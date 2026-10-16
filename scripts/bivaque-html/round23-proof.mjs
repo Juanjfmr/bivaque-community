@@ -247,6 +247,52 @@ const checkpoints = {
       `retirada imediata: ${ids}`,
     )
   },
+  async "typed-date-keeps-focus-and-counts"(page) {
+    await snapshot(page)
+    await go(page, "imoveis")
+    await open(page, "avail")
+    const before = await applyText(page)
+    const [y, m, d] = day(20).split("-")
+    await panel(page).locator("#fp-date").click()
+    await page.keyboard.type(`${d}${m}${y}`)
+    await page.keyboard.press("Tab")
+    await page.waitForTimeout(150)
+    expect(await isOpen(page), "painel fechou ao digitar a data")
+    expect(
+      (await panel(page).locator("#fp-date").inputValue()) === day(20),
+      `data digitada não ficou: ${await panel(page).locator("#fp-date").inputValue()}`,
+    )
+    expect(
+      (await panel(page).locator('[data-field="avail"][aria-pressed="true"]').count()) === 0,
+      "chip de período continuou marcado com a data escolhida",
+    )
+    expect(typeof before === "string", "sem contagem")
+  },
+  async "popover-stays-inside-the-window"(page) {
+    if (!desktop(page)) return
+    await page.setViewportSize({ width: page.viewportSize().width, height: 420 })
+    await snapshot(page)
+    await go(page, "imoveis")
+    await open(page, "hood")
+    const r = await panel(page).boundingBox()
+    expect(r.y >= 0 && r.y + r.height <= 420, `painel fora da janela: ${r.y}+${r.height}`)
+    expect(await panel(page).locator('[data-f="apply"]').isVisible(), "botão Ver fora de alcance")
+  },
+  async "home-entry-starts-without-old-filters"(page) {
+    await snapshot(page)
+    await go(page, "imoveis")
+    await page.locator('#main [data-action="catalog-toggle"][data-value="pets"]').click()
+    await settle(page)
+    await go(page, "inicio")
+    await page.locator('#main .section-links [data-action="intent"][data-value="imovel"]').click()
+    await settle(page)
+    expect(
+      (await page
+        .locator('#main [data-action="catalog-toggle"][data-value="pets"]')
+        .getAttribute("aria-pressed")) === "false",
+      "filtro antigo continuou ao entrar pela Início",
+    )
+  },
   async "editor-saves-availability"(page) {
     await snapshot(page)
     await go(page, "imoveis")

@@ -17,7 +17,7 @@ function itemCardLine(x){
 function propertyDetailHtml(i){
  const amen=(i.amen||[]).map(amenityLabel).filter(Boolean);
  const later=i.avail&&i.avail>dateISO(0),when=later?`Disponível a partir de ${new Date(`${i.avail}T12:00`).toLocaleDateString('pt-BR')}`:'Disponível agora';
- return `<p class="small muted">${i.ptype?`${esc(i.ptype)} para alugar · `:''}${when}</p><div class="facts"><div class="fact"><b>${i.beds||'—'}</b><span>quartos</span></div><div class="fact"><b>${i.area||'—'} m²</b><span>área</span></div><div class="fact"><b>${i.parking??'—'}</b><span>vagas</span></div></div><p class="small muted">${i.condo?`Aluguel ${money(i.numPrice)} + condomínio ${money(i.condo)} = <b>${money(itemTotal(i))} / mês</b>.`:'Sem condomínio.'}</p>${amen.length?`<section class="section">${sectionTitle('Comodidades')}<md-chip-set>${amen.map(a=>`<md-assist-chip label="${esc(a)}">${icon('check','icon')}</md-assist-chip>`).join('')}</md-chip-set></section>`:''}`;
+ return `<p class="small muted">${i.ptype?`${esc(i.ptype)} para alugar · `:''}${when}</p><div class="facts"><div class="fact"><b>${esc(String(i.beds??'—'))}</b><span>quartos</span></div><div class="fact"><b>${esc(String(i.area||'—'))} m²</b><span>área</span></div><div class="fact"><b>${esc(String(i.parking??'—'))}</b><span>vagas</span></div></div><p class="small muted">${i.condo?`Aluguel ${money(i.numPrice)} + condomínio ${money(i.condo)} = <b>${money(itemTotal(i))} / mês</b>.`:'Sem condomínio.'}</p>${amen.length?`<section class="section">${sectionTitle('Comodidades')}<md-chip-set>${amen.map(a=>`<md-assist-chip label="${esc(a)}">${icon('check','icon')}</md-assist-chip>`).join('')}</md-chip-set></section>`:''}`;
 }
 function itemDetailHtml(i){
  if(!i.cond&&!i.cat&&!i.pickup)return '';

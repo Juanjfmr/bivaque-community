@@ -27,8 +27,8 @@ async function perform(action,value,el){
  case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();$('#search-query').focus();break;
  case 'recent-search':case 'guide-search':searchQuery=value;saveRecent(value);navigate('busca');break;
  case 'search-type':searchType=value;render();globalFocus(action,value);break;
- case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value==='imovel'?'imovel':'desapego';searchHood='Todos';searchMin=searchMax='';navigate(catalogFilter==='imovel'?'imoveis':'desapegos');}break;
- case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='desapego';searchHood='Todos';searchMin=searchMax='';navigate('desapegos');break;
+ case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value==='imovel'?'imovel':'desapego';catalogAttrs={...catalogAttrs,[catalogFilter]:structuredClone(CATALOG_DEFAULTS[catalogFilter])};navigate(catalogFilter==='imovel'?'imoveis':'desapegos');}break;
+ case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='desapego';catalogAttrs={...catalogAttrs,desapego:structuredClone(CATALOG_DEFAULTS.desapego)};navigate('desapegos');break;
  case 'catalog-pill':openFilterPanel(value,el);break;
  case 'catalog-toggle':if(['pets','furnished'].includes(value)){catalogSetAttr('amen',value);render();globalFocus(action,value);}break;
  case 'catalog-filter':catalogFilter=value;render();globalFocus(action,value);break;
@@ -41,7 +41,7 @@ async function perform(action,value,el){
  case 'apply-city':{
   const city=$('#city-select').value,mode=$('#moment-select').value,dest=$('#destination-select').value,arrival=$('#arrival-date').value,leave=$('#leave-date').value;
   const momentProblem=!CITY_NAMES.includes(city)?'Escolha uma cidade da lista.':mode==='chegando'&&!arrival?'Informe a data de chegada.':mode==='saindo'&&!leave?'Informe a data de saída.':mode==='saindo'&&!CITY_NAMES.includes(dest)?'Escolha o destino da mudança.':'';if(momentProblem){notify(momentProblem,'error');break;}
-  if(mutate(()=>{state.city=city;state.mode=mode;if(mode==='chegando')state.arrival=arrival;if(mode==='saindo'){state.leaveDate=leave;state.dest=dest;}},{redraw:false})){searchHood='Todos';searchMin=searchMax='';await closeDialog(true);navigate('inicio');}break;
+  if(mutate(()=>{state.city=city;state.mode=mode;if(mode==='chegando')state.arrival=arrival;if(mode==='saindo'){state.leaveDate=leave;state.dest=dest;}},{redraw:false})){searchHood='Todos';searchMin=searchMax='';catalogAttrs=structuredClone(CATALOG_DEFAULTS);await closeDialog(true);navigate('inicio');}break;
  }
  case 'home-city':if(mutate(()=>state.city=state.homeCity,{redraw:false})){if(dialog.open)await closeDialog(true);navigate('inicio');}break;
  case 'settings':openSettings();break;
@@ -49,10 +49,10 @@ async function perform(action,value,el){
  case 'prototype':openPrototype();break;
  case 'apply-prototype':{
   const stage=$('#prototype-stage').value,verified=$('#verified-test').selected,incoming=Math.min(10000,Math.max(0,Number($('#prototype-incoming').value)||0));
-  if(stage!==state.stage){confirm('Trocar o cenário de teste?','Isso substitui as alterações locais pelos exemplos do cenário escolhido.',async()=>{const prior=state;state=normalizeCategories(initial(stage));state.profile.verified=verified;if(incoming!==prior.incoming)state.incoming=incoming;if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Cenário atualizado');});}
+  if(stage!==state.stage){confirm('Trocar o cenário de teste?','Isso substitui as alterações locais pelos exemplos do cenário escolhido.',async()=>{const prior=state;state=normalizeListings(normalizeCategories(initial(stage)));state.profile.verified=verified;if(incoming!==prior.incoming)state.incoming=incoming;if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Cenário atualizado');});}
   else if(mutate(()=>{state.profile.verified=verified;state.incoming=incoming;},{redraw:false})){await closeDialog(true);render();notify('Permissão de teste atualizada');}break;
  }
- case 'reset-prototype':confirm('Recomeçar do zero?','Anúncios, conversas, salvos e outras alterações feitas neste dispositivo serão substituídos pelos exemplos iniciais.',async()=>{const prior=state;state=normalizeCategories(initial());if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Protótipo reiniciado');});break;
+ case 'reset-prototype':confirm('Recomeçar do zero?','Anúncios, conversas, salvos e outras alterações feitas neste dispositivo serão substituídos pelos exemplos iniciais.',async()=>{const prior=state;state=normalizeListings(normalizeCategories(initial()));if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Protótipo reiniciado');});break;
  case 'simulate-answer':simulateAnswer();break;
  case 'simulate-message':simulateMessage();break;
  case 'close-dialog':await closeDialog();break;

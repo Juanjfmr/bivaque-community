@@ -19,8 +19,6 @@ async function emptyFilter(page) {
 async function slowCover(page) {
   await page.evaluate(() => {
     const img = document.querySelector("#catalog-results .cover img")
-    img.closest(".cover").classList.remove("img-ready")
-    img.classList.remove("img-in")
     img.removeAttribute("loading")
     img.src = `/slow-${Date.now()}.png`
   })
@@ -29,18 +27,27 @@ async function slowCover(page) {
     const img = document.querySelector("#catalog-results .cover img")
     const frame = img.closest(".cover")
     return {
-      ready: frame.classList.contains("img-ready"),
+      waiting: frame.classList.contains("img-wait"),
       shimmer: getComputedStyle(frame, "::before").content !== "none",
       opacity: getComputedStyle(img).opacity,
     }
   })
 }
 const frameReady = (page) =>
-  page.evaluate(() =>
-    document
-      .querySelector("#catalog-results .cover img")
-      .closest(".cover")
-      .classList.contains("img-ready"),
+  page.evaluate(
+    () =>
+      !document
+        .querySelector("#catalog-results .cover img")
+        .closest(".cover")
+        .classList.contains("img-wait"),
+  )
+const waitingInView = (page) =>
+  page.evaluate(
+    () =>
+      [...document.querySelectorAll(".img-wait")].filter((f) => {
+        const r = f.getBoundingClientRect()
+        return r.bottom > 0 && r.top < innerHeight
+      }).length,
   )
 
 const checkpoints = {
@@ -124,14 +131,24 @@ const checkpoints = {
     await snapshot(page)
     await go(page, "imoveis")
     await page.waitForTimeout(500)
-    const stuck = await page.evaluate(
-      () =>
-        [...document.querySelectorAll(".cover:has(>img):not(.img-ready)")].filter((f) => {
-          const r = f.getBoundingClientRect()
-          return r.bottom > 0 && r.top < innerHeight
-        }).length,
-    )
+    const stuck = await waitingInView(page)
     expect(!stuck, `${stuck} fotos à vista continuam carregando`)
+  },
+  async "redraw-does-not-flash-photos"(page) {
+    await snapshot(page)
+    await go(page, "imoveis")
+    await page.waitForTimeout(500)
+    // Um toque que redesenha a tela: as fotos já decodificadas não voltam a carregar.
+    const flashed = await page.evaluate(async () => {
+      document.querySelector('#main [data-action="catalog-toggle"][data-value="pets"]').click()
+      await Promise.resolve()
+      await new Promise((r) => requestAnimationFrame(r))
+      return [...document.querySelectorAll("#catalog-results .img-wait")].filter((f) => {
+        const r = f.getBoundingClientRect()
+        return r.bottom > 0 && r.top < innerHeight
+      }).length
+    })
+    expect(!flashed, `${flashed} fotos piscaram no redesenho`)
   },
 }
 

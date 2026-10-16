@@ -134,6 +134,20 @@ const checkpoints = {
     const tag = await page.locator('#catalog-results [data-value="i2"] .pill').innerText()
     expect(tag === "Apartamento", `exemplo antigo sem atributos: ${tag}`)
   },
+  async "reset-keeps-market-attributes"(page) {
+    await snapshot(page)
+    await action(page, "prototype")
+    await action(page, "reset-prototype")
+    await page.locator("#confirm-dialog md-filled-button").last().click()
+    await page.waitForFunction(() =>
+      /reiniciado/.test(document.querySelector("#snackbar")?.innerText),
+    )
+    await go(page, "imoveis")
+    const ids = await shownIds(page)
+    expect(ids.includes("i7") && ids.includes("i10"), `recomeçar sem os exemplos novos: ${ids}`)
+    const tag = await page.locator('#catalog-results [data-value="i2"] .pill').innerText()
+    expect(tag === "Apartamento", `recomeçar sem os atributos: ${tag}`)
+  },
   async "back-from-listing-returns-to-its-screen"(page) {
     await snapshot(page)
     await go(page, "inicio")
