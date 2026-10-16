@@ -19,3 +19,14 @@
 .plan-step>md-icon{flex:none;margin-top:16px;color:var(--md-sys-color-on-surface-variant)}
 .plan-done{color:var(--md-sys-color-on-success-container);background:var(--md-sys-color-success-container);font-weight:650}
 .plan-now{padding:1px 8px;border-radius:999px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:11px;line-height:16px;font-weight:700;letter-spacing:.3px}
+/* Rodada 26: anel de progresso no cabeçalho e botão Continuar. */
+.plan-head{display:flex;align-items:center;gap:12px}
+.plan-ring{width:52px;height:52px;flex:none;transform:rotate(-90deg)}
+.plan-ring circle{fill:none;stroke-width:5}
+.plan-ring .track{stroke:var(--md-sys-color-surface-container-highest)}
+.plan-ring .fill{stroke:var(--md-sys-color-primary);stroke-linecap:round;transition:stroke-dasharray .4s ease}
+.plan-ring text{transform:rotate(90deg);transform-origin:26px 26px;font:700 13px var(--md-ref-typeface-plain);fill:var(--md-sys-color-on-surface)}
+.plan-next{margin:6px 0 2px}
+.plan-next md-filled-button{width:100%}
+@media(min-width:1024px){.plan-next md-filled-button{width:auto;min-width:200px}}
+@media (prefers-reduced-motion:reduce){.plan-ring .fill{transition:none}}
