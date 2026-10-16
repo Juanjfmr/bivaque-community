@@ -11,18 +11,20 @@ const isoDay=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'');
 const shortDay=v=>new Date(`${v}T12:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
 const countWord=(n,kind)=>kind==='imovel'?`${n} ${n===1?'imóvel':'imóveis'}`:`${n} ${n===1?'desapego':'desapegos'}`;
 const manyLabel=(list,empty,many)=>list.length===1?list[0]:list.length?`${list.length} ${many}`:empty;
-function priceLabel(kind,min,max){const a=Number(min)||0,b=Number(max)||0;if(!a&&!b)return kind==='imovel'?'Total por mês':'Preço';if(a&&b)return `${money(a)} a ${money(b)}`;return b?`Até ${money(b)}`:`A partir de ${money(a)}`;}
+// Faixa vazia = sem limite; "0" é um limite de verdade (o filtro usa a mesma regra).
+const hasPrice=v=>v!==''&&v!=null;
+function priceLabel(kind,min,max){const a=Number(min)||0,b=Number(max)||0;if(!hasPrice(min)&&!hasPrice(max))return kind==='imovel'?'Total por mês':'Preço';if(hasPrice(min)&&hasPrice(max))return `${money(a)} a ${money(b)}`;return hasPrice(max)?`Até ${money(b)}`:`A partir de ${money(a)}`;}
 const availLabel=v=>v==='now'?'Disponível agora':v==='30'?'Em até 30 dias':v==='60'?'Em até 60 dias':isoDay(v)?`Até ${shortDay(v)}`:'Disponível';
 // Quantos grupos de filtro estão ativos (o número da pílula "Filtros").
 function filterActiveCount(kind,a=catalogAttrs[kind]){
- const price=Number(a.min)||Number(a.max)?1:0;
+ const price=hasPrice(a.min)||hasPrice(a.max)?1:0;
  return kind==='imovel'?price+(a.ptypes.length?1:0)+(a.hoods.length?1:0)+(a.beds?1:0)+(a.parking?1:0)+(a.area?1:0)+a.amen.length+(a.avail?1:0):price+(a.cats.length?1:0)+(a.hoods.length?1:0)+(a.cond?1:0)+(a.pickup?1:0);
 }
 function catalogPillsHtml(kind){
  const a=catalogAttrs[kind],n=filterActiveCount(kind),pill=(key,label,on)=>`<button type="button" class="fpill${on?' on':''}" data-action="catalog-pill" data-value="${key}" aria-haspopup="dialog">${esc(label)}${icon('expand_more')}</button>`;
  const toggle=(k,ic,label)=>{const on=a.amen.includes(k);return `<button type="button" class="fpill${on?' on':''}" data-action="catalog-toggle" data-value="${k}" aria-pressed="${on}">${icon(ic)}${esc(label)}</button>`;};
  const all=`<button type="button" class="fpill fall${n?' on':''}" data-action="catalog-pill" data-value="all" aria-haspopup="dialog" aria-label="${n?`Filtros, ${n} ativos`:'Filtros'}">${icon('tune')}${FILTER_DESKTOP.matches?'Todos os filtros':'Filtros'}${n?`<span class="fbadge" aria-hidden="true">${n}</span>`:''}</button>`;
- const price=pill('price',priceLabel(kind,a.min,a.max),Number(a.min)||Number(a.max));
+ const price=pill('price',priceLabel(kind,a.min,a.max),hasPrice(a.min)||hasPrice(a.max));
  const hood=pill('hood',manyLabel(a.hoods,'Bairro','bairros'),a.hoods.length);
  const items=kind==='imovel'?[pill('ptype',manyLabel(a.ptypes,'Tipo','tipos'),a.ptypes.length),price,pill('beds',[a.beds?`${a.beds}+ quartos`:'',a.parking?`${a.parking}+ ${a.parking===1?'vaga':'vagas'}`:''].filter(Boolean).join(' · ')||'Quartos',a.beds||a.parking),hood,pill('avail',availLabel(a.avail),a.avail),toggle('pets','pets','Aceita pets'),toggle('furnished','chair','Mobiliado')]:[pill('cat',manyLabel(a.cats,'Categoria','categorias'),a.cats.length),price,pill('cond',a.cond||'Estado',a.cond),pill('pickup',a.pickup==='now'?'Retirada imediata':a.pickup==='30'?'Retirada em 30 dias':'Retirada',a.pickup),hood];
  return `<div class="fpills" role="group" aria-label="Filtros de ${kind==='imovel'?'imóveis':'desapegos'}">${all}${items.join('')}</div>`;

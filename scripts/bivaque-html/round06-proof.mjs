@@ -69,6 +69,10 @@ const signature = (page) =>
       hash: location.hash,
       dialog: d?.open ? h(d.innerText) : 0,
       confirm: !!c?.open,
+      // Rodada 23: painel de filtros (dialog nativo) também é resposta visível.
+      panel: document.querySelector("#filter-panel")?.open
+        ? h(document.querySelector("#filter-panel").innerText)
+        : 0,
       // offsetParent é nulo para position:fixed; mede a caixa visível do menu.
       menu: (() => {
         const m = document.querySelector("#create-menu")

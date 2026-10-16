@@ -33,29 +33,34 @@ const chips = (page, id) =>
 
 const checkpoints = {
   async "price-slider-filters-and-resets"(page) {
-    await go(page, "catalogo")
-    const all = await page.locator('#main [data-action="open-item"]').count()
+    // Rodada 23: o slider de preço vive no painel da pílula "Preço" e só vale ao aplicar.
+    await go(page, "desapegos")
+    const cards = () => page.locator('#catalog-results [data-action="open-item"]').count()
+    const pricePill = page.locator('#main [data-action="catalog-pill"][data-value="price"]')
+    const all = await cards()
     expect(all > 1, "catálogo sem itens suficientes")
-    const slider = page.locator("#catalog-price")
+    await pricePill.click()
+    await settle(page)
+    const slider = page.locator("#fp-price")
     const max = Number(await slider.evaluate((s) => s.max))
-    // Leva o máximo para baixo pelo teclado: menos itens, rótulo descreve a faixa.
-    await page.locator("#catalog-price input").last().focus()
+    // Leva o máximo para baixo pelo teclado: menos itens e a pílula descreve a faixa.
+    await page.locator("#fp-price input").last().focus()
     for (let i = 0; i < 40; i++) await page.keyboard.press("PageDown")
     await page.waitForTimeout(300)
-    const narrowed = await page.locator('#main [data-action="open-item"]').count()
-    const label = await page.locator("#catalog-price-label").textContent()
-    expect(narrowed < all, `faixa não filtrou: ${narrowed}/${all}`)
-    expect(/R\$/.test(label) && !/Qualquer/.test(label), `rótulo da faixa: "${label}"`)
     expect(Number(await slider.evaluate((s) => s.valueEnd)) < max, "máximo não mudou")
-    await action(page, "clear-filters")
-    expect(
-      (await page.locator('#main [data-action="open-item"]').count()) === all,
-      "limpar não restaurou",
-    )
-    expect(
-      /Qualquer preço/.test(await page.locator("#catalog-price-label").textContent()),
-      "rótulo não voltou",
-    )
+    await page.locator('#filter-panel [data-f="apply"]').click()
+    await settle(page)
+    const narrowed = await cards()
+    const label = await pricePill.innerText()
+    expect(narrowed < all, `faixa não filtrou: ${narrowed}/${all}`)
+    expect(/R\$/.test(label), `pílula sem a faixa: "${label}"`)
+    await pricePill.click()
+    await settle(page)
+    await page.locator('#filter-panel [data-f="clear"]').first().click()
+    await page.locator('#filter-panel [data-f="apply"]').click()
+    await settle(page)
+    expect((await cards()) === all, "limpar não restaurou")
+    expect(/^Preço/.test(await pricePill.innerText()), "pílula não voltou")
   },
   async "input-chips-add-remove-dedupe-persist"(page) {
     await openBizEditor(page)
