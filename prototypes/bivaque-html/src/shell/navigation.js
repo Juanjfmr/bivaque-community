@@ -60,7 +60,7 @@ function shell(){
 function actionsBar(html){$('#detail-actions').innerHTML=`<div class="detail-actions-in">${html}</div>`;$('#detail-actions').hidden=false;root.classList.add('detail');}
 function syncMobileNavigation(){
  const mobile=innerWidth<720,rootPage=['inicio','comunidade','conversas','voce'].includes(route.name);
- $('#nav').hidden=mobile&&!rootPage;$('#nav').classList.toggle('minimized',mobile&&rootPage&&navMinimized);$('#nav').inert=(mobile&&(!rootPage||navMinimized))||createOpen;
+ $('#nav').hidden=mobile&&!rootPage;$('#nav').classList.toggle('minimized',mobile&&rootPage&&navMinimized);$('#nav').inert=(mobile&&(!rootPage||navMinimized))||createOpen||paletteIsOpen();
  $('#fab').hidden=mobile&&!rootPage;$('#fab').classList.toggle('compact',mobile&&rootPage&&navMinimized);
  document.body.classList.toggle('mobile-detail',mobile&&!rootPage);
 }

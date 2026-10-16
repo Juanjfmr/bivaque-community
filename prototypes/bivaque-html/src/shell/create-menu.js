@@ -90,7 +90,7 @@ function createPanelMorph(popup,anchor,closing){
 }
 // Atalho do desktop: a tecla C abre o Criar, fora de campos de texto e de diálogos.
 document.addEventListener('keydown',e=>{
- if((e.key!=='c'&&e.key!=='C')||e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.isComposing||e.defaultPrevented||createOpen||!createPanelMQ.matches||dialog.open||confirmDialog.open||readonly())return;
+ if((e.key!=='c'&&e.key!=='C')||e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.isComposing||e.defaultPrevented||createOpen||!createPanelMQ.matches||dialog.open||confirmDialog.open||readonly()||paletteIsOpen())return;
  if(e.composedPath().some(el=>el.matches?.('input,textarea,select,[contenteditable],md-outlined-text-field,md-filled-text-field,md-outlined-select')))return;
  const fab=$('#fab');if(!fab||fab.hidden||fab.disabled||!fab.getClientRects().length)return;e.preventDefault();openCreate(fab);
 });
