@@ -13,8 +13,9 @@ function segPlace(row,ind,rect){ind.style.transform=`translate(${rect.x}px,${rec
 function segmentsAfterRender(scope=document){
  segObserver?.disconnect();
  const rows=$$('.filter-row[data-seg]',scope);if(!rows.length)return;
- // O observador avisa uma vez ao começar; só reposiciona (sem animar) quando a medida muda.
- segObserver=new ResizeObserver(entries=>{for(const e of entries){const row=e.target.closest('.filter-row[data-seg]'),ind=row&&$('.seg-ind',row),rect=row&&segRect(row),last=row&&segLast.get(segKey(row));if(!ind||!rect||last&&last.x===rect.x&&last.w===rect.w&&last.y===rect.y)continue;{ind.classList.add('no-anim');segPlace(row,ind,rect);segLast.set(segKey(row),rect);}}});
+ // O observador avisa uma vez ao começar; só reposiciona quando a medida muda, e segue com a
+ // transição (o check do chip escolhido muda a largura dele no meio do deslize).
+ segObserver=new ResizeObserver(entries=>{for(const e of entries){const row=e.target.closest('.filter-row[data-seg]'),ind=row&&$('.seg-ind',row),rect=row&&segRect(row),last=row&&segLast.get(segKey(row));if(!ind||!rect||last&&last.x===rect.x&&last.w===rect.w&&last.y===rect.y)continue;{segPlace(row,ind,rect);segLast.set(segKey(row),rect);}}});
  for(const row of rows){
   const ind=$('.seg-ind',row);if(!ind)continue;
   // Espera os chips desenharem (componentes Material atualizam depois de entrar na página).
