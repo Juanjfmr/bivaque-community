@@ -46,6 +46,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07h/CSS | `src/styles/notices.css` | Conversas/notificações | Rodada 17: central de avisos (abas, ícone por tipo, não lidos) |
 | 07i/CSS | `src/styles/photos.css` | Desapegos/imóveis | Rodada 18: arrastar e soltar fotos, capa e galeria em tela cheia |
 | 07j/CSS | `src/styles/count-up.css` | Frontend premium | Rodada 19: contador animado e avatares de quem indicou |
+| 07k/CSS | `src/styles/chat-bubbles.css` | Frontend premium | Rodada 20: balões agrupados, separador de dia, estado, reações e entrada |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -73,6 +74,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 30/App | `src/features/events/views.js` | Encontros/eventos | Agenda e detalhe de encontro |
 | 31/App | `src/features/profile/views.js` | Perfil/família/movimentação | Perfil, salvos, próprios anúncios e perguntas |
 | 32/App | `src/features/messaging/views.js` | Conversas/notificações | Lista, títulos/contexto e histórico de conversa |
+| 32b/App | `src/features/messaging/bubbles.js` | Frontend premium | Rodada 20: `chatMessagesHtml` (grupos, dias, estado, entrada) e reações locais |
 | 33/App | `src/features/transfers/guide.js` | Perfil/família/movimentação | Guia demonstrativo de chegada |
 | 34/App | `src/shell/dialogs.js` | Frontend premium | Dialog/confirm, history e sheet drag |
 | 35/App | `src/shell/create-menu.js` | Frontend premium | Menu Criar, keyboard e posicionamento |

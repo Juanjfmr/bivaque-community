@@ -25,6 +25,7 @@
         "styles/notices.css",
         "styles/photos.css",
         "styles/count-up.css",
+        "styles/chat-bubbles.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -74,6 +75,7 @@
         "features/events/views.js",
         "features/profile/views.js",
         "features/messaging/views.js",
+        "features/messaging/bubbles.js",
         "features/transfers/guide.js",
         "shell/dialogs.js",
         "shell/create-menu.js",

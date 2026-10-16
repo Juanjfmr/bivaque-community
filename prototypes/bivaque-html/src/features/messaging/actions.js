@@ -19,9 +19,10 @@ function messagingCanWrite(){
  return true;
 }
 async function messagingAction(action,value,el){
- if(!['open-thread','send-message','thread-origin','thread-menu','pin-thread','swipe-delete-thread','quick-reply'].includes(action))return false;
- const t=messagingThread(action==='quick-reply'?value.split('|')[0]:value);
+ if(!['open-thread','send-message','thread-origin','thread-menu','pin-thread','swipe-delete-thread','quick-reply','react-open','react-msg'].includes(action))return false;
+ const t=messagingThread(['quick-reply','react-open','react-msg'].includes(action)?value.split('|')[0]:value);
  if(!t){messagingFeedback('Esta conversa não está disponível nesta cidade.');return true;}
+ if(action==='react-open'||action==='react-msg'){chatReactAction(action,t,value);return true;}
  if(action==='quick-reply'){const input=$('#chat-input'),text=messagingQuickReplies(t)[Number(value.split('|')[1])];if(!input||input.disabled||!text)return true;const current=(input.value||'').trimEnd();input.value=current?`${current} ${text}`:text;messagingDrafts.set(t.id,input.value);input.focus();return true;}
  if(action==='open-thread'){
   messagingReturnFocus={route:{...route},action:el?.dataset.action||'open-thread',value};
