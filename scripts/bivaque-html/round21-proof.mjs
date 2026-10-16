@@ -43,7 +43,7 @@ async function slide(page, action, value) {
 }
 
 const SCREENS = [
-  ["catalogo", "catalog-filter"],
+  ["salvos", "saved-filter"],
   ["negocios", "biz-filter"],
   ["comunidade", "question-filter"],
 ]
@@ -63,47 +63,46 @@ const checkpoints = {
   async "pill-slides-from-previous-filter"(page) {
     await page.emulateMedia({ reducedMotion: "no-preference" })
     await snapshot(page)
-    await go(page, "catalogo")
+    await go(page, "comunidade")
     await settle(page)
     const start =
-      (await pillFit(page, "catalog-filter")) &&
-      (await page.locator(`${ROW("catalog-filter")} .seg-ind`).boundingBox()).x
-    const xs = await slide(page, "catalog-filter", "imovel")
+      (await pillFit(page, "question-filter")) &&
+      (await page.locator(`${ROW("question-filter")} .seg-ind`).boundingBox()).x
+    const xs = await slide(page, "question-filter", "mine")
     const end = (
-      await page.locator(`${ROW("catalog-filter")} md-filter-chip[selected]`).boundingBox()
+      await page.locator(`${ROW("question-filter")} md-filter-chip[selected]`).boundingBox()
     ).x
     const between = xs.filter((x) => x > Math.min(start, end) + 4 && x < Math.max(start, end) - 4)
     expect(between.length >= 2, `a pílula pulou sem deslizar: ${xs.map(Math.round).join(",")}`)
-    const f = await pillFit(page, "catalog-filter")
+    const f = await pillFit(page, "question-filter")
     expect(f.off <= 1.5, `a pílula não terminou no filtro novo (${f.off.toFixed(1)} px)`)
   },
   async "reduced-motion-jumps-without-sliding"(page) {
     await snapshot(page)
-    await go(page, "catalogo")
+    await go(page, "comunidade")
     await settle(page)
-    const xs = await slide(page, "catalog-filter", "desapego")
+    const xs = await slide(page, "question-filter", "ok")
     const end = (
-      await page.locator(`${ROW("catalog-filter")} md-filter-chip[selected]`).boundingBox()
+      await page.locator(`${ROW("question-filter")} md-filter-chip[selected]`).boundingBox()
     ).x
     const moving = xs.filter((x) => Math.abs(x - end) > 1.5)
     expect(moving.length <= 2, `deslizou com movimento reduzido: ${xs.map(Math.round).join(",")}`)
   },
   async "selection-semantics-unchanged"(page) {
     await snapshot(page)
-    await go(page, "catalogo")
+    await go(page, "comunidade")
     await settle(page)
-    await page.locator(`${ROW("catalog-filter")} md-filter-chip[data-value="imovel"]`).click()
+    await page.locator(`${ROW("question-filter")} md-filter-chip[data-value="ok"]`).click()
     await settle(page)
     const chips = await page
-      .locator(`${ROW("catalog-filter")} md-filter-chip`)
+      .locator(`${ROW("question-filter")} md-filter-chip`)
       .evaluateAll((els) => els.map((e) => `${e.dataset.value}:${e.selected}`))
-    expect(chips.join() === "all:false,desapego:false,imovel:true", `seleção errada: ${chips}`)
+    expect(chips.join() === "help:false,ok:true,mine:false", `seleção errada: ${chips}`)
     expect(
-      (await page.locator(`${ROW("catalog-filter")} .seg-ind`).getAttribute("aria-hidden")) ===
+      (await page.locator(`${ROW("question-filter")} .seg-ind`).getAttribute("aria-hidden")) ===
         "true",
       "pílula lida pelo leitor de tela",
     )
-    expect(/Imóveis/.test(await page.locator("#main h1").innerText()), "filtro não filtrou")
   },
   async "pill-follows-resize"(page) {
     await snapshot(page)

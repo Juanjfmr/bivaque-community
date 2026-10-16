@@ -27,10 +27,12 @@ async function perform(action,value,el){
  case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();$('#search-query').focus();break;
  case 'recent-search':case 'guide-search':searchQuery=value;saveRecent(value);navigate('busca');break;
  case 'search-type':searchType=value;render();globalFocus(action,value);break;
- case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value;searchHood='Todos';searchMin=searchMax='';navigate('catalogo');}break;
- case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='all';searchHood='Todos';searchMin=searchMax='';navigate('catalogo');break;
+ case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value==='imovel'?'imovel':'desapego';searchHood='Todos';searchMin=searchMax='';navigate(catalogFilter==='imovel'?'imoveis':'desapegos');}break;
+ case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='desapego';searchHood='Todos';searchMin=searchMax='';navigate('desapegos');break;
+ case 'catalog-attr':{const [key,v]=value.split('|');catalogSetAttr(key,v);render();globalFocus(action,value);break;}
+ case 'catalog-more':{catalogMore=!catalogMore;const box=$('#catalog-more');box?.classList.toggle('open',catalogMore);if(el)el.ariaExpanded=String(catalogMore);break;}
  case 'catalog-filter':catalogFilter=value;render();globalFocus(action,value);break;
- case 'clear-filters':searchHood='Todos';searchMin=searchMax='';searchSort='recent';render();break;
+ case 'clear-filters':searchHood='Todos';searchMin=searchMax='';searchSort='recent';catalogAttrs=structuredClone(CATALOG_DEFAULTS);render();break;
  case 'businesses':bizCat='Todos';bizQuery='';navigate('negocios');break;
  case 'biz-filter':bizCat=value;render();globalFocus(action,value);break;
  case 'community-tab':communityTab=value;render();globalFocus(action,value);break;

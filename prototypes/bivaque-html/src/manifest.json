@@ -27,6 +27,7 @@
         "styles/count-up.css",
         "styles/chat-bubbles.css",
         "styles/segmented.css",
+        "styles/catalog.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -57,6 +58,7 @@
         "utilities/format.js",
         "data/demo/model.js",
         "features/businesses/taxonomy.js",
+        "features/listings/attributes.js",
         "features/groups/presets.js",
         "app/state.js",
         "shell/primitives.js",

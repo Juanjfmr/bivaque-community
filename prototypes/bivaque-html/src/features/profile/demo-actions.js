@@ -14,7 +14,7 @@ function noticeText(n){return n.text||String(n.html||'Aviso local').replace(/<[^
 // Não lidos, "Marcar todos como lidos", ícone por tipo e separação entre hoje e anteriores. As ações
 // de abrir e marcar um aviso continuam as mesmas.
 let noticesTab='all';
-const NOTICE_ICONS={conversa:'chat_bubble',conversas:'chat_bubble',anuncio:'sell',catalogo:'sell',negocio:'storefront',negocios:'storefront',pedido:'request_quote',pedidos:'request_quote',pergunta:'forum',comunidade:'forum',evento:'event',agenda:'event',grupo:'groups',publicacao:'groups'};
+const NOTICE_ICONS={conversa:'chat_bubble',conversas:'chat_bubble',anuncio:'sell',catalogo:'sell',desapegos:'sell',imoveis:'apartment',negocio:'storefront',negocios:'storefront',pedido:'request_quote',pedidos:'request_quote',pergunta:'forum',comunidade:'forum',evento:'event',agenda:'event',grupo:'groups',publicacao:'groups'};
 function noticeRow(n){return `<div class="list-row notice-row${n.unread?' is-unread':''}"><span class="notice-ico">${icon(NOTICE_ICONS[n.go?.[0]]||'notifications')}</span><button type="button" class="txt" data-action="notice-open" data-value="${esc(n.id)}"><b>${esc(noticeText(n))}</b><small>${esc(n.when||'Agora')} · ${n.unread?'não lido':'lido'}</small></button>${iconBtn(n.unread?'drafts':'done','notice-read',n.id,n.unread?'Marcar aviso como lido':'Aviso lido',n.unread?'':'disabled')}</div>`;}
 function openNotices(){
  const ns=state.notices.filter(n=>n.city===state.homeCity),unread=ns.filter(n=>n.unread).length,list=noticesTab==='unread'?ns.filter(n=>n.unread):ns;
@@ -26,7 +26,7 @@ function openNotices(){
 function profileRestoreOverlay(kind){if(kind!=='notices')return false;noticesTab='all';openNotices();return true;}
 function noticeDestination(n){
  if(n.city!==state.homeCity||n.city!==state.city||!Array.isArray(n.go))return null;
- const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','negocios','agenda','guia'];
+ const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','desapegos','imoveis','negocios','agenda','guia'];
  if(roots.includes(name)&&!id)return {name,id:null};
  const record=name==='anuncio'?itemById(id):name==='negocio'?bizById(id):name==='pergunta'?askById(id):name==='grupo'?gById(id):name==='conversa'?threadById(id):name==='evento'?state.events.find(e=>e.id===id):null;
  return accessibleRecord(record)&&!record.deleted&&!record.hidden?{name,id}:null;

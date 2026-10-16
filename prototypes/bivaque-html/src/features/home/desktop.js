@@ -39,7 +39,7 @@ function homeDeskServices(){
 }
 function homeDeskItems(arriving){
  const items=cityItems().filter(x=>x.status==='active').sort((a,b)=>b.createdAt-a.createdAt).slice(0,4);
- return `<section class="section">${sectionTitle(arriving?'Para a casa nova':'Oportunidades perto de você','Ver todos','catalog-all')}${items.length?`<div class="home-row">${items.map(photoCard).join('')}</div>`:empty('As primeiras oportunidades aparecem aqui','Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato.','sell',readonly()?'':'create-item',readonly()?'':'Anunciar desapego')}</section>`;
+ return `<section class="section">${catalogSectionTitle(arriving?'Para a casa nova':'Oportunidades perto de você')}${items.length?`<div class="home-row">${items.map(photoCard).join('')}</div>`:empty('As primeiras oportunidades aparecem aqui','Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato.','sell',readonly()?'':'create-item',readonly()?'':'Anunciar desapego')}</section>`;
 }
 // Lateral: atividade dos meus grupos, com o sinal do que mudou (respostas, comentários).
 function homeDeskGroups(){

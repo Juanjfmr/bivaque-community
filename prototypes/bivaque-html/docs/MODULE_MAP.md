@@ -48,6 +48,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07j/CSS | `src/styles/count-up.css` | Frontend premium | Rodada 19: contador animado e avatares de quem indicou |
 | 07k/CSS | `src/styles/chat-bubbles.css` | Frontend premium | Rodada 20: balões agrupados, separador de dia, estado, reações e entrada |
 | 07l/CSS | `src/styles/segmented.css` | Frontend premium | Rodada 21: pílula deslizante dos filtros |
+| 07m/CSS | `src/styles/catalog.css` | Frontend premium | Rodada 22: filtros próprios de Desapegos e Imóveis |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -56,6 +57,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 13/App | `src/utilities/format.js` | Arquitetura | Seletores, escaping, datas, ids e apresentação |
 | 14/App | `src/data/demo/model.js` | Arquitetura | Chave de storage e constantes do modelo demo |
 | 14a/App | `src/features/businesses/taxonomy.js` | Negócios/serviços | Rodada 12: grupos de serviço com especialidade opcional e migração das categorias antigas |
+| 14a/Appb | `src/features/listings/attributes.js` | Anúncios | Rodada 22: tipos, comodidades, categorias e estado; migração dos exemplos (`normalizeListings`) |
 | 15/App | `src/features/groups/presets.js` | Comunidades/grupos | Templates/interesses/notificações de grupo |
 | 16/App | `src/app/state.js` | Arquitetura | Inicialização, schema 2, `state`, `mutate`, seletores e permissões demo |
 | 17/App | `src/shell/primitives.js` | Frontend premium | HTML compartilhado, imagens e snackbar |
