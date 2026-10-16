@@ -31,6 +31,7 @@ async function perform(action,value,el){
  case 'search-type':searchType=value;render();globalFocus(action,value);break;
  case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value==='imovel'?'imovel':'desapego';catalogAttrs={...catalogAttrs,[catalogFilter]:structuredClone(CATALOG_DEFAULTS[catalogFilter])};navigate(catalogFilter==='imovel'?'imoveis':'desapegos');}break;
  case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='desapego';catalogAttrs={...catalogAttrs,desapego:structuredClone(CATALOG_DEFAULTS.desapego)};navigate('desapegos');break;
+ case 'verified-info':openVerifiedInfo();break;
  case 'catalog-pill':openFilterPanel(value,el);break;
  case 'catalog-toggle':if(['pets','furnished'].includes(value)){catalogSetAttr('amen',value);render();globalFocus(action,value);}break;
  case 'catalog-filter':catalogFilter=value;render();globalFocus(action,value);break;

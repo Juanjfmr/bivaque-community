@@ -20,3 +20,11 @@
 @keyframes empty-twinkle{50%{transform:scale(.6);opacity:.55}}
 @keyframes empty-spin{to{transform:rotate(360deg)}}
 @media (forced-colors:active){.empty-art{display:none}}
+/* Rodada 28: selo verificado que explica o que confere. */
+.pill-info{border:0;cursor:pointer;font:550 12px/18px var(--md-ref-typeface-plain);display:inline-flex;align-items:center;gap:4px}
+.pill-info md-icon{font-size:16px;--md-icon-size:16px}
+.pill-info md-icon:last-child{font-size:16px;--md-icon-size:16px;opacity:.8}
+.vinfo{display:grid;gap:14px}
+.vinfo-row{display:flex;gap:14px;align-items:flex-start}
+.vinfo-row>md-icon{flex:none;width:40px;height:40px;border-radius:20px;display:grid;place-items:center;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-size:22px}
+.vinfo-row p{margin:2px 0 0;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
