@@ -1,0 +1,43 @@
+task_id: HTML-021
+objective: >
+  Rodada 21 troca o fundo do filtro escolhido por uma pilula unica que desliza do filtro
+  anterior para o novo, nos filtros de escolha unica, inspirada no Animated Tabs do 21st.dev,
+  e troca o teto de tamanho do HTML bruto pelo tamanho transferido (gzip).
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+  - Aprovacao do usuario em 2026-10-16 para trocar o teto de 3 MB brutos por 2 MB transferidos
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 7545bcfa. O filtro escolhido trocava de fundo sem transicao; o teto bruto de 3 MB estava
+    a 20 KB de estourar com 1,80 MB realmente transferidos.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/catalog.js
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/segmented.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-021.task.yml
+forbidden:
+  - mudar quais filtros existem ou o que filtram
+  - afrouxar a trava do pacote Material
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - A pilula fica sobre o filtro escolhido em todas as telas que usam filterChips
+  - Ao trocar de filtro a pilula desliza do anterior para o novo; com movimento reduzido salta
+  - Selecao, check e leitura do leitor de tela continuam do chip; a pilula e oculta
+  - A pilula acompanha mudanca de largura
+  - O HTML transferido (gzip) fica abaixo de 2 MB e o pacote Material nao cresce
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round21-proof.mjs
+  - BIVAQUE_HTML_CHECKPOINT=material-components-registered node scripts/bivaque-html/round09-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao no prototipo e criterio de tamanho
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
