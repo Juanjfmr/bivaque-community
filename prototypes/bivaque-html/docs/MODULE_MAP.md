@@ -40,6 +40,8 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07a/CSS | `src/styles/home-desktop.css` | Início/busca/descoberta | Rodada 13: Início do desktop (≥ 1024 px), duas colunas; celular e tablet não mudam |
 | 07c/CSS | `src/styles/high-contrast.css` | Frontend premium | Rodada 09: alto contraste do sistema (forced-colors): contornos, aba ativa, barras de enquete e foco |
 | 07d/CSS | `src/styles/create-rail.css` | Frontend premium | Rodada 13: botão "+ Criar" da barra lateral e painel de criação do desktop |
+| 07e/CSS | `src/styles/command-palette.css` | Início/busca/descoberta | Rodada 14: paleta de busca e comandos do desktop |
+| 07f/CSS | `src/styles/plan-timeline.css` | Perfil/família/movimentação | Rodada 15: plano de chegada/saída como linha do tempo |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -70,6 +72,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 33/App | `src/features/transfers/guide.js` | Perfil/família/movimentação | Guia demonstrativo de chegada |
 | 34/App | `src/shell/dialogs.js` | Frontend premium | Dialog/confirm, history e sheet drag |
 | 35/App | `src/shell/create-menu.js` | Frontend premium | Menu Criar, keyboard e posicionamento |
+| 35a/App | `src/shell/command-palette.js` | Início/busca/descoberta | Rodada 14: paleta Ctrl+K/⌘K e "/": busca agrupada, páginas, ações de criar e buscas recentes |
 | 36/App | `src/features/profile/settings.js` | Perfil/família/movimentação | Cidade, configurações e controles de protótipo |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |

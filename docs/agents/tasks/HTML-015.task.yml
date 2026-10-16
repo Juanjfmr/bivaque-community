@@ -1,0 +1,41 @@
+task_id: HTML-015
+objective: >
+  Rodada 15 transforma o plano de chegada e saida numa linha do tempo vertical inspirada no
+  21st.dev: etapas concluida, proxima e pendente ligadas por uma trilha, selo Proxima e contador
+  de dias ate a chegada ou a mudanca, na Inicio e no plano completo, em todas as larguras.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Rodada 14. O plano era uma lista de caixas de marcar sem indicar a proxima etapa nem quanto
+    tempo falta.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/home/
+  - prototypes/bivaque-html/src/styles/plan-timeline.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-015.task.yml
+forbidden:
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - mudar as acoes plan-check e plan-go ou o checkbox que as provas usam
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Etapas com estados concluida, proxima e pendente; marcar avanca a proxima
+  - Contador de dias para chegada e para a mudanca
+  - Plano completo mostra todas as etapas na mesma linha do tempo
+  - Icones existem na fonte embutida
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,768-light,1024-light,1440-light,1440-dark node scripts/bivaque-html/round15-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - npx pnpm@11.18.0 gate
+risk: apresentacao do plano pessoal, so no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -7,7 +7,7 @@ function renderHomeDesktop(){
  const arriving=state.mode==='chegando'&&!readonly(),leaving=state.mode==='saindo'&&!readonly();
  const title=readonly()?`Conheça ${state.city}`:`O que você precisa em ${state.city}?`;
  const subtitle=arriving?`${countDays(state.arrival)} dias para chegar · ${dateLabel(state.arrival)}`:leaving?`${countDays(state.leaveDate)} dias para sua mudança para ${state.dest}`:'Serviços e oportunidades entre militares e famílias.';
- let main=`<div class="page-head"><div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div></div><div class="home-top"><md-filled-tonal-button id="home-search" class="home-search-button" data-action="search" aria-label="Buscar no Bivaque">${icon('search','icon')}<span>Busque serviços, produtos, imóveis ou indicações</span></md-filled-tonal-button><nav class="intent-grid" aria-label="Áreas">${[['storefront','Negócios','biz'],['sell','Desapegos','desapego'],['apartment','Imóveis','imovel'],['volunteer_activism','Indicações','ind']].map(([ic,label,v])=>`<button type="button" class="intent" data-action="intent" data-value="${v}">${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
+ let main=`<div class="page-head"><div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div></div><div class="home-top"><md-filled-tonal-button id="home-search" class="home-search-button" data-action="search" aria-label="Buscar no Bivaque">${icon('search','icon')}<span>Busque serviços, produtos, imóveis ou indicações</span><kbd class="home-kbd" aria-hidden="true">${PALETTE_MAC?'⌘':'Ctrl'} K</kbd></md-filled-tonal-button><nav class="intent-grid" aria-label="Áreas">${[['storefront','Negócios','biz'],['sell','Desapegos','desapego'],['apartment','Imóveis','imovel'],['volunteer_activism','Indicações','ind']].map(([ic,label,v])=>`<button type="button" class="intent" data-action="intent" data-value="${v}">${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
  const hire=readonly()?'':`<button type="button" class="home-hire" data-action="create-request">${icon('build')}<span class="grow"><b>Precisa contratar?</b><small>Descreva o que precisa e receba até ${REQUEST_LIMIT} propostas.</small></span>${icon('chevron_right')}</button>`,notice=homeDeskNotice();
  main+=readonlyHtml()+(notice||hire?`<div class="home-alerts">${notice}${hire}</div>`:'')+homeResumeHtml();
  if((arriving||leaving)&&state.plan[state.mode])main+=renderPlan(state.mode);
@@ -61,9 +61,9 @@ function homeDeskEvent(){
 // Lateral: chegada pelo momento da pessoa. Quem mora ajuda quem chega; quem chega se orienta.
 function homeDeskArrival(arriving,leaving){
  if(readonly())return '';
- const card=(title,sub,label,action,value='')=>`<section class="home-card home-arrival">${icon('flight_land')}<div><h3>${esc(title)}</h3><p>${esc(sub)}</p>${btn(label,action,value,'text','chevron_right')}</div></section>`;
+ const card=(title,sub,label,action,value='',ic='flight_land')=>`<section class="home-card home-arrival">${icon(ic)}<div><h3>${esc(title)}</h3><p>${esc(sub)}</p>${btn(label,action,value,'text','chevron_right')}</div></section>`;
  if(arriving)return card(`Chegando a ${state.city}?`,'Encontre orientações e indicações para a mudança.','Ver guia de chegada','guide');
- if(leaving)return card(`Mudança para ${state.dest}`,'Acompanhe as etapas da sua saída.','Ver plano completo','plan','saindo');
+ if(leaving)return card(`Mudança para ${state.dest}`,'Acompanhe as etapas da sua saída.','Ver plano completo','plan','saindo','local_shipping');
  if(state.incoming)return card(`${state.incoming} famílias estão chegando`,'Uma indicação sua pode ajudar.','Ajudar quem chega','nav','comunidade');
  return '';
 }
