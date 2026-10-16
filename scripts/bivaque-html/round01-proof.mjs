@@ -448,27 +448,29 @@ async function verify(width, theme) {
         )
         await page.locator(selector).first().waitFor({ state: "visible" })
       }
-      await reset(undefined, "catalogo")
-      await action("catalog-filter", "imovel", { keyboard: true })
-      await expectFocus(page, "catalog-filter", "imovel")
-      const listingIds = await page
-        .locator('[data-action="open-item"]')
-        .evaluateAll((items) => items.map((item) => item.dataset.value))
-      assert(listingIds.length > 0)
+      // Rodadas 22 e 23: Imóveis é tela própria; a faixa de valor fica no painel da pílula.
+      await reset(undefined, "imoveis")
+      const types = ["Apartamento", "Casa", "Casa em condomínio", "Flat ou studio", "Kitnet"]
+      const tags = await page.locator("#catalog-results .cover .pill").allInnerTexts()
+      assert(tags.length > 0)
       assert(
-        listingIds.every((id) => fixture.items.find((item) => item.id === id).kind === "imovel"),
+        tags.every((tag) => types.includes(tag)),
+        `tela de imóveis com outro tipo: ${tags}`,
       )
-      // Rodada 10: faixa de preço virou md-slider; leva o mínimo ao extremo pelo teclado.
-      await page.locator("#catalog-price input").first().focus()
+      await action("catalog-pill", "price", { keyboard: true })
+      await page.locator("#filter-panel[open]").waitFor()
+      // Leva o mínimo ao extremo pelo teclado e aplica: nenhum imóvel cabe na faixa.
+      await page.locator("#fp-price input").first().focus()
       await page.keyboard.press("End")
       await page.waitForTimeout(250)
-      await feedback(page, "Nenhum an.ncio com esses filtros")
+      await page.locator('#filter-panel [data-f="apply"]').click()
+      await expectFocus(page, "catalog-pill", "price")
+      await feedback(page, "Nenhum im.vel com esses filtros")
       await action("clear-filters")
-      assert.equal(await page.locator("#catalog-price").evaluate((s) => s.valueStart), 0)
       assert(
-        await page
-          .locator('[data-action="catalog-filter"][data-value="imovel"]')
-          .evaluate((element) => element.selected),
+        /^Total por mês/.test(
+          await page.locator('[data-action="catalog-pill"][data-value="price"]').innerText(),
+        ),
       )
       const item = await page
         .locator('[data-action="open-item"]')
@@ -479,13 +481,8 @@ async function verify(width, theme) {
       await page.reload()
       await stabilize(page)
       await action("back")
-      await route(page, "catalogo")
+      await route(page, "imoveis")
       await expectFocus(page, "open-item", item)
-      assert(
-        await page
-          .locator('[data-action="catalog-filter"][data-value="imovel"]')
-          .evaluate((element) => element.selected),
-      )
       await reset(undefined, "negocios")
       const category = fixture.biz[0].cat
       await action("biz-filter", category, { keyboard: true })
@@ -849,12 +846,7 @@ async function verify(width, theme) {
           fixture.plan.chegando.length,
       )
       await action("plan-go", value, { scope: page.locator("#dialog") })
-      await route(page, "catalogo")
-      assert(
-        await page
-          .locator('[data-action="catalog-filter"][data-value="imovel"]')
-          .evaluate((e) => e.selected),
-      )
+      await route(page, "imoveis")
     })
     await test("personal-plan-search-and-destination-guides", async () => {
       await reset((data) => {

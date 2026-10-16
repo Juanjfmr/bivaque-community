@@ -29,6 +29,9 @@ async function fillItem(page, { title = "Mesa de jantar 6 lugares", price = "450
   await fill(page, "item-title", title)
   await fill(page, "item-price", price)
   await choose(page, "item-hood")
+  // Rodada 22: desapego exige categoria e estado; imóvel exige o tipo.
+  for (const id of ["item-cat", "item-cond", "item-ptype"])
+    if (await page.locator(`#${id}`).count()) await choose(page, id)
   await fill(page, "item-desc", "Mesa de madeira maciça, ótimo estado, retirada no bairro.")
 }
 async function otherItem(page) {
