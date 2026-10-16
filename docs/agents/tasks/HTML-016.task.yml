@@ -1,0 +1,42 @@
+task_id: HTML-016
+objective: >
+  Rodada 16 mostra as propostas de um pedido lado a lado, com as mesmas linhas alinhadas
+  (valor, data, execucao, validade, mensagem), selos de menor valor e data mais cedo e
+  reordenacao por chegada (padrao), menor valor ou mais cedo, so enquanto o pedido esta ativo.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+  - ADR-20261015-pedido-aberto-e-propostas, P4 e P6 (sem ranking pago; ordem padrao de chegada)
+adr: docs/decisions/ADR-20261015-pedido-aberto-e-propostas.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 5e4fc77a. As propostas apareciam empilhadas, com os dados numa linha de texto, o que
+    dificultava comparar valor, prazo e data.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/requests/
+  - prototypes/bivaque-html/src/styles/proposal-compare.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-016.task.yml
+forbidden:
+  - ranking pago, destaque comprado ou qualquer cobranca do prestador
+  - mudar o lado do prestador
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Colunas alinhadas com escolher, ver empresa e denunciar em cada uma
+  - Selos so quando diferenciam; empate total sem selo
+  - Ordenacao so no pedido em que foi escolhida e so com pedido ativo e mais de uma proposta
+  - Depois da escolha, escolhida em destaque e as outras recusadas sem perder contraste
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,768-light,1024-light,1440-light,1440-dark node scripts/bivaque-html/round16-proof.mjs
+  - node scripts/bivaque-html/round11-proof.mjs --full
+  - npx pnpm@11.18.0 gate
+risk: apresentacao das propostas, so no prototipo
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

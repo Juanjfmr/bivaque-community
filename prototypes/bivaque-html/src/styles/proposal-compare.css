@@ -1,0 +1,25 @@
+/* Rodada 16: propostas lado a lado, com as linhas alinhadas entre as colunas (subgrid). */
+.prop-sort{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.prop-compare{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);grid-template-rows:repeat(6,auto);column-gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 4px 24px;overscroll-behavior-x:contain}
+.prop-compare:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px;border-radius:24px}
+.prop-col{grid-row:span 6;display:grid;grid-template-rows:subgrid;row-gap:8px;padding:16px;border-radius:22px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);scroll-snap-align:start;min-width:0}
+.prop-col.is-chosen{border:2px solid var(--md-sys-color-primary);box-shadow:0 10px 24px -14px rgba(22,78,99,.6)}
+.prop-col.is-declined{background:var(--md-sys-color-surface-container-low);border-style:dashed}
+.prop-col.is-declined .prop-price{color:var(--md-sys-color-on-surface-variant)}
+.prop-col header{display:grid;gap:2px}
+.prop-col header b{font-size:16px;line-height:22px}
+.prop-col header small{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.prop-badges{display:flex;flex-wrap:wrap;gap:6px;align-content:start;min-height:24px}
+.prop-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px 2px 6px;border-radius:999px;background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container);font-size:12px;font-weight:650}
+.prop-badge md-icon{font-size:16px}
+.prop-price{margin:0;font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.3px}
+.prop-facts{display:grid;gap:6px;margin:0;padding:10px 0;border-block:1px solid var(--md-sys-color-outline-variant)}
+.prop-facts div{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.prop-facts dt{display:inline-flex;align-items:center;gap:6px;color:var(--md-sys-color-on-surface-variant)}
+.prop-facts dt md-icon{font-size:17px}
+.prop-facts dd{margin:0;font-weight:600;text-align:right}
+.prop-msg{margin:0;font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.prop-actions{display:grid;gap:4px;align-content:end}
+.prop-actions md-filled-button,.prop-actions md-filled-tonal-button{width:100%}
+.prop-actions .row{justify-content:space-between;flex-wrap:wrap}
+@media(max-width:719px){.prop-compare{grid-auto-columns:84%}}
