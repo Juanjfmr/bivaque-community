@@ -11,7 +11,7 @@ function initial(stage='live'){
 }
 function threadSnapshot(t,items,biz){const x=t.about.type==='item'?items.find(i=>i.id===t.about.id):biz.find(b=>b.id===t.about.id);return x?{title:x.title||x.name,photo:x.photos?.[0],price:x.price,city:x.city}:null;}
 let state;
-try{const raw=JSON.parse(localStorage.getItem(KEY));state=normalizeCategories(raw?.schema===2?raw:initial());}catch{state=normalizeCategories(initial());}
+try{const raw=JSON.parse(localStorage.getItem(KEY));state=normalizeListings(normalizeCategories(raw?.schema===2?raw:initial()));}catch{state=normalizeListings(normalizeCategories(initial()));}
 let route={name:'inicio',id:null};
 let origin='inicio', communityTab='ind', questionFilter='help', catalogFilter='all', searchType='all', searchQuery='', searchHood='Todos', searchMin='', searchMax='', searchSort='recent',bizCat='Todos',bizQuery='',myAdsFilter='active',savedType='all';
 let editor=null,editorDirty=false,onboardStep=1,onboardDraft=null,toastTimer,toastUndo=null,searchTimer;

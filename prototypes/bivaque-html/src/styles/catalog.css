@@ -1,0 +1,23 @@
+/* Rodada 22: telas de Desapegos e Imóveis com filtros próprios. Celular e tablet: tipo na
+   largura toda, bairro e ordem lado a lado, preço e "Mais filtros". Desktop: uma linha só. */
+.filter-panel.catalog-primary{grid-template-columns:1fr 1fr}
+.catalog-primary>:first-child,.catalog-primary .price-filter{grid-column:1/-1}
+.catalog-more-toggle{grid-column:1/-1;justify-self:start}
+@media(min-width:1024px){
+ .filter-panel.catalog-primary{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr);align-items:center}
+ .catalog-primary>:first-child{grid-column:auto;order:1}
+ .catalog-primary #catalog-hood{order:2}
+ .filter-panel.catalog-primary .price-filter{grid-column:auto;order:3}
+ .catalog-primary #catalog-sort{order:4}
+ .catalog-more-toggle{display:none}
+}
+.catalog-more{display:flex;flex-wrap:wrap;gap:14px 28px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:var(--md-sys-color-surface-container-low)}
+.catalog-more:not(.open){display:none}
+@media(min-width:1024px){.catalog-more:not(.open){display:flex}}
+.attr-group{display:grid;gap:6px;min-width:0}
+.attr-group[aria-labelledby="attr-amen"]{flex-basis:100%}
+.attr-label{font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}
+.attr-group md-chip-set{display:flex;flex-wrap:wrap;gap:6px}
+.section-links{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+/* Cartões de alturas diferentes na mesma linha: conteúdo começa no topo (o botão centralizava). */
+.card-grid .card-link{display:flex;flex-direction:column;justify-content:flex-start}
