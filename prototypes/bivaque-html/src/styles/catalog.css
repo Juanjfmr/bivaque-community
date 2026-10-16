@@ -1,23 +1,63 @@
-/* Rodada 22: telas de Desapegos e Imóveis com filtros próprios. Celular e tablet: tipo na
-   largura toda, bairro e ordem lado a lado, preço e "Mais filtros". Desktop: uma linha só. */
-.filter-panel.catalog-primary{grid-template-columns:1fr 1fr}
-.catalog-primary>:first-child,.catalog-primary .price-filter{grid-column:1/-1}
-.catalog-more-toggle{grid-column:1/-1;justify-self:start}
-@media(min-width:1024px){
- .filter-panel.catalog-primary{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr);align-items:center}
- .catalog-primary>:first-child{grid-column:auto;order:1}
- .catalog-primary #catalog-hood{order:2}
- .filter-panel.catalog-primary .price-filter{grid-column:auto;order:3}
- .catalog-primary #catalog-sort{order:4}
- .catalog-more-toggle{display:none}
-}
-.catalog-more{display:flex;flex-wrap:wrap;gap:14px 28px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:var(--md-sys-color-surface-container-low)}
-.catalog-more:not(.open){display:none}
-@media(min-width:1024px){.catalog-more:not(.open){display:flex}}
-.attr-group{display:grid;gap:6px;min-width:0}
-.attr-group[aria-labelledby="attr-amen"]{flex-basis:100%}
-.attr-label{font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}
-.attr-group md-chip-set{display:flex;flex-wrap:wrap;gap:6px}
-.section-links{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-/* Cartões de alturas diferentes na mesma linha: conteúdo começa no topo (o botão centralizava). */
+/* Rodadas 22 e 23: Desapegos e Imóveis com filtros em pílulas, folhas e painéis. */
+.fpills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:10px -16px 6px;padding:2px 16px 6px}
+.fpills::-webkit-scrollbar{display:none}
+@media(min-width:1024px){.fpills{flex-wrap:wrap;overflow:visible;margin:14px 0 8px;padding:0}}
+.fpill{flex:none;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:8px;background:transparent;color:var(--md-sys-color-on-surface-variant);font:500 14px/1 var(--md-ref-typeface-plain);cursor:pointer}
+.fpill md-icon{--md-icon-size:18px;font-size:18px}
+.fpill.on{background:var(--md-sys-color-secondary-container);border-color:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.fpill:focus-visible,.fchip:focus-visible,.fopt:focus-visible,.fsort:focus-visible,.fcta:focus-visible,.flink:focus-visible,.ficon:focus-visible{outline:3px solid var(--md-sys-color-primary);outline-offset:2px}
+.fbadge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:12px;display:grid;place-items:center}
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 14px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.fbar b{color:var(--md-sys-color-on-surface)}
+@media(min-width:1024px){.fbar{border-top:1px solid var(--md-sys-color-surface-container-high);padding-top:14px;font-size:15px}}
+.fsort{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 6px;border:0;background:none;color:var(--md-sys-color-primary);font:600 14px var(--md-ref-typeface-plain);cursor:pointer}
+.avail{display:inline-block;align-self:flex-start;margin-top:8px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;color:#1d5b33;background:#dcefe1}
+.avail.later{color:#6b4a12;background:#f5e7cf}
+:root[data-theme=dark] .avail{color:#a8dcb6;background:#1f3a28}:root[data-theme=dark] .avail.later{color:#f0c98a;background:#3d2e12}
 .card-grid .card-link{display:flex;flex-direction:column;justify-content:flex-start}
+.section-links{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.attr-group{display:grid;gap:6px;min-width:0}.attr-label{font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}.attr-group md-chip-set{display:flex;flex-wrap:wrap;gap:6px}
+/* Painel: folha no celular, tela cheia para "Filtros", suspenso ou lateral no desktop. */
+.fpanel{border:0;padding:0;margin:0;max-width:none;max-height:none;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface);display:none;flex-direction:column;font-family:var(--md-ref-typeface-plain)}
+.fpanel[open]{display:flex}
+.fpanel::backdrop{background:rgb(10 20 25 / .42)}
+.fpanel.sheet{position:fixed;inset:auto 0 0 0;width:100%;max-height:88vh;border-radius:28px 28px 0 0;box-shadow:0 -6px 24px rgb(0 0 0 / .18)}
+.fpanel.full{position:fixed;inset:0;width:100%;height:100%}
+.fpanel.pop{position:fixed;width:min(420px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 140px));border-radius:16px;box-shadow:0 8px 28px rgb(0 0 0 / .22)}
+.fpanel.pop::backdrop{background:transparent}
+.fpanel.drawer{position:fixed;inset:0 0 0 auto;width:min(460px,100vw);height:100%;box-shadow:-8px 0 28px rgb(0 0 0 / .2)}
+.fgrab{width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant);margin:10px auto 0;flex:none}
+.fhead{display:flex;align-items:center;gap:8px;padding:14px 12px 6px 20px;flex:none}
+.fhead h2{flex:1;margin:0;font-size:20px}
+.ficon{width:44px;height:44px;border:0;border-radius:22px;background:none;color:var(--md-sys-color-on-surface-variant);display:grid;place-items:center;cursor:pointer}
+.fbody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 20px}
+.fsec{padding:14px 0;border-bottom:1px solid var(--md-sys-color-surface-container-high)}
+.fsec:last-child{border-bottom:0}
+.fsec h3{margin:0 0 10px;font-size:15px}
+.fhint{margin:-6px 0 10px;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.fchips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:8px;background:transparent;color:var(--md-sys-color-on-surface-variant);font:500 14px var(--md-ref-typeface-plain);cursor:pointer}
+.fchip md-icon{--md-icon-size:16px;font-size:16px}
+.fchip.on{background:var(--md-sys-color-secondary-container);border-color:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.fseg{display:flex;border:1px solid var(--md-sys-color-outline);border-radius:20px;overflow:hidden}
+.fseg .fchip{flex:1;justify-content:center;border:0;border-left:1px solid var(--md-sys-color-outline);border-radius:0;min-height:40px;padding:0 6px}
+.fseg .fchip:first-child{border-left:0;flex:1.5}
+.fseg .fchip md-icon{display:none}
+.fminmax{display:flex;gap:10px;margin:14px 0 6px}
+.ffield{flex:1;display:grid;gap:4px;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ffield input{height:48px;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:6px;background:transparent;color:var(--md-sys-color-on-surface);font:16px var(--md-ref-typeface-plain);min-width:0}
+.ffield input:focus{outline:2px solid var(--md-sys-color-primary);outline-offset:-1px}
+.fdate{margin-top:12px;max-width:260px}
+#fp-price{width:100%}
+.ffoot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--md-sys-color-surface-container-high);flex:none}
+.fpanel.pop .ffoot{padding:12px 18px 16px}
+.flink{min-height:40px;padding:0 8px;border:0;background:none;color:var(--md-sys-color-primary);font:600 14px var(--md-ref-typeface-plain);cursor:pointer}
+.fcta{min-height:48px;padding:0 24px;border:0;border-radius:24px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font:600 15px var(--md-ref-typeface-plain);cursor:pointer}
+.fopt{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:0 4px;border:0;border-bottom:1px solid var(--md-sys-color-surface-container-high);background:none;color:var(--md-sys-color-on-surface);font:15px var(--md-ref-typeface-plain);text-align:left;cursor:pointer}
+.fopt[aria-checked=true]{font-weight:600;color:var(--md-sys-color-primary)}
+.fpanel.pop .fbody,.fpanel.sheet .fbody{padding-bottom:4px}
+@media(prefers-reduced-motion:no-preference){.fpanel.sheet[open]{animation:fp-up .26s cubic-bezier(.2,.8,.2,1)}.fpanel.drawer[open]{animation:fp-left .26s cubic-bezier(.2,.8,.2,1)}.fpanel.pop[open]{animation:fp-fade .16s ease-out}}
+@keyframes fp-up{from{transform:translateY(40px);opacity:0}}@keyframes fp-left{from{transform:translateX(40px);opacity:0}}@keyframes fp-fade{from{opacity:0;transform:translateY(-4px)}}
+@media(forced-colors:active){.fpill.on,.fchip.on{outline:2px solid Highlight}.fpanel{border:1px solid CanvasText}}
+/* Folha ou painel de um filtro só: o título da seção repete o do painel; fica só para o leitor de tela. */
+.fpanel.sheet .fsec:only-child>h3,.fpanel.pop .fsec:only-child>h3{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}

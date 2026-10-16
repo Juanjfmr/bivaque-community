@@ -29,8 +29,8 @@ async function perform(action,value,el){
  case 'search-type':searchType=value;render();globalFocus(action,value);break;
  case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value==='imovel'?'imovel':'desapego';searchHood='Todos';searchMin=searchMax='';navigate(catalogFilter==='imovel'?'imoveis':'desapegos');}break;
  case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='desapego';searchHood='Todos';searchMin=searchMax='';navigate('desapegos');break;
- case 'catalog-attr':{const [key,v]=value.split('|');catalogSetAttr(key,v);render();globalFocus(action,value);break;}
- case 'catalog-more':{catalogMore=!catalogMore;const box=$('#catalog-more');box?.classList.toggle('open',catalogMore);if(el)el.ariaExpanded=String(catalogMore);break;}
+ case 'catalog-pill':openFilterPanel(value,el);break;
+ case 'catalog-toggle':if(['pets','furnished'].includes(value)){catalogSetAttr('amen',value);render();globalFocus(action,value);}break;
  case 'catalog-filter':catalogFilter=value;render();globalFocus(action,value);break;
  case 'clear-filters':searchHood='Todos';searchMin=searchMax='';searchSort='recent';catalogAttrs=structuredClone(CATALOG_DEFAULTS);render();break;
  case 'businesses':bizCat='Todos';bizQuery='';navigate('negocios');break;

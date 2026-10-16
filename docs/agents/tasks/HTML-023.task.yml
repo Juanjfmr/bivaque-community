@@ -1,0 +1,45 @@
+task_id: HTML-023
+objective: >
+  Rodada 23 troca a apresentacao dos filtros de Desapegos e Imoveis por pilulas com folha (celular)
+  e painel suspenso ou lateral (desktop), contagem ao vivo antes de aplicar e ordenacao junto da
+  contagem, como na maquete aprovada, e acrescenta a disponibilidade para morar nos imoveis.
+authority:
+  - Maquete aprovada pelo usuario em 2026-10-16 (ordem das pilulas e atalhos Aceita pets e Mobiliado)
+  - Pedido do usuario em 2026-10-16 para tirar "de quem esta de mudanca" do subtitulo de Desapegos
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD fdb6dba0. Selects, slider e grupos de chips empurravam os resultados para baixo; ruido de
+    "Qualquer" marcado; preco so por slider; sem data de disponibilidade do imovel.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/styles/segmented.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-023.task.yml
+forbidden:
+  - mudar o que cada filtro filtra alem da disponibilidade nova
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Pilulas mostram o valor escolhido; Filtros mostra quantos estao ativos
+  - Painel conta os resultados antes de aplicar; fechar, Esc ou Voltar descartam e fecham so o painel
+  - Folha e tela cheia no celular, painel suspenso e lateral no desktop; atalhos nao abrem por baixo
+  - Cada tela guarda os proprios filtros, inclusive o preco
+  - Imovel filtra por disponibilidade (agora, 30, 60 dias ou data); editor, cartao e detalhe mostram
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round23-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round22-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round21-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: apresentacao dos filtros e um campo local novo no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
