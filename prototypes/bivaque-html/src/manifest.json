@@ -91,6 +91,7 @@
         "shell/image-loading.js",
         "features/profile/settings.js",
         "features/listings/editor.js",
+        "features/listings/wizard.js",
         "features/listings/photos.js",
         "features/events/editor.js",
         "features/businesses/editor.js",

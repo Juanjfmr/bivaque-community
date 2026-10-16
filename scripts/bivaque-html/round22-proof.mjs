@@ -12,6 +12,7 @@ import {
   snapshot,
   stored,
 } from "./proof-harness.mjs"
+import { wizardProperty } from "./wizard-helpers.mjs"
 
 // Rodada 22: Desapegos e Imóveis são telas próprias com os filtros do seu mercado. Os filtros em
 // si são provados na Rodada 23 (pílulas e painéis), que substituiu os controles desta rodada. Imóvel:
@@ -64,15 +65,17 @@ const checkpoints = {
     await snapshot(page)
     await go(page, "imoveis")
     await action(page, "create-property")
-    await fill(page, "item-title", "Casa com piscina no Tarumã")
-    await fill(page, "item-price", "3000")
-    await choose(page, "item-hood", "Tarumã")
-    await choose(page, "item-ptype", "Casa")
-    await fill(page, "item-beds", "3")
-    await fill(page, "item-area", "150")
-    await fill(page, "item-parking", "2")
-    await page.locator('#item-amen md-filter-chip[data-value="pool"]').click()
-    await fill(page, "item-desc", "Casa ampla com piscina e quintal.")
+    await wizardProperty(page, {
+      title: "Casa com piscina no Tarumã",
+      price: "3000",
+      hood: "Tarumã",
+      ptype: "Casa",
+      beds: "3",
+      area: "150",
+      parking: "2",
+      amen: ["pool"],
+      desc: "Casa ampla com piscina e quintal.",
+    })
     await action(page, "submit-item")
     await settle(page)
     const mine = (await stored(page)).items.find((x) => x.title === "Casa com piscina no Tarumã")
