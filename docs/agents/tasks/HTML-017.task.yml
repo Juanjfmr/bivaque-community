@@ -1,0 +1,40 @@
+task_id: HTML-017
+objective: >
+  Rodada 17 transforma o dialogo de avisos numa central de avisos inspirada no 21st.dev: abas
+  Todos e Nao lidos com contagem, marcar todos como lidos, grupos Hoje e Anteriores, icone por
+  tipo de aviso e marca de nao lido, mantendo as acoes notice-open, notice-read e notice-home.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 0cc6a86c. Os avisos eram uma lista unica sem filtro, sem marcar todos e sem tipo; o
+    icone do botao marcar como lido (mark_email_read) nao existia na fonte embutida.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/profile/demo-actions.js
+  - prototypes/bivaque-html/src/styles/notices.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-017.task.yml
+forbidden:
+  - enviar notificacao real ou guardar aviso fora do navegador
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Abas com contagem; aba Nao lidos vazia mostra Tudo em dia
+  - Marcar todos grava so avisos da cidade de origem; falha de gravacao mantem os nao lidos
+  - Foco volta ao chip da aba depois de trocar de aba ou marcar todos
+  - Ao voltar de um aviso aberto, a lista reabre em Todos com o aviso visivel
+  - Texto de aviso com HTML aparece como texto; todos os icones de tipo existem na fonte
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,768-light,1024-light,1440-light,1440-dark node scripts/bivaque-html/round17-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: avisos locais de demonstracao, so no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
