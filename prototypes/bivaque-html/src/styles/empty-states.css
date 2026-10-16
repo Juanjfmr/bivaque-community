@@ -1,10 +1,9 @@
 /* Rodada 24: moldura das fotos enquanto carregam e estados vazios ilustrados. */
-.cover:has(>img):not(.img-ready)::before,.detail-hero:has(>img):not(.img-ready)::before,.gallery button:has(>img):not(.img-ready)::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(100deg,transparent 20%,color-mix(in srgb,var(--md-sys-color-surface-container-lowest) 55%,transparent) 50%,transparent 80%) var(--md-sys-color-surface-container-high);background-size:220% 100%;animation:img-shimmer 1.2s linear infinite;pointer-events:none}
+:is(.cover,.detail-hero,.gallery button).img-wait::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(100deg,transparent 20%,color-mix(in srgb,var(--md-sys-color-surface-container-lowest) 55%,transparent) 50%,transparent 80%) var(--md-sys-color-surface-container-high);background-size:220% 100%;animation:img-shimmer 1.2s linear infinite;pointer-events:none}
 .gallery button{position:relative}
 @keyframes img-shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
-:is(.cover,.detail-hero,.gallery button)>img{transition:opacity .28s ease-out}
-:is(.cover,.detail-hero,.gallery button):not(.img-ready)>img:not(.img-in){opacity:0}
-@media (prefers-reduced-motion:reduce){:is(.cover,.detail-hero,.gallery button):has(>img):not(.img-ready)::before{animation:none}:is(.cover,.detail-hero,.gallery button)>img{transition:none}}
+:is(.cover,.detail-hero,.gallery button).img-wait>img{opacity:0}
+@media (prefers-reduced-motion:reduce){:is(.cover,.detail-hero,.gallery button).img-wait::before{animation:none}}
 .empty{background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--md-sys-color-secondary-container) 45%,transparent),transparent 70%) var(--md-sys-color-surface-container-lowest);border-style:solid}
 .empty-art{position:relative;width:132px;height:112px;margin:2px auto 6px;display:grid;place-items:center}
 .empty-art svg{position:absolute;inset:0;width:100%;height:100%}
