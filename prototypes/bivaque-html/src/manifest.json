@@ -89,6 +89,7 @@
         "shell/count-up.js",
         "shell/segmented.js",
         "shell/image-loading.js",
+        "shell/verified-info.js",
         "features/profile/settings.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
