@@ -1,0 +1,43 @@
+task_id: HTML-019
+objective: >
+  Rodada 19 faz o numero de indicacoes subir ao aparecer na tela e mostra os avatares de quem
+  indicou, na pagina do negocio e nos cartoes de servico da Inicio do desktop, inspirada no
+  Number Ticker e nos componentes de prova social do 21st.dev.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD dce5c4f9. A contagem de indicacoes era so um numero estatico, sem mostrar quem indicou.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/businesses/detail.js
+  - prototypes/bivaque-html/src/features/home/desktop.js
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/count-up.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-019.task.yml
+forbidden:
+  - inventar avatares ou pessoas que nao estao nos relatos
+  - mudar a Inicio do celular e do tablet
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - O HTML ja traz o valor final; com movimento reduzido o numero nao muda
+  - O numero sobe uma vez, so quando aparece na tela, e termina no valor certo
+  - Avatares so de quem deixou relato, ate 3, e "+N" para o restante; ocultos do leitor de tela
+  - Negocio sem relatos nao mostra avatares
+  - Inicio do desktop com contador e avatares nos servicos e so contador no cartao de chegada; celular sem mudanca
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,768-light,1440-light,1440-dark node scripts/bivaque-html/round19-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,768-light,1440-light,1440-dark node scripts/bivaque-html/round13-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

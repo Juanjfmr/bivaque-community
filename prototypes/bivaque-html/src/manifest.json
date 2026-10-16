@@ -24,6 +24,7 @@
         "styles/proposal-compare.css",
         "styles/notices.css",
         "styles/photos.css",
+        "styles/count-up.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -77,6 +78,7 @@
         "shell/dialogs.js",
         "shell/create-menu.js",
         "shell/command-palette.js",
+        "shell/count-up.js",
         "features/profile/settings.js",
         "features/listings/editor.js",
         "features/listings/photos.js",

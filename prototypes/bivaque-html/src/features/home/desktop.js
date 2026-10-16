@@ -34,7 +34,7 @@ function homeDeskNotice(){
 function homeDeskServices(){
  const organic=cityBiz().filter(b=>!b.spon).sort((a,b)=>b.recN-a.recN),spon=cityBiz().find(b=>b.spon&&b.claimed!==false);
  const list=spon?[...organic.slice(0,2),spon,...organic.slice(2,3)]:organic.slice(0,4);
- const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,b.spon?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${b.recN} ${b.recN===1?'indicação':'indicações'}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
+ const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,b.spon?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${countHtml(b.recN)} ${b.recN===1?'indicação':'indicações'}${avatarStack(b.says,b.recN)}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
  return `<section class="section">${sectionTitle('Serviços recomendados','Ver negócios','businesses')}<p class="small muted home-sub">Indicados pela comunidade de ${esc(state.city)}</p>${list.length?`<div class="home-row">${list.map(card).join('')}</div>`:empty('Ainda sem negócios cadastrados','As indicações da comunidade ajudarão a formar o guia de serviços.','storefront')}</section>`;
 }
 function homeDeskItems(arriving){
@@ -61,9 +61,10 @@ function homeDeskEvent(){
 // Lateral: chegada pelo momento da pessoa. Quem mora ajuda quem chega; quem chega se orienta.
 function homeDeskArrival(arriving,leaving){
  if(readonly())return '';
- const card=(title,sub,label,action,value='',ic='flight_land')=>`<section class="home-card home-arrival">${icon(ic)}<div><h3>${esc(title)}</h3><p>${esc(sub)}</p>${btn(label,action,value,'text','chevron_right')}</div></section>`;
- if(arriving)return card(`Chegando a ${state.city}?`,'Encontre orientações e indicações para a mudança.','Ver guia de chegada','guide');
- if(leaving)return card(`Mudança para ${state.dest}`,'Acompanhe as etapas da sua saída.','Ver plano completo','plan','saindo','local_shipping');
- if(state.incoming)return card(`${state.incoming} famílias estão chegando`,'Uma indicação sua pode ajudar.','Ajudar quem chega','nav','comunidade');
+ // titleHtml já vem escapado: só o contador entra como HTML.
+ const card=(titleHtml,sub,label,action,value='',ic='flight_land')=>`<section class="home-card home-arrival">${icon(ic)}<div><h3>${titleHtml}</h3><p>${esc(sub)}</p>${btn(label,action,value,'text','chevron_right')}</div></section>`;
+ if(arriving)return card(esc(`Chegando a ${state.city}?`),'Encontre orientações e indicações para a mudança.','Ver guia de chegada','guide');
+ if(leaving)return card(esc(`Mudança para ${state.dest}`),'Acompanhe as etapas da sua saída.','Ver plano completo','plan','saindo','local_shipping');
+ if(state.incoming)return card(`${countHtml(state.incoming)} famílias estão chegando`,'Uma indicação sua pode ajudar.','Ajudar quem chega','nav','comunidade');
  return '';
 }

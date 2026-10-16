@@ -1,0 +1,14 @@
+/* Rodada 19: contador animado e avatares de quem indicou. */
+[data-count-to]{font-variant-numeric:tabular-nums}
+.avatar-stack{display:inline-flex;align-items:center;vertical-align:middle;margin-left:8px}
+.avatar-stack .avatar{width:26px;height:26px;margin-left:-5px;font-size:11px;font-weight:700;letter-spacing:-.3px;border:2px solid var(--ring,var(--md-sys-color-surface-container-lowest));box-sizing:content-box}
+.avatar-stack .avatar:first-child{margin-left:0}
+.avatar-stack .avatar.c1{background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary)}
+.avatar-stack .avatar.c2{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-surface)}
+.avatar-stack .avatar.c3{background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container)}
+.avatar-stack .avatar.c4{background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface)}
+.avatar-stack .avatar.more{background:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface)}
+.fact-proof{display:grid;gap:6px;align-content:start;--ring:var(--md-sys-color-surface-container)}
+.fact-proof .avatar-stack{margin:2px 0 0}
+.home-biz .card-line .avatar-stack{margin-left:6px}
+@media (forced-colors:active){.avatar-stack .avatar{border-color:Canvas;outline:1px solid CanvasText}}
