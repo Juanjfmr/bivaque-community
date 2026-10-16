@@ -66,3 +66,17 @@
 .falert>md-icon{color:var(--md-sys-color-primary);flex:none}
 .falert.is-on{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
 .alert-row.is-paused .txt b{color:var(--md-sys-color-on-surface-variant)}
+/* Rodada 27: anúncio de imóvel em etapas. */
+.wiz-progress{margin:0 0 6px}
+.wiz-bar{height:6px;border-radius:3px;background:var(--md-sys-color-surface-container-highest);overflow:hidden}
+.wiz-bar span{display:block;height:100%;width:20%;border-radius:3px;background:var(--md-sys-color-primary);transition:width .3s ease}
+.wiz-count{margin:8px 0 0;font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}
+.wiz-title{margin:6px 0 2px;font-size:18px;outline:none}
+.wiz-gap{flex:1}
+.wiz-preview{max-width:320px;margin:4px 0 14px;pointer-events:none}
+.wiz-preview .save-card{display:none}
+.wiz-rows{display:grid;gap:2px;border-radius:16px;overflow:hidden}
+.wiz-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:var(--md-sys-color-surface-container-low)}
+.wiz-row small{display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.wiz-row b{font-size:14px;font-weight:600}
+@media (prefers-reduced-motion:reduce){.wiz-bar span{transition:none}}

@@ -1,14 +1,5 @@
-import {
-  choose,
-  expect,
-  fill,
-  go,
-  routeOf,
-  runProof,
-  settle,
-  snapshot,
-  stored,
-} from "./proof-harness.mjs"
+import { expect, go, routeOf, runProof, settle, snapshot, stored } from "./proof-harness.mjs"
+import { wizardProperty } from "./wizard-helpers.mjs"
 
 // Rodada 23: filtros em pílulas (maquete aprovada em 2026-10-16). A pílula mostra o valor
 // escolhido; o painel conta os resultados antes de aplicar; fechar descarta; Voltar fecha só o
@@ -298,14 +289,15 @@ const checkpoints = {
     await go(page, "imoveis")
     await page.locator('#main [data-action="create-property"]').click()
     await settle(page)
-    await fill(page, "item-title", "Apartamento perto da Base")
-    await fill(page, "item-price", "2100")
-    await choose(page, "item-hood", "Flores")
-    await choose(page, "item-ptype", "Apartamento")
-    await fill(page, "item-beds", "2")
-    await fill(page, "item-area", "65")
-    await fill(page, "item-avail", day(25))
-    await fill(page, "item-desc", "Dois quartos, perto da Base Aérea.")
+    await wizardProperty(page, {
+      title: "Apartamento perto da Base",
+      price: "2100",
+      hood: "Flores",
+      beds: "2",
+      area: "65",
+      avail: day(25),
+      desc: "Dois quartos, perto da Base Aérea.",
+    })
     await page.locator('#dialog [data-action="submit-item"]').click()
     await settle(page)
     const mine = (await stored(page)).items.find((x) => x.title === "Apartamento perto da Base")

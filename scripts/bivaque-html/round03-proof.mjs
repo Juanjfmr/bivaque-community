@@ -15,6 +15,7 @@ import {
   stored,
   toast,
 } from "./proof-harness.mjs"
+import { wizardProperty, wizCount } from "./wizard-helpers.mjs"
 
 // Rodada 03: Desapegos, Imóveis e Negócios. Publicar, rascunho, editar, encerrar,
 // excluir, salvar, interesse, oferta, visita, contatos recebidos e página de negócio.
@@ -124,12 +125,11 @@ const checkpoints = {
     )
   },
   async "publish-imovel"(page) {
+    // Rodada 27: imóvel novo é feito em etapas; a etapa sem quartos e área não deixa seguir.
     await openCreate(page, "create-property")
-    await fillItem(page, { title: "Apartamento 2 quartos perto da base", price: "2300" })
-    await action(page, "submit-item")
-    expect((await dialogKind(page)) !== null, "publicou imóvel sem quartos e área")
-    await fill(page, "item-beds", "2")
-    await fill(page, "item-area", "68")
+    await page.locator('#dialog [data-action="wiz-next"]').click()
+    expect(/Etapa 1 de 5/.test(await wizCount(page)), "avançou sem quartos e área")
+    await wizardProperty(page, { title: "Apartamento 2 quartos perto da base", price: "2300" })
     await action(page, "submit-item")
     const r = await routeOf(page)
     const i = await item(page, r.id)
