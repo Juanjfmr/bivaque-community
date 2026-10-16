@@ -11,10 +11,10 @@
 .fbar b{color:var(--md-sys-color-on-surface)}
 @media(min-width:1024px){.fbar{border-top:1px solid var(--md-sys-color-surface-container-high);padding-top:14px;font-size:15px}}
 .fsort{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 6px;border:0;background:none;color:var(--md-sys-color-primary);font:600 14px var(--md-ref-typeface-plain);cursor:pointer}
-.avail{display:inline-block;align-self:flex-start;margin-top:8px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;color:#1d5b33;background:#dcefe1}
+.avail{display:inline-block;align-self:flex-start;justify-self:start;width:fit-content;margin-top:8px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;color:#1d5b33;background:#dcefe1}
 .avail.later{color:#6b4a12;background:#f5e7cf}
 :root[data-theme=dark] .avail{color:#a8dcb6;background:#1f3a28}:root[data-theme=dark] .avail.later{color:#f0c98a;background:#3d2e12}
-.card-grid .card-link{display:flex;flex-direction:column;justify-content:flex-start}
+.photo-card>.card-link{display:flex;flex-direction:column;justify-content:flex-start}
 .section-links{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .attr-group{display:grid;gap:6px;min-width:0}.attr-label{font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}.attr-group md-chip-set{display:flex;flex-wrap:wrap;gap:6px}
 /* Painel: folha no celular, tela cheia para "Filtros", suspenso ou lateral no desktop. */
