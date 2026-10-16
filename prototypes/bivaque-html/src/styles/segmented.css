@@ -8,8 +8,3 @@
 .filter-row.seg-ready md-filter-chip{--md-filter-chip-selected-container-color:transparent}
 @media (prefers-reduced-motion:reduce){.seg-ind{transition:none}}
 @media (forced-colors:active){.seg-ind{display:none}.filter-row.seg-ready md-filter-chip{--md-filter-chip-selected-container-color:Highlight}}
-/* Preço: no desktop divide a linha com Bairro e Ordenar, em vez de esticar o controle pela
-   página toda; no tablet os dois campos ficam lado a lado, sem quebrar o texto, e o preço embaixo. */
-.filter-panel .price-filter{grid-column:1/-1;min-width:0}
-@media(min-width:720px) and (max-width:1023px){.filter-panel{grid-template-columns:1fr 1fr}}
-@media(min-width:1024px){.filter-panel .price-filter{grid-column:span 2;align-self:center}}

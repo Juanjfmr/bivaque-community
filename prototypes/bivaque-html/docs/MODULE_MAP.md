@@ -65,6 +65,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 19/App | `src/features/home/views.js` | Início/busca/descoberta | Início e plano de chegada/saída |
 | 19a/App | `src/features/home/desktop.js` | Início/busca/descoberta | Rodada 13: `renderHomeDesktop`, aviso pessoal, serviços, grupos, próximo encontro e chegada |
 | 20/App | `src/features/listings/catalog.js` | Desapegos/mercado | Filtros compartilhados e catálogo de anúncios/imóveis |
+| 20/Appb | `src/features/listings/filters.js` | Anúncios | Rodada 23: pílulas de filtro, folha/painel com contagem ao vivo, Voltar fecha só o painel |
 | 21/App | `src/features/businesses/catalog.js` | Negócios/serviços | Catálogo de negócios e publicidade identificada |
 | 22/App | `src/features/search/views.js` | Início/busca/descoberta | Busca transversal e sinônimos demo |
 | 23/App | `src/features/community/views.js` | Memória/indicações | Tabs da comunidade e entrada de grupos/negócios |

@@ -49,7 +49,7 @@ document.addEventListener('keydown',e=>{
  if(!combo&&!slash)return;
  if(slash&&e.composedPath().some(el=>el.matches?.('input,textarea,select,[contenteditable],md-outlined-text-field,md-filled-text-field,md-outlined-select')))return;
  if(paletteIsOpen()){if(combo){e.preventDefault();closePalette();}return;}
- if(createOpen||dialog.open||confirmDialog.open||$('#lightbox'))return;e.preventDefault();openPalette();
+ if(createOpen||dialog.open||confirmDialog.open||$('#lightbox')||$('#filter-panel')?.open)return;e.preventDefault();openPalette();
 });
 createPanelMQ.addEventListener('change',()=>{if(!createPanelMQ.matches)closePalette(false);});
 window.addEventListener('popstate',()=>closePalette(false));
