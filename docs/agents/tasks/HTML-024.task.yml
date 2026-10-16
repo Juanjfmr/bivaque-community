@@ -1,0 +1,40 @@
+task_id: HTML-024
+objective: >
+  Rodada 24 mostra um esqueleto so onde ha espera real (fotos carregando ou falhando) e troca os
+  estados vazios por uma ilustracao leve, inspirada nos Skeleton e Empty State do 21st.dev.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+  - Pedido do usuario em 2026-10-16 "Vai pro 24"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD bdf77a5a. Fotos apareciam de uma vez depois de decodificar, com a moldura vazia; estados
+    vazios eram so um icone numa caixa tracejada.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/empty-states.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-024.task.yml
+forbidden:
+  - atraso artificial para exibir esqueleto
+  - imagens novas embutidas (peso)
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - A moldura da foto mostra esqueleto ate a foto carregar ou falhar, e a foto entra com esmaecer
+  - Fotos a vista no primeiro desenho nao ficam presas carregando
+  - Todo estado vazio tem a ilustracao, oculta do leitor de tela, com titulo e acao iguais
+  - Movimento reduzido desliga as animacoes
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round24-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round23-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
