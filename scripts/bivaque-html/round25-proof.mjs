@@ -62,6 +62,40 @@ const checkpoints = {
     await settle(page)
     expect(!(await alerts(page)).length, "desfazer não removeu o alerta")
   },
+  async "same-search-any-order-is-one-alert"(page) {
+    await snapshot(page)
+    await go(page, "imoveis")
+    await pets(page).click()
+    await settle(page)
+    await page.locator('#main [data-action="catalog-toggle"][data-value="furnished"]').click()
+    await settle(page)
+    await page.locator('#main [data-action="search-alert"]').click()
+    await settle(page)
+    // Mesma busca escolhida na ordem inversa: reconhece o alerta, não oferece outro.
+    await pets(page).click()
+    await settle(page)
+    await page.locator('#main [data-action="catalog-toggle"][data-value="furnished"]').click()
+    await settle(page)
+    await page.locator('#main [data-action="catalog-toggle"][data-value="furnished"]').click()
+    await settle(page)
+    await pets(page).click()
+    await settle(page)
+    expect(
+      /Alerta ativo/.test(await banner(page).innerText()),
+      "mesma busca em outra ordem virou alerta novo",
+    )
+    expect((await alerts(page)).length === 1, "alerta duplicado")
+  },
+  async "background-follows-alert-changes"(page) {
+    await petsAlert(page)
+    await page.locator('#main [data-action="search-alerts"]').click()
+    await settle(page)
+    await page.locator('#dialog [data-action="alert-delete"]').click()
+    await settle(page)
+    await page.keyboard.press("Escape")
+    await settle(page)
+    expect(/Avise-me/.test(await banner(page).innerText()), "faixa continuou dizendo alerta ativo")
+  },
   async "manage-alerts-in-profile"(page) {
     await petsAlert(page)
     await go(page, "voce")

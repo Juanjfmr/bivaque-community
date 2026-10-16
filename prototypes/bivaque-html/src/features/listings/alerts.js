@@ -5,7 +5,9 @@
 // Exclusão feita dentro da lista: o desfazer fica na própria lista (o aviso de rodapé fica
 // por baixo do diálogo e não pode ser tocado).
 let alertDeleted=null;
-const alertSame=(a,kind,attrs)=>a.kind===kind&&a.city===state.city&&JSON.stringify(a.attrs)===JSON.stringify(attrs);
+// Mesma busca, qualquer ordem de clique: listas comparadas ordenadas.
+const alertKey=attrs=>JSON.stringify(Object.keys(attrs).sort().map(k=>[k,Array.isArray(attrs[k])?[...attrs[k]].sort():attrs[k]]));
+const alertSame=(a,kind,attrs)=>a.kind===kind&&a.city===state.city&&alertKey(a.attrs)===alertKey(attrs);
 const currentAlert=kind=>(state.alerts||[]).find(a=>alertSame(a,kind,catalogAttrs[kind]));
 function alertLabel(kind,a){
  const parts=[kind==='imovel'?'Imóveis':'Desapegos'];
@@ -35,10 +37,11 @@ function alertRow(a){
  const n=state.items.filter(x=>alertMatches(x,a)).length;
  return `<div class="list-row alert-row${a.notify?'':' is-paused'}"><button type="button" class="txt" data-action="alert-open" data-value="${esc(a.id)}"><b>${esc(a.label)}</b><small>${esc(a.city)} · ${n} ${n===1?'anúncio':'anúncios'} hoje · ${a.notify?'avisos ligados':'avisos pausados'}</small></button>${iconBtn(a.notify?'notifications_active':'notifications_off','alert-toggle',a.id,a.notify?`Pausar avisos de ${a.label}`:`Ligar avisos de ${a.label}`,`aria-pressed="${a.notify}"`)}${iconBtn('delete','alert-delete',a.id,`Excluir alerta ${a.label}`)}</div>`;
 }
-function openSearchAlerts(focus){
+function openSearchAlerts(focus,message=''){
  const list=state.alerts||[];
+ const note=message?`<div class="falert" role="status">${icon('info')}<span class="grow">${esc(message)}</span></div>`:'';
  const undo=alertDeleted?`<div class="falert" role="status">${icon('delete')}<span class="grow">Alerta “${esc(alertDeleted.alert.label)}” excluído.</span>${btn('Desfazer','alert-undo','','text')}</div>`:'';
- showDialog('Alertas de busca',`<p class="form-note">Avisamos na central quando aparecer um anúncio novo de outra pessoa que caiba na busca. Fica só neste aparelho.</p>${undo}${list.length?`<div class="list">${list.map(alertRow).join('')}</div>`:empty('Nenhum alerta ainda','Filtre imóveis ou desapegos e toque em “Avise-me”.','notifications_none')}`,btn('Fechar','close-dialog','','text'));
+ showDialog('Alertas de busca',`<p class="form-note">Avisamos na central quando aparecer um anúncio novo de outra pessoa que caiba na busca. Fica só neste aparelho.</p>${note}${undo}${list.length?`<div class="list">${list.map(alertRow).join('')}</div>`:empty('Nenhum alerta ainda','Filtre imóveis ou desapegos e toque em “Avise-me”.','notifications_none')}`,btn('Fechar','close-dialog','','text'));
  if(focus)globalFocus(focus[0],focus[1],dialog);
 }
 async function alertAction(action,value){
@@ -47,16 +50,16 @@ async function alertAction(action,value){
  if(action==='search-alert'){createSearchAlert();return true;}
  if(action==='search-alerts'){openSearchAlerts();return true;}
  if(action==='simulate-alert'){simulateAlertListing();return true;}
- if(action==='alert-undo'){const d=alertDeleted;alertDeleted=null;if(d&&mutate(()=>{const list=[...state.alerts];list.splice(Math.min(d.index,list.length),0,d.alert);state.alerts=list;},{redraw:false}))openSearchAlerts(['alert-open',d.alert.id]);return true;}
- const al=(state.alerts||[]).find(a=>a.id===value);if(!al){notify('Este alerta não existe mais.','info');return true;}
+ if(action==='alert-undo'){const d=alertDeleted;alertDeleted=null;if(d&&mutate(()=>{const list=[...state.alerts];list.splice(Math.min(d.index,list.length),0,d.alert);state.alerts=list;},{redraw:false})){render();openSearchAlerts(['alert-open',d.alert.id]);}return true;}
+ const al=(state.alerts||[]).find(a=>a.id===value);if(!al){openSearchAlerts(null,'Este alerta não existe mais.');return true;}
  if(action==='alert-open'){
-  if(al.city!==state.city){notify(`Este alerta é de ${al.city}. Troque a cidade para ver os anúncios.`,'info');return true;}
+  if(al.city!==state.city){openSearchAlerts(['alert-open',al.id],`Este alerta é de ${al.city}. Troque a cidade para ver os anúncios.`);return true;}
   if(dialog.open)await closeDialog(true);catalogFilter=al.kind;catalogAttrs={...catalogAttrs,[al.kind]:structuredClone({...CATALOG_DEFAULTS[al.kind],...al.attrs})};
   navigate(al.kind==='imovel'?'imoveis':'desapegos');return true;
  }
- if(action==='alert-toggle'){if(mutate(()=>{const a=state.alerts.find(x=>x.id===value);a.notify=!a.notify;},{redraw:false}))openSearchAlerts([action,value]);return true;}
+ if(action==='alert-toggle'){if(mutate(()=>{const a=state.alerts.find(x=>x.id===value);a.notify=!a.notify;},{redraw:false})){render();openSearchAlerts([action,value]);}return true;}
  const index=state.alerts.findIndex(a=>a.id===value);
- if(mutate(()=>{state.alerts=state.alerts.filter(a=>a.id!==value);},{redraw:false})){alertDeleted={alert:al,index};openSearchAlerts(['alert-undo','']);}
+ if(mutate(()=>{state.alerts=state.alerts.filter(a=>a.id!==value);},{redraw:false})){alertDeleted={alert:al,index};render();openSearchAlerts(['alert-undo','']);}
  return true;
 }
 // Painel do protótipo: chega um anúncio de outra pessoa que cabe no primeiro alerta ligado.
@@ -64,7 +67,7 @@ function simulateAlertListing(){
  const al=(state.alerts||[]).find(a=>a.notify&&a.city===state.homeCity);
  if(!al){notify(`Crie um alerta com avisos ligados em ${state.homeCity} primeiro.`,'info');return;}
  const a=al.attrs,min=Number(a.min)||0,max=hasPrice(a.max)?Number(a.max):0,kind=al.kind;
- const price=max?Math.max(min,Math.floor(max*0.9/10)*10):Math.max(min,kind==='imovel'?2300:350);
+ const price=max?Math.max(min,max>=20?Math.floor(max*0.9/10)*10:max):Math.max(min,kind==='imovel'?2300:350);
  const hood=a.hoods[0]||'Flores',id=uid('i');
  const base={id,kind,city:al.city,status:'active',saved:false,demo:true,views:0,createdAt:Date.now(),numPrice:price,price:money(price),hood,seller:'Paula V.',sini:'PV',stone:'c2',note:'Membro da comunidade'};
  const item=kind==='imovel'

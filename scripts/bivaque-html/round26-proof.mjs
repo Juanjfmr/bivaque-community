@@ -73,6 +73,17 @@ const checkpoints = {
         "Continuar não levou a lugar nenhum",
       )
   },
+  async "card-shows-the-step-continue-points-to"(page) {
+    await setMode(page, "chegando", 4)
+    const steps = (await stored(page)).plan.chegando
+    const current = steps.find((s) => !s.done)
+    const shown = await page.locator("#main .plan-card .plan-step b").allInnerTexts()
+    expect(
+      shown.some((t) => t.startsWith(current.t)),
+      `cartão não mostra a etapa atual (${current.t}): ${shown.join(" | ")}`,
+    )
+    expect(await page.locator("#main .plan-card .plan-now").count(), "etapa atual sem Próxima")
+  },
   async "checking-a-step-updates-ring"(page) {
     await setMode(page, "chegando", 0)
     const total = (await stored(page)).plan.chegando.length
