@@ -52,7 +52,7 @@ function demoListingsNew(){
 function normalizeListings(s){
  const attrs=demoListingAttrs();
  const items=s.items.map(x=>x.demo&&attrs[x.id]?{...attrs[x.id],...x}:x);
- if(s.listingDemoV)return {...s,items};
+ if(s.listingDemoV)return {...s,items,alerts:s.alerts||[]};
  const have=new Set(items.map(x=>x.id)),extra=s.stage==='seed'?[]:demoListingsNew().filter(x=>!have.has(x.id));
- return {...s,items:[...items,...extra],listingDemoV:1};
+ return {...s,items:[...items,...extra],listingDemoV:1,alerts:s.alerts||[]};
 }

@@ -9,7 +9,7 @@ function catalogKind(){return route.name==='imoveis'?'imovel':route.name==='desa
 const itemTotal=x=>(Number(x.numPrice)||0)+(x.kind==='imovel'?Number(x.condo)||0:0);
 function renderCatalog(){
  const kind=catalogKind(),imovel=kind==='imovel',list=filteredItems(kind);catalogFilter=kind;
- return `<div class="page-head"><div><h1>${imovel?'Imóveis':'Desapegos'}</h1><p>${imovel?'Para alugar':'À venda'} em ${esc(state.city)}</p></div>${!readonly()?btn(imovel?'Anunciar imóvel':'Anunciar desapego',imovel?'create-property':'create-item','','tonal','add'):''}</div>${readonlyHtml()}${catalogPillsHtml(kind)}${catalogBarHtml(kind,list.length)}<div id="catalog-results">${itemResults(list,kind)}</div>`;
+ return `<div class="page-head"><div><h1>${imovel?'Imóveis':'Desapegos'}</h1><p>${imovel?'Para alugar':'À venda'} em ${esc(state.city)}</p></div>${!readonly()?btn(imovel?'Anunciar imóvel':'Anunciar desapego',imovel?'create-property':'create-item','','tonal','add'):''}</div>${readonlyHtml()}${catalogPillsHtml(kind)}${catalogBarHtml(kind,list.length)}${alertBannerHtml(kind)}<div id="catalog-results">${itemResults(list,kind)}</div>`;
 }
 // Atalhos de um toque (Aceita pets, Mobiliado) entram e saem das comodidades.
 function catalogSetAttr(key,value){const kind=catalogKind(),a={...catalogAttrs[kind]};if(key==='amen')a.amen=a.amen.includes(value)?a.amen.filter(k=>k!==value):[...a.amen,value];else a[key]=value;catalogAttrs={...catalogAttrs,[kind]:a};}

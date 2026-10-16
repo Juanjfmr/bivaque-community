@@ -61,3 +61,8 @@
 @media(forced-colors:active){.fpill.on,.fchip.on{outline:2px solid Highlight}.fpanel{border:1px solid CanvasText}}
 /* Folha ou painel de um filtro só: o título da seção repete o do painel; fica só para o leitor de tela. */
 .fpanel.sheet .fsec:only-child>h3,.fpanel.pop .fsec:only-child>h3{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+/* Rodada 25: faixa do alerta de busca. */
+.falert{display:flex;align-items:center;gap:10px;margin:-4px 0 14px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--md-sys-color-surface-container-low);font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.falert>md-icon{color:var(--md-sys-color-primary);flex:none}
+.falert.is-on{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.alert-row.is-paused .txt b{color:var(--md-sys-color-on-surface-variant)}

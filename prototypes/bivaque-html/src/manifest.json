@@ -68,6 +68,7 @@
         "features/home/desktop.js",
         "features/listings/catalog.js",
         "features/listings/filters.js",
+        "features/listings/alerts.js",
         "features/businesses/catalog.js",
         "features/search/views.js",
         "features/community/views.js",
