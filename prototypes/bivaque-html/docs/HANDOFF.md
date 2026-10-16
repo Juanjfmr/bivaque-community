@@ -18,8 +18,24 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 - **Rodada 13 (15/10):** Início do desktop (≥ 1024 px) e painel "Criar no Bivaque" com
   atalho C. **Nova base visual congelada** em `scripts/bivaque-html/round13-baseline.mjs`.
   Ver [ROUND_13](ROUND_13.md).
-- Próximo assunto combinado com o usuário: componentes do 21st.dev (paleta de busca ⌘K,
-  contador com avatares, abas com indicador deslizante, comparação de propostas).
+- **Rodadas 14 a 24 (15 e 16/10):** lote de componentes inspirados no 21st.dev:
+  - busca rápida ⌘K, plano em linha do tempo, propostas lado a lado e central de avisos;
+  - fotos com arrastar e soltar e galeria, contador com avatares, balões de conversa e
+    pílula deslizante;
+  - Desapegos e Imóveis em telas próprias, com filtros de cada mercado em pílulas (maquete
+    aprovada);
+  - fotos carregando e estados vazios ilustrados.
+  Ver [ROUND_14](ROUND_14.md) a [ROUND_24](ROUND_24.md). A revisão foi única para o lote, a
+  bateria completa passou e a **nova base visual** está em
+  [VISUAL_BASELINE_R24](VISUAL_BASELINE_R24.md). Publicado em 16/10.
+- Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
+- Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
+  revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
+  lote.
+- Próximo assunto combinado com o usuário: lotes B (alerta de busca salva, primeiros passos de
+  quem chega, anúncio em etapas, explicação do selo verificado), C (cartão de compartilhamento,
+  mapa de bairros, agenda agrupada) e D (comparar imóveis salvos, avisos empilhados,
+  microanimação ao indicar), com referências do Mobbin.
 - Antes do lançamento: auditoria de acessibilidade com axe-core e leitor de tela real.
 - Pendente de decisão humana: aprovação da parte comercial (R3, exige ADR).
 - Próximo passo do produto: adaptar ao backend seguindo [ADAPTERS](ADAPTERS.md).
