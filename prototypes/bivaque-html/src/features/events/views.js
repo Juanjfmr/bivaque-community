@@ -1,4 +1,15 @@
-function renderAgenda(){const es=state.events.filter(e=>e.city===state.city&&e.date>=dateISO()).sort((a,b)=>a.date.localeCompare(b.date));return `<div class="page-head"><div><h1>Agenda da cidade</h1><p>Encontros da comunidade de ${esc(state.city)}.</p></div>${!readonly()?btn('Criar encontro','create-event','','tonal','add'):''}</div>${readonlyHtml()}${es.length?`<div class="list">${es.map(eventRow).join('')}</div>`:empty('Nenhum encontro agendado','Os próximos encontros aparecerão aqui.','event',readonly()?'':'create-event',readonly()?'':'Criar encontro')}`;}
+// Rodada 32: agenda agrupada por dia, com filtro por público (referência do Mobbin: Luma).
+let agendaFilter='all';
+const AGENDA_AUDIENCE=[['all','Todos'],['chegando','Para quem chega'],['moro','Para quem mora'],['saindo','Para quem sai']];
+function agendaDay(iso){const today=dateISO(0),tomorrow=dateISO(1);if(iso===today)return 'Hoje';if(iso===tomorrow)return 'Amanhã';const t=new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});return t.charAt(0).toUpperCase()+t.slice(1);}
+function renderAgenda(){
+ const all=state.events.filter(e=>e.city===state.city&&e.date>=dateISO()).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+ if(!AGENDA_AUDIENCE.some(([v])=>v===agendaFilter))agendaFilter='all';
+ const count=v=>v==='all'?all.length:all.filter(e=>(e.modes||[]).includes(v)).length,es=agendaFilter==='all'?all:all.filter(e=>(e.modes||[]).includes(agendaFilter));
+ const days=[];for(const e of es){const last=days.at(-1);if(last?.date===e.date)last.items.push(e);else days.push({date:e.date,items:[e]});}
+ const chips=all.length?filterChips(AGENDA_AUDIENCE.filter(([v])=>v==='all'||count(v)).map(([v,l])=>[v,`${l} · ${count(v)}`]),agendaFilter,'agenda-filter'):'';
+ return `<div class="page-head"><div><h1>Agenda da cidade</h1><p>Encontros da comunidade de ${esc(state.city)}.</p></div>${!readonly()?btn('Criar encontro','create-event','','tonal','add'):''}</div>${readonlyHtml()}${chips}${es.length?days.map(d=>`<section class="agenda-day" aria-labelledby="ad-${d.date}"><h2 class="agenda-date" id="ad-${d.date}">${esc(agendaDay(d.date))}</h2><div class="list">${d.items.map(eventRow).join('')}</div></section>`).join(''):all.length?empty('Nenhum encontro para esse público','Veja todos os encontros da cidade.','event','agenda-filter','Ver todos'):empty('Nenhum encontro agendado','Os próximos encontros aparecerão aqui.','event',readonly()?'':'create-event',readonly()?'':'Criar encontro')}`;
+}
 function renderEvent(){
  const e=state.events.find(x=>x.id===route.id);if(!accessibleRecord(e))return unavailable();
  actionsBar(`${iconBtn('share','share',`evento|${e.id}`,'Compartilhar encontro')}${e.mine?btn('Editar encontro','edit-event',e.id,'filled','edit'):btn(e.on?'Presença confirmada':'Confirmar presença','attend-event',e.id,'filled',e.on?'check':'event_available')}`);
