@@ -97,7 +97,7 @@ async function perform(action,value,el){
  case 'submit-biz':await submitBusiness();break;
  case 'quote':await contact('biz',value,'Olá! Vi sua página no Bivaque. Pode me passar um orçamento?');break;
  case 'recommend-biz':{if(!canPost())break;const b=bizById(value);if(!b)break;if(b.myInd){notify('Você já indicou este negócio.','info');break;}showDialog('Indicar este negócio',field('recommend-why','Conte sua experiência','','type="textarea" rows="3" required minlength="12"'),`${btn('Cancelar','close-dialog','','text')}${btn('Publicar indicação','submit-recommend',value,'filled')}`);break;}
- case 'submit-recommend':{const b=bizById(value);if(!b||!canPost()||!validFields(['recommend-why']))break;const text=$('#recommend-why').value.trim();if(mutate(()=>{b.recN++;b.myInd=true;b.says.push([initals(state.profile.name),'me',state.profile.name,text]);},{redraw:false})){await closeDialog(true);render();notify('Sua indicação foi adicionada');}break;}
+ case 'submit-recommend':{const b=bizById(value);if(!b||!canPost()||!validFields(['recommend-why']))break;const text=$('#recommend-why').value.trim();if(mutate(()=>{b.recN++;b.myInd=true;b.says.push([initals(state.profile.name),'me',state.profile.name,text]);},{redraw:false})){await closeDialog(true);render();notify('Sua indicação foi adicionada');requestAnimationFrame(()=>celebrate($('#main .fact-proof [data-count-to]')));}break;}
  case 'indicate':openIndicate();break;
  case 'submit-indicate':await submitIndicate();break;
  case 'invite-owner':await copyText(`A comunidade do Bivaque indicou seu negócio. Conheça sua página: ${location.href}`);break;

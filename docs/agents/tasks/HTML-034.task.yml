@@ -1,0 +1,37 @@
+task_id: HTML-034
+objective: >
+  Rodada 34 celebra a indicacao de um negocio: o numero de indicacoes cresce e volta com um
+  pequeno estouro de pontos ao redor, e o avatar da pessoa entra na pilha; nada acontece com
+  movimento reduzido.
+authority:
+  - Aprovacao do usuario em 2026-10-16 ("6e7 ok")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD f81d392c. Indicar um negocio so mostrava o aviso, sem retorno no proprio numero.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/empty-states.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-034.task.yml
+forbidden:
+  - animar com movimento reduzido ou bloquear o clique durante a animacao
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Indicar anima o numero e cria o estouro, que some sozinho e nao e anunciado
+  - Com movimento reduzido nao ha animacao nem estouro
+  - O aviso e a contagem continuam iguais
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round34-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: animacao decorativa em uma acao
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
