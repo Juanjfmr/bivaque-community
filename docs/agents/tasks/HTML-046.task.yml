@@ -1,0 +1,40 @@
+task_id: HTML-046
+objective: >
+  Rodada 46 (lote de volume) leva os blocos da R45 a Comunidade (indicacoes e aba de negocios),
+  busca, busca de grupos, feed dos grupos (blocos de 10), Conversas, Salvos e Meus anuncios. Na
+  busca em "Tudo", cada tipo mostra os primeiros e "Ver todos os N"; filtrada por tipo, vem em
+  blocos.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete do lote de volume; "Sim, como na maquete")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD ce620405. Sonda de volume, cidade grande, celular medio: Comunidade 2,4 s e 64 telas;
+    busca 1,3 s e 45 telas; feed de grupo com 57 telas; Conversas 1,8 s.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-046.task.yml
+forbidden:
+  - mudar listas curtas, o casamento de termos da busca ou a ordem das listas
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Indicacoes, Conversas, Salvos e Meus anuncios abrem com 24 e a contagem
+  - Busca em Tudo mostra 4 anuncios, 4 negocios e 5 dos demais com "Ver todos os N"; filtrada, blocos
+  - Feed do grupo em blocos de 10
+  - Listas curtas sem contagem nem fim de bloco
+  - Na sonda de volume (celular medio), nenhuma tela passa de 1 s
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round46-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round10-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round04-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: listas
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

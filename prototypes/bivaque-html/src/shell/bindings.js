@@ -4,10 +4,10 @@ function bindScreen(){
  bindMessagingScreen();
  bindOriginalGestures();
  const q=$('#search-query');if(q)requestAnimationFrame(()=>q.focus({preventScroll:true}));
- q?.addEventListener('input',()=>{searchQuery=q.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#search-results').innerHTML=searchResults();},120);});q?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveRecent(q.value);}});
+ q?.addEventListener('input',()=>{searchQuery=q.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#search-results').innerHTML=searchResults();pagedWatch();},120);});q?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveRecent(q.value);}});
  const bs=$('#biz-search');bs?.addEventListener('input',()=>{bizQuery=bs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{const html=renderBusinesses(),tmp=document.createElement('div');tmp.innerHTML=html;$('#business-results').innerHTML=$('#business-results',tmp).innerHTML;pagedWatch();},120);});
  $('#digest-switch')?.addEventListener('change',e=>mutate(()=>{state.prefs.digest=e.target.selected;},{redraw:false}));
- const gs=$('#group-search');gs?.addEventListener('input',()=>{groupQuery=gs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#groups-body').innerHTML=groupsBody();},120);});
+ const gs=$('#group-search');gs?.addEventListener('input',()=>{groupQuery=gs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#groups-body').innerHTML=groupsBody();pagedWatch();},120);});
  const tabs=$('#community-tabs');if(tabs)tabs.activeTabIndex=['ind','grp','biz'].indexOf(communityTab);
 }
 function saveRecent(q){q=q.trim();if(!q)return;mutate(()=>{state.recent=[q,...state.recent.filter(x=>x!==q)].slice(0,8);},{redraw:false});}
