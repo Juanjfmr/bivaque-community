@@ -1,0 +1,37 @@
+task_id: HTML-043
+objective: >
+  Rodada 43 pede os avisos no celular com explicacao antes do pedido do sistema (simulado no
+  prototipo), mostra o estado em Voce e torna o Bivaque instalavel como app: manifesto, icones e a
+  linha de instalar em Voce (pedido do navegador no Android, passo a passo no iPhone).
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode seguir", lote mobile 2)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 845f9e58. Nao havia como ativar avisos no celular nem instalar o prototipo como app.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/pwa/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-043.task.yml
+forbidden:
+  - fazer o pedido real de permissao de avisos do navegador
+  - pedir avisos em cidade de consulta ou mais de uma vez em 7 dias depois de recusado
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Depois do primeiro alerta, pergunta ou pedido, a folha explica os avisos com exemplos
+  - Agora nao espera 7 dias; Ativar avisos muda o estado mostrado em Voce
+  - Linha de instalar so aparece com suporte; Android usa o pedido do navegador e o iPhone ganha o passo a passo
+  - O HTML aponta para o manifesto e o icone; o deploy publica os arquivos do app
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round43-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: avisos e instalacao
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

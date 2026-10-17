@@ -12,7 +12,7 @@ async function requestAction(action,value){
   const problem=!GROUP_NAMES.includes(cat)?'Escolha o tipo de serviço.':spec&&!groupSpecs(cat).includes(spec)?'Escolha uma especialidade da lista.':!HOODS.includes(hood)?'Escolha o bairro.':desc.length<20?'Descreva o serviço com pelo menos 20 caracteres.':desc.length>1000?'A descrição pode ter até 1000 caracteres.':kind!=='asap'&&!date?'Informe a data.':kind!=='asap'&&date<dateISO()?'A data precisa ser hoje ou depois.':'';
   if(problem){notify(problem,'error');return true;}
   const id=uid('r'),at=Date.now();
-  if(mutate(()=>{state.requests=[{id,city:state.homeCity,cat,spec:spec||null,hood,desc,when:{kind,date:kind==='asap'?null:date},photos:editor.photos.slice(0,REQUEST_PHOTOS),status:'open',createdAt:at,expiresAt:at+REQUEST_DAYS*864e5,proposals:[],who:state.profile.name,mine:true},...requestList()];},{redraw:false})){await closeDialog(true);navigate('pedido',id);notify('Pedido enviado às empresas do ramo','send');}
+  if(mutate(()=>{state.requests=[{id,city:state.homeCity,cat,spec:spec||null,hood,desc,when:{kind,date:kind==='asap'?null:date},photos:editor.photos.slice(0,REQUEST_PHOTOS),status:'open',createdAt:at,expiresAt:at+REQUEST_DAYS*864e5,proposals:[],who:state.profile.name,mine:true},...requestList()];},{redraw:false})){await closeDialog(true);navigate('pedido',id);notify('Pedido enviado às empresas do ramo','send');askPushSoon('request');}
   return true;
  }
  case 'choose-proposal':{

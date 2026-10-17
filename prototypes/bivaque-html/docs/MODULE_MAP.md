@@ -56,6 +56,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07r/CSS | `src/styles/chat-mobile.css` | Frontend premium | Rodada 37: conversa com a pessoa na barra, aviso de segurança e caixa em pílula |
 | 07s/CSS | `src/styles/detail-immersive.css` | Frontend premium | Rodada 38: anúncio e negócio com a foto até o topo no celular |
 | 07t/CSS | `src/styles/sheets.css` | Frontend premium | Rodada 41: fundo que encolhe sob as folhas e folha do bairro sobre o mapa |
+| 07u/CSS | `src/styles/push-install.css` | Frontend premium | Rodada 43: folha dos avisos e passo a passo da instalação |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -100,6 +101,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 35g/App | `src/shell/celebrate.js` | Frontend premium | Rodada 34: microanimação ao indicar (número pulsa, pontos, avatar entra) |
 | 35h/App | `src/shell/haptics.js` | Frontend premium | Rodada 42: vibração leve ao salvar, indicar, deslizar, fechar a foto e trocar a altura da folha |
 | 36/App | `src/features/profile/settings.js` | Perfil/família/movimentação | Cidade, configurações e controles de protótipo |
+| 36/Appb | `src/features/profile/push-install.js` | Perfil | Rodada 43: avisos no celular pedidos com explicação e instalação como app |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |

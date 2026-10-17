@@ -1,0 +1,13 @@
+/* Rodada 43: folha que explica os avisos antes do pedido e passo a passo da instalação no iPhone. */
+.push-samples{display:grid;gap:8px;margin:4px 0 6px}
+.push-sample{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:16px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);box-shadow:0 4px 14px #0000000f}
+.push-sample:nth-child(2){margin:0 10px;opacity:.85}
+.push-sample:nth-child(3){margin:0 20px;opacity:.65}
+.push-sample>md-icon{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);font-size:20px}
+.push-sample span{display:grid;gap:1px;flex:1;min-width:0}
+.push-sample b{font-size:14px;line-height:19px}
+.push-sample small{font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.push-sample time{font-size:11px;color:var(--md-sys-color-on-surface-variant)}
+.install-steps{display:grid;gap:12px;margin:0;padding-left:22px;font-size:15px;line-height:22px}
+.inline-svg{width:20px;height:20px;vertical-align:-4px;flex:none}
+.list-row>.inline-svg{width:24px;height:24px;color:var(--md-sys-color-primary)}

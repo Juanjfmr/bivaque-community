@@ -31,7 +31,7 @@ function createSearchAlert(){
  const alert={id:uid('al'),kind,city:state.city,attrs:structuredClone(catalogAttrs[kind]),label:alertLabel(kind,catalogAttrs[kind]),notify:true,createdAt:Date.now()};
  if(!mutate(()=>{state.alerts=[alert,...(state.alerts||[])];},{redraw:false}))return;
  render();globalFocus('search-alerts');
- notify('Alerta criado: avisaremos quando aparecer um anúncio assim.','notifications',()=>{if(mutate(()=>{state.alerts=state.alerts.filter(a=>a.id!==alert.id);}))notify('Alerta removido','delete');});
+ notify('Alerta criado: avisaremos quando aparecer um anúncio assim.','notifications',()=>{if(mutate(()=>{state.alerts=state.alerts.filter(a=>a.id!==alert.id);}))notify('Alerta removido','delete');});askPushSoon('alert');
 }
 function alertRow(a){
  const n=state.items.filter(x=>alertMatches(x,a)).length;
