@@ -8,12 +8,14 @@ function globalFocusDescriptor(el=document.activeElement){
  return el?{id:el.id||'',action:el.dataset?.action||'',value:el.dataset?.value||''}:null;
 }
 function globalFocus(action,value='',scope=document){
- const target=$$('[data-action]',scope).find(x=>x.dataset.action===action&&(x.dataset.value||'')===value);
- if(target)requestAnimationFrame(()=>target.isConnected&&target.focus({preventScroll:true}));return !!target;
+ // Com cópias do mesmo botão (ex.: o ⋮ da barra no celular e o da página no desktop), o foco vai
+ // para a que está à vista; a escolha espera o quadro seguinte, quando a tela nova já foi desenhada.
+ const matches=$$('[data-action]',scope).filter(x=>x.dataset.action===action&&(x.dataset.value||'')===value);
+ if(matches.length)requestAnimationFrame(()=>{const target=matches.find(x=>x.isConnected&&x.getClientRects().length)||matches[0];if(target.isConnected)target.focus({preventScroll:true});});return matches.length>0;
 }
 function navigationFocus(descriptor){
  let target=descriptor?.id?document.getElementById(descriptor.id):null;
- if(!target&&descriptor?.action)target=$$('[data-action]').find(x=>x.dataset.action===descriptor.action&&(x.dataset.value||'')===descriptor.value);
+ if(!target&&descriptor?.action){const all=$$('[data-action]').filter(x=>x.dataset.action===descriptor.action&&(x.dataset.value||'')===descriptor.value);target=all.find(x=>x.getClientRects().length)||all[0]||null;}
  if(!target||target.closest('[hidden],[inert]'))target=$('h1',root)||$('#page');
  if(target){if(!target.matches('button,input,textarea,a,[data-action]'))target.tabIndex=-1;requestAnimationFrame(()=>target.isConnected&&target.focus({preventScroll:true}));}
 }
@@ -51,10 +53,12 @@ function activeTab(){if(['inicio','comunidade','conversas','voce'].includes(rout
 function shell(){
  const rootPage=['inicio','comunidade','conversas','voce'].includes(route.name);const notices=state.notices.filter(n=>n.city===state.homeCity&&n.unread).length, chats=state.threads.filter(t=>t.city===state.city&&!t.deleted&&t.unread).length;
  $('#topbar').innerHTML=`<div class="topbar-in"><div class="row grow">${rootPage?`<span class="brand">${mark()}<span class="brand-text">${route.name==='inicio'?'Bivaque':esc(titleForRoute())}</span></span>`:`${iconBtn('arrow_back','back','','Voltar')}${chatTopTitle()||`<span class="top-title grow">${esc(titleForRoute())}</span>`}`}</div><div class="row">${btn(state.city,'city','','text','expand_more').replace('<md-text-button','<md-text-button class="city-chip"')}${route.name==='inicio'?`<span class="notice-button">${iconBtn('notifications','notices','','Avisos')}${notices?`<span class="badge">${notices}</span>`:''}</span>`:chatTopActions()||iconBtn('search','search','','Buscar')}</div></div>`;
+ // Abaixo de 1024 px a cidade fica no título da Início; vendo outra cidade, ela volta para a barra.
+ $('#topbar').classList.toggle('away',readonly()&&route.name!=='inicio');
  $('#topbar').classList.toggle('searching',route.name==='busca');document.body.classList.toggle('search-mode',route.name==='busca');
  if(route.name==='busca')$('#topbar').innerHTML=`<div class="search-topbar">${iconBtn('arrow_back','back','','Voltar')}<md-filled-text-field id="search-query" class="search-input" type="search" placeholder="Buscar no Bivaque" aria-label="Buscar no Bivaque" value="${esc(searchQuery)}" autofocus>${icon('search','leading-icon')}${iconBtn('close','clear-search','','Limpar busca').replace('<md-icon-button','<md-icon-button slot="trailing-icon"')}</md-filled-text-field></div>`;
  $('#nav').innerHTML=`<div class="rail-brand">${mark()}</div>${[['inicio','Início'],['comunidade','Comunidade'],['conversas','Conversas'],['voce','Você']].map(([n,label])=>`${n==='conversas'?'<span class="nav-create-slot" aria-hidden="true">Criar</span>':''}<button type="button" class="nav-item" data-action="nav" data-value="${n}" ${activeTab()===n?'aria-current="page"':''}><span class="nav-icon">${navIcon(n)}${n==='conversas'&&chats?`<span class="badge">${chats}</span>`:''}</span><span>${label}</span></button>`).join('')}<div class="rail-tools">${iconBtn('tune','prototype','','Controles do protótipo')}${iconBtn('settings','settings','','Configurações')}</div>`;
- syncMobileNavigation();$('#fab').disabled=readonly();requestAnimationFrame(syncTopTitle);
+ $('#nav .nav-create-slot')?.addEventListener('click',()=>$('#fab').click());syncMobileNavigation();$('#fab').disabled=readonly();requestAnimationFrame(syncTopTitle);
  $('#detail-actions').hidden=true;root.classList.remove('detail');
 }
 function actionsBar(html){$('#detail-actions').innerHTML=`<div class="detail-actions-in">${html}</div>`;$('#detail-actions').hidden=false;root.classList.add('detail');}
@@ -90,7 +94,8 @@ root.addEventListener('scroll',()=>{
   if(y>lastNavY+6&&y>140)navMinimized=true;else if(y<lastNavY-6||y<60)navMinimized=false;syncMobileNavigation();
  }lastNavY=y;syncTopTitle();
 },{passive:true});
-addEventListener('resize',()=>syncTopTitle(),{passive:true});
+var chatWide=innerWidth>=720;
+addEventListener('resize',()=>{syncTopTitle();const wide=innerWidth>=720;if(wide!==chatWide){chatWide=wide;if(route.name==='conversa')render();}},{passive:true});
 function remember(type,id){state.lastViewed={type,id,city:state.city};try{localStorage.setItem(KEY,JSON.stringify(state));}catch{};}
 function render(){const flight=motionBeforeRender();ensureTurma();theme();navigationRenderedCity=state.city;shell();const f={inicio:renderHome,catalogo:renderCatalog,desapegos:renderCatalog,imoveis:renderCatalog,negocios:renderBusinesses,comunidade:renderCommunity,anuncio:renderItem,negocio:renderBusiness,pergunta:renderQuestion,grupo:renderGroup,publicacao:renderPost,evento:renderEvent,agenda:renderAgenda,voce:renderProfile,salvos:renderSaved,'meus-anuncios':renderMyAds,minhas:renderMineQuestions,conversas:renderThreads,conversa:renderChat,busca:renderSearch,guia:renderGuide,pedidos:renderRequests,pedido:renderRequest}[route.name]||(()=>empty('Página indisponível',navigationProblem||'Confira o endereço ou volte ao início.','link_off','home','Ir para o início'));root.innerHTML=`<div class="page ${route.name==='conversa'?'chat-page':''}" id="page">${f()}</div>`;bindScreen();document.title=`${titleForRoute()} · Bivaque`;motionAfterRender(flight);animateCounts(root);segmentsAfterRender(root);catalogMapAfterRender();}
 function readonlyHtml(){return readonly()?`<div class="context-strip readonly">${icon('visibility')}<span class="grow">Você está conhecendo <b>${esc(state.city)}</b>. Sua cidade atual é ${esc(state.homeCity)}.</span>${btn('Voltar','home-city','','text')}</div>`:'';}

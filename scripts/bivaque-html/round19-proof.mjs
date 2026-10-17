@@ -165,10 +165,7 @@ const checkpoints = {
     await go(page, "inicio")
     const stacks = await page.locator("#main .avatar-stack").count()
     const counts = await page.locator("#main [data-count-to]").count()
-    if (!desktop(page)) {
-      expect(!stacks && !counts, "a Início do celular mudou")
-      return
-    }
+    // Rodada 35: a Início do celular usa os mesmos cartões de serviço do desktop.
     expect(counts > 0, "Início do desktop sem contador")
     expect(stacks > 0, "cartões de serviço sem avatares")
     expect(

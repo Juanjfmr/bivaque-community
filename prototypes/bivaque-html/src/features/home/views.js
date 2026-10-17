@@ -4,15 +4,15 @@
 // avisos ficam só no sino. A cidade faz parte do título e troca com um toque. A busca mostra um
 // exemplo que gira (referência: Placeholders and Vanish Input, no 21st.dev); com movimento
 // reduzido, fica o primeiro.
-var HOME_SEARCH_EXAMPLES=['diarista no Planalto','escola em Flores','berço','apartamento em Ponta Negra','pediatra pelo plano'],homeSearchTimer=0;
+var HOME_SEARCH_EXAMPLES=['diarista de confiança','escola perto de casa','berço','apartamento de 2 quartos','pediatra pelo plano'],homeSearchTimer=0;
 function homeSearchRotate(){
  clearInterval(homeSearchTimer);if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;let i=0;
- homeSearchTimer=setInterval(()=>{const el=$('#home-search .home-search-ex');if(!el){clearInterval(homeSearchTimer);return;}i=(i+1)%HOME_SEARCH_EXAMPLES.length;el.textContent=`“${HOME_SEARCH_EXAMPLES[i]}”`;el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});},3200);
+ homeSearchTimer=setInterval(()=>{const el=$('#home-search .home-search-ex');if(!el||i===HOME_SEARCH_EXAMPLES.length-1||$('#home-search').matches(':focus-within,:hover')){clearInterval(homeSearchTimer);return;}i+=1;el.textContent=`“${HOME_SEARCH_EXAMPLES[i]}”`;el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});},3200);
 }
 function renderHome(){
  if(HOME_DESKTOP.matches)return renderHomeDesktop();
  const arriving=state.mode==='chegando'&&!readonly(),leaving=state.mode==='saindo'&&!readonly();
- const city=`<button type="button" class="h1-city" data-action="city" aria-label="${esc(`Trocar de cidade. Cidade atual: ${state.city}`)}">${esc(state.city)}${icon('expand_more')}</button>`;
+ const city=`<button type="button" class="h1-city" data-action="city" aria-haspopup="dialog" title="Trocar de cidade">${esc(state.city)}${icon('expand_more')}</button>`;
  const subtitle=arriving?`${countDays(state.arrival)} dias para chegar · ${dateLabel(state.arrival)}`:leaving?`${countDays(state.leaveDate)} dias para sua mudança para ${state.dest}`:'';
  let h=`<div class="home-mob"><div class="page-head"><div><h1>${readonly()?'Conheça':'O que você precisa em'} ${city}</h1>${subtitle?`<p>${esc(subtitle)}</p>`:''}</div></div><div class="home-top"><md-filled-tonal-button id="home-search" class="home-search-button" data-action="search" aria-label="Buscar no Bivaque">${icon('search','icon')}<span>Busque <b class="home-search-ex">“${esc(HOME_SEARCH_EXAMPLES[0])}”</b></span></md-filled-tonal-button><nav class="intent-grid" aria-label="Áreas">${(arriving?[['apartment','Imóveis','imovel'],['storefront','Negócios','biz'],['sell','Desapegos','desapego'],['volunteer_activism','Indicações','ind']]:[['storefront','Negócios','biz'],['sell','Desapegos','desapego'],['apartment','Imóveis','imovel'],['volunteer_activism','Indicações','ind']]).map(([ic,label,v])=>`<button type="button" class="intent" data-action="intent" data-value="${v}">${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
  if(!readonly())h+=`<div class="home-alerts"><button type="button" class="home-hire" data-action="create-request">${icon('build')}<span class="grow"><b>Precisa contratar?</b><small>Receba até ${REQUEST_LIMIT} propostas da comunidade.</small></span>${icon('chevron_right')}</button></div>`;

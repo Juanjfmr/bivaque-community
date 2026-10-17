@@ -27,6 +27,45 @@ async function typeAndSend(page, text) {
 const msgs = async (page) => (await stored(page)).threads.find((t) => t.id === "t1").msgs.length
 
 const checkpoints = {
+  async "turning-the-device-switches-the-composer"(page) {
+    if (!phone(page)) return
+    await openChat(page)
+    const label = () => page.locator("#chat-input").getAttribute("label")
+    expect(!(await label()), "celular com rótulo")
+    const size = page.viewportSize()
+    await page.setViewportSize({ width: 800, height: size.height })
+    await settle(page)
+    expect((await label()) === "Mensagem", "largo continuou com a pílula")
+    await page.setViewportSize(size)
+    await settle(page)
+    expect(!(await label()), "voltou a estreito sem a pílula")
+  },
+  async "counter-appears-near-the-limit"(page) {
+    if (!phone(page)) return
+    await openChat(page)
+    await page.evaluate(() => {
+      const f = document.querySelector("#chat-input")
+      f.value = "a".repeat(1900)
+      f.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    expect(
+      (await page.locator("#chat-status").innerText()) === "1.900 de 2.000 caracteres",
+      "sem contador perto do limite",
+    )
+  },
+  async "closing-the-menu-returns-focus-to-the-visible-button"(page) {
+    if (phone(page)) return
+    await openChat(page)
+    await page.locator('#main [data-action="thread-menu"]').click()
+    await settle(page)
+    await page.keyboard.press("Escape")
+    await settle(page)
+    const ok = await page.evaluate(() => {
+      const a = document.activeElement
+      return a?.dataset?.action === "thread-menu" && a.getClientRects().length > 0
+    })
+    expect(ok, "foco não voltou ao ⋮ visível")
+  },
   async "bar-shows-who-and-what"(page) {
     await openChat(page)
     if (!phone(page)) {

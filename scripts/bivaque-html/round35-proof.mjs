@@ -26,6 +26,28 @@ const visible = (page, sel) =>
   })
 
 const checkpoints = {
+  async "create-label-opens-create"(page) {
+    if (!phone(page)) return
+    await snapshot(page)
+    await go(page, "inicio")
+    // Toca no texto "Criar", embaixo do círculo (o centro da célula é o próprio círculo).
+    const slot = page.locator("#nav .nav-create-slot")
+    const b = await slot.boundingBox()
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height - 14)
+    await settle(page)
+    expect(
+      await page.evaluate(() => document.querySelector("#create-menu").classList.contains("open")),
+      "tocar em Criar não abriu o menu",
+    )
+  },
+  async "away-city-returns-to-the-bar"(page) {
+    if (desktop(page)) return
+    await snapshot(page)
+    await go(page, "imoveis?cidade=Brasília")
+    expect(await visible(page, "#topbar .city-chip"), "cidade de consulta fora da barra")
+    await go(page, "imoveis?cidade=Manaus")
+    expect(!(await visible(page, "#topbar .city-chip")), "cidade de casa voltou para a barra")
+  },
   async "phone-home-follows-desktop-order"(page) {
     await snapshot(page)
     await go(page, "inicio")
@@ -153,7 +175,7 @@ const checkpoints = {
     await go(page, "inicio")
     const ex = () => page.locator("#home-search .home-search-ex").innerText()
     const first = await ex()
-    expect(first === "“diarista no Planalto”", `exemplo: ${first}`)
+    expect(first === "“diarista de confiança”", `exemplo: ${first}`)
     await page.waitForTimeout(3500)
     expect((await ex()) === first, "exemplo girou com movimento reduzido")
     await page.emulateMedia({ reducedMotion: "no-preference" })
