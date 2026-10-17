@@ -1,0 +1,43 @@
+task_id: HTML-031
+objective: >
+  Rodada 31 cria a visualizacao em mapa de Imoveis e Desapegos, com MapLibre GL JS e o mapa-base
+  do OpenFreeMap carregados so quando a pessoa abre o mapa, marcadores com a contagem por bairro
+  (centro aproximado), folha com os anuncios do bairro e alternativa sem internet.
+authority:
+  - Escolha do usuario em 2026-10-16 ("MapLibre + OpenFreeMap") depois da pesquisa de dependencias externas
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD d46f35d8. So havia lista; o unico mapa era um link externo para o OpenStreetMap.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/shell/navigation.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/decisions/ADR-20261016-mapa-de-bairros.md
+  - docs/agents/tasks/HTML-031.task.yml
+forbidden:
+  - carregar o mapa antes de a pessoa pedir ou enviar dados de filtros ao fornecedor
+  - mostrar ou guardar endereco exato; guardar organizacao militar (AGENTS.md)
+  - levar o mapa ao app real sem aprovar o ADR-20261016-mapa-de-bairros
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Lista por padrao; o MapLibre so e pedido ao abrir o mapa
+  - Um marcador por bairro com a contagem dos anuncios filtrados e rotulo legivel
+  - Tocar no bairro abre a folha com os anuncios; Ver so este bairro aplica o filtro na lista
+  - Sem internet, aviso e bairros em chips continuam funcionando; nomes do mapa em portugues
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round31-proof.mjs
+  - node scripts/bivaque-html/round31-shots.mjs (rede real)
+  - npx pnpm@11.18.0 gate
+risk: dependencia externa so no prototipo; produto depende do ADR
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
