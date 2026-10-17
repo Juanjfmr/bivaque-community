@@ -96,6 +96,26 @@ export async function skipPushAsk(page) {
   await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(s)])
   await reload(page)
 }
+// Depois de enviar um pedido ou criar um alerta, a folha dos avisos pode abrir em 900 ms: espera
+// por ela e fecha com "Agora não", para o resto do fluxo não ser coberto.
+export async function dismissPushAsk(page) {
+  const shown = await page
+    .waitForFunction(
+      () =>
+        document.querySelector("#dialog")?.open &&
+        document.querySelector("#dialog").dataset.kind === "push",
+      null,
+      { timeout: 1400 },
+    )
+    .then(
+      () => true,
+      () => false,
+    )
+  if (shown) {
+    await page.locator('#dialog [data-action="push-later"]').click()
+    await settle(page)
+  }
+}
 export async function reload(page) {
   await page.reload()
   await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)

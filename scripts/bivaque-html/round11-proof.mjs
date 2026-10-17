@@ -4,6 +4,7 @@ import {
   choose,
   confirmOk,
   dialogKind,
+  dismissPushAsk,
   expect,
   failStorage,
   fill,
@@ -50,6 +51,7 @@ async function createRequest(
   await choose(page, "request-hood", hood)
   await fill(page, "request-desc", desc)
   await action(page, "submit-request")
+  await dismissPushAsk(page)
   const r = await routeOf(page)
   expect(r.name === "pedido" && r.id, `pedido não abriu: ${r.name}`)
   return r.id
@@ -84,11 +86,13 @@ const checkpoints = {
     const cat = await demoCategory(page)
     await openRequestForm(page)
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(/tipo de serviço/i.test(await toast(page)), "sem mensagem de tipo")
     await choose(page, "request-cat", cat)
     await choose(page, "request-hood", "Centro")
     await fill(page, "request-desc", "Curto")
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(/20 caracteres/.test(await toast(page)), "aceitou descrição curta")
     await fill(
       page,
@@ -98,6 +102,7 @@ const checkpoints = {
     await choose(page, "request-when", "on")
     expect(await page.locator("#request-date").isVisible(), "data não apareceu para 'em uma data'")
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     const id = (await routeOf(page)).id
     const r = await req(page, id)
     expect(
@@ -535,6 +540,7 @@ const checkpoints = {
     )
     await failStorage(page)
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(
       (await dialogKind(page)) === "editor" && /salvar/i.test(await toast(page)),
       "sem feedback de falha",
