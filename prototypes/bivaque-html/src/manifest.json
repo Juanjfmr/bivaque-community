@@ -104,6 +104,7 @@
         "shell/celebrate.js",
         "shell/haptics.js",
         "shell/paged-list.js",
+        "shell/in-place.js",
         "features/profile/settings.js",
         "features/profile/push-install.js",
         "features/listings/editor.js",

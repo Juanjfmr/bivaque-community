@@ -1,0 +1,37 @@
+task_id: HTML-047
+objective: >
+  Rodada 47 (lote de volume) faz salvar anuncio ou negocio e marcar "Util" no feed do grupo
+  atualizarem so o botao ou o cartao tocado, sem redesenhar a lista. Salvos, Voce e o atalho de
+  comparar imoveis continuam redesenhando, porque mostram o resultado do toque.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (plano do lote de volume; "Sim")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD addfccdf. Cada toque em salvar chamava render(); na sonda de volume (cidade grande,
+    celular medio) salvar levava 5,4 s antes dos blocos e 0,5 s depois deles.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-047.task.yml
+forbidden:
+  - mudar o que fica gravado, os avisos ou a vibracao
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Salvar numa lista longa troca so o botao (icone, rotulo, estado) e grava; o foco volta ao botao
+  - Em Salvos, tirar dos salvos ainda remove o cartao
+  - Negocios salva no lugar
+  - O botao Util no feed troca so a publicacao tocada e grava
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round47-proof.mjs
+  - provas antigas com salvar ou Util (03, 06, 07, 09, 19, 31, 33, 41, 42)
+  - npx pnpm@11.18.0 gate
+risk: estado
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
