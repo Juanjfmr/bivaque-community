@@ -1,0 +1,40 @@
+task_id: HTML-040
+objective: >
+  Rodada 40 da a galeria de fotos gestos de app: a foto acompanha o dedo, para o lado troca de
+  foto, para baixo fecha a galeria com o fundo esmaecendo; pinca e toque duplo ampliam ate 4x e a
+  foto ampliada se arrasta. No mouse, clique duplo e Ctrl + roda; no teclado, + - e 0.
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode seguir", lote mobile 2)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 269c673b. A galeria so trocava de foto com um deslize lateral, sem acompanhar o dedo,
+    sem ampliar e sem fechar arrastando.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/styles/photos.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-040.task.yml
+forbidden:
+  - mudar miniaturas, contador, setas, foco preso ou o historico da galeria
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Arrastar para baixo fecha; arrasto curto volta ao lugar; a foto e o fundo acompanham o dedo
+  - Arrastar para o lado troca de foto, inclusive sem movimento intermediario
+  - Toque duplo e pinca ampliam; ampliada a foto se arrasta e o toque duplo volta
+  - Clique simples na foto nao fecha a galeria; o clique depois de um gesto tambem nao
+  - Teclado (+ - 0) e mouse (clique duplo) ampliam
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round40-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round18-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: galeria de fotos
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -131,8 +131,9 @@ const checkpoints = {
     await openItemWithPhotos(page)
     await page.locator('#main [data-action="lightbox"]').click()
     await settle(page)
+    // Rodada 40: os gestos ficam no palco da foto, onde um toque de verdade cai.
     await page.evaluate(() => {
-      const el = document.querySelector("#lightbox")
+      const el = document.querySelector("#lightbox .lightbox-stage")
       el.dispatchEvent(
         new PointerEvent("pointerdown", {
           bubbles: true,

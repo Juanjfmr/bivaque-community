@@ -103,6 +103,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 37/Appd | `src/features/listings/compare.js` | Anúncios | Rodada 30: comparar imóveis salvos lado a lado com destaques |
 | 37/Appe | `src/features/listings/map.js` | Anúncios | Rodada 31: mapa de bairros com MapLibre + OpenFreeMap carregados sob demanda; contagem por bairro e folha com os anúncios |
 | 37a/App | `src/features/listings/photos.js` | Desapegos/imóveis | Rodada 18: processamento das fotos (botão e soltar), capa e galeria em tela cheia |
+| 37b/App | `src/features/listings/photo-gestures.js` | Frontend premium | Rodada 40: galeria com pinça, toque duplo, arrastar para baixo e foto que acompanha o dedo |
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |
 | 39/App | `src/features/businesses/editor.js` | Negócios/serviços | Edição e persistência local do negócio |
 | 40/App | `src/features/community/editor.js` | Memória/indicações | Pedir indicação e perguntas similares |

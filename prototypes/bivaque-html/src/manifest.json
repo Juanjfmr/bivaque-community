@@ -104,6 +104,7 @@
         "features/listings/compare.js",
         "features/listings/map.js",
         "features/listings/photos.js",
+        "features/listings/photo-gestures.js",
         "features/events/editor.js",
         "features/businesses/editor.js",
         "features/community/editor.js",
