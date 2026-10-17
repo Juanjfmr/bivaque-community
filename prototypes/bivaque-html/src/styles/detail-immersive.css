@@ -1,0 +1,14 @@
+/* Rodada 38: anúncio e negócio no celular com a foto até o topo. A barra fica transparente sobre a
+   foto, com os botões em círculos escuros, e volta ao normal (com o título) quando a foto passa
+   por baixo dela. */
+@media(max-width:719px){
+body.immersive main{top:0}
+body.immersive .page{padding-top:0}
+body.immersive .detail-hero{margin:0 calc(-1 * var(--space));border-radius:0;aspect-ratio:4/3}
+body.immersive .topbar{transition:background-color .2s,border-color .2s}
+body.immersive .topbar .top-title{transition:opacity .2s}
+body.immersive .topbar:not(.bar-solid){background:transparent;border-bottom-color:transparent}
+body.immersive .topbar:not(.bar-solid) .top-title{opacity:0}
+body.immersive .topbar:not(.bar-solid) md-icon-button{border-radius:50%;background:rgba(16,28,34,.52);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);--md-icon-button-icon-color:#fff;--md-icon-button-hover-icon-color:#fff;--md-icon-button-focus-icon-color:#fff;--md-icon-button-pressed-icon-color:#fff}
+}
+@media(max-width:719px) and (prefers-reduced-motion:reduce){body.immersive .topbar,body.immersive .topbar .top-title{transition:none}}

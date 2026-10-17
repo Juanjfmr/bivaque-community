@@ -54,6 +54,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07p/CSS | `src/styles/nav-bar.css` | Frontend premium | Rodada 35: barra do celular com Criar no centro, luz na aba ativa e ícones em SVG |
 | 07q/CSS | `src/styles/top-title.css` | Frontend premium | Rodada 36: título grande que sobe para a barra no celular |
 | 07r/CSS | `src/styles/chat-mobile.css` | Frontend premium | Rodada 37: conversa com a pessoa na barra, aviso de segurança e caixa em pílula |
+| 07s/CSS | `src/styles/detail-immersive.css` | Frontend premium | Rodada 38: anúncio e negócio com a foto até o topo no celular |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
