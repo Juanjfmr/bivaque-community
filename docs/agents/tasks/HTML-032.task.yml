@@ -1,0 +1,36 @@
+task_id: HTML-032
+objective: >
+  Rodada 32 agrupa a agenda por dia (Hoje, Amanha, dia por extenso) e filtra por publico (quem
+  chega, mora ou sai) com a contagem em cada chip, inspirada na lista do Luma no Mobbin.
+authority:
+  - Decisao delegada pelo usuario em 2026-10-16 ("5. Voce pode decidir")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD a8b4c24b. A agenda era uma lista unica, sem agrupar por dia nem filtrar por publico.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/events/views.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-032.task.yml
+forbidden:
+  - criar temas de encontro que os dados nao tem
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Encontros agrupados por dia em ordem, com Hoje e Amanha
+  - Filtro por publico com contagem; vazio oferece Ver todos
+  - Encontros passados continuam fora da agenda
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round32-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round05-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
