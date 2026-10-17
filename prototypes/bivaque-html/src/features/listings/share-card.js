@@ -2,7 +2,7 @@
 // abrem uma folha com a prévia de uma imagem pronta para grupos de WhatsApp: foto, preço ou
 // indicações, bairro e "Bivaque". A imagem é desenhada no próprio aparelho (canvas); nada é
 // enviado a serviço externo. "Compartilhar link" segue o fluxo de sempre (share()).
-let shareCard=null;
+let shareCard=null,shareSeq=0;
 const SHARE_W=1080,SHARE_H=1350;
 function shareCardData(type,id){
  if(type==='anuncio'){const x=itemById(id);if(!accessibleRecord(x))return null;const imovel=x.kind==='imovel';
@@ -24,7 +24,7 @@ async function shareCardBlob(d){
  await Promise.all([document.fonts.load(font(700,64)),document.fonts.load(font(500,40)),document.fonts.load('200px "Material Symbols Rounded"')]).catch(()=>{});
  g.fillStyle='#f9f9fb';g.fillRect(0,0,SHARE_W,SHARE_H);
  const ph=720;
- if(d.photo){try{const img=new Image();img.src=d.photo;await img.decode();const s=Math.max(SHARE_W/img.width,ph/img.height),w=img.width*s,h=img.height*s;g.drawImage(img,(SHARE_W-w)/2,(ph-h)/2,w,h);}catch{d={...d,photo:''};}}
+ if(d.photo){try{const img=new Image();img.src=d.photo;await img.decode();const s=Math.max(SHARE_W/img.width,ph/img.height),w=img.width*s,h=img.height*s;g.save();g.beginPath();g.rect(0,0,SHARE_W,ph);g.clip();g.drawImage(img,(SHARE_W-w)/2,(ph-h)/2,w,h);g.restore();}catch{d={...d,photo:''};}}
  // Sem foto: o ícone do anúncio no lugar da imagem.
  if(!d.photo){g.fillStyle='#e7e8ea';g.fillRect(0,0,SHARE_W,ph);g.fillStyle='#71787d';g.font='220px "Material Symbols Rounded"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
  g.font=font(700,34);const tw=g.measureText(d.tag).width;g.fillStyle='rgba(20,41,51,.86)';g.beginPath();g.roundRect(48,48,tw+48,64,16);g.fill();g.fillStyle='#fff';g.fillText(d.tag,72,92);
@@ -38,8 +38,11 @@ async function shareCardBlob(d){
 async function openShareCard(type,id){
  const d=shareCardData(type,id);if(!d){await share(type,id);return;}
  if(shareCard?.url)URL.revokeObjectURL(shareCard.url);
- showDialog('Compartilhar',`<div class="share-card"><div class="share-preview" id="share-preview" aria-busy="true"><span class="share-wait">Preparando o cartão…</span></div><p class="form-note">Imagem pronta para grupos de WhatsApp, feita neste aparelho. O link abre o anúncio no Bivaque.</p></div>`,`${btn('Compartilhar link','share-link',`${type}|${id}`,'text','link')}${btn('Baixar imagem','share-download','','outlined','image')}${btn('Compartilhar com imagem','share-image','','filled','share')}`,'share-card');
- const blob=await shareCardBlob(d),box=$('#share-preview');if(!box||!dialog.open)return;
+ // O cartão anterior sai antes da prévia nova; um preparo mais antigo que termine depois é descartado.
+ shareCard=null;const seq=++shareSeq;
+ showDialog('Compartilhar',`<div class="share-card"><div class="share-preview" id="share-preview" aria-busy="true"><span class="share-wait">Preparando o cartão…</span></div><p class="form-note">Imagem pronta para grupos de WhatsApp, feita neste aparelho. O link é da demonstração local e não abre em outros aparelhos.</p></div>`,`${btn('Compartilhar link','share-link',`${type}|${id}`,'text','link')}${btn('Baixar imagem','share-download','','outlined','image')}${btn('Compartilhar com imagem','share-image','','filled','share')}`,'share-card');
+ const blob=await shareCardBlob(d),box=$('#share-preview');if(seq!==shareSeq||!box||!dialog.open)return;
+ if(!blob){box.removeAttribute('aria-busy');box.innerHTML='<span class="share-wait">Não foi possível montar a imagem neste aparelho. Use “Compartilhar link”.</span>';return;}
  shareCard={type,id,blob,url:URL.createObjectURL(blob),name:`bivaque-${type}-${id}.png`,title:d.title};
  box.removeAttribute('aria-busy');box.innerHTML=`<img src="${shareCard.url}" alt="${esc(`Cartão de compartilhamento: ${d.title}, ${d.big}, ${d.place}`)}">`;
  const file=new File([blob],shareCard.name,{type:'image/png'});shareCard.file=file;
@@ -50,7 +53,7 @@ async function shareCardAction(action,value){
  if(action==='share-link'){const [type,id]=value.split('|');if(dialog.open)await closeDialog(true);await share(type,id);return true;}
  if(!shareCard?.blob){notify('O cartão ainda está sendo preparado.','info');return true;}
  if(action==='share-download'){const a=document.createElement('a');a.href=shareCard.url;a.download=shareCard.name;document.body.appendChild(a);a.click();a.remove();notify('Imagem salva no aparelho','image');return true;}
- const link=new URL(location.href);const rec=shareCard.type==='anuncio'?itemById(shareCard.id):bizById(shareCard.id);link.hash=`${shareCard.type}/${encodeURIComponent(shareCard.id)}?cidade=${encodeURIComponent(rec?.city||state.city)}`;
- try{await navigator.share({files:[shareCard.file],title:`${shareCard.title} · Bivaque`,text:`${shareCard.title} · ${link.href}`});notify('Cartão compartilhado','share');}catch(error){if(error.name!=='AbortError')notify('Não foi possível compartilhar a imagem. Use “Baixar imagem” ou “Compartilhar link”.','error');}
+ const link=new URL(location.href),web=/^https?:$/.test(location.protocol);const rec=shareCard.type==='anuncio'?itemById(shareCard.id):bizById(shareCard.id);link.hash=`${shareCard.type}/${encodeURIComponent(shareCard.id)}?cidade=${encodeURIComponent(rec?.city||state.city)}`;
+ try{await navigator.share({files:[shareCard.file],title:`${shareCard.title} · Bivaque`,text:web?`${shareCard.title} · ${link.href}`:`${shareCard.title} · demonstração Bivaque`});notify('Cartão compartilhado','share');}catch(error){if(error.name!=='AbortError')notify('Não foi possível compartilhar a imagem. Use “Baixar imagem” ou “Compartilhar link”.','error');}
  return true;
 }

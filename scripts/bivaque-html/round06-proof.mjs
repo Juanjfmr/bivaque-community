@@ -326,4 +326,7 @@ const checkpoints = {
   },
 }
 
-await runProof(checkpoints, "round06")
+// O mapa de bairros (Rodada 31) carrega MapLibre e o mapa-base quando o botão "Mapa" é tocado.
+await runProof(checkpoints, "round06", {
+  allowExternal: ["https://unpkg.com/maplibre-gl@", "https://tiles.openfreemap.org/"],
+})

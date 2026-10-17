@@ -8,7 +8,7 @@ const MAP_JS='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
 const MAP_CSS='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
 const MAP_STYLE='https://tiles.openfreemap.org/styles/liberty';
 const HOOD_POINTS={'Ponta Negra':[-60.0962,-3.0509],'Planalto':[-60.0572,-3.0653],'Dom Pedro':[-60.0431,-3.0877],'Flores':[-60.0212,-3.0728],'Adrianópolis':[-60.0090,-3.1017],'Parque 10':[-60.0213,-3.0794],'Tarumã':[-60.0513,-3.0247],'Centro':[-60.0216,-3.1321]};
-let catalogView='list',catalogMap=null,mapLoading=null;
+let catalogView='list',catalogMap=null,catalogMapKey='',mapLoading=null;
 function catalogViewHtml(){return `<div class="fview" role="group" aria-label="Ver como">${[['list','list','Lista'],['map','map','Mapa']].map(([v,ic,l])=>`<button type="button" class="fchip${catalogView===v?' on':''}" data-action="catalog-view" data-value="${v}" aria-pressed="${catalogView===v}" aria-label="Ver em ${l.toLowerCase()}">${icon(ic)}<span class="fview-label">${l}</span></button>`).join('')}</div>`;}
 function hoodCounts(list){const m=new Map();for(const x of list)m.set(x.hood,(m.get(x.hood)||0)+1);return [...m].sort((a,b)=>b[1]-a[1]);}
 function catalogMapHtml(list,kind){
@@ -24,19 +24,24 @@ function loadMapLibre(){
   const s=document.createElement('script');s.src=MAP_JS;s.async=true;const t=setTimeout(()=>reject(new Error('timeout')),15000);
   s.onload=()=>{clearTimeout(t);window.maplibregl?resolve(window.maplibregl):reject(new Error('sem maplibregl'));};
   s.onerror=()=>{clearTimeout(t);reject(new Error('falha ao carregar'));};document.head.appendChild(s);
- }).catch(error=>{mapLoading=null;throw error;});
+ }).catch(error=>{mapLoading=null;document.querySelectorAll(`script[src="${MAP_JS}"],link[href="${MAP_CSS}"]`).forEach(n=>n.remove());throw error;});
  return mapLoading;
 }
-// Depois de cada desenho: monta o mapa se a tela pede, e desmonta o anterior.
+// Depois de cada desenho: monta o mapa se a tela pede, e desmonta o anterior. Com os mesmos
+// bairros e contagens (ex.: salvar um anúncio na folha do bairro), o mapa já montado volta para o
+// lugar, sem baixar tudo de novo nem perder o zoom.
 async function catalogMapAfterRender(){
- if(catalogMap){try{catalogMap.remove();}catch{}catalogMap=null;}
- const box=$('#catalog-map');if(!box)return;
- const kind=catalogKind(),list=filteredItems(kind),status=$('#cmap-status');
+ refreshHoodSheet();
+ const box=$('#catalog-map'),kind=box?catalogKind():'',list=box?filteredItems(kind):[],key=box?`${kind}|${hoodCounts(list).join(';')}`:'';
+ if(catalogMap&&box&&key===catalogMapKey){box.replaceWith(catalogMap.getContainer());catalogMap.resize();return;}
+ if(catalogMap){try{catalogMap.remove();}catch{}catalogMap=null;catalogMapKey='';}
+ if(!box)return;
+ const status=$('#cmap-status');
  try{
   const gl=await loadMapLibre();if(!box.isConnected)return;
   const pts=hoodCounts(list).filter(([h])=>HOOD_POINTS[h]);
   const map=new gl.Map({container:box,style:MAP_STYLE,center:[-60.035,-3.08],zoom:11.3,attributionControl:{compact:true},cooperativeGestures:true});
-  catalogMap=map;map.addControl(new gl.NavigationControl({showCompass:false}),'top-right');
+  catalogMap=map;catalogMapKey=key;map.addControl(new gl.NavigationControl({showCompass:false}),'top-right');
   for(const [h,n] of pts){
    const el=document.createElement('button');el.type='button';el.className='cmap-pin';el.dataset.action='map-hood';el.dataset.value=h;el.textContent=String(n);
    new gl.Marker({element:el}).setLngLat(HOOD_POINTS[h]).addTo(map);
@@ -52,7 +57,17 @@ async function catalogMapAfterRender(){
 }
 function openHoodSheet(hood){
  const kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood);
- showDialog(`${hood} · ${countWord(list.length,kind)}`,`<p class="form-note">Com os filtros que você escolheu.</p>${list.length?`<div class="card-grid">${list.map(photoCard).join('')}</div>`:empty('Nenhum anúncio neste bairro','Mude os filtros ou escolha outro bairro.','location_off')}`,`${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}${btn('Fechar','close-dialog','','filled')}`);
+ showDialog(`${hood} · ${countWord(list.length,kind)}`,`<p class="form-note">Com os filtros que você escolheu.</p>${list.length?`<div class="card-grid">${list.map(photoCard).join('')}</div>`:empty('Nenhum anúncio neste bairro','Mude os filtros ou escolha outro bairro.','location_off')}`,`${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}${btn('Fechar','close-dialog','','filled')}`,'hood');
+}
+// A folha do bairro não é redesenhada pelo render(); o botão de salvar acompanha o estado.
+function refreshHoodSheet(){
+ if(!dialog.open||dialog.dataset.kind!=='hood')return;
+ for(const b of dialog.querySelectorAll('[data-action="save-item"]')){
+  const x=itemById(b.dataset.value);if(!x||(b.ariaPressed??b.getAttribute('aria-pressed'))===String(!!x.saved))continue;
+  const focused=document.activeElement===b,t=document.createElement('template');
+  t.innerHTML=iconBtn(x.saved?'bookmark':'bookmark_border','save-item',x.id,x.saved?'Remover dos salvos':'Salvar anúncio',`class="save-card" aria-pressed="${!!x.saved}"`);
+  const nb=t.content.firstElementChild;b.replaceWith(nb);if(focused)nb.focus();
+ }
 }
 async function mapAction(action,value){
  if(!['catalog-view','map-hood','map-hood-list'].includes(action))return false;

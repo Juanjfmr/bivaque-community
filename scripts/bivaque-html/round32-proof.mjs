@@ -32,6 +32,28 @@ async function setDates(page, offsets) {
 const headers = (page) => page.locator("#main .agenda-date").allInnerTexts()
 
 const checkpoints = {
+  // Revisão do lote C: encontro criado pela pessoa (sem público escolhido) vale para todos.
+  async "event-without-audience-shows-in-every-filter"(page) {
+    await setDates(page, [1])
+    const id = await page.evaluate((k) => {
+      const x = JSON.parse(localStorage.getItem(k))
+      delete x.events[0].modes
+      localStorage.setItem(k, JSON.stringify(x))
+      return x.events[0].id
+    }, KEY)
+    await reload(page)
+    await go(page, "agenda")
+    for (const v of ["chegando", "moro", "saindo"]) {
+      await page.locator(`#main [data-action="agenda-filter"][data-value="${v}"]`).click()
+      await settle(page)
+      expect(
+        await page
+          .locator(`#main .agenda-day [data-action="open-event"][data-value="${id}"]`)
+          .count(),
+        `encontro sem público sumiu em ${v}`,
+      )
+    }
+  },
   async "groups-by-day-with-friendly-labels"(page) {
     await setDates(page, [0, 1, 1, 9])
     const h = await headers(page)

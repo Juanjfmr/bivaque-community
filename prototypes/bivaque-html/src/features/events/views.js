@@ -1,11 +1,14 @@
 // Rodada 32: agenda agrupada por dia, com filtro por público (referência do Mobbin: Luma).
 let agendaFilter='all';
 const AGENDA_AUDIENCE=[['all','Todos'],['chegando','Para quem chega'],['moro','Para quem mora'],['saindo','Para quem sai']];
+// Encontro criado pela pessoa não escolhe público: vale para todos.
+const eventModes=e=>e.modes?.length?e.modes:['chegando','moro','saindo'];
 function agendaDay(iso){const today=dateISO(0),tomorrow=dateISO(1);if(iso===today)return 'Hoje';if(iso===tomorrow)return 'Amanhã';const t=new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});return t.charAt(0).toUpperCase()+t.slice(1);}
 function renderAgenda(){
  const all=state.events.filter(e=>e.city===state.city&&e.date>=dateISO()).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
- if(!AGENDA_AUDIENCE.some(([v])=>v===agendaFilter))agendaFilter='all';
- const count=v=>v==='all'?all.length:all.filter(e=>(e.modes||[]).includes(v)).length,es=agendaFilter==='all'?all:all.filter(e=>(e.modes||[]).includes(agendaFilter));
+ const count=v=>v==='all'?all.length:all.filter(e=>eventModes(e).includes(v)).length;
+ if(!AGENDA_AUDIENCE.some(([v])=>v===agendaFilter)||!count(agendaFilter))agendaFilter='all';
+ const es=agendaFilter==='all'?all:all.filter(e=>eventModes(e).includes(agendaFilter));
  const days=[];for(const e of es){const last=days.at(-1);if(last?.date===e.date)last.items.push(e);else days.push({date:e.date,items:[e]});}
  const chips=all.length?filterChips(AGENDA_AUDIENCE.filter(([v])=>v==='all'||count(v)).map(([v,l])=>[v,`${l} · ${count(v)}`]),agendaFilter,'agenda-filter'):'';
  return `<div class="page-head"><div><h1>Agenda da cidade</h1><p>Encontros da comunidade de ${esc(state.city)}.</p></div>${!readonly()?btn('Criar encontro','create-event','','tonal','add'):''}</div>${readonlyHtml()}${chips}${es.length?days.map(d=>`<section class="agenda-day" aria-labelledby="ad-${d.date}"><h2 class="agenda-date" id="ad-${d.date}">${esc(agendaDay(d.date))}</h2><div class="list">${d.items.map(eventRow).join('')}</div></section>`).join(''):all.length?empty('Nenhum encontro para esse público','Veja todos os encontros da cidade.','event','agenda-filter','Ver todos'):empty('Nenhum encontro agendado','Os próximos encontros aparecerão aqui.','event',readonly()?'':'create-event',readonly()?'':'Criar encontro')}`;
