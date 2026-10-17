@@ -5,7 +5,7 @@
 const LIST_PAGE=24;
 var pagedShown=new Map(),pagedLists={},pagedObserver=null;
 function pagedHtml(id,sig,list,cardFn,{noun,wrap='card-grid',end='',size=LIST_PAGE}={}){
- const prev=pagedShown.get(id),n=Math.min(list.length,prev?.sig===sig?prev.n:size);
+ const prev=pagedShown.get(id),n=Math.min(list.length,Math.max(size,prev?.sig===sig?prev.n:0));
  pagedShown.set(id,{sig,n});pagedLists[id]={list,cardFn,noun,wrap,end,size};
  return `<div class="${wrap}" data-paged="${id}">${list.slice(0,n).map(cardFn).join('')}</div>${pagedFootHtml(id)}`;
 }
