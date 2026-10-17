@@ -334,8 +334,9 @@ const checkpoints = {
   },
   async "recent-search-suggestion-runs"(page) {
     await go(page, "busca")
-    const chip = page.locator('md-suggestion-chip[data-action="recent-search"]').first()
-    expect(await chip.count(), "buscas recentes não são chips de sugestão")
+    // Rodada 44: sugestões e recentes viraram linhas tocáveis (antes, chips de sugestão).
+    const chip = page.locator('#search-results [data-action="recent-search"]').first()
+    expect(await chip.count(), "sem sugestão tocável na busca")
     const term = await chip.getAttribute("data-value")
     await chip.click()
     await settle(page)

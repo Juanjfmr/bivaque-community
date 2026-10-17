@@ -57,6 +57,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07s/CSS | `src/styles/detail-immersive.css` | Frontend premium | Rodada 38: anúncio e negócio com a foto até o topo no celular |
 | 07t/CSS | `src/styles/sheets.css` | Frontend premium | Rodada 41: fundo que encolhe sob as folhas e folha do bairro sobre o mapa |
 | 07u/CSS | `src/styles/push-install.css` | Frontend premium | Rodada 43: folha dos avisos e passo a passo da instalação |
+| 07v/CSS | `src/styles/search-mobile.css` | Frontend premium | Rodada 44: busca em tela cheia com recentes, explorar e sugestões |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
