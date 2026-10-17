@@ -1,0 +1,16 @@
+/* Rodada 45: fim de bloco das listas longas (contagem, barra, botão de reserva e fim da lista). */
+.paged-foot{display:grid;justify-items:center;gap:10px;margin:22px 0 8px;text-align:center}
+.paged-foot small{font-size:13px;color:var(--md-sys-color-on-surface-variant)}
+.paged-bar{display:block;width:160px;height:4px;border-radius:2px;background:var(--md-sys-color-surface-container-highest);overflow:hidden}
+.paged-bar i{display:block;height:100%;background:var(--md-sys-color-primary)}
+.paged-foot.is-loading .paged-bar,.paged-foot.is-loading md-outlined-button{visibility:hidden}
+.paged-skel{border-radius:24px;border:1px solid var(--md-sys-color-outline-variant);overflow:hidden;background:var(--md-sys-color-surface-container-lowest)}
+.paged-skel i{display:block;aspect-ratio:4/3;background:linear-gradient(90deg,var(--md-sys-color-surface-container) 25%,var(--md-sys-color-surface-container-high) 50%,var(--md-sys-color-surface-container) 75%);background-size:200% 100%;animation:paged-shimmer 1.2s linear infinite}
+.paged-skel b{display:block;height:14px;margin:14px 16px 0;border-radius:7px;background:var(--md-sys-color-surface-container-high)}
+.paged-skel b+b{width:40%;margin-bottom:16px}
+@keyframes paged-shimmer{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.paged-skel i{animation:none}}
+.paged-end{display:flex;gap:12px;align-items:center;margin:16px 0 8px;padding:16px;border-radius:20px;background:var(--md-sys-color-surface-container-low)}
+.paged-end>md-icon{flex:none;color:var(--md-sys-color-primary)}
+.paged-end b{display:block;font-size:15px;line-height:21px}
+.paged-end small{display:block;font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant)}

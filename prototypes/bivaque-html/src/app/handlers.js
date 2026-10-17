@@ -7,6 +7,7 @@ async function perform(action,value,el){
  if(await shareCardAction(action,value))return;
  if(await compareAction(action,value))return;
  if(await mapAction(action,value))return;
+ if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
  switch(action){
