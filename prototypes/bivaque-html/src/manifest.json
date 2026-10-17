@@ -37,6 +37,7 @@
         "styles/sheets.css",
         "styles/push-install.css",
         "styles/search-mobile.css",
+        "styles/paged.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -102,6 +103,8 @@
         "shell/toasts.js",
         "shell/celebrate.js",
         "shell/haptics.js",
+        "shell/paged-list.js",
+        "shell/in-place.js",
         "features/profile/settings.js",
         "features/profile/push-install.js",
         "features/listings/editor.js",

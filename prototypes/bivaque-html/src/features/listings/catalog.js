@@ -24,6 +24,11 @@ function catalogMatches(x,kind,a){
  return hood&&(!a.cats.length||a.cats.includes(x.cat))&&(!a.cond||x.cond===a.cond)&&(a.pickup!=='now'||!pick||pick<=dateISO(0))&&(a.pickup!=='30'||!pick||pick<=dateISO(30));
 }
 function filteredItems(kind=catalogKind(),a=catalogAttrs[kind]){const list=cityItems().filter(x=>x.status==='active'&&x.kind===kind&&(!a.min||itemTotal(x)>=Number(a.min))&&(!a.max||itemTotal(x)<=Number(a.max))&&catalogMatches(x,kind,a));return list.sort((p,q)=>searchSort==='price-low'?itemTotal(p)-itemTotal(q):searchSort==='price-high'?itemTotal(q)-itemTotal(p):q.createdAt-p.createdAt);}
-function itemResults(list,kind=catalogKind()){return list.length?`<div class="card-grid">${list.map(photoCard).join('')}</div>`:kind==='imovel'?empty('Nenhum imóvel com esses filtros','Tente outro bairro, um total maior ou menos comodidades.','search_off','clear-filters','Limpar filtros'):empty('Nenhum desapego com esses filtros','Tente outra categoria, outro bairro ou amplie a faixa de preço.','search_off','clear-filters','Limpar filtros');}
+function catalogEndHtml(kind){
+ if(readonly()||(filterActiveCount(kind)&&currentAlert(kind)))return '';
+ const f=filterActiveCount(kind),what=kind==='imovel'?'outro imóvel':'outro desapego';
+ return `<div class="paged-end">${icon(f?'notifications':'tune')}<span class="grow"><b>Não achou o que procura?</b><small>${f?`Crie um alerta e avisamos quando aparecer ${what} assim.`:'Filtre por bairro, preço e mais para achar mais rápido.'}</small></span>${f?btn('Avise-me','search-alert','','tonal'):btn('Filtrar','catalog-pill','all','tonal')}</div>`;
+}
+function itemResults(list,kind=catalogKind()){return list.length?pagedHtml(`catalog-${kind}`,`${state.city}|${JSON.stringify(catalogAttrs[kind])}|${searchSort}`,list,photoCard,{noun:kind==='imovel'?'imóveis':'desapegos',end:catalogEndHtml(kind)}):kind==='imovel'?empty('Nenhum imóvel com esses filtros','Tente outro bairro, um total maior ou menos comodidades.','search_off','clear-filters','Limpar filtros'):empty('Nenhum desapego com esses filtros','Tente outra categoria, outro bairro ou amplie a faixa de preço.','search_off','clear-filters','Limpar filtros');}
 // Seção da Início com os dois tipos: cada um leva à sua tela.
 function catalogSectionTitle(title){return `<div class="section-title"><h2>${esc(title)}</h2><div class="section-links">${btn('Ver desapegos','intent','desapego','text')}${btn('Ver imóveis','intent','imovel','text')}</div></div>`;}

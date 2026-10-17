@@ -7,6 +7,7 @@ async function perform(action,value,el){
  if(await shareCardAction(action,value))return;
  if(await compareAction(action,value))return;
  if(await mapAction(action,value))return;
+ if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
  switch(action){
@@ -30,10 +31,10 @@ async function perform(action,value,el){
  case 'report':case 'submit-report':showGlobalDependency(action);break;
  case 'search':searchQuery='';navigate('busca');break;
  case 'search-from-home':searchQuery=$('#home-search')?.value.trim()||'';saveRecent(searchQuery);navigate('busca');break;
- case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();$('#search-query').focus();break;
+ case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();pagedWatch();$('#search-query').focus();break;
  case 'recent-search':case 'guide-search':searchQuery=value;saveRecent(value);navigate('busca');break;
  // Rodada 44: a seta completa o texto sem buscar; Limpar apaga as recentes; Explorar abre a tela filtrada.
- case 'search-fill':{const f=$('#search-query');searchQuery=value;if(f){f.value=value;f.focus();}$('#search-results')&&($('#search-results').innerHTML=searchResults());break;}
+ case 'search-fill':{const f=$('#search-query');searchQuery=value;if(f){f.value=value;f.focus();}$('#search-results')&&($('#search-results').innerHTML=searchResults());pagedWatch();break;}
  case 'clear-recent':if(mutate(()=>{state.recent=[];},{redraw:false})){$('#search-results')&&($('#search-results').innerHTML=searchResults());notify('Buscas recentes apagadas','delete');$('#search-query')?.focus();}break;
  case 'search-explore':if(value.startsWith('biz|')){bizQuery='';bizCat=value.slice(4);navigate('negocios');}else navigate(value==='imovel'?'imoveis':'desapegos');break;
  case 'search-type':searchType=value;render();globalFocus(action,value);break;
@@ -83,7 +84,7 @@ async function perform(action,value,el){
  case 'open-item':{
   const i=itemById(value);if(!i)break;if(i.city!==state.city)mutate(()=>state.city=i.city,{redraw:false});if(!i.mine)mutate(()=>i.views=(i.views||0)+1,{redraw:false});remember('item',value);if(dialog.open)await closeDialog(true);navigate('anuncio',value);break;
  }
- case 'save-item':{const i=itemById(value);if(!i)break;if(mutate(()=>i.saved=!i.saved)){haptic();notify(i.saved?'Anúncio salvo':'Anúncio removido dos salvos',i.saved?'bookmark':'bookmark_remove');}break;}
+ case 'save-item':{const i=itemById(value);if(!i)break;if(toggleSaved(action,i)){haptic();notify(i.saved?'Anúncio salvo':'Anúncio removido dos salvos',i.saved?'bookmark':'bookmark_remove');}break;}
  case 'item-interest':await contact('item',value,'Olá! '+(itemById(value)?.kind==='imovel'?'O imóvel ainda está disponível?':'O anúncio ainda está disponível?'));break;
  case 'item-offer':{const i=itemById(value);if(!i||i.status!=='active'){notify('Este anúncio foi encerrado.','info');break;}showDialog('Fazer uma oferta',`${field('offer-amount','Sua oferta (R$)',Math.round(i.numPrice*.9),'type="number" min="1" required')}<p class="form-note">O valor será enviado como mensagem. O anunciante decide se aceita.</p>`,`${btn('Cancelar','close-dialog','','text')}${btn('Preparar oferta','send-offer',value,'filled')}`);break;}
  case 'send-offer':if(validFields(['offer-amount']))await contact('item',value,`Olá! Você aceitaria ${money($('#offer-amount').value)}?`);break;
@@ -96,7 +97,7 @@ async function perform(action,value,el){
   const type=action==='item-leads'?'item':'biz',ts=state.threads.filter(t=>t.about.type===type&&t.about.id===value);showDialog('Contatos recebidos',ts.length?`<div class="list">${ts.map(t=>profileRow('chat_bubble',t.who,t.msgs.at(-1)?.t||'Conversa iniciada','open-thread',t.id)).join('')}</div>`:empty('Nenhum contato ainda','Os contatos sobre esta publicação aparecerão aqui.','chat_bubble'),btn('Fechar','close-dialog','','text'));break;
  }
  case 'open-biz':{const b=bizById(value);if(!b)break;if(b.city!==state.city)mutate(()=>state.city=b.city,{redraw:false});if(!b.mine)mutate(()=>b.views=(b.views||0)+1,{redraw:false});remember('biz',value);if(dialog.open)await closeDialog(true);navigate('negocio',value);break;}
- case 'save-biz':{const b=bizById(value);if(!b)break;if(mutate(()=>b.saved=!b.saved)){haptic();notify(b.saved?'Negócio salvo':'Negócio removido dos salvos',b.saved?'bookmark':'bookmark_remove');}break;}
+ case 'save-biz':{const b=bizById(value);if(!b)break;if(toggleSaved(action,b)){haptic();notify(b.saved?'Negócio salvo':'Negócio removido dos salvos',b.saved?'bookmark':'bookmark_remove');}break;}
  case 'my-biz':if(readonly())mutate(()=>state.city=state.homeCity,{redraw:false});if(state.myBiz?.live){if(dialog.open)await closeDialog(true);navigate('negocio',state.myBiz.id);}else openBusinessEditor();break;
  case 'edit-biz':openBusinessEditor(value);break;
  case 'submit-biz':await submitBusiness();break;

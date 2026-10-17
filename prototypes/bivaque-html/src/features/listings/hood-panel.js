@@ -4,6 +4,9 @@
 // No desktop e no tablet, a folha do bairro continua sendo o diálogo (openHoodSheet).
 var hoodPanel=null;
 const HOOD_STOPS=['low','half','full'];
+// Rodada 48 (lote de volume): num bairro com muitos anúncios, a folha mostra 12 e termina em "Ver todos".
+const HOOD_PANEL_CAP=12;
+function hoodAllTile(hood,n){return `<button type="button" class="hp-all" data-action="map-hood-list" data-value="${esc(hood)}">${icon('list')}<b>Ver todos os ${n}</b><small>na lista, só deste bairro</small></button>`;}
 function hoodStopHeight(stop){return stop==='low'?248:stop==='half'?Math.round(innerHeight*.58):innerHeight-76;}
 function hoodCompactRow(x,kind){
  const p=image(x.photos?.[0]),meta=kind==='imovel'?[x.beds?`${x.beds} ${x.beds===1?'quarto':'quartos'}`:'',x.area?`${x.area} m²`:''].filter(Boolean).join(' · '):[x.cond,x.cat].filter(Boolean).join(' · ');
@@ -11,7 +14,7 @@ function hoodCompactRow(x,kind){
 }
 function hoodPanelHtml(){
  const {hood,stop}=hoodPanel,kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood);
- const body=!list.length?`<p class="small muted">Nenhum anúncio neste bairro com esses filtros.</p>`:stop==='low'?`${hoodCompactRow(list[0],kind)}${list.length>1?`<p class="hp-more">Puxe para ver os ${list.length} anúncios</p>`:''}`:`<div class="hp-cards">${list.map(photoCard).join('')}</div>`;
+ const body=!list.length?`<p class="small muted">Nenhum anúncio neste bairro com esses filtros.</p>`:stop==='low'?`${hoodCompactRow(list[0],kind)}${list.length>1?`<p class="hp-more">Puxe para ver os ${list.length} anúncios</p>`:''}`:`<div class="hp-cards">${list.slice(0,HOOD_PANEL_CAP).map(photoCard).join('')}${list.length>HOOD_PANEL_CAP?hoodAllTile(hood,list.length):''}</div>`;
  const more=stop==='full'?'Mostrar menos do bairro':'Mostrar mais do bairro';
  return `<div class="hp-top"><button type="button" class="hp-grab" data-action="hood-panel-stop" aria-label="${more}"></button><div class="hp-head"><h2 id="hp-title" tabindex="-1">${esc(hood)}</h2><small>${esc(countWord(list.length,kind))} com os filtros que você escolheu</small></div>${iconBtn('close','hood-panel-close','',`Fechar ${hood}`)}</div><div class="hp-body">${body}</div><div class="hp-foot">${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}</div>`;
 }
