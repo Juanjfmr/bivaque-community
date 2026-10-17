@@ -187,6 +187,38 @@ const checkpoints = {
       )
     }
   },
+  // Revisão do lote: a antecedência vale dentro do #main, os gestos chegam ao bloco novo e o leitor
+  // de tela ouve a nova contagem.
+  async "loads-before-the-end-is-visible"(page) {
+    await withVolume(page, { items: 80 })
+    await go(page, "desapegos")
+    await page.evaluate(() => {
+      const main = document.querySelector("#main")
+      const foot = document.querySelector('[data-paged-foot="catalog-desapego"]')
+      const top =
+        foot.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop
+      main.scrollTop = top - main.clientHeight - 300
+    })
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-paged="catalog-desapego"] > .photo-card').length >= 48,
+      null,
+      { timeout: 4000 },
+    )
+  },
+  async "new-block-gets-gestures-and-announces"(page) {
+    await withVolume(page, { items: 80, noObserver: true })
+    await go(page, "desapegos")
+    await page.locator('[data-action="list-more"][data-value="catalog-desapego"]').click()
+    await settle(page)
+    const lp = await page
+      .locator('[data-paged="catalog-desapego"] > .photo-card')
+      .nth(30)
+      .locator(".card-link")
+      .getAttribute("data-long-press")
+    expect(lp === "1", "cartão do bloco novo sem o menu de segurar")
+    const live = await page.locator('[data-paged-live="catalog-desapego"]').innerText()
+    expect(/^Mostrando 48 de \d+ desapegos$/.test(live), `região viva: ${live}`)
+  },
 }
 
 await runProof(checkpoints, "round45")

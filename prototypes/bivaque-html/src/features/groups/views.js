@@ -97,7 +97,7 @@ function renderGroup(){
  if(member&&!readonly())h+=`<button type="button" class="g-compose" data-action="new-post" data-value="${g.id}"><span class="avatar me">${esc(initals(state.profile.name))}</span><span class="grow">Escreva para o grupo…</span>${icon('photo_camera')}</button>`;
  h+=filterChips([['all','Tudo'],['question','Perguntas'],['event','Eventos']],groupFilter,'group-filter');
  const posts=g.posts.filter(x=>groupFilter==='all'?x!==ev:x.type===groupFilter).sort((a,b)=>b.at-a.at);
- h+=posts.length?pagedHtml(`feed-${g.id}`,groupFilter,posts,x=>gPostCard(g,x),{noun:'publicações',wrap:'stack',size:10}):empty(member?'Comece uma conversa útil':'Ainda sem publicações',member?'Publique um aviso, uma pergunta, um evento ou uma enquete.':'Entre no grupo para participar.','forum',member&&!readonly()?'new-post-empty':'',member&&!readonly()?'Escrever':'');
+ h+=posts.length?pagedHtml(`feed-${g.id}`,groupFilter,posts,x=>gPostCard(g,x),{noun:'publicações',art:'as',wrap:'stack',size:10}):empty(member?'Comece uma conversa útil':'Ainda sem publicações',member?'Publique um aviso, uma pergunta, um evento ou uma enquete.':'Entre no grupo para participar.','forum',member&&!readonly()?'new-post-empty':'',member&&!readonly()?'Escrever':'');
  return h;
 }
 function renderPost(){

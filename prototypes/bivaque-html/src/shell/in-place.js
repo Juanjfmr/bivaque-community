@@ -5,7 +5,7 @@ function savedNeedsRender(){return ['salvos','voce'].includes(route.name)||!!roo
 // Troca cada botão de salvar desse anúncio ou negócio (cartão, folha do bairro, página) e devolve o foco.
 function patchSaveButtons(action,x){
  const [on,off]=action==='save-item'?['Remover dos salvos','Salvar anúncio']:['Remover negócio dos salvos','Salvar negócio'];
- for(const b of $$(`[data-action="${action}"][data-value="${x.id}"]`)){
+ for(const b of $$(`[data-action="${action}"][data-value="${x.id}"]`).filter(e=>!e.closest('#create-menu'))){
   const focused=document.activeElement===b,t=document.createElement('template');
   t.innerHTML=iconBtn(x.saved?'bookmark':'bookmark_border',action,x.id,x.saved?on:off,`${b.classList.contains('save-card')?'class="save-card" ':''}aria-pressed="${!!x.saved}"`);
   // O botão do Material só aceita foco depois de desenhar o interior.

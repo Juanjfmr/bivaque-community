@@ -34,7 +34,7 @@ async function perform(action,value,el){
  case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();pagedWatch();$('#search-query').focus();break;
  case 'recent-search':case 'guide-search':searchQuery=value;saveRecent(value);navigate('busca');break;
  // Rodada 44: a seta completa o texto sem buscar; Limpar apaga as recentes; Explorar abre a tela filtrada.
- case 'search-fill':{const f=$('#search-query');searchQuery=value;if(f){f.value=value;f.focus();}$('#search-results')&&($('#search-results').innerHTML=searchResults());break;}
+ case 'search-fill':{const f=$('#search-query');searchQuery=value;if(f){f.value=value;f.focus();}$('#search-results')&&($('#search-results').innerHTML=searchResults());pagedWatch();break;}
  case 'clear-recent':if(mutate(()=>{state.recent=[];},{redraw:false})){$('#search-results')&&($('#search-results').innerHTML=searchResults());notify('Buscas recentes apagadas','delete');$('#search-query')?.focus();}break;
  case 'search-explore':if(value.startsWith('biz|')){bizQuery='';bizCat=value.slice(4);navigate('negocios');}else navigate(value==='imovel'?'imoveis':'desapegos');break;
  case 'search-type':searchType=value;render();globalFocus(action,value);break;

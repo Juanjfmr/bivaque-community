@@ -16,3 +16,5 @@
 .paged-end small{display:block;font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant)}
 /* Rodada 46: "Ver todos os N" na busca ocupa a largura da seção. */
 .search-all{width:100%;margin-top:12px}
+/* Região viva do fim de bloco: só para leitor de tela. */
+.paged-live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}

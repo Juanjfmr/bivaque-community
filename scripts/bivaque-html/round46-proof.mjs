@@ -158,6 +158,53 @@ const checkpoints = {
       "busca curta com Ver todos",
     )
   },
+  // Revisão do lote: foco no feed depois de "Mostrar mais" e artigo feminino no fim.
+  async "feed-focus-and-feminine-end"(page) {
+    await page.addInitScript(() => {
+      window.IntersectionObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return []
+        }
+      }
+    })
+    await withVolume(page, (x) => {
+      const g = x.groups.find((i) => i.id === "g-familias")
+      const base = g.posts.find((p) => p.type === "post") || g.posts[0]
+      for (let n = 0; n < 12; n++)
+        g.posts.push({
+          ...base,
+          id: `vol-p${n}`,
+          type: "post",
+          text: `Publicação ${n + 1}`,
+          at: base.at - (n + 1) * 6e4,
+          comments: [],
+        })
+      const q = x.asks.find((a) => a.status === "open" && !a.mine && !a.fromMemory)
+      for (let n = 0; n < 30; n++)
+        x.asks.push({ ...q, id: `vol-a${n}`, q: `Pergunta ${n + 1}`, answers: [] })
+    })
+    await go(page, "grupo/g-familias")
+    await page.locator('[data-action="list-more"][data-value="feed-g-familias"]').click()
+    await settle(page)
+    const at = await page.evaluate(() => {
+      const feed = document.querySelector('[data-paged="feed-g-familias"]')
+      const el = document.activeElement
+      return feed.contains(el)
+        ? [...feed.children].findIndex((c) => c === el || c.contains(el))
+        : -1
+    })
+    expect(at === 10, `foco depois de Mostrar mais no feed: ${at}`)
+    await go(page, "comunidade")
+    await page.locator('[data-action="list-more"][data-value="asks"]').click()
+    await settle(page)
+    expect(
+      /^Você viu as \d+ perguntas$/.test(await foot(page, "asks")),
+      `fim: ${await foot(page, "asks")}`,
+    )
+  },
 }
 
 await runProof(checkpoints, "round46")

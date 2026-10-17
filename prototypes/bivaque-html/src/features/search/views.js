@@ -5,16 +5,16 @@ function matchingBiz(q){return cityBiz().filter(b=>b.claimed!==false&&matches(q,
 function searchLists(){const q=searchQuery.trim();return {items:cityItems().filter(i=>i.status==='active'&&matches(q,i.title+' '+i.desc+' '+i.hood)),biz:cityBiz().filter(b=>matches(q,b.name+' '+b.cat+' '+b.svc.join(' ')+' '+(b.specs||[]).join(' ')+' '+b.hoods.join(' '),b.kw||[])),asks:cityAsks().filter(a=>matches(q,a.q+' '+a.topic,a.keywords||[])),groups:cityGroups().filter(g=>matches(q,g.t+' '+g.about)),events:state.events.filter(e=>e.city===state.city&&e.date>=dateISO()&&matches(q,e.title+' '+e.description+' '+e.place))};}
 function renderSearch(){return `<div class="page-head search-head"><div><h1>Buscar em ${esc(state.city)}</h1><p>Encontre oportunidades, negócios e respostas da comunidade.</p></div></div>${filterChips([['all','Tudo'],['items','Anúncios'],['biz','Negócios'],['asks','Indicações'],['groups','Grupos'],['events','Encontros']],searchType,'search-type')}<div id="search-results">${searchResults()}</div>`;}
 // Rodada 46: em "Tudo", cada tipo mostra os primeiros e "Ver todos os N" (Nextdoor, no Mobbin).
-const SEARCH_TYPES=[['items','Anúncios',photoCard,'card-grid',4,'anúncios'],['biz','Negócios',businessCard,'card-grid',4,'negócios'],['asks','Indicações e respostas',questionRow,'list',5,'indicações'],['groups','Grupos',g=>groupRow(g),'list',5,'grupos'],['events','Encontros',eventRow,'list',5,'encontros']];
+const SEARCH_TYPES=[['items','Anúncios',photoCard,'card-grid',4,'anúncios'],['biz','Negócios',businessCard,'card-grid',4,'negócios'],['asks','Indicações e respostas',questionRow,'list',5,'indicações','as'],['groups','Grupos',g=>groupRow(g),'list',5,'grupos'],['events','Encontros',eventRow,'list',5,'encontros']];
 function searchResults(){
  if(!searchQuery.trim())return searchStartSections();
  const groups=searchLists(),count=Object.entries(groups).filter(([k])=>searchType==='all'||searchType===k).reduce((n,[,v])=>n+v.length,0),suggest=searchSuggestHtml(searchQuery,groups);
  if(!count)return `${suggest}<section class="section">${empty('Nada sobre “'+searchQuery+'”','Tente termos mais simples. Se a dúvida ainda não tiver resposta, pergunte à comunidade.','search_off',readonly()?'':'ask-from-search',readonly()?'':'Pedir indicação')}</section>`;
  let h=`${suggest}<p class="small muted" style="margin-top:18px">${count} ${count===1?'resultado':'resultados'} em ${esc(state.city)}</p>`;
- for(const [k,title,fn,wrap,cap,noun] of SEARCH_TYPES){
+ for(const [k,title,fn,wrap,cap,noun,art='os'] of SEARCH_TYPES){
   const list=groups[k];if(!list.length||(searchType!=='all'&&searchType!==k))continue;
-  const body=searchType===k?pagedHtml(`search-${k}`,`${state.city}|${searchQuery}`,list,fn,{noun,wrap,end:k==='asks'?askEndHtml():''})
-   :`<div class="${wrap}">${list.slice(0,cap).map(fn).join('')}</div>${list.length>cap?btn(`Ver todos os ${list.length} ${noun}`,'search-type',k,'outlined').replace('<md-outlined-button','<md-outlined-button class="search-all"'):''}`;
+  const body=searchType===k?pagedHtml(`search-${k}`,`${state.city}|${searchQuery}`,list,fn,{noun,art,wrap,end:k==='asks'?askEndHtml():''})
+   :`<div class="${wrap}">${list.slice(0,cap).map(fn).join('')}</div>${list.length>cap?btn(`Ver ${art==='as'?'todas':'todos'} ${art} ${list.length} ${noun}`,'search-type',k,'outlined').replace('<md-outlined-button','<md-outlined-button class="search-all"'):''}`;
   h+=`<section class="section">${sectionTitle(title)}${body}</section>`;
  }
  return h;
