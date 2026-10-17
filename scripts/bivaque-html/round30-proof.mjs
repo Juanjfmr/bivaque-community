@@ -91,6 +91,11 @@ const checkpoints = {
       /saiu dos salvos/.test(await page.locator("#dialog").innerText()),
       "sem aviso dentro da comparação",
     )
+    // Revisão do lote C: o foco fica na comparação, não volta para o início da página.
+    expect(
+      await page.evaluate(() => document.activeElement?.matches?.("#dialog .prop-compare")),
+      "foco perdido ao tirar dos salvos",
+    )
     await page.locator('#dialog [data-action="compare-unsave"][data-value="i7"]').click()
     await settle(page)
     expect(

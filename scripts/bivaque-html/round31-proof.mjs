@@ -5,8 +5,8 @@ import { expect, go, runProof, settle, snapshot } from "./proof-harness.mjs"
 // A captura com a rede de verdade fica em round31-shots.mjs.
 const MAP_JS = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
 const STUB = `window.maplibregl={
- Map:class{constructor(o){window.__map={opts:o,markers:[],layers:[],removed:false};this.c=o.container;this.h={};setTimeout(()=>this.h.load?.(),0)}
-  on(e,f){this.h[e]=f;return this}addControl(){return this}remove(){window.__map.removed=true}
+ Map:class{constructor(o){window.__maps=(window.__maps||0)+1;window.__map={opts:o,markers:[],layers:[],removed:false};this.c=o.container;this.h={};setTimeout(()=>this.h.load?.(),0)}
+  on(e,f){this.h[e]=f;return this}addControl(){return this}getContainer(){return this.c}resize(){}remove(){window.__map.removed=true}
   getStyle(){return{layers:[{id:'place',type:'symbol'},{id:'water',type:'fill'}]}}
   getLayoutProperty(id){return id==='place'?['get','name:en']:undefined}
   setLayoutProperty(id,k,v){window.__map.layers.push([id,k,JSON.stringify(v)])}},
@@ -37,6 +37,25 @@ const pins = (page) =>
     .evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")))
 
 const checkpoints = {
+  // Revisão do lote C: salvar na folha do bairro atualiza o botão e não remonta o mapa.
+  async "saving-in-sheet-keeps-the-map"(page) {
+    await openMap(page)
+    await page.locator('#catalog-map .cmap-pin[data-value="Ponta Negra"]').click()
+    await settle(page)
+    const before = await page.evaluate(() => window.__maps)
+    await page.locator('#dialog [data-action="save-item"][data-value="i2"]').click()
+    await settle(page)
+    // O Material leva o aria-pressed do host para o botão interno: lê a propriedade.
+    const pressed = await page
+      .locator('#dialog [data-action="save-item"][data-value="i2"]')
+      .evaluate((b) => [b.ariaPressed, b.getAttribute("aria-pressed"), b.innerHTML.slice(0, 120)])
+    expect(
+      pressed[0] === "true" || pressed[1] === "true",
+      `botão da folha não acompanhou o salvar: ${JSON.stringify(pressed)}`,
+    )
+    expect((await page.evaluate(() => window.__maps)) === before, "mapa remontado ao salvar")
+    expect(await page.locator("#catalog-map .cmap-pin").count(), "marcadores sumiram")
+  },
   async "map-loads-only-when-asked"(page) {
     const asked = []
     page.on("request", (r) => r.url().startsWith("https://unpkg.com") && asked.push(r.url()))

@@ -23,8 +23,15 @@ function notify(text,ic='check_circle',undo=null){
  const bar=$('#snackbar');bar.classList.remove('is-paused');bar.innerHTML=toastInner(t,false);bar.classList.add('show');
  toastExpire(t);requestAnimationFrame(toastRenderStack);
 }
+// Fecha o aviso mais novo antes de o desfazer dele rodar, para o aviso que o desfazer mostra não
+// empilhar o aviso já desfeito.
+function toastDismissCurrent(){const t=toastCurrent;if(t)clearTimeout(t.timer);toastCurrent=null;toastUndo=null;$('#snackbar')?.classList.remove('show','is-paused');toastRenderStack();}
+// Recomeçar do zero: nenhum desfazer antigo pode ressuscitar dado no estado novo.
+function toastClearAll(){for(const t of toastStack)clearTimeout(t.timer);toastStack=[];toastDismissCurrent();}
 // Desfazer de um aviso da pilha (o do mais novo continua no case 'undo' de sempre).
 function toastUndoStacked(id){const t=toastStack.find(x=>String(x.id)===String(id));if(!t?.undo)return false;toastStack=toastStack.filter(x=>x!==t);clearTimeout(t.timer);toastRenderStack();t.undo();return true;}
-function toastPause(on){const t=toastCurrent,bar=$('#snackbar');if(!t)return;if(on&&!t.paused){t.paused=true;t.pausedAt=performance.now();clearTimeout(t.timer);bar.classList.add('is-paused');}else if(!on&&t.paused){t.start+=performance.now()-t.pausedAt;t.paused=false;bar.classList.remove('is-paused');toastExpire(t);}}
+// Só o aviso com desfazer pausa: um aviso simples parado sob o mouse cobriria o botão de baixo
+// (ex.: enviar, nas Conversas) para sempre.
+function toastPause(on){const t=toastCurrent,bar=$('#snackbar');if(!t||(on&&!t.undo))return;if(on&&!t.paused){t.paused=true;t.pausedAt=performance.now();clearTimeout(t.timer);bar.classList.add('is-paused');}else if(!on&&t.paused){t.start+=performance.now()-t.pausedAt;t.paused=false;bar.classList.remove('is-paused');toastExpire(t);}}
 function bindToastPause(){const bar=$('#snackbar');if(!bar)return;bar.addEventListener('mouseenter',()=>toastPause(true));bar.addEventListener('mouseleave',()=>toastPause(false));bar.addEventListener('focusin',()=>toastPause(true));bar.addEventListener('focusout',()=>toastPause(false));}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindToastPause);else bindToastPause();

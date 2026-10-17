@@ -1,4 +1,4 @@
-import { expect, go, reload, runProof, settle, snapshot } from "./proof-harness.mjs"
+import { expect, go, KEY, reload, runProof, settle, snapshot } from "./proof-harness.mjs"
 
 // Rodada 29: compartilhar anúncio ou negócio abre uma folha com o cartão desenhado no aparelho,
 // pronto para WhatsApp. "Compartilhar com imagem" manda imagem e link, "Baixar imagem" salva o
@@ -101,6 +101,49 @@ const checkpoints = {
     await page.locator('#detail-actions [data-action="share"]').click()
     await settle(page)
     expect(!(await page.locator("#share-preview").count()), "encontro abriu o cartão")
+  },
+  // Revisão do lote C: foto em retrato não invade a faixa do texto.
+  async "tall-photo-stays-in-its-band"(page) {
+    await snapshot(page)
+    await page.evaluate((k) => {
+      const c = document.createElement("canvas")
+      c.width = 200
+      c.height = 600
+      const g = c.getContext("2d")
+      g.fillStyle = "#ff0000"
+      g.fillRect(0, 0, 200, 600)
+      const x = JSON.parse(localStorage.getItem(k))
+      x.items.find((i) => i.id === "i2").photos = [c.toDataURL("image/png")]
+      localStorage.setItem(k, JSON.stringify(x))
+    }, KEY)
+    await reload(page)
+    await openSheet(page, "anuncio/i2")
+    const [top, text] = await preview(page).evaluate((img) => {
+      const c = document.createElement("canvas")
+      c.width = img.naturalWidth
+      c.height = img.naturalHeight
+      const g = c.getContext("2d")
+      g.drawImage(img, 0, 0)
+      return [g.getImageData(540, 360, 1, 1).data, g.getImageData(1000, 1000, 1, 1).data].map(
+        (d) => [...d.slice(0, 3)],
+      )
+    })
+    expect(top.join() === "255,0,0", `foto fora da faixa de cima: ${top}`)
+    expect(text.join() !== "255,0,0", `foto invadiu o texto: ${text}`)
+  },
+  // Revisão do lote C: o segundo cartão não baixa o arquivo do primeiro.
+  async "second-card-never-downloads-the-first"(page) {
+    await openSheet(page, "anuncio/i1")
+    await page.keyboard.press("Escape")
+    await settle(page)
+    const names = []
+    page.on("download", (d) => names.push(d.suggestedFilename()))
+    await go(page, "anuncio/i2")
+    await page.locator('#detail-actions [data-action="share"]').click()
+    await page.locator('#dialog [data-action="share-download"]').click()
+    await page.waitForFunction(() => document.querySelector("#share-preview img")?.complete)
+    await settle(page)
+    expect(!names.includes("bivaque-anuncio-i1.png"), `baixou o cartão anterior: ${names}`)
   },
 }
 

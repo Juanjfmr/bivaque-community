@@ -31,6 +31,6 @@ async function compareAction(action,value){
  if(action==='compare-saved'){openCompareSaved();return true;}
  const x=itemById(value);if(!x){openCompareSaved('Este anúncio não está mais disponível.');return true;}
  if(action==='compare-open'){if(dialog.open)await closeDialog(true);navigate('anuncio',value);return true;}
- if(mutate(()=>{itemById(value).saved=false;},{redraw:false})){render();if(savedRentals().length>=2)openCompareSaved(`“${x.title}” saiu dos salvos.`);else{if(dialog.open)await closeDialog(true);notify(`“${x.title}” saiu dos salvos. Salve outro imóvel para voltar a comparar.`,'bookmark_border');}}
+ if(mutate(()=>{itemById(value).saved=false;},{redraw:false})){render();if(savedRentals().length>=2){openCompareSaved(`“${x.title}” saiu dos salvos.`);$('#dialog .prop-compare')?.focus();}else{if(dialog.open)await closeDialog(true);notify(`“${x.title}” saiu dos salvos. Salve outro imóvel para voltar a comparar.`,'bookmark_border');}}
  return true;
 }
