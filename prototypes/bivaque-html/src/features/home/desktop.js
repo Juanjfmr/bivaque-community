@@ -1,5 +1,5 @@
 // Rodada 13: Início do desktop (a partir de 1024 px) aprovada pelo usuário em 15/10/2026.
-// Celular e tablet continuam com renderHome original. Duas colunas: o que a pessoa procura
+// Celular e tablet usam renderHome (Rodada 35), com estes mesmos blocos. Duas colunas: o que a pessoa procura
 // à esquerda; grupos, próximo encontro e chegada à direita. Sem estrelas: o sinal é indicação.
 const HOME_DESKTOP=matchMedia('(min-width:1024px)');
 HOME_DESKTOP.addEventListener('change',()=>{if(route.name==='inicio')render();});
@@ -30,16 +30,17 @@ function homeDeskNotice(){
  if(unread.length){const n=unread[0],text=noticeText(n);return strip('notifications',unread.length===1?'Você tem 1 aviso novo':`Você tem ${unread.length} avisos novos`,text,'Ver avisos','notices','');}
  return '';
 }
-// Serviços: dois indicados e o patrocinado, sempre com rótulo. Sem estrelas.
-function homeDeskServices(){
+// Serviços: indicados e o patrocinado, sempre com rótulo. Sem estrelas. No desktop o patrocinado
+// é o 3º cartão; no celular (Rodada 35), o 2º, para aparecer sem deslizar o carrossel.
+function homeDeskServices(sponAt=2){
  const organic=cityBiz().filter(b=>!b.spon).sort((a,b)=>b.recN-a.recN),spon=cityBiz().find(b=>b.spon&&b.claimed!==false);
- const list=spon?[...organic.slice(0,2),spon,...organic.slice(2,3)]:organic.slice(0,4);
+ const list=spon?[...organic.slice(0,sponAt),spon,...organic.slice(sponAt,3)]:organic.slice(0,4);
  const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,b.spon?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${countHtml(b.recN)} ${b.recN===1?'indicação':'indicações'}${avatarStack(b.says,b.recN)}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
  return `<section class="section">${sectionTitle('Serviços recomendados','Ver negócios','businesses')}<p class="small muted home-sub">Indicados pela comunidade de ${esc(state.city)}</p>${list.length?`<div class="home-row">${list.map(card).join('')}</div>`:empty('Ainda sem negócios cadastrados','As indicações da comunidade ajudarão a formar o guia de serviços.','storefront')}</section>`;
 }
-function homeDeskItems(arriving){
+function homeDeskItems(arriving,title='Oportunidades perto de você'){
  const items=cityItems().filter(x=>x.status==='active').sort((a,b)=>b.createdAt-a.createdAt).slice(0,4);
- return `<section class="section">${catalogSectionTitle(arriving?'Para a casa nova':'Oportunidades perto de você')}${items.length?`<div class="home-row">${items.map(photoCard).join('')}</div>`:empty('As primeiras oportunidades aparecem aqui','Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato.','sell',readonly()?'':'create-item',readonly()?'':'Anunciar desapego')}</section>`;
+ return `<section class="section">${catalogSectionTitle(arriving?'Para a casa nova':title)}${items.length?`<div class="home-row">${items.map(photoCard).join('')}</div>`:empty('As primeiras oportunidades aparecem aqui','Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato.','sell',readonly()?'':'create-item',readonly()?'':'Anunciar desapego')}</section>`;
 }
 // Lateral: atividade dos meus grupos, com o sinal do que mudou (respostas, comentários).
 function homeDeskGroups(){

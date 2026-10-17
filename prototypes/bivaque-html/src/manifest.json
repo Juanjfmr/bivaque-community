@@ -29,6 +29,8 @@
         "styles/segmented.css",
         "styles/catalog.css",
         "styles/empty-states.css",
+        "styles/home-mobile.css",
+        "styles/nav-bar.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"

@@ -1,0 +1,24 @@
+/* Rodada 35: barra de navegação aprovada em 17/10/2026 (versão 6 da maquete). Ícones em SVG
+   próprio no celular e na barra lateral. No celular: fundo da página com sombra leve, "Criar"
+   num círculo elevado no centro (o próprio #fab) e luz sobre a aba ativa (referências: Limelight
+   Nav e Tubelight Navbar, no 21st.dev). Abaixo de 1024 px a cidade sai da barra superior e fica
+   no título da Início. */
+.nav-svg{width:24px;height:24px}
+.nav-svg .f{fill:currentColor;fill-opacity:0}
+.nav-item[aria-current=page] .nav-svg .f{fill-opacity:.22}
+.nav-avatar{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface-variant);font-size:10.5px;font-weight:700;letter-spacing:.3px;box-shadow:0 0 0 1.6px currentColor}
+.nav-item[aria-current=page] .nav-avatar{background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);box-shadow:0 0 0 2px var(--md-sys-color-primary)}
+.nav-create-slot{display:none}
+@media(max-width:1023px){.topbar .city-chip{display:none}}
+@media(max-width:719px){
+.nav-main{grid-template-columns:repeat(5,minmax(0,1fr));background:var(--md-sys-color-surface);border-top:0;box-shadow:0 -1px 0 color-mix(in srgb,var(--md-sys-color-outline-variant) 55%,transparent),0 -10px 24px #0000000d}
+.nav-create-slot{display:block;padding-top:48px;text-align:center;font-size:12px;line-height:16px;font-weight:500;letter-spacing:.5px;color:var(--md-sys-color-on-surface-variant);pointer-events:none}
+.nav-item[aria-current=page],.nav-item[aria-current=page] .nav-svg{color:var(--md-sys-color-primary)}
+.nav-item[aria-current=page] .nav-icon{background:none}
+.nav-item[aria-current=page]::before{content:'';position:absolute;top:0;left:50%;width:34px;height:3px;transform:translateX(-50%);border-radius:0 0 4px 4px;background:var(--md-sys-color-primary)}
+.nav-item[aria-current=page]::after{content:'';position:absolute;top:3px;left:50%;width:58px;height:46px;transform:translateX(-50%);background:linear-gradient(to bottom,color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent),transparent);clip-path:polygon(28% 0,72% 0,100% 100%,0 100%);pointer-events:none}
+.create-fab{left:50%;right:auto;translate:-50% 0;bottom:calc(var(--bottom) - 42px + env(safe-area-inset-bottom));width:58px;min-width:58px;height:58px;border-radius:50%;box-shadow:0 0 0 4px var(--md-sys-color-surface),0 6px 16px color-mix(in srgb,var(--md-sys-color-primary) 40%,transparent);--md-filled-tonal-button-container-height:58px;--md-filled-tonal-button-container-shape:29px;--md-filled-tonal-button-container-color:var(--md-sys-color-primary);--md-filled-tonal-button-label-text-color:var(--md-sys-color-on-primary);--md-filled-tonal-button-icon-color:var(--md-sys-color-on-primary);--md-filled-tonal-button-icon-size:28px;--md-filled-tonal-button-leading-space:15px;--md-filled-tonal-button-trailing-space:15px;--md-filled-tonal-button-with-leading-icon-leading-space:15px;--md-filled-tonal-button-with-leading-icon-trailing-space:15px}
+.create-fab .fab-label{display:none}
+.create-fab md-icon[slot=icon]{margin-right:0}
+.create-fab.compact{width:58px;min-width:58px}
+}

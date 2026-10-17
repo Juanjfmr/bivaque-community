@@ -52,10 +52,10 @@ function placeCreateMenu(){
  if(!createOpen||!createAnchor)return;const popup=$('#create-menu'),a=createAnchor.getBoundingClientRect();
  if(popup.classList.contains('create-panel')){const w=Math.min(620,innerWidth-24);popup.style.width=w+'px';const h=popup.offsetHeight;popup.style.left=Math.max(12,Math.min(innerWidth-w-12,a.left))+'px';popup.style.top=Math.max(12,Math.min(innerHeight-h-12,a.top))+'px';popup.style.transformOrigin='left top';popup.dataset.placed='';return;}
  const w=Math.min(262,innerWidth-24),h=popup.offsetHeight;
- const above=a.top>innerHeight/2;const left=Math.max(12,Math.min(innerWidth-w-12,a.right-w));
+ const above=a.top>innerHeight/2,center=createAnchor.id==='fab'&&innerWidth<720;const left=Math.max(12,Math.min(innerWidth-w-12,center?a.left+a.width/2-w/2:a.right-w));popup.style.justifyItems=center?'center':'';
  let top=above?a.top-h-10:a.bottom+12;top=Math.max(12,Math.min(innerHeight-h-12,top));
  const preview=$('#context-preview');if(preview){preview.style.width=a.width+'px';preview.style.left=Math.max(12,Math.min(innerWidth-a.width-12,a.left))+'px';const ph=preview.offsetHeight,py=Math.max(12,Math.min(a.top,innerHeight-h-ph-36));preview.style.top=py+'px';top=Math.min(innerHeight-h-12,py+ph+12);}
- popup.style.width=w+'px';popup.style.left=left+'px';popup.style.top=top+'px';popup.style.transformOrigin=above?'right bottom':'left top';
+ popup.style.width=w+'px';popup.style.left=left+'px';popup.style.top=top+'px';popup.style.transformOrigin=above?(center?'center bottom':'right bottom'):'left top';
 }
 function closeCreateMenu(restoreFocus=true,dropHistory=true){
  if(!createOpen)return createHistoryPromise||Promise.resolve();createOpen=false;const popup=$('#create-menu');popup.classList.remove('open');popup.style.pointerEvents='none';$('#create-scrim').classList.remove('open');$('#create-scrim').hidden=true;

@@ -1,0 +1,44 @@
+task_id: HTML-035
+objective: >
+  Rodada 35 leva a organizacao da Inicio do desktop para o celular e o tablet (servicos e
+  oportunidades em carrossel, patrocinado no 2o cartao, grupos e encontro compactos, chegada pelo
+  momento, "Tem um negocio?" no fim), tira o aviso repetido do sino, poe a cidade no titulo e
+  troca a barra do celular: Criar num circulo no centro, luz sobre a aba ativa e icones em SVG.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete versao 6, barra C, "Luz")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD ab70368c. A Inicio do celular abria com grupos e faixas, ocupava 4,4 telas, repetia os
+    avisos do sino e tinha um botao Criar flutuante que tampava conteudo.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/home/
+  - prototypes/bivaque-html/src/features/groups/views.js
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-035.task.yml
+forbidden:
+  - mudar a Inicio do desktop (a partir de 1024 px) alem dos icones da barra lateral
+  - mudar o id, o menu ou o bloqueio do botao #fab
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Abaixo de 1024 px a Inicio segue a ordem aprovada, sem aviso pessoal e sem bloco patrocinado separado
+  - Patrocinado no 2o cartao no celular e no 3o no desktop
+  - Cidade no titulo da Inicio e fora da barra abaixo de 1024 px; no desktop continua na barra
+  - Criar no centro da barra do celular, circular, sobre a borda, com o menu centralizado
+  - Icones da barra em SVG, Voce com as iniciais e luz na aba ativa no celular
+  - Exemplo da busca gira so sem movimento reduzido
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round35-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: navegacao do celular e Inicio, em todo o prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
