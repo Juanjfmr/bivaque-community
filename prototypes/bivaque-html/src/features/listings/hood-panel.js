@@ -32,7 +32,7 @@ function closeHoodPanel(restore=true){
  const back=hoodPanel?.back;hoodPanel=null;$('#hood-panel')?.remove();document.body.classList.remove('hood-open');hoodPinsSync();
  if(restore&&back?.isConnected)back.focus({preventScroll:true});
 }
-function setHoodStop(stop){if(!hoodPanel)return;hoodPanel.stop=stop;renderHoodPanel();}
+function setHoodStop(stop){if(!hoodPanel)return;if(hoodPanel.stop!==stop)haptic(6);hoodPanel.stop=stop;renderHoodPanel();}
 // Depois de cada desenho: a folha some fora do mapa e acompanha filtros e salvos.
 function syncHoodPanel(){
  if(!hoodPanel)return;

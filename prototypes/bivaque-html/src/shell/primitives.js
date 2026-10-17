@@ -9,7 +9,8 @@ function iconBtn(ic,action,value='',label=ic,extra=''){return `<md-icon-button t
 function selectField(id,label,values,selected='',extra=''){
  return `<md-outlined-select id="${id}" label="${esc(label)}" ${extra}>${values.map(v=>{const [value,title]=Array.isArray(v)?v:[v,v];return `<md-select-option value="${esc(value)}" ${String(selected)===String(value)?'selected':''}><div slot="headline">${esc(title)}</div></md-select-option>`;}).join('')}</md-outlined-select>`;
 }
-function field(id,label,value='',extra=''){return `<md-outlined-text-field id="${id}" label="${esc(label)}" value="${esc(value)}" ${extra}></md-outlined-text-field>`;}
+// Rodada 42: no celular, campo numérico abre o teclado numérico e campo de busca, a tecla Buscar.
+function field(id,label,value='',extra=''){if(/type="number"/.test(extra)&&!/inputmode=/.test(extra))extra+=' inputmode="numeric"';if(/type="search"/.test(extra)&&!/inputmode=/.test(extra))extra+=' inputmode="search"';return `<md-outlined-text-field id="${id}" label="${esc(label)}" value="${esc(value)}" ${extra}></md-outlined-text-field>`;}
 function pill(text,kind='',ic=''){return `<span class="pill ${kind}">${ic?icon(ic):''}${esc(text)}</span>`;}
 function sectionTitle(title,label='',action='',value=''){return `<div class="section-title"><h2>${esc(title)}</h2>${label?btn(label,action,value,'text'):''}</div>`;}
 // Estado vazio (Rodada 24): ilustração leve em volta do ícone, sem imagem nova (peso zero).

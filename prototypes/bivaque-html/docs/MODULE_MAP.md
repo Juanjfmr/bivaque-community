@@ -98,6 +98,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 35e/App | `src/shell/verified-info.js` | Confiança | Rodada 28: selo verificado que abre a explicação do que a verificação confere |
 | 35f/App | `src/shell/toasts.js` | Frontend premium | Rodada 33: notify() com avisos empilhados, desfazer por aviso e tempo visível |
 | 35g/App | `src/shell/celebrate.js` | Frontend premium | Rodada 34: microanimação ao indicar (número pulsa, pontos, avatar entra) |
+| 35h/App | `src/shell/haptics.js` | Frontend premium | Rodada 42: vibração leve ao salvar, indicar, deslizar, fechar a foto e trocar a altura da folha |
 | 36/App | `src/features/profile/settings.js` | Perfil/família/movimentação | Cidade, configurações e controles de protótipo |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |

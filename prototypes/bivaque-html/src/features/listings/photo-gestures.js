@@ -55,7 +55,7 @@ function bindLightboxGestures(el){
   moved=true;
   if(g.axis==='pan'){lbZoom.x=g.zx+dx;lbZoom.y=g.zy+dy;lbClamp();lbApply(false);}
   else if(g.axis==='x'){lbZoom.x=dx;lbApply(false);}
-  else if(g.axis==='down'){lbZoom.y=Math.max(0,dy);el.style.setProperty('--lb-fade',String(Math.max(.2,1-dy/420)));lbApply(false);}
+  else if(g.axis==='down'){if(dy>120&&!g.armed)haptic(8);g.armed=dy>120;lbZoom.y=Math.max(0,dy);el.style.setProperty('--lb-fade',String(Math.max(.2,1-dy/420)));lbApply(false);}
  });
  const end=e=>{
   if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);if(!g)return;

@@ -99,6 +99,7 @@
         "shell/verified-info.js",
         "shell/toasts.js",
         "shell/celebrate.js",
+        "shell/haptics.js",
         "features/profile/settings.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
