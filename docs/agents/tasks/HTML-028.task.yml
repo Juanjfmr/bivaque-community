@@ -1,0 +1,40 @@
+task_id: HTML-028
+objective: >
+  Rodada 28 faz o selo "Perfil verificado" e a linha de verificacao do negocio abrirem uma
+  explicacao do que a verificacao confere e do que nao confere, seguindo o ADR da admissao,
+  inspirada na folha de garantia da Glovo no Mobbin.
+authority:
+  - Pedido do usuario em 2026-10-16 para adotar todos os itens do lote B ("Pode comecar")
+  - docs/decisions/ADR-20260816-forma-da-admissao.md (o Estado atesta o vinculo; o resto e declarado)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 2e602fc8. O selo era so um rotulo; ninguem sabia o que "verificado" garantia.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/features/listings/detail.js
+  - prototypes/bivaque-html/src/features/businesses/detail.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/empty-states.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-028.task.yml
+forbidden:
+  - prometer o que a verificacao nao confere (endereco, qualidade do anuncio, garantia de negocio)
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Selo no anuncio e linha do negocio abrem a explicacao, por toque e por teclado
+  - Explicacao diz a fonte (Portal da Transparencia), o que e declarado e o que o selo nao garante
+  - Fechar devolve o foco ao selo
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round28-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: texto de confianca no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

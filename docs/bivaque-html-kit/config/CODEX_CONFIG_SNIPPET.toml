@@ -1,0 +1,14 @@
+# OPCIONAL — mesclar manualmente ao .codex/config.toml existente; nunca substituir
+# Exemplo conhecido do Codex CLI (a configuração pode variar por release).
+# Confira a versão instalada e a documentação antes de ativar qualquer feature flag.
+
+[agents]
+max_threads = 4
+max_depth = 1
+
+# Para versões do CLI que aceitam esta chave:
+# [features]
+# multi_agent = true
+
+# Os 18 arquivos em .codex/agents/ são perfis disponíveis, não 18 threads simultâneas.
+# O modelo deliberadamente não está fixado em cada agente; herda o modelo da sessão Codex.

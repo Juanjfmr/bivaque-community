@@ -1,0 +1,44 @@
+/* Rodada 24: moldura das fotos enquanto carregam e estados vazios ilustrados. */
+:is(.cover,.detail-hero,.gallery button).img-wait::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(100deg,transparent 20%,color-mix(in srgb,var(--md-sys-color-surface-container-lowest) 55%,transparent) 50%,transparent 80%) var(--md-sys-color-surface-container-high);background-size:220% 100%;animation:img-shimmer 1.2s linear infinite;pointer-events:none}
+.gallery button{position:relative}
+@keyframes img-shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
+:is(.cover,.detail-hero,.gallery button).img-wait>img{opacity:0}
+@media (prefers-reduced-motion:reduce){:is(.cover,.detail-hero,.gallery button).img-wait::before{animation:none}}
+.empty{background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--md-sys-color-secondary-container) 45%,transparent),transparent 70%) var(--md-sys-color-surface-container-lowest);border-style:solid}
+.empty-art{position:relative;width:132px;height:112px;margin:2px auto 6px;display:grid;place-items:center}
+.empty-art svg{position:absolute;inset:0;width:100%;height:100%}
+.empty-art .blob{fill:var(--md-sys-color-secondary-container)}
+.empty-art .ring{fill:none;stroke:var(--md-sys-color-outline-variant);stroke-width:1.5;stroke-dasharray:3 6}
+.empty-ic{position:relative;width:60px;height:60px;border-radius:30px;display:grid;place-items:center;background:var(--md-sys-color-surface-container-lowest);box-shadow:0 6px 18px color-mix(in srgb,var(--md-sys-color-primary) 18%,transparent)}
+.empty .empty-ic md-icon{font-size:30px;width:30px;height:30px;--md-icon-size:30px;color:var(--md-sys-color-primary)}
+.empty-art i{position:absolute;border-radius:50%;background:var(--md-sys-color-tertiary-container)}
+.empty-art .d1{width:10px;height:10px;left:14px;top:22px}
+.empty-art .d2{width:7px;height:7px;right:16px;top:14px;background:var(--md-sys-color-primary)}
+.empty-art .d3{width:12px;height:12px;right:10px;bottom:20px;background:var(--md-sys-color-on-primary-container)}
+@media (prefers-reduced-motion:no-preference){.empty-ic{animation:empty-float 5s ease-in-out infinite}.empty-art i{animation:empty-twinkle 3.2s ease-in-out infinite}.empty-art .d2{animation-delay:.8s}.empty-art .d3{animation-delay:1.6s}.empty-art .ring{animation:empty-spin 40s linear infinite;transform-origin:50% 50%}}
+@keyframes empty-float{50%{transform:translateY(-5px)}}
+@keyframes empty-twinkle{50%{transform:scale(.6);opacity:.55}}
+@keyframes empty-spin{to{transform:rotate(360deg)}}
+@media (forced-colors:active){.empty-art{display:none}}
+/* Rodada 28: selo verificado que explica o que confere. */
+.pill-info{border:0;cursor:pointer;font:550 12px/18px var(--md-ref-typeface-plain);display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:6px 12px}
+.pill-info md-icon{font-size:16px;--md-icon-size:16px}
+.pill-info md-icon:last-child{font-size:16px;--md-icon-size:16px;opacity:.8}
+.vinfo{display:grid;gap:14px}
+.vinfo-row{display:flex;gap:14px;align-items:flex-start}
+.vinfo-row>md-icon{flex:none;width:40px;height:40px;border-radius:20px;display:grid;place-items:center;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-size:22px}
+.vinfo-row p{margin:2px 0 0;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+/* Rodada 33: avisos empilhados e tempo visível. */
+.snackbar{overflow:hidden}
+.toast-time{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--md-sys-color-inverse-primary);transform-origin:left;animation:toast-time linear forwards;opacity:.8}
+.snackbar.is-paused .toast-time{animation-play-state:paused}
+@keyframes toast-time{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.toast-stack{position:fixed;z-index:999;left:16px;right:16px;max-width:540px;margin:auto;display:grid;gap:8px;pointer-events:none}
+.toast-stack .snackbar{position:relative;left:auto;right:auto;bottom:auto;transform:scale(.97);opacity:.94;pointer-events:auto}
+@media(min-width:720px){.toast-stack{left:calc(var(--rail) + 16px)}}
+@media (prefers-reduced-motion:reduce){.toast-time{display:none}}
+/* Rodada 34: pontos que saem do número ao indicar. */
+.burst{position:fixed;z-index:1100;width:0;height:0;pointer-events:none}
+.burst i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--md-sys-color-primary);animation:burst .7s cubic-bezier(.2,.8,.2,1) forwards}
+.burst i:nth-child(even){background:var(--md-sys-color-tertiary);width:6px;height:6px}
+@keyframes burst{0%{transform:rotate(var(--a)) translateX(6px) scale(1);opacity:1}60%{opacity:1}100%{transform:rotate(var(--a)) translateX(44px) scale(.4);opacity:0}}

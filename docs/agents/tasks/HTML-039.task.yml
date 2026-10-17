@@ -1,0 +1,37 @@
+task_id: HTML-039
+objective: >
+  Rodada 39 completa o deslizar das conversas, que ja existia com Fixar e Apagar: entra
+  "Nao lida/Lida" no deslizar e no menu, a primeira visita no celular mostra que o gesto existe e
+  o arrasto com mouse deixa de fechar a linha que acabou de abrir.
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode terminar todos", lote mobile)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 987f7c03. Nao havia como marcar uma conversa como nao lida, o gesto nao era descoberto e
+    com mouse a linha fechava ao soltar o arrasto.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/messaging/actions.js
+  - prototypes/bivaque-html/src/motion/gestures.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-039.task.yml
+forbidden:
+  - mudar Fixar, Apagar, o desfazer ou os gestos de outras telas
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Deslizar uma conversa mostra Nao lida/Lida, Fixar e Apagar; Nao lida troca o estado
+  - O menu da conversa tem a mesma acao
+  - A dica do gesto aparece uma vez no celular e nunca com movimento reduzido
+  - Arrasto com mouse deixa a linha aberta
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round39-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: lista de conversas
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

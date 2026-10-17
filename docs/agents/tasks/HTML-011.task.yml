@@ -1,0 +1,59 @@
+task_id: HTML-011
+objective: >
+  Rodada 11 cria no prototipo HTML o pedido aberto de servico no estilo GetNinjas. A
+  pessoa descreve a necessidade, o tipo de servico, o bairro, a data e ate 4 fotos. O
+  pedido vai para as empresas do ramo na cidade que atendem o bairro, e elas enviam ate 5
+  propostas com valor fixo, faixa ou a combinar apos visita, data, validade e prazo. A
+  pessoa compara, escolhe uma e a conversa com a empresa abre. Perguntas da comunidade
+  passam a ser so da comunidade (opcao C).
+authority:
+  - Pedido explicito do usuario em 2026-10-15 para o fluxo de contratar servico
+  - Decisao do usuario em 2026-10-15 - opcao C, perguntar na comunidade nao prepara orcamento
+  - ADR-20261015-pedido-aberto-e-propostas aprovado pelo usuario em 2026-10-15, so para o prototipo
+  - Aprovacao visual do usuario em 2026-10-15 das telas da rodada
+adr: docs/decisions/ADR-20261015-pedido-aberto-e-propostas.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD d53db07f. Nao havia como descrever uma necessidade e receber propostas de varias
+    empresas; o unico caminho era pedir orcamento a uma empresa por vez na pagina dela.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/decisions/ADR-20261015-pedido-aberto-e-propostas.md
+  - docs/agents/tasks/HTML-011.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles globais, data/demo ou vendor
+  - cobrar prestadores, intermediar pagamento ou guardar dado de pagamento
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - levar o pedido aberto ao app real sem novo ADR
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Pedido valida tipo, bairro, descricao, data e ate 4 fotos, e respeita 3 pedidos abertos
+  - Ate 5 propostas por pedido, comparaveis; escolher recusa as outras e abre a conversa
+  - Cancelar, expirar em 7 dias e retirar proposta encerram corretamente
+  - Prestador so ve pedidos do seu ramo, cidade e bairro; pedido encerrado esconde descricao, fotos e nome de quem nao foi escolhido
+  - Proposta retirada ou pedido encerrado nao podem ser escolhidos por tela desatualizada
+  - Cidade so de leitura nao cria pedido; falha de armazenamento nao perde estado
+  - Aviso de que o Bivaque nao intermedeia pagamento no formulario, na lista e na escolha
+  - Regressao de todas as rodadas, visual e gate
+proof:
+  - node scripts/bivaque-html/round11-proof.mjs --full
+  - node scripts/bivaque-html/round10-proof.mjs --full
+  - node scripts/bivaque-html/round08-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: pedido de servico, propostas com valor e conversa com empresa, so no prototipo
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

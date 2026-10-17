@@ -1,0 +1,53 @@
+task_id: HTML-009
+objective: >
+  Rodada 09 de melhorias invisiveis: build reproduzivel do pacote Material com 5
+  componentes a mais para a Rodada 10, indicador acessivel de processamento de fotos
+  e suporte ao alto contraste do sistema, sem mudar o visual normal.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para seguir com o plano das Rodadas 09 e 10
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD d9c9f262. Pacote Material era copia congelada sem script de geracao (32
+    componentes); fotos processadas sem feedback; nenhuma regra forced-colors, com aba
+    ativa e barras de enquete perdendo significado em alto contraste.
+allowed_paths:
+  - prototypes/bivaque-html/src/vendor/material-web-2.5.0.js
+  - prototypes/bivaque-html/src/styles/high-contrast.css
+  - prototypes/bivaque-html/src/shell/bindings.js
+  - prototypes/bivaque-html/src/features/listings/editor.js
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/build-material.mjs
+  - scripts/bivaque-html/material-build/
+  - scripts/bivaque-html/round09-proof.mjs
+  - scripts/bivaque-html/test_build.py
+  - docs/agents/tasks/HTML-009.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada ou o pacote Material a mao
+  - mudar o visual fora do modo de alto contraste
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge, push ou publicacao
+acceptance:
+  - Pacote Material gerado por script com versoes conferidas contra lockfile versionado e bytes reproduziveis
+  - 38 componentes registrados no navegador, HTML dentro do orcamento de peso
+  - Fotos mostram progresso acessivel e contam so arquivos aceitos
+  - Alto contraste preserva aba ativa, selos, barras de enquete, aviso e foco
+  - Regressao de todas as rodadas, visual e gate
+proof:
+  - node scripts/bivaque-html/build-material.mjs
+  - python scripts/bivaque-html/build.py --check-current
+  - python scripts/bivaque-html/test_build.py
+  - node scripts/bivaque-html/round09-proof.mjs --full
+  - node scripts/bivaque-html/round08-proof.mjs --full
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: dependencia de interface e acessibilidade demonstrativas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

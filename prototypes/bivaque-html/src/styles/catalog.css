@@ -1,0 +1,113 @@
+/* Rodadas 22 e 23: Desapegos e Imóveis com filtros em pílulas, folhas e painéis. */
+.fpills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:10px -16px 6px;padding:2px 16px 6px}
+.fpills::-webkit-scrollbar{display:none}
+@media(min-width:1024px){.fpills{flex-wrap:wrap;overflow:visible;margin:14px 0 8px;padding:0}}
+.fpill{flex:none;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:8px;background:transparent;color:var(--md-sys-color-on-surface-variant);font:500 14px/1 var(--md-ref-typeface-plain);cursor:pointer}
+.fpill md-icon{--md-icon-size:18px;font-size:18px}
+.fpill.on{background:var(--md-sys-color-secondary-container);border-color:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.fpill:focus-visible,.fchip:focus-visible,.fopt:focus-visible,.fsort:focus-visible,.fcta:focus-visible,.flink:focus-visible,.ficon:focus-visible{outline:3px solid var(--md-sys-color-primary);outline-offset:2px}
+.fbadge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:12px;display:grid;place-items:center}
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 14px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.fbar b{color:var(--md-sys-color-on-surface)}
+@media(min-width:1024px){.fbar{border-top:1px solid var(--md-sys-color-surface-container-high);padding-top:14px;font-size:15px}}
+.fsort{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 6px;border:0;background:none;color:var(--md-sys-color-primary);font:600 14px var(--md-ref-typeface-plain);cursor:pointer}
+.avail{display:inline-block;align-self:flex-start;justify-self:start;width:fit-content;margin-top:8px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;color:#1d5b33;background:#dcefe1}
+.avail.later{color:#6b4a12;background:#f5e7cf}
+:root[data-theme=dark] .avail{color:#a8dcb6;background:#1f3a28}:root[data-theme=dark] .avail.later{color:#f0c98a;background:#3d2e12}
+.photo-card>.card-link{display:flex;flex-direction:column;justify-content:flex-start}
+.section-links{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.attr-group{display:grid;gap:6px;min-width:0}.attr-label{font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}.attr-group md-chip-set{display:flex;flex-wrap:wrap;gap:6px}
+/* Painel: folha no celular, tela cheia para "Filtros", suspenso ou lateral no desktop. */
+.fpanel{border:0;padding:0;margin:0;max-width:none;max-height:none;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface);display:none;flex-direction:column;font-family:var(--md-ref-typeface-plain)}
+.fpanel[open]{display:flex}
+.fpanel::backdrop{background:rgb(10 20 25 / .42)}
+.fpanel.sheet{position:fixed;inset:auto 0 0 0;width:100%;max-height:88vh;max-height:88dvh;border-radius:28px 28px 0 0;box-shadow:0 -6px 24px rgb(0 0 0 / .18)}
+.fpanel.full{position:fixed;inset:0;width:100%;height:100%}
+.fpanel.pop{position:fixed;width:min(420px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 140px));border-radius:16px;box-shadow:0 8px 28px rgb(0 0 0 / .22)}
+.fpanel.pop::backdrop{background:transparent}
+.fpanel.drawer{position:fixed;inset:0 0 0 auto;width:min(460px,100vw);height:100%;box-shadow:-8px 0 28px rgb(0 0 0 / .2)}
+.fgrab{width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant);margin:10px auto 0;flex:none}
+.fhead{display:flex;align-items:center;gap:8px;padding:14px 12px 6px 20px;flex:none}
+.fhead h2{flex:1;margin:0;font-size:20px}
+.ficon{width:44px;height:44px;border:0;border-radius:22px;background:none;color:var(--md-sys-color-on-surface-variant);display:grid;place-items:center;cursor:pointer}
+.fbody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 20px}
+.fsec{padding:14px 0;border-bottom:1px solid var(--md-sys-color-surface-container-high)}
+.fsec:last-child{border-bottom:0}
+.fsec h3{margin:0 0 10px;font-size:15px}
+.fhint{margin:-6px 0 10px;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.fchips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:8px;background:transparent;color:var(--md-sys-color-on-surface-variant);font:500 14px var(--md-ref-typeface-plain);cursor:pointer}
+.fchip md-icon{--md-icon-size:16px;font-size:16px}
+.fchip.on{background:var(--md-sys-color-secondary-container);border-color:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.fseg{display:flex;border:1px solid var(--md-sys-color-outline);border-radius:20px;overflow:hidden}
+.fseg .fchip{flex:1;justify-content:center;border:0;border-left:1px solid var(--md-sys-color-outline);border-radius:0;min-height:40px;padding:0 6px}
+.fseg .fchip:first-child{border-left:0;flex:1.5}
+.fseg .fchip md-icon{display:none}
+.fminmax{display:flex;gap:10px;margin:14px 0 6px}
+.ffield{flex:1;display:grid;gap:4px;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ffield input{height:48px;padding:0 12px;border:1px solid var(--md-sys-color-outline);border-radius:6px;background:transparent;color:var(--md-sys-color-on-surface);font:16px var(--md-ref-typeface-plain);min-width:0}
+.ffield input:focus{outline:2px solid var(--md-sys-color-primary);outline-offset:-1px}
+.fdate{margin-top:12px;max-width:260px}
+#fp-price{width:100%}
+.ffoot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--md-sys-color-surface-container-high);flex:none}
+.fpanel.pop .ffoot{padding:12px 18px 16px}
+.flink{min-height:40px;padding:0 8px;border:0;background:none;color:var(--md-sys-color-primary);font:600 14px var(--md-ref-typeface-plain);cursor:pointer}
+.fcta{min-height:48px;padding:0 24px;border:0;border-radius:24px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font:600 15px var(--md-ref-typeface-plain);cursor:pointer}
+.fopt{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:0 4px;border:0;border-bottom:1px solid var(--md-sys-color-surface-container-high);background:none;color:var(--md-sys-color-on-surface);font:15px var(--md-ref-typeface-plain);text-align:left;cursor:pointer}
+.fopt[aria-checked=true]{font-weight:600;color:var(--md-sys-color-primary)}
+.fpanel.pop .fbody,.fpanel.sheet .fbody{padding-bottom:4px}
+@media(prefers-reduced-motion:no-preference){.fpanel.sheet[open]{animation:fp-up .26s cubic-bezier(.2,.8,.2,1)}.fpanel.drawer[open]{animation:fp-left .26s cubic-bezier(.2,.8,.2,1)}.fpanel.pop[open]{animation:fp-fade .16s ease-out}}
+@keyframes fp-up{from{transform:translateY(40px);opacity:0}}@keyframes fp-left{from{transform:translateX(40px);opacity:0}}@keyframes fp-fade{from{opacity:0;transform:translateY(-4px)}}
+@media(forced-colors:active){.fpill.on,.fchip.on{outline:2px solid Highlight}.fpanel{border:1px solid CanvasText}}
+/* Folha ou painel de um filtro só: o título da seção repete o do painel; fica só para o leitor de tela. */
+.fpanel.sheet .fsec:only-child>h3,.fpanel.pop .fsec:only-child>h3{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+/* Rodada 25: faixa do alerta de busca. */
+.falert{display:flex;align-items:center;gap:10px;margin:-4px 0 14px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--md-sys-color-surface-container-low);font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.falert>md-icon{color:var(--md-sys-color-primary);flex:none}
+.falert.is-on{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.alert-row.is-paused .txt b{color:var(--md-sys-color-on-surface-variant)}
+/* Rodada 27: anúncio de imóvel em etapas. */
+.wiz-progress{margin:0 0 6px}
+.wiz-bar{height:6px;border-radius:3px;background:var(--md-sys-color-surface-container-highest);overflow:hidden}
+.wiz-bar span{display:block;height:100%;width:20%;border-radius:3px;background:var(--md-sys-color-primary);transition:width .3s ease}
+.wiz-count{margin:8px 0 0;font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant)}
+.wiz-title{margin:6px 0 2px;font-size:18px;outline:none}
+.wiz-gap{flex:1}
+.wiz-preview{max-width:320px;margin:4px 0 14px;pointer-events:none}
+.wiz-preview .save-card{display:none}
+.wiz-rows{display:grid;gap:2px;border-radius:16px;overflow:hidden}
+.wiz-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:var(--md-sys-color-surface-container-low)}
+.wiz-row small{display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.wiz-row b{font-size:14px;font-weight:600}
+@media (prefers-reduced-motion:reduce){.wiz-bar span{transition:none}}
+/* Rodada 29: cartão de compartilhamento. */
+.share-preview{display:grid;place-items:center;aspect-ratio:4/5;max-height:56vh;margin:0 auto 10px;border-radius:18px;overflow:hidden;background:var(--md-sys-color-surface-container-high)}
+.share-preview img{width:100%;height:100%;object-fit:contain;display:block}
+.share-wait{font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+/* Rodada 30: comparar imóveis salvos (colunas da Rodada 16). */
+md-dialog[data-kind=compare]{width:min(1080px,100vw);max-width:100vw}
+.cmp-grid{grid-template-rows:repeat(8,auto)}
+.cmp-col{grid-row:span 8}
+.cmp-col>div{display:grid;gap:4px;align-content:start}
+.cmp-col .prop-badge{justify-self:start}
+.cmp-photo{width:100%;aspect-ratio:16/9;max-height:130px;object-fit:cover;border-radius:14px;margin-bottom:6px}
+.cmp-label{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cmp-sub{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cmp-amen{list-style:none;margin:0;padding:0;display:grid;gap:2px;font-size:13px}
+.cmp-amen li{display:flex;align-items:center;gap:4px}
+.cmp-amen md-icon{font-size:16px;--md-icon-size:16px;color:var(--md-sys-color-primary)}
+.cmp-actions{display:flex!important;flex-wrap:wrap;gap:6px;align-items:center}
+/* Rodada 31: mapa de bairros (MapLibre + OpenFreeMap, carregados sob demanda). */
+.fbar{flex-wrap:wrap;row-gap:8px}
+.fview{display:inline-flex;gap:6px;margin-left:auto}
+.fview .fchip{min-height:34px}
+.cmap{position:relative;height:min(62vh,520px);border-radius:18px;overflow:hidden;background:var(--md-sys-color-surface-container-high)}
+.cmap-status{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;margin:0;padding:24px;text-align:center;font-size:14px;color:var(--md-sys-color-on-surface-variant);z-index:1}
+.cmap-pin{min-width:40px;height:40px;padding:0 10px;border-radius:20px;border:3px solid #fff;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font:700 15px var(--md-ref-typeface-plain);box-shadow:0 4px 12px rgb(0 0 0 / .3);cursor:pointer}
+.cmap-pin:focus-visible{outline:3px solid var(--md-sys-color-tertiary);outline-offset:2px}
+.cmap-note{margin:8px 2px 14px;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cmap-list h3{margin:0 0 8px;font-size:15px}
+@media(max-width:479px){.fview-label,.fbar-extra{display:none}.fview .fchip{padding:0 10px}}
+/* Rodada 32: agenda agrupada por dia. */
+.agenda-day{margin:6px 0 18px}
+.agenda-date{position:sticky;top:0;z-index:2;margin:0 0 8px;padding:8px 2px;font-size:15px;font-weight:700;background:var(--md-sys-color-surface)}

@@ -1,0 +1,36 @@
+task_id: HTML-038
+objective: >
+  Rodada 38 abre anuncio e negocio no celular com a foto ate o topo e a barra transparente por
+  cima, com os botoes em circulos; a barra volta ao normal, com o titulo, quando a foto passa por
+  baixo dela.
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode terminar todos", lote mobile)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 3d17d7bf. No celular, o detalhe tinha a barra cheia e a foto com margens abaixo dela.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/navigation.js
+  - prototypes/bivaque-html/src/styles/
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-038.task.yml
+forbidden:
+  - mudar o detalhe no desktop ou outras telas
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - No celular a foto do anuncio e do negocio comeca no topo, de borda a borda
+  - Barra transparente sobre a foto e solida, com titulo, depois de rolar
+  - Voltar funciona e a barra volta ao normal fora do detalhe; desktop sem mudanca
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round38-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: detalhe do celular
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

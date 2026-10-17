@@ -1,0 +1,39 @@
+task_id: HTML-033
+objective: >
+  Rodada 33 empilha avisos com desfazer: o aviso mais novo continua em #snackbar e o anterior com
+  desfazer ainda valendo sobe para a pilha (no maximo dois) com o proprio desfazer; barra de tempo
+  que pausa com mouse ou foco, inspirada no Sonner e na Insight Timer.
+authority:
+  - Aprovacao do usuario em 2026-10-16 ("6e7 ok")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD df318a47. Um aviso novo apagava o anterior, e o desfazer dele se perdia.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/empty-states.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-033.task.yml
+forbidden:
+  - mudar o id, a regiao viva ou o desfazer de #snackbar
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Aviso com desfazer ainda valendo sobe para a pilha; aviso sem desfazer e so substituido
+  - Desfazer da pilha desfaz a acao certa; pilha com no maximo dois
+  - Barra de tempo pausa com mouse ou foco e some com movimento reduzido
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round33-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round02-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round11-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: comportamento de aviso em todo o prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

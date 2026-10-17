@@ -1,0 +1,43 @@
+task_id: HTML-014
+objective: >
+  Rodada 14 cria no desktop a paleta de busca e comandos (Ctrl+K ou ⌘K, e "/"), inspirada nas
+  paletas do 21st.dev: busca agrupada em negocios, anuncios, perguntas e grupos com o termo
+  destacado, paginas, acoes de criar e buscas recentes, navegacao por teclado e a opcao de
+  buscar em tudo. A busca da Inicio do desktop mostra a dica do atalho.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev, com a paleta em primeiro
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD c9b8c4fb. Buscar exigia ir a tela Buscar; nao havia busca rapida nem atalho de teclado
+    para paginas e acoes.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/command-palette.js
+  - prototypes/bivaque-html/src/styles/command-palette.css
+  - prototypes/bivaque-html/src/styles/create-rail.css
+  - prototypes/bivaque-html/src/features/home/desktop.js
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-014.task.yml
+forbidden:
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - mudar a busca do celular e do tablet
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Ctrl+K ou ⌘K abre a paleta so no desktop; "/" abre fora de campos de texto
+  - Resultados agrupados com o termo destacado; setas e Enter abrem o resultado; Esc fecha e devolve o foco
+  - Buscar em tudo leva a tela Buscar e salva a busca recente, que aparece na paleta
+  - Acoes de criar funcionam e somem em cidade consultada
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,768-light,1024-light,1440-light,1440-dark node scripts/bivaque-html/round14-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: busca e atalhos de teclado do desktop, so no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,45 @@
+task_id: HTML-020
+objective: >
+  Rodada 20 renova os baloes da conversa: mensagens seguidas agrupadas, separador de dia,
+  estado da ultima mensagem sua, reacao local nas recebidas e entrada animada das novas,
+  inspirada nos componentes Chat Bubble e Message Reactions do 21st.dev.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+  - Pedido do usuario em 2026-10-16 "Rodada 20"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 863d49fd. Cada mensagem era um balao solto com hora; mensagens antigas sem horario
+    mostravam a hora atual; sem dias, sem estado, sem reacao, sem entrada.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/messaging/
+  - prototypes/bivaque-html/src/styles/chat-bubbles.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-020.task.yml
+forbidden:
+  - inventar hora, leitura ou entrega que o dado nao tem
+  - enviar mensagem ou reacao para fora do navegador
+  - mudar os baloes de outras telas (grupos, pedidos)
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Mensagens da mesma pessoa em ate 5 min no mesmo dia formam grupo, com hora so no fim
+  - Separador Hoje, Ontem ou data; mensagem sem horario nao ganha hora nem dia
+  - Enviada aparece so na ultima mensagem, quando ela e sua
+  - Reacao nas recebidas, salva no aparelho, removivel, com Esc e foco corretos; bloqueada sem perfil verificado
+  - Mensagem nova entra animada uma vez; com movimento reduzido nao anima
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,768-light,1440-light,1440-dark node scripts/bivaque-html/round20-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,768-light,1440-light,1440-dark node scripts/bivaque-html/round10-proof.mjs
+  - node scripts/bivaque-html/runtime-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao e dado local no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

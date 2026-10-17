@@ -1,0 +1,42 @@
+task_id: HTML-027
+objective: >
+  Rodada 27 faz o anuncio de imovel novo em 5 etapas (o imovel; valores e disponibilidade;
+  comodidades e descricao; fotos; revisao com previa do cartao e Editar por parte), cada etapa
+  validada antes de seguir, inspirado no fluxo de anuncio do eBay no Mobbin.
+authority:
+  - Pedido do usuario em 2026-10-16 para adotar todos os itens do lote B ("Pode comecar")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 8ff985ac. O anuncio de imovel era um formulario unico longo com 11 campos e fotos.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-027.task.yml
+forbidden:
+  - mudar os campos, a validacao final ou o que e salvo
+  - colocar desapego ou a edicao de imovel em etapas
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Imovel novo comeca na etapa 1 de 5; Continuar so avanca com a etapa valida
+  - Voltar preserva o que foi digitado; revisao mostra a previa do cartao, o total e Editar por parte
+  - Publicar e salvar rascunho funcionam de qualquer etapa; rascunho de imovel reabre nas etapas
+  - Editar imovel e anunciar desapego continuam numa pagina so
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round27-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round03-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round22-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round23-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: fluxo de publicacao local no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

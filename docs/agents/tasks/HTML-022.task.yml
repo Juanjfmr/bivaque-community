@@ -1,0 +1,49 @@
+task_id: HTML-022
+objective: >
+  Rodada 22 separa Desapegos e Imoveis em telas proprias, cada uma com os filtros do seu
+  mercado (imovel: tipo, total do mes, quartos, vagas, area e comodidades; desapego: categoria,
+  estado de uso, preco e retirada prevista), com os campos no editor, no cartao e no detalhe, e
+  acrescenta anuncios de exemplo para os filtros terem o que mostrar.
+authority:
+  - Pedido do usuario em 2026-10-16 para filtros proprios de cada mercado
+  - Escolhas do usuario em 2026-10-16 "Duas telas independentes" e "Adicionar exemplos"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 7dbaf552. Uma tela so com Tudo, Desapegos e Imoveis e os mesmos filtros (bairro, ordem
+    e preco) para os dois mercados.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/features/home/
+  - prototypes/bivaque-html/src/features/profile/demo-actions.js
+  - prototypes/bivaque-html/src/app/
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-022.task.yml
+forbidden:
+  - fotos novas embutidas (peso) ou foto que nao corresponda ao anuncio
+  - trazer de volta um exemplo apagado pela pessoa
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Imoveis e Desapegos sao telas proprias, sem mistura e sem a aba Tudo; o endereco antigo abre uma delas
+  - Filtros de imovel por tipo, total do mes, quartos, vagas, area e comodidades
+  - Filtros de desapego por categoria, estado de uso, preco e retirada
+  - Mais filtros recolhidos no celular e no tablet, sempre a vista no desktop
+  - Editor exige tipo (imovel) ou categoria e estado (desapego); detalhe e cartao mostram os campos
+  - Exemplos novos entram uma vez; dados salvos antigos ganham os atributos
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round22-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round21-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round10-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: modelo local de anuncios do prototipo e navegacao do catalogo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

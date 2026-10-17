@@ -1,0 +1,37 @@
+task_id: HTML-036
+objective: >
+  Rodada 36 tira o titulo repetido das telas de lista no celular: a barra fica sem titulo e sem
+  linha enquanto o titulo grande da pagina esta a vista e mostra o titulo quando ele passa por
+  baixo dela.
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode terminar todos", lote mobile)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 9fa31290. Imoveis, Comunidade, Agenda e as outras listas mostravam o mesmo titulo na
+    barra e na pagina.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/navigation.js
+  - prototypes/bivaque-html/src/styles/
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-036.task.yml
+forbidden:
+  - mudar a barra do desktop, da Inicio ou das telas sem titulo grande
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - No celular, o titulo da barra aparece so quando o titulo da pagina passa por baixo dela
+  - Inicio, detalhes e desktop mantem o titulo da barra sempre visivel
+  - Movimento reduzido troca sem transicao
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round36-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: barra superior do celular
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

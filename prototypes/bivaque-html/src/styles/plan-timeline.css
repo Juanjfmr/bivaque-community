@@ -1,0 +1,32 @@
+/* Rodada 15: plano de chegada e saída como linha do tempo. Vale em todas as larguras. */
+.plan-card h3{margin:0}
+.plan-days{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-primary);font-size:13px;white-space:nowrap}
+.plan-days b{font-size:18px;line-height:1}
+.plan-days md-icon{font-size:20px}
+.plan-steps{display:grid;margin:0;padding:0;list-style:none}
+.plan-step{position:relative;display:flex;align-items:flex-start;gap:10px;padding:5px 0}
+.plan-step:not(:last-child)::after{content:'';position:absolute;left:19px;top:51px;bottom:-11px;width:2px;border-radius:1px;background:var(--md-sys-color-outline-variant)}
+.plan-step.is-done:not(:last-child)::after{background:var(--md-sys-color-primary)}
+.plan-node{position:relative;z-index:1;flex:none;margin-top:6px;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--md-sys-color-surface-container-lowest);border:2px solid var(--md-sys-color-outline-variant)}
+.is-done .plan-node{border-color:var(--md-sys-color-primary)}
+.is-current .plan-node{border-color:var(--md-sys-color-primary);box-shadow:0 0 0 5px rgba(22,78,99,.16);box-shadow:0 0 0 5px color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent)}
+.plan-node md-checkbox{--md-checkbox-container-shape:50%}
+.plan-step button{flex:1;display:grid;gap:2px;min-width:0;min-height:52px;padding:8px 10px;border-radius:14px;text-align:left}
+@media(hover:hover){.plan-step button:hover{background:var(--md-sys-color-surface-container-low)}}
+.plan-step b{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;line-height:20px}
+.is-done b{color:var(--md-sys-color-on-surface-variant);font-weight:550}
+.plan-step small{font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant)}
+.plan-step>md-icon{flex:none;margin-top:16px;color:var(--md-sys-color-on-surface-variant)}
+.plan-done{color:var(--md-sys-color-on-success-container);background:var(--md-sys-color-success-container);font-weight:650}
+.plan-now{padding:1px 8px;border-radius:999px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:11px;line-height:16px;font-weight:700;letter-spacing:.3px}
+/* Rodada 26: anel de progresso no cabeçalho e botão Continuar. */
+.plan-head{display:flex;align-items:center;gap:12px}
+.plan-ring{width:52px;height:52px;flex:none;transform:rotate(-90deg)}
+.plan-ring circle{fill:none;stroke-width:5}
+.plan-ring .track{stroke:var(--md-sys-color-surface-container-highest)}
+.plan-ring .fill{stroke:var(--md-sys-color-primary);stroke-linecap:round;transition:stroke-dasharray .4s ease}
+.plan-ring text{transform:rotate(90deg);transform-origin:26px 26px;font:700 13px var(--md-ref-typeface-plain);fill:var(--md-sys-color-on-surface)}
+.plan-next{margin:6px 0 2px}
+.plan-next md-filled-button{width:100%}
+@media(min-width:1024px){.plan-next md-filled-button{width:auto;min-width:200px}}
+@media (prefers-reduced-motion:reduce){.plan-ring .fill{transition:none}}

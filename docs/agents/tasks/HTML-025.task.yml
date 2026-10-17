@@ -1,0 +1,39 @@
+task_id: HTML-025
+objective: >
+  Rodada 25 cria o alerta de busca salva: "Avise-me" com filtros ativos em Imoveis e Desapegos,
+  lista de alertas em Voce (pausar, abrir com os filtros, excluir com desfazer) e aviso na central
+  quando um anuncio novo de outra pessoa cabe no alerta, com referencias do Mobbin.
+authority:
+  - Pedido do usuario em 2026-10-16 para adotar todos os itens, comecando pelo lote B ("Pode comecar")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 58526f37. Nao havia como guardar uma busca nem ser avisado de anuncio novo.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/features/profile/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-025.task.yml
+forbidden:
+  - enviar notificacao real ou qualquer dado para fora do navegador
+  - avisar sobre o proprio anuncio
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Avise-me so aparece com filtros ativos; criar mostra confirmacao com desfazer
+  - Lista em Voce com pausar, abrir reaplicando os filtros e excluir com desfazer dentro da lista
+  - Anuncio novo que cabe num alerta ligado gera aviso na central; alerta pausado ou inexistente nao
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round25-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: preferencia local nova no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

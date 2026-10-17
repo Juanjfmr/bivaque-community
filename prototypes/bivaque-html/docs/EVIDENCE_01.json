@@ -1,0 +1,131 @@
+{
+  "round": "01",
+  "date": "2026-10-14",
+  "finalApproval": {
+    "prototypeScope": "PASS",
+    "repositoryGate": "BLOCKED_EXTERNAL",
+    "closedAt": "2026-10-14",
+    "note": "Visual e secrets fechados; lint docs/evidence (outra sessao, nao versionado) e typecheck mobile yargs permanecem externos"
+  },
+  "candidateSha256": "e6acf9e62140d396b2f9df0e74557ebc1c8a24a67a19d03c1ac2bdb6eadaaf87",
+  "candidateBytes": 2790480,
+  "baseRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
+  "layers": {
+    "codeReview": "PASS independent b46 + delta e6",
+    "functionalRuntime": "PASS independent",
+    "visualAdjudication": "BLOCKED independent; three raw FAIL matrices preserved",
+    "repositoryGate": "FAIL lint outside scope",
+    "CI": "NOT_EXECUTED",
+    "mergePublication": "NOT_EXECUTED"
+  },
+  "functional": {
+    "contexts": 6,
+    "globalCheckpoints": 198,
+    "messagingCheckpoints": 96,
+    "total": 294,
+    "captures": 72,
+    "browserErrors": 0,
+    "externalRequests": 0
+  },
+  "visual": {
+    "protocols": 3,
+    "capturesPerProtocol": 132,
+    "controlledArgs": ["--disable-gpu", "--force-color-profile=srgb"],
+    "oracleTolerance": 0,
+    "masks": false,
+    "limitation": "Same frozen HTML bytes yield different RGBA between contexts; visible metadata agrees. Cause not finally established.",
+    "closure": {
+      "status": "PASS",
+      "report": ".visual/bivaque-html-round01/visual-unstable-zone-e6ac/report.json",
+      "reportSha256": "1374e521d5e0ff8153f32edca6a075403f38862c99cf6946854d191533a0a1a9",
+      "criterion": "hashes markup/geometria/estilos/imagens iguais e 0 pixel base x candidato fora da zona instavel do renderer",
+      "captures": 132,
+      "strictScenes": "12/12",
+      "globalViewsStructurallyEqual": "30/30",
+      "negativeControl": "6px delta8 detectado em 2 cenarios"
+    }
+  },
+  "technical": {
+    "builder": "20 PASS",
+    "contract": "PASS",
+    "original": "PASS",
+    "deterministicBuild": "PASS",
+    "unit": "564 PASS",
+    "privacy": "189 PASS",
+    "webTypecheck": "PASS",
+    "mobileTypecheck": "FAIL TS2688 yargs",
+    "scope": "106 PASS / 1 FAIL; 22 embedded base64 false positives",
+    "gate": "FAIL lint in two preserved Figma JSONs",
+    "closure": {
+      "scope": "107/107",
+      "secrets": "PASS (excecao data-URI image/font com controles negativos)",
+      "build": "PASS",
+      "test": "PASS",
+      "lint": "FAIL externo docs/evidence/figma-2026-10-06",
+      "typecheck": "FAIL externo apps/mobile TS2688 yargs"
+    }
+  },
+  "inventory": {
+    "routes": 19,
+    "actionsBefore": 147,
+    "actionsAfter": 151,
+    "tested": 55,
+    "noHandler": 0,
+    "futureOrUnverified": 95,
+    "defective": ["join-group"],
+    "removed": [],
+    "dynamicRetained": 11
+  },
+  "preservation": {
+    "otherSessionsGitDiffUnchanged": true,
+    "protectedFiles": {
+      "prototypes\\bivaque-html\\reference\\Bivaque_Material_Web.original.html": true,
+      "prototypes\\bivaque-html\\src\\manifest.json": true,
+      "prototypes\\bivaque-html\\src\\styles\\base.css": true,
+      "prototypes\\bivaque-html\\src\\styles\\create-menu.css": true,
+      "prototypes\\bivaque-html\\src\\styles\\fonts.css": true,
+      "prototypes\\bivaque-html\\src\\styles\\groups.css": true,
+      "prototypes\\bivaque-html\\src\\styles\\navigation.css": true,
+      "prototypes\\bivaque-html\\src\\styles\\overlays.css": true,
+      "prototypes\\bivaque-html\\src\\styles\\palette.css": true,
+      "prototypes\\bivaque-html\\src\\vendor\\material-web-2.5.0.js": true,
+      "prototypes\\bivaque-html\\src\\data\\demo\\assets.js": true,
+      "prototypes\\bivaque-html\\src\\data\\demo\\material-version.js": true,
+      "prototypes\\bivaque-html\\src\\data\\demo\\model.js": true,
+      "prototypes\\bivaque-html\\src\\data\\demo\\source.js": true,
+      "scripts\\bivaque-html\\verify_reference.py": true,
+      "docs\\evidence\\figma-2026-10-06\\local-artifacts-manifest.json": true,
+      "docs\\evidence\\figma-2026-10-06\\repair-run15-proof.json": true
+    }
+  },
+  "hashes": {
+    "prototypes/bivaque-html/dist/Bivaque_Material_Web.html": "e6acf9e62140d396b2f9df0e74557ebc1c8a24a67a19d03c1ac2bdb6eadaaf87",
+    "prototypes/bivaque-html/reference/Bivaque_Material_Web.original.html": "29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4",
+    "scripts/bivaque-html/build.py": "975f4d08723283e42fe5bd294b45e32a11c66453b34ea430ab9d92a0b4eb3e5f",
+    "scripts/bivaque-html/capture-support.mjs": "fae15e6dcdc77fd537ec432deaa9129ab9a17506ebbde01ddd59054755e0bbc7",
+    "scripts/bivaque-html/round001-proof.mjs": "f8fbc03b37c8124b2c192e4983131b037449bba77053675c946ce8635f0c5baf",
+    "scripts/bivaque-html/navigation-inventory.mjs": "4ff8ec18c2c0fbf3de92ee66ce859a1e03765f35a1be93f4d70609f82cc5a7ea",
+    "scripts/bivaque-html/round01-proof.mjs": "c18dc7839b3ae6bd10eafe75068231f1f52a03715d1de5b8370fb5efdef8ed88",
+    "scripts/bivaque-html/round01-visual.mjs": "0518b08e15addfb467f8e81f24754acfff21a6e0b5d247bc8ef715810148e039",
+    ".visual/bivaque-html-round01/independent-round01-verdict.json": "5b17bb1995fce666a9e5b067edbed02c04a5a882793dad7d59587b939d1efbb2",
+    ".visual/bivaque-html-round01/combined-functional.json": "6b85338d335df198441bc4d25c216a64e67027d78ff5ef7126c90295e3eea923",
+    ".visual/bivaque-html-round01/independent-functional-final-e6ac/report.json": "3a5f25ecd208598876a7e9179afab2af1be3029c1172a3f92c19877755ae1898",
+    ".visual/bivaque-html-round01/independent-global-filters-e6ac/report.json": "b5390bfca91b1ae5108f74188135f4d8090b1ccbbbcbf0670b5cd60ea34fc0fb",
+    ".visual/bivaque-html-round01/messaging-regression-final-e6ac/report.json": "a0e35c98fa35f4b16c5a3f8ed0c14fe59c6cf68dc944c8ec03d8ddf62e1f414c",
+    ".visual/bivaque-html-round01/independent-visual-final-e6ac/report.json": "5bffd9f63d0e328c76d7ded4520141ab026e4127c832a681f4db61ccff4f0a4d",
+    ".visual/bivaque-html-round01/independent-visual-serial-e6ac/report.json": "717c3ce14263e07485291ca237f365cf7ca3b6c119961e0142352a59b8203a4a",
+    ".visual/bivaque-html-round01/independent-visual-controlled-e6ac/report.json": "24188bb129c484711840e3e036850be972b54b93d1d87840fdb32312e2471490",
+    ".visual/bivaque-html-round01/review-status.md": "2fb73682db6f0ebd82a1e6c9a1422d9ddf5ac8d500914a4fbdce28ac67964d1e",
+    ".visual/bivaque-html-round01/review-final-probes.json": "fa60a0c59b23356d829324cddeca79abc32d2fc46427e22c3b4f3461f30ee268",
+    ".visual/bivaque-html-round01/review-delta-e6.md": "16205e72126c6ae2247bf165cebb4c3ba4f140bf101ccb6e8c0de00033363874",
+    ".visual/bivaque-html-round01/review-denial-e6.json": "261df032deff0545397df7294e3681882b98215a9f420fb7980453b66dae0a5a",
+    ".visual/bivaque-html-round01/preserved-state.json": "bbc7d4437672337b84090b33d23bf6327942d6ffb6234abce9fdd11f2d822fa5",
+    "prototypes/bivaque-html/docs/NAVIGATION_BEFORE.json": "19adf851aa66042b420c1e035088c3cdcd1907d2d807676322a085b5a6a31c4c",
+    "prototypes/bivaque-html/docs/NAVIGATION_AFTER.json": "1efd45d8853a655e7ab776f634a44c1ad9f0f868d931594b85323d53470b8a03"
+  },
+  "limitations": [
+    "Chromium viewport emulation; no physical-device/full screen-reader certification",
+    "Clipboard/share API success/denial/cancel instrumentation plus real selectable fallback",
+    "Other domains remain pending; no backend/real messages or invitations/production integration"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "version": "1.0",
+  "created": "2026-10-13",
+  "visual_reference_sha256": "29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4",
+  "agent_count": 18,
+  "files": {
+    ".codex/agents/bivaque-acesso-onboarding.toml": {
+      "sha256": "79a8ddea8fa0d30d600ddeded66e47d50bbfb252656e545b291b482dbf0a2781",
+      "size": 2103
+    },
+    ".codex/agents/bivaque-arquitetura-integracao.toml": {
+      "sha256": "ca7eb367ea5702305a82788ec6724a8a9a85b3f2ef846bc6a881d84694f30840",
+      "size": 2021
+    },
+    ".codex/agents/bivaque-comunidades-grupos.toml": {
+      "sha256": "bf799eec0bd4cbed82841d43848d1e230561751b41266ec39b50e609fe031388",
+      "size": 2043
+    },
+    ".codex/agents/bivaque-conversas-notificacoes.toml": {
+      "sha256": "57414cbbf83ffa89e5dfe797596c4d8e37ce5e6bf393234058d1d23d8cfd3285",
+      "size": 1940
+    },
+    ".codex/agents/bivaque-desapegos-mercado.toml": {
+      "sha256": "8f31a11c6de423d390de59bf07da176deb863e5fdca72ed62a055aea1ce5ac7a",
+      "size": 1939
+    },
+    ".codex/agents/bivaque-diretor-produto.toml": {
+      "sha256": "1562d0bf5db5bcaa7fca6414810105190018583d2753ff0a70ab0dd521cf152c",
+      "size": 2069
+    },
+    ".codex/agents/bivaque-encontros-eventos.toml": {
+      "sha256": "772308949d99e6e668439296e342f07b808c75a540f410ed259e0b412de70ed2",
+      "size": 1907
+    },
+    ".codex/agents/bivaque-frontend-premium.toml": {
+      "sha256": "45cebde7816881b31ee6fdcbcde1e21627159954ccae1d904d7ace1dfe79c9a2",
+      "size": 2054
+    },
+    ".codex/agents/bivaque-imoveis-moradia.toml": {
+      "sha256": "c38faa4904ad40fc039c03c14d76df9a3128022981dec1a1eee374e5b1b059c3",
+      "size": 1934
+    },
+    ".codex/agents/bivaque-inicio-busca-descoberta.toml": {
+      "sha256": "315b1a908f8f38cd2f2672c8c7939098239dc7634cd5a050e553a51910b02c22",
+      "size": 1961
+    },
+    ".codex/agents/bivaque-memoria-indicacoes.toml": {
+      "sha256": "e4737d54db6a41b9493996dcef2f7c65d1eee2ee4b343f0350010b795fdb4778",
+      "size": 1948
+    },
+    ".codex/agents/bivaque-monetizacao-crescimento.toml": {
+      "sha256": "9b43da39b292e06f0d5f2c0528c6fae6617cb3dc2a5ada9338a345c51abd69e2",
+      "size": 1945
+    },
+    ".codex/agents/bivaque-motion-microinteracoes.toml": {
+      "sha256": "32c7083205f6940d63b865b4c7e636c9247e6270b616150898df689ff17a8f5b",
+      "size": 1983
+    },
+    ".codex/agents/bivaque-negocios-servicos.toml": {
+      "sha256": "cee9ad2fca29ed3ebe10fd478edf21c8e9050a1a68892bdac6e2a29c3fdc8525",
+      "size": 2015
+    },
+    ".codex/agents/bivaque-perfil-familia-movimentacao.toml": {
+      "sha256": "0b5c0157441bc3b4dfbf229373a06de870650a5261eecb04f86c1999c1747ee1",
+      "size": 1963
+    },
+    ".codex/agents/bivaque-qa-experiencia.toml": {
+      "sha256": "8245c1b2a095d376bb9517fe3274cd89a66d497f3cfd6ddf206c64041a2de084",
+      "size": 1962
+    },
+    ".codex/agents/bivaque-seguranca-privacidade.toml": {
+      "sha256": "668f37c7ffac07d29a5c87575c23333e4a2ae9d14af6cf2508aafa08642609ba",
+      "size": 1996
+    },
+    ".codex/agents/bivaque-ui-ux-especialista.toml": {
+      "sha256": "7e70fd7104821fc7fd64270a962a718f5fb5595a942faa16e2a0592b48187268",
+      "size": 2261
+    },
+    "CODEX_PROMPT_INICIAL.md": {
+      "sha256": "c6ee08400835ed0e7c2ff9a1c04ad070f05fdeb3fe2f710d0be25753d10a8e50",
+      "size": 4212
+    },
+    "README.md": {
+      "sha256": "a5a6a26cf3003dfd599513be757108c3a3eb812baaf0aee2514c757f303d4620",
+      "size": 2811
+    },
+    "config/CODEX_CONFIG_SNIPPET.toml": {
+      "sha256": "6c3a2c0903bbc35d881447e185eee3c2ad3b738b27e19589fb79f51f1e1c3d03",
+      "size": 558
+    },
+    "docs/ACCEPTANCE.md": {
+      "sha256": "780d944bfc20920e1d6ab3812606e465b93ff71821a86c27b2367566119a93ca",
+      "size": 2335
+    },
+    "docs/AGENT_RULES.md": {
+      "sha256": "921631cb11512d55bbc625454ad7ad95acf2f21baa862de3f27c1452a731e298",
+      "size": 2575
+    },
+    "docs/ARCHITECTURE.md": {
+      "sha256": "9502eeac3a0b9e3f335df1378461c58fa4dc65937d764826471dc7f45300b54e",
+      "size": 2162
+    },
+    "docs/INITIAL_INVENTORY.md": {
+      "sha256": "e5aebc423699ed8d7d58086829c0c49804f1a7877db5cc58657f35adb62cb45d",
+      "size": 1655
+    },
+    "docs/PLANO_COMPLETO_18_AGENTES.md": {
+      "sha256": "cfae85372a598260c3665dc4aa09890a1350bb542efbac99218065184f427159",
+      "size": 17159
+    },
+    "docs/ROADMAP.md": {
+      "sha256": "962967cf6d2ad64e276a9f809dc722f5d15ee5e65f6e15c0466472f398449eb5",
+      "size": 2163
+    },
+    "docs/UI_UX.md": {
+      "sha256": "af0158ec33374dc735fa792c97d4326d7cba11b647388ff62288ff63ddf96d0a",
+      "size": 2572
+    },
+    "prototype/reference/Bivaque_Material_Web.original.html": {
+      "sha256": "29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4",
+      "size": 2760578
+    },
+    "scripts/audit_html.py": {
+      "sha256": "dd59ea2e4245f0a4ce807cf8ac0aefc476d9e09c581f1e85ffad9ac390c29ccb",
+      "size": 1633
+    },
+    "scripts/install.py": {
+      "sha256": "9d629099f5463bd1cbc35942e47b84cba8d6a83dfb80c0b2931c8c5b3f934639",
+      "size": 2247
+    },
+    "scripts/verify_reference.py": {
+      "sha256": "546e8c6332b1af074db8a755bb1dff45772cf2322d42c577a48f1b1f516fcd7e",
+      "size": 569
+    },
+    "tasks/ROUND_00.md": {
+      "sha256": "b126528479a9cc763c19c13717cdc2c28b4fa2f5cfaecf695f5d90e4883bb33b",
+      "size": 1885
+    },
+    "templates/TASK_TEMPLATE.md": {
+      "sha256": "22650637c560763e61063690d05916ac6e241e48ef28655b362dd43871597bb9",
+      "size": 1115
+    }
+  }
+}

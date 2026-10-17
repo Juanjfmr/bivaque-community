@@ -1,0 +1,32 @@
+/* Rodada 14: paleta de busca e comandos do desktop (Ctrl+K ou ⌘K). Só existe quando aberta. */
+.palette{position:fixed;inset:0;z-index:80}
+.palette-scrim{position:absolute;inset:0;background:rgba(0,22,30,.28);backdrop-filter:blur(2px)}
+.palette-box{position:absolute;top:12vh;left:50%;translate:-50% 0;display:flex;flex-direction:column;width:min(640px,calc(100vw - 32px));max-height:72vh;overflow:hidden;border-radius:24px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);box-shadow:0 32px 72px -18px rgba(0,30,40,.45),0 4px 12px rgba(0,30,40,.1)}
+.palette.open .palette-box{animation:palette-in .22s cubic-bezier(.2,0,0,1)}
+@keyframes palette-in{from{opacity:0;transform:translateY(-8px) scale(.98)}}
+.palette-field{display:flex;align-items:center;gap:12px;padding:0 16px 0 20px;height:62px;border-bottom:1px solid var(--md-sys-color-outline-variant)}
+.palette-field>md-icon{color:var(--md-sys-color-primary)}
+#palette-input{flex:1;min-width:0;height:100%;border:0;outline:none;background:none;font:inherit;font-size:18px;color:var(--md-sys-color-on-surface)}
+#palette-input::placeholder{color:var(--md-sys-color-on-surface-variant)}
+.palette kbd,.home-kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:7px;border:1px solid var(--md-sys-color-outline-variant);border-bottom-width:2px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);font-family:inherit;font-size:12px;font-weight:650;line-height:1}
+.palette-field kbd{cursor:pointer}
+.palette-list{flex:1;overflow:auto;padding:6px 8px 8px;overscroll-behavior:contain}
+.palette-title{padding:10px 12px 4px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant)}
+.palette-option{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:14px;cursor:pointer}
+.palette-option>md-icon{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-primary);font-size:20px}
+.palette-option[aria-selected=true]{background:var(--md-sys-color-secondary-container)}
+.palette-option[aria-selected=true]>md-icon{background:var(--md-sys-color-surface-container-lowest)}
+.palette-text{display:grid;flex:1;min-width:0}
+.palette-text b{overflow:hidden;font-size:15px;line-height:21px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.palette-text small{overflow:hidden;font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant);text-overflow:ellipsis;white-space:nowrap}
+.palette-text mark{background:none;color:var(--md-sys-color-primary);font-weight:800;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.palette-go{display:grid;opacity:0;color:var(--md-sys-color-on-surface-variant)}
+.palette-option[aria-selected=true] .palette-go{opacity:1}
+.palette-all{margin-top:6px;border-top:1px solid var(--md-sys-color-outline-variant);border-radius:0 0 14px 14px}
+.palette-empty{margin:18px;color:var(--md-sys-color-on-surface-variant);text-align:center}
+.palette-foot{display:flex;gap:18px;padding:10px 18px;border-top:1px solid var(--md-sys-color-outline-variant);font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.palette-foot span{display:inline-flex;align-items:center;gap:4px}
+.palette-foot kbd{min-width:18px;height:18px;font-size:11px}
+.home-kbd{margin-left:10px;font-size:11px}
+@media(prefers-reduced-motion:reduce){.palette.open .palette-box{animation:none}}
+.palette-live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

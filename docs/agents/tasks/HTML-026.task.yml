@@ -1,0 +1,37 @@
+task_id: HTML-026
+objective: >
+  Rodada 26 traz ao cartao do plano de chegada e saida o padrao de primeiros passos do Mobbin
+  (Rakuten, Shopify, Fitbit): anel de progresso com a contagem e botao Continuar que leva direto
+  a proxima etapa, no celular e no desktop.
+authority:
+  - Pedido do usuario em 2026-10-16 para adotar todos os itens do lote B ("Pode comecar")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 2a220d65. O cartao do plano (Rodada 15) ja mostrava dias, etapas e a proxima, com barra
+    fina de progresso e sem acao direta para a proxima etapa.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/home/views.js
+  - prototypes/bivaque-html/src/styles/plan-timeline.css
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-026.task.yml
+forbidden:
+  - criar outra tela de plano ou duplicar o cartao existente
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Anel mostra feitas/total, com rotulo para leitor de tela, e acompanha a marcacao das etapas
+  - Continuar leva ao destino da proxima etapa e diz o nome dela ao leitor de tela
+  - Plano concluido sem Continuar; plano de saida com o mesmo anel
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round26-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round15-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

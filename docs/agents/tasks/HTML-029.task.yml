@@ -1,0 +1,40 @@
+task_id: HTML-029
+objective: >
+  Rodada 29 faz o compartilhar de anuncio e negocio abrir uma folha com um cartao pronto para
+  grupos de WhatsApp (foto, preco ou indicacoes, bairro e Bivaque), desenhado no proprio aparelho,
+  com compartilhar com imagem, baixar imagem e compartilhar link, inspirado no Rodeo e no Brink.
+authority:
+  - Escolha do usuario em 2026-10-16 ("1 ok") para o lote C
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD c252ce44. Compartilhar mandava so um link cru, sem imagem.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-029.task.yml
+forbidden:
+  - enviar a imagem ou qualquer dado a servico externo para gerar o cartao
+  - mudar o fluxo de compartilhar link (copiar, negado, cancelado)
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Anuncio e negocio abrem a folha com a previa do cartao 1080x1350 e descricao para leitor de tela
+  - Compartilhar com imagem manda o PNG e o link; some onde o aparelho nao compartilha arquivos
+  - Baixar imagem salva o PNG; Compartilhar link segue o fluxo antigo
+  - Encontros e perguntas continuam so com link
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round29-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: geracao local de imagem no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

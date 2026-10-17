@@ -1,0 +1,41 @@
+task_id: HTML-037
+objective: >
+  Rodada 37 deixa a conversa do celular com cara de app: a barra mostra com quem se fala e o
+  assunto, o menu da conversa vai para a barra, a caixa de texto vira uma pilula com o enviar
+  dentro (sem rotulo, dica de teclado ou contador fixo) e toda conversa abre com um aviso contra
+  golpe.
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode terminar todos", lote mobile)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 483d7a33. A barra dizia "Conversa", o nome rolava para fora e a caixa de texto tinha
+    rotulo, contador e a dica "Enter envia" no celular.
+allowed_paths:
+  - prototypes/bivaque-html/src/shell/navigation.js
+  - prototypes/bivaque-html/src/features/messaging/views.js
+  - prototypes/bivaque-html/src/styles/
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-037.task.yml
+forbidden:
+  - mudar a barra ou a caixa de texto da conversa no desktop
+  - mudar o limite de 2.000 caracteres ou o envio
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - No celular a barra mostra pessoa e assunto e tem o menu da conversa; o titulo segue para leitor de tela
+  - Caixa em pilula com o enviar dentro; o limite continua valendo no envio
+  - Aviso de seguranca no comeco de toda conversa
+  - Desktop com a barra e a caixa de antes
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round37-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: conversa do celular
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

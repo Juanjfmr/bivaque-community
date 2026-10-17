@@ -1,0 +1,41 @@
+{
+  "round": "00.1",
+  "generalStatus": "BLOCKED",
+  "candidateSha256": "3a89428131ea76386ca0966d8dc7964cb0b7a58e398ed350a88148e35682e8c2",
+  "hashes": {
+    "prototypes/bivaque-html/dist/Bivaque_Material_Web.html": "3a89428131ea76386ca0966d8dc7964cb0b7a58e398ed350a88148e35682e8c2",
+    "prototypes/bivaque-html/reference/Bivaque_Material_Web.original.html": "29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4",
+    "scripts/bivaque-html/build.py": "975f4d08723283e42fe5bd294b45e32a11c66453b34ea430ab9d92a0b4eb3e5f",
+    "scripts/bivaque-html/round001-proof.mjs": "f8fbc03b37c8124b2c192e4983131b037449bba77053675c946ce8635f0c5baf",
+    "scripts/bivaque-html/capture-support.mjs": "fae15e6dcdc77fd537ec432deaa9129ab9a17506ebbde01ddd59054755e0bbc7",
+    "scripts/bivaque-html/visual-stability.mjs": "677c52219b9d82d9da9d2aec9c2aa5dec92576949dc8de4e53055f6760aff263",
+    ".visual/bivaque-html-round00-1/independent-functional/report.json": "03f93792c70129690be48b9cdff0de5bfbdb7dd4256c6016766e105bad20bcf3",
+    ".visual/bivaque-html-round00-1/visual-1791930736349/visual-stability.json": "4a782b9573152773614b935eab7ea6a7788cdf71a03ec1f2471385abea213cce",
+    ".visual/bivaque-html-round01/prior-round-verification/independent-round001-verdict.json": "af238f8088a0cd815c3b59748d4d922ca7e186959317a67fc6012cff8ee8163f",
+    ".visual/bivaque-html-round00-1/visual-1791952841995/visual-stability.json": "a47b2b029d2e89cbb6c042725daec8ba262f9ae392d5e8ba8f679ca1c3ae89e6"
+  },
+  "checks": {
+    "builderTests": 20,
+    "scopeTests": 107,
+    "unitTests": 564,
+    "functionalContexts": 6,
+    "functionalCheckpoints": 96,
+    "functionalCaptures": 30,
+    "functionalStatus": "PASS",
+    "visualCaptures": 144,
+    "visualConsecutivePairs": 144,
+    "visualStatus": "PASS"
+  },
+  "independence": {
+    "codeReview": "PASS, html_review",
+    "functionalExecution": "PASS, html_ux_audit executed final script",
+    "finalRuntimeAdjudication": "PASS, html_ux_audit, independent verdict completed 2026-10-14",
+    "visualExecution": "PASS, fresh independent 144-capture rerun"
+  },
+  "globalBlockers": [
+    "Preexisting JSON formatting errors; files preserved",
+    "TS2688 missing yargs definition in mobile; unrelated diff preserved"
+  ],
+  "evidenceRoot": ".visual/bivaque-html-round00-1",
+  "prototypeCriteriaStatus": "PASS"
+}
