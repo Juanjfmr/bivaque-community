@@ -19,7 +19,7 @@ function messagingCanWrite(){
  return true;
 }
 async function messagingAction(action,value,el){
- if(!['open-thread','send-message','thread-origin','thread-menu','pin-thread','swipe-delete-thread','quick-reply','react-open','react-msg'].includes(action))return false;
+ if(!['open-thread','send-message','thread-origin','thread-menu','pin-thread','thread-unread','swipe-delete-thread','quick-reply','react-open','react-msg'].includes(action))return false;
  const t=messagingThread(['quick-reply','react-open','react-msg'].includes(action)?value.split('|')[0]:value);
  if(!t){messagingFeedback('Esta conversa não está disponível nesta cidade.');return true;}
  if(action==='react-open'||action==='react-msg'){chatReactAction(action,t,value);return true;}
@@ -48,7 +48,12 @@ async function messagingAction(action,value,el){
  }
  if(!messagingCanWrite())return true;
  if(action==='thread-menu'){
-  showDialog('Opções da conversa',`<p class="form-note">Esta conversa é fictícia e está salva apenas neste dispositivo.</p><div class="stack">${btn(t.pinned?'Soltar conversa':'Fixar conversa','pin-thread',value,'outlined','push_pin')}${btn('Apagar conversa local','swipe-delete-thread',value,'text','delete')}</div>`,btn('Fechar','close-dialog','','text'));return true;
+  showDialog('Opções da conversa',`<p class="form-note">Esta conversa é fictícia e está salva apenas neste dispositivo.</p><div class="stack">${btn(t.unread?'Marcar como lida':'Marcar como não lida','thread-unread',value,'outlined',t.unread?'drafts':'chat_bubble')}${btn(t.pinned?'Soltar conversa':'Fixar conversa','pin-thread',value,'outlined','push_pin')}${btn('Apagar conversa local','swipe-delete-thread',value,'text','delete')}</div>`,btn('Fechar','close-dialog','','text'));return true;
+ }
+ // Rodada 39: marcar como não lida (ou lida) pelo deslizar ou pelo menu ⋮.
+ if(action==='thread-unread'){
+  const t=messagingThread(value);if(!t)return true;
+  if(mutate(()=>{t.unread=!t.unread;},{redraw:false})){if(dialog.open)await closeDialog(true);render();notify(t.unread?'Conversa marcada como não lida':'Conversa marcada como lida',t.unread?'chat_bubble':'drafts');}return true;
  }
  if(action==='pin-thread'){
   if(mutate(()=>{threadById(value).pinned=!threadById(value).pinned;},{redraw:false})){if(dialog.open)await closeDialog(true);render();notify(threadById(value).pinned?'Conversa fixada':'Conversa solta');}return true;
