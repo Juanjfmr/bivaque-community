@@ -93,7 +93,10 @@ export async function reload(page) {
   await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
 }
 
-export async function runProof(checkpoints, round) {
+// options.allowExternal: prefixos externos que a prova intercepta e responde localmente (ex.: o
+// MapLibre do mapa, Rodada 31). Qualquer outro endereço externo continua reprovando.
+export async function runProof(checkpoints, round, options = {}) {
+  const allowed = options.allowExternal ?? []
   const root = resolve(import.meta.dirname, "../..")
   const output = resolve(
     root,
@@ -147,7 +150,12 @@ export async function runProof(checkpoints, round) {
         page.on("request", (r) => {
           // blob: é memória da própria página (ex.: cartão de compartilhamento), nunca sai do navegador.
           const u = r.url()
-          if (!u.startsWith("http://127.0.0.1") && !u.startsWith("data:") && !u.startsWith("blob:"))
+          if (
+            !u.startsWith("http://127.0.0.1") &&
+            !u.startsWith("data:") &&
+            !u.startsWith("blob:") &&
+            !allowed.some((prefix) => u.startsWith(prefix))
+          )
             report.externalRequests.push({ ctx, name, url: u })
         })
         const result = { ctx, name, status: "PASS" }

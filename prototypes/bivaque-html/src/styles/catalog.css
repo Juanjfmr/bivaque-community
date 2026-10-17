@@ -97,3 +97,14 @@ md-dialog[data-kind=compare]{width:min(1080px,100vw);max-width:100vw}
 .cmp-amen li{display:flex;align-items:center;gap:4px}
 .cmp-amen md-icon{font-size:16px;--md-icon-size:16px;color:var(--md-sys-color-primary)}
 .cmp-actions{display:flex!important;flex-wrap:wrap;gap:6px;align-items:center}
+/* Rodada 31: mapa de bairros (MapLibre + OpenFreeMap, carregados sob demanda). */
+.fbar{flex-wrap:wrap;row-gap:8px}
+.fview{display:inline-flex;gap:6px;margin-left:auto}
+.fview .fchip{min-height:34px}
+.cmap{position:relative;height:min(62vh,520px);border-radius:18px;overflow:hidden;background:var(--md-sys-color-surface-container-high)}
+.cmap-status{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;font-size:14px;color:var(--md-sys-color-on-surface-variant);z-index:1}
+.cmap-pin{min-width:40px;height:40px;padding:0 10px;border-radius:20px;border:3px solid #fff;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font:700 15px var(--md-ref-typeface-plain);box-shadow:0 4px 12px rgb(0 0 0 / .3);cursor:pointer}
+.cmap-pin:focus-visible{outline:3px solid var(--md-sys-color-tertiary);outline-offset:2px}
+.cmap-note{margin:8px 2px 14px;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cmap-list h3{margin:0 0 8px;font-size:15px}
+@media(max-width:479px){.fview-label,.fbar-extra{display:none}.fview .fchip{padding:0 10px}}
