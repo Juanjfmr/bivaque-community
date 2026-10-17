@@ -54,6 +54,14 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
     que faltava.
   Revisão única, bateria e base visual em [VISUAL_BASELINE_R39](VISUAL_BASELINE_R39.md).
   Publicado em 17/10 (`b71c2248…`).
+- **Lote mobile 2, Rodadas 40 a 44 (17/10):**
+  - galeria com arrastar para fechar, pinça e toque duplo;
+  - folha do bairro sobre o mapa, com três alturas;
+  - teclado certo em cada campo, preenchimento automático e vibração leve;
+  - avisos pedidos com explicação antes e instalação como app;
+  - busca em tela cheia com recentes, explorar e sugestões.
+  Revisão única, bateria e base visual em [VISUAL_BASELINE_R44](VISUAL_BASELINE_R44.md).
+  Publicado em 17/10 (`eb4969db…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do

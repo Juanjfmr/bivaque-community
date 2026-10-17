@@ -4,16 +4,16 @@ import { createHash } from "node:crypto"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
-// Base visual congelada no fechamento do lote mobile (Rodadas 35 a 39), aprovada pelo usuário em
-// 2026-10-17 ("Congelar e publicar"; prototypes/bivaque-html/docs/VISUAL_BASELINE_R39.md). Os nomes
+// Base visual congelada no fechamento do lote mobile 2 (Rodadas 40 a 44), aprovada pelo usuário em
+// 2026-10-17 ("Congelar e publicar"; prototypes/bivaque-html/docs/VISUAL_BASELINE_R44.md). Os nomes
 // "Round13" ficam por compatibilidade com quem importa este módulo. Bases anteriores continuam
-// guardadas: Rodada 34 em .visual/bivaque-html-round34/baseline/round34.html (8dcad9cd…), Rodada 28 em .visual/bivaque-html-round28/baseline/round28.html (57f4e391…), Rodada 24 em .visual/bivaque-html-round24/baseline/round24.html (4678825f…), Rodada 13 em
+// guardadas: Rodada 39 em .visual/bivaque-html-round39/baseline/round39.html (b71c2248…), Rodada 34 em .visual/bivaque-html-round34/baseline/round34.html (8dcad9cd…), Rodada 28 em .visual/bivaque-html-round28/baseline/round28.html (57f4e391…), Rodada 24 em .visual/bivaque-html-round24/baseline/round24.html (4678825f…), Rodada 13 em
 // .visual/bivaque-html-round13/baseline/round13.html (f63e6a9a…) e Rodada 00.1 em
 // .visual/bivaque-html-round01/baseline/round001.html.
 export const ROUND13_BASELINE_SHA256 =
-  "b71c2248db814d2444f0fe03155f3a5cb1ccd0c9503def583d030c058f70a9d2"
-const FILE = ".visual/bivaque-html-round39/baseline/round39.html"
-const REPORT = "prototypes/bivaque-html/docs/VISUAL_BASELINE_R39.md"
+  "eb4969db49e9dfb42c1d17c2b9ce1ad9d363ade4841725d5018b856e1ed7fbb1"
+const FILE = ".visual/bivaque-html-round44/baseline/round44.html"
+const REPORT = "prototypes/bivaque-html/docs/VISUAL_BASELINE_R44.md"
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex")
 
