@@ -88,6 +88,14 @@ export async function snapshot(page) {
   }
   return stored(page)
 }
+// Rodada 43: publicar uma pergunta, criar alerta ou pedido abre a folha dos avisos. Provas que não
+// tratam dos avisos marcam a folha como já mostrada para ela não cobrir o fluxo.
+export async function skipPushAsk(page) {
+  const s = await snapshot(page)
+  s.prefs.pushAskedAt = Date.now()
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(s)])
+  await reload(page)
+}
 export async function reload(page) {
   await page.reload()
   await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)

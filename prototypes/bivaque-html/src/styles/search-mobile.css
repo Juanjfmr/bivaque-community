@@ -17,4 +17,4 @@
 .search-tile small{display:block;font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant)}
 .search-suggest{margin-top:6px}
 @media(min-width:720px){.search-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:719px){.search-head{display:none}.search-head+md-chip-set,.search-head+.filter-row{margin-top:6px}}
+@media(max-width:719px){.search-head{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}.search-head+md-chip-set,.search-head+.filter-row{margin-top:6px}}

@@ -195,6 +195,29 @@ const checkpoints = {
     await settle(page)
     expect((await zoom(page)).zoomed, "clique duplo não ampliou")
   },
+  // Revisão do lote: um toque em botão logo depois de um gesto não é engolido.
+  async "button-tap-after-gesture-works"(page) {
+    await openGallery(page)
+    const [x, y] = await center(page)
+    await touch(page, [[[x, y]], [[x - 30, y]], [[x - 120, y]], [[x - 140, y]]])
+    expect((await count(page)).startsWith("2 de"), "o gesto não trocou a foto")
+    await page.locator("#lightbox .lightbox-next").click()
+    await settle(page)
+    expect((await count(page)).startsWith("3 de"), `a seta depois do gesto: ${await count(page)}`)
+  },
+  async "zoomed-arrows-leave-the-tab-order"(page) {
+    await openGallery(page)
+    await page.keyboard.press("+")
+    const vis = await page.evaluate(() =>
+      [".lightbox-prev", ".lightbox-next"].map(
+        (s) => getComputedStyle(document.querySelector(`#lightbox ${s}`)).visibility,
+      ),
+    )
+    expect(
+      vis.every((v) => v === "hidden"),
+      `setas ampliadas: ${vis}`,
+    )
+  },
 }
 
 await runProof(checkpoints, "round40")

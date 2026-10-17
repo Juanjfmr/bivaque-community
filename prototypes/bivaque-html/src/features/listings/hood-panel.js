@@ -19,16 +19,24 @@ function hoodPinsSync(){for(const pin of $$('.cmap-pin'))pin.classList.toggle('o
 function renderHoodPanel(focus=false){
  let el=$('#hood-panel');
  if(!el){el=document.createElement('section');el.id='hood-panel';el.className='hood-panel';el.setAttribute('role','region');document.body.appendChild(el);bindHoodPanelDrag(el);}
+ // Redesenhar (ex.: ao salvar um anúncio) mantém a rolagem e o foco de quem está na folha.
+ const keep=el.dataset.stop===hoodPanel.stop?{x:el.querySelector('.hp-cards')?.scrollLeft||0,y:el.querySelector('.hp-body')?.scrollTop||0}:null,act=el.contains(document.activeElement)?globalFocusDescriptor(document.activeElement):null;
  el.dataset.stop=hoodPanel.stop;el.setAttribute('aria-labelledby','hp-title');el.innerHTML=hoodPanelHtml();
+ if(keep){const c=el.querySelector('.hp-cards'),b=el.querySelector('.hp-body');if(c)c.scrollLeft=keep.x;if(b)b.scrollTop=keep.y;}
+ if(act?.action){const t=[...el.querySelectorAll('[data-action]')].find(x=>x.dataset.action===act.action&&(x.dataset.value||'')===act.value);t?.focus({preventScroll:true});}
  document.body.classList.add('hood-open');hoodPinsSync();
  if(focus)requestAnimationFrame(()=>$('#hp-title')?.focus({preventScroll:true}));
 }
+var hoodClosingHistory=false;
 function openHoodPanel(hood){
+ if(!hoodPanel)try{history.pushState({...history.state,bivaque:true,hood:true,overlayDepth:(history.state?.overlayDepth||0)+1},'',location.href);}catch{}
  const same=hoodPanel?.hood===hood;hoodPanel={hood,stop:same?hoodPanel.stop:'low',back:document.activeElement};renderHoodPanel(true);
  // O bairro escolhido vai para o centro da parte do mapa que fica acima da folha.
  if(HOOD_POINTS[hood])catalogMap?.easeTo?.({center:HOOD_POINTS[hood],offset:[0,-hoodStopHeight(hoodPanel.stop)/2],duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:450});
 }
-function closeHoodPanel(restore=true){
+function closeHoodPanel(restore=true,dropHistory=true){
+ if(!hoodPanel)return;
+ if(dropHistory&&history.state?.hood){hoodClosingHistory=true;history.back();}
  const back=hoodPanel?.back;hoodPanel=null;$('#hood-panel')?.remove();document.body.classList.remove('hood-open');hoodPinsSync();
  if(restore&&back?.isConnected)back.focus({preventScroll:true});
 }
@@ -36,7 +44,7 @@ function setHoodStop(stop){if(!hoodPanel)return;if(hoodPanel.stop!==stop)haptic(
 // Depois de cada desenho: a folha some fora do mapa e acompanha filtros e salvos.
 function syncHoodPanel(){
  if(!hoodPanel)return;
- if(!$('#catalog-map')||innerWidth>=720){closeHoodPanel(false);return;}
+ if(!$('#catalog-map')||innerWidth>=720){closeHoodPanel(false,false);return;}
  renderHoodPanel();
 }
 function bindHoodPanelDrag(el){
@@ -50,8 +58,9 @@ function bindHoodPanelDrag(el){
  const end=e=>{
   if(!d||e.pointerId!==d.id)return;const cur=d;d=null;if(!cur.moved)return;
   const dy=e.clientY-cur.y,v=dy/Math.max(1,performance.now()-cur.t),h=cur.h-dy;el.style.transition='';el.style.height='';
-  // O clique que o mouse gera ao soltar não aciona o puxador.
-  el.addEventListener('click',ev=>{ev.stopPropagation();ev.preventDefault();},{capture:true,once:true});
+  // O clique que o mouse gera ao soltar não aciona o puxador. O dedo não gera clique depois de
+  // arrastar; por isso o supressor só existe para o mouse e não engole o próximo toque.
+  if(e.pointerType==='mouse')el.addEventListener('click',ev=>{ev.stopPropagation();ev.preventDefault();},{capture:true,once:true});
   if(e.type==='pointercancel'){renderHoodPanel();return;}
   if(h<150||(v>.8&&hoodPanel?.stop==='low')){closeHoodPanel();return;}
   let i=HOOD_STOPS.map(s=>Math.abs(hoodStopHeight(s)-h)).reduce((b,x,k,a)=>x<a[b]?k:b,0);
@@ -60,8 +69,15 @@ function bindHoodPanelDrag(el){
  };
  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&hoodPanel&&!dialog.open&&!confirmDialog.open&&!$('#lightbox')){e.preventDefault();closeHoodPanel();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&hoodPanel&&!e.defaultPrevented&&!createOpen&&!$('#filter-panel')?.open&&!dialog.open&&!confirmDialog.open&&!$('#lightbox')){e.preventDefault();closeHoodPanel();}});
 addEventListener('resize',()=>{if(hoodPanel&&innerWidth>=720)closeHoodPanel(false);},{passive:true});
+// Voltar do sistema: recolhe a folha; uma entrada da folha que sobrou (saiu do mapa por outra rota) é pulada.
+function hoodPopstate(){
+ if(hoodClosingHistory){hoodClosingHistory=false;return true;}
+ if(hoodPanel){closeHoodPanel(true,false);return true;}
+ if(history.state?.hood){history.back();return true;}
+ return false;
+}
 async function hoodPanelAction(action){
  if(action==='hood-panel-close'){closeHoodPanel();return true;}
  if(action==='hood-panel-stop'){setHoodStop(HOOD_STOPS[(HOOD_STOPS.indexOf(hoodPanel?.stop||'low')+1)%3]);$('#hood-panel .hp-grab')?.focus({preventScroll:true});return true;}

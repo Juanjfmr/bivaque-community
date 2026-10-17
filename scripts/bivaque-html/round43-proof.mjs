@@ -125,6 +125,20 @@ const checkpoints = {
     ])
     expect(head[0] === "manifest.webmanifest" && head[1] === "icon-192.png", `cabeçalho: ${head}`)
   },
+  // Revisão do lote: fechar a folha pelo X ou Esc também espera 7 dias.
+  async "closing-the-sheet-counts-as-asked"(page) {
+    await snapshot(page)
+    await noRealPermission(page)
+    await reload(page)
+    await createAlert(page, "pets")
+    expect((await dialogKind(page)) === "push", "sem a folha dos avisos")
+    await page.keyboard.press("Escape")
+    await settle(page)
+    expect(!(await dialogKind(page)), "Esc não fechou")
+    expect((await stored(page)).prefs.pushAskedAt, "fechar não registrou a pergunta")
+    await createAlert(page, "furnished")
+    expect(!(await dialogKind(page)), "pediu de novo depois de fechar pelo Esc")
+  },
 }
 
 await runProof(checkpoints, "round43")

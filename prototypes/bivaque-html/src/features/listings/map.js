@@ -78,6 +78,7 @@ async function mapAction(action,value){
  if(action==='catalog-view'){catalogView=value==='map'?'map':'list';render();globalFocus(action,catalogView);return true;}
  // Rodada 41: no celular, a folha do bairro fica sobre o mapa; no desktop, continua o diálogo.
  if(action==='map-hood'){if(innerWidth<720)openHoodPanel(value);else openHoodSheet(value);return true;}
+ if(hoodPanel)closeHoodPanel(false);
  const kind=catalogKind();catalogAttrs={...catalogAttrs,[kind]:{...catalogAttrs[kind],hoods:[value]}};catalogView='list';
  if(dialog.open)await closeDialog(true);render();globalFocus('catalog-pill','hood');return true;
 }

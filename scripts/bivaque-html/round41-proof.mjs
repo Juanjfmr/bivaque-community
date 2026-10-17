@@ -1,4 +1,4 @@
-import { expect, go, runProof, settle, snapshot } from "./proof-harness.mjs"
+import { expect, go, KEY, reload, runProof, settle, snapshot } from "./proof-harness.mjs"
 
 // Rodada 41: no celular, a folha do bairro fica sobre o mapa com três alturas e o mapa continua
 // tocável; as folhas comuns encolhem a página de trás. No desktop, a folha do bairro é o diálogo.
@@ -152,6 +152,95 @@ const checkpoints = {
       !(await page.evaluate(() => document.body.classList.contains("sheet-depth"))),
       "a página não voltou ao fechar",
     )
+  },
+  // Revisão do lote: arrastar com o dedo não engole o toque seguinte.
+  async "touch-drag-then-tap-works"(page) {
+    if (!phone(page)) return
+    await openMap(page)
+    await pin(page, "Ponta Negra").click()
+    await settle(page)
+    await page.evaluate(async () => {
+      const head = document.querySelector("#hood-panel .hp-head")
+      const r = head.getBoundingClientRect()
+      const x = r.left + 40
+      const fire = (type, y) =>
+        head.dispatchEvent(
+          new PointerEvent(type, {
+            pointerId: 7,
+            pointerType: "touch",
+            clientX: x,
+            clientY: y,
+            bubbles: true,
+          }),
+        )
+      fire("pointerdown", r.top + 10)
+      for (let i = 1; i <= 6; i++) {
+        fire("pointermove", r.top + 10 - i * 30)
+        await new Promise((ok) => setTimeout(ok, 30))
+      }
+      fire("pointerup", r.top + 10 - 180)
+    })
+    await settle(page)
+    const mid = (await panel(page))?.stop
+    expect(mid && mid !== "low", `arrastar para cima: ${mid}`)
+    await page.locator("#hood-panel .hp-grab").click()
+    await settle(page)
+    expect((await panel(page))?.stop !== mid, "o toque depois do arrasto foi engolido")
+  },
+  async "back-closes-the-panel-before-the-map"(page) {
+    if (!phone(page)) return
+    await openMap(page)
+    await pin(page, "Ponta Negra").click()
+    await settle(page)
+    await page.goBack()
+    await settle(page)
+    expect(!(await panel(page)), "o Voltar do sistema não recolheu a folha")
+    expect(await page.locator("#catalog-map").count(), "o Voltar do sistema saiu do mapa")
+    await pin(page, "Ponta Negra").click()
+    await settle(page)
+    await page.locator('#topbar [data-action="back"]').click()
+    await settle(page)
+    expect(!(await panel(page)), "o voltar da barra não recolheu a folha")
+    expect(await page.locator("#catalog-map").count(), "o voltar da barra saiu do mapa")
+    await pin(page, "Ponta Negra").click()
+    await settle(page)
+    await page.locator('#hood-panel [data-action="hood-panel-close"]').click()
+    await settle(page)
+    await page.goBack()
+    await settle(page)
+    expect(
+      !(await page.locator("#catalog-map").count()),
+      "fechar pelo X deixou uma entrada sobrando no histórico",
+    )
+  },
+  async "redraw-keeps-the-cards-scroll"(page) {
+    if (!phone(page)) return
+    await snapshot(page)
+    await page.evaluate((k) => {
+      const x = JSON.parse(localStorage.getItem(k))
+      const base = x.items.find((i) => i.id === "i2")
+      for (let n = 0; n < 5; n++)
+        x.items.push({ ...base, id: `i2x${n}`, title: `${base.title} ${n}` })
+      localStorage.setItem(k, JSON.stringify(x))
+    }, KEY)
+    await reload(page)
+    await openMap(page)
+    await pin(page, "Ponta Negra").click()
+    await settle(page)
+    await page.locator("#hood-panel .hp-grab").click()
+    await settle(page)
+    const left = await page.evaluate(() => {
+      const c = document.querySelector("#hood-panel .hp-cards")
+      c.scrollLeft = 400
+      return c.scrollLeft
+    })
+    expect(left > 100, `cartões sem rolagem para testar: ${left}`)
+    await page.locator('#hood-panel [data-action="save-item"]').nth(2).click()
+    await settle(page)
+    const after = await page.evaluate(
+      () => document.querySelector("#hood-panel .hp-cards").scrollLeft,
+    )
+    expect(Math.abs(after - left) < 2, `salvar perdeu a rolagem: ${left} → ${after}`)
   },
 }
 

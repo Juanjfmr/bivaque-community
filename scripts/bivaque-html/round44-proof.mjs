@@ -36,7 +36,9 @@ const checkpoints = {
     expect(tiles >= 4, `poucos atalhos: ${tiles}`)
     expect(await section(page, "Sugestões").count(), "sem sugestões")
     expect(!(await page.locator("#search-results .empty").count()), "ilustração grande continua")
-    const head = await page.locator("#main .search-head").isVisible()
+    const head = await page
+      .locator("#main .search-head")
+      .evaluate((h) => h.getBoundingClientRect().width > 2)
     expect(phone(page) ? !head : head, `título repetido: ${head}`)
   },
   async "arrow-completes-without-searching"(page) {
@@ -112,6 +114,26 @@ const checkpoints = {
         /Indicações e respostas/.test(await page.locator("#search-results").innerText()),
       "atalho por tipo não filtrou",
     )
+  },
+  // Revisão do lote: o destaque funciona sem acento e o título continua para leitor de tela.
+  async "highlight-ignores-accents-and-title-stays-for-readers"(page) {
+    await withRecent(page, [])
+    await page.locator("#search-query input").fill("mecâni")
+    await page.waitForTimeout(500)
+    const first = page.locator("#search-results .search-suggest .search-row .grow").first()
+    expect(
+      /^mec[aâ]nic/i.test((await first.innerText()).trim()),
+      `sugestão: ${await first.innerText()}`,
+    )
+    expect(
+      /^mec[aâ]ni$/i.test(await first.locator("b").first().innerText()),
+      `destaque: ${await first.innerHTML()}`,
+    )
+    const head = await page.evaluate(() => {
+      const h = document.querySelector("#main .search-head")
+      return h && getComputedStyle(h).display !== "none" && h.textContent.trim().length > 0
+    })
+    expect(head, "o título saiu também para leitor de tela")
   },
 }
 

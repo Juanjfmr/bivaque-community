@@ -11,6 +11,7 @@ import {
   routeOf,
   runProof,
   settle,
+  skipPushAsk,
   snapshot,
   stored,
   toast,
@@ -282,6 +283,7 @@ const checkpoints = {
     }
   },
   async "ask-answer-solve-reopen"(page) {
+    await skipPushAsk(page)
     await go(page, "comunidade")
     await action(page, "ask")
     await fill(page, "ask-input", "Escola")
@@ -306,6 +308,7 @@ const checkpoints = {
     )
   },
   async "solve-reopen-like-origin"(page) {
+    await skipPushAsk(page)
     await go(page, "comunidade")
     await action(page, "ask")
     await fill(page, "ask-input", "Onde revisar o carro com preço justo no Centro?")

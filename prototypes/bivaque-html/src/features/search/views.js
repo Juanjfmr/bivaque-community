@@ -37,7 +37,7 @@ function searchSuggestHtml(q,groups){
  const vocab=[...state.recent,...Object.keys(SYNONYMS),...SERVICE_GROUPS.flatMap(([g,specs])=>[g,...specs]),...ITEM_CATEGORIES,...cityBiz().flatMap(b=>b.hoods||[])];
  const seen=new Set(),words=[];
  for(const w of vocab){const nw=norm(w);if(nw===nq||seen.has(nw)||!(nw.startsWith(nq)||nw.split(/\s+/).some(t=>t.startsWith(nq))))continue;seen.add(nw);words.push(w.toLowerCase());if(words.length===2)break;}
- const mark=t=>t.slice(0,q.trim().length).toLowerCase()===q.trim().toLowerCase()?`<b>${esc(t.slice(0,q.trim().length))}</b>${esc(t.slice(q.trim().length))}`:esc(t);
+ const mark=t=>norm(t.slice(0,q.trim().length))===norm(q.trim())?`<b>${esc(t.slice(0,q.trim().length))}</b>${esc(t.slice(q.trim().length))}`:esc(t);
  const scopes=[['biz','storefront','Negócios','negócio','negócios'],['items','sell','Anúncios','anúncio','anúncios'],['asks','forum','Indicações','resposta','respostas']].filter(([k])=>groups[k].length&&searchType==='all');
  const rows=[...words.map(w=>searchRow(w,'search',mark(w))),...scopes.map(([k,ic,label,one,many])=>`<div class="search-row"><button type="button" class="search-row-go" data-action="search-type" data-value="${k}">${icon(ic)}<span class="grow">${mark(q.trim())} em ${label}</span><small>${groups[k].length} ${groups[k].length===1?one:many}</small></button></div>`)];
  return rows.length?`<section class="search-sec search-suggest" aria-label="Sugestões para a busca">${rows.join('')}</section>`:'';

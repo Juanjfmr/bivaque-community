@@ -15,11 +15,14 @@ const PUSH_SAMPLES={
 };
 function pushOn(){return state.prefs.push==='on';}
 // Depois de uma ação que gera aviso, uma vez; recusado, só volta depois de 7 dias.
-function askPushSoon(reason){setTimeout(()=>maybeAskPush(reason),900);}
+// Não interrompe quem já está digitando (ex.: respondendo logo após publicar); pergunta na próxima vez.
+function askPushSoon(reason){setTimeout(()=>{if(!createOpen&&!$('#lightbox')&&!$('#filter-panel')?.open&&!document.activeElement?.matches('input,textarea,md-outlined-text-field,md-filled-text-field,[contenteditable="true"]'))maybeAskPush(reason);},900);}
 function maybeAskPush(reason,force=false){
  if(readonly()||pushOn()||dialog.open||confirmDialog.open)return false;
  if(!force&&state.prefs.pushAskedAt&&Date.now()-state.prefs.pushAskedAt<PUSH_REASK_MS)return false;
  const first=PUSH_SAMPLES[reason]||PUSH_SAMPLES.ask,rest=Object.entries(PUSH_SAMPLES).filter(([k])=>k!==reason).map(([,v])=>v),cards=[first,...rest].slice(0,3);
+ // Mostrar já conta como pergunta: fechar pelo X, Esc ou arrastando também espera 7 dias.
+ mutate(()=>{state.prefs.pushAskedAt=Date.now();},{redraw:false});
  showDialog('Receba avisos do que importa',`<div class="push-samples" aria-hidden="true">${cards.map(([ic,t,s])=>`<div class="push-sample">${icon(ic)}<span><b>${esc(t)}</b><small>${esc(s)}</small></span><time>agora</time></div>`).join('')}</div><p class="form-note">Avisamos só do que você pediu: respostas às suas perguntas, propostas aos seus pedidos, alertas de busca e encontros. Você muda isso quando quiser em Você → Avisos.</p>`,`${btn('Agora não','push-later','','text')}${btn('Ativar avisos','push-enable','','filled','notifications_active')}`,'push');
  return true;
 }
@@ -39,7 +42,7 @@ async function pushInstallAction(action){
  if(action==='push-later'){mutate(()=>{state.prefs.pushAskedAt=Date.now();},{redraw:false});await closeDialog(true);return true;}
  if(action==='push-enable'){if(mutate(()=>{state.prefs.push='on';state.prefs.pushAskedAt=Date.now();},{redraw:false})){await closeDialog(true);render();notify('Avisos ativados neste protótipo. No app, o celular pede a sua permissão aqui.','notifications_active');}return true;}
  if(action==='push-disable'){if(mutate(()=>{state.prefs.push='off';}))notify('Avisos no celular desativados','notifications_off');return true;}
- if(installPrompt){const p=installPrompt;installPrompt=null;try{await p.prompt();const r=await p.userChoice;if(r?.outcome!=='accepted')notify('Instalação cancelada. Você pode instalar depois em Você.','info');}catch{notify('Não foi possível instalar agora.','error');}render();return true;}
+ if(installPrompt){const p=installPrompt;installPrompt=null;try{await p.prompt();const r=await p.userChoice;if(r?.outcome!=='accepted')notify('Instalação cancelada.','info');}catch{notify('Não foi possível instalar agora.','error');}render();return true;}
  showDialog('Instalar no iPhone',`<ol class="install-steps"><li>Toque em ${SVG_SHARE_IOS} <b>Compartilhar</b>, na barra do Safari.</li><li>Escolha <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>. O Bivaque abre direto da tela inicial.</li></ol>`,btn('Entendi','close-dialog','','filled'),'install');
  return true;
 }

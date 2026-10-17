@@ -16,7 +16,7 @@
 /* Rodada 40: ao arrastar para baixo o fundo esmaece; ampliada, a foto se arrasta e as setas saem. */
 .lightbox-top,.lightbox-thumbs{opacity:var(--lb-fade,1)}
 .lightbox.zoomed .lightbox-stage img{cursor:grab;border-radius:0}
-.lightbox.zoomed .lightbox-prev,.lightbox.zoomed .lightbox-next{opacity:0;pointer-events:none}
+.lightbox.zoomed .lightbox-prev,.lightbox.zoomed .lightbox-next{opacity:0;pointer-events:none;visibility:hidden}
 .lightbox-btn{display:grid;place-items:center;width:48px;height:48px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
 .lightbox-btn:hover{background:rgba(255,255,255,.22)}
 .lightbox-btn:focus-visible,.lightbox-thumbs button:focus-visible{outline:2px solid #fff;outline-offset:2px}

@@ -81,7 +81,9 @@ function bindLightboxGestures(el){
   lbClamp();lbApply(true);
  };
  stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
- // O clique que vem depois de um gesto não fecha a galeria nem troca de foto.
+ // O clique que vem depois de um gesto não fecha a galeria nem troca de foto. Qualquer toque novo
+ // (inclusive em botões) zera a marca, para o toque seguinte a um gesto não ser engolido.
+ el.addEventListener('pointerdown',()=>{moved=false;},true);
  el.addEventListener('click',e=>{if(moved){moved=false;e.stopImmediatePropagation();e.preventDefault();}},true);
  stage.addEventListener('dblclick',e=>{if(e.target.closest('button')||performance.now()-lbTouchZoomAt<600)return;e.preventDefault();lbToggleZoom(e.clientX,e.clientY);});
  // Pinça no trackpad chega como roda com Ctrl.
