@@ -52,6 +52,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07n/CSS | `src/styles/empty-states.css` | Frontend premium | Rodada 24: moldura das fotos carregando e estados vazios ilustrados |
 | 07o/CSS | `src/styles/home-mobile.css` | Frontend premium | Rodada 35: Início do celular e do tablet com a organização do desktop |
 | 07p/CSS | `src/styles/nav-bar.css` | Frontend premium | Rodada 35: barra do celular com Criar no centro, luz na aba ativa e ícones em SVG |
+| 07q/CSS | `src/styles/top-title.css` | Frontend premium | Rodada 36: título grande que sobe para a barra no celular |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |

@@ -50,11 +50,11 @@ function titleForRoute(){return ({inicio:'Bivaque',comunidade:'Comunidade',conve
 function activeTab(){if(['inicio','comunidade','conversas','voce'].includes(route.name))return route.name;if(route.name==='conversa')return 'conversas';if(['grupo','publicacao','pergunta','minhas'].includes(route.name))return 'comunidade';if(['salvos','meus-anuncios'].includes(route.name))return 'voce';return origin;}
 function shell(){
  const rootPage=['inicio','comunidade','conversas','voce'].includes(route.name);const notices=state.notices.filter(n=>n.city===state.homeCity&&n.unread).length, chats=state.threads.filter(t=>t.city===state.city&&!t.deleted&&t.unread).length;
- $('#topbar').innerHTML=`<div class="topbar-in"><div class="row grow">${rootPage?`<span class="brand">${mark()}${route.name==='inicio'?'Bivaque':esc(titleForRoute())}</span>`:`${iconBtn('arrow_back','back','','Voltar')}<span class="top-title grow">${esc(titleForRoute())}</span>`}</div><div class="row">${btn(state.city,'city','','text','expand_more').replace('<md-text-button','<md-text-button class="city-chip"')}${route.name==='inicio'?`<span class="notice-button">${iconBtn('notifications','notices','','Avisos')}${notices?`<span class="badge">${notices}</span>`:''}</span>`:iconBtn('search','search','','Buscar')}</div></div>`;
+ $('#topbar').innerHTML=`<div class="topbar-in"><div class="row grow">${rootPage?`<span class="brand">${mark()}<span class="brand-text">${route.name==='inicio'?'Bivaque':esc(titleForRoute())}</span></span>`:`${iconBtn('arrow_back','back','','Voltar')}<span class="top-title grow">${esc(titleForRoute())}</span>`}</div><div class="row">${btn(state.city,'city','','text','expand_more').replace('<md-text-button','<md-text-button class="city-chip"')}${route.name==='inicio'?`<span class="notice-button">${iconBtn('notifications','notices','','Avisos')}${notices?`<span class="badge">${notices}</span>`:''}</span>`:iconBtn('search','search','','Buscar')}</div></div>`;
  $('#topbar').classList.toggle('searching',route.name==='busca');document.body.classList.toggle('search-mode',route.name==='busca');
  if(route.name==='busca')$('#topbar').innerHTML=`<div class="search-topbar">${iconBtn('arrow_back','back','','Voltar')}<md-filled-text-field id="search-query" class="search-input" type="search" placeholder="Buscar no Bivaque" aria-label="Buscar no Bivaque" value="${esc(searchQuery)}" autofocus>${icon('search','leading-icon')}${iconBtn('close','clear-search','','Limpar busca').replace('<md-icon-button','<md-icon-button slot="trailing-icon"')}</md-filled-text-field></div>`;
  $('#nav').innerHTML=`<div class="rail-brand">${mark()}</div>${[['inicio','Início'],['comunidade','Comunidade'],['conversas','Conversas'],['voce','Você']].map(([n,label])=>`${n==='conversas'?'<span class="nav-create-slot" aria-hidden="true">Criar</span>':''}<button type="button" class="nav-item" data-action="nav" data-value="${n}" ${activeTab()===n?'aria-current="page"':''}><span class="nav-icon">${navIcon(n)}${n==='conversas'&&chats?`<span class="badge">${chats}</span>`:''}</span><span>${label}</span></button>`).join('')}<div class="rail-tools">${iconBtn('tune','prototype','','Controles do protótipo')}${iconBtn('settings','settings','','Configurações')}</div>`;
- syncMobileNavigation();$('#fab').disabled=readonly();
+ syncMobileNavigation();$('#fab').disabled=readonly();requestAnimationFrame(syncTopTitle);
  $('#detail-actions').hidden=true;root.classList.remove('detail');
 }
 function actionsBar(html){$('#detail-actions').innerHTML=`<div class="detail-actions-in">${html}</div>`;$('#detail-actions').hidden=false;root.classList.add('detail');}
@@ -62,6 +62,14 @@ function actionsBar(html){$('#detail-actions').innerHTML=`<div class="detail-act
 // baseado no Lucide, licença ISC). A aba ativa ganha preenchimento leve; Você mostra as iniciais.
 var NAV_SVG={inicio:'<path class="f" d="M3 10a2 2 0 0 1 .7-1.5l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M15 21v-7a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v7"/>',comunidade:'<path class="f" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle class="f" cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',conversas:'<path class="f" d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="2.6"/>'};
 function navIcon(n){if(n==='voce')return `<span class="nav-avatar" aria-hidden="true">${esc(initals(state.profile?.name||''))}</span>`;return `<svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${NAV_SVG[n]}</svg>`;}
+// Rodada 36: no celular, o título da barra só aparece quando o título grande da página passa
+// por baixo dela (referências: Apple Mail e Mensagens, no Mobbin). Sem título grande, fica visível.
+function syncTopTitle(){
+ const bar=$('#topbar'),h=$('#main .page-head h1');if(!bar)return;
+ const dock=innerWidth<720&&h&&!['inicio','busca'].includes(route.name);
+ bar.classList.toggle('title-hides',Boolean(dock));if(!dock){bar.classList.remove('title-docked');return;}
+ bar.classList.toggle('title-docked',h.getBoundingClientRect().bottom<=bar.getBoundingClientRect().bottom+4);
+}
 function syncMobileNavigation(){
  const mobile=innerWidth<720,rootPage=['inicio','comunidade','conversas','voce'].includes(route.name);
  $('#nav').hidden=mobile&&!rootPage;$('#nav').classList.toggle('minimized',mobile&&rootPage&&navMinimized);$('#nav').inert=(mobile&&(!rootPage||navMinimized))||createOpen||paletteIsOpen()||Boolean($('#lightbox'));
@@ -71,8 +79,9 @@ function syncMobileNavigation(){
 root.addEventListener('scroll',()=>{
  const y=root.scrollTop;if(innerWidth<720&&!createOpen&&['inicio','comunidade','conversas','voce'].includes(route.name)){
   if(y>lastNavY+6&&y>140)navMinimized=true;else if(y<lastNavY-6||y<60)navMinimized=false;syncMobileNavigation();
- }lastNavY=y;
+ }lastNavY=y;syncTopTitle();
 },{passive:true});
+addEventListener('resize',()=>syncTopTitle(),{passive:true});
 function remember(type,id){state.lastViewed={type,id,city:state.city};try{localStorage.setItem(KEY,JSON.stringify(state));}catch{};}
 function render(){const flight=motionBeforeRender();ensureTurma();theme();navigationRenderedCity=state.city;shell();const f={inicio:renderHome,catalogo:renderCatalog,desapegos:renderCatalog,imoveis:renderCatalog,negocios:renderBusinesses,comunidade:renderCommunity,anuncio:renderItem,negocio:renderBusiness,pergunta:renderQuestion,grupo:renderGroup,publicacao:renderPost,evento:renderEvent,agenda:renderAgenda,voce:renderProfile,salvos:renderSaved,'meus-anuncios':renderMyAds,minhas:renderMineQuestions,conversas:renderThreads,conversa:renderChat,busca:renderSearch,guia:renderGuide,pedidos:renderRequests,pedido:renderRequest}[route.name]||(()=>empty('Página indisponível',navigationProblem||'Confira o endereço ou volte ao início.','link_off','home','Ir para o início'));root.innerHTML=`<div class="page ${route.name==='conversa'?'chat-page':''}" id="page">${f()}</div>`;bindScreen();document.title=`${titleForRoute()} · Bivaque`;motionAfterRender(flight);animateCounts(root);segmentsAfterRender(root);catalogMapAfterRender();}
 function readonlyHtml(){return readonly()?`<div class="context-strip readonly">${icon('visibility')}<span class="grow">Você está conhecendo <b>${esc(state.city)}</b>. Sua cidade atual é ${esc(state.homeCity)}.</span>${btn('Voltar','home-city','','text')}</div>`:'';}

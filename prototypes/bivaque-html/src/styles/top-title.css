@@ -1,0 +1,10 @@
+/* Rodada 36: título grande que sobe para a barra no celular. Enquanto o título da página está à
+   vista, a barra fica sem título e sem linha, como uma continuação da página; quando ele passa por
+   baixo da barra, o título aparece nela. */
+@media(max-width:719px){
+.topbar.title-hides .top-title,.topbar.title-hides .brand-text{opacity:0;transform:translateY(6px);transition:opacity .18s ease-out,transform .18s ease-out}
+.topbar.title-hides.title-docked .top-title,.topbar.title-hides.title-docked .brand-text{opacity:1;transform:none}
+.topbar.title-hides:not(.title-docked){border-bottom-color:transparent}
+.topbar{transition:border-color .18s}
+}
+@media(max-width:719px) and (prefers-reduced-motion:reduce){.topbar.title-hides .top-title,.topbar.title-hides .brand-text,.topbar{transition:none}}
