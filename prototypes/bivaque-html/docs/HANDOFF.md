@@ -28,12 +28,18 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   Ver [ROUND_14](ROUND_14.md) a [ROUND_24](ROUND_24.md). A revisão foi única para o lote, a
   bateria completa passou e a **nova base visual** está em
   [VISUAL_BASELINE_R24](VISUAL_BASELINE_R24.md). Publicado em 16/10.
+- **Lote B, Rodadas 25 a 28 (16/10):**
+  - alerta de busca salva;
+  - plano com anel e "Continuar";
+  - imóvel em etapas;
+  - explicação do selo verificado.
+  Revisão única, bateria e base visual em [VISUAL_BASELINE_R28](VISUAL_BASELINE_R28.md).
+  Ainda não publicado.
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
   lote.
-- Próximo assunto combinado com o usuário: lotes B (alerta de busca salva, primeiros passos de
-  quem chega, anúncio em etapas, explicação do selo verificado), C (cartão de compartilhamento,
+- Próximo assunto combinado com o usuário: lote C (cartão de compartilhamento,
   mapa de bairros, agenda agrupada) e D (comparar imóveis salvos, avisos empilhados,
   microanimação ao indicar), com referências do Mobbin.
 - Antes do lançamento: auditoria de acessibilidade com axe-core e leitor de tela real.
