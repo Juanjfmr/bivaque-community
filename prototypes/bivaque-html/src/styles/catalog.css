@@ -80,3 +80,7 @@
 .wiz-row small{display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
 .wiz-row b{font-size:14px;font-weight:600}
 @media (prefers-reduced-motion:reduce){.wiz-bar span{transition:none}}
+/* Rodada 29: cartão de compartilhamento. */
+.share-preview{display:grid;place-items:center;aspect-ratio:4/5;max-height:56vh;margin:0 auto 10px;border-radius:18px;overflow:hidden;background:var(--md-sys-color-surface-container-high)}
+.share-preview img{width:100%;height:100%;object-fit:contain;display:block}
+.share-wait{font-size:14px;color:var(--md-sys-color-on-surface-variant)}
