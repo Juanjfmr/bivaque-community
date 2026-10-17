@@ -136,6 +136,12 @@ const checkpoints = {
     expect(Math.abs(geo.cx - geo.w / 2) < 2, `Criar fora do centro: ${geo.cx}`)
     expect(geo.fTop < geo.nTop && geo.fBottom > geo.nTop, "Criar não fica sobre a borda da barra")
     expect(Math.abs(geo.fw - geo.fh) < 1, "Criar não é um círculo")
+    const plus = await page.evaluate(() => {
+      const f = document.querySelector("#fab").getBoundingClientRect()
+      const i = document.querySelector("#fab md-icon").getBoundingClientRect()
+      return Math.abs(f.left + f.width / 2 - (i.left + i.width / 2))
+    })
+    expect(plus < 1, `"+" fora do centro do círculo: ${plus}px`)
     expect(
       (await page.locator("#nav .nav-create-slot").innerText()) === "Criar",
       "sem o nome Criar na barra",
