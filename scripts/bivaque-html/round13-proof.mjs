@@ -26,7 +26,9 @@ const checkpoints = {
         !(await page.locator(".home-desk").count()),
         "celular/tablet ganhou a Início do desktop",
       )
-      expect(/^Perto de você/.test(h1), `título do celular mudou: ${h1}`)
+      // Rodada 35: o celular segue a organização do desktop, com a cidade no título.
+      expect(/^O que você precisa em /.test(h1), `título do celular: ${h1}`)
+      expect(await page.locator(".home-mob").count(), "celular sem a Início nova")
       return
     }
     expect(await page.locator(".home-desk .home-side").count(), "desktop sem coluna lateral")

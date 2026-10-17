@@ -154,7 +154,8 @@ const checkpoints = {
     await fixture(page, standard)
     const trigger = page.locator('.msg-react[aria-controls="react-pick-1"]')
     await trigger.click()
-    await page.locator("#chat-heading").click()
+    // Rodada 37: no celular o cabeçalho da conversa sai da vista; o aviso de segurança é área neutra.
+    await page.locator("#main .chat-safety").click()
     expect(await page.locator("#react-pick-1").isHidden(), "clique fora não fechou o seletor")
     await trigger.click()
     for (let i = 0; i < 4; i++) await page.keyboard.press("Tab")

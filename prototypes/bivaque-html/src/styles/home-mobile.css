@@ -7,6 +7,7 @@
 .h1-city{display:inline-flex;align-items:center;padding:0 2px 0 4px;margin-left:-2px;border-radius:10px;color:var(--md-sys-color-primary);font:inherit;letter-spacing:inherit;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:color-mix(in srgb,var(--md-sys-color-primary) 35%,transparent)}
 .h1-city md-icon{font-size:22px}
 .home-search-ex{font-weight:500;color:var(--md-sys-color-on-surface)}
+.home-mob .home-search-button>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .home-mob .home-top .intent-grid{margin-top:12px;gap:6px}
 .home-mob .intent{min-height:0;padding:6px 2px;gap:5px;font-size:11.5px}
 .home-mob .intent md-icon{width:46px;height:38px;font-size:22px;border-radius:14px}
