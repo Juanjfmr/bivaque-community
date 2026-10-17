@@ -60,7 +60,8 @@ async function catalogMapAfterRender(){
 }
 function openHoodSheet(hood){
  const kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood);
- showDialog(`${hood} · ${countWord(list.length,kind)}`,`<p class="form-note">Com os filtros que você escolheu.</p>${list.length?`<div class="card-grid">${list.map(photoCard).join('')}</div>`:empty('Nenhum anúncio neste bairro','Mude os filtros ou escolha outro bairro.','location_off')}`,`${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}${btn('Fechar','close-dialog','','filled')}`,'hood');
+ showDialog(`${hood} · ${countWord(list.length,kind)}`,`<p class="form-note">Com os filtros que você escolheu.</p>${list.length?pagedHtml('hood-dialog',`${hood}|${JSON.stringify(catalogAttrs[kind])}|${searchSort}`,list,photoCard,{noun:kind==='imovel'?'imóveis':'desapegos'}):empty('Nenhum anúncio neste bairro','Mude os filtros ou escolha outro bairro.','location_off')}`,`${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}${btn('Fechar','close-dialog','','filled')}`,'hood');
+ pagedWatch();
 }
 // A folha do bairro não é redesenhada pelo render(); o botão de salvar acompanha o estado.
 function refreshHoodSheet(){

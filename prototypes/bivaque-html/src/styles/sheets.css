@@ -34,3 +34,9 @@ body.hood-open .page{padding-bottom:280px}
 .cmap-pin.on{scale:1.2;z-index:2;box-shadow:0 0 0 3px var(--md-sys-color-surface),0 0 0 6px var(--md-sys-color-primary)}
 }
 @media(max-width:719px) and (prefers-reduced-motion:reduce){#app-shell,.hood-panel{transition:none}}
+/* Rodada 48: cartão "Ver todos os N" no fim do carrossel da folha do bairro. */
+.hp-all{flex:none;display:grid;place-content:center;justify-items:center;gap:4px;width:150px;padding:16px;border-radius:24px;border:1px dashed var(--md-sys-color-outline);color:var(--md-sys-color-primary);text-align:center;scroll-snap-align:start}
+.hp-all md-icon{font-size:28px}
+.hp-all b{font-size:15px;line-height:20px}
+.hp-all small{font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant)}
+.hood-panel[data-stop=full] .hp-all{width:auto;min-height:160px}
