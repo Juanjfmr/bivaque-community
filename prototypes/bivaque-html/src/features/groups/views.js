@@ -108,10 +108,3 @@ function renderPost(){
  else if(!g.on)h+=`<div class="context-strip readonly">${icon('group_add')}<span class="grow">Entre no grupo para comentar.</span>${readonly()?'':btn(g.privacy==='fechado'?'Pedir':'Entrar','join-group',g.id,'text')}</div>`;
  return h;
 }
-function homeGroupsBlock(){
- if(readonly())return '';const mg=state.groups.filter(g=>g.on&&(g.privacy==='aberto'||g.on));if(!mg.length)return '';
- const posts=mg.flatMap(g=>g.posts.filter(p=>p.type!=='event').map(p=>({g,p}))).sort((a,b)=>b.p.at-a.p.at).slice(0,2);
- const ev=mg.flatMap(g=>g.posts.filter(p=>p.type==='event'&&p.event.date>=dateISO()).map(p=>({g,p}))).sort((a,b)=>a.p.event.date.localeCompare(b.p.event.date))[0];
- if(!posts.length&&!ev)return `<section class="section">${sectionTitle('Dos seus grupos','Ver grupos','groups')}<div class="list">${mg.slice(0,2).map(g=>groupRow(g)).join('')}</div></section>`;
- return `<section class="section">${sectionTitle('Dos seus grupos','Ver grupos','groups')}<div class="list">${posts.map(({g,p})=>`<button type="button" class="list-row" data-action="open-post" data-value="${g.id}~${p.id}"><span class="avatar">${esc(p.mine?initals(state.profile.name):p.ini)}</span><span class="txt"><b>${esc(p.mine?'Você':p.author.split(' ')[0])} em ${esc(g.t)}</b><small class="g-sub">${esc(p.text)}</small><small>${gAgo(p.at)}${p.comments.length?` · ${p.comments.length} ${p.comments.length===1?'comentário':'comentários'}`:''}</small></span>${icon('chevron_right')}</button>`).join('')}${ev?(()=>{const d=new Date(ev.p.event.date+'T12:00:00');return `<div class="list-row"><button type="button" class="event-date" data-action="open-post" data-value="${ev.g.id}~${ev.p.id}"><small>${d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase()}</small><b>${d.getDate()}</b></button><button type="button" class="txt" data-action="open-post" data-value="${ev.g.id}~${ev.p.id}"><b>${esc(ev.p.text)}</b><small>${esc(ev.g.t)} · ${esc(ev.p.event.time)}</small></button>${btn(ev.p.event.on?'Confirmado':'Vou','attend-post',`${ev.g.id}|${ev.p.id}`,ev.p.event.on?'tonal':'outlined',ev.p.event.on?'check':'')}</div>`;})():''}</div></section>`;
-}
