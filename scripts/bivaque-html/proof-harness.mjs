@@ -145,8 +145,10 @@ export async function runProof(checkpoints, round) {
         const page = await context.newPage()
         page.on("pageerror", (e) => report.browserErrors.push({ ctx, name, message: e.message }))
         page.on("request", (r) => {
-          if (!r.url().startsWith("http://127.0.0.1") && !r.url().startsWith("data:"))
-            report.externalRequests.push({ ctx, name, url: r.url() })
+          // blob: é memória da própria página (ex.: cartão de compartilhamento), nunca sai do navegador.
+          const u = r.url()
+          if (!u.startsWith("http://127.0.0.1") && !u.startsWith("data:") && !u.startsWith("blob:"))
+            report.externalRequests.push({ ctx, name, url: u })
         })
         const result = { ctx, name, status: "PASS" }
         try {

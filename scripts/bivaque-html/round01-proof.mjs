@@ -871,7 +871,9 @@ async function verify(width, theme) {
       const item = fixture.items[0]
       await reset(undefined, `anuncio/${item.id}`)
       await clipboard(page, "success")
+      // Rodada 29: compartilhar abre a folha do cartão; o link segue o fluxo de sempre.
       await action("share", `anuncio|${item.id}`)
+      await action("share-link", `anuncio|${item.id}`)
       await page.waitForFunction(() => window.__proofClipboard.length > 0)
       const link = new URL(await page.evaluate(() => window.__proofClipboard.at(-1)))
       assert.equal(link.origin, origin)
@@ -883,7 +885,9 @@ async function verify(width, theme) {
       const item = fixture.items[0]
       await reset(undefined, `anuncio/${item.id}`)
       await clipboard(page, "denied", "denied")
+      // Rodada 29: compartilhar abre a folha do cartão; o link segue o fluxo de sempre.
       await action("share", `anuncio|${item.id}`)
+      await action("share-link", `anuncio|${item.id}`)
       const field = page.locator("#share-link input")
       await field.waitFor({ state: "visible" })
       const value = await field.inputValue()
@@ -901,7 +905,9 @@ async function verify(width, theme) {
       const item = fixture.items[0]
       await reset(undefined, `anuncio/${item.id}`)
       await clipboard(page, "success", "abort")
+      // Rodada 29: compartilhar abre a folha do cartão; o link segue o fluxo de sempre.
       await action("share", `anuncio|${item.id}`)
+      await action("share-link", `anuncio|${item.id}`)
       assert.equal(await page.evaluate(() => window.__proofShares.length), 1)
       assert.equal(await page.evaluate(() => window.__proofClipboard.length), 0)
       assert(

@@ -4,6 +4,7 @@ async function perform(action,value,el){
  if(await messagingAction(action,value,el))return;
  if(await alertAction(action,value))return;
  if(wizardAction(action,value))return;
+ if(await shareCardAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
  switch(action){
  case 'nav':if(dialog.open)await closeDialog(true);navigate(value);break;
@@ -16,7 +17,7 @@ async function perform(action,value,el){
  case 'plan':openLocalPlan(value);break;
  case 'plan-check':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step){showGlobalDependency('plano-indisponivel');break;}if(readonly()||!state.profile.verified){showDialog('Checklist indisponível',`<p class="form-note">${readonly()?`Você está consultando ${esc(state.city)}. As marcações locais estão disponíveis na sua cidade, ${esc(state.homeCity)}.`:'Seu perfil de teste precisa estar verificado antes de salvar marcações. Nenhuma etapa foi alterada.'}</p>`,`${btn('Voltar','close-dialog','','text')}${readonly()?btn('Voltar à minha cidade','home-city','','filled'):btn('Consultar verificação demonstrativa','onboarding','','filled')}`,'plan-permission');render();break;}const next=!step.done,saved=mutate(()=>{state.plan[kind].find(x=>x.id===id).done=next;},{redraw:false});if(dialog.dataset.kind==='local-plan'&&dialog.open)openLocalPlan(kind);else render();globalFocus('plan-check',value,dialog.open?dialog:root);if(saved)notify(next?'Etapa concluída neste dispositivo':'Etapa reaberta neste dispositivo');break;}
  case 'plan-go':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step?.go){showGlobalDependency('plano-indisponivel');break;}if(dialog.open)await closeDialog(true);const [next,arg]=step.go;if(next==='filter')await perform('intent',arg,el);else if(next==='search')await perform('guide-search',arg,el);else if(next==='groups')await perform('groups','',el);else if(next==='publish')await perform(arg==='imovel'?'create-property':'create-item','',el);else if(next==='my-questions')await perform('my-questions','',el);else if(next==='destination'){if(!CITY_NAMES.includes(state.dest)){showGlobalDependency('plano-indisponivel');break;}if(mutate(()=>state.city=state.dest,{redraw:false}))navigate('guia');}else showGlobalDependency('plano-indisponivel');break;}
- case 'share':{const [type,id]=value.split('|');await share(type,id);break;}
+ case 'share':{const [type,id]=value.split('|');if(type==='anuncio'||type==='negocio')await openShareCard(type,id);else await share(type,id);break;}
  case 'copy-share':await copyText($('#share-link')?.value||'');break;
  case 'create-event':openEventEditor();break;
  case 'edit-event':openEventEditor(value);break;
