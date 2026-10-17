@@ -1,0 +1,21 @@
+/* Rodada 37: conversa com cara de app. A barra mostra a pessoa e o assunto; o aviso de segurança
+   fica no começo da conversa (referências: Vinted e Uber, no Mobbin). */
+.top-chat{display:none;align-items:center;gap:10px;min-width:0}
+.top-chat .avatar{width:34px;height:34px;font-size:12px}
+.top-chat-txt{display:grid;min-width:0;line-height:1.2}
+.top-chat-txt b{font-size:16px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-chat-txt small{font-size:12px;font-weight:450;color:var(--md-sys-color-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-phone{display:none}
+.chat-safety{display:flex;align-items:flex-start;gap:8px;margin:12px 0 0;padding:10px 12px;border-radius:14px;background:var(--md-sys-color-surface-container);font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant)}
+.chat-safety md-icon{flex:none;font-size:20px;color:var(--md-sys-color-primary)}
+@media(max-width:719px){
+.tb-phone{display:contents}.tb-desk,.tb-desk-title{display:none}.top-chat{display:flex}
+/* O cabeçalho da página sai da vista (o título continua para leitor de tela e foco). */
+.chat-head{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}
+.chat-head+.form-note{margin-top:0}
+.chat-head [data-action=thread-menu]{display:none}
+.compose-bar{position:relative;align-items:center}
+.chat-pill{flex:1;min-width:0;--md-outlined-text-field-container-shape:24px;--md-outlined-text-field-top-space:12px;--md-outlined-text-field-bottom-space:12px;--md-outlined-text-field-trailing-space:56px;--md-outlined-text-field-leading-space:18px}
+.compose-bar [data-action=send-message]{position:absolute;right:6px;bottom:4px;z-index:1;border-radius:50%;background:var(--md-sys-color-primary);--md-icon-button-icon-color:var(--md-sys-color-on-primary);--md-icon-button-hover-icon-color:var(--md-sys-color-on-primary);--md-icon-button-focus-icon-color:var(--md-sys-color-on-primary);--md-icon-button-pressed-icon-color:var(--md-sys-color-on-primary);--md-icon-button-disabled-icon-color:var(--md-sys-color-on-surface-variant)}
+.compose-bar [data-action=send-message][disabled]{background:var(--md-sys-color-surface-container-high)}
+}
