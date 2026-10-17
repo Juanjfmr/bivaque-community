@@ -35,13 +35,21 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   - explicação do selo verificado.
   Revisão única, bateria e base visual em [VISUAL_BASELINE_R28](VISUAL_BASELINE_R28.md).
   Ainda não publicado.
+- **Lote C, Rodadas 29 a 34 (16 e 17/10):**
+  - cartão para compartilhar no WhatsApp;
+  - comparar imóveis salvos;
+  - mapa de bairros com MapLibre e OpenFreeMap (ADR-20261016-mapa-de-bairros, a aprovar);
+  - agenda agrupada por dia;
+  - avisos empilhados com desfazer;
+  - celebração ao indicar.
+  Revisão única, bateria e base visual em [VISUAL_BASELINE_R34](VISUAL_BASELINE_R34.md).
+  Ainda não publicado.
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
   lote.
-- Próximo assunto combinado com o usuário: lote C (cartão de compartilhamento,
-  mapa de bairros, agenda agrupada) e D (comparar imóveis salvos, avisos empilhados,
-  microanimação ao indicar), com referências do Mobbin.
+- Lotes B e C concluídos; o site publicado ainda está na Rodada 24. Publicar só quando o
+  usuário pedir.
 - Antes do lançamento: auditoria de acessibilidade com axe-core e leitor de tela real.
 - Pendente de decisão humana: aprovação da parte comercial (R3, exige ADR).
 - Próximo passo do produto: adaptar ao backend seguindo [ADAPTERS](ADAPTERS.md).
