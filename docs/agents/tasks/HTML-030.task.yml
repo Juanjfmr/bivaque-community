@@ -1,0 +1,38 @@
+task_id: HTML-030
+objective: >
+  Rodada 30 compara imoveis salvos lado a lado (total do mes, quartos, area, vagas,
+  disponibilidade e comodidades), do menor para o maior total, com destaques so quando os valores
+  diferem, no padrao das propostas da Rodada 16.
+authority:
+  - Escolha do usuario em 2026-10-16 ("3. Ok") para o lote C
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD b8c7b8ba. Para comparar imoveis salvos era preciso abrir um por um.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/features/profile/views.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/styles/catalog.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-030.task.yml
+forbidden:
+  - ranking pago ou destaque que nao venha dos dados do anuncio
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Comparar aparece em Salvos com dois ou mais imoveis salvos
+  - Colunas do menor para o maior total; destaques Menor total, Mais quartos, Maior area e Disponivel antes so quando diferem
+  - Tirar dos salvos e abrir o anuncio direto da comparacao
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round30-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: so apresentacao no prototipo
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

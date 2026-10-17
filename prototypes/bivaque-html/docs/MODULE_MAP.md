@@ -93,6 +93,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |
+| 37/Appd | `src/features/listings/compare.js` | Anúncios | Rodada 30: comparar imóveis salvos lado a lado com destaques |
 | 37a/App | `src/features/listings/photos.js` | Desapegos/imóveis | Rodada 18: processamento das fotos (botão e soltar), capa e galeria em tela cheia |
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |
 | 39/App | `src/features/businesses/editor.js` | Negócios/serviços | Edição e persistência local do negócio |
