@@ -37,3 +37,8 @@
 .toast-stack .snackbar{position:relative;left:auto;right:auto;bottom:auto;transform:scale(.97);opacity:.94;pointer-events:auto}
 @media(min-width:720px){.toast-stack{left:calc(var(--rail) + 16px)}}
 @media (prefers-reduced-motion:reduce){.toast-time{display:none}}
+/* Rodada 34: pontos que saem do número ao indicar. */
+.burst{position:fixed;z-index:1100;width:0;height:0;pointer-events:none}
+.burst i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--md-sys-color-primary);animation:burst .7s cubic-bezier(.2,.8,.2,1) forwards}
+.burst i:nth-child(even){background:var(--md-sys-color-tertiary);width:6px;height:6px}
+@keyframes burst{0%{transform:rotate(var(--a)) translateX(6px) scale(1);opacity:1}60%{opacity:1}100%{transform:rotate(var(--a)) translateX(44px) scale(.4);opacity:0}}

@@ -91,6 +91,7 @@
         "shell/image-loading.js",
         "shell/verified-info.js",
         "shell/toasts.js",
+        "shell/celebrate.js",
         "features/profile/settings.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
