@@ -28,3 +28,12 @@
 .vinfo-row{display:flex;gap:14px;align-items:flex-start}
 .vinfo-row>md-icon{flex:none;width:40px;height:40px;border-radius:20px;display:grid;place-items:center;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-size:22px}
 .vinfo-row p{margin:2px 0 0;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+/* Rodada 33: avisos empilhados e tempo visível. */
+.snackbar{overflow:hidden}
+.toast-time{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--md-sys-color-inverse-primary);transform-origin:left;animation:toast-time linear forwards;opacity:.8}
+.snackbar.is-paused .toast-time{animation-play-state:paused}
+@keyframes toast-time{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.toast-stack{position:fixed;z-index:999;left:16px;right:16px;max-width:540px;margin:auto;display:grid;gap:8px;pointer-events:none}
+.toast-stack .snackbar{position:relative;left:auto;right:auto;bottom:auto;transform:scale(.97);opacity:.94;pointer-events:auto}
+@media(min-width:720px){.toast-stack{left:calc(var(--rail) + 16px)}}
+@media (prefers-reduced-motion:reduce){.toast-time{display:none}}
