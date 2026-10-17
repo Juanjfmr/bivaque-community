@@ -1,7 +1,17 @@
-import { action, expect, go, runProof, settle, snapshot, stored } from "./proof-harness.mjs"
+import {
+  action,
+  expect,
+  go,
+  runProof,
+  settle,
+  skipPushAsk,
+  snapshot,
+  stored,
+} from "./proof-harness.mjs"
 
 // Rodada 33: avisos empilhados. O aviso mais novo fica em #snackbar; um aviso anterior com
-// desfazer ainda valendo sobe para a pilha (no máximo dois) com o próprio desfazer.
+// desfazer ainda valendo sobe para a pilha (no máximo dois) com o próprio desfazer. Criar alerta
+// abre a folha dos avisos (Rodada 43): os checkpoints com alerta a dispensam antes.
 const stack = (page) => page.locator("#toast-stack .snackbar")
 async function alertWith(page, amen) {
   await page.locator(`#main [data-action="catalog-toggle"][data-value="${amen}"]`).click()
@@ -12,7 +22,7 @@ async function alertWith(page, amen) {
 
 const checkpoints = {
   async "undoable-toast-moves-up-with-its-undo"(page) {
-    await snapshot(page)
+    await skipPushAsk(page)
     await go(page, "imoveis")
     await alertWith(page, "pets")
     await alertWith(page, "furnished")
@@ -37,7 +47,7 @@ const checkpoints = {
     expect((await stack(page).count()) === 1, "pilha errada depois de desfazer")
   },
   async "stack-keeps-at-most-two"(page) {
-    await snapshot(page)
+    await skipPushAsk(page)
     await go(page, "imoveis")
     await alertWith(page, "pets")
     await alertWith(page, "furnished")
@@ -104,7 +114,7 @@ const checkpoints = {
   },
   // Revisão do lote C: recomeçar do zero apaga os desfazer antigos.
   async "reset-clears-old-undos"(page) {
-    await snapshot(page)
+    await skipPushAsk(page)
     await go(page, "imoveis")
     await alertWith(page, "pets")
     await alertWith(page, "furnished")
