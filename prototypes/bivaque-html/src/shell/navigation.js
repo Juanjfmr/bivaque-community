@@ -70,6 +70,11 @@ function chatTopTitle(){const t=route.name==='conversa'&&messagingThread(route.i
 function chatTopActions(){const t=route.name==='conversa'&&messagingThread(route.id);if(!t)return '';return `<span class="tb-desk">${iconBtn('search','search','','Buscar')}</span><span class="tb-phone">${iconBtn('more_vert','thread-menu',t.id,'Opções da conversa')}</span>`;}
 function syncTopTitle(){
  const bar=$('#topbar'),h=$('#main .page-head h1');if(!bar)return;
+ // Rodada 38: no celular, anúncio e negócio abrem com a foto até o topo e a barra transparente por
+ // cima (referências: Swiggy, talabat e Insight Timer, no Mobbin); a barra volta ao rolar a foto.
+ const hero=$('#main .detail-hero'),immersive=innerWidth<720&&hero&&['anuncio','negocio'].includes(route.name);
+ document.body.classList.toggle('immersive',Boolean(immersive));
+ bar.classList.toggle('bar-solid',Boolean(immersive)&&hero.getBoundingClientRect().bottom<=bar.getBoundingClientRect().bottom);
  const dock=innerWidth<720&&h&&!['inicio','busca','conversa'].includes(route.name);
  bar.classList.toggle('title-hides',Boolean(dock));if(!dock){bar.classList.remove('title-docked');return;}
  bar.classList.toggle('title-docked',h.getBoundingClientRect().bottom<=bar.getBoundingClientRect().bottom+4);
