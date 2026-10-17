@@ -44,6 +44,16 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   - celebração ao indicar.
   Revisão única, bateria e base visual em [VISUAL_BASELINE_R34](VISUAL_BASELINE_R34.md).
   Publicado em 17/10 (`8dcad9cd…`).
+- **Lote mobile, Rodadas 35 a 39 (17/10):**
+  - Início do celular com a organização do desktop e a cidade no título;
+  - barra de baixo com "Criar" no centro, luz na aba ativa e ícones em SVG;
+  - título grande que sobe para a barra;
+  - conversa com a pessoa na barra, aviso contra golpe e caixa em pílula;
+  - anúncio e negócio com a foto até o topo;
+  - deslizar nas conversas com "Não lida". O gesto já existia; a auditoria errou ao dizer
+    que faltava.
+  Revisão única, bateria e base visual em [VISUAL_BASELINE_R39](VISUAL_BASELINE_R39.md).
+  Publicado em 17/10 (`b71c2248…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
