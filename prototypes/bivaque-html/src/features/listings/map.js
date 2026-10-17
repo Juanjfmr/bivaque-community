@@ -31,7 +31,7 @@ function loadMapLibre(){
 // bairros e contagens (ex.: salvar um anúncio na folha do bairro), o mapa já montado volta para o
 // lugar, sem baixar tudo de novo nem perder o zoom.
 async function catalogMapAfterRender(){
- refreshHoodSheet();
+ refreshHoodSheet();syncHoodPanel();
  const box=$('#catalog-map'),kind=box?catalogKind():'',list=box?filteredItems(kind):[],key=box?`${kind}|${hoodCounts(list).join(';')}`:'';
  if(catalogMap&&box&&key===catalogMapKey){box.replaceWith(catalogMap.getContainer());catalogMap.resize();return;}
  if(catalogMap){try{catalogMap.remove();}catch{}catalogMap=null;catalogMapKey='';}
@@ -48,6 +48,9 @@ async function catalogMapAfterRender(){
    // O MapLibre troca o rótulo por "Map marker"; o bairro e a contagem voltam depois de adicionar.
    el.setAttribute('aria-label',`${h}: ${countWord(n,kind)}`);
   }
+  hoodPinsSync();
+  // Rodada 41: o mapa enquadra todos os bairros com anúncio (no celular, o centro fixo deixava um de fora).
+  if(pts.length>1){const lng=pts.map(([h])=>HOOD_POINTS[h][0]),lat=pts.map(([h])=>HOOD_POINTS[h][1]);map.fitBounds?.([[Math.min(...lng),Math.min(...lat)],[Math.max(...lng),Math.max(...lat)]],{padding:48,maxZoom:13,duration:0});}
   // Nomes em português quando o OpenStreetMap tiver (o estilo vem com nomes em inglês).
   map.on('load',()=>{status?.remove();for(const l of map.getStyle?.().layers||[])if(l.type==='symbol'&&map.getLayoutProperty(l.id,'text-field'))try{map.setLayoutProperty(l.id,'text-field',['coalesce',['get','name:pt'],['get','name']]);}catch{}});
   map.on('error',()=>{if(status)status.textContent='Parte do mapa não carregou. Os bairros abaixo continuam funcionando.';});
@@ -70,9 +73,11 @@ function refreshHoodSheet(){
  }
 }
 async function mapAction(action,value){
- if(!['catalog-view','map-hood','map-hood-list'].includes(action))return false;
+ if(!['catalog-view','map-hood','map-hood-list','hood-panel-close','hood-panel-stop'].includes(action))return false;
+ if(await hoodPanelAction(action))return true;
  if(action==='catalog-view'){catalogView=value==='map'?'map':'list';render();globalFocus(action,catalogView);return true;}
- if(action==='map-hood'){openHoodSheet(value);return true;}
+ // Rodada 41: no celular, a folha do bairro fica sobre o mapa; no desktop, continua o diálogo.
+ if(action==='map-hood'){if(innerWidth<720)openHoodPanel(value);else openHoodSheet(value);return true;}
  const kind=catalogKind();catalogAttrs={...catalogAttrs,[kind]:{...catalogAttrs[kind],hoods:[value]}};catalogView='list';
  if(dialog.open)await closeDialog(true);render();globalFocus('catalog-pill','hood');return true;
 }

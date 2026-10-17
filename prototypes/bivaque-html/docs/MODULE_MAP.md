@@ -55,6 +55,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07q/CSS | `src/styles/top-title.css` | Frontend premium | Rodada 36: título grande que sobe para a barra no celular |
 | 07r/CSS | `src/styles/chat-mobile.css` | Frontend premium | Rodada 37: conversa com a pessoa na barra, aviso de segurança e caixa em pílula |
 | 07s/CSS | `src/styles/detail-immersive.css` | Frontend premium | Rodada 38: anúncio e negócio com a foto até o topo no celular |
+| 07t/CSS | `src/styles/sheets.css` | Frontend premium | Rodada 41: fundo que encolhe sob as folhas e folha do bairro sobre o mapa |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -88,6 +89,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 32b/App | `src/features/messaging/bubbles.js` | Frontend premium | Rodada 20: `chatMessagesHtml` (grupos, dias, estado, entrada) e reações locais |
 | 33/App | `src/features/transfers/guide.js` | Perfil/família/movimentação | Guia demonstrativo de chegada |
 | 34/App | `src/shell/dialogs.js` | Frontend premium | Dialog/confirm, history e sheet drag |
+| 34b/App | `src/shell/sheet-depth.js` | Frontend premium | Rodada 41: página de trás encolhe enquanto uma folha está aberta |
 | 35/App | `src/shell/create-menu.js` | Frontend premium | Menu Criar, keyboard e posicionamento |
 | 35a/App | `src/shell/command-palette.js` | Início/busca/descoberta | Rodada 14: paleta Ctrl+K/⌘K e "/": busca agrupada, páginas, ações de criar e buscas recentes |
 | 35b/App | `src/shell/count-up.js` | Frontend premium | Rodada 19: `animateCounts` (número sobe ao aparecer, respeita movimento reduzido) e `avatarStack` |
@@ -102,6 +104,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |
 | 37/Appd | `src/features/listings/compare.js` | Anúncios | Rodada 30: comparar imóveis salvos lado a lado com destaques |
 | 37/Appe | `src/features/listings/map.js` | Anúncios | Rodada 31: mapa de bairros com MapLibre + OpenFreeMap carregados sob demanda; contagem por bairro e folha com os anúncios |
+| 37/Appf | `src/features/listings/hood-panel.js` | Desapegos/imóveis | Rodada 41: folha do bairro sobre o mapa com três alturas |
 | 37a/App | `src/features/listings/photos.js` | Desapegos/imóveis | Rodada 18: processamento das fotos (botão e soltar), capa e galeria em tela cheia |
 | 37b/App | `src/features/listings/photo-gestures.js` | Frontend premium | Rodada 40: galeria com pinça, toque duplo, arrastar para baixo e foto que acompanha o dedo |
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |

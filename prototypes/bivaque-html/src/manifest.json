@@ -34,6 +34,7 @@
         "styles/top-title.css",
         "styles/chat-mobile.css",
         "styles/detail-immersive.css",
+        "styles/sheets.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -89,6 +90,7 @@
         "features/messaging/bubbles.js",
         "features/transfers/guide.js",
         "shell/dialogs.js",
+        "shell/sheet-depth.js",
         "shell/create-menu.js",
         "shell/command-palette.js",
         "shell/count-up.js",
@@ -103,6 +105,7 @@
         "features/listings/share-card.js",
         "features/listings/compare.js",
         "features/listings/map.js",
+        "features/listings/hood-panel.js",
         "features/listings/photos.js",
         "features/listings/photo-gestures.js",
         "features/events/editor.js",

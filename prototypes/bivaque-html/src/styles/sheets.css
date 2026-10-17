@@ -1,0 +1,36 @@
+/* Rodada 41: folhas no celular, aprovadas em 17/10/2026 (maquete). A página de trás encolhe um
+   pouco enquanto uma folha está aberta, e a folha do bairro fica sobre o mapa com três alturas. */
+@media(max-width:719px){
+#app-shell{transition:transform .32s cubic-bezier(.32,.72,0,1),border-radius .32s}
+body.sheet-depth{background:#0c1114}
+body.sheet-depth #app-shell{position:fixed;inset:0;transform:translateY(8px) scale(.965);transform-origin:50% 0;border-radius:16px;overflow:hidden}
+.hood-panel{position:fixed;left:0;right:0;bottom:0;z-index:46;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);border-radius:28px 28px 0 0;background:var(--md-sys-color-surface-container-low);box-shadow:0 -8px 28px #0000002e;transition:height .3s cubic-bezier(.32,.72,0,1)}
+.hood-panel[data-stop=low]{height:248px}
+.hood-panel[data-stop=half]{height:58dvh}
+.hood-panel[data-stop=full]{height:calc(100dvh - 76px)}
+.hp-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;padding:4px 12px 4px 16px;touch-action:none;cursor:grab}
+.hp-grab{grid-column:1/-1;position:relative;display:block;width:48px;height:22px;margin:0 auto;padding:0;border:0;background:none;cursor:pointer}
+.hp-grab::before{content:'';position:absolute;left:6px;right:6px;top:9px;height:4px;border-radius:2px;background:var(--md-sys-color-outline)}
+.hp-head{min-width:0}
+.hp-head h2{font-size:20px;line-height:26px;outline:none}
+.hp-head small{font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.hp-body{flex:1;min-height:0;overflow-y:auto;padding:8px 16px}
+.hood-panel[data-stop=low] .hp-body{overflow:hidden}
+.hp-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border-radius:18px;text-align:left;color:inherit;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.hp-row img,.hp-noimg{flex:none;width:72px;height:72px;border-radius:12px;object-fit:cover}
+.hp-noimg{display:grid;place-items:center;background:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface-variant)}
+.hp-txt{display:grid;gap:1px;flex:1;min-width:0}
+.hp-txt .price{font-size:17px;line-height:22px}
+.hp-txt b{font-size:15px;line-height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp-txt small{font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant)}
+.hp-more{margin:8px 0 0;text-align:center;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.hp-cards{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 8px;scrollbar-width:none}
+.hp-cards .photo-card{flex:none;width:min(62vw,280px);scroll-snap-align:start}
+.hood-panel[data-stop=full] .hp-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;margin:0;padding:0}
+.hood-panel[data-stop=full] .hp-cards .photo-card{width:auto}
+.hp-foot{padding:4px 8px 8px;border-top:1px solid var(--md-sys-color-outline-variant)}
+body.hood-open .page{padding-bottom:280px}
+/* O MapLibre posiciona o marcador com transform: o destaque usa scale, que não briga com ele. */
+.cmap-pin.on{scale:1.2;z-index:2;box-shadow:0 0 0 3px var(--md-sys-color-surface),0 0 0 6px var(--md-sys-color-primary)}
+}
+@media(max-width:719px) and (prefers-reduced-motion:reduce){#app-shell,.hood-panel{transition:none}}
