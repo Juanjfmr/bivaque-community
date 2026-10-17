@@ -84,3 +84,16 @@
 .share-preview{display:grid;place-items:center;aspect-ratio:4/5;max-height:56vh;margin:0 auto 10px;border-radius:18px;overflow:hidden;background:var(--md-sys-color-surface-container-high)}
 .share-preview img{width:100%;height:100%;object-fit:contain;display:block}
 .share-wait{font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+/* Rodada 30: comparar imóveis salvos (colunas da Rodada 16). */
+md-dialog[data-kind=compare]{width:min(1080px,100vw);max-width:100vw}
+.cmp-grid{grid-template-rows:repeat(8,auto)}
+.cmp-col{grid-row:span 8}
+.cmp-col>div{display:grid;gap:4px;align-content:start}
+.cmp-col .prop-badge{justify-self:start}
+.cmp-photo{width:100%;aspect-ratio:16/9;max-height:130px;object-fit:cover;border-radius:14px;margin-bottom:6px}
+.cmp-label{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cmp-sub{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.cmp-amen{list-style:none;margin:0;padding:0;display:grid;gap:2px;font-size:13px}
+.cmp-amen li{display:flex;align-items:center;gap:4px}
+.cmp-amen md-icon{font-size:16px;--md-icon-size:16px;color:var(--md-sys-color-primary)}
+.cmp-actions{display:flex!important;flex-wrap:wrap;gap:6px;align-items:center}

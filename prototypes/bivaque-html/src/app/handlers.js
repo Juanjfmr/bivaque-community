@@ -5,6 +5,7 @@ async function perform(action,value,el){
  if(await alertAction(action,value))return;
  if(wizardAction(action,value))return;
  if(await shareCardAction(action,value))return;
+ if(await compareAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
  switch(action){
  case 'nav':if(dialog.open)await closeDialog(true);navigate(value);break;
