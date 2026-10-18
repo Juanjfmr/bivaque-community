@@ -1,0 +1,57 @@
+task_id: HTML-065
+objective: >
+  Rodada 65 do Lote Funcional: correcoes da revisao (pedidos, propostas, planos, pagina de negocio e apagar
+  a conta). Proposta removida pelo Painel devolve as outras propostas validas ao reabrir o pedido e nao
+  reabre pedido concluido; Desfazer no Painel so vale com o pedido como a decisao o deixou; pagina
+  suspensa, pausada ou excluida nao pode ser escolhida, nem voltar num desistir, nem propor; o
+  patrocinio fica preso a pagina e a suspensao fica na conta; o limite de 5 conversas novas vale tambem
+  para o Destaque de momento e voltar ao Gratis encerra o destaque; apagar a conta limpa bloqueios,
+  denuncias, prazos de oferta, nomes no Painel, propostas e ofertas da pagina, repassa ou encerra grupos e
+  nao subtrai totais-base; Meus chamados so abre para quem entrou.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 65 (secao R65 de correcoes.md, revisao do Lote Funcional, base 29fb032d)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 29fb032d (R57 a R63). A remocao pelo Painel reabre qualquer pedido sem devolver as outras
+    propostas e reabre pedido concluido; o Desfazer restaura sem conferir o estado do pedido; proposta de
+    pagina suspensa, pausada ou excluida pode ser escolhida e volta num desistir; o patrocinio vale para
+    qualquer pagina da pessoa e a suspensao some ao excluir e recriar a pagina; o Destaque de momento nao
+    tem limite de conversas e voltar ao Gratis exige pagina aberta; apagar a conta deixa bloqueios,
+    denuncias, prazos de oferta, nome no Painel, propostas e ofertas da pagina, e subtrai totais-base;
+    Meus chamados abre sem conta. Prova round65 em 375-light contra esse HEAD: 1 de 16 checkpoints PASS
+    (o controle que ja funcionava).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-065.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - cobrar de verdade ou integrar meio de pagamento (modo teste)
+  - fora do escopo: visibilidade centralizada, grupo encerrado, ofertas no feed e acessibilidade (R64)
+acceptance:
+  - Remover pelo Painel a proposta escolhida reabre o pedido e devolve a enviada as outras propostas recusadas ainda validas e de paginas abertas; pedido concluido ou cancelado nao reabre; Escolher so aparece em proposta enviada e valida
+  - Desfazer no Painel so restaura se o pedido continua aberto e sem escolhida; senao avisa e mantem a decisao
+  - Proposta de pagina suspensa, pausada ou excluida nao pode ser escolhida nem volta num desistir; pagina suspensa ou pausada nao ve pedido novo nem envia proposta; excluir a pagina retira tambem as propostas recusadas de pedido aberto ou escolhido; Conversar com o prestador abre a conversa da escolha ou explica
+  - O patrocinio guarda a pagina (bizId) e acaba ao excluir a pagina; a suspensao do Painel fica na conta e vale na pagina nova
+  - O Destaque de momento mantem o limite de 5 conversas novas por mes (so o Plano do negocio e ilimitado); voltar ao Gratis encerra o destaque e vale com a pagina pausada ou suspensa
+  - Apagar a conta zera bloqueios e denuncias, tira os prazos de oferta, anonimiza o nome nos titulos do Painel, retira propostas e ofertas da pagina, remove alsoCity de pergunta apagada, passa a administracao ao primeiro moderador ou encerra o grupo, e limpa so o voto e a presenca da pessoa sem subtrair totais-base
+  - Meus chamados so abre para quem entrou; quem envia sem conta ve so a confirmacao
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round65-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round62-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round63-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: exclusao de conta e dados pessoais (R2 no minimo); os planos tocam a pendencia comercial R3 ja registrada no HTML-063 (o limite de 5 conversas agora tambem no Destaque de momento depende da aprovacao do dono do produto)
+adr: docs/decisions/ADR-20260820-alcance-pago.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

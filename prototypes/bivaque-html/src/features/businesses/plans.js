@@ -1,6 +1,7 @@
 // Rodada 63: planos do negócio. A tela de planos promete e o protótipo cumpre:
-// Grátis = até 5 novas conversas respondidas por mês. Destaque de momento = a página aparece no espaço
-// Patrocinado por 7 dias. Plano do negócio = conversas sem limite e 4 destaques por mês (7 dias cada).
+// Grátis e Destaque de momento = até 5 novas conversas respondidas por mês; o destaque coloca a página no espaço
+// Patrocinado por 7 dias. Só o Plano do negócio tem conversas sem limite e 4 destaques por mês (7 dias cada).
+// Rodada 65: o patrocínio guarda a página (`spot.bizId`) e termina com ela; voltar ao Grátis o encerra.
 // Pagar não muda a ordem das indicações da comunidade: o patrocínio só ocupa o espaço Patrocinado.
 // Modo teste: nenhuma cobrança. A aprovação comercial (R3) continua pendente com o dono do produto.
 const PLAN_FREE_REPLIES=5,PLAN_BOOSTS=4,PLAN_SPOT_MS=7*864e5;
@@ -13,19 +14,19 @@ function planRoll(s){if(s.month!==planMonth()){s.month=planMonth();s.repliedThre
 const planReplied=()=>{const s=planSub();return s.month===planMonth()?(s.repliedThreadIds||[]).length:0;};
 const planBoostsLeft=()=>{const s=planSub();return Math.max(0,PLAN_BOOSTS-(s.month===planMonth()?s.boosts||0:0));};
 // Destaque em andamento da página da própria pessoa; página pausada ou suspensa não aparece em Patrocinado.
-const spotActive=b=>!!b&&state.myBiz?.id===b.id&&(planSub().spot?.until||0)>Date.now()&&bizOpen(b);
+const spotActive=b=>!!b&&state.myBiz?.id===b.id&&planSub().spot?.bizId===b.id&&(planSub().spot.until||0)>Date.now()&&bizOpen(b);
 const isSpon=b=>!!b&&(!!b.spon||spotActive(b));
 
 // Caixa da página: responder uma conversa nova além do limite do plano grátis é recusado.
 function planReplyGate(t){
  if(!state.myBiz?.live||t.about?.type!=='biz'||t.about.id!==state.myBiz.id)return {track:false};
  const isNew=!t.msgs.some(m=>m.me);
- return {track:true,isNew,blocked:isNew&&planSub().tier==='free'&&planReplied()>=PLAN_FREE_REPLIES};
+ return {track:true,isNew,blocked:isNew&&planSub().tier!=='plan'&&planReplied()>=PLAN_FREE_REPLIES};
 }
 function planCountReply(t){const s=state.subscription;planRoll(s);if(!s.repliedThreadIds.includes(t.id))s.repliedThreadIds.push(t.id);}
-function planLimitDialog(){showDialog('Limite do plano grátis',`<p class="form-note">Você já respondeu ${PLAN_FREE_REPLIES} conversas novas neste mês. As conversas que você já respondeu continuam livres. As novas voltam em ${planRenewDay()}, ou agora com um plano.</p>`,`${btn('Agora não','close-dialog','','text')}${btn('Conhecer os planos','plans','','filled','trending_up')}`,'plan-limit');}
+function planLimitDialog(){showDialog('Limite de conversas novas',`<p class="form-note">Você já respondeu ${PLAN_FREE_REPLIES} conversas novas neste mês. As conversas que você já respondeu continuam livres. As novas voltam em ${planRenewDay()}, ou agora com o Plano do negócio, que não tem limite.</p>`,`${btn('Agora não','close-dialog','','text')}${btn('Conhecer os planos','plans','','filled','trending_up')}`,'plan-limit');}
 
-const planConvoText=()=>planSub().tier==='free'||!planSub().tier?`${planReplied()} de ${PLAN_FREE_REPLIES} conversas novas respondidas neste mês`:'Conversas novas sem limite';
+const planConvoText=()=>planSub().tier==='plan'?'Conversas novas sem limite':`${planReplied()} de ${PLAN_FREE_REPLIES} conversas novas respondidas neste mês`;
 function planSpotText(){
  const s=planSub();if(spotActive(state.myBiz))return `Patrocinado até ${planDay(s.spot.until)}`;
  if(s.tier==='plan')return planBoostsLeft()?`Restam ${planBoostsLeft()} de ${PLAN_BOOSTS} destaques neste mês`:`Os ${PLAN_BOOSTS} destaques do mês já foram usados. Voltam em ${planRenewDay()}`;
@@ -38,11 +39,12 @@ function planStatusHtml(){
 
 async function planActivate(){
  const tier=$$('md-radio[name=plan]',dialog).find(x=>x.checked)?.value||'free',b=state.myBiz,now=Date.now();
- if(!bizOpen(b)){notify('Crie ou reative a página do negócio antes de ativar um plano.','info');return;}
- let started=false;
- if(!mutate(()=>{const s=state.subscription;planRoll(s);s.tier=tier;if(tier==='moment'&&!spotActive(b)){s.spot={from:now,until:now+PLAN_SPOT_MS};started=true;}},{redraw:false}))return;
+ // Voltar ao Grátis vale com a página pausada, suspensa ou sem página; os planos pagos pedem página aberta.
+ if(tier!=='free'&&!bizOpen(b)){notify('Crie ou reative a página do negócio antes de ativar um plano.','info');return;}
+ let started=false,ended=false;
+ if(!mutate(()=>{const s=state.subscription;planRoll(s);s.tier=tier;if(tier==='free'){ended=!!s.spot&&(s.spot.until||0)>now;delete s.spot;}else if(tier==='moment'&&!spotActive(b)){s.spot={from:now,until:now+PLAN_SPOT_MS,bizId:b.id};started=true;}},{redraw:false}))return;
  await closeDialog(true);render();
- notify(tier==='free'?'Plano grátis selecionado':started?`Plano de teste ativado, sem pagamento. Sua página aparece em Patrocinado até ${planDay(now+PLAN_SPOT_MS)}.`:tier==='plan'?`Plano de teste ativado, sem pagamento. Restam ${planBoostsLeft()} destaques neste mês.`:'Plano de teste ativado, sem pagamento.');
+ notify(tier==='free'?(ended?'Plano grátis selecionado. O destaque terminou e sua página saiu de Patrocinado.':'Plano grátis selecionado'):started?`Plano de teste ativado, sem pagamento. Sua página aparece em Patrocinado até ${planDay(now+PLAN_SPOT_MS)}.`:tier==='plan'?`Plano de teste ativado, sem pagamento. Restam ${planBoostsLeft()} destaques neste mês.`:'Plano de teste ativado, sem pagamento.');
 }
 function planBoost(){
  const b=state.myBiz,s=planSub(),now=Date.now();
@@ -50,7 +52,7 @@ function planBoost(){
  if(spotActive(b)){notify(`Sua página já está em Patrocinado até ${planDay(s.spot.until)}.`,'info');return;}
  if(s.tier!=='moment'&&s.tier!=='plan'){notify('Destaque faz parte dos planos pagos.','info');openPlans();return;}
  if(s.tier==='plan'&&!planBoostsLeft()){notify(`Os ${PLAN_BOOSTS} destaques deste mês já foram usados. Voltam em ${planRenewDay()}.`,'info');return;}
- if(mutate(()=>{const x=state.subscription;planRoll(x);x.spot={from:now,until:now+PLAN_SPOT_MS};if(x.tier==='plan')x.boosts=(x.boosts||0)+1;}))notify(`Sua página aparece em Patrocinado até ${planDay(now+PLAN_SPOT_MS)}.`,'trending_up');
+ if(mutate(()=>{const x=state.subscription;planRoll(x);x.spot={from:now,until:now+PLAN_SPOT_MS,bizId:b.id};if(x.tier==='plan')x.boosts=(x.boosts||0)+1;}))notify(`Sua página aparece em Patrocinado até ${planDay(now+PLAN_SPOT_MS)}.`,'trending_up');
 }
 // Modo teste: um contato novo chega à caixa da página, para provar o limite de conversas.
 const PLAN_TEST_NAMES=['Marina L.','Caio R.','Helena P.','Otávio S.','Bianca F.','Lúcio M.','Renata V.','Davi C.'];

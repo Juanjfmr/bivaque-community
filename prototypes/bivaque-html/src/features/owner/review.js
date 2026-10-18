@@ -43,7 +43,9 @@ function reportConsequence(type,id,d,o){
  const obj=type==='proposal'?proposalRaw(id):reportTarget(type,id),field=type==='biz'?'suspended':type==='request'||type==='proposal'?'status':'hidden',mod={type,id,field,had:field in obj,prev:obj[field]};
  obj[field]=field==='status'?'removed':true;
  // Proposta já escolhida: o pedido volta a ficar aberto, sem escolhida.
- if(type==='proposal'){const r=requestList().find(x=>x.proposals.some(p=>p.id===id));if(r?.chosen===id){mod.req={status:r.status,chosen:r.chosen,threadId:r.threadId||null};r.status='open';r.chosen=null;r.threadId=null;}}
+ // Rodada 65: só reabre o pedido que ainda está escolhido (concluído ou cancelado fica como está). As outras
+ // propostas ainda válidas, de páginas abertas, voltam à lista como no "desistir"; o Desfazer devolve só elas.
+ if(type==='proposal'){const r=requestList().find(x=>x.proposals.some(p=>p.id===id));if(r?.chosen===id&&r.status==='chosen'){mod.req={status:r.status,chosen:r.chosen,threadId:r.threadId||null,restored:[]};r.status='open';r.chosen=null;r.threadId=null;if(Date.now()<=r.expiresAt)for(const x of r.proposals)if(x.status==='declined'&&!proposalExpired(x)&&proposalBizOpen(bizById(x.bizId))){x.status='sent';mod.req.restored.push(x.id);}}}
  return {mod};
 }
 const reportLabel=(type,id)=>{const t=reportTarget(type,id);return t?reportTitle(type,t,id):'';};
