@@ -29,8 +29,8 @@ proof:
   - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round51-proof.mjs
   - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round50-proof.mjs
   - npx pnpm@11.18.0 gate
-risk: painel
-risk_level: R1
+risk: dados-pessoais
+risk_level: R2
 reviewer_must_differ_from_executor: true
 retry_budget: 3
 on_budget_exhausted: BLOCKED

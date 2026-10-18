@@ -1,6 +1,6 @@
 # Bivaque — Rodada 51: Cidades do Painel do Bivaque
 
-Data: 17/10/2026. Contrato: `docs/agents/tasks/HTML-051.task.yml` (R1). Base: `899e66a0`.
+Data: 17/10/2026. Contrato: `docs/agents/tasks/HTML-051.task.yml` (R2: guarda o nome de quem é convidado). Base: `899e66a0`.
 Lote do painel do dono.
 
 **Veredito: PASS.**
