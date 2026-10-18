@@ -69,6 +69,7 @@ function renderEntryPending(){
 const ENTRY_STEPS={conta:()=>renderEntrySignup(),aceite:()=>renderEntryGoogleConsent(),cpf:()=>renderEntryCpf(),resultado:()=>renderEntryResult(),analise:()=>renderEntryPending(),cidade:()=>renderEntryCity()};
 function renderEntry(){
  const id=route.id||'';
+ if(id==='apagada'&&state.accountDeletedAt)return renderAccountDeleted();
  if(id==='boas-vindas')return state.signedOut?renderEntryLanding():renderEntryWelcome();
  if(id==='login')return renderEntryLogin();
  if(id==='senha')return renderEntryForgot();
@@ -91,7 +92,7 @@ function entrySignup(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return entryError('Confira o e-mail.','en-email');
  if(pass.length<8||!/[a-z]/i.test(pass)||!/\d/.test(pass))return entryError(`A senha precisa ter ${ENTRY_SENHA_REGRA.toLowerCase()}`,'en-pass');
  if(!$('#en-consent')?.checked)return entryError('Para criar a conta, aceite a Política de privacidade e o Código de conduta.','en-consent');
- if(email===(state.profile.email||'rafael@exemplo.com'))return entryError('Este e-mail já tem conta. Use Entrar ou recupere a senha.','en-email');
+ if(email===entryKnownEmail())return entryError('Este e-mail já tem conta. Use Entrar ou recupere a senha.','en-email');
  if(!mutate(()=>{state.entry={account:{name:name.slice(0,80),email,provider:'email'},consentAt:Date.now(),eligibility:'none'};},{redraw:false}))return;
  navigate('entrar','cpf');
 }

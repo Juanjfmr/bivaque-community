@@ -124,6 +124,7 @@
         "features/entry/login.js",
         "features/entry/arrive.js",
         "features/legal/pages.js",
+        "features/support/help.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
         "features/listings/share-card.js",
