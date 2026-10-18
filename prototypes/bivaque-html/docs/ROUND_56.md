@@ -99,3 +99,8 @@ protótipo ainda descarta a entrada em andamento.
 | Rodadas 54 e 55 (375 e 1440, claro) | PASS, 12/12 e 10/10 |
 | Rodadas 01, 02, 10 e 53 | PASS |
 | Gate (lint, tipos, testes, segredos) | PASS |
+
+## Congelamento
+
+Aprovado pelo usuário em 18/10/2026 ("pode congelar o protótipo com o lote de entrada"), sem
+publicar. Nova base visual em [VISUAL_BASELINE_R56](VISUAL_BASELINE_R56.md) (`19df283b…`).

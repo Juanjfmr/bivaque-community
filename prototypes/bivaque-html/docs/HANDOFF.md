@@ -78,6 +78,16 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   - a denúncia feita no app passa a ser registrada e chega à fila.
   Revisão própria e revisão independente do GPT (Codex), bateria e base visual em
   [VISUAL_BASELINE_R52](VISUAL_BASELINE_R52.md). Publicado em 18/10 (`c83703ea…`).
+- **Lote Entrada, Rodadas 53 a 56 (18/10):** a entrada como no app web, com o prototipo fechado
+  para quem saiu:
+  - landing pública com amostra; Sair e Entrar;
+  - criar conta (e-mail ou Google com aceite), CPF conferido e nunca guardado, resultados distintos
+    (o vínculo militar é dado público), envio de documento e análise com linha do tempo;
+  - recuperar a senha com resposta neutra; convite familiar preso ao e-mail, com prazo de 7 dias;
+  - passo 3 (cidade, momento e nome), boas-vindas e perfil novo do zero;
+  - a entrada em análise aparece na fila do Painel do Bivaque.
+  Revisões de código, de segurança (R3) e do GPT (Codex), bateria e base visual em
+  [VISUAL_BASELINE_R56](VISUAL_BASELINE_R56.md). Congelada em 18/10 (`19df283b…`), sem publicar.
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
