@@ -20,11 +20,16 @@ export const routeOf = (page) => page.evaluate(() => window.Bivaque.inspect().ro
 export function expect(condition, message) {
   if (!condition) throw new Error(message)
 }
+// Um diálogo que acabou de fechar (ex.: a cidade no snapshot) volta no histórico; com a animação
+// ligada, esse "voltar" pode chegar depois da troca de endereço e desfazê-la. Confere e troca de novo.
 export async function go(page, hash) {
-  await page.evaluate((h) => {
-    location.hash = h
-  }, hash)
-  await settle(page)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.evaluate((h) => {
+      location.hash = h
+    }, hash)
+    await settle(page)
+    if (await page.evaluate((h) => decodeURIComponent(location.hash.slice(1)) === h, hash)) return
+  }
 }
 export async function action(page, name, value) {
   const scope = value ? `[data-action="${name}"][data-value="${value}"]` : `[data-action="${name}"]`
