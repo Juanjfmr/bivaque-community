@@ -32,7 +32,6 @@ const HELP_TOPICS=[
   ['Como denuncio um conteúdo?','Use Denunciar no anúncio, na pergunta, na resposta, no comentário, na publicação, na conversa, na página do negócio ou no pedido de serviço. Escolha o motivo; a equipe analisa e pode remover o conteúdo ou limitar a conta.'],
   ['Quem vê meus dados?','Só membros confirmados da família militar. Seu bairro só aparece se você permitir, em Configurações → Mostrar meu bairro.'],
   ['O que faço diante de um golpe?','Não envie dinheiro adiantado nem códigos recebidos por mensagem. Denuncie o anúncio e combine a entrega num local movimentado.'],
-  ['Onde leio as regras?','Na Política de privacidade e no Código de conduta, em Configurações ou no rodapé da página inicial.'],
   ['O que acontece se eu apagar minha conta?','Seus anúncios, perguntas e páginas saem da comunidade. Suas respostas e indicações ficam, sem o seu nome, e suas conversas são apagadas para você.']]}
 ];
 var supportTopic='conta';
