@@ -30,5 +30,7 @@ const OWNER_DEMO={
   {id:'ov1',name:'Carla R.',city:'Manaus',when:'em novembro',invitedBy:'Paulo R.',hoursAgo:2,checks:[['Nome confere com o documento',true],['Documento dentro da validade',true],['Cidade de destino confere com o pedido',false]]}
  ],
  claims:[{id:'oc1',biz:'b7',hoursAgo:20}],
- staleExtra:{Natal:4}
+ staleExtra:{Natal:4},
+ // Quem já está cuidando de um item (moderadora de exemplo).
+ assignees:{'report:item|i1':'Ana P.'}
 };

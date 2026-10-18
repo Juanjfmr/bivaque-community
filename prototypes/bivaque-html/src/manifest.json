@@ -111,6 +111,7 @@
         "features/profile/push-install.js",
         "features/owner/console.js",
         "features/owner/review.js",
+        "features/owner/queues.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
         "features/listings/share-card.js",

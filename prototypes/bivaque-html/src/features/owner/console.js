@@ -54,12 +54,16 @@ function ownerChanges(){
 function ownerRow(q){const [due,late]=ownerDue(q.due);return `<div class="ow-q" role="listitem"><span class="ow-ic ow-${q.tone}">${icon(q.icon)}</span><span class="t"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></span><span class="ow-sla${late?' late':''}">${due}</span>${btn('Revisar','owner-review',q.id,q.kind==='verify'?'filled':'outlined')}</div>`;}
 function ownerQueueHtml(){
  const all=ownerQueue(),count=k=>k==='all'?all.length:all.filter(q=>q.kind===k).length,list=all.filter(q=>ownerTab==='all'||q.kind===ownerTab);
- return `<section class="ow-card ow-queue" aria-labelledby="ow-q-t"><h2 id="ow-q-t">Precisa de você</h2>${filterChips(OWNER_KINDS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>[k,`${l} · ${count(k)}`]),ownerTab,'owner-tab')}${list.length?`<div class="ow-list" role="list">${list.map(ownerRow).join('')}</div>`:`<p class="ow-done">${icon('check')}Nada esperando por você${ownerCity==='Todas'?'':` em ${esc(ownerCity)}`}.</p>`}</section>`;
+ return `<section class="ow-card ow-queue" aria-labelledby="ow-q-t"><div class="ow-card-head"><h2 id="ow-q-t">Precisa de você</h2>${btn('Abrir filas','owner-go','filas','text')}</div>${filterChips(OWNER_KINDS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>[k,`${l} · ${count(k)}`]),ownerTab,'owner-tab')}${list.length?`<div class="ow-list" role="list">${list.map(ownerRow).join('')}</div>`:`<p class="ow-done">${icon('check')}Nada esperando por você${ownerCity==='Todas'?'':` em ${esc(ownerCity)}`}.</p>`}</section>`;
 }
+const OWNER_PAGES=[['','Visão geral','home'],['filas','Filas','inbox']];
 function renderOwner(){
- const name=state.profile.name.split(' ')[0];
- return `<div class="ow"><nav class="ow-nav" aria-label="Painel do Bivaque"><div class="ow-brand"><span class="ow-mark" aria-hidden="true">B</span><span>Painel do Bivaque<small>Dono · ${esc(state.profile.name)}</small></span></div><button type="button" class="ow-nav-item on" aria-current="page">${icon('home')}Visão geral</button><span class="ow-sp"></span><button type="button" class="ow-nav-item" data-action="owner-exit">${icon('arrow_back')}Voltar ao app</button></nav>
+ const name=state.profile.name.split(' ')[0],sub=OWNER_PAGES.some(([p])=>p===(route.id||''))?route.id||'':'',open=ownerQueue().length;
+ const nav=OWNER_PAGES.map(([p,l,ic])=>`<button type="button" class="ow-nav-item${p===sub?' on':''}" data-action="owner-go" data-value="${p}"${p===sub?' aria-current="page"':''}>${icon(ic)}${l}${p==='filas'&&open?`<b class="ow-badge" aria-label="${open} abertos">${open}</b>`:''}</button>`).join('');
+ const body=sub==='filas'?renderOwnerQueues():renderOwnerOverview(name);
+ return `<div class="ow"><nav class="ow-nav" aria-label="Painel do Bivaque"><div class="ow-brand"><span class="ow-mark" aria-hidden="true">B</span><span>Painel do Bivaque<small>Dono · ${esc(state.profile.name)}</small></span></div>${nav}<span class="ow-sp"></span><button type="button" class="ow-nav-item" data-action="owner-exit">${icon('arrow_back')}Voltar ao app</button></nav>
  <div class="ow-main"><div class="ow-top"><button type="button" class="ow-exit" data-action="owner-exit" aria-label="Voltar ao app">${icon('arrow_back')}</button><span class="ow-top-t">Painel do Bivaque</span><span class="ow-demo">Dados de exemplo</span></div>
- <h1 class="ow-h1">Bom dia, ${esc(name)}</h1><div class="ow-filters">${filterChips([['Todas','Todas as cidades'],...ownerCities().map(c=>[c,c])],ownerCity,'owner-city')}<span class="ow-period">Últimos 30 dias</span></div>
- <div class="ow-grid">${ownerHero()}${ownerKpis()}${ownerQueueHtml()}${ownerChanges()}</div></div></div>`;
+ <div class="ow-subnav">${filterChips(OWNER_PAGES.map(([p,l])=>[p,p==='filas'?`${l} · ${open}`:l]),sub,'owner-go')}</div>${body}</div></div>`;
 }
+function renderOwnerOverview(name){return `<h1 class="ow-h1">Bom dia, ${esc(name)}</h1><div class="ow-filters">${filterChips([['Todas','Todas as cidades'],...ownerCities().map(c=>[c,c])],ownerCity,'owner-city')}<span class="ow-period">Últimos 30 dias</span></div>
+ <div class="ow-grid">${ownerHero()}${ownerKpis()}${ownerQueueHtml()}${ownerChanges()}</div>`;}

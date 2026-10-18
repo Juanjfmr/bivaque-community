@@ -29,7 +29,10 @@ function ownerDecide(value){
  const label={remove:'removido',dismiss:'dispensado',approve:'aprovado',reject:'recusado',more:'novo documento pedido',call:'embaixadores chamados'}[d];
  const ok=mutate(()=>{
   const o=state.owner||(state.owner={decisions:{},log:[]});
-  o.decisions[id]={d,reason,at:Date.now()};o.log=[{at:Date.now(),text:`${q.title}: ${label}${reason?` (${OWNER_DECISION_REASONS.find(r=>r[0]===reason)?.[1].toLowerCase()})`:''}`},...o.log].slice(0,50);
+  const undo={};
+  if(q.kind==='report'){undo.reportKey=`${q.type}|${q.target}`;const t=reportTarget(q.type,q.target);if(d==='remove'&&q.type==='item'&&t){undo.item=t.id;undo.itemStatus=t.status;}if(d==='remove'&&q.type==='ask'&&t){undo.ask=t.id;undo.askHidden=!!t.hidden;}}
+  if(q.kind==='claim'&&d==='approve'){undo.biz=q.biz.id;undo.claimed=q.biz.claimed;}
+  o.decisions[id]={d,reason,at:Date.now(),title:q.title,kind:q.kind,city:q.city,undo};o.log=[{at:Date.now(),text:`${q.title}: ${label}${reason?` (${OWNER_DECISION_REASONS.find(r=>r[0]===reason)?.[1].toLowerCase()})`:''}`},...o.log].slice(0,50);
   if(q.kind==='report'&&d==='remove'){const t=reportTarget(q.type,q.target);if(q.type==='item'&&t)t.status='removed';if(q.type==='ask'&&t)t.hidden=true;}
   if(q.kind==='report')for(const r of state.reports||[])if(`${r.type}|${r.target}`===`${q.type}|${q.target}`)r.status='closed';
   if(q.kind==='claim'&&d==='approve')q.biz.claimed=true;
@@ -40,12 +43,17 @@ function ownerDecide(value){
 function ownerCallText(q){const cs=OWNER_DEMO.cities,c=Object.keys(q.cities),without=c.filter(x=>!cs[x]?.ambassadors),withA=c.filter(x=>cs[x]?.ambassadors);return `${withA.length?`Aviso enviado aos embaixadores de ${withA.join(' e ')}. `:''}${without.length?`${without.join(' e ')} ainda não ${without.length===1?'tem':'têm'} embaixador: convide alguém de lá.`:''}`.trim();}
 async function ownerAction(action,value){
  if(!action.startsWith('owner-'))return false;
- if(action==='owner-open'){if(dialog.open)await closeDialog(true);ownerTab='all';navigate('dono');return true;}
+ if(action==='owner-open'){if(dialog.open)await closeDialog(true);ownerTab='all';ownerStatus='open';navigate('dono');return true;}
  if(action==='owner-exit'){navigate('voce');return true;}
  if(action==='owner-city'){ownerCity=value;render();globalFocus(action,value);return true;}
  if(action==='owner-tab'){ownerTab=value;render();globalFocus(action,value);return true;}
  if(action==='owner-review'){ownerReview(value);return true;}
  if(action==='owner-decide'){ownerDecide(value);return true;}
+ if(action==='owner-go'){navigate('dono',value||null);return true;}
+ if(action==='owner-status'){ownerStatus=value;render();globalFocus(action,value);return true;}
+ if(action==='owner-sort'){ownerSort=value;render();globalFocus(action,value);return true;}
+ if(action==='owner-assign'){ownerAssign(value);return true;}
+ if(action==='owner-undo'){ownerUndo(value);return true;}
  return false;
 }
 // Denúncia feita no app: fica registrada e entra na fila do dono (antes, só um aviso de dependência).

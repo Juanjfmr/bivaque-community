@@ -110,6 +110,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 36/Appb | `src/features/profile/push-install.js` | Perfil | Rodada 43: avisos no celular pedidos com explicação e instalação como app |
 | 36/Appbc | `src/features/owner/console.js` | Perfil | Rodada 49: Painel do Bivaque: visão geral, chegadas atendidas, o que mudou e fila |
 | 36/Appbd | `src/features/owner/review.js` | Perfil | Rodada 49: revisar e decidir itens da fila; denúncia registrada no app |
+| 36/Appbe | `src/features/owner/queues.js` | Perfil | Rodada 50: Filas do Painel do Bivaque: abertas e decididas, assumir e desfazer |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |

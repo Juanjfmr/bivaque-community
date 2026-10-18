@@ -82,3 +82,17 @@ md-dialog[data-kind=owner-review] .sheet-grab{display:none}
  md-dialog[data-kind=owner-review]{margin:auto auto 0;height:auto;max-height:92dvh;width:100vw;--md-dialog-container-shape-start-start:28px;--md-dialog-container-shape-start-end:28px;--md-dialog-container-shape-end-start:0px;--md-dialog-container-shape-end-end:0px}
 }
 .ow-exit{place-items:center;width:40px;height:40px;border-radius:20px;color:inherit}
+/* Rodada 50: Filas e navegação do console. */
+.ow-badge{margin-left:auto;display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:12px;font-weight:700}
+.ow-subnav{display:none;margin:0 0 8px}
+.ow-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ow-card-head h2{margin:0}
+.ow-lead{margin:-4px 0 12px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.ow-q-tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:4px}
+.ow-q-tools .filter-row,.ow-queue-page>.filter-row{margin:0 0 6px}
+.ow-q-full{grid-template-columns:36px minmax(0,1fr) auto 150px auto}
+.ow-who{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap}
+.ow-who i{display:grid;place-items:center;width:24px;height:24px;border-radius:12px;background:var(--md-sys-color-surface-container-highest);font-style:normal;font-size:10px;font-weight:700;color:var(--md-sys-color-on-surface)}
+.ow-acts{display:flex;gap:4px;justify-content:flex-end;align-items:center}
+@media(max-width:1023px){.ow-subnav{display:block}}
+@media(max-width:719px){.ow-q-full{grid-template-columns:36px auto minmax(0,1fr);grid-template-areas:'ic t t' '. sla who' '. acts acts';row-gap:6px;column-gap:12px}.ow-q-full>.ow-ic{grid-area:ic}.ow-q-full>.t{grid-area:t}.ow-q-full>.ow-sla{grid-area:sla}.ow-q-full>.ow-who{grid-area:who}.ow-q-full>.ow-acts{grid-area:acts;justify-content:flex-start}}
