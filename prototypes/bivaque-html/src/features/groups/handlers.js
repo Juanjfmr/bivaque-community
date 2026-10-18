@@ -37,6 +37,7 @@ async function groupAction(action,value,el){
  case 'save-interests':{if(mutate(()=>{state.profile.interests=[...interestsDraft];},{redraw:false})){interestsDraft=null;await closeDialog(true);communityTab='grp';render();notify('Sugestões de grupos atualizadas','auto_awesome');}return true;}
  case 'simulate-moderation':openModeration();return true;
  case 'moderation-approve':case 'moderation-deny':{const g=gById(value);if(!g?.pending)return true;const ok=action==='moderation-approve';if(mutate(()=>{g.pending=false;if(ok){g.on=true;g.joinedAt=Date.now();g.notif='destaques';}state.notices.unshift({id:uid('n'),city:g.city,unread:true,text:ok?`Sua entrada em ${g.t} foi aprovada pelo moderador.`:`Seu pedido para ${g.t} não foi aprovado pelo moderador.`,go:['grupo',g.id],when:'Agora'});},{redraw:false})){notify(ok?`Você foi aprovado em ${g.t}`:`Pedido para ${g.t} recusado`,ok?'group':'close');openModeration(true);render();}return true;}
+ case 'cancel-join':{const g=gById(value);if(!g?.pending){notify('Este pedido não está mais pendente.','info');render();return true;}if(mutate(()=>{g.pending=false;g.requests=(g.requests||[]).filter(r=>r.name!==state.profile.name);},{redraw:false})){render();notify('Pedido cancelado.','close');}else notify('Não foi possível cancelar o pedido. Ele continua pendente.','error');return true;}
  case 'noop':return true;
  }
  return false;

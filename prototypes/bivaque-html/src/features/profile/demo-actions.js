@@ -28,10 +28,10 @@ function openNotices(){
 function profileRestoreOverlay(kind){if(kind!=='notices')return false;noticesTab='all';openNotices();return true;}
 function noticeDestination(n){
  if(n.city!==state.homeCity||n.city!==state.city||!Array.isArray(n.go))return null;
- const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','desapegos','imoveis','negocios','agenda','guia'];
+ const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','desapegos','imoveis','negocios','agenda','guia','pedidos'];
  if(roots.includes(name)&&!id)return {name,id:null};
- const record=name==='anuncio'?itemById(id):name==='negocio'?bizById(id):name==='pergunta'?askById(id):name==='grupo'?gById(id):name==='conversa'?threadById(id):name==='evento'?state.events.find(e=>e.id===id):null;
- return accessibleRecord(record)&&!record.deleted&&!record.hidden?{name,id}:null;
+ const record=name==='anuncio'?itemById(id):name==='negocio'?bizById(id):name==='pergunta'?askById(id):name==='grupo'?gById(id):name==='pedido'?requestById(id):name==='conversa'?threadById(id):name==='evento'?state.events.find(e=>e.id===id):null;
+ return accessibleRecord(record)&&!record.deleted&&!record.hidden&&(name!=='pedido'||record.mine||providerCanSee(record))?{name,id}:null;
 }
 async function profileGlobalAction(action,value,el){
  if(!['saved','my-ads','saved-filter','my-ads-filter','family','family-settings','new-invite','copy-invite','remove-invite','notices','notices-tab','notices-read-all','notice-open','notice-read','notice-home','cap'].includes(action))return false;

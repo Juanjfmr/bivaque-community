@@ -85,7 +85,7 @@ function gPostCard(g,p,full=false){
 function renderGroup(){
  const g=gById(route.id);if(!g||(g.city!==state.city&&!g.on))return unavailable();
  const member=g.on,admin=g.role==='admin',canSee=g.privacy==='aberto'||member;
- if(!member&&!readonly())actionsBar(g.pending?btn('Pedido enviado','noop','','tonal','hourglass_top').replace('<md-filled-tonal-button','<md-filled-tonal-button disabled'):btn(g.privacy==='fechado'?'Pedir para entrar':'Entrar no grupo','join-group',g.id,'filled','group_add'));
+ if(!member&&!readonly())actionsBar(g.pending?btn('Cancelar pedido','cancel-join',g.id,'outlined','close'):btn(g.privacy==='fechado'?'Pedir para entrar':'Entrar no grupo','join-group',g.id,'filled','group_add'));
  const p=image(g.img);
  let h=`<div class="detail-hero g-hero" style="aspect-ratio:16/7">${p?`<img src="${p}" alt="">`:`<div class="g-tile g-${g.tpl} g-tile-hero">${icon(GTPL[g.tpl]?.ic||'groups')}</div>`}<span class="pill">${esc(GTPL[g.tpl]?.name||'Grupo')}</span></div><div class="detail-title"><h1>${esc(g.t)}</h1><p class="muted small g-meta">${icon(g.privacy==='fechado'?'lock':'public')}${g.privacy==='fechado'?'Fechado':'Aberto'} · ${gMembers(g)} · ${esc(g.city)}</p></div><p class="detail-copy">${esc(g.about)}</p>`;
  if(member)h+=`<div class="g-actions">${btn(`Participando · ${NOTIF[g.notif||'destaques'][1]}`,'group-menu',g.id,'tonal','expand_more')}${btn('Convidar','invite-group',g.id,'outlined','share')}${admin?btn('Gerenciar','manage-group',g.id,'outlined','admin_panel_settings'):''}</div>`;

@@ -1,0 +1,54 @@
+task_id: HTML-057
+objective: >
+  Rodada 57 do Lote Funcional: caminhos quebrados simples da auditoria de 18/10/2026. O aviso de
+  proposta abre o pedido e o aviso de pedidos abre a lista (um aviso de pedido que sumiu fica na
+  caixa, com explicacao). "Confirmado" no proprio encontro vira "Voce organiza", que leva ao
+  encontro. Interesse no proprio anuncio nao cria conversa e o menu de toque longo oferece "Ver
+  anuncio" sem denuncia. O pedido de entrada em grupo fechado pode ser cancelado. O contador de
+  Salvos em Voce usa o mesmo criterio da lista Salvos.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 57 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 50f0bd8d, build sem alteracoes (SHA256 19df283b, base da Rodada 56). Prova round57 em 375-light:
+    7 de 8 checkpoints FAIL (aviso de proposta nao abre o pedido; aviso de pedidos nao abre a lista;
+    o proprio encontro mostra "Vou"; interesse no proprio anuncio aceito e menu com "Tenho interesse";
+    grupo fechado sem acao de cancelar; Voce mostra 3 salvos e Salvos lista 2).
+    O checkpoint do aviso de pedido sumido passa no baseline de proposito: e o controle negativo.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-057.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - fora de caminhos quebrados: catalogo, catalog-filter e search-from-home ficam para outra rodada
+acceptance:
+  - Aviso de proposta do pedido abre o pedido com a lista de propostas
+  - Aviso que leva a Pedidos de servico abre a lista; aviso de pedido que nao existe mais fica na caixa com explicacao
+  - No proprio encontro na Agenda, o botao "Voce organiza" abre o encontro e nao oferece presenca
+  - Interesse no proprio anuncio (acao direta) recusa com "Este anuncio e seu.", sem criar conversa
+  - Menu de toque longo do proprio anuncio oferece "Ver anuncio", sem "Tenho interesse" nem denuncia
+  - Pedido de entrada em grupo fechado mostra "Cancelar pedido"; cancelar zera o pedido, avisa "Pedido cancelado." e volta a oferecer o pedido
+  - O numero de salvos em Voce bate com a quantidade de cards na tela Salvos, com anuncio removido e negocio salvo
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round57-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round04-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round05-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round11-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round12-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round17-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round06-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: caminhos quebrados simples de interface, sem dado novo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

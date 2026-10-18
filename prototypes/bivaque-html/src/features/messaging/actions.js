@@ -82,7 +82,7 @@ function ensureThread(type,id,draft=''){
  if(!t){t={id:uid('t'),who:x.seller||x.name,ini:x.sini||x.ini||initals(x.name),city:x.city,about:{type,id},snapshot:{title:x.title||x.name,photo:x.photos?.[0],price:x.price,city:x.city},msgs:[],unread:false,updatedAt:Date.now()};state.threads.unshift(t);}t.deleted=false;if(draft)t.draft=draft;return t;
 }
 async function contact(type,id,draft=''){
- if(!canPost())return;const x=type==='item'?itemById(id):bizById(id);if(!accessibleRecord(x))return;if(type==='item'&&x.status!=='active'){notify('Este anúncio já foi encerrado.','info');return;}if(type==='biz'&&x.claimed===false){notify('O responsável ainda não assumiu a página.','info');return;}let t;
+ if(!canPost())return;const x=type==='item'?itemById(id):bizById(id);if(!accessibleRecord(x))return;if(type==='item'&&x.mine){notify('Este anúncio é seu.','info');return;}if(type==='item'&&x.status!=='active'){notify('Este anúncio já foi encerrado.','info');return;}if(type==='biz'&&x.claimed===false){notify('O responsável ainda não assumiu a página.','info');return;}let t;
  if(mutate(()=>{t=ensureThread(type,id,draft);},{redraw:false})){messagingReturnFocus={route:{...route},action:type==='item'?'item-interest':'quote',value:id};messagingDrafts.delete(t.id);if(dialog.open)await closeDialog(true);navigate('conversa',t.id);}
 }
 async function share(type,id){
