@@ -2,11 +2,10 @@
 md-dialog.form-dialog{margin:auto auto 0;width:min(600px,100vw);max-width:100vw;max-height:88dvh;--md-dialog-container-color:var(--md-sys-color-surface-container-low);--md-dialog-container-shape-end-start:0px;--md-dialog-container-shape-end-end:0px}
 md-dialog[data-kind=editor]{height:calc(100dvh - 48px - env(safe-area-inset-top));max-height:calc(100dvh - 48px - env(safe-area-inset-top))}
 md-dialog[data-kind=prototype]{margin:0 0 0 auto;width:min(400px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;--md-dialog-container-shape-start-start:16px;--md-dialog-container-shape-start-end:0px;--md-dialog-container-shape-end-start:16px;--md-dialog-container-shape-end-end:0px;--md-dialog-container-color:var(--md-sys-color-surface)}
-md-dialog[data-kind=onboarding]{margin:0 auto;width:min(660px,100vw);height:100dvh;max-height:100dvh;--md-dialog-container-shape:0px}
 .dialog-title{position:relative;padding-top:28px!important}
 .sheet-grab{position:absolute;top:0;left:calc(50% - 35px);width:70px;height:28px;cursor:grab;touch-action:none}
 .sheet-grab::after{content:'';position:absolute;top:8px;left:17px;width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)}
-md-dialog[data-kind=prototype] .sheet-grab,md-dialog[data-kind=onboarding] .sheet-grab{display:none}
+md-dialog[data-kind=prototype] .sheet-grab{display:none}
 @media(max-width:719px){md-dialog.form-dialog{width:100vw;max-width:100vw}}
 
 .create-scrim.context-menu{background:rgba(0,0,0,.32)}

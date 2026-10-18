@@ -24,7 +24,7 @@ function renderEntryLanding(){
 function entrySignOut(){confirm('Sair do Bivaque?','Você volta para a página inicial. Os dados de teste continuam neste dispositivo.',()=>{if(mutate(()=>{state.signedOut=true;},{redraw:false})){entrySampleCity=null;navigate('entrar',null,{replace:true});}});}
 function entrySignInBack(){if(!mutate(()=>{state.signedOut=false;},{redraw:false}))return;navigate('inicio',null,{replace:true});notify(`Você entrou como ${state.profile.name} (modo teste).`,'check_circle');}
 async function entryAction(action,value){
- if(!action.startsWith('entry-')&&action!=='sign-out')return false;
+ if(!action.startsWith('entry-')&&!['sign-out','onboarding'].includes(action))return false;
  if(await entryFlowAction(action,value))return true;
  if(action==='sign-out'){entrySignOut();return true;}
  if(action==='entry-sample-city'){entrySampleCity=value;const c=$('#en-cards');if(c)c.innerHTML=entrySample(value);for(const ch of $$('[data-action="entry-sample-city"]'))ch.selected=ch.dataset.value===value;return true;}

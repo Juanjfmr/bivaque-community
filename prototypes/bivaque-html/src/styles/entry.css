@@ -74,3 +74,23 @@ body.entry-mode main{inset:0}
 .en-inv{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);margin:4px 0 14px}
 .en-inv b{display:block;font-size:15px}
 .en-av{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:22px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface);font-weight:700}
+/* Rodada 56: passo 3 (cidade, momento e nome) e boas-vindas. */
+.en-form md-outlined-select{width:100%;margin:0 0 4px}
+.en-sub{margin:0 0 14px;font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant)}
+.en-lbl{margin:0 0 6px;font-size:14px}
+.en-seg{display:flex;border:1px solid var(--md-sys-color-outline);border-radius:20px;overflow:hidden;margin:0 0 4px}
+.en-seg label{flex:1;position:relative}
+.en-seg label+label{border-left:1px solid var(--md-sys-color-outline)}
+.en-seg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.en-seg span{display:block;padding:10px 4px;text-align:center;font-size:14px;font-weight:500}
+.en-seg input:checked+span{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.en-seg input:focus-visible+span{outline:2px solid var(--md-sys-color-primary);outline-offset:-3px}
+.en-date{display:grid;gap:4px;margin:0 0 12px;font-size:13px;color:var(--md-sys-color-on-surface-variant)}
+.en-date input{height:52px;padding:0 14px;border:1px solid var(--md-sys-color-outline);border-radius:4px;background:transparent;color:var(--md-sys-color-on-surface);font:inherit;font-size:16px}
+.en-badge{display:grid;place-items:center;width:64px;height:64px;border-radius:32px;margin:28px auto 14px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)}
+.en-welcome .en-h1,.en-welcome .en-lead{text-align:center}
+.en-welcome .en-h1:focus{outline:none}
+.en-tile{display:flex;gap:12px;align-items:flex-start;width:100%;margin:0 0 10px;padding:14px;border:1px solid var(--md-sys-color-outline-variant);border-radius:16px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface-variant);font:inherit;font-size:14px;line-height:20px;text-align:left;cursor:pointer}
+.en-tile md-icon{flex:none;color:var(--md-sys-color-primary)}
+.en-tile b{display:block;font-size:15px;color:var(--md-sys-color-on-surface)}
+.en-tile:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px}

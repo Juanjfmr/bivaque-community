@@ -1,6 +1,5 @@
 import {
   confirmOk,
-  dialogKind,
   expect,
   fill,
   go,
@@ -105,7 +104,7 @@ const checkpoints = {
     await fill(page, "en-pass", "senha1234")
     await page.locator("#en-consent").click()
     await click(page, "entry-invite-accept")
-    expect((await dialogKind(page)) === "onboarding", "o convite não seguiu para cidade e momento")
+    expect((await routeOf(page)).id === "cidade", "o convite não seguiu para cidade e momento")
     const s = await stored(page)
     expect(s.invites.find((i) => i.code === "DEMO-TESTE01").used, "o convite não ficou usado")
     expect(

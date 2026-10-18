@@ -53,7 +53,9 @@ function renderEntry(){
  if(id==='senha')return renderEntryForgot();
  if(id==='convite')return renderEntryInvite();
  if(id==='aceite'&&entryData().account)return renderEntryGoogleConsent();
- if(!entryData().account&&['cpf','resultado','analise'].includes(id))return renderEntrySignup();
+ if(id==='boas-vindas'&&!state.signedOut)return renderEntryWelcome();
+ if(!entryData().account&&['cpf','resultado','analise','cidade'].includes(id))return renderEntrySignup();
+ if(id==='cidade'&&entryData().eligibility==='verified')return renderEntryCity();
  if(id==='cpf')return renderEntryCpf();
  if(id==='resultado')return renderEntryResult();
  if(id==='analise')return renderEntryPending();
@@ -80,10 +82,8 @@ function entryCpf(){
  if(outcome==='verified'){entryVerified();return;}
  navigate('entrar',outcome==='pending'?'analise':'resultado');
 }
-// Até a Rodada 56, quem é verificado escolhe cidade e momento no passo do cadastro existente.
-function entryVerified(){
- const a=entryData().account;openOnboarding();onboardDraft.name=a?.name||onboardDraft.name;onboardDraft.verified=true;onboardStep=4;renderOnboarding();
-}
+// Quem é verificado segue para o passo 3: cidade, momento e nome (Rodada 56).
+function entryVerified(){entryCityDraft=null;navigate('entrar','cidade');}
 function entryDoc(input){
  const f=input.files?.[0];if(!f)return;
  if(!ENTRY_DOC_TYPES.includes(f.type))return entryError('Formato inválido: use PDF, JPG ou PNG.');
@@ -94,6 +94,7 @@ function entryDoc(input){
 function bindEntry(){$('#en-doc')?.addEventListener('change',e=>entryDoc(e.target));for(const f of $$('.en-form md-outlined-text-field'))f.addEventListener('input',()=>{const e=$('#en-err');if(e)e.textContent='';});}
 async function entryFlowAction(action,value){
  if(await entryAuthAction(action,value))return true;
+ if(await entryArriveAction(action,value))return true;
  if(action==='entry-go'){navigate('entrar',value||null);return true;}
  if(action==='entry-signup'){entrySignup();return true;}
  if(action==='entry-cpf'){entryCpf();return true;}

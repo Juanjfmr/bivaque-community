@@ -117,6 +117,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 36/Appbh | `src/features/entry/landing.js` | Perfil | Rodada 53: landing com amostra grátis, Sair e Entrar |
 | 36/Appbi | `src/features/entry/account.js` | Perfil | Rodada 54: criar conta e elegibilidade (CPF, resultados, documento, em análise) |
 | 36/Appbj | `src/features/entry/login.js` | Perfil | Rodada 55: entrar, recuperar a senha, Google com aceite e convite familiar |
+| 36/Appbk | `src/features/entry/arrive.js` | Perfil | Rodada 56: passo 3 (cidade, momento e nome), boas-vindas e entrada em análise na fila do dono |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |
@@ -130,7 +131,6 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 40/App | `src/features/community/editor.js` | Memória/indicações | Pedir indicação e perguntas similares |
 | 41/App | `src/features/businesses/indication.js` | Negócios/serviços | Indicação local de negócio |
 | 42/App | `src/features/profile/demo-actions.js` | Perfil/família/movimentação | Planos, convites familiares e denúncia; coordenar Monetização/Segurança |
-| 43/App | `src/features/auth/onboarding.js` | Acesso/onboarding | Cadastro e verificação fictícios |
 | 44/App | `src/features/messaging/actions.js` | Conversas/notificações | Contato/conversa, dispatch de mensagens; contém share/copy e simulação de respostas compartilhados |
 | 45/App | `src/shell/bindings.js` | Frontend premium | Bindings de tela/dialog e links externos |
 | 45a/App | `src/features/requests/model.js` | Negócios/serviços | Rodada 11: pedido aberto e propostas — regras, elegibilidade, simulação (ADR-20261015) |

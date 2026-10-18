@@ -1,6 +1,5 @@
 import {
   confirmOk,
-  dialogKind,
   expect,
   fill,
   go,
@@ -92,7 +91,7 @@ const checkpoints = {
     await sendCpf(page, "123.456.789-00")
     expect(/CPF inválido/.test(await err(page)), `CPF inválido: ${await err(page)}`)
     await sendCpf(page)
-    expect((await dialogKind(page)) === "onboarding", "vínculo confirmado não seguiu para a cidade")
+    expect((await routeOf(page)).id === "cidade", "vínculo confirmado não seguiu para a cidade")
     const raw = await page.evaluate((k) => localStorage.getItem(k), KEY)
     expect(!raw.includes("52998224725") && !raw.includes(VALID_CPF), "o CPF ficou guardado")
   },
@@ -135,7 +134,7 @@ const checkpoints = {
     await page.locator('#main [data-action="entry-approve"]').click()
     await settle(page)
     expect((await stored(page)).entry.eligibility === "verified", "aprovação não gravada")
-    expect((await dialogKind(page)) === "onboarding", "aprovação não seguiu para a cidade")
+    expect((await routeOf(page)).id === "cidade", "aprovação não seguiu para a cidade")
   },
   async "source-down-offers-retry"(page) {
     await startOut(page, "error")

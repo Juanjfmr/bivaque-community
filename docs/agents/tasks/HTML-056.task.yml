@@ -1,0 +1,45 @@
+task_id: HTML-056
+objective: >
+  Rodada 56 (ultima do lote Entrada): o passo 3 da entrada vira pagina, como na maquete v2
+  (cidade, momento e "Como voce quer ser chamado"), seguido das boas-vindas. O cadastro em dialogo
+  sai: vinculo, Forca e o resultado da verificacao nao sao mais escolhidos ali. A entrada em
+  analise aparece na fila de verificacoes do Painel do Bivaque, e aprovar libera o passo 3.
+  "Ver o cadastro" nos controles do prototipo vira "Ver a entrada do zero".
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do lote Entrada; "Sim, como na v2")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 2299e7f1. Quem passava pela elegibilidade caia no cadastro antigo em dialogo, na etapa 4
+    de 5, que ainda gravava vinculo e Forca e terminava sem boas-vindas; a entrada em analise nao
+    aparecia para o dono.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-056.task.yml
+forbidden:
+  - guardar senha
+  - guardar documento de identificacao em claro
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Elegibilidade confirmada leva ao passo 3 com o nome da conta preenchido
+  - Concluir grava cidade, momento e datas, o perfil com o e-mail da conta e abre as boas-vindas
+  - Quem mora nao informa data; quem sai precisa de destino diferente da cidade
+  - Boas-vindas e passo 3 nao abrem sem conta verificada
+  - A entrada em analise aparece na fila do dono; aprovar libera o passo 3
+  - Ver a entrada do zero recomeca pela conta sem apagar os dados de teste
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round56-proof.mjs
+  - node scripts/bivaque-html/round02-proof.mjs
+  - node scripts/bivaque-html/round10-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: verificacao-de-identidade
+adr: docs/decisions/ADR-20260816-forma-da-admissao.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
