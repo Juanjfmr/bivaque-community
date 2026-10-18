@@ -44,7 +44,8 @@ function ownerDecide(value){
    if(d==='remove'&&q.type==='ask'&&t){undo.ask=t.id;undo.askHidden=!!t.hidden;t.hidden=true;}
   }
   // Entrada em análise neste dispositivo: aprovar libera o passo da cidade; pedir outro documento volta ao envio.
-  if(q.entry&&['approve','more'].includes(d)){undo.entry={eligibility:state.entry.eligibility,doc:state.entry.doc||null};state.entry={...state.entry,eligibility:d==='approve'?'verified':'notfound',doc:d==='more'?null:state.entry.doc};}
+  // O desfazer guarda de quem era a entrada e o estado que a decisão deixou, para não valer em outra conta.
+  if(q.entry&&['approve','more'].includes(d)){const before=state.entry,after=d==='approve'?{eligibility:'verified',asked:false,doc:before.doc||null}:{eligibility:'pending',asked:true,doc:null};undo.entry={email:before.account.email,before:{eligibility:before.eligibility,asked:!!before.asked,doc:before.doc||null},after};state.entry={...before,...after};}
   if(q.kind==='claim'&&d==='approve'){undo.biz=q.biz.id;undo.hasClaimed=true;undo.claimed=q.biz.claimed??null;q.biz.claimed=true;}
   if(q.kind==='report')undo.target={type:q.type,id:q.target};
   if(q.kind==='stale'){undo.cityIds=q.cityIds;for(const c of q.cityIds)o.decisions[c]={d,reason:'',at:Date.now(),title:q.title,kind:'stale',city:'',part:id};}

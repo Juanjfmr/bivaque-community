@@ -306,6 +306,7 @@ const checkpoints = {
       "rótulo da data não é de saída",
     )
     await mode(page, "moro")
+    await choose(page, "en-city", "Manaus")
     await page.locator('#main [data-action="entry-finish"]').click()
     await settle(page)
     expect((await routeOf(page)).id === "boas-vindas", "moro não concluiu sem data")

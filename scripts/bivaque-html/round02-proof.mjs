@@ -165,6 +165,9 @@ const checkpoints = {
     const before = JSON.stringify(await stored(page))
     await moment(page, "chegando")
     await finish(page)
+    expect(/cidade/i.test(await err(page)), `sem cidade: ${await err(page)}`)
+    await choose(page, "en-city", "Manaus")
+    await finish(page)
     expect(/data de chegada/i.test(await err(page)), `sem data: ${await err(page)}`)
     await page.locator("#en-date").fill(inDays(10))
     await fill(page, "en-name", "J")
@@ -175,6 +178,7 @@ const checkpoints = {
   },
   async "entry-step3-family-account"(page) {
     await openStep3(page, { family: true, invitedBy: "Rafael Souza" })
+    await choose(page, "en-city", "Manaus")
     await moment(page, "moro")
     expect((await page.locator("#en-date").count()) === 0, "quem mora precisa informar data")
     await finish(page)
@@ -396,6 +400,7 @@ const checkpoints = {
   },
   async "storage-failure-rolls-back"(page) {
     await openStep3(page)
+    await choose(page, "en-city", "Manaus")
     await moment(page, "moro")
     const before = JSON.stringify(await stored(page))
     await page.evaluate(() => {

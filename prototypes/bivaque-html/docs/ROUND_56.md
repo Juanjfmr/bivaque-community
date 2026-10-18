@@ -51,3 +51,50 @@ Base: `2299e7f1`. Última rodada do lote Entrada.
 | Gate (lint, tipos, testes, segredos) | PASS |
 
 Capturas: `.visual/bivaque-html-round56/` (passo 3 e boas-vindas, 375 e 1440).
+
+## Fechamento do lote: revisões e correções
+
+Três revisões independentes do lote (R53 a R56): revisão de código, revisão de segurança (R3) e
+Codex (GPT). Nenhum achado crítico; XSS, senha e CPF guardados: nada encontrado.
+
+Decisões do dono (18/10/2026):
+
+- **Resposta única na consulta do CPF** (BIVAQUE.md §4.2). Vínculo não localizado, não militar e
+  fonte fora do ar levam à mesma tela ("Precisamos conferir seu vínculo"), com envio de documento.
+  O resultado não revela se um CPF é de militar. Os controles do protótipo passam a ter só
+  "Vínculo confirmado" e "Não confirmado: vai para análise".
+- **Convite familiar preso ao e-mail** (§4.1). Quem convida informa o e-mail do familiar; o convite
+  vale só para ele, vence em 7 dias e só é consumido quando a pessoa conclui a entrada. Quem entrou
+  por convite não convida outros.
+- **Perfil novo do zero.** A conta nova não herda vínculo, Força nem interesses. Em Você aparece
+  "Vínculo confirmado". O conteúdo de demonstração (anúncios, conversas) continua compartilhado
+  neste aparelho: limite do protótipo, separado por conta só no app real.
+
+Correções:
+
+- A paleta de comandos (Ctrl+K) não abre para quem saiu ou está na entrada; publicar também não.
+- O próximo passo da entrada fica num só lugar: o endereço não pula o aceite do Google, a consulta
+  do CPF nem a análise. "Simular aprovação" só aprova uma análise pendente.
+- "Quero fazer parte" com uma entrada em andamento oferece continuar ou começar com outra conta
+  (com confirmação), em vez de apagar a conta sem aviso. Entrar sempre abre o formulário: quem está
+  em análise pode usar outra conta.
+- Desfazer no Painel guarda de quem era a entrada: não vale se outra conta começou depois.
+- Do documento fica só o tipo e o tamanho; o nome do arquivo (que pode trazer o CPF) não é guardado.
+- A amostra grátis usa só exemplos aprovados para divulgação, nunca o que alguém publicou aqui.
+- Voltar pelo navegador depois de concluir não troca a cidade de quem acabou de entrar.
+- "Esqueci minha senha" ganhou "Usar outro e-mail". Entrar só compara a senha (a regra vale para
+  criar a conta) e apaga a senha depois de uma falha.
+- Enter num campo envia o passo; o campo com erro fica marcado; o foco vai ao título quando a tela
+  muda sem trocar de endereço.
+- A cidade do passo 3 começa em branco.
+
+Ficaram de fora (LOW): a imagem `chegada`, sem uso desde a saída do cadastro em diálogo, continua
+em `data/demo/assets.js` (extraída da referência original); trocar de cenário nos controles do
+protótipo ainda descarta a entrada em andamento.
+
+| Prova | Resultado |
+| --- | --- |
+| Rodada 56 (6 verificações; 375 e 1440, claro) | PASS, 12/12 |
+| Rodadas 54 e 55 (375 e 1440, claro) | PASS, 12/12 e 10/10 |
+| Rodadas 01, 02, 10 e 53 | PASS |
+| Gate (lint, tipos, testes, segredos) | PASS |

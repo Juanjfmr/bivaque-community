@@ -3,7 +3,7 @@
 // conta e da consulta do CPF. Quem está em análise aparece na fila do Painel do Bivaque.
 var entryCityDraft=null;
 function entryCityData(){
- if(!entryCityDraft)entryCityDraft={name:entryData().account?.name||'',city:CITY_NAMES.includes(state.homeCity)?state.homeCity:'',mode:'chegando',arrival:'',leave:'',dest:''};
+ if(!entryCityDraft)entryCityDraft={name:entryData().account?.name||'',city:'',mode:'chegando',arrival:'',leave:'',dest:''};
  return entryCityDraft;
 }
 // Só os campos do momento são trocados: o rádio em uso não é redesenhado e o foco fica nele.
@@ -36,18 +36,21 @@ function bindEntryCity(){
 }
 function entryFinish(){
  const e=entryData(),a=e.account,d=entryCityData();
- if(!a||e.eligibility!=='verified'){navigate('entrar',null);return;}
+ if(entryNext()!=='cidade'){navigate('entrar',entryNext());return;}
  const city=$('#en-city')?.value||'',date=$('#en-date')?.value||'',dest=$('#en-dest')?.value||'',name=($('#en-name')?.value||'').trim().replace(/\s+/g,' ');
  if(!CITY_NAMES.includes(city))return entryError('Escolha sua cidade.','en-city');
  if(d.mode!=='moro'&&!date)return entryError(d.mode==='saindo'?'Informe a data da saída.':'Informe a data de chegada.','en-date');
  if(d.mode==='saindo'&&(!CITY_NAMES.includes(dest)||dest===city))return entryError('Escolha um destino diferente da sua cidade atual.','en-dest');
  if(name.length<2)return entryError('Informe como você quer ser chamado.','en-name');
  if(!mutate(()=>{
-  state.profile={...state.profile,name:name.slice(0,80),email:a.email,verified:true,...(a.family?{role:'familia'}:{})};
+  // Perfil novo do zero (decisão do dono, 18/10/2026): nada da conta anterior é herdado. Vínculo e
+  // Força não são perguntados; só a família vem marcada, pelo convite.
+  state.profile={name:name.slice(0,80),email:a.email,verified:true,role:a.family?'familia':'',force:'',interests:[]};
+  if(a.invite){const inv=state.invites.find(i=>i.code===a.invite);if(inv)inv.used=true;}
   state.city=state.homeCity=city;state.mode=d.mode;
   if(d.mode==='chegando')state.arrival=date;
   if(d.mode==='saindo'){state.leaveDate=date;state.dest=dest;}
-  state.leftAuto=[];state.onboarded=true;state.signedOut=false;state.entry={...state.entry,done:Date.now()};
+  state.leftAuto=[];state.signedOut=false;state.entry={...state.entry,done:Date.now()};
  },{redraw:false}))return;
  entryCityDraft=null;navigate('entrar','boas-vindas',{replace:true});
 }
@@ -59,19 +62,20 @@ function renderEntryWelcome(){
  ${tiles.map(([ic,t,d,to])=>`<button type="button" class="en-tile" data-action="entry-home" data-value="${esc(to)}">${icon(ic)}<span><b>${esc(t)}</b>${esc(d)}</span></button>`).join('')}${btn('Entrar na comunidade','entry-home','comunidade','filled')}</div>`;
 }
 // A entrada em análise na fila do dono: o nome e o que já chegou. A pessoa ainda não escolheu a cidade.
+// Depois de "Pedir outro documento", sai da fila até o novo envio.
 function ownerEntryVerification(){
- const e=state.entry;if(!e?.account||e.eligibility!=='pending')return null;
+ const e=state.entry;if(!e?.account||e.done||e.eligibility!=='pending'||(e.asked&&!e.doc))return null;
  const at=e.doc?.at||e.checkedAt||0;
- return {id:`verify:entry-${at}`,kind:'verify',entry:true,data:{checks:[['Documento enviado',!!e.doc],['Nome confere com o documento',false]]},city:'',at,due:at+OWNER_SLA,icon:'verified_user',tone:'blue',title:`${e.account.name} pediu verificação`,sub:e.doc?`Documento enviado · ${e.doc.name}`:'A fonte oficial pediu conferência'};
+ return {id:`verify:entry-${at}`,kind:'verify',entry:true,data:{checks:[['Documento enviado',!!e.doc],['Nome confere com o documento',false]]},city:'',at,due:at+OWNER_SLA,icon:'verified_user',tone:'blue',title:`${e.account.name} pediu verificação`,sub:e.doc?`Documento enviado · ${entryDocLabel(e.doc)}`:'Sem confirmação automática do vínculo'};
 }
 function ownerEntryReviewBody(q){
  const doc=state.entry?.doc;
- return `<p>Criou a conta neste dispositivo. A fonte oficial não confirmou o vínculo pelo CPF${doc?' e a pessoa enviou um documento':''}. O CPF não fica guardado.</p><h3>Documento</h3><div class="ow-doc">${doc?esc(doc.name):'Nenhum documento ainda'}</div><h3>Conferir</h3>${ownerChecks(q.data.checks)}<h3>Histórico</h3><p class="small muted">Primeiro pedido. A cidade é escolhida depois da aprovação.</p>`;
+ return `<p>Criou a conta neste dispositivo. A consulta pelo CPF não confirmou o vínculo de forma automática${doc?' e a pessoa enviou um documento':''}. O CPF não fica guardado.</p><h3>Documento</h3><div class="ow-doc">${doc?esc(entryDocLabel(doc)):'Nenhum documento ainda'}</div><h3>Conferir</h3>${ownerChecks(q.data.checks)}<h3>Histórico</h3><p class="small muted">Primeiro pedido. A cidade é escolhida depois da aprovação.</p>`;
 }
 async function entryArriveAction(action,value){
  if(action==='entry-finish'){entryFinish();return true;}
  if(action==='entry-home'){const [name,id]=(value||'inicio').split('/');navigate(name,id||null,{replace:true});return true;}
  // Controles do protótipo: recomeçar a jornada de entrada do zero, sem apagar os dados de teste.
- if(action==='onboarding'){if(dialog.open)await closeDialog(true);if(mutate(()=>{state.signedOut=true;state.entry={};},{redraw:false})){entryCityDraft=null;entryInviteCode='';entryForgotSent='';navigate('entrar','conta');}return true;}
+ if(action==='onboarding'){if(dialog.open)await closeDialog(true);if(mutate(()=>{state.signedOut=true;state.entry={};},{redraw:false})){entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);navigate('entrar','conta');}return true;}
  return false;
 }

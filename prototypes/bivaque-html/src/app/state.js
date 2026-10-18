@@ -37,6 +37,7 @@ const askById=id=>state.asks.find(x=>x.id===id);
 const threadById=id=>state.threads.find(x=>x.id===id);
 const readonly=()=>state.city!==state.homeCity;
 function canPost(){
+ if(state.signedOut)return false;
  if(readonly()){notify(`Você está consultando ${state.city}. Publique na sua cidade, ${state.homeCity}.`,'info');return false;}
  if(!state.profile.verified){showDialog('Perfil em análise','<p class="form-note">Publicar libera quando a equipe aprovar seu perfil. Nada foi publicado.</p>',btn('Voltar','close-dialog','','filled'),'unverified');return false;}return true;
 }

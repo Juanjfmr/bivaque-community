@@ -19,10 +19,12 @@ function navigationFocus(descriptor){
  if(!target||target.closest('[hidden],[inert]'))target=$('h1',root)||$('#page');
  if(target){if(!target.matches('button,input,textarea,a,[data-action]'))target.tabIndex=-1;requestAnimationFrame(()=>target.isConnected&&target.focus({preventScroll:true}));}
 }
-function navigationContext(){return {route:{...route},city:navigationRenderedCity,origin,scroll:root.scrollTop,focus:globalFocusDescriptor(globalActionElement?.isConnected?globalActionElement:document.activeElement),filters:{communityTab,questionFilter,catalogFilter,catalogAttrs:structuredClone(catalogAttrs),searchType,searchQuery,searchHood,searchMin,searchMax,searchSort,bizCat,bizQuery,myAdsFilter,savedType}};}
+function navigationContext(){return {route:{...route},city:navigationRenderedCity,who:state.profile.email||'',origin,scroll:root.scrollTop,focus:globalFocusDescriptor(globalActionElement?.isConnected?globalActionElement:document.activeElement),filters:{communityTab,questionFilter,catalogFilter,catalogAttrs:structuredClone(catalogAttrs),searchType,searchQuery,searchHood,searchMin,searchMax,searchSort,bizCat,bizQuery,myAdsFilter,savedType}};}
 function navigationRestore(context){
  if(!context)return;
- if(CITY_NAMES.includes(context.city))state.city=context.city;
+ // A cidade consultada só volta para a mesma conta: depois de concluir a entrada, o histórico de
+ // antes não troca a cidade de quem acabou de entrar.
+ if(CITY_NAMES.includes(context.city)&&(context.who===undefined||context.who===(state.profile.email||'')))state.city=context.city;
  origin=['inicio','comunidade','conversas','voce'].includes(context.origin)?context.origin:'inicio';
  const f=context.filters||{};
  communityTab=f.communityTab??communityTab;questionFilter=f.questionFilter??questionFilter;catalogFilter=f.catalogFilter??catalogFilter;if(f.catalogAttrs?.desapego&&f.catalogAttrs?.imovel)catalogAttrs={desapego:{...structuredClone(CATALOG_DEFAULTS.desapego),...f.catalogAttrs.desapego},imovel:{...structuredClone(CATALOG_DEFAULTS.imovel),...f.catalogAttrs.imovel}};searchType=f.searchType??searchType;searchQuery=f.searchQuery??searchQuery;searchHood=f.searchHood??searchHood;searchMin=f.searchMin??searchMin;searchMax=f.searchMax??searchMax;searchSort=f.searchSort??searchSort;bizCat=['Todos',...GROUP_NAMES].includes(f.bizCat)?f.bizCat:bizCat;bizQuery=f.bizQuery??bizQuery;myAdsFilter=f.myAdsFilter??myAdsFilter;savedType=f.savedType??savedType;

@@ -1,11 +1,12 @@
 // Rodada 53 (lote Entrada; maquete v2 aprovada em 17/10/2026, com a crítica própria e a do GPT):
 // landing pública com a amostra grátis na própria página. Quem saiu (state.signedOut) só vê a landing;
-// a amostra usa exemplos do arquivo da comunidade, sem identificar membros. Decisão do dono: quem
+// a amostra usa só exemplos do arquivo da comunidade aprovados para divulgação (fromMemory), nunca o
+// que alguém publicou neste dispositivo, e não identifica membros. Decisão do dono: quem
 // está em análise não lê o Bivaque; a degustação é esta amostra.
 var entrySampleCity=null;
 function entrySample(city){
  const solved=state.asks.filter(a=>a.city===city&&a.status==='ok'&&!a.hidden),fam=SOURCE.cities?.[city]?.fam||0;
- const ex=solved.find(a=>a.fromMemory)||solved[0];
+ const ex=solved.find(a=>a.fromMemory);
  const cards=ex?[
   `<article class="en-card">${icon('forum')}<b>${esc(ex.q)}</b><span>Resolvida · a comunidade indicou o que confirmar antes de decidir.</span></article>`,
   `<article class="en-card">${icon('map')}<b>Guia de ${esc(city)}: a chegada</b><span>Moradia, escola, saúde e mudança, na ordem, com o que quem chegou antes aprendeu.</span></article>`,
@@ -21,15 +22,16 @@ function renderEntryLanding(){
  <section class="en-sample" aria-labelledby="en-sample-t"><h2 id="en-sample-t">Amostra grátis: veja o que a comunidade sabe</h2><p>Exemplos aprovados para divulgação, sem identificar os membros.</p>${filterChips(CITY_NAMES.map(c=>[c,c]),city,'entry-sample-city')}<div class="en-cards" id="en-cards">${entrySample(city)}</div></section></div></div>`;
 }
 // Sair: os dados de teste ficam neste dispositivo; entrar de novo volta para o mesmo perfil.
-function entrySignOut(){confirm('Sair do Bivaque?','Você volta para a página inicial. Os dados de teste continuam neste dispositivo.',()=>{if(mutate(()=>{state.signedOut=true;},{redraw:false})){entrySampleCity=null;navigate('entrar',null,{replace:true});}});}
+function entrySignOut(){confirm('Sair do Bivaque?','Você volta para a página inicial. Os dados de teste continuam neste dispositivo.',()=>{if(mutate(()=>{state.signedOut=true;},{redraw:false})){entrySampleCity=null;entryForgotSent='';entryInviteCode='';closePalette(false);navigate('entrar',null,{replace:true});}});}
 function entrySignInBack(){if(!mutate(()=>{state.signedOut=false;},{redraw:false}))return;navigate('inicio',null,{replace:true});notify(`Você entrou como ${state.profile.name} (modo teste).`,'check_circle');}
 async function entryAction(action,value){
  if(!action.startsWith('entry-')&&!['sign-out','onboarding'].includes(action))return false;
  if(await entryFlowAction(action,value))return true;
  if(action==='sign-out'){entrySignOut();return true;}
  if(action==='entry-sample-city'){entrySampleCity=value;const c=$('#en-cards');if(c)c.innerHTML=entrySample(value);for(const ch of $$('[data-action="entry-sample-city"]'))ch.selected=ch.dataset.value===value;return true;}
- // Quem está no meio da entrada volta para o passo em que parou; quem já é membro volta ao app.
- if(action==='entry-login'){const e=entryData();if(e.account&&e.eligibility&&e.eligibility!=='verified'){navigate('entrar',e.eligibility==='pending'?'analise':e.eligibility==='none'?'cpf':'resultado');return true;}navigate('entrar','login');return true;}
+ // Entrar sempre abre o formulário: quem está no meio da entrada retoma ao entrar com o e-mail dela,
+ // e quem quer usar outra conta não fica preso.
+ if(action==='entry-login'){navigate('entrar','login');return true;}
  if(action==='entry-join'){navigate('entrar','conta');return true;}
  if(action==='entry-invite'){entryInviteCode='';navigate('entrar','convite');return true;}
  return false;
