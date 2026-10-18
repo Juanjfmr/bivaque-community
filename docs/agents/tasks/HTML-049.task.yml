@@ -1,0 +1,42 @@
+task_id: HTML-049
+objective: >
+  Rodada 49 cria o Painel do Bivaque, o console do dono da plataforma, fora da navegacao do app:
+  chegadas atendidas como metrica principal, metricas com tendencia, O que mudou e a fila Precisa
+  de voce com prazo, revisada num painel lateral. A denuncia feita no app passa a ser registrada e
+  entra na fila; remover ou recusar pede motivo.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2; "Sim, como na v2"; painel do dono primeiro)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 324b690d. Nao havia tela do dono; denunciar mostrava so um aviso de que dependia da rodada
+    de seguranca e moderacao, sem registrar nada.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-049.task.yml
+forbidden:
+  - apresentar numeros de exemplo como reais (a tela marca Dados de exemplo)
+  - guardar posto, organizacao militar ou endereco em pedidos de verificacao
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - O menu do protótipo abre o painel; a navegacao do app some e Voltar ao app a devolve
+  - Denuncia feita no app exige motivo, fica registrada e aparece na fila do dono
+  - Remover denuncia exige motivo e tira o anuncio das listas
+  - Aprovar verificacao pelo painel lateral grava a decisao e o registro
+  - Filtro por cidade muda a metrica principal e a fila
+  - Chamar embaixadores avisa quando a cidade nao tem embaixador
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round49-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round06-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round11-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: moderacao
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

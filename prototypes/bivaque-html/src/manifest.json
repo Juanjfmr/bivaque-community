@@ -38,6 +38,7 @@
         "styles/push-install.css",
         "styles/search-mobile.css",
         "styles/paged.css",
+        "styles/owner.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -67,6 +68,7 @@
         "app/open.js",
         "utilities/format.js",
         "data/demo/model.js",
+        "data/demo/owner.js",
         "features/businesses/taxonomy.js",
         "features/listings/attributes.js",
         "features/groups/presets.js",
@@ -107,6 +109,11 @@
         "shell/in-place.js",
         "features/profile/settings.js",
         "features/profile/push-install.js",
+        "features/owner/console.js",
+        "features/owner/review.js",
+        "features/owner/queues.js",
+        "features/owner/cities.js",
+        "features/owner/business-team.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
         "features/listings/share-card.js",

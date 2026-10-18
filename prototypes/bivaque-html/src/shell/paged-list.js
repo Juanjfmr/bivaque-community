@@ -4,10 +4,10 @@
 // A quantidade mostrada fica guardada por lista e filtro: voltar de um anúncio devolve o mesmo ponto.
 const LIST_PAGE=24;
 var pagedShown=new Map(),pagedLists={},pagedObservers=[];
-function pagedHtml(id,sig,list,cardFn,{noun,art='os',wrap='card-grid',end='',size=LIST_PAGE}={}){
+function pagedHtml(id,sig,list,cardFn,{noun,art='os',wrap='card-grid',end='',size=LIST_PAGE,role=''}={}){
  const prev=pagedShown.get(id),n=Math.min(list.length,Math.max(size,prev?.sig===sig?prev.n:0));
  pagedShown.set(id,{sig,n});pagedLists[id]={list,cardFn,noun,art,wrap,end,size};
- return `<div class="${wrap}" data-paged="${id}">${list.slice(0,n).map(cardFn).join('')}</div>${pagedFootHtml(id)}<span class="paged-live" role="status" data-paged-live="${id}"></span>`;
+ return `<div class="${wrap}" data-paged="${id}"${role?` role="${role}"`:''}>${list.slice(0,n).map(cardFn).join('')}</div>${pagedFootHtml(id)}<span class="paged-live" role="status" data-paged-live="${id}"></span>`;
 }
 function pagedFootHtml(id){
  const {list,noun,end,size}=pagedLists[id],n=pagedShown.get(id).n,total=list.length;

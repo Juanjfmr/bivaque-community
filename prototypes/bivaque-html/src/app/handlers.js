@@ -7,6 +7,7 @@ async function perform(action,value,el){
  if(await shareCardAction(action,value))return;
  if(await compareAction(action,value))return;
  if(await mapAction(action,value))return;
+ if(await ownerAction(action,value))return;
  if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
@@ -28,7 +29,9 @@ async function perform(action,value,el){
  case 'submit-event':await submitEvent();break;
  case 'attend-event':{const e=state.events.find(x=>x.id===value);if(!accessibleRecord(e)||e.mine||!canPost())break;if(!e.on&&e.date<dateISO()){notify('Este encontro já aconteceu.','info');break;}if(!e.on&&e.max&&(e.going||0)>=e.max){notify('As vagas deste encontro acabaram.','info');break;}if(mutate(()=>{e.on=!e.on;e.going=Math.max(0,(e.going||0)+(e.on?1:-1));}))notify(e.on?'Presença confirmada neste dispositivo':'Presença cancelada',e.on?'event_available':'event_busy');break;}
  case 'delete-event':{const e=state.events.find(x=>x.id===value);if(!e?.mine||!canPost())break;confirm('Cancelar encontro?',`“${e.title}” sairá da agenda da cidade.`,()=>{const snapshot=structuredClone(e);if(mutate(()=>{state.events=state.events.filter(x=>x.id!==value);},{redraw:false})){navigate('agenda');notify('Encontro cancelado','event_busy',()=>mutate(()=>{state.events.unshift(snapshot);}));}});break;}
- case 'report':case 'submit-report':showGlobalDependency(action);break;
+ // Rodada 49: a denúncia é registrada e entra na fila do Painel do Bivaque.
+ case 'report':{const [t,id]=(value||'').split('|');if(t&&id)openReport(t,id);break;}
+ case 'submit-report':submitReport(value);break;
  case 'search':searchQuery='';navigate('busca');break;
  case 'search-from-home':searchQuery=$('#home-search')?.value.trim()||'';saveRecent(searchQuery);navigate('busca');break;
  case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();pagedWatch();$('#search-query').focus();break;
@@ -148,8 +151,8 @@ function openLocalPlan(kind){
  showDialog(kind==='chegando'?'Seu plano de chegada':'Seu plano de saída',`<p class="form-note">Checklist pessoal demonstrativo. As marcações ficam apenas neste dispositivo; nenhuma providência externa é realizada.</p>${renderPlan(kind,true)}`,btn('Fechar','close-dialog','','text'),'local-plan');
 }
 function showGlobalDependency(action){
- const titles={'create-event':'Criar encontro','edit-event':'Editar encontro','delete-event':'Cancelar encontro','attend-event':'Confirmar presença','submit-event':'Publicar encontro','evento-indisponivel':'Encontro indisponível','plano-indisponivel':'Etapa indisponível',report:'Denunciar conteúdo','submit-report':'Registrar denúncia'};
- const eventAction=['create-event','edit-event','delete-event','attend-event','submit-event'].includes(action),reportAction=['report','submit-report'].includes(action);
- const text=eventAction?'Esta operação depende da rodada de Encontros: criação, presença, lotação e cancelamento ainda precisam de suas regras e provas. Nenhum encontro ou confirmação foi alterado. Você pode consultar a agenda existente.':reportAction?'O tratamento de denúncias depende da rodada de segurança e moderação. Nenhuma denúncia foi enviada ou registrada por esta ação.':'Este recurso não está disponível neste contexto da demonstração. Consulte os dados existentes ou retorne à página anterior.';
+ const titles={'create-event':'Criar encontro','edit-event':'Editar encontro','delete-event':'Cancelar encontro','attend-event':'Confirmar presença','submit-event':'Publicar encontro','evento-indisponivel':'Encontro indisponível','plano-indisponivel':'Etapa indisponível'};
+ const eventAction=['create-event','edit-event','delete-event','attend-event','submit-event'].includes(action);
+ const text=eventAction?'Esta operação depende da rodada de Encontros: criação, presença, lotação e cancelamento ainda precisam de suas regras e provas. Nenhum encontro ou confirmação foi alterado. Você pode consultar a agenda existente.':'Este recurso não está disponível neste contexto da demonstração. Consulte os dados existentes ou retorne à página anterior.';
  showDialog(titles[action]||'Ação indisponível nesta rodada',`<p class="form-note">${esc(text)}</p>`,`${btn('Voltar','close-dialog','','text')}${eventAction||action==='evento-indisponivel'?btn('Consultar Agenda','agenda','','filled'):btn('Ir para o início','home','','filled')}`,'dependency');
 }
