@@ -113,6 +113,7 @@
         "features/owner/review.js",
         "features/owner/queues.js",
         "features/owner/cities.js",
+        "features/owner/business-team.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
         "features/listings/share-card.js",

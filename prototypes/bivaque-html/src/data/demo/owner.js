@@ -10,14 +10,14 @@ const OWNER_DEMO={
  kpis:[
   {id:'active',label:'Famílias ativas na semana',value:1284,fmt:'n',delta:'▲ 8%',up:true,series:[820,860,900,940,1010,1080,1120,1190,1230,1284],scale:true},
   {id:'solved',label:'Perguntas resolvidas em 24 h',value:82,fmt:'%',delta:'▲ 5 pts',up:true,series:[70,72,71,75,74,78,77,80,81,82]},
-  {id:'revenue',label:'Receita dos planos (mês)',value:4870,fmt:'R$',delta:'▼ 2%',up:false,series:[4700,4800,4950,5000,4980,4950,4900,4920,4890,4870],scale:true}
+  {id:'revenue',label:'Receita dos planos (mês)',fmt:'R$',delta:'▼ 2%',up:false,series:[4700,4800,4950,5000,4980,4950,4900,4920,4890,4870],revenue:true}
  ],
  // O que saiu do normal. "go" leva a uma ação que existe nesta rodada.
  changes:[
   {icon:'trending_up',tone:'red',city:'Manaus',title:'Denúncias de golpe em Manaus',text:'Subiram de 1 para 5 esta semana; 4 citam Pix antecipado.',go:'report'},
   {icon:'group',tone:'amber',city:'Natal',title:'Natal sem embaixador',text:'12 famílias chegam em 60 dias; 4 perguntas paradas.',go:'stale'},
-  {icon:'event_busy',tone:'amber',city:'Manaus',title:'2 planos vencem sem renovação',text:'Mudanças Rio Negro e Sorriso Kids, na quinta.',go:''},
-  {icon:'trending_up',tone:'green',city:'Brasília',title:'Brasília passou de 400 famílias',text:'Grupo “Chegadas de dezembro” com 74 membros.',go:''}
+  {icon:'event_busy',tone:'amber',city:'Manaus',title:'2 planos vencem sem renovação',text:'Mudanças Rio Negro e Sorriso Kids, na quinta.',go:'page:negocios'},
+  {icon:'trending_up',tone:'green',city:'Brasília',title:'Brasília passou de 400 famílias',text:'Grupo “Chegadas de dezembro” com 74 membros.',go:'page:cidades'}
  ],
  // Denúncias e pedidos que chegaram antes desta sessão. Pessoas e documentos são fictícios; nada
  // de posto, organização militar ou endereço.
@@ -33,5 +33,11 @@ const OWNER_DEMO={
  staleExtra:{Natal:4},
  // Quem já está cuidando de um item (moderadora de exemplo).
  assignees:{'report:item|i1':'Ana P.'},
- ambassadors:{'Rio de Janeiro':['Bruno M.','Clara T.','Diego F.','Elisa R.','Fábio L.','Gabriela S.'],'Brasília':['Helena V.','Igor N.','Júlia C.','Kauã P.'],'Manaus':['Ana P.','Luana M.','Paulo R.'],'Natal':[]}
+ ambassadors:{'Rio de Janeiro':['Bruno M.','Clara T.','Diego F.','Elisa R.','Fábio L.','Gabriela S.'],'Brasília':['Helena V.','Igor N.','Júlia C.','Kauã P.'],'Manaus':['Ana P.','Luana M.','Paulo R.'],'Natal':[]},
+ // Rodada 52: planos dos negócios de exemplo (o resto é grátis) e a equipe de moderação.
+ plans:{b2:{tier:'featured',price:390,renewDays:4},b9:{tier:'featured',price:390,renewDays:4},b4:{tier:'basic',price:99,renewDays:30},b1:{tier:'basic',price:99,renewDays:12}},
+ quoteRequests:212,
+ // Planos das cidades sem negócios no protótipo; com os de Manaus, a receita fecha em R$ 4.870.
+ otherPlans:{'Rio de Janeiro':{count:6,revenue:2190},'Brasília':{count:4,revenue:1702},'Natal':{count:0,revenue:0}},
+ moderators:[{name:'Ana P.',role:'Moderação',city:'Manaus',items:1}]
 };

@@ -114,3 +114,10 @@ md-dialog[data-kind=owner-review] .sheet-grab{display:none}
 .ow-amb{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .ow-review md-outlined-text-field,.ow-review md-outlined-select{width:100%}
 @media(max-width:719px){.ow-table thead{display:none}.ow-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)}.ow-table th,.ow-table td{border:0;padding:2px 0}.ow-table tbody th{grid-column:1/-1}.ow-table td.n{text-align:left}.ow-table td::before{content:attr(data-label);display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}}
+/* Rodada 52: Negócios e planos, Pessoas e equipe. */
+.ow-main>.ow-card{margin-bottom:12px}
+.ow-mini-4{grid-template-columns:repeat(4,minmax(0,1fr));margin:0}
+.ow-q-plan{grid-template-columns:36px minmax(0,1fr) auto}
+.ow-amb-city{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--md-sys-color-outline-variant);font-size:14px}
+.ow-amb-city span{color:var(--md-sys-color-on-surface-variant)}
+@media(max-width:719px){.ow-mini-4{grid-template-columns:repeat(2,minmax(0,1fr))}.ow-amb-city{grid-template-columns:1fr;gap:2px}.ow-q-plan{grid-template-columns:36px minmax(0,1fr)}.ow-q-plan>.ow-acts,.ow-q-plan>.ow-sla{grid-column:2;justify-self:start}}

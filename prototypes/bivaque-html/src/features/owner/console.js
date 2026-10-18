@@ -37,7 +37,7 @@ function ownerQueue(){
 }
 const ownerCities=()=>Object.keys(OWNER_DEMO.cities);
 function ownerSpark(pts,bad){const max=Math.max(...pts),min=Math.min(...pts),d=pts.map((p,i)=>`${(i/(pts.length-1)*100).toFixed(1)},${(32-(p-min)/(max-min||1)*28).toFixed(1)}`).join(' ');return `<svg viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"><polyline points="${d}" fill="none" stroke="${bad?'var(--owner-bad)':'var(--md-sys-color-primary)'}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;}
-function ownerNum(k,share){const v=k.scale?Math.round(k.value*share):k.value;return k.fmt==='%'?`${v}%`:k.fmt==='R$'?`R$ ${v.toLocaleString('pt-BR')}`:v.toLocaleString('pt-BR');}
+function ownerNum(k,share){const v=k.revenue?ownerPlansTotal().revenue:k.scale?Math.round(k.value*share):k.value;return k.fmt==='%'?`${v}%`:k.fmt==='R$'?`R$ ${v.toLocaleString('pt-BR')}`:v.toLocaleString('pt-BR');}
 function ownerHero(){
  const cs=OWNER_DEMO.cities,names=ownerCity==='Todas'?ownerCities():[ownerCity],arr=names.reduce((s,c)=>s+cs[c].arriving,0),served=names.reduce((s,c)=>s+cs[c].arriving*cs[c].served,0)/Math.max(1,arr),pct=Math.round(served*100);
  const rows=ownerCities().map(c=>`<div class="ow-city${cs[c].served<.5?' low':''}${ownerCity!=='Todas'&&c!==ownerCity?' dim':''}"><span>${esc(c)}</span><span aria-hidden="true"><i style="width:${Math.round(cs[c].served*100)}%"></i></span><b>${Math.round(cs[c].served*100)}%</b></div>`).join('');
@@ -49,18 +49,18 @@ function ownerKpis(){
 }
 function ownerChanges(){
  const list=OWNER_DEMO.changes.filter(c=>ownerCity==='Todas'||c.city===ownerCity);
- return `<section class="ow-card ow-changes" aria-labelledby="ow-chg-t"><h2 id="ow-chg-t">O que mudou</h2>${list.length?list.map(c=>`<div class="ow-chg">${icon(c.icon).replace('<md-icon',`<md-icon class="ow-${c.tone}"`)}<span class="t"><b>${esc(c.title)}</b>${esc(c.text)}</span>${c.go?btn(c.go==='report'?'Ver':'Ver perguntas','owner-tab',c.go,'text'):''}</div>`).join(''):`<p class="small muted">Nada fora do normal em ${esc(ownerCity)}.</p>`}</section>`;
+ return `<section class="ow-card ow-changes" aria-labelledby="ow-chg-t"><h2 id="ow-chg-t">O que mudou</h2>${list.length?list.map(c=>`<div class="ow-chg">${icon(c.icon).replace('<md-icon',`<md-icon class="ow-${c.tone}"`)}<span class="t"><b>${esc(c.title)}</b>${esc(c.text)}</span>${c.go.startsWith('page:')?btn('Ver','owner-go',c.go.slice(5),'text'):c.go?btn(c.go==='report'?'Ver':'Ver perguntas','owner-tab',c.go,'text'):''}</div>`).join(''):`<p class="small muted">Nada fora do normal em ${esc(ownerCity)}.</p>`}</section>`;
 }
 function ownerRow(q){const [due,late]=ownerDue(q.due);return `<div class="ow-q" role="listitem"><span class="ow-ic ow-${q.tone}">${icon(q.icon)}</span><span class="t"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></span><span class="ow-sla${late?' late':''}">${due}</span>${btn('Revisar','owner-review',q.id,q.kind==='verify'?'filled':'outlined')}</div>`;}
 function ownerQueueHtml(){
  const all=ownerQueue(),count=k=>k==='all'?all.length:all.filter(q=>q.kind===k).length,list=all.filter(q=>ownerTab==='all'||q.kind===ownerTab);
  return `<section class="ow-card ow-queue" aria-labelledby="ow-q-t"><div class="ow-card-head"><h2 id="ow-q-t">Precisa de você</h2>${btn('Abrir filas','owner-go','filas','text')}</div>${filterChips(OWNER_KINDS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>[k,`${l} · ${count(k)}`]),ownerTab,'owner-tab')}${list.length?`<div class="ow-list" role="list">${list.map(ownerRow).join('')}</div>`:`<p class="ow-done">${icon('check')}Nada esperando por você${ownerCity==='Todas'?'':` em ${esc(ownerCity)}`}.</p>`}</section>`;
 }
-const OWNER_PAGES=[['','Visão geral','home'],['filas','Filas','inbox'],['cidades','Cidades','apartment']];
+const OWNER_PAGES=[['','Visão geral','home'],['filas','Filas','inbox'],['cidades','Cidades','apartment'],['negocios','Negócios e planos','storefront'],['equipe','Pessoas e equipe','group']];
 function renderOwner(){
  const name=state.profile.name.split(' ')[0],sub=OWNER_PAGES.some(([p])=>p===(route.id||''))?route.id||'':'',open=ownerQueue().length;
  const nav=OWNER_PAGES.map(([p,l,ic])=>`<button type="button" class="ow-nav-item${p===sub?' on':''}" data-action="owner-go" data-value="${p}"${p===sub?' aria-current="page"':''}>${icon(ic)}${l}${p==='filas'&&open?`<b class="ow-badge" aria-label="${open} abertos">${open}</b>`:''}</button>`).join('');
- const body=sub==='filas'?renderOwnerQueues():sub==='cidades'?renderOwnerCities():renderOwnerOverview(name);
+ const body=sub==='filas'?renderOwnerQueues():sub==='cidades'?renderOwnerCities():sub==='negocios'?renderOwnerBusiness():sub==='equipe'?renderOwnerTeam():renderOwnerOverview(name);
  return `<div class="ow"><nav class="ow-nav" aria-label="Painel do Bivaque"><div class="ow-brand"><span class="ow-mark" aria-hidden="true">B</span><span>Painel do Bivaque<small>Dono · ${esc(state.profile.name)}</small></span></div>${nav}<span class="ow-sp"></span><button type="button" class="ow-nav-item" data-action="owner-exit">${icon('arrow_back')}Voltar ao app</button></nav>
  <div class="ow-main"><div class="ow-top"><button type="button" class="ow-exit" data-action="owner-exit" aria-label="Voltar ao app">${icon('arrow_back')}</button><span class="ow-top-t">Painel do Bivaque</span><span class="ow-demo">Dados de exemplo</span></div>
  <div class="ow-subnav">${filterChips(OWNER_PAGES.map(([p,l])=>[p,p==='filas'?`${l} · ${open}`:l]),sub,'owner-go')}</div>${body}</div></div>`;
