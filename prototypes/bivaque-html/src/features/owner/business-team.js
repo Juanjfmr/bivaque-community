@@ -1,19 +1,22 @@
 // Rodada 52: Negócios e planos e Pessoas e equipe do Painel do Bivaque. Planos e receita são de
 // exemplo; os negócios vêm do protótipo. "Lembrar" e os convites ficam no registro do dono.
-const OWNER_PLAN_LABEL={free:'Grátis',basic:'Básico',featured:'Destaque'};
-function ownerPlan(b){return OWNER_DEMO.plans?.[b.id]||{tier:'free'};}
+// Mesmo catálogo do app (Planos para o negócio): preço mensal para a receita, rótulo como no app.
+const OWNER_PLAN_LABEL={free:'Grátis',moment:'Destaque de momento',plan:'Plano do negócio'};
+const OWNER_PLAN_PRICE={moment:{label:'R$ 9,90/semana',month:40},plan:{label:'R$ 39/mês',month:39}};
+function ownerPlan(b){if(state.myBiz&&b.id===state.myBiz.id&&state.subscription?.tier&&state.subscription.tier!=='free')return {tier:state.subscription.tier,renewDays:30,mine:true};return OWNER_DEMO.plans?.[b.id]||{tier:'free'};}
+const ownerPlanMonth=p=>OWNER_PLAN_PRICE[p.tier]?.month||0;
 // Planos pagos e receita: negócios do protótipo mais os planos de exemplo das outras cidades.
-function ownerPlansTotal(city=ownerCity){const paid=[...(state.myBiz?.live?[state.myBiz]:[]),...state.biz].filter(b=>(city==='Todas'||b.city===city)&&ownerPlan(b).tier!=='free'),o=Object.entries(OWNER_DEMO.otherPlans||{}).filter(([c])=>city==='Todas'||c===city);return {count:paid.length+o.reduce((s,[,v])=>s+v.count,0),revenue:paid.reduce((s,b)=>s+(ownerPlan(b).price||0),0)+o.reduce((s,[,v])=>s+v.revenue,0)};}
+function ownerPlansTotal(city=ownerCity){const paid=[...(state.myBiz?.live?[state.myBiz]:[]),...state.biz].filter(b=>(city==='Todas'||b.city===city)&&ownerPlan(b).tier!=='free'),o=Object.entries(OWNER_DEMO.otherPlans||{}).filter(([c])=>city==='Todas'||c===city);return {count:paid.length+o.reduce((s,[,v])=>s+v.count,0),revenue:paid.reduce((s,b)=>s+ownerPlanMonth(ownerPlan(b)),0)+o.reduce((s,[,v])=>s+v.revenue,0)};}
 function ownerBizAll(){return [...(state.myBiz?.live?[state.myBiz]:[]),...state.biz].filter(b=>ownerCity==='Todas'||b.city===ownerCity);}
 function ownerClaimPending(b){return OWNER_DEMO.claims.some(c=>c.biz===b.id)&&ownerQueue().some(q=>q.kind==='claim'&&q.biz.id===b.id);}
 function ownerBizRow(b){
  const p=ownerPlan(b),claimed=b.claimed!==false;
- return `<tr><th scope="row"><button type="button" class="ow-link" data-action="open-biz" data-value="${esc(b.id)}">${esc(b.name)}</button><small>${esc(b.cat)}</small></th><td data-label="Cidade">${esc(b.city)}</td><td data-label="Plano">${OWNER_PLAN_LABEL[p.tier]}${p.price?` · R$ ${p.price}`:''}</td><td class="n" data-label="Indicações">${b.recN||0}</td><td data-label="Situação">${ownerClaimPending(b)?'Reivindicação em análise':claimed?'Com responsável':'Aguardando responsável'}</td></tr>`;
+ return `<tr><th scope="row"><button type="button" class="ow-link" data-action="open-biz" data-value="${esc(b.id)}">${esc(b.name)}</button><small>${esc(b.cat)}</small></th><td data-label="Cidade">${esc(b.city)}</td><td data-label="Plano">${OWNER_PLAN_LABEL[p.tier]||p.tier}${OWNER_PLAN_PRICE[p.tier]?` · ${OWNER_PLAN_PRICE[p.tier].label}`:''}</td><td class="n" data-label="Indicações">${b.recN||0}</td><td data-label="Situação">${ownerClaimPending(b)?'Reivindicação em análise':claimed?'Com responsável':'Aguardando responsável'}</td></tr>`;
 }
 function renderOwnerBusiness(){
- const all=ownerBizAll(),paid=all.filter(b=>ownerPlan(b).tier!=='free'),tot=ownerPlansTotal(),spon=all.filter(b=>b.spon).length,quotes=OWNER_DEMO.quoteRequests||0,reminded=ownerData().reminded||{};
+ const all=ownerBizAll(),paid=all.filter(b=>ownerPlan(b).tier!=='free'),tot=ownerPlansTotal(),spon=all.filter(b=>b.spon).length,quotes=Object.entries(OWNER_DEMO.quotesByCity||{}).filter(([c])=>ownerCity==='Todas'||c===ownerCity).reduce((s,[,n])=>s+n,0),reminded=ownerData().reminded||{};
  const due=paid.filter(b=>ownerPlan(b).renewDays<=7).sort((a,b)=>ownerPlan(a).renewDays-ownerPlan(b).renewDays);
- const dueRow=b=>{const p=ownerPlan(b);return `<div class="ow-q ow-q-plan" role="listitem"><span class="ow-ic ow-amber">${icon('event_busy')}</span><span class="t"><b>${esc(b.name)}</b><small>${OWNER_PLAN_LABEL[p.tier]} · R$ ${p.price}/mês · vence em ${p.renewDays} ${p.renewDays===1?'dia':'dias'}</small></span><span class="ow-acts">${reminded[b.id]?`<span class="ow-sla">Lembrete registrado</span>`:ownerBtn('Lembrar','owner-remind',{id:b.id,title:b.name},'outlined')}</span></div>`;};
+ const dueRow=b=>{const p=ownerPlan(b);return `<div class="ow-q ow-q-plan" role="listitem"><span class="ow-ic ow-amber">${icon('event_busy')}</span><span class="t"><b>${esc(b.name)}</b><small>${OWNER_PLAN_LABEL[p.tier]} · ${OWNER_PLAN_PRICE[p.tier]?.label||''} · vence em ${p.renewDays} ${p.renewDays===1?'dia':'dias'}</small></span><span class="ow-acts">${reminded[b.id]?`<span class="ow-sla">Lembrete registrado</span>`:ownerBtn('Lembrar','owner-remind',{id:b.id,title:b.name},'outlined')}</span></div>`;};
  return `<h1 class="ow-h1">Negócios e planos</h1><p class="ow-lead">Planos pagos, patrocínios e o que vence nos próximos dias.</p>
  <div class="ow-filters">${filterChips([['Todas','Todas as cidades'],...ownerCities().map(c=>[c,c])],ownerCity,'owner-city')}</div>
  <section class="ow-card"><div class="ow-mini ow-mini-4"><div><small>Planos pagos</small><b>${tot.count}</b></div><div><small>Receita do mês</small><b>R$ ${tot.revenue.toLocaleString('pt-BR')}</b></div><div><small>Patrocinados</small><b>${spon}</b></div><div><small>Pedidos de orçamento (30 dias)</small><b>${quotes}</b></div></div></section>

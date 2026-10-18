@@ -32,7 +32,7 @@ const checkpoints = {
     await page.locator('#main [data-action="owner-city"][data-value="Todas"]').click()
     await settle(page)
     expect(
-      (await revenueBusiness(page)) === all && all === "R$ 4.870",
+      (await revenueBusiness(page)) === all && all === "R$ 2.809",
       `todas: ${all} × ${await revenueBusiness(page)}`,
     )
   },

@@ -10,7 +10,7 @@ const OWNER_DEMO={
  kpis:[
   {id:'active',label:'Famílias ativas na semana',value:1010,fmt:'n',delta:'▲ 8%',up:true,series:[700,720,760,790,830,880,910,950,980,1010],scale:true},
   {id:'solved',label:'Perguntas resolvidas em 24 h',value:82,fmt:'%',delta:'▲ 5 pts',up:true,series:[70,72,71,75,74,78,77,80,81,82]},
-  {id:'revenue',label:'Receita dos planos (mês)',fmt:'R$',delta:'▼ 2%',up:false,series:[4700,4800,4950,5000,4980,4950,4900,4920,4890,4870],revenue:true}
+  {id:'revenue',label:'Receita dos planos (mês)',fmt:'R$',delta:'▼ 2%',up:false,series:[2720,2770,2850,2880,2870,2860,2840,2850,2830,2809],revenue:true}
  ],
  // O que saiu do normal. "go" leva a uma ação que existe nesta rodada.
  changes:[
@@ -35,9 +35,10 @@ const OWNER_DEMO={
  assignees:{'report:item|i1':'Ana P.'},
  ambassadors:{'Rio de Janeiro':['Bruno M.','Clara T.','Diego F.','Elisa R.','Fábio L.','Gabriela S.'],'Brasília':['Helena V.','Igor N.','Júlia C.','Kauã P.'],'Manaus':['Ana P.','Luana M.','Paulo R.'],'Natal':[]},
  // Rodada 52: planos dos negócios de exemplo (o resto é grátis) e a equipe de moderação.
- plans:{b2:{tier:'featured',price:390,renewDays:4},b9:{tier:'featured',price:390,renewDays:4},b4:{tier:'basic',price:99,renewDays:30},b1:{tier:'basic',price:99,renewDays:12}},
- quoteRequests:212,
- // Planos das cidades sem negócios no protótipo; com os de Manaus, a receita fecha em R$ 4.870.
- otherPlans:{'Rio de Janeiro':{count:6,revenue:2190},'Brasília':{count:4,revenue:1702},'Natal':{count:0,revenue:0}},
+ // Mesmo catálogo do app: Plano do negócio (R$ 39/mês) e Destaque de momento (R$ 9,90/semana).
+ plans:{b2:{tier:'plan',renewDays:4},b9:{tier:'plan',renewDays:4},b4:{tier:'moment',renewDays:30},b1:{tier:'plan',renewDays:12}},
+ quotesByCity:{'Rio de Janeiro':90,'Brasília':70,'Manaus':40,'Natal':12},
+ // Planos das cidades sem negócios no protótipo; com os de Manaus, a receita fecha em R$ 2.809.
+ otherPlans:{'Rio de Janeiro':{count:40,revenue:1560},'Brasília':{count:28,revenue:1092},'Natal':{count:0,revenue:0}},
  moderators:[{name:'Ana P.',role:'Moderação',city:'Manaus'}]
 };

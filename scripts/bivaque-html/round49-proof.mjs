@@ -131,7 +131,7 @@ const checkpoints = {
   },
   async "calling-ambassadors-names-the-city-without-one"(page) {
     await openConsole(page)
-    const id = await qid(page, "stale:")
+    const id = await qid(page, "stale+")
     await review(page, id)
     await decide(page, id, "call")
     await settle(page)
@@ -199,6 +199,31 @@ const checkpoints = {
       (await queueTitles(page)).length >= 3,
       `a aba vazia ficou presa: ${await queueTitles(page)}`,
     )
+  },
+  // Revisão do Codex: o id não depende do relógio, e perguntas paradas são tratadas por cidade.
+  async "review-opens-after-the-clock-moves"(page) {
+    await openConsole(page)
+    await page.evaluate(() => {
+      const now = Date.now
+      Date.now = () => now() + 90000
+    })
+    const id = await qid(page, "report:item|i1:")
+    await page.locator(`#main [data-action="owner-review"][data-value="${id}"]`).click()
+    await settle(page)
+    expect((await dialogKind(page)) === "owner-review", "o relógio andou e a revisão não abriu")
+  },
+  async "calling-one-city-stays-done-under-all-cities"(page) {
+    await openConsole(page)
+    await page.locator('#main [data-action="owner-city"][data-value="Natal"]').click()
+    await settle(page)
+    const id = await qid(page, "stale+")
+    await review(page, id)
+    await decide(page, id, "call")
+    await settle(page)
+    await page.locator('#main [data-action="owner-city"][data-value="Todas"]').click()
+    await settle(page)
+    const row = await page.locator("#main .ow-q", { hasText: "perguntas sem resposta" }).innerText()
+    expect(!/Natal/.test(row), `Natal voltou à fila em Todas: ${row}`)
   },
 }
 

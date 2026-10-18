@@ -10,8 +10,10 @@ function ownerData(){return state.owner||{decisions:{},log:[]};}
 function ownerDecided(id){return !!ownerData().decisions[id];}
 function ownerAgo(ms){const h=Math.round((Date.now()-ms)/36e5);return h<1?'agora':h<24?`há ${h} h`:h<48?'ontem':`há ${Math.round(h/24)} dias`;}
 function ownerDue(due){const left=due-Date.now();if(left<=0)return ['atrasada',true];const h=Math.ceil(left/36e5);return [h<24?`vence em ${h} h`:`vence em ${Math.ceil(h/24)} dias`,h<=2];}
-function reportTarget(type,id){return type==='item'?itemById(id):type==='ask'?askById(id):type==='biz'?bizById(id):null;}
-function reportTitle(type,t){return type==='item'?`Anúncio “${t.title}”`:type==='ask'?`Pergunta “${t.q}”`:type==='biz'?`Página de “${t.name}”`:type==='proposal'?'Proposta de prestador':'Pedido de orçamento';}
+// Proposta denunciada: a proposta e o pedido em que ela está (para o dono saber o que julga).
+function proposalTarget(id){for(const r of state.requests||[]){const p=(r.proposals||[]).find(x=>x.id===id);if(p)return {...p,request:r,city:r.city,name:bizById(p.bizId)?.name||'Prestador'};}return null;}
+function reportTarget(type,id){return type==='item'?itemById(id):type==='ask'?askById(id):type==='biz'?bizById(id):type==='request'?requestById(id):type==='proposal'?proposalTarget(id):null;}
+function reportTitle(type,t){return type==='item'?`Anúncio “${t.title}”`:type==='ask'?`Pergunta “${t.q}”`:type==='biz'?`Página de “${t.name}”`:type==='proposal'?`Proposta de ${t.name} (${t.request.cat})`:`Pedido de orçamento: ${t.cat}${t.desc?` · “${String(t.desc).slice(0,40)}”`:''}`;}
 // Denúncias abertas agrupadas por conteúdo: as de exemplo e as feitas neste dispositivo. O id leva o
 // momento da primeira denúncia aberta: decidir fecha o grupo; uma denúncia nova abre outro.
 const REPORT_TYPE_TITLE={proposal:'Proposta de prestador',request:'Pedido de orçamento'};
@@ -21,8 +23,8 @@ function ownerReports(){
  const groups=new Map();
  for(const r of all){const key=`${r.type}|${r.target}`;groups.set(key,[...(groups.get(key)||[]),r]);}
  return [...groups].map(([key,list])=>{
-  const [type,target]=key.split('|'),t=reportTarget(type,target),first=Math.min(...list.map(r=>r.at)),reasons=[...new Set(list.map(r=>REPORT_REASONS[r.reason]||r.reason))],city=t?.city||state.homeCity;
-  return {id:`report:${key}:${Math.round(first).toString(36)}`,kind:'report',type,target,list,city,at:first,due:first+OWNER_SLA,icon:'report',tone:'red',removable:!!t&&(type==='item'||type==='ask'),
+  const [type,target]=key.split('|'),t=reportTarget(type,target),oldest=list.reduce((a,b)=>b.at<a.at?b:a),first=oldest.at,reasons=[...new Set(list.map(r=>REPORT_REASONS[r.reason]||r.reason))],city=t?.city||state.homeCity;
+  return {id:`report:${key}:${oldest.id}`,kind:'report',type,target,list,city,at:first,due:first+OWNER_SLA,icon:'report',tone:'red',removable:!!t&&(type==='item'||type==='ask'),
    title:t?reportTitle(type,t):REPORT_TYPE_TITLE[type]||'Conteúdo denunciado',sub:`${city} · ${list.length} ${list.length===1?'denúncia':'denúncias'}: ${reasons.join(', ')}`,gone:type==='item'&&t?.status==='removed'||type==='ask'&&t?.hidden};
  }).filter(x=>!x.gone);
 }
@@ -32,13 +34,16 @@ function ownerStaleBy(){
  const by={...OWNER_DEMO.staleExtra};for(const a of old)by[a.city]=(by[a.city]||0)+1;
  return {by,old};
 }
-// Um item por escopo (todas as cidades ou a filtrada); o id muda quando as perguntas paradas mudam.
+// Perguntas paradas: a decisão e o responsável valem por cidade (id stale:<cidade>:<perguntas>); o
+// item da fila junta as cidades do escopo que ainda não foram tratadas.
+function ownerStaleCityId(city,by,old){return `stale:${city}:${by[city]}:${old.filter(a=>a.city===city).map(a=>a.id).join(',')}`;}
 function ownerStale(){
- const {by:all,old}=ownerStaleBy(),scope=ownerCity==='Todas'?Object.keys(all):[ownerCity],by=Object.fromEntries(scope.filter(c=>all[c]).map(c=>[c,all[c]]));
- const cities=Object.keys(by),n=cities.reduce((s,c)=>s+by[c],0);if(!n)return [];
- const asks=old.filter(a=>by[a.city]);
- return [{id:`stale:${cities.sort().map(c=>`${c}${by[c]}`).join('|')}:${asks.map(a=>a.id).join(',')}`,kind:'stale',city:cities.length===1?cities[0]:'',cities:by,asks,at:Date.now()-2*OWNER_DAY,due:Date.now()-1,icon:'forum',tone:'amber',
-  title:`${n} ${n===1?'pergunta sem resposta':'perguntas sem resposta'} há 48 h`,sub:cities.sort((a,b)=>by[b]-by[a]).map(c=>`${by[c]} em ${c}`).join(', ')}];
+ const {by:all,old}=ownerStaleBy(),scope=ownerCity==='Todas'?Object.keys(all):[ownerCity];
+ const open=scope.filter(c=>all[c]&&!ownerDecided(ownerStaleCityId(c,all,old)));
+ const by=Object.fromEntries(open.map(c=>[c,all[c]])),n=open.reduce((s,c)=>s+by[c],0);if(!n)return [];
+ const cityIds=open.map(c=>ownerStaleCityId(c,all,old));
+ return [{id:`stale+${cityIds.join('+')}`,cityIds,kind:'stale',city:open.length===1?open[0]:'',cities:by,asks:old.filter(a=>by[a.city]),at:Date.now()-2*OWNER_DAY,due:Date.now()-1,icon:'forum',tone:'amber',
+  title:`${n} ${n===1?'pergunta sem resposta':'perguntas sem resposta'} há 48 h`,sub:[...open].sort((a,b)=>by[b]-by[a]).map(c=>`${by[c]} em ${c}`).join(', ')}];
 }
 function ownerQueue(){
  const v=OWNER_DEMO.verifications.map(x=>{const at=Date.now()-x.hoursAgo*36e5;return {id:`verify:${x.id}`,kind:'verify',data:x,city:x.city,at,due:at+OWNER_SLA,icon:'verified_user',tone:'blue',title:`${x.name} pediu verificação`,sub:`Chegando a ${x.city} ${x.when}`};});
