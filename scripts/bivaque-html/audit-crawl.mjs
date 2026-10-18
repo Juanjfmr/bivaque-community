@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
-import { go, KEY, runProof, settle, snapshot } from "./proof-harness.mjs"
+import { KEY, runProof, settle, snapshot } from "./proof-harness.mjs"
 
 // Varredura de funcionamento do protótipo (pedido do usuário em 2026-10-18, antes do back-end real):
 // percorre todas as rotas, clica em cada ação visível da tela e, um nível abaixo, em cada ação dos
@@ -137,7 +137,7 @@ const dialogTitle = (page) =>
     const d = document.querySelector("#dialog")
     if (!d?.open) return null
     const hd = d.querySelector('[slot="headline"]')?.cloneNode(true)
-    hd?.querySelectorAll("md-icon,md-icon-button,[data-action]").forEach((x) => x.remove())
+    for (const x of hd?.querySelectorAll("md-icon,md-icon-button,[data-action]") ?? []) x.remove()
     return (hd?.textContent || d.dataset.kind || "diálogo").trim().slice(0, 60)
   })
 const listTargets = (page, inDialog) =>
