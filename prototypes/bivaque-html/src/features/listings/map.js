@@ -9,8 +9,8 @@ const MAP_CSS='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
 const MAP_STYLE='https://tiles.openfreemap.org/styles/liberty';
 const HOOD_POINTS={'Ponta Negra':[-60.0962,-3.0509],'Planalto':[-60.0572,-3.0653],'Dom Pedro':[-60.0431,-3.0877],'Flores':[-60.0212,-3.0728],'Adrianópolis':[-60.0090,-3.1017],'Parque 10':[-60.0213,-3.0794],'Tarumã':[-60.0513,-3.0247],'Centro':[-60.0216,-3.1321]};
 let catalogView='list',catalogMap=null,catalogMapKey='',mapLoading=null;
-function catalogViewHtml(){return `<div class="fview" role="group" aria-label="Ver como">${[['list','list','Lista'],['map','map','Mapa']].map(([v,ic,l])=>`<button type="button" class="fchip${catalogView===v?' on':''}" data-action="catalog-view" data-value="${v}" aria-pressed="${catalogView===v}" aria-label="Ver em ${l.toLowerCase()}">${icon(ic)}<span class="fview-label">${l}</span></button>`).join('')}</div>`;}
-function hoodCounts(list){const m=new Map();for(const x of list)m.set(x.hood,(m.get(x.hood)||0)+1);return [...m].sort((a,b)=>b[1]-a[1]);}
+function catalogViewHtml(){if(!cityHasHoods())return '';return `<div class="fview" role="group" aria-label="Ver como">${[['list','list','Lista'],['map','map','Mapa']].map(([v,ic,l])=>`<button type="button" class="fchip${catalogView===v?' on':''}" data-action="catalog-view" data-value="${v}" aria-pressed="${catalogView===v}" aria-label="Ver em ${l.toLowerCase()}">${icon(ic)}<span class="fview-label">${l}</span></button>`).join('')}</div>`;}
+function hoodCounts(list){const m=new Map();for(const x of list)if(hoodShown(x))m.set(x.hood,(m.get(x.hood)||0)+1);return [...m].sort((a,b)=>b[1]-a[1]);}
 function catalogMapHtml(list,kind){
  const counts=hoodCounts(list),word=n=>countWord(n,kind);
  return `<div class="cmap-wrap"><div class="cmap" id="catalog-map" role="region" aria-label="Mapa com ${word(list.length)} por bairro"><p class="cmap-status" id="cmap-status">Carregando o mapa…</p></div><p class="cmap-note">Posição aproximada do bairro; o endereço exato não aparece. Mapa © OpenStreetMap, servido pelo OpenFreeMap.</p>
@@ -59,7 +59,7 @@ async function catalogMapAfterRender(){
  }
 }
 function openHoodSheet(hood){
- const kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood);pagedShown.delete('hood-dialog');
+ const kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood&&hoodShown(x));pagedShown.delete('hood-dialog');
  showDialog(`${hood} · ${countWord(list.length,kind)}`,`<p class="form-note">Com os filtros que você escolheu.</p>${list.length?pagedHtml('hood-dialog',`${hood}|${JSON.stringify(catalogAttrs[kind])}|${searchSort}`,list,photoCard,{noun:kind==='imovel'?'imóveis':'desapegos'}):empty('Nenhum anúncio neste bairro','Mude os filtros ou escolha outro bairro.','location_off')}`,`${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}${btn('Fechar','close-dialog','','filled')}`,'hood');
  pagedWatch();
 }

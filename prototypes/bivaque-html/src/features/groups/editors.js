@@ -1,12 +1,19 @@
+// Rodada 63: oferta do negócio de um membro no grupo, uma por semana por pessoa, só com a página ativa.
+const OFFER_WEEK_MS=7*864e5;
+const bizOpen=b=>!!b?.live&&!b.suspended&&!b.paused;
+const canOffer=g=>!!g?.allowOffers&&bizOpen(state.myBiz);
+function nextOfferAt(g){const t=(g.offerAt||{})[state.profile.name];return t&&t+OFFER_WEEK_MS>Date.now()?t+OFFER_WEEK_MS:0;}
 function openPostEditor(gid,type){
  const g=gById(gid);if(!g||!g.on||!canPost())return;
  if(!postDraft||postDraft.gid!==gid)postDraft={gid,type:'post',text:'',alsoCity:false,date:dateISO(7),time:'09:00',place:'',opts:['','','','']};
  if(type)postDraft.type=type;const d=postDraft,types=[['post','Publicação','edit'],['question','Pergunta','help'],['event','Evento','event'],['poll','Enquete','ballot']];
+ if(canOffer(g))types.push(['offer','Oferta do meu negócio','sell']);else if(d.type==='offer')d.type='post';
  let c=`<md-chip-set class="post-types">${types.map(([v,t,ic])=>`<md-filter-chip label="${t}" ${d.type===v?'selected':''} data-action="post-type" data-value="${v}">${icon(ic,'icon')}</md-filter-chip>`).join('')}</md-chip-set>`;
- c+=field('post-text',{post:'O que você quer compartilhar?',question:'O que você quer perguntar?',event:'Nome do evento',poll:'Pergunta da enquete'}[d.type],d.text,d.type==='event'?'maxlength="120"':'type="textarea" rows="4" maxlength="2000"');
+ c+=field('post-text',{post:'O que você quer compartilhar?',question:'O que você quer perguntar?',event:'Nome do evento',poll:'Pergunta da enquete',offer:'Descreva a oferta'}[d.type],d.text,d.type==='event'?'maxlength="120"':'type="textarea" rows="4" maxlength="2000"');
  if(d.type==='question')c+=`<label class="choice"><md-checkbox id="post-city" ${d.alsoCity?'checked':''} aria-label="Também perguntar à cidade"></md-checkbox><span class="txt"><b>Também perguntar à cidade</b><small>A pergunta também vai para Indicações, onde qualquer membro de ${esc(g.city)} pode responder.</small></span></label>`;
  if(d.type==='event')c+=`<div class="form-grid"><label class="field-label">Data<input id="post-date" type="date" min="${dateISO()}" value="${d.date}"></label><label class="field-label">Horário<input id="post-time" type="time" value="${d.time}"></label></div>${field('post-place','Local (público)',d.place,'maxlength="120"')}`;
  if(d.type==='poll')c+=d.opts.map((o,i)=>field('poll-'+i,`Opção ${i+1}${i>1?' (opcional)':''}`,o,'maxlength="60"')).join('');
+ if(d.type==='offer')c+=`<div class="who-sees">${icon('storefront')}<span><b>Link:</b> a oferta leva à página de ${esc(state.myBiz.name)}. Uma por semana neste grupo, sempre com o rótulo Oferta.</span></div>`;
  c+=`<div class="who-sees">${icon(g.privacy==='fechado'?'lock':'visibility')}<span><b>Quem vê:</b> ${g.privacy==='fechado'?'só os membros aprovados do grupo.':'membros do grupo. O grupo é aberto, então quem entrar também verá.'}${d.type==='question'&&d.alsoCity?` A pergunta também aparece para ${esc(g.city)} em Indicações.`:''}</span></div>`;
  showDialog(`Publicar em ${g.t}`,c,`${btn('Cancelar','close-dialog','','text')}${btn('Publicar','submit-post',gid,'filled','send')}`);
  $('#post-city')?.addEventListener('change',e=>{readPostDraft();postDraft.alsoCity=e.target.checked;openPostEditor(gid);});

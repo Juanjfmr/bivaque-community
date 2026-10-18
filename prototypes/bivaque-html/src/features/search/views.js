@@ -2,10 +2,21 @@ const SYNONYMS={dentista:'odonto odontopediatra odontopediatria',pediatra:'pedia
 function queryTerms(q){return norm(q).split(/[^a-z0-9]+/).filter(x=>x.length>1&&!['de','da','do','das','dos','em','no','na','para','com','um','uma','por','perto'].includes(x));}
 function matches(q,text,keywords=[]){const terms=queryTerms(q);if(!terms.length)return true;const hay=norm(text+' '+keywords.join(' '));return terms.every(w=>hay.includes(w)||(SYNONYMS[w]||'').split(' ').some(s=>s&&hay.includes(norm(s))));}
 function matchingBiz(q){return cityBiz().filter(b=>b.claimed!==false&&matches(q,b.name+' '+b.cat+' '+b.svc.join(' ')+' '+(b.specs||[]).join(' '),b.kw||[])).slice(0,3);}
-function searchLists(){const q=searchQuery.trim();return {items:cityItems().filter(i=>i.status==='active'&&matches(q,i.title+' '+i.desc+' '+i.hood)),biz:cityBiz().filter(b=>matches(q,b.name+' '+b.cat+' '+b.svc.join(' ')+' '+(b.specs||[]).join(' ')+' '+b.hoods.join(' '),b.kw||[])),asks:cityAsks().filter(a=>matches(q,a.q+' '+a.topic,a.keywords||[])),groups:cityGroups().filter(g=>matches(q,g.t+' '+g.about)),events:state.events.filter(e=>e.city===state.city&&e.date>=dateISO()&&matches(q,e.title+' '+e.description+' '+e.place))};}
+function searchLists(){const q=searchQuery.trim();return {items:cityItems().filter(i=>i.status==='active'&&matches(q,i.title+' '+i.desc+' '+(hoodShown(i)?i.hood:''))),biz:cityBiz().filter(b=>matches(q,b.name+' '+b.cat+' '+b.svc.join(' ')+' '+(b.specs||[]).join(' ')+' '+b.hoods.join(' '),b.kw||[])),asks:cityAsks().filter(a=>matches(q,a.q+' '+a.topic+' '+askAnswers(a).map(x=>x.t).join(' '),a.keywords||[])),groups:cityGroups().filter(g=>matches(q,g.t+' '+g.about)),events:state.events.filter(e=>e.city===state.city&&e.date>=dateISO()&&matches(q,e.title+' '+e.description+' '+e.place))};}
 function renderSearch(){return `<div class="page-head search-head"><div><h1>Buscar em ${esc(state.city)}</h1><p>Encontre oportunidades, negócios e respostas da comunidade.</p></div></div>${filterChips([['all','Tudo'],['items','Anúncios'],['biz','Negócios'],['asks','Indicações'],['groups','Grupos'],['events','Encontros']],searchType,'search-type')}<div id="search-results">${searchResults()}</div>`;}
+// Rodada 63: a busca também procura no texto das respostas e mostra o trecho que bateu.
+function answerSnippet(q){
+ const terms=queryTerms(searchQuery);if(!terms.length||matches(searchQuery,q.q+' '+q.topic,q.keywords||[]))return '';
+ let best=null;
+ for(const a of askAnswers(q)){const score=terms.filter(t=>matches(t,a.t)).length;if(score&&(!best||score>best.score))best={a,score};}
+ if(!best)return '';
+ const text=best.a.t,flat=norm(text),pos=flat.length===text.length?terms.map(t=>flat.indexOf(t)).filter(i=>i>=0):[],at=pos.length?Math.min(...pos):0,from=Math.max(0,at-30);
+ const part=text.slice(from,from+110).trim(),who=best.a.mine?'Sua resposta':best.a.who;
+ return `<small class="search-snippet">${esc(who)}: “${from>0?'…':''}${esc(part)}${from+110<text.length?'…':''}”</small>`;
+}
+const askHit=q=>questionRow(q,answerSnippet(q));
 // Rodada 46: em "Tudo", cada tipo mostra os primeiros e "Ver todos os N" (Nextdoor, no Mobbin).
-const SEARCH_TYPES=[['items','Anúncios',photoCard,'card-grid',4,'anúncios'],['biz','Negócios',businessCard,'card-grid',4,'negócios'],['asks','Indicações e respostas',questionRow,'list',5,'indicações','as'],['groups','Grupos',g=>groupRow(g),'list',5,'grupos'],['events','Encontros',eventRow,'list',5,'encontros']];
+const SEARCH_TYPES=[['items','Anúncios',photoCard,'card-grid',4,'anúncios'],['biz','Negócios',businessCard,'card-grid',4,'negócios'],['asks','Indicações e respostas',askHit,'list',5,'indicações','as'],['groups','Grupos',g=>groupRow(g),'list',5,'grupos'],['events','Encontros',eventRow,'list',5,'encontros']];
 function searchResults(){
  if(!searchQuery.trim())return searchStartSections();
  const groups=searchLists(),count=Object.entries(groups).filter(([k])=>searchType==='all'||searchType===k).reduce((n,[,v])=>n+v.length,0),suggest=searchSuggestHtml(searchQuery,groups);

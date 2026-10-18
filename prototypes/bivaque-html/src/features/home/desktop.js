@@ -25,7 +25,7 @@ function homeDeskNotice(){
  const ask=cityAsks().filter(q=>q.mine&&q.status!=='ok'&&q.answers.length).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
  if(ask){const n=ask.answers.length;return strip('chat_bubble',`Sua pergunta recebeu ${n} ${n===1?'resposta':'respostas'}`,ask.q,'Ver respostas','open-question',ask.id);}
  const req=requestList().filter(r=>r.mine&&r.city===state.city&&requestActive(r)&&r.proposals.some(p=>p.status==='sent')).sort((a,b)=>b.createdAt-a.createdAt)[0];
- if(req){const n=req.proposals.filter(p=>p.status==='sent').length;return strip('request_quote',`Seu pedido recebeu ${n} ${n===1?'proposta':'propostas'}`,`${requestTitle(req)} · ${req.hood}`,'Comparar','open-request',req.id);}
+ if(req){const n=req.proposals.filter(p=>p.status==='sent').length;return strip('request_quote',`Seu pedido recebeu ${n} ${n===1?'proposta':'propostas'}`,`${requestTitle(req)}${hoodShown(req)?' · '+req.hood:''}`,'Comparar','open-request',req.id);}
  const unread=state.notices.filter(n=>n.unread&&n.city===state.homeCity);
  if(unread.length){const n=unread[0],text=noticeText(n);return strip('notifications',unread.length===1?'Você tem 1 aviso novo':`Você tem ${unread.length} avisos novos`,text,'Ver avisos','notices','');}
  return '';
@@ -33,9 +33,9 @@ function homeDeskNotice(){
 // Serviços: indicados e o patrocinado, sempre com rótulo. Sem estrelas. No desktop o patrocinado
 // é o 3º cartão; no celular (Rodada 35), o 2º, para aparecer sem deslizar o carrossel.
 function homeDeskServices(sponAt=2){
- const organic=cityBiz().filter(b=>!b.spon).sort((a,b)=>b.recN-a.recN),spon=cityBiz().find(b=>b.spon&&b.claimed!==false);
+ const organic=cityBiz().filter(b=>!isSpon(b)).sort((a,b)=>b.recN-a.recN),spon=cityBiz().find(b=>spotActive(b))||cityBiz().find(b=>b.spon&&b.claimed!==false);
  const list=spon?[...organic.slice(0,sponAt),spon,...organic.slice(sponAt,3)]:organic.slice(0,4);
- const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,b.spon?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${countHtml(b.recN)} ${b.recN===1?'indicação':'indicações'}${avatarStack(b.says,b.recN)}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
+ const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,isSpon(b)?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${countHtml(b.recN)} ${b.recN===1?'indicação':'indicações'}${avatarStack(b.says,b.recN)}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
  return `<section class="section">${sectionTitle('Serviços recomendados','Ver negócios','businesses')}<p class="small muted home-sub">Indicados pela comunidade de ${esc(state.city)}</p>${list.length?`<div class="home-row">${list.map(card).join('')}</div>`:empty('Ainda sem negócios cadastrados','As indicações da comunidade ajudarão a formar o guia de serviços.','storefront')}</section>`;
 }
 function homeDeskItems(arriving,title='Oportunidades perto de você'){

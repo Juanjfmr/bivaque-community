@@ -111,6 +111,8 @@
         "features/profile/settings.js",
         "features/profile/hidden.js",
         "features/profile/blocks.js",
+        "features/profile/hood-privacy.js",
+        "features/businesses/plans.js",
         "features/profile/push-install.js",
         "features/owner/console.js",
         "features/owner/review.js",

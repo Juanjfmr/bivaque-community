@@ -17,14 +17,16 @@ async function groupAction(action,value,el){
  case 'new-post':case 'new-post-empty':postDraft=null;openPostEditor(action==='new-post-empty'?route.id:value);return true;
  case 'post-type':readPostDraft();openPostEditor(postDraft.gid,value);return true;
  case 'submit-post':{readPostDraft();const g=gById(value),d=postDraft;if(!g||!d)return true;const text=(d.text||'').trim();
+  if(d.type==='offer'){if(!canOffer(g)){notify('Este grupo não aceita ofertas de negócio agora.','info');return true;}const nx=nextOfferAt(g);if(nx){notify(`Você já fez uma oferta neste grupo esta semana. Pode fazer outra em ${new Date(nx).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(', ',' às ')}.`,'info');return true;}}
   if(text.length<(d.type==='event'?3:5)){notify(d.type==='event'?'Dê um nome ao evento.':'Escreva pelo menos 5 caracteres.','error');return true;}
   if(d.type==='event'&&(!d.date||!d.place.trim())){notify('Informe a data e o local do evento.','error');return true;}
   const opts=d.opts.map(o=>o.trim()).filter(Boolean);if(d.type==='poll'&&opts.length<2){notify('A enquete precisa de pelo menos 2 opções.','error');return true;}
   let askId=null;if(mutate(()=>{const p={id:uid('p'),type:d.type,author:state.profile.name,ini:initals(state.profile.name),text,at:Date.now(),comments:[],useful:0,liked:false,mine:true};
    if(d.type==='event')p.event={date:d.date,time:d.time,place:d.place.trim(),going:0,on:true};
    if(d.type==='poll')p.poll={options:opts.map(o=>[o,0]),voted:null};
+   if(d.type==='offer'){p.biz=state.myBiz.id;g.offerAt={...(g.offerAt||{}),[state.profile.name]:p.at};}
    if(d.type==='question'&&d.alsoCity){askId=uid('q');state.asks.unshift({id:askId,q:text,city:g.city,topic:g.t,who:state.profile.name,ini:initals(state.profile.name),ctx:`Também perguntada em ${g.t}`,status:'open',answers:[],createdAt:Date.now(),mine:true,following:true});p.alsoCity=askId;}
-   g.posts.unshift(p);},{redraw:false})){postDraft=null;await closeDialog(true);groupFilter='all';render();notify(askId?'Publicado no grupo e enviado à cidade':'Publicado no grupo','send');}return true;}
+   g.posts.unshift(p);},{redraw:false})){postDraft=null;await closeDialog(true);groupFilter='all';render();notify(askId?'Publicado no grupo e enviado à cidade':d.type==='offer'?'Oferta publicada no grupo':'Publicado no grupo','send');}return true;}
  case 'group-filter':groupFilter=value;render();return true;
  case 'open-post':{const [gid]=value.split('~'),g=gById(gid);if(g&&g.unread){mutate(()=>{g.unread=0;},{redraw:false});}if(dialog.open)await closeDialog(true);navigate('publicacao',value);return true;}
  case 'like-post':{const [gid,pid]=value.split('|'),g=gById(gid),p=g?.posts.find(x=>x.id===pid);if(p&&mutate(()=>{p.liked=!p.liked;},{redraw:false}))patchPostCard(g,p,value);return true;}

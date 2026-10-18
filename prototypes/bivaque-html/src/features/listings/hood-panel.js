@@ -10,10 +10,10 @@ function hoodAllTile(hood,n){return `<button type="button" class="hp-all" data-a
 function hoodStopHeight(stop){return stop==='low'?248:stop==='half'?Math.round(innerHeight*.58):innerHeight-76;}
 function hoodCompactRow(x,kind){
  const p=image(x.photos?.[0]),meta=kind==='imovel'?[x.beds?`${x.beds} ${x.beds===1?'quarto':'quartos'}`:'',x.area?`${x.area} m²`:''].filter(Boolean).join(' · '):[x.cond,x.cat].filter(Boolean).join(' · ');
- return `<button type="button" class="hp-row" data-action="open-item" data-value="${x.id}">${p?`<img src="${p}" alt="">`:`<span class="hp-noimg">${icon(x.icon||'image')}</span>`}<span class="hp-txt"><span class="price">${money(x.numPrice)}${x.per?'<small> / mês</small>':''}</span><b>${esc(x.title)}</b><small>${esc(meta||x.hood)}</small></span>${icon('chevron_right')}</button>`;
+ return `<button type="button" class="hp-row" data-action="open-item" data-value="${x.id}">${p?`<img src="${p}" alt="">`:`<span class="hp-noimg">${icon(x.icon||'image')}</span>`}<span class="hp-txt"><span class="price">${money(x.numPrice)}${x.per?'<small> / mês</small>':''}</span><b>${esc(x.title)}</b><small>${esc(meta||(hoodShown(x)?x.hood:''))}</small></span>${icon('chevron_right')}</button>`;
 }
 function hoodPanelHtml(){
- const {hood,stop}=hoodPanel,kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood);
+ const {hood,stop}=hoodPanel,kind=catalogKind(),list=filteredItems(kind).filter(x=>x.hood===hood&&hoodShown(x));
  const body=!list.length?`<p class="small muted">Nenhum anúncio neste bairro com esses filtros.</p>`:stop==='low'?`${hoodCompactRow(list[0],kind)}${list.length>1?`<p class="hp-more">Puxe para ver os ${list.length} anúncios</p>`:''}`:`<div class="hp-cards">${list.slice(0,HOOD_PANEL_CAP).map(photoCard).join('')}${list.length>HOOD_PANEL_CAP?hoodAllTile(hood,list.length):''}</div>`;
  const more=stop==='full'?'Mostrar menos do bairro':'Mostrar mais do bairro';
  return `<div class="hp-top"><button type="button" class="hp-grab" data-action="hood-panel-stop" aria-label="${more}"></button><div class="hp-head"><h2 id="hp-title" tabindex="-1">${esc(hood)}</h2><small>${esc(countWord(list.length,kind))} com os filtros que você escolheu</small></div>${iconBtn('close','hood-panel-close','',`Fechar ${hood}`)}</div><div class="hp-body">${body}</div><div class="hp-foot">${btn('Ver só este bairro na lista','map-hood-list',hood,'text','list')}</div>`;
