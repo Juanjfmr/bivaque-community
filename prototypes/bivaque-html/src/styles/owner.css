@@ -96,3 +96,21 @@ md-dialog[data-kind=owner-review] .sheet-grab{display:none}
 .ow-acts{display:flex;gap:4px;justify-content:flex-end;align-items:center}
 @media(max-width:1023px){.ow-subnav{display:block}}
 @media(max-width:719px){.ow-q-full{grid-template-columns:36px auto minmax(0,1fr);grid-template-areas:'ic t t' '. sla who' '. acts acts';row-gap:6px;column-gap:12px}.ow-q-full>.ow-ic{grid-area:ic}.ow-q-full>.t{grid-area:t}.ow-q-full>.ow-sla{grid-area:sla}.ow-q-full>.ow-who{grid-area:who}.ow-q-full>.ow-acts{grid-area:acts;justify-content:flex-start}}
+/* Rodada 51: Cidades. */
+.ow-table{width:100%;border-collapse:collapse;font-size:14px}
+.ow-table th,.ow-table td{padding:10px 8px;border-bottom:1px solid var(--md-sys-color-outline-variant);text-align:left;vertical-align:middle}
+.ow-table thead th{font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.ow-table .n{text-align:right;font-variant-numeric:tabular-nums}
+.ow-table tbody th small{display:block;margin-left:16px;font-size:12px;font-weight:400;color:var(--md-sys-color-on-surface-variant)}
+.ow-table td small{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ow-link{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--md-sys-color-primary);text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.ow-dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:4px;margin-right:6px;vertical-align:1px}
+.ow-dot-ok{background:var(--owner-good)}.ow-dot-warn{background:var(--owner-warn)}.ow-dot-bad{background:var(--owner-bad)}
+.ow-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.ow-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.ow-mini div{padding:10px 12px;border-radius:14px;background:var(--md-sys-color-surface-container-low)}
+.ow-mini small{display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ow-mini b{font-size:20px;line-height:26px}
+.ow-amb{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ow-review md-outlined-text-field,.ow-review md-outlined-select{width:100%}
+@media(max-width:719px){.ow-table thead{display:none}.ow-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)}.ow-table th,.ow-table td{border:0;padding:2px 0}.ow-table tbody th{grid-column:1/-1}.ow-table td.n{text-align:left}.ow-table td::before{content:attr(data-label);display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}}

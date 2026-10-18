@@ -54,6 +54,9 @@ async function ownerAction(action,value){
  if(action==='owner-sort'){ownerSort=value;render();globalFocus(action,value);return true;}
  if(action==='owner-assign'){ownerAssign(value);return true;}
  if(action==='owner-undo'){ownerUndo(value);return true;}
+ if(action==='owner-city-open'){ownerCityOpen(value);return true;}
+ if(action==='owner-invite'){ownerInvite(value);return true;}
+ if(action==='owner-city-stale'){await closeDialog(true);ownerCity=value;ownerTab='stale';ownerStatus='open';navigate('dono','filas');return true;}
  return false;
 }
 // Denúncia feita no app: fica registrada e entra na fila do dono (antes, só um aviso de dependência).

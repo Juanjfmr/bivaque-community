@@ -32,5 +32,6 @@ const OWNER_DEMO={
  claims:[{id:'oc1',biz:'b7',hoursAgo:20}],
  staleExtra:{Natal:4},
  // Quem já está cuidando de um item (moderadora de exemplo).
- assignees:{'report:item|i1':'Ana P.'}
+ assignees:{'report:item|i1':'Ana P.'},
+ ambassadors:{'Rio de Janeiro':['Bruno M.','Clara T.','Diego F.','Elisa R.','Fábio L.','Gabriela S.'],'Brasília':['Helena V.','Igor N.','Júlia C.','Kauã P.'],'Manaus':['Ana P.','Luana M.','Paulo R.'],'Natal':[]}
 };
