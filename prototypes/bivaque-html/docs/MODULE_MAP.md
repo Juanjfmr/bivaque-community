@@ -131,6 +131,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |
 | 39/App | `src/features/businesses/editor.js` | Negócios/serviços | Edição e persistência local do negócio |
 | 40/App | `src/features/community/editor.js` | Memória/indicações | Pedir indicação e perguntas similares |
+| 40/Appc | `src/features/profile/blocks.js` | Perfil/família/movimentação | Rodada 60: bloquear pessoa (lista de bloqueados, Pessoas bloqueadas, detalhe de quem foi bloqueado) e ⋮ de denunciar ou bloquear em resposta, comentário e publicação de outra pessoa |
 | 40/Appb | `src/features/community/manage.js` | Memória/indicações | Rodada 59: editar e excluir o que a pessoa publicou (pergunta, resposta, publicação e comentário de grupo, encontro), menu ⋮ só para o autor e aviso a quem confirmou presença |
 | 41/App | `src/features/businesses/indication.js` | Negócios/serviços | Indicação local de negócio |
 | 42/App | `src/features/profile/demo-actions.js` | Perfil/família/movimentação | Planos, convites familiares e denúncia; coordenar Monetização/Segurança |

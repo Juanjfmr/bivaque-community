@@ -45,13 +45,13 @@ function homeDeskItems(arriving,title='Oportunidades perto de você'){
 // Lateral: atividade dos meus grupos, com o sinal do que mudou (respostas, comentários).
 function homeDeskGroups(){
  if(readonly())return '';const mg=state.groups.filter(g=>g.on);if(!mg.length)return '';
- const posts=mg.flatMap(g=>g.posts.filter(p=>p.type!=='event').map(p=>({g,p}))).sort((a,b)=>b.p.at-a.p.at).slice(0,2);
- const row=({g,p})=>{const n=p.comments.length,what=p.type==='question'?(n===1?'resposta':'respostas'):(n===1?'comentário':'comentários');return `<button type="button" class="list-row" data-action="open-post" data-value="${g.id}~${p.id}"><span class="avatar">${esc(p.mine?initals(state.profile.name):p.ini)}</span><span class="txt"><b>${esc(p.text)}</b><small class="home-meta"><span class="home-meta-group">${esc(g.t)}</span>${n?`<span class="home-activity">${n} ${what}</span>`:''}<span>${gAgo(p.at)}</span></small></span>${icon('chevron_right')}</button>`;};
+ const posts=mg.flatMap(g=>groupPosts(g).filter(p=>p.type!=='event'&&!p.hidden).map(p=>({g,p}))).sort((a,b)=>b.p.at-a.p.at).slice(0,2);
+ const row=({g,p})=>{const n=postComments(p).length,what=p.type==='question'?(n===1?'resposta':'respostas'):(n===1?'comentário':'comentários');return `<button type="button" class="list-row" data-action="open-post" data-value="${g.id}~${p.id}"><span class="avatar">${esc(p.mine?initals(state.profile.name):p.ini)}</span><span class="txt"><b>${esc(p.text)}</b><small class="home-meta"><span class="home-meta-group">${esc(g.t)}</span>${n?`<span class="home-activity">${n} ${what}</span>`:''}<span>${gAgo(p.at)}</span></small></span>${icon('chevron_right')}</button>`;};
  return `<section class="home-card">${sectionTitle('Nos seus grupos','Ver grupos','groups')}<div class="list">${posts.length?posts.map(row).join(''):mg.slice(0,2).map(g=>groupRow(g)).join('')}</div></section>`;
 }
 // Lateral: o próximo encontro (do grupo ou da agenda), com confirmação em um toque.
 function homeDeskEvent(){
- const today=dateISO(),groupEv=readonly()?null:state.groups.filter(g=>g.on).flatMap(g=>g.posts.filter(p=>p.type==='event'&&p.event.date>=today).map(p=>({g,p}))).sort((a,b)=>a.p.event.date.localeCompare(b.p.event.date))[0];
+ const today=dateISO(),groupEv=readonly()?null:state.groups.filter(g=>g.on).flatMap(g=>groupPosts(g).filter(p=>p.type==='event'&&!p.hidden&&p.event.date>=today).map(p=>({g,p}))).sort((a,b)=>a.p.event.date.localeCompare(b.p.event.date))[0];
  const cityEv=state.events.filter(e=>e.city===state.city&&e.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
  const useGroup=groupEv&&(!cityEv||groupEv.p.event.date<=cityEv.date);if(!useGroup&&!cityEv)return '';
  const date=useGroup?groupEv.p.event.date:cityEv.date,d=new Date(date+'T12:00:00'),open=useGroup?['open-post',`${groupEv.g.id}~${groupEv.p.id}`]:['open-event',cityEv.id];

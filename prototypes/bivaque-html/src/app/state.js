@@ -27,9 +27,17 @@ function mutate(fn,{redraw=true}={}){
  try{fn();localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state=JSON.parse(before);notify('Não foi possível salvar. Libere espaço no navegador ou use fotos menores.','error');return false;}
  if(redraw)render();return true;
 }
-function cityItems(){return state.items.filter(x=>x.city===state.city);}
-function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.biz).filter(x=>x.city===state.city);}
-function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden&&!x.hiddenByMe);}
+// Rodada 60: quem a pessoa bloqueou some das listas, da busca e dos detalhes (o nome é a identidade no protótipo).
+const isBlocked=name=>!!name&&(state.blocked||[]).some(b=>b.name===name);
+// Só pessoas se bloqueiam: nunca a própria conta, nem "Relato da comunidade" e outros autores de exemplo (nome + inicial).
+const blockable=name=>!!name&&name!==state.profile?.name&&/^[^\s.]+( [^\s.]+\.)?$/.test(name);
+function cityItems(){return state.items.filter(x=>x.city===state.city&&(x.mine||!isBlocked(x.seller)));}
+function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.biz).filter(x=>x.city===state.city&&!x.suspended);}
+function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden&&!x.hiddenByMe&&(x.mine||!isBlocked(x.who)));}
+// Respostas e comentários que a pessoa vê: sem os de quem bloqueou e sem os removidos pela moderação.
+const askAnswers=q=>q.answers.filter(a=>!a.hidden&&(a.mine||!isBlocked(a.who)));
+const groupPosts=g=>g.posts.filter(p=>p.mine||!isBlocked(p.author));
+const postComments=p=>p.comments.filter(c=>!c.hidden&&(c.mine||!isBlocked(c.author)));
 function cityGroups(){return state.groups.filter(x=>x.city===state.city);}
 const itemById=id=>state.items.find(x=>x.id===id);
 const bizById=id=>(state.myBiz?.id===id?state.myBiz:state.biz.find(x=>x.id===id));

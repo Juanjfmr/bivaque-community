@@ -4,10 +4,21 @@ const OWNER_DECISION_REASONS=[['','Escolher motivo'],['golpe','Golpe ou pedido d
 function ownerFind(id){return ownerQueue().find(q=>q.id===id)||null;}
 function ownerChecks(list){return `<ul class="ow-checks">${list.map(([t,ok])=>`<li>${icon(ok?'check_circle':'schedule')}<span>${esc(t)}${ok?'':' · conferir'}</span></li>`).join('')}</ul>`;}
 const ownerReason=()=>selectField('owner-reason','Motivo da decisão',OWNER_DECISION_REASONS,'');
+// Rodada 60: o que cada decisão faz, no texto da revisão; e o atalho para ver o conteúdo denunciado.
+const OWNER_ACT_NOTE={remove:'Remover tira o conteúdo das listas e da busca, para todos, e deixa "removido pela moderação" no lugar. Dispensar mantém o conteúdo e fecha as denúncias.',suspend:'Suspender tira a página do catálogo e da busca, e ela passa a mostrar que está suspensa. Dispensar mantém a página e fecha as denúncias.',warn:'Advertir registra a advertência e avisa aqui no Painel; a conversa não é apagada. Dispensar fecha as denúncias sem registro.'};
+const OWNER_ACT_LABEL={remove:'Remover',suspend:'Suspender página',warn:'Advertir'};
+function ownerReportOpen(q,t){
+ if(!t)return '';
+ if(q.type==='answer')return btn('Abrir a pergunta','open-question',answerRef(q.target).q.id,'text','open_in_new');
+ if(q.type==='post')return btn('Abrir a publicação','open-post',q.target,'text','open_in_new');
+ if(q.type==='comment')return btn('Abrir a publicação','open-post',q.target.split('~').slice(0,2).join('~'),'text','open_in_new');
+ if(q.type==='biz')return btn('Abrir a página','open-biz',t.id,'text','open_in_new');
+ return '';
+}
 function ownerReviewBody(q){
  if(q.kind==='report'){
-  const t=reportTarget(q.type,q.target),who=t?.seller||t?.who||t?.name||'';
-  return `<p>${esc(q.title)}${who?` · ${esc(who)}`:''}</p><h3>Denúncias</h3><ul class="ow-reports">${q.list.map(r=>`<li><b>${esc(REPORT_REASONS[r.reason]||r.reason)}</b>${r.details?` · “${esc(r.details)}”`:''}<small>${ownerAgo(r.at)}${r.demo?'':' · feita neste dispositivo'}</small></li>`).join('')}</ul>${t&&q.type==='item'?btn('Abrir o anúncio','open-item',t.id,'text','open_in_new'):''}${t&&(q.type==='request'||q.type==='proposal')?btn('Abrir o pedido','open-request',q.type==='request'?t.id:t.request.id,'text','open_in_new'):''}${q.removable?'':'<p class="form-note">Este tipo de conteúdo ainda não é removido pelo painel: dispense ou trate com o responsável.</p>'}<h3>Decisão</h3>${ownerReason()}<p class="form-note">Remover tira o conteúdo das listas e da busca. Dispensar mantém o conteúdo e fecha as denúncias.</p>`;
+  const t=reportTarget(q.type,q.target),who=['answer','comment','post','thread'].includes(q.type)?'':t?.seller||t?.who||t?.name||'';
+  return `<p>${esc(q.title)}${who?` · ${esc(who)}`:''}</p><h3>Denúncias</h3><ul class="ow-reports">${q.list.map(r=>`<li><b>${esc(REPORT_REASONS[r.reason]||r.reason)}</b>${r.details?` · “${esc(r.details)}”`:''}<small>${ownerAgo(r.at)}${r.demo?'':' · feita neste dispositivo'}</small></li>`).join('')}</ul>${t&&q.type==='item'?btn('Abrir o anúncio','open-item',t.id,'text','open_in_new'):''}${t&&(q.type==='request'||q.type==='proposal')?btn('Abrir o pedido','open-request',q.type==='request'?t.id:t.request.id,'text','open_in_new'):''}${ownerReportOpen(q,t)}${q.byAuthor?'<p><b>O conteúdo já foi excluído pelo autor.</b></p><h3>Decisão</h3><p class="form-note">Não há mais o que remover. Dispensar fecha as denúncias.</p>':`<h3>Decisão</h3>${ownerReason()}<p class="form-note">${OWNER_ACT_NOTE[q.act]||'Dispensar fecha as denúncias.'}</p>`}`;
  }
  if(q.kind==='verify'&&q.entry)return ownerEntryReviewBody(q);
  if(q.kind==='verify'){const v=q.data;return `<p>Pediu acesso como família chegando a ${esc(v.city)} ${esc(v.when)}. Convidada por ${esc(v.invitedBy)}, verificado.</p><h3>Documento</h3><div class="ow-doc">Documento enviado (exemplo)</div><h3>Conferir</h3>${ownerChecks(v.checks)}<h3>Histórico</h3><p class="small muted">Primeiro pedido. Nenhuma denúncia.</p><h3>Se for recusar</h3>${ownerReason()}`;}
@@ -17,7 +28,7 @@ function ownerReviewBody(q){
 }
 function ownerReviewActions(q){
  const a=(label,d,kind='outlined')=>btn(label,'owner-decide',`${q.id}~${d}`,kind);
- if(q.kind==='report')return `${a('Dispensar','dismiss',q.removable?'text':'filled')}${q.removable?a('Remover','remove','filled'):''}`;
+ if(q.kind==='report')return `${a('Dispensar','dismiss',q.act?'text':'filled')}${q.act?a(OWNER_ACT_LABEL[q.act],q.act,'filled'):''}`;
  if(q.kind==='verify'&&q.entry)return `${a('Pedir outro documento','more','text')}${a('Aprovar','approve','filled')}`;
  if(q.kind==='verify')return `${a('Pedir outro documento','more','text')}${a('Recusar','reject')}${a('Aprovar','approve','filled')}`;
  if(q.kind==='claim')return `${a('Recusar','reject')}${a('Aprovar','approve','filled')}`;
@@ -26,12 +37,23 @@ function ownerReviewActions(q){
 // O erro manual do campo sai assim que a pessoa escolhe ou digita.
 function ownerClearErrors(){for(const f of $$('#dialog md-outlined-select,#dialog md-outlined-text-field'))for(const ev of ['change','input'])f.addEventListener(ev,()=>{f.error=false;f.errorText='';});}
 function ownerReview(id){const q=ownerFind(id);if(!q){notify('Este item já foi decidido.','info');return;}showDialog(q.title,`<div class="ow-review">${ownerReviewBody(q)}</div>`,ownerReviewActions(q),'owner-review');ownerClearErrors();}
+// Rodada 60: a consequência de cada tipo. Devolve o que o Desfazer precisa para voltar ao que era.
+function reportConsequence(type,id,d,o){
+ if(d==='warn'){const w={id:uid('w'),at:Date.now(),thread:id,who:threadById(id)?.who||''};o.warnings=[...(o.warnings||[]),w];return {warn:w.id};}
+ const obj=type==='proposal'?proposalRaw(id):reportTarget(type,id),field=type==='biz'?'suspended':type==='request'||type==='proposal'?'status':'hidden',mod={type,id,field,had:field in obj,prev:obj[field]};
+ obj[field]=field==='status'?'removed':true;
+ // Proposta já escolhida: o pedido volta a ficar aberto, sem escolhida.
+ if(type==='proposal'){const r=requestList().find(x=>x.proposals.some(p=>p.id===id));if(r?.chosen===id){mod.req={status:r.status,chosen:r.chosen,threadId:r.threadId||null};r.status='open';r.chosen=null;r.threadId=null;}}
+ return {mod};
+}
+const reportLabel=(type,id)=>{const t=reportTarget(type,id);return t?reportTitle(type,t,id):'';};
 function ownerDecide(value){
- const [id,d]=value.split('~'),q=ownerFind(id);if(!q)return;
- if(d==='remove'&&!q.removable)return;
- const needs=d==='remove'||d==='reject',reason=$('#owner-reason')?.value||'';
+ // O id de resposta, comentário e publicação tem "~": a decisão é o que vem depois do último.
+ const cut=value.lastIndexOf('~'),id=value.slice(0,cut),d=value.slice(cut+1),q=ownerFind(id);if(!q)return;
+ if(['remove','suspend','warn'].includes(d)&&q.act!==d)return;
+ const needs=['remove','suspend','warn','reject'].includes(d),reason=$('#owner-reason')?.value||'';
  if(needs&&!reason){const f=$('#owner-reason');if(f){f.error=true;f.errorText='Escolha o motivo antes de decidir.';f.focus();}return;}
- const label={remove:'removido',dismiss:'dispensado',approve:'aprovado',reject:'recusado',more:'novo documento pedido',call:'aviso aos embaixadores registrado'}[d];
+ const label={remove:'removido',suspend:'página suspensa',warn:'advertência registrada',dismiss:'dispensado',approve:'aprovado',reject:'recusado',more:'novo documento pedido',call:'aviso aos embaixadores registrado'}[d];
  const ok=mutate(()=>{
   const o=state.owner||(state.owner={decisions:{},log:[]});
   const undo={};
@@ -42,6 +64,7 @@ function ownerDecide(value){
    const t=reportTarget(q.type,q.target);
    if(d==='remove'&&q.type==='item'&&t){undo.item=t.id;undo.itemStatus=t.status;t.status='removed';}
    if(d==='remove'&&q.type==='ask'&&t){undo.ask=t.id;undo.askHidden=!!t.hidden;t.hidden=true;}
+   if(t&&['remove','suspend','warn'].includes(d)&&q.type!=='item'&&q.type!=='ask')Object.assign(undo,reportConsequence(q.type,q.target,d,o));
   }
   // Entrada em análise neste dispositivo: aprovar libera o passo da cidade; pedir outro documento volta ao envio.
   // O desfazer guarda de quem era a entrada e o estado que a decisão deixou, para não valer em outra conta.
@@ -82,6 +105,6 @@ function submitReport(value){
  const [type,target]=value.split('|'),reason=$('#report-reason')?.value||'',details=($('#report-details')?.value||'').trim();
  if(!reason){const f=$('#report-reason');if(f){f.error=true;f.errorText='Escolha o motivo.';f.focus();}return;}
  if((state.reports||[]).some(r=>r.type===type&&r.target===target&&r.status==='open')){closeDialog(true);notify('Você já denunciou este conteúdo. A equipe do Bivaque está revisando.','info');return;}
- if(!mutate(()=>{state.reports=[...(state.reports||[]),{id:uid('rp'),type,target,reason,details:details.slice(0,1000),at:Date.now(),status:'open'}];},{redraw:false}))return;
+ if(!mutate(()=>{state.reports=[...(state.reports||[]),{id:uid('rp'),type,target,reason,label:reportLabel(type,target),details:details.slice(0,1000),at:Date.now(),status:'open'}];},{redraw:false}))return;
  closeDialog(true).then(()=>notify('Denúncia registrada. A equipe do Bivaque revisa em até 24 h.','flag'));
 }

@@ -110,6 +110,7 @@
         "shell/in-place.js",
         "features/profile/settings.js",
         "features/profile/hidden.js",
+        "features/profile/blocks.js",
         "features/profile/push-install.js",
         "features/owner/console.js",
         "features/owner/review.js",

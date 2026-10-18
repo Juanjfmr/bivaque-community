@@ -6,23 +6,24 @@ function requestList(){return state.requests||[];}
 function requestById(id){return requestList().find(r=>r.id===id);}
 function requestExpired(r){return r.status==='open'&&Date.now()>r.expiresAt;}
 function requestStatus(r){if(requestExpired(r))return 'expired';if(r.status!=='open')return r.status;return r.proposals.some(p=>p.status==='sent')?'proposals':'open';}
-function requestStatusLabel(r){return {open:'Aguardando propostas',proposals:'Com propostas',chosen:'Proposta escolhida',done:'Concluído',cancelled:'Cancelado',expired:'Expirado'}[requestStatus(r)];}
+function requestStatusLabel(r){return {open:'Aguardando propostas',proposals:'Com propostas',chosen:'Proposta escolhida',done:'Concluído',cancelled:'Cancelado',expired:'Expirado',removed:'Removido pela moderação'}[requestStatus(r)];}
 function requestActive(r){return r.status==='open'&&!requestExpired(r);}
 // Rodada 58: proposta desistida pelo cliente sai da lista como a retirada; proposta com validade
 // vencida continua na lista, marcada "Vencida", e não pode ser escolhida.
-function requestLiveProposals(r){return r.proposals.filter(p=>p.status!=='withdrawn'&&p.status!=='gaveup');}
+// Rodada 60: pedido e proposta removidos pelo Painel (status "removed") somem das listas.
+function requestLiveProposals(r){return r.proposals.filter(p=>p.status!=='withdrawn'&&p.status!=='gaveup'&&p.status!=='removed');}
 function proposalExpired(p){return !!p.validUntil&&p.validUntil<dateISO();}
 function requestFull(r){return requestLiveProposals(r).length>=REQUEST_LIMIT;}
 // Elegíveis: mesma cidade e categoria, página assumida, que atendem o bairro; nunca a própria página.
-function requestEligible(r){return state.biz.filter(b=>b.city===r.city&&b.cat===r.cat&&specOk(b,r.spec)&&b.claimed!==false&&(!b.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro')&&b.id!==state.myBiz?.id);}
+function requestEligible(r){return state.biz.filter(b=>b.city===r.city&&b.cat===r.cat&&specOk(b,r.spec)&&b.claimed!==false&&!b.suspended&&(!b.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro')&&b.id!==state.myBiz?.id);}
 function requestWhenLabel(r){return r.when.kind==='asap'?'O quanto antes':r.when.kind==='until'?`Até ${dateLabel(r.when.date)}`:`Em ${dateLabel(r.when.date)}`;}
 function proposalPrice(p){return p.price.kind==='fixed'?money(p.price.min):p.price.kind==='range'?`${money(p.price.min)} a ${money(p.price.max)}`:'A combinar após visita';}
-function myProposal(r){return state.myBiz?r.proposals.find(p=>p.bizId===state.myBiz.id&&p.status!=='withdrawn'&&p.status!=='gaveup'):null;}
+function myProposal(r){return state.myBiz?r.proposals.find(p=>p.bizId===state.myBiz.id&&p.status!=='withdrawn'&&p.status!=='gaveup'&&p.status!=='removed'):null;}
 // Lado do prestador: pedidos de outras pessoas no ramo da minha página.
 // Revisão da Rodada 11: o prestador vê o pedido aberto se for elegível (cidade, ramo e bairro)
 // ou se já enviou proposta; depois do fechamento, fotos e nome só para quem foi escolhido.
 function providerHoodOk(r){const b=state.myBiz;return !b?.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro';}
-function providerCanSee(r){const b=state.myBiz;if(!b?.live||!r||r.mine||r.city!==b.city||r.cat!==b.cat)return false;return (requestActive(r)&&providerHoodOk(r)&&specOk(b,r.spec))||r.proposals.some(p=>p.bizId===b.id);}
+function providerCanSee(r){const b=state.myBiz;if(!b?.live||!r||r.status==='removed'||r.mine||r.city!==b.city||r.cat!==b.cat)return false;return (requestActive(r)&&providerHoodOk(r)&&specOk(b,r.spec))||r.proposals.some(p=>p.bizId===b.id);}
 function providerSeesDetails(r){return providerCanSee(r)&&(requestActive(r)||r.chosen&&r.proposals.find(p=>p.id===r.chosen)?.bizId===state.myBiz.id);}
 function providerRequests(){return requestList().filter(providerCanSee);}
 // Exemplos fictícios para quem testa o lado do prestador (só se ainda não houver nenhum).

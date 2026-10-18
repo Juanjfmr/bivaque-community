@@ -1,7 +1,7 @@
 // Rodada 50: página Filas do Painel do Bivaque. Abertas e decididas, por tipo, ordenadas por prazo
 // ou pelas mais recentes; "Assumir" põe você como responsável e "Desfazer" reabre uma decisão.
 var ownerStatus='open',ownerSort='due';
-const OWNER_DECISION_LABEL={remove:'Removido',dismiss:'Dispensado',approve:'Aprovado',reject:'Recusado',more:'Novo documento pedido',call:'Embaixadores chamados'};
+const OWNER_DECISION_LABEL={remove:'Removido',suspend:'Página suspensa',warn:'Advertência registrada',dismiss:'Dispensado',approve:'Aprovado',reject:'Recusado',more:'Novo documento pedido',call:'Embaixadores chamados'};
 function ownerWho(q){if(q.cityIds){const as=q.cityIds.map(c=>ownerData().assign?.[c]);return as.every(a=>a==='me')?'Você':'';}const a=ownerData().assign?.[q.id]||Object.entries(OWNER_DEMO.assignees||{}).find(([k])=>q.id.startsWith(k))?.[1];return a==='me'?'Você':a||'';}
 function ownerRowFull(q){
  const [due,late]=ownerDue(q.due),who=ownerWho(q);
@@ -26,14 +26,16 @@ function renderOwnerQueues(){
 // Reabrir: desfaz o efeito da decisão e devolve o item à fila.
 function ownerUndo(id){
  const d=ownerData().decisions[id];if(!d)return;
- const tg=d.undo?.target,gone=tg&&(tg.type==='item'?itemById(tg.id)?.status==='removed':tg.type==='ask'?!!askById(tg.id)?.hidden:false);
- if(gone&&d.d!=='remove'){notify('Este conteúdo foi removido por outra decisão. Desfaça a remoção primeiro.','info');return;}
+ const tg=d.undo?.target,tt=tg&&reportTarget(tg.type,tg.id),gone=!!tt&&reportGone(tg.type,tt);
+ if(gone&&!['remove','suspend'].includes(d.d)){notify('Este conteúdo foi removido por outra decisão. Desfaça a remoção primeiro.','info');return;}
  const ue=d.undo?.entry,cur=state.entry;
  if(ue&&(!cur?.account||cur.done||cur.account.email!==ue.email||cur.eligibility!==ue.after?.eligibility||!!cur.asked!==!!ue.after?.asked)){notify('A pessoa já seguiu na entrada. Esta decisão não pode mais ser desfeita.','info');return;}
  if(!mutate(()=>{
   const o=state.owner,u=d.undo||{};
   if(u.itemStatus){const i=itemById(u.item);if(i)i.status=u.itemStatus;}
   if(u.askHidden!==undefined){const a=askById(u.ask);if(a)a.hidden=u.askHidden;}
+  if(u.mod){const m=u.mod,obj=m.type==='proposal'?proposalRaw(m.id):reportTarget(m.type,m.id);if(obj){if(m.had)obj[m.field]=m.prev;else delete obj[m.field];}if(m.req){const r=requestList().find(x=>x.proposals.some(p=>p.id===m.id));if(r)Object.assign(r,m.req);}}
+  if(u.warn)o.warnings=(o.warnings||[]).filter(w=>w.id!==u.warn);
   if(u.reportIds)for(const r of state.reports||[])if(u.reportIds.includes(r.id))r.status='open';
   if(u.demoIds?.length)o.closedDemo=(o.closedDemo||[]).filter(x=>!u.demoIds.includes(x));
   if(u.entry)state.entry={...state.entry,...u.entry.before};
