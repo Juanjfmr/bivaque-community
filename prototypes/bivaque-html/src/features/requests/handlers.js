@@ -47,7 +47,7 @@ async function requestAction(action,value){
   confirm('Cancelar pedido?','As empresas deixam de ver o pedido e as propostas recebidas são encerradas.',()=>{if(!requestActive(r)){render();return;}if(mutate(()=>{r.status='cancelled';for(const x of r.proposals)if(x.status==='sent')x.status='declined';requestDeclinedNotice(r);}))notify('Pedido cancelado','close');});
   return true;
  }
- case 'propose':{const r=requestById(value);if(!r||!providerCanSee(r)||!requestActive(r)){notify('Este pedido não recebe mais propostas.','info');render();return true;}openProposalEditor(value);return true;}
+ case 'propose':{const r=requestById(value);if(state.myBiz?.paused&&r&&requestActive(r)&&!myProposal(r)){notify('Sua página está pausada. Reative para enviar propostas.','info');render();return true;}if(!r||!providerCanSee(r)||!requestActive(r)){notify('Este pedido não recebe mais propostas.','info');render();return true;}openProposalEditor(value);return true;}
  case 'submit-proposal':{
   const r=requestById(value);if(!r||!editor||editor.kind!=='proposal')return true;if(!providerCanSee(r)||!requestActive(r)){notify('Este pedido não recebe mais propostas.','info');await closeDialog(true);render();return true;}
   if(!validFields(['prop-duration','prop-msg']))return true;

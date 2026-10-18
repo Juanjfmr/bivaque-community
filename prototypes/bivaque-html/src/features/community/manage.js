@@ -66,6 +66,8 @@ async function manageAction(action,value,el){
  }
  // Publicação de grupo
  const g=gById(a1),p=g?.posts.find(x=>x.id===a2);
+ // Rodada 61: grupo encerrado é só leitura; editar ou excluir publicação e comentário dele é recusado.
+ if(g&&groupClosed(g)&&(action.includes('post')||action.includes('comment')))return groupLockedNotice();
  if(action.includes('post')){
   if(!p?.mine||!canPost())return true;
   if(action==='post-menu'){const noun=p.type==='event'?'encontro':p.type==='poll'?'enquete':p.type==='question'?'pergunta':'publicação';openCreate(el,[['edit',`Editar ${noun}`,'edit-post','',value],['delete',p.type==='event'?'Cancelar encontro':`Excluir ${noun}`,'delete-post','',value,true]]);return true;}

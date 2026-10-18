@@ -23,7 +23,7 @@ function myProposal(r){return state.myBiz?r.proposals.find(p=>p.bizId===state.my
 // Revisão da Rodada 11: o prestador vê o pedido aberto se for elegível (cidade, ramo e bairro)
 // ou se já enviou proposta; depois do fechamento, fotos e nome só para quem foi escolhido.
 function providerHoodOk(r){const b=state.myBiz;return !b?.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro';}
-function providerCanSee(r){const b=state.myBiz;if(!b?.live||!r||r.status==='removed'||r.mine||r.city!==b.city||r.cat!==b.cat)return false;return (requestActive(r)&&providerHoodOk(r)&&specOk(b,r.spec))||r.proposals.some(p=>p.bizId===b.id);}
+function providerCanSee(r){const b=state.myBiz;if(!b?.live||!r||r.status==='removed'||r.mine||r.city!==b.city||r.cat!==b.cat)return false;return (requestActive(r)&&!b.paused&&providerHoodOk(r)&&specOk(b,r.spec))||r.proposals.some(p=>p.bizId===b.id);}
 function providerSeesDetails(r){return providerCanSee(r)&&(requestActive(r)||r.chosen&&r.proposals.find(p=>p.id===r.chosen)?.bizId===state.myBiz.id);}
 function providerRequests(){return requestList().filter(providerCanSee);}
 // Exemplos fictícios para quem testa o lado do prestador (só se ainda não houver nenhum).
