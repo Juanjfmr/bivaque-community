@@ -18,7 +18,7 @@ const LEGAL_DOCS={
 };
 const legalRoute=()=>LEGAL_ROUTES.includes(route.name);
 // Quem saiu lê as páginas com o visual da entrada, sem a barra do app.
-const entryChrome=()=>route.name==='entrar'||(legalRoute()&&!!state.signedOut);
+const entryChrome=()=>route.name==='entrar'||((legalRoute()||supportRoute())&&!!state.signedOut);
 // O que a pessoa digitou na entrada fica só na memória enquanto ela lê o documento. Nada vai para o
 // armazenamento; a senha é descartada assim que ela sai da leitura.
 var entryDraft=null;

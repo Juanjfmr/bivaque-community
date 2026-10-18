@@ -157,7 +157,7 @@ class BuilderInvariants(unittest.TestCase):
     def test_module_map_covers_all_115_fragments(self):
         document = (BUILD.PROTOTYPE / "docs/MODULE_MAP.md").read_text(encoding="utf-8")
         paths = [name for slot in self.manifest["slots"] for name in slot["files"]]
-        self.assertEqual(len(paths), 115)  # Rodada 08: 2 de motion; Rodada 09: alto contraste; Rodada 11: 3 de pedidos; Rodada 12: taxonomia; Rodada 13: Início do desktop e Criar; Rodada 14: paleta; Rodada 15: linha do tempo; Rodada 16: comparação de propostas; Rodada 17: avisos; Rodada 18: fotos e galeria; Rodada 19: contador; Rodada 58: privacidade e conduta, Ocultados; Rodada 59: editar e excluir; Rodada 60: bloquear pessoa
+        self.assertEqual(len(paths), 116)  # Rodada 62: Ajuda e apagar a conta; Rodada 08: 2 de motion; Rodada 09: alto contraste; Rodada 11: 3 de pedidos; Rodada 12: taxonomia; Rodada 13: Início do desktop e Criar; Rodada 14: paleta; Rodada 15: linha do tempo; Rodada 16: comparação de propostas; Rodada 17: avisos; Rodada 18: fotos e galeria; Rodada 19: contador; Rodada 58: privacidade e conduta, Ocultados; Rodada 59: editar e excluir; Rodada 60: bloquear pessoa
         for path in paths:
             with self.subTest(path=path):
                 self.assertIn(f"`src/{path}`", document)
