@@ -455,8 +455,8 @@ const checkpoints = {
     expect((await req(page, id)).status === "open", "pedido mudou de situação")
   },
   async "report-request-and-proposal"(page) {
-    // P7: denúncia de proposta (quem pede) e de pedido (prestador). O tratamento depende da
-    // rodada de moderação, como nas outras denúncias do protótipo: nada é registrado.
+    // P7: denúncia de proposta (quem pede) e de pedido (prestador). Desde a Rodada 49, a denúncia
+    // abre o formulário com motivo e vai para a fila do Painel do Bivaque; o pedido não muda.
     const cat = await demoCategory(page)
     const id = await createRequest(page, { cat })
     await simulate(page)
@@ -469,7 +469,10 @@ const checkpoints = {
     )
     await reports.first().click()
     await settle(page)
-    expect((await dialogKind(page)) === "dependency", "denúncia de proposta sem aviso")
+    expect(
+      await page.locator('#dialog [data-action="submit-report"][data-value^="proposal|"]').count(),
+      "denúncia de proposta sem formulário",
+    )
     expect(
       JSON.stringify(await req(page, id)) === JSON.stringify(before),
       "denúncia alterou o pedido",
@@ -489,7 +492,12 @@ const checkpoints = {
     )
     await page.locator(`#main [data-action="report"][data-value="request|${rid}"]`).click()
     await settle(page)
-    expect((await dialogKind(page)) === "dependency", "denúncia de pedido sem aviso")
+    expect(
+      await page
+        .locator(`#dialog [data-action="submit-report"][data-value="request|${rid}"]`)
+        .count(),
+      "denúncia de pedido sem formulário",
+    )
   },
   async "create-menu-new-item-fits"(page) {
     // O 7º item do menu Criar (subtítulo mais longo) cabe no botão, no menu e na tela.
