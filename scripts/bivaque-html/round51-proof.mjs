@@ -54,7 +54,10 @@ const checkpoints = {
       inv.length === 1 && inv[0].city === "Natal" && inv[0].name === "Marina Costa",
       "convite não gravado",
     )
-    expect(/Convite enviado a Marina Costa/.test(await toast(page)), `aviso: ${await toast(page)}`)
+    expect(
+      /Convite para Marina Costa ser embaixador em Natal registrado/.test(await toast(page)),
+      `aviso: ${await toast(page)}`,
+    )
     const natal = await page.locator("#main .ow-table tbody tr", { hasText: "Natal" }).innerText()
     expect(/\+1 convite/.test(natal), `tabela sem o convite: ${natal}`)
   },

@@ -12,22 +12,32 @@ function ownerAgo(ms){const h=Math.round((Date.now()-ms)/36e5);return h<1?'agora
 function ownerDue(due){const left=due-Date.now();if(left<=0)return ['atrasada',true];const h=Math.ceil(left/36e5);return [h<24?`vence em ${h} h`:`vence em ${Math.ceil(h/24)} dias`,h<=2];}
 function reportTarget(type,id){return type==='item'?itemById(id):type==='ask'?askById(id):type==='biz'?bizById(id):null;}
 function reportTitle(type,t){return type==='item'?`Anúncio “${t.title}”`:type==='ask'?`Pergunta “${t.q}”`:type==='biz'?`Página de “${t.name}”`:type==='proposal'?'Proposta de prestador':'Pedido de orçamento';}
-// Denúncias agrupadas por conteúdo: as de exemplo e as feitas neste dispositivo.
+// Denúncias abertas agrupadas por conteúdo: as de exemplo e as feitas neste dispositivo. O id leva o
+// momento da primeira denúncia aberta: decidir fecha o grupo; uma denúncia nova abre outro.
+const REPORT_TYPE_TITLE={proposal:'Proposta de prestador',request:'Pedido de orçamento'};
 function ownerReports(){
- const all=[...OWNER_DEMO.reports.map(r=>({...r,at:Date.now()-r.hoursAgo*36e5,demo:true})),...(state.reports||[])];
+ const closed=ownerData().closedDemo||[];
+ const all=[...OWNER_DEMO.reports.filter(r=>!closed.includes(r.id)).map(r=>({...r,at:Date.now()-r.hoursAgo*36e5,demo:true})),...(state.reports||[]).filter(r=>r.status!=='closed')];
  const groups=new Map();
  for(const r of all){const key=`${r.type}|${r.target}`;groups.set(key,[...(groups.get(key)||[]),r]);}
  return [...groups].map(([key,list])=>{
-  const [type,target]=key.split('|'),t=reportTarget(type,target),first=Math.min(...list.map(r=>r.at)),reasons=[...new Set(list.map(r=>REPORT_REASONS[r.reason]||r.reason))];
-  return {id:`report:${key}`,kind:'report',type,target,list,city:t?.city||state.homeCity,at:first,due:first+OWNER_SLA,icon:'report',tone:'red',
-   title:t?reportTitle(type,t):'Conteúdo denunciado',sub:`${t?.city||state.homeCity} · ${list.length} ${list.length===1?'denúncia':'denúncias'}: ${reasons.join(', ')}`,gone:type==='item'&&t?.status==='removed'||type==='ask'&&t?.hidden};
+  const [type,target]=key.split('|'),t=reportTarget(type,target),first=Math.min(...list.map(r=>r.at)),reasons=[...new Set(list.map(r=>REPORT_REASONS[r.reason]||r.reason))],city=t?.city||state.homeCity;
+  return {id:`report:${key}:${Math.round(first).toString(36)}`,kind:'report',type,target,list,city,at:first,due:first+OWNER_SLA,icon:'report',tone:'red',removable:!!t&&(type==='item'||type==='ask'),
+   title:t?reportTitle(type,t):REPORT_TYPE_TITLE[type]||'Conteúdo denunciado',sub:`${city} · ${list.length} ${list.length===1?'denúncia':'denúncias'}: ${reasons.join(', ')}`,gone:type==='item'&&t?.status==='removed'||type==='ask'&&t?.hidden};
  }).filter(x=>!x.gone);
 }
-function ownerStale(){
+// Perguntas sem resposta há 48 h por cidade: as do protótipo e as de exemplo das outras cidades.
+function ownerStaleBy(){
  const old=state.asks.filter(a=>!a.hidden&&a.status==='open'&&!a.answers.length&&Date.now()-(a.createdAt||Date.now())>2*OWNER_DAY);
  const by={...OWNER_DEMO.staleExtra};for(const a of old)by[a.city]=(by[a.city]||0)+1;
- const cities=Object.keys(by).filter(c=>by[c]),n=cities.reduce((s,c)=>s+by[c],0);if(!n)return [];
- return [{id:'stale',kind:'stale',city:cities.length===1?cities[0]:'',cities:by,asks:old,at:Date.now()-2*OWNER_DAY,due:Date.now()-1,icon:'forum',tone:'amber',
+ return {by,old};
+}
+// Um item por escopo (todas as cidades ou a filtrada); o id muda quando as perguntas paradas mudam.
+function ownerStale(){
+ const {by:all,old}=ownerStaleBy(),scope=ownerCity==='Todas'?Object.keys(all):[ownerCity],by=Object.fromEntries(scope.filter(c=>all[c]).map(c=>[c,all[c]]));
+ const cities=Object.keys(by),n=cities.reduce((s,c)=>s+by[c],0);if(!n)return [];
+ const asks=old.filter(a=>by[a.city]);
+ return [{id:`stale:${cities.sort().map(c=>`${c}${by[c]}`).join('|')}:${asks.map(a=>a.id).join(',')}`,kind:'stale',city:cities.length===1?cities[0]:'',cities:by,asks,at:Date.now()-2*OWNER_DAY,due:Date.now()-1,icon:'forum',tone:'amber',
   title:`${n} ${n===1?'pergunta sem resposta':'perguntas sem resposta'} há 48 h`,sub:cities.sort((a,b)=>by[b]-by[a]).map(c=>`${by[c]} em ${c}`).join(', ')}];
 }
 function ownerQueue(){
@@ -39,7 +49,7 @@ const ownerCities=()=>Object.keys(OWNER_DEMO.cities);
 function ownerSpark(pts,bad){const max=Math.max(...pts),min=Math.min(...pts),d=pts.map((p,i)=>`${(i/(pts.length-1)*100).toFixed(1)},${(32-(p-min)/(max-min||1)*28).toFixed(1)}`).join(' ');return `<svg viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"><polyline points="${d}" fill="none" stroke="${bad?'var(--owner-bad)':'var(--md-sys-color-primary)'}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;}
 function ownerNum(k,share){const v=k.revenue?ownerPlansTotal().revenue:k.scale?Math.round(k.value*share):k.value;return k.fmt==='%'?`${v}%`:k.fmt==='R$'?`R$ ${v.toLocaleString('pt-BR')}`:v.toLocaleString('pt-BR');}
 function ownerHero(){
- const cs=OWNER_DEMO.cities,names=ownerCity==='Todas'?ownerCities():[ownerCity],arr=names.reduce((s,c)=>s+cs[c].arriving,0),served=names.reduce((s,c)=>s+cs[c].arriving*cs[c].served,0)/Math.max(1,arr),pct=Math.round(served*100);
+ const cs=OWNER_DEMO.cities,names=ownerCity==='Todas'?ownerCities():[ownerCity],arr=names.reduce((s,c)=>s+cs[c].arrived30,0),served=names.reduce((s,c)=>s+cs[c].arrived30*cs[c].served,0)/Math.max(1,arr),pct=Math.round(served*100);
  const rows=ownerCities().map(c=>`<div class="ow-city${cs[c].served<.5?' low':''}${ownerCity!=='Todas'&&c!==ownerCity?' dim':''}"><span>${esc(c)}</span><span aria-hidden="true"><i style="width:${Math.round(cs[c].served*100)}%"></i></span><b>${Math.round(cs[c].served*100)}%</b></div>`).join('');
  return `<section class="ow-card ow-hero" aria-labelledby="ow-hero-t"><h2 id="ow-hero-t">Chegadas atendidas</h2><div class="ow-big"><b>${pct}%</b><span class="ow-up">▲ 6 pts</span></div><p>das ${arr} famílias que chegaram nos últimos 30 dias${ownerCity==='Todas'?'':` a ${esc(ownerCity)}`} tiveram resposta ou contato na primeira semana. Meta: 80%.</p><div class="ow-goal" role="img" aria-label="${pct}% de 80% da meta"><i style="width:${pct}%"></i><s style="left:80%"></s></div>${rows}</section>`;
 }
@@ -51,9 +61,14 @@ function ownerChanges(){
  const list=OWNER_DEMO.changes.filter(c=>ownerCity==='Todas'||c.city===ownerCity);
  return `<section class="ow-card ow-changes" aria-labelledby="ow-chg-t"><h2 id="ow-chg-t">O que mudou</h2>${list.length?list.map(c=>`<div class="ow-chg">${icon(c.icon).replace('<md-icon',`<md-icon class="ow-${c.tone}"`)}<span class="t"><b>${esc(c.title)}</b>${esc(c.text)}</span>${c.go.startsWith('page:')?btn('Ver','owner-go',c.go.slice(5),'text'):c.go?btn(c.go==='report'?'Ver':'Ver perguntas','owner-tab',c.go,'text'):''}</div>`).join(''):`<p class="small muted">Nada fora do normal em ${esc(ownerCity)}.</p>`}</section>`;
 }
-function ownerRow(q){const [due,late]=ownerDue(q.due);return `<div class="ow-q" role="listitem"><span class="ow-ic ow-${q.tone}">${icon(q.icon)}</span><span class="t"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></span><span class="ow-sla${late?' late':''}">${due}</span>${btn('Revisar','owner-review',q.id,q.kind==='verify'?'filled':'outlined')}</div>`;}
+function ownerRow(q){const [due,late]=ownerDue(q.due);return `<div class="ow-q" role="listitem"><span class="ow-ic ow-${q.tone}">${icon(q.icon)}</span><span class="t"><b>${esc(q.title)}</b><small>${esc(q.sub)}</small></span><span class="ow-sla${late?' late':''}">${due}</span>${ownerBtn('Revisar','owner-review',q,q.kind==='verify'?'filled':'outlined')}</div>`;}
+// Botão da fila com o item no nome acessível ("Revisar: Carla R. pediu verificação").
+function ownerBtn(label,action,q,kind){return btn(label,action,q.id,kind).replace(/^<(md-[a-z-]+)/,`<$1 aria-label="${esc(label)}: ${esc(q.title)}"`);}
+// Depois de uma decisão, o foco vai ao título da página (o controle de antes saiu da tela).
+function ownerFocusHeading(){requestAnimationFrame(()=>{const h=$('#main .ow-h1');if(h){h.tabIndex=-1;h.focus({preventScroll:true});}});}
 function ownerQueueHtml(){
- const all=ownerQueue(),count=k=>k==='all'?all.length:all.filter(q=>q.kind===k).length,list=all.filter(q=>ownerTab==='all'||q.kind===ownerTab);
+ const all=ownerQueue(),count=k=>k==='all'?all.length:all.filter(q=>q.kind===k).length;if(ownerTab!=='all'&&!count(ownerTab))ownerTab='all';
+ const list=all.filter(q=>ownerTab==='all'||q.kind===ownerTab);
  return `<section class="ow-card ow-queue" aria-labelledby="ow-q-t"><div class="ow-card-head"><h2 id="ow-q-t">Precisa de você</h2>${btn('Abrir filas','owner-go','filas','text')}</div>${filterChips(OWNER_KINDS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>[k,`${l} · ${count(k)}`]),ownerTab,'owner-tab')}${list.length?`<div class="ow-list" role="list">${list.map(ownerRow).join('')}</div>`:`<p class="ow-done">${icon('check')}Nada esperando por você${ownerCity==='Todas'?'':` em ${esc(ownerCity)}`}.</p>`}</section>`;
 }
 const OWNER_PAGES=[['','Visão geral','home'],['filas','Filas','inbox'],['cidades','Cidades','apartment'],['negocios','Negócios e planos','storefront'],['equipe','Pessoas e equipe','group']];

@@ -14,6 +14,12 @@ import {
 // decididas, desfazer uma decisão e ordenar por prazo ou pelas mais recentes.
 const titles = (page) =>
   page.locator("#main .ow-q .t b").evaluateAll((els) => els.map((e) => e.textContent))
+// O id da denúncia leva o momento da primeira (Rodada 49, revisão): lê o id da própria tela.
+const qid = (page, prefix) =>
+  page
+    .locator(`#main [data-action="owner-review"][data-value^="${prefix}"]`)
+    .first()
+    .getAttribute("data-value")
 const phone = (page) => page.viewportSize().width < 720
 async function openQueues(page) {
   await snapshot(page)
@@ -56,7 +62,7 @@ const checkpoints = {
   },
   async "decided-list-and-undo-restore-the-listing"(page) {
     await openQueues(page)
-    const id = "report:item|i1"
+    const id = await qid(page, "report:item|i1:")
     await page.locator(`#main [data-action="owner-review"][data-value="${id}"]`).click()
     await settle(page)
     await choose(page, "owner-reason", "golpe")

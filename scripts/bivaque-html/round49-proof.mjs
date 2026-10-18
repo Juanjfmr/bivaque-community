@@ -26,6 +26,12 @@ async function review(page, id) {
   await settle(page)
   expect((await dialogKind(page)) === "owner-review", `revisão de ${id} não abriu`)
 }
+// O id da denúncia leva o momento da primeira (Rodada 49, revisão): lê o id da própria tela.
+const qid = (page, prefix) =>
+  page
+    .locator(`#main [data-action="owner-review"][data-value^="${prefix}"]`)
+    .first()
+    .getAttribute("data-value")
 const decide = (page, id, d) =>
   page.locator(`#dialog [data-action="owner-decide"][data-value="${id}~${d}"]`).click()
 
@@ -75,7 +81,7 @@ const checkpoints = {
   },
   async "remove-needs-a-reason-then-leaves-the-lists"(page) {
     await openConsole(page)
-    const id = "report:item|i1"
+    const id = await qid(page, "report:item|i1:")
     await review(page, id)
     await decide(page, id, "remove")
     await settle(page)
@@ -125,8 +131,9 @@ const checkpoints = {
   },
   async "calling-ambassadors-names-the-city-without-one"(page) {
     await openConsole(page)
-    await review(page, "stale")
-    await decide(page, "stale", "call")
+    const id = await qid(page, "stale:")
+    await review(page, id)
+    await decide(page, id, "call")
     await settle(page)
     expect(/Natal ainda não tem embaixador/.test(await toast(page)), `aviso: ${await toast(page)}`)
   },
@@ -140,6 +147,58 @@ const checkpoints = {
       getComputedStyle(document.querySelector("#nav")).display,
     ])
     expect(!nav[0] && nav[1] !== "none", `navegação do app não voltou: ${nav}`)
+  },
+  // Revisão do lote: removido não abre nem fica em Salvos; denúncia nova volta à fila; aba vazia.
+  async "removed-listing-is-gone-everywhere"(page) {
+    await openConsole(page)
+    const id = await qid(page, "report:item|i1:")
+    await review(page, id)
+    await choose(page, "owner-reason", "golpe")
+    await decide(page, id, "remove")
+    await settle(page)
+    await go(page, "anuncio/i1")
+    expect(
+      /Anúncio removido/.test(await page.locator("#main").innerText()),
+      "o anúncio removido abriu pelo endereço",
+    )
+    expect(
+      !(await page.locator('[data-action="save-item"][data-value="i1"]:visible').count()),
+      "o removido ainda pode ser salvo",
+    )
+  },
+  async "new-report-after-a-decision-returns"(page) {
+    await openConsole(page)
+    const id = await qid(page, "report:item|i1:")
+    await review(page, id)
+    await decide(page, id, "dismiss")
+    await settle(page)
+    expect(
+      !(await page
+        .locator('#main [data-action="owner-review"][data-value^="report:item|i1:"]')
+        .count()),
+      "dispensar não tirou da fila",
+    )
+    await go(page, "anuncio/i1")
+    await page.locator('[data-action="report"][data-value="item|i1"]:visible').first().click()
+    await settle(page)
+    await choose(page, "report-reason", "fraud")
+    await page.locator('#dialog [data-action="submit-report"]').click()
+    await settle(page)
+    await go(page, "dono")
+    const again = await qid(page, "report:item|i1:")
+    expect(again && again !== id, `a denúncia nova não voltou à fila: ${again}`)
+  },
+  async "empty-tab-falls-back-to-all"(page) {
+    await openConsole(page)
+    await page.locator('#main [data-action="owner-tab"][data-value="verify"]').click()
+    await settle(page)
+    await review(page, "verify:ov1")
+    await decide(page, "verify:ov1", "approve")
+    await settle(page)
+    expect(
+      (await queueTitles(page)).length >= 3,
+      `a aba vazia ficou presa: ${await queueTitles(page)}`,
+    )
   },
 }
 

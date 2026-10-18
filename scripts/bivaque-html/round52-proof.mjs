@@ -43,11 +43,11 @@ const checkpoints = {
     await settle(page)
     expect((await stored(page)).owner.reminded.b2, "lembrete não registrado")
     expect(
-      /Lembrete de renovação enviado a Mudanças Rio Negro/.test(await toast(page)),
+      /Lembrete de renovação para Mudanças Rio Negro registrado/.test(await toast(page)),
       `aviso: ${await toast(page)}`,
     )
     const row = await page.locator("#main .ow-q", { hasText: "Mudanças Rio Negro" }).innerText()
-    expect(/Lembrete enviado/.test(row), `linha: ${row}`)
+    expect(/Lembrete registrado/.test(row), `linha: ${row}`)
   },
   async "business-list-opens-the-page"(page) {
     const s = await snapshot(page)

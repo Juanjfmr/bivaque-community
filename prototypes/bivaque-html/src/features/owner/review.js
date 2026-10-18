@@ -16,35 +16,43 @@ function ownerReviewBody(q){
 }
 function ownerReviewActions(q){
  const a=(label,d,kind='outlined')=>btn(label,'owner-decide',`${q.id}~${d}`,kind);
- if(q.kind==='report')return `${a('Dispensar','dismiss','text')}${a('Remover','remove','filled')}`;
+ if(q.kind==='report')return `${a('Dispensar','dismiss',q.removable?'text':'filled')}${q.removable?a('Remover','remove','filled'):''}`;
  if(q.kind==='verify')return `${a('Pedir outro documento','more','text')}${a('Recusar','reject')}${a('Aprovar','approve','filled')}`;
  if(q.kind==='claim')return `${a('Recusar','reject')}${a('Aprovar','approve','filled')}`;
  return a('Chamar embaixadores','call','filled');
 }
-function ownerReview(id){const q=ownerFind(id);if(!q){notify('Este item já foi decidido.','info');return;}showDialog(q.title,`<div class="ow-review">${ownerReviewBody(q)}</div>`,ownerReviewActions(q),'owner-review');}
+// O erro manual do campo sai assim que a pessoa escolhe ou digita.
+function ownerClearErrors(){for(const f of $$('#dialog md-outlined-select,#dialog md-outlined-text-field'))for(const ev of ['change','input'])f.addEventListener(ev,()=>{f.error=false;f.errorText='';});}
+function ownerReview(id){const q=ownerFind(id);if(!q){notify('Este item já foi decidido.','info');return;}showDialog(q.title,`<div class="ow-review">${ownerReviewBody(q)}</div>`,ownerReviewActions(q),'owner-review');ownerClearErrors();}
 function ownerDecide(value){
  const [id,d]=value.split('~'),q=ownerFind(id);if(!q)return;
+ if(d==='remove'&&!q.removable)return;
  const needs=d==='remove'||d==='reject',reason=$('#owner-reason')?.value||'';
  if(needs&&!reason){const f=$('#owner-reason');if(f){f.error=true;f.errorText='Escolha o motivo antes de decidir.';f.focus();}return;}
- const label={remove:'removido',dismiss:'dispensado',approve:'aprovado',reject:'recusado',more:'novo documento pedido',call:'embaixadores chamados'}[d];
+ const label={remove:'removido',dismiss:'dispensado',approve:'aprovado',reject:'recusado',more:'novo documento pedido',call:'aviso aos embaixadores registrado'}[d];
  const ok=mutate(()=>{
   const o=state.owner||(state.owner={decisions:{},log:[]});
   const undo={};
-  if(q.kind==='report'){undo.reportKey=`${q.type}|${q.target}`;const t=reportTarget(q.type,q.target);if(d==='remove'&&q.type==='item'&&t){undo.item=t.id;undo.itemStatus=t.status;}if(d==='remove'&&q.type==='ask'&&t){undo.ask=t.id;undo.askHidden=!!t.hidden;}}
-  if(q.kind==='claim'&&d==='approve'){undo.biz=q.biz.id;undo.claimed=q.biz.claimed;}
-  o.decisions[id]={d,reason,at:Date.now(),title:q.title,kind:q.kind,city:q.city,undo};o.log=[{at:Date.now(),text:`${q.title}: ${label}${reason?` (${OWNER_DECISION_REASONS.find(r=>r[0]===reason)?.[1].toLowerCase()})`:''}`},...o.log].slice(0,50);
-  if(q.kind==='report'&&d==='remove'){const t=reportTarget(q.type,q.target);if(q.type==='item'&&t)t.status='removed';if(q.type==='ask'&&t)t.hidden=true;}
-  if(q.kind==='report')for(const r of state.reports||[])if(`${r.type}|${r.target}`===`${q.type}|${q.target}`)r.status='closed';
-  if(q.kind==='claim'&&d==='approve')q.biz.claimed=true;
+  if(q.kind==='report'){
+   undo.reportIds=q.list.filter(r=>!r.demo).map(r=>r.id);undo.demoIds=q.list.filter(r=>r.demo).map(r=>r.id);
+   for(const r of state.reports||[])if(undo.reportIds.includes(r.id))r.status='closed';
+   o.closedDemo=[...new Set([...(o.closedDemo||[]),...undo.demoIds])];
+   const t=reportTarget(q.type,q.target);
+   if(d==='remove'&&q.type==='item'&&t){undo.item=t.id;undo.itemStatus=t.status;t.status='removed';}
+   if(d==='remove'&&q.type==='ask'&&t){undo.ask=t.id;undo.askHidden=!!t.hidden;t.hidden=true;}
+  }
+  if(q.kind==='claim'&&d==='approve'){undo.biz=q.biz.id;undo.hasClaimed=true;undo.claimed=q.biz.claimed??null;q.biz.claimed=true;}
+  o.decisions[id]={d,reason,at:Date.now(),title:q.title,kind:q.kind,city:q.city,undo};
+  o.log=[{at:Date.now(),text:`${q.title}: ${label}${reason?` (${OWNER_DECISION_REASONS.find(r=>r[0]===reason)?.[1].toLowerCase()})`:''}`},...o.log].slice(0,50);
  },{redraw:false});
  if(!ok)return;
- closeDialog(true).then(()=>{render();notify(d==='call'?ownerCallText(q):`${q.title}: ${label}.`,'check_circle');});
+ closeDialog(true).then(()=>{render();ownerFocusHeading();notify(d==='call'?ownerCallText(q):`${q.title}: ${label}.`,'check_circle');});
 }
-function ownerCallText(q){const cs=OWNER_DEMO.cities,c=Object.keys(q.cities),without=c.filter(x=>!cs[x]?.ambassadors),withA=c.filter(x=>cs[x]?.ambassadors);return `${withA.length?`Aviso enviado aos embaixadores de ${withA.join(' e ')}. `:''}${without.length?`${without.join(' e ')} ainda não ${without.length===1?'tem':'têm'} embaixador: convide alguém de lá.`:''}`.trim();}
+function ownerCallText(q){const cs=OWNER_DEMO.cities,c=Object.keys(q.cities),without=c.filter(x=>!cs[x]?.ambassadors),withA=c.filter(x=>cs[x]?.ambassadors);return `${withA.length?`Aviso registrado para os embaixadores de ${withA.join(' e ')} (modo teste). `:''}${without.length?`${without.join(' e ')} ainda não ${without.length===1?'tem':'têm'} embaixador: convide alguém de lá.`:''}`.trim();}
 async function ownerAction(action,value){
  if(!action.startsWith('owner-'))return false;
  if(action==='owner-open'){if(dialog.open)await closeDialog(true);ownerTab='all';ownerStatus='open';navigate('dono');return true;}
- if(action==='owner-exit'){navigate('voce');return true;}
+ if(action==='owner-exit'){navigate('voce',null,{replace:true});return true;}
  if(action==='owner-city'){ownerCity=value;render();globalFocus(action,value);return true;}
  if(action==='owner-tab'){ownerTab=value;render();globalFocus(action,value);return true;}
  if(action==='owner-review'){ownerReview(value);return true;}
