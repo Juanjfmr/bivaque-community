@@ -34,15 +34,6 @@ async function startOut(page, portal = "verified") {
   await page.locator('#main [data-action="entry-join"]').click()
   await settle(page)
 }
-// Volta ao perfil de exemplo sem entrada em andamento, para recomeçar pelo Sair.
-const signBackIn = (page) =>
-  page.evaluate((k) => {
-    const x = JSON.parse(localStorage.getItem(k))
-    if (!x) return
-    x.entry = {}
-    x.signedOut = false
-    localStorage.setItem(k, JSON.stringify(x))
-  }, KEY)
 const err = (page) => page.locator("#en-err").innerText()
 async function createAccount(page, email = "carla.teste@exemplo.com") {
   await fill(page, "en-name", "Carla Teste")
@@ -104,16 +95,18 @@ const checkpoints = {
     const raw = await page.evaluate((k) => localStorage.getItem(k), KEY)
     expect(!raw.includes("52998224725") && !raw.includes(VALID_CPF), "o CPF ficou guardado")
   },
-  // Fechamento do lote (BIVAQUE.md §4.2): todo resultado sem confirmação leva à mesma análise, com
-  // envio de documento. Do arquivo fica só o tipo e o tamanho (o nome pode trazer o CPF).
-  async "not-confirmed-then-document-in-the-same-review"(page) {
+  // Resultados distintos (decisão do dono, 18/10/2026). Do documento fica só o tipo e o tamanho.
+  async "not-found-then-document-then-pending"(page) {
     await startOut(page, "notfound")
     await createAccount(page)
     await sendCpf(page)
-    expect((await routeOf(page)).id === "analise", "vínculo não confirmado fora da análise")
     expect(
-      /Precisamos conferir seu vínculo/.test(await page.locator("#main").innerText()),
-      "análise sem o título neutro",
+      (await routeOf(page)).id === "resultado",
+      "vínculo não localizado sem a tela de resultado",
+    )
+    expect(
+      /Não localizamos o vínculo/.test(await page.locator("#main").innerText()),
+      "resultado sem o título",
     )
     await page.locator("#en-doc").setInputFiles({
       name: "contracheque-52998224725.pdf",
@@ -121,6 +114,7 @@ const checkpoints = {
       buffer: Buffer.from("%PDF-1.4 teste"),
     })
     await settle(page)
+    expect((await routeOf(page)).id === "analise", "o documento não levou à análise")
     expect(
       /Recebemos seu documento/.test(await page.locator("#main").innerText()),
       "análise sem o documento",
@@ -152,21 +146,15 @@ const checkpoints = {
     expect((await stored(page)).entry.eligibility === "verified", "aprovação não gravada")
     expect((await routeOf(page)).id === "cidade", "aprovação não seguiu para a cidade")
   },
-  async "every-unconfirmed-result-looks-the-same"(page) {
-    const screens = []
-    for (const portal of ["notfound", "pending", "error"]) {
-      await signBackIn(page)
-      await startOut(page, portal)
-      await createAccount(page, `teste.${portal}@exemplo.com`)
-      await sendCpf(page)
-      expect((await routeOf(page)).id === "analise", `${portal} fora da análise`)
-      screens.push((await page.locator("#main").innerText()).replace(/teste\.\w+@exemplo\.com/, ""))
-    }
-    expect(new Set(screens).size === 1, "os resultados sem confirmação são diferentes")
-    // Análise não é atalho: sem consulta, o endereço volta ao CPF.
-    await signBackIn(page)
-    await startOut(page)
+  async "source-down-offers-retry"(page) {
+    await startOut(page, "error")
     await createAccount(page)
+    await sendCpf(page)
+    expect(/fora do ar/.test(await page.locator("#main").innerText()), "fonte fora do ar sem aviso")
+    await page.locator('#main [data-action="entry-retry"]').click()
+    await settle(page)
+    expect((await routeOf(page)).id === "cpf", "Tentar de novo não voltou ao CPF")
+    // A análise não é atalho: sem documento nem resultado pendente, o endereço volta ao CPF.
     await go(page, "entrar/analise")
     expect((await routeOf(page)).id === "cpf", "o endereço abriu a análise sem consulta")
   },

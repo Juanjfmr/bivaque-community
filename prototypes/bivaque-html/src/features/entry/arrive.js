@@ -66,11 +66,11 @@ function renderEntryWelcome(){
 function ownerEntryVerification(){
  const e=state.entry;if(!e?.account||e.done||e.eligibility!=='pending'||(e.asked&&!e.doc))return null;
  const at=e.doc?.at||e.checkedAt||0;
- return {id:`verify:entry-${at}`,kind:'verify',entry:true,data:{checks:[['Documento enviado',!!e.doc],['Nome confere com o documento',false]]},city:'',at,due:at+OWNER_SLA,icon:'verified_user',tone:'blue',title:`${e.account.name} pediu verificação`,sub:e.doc?`Documento enviado · ${entryDocLabel(e.doc)}`:'Sem confirmação automática do vínculo'};
+ return {id:`verify:entry-${at}`,kind:'verify',entry:true,data:{checks:[['Documento enviado',!!e.doc],['Nome confere com o documento',false]]},city:'',at,due:at+OWNER_SLA,icon:'verified_user',tone:'blue',title:`${e.account.name} pediu verificação`,sub:e.doc?`Documento enviado · ${entryDocLabel(e.doc)}`:'A fonte oficial pediu conferência'};
 }
 function ownerEntryReviewBody(q){
  const doc=state.entry?.doc;
- return `<p>Criou a conta neste dispositivo. A consulta pelo CPF não confirmou o vínculo de forma automática${doc?' e a pessoa enviou um documento':''}. O CPF não fica guardado.</p><h3>Documento</h3><div class="ow-doc">${doc?esc(entryDocLabel(doc)):'Nenhum documento ainda'}</div><h3>Conferir</h3>${ownerChecks(q.data.checks)}<h3>Histórico</h3><p class="small muted">Primeiro pedido. A cidade é escolhida depois da aprovação.</p>`;
+ return `<p>Criou a conta neste dispositivo. A fonte oficial não confirmou o vínculo pelo CPF${doc?' e a pessoa enviou um documento':''}. O CPF não fica guardado.</p><h3>Documento</h3><div class="ow-doc">${doc?esc(entryDocLabel(doc)):'Nenhum documento ainda'}</div><h3>Conferir</h3>${ownerChecks(q.data.checks)}<h3>Histórico</h3><p class="small muted">Primeiro pedido. A cidade é escolhida depois da aprovação.</p>`;
 }
 async function entryArriveAction(action,value){
  if(action==='entry-finish'){entryFinish();return true;}

@@ -59,10 +59,11 @@ Codex (GPT). Nenhum achado crítico; XSS, senha e CPF guardados: nada encontrado
 
 Decisões do dono (18/10/2026):
 
-- **Resposta única na consulta do CPF** (BIVAQUE.md §4.2). Vínculo não localizado, não militar e
-  fonte fora do ar levam à mesma tela ("Precisamos conferir seu vínculo"), com envio de documento.
-  O resultado não revela se um CPF é de militar. Os controles do protótipo passam a ter só
-  "Vínculo confirmado" e "Não confirmado: vai para análise".
+- **Resultados distintos na consulta do CPF**, como exceção ao BIVAQUE.md §4.2. A revisão de
+  segurança pediu resposta única para ninguém descobrir quem é militar testando CPFs. O dono decidiu
+  o contrário: todo militar é agente público e o vínculo já aparece no Portal da Transparência, então
+  o resultado não revela nada novo e ajuda a pessoa. Confirmado segue para a cidade; não localizado
+  pede um documento; fonte fora do ar pede para tentar de novo. Cabe ao dono atualizar a §4.2.
 - **Convite familiar preso ao e-mail** (§4.1). Quem convida informa o e-mail do familiar; o convite
   vale só para ele, vence em 7 dias e só é consumido quando a pessoa conclui a entrada. Quem entrou
   por convite não convida outros.

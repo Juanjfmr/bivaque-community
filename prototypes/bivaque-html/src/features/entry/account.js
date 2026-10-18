@@ -1,9 +1,10 @@
 // Rodada 54 (lote Entrada): criar conta e confirmar a elegibilidade, como no app web (preauth):
 // nome, e-mail e senha com aceite da privacidade e do código de conduta; CPF conferido na fonte
 // oficial (aqui, simulado pelos controles do protótipo) e nunca guardado.
-// Fechamento do lote (decisão do dono, 18/10/2026): resposta única, como manda o BIVAQUE.md §4.2.
-// Vínculo não localizado, não militar e fonte fora do ar levam à mesma tela de análise, com envio
-// de documento: o resultado não revela se um CPF é de militar. Uma consulta por conta.
+// Resultados distintos (decisão do dono, 18/10/2026, exceção ao BIVAQUE.md §4.2): o vínculo de
+// militar é público no Portal da Transparência, então dizer o resultado não revela nada novo e
+// ajuda a pessoa. Confirmado segue para a cidade; não localizado pede um documento; fonte fora do
+// ar pede para tentar de novo; em análise espera a equipe.
 // A senha não é guardada; da conta fica só nome e e-mail, neste dispositivo. Do documento ficam só
 // o tipo e o tamanho (o nome do arquivo pode trazer o CPF).
 const ENTRY_SENHA_REGRA='Ao menos 8 caracteres, com letras e números.';
@@ -14,7 +15,8 @@ const entryInProgress=()=>{const e=entryData();return !!e.account&&!e.done;};
 // consulta do CPF e a análise não são contornáveis pelo endereço.
 function entryNext(){
  const e=entryData();if(!entryInProgress())return 'conta';if(!e.consentAt)return 'aceite';
- if(e.eligibility==='verified')return 'cidade';return e.eligibility&&e.eligibility!=='none'?'analise':'cpf';
+ if(e.eligibility==='verified')return 'cidade';if(e.eligibility==='notfound'||e.eligibility==='error')return 'resultado';
+ return e.eligibility&&e.eligibility!=='none'?'analise':'cpf';
 }
 // Validação do CPF pelos dígitos verificadores (o número não sai deste formulário).
 function validCpf(raw){
@@ -45,21 +47,26 @@ function renderEntryCpf(){
  return `<div class="en en-form">${entryTop('')}${entrySteps(2,'Elegibilidade')}<h1 class="en-h1" tabindex="-1">Confirme seu vínculo.</h1><p class="en-lead">Para militares federais ativos, veteranos e pensionistas militares.</p>
  ${field('en-cpf','CPF','','required inputmode="numeric" maxlength="14" autocomplete="off" placeholder="000.000.000-00"')}<p class="en-err" id="en-err" role="alert"></p>
  ${btn('Conferir e continuar','entry-cpf','','filled')}
- <div class="en-why">${icon('lock')}<span><b>O que fazemos com o CPF</b>Consultamos a fonte oficial para confirmar o vínculo deste CPF. O número não fica salvo, e não pedimos posto, organização nem endereço. Se precisarmos conferir, pedimos um documento.</span></div>
+ <div class="en-why">${icon('verified_user')}<span><b>Por que o CPF</b>Com ele confirmamos o vínculo na fonte oficial, sem pedir posto nem organização. O número não fica salvo.</span></div>
  <button type="button" class="en-link" data-action="entry-invite">${icon('group')}<span><b>É cônjuge ou dependente?</b>Você entra pelo convite de quem é militar, sem CPF.</span></button></div>`;
 }
-// Uma tela só para todo resultado que não confirma na hora (§4.2): a pessoa não sabe por quê.
+function renderEntryResult(){
+ if(entryData().eligibility==='error')return `<div class="en en-form">${entryTop('')}${entrySteps(2,'Elegibilidade')}<h1 class="en-h1" tabindex="-1">Não conseguimos consultar agora.</h1><p class="en-lead">A fonte oficial está fora do ar. Tente de novo em alguns minutos.</p>${btn('Tentar de novo','entry-retry','','filled')}</div>`;
+ return `<div class="en en-form">${entryTop('')}${entrySteps(2,'Elegibilidade')}<h1 class="en-h1" tabindex="-1">Não localizamos o vínculo.</h1><p class="en-lead">A fonte oficial não confirmou o vínculo deste CPF. Isso acontece com quem passou para a reserva há pouco ou com pensionistas recentes.</p>
+ <label class="en-file">${icon('upload')}<span><b>Enviar um documento</b>PDF, JPG ou PNG, até 10 MB. A equipe responde em até 2 dias úteis.</span><input id="en-doc" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"></label><p class="en-err" id="en-err" role="alert"></p>
+ ${btn('Conferir o CPF de novo','entry-retry','','outlined')}</div>`;
+}
 function renderEntryPending(){
  const e=entryData(),doc=e.doc,when=t=>new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
- const steps=[['done','Conta criada',e.account?.email||''],[doc?'done':'now',doc?'Documento enviado':'Consulta feita',doc?`${entryDocLabel(doc)} · ${when(doc.at)}`:e.asked?'A equipe pediu outro documento':'Não deu para confirmar de forma automática'],['now','Análise da equipe','Até 2 dias úteis · normalmente no mesmo dia'],['','Escolher sua cidade','Assim que liberar']];
- const title=doc?'Recebemos seu documento.':e.asked?'A equipe pediu outro documento.':'Precisamos conferir seu vínculo.';
+ const steps=[['done','Conta criada',e.account?.email||''],[doc?'done':'now',doc?'Documento enviado':'Consulta feita',doc?`${entryDocLabel(doc)} · ${when(doc.at)}`:e.asked?'A equipe pediu outro documento':'A fonte oficial pediu uma conferência'],['now','Análise da equipe','Até 2 dias úteis · normalmente no mesmo dia'],['','Escolher sua cidade','Assim que liberar']];
+ const title=doc?'Recebemos seu documento.':e.asked?'A equipe pediu outro documento.':'Sua elegibilidade está em análise.';
  return `<div class="en en-form">${entryTop('')}<h1 class="en-h1" tabindex="-1">${title}</h1><p class="en-lead">Enquanto a equipe confere, o conteúdo do Bivaque fica fechado.${doc?'':' Para adiantar, envie um documento que mostre o vínculo, como o contracheque ou a identidade militar.'}</p>
  <ol class="en-time">${steps.map(([s,t,d],i)=>`<li class="${s}"><i aria-hidden="true">${s==='done'?'✓':i+1}</i><span><b>${t}</b>${esc(d)}</span></li>`).join('')}</ol>
  <label class="en-file">${icon('upload')}<span><b>${doc?'Enviar outro documento':'Enviar um documento'}</b>PDF, JPG ou PNG, até 10 MB.</span><input id="en-doc" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"></label><p class="en-err" id="en-err" role="alert"></p>
  ${e.notify?`<p class="en-ok" role="status">${icon('notifications_active')}Vamos avisar por e-mail e no celular quando liberar.</p>`:btn('Avise-me quando liberar','entry-notify','','filled','notifications')}
  <p class="en-foot">Você pode sair e voltar: o status fica aqui.</p><div class="en-test">${pill('Modo teste')}<span>A análise da equipe é simulada neste protótipo.</span>${btn('Simular aprovação','entry-approve','','text')}</div></div>`;
 }
-const ENTRY_STEPS={conta:()=>renderEntrySignup(),aceite:()=>renderEntryGoogleConsent(),cpf:()=>renderEntryCpf(),analise:()=>renderEntryPending(),cidade:()=>renderEntryCity()};
+const ENTRY_STEPS={conta:()=>renderEntrySignup(),aceite:()=>renderEntryGoogleConsent(),cpf:()=>renderEntryCpf(),resultado:()=>renderEntryResult(),analise:()=>renderEntryPending(),cidade:()=>renderEntryCity()};
 function renderEntry(){
  const id=route.id||'';
  if(id==='boas-vindas')return state.signedOut?renderEntryLanding():renderEntryWelcome();
@@ -92,24 +99,23 @@ function entryCpf(){
  if(entryNext()!=='cpf'){navigate('entrar',entryNext());return;}
  const raw=$('#en-cpf')?.value||'';
  if(!validCpf(raw))return entryError('CPF inválido. Confira os 11 dígitos.','en-cpf');
- // Modo teste: os controles do protótipo decidem se a fonte confirma. Qualquer outro resultado vira
- // análise, com a mesma tela.
- const ok=(state.test?.portal||'verified')==='verified';
- if(!mutate(()=>{state.entry={...state.entry,eligibility:ok?'verified':'pending',checkedAt:Date.now()};},{redraw:false}))return;
+ // Modo teste: os controles do protótipo decidem o resultado da fonte oficial.
+ const outcome=['verified','notfound','pending','error'].includes(state.test?.portal)?state.test.portal:'verified',ok=outcome==='verified';
+ if(!mutate(()=>{state.entry={...state.entry,eligibility:outcome,checkedAt:Date.now()};},{redraw:false}))return;
  // O CPF não fica salvo: o campo é limpo antes de sair do passo.
  const f=$('#en-cpf');if(f)f.value='';
  if(ok){entryVerified();return;}
- navigate('entrar','analise');
+ navigate('entrar',entryNext());
 }
 // Quem é verificado segue para o passo 3: cidade, momento e nome (Rodada 56).
 function entryVerified(){entryCityDraft=null;navigate('entrar','cidade');}
 function entryDoc(input){
- const f=input.files?.[0];if(!f||entryNext()!=='analise')return;
+ const f=input.files?.[0];if(!f||!['resultado','analise'].includes(entryNext()))return;
  const type=ENTRY_DOC_TYPES[f.type];
  if(!type)return entryError('Formato inválido: use PDF, JPG ou PNG.');
  if(!f.size||f.size>ENTRY_DOC_MAX)return entryError('O documento precisa ter até 10 MB.');
  if(!mutate(()=>{state.entry={...state.entry,eligibility:'pending',asked:false,doc:{type,size:f.size,at:Date.now()}};},{redraw:false}))return;
- render();entryFocusTitle();
+ if(route.id==='analise'){render();entryFocusTitle();}else navigate('entrar','analise');
 }
 function bindEntry(){
  $('#en-doc')?.addEventListener('change',e=>entryDoc(e.target));
@@ -124,6 +130,7 @@ async function entryFlowAction(action,value){
  if(action==='entry-go'){if(value==='senha')entryForgotSent='';if(value==='convite')entryInviteCode='';navigate('entrar',value||null);return true;}
  if(action==='entry-signup'){entrySignup();return true;}
  if(action==='entry-cpf'){entryCpf();return true;}
+ if(action==='entry-retry'){if(entryNext()==='resultado'&&mutate(()=>{state.entry={...state.entry,eligibility:'none'};},{redraw:false}))navigate('entrar','cpf');return true;}
  if(action==='entry-resume'){navigate('entrar',entryNext());return true;}
  if(action==='entry-restart'){confirm('Começar com outra conta?','A entrada em andamento é apagada deste dispositivo.',()=>{if(mutate(()=>{state.entry={};},{redraw:false}))navigate('entrar','conta',{replace:true});});return true;}
  if(action==='entry-notify'){if(mutate(()=>{state.entry={...state.entry,notify:true};})){notify('Vamos avisar quando liberar.','notifications_active');entryFocusTitle();}return true;}
