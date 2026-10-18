@@ -20,7 +20,8 @@ const qid = (page, prefix) =>
     .locator(`#main [data-action="owner-review"][data-value^="${prefix}"]`)
     .first()
     .getAttribute("data-value")
-const phone = (page) => page.viewportSize().width < 720
+// Abaixo de 1024 px o console troca a lateral pela navegação no topo.
+const phone = (page) => page.viewportSize().width < 1024
 async function openQueues(page) {
   await snapshot(page)
   await go(page, "dono")
