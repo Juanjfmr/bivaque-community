@@ -29,7 +29,7 @@ function mutate(fn,{redraw=true}={}){
 }
 function cityItems(){return state.items.filter(x=>x.city===state.city);}
 function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.biz).filter(x=>x.city===state.city);}
-function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden);}
+function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden&&!x.hiddenByMe);}
 function cityGroups(){return state.groups.filter(x=>x.city===state.city);}
 const itemById=id=>state.items.find(x=>x.id===id);
 const bizById=id=>(state.myBiz?.id===id?state.myBiz:state.biz.find(x=>x.id===id));

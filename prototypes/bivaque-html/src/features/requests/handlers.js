@@ -17,9 +17,29 @@ async function requestAction(action,value){
  }
  case 'choose-proposal':{
   const [rid,pid]=value.split('|'),r=requestById(rid),p=r?.proposals.find(x=>x.id===pid);if(!r?.mine||!canPost())return true;if(!requestActive(r)||p?.status!=='sent'){notify('Esta proposta não está mais disponível.','info');render();return true;}
+  if(proposalExpired(p)){notify(`Esta proposta venceu em ${dateLabel(p.validUntil)} e não pode ser escolhida.`,'info');render();return true;}
   const b=bizById(p.bizId);
-  confirm('Escolher esta proposta?',`${b?.name||'A empresa'} · ${proposalPrice(p)}. As outras propostas serão recusadas e a conversa com a empresa será aberta. ${REQUEST_NOTE}`,async()=>{if(!requestActive(r)||p.status!=='sent'){notify('Esta proposta não está mais disponível.','info');render();return;}let t=null;
+  confirm('Escolher esta proposta?',`${b?.name||'A empresa'} · ${proposalPrice(p)}. As outras propostas serão recusadas e a conversa com a empresa será aberta. ${REQUEST_NOTE}`,async()=>{if(!requestActive(r)||p.status!=='sent'){notify('Esta proposta não está mais disponível.','info');render();return;}if(proposalExpired(p)){notify(`Esta proposta venceu em ${dateLabel(p.validUntil)} e não pode ser escolhida.`,'info');render();return;}let t=null;
    if(mutate(()=>{r.status='chosen';r.chosen=pid;for(const x of r.proposals)if(x.status==='sent')x.status=x.id===pid?'chosen':'declined';requestDeclinedNotice(r);if(b){t=ensureThread('biz',b.id,`Olá! Escolhi sua proposta para ${requestTitle(r)} em ${r.hood}. Podemos combinar os detalhes?`);r.threadId=t?.id||null;}},{redraw:false})){if(t){messagingDrafts.delete(t.id);navigate('conversa',t.id);}else render();notify('Proposta escolhida. Combine os detalhes na conversa.','check_circle');}});
+  return true;
+ }
+ // Rodada 58: depois da escolha, o cliente conclui o serviço, conversa com o prestador ou desiste.
+ case 'complete-request':{
+  const r=requestById(value);if(!r?.mine||!canPost())return true;if(r.status!=='chosen'){notify('Este pedido não tem uma proposta escolhida.','info');render();return true;}
+  if(mutate(()=>{r.status='done';r.doneAt=Date.now();}))notify('Serviço concluído. Pedido encerrado.','check_circle',()=>{const x=requestById(value);if(x?.status==='done')mutate(()=>{x.status='chosen';delete x.doneAt;});});
+  return true;
+ }
+ case 'chat-provider':{
+  const r=requestById(value),p=r?.mine&&r.proposals.find(x=>x.id===r.chosen);if(!p){notify('Este pedido não tem uma proposta escolhida.','info');return true;}
+  await contact('biz',p.bizId);return true;
+ }
+ case 'give-up-proposal':{
+  const r=requestById(value),p=r?.mine&&r.proposals.find(x=>x.id===r.chosen);if(!r?.mine||!canPost())return true;if(r.status!=='chosen'||!p){notify('Este pedido não tem uma proposta escolhida.','info');render();return true;}
+  const b=bizById(p.bizId),reopens=Date.now()<=r.expiresAt;
+  confirm('Desistir desta proposta?',`${b?.name||'A empresa'} deixa de ser a escolhida. ${reopens?'O pedido volta a receber propostas e as outras propostas ainda válidas voltam à lista.':'O prazo do pedido já passou, então ele fica encerrado.'}`,()=>{
+   if(r.status!=='chosen'){render();return;}const restored=[];
+   if(mutate(()=>{p.status='gaveup';p.gaveUpAt=Date.now();r.status='open';r.chosen=null;r.threadId=null;if(reopens)for(const x of r.proposals)if(x.status==='declined'&&!proposalExpired(x)){x.status='sent';restored.push(x);}requestGaveUpNotice(r,p,restored);}))notify(!reopens?'Proposta desistida. O prazo do pedido já passou e ele ficou encerrado.':restored.length?`Proposta desistida. Pedido reaberto com ${restored.length} proposta${restored.length===1?'':'s'} ainda válida${restored.length===1?'':'s'}.`:'Proposta desistida. Pedido reaberto: as empresas do ramo podem enviar novas propostas.','undo');
+  });
   return true;
  }
  case 'cancel-request':{

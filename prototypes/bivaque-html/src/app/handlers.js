@@ -9,6 +9,8 @@ async function perform(action,value,el){
  if(await mapAction(action,value))return;
  if(await ownerAction(action,value))return;
  if(await entryAction(action,value))return;
+ if(await legalAction(action,value))return;
+ if(await hiddenAction(action,value))return;
  if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
@@ -130,7 +132,6 @@ async function perform(action,value,el){
  case 'solve-question':case 'reopen-question':{if(!canPost())break;const [id,aid]=value.split('|'),q=askById(id);if(!q?.mine)break;if(mutate(()=>{q.status=action==='solve-question'?'ok':'open';q.answers.forEach(a=>a.solved=action==='solve-question'&&a.id===aid);})){notify(action==='solve-question'?'Resolvida. Sua experiência fica disponível para a comunidade.':'Pergunta reaberta');}break;}
  case 'like-answer':{if(!canPost())break;const [id,aid]=value.split('|'),a=askById(id)?.answers.find(x=>x.id===aid);if(a)mutate(()=>{a.liked=!a.liked;a.helped=(a.helped||0)+(a.liked?1:-1);});break;}
  case 'follow-question':{const q=askById(value);if(q){mutate(()=>q.following=!q.following);notify(q.following?'Você acompanha as respostas':'Você deixou de acompanhar');}break;}
- case 'hide-question':{const q=askById(value);if(q&&mutate(()=>q.hidden=true))notify('Pergunta ocultada','visibility_off',()=>mutate(()=>q.hidden=false));break;}
  case 'answer-origin':{const [id,aid]=value.split('|'),q=askById(id),a=q?.answers.find(x=>x.id===aid);if(a?.originQuestion){navigate('pergunta',a.originQuestion);break;}showDialog('Origem da indicação',`<div class="choice">${icon('history_edu')}<span class="txt"><b>${esc(q?.q)}</b><small>${esc(q?.who)} · ${esc(q?.city)}</small></span></div><p class="detail-copy">${esc(a?.t)}</p>${a?.biz&&bizById(a.biz)?`<button type="button" class="answer-origin" data-action="open-biz" data-value="${a.biz}">${icon('storefront')}<span class="grow">${esc(bizById(a.biz).name)}</span>${icon('chevron_right')}</button>`:''}${q?.demo||q?.fromMemory?'<p class="form-note">Relato de exemplo preservado no arquivo da cidade.</p>':''}`,btn('Fechar','close-dialog','','text'));break;}
  case 'my-questions':mutate(()=>state.city=state.homeCity,{redraw:false});navigate('minhas');break;
  case 'groups':communityTab='grp';navigate('comunidade');break;

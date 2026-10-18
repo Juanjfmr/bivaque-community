@@ -94,3 +94,14 @@ body.entry-mode main{inset:0}
 .en-tile md-icon{flex:none;color:var(--md-sys-color-primary)}
 .en-tile b{display:block;font-size:15px;color:var(--md-sys-color-on-surface)}
 .en-tile:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px}
+/* Rodada 58: nomes do aceite como links e páginas da Política de privacidade e do Código de conduta. */
+.en-inline{display:inline;padding:0;margin:0;border:0;background:none;font:inherit;color:var(--md-sys-color-primary);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.en-inline:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px;border-radius:2px}
+.en-legal{margin-top:6px}
+.legal-doc{max-width:640px}
+.legal-doc.en{padding-top:12px}
+.legal-h{font-size:17px;line-height:24px;font-weight:650;margin:20px 0 4px}
+.legal-p{margin:0 0 8px;font-size:15px;line-height:23px;color:var(--md-sys-color-on-surface-variant)}
+.legal-p.muted{margin-top:24px;font-size:14px}
+.settings-links{margin:12px 0 4px}
+.settings-links .list-row{min-height:64px;text-align:left}

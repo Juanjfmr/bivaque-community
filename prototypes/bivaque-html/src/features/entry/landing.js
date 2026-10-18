@@ -18,7 +18,7 @@ function renderEntryLanding(){
  const city=entrySampleCity||state.homeCity;
  return `<div class="en"><header class="en-top"><span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span>${btn('Entrar','entry-login','','text')}</header>
  <div class="en-grid"><section class="en-hero" aria-labelledby="en-h1"><p class="en-aud">Militares federais, veteranos, pensionistas e famílias</p><h1 id="en-h1">Muda a cidade. Fica a sua rede.</h1><p class="en-lead">Guia da cidade, comunidades e serviços indicados por quem já mora lá. Só entra quem tem o vínculo confirmado.</p>
- <div class="en-ctas">${btn('Quero fazer parte','entry-join','','filled')}${btn('Recebi um convite de familiar','entry-invite','','outlined','person_add')}</div><p class="en-note">Gratuito · Não é um canal oficial das Forças</p></section>
+ <div class="en-ctas">${btn('Quero fazer parte','entry-join','','filled')}${btn('Recebi um convite de familiar','entry-invite','','outlined','person_add')}</div><p class="en-note">Gratuito · Não é um canal oficial das Forças</p><p class="en-note en-legal">${legalLink('privacidade')} · ${legalLink('conduta')}</p></section>
  <section class="en-sample" aria-labelledby="en-sample-t"><h2 id="en-sample-t">Amostra grátis: veja o que a comunidade sabe</h2><p>Exemplos aprovados para divulgação, sem identificar os membros.</p>${filterChips(CITY_NAMES.map(c=>[c,c]),city,'entry-sample-city')}<div class="en-cards" id="en-cards">${entrySample(city)}</div></section></div></div>`;
 }
 // Sair: os dados de teste ficam neste dispositivo; entrar de novo volta para o mesmo perfil.

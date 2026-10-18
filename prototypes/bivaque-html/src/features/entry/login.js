@@ -20,7 +20,7 @@ function renderEntryForgot(){
 function renderEntryGoogleConsent(){
  const a=entryData().account;
  return `<div class="en en-form">${entryTop('conta')}${entrySteps(1,'Conta')}<h1 class="en-h1" tabindex="-1">Antes de entrar, as regras.</h1><p class="en-lead">Você entrou com o Google como ${esc(a?.email||'')}.</p>
- <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">Li e aceito a Política de privacidade e o Código de conduta.</span></label><p class="en-err" id="en-err" role="alert"></p>
+ <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">${legalConsentText()}.</span></label><p class="en-err" id="en-err" role="alert"></p>
  ${btn('Concordar e continuar','entry-google-consent','','filled')}</div>`;
 }
 const entryInviteValid=i=>!i.used&&!!i.email&&!!i.at&&Date.now()-i.at<ENTRY_INVITE_DAYS*864e5;
@@ -33,7 +33,7 @@ function renderEntryInvite(){
  const from=inv.from||state.profile.name;
  return `<div class="en en-form">${entryTop('')}<div class="en-inv"><span class="en-av" aria-hidden="true">${esc(initals(from))}</span><span><b>${esc(from)} convidou você</b>para a família no Bivaque, em ${esc(state.homeCity)}.</span></div><h1 class="en-h1" tabindex="-1">Crie sua conta.</h1><p class="en-lead">Quem convidou já foi verificado. Você não precisa de CPF.</p>
  ${field('en-name','Nome',inv.name||'','required minlength="2" maxlength="80" autocomplete="name"')}${field('en-email','E-mail do convite',inv.email,'type="email" readonly autocomplete="email" supporting-text="O convite vale só para este e-mail."')}${entryPasswordField('en-pass','Senha')}
- <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">Li e aceito a Política de privacidade e o Código de conduta.</span></label><p class="en-err" id="en-err" role="alert"></p>
+ <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">${legalConsentText()}.</span></label><p class="en-err" id="en-err" role="alert"></p>
  ${btn('Aceitar convite','entry-invite-accept','','filled')}</div>`;
 }
 var entryForgotSent='',entryInviteCode='';
