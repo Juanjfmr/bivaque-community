@@ -1,0 +1,38 @@
+task_id: HTML-053
+objective: >
+  Rodada 53 (lote Entrada) cria a landing publica do Bivaque com a amostra gratis na propria
+  pagina (exemplos do arquivo da comunidade, sem identificar membros, por cidade), o Sair em Voce e
+  o bloqueio de rotas para quem saiu; Entrar volta ao mesmo perfil.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do lote Entrada; "Sim, como na v2")
+  - Decisao do usuario em 2026-10-17 - amostra gratis na landing; quem esta em analise nao le o Bivaque
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 00e6dbac. O prototipo abria direto na Inicio de um perfil pronto; nao havia landing, Sair
+    nem estado sem conta.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-053.task.yml
+forbidden:
+  - identificar membros na amostra
+  - abrir conteudo interno para quem saiu
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Sair leva a landing, fora da navegacao do app, e qualquer rota interna volta para ela
+  - A amostra mostra exemplos de Manaus sem nomes e troca de cidade
+  - Entrar volta ao mesmo perfil; quem esta dentro nao fica na landing
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round53-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round02-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: entrada
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

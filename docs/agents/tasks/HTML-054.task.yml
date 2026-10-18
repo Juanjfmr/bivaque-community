@@ -1,0 +1,42 @@
+task_id: HTML-054
+objective: >
+  Rodada 54 (lote Entrada) cria a conta e a elegibilidade como no app web: nome, e-mail e senha
+  com aceite da privacidade e do codigo de conduta (senha nunca guardada); CPF conferido pelos
+  digitos e pela fonte oficial simulada, nunca guardado; resultados confirmado, nao localizado com
+  envio de documento, em analise com linha do tempo e conteudo fechado, e fonte fora do ar.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do lote Entrada; "Sim, como na v2")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 00e6dbac. O cadastro do prototipo pedia vinculo e Forca e deixava escolher o resultado da
+    verificacao; nao havia conta, aceite, CPF, documento nem analise.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-054.task.yml
+forbidden:
+  - guardar senha ou CPF
+  - pedir posto, organizacao militar ou endereco
+  - abrir o conteudo do Bivaque para quem esta em analise
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Criar conta exige nome, e-mail valido, senha com letras e numeros e o aceite; e-mail existente e recusado
+  - A senha e o CPF nao aparecem no estado gravado
+  - CPF invalido fica no passo; confirmado segue para cidade e momento
+  - Nao localizado aceita documento PDF, JPG ou PNG ate 10 MB e leva a analise
+  - Em analise o conteudo fica fechado; a aprovacao (modo teste) segue para a cidade
+  - Fonte fora do ar oferece tentar de novo
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round54-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: verificacao-de-identidade
+adr: docs/decisions/ADR-20260816-forma-da-admissao.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
