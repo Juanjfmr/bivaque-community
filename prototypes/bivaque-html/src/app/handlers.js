@@ -11,6 +11,7 @@ async function perform(action,value,el){
  if(await entryAction(action,value))return;
  if(await legalAction(action,value))return;
  if(await hiddenAction(action,value))return;
+ if(await supportAction(action,value))return;
  if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
  if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;if(await manageAction(action,value,el))return;

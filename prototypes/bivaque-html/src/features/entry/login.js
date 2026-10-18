@@ -9,7 +9,7 @@ function renderEntryLogin(){
  ${btn('Continuar com Google','entry-google','login','outlined')}<p class="en-or">ou com e-mail</p>
  ${field('en-email','E-mail','','type="email" required autocomplete="email" inputmode="email"')}${entryPasswordField('en-pass-login','Senha')}<p class="en-err" id="en-err" role="alert"></p>
  ${btn('Entrar','entry-login-submit','','filled')}<p class="en-foot">${btn('Esqueci minha senha','entry-go','senha','text')}${btn('Criar conta','entry-go','conta','text')}</p>
- <p class="en-hint">Modo teste: use ${esc(state.profile.email||ENTRY_DEMO_EMAIL)} e qualquer senha.</p></div>`;
+ <p class="en-hint">${entryKnownEmail()?`Modo teste: use ${esc(entryKnownEmail())} e qualquer senha.`:'A conta anterior foi apagada neste aparelho. Crie uma nova.'}</p></div>`;
 }
 function renderEntryForgot(){
  const sent=entryForgotSent;
@@ -45,7 +45,7 @@ function entryLoginSubmit(){
  const email=entryEmail(),passField=$('#en-pass-login'),pass=passField?.value||'',e=entryData();
  const fail=()=>{if(passField)passField.value='';entryError('E-mail ou senha incorretos.','en-email');};
  if(!entryEmailOk(email)||!pass)return fail();
- if(email===(state.profile.email||ENTRY_DEMO_EMAIL)){entrySignInBack();return;}
+ if(email===entryKnownEmail()){entrySignInBack();return;}
  if(entryInProgress()&&e.account.email===email){navigate('entrar',entryNext());return;}
  fail();
 }
