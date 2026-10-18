@@ -70,6 +70,14 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   Sonda de volume: numa cidade grande, num celular médio, as listas abrem em menos de 1 s (antes,
   até 9,5 s). Revisão única, bateria e base visual em
   [VISUAL_BASELINE_R48](VISUAL_BASELINE_R48.md). Publicado em 17/10 (`1de94489…`).
+- **Painel do Bivaque, Rodadas 49 a 52 (18/10):** o console do dono da plataforma (Você →
+  Controles do protótipo → "Ver como dono do Bivaque"):
+  - visão geral com chegadas atendidas, métricas, O que mudou e a fila com prazo;
+  - revisão no painel lateral, com motivo para remover ou recusar;
+  - Filas, Cidades, Negócios e planos, Pessoas e equipe;
+  - a denúncia feita no app passa a ser registrada e chega à fila.
+  Revisão própria e revisão independente do GPT (Codex), bateria e base visual em
+  [VISUAL_BASELINE_R52](VISUAL_BASELINE_R52.md). Publicado em 18/10 (`c83703ea…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do

@@ -30,3 +30,30 @@ convidado). Base: `ee09174a`. Lote do painel do dono.
 | Gate (lint, tipos, testes, segredos) | PASS |
 
 Capturas: `.visual/bivaque-html-round52/telas/`.
+
+## Fechamento do lote do Painel do Bivaque (rodadas 49 a 52)
+
+Duas revisões para o lote todo: a própria e uma independente do GPT (via Codex, só leitura), e a
+bateria completa (375 claro, 768 claro e 1440 escuro).
+
+### Correções das revisões
+
+| Origem | Severidade | Problema | Correção |
+| --- | --- | --- | --- |
+| Própria | Alta | Anúncio ou pergunta removidos ainda abriam por Salvos e pelo endereço | Página "removido pela moderação"; somem de Salvos |
+| Própria | Alta | Decisão presa ao conteúdo: denúncia nova do mesmo anúncio nunca voltava | Grupos só com denúncias abertas; decidir fecha o grupo |
+| GPT | Alta | Id da denúncia vinha do relógio: com o tempo andando, Revisar e Assumir falhavam | Id vem da denúncia mais antiga do grupo |
+| GPT | Alta | Pergunta removida ainda aparecia em Minhas perguntas e nas origens do negócio | Filtrada nos dois lugares |
+| Própria | Média | Remover sem efeito em proposta, pedido e página | Remover só onde há efeito; o resto, dispensar |
+| Própria | Média | Aba vazia presa; foco perdido depois de decidir; carga da equipe errada; números de exemplo contraditórios; avisos diziam "enviado" | Corrigidos; avisos dizem "registrado (modo teste)" |
+| GPT | Média | Desfazer uma dispensa antiga reabria denúncia de conteúdo já removido | Bloqueado com aviso |
+| GPT | Média | Filtro por cidade recriava perguntas paradas já tratadas | Decisão e responsável por cidade |
+| GPT | Média | Proposta e pedido denunciados sem contexto | Mostram o conteúdo e abrem o pedido |
+| GPT | Média | Pedidos de orçamento iguais em toda cidade; catálogo de planos diferente do app; plano ativado no app ignorado | Por cidade; catálogo e preços do app; plano do app conta |
+
+### Pego pela bateria
+
+- R03: sem resultado (coincidiu com a geração de uma maquete); passou sozinha.
+- R50: a prova usava o limite de 720 px; o console troca a navegação em 1024 px.
+
+Base visual nova em [VISUAL_BASELINE_R52](VISUAL_BASELINE_R52.md).

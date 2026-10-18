@@ -2081,7 +2081,7 @@
       "priority": "P1",
       "category": "frontend",
       "status": "done",
-      "description": "Prototipo HTML concluido em 2026-10-14 e ampliado ate a Rodada 48 em 2026-10-17: Rodadas 00 a 06 PASS, varredura sem botao morto nas telas, prova ampla e gate verdes, lista de adaptadores entregue. Pendente decisao humana: aprovacao da parte comercial (R3, ADR).",
+      "description": "Prototipo HTML concluido em 2026-10-14 e ampliado ate a Rodada 52 em 2026-10-18: Rodadas 00 a 06 PASS, varredura sem botao morto nas telas, prova ampla e gate verdes, lista de adaptadores entregue. Pendente decisao humana: aprovacao da parte comercial (R3, ADR).",
       "checklist": [
         "Instalar e validar os 18 perfis e o manifesto",
         "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
@@ -2135,9 +2135,17 @@
         "Rodada45: listas longas em blocos de 24 com carregamento ao rolar",
         "Rodada46: blocos em Comunidade, busca, grupos, Conversas e Salvos",
         "Rodada47: salvar e Util sem redesenhar a lista",
-        "Rodada48: folha do bairro com Ver todos; revisao do lote de volume, bateria e nova base visual (2026-10-17)"
+        "Rodada48: folha do bairro com Ver todos; revisao do lote de volume, bateria e nova base visual (2026-10-17)",
+        "Rodada49: Painel do Bivaque, console do dono com visao geral e revisao; denuncia registrada no app",
+        "Rodada50: Filas do painel com abertas, decididas, assumir e desfazer",
+        "Rodada51: Cidades do painel com saude, embaixadores e convite",
+        "Rodada52: Negocios e planos, Pessoas e equipe; revisao propria e do GPT, bateria e nova base visual (2026-10-18)"
       ],
       "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
         true,
         true,
         true,
