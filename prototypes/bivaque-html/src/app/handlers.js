@@ -12,6 +12,7 @@ async function perform(action,value,el){
  if(await legalAction(action,value))return;
  if(await hiddenAction(action,value))return;
  if(await blockAction(action,value,el))return;
+ if(await planAction(action,value))return;
  if(await supportAction(action,value))return;
  if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
@@ -66,7 +67,7 @@ async function perform(action,value,el){
  }
  case 'home-city':if(mutate(()=>state.city=state.homeCity,{redraw:false})){if(dialog.open)await closeDialog(true);navigate('inicio');}break;
  case 'settings':openSettings();break;
- case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected;if(mutate(()=>{state.profile.name=name;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
+ case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected,hood=$('#profile-hood')?.value??state.profile.hood??'';if(mutate(()=>{state.profile.name=name;state.profile.hood=hood;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
  case 'prototype':openPrototype();break;
  case 'apply-prototype':{
   const stage=$('#prototype-stage').value,verified=$('#verified-test').selected,incoming=Math.min(10000,Math.max(0,Number($('#prototype-incoming').value)||0));
@@ -117,12 +118,11 @@ async function perform(action,value,el){
  case 'submit-indicate':await submitIndicate();break;
  case 'invite-owner':await copyText(`A comunidade do Bivaque indicou seu negócio. Conheça sua página: ${location.href}`);break;
  case 'claim-biz':if(state.myBiz?.live){notify('Você já tem uma página. Abra “Meu negócio” para editar.','info');break;}showDialog('Assumir página no modo teste',`${field('claim-name','Seu nome',state.profile.name,'required minlength="3" autocomplete=\"name\"')}<p class="form-note">Esta ação simula a confirmação do responsável. Na versão de produção, a propriedade precisará ser validada antes de editar a página.</p>`,`${btn('Cancelar','close-dialog','','text')}${btn('Assumir no modo teste','confirm-claim',value,'filled')}`);break;
- case 'confirm-claim':{const b=bizById(value);if(!b||!canPost()||!validFields(['claim-name']))break;if(mutate(()=>{state.myBiz={...b,mine:true,live:true,claimed:true,owner:$('#claim-name').value+' · responsável de teste'};state.biz=state.biz.filter(x=>x.id!==b.id);},{redraw:false})){await closeDialog(true);openBusinessEditor(b.id);}break;}
+ case 'confirm-claim':{const b=bizById(value);if(!b||!canPost()||!validFields(['claim-name']))break;if(mutate(()=>{state.myBiz={...b,spon:false,mine:true,live:true,claimed:true,owner:$('#claim-name').value+' · responsável de teste'};state.biz=state.biz.filter(x=>x.id!==b.id);},{redraw:false})){await closeDialog(true);openBusinessEditor(b.id);}break;}
  case 'whatsapp':{const b=bizById(value);if(b?.whatsapp){let n=b.whatsapp;if(n.length<=11)n='55'+n;external('https://wa.me/'+n);}break;}
  case 'instagram':{const b=bizById(value);if(b?.instagram)external('https://www.instagram.com/'+encodeURIComponent(b.instagram)+'/');break;}
  case 'website':{const b=bizById(value);if(b?.website&&/^https?:\/\//.test(b.website))external(b.website);break;}
  case 'plans':openPlans();break;
- case 'activate-plan':{const tier=$$('md-radio[name=plan]',dialog).find(x=>x.checked)?.value||'free';if(mutate(()=>{state.subscription.tier=tier;},{redraw:false})){await closeDialog(true);render();notify(tier==='free'?'Plano grátis selecionado':'Plano de teste ativado. Nenhum pagamento realizado.');}break;}
  case 'open-question':{
   const q=askById(value);if(!q)break;if(q.city!==state.city)mutate(()=>state.city=q.city,{redraw:false});if(dialog.dataset.kind==='editor'&&editor?.kind==='ask')mutate(()=>state.askDraft=$('#ask-input')?.value||'',{redraw:false});remember('ask',value);if(dialog.open)await closeDialog(true);navigate('pergunta',value);break;
  }

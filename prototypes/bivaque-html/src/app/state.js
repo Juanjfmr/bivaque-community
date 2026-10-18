@@ -36,7 +36,8 @@ function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.bi
 function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden&&!x.hiddenByMe&&(x.mine||!isBlocked(x.who)));}
 // Respostas e comentários que a pessoa vê: sem os de quem bloqueou e sem os removidos pela moderação.
 const askAnswers=q=>q.answers.filter(a=>!a.hidden&&(a.mine||!isBlocked(a.who)));
-const groupPosts=g=>g.posts.filter(p=>p.mine||!isBlocked(p.author));
+// Rodada 63: com "Permitir oferta de negócio de membro" desligado, as ofertas do grupo ficam ocultas (os dados ficam).
+const groupPosts=g=>g.posts.filter(p=>(p.mine||!isBlocked(p.author))&&(p.type!=='offer'||g.allowOffers));
 const postComments=p=>p.comments.filter(c=>!c.hidden&&(c.mine||!isBlocked(c.author)));
 function cityGroups(){return state.groups.filter(x=>x.city===state.city);}
 const itemById=id=>state.items.find(x=>x.id===id);

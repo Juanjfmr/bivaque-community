@@ -37,8 +37,9 @@ async function messagingAction(action,value,el){
   if(isBlocked(t.who)){messagingFeedback(`Você bloqueou ${t.who}.`);return true;}
   if(!messagingCanWrite())return true;
   if(!text||raw.length>2000){messagingFeedback(!text?'Escreva uma mensagem antes de enviar.':'A mensagem pode ter até 2.000 caracteres.',{invalid:true});input.focus({preventScroll:true});return true;}
+  const gate=planReplyGate(t);if(gate.blocked){planLimitDialog();return true;}
   messagingFeedback('Salvando mensagem neste dispositivo…');
-  const saved=mutate(()=>{const thread=threadById(value);thread.msgs.push({me:true,t:text,at:Date.now()});thread.updatedAt=Date.now();thread.unread=false;thread.draft='';},{redraw:false});
+  const saved=mutate(()=>{const thread=threadById(value);thread.msgs.push({me:true,t:text,at:Date.now()});thread.updatedAt=Date.now();thread.unread=false;thread.draft='';if(gate.isNew)planCountReply(thread);},{redraw:false});
   if(!saved){messagingFeedback('Não foi possível salvar a mensagem. O texto foi mantido; libere espaço e tente novamente.');input.focus({preventScroll:true});return true;}
   messagingDrafts.delete(value);render();messagingFeedback('Mensagem fictícia salva neste dispositivo.');return true;
  }

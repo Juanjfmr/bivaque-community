@@ -18,14 +18,15 @@ const availLabel=v=>v==='now'?'Disponível agora':v==='30'?'Em até 30 dias':v==
 // Quantos grupos de filtro estão ativos (o número da pílula "Filtros").
 function filterActiveCount(kind,a=catalogAttrs[kind]){
  const price=hasPrice(a.min)||hasPrice(a.max)?1:0;
- return kind==='imovel'?price+(a.ptypes.length?1:0)+(a.hoods.length?1:0)+(a.beds?1:0)+(a.parking?1:0)+(a.area?1:0)+a.amen.length+(a.avail?1:0):price+(a.cats.length?1:0)+(a.hoods.length?1:0)+(a.cond?1:0)+(a.pickup?1:0);
+ const hoods=cityHasHoods()&&a.hoods.length?1:0;
+ return kind==='imovel'?price+(a.ptypes.length?1:0)+hoods+(a.beds?1:0)+(a.parking?1:0)+(a.area?1:0)+a.amen.length+(a.avail?1:0):price+(a.cats.length?1:0)+hoods+(a.cond?1:0)+(a.pickup?1:0);
 }
 function catalogPillsHtml(kind){
  const a=catalogAttrs[kind],n=filterActiveCount(kind),pill=(key,label,on)=>`<button type="button" class="fpill${on?' on':''}" data-action="catalog-pill" data-value="${key}" aria-haspopup="dialog">${esc(label)}${icon('expand_more')}</button>`;
  const toggle=(k,ic,label)=>{const on=a.amen.includes(k);return `<button type="button" class="fpill${on?' on':''}" data-action="catalog-toggle" data-value="${k}" aria-pressed="${on}">${icon(ic)}${esc(label)}</button>`;};
  const all=`<button type="button" class="fpill fall${n?' on':''}" data-action="catalog-pill" data-value="all" aria-haspopup="dialog" aria-label="${n?`Filtros, ${n} ativos`:'Filtros'}">${icon('tune')}${FILTER_DESKTOP.matches?'Todos os filtros':'Filtros'}${n?`<span class="fbadge" aria-hidden="true">${n}</span>`:''}</button>`;
  const price=pill('price',priceLabel(kind,a.min,a.max),hasPrice(a.min)||hasPrice(a.max));
- const hood=pill('hood',manyLabel(a.hoods,'Bairro','bairros'),a.hoods.length);
+ const hood=cityHasHoods()?pill('hood',manyLabel(a.hoods,'Bairro','bairros'),a.hoods.length):'';
  const items=kind==='imovel'?[pill('ptype',manyLabel(a.ptypes,'Tipo','tipos'),a.ptypes.length),price,pill('beds',[a.beds?`${a.beds}+ quartos`:'',a.parking?`${a.parking}+ ${a.parking===1?'vaga':'vagas'}`:''].filter(Boolean).join(' · ')||'Quartos',a.beds||a.parking),hood,pill('avail',availLabel(a.avail),a.avail),toggle('pets','pets','Aceita pets'),toggle('furnished','chair','Mobiliado')]:[pill('cat',manyLabel(a.cats,'Categoria','categorias'),a.cats.length),price,pill('cond',a.cond||'Estado',a.cond),pill('pickup',a.pickup==='now'?'Retirada imediata':a.pickup==='30'?'Retirada em 30 dias':'Retirada',a.pickup),hood];
  return `<div class="fpills" role="group" aria-label="Filtros de ${kind==='imovel'?'imóveis':'desapegos'}">${all}${items.join('')}</div>`;
 }
@@ -56,7 +57,7 @@ function fpSection(id){
  if(id==='pickup')return fpGroup(id,'Retirada',chips('pickup',[['','Qualquer data'],['now','Retirada imediata'],['30','Em até 30 dias']]));
  return '';
 }
-function fpSections(){const {kind,key}=filterDraft;return key==='all'?FILTER_SECTIONS[kind]:key==='beds'?['beds','parking']:[key];}
+function fpSections(){const {kind,key}=filterDraft;return (key==='all'?FILTER_SECTIONS[kind]:key==='beds'?['beds','parking']:[key]).filter(id=>id!=='hood'||cityHasHoods());}
 function fpCount(){const {kind,attrs}=filterDraft;return filteredItems(kind,attrs).length;}
 function filterPanelHtml(){
  const {kind,key,mode}=filterDraft,title=key==='price'?(kind==='imovel'?'Total por mês':'Preço'):FILTER_TITLES[key];
