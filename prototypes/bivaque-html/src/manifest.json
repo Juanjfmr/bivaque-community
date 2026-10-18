@@ -39,6 +39,7 @@
         "styles/search-mobile.css",
         "styles/paged.css",
         "styles/owner.css",
+        "styles/entry.css",
         "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
@@ -114,6 +115,10 @@
         "features/owner/queues.js",
         "features/owner/cities.js",
         "features/owner/business-team.js",
+        "features/entry/landing.js",
+        "features/entry/account.js",
+        "features/entry/login.js",
+        "features/entry/arrive.js",
         "features/listings/editor.js",
         "features/listings/wizard.js",
         "features/listings/share-card.js",
@@ -130,7 +135,6 @@
         "features/requests/views.js",
         "features/requests/handlers.js",
         "features/profile/demo-actions.js",
-        "features/auth/onboarding.js",
         "features/messaging/actions.js",
         "shell/bindings.js",
         "motion/gestures.js",

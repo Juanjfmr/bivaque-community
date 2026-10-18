@@ -60,6 +60,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07v/CSS | `src/styles/search-mobile.css` | Frontend premium | Rodada 44: busca em tela cheia com recentes, explorar e sugestões |
 | 07w/CSS | `src/styles/paged.css` | Frontend premium | Rodada 45: fim de bloco das listas longas |
 | 07x/CSS | `src/styles/owner.css` | Frontend premium | Rodada 49: Painel do Bivaque (console do dono) |
+| 07y/CSS | `src/styles/entry.css` | Frontend premium | Rodada 53: landing pública e entrada |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -113,6 +114,10 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 36/Appbe | `src/features/owner/queues.js` | Perfil | Rodada 50: Filas do Painel do Bivaque: abertas e decididas, assumir e desfazer |
 | 36/Appbf | `src/features/owner/cities.js` | Perfil | Rodada 51: Cidades do Painel do Bivaque: saúde, embaixadores e convite |
 | 36/Appbg | `src/features/owner/business-team.js` | Perfil | Rodada 52: Negócios e planos e Pessoas e equipe do Painel do Bivaque |
+| 36/Appbh | `src/features/entry/landing.js` | Perfil | Rodada 53: landing com amostra grátis, Sair e Entrar |
+| 36/Appbi | `src/features/entry/account.js` | Perfil | Rodada 54: criar conta e elegibilidade (CPF, resultados, documento, em análise) |
+| 36/Appbj | `src/features/entry/login.js` | Perfil | Rodada 55: entrar, recuperar a senha, Google com aceite e convite familiar |
+| 36/Appbk | `src/features/entry/arrive.js` | Perfil | Rodada 56: passo 3 (cidade, momento e nome), boas-vindas e entrada em análise na fila do dono |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |
@@ -126,7 +131,6 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 40/App | `src/features/community/editor.js` | Memória/indicações | Pedir indicação e perguntas similares |
 | 41/App | `src/features/businesses/indication.js` | Negócios/serviços | Indicação local de negócio |
 | 42/App | `src/features/profile/demo-actions.js` | Perfil/família/movimentação | Planos, convites familiares e denúncia; coordenar Monetização/Segurança |
-| 43/App | `src/features/auth/onboarding.js` | Acesso/onboarding | Cadastro e verificação fictícios |
 | 44/App | `src/features/messaging/actions.js` | Conversas/notificações | Contato/conversa, dispatch de mensagens; contém share/copy e simulação de respostas compartilhados |
 | 45/App | `src/shell/bindings.js` | Frontend premium | Bindings de tela/dialog e links externos |
 | 45a/App | `src/features/requests/model.js` | Negócios/serviços | Rodada 11: pedido aberto e propostas — regras, elegibilidade, simulação (ADR-20261015) |

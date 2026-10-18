@@ -9,6 +9,7 @@ function ownerReviewBody(q){
   const t=reportTarget(q.type,q.target),who=t?.seller||t?.who||t?.name||'';
   return `<p>${esc(q.title)}${who?` · ${esc(who)}`:''}</p><h3>Denúncias</h3><ul class="ow-reports">${q.list.map(r=>`<li><b>${esc(REPORT_REASONS[r.reason]||r.reason)}</b>${r.details?` · “${esc(r.details)}”`:''}<small>${ownerAgo(r.at)}${r.demo?'':' · feita neste dispositivo'}</small></li>`).join('')}</ul>${t&&q.type==='item'?btn('Abrir o anúncio','open-item',t.id,'text','open_in_new'):''}${t&&(q.type==='request'||q.type==='proposal')?btn('Abrir o pedido','open-request',q.type==='request'?t.id:t.request.id,'text','open_in_new'):''}${q.removable?'':'<p class="form-note">Este tipo de conteúdo ainda não é removido pelo painel: dispense ou trate com o responsável.</p>'}<h3>Decisão</h3>${ownerReason()}<p class="form-note">Remover tira o conteúdo das listas e da busca. Dispensar mantém o conteúdo e fecha as denúncias.</p>`;
  }
+ if(q.kind==='verify'&&q.entry)return ownerEntryReviewBody(q);
  if(q.kind==='verify'){const v=q.data;return `<p>Pediu acesso como família chegando a ${esc(v.city)} ${esc(v.when)}. Convidada por ${esc(v.invitedBy)}, verificado.</p><h3>Documento</h3><div class="ow-doc">Documento enviado (exemplo)</div><h3>Conferir</h3>${ownerChecks(v.checks)}<h3>Histórico</h3><p class="small muted">Primeiro pedido. Nenhuma denúncia.</p><h3>Se for recusar</h3>${ownerReason()}`;}
  if(q.kind==='claim'){const b=q.biz;return `<p>${esc(b.name)} · ${esc(b.cat)} · ${esc(b.city)}</p><h3>Conferir</h3>${ownerChecks([['Indicada pela comunidade',(b.recN||0)>0],['CNPJ e telefone conferem',true],['Quem pede é o responsável',false]])}${btn('Abrir a página','open-biz',b.id,'text','open_in_new')}<h3>Se for recusar</h3>${ownerReason()}`;}
  const rows=q.asks.slice(0,5).map(a=>`<li><b>${esc(a.q)}</b><small>${esc(a.city)} · ${ownerAgo(a.createdAt)}</small></li>`).join('');
@@ -17,6 +18,7 @@ function ownerReviewBody(q){
 function ownerReviewActions(q){
  const a=(label,d,kind='outlined')=>btn(label,'owner-decide',`${q.id}~${d}`,kind);
  if(q.kind==='report')return `${a('Dispensar','dismiss',q.removable?'text':'filled')}${q.removable?a('Remover','remove','filled'):''}`;
+ if(q.kind==='verify'&&q.entry)return `${a('Pedir outro documento','more','text')}${a('Aprovar','approve','filled')}`;
  if(q.kind==='verify')return `${a('Pedir outro documento','more','text')}${a('Recusar','reject')}${a('Aprovar','approve','filled')}`;
  if(q.kind==='claim')return `${a('Recusar','reject')}${a('Aprovar','approve','filled')}`;
  return a('Chamar embaixadores','call','filled');
@@ -41,6 +43,9 @@ function ownerDecide(value){
    if(d==='remove'&&q.type==='item'&&t){undo.item=t.id;undo.itemStatus=t.status;t.status='removed';}
    if(d==='remove'&&q.type==='ask'&&t){undo.ask=t.id;undo.askHidden=!!t.hidden;t.hidden=true;}
   }
+  // Entrada em análise neste dispositivo: aprovar libera o passo da cidade; pedir outro documento volta ao envio.
+  // O desfazer guarda de quem era a entrada e o estado que a decisão deixou, para não valer em outra conta.
+  if(q.entry&&['approve','more'].includes(d)){const before=state.entry,after=d==='approve'?{eligibility:'verified',asked:false,doc:before.doc||null}:{eligibility:'pending',asked:true,doc:null};undo.entry={email:before.account.email,before:{eligibility:before.eligibility,asked:!!before.asked,doc:before.doc||null},after};state.entry={...before,...after};}
   if(q.kind==='claim'&&d==='approve'){undo.biz=q.biz.id;undo.hasClaimed=true;undo.claimed=q.biz.claimed??null;q.biz.claimed=true;}
   if(q.kind==='report')undo.target={type:q.type,id:q.target};
   if(q.kind==='stale'){undo.cityIds=q.cityIds;for(const c of q.cityIds)o.decisions[c]={d,reason:'',at:Date.now(),title:q.title,kind:'stale',city:'',part:id};}

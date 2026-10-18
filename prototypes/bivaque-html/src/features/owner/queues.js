@@ -28,12 +28,15 @@ function ownerUndo(id){
  const d=ownerData().decisions[id];if(!d)return;
  const tg=d.undo?.target,gone=tg&&(tg.type==='item'?itemById(tg.id)?.status==='removed':tg.type==='ask'?!!askById(tg.id)?.hidden:false);
  if(gone&&d.d!=='remove'){notify('Este conteúdo foi removido por outra decisão. Desfaça a remoção primeiro.','info');return;}
+ const ue=d.undo?.entry,cur=state.entry;
+ if(ue&&(!cur?.account||cur.done||cur.account.email!==ue.email||cur.eligibility!==ue.after?.eligibility||!!cur.asked!==!!ue.after?.asked)){notify('A pessoa já seguiu na entrada. Esta decisão não pode mais ser desfeita.','info');return;}
  if(!mutate(()=>{
   const o=state.owner,u=d.undo||{};
   if(u.itemStatus){const i=itemById(u.item);if(i)i.status=u.itemStatus;}
   if(u.askHidden!==undefined){const a=askById(u.ask);if(a)a.hidden=u.askHidden;}
   if(u.reportIds)for(const r of state.reports||[])if(u.reportIds.includes(r.id))r.status='open';
   if(u.demoIds?.length)o.closedDemo=(o.closedDemo||[]).filter(x=>!u.demoIds.includes(x));
+  if(u.entry)state.entry={...state.entry,...u.entry.before};
   if(u.hasClaimed){const b=bizById(u.biz);if(b){if(u.claimed===null)delete b.claimed;else b.claimed=u.claimed;}}
   for(const c of u.cityIds||[])delete o.decisions[c];
   delete o.decisions[id];o.log=[{at:Date.now(),text:`${d.title||id}: decisão desfeita`},...o.log].slice(0,50);

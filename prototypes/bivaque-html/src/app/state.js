@@ -14,7 +14,7 @@ let state;
 try{const raw=JSON.parse(localStorage.getItem(KEY));state=normalizeListings(normalizeCategories(raw?.schema===2?raw:initial()));}catch{state=normalizeListings(normalizeCategories(initial()));}
 let route={name:'inicio',id:null};
 let origin='inicio', communityTab='ind', questionFilter='help', catalogFilter='all', searchType='all', searchQuery='', searchHood='Todos', searchMin='', searchMax='', searchSort='recent',bizCat='Todos',bizQuery='',myAdsFilter='active',savedType='all';
-let editor=null,editorDirty=false,onboardStep=1,onboardDraft=null,toastTimer,toastUndo=null,searchTimer;
+let editor=null,editorDirty=false,toastTimer,toastUndo=null,searchTimer;
 let createOpen=false,createAnchor=null,createFocusIndex=0,createClosingHistory=false,createHistoryDone=null,createHistoryPromise=null;
 let navMinimized=false,lastNavY=0;
 let dialogClosingHistory=false,dialogHistoryDone=null,dialogHistoryPromise=null;
@@ -37,7 +37,8 @@ const askById=id=>state.asks.find(x=>x.id===id);
 const threadById=id=>state.threads.find(x=>x.id===id);
 const readonly=()=>state.city!==state.homeCity;
 function canPost(){
+ if(state.signedOut)return false;
  if(readonly()){notify(`Você está consultando ${state.city}. Publique na sua cidade, ${state.homeCity}.`,'info');return false;}
- if(!state.profile.verified){openOnboarding();return false;}return true;
+ if(!state.profile.verified){showDialog('Perfil em análise','<p class="form-note">Publicar libera quando a equipe aprovar seu perfil. Nada foi publicado.</p>',btn('Voltar','close-dialog','','filled'),'unverified');return false;}return true;
 }
 function accessibleRecord(record){return record&&record.city===state.city;}

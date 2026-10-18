@@ -18,13 +18,13 @@ dialog.addEventListener('cancel',e=>{if(editorDirty){e.preventDefault();closeDia
 dialog.addEventListener('closed',()=>{editor=null;editorDirty=false;dropDialogHistory();navigationFocus(dialogReturnDescriptor);});
 function overlayAnimation(open){
  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return {dialog:[],scrim:[]};
- const drawer=dialog.dataset.kind==='prototype',full=dialog.dataset.kind==='onboarding',from=drawer?'translateX(100%)':full?'translateY(100%)':'translateY(105%)';
+ const drawer=dialog.dataset.kind==='prototype',from=drawer?'translateX(100%)':'translateY(105%)';
  return {dialog:[[[{transform:open?from:'none'},{transform:open?'none':from}],{duration:open?500:240,easing:'cubic-bezier(.32,.72,0,1)'}]],scrim:[[[{opacity:open?0:.32},{opacity:open?.32:0}],{duration:open?300:200}]]};
 }
 dialog.getOpenAnimation=()=>overlayAnimation(true);dialog.getCloseAnimation=()=>overlayAnimation(false);
 function bindSheetDrag(){
  const grab=$('.sheet-grab',dialog);if(!grab)return;let drag=null;
- grab.addEventListener('pointerdown',e=>{if(innerWidth>=720||['prototype','onboarding'].includes(dialog.dataset.kind))return;drag={id:e.pointerId,y:e.clientY,t:Date.now(),dy:0};grab.setPointerCapture(e.pointerId);e.preventDefault();});
+ grab.addEventListener('pointerdown',e=>{if(innerWidth>=720||dialog.dataset.kind==='prototype')return;drag={id:e.pointerId,y:e.clientY,t:Date.now(),dy:0};grab.setPointerCapture(e.pointerId);e.preventDefault();});
  grab.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;drag.dy=Math.max(0,e.clientY-drag.y);dialog.shadowRoot.querySelector('dialog').style.translate='0 '+drag.dy+'px';});
  const end=e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;dialog.shadowRoot.querySelector('dialog').style.translate='';if(e.type!=='pointercancel'&&(d.dy>110||(d.dy>30&&d.dy/Math.max(1,Date.now()-d.t)>.5)))closeDialog();};
  grab.addEventListener('pointerup',end);grab.addEventListener('pointercancel',end);

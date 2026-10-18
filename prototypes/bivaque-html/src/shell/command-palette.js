@@ -36,7 +36,8 @@ function renderPalette(q){
 function setPaletteActive(n,scroll=true){if(!paletteItems.length)return;paletteActive=(n+paletteItems.length)%paletteItems.length;for(const el of $$('.palette-option',$('#palette-list')))el.setAttribute('aria-selected',String(Number(el.dataset.paletteIndex)===paletteActive));$('#palette-input').setAttribute('aria-activedescendant',`palette-opt-${paletteActive}`);if(scroll)$(`#palette-opt-${paletteActive}`)?.scrollIntoView({block:'nearest'});}
 function paletteKeys(e){if(e.isComposing||e.keyCode===229)return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();setPaletteActive(paletteActive+(e.key==='ArrowDown'?1:-1));}else if(e.key==='Enter'){e.preventDefault();runPalette(paletteActive);}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closePalette();}}
 function openPalette(){
- if(createOpen||dialog.open||confirmDialog.open)return;const el=paletteEl();if(!el.hidden)return;paletteReturn=document.activeElement;
+ // Quem saiu ou ainda está na entrada não consulta o conteúdo pela paleta.
+ if(state.signedOut||route.name==='entrar'||createOpen||dialog.open||confirmDialog.open)return;const el=paletteEl();if(!el.hidden)return;paletteReturn=document.activeElement;
  el.hidden=false;for(const id of PALETTE_BEHIND)$(id)&&($(id).inert=true);const input=$('#palette-input');input.value='';renderPalette('');
  requestAnimationFrame(()=>{el.classList.add('open');input.focus({preventScroll:true});});
 }

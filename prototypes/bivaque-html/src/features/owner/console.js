@@ -48,7 +48,8 @@ function ownerStale(){
 function ownerQueue(){
  const v=OWNER_DEMO.verifications.map(x=>{const at=Date.now()-x.hoursAgo*36e5;return {id:`verify:${x.id}`,kind:'verify',data:x,city:x.city,at,due:at+OWNER_SLA,icon:'verified_user',tone:'blue',title:`${x.name} pediu verificação`,sub:`Chegando a ${x.city} ${x.when}`};});
  const c=OWNER_DEMO.claims.map(x=>{const b=bizById(x.biz);if(!b)return null;const at=Date.now()-x.hoursAgo*36e5;return {id:`claim:${x.id}`,kind:'claim',data:x,biz:b,city:b.city,at,due:at+3*OWNER_DAY,icon:'storefront',tone:'green',title:`${b.name} reivindicou a página`,sub:`Indicada em ${b.recN||1} ${b.recN===1?'conversa':'conversas'}`};}).filter(Boolean);
- return [...ownerReports(),...v,...c,...ownerStale()].filter(q=>!ownerDecided(q.id)&&(ownerCity==='Todas'||q.city===ownerCity||q.cities?.[ownerCity])).sort((a,b)=>a.due-b.due);
+ const me=ownerEntryVerification();
+ return [...ownerReports(),...(me?[me]:[]),...v,...c,...ownerStale()].filter(q=>!ownerDecided(q.id)&&(ownerCity==='Todas'||q.city===ownerCity||q.cities?.[ownerCity])).sort((a,b)=>a.due-b.due);
 }
 const ownerCities=()=>Object.keys(OWNER_DEMO.cities);
 function ownerSpark(pts,bad){const max=Math.max(...pts),min=Math.min(...pts),d=pts.map((p,i)=>`${(i/(pts.length-1)*100).toFixed(1)},${(32-(p-min)/(max-min||1)*28).toFixed(1)}`).join(' ');return `<svg viewBox="0 0 100 34" preserveAspectRatio="none" aria-hidden="true"><polyline points="${d}" fill="none" stroke="${bad?'var(--owner-bad)':'var(--md-sys-color-primary)'}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;}
