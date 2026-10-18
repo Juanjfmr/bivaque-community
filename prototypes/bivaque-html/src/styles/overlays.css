@@ -30,3 +30,7 @@ md-dialog[data-kind=prototype] .sheet-grab{display:none}
 .search-mode main{top:calc(76px + env(safe-area-inset-top))}
 .pill.ok{background:var(--md-sys-color-success-container);color:var(--md-sys-color-on-success-container)}.answer.accepted{border-color:var(--md-sys-color-success)}
 
+
+/* Rodada 59: confirmacao destrutiva (Excluir) e item de menu perigoso */
+.danger-fill{--md-filled-button-container-color:var(--md-sys-color-error);--md-filled-button-label-text-color:var(--md-sys-color-on-error);--md-filled-button-hover-label-text-color:var(--md-sys-color-on-error);--md-filled-button-focus-label-text-color:var(--md-sys-color-on-error);--md-filled-button-pressed-label-text-color:var(--md-sys-color-on-error)}
+.create-menu-action.danger-action{--md-filled-tonal-button-label-text-color:#ffc9c2;--md-filled-tonal-button-icon-color:#ffc9c2}

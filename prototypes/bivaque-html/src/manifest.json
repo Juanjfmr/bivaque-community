@@ -132,6 +132,7 @@
         "features/events/editor.js",
         "features/businesses/editor.js",
         "features/community/editor.js",
+        "features/community/manage.js",
         "features/businesses/indication.js",
         "features/requests/model.js",
         "features/requests/views.js",

@@ -29,7 +29,7 @@ function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false){
  const panel=!customChoices&&!contextMenu&&anchor?.id==='fab'&&createPanelMQ.matches;
  const popup=$('#create-menu');popup.classList.toggle('context-menu',contextMenu);popup.classList.toggle('create-panel',panel);popup.setAttribute('role',panel?'dialog':'menu');popup.setAttribute('aria-label',contextMenu?'Ações do anúncio':'Criar publicação');$('#create-scrim').classList.toggle('context-menu',contextMenu);
  popup._closing?.cancel();popup.style.pointerEvents='';delete popup.dataset.placed;
- popup.innerHTML=panel?createPanelHtml():choices.map(([ic,title,action,sub,value])=>`<md-filled-tonal-button type="button" class="create-menu-action" role="menuitem" data-action="${action}"${value!==undefined?` data-value="${esc(value)}"`:''}>${icon(ic,'icon')}<span class="create-menu-label">${esc(title)}${sub?`<span class="create-menu-sub">${esc(sub)}</span>`:''}</span></md-filled-tonal-button>`).join('');
+ popup.innerHTML=panel?createPanelHtml():choices.map(([ic,title,action,sub,value,danger])=>`<md-filled-tonal-button type="button" class="create-menu-action${danger?' danger-action':''}" role="menuitem" data-action="${action}"${value!==undefined?` data-value="${esc(value)}"`:''}>${icon(ic,'icon')}<span class="create-menu-label">${esc(title)}${sub?`<span class="create-menu-sub">${esc(sub)}</span>`:''}</span></md-filled-tonal-button>`).join('');
  // The pinned Material button delegates its aria properties but does not
  // render role on its inner button. Preserve the menu's accessible semantics.
  popup.querySelector('.cp-close')?.addEventListener('click',()=>closeCreateMenu());

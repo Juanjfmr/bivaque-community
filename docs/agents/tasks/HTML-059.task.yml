@@ -1,0 +1,55 @@
+task_id: HTML-059
+objective: >
+  Rodada 59 do Lote Funcional: quem publicou edita e exclui o que publicou. Pergunta (menu de tres
+  pontos so para o autor: Editar pergunta, Marcar como resolvida, Compartilhar, Excluir pergunta, com
+  confirmacao que diz quantas respostas saem), resposta minha numa pergunta (Editar e Excluir; excluir a
+  solucao devolve a pergunta a sem solucao), publicacao e comentario meus em grupo (Editar e Excluir com
+  contadores coerentes; enquete com votos so muda o texto) e encontro meu em grupo ou na Agenda (editar
+  e cancelar avisam quem confirmou presenca, aviso local). Conteudo de outra pessoa nao muda.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 59 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18 (secao C, primeira linha) e da maquete funcional aprovada (quadros 1 e 2)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 09e27711 (Rodada 58), build sem alteracoes (SHA256 cbe06eab). Prova round59 em 375-light:
+    14 de 14 checkpoints FAIL (pergunta propria sem menu de tres pontos; resposta, publicacao e
+    comentario proprios sem Editar nem Excluir; confirmacao sem o numero de respostas; encontro de
+    grupo sem editar nem cancelar; encontro da Agenda cancelado sem avisar quem confirmou).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-059.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - fora do escopo: denunciar, bloquear e conteudo de outra pessoa ficam para a rodada 60
+acceptance:
+  - O menu de tres pontos da pergunta aparece so para o autor e oferece Editar pergunta, Marcar como resolvida (ou Reabrir pergunta), Compartilhar e Excluir pergunta
+  - Editar pergunta reabre o texto preenchido e salva no mesmo registro, com a marca editada; texto curto demais nao salva
+  - Excluir pergunta pede confirmacao com o numero de respostas e Isso nao pode ser desfeito; depois some das listas, da busca, da pagina do negocio que a citava, de Retomar, e o aviso que apontava para ela deixa de abrir
+  - Resposta minha tem Editar e Excluir (com confirmacao); excluir a resposta marcada como solucao devolve a pergunta a sem solucao
+  - Publicacao e comentario meus em grupo tem Editar e Excluir (confirmacao na exclusao) e os contadores de comentarios ficam coerentes; excluir o comentario que resolveu reabre a publicacao e retira a indicacao do negocio
+  - Enquete com votos so muda o texto (opcoes e votos ficam); sem votos as opcoes tambem mudam, com o minimo de duas
+  - Encontro meu em grupo e na Agenda tem Editar e Cancelar com confirmacao; mudar data, horario ou local, ou cancelar, avisa quantas pessoas que confirmaram foram avisadas
+  - O menu nao aparece em conteudo de outra pessoa; armazenamento cheio nao perde nada e avisa que nao salvou; o Ocultar pessoal e a moderacao seguem como estavam
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round59-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round57-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round04-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round05-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round06-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round07-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round32-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: exclusao de conteudo publicado pela propria pessoa, sem desfazer; mexe em perguntas, respostas, publicacoes e encontros guardados no aparelho
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
