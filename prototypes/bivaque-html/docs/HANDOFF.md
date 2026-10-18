@@ -62,6 +62,14 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   - busca em tela cheia com recentes, explorar e sugestões.
   Revisão única, bateria e base visual em [VISUAL_BASELINE_R44](VISUAL_BASELINE_R44.md).
   Publicado em 17/10 (`eb4969db…`).
+- **Lote de volume, Rodadas 45 a 48 (17/10):**
+  - listas longas em blocos de 24, com carregamento ao rolar e contagem;
+  - blocos também em Comunidade, busca, grupos, Conversas, Salvos e Meus anúncios;
+  - salvar e "Útil" sem redesenhar a lista;
+  - folha do bairro com muitos anúncios terminando em "Ver todos".
+  Sonda de volume: numa cidade grande, num celular médio, as listas abrem em menos de 1 s (antes,
+  até 9,5 s). Revisão única, bateria e base visual em
+  [VISUAL_BASELINE_R48](VISUAL_BASELINE_R48.md). Publicado em 17/10 (`1de94489…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do

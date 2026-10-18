@@ -23,3 +23,30 @@ Lote de volume.
 | Gate (lint, tipos, testes, segredos) | PASS |
 
 Captura: `.visual/bivaque-html-round48/telas/`.
+
+## Fechamento do lote de volume (rodadas 45 a 48)
+
+Uma revisão para o lote todo e a bateria completa (375 claro, 768 claro e 1440 escuro).
+
+### Correções da revisão (nenhum item crítico ou alto)
+
+| Severidade | Problema | Correção |
+| --- | --- | --- |
+| Média | A antecedência de 600 px não valia: quem rola é o `#main`, não a janela | O observador usa o `#main` (ou o diálogo) como raiz |
+| Média | Blocos acrescentados ficavam sem os gestos (segurar, deslizar) | Os gestos passam pelos blocos novos; os laços ficaram idempotentes |
+| Média | "Mostrar mais" no feed perdia o foco | O foco vai ao item novo |
+| Média | Salvar trocava também o item do menu de segurar | O menu fica de fora |
+| Baixa | Completar pela seta não religava o carregamento | Religa |
+| Baixa | O diálogo do bairro reabria com o bloco antigo | Abre no primeiro bloco |
+| Baixa | Carregamento pendente valia para uma lista redesenhada | Só vale para a lista em tela |
+| Baixa | "Você viu os 30 perguntas" | Artigo concorda (as perguntas, as conversas) |
+| Baixa | A contagem nova não era anunciada | Região viva fixa, só o texto muda |
+
+### Pego pelas provas antigas e pela bateria
+
+- **Bloco mínimo de 24 (R06):** uma lista curta que ganhava um item escondia o novo; corrigido.
+- **R12 e R19:** falharam uma vez por disputa de processador e passaram sozinhas.
+- **R21:** o "voltar" do diálogo de cidade, com a animação ligada, desfazia a troca de endereço
+  da prova; o `go()` do harness confere e troca de novo.
+
+Base visual nova em [VISUAL_BASELINE_R48](VISUAL_BASELINE_R48.md).
