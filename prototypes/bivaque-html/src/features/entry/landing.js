@@ -29,8 +29,8 @@ async function entryAction(action,value){
  if(action==='sign-out'){entrySignOut();return true;}
  if(action==='entry-sample-city'){entrySampleCity=value;const c=$('#en-cards');if(c)c.innerHTML=entrySample(value);for(const ch of $$('[data-action="entry-sample-city"]'))ch.selected=ch.dataset.value===value;return true;}
  // Quem está no meio da entrada volta para o passo em que parou; quem já é membro volta ao app.
- if(action==='entry-login'){const e=entryData();if(e.account&&e.eligibility&&e.eligibility!=='verified'){navigate('entrar',e.eligibility==='pending'?'analise':e.eligibility==='none'?'cpf':'resultado');return true;}entrySignInBack();return true;}
+ if(action==='entry-login'){const e=entryData();if(e.account&&e.eligibility&&e.eligibility!=='verified'){navigate('entrar',e.eligibility==='pending'?'analise':e.eligibility==='none'?'cpf':'resultado');return true;}navigate('entrar','login');return true;}
  if(action==='entry-join'){navigate('entrar','conta');return true;}
- if(action==='entry-invite'){openOnboarding();onboardDraft.role='familia';onboardStep=2;renderOnboarding();return true;}
+ if(action==='entry-invite'){entryInviteCode='';navigate('entrar','convite');return true;}
  return false;
 }

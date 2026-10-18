@@ -1,0 +1,40 @@
+task_id: HTML-055
+objective: >
+  Rodada 55 (lote Entrada) completa a entrada como no app web: entrar com e-mail e senha (mesma
+  mensagem para e-mail ou senha errados), recuperar a senha (resposta neutra), Google com o aceite
+  da privacidade e do codigo de conduta em passo proprio, e o convite familiar, que entra sem CPF.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do lote Entrada; "Sim, como na v2")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 7a345b2e. Entrar voltava direto ao perfil, sem formulario; nao havia recuperar a senha,
+    Google nem entrada por convite familiar.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-055.task.yml
+forbidden:
+  - guardar senha
+  - revelar se um e-mail tem conta (entrar e recuperar a senha respondem igual)
+  - pedir CPF a familiar que entra por convite
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Entrar recusa e-mail ou senha errados com a mesma mensagem e aceita o perfil de exemplo
+  - Recuperar a senha responde igual para qualquer e-mail valido
+  - Google pede o aceite em passo proprio antes do CPF
+  - Convite familiar valida o codigo, mostra quem convidou e segue sem CPF; o codigo fica usado
+  - Entrar retoma a conta que esta em analise
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round55-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: verificacao-de-identidade
+adr: docs/decisions/ADR-20260816-forma-da-admissao.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

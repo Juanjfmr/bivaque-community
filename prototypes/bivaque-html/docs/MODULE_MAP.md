@@ -116,6 +116,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 36/Appbg | `src/features/owner/business-team.js` | Perfil | Rodada 52: Negócios e planos e Pessoas e equipe do Painel do Bivaque |
 | 36/Appbh | `src/features/entry/landing.js` | Perfil | Rodada 53: landing com amostra grátis, Sair e Entrar |
 | 36/Appbi | `src/features/entry/account.js` | Perfil | Rodada 54: criar conta e elegibilidade (CPF, resultados, documento, em análise) |
+| 36/Appbj | `src/features/entry/login.js` | Perfil | Rodada 55: entrar, recuperar a senha, Google com aceite e convite familiar |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |

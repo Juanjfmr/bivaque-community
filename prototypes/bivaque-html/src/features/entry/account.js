@@ -3,7 +3,7 @@
 // oficial (aqui, simulado pelos controles do protótipo) e nunca guardado. Resultados distintos:
 // verificado, vínculo não localizado (envio de documento), em análise e fonte fora do ar.
 // A senha não é guardada; da conta fica só nome e e-mail, neste dispositivo.
-const ENTRY_PASSWORD_RULE='Ao menos 8 caracteres, com letras e números.';
+const ENTRY_SENHA_REGRA='Ao menos 8 caracteres, com letras e números.';
 const ENTRY_DOC_TYPES=['application/pdf','image/jpeg','image/png'],ENTRY_DOC_MAX=10*1024*1024;
 function entryData(){return state.entry||{};}
 // Validação do CPF pelos dígitos verificadores (o número não sai deste formulário).
@@ -14,13 +14,14 @@ function validCpf(raw){
 }
 const entryTop=(back='',right='sair')=>`<header class="en-top">${back?iconBtn('arrow_back','entry-go',back,'Voltar'):''}<span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span>${right==='entrar'?btn('Entrar','entry-login','','text'):btn('Sair','entry-cancel','','text')}</header>`;
 function entrySteps(n,label){return `<p class="en-step">Passo ${n} de 3 · ${label}</p><div class="en-steps" role="img" aria-label="Passo ${n} de 3">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;}
-function entryPasswordField(id,label){return `<md-outlined-text-field id="${id}" label="${label}" type="password" required minlength="8" autocomplete="${id==='en-pass'?'new-password':'current-password'}" supporting-text="${ENTRY_PASSWORD_RULE}">${iconBtn('visibility','entry-pass-toggle',id,'Mostrar senha','slot="trailing-icon"')}</md-outlined-text-field>`;}
+function entryPasswordField(id,label){return `<md-outlined-text-field id="${id}" label="${label}" type="password" required minlength="8" autocomplete="${id==='en-pass'?'new-password':'current-password'}" supporting-text="${ENTRY_SENHA_REGRA}">${iconBtn('visibility','entry-pass-toggle',id,'Mostrar senha','slot="trailing-icon"')}</md-outlined-text-field>`;}
 function renderEntrySignup(){
  return `<div class="en en-form">${entryTop('','entrar')}${entrySteps(1,'Conta')}<h1 class="en-h1">Vamos começar.</h1>
+ ${btn('Continuar com Google','entry-google','conta','outlined')}<p class="en-or">ou com e-mail</p>
   ${field('en-name','Nome','','required minlength="2" maxlength="80" autocomplete="name"')}
  ${field('en-email','E-mail','','type="email" required autocomplete="email" inputmode="email"')}
  ${entryPasswordField('en-pass','Senha')}
- <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">Li e aceito a Política de privacidade e o Código de conduta.</span></label><p class="en-err" id="en-err" role="alert"></p>
+ <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">Li e aceito a Política de privacidade e o Código de conduta. Pelo Google, o aceite vem no passo seguinte.</span></label><p class="en-err" id="en-err" role="alert"></p>
  ${btn('Criar conta','entry-signup','','filled')}<p class="en-foot">Já tem conta? ${btn('Entrar','entry-login','','text')}</p></div>`;
 }
 function renderEntryCpf(){
@@ -48,6 +49,10 @@ function renderEntryPending(){
 function renderEntry(){
  const id=route.id||'';
  if(id==='conta')return renderEntrySignup();
+ if(id==='login')return renderEntryLogin();
+ if(id==='senha')return renderEntryForgot();
+ if(id==='convite')return renderEntryInvite();
+ if(id==='aceite'&&entryData().account)return renderEntryGoogleConsent();
  if(!entryData().account&&['cpf','resultado','analise'].includes(id))return renderEntrySignup();
  if(id==='cpf')return renderEntryCpf();
  if(id==='resultado')return renderEntryResult();
@@ -59,7 +64,7 @@ function entrySignup(){
  const name=($('#en-name')?.value||'').trim().replace(/\s+/g,' '),email=($('#en-email')?.value||'').trim().toLowerCase(),pass=$('#en-pass')?.value||'';
  if(name.length<2)return entryError('Informe seu nome.','en-name');
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return entryError('Confira o e-mail.','en-email');
- if(pass.length<8||!/[a-z]/i.test(pass)||!/\d/.test(pass))return entryError(`A senha precisa ter ${ENTRY_PASSWORD_RULE.toLowerCase()}`,'en-pass');
+ if(pass.length<8||!/[a-z]/i.test(pass)||!/\d/.test(pass))return entryError(`A senha precisa ter ${ENTRY_SENHA_REGRA.toLowerCase()}`,'en-pass');
  if(!$('#en-consent')?.checked)return entryError('Para criar a conta, aceite a Política de privacidade e o Código de conduta.','en-consent');
  if(email===(state.profile.email||'rafael@exemplo.com')||email===entryData().account?.email)return entryError('Este e-mail já tem conta. Use Entrar ou recupere a senha.','en-email');
  if(!mutate(()=>{state.entry={account:{name:name.slice(0,80),email,provider:'email'},consentAt:Date.now(),eligibility:'none'};},{redraw:false}))return;
@@ -88,6 +93,7 @@ function entryDoc(input){
 }
 function bindEntry(){$('#en-doc')?.addEventListener('change',e=>entryDoc(e.target));for(const f of $$('.en-form md-outlined-text-field'))f.addEventListener('input',()=>{const e=$('#en-err');if(e)e.textContent='';});}
 async function entryFlowAction(action,value){
+ if(await entryAuthAction(action,value))return true;
  if(action==='entry-go'){navigate('entrar',value||null);return true;}
  if(action==='entry-signup'){entrySignup();return true;}
  if(action==='entry-cpf'){entryCpf();return true;}

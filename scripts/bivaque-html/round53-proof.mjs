@@ -57,6 +57,11 @@ const checkpoints = {
     await signOut(page)
     await page.locator('#main [data-action="entry-login"]').click()
     await settle(page)
+    // Desde a Rodada 55, Entrar tem formulário (modo teste: o e-mail do perfil de exemplo).
+    await page.locator("#en-email input").fill("rafael@exemplo.com")
+    await page.locator("#en-pass-login input").fill("senha1234")
+    await page.locator('#main [data-action="entry-login-submit"]').click()
+    await settle(page)
     expect((await routeOf(page)).name === "inicio", "Entrar não voltou para a Início")
     expect(/Você entrou como Rafael Souza/.test(await toast(page)), `aviso: ${await toast(page)}`)
     expect(

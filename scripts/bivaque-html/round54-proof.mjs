@@ -89,7 +89,7 @@ const checkpoints = {
   async "cpf-digits-checked-and-never-stored"(page) {
     await startOut(page)
     await createAccount(page)
-    await sendCpf(page, "111.111.111-11")
+    await sendCpf(page, "123.456.789-00")
     expect(/CPF inválido/.test(await err(page)), `CPF inválido: ${await err(page)}`)
     await sendCpf(page)
     expect((await dialogKind(page)) === "onboarding", "vínculo confirmado não seguiu para a cidade")

@@ -66,3 +66,11 @@ body.entry-mode main{inset:0}
 .en-test{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:24px 0 0;padding:10px 12px;border-radius:12px;border:1px dashed var(--md-sys-color-outline-variant);font-size:13px;color:var(--md-sys-color-on-surface-variant)}
 /* O título recebe o foco ao abrir (leitor de tela); numa página de apresentação, sem o contorno. */
 .en h1[tabindex="-1"]:focus,.en h1:focus{outline:none}
+/* Rodada 55: entrar, recuperar a senha, Google e convite familiar. */
+.en-or{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--md-sys-color-on-surface-variant);margin:8px 0 12px}
+.en-or::before,.en-or::after{content:"";flex:1;height:1px;background:var(--md-sys-color-outline-variant)}
+.en-hint{font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:12px 0 0}
+.en-foot{flex-wrap:wrap}
+.en-inv{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);margin:4px 0 14px}
+.en-inv b{display:block;font-size:15px}
+.en-av{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:22px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface);font-weight:700}
