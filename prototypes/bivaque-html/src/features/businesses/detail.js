@@ -17,9 +17,12 @@ function ownBizAction(action,value,el){
  if(action==='delete-biz')confirm('Excluir página?','A página sai do Bivaque. As propostas abertas saem dos pedidos e os clientes deixam de vê-las. Isso não pode ser desfeito.',()=>deleteMyBiz(value),{ok:'Excluir',cancel:'Cancelar',danger:true});
 }
 // Excluir: a página some; propostas abertas viram retiradas, e o histórico de pedidos concluídos fica como está.
+// Rodada 65: as recusadas de pedido ainda aberto ou escolhido também saem (não voltam num "desistir"); o
+// patrocínio acaba com a página; a suspensão do Painel fica na conta (`bizSuspended`) e vale na página nova.
+function bizLeaveRequests(id){for(const r of requestList())for(const p of r.proposals)if(p.bizId===id&&(p.status==='sent'||p.status==='declined'&&['open','chosen'].includes(r.status)))p.status='withdrawn';}
 function deleteMyBiz(id){
  if(state.myBiz?.id!==id)return;
- if(!mutate(()=>{for(const r of requestList())for(const p of r.proposals)if(p.bizId===id&&p.status==='sent')p.status='withdrawn';state.myBiz=null;},{redraw:false}))return;
+ if(!mutate(()=>{bizLeaveRequests(id);if(state.myBiz.suspended)state.bizSuspended=true;if(state.subscription)delete state.subscription.spot;state.myBiz=null;},{redraw:false}))return;
  navigate('voce',null,{replace:true});notify('Página excluída. As propostas abertas saíram dos pedidos.','delete');
 }
 function businessMetrics(b){const ts=state.threads.filter(t=>t.about.type==='biz'&&t.about.id===b.id);return `<section class="section" style="margin-top:16px">${sectionTitle('Resultados da sua página')}<div class="metric-grid"><div class="metric"><b>${b.views||0}</b><span>visitas</span></div><div class="metric"><b>${ts.length}</b><span>pedidos de contato</span></div><div class="metric"><b>${ts.filter(t=>t.msgs.some(m=>m.me)).length}</b><span>conversas respondidas</span></div></div><p class="small muted" style="margin-top:12px">Plano ${state.subscription.tier==='free'?'grátis':'de teste'} · os indicadores contam as ações realizadas nesta versão.</p>${planStatusHtml()}<div class="stack" style="margin-top:16px">${btn('Ver pedidos recebidos','biz-leads',b.id,'outlined','inbox')}${btn('Conhecer os planos','plans','','tonal','trending_up')}${btn('Copiar link da página','share',`negocio|${b.id}`,'text','link')}</div></section>`;}

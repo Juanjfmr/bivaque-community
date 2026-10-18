@@ -7,6 +7,7 @@ const SUPPORT_ROUTES=['ajuda','contato','chamados'];
 const supportRoute=()=>SUPPORT_ROUTES.includes(route.name);
 const TICKET_MIN=10,TICKET_MAX=1000,DELETE_WORD='APAGAR',GONE_NAME='Membro que saiu',GONE_INI='MS';
 const TICKET_TOPICS=[['conta','Conta'],['comunidade','Comunidade'],['anuncios','Anúncios'],['seguranca','Segurança'],['outro','Outro']];
+const TICKET_SENT='Recebemos. Respondemos por e-mail em até 2 dias úteis.';
 const TICKET_REPLY='Obrigado por escrever. Já olhamos o seu caso e a resposta foi enviada para o seu e-mail.';
 // Só o que o app faz hoje. Cada tema abre de 3 a 5 perguntas.
 const HELP_TOPICS=[
@@ -34,7 +35,7 @@ const HELP_TOPICS=[
   ['O que faço diante de um golpe?','Não envie dinheiro adiantado nem códigos recebidos por mensagem. Denuncie o anúncio e combine a entrega num local movimentado.'],
   ['O que acontece se eu apagar minha conta?','Seus anúncios, perguntas e páginas saem da comunidade. Suas respostas e indicações ficam, sem o seu nome, e suas conversas são apagadas para você.']]}
 ];
-var supportTopic='conta';
+var supportTopic='conta',supportSent=false;
 const supportEmail=()=>state.profile.email||ENTRY_DEMO_EMAIL;
 // Depois de apagar a conta, o e-mail antigo não entra mais (a entrada e o cadastro usam isto).
 const entryKnownEmail=()=>state.accountDeletedAt?'':supportEmail();
@@ -51,11 +52,14 @@ function renderHelp(){
  if(topic)return supportPage(topic.t,`<div class="list">${topic.qa.map(([q,a])=>`<details class="help-q"><summary><b>${esc(q)}</b>${icon('expand_more')}</summary><p>${esc(a)}</p></details>`).join('')}</div>${helpContactCard()}`);
  const open=ticketsOpen().length,n=(state.tickets||[]).length;
  const rows=HELP_TOPICS.map(x=>profileRow(x.ic,x.t,x.s,'support-open','ajuda:'+x.id)).join('');
- return supportPage('Ajuda',`<div class="list">${rows}</div>${helpContactCard()}<div class="list">${profileRow('inbox','Meus chamados',open?`${open} em andamento`:n?'Todos respondidos':'Nenhum chamado ainda','support-open','chamados')}</div>`);
+ // Rodada 65: Meus chamados é de quem tem conta.
+ return supportPage('Ajuda',`<div class="list">${rows}</div>${helpContactCard()}${state.signedOut?'':`<div class="list">${profileRow('inbox','Meus chamados',open?`${open} em andamento`:n?'Todos respondidos':'Nenhum chamado ainda','support-open','chamados')}</div>`}`);
 }
 function renderContact(){
  const chips=`<md-chip-set aria-label="Assunto">${TICKET_TOPICS.map(([v,l])=>`<md-filter-chip label="${l}" ${v===supportTopic?'selected':''} data-action="support-topic" data-value="${v}" aria-label="Assunto: ${l}"></md-filter-chip>`).join('')}</md-chip-set>`;
  const who=state.signedOut?field('support-email','Seu e-mail','','type="email" required autocomplete="email" inputmode="email"')+'<p class="small muted help-note">A resposta vai para este e-mail.</p>':`<p class="small muted help-note">A resposta vai para ${esc(supportEmail())}.</p>`;
+ // Rodada 65: quem enviou sem conta vê só a confirmação (Meus chamados é de quem entrou).
+ if(state.signedOut&&supportSent)return supportPage('Recebemos sua mensagem',`<div class="help-card" role="status"><b>${TICKET_SENT}</b><p>A resposta vai para o e-mail que você informou.</p>${btn('Voltar à Ajuda','support-open','ajuda','filled')}</div>`);
  return supportPage('Fale com a gente',`<div class="help-chips">${chips}</div>${field('support-text','Conte o que aconteceu','',`type="textarea" rows="5" required maxlength="${TICKET_MAX}" supporting-text="Mínimo de ${TICKET_MIN} caracteres"`)}${who}<div class="help-send">${btn('Enviar','support-send','','filled')}</div><p class="small muted help-note">Neste teste o chamado fica só neste aparelho.</p>`);
 }
 function ticketRow(t){
@@ -74,8 +78,8 @@ function supportSend(){
  if(!entryEmailOk(mail))return fieldError($('#support-email'),'Confira o e-mail.');
  const ticket={id:uid('t'),topic:supportTopic,text:text.slice(0,TICKET_MAX),at:Date.now(),status:'open',email:mail};
  if(!mutate(()=>{state.tickets=[ticket,...(state.tickets||[])];},{redraw:false}))return;
- navigate('chamados',null,{replace:true});
- notify('Recebemos. Respondemos por e-mail em até 2 dias úteis.','inbox');
+ if(state.signedOut){supportSent=true;render();}else navigate('chamados',null,{replace:true});
+ notify(TICKET_SENT,'inbox');
 }
 // Controles do protótipo: o chamado mais antigo ainda aberto é respondido e um aviso leva a Meus chamados.
 function supportSimulate(){
@@ -90,20 +94,33 @@ function renderDeleteAccount(){
 }
 // Tudo numa gravação só (`mutate`): se o armazenamento recusar, nada fica pela metade.
 function accountPurge(){
- const gone=o=>{o.mine=false;o.ini=GONE_INI;};
+ const gone=o=>{o.mine=false;o.ini=GONE_INI;},name=state.profile.name,email=state.profile.email,bizId=state.myBiz?.id;
  state.items=state.items.filter(x=>!x.mine);state.asks=state.asks.filter(q=>!q.mine);state.events=state.events.filter(e=>!e.mine);
- state.requests=(state.requests||[]).filter(r=>!r.mine);state.myBiz=null;
+ state.requests=(state.requests||[]).filter(r=>!r.mine);
+ // Rodada 65: a página sai dos pedidos de terceiros; bloqueios e denúncias (com o texto digitado) são apagados;
+ // o nome some dos títulos e do registro do Painel; a suspensão da conta não sobra.
+ if(bizId)bizLeaveRequests(bizId);
+ state.myBiz=null;delete state.bizSuspended;state.blocked=[];state.reports=[];
+ if(state.owner&&name){const anon=s=>typeof s==='string'?s.split(name).join(GONE_NAME):s;for(const d of Object.values(state.owner.decisions||{}))d.title=anon(d.title);state.owner.log=(state.owner.log||[]).map(l=>({...l,text:anon(l.text)}));}
  for(const x of state.items)x.saved=false;
  for(const q of state.asks){q.following=false;delete q.hiddenByMe;for(const a of q.answers)if(a.mine){gone(a);a.who=GONE_NAME;}}
  for(const e of state.events)if(e.on){e.on=false;e.going=Math.max(0,(e.going||0)-1);}
  for(const b of state.biz){b.saved=false;b.myInd=false;b.says=(b.says||[]).map(s=>s[1]==='me'?[GONE_INI,'',GONE_NAME,s[3]]:s);}
  for(const g of state.groups){
+  // Única administradora: o primeiro moderador assume; sem moderador, o grupo é encerrado (como em closeGroup).
+  g.mods=(g.mods||[]).filter(m=>m!==name);
+  if(g.role==='admin'){if(g.mods.length){g.admin=g.mods[0];g.mods=g.mods.slice(1);}else{g.closedAt=Date.now();g.requests=[];}}
+  for(const k of [name,email])if(k&&g.offerAt)delete g.offerAt[k];
+  if(g.offerAt&&!Object.keys(g.offerAt).length)delete g.offerAt;
   g.on=false;g.pending=false;g.role=null;g.unread=0;
+  if(bizId)g.posts=g.posts.filter(p=>!(p.type==='offer'&&p.biz===bizId));
   for(const p of g.posts){
+   if(p.alsoCity&&!state.asks.some(q=>q.id===p.alsoCity))delete p.alsoCity;
    if(p.mine){gone(p);p.author=GONE_NAME;}
    for(const c of p.comments)if(c.mine){gone(c);c.author=GONE_NAME;}
-   if(p.poll?.voted!=null){const o=p.poll.options[p.poll.voted];if(o)o[1]=Math.max(0,o[1]-1);p.poll.voted=null;}
-   if(p.event?.on){p.event.on=false;p.event.going=Math.max(0,(p.event.going||0)-1);}
+   // Voto e presença em publicação de grupo ficam fora dos totais-base (a tela soma o da própria pessoa): limpa só o dela.
+   if(p.poll?.voted!=null)p.poll.voted=null;
+   if(p.event?.on)p.event.on=false;
   }
  }
  state.leftAuto=state.groups.filter(g=>g.auto).map(g=>g.id);
@@ -115,7 +132,7 @@ function accountDelete(){
  const f=$('#delete-word');if(f)f.error=false;
  if(String(f?.value||'').trim().toUpperCase()!==DELETE_WORD)return fieldError(f,`Digite ${DELETE_WORD} para confirmar.`);
  if(!mutate(accountPurge,{redraw:false}))return;
- entrySampleCity=null;entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);toastClearAll();
+ supportSent=false;entrySampleCity=null;entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);toastClearAll();
  navigate('entrar','apagada',{replace:true});
 }
 function renderAccountDeleted(){
@@ -128,7 +145,7 @@ async function supportAction(action,value){
  if(action==='support-open'||action==='support-contact'){
   const [name,id]=action==='support-contact'?['contato',null]:String(value).split(':');
   if(![...SUPPORT_ROUTES,'apagar-conta'].includes(name)||(name==='apagar-conta'&&state.signedOut))return true;
-  if(name==='contato')supportTopic='conta';
+  if(name==='contato'){supportTopic='conta';supportSent=false;}
   if(dialog.open)await closeDialog(true);navigate(name,id||null);return true;
  }
  if(action==='support-topic'){

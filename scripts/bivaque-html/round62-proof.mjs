@@ -212,8 +212,10 @@ const checkpoints = {
     await click(page, '[data-action="support-send"]')
     const t = (await stored(page)).tickets
     expect(t.length === 1 && t[0].email === "visita@exemplo.com", "e-mail do chamado não gravou")
-    expect((await routeOf(page)).name === "chamados", "não abriu Meus chamados")
-    expect((await mainText(page)).includes(TICKET_TEXT), "o chamado não aparece")
+    // R65: sem conta, "Meus chamados" não abre; a pessoa vê só a confirmação.
+    expect((await routeOf(page)).name === "contato", "sem conta, foi para Meus chamados")
+    expect(/Recebemos/.test(await mainText(page)), "sem a confirmação")
+    expect(!(await mainText(page)).includes(TICKET_TEXT), "o chamado apareceu sem conta")
   },
   // ---- Meus chamados ----
   async "my-tickets-show-the-state-from-help"(page) {
@@ -347,10 +349,10 @@ const checkpoints = {
     const comment = g.posts.flatMap((p) => p.comments).find((c) => c.id === "c-r62")
     expect(comment && comment.author === GONE && !comment.mine, "o comentário não ficou anônimo")
     expect(!s.groups.some((x) => x.on), "continua em grupos")
-    expect(
-      g.posts.find((p) => p.id === "p-r62-poll").poll.options[1][1] === pollBefore - 1,
-      "o voto na enquete ficou",
-    )
+    // R65: o total-base da enquete não perde o voto da pessoa (a tela soma o dela por cima); limpa só `voted`.
+    const poll = g.posts.find((p) => p.id === "p-r62-poll").poll
+    expect(poll.voted === null, "o voto na enquete ficou")
+    expect(poll.options[1][1] === pollBefore, "o total-base da enquete foi subtraído")
     expect(!s.events.some((e) => e.mine || e.id === "e-r62"), "sobrou encontro meu")
     const kept = s.events.find((e) => e.id === stay.id)
     expect(!kept.on && kept.going === goingBefore - 1, "a presença em outro encontro ficou")
