@@ -27,8 +27,9 @@ const HELP_TOPICS=[
   ['Como peço orçamento ou serviço?','Na página de um negócio, toque em Pedir orçamento. Para receber propostas de vários prestadores, abra Pedidos de serviço em Você: até 5 empresas respondem e você escolhe.'],
   ['Como indico um negócio?','Na página do negócio, toque em Indicar este negócio e conte sua experiência.'],
   ['O Bivaque cobra ou intermedeia pagamento?','Não. Valor e pagamento são combinados entre vocês. Desconfie de quem pede pagamento adiantado.']]},
- {id:'seguranca',ic:'verified_user',t:'Segurança',s:'Denunciar, privacidade, regras',qa:[
-  ['Como denuncio um conteúdo?','Use Denunciar no anúncio, na pergunta, na página do negócio ou no pedido de serviço. Escolha o motivo; a equipe analisa e pode remover o conteúdo ou limitar a conta.'],
+ {id:'seguranca',ic:'verified_user',t:'Segurança',s:'Bloquear, denunciar, privacidade',qa:[
+  ['Como bloqueio uma pessoa?','No ⋮ de uma resposta, comentário ou publicação dela, no menu da conversa ou na página do anúncio, toque em Bloquear. Você deixa de ver o que ela publica e ela não fala mais com você; ela não é avisada. Desbloqueie em Configurações → Pessoas bloqueadas.'],
+  ['Como denuncio um conteúdo?','Use Denunciar no anúncio, na pergunta, na resposta, no comentário, na publicação, na conversa, na página do negócio ou no pedido de serviço. Escolha o motivo; a equipe analisa e pode remover o conteúdo ou limitar a conta.'],
   ['Quem vê meus dados?','Só membros confirmados da família militar. Seu bairro só aparece se você permitir, em Configurações → Mostrar meu bairro.'],
   ['O que faço diante de um golpe?','Não envie dinheiro adiantado nem códigos recebidos por mensagem. Denuncie o anúncio e combine a entrega num local movimentado.'],
   ['Onde leio as regras?','Na Política de privacidade e no Código de conduta, em Configurações ou no rodapé da página inicial.'],
