@@ -107,6 +107,7 @@ async function perform(action,value,el){
  case 'save-biz':{const b=bizById(value);if(!b)break;if(toggleSaved(action,b)){haptic();notify(b.saved?'Negócio salvo':'Negócio removido dos salvos',b.saved?'bookmark':'bookmark_remove');}break;}
  case 'my-biz':if(readonly())mutate(()=>state.city=state.homeCity,{redraw:false});if(state.myBiz?.live){if(dialog.open)await closeDialog(true);navigate('negocio',state.myBiz.id);}else openBusinessEditor();break;
  case 'edit-biz':openBusinessEditor(value);break;
+ case 'biz-menu':case 'pause-biz':case 'resume-biz':case 'delete-biz':ownBizAction(action,value,el);break;
  case 'submit-biz':await submitBusiness();break;
  case 'quote':await contact('biz',value,'Olá! Vi sua página no Bivaque. Pode me passar um orçamento?');break;
  case 'recommend-biz':{if(!canPost())break;const b=bizById(value);if(!b)break;if(b.myInd){notify('Você já indicou este negócio.','info');break;}showDialog('Indicar este negócio',field('recommend-why','Conte sua experiência','','type="textarea" rows="3" required minlength="12"'),`${btn('Cancelar','close-dialog','','text')}${btn('Publicar indicação','submit-recommend',value,'filled')}`);break;}
