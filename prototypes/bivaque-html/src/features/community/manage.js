@@ -27,8 +27,8 @@ async function savePost(g,p){
  if(opts&&opts.length<2){notify('A enquete precisa de pelo menos 2 opções.','error');return;}
  const moved=ev&&(date!==p.event.date||time!==p.event.time||place!==p.event.place),optsChanged=opts&&opts.join('|')!==p.poll.options.map(o=>o[0]).join('|');
  if(text===p.text&&!moved&&!optsChanged){await closeDialog(true);return;}
- if(!mutate(()=>{p.text=text;if(ev)Object.assign(p.event,{date,time,place});if(optsChanged)p.poll.options=opts.map(o=>[o,0]);p.edited=Date.now();},{redraw:false}))return;
- await closeDialog(true);render();notify(ev?`Encontro atualizado.${moved?guestsNote(p.event.going,true):''}`:p.poll?'Enquete atualizada.':p.type==='question'?'Pergunta atualizada.':'Publicação atualizada.');
+ if(!mutate(()=>{p.text=text;if(ev)Object.assign(p.event,{date,time,place});if(optsChanged)p.poll.options=opts.map(o=>[o,0]);p.edited=Date.now();const a=p.alsoCity&&askById(p.alsoCity);if(a){a.q=text;a.edited=Date.now();}},{redraw:false}))return;
+ await closeDialog(true);render();notify(ev?`Encontro atualizado.${moved?guestsNote(p.event.going,true):''}`:p.poll?'Enquete atualizada.':p.type==='question'?(p.alsoCity&&askById(p.alsoCity)?'Pergunta atualizada, também em Indicações.':'Pergunta atualizada.'):'Publicação atualizada.');
 }
 async function removeQuestion(id){
  const q=askById(id);if(!q?.mine)return;
@@ -37,7 +37,7 @@ async function removeQuestion(id){
 }
 async function removePost(gid,pid){
  const g=gById(gid),p=g?.posts.find(x=>x.id===pid);if(!p?.mine)return;const ev=p.type==='event',n=ev?p.event.going:0;
- if(!mutate(()=>{g.posts=g.posts.filter(x=>x.id!==pid);},{redraw:false}))return;
+ if(!mutate(()=>{g.posts=g.posts.filter(x=>x.id!==pid);for(const c of p.comments){const b=c.biz&&bizById(c.biz);if(b)b.recN=Math.max(0,(b.recN||0)-1);}},{redraw:false}))return;
  if(route.name==='publicacao')navigate('grupo',gid,{replace:true});else render();
  notify(ev?`Encontro cancelado.${guestsNote(n,true)}`:`${p.poll?'Enquete':p.type==='question'?'Pergunta':'Publicação'} excluída.`,ev?'event_busy':'delete');
 }
@@ -48,7 +48,7 @@ async function manageAction(action,value,el){
  const q=action.includes('question')?askById(a1):null;
  if(q!==null){
   if(!q?.mine||q.city!==state.homeCity||!canPost())return true;
-  if(action==='question-menu'){openCreate(el,[['edit','Editar pergunta','edit-question','',q.id],[q.status==='ok'?'refresh':'check_circle',q.status==='ok'?'Reabrir pergunta':'Marcar como resolvida','toggle-question','',q.id],['share','Compartilhar','share','','pergunta|'+q.id],['delete','Excluir pergunta','delete-question','',q.id,true]]);return true;}
+  if(action==='question-menu'){openCreate(el,[['edit','Editar pergunta','edit-question','',q.id],[q.status==='ok'?'refresh':'check_circle',q.status==='ok'?'Reabrir pergunta':'Marcar como resolvida','toggle-question','',q.id],['share','Compartilhar','share','','pergunta|'+q.id],['delete','Excluir pergunta','delete-question','',q.id,true]],false,'Ações da pergunta');return true;}
   if(action==='edit-question'){openTextEdit('Editar pergunta','Sua pergunta',q.q,'save-question',q.id,8);return true;}
   if(action==='save-question'){const text=editedText();if(text.length<8||queryTerms(text).length<2){notify('Escreva uma pergunta com um pouco mais de contexto.','error');return true;}if(text===q.q){await closeDialog(true);return true;}if(mutate(()=>{q.q=text;q.edited=Date.now();},{redraw:false})){await closeDialog(true);render();notify('Pergunta atualizada.');}return true;}
   if(action==='toggle-question'){const solve=q.status!=='ok';if(mutate(()=>{q.status=solve?'ok':'open';if(!solve)q.answers.forEach(a=>{a.solved=false;});}))notify(solve?'Pergunta marcada como resolvida.':'Pergunta reaberta.');return true;}
@@ -58,7 +58,7 @@ async function manageAction(action,value,el){
  // Resposta minha numa pergunta: a pergunta pode ser de qualquer pessoa
  if(action.includes('answer')){
   const aq=askById(a1),ans=aq?.answers.find(x=>x.id===a2);if(!ans?.mine||aq.city!==state.homeCity||!canPost())return true;
-  if(action==='answer-menu'){openCreate(el,[['edit','Editar resposta','edit-answer','',value],['delete','Excluir resposta','delete-answer','',value,true]]);return true;}
+  if(action==='answer-menu'){openCreate(el,[['edit','Editar resposta','edit-answer','',value],['delete','Excluir resposta','delete-answer','',value,true]],false,'Ações da resposta');return true;}
   if(action==='edit-answer'){openTextEdit('Editar resposta','Sua resposta',ans.t,'save-answer',value,5);return true;}
   if(action==='save-answer'){const text=editedText();if(text.length<5){notify('Escreva uma resposta com um pouco mais de contexto.','error');return true;}if(text===ans.t){await closeDialog(true);return true;}if(mutate(()=>{ans.t=text;ans.edited=Date.now();},{redraw:false})){await closeDialog(true);render();notify('Resposta atualizada.');}return true;}
   // Se era a solução, a pergunta volta a ficar sem solução.
@@ -70,7 +70,7 @@ async function manageAction(action,value,el){
  if(g&&groupClosed(g)&&(action.includes('post')||action.includes('comment')))return groupLockedNotice();
  if(action.includes('post')){
   if(!p?.mine||!canPost())return true;
-  if(action==='post-menu'){const noun=p.type==='event'?'encontro':p.type==='poll'?'enquete':p.type==='question'?'pergunta':'publicação';openCreate(el,[['edit',`Editar ${noun}`,'edit-post','',value],['delete',p.type==='event'?'Cancelar encontro':`Excluir ${noun}`,'delete-post','',value,true]]);return true;}
+  if(action==='post-menu'){const noun=p.type==='event'?'encontro':p.type==='poll'?'enquete':p.type==='question'?'pergunta':'publicação';openCreate(el,[['edit',`Editar ${noun}`,'edit-post','',value],['delete',p.type==='event'?'Cancelar encontro':`Excluir ${noun}`,'delete-post','',value,true]],false,`Ações d${noun==='encontro'?'o':'a'} ${noun}`);return true;}
   if(action==='edit-post'){openPostEdit(g,p);return true;}
   if(action==='save-post'){await savePost(g,p);return true;}
   const nc=p.comments.length;
@@ -81,7 +81,7 @@ async function manageAction(action,value,el){
  // Comentário meu numa publicação (resposta, se a publicação é uma pergunta)
  const c=p?.comments.find(x=>x.id===a3),w=p?.type==='question'?'resposta':'comentário';
  if(!c?.mine||!canPost())return true;
- if(action==='comment-menu'){openCreate(el,[['edit',`Editar ${w}`,'edit-comment','',value],['delete',`Excluir ${w}`,'delete-comment','',value,true]]);return true;}
+ if(action==='comment-menu'){openCreate(el,[['edit',`Editar ${w}`,'edit-comment','',value],['delete',`Excluir ${w}`,'delete-comment','',value,true]],false,`Ações d${w==='resposta'?'a':'o'} ${w}`);return true;}
  if(action==='edit-comment'){openTextEdit(`Editar ${w}`,w==='resposta'?'Sua resposta':'Seu comentário',c.text,'save-comment',value);return true;}
  if(action==='save-comment'){const text=editedText();if(text.length<3){notify('Escreva pelo menos 3 caracteres.','error');return true;}if(text===c.text){await closeDialog(true);return true;}if(mutate(()=>{c.text=text;c.edited=Date.now();},{redraw:false})){await closeDialog(true);render();notify(w==='resposta'?'Resposta atualizada.':'Comentário atualizado.');}return true;}
  confirm(`Excluir ${w}?`,`${c.biz?'A indicação do negócio marcado também sai. ':''}${c.solved?'A pergunta volta a ficar sem solução. ':''}Isso não pode ser desfeito.`,()=>{if(mutate(()=>{p.comments=p.comments.filter(x=>x.id!==a3);if(c.solved)p.resolved=false;const b=c.biz&&bizById(c.biz);if(b)b.recN=Math.max(0,(b.recN||0)-1);},{redraw:false})){render();notify(w==='resposta'?'Resposta excluída.':'Comentário excluído.','delete');}},EDIT_CONFIRM);

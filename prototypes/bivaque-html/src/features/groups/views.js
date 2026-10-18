@@ -45,13 +45,15 @@ const GROUP_CLOSE_DAYS=30,GROUP_CLOSED_NOTE='Este grupo foi encerrado. As public
 function groupClosed(g){return !!g?.closedAt;}
 function groupReopenUntil(g){return g.closedAt+GROUP_CLOSE_DAYS*864e5;}
 function groupCanReopen(g){return groupClosed(g)&&Date.now()<=groupReopenUntil(g);}
+// Rodada 64: encerrado dentro dos 30 dias segue para leitura; depois do prazo, nada do grupo aparece.
+function groupReadable(g){return !groupClosed(g)||groupCanReopen(g);}
 function dayMonth(at){return new Date(at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
 function groupLockedNotice(){notify(GROUP_CLOSED_NOTE,'lock');return true;}
 function closedStrip(g){const until=dayMonth(groupReopenUntil(g));return `<div class="context-strip readonly g-closed" role="status">${icon('lock')}<span class="grow"><b>Grupo encerrado em ${dayMonth(g.closedAt)}.</b> ${groupCanReopen(g)?`As publicações ficam disponíveis para leitura até ${until}.`:`As publicações deixaram de estar disponíveis desde ${until}.`}</span></div>`;}
 function gMembers(g){const n=g.members+(g.on?1:0);return n>=10?`${n} membros`:'Grupo novo';}
 function gAgo(at){const m=Math.max(1,Math.round((Date.now()-at)/6e4));if(m<60)return `há ${m} min`;const h=Math.round(m/60);if(h<24)return `há ${h} h`;const d=Math.round(h/24);return d===1?'ontem':`há ${d} dias`;}
 function gThumb(g,cls='list-photo'){const p=image(g.img);return p?`<img class="${cls}" src="${p}" alt="">`:`<span class="${cls} g-tile g-${g.tpl}">${icon(GTPL[g.tpl]?.ic||'groups')}</span>`;}
-function gLast(g){const p=[...groupPosts(g)].sort((a,b)=>b.at-a.at)[0];return p?`${p.mine?'Você':p.author.split(' ')[0]}: ${p.text}`:g.about;}
+function gLast(g){if(!groupReadable(g))return 'Grupo encerrado';const p=[...groupPosts(g)].filter(x=>!x.hidden).sort((a,b)=>b.at-a.at)[0];return p?`${p.mine?'Você':p.author.split(' ')[0]}: ${p.type==='offer'?'Oferta · ':''}${p.text}`:g.about;}
 function gReason(g){
  if(g.auto&&state.mode==='chegando'&&g.city===state.homeCity&&g.cycle===cycleOf(state.arrival))return `Pela sua chegada em ${g.cycle}`;
  if(g.auto&&state.mode==='moro'&&g.city===state.homeCity)return `Chegam em ${g.cycle}. Uma indicação sua ajuda`;
@@ -97,7 +99,7 @@ function renderGroup(){
  if(!member&&!readonly()&&!groupClosed(g))actionsBar(g.pending?btn('Cancelar pedido','cancel-join',g.id,'outlined','close'):btn(g.privacy==='fechado'?'Pedir para entrar':'Entrar no grupo','join-group',g.id,'filled','group_add'));
  const p=image(g.img);
  let h=`<div class="detail-hero g-hero" style="aspect-ratio:16/7">${p?`<img src="${p}" alt="">`:`<div class="g-tile g-${g.tpl} g-tile-hero">${icon(GTPL[g.tpl]?.ic||'groups')}</div>`}<span class="pill">${esc(GTPL[g.tpl]?.name||'Grupo')}</span></div><div class="detail-title"><h1>${esc(g.t)}</h1><p class="muted small g-meta">${icon(g.privacy==='fechado'?'lock':'public')}${g.privacy==='fechado'?'Fechado':'Aberto'} · ${gMembers(g)} · ${esc(g.city)}</p></div><p class="detail-copy">${esc(g.about)}</p>`;
- if(member)h+=`<div class="g-actions">${btn(`Participando · ${NOTIF[g.notif||'destaques'][1]}`,'group-menu',g.id,'tonal','expand_more')}${groupClosed(g)?'':btn('Convidar','invite-group',g.id,'outlined','share')}${admin?btn('Gerenciar','manage-group',g.id,'outlined','admin_panel_settings'):''}</div>`;
+ if(member)h+=`<div class="g-actions">${btn(`Participando · ${NOTIF[g.notif||'destaques'][1]}`,'group-menu',g.id,'tonal','expand_more').replace('<md-filled-tonal-button','<md-filled-tonal-button aria-haspopup="menu"')}${groupClosed(g)?'':btn('Convidar','invite-group',g.id,'outlined','share')}${admin?btn('Gerenciar','manage-group',g.id,'outlined','admin_panel_settings'):''}</div>`;
  h+=`<details class="g-rules"><summary>${icon('gavel')}Regras do grupo</summary><p class="small">${esc(g.rules)}</p></details>`;
  if(!canSee)return h+`<div class="context-strip readonly">${icon('lock')}<span class="grow"><b>Grupo fechado</b><br>As publicações aparecem para quem for aprovado pelo admin.</span></div>`;
  if(groupClosed(g))h+=closedStrip(g);if(groupClosed(g)&&!groupCanReopen(g))return h;
@@ -111,7 +113,9 @@ function renderGroup(){
  return h;
 }
 function renderPost(){
- const [gid,pid]=(route.id||'').split('~'),g=gById(gid),p=g?.posts.find(x=>x.id===pid);if(!g||!p||(g.privacy==='fechado'&&!g.on)||(p.type==='offer'&&!g.allowOffers))return unavailable();
+ const [gid,pid]=(route.id||'').split('~'),g=gById(gid),p=g?.posts.find(x=>x.id===pid);if(!g||(g.privacy==='fechado'&&!g.on)||!groupReadable(g))return unavailable();
+  if(!p)return empty('Esta publicação foi excluída.','Quem publicou apagou o conteúdo. O resto do grupo continua disponível.','delete','groups','Ver grupos');
+  if(p.type==='offer'&&!(g.allowOffers&&bizLive(bizById(p.biz))))return unavailable();
   if(p.hidden)return removedContent('post');
   const bg=blockedGate('post',`${g.id}~${p.id}`,p.author,p.mine),shown=p.comments.filter(c=>c.mine||!isBlocked(c.author)),nc=postComments(p).length;if(bg.page)return bg.page;
   let h=`${bg.strip||''}<button type="button" class="g-back" data-action="open-group" data-value="${g.id}">${gThumb(g,'g-mini')}<span class="grow"><b class="small">${esc(g.t)}</b><br><span class="tiny muted">${gMembers(g)}</span></span>${icon('chevron_right')}</button>${gPostCard(g,p,true)}<div class="gpost-actions">${groupClosed(g)?'':btn(`Útil${p.useful+(p.liked?1:0)?' · '+(p.useful+(p.liked?1:0)):''}`,'like-post',`${g.id}|${p.id}`,p.liked?'tonal':'text','thumb_up')}</div>`;

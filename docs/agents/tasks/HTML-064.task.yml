@@ -1,0 +1,52 @@
+task_id: HTML-064
+objective: >
+  Rodada 64 do Lote Funcional (correcoes da revisao do lote, parte de visibilidade, grupo encerrado, ofertas,
+  acessibilidade e pequenos). Um predicado por tipo de registro (pergunta, anuncio, negocio, aviso) reune
+  moderacao, ocultar pessoal, bloqueio e pagina pausada e vale em Continue de onde parou, relatos da pagina,
+  interessados, contador de conversas, metricas, avisos, alertas, Ocultados e Simular resposta. Grupo encerrado
+  so e lido dentro dos 30 dias (publicacao, previa, Inicio, busca e paleta) e zera os pedidos de entrada. A
+  oferta de grupo some quando a pagina nao esta aberta e a cota semanal vale pela conta, nao pelo nome.
+  Publicacao apagada diz que foi excluida. Os menus de tres pontos ganham nome proprio e declaram o menu no
+  gatilho; Ocultar pergunta entra no menu da pergunta de outra pessoa. Pequenos: apagar publicacao desconta as
+  indicacoes dos comentarios, editar publicacao enviada a cidade atualiza Indicacoes, links das Configuracoes
+  perguntam antes de descartar edicao, o rascunho da entrada nao guarda a senha e os formularios nao oferecem
+  bairros de Manaus fora de Manaus.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 64 (secao R64 de correcoes.md da revisao do Lote Funcional, base 29fb032d)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 29fb032d (R57 a R63). Prova round64 em 375-light contra a build desse HEAD: ver ROUND_64.md
+    (os checkpoints que reproduzem cada defeito reprovam antes da correcao).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-064.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - fora do escopo: pedidos, propostas, planos, pagina de negocio e apagar a conta (R65)
+acceptance:
+  - Registro de pessoa bloqueada, pergunta oculta ou removida e pagina pausada nao aparece em Continue de onde parou, relatos e avatares da pagina, interessados, contador de conversas, metricas, avisos (lista, destino e sino), alertas, Ocultados e Simular resposta; bloquear ou ocultar limpa o Retomar
+  - Bloquear X nao aparece quando X ja esta bloqueado; o contador de suas perguntas segue o criterio da lista
+  - Grupo encerrado so aparece para leitura dentro de 30 dias; depois do prazo nada dele aparece na lista, no Inicio, na publicacao, na busca e na paleta; encerrar zera os pedidos e aprovar ou recusar e recusado
+  - A previa do grupo ignora publicacao removida pela moderacao; oferta de pagina pausada, suspensa ou excluida some, e a previa e o Inicio prefixam Oferta
+  - A cota semanal de oferta usa a conta e sobrevive a trocar de nome; publicacao apagada pelo autor diz que foi excluida
+  - Cada menu de tres pontos tem nome proprio e o gatilho declara aria-haspopup; Ocultar pergunta aparece no menu da pergunta de outra pessoa
+  - Apagar publicacao desconta as indicacoes marcadas nos comentarios; editar publicacao enviada a cidade atualiza Indicacoes; links das Configuracoes perguntam antes de descartar edicao; o rascunho da entrada nao guarda a senha; sem bairros de Manaus nos formularios fora de Manaus
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round64-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round60-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round61-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round63-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: dados pessoais (bloqueio, ocultar e senha da entrada); sem verificacao de identidade nem cobranca
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

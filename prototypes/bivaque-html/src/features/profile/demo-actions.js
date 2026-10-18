@@ -11,6 +11,14 @@ function profileFamilyAllowed(){
  if(readonly()||!state.profile.verified){profileFeedback(readonly()?`Volte à sua cidade, ${state.homeCity}, para criar ou revogar convites locais.`:'Verifique o perfil de teste antes de criar ou revogar convites locais.');return false;}
  return true;
 }
+// Rodada 64: aviso cujo registro ficou invisível (pessoa bloqueada, oculto, removido, página pausada) não é listado nem contado.
+function noticeVisible(n){
+ if(!Array.isArray(n.go)||n.go[1]===undefined)return true;const [name,id]=n.go;
+ const rec=name==='anuncio'?itemById(id):name==='pergunta'?askById(id):name==='negocio'?bizById(id):name==='conversa'?threadById(id):null;
+ if(!rec)return true;
+ return name==='anuncio'?itemVisible(rec):name==='pergunta'?askVisible(rec):name==='negocio'?bizVisible(rec):!isBlocked(rec.who);
+}
+const noticeList=()=>state.notices.filter(n=>n.city===state.homeCity&&noticeVisible(n));
 function noticeText(n){return n.text||String(n.html||'Aviso local').replace(/<[^>]*>/g,'');}
 // Rodada 17: central de avisos (referência: Notification Inbox Popover do 21st.dev). Abas Todos e
 // Não lidos, "Marcar todos como lidos", ícone por tipo e separação entre hoje e anteriores. As ações
@@ -19,7 +27,7 @@ let noticesTab='all';
 const NOTICE_ICONS={conversa:'chat_bubble',conversas:'chat_bubble',anuncio:'sell',catalogo:'sell',desapegos:'sell',imoveis:'apartment',negocio:'storefront',negocios:'storefront',pedido:'request_quote',pedidos:'request_quote',chamados:'inbox',pergunta:'forum',comunidade:'forum',evento:'event',agenda:'event',grupo:'groups',publicacao:'groups'};
 function noticeRow(n){return `<div class="list-row notice-row${n.unread?' is-unread':''}"><span class="notice-ico">${icon(NOTICE_ICONS[n.go?.[0]]||'notifications')}</span><button type="button" class="txt" data-action="notice-open" data-value="${esc(n.id)}"><b>${esc(noticeText(n))}</b><small>${esc(n.when||'Agora')} · ${n.unread?'não lido':'lido'}</small></button>${iconBtn(n.unread?'drafts':'done','notice-read',n.id,n.unread?'Marcar aviso como lido':'Aviso lido',n.unread?'':'disabled')}</div>`;}
 function openNotices(){
- const ns=state.notices.filter(n=>n.city===state.homeCity),unread=ns.filter(n=>n.unread).length,list=noticesTab==='unread'?ns.filter(n=>n.unread):ns;
+ const ns=noticeList(),unread=ns.filter(n=>n.unread).length,list=noticesTab==='unread'?ns.filter(n=>n.unread):ns;
  const recent=n=>['Agora','Hoje'].includes(n.when||'Agora')||/^há \d+ (min|h)/.test(n.when||''),groups=[['Hoje',list.filter(recent)],['Anteriores',list.filter(n=>!recent(n))]].filter(([,g])=>g.length);
  const tabs=ns.length?`<div class="notice-head"><md-chip-set aria-label="Mostrar avisos">${[['all',`Todos (${ns.length})`],['unread',`Não lidos (${unread})`]].map(([v,label])=>`<md-filter-chip label="${label}" ${noticesTab===v?'selected':''} data-action="notices-tab" data-value="${v}"></md-filter-chip>`).join('')}</md-chip-set>${unread?btn('Marcar todos como lidos','notices-read-all','','text','check_circle'):''}</div>`:'';
  const body=!ns.length?empty('Nenhum aviso nesta cidade','Os avisos de demonstração da sua cidade atual aparecerão aqui.','notifications_none'):!list.length?empty('Tudo em dia','Você leu todos os avisos desta cidade.','check_circle'):groups.map(([title,g])=>`<p class="notice-group">${title}</p><div class="list">${g.map(noticeRow).join('')}</div>`).join('');
@@ -31,7 +39,7 @@ function noticeDestination(n){
  const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','desapegos','imoveis','negocios','agenda','guia','pedidos','chamados'];
  if(roots.includes(name)&&!id)return {name,id:null};
  const record=name==='anuncio'?itemById(id):name==='negocio'?bizById(id):name==='pergunta'?askById(id):name==='grupo'?gById(id):name==='pedido'?requestById(id):name==='conversa'?threadById(id):name==='evento'?state.events.find(e=>e.id===id):null;
- return accessibleRecord(record)&&!record.deleted&&!record.hidden&&(name!=='pedido'||record.mine||providerCanSee(record))?{name,id}:null;
+ return accessibleRecord(record)&&!record.deleted&&!record.hidden&&noticeVisible(n)&&(name!=='pedido'||record.mine||providerCanSee(record))?{name,id}:null;
 }
 async function profileGlobalAction(action,value,el){
  if(!['saved','my-ads','saved-filter','my-ads-filter','family','family-settings','new-invite','copy-invite','remove-invite','notices','notices-tab','notices-read-all','notice-open','notice-read','notice-home','cap'].includes(action))return false;

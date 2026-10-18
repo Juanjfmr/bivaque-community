@@ -173,10 +173,11 @@ const checkpoints = {
     expect((await routeOf(page)).id === "conta", "não voltou ao mesmo passo (conta)")
     expect(
       (await value(page, "en-name")) === "Carla Teste" &&
-        (await value(page, "en-email")) === "carla.teste@exemplo.com" &&
-        (await value(page, "en-pass")) === VALID,
+        (await value(page, "en-email")) === "carla.teste@exemplo.com",
       "o que foi digitado se perdeu ao ler a política",
     )
+    // Rodada 64: a senha não entra no rascunho; ao voltar o campo vem vazio.
+    expect((await value(page, "en-pass")) === "", "a senha voltou preenchida depois da leitura")
     expect(
       !(await page.locator("#en-consent").evaluate((el) => el.checked)),
       "tocar no link marcou a caixa do aceite",
@@ -195,7 +196,8 @@ const checkpoints = {
       "tocar no link desmarcou a caixa do aceite",
     )
     expect((await value(page, "en-name")) === "Carla Teste", "nome perdido na segunda leitura")
-    // A senha só ficou na memória: nunca no armazenamento.
+    // A senha não é guardada: digita de novo e segue (e nunca vai para o armazenamento).
+    await fill(page, "en-pass", VALID)
     await page.locator('#main [data-action="entry-signup"]').click()
     await settle(page)
     expect((await routeOf(page)).id === "cpf", "o cadastro não seguiu depois da leitura")

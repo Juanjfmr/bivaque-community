@@ -129,7 +129,7 @@ async function supportAction(action,value){
   const [name,id]=action==='support-contact'?['contato',null]:String(value).split(':');
   if(![...SUPPORT_ROUTES,'apagar-conta'].includes(name)||(name==='apagar-conta'&&state.signedOut))return true;
   if(name==='contato')supportTopic='conta';
-  if(dialog.open)await closeDialog(true);navigate(name,id||null);return true;
+  if(await leaveDialog(()=>navigate(name,id||null)))navigate(name,id||null);return true;
  }
  if(action==='support-topic'){
   if(!TICKET_TOPICS.some(([v])=>v===value))return true;supportTopic=value;

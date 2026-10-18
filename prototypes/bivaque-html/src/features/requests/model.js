@@ -15,14 +15,14 @@ function requestLiveProposals(r){return r.proposals.filter(p=>p.status!=='withdr
 function proposalExpired(p){return !!p.validUntil&&p.validUntil<dateISO();}
 function requestFull(r){return requestLiveProposals(r).length>=REQUEST_LIMIT;}
 // Elegíveis: mesma cidade e categoria, página assumida, que atendem o bairro; nunca a própria página.
-function requestEligible(r){return state.biz.filter(b=>b.city===r.city&&b.cat===r.cat&&specOk(b,r.spec)&&b.claimed!==false&&!b.suspended&&(!b.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro')&&b.id!==state.myBiz?.id);}
+function requestEligible(r){return state.biz.filter(b=>b.city===r.city&&b.cat===r.cat&&specOk(b,r.spec)&&b.claimed!==false&&!b.suspended&&(!b.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro'||!cityHasHoods(r.city))&&b.id!==state.myBiz?.id);}
 function requestWhenLabel(r){return r.when.kind==='asap'?'O quanto antes':r.when.kind==='until'?`Até ${dateLabel(r.when.date)}`:`Em ${dateLabel(r.when.date)}`;}
 function proposalPrice(p){return p.price.kind==='fixed'?money(p.price.min):p.price.kind==='range'?`${money(p.price.min)} a ${money(p.price.max)}`:'A combinar após visita';}
 function myProposal(r){return state.myBiz?r.proposals.find(p=>p.bizId===state.myBiz.id&&p.status!=='withdrawn'&&p.status!=='gaveup'&&p.status!=='removed'):null;}
 // Lado do prestador: pedidos de outras pessoas no ramo da minha página.
 // Revisão da Rodada 11: o prestador vê o pedido aberto se for elegível (cidade, ramo e bairro)
 // ou se já enviou proposta; depois do fechamento, fotos e nome só para quem foi escolhido.
-function providerHoodOk(r){const b=state.myBiz;return !b?.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro';}
+function providerHoodOk(r){const b=state.myBiz;return !b?.hoods?.length||b.hoods.includes(r.hood)||r.hood==='Outro bairro'||!cityHasHoods(r.city);}
 function providerCanSee(r){const b=state.myBiz;if(!b?.live||!r||r.status==='removed'||r.mine||r.city!==b.city||r.cat!==b.cat)return false;return (requestActive(r)&&!b.paused&&providerHoodOk(r)&&specOk(b,r.spec))||r.proposals.some(p=>p.bizId===b.id);}
 function providerSeesDetails(r){return providerCanSee(r)&&(requestActive(r)||r.chosen&&r.proposals.find(p=>p.id===r.chosen)?.bizId===state.myBiz.id);}
 function providerRequests(){return requestList().filter(providerCanSee);}

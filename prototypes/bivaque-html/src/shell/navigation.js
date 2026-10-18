@@ -56,7 +56,7 @@ function shell(){
  // Rodada 49: o Painel do Bivaque tem a própria navegação; a do app sai de cena.
  document.body.classList.toggle('owner-mode',route.name==='dono');
  document.body.classList.toggle('entry-mode',entryChrome());
- const rootPage=['inicio','comunidade','conversas','voce'].includes(route.name);const notices=state.notices.filter(n=>n.city===state.homeCity&&n.unread).length, chats=state.threads.filter(t=>t.city===state.city&&!t.deleted&&t.unread).length;
+ const rootPage=['inicio','comunidade','conversas','voce'].includes(route.name);const notices=noticeList().filter(n=>n.unread).length, chats=state.threads.filter(t=>t.city===state.city&&!t.deleted&&t.unread&&!isBlocked(t.who)).length;
  $('#topbar').innerHTML=`<div class="topbar-in"><div class="row grow">${rootPage?`<span class="brand">${mark()}<span class="brand-text">${route.name==='inicio'?'Bivaque':esc(titleForRoute())}</span></span>`:`${iconBtn('arrow_back','back','','Voltar')}${chatTopTitle()||`<span class="top-title grow">${esc(titleForRoute())}</span>`}`}</div><div class="row">${btn(state.city,'city','','text','expand_more').replace('<md-text-button','<md-text-button class="city-chip"')}${route.name==='inicio'?`<span class="notice-button">${iconBtn('notifications','notices','','Avisos')}${notices?`<span class="badge">${notices}</span>`:''}</span>`:chatTopActions()||questionTopActions()||iconBtn('search','search','','Buscar')}</div></div>`;
  // Abaixo de 1024 px a cidade fica no título da Início; vendo outra cidade, ela volta para a barra.
  $('#topbar').classList.toggle('away',readonly()&&route.name!=='inicio');
