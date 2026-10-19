@@ -44,7 +44,7 @@ async function planActivate(){
  let started=false,ended=false;
  if(!mutate(()=>{const s=state.subscription;planRoll(s);s.tier=tier;if(tier==='free'){ended=!!s.spot&&(s.spot.until||0)>now;delete s.spot;}else if(tier==='moment'&&!spotActive(b)){s.spot={from:now,until:now+PLAN_SPOT_MS,bizId:b.id};started=true;}},{redraw:false}))return;
  await closeDialog(true);render();
- notify(tier==='free'?(ended?'Plano grátis selecionado. O destaque terminou e sua página saiu de Patrocinado.':'Plano grátis selecionado'):started?`Plano de teste ativado, sem pagamento. Sua página aparece em Patrocinado até ${planDay(now+PLAN_SPOT_MS)}.`:tier==='plan'?`Plano de teste ativado, sem pagamento. Restam ${planBoostsLeft()} destaques neste mês.`:'Plano de teste ativado, sem pagamento.');
+ notify(tier==='free'?(ended?'Plano grátis selecionado. O destaque terminou e sua página saiu de Patrocinado.':'Plano grátis selecionado'):started?`Plano de teste ativado. Nenhum pagamento realizado. Sua página aparece em Patrocinado até ${planDay(now+PLAN_SPOT_MS)}.`:tier==='plan'?`Plano de teste ativado. Nenhum pagamento realizado. Restam ${planBoostsLeft()} destaques neste mês.`:'Plano de teste ativado. Nenhum pagamento realizado.');
 }
 function planBoost(){
  const b=state.myBiz,s=planSub(),now=Date.now();
