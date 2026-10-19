@@ -35,8 +35,9 @@ e não deve ser mexida.
 2. Instalar com `npx pnpm@11.18.0 install --frozen-lockfile`.
 3. Abrir o Docker Desktop e subir o banco local com `npx supabase start`. É o banco local de testes; **nunca**
    use `db push` nem `--linked`.
-4. Fazer o reset com `npx supabase db reset`, e conferir a linha de base: `npx pnpm@11.18.0 test:db` e
-   `npx pnpm@11.18.0 gate`. Registrar o que já falha **antes** de mexer, para não atribuir ao lote.
+4. Fazer o reset **sem dados de exemplo**, como o CI: `npx supabase db reset --local --no-seed`. Depois rodar
+   `npx pnpm@11.18.0 test:db` e `npx pnpm@11.18.0 gate`. Com seed, uns 40 testes falham por depender dos
+   dados, e isso não é defeito. Linha de base em 19/10: `--no-seed` dá 133 arquivos e 1.807 testes PASS.
 5. Não copiar `.env.local` de outro lugar. Se um teste precisar de variável, usar as do `supabase start` e as
    do `.env.example`.
 

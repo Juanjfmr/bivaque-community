@@ -35,7 +35,7 @@ acceptance:
   - Quem ainda pode ler conteudo removido (autor, operador) segue o que o codigo de moderacao ja usa, documentado na migration
   - Feed, grupo e publicacao continuam passando nos testes existentes
 proof:
-  - npx supabase db reset
+  - npx supabase db reset --local --no-seed
   - npx pnpm@11.18.0 test:db
   - npx pnpm@11.18.0 gate
   - npx playwright test (specs de comunidade, grupo e publicacao afetadas)

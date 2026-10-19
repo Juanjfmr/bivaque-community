@@ -34,7 +34,7 @@ acceptance:
   - Todo SELECT do app que traz contact_phone usa o caminho novo (rg contact_phone em apps/web) e ficha, busca e painel do prestador continuam passando
   - database.generated.ts atualizado se o schema publico mudar
 proof:
-  - npx supabase db reset
+  - npx supabase db reset --local --no-seed
   - npx pnpm@11.18.0 test:db
   - npx pnpm@11.18.0 gate
   - npx playwright test (specs de prestador, negocio e servicos)
