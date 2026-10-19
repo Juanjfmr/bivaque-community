@@ -61,7 +61,5 @@ closure:
 # Sem mudanca de assinatura do schema publico: tipos nao precisaram regeneracao.
 # Quadro consultado: nenhum card SEC-001; registro mantido neste contrato autorizado.
 # Advisor security --local --level error: No issues found (exit 0).
-# BLOQUEIO DE ENTREGA: git add/commit nao executaram por sandbox (sem staging):
-# fatal: Unable to create 'C:/Users/juana/bivaque-community/.git/worktrees/seguranca/index.lock': Permission denied
-# Metadados Git fora da raiz gravavel. SEC-002/SEC-004 nao iniciadas: preservar
-# ordem e commit por tarefa sem contornar permissoes. Diff implementado, nao commitado.
+# Commit: o sandbox do Codex nao gravou no .git da worktree; o coordenador (Claude) fez o commit
+# 95d5d797 depois de revisar a migration e reconferir test:db (1818 PASS).
