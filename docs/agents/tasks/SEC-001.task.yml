@@ -47,3 +47,21 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Execucao Codex, 2026-10-19 (revisao independente pendente):
+# RED: reset --local --no-seed + test:db: 134 arquivos, 1816 testes, FAIL;
+# moderated-content-select.sql falhou 1-7/9: conteudo removido continuava visivel
+# ao membro/autor e contaminava as contagens. Positivos refinados por ID no GREEN.
+# GREEN: mesmo reset + test:db: 134 arquivos, 1818 testes PASS (11 novos).
+# Gate completo: lint/typecheck/test/secrets PASS; build pulado pelo script sem .env.local.
+# db:lint: exit 0; diagnosticos apenas em extensions (helpers do pgTAP), nenhum em public/private.
+# Leitura removida: autor/membro nao leem; operacao mantem service_role no servidor.
+# E2E comunidade/grupo/publicacao: pendente para CI com seed; banco desta sessao
+# sem seed, sem contas E2E, sem criar .env.local conforme instrucao do dono.
+# Sem mudanca de assinatura do schema publico: tipos nao precisaram regeneracao.
+# Quadro consultado: nenhum card SEC-001; registro mantido neste contrato autorizado.
+# Advisor security --local --level error: No issues found (exit 0).
+# BLOQUEIO DE ENTREGA: git add/commit nao executaram por sandbox (sem staging):
+# fatal: Unable to create 'C:/Users/juana/bivaque-community/.git/worktrees/seguranca/index.lock': Permission denied
+# Metadados Git fora da raiz gravavel. SEC-002/SEC-004 nao iniciadas: preservar
+# ordem e commit por tarefa sem contornar permissoes. Diff implementado, nao commitado.
