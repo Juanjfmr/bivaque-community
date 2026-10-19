@@ -1,0 +1,51 @@
+task_id: SEC-004
+objective: >
+  Nenhuma foto enviada (anuncio, evento e demais uploads de usuario) e gravada com metadados de localizacao
+  (EXIF/GPS e equivalentes): a limpeza acontece no servidor. A acao de foto de evento que usa a service role
+  reconfere a mesma autorizacao que a policy do Storage exigiria.
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5)
+  - Decisao do dono em 2026-10-19 - lote de seguranca implementado pelo Codex, revisado por DeepSeek V4.1 Flash e Opus
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/lib/listings/actions.ts:63-80 e apps/web/app/(shell)/events/upload-photo-action.ts:22-43 validam
+    MIME e tamanho e enviam os bytes sem limpar metadados; a limpeza depende do canvas do aparelho
+    (docs/PRODUCT_STATUS.md:94). upload-photo-action usa service role so com getUser(), enquanto
+    20260821000015_event_photos_bucket.sql:29-39 exige vinculo. Escrever primeiro o teste com um JPEG com GPS
+    e ver os bytes gravados ainda com GPS.
+allowed_paths:
+  - apps/web/lib/
+  - apps/web/app/
+  - apps/web/package.json
+  - pnpm-lock.yaml
+  - tests/unit/
+  - tests/e2e/
+  - tests/fixtures/
+  - supabase/tests/
+  - docs/agents/tasks/SEC-004.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - apagar dados alem dos residuos que a tarefa manda purgar
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+  - adicionar dependencia sem versao exata ou de fonte nao oficial (preferir biblioteca ja usada no repo; se precisar de nova, justificar no PR)
+acceptance:
+  - Inventario de todos os caminhos de upload de imagem do usuario no app listado no PR
+  - Teste com JPEG (e PNG/WebP se aceitos) contendo GPS prova que o arquivo gravado nao tem GPS nem EXIF de localizacao, em cada caminho
+  - Upload direto ao Storage pelo cliente, se existir, fica coberto (fechado pela policy ou tratado no servidor), documentado
+  - upload-photo-action recusa conta sem vinculo ao escopo do evento (teste negativo)
+proof:
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 gate
+  - npx playwright test tests/e2e/photo-upload.spec.ts
+risk: coordenada do aparelho gravada em foto publica; acao privilegiada sem autorizacao
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

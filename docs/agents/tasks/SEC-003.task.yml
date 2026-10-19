@@ -1,0 +1,42 @@
+task_id: SEC-003
+objective: >
+  A purga da exclusao de conta nao pula objetos do Storage: apaga todos os arquivos pessoais de cada bucket
+  e so marca a purga como concluida depois de confirmar que nao sobrou nenhum.
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5)
+  - Decisao do dono em 2026-10-19 - lote de seguranca implementado pelo Codex, revisado por DeepSeek V4.1 Flash e Opus
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/internal/account-deletion/route.ts:72-74 lista com offset page*PAGE_SIZE depois de
+    remover a pagina anterior; com 101 objetos apaga 100, consulta offset 100 numa lista de 1 e termina com
+    residuo. tests/unit/infra/account-deletion-route.test.ts:231-240 confirma o offset errado. Escrever
+    primeiro o teste com colecao que encolhe a cada remocao e ver falhar.
+allowed_paths:
+  - apps/web/app/api/internal/account-deletion/
+  - apps/web/lib/
+  - tests/unit/infra/
+  - supabase/tests/
+  - docs/agents/tasks/SEC-003.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - apagar dados alem dos residuos que a tarefa manda purgar
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+acceptance:
+  - Teste unitario com Storage simulado que encolhe a cada remove prova que 0, 1, 100, 101 e 250 objetos sao todos apagados
+  - A purga so finaliza depois de uma listagem vazia confirmada; erro de listagem ou remocao nao finaliza
+  - O teste antigo que fixava o offset errado e corrigido para o comportamento certo, com comentario
+proof:
+  - npx pnpm@11.18.0 test -- tests/unit/infra/account-deletion-route.test.ts
+  - npx pnpm@11.18.0 gate
+risk: residuo de dado pessoal depois da exclusao de conta (LGPD)
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
