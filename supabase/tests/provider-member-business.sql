@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(41);
+select plan(42);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -130,6 +130,19 @@ select lives_ok(
        ) $$,
   'member owner adds a portfolio photo row'
 );
+-- SEC-006: o dono não grava direto no bucket; a Server Action reconfere
+-- can_manage_provider_profile e grava com service_role.
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name, owner)
+       values (
+         'provider-photos',
+         current_setting('test.provider_id') || '/portfolio/prato.webp',
+         '10000000-0000-4000-8000-000000000001'
+       ) $$,
+  '42501', null,
+  'member owner cannot upload to the business folder directly'
+);
+set local role service_role;
 select lives_ok(
   $$ insert into storage.objects (bucket_id, name, owner)
        values (
@@ -137,8 +150,9 @@ select lives_ok(
          current_setting('test.provider_id') || '/portfolio/prato.webp',
          '10000000-0000-4000-8000-000000000001'
        ) $$,
-  'member owner uploads to the own business folder'
+  'service_role uploads the business photo for the action'
 );
+set local role authenticated;
 select throws_ok(
   $$ insert into public.provider_reach (provider_id, scope_type, scope_id, source)
        values (

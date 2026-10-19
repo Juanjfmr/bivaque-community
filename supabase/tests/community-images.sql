@@ -10,7 +10,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(13);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -36,6 +36,21 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- SEC-006: o dono também não grava direto no bucket. A Server Action grava com
+-- service_role depois de reconferir a posse.
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name, owner)
+     values (
+       'community-images',
+       '70000000-0000-4000-8000-000000000001/banner',
+       '10000000-0000-4000-8000-000000000001'::uuid
+     ) $$,
+  '42501',
+  null,
+  'the owner cannot upload a banner directly; only the server action can'
+);
+
+set local role service_role;
 select lives_ok(
   $$ insert into storage.objects (bucket_id, name, owner)
      values (
@@ -43,10 +58,11 @@ select lives_ok(
        '70000000-0000-4000-8000-000000000001/banner',
        '10000000-0000-4000-8000-000000000001'::uuid
      ) $$,
-  'the owner can upload a banner inside the community folder'
+  'service_role uploads the owner image for the action'
 );
 
 -- ── Common member (member-four belongs to the community but is not owner) ──
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
 
 select throws_ok(

@@ -54,3 +54,36 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+# Execucao SEC-006, 2026-10-19, sobre b025f440 + diff local.
+# RED: supabase test db com security-image-storage.sql -> 137 arquivos, 1918 testes, FAIL.
+# Falhas 1-8, 10, 12 e 43: authenticated ainda fazia INSERT/UPDATE direto em avatars, event-photos,
+# listing-photos, community-images, provider-photos e service-request-photos.
+# O rascunho do teste tinha plan(42) para 43 casos e misturava set_config com a funcao de teste;
+# cada caso virou instrucao propria. O visitante de outra cidade passou a provar a leitura de
+# listing-photos ativa que o ADR de consulta a outra cidade garante, em vez de exigir negacao.
+# GREEN: npx pnpm@11.18.0 test:db -> 137 arquivos, 1923 testes, PASS; security-image-storage.sql ok.
+# Unidade: npx pnpm@11.18.0 exec vitest run tests/unit/security -> 12 arquivos, 201 testes PASS.
+# Gate: npx pnpm@11.18.0 gate -> exit 0; lint, typecheck, test e secrets PASS; build PULADO sem .env.local.
+# MORADIA, PORTFOLIO e PEDIDO gravam com service_role depois de reconferir a autorizacao:
+# listings.owner_user_id, can_manage_provider_profile(provider_id) e service_requests.requester_user_id.
+# MERCADO (novo e editar) envia por uploadListingPhotoAction; formatos JPEG/PNG/WebP e limite de 10 MB
+# preservados; bodySizeLimit 12mb justificado por uma foto de 10 MB por chamada mais multipart.
+# Teste de unidade prova bytes gravados sem EXIF, GPS, XMP ou orientacao nos tres formatos.
+# Upload com service_role deixa owner nulo (conferido na API local do Storage); por isso as remocoes
+# de foto de anuncio e portfolio tambem passaram ao servidor, reconferindo posse e prefixo de pasta,
+# sem alterar as policies de DELETE.
+# Policies removidas (INSERT): avatars_insert_own_folder, event_photos_insert_self,
+# listing_photos_storage_insert_owner, community_images_insert_owner, provider_photos_insert_owner,
+# service_request_photos_storage_insert_owner.
+# Policies removidas (UPDATE): avatars_update_own, event_photos_update_own,
+# community_images_update_owner, service_request_photos_storage_update_owner.
+# SELECT e DELETE preservados; verification-documents nao foi tocado.
+# pgTAP existentes ajustados ao contrato novo: community-images, event-photos-storage, listings-moradia,
+# provider-member-business, provider-showcase-scope e rls-or-column-regression.
+# BLOQUEIO REAL: db reset --local --no-seed recusado pelo guard-rail de permissao nesta execucao
+# nao interativa. A migration nova foi aplicada com supabase migration up --local e test:db passou
+# nesse estado; o replay limpo a partir de banco vazio fica pendente de uma sessao com aprovacao.
+# E2E foto-upload nao rodou: sem seed local e sem apps/web/.env.local.
+# Sem .env.local, instalacao, push, PR, merge, deploy ou db push remoto; nenhuma migration antiga editada.
+# Revisao independente e runtime de entrega continuam pendentes.
+

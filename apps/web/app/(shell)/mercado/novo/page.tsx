@@ -6,9 +6,12 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useRef, useState } from "react"
+import {
+  deleteListingPhotoObjectAction,
+  uploadListingPhotoAction,
+} from "../../../../lib/listings/actions"
 import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../lib/listings/address"
 import {
-  buildListingPhotoPath,
   LISTING_CATEGORIES,
   LISTING_CONDITIONS,
   MAX_LISTING_PHOTOS,
@@ -182,12 +185,15 @@ export default function NovoAnuncioPage() {
       for (let index = 0; index < photos.length; index += 1) {
         const photo = photos[index]
         if (photo === undefined) continue
-        const path = buildListingPhotoPath(listingId, index, photo.blob.type)
-        const { error: uploadError } = await supabase.storage
-          .from("listing-photos")
-          .upload(path, photo.blob, { contentType: photo.blob.type, upsert: false })
-        if (uploadError) throw new Error(uploadError.message)
-        uploaded.push(path)
+        // SEC-006: o bucket só aceita escrita do servidor, que limpa EXIF/GPS e
+        // reconfere a posse do anúncio antes de gravar com service_role.
+        const photoForm = new FormData()
+        photoForm.set("listingId", listingId)
+        photoForm.set("position", String(index))
+        photoForm.set("photo", photo.blob, `foto-${index + 1}.jpg`)
+        const result = await uploadListingPhotoAction(photoForm)
+        if ("error" in result) throw new Error(result.error)
+        uploaded.push(result.path)
       }
       if (uploaded.length > 0) {
         const { error: photoError } = await supabase.from("listing_photos").insert(
@@ -202,8 +208,13 @@ export default function NovoAnuncioPage() {
       router.push(`/mercado/${listingId}` as Route)
     } catch {
       // Nada de objeto órfão alcançável: desfaz o que subiu e mantém o rascunho.
-      if (uploaded.length > 0) {
-        await supabase.storage.from("listing-photos").remove(uploaded)
+      // A remoção também é do servidor: o objeto gravado com service_role tem
+      // owner nulo e não é alcançável pela policy de DELETE do cliente.
+      for (const path of uploaded) {
+        const cleanup = new FormData()
+        cleanup.set("listingId", listingId)
+        cleanup.set("path", path)
+        await deleteListingPhotoObjectAction(cleanup)
       }
       setSubmitError(
         publish

@@ -12,6 +12,7 @@ import {
   validateRequestWhen,
 } from "../../../../lib/service-requests/request-form"
 import { sanitizeImage } from "../../../../lib/storage/sanitize-image"
+import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 
 // RECON-022 — criação do pedido de serviço.
 //
@@ -121,40 +122,68 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
 
   const createdId = requestId as string
 
-  // Anexo é opcional e vem depois do pedido existir: o caminho começa pelo id
-  // do pedido, que é o que a policy de leitura do storage confere.
-  for (const [index, { file, body }] of images.entries()) {
-    if (!SERVICE_REQUEST_PHOTO_MIME_TYPES.some((mime) => mime === file.type)) {
-      return { status: "error", message: "Use imagens JPEG, PNG ou WebP." }
-    }
-    const path = `${createdId}/${index}.${extensionFor(file.type)}`
-    const { error: uploadError } = await client.storage
-      .from("service-request-photos")
-      .upload(path, body, { contentType: file.type, upsert: true })
-    if (uploadError) {
-      log.error("pedidos: photo upload failed", { error: uploadError.message })
+  // SEC-006 — a policy service_request_photos_storage_insert_owner exigia dono
+  // do objeto e pedido cujo requester é o chamador. O upload agora usa
+  // service_role, então a mesma condição é reconferida aqui antes de escrever.
+  // Sem anexo não há escrita no Storage e nada a reconferir.
+  if (images.length > 0) {
+    const serviceClient = createServiceClient()
+    const { data: ownedRequest, error: ownershipError } = await serviceClient
+      .from("service_requests")
+      .select("id")
+      .eq("id", createdId)
+      .eq("requester_user_id", user.id)
+      .maybeSingle()
+    if (ownershipError) {
+      log.error("pedidos: request ownership check failed", { error: ownershipError.message })
       return {
         status: "error",
         message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
       }
     }
-    // A migration dá a `authenticated` apenas SELECT e INSERT em
-    // `service_request_photos` (sem policy/grants de UPDATE). Um upsert com
-    // merge exigiria UPDATE e falharia com "permission denied" já na primeira
-    // foto; `ignoreDuplicates` produz ON CONFLICT DO NOTHING, que só precisa
-    // de INSERT e mantém o reenvio idempotente. O arquivo já foi sobrescrito no
-    // storage (upsert: true), então o caminho continua apontando para o novo.
-    const { error: photoError } = await client
-      .from("service_request_photos")
-      .upsert(
-        { request_id: createdId, photo_path: path, position: index },
-        { onConflict: "request_id,position", ignoreDuplicates: true },
-      )
-    if (photoError) {
-      log.error("pedidos: photo row failed", { error: photoError.message })
+    if (!ownedRequest) {
+      log.error("pedidos: request ownership mismatch", { request_id: createdId })
       return {
         status: "error",
         message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
+      }
+    }
+
+    // Anexo é opcional e vem depois do pedido existir: o caminho começa pelo id
+    // do pedido, que é o que a policy de leitura do storage confere.
+    for (const [index, { file, body }] of images.entries()) {
+      if (!SERVICE_REQUEST_PHOTO_MIME_TYPES.some((mime) => mime === file.type)) {
+        return { status: "error", message: "Use imagens JPEG, PNG ou WebP." }
+      }
+      const path = `${createdId}/${index}.${extensionFor(file.type)}`
+      const { error: uploadError } = await serviceClient.storage
+        .from("service-request-photos")
+        .upload(path, body, { contentType: file.type, upsert: true })
+      if (uploadError) {
+        log.error("pedidos: photo upload failed", { error: uploadError.message })
+        return {
+          status: "error",
+          message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
+        }
+      }
+      // A migration dá a `authenticated` apenas SELECT e INSERT em
+      // `service_request_photos` (sem policy/grants de UPDATE). Um upsert com
+      // merge exigiria UPDATE e falharia com "permission denied" já na primeira
+      // foto; `ignoreDuplicates` produz ON CONFLICT DO NOTHING, que só precisa
+      // de INSERT e mantém o reenvio idempotente. O arquivo já foi sobrescrito no
+      // storage (upsert: true), então o caminho continua apontando para o novo.
+      const { error: photoError } = await client
+        .from("service_request_photos")
+        .upsert(
+          { request_id: createdId, photo_path: path, position: index },
+          { onConflict: "request_id,position", ignoreDuplicates: true },
+        )
+      if (photoError) {
+        log.error("pedidos: photo row failed", { error: photoError.message })
+        return {
+          status: "error",
+          message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
+        }
       }
     }
   }

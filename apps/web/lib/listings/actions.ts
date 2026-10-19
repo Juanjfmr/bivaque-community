@@ -2,14 +2,17 @@
 
 // RECON-027 — escritas de Moradia. Mesmo ciclo de vida do Mercado (ADR D1/D2):
 // o dono cria, edita e publica; a RLS confere dono e público a cada escrita.
-// O servidor limpa os metadados antes do envio pelo cliente autenticado;
-// a policy de storage reconfere o dono.
+// O servidor limpa os metadados e grava com service_role. Antes de cada upload
+// ele reconfere a mesma condição que a policy do Storage exigia (anúncio existe
+// e é do chamador), porque privilégio não é identidade.
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { sanitizeImage } from "../storage/sanitize-image"
+import { createServerClient as createServiceClient } from "../supabase/server"
 import type { ActionState } from "./action-state"
 import { validateAddress } from "./address"
+import { buildListingPhotoPath } from "./catalog"
 import { parseListingFilters, type RawSearchParams } from "./filters"
 import { createListingClient } from "./ssr-client"
 import { MAX_LISTING_PHOTOS, MAX_PHOTO_BYTES } from "./types"
@@ -64,6 +67,30 @@ async function currentUserId(): Promise<string | null> {
 async function uploadPhotos(listingId: string, files: File[]): Promise<{ error?: string }> {
   if (files.length === 0) return {}
   const client = await createListingClient()
+  const {
+    data: { user },
+  } = await client.auth.getUser()
+  if (!user) {
+    return { error: "Sessão expirada. Entre novamente para enviar as fotos." }
+  }
+
+  // Mesma autorização de listing_photos_storage_insert_owner: o anúncio existe
+  // e owner_user_id é o chamador. A checagem é explícita porque o upload abaixo
+  // usa service_role e não passa mais pela policy.
+  const service = createServiceClient()
+  const { data: ownedListing, error: ownershipError } = await service
+    .from("listings")
+    .select("id")
+    .eq("id", listingId)
+    .eq("owner_user_id", user.id)
+    .maybeSingle()
+  if (ownershipError) {
+    return { error: ownershipError.message }
+  }
+  if (!ownedListing) {
+    return { error: "Este anúncio não existe ou não é seu." }
+  }
+
   const allowed = ["image/jpeg", "image/png", "image/webp"]
 
   for (const [index, file] of files.entries()) {
@@ -79,10 +106,8 @@ async function uploadPhotos(listingId: string, files: File[]): Promise<{ error?:
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Imagem inválida." }
     }
-    const extension =
-      file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
-    const path = `${listingId}/${Date.now()}-${index}-${crypto.randomUUID()}.${extension}`
-    const { error: uploadError } = await client.storage
+    const path = buildListingPhotoPath(listingId, index, file.type)
+    const { error: uploadError } = await service.storage
       .from("listing-photos")
       .upload(path, image, { contentType: file.type, upsert: false })
     if (uploadError) {
@@ -96,6 +121,70 @@ async function uploadPhotos(listingId: string, files: File[]): Promise<{ error?:
     }
   }
   return {}
+}
+
+// SEC-006 — foto do Mercado. O navegador não grava mais direto no bucket: envia
+// o arquivo para cá, que limpa os metadados e grava com service_role. A
+// autorização de listing_photos_storage_insert_owner é reconferida antes do
+// upload: o anúncio existe e é do chamador.
+export async function uploadListingPhotoAction(
+  formData: FormData,
+): Promise<{ path: string } | { error: string }> {
+  const listingId = String(formData.get("listingId") ?? "")
+  const position = Number.parseInt(String(formData.get("position") ?? ""), 10)
+  const file = formData.get("photo")
+
+  if (listingId === "") {
+    return { error: "Anúncio não identificado." }
+  }
+  if (!Number.isInteger(position) || position < 0 || position >= MAX_LISTING_PHOTOS) {
+    return { error: "Posição de foto inválida." }
+  }
+  if (!(file instanceof File)) {
+    return { error: "Escolha uma imagem para enviar." }
+  }
+  const allowed = ["image/jpeg", "image/png", "image/webp"]
+  if (!allowed.includes(file.type)) {
+    return { error: "Use uma imagem JPEG, PNG ou WebP." }
+  }
+  if (file.size === 0 || file.size > MAX_PHOTO_BYTES) {
+    return { error: "A imagem deve ter até 10 MB." }
+  }
+
+  const userId = await currentUserId()
+  if (userId === null) {
+    return { error: "Sessão expirada. Entre novamente para enviar a foto." }
+  }
+
+  const service = createServiceClient()
+  const { data: ownedListing, error: ownershipError } = await service
+    .from("listings")
+    .select("id")
+    .eq("id", listingId)
+    .eq("owner_user_id", userId)
+    .maybeSingle()
+  if (ownershipError) {
+    return { error: ownershipError.message }
+  }
+  if (!ownedListing) {
+    return { error: "Este anúncio não existe ou não é seu." }
+  }
+
+  let image: Buffer
+  try {
+    image = await sanitizeImage(file, MAX_PHOTO_BYTES)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Imagem inválida." }
+  }
+
+  const path = buildListingPhotoPath(listingId, position, file.type)
+  const { error: uploadError } = await service.storage
+    .from("listing-photos")
+    .upload(path, image, { contentType: file.type, upsert: false })
+  if (uploadError) {
+    return { error: uploadError.message }
+  }
+  return { path }
 }
 
 export async function createPropertyAction(formData: FormData): Promise<ActionState> {
@@ -299,6 +388,51 @@ export async function createListingAlertAction(formData: FormData): Promise<Acti
   return { ok: true, message: activate ? "Alerta criado." : "Busca salva." }
 }
 
+// Objetos gravados pela action têm owner nulo (o service_role não carrega o
+// `sub` do usuário), então a policy de DELETE `owner = auth.uid()` não os
+// alcança. A remoção também passa a ser privilegiada, reconferindo a mesma
+// posse e o mesmo prefixo de pasta que a policy exigia.
+async function removeOwnedListingObjects(
+  listingId: string,
+  paths: string[],
+): Promise<{ error?: string }> {
+  if (paths.length === 0) return {}
+  const userId = await currentUserId()
+  if (userId === null) {
+    return { error: "Sessão expirada. Entre novamente para editar." }
+  }
+  if (paths.some((path) => !path.startsWith(`${listingId}/`))) {
+    return { error: "A foto não pertence a este anúncio." }
+  }
+
+  const service = createServiceClient()
+  const { data: ownedListing, error: ownershipError } = await service
+    .from("listings")
+    .select("id")
+    .eq("id", listingId)
+    .eq("owner_user_id", userId)
+    .maybeSingle()
+  if (ownershipError) return { error: ownershipError.message }
+  if (!ownedListing) return { error: "Este anúncio não existe ou não é seu." }
+
+  const { error: removeError } = await service.storage.from("listing-photos").remove(paths)
+  if (removeError) return { error: removeError.message }
+  return {}
+}
+
+export async function deleteListingPhotoObjectAction(formData: FormData): Promise<ActionState> {
+  const listingId = String(formData.get("listingId") ?? "")
+  const path = String(formData.get("path") ?? "")
+  if (listingId === "" || path === "") {
+    return { ok: false, message: "Foto não identificada." }
+  }
+  const removal = await removeOwnedListingObjects(listingId, [path])
+  if (removal.error) return { ...GENERIC_ERROR, message: removal.error }
+  revalidatePath(`/imoveis/${listingId}`)
+  revalidatePath(`/mercado/${listingId}`)
+  return { ok: true }
+}
+
 export async function removeListingPhotoAction(formData: FormData): Promise<ActionState> {
   const userId = await currentUserId()
   if (userId === null) {
@@ -321,9 +455,9 @@ export async function removeListingPhotoAction(formData: FormData): Promise<Acti
   }
 
   // D3 do ADR de mídia: remover a imagem do recurso remove o objeto.
-  const { error: storageError } = await client.storage.from("listing-photos").remove([path])
-  if (storageError) {
-    return { ...GENERIC_ERROR, message: storageError.message }
+  const removal = await removeOwnedListingObjects(listingId, [path])
+  if (removal.error) {
+    return { ...GENERIC_ERROR, message: removal.error }
   }
 
   revalidatePath(`/imoveis/${listingId}`)

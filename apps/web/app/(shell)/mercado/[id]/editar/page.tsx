@@ -6,12 +6,12 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../../lib/listings/address"
 import {
-  buildListingPhotoPath,
-  LISTING_CATEGORIES,
-  LISTING_CONDITIONS,
-} from "../../../../../lib/listings/catalog"
+  deleteListingPhotoObjectAction,
+  uploadListingPhotoAction,
+} from "../../../../../lib/listings/actions"
+import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../../lib/listings/address"
+import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "../../../../../lib/listings/catalog"
 import { listingsClient } from "../../../../../lib/listings/client"
 import {
   type ListingEditErrors,
@@ -231,11 +231,15 @@ export default function EditarAnuncioPage() {
     let newPath: string | null = null
     try {
       const blob = await stripExif(file)
-      newPath = buildListingPhotoPath(state.listing.id, 0, blob.type)
-      const { error: uploadError } = await supabase.storage
-        .from("listing-photos")
-        .upload(newPath, blob, { contentType: blob.type, upsert: false })
-      if (uploadError) throw new Error(uploadError.message)
+      // SEC-006: a gravação é do servidor, que limpa EXIF/GPS e reconfere a
+      // posse do anúncio antes de usar service_role.
+      const photoForm = new FormData()
+      photoForm.set("listingId", state.listing.id)
+      photoForm.set("position", "0")
+      photoForm.set("photo", blob, "foto-1.jpg")
+      const result = await uploadListingPhotoAction(photoForm)
+      if ("error" in result) throw new Error(result.error)
+      newPath = result.path
 
       // O canônico não tem índice único em (listing_id, position): substituir a
       // foto é apagar as linhas do anúncio e gravar a nova, não `upsert`.
@@ -251,7 +255,10 @@ export default function EditarAnuncioPage() {
       if (photoError) throw new Error(photoError.message)
 
       if (previousPath !== null && previousPath !== newPath) {
-        await supabase.storage.from("listing-photos").remove([previousPath])
+        const cleanup = new FormData()
+        cleanup.set("listingId", state.listing.id)
+        cleanup.set("path", previousPath)
+        await deleteListingPhotoObjectAction(cleanup)
       }
 
       const { data: signed } = await supabase.storage
@@ -264,7 +271,11 @@ export default function EditarAnuncioPage() {
       }))
     } catch {
       if (newPath !== null) {
-        await supabase.storage.from("listing-photos").remove([newPath])
+        // O objeto veio da action com owner nulo; a remoção também é do servidor.
+        const cleanup = new FormData()
+        cleanup.set("listingId", state.listing.id)
+        cleanup.set("path", newPath)
+        await deleteListingPhotoObjectAction(cleanup)
       }
       setSaveError("Não foi possível trocar a foto. A foto anterior continua aqui.")
     }
