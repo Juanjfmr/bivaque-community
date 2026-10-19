@@ -29,7 +29,7 @@ acceptance:
   - Teste prova que sem erro o comportamento atual (respeitar preferencia e opt-out) continua
   - Log do erro sem PII (usar o scrubber existente)
 proof:
-  - npx pnpm@11.18.0 test -- tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
   - npx pnpm@11.18.0 gate
 risk: envio de aviso a quem pediu para nao receber
 risk_level: R3
@@ -39,3 +39,28 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Execucao local em 2026-10-19, branch codex/seguranca (implementador Codex).
+# Baseline: proof corrigido -> exit 0, 15 passed em 2 arquivos.
+# TDD RED (teste antes do codigo): mesmo proof -> exit 1, 6 failed, 17 passed.
+# Erros retornados nas consultas de notification_preferences, matriz de canais
+# e notification_opt_outs chamavam send 1 vez; rejeicoes abortavam sem patch.
+# Correcao: consultas inconclusivas nao entram no adaptador; item fica pending
+# com last_error tecnico e updated_at renovado. Nao consome tentativa de envio;
+# o agendador SQL existente espera 60s * 2^attempts antes de selecionar de novo.
+# Erros retornados/rejeitados usam scrubPii antes do log; teste verifica que
+# e-mail e documento ficticios nao aparecem em log, resposta ou patch.
+# TDD GREEN: npx.cmd pnpm@11.18.0 exec vitest run
+# tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
+# -> exit 0, 25 passed em 2 arquivos. Inclui recuperacao, lote misto, opt-out,
+# matriz desabilitada e os comportamentos anteriores de preferencias/defaults.
+# Primeiro gate: FAIL em typecheck, TS2322 causado pelo diff (lastError opcional
+# recebia undefined). Corrigido com narrowing antes de construir a mutacao;
+# proof repetido apos a correcao -> 25 passed, exit 0.
+# Quadro consultado: DONE-OUTBOX-FOUNDATION (mecanismo historico); sem card
+# SEC-005. BOARD/board.json fora dos allowed_paths, nao alterados.
+# Limites: Docker indisponivel; sem supabase start/test:db/E2E/runtime integrado.
+# Nenhum .env.local criado. Implementado; revisao independente pendente.
+# Gate final: npx.cmd pnpm@11.18.0 gate -> exit 0; lint, typecheck, test e
+# secrets PASS. Unit 1257, mobile 76, web 19, privacy 189, scope 120, sem falhas.
+# Build pulado automaticamente por ausencia de apps/web/.env.local.

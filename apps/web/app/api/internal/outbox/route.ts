@@ -1,5 +1,11 @@
 import { timingSafeEqual } from "node:crypto"
-import { deliverOutboxBatch, type OutboxChannel, type OutboxMessage } from "@bivaque/domain"
+import {
+  deliverOutboxBatch,
+  type OutboxChannel,
+  type OutboxMessage,
+  type OutboxMutation,
+  scrubPii,
+} from "@bivaque/domain"
 import { NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import { log } from "../../../../lib/logger"
@@ -48,6 +54,20 @@ function toMessage(row: OutboxRow): OutboxMessage {
 function userIdFromPayload(payload: Record<string, unknown>): string | null {
   const raw = payload["user_id"]
   return typeof raw === "string" && raw.length > 0 ? raw : null
+}
+
+// A rejected query is as inconclusive as a returned database error.
+async function deliveryLookup<T>(
+  query: PromiseLike<{ data: T | null; error: { message: string } | null }>,
+) {
+  try {
+    return await query
+  } catch (error) {
+    return {
+      data: null,
+      error: { message: error instanceof Error ? error.message : "lookup rejected" },
+    }
+  }
 }
 
 export async function POST(request: Request) {
@@ -113,29 +133,36 @@ export async function POST(request: Request) {
   let channelPreferences: Array<
     Pick<NotificationChannelPreferencesRow, "user_id" | "notification_type" | "channel" | "enabled">
   > = []
+  let preferenceLookupError: string | undefined
   if (userIds.length > 0) {
     const [preferencesResult, channelPreferencesResult] = await Promise.all([
-      supabase
-        .from("notification_preferences")
-        .select("user_id, comments, events, messages, mentions, product_news, indications")
-        .in("user_id", userIds),
-      supabase
-        .from("notification_channel_preferences")
-        .select("user_id, notification_type, channel, enabled")
-        .in("user_id", userIds),
+      deliveryLookup(
+        supabase
+          .from("notification_preferences")
+          .select("user_id, comments, events, messages, mentions, product_news, indications")
+          .in("user_id", userIds),
+      ),
+      deliveryLookup(
+        supabase
+          .from("notification_channel_preferences")
+          .select("user_id, notification_type, channel, enabled")
+          .in("user_id", userIds),
+      ),
     ])
 
     if (preferencesResult.error) {
+      preferenceLookupError = "preference_lookup_failed"
       log.error("outbox worker preference lookup failed", {
-        error: preferencesResult.error.message,
+        error: scrubPii(preferencesResult.error.message),
       })
     } else {
       preferences = preferencesResult.data ?? []
     }
 
     if (channelPreferencesResult.error) {
+      preferenceLookupError = "channel_preference_lookup_failed"
       log.error("outbox worker channel-preference lookup failed", {
-        error: channelPreferencesResult.error.message,
+        error: scrubPii(channelPreferencesResult.error.message),
       })
     } else {
       channelPreferences = channelPreferencesResult.data ?? []
@@ -144,14 +171,30 @@ export async function POST(request: Request) {
 
   const optOutResults = await Promise.all(
     messages.map((message) =>
-      supabase
-        .from("notification_opt_outs")
-        .select("recipient")
-        .eq("channel", message.channel)
-        .eq("recipient", message.recipient)
-        .maybeSingle(),
+      deliveryLookup(
+        supabase
+          .from("notification_opt_outs")
+          .select("recipient")
+          .eq("channel", message.channel)
+          .eq("recipient", message.recipient)
+          .maybeSingle(),
+      ),
     ),
   )
+
+  const lookupErrors = new Map<string, string>()
+  for (const [index, message] of messages.entries()) {
+    if (preferenceLookupError && userIdFromPayload(message.payload)) {
+      lookupErrors.set(message.id, preferenceLookupError)
+    }
+    const result = optOutResults[index]
+    if (result?.error) {
+      lookupErrors.set(message.id, "opt_out_lookup_failed")
+      log.error("outbox worker opt-out lookup failed", {
+        error: scrubPii(result.error.message),
+      })
+    }
+  }
 
   const preferencesByUser = new Map<string, NotificationPreferencesRow>(
     preferences.map((preference) => [preference.user_id, preference]),
@@ -175,24 +218,46 @@ export async function POST(request: Request) {
     }),
   )
 
-  const mutations = await deliverOutboxBatch(messages, {
-    adapters: createChannelAdapters(),
-    now: Date.now(),
-    baseRetryMs: 0,
-    preferenceAllows: (message) => {
-      const userId = userIdFromPayload(message.payload)
-      if (!userId) return true
-
-      return outboxDeliveryAllowed({
-        type: message.type,
-        outboxChannel: message.channel,
-        preference: preferencesByUser.get(userId),
-        matrix: channelPreferencesByUser.get(userId) ?? [],
-      })
-    },
-    optOutAllows: (channel: OutboxChannel, recipient: string) =>
-      !optedOut.has(`${channel}:${recipient}`),
+  const now = Date.now()
+  // No delivery was attempted. Keep these rows pending without consuming the
+  // provider retry budget. The SQL dispatcher waits 60s * 2^attempts after
+  // updated_at before selecting them again (it leases rows before this POST).
+  const mutations = messages.flatMap<OutboxMutation>((message) => {
+    const lastError = lookupErrors.get(message.id)
+    if (!lastError) return []
+    return [
+      {
+        id: message.id,
+        status: "pending",
+        attempts: message.attempts,
+        lastError,
+        updatedAt: now,
+      },
+    ]
   })
+  mutations.push(
+    ...(await deliverOutboxBatch(
+      messages.filter((message) => !lookupErrors.has(message.id)),
+      {
+        adapters: createChannelAdapters(),
+        now,
+        baseRetryMs: 0,
+        preferenceAllows: (message) => {
+          const userId = userIdFromPayload(message.payload)
+          if (!userId) return true
+
+          return outboxDeliveryAllowed({
+            type: message.type,
+            outboxChannel: message.channel,
+            preference: preferencesByUser.get(userId),
+            matrix: channelPreferencesByUser.get(userId) ?? [],
+          })
+        },
+        optOutAllows: (channel: OutboxChannel, recipient: string) =>
+          !optedOut.has(`${channel}:${recipient}`),
+      },
+    )),
+  )
 
   let sent = 0
   let skipped = 0

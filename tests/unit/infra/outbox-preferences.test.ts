@@ -13,7 +13,8 @@
 // ficou fora do mapa e o convite chegava a quem desligou eventos. Por isso o
 // negativo tem que passar pelo `preferenceKey()` de verdade.
 
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { isOutboxDue, OUTBOX_BASE_RETRY_MS } from "@bivaque/domain"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { POST } from "web/app/api/internal/outbox/route"
 
 const send = vi.fn(async () => ({ ok: true }))
@@ -30,32 +31,41 @@ vi.mock("web/lib/outbox/adapters", () => ({
 
 import { createServerClient } from "web/lib/supabase/server"
 
-type QueryResult = { data: unknown; error: null }
+type QueryResult = { data: unknown; error: { message: string } | null }
+type LookupTable =
+  | "notification_preferences"
+  | "notification_channel_preferences"
+  | "notification_opt_outs"
 
-function query(result: QueryResult) {
+function query(result: QueryResult | Error) {
+  const settle = () => (result instanceof Error ? Promise.reject(result) : Promise.resolve(result))
   const builder = {
     select: vi.fn(() => builder),
     in: vi.fn(() => builder),
     eq: vi.fn(() => builder),
-    limit: vi.fn(async () => result),
-    maybeSingle: vi.fn(async () => result),
-    update: vi.fn(() => builder),
+    limit: vi.fn(settle),
+    maybeSingle: vi.fn(settle),
+    update: vi.fn((_patch: unknown) => builder),
     // Supabase query builders are awaitable thenables.
     // biome-ignore lint/suspicious/noThenProperty: the mock mirrors Supabase's awaitable builder
     then: (
       onFulfilled: (value: QueryResult) => unknown,
       onRejected?: (reason: unknown) => unknown,
-    ) => Promise.resolve(result).then(onFulfilled, onRejected),
+    ) => settle().then(onFulfilled, onRejected),
   }
   return builder
 }
 
-function clientFor(messageType: string, events: boolean) {
+function clientFor(
+  messageType: string,
+  events: boolean,
+  lookups: Partial<Record<LookupTable, QueryResult | Error>> = {},
+) {
   const outboxRead = query({
     data: [
       {
         id: "10000000-0000-4000-8000-000000000001",
-        recipient: "recipient@example.com",
+        recipient: "recipient@example.invalid",
         channel: "email",
         type: messageType,
         payload: { user_id: "20000000-0000-4000-8000-000000000001" },
@@ -70,26 +80,33 @@ function clientFor(messageType: string, events: boolean) {
     ],
     error: null,
   })
-  const preferences = query({
-    data: [
-      {
-        user_id: "20000000-0000-4000-8000-000000000001",
-        comments: false,
-        events,
-        messages: false,
-        mentions: false,
-      },
-    ],
-    error: null,
-  })
-  const optOut = query({ data: null, error: null })
+  const preferences = query(
+    lookups.notification_preferences ?? {
+      data: [
+        {
+          user_id: "20000000-0000-4000-8000-000000000001",
+          comments: false,
+          events,
+          messages: false,
+          mentions: false,
+        },
+      ],
+      error: null,
+    },
+  )
+  const channelPreferences = query(
+    lookups.notification_channel_preferences ?? { data: [], error: null },
+  )
+  const optOut = query(lookups.notification_opt_outs ?? { data: null, error: null })
   const update = query({ data: null, error: null })
-  let outboxReads = 0
+  outboxRead.update.mockReturnValue(update)
 
   return {
+    update: outboxRead,
     from: vi.fn((table: string) => {
-      if (table === "outbox") return outboxReads++ === 0 ? outboxRead : update
+      if (table === "outbox") return outboxRead
       if (table === "notification_preferences") return preferences
+      if (table === "notification_channel_preferences") return channelPreferences
       return optOut
     }),
   }
@@ -97,6 +114,10 @@ function clientFor(messageType: string, events: boolean) {
 
 async function process(messageType: string, events: boolean) {
   const client = clientFor(messageType, events)
+  return dispatch(client)
+}
+
+async function dispatch(client: ReturnType<typeof clientFor>) {
   vi.mocked(createServerClient).mockReturnValue(client as never)
   const response = await POST(
     new Request("http://localhost/api/internal/outbox", {
@@ -111,6 +132,160 @@ async function process(messageType: string, events: boolean) {
 beforeEach(() => {
   vi.stubEnv("OUTBOX_WORKER_SECRET", "test-secret")
   send.mockClear()
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date("2026-10-19T12:00:00.000Z"))
+  vi.spyOn(console, "error").mockImplementation(() => {})
+  vi.spyOn(console, "info").mockImplementation(() => {})
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
+  vi.restoreAllMocks()
+})
+
+describe("SEC-005: delivery lookup failures", () => {
+  const tables: LookupTable[] = [
+    "notification_preferences",
+    "notification_channel_preferences",
+    "notification_opt_outs",
+  ]
+
+  describe.each(["returned", "rejected"])("%s lookup error", (failureMode) => {
+    it.each(tables)("defers %s failures without sending or immediate retry", async (table) => {
+      const detail = "lookup offline for recipient@example.invalid; document 000.000.000-00"
+      const client = clientFor("event_invite", true, {
+        [table]:
+          failureMode === "rejected"
+            ? new Error(detail)
+            : { data: null, error: { message: detail } },
+      })
+
+      const payload = await dispatch(client)
+
+      expect(send).not.toHaveBeenCalled()
+      expect(payload).toEqual({ processed: 1, sent: 0, skipped: 0, failed: 0, pending: 1 })
+      expect(client.update.update).toHaveBeenCalledTimes(1)
+      const patch = client.update.update.mock.calls[0]?.[0] as {
+        status: string
+        attempts: number
+        last_error: string
+        updated_at: string
+      }
+      expect(patch).toMatchObject({ status: "pending", attempts: 0 })
+      expect(patch.last_error).toContain("lookup_failed")
+      expect(patch.updated_at).toBe(new Date().toISOString())
+      // The SQL dispatcher schedules from updated_at + 60s * 2^attempts.
+      const retry = { attempts: patch.attempts, updatedAt: Date.parse(patch.updated_at) }
+      const row = {
+        ...retry,
+        id: "retry",
+        recipient: "recipient@example.invalid",
+        channel: "email" as const,
+        type: "event_invite",
+        payload: {},
+      }
+      expect(isOutboxDue(row, Date.now())).toBe(false)
+      expect(isOutboxDue(row, Date.now() + OUTBOX_BASE_RETRY_MS - 1)).toBe(false)
+      expect(isOutboxDue(row, Date.now() + OUTBOX_BASE_RETRY_MS)).toBe(true)
+      expect(console.error).toHaveBeenCalled()
+      const evidence = JSON.stringify({
+        errors: vi.mocked(console.error).mock.calls,
+        patch,
+        payload,
+      })
+      expect(evidence).not.toContain("recipient@example.invalid")
+      expect(evidence).not.toContain("000.000.000-00")
+      expect(evidence).toContain("[redacted]")
+    })
+  })
+
+  it("still honors a channel disabled in the matrix", async () => {
+    const client = clientFor("event_invite", true, {
+      notification_channel_preferences: {
+        data: [
+          {
+            user_id: "20000000-0000-4000-8000-000000000001",
+            notification_type: "events",
+            channel: "email",
+            enabled: false,
+          },
+        ],
+        error: null,
+      },
+    })
+    expect(await dispatch(client)).toMatchObject({ sent: 0, skipped: 1, pending: 0 })
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it("still honors an opt-out after a successful lookup", async () => {
+    const client = clientFor("event_invite", true, {
+      notification_opt_outs: { data: { recipient: "recipient@example.invalid" }, error: null },
+    })
+    expect(await dispatch(client)).toMatchObject({ sent: 0, skipped: 1, pending: 0 })
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it("delivers on the next scheduled attempt after the lookup recovers", async () => {
+    const optOut: QueryResult = { data: null, error: { message: "lookup offline" } }
+    const client = clientFor("event_invite", true, { notification_opt_outs: optOut })
+    expect(await dispatch(client)).toMatchObject({ sent: 0, pending: 1 })
+    expect(send).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(OUTBOX_BASE_RETRY_MS)
+    optOut.error = null
+    expect(await dispatch(client)).toMatchObject({ sent: 1, pending: 0 })
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(client.update.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "sent", last_error: null }),
+    )
+  })
+
+  it("defers only the recipient with an inconclusive opt-out in a mixed batch", async () => {
+    const client = clientFor("event_invite", true)
+    const outbox = client.update
+    const result = await outbox.limit()
+    if (result instanceof Error || !Array.isArray(result.data)) {
+      throw new Error("Expected outbox fixtures")
+    }
+    const first = result.data[0]
+    outbox.limit.mockResolvedValue({
+      data: [
+        first,
+        {
+          ...first,
+          id: "10000000-0000-4000-8000-000000000002",
+          recipient: "other@example.invalid",
+        },
+      ],
+      error: null,
+    })
+    const optOut = query({ data: null, error: null })
+    optOut.maybeSingle.mockResolvedValueOnce({ data: null, error: { message: "lookup offline" } })
+    const originalFrom = client.from.getMockImplementation()
+    client.from.mockImplementation((table) => {
+      if (table === "notification_opt_outs") return optOut
+      if (!originalFrom) throw new Error("Missing table fixture")
+      return originalFrom(table)
+    })
+
+    expect(await dispatch(client)).toEqual({
+      processed: 2,
+      sent: 1,
+      skipped: 0,
+      failed: 0,
+      pending: 1,
+    })
+    expect(send).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ recipient: "other@example.invalid" }),
+    )
+    expect(outbox.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "pending",
+        last_error: "opt_out_lookup_failed",
+      }),
+    )
+  })
 })
 
 describe("event_invite outbox preference", () => {
