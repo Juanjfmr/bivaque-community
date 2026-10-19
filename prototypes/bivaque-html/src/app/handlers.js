@@ -67,7 +67,7 @@ async function perform(action,value,el){
  }
  case 'home-city':if(mutate(()=>state.city=state.homeCity,{redraw:false})){if(dialog.open)await closeDialog(true);navigate('inicio');}break;
  case 'settings':openSettings();break;
- case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected,hood=$('#profile-hood')?hoodValue('profile-hood'):state.profile.hood??'';if(hoodCep(hood)){notify(HOOD_CEP_MSG,'error');break;}if(mutate(()=>{state.profile.name=name;state.profile.hood=hood;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
+ case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected,hood=$('#profile-hood')?hoodValue('profile-hood'):state.profile.hood??'';if(hoodCep($('#profile-hood')?.value)){notify(HOOD_CEP_MSG,'error');break;}if(mutate(()=>{state.profile.name=name;state.profile.hood=hood;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
  case 'prototype':openPrototype();break;
  case 'apply-prototype':{
   const stage=$('#prototype-stage').value,verified=$('#verified-test').selected,incoming=Math.min(10000,Math.max(0,Number($('#prototype-incoming').value)||0));

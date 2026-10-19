@@ -6,8 +6,9 @@
 // por baixo do diálogo e não pode ser tocado).
 let alertDeleted=null;
 // Mesma busca, qualquer ordem de clique: listas comparadas ordenadas.
-// Rodada 67: dist zerada não conta (alertas salvos antes da distância continuam iguais).
-const alertKey=attrs=>JSON.stringify(Object.keys(attrs).filter(k=>k!=='dist'||attrs.dist).sort().map(k=>[k,Array.isArray(attrs[k])?[...attrs[k]].sort():attrs[k]]));
+// Rodada 67: distância que não vale (zerada, ou sem bairro no perfil) não conta: alertas salvos antes da
+// distância continuam iguais.
+const alertKey=attrs=>JSON.stringify(Object.keys(attrs).filter(k=>k!=='dist'||distOn(attrs)).sort().map(k=>[k,Array.isArray(attrs[k])?[...attrs[k]].sort():attrs[k]]));
 const alertSame=(a,kind,attrs)=>a.kind===kind&&a.city===state.city&&alertKey(a.attrs)===alertKey(attrs);
 const currentAlert=kind=>(state.alerts||[]).find(a=>alertSame(a,kind,catalogAttrs[kind]));
 function alertLabel(kind,a){
@@ -20,7 +21,7 @@ function alertLabel(kind,a){
  if(a.dist)parts.push(`até ${a.dist} km do seu bairro`);
  return parts.join(' · ');
 }
-function alertMatches(x,al){const a=al.attrs;return x.city===al.city&&x.status==='active'&&itemVisible(x)&&x.kind===al.kind&&(!hasPrice(a.min)||itemTotal(x)>=Number(a.min))&&(!hasPrice(a.max)||itemTotal(x)<=Number(a.max))&&catalogMatches(x,al.kind,a);}
+function alertMatches(x,al){const a=al.attrs;return x.city===al.city&&x.status==='active'&&itemVisible(x)&&x.kind===al.kind&&(!hasPrice(a.min)||itemTotal(x)>=Number(a.min))&&(!hasPrice(a.max)||itemTotal(x)<=Number(a.max))&&(!a.dist||!!hoodOrigin(al.city))&&catalogMatches(x,al.kind,a);}
 // Faixa abaixo da contagem: só aparece com filtros ativos, que é quando um alerta faz sentido.
 function alertBannerHtml(kind){
  if(!filterActiveCount(kind))return '';const al=currentAlert(kind);
@@ -30,7 +31,9 @@ function alertBannerHtml(kind){
 function createSearchAlert(){
  const kind=catalogKind();if(!filterActiveCount(kind)){notify('Escolha ao menos um filtro para criar o alerta.','info');return;}
  if(currentAlert(kind)){openSearchAlerts();return;}
- const alert={id:uid('al'),kind,city:state.city,attrs:structuredClone(catalogAttrs[kind]),label:alertLabel(kind,catalogAttrs[kind]),notify:true,createdAt:Date.now()};
+ // Distância só entra no alerta quando vale (bairro no perfil, cidade onde mora).
+ const attrs={...structuredClone(catalogAttrs[kind]),dist:distOn(catalogAttrs[kind])};
+ const alert={id:uid('al'),kind,city:state.city,attrs,label:alertLabel(kind,attrs),notify:true,createdAt:Date.now()};
  if(!mutate(()=>{state.alerts=[alert,...(state.alerts||[])];},{redraw:false}))return;
  render();globalFocus('search-alerts');
  notify('Alerta criado: avisaremos quando aparecer um anúncio assim.','notifications',()=>{if(mutate(()=>{state.alerts=state.alerts.filter(a=>a.id!==alert.id);}))notify('Alerta removido','delete');});askPushSoon('alert');
