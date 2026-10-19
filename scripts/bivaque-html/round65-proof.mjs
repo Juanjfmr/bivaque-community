@@ -545,4 +545,5 @@ const checkpoints = {
   },
 }
 
-await runProof(checkpoints, "round65")
+// Rodada 69: o produto pago saiu do lançamento; esta prova liga a chave para continuar guardando as regras dele.
+await runProof(checkpoints, "round65", { labs: { paidPlans: true } })

@@ -4,6 +4,11 @@
 // Rodada 65: o patrocínio guarda a página (`spot.bizId`) e termina com ela; voltar ao Grátis o encerra.
 // Pagar não muda a ordem das indicações da comunidade: o patrocínio só ocupa o espaço Patrocinado.
 // Modo teste: nenhuma cobrança. A aprovação comercial (R3) continua pendente com o dono do produto.
+// Rodada 69: lançamento sem cobrança (decisão do dono em 2026-10-19). A página do negócio é gratuita e completa,
+// com conversas sem limite, e ninguém aparece como Patrocinado. O produto pago volta só com um ADR novo (o
+// ADR-20260820-alcance-pago foi escrito para vilas) e com CNPJ. O código fica atrás desta chave, que as
+// provas dos planos ligam com window.BIVAQUE_LABS={paidPlans:true}.
+const paidPlans=()=>!!window.BIVAQUE_LABS?.paidPlans;
 const PLAN_FREE_REPLIES=5,PLAN_BOOSTS=4,PLAN_SPOT_MS=7*864e5;
 const planSub=()=>state.subscription||{tier:'free'};
 const planMonth=()=>dateISO().slice(0,7);
@@ -14,14 +19,14 @@ function planRoll(s){if(s.month!==planMonth()){s.month=planMonth();s.repliedThre
 const planReplied=()=>{const s=planSub();return s.month===planMonth()?(s.repliedThreadIds||[]).length:0;};
 const planBoostsLeft=()=>{const s=planSub();return Math.max(0,PLAN_BOOSTS-(s.month===planMonth()?s.boosts||0:0));};
 // Destaque em andamento da página da própria pessoa; página pausada ou suspensa não aparece em Patrocinado.
-const spotActive=b=>!!b&&state.myBiz?.id===b.id&&planSub().spot?.bizId===b.id&&(planSub().spot.until||0)>Date.now()&&bizOpen(b);
-const isSpon=b=>!!b&&(!!b.spon||spotActive(b));
+const spotActive=b=>paidPlans()&&!!b&&state.myBiz?.id===b.id&&planSub().spot?.bizId===b.id&&(planSub().spot.until||0)>Date.now()&&bizOpen(b);
+const isSpon=b=>paidPlans()&&!!b&&(!!b.spon||spotActive(b));
 
 // Caixa da página: responder uma conversa nova além do limite do plano grátis é recusado.
 function planReplyGate(t){
  if(!state.myBiz?.live||t.about?.type!=='biz'||t.about.id!==state.myBiz.id)return {track:false};
  const isNew=!t.msgs.some(m=>m.me);
- return {track:true,isNew,blocked:isNew&&planSub().tier!=='plan'&&planReplied()>=PLAN_FREE_REPLIES};
+ return {track:true,isNew,blocked:paidPlans()&&isNew&&planSub().tier!=='plan'&&planReplied()>=PLAN_FREE_REPLIES};
 }
 function planCountReply(t){const s=state.subscription;planRoll(s);if(!s.repliedThreadIds.includes(t.id))s.repliedThreadIds.push(t.id);}
 function planLimitDialog(){showDialog('Limite de conversas novas',`<p class="form-note">Você já respondeu ${PLAN_FREE_REPLIES} conversas novas neste mês. As conversas que você já respondeu continuam livres. As novas voltam em ${planRenewDay()}, ou agora com o Plano do negócio, que não tem limite.</p>`,`${btn('Agora não','close-dialog','','text')}${btn('Conhecer os planos','plans','','filled','trending_up')}`,'plan-limit');}
@@ -34,6 +39,7 @@ function planSpotText(){
 }
 const planCanBoost=()=>{const s=planSub();return !spotActive(state.myBiz)&&(s.tier==='moment'||s.tier==='plan'&&planBoostsLeft()>0);};
 function planStatusHtml(){
+ if(!paidPlans())return '';
  return `<div class="stack" style="margin-top:12px"><div class="choice">${icon('forum')}<span class="txt"><b>Conversas</b><small>${esc(planConvoText())}</small></span></div><div class="choice">${icon('trending_up')}<span class="txt"><b>Destaque</b><small>${esc(planSpotText())}</small></span>${planCanBoost()?btn('Destacar por 7 dias','biz-boost','','tonal'):''}</div></div>`;
 }
 

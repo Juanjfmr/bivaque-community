@@ -183,6 +183,11 @@ export async function runProof(checkpoints, round, options = {}) {
         if (only && only !== name) continue
         const context = await createDeterministicContext(browser, { width: Number(width), theme })
         // Links externos (WhatsApp, Instagram, mapa) são registrados, não abertos.
+        // Rodada 69: options.labs liga recursos desligados no lançamento (ex.: { paidPlans: true }).
+        if (options.labs)
+          await context.addInitScript((labs) => {
+            window.BIVAQUE_LABS = labs
+          }, options.labs)
         await context.addInitScript(() => {
           window.__opened = []
           window.open = (u) => {

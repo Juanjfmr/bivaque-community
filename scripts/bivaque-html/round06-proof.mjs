@@ -327,6 +327,8 @@ const checkpoints = {
 }
 
 // O mapa de bairros (Rodada 31) carrega MapLibre e o mapa-base quando o botão "Mapa" é tocado.
+// Rodada 69: o produto pago saiu do lançamento; esta prova liga a chave para continuar guardando as regras dele.
 await runProof(checkpoints, "round06", {
+  labs: { paidPlans: true },
   allowExternal: ["https://unpkg.com/maplibre-gl@", "https://tiles.openfreemap.org/"],
 })
