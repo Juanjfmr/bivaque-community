@@ -1,0 +1,55 @@
+task_id: SEC-006
+objective: >
+  Nenhuma imagem de usuario chega ao Storage sem passar pela limpeza do servidor. O envio do Mercado
+  (novo anuncio e editar foto) deixa de gravar direto do navegador e passa por action no servidor com a
+  mesma limpeza da SEC-004; as policies de Storage que permitem INSERT ou UPDATE pelo papel authenticated
+  nos buckets de imagem de usuario sao removidas, e a escrita fica so com as actions (service role com
+  autorizacao reconferida).
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5, H4)
+  - Decisao do coordenador em 2026-10-19 ao dividir a SEC-004 (inventario do Codex no contrato SEC-004)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Inventario da SEC-004 - mercado/novo/page.tsx e mercado/[id]/editar/page.tsx enviam direto do navegador
+    para listing-photos; Storage permite INSERT authenticated em avatars, event-photos, listing-photos,
+    community-images, provider-photos e service-request-photos, e UPDATE em avatars, event-photos,
+    community-images e service-request-photos. Escrever primeiro o pgTAP em que authenticated grava direto
+    num bucket de imagem e ver passar a escrita (falha do contrato).
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/
+  - apps/web/lib/
+  - apps/web/next.config.ts
+  - tests/unit/
+  - tests/e2e/
+  - tests/fixtures/
+  - docs/agents/tasks/SEC-006.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - remover leitura (SELECT) dos buckets ou mudar quem pode ver as imagens
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+acceptance:
+  - pgTAP prova que authenticated NAO consegue INSERT nem UPDATE direto nos buckets de imagem de usuario e que a leitura existente continua igual
+  - Mercado novo anuncio e editar foto enviam pela action do servidor, com limpeza de metadados e o mesmo limite de tamanho e formato de antes (ajustar bodySizeLimit se necessario, com justificativa)
+  - Teste prova que a foto do Mercado gravada nao tem EXIF ou GPS
+  - Nenhum outro caminho de upload quebra (testes existentes e E2E de foto)
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 exec vitest run tests/unit/security
+  - npx pnpm@11.18.0 gate
+  - npx playwright test tests/e2e/photo-upload.spec.ts (no CI se nao houver seed local)
+risk: coordenada do aparelho gravada em foto publica por envio direto ao Storage
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
