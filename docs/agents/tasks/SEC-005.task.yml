@@ -64,3 +64,15 @@ closure:
 # Gate final: npx.cmd pnpm@11.18.0 gate -> exit 0; lint, typecheck, test e
 # secrets PASS. Unit 1257, mobile 76, web 19, privacy 189, scope 120, sem falhas.
 # Build pulado automaticamente por ausencia de apps/web/.env.local.
+# Correcao da revisao Flash H4/L5, Codex, 2026-10-19, sobre c007bf03 + diff local.
+# RED: outbox-preferences + outbox-delivery, 3 failed e 25 passed; 101/250 IDs eram recusados com invalid_batch.
+# GREEN: mesmos arquivos, 28/28 PASS, com blocos de ate 100, IDs deduplicados e continuidade apos bloco vazio.
+# Rota TypeScript agrega contadores de todos os blocos, preservando consultas fail-closed, opt-out e matriz de canais.
+# Nenhuma migration nesta tarefa; SQL despacha a fila como antes.
+# Teste de recuperacao renomeado para redispatch pelo chamador; removida espera que nao exercitava o agendador SQL.
+# Teste de isOutboxDue permanece identificado como verificacao do calculo de prazo, nao prova do cron real.
+# Gate final exit 0: lint, typecheck, test, secrets PASS; build pulado sem .env.local.
+# test:db da rodada PASS: 136 arquivos, 1875 testes, incluindo outbox-worker.sql.
+# Sem commit/alteracao do quadro fora dos allowed_paths; revisao independente e runtime de entrega pendentes.
+# Coordenador, 2026-10-19: para H4/L5 foi mantida a versao do DeepSeek V4.1 Flash (commit 755c13f5),
+# com teto de 5000 IDs por chamada; a versao do Codex descrita acima ficou guardada fora do repositorio.
