@@ -23,9 +23,9 @@ function paletteGroups(q){
  if(!t||!queryTerms(t).length)return [['Ações',create.slice(0,3)],['Ir para',pages.slice(0,6)],['Buscas recentes',state.recent.slice(0,4).map(x=>({ic:'history',label:x,action:'recent-search',value:x}))]];
  const hit=x=>matches(t,`${x.label} ${x.kw||''}`);
  const biz=cityBiz().filter(b=>matches(t,`${b.name} ${b.cat} ${(b.specs||[]).join(' ')} ${b.svc.join(' ')} ${b.hoods.join(' ')}`,b.kw||[])).sort((a,b)=>b.recN-a.recN).slice(0,4).map(b=>({ic:'storefront',label:b.name,sub:`${b.cat}${b.recN?` · ${b.recN} ${b.recN===1?'indicação':'indicações'}`:''}`,action:'open-biz',value:b.id}));
- const items=cityItems().filter(x=>x.status==='active'&&matches(t,`${x.title} ${x.desc||''} ${x.hood}`)).slice(0,4).map(x=>({ic:x.kind==='imovel'?'apartment':'sell',label:x.title,sub:`${money(x.numPrice)}${x.per?' / mês':''} · ${x.hood}`,action:'open-item',value:x.id}));
- const asks=cityAsks().filter(x=>matches(t,x.q)).slice(0,3).map(x=>({ic:'forum',label:x.q,sub:`${x.answers.length} ${x.answers.length===1?'resposta':'respostas'}`,action:'open-question',value:x.id}));
- const groups=state.groups.filter(g=>g.city===state.city&&matches(t,g.t)).slice(0,3).map(g=>({ic:'groups',label:g.t,sub:g.on?'Você participa':'Grupo da cidade',action:'open-group',value:g.id}));
+ const items=cityItems().filter(x=>x.status==='active'&&matches(t,`${x.title} ${x.desc||''} ${hoodShown(x)?x.hood:''}`)).slice(0,4).map(x=>({ic:x.kind==='imovel'?'apartment':'sell',label:x.title,sub:`${money(x.numPrice)}${x.per?' / mês':''}${hoodShown(x)?' · '+x.hood:''}`,action:'open-item',value:x.id}));
+ const asks=cityAsks().filter(x=>matches(t,x.q)).slice(0,3).map(x=>({ic:'forum',label:x.q,sub:`${askAnswers(x).length} ${askAnswers(x).length===1?'resposta':'respostas'}`,action:'open-question',value:x.id}));
+ const groups=state.groups.filter(g=>g.city===state.city&&!groupClosed(g)&&matches(t,g.t)).slice(0,3).map(g=>({ic:'groups',label:g.t,sub:g.on?'Você participa':'Grupo da cidade',action:'open-group',value:g.id}));
  return [['Negócios',biz],['Anúncios',items],['Perguntas',asks],['Grupos',groups],['Ações',create.filter(hit)],['Ir para',pages.filter(hit)],['',[{ic:'search',label:`Buscar “${t}” em tudo`,action:'recent-search',value:t,all:true}]]];
 }
 function renderPalette(q){
@@ -36,7 +36,8 @@ function renderPalette(q){
 function setPaletteActive(n,scroll=true){if(!paletteItems.length)return;paletteActive=(n+paletteItems.length)%paletteItems.length;for(const el of $$('.palette-option',$('#palette-list')))el.setAttribute('aria-selected',String(Number(el.dataset.paletteIndex)===paletteActive));$('#palette-input').setAttribute('aria-activedescendant',`palette-opt-${paletteActive}`);if(scroll)$(`#palette-opt-${paletteActive}`)?.scrollIntoView({block:'nearest'});}
 function paletteKeys(e){if(e.isComposing||e.keyCode===229)return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();setPaletteActive(paletteActive+(e.key==='ArrowDown'?1:-1));}else if(e.key==='Enter'){e.preventDefault();runPalette(paletteActive);}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closePalette();}}
 function openPalette(){
- if(createOpen||dialog.open||confirmDialog.open)return;const el=paletteEl();if(!el.hidden)return;paletteReturn=document.activeElement;
+ // Quem saiu ou ainda está na entrada não consulta o conteúdo pela paleta.
+ if(state.signedOut||route.name==='entrar'||createOpen||dialog.open||confirmDialog.open)return;const el=paletteEl();if(!el.hidden)return;paletteReturn=document.activeElement;
  el.hidden=false;for(const id of PALETTE_BEHIND)$(id)&&($(id).inert=true);const input=$('#palette-input');input.value='';renderPalette('');
  requestAnimationFrame(()=>{el.classList.add('open');input.focus({preventScroll:true});});
 }

@@ -1,0 +1,38 @@
+task_id: HTML-051
+objective: >
+  Rodada 51 cria a pagina Cidades do Painel do Bivaque: saude de cada cidade (familias, chegadas
+  em 60 dias, chegadas atendidas, perguntas sem resposta e embaixadores), com a que mais precisa
+  de ajuda primeiro; detalhe no painel lateral com embaixadores, Convidar embaixador e Ver
+  perguntas paradas, que abre a fila filtrada pela cidade.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do painel; R51 Cidades)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 899e66a0. A saude das cidades aparecia so como barras na metrica principal, sem detalhe,
+    sem embaixadores e sem como agir.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-051.task.yml
+forbidden:
+  - guardar contato, posto, organizacao militar ou endereco do convidado (so o nome)
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Cidades abre pela navegacao do console, com Natal (precisa de ajuda) primeiro
+  - O detalhe mostra embaixadores e os numeros da cidade
+  - Convidar exige nome, grava o convite e a tabela mostra o convite
+  - Ver perguntas paradas abre a fila filtrada pela cidade
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round51-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round50-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: dados-pessoais
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

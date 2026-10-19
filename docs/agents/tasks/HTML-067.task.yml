@@ -1,0 +1,43 @@
+task_id: HTML-067
+objective: >
+  Rodada 67: filtro e mapa de bairros em qualquer cidade. O filtro de anuncios ganha "Distancia de mim"
+  (Qualquer, 1, 3, 5 ou 10 km a partir do centro do bairro do perfil, so na cidade onde a pessoa mora) e os
+  bairros da cidade vem da base (os com mais anuncios primeiro), com busca quando sao muitos. Filtro de
+  bairro e Mapa aparecem em toda cidade com base de bairros; o mapa centraliza na cidade e usa o centro de
+  cada bairro da base. Alertas de busca entendem a distancia e os antigos continuam iguais.
+authority:
+  - Pedido do usuario em 2026-10-19 ("Nao pense so em Manaus"; "pode fazer") e maquete aprovada (.visual/bivaque-html-bairros/maquete.html, quadros 6 e 7)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base R65 (0dce1b06): sem distancia; o filtro de bairro e o Mapa so existem em Manaus e com os 9 bairros
+    fixos. Prova round67 em 375-light contra a base R65: 0 de 3 checkpoints PASS.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-067.task.yml
+forbidden:
+  - gravar coordenadas do aparelho ou endereco (a distancia usa so o centro publico do bairro do perfil)
+  - mostrar ponto exato de anuncio no mapa
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+acceptance:
+  - Com bairro no perfil, o filtro mostra Distancia de mim e o ponto de partida; 3 km e 1 km tiram os anuncios de bairros mais longe; Qualquer volta tudo; a pilula diz Ate N km
+  - Sem bairro no perfil, o filtro explica que e preciso informar o bairro em Configuracoes; conhecendo outra cidade, nao ha distancia
+  - Em Natal (e nas outras cidades com base) ha filtro de bairro e Mapa com os bairros da cidade, nunca os de Manaus; a busca esconde os chips que nao batem
+  - Anuncio com bairro fora da base entra no filtro por bairro, mas nao no filtro por distancia
+  - Alertas salvos antes da distancia continuam reconhecidos
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round67-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light BIVAQUE_HTML_CHECKPOINT=hood-filter-and-map-exist-only-for-cities-with-hood-data node scripts/bivaque-html/round63-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round23-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round31-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: dados pessoais (bairro do perfil usado como ponto de partida); nada novo e gravado
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

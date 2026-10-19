@@ -1,23 +1,33 @@
-function openPlans(){showDialog('Planos para o negócio',`<p class="form-note">Compare os benefícios. Nesta versão você ativa um plano de teste; nenhum pagamento é realizado.</p>${[['free','Grátis','R$ 0','Página na cidade e até 5 novas conversas respondidas por mês.'],['moment','Destaque de momento','R$ 9,90 / semana','Um espaço separado e identificado como Patrocinado.'],['plan','Plano do negócio','R$ 39 / mês','Quatro destaques por mês e conversas sem limite.']].map(([v,t,p,d])=>`<label class="choice"><md-radio name="plan" value="${v}" ${state.subscription.tier===v?'checked':''} aria-label="${t}"></md-radio><span class="txt"><b>${t} · ${p}</b><small>${d}</small></span></label>`).join('')}<p class="form-note">Pagar não altera a ordem das indicações da comunidade.</p>`,`${btn('Cancelar','close-dialog','','text')}${btn('Ativar no modo teste','activate-plan','','filled')}`);}
+function openPlans(){showDialog('Planos para o negócio',`<p class="form-note">Compare os benefícios. Nesta versão você ativa um plano de teste; nenhum pagamento é realizado.</p>${[['free','Grátis','R$ 0','Página na cidade e até 5 novas conversas respondidas por mês.'],['moment','Destaque de momento','R$ 9,90 / semana','Um espaço separado e identificado como Patrocinado, por 7 dias. Mantém o limite de 5 novas conversas por mês.'],['plan','Plano do negócio','R$ 39 / mês','Quatro destaques por mês e conversas sem limite.']].map(([v,t,p,d])=>`<label class="choice"><md-radio name="plan" value="${v}" ${state.subscription.tier===v?'checked':''} aria-label="${t}"></md-radio><span class="txt"><b>${t} · ${p}</b><small>${d}</small></span></label>`).join('')}${state.myBiz?.live?`<p class="form-note"><b>Neste mês:</b> ${esc(planConvoText())}. ${esc(planSpotText())}.</p>`:''}<p class="form-note">Pagar não altera a ordem das indicações da comunidade.</p>`,`${btn('Cancelar','close-dialog','','text')}${btn('Ativar no modo teste','activate-plan','','filled')}`);}
 function openFamily(){
  if(!state.prefs.familyOnly){showDialog('Família convidada',`<p class="form-note">Os convites locais estão desativados nas suas Configurações. Ative “Convites de família” para criar um código de demonstração.</p>`,`${btn('Fechar','close-dialog','','text')}${btn('Abrir Configurações','family-settings','','filled','settings')}`);return;}
- showDialog('Família convidada',`<p class="form-note">Use nomes fictícios. Estes códigos testam o cadastro apenas neste navegador; nenhum convite real é enviado.</p><div class="stack">${state.invites.map(x=>`<div class="choice"><span class="txt"><b>${esc(x.name)}</b><small>Código: ${esc(x.code)} · ${x.used?'utilizado':'disponível'}</small></span>${iconBtn('content_copy','copy-invite',x.code,'Copiar convite',x.used?'disabled':'')}${iconBtn('delete','remove-invite',x.code,'Revogar convite',x.used?'disabled':'')}</div>`).join('')||'<p class="small muted">Nenhum convite criado.</p>'}</div>${field('invite-name','Nome fictício do familiar','','required minlength="2" maxlength="80"')}<p id="family-status" class="form-note" role="status" aria-live="polite"></p><div id="family-copy"></div>`,`${btn('Fechar','close-dialog','','text')}${btn('Criar convite','new-invite','','filled','person_add')}`);
+ showDialog('Família convidada',`<p class="form-note">Use nomes fictícios. Estes códigos testam o cadastro apenas neste navegador; nenhum convite real é enviado.</p><div class="stack">${state.invites.map(x=>`<div class="choice"><span class="txt"><b>${esc(x.name)}</b><small>${x.email?`${esc(x.email)} · `:''}Código: ${esc(x.code)} · ${x.used?'utilizado':entryInviteValid(x)?`vale até ${new Date(x.at+ENTRY_INVITE_DAYS*864e5).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:'vencido'}</small></span>${iconBtn('content_copy','copy-invite',x.code,'Copiar convite',x.used||!entryInviteValid(x)?'disabled':'')}${iconBtn('delete','remove-invite',x.code,'Revogar convite',x.used?'disabled':'')}</div>`).join('')||'<p class="small muted">Nenhum convite criado.</p>'}</div>${field('invite-name','Nome fictício do familiar','','required minlength="2" maxlength="80" autocomplete=\"off\"')}${field('invite-email','E-mail do familiar','','type="email" required autocomplete="off" supporting-text="O convite vale só para este e-mail, por 7 dias."')}<p id="family-status" class="form-note" role="status" aria-live="polite"></p><div id="family-copy"></div>`,`${btn('Fechar','close-dialog','','text')}${btn('Criar convite','new-invite','','filled','person_add')}`);
 }
 function profileFeedback(text,id='family-status'){const status=$('#'+id);if(status)status.textContent=text;else notify(text,'info');}
 function profileFamilyAllowed(){
  if(!state.prefs.familyOnly){openFamily();return false;}
+ // Só quem confirmou o vínculo convida: quem entrou por convite não convida outros (BIVAQUE.md §4.1).
+ if(state.profile.role==='familia'){profileFeedback('Convites de família são criados por quem é militar, veterano ou pensionista.');return false;}
  if(readonly()||!state.profile.verified){profileFeedback(readonly()?`Volte à sua cidade, ${state.homeCity}, para criar ou revogar convites locais.`:'Verifique o perfil de teste antes de criar ou revogar convites locais.');return false;}
  return true;
 }
+// Rodada 64: aviso cujo registro ficou invisível (pessoa bloqueada, oculto, removido, página pausada) não é listado nem contado.
+function noticeVisible(n){
+ if(!Array.isArray(n.go)||n.go[1]===undefined)return true;const [name,id]=n.go;
+ const rec=name==='anuncio'?itemById(id):name==='pergunta'?askById(id):name==='negocio'?bizById(id):name==='conversa'?threadById(id):null;
+ if(!rec)return true;
+ return name==='anuncio'?itemVisible(rec):name==='pergunta'?askVisible(rec):name==='negocio'?bizVisible(rec):!isBlocked(rec.who);
+}
+const noticeList=()=>state.notices.filter(n=>n.city===state.homeCity&&noticeVisible(n));
 function noticeText(n){return n.text||String(n.html||'Aviso local').replace(/<[^>]*>/g,'');}
 // Rodada 17: central de avisos (referência: Notification Inbox Popover do 21st.dev). Abas Todos e
 // Não lidos, "Marcar todos como lidos", ícone por tipo e separação entre hoje e anteriores. As ações
 // de abrir e marcar um aviso continuam as mesmas.
 let noticesTab='all';
-const NOTICE_ICONS={conversa:'chat_bubble',conversas:'chat_bubble',anuncio:'sell',catalogo:'sell',desapegos:'sell',imoveis:'apartment',negocio:'storefront',negocios:'storefront',pedido:'request_quote',pedidos:'request_quote',pergunta:'forum',comunidade:'forum',evento:'event',agenda:'event',grupo:'groups',publicacao:'groups'};
+const NOTICE_ICONS={conversa:'chat_bubble',conversas:'chat_bubble',anuncio:'sell',catalogo:'sell',desapegos:'sell',imoveis:'apartment',negocio:'storefront',negocios:'storefront',pedido:'request_quote',pedidos:'request_quote',chamados:'inbox',pergunta:'forum',comunidade:'forum',evento:'event',agenda:'event',grupo:'groups',publicacao:'groups'};
 function noticeRow(n){return `<div class="list-row notice-row${n.unread?' is-unread':''}"><span class="notice-ico">${icon(NOTICE_ICONS[n.go?.[0]]||'notifications')}</span><button type="button" class="txt" data-action="notice-open" data-value="${esc(n.id)}"><b>${esc(noticeText(n))}</b><small>${esc(n.when||'Agora')} · ${n.unread?'não lido':'lido'}</small></button>${iconBtn(n.unread?'drafts':'done','notice-read',n.id,n.unread?'Marcar aviso como lido':'Aviso lido',n.unread?'':'disabled')}</div>`;}
 function openNotices(){
- const ns=state.notices.filter(n=>n.city===state.homeCity),unread=ns.filter(n=>n.unread).length,list=noticesTab==='unread'?ns.filter(n=>n.unread):ns;
+ const ns=noticeList(),unread=ns.filter(n=>n.unread).length,list=noticesTab==='unread'?ns.filter(n=>n.unread):ns;
  const recent=n=>['Agora','Hoje'].includes(n.when||'Agora')||/^há \d+ (min|h)/.test(n.when||''),groups=[['Hoje',list.filter(recent)],['Anteriores',list.filter(n=>!recent(n))]].filter(([,g])=>g.length);
  const tabs=ns.length?`<div class="notice-head"><md-chip-set aria-label="Mostrar avisos">${[['all',`Todos (${ns.length})`],['unread',`Não lidos (${unread})`]].map(([v,label])=>`<md-filter-chip label="${label}" ${noticesTab===v?'selected':''} data-action="notices-tab" data-value="${v}"></md-filter-chip>`).join('')}</md-chip-set>${unread?btn('Marcar todos como lidos','notices-read-all','','text','check_circle'):''}</div>`:'';
  const body=!ns.length?empty('Nenhum aviso nesta cidade','Os avisos de demonstração da sua cidade atual aparecerão aqui.','notifications_none'):!list.length?empty('Tudo em dia','Você leu todos os avisos desta cidade.','check_circle'):groups.map(([title,g])=>`<p class="notice-group">${title}</p><div class="list">${g.map(noticeRow).join('')}</div>`).join('');
@@ -26,10 +36,10 @@ function openNotices(){
 function profileRestoreOverlay(kind){if(kind!=='notices')return false;noticesTab='all';openNotices();return true;}
 function noticeDestination(n){
  if(n.city!==state.homeCity||n.city!==state.city||!Array.isArray(n.go))return null;
- const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','desapegos','imoveis','negocios','agenda','guia'];
+ const [name,id]=n.go,roots=['inicio','comunidade','conversas','voce','catalogo','desapegos','imoveis','negocios','agenda','guia','pedidos','chamados'];
  if(roots.includes(name)&&!id)return {name,id:null};
- const record=name==='anuncio'?itemById(id):name==='negocio'?bizById(id):name==='pergunta'?askById(id):name==='grupo'?gById(id):name==='conversa'?threadById(id):name==='evento'?state.events.find(e=>e.id===id):null;
- return accessibleRecord(record)&&!record.deleted&&!record.hidden?{name,id}:null;
+ const record=name==='anuncio'?itemById(id):name==='negocio'?bizById(id):name==='pergunta'?askById(id):name==='grupo'?gById(id):name==='pedido'?requestById(id):name==='conversa'?threadById(id):name==='evento'?state.events.find(e=>e.id===id):null;
+ return accessibleRecord(record)&&!record.deleted&&!record.hidden&&noticeVisible(n)&&(name!=='pedido'||record.mine||providerCanSee(record))?{name,id}:null;
 }
 async function profileGlobalAction(action,value,el){
  if(!['saved','my-ads','saved-filter','my-ads-filter','family','family-settings','new-invite','copy-invite','remove-invite','notices','notices-tab','notices-read-all','notice-open','notice-read','notice-home','cap'].includes(action))return false;
@@ -43,9 +53,11 @@ async function profileGlobalAction(action,value,el){
  case 'new-invite':{
   if(!profileFamilyAllowed())break;const input=$('#invite-name'),name=(input?.value||'').trim();
   if(name.length<2||name.length>80){if(input){input.error=true;input.errorText='Use um nome fictício entre 2 e 80 caracteres.';input.focus({preventScroll:true});}profileFeedback('Use um nome fictício entre 2 e 80 caracteres.');break;}
+  const emailInput=$('#invite-email'),email=(emailInput?.value||'').trim().toLowerCase();
+  if(!entryEmailOk(email)){if(emailInput){emailInput.error=true;emailInput.errorText='Informe o e-mail do familiar.';emailInput.focus({preventScroll:true});}profileFeedback('Informe o e-mail do familiar: o convite vale só para ele.');break;}
   let code='';for(let attempt=0;attempt<3;attempt++){const candidate='DEMO-'+crypto.randomUUID().replaceAll('-','').slice(0,8).toUpperCase();if(!state.invites.some(x=>x.code===candidate)){code=candidate;break;}}
   if(!code){profileFeedback('Não foi possível criar um código único. Tente novamente.');break;}
-  if(!mutate(()=>{state.invites.push({name,code,used:false});},{redraw:false})){profileFeedback('Não foi possível salvar o convite. O nome foi mantido; libere espaço e tente novamente.');break;}
+  if(!mutate(()=>{state.invites.push({name,email,code,used:false,at:Date.now()});},{redraw:false})){profileFeedback('Não foi possível salvar o convite. O nome foi mantido; libere espaço e tente novamente.');break;}
   render();openFamily();profileFeedback('Código de demonstração criado apenas neste navegador.');globalFocus('copy-invite',code,dialog);break;
  }
  case 'copy-invite':{

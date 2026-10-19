@@ -2,7 +2,7 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-10-07
+**Snapshot:** 2026-10-19
 
 > Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos nao substituem entregas de outros agentes.
 

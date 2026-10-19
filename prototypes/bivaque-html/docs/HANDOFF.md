@@ -54,6 +54,60 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
     que faltava.
   Revisão única, bateria e base visual em [VISUAL_BASELINE_R39](VISUAL_BASELINE_R39.md).
   Publicado em 17/10 (`b71c2248…`).
+- **Lote mobile 2, Rodadas 40 a 44 (17/10):**
+  - galeria com arrastar para fechar, pinça e toque duplo;
+  - folha do bairro sobre o mapa, com três alturas;
+  - teclado certo em cada campo, preenchimento automático e vibração leve;
+  - avisos pedidos com explicação antes e instalação como app;
+  - busca em tela cheia com recentes, explorar e sugestões.
+  Revisão única, bateria e base visual em [VISUAL_BASELINE_R44](VISUAL_BASELINE_R44.md).
+  Publicado em 17/10 (`eb4969db…`).
+- **Lote de volume, Rodadas 45 a 48 (17/10):**
+  - listas longas em blocos de 24, com carregamento ao rolar e contagem;
+  - blocos também em Comunidade, busca, grupos, Conversas, Salvos e Meus anúncios;
+  - salvar e "Útil" sem redesenhar a lista;
+  - folha do bairro com muitos anúncios terminando em "Ver todos".
+  Sonda de volume: numa cidade grande, num celular médio, as listas abrem em menos de 1 s (antes,
+  até 9,5 s). Revisão única, bateria e base visual em
+  [VISUAL_BASELINE_R48](VISUAL_BASELINE_R48.md). Publicado em 17/10 (`1de94489…`).
+- **Painel do Bivaque, Rodadas 49 a 52 (18/10):** o console do dono da plataforma (Você →
+  Controles do protótipo → "Ver como dono do Bivaque"):
+  - visão geral com chegadas atendidas, métricas, O que mudou e a fila com prazo;
+  - revisão no painel lateral, com motivo para remover ou recusar;
+  - Filas, Cidades, Negócios e planos, Pessoas e equipe;
+  - a denúncia feita no app passa a ser registrada e chega à fila.
+  Revisão própria e revisão independente do GPT (Codex), bateria e base visual em
+  [VISUAL_BASELINE_R52](VISUAL_BASELINE_R52.md). Publicado em 18/10 (`c83703ea…`).
+- **Lote Entrada, Rodadas 53 a 56 (18/10):** a entrada como no app web, com o prototipo fechado
+  para quem saiu:
+  - landing pública com amostra; Sair e Entrar;
+  - criar conta (e-mail ou Google com aceite), CPF conferido e nunca guardado, resultados distintos
+    (o vínculo militar é dado público), envio de documento e análise com linha do tempo;
+  - recuperar a senha com resposta neutra; convite familiar preso ao e-mail, com prazo de 7 dias;
+  - passo 3 (cidade, momento e nome), boas-vindas e perfil novo do zero;
+  - a entrada em análise aparece na fila do Painel do Bivaque.
+  Revisões de código, de segurança (R3) e do GPT (Codex), bateria e base visual em
+  [VISUAL_BASELINE_R56](VISUAL_BASELINE_R56.md). Congelada em 18/10 (`19df283b…`), sem publicar.
+- **Lote Funcional, Rodadas 57 a 65 (18 e 19/10):** fecha os caminhos quebrados e as jornadas que
+  faltavam antes do back-end (auditoria funcional de 18/10):
+  - aviso abre o pedido, "Você organiza", sem interesse no próprio anúncio, cancelar pedido de grupo;
+  - Política de privacidade e Código de conduta legíveis; pedido depois da escolha; ocultar pessoal;
+  - editar e excluir o que publicou; bloquear pessoa; denunciar resposta, comentário, publicação e
+    conversa, com consequência real no Painel;
+  - encerrar grupo; pausar e excluir página de negócio; Ajuda e Fale com a gente; apagar a conta;
+  - "Mostrar meu bairro", busca nas respostas, oferta de negócio em grupo e benefícios dos planos.
+  Implementado por subagentes (Haiku e Sonnet); três revisões independentes, duas rodadas de correção,
+  bateria e base visual em [VISUAL_BASELINE_R65](VISUAL_BASELINE_R65.md). Publicado em 19/10
+  (`0dce1b06…`). Pendente com o dono: aprovação comercial dos planos (R3).
+- **Lote Bairros, Rodadas 66 a 68 (19/10):** bairro em qualquer cidade, não só Manaus:
+  - campo de busca de bairro (nome sem acento, CEP de teste ou localização; CEP e coordenadas nunca
+    gravados) no pedido, anúncio, imóvel, indicação e Configurações;
+  - base de bairros com zona e centro aproximado (Manaus, Brasília, Natal, Rio);
+  - filtro "Distância de mim" a partir do bairro do perfil, bairros da cidade com busca, e Mapa em qualquer
+    cidade;
+  - correções das três revisões (R68).
+  Implementado por Opus na sessão principal; revisões do agente revisor, Codex e OpenCode; bateria e base
+  visual em [VISUAL_BASELINE_R68](VISUAL_BASELINE_R68.md). Publicado em 19/10 (`3d427b0d…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do

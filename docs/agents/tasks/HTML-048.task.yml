@@ -1,0 +1,37 @@
+task_id: HTML-048
+objective: >
+  Rodada 48 (lote de volume) limita a folha do bairro no celular a 12 anuncios no carrossel (e na
+  grade da tela cheia), terminando num cartao "Ver todos os N" que leva a lista so daquele bairro.
+  No tablet e no computador, o dialogo do bairro vem em blocos de 24, como as listas.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (plano do lote de volume; "Sim")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 13662fdc. A folha e o dialogo do bairro desenhavam todos os anuncios do bairro de uma vez
+    (na sonda de volume, cerca de 150 num bairro).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-048.task.yml
+forbidden:
+  - mudar as tres alturas da folha, os marcadores ou o fluxo Ver so este bairro na lista
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Bairro com mais de 12 anuncios mostra 12 e o cartao Ver todos os N, que abre a lista do bairro
+  - Bairro com poucos anuncios fica igual
+  - Dialogo do bairro com contagem e blocos de 24
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round48-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round41-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round31-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: mapa
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

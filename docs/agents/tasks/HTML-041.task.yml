@@ -1,0 +1,42 @@
+task_id: HTML-041
+objective: >
+  Rodada 41 leva folhas com alturas de parada ao celular: a folha do bairro fica sobre o mapa sem
+  cobri-lo, abre baixa, sobe ate a metade e a tela cheia, o marcador escolhido fica em destaque e
+  centralizado e outro marcador troca o bairro; as folhas comuns encolhem a pagina de tras. O mapa
+  passa a enquadrar todos os bairros ao carregar.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete; "Sim, como na maquete" e "Sim, mais sutil")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 9397e840. No celular a folha do bairro cobria o mapa inteiro e o enquadramento inicial
+    deixava Ponta Negra fora da tela.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-041.task.yml
+forbidden:
+  - mudar a folha do bairro no desktop e no tablet (continua o dialogo)
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - No celular, tocar num marcador abre a folha baixa sem dialogo, com o marcador em destaque
+  - Puxador e arrasto levam a metade e a tela cheia; arrastar a folha baixa para baixo fecha
+  - Outro marcador troca o bairro; Esc, Ver na lista e sair do mapa fecham a folha
+  - Folhas comuns no celular encolhem a pagina de tras e ela volta ao fechar; desktop sem efeito
+  - O mapa enquadra todos os bairros com anuncio
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round41-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round31-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: mapa e folhas do celular
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

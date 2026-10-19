@@ -1,0 +1,20 @@
+/* Rodada 44: busca em tela cheia. No celular sai o título repetido; recentes e sugestões viram
+   linhas tocáveis e "Explorar" mostra atalhos com contagem. */
+.search-sec h2,.search-sec .section-title h2{font-size:17px;line-height:24px}
+.search-sec>h2{margin-bottom:6px}
+.search-row{display:flex;align-items:center;border-bottom:1px solid var(--md-sys-color-outline-variant)}
+.search-row-go{display:flex;align-items:center;gap:14px;flex:1;min-width:0;min-height:48px;padding:6px 2px;text-align:left;font-size:15px;color:inherit}
+.search-row-go>md-icon{color:var(--md-sys-color-on-surface-variant);font-size:22px}
+.search-row-go small{margin-left:auto;padding-left:8px;font-size:12px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap}
+.search-row-go .grow{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-row-go b{font-weight:650}
+.search-fill{display:grid;place-items:center;width:44px;height:44px;flex:none;color:var(--md-sys-color-on-surface-variant);border-radius:50%}
+.search-fill md-icon{rotate:45deg;font-size:20px}
+.search-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.search-tile{display:flex;align-items:center;gap:10px;min-height:60px;padding:10px 12px;border-radius:16px;text-align:left;color:inherit;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.search-tile>md-icon,.search-tile>.inline-svg{flex:none;color:var(--md-sys-color-primary);width:24px;height:24px}
+.search-tile b{display:block;font-size:14px;line-height:19px;font-weight:600}
+.search-tile small{display:block;font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant)}
+.search-suggest{margin-top:6px}
+@media(min-width:720px){.search-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:719px){.search-head{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}.search-head+md-chip-set,.search-head+.filter-row{margin-top:6px}}

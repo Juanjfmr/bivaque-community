@@ -55,6 +55,12 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07q/CSS | `src/styles/top-title.css` | Frontend premium | Rodada 36: título grande que sobe para a barra no celular |
 | 07r/CSS | `src/styles/chat-mobile.css` | Frontend premium | Rodada 37: conversa com a pessoa na barra, aviso de segurança e caixa em pílula |
 | 07s/CSS | `src/styles/detail-immersive.css` | Frontend premium | Rodada 38: anúncio e negócio com a foto até o topo no celular |
+| 07t/CSS | `src/styles/sheets.css` | Frontend premium | Rodada 41: fundo que encolhe sob as folhas e folha do bairro sobre o mapa |
+| 07u/CSS | `src/styles/push-install.css` | Frontend premium | Rodada 43: folha dos avisos e passo a passo da instalação |
+| 07v/CSS | `src/styles/search-mobile.css` | Frontend premium | Rodada 44: busca em tela cheia com recentes, explorar e sugestões |
+| 07w/CSS | `src/styles/paged.css` | Frontend premium | Rodada 45: fim de bloco das listas longas |
+| 07x/CSS | `src/styles/owner.css` | Frontend premium | Rodada 49: Painel do Bivaque (console do dono) |
+| 07y/CSS | `src/styles/entry.css` | Frontend premium | Rodada 53: landing pública e entrada |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -62,11 +68,14 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 12/App | `src/app/open.js` | Arquitetura | Comentário, abertura do IIFE e strict mode |
 | 13/App | `src/utilities/format.js` | Arquitetura | Seletores, escaping, datas, ids e apresentação |
 | 14/App | `src/data/demo/model.js` | Arquitetura | Chave de storage e constantes do modelo demo |
+| 66/App | `src/data/demo/bairros.js` | Perfil/família/movimentação | Rodada 66: bairros por cidade (zona e centro aproximado) e CEPs de teste |
+| 14/Appb | `src/data/demo/owner.js` | Dados | Rodada 49: números de exemplo do Painel do Bivaque |
 | 14a/App | `src/features/businesses/taxonomy.js` | Negócios/serviços | Rodada 12: grupos de serviço com especialidade opcional e migração das categorias antigas |
 | 14a/Appb | `src/features/listings/attributes.js` | Anúncios | Rodada 22: tipos, comodidades, categorias e estado; migração dos exemplos (`normalizeListings`) |
 | 15/App | `src/features/groups/presets.js` | Comunidades/grupos | Templates/interesses/notificações de grupo |
 | 16/App | `src/app/state.js` | Arquitetura | Inicialização, schema 2, `state`, `mutate`, seletores e permissões demo |
 | 17/App | `src/shell/primitives.js` | Frontend premium | HTML compartilhado, imagens e snackbar |
+| 66/App | `src/shell/hood-picker.js` | Frontend premium | Rodada 66: campo de bairro com busca por nome, CEP ou localização (CEP e coordenadas não ficam salvos) |
 | 18/App | `src/shell/navigation.js` | Frontend premium | Router, history, tema, shell e dispatch de render |
 | 19/App | `src/features/home/views.js` | Início/busca/descoberta | Início e plano de chegada/saída |
 | 19a/App | `src/features/home/desktop.js` | Início/busca/descoberta | Rodada 13: `renderHomeDesktop`, aviso pessoal, serviços, grupos, próximo encontro e chegada |
@@ -88,6 +97,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 32b/App | `src/features/messaging/bubbles.js` | Frontend premium | Rodada 20: `chatMessagesHtml` (grupos, dias, estado, entrada) e reações locais |
 | 33/App | `src/features/transfers/guide.js` | Perfil/família/movimentação | Guia demonstrativo de chegada |
 | 34/App | `src/shell/dialogs.js` | Frontend premium | Dialog/confirm, history e sheet drag |
+| 34b/App | `src/shell/sheet-depth.js` | Frontend premium | Rodada 41: página de trás encolhe enquanto uma folha está aberta |
 | 35/App | `src/shell/create-menu.js` | Frontend premium | Menu Criar, keyboard e posicionamento |
 | 35a/App | `src/shell/command-palette.js` | Início/busca/descoberta | Rodada 14: paleta Ctrl+K/⌘K e "/": busca agrupada, páginas, ações de criar e buscas recentes |
 | 35b/App | `src/shell/count-up.js` | Frontend premium | Rodada 19: `animateCounts` (número sobe ao aparecer, respeita movimento reduzido) e `avatarStack` |
@@ -96,19 +106,40 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 35e/App | `src/shell/verified-info.js` | Confiança | Rodada 28: selo verificado que abre a explicação do que a verificação confere |
 | 35f/App | `src/shell/toasts.js` | Frontend premium | Rodada 33: notify() com avisos empilhados, desfazer por aviso e tempo visível |
 | 35g/App | `src/shell/celebrate.js` | Frontend premium | Rodada 34: microanimação ao indicar (número pulsa, pontos, avatar entra) |
+| 35h/App | `src/shell/haptics.js` | Frontend premium | Rodada 42: vibração leve ao salvar, indicar, deslizar, fechar a foto e trocar a altura da folha |
+| 35i/App | `src/shell/paged-list.js` | Frontend premium | Rodada 45: listas longas em blocos de 24, com carregamento ao rolar e botão de reserva |
+| 35j/App | `src/shell/in-place.js` | Frontend premium | Rodada 47: salvar e "Útil" atualizam só o que foi tocado |
 | 36/App | `src/features/profile/settings.js` | Perfil/família/movimentação | Cidade, configurações e controles de protótipo |
+| 36/Appbm | `src/features/profile/hidden.js` | Perfil/família/movimentação | Rodada 58: ocultar pergunta só para a pessoa (`hiddenByMe`), Desfazer, faixa na pergunta e lista Ocultados |
+| 36/Appb | `src/features/profile/push-install.js` | Perfil | Rodada 43: avisos no celular pedidos com explicação e instalação como app |
+| 36/Appbc | `src/features/owner/console.js` | Perfil | Rodada 49: Painel do Bivaque: visão geral, chegadas atendidas, o que mudou e fila |
+| 36/Appbd | `src/features/owner/review.js` | Perfil | Rodada 49: revisar e decidir itens da fila; denúncia registrada no app |
+| 36/Appbe | `src/features/owner/queues.js` | Perfil | Rodada 50: Filas do Painel do Bivaque: abertas e decididas, assumir e desfazer |
+| 36/Appbf | `src/features/owner/cities.js` | Perfil | Rodada 51: Cidades do Painel do Bivaque: saúde, embaixadores e convite |
+| 36/Appbg | `src/features/owner/business-team.js` | Perfil | Rodada 52: Negócios e planos e Pessoas e equipe do Painel do Bivaque |
+| 36/Appbh | `src/features/entry/landing.js` | Perfil | Rodada 53: landing com amostra grátis, Sair e Entrar |
+| 36/Appbi | `src/features/entry/account.js` | Perfil | Rodada 54: criar conta e elegibilidade (CPF, resultados, documento, em análise) |
+| 36/Appbj | `src/features/entry/login.js` | Perfil | Rodada 55: entrar, recuperar a senha, Google com aceite e convite familiar |
+| 36/Appbk | `src/features/entry/arrive.js` | Perfil | Rodada 56: passo 3 (cidade, momento e nome), boas-vindas e entrada em análise na fila do dono |
+| 36/Appbl | `src/features/legal/pages.js` | Perfil | Rodada 58: Política de privacidade e Código de conduta (rotas `privacidade` e `conduta`), links do aceite e rascunho da entrada em memória |
+| 36/Appbn | `src/features/support/help.js` | Perfil | Rodada 62: Ajuda, Fale com a gente, Meus chamados (rotas `ajuda`, `contato`, `chamados`) e Apagar a conta (`apagar-conta`, tela de conta apagada) |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |
 | 37/Appd | `src/features/listings/compare.js` | Anúncios | Rodada 30: comparar imóveis salvos lado a lado com destaques |
 | 37/Appe | `src/features/listings/map.js` | Anúncios | Rodada 31: mapa de bairros com MapLibre + OpenFreeMap carregados sob demanda; contagem por bairro e folha com os anúncios |
+| 37/Appf | `src/features/listings/hood-panel.js` | Desapegos/imóveis | Rodada 41: folha do bairro sobre o mapa com três alturas |
 | 37a/App | `src/features/listings/photos.js` | Desapegos/imóveis | Rodada 18: processamento das fotos (botão e soltar), capa e galeria em tela cheia |
+| 37b/App | `src/features/listings/photo-gestures.js` | Frontend premium | Rodada 40: galeria com pinça, toque duplo, arrastar para baixo e foto que acompanha o dedo |
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |
 | 39/App | `src/features/businesses/editor.js` | Negócios/serviços | Edição e persistência local do negócio |
 | 40/App | `src/features/community/editor.js` | Memória/indicações | Pedir indicação e perguntas similares |
+| 40/Appc | `src/features/profile/blocks.js` | Perfil/família/movimentação | Rodada 60: bloquear pessoa (lista de bloqueados, Pessoas bloqueadas, detalhe de quem foi bloqueado) e ⋮ de denunciar ou bloquear em resposta, comentário e publicação de outra pessoa |
+| 63/Appa | `src/features/profile/hood-privacy.js` | Perfil/família/movimentação | Rodada 63: "Mostrar meu bairro" (bairro some do que a pessoa publica quando desligado) e cidades com dados de bairro e mapa |
+| 63/Appb | `src/features/businesses/plans.js` | Negócios/serviços | Rodada 63: limites e benefícios dos planos (conversas novas por mês, destaque em Patrocinado por 7 dias) |
+| 40/Appb | `src/features/community/manage.js` | Memória/indicações | Rodada 59: editar e excluir o que a pessoa publicou (pergunta, resposta, publicação e comentário de grupo, encontro), menu ⋮ só para o autor e aviso a quem confirmou presença |
 | 41/App | `src/features/businesses/indication.js` | Negócios/serviços | Indicação local de negócio |
 | 42/App | `src/features/profile/demo-actions.js` | Perfil/família/movimentação | Planos, convites familiares e denúncia; coordenar Monetização/Segurança |
-| 43/App | `src/features/auth/onboarding.js` | Acesso/onboarding | Cadastro e verificação fictícios |
 | 44/App | `src/features/messaging/actions.js` | Conversas/notificações | Contato/conversa, dispatch de mensagens; contém share/copy e simulação de respostas compartilhados |
 | 45/App | `src/shell/bindings.js` | Frontend premium | Bindings de tela/dialog e links externos |
 | 45a/App | `src/features/requests/model.js` | Negócios/serviços | Rodada 11: pedido aberto e propostas — regras, elegibilidade, simulação (ADR-20261015) |

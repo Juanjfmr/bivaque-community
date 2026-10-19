@@ -1,0 +1,39 @@
+task_id: HTML-044
+objective: >
+  Rodada 44 deixa a busca em tela cheia mais util: no celular sai o titulo repetido; a busca vazia
+  mostra buscas recentes (com Limpar), Explorar com atalhos que abrem a tela filtrada e sugestoes,
+  em linhas com a seta que completa o texto sem buscar; ao digitar, sugestoes de complemento e
+  atalhos por tipo vem antes dos resultados.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete; "Sim, como na maquete")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 9442fe13. A busca vazia era uma ilustracao grande, as sugestoes eram chips sem completar e
+    nao havia sugestao enquanto se digitava.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-044.task.yml
+forbidden:
+  - mudar a busca rapida do desktop (Ctrl K) ou o casamento de termos
+  - inventar dados de mais buscados
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Busca vazia com recentes, Explorar e sugestoes; sem a ilustracao grande; titulo fora no celular
+  - A seta completa sem gravar busca; a linha busca e grava; Limpar apaga as recentes
+  - Explorar abre Negocios filtrados, Imoveis ou Desapegos
+  - Ao digitar, sugestao com a parte digitada em destaque e atalho por tipo que filtra
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round44-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round10-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: busca
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

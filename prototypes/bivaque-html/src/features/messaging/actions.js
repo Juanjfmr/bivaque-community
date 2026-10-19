@@ -34,10 +34,12 @@ async function messagingAction(action,value,el){
   if(route.name!=='conversa'||route.id!==value){notify('Abra esta conversa antes de enviar uma mensagem.','info');return true;}
   const input=$('#chat-input');if(!input){notify('O campo de mensagem não está disponível.','error');return true;}
   const raw=input.value||'',text=raw.trim();messagingDrafts.set(value,raw);
+  if(isBlocked(t.who)){messagingFeedback(`Você bloqueou ${t.who}.`);return true;}
   if(!messagingCanWrite())return true;
   if(!text||raw.length>2000){messagingFeedback(!text?'Escreva uma mensagem antes de enviar.':'A mensagem pode ter até 2.000 caracteres.',{invalid:true});input.focus({preventScroll:true});return true;}
+  const gate=planReplyGate(t);if(gate.blocked){planLimitDialog();return true;}
   messagingFeedback('Salvando mensagem neste dispositivo…');
-  const saved=mutate(()=>{const thread=threadById(value);thread.msgs.push({me:true,t:text,at:Date.now()});thread.updatedAt=Date.now();thread.unread=false;thread.draft='';},{redraw:false});
+  const saved=mutate(()=>{const thread=threadById(value);thread.msgs.push({me:true,t:text,at:Date.now()});thread.updatedAt=Date.now();thread.unread=false;thread.draft='';if(gate.isNew)planCountReply(thread);},{redraw:false});
   if(!saved){messagingFeedback('Não foi possível salvar a mensagem. O texto foi mantido; libere espaço e tente novamente.');input.focus({preventScroll:true});return true;}
   messagingDrafts.delete(value);render();messagingFeedback('Mensagem fictícia salva neste dispositivo.');return true;
  }
@@ -46,10 +48,11 @@ async function messagingAction(action,value,el){
   if(!accessibleRecord(ref)){messagingFeedback('A origem deste contato não está mais disponível. O histórico da conversa foi preservado.');return true;}
   navigate(t.about.type==='item'?'anuncio':'negocio',ref.id);return true;
  }
- if(!messagingCanWrite())return true;
+ // Rodada 60 (quadro 6): menu da conversa no popover do ⋮, com Denunciar e Bloquear.
  if(action==='thread-menu'){
-  showDialog('Opções da conversa',`<p class="form-note">Esta conversa é fictícia e está salva apenas neste dispositivo.</p><div class="stack">${btn(t.unread?'Marcar como lida':'Marcar como não lida','thread-unread',value,'outlined',t.unread?'drafts':'chat_bubble')}${btn(t.pinned?'Soltar conversa':'Fixar conversa','pin-thread',value,'outlined','push_pin')}${btn('Apagar conversa local','swipe-delete-thread',value,'text','delete')}</div>`,btn('Fechar','close-dialog','','text'));return true;
+  openCreate(el,[[t.unread?'drafts':'chat_bubble',t.unread?'Marcar como lida':'Marcar como não lida','thread-unread','',value],['push_pin',t.pinned?'Soltar conversa':'Fixar conversa','pin-thread','',value],['flag','Denunciar conversa','report','',`thread|${value}`],isBlocked(t.who)?['visibility',`Desbloquear ${t.who}`,'unblock-person','',t.who]:['cancel',`Bloquear ${t.who}`,'block-person','',t.who],['delete','Apagar conversa','swipe-delete-thread','',value,true]],false,'Ações da conversa');return true;
  }
+ if(!messagingCanWrite())return true;
  // Rodada 39: marcar como não lida (ou lida) pelo deslizar ou pelo menu ⋮.
  if(action==='thread-unread'){
   const t=messagingThread(value);if(!t)return true;
@@ -82,7 +85,7 @@ function ensureThread(type,id,draft=''){
  if(!t){t={id:uid('t'),who:x.seller||x.name,ini:x.sini||x.ini||initals(x.name),city:x.city,about:{type,id},snapshot:{title:x.title||x.name,photo:x.photos?.[0],price:x.price,city:x.city},msgs:[],unread:false,updatedAt:Date.now()};state.threads.unshift(t);}t.deleted=false;if(draft)t.draft=draft;return t;
 }
 async function contact(type,id,draft=''){
- if(!canPost())return;const x=type==='item'?itemById(id):bizById(id);if(!accessibleRecord(x))return;if(type==='item'&&x.status!=='active'){notify('Este anúncio já foi encerrado.','info');return;}if(type==='biz'&&x.claimed===false){notify('O responsável ainda não assumiu a página.','info');return;}let t;
+ if(!canPost())return;const x=type==='item'?itemById(id):bizById(id);if(!accessibleRecord(x))return;if(type==='item'&&x.mine){notify('Este anúncio é seu.','info');return;}if(type==='item'&&x.status!=='active'){notify('Este anúncio já foi encerrado.','info');return;}if(type==='biz'&&x.claimed===false){notify('O responsável ainda não assumiu a página.','info');return;}if(type==='biz'&&x.suspended){notify('Esta página está suspensa pela moderação.','info');return;}if(!x.mine&&isBlocked(x.seller||x.name)){notify(`Você bloqueou ${x.seller||x.name}. Desbloqueie em Configurações para conversar.`,'info');return;}let t;
  if(mutate(()=>{t=ensureThread(type,id,draft);},{redraw:false})){messagingReturnFocus={route:{...route},action:type==='item'?'item-interest':'quote',value:id};messagingDrafts.delete(t.id);if(dialog.open)await closeDialog(true);navigate('conversa',t.id);}
 }
 async function share(type,id){
@@ -103,5 +106,5 @@ async function copyText(text){
   const input=$('#copy-recovery-text');await input?.updateComplete;input?.focus({preventScroll:true});input?.shadowRoot?.querySelector('input,textarea')?.select();return false;
  }
 }
-function simulateAnswer(){const q=state.asks.find(q=>q.mine&&q.city===state.homeCity&&q.status==='open');if(!q){notify('Publique uma pergunta aberta antes de simular a resposta.','info');return;}const terms=queryTerms(q.q),donor=state.asks.filter(a=>!a.mine&&a.city===q.city&&a.answers.length&&a.status==='ok').map(a=>({a,score:terms.filter(t=>matches(t,a.q,a.keywords||[])).length})).filter(x=>x.score>=Math.min(2,terms.length)).sort((a,b)=>b.score-a.score)[0];if(!donor){notify('Não há resposta de exemplo relacionada a essa pergunta.','info');return;}const source=donor.a.answers[0];if(mutate(()=>{q.answers.push({...structuredClone(source),id:uid('a'),mine:false,who:'Resposta de exemplo da comunidade',ini:'CM',solved:false,originQuestion:donor.a.id});state.notices.unshift({id:uid('n'),city:q.city,unread:true,text:'Uma resposta de exemplo chegou à sua pergunta.',go:['pergunta',q.id],when:'Agora'});})){notify('Resposta relacionada adicionada');}}
-function simulateMessage(){const t=route.name==='conversa'?messagingThread(route.id):state.threads.find(t=>t.city===state.homeCity&&!t.deleted);if(!t){notify('Abra um anúncio e inicie uma conversa primeiro.','info');return;}if(!messagingCanWrite())return;const text=t.about.type==='item'?'Obrigado pelo contato. Vamos confirmar disponibilidade e combinar os detalhes.':'Obrigado pelo contato. Conte o serviço e o bairro para combinarmos um orçamento.';if(mutate(()=>{t.msgs.push({me:false,t:text,at:Date.now()});t.unread=route.name!=='conversa';t.updatedAt=Date.now();}))notify('Resposta fictícia salva neste dispositivo');}
+function simulateAnswer(){const q=state.asks.find(q=>q.mine&&q.city===state.homeCity&&q.status==='open');if(!q){notify('Publique uma pergunta aberta antes de simular a resposta.','info');return;}const terms=queryTerms(q.q),donor=state.asks.filter(a=>!a.mine&&a.city===q.city&&askVisible(a)&&askAnswers(a).length&&a.status==='ok').map(a=>({a,score:terms.filter(t=>matches(t,a.q,a.keywords||[])).length})).filter(x=>x.score>=Math.min(2,terms.length)).sort((a,b)=>b.score-a.score)[0];if(!donor){notify('Não há resposta de exemplo relacionada a essa pergunta.','info');return;}const source=askAnswers(donor.a)[0];if(mutate(()=>{q.answers.push({...structuredClone(source),id:uid('a'),mine:false,who:'Resposta de exemplo da comunidade',ini:'CM',solved:false,originQuestion:donor.a.id});state.notices.unshift({id:uid('n'),city:q.city,unread:true,text:'Uma resposta de exemplo chegou à sua pergunta.',go:['pergunta',q.id],when:'Agora'});})){notify('Resposta relacionada adicionada');}}
+function simulateMessage(){const t=route.name==='conversa'?messagingThread(route.id):state.threads.find(t=>t.city===state.homeCity&&!t.deleted&&!isBlocked(t.who));if(!t){notify('Abra um anúncio e inicie uma conversa primeiro.','info');return;}if(isBlocked(t.who)){notify(`Você bloqueou ${t.who}. Nenhuma mensagem chega.`,'info');return;}if(!messagingCanWrite())return;const text=t.about.type==='item'?'Obrigado pelo contato. Vamos confirmar disponibilidade e combinar os detalhes.':'Obrigado pelo contato. Conte o serviço e o bairro para combinarmos um orçamento.';if(mutate(()=>{t.msgs.push({me:false,t:text,at:Date.now()});t.unread=route.name!=='conversa';t.updatedAt=Date.now();}))notify('Resposta fictícia salva neste dispositivo');}

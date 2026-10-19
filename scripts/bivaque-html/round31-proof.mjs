@@ -36,18 +36,27 @@ const pins = (page) =>
     .locator("#catalog-map .cmap-pin")
     .evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")))
 
+// Rodada 41: no celular a folha do bairro fica sobre o mapa (#hood-panel); no desktop, o diálogo.
+const sheetOf = (page) => (page.viewportSize().width < 720 ? "#hood-panel" : "#dialog")
+
 const checkpoints = {
   // Revisão do lote C: salvar na folha do bairro atualiza o botão e não remonta o mapa.
   async "saving-in-sheet-keeps-the-map"(page) {
     await openMap(page)
     await page.locator('#catalog-map .cmap-pin[data-value="Ponta Negra"]').click()
     await settle(page)
+    const sheet = sheetOf(page)
+    // No celular, os cartões com o salvar aparecem a partir da metade da folha.
+    if (sheet === "#hood-panel") {
+      await page.locator("#hood-panel .hp-grab").click()
+      await settle(page)
+    }
     const before = await page.evaluate(() => window.__maps)
-    await page.locator('#dialog [data-action="save-item"][data-value="i2"]').click()
+    await page.locator(`${sheet} [data-action="save-item"][data-value="i2"]`).click()
     await settle(page)
     // O Material leva o aria-pressed do host para o botão interno: lê a propriedade.
     const pressed = await page
-      .locator('#dialog [data-action="save-item"][data-value="i2"]')
+      .locator(`${sheet} [data-action="save-item"][data-value="i2"]`)
       .evaluate((b) => [b.ariaPressed, b.getAttribute("aria-pressed"), b.innerHTML.slice(0, 120)])
     expect(
       pressed[0] === "true" || pressed[1] === "true",
@@ -108,15 +117,16 @@ const checkpoints = {
     await openMap(page)
     await page.locator('#catalog-map .cmap-pin[data-value="Ponta Negra"]').click()
     await settle(page)
+    const sheet = sheetOf(page)
     expect(
-      /^Ponta Negra · 1 imóvel/.test(await page.locator("#dialog").innerText()),
+      /^\s*Ponta Negra\s*(·\s*)?1 imóvel/.test(await page.locator(sheet).innerText()),
       "folha do bairro",
     )
     expect(
-      await page.locator('#dialog [data-action="open-item"][data-value="i2"]').count(),
+      await page.locator(`${sheet} [data-action="open-item"][data-value="i2"]`).count(),
       "folha sem o anúncio do bairro",
     )
-    await page.locator('#dialog [data-action="map-hood-list"]').click()
+    await page.locator(`${sheet} [data-action="map-hood-list"]`).click()
     await settle(page)
     expect(
       (await page
@@ -140,8 +150,15 @@ const checkpoints = {
     )
     await page.locator('#main .cmap-list [data-action="map-hood"]').first().click()
     await settle(page)
+    const sheet = sheetOf(page)
     expect(
-      await page.evaluate(() => document.querySelector("#dialog").open),
+      await page.evaluate(
+        (sel) =>
+          sel === "#dialog"
+            ? document.querySelector(sel).open
+            : Boolean(document.querySelector(sel)),
+        sheet,
+      ),
       "bairros não funcionam sem o mapa",
     )
   },

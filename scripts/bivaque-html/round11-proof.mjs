@@ -4,6 +4,7 @@ import {
   choose,
   confirmOk,
   dialogKind,
+  dismissPushAsk,
   expect,
   failStorage,
   fill,
@@ -50,6 +51,7 @@ async function createRequest(
   await choose(page, "request-hood", hood)
   await fill(page, "request-desc", desc)
   await action(page, "submit-request")
+  await dismissPushAsk(page)
   const r = await routeOf(page)
   expect(r.name === "pedido" && r.id, `pedido não abriu: ${r.name}`)
   return r.id
@@ -84,11 +86,13 @@ const checkpoints = {
     const cat = await demoCategory(page)
     await openRequestForm(page)
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(/tipo de serviço/i.test(await toast(page)), "sem mensagem de tipo")
     await choose(page, "request-cat", cat)
     await choose(page, "request-hood", "Centro")
     await fill(page, "request-desc", "Curto")
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(/20 caracteres/.test(await toast(page)), "aceitou descrição curta")
     await fill(
       page,
@@ -98,6 +102,7 @@ const checkpoints = {
     await choose(page, "request-when", "on")
     expect(await page.locator("#request-date").isVisible(), "data não apareceu para 'em uma data'")
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     const id = (await routeOf(page)).id
     const r = await req(page, id)
     expect(
@@ -450,8 +455,8 @@ const checkpoints = {
     expect((await req(page, id)).status === "open", "pedido mudou de situação")
   },
   async "report-request-and-proposal"(page) {
-    // P7: denúncia de proposta (quem pede) e de pedido (prestador). O tratamento depende da
-    // rodada de moderação, como nas outras denúncias do protótipo: nada é registrado.
+    // P7: denúncia de proposta (quem pede) e de pedido (prestador). Desde a Rodada 49, a denúncia
+    // abre o formulário com motivo e vai para a fila do Painel do Bivaque; o pedido não muda.
     const cat = await demoCategory(page)
     const id = await createRequest(page, { cat })
     await simulate(page)
@@ -464,7 +469,10 @@ const checkpoints = {
     )
     await reports.first().click()
     await settle(page)
-    expect((await dialogKind(page)) === "dependency", "denúncia de proposta sem aviso")
+    expect(
+      await page.locator('#dialog [data-action="submit-report"][data-value^="proposal|"]').count(),
+      "denúncia de proposta sem formulário",
+    )
     expect(
       JSON.stringify(await req(page, id)) === JSON.stringify(before),
       "denúncia alterou o pedido",
@@ -484,7 +492,12 @@ const checkpoints = {
     )
     await page.locator(`#main [data-action="report"][data-value="request|${rid}"]`).click()
     await settle(page)
-    expect((await dialogKind(page)) === "dependency", "denúncia de pedido sem aviso")
+    expect(
+      await page
+        .locator(`#dialog [data-action="submit-report"][data-value="request|${rid}"]`)
+        .count(),
+      "denúncia de pedido sem formulário",
+    )
   },
   async "create-menu-new-item-fits"(page) {
     // O 7º item do menu Criar (subtítulo mais longo) cabe no botão, no menu e na tela.
@@ -535,6 +548,7 @@ const checkpoints = {
     )
     await failStorage(page)
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(
       (await dialogKind(page)) === "editor" && /salvar/i.test(await toast(page)),
       "sem feedback de falha",

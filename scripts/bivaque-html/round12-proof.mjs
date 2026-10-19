@@ -3,6 +3,7 @@ import {
   addChips,
   choose,
   dialogKind,
+  dismissPushAsk,
   expect,
   fill,
   go,
@@ -39,6 +40,7 @@ async function createRequest(page, cat, spec) {
     "Preciso do serviço ainda nesta semana, com orçamento por escrito.",
   )
   await action(page, "submit-request")
+  await dismissPushAsk(page)
   const r = await routeOf(page)
   expect(r.name === "pedido" && r.id, `pedido não abriu: ${r.name}`)
   return r.id
@@ -137,6 +139,7 @@ const checkpoints = {
       "Preciso trocar a torneira e ver um vazamento na pia da cozinha.",
     )
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     const id = (await routeOf(page)).id
     const r = await req(page, id)
     expect(
@@ -332,6 +335,7 @@ const checkpoints = {
         '<select id="request-spec"><option value="Elétrica" selected>Elétrica</option></select>'
     })
     await action(page, "submit-request")
+    await dismissPushAsk(page)
     expect(/especialidade da lista/.test(await toast(page)), "aceitou especialidade de outro grupo")
     expect(((await stored(page)).requests?.length ?? 0) === before, "pedido adulterado salvo")
   },

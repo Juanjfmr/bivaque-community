@@ -54,6 +54,4 @@ span.g-mini md-icon{font-size:22px;width:22px;height:22px}
 .field-cap{font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant);margin:4px 0 -4px}
 .choice b md-icon{font-size:18px;width:18px;height:18px;vertical-align:-3px}
 .g-help-note{display:flex;align-items:center;gap:8px;margin:-6px 0 6px}.g-help-note md-icon{font-size:18px;width:18px;height:18px;color:var(--md-sys-color-primary)}
-.onboard-turma{margin-top:16px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)}
-.onboard-turma small{color:inherit;opacity:.85}
 @media (max-width:420px){.g-row{padding:14px 12px}.g-row .list-photo{width:56px;height:56px}}

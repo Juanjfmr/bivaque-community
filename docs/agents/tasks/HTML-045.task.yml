@@ -1,0 +1,41 @@
+task_id: HTML-045
+objective: >
+  Rodada 45 (lote de volume) divide as listas longas de Imoveis, Desapegos e Negocios em blocos de
+  24. O proximo bloco entra sozinho perto do fim, com um botao "Mostrar mais" de reserva e a
+  contagem; no fim, o total e uma acao para quem nao achou. Voltar de um anuncio devolve o mesmo
+  ponto; trocar o filtro recomeca do primeiro bloco.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete; "Sim, como na maquete"; blocos de 24)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 797eb83f. Sonda de volume (.visual/bivaque-html-volume/probe.mjs), cidade grande com
+    CPU 4x mais lenta: Imoveis 9,0 s, Desapegos 9,5 s, Negocios 4,3 s; salvar 5,4 s; todas as
+    listas desenhadas de uma vez (559 e 654 cartoes).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-045.task.yml
+forbidden:
+  - mudar listas curtas (ate 24 itens), o mapa ou os filtros
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Lista longa abre com 24 cartoes e "Mostrando 24 de N"
+  - O botao acrescenta o bloco sem redesenhar e leva o foco ao primeiro cartao novo
+  - Rolar perto do fim carrega o proximo bloco sozinho, sem deixar cartoes de espera
+  - Voltar de um anuncio mantem o bloco e a posicao; trocar o filtro recomeca
+  - Fim da lista com o total e uma acao (Filtrar, Avise-me ou Pedir); Negocios em blocos
+  - Na sonda de volume (celular medio), Imoveis e Desapegos abrem em menos de 1,5 s
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round45-proof.mjs
+  - node .visual/bivaque-html-volume/probe.mjs
+  - npx pnpm@11.18.0 gate
+risk: listas
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

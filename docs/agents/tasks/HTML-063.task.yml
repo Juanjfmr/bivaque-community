@@ -1,0 +1,52 @@
+task_id: HTML-063
+objective: >
+  Rodada 63 do Lote Funcional: promessas da tela cumpridas ou retiradas. Mostrar meu bairro passa a valer
+  (desligado, o bairro some do que a pessoa publicou, sem perder o dado); a busca procura no texto das
+  respostas e mostra o trecho; Permitir oferta de negocio de membro muda o publicador do grupo (uma oferta
+  por semana por pessoa, so com pagina ativa); os planos aplicam o que anunciam (Gratis ate 5 conversas
+  novas respondidas por mes; Destaque de momento coloca a pagina no espaco Patrocinado por 7 dias; Plano
+  do negocio com conversas sem limite e quatro destaques por mes), sem alterar a ordem das indicacoes;
+  filtro de bairro e Mapa saem das cidades sem dados de bairro.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 63 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18 (secao B, itens 8 a 11 e 13), com as decisoes do coordenador
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 8f8b0d31 (Rodada 60). A preferencia showHood e salva e nada a usa; allowOffers nao muda o
+    publicador; a busca ignora o texto das respostas; trocar de plano so muda o nome; Brasilia, Rio e
+    Natal mostram o filtro de bairros e o Mapa de Manaus. Prova round63 em 375-light contra esse HEAD:
+    0 de 11 checkpoints PASS.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-063.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - cobrar de verdade ou integrar meio de pagamento (modo teste)
+  - fora do escopo: encerrar grupo, pausar ou excluir pagina de negocio (R61), apagar conta e Ajuda (R62)
+acceptance:
+  - Com Mostrar meu bairro desligado, o bairro some do anuncio (cartao, detalhe, busca, mapa), do pedido e do cabecalho da propria pergunta, resposta, publicacao e comentario de grupo; religar mostra de novo; o conteudo de outras pessoas nao muda
+  - A busca em Indicacoes e respostas acha o texto das respostas e mostra o trecho que bateu; resposta removida ou de pessoa bloqueada nao entra
+  - Com a oferta permitida e a pagina ativa (nao pausada nem suspensa) o publicador oferece Oferta do meu negocio com link para a pagina; sem permissao o tipo some e as ofertas existentes ficam ocultas
+  - Uma oferta por semana por pessoa por grupo; a recusa diz quando pode de novo; excluir a oferta nao zera o prazo
+  - No plano Gratis a sexta conversa nova respondida no mes e recusada com aviso e convite aos planos; conversa ja respondida segue livre; mes novo zera a conta
+  - Destaque de momento coloca a pagina no espaco Patrocinado por 7 dias, identificada, sem mexer na ordem das indicacoes; Plano do negocio tem conversas sem limite e quatro destaques por mes, com o saldo visivel
+  - Filtro de bairro e botao de Mapa so aparecem em cidade com dados de bairro (Manaus)
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round63-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round01-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round31-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round60-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: monetizacao e pagamento (planos e patrocinio) e dados pessoais (bairro); a aprovacao comercial dos valores e dos limites do prototipo continua pendente com o dono do produto
+adr: docs/decisions/ADR-20260820-alcance-pago.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

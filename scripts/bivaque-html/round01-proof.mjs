@@ -621,6 +621,7 @@ async function verify(width, theme) {
           ),
       )
       await page.locator("#invite-name input").fill("Familiar fictício")
+      await page.locator("#invite-email input").fill("familiar@exemplo.com")
       await action("new-invite")
       const invite = (await state(page)).invites[0]
       assert.equal(invite.name, "Familiar fictício")
@@ -643,7 +644,15 @@ async function verify(width, theme) {
     })
     await test("family-clipboard-denied-selectable-recovery", async () => {
       await reset((data) => {
-        data.invites = [{ code: "DEMO-PROOF", name: "Pessoa fictícia", used: false }]
+        data.invites = [
+          {
+            code: "DEMO-PROOF",
+            name: "Pessoa fictícia",
+            email: "pessoa@exemplo.com",
+            used: false,
+            at: Date.now(),
+          },
+        ]
       }, "voce")
       await action("family")
       await clipboard(page, "denied")
@@ -661,6 +670,7 @@ async function verify(width, theme) {
       }, "voce")
       await action("family")
       await page.locator("#invite-name input").fill("Exemplo de rollback")
+      await page.locator("#invite-email input").fill("rollback@exemplo.com")
       await storageFailure(page)
       await action("new-invite")
       await feedback(page, "salvar|armazen|espaço|grav")

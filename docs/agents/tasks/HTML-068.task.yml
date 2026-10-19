@@ -1,0 +1,44 @@
+task_id: HTML-068
+objective: >
+  Rodada 68: correcoes das revisoes independentes do Lote Bairros (agente revisor, Codex e OpenCode). CEP
+  nunca chega ao armazenamento: nem pelo rascunho de anuncio, nem junto de texto ("CEP 59075-000",
+  "Rua X, 69050-000"), nem nos bairros em que o negocio atende. Empresa que escreveu o bairro de outro
+  jeito (sem acento, outra caixa) recebe o pedido. Alerta so guarda e anuncia distancia quando ela vale, e
+  deixa de casar se o bairro do perfil sumir. Campo de bairro: Esc fecha de vez, texto de apoio volta ao
+  editar e o leitor de tela ouve so a contagem de sugestoes.
+authority:
+  - Metodo de fechamento de lote aprovado pelo usuario (revisoes independentes, corrigir MEDIUM ou acima)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Build da R67 (87f3c853, 2920155a): prova round68 em 375-light, 1 de 5 checkpoints PASS (rascunho grava o
+    CEP, "CEP 59075-000" vira bairro livre, CEP entra nos bairros do negocio, empresa com "candelaria" nao
+    ve o pedido de Candelaria). O checkpoint de alerta ja passava e fica como guarda.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-068.task.yml
+forbidden:
+  - gravar CEP, endereco residencial ou coordenadas do aparelho
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+acceptance:
+  - Salvar rascunho com CEP no bairro grava o bairro vazio; o CEP nao aparece no armazenamento
+  - CEP junto de texto e tratado como CEP (sugere o bairro, nao oferece usar como esta) e o pedido nao sai
+  - Nome de bairro com numero curto (Parque 10, Vila 2) continua valendo
+  - Bairro com CEP nos bairros em que o negocio atende e recusado; a pagina nao e publicada
+  - Empresa que atende "candelaria" ve o pedido de "Candelária"
+  - Alerta criado sem bairro no perfil nao guarda distancia; com bairro, guarda e diz "ate 3 km do seu bairro"
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round68-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round66-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round67-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: dados pessoais (CEP e endereco nunca gravados)
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

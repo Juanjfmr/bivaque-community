@@ -1,0 +1,51 @@
+task_id: HTML-062
+objective: >
+  Rodada 62 do Lote Funcional: Apagar a conta e Ajuda com suporte. Ajuda (rota ajuda, aberta para quem
+  saiu e para quem entrou) com quatro temas de 3 a 5 perguntas sobre o que o app faz hoje, cartao Nao
+  achou com Fale com a gente e Meus chamados; Fale com a gente (assunto, texto de no minimo 10
+  caracteres, e-mail da conta ou campo de e-mail sem conta) grava o chamado neste aparelho; Controles
+  do prototipo ganham Simular resposta do suporte, que responde o chamado mais antigo e cria um aviso
+  que abre Meus chamados; Apagar a conta em Configuracoes, confirmada digitando APAGAR, remove o que e da
+  pessoa, anonimiza respostas e indicacoes, apaga as conversas, limpa perfil, entrada e chamados, sai da
+  conta e mostra a tela Sua conta foi apagada com Voltar ao inicio.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 62 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18 e da maquete funcional aprovada (quadros 13 a 16); decisao do usuario: a confirmacao de apagar e digitar APAGAR
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 0612251a (Rodada 59), build sem alteracoes. Prova round62 em 375-light: ver ROUND_62.md
+    (rotas ajuda, contato, chamados e apagar-conta inexistentes; sem linha Ajuda, sem Apagar a conta, sem
+    Simular resposta do suporte).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-062.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - fora do escopo: bloquear e denunciar (rodada 60), encerrar grupo e pausar pagina (rodada 61), promessas da tela (rodada 63)
+acceptance:
+  - A Ajuda abre com e sem conta (visual da entrada para quem saiu, tambem pelo endereco direto e pelo rodape da landing) e por Voce e Configuracoes; cada um dos quatro temas abre de 3 a 5 perguntas com resposta
+  - Fale com a gente exige texto de no minimo 10 caracteres (erro no campo), mostra A resposta vai para o e-mail da conta ou pede um e-mail valido sem conta, e ao enviar grava o chamado em state.tickets, avisa Recebemos e abre Meus chamados com o estado
+  - Simular resposta do suporte nos Controles marca o chamado mais antigo como respondido e cria um aviso que abre Meus chamados; sem chamado aberto avisa e nao cria aviso
+  - Apagar a conta so age com a palavra APAGAR (qualquer caixa, espacos nas pontas); sem ela mostra erro no campo e nada muda
+  - Ao apagar saem anuncios, rascunhos, perguntas, pagina do negocio, encontros e pedidos da pessoa; respostas, indicacoes, publicacoes e comentarios ficam como Membro que saiu; conversas, avisos, chamados, convites e alertas sao apagados; perfil e entrada sao limpos e a pessoa sai da conta
+  - A tela Sua conta foi apagada leva a landing por Voltar ao inicio; a conta apagada nao volta pelo login; a Ajuda continua aberta
+  - Falha de gravacao nao deixa nada pela metade (apagar e enviar chamado)
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round62-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round56-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round55-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: exclusao de conta e de dados pessoais guardados no aparelho, sem desfazer; a Ajuda fala de CPF (so confirma o vinculo, nao fica salvo) e o chamado guarda um e-mail
+adr: docs/decisions/ADR-20260816-forma-da-admissao.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -6,7 +6,7 @@ let shareCard=null,shareSeq=0;
 const SHARE_W=1080,SHARE_H=1350;
 function shareCardData(type,id){
  if(type==='anuncio'){const x=itemById(id);if(!accessibleRecord(x))return null;const imovel=x.kind==='imovel';
-  return {type,id,photo:image(x.photos?.[0]),glyph:x.icon||(imovel?'apartment':'sell'),tag:imovel?x.ptype||'Imóvel':'Desapego',big:money(x.numPrice)+(imovel?' /mês':''),title:x.title,lines:[imovel?[x.beds?`${x.beds} ${x.beds===1?'quarto':'quartos'}`:'',x.area?`${x.area} m²`:'',x.parking?`${x.parking} ${x.parking===1?'vaga':'vagas'}`:''].filter(Boolean).join(' · '):[x.cond,x.cat].filter(Boolean).join(' · '),imovel&&x.condo?`${money(itemTotal(x))} por mês com condomínio`:''].filter(Boolean),place:`${x.hood} · ${x.city}`};}
+  return {type,id,photo:image(x.photos?.[0]),glyph:x.icon||(imovel?'apartment':'sell'),tag:imovel?x.ptype||'Imóvel':'Desapego',big:money(x.numPrice)+(imovel?' /mês':''),title:x.title,lines:[imovel?[x.beds?`${x.beds} ${x.beds===1?'quarto':'quartos'}`:'',x.area?`${x.area} m²`:'',x.parking?`${x.parking} ${x.parking===1?'vaga':'vagas'}`:''].filter(Boolean).join(' · '):[x.cond,x.cat].filter(Boolean).join(' · '),imovel&&x.condo?`${money(itemTotal(x))} por mês com condomínio`:''].filter(Boolean),place:`${hoodTag(x,' · ',true)}${x.city}`};}
  if(type==='negocio'){const b=bizById(id);if(!accessibleRecord(b))return null;
   return {type,id,photo:image(b.photos?.[0]),glyph:b.icon||'storefront',tag:b.cat,big:`${b.recN||0} ${b.recN===1?'indicação':'indicações'}`,title:b.name,lines:[b.disc?`Benefício: ${b.disc}`:'da comunidade de militares e famílias'],place:`${(b.hoods||[]).slice(0,2).join(', ')||b.city} · ${b.city}`};}
  return null;

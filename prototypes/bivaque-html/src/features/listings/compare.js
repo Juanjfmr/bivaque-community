@@ -11,7 +11,7 @@ function compareBadges(list){
 function compareColHtml(x,best){
  const badge=(on,text)=>on?`<span class="prop-badge">${icon('check')}${text}</span>`:'',later=x.avail&&x.avail>dateISO(0),amen=(x.amen||[]).map(amenityLabel).filter(Boolean);
  return `<article class="prop-col cmp-col" aria-label="${esc(x.title)}">
-<header>${x.photos?.[0]?`<img class="cmp-photo" src="${image(x.photos[0])}" alt="">`:''}<b>${esc(x.title)}</b><small>${esc(x.ptype||'Imóvel')} · ${esc(x.hood)}</small></header>
+<header>${x.photos?.[0]?`<img class="cmp-photo" src="${image(x.photos[0])}" alt="">`:''}<b>${esc(x.title)}</b><small>${esc(x.ptype||'Imóvel')}${hoodShown(x)?' · '+esc(x.hood):''}</small></header>
 <div><span class="cmp-label">Total por mês</span><b class="prop-price">${money(itemTotal(x))}</b><small class="cmp-sub">${x.condo?`aluguel ${money(x.numPrice)} + condomínio ${money(x.condo)}`:'sem condomínio'}</small>${badge(best.total===itemTotal(x),'Menor total')}</div>
 <div><span class="cmp-label">Quartos</span><b>${esc(String(x.beds??'—'))}</b>${badge(best.beds===(x.beds||0),'Mais quartos')}</div>
 <div><span class="cmp-label">Área</span><b>${x.area?`${esc(String(x.area))} m²`:'—'}</b>${badge(best.area===(x.area||0),'Maior área')}</div>

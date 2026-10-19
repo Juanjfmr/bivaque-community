@@ -1,0 +1,47 @@
+task_id: HTML-066
+objective: >
+  Rodada 66: bairro em qualquer cidade. A lista fixa de bairros de Manaus vira um campo de busca no pedido,
+  no anuncio, no imovel, na indicacao e em Configuracoes (Seu bairro). O campo acha o bairro pelo nome (sem
+  acento), pelo CEP (CEPs de teste, sem rede) ou pela localizacao do aparelho (bairro mais proximo na
+  cidade), sugere os mais escolhidos da cidade e aceita o texto como esta quando o bairro nao esta na base.
+  Base de bairros por cidade (zona e centro aproximado) para Manaus, Brasilia, Natal e Rio de Janeiro.
+  O CEP e as coordenadas so servem para achar o bairro e nunca sao gravados.
+authority:
+  - Pedido do usuario em 2026-10-19 ("Nao da pra vincular o CEP ou algo do tipo? ... Nao pense so em Manaus"; "pode fazer") e maquete aprovada (.visual/bivaque-html-bairros/maquete.html, "Sim, como na maquete")
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 1e822970 (base R65, 0dce1b06). Manaus tem uma lista fixa de 9 bairros; as outras cidades so tem
+    texto livre opcional; nao ha busca, CEP nem localizacao. Prova round66 em 375-light contra a base R65:
+    0 de 5 checkpoints PASS.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-066.task.yml
+forbidden:
+  - gravar CEP, endereco residencial ou coordenadas do aparelho
+  - chamar servico externo de CEP ou de geolocalizacao reversa (prototipo sem rede)
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - fora do escopo: filtro por distancia e bairros e mapa em outras cidades (R67)
+acceptance:
+  - O campo de bairro e uma busca em qualquer cidade; ao tocar mostra os mais escolhidos da cidade, nunca bairros de outra cidade
+  - Digitar o nome sem acento acha o bairro (Candelaria -> Candelária) com destaque e zona; seta para baixo e Enter escolhem
+  - CEP de teste da cidade sugere o bairro com o aviso de que o CEP nao fica salvo; CEP de outra cidade e CEP desconhecido explicam; CEP digitado sem escolher nao e enviado e nao vai para o armazenamento
+  - Bairro fora da base pode ser usado como esta; nome da base escrito de outro jeito vira o nome certo ao sair do campo
+  - Usar minha localizacao escolhe o bairro mais proximo da cidade (ate 30 km) e descarta as coordenadas; longe da cidade, nao escolhe e explica
+  - Configuracoes tem Seu bairro (opcional) em qualquer cidade; CEP nao e salvo; apagar o campo tira o bairro
+  - Pedido com bairro fora da base chega a todas as empresas do ramo na cidade (como Outro bairro)
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round66-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light BIVAQUE_HTML_CHECKPOINT=forms-offer-no-manaus-hoods-in-other-cities node scripts/bivaque-html/round64-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round11-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: dados pessoais (bairro, CEP e localizacao do aparelho); o CEP pode identificar a rua, por isso so o bairro e o centro publico do bairro sao usados
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

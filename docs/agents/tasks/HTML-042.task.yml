@@ -1,0 +1,35 @@
+task_id: HTML-042
+objective: >
+  Rodada 42 da a cada campo o teclado certo no celular (numerico nos campos de numero, tecla
+  Buscar na busca), autopreenchimento no proprio nome e no telefone, e vibracao leve ao salvar,
+  indicar, passar do ponto no deslizar, soltar a foto para fechar e trocar a altura da folha.
+authority:
+  - Aprovacao do usuario em 2026-10-17 ("Pode seguir", lote mobile 2)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 9b35a312. Seis campos numericos abriam o teclado de letras, nenhum campo tinha
+    autopreenchimento e nenhuma acao tinha retorno tatil.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-042.task.yml
+forbidden:
+  - mudar validacao, limites ou o envio dos formularios
+  - editar a referencia HTML congelada, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Todo campo numerico abre o teclado numerico; quem ja tinha inputmode nao e trocado
+  - A busca tem a tecla Buscar; nome proprio e telefone tem autopreenchimento
+  - Salvar vibra uma vez; o deslizar vibra ao passar do ponto
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round42-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: formularios e retorno tatil
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

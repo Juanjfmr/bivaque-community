@@ -1,5 +1,6 @@
 import {
   action,
+  dismissPushAsk,
   expect,
   go,
   routeOf,
@@ -21,6 +22,7 @@ async function petsAlert(page) {
   await pets(page).click()
   await settle(page)
   await page.locator('#main [data-action="search-alert"]').click()
+  await dismissPushAsk(page)
   await settle(page)
 }
 // O painel do protótipo continua aberto depois de simular; fecha antes de seguir.
@@ -70,6 +72,7 @@ const checkpoints = {
     await page.locator('#main [data-action="catalog-toggle"][data-value="furnished"]').click()
     await settle(page)
     await page.locator('#main [data-action="search-alert"]').click()
+    await dismissPushAsk(page)
     await settle(page)
     // Mesma busca escolhida na ordem inversa: reconhece o alerta, não oferece outro.
     await pets(page).click()
