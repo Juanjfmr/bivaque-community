@@ -1,0 +1,123 @@
+/* Rodada 49: Painel do Bivaque. Fora da navegação do app: a barra de cima, a barra lateral, a de
+   baixo e o Criar somem; o console tem a própria navegação. */
+:root{--owner-bad:#b3261e;--owner-good:#1f7a45;--owner-warn:#8a5c00}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--owner-bad:#ffb4ab;--owner-good:#8fd6a5;--owner-warn:#f0c46b}}
+:root[data-theme=dark]{--owner-bad:#ffb4ab;--owner-good:#8fd6a5;--owner-warn:#f0c46b}
+body.owner-mode #topbar,body.owner-mode #nav,body.owner-mode #fab{display:none}
+body.owner-mode main{inset:0}
+.page.owner-page{max-width:none;padding:0}
+.ow{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.ow-nav{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:2px;padding:16px 12px;border-right:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low)}
+.ow-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;font-weight:650;font-size:15px;line-height:20px}
+.ow-brand small{display:block;font-weight:500;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ow-mark{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:10px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-weight:800}
+.ow-nav-item{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:20px;font-size:14px;color:inherit;text-align:left;width:100%}
+.ow-nav-item.on{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:600}
+.ow-sp{flex:1}
+.ow-main{min-width:0;padding:0 28px 32px}
+.ow-top{display:flex;align-items:center;gap:10px;height:56px}
+.ow-exit,.ow-top-t{display:none}
+.ow-demo{margin-left:auto;font-size:12px;line-height:16px;padding:4px 10px;border-radius:10px;background:var(--md-sys-color-surface-container-high);color:var(--owner-warn);font-weight:600}
+.ow-h1{font-size:26px;line-height:32px;margin:0 0 10px;font-weight:650}
+.ow-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ow-filters .filter-row{margin:0}
+.ow-period{font-size:13px;color:var(--md-sys-color-on-surface-variant)}
+/* Computador: à esquerda a métrica principal e "O que mudou"; à direita as métricas e a fila. */
+.ow-grid{display:grid;gap:12px;align-items:start;grid-template-columns:minmax(0,1.2fr) repeat(3,minmax(0,1fr));grid-template-areas:'hero k1 k2 k3' 'hero q q q' 'chg q q q'}
+.ow-hero{grid-area:hero}.ow-kpi-active{grid-area:k1}.ow-kpi-solved{grid-area:k2}.ow-kpi-revenue{grid-area:k3}.ow-changes{grid-area:chg}.ow-queue{grid-area:q}
+.ow-card{border-radius:20px;border:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-lowest);padding:16px;min-width:0}
+.ow-card h2{font-size:16px;line-height:22px;margin:0 0 8px}
+.ow-hero{background:linear-gradient(160deg,var(--md-sys-color-primary-container),var(--md-sys-color-surface-container-lowest) 72%)}
+.ow-big{display:flex;align-items:baseline;gap:10px}
+.ow-big b{font-size:40px;line-height:44px;font-weight:700}
+.ow-hero p{margin:4px 0 10px;font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.ow-goal{position:relative;height:8px;border-radius:4px;background:var(--md-sys-color-surface-container-highest);margin:6px 0 12px}
+.ow-goal i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--md-sys-color-primary)}
+.ow-goal s{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--md-sys-color-on-surface)}
+.ow-city{display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:8px;font-size:12px;line-height:16px;margin:5px 0}
+.ow-city span:nth-child(2){height:6px;border-radius:3px;background:var(--md-sys-color-surface-container-highest);overflow:hidden}
+.ow-city span:nth-child(2) i{display:block;height:100%;background:var(--md-sys-color-primary)}
+.ow-city.low span:nth-child(2) i{background:var(--owner-bad)}
+.ow-city.dim{opacity:.45}
+.ow-city b{text-align:right}
+.ow-kpi small{display:block;font-size:13px;line-height:18px;color:var(--md-sys-color-on-surface-variant)}
+.ow-kpi .v{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px;flex-wrap:wrap}
+.ow-kpi .v b{font-size:26px;line-height:32px;font-weight:650}
+.ow-up{font-size:12px;font-weight:600;color:var(--owner-good)}
+.ow-down{font-size:12px;font-weight:600;color:var(--owner-bad)}
+.ow-kpi svg{display:block;width:100%;height:34px;margin-top:8px}
+.ow-red{color:var(--owner-bad)}.ow-amber{color:var(--owner-warn)}.ow-blue{color:var(--md-sys-color-primary)}.ow-green{color:var(--owner-good)}
+.ow-chg{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--md-sys-color-outline-variant);font-size:13px;line-height:18px}
+.ow-chg:first-of-type{border-top:0}
+.ow-chg>md-icon{flex:none;font-size:20px}
+.ow-chg{flex-wrap:wrap}.ow-chg .t{flex:1 1 calc(100% - 30px);min-width:0}.ow-chg>md-text-button{margin:-4px 0 -6px 18px}.ow-chg .t b{display:block;font-size:14px;line-height:20px}
+.ow-queue .filter-row{margin:2px 0 6px}
+.ow-q{display:grid;grid-template-columns:36px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant)}
+.ow-ic{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--md-sys-color-surface-container-high)}
+.ow-q .t b{display:block;font-size:14px;line-height:19px}
+.ow-q .t small{display:block;font-size:12px;line-height:17px;color:var(--md-sys-color-on-surface-variant)}
+.ow-sla{font-size:12px;white-space:nowrap;color:var(--md-sys-color-on-surface-variant)}
+.ow-sla.late{color:var(--owner-bad);font-weight:600}
+.ow-done{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+/* Painel lateral de revisão: o mesmo lado direito dos controles do protótipo. */
+md-dialog[data-kind=owner-review]{margin:0 0 0 auto;width:min(420px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;--md-dialog-container-shape-start-start:16px;--md-dialog-container-shape-start-end:0px;--md-dialog-container-shape-end-start:16px;--md-dialog-container-shape-end-end:0px}
+md-dialog[data-kind=owner-review] .sheet-grab{display:none}
+.ow-review{font-size:14px;line-height:20px}
+.ow-review p{margin:0 0 8px}
+.ow-review h3{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:16px 0 6px}
+.ow-checks,.ow-reports{list-style:none;margin:0;padding:0}
+.ow-checks li{display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+.ow-reports li{padding:8px 0;border-top:1px solid var(--md-sys-color-outline-variant)}
+.ow-reports li:first-child{border-top:0}
+.ow-reports small{display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ow-doc{display:grid;place-items:center;height:120px;border-radius:14px;background:repeating-linear-gradient(135deg,var(--md-sys-color-surface-container) 0 10px,var(--md-sys-color-surface-container-high) 10px 20px);color:var(--md-sys-color-on-surface-variant);font-size:13px}
+@media(max-width:1180px){.ow-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:'hero hero hero' 'k1 k2 k3' 'q q q' 'chg chg chg'}}
+@media(max-width:1023px){.ow{grid-template-columns:1fr}.ow-nav{display:none}.ow-exit,.ow-top-t{display:inline-flex}.ow-top-t{font-weight:600}}
+@media(max-width:719px){
+ .ow-main{padding:0 16px 32px}
+ .ow-grid{grid-template-columns:1fr;grid-template-areas:'q' 'hero' 'k1' 'k2' 'k3' 'chg'}
+ .ow-filters .filter-row{max-width:100%;overflow-x:auto}
+ .ow-q{grid-template-columns:36px minmax(0,1fr);row-gap:6px}
+ .ow-q .ow-sla,.ow-q md-outlined-button,.ow-q md-filled-button{grid-column:2;justify-self:start}
+ md-dialog[data-kind=owner-review]{margin:auto auto 0;height:auto;max-height:92dvh;width:100vw;--md-dialog-container-shape-start-start:28px;--md-dialog-container-shape-start-end:28px;--md-dialog-container-shape-end-start:0px;--md-dialog-container-shape-end-end:0px}
+}
+.ow-exit{place-items:center;width:40px;height:40px;border-radius:20px;color:inherit}
+/* Rodada 50: Filas e navegação do console. */
+.ow-badge{margin-left:auto;display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:12px;font-weight:700}
+.ow-subnav{display:none;margin:0 0 8px}
+.ow-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ow-card-head h2{margin:0}
+.ow-lead{margin:-4px 0 12px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.ow-q-tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:4px}
+.ow-q-tools .filter-row,.ow-queue-page>.filter-row{margin:0 0 6px}
+.ow-q-full{grid-template-columns:36px minmax(0,1fr) auto 150px auto}
+.ow-who{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap}
+.ow-who i{display:grid;place-items:center;width:24px;height:24px;border-radius:12px;background:var(--md-sys-color-surface-container-highest);font-style:normal;font-size:10px;font-weight:700;color:var(--md-sys-color-on-surface)}
+.ow-acts{display:flex;gap:4px;justify-content:flex-end;align-items:center}
+@media(max-width:1023px){.ow-subnav{display:block}}
+@media(max-width:719px){.ow-q-full{grid-template-columns:36px auto minmax(0,1fr);grid-template-areas:'ic t t' '. sla who' '. acts acts';row-gap:6px;column-gap:12px}.ow-q-full>.ow-ic{grid-area:ic}.ow-q-full>.t{grid-area:t}.ow-q-full>.ow-sla{grid-area:sla}.ow-q-full>.ow-who{grid-area:who}.ow-q-full>.ow-acts{grid-area:acts;justify-content:flex-start}}
+/* Rodada 51: Cidades. */
+.ow-table{width:100%;border-collapse:collapse;font-size:14px}
+.ow-table th,.ow-table td{padding:10px 8px;border-bottom:1px solid var(--md-sys-color-outline-variant);text-align:left;vertical-align:middle}
+.ow-table thead th{font-size:12px;font-weight:500;color:var(--md-sys-color-on-surface-variant)}
+.ow-table .n{text-align:right;font-variant-numeric:tabular-nums}
+.ow-table tbody th small{display:block;margin-left:16px;font-size:12px;font-weight:400;color:var(--md-sys-color-on-surface-variant)}
+.ow-table td small{font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ow-link{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--md-sys-color-primary);text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.ow-dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:4px;margin-right:6px;vertical-align:1px}
+.ow-dot-ok{background:var(--owner-good)}.ow-dot-warn{background:var(--owner-warn)}.ow-dot-bad{background:var(--owner-bad)}
+.ow-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.ow-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.ow-mini div{padding:10px 12px;border-radius:14px;background:var(--md-sys-color-surface-container-low)}
+.ow-mini small{display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}
+.ow-mini b{font-size:20px;line-height:26px}
+.ow-amb{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ow-review md-outlined-text-field,.ow-review md-outlined-select{width:100%}
+@media(max-width:719px){.ow-table thead{display:none}.ow-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)}.ow-table th,.ow-table td{border:0;padding:2px 0}.ow-table tbody th{grid-column:1/-1}.ow-table td.n{text-align:left}.ow-table td::before{content:attr(data-label);display:block;font-size:12px;color:var(--md-sys-color-on-surface-variant)}}
+/* Rodada 52: Negócios e planos, Pessoas e equipe. */
+.ow-main>.ow-card{margin-bottom:12px}
+.ow-mini-4{grid-template-columns:repeat(4,minmax(0,1fr));margin:0}
+.ow-q-plan{grid-template-columns:36px minmax(0,1fr) auto}
+.ow-amb-city{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--md-sys-color-outline-variant);font-size:14px}
+.ow-amb-city span{color:var(--md-sys-color-on-surface-variant)}
+@media(max-width:719px){.ow-mini-4{grid-template-columns:repeat(2,minmax(0,1fr))}.ow-amb-city{grid-template-columns:1fr;gap:2px}.ow-q-plan{grid-template-columns:36px minmax(0,1fr)}.ow-q-plan>.ow-acts,.ow-q-plan>.ow-sla{grid-column:2;justify-self:start}}

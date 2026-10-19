@@ -1,6 +1,5 @@
 const KEY='bivaque-material-web-v3';
 const CITY_NAMES=Object.keys(SOURCE.cities);
-const HOODS=['Ponta Negra','Planalto','Dom Pedro','Flores','Adrianópolis','Parque 10','Tarumã','Centro','Outro bairro'];
 const CAT_NAMES=['Todos','Climatização','Elétrica','Mecânica','Saúde','Pets','Mudança','Comida','Aulas','Refrigeração','Beleza','Outros'];
 const PHOTO_BY_ITEM={i1:'sofa',i2:'apartment',i3:'crib',i4:'fridge',i5:'interior',i6:'interior'};
 const PHOTO_BY_BIZ={b1:'service',b2:'moving',b3:'kitchen',b4:'cake',b5:'classroom',b6:'service',b7:'workshop',b8:'pets',b9:'dentist'};

@@ -14,7 +14,7 @@ let state;
 try{const raw=JSON.parse(localStorage.getItem(KEY));state=normalizeListings(normalizeCategories(raw?.schema===2?raw:initial()));}catch{state=normalizeListings(normalizeCategories(initial()));}
 let route={name:'inicio',id:null};
 let origin='inicio', communityTab='ind', questionFilter='help', catalogFilter='all', searchType='all', searchQuery='', searchHood='Todos', searchMin='', searchMax='', searchSort='recent',bizCat='Todos',bizQuery='',myAdsFilter='active',savedType='all';
-let editor=null,editorDirty=false,onboardStep=1,onboardDraft=null,toastTimer,toastUndo=null,searchTimer;
+let editor=null,editorDirty=false,toastTimer,toastUndo=null,searchTimer;
 let createOpen=false,createAnchor=null,createFocusIndex=0,createClosingHistory=false,createHistoryDone=null,createHistoryPromise=null;
 let navMinimized=false,lastNavY=0;
 let dialogClosingHistory=false,dialogHistoryDone=null,dialogHistoryPromise=null;
@@ -22,14 +22,34 @@ let confirmClosingHistory=false,confirmHistoryDone=null,confirmHistoryPromise=nu
 const scrollPositions=new Map();
 const root=$('#main'),dialog=$('#dialog'),confirmDialog=$('#confirm-dialog');
 const USER_ID='local-member';
+// Rodada 64: identificador estável da conta (não muda se a pessoa trocar de nome); a cota semanal de oferta e o pedido de entrada usam este.
+const accountKey=()=>state.profile?.email||USER_ID;
 function mutate(fn,{redraw=true}={}){
  const before=JSON.stringify(state);
  try{fn();localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state=JSON.parse(before);notify('Não foi possível salvar. Libere espaço no navegador ou use fotos menores.','error');return false;}
  if(redraw)render();return true;
 }
-function cityItems(){return state.items.filter(x=>x.city===state.city);}
-function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.biz).filter(x=>x.city===state.city);}
-function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden);}
+// Rodada 60: quem a pessoa bloqueou some das listas, da busca e dos detalhes (o nome é a identidade no protótipo).
+const isBlocked=name=>!!name&&(state.blocked||[]).some(b=>b.name===name);
+// Só pessoas se bloqueiam: nunca a própria conta, nem "Relato da comunidade" e outros autores de exemplo (nome + inicial).
+const blockable=name=>!!name&&name!==state.profile?.name&&/^[^\s.]+( [^\s.]+\.)?$/.test(name);
+// Rodada 64: um predicado por tipo reúne moderação, ocultar pessoal, bloqueio e página pausada; as telas usam estes.
+const askVisible=q=>!!q&&!q.hidden&&!q.hiddenByMe&&(!!q.mine||!isBlocked(q.who));
+const itemVisible=x=>!!x&&x.status!=='removed'&&(!!x.mine||!isBlocked(x.seller));
+// Página aberta: publicada, não suspensa pelo Painel e não pausada (a de exemplo não tem `live`).
+const bizLive=b=>!!b&&b.live!==false&&!b.suspended&&!b.paused;
+const bizVisible=b=>!!b&&(!!b.mine||bizLive(b));
+// Relatos da página sem os de pessoas bloqueadas (o relato próprio fica).
+const bizSays=b=>(b?.says||[]).filter(s=>s[1]==='me'||!isBlocked(s[2]));
+function cityItems(){return state.items.filter(x=>x.city===state.city&&(x.mine||!isBlocked(x.seller)));}
+function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.biz).filter(x=>x.city===state.city&&!x.suspended&&!x.paused);}
+function cityAsks(){return state.asks.filter(x=>x.city===state.city&&askVisible(x));}
+// Respostas e comentários que a pessoa vê: sem os de quem bloqueou e sem os removidos pela moderação.
+const askAnswers=q=>q.answers.filter(a=>!a.hidden&&(a.mine||!isBlocked(a.who)));
+// Rodada 63: com "Permitir oferta de negócio de membro" desligado, as ofertas do grupo ficam ocultas (os dados ficam).
+// Rodada 64: grupo encerrado fora do prazo de leitura não mostra nada; oferta só vale com a página dela aberta.
+const groupPosts=g=>!groupReadable(g)?[]:g.posts.filter(p=>(p.mine||!isBlocked(p.author))&&(p.type!=='offer'||(g.allowOffers&&bizLive(bizById(p.biz)))));
+const postComments=p=>p.comments.filter(c=>!c.hidden&&(c.mine||!isBlocked(c.author)));
 function cityGroups(){return state.groups.filter(x=>x.city===state.city);}
 const itemById=id=>state.items.find(x=>x.id===id);
 const bizById=id=>(state.myBiz?.id===id?state.myBiz:state.biz.find(x=>x.id===id));
@@ -37,7 +57,8 @@ const askById=id=>state.asks.find(x=>x.id===id);
 const threadById=id=>state.threads.find(x=>x.id===id);
 const readonly=()=>state.city!==state.homeCity;
 function canPost(){
+ if(state.signedOut)return false;
  if(readonly()){notify(`Você está consultando ${state.city}. Publique na sua cidade, ${state.homeCity}.`,'info');return false;}
- if(!state.profile.verified){openOnboarding();return false;}return true;
+ if(!state.profile.verified){showDialog('Perfil em análise','<p class="form-note">Publicar libera quando a equipe aprovar seu perfil. Nada foi publicado.</p>',btn('Voltar','close-dialog','','filled'),'unverified');return false;}return true;
 }
 function accessibleRecord(record){return record&&record.city===state.city;}

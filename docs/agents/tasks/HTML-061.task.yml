@@ -1,0 +1,50 @@
+task_id: HTML-061
+objective: >
+  Rodada 61 do Lote Funcional: encerrar grupo (só o admin, confirmação vermelha, só leitura por 30 dias,
+  some das sugestões e de Descobrir grupos, segue em Meus grupos marcado Encerrado, reabrir enquanto
+  estiver no prazo) e pausar ou excluir a minha página de negócio (menu ⋮ com Editar página, Pausar ou
+  Reativar e Excluir; pausada sai do catálogo, da busca e das propostas para pedidos novos; excluir tira a
+  página e retira as propostas abertas dos pedidos, sem mexer no histórico concluído).
+authority:
+  - Pedido do usuário em 2026-10-18: implementar a Rodada 61 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18 (seção C) e da maquete funcional aprovada (quadros 11 e 12)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 8f8b0d31 (Rodada 60), build SHA256 3402aae2 reproduzido. Prova round61 sobre esse build (exportado
+    do HEAD em diretório temporário), 375-light: 0 de 6 checkpoints PASS. Não há menu Encerrar no Gerenciar
+    grupo, a faixa de grupo encerrado não existe, o grupo do admin não pode ser encerrado, e a página própria
+    não tem ⋮ com Pausar e Excluir.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-061.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - apagar ou alterar conteudo de outra pessoa ao encerrar grupo ou excluir a propria pagina, alem do que o contrato descreve
+  - usar "suspensa" para pausa: suspensao e do Painel (R60) e so o Painel a reverte
+  - fora do escopo: apagar conta e Ajuda e suporte (R62), promessas da tela (R63)
+acceptance:
+  - Encerrar grupo so aparece para o admin, pede confirmacao vermelha "Encerrar o grupo?" com Cancelar, e Cancelar nao encerra
+  - Grupo encerrado nao aceita publicacao, comentario, voto nem encontro: os botoes somem e as acoes recusam com aviso; Útil tambem some
+  - Grupo encerrado mostra a faixa "Grupo encerrado em DD/MM. As publicacoes ficam disponiveis para leitura ate DD/MM." e some das sugestoes, das populares e de Descobrir grupos; em Meus grupos aparece marcado Encerrado
+  - Admin reabre o grupo enquanto estiver no prazo de 30 dias; depois do prazo, nao reabre e as publicacoes deixam de aparecer
+  - Pausar pela pagina propria (menu ⋮ com Editar pagina, Pausar pagina, Excluir pagina) tira a pagina do catalogo, da busca, das sugestoes e das propostas para pedidos novos; a pagina mostra Pagina pausada com Reativar, e Reativar devolve tudo
+  - Excluir pede confirmacao vermelha; Cancelar nao exclui; excluir remove state.myBiz, marca as propostas abertas dela como retiradas, deixa intacto o historico de pedido concluido, volta para Voce com aviso
+  - Usuario que nao e admin nao ve Encerrar grupo
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round61-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round04-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round59-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round10-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: encerrar grupo e excluir a propria pagina de negocio afetam outras pessoas (membros do grupo perdem a escrita; clientes perdem propostas abertas de um negocio); acoes destrutivas com confirmacao vermelha e sem Desfazer (a exclusao da pagina nao tem volta)
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

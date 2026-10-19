@@ -6,6 +6,7 @@ import {
   expect,
   fill,
   go,
+  KEY,
   reload,
   routeOf,
   runProof,
@@ -18,6 +19,25 @@ import {
 // Rodada 10: componentes Material visíveis onde se encaixam. Slider de faixa de preço,
 // chips de entrada (bairros e serviços do negócio) e chips de sugestão (buscas recentes
 // e respostas rápidas na conversa, que só preenchem o rascunho).
+async function step3(page) {
+  await snapshot(page)
+  await page.evaluate((k) => {
+    const s = JSON.parse(localStorage.getItem(k))
+    s.signedOut = true
+    s.entry = {
+      account: { name: "Joana Lima", email: "joana.teste@exemplo.com", provider: "email" },
+      consentAt: Date.now(),
+      eligibility: "verified",
+    }
+    localStorage.setItem(k, JSON.stringify(s))
+  }, KEY)
+  await reload(page)
+  await go(page, "entrar/cidade")
+}
+async function mode(page, value) {
+  await page.locator(`#en-city-form input[name="en-mode"][value="${value}"]`).click()
+  await settle(page)
+}
 async function openBizEditor(page) {
   await go(page, "voce")
   await action(page, "my-biz")
@@ -267,75 +287,63 @@ const checkpoints = {
       "moro exigiu dados de transferência",
     )
   },
+  // Rodada 56: os campos do momento ficam no passo 3 da entrada (antes, no cadastro em diálogo).
   async "onboarding-moment-fields"(page) {
-    await action(page, "prototype")
-    await page.locator('#dialog [data-action="onboarding"]').click()
-    await settle(page)
-    await action(page, "onboard-next")
-    await fill(page, "onboard-name", "Joana Lima")
-    await page.locator("#onboard-terms").click()
-    await action(page, "onboard-next")
-    await action(page, "onboard-next")
-    await choose(page, "onboard-mode", "moro")
+    await step3(page)
+    await mode(page, "moro")
     expect(
-      !(await page.locator("#onboard-date").isVisible()) &&
-        !(await page.locator("#onboard-dest").isVisible()),
-      "cadastro pede data ou destino para quem mora",
+      (await page.locator("#en-date").count()) === 0 &&
+        (await page.locator("#en-dest").count()) === 0,
+      "entrada pede data ou destino para quem mora",
     )
-    await choose(page, "onboard-mode", "saindo")
+    await mode(page, "saindo")
     expect(
-      (await page.locator("#onboard-date").isVisible()) &&
-        (await page.locator("#onboard-dest").isVisible()),
+      (await page.locator("#en-date").isVisible()) && (await page.locator("#en-dest").isVisible()),
       "saindo sem data ou destino",
     )
     expect(
-      /Data da saída/.test(await page.locator("#dialog").innerText()),
+      /Data da saída/.test(await page.locator("#main").innerText()),
       "rótulo da data não é de saída",
     )
-    await choose(page, "onboard-mode", "moro")
-    await action(page, "onboard-next")
-    expect(
-      /Etapa 5 de 5/.test(await page.locator("#dialog").innerText()),
-      "moro não avançou sem data",
-    )
+    await mode(page, "moro")
+    await choose(page, "en-city", "Manaus")
+    await page.locator('#main [data-action="entry-finish"]').click()
+    await settle(page)
+    expect((await routeOf(page)).id === "boas-vindas", "moro não concluiu sem data")
   },
   async "onboarding-keeps-arrival-and-leave-apart"(page) {
     const day = (n) =>
       page.evaluate((k) => new Date(Date.now() + k * 864e5).toISOString().slice(0, 10), n)
-    await action(page, "prototype")
-    await page.locator('#dialog [data-action="onboarding"]').click()
-    await settle(page)
-    await action(page, "onboard-next")
-    await fill(page, "onboard-name", "Joana Lima")
-    await page.locator("#onboard-terms").click()
-    await action(page, "onboard-next")
-    await action(page, "onboard-next")
-    await choose(page, "onboard-mode", "chegando")
+    await step3(page)
+    await mode(page, "chegando")
     const arrival = await day(12)
-    await page.locator("#onboard-date").fill(arrival)
-    await page.locator("#onboard-date").dispatchEvent("change")
-    await choose(page, "onboard-mode", "saindo")
+    await page.locator("#en-date").fill(arrival)
+    await page.locator("#en-date").dispatchEvent("change")
+    await mode(page, "saindo")
     expect(
-      await page.evaluate(() => document.querySelector("#onboard-mode").matches(":focus-within")),
+      await page.evaluate(() =>
+        document.activeElement?.matches('input[name="en-mode"][value="saindo"]'),
+      ),
       "foco perdido ao trocar o momento",
     )
     expect(
-      (await page.locator("#onboard-date").inputValue()) !== arrival,
+      (await page.locator("#en-date").inputValue()) !== arrival,
       "data de chegada reaproveitada como saída",
     )
     const leave = await day(40)
-    await page.locator("#onboard-date").fill(leave)
-    await page.locator("#onboard-date").dispatchEvent("change")
-    await choose(page, "onboard-mode", "chegando")
+    await page.locator("#en-date").fill(leave)
+    await page.locator("#en-date").dispatchEvent("change")
+    await mode(page, "chegando")
     expect(
-      (await page.locator("#onboard-date").inputValue()) === arrival,
+      (await page.locator("#en-date").inputValue()) === arrival,
       "data de chegada perdida ao alternar",
     )
   },
   async "recent-search-suggestion-runs"(page) {
     await go(page, "busca")
-    const chip = page.locator('md-suggestion-chip[data-action="recent-search"]').first()
-    expect(await chip.count(), "buscas recentes não são chips de sugestão")
+    // Rodada 44: sugestões e recentes viraram linhas tocáveis (antes, chips de sugestão).
+    const chip = page.locator('#search-results [data-action="recent-search"]').first()
+    expect(await chip.count(), "sem sugestão tocável na busca")
     const term = await chip.getAttribute("data-value")
     await chip.click()
     await settle(page)

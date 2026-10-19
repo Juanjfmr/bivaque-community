@@ -1,0 +1,60 @@
+task_id: HTML-060
+objective: >
+  Rodada 60 do Lote Funcional: bloquear pessoa, denunciar o que hoje nao da e dar consequencia real a cada
+  tipo de denuncia no Painel do Bivaque. Bloquear (menu de tres pontos em resposta, comentario e publicacao
+  de outra pessoa, menu da conversa e pagina do anuncio de outra pessoa) some com perguntas, respostas,
+  anuncios, publicacoes e comentarios da pessoa das listas, da busca e dos detalhes, troca a caixa de
+  mensagem da conversa por Desbloquear e recusa conversa nova; Configuracoes lista as pessoas bloqueadas e
+  desbloquear devolve tudo. Denunciar resposta, comentario, publicacao de grupo e conversa chega a fila do
+  Painel com titulo e alvo legiveis. No Painel: remover resposta, comentario, publicacao, pedido e
+  proposta (com removido pela moderacao no lugar), suspender pagina de negocio, advertir conversa, desfazer
+  em todos e so dispensar quando o autor ja excluiu o conteudo.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 60 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18 (secao C, bloquear, denunciar e consequencia no Painel) e da maquete funcional aprovada (quadros 3 a 6)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 0612251a (Rodada 59), build SHA256 9f0674e8. Prova round60 em 375-light: 0 de 14 checkpoints
+    PASS (sem menu de bloquear nem de denunciar em resposta, comentario e publicacao alheios; menu da
+    conversa sem Denunciar e Bloquear; Painel com Remover so para anuncio e pergunta e Dispensar para o
+    resto; denuncia de conteudo excluido pelo autor com titulo generico e Remover).
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-060.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - mexer em conteudo de outra conta ao desfazer uma decisao do Painel
+  - fora do escopo: encerrar grupo, pausar ou excluir pagina de negocio (R61), apagar conta e Ajuda (R62)
+acceptance:
+  - Bloquear pede confirmacao com os dois paragrafos do quadro e Cancelar nao bloqueia; ninguem e avisado e a pessoa nunca se bloqueia a si mesma
+  - Pessoa bloqueada some de Comunidade, Resolvidas, busca, Desapegos, grupos e respostas e comentarios dos detalhes; o detalhe aberto pelo endereco mostra Conteudo de uma pessoa que voce bloqueou com Ver mesmo assim
+  - Conversa com pessoa bloqueada troca a caixa de mensagem por Voce bloqueou X e Desbloquear; contato novo com ela, por anuncio ou negocio, e recusado com aviso
+  - Configuracoes tem Pessoas bloqueadas com Desbloquear e a frase Quem voce bloqueou nao ve que foi bloqueado; desbloquear devolve tudo
+  - Resposta, comentario, publicacao de grupo e conversa podem ser denunciados e chegam a fila do Painel com titulo e alvo legiveis; a denuncia guarda o titulo para o caso de o autor excluir o conteudo
+  - Painel oferece Remover para resposta, comentario, publicacao, pedido e proposta, Suspender pagina para negocio e Advertir para conversa (motivo obrigatorio), sempre com Dispensar; o conteudo removido mostra removido pela moderacao no lugar; negocio suspenso sai do catalogo e da busca e a pagina diz que esta suspensa
+  - Desfazer no Painel devolve cada consequencia sem mexer em outro conteudo
+  - Denuncia de conteudo que o autor excluiu mostra O conteudo ja foi excluido pelo autor e so oferece Dispensar
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round60-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round59-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round52-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round51-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round50-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round49-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round41-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round39-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round37-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: moderacao de conteudo e dados de pessoas (nome de quem foi bloqueado e conversas denunciadas guardados no aparelho); remocao e suspensao pelo dono da plataforma, com Desfazer
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

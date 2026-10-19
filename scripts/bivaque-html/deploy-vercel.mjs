@@ -1,9 +1,10 @@
 // Publica o protótipo HTML como link de teste na Vercel (projeto separado "bivaque-prototipo").
 // Uso: node scripts/bivaque-html/deploy-vercel.mjs [--dry-run]
-// Só sobe o HTML gerado (nenhum código do repositório), com noindex e sem cache do index,
+// Só sobe o HTML gerado e os arquivos do app instalável (nenhum código do repositório), com
+// noindex e sem cache do index,
 // depois de conferir que o dist está atualizado e que a referência congelada está íntegra.
 import { execFileSync, spawnSync } from "node:child_process"
-import { copyFileSync, mkdirSync, writeFileSync } from "node:fs"
+import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
 
 const root = resolve(import.meta.dirname, "../..")
@@ -19,6 +20,9 @@ for (const args of [
 
 mkdirSync(folder, { recursive: true })
 copyFileSync(dist, join(folder, "index.html"))
+// Rodada 43: manifesto e ícones do app instalável, ao lado do HTML.
+const pwa = join(root, "prototypes/bivaque-html/pwa")
+for (const name of readdirSync(pwa)) copyFileSync(join(pwa, name), join(folder, name))
 writeFileSync(
   join(folder, "vercel.json"),
   `${JSON.stringify(

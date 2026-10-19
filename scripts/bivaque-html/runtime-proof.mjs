@@ -172,8 +172,13 @@ async function inspectCandidate(stage, width, theme) {
     await visit("voce")
     await action(page, "prototype")
     await action(page, "onboarding")
-    await action(page, "onboard-next")
-    await page.locator("#onboard-name").waitFor({ state: "visible" })
+    if (stage === "baseline") {
+      await action(page, "onboard-next")
+      await page.locator("#onboard-name").waitFor({ state: "visible" })
+    } else {
+      // Round 56: "Ver a entrada do zero" opens the account step of the entry.
+      await page.locator("#en-name").waitFor({ state: "visible" })
+    }
     checks.push("onboarding-entry")
     await snapshot(page, stage, "onboarding", width, theme)
     const knownFailures = report.errors.filter(

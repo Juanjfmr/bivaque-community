@@ -1,0 +1,38 @@
+task_id: HTML-050
+objective: >
+  Rodada 50 cria a pagina Filas do Painel do Bivaque: abertas e decididas, por tipo e cidade,
+  ordenadas por prazo ou pelas mais recentes, com Assumir (voce como responsavel) e Desfazer
+  (reabre a decisao e desfaz o efeito). A navegacao do console ganha Filas com a contagem; no
+  celular, Visao geral e Filas ficam no topo.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do painel; R50 Filas)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD ec0f792b. A fila existia so como resumo na visao geral, sem responsavel, sem historico de
+    decisoes e sem como desfazer.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-050.task.yml
+forbidden:
+  - apagar decisoes sem registro
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Filas abre pela navegacao do console, com a contagem igual as linhas abertas
+  - Assumir grava voce como responsavel e tira o botao da linha
+  - Decididas mostra a decisao e o motivo; Desfazer devolve o anuncio e o item a fila
+  - Ordenar por prazo poe a atrasada primeiro; por mais recentes, o pedido mais novo
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round50-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round49-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: moderacao
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

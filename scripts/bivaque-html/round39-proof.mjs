@@ -57,7 +57,8 @@ const checkpoints = {
     const before = await unread(page, id)
     await page.locator(`#main [data-action="thread-menu"][data-value="${id}"]`).click()
     await settle(page)
-    await page.locator('#dialog [data-action="thread-unread"]').click()
+    // Rodada 60: o menu da conversa virou o popover do ⋮ (quadro 6), não mais uma folha.
+    await page.locator('#create-menu [data-action="thread-unread"]').click()
     await settle(page)
     expect((await unread(page, id)) === !before, "menu não trocou lida/não lida")
   },

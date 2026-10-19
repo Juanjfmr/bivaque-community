@@ -1,0 +1,29 @@
+{
+  "name": "Bivaque — protótipo",
+  "short_name": "Bivaque",
+  "description": "Serviços, oportunidades e indicações entre militares e famílias, cidade por cidade.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafb",
+  "theme_color": "#f8fafb",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

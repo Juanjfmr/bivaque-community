@@ -5,7 +5,7 @@ import { join, resolve } from "node:path"
 import { chromium } from "@playwright/test"
 import { createDeterministicContext } from "./capture-support.mjs"
 
-// Rodada 02: Acesso/onboarding, Cidade e momento, Configurações e controles do protótipo.
+// Rodada 02: Acesso (passo 3 da entrada desde a Rodada 56), Cidade e momento, Configurações e controles do protótipo.
 // Interações por clique/teclado na UI; localStorage só é lido, exceto o convite de família
 // semeado (fixture) e a quota simulada para a falha de gravação.
 const root = resolve(import.meta.dirname, "../..")
@@ -43,8 +43,8 @@ const dialogKind = (page) =>
     const d = document.querySelector("#dialog")
     return d?.open ? d.dataset.kind || "dialog" : null
   })
-const step = (page) =>
-  page.evaluate(() => document.querySelector(".onboard-step span")?.textContent ?? null)
+const entryUrl = (page) => page.evaluate(() => location.hash.slice(1))
+const err = (page) => page.locator("#en-err").innerText()
 const settle = (page) => page.waitForTimeout(350)
 function expect(condition, message) {
   if (!condition) throw new Error(message)
@@ -71,57 +71,88 @@ async function choose(page, id, value) {
 async function fill(page, id, text) {
   await page.locator(`#${id} input`).fill(text)
 }
-async function openOnboarding(page) {
-  await action(page, "prototype")
-  await page.locator('#dialog [data-action="onboarding"]').click()
+// Rodada 56: o cadastro em diálogo virou o passo 3 da entrada (cidade, momento e nome). A conta e a
+// elegibilidade já confirmada entram pelo armazenamento; as Rodadas 54 e 55 provam esses passos.
+// Grava o estado inicial uma vez (o app só grava na primeira mudança), como o snapshot do harness.
+async function persisted(page) {
+  if (!(await stored(page))) {
+    await action(page, "city")
+    await action(page, "apply-city")
+  }
+}
+async function openStep3(page, account = {}) {
+  await persisted(page)
+  await page.evaluate(
+    ([k, extra]) => {
+      const s = JSON.parse(localStorage.getItem(k))
+      s.signedOut = true
+      s.entry = {
+        account: {
+          name: "Joana Lima",
+          email: "joana.teste@exemplo.com",
+          provider: "email",
+          ...extra,
+        },
+        consentAt: Date.now(),
+        eligibility: "verified",
+      }
+      localStorage.setItem(k, JSON.stringify(s))
+    },
+    [KEY, account],
+  )
+  await page.reload()
+  await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
+  await page.evaluate(() => {
+    location.hash = "entrar/cidade"
+  })
   await settle(page)
-  expect((await dialogKind(page)) === "onboarding", "cadastro não abriu")
+  expect(await page.locator("#en-city-form").isVisible(), "passo 3 da entrada não abriu")
 }
-async function toStep2(page) {
-  await openOnboarding(page)
-  await action(page, "onboard-next")
-  expect((await step(page)) === "Etapa 2 de 5", `esperava etapa 2, veio ${await step(page)}`)
+async function moment(page, value) {
+  await page.locator(`#en-city-form input[name="en-mode"][value="${value}"]`).click()
+  await settle(page)
 }
-async function passStep2(page, name = "Joana Lima") {
-  await fill(page, "onboard-name", name)
-  await page.locator("#onboard-terms").click()
-  await action(page, "onboard-next")
+async function finish(page) {
+  await page.locator('#main [data-action="entry-finish"]').click()
+  await settle(page)
 }
 const inDays = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10)
 
 const checkpoints = {
-  async "onboarding-happy-path"(page) {
-    await toStep2(page)
-    await passStep2(page)
-    expect((await step(page)) === "Etapa 3 de 5", "não avançou para a verificação")
-    await page.locator('md-radio[value="yes"]').click()
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 4 de 5", "não avançou para cidade")
-    await choose(page, "onboard-city", "Brasília")
-    await choose(page, "onboard-mode", "chegando")
-    await page.locator("#onboard-date").fill(inDays(20))
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 5 de 5", "não avançou para interesses")
-    const chips = page.locator('#dialog [data-action="interest-toggle"]')
-    for (let i = 0; i < 4; i++) {
-      await chips.nth(i).click()
-      await settle(page)
-    }
-    const selected = await page.locator("#dialog md-filter-chip[selected]").count()
-    expect(selected === 3, `limite de 3 interesses violado: ${selected}`)
-    await action(page, "onboard-finish")
-    expect((await dialogKind(page)) === null, "cadastro não fechou")
+  async "entry-step3-happy-path"(page) {
+    await openStep3(page)
+    expect(
+      (await page.locator("#en-name input").inputValue()) === "Joana Lima",
+      "nome da conta não veio preenchido",
+    )
+    await choose(page, "en-city", "Brasília")
+    await moment(page, "chegando")
+    await page.locator("#en-date").fill(inDays(20))
+    await finish(page)
+    expect(
+      (await entryUrl(page)) === "entrar/boas-vindas",
+      `não abriu as boas-vindas: ${await entryUrl(page)}`,
+    )
+    const text = await page.locator("#main").innerText()
+    expect(
+      /Você chegou ao Bivaque/.test(text) && /plano de chegada a Brasília/.test(text),
+      `boas-vindas: ${text.slice(0, 160)}`,
+    )
     const s = await stored(page)
-    expect(s.profile.name === "Joana Lima" && s.profile.verified === true, "perfil não salvo")
+    expect(
+      s.profile.name === "Joana Lima" &&
+        s.profile.verified === true &&
+        s.profile.email === "joana.teste@exemplo.com",
+      "perfil não salvo",
+    )
     expect(
       s.homeCity === "Brasília" && s.city === "Brasília" && s.mode === "chegando",
       "cidade/momento não salvos",
     )
-    expect(
-      s.arrival === inDays(20) && s.profile.interests.length === 3,
-      "data/interesses não salvos",
-    )
-    expect((await toast(page)).length > 0, "sem confirmação ao concluir")
+    expect(s.arrival === inDays(20) && !s.signedOut && s.entry.done, "data ou entrada não salvas")
+    await page.locator('#main [data-action="entry-home"][data-value="comunidade"]').click()
+    await settle(page)
+    expect((await entryUrl(page)) === "comunidade", "Entrar na comunidade não abriu a Comunidade")
     await page.reload()
     await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
     expect(
@@ -129,130 +160,95 @@ const checkpoints = {
       "não persistiu após reload",
     )
   },
-  async "onboarding-validation"(page) {
-    await toStep2(page)
+  async "entry-step3-validation"(page) {
+    await openStep3(page)
     const before = JSON.stringify(await stored(page))
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 2 de 5", "avançou sem nome/termos")
-    expect(/nome/i.test(await toast(page)), "sem feedback de campo obrigatório")
-    await fill(page, "onboard-name", "Al")
-    await page.locator("#onboard-terms").click()
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 2 de 5", "aceitou nome com 2 letras")
-    await fill(page, "onboard-name", "Joana Lima")
-    await page.locator("#onboard-terms").click()
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 2 de 5", "avançou com termos desmarcados")
+    await moment(page, "chegando")
+    await finish(page)
+    expect(/cidade/i.test(await err(page)), `sem cidade: ${await err(page)}`)
+    await choose(page, "en-city", "Manaus")
+    await finish(page)
+    expect(/data de chegada/i.test(await err(page)), `sem data: ${await err(page)}`)
+    await page.locator("#en-date").fill(inDays(10))
+    await fill(page, "en-name", "J")
+    await finish(page)
+    expect(/chamado/i.test(await err(page)), `nome curto: ${await err(page)}`)
+    expect((await entryUrl(page)) === "entrar/cidade", "saiu do passo 3 com erro")
     expect(JSON.stringify(await stored(page)) === before, "estado alterado durante validação")
   },
-  async "onboarding-family-invite"(page) {
-    await action(page, "city")
-    await action(page, "apply-city")
+  async "entry-step3-family-account"(page) {
+    await openStep3(page, { family: true, invitedBy: "Rafael Souza" })
+    await choose(page, "en-city", "Manaus")
+    await moment(page, "moro")
+    expect((await page.locator("#en-date").count()) === 0, "quem mora precisa informar data")
+    await finish(page)
+    const s = await stored(page)
+    expect(s.profile.role === "familia" && s.mode === "moro", "conta de família não salva")
+    expect(
+      /Conhecer/.test(await page.locator("#main").innerText()),
+      "boas-vindas sem o guia da cidade",
+    )
+  },
+  async "unverified-profile-blocks-publish"(page) {
+    await persisted(page)
     await page.evaluate((k) => {
       const s = JSON.parse(localStorage.getItem(k))
-      s.invites = [...(s.invites || []), { code: "FAM-TESTE1", used: false, created: Date.now() }]
+      s.profile.verified = false
       localStorage.setItem(k, JSON.stringify(s))
     }, KEY)
     await page.reload()
     await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
-    await toStep2(page)
-    await fill(page, "onboard-name", "Joana Lima")
-    await choose(page, "onboard-role", "familia")
-    expect(
-      (await page.locator("#onboard-name input").inputValue()) === "Joana Lima",
-      "nome perdido ao trocar vínculo",
-    )
-    await page.locator("#onboard-terms").click()
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 2 de 5", "família avançou sem código")
-    await fill(page, "onboard-code", "FAM-ERRADO")
-    await action(page, "onboard-next")
-    expect(
-      (await step(page)) === "Etapa 2 de 5" && /convite/i.test(await toast(page)),
-      "código inválido aceito",
-    )
-    await fill(page, "onboard-code", "fam-teste1")
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 3 de 5", "código válido recusado")
-    for (let i = 0; i < 2; i++) await action(page, "onboard-next")
-    await action(page, "onboard-finish")
-    const s = await stored(page)
-    expect(s.profile.role === "familia", "vínculo família não salvo")
-    expect(
-      s.invites.find((x) => x.code === "FAM-TESTE1")?.used === true,
-      "convite não marcado como usado",
-    )
-  },
-  async "onboarding-pending-blocks-publish"(page) {
-    await toStep2(page)
-    await passStep2(page)
-    await page.locator('md-radio[value="pending"]').click()
-    for (let i = 0; i < 2; i++) await action(page, "onboard-next")
-    await action(page, "onboard-finish")
-    expect((await stored(page)).profile.verified === false, "verificação pendente não salva")
-    expect(/análise/i.test(await toast(page)), "sem aviso de perfil em análise")
     const items = (await stored(page)).items.length
     await page.locator('[data-action="create"]:visible').first().click()
     await settle(page)
     await page.locator("#create-menu [data-action]:visible").first().click()
     await settle(page)
     const kind = await dialogKind(page)
-    expect(
-      kind === "onboarding" || /verifica|análise/i.test(await toast(page)),
-      `publicação liberada sem verificação (diálogo ${kind})`,
-    )
+    expect(kind === "unverified", `publicação liberada sem verificação (diálogo ${kind})`)
     expect((await stored(page)).items.length === items, "item criado sem verificação")
   },
-  async "onboarding-leaving-needs-destination"(page) {
-    await toStep2(page)
-    await passStep2(page)
-    await action(page, "onboard-next")
-    await choose(page, "onboard-city", "Natal")
-    await choose(page, "onboard-mode", "saindo")
-    await choose(page, "onboard-dest", "Natal")
-    await page.locator("#onboard-date").fill(inDays(15))
-    await action(page, "onboard-next")
+  async "entry-step3-leaving-needs-destination"(page) {
+    await openStep3(page)
+    await choose(page, "en-city", "Natal")
+    await moment(page, "saindo")
+    await page.locator("#en-date").fill(inDays(15))
+    await choose(page, "en-dest", "Natal")
+    await finish(page)
     expect(
-      (await step(page)) === "Etapa 4 de 5" && /destino/i.test(await toast(page)),
+      (await entryUrl(page)) === "entrar/cidade" && /destino/i.test(await err(page)),
       "aceitou destino igual à cidade",
     )
-    await choose(page, "onboard-dest", "Brasília")
-    await action(page, "onboard-next")
-    expect((await step(page)) === "Etapa 5 de 5", "destino válido recusado")
+    await choose(page, "en-dest", "Brasília")
+    await finish(page)
     expect(
-      /Brasília/.test(await page.locator("#dialog").innerText()),
-      "turma do destino não indicada",
+      /plano de saída para Brasília/.test(await page.locator("#main").innerText()),
+      "boas-vindas sem o plano de saída",
     )
-    await action(page, "onboard-finish")
     const s = await stored(page)
     expect(
       s.mode === "saindo" && s.dest === "Brasília" && s.leaveDate === inDays(15),
       "saída não salva",
     )
   },
-  async "onboarding-back-and-escape"(page) {
-    await toStep2(page)
-    await passStep2(page)
-    await action(page, "onboard-prev")
-    expect((await step(page)) === "Etapa 2 de 5", "Voltar não retornou etapa")
-    expect(
-      (await page.locator("#onboard-name input").inputValue()) === "Joana Lima",
-      "nome perdido ao voltar",
-    )
-    await passStep2(page)
-    await page.goBack()
-    await settle(page)
-    expect((await step(page)) === "Etapa 2 de 5", `voltar do navegador: ${await step(page)}`)
+  async "entry-step3-exit-and-resume"(page) {
+    await openStep3(page)
     const before = JSON.stringify(await stored(page))
-    await page.keyboard.press("Escape")
+    await page.locator('#main [data-action="entry-cancel"]').click()
     await settle(page)
-    expect((await dialogKind(page)) === null, "Escape não fechou o cadastro")
-    expect(JSON.stringify(await stored(page)) === before, "cancelar gravou dados parciais")
     expect(
-      await page.evaluate(
-        () => !!document.activeElement && document.activeElement !== document.body,
-      ),
-      "foco perdido após fechar",
+      (await entryUrl(page)) === "entrar",
+      `Sair não voltou à landing: ${await entryUrl(page)}`,
+    )
+    expect(JSON.stringify(await stored(page)) === before, "sair gravou dados parciais")
+    await page.locator('#main [data-action="entry-login"]').click()
+    await settle(page)
+    await fill(page, "en-email", "joana.teste@exemplo.com")
+    await fill(page, "en-pass-login", "senha1234")
+    await page.locator('#main [data-action="entry-login-submit"]').click()
+    await settle(page)
+    expect(
+      (await entryUrl(page)) === "entrar/cidade",
+      `entrar não retomou o passo 3: ${await entryUrl(page)}`,
     )
   },
   async "city-consult-and-return"(page) {
@@ -403,17 +399,17 @@ const checkpoints = {
     )
   },
   async "storage-failure-rolls-back"(page) {
-    await toStep2(page)
-    await passStep2(page)
-    for (let i = 0; i < 2; i++) await action(page, "onboard-next")
+    await openStep3(page)
+    await choose(page, "en-city", "Manaus")
+    await moment(page, "moro")
     const before = JSON.stringify(await stored(page))
     await page.evaluate(() => {
       Storage.prototype.setItem = () => {
         throw new DOMException("quota", "QuotaExceededError")
       }
     })
-    await action(page, "onboard-finish")
-    expect((await dialogKind(page)) === "onboarding", "cadastro fechou apesar da falha")
+    await finish(page)
+    expect((await entryUrl(page)) === "entrar/cidade", "passo 3 fechou apesar da falha")
     expect(/salvar/i.test(await toast(page)), "sem feedback de falha de gravação")
     expect(JSON.stringify(await stored(page)) === before, "estado parcial gravado")
   },

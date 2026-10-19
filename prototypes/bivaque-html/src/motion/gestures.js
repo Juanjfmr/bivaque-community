@@ -1,12 +1,13 @@
 let openSwipe=null;
 function makeSwipe(content,actions){
+ if(content.classList.contains('swipe-content'))return;
  const sw=document.createElement('div');sw.className='swipe-row';content.replaceWith(sw);sw.appendChild(content);content.classList.add('swipe-content');
  const box=document.createElement('div');box.className='swipe-actions';box.innerHTML=actions.map(([ic,label,action,value,color])=>`<button type="button" data-action="${action}" data-value="${esc(value)}" aria-label="${esc(label)}" style="background:${color}">${icon(ic)}<span>${esc(label)}</span></button>`).join('');sw.prepend(box);
  const width=actions.length*62+16;let drag=null,opened=false;
  const set=(x,animated)=>{content.style.transition=animated?'transform .3s cubic-bezier(.2,0,0,1)':'none';content.style.transform=`translateX(${x}px)`;};
  const close=()=>{opened=false;set(0,true);if(openSwipe===close)openSwipe=null;};
  content.addEventListener('pointerdown',e=>{if(e.button>0)return;for(const a of content.getAnimations())if(a.id==='swipe-hint')a.cancel();drag={x:e.clientX,y:e.clientY,base:opened?-width:0,id:e.pointerId,moved:false};});
- content.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved){if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)){drag=null;return;}if(Math.abs(dx)<=8||Math.abs(dx)<=Math.abs(dy))return;drag.moved=true;try{content.setPointerCapture(e.pointerId);}catch{}if(openSwipe&&openSwipe!==close)openSwipe();}let x=drag.base+dx;if(x>0)x*=.25;if(x<-width)x=-width+(x+width)*.3;set(x,false);});
+ content.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved){if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)){drag=null;return;}if(Math.abs(dx)<=8||Math.abs(dx)<=Math.abs(dy))return;drag.moved=true;try{content.setPointerCapture(e.pointerId);}catch{}if(openSwipe&&openSwipe!==close)openSwipe();}let x=drag.base+dx;if(x>0)x*=.25;if(x<-width)x=-width+(x+width)*.3;set(x,false);const armed=x<-width*.45;if(armed&&!drag.armed)haptic(8);drag.armed=armed;});
  const end=e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;if(!d.moved)return;sw._swiped=true;setTimeout(()=>sw._swiped=false,80);if(e.type!=='pointercancel'&&d.base+e.clientX-d.x<-width*.45){opened=true;set(-width,true);openSwipe=close;}else close();};
  content.addEventListener('pointerup',end);content.addEventListener('pointercancel',end);
  // O clique que o mouse gera ao soltar o arrasto não fecha a linha que acabou de abrir (Rodada 39).
@@ -22,6 +23,7 @@ function swipeHint(row){
  content.animate([{transform:'translateX(0)'},{transform:'translateX(-96px)',offset:.4},{transform:'translateX(-96px)',offset:.62},{transform:'translateX(0)'}],{id:'swipe-hint',duration:1300,delay:600,easing:'cubic-bezier(.2,0,0,1)'});
 }
 function longPress(el,fn){
+ if(el.dataset.longPress)return;el.dataset.longPress='1';
  let timer=null,startX=0,startY=0,held=false;
  const cancel=()=>{clearTimeout(timer);el.style.scale='';};
  el.addEventListener('pointerdown',e=>{if(e.button>0||createOpen)return;startX=e.clientX;startY=e.clientY;timer=setTimeout(()=>{held=true;el.style.scale='';fn(el);},480);el.style.scale='.97';});
@@ -30,11 +32,14 @@ function longPress(el,fn){
  el.addEventListener('click',e=>{if(held){held=false;e.preventDefault();e.stopPropagation();}},true);
  el.addEventListener('contextmenu',e=>{e.preventDefault();cancel();fn(el);});
 }
-function bindOriginalGestures(){
- for(const card of $$('.photo-card > .card-link[data-action="open-item"]',root)){longPress(card,anchor=>{const id=anchor.dataset.value,i=itemById(id);if(!i)return;openCreate(anchor,[['bookmark',i.saved?'Remover dos salvos':'Salvar','save-item','',id],['share','Compartilhar com a família','share','','anuncio|'+id],['chat_bubble','Tenho interesse','item-interest','',id],['flag','Denunciar…','report','','item|'+id]],true);});}
+// Rodada 57: no próprio anúncio, o menu oferece ver o anúncio (sem interesse nem denúncia).
+function itemContextChoices(i){const id=i.id,choices=[['bookmark',i.saved?'Remover dos salvos':'Salvar','save-item','',id],['share','Compartilhar com a família','share','','anuncio|'+id]];if(i.mine)return [...choices,['visibility','Ver anúncio','open-item','',id]];return [...choices,['chat_bubble','Tenho interesse','item-interest','',id],['flag','Denunciar…','report','','item|'+id]];}
+// Rodada 45: também é chamada depois de cada bloco acrescentado (hint=false); os laços são idempotentes.
+function bindOriginalGestures(hint=true){
+ for(const card of $$('.photo-card > .card-link[data-action="open-item"]',root)){longPress(card,anchor=>{const id=anchor.dataset.value,i=itemById(id);if(!i)return;openCreate(anchor,itemContextChoices(i),true);});}
  if(route.name==='comunidade'&&communityTab==='ind')for(const row of $$('[data-action="open-question"]',root)){const q=askById(row.dataset.value);if(q)makeSwipe(row,[[q.following?'notifications_off':'notifications_active',q.following?'Parar':'Seguir','follow-question',q.id,'#31647a'],['visibility_off','Ocultar','hide-question',q.id,'#6c7378']]);}
  if(route.name==='conversas')for(const row of $$('.list > .list-row',root)){const t=threadById($('[data-action="open-thread"]',row)?.dataset.value);if(t)makeSwipe(row,[[t.unread?'drafts':'chat_bubble',t.unread?'Lida':'Não lida','thread-unread',t.id,'#2f5f73'],['push_pin',t.pinned?'Soltar':'Fixar','pin-thread',t.id,'#654112'],['delete','Apagar','swipe-delete-thread',t.id,'#ba1a1a']]);}
- if(route.name==='conversas')swipeHint($('.list > .swipe-row',root));
+ if(hint&&route.name==='conversas')swipeHint($('.list > .swipe-row',root));
 }
 (function restoreEdgeBack(){
  let drag=null;

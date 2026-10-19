@@ -9,10 +9,14 @@
 .photo-cover.is-cover{background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);cursor:default}
 .hero-zoom{position:absolute;right:12px;bottom:12px;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:0;border-radius:999px;background:rgba(0,0,0,.62);color:#fff;font:inherit;font-size:13px;font-weight:650;cursor:pointer;backdrop-filter:blur(6px)}
 .hero-zoom md-icon{font-size:18px}
-.lightbox{position:fixed;inset:0;z-index:90;display:grid;grid-template-rows:auto 1fr auto;background:rgba(6,10,12,.94);color:#fff}
+.lightbox{position:fixed;inset:0;z-index:90;display:grid;grid-template-rows:auto 1fr auto;background:rgba(6,10,12,calc(.94 * var(--lb-fade,1)));color:#fff}
 .lightbox-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:14px;font-weight:650}
-.lightbox-stage{position:relative;display:grid;place-items:center;min-height:0;padding:0 64px;touch-action:pan-y}
-.lightbox-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;user-select:none}
+.lightbox-stage{position:relative;display:grid;place-items:center;min-height:0;padding:0 64px;touch-action:none;overflow:hidden}
+.lightbox-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;user-select:none;-webkit-user-drag:none;will-change:transform;cursor:zoom-in}
+/* Rodada 40: ao arrastar para baixo o fundo esmaece; ampliada, a foto se arrasta e as setas saem. */
+.lightbox-top,.lightbox-thumbs{opacity:var(--lb-fade,1)}
+.lightbox.zoomed .lightbox-stage img{cursor:grab;border-radius:0}
+.lightbox.zoomed .lightbox-prev,.lightbox.zoomed .lightbox-next{opacity:0;pointer-events:none;visibility:hidden}
 .lightbox-btn{display:grid;place-items:center;width:48px;height:48px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
 .lightbox-btn:hover{background:rgba(255,255,255,.22)}
 .lightbox-btn:focus-visible,.lightbox-thumbs button:focus-visible{outline:2px solid #fff;outline-offset:2px}

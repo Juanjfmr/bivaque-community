@@ -20,11 +20,16 @@ export const routeOf = (page) => page.evaluate(() => window.Bivaque.inspect().ro
 export function expect(condition, message) {
   if (!condition) throw new Error(message)
 }
+// Um diálogo que acabou de fechar (ex.: a cidade no snapshot) volta no histórico; com a animação
+// ligada, esse "voltar" pode chegar depois da troca de endereço e desfazê-la. Confere e troca de novo.
 export async function go(page, hash) {
-  await page.evaluate((h) => {
-    location.hash = h
-  }, hash)
-  await settle(page)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.evaluate((h) => {
+      location.hash = h
+    }, hash)
+    await settle(page)
+    if (await page.evaluate((h) => decodeURIComponent(location.hash.slice(1)) === h, hash)) return
+  }
 }
 export async function action(page, name, value) {
   const scope = value ? `[data-action="${name}"][data-value="${value}"]` : `[data-action="${name}"]`
@@ -34,6 +39,18 @@ export async function action(page, name, value) {
   await settle(page)
 }
 export async function choose(page, id, value) {
+  // Rodada 66: o bairro é um campo de busca. Sem valor, toca na primeira sugestão ("Mais escolhidos");
+  // com valor, digita e toca na sugestão com esse nome (ou em "Usar … como está").
+  if (await page.locator(`.hood-pick #${id}`).count()) {
+    await page.locator(`#${id} input`).fill(value ? String(value) : "")
+    const menu = page.locator(`#${id}-menu`)
+    await menu.waitFor({ state: "visible", timeout: 3000 })
+    await (value
+      ? menu.locator(`.hood-opt[data-hood-name="${value}"]`)
+      : menu.locator(".hood-opt").first()
+    ).click()
+    return
+  }
   const option = value
     ? page.locator(`#${id} md-select-option[value="${value}"]`)
     : page.locator(`#${id} md-select-option`).nth(1)
@@ -87,6 +104,34 @@ export async function snapshot(page) {
     await action(page, "apply-city")
   }
   return stored(page)
+}
+// Rodada 43: publicar uma pergunta, criar alerta ou pedido abre a folha dos avisos. Provas que não
+// tratam dos avisos marcam a folha como já mostrada para ela não cobrir o fluxo.
+export async function skipPushAsk(page) {
+  const s = await snapshot(page)
+  s.prefs.pushAskedAt = Date.now()
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(s)])
+  await reload(page)
+}
+// Depois de enviar um pedido ou criar um alerta, a folha dos avisos pode abrir em 900 ms: espera
+// por ela e fecha com "Agora não", para o resto do fluxo não ser coberto.
+export async function dismissPushAsk(page) {
+  const shown = await page
+    .waitForFunction(
+      () =>
+        document.querySelector("#dialog")?.open &&
+        document.querySelector("#dialog").dataset.kind === "push",
+      null,
+      { timeout: 1400 },
+    )
+    .then(
+      () => true,
+      () => false,
+    )
+  if (shown) {
+    await page.locator('#dialog [data-action="push-later"]').click()
+    await settle(page)
+  }
 }
 export async function reload(page) {
   await page.reload()

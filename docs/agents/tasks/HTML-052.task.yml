@@ -1,0 +1,39 @@
+task_id: HTML-052
+objective: >
+  Rodada 52 cria Negocios e planos (planos pagos, receita, patrocinados, pedidos de orcamento,
+  planos que vencem em 7 dias com Lembrar e a lista de negocios com plano e situacao) e Pessoas e
+  equipe (moderacao com a carga de cada um, embaixadores por cidade e Convidar moderador) no Painel
+  do Bivaque. A receita da visao geral passa a sair do mesmo calculo dos planos.
+authority:
+  - Aprovacao do usuario em 2026-10-17 (maquete v2 do painel; R52 Negocios e planos e Pessoas)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD ee09174a. O painel nao tinha planos, vencimentos nem equipe; a receita era um numero solto.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-052.task.yml
+forbidden:
+  - guardar contato, posto, organizacao militar ou endereco do convidado (so nome e cidade)
+  - cobrar ou enviar mensagem real (Lembrar e convites ficam no registro do prototipo)
+  - editar a referencia HTML congelada ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - A receita de Negocios e planos e a da visao geral sao iguais, em todas as cidades e por cidade
+  - Lembrar grava o lembrete e a linha mostra Lembrete enviado
+  - A lista de negocios abre a pagina do negocio fora do console
+  - Equipe mostra a sua carga; convidar moderador exige nome e aparece na equipe
+  - O que mudou leva aos planos
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round52-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round49-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: dados-pessoais
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
