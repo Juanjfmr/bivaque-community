@@ -2,11 +2,12 @@
 
 // RECON-027 — escritas de Moradia. Mesmo ciclo de vida do Mercado (ADR D1/D2):
 // o dono cria, edita e publica; a RLS confere dono e público a cada escrita.
-// As fotos chegam já sem EXIF (o cliente redesenha em canvas) e são enviadas
-// pelo cliente autenticado, então a policy de storage reconfere o dono.
+// O servidor limpa os metadados antes do envio pelo cliente autenticado;
+// a policy de storage reconfere o dono.
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { sanitizeImage } from "../storage/sanitize-image"
 import type { ActionState } from "./action-state"
 import { validateAddress } from "./address"
 import { parseListingFilters, type RawSearchParams } from "./filters"
@@ -72,12 +73,18 @@ async function uploadPhotos(listingId: string, files: File[]): Promise<{ error?:
     if (file.size > MAX_PHOTO_BYTES) {
       return { error: "Uma das fotos passa de 10 MB." }
     }
+    let image: Buffer
+    try {
+      image = await sanitizeImage(file, MAX_PHOTO_BYTES)
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Imagem inválida." }
+    }
     const extension =
       file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
     const path = `${listingId}/${Date.now()}-${index}-${crypto.randomUUID()}.${extension}`
     const { error: uploadError } = await client.storage
       .from("listing-photos")
-      .upload(path, file, { contentType: file.type, upsert: false })
+      .upload(path, image, { contentType: file.type, upsert: false })
     if (uploadError) {
       return { error: uploadError.message }
     }

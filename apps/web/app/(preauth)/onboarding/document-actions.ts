@@ -5,6 +5,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { log } from "../../../lib/logger"
 import { readDocumentPaths } from "../../../lib/onboarding/document-status"
+import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const DOCUMENT_BUCKET = "verification-documents"
@@ -108,9 +109,20 @@ export async function uploadVerificationDocumentAction(
     return { ok: false, error: "Formato inválido. Envie um PDF, JPEG ou PNG." }
   }
 
-  await sweepOrphanedUploads(supabase, userId)
+  let buffer: Uint8Array
+  try {
+    buffer =
+      file.type === "application/pdf"
+        ? new Uint8Array(await file.arrayBuffer())
+        : await sanitizeImage(file, MAX_BYTES)
+  } catch {
+    return {
+      ok: false,
+      error: "Não foi possível ler a imagem. Envie um JPEG ou PNG válido de até 10 MB.",
+    }
+  }
 
-  const buffer = new Uint8Array(await file.arrayBuffer())
+  await sweepOrphanedUploads(supabase, userId)
   const { randomUUID } = await import("node:crypto")
   const storageObjectPath = `${userId}/${randomUUID()}`
 

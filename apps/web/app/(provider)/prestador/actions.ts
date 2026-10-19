@@ -12,6 +12,7 @@ import {
   validatePriceCents,
   validateTitle,
 } from "../../../lib/providers/showcase"
+import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda G Task 4 — Server Actions do painel do prestador.
@@ -248,9 +249,10 @@ export async function addPortfolioPhotoAction(formData: FormData): Promise<void>
 
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
   const path = `${profileId}/portfolio/${crypto.randomUUID()}.${extension}`
+  const image = await sanitizeImage(file, 5242880)
   const { error: uploadError } = await client.storage
     .from("provider-photos")
-    .upload(path, await file.arrayBuffer(), { contentType: file.type })
+    .upload(path, image, { contentType: file.type })
   if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`)
 
   const { count, error: countError } = await client

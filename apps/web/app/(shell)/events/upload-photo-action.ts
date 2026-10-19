@@ -1,14 +1,10 @@
 "use server"
 
-// Wave F Task 9 — real photo upload with EXIF stripping.
-//
-// The client strips EXIF metadata by drawing the image onto a canvas and
-// exporting as PNG/JPEG (browsers automatically drop EXIF in this process).
-// The server validates type/size and uploads to the private event-photos
-// bucket. The returned path is stored in the post's photo_path field.
+// The server strips metadata even when the client bypasses the canvas.
 
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
@@ -32,12 +28,23 @@ export async function uploadPostPhotoAction(formData: FormData): Promise<{ photo
   } = await supabase.auth.getUser()
   if (!user) throw new Error("não autenticado")
 
+  // Same prerequisite as event_photos_insert_self: no post/event exists yet.
+  const { data: membership, error: membershipError } = await supabase
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle()
+  if (membershipError || !membership) throw new Error("vínculo com localidade necessário")
+
+  const image = await sanitizeImage(file, MAX_SIZE)
+
   // Upload to storage bucket. The service_role client has write access.
   const serviceClient = createServiceClient()
   const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${file.type.split("/")[1]}`
   const { error: uploadError } = await serviceClient.storage
     .from("event-photos")
-    .upload(fileName, file, {
+    .upload(fileName, image, {
       contentType: file.type,
       upsert: false,
     })

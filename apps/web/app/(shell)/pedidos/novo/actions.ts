@@ -5,11 +5,13 @@ import { cookies } from "next/headers"
 import { log } from "../../../../lib/logger"
 import {
   firstFailure,
+  SERVICE_REQUEST_PHOTO_MAX_BYTES,
   SERVICE_REQUEST_PHOTO_MIME_TYPES,
   validateRequestDescription,
   validateRequestPhotos,
   validateRequestWhen,
 } from "../../../../lib/service-requests/request-form"
+import { sanitizeImage } from "../../../../lib/storage/sanitize-image"
 
 // RECON-022 — criação do pedido de serviço.
 //
@@ -82,6 +84,15 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
     return { status: "session" }
   }
 
+  const images: { file: File; body: Buffer }[] = []
+  try {
+    for (const file of photos) {
+      images.push({ file, body: await sanitizeImage(file, SERVICE_REQUEST_PHOTO_MAX_BYTES) })
+    }
+  } catch {
+    return { status: "error", message: "Envie imagens JPEG, PNG ou WebP válidas de até 10 MB." }
+  }
+
   const { data: requestId, error } = await client.rpc("create_service_request", {
     p_provider_id: providerId,
     p_description: description.trim(),
@@ -112,14 +123,14 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
 
   // Anexo é opcional e vem depois do pedido existir: o caminho começa pelo id
   // do pedido, que é o que a policy de leitura do storage confere.
-  for (const [index, file] of photos.entries()) {
+  for (const [index, { file, body }] of images.entries()) {
     if (!SERVICE_REQUEST_PHOTO_MIME_TYPES.some((mime) => mime === file.type)) {
       return { status: "error", message: "Use imagens JPEG, PNG ou WebP." }
     }
     const path = `${createdId}/${index}.${extensionFor(file.type)}`
     const { error: uploadError } = await client.storage
       .from("service-request-photos")
-      .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: true })
+      .upload(path, body, { contentType: file.type, upsert: true })
     if (uploadError) {
       log.error("pedidos: photo upload failed", { error: uploadError.message })
       return {

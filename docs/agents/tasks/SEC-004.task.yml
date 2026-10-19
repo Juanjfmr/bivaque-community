@@ -35,7 +35,7 @@ forbidden:
 acceptance:
   - Inventario de todos os caminhos de upload de imagem do usuario no app listado no PR
   - Teste com JPEG (e PNG/WebP se aceitos) contendo GPS prova que o arquivo gravado nao tem GPS nem EXIF de localizacao, em cada caminho
-  - Upload direto ao Storage pelo cliente, se existir, fica coberto (fechado pela policy ou tratado no servidor), documentado
+  - Upload direto ao Storage pelo cliente fica para a SEC-006 (decisao do coordenador em 2026-10-19); aqui so documentar quais caminhos continuam diretos
   - upload-photo-action recusa conta sem vinculo ao escopo do evento (teste negativo)
 proof:
   - npx pnpm@11.18.0 test
@@ -49,3 +49,79 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+# Execucao local 2026-10-19, somente SEC-004, sem git add ou commit.
+# RED: vitest run tests/unit/security/photo-upload-action.test.ts, 4 testes falharam.
+# JPEG, PNG e WebP sinteticos com GPS chegaram ao upload ainda com EXIF.
+# Conta autenticada sem locality_memberships foi aceita pelo upload privilegiado.
+# sharp 0.35.3 consta no lockfile e o modulo local codificou JPEG, PNG e WebP.
+# Nenhuma biblioteca instalada e nenhum arquivo de ambiente criado ou alterado.
+# Baseline reconferida: npx supabase db reset --local --no-seed PASS.
+# npx pnpm 11.18.0 test:db PASS, 135 arquivos e 1842 testes.
+# Inventario web: nove pontos de upload em nove arquivos de implementacao.
+# lib/listings/actions.ts, uploadPhotos, Moradia cria e edita, listing-photos.
+# app/(shell)/mercado/novo/page.tsx, envio direto do navegador, listing-photos.
+# app/(shell)/mercado/[id]/editar/page.tsx, envio direto do navegador, listing-photos.
+# app/(shell)/events/upload-photo-action.ts, publicacao e capa de evento, event-photos.
+# app/(shell)/profile/avatar-actions.ts, uploadAvatarAction, avatars.
+# app/(owner)/communities/actions.ts, faixa e miniatura, community-images.
+# app/(provider)/prestador/actions.ts, addPortfolioPhotoAction, provider-photos.
+# app/(shell)/pedidos/novo/actions.ts, submitServiceRequest, service-request-photos.
+# app/(preauth)/onboarding/document-actions.ts, JPEG e PNG de identidade, verification-documents.
+# Nenhuma rota HTTP de upload, URL assinada de upload ou upload mobile ativo foi encontrado.
+# Rotas de avatar e documento de admissao apenas leem ou assinam arquivos existentes.
+# Todos os nove pontos ainda precisam de limpeza no servidor; canvas nao fecha o contrato.
+# Storage permite INSERT autenticado em avatars, event-photos, listing-photos,
+# community-images, provider-photos e service-request-photos.
+# Storage permite UPDATE autenticado em avatars, event-photos, community-images
+# e service-request-photos; esses caminhos tambem contornam uma limpeza so em actions.
+# verification-documents ja depende de service_role para escrita, sem policy de cliente.
+# BLOQUEIO: fechar o envio direto exige migration nova em supabase/migrations/.
+# Esse caminho nao esta no allowed_paths. Nao foi ampliado nem foi criada migration.
+# Pedido de esclarecimento enviado ao dono; sem resposta, nao inferir autorizacao.
+# Proximo passo: autorizar supabase/migrations/ e retomar a partir dos testes RED.
+# Implementacao, GREEN e revisao independente pendentes. SEC-004 permanece aberta.
+# Gate executado: lint PASS, typecheck PASS, test FAIL nos quatro casos RED novos.
+# Etapas posteriores nao executadas; build pulado pelo gate por falta de .env.local.
+# E2E nao executado nesta etapa bloqueada; sem alegar prova de jornada ou GREEN.
+# Validador task-contract.mjs aplicado ao contrato: valido, R3 e retry_budget 3.
+# Decisao do coordenador (Claude), 2026-10-19, apos o BLOQUEIO acima:
+# a SEC-004 fica restrita aos caminhos que ja passam pelo servidor (actions), sem migration.
+# Limpeza com sharp (ja no lockfile): reencodar e descartar metadados (EXIF, GPS, XMP) em
+# moradia, avatar, comunidade, portfolio, pedido de servico, documento e evento.
+# Mais o negativo de vinculo em upload-photo-action. Mercado direto e as policies de INSERT
+# e UPDATE dos buckets vao para a SEC-006, que libera supabase/migrations/.
+# Retomada 2026-10-19 conforme a decisao acima; registros de BLOQUEIO anteriores sao historicos.
+# Escopo implementado somente nas actions existentes; Mercado direto e policies ficam na SEC-006.
+# RED reproduzido: 4 de 4 testes originais falharam antes de alterar as actions.
+# RED ampliado antes da implementacao: 64 falhas e 20 sucessos em 84 casos.
+# Falhas: EXIF/GPS preservado em todos os caminhos, bytes corrompidos aceitos e evento sem vinculo.
+# Helper unico apps/web/lib/storage/sanitize-image.ts usa sharp 0.35.3 para decodificar e reencodar.
+# autoOrient aplica rotacao e espelhamento antes de descartar EXIF, GPS, XMP e IPTC.
+# Mantidos JPEG, PNG e WebP, MIME, caminhos e modos de sobrescrita; tamanho conferido antes e depois.
+# Imagem corrompida ou MIME divergente e recusado; PDF de identidade segue sem alteracao dos bytes.
+# Moradia criar e editar: listing-photos, JPEG/PNG/WebP, 10 MB, helper no uploadPhotos compartilhado.
+# Avatar: avatars, JPEG/PNG/WebP, 5 MB, uploadAvatarAction.
+# Comunidade faixa e miniatura: community-images, JPEG/PNG/WebP, 10 MB, setCommunityImageAction.
+# Portfolio: provider-photos, JPEG/PNG/WebP, 5 MB, addPortfolioPhotoAction.
+# Pedido: service-request-photos, JPEG/PNG/WebP, 10 MB, submitServiceRequest.
+# Identidade: verification-documents, JPEG/PNG, 10 MB, uploadVerificationDocumentAction; PDF preservado.
+# Evento: event-photos, JPEG/PNG/WebP, 5 MB, uploadPostPhotoAction.
+# Evento reconfere locality_memberships pelo usuario da sessao antes de criar cliente privilegiado.
+# Negativas de evento: sem vinculo, erro de consulta e sem sessao; positivo ignora userId forjado no form.
+# Fixture sintetica verifica diretorio GPS no TIFF e coordenadas no XMP antes de testar a limpeza.
+# GREEN: photo-upload-action.test.ts 84 de 84; sanitize-image.test.ts 10 de 10, total 94.
+# Cada caminho cobre metadados, formato, orientacoes 1 e 6, MIME recusado, excesso de bytes e corrupcao.
+# Helper cobre oito orientacoes EXIF por pixels assimetricos, MIME divergente e excesso apos reencodar.
+# sharp ja estava instalado; declarado como dependencia direta web exata e importer do lock ajustado.
+# Ao executar pnpm exec apos o ajuste, pnpm sincronizou node_modules automaticamente, com zero downloads.
+# Verificacao automatica de dependencias desativada nos comandos seguintes; sem instalacao solicitada.
+# supabase start PASS; primeira consulta de help encontrou telemetria fora do sandbox.
+# SUPABASE_TELEMETRY_DISABLED=1 e DO_NOT_TRACK=1 evitaram essa escrita nos comandos seguintes.
+# db reset --local --no-seed PASS; test:db PASS, 135 arquivos e 1842 testes, sem captura ou dev server.
+# Gate completo PASS: lint, typecheck, test e secrets; build PULADO porque .env.local esta ausente.
+# Gate mediu 1351 unitarios, 76 mobile, 19 web, 189 privacy e 120 scope, todos passando.
+# Nenhum .env.local criado ou alterado, nenhuma migration ou policy alterada, nenhum comando de escrita git.
+# Nenhum push, PR, merge ou deploy; rede nao solicitada e nenhum provedor externo usado nos testes.
+# Quadro consultado por SEC-004 sem card correspondente; registro mantido somente neste contrato.
+# task-contract.mjs validado; implementacao local com testes, revisao independente e E2E pendentes.
+# A prova dos bytes das actions usa Storage mockado; pgTAP e prova separada do banco local real.
