@@ -226,13 +226,16 @@ describe("SEC-005: delivery lookup failures", () => {
     expect(send).not.toHaveBeenCalled()
   })
 
-  it("delivers on the next scheduled attempt after the lookup recovers", async () => {
+  // A rota não consulta relógio: quem agenda é o despachante SQL, que espera
+  // updated_at + 60s * 2^attempts. O teste de falha acima prova esse
+  // agendamento via isOutboxDue; este prova a recuperação quando o lote é
+  // reenviado depois que a consulta volta a responder.
+  it("delivers when a later dispatch runs after the lookup recovers", async () => {
     const optOut: QueryResult = { data: null, error: { message: "lookup offline" } }
     const client = clientFor("event_invite", true, { notification_opt_outs: optOut })
     expect(await dispatch(client)).toMatchObject({ sent: 0, pending: 1 })
     expect(send).not.toHaveBeenCalled()
 
-    vi.advanceTimersByTime(OUTBOX_BASE_RETRY_MS)
     optOut.error = null
     expect(await dispatch(client)).toMatchObject({ sent: 1, pending: 0 })
     expect(send).toHaveBeenCalledTimes(1)
