@@ -1,13 +1,14 @@
 # Protótipo HTML → Supabase: lista de adaptadores
 
 Entregável final do kit: o que cada parte do estado local do protótipo (`localStorage`,
-schema 2) vai exigir quando a interface for ligada ao backend real. O mapeamento foi
-feito **por nome de tabela** nas 133 migrations de `supabase/migrations/`. As colunas
-e as políticas RLS **não foram conferidas uma a uma**: cada adaptador começa por essa
-verificação. Nenhum arquivo de backend foi alterado.
+schema 2) vai exigir quando a interface for ligada ao backend real. O mapeamento original foi feito **por nome de tabela** e precisa ser reconciliado
+com a evolução posterior do backend. Em 19/10/2026, o repositório contém 184 migrations
+SQL; as colunas, políticas RLS e o funcionamento em runtime **não foram conferidos
+integralmente** nesta revisão. Cada adaptador começa por essas verificações. Nenhum arquivo de backend foi alterado.
 
-Legenda: **Existe** = tabela/RPC com o mesmo propósito; **Parcial** = cobre parte;
-**Lacuna** = não há nada equivalente.
+Legenda: **Existe** = estrutura identificada no código das migrations, **não** prova
+de implantação em produção nem de funcionamento; **Parcial** = cobre parte;
+**Lacuna** = equivalente ainda não identificado no inventário.
 
 | Estado local | Usado em | Backend | Situação |
 | --- | --- | --- | --- |
@@ -18,7 +19,7 @@ Legenda: **Existe** = tabela/RPC com o mesmo propósito; **Parcial** = cobre par
 | `prefs.digest/cap` | Configurações | `notification_preferences`, `notification_opt_outs` | Existe |
 | `prefs.appearance` | Tema | — | Só local (não precisa de backend) |
 | `prefs.showHood` | Privacidade | `profiles` | Verificar coluna |
-| `items` (desapegos e imóveis), `drafts`, `saved` em anúncio | Desapegos, Imóveis, Meus anúncios, Salvos | — | **Lacuna: não há tabelas de anúncio, rascunho nem favorito de anúncio** |
+| `items` (desapegos e imóveis), `drafts`, `saved` em anúncio | Desapegos, Imóveis, Meus anúncios, Salvos | `listings` (status `draft`), `property_details`, `listing_photos`, `listing_saves`, `listing_status_events`, `transition_listing` | **Existe no código das migrations.** Adaptador de estado local, políticas RLS e execução ponta a ponta ainda exigem verificação. |
 | `biz`, `myBiz`, assumir página | Negócios | `provider_profiles`, `provider_accounts`, `provider_catalog_items`, `provider_portfolio_photos`, `provider_reach`, `provider_search` | Existe |
 | `biz.says/recN`, indicação | Negócios, Comunidade | `recommendation_replies`, `recommendation_requests` | Parcial: conferir se a indicação direta a negócio cabe nessas tabelas |
 | `biz.saved` | Salvos | `recommendation_saves`? | Verificar |
@@ -69,5 +70,32 @@ implementação. Este documento só descreve as lacunas e não aprova nada.
 2. Comunidade, grupos, publicações, indicações e eventos, que já existem.
 3. Conversas e avisos, que já existem.
 4. Negócios, que já existem como `provider_*`.
-5. **Anúncios (desapegos e imóveis): exige desenho de dados novo.**
-6. **Planos e patrocínio: exige decisão de produto e de cobrança.**
+5. **Anúncios (desapegos e imóveis): reconciliar o estado do protótipo com o domínio `listings` já modelado nas migrations.** Verificar aplicação do schema, políticas RLS, transições e testes E2E antes de considerar o adaptador concluído.
+6. **Planos e patrocínio: confirmar a ausência de um domínio completo de cobrança no backend atual e obter aprovação R3 para a integração comercial.**
+
+
+## Reconciliação de evidências — 19/10/2026
+
+**Escopo:** comparação estática, por GitHub, deste inventário contra a árvore `main`
+do repositório. **Não houve execução do REA, migração do banco, testes E2E, nem
+inspeção de políticas RLS em ambiente implantado.**
+
+- O inventário original diz que anúncios, rascunhos e favoritos não têm tabelas.
+  Porém `supabase/migrations/20260911043053_listings_market_and_homes.sql`
+  cria `public.listings`, `public.property_details`, `public.listing_photos`,
+  `public.listing_alerts` e `public.listing_saves`, com policies de acesso.
+- `supabase/migrations/20260911043436_listing_lifecycle.sql` cria o histórico
+  `listing_status_events` e a RPC `transition_listing` para as mudanças de situação.
+- `docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md` já registra o desenho
+  unificado de Mercado e Moradia como aprovado, de risco R3.
+- Existem testes de banco em `supabase/tests/listing-market.sql`,
+  `supabase/tests/listings-moradia.sql`, `supabase/tests/listing-lifecycle.sql`
+  e `supabase/tests/listing-alerts.sql`; sua presença **não equivale a execução
+  recente bem-sucedida**.
+- A UI do protótipo continua em `localStorage`. O trabalho remanescente é verificar
+  campos, contratos, autorização, migração implantada, adaptação de dados e fluxo completo.
+
+**Próxima prova recomendada:** montar matriz de contrato para
+`criar rascunho → publicar → pesquisar → salvar → iniciar conversa → alterar situação`,
+ligando cada ação de `prototypes/bivaque-html/src/features/listings/` a uma tabela/RPC,
+uma policy e um teste de sucesso/negação no backend real.
