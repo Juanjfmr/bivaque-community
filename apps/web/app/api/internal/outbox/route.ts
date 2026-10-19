@@ -21,6 +21,22 @@ export const dynamic = "force-dynamic"
 
 const MAX_BATCH = 100
 
+// Teto de segurança do lote total. `private.outbox_prepare_due()` entrega
+// todos os IDs vencidos no mesmo minuto, sem limite; 5.000 cobre uma fila bem
+// acima do volume normal e ainda impede que um payload arbitrário abra
+// milhares de consultas numa única requisição. O processamento é fatiado em
+// blocos de MAX_BATCH — rejeitar o lote inteiro travava a fila para sempre
+// (SEC-005 H4), porque o SQL já havia avançado `updated_at` dos itens.
+const MAX_TOTAL_BATCH = 5_000
+
+type BatchCounts = {
+  processed: number
+  sent: number
+  skipped: number
+  failed: number
+  pending: number
+}
+
 type OutboxRow = Database["public"]["Tables"]["outbox"]["Row"]
 type NotificationPreferencesRow = Pick<
   Database["public"]["Tables"]["notification_preferences"]["Row"],
@@ -97,13 +113,49 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 })
   }
 
-  const ids = rawIds.filter((id): id is string => typeof id === "string" && id.length > 0)
-  if (ids.length === 0 || ids.length > MAX_BATCH) {
+  const ids = [
+    ...new Set(rawIds.filter((id): id is string => typeof id === "string" && id.length > 0)),
+  ]
+  if (ids.length === 0 || ids.length > MAX_TOTAL_BATCH) {
     return NextResponse.json({ error: "invalid_batch" }, { status: 400 })
   }
 
   const supabase = createServerClient()
+  const now = Date.now()
+  const totals: BatchCounts = { processed: 0, sent: 0, skipped: 0, failed: 0, pending: 0 }
 
+  for (const chunk of chunksOf(ids, MAX_BATCH)) {
+    const counts = await processBatch(chunk, supabase, now)
+    if (counts === null) {
+      return NextResponse.json({ error: "internal" }, { status: 500 })
+    }
+    totals.processed += counts.processed
+    totals.sent += counts.sent
+    totals.skipped += counts.skipped
+    totals.failed += counts.failed
+    totals.pending += counts.pending
+  }
+
+  log.info("outbox worker processed batch", totals)
+
+  return NextResponse.json(totals)
+}
+
+function chunksOf<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size))
+  }
+  return chunks
+}
+
+// Processa até MAX_BATCH IDs. Devolve null quando a consulta do lote falha,
+// para o chamador responder 500 sem continuar com dados que não conseguiu ler.
+async function processBatch(
+  ids: string[],
+  supabase: ReturnType<typeof createServerClient>,
+  now: number,
+): Promise<BatchCounts | null> {
   const { data: rows, error: selectError } = await supabase
     .from("outbox")
     .select("*")
@@ -113,11 +165,11 @@ export async function POST(request: Request) {
 
   if (selectError) {
     log.error("outbox worker select failed", { error: selectError.message, count: ids.length })
-    return NextResponse.json({ error: "internal" }, { status: 500 })
+    return null
   }
 
   if (!rows || rows.length === 0) {
-    return NextResponse.json({ processed: 0 })
+    return { processed: 0, sent: 0, skipped: 0, failed: 0, pending: 0 }
   }
 
   const messages = rows.map(toMessage)
@@ -218,7 +270,6 @@ export async function POST(request: Request) {
     }),
   )
 
-  const now = Date.now()
   // No delivery was attempted. Keep these rows pending without consuming the
   // provider retry budget. The SQL dispatcher waits 60s * 2^attempts after
   // updated_at before selecting them again (it leases rows before this POST).
@@ -302,19 +353,11 @@ export async function POST(request: Request) {
     }
   }
 
-  log.info("outbox worker processed batch", {
+  return {
     processed: mutations.length,
     sent,
     skipped,
     failed,
     pending,
-  })
-
-  return NextResponse.json({
-    processed: mutations.length,
-    sent,
-    skipped,
-    failed,
-    pending,
-  })
+  }
 }
