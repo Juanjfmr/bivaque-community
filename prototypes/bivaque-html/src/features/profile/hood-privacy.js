@@ -7,8 +7,9 @@ const hoodShown=x=>!!x&&!!x.hood&&!(x.mine&&!state.prefs.showHood);
 const hoodTag=(x,sep=' · ',plain=false)=>hoodShown(x)?(plain?x.hood:esc(x.hood))+sep:'';
 // Sufixo do cabeçalho de conteúdo próprio: " · Parque 10", só com a preferência ligada e um bairro no perfil.
 const ownHoodSuffix=mine=>mine&&state.prefs.showHood&&state.profile.hood?` · ${esc(state.profile.hood)}`:'';
-// Só Manaus tem a lista de bairros e as coordenadas do mapa; nas outras cidades não há filtro de bairro nem Mapa.
-const HOOD_CITIES=['Manaus'];
-const cityHasHoods=(city=state.city)=>HOOD_CITIES.includes(city);
+// Rodada 67: filtro de bairro e Mapa em toda cidade com base de bairros (data/demo/bairros.js).
+const cityHasHoods=(city=state.city)=>hoodsOf(city).length>0;
+// Ponto de partida da distância: o bairro do perfil, só na cidade onde a pessoa mora.
+const hoodOrigin=(city=state.city)=>city===state.homeCity?hoodInfo(state.profile.hood,city):null;
 // Rodada 66: nos formulários, o campo de bairro com busca (shell/hood-picker.js), em qualquer cidade.
 function hoodField(id,value='',city=state.homeCity,help){return hoodPicker(id,'Bairro',value,{city,...(help?{help}:{})});}

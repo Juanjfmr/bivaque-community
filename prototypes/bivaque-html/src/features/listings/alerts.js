@@ -6,7 +6,8 @@
 // por baixo do diálogo e não pode ser tocado).
 let alertDeleted=null;
 // Mesma busca, qualquer ordem de clique: listas comparadas ordenadas.
-const alertKey=attrs=>JSON.stringify(Object.keys(attrs).sort().map(k=>[k,Array.isArray(attrs[k])?[...attrs[k]].sort():attrs[k]]));
+// Rodada 67: dist zerada não conta (alertas salvos antes da distância continuam iguais).
+const alertKey=attrs=>JSON.stringify(Object.keys(attrs).filter(k=>k!=='dist'||attrs.dist).sort().map(k=>[k,Array.isArray(attrs[k])?[...attrs[k]].sort():attrs[k]]));
 const alertSame=(a,kind,attrs)=>a.kind===kind&&a.city===state.city&&alertKey(a.attrs)===alertKey(attrs);
 const currentAlert=kind=>(state.alerts||[]).find(a=>alertSame(a,kind,catalogAttrs[kind]));
 function alertLabel(kind,a){
@@ -16,6 +17,7 @@ function alertLabel(kind,a){
  if(kind==='imovel'){if(a.beds)parts.push(`${a.beds}+ quartos`);if(a.parking)parts.push(`${a.parking}+ ${a.parking===1?'vaga':'vagas'}`);if(a.area)parts.push(`${a.area} m²+`);for(const k of a.amen)parts.push(amenityLabel(k).toLowerCase());if(a.avail)parts.push(availLabel(a.avail).toLowerCase());}
  else{if(a.cond)parts.push(a.cond.toLowerCase());if(a.pickup)parts.push(a.pickup==='now'?'retirada imediata':'retirada em até 30 dias');}
  if(a.hoods.length)parts.push(a.hoods.length===1?a.hoods[0]:`${a.hoods.length} bairros`);
+ if(a.dist)parts.push(`até ${a.dist} km do seu bairro`);
  return parts.join(' · ');
 }
 function alertMatches(x,al){const a=al.attrs;return x.city===al.city&&x.status==='active'&&itemVisible(x)&&x.kind===al.kind&&(!hasPrice(a.min)||itemTotal(x)>=Number(a.min))&&(!hasPrice(a.max)||itemTotal(x)<=Number(a.max))&&catalogMatches(x,al.kind,a);}
@@ -69,7 +71,7 @@ function simulateAlertListing(){
  if(isBlocked('Paula V.')){notify('Paula V. está nas suas pessoas bloqueadas. Nenhum anúncio de exemplo chegou.','info');return;}
  const a=al.attrs,min=Number(a.min)||0,max=hasPrice(a.max)?Number(a.max):0,kind=al.kind;
  const price=max?Math.max(min,max>=20?Math.floor(max*0.9/10)*10:max):Math.max(min,kind==='imovel'?2300:350);
- const hood=a.hoods[0]||'Flores',id=uid('i');
+ const hood=a.hoods[0]||(a.dist&&hoodOrigin(al.city)?.name)||hoodPopular(al.city)[0]?.name||'',id=uid('i');
  const base={id,kind,city:al.city,status:'active',saved:false,demo:true,views:0,createdAt:Date.now(),numPrice:price,price:money(price),hood,seller:'Paula V.',sini:'PV',stone:'c2',note:'Membro da comunidade'};
  const item=kind==='imovel'
   ?(()=>{const ptype=a.ptypes[0]||'Apartamento',beds=Math.max(a.beds,2);return {...base,per:'/mês',flag:'Aluguel',ptype,beds,area:Math.max(a.area,64),parking:a.parking,condo:0,amen:[...a.amen],avail:'',photos:[ptype.startsWith('Casa')?'kitchen':'apartment'],title:`${ptype} com ${beds} quartos em ${hood}`,desc:'Anúncio de exemplo criado para demonstrar o alerta de busca.'};})()

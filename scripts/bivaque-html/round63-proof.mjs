@@ -495,7 +495,8 @@ const checkpoints = {
     expect(/Bairro/.test(await page.locator("#filter-panel").innerText()), "painel sem Bairro")
     await page.keyboard.press("Escape")
     await settle(page)
-    // outra cidade: nenhum dos dois, e Manaus não é oferecida no lugar
+    // Rodada 67: toda cidade com base de bairros tem filtro e Mapa, com os bairros dela; os de Manaus
+    // nunca são oferecidos no lugar (antes, fora de Manaus os dois sumiam).
     for (const city of ["Brasília", "Natal"]) {
       await action(page, "city")
       await choose(page, "city-select", city)
@@ -503,16 +504,19 @@ const checkpoints = {
       for (const route of ["imoveis", "desapegos"]) {
         await go(page, route)
         expect(
-          (await page.locator('[data-action="catalog-view"]').count()) === 0,
-          `${city}/${route}: botão de Mapa`,
+          (await page.locator('[data-action="catalog-view"]').count()) === 2,
+          `${city}/${route}: sem botão de Mapa`,
         )
         expect(
-          (await page.locator('[data-action="catalog-pill"][data-value="hood"]').count()) === 0,
-          `${city}/${route}: filtro de bairro`,
+          (await page.locator('[data-action="catalog-pill"][data-value="hood"]').count()) === 1,
+          `${city}/${route}: sem filtro de bairro`,
         )
         await action(page, "catalog-pill", "all")
         const panel = await page.locator("#filter-panel").innerText()
-        expect(!/Bairro|Ponta Negra|Planalto/.test(panel), `${city}/${route}: painel com bairros`)
+        expect(
+          /Bairro/.test(panel) && !/Planalto|Adrianópolis|Parque 10|Tarumã/.test(panel),
+          `${city}/${route}: painel com bairros de Manaus`,
+        )
         await page.keyboard.press("Escape")
         await settle(page)
       }

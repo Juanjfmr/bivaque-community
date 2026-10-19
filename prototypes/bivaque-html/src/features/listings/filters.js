@@ -5,7 +5,7 @@
 const FILTER_DESKTOP=matchMedia('(min-width:1024px)');
 const FILTER_QUICK={imovel:[1500,2500,3000,4000],desapego:[100,300,800,1500]};
 const FILTER_SECTIONS={imovel:['ptype','price','avail','beds','parking','area','amen','hood'],desapego:['cat','price','cond','pickup','hood']};
-const FILTER_FIELDS={ptype:['ptypes'],price:['min','max'],avail:['avail'],beds:['beds'],parking:['parking'],area:['area'],amen:['amen'],hood:['hoods'],cat:['cats'],cond:['cond'],pickup:['pickup']};
+const FILTER_FIELDS={ptype:['ptypes'],price:['min','max'],avail:['avail'],beds:['beds'],parking:['parking'],area:['area'],amen:['amen'],hood:['hoods','dist'],cat:['cats'],cond:['cond'],pickup:['pickup']};
 let filterDraft=null,filterClosingHistory=false,fpDownOnBackdrop=false;
 const isoDay=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'');
 const shortDay=v=>new Date(`${v}T12:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
@@ -18,7 +18,7 @@ const availLabel=v=>v==='now'?'Disponível agora':v==='30'?'Em até 30 dias':v==
 // Quantos grupos de filtro estão ativos (o número da pílula "Filtros").
 function filterActiveCount(kind,a=catalogAttrs[kind]){
  const price=hasPrice(a.min)||hasPrice(a.max)?1:0;
- const hoods=cityHasHoods()&&a.hoods.length?1:0;
+ const hoods=cityHasHoods()&&(a.hoods.length||distOn(a))?1:0;
  return kind==='imovel'?price+(a.ptypes.length?1:0)+hoods+(a.beds?1:0)+(a.parking?1:0)+(a.area?1:0)+a.amen.length+(a.avail?1:0):price+(a.cats.length?1:0)+hoods+(a.cond?1:0)+(a.pickup?1:0);
 }
 function catalogPillsHtml(kind){
@@ -26,7 +26,7 @@ function catalogPillsHtml(kind){
  const toggle=(k,ic,label)=>{const on=a.amen.includes(k);return `<button type="button" class="fpill${on?' on':''}" data-action="catalog-toggle" data-value="${k}" aria-pressed="${on}">${icon(ic)}${esc(label)}</button>`;};
  const all=`<button type="button" class="fpill fall${n?' on':''}" data-action="catalog-pill" data-value="all" aria-haspopup="dialog" aria-label="${n?`Filtros, ${n} ativos`:'Filtros'}">${icon('tune')}${FILTER_DESKTOP.matches?'Todos os filtros':'Filtros'}${n?`<span class="fbadge" aria-hidden="true">${n}</span>`:''}</button>`;
  const price=pill('price',priceLabel(kind,a.min,a.max),hasPrice(a.min)||hasPrice(a.max));
- const hood=cityHasHoods()?pill('hood',manyLabel(a.hoods,'Bairro','bairros'),a.hoods.length):'';
+ const hood=cityHasHoods()?pill('hood',[a.hoods.length?manyLabel(a.hoods,'','bairros'):'',distOn(a)?`Até ${a.dist} km`:''].filter(Boolean).join(' · ')||'Bairro',a.hoods.length||distOn(a)):'';
  const items=kind==='imovel'?[pill('ptype',manyLabel(a.ptypes,'Tipo','tipos'),a.ptypes.length),price,pill('beds',[a.beds?`${a.beds}+ quartos`:'',a.parking?`${a.parking}+ ${a.parking===1?'vaga':'vagas'}`:''].filter(Boolean).join(' · ')||'Quartos',a.beds||a.parking),hood,pill('avail',availLabel(a.avail),a.avail),toggle('pets','pets','Aceita pets'),toggle('furnished','chair','Mobiliado')]:[pill('cat',manyLabel(a.cats,'Categoria','categorias'),a.cats.length),price,pill('cond',a.cond||'Estado',a.cond),pill('pickup',a.pickup==='now'?'Retirada imediata':a.pickup==='30'?'Retirada em 30 dias':'Retirada',a.pickup),hood];
  return `<div class="fpills" role="group" aria-label="Filtros de ${kind==='imovel'?'imóveis':'desapegos'}">${all}${items.join('')}</div>`;
 }
@@ -51,11 +51,22 @@ function fpSection(id){
  if(id==='parking')return fpGroup(id,'Vagas de garagem',seg('parking',[[0,'Qualquer'],[1,'1+'],[2,'2+'],[3,'3+']]));
  if(id==='area')return fpGroup(id,'Área mínima',chips('area',[[0,'Qualquer'],[40,'40 m²+'],[60,'60 m²+'],[80,'80 m²+'],[100,'100 m²+']]));
  if(id==='amen')return fpGroup(id,'Comodidades',chips('amen',PROPERTY_AMENITIES,true));
- if(id==='hood')return fpGroup(id,'Bairro',chips('hoods',HOODS.map(h=>[h,h]),true));
+ if(id==='hood')return fpHoodSection(chips,seg);
  if(id==='cat')return fpGroup(id,'Categoria',chips('cats',ITEM_CATEGORIES.map(c=>[c,c]),true));
  if(id==='cond')return fpGroup(id,'Estado de uso',chips('cond',[['','Todos'],...ITEM_CONDITIONS.map(c=>[c,c])]));
  if(id==='pickup')return fpGroup(id,'Retirada',chips('pickup',[['','Qualquer data'],['now','Retirada imediata'],['30','Em até 30 dias']]));
  return '';
+}
+// Rodada 67: distância a partir do bairro do perfil (só na cidade onde a pessoa mora) e bairros da
+// cidade, os com mais anúncios primeiro; com muitos bairros, uma busca filtra os chips.
+const distOn=a=>a.dist&&hoodOrigin()?a.dist:0;
+function fpHoodSection(chips,seg){
+ const {kind,attrs:a}=filterDraft,city=state.city,o=hoodOrigin(),n=new Map();
+ for(const x of cityItems())if(x.status==='active'&&x.kind===kind&&hoodShown(x))n.set(x.hood,(n.get(x.hood)||0)+1);
+ const base=hoodsOf(city).map(h=>h.name).sort((p,q)=>(n.get(q)||0)-(n.get(p)||0)),names=[...new Set([...a.hoods,...base,...n.keys()])];
+ const dist=city!==state.homeCity?'':o?fpGroup('dist','Distância de mim',seg('dist',[[0,'Qualquer'],[1,'1 km'],[3,'3 km'],[5,'5 km'],[10,'10 km']]),`A partir do seu bairro, ${esc(o.name)}.`):fpGroup('dist','Distância de mim','','Informe seu bairro em Configurações para filtrar pela distância.');
+ const search=names.length>8?`<label class="ffield fhood-q"><span>Acrescentar bairro</span><input type="search" id="fp-hood-q" placeholder="Digite o bairro" autocomplete="off"></label>`:'';
+ return dist+fpGroup('hood','Bairros',search+chips('hoods',names.map(h=>[h,h]),true));
 }
 function fpSections(){const {kind,key}=filterDraft;return (key==='all'?FILTER_SECTIONS[kind]:key==='beds'?['beds','parking']:[key]).filter(id=>id!=='hood'||cityHasHoods());}
 function fpCount(){const {kind,attrs}=filterDraft;return filteredItems(kind,attrs).length;}
@@ -86,6 +97,7 @@ function bindFilterInputs(el){
  const clean=v=>{const n=Math.max(0,Math.trunc(Number(v)||0));return n?String(n):'';};
  for(const [input,key] of [[min,'min'],[max,'max']])input?.addEventListener('input',()=>{filterDraft.attrs={...filterDraft.attrs,[key]:clean(input.value)};const a=filterDraft.attrs;if(slider){const top=Number(slider.max);slider.valueStart=Math.min(Number(a.min)||0,top);slider.valueEnd=Math.min(Number(a.max)||top,top);}fpSync('[data-f="quick"]',b=>Number(a.max)===Number(b.dataset.v)&&!Number(a.min));fpUpdateCount();});
  slider?.addEventListener('change',()=>{const top=Number(slider.max);filterDraft.attrs={...filterDraft.attrs,min:slider.valueStart>0?String(slider.valueStart):'',max:slider.valueEnd<top?String(slider.valueEnd):''};if(min)min.value=filterDraft.attrs.min;if(max)max.value=filterDraft.attrs.max;fpUpdateCount();});
+ const hq=$('#fp-hood-q',el);hq?.addEventListener('input',()=>{const q=hoodNorm(hq.value);for(const b of $$('[data-field="hoods"]',el))b.hidden=!!q&&!hoodNorm(b.dataset.v).includes(q)&&b.getAttribute('aria-pressed')!=='true';});
  date?.addEventListener('change',()=>{const v=isoDay(date.value)&&date.value>=dateISO(0)?date.value:'';filterDraft.attrs={...filterDraft.attrs,avail:v};fpSync('[data-field="avail"]',b=>b.dataset.v===v);fpUpdateCount();});
 }
 function filterPanelClick(e){
@@ -97,7 +109,7 @@ function filterPanelClick(e){
  if(f==='clear'){const defaults=CATALOG_DEFAULTS[d.kind],attrs={...d.attrs};for(const s of fpSections())for(const field of FILTER_FIELDS[s])attrs[field]=structuredClone(defaults[field]);d.attrs=attrs;fpRefresh('#fp-apply');return;}
  if(f==='quick'){const on=Number(d.attrs.max)===Number(b.dataset.v)&&!Number(d.attrs.min);d.attrs={...d.attrs,min:'',max:on?'':b.dataset.v};const a=d.attrs,el=$('#filter-panel'),slider=$('#fp-price',el);fpSync('[data-f="quick"]',x=>Number(a.max)===Number(x.dataset.v)&&!Number(a.min));if($('#fp-min',el))$('#fp-min',el).value=a.min;if($('#fp-max',el))$('#fp-max',el).value=a.max;if(slider){const top=Number(slider.max);slider.valueStart=0;slider.valueEnd=Math.min(Number(a.max)||top,top);}fpUpdateCount();return;}
  if(f==='set'){
-  const field=b.dataset.field,raw=b.dataset.v,num=['beds','parking','area'].includes(field),v=num?Number(raw)||0:raw,attrs={...d.attrs};
+  const field=b.dataset.field,raw=b.dataset.v,num=['beds','parking','area','dist'].includes(field),v=num?Number(raw)||0:raw,attrs={...d.attrs};
   attrs[field]=b.dataset.multi?(attrs[field].includes(v)?attrs[field].filter(x=>x!==v):[...attrs[field],v]):v;d.attrs=attrs;
   const cur=attrs[field],same=x=>{const xv=num?Number(x.dataset.v)||0:x.dataset.v;return Array.isArray(cur)?cur.includes(xv):String(cur)===String(xv);};
   fpSync(`[data-f="set"][data-field="${field}"]`,same);if(field==='avail'){const date=$('#fp-date');if(date)date.value='';}fpUpdateCount();

@@ -2,7 +2,8 @@ function filterChips(values,selected,action){return `<div class="filter-row" dat
 // Rodada 22: Desapegos e Imóveis são telas próprias, cada uma com os filtros do seu mercado.
 // Rodada 23: os filtros ficam em pílulas (features/listings/filters.js).
 // Cada tela guarda os próprios filtros, inclusive a faixa de valor.
-const CATALOG_DEFAULTS={desapego:{cats:[],hoods:[],cond:'',pickup:'',min:'',max:''},imovel:{ptypes:[],hoods:[],beds:0,parking:0,area:0,amen:[],avail:'',min:'',max:''}};
+// Rodada 67: dist = distância máxima (km) a partir do bairro do perfil; 0 = qualquer.
+const CATALOG_DEFAULTS={desapego:{cats:[],hoods:[],dist:0,cond:'',pickup:'',min:'',max:''},imovel:{ptypes:[],hoods:[],dist:0,beds:0,parking:0,area:0,amen:[],avail:'',min:'',max:''}};
 let catalogAttrs=structuredClone(CATALOG_DEFAULTS);
 function catalogKind(){return route.name==='imoveis'?'imovel':route.name==='desapegos'?'desapego':catalogFilter==='imovel'?'imovel':'desapego';}
 // Imóvel pesa pelo total do mês (aluguel + condomínio); desapego, pelo preço.
@@ -18,7 +19,9 @@ function catalogPriceRange(kind=catalogKind()){const prices=cityItems().filter(x
 // Disponível até a data pedida: sem data no anúncio = disponível agora.
 function availBy(value){return value==='now'?dateISO(0):value==='30'?dateISO(30):value==='60'?dateISO(60):/^\d{4}-\d{2}-\d{2}$/.test(value||'')?value:'';}
 function catalogMatches(x,kind,a){
- const hood=!a.hoods.length||!cityHasHoods(x.city)||a.hoods.includes(x.hood);
+ // Distância pelo centro dos bairros; anúncio com bairro fora da base não entra quando há distância.
+ const o=a.dist?hoodOrigin(x.city):null,p=o&&hoodInfo(x.hood,x.city)?.pt,near=!o||!!p&&hoodKm(o.pt,p)<=a.dist;
+ const hood=(!a.hoods.length||a.hoods.includes(x.hood))&&near;
  if(kind==='imovel'){const by=availBy(a.avail);return hood&&(!a.ptypes.length||a.ptypes.includes(x.ptype))&&(x.beds||0)>=a.beds&&(x.parking||0)>=a.parking&&(x.area||0)>=a.area&&a.amen.every(k=>(x.amen||[]).includes(k))&&(!by||!x.avail||x.avail<=by);}
  const pick=x.pickup||'';
  return hood&&(!a.cats.length||a.cats.includes(x.cat))&&(!a.cond||x.cond===a.cond)&&(a.pickup!=='now'||!pick||pick<=dateISO(0))&&(a.pickup!=='30'||!pick||pick<=dateISO(30));

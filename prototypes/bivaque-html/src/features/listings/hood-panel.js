@@ -35,7 +35,7 @@ function openHoodPanel(hood){
  if(!hoodPanel)try{history.pushState({...history.state,bivaque:true,hood:true,overlayDepth:(history.state?.overlayDepth||0)+1},'',location.href);}catch{}
  const same=hoodPanel?.hood===hood;hoodPanel={hood,stop:same?hoodPanel.stop:'low',back:document.activeElement};renderHoodPanel(true);
  // O bairro escolhido vai para o centro da parte do mapa que fica acima da folha.
- if(HOOD_POINTS[hood])catalogMap?.easeTo?.({center:HOOD_POINTS[hood],offset:[0,-hoodStopHeight(hoodPanel.stop)/2],duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:450});
+ if(hoodPoint(hood))catalogMap?.easeTo?.({center:hoodPoint(hood),offset:[0,-hoodStopHeight(hoodPanel.stop)/2],duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:450});
 }
 function closeHoodPanel(restore=true,dropHistory=true){
  if(!hoodPanel)return;
