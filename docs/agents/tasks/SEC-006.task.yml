@@ -39,6 +39,7 @@ acceptance:
   - Mercado novo anuncio e editar foto enviam pela action do servidor, com limpeza de metadados e o mesmo limite de tamanho e formato de antes (ajustar bodySizeLimit se necessario, com justificativa)
   - Teste prova que a foto do Mercado gravada nao tem EXIF ou GPS
   - Nenhum outro caminho de upload quebra (testes existentes e E2E de foto)
+  - Revisao Flash M3 - moradia (lib/listings/actions.ts), portfolio (prestador/actions.ts) e pedido (pedidos/novo/actions.ts) ainda gravam com o cliente do usuario; passam a gravar com service role depois de reconferir a mesma autorizacao que a policy exigia, antes de remover as policies
 proof:
   - npx supabase db reset --local --no-seed
   - npx pnpm@11.18.0 test:db
