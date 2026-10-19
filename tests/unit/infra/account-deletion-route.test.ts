@@ -245,7 +245,7 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
     expect(mockRemove).toHaveBeenCalledWith([`${USER_ID}/resto.png`])
   })
 
-  it.each([0, 1, 100, 101, 250])(
+  it.each([0, 1, 100, 101, 250, 5000])(
     "removes all %i objects in each shrinking personal bucket before finalizing",
     async (count) => {
       const buckets = ["avatars", "verification-documents"].map((name) => {
@@ -284,6 +284,66 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
       expect(mockRpc).toHaveBeenCalledWith("finalize_account_deletion", { p_user_id: USER_ID })
     },
   )
+
+  it("recursively drains avatar folders without removing folder entries", async () => {
+    const remaining = new Set([
+      `${USER_ID}/avatar.png`,
+      `${USER_ID}/sub/photo.jpg`,
+      `${USER_ID}/sub/deeper/photo.webp`,
+    ])
+    const list = vi.fn(async (prefix: string) => {
+      const entries = new Map<string, { name: string; id: string | null }>()
+      for (const path of remaining) {
+        if (!path.startsWith(`${prefix}/`)) continue
+        const relative = path.slice(prefix.length + 1)
+        const name = relative.split("/")[0] ?? ""
+        entries.set(name, { name, id: relative.includes("/") ? null : path })
+      }
+      return { data: [...entries.values()].slice(0, 100), error: null }
+    })
+    const remove = vi.fn(async (paths: string[]) => {
+      // A folder is virtual: attempting to remove it leaves all its children.
+      for (const path of paths) {
+        expect(remaining.has(path)).toBe(true)
+        remaining.delete(path)
+      }
+      return { error: null }
+    })
+    mockStorageFrom.mockImplementation((bucket: string) =>
+      bucket === "avatars" ? { list, remove } : { list: mockList, remove: mockRemove },
+    )
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("purged")
+    expect(remaining.size).toBe(0)
+    expect(list).toHaveBeenCalledWith(`${USER_ID}/sub/deeper`, { limit: 100, offset: 0 })
+    expect((await list.mock.results.at(-1)?.value)?.data).toEqual([])
+    expect(mockDeleteUser).toHaveBeenCalledWith(USER_ID, true)
+  })
+
+  it("does not finalize when a nested listing fails", async () => {
+    mockList.mockResolvedValueOnce({ data: [{ name: "sub", id: null }], error: null })
+    mockList.mockResolvedValueOnce({ data: null, error: { message: "storage offline" } })
+
+    const { payload } = await run()
+
+    expect(mockList).toHaveBeenNthCalledWith(2, `${USER_ID}/sub`, { limit: 100, offset: 0 })
+    expect(mockRemove).not.toHaveBeenCalled()
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+  })
+
+  it("bounds recursive folder depth without treating a folder as an object", async () => {
+    mockList.mockResolvedValue({ data: [{ name: "sub", id: null }], error: null })
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    expect(mockList.mock.calls.length).toBeLessThanOrEqual(11)
+    expect(mockRemove).not.toHaveBeenCalled()
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+  })
 
   it.each(["avatars", "verification-documents"])(
     "does not finalize when the empty confirmation for %s fails after removal",
@@ -330,7 +390,8 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
     const { payload } = await run()
 
     expect(payload.outcomes[USER_ID]).toBe("media_failed")
-    expect(mockList).toHaveBeenCalledTimes(50)
+    // Even at the page ceiling, confirm whether the last removal drained it.
+    expect(mockList).toHaveBeenCalledTimes(51)
     expect(mockDeleteUser).not.toHaveBeenCalled()
     expect(mockRpc).not.toHaveBeenCalledWith("finalize_account_deletion", expect.anything())
   })

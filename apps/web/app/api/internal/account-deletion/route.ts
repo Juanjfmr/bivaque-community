@@ -62,40 +62,53 @@ function secretMatches(provided: string, expected: string): boolean {
 // linha seria marcada como purgada mesmo assim.
 const PAGE_SIZE = 100
 const MAX_PAGES = 50
+const MAX_FOLDER_DEPTH = 10
+
+async function purgeFolder(
+  storage: ReturnType<ReturnType<typeof createServerClient>["storage"]["from"]>,
+  prefix: string,
+  depth = 0,
+): Promise<string | null> {
+  if (depth > MAX_FOLDER_DEPTH) return "more folders than the purge depth ceiling"
+
+  // Uma listagem extra confirma o vazio mesmo depois da 50a pagina removida.
+  for (let page = 0; page <= MAX_PAGES; page += 1) {
+    const { data: objects, error: listError } = await storage.list(prefix, {
+      limit: PAGE_SIZE,
+      offset: 0,
+    })
+    if (listError) return listError.message
+    if (!objects) return "missing object listing"
+    if (objects.length === 0) return null
+    if (page === MAX_PAGES) return "more objects than the purge page ceiling"
+
+    // O Storage representa pastas virtuais com id null. Nunca remove a pasta:
+    // drena as folhas e deixa a entrada desaparecer da listagem do pai.
+    const paths: string[] = []
+    for (const object of objects) {
+      const path = `${prefix}/${object.name}`
+      if (object.id === null) {
+        const error = await purgeFolder(storage, path, depth + 1)
+        if (error) return error
+      } else {
+        paths.push(path)
+      }
+    }
+    if (paths.length > 0) {
+      const { error } = await storage.remove(paths)
+      if (error) return error.message
+    }
+  }
+  return "purge page ceiling reached"
+}
 
 async function purgePersonalMedia(
   supabase: ReturnType<typeof createServerClient>,
   userId: string,
 ): Promise<string | null> {
   for (const bucket of PERSONAL_BUCKETS) {
-    for (let page = 0; page < MAX_PAGES; page += 1) {
-      const { data: objects, error: listError } = await supabase.storage
-        .from(bucket)
-        // A remoção encolhe a coleção: sempre drenar a primeira página.
-        .list(userId, { limit: PAGE_SIZE, offset: 0 })
-
-      if (listError) {
-        return `${bucket}: ${listError.message}`
-      }
-      if (!objects) {
-        return `${bucket}: missing object listing`
-      }
-      if (objects.length === 0) {
-        break
-      }
-
-      const paths = objects.map((object) => `${userId}/${object.name}`)
-      const { error: removeError } = await supabase.storage.from(bucket).remove(paths)
-      if (removeError) {
-        return `${bucket}: ${removeError.message}`
-      }
-
-      // Teto de segurança: passou de MAX_PAGES, é melhor falhar e tentar de
-      // novo do que marcar como purgado com resíduo.
-      if (page === MAX_PAGES - 1) {
-        return `${bucket}: more objects than the purge page ceiling`
-      }
-    }
+    const error = await purgeFolder(supabase.storage.from(bucket), userId)
+    if (error) return `${bucket}: ${error}`
   }
 
   return null

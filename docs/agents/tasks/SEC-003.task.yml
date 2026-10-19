@@ -70,3 +70,11 @@ closure:
 # unit 1247, mobile 76, web 19, privacy 189, scope 120. Build pulado pelo
 # proprio gate por ausencia de .env.local; nenhum env criado.
 # Sem Docker/test:db/E2E/runtime integrado; revisao independente pendente.
+# Correcao da revisao Flash H2/L1, Codex, 2026-10-19, sobre c007bf03 + diff local.
+# RED: account-deletion-route.test.ts, 5 failed e 24 passed (subpastas, teto e confirmacao vazia).
+# GREEN: mesmo arquivo, 29/29 PASS, incluindo exatamente 5000 objetos por bucket e avatars/sub/deeper.
+# Purga recursiva distingue id null de folha, limita profundidade a 10 e confirma vazio apos a pagina 50.
+# Erro de pasta, profundidade excessiva ou residuo no teto impedem deleteUser/finalize; nunca remove entrada de pasta.
+# Gate final exit 0: lint, typecheck, test, secrets PASS; build pulado sem .env.local.
+# test:db da rodada PASS: 136 arquivos, 1875 testes; Storage permanece simulado nos unitarios.
+# Sem commit/alteracao de quadro fora dos allowed_paths; revisao independente e runtime Storage real pendentes.
