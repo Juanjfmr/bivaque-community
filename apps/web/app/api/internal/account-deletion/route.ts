@@ -21,9 +21,9 @@ export const dynamic = "force-dynamic"
 //      troca o e-mail por uma cadeia aleatória, e uma tentativa repetida nunca
 //      mais acharia o endereço real. Falhar aqui aborta sem purgar nada;
 //   1. mídias pessoais no bucket (avatar e documento de verificação, ambos
-//      organizados por <user_id>/...), paginadas até acabar. Se falhar, nada foi
-//      apagado ainda e a tentativa seguinte repete sem efeito colateral —
-//      remover objeto ausente é no-op;
+//      organizados por <user_id>/...), paginadas até confirmar a lista vazia.
+//      Se falhar, a credencial é preservada e a tentativa seguinte continua a
+//      limpeza — remover objeto ausente é no-op;
 //   2. auth.admin.deleteUser(id, true): soft delete do GoTrue apaga credencial
 //      e identidade e MANTÉM a linha de auth.users, que é o que segura a FK do
 //      conteúdo público (posts/comments são ON DELETE CASCADE);
@@ -71,12 +71,16 @@ async function purgePersonalMedia(
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const { data: objects, error: listError } = await supabase.storage
         .from(bucket)
-        .list(userId, { limit: PAGE_SIZE, offset: page * PAGE_SIZE })
+        // A remoção encolhe a coleção: sempre drenar a primeira página.
+        .list(userId, { limit: PAGE_SIZE, offset: 0 })
 
       if (listError) {
         return `${bucket}: ${listError.message}`
       }
-      if (!objects || objects.length === 0) {
+      if (!objects) {
+        return `${bucket}: missing object listing`
+      }
+      if (objects.length === 0) {
         break
       }
 
@@ -84,10 +88,6 @@ async function purgePersonalMedia(
       const { error: removeError } = await supabase.storage.from(bucket).remove(paths)
       if (removeError) {
         return `${bucket}: ${removeError.message}`
-      }
-
-      if (objects.length < PAGE_SIZE) {
-        break
       }
 
       // Teto de segurança: passou de MAX_PAGES, é melhor falhar e tentar de

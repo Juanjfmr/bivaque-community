@@ -30,7 +30,7 @@ acceptance:
   - A purga so finaliza depois de uma listagem vazia confirmada; erro de listagem ou remocao nao finaliza
   - O teste antigo que fixava o offset errado e corrigido para o comportamento certo, com comentario
 proof:
-  - npx pnpm@11.18.0 test -- tests/unit/infra/account-deletion-route.test.ts
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/account-deletion-route.test.ts
   - npx pnpm@11.18.0 gate
 risk: residuo de dado pessoal depois da exclusao de conta (LGPD)
 risk_level: R3
@@ -40,3 +40,33 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Execucao local em 2026-10-19, branch codex/seguranca (implementador Codex).
+# TDD RED: vitest run tests/unit/infra/account-deletion-route.test.ts -> 8 failed,
+# 17 passed. Colecao mutavel: 101 objetos deixavam 1; 250 deixavam 100.
+# Tambem falhavam offset zero, confirmacao vazia e teto sem finalizacao.
+# TDD GREEN: mesmo arquivo -> 25 passed, incluindo 0/1/100/101/250 nos dois
+# buckets, erro de listagem/remocao/confirmacao, listagem ausente e teto.
+# Gate: npx pnpm@11.18.0 gate -> exit 0; lint, typecheck, test, secrets PASS.
+# Suite: unit 1247, mobile 76, web 19, privacy 189, scope 120; sem falhas.
+# Build PULADO automaticamente: apps/web/.env.local ausente (nao criado).
+# Windows: npx.cmd; pnpm 11.18.0 do cache local, sem rede ou mudanca de versao.
+# Limites: Docker indisponivel; sem supabase start, test:db, E2E ou runtime
+# integrado. Implementado; revisao independente e verificacao de runtime pendentes.
+# Quadro consultado: SEC-003 ausente; RECON-052 contem o mecanismo historico.
+# BOARD/board.json nao alterados: fora dos allowed_paths deste contrato.
+# Divergencia encontrada no proof literal: pnpm test -- <arquivo> executou a
+# suite, mas encaminhou o arquivo Vitest ao node --test de test:scope: 120 pass,
+# 1 fail (carregamento do arquivo unitario pelo runner incorreto), exit 1.
+# O gate sem argumentos extras e o Vitest direcionado passaram, como acima.
+# Conforme roteiro, execucao parada antes do commit e da SEC-005, aguardando
+# autorizacao para corrigir apenas o comando de prova nos contratos.
+# Autorizado pelo coordenador (Claude) em 2026-10-19: o proof literal estava errado no contrato;
+# trocado por `pnpm exec vitest run <arquivo>`, que roda o Vitest isolado. Nada mais muda no contrato.
+# Retomada autorizada em 2026-10-19: proof corrigido executado com
+# npx.cmd pnpm@11.18.0 exec vitest run tests/unit/infra/account-deletion-route.test.ts
+# -> exit 0, 25 passed (1 arquivo). RED anterior preservado acima.
+# Gate reexecutado -> exit 0: lint, typecheck, test e secrets PASS;
+# unit 1247, mobile 76, web 19, privacy 189, scope 120. Build pulado pelo
+# proprio gate por ausencia de .env.local; nenhum env criado.
+# Sem Docker/test:db/E2E/runtime integrado; revisao independente pendente.
