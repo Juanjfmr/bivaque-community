@@ -2597,6 +2597,10 @@ export type Database = {
         Returns: string
       }
       get_profile_bio: { Args: { p_user_id: string }; Returns: string }
+      get_provider_contact_phone: {
+        Args: { p_provider_id: string }
+        Returns: string
+      }
       has_accepted_consent: {
         Args: {
           p_code_of_conduct_version: number

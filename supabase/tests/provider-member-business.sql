@@ -106,8 +106,7 @@ select lives_ok(
   'member cannot directly change privacy-sensitive contact columns'
 );
 select is(
-  (select contact_phone from public.provider_profiles
-    where id = current_setting('test.provider_id')::uuid),
+  public.get_provider_contact_phone(current_setting('test.provider_id')::uuid),
   null::text,
   'member business page keeps phone unset until its visibility contract is implemented'
 );
