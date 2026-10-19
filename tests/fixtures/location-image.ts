@@ -1,4 +1,39 @@
+import { crc32, deflateSync } from "node:zlib"
 import sharp from "sharp"
+
+export async function animatedLocationImage(): Promise<File> {
+  const bytes = await sharp(Buffer.from([255, 0, 0, 0, 255, 0]), {
+    raw: { width: 1, height: 2, channels: 3, pageHeight: 1 },
+  })
+    .withMetadata({ orientation: 6 })
+    .webp({ lossless: true, loop: 0, delay: [100, 100] })
+    .toBuffer()
+  return new File([new Uint8Array(bytes)], "animated.webp", { type: "image/webp" })
+}
+
+// Valid monochrome PNG: only ~32 MB while constructing the 256 MP fixture.
+// Never allocate a decoded 16000 x 16000 RGB image just to test its rejection.
+export function oversizedPixelImage(): File {
+  function chunk(type: string, data: Buffer) {
+    const length = Buffer.alloc(4)
+    length.writeUInt32BE(data.length)
+    const payload = Buffer.concat([Buffer.from(type), data])
+    const checksum = Buffer.alloc(4)
+    checksum.writeUInt32BE(crc32(payload))
+    return Buffer.concat([length, payload, checksum])
+  }
+  const header = Buffer.alloc(13)
+  header.writeUInt32BE(16000, 0)
+  header.writeUInt32BE(16000, 4)
+  header[8] = 1 // one bit per grayscale pixel
+  const bytes = Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", header),
+    chunk("IDAT", deflateSync(Buffer.alloc((16000 / 8 + 1) * 16000))),
+    chunk("IEND", Buffer.alloc(0)),
+  ])
+  return new File([new Uint8Array(bytes)], "16000x16000.png", { type: "image/png" })
+}
 
 // Synthetic pixels and coordinates, never a person's photo/location.
 export async function locationImage(

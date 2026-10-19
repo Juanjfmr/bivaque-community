@@ -10,7 +10,9 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 
-export async function uploadPostPhotoAction(formData: FormData): Promise<{ photoPath: string }> {
+export async function uploadPostPhotoAction(
+  formData: FormData,
+): Promise<{ photoPath: string } | { error: string }> {
   const file = formData.get("photo") as File | null
   if (!file || !(file instanceof File)) throw new Error("no file provided")
 
@@ -37,7 +39,12 @@ export async function uploadPostPhotoAction(formData: FormData): Promise<{ photo
     .maybeSingle()
   if (membershipError || !membership) throw new Error("vínculo com localidade necessário")
 
-  const image = await sanitizeImage(file, MAX_SIZE)
+  let image: Buffer
+  try {
+    image = await sanitizeImage(file, MAX_SIZE)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Não foi possível preparar a imagem." }
+  }
 
   // Upload to storage bucket. The service_role client has write access.
   const serviceClient = createServiceClient()

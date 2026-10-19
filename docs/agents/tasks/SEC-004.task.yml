@@ -128,3 +128,17 @@ closure:
 # Decisao do dono, 2026-10-19 (revisao Flash L3): PDF de identidade continua aceito e
 # guardado byte a byte. O gov entrega CIN e CNH digital em PDF assinado; regravar quebraria a
 # assinatura. Registrado no ADR. O teste que preserva o PDF byte a byte e o comportamento correto.
+# Correcao da revisao Flash M1/M2/L2/L7, Codex, 2026-10-19, sobre c007bf03 + diff local.
+# RED: sanitize-image + photo-upload-action, 6 failed e 94 passed.
+# WebP animado orientacao 6 era recusado; PNG valido 16000x16000 era aceito; quatro actions rejeitavam em vez de retornar erro.
+# GREEN: mesmos dois arquivos, 100/100 PASS; open-cap-message.test.ts adicional 3/3 PASS.
+# Helper server-only, limitInputPixels 25000000, mensagem de 25 megapixels; autoOrient so para pagina unica.
+# Comunidade, portfolio e evento retornam erro estruturado do helper; consumidores exibem a mensagem sem sucesso falso.
+# Portfolio ganhou wrapper cliente para feedback e bloqueio durante envio; markup existente foi preservado.
+# Fixtures WebP de duas paginas e PNG monocromatico de 256 MP sinteticos, sem dados reais ou dependencia nova.
+# Mock server-only restrito aos testes; producao mantem a protecao de limite servidor/cliente.
+# Checklist React aplicado aos consumidores; nenhuma aprovacao independente atribuida ao implementador.
+# Gate final exit 0: lint, typecheck, test, secrets PASS; build pulado sem .env.local.
+# test:db da rodada PASS: 136 arquivos, 1875 testes; E2E e revisao independente do diff pendentes.
+# PDF e arquivo SEC-006 preservados; uploads diretos continuam pertencendo exclusivamente a SEC-006.
+# Sem rede solicitada, instalacao, arquivo de ambiente, commit, push, PR, merge ou deploy.

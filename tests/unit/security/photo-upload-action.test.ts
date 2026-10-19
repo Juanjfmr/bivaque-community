@@ -6,6 +6,7 @@ import { uploadPostPhotoAction } from "web/app/(shell)/events/upload-photo-actio
 import { submitServiceRequest } from "web/app/(shell)/pedidos/novo/actions"
 import { uploadAvatarAction } from "web/app/(shell)/profile/avatar-actions"
 import { createPropertyAction, updatePropertyAction } from "web/lib/listings/actions"
+import { sanitizeImage } from "web/lib/storage/sanitize-image"
 import { hasExifGps, imageMetadata, locationImage } from "../../fixtures/location-image"
 
 const mocks = vi.hoisted(() => {
@@ -54,6 +55,12 @@ const mocks = vi.hoisted(() => {
   }
   const service = { ...client, from: vi.fn((name: string) => table(name, true)) }
   return { upload, member, getUser, storageFrom, rpc, client, service, eq }
+})
+
+vi.mock("server-only", () => ({}))
+vi.mock("web/lib/storage/sanitize-image", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("web/lib/storage/sanitize-image")>()
+  return { sanitizeImage: vi.fn(actual.sanitizeImage) }
 })
 
 vi.mock("next/headers", () => ({ cookies: async () => ({ getAll: () => [] }) }))
@@ -200,6 +207,19 @@ describe("SEC-004 event authorization", () => {
     expect(mocks.client.from).toHaveBeenCalledWith("locality_memberships")
     expect(mocks.eq).toHaveBeenCalledWith("user_id", "fixture-user")
     expect(mocks.upload.mock.calls[0]?.[0]).toMatch(/^fixture-user\//)
+  })
+})
+
+describe("SEC-004 recoverable image errors", () => {
+  const affected = paths.filter((path) =>
+    ["comunidade faixa", "comunidade miniatura", "portfolio", "evento"].includes(path.name),
+  )
+  it.each(affected)("returns the sanitizer message for $name without storing it", async (path) => {
+    const message = "A imagem processada passa do tamanho permitido."
+    vi.mocked(sanitizeImage).mockRejectedValueOnce(new Error(message))
+
+    await expect(send(path, await locationImage("jpeg"))).resolves.toEqual({ error: message })
+    expect(mocks.upload).not.toHaveBeenCalled()
   })
 })
 

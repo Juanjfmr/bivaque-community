@@ -336,12 +336,17 @@ function readImageInput(formData: FormData): {
   return { communityId, kind, file }
 }
 
-async function setCommunityImageAction(formData: FormData) {
+async function setCommunityImageAction(formData: FormData): Promise<{ error: string } | undefined> {
   const { communityId, kind, file } = readImageInput(formData)
   const callerId = await requireCallerUserId()
   const community = await requireCommunityOwner(communityId, callerId)
 
-  const image = await sanitizeImage(file, COMMUNITY_IMAGE_MAX_BYTES)
+  let image: Buffer
+  try {
+    image = await sanitizeImage(file, COMMUNITY_IMAGE_MAX_BYTES)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Não foi possível preparar a imagem." }
+  }
   const path = communityImagePath(communityId, kind)
   const service = createServiceClient()
 
@@ -372,6 +377,7 @@ async function setCommunityImageAction(formData: FormData) {
   revalidatePath(`/communities/${communityId}`)
   revalidatePath(`/communities/${communityId}/admin/media`)
   revalidatePath("/communities")
+  return undefined
 }
 
 async function removeCommunityImageAction(formData: FormData) {

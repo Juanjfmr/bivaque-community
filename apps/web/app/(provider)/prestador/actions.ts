@@ -229,7 +229,9 @@ export async function movePortfolioPhotoDownAction(formData: FormData): Promise<
   await moveRow("provider_portfolio_photos", formData, "down")
 }
 
-export async function addPortfolioPhotoAction(formData: FormData): Promise<void> {
+export async function addPortfolioPhotoAction(
+  formData: FormData,
+): Promise<{ error: string } | undefined> {
   const file = formData.get("file")
   const caption = text(formData, "caption")
 
@@ -249,7 +251,12 @@ export async function addPortfolioPhotoAction(formData: FormData): Promise<void>
 
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
   const path = `${profileId}/portfolio/${crypto.randomUUID()}.${extension}`
-  const image = await sanitizeImage(file, 5242880)
+  let image: Buffer
+  try {
+    image = await sanitizeImage(file, 5242880)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Não foi possível preparar a imagem." }
+  }
   const { error: uploadError } = await client.storage
     .from("provider-photos")
     .upload(path, image, { contentType: file.type })
@@ -271,6 +278,7 @@ export async function addPortfolioPhotoAction(formData: FormData): Promise<void>
 
   revalidatePath("/prestador/catalogo")
   revalidatePath("/negocio/catalogo")
+  return undefined
 }
 
 export async function updatePhotoCaptionAction(formData: FormData): Promise<void> {

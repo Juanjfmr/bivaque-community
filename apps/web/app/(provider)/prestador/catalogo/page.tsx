@@ -4,7 +4,6 @@ import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import {
-  addPortfolioPhotoAction,
   deleteCatalogItemAction,
   deletePortfolioPhotoAction,
   moveCatalogItemDownAction,
@@ -14,6 +13,7 @@ import {
   saveCatalogItemAction,
   updatePhotoCaptionAction,
 } from "../actions"
+import { PortfolioPhotoForm } from "./portfolio-photo-form"
 
 // Onda G Task 4 — catálogo e portfólio do prestador. Toda leitura passa pelo
 // cliente autenticado (RLS owner-only); fotos do bucket privado aparecem por
@@ -300,7 +300,7 @@ export default async function PrestadorCatalogoPage({
         className="rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line sm:p-5"
       >
         <h2 className="text-lg font-semibold text-ui-ink">Adicionar foto ao portfólio</h2>
-        <form action={addPortfolioPhotoAction} className="mt-4 space-y-3">
+        <PortfolioPhotoForm>
           <div>
             <label htmlFor="foto-arquivo" className="text-sm font-medium text-ui-ink">
               Escolher imagem{" "}
@@ -325,7 +325,7 @@ export default async function PrestadorCatalogoPage({
           <Button type="submit" variant="primary" size="md">
             Publicar foto
           </Button>
-        </form>
+        </PortfolioPhotoForm>
       </section>
 
       <section aria-label="Meu portfólio" className="space-y-3">

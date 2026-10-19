@@ -1,9 +1,45 @@
 import sharp from "sharp"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
-import { locationImage } from "../../fixtures/location-image"
+import {
+  animatedLocationImage,
+  locationImage,
+  oversizedPixelImage,
+} from "../../fixtures/location-image"
+
+vi.mock("server-only", () => ({}))
 
 describe("SEC-004 image orientation pixels", () => {
+  it("accepts animated WebP with EXIF orientation 6 without rotating multiple pages", async () => {
+    const file = await animatedLocationImage()
+    const before = await sharp(Buffer.from(await file.arrayBuffer()), { animated: true }).metadata()
+    expect(before.pages).toBe(2)
+    expect(before.orientation).toBe(6)
+    const bytes = await sanitizeImage(file, 1024 * 1024)
+    const image = sharp(bytes, { animated: true })
+    const after = await image.metadata()
+    expect(after.pages).toBe(2)
+    expect(after.delay).toEqual(before.delay)
+    expect(after.pageHeight).toBe(before.pageHeight)
+    expect(after.width).toBe(before.width)
+    expect(after.exif).toBeUndefined()
+    expect(after.orientation).toBeUndefined()
+    const originalPixels = await sharp(Buffer.from(await file.arrayBuffer()), { animated: true })
+      .raw()
+      .toBuffer()
+    // WebP reencoding is lossy; frame order/colors must survive, not exact bytes.
+    const outputPixels = await image.raw().toBuffer()
+    expect(outputPixels.length).toBe(originalPixels.length)
+    for (const [index, value] of outputPixels.entries()) {
+      expect(Math.abs(value - (originalPixels[index] ?? 0))).toBeLessThanOrEqual(5)
+    }
+  })
+
+  it("rejects a valid 16000 x 16000 PNG with a clear 25 megapixel limit", async () => {
+    const file = oversizedPixelImage()
+    expect(file.size).toBeLessThan(1024 * 1024)
+    await expect(sanitizeImage(file, 1024 * 1024)).rejects.toThrow("25 megapixels")
+  })
   const orientations = [
     [1, [1, 2, 3, 4, 5, 6]],
     [2, [2, 1, 4, 3, 6, 5]],

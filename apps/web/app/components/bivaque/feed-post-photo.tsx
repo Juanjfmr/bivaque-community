@@ -60,6 +60,10 @@ export function PhotoField({
         formData.append("photo", blob, file.name)
         const { uploadPostPhotoAction } = await import("../../(shell)/events/upload-photo-action")
         const result = await uploadPostPhotoAction(formData)
+        if ("error" in result) {
+          onError(result.error)
+          return
+        }
         onChange(result.photoPath)
       } catch (err) {
         // O teto de 10MB é da caixa; o servidor ainda revalida o blob
