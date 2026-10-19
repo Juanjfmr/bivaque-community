@@ -76,7 +76,19 @@ identidade, guardado byte a byte por causa da assinatura do governo.
 
 **O que falta, nesta ordem:**
 
-1. **Ler a sua própria revisão de confirmação da SEC-006**, que estava rodando na passagem. O resultado fica
+1. **A revisão de confirmação da SEC-006 terminou com FAIL.** O texto completo está em
+   `codex-review-sec006-b.md` (caminho abaixo).
+   - M1 e L3 ficaram resolvidos; o M2 ficou parcial.
+   - Há **3 regressões novas, todas MEDIUM:**
+     - o Mercado fica preso em "Enviando…" quando uma etapa falha;
+     - o Pedido com 7 fotos descarta todas sem avisar e mostra sucesso;
+     - a Moradia gera posições de foto duplicadas.
+   - Há também **lacunas antigas** nas actions por foto: quantidade burlável na Moradia, fotos órfãs e troca
+     de formato no Pedido, atomicidade incompleta.
+   - Mande o DeepSeek corrigir tudo isso, com teste primeiro. Se precisar de constraint no banco, use uma
+     migration nova. Depois verifique e revise de novo antes do PR.
+
+   Ler a sua própria revisão de confirmação da SEC-006. O resultado fica
    em `codex-review-sec006-b.md`, na pasta de rascunho da sessão anterior:
    `C:\Users\juana\AppData\Local\Temp\claude\C--Users-juana-AppData-Roaming-Claude-scratch-workspaces-a0b72b39-02e4-4ec9-8144-3ef364ba0999-ef306464-50e5-4883-82e6-5a1e27f72244-scratch-2026-10-14-106e75\6fac2a1f-1a9a-4793-92a4-5b7b8851dae3\scratchpad\seguranca\`
    - Se ela não existir, rode a revisão de novo sobre `git show 29fd1fee`.
