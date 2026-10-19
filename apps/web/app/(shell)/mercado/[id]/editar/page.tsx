@@ -19,6 +19,7 @@ import {
   type ManagedListingRow,
   validateListingEdit,
 } from "../../../../../lib/listings/lifecycle"
+import { replaceListingPhoto } from "../../../../../lib/listings/photo-replacement"
 import { useLocalityContext } from "../../../../../lib/locality-context"
 import { useMemberContext } from "../../../../../lib/member-context"
 import { AccessUnavailableState } from "../../../../components/bivaque/empty-state"
@@ -83,6 +84,8 @@ export default function EditarAnuncioPage() {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [photoChanged, setPhotoChanged] = useState(false)
+  const [photoNotice, setPhotoNotice] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -224,60 +227,64 @@ export default function EditarAnuncioPage() {
     }
     setSaveError(null)
     setSaved(false)
+    setPhotoChanged(false)
+    setPhotoNotice(null)
     setUploading(true)
 
     const supabase = listingsClient()
-    const previousPath = state.photoPath
-    let newPath: string | null = null
-    try {
-      const blob = await stripExif(file)
-      // SEC-006: a gravação é do servidor, que limpa EXIF/GPS e reconfere a
-      // posse do anúncio antes de usar service_role.
-      const photoForm = new FormData()
-      photoForm.set("listingId", state.listing.id)
-      photoForm.set("position", "0")
-      photoForm.set("photo", blob, "foto-1.jpg")
-      const result = await uploadListingPhotoAction(photoForm)
-      if ("error" in result) throw new Error(result.error)
-      newPath = result.path
-
+    const listingId = state.listing.id
+    const result = await replaceListingPhoto(state.photoPath, {
+      uploadNewPhoto: async () => {
+        const blob = await stripExif(file)
+        // SEC-006: a gravação é do servidor, que limpa EXIF/GPS e reconfere a
+        // posse do anúncio antes de usar service_role.
+        const photoForm = new FormData()
+        photoForm.set("listingId", listingId)
+        photoForm.set("position", "0")
+        photoForm.set("photo", blob, "foto-1.jpg")
+        return await uploadListingPhotoAction(photoForm)
+      },
       // O canônico não tem índice único em (listing_id, position): substituir a
       // foto é apagar as linhas do anúncio e gravar a nova, não `upsert`.
-      const { error: clearError } = await supabase
-        .from("listing_photos")
-        .delete()
-        .eq("listing_id", state.listing.id)
-      if (clearError) throw new Error(clearError.message)
-
-      const { error: photoError } = await supabase
-        .from("listing_photos")
-        .insert({ listing_id: state.listing.id, path: newPath, position: 0 })
-      if (photoError) throw new Error(photoError.message)
-
-      if (previousPath !== null && previousPath !== newPath) {
+      clearPhotoRows: async () => {
+        const { error } = await supabase.from("listing_photos").delete().eq("listing_id", listingId)
+        return { error: error?.message ?? null }
+      },
+      insertNewPhotoRow: async (path) => {
+        const { error } = await supabase
+          .from("listing_photos")
+          .insert({ listing_id: listingId, path, position: 0 })
+        return { error: error?.message ?? null }
+      },
+      // O objeto veio da action com owner nulo; a remoção também é do servidor.
+      deletePhotoObject: async (path) => {
         const cleanup = new FormData()
-        cleanup.set("listingId", state.listing.id)
-        cleanup.set("path", previousPath)
-        await deleteListingPhotoObjectAction(cleanup)
-      }
+        cleanup.set("listingId", listingId)
+        cleanup.set("path", path)
+        const removal = await deleteListingPhotoObjectAction(cleanup)
+        return { ok: removal.ok }
+      },
+    })
 
-      const { data: signed } = await supabase.storage
-        .from("listing-photos")
-        .createSignedUrl(newPath, 3600)
-      setState((previous) => ({
-        ...previous,
-        photoPath: newPath,
-        photoUrl: signed?.signedUrl ?? null,
-      }))
-    } catch {
-      if (newPath !== null) {
-        // O objeto veio da action com owner nulo; a remoção também é do servidor.
-        const cleanup = new FormData()
-        cleanup.set("listingId", state.listing.id)
-        cleanup.set("path", newPath)
-        await deleteListingPhotoObjectAction(cleanup)
-      }
-      setSaveError("Não foi possível trocar a foto. A foto anterior continua aqui.")
+    if (!result.ok) {
+      setSaveError(result.message)
+      setUploading(false)
+      return
+    }
+
+    const { data: signed } = await supabase.storage
+      .from("listing-photos")
+      .createSignedUrl(result.path, 3600)
+    setState((previous) => ({
+      ...previous,
+      photoPath: result.path,
+      photoUrl: signed?.signedUrl ?? null,
+    }))
+    setPhotoChanged(true)
+    if (result.previousCleanupFailed) {
+      setPhotoNotice(
+        "A foto foi trocada, mas não foi possível remover a anterior do armazenamento.",
+      )
     }
     setUploading(false)
   }
@@ -374,8 +381,14 @@ export default function EditarAnuncioPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Editar anúncio</h1>
 
       {saveError ? <FeedbackAlert variant="danger" description={saveError} /> : null}
+      {photoNotice !== null && saveError === null ? (
+        <FeedbackAlert variant="warning" description={photoNotice} />
+      ) : null}
       {saved && saveError === null ? (
         <FeedbackAlert variant="success" description="Alterações salvas." />
+      ) : null}
+      {photoChanged && saveError === null ? (
+        <FeedbackAlert variant="success" description="Foto do anúncio alterada." />
       ) : null}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

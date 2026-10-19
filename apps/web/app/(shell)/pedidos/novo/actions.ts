@@ -5,8 +5,8 @@ import { cookies } from "next/headers"
 import { log } from "../../../../lib/logger"
 import {
   firstFailure,
+  SERVICE_REQUEST_MAX_PHOTOS,
   SERVICE_REQUEST_PHOTO_MAX_BYTES,
-  SERVICE_REQUEST_PHOTO_MIME_TYPES,
   validateRequestDescription,
   validateRequestPhotos,
   validateRequestWhen,
@@ -20,12 +20,16 @@ import { createServerClient as createServiceClient } from "../../../../lib/supab
 // o RPC `create_service_request` deriva o destinatário do próprio banco e
 // reconfere `can_see_provider`. Sem service_role aqui: a RLS e o RPC
 // autorizam. A chave de idempotência faz o reenvio devolver o mesmo pedido.
+//
+// SEC-006 (revisão M2) — as fotos saem deste corpo. O `bodySizeLimit` de 12 MB
+// vale para a requisição inteira, então cada foto vira uma chamada própria em
+// `uploadServiceRequestPhotoAction`, depois que o pedido já existe.
 
 export type ServiceRequestActionState =
   | { status: "idle" }
   | { status: "error"; message: string }
   | { status: "session" }
-  | { status: "success"; requestId: string }
+  | { status: "success"; requestId: string; photoWarning?: string }
 
 function text(formData: FormData, name: string): string {
   const raw = formData.get(name)
@@ -38,19 +42,35 @@ function extensionFor(mime: string): string {
   return "jpg"
 }
 
+async function createUserClient() {
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
+  }
+
+  const cookieStore = await cookies()
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll() {
+        // A sessão já existe; estas actions não renovam cookie.
+      },
+    },
+  })
+}
+
 export async function submitServiceRequest(formData: FormData): Promise<ServiceRequestActionState> {
   const providerId = text(formData, "providerId").trim()
   const description = text(formData, "description")
   const when = text(formData, "when")
   const idempotencyKey = text(formData, "idempotencyKey").trim()
-  const photos = formData
-    .getAll("photos")
-    .filter((entry): entry is File => entry instanceof File && entry.size > 0)
 
   const validation = firstFailure(
     validateRequestDescription(description),
     validateRequestWhen(when),
-    validateRequestPhotos(photos),
   )
   if (!validation.ok) {
     return { status: "error", message: validation.message }
@@ -60,38 +80,12 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
     return { status: "error", message: "Não foi possível identificar o destinatário do pedido." }
   }
 
-  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
-  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
-  }
-
-  const cookieStore = await cookies()
-  const client = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll() {
-        // A sessão já existe; esta action não renova cookie.
-      },
-    },
-  })
-
+  const client = await createUserClient()
   const {
     data: { user },
   } = await client.auth.getUser()
   if (!user) {
     return { status: "session" }
-  }
-
-  const images: { file: File; body: Buffer }[] = []
-  try {
-    for (const file of photos) {
-      images.push({ file, body: await sanitizeImage(file, SERVICE_REQUEST_PHOTO_MAX_BYTES) })
-    }
-  } catch {
-    return { status: "error", message: "Envie imagens JPEG, PNG ou WebP válidas de até 10 MB." }
   }
 
   const { data: requestId, error } = await client.rpc("create_service_request", {
@@ -120,73 +114,90 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
     }
   }
 
-  const createdId = requestId as string
+  return { status: "success", requestId: requestId as string }
+}
 
-  // SEC-006 — a policy service_request_photos_storage_insert_owner exigia dono
-  // do objeto e pedido cujo requester é o chamador. O upload agora usa
-  // service_role, então a mesma condição é reconferida aqui antes de escrever.
-  // Sem anexo não há escrita no Storage e nada a reconferir.
-  if (images.length > 0) {
-    const serviceClient = createServiceClient()
-    const { data: ownedRequest, error: ownershipError } = await serviceClient
-      .from("service_requests")
-      .select("id")
-      .eq("id", createdId)
-      .eq("requester_user_id", user.id)
-      .maybeSingle()
-    if (ownershipError) {
-      log.error("pedidos: request ownership check failed", { error: ownershipError.message })
-      return {
-        status: "error",
-        message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
-      }
-    }
-    if (!ownedRequest) {
-      log.error("pedidos: request ownership mismatch", { request_id: createdId })
-      return {
-        status: "error",
-        message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
-      }
-    }
+/**
+ * SEC-006 (revisão M2) — uma foto por chamada, sempre depois de o pedido
+ * existir. Repete a autorização que a policy do Storage exigia (pedido cujo
+ * `requester_user_id` é o chamador) antes de usar service_role.
+ */
+export async function uploadServiceRequestPhotoAction(
+  formData: FormData,
+): Promise<{ ok: true } | { error: string }> {
+  const requestId = text(formData, "requestId").trim()
+  const position = Number.parseInt(text(formData, "position"), 10)
+  const file = formData.get("photo")
 
-    // Anexo é opcional e vem depois do pedido existir: o caminho começa pelo id
-    // do pedido, que é o que a policy de leitura do storage confere.
-    for (const [index, { file, body }] of images.entries()) {
-      if (!SERVICE_REQUEST_PHOTO_MIME_TYPES.some((mime) => mime === file.type)) {
-        return { status: "error", message: "Use imagens JPEG, PNG ou WebP." }
-      }
-      const path = `${createdId}/${index}.${extensionFor(file.type)}`
-      const { error: uploadError } = await serviceClient.storage
-        .from("service-request-photos")
-        .upload(path, body, { contentType: file.type, upsert: true })
-      if (uploadError) {
-        log.error("pedidos: photo upload failed", { error: uploadError.message })
-        return {
-          status: "error",
-          message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
-        }
-      }
-      // A migration dá a `authenticated` apenas SELECT e INSERT em
-      // `service_request_photos` (sem policy/grants de UPDATE). Um upsert com
-      // merge exigiria UPDATE e falharia com "permission denied" já na primeira
-      // foto; `ignoreDuplicates` produz ON CONFLICT DO NOTHING, que só precisa
-      // de INSERT e mantém o reenvio idempotente. O arquivo já foi sobrescrito no
-      // storage (upsert: true), então o caminho continua apontando para o novo.
-      const { error: photoError } = await client
-        .from("service_request_photos")
-        .upsert(
-          { request_id: createdId, photo_path: path, position: index },
-          { onConflict: "request_id,position", ignoreDuplicates: true },
-        )
-      if (photoError) {
-        log.error("pedidos: photo row failed", { error: photoError.message })
-        return {
-          status: "error",
-          message: "O pedido foi criado, mas o envio das fotos falhou. Tente novamente.",
-        }
-      }
-    }
+  if (requestId === "") {
+    return { error: "Pedido não identificado." }
+  }
+  if (!Number.isInteger(position) || position < 0 || position >= SERVICE_REQUEST_MAX_PHOTOS) {
+    return { error: "Posição de foto inválida." }
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Escolha uma imagem para enviar." }
+  }
+  const validation = validateRequestPhotos([file])
+  if (!validation.ok) {
+    return { error: validation.message }
   }
 
-  return { status: "success", requestId: createdId }
+  const client = await createUserClient()
+  const {
+    data: { user },
+  } = await client.auth.getUser()
+  if (!user) {
+    return { error: "Sessão expirada. Entre novamente para enviar a foto." }
+  }
+
+  const serviceClient = createServiceClient()
+  const { data: ownedRequest, error: ownershipError } = await serviceClient
+    .from("service_requests")
+    .select("id")
+    .eq("id", requestId)
+    .eq("requester_user_id", user.id)
+    .maybeSingle()
+  if (ownershipError) {
+    log.error("pedidos: request ownership check failed", { error: ownershipError.message })
+    return { error: "O pedido não existe ou não é seu." }
+  }
+  if (!ownedRequest) {
+    log.error("pedidos: request ownership mismatch", { request_id: requestId })
+    return { error: "O pedido não existe ou não é seu." }
+  }
+
+  let body: Buffer
+  try {
+    body = await sanitizeImage(file, SERVICE_REQUEST_PHOTO_MAX_BYTES)
+  } catch {
+    return { error: "Envie imagens JPEG, PNG ou WebP válidas de até 10 MB." }
+  }
+
+  const path = `${requestId}/${position}.${extensionFor(file.type)}`
+  const { error: uploadError } = await serviceClient.storage
+    .from("service-request-photos")
+    .upload(path, body, { contentType: file.type, upsert: true })
+  if (uploadError) {
+    log.error("pedidos: photo upload failed", { error: uploadError.message })
+    return { error: "Não foi possível enviar a foto." }
+  }
+
+  // A migration dá a `authenticated` apenas SELECT e INSERT em
+  // `service_request_photos` (sem policy/grants de UPDATE). Um upsert com merge
+  // exigiria UPDATE e falharia com "permission denied" já na primeira foto;
+  // `ignoreDuplicates` produz ON CONFLICT DO NOTHING, que só precisa de INSERT e
+  // mantém o reenvio idempotente.
+  const { error: photoError } = await client
+    .from("service_request_photos")
+    .upsert(
+      { request_id: requestId, photo_path: path, position },
+      { onConflict: "request_id,position", ignoreDuplicates: true },
+    )
+  if (photoError) {
+    log.error("pedidos: photo row failed", { error: photoError.message })
+    return { error: "Não foi possível registrar a foto." }
+  }
+
+  return { ok: true }
 }

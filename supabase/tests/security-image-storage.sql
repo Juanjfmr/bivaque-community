@@ -12,7 +12,7 @@
 --     então o caso prova que ela continua valendo em vez de exigir negação.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(49);
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
 
@@ -55,6 +55,26 @@ values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-0000000
   'photo', 'Synthetic image post', 'security-event.jpg');
 update public.communities set banner_path = '70000000-0000-4000-8000-000000000001/banner'
 where id = '70000000-0000-4000-8000-000000000001';
+
+-- ── Objeto gravado pela service role: owner nulo ────────────────────────────
+-- O upload das actions usa service_role, que não carrega o `sub` do usuário;
+-- `storage.objects.owner` fica nulo. As leituras esperadas não podem depender
+-- do owner para continuar funcionando.
+set local role service_role;
+select lives_ok(
+  $$ insert into storage.objects (bucket_id, name, owner) values
+       ('avatars', '10000000-0000-4000-8000-000000000001/server-null.jpg', null) $$,
+  'avatars: service_role stores with null owner');
+select lives_ok(
+  $$ insert into storage.objects (bucket_id, name, owner) values
+       ('listing-photos', 'a0000000-0000-4000-8000-000000000001/server-null.jpg', null) $$,
+  'listing-photos: service_role stores with null owner');
+select lives_ok(
+  format($$ insert into storage.objects (bucket_id, name, owner) values
+       ('service-request-photos', %L, null) $$,
+    current_setting('test.image_request') || '/server-null.jpg'),
+  'service-request-photos: service_role stores with null owner');
+reset role;
 
 -- ── INSERT: o cliente autenticado não escreve direto ────────────────────────
 -- Owners, caminhos e escopos válidos: uma recusa por caminho malformado não
@@ -162,6 +182,23 @@ select isnt_empty(
       where bucket_id = 'service-request-photos' and name = %L $$,
     current_setting('test.image_request') || '/security.jpg'),
   'service-request-photos: requester retains existing SELECT');
+-- Objetos sem owner (upload da service role) continuam legíveis para quem a
+-- policy de leitura autoriza; nenhuma delas depende de `owner`.
+select isnt_empty(
+  $$ select 1 from storage.objects
+      where bucket_id = 'avatars'
+        and name = '10000000-0000-4000-8000-000000000001/server-null.jpg' $$,
+  'avatars: null-owner server upload retains existing SELECT');
+select isnt_empty(
+  $$ select 1 from storage.objects
+      where bucket_id = 'listing-photos'
+        and name = 'a0000000-0000-4000-8000-000000000001/server-null.jpg' $$,
+  'listing-photos: null-owner server upload retains existing SELECT');
+select isnt_empty(
+  format($$ select 1 from storage.objects
+      where bucket_id = 'service-request-photos' and name = %L $$,
+    current_setting('test.image_request') || '/server-null.jpg'),
+  'service-request-photos: null-owner server upload retains existing SELECT');
 
 -- ── Leitura existente: quem não participa continua sem ver ──────────────────
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);

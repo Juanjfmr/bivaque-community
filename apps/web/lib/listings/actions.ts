@@ -7,7 +7,6 @@
 // e é do chamador), porque privilégio não é identidade.
 
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 import { sanitizeImage } from "../storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../supabase/server"
 import type { ActionState } from "./action-state"
@@ -64,14 +63,40 @@ async function currentUserId(): Promise<string | null> {
   return user?.id ?? null
 }
 
-async function uploadPhotos(listingId: string, files: File[]): Promise<{ error?: string }> {
-  if (files.length === 0) return {}
+// SEC-006 (revisão M2) — Moradia envia UMA foto por chamada, como o Mercado.
+// O `bodySizeLimit` cobre o corpo inteiro da requisição; mandar as até 12 fotos
+// juntas estourava os 12 MB antes de a action rodar. Cada chamada reconfere a
+// autorização que a policy exigia e limpa os metadados da imagem.
+export async function uploadPropertyPhotoAction(
+  formData: FormData,
+): Promise<{ path: string } | { error: string }> {
+  const listingId = String(formData.get("listingId") ?? "")
+  const position = Number.parseInt(String(formData.get("position") ?? ""), 10)
+  const file = formData.get("photo")
+
+  if (listingId === "") {
+    return { error: "Anúncio não identificado." }
+  }
+  if (!Number.isInteger(position) || position < 0 || position >= MAX_LISTING_PHOTOS) {
+    return { error: "Posição de foto inválida." }
+  }
+  if (!(file instanceof File)) {
+    return { error: "Escolha uma imagem para enviar." }
+  }
+  const allowed = ["image/jpeg", "image/png", "image/webp"]
+  if (!allowed.includes(file.type)) {
+    return { error: "Use uma imagem JPEG, PNG ou WebP." }
+  }
+  if (file.size === 0 || file.size > MAX_PHOTO_BYTES) {
+    return { error: "A imagem deve ter até 10 MB." }
+  }
+
   const client = await createListingClient()
   const {
     data: { user },
   } = await client.auth.getUser()
   if (!user) {
-    return { error: "Sessão expirada. Entre novamente para enviar as fotos." }
+    return { error: "Sessão expirada. Entre novamente para enviar a foto." }
   }
 
   // Mesma autorização de listing_photos_storage_insert_owner: o anúncio existe
@@ -91,36 +116,31 @@ async function uploadPhotos(listingId: string, files: File[]): Promise<{ error?:
     return { error: "Este anúncio não existe ou não é seu." }
   }
 
-  const allowed = ["image/jpeg", "image/png", "image/webp"]
-
-  for (const [index, file] of files.entries()) {
-    if (!allowed.includes(file.type)) {
-      return { error: `Formato de imagem não permitido: ${file.type || "desconhecido"}.` }
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      return { error: "Uma das fotos passa de 10 MB." }
-    }
-    let image: Buffer
-    try {
-      image = await sanitizeImage(file, MAX_PHOTO_BYTES)
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Imagem inválida." }
-    }
-    const path = buildListingPhotoPath(listingId, index, file.type)
-    const { error: uploadError } = await service.storage
-      .from("listing-photos")
-      .upload(path, image, { contentType: file.type, upsert: false })
-    if (uploadError) {
-      return { error: uploadError.message }
-    }
-    const { error: rowError } = await client
-      .from("listing_photos")
-      .insert({ listing_id: listingId, path, position: index })
-    if (rowError) {
-      return { error: rowError.message }
-    }
+  let image: Buffer
+  try {
+    image = await sanitizeImage(file, MAX_PHOTO_BYTES)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Imagem inválida." }
   }
-  return {}
+
+  const path = buildListingPhotoPath(listingId, position, file.type)
+  const { error: uploadError } = await service.storage
+    .from("listing-photos")
+    .upload(path, image, { contentType: file.type, upsert: false })
+  if (uploadError) {
+    return { error: uploadError.message }
+  }
+
+  const { error: rowError } = await client
+    .from("listing_photos")
+    .insert({ listing_id: listingId, path, position })
+  if (rowError) {
+    // A linha é o que torna a foto visível; sem ela o objeto fica órfão.
+    await service.storage.from("listing-photos").remove([path])
+    return { error: rowError.message }
+  }
+
+  return { path }
 }
 
 // SEC-006 — foto do Mercado. O navegador não grava mais direto no bucket: envia
@@ -252,14 +272,8 @@ export async function createPropertyAction(formData: FormData): Promise<ActionSt
     return { ...GENERIC_ERROR, message: detailsError.message }
   }
 
-  const files = formData.getAll("photos").filter((entry): entry is File => entry instanceof File)
-  const upload = await uploadPhotos(listing.id, files.slice(0, MAX_LISTING_PHOTOS))
-  if (upload.error) {
-    return { ok: false, message: upload.error }
-  }
-
   revalidatePath("/imoveis")
-  redirect(`/imoveis/${listing.id}`)
+  return { ok: true, message: "Anúncio criado.", listingId: listing.id }
 }
 
 export async function updatePropertyAction(formData: FormData): Promise<ActionState> {
@@ -321,15 +335,9 @@ export async function updatePropertyAction(formData: FormData): Promise<ActionSt
     return { ...GENERIC_ERROR, message: detailsError.message }
   }
 
-  const files = formData.getAll("photos").filter((entry): entry is File => entry instanceof File)
-  const upload = await uploadPhotos(listingId, files.slice(0, MAX_LISTING_PHOTOS))
-  if (upload.error) {
-    return { ok: false, message: upload.error }
-  }
-
   revalidatePath(`/imoveis/${listingId}`)
   revalidatePath("/imoveis")
-  redirect(`/imoveis/${listingId}`)
+  return { ok: true, message: "Anúncio atualizado.", listingId }
 }
 
 function alertNameFromFilters(raw: RawSearchParams): string {

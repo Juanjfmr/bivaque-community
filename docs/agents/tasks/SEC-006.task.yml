@@ -86,4 +86,22 @@ closure:
 # E2E foto-upload nao rodou: sem seed local e sem apps/web/.env.local.
 # Sem .env.local, instalacao, push, PR, merge, deploy ou db push remoto; nenhuma migration antiga editada.
 # Revisao independente e runtime de entrega continuam pendentes.
+# Revisao do Codex (2026-10-19) - M1, M2 e L3 corrigidos no ciclo TDD.
+# M1 RED: testes/unit/listings/photo-replacement.test.ts -> 2 de 4 falhavam; a falha ao
+# apagar a foto anterior caia no catch e apagava tambem a foto nova, e { ok: false }
+# da remocao era ignorado. GREEN: 4/4 PASS.
+# M1: lib/listings/photo-replacement.ts so desfaz newPath quando a linha nova falha;
+# falha ao remover o objeto anterior vira aviso e a tela mostra que a foto foi trocada.
+# M2 RED: tests/unit/security/photo-upload-per-call.test.ts -> as duas actions novas
+# ainda nao existiam (uploadPropertyPhotoAction e uploadServiceRequestPhotoAction).
+# GREEN: 6/6 PASS (2 chamadas de 7 MB somando 14 MB) e tests/unit/storage/photo-upload-sequence.test.ts 4/4 PASS.
+# M2: Moradia e Pedido criam o registro e enviam uma foto por chamada; cada action
+# reconfere a posse e usa sanitizeImage. runWithPending encerra o pending no finally.
+# L3: o mock de tests/unit/security/image-write-authorization.test.ts registra os filtros e
+# devolve o recurso somente com id e dono corretos; negativos com recurso de outra pessoa
+# para anuncio, pedido, perfil e remocao. pgTAP ganhou objeto com owner nulo gravado
+# pela service role e 3 leituras esperadas; plan(43) -> plan(49).
+# db reset --local --no-seed recusado de novo pelo guard-rail nao interativo; migration up
+# --local disse up to date e test:db passou nesse estado.
+# test:db -> 137 arquivos, 1929 testes PASS. Unidade da area -> 30 arquivos, 361 testes PASS.
 

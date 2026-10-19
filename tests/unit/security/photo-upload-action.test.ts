@@ -3,9 +3,9 @@ import { setCommunityImageAction } from "web/app/(owner)/communities/actions"
 import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
 import { addPortfolioPhotoAction } from "web/app/(provider)/prestador/actions"
 import { uploadPostPhotoAction } from "web/app/(shell)/events/upload-photo-action"
-import { submitServiceRequest } from "web/app/(shell)/pedidos/novo/actions"
+import { uploadServiceRequestPhotoAction } from "web/app/(shell)/pedidos/novo/actions"
 import { uploadAvatarAction } from "web/app/(shell)/profile/avatar-actions"
-import { createPropertyAction, updatePropertyAction } from "web/lib/listings/actions"
+import { uploadPropertyPhotoAction } from "web/lib/listings/actions"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
 import { hasExifGps, imageMetadata, locationImage } from "../../fixtures/location-image"
 
@@ -88,13 +88,13 @@ afterEach(() => vi.unstubAllEnvs())
 
 const formats = ["jpeg", "png", "webp"] as const
 const paths = [
-  { name: "moradia criar", field: "photos", bucket: "listing-photos", maxMB: 10 },
-  { name: "moradia editar", field: "photos", bucket: "listing-photos", maxMB: 10 },
+  { name: "moradia criar", field: "photo", bucket: "listing-photos", maxMB: 10 },
+  { name: "moradia editar", field: "photo", bucket: "listing-photos", maxMB: 10 },
   { name: "avatar", field: "avatar", bucket: "avatars", maxMB: 5 },
   { name: "comunidade faixa", field: "image", bucket: "community-images", maxMB: 10 },
   { name: "comunidade miniatura", field: "image", bucket: "community-images", maxMB: 10 },
   { name: "portfolio", field: "file", bucket: "provider-photos", maxMB: 5 },
-  { name: "pedido", field: "photos", bucket: "service-request-photos", maxMB: 10 },
+  { name: "pedido", field: "photo", bucket: "service-request-photos", maxMB: 10 },
   { name: "identidade", field: "document", bucket: "verification-documents", maxMB: 10 },
   { name: "evento", field: "photo", bucket: "event-photos", maxMB: 5 },
 ] as const
@@ -108,6 +108,8 @@ function formFor(path: UploadPath, file: File) {
   form.set("deal", "rent")
   form.set("propertyType", "house")
   form.set("listingId", "fixture-resource")
+  form.set("position", "0")
+  form.set("requestId", "fixture-request")
   form.set("communityId", "fixture-community")
   form.set("kind", path.name === "comunidade faixa" ? "banner" : "thumbnail")
   form.set("providerId", "fixture-provider")
@@ -119,9 +121,8 @@ async function send(path: UploadPath, file: File) {
   const form = formFor(path, file)
   switch (path.name) {
     case "moradia criar":
-      return createPropertyAction(form)
     case "moradia editar":
-      return updatePropertyAction(form)
+      return uploadPropertyPhotoAction(form)
     case "avatar":
       return uploadAvatarAction(form)
     case "comunidade faixa":
@@ -130,7 +131,7 @@ async function send(path: UploadPath, file: File) {
     case "portfolio":
       return addPortfolioPhotoAction(form)
     case "pedido":
-      return submitServiceRequest(form)
+      return uploadServiceRequestPhotoAction(form)
     case "identidade":
       return uploadVerificationDocumentAction(form)
     case "evento":
