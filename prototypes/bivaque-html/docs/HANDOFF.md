@@ -99,6 +99,15 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   Implementado por subagentes (Haiku e Sonnet); três revisões independentes, duas rodadas de correção,
   bateria e base visual em [VISUAL_BASELINE_R65](VISUAL_BASELINE_R65.md). Publicado em 19/10
   (`0dce1b06…`). Pendente com o dono: aprovação comercial dos planos (R3).
+- **Lote Bairros, Rodadas 66 a 68 (19/10):** bairro em qualquer cidade, não só Manaus:
+  - campo de busca de bairro (nome sem acento, CEP de teste ou localização; CEP e coordenadas nunca
+    gravados) no pedido, anúncio, imóvel, indicação e Configurações;
+  - base de bairros com zona e centro aproximado (Manaus, Brasília, Natal, Rio);
+  - filtro "Distância de mim" a partir do bairro do perfil, bairros da cidade com busca, e Mapa em qualquer
+    cidade;
+  - correções das três revisões (R68).
+  Implementado por Opus na sessão principal; revisões do agente revisor, Codex e OpenCode; bateria e base
+  visual em [VISUAL_BASELINE_R68](VISUAL_BASELINE_R68.md). Publicado em 19/10 (`3d427b0d…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do

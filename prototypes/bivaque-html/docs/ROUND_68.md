@@ -85,3 +85,8 @@ Uma empresa que atende "candelaria" recebe o pedido de "Candelária".
   - O checkpoint de alerta já passava antes e fica como guarda.
 - `round66-proof.mjs`: 15/15 e `round67-proof.mjs`: 9/9, nos mesmos três contextos, com o build final.
 - `npx pnpm@11.18.0 gate`: **verde**. O build web pulou, como sempre na worktree.
+
+## Congelamento do lote
+
+Aprovado pelo usuário em 19/10/2026 ("Congelar e publicar"). Nova base visual em
+[VISUAL_BASELINE_R68](VISUAL_BASELINE_R68.md) (`3d427b0d…`).
