@@ -137,8 +137,9 @@ const checkpoints = {
   },
   async "sheet-shrinks-the-page-behind-on-phone"(page) {
     await snapshot(page)
-    await go(page, "conversas")
-    await page.locator('#main [data-action="thread-menu"]').first().click()
+    // Rodada 60: o menu da conversa virou popover; a folha que encolhe a página é a das Configurações.
+    await go(page, "voce")
+    await page.locator('#main [data-action="settings"]').first().click()
     await settle(page)
     const on = await page.evaluate(() => [
       document.body.classList.contains("sheet-depth"),

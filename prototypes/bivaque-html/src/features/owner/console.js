@@ -12,8 +12,20 @@ function ownerAgo(ms){const h=Math.round((Date.now()-ms)/36e5);return h<1?'agora
 function ownerDue(due){const left=due-Date.now();if(left<=0)return ['atrasada',true];const h=Math.ceil(left/36e5);return [h<24?`vence em ${h} h`:`vence em ${Math.ceil(h/24)} dias`,h<=2];}
 // Proposta denunciada: a proposta e o pedido em que ela está (para o dono saber o que julga).
 function proposalTarget(id){for(const r of state.requests||[]){const p=(r.proposals||[]).find(x=>x.id===id);if(p)return {...p,request:r,city:r.city,name:bizById(p.bizId)?.name||'Prestador'};}return null;}
-function reportTarget(type,id){return type==='item'?itemById(id):type==='ask'?askById(id):type==='biz'?bizById(id):type==='request'?requestById(id):type==='proposal'?proposalTarget(id):null;}
-function reportTitle(type,t){return type==='item'?`Anúncio “${t.title}”`:type==='ask'?`Pergunta “${t.q}”`:type==='biz'?`Página de “${t.name}”`:type==='proposal'?`Proposta de ${t.name} (${t.request.cat})`:`Pedido de orçamento: ${t.cat}${t.desc?` · “${String(t.desc).slice(0,40)}”`:''}`;}
+// Rodada 60: resposta, comentário, publicação de grupo e conversa também são denunciáveis. Os que moram
+// dentro de outro registro levam o id dos pais separado por "~" (o id de pergunta, grupo e conversa nunca tem "~").
+function answerRef(id){const [qid,aid]=String(id).split('~'),q=askById(qid),a=q?.answers.find(x=>x.id===aid);return a?{q,a}:null;}
+function postRef(id){const [gid,pid]=String(id).split('~'),g=gById(gid),p=g?.posts.find(x=>x.id===pid);return p?{g,p}:null;}
+function commentRef(id){const [gid,pid,cid]=String(id).split('~'),r=postRef(`${gid}~${pid}`),c=r?.p.comments.find(x=>x.id===cid);return c?{...r,c}:null;}
+function proposalRaw(id){for(const r of requestList()){const p=r.proposals.find(x=>x.id===id);if(p)return p;}return null;}
+function reportTarget(type,id){return type==='item'?itemById(id):type==='ask'?askById(id):type==='biz'?bizById(id):type==='request'?requestById(id):type==='proposal'?proposalTarget(id):type==='answer'?answerRef(id)?.a:type==='comment'?commentRef(id)?.c:type==='post'?postRef(id)?.p:type==='thread'?threadById(id):null;}
+const reportSnip=(x,n=40)=>{x=String(x||'');return x.length>n?`${x.slice(0,n-1)}…`:x;};
+function reportCity(type,id,t){return (type==='answer'?answerRef(id)?.q:type==='comment'?commentRef(id)?.g:type==='post'?postRef(id)?.g:t)?.city||t?.city||state.homeCity;}
+// O que o Painel faz com cada tipo: remover (some para todos), suspender a página ou advertir a conversa.
+const REPORT_ACT={item:'remove',ask:'remove',answer:'remove',comment:'remove',post:'remove',request:'remove',proposal:'remove',biz:'suspend',thread:'warn'};
+// Conteúdo que a moderação já tirou do ar (a denúncia sai da fila).
+function reportGone(type,t){return type==='item'||type==='request'||type==='proposal'?t.status==='removed':type==='biz'?!!t.suspended:type==='thread'?false:!!t.hidden;}
+function reportTitle(type,t,id=''){return type==='answer'?`Resposta de ${t.who} · “${reportSnip(t.t)}”`:type==='comment'?`${commentRef(id)?.p.type==='question'?'Resposta':'Comentário'} de ${t.author} · “${reportSnip(t.text)}”`:type==='post'?`Publicação de ${t.author} · “${reportSnip(t.text)}”`:type==='thread'?`Conversa com ${t.who}`:type==='item'?`Anúncio “${t.title}”`:type==='ask'?`Pergunta “${t.q}”`:type==='biz'?`Página de “${t.name}”`:type==='proposal'?`Proposta de ${t.name} (${t.request.cat})`:`Pedido de orçamento: ${t.cat}${t.desc?` · “${String(t.desc).slice(0,40)}”`:''}`;}
 // Denúncias abertas agrupadas por conteúdo: as de exemplo e as feitas neste dispositivo. O id leva o
 // momento da primeira denúncia aberta: decidir fecha o grupo; uma denúncia nova abre outro.
 const REPORT_TYPE_TITLE={proposal:'Proposta de prestador',request:'Pedido de orçamento'};
@@ -23,9 +35,9 @@ function ownerReports(){
  const groups=new Map();
  for(const r of all){const key=`${r.type}|${r.target}`;groups.set(key,[...(groups.get(key)||[]),r]);}
  return [...groups].map(([key,list])=>{
-  const [type,target]=key.split('|'),t=reportTarget(type,target),oldest=list.reduce((a,b)=>b.at<a.at?b:a),first=oldest.at,reasons=[...new Set(list.map(r=>REPORT_REASONS[r.reason]||r.reason))],city=t?.city||state.homeCity;
-  return {id:`report:${key}:${oldest.id}`,kind:'report',type,target,list,city,at:first,due:first+OWNER_SLA,icon:'report',tone:'red',removable:!!t&&(type==='item'||type==='ask'),
-   title:t?reportTitle(type,t):REPORT_TYPE_TITLE[type]||'Conteúdo denunciado',sub:`${city} · ${list.length} ${list.length===1?'denúncia':'denúncias'}: ${reasons.join(', ')}`,gone:type==='item'&&t?.status==='removed'||type==='ask'&&t?.hidden};
+  const [type,target]=key.split('|'),t=reportTarget(type,target),oldest=list.reduce((a,b)=>b.at<a.at?b:a),first=oldest.at,reasons=[...new Set(list.map(r=>REPORT_REASONS[r.reason]||r.reason))],city=reportCity(type,target,t);
+  return {id:`report:${key}:${oldest.id}`,kind:'report',type,target,list,city,at:first,due:first+OWNER_SLA,icon:'report',tone:'red',act:t?REPORT_ACT[type]||'':'',byAuthor:!t,
+   title:t?reportTitle(type,t,target):list.find(r=>r.label)?.label||REPORT_TYPE_TITLE[type]||'Conteúdo denunciado',sub:`${city} · ${list.length} ${list.length===1?'denúncia':'denúncias'}: ${reasons.join(', ')}${t?'':' · excluído pelo autor'}`,gone:!!t&&reportGone(type,t)};
  }).filter(x=>!x.gone);
 }
 // Perguntas sem resposta há 48 h por cidade: as do protótipo e as de exemplo das outras cidades.

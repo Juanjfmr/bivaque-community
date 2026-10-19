@@ -11,7 +11,13 @@ function dropDialogHistory(){
  return dialogHistoryPromise||Promise.resolve();
 }
 async function closeDialog(force=false,dropHistory=true){if(editorDirty&&!force){confirm('Descartar alterações?','Você pode continuar editando ou descartar o que ainda não foi salvo.',async()=>{editorDirty=false;await dialog.close();await dropDialogHistory();editor=null;});return;}editorDirty=false;editor=null;await dialog.close();if(dropHistory)await dropDialogHistory();}
-function confirm(title,text,fn){confirmReturnDescriptor=globalFocusDescriptor(document.activeElement);confirmDialog.innerHTML=`<div slot="headline">${esc(title)}</div><div slot="content">${esc(text)}</div><div slot="actions" class="dialog-actions">${btn('Continuar','cancel-confirm','','text')}${btn('Confirmar','accept-confirm','','filled')}</div>`;confirmDialog._accept=fn;if(!confirmDialog.open)try{history.pushState({...history.state,bivaque:true,confirm:true,overlayDepth:(history.state?.overlayDepth||0)+1},'',location.href);}catch{}confirmDialog.show();}
+// Rodada 64: sair do diálogo para outra página. Com edição não salva, pergunta antes (como o fechamento normal) e só navega se a pessoa descartar.
+async function leaveDialog(then){
+ if(!dialog.open)return true;
+ if(!editorDirty){await closeDialog(true);return true;}
+ confirm('Descartar alterações?','Você pode continuar editando ou descartar o que ainda não foi salvo.',async()=>{editorDirty=false;await closeDialog(true);then?.();});return false;
+}
+function confirm(title,text,fn,{ok='Confirmar',cancel='Continuar',danger=false}={}){confirmReturnDescriptor=globalFocusDescriptor(document.activeElement);confirmDialog.innerHTML=`<div slot="headline">${esc(title)}</div><div slot="content">${text.includes('\n')?text.split('\n').map(x=>`<p>${esc(x)}</p>`).join(''):esc(text)}</div><div slot="actions" class="dialog-actions">${btn(cancel,'cancel-confirm','','text')}${danger?btn(ok,'accept-confirm','','filled').replace('<md-filled-button','<md-filled-button class="danger-fill"'):btn(ok,'accept-confirm','','filled')}</div>`;confirmDialog._accept=fn;if(!confirmDialog.open)try{history.pushState({...history.state,bivaque:true,confirm:true,overlayDepth:(history.state?.overlayDepth||0)+1},'',location.href);}catch{}confirmDialog.show();}
 function dropConfirmHistory(){if(!confirmClosingHistory&&history.state?.confirm){confirmClosingHistory=true;confirmHistoryPromise=new Promise(resolve=>confirmHistoryDone=resolve);history.back();}return confirmHistoryPromise||Promise.resolve();}
 confirmDialog.addEventListener('closed',()=>{dropConfirmHistory();if(dialog.open){const target=confirmReturnDescriptor?.id?document.getElementById(confirmReturnDescriptor.id):null;(target||$('[data-action="close-dialog"]',dialog))?.focus({preventScroll:true});}else navigationFocus(confirmReturnDescriptor);});
 dialog.addEventListener('cancel',e=>{if(editorDirty){e.preventDefault();closeDialog();}});

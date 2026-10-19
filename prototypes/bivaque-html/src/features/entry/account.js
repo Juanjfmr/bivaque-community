@@ -34,7 +34,7 @@ function renderEntrySignup(){
   ${field('en-name','Nome','','required minlength="2" maxlength="80" autocomplete="name"')}
  ${field('en-email','E-mail','','type="email" required autocomplete="email" inputmode="email"')}
  ${entryPasswordField('en-pass','Senha')}
- <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">Li e aceito a Política de privacidade e o Código de conduta. Pelo Google, o aceite vem no passo seguinte.</span></label><p class="en-err" id="en-err" role="alert"></p>
+ <label class="en-check"><md-checkbox id="en-consent" aria-describedby="en-consent-t"></md-checkbox><span id="en-consent-t">${legalConsentText()}. Pelo Google, o aceite vem no passo seguinte.</span></label><p class="en-err" id="en-err" role="alert"></p>
  ${btn('Criar conta','entry-signup','','filled')}<p class="en-foot">Já tem conta? ${btn('Entrar','entry-login','','text')}</p></div>`;
 }
 // Quem já começou não perde a conta sem querer: continuar, ou começar de novo com confirmação.
@@ -69,6 +69,7 @@ function renderEntryPending(){
 const ENTRY_STEPS={conta:()=>renderEntrySignup(),aceite:()=>renderEntryGoogleConsent(),cpf:()=>renderEntryCpf(),resultado:()=>renderEntryResult(),analise:()=>renderEntryPending(),cidade:()=>renderEntryCity()};
 function renderEntry(){
  const id=route.id||'';
+ if(id==='apagada'&&state.accountDeletedAt)return renderAccountDeleted();
  if(id==='boas-vindas')return state.signedOut?renderEntryLanding():renderEntryWelcome();
  if(id==='login')return renderEntryLogin();
  if(id==='senha')return renderEntryForgot();
@@ -91,7 +92,7 @@ function entrySignup(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return entryError('Confira o e-mail.','en-email');
  if(pass.length<8||!/[a-z]/i.test(pass)||!/\d/.test(pass))return entryError(`A senha precisa ter ${ENTRY_SENHA_REGRA.toLowerCase()}`,'en-pass');
  if(!$('#en-consent')?.checked)return entryError('Para criar a conta, aceite a Política de privacidade e o Código de conduta.','en-consent');
- if(email===(state.profile.email||'rafael@exemplo.com'))return entryError('Este e-mail já tem conta. Use Entrar ou recupere a senha.','en-email');
+ if(email===entryKnownEmail())return entryError('Este e-mail já tem conta. Use Entrar ou recupere a senha.','en-email');
  if(!mutate(()=>{state.entry={account:{name:name.slice(0,80),email,provider:'email'},consentAt:Date.now(),eligibility:'none'};},{redraw:false}))return;
  navigate('entrar','cpf');
 }
@@ -118,6 +119,7 @@ function entryDoc(input){
  if(route.id==='analise'){render();entryFocusTitle();}else navigate('entrar','analise');
 }
 function bindEntry(){
+ entryDraftRestore();
  $('#en-doc')?.addEventListener('change',e=>entryDoc(e.target));
  const form=$('#main .en-form');if(!form)return;
  for(const f of $$('md-outlined-text-field',form))f.addEventListener('input',()=>{f.error=false;const e=$('#en-err');if(e)e.textContent='';});

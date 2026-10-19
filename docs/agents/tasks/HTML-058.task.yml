@@ -1,0 +1,56 @@
+task_id: HTML-058
+objective: >
+  Rodada 58 do Lote Funcional: Politica de privacidade e Codigo de conduta legiveis (rotas privacidade
+  e conduta, abertas para quem saiu e para quem entrou; os nomes no aceite viram links que voltam ao
+  mesmo passo sem perder o formulario; links em Configuracoes e na landing); pedido depois da escolha
+  (Servico concluido, Conversar com o prestador, Desistir desta proposta com reabertura do pedido;
+  proposta vencida marcada Vencida e nao escolhivel); Ocultar pessoal em perguntas com Desfazer, faixa
+  no endereco direto e lista Ocultados em Configuracoes, sem tocar o campo da moderacao.
+authority:
+  - Pedido do usuario em 2026-10-18: implementar a Rodada 58 do docs/LOTE_FUNCIONAL.md, a partir da AUDITORIA_FUNCIONAL_2026-10-18 (itens A4, A5 e A6) e da maquete funcional aprovada (quadros 7 a 10)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 04845c92 (Rodada 57), build sem alteracoes (SHA256 5aeeed7e). Prova round58 em 375-light:
+    14 de 15 checkpoints FAIL (links do aceite inexistentes; rotas privacidade e conduta indisponiveis;
+    pedido escolhido sem concluir, conversar nem desistir; proposta vencida ainda escolhivel; Ocultar
+    grava hidden e a pergunta passa a dizer removida pela moderacao; sem lista Ocultados).
+    O checkpoint da remocao pela moderacao passa no baseline de proposito: e o controle negativo.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-058.task.yml
+forbidden:
+  - guardar senha
+  - guardar CPF ou documento de identificacao
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+  - fora do escopo: editar e excluir conteudo, bloquear, denunciar mensagem, encerrar grupo, apagar conta e Ajuda ficam para as rodadas 59 a 62
+acceptance:
+  - Os nomes Politica de privacidade e Codigo de conduta no aceite (cadastro, Google e convite) abrem a pagina e voltam ao mesmo passo sem perder nome, e-mail e senha digitados nem marcar ou desmarcar a caixa
+  - As paginas abrem para quem saiu (visual da entrada) e para quem entrou (barra do app), tambem pelo endereco direto, marcadas Versao de teste; o CPF so confirma o vinculo e nao fica salvo
+  - Configuracoes e o rodape da landing levam as duas paginas; a senha digitada nunca vai para o armazenamento
+  - Pedido com proposta escolhida oferece Servico concluido (encerra como Concluido na lista e no detalhe), Conversar com o prestador (abre a conversa da escolha) e Desistir desta proposta (confirma, marca desistida e reabre o pedido para as outras propostas validas, se o prazo do pedido permitir, e avisa o resultado)
+  - Proposta com validade vencida aparece como Vencida e nao pode ser escolhida (botao ausente e recusa com aviso)
+  - A empresa que teve a proposta desistida, ou que voltou a lista, recebe aviso
+  - Ocultar uma pergunta grava hiddenByMe (nao hidden), tira so das listas da pessoa e avisa Pergunta ocultada para voce com Desfazer
+  - O endereco direto de pergunta ocultada abre com a faixa Voce ocultou esta pergunta e Mostrar, sem falar em moderacao; Configuracoes lista Ocultados com Mostrar por item
+  - A remocao pela moderacao (hidden) continua dizendo moderacao e some das listas
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round54-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round55-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round56-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round11-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round16-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round57-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: as paginas de privacidade falam de CPF e de verificacao de identidade; o pedido e as propostas movem dados de prestadores
+adr: docs/decisions/ADR-20260816-forma-da-admissao.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

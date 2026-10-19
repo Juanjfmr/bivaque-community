@@ -108,6 +108,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 35i/App | `src/shell/paged-list.js` | Frontend premium | Rodada 45: listas longas em blocos de 24, com carregamento ao rolar e botão de reserva |
 | 35j/App | `src/shell/in-place.js` | Frontend premium | Rodada 47: salvar e "Útil" atualizam só o que foi tocado |
 | 36/App | `src/features/profile/settings.js` | Perfil/família/movimentação | Cidade, configurações e controles de protótipo |
+| 36/Appbm | `src/features/profile/hidden.js` | Perfil/família/movimentação | Rodada 58: ocultar pergunta só para a pessoa (`hiddenByMe`), Desfazer, faixa na pergunta e lista Ocultados |
 | 36/Appb | `src/features/profile/push-install.js` | Perfil | Rodada 43: avisos no celular pedidos com explicação e instalação como app |
 | 36/Appbc | `src/features/owner/console.js` | Perfil | Rodada 49: Painel do Bivaque: visão geral, chegadas atendidas, o que mudou e fila |
 | 36/Appbd | `src/features/owner/review.js` | Perfil | Rodada 49: revisar e decidir itens da fila; denúncia registrada no app |
@@ -118,6 +119,8 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 36/Appbi | `src/features/entry/account.js` | Perfil | Rodada 54: criar conta e elegibilidade (CPF, resultados, documento, em análise) |
 | 36/Appbj | `src/features/entry/login.js` | Perfil | Rodada 55: entrar, recuperar a senha, Google com aceite e convite familiar |
 | 36/Appbk | `src/features/entry/arrive.js` | Perfil | Rodada 56: passo 3 (cidade, momento e nome), boas-vindas e entrada em análise na fila do dono |
+| 36/Appbl | `src/features/legal/pages.js` | Perfil | Rodada 58: Política de privacidade e Código de conduta (rotas `privacidade` e `conduta`), links do aceite e rascunho da entrada em memória |
+| 36/Appbn | `src/features/support/help.js` | Perfil | Rodada 62: Ajuda, Fale com a gente, Meus chamados (rotas `ajuda`, `contato`, `chamados`) e Apagar a conta (`apagar-conta`, tela de conta apagada) |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37/Appb | `src/features/listings/wizard.js` | Anúncios | Rodada 27: anúncio de imóvel em 5 etapas com revisão; publicar inválido volta à etapa do campo |
 | 37/Appc | `src/features/listings/share-card.js` | Anúncios | Rodada 29: cartão de compartilhamento desenhado no aparelho (canvas), com imagem, download e link |
@@ -129,6 +132,10 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 38/App | `src/features/events/editor.js` | Encontros/eventos | Edição e envio fictício de encontro |
 | 39/App | `src/features/businesses/editor.js` | Negócios/serviços | Edição e persistência local do negócio |
 | 40/App | `src/features/community/editor.js` | Memória/indicações | Pedir indicação e perguntas similares |
+| 40/Appc | `src/features/profile/blocks.js` | Perfil/família/movimentação | Rodada 60: bloquear pessoa (lista de bloqueados, Pessoas bloqueadas, detalhe de quem foi bloqueado) e ⋮ de denunciar ou bloquear em resposta, comentário e publicação de outra pessoa |
+| 63/Appa | `src/features/profile/hood-privacy.js` | Perfil/família/movimentação | Rodada 63: "Mostrar meu bairro" (bairro some do que a pessoa publica quando desligado) e cidades com dados de bairro e mapa |
+| 63/Appb | `src/features/businesses/plans.js` | Negócios/serviços | Rodada 63: limites e benefícios dos planos (conversas novas por mês, destaque em Patrocinado por 7 dias) |
+| 40/Appb | `src/features/community/manage.js` | Memória/indicações | Rodada 59: editar e excluir o que a pessoa publicou (pergunta, resposta, publicação e comentário de grupo, encontro), menu ⋮ só para o autor e aviso a quem confirmou presença |
 | 41/App | `src/features/businesses/indication.js` | Negócios/serviços | Indicação local de negócio |
 | 42/App | `src/features/profile/demo-actions.js` | Perfil/família/movimentação | Planos, convites familiares e denúncia; coordenar Monetização/Segurança |
 | 44/App | `src/features/messaging/actions.js` | Conversas/notificações | Contato/conversa, dispatch de mensagens; contém share/copy e simulação de respostas compartilhados |

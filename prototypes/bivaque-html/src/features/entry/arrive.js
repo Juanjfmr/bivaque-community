@@ -50,7 +50,7 @@ function entryFinish(){
   state.city=state.homeCity=city;state.mode=d.mode;
   if(d.mode==='chegando')state.arrival=date;
   if(d.mode==='saindo'){state.leaveDate=date;state.dest=dest;}
-  state.leftAuto=[];state.signedOut=false;state.entry={...state.entry,done:Date.now()};
+  state.leftAuto=[];state.signedOut=false;delete state.accountDeletedAt;state.entry={...state.entry,done:Date.now()};
  },{redraw:false}))return;
  entryCityDraft=null;navigate('entrar','boas-vindas',{replace:true});
 }

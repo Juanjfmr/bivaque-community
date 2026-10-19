@@ -32,9 +32,11 @@ function longPress(el,fn){
  el.addEventListener('click',e=>{if(held){held=false;e.preventDefault();e.stopPropagation();}},true);
  el.addEventListener('contextmenu',e=>{e.preventDefault();cancel();fn(el);});
 }
+// Rodada 57: no próprio anúncio, o menu oferece ver o anúncio (sem interesse nem denúncia).
+function itemContextChoices(i){const id=i.id,choices=[['bookmark',i.saved?'Remover dos salvos':'Salvar','save-item','',id],['share','Compartilhar com a família','share','','anuncio|'+id]];if(i.mine)return [...choices,['visibility','Ver anúncio','open-item','',id]];return [...choices,['chat_bubble','Tenho interesse','item-interest','',id],['flag','Denunciar…','report','','item|'+id]];}
 // Rodada 45: também é chamada depois de cada bloco acrescentado (hint=false); os laços são idempotentes.
 function bindOriginalGestures(hint=true){
- for(const card of $$('.photo-card > .card-link[data-action="open-item"]',root)){longPress(card,anchor=>{const id=anchor.dataset.value,i=itemById(id);if(!i)return;openCreate(anchor,[['bookmark',i.saved?'Remover dos salvos':'Salvar','save-item','',id],['share','Compartilhar com a família','share','','anuncio|'+id],['chat_bubble','Tenho interesse','item-interest','',id],['flag','Denunciar…','report','','item|'+id]],true);});}
+ for(const card of $$('.photo-card > .card-link[data-action="open-item"]',root)){longPress(card,anchor=>{const id=anchor.dataset.value,i=itemById(id);if(!i)return;openCreate(anchor,itemContextChoices(i),true);});}
  if(route.name==='comunidade'&&communityTab==='ind')for(const row of $$('[data-action="open-question"]',root)){const q=askById(row.dataset.value);if(q)makeSwipe(row,[[q.following?'notifications_off':'notifications_active',q.following?'Parar':'Seguir','follow-question',q.id,'#31647a'],['visibility_off','Ocultar','hide-question',q.id,'#6c7378']]);}
  if(route.name==='conversas')for(const row of $$('.list > .list-row',root)){const t=threadById($('[data-action="open-thread"]',row)?.dataset.value);if(t)makeSwipe(row,[[t.unread?'drafts':'chat_bubble',t.unread?'Lida':'Não lida','thread-unread',t.id,'#2f5f73'],['push_pin',t.pinned?'Soltar':'Fixar','pin-thread',t.id,'#654112'],['delete','Apagar','swipe-delete-thread',t.id,'#ba1a1a']]);}
  if(hint&&route.name==='conversas')swipeHint($('.list > .swipe-row',root));

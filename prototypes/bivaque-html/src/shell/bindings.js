@@ -12,7 +12,7 @@ function bindScreen(){
 }
 function saveRecent(q){q=q.trim();if(!q)return;mutate(()=>{state.recent=[q,...state.recent.filter(x=>x!==q)].slice(0,8);},{redraw:false});}
 function bindDialog(){
- if(editor)$$('md-outlined-text-field,md-outlined-select,input[type=date],input[type=time]',dialog).forEach(e=>{e.addEventListener('input',()=>{editorDirty=true;});e.addEventListener('change',()=>{editorDirty=true;});});
+ if(editor)$$('md-outlined-text-field,md-outlined-select,md-switch,input[type=date],input[type=time]',dialog).forEach(e=>{e.addEventListener('input',()=>{editorDirty=true;});e.addEventListener('change',()=>{editorDirty=true;});});
  bindChipEntries(dialog);
  $('#ask-input')?.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(updateSimilar,160);});
  $('#upload-photos')?.addEventListener('change',async e=>{await addEditorPhotos(e.target.files);e.target.value='';});bindPhotoDrop();

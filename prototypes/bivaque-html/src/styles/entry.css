@@ -94,3 +94,45 @@ body.entry-mode main{inset:0}
 .en-tile md-icon{flex:none;color:var(--md-sys-color-primary)}
 .en-tile b{display:block;font-size:15px;color:var(--md-sys-color-on-surface)}
 .en-tile:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px}
+/* Rodada 58: nomes do aceite como links e páginas da Política de privacidade e do Código de conduta. */
+.en-inline{display:inline;padding:0;margin:0;border:0;background:none;font:inherit;color:var(--md-sys-color-primary);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.en-inline:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px;border-radius:2px}
+.en-legal{margin-top:6px}
+.legal-doc{max-width:640px}
+.legal-doc.en{padding-top:12px}
+.legal-h{font-size:17px;line-height:24px;font-weight:650;margin:20px 0 4px}
+.legal-p{margin:0 0 8px;font-size:15px;line-height:23px;color:var(--md-sys-color-on-surface-variant)}
+.legal-p.muted{margin-top:24px;font-size:14px}
+.settings-links{margin:12px 0 4px}
+.settings-links .list-row{min-height:64px;text-align:left}
+/* Rodada 62: Ajuda, Fale com a gente, Meus chamados e Apagar a conta. */
+.help-card{margin:16px 0;padding:16px;border-radius:16px;text-align:center;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.help-card b{font-size:16px}
+.help-card p{margin:6px 0 12px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+.help-card md-filled-button{width:100%}
+.help-q{border-bottom:1px solid var(--md-sys-color-outline-variant)}
+.help-q:last-child{border-bottom:0}
+.help-q summary{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 16px;cursor:pointer;list-style:none}
+.help-q summary::-webkit-details-marker{display:none}
+.help-q summary b{flex:1;font-weight:500;font-size:15px;line-height:22px}
+.help-q summary md-icon{color:var(--md-sys-color-on-surface-variant);transition:transform .2s}
+.help-q[open] summary md-icon{transform:rotate(180deg)}
+.help-q p{margin:0;padding:0 16px 16px;font-size:15px;line-height:23px;color:var(--md-sys-color-on-surface-variant)}
+.help-chips{margin:4px 0 14px}
+.help-note{margin:8px 0 0}
+.help-send{margin-top:20px}
+.help-send md-filled-button,.help-danger md-filled-button{width:100%;height:52px}
+.help-warn{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;margin:0 0 14px;font-size:14px;background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container)}
+.help-danger{margin-top:4px}
+.legal-doc md-outlined-text-field{width:100%;margin:0 0 4px}
+.legal-doc .list+md-outlined-text-field{margin-top:14px}
+.ticket{padding:14px 16px;border-radius:16px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.ticket-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ticket p{margin:4px 0 0}
+.ticket-text{font-size:15px;line-height:22px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ticket-reply{margin-top:10px!important;padding:10px 12px;border-radius:12px;background:var(--md-sys-color-surface-container);font-size:14px;line-height:21px}
+.ticket-reply b{display:block;font-size:13px}
+.danger-row .txt b,.danger-row md-icon{color:var(--md-sys-color-error)}
+.en-gone-in{display:flex;flex-direction:column;align-items:center;text-align:center;padding:96px 12px 0}
+.en-gone-in md-icon{font-size:48px;width:48px;height:48px;color:var(--md-sys-color-primary)}
+.en-gone-in .en-h1{margin:16px 0 8px}

@@ -9,9 +9,14 @@ async function perform(action,value,el){
  if(await mapAction(action,value))return;
  if(await ownerAction(action,value))return;
  if(await entryAction(action,value))return;
+ if(await legalAction(action,value))return;
+ if(await hiddenAction(action,value))return;
+ if(await blockAction(action,value,el))return;
+ if(await planAction(action,value))return;
+ if(await supportAction(action,value))return;
  if(pagedAction(action,value))return;
  if(await pushInstallAction(action,value))return;
- if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
+ if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;if(await manageAction(action,value,el))return;
  switch(action){
  case 'nav':if(dialog.open)await closeDialog(true);navigate(value);break;
  case 'home':if(dialog.open)await closeDialog(true);navigate('inicio');break;
@@ -19,7 +24,7 @@ async function perform(action,value,el){
  case 'guide':if(dialog.open)await closeDialog(true);navigate('guia');break;
  case 'agenda':if(dialog.open)await closeDialog(true);navigate('agenda');break;
  case 'open-event':{const event=state.events.find(x=>x.id===value);if(!accessibleRecord(event)){showGlobalDependency('evento-indisponivel');break;}if(dialog.open)await closeDialog(true);navigate('evento',value);break;}
- case 'resume':{const [type,id]=value.split('|'),ref=type==='item'?itemById(id):type==='biz'?bizById(id):type==='ask'?askById(id):null;if(!accessibleRecord(ref)||state.lastViewed?.city!==state.city){showDialog('Conteúdo anterior indisponível','<p class="form-note">A referência foi removida ou pertence a outra cidade. Seu restante de dados locais foi preservado.</p>',`${btn('Voltar','close-dialog','','text')}${btn('Explorar nesta cidade','catalog-all','','filled')}`);break;}await perform(type==='item'?'open-item':type==='biz'?'open-biz':'open-question',id,el);break;}
+ case 'resume':{const [type,id]=value.split('|'),ref=type==='item'?itemById(id):type==='biz'?bizById(id):type==='ask'?askById(id):null;if(!accessibleRecord(ref)||!resumeRecord({type,id})||state.lastViewed?.city!==state.city){showDialog('Conteúdo anterior indisponível','<p class="form-note">A referência foi removida ou pertence a outra cidade. Seu restante de dados locais foi preservado.</p>',`${btn('Voltar','close-dialog','','text')}${btn('Explorar nesta cidade','catalog-all','','filled')}`);break;}await perform(type==='item'?'open-item':type==='biz'?'open-biz':'open-question',id,el);break;}
  case 'plan':openLocalPlan(value);break;
  case 'plan-check':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step){showGlobalDependency('plano-indisponivel');break;}if(readonly()||!state.profile.verified){showDialog('Checklist indisponível',`<p class="form-note">${readonly()?`Você está consultando ${esc(state.city)}. As marcações locais estão disponíveis na sua cidade, ${esc(state.homeCity)}.`:'Seu perfil de teste precisa estar verificado antes de salvar marcações. Nenhuma etapa foi alterada.'}</p>`,`${readonly()?btn('Voltar','close-dialog','','text')+btn('Voltar à minha cidade','home-city','','filled'):btn('Voltar','close-dialog','','filled')}`,'plan-permission');render();break;}const next=!step.done,saved=mutate(()=>{state.plan[kind].find(x=>x.id===id).done=next;},{redraw:false});if(dialog.dataset.kind==='local-plan'&&dialog.open)openLocalPlan(kind);else render();globalFocus('plan-check',value,dialog.open?dialog:root);if(saved)notify(next?'Etapa concluída neste dispositivo':'Etapa reaberta neste dispositivo');break;}
  case 'plan-go':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step?.go){showGlobalDependency('plano-indisponivel');break;}if(dialog.open)await closeDialog(true);const [next,arg]=step.go;if(next==='filter')await perform('intent',arg,el);else if(next==='search')await perform('guide-search',arg,el);else if(next==='groups')await perform('groups','',el);else if(next==='publish')await perform(arg==='imovel'?'create-property':'create-item','',el);else if(next==='my-questions')await perform('my-questions','',el);else if(next==='destination'){if(!CITY_NAMES.includes(state.dest)){showGlobalDependency('plano-indisponivel');break;}if(mutate(()=>state.city=state.dest,{redraw:false}))navigate('guia');}else showGlobalDependency('plano-indisponivel');break;}
@@ -29,7 +34,7 @@ async function perform(action,value,el){
  case 'edit-event':openEventEditor(value);break;
  case 'submit-event':await submitEvent();break;
  case 'attend-event':{const e=state.events.find(x=>x.id===value);if(!accessibleRecord(e)||e.mine||!canPost())break;if(!e.on&&e.date<dateISO()){notify('Este encontro já aconteceu.','info');break;}if(!e.on&&e.max&&(e.going||0)>=e.max){notify('As vagas deste encontro acabaram.','info');break;}if(mutate(()=>{e.on=!e.on;e.going=Math.max(0,(e.going||0)+(e.on?1:-1));}))notify(e.on?'Presença confirmada neste dispositivo':'Presença cancelada',e.on?'event_available':'event_busy');break;}
- case 'delete-event':{const e=state.events.find(x=>x.id===value);if(!e?.mine||!canPost())break;confirm('Cancelar encontro?',`“${e.title}” sairá da agenda da cidade.`,()=>{const snapshot=structuredClone(e);if(mutate(()=>{state.events=state.events.filter(x=>x.id!==value);},{redraw:false})){navigate('agenda');notify('Encontro cancelado','event_busy',()=>mutate(()=>{state.events.unshift(snapshot);}));}});break;}
+ case 'delete-event':{const e=state.events.find(x=>x.id===value);if(!e?.mine||!canPost())break;confirm('Cancelar encontro?',`“${e.title}” sairá da agenda da cidade.${guestsNote(eventGuests(e),false)}`,()=>{const guests=eventGuests(e);const snapshot=structuredClone(e);if(mutate(()=>{state.events=state.events.filter(x=>x.id!==value);},{redraw:false})){navigate('agenda');notify(`Encontro cancelado.${guestsNote(guests,true)}`,'event_busy',()=>mutate(()=>{state.events.unshift(snapshot);}));}},{...EDIT_CONFIRM,ok:'Cancelar encontro',cancel:'Voltar'});break;}
  // Rodada 49: a denúncia é registrada e entra na fila do Painel do Bivaque.
  case 'report':{const [t,id]=(value||'').split('|');if(t&&id)openReport(t,id);break;}
  case 'submit-report':submitReport(value);break;
@@ -62,7 +67,7 @@ async function perform(action,value,el){
  }
  case 'home-city':if(mutate(()=>state.city=state.homeCity,{redraw:false})){if(dialog.open)await closeDialog(true);navigate('inicio');}break;
  case 'settings':openSettings();break;
- case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected;if(mutate(()=>{state.profile.name=name;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
+ case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected,hood=$('#profile-hood')?.value??state.profile.hood??'';if(mutate(()=>{state.profile.name=name;state.profile.hood=hood;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
  case 'prototype':openPrototype();break;
  case 'apply-prototype':{
   const stage=$('#prototype-stage').value,verified=$('#verified-test').selected,incoming=Math.min(10000,Math.max(0,Number($('#prototype-incoming').value)||0));
@@ -98,12 +103,13 @@ async function perform(action,value,el){
  case 'delete-draft':confirm('Excluir rascunho?','O texto e as fotos deste rascunho serão removidos.',()=>{if(mutate(()=>state.drafts=state.drafts.filter(d=>d.id!==value)))notify('Rascunho excluído');});break;
  case 'gallery':{const i=itemById(route.id);if(!i)break;$('#hero-image').src=image(i.photos[Number(value)]);$$('.gallery button').forEach((b,n)=>b.classList.toggle('selected',n===Number(value)));break;}
  case 'item-leads':case 'biz-leads':{
-  const type=action==='item-leads'?'item':'biz',ts=state.threads.filter(t=>t.about.type===type&&t.about.id===value);showDialog('Contatos recebidos',ts.length?`<div class="list">${ts.map(t=>profileRow('chat_bubble',t.who,t.msgs.at(-1)?.t||'Conversa iniciada','open-thread',t.id)).join('')}</div>`:empty('Nenhum contato ainda','Os contatos sobre esta publicação aparecerão aqui.','chat_bubble'),btn('Fechar','close-dialog','','text'));break;
+  const type=action==='item-leads'?'item':'biz',ts=state.threads.filter(t=>t.about.type===type&&t.about.id===value&&!isBlocked(t.who));showDialog('Contatos recebidos',ts.length?`<div class="list">${ts.map(t=>profileRow('chat_bubble',t.who,t.msgs.at(-1)?.t||'Conversa iniciada','open-thread',t.id)).join('')}</div>`:empty('Nenhum contato ainda','Os contatos sobre esta publicação aparecerão aqui.','chat_bubble'),btn('Fechar','close-dialog','','text'));break;
  }
  case 'open-biz':{const b=bizById(value);if(!b)break;if(b.city!==state.city)mutate(()=>state.city=b.city,{redraw:false});if(!b.mine)mutate(()=>b.views=(b.views||0)+1,{redraw:false});remember('biz',value);if(dialog.open)await closeDialog(true);navigate('negocio',value);break;}
  case 'save-biz':{const b=bizById(value);if(!b)break;if(toggleSaved(action,b)){haptic();notify(b.saved?'Negócio salvo':'Negócio removido dos salvos',b.saved?'bookmark':'bookmark_remove');}break;}
  case 'my-biz':if(readonly())mutate(()=>state.city=state.homeCity,{redraw:false});if(state.myBiz?.live){if(dialog.open)await closeDialog(true);navigate('negocio',state.myBiz.id);}else openBusinessEditor();break;
  case 'edit-biz':openBusinessEditor(value);break;
+ case 'biz-menu':case 'pause-biz':case 'resume-biz':case 'delete-biz':ownBizAction(action,value,el);break;
  case 'submit-biz':await submitBusiness();break;
  case 'quote':await contact('biz',value,'Olá! Vi sua página no Bivaque. Pode me passar um orçamento?');break;
  case 'recommend-biz':{if(!canPost())break;const b=bizById(value);if(!b)break;if(b.myInd){notify('Você já indicou este negócio.','info');break;}showDialog('Indicar este negócio',field('recommend-why','Conte sua experiência','','type="textarea" rows="3" required minlength="12"'),`${btn('Cancelar','close-dialog','','text')}${btn('Publicar indicação','submit-recommend',value,'filled')}`);break;}
@@ -112,12 +118,11 @@ async function perform(action,value,el){
  case 'submit-indicate':await submitIndicate();break;
  case 'invite-owner':await copyText(`A comunidade do Bivaque indicou seu negócio. Conheça sua página: ${location.href}`);break;
  case 'claim-biz':if(state.myBiz?.live){notify('Você já tem uma página. Abra “Meu negócio” para editar.','info');break;}showDialog('Assumir página no modo teste',`${field('claim-name','Seu nome',state.profile.name,'required minlength="3" autocomplete=\"name\"')}<p class="form-note">Esta ação simula a confirmação do responsável. Na versão de produção, a propriedade precisará ser validada antes de editar a página.</p>`,`${btn('Cancelar','close-dialog','','text')}${btn('Assumir no modo teste','confirm-claim',value,'filled')}`);break;
- case 'confirm-claim':{const b=bizById(value);if(!b||!canPost()||!validFields(['claim-name']))break;if(mutate(()=>{state.myBiz={...b,mine:true,live:true,claimed:true,owner:$('#claim-name').value+' · responsável de teste'};state.biz=state.biz.filter(x=>x.id!==b.id);},{redraw:false})){await closeDialog(true);openBusinessEditor(b.id);}break;}
+ case 'confirm-claim':{const b=bizById(value);if(!b||!canPost()||!validFields(['claim-name']))break;if(mutate(()=>{state.myBiz={...b,spon:false,mine:true,live:true,claimed:true,...(state.bizSuspended?{suspended:true}:{}),owner:$('#claim-name').value+' · responsável de teste'};state.biz=state.biz.filter(x=>x.id!==b.id);},{redraw:false})){await closeDialog(true);openBusinessEditor(b.id);}break;}
  case 'whatsapp':{const b=bizById(value);if(b?.whatsapp){let n=b.whatsapp;if(n.length<=11)n='55'+n;external('https://wa.me/'+n);}break;}
  case 'instagram':{const b=bizById(value);if(b?.instagram)external('https://www.instagram.com/'+encodeURIComponent(b.instagram)+'/');break;}
  case 'website':{const b=bizById(value);if(b?.website&&/^https?:\/\//.test(b.website))external(b.website);break;}
  case 'plans':openPlans();break;
- case 'activate-plan':{const tier=$$('md-radio[name=plan]',dialog).find(x=>x.checked)?.value||'free';if(mutate(()=>{state.subscription.tier=tier;},{redraw:false})){await closeDialog(true);render();notify(tier==='free'?'Plano grátis selecionado':'Plano de teste ativado. Nenhum pagamento realizado.');}break;}
  case 'open-question':{
   const q=askById(value);if(!q)break;if(q.city!==state.city)mutate(()=>state.city=q.city,{redraw:false});if(dialog.dataset.kind==='editor'&&editor?.kind==='ask')mutate(()=>state.askDraft=$('#ask-input')?.value||'',{redraw:false});remember('ask',value);if(dialog.open)await closeDialog(true);navigate('pergunta',value);break;
  }
@@ -130,7 +135,6 @@ async function perform(action,value,el){
  case 'solve-question':case 'reopen-question':{if(!canPost())break;const [id,aid]=value.split('|'),q=askById(id);if(!q?.mine)break;if(mutate(()=>{q.status=action==='solve-question'?'ok':'open';q.answers.forEach(a=>a.solved=action==='solve-question'&&a.id===aid);})){notify(action==='solve-question'?'Resolvida. Sua experiência fica disponível para a comunidade.':'Pergunta reaberta');}break;}
  case 'like-answer':{if(!canPost())break;const [id,aid]=value.split('|'),a=askById(id)?.answers.find(x=>x.id===aid);if(a)mutate(()=>{a.liked=!a.liked;a.helped=(a.helped||0)+(a.liked?1:-1);});break;}
  case 'follow-question':{const q=askById(value);if(q){mutate(()=>q.following=!q.following);notify(q.following?'Você acompanha as respostas':'Você deixou de acompanhar');}break;}
- case 'hide-question':{const q=askById(value);if(q&&mutate(()=>q.hidden=true))notify('Pergunta ocultada','visibility_off',()=>mutate(()=>q.hidden=false));break;}
  case 'answer-origin':{const [id,aid]=value.split('|'),q=askById(id),a=q?.answers.find(x=>x.id===aid);if(a?.originQuestion){navigate('pergunta',a.originQuestion);break;}showDialog('Origem da indicação',`<div class="choice">${icon('history_edu')}<span class="txt"><b>${esc(q?.q)}</b><small>${esc(q?.who)} · ${esc(q?.city)}</small></span></div><p class="detail-copy">${esc(a?.t)}</p>${a?.biz&&bizById(a.biz)?`<button type="button" class="answer-origin" data-action="open-biz" data-value="${a.biz}">${icon('storefront')}<span class="grow">${esc(bizById(a.biz).name)}</span>${icon('chevron_right')}</button>`:''}${q?.demo||q?.fromMemory?'<p class="form-note">Relato de exemplo preservado no arquivo da cidade.</p>':''}`,btn('Fechar','close-dialog','','text'));break;}
  case 'my-questions':mutate(()=>state.city=state.homeCity,{redraw:false});navigate('minhas');break;
  case 'groups':communityTab='grp';navigate('comunidade');break;
