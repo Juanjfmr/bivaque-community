@@ -134,3 +134,8 @@ Provas rodadas (lote enxuto: a nova, três antigas diretamente afetadas e o gate
 Contrato validado: `node scripts/agents/task-contract.mjs docs/agents/tasks/HTML-065.task.yml` → `ok (R3, retry 3)`.
 Por ajuste de método, a bateria completa (inclui a Rodada 60, que cobre o Desfazer do Painel) fica para o
 fechamento do lote.
+
+## Congelamento do lote
+
+Aprovado pelo usuário em 19/10/2026 ("Congelar e publicar"). Nova base visual em
+[VISUAL_BASELINE_R65](VISUAL_BASELINE_R65.md) (`0dce1b06…`).

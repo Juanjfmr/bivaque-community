@@ -15,6 +15,8 @@ Worktree: `.claude/worktrees/funcional`, branch `codex/funcional`. Uma rodada po
 | 61 | Encerrar grupo; pausar e excluir página de negócio |
 | 62 | Apagar a conta; Ajuda e suporte |
 | 63 | Promessas da tela: cumprir ou retirar |
+| 64 | Correções da revisão: visibilidade, grupo encerrado, ofertas, acessibilidade |
+| 65 | Correções da revisão: pedidos, propostas, planos, página de negócio, apagar a conta |
 
 ## Regras para quem implementa
 

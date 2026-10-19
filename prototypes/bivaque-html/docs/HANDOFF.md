@@ -88,6 +88,17 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   - a entrada em análise aparece na fila do Painel do Bivaque.
   Revisões de código, de segurança (R3) e do GPT (Codex), bateria e base visual em
   [VISUAL_BASELINE_R56](VISUAL_BASELINE_R56.md). Congelada em 18/10 (`19df283b…`), sem publicar.
+- **Lote Funcional, Rodadas 57 a 65 (18 e 19/10):** fecha os caminhos quebrados e as jornadas que
+  faltavam antes do back-end (auditoria funcional de 18/10):
+  - aviso abre o pedido, "Você organiza", sem interesse no próprio anúncio, cancelar pedido de grupo;
+  - Política de privacidade e Código de conduta legíveis; pedido depois da escolha; ocultar pessoal;
+  - editar e excluir o que publicou; bloquear pessoa; denunciar resposta, comentário, publicação e
+    conversa, com consequência real no Painel;
+  - encerrar grupo; pausar e excluir página de negócio; Ajuda e Fale com a gente; apagar a conta;
+  - "Mostrar meu bairro", busca nas respostas, oferta de negócio em grupo e benefícios dos planos.
+  Implementado por subagentes (Haiku e Sonnet); três revisões independentes, duas rodadas de correção,
+  bateria e base visual em [VISUAL_BASELINE_R65](VISUAL_BASELINE_R65.md). Publicado em 19/10
+  (`0dce1b06…`). Pendente com o dono: aprovação comercial dos planos (R3).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
