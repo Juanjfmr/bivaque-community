@@ -29,8 +29,9 @@ e não deve ser mexida.
 
 ## Preparação (uma vez)
 
-1. Partir da `main` atualizada, numa worktree ou branch própria. Exemplo: `codex/seguranca`, a partir de
-   `origin/main`.
+1. Trabalhar na branch `codex/seguranca`, que já está pronta na worktree
+   `C:\Users\juana\bivaque-community\.claude\worktrees\seguranca`. Ela parte de `origin/main` (`6c6947c1`) e
+   traz esta auditoria e os contratos.
 2. Instalar com `npx pnpm@11.18.0 install --frozen-lockfile`.
 3. Abrir o Docker Desktop e subir o banco local com `npx supabase start`. É o banco local de testes; **nunca**
    use `db push` nem `--linked`.
