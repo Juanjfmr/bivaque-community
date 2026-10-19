@@ -10,5 +10,5 @@ const ownHoodSuffix=mine=>mine&&state.prefs.showHood&&state.profile.hood?` · ${
 // Só Manaus tem a lista de bairros e as coordenadas do mapa; nas outras cidades não há filtro de bairro nem Mapa.
 const HOOD_CITIES=['Manaus'];
 const cityHasHoods=(city=state.city)=>HOOD_CITIES.includes(city);
-// Rodada 64: nos formulários, cidade sem lista de bairros pede um texto livre e opcional (não os bairros de Manaus).
-function hoodField(id,value='',city=state.homeCity){return cityHasHoods(city)?selectField(id,'Bairro',[['','Escolher bairro'],...HOODS],value,'required'):field(id,'Bairro (opcional)',value,'maxlength="60"');}
+// Rodada 66: nos formulários, o campo de bairro com busca (shell/hood-picker.js), em qualquer cidade.
+function hoodField(id,value='',city=state.homeCity,help){return hoodPicker(id,'Bairro',value,{city,...(help?{help}:{})});}

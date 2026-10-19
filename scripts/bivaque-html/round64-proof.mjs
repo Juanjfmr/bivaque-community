@@ -664,27 +664,40 @@ const checkpoints = {
   },
 
   // ---- 8. Sem bairros de Manaus fora de Manaus ----
+  // Rodada 66: o campo de bairro virou busca em todas as cidades (shell/hood-picker.js); a prova passa a
+  // conferir que fora de Manaus as sugestões são da cidade da pessoa, nunca os bairros de Manaus.
   async "forms-offer-no-manaus-hoods-in-other-cities"(page) {
-    const kind = (id) => page.locator(`#${id}`).evaluate((el) => el.tagName)
-    // Manaus (controle): lista de bairros
+    const kind = (id) =>
+      page.locator(`#${id}`).evaluate((el) => (el.closest(".hood-pick") ? "PICKER" : el.tagName))
+    const suggestions = async (id) => {
+      await page.locator(`#${id} input`).fill("")
+      await page.locator(`#${id}-menu`).waitFor({ state: "visible", timeout: 3000 })
+      return page.locator(`#${id}-menu`).innerText()
+    }
+    // Manaus (controle): campo de busca de bairro
     await snapshot(page)
     await go(page, "inicio")
     await openCreateChoice(page, "create-item")
-    expect((await kind("item-hood")) === "MD-OUTLINED-SELECT", "Manaus perdeu a lista de bairros")
+    expect((await kind("item-hood")) === "PICKER", "Manaus perdeu o campo de bairro")
+    expect(
+      /Mais escolhidos em Manaus/i.test(await suggestions("item-hood")),
+      "Manaus sem sugestões",
+    )
+    // Esc fecha primeiro as sugestões e depois a janela
+    await page.keyboard.press("Escape")
     await page.keyboard.press("Escape")
     await settle(page)
-    // Brasília: campo livre e opcional, sem Ponta Negra & cia.
+    // Brasília: sugestões de Brasília, sem Ponta Negra & cia.
     await patchState(page, "s.homeCity='Brasília';s.city='Brasília'")
     await go(page, "inicio?cidade=Brasília")
     await openCreateChoice(page, "create-item")
+    expect((await kind("item-hood")) === "PICKER", "desapego: bairro sem busca")
+    const bsb = await suggestions("item-hood")
     expect(
-      (await kind("item-hood")) === "MD-OUTLINED-TEXT-FIELD",
-      "desapego: bairro continua lista",
+      /Mais escolhidos em Brasília/i.test(bsb) && !/Ponta Negra|Planalto/.test(bsb),
+      `desapego oferece bairros de Manaus: ${bsb}`,
     )
-    expect(
-      !/Ponta Negra|Planalto/.test(await dialogText(page)),
-      "desapego oferece bairros de Manaus",
-    )
+    await choose(page, "item-hood")
     await fill(page, "item-title", "Estante de livros branca")
     await fill(page, "item-price", "150")
     await choose(page, "item-cat")
@@ -693,29 +706,31 @@ const checkpoints = {
     await action(page, "submit-item")
     const item = (await stored(page)).items.find((i) => i.title === "Estante de livros branca")
     expect(
-      item && item.hood === "" && item.city === "Brasília",
-      `anúncio sem bairro: ${JSON.stringify(item)}`,
+      item &&
+        /^(Asa Sul|Asa Norte|Noroeste|Sudoeste|Cruzeiro|Lago Sul|Lago Norte|Guará|Águas Claras)$/.test(
+          item.hood,
+        ) &&
+        item.city === "Brasília",
+      `anúncio sem bairro de Brasília: ${JSON.stringify(item)}`,
     )
     await go(page, "inicio?cidade=Brasília")
     await openCreateChoice(page, "create-property")
-    expect((await kind("item-hood")) === "MD-OUTLINED-TEXT-FIELD", "imóvel: bairro continua lista")
+    expect((await kind("item-hood")) === "PICKER", "imóvel: bairro sem busca")
     await page.keyboard.press("Escape")
     await settle(page)
     await go(page, "inicio?cidade=Brasília")
     await openCreateChoice(page, "create-request")
+    expect((await kind("request-hood")) === "PICKER", "pedido: bairro sem busca")
     expect(
-      (await kind("request-hood")) === "MD-OUTLINED-TEXT-FIELD",
-      "pedido: bairro continua lista",
+      !/Ponta Negra|Planalto/.test(await suggestions("request-hood")),
+      "pedido oferece bairros de Manaus",
     )
-    expect(!/Ponta Negra|Planalto/.test(await dialogText(page)), "pedido oferece bairros de Manaus")
+    await page.keyboard.press("Escape")
     await page.keyboard.press("Escape")
     await settle(page)
     await go(page, "inicio?cidade=Brasília")
     await openCreateChoice(page, "indicate")
-    expect(
-      (await kind("ind-hood")) === "MD-OUTLINED-TEXT-FIELD",
-      "indicação: bairro continua lista",
-    )
+    expect((await kind("ind-hood")) === "PICKER", "indicação: bairro sem busca")
   },
 }
 

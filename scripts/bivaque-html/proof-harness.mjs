@@ -39,6 +39,18 @@ export async function action(page, name, value) {
   await settle(page)
 }
 export async function choose(page, id, value) {
+  // Rodada 66: o bairro é um campo de busca. Sem valor, toca na primeira sugestão ("Mais escolhidos");
+  // com valor, digita e toca na sugestão com esse nome (ou em "Usar … como está").
+  if (await page.locator(`.hood-pick #${id}`).count()) {
+    await page.locator(`#${id} input`).fill(value ? String(value) : "")
+    const menu = page.locator(`#${id}-menu`)
+    await menu.waitFor({ state: "visible", timeout: 3000 })
+    await (value
+      ? menu.locator(`.hood-opt[data-hood-name="${value}"]`)
+      : menu.locator(".hood-opt").first()
+    ).click()
+    return
+  }
   const option = value
     ? page.locator(`#${id} md-select-option[value="${value}"]`)
     : page.locator(`#${id} md-select-option`).nth(1)

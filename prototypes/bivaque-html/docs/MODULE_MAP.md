@@ -68,12 +68,14 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 12/App | `src/app/open.js` | Arquitetura | Comentário, abertura do IIFE e strict mode |
 | 13/App | `src/utilities/format.js` | Arquitetura | Seletores, escaping, datas, ids e apresentação |
 | 14/App | `src/data/demo/model.js` | Arquitetura | Chave de storage e constantes do modelo demo |
+| 66/App | `src/data/demo/bairros.js` | Perfil/família/movimentação | Rodada 66: bairros por cidade (zona e centro aproximado) e CEPs de teste |
 | 14/Appb | `src/data/demo/owner.js` | Dados | Rodada 49: números de exemplo do Painel do Bivaque |
 | 14a/App | `src/features/businesses/taxonomy.js` | Negócios/serviços | Rodada 12: grupos de serviço com especialidade opcional e migração das categorias antigas |
 | 14a/Appb | `src/features/listings/attributes.js` | Anúncios | Rodada 22: tipos, comodidades, categorias e estado; migração dos exemplos (`normalizeListings`) |
 | 15/App | `src/features/groups/presets.js` | Comunidades/grupos | Templates/interesses/notificações de grupo |
 | 16/App | `src/app/state.js` | Arquitetura | Inicialização, schema 2, `state`, `mutate`, seletores e permissões demo |
 | 17/App | `src/shell/primitives.js` | Frontend premium | HTML compartilhado, imagens e snackbar |
+| 66/App | `src/shell/hood-picker.js` | Frontend premium | Rodada 66: campo de bairro com busca por nome, CEP ou localização (CEP e coordenadas não ficam salvos) |
 | 18/App | `src/shell/navigation.js` | Frontend premium | Router, history, tema, shell e dispatch de render |
 | 19/App | `src/features/home/views.js` | Início/busca/descoberta | Início e plano de chegada/saída |
 | 19a/App | `src/features/home/desktop.js` | Início/busca/descoberta | Rodada 13: `renderHomeDesktop`, aviso pessoal, serviços, grupos, próximo encontro e chegada |
