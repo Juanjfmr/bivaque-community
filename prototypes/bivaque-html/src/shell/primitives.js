@@ -5,7 +5,7 @@ function cover(x,tag=''){
 function btn(text,action,value='',kind='filled',ic=''){
  const tag={'filled':'md-filled-button','tonal':'md-filled-tonal-button','text':'md-text-button','outlined':'md-outlined-button'}[kind];return `<${tag} type="button" data-action="${action}"${value!==''?` data-value="${esc(value)}"`:''}>${ic?icon(ic,'icon'):''}${esc(text)}</${tag}>`;
 }
-function iconBtn(ic,action,value='',label=ic,extra=''){return `<md-icon-button type="button" data-action="${action}" data-value="${esc(value)}" aria-label="${esc(label)}" ${extra}>${icon(ic)}</md-icon-button>`;}
+function iconBtn(ic,action,value='',label=ic,extra=''){return `<md-icon-button type="button" data-action="${action}" data-value="${esc(value)}" aria-label="${esc(label)}" ${/-menu$/.test(action)?'aria-haspopup="menu" ':''}${extra}>${icon(ic)}</md-icon-button>`;}
 function selectField(id,label,values,selected='',extra=''){
  return `<md-outlined-select id="${id}" label="${esc(label)}" ${extra}>${values.map(v=>{const [value,title]=Array.isArray(v)?v:[v,v];return `<md-select-option value="${esc(value)}" ${String(selected)===String(value)?'selected':''}><div slot="headline">${esc(title)}</div></md-select-option>`;}).join('')}</md-outlined-select>`;
 }

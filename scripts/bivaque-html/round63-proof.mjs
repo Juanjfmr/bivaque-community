@@ -282,10 +282,10 @@ const checkpoints = {
     const msg = await toast(page)
     expect(/Pode fazer outra em \d\d\/\d\d às \d\d:\d\d/.test(msg), `sem a data: ${msg}`)
     expect((await offers()).length === 1, "criou a segunda oferta")
-    // passada a semana, pode de novo
+    // passada a semana, pode de novo (Rodada 64: a cota é da conta, não do nome; chave = e-mail ou 'local-member')
     await patchState(
       page,
-      `const g=s.groups.find(x=>x.id==='${GID}');g.offerAt[s.profile.name]=Date.now()-8*${DAY}`,
+      `const g=s.groups.find(x=>x.id==='${GID}');g.offerAt[s.profile.email||'local-member']=Date.now()-8*${DAY}`,
     )
     await post("Oferta nova depois de uma semana.")
     expect((await offers()).length === 2, "não liberou depois de uma semana")

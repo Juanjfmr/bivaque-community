@@ -22,11 +22,11 @@ function renderHomeDesktop(){
 function homeDeskNotice(){
  if(readonly())return '';
  const strip=(ic,title,sub,label,action,value)=>`<button type="button" class="home-notice" data-action="${action}" data-value="${esc(value)}">${icon(ic)}<span class="grow"><b>${esc(title)}</b><small>${esc(sub)}</small></span><span class="home-notice-go">${esc(label)}${icon('chevron_right')}</span></button>`;
- const ask=cityAsks().filter(q=>q.mine&&q.status!=='ok'&&q.answers.length).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
- if(ask){const n=ask.answers.length;return strip('chat_bubble',`Sua pergunta recebeu ${n} ${n===1?'resposta':'respostas'}`,ask.q,'Ver respostas','open-question',ask.id);}
+ const ask=cityAsks().filter(q=>q.mine&&q.status!=='ok'&&askAnswers(q).length).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+ if(ask){const n=askAnswers(ask).length;return strip('chat_bubble',`Sua pergunta recebeu ${n} ${n===1?'resposta':'respostas'}`,ask.q,'Ver respostas','open-question',ask.id);}
  const req=requestList().filter(r=>r.mine&&r.city===state.city&&requestActive(r)&&r.proposals.some(p=>p.status==='sent')).sort((a,b)=>b.createdAt-a.createdAt)[0];
  if(req){const n=req.proposals.filter(p=>p.status==='sent').length;return strip('request_quote',`Seu pedido recebeu ${n} ${n===1?'proposta':'propostas'}`,`${requestTitle(req)}${hoodShown(req)?' · '+req.hood:''}`,'Comparar','open-request',req.id);}
- const unread=state.notices.filter(n=>n.unread&&n.city===state.homeCity);
+ const unread=noticeList().filter(n=>n.unread);
  if(unread.length){const n=unread[0],text=noticeText(n);return strip('notifications',unread.length===1?'Você tem 1 aviso novo':`Você tem ${unread.length} avisos novos`,text,'Ver avisos','notices','');}
  return '';
 }
@@ -35,7 +35,7 @@ function homeDeskNotice(){
 function homeDeskServices(sponAt=2){
  const organic=cityBiz().filter(b=>!isSpon(b)).sort((a,b)=>b.recN-a.recN),spon=cityBiz().find(b=>spotActive(b))||cityBiz().find(b=>b.spon&&b.claimed!==false);
  const list=spon?[...organic.slice(0,sponAt),spon,...organic.slice(sponAt,3)]:organic.slice(0,4);
- const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,isSpon(b)?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${countHtml(b.recN)} ${b.recN===1?'indicação':'indicações'}${avatarStack(b.says,b.recN)}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
+ const card=b=>`<article class="photo-card home-biz"><button type="button" class="card-link" data-action="open-biz" data-value="${b.id}">${cover(b,isSpon(b)?'Patrocinado':b.claimed===false?'Indicado pela comunidade':'')}<div class="card-body"><h3>${esc(b.name)}</h3><p class="card-meta">${esc(b.cat)}${b.specs?.length===1?` · ${esc(b.specs[0])}`:''}</p><div class="home-biz-foot"><span class="card-line">${icon(b.claimed===false?'hourglass_top':'forum')}${b.claimed===false?'Aguardando o responsável':b.recN?`${countHtml(b.recN)} ${b.recN===1?'indicação':'indicações'}${avatarStack(bizSays(b),b.recN)}`:'Novo na cidade'}</span><span class="home-biz-go">Ver negócio${icon('chevron_right')}</span></div></div></button></article>`;
  return `<section class="section">${sectionTitle('Serviços recomendados','Ver negócios','businesses')}<p class="small muted home-sub">Indicados pela comunidade de ${esc(state.city)}</p>${list.length?`<div class="home-row">${list.map(card).join('')}</div>`:empty('Ainda sem negócios cadastrados','As indicações da comunidade ajudarão a formar o guia de serviços.','storefront')}</section>`;
 }
 function homeDeskItems(arriving,title='Oportunidades perto de você'){
@@ -44,14 +44,14 @@ function homeDeskItems(arriving,title='Oportunidades perto de você'){
 }
 // Lateral: atividade dos meus grupos, com o sinal do que mudou (respostas, comentários).
 function homeDeskGroups(){
- if(readonly())return '';const mg=state.groups.filter(g=>g.on);if(!mg.length)return '';
+ if(readonly())return '';const mg=state.groups.filter(g=>g.on&&groupReadable(g));if(!mg.length)return '';
  const posts=mg.flatMap(g=>groupPosts(g).filter(p=>p.type!=='event'&&!p.hidden).map(p=>({g,p}))).sort((a,b)=>b.p.at-a.p.at).slice(0,2);
- const row=({g,p})=>{const n=postComments(p).length,what=p.type==='question'?(n===1?'resposta':'respostas'):(n===1?'comentário':'comentários');return `<button type="button" class="list-row" data-action="open-post" data-value="${g.id}~${p.id}"><span class="avatar">${esc(p.mine?initals(state.profile.name):p.ini)}</span><span class="txt"><b>${esc(p.text)}</b><small class="home-meta"><span class="home-meta-group">${esc(g.t)}</span>${n?`<span class="home-activity">${n} ${what}</span>`:''}<span>${gAgo(p.at)}</span></small></span>${icon('chevron_right')}</button>`;};
+ const row=({g,p})=>{const n=postComments(p).length,what=p.type==='question'?(n===1?'resposta':'respostas'):(n===1?'comentário':'comentários');return `<button type="button" class="list-row" data-action="open-post" data-value="${g.id}~${p.id}"><span class="avatar">${esc(p.mine?initals(state.profile.name):p.ini)}</span><span class="txt"><b>${p.type==='offer'?'Oferta · ':''}${esc(p.text)}</b><small class="home-meta"><span class="home-meta-group">${esc(g.t)}</span>${n?`<span class="home-activity">${n} ${what}</span>`:''}<span>${gAgo(p.at)}</span></small></span>${icon('chevron_right')}</button>`;};
  return `<section class="home-card">${sectionTitle('Nos seus grupos','Ver grupos','groups')}<div class="list">${posts.length?posts.map(row).join(''):mg.slice(0,2).map(g=>groupRow(g)).join('')}</div></section>`;
 }
 // Lateral: o próximo encontro (do grupo ou da agenda), com confirmação em um toque.
 function homeDeskEvent(){
- const today=dateISO(),groupEv=readonly()?null:state.groups.filter(g=>g.on).flatMap(g=>groupPosts(g).filter(p=>p.type==='event'&&!p.hidden&&p.event.date>=today).map(p=>({g,p}))).sort((a,b)=>a.p.event.date.localeCompare(b.p.event.date))[0];
+ const today=dateISO(),groupEv=readonly()?null:state.groups.filter(g=>g.on&&!groupClosed(g)).flatMap(g=>groupPosts(g).filter(p=>p.type==='event'&&!p.hidden&&p.event.date>=today).map(p=>({g,p}))).sort((a,b)=>a.p.event.date.localeCompare(b.p.event.date))[0];
  const cityEv=state.events.filter(e=>e.city===state.city&&e.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
  const useGroup=groupEv&&(!cityEv||groupEv.p.event.date<=cityEv.date);if(!useGroup&&!cityEv)return '';
  const date=useGroup?groupEv.p.event.date:cityEv.date,d=new Date(date+'T12:00:00'),open=useGroup?['open-post',`${groupEv.g.id}~${groupEv.p.id}`]:['open-event',cityEv.id];

@@ -13,8 +13,9 @@ const CREATE_PANEL_CHOICES=[
  ['storefront','Divulgar meu negócio','my-biz','Crie a página e receba pedidos da comunidade','cp-biz']
 ];
 function createPanelHtml(){return `<div class="cp-head"><div><h2 id="cp-title">Criar no Bivaque</h2><p>O que você quer publicar ou pedir?</p></div><kbd class="cp-kbd" aria-hidden="true" title="Atalho: tecla C">C</kbd><button type="button" class="cp-close" tabindex="-1" aria-label="Fechar" title="Fechar (Esc)">${icon('close')}<md-ripple></md-ripple></button></div><div class="cp-grid" role="menu" aria-labelledby="cp-title">${CREATE_PANEL_CHOICES.map(([ic,title,action,sub,tone],i)=>`<button type="button" class="create-menu-action cp-item${action==='my-biz'?' cp-wide':''}" role="menuitem" data-action="${action}" style="--i:${i}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><span class="cp-ico ${tone}">${icon(ic)}</span><span class="cp-txt"><b>${esc(title)}${action==='create-request'?'<span class="cp-new">Novo</span>':''}</b><small>${esc(sub||`Receba até ${REQUEST_LIMIT} propostas`)}</small></span></button>`).join('')}</div>`;}
-function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false){
- if(createHistoryPromise){createHistoryPromise.then(()=>openCreate(anchor,customChoices,contextMenu));return;}
+// Rodada 64: `label` é o nome acessível do menu (ex.: "Ações da resposta"); sem ele, o de sempre.
+function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false,label=''){
+ if(createHistoryPromise){createHistoryPromise.then(()=>openCreate(anchor,customChoices,contextMenu,label));return;}
  if(createOpen){closeCreateMenu();return;}
  createAnchor=anchor;createReturnDescriptor=globalFocusDescriptor(anchor);createOpen=true;createFocusIndex=0;
  const choices=customChoices||[
@@ -27,7 +28,7 @@ function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false){
   ['storefront','Divulgar meu negócio','my-biz','']
  ];
  const panel=!customChoices&&!contextMenu&&anchor?.id==='fab'&&createPanelMQ.matches;
- const popup=$('#create-menu');popup.classList.toggle('context-menu',contextMenu);popup.classList.toggle('create-panel',panel);popup.setAttribute('role',panel?'dialog':'menu');popup.setAttribute('aria-label',contextMenu?'Ações do anúncio':'Criar publicação');$('#create-scrim').classList.toggle('context-menu',contextMenu);
+ const popup=$('#create-menu');popup.classList.toggle('context-menu',contextMenu);popup.classList.toggle('create-panel',panel);popup.setAttribute('role',panel?'dialog':'menu');popup.setAttribute('aria-label',label||(contextMenu?'Ações do anúncio':'Criar publicação'));$('#create-scrim').classList.toggle('context-menu',contextMenu);
  popup._closing?.cancel();popup.style.pointerEvents='';delete popup.dataset.placed;
  popup.innerHTML=panel?createPanelHtml():choices.map(([ic,title,action,sub,value,danger])=>`<md-filled-tonal-button type="button" class="create-menu-action${danger?' danger-action':''}" role="menuitem" data-action="${action}"${value!==undefined?` data-value="${esc(value)}"`:''}>${icon(ic,'icon')}<span class="create-menu-label">${esc(title)}${sub?`<span class="create-menu-sub">${esc(sub)}</span>`:''}</span></md-filled-tonal-button>`).join('');
  // The pinned Material button delegates its aria properties but does not

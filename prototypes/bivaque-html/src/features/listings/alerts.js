@@ -18,7 +18,7 @@ function alertLabel(kind,a){
  if(a.hoods.length)parts.push(a.hoods.length===1?a.hoods[0]:`${a.hoods.length} bairros`);
  return parts.join(' · ');
 }
-function alertMatches(x,al){const a=al.attrs;return x.city===al.city&&x.status==='active'&&x.kind===al.kind&&(!hasPrice(a.min)||itemTotal(x)>=Number(a.min))&&(!hasPrice(a.max)||itemTotal(x)<=Number(a.max))&&catalogMatches(x,al.kind,a);}
+function alertMatches(x,al){const a=al.attrs;return x.city===al.city&&x.status==='active'&&itemVisible(x)&&x.kind===al.kind&&(!hasPrice(a.min)||itemTotal(x)>=Number(a.min))&&(!hasPrice(a.max)||itemTotal(x)<=Number(a.max))&&catalogMatches(x,al.kind,a);}
 // Faixa abaixo da contagem: só aparece com filtros ativos, que é quando um alerta faz sentido.
 function alertBannerHtml(kind){
  if(!filterActiveCount(kind))return '';const al=currentAlert(kind);
@@ -66,6 +66,7 @@ async function alertAction(action,value){
 function simulateAlertListing(){
  const al=(state.alerts||[]).find(a=>a.notify&&a.city===state.homeCity);
  if(!al){notify(`Crie um alerta com avisos ligados em ${state.homeCity} primeiro.`,'info');return;}
+ if(isBlocked('Paula V.')){notify('Paula V. está nas suas pessoas bloqueadas. Nenhum anúncio de exemplo chegou.','info');return;}
  const a=al.attrs,min=Number(a.min)||0,max=hasPrice(a.max)?Number(a.max):0,kind=al.kind;
  const price=max?Math.max(min,max>=20?Math.floor(max*0.9/10)*10:max):Math.max(min,kind==='imovel'?2300:350);
  const hood=a.hoods[0]||'Flores',id=uid('i');

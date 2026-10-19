@@ -22,6 +22,8 @@ let confirmClosingHistory=false,confirmHistoryDone=null,confirmHistoryPromise=nu
 const scrollPositions=new Map();
 const root=$('#main'),dialog=$('#dialog'),confirmDialog=$('#confirm-dialog');
 const USER_ID='local-member';
+// Rodada 64: identificador estável da conta (não muda se a pessoa trocar de nome); a cota semanal de oferta e o pedido de entrada usam este.
+const accountKey=()=>state.profile?.email||USER_ID;
 function mutate(fn,{redraw=true}={}){
  const before=JSON.stringify(state);
  try{fn();localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state=JSON.parse(before);notify('Não foi possível salvar. Libere espaço no navegador ou use fotos menores.','error');return false;}
@@ -31,13 +33,22 @@ function mutate(fn,{redraw=true}={}){
 const isBlocked=name=>!!name&&(state.blocked||[]).some(b=>b.name===name);
 // Só pessoas se bloqueiam: nunca a própria conta, nem "Relato da comunidade" e outros autores de exemplo (nome + inicial).
 const blockable=name=>!!name&&name!==state.profile?.name&&/^[^\s.]+( [^\s.]+\.)?$/.test(name);
+// Rodada 64: um predicado por tipo reúne moderação, ocultar pessoal, bloqueio e página pausada; as telas usam estes.
+const askVisible=q=>!!q&&!q.hidden&&!q.hiddenByMe&&(!!q.mine||!isBlocked(q.who));
+const itemVisible=x=>!!x&&x.status!=='removed'&&(!!x.mine||!isBlocked(x.seller));
+// Página aberta: publicada, não suspensa pelo Painel e não pausada (a de exemplo não tem `live`).
+const bizLive=b=>!!b&&b.live!==false&&!b.suspended&&!b.paused;
+const bizVisible=b=>!!b&&(!!b.mine||bizLive(b));
+// Relatos da página sem os de pessoas bloqueadas (o relato próprio fica).
+const bizSays=b=>(b?.says||[]).filter(s=>s[1]==='me'||!isBlocked(s[2]));
 function cityItems(){return state.items.filter(x=>x.city===state.city&&(x.mine||!isBlocked(x.seller)));}
 function cityBiz(){return (state.myBiz?.live?[state.myBiz,...state.biz]:state.biz).filter(x=>x.city===state.city&&!x.suspended&&!x.paused);}
-function cityAsks(){return state.asks.filter(x=>x.city===state.city&&!x.hidden&&!x.hiddenByMe&&(x.mine||!isBlocked(x.who)));}
+function cityAsks(){return state.asks.filter(x=>x.city===state.city&&askVisible(x));}
 // Respostas e comentários que a pessoa vê: sem os de quem bloqueou e sem os removidos pela moderação.
 const askAnswers=q=>q.answers.filter(a=>!a.hidden&&(a.mine||!isBlocked(a.who)));
 // Rodada 63: com "Permitir oferta de negócio de membro" desligado, as ofertas do grupo ficam ocultas (os dados ficam).
-const groupPosts=g=>g.posts.filter(p=>(p.mine||!isBlocked(p.author))&&(p.type!=='offer'||g.allowOffers));
+// Rodada 64: grupo encerrado fora do prazo de leitura não mostra nada; oferta só vale com a página dela aberta.
+const groupPosts=g=>!groupReadable(g)?[]:g.posts.filter(p=>(p.mine||!isBlocked(p.author))&&(p.type!=='offer'||(g.allowOffers&&bizLive(bizById(p.biz)))));
 const postComments=p=>p.comments.filter(c=>!c.hidden&&(c.mine||!isBlocked(c.author)));
 function cityGroups(){return state.groups.filter(x=>x.city===state.city);}
 const itemById=id=>state.items.find(x=>x.id===id);

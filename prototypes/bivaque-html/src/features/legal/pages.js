@@ -20,9 +20,10 @@ const legalRoute=()=>LEGAL_ROUTES.includes(route.name);
 // Quem saiu lê as páginas com o visual da entrada, sem a barra do app.
 const entryChrome=()=>route.name==='entrar'||((legalRoute()||supportRoute())&&!!state.signedOut);
 // O que a pessoa digitou na entrada fica só na memória enquanto ela lê o documento. Nada vai para o
-// armazenamento; a senha é descartada assim que ela sai da leitura.
+// armazenamento, e a senha não é guardada.
 var entryDraft=null;
-const ENTRY_DRAFT_FIELDS=['en-name','en-email','en-pass','en-pass-login','en-code'];
+// A senha nunca entra no rascunho: ao voltar da leitura, o campo de senha vem vazio.
+const ENTRY_DRAFT_FIELDS=['en-name','en-email','en-code'];
 function entryDraftSave(){
  if(route.name!=='entrar')return;const fields={};
  for(const id of ENTRY_DRAFT_FIELDS){const f=$('#'+id);if(f&&!f.readOnly)fields[id]=f.value||'';}
@@ -44,5 +45,5 @@ function renderLegal(){
 }
 async function legalAction(action,value){
  if(action!=='open-legal'||!LEGAL_ROUTES.includes(value))return false;
- entryDraftSave();if(dialog.open)await closeDialog(true);navigate(value);return true;
+ entryDraftSave();if(await leaveDialog(()=>navigate(value)))navigate(value);return true;
 }

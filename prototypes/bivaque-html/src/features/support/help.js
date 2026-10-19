@@ -110,7 +110,8 @@ function accountPurge(){
   // Única administradora: o primeiro moderador assume; sem moderador, o grupo é encerrado (como em closeGroup).
   g.mods=(g.mods||[]).filter(m=>m!==name);
   if(g.role==='admin'){if(g.mods.length){g.admin=g.mods[0];g.mods=g.mods.slice(1);}else{g.closedAt=Date.now();g.requests=[];}}
-  for(const k of [name,email])if(k&&g.offerAt)delete g.offerAt[k];
+  // R64 usa accountKey() (e-mail ou USER_ID) como chave da cota; o nome fica por dados antigos.
+  for(const k of [name,email,USER_ID])if(k&&g.offerAt)delete g.offerAt[k];
   if(g.offerAt&&!Object.keys(g.offerAt).length)delete g.offerAt;
   g.on=false;g.pending=false;g.role=null;g.unread=0;
   if(bizId)g.posts=g.posts.filter(p=>!(p.type==='offer'&&p.biz===bizId));
@@ -146,7 +147,7 @@ async function supportAction(action,value){
   const [name,id]=action==='support-contact'?['contato',null]:String(value).split(':');
   if(![...SUPPORT_ROUTES,'apagar-conta'].includes(name)||(name==='apagar-conta'&&state.signedOut))return true;
   if(name==='contato'){supportTopic='conta';supportSent=false;}
-  if(dialog.open)await closeDialog(true);navigate(name,id||null);return true;
+  if(await leaveDialog(()=>navigate(name,id||null)))navigate(name,id||null);return true;
  }
  if(action==='support-topic'){
   if(!TICKET_TOPICS.some(([v])=>v===value))return true;supportTopic=value;

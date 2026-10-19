@@ -29,7 +29,7 @@ function blockConfirm(name){
 function setBlocked(name,on){
  if(!name||name===state.profile.name)return;
  const had=isBlocked(name);if(on===had)return;
- if(!mutate(()=>{state.blocked=on?[...(state.blocked||[]),{name,at:Date.now()}]:(state.blocked||[]).filter(b=>b.name!==name);},{redraw:false}))return;
+ if(!mutate(()=>{state.blocked=on?[...(state.blocked||[]),{name,at:Date.now()}]:(state.blocked||[]).filter(b=>b.name!==name);const l=state.lastViewed,seen=l?.type==='item'?itemById(l.id)?.seller:l?.type==='ask'?askById(l.id)?.who:'';if(on&&seen===name)state.lastViewed=null;},{redraw:false}))return;
  blockPeek=new Set();
  const f=feminine(name);
  render();
@@ -37,16 +37,18 @@ function setBlocked(name,on){
  else notify(`${name} ${f?'desbloqueada':'desbloqueado'}.`,'check_circle');
 }
 // ⋮ do conteúdo de outra pessoa: denunciar e bloquear (só quem não sou eu).
-function otherMenu(el,what,reportValue,name){
- openCreate(el,[['flag',`Denunciar ${what}`,'report','',reportValue],...(blockable(name)&&!isBlocked(name)?[['cancel',`Bloquear ${name}`,'block-person','',name]]:[])]);
+function otherMenu(el,what,reportValue,name,extra=[]){
+ openCreate(el,[...extra,['flag',`Denunciar ${what}`,'report','',reportValue],...(blockable(name)&&!isBlocked(name)?[['cancel',`Bloquear ${name}`,'block-person','',name]]:[])],false,`Ações d${what==='comentário'?'o':'a'} ${what}`);
 }
 async function blockAction(action,value,el){
- if(!['open-blocked','block-person','unblock-person','peek-blocked','answer-other-menu','comment-other-menu','post-other-menu'].includes(action))return false;
- if(action==='open-blocked'){if(dialog.open)await closeDialog(true);navigate('bloqueados');return true;}
+ if(!['open-blocked','block-person','unblock-person','peek-blocked','answer-other-menu','comment-other-menu','post-other-menu','question-other-menu'].includes(action))return false;
+ if(action==='open-blocked'){if(await leaveDialog(()=>navigate('bloqueados')))navigate('bloqueados');return true;}
  if(action==='block-person'){if(value&&value!==state.profile.name&&!isBlocked(value))blockConfirm(value);return true;}
  if(action==='unblock-person'){setBlocked(value,false);return true;}
  if(action==='peek-blocked'){blockPeek=new Set([...blockPeek,value]);render();return true;}
  const [a1,a2,a3]=value.split('|');
+ // Rodada 64: o ⋮ da pergunta de outra pessoa também oferece Ocultar (além do deslizar).
+ if(action==='question-other-menu'){const q=askById(a1);if(q&&!q.mine)otherMenu(el,'pergunta',`ask|${q.id}`,q.who,q.hiddenByMe?[]:[['visibility_off','Ocultar pergunta','hide-question','',q.id]]);return true;}
  if(action==='answer-other-menu'){const a=askById(a1)?.answers.find(x=>x.id===a2);if(a&&!a.mine)otherMenu(el,'resposta',`answer|${a1}~${a2}`,a.who);return true;}
  const p=gById(a1)?.posts.find(x=>x.id===a2);
  if(action==='post-other-menu'){if(p&&!p.mine)otherMenu(el,'publicação',`post|${a1}~${a2}`,p.author);return true;}
