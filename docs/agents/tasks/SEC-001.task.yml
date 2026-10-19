@@ -1,0 +1,49 @@
+task_id: SEC-001
+objective: >
+  Publicacao e comentario removidos pela moderacao (is_deleted) deixam de ser legiveis por consulta direta
+  a API (SELECT em public.posts e public.comments), inclusive comentario de publicacao removida. O feed e as
+  telas continuam funcionando.
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5)
+  - Decisao do dono em 2026-10-19 - lote de seguranca implementado pelo Codex, revisado por DeepSeek V4.1 Flash e Opus
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A ultima policy posts_select_locality_member (20260805214709_community_scope.sql:264) so chama
+    private.can_access_post_scope e nao olha is_deleted; comments_select_via_post (:286) idem. Reconhecido
+    em 20260821000033_hideable_targets.sql:14. Escrever primeiro o pgTAP que le um post e um comentario
+    removidos como membro do escopo e ver falhar.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/
+  - apps/web/lib/
+  - tests/unit/
+  - tests/e2e/
+  - docs/agents/tasks/SEC-001.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - apagar dados alem dos residuos que a tarefa manda purgar
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+acceptance:
+  - pgTAP novo prova que membro do escopo NAO le post removido, comentario removido nem comentario de post removido por SELECT direto (falha antes, passa depois)
+  - pgTAP prova que post e comentario nao removidos continuam legiveis pelo mesmo membro
+  - Quem ainda pode ler conteudo removido (autor, operador) segue o que o codigo de moderacao ja usa, documentado na migration
+  - Feed, grupo e publicacao continuam passando nos testes existentes
+proof:
+  - npx supabase db reset
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx playwright test (specs de comunidade, grupo e publicacao afetadas)
+risk: RLS de conteudo moderado; leitura indevida de conteudo removido
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,48 @@
+task_id: SEC-002
+objective: >
+  O telefone da ficha do prestador (provider_profiles.contact_phone) so e legivel quando contact_is_public
+  e verdadeiro, ou pelo proprio dono e pela operacao autorizada. A protecao fica no banco (grant por coluna,
+  view ou RPC), nao so na interface; busca e ficha publica continuam funcionando.
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5)
+  - Decisao do dono em 2026-10-19 - lote de seguranca implementado pelo Codex, revisado por DeepSeek V4.1 Flash e Opus
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    20260825185327_provider_showcase.sql:139 da grant select na tabela inteira a authenticated e nenhuma
+    policy ou view usa contact_is_public (:27). Escrever primeiro o pgTAP em que um membro que alcanca a
+    ficha le contact_phone com contact_is_public=false e ver falhar.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/
+  - apps/web/lib/
+  - tests/unit/
+  - tests/e2e/
+  - docs/agents/tasks/SEC-002.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - apagar dados alem dos residuos que a tarefa manda purgar
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+acceptance:
+  - pgTAP prova que membro que alcanca a ficha NAO le contact_phone quando contact_is_public=false e le quando true
+  - pgTAP prova que o dono da ficha le o proprio telefone
+  - Todo SELECT do app que traz contact_phone usa o caminho novo (rg contact_phone em apps/web) e ficha, busca e painel do prestador continuam passando
+  - database.generated.ts atualizado se o schema publico mudar
+proof:
+  - npx supabase db reset
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx playwright test (specs de prestador, negocio e servicos)
+risk: dado pessoal de contato exposto por RLS/grant
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

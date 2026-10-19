@@ -1,0 +1,41 @@
+task_id: SEC-005
+objective: >
+  O worker do outbox nao envia aviso quando nao consegue saber a preferencia de canal ou o opt-out da pessoa:
+  erro na consulta deixa o item na fila com erro registrado e nada sai.
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5)
+  - Decisao do dono em 2026-10-19 - lote de seguranca implementado pelo Codex, revisado por DeepSeek V4.1 Flash e Opus
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/internal/outbox/route.ts:128-143,171-174 e apps/web/lib/notifications/channel-preferences.ts:77-105
+    transformam erro de consulta em colecao vazia, que vira sem bloqueio e envia. Escrever primeiro o teste
+    em que a consulta de opt-out falha e ver o envio acontecer.
+allowed_paths:
+  - apps/web/app/api/internal/outbox/
+  - apps/web/lib/notifications/
+  - tests/unit/infra/
+  - tests/unit/notifications/
+  - docs/agents/tasks/SEC-005.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - apagar dados alem dos residuos que a tarefa manda purgar
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+acceptance:
+  - Teste prova que erro na consulta de preferencias OU de opt-out nao chama o adaptador de envio e deixa o item com erro e nova tentativa agendada, sem laco de retry imediato
+  - Teste prova que sem erro o comportamento atual (respeitar preferencia e opt-out) continua
+  - Log do erro sem PII (usar o scrubber existente)
+proof:
+  - npx pnpm@11.18.0 test -- tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
+  - npx pnpm@11.18.0 gate
+risk: envio de aviso a quem pediu para nao receber
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
