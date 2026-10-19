@@ -125,3 +125,6 @@ closure:
 # Quadro consultado por SEC-004 sem card correspondente; registro mantido somente neste contrato.
 # task-contract.mjs validado; implementacao local com testes, revisao independente e E2E pendentes.
 # A prova dos bytes das actions usa Storage mockado; pgTAP e prova separada do banco local real.
+# Decisao do dono, 2026-10-19 (revisao Flash L3): PDF de identidade continua aceito e
+# guardado byte a byte. O gov entrega CIN e CNH digital em PDF assinado; regravar quebraria a
+# assinatura. Registrado no ADR. O teste que preserva o PDF byte a byte e o comportamento correto.

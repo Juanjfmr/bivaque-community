@@ -41,6 +41,13 @@ negativo:
 5. **Na dúvida, não envia:** se não der para saber a preferência ou o opt-out, o aviso fica na fila com
    erro e não sai.
 
+**Exceção, decidida pelo dono em 19/10/2026: PDF do documento de identidade.** É aceito e guardado
+exatamente como chegou, byte a byte, sem limpar metadados. É assim que o governo entrega a CIN e a CNH
+digital, e esses arquivos são assinados digitalmente: regravar o PDF quebraria a assinatura que prova a
+autenticidade. PDF emitido pelo governo não carrega a localização do aparelho, só a operação vê o arquivo
+na admissão, e ele tem prazo de descarte. Fotos (JPEG, PNG e WebP), inclusive de documento, continuam
+limpas pela regra 4.
+
 Fora deste ADR: a exposição da afiliação (Força e OM, `BLOCK-AFFILIATION`), que é uma decisão de produto e
 jurídica pendente com o dono.
 
