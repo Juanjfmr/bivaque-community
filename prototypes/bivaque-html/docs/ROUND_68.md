@@ -1,7 +1,7 @@
 # Bivaque — Rodada 68: correções das revisões do Lote Bairros
 
 Data: 19/10/2026. Contrato: `docs/agents/tasks/HTML-068.task.yml` (R2). Lote Bairros (Rodadas 66 a 68).
-Base: a Rodada 67 (`87f3c853`, build `2920155a…`). Candidato: build `0d1de785…`.
+Base: a Rodada 67 (`87f3c853`, build `2920155a…`). Candidato: build `3d427b0d…` (a primeira passada, sem os achados LOW do OpenCode, foi `0d1de785…`).
 
 **Veredito: PASS** no protótipo.
 
@@ -11,7 +11,7 @@ Três revisões independentes, só de leitura, sobre o diff `1e822970..87f3c853`
 
 - o agente revisor de código: 1 HIGH, 2 MEDIUM e 3 LOW;
 - o Codex: 2 HIGH, 2 MEDIUM e 1 LOW;
-- o OpenCode (DeepSeek V4.1 Flash): ver a seção "OpenCode" abaixo.
+- o OpenCode (DeepSeek V4.1 Flash): 1 CRITICAL, 1 HIGH, 2 MEDIUM e 6 LOW.
 
 As duas primeiras coincidiram no defeito principal: o CEP escapava para o armazenamento por caminhos que a
 R66 não cobria.
@@ -57,6 +57,16 @@ Uma empresa que atende "candelaria" recebe o pedido de "Candelária".
 - O leitor de tela ouve só a contagem ("3 sugestões. Use as setas para escolher."), não a lista inteira a cada
   letra.
 
+### Achados só do OpenCode (LOW)
+
+- **Localização que chega depois de fechar a janela** não mexe mais em nada. Antes, marcava o próximo
+  formulário como alterado, e fechar pedia "Descartar alterações?" sem motivo.
+- **"Usar minha localização"** tem 44 px de altura, o mínimo de toque do projeto. Antes tinha 40.
+- **Bairro digitado à mão no perfil** ("Vila da Prata"). O filtro agora explica que a distância usa os
+  bairros da lista e pede para escolher o seu na lista. Antes, dizia "Informe seu bairro", como se não houvesse
+  nenhum.
+- **A chave do mapa já montado** inclui a cidade, para que um mapa nunca seja reaproveitado em outra cidade.
+
 ### Pendências registradas
 
 - **Padrão combobox completo no campo de bairro** (`role="combobox"`, `aria-expanded`). O
@@ -67,9 +77,11 @@ Uma empresa que atende "candelaria" recebe o pedido de "Candelária".
 
 ## Provas
 
-- `round68-proof.mjs`, 5 checkpoints em 375-light e 1440-light: **10/10 PASS**.
+- `round68-proof.mjs`, 6 checkpoints em 375-light, 768-light e 1440-dark: **18/18 PASS**.
+  - A primeira passada tinha 5 checkpoints, sem os achados LOW do OpenCode, e deu 10/10 em 375-light e
+    1440-light.
+  - O checkpoint do bairro digitado entrou junto com esses achados.
   - Contra o build da R67 (375-light): **1/5**.
   - O checkpoint de alerta já passava antes e fica como guarda.
-- `round66-proof.mjs`: 10/10.
-- `round67-proof.mjs`: 6/6.
+- `round66-proof.mjs`: 15/15 e `round67-proof.mjs`: 9/9, nos mesmos três contextos, com o build final.
 - `npx pnpm@11.18.0 gate`: **verde**. O build web pulou, como sempre na worktree.

@@ -144,6 +144,19 @@ const checkpoints = {
       `alerta 3 km: ${JSON.stringify(a3)}`,
     )
   },
+
+  async "free-text-profile-hood-explains-the-distance"(page) {
+    await patchState(page, "s.profile.hood='Vila da Prata'")
+    await go(page, "imoveis")
+    await action(page, "catalog-pill", "hood")
+    await page.locator("#filter-panel[open]").waitFor()
+    const text = await page.locator("#filter-panel").innerText()
+    expect(
+      /A distância usa os bairros da lista de Manaus/.test(text) &&
+        !/Informe seu bairro/.test(text),
+      `bairro digitado no perfil: ${text.slice(0, 200)}`,
+    )
+  },
 }
 
 await runProof(checkpoints, "round68")

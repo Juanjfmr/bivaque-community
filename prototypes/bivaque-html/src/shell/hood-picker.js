@@ -66,11 +66,12 @@ function hoodSettle(pick){
 function hoodLocate(pick){
  const city=pick.dataset.city,list=hoodsOf(city);
  if(!navigator.geolocation){notify('Este aparelho não informa a localização. Digite o bairro ou o CEP.','info');return;}
- navigator.geolocation.getCurrentPosition(pos=>{
+ // A resposta pode chegar depois de a janela fechar: aí não mexe em nada.
+ navigator.geolocation.getCurrentPosition(pos=>{if(!pick.isConnected)return;
   const here=[pos.coords.longitude,pos.coords.latitude],best=list.map(h=>[h,hoodKm(here,h.pt)]).sort((a,b)=>a[1]-b[1])[0];
   if(!best||best[1]>HOOD_FAR_KM){notify(`Sua localização não fica em ${city}. Digite o bairro.`,'info');return;}
   hoodSet(pick,best[0].name,`${city} · ${best[0].zone} · pela localização`);$('md-outlined-text-field',pick).focus();hoodMenu(pick,false);
- },()=>notify('Não deu para usar a localização. Digite o bairro ou o CEP.','info'),{enableHighAccuracy:false,timeout:10000,maximumAge:0});
+ },()=>{if(pick.isConnected)notify('Não deu para usar a localização. Digite o bairro ou o CEP.','info');},{enableHighAccuracy:false,timeout:10000,maximumAge:0});
 }
 document.addEventListener('input',e=>{const pick=hoodPickOf(e.target);if(!pick||e.target.tagName!=='MD-OUTLINED-TEXT-FIELD')return;e.target.error=false;e.target.setCustomValidity?.('');e.target.supportingText=pick.dataset.help;hoodMenu(pick);});
 document.addEventListener('focusin',e=>{const pick=hoodPickOf(e.target);if(pick&&e.target.tagName==='MD-OUTLINED-TEXT-FIELD')hoodMenu(pick);});

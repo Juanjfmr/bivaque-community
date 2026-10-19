@@ -34,7 +34,7 @@ function loadMapLibre(){
 // lugar, sem baixar tudo de novo nem perder o zoom.
 async function catalogMapAfterRender(){
  refreshHoodSheet();syncHoodPanel();
- const box=$('#catalog-map'),kind=box?catalogKind():'',list=box?filteredItems(kind):[],key=box?`${kind}|${hoodCounts(list).join(';')}`:'';
+ const box=$('#catalog-map'),kind=box?catalogKind():'',list=box?filteredItems(kind):[],key=box?`${state.city}|${kind}|${hoodCounts(list).join(';')}`:'';
  if(catalogMap&&box&&key===catalogMapKey){box.replaceWith(catalogMap.getContainer());catalogMap.resize();return;}
  if(catalogMap){try{catalogMap.remove();}catch{}catalogMap=null;catalogMapKey='';}
  if(!box)return;

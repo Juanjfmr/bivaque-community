@@ -64,7 +64,7 @@ function fpHoodSection(chips,seg){
  const {kind,attrs:a}=filterDraft,city=state.city,o=hoodOrigin(),n=new Map();
  for(const x of cityItems())if(x.status==='active'&&x.kind===kind&&hoodShown(x))n.set(x.hood,(n.get(x.hood)||0)+1);
  const base=hoodsOf(city).map(h=>h.name).sort((p,q)=>(n.get(q)||0)-(n.get(p)||0)),names=[...new Set([...a.hoods,...base,...n.keys()])];
- const dist=city!==state.homeCity?'':o?fpGroup('dist','Distância de mim',seg('dist',[[0,'Qualquer'],[1,'1 km'],[3,'3 km'],[5,'5 km'],[10,'10 km']]),`A partir do seu bairro, ${esc(o.name)}.`):fpGroup('dist','Distância de mim','','Informe seu bairro em Configurações para filtrar pela distância.');
+ const dist=city!==state.homeCity?'':o?fpGroup('dist','Distância de mim',seg('dist',[[0,'Qualquer'],[1,'1 km'],[3,'3 km'],[5,'5 km'],[10,'10 km']]),`A partir do seu bairro, ${esc(o.name)}.`):fpGroup('dist','Distância de mim','',state.profile.hood?`A distância usa os bairros da lista de ${esc(city)}. Escolha o seu na lista em Configurações.`:'Informe seu bairro em Configurações para filtrar pela distância.');
  const search=names.length>8?`<label class="ffield fhood-q"><span>Acrescentar bairro</span><input type="search" id="fp-hood-q" placeholder="Digite o bairro" autocomplete="off"></label>`:'';
  return dist+fpGroup('hood','Bairros',search+chips('hoods',names.map(h=>[h,h]),true));
 }
