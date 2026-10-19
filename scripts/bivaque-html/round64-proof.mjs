@@ -111,6 +111,12 @@ const checkpoints = {
       .click()
     await settle(page)
     await confirmOk(page)
+    // A confirmação grava de forma assíncrona: espera a condição (com prazo) em vez de ler uma vez só.
+    await page
+      .waitForFunction((k) => JSON.parse(localStorage.getItem(k))?.lastViewed === null, KEY, {
+        timeout: 4000,
+      })
+      .catch(() => {})
     expect((await stored(page)).lastViewed === null, "bloquear não limpou lastViewed")
     await go(page, "inicio")
     expect(
