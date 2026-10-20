@@ -26,7 +26,8 @@ SOURCES = {
 }
 COLUMNS = [
     "candidate_id", "force", "acronym", "name", "city", "uf",
-    "address_published", "source_url", "source_date", "institutional_status",
+    "address_published", "neighborhood_published", "postal_code_published",
+    "source_url", "source_date", "institutional_status",
     "geo_status", "source_kind",
 ]
 UA = "BivaqueOMCatalog/0.1 (periodic public directory review; no personal data)"
@@ -58,6 +59,7 @@ def read_seed(path: Path) -> list[dict]:
             "candidate_id": ident(force, acronym, name, city, uf),
             "force": force, "acronym": acronym, "name": name, "city": city,
             "uf": uf, "address_published": address,
+            "neighborhood_published": "", "postal_code_published": (r.get("CEP") or "").strip(),
             "source_url": (r.get("URL da fonte") or "").strip(),
             "source_date": (r.get("Data consulta") or "").strip(),
             "institutional_status": "PENDING", "geo_status": "NOT_VERIFIED",
@@ -144,6 +146,49 @@ def parse_marinha(html: str) -> list[dict]:
                  for r in records}.values())
 
 
+def parse_exercito(html: str) -> list[dict]:
+    """Extract public name, address and municipality from EB's state cards.
+
+    Based on an actual 2026-10-20 HTTP 200 snapshot: each div.card has
+    h5.card-header and labeled Endereço/Bairro/Cidade - UF/CEP fields.
+    Existence in a directory does NOT establish active institutional status.
+    """
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    result = []
+    seen = set()
+    for card in soup.select("div.card"):
+        heading = card.select_one("h5.card-header")
+        if heading is None:
+            continue
+        name = heading.get_text(" ", strip=True)
+        body = card.select_one("div.card-body") or card
+        fields = {}
+        for tag in body.select("span.card-title"):
+            label = tag.get_text(" ", strip=True).rstrip(":")
+            parent_text = tag.parent.get_text(" ", strip=True)
+            value = parent_text[len(tag.get_text(" ", strip=True)):].strip()
+            fields[label] = value
+        locality = fields.get("Cidade - UF", "")
+        match = re.fullmatch(r"(.*?)\s+-\s+([A-Za-z]{2})", locality)
+        if not match or not name or not fields.get("Endereço"):
+            continue
+        city, uf = match.group(1).strip(), match.group(2).upper()
+        key = (norm(name), norm(city), uf)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append({
+            "force": "EXÉRCITO", "acronym": "", "name": name,
+            "city": city, "uf": uf,
+            "address_published": fields.get("Endereço", ""),
+            "neighborhood_published": fields.get("Bairro", ""),
+            "postal_code_published": fields.get("CEP", ""),
+            "source_url": SOURCES["EXÉRCITO"],
+        })
+    return result
+
+
 def reconcile(seed: list[dict], discovered: list[dict]) -> tuple[list[dict], list[dict]]:
     """Never silently overwrite old data or infer status from a match."""
     index: dict[tuple, list[dict]] = {}
@@ -153,7 +198,7 @@ def reconcile(seed: list[dict], discovered: list[dict]) -> tuple[list[dict], lis
     new_candidates, review = [], []
     for r in discovered:
         key = (r["force"], norm(r["name"]), norm(r["city"]))
-        matches = index.get(key, [])
+        matches = [m for m in index.get(key, []) if not r.get("uf") or m.get("uf") == r.get("uf")]
         if len(matches) == 1:
             review.append({"kind": "CONFIRMED_TEXT_MATCH", "candidate_id": matches[0]["candidate_id"],
                            "force": r["force"], "name": r["name"], "city": r["city"],
@@ -190,6 +235,11 @@ def run(args: argparse.Namespace) -> dict:
             if meta["http_status"] == 200 and force == "MARINHA":
                 content = (out / "snapshots" / "marinha.html").read_text(encoding="utf-8", errors="replace")
                 found = parse_marinha(content)
+                meta["parsed_records"] = len(found)
+                discovered.extend(found)
+            elif meta["http_status"] == 200 and force == "EXÉRCITO":
+                content = (out / "snapshots" / "exercito.html").read_text(encoding="utf-8", errors="replace")
+                found = parse_exercito(content)
                 meta["parsed_records"] = len(found)
                 discovered.extend(found)
             elif meta["http_status"] == 200:
