@@ -1,0 +1,41 @@
+name: OM catalogue review
+on:
+  workflow_dispatch:
+    inputs:
+      online:
+        description: "Consult public institutional directory URLs (no scraping bypass)"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 10 1 * *"
+  pull_request:
+    paths:
+      - "scripts/om-catalog/**"
+      - "data/oms/**"
+      - "tests/unit/om-catalog/**"
+      - ".github/workflows/om-catalog-review.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install beautifulsoup4==4.14.3
+      - name: Unit tests
+        run: python -m unittest discover -s tests/unit/om-catalog -p "test_*.py" -v
+      - name: Offline seed audit
+        run: python scripts/om-catalog/catalog.py --out out/om-catalog
+      - name: Online source check (schedule or explicit opt-in)
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.online)
+        run: python scripts/om-catalog/catalog.py --online --out out/om-catalog
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: om-catalog-review-${{ github.run_id }}
+          path: out/om-catalog/
+          retention-days: 30
