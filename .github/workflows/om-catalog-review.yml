@@ -31,7 +31,7 @@ jobs:
       - name: Offline seed audit
         run: python scripts/om-catalog/catalog.py --out out/om-catalog
       - name: Online source check (schedule or explicit opt-in)
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.online)
+        if: github.event_name == 'schedule' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.online)
         run: python scripts/om-catalog/catalog.py --online --out out/om-catalog
       - uses: actions/upload-artifact@v4
         if: always()
