@@ -29,6 +29,24 @@ class OMCatalogTests(unittest.TestCase):
         self.assertEqual(rows[0]["force"], "MARINHA")
         self.assertEqual(rows[0]["uf"], "")
 
+    def test_army_public_directory_card_fields(self):
+        sample = """
+        <section class="row">
+          <div class="card"><div class="card-body">
+            <h5 class="card-header bg-secondary">12º Batalhão de Suprimento</h5>
+            <div><span class="card-title">Endereço:</span> RUA MARECHAL BITTENCOURT 55</div>
+            <div><span class="card-title">Bairro:</span> Santo Antônio</div>
+            <div><span class="card-title">Cidade - UF:</span> Manaus - AM</div>
+            <div><span class="card-title">CEP:</span> 69029290</div>
+          </div></div>
+        </section>"""
+        rows = catalog.parse_exercito(sample)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["city"], "Manaus")
+        self.assertEqual(rows[0]["uf"], "AM")
+        self.assertEqual(rows[0]["address_published"], "RUA MARECHAL BITTENCOURT 55")
+        self.assertEqual(rows[0]["postal_code_published"], "69029290")
+
     def test_no_institutional_approval_from_text_match(self):
         seed = [{"force": "MARINHA", "name": "Base Naval de Aratu",
                  "city": "Salvador", "candidate_id": "abc"}]
