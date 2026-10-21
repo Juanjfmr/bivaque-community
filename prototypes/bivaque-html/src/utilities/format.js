@@ -2,7 +2,7 @@ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelect
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const icon=(n,slot='',filled=false)=>`<md-icon${slot?` slot="${slot}"`:''}${filled?' class="filled"':''} aria-hidden="true">${n}</md-icon>`;
-const mark=()=>`<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#2f7654"/><path d="M20 14h17c8 0 13 4 13 11 0 4-2 7-6 9 5 2 8 6 8 12 0 8-6 13-15 13H20V14Zm11 9v8h5c3 0 5-1 5-4s-2-4-5-4h-5Zm0 17v10h6c4 0 6-2 6-5s-2-5-6-5h-6Z" fill="#f7f6ef"/></svg>`;
+const mark=()=>`<svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><path class="bv-symbol-body" fill-rule="evenodd" d="M23 5H54C73 5 84 15 84 31C84 42 78 49 67 53C81 57 89 67 89 80C89 91 79 95 63 95H23L14 86V59H36V44H14V14L23 5ZM36 20V40H54C63 40 68 36 68 30C68 24 63 20 54 20H36ZM36 61V80H63C71 80 76 77 76 71C76 65 71 61 63 61H36Z"/><path class="bv-symbol-threshold" d="M36 44H48V59H36V44Z"/></svg>`;
 const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
 const uid=p=>p+crypto.randomUUID().replaceAll('-','').slice(0,12);
 const dateISO=(offset=0)=>{const d=new Date();d.setDate(d.getDate()+offset);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};

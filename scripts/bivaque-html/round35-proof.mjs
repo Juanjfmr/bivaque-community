@@ -171,8 +171,14 @@ const checkpoints = {
     const active = page.locator('#nav .nav-item[data-value="comunidade"]')
     expect((await active.getAttribute("aria-current")) === "page", "aba ativa sem aria-current")
     if (phone(page)) {
-      const light = await active.evaluate((e) => getComputedStyle(e, "::before").content)
-      expect(light !== "none", "aba ativa sem a luz")
+      // Rodada 70 (ADR-20261020): a luz no topo deu lugar ao "pill" de 10 px da maquete.
+      const pill = await active.evaluate((e) => {
+        const icon = e.querySelector(".nav-icon")
+        const style = getComputedStyle(icon)
+        return { radius: style.borderTopLeftRadius, background: style.backgroundColor }
+      })
+      expect(pill.background !== "rgba(0, 0, 0, 0)", "aba ativa sem o pill")
+      expect(pill.radius === "10px", `pill da aba ativa com ${pill.radius} de canto`)
     }
   },
   async "search-example-rotates-only-with-motion"(page) {
