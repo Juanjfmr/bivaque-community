@@ -22,4 +22,7 @@ class NormalizationTests(unittest.TestCase):
     def test_foreign_not_located_in_brazil(self):
         orgs,sites,_=build([self.row(pais_classificacao='US',uf='',municipio='Washington')])
         self.assertFalse(orgs[0][8]);self.assertEqual(len(sites),0)
+    def test_foreign_attache_from_eb_not_a_brazilian_site(self):
+        r=self.row(forca='EB',nome_publicado='Aditância do Exército na Itália',municipio='Roma',uf='DF',pais_classificacao='BR',endereco_publicado='Piazza Navona, 14',cep='00186')
+        orgs,sites,_=build([r]);self.assertEqual(orgs[0][6],'EXTERIOR_REVIEW');self.assertFalse(orgs[0][8]);self.assertEqual(len(sites),0)
 if __name__=='__main__':unittest.main()
