@@ -11,8 +11,8 @@ python -m unittest discover -s tests/om-catalog -p 'test_audit_sites.py' -v
 
 ## Resultado do lote inicial (sem catálogo IBGE)
 
-- 739 candidatos: 542 endereços preparados para **envio a um geocodificador externo**, 183 precisam de revisão textual e 14 estão bloqueados.
-- 258 sinalizações, inclusive 32 avisos de possíveis locais compartilhados (não significa agrupamento aprovado).
+- 739 candidatos: 537 endereços preparados para **envio a um geocodificador externo**, 177 precisam de revisão textual e 25 estão bloqueados.
+- 277 sinalizações, inclusive 32 avisos de possíveis locais compartilhados (não significa agrupamento aprovado).
 - 0 coordenadas, 0 acessos públicos certificados, 0 itens liberados para calcular distância.
 - O mesmo endereço textual pode esconder entradas distintas; local de quartel nunca é automaticamente a porta pública de acesso.
 
@@ -23,3 +23,12 @@ Após obter sugestões de coordenadas, exigir inspeção individual da localiza�
 ## Reprodutibilidade e fontes
 
 O dataset público heterogêneo está versionado em `data/om/raw_oms_1416.csv` com fonte URL por registro. Executar `normalize.py` primeiro para produzir organizações e sites; só então `audit_sites.py`. As 739 linhas de sites são **agrupamentos textuais provisórios**, não portões. O campo `source_url` identifica a fonte da coleta, não uma confirmação individual de vigência. Dados externos para geocodificação entram exclusivamente por `validate_geocodes.py` e são marcados para inspeção humana, jamais autorizados diretamente no produto.
+
+## Auditoria IBGE reproduzida no GitHub Actions
+
+- Arquivo `data/om/ibge_localities.csv`: 5.571 municípios extraídos sem alteração de nomes da migration `supabase/migrations/20260817022707_locality_catalog_data.sql`.
+- Execução CI em 21/10/2026: 22 testes aprovados; 19 endereços com `IBGE_CITY_NOT_MATCHED` (incluindo unidades no exterior incorretamente classificadas com UF DF e grafias como `REFICE`, `Brasíliaília`, `Tefé-AM`).
+- Resultados: 537 `READY_FOR_EXTERNAL_GEOCODING`, 177 `REVIEW_ADDRESS`, 25 `BLOCKED`, 277 sinalizações. Nenhum ponto geográfico foi validado ou publicado.
+- A auditoria não altera nomes e não resolve ambiguidades automaticamente. Alterações precisam preservar a fonte original e registrar a correção como dado derivado.
+
+O workflow `.github/workflows/om-catalog-audit.yml` regenera os artefatos e registra as métricas em cada PR que altera o cadastro ou o pipeline.
