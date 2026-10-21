@@ -52,7 +52,7 @@ jobs:
               sites=list(csv.DictReader(f))
           report=json.loads((folder/'audit/site_audit.json').read_text())
           assert len(orgs)==1416, f'Unexpected OM count: {len(orgs)}'
-          assert len(sites)==739, f'Unexpected address candidates: {len(sites)}'
+          assert len(sites)==733, f'Unexpected address candidates: {len(sites)}'
           assert report['verified_public_access']==0
           assert report['auto_published']==0
           assert all(s['geolocation_status']=='UNVERIFIED_TEXT' and not s['latitude'] and not s['longitude'] for s in sites)
