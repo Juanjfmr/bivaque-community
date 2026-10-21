@@ -21,12 +21,12 @@ export const dynamic = "force-dynamic"
 
 const MAX_BATCH = 100
 
-// Teto de segurança do lote total. `private.outbox_prepare_due()` entrega
-// todos os IDs vencidos no mesmo minuto, sem limite; 5.000 cobre uma fila bem
-// acima do volume normal e ainda impede que um payload arbitrário abra
-// milhares de consultas numa única requisição. O processamento é fatiado em
-// blocos de MAX_BATCH — rejeitar o lote inteiro travava a fila para sempre
-// (SEC-005 H4), porque o SQL já havia avançado `updated_at` dos itens.
+// Teto de segurança do lote total. A reserva SQL entrega no máximo este mesmo
+// número por chamada (SEC-AUD-002); 5.000 cobre uma fila bem acima do volume
+// normal e ainda impede que um payload arbitrário abra milhares de consultas
+// numa única requisição. O processamento é fatiado em blocos de MAX_BATCH.
+// Rejeitar o lote inteiro travava a fila para sempre (SEC-005 H4), porque o SQL
+// já havia avançado `updated_at` dos itens.
 const MAX_TOTAL_BATCH = 5_000
 
 type BatchCounts = {

@@ -17,6 +17,9 @@ allowed_paths:
   - apps/web/lib/notifications/
   - tests/unit/infra/
   - tests/unit/notifications/
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
   - docs/agents/tasks/SEC-005.task.yml
 forbidden:
   - push direto na main, merge, deploy ou db push no banco remoto
@@ -28,6 +31,10 @@ acceptance:
   - Teste prova que erro na consulta de preferencias OU de opt-out nao chama o adaptador de envio e deixa o item com erro e nova tentativa agendada, sem laco de retry imediato
   - Teste prova que sem erro o comportamento atual (respeitar preferencia e opt-out) continua
   - Log do erro sem PII (usar o scrubber existente)
+  # SEC-AUD-002 (MEDIUM, 2026-10-19)
+  - A reserva SQL (`private.outbox_prepare_due()`) entrega no maximo o mesmo teto de 5.000 IDs aceito pela rota HTTP, em ordem deterministica e com concorrencia segura; os IDs fora do lote continuam vencidos e elegiveis na chamada seguinte
+  - pgTAP prova que uma fila de 5.001 drena em duas chamadas limitadas, sem repetir ID e sem adiantar `updated_at` dos nao reservados
+  - Autenticacao, fail-closed de preferencia/opt-out, chunks de 100 e limite operacional do consumidor permanecem intactos
 proof:
   - npx pnpm@11.18.0 exec vitest run tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
   - npx pnpm@11.18.0 gate
@@ -76,3 +83,13 @@ closure:
 # Sem commit/alteracao do quadro fora dos allowed_paths; revisao independente e runtime de entrega pendentes.
 # Coordenador, 2026-10-19: para H4/L5 foi mantida a versao do DeepSeek V4.1 Flash (commit 755c13f5),
 # com teto de 5000 IDs por chamada; a versao do Codex descrita acima ficou guardada fora do repositorio.
+
+# SEC-AUD-002, 2026-10-19, tentativa 1 (DeepSeek V4.1 Flash), sobre o diff SEC006 local.
+# RED/limite: a funcao aplicada reservava todos os vencidos; a rota aceita no maximo 5.000.
+# Migration nova 20261020002739_sec_aud002_outbox_prepare_limit.sql preserva a assinatura
+# private.outbox_prepare_due() e limita a reserva a 5.000, ordenada por updated_at/id e com
+# FOR UPDATE SKIP LOCKED. Itens fora do lote nao tem updated_at alterado.
+# pgTAP novo supabase/tests/outbox-batch-cap.sql (6 casos) cobre 5.001 -> 5.000 + 1, sem repetir ID.
+# NAO EXECUTADO: a tarefa proibe alterar o banco local; coordenador roda reset --no-seed e test:db.
+# Rota HTTP, autenticacao, chunks de 100, fail-closed e adaptadores nao foram alterados.
+# Gate final da rodada SEC-AUD-002: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
