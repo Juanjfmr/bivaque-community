@@ -1,0 +1,47 @@
+task_id: HTML-070
+objective: >
+  Rodada 70: a pele da marca no protótipo, nos temas claro e escuro (ADR-20261020). Troca a pele Material
+  verde-petróleo pelo brandbook oficial com os ajustes da maquete docs/brand/maquete-2026-10-20: Grafite,
+  Papel e Brasa no claro; Carvão, Elevado e Brasa Clara no escuro; Brasa só na ação principal e no botão
+  Criar; cidade em destaque em Brasa escurecida; links, ações secundárias, aba ativa e contadores em
+  Grafite; vermelho só para erro; cantos de 12 px (abas 10 px, Criar 18 px); títulos de display em Noto
+  Serif; o símbolo oficial no lugar do "B" verde; fotos 10% mais escuras no escuro. As fontes (Noto e
+  ícones Outlined) já entraram no commit f633c946.
+authority:
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md (aprovado pelo dono em 2026-10-20)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base f633c946: --md-sys-color-primary é #164e63 (verde-petróleo) no claro e #a2d3e7 no escuro; a
+    superfície é #f8fafb; a marca é um quadrado verde #2f7654 com "B"; campos com 16 px de canto.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-070.task.yml
+forbidden:
+  - editar src/vendor, src/styles/fonts.css, a referência HTML congelada ou a base visual (.visual/**/baseline)
+  - mudar texto, fluxo ou comportamento das telas (só a pele)
+  - redesenhar o símbolo (usar o SVG oficial de apps/web/public/brand sem alterar o desenho)
+  - fazer merge, push, deploy ou git stash
+acceptance:
+  - Os tokens --md-sys-color-* de base.css seguem a tabela da tarefa nos dois temas
+  - Nenhum par de texto e fundo dos tokens fica abaixo de 4,5:1 nos dois temas (a prova calcula)
+  - Brasa (#B84A3A no claro, #E07A5A no escuro) aparece só no botão Criar e no CTA primário
+  - O vermelho de erro continua distinto da Brasa
+  - Cartões, campos e categorias com 12 px de canto; abas e indicador da navegação com 10 px; Criar com 18 px
+  - A marca usa o símbolo oficial (Grafite e Brasa no claro; branco inteiro no escuro)
+  - Nenhuma cor fixa nova fora dos tokens; as cores fixas que existiam viram token com par claro e escuro
+  - As provas de rodadas anteriores que não comparam pixel continuam verdes em 375-light
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round70-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round69-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: visual amplo (toda tela muda de cor); a base visual é recongelada no fechamento do lote
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
