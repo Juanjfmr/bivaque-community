@@ -6,13 +6,21 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import {
+  requestSubmissionBlocked,
+  selectRequestPhotos,
+} from "../../../../lib/service-requests/photo-selection"
+import {
   SERVICE_REQUEST_DESCRIPTION_MAX,
   SERVICE_REQUEST_WHEN_OPTIONS,
-  validateRequestPhotos,
 } from "../../../../lib/service-requests/request-form"
+import { runWithPending, uploadPhotosOneByOne } from "../../../../lib/storage/photo-upload-sequence"
 import { Card } from "../../../components/bivaque/card"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
-import { type ServiceRequestActionState, submitServiceRequest } from "./actions"
+import {
+  type ServiceRequestActionState,
+  submitServiceRequest,
+  uploadServiceRequestPhotoAction,
+} from "./actions"
 
 // Prancha 62, painel direito — descrever a necessidade. Destinatário é
 // somente leitura (derive da URL), o prazo desejado é "Quando" (nunca contato
@@ -21,8 +29,6 @@ import { type ServiceRequestActionState, submitServiceRequest } from "./actions"
 // Estados fechados: envio em andamento sem duplicar (botão desabilita e a
 // chave de idempotência segura o reenvio), erro recuperável que preserva o
 // texto, sessão expirada com caminho de volta, e sucesso.
-
-type PhotoEntry = { name: string; size: number; type: string }
 
 export function RequestForm({
   providerId,
@@ -34,8 +40,8 @@ export function RequestForm({
   const formRef = useRef<HTMLFormElement>(null)
   const [description, setDescription] = useState("")
   const [when, setWhen] = useState<string>(SERVICE_REQUEST_WHEN_OPTIONS[0])
-  const [photos, setPhotos] = useState<PhotoEntry[]>([])
-  const [clientError, setClientError] = useState<string | null>(null)
+  const [photos, setPhotos] = useState<File[]>([])
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<ServiceRequestActionState>({ status: "idle" })
   // Chave de idempotência gerada no cliente, depois da hidratação: o mesmo
@@ -47,31 +53,67 @@ export function RequestForm({
   }, [])
 
   function handlePhotos(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []).map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    }))
-    const validation = validateRequestPhotos(files)
-    if (!validation.ok) {
-      setClientError(validation.message)
-      setPhotos([])
-      return
-    }
-    setClientError(null)
-    setPhotos(files)
+    const files = Array.from(event.target.files ?? [])
+    const selection = selectRequestPhotos(photos, files)
+    setPhotos(selection.photos)
+    setPhotoError(selection.error)
+    event.target.value = ""
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (pending || formRef.current === null) return
-    setPending(true)
-    setClientError(null)
-    const next = await submitServiceRequest(new FormData(formRef.current))
-    setResult(next)
-    if (next.status === "error" || next.status === "session") {
-      setPending(false)
+    // A seleção inválida bloqueia o envio e o erro continua visível até uma
+    // seleção válida. Antes, o submit apagava o erro e publicava sem anexo.
+    const blocked = requestSubmissionBlocked(photoError)
+    if (blocked !== null) {
+      // O erro já está visível em `photoError`; não o copie para `result`, senão
+      // ele continuaria na tela depois de uma seleção válida.
+      return
     }
+    if (pending || formRef.current === null) return
+    const form = new FormData(formRef.current)
+    // SEC-006 (revisão M2): as fotos não viajam no corpo do pedido. Cada uma
+    // vira uma chamada própria depois que o pedido existe, para o total não
+    // estourar o `bodySizeLimit` de 12 MB.
+    form.delete("photos")
+    const chosen = photos
+
+    // `runWithPending` desliga o pending em qualquer saída, inclusive quando a
+    // Server Action rejeita (corpo grande, rede ou exceção do servidor).
+    const outcome = await runWithPending(
+      setPending,
+      async (): Promise<ServiceRequestActionState> => {
+        const created = await submitServiceRequest(form)
+        if (created.status !== "success" || chosen.length === 0) return created
+
+        const batch = await uploadPhotosOneByOne(chosen, async (file, index) => {
+          const photoForm = new FormData()
+          photoForm.set("requestId", created.requestId)
+          photoForm.set("position", String(index))
+          photoForm.set("photo", file)
+          return await uploadServiceRequestPhotoAction(photoForm)
+        })
+
+        if (batch.failures.length === 0) return created
+        const indeterminate = batch.failures.some((failure) => failure.indeterminate === true)
+        return {
+          status: "success",
+          requestId: created.requestId,
+          photoWarning: indeterminate
+            ? "O pedido foi enviado, mas não foi possível confirmar uma foto. Recarregue o pedido antes de tentar novamente."
+            : batch.failures.length === 1
+              ? "O pedido foi enviado, mas uma foto não pôde ser anexada."
+              : `O pedido foi enviado, mas ${batch.failures.length} fotos não puderam ser anexadas.`,
+        }
+      },
+      "Não foi possível enviar o pedido. Seu texto continua aqui — tente novamente.",
+    )
+
+    if (!outcome.ok) {
+      setResult({ status: "error", message: outcome.message })
+      return
+    }
+    setResult(outcome.value)
   }
 
   if (result.status === "success") {
@@ -82,6 +124,11 @@ export function RequestForm({
           title="Pedido enviado"
           description={`Seu pedido para ${providerName} foi enviado. Ele receberá o pedido e poderá responder.`}
         />
+        {result.photoWarning ? (
+          <div className="mt-4">
+            <FeedbackAlert variant="warning" description={result.photoWarning} />
+          </div>
+        ) : null}
         {/* NAV-PEDIDOS-ORFA: a porta para acompanhar nasce aqui, onde o pedido nasce. */}
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <Link
@@ -101,7 +148,7 @@ export function RequestForm({
     )
   }
 
-  const errorMessage = clientError ?? (result.status === "error" ? result.message : null)
+  const errorMessage = photoError ?? (result.status === "error" ? result.message : null)
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
@@ -228,7 +275,7 @@ export function RequestForm({
                 variant="tertiary"
                 size="sm"
                 onPress={() => formRef.current?.requestSubmit()}
-                isDisabled={pending}
+                isDisabled={pending || photoError !== null}
               >
                 Tentar novamente
               </Button>
@@ -236,7 +283,12 @@ export function RequestForm({
           />
         ) : null}
 
-        <Button type="submit" variant="primary" isDisabled={pending} className="min-h-11 w-full">
+        <Button
+          type="submit"
+          variant="primary"
+          isDisabled={pending || photoError !== null}
+          className="min-h-11 w-full"
+        >
           <Send size={18} aria-hidden="true" />
           {pending ? "Enviando…" : "Enviar pedido"}
         </Button>

@@ -1428,6 +1428,8 @@ export type Database = {
           last_error: string | null
           payload: Json
           recipient: string
+          reserved_by: string | null
+          reserved_until: string | null
           status: Database["public"]["Enums"]["outbox_status"]
           type: string
           updated_at: string
@@ -1440,6 +1442,8 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           recipient: string
+          reserved_by?: string | null
+          reserved_until?: string | null
           status?: Database["public"]["Enums"]["outbox_status"]
           type: string
           updated_at?: string
@@ -1452,6 +1456,8 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           recipient?: string
+          reserved_by?: string | null
+          reserved_until?: string | null
           status?: Database["public"]["Enums"]["outbox_status"]
           type?: string
           updated_at?: string
@@ -2465,6 +2471,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_property_listing: {
+        Args: { p_details: Json; p_listing: Json }
+        Returns: string
+      }
       create_provider_invitation: {
         Args: {
           p_community_id: string
@@ -2597,6 +2607,10 @@ export type Database = {
         Returns: string
       }
       get_profile_bio: { Args: { p_user_id: string }; Returns: string }
+      get_provider_contact_phone: {
+        Args: { p_provider_id: string }
+        Returns: string
+      }
       has_accepted_consent: {
         Args: {
           p_code_of_conduct_version: number
@@ -2932,6 +2946,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      register_service_request_photo: {
+        Args: { p_path: string; p_position: number; p_request_id: string }
+        Returns: string
+      }
       reject_guide_correction: {
         Args: {
           p_note: string
@@ -2971,6 +2989,10 @@ export type Database = {
       reopen_recommendation: {
         Args: { p_request_id: string }
         Returns: undefined
+      }
+      replace_listing_photo: {
+        Args: { p_listing_id: string; p_path: string; p_position?: number }
+        Returns: string[]
       }
       request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {

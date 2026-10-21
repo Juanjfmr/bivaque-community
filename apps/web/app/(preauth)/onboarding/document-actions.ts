@@ -5,12 +5,54 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { log } from "../../../lib/logger"
 import { readDocumentPaths } from "../../../lib/onboarding/document-status"
+import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const DOCUMENT_BUCKET = "verification-documents"
 const MAX_BYTES = 10 * 1024 * 1024
 const ORPHAN_MIN_AGE_MS = 60 * 60 * 1000
 const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"])
+
+// SEC-AUD-001: o MIME vem do cliente. A exceção byte a byte do PDF só pode ser
+// aplicada quando os bytes começam com `%PDF-` no offset 0; verificar a
+// assinatura digital ou o emissor exigiria um parser caro que o ADR não pede.
+// A versão anterior varria os primeiros 1 KiB, então um JPEG com GPS e
+// `%PDF-1.7` num comentário passava como PDF e era guardado sem limpeza. A
+// assinatura de imagem nos primeiros bytes também é recusada, mesmo que o texto
+// PDF apareça depois dela.
+const IMAGE_SIGNATURES: Array<{ label: string; matches: (bytes: Buffer) => boolean }> = [
+  {
+    label: "jpeg",
+    matches: (bytes) =>
+      bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff,
+  },
+  {
+    label: "png",
+    matches: (bytes) =>
+      bytes.length >= 8 &&
+      bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+  },
+  {
+    label: "webp",
+    matches: (bytes) =>
+      bytes.length >= 12 &&
+      bytes.toString("latin1", 0, 4) === "RIFF" &&
+      bytes.toString("latin1", 8, 12) === "WEBP",
+  },
+  {
+    label: "gif",
+    matches: (bytes) => bytes.length >= 4 && bytes.toString("latin1", 0, 4) === "GIF8",
+  },
+]
+
+function hasPdfHeader(bytes: Uint8Array): boolean {
+  return Buffer.from(bytes.subarray(0, 5)).toString("latin1") === "%PDF-"
+}
+
+function hasImageSignature(bytes: Uint8Array): boolean {
+  const head = Buffer.from(bytes.subarray(0, 12))
+  return IMAGE_SIGNATURES.some((signature) => signature.matches(head))
+}
 
 export type UploadVerificationDocumentResult = { ok: true } | { ok: false; error: string }
 
@@ -108,9 +150,28 @@ export async function uploadVerificationDocumentAction(
     return { ok: false, error: "Formato inválido. Envie um PDF, JPEG ou PNG." }
   }
 
-  await sweepOrphanedUploads(supabase, userId)
+  let buffer: Uint8Array
+  try {
+    if (file.type === "application/pdf") {
+      const original = new Uint8Array(await file.arrayBuffer())
+      if (hasImageSignature(original) || !hasPdfHeader(original)) {
+        return {
+          ok: false,
+          error: "O arquivo não é um PDF válido. Envie um PDF, JPEG ou PNG.",
+        }
+      }
+      buffer = original
+    } else {
+      buffer = await sanitizeImage(file, MAX_BYTES)
+    }
+  } catch {
+    return {
+      ok: false,
+      error: "Não foi possível ler a imagem. Envie um JPEG ou PNG válido de até 10 MB.",
+    }
+  }
 
-  const buffer = new Uint8Array(await file.arrayBuffer())
+  await sweepOrphanedUploads(supabase, userId)
   const { randomUUID } = await import("node:crypto")
   const storageObjectPath = `${userId}/${randomUUID()}`
 

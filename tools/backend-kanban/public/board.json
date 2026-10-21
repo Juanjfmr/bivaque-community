@@ -5023,6 +5023,92 @@
       "dependencies": [],
       "blockers": [],
       "completedAt": "2026-10-14"
+    },
+    {
+      "id": "SEC-006",
+      "title": "SEC-006: envio de imagens pelo servidor e integridade das fotos",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "description": "Fechar SEC-006 na branch codex/seguranca: bloquear escrita direta nos buckets de imagens, preservar limpeza e autorização no servidor e resolver os achados MEDIUM da confirmação de 29fd1fee. ADR R3 aprovado em 19/10. Não inclui BLOCK-AFFILIATION. Push/PR dependem do ok explícito de Juan; merge/deploy também.",
+      "updatedAt": "2026-10-19",
+      "sourceRevision": "1eeefe07",
+      "dependencies": [],
+      "checklist": [
+        "Mercado: erro/rejeição encerra Enviando com feedback; troca de referência é atômica e conserva foto anterior em falha",
+        "Pedido: seleção além de seis fotos impede envio silencioso; retry de formato e falha de vínculo não deixam sucesso falso ou órfãos",
+        "Moradia: posições livres sem duplicidade e teto de 12 imposto no banco, inclusive chamadas concorrentes; criação atômica com detalhes",
+        "Preservar leitura/RLS, autorização real do dono, limpeza EXIF/GPS e uma foto por chamada",
+        "TDD RED/GREEN, replay limpo sem seed, pgTAP, db:lint/advisors, unitários da área e gate",
+        "Revisão independente e prova de navegador no candidato; PR local preparado para main; solicitar ok antes de push/abertura"
+      ],
+      "proof": [
+        "Origem: HANDOFF-COORDENACAO-2026-10-19.md item 1; revisão de confirmação codex-review-sec006-b.md: FAIL com três regressões MEDIUM e lacunas de integridade. Código confrontado: 29fd1fee. Implementação anterior DeepSeek; confirmação Codex em sessão anterior."
+      ],
+      "links": [
+        "docs/agents/tasks/SEC-006.task.yml",
+        "docs/agents/HANDOFF-COORDENACAO-2026-10-19.md",
+        "docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md"
+      ],
+      "tests": ["npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 gate"],
+      "notes": [
+        "Card ausente na consulta inicial por SEC/upload/segurança; criado pelo coordenador para reconciliar a descoberta com o contrato existente, sem nova fila. Evidências locais em C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019."
+      ]
+    },
+    {
+      "id": "SEC-004",
+      "title": "SEC-004: conferir PDF real antes da exceção de limpeza",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "description": "Auditoria independente SEC-AUD-001 reproduziu foto com GPS rotulada application/pdf persistida sem sanitizeImage. Restaurar regra do ADR aceito preservando PDF verdadeiro byte a byte, sem validação nova de assinatura ou emissão.",
+      "checklist": [
+        "Recusar JPEG/PNG rotulado PDF antes do upload; PDF verdadeiro preservado integralmente",
+        "TDD negativo/positivo, unitários da área e gate",
+        "Revisão independente do reparo antes de recomendar PR"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-10-19",
+      "sourceRevision": "1eeefe07",
+      "proof": [
+        "Origem: auditoria independente desta coordenação em 19/10/2026, parecer FAIL; C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019/security-audit.md. Novos MEDIUM no mesmo contrato do lote autorizado."
+      ],
+      "links": [
+        "docs/agents/tasks/SEC-004.task.yml",
+        "docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md"
+      ],
+      "notes": [
+        "Não concluído pelo histórico anterior: novo achado exige reparo e prova. Push/PR aguardam ok de Juan."
+      ]
+    },
+    {
+      "id": "SEC-005",
+      "title": "SEC-005: fila acima de 5.000 avisos continua drenando",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "description": "Auditoria independente SEC-AUD-002 confirmou produtor SQL reservando todos os vencidos e HTTP recusando lote superior a 5.000. Compatibilizar produtor/consumidor sem perda de IDs ou afrouxar autenticação/fail-closed.",
+      "checklist": [
+        "Fila maior que o teto drena em chamadas limitadas; não reservados continuam vencidos",
+        "Migration nova, pgTAP transacional, replay limpo sem seed, db:lint/advisors e gate",
+        "Revisão independente dos dois lados SQL/HTTP antes de recomendar PR"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-10-19",
+      "sourceRevision": "1eeefe07",
+      "proof": [
+        "Origem: auditoria independente desta coordenação em 19/10/2026, parecer FAIL; C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019/security-audit.md. Novos MEDIUM no mesmo contrato do lote autorizado."
+      ],
+      "links": [
+        "docs/agents/tasks/SEC-005.task.yml",
+        "docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md"
+      ],
+      "notes": [
+        "Não concluído pelo histórico anterior: novo achado exige reparo e prova. Push/PR aguardam ok de Juan."
+      ]
     }
   ]
 }

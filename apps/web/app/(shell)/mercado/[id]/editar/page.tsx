@@ -6,12 +6,12 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../../lib/listings/address"
 import {
-  buildListingPhotoPath,
-  LISTING_CATEGORIES,
-  LISTING_CONDITIONS,
-} from "../../../../../lib/listings/catalog"
+  replaceListingPhotoAction,
+  uploadListingPhotoAction,
+} from "../../../../../lib/listings/actions"
+import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../../lib/listings/address"
+import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "../../../../../lib/listings/catalog"
 import { listingsClient } from "../../../../../lib/listings/client"
 import {
   type ListingEditErrors,
@@ -19,8 +19,10 @@ import {
   type ManagedListingRow,
   validateListingEdit,
 } from "../../../../../lib/listings/lifecycle"
+import { replaceListingPhoto } from "../../../../../lib/listings/photo-replacement"
 import { useLocalityContext } from "../../../../../lib/locality-context"
 import { useMemberContext } from "../../../../../lib/member-context"
+import { stripExif } from "../../../../../lib/storage/client-image"
 import { AccessUnavailableState } from "../../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../../../components/bivaque/feedback-alert"
@@ -43,27 +45,6 @@ const INITIAL_STATE: EditState = {
   photoUrl: null,
 }
 
-async function stripExif(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file)
-  const canvas = document.createElement("canvas")
-  canvas.width = bitmap.width
-  canvas.height = bitmap.height
-  const context = canvas.getContext("2d")
-  if (context === null) throw new Error("canvas indisponível")
-  context.drawImage(bitmap, 0, 0)
-  bitmap.close()
-  return await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob === null) reject(new Error("não foi possível processar a imagem"))
-        else resolve(blob)
-      },
-      "image/jpeg",
-      0.9,
-    )
-  })
-}
-
 export default function EditarAnuncioPage() {
   const params = useParams<{ id: string }>()
   const listingId = params.id
@@ -83,6 +64,8 @@ export default function EditarAnuncioPage() {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [photoChanged, setPhotoChanged] = useState(false)
+  const [photoNotice, setPhotoNotice] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -224,51 +207,83 @@ export default function EditarAnuncioPage() {
     }
     setSaveError(null)
     setSaved(false)
+    setPhotoChanged(false)
+    setPhotoNotice(null)
     setUploading(true)
 
     const supabase = listingsClient()
-    const previousPath = state.photoPath
-    let newPath: string | null = null
+    const listingId = state.listing.id
     try {
-      const blob = await stripExif(file)
-      newPath = buildListingPhotoPath(state.listing.id, 0, blob.type)
-      const { error: uploadError } = await supabase.storage
-        .from("listing-photos")
-        .upload(newPath, blob, { contentType: blob.type, upsert: false })
-      if (uploadError) throw new Error(uploadError.message)
+      const result = await replaceListingPhoto(state.photoPath, {
+        uploadNewPhoto: async () => {
+          // `createImageBitmap`, a compressão e a Server Action podem rejeitar;
+          // o helper traduz cada saída em falha e a tela encerra o "Enviando…".
+          const blob = await stripExif(file)
+          const photoForm = new FormData()
+          photoForm.set("listingId", listingId)
+          photoForm.set("position", "0")
+          photoForm.set("photo", blob, "foto-1.jpg")
+          return await uploadListingPhotoAction(photoForm)
+        },
+        // A troca das linhas é uma RPC transacional. Não existe janela em que o
+        // anúncio fique sem foto, e o commit devolve os caminhos anteriores.
+        commitReplacement: async (path) => {
+          const swap = new FormData()
+          swap.set("listingId", listingId)
+          swap.set("path", path)
+          swap.set("position", "0")
+          const committed = await replaceListingPhotoAction(swap)
+          if ("error" in committed) {
+            return {
+              error: committed.error,
+              definite: committed.definite,
+              cleanupFailed: committed.cleanupFailed,
+            }
+          }
+          return {
+            error: null,
+            previousPaths: committed.previousPaths,
+            cleanupFailed: committed.previousCleanupFailed,
+          }
+        },
+      })
 
-      // O canônico não tem índice único em (listing_id, position): substituir a
-      // foto é apagar as linhas do anúncio e gravar a nova, não `upsert`.
-      const { error: clearError } = await supabase
-        .from("listing_photos")
-        .delete()
-        .eq("listing_id", state.listing.id)
-      if (clearError) throw new Error(clearError.message)
-
-      const { error: photoError } = await supabase
-        .from("listing_photos")
-        .insert({ listing_id: state.listing.id, path: newPath, position: 0 })
-      if (photoError) throw new Error(photoError.message)
-
-      if (previousPath !== null && previousPath !== newPath) {
-        await supabase.storage.from("listing-photos").remove([previousPath])
+      if (!result.ok) {
+        setSaveError(result.message)
+        return
       }
 
-      const { data: signed } = await supabase.storage
-        .from("listing-photos")
-        .createSignedUrl(newPath, 3600)
+      // A URL assinada é só apresentação: falhar aqui não desfaz a troca já
+      // confirmada nem pode transformar sucesso em erro.
+      let photoUrl: string | null = null
+      try {
+        const { data: signed } = await supabase.storage
+          .from("listing-photos")
+          .createSignedUrl(result.path, 3600)
+        photoUrl = signed?.signedUrl ?? null
+      } catch (error) {
+        console.error("[mercado] falha ao assinar a foto nova:", error)
+      }
+
       setState((previous) => ({
         ...previous,
-        photoPath: newPath,
-        photoUrl: signed?.signedUrl ?? null,
+        photoPath: result.path,
+        photoUrl,
       }))
-    } catch {
-      if (newPath !== null) {
-        await supabase.storage.from("listing-photos").remove([newPath])
+      setPhotoChanged(true)
+      if (result.previousCleanupFailed) {
+        setPhotoNotice(
+          "A foto foi trocada, mas não foi possível remover a anterior do armazenamento.",
+        )
       }
-      setSaveError("Não foi possível trocar a foto. A foto anterior continua aqui.")
+    } catch (error) {
+      console.error("[mercado] falha inesperada ao trocar a foto:", error)
+      setSaveError(
+        "Não foi possível trocar a foto. A foto anterior continua aqui; tente novamente.",
+      )
+    } finally {
+      setUploading(false)
     }
-    setUploading(false)
   }
 
   const fieldError = (key: keyof ListingEditErrors) =>
@@ -363,8 +378,14 @@ export default function EditarAnuncioPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Editar anúncio</h1>
 
       {saveError ? <FeedbackAlert variant="danger" description={saveError} /> : null}
+      {photoNotice !== null && saveError === null ? (
+        <FeedbackAlert variant="warning" description={photoNotice} />
+      ) : null}
       {saved && saveError === null ? (
         <FeedbackAlert variant="success" description="Alterações salvas." />
+      ) : null}
+      {photoChanged && saveError === null ? (
+        <FeedbackAlert variant="success" description="Foto do anúncio alterada." />
       ) : null}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

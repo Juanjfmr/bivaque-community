@@ -50,7 +50,7 @@ describe("nome acessivel do gatilho de overflow", () => {
   })
 
   it("corta identificacao longa em limite de palavra, sem reticencias", () => {
-    const longo = "a".repeat(30) + " " + "b".repeat(40)
+    const longo = `${"a".repeat(30)} ${"b".repeat(40)}`
     const sufixo = accessibleSuffix(longo)
     expect(sufixo.length).toBeLessThanOrEqual(48)
     expect(sufixo).toBe("a".repeat(30))

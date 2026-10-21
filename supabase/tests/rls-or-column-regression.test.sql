@@ -463,9 +463,9 @@ select results_eq(
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- GUARD 9: storage policies exist with correct names
--- ═══════════════════════════════════════════════════════════════════════════════
-
+-- GUARD 9: storage policies exist with correct names.
+-- SEC-006: INSERT/UPDATE pelo cliente foram removidos de propósito; restam as
+-- policies de leitura e de exclusão.
 select results_eq(
   $$
     select count(*)
@@ -473,18 +473,14 @@ select results_eq(
     where schemaname = 'storage'
       and tablename = 'objects'
       and policyname in (
-        'avatars_insert_own_folder',
         'avatars_select_authenticated',
-        'avatars_update_own',
         'avatars_delete_own',
-        'event_photos_insert_self',
         'event_photos_select_scoped',
-        'event_photos_update_own',
         'event_photos_delete_own'
       )
   $$,
-  array[8::bigint],
-  'GUARD: all 8 storage policies intact'
+  array[4::bigint],
+  'GUARD: all 4 remaining storage policies intact'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════

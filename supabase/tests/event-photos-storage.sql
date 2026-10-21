@@ -3,7 +3,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(5);
+select plan(6);
 
 \ir fixtures/foundation.inc
 \ir fixtures/storage.inc
@@ -28,13 +28,28 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- SEC-006: o membro não grava direto; a Server Action grava com service_role
+-- depois de reconferir o vínculo de localidade.
+select throws_ok(
+  $$
+    insert into storage.objects (bucket_id, name, owner)
+    values ('event-photos', 'test-member-one.jpg', '10000000-0000-4000-8000-000000000001'::uuid)
+  $$,
+  '42501',
+  null,
+  'F9+: member cannot insert an event photo directly'
+);
+
+set local role service_role;
 select lives_ok(
   $$
     insert into storage.objects (bucket_id, name, owner)
     values ('event-photos', 'test-member-one.jpg', '10000000-0000-4000-8000-000000000001'::uuid)
   $$,
-  'F9+: member can insert their own event photo'
+  'F9+: service_role inserts the member event photo for the action'
 );
+
+set local role authenticated;
 
 -- The scoped read policy exposes the photo only through a post in the
 -- viewer's locality that references it via photo_path. Create that post as

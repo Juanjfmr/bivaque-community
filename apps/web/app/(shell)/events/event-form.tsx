@@ -58,8 +58,9 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
     const formData = new FormData()
     formData.set("photo", file)
     try {
-      const { photoPath } = await uploadPostPhotoAction(formData)
-      setCoverPath(photoPath)
+      const result = await uploadPostPhotoAction(formData)
+      if ("error" in result) setCoverError(result.error)
+      else setCoverPath(result.photoPath)
     } catch (error) {
       setCoverError(error instanceof Error ? error.message : "Não foi possível enviar a imagem.")
     }

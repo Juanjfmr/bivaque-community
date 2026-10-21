@@ -27,16 +27,20 @@ export default async function PrestadorContaPage() {
   } = await authClient.auth.getUser()
   if (!user) return null
 
-  const { data: profileRow } = await authClient
+  const { data: profileRow, error: profileError } = await authClient
     .from("provider_profiles")
-    .select("id, contact_phone, contact_is_public")
+    .select("id, contact_is_public")
     .eq("owner_user_id", user.id)
     .maybeSingle()
   const profile = (profileRow ?? null) as {
     id: string
-    contact_phone: string | null
     contact_is_public: boolean
   } | null
+  if (profileError) throw new Error("Falha ao carregar a ficha.")
+  const { data: contactPhone, error: contactError } = profile
+    ? await authClient.rpc("get_provider_contact_phone", { p_provider_id: profile.id })
+    : { data: null, error: null }
+  if (contactError) throw new Error("Falha ao carregar o telefone da ficha.")
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
@@ -67,7 +71,7 @@ export default async function PrestadorContaPage() {
               id="contactPhone"
               name="contactPhone"
               type="tel"
-              defaultValue={profile.contact_phone ?? ""}
+              defaultValue={contactPhone ?? ""}
               placeholder="92 999999999"
               className="mt-1 min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors"
             />

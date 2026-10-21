@@ -51,6 +51,33 @@ jobs:
       - name: Secrets scan
         run: pnpm test:secrets
 
+      # `supabase start` pulls the whole stack from the public ECR, and the ECR
+      # refused it twice in a row with "toomanyrequests: Data limit exceeded"
+      # before any test ran (21/10/2026, PR #98, and other branches the same
+      # day). Same remedy as the tool images below: pull with backoff and, if
+      # ECR still refuses, take the same tag from Docker Hub and retag it under
+      # the name the CLI asks for, so `supabase start` finds it locally.
+      # Tags are the defaults of the pinned CLI (2.107.0), from `supabase services`.
+      - name: Pre-pull Supabase stack images
+        run: |
+          pull() {
+            local ecr="public.ecr.aws/supabase/$1" hub="$2"
+            for delay in 0 10 30 60; do
+              sleep "$delay"
+              docker pull -q "$ecr" && return 0
+            done
+            docker pull -q "$hub" && docker tag "$hub" "$ecr"               || echo "::warning::$1 nao baixou do ECR nem do Docker Hub; o supabase start tenta de novo"
+          }
+          pull postgres:17.6.1.136 supabase/postgres:17.6.1.136
+          pull gotrue:v2.190.0 supabase/gotrue:v2.190.0
+          pull postgrest:v14.13 postgrest/postgrest:v14.13
+          pull storage-api:v1.60.20 supabase/storage-api:v1.60.20
+          pull postgres-meta:v0.96.6 supabase/postgres-meta:v0.96.6
+          pull studio:2026.06.15-sha-a412298 supabase/studio:2026.06.15-sha-a412298
+          pull kong:2.8.1 kong:2.8.1
+          pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
+          pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+
       - name: Start local Supabase
         run: pnpm exec supabase start
 
@@ -130,8 +157,11 @@ jobs:
       - name: Root E2E tests (parallel, excluding @stateful)
         run: pnpm test:e2e
 
+      # O trace de falha vai junto no artefato (test-results/): o relatório só
+      # mostra o passo que travou, e um spec stateful que passa local e falha
+      # aqui não tem outra testemunha do que a tela tinha (PR #98, 21/10/2026).
       - name: Root E2E tests (stateful, serial)
-        run: pnpm test:e2e:stateful
+        run: pnpm test:e2e:stateful --trace=retain-on-failure
 
       - name: Upload Playwright artifacts
         if: always()

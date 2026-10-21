@@ -6,6 +6,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+vi.mock("server-only", () => ({}))
+
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({ getAll: () => [], setAll: () => {} })),
 }))

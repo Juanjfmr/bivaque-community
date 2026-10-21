@@ -41,7 +41,7 @@ export interface PropertyDetail extends PropertySummary {
   audienceLabel: string
   /** Por escolha de quem anuncia; null quando não informado. */
   address: string | null
-  photos: { id: string; path: string }[]
+  photos: { id: string; path: string; position: number }[]
 }
 
 interface RawRow {
@@ -235,7 +235,11 @@ export async function getPropertyDetail(
     audienceLabel: row.communities?.name
       ? `Comunidade — ${row.communities.name}`
       : `Toda a cidade — ${summary.cityName ?? "cidade"}${summary.stateCode ? `, ${summary.stateCode}` : ""}`,
-    photos: photos.map((photo) => ({ id: photo.id, path: photo.path })),
+    photos: photos.map((photo) => ({
+      id: photo.id,
+      path: photo.path,
+      position: photo.position,
+    })),
   }
 }
 

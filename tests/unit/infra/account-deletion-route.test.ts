@@ -17,6 +17,7 @@ const mockDeleteUser = vi.fn()
 const mockRpc = vi.fn()
 const mockList = vi.fn()
 const mockRemove = vi.fn()
+const mockStorageFrom = vi.fn()
 
 // A rota fala com dois RPCs pelo mesmo cliente. O comportamento é por nome de
 // função, como no cliente real — um mock que devolvesse a mesma coisa para os
@@ -30,7 +31,7 @@ function buildClient() {
       select: () => ({ eq: () => ({ maybeSingle: mockMaybeSingle }) }),
     }),
     auth: { admin: { getUserById: mockGetUserById, deleteUser: mockDeleteUser } },
-    storage: { from: () => ({ list: mockList, remove: mockRemove }) },
+    storage: { from: mockStorageFrom },
     rpc: mockRpc,
   } as never
 }
@@ -69,6 +70,7 @@ beforeEach(() => {
   mockDeleteUser.mockResolvedValue({ error: null })
   mockList.mockResolvedValue({ data: [], error: null })
   mockRemove.mockResolvedValue({ error: null })
+  mockStorageFrom.mockImplementation(() => ({ list: mockList, remove: mockRemove }))
   contactResult = { data: 2, error: null }
   finalizeResult = { data: "purged", error: null }
   // settle_account_possessions roda ANTES do deleteUser: e a ordem que impede a
@@ -82,7 +84,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs()
-  vi.clearAllMocks()
+  vi.resetAllMocks()
 })
 
 describe("POST /api/internal/account-deletion (RECON-052)", () => {
@@ -193,6 +195,7 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
 
   it("purges a due request: contact data, media, soft delete, finalize", async () => {
     mockList.mockResolvedValueOnce({ data: [{ name: "avatar.png" }], error: null })
+    mockList.mockResolvedValueOnce({ data: [], error: null })
     mockList.mockResolvedValueOnce({ data: [{ name: "documento.pdf" }], error: null })
 
     const { response, payload } = await run()
@@ -237,8 +240,160 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
     const { payload } = await run()
 
     expect(payload.outcomes[USER_ID]).toBe("purged")
-    expect(mockList).toHaveBeenCalledWith(USER_ID, { limit: 100, offset: 100 })
+    // Remover a página encolhe a coleção: avançar o offset pularia o restante.
+    expect(mockList).toHaveBeenNthCalledWith(2, USER_ID, { limit: 100, offset: 0 })
     expect(mockRemove).toHaveBeenCalledWith([`${USER_ID}/resto.png`])
+  })
+
+  it.each([0, 1, 100, 101, 250, 5000])(
+    "removes all %i objects in each shrinking personal bucket before finalizing",
+    async (count) => {
+      const buckets = ["avatars", "verification-documents"].map((name) => {
+        const remaining = new Set(
+          Array.from({ length: count }, (_, index) => `${USER_ID}/file-${index}`),
+        )
+        const list = vi.fn(async (prefix: string, options: { offset: number; limit: number }) => ({
+          data: [...remaining]
+            .slice(options.offset, options.offset + options.limit)
+            .map((path) => ({ name: path.slice(prefix.length + 1) })),
+          error: null,
+        }))
+        const remove = vi.fn(async (paths: string[]) => {
+          for (const path of paths) remaining.delete(path)
+          return { error: null }
+        })
+        return { name, remaining, list, remove }
+      })
+      mockStorageFrom.mockImplementation((name: string) => {
+        const bucket = buckets.find((bucket) => bucket.name === name)
+        if (!bucket) throw new Error("Unexpected bucket")
+        return bucket
+      })
+
+      const { payload } = await run()
+
+      for (const bucket of buckets) {
+        expect(bucket.remaining.size).toBe(0)
+        expect(bucket.list).toHaveBeenCalledTimes(Math.ceil(count / 100) + 1)
+        expect((await bucket.list.mock.results.at(-1)?.value)?.data).toEqual([])
+        expect(bucket.list.mock.invocationCallOrder.at(-1)).toBeLessThan(
+          mockDeleteUser.mock.invocationCallOrder[0] ?? 0,
+        )
+      }
+      expect(payload.outcomes[USER_ID]).toBe("purged")
+      expect(mockRpc).toHaveBeenCalledWith("finalize_account_deletion", { p_user_id: USER_ID })
+    },
+  )
+
+  it("recursively drains avatar folders without removing folder entries", async () => {
+    const remaining = new Set([
+      `${USER_ID}/avatar.png`,
+      `${USER_ID}/sub/photo.jpg`,
+      `${USER_ID}/sub/deeper/photo.webp`,
+    ])
+    const list = vi.fn(async (prefix: string) => {
+      const entries = new Map<string, { name: string; id: string | null }>()
+      for (const path of remaining) {
+        if (!path.startsWith(`${prefix}/`)) continue
+        const relative = path.slice(prefix.length + 1)
+        const name = relative.split("/")[0] ?? ""
+        entries.set(name, { name, id: relative.includes("/") ? null : path })
+      }
+      return { data: [...entries.values()].slice(0, 100), error: null }
+    })
+    const remove = vi.fn(async (paths: string[]) => {
+      // A folder is virtual: attempting to remove it leaves all its children.
+      for (const path of paths) {
+        expect(remaining.has(path)).toBe(true)
+        remaining.delete(path)
+      }
+      return { error: null }
+    })
+    mockStorageFrom.mockImplementation((bucket: string) =>
+      bucket === "avatars" ? { list, remove } : { list: mockList, remove: mockRemove },
+    )
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("purged")
+    expect(remaining.size).toBe(0)
+    expect(list).toHaveBeenCalledWith(`${USER_ID}/sub/deeper`, { limit: 100, offset: 0 })
+    expect((await list.mock.results.at(-1)?.value)?.data).toEqual([])
+    expect(mockDeleteUser).toHaveBeenCalledWith(USER_ID, true)
+  })
+
+  it("does not finalize when a nested listing fails", async () => {
+    mockList.mockResolvedValueOnce({ data: [{ name: "sub", id: null }], error: null })
+    mockList.mockResolvedValueOnce({ data: null, error: { message: "storage offline" } })
+
+    const { payload } = await run()
+
+    expect(mockList).toHaveBeenNthCalledWith(2, `${USER_ID}/sub`, { limit: 100, offset: 0 })
+    expect(mockRemove).not.toHaveBeenCalled()
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+  })
+
+  it("bounds recursive folder depth without treating a folder as an object", async () => {
+    mockList.mockResolvedValue({ data: [{ name: "sub", id: null }], error: null })
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    expect(mockList.mock.calls.length).toBeLessThanOrEqual(11)
+    expect(mockRemove).not.toHaveBeenCalled()
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+  })
+
+  it.each(["avatars", "verification-documents"])(
+    "does not finalize when the empty confirmation for %s fails after removal",
+    async (bucket) => {
+      if (bucket === "verification-documents") {
+        mockList.mockResolvedValueOnce({ data: [], error: null })
+      }
+      mockList.mockResolvedValueOnce({ data: [{ name: "last-file" }], error: null })
+      mockList.mockResolvedValueOnce({ data: null, error: { message: "storage offline" } })
+
+      const { payload } = await run()
+
+      expect(mockRemove).toHaveBeenCalledWith([`${USER_ID}/last-file`])
+      expect(payload.outcomes[USER_ID]).toBe("media_failed")
+      expect(mockDeleteUser).not.toHaveBeenCalled()
+      expect(mockRpc).not.toHaveBeenCalledWith("finalize_account_deletion", expect.anything())
+    },
+  )
+
+  it("does not treat a missing listing as a confirmed empty bucket", async () => {
+    mockList.mockResolvedValueOnce({ data: null, error: null })
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+    expect(mockRpc).not.toHaveBeenCalledWith("finalize_account_deletion", expect.anything())
+  })
+
+  it("does not finalize when removing personal media fails", async () => {
+    mockList.mockResolvedValueOnce({ data: [{ name: "avatar.png" }], error: null })
+    mockRemove.mockResolvedValueOnce({ error: { message: "storage offline" } })
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+    expect(mockRpc).not.toHaveBeenCalledWith("finalize_account_deletion", expect.anything())
+  })
+
+  it("does not finalize or loop forever when Storage keeps returning objects", async () => {
+    mockList.mockResolvedValue({ data: [{ name: "persistent-file" }], error: null })
+
+    const { payload } = await run()
+
+    expect(payload.outcomes[USER_ID]).toBe("media_failed")
+    // Even at the page ceiling, confirm whether the last removal drained it.
+    expect(mockList).toHaveBeenCalledTimes(51)
+    expect(mockDeleteUser).not.toHaveBeenCalled()
+    expect(mockRpc).not.toHaveBeenCalledWith("finalize_account_deletion", expect.anything())
   })
 
   it("does not finalize when a bucket page fails", async () => {

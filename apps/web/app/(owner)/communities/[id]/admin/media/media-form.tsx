@@ -75,7 +75,11 @@ export function CommunityMediaForm({
       formData.append("communityId", communityId)
       formData.append("kind", kind)
       formData.append("image", blob, `${kind}.jpg`)
-      await setCommunityImageAction(formData)
+      const result = await setCommunityImageAction(formData)
+      if (result?.error) {
+        setError(result.error)
+        return
+      }
       setNotice(kind === "banner" ? "Faixa atualizada." : "Miniatura atualizada.")
       router.refresh()
     } catch (err) {
