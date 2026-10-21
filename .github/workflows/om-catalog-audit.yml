@@ -68,3 +68,31 @@ jobs:
             /tmp/om-catalog/review_queue.csv
             /tmp/om-catalog/audit/
           retention-days: 14
+
+  staging-sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: staging
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: temporary-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d staging"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: temporary-ci-only
+      PGDATABASE: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert OM schema and permissions in disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f tests/om-catalog/schema_staging.sql
