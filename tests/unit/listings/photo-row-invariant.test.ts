@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
   const state = {
     ownsListing: true,
     insertError: null as null | { message: string; code?: string },
+    transportError: false,
   }
   const upload = vi.fn()
   const remove = vi.fn()
@@ -32,12 +33,16 @@ const mocks = vi.hoisted(() => {
       maybeSingle: async () => result(),
       single: async () => result(),
       // biome-ignore lint/suspicious/noThenProperty: PostgREST query builders are intentionally thenable.
-      then: (resolve: (value: unknown) => unknown) =>
-        Promise.resolve(
+      then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => {
+        if (name === "listing_photos" && state.transportError) {
+          return Promise.reject(new Error("transport down")).then(resolve, reject)
+        }
+        return Promise.resolve(
           name === "listing_photos"
             ? { data: null, error: state.insertError }
             : { data: null, error: null },
-        ).then(resolve),
+        ).then(resolve, reject)
+      },
     }
     return builder
   }
@@ -71,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.state.ownsListing = true
   mocks.state.insertError = null
+  mocks.state.transportError = false
   mocks.getUser.mockResolvedValue({ data: { user: { id: "fixture-user" } }, error: null })
   mocks.upload.mockResolvedValue({ error: null })
   mocks.remove.mockResolvedValue({ error: null })
@@ -109,5 +115,25 @@ describe("SEC-006 invariante de posição na action de Moradia", () => {
     expect(result).toEqual({ error: "Posição de foto inválida." })
     expect(mocks.upload).not.toHaveBeenCalled()
     expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  it("não remove o objeto quando a resposta do INSERT se perde no transporte", async () => {
+    mocks.state.transportError = true
+
+    const result = await uploadPropertyPhotoAction(form("0"))
+
+    expect(result).toMatchObject({ error: expect.stringContaining("Recarregue") })
+    expect(mocks.upload).toHaveBeenCalledOnce()
+    expect(mocks.remove).not.toHaveBeenCalled()
+  })
+
+  it("não remove o objeto quando o erro do INSERT não traz SQLSTATE", async () => {
+    mocks.state.insertError = { message: "gateway timeout without code" }
+
+    const result = await uploadPropertyPhotoAction(form("0"))
+
+    expect(result).toMatchObject({ error: expect.stringContaining("Recarregue") })
+    expect(mocks.upload).toHaveBeenCalledOnce()
+    expect(mocks.remove).not.toHaveBeenCalled()
   })
 })

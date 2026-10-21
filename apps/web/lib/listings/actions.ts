@@ -132,13 +132,37 @@ export async function uploadPropertyPhotoAction(
     return { error: uploadError.message }
   }
 
-  const { error: rowError } = await client
-    .from("listing_photos")
-    .insert({ listing_id: listingId, path, position })
+  let rowError: { message: string; code?: string } | null = null
+  try {
+    const { error } = await client
+      .from("listing_photos")
+      .insert({ listing_id: listingId, path, position })
+    rowError = error
+  } catch (error) {
+    // Sem resposta nao ha prova de rollback: o INSERT pode ter commitado e a
+    // resposta se perdido depois. Apagar o objeto deixaria a linha apontando
+    // para um arquivo inexistente.
+    console.error("[moradia] falha de transporte ao gravar a linha da foto:", error)
+    return {
+      error:
+        "Não foi possível confirmar o envio da foto. Recarregue o anúncio antes de tentar novamente.",
+    }
+  }
+
   if (rowError) {
-    // A linha é o que torna a foto visível; sem ela o objeto fica órfão. A
-    // colisão de posição (23505) e o teto/faixa (23514) são invariantes do
-    // banco: a action não tenta "consertar" a posição por conta própria.
+    if (!isDefiniteSqlRejection(rowError)) {
+      // Erro sem SQLSTATE (gateway, PostgREST, timeout) tambem e inconclusivo.
+      // Preserva o objeto para o retry/recarga, como Mercado e Pedido fazem.
+      return {
+        error:
+          "Não foi possível confirmar o envio da foto. Recarregue o anúncio antes de tentar novamente.",
+      }
+    }
+
+    // Recusa SQL definitiva: a linha é o que torna a foto visível; sem ela o
+    // objeto fica órfão. A colisão de posição (23505) e o teto/faixa (23514)
+    // são invariantes do banco: a action não tenta "consertar" a posição por
+    // conta própria.
     const cleanup = await service.storage.from("listing-photos").remove([path])
     if (cleanup.error) {
       console.error("[moradia] falha ao remover objeto sem linha:", cleanup.error.message)

@@ -160,3 +160,12 @@ closure:
 # e preserva SELECT; o comentario da migration registra que a tabela fica travada por pouco tempo.
 # A migration nao foi aplicada em banco remoto (a branch nunca saiu daqui), por isso foi editada.
 # GREEN: 2/2 PASS. O reset limpo que reaplica a migration fica com o coordenador.
+
+# M4 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash):
+# RED: tests/unit/listings/photo-row-invariant.test.ts, 2 de 5 falharam. Resposta perdida no
+# transporte rejeitava a action, e erro sem SQLSTATE devolvia a mensagem e apagava o objeto novo.
+# Correcao: uploadPropertyPhotoAction usa isDefiniteSqlRejection (apps/web/lib/storage/rpc-outcome.ts).
+# Recusa SQL definitiva, com codigo, remove o objeto novo; erro de transporte ou erro sem codigo
+# preserva o objeto e pede para recarregar. O teste de 23505 continua exigindo a remocao.
+# GREEN: 5/5 PASS; area de listagens e uploads 217/217 em 17 arquivos.
+
