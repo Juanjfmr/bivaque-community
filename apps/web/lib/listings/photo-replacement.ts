@@ -1,67 +1,70 @@
-// SEC-006 (revisão M1) — troca da foto de um anúncio do Mercado.
+// SEC-006 (reparo 2026-10-19, tentativa 2) — troca da foto de um anúncio.
 //
-// O fluxo vive fora da tela porque a ordem das operações é o contrato: subir a
-// foto nova, limpar as linhas antigas, gravar a linha nova e só então remover o
-// objeto antigo. A tela injeta as operações (Server Actions + cliente Supabase)
-// e este módulo decide o que pode ser desfeito.
+// A Server Action é a ÚNICA responsável por limpar objetos do Storage:
+//   * recusa SQL definitiva -> limpa o objeto novo (não referenciado);
+//   * commit confirmado -> limpa os objetos antigos;
+//   * resultado ambíguo -> não limpa nada.
+//
+// O cliente só apresenta o resultado. Ele não pode apagar o objeto novo com
+// base em erro genérico: a RPC pode ter comitado e a resposta se perdido.
 
 export interface ListingPhotoReplacementSteps {
   uploadNewPhoto: () => Promise<{ path: string } | { error: string }>
-  clearPhotoRows: () => Promise<{ error: string | null }>
-  insertNewPhotoRow: (path: string) => Promise<{ error: string | null }>
-  deletePhotoObject: (path: string) => Promise<{ ok: boolean }>
+  commitReplacement: (
+    path: string,
+  ) => Promise<
+    | { error: null; previousPaths?: string[]; cleanupFailed?: boolean }
+    | { error: string; definite: boolean; cleanupFailed: boolean }
+  >
 }
 
 export type ListingPhotoReplacementResult =
   | { ok: true; path: string; previousCleanupFailed: boolean }
-  | { ok: false; message: string }
+  | { ok: false; indeterminate: boolean; message: string }
 
-const REPLACE_ERROR = "Não foi possível trocar a foto. A foto anterior continua aqui."
-
-async function discardNewPhoto(path: string, steps: ListingPhotoReplacementSteps): Promise<void> {
-  try {
-    await steps.deletePhotoObject(path)
-  } catch (error) {
-    // O anúncio ainda aponta para a foto anterior; o objeto novo fica órfão.
-    console.error("[mercado] falha ao descartar a foto nova:", error)
-  }
-}
+const DEFINITE_ERROR = "Não foi possível trocar a foto. A foto anterior continua aqui."
+const INDETERMINATE_ERROR =
+  "Não foi possível confirmar a troca. A foto nova pode estar no anúncio; recarregue antes de tentar novamente."
 
 export async function replaceListingPhoto(
-  previousPath: string | null,
+  _previousPath: string | null,
   steps: ListingPhotoReplacementSteps,
 ): Promise<ListingPhotoReplacementResult> {
-  const uploaded = await steps.uploadNewPhoto()
-  if ("error" in uploaded) return { ok: false, message: REPLACE_ERROR }
+  let uploaded: { path: string } | { error: string }
+  try {
+    uploaded = await steps.uploadNewPhoto()
+  } catch (error) {
+    // createImageBitmap, compressão ou a Server Action podem rejeitar. A tela
+    // precisa receber uma saída, não uma promessa pendente.
+    console.error("[mercado] falha ao enviar a foto nova:", error)
+    return { ok: false, indeterminate: false, message: DEFINITE_ERROR }
+  }
+  if ("error" in uploaded) {
+    return { ok: false, indeterminate: false, message: DEFINITE_ERROR }
+  }
   const newPath = uploaded.path
 
-  // A linha nova é o que faz o anúncio apontar para a foto. Só enquanto ela
-  // não existe é seguro desfazer o objeto recém-enviado.
-  const cleared = await steps.clearPhotoRows()
-  if (cleared.error !== null) {
-    await discardNewPhoto(newPath, steps)
-    return { ok: false, message: REPLACE_ERROR }
+  let committed: Awaited<ReturnType<ListingPhotoReplacementSteps["commitReplacement"]>>
+  try {
+    committed = await steps.commitReplacement(newPath)
+  } catch (error) {
+    // Erro de transporte: o commit pode ter acontecido. Não apague a foto nova.
+    console.error("[mercado] falha ambígua ao trocar a linha da foto:", error)
+    return { ok: false, indeterminate: true, message: INDETERMINATE_ERROR }
   }
 
-  const inserted = await steps.insertNewPhotoRow(newPath)
-  if (inserted.error !== null) {
-    await discardNewPhoto(newPath, steps)
-    return { ok: false, message: REPLACE_ERROR }
-  }
-
-  // Daqui em diante a troca está consumada: o banco aponta para a foto nova.
-  // Falhar ao apagar a antiga só deixa um objeto órfão no bucket e não pode
-  // desfazer nada nem mentir sobre o estado da tela.
-  let previousCleanupFailed = false
-  if (previousPath !== null && previousPath !== newPath) {
-    try {
-      const removed = await steps.deletePhotoObject(previousPath)
-      previousCleanupFailed = !removed.ok
-    } catch (error) {
-      previousCleanupFailed = true
-      console.error("[mercado] falha ao remover a foto anterior:", error)
+  if (committed.error !== null) {
+    if (!committed.definite) {
+      return { ok: false, indeterminate: true, message: INDETERMINATE_ERROR }
     }
+    // Recusa SQL definitiva: a Server Action já descartou o objeto novo, porque
+    // a transação não commitou e o caminho é exclusivo desta chamada.
+    return { ok: false, indeterminate: false, message: DEFINITE_ERROR }
   }
 
-  return { ok: true, path: newPath, previousCleanupFailed }
+  return {
+    ok: true,
+    path: newPath,
+    previousCleanupFailed: committed.cleanupFailed === true,
+  }
 }

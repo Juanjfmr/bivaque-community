@@ -2465,6 +2465,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_property_listing: {
+        Args: { p_details: Json; p_listing: Json }
+        Returns: string
+      }
       create_provider_invitation: {
         Args: {
           p_community_id: string
@@ -2936,6 +2940,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      register_service_request_photo: {
+        Args: { p_path: string; p_position: number; p_request_id: string }
+        Returns: string | null
+      }
       reject_guide_correction: {
         Args: {
           p_note: string
@@ -2975,6 +2983,10 @@ export type Database = {
       reopen_recommendation: {
         Args: { p_request_id: string }
         Returns: undefined
+      }
+      replace_listing_photo: {
+        Args: { p_listing_id: string; p_path: string; p_position?: number }
+        Returns: string[]
       }
       request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {

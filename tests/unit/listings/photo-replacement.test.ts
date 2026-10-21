@@ -4,95 +4,122 @@ import {
   replaceListingPhoto,
 } from "../../../apps/web/lib/listings/photo-replacement"
 
-// SEC-006 (revisão M1) — a troca de foto do Mercado.
+// SEC-006 (reparo 2026-10-19, tentativa 2) — a composição da troca de foto.
 //
-// O cenário que o Codex apontou: a foto nova já foi gravada em
-// `listing_photos` e a remoção da foto anterior falha. Desfazer a foto nova
-// nesse momento deixa o anúncio apontando para um objeto que não existe, e a
-// mensagem diz que a anterior continua disponível — o que é falso.
+// Só a recusa SQL definitiva autoriza dizer que a foto anterior continua e que
+// o objeto novo pode ser descartado. Resposta perdida, exceção de transporte ou
+// erro sem código SQL são INCONCLUSIVOS: os bytes da foto nova são preservados
+// porque o commit pode ter acontecido. A limpeza de objetos (nova em recusa,
+// antigas após commit) é responsabilidade exclusiva da Server Action.
 
 const NEW_PATH = "fixture-listing/0-new.jpg"
 const OLD_PATH = "fixture-listing/0-old.jpg"
+const OTHER_OLD_PATH = "fixture-listing/1-old.jpg"
 
 function steps(
   overrides: Partial<ListingPhotoReplacementSteps> = {},
 ): ListingPhotoReplacementSteps {
   return {
     uploadNewPhoto: async () => ({ path: NEW_PATH }),
-    clearPhotoRows: async () => ({ error: null }),
-    insertNewPhotoRow: async () => ({ error: null }),
-    deletePhotoObject: async () => ({ ok: true }),
+    commitReplacement: async () => ({ error: null, previousPaths: [OLD_PATH] }),
     ...overrides,
   }
 }
 
-describe("SEC-006 troca de foto do Mercado", () => {
-  it("mantém a foto nova quando apagar o objeto anterior lança erro", async () => {
-    const deleted: string[] = []
+describe("SEC-006 composição da troca de foto do Mercado", () => {
+  it("mapeia sucesso e aviso de limpeza sem apagar nada no cliente", async () => {
     const result = await replaceListingPhoto(
       OLD_PATH,
       steps({
-        deletePhotoObject: async (path) => {
-          deleted.push(path)
-          if (path === OLD_PATH) throw new Error("storage indisponível")
-          return { ok: true }
-        },
+        commitReplacement: async () => ({
+          error: null,
+          previousPaths: [OLD_PATH, OTHER_OLD_PATH],
+          cleanupFailed: true,
+        }),
       }),
     )
 
-    expect(deleted).toEqual([OLD_PATH])
-    expect(result).toEqual({ ok: true, path: NEW_PATH, previousCleanupFailed: true })
+    expect(result).toEqual({
+      ok: true,
+      path: NEW_PATH,
+      previousCleanupFailed: true,
+    })
   })
 
-  it("mantém a foto nova quando apagar o objeto anterior devolve falha", async () => {
-    const deleted: string[] = []
+  it("recusa definitiva informa que a anterior continua", async () => {
     const result = await replaceListingPhoto(
       OLD_PATH,
       steps({
-        deletePhotoObject: async (path) => {
-          deleted.push(path)
-          return path === OLD_PATH ? { ok: false } : { ok: true }
-        },
+        commitReplacement: async () => ({
+          error: "colisão de posição",
+          definite: true,
+          cleanupFailed: false,
+        }),
       }),
     )
 
-    expect(deleted).toEqual([OLD_PATH])
-    expect(result).toEqual({ ok: true, path: NEW_PATH, previousCleanupFailed: true })
-  })
-
-  it("desfaz a foto nova quando a linha nova não é gravada", async () => {
-    const deleted: string[] = []
-    const result = await replaceListingPhoto(
-      OLD_PATH,
-      steps({
-        insertNewPhotoRow: async () => ({ error: "linha recusada" }),
-        deletePhotoObject: async (path) => {
-          deleted.push(path)
-          return { ok: true }
-        },
-      }),
-    )
-
-    expect(deleted).toEqual([NEW_PATH])
     expect(result).toEqual({
       ok: false,
+      indeterminate: false,
       message: "Não foi possível trocar a foto. A foto anterior continua aqui.",
     })
   })
 
-  it("não remove o objeto anterior quando o caminho é o mesmo", async () => {
-    const deleted: string[] = []
+  it("erro inconclusivo não promete rollback nem apaga a foto nova", async () => {
     const result = await replaceListingPhoto(
-      NEW_PATH,
+      OLD_PATH,
       steps({
-        deletePhotoObject: async (path) => {
-          deleted.push(path)
-          return { ok: true }
+        commitReplacement: async () => ({
+          error: "timeout",
+          definite: false,
+          cleanupFailed: false,
+        }),
+      }),
+    )
+
+    expect(result).toMatchObject({ ok: false, indeterminate: true })
+    if (!result.ok) {
+      expect(result.message).not.toContain("anterior continua aqui")
+      expect(result.message).toContain("recarregue")
+    }
+  })
+
+  it("exceção na troca é inconclusiva", async () => {
+    const result = await replaceListingPhoto(
+      OLD_PATH,
+      steps({
+        commitReplacement: async () => {
+          throw new Error("resposta perdida")
         },
       }),
     )
 
-    expect(deleted).toEqual([])
-    expect(result).toEqual({ ok: true, path: NEW_PATH, previousCleanupFailed: false })
+    expect(result).toMatchObject({ ok: false, indeterminate: true })
+  })
+
+  it("falha no envio não apaga nada e mantém a anterior", async () => {
+    const thrown = await replaceListingPhoto(
+      OLD_PATH,
+      steps({
+        uploadNewPhoto: async () => {
+          throw new Error("createImageBitmap indisponível")
+        },
+      }),
+    )
+    expect(thrown).toEqual({
+      ok: false,
+      indeterminate: false,
+      message: "Não foi possível trocar a foto. A foto anterior continua aqui.",
+    })
+
+    const returned = await replaceListingPhoto(
+      OLD_PATH,
+      steps({ uploadNewPhoto: async () => ({ error: "arquivo grande" }) }),
+    )
+    expect(returned).toEqual({
+      ok: false,
+      indeterminate: false,
+      message: "Não foi possível trocar a foto. A foto anterior continua aqui.",
+    })
   })
 })

@@ -9,6 +9,8 @@
 export interface PhotoUploadFailure {
   index: number
   message: string
+  /** O envio pode ter sido concluído; os bytes foram preservados. */
+  indeterminate?: boolean
 }
 
 export interface SequentialPhotoUploadResult {
@@ -16,7 +18,9 @@ export interface SequentialPhotoUploadResult {
   failures: PhotoUploadFailure[]
 }
 
-export type PhotoUploadOutcome = { error?: string; path?: string; ok?: boolean } | undefined
+export type PhotoUploadOutcome =
+  | { error?: string; path?: string; ok?: boolean; indeterminate?: boolean }
+  | undefined
 
 const DEFAULT_UPLOAD_ERROR = "Não foi possível enviar a foto."
 
@@ -36,7 +40,11 @@ export async function uploadPhotosOneByOne(
     try {
       const result = await upload(file, index)
       if (result !== undefined && "error" in result && typeof result.error === "string") {
-        failures.push({ index, message: result.error })
+        failures.push({
+          index,
+          message: result.error,
+          ...(result.indeterminate === true ? { indeterminate: true } : {}),
+        })
         continue
       }
       uploaded += 1

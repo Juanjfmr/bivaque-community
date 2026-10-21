@@ -7,6 +7,7 @@
 // e é do chamador), porque privilégio não é identidade.
 
 import { revalidatePath } from "next/cache"
+import { isDefiniteSqlRejection } from "../storage/rpc-outcome"
 import { sanitizeImage } from "../storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../supabase/server"
 import type { ActionState } from "./action-state"
@@ -135,12 +136,151 @@ export async function uploadPropertyPhotoAction(
     .from("listing_photos")
     .insert({ listing_id: listingId, path, position })
   if (rowError) {
-    // A linha é o que torna a foto visível; sem ela o objeto fica órfão.
-    await service.storage.from("listing-photos").remove([path])
+    // A linha é o que torna a foto visível; sem ela o objeto fica órfão. A
+    // colisão de posição (23505) e o teto/faixa (23514) são invariantes do
+    // banco: a action não tenta "consertar" a posição por conta própria.
+    const cleanup = await service.storage.from("listing-photos").remove([path])
+    if (cleanup.error) {
+      console.error("[moradia] falha ao remover objeto sem linha:", cleanup.error.message)
+    }
     return { error: rowError.message }
   }
 
   return { path }
+}
+
+// SEC-006 (reconferência 2026-10-19) — a troca da foto do Mercado precisa ser
+// uma transação só, não "apaga linhas, insere linha". A RPC reconfere o dono,
+// trava o anúncio, apaga as linhas antigas e insere a nova no mesmo commit;
+// devolve os caminhos antigos para a limpeza posterior. O objeto novo só é
+// descartado quando a RPC recusa de forma definitiva e nenhuma linha aponta
+// para ele.
+export async function replaceListingPhotoAction(
+  formData: FormData,
+): Promise<
+  | { ok: true; previousPaths: string[]; previousCleanupFailed: boolean }
+  | { ok: false; definite: boolean; cleanupFailed: boolean; error: string }
+> {
+  const listingId = String(formData.get("listingId") ?? "")
+  const newPath = String(formData.get("path") ?? "")
+  const position = Number.parseInt(String(formData.get("position") ?? "0"), 10)
+
+  if (listingId === "" || newPath === "") {
+    return { ok: false, definite: true, cleanupFailed: false, error: "Foto não identificada." }
+  }
+  if (!newPath.startsWith(`${listingId}/`)) {
+    return {
+      ok: false,
+      definite: true,
+      cleanupFailed: false,
+      error: "A foto não pertence a este anúncio.",
+    }
+  }
+  if (!Number.isInteger(position) || position < 0 || position >= MAX_LISTING_PHOTOS) {
+    return { ok: false, definite: true, cleanupFailed: false, error: "Posição de foto inválida." }
+  }
+
+  const userId = await currentUserId()
+  if (userId === null) {
+    return {
+      ok: false,
+      definite: true,
+      cleanupFailed: false,
+      error: "Sessão expirada. Entre novamente para trocar a foto.",
+    }
+  }
+
+  const service = createServiceClient()
+  const { data: ownedListing } = await service
+    .from("listings")
+    .select("id")
+    .eq("id", listingId)
+    .eq("owner_user_id", userId)
+    .maybeSingle()
+  if (!ownedListing) {
+    return {
+      ok: false,
+      definite: true,
+      cleanupFailed: false,
+      error: "Este anúncio não existe ou não é seu.",
+    }
+  }
+
+  const client = await createListingClient()
+  let rpcData: string[] = []
+  let rpcError: { message: string; code?: string } | null = null
+  let transportFailure = false
+  try {
+    const { data, error } = await client.rpc("replace_listing_photo", {
+      p_listing_id: listingId,
+      p_path: newPath,
+      p_position: position,
+    })
+    if (error) rpcError = error
+    else rpcData = Array.isArray(data) ? (data as string[]) : []
+  } catch (error) {
+    transportFailure = true
+    console.error("[mercado] falha de transporte na troca da foto:", error)
+  }
+
+  if (transportFailure) {
+    // Sem resposta não há prova de rollback. O commit pode acontecer depois de
+    // qualquer SELECT feito agora, então nenhum objeto é apagado. O caminho é
+    // exclusivo desta chamada e fica preservado para o retry/recarga.
+    return {
+      ok: false,
+      definite: false,
+      cleanupFailed: false,
+      error: "Não foi possível confirmar a troca da foto.",
+    }
+  }
+
+  if (rpcError !== null) {
+    if (!isDefiniteSqlRejection(rpcError)) {
+      // Erro estruturado sem SQLSTATE (por exemplo, gateway/PGRST) não prova
+      // que a transação foi recusada. Preserva o objeto.
+      return {
+        ok: false,
+        definite: false,
+        cleanupFailed: false,
+        error: "Não foi possível confirmar a troca da foto.",
+      }
+    }
+
+    // Recusa SQL definitiva: a transação não commitou. O caminho é exclusivo
+    // desta chamada; limpar o objeto novo é seguro.
+    let cleanupFailed = false
+    try {
+      const cleanup = await service.storage.from("listing-photos").remove([newPath])
+      if (cleanup.error) {
+        cleanupFailed = true
+        console.error("[mercado] falha ao remover objeto sem linha:", cleanup.error.message)
+      }
+    } catch (error) {
+      cleanupFailed = true
+      console.error("[mercado] falha ao remover objeto sem linha:", error)
+    }
+    return { ok: false, definite: true, cleanupFailed, error: rpcError.message }
+  }
+
+  const oldPaths = rpcData.filter((path) => path !== newPath && path.startsWith(`${listingId}/`))
+  let previousCleanupFailed = false
+  if (oldPaths.length > 0) {
+    try {
+      const { error: removeError } = await service.storage.from("listing-photos").remove(oldPaths)
+      if (removeError) {
+        previousCleanupFailed = true
+        console.error("[mercado] falha ao remover fotos anteriores:", removeError.message)
+      }
+    } catch (error) {
+      previousCleanupFailed = true
+      console.error("[mercado] falha ao remover fotos anteriores:", error)
+    }
+  }
+
+  revalidatePath(`/mercado/${listingId}`)
+  revalidatePath(`/mercado/${listingId}/editar`)
+  return { ok: true, previousPaths: oldPaths, previousCleanupFailed }
 }
 
 // SEC-006 — foto do Mercado. O navegador não grava mais direto no bucket: envia
@@ -208,8 +348,7 @@ export async function uploadListingPhotoAction(
 }
 
 export async function createPropertyAction(formData: FormData): Promise<ActionState> {
-  const userId = await currentUserId()
-  if (userId === null) {
+  if ((await currentUserId()) === null) {
     return { ok: false, message: "Sessão expirada. Entre novamente para publicar." }
   }
 
@@ -223,57 +362,54 @@ export async function createPropertyAction(formData: FormData): Promise<ActionSt
   const status = intent === "draft" ? "draft" : "active"
   const localityId = String(formData.get("localityId") ?? "")
   const communityId = String(formData.get("communityId") ?? "")
-  const audience = communityId !== "" ? { community_id: communityId } : { locality_id: localityId }
 
+  // SEC-006 (reconferência 2026-10-19) — `listings` e `property_details` nascem
+  // na mesma transação (RPC). A tentativa anterior de compensar com `delete`
+  // não conferia o resultado: se a limpeza também falhasse, sobrava um anúncio
+  // sem detalhe. A RPC deriva o dono de auth.uid() e mantém os grants atuais.
   const client = await createListingClient()
-  const { data: listing, error: listingError } = await client
-    .from("listings")
-    .insert({
-      owner_user_id: userId,
-      kind: "property",
-      status,
-      title: draft.title.trim(),
-      description: draft.description.trim() || null,
-      neighborhood: draft.neighborhood.trim() || null,
-      address: addressValue(draft.address),
-      published_at: status === "active" ? new Date().toISOString() : null,
-      ...audience,
+  let listingId: string | null = null
+  let rpcError: string | null = null
+  try {
+    const { data, error } = await client.rpc("create_property_listing", {
+      p_listing: {
+        status,
+        title: draft.title.trim(),
+        description: draft.description.trim() || null,
+        neighborhood: draft.neighborhood.trim() || null,
+        address: addressValue(draft.address),
+        published_at: status === "active" ? new Date().toISOString() : null,
+        locality_id: communityId === "" ? localityId || null : null,
+        community_id: communityId === "" ? null : communityId,
+      },
+      p_details: {
+        deal: draft.deal,
+        property_type: draft.propertyType,
+        rent_cents: parseOptionalCents(draft.rent),
+        condo_fee_cents: parseOptionalCents(draft.condoFee),
+        iptu_cents: parseOptionalCents(draft.iptu),
+        sale_price_cents: parseOptionalCents(draft.salePrice),
+        bedrooms: parseOptionalInt(draft.bedrooms),
+        suites: parseOptionalInt(draft.suites),
+        parking_spots: parseOptionalInt(draft.parkingSpots),
+        area_m2: parseOptionalArea(draft.areaM2),
+        available_from: draft.availableFrom.trim() || null,
+      },
     })
-    .select("id")
-    .single()
-
-  if (listingError) {
-    return { ...GENERIC_ERROR, message: listingError.message }
+    if (error) rpcError = error.message
+    else if (typeof data === "string") listingId = data
+    else rpcError = "A criação do anúncio não devolveu identificador."
+  } catch (error) {
+    console.error("[moradia] falha ao criar o anúncio:", error)
+    rpcError = "Não foi possível salvar agora. Tente de novo em instantes."
   }
 
-  const { error: detailsError } = await client.from("property_details").insert({
-    listing_id: listing.id,
-    deal: draft.deal as "rent" | "sale",
-    property_type: draft.propertyType as
-      | "apartment"
-      | "house"
-      | "studio"
-      | "room"
-      | "land"
-      | "commercial",
-    rent_cents: parseOptionalCents(draft.rent),
-    condo_fee_cents: parseOptionalCents(draft.condoFee),
-    iptu_cents: parseOptionalCents(draft.iptu),
-    sale_price_cents: parseOptionalCents(draft.salePrice),
-    bedrooms: parseOptionalInt(draft.bedrooms),
-    suites: parseOptionalInt(draft.suites),
-    parking_spots: parseOptionalInt(draft.parkingSpots),
-    area_m2: parseOptionalArea(draft.areaM2),
-    available_from: draft.availableFrom.trim() || null,
-  })
-
-  if (detailsError) {
-    await client.from("listings").delete().eq("id", listing.id)
-    return { ...GENERIC_ERROR, message: detailsError.message }
+  if (rpcError !== null || listingId === null) {
+    return { ...GENERIC_ERROR, message: rpcError ?? "Não foi possível salvar agora." }
   }
 
   revalidatePath("/imoveis")
-  return { ok: true, message: "Anúncio criado.", listingId: listing.id }
+  return { ok: true, message: "Anúncio criado.", listingId }
 }
 
 export async function updatePropertyAction(formData: FormData): Promise<ActionState> {

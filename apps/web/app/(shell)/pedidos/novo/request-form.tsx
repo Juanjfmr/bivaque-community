@@ -6,9 +6,12 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import {
+  requestSubmissionBlocked,
+  selectRequestPhotos,
+} from "../../../../lib/service-requests/photo-selection"
+import {
   SERVICE_REQUEST_DESCRIPTION_MAX,
   SERVICE_REQUEST_WHEN_OPTIONS,
-  validateRequestPhotos,
 } from "../../../../lib/service-requests/request-form"
 import { runWithPending, uploadPhotosOneByOne } from "../../../../lib/storage/photo-upload-sequence"
 import { Card } from "../../../components/bivaque/card"
@@ -38,7 +41,7 @@ export function RequestForm({
   const [description, setDescription] = useState("")
   const [when, setWhen] = useState<string>(SERVICE_REQUEST_WHEN_OPTIONS[0])
   const [photos, setPhotos] = useState<File[]>([])
-  const [clientError, setClientError] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<ServiceRequestActionState>({ status: "idle" })
   // Chave de idempotência gerada no cliente, depois da hidratação: o mesmo
@@ -51,20 +54,23 @@ export function RequestForm({
 
   function handlePhotos(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
-    const validation = validateRequestPhotos(files)
-    if (!validation.ok) {
-      setClientError(validation.message)
-      setPhotos([])
-      return
-    }
-    setClientError(null)
-    setPhotos(files)
+    const selection = selectRequestPhotos(photos, files)
+    setPhotos(selection.photos)
+    setPhotoError(selection.error)
+    event.target.value = ""
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    // A seleção inválida bloqueia o envio e o erro continua visível até uma
+    // seleção válida. Antes, o submit apagava o erro e publicava sem anexo.
+    const blocked = requestSubmissionBlocked(photoError)
+    if (blocked !== null) {
+      // O erro já está visível em `photoError`; não o copie para `result`, senão
+      // ele continuaria na tela depois de uma seleção válida.
+      return
+    }
     if (pending || formRef.current === null) return
-    setClientError(null)
     const form = new FormData(formRef.current)
     // SEC-006 (revisão M2): as fotos não viajam no corpo do pedido. Cada uma
     // vira uma chamada própria depois que o pedido existe, para o total não
@@ -89,11 +95,13 @@ export function RequestForm({
         })
 
         if (batch.failures.length === 0) return created
+        const indeterminate = batch.failures.some((failure) => failure.indeterminate === true)
         return {
           status: "success",
           requestId: created.requestId,
-          photoWarning:
-            batch.failures.length === 1
+          photoWarning: indeterminate
+            ? "O pedido foi enviado, mas não foi possível confirmar uma foto. Recarregue o pedido antes de tentar novamente."
+            : batch.failures.length === 1
               ? "O pedido foi enviado, mas uma foto não pôde ser anexada."
               : `O pedido foi enviado, mas ${batch.failures.length} fotos não puderam ser anexadas.`,
         }
@@ -140,7 +148,7 @@ export function RequestForm({
     )
   }
 
-  const errorMessage = clientError ?? (result.status === "error" ? result.message : null)
+  const errorMessage = photoError ?? (result.status === "error" ? result.message : null)
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
@@ -267,7 +275,7 @@ export function RequestForm({
                 variant="tertiary"
                 size="sm"
                 onPress={() => formRef.current?.requestSubmit()}
-                isDisabled={pending}
+                isDisabled={pending || photoError !== null}
               >
                 Tentar novamente
               </Button>
@@ -275,7 +283,12 @@ export function RequestForm({
           />
         ) : null}
 
-        <Button type="submit" variant="primary" isDisabled={pending} className="min-h-11 w-full">
+        <Button
+          type="submit"
+          variant="primary"
+          isDisabled={pending || photoError !== null}
+          className="min-h-11 w-full"
+        >
           <Send size={18} aria-hidden="true" />
           {pending ? "Enviando…" : "Enviar pedido"}
         </Button>

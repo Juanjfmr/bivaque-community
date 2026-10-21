@@ -11,6 +11,7 @@ import {
   validateRequestPhotos,
   validateRequestWhen,
 } from "../../../../lib/service-requests/request-form"
+import { isDefiniteSqlRejection } from "../../../../lib/storage/rpc-outcome"
 import { sanitizeImage } from "../../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 
@@ -122,25 +123,38 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
  * existir. Repete a autorização que a policy do Storage exigia (pedido cujo
  * `requester_user_id` é o chamador) antes de usar service_role.
  */
+export type UploadServiceRequestPhotoResult =
+  | { ok: true }
+  | {
+      error: string
+      definite?: boolean
+      indeterminate?: boolean
+      cleanupFailed?: boolean
+    }
+
+function definiteFailure(error: string): UploadServiceRequestPhotoResult {
+  return { error }
+}
+
 export async function uploadServiceRequestPhotoAction(
   formData: FormData,
-): Promise<{ ok: true } | { error: string }> {
+): Promise<UploadServiceRequestPhotoResult> {
   const requestId = text(formData, "requestId").trim()
   const position = Number.parseInt(text(formData, "position"), 10)
   const file = formData.get("photo")
 
   if (requestId === "") {
-    return { error: "Pedido não identificado." }
+    return definiteFailure("Pedido não identificado.")
   }
   if (!Number.isInteger(position) || position < 0 || position >= SERVICE_REQUEST_MAX_PHOTOS) {
-    return { error: "Posição de foto inválida." }
+    return definiteFailure("Posição de foto inválida.")
   }
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Escolha uma imagem para enviar." }
+    return definiteFailure("Escolha uma imagem para enviar.")
   }
   const validation = validateRequestPhotos([file])
   if (!validation.ok) {
-    return { error: validation.message }
+    return definiteFailure(validation.message)
   }
 
   const client = await createUserClient()
@@ -148,7 +162,7 @@ export async function uploadServiceRequestPhotoAction(
     data: { user },
   } = await client.auth.getUser()
   if (!user) {
-    return { error: "Sessão expirada. Entre novamente para enviar a foto." }
+    return definiteFailure("Sessão expirada. Entre novamente para enviar a foto.")
   }
 
   const serviceClient = createServiceClient()
@@ -160,43 +174,115 @@ export async function uploadServiceRequestPhotoAction(
     .maybeSingle()
   if (ownershipError) {
     log.error("pedidos: request ownership check failed", { error: ownershipError.message })
-    return { error: "O pedido não existe ou não é seu." }
+    return definiteFailure("O pedido não existe ou não é seu.")
   }
   if (!ownedRequest) {
     log.error("pedidos: request ownership mismatch", { request_id: requestId })
-    return { error: "O pedido não existe ou não é seu." }
+    return definiteFailure("O pedido não existe ou não é seu.")
   }
 
   let body: Buffer
   try {
     body = await sanitizeImage(file, SERVICE_REQUEST_PHOTO_MAX_BYTES)
   } catch {
-    return { error: "Envie imagens JPEG, PNG ou WebP válidas de até 10 MB." }
+    return definiteFailure("Envie imagens JPEG, PNG ou WebP válidas de até 10 MB.")
   }
 
-  const path = `${requestId}/${position}.${extensionFor(file.type)}`
+  // Caminho único por chamada: duas tentativas na mesma posição não podem
+  // sobrescrever o objeto uma da outra antes de a linha decidir quem vence.
+  const path = `${requestId}/${position}-${Date.now()}-${crypto.randomUUID()}.${extensionFor(file.type)}`
   const { error: uploadError } = await serviceClient.storage
     .from("service-request-photos")
-    .upload(path, body, { contentType: file.type, upsert: true })
+    .upload(path, body, { contentType: file.type, upsert: false })
   if (uploadError) {
     log.error("pedidos: photo upload failed", { error: uploadError.message })
-    return { error: "Não foi possível enviar a foto." }
+    return definiteFailure("Não foi possível enviar a foto.")
   }
 
-  // A migration dá a `authenticated` apenas SELECT e INSERT em
-  // `service_request_photos` (sem policy/grants de UPDATE). Um upsert com merge
-  // exigiria UPDATE e falharia com "permission denied" já na primeira foto;
-  // `ignoreDuplicates` produz ON CONFLICT DO NOTHING, que só precisa de INSERT e
-  // mantém o reenvio idempotente.
-  const { error: photoError } = await client
-    .from("service_request_photos")
-    .upsert(
-      { request_id: requestId, photo_path: path, position },
-      { onConflict: "request_id,position", ignoreDuplicates: true },
-    )
-  if (photoError) {
-    log.error("pedidos: photo row failed", { error: photoError.message })
-    return { error: "Não foi possível registrar a foto." }
+  // O vínculo é uma RPC transacional: ela reconfere o solicitante, trava o
+  // pedido, grava/atualiza a linha e devolve o caminho anterior.
+  let previousPath: string | null = null
+  let registrationError: { message: string; code?: string } | null = null
+  let transportFailure = false
+  try {
+    const { data, error } = await client.rpc("register_service_request_photo", {
+      p_request_id: requestId,
+      p_path: path,
+      p_position: position,
+    })
+    if (error) registrationError = error
+    else if (typeof data === "string") previousPath = data
+  } catch (error) {
+    transportFailure = true
+    log.error("pedidos: photo registration transport failure", {
+      error: error instanceof Error ? error.message : "unknown",
+    })
+  }
+
+  if (transportFailure) {
+    // Sem resposta, o commit pode acontecer depois de qualquer SELECT. Os bytes
+    // ficam preservados; a próxima chamada na mesma posição substitui a linha e
+    // limpa o objeto anterior somente após o commit.
+    return {
+      error:
+        "Não foi possível confirmar o envio da foto. Recarregue o pedido antes de tentar novamente.",
+      definite: false,
+      indeterminate: true,
+      cleanupFailed: false,
+    }
+  }
+
+  if (registrationError !== null) {
+    if (!isDefiniteSqlRejection(registrationError)) {
+      return {
+        error:
+          "Não foi possível confirmar o envio da foto. Recarregue o pedido antes de tentar novamente.",
+        definite: false,
+        indeterminate: true,
+        cleanupFailed: false,
+      }
+    }
+
+    // Recusa SQL definitiva: não houve commit. O caminho é exclusivo desta
+    // chamada; compensar o objeto novo é seguro.
+    let cleanupFailed = false
+    try {
+      const cleanup = await serviceClient.storage.from("service-request-photos").remove([path])
+      if (cleanup.error) {
+        cleanupFailed = true
+        log.error("pedidos: orphan photo cleanup failed", { error: cleanup.error.message })
+      }
+    } catch (error) {
+      cleanupFailed = true
+      log.error("pedidos: orphan photo cleanup failed", {
+        error: error instanceof Error ? error.message : "unknown",
+      })
+    }
+    log.error("pedidos: photo row failed", { error: registrationError.message })
+    return {
+      error: "Não foi possível registrar a foto.",
+      definite: true,
+      indeterminate: false,
+      cleanupFailed,
+    }
+  }
+
+  // A partir daqui o commit aconteceu: o caminho anterior não é mais lido pelo
+  // pedido e pode ser removido. Falhar nessa limpeza deixa um objeto órfão e não
+  // invalida o anexo novo.
+  if (previousPath !== null && previousPath !== path && previousPath.startsWith(`${requestId}/`)) {
+    try {
+      const cleanup = await serviceClient.storage
+        .from("service-request-photos")
+        .remove([previousPath])
+      if (cleanup.error) {
+        log.error("pedidos: previous photo cleanup failed", { error: cleanup.error.message })
+      }
+    } catch (error) {
+      log.error("pedidos: previous photo cleanup failed", {
+        error: error instanceof Error ? error.message : "unknown",
+      })
+    }
   }
 
   return { ok: true }

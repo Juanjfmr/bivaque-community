@@ -11,6 +11,7 @@ import {
   uploadPropertyPhotoAction,
 } from "../../../lib/listings/actions"
 import { ADDRESS_HINT, ADDRESS_MAX } from "../../../lib/listings/address"
+import { allocatePhotoPositions } from "../../../lib/listings/photo-positions"
 import {
   MAX_LISTING_PHOTOS,
   PROPERTY_TYPE_LABELS,
@@ -43,6 +44,7 @@ async function stripExifToJpeg(file: File): Promise<File> {
 export interface ExistingPhoto {
   id: string
   path: string
+  position: number
   url: string | null
 }
 
@@ -146,10 +148,21 @@ export function PropertyForm({
           return { ok: false as const, message: "Não foi possível identificar o anúncio salvo." }
         }
 
+        const positions = allocatePhotoPositions(
+          existing.map((photo) => photo.position),
+          chosen.length,
+        )
         const batch = await uploadPhotosOneByOne(chosen, async (photo, index) => {
+          // A posição não é `existing.length + index`: depois de remover uma
+          // foto do meio, essa conta repete uma posição ocupada. O banco agora
+          // tem unicidade e faixa; a tela escolhe a primeira posição livre.
+          const position = positions[index]
+          if (position === undefined) {
+            return { error: "Não há posição livre para esta foto." }
+          }
           const photoForm = new FormData()
           photoForm.set("listingId", id)
-          photoForm.set("position", String(existing.length + index))
+          photoForm.set("position", String(position))
           photoForm.set("photo", photo)
           return await uploadPropertyPhotoAction(photoForm)
         })

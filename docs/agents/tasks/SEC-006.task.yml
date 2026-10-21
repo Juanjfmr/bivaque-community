@@ -40,6 +40,14 @@ acceptance:
   - Teste prova que a foto do Mercado gravada nao tem EXIF ou GPS
   - Nenhum outro caminho de upload quebra (testes existentes e E2E de foto)
   - Revisao Flash M3 - moradia (lib/listings/actions.ts), portfolio (prestador/actions.ts) e pedido (pedidos/novo/actions.ts) ainda gravam com o cliente do usuario; passam a gravar com service role depois de reconferir a mesma autorizacao que a policy exigia, antes de remover as policies
+  # Correcoes da confirmacao de 2026-10-19 (tentativa 1/3).
+  - Mercado editar: toda saida de createImageBitmap, compressao, Server Action, troca e limpeza encerra "Enviando..." e mostra feedback; `finally` cobre excecao e sucesso
+  - Pedido: selecao invalida preserva as fotos e o erro, bloqueia o submit e so limpa o erro numa selecao valida
+  - Moradia: posicao da foto e alocada em vaga livre (buracos e teto), nao por `existing.length + index`
+  - Banco: `listing_photos` tem unicidade (listing_id, position) e faixa 0..11; `service_request_photos` tem faixa 0..5; concorrencia e coberta pela unicidade; duplicadas antigas sao renumeradas sem apagar linhas e o excedente antigo segue legivel
+  - Pedido: upload e linha sao vinculados por RPC transacional que devolve o caminho anterior; retry na mesma posicao troca a linha, compensa objeto sem linha e nunca apaga objeto referenciado por outra chamada
+  - Moradia: criacao de listings + property_details e uma unica RPC transacional, com dono derivado de auth.uid(); teste pgTAP prova rollback sem anuncio orfao
+  - Mercado: troca da foto e uma unica RPC transacional que reconfere o dono; o objeto anterior so e removido depois do commit e falha na limpeza nao desfaz a troca
 proof:
   - npx supabase db reset --local --no-seed
   - npx pnpm@11.18.0 test:db
@@ -104,4 +112,31 @@ closure:
 # db reset --local --no-seed recusado de novo pelo guard-rail nao interativo; migration up
 # --local disse up to date e test:db passou nesse estado.
 # test:db -> 137 arquivos, 1929 testes PASS. Unidade da area -> 30 arquivos, 361 testes PASS.
+# Confirmacao de 2026-10-19, tentativa 1/3 (DeepSeek V4.1 Flash), checkout .claude/worktrees/seguranca:
+# RED em C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019/sec006-red-1.log:
+# 4 suites novas sem modulo e 15 casos falhando (foto presa, selecao, posicoes, troca nao transacional).
+# GREEN da area: 37 arquivos, 405 testes PASS; todos os unitarios: 158 arquivos, 1443 testes PASS.
+# typecheck PASS. Gate completo PASS: lint, typecheck, test (158 arquivos/1443 testes unitarios,
+# 9/189 privacy, 120 scope), secrets; build PULADO por falta de apps/web/.env.local.
+# O Biome ainda imprime infos de arquivos alheios (arrivals, communities-screen, scripts/load), sem erro.
+# Migration nova 20261019235819_sec006_photo_invariants_and_atomic_writes.sql:
+# renumera duplicadas de listing_photos sem apagar linhas; unique (listing_id, position) e check
+# NOT VALID 0..11; check NOT VALID 0..5 em service_request_photos; RPCs create_property_listing,
+# replace_listing_photo e register_service_request_photo com grants so para authenticated.
+# pgTAP novo supabase/tests/sec006-photo-invariants.sql (31 casos): NAO EXECUTADO nesta sessao porque
+# a tarefa proibe alterar o banco local; o coordenador roda reset --no-seed e test:db depois.
+# E2E foto-upload nao rodou (sem seed/.env.local). Nenhum commit, push, PR, merge ou db push.
 
+
+# Reparo 2/3, 2026-10-19 (DeepSeek V4.1 Flash), sobre o mesmo diff, sem commit:
+# RED em sec006-t2-red-1.log: 14 falhas de composicao/acao; o helper chamava deleteListingPhotoObjectAction
+# ao receber erro generico e apagava o objeto que a RPC podia ter comitado.
+# GREEN: helper + replaceListingPhotoAction + uploadServiceRequestPhotoAction com resultado estruturado.
+# Recusa SQL definitiva = erro PostgREST com code; a action limpa apenas o objeto novo e informa cleanup.
+# Erro de transporte/erro sem code = inconclusivo: nenhum objeto e apagado, a mensagem manda recarregar e o
+# retry substitui a linha. Removido o SELECT imediato, que nao prova rollback por causa de commit atrasado.
+# Composicao real helper+action+runWithPending em photo-replacement-composition.test.ts cobre pending,
+# resposta perdida, objeto referenciado preservado e retry. Testes de commit atrasado nas duas actions.
+# pgTAP sec006-photo-invariants.sql corrigido para private.renumber_listing_photos(); plan(31) mantido.
+# pgTAP continua NAO executado nesta sessao (proibido tocar banco local).
+# Gate final da tentativa 2: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
