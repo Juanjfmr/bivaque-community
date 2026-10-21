@@ -49,8 +49,13 @@ def run(queue,out,operation='prepare',max_addresses=1000,job_id=''):
         if not job_id or not all(c in '0123456789abcdef' for c in job_id.lower()) or len(job_id)!=32:
             raise ValueError('Expected 32-character provider batch job ID')
         status,response=request_json('GET',url+'&'+urllib.parse.urlencode({'id':job_id}))
-        if status==202:return {'job_id':job_id,'status':'PENDING'}
-        if status!=200:raise ValueError(f'Provider returned HTTP {status}')
+        # Geoapify returns pending as HTTP 200 with JSON {"status":"pending"}.
+        if status==202 or (isinstance(response,dict) and response.get('status') in ('pending','processing')):
+            return {'job_id':job_id,'status':'PENDING'}
+        if status!=200 or not isinstance(response,list):
+            raise ValueError('Batch has not returned an ordered JSON array')
+        if len(response)!=len(items):
+            raise ValueError('Batch size does not match the input; refuse untraceable coordinates')
         (out/'provider_results_unverified.json').write_text(json.dumps(response,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
         return {'job_id':job_id,'status':'RECEIVED_UNVERIFIED','manual_review_required':True}
     raise ValueError('Invalid operation')
