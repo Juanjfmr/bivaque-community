@@ -43,6 +43,16 @@ $$;
 revoke all on function private.renumber_listing_photos() from public, anon, authenticated;
 grant execute on function private.renumber_listing_photos() to service_role;
 
+-- A renumeracao e o `ADD UNIQUE` precisam acontecer sem escrita concorrente.
+-- Sem esta trava, outra sessao pode inserir uma posicao duplicada depois do
+-- snapshot da renumeracao e antes do `ADD CONSTRAINT`; o UNIQUE entao encontra
+-- a duplicata e aborta a implantacao. `SHARE ROW EXCLUSIVE` bloqueia
+-- INSERT/UPDATE/DELETE em `listing_photos` e continua permitindo SELECT (ao
+-- contrario de `ACCESS EXCLUSIVE`, que bloquearia leitura tambem). A tabela
+-- fica travada por pouco tempo: so o intervalo entre a renumeracao e a criacao
+-- da constraint, dentro da transacao desta migration.
+lock table public.listing_photos in share row exclusive mode;
+
 select private.renumber_listing_photos();
 
 -- ── 2. Unicidade e faixa ─────────────────────────────────────────────────────

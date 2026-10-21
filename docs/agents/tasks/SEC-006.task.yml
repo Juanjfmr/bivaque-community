@@ -151,3 +151,12 @@ closure:
 # locality_id: o modelo atual nao exige vinculo de localidade para publicar; apenas documentado.
 # GREEN: 8/8 PASS, incluindo comunidade B aprovada e community_id nulo.
 # migration up --local aplicou a migration; db reset continua bloqueado e fica para o coordenador.
+
+# Revisao final do lote, 2026-10-21 (DeepSeek V4.1 Flash), M2:
+# RED: tests/unit/security/installation-lock.test.ts falhou; a migration 20261019235819 nao
+# travava listing_photos, entao uma escrita concorrente podia invalidar a renumeracao antes do UNIQUE.
+# Correcao: lock table public.listing_photos in share row exclusive mode imediatamente antes da
+# renumeracao e do add constraint, ainda na mesma transacao. SHARE ROW EXCLUSIVE bloqueia escrita
+# e preserva SELECT; o comentario da migration registra que a tabela fica travada por pouco tempo.
+# A migration nao foi aplicada em banco remoto (a branch nunca saiu daqui), por isso foi editada.
+# GREEN: 2/2 PASS. O reset limpo que reaplica a migration fica com o coordenador.
