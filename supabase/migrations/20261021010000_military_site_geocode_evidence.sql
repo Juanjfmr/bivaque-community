@@ -9,9 +9,9 @@ alter table public.military_sites
   add constraint military_sites_verified_with_evidence check(
     geolocation_status <> 'VERIFIED_PUBLIC_ACCESS'
     or (latitude is not null and longitude is not null
-        and public_access_evidence_url like 'https://%'
+        and coalesce(public_access_evidence_url like 'https://%',false)
         and public_access_verified_at is not null
-        and length(btrim(public_access_verified_by)) > 0)
+        and coalesce(length(btrim(public_access_verified_by)) > 0,false))
   );
 create table if not exists public.military_site_geocode_suggestions (
  id uuid primary key default gen_random_uuid(),
