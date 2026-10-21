@@ -82,9 +82,10 @@ Nenhuma.
 
 - Toda cor nova precisa do par escuro.
 - O número de capturas comparadas dobra.
-- **Ativos vetoriais:** os logos do PDF são PNG de 1.024 px. É preciso obter os SVG oficiais e os ícones
-  de app (16, 32, 48 px, PWA e maskable) antes do lançamento público. Até lá, valem os PNG de
-  `docs/brand/reference/`.
+- **Ativos:** os SVG oficiais (cinco assinaturas em versão colorida, grafite, branca e preta; Pátio; símbolos
+  otimizados de 16, 24, 32 e 48 px; favicon; PWA 192/512; maskable; Apple touch; Android) estão em
+  `apps/web/public/brand/`, vindos da branch `feat/bivaque-brand-foundation` de 29/08. Use sempre esses
+  arquivos, nunca PNG extraído do PDF.
 
 ## Reversal cost
 

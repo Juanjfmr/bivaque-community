@@ -1,6 +1,6 @@
 # Identidade oficial Bivaque
 
-> **Atualização de 2026-10-20 ([ADR-20261020-identidade-visual-e-tema-escuro](../decisions/ADR-20261020-identidade-visual-e-tema-escuro.md)):** a pele do Bivaque real é este brandbook, com os ajustes da maquete em `maquete-2026-10-20/`, e o produto tem **tema claro e escuro** desde o porte para o Next. O padrão é "Automática". As menções a "light-only" e à D31 abaixo ficaram superadas. O brandbook em PDF e os logos extraídos estão em `reference/`.
+> **Atualização de 2026-10-20 ([ADR-20261020-identidade-visual-e-tema-escuro](../decisions/ADR-20261020-identidade-visual-e-tema-escuro.md)):** a pele do Bivaque real é este brandbook, com os ajustes da maquete em `maquete-2026-10-20/`, e o produto tem **tema claro e escuro** desde o porte para o Next. O padrão é "Automática". As menções a "light-only" e à D31 abaixo ficaram superadas. O brandbook em PDF está em `reference/`. Os logos e ícones oficiais em SVG ficam em `apps/web/public/brand/`.
 
 Esta pasta é a fonte operacional da identidade aprovada em 29 de agosto de 2026.
 

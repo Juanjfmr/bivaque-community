@@ -15,7 +15,7 @@
  --t1:#2C3B3E;--t1i:#ECEAE4;--t2:#3E2A26;--t2i:#F0A08A;--t3:#263A3D;--t3i:#9FBCC0;--t4:#2E3436;--t4i:#F2F0EB}
 .top{display:flex;align-items:center;gap:10px;height:64px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--bg)}
 .glyph{width:32px;height:32px}.g-body{fill:var(--g-body)}.g-threshold{fill:var(--g-thr)}
-.logo{height:26px;width:auto}.sp{flex:1}
+.logo{height:30px;width:auto}.sp{flex:1}
 .bell{position:relative;border:0;background:none;color:var(--text);padding:8px}
 .badge{position:absolute;top:2px;right:0;min-width:18px;height:18px;border-radius:9px;background:var(--badge);color:var(--on-badge);font:700 11px/18px "Noto Sans",sans-serif;text-align:center;padding:0 4px}
 main{flex:1;overflow:hidden;padding:20px 16px 0}
@@ -51,7 +51,7 @@ h1{font:600 24px/1.25 "Noto Serif",serif;margin:0 0 18px}
 </style></head><body>
 <div class="sheet"><h1>Brandbook oficial, com os ajustes</h1><p>Os valores vêm do <code>BIVAQUE_brandbook.pdf</code> e de <code>docs/brand</code> (identidade oficial de 29/08): Grafite, Papel, Brasa, Noto Serif e Noto Sans, além da paleta escura de referência (Carvão, Elevado, Névoa e Brasa Clara). O selo Patrocinado saiu, porque o lançamento é sem cobrança.</p></div>
 <div class="grid"><section class="frame"><p class="flabel">Claro</p><div class="phone" data-theme="light">
-<header class="top"><img class="logo" src="img/logo-principal.png" alt="Bivaque"><span class="sp"></span><button type="button" class="bell" aria-label="Avisos, 2 novos"><span class="ms">notifications</span><span class="badge">2</span></button></header>
+<header class="top"><img class="logo" src="img/bivaque-logo-horizontal.svg" alt="Bivaque"><span class="sp"></span><button type="button" class="bell" aria-label="Avisos, 2 novos"><span class="ms">notifications</span><span class="badge">2</span></button></header>
 <main>
 <h1>O que você precisa<br>em <span class="city">Manaus<span class="ms">expand_more</span></span></h1>
 <div class="search"><span class="ms">search</span>Busque “pediatra pelo plano”</div>
@@ -68,7 +68,7 @@ h1{font:600 24px/1.25 "Noto Serif",serif;margin:0 0 18px}
 </main>
 <footer class="nav"><span class="on"><span class="pill"><span class="ms">home</span></span>Início</span><span><span class="pill"><span class="ms">group</span></span>Comunidade</span><span class="create"><span class="fab"><span class="ms">add</span></span>Criar</span><span><span class="pill"><span class="ms">chat_bubble</span><span class="badge">3</span></span>Conversas</span><span><span class="pill"><span class="me">RS</span></span>Você</span></footer>
 </div></section><section class="frame"><p class="flabel">Escuro</p><div class="phone" data-theme="dark">
-<header class="top"><img class="logo" src="img/logo-branco.png" alt="Bivaque"><span class="sp"></span><button type="button" class="bell" aria-label="Avisos, 2 novos"><span class="ms">notifications</span><span class="badge">2</span></button></header>
+<header class="top"><img class="logo" src="img/bivaque-logo-horizontal-white.svg" alt="Bivaque"><span class="sp"></span><button type="button" class="bell" aria-label="Avisos, 2 novos"><span class="ms">notifications</span><span class="badge">2</span></button></header>
 <main>
 <h1>O que você precisa<br>em <span class="city">Manaus<span class="ms">expand_more</span></span></h1>
 <div class="search"><span class="ms">search</span>Busque “pediatra pelo plano”</div>
@@ -90,6 +90,6 @@ h1{font:600 24px/1.25 "Noto Serif",serif;margin:0 0 18px}
 <li><b>Os avisos deixaram de ser vermelhos.</b> Os contadores agora são Grafite sobre Papel (no escuro, Papel sobre Carvão). O vermelho fica reservado para erro e para "isto destrói".</li>
 <li><b>Cada categoria tem um tom próprio, só da paleta oficial:</b> Grafite, Brasa, Névoa e Papel escurecido. Saiu o bege que eu tinha inventado.</li><li><b>Cantos e ícones mais próximos do Glifo:</b> cartões, categorias e busca com 12 px e abas com 10 px, como nos botões da página 21. O botão Criar virou um quadrado de cantos suaves, e os ícones passaram de Rounded para Outlined.</li><li><b>Leitura:</b> avatares de 28 px com texto de 11 px; título de 24 px que quebra em "O que você precisa / em Manaus"; busca alinhada à esquerda, como campo de digitar; no escuro, as fotos ficam 10% mais escuras para não disputar com o conteúdo.</li>
 <li><b>Escuro, como na página 13 do brandbook:</b> fundo Carvão <span class="sw" style="background:#171E20"></span> e cartões em Elevado <span class="sw" style="background:#20292B"></span>. Ação e destaque usam a Brasa Clara <span class="sw" style="background:#E07A5A"></span> com texto Carvão (5,71:1). O logo aparece na versão branca inteira, sem a Brasa, que só existe na versão colorida.</li>
-<li><b>Ressalva do brandbook:</b> "o piloto é light-only". As cores escuras documentam a robustez da marca, mas não autorizam modo escuro no app sem decisão sua.</li>
-<li><b>Logos oficiais extraídos do PDF</b> (assinatura horizontal compacta, colorida e branca). No PDF eles estão em PNG de 1.024 px; para o app real precisamos dos arquivos vetoriais (SVG).</li>
+<li><b>Tema escuro aprovado pelo dono em 20/10</b> (ADR-20261020): o produto tem claro e escuro desde o porte, com o padrão em Automática. Isso substitui o "light-only" do brandbook.</li>
+<li><b>Logos oficiais em SVG</b> (<code>apps/web/public/brand/</code>): assinatura horizontal colorida e branca.</li>
 </ul></div></body></html>
