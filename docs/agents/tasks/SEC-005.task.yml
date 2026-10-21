@@ -93,3 +93,17 @@ closure:
 # NAO EXECUTADO: a tarefa proibe alterar o banco local; coordenador roda reset --no-seed e test:db.
 # Rota HTTP, autenticacao, chunks de 100, fail-closed e adaptadores nao foram alterados.
 # Gate final da rodada SEC-AUD-002: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
+
+# M3 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash):
+# RED: tests/unit/infra/outbox-slow-delivery.test.ts falhou; a primeira mensagem ja entregue
+# continuava pending enquanto a segunda estava presa no adaptador, e um segundo POST a reenviava.
+# RED pgTAP: supabase/tests/outbox-reservation-lease.sql falhou; outbox nao tinha reserved_until
+# e a reserva de 60s permitia outro despachante durante um bloco lento.
+# Correcao escolhida: opcao (a). A rota grava cada mutacao imediatamente depois da entrega, e a
+# reserva SQL ganhou reserved_until de 5 minutos em private.outbox_prepare_due().
+# updated_at continua a ultima escrita e alimenta o backoff; reserved_until so bloqueia outro worker.
+# A rota limpa reserved_until ao gravar sent, failed, pending ou skipped.
+# Migration 20261021174939_sec_aud003_outbox_reservation_lease.sql; types regenerados com reserved_until.
+# outbox-table.sql passou a exigir a coluna. GREEN: unitarios 28/28, pgTAP 6/6, worker 9/9, lote 6/6.
+# Nenhuma coluna de token por item foi adicionada; idempotencia de provedor continua fora do escopo.
+

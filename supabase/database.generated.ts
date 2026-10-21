@@ -1428,6 +1428,7 @@ export type Database = {
           last_error: string | null
           payload: Json
           recipient: string
+          reserved_until: string | null
           status: Database["public"]["Enums"]["outbox_status"]
           type: string
           updated_at: string
@@ -1440,6 +1441,7 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           recipient: string
+          reserved_until?: string | null
           status?: Database["public"]["Enums"]["outbox_status"]
           type: string
           updated_at?: string
@@ -1452,6 +1454,7 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           recipient?: string
+          reserved_until?: string | null
           status?: Database["public"]["Enums"]["outbox_status"]
           type?: string
           updated_at?: string
@@ -2942,7 +2945,7 @@ export type Database = {
       }
       register_service_request_photo: {
         Args: { p_path: string; p_position: number; p_request_id: string }
-        Returns: string | null
+        Returns: string
       }
       reject_guide_correction: {
         Args: {

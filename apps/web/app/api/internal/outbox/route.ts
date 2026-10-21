@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto"
 import {
-  deliverOutboxBatch,
+  deliverOutboxMessage,
   type OutboxChannel,
   type OutboxMessage,
   type OutboxMutation,
@@ -270,94 +270,85 @@ async function processBatch(
     }),
   )
 
-  // No delivery was attempted. Keep these rows pending without consuming the
-  // provider retry budget. The SQL dispatcher waits 60s * 2^attempts after
-  // updated_at before selecting them again (it leases rows before this POST).
-  const mutations = messages.flatMap<OutboxMutation>((message) => {
+  // Persistir a mutacao logo depois de cada entrega, e nao so no fim do bloco:
+  // se uma entrega demora, as anteriores ja estao `sent` no banco e outro
+  // disparo nao as seleciona de novo. A reserva de 5 minutos em
+  // `private.outbox_prepare_due()` cobre a mensagem que esta em voo.
+  const deliveryDeps = {
+    adapters: createChannelAdapters(),
+    now,
+    baseRetryMs: 0,
+    preferenceAllows: (message: OutboxMessage) => {
+      const userId = userIdFromPayload(message.payload)
+      if (!userId) return true
+
+      return outboxDeliveryAllowed({
+        type: message.type,
+        outboxChannel: message.channel,
+        preference: preferencesByUser.get(userId),
+        matrix: channelPreferencesByUser.get(userId) ?? [],
+      })
+    },
+    optOutAllows: (channel: OutboxChannel, recipient: string) =>
+      !optedOut.has(`${channel}:${recipient}`),
+  }
+
+  const counts: BatchCounts = { processed: 0, sent: 0, skipped: 0, failed: 0, pending: 0 }
+
+  for (const message of messages) {
     const lastError = lookupErrors.get(message.id)
-    if (!lastError) return []
-    return [
-      {
-        id: message.id,
-        status: "pending",
-        attempts: message.attempts,
-        lastError,
-        updatedAt: now,
-      },
-    ]
-  })
-  mutations.push(
-    ...(await deliverOutboxBatch(
-      messages.filter((message) => !lookupErrors.has(message.id)),
-      {
-        adapters: createChannelAdapters(),
-        now,
-        baseRetryMs: 0,
-        preferenceAllows: (message) => {
-          const userId = userIdFromPayload(message.payload)
-          if (!userId) return true
+    const mutation: OutboxMutation = lastError
+      ? {
+          // Nenhuma entrega foi tentada. A linha fica pending sem consumir a
+          // tentativa do provedor; o despachante SQL volta a seleciona-la
+          // depois do prazo de tentativa.
+          id: message.id,
+          status: "pending",
+          attempts: message.attempts,
+          lastError,
+          updatedAt: now,
+        }
+      : await deliverOutboxMessage(message, deliveryDeps)
 
-          return outboxDeliveryAllowed({
-            type: message.type,
-            outboxChannel: message.channel,
-            preference: preferencesByUser.get(userId),
-            matrix: channelPreferencesByUser.get(userId) ?? [],
-          })
-        },
-        optOutAllows: (channel: OutboxChannel, recipient: string) =>
-          !optedOut.has(`${channel}:${recipient}`),
-      },
-    )),
-  )
-
-  let sent = 0
-  let skipped = 0
-  let failed = 0
-  let pending = 0
-
-  for (const mutation of mutations) {
     const patch: OutboxUpdate = {
       status: mutation.status,
       attempts: mutation.attempts,
       last_error: mutation.lastError ?? null,
       updated_at: new Date(mutation.updatedAt).toISOString(),
+      // A reserva do despachante SQL termina aqui: a mutacao ja foi gravada.
+      reserved_until: null,
     }
 
     // O patch de fallback saiu com o canal WhatsApp: o banco nao tem mais
     // fallback_channel/fallback_reason e o dominio nao produz mais o campo.
     const { error: updateError } = await supabase.from("outbox").update(patch).eq("id", mutation.id)
 
+    counts.processed++
     if (updateError) {
       log.error("outbox worker update failed", {
         id: mutation.id,
         status: mutation.status,
         error: updateError.message,
       })
-      failed++
+      counts.failed++
       continue
     }
 
     switch (mutation.status) {
       case "sent":
-        sent++
+        counts.sent++
         break
       case "skipped":
-        skipped++
+        counts.skipped++
         break
       case "failed":
-        failed++
+        counts.failed++
         break
       case "pending":
-        pending++
+        counts.pending++
         break
     }
   }
 
-  return {
-    processed: mutations.length,
-    sent,
-    skipped,
-    failed,
-    pending,
-  }
+  return counts
 }
