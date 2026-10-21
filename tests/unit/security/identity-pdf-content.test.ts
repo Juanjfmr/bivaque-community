@@ -1,3 +1,4 @@
+import { crc32 } from "node:zlib"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
@@ -80,6 +81,40 @@ trailer
 %%EOF
 `
 
+// O caso da revisao final: `%PDF-1.7` dentro de um comentario de JPEG com GPS.
+// A assinatura de imagem continua no offset 0; o texto PDF aparece depois dela,
+// dentro da janela de 1 KiB que a versao anterior varria.
+async function jpegWithPdfComment(): Promise<Uint8Array> {
+  const image = await locationImage("jpeg")
+  const original = Buffer.from(await image.arrayBuffer())
+  const payload = Buffer.from("%PDF-1.7", "latin1")
+  const length = Buffer.alloc(2)
+  length.writeUInt16BE(payload.length + 2)
+  const comment = Buffer.concat([Buffer.from([0xff, 0xfe]), length, payload])
+  return new Uint8Array(Buffer.concat([original.subarray(0, 2), comment, original.subarray(2)]))
+}
+
+// PNG equivalente: um chunk tEXt valido com `%PDF-1.7`, depois da assinatura e
+// do IHDR. O GPS do fixture continua nos demais chunks.
+async function pngWithPdfText(): Promise<Uint8Array> {
+  const image = await locationImage("png")
+  const original = Buffer.from(await image.arrayBuffer())
+  const data = Buffer.concat([
+    Buffer.from("Comment\0", "latin1"),
+    Buffer.from("%PDF-1.7", "latin1"),
+  ])
+  const length = Buffer.alloc(4)
+  length.writeUInt32BE(data.length)
+  const payload = Buffer.concat([Buffer.from("tEXt", "latin1"), data])
+  const checksum = Buffer.alloc(4)
+  checksum.writeUInt32BE(crc32(payload))
+  const chunk = Buffer.concat([length, payload, checksum])
+  const insertAt = 8 + 4 + 4 + 13 + 4 // assinatura + comprimento + tipo + IHDR + CRC
+  return new Uint8Array(
+    Buffer.concat([original.subarray(0, insertAt), chunk, original.subarray(insertAt)]),
+  )
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:55321")
@@ -99,6 +134,24 @@ describe("SEC-AUD-001 conteúdo real do documento de identidade", () => {
     async (format) => {
       const image = await locationImage(format)
       const disguised = new File([await image.arrayBuffer()], "identidade.pdf", {
+        type: "application/pdf",
+      })
+
+      const result = await uploadVerificationDocumentAction(form(disguised))
+
+      expect(result).toMatchObject({ ok: false })
+      expect(sanitizeImage).not.toHaveBeenCalled()
+      expect(mocks.upload).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each([
+    ["jpeg", jpegWithPdfComment],
+    ["png", pngWithPdfText],
+  ] as const)(
+    "recusa %s com GPS e %PDF- embutido, enviado como application/pdf",
+    async (_format, build) => {
+      const disguised = new File([await build()], "identidade.pdf", {
         type: "application/pdf",
       })
 

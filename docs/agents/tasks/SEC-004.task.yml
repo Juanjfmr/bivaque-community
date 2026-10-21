@@ -155,3 +155,13 @@ closure:
 # A excecao de PDF continua; nenhuma assinatura/emissor foi validada e nenhum parser novo foi adicionado.
 # Gate/typecheck/lint da area executados nesta rodada; E2E e revisao independente pendentes.
 # Gate final da rodada SEC-AUD-001: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
+
+# SEC-AUD-001 parte 2, revisao final de 2026-10-21 (DeepSeek V4.1 Flash):
+# RED: tests/unit/security/identity-pdf-content.test.ts, 2 de 6 falharam. JPEG e PNG com GPS e
+# %PDF-1.7 embutido depois da assinatura, enviados como application/pdf, respondiam ok e eram
+# guardados byte a byte, porque hasPdfHeader varria os primeiros 1 KiB.
+# Correcao: PDF so e aceito quando os bytes comecam com %PDF- no offset 0, e assinatura de
+# imagem nos primeiros bytes (JPEG, PNG, WebP, GIF) e recusada antes do Storage.
+# Nenhum parser de assinatura ou emissor foi adicionado; PDF real continua byte a byte.
+# GREEN: 6/6 PASS, incluindo PDF real preservado e JPEG/PNG com GPS sem %PDF-.
+
