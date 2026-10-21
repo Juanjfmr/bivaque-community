@@ -45,3 +45,13 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Evidência de execução (Rodada 70, 21/10/2026)
+# Base f633c946, build 0ac8bd1c437804de: round70 nos 4 contextos = 6/24 (18 checkpoints falham).
+# Candidato build a460dedb2e5b4d10: round70 = 24/24; round69 em 375-light = 4/4.
+# Provas antigas sem comparação de pixel em 375-light: R13 16/16; R14 11/11; R29 8/8; R35 9/9; R07 8/8.
+# R07 em 375-dark: 8/8 (contraste e alvo de toque em todas as rotas).
+# Gate verde: lint, typecheck, test e secrets. O build web pulou por falta de apps/web/.env.local,
+# então não há evidência de que o Next compila nesta worktree.
+# A R35 passou a afirmar o pill de 10 px no lugar da luz da aba ativa (ADR-20261020).
+# Relatório: prototypes/bivaque-html/docs/ROUND_70.md
