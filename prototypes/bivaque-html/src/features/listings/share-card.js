@@ -18,21 +18,24 @@ function shareWrap(ctx,text,max,lines){
  if(cur){let last=cur;if(cut||ctx.measureText(last).width>max){while(last&&ctx.measureText(`${last}…`).width>max)last=last.slice(0,-1);last=`${last.trimEnd()}…`;}out.push(last);}
  return out.slice(0,lines);
 }
+// A imagem não acompanha o tema: usa sempre as cores claras da marca (Papel, Grafite e Brasa).
+const SHARE_INK='#253033',SHARE_PAPER='#F2F0EB',SHARE_MUTED='#55625F',SHARE_BRASA='#B84A3A';
+const SHARE_SYMBOL_BODY='M23 5H54C73 5 84 15 84 31C84 42 78 49 67 53C81 57 89 67 89 80C89 91 79 95 63 95H23L14 86V59H36V44H14V14L23 5ZM36 20V40H54C63 40 68 36 68 30C68 24 63 20 54 20H36ZM36 61V80H63C71 80 76 77 76 71C76 65 71 61 63 61H36Z';
+const SHARE_SYMBOL_THRESHOLD='M36 44H48V59H36V44Z';
 async function shareCardBlob(d){
- const css=getComputedStyle(document.documentElement),tok=n=>css.getPropertyValue(`--md-sys-color-${n}`).trim()||'#003748';
  const c=document.createElement('canvas');c.width=SHARE_W;c.height=SHARE_H;const g=c.getContext('2d'),font=(w,s)=>`${w} ${s}px "Noto Sans", system-ui, sans-serif`;
  await Promise.all([document.fonts.load(font(700,64)),document.fonts.load(font(500,40)),document.fonts.load('200px "Material Symbols Outlined"')]).catch(()=>{});
- g.fillStyle='#f9f9fb';g.fillRect(0,0,SHARE_W,SHARE_H);
+ g.fillStyle=SHARE_PAPER;g.fillRect(0,0,SHARE_W,SHARE_H);
  const ph=720;
  if(d.photo){try{const img=new Image();img.src=d.photo;await img.decode();const s=Math.max(SHARE_W/img.width,ph/img.height),w=img.width*s,h=img.height*s;g.save();g.beginPath();g.rect(0,0,SHARE_W,ph);g.clip();g.drawImage(img,(SHARE_W-w)/2,(ph-h)/2,w,h);g.restore();}catch{d={...d,photo:''};}}
  // Sem foto: o ícone do anúncio no lugar da imagem.
- if(!d.photo){g.fillStyle='#e7e8ea';g.fillRect(0,0,SHARE_W,ph);g.fillStyle='#71787d';g.font='220px "Material Symbols Outlined"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
- g.font=font(700,34);const tw=g.measureText(d.tag).width;g.fillStyle='rgba(20,41,51,.86)';g.beginPath();g.roundRect(48,48,tw+48,64,16);g.fill();g.fillStyle='#fff';g.fillText(d.tag,72,92);
- let y=ph+96;g.fillStyle='#191c1d';g.font=font(800,72);g.fillText(d.big,64,y);
+ if(!d.photo){g.fillStyle='#E8E5DE';g.fillRect(0,0,SHARE_W,ph);g.fillStyle='#78807D';g.font='220px "Material Symbols Outlined"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
+ g.font=font(700,34);const tw=g.measureText(d.tag).width;g.fillStyle='rgba(37,48,51,.86)';g.beginPath();g.roundRect(48,48,tw+48,64,16);g.fill();g.fillStyle=SHARE_PAPER;g.fillText(d.tag,72,92);
+ let y=ph+96;g.fillStyle=SHARE_INK;g.font=font(800,72);g.fillText(d.big,64,y);
  y+=74;g.font=font(700,50);for(const line of shareWrap(g,d.title,SHARE_W-128,2)){g.fillText(line,64,y);y+=62;}
- g.font=font(500,38);g.fillStyle='#41484c';for(const line of d.lines){for(const l of shareWrap(g,line,SHARE_W-128,1)){g.fillText(l,64,y);y+=52;}}
- g.fillStyle=tok('primary');g.fillText(d.place,64,Math.min(y+6,SHARE_H-170));
- g.fillStyle=tok('primary');g.fillRect(0,SHARE_H-130,SHARE_W,130);g.fillStyle='#2f8a50';g.beginPath();g.roundRect(64,SHARE_H-105,80,80,20);g.fill();g.fillStyle='#fff';g.font=font(800,52);g.textAlign='center';g.fillText('B',104,SHARE_H-46);g.textAlign='left';g.font=font(700,44);g.fillText('Bivaque',168,SHARE_H-70);g.font=font(500,30);g.fillStyle='rgba(255,255,255,.85)';g.fillText('Comunidade de militares e famílias',168,SHARE_H-30);
+ g.font=font(500,38);g.fillStyle=SHARE_MUTED;for(const line of d.lines){for(const l of shareWrap(g,line,SHARE_W-128,1)){g.fillText(l,64,y);y+=52;}}
+ g.fillStyle=SHARE_BRASA;g.fillText(d.place,64,Math.min(y+6,SHARE_H-170));
+ g.fillStyle=SHARE_INK;g.fillRect(0,SHARE_H-130,SHARE_W,130);g.save();g.translate(64,SHARE_H-105);g.scale(.8,.8);g.fillStyle=SHARE_PAPER;g.fill(new Path2D(SHARE_SYMBOL_BODY),'evenodd');g.fillStyle=SHARE_BRASA;g.fill(new Path2D(SHARE_SYMBOL_THRESHOLD));g.restore();g.fillStyle=SHARE_PAPER;g.font=font(700,44);g.fillText('Bivaque',168,SHARE_H-70);g.font=font(500,30);g.fillStyle='rgba(242,240,235,.85)';g.fillText('Comunidade de militares e famílias',168,SHARE_H-30);
  return new Promise(r=>c.toBlob(r,'image/png'));
 }
 async function openShareCard(type,id){
