@@ -5,7 +5,11 @@ describe("military organization directory", () => {
   it("lists public organizations only in the requested municipality", () => {
     const results = listOrganizationsByCity("Manaus", "AM")
     expect(results.length).toBeGreaterThan(0)
-    expect(results.every((entry) => entry.uf === "AM" && entry.city.toLocaleLowerCase("pt-BR") === "manaus")).toBe(true)
+    expect(
+      results.every(
+        (entry) => entry.uf === "AM" && entry.city.toLocaleLowerCase("pt-BR") === "manaus",
+      ),
+    ).toBe(true)
   })
   it("does not accept an OM from another municipality", () => {
     const mana = listOrganizationsByCity("Manaus", "AM")[0]
