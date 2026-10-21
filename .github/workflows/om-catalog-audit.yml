@@ -39,7 +39,8 @@ jobs:
           python scripts/om-catalog/audit_sites.py \
             --organizations /tmp/om-catalog/military_organizations.csv \
             --sites /tmp/om-catalog/military_sites.csv \
-            --out /tmp/om-catalog/audit
+            --out /tmp/om-catalog/audit \
+            --localities data/om/ibge_localities.csv
       - name: Check baseline totals and prohibit false verification
         run: |
           python - <<'PY'
