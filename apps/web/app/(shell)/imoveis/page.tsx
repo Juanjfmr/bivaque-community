@@ -12,8 +12,8 @@ import {
 } from "../../../lib/listings/filters"
 import { getSavedListingIds, searchProperties, signPhotoPaths } from "../../../lib/listings/queries"
 import { createListingClient } from "../../../lib/listings/ssr-client"
-import { findOrganizationInCity, listOrganizationsByCity } from "../../../lib/om/catalog"
 import { PROPERTY_TYPE_LABELS, type PropertyType } from "../../../lib/listings/types"
+import { findOrganizationInCity, listOrganizationsByCity } from "../../../lib/om/catalog"
 import { Card } from "../../components/bivaque/card"
 import { ListingAlertForm } from "./alert-form"
 import { SaveListingButton } from "./save-listing-button"
@@ -83,9 +83,14 @@ export default async function ImoveisPage({
     ? listOrganizationsByCity(localityRow.localities.city_name, localityRow.localities.state_code)
     : []
   const omParam = params.om
-  const selectedOm = typeof omParam === "string" && localityRow?.localities
-    ? findOrganizationInCity(omParam, localityRow.localities.city_name, localityRow.localities.state_code)
-    : null
+  const selectedOm =
+    typeof omParam === "string" && localityRow?.localities
+      ? findOrganizationInCity(
+          omParam,
+          localityRow.localities.city_name,
+          localityRow.localities.state_code,
+        )
+      : null
 
   const { rows, count } = await searchProperties(client, filters, {
     localityId,
@@ -147,17 +152,15 @@ export default async function ImoveisPage({
           </span>
         ) : null}
 
-        <label className="sr-only" htmlFor="filtro-om">Organização Militar de referência</label>
-        <select
-          id="filtro-om"
-          name="om"
-          defaultValue={selectedOm?.id ?? ""}
-          className={fieldClass}
-        >
+        <label className="sr-only" htmlFor="filtro-om">
+          Organização Militar de referência
+        </label>
+        <select id="filtro-om" name="om" defaultValue={selectedOm?.id ?? ""} className={fieldClass}>
           <option value="">Sem OM selecionada</option>
           {organizations.map((entry) => (
             <option key={entry.id} value={entry.id}>
-              {entry.acronym ? `${entry.acronym} — ` : ""}{entry.name} ({entry.force})
+              {entry.acronym ? `${entry.acronym} — ` : ""}
+              {entry.name} ({entry.force})
             </option>
           ))}
         </select>
@@ -243,11 +246,14 @@ export default async function ImoveisPage({
       </form>
 
       {selectedOm ? (
-        <p role="status" className="mt-3 rounded-lg border border-border bg-[var(--semantic-surface)] p-3 text-sm text-muted">
+        <p
+          role="status"
+          className="mt-3 rounded-lg border border-border bg-[var(--semantic-surface)] p-3 text-sm text-muted"
+        >
           <strong className="text-foreground">{selectedOm.name}</strong> · {selectedOm.force} —
-          Referência institucional. Os resultados continuam abrangendo a cidade;
-          distâncias e ordenação por proximidade dependem de localização pública validada.
-          A seleção não identifica sua lotação militar.
+          Referência institucional. Os resultados continuam abrangendo a cidade; distâncias e
+          ordenação por proximidade dependem de localização pública validada. A seleção não
+          identifica sua lotação militar.
         </p>
       ) : organizations.length === 0 ? (
         <p className="mt-3 text-sm text-muted">
