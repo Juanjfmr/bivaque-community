@@ -9,7 +9,7 @@
 .plan-step.is-done:not(:last-child)::after{background:var(--md-sys-color-primary)}
 .plan-node{position:relative;z-index:1;flex:none;margin-top:6px;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--md-sys-color-surface-container-lowest);border:2px solid var(--md-sys-color-outline-variant)}
 .is-done .plan-node{border-color:var(--md-sys-color-primary)}
-.is-current .plan-node{border-color:var(--md-sys-color-primary);box-shadow:0 0 0 5px rgba(22,78,99,.16);box-shadow:0 0 0 5px color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent)}
+.is-current .plan-node{border-color:var(--md-sys-color-primary);box-shadow:0 0 0 5px color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent)}
 .plan-node md-checkbox{--md-checkbox-container-shape:50%}
 .plan-step button{flex:1;display:grid;gap:2px;min-width:0;min-height:52px;padding:8px 10px;border-radius:14px;text-align:left}
 @media(hover:hover){.plan-step button:hover{background:var(--md-sys-color-surface-container-low)}}

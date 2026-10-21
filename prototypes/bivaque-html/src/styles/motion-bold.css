@@ -1,2 +1,2 @@
-.motion-flight{position:fixed;z-index:60;margin:0;object-fit:cover;pointer-events:none;box-shadow:0 22px 56px rgba(0,0,0,.30)}
+.motion-flight{position:fixed;z-index:60;margin:0;object-fit:cover;pointer-events:none;box-shadow:0 22px 56px var(--bv-shadow-strong)}
 @media (prefers-reduced-motion:no-preference){.photo-card>.card-link:active,.list-row:active{scale:.97}.list-row{transition:scale .18s cubic-bezier(.2,0,0,1)}}

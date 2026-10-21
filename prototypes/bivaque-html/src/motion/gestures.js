@@ -2,7 +2,7 @@ let openSwipe=null;
 function makeSwipe(content,actions){
  if(content.classList.contains('swipe-content'))return;
  const sw=document.createElement('div');sw.className='swipe-row';content.replaceWith(sw);sw.appendChild(content);content.classList.add('swipe-content');
- const box=document.createElement('div');box.className='swipe-actions';box.innerHTML=actions.map(([ic,label,action,value,color])=>`<button type="button" data-action="${action}" data-value="${esc(value)}" aria-label="${esc(label)}" style="background:${color}">${icon(ic)}<span>${esc(label)}</span></button>`).join('');sw.prepend(box);
+ const box=document.createElement('div');box.className='swipe-actions';box.innerHTML=actions.map(([ic,label,action,value,color,text])=>`<button type="button" data-action="${action}" data-value="${esc(value)}" aria-label="${esc(label)}" style="background:${color};color:${text||'var(--bv-on-photo)'}">${icon(ic)}<span>${esc(label)}</span></button>`).join('');sw.prepend(box);
  const width=actions.length*62+16;let drag=null,opened=false;
  const set=(x,animated)=>{content.style.transition=animated?'transform .3s cubic-bezier(.2,0,0,1)':'none';content.style.transform=`translateX(${x}px)`;};
  const close=()=>{opened=false;set(0,true);if(openSwipe===close)openSwipe=null;};
@@ -37,8 +37,8 @@ function itemContextChoices(i){const id=i.id,choices=[['bookmark',i.saved?'Remov
 // Rodada 45: também é chamada depois de cada bloco acrescentado (hint=false); os laços são idempotentes.
 function bindOriginalGestures(hint=true){
  for(const card of $$('.photo-card > .card-link[data-action="open-item"]',root)){longPress(card,anchor=>{const id=anchor.dataset.value,i=itemById(id);if(!i)return;openCreate(anchor,itemContextChoices(i),true);});}
- if(route.name==='comunidade'&&communityTab==='ind')for(const row of $$('[data-action="open-question"]',root)){const q=askById(row.dataset.value);if(q)makeSwipe(row,[[q.following?'notifications_off':'notifications_active',q.following?'Parar':'Seguir','follow-question',q.id,'#31647a'],['visibility_off','Ocultar','hide-question',q.id,'#6c7378']]);}
- if(route.name==='conversas')for(const row of $$('.list > .list-row',root)){const t=threadById($('[data-action="open-thread"]',row)?.dataset.value);if(t)makeSwipe(row,[[t.unread?'drafts':'chat_bubble',t.unread?'Lida':'Não lida','thread-unread',t.id,'#2f5f73'],['push_pin',t.pinned?'Soltar':'Fixar','pin-thread',t.id,'#654112'],['delete','Apagar','swipe-delete-thread',t.id,'#ba1a1a']]);}
+ if(route.name==='comunidade'&&communityTab==='ind')for(const row of $$('[data-action="open-question"]',root)){const q=askById(row.dataset.value);if(q)makeSwipe(row,[[q.following?'notifications_off':'notifications_active',q.following?'Parar':'Seguir','follow-question',q.id,'var(--md-sys-color-primary)','var(--md-sys-color-on-primary)'],['visibility_off','Ocultar','hide-question',q.id,'var(--md-sys-color-on-surface-variant)','var(--md-sys-color-surface)']]);}
+ if(route.name==='conversas')for(const row of $$('.list > .list-row',root)){const t=threadById($('[data-action="open-thread"]',row)?.dataset.value);if(t)makeSwipe(row,[[t.unread?'drafts':'chat_bubble',t.unread?'Lida':'Não lida','thread-unread',t.id,'var(--md-sys-color-primary)','var(--md-sys-color-on-primary)'],['push_pin',t.pinned?'Soltar':'Fixar','pin-thread',t.id,'var(--md-sys-color-secondary)','var(--md-sys-color-on-secondary)'],['delete','Apagar','swipe-delete-thread',t.id,'var(--md-sys-color-error)','var(--md-sys-color-on-error)']]);}
  if(hint&&route.name==='conversas')swipeHint($('.list > .swipe-row',root));
 }
 (function restoreEdgeBack(){
