@@ -12,6 +12,7 @@ import {
 } from "../../../lib/listings/filters"
 import { getSavedListingIds, searchProperties, signPhotoPaths } from "../../../lib/listings/queries"
 import { createListingClient } from "../../../lib/listings/ssr-client"
+import { findOrganizationInCity, listOrganizationsByCity } from "../../../lib/om/catalog"
 import { PROPERTY_TYPE_LABELS, type PropertyType } from "../../../lib/listings/types"
 import { Card } from "../../components/bivaque/card"
 import { ListingAlertForm } from "./alert-form"
@@ -76,6 +77,16 @@ export default async function ImoveisPage({
     ? `${localityRow.localities.city_name}, ${localityRow.localities.state_code}`
     : "sua cidade"
 
+  // A OM é apenas um ponto de referência institucional. Não modifica o universo
+  // de imóveis enquanto não houver pontos de acesso públicos geoverificados.
+  const organizations = localityRow?.localities
+    ? listOrganizationsByCity(localityRow.localities.city_name, localityRow.localities.state_code)
+    : []
+  const omParam = params.om
+  const selectedOm = typeof omParam === "string" && localityRow?.localities
+    ? findOrganizationInCity(omParam, localityRow.localities.city_name, localityRow.localities.state_code)
+    : null
+
   const { rows, count } = await searchProperties(client, filters, {
     localityId,
     withCommunities: true,
@@ -135,6 +146,21 @@ export default async function ImoveisPage({
             </Link>
           </span>
         ) : null}
+
+        <label className="sr-only" htmlFor="filtro-om">Organização Militar de referência</label>
+        <select
+          id="filtro-om"
+          name="om"
+          defaultValue={selectedOm?.id ?? ""}
+          className={fieldClass}
+        >
+          <option value="">Sem OM selecionada</option>
+          {organizations.map((entry) => (
+            <option key={entry.id} value={entry.id}>
+              {entry.acronym ? `${entry.acronym} — ` : ""}{entry.name} ({entry.force})
+            </option>
+          ))}
+        </select>
 
         <label className="sr-only" htmlFor="filtro-negocio">
           Tipo de negócio
@@ -215,6 +241,19 @@ export default async function ImoveisPage({
           Filtrar
         </button>
       </form>
+
+      {selectedOm ? (
+        <p role="status" className="mt-3 rounded-lg border border-border bg-[var(--semantic-surface)] p-3 text-sm text-muted">
+          <strong className="text-foreground">{selectedOm.name}</strong> · {selectedOm.force} —
+          Referência institucional. Os resultados continuam abrangendo a cidade;
+          distâncias e ordenação por proximidade dependem de localização pública validada.
+          A seleção não identifica sua lotação militar.
+        </p>
+      ) : organizations.length === 0 ? (
+        <p className="mt-3 text-sm text-muted">
+          Nenhuma OM cadastrada para esta cidade. A busca de imóveis continua disponível.
+        </p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium">{count} resultados</p>
