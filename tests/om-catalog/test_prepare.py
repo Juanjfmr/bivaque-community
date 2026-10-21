@@ -34,6 +34,14 @@ class TestOmCatalog(unittest.TestCase):
              'latitude':'-3.1','fonte_url':'https://fab.mil.br'}
         with self.assertRaises(ValueError): mod.prepare([row])
 
+    def test_ibge_verified_does_not_imply_geolocation(self):
+        row={'id':'one','forca':'FAB','nome_publicado':'Base Aerea', 'municipio':'Manaus','uf':'AM',
+             'fonte_url':'https://fab.mil.br','pais_classificacao':'BR'}
+        orgs,_,_=mod.prepare([row],{('Manaus','AM'):'1302603'})
+        self.assertEqual(orgs[0]['ibge_code'],'1302603')
+        self.assertIsNone(orgs[0]['site_id'])
+        self.assertEqual(orgs[0]['catalog_status'],'unverified')
+
     def test_real_file_has_expected_counts_without_fake_geodata(self):
         source=Path(__file__).resolve().parents[2]/'data/om-catalog/source-2026-10-20.csv'
         if not source.exists():self.skipTest('source file unavailable')
