@@ -39,7 +39,7 @@ def run(queue,out,operation='prepare',max_addresses=1000,job_id=''):
     if operation=='prepare':return {'addresses':len(items),'submitted':False}
     api_key=os.environ.get('GEOAPIFY_API_KEY','')
     if not api_key:raise ValueError('GEOAPIFY_API_KEY is required (not committed to the repository)')
-    url=API+'?'+urllib.parse.urlencode({'apiKey':api_key})
+    url=API+'?'+urllib.parse.urlencode({'apiKey':api_key,'filter':'countrycode:br','lang':'pt'})
     if operation=='submit':
         status,response=request_json('POST',url,payload)
         if status not in (200,201,202) or not response.get('id'):raise ValueError('Provider did not return a batch job ID')
