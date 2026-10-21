@@ -21,4 +21,22 @@ class BatchTests(unittest.TestCase):
             src=Path(td)/'input.csv'
             src.write_text('site_id,address,city,state,address_quality\na,Av A 20,Manaus,AM,READY_FOR_EXTERNAL_GEOCODING\n',encoding='utf-8')
             with self.assertRaises(ValueError):run(src,Path(td)/'out',max_addresses=0)
+    def test_provider_pending_payload_not_treated_as_final_result(self):
+        with tempfile.TemporaryDirectory() as td:
+            from unittest.mock import patch
+            src=Path(td)/'input.csv'
+            src.write_text('site_id,address,city,state,address_quality\na,Av A 20,Manaus,AM,READY_FOR_EXTERNAL_GEOCODING\n',encoding='utf-8')
+            with patch.dict('os.environ',{'GEOAPIFY_API_KEY':'test-do-not-log'}):
+                with patch('geoapify_batch.request_json',return_value=(200,{'id':'a'*32,'status':'pending'})):
+                    result=run(src,Path(td)/'out','collect',1,'a'*32)
+            self.assertEqual(result['status'],'PENDING')
+            self.assertFalse((Path(td)/'out/provider_results_unverified.json').exists())
+    def test_provider_complete_results_requires_matching_manifest(self):
+        with tempfile.TemporaryDirectory() as td:
+            from unittest.mock import patch
+            src=Path(td)/'input.csv'
+            src.write_text('site_id,address,city,state,address_quality\na,Av A 20,Manaus,AM,READY_FOR_EXTERNAL_GEOCODING\n',encoding='utf-8')
+            with patch.dict('os.environ',{'GEOAPIFY_API_KEY':'test-do-not-log'}):
+                with patch('geoapify_batch.request_json',return_value=(200,[])):
+                    with self.assertRaises(ValueError):run(src,Path(td)/'out','collect',1,'a'*32)
 if __name__=='__main__':unittest.main()
