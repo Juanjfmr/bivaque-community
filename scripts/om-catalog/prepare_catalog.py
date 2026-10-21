@@ -28,7 +28,8 @@ def classify(row):
         return 'meio_naval'
     return 'organizacao_ou_unidade'
 
-def prepare(rows):
+def prepare(rows, ibge_lookup=None):
+    ibge_lookup=ibge_lookup or {}
     organizations, reviews, sites = [], [], {}
     siglas = Counter((r.get('forca'), key(r.get('sigla'))) for r in rows if clean(r.get('sigla')))
     identities = Counter((r.get('forca'),key(r.get('nome_publicado')),key(r.get('municipio')),r.get('uf')) for r in rows)
@@ -48,7 +49,8 @@ def prepare(rows):
         if unit_type != 'organizacao_ou_unidade': issues.append('unit_type_review')
         if row['sigla'] and siglas[row['forca'],key(row['sigla'])]>1: issues.append('duplicate_acronym')
         if identities[row['forca'],key(row['nome_publicado']),key(row['municipio']),row['uf']]>1: issues.append('duplicate_identity')
-        if row['municipio'] and row['uf'] in UF: issues.append('ibge_code_not_checked')
+        ibge_code=ibge_lookup.get((row['municipio'],row['uf']))
+        if row['municipio'] and row['uf'] in UF and not ibge_code: issues.append('ibge_code_not_checked')
         issues.append('address_not_geocoded' if row['endereco_publicado'] else 'address_missing')
         organizations.append({
             'id':uid,'source_key':source_key,'force':row['forca'],'acronym':row['sigla'],
@@ -57,7 +59,7 @@ def prepare(rows):
             'address_raw':row['endereco_publicado'],'postal_code_raw':row['cep'],
             'source_url':row['fonte_url'],'observed_on':row['data_coleta'],
             'source_origin':row['origem'],'catalog_status':'unverified',
-            'ibge_code':None,'site_id':None,'issues':issues
+            'ibge_code':ibge_code,'site_id':None,'issues':issues
         })
         reviews.extend({'id':uid,'reason':reason,'name':row['nome_publicado']} for reason in issues)
         if row['endereco_publicado'] and row['pais_classificacao']=='BR' and row['uf'] in UF and row['municipio']:
@@ -75,12 +77,18 @@ def prepare(rows):
                 sites[address_key]['source_urls'].append(row['fonte_url'])
     return organizations, reviews, sorted(sites.values(),key=lambda x:(x['uf'],key(x['city_raw']),key(x['address_raw'])))
 
-def execute(input_file, output_dir):
+def execute(input_file, output_dir, crosswalk=None):
+    ibge_lookup={}
+    if crosswalk:
+        with open(crosswalk,encoding='utf-8-sig',newline='') as fh:
+            for record in csv.DictReader(fh,delimiter=';'):
+                if record['status']=='match_exato_case_insensitive' and record['ibge_code'].isdigit() and len(record['ibge_code'])==7:
+                    ibge_lookup[(record['municipio_fonte'],record['uf'])]=record['ibge_code']
     with open(input_file,encoding='utf-8-sig',newline='') as handle:
         reader=csv.DictReader(handle,delimiter=';')
         if set(FIELDS)-set(reader.fieldnames or []): raise ValueError('Required columns missing')
         rows=list(reader)
-    organizations,reviews,sites=prepare(rows)
+    organizations,reviews,sites=prepare(rows,ibge_lookup)
     output_dir.mkdir(parents=True,exist_ok=True)
     def write(filename,data):
         (output_dir/filename).write_text(json.dumps(data,indent=2,sort_keys=True,ensure_ascii=False)+'\n',encoding='utf-8')
@@ -93,7 +101,8 @@ def execute(input_file, output_dir):
         'domestic_classification':sum(x['country_classification']=='BR' for x in organizations),
         'outside_or_undefined':sum(x['country_classification']!='BR' for x in organizations),
         'missing_city_or_uf':sum(not x['city_raw'] or x['state_raw'] not in UF for x in organizations),
-        'site_candidates_not_verified':len(sites),'geographic_search_ready':0,
+        'site_candidates_not_verified':len(sites),
+        'ibge_confirmed_oms':sum(bool(x['ibge_code']) for x in organizations),'geographic_search_ready':0,
         'military_personal_affiliations_collected':0,
         'review_flags':dict(sorted(Counter(r['reason'] for r in reviews).items()))
     }
@@ -104,5 +113,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--input',required=True,type=Path)
     parser.add_argument('--out',required=True,type=Path)
+    parser.add_argument('--crosswalk',type=Path)
     args=parser.parse_args()
-    print(json.dumps(execute(args.input,args.out),indent=2,ensure_ascii=False))
+    print(json.dumps(execute(args.input,args.out,args.crosswalk),indent=2,ensure_ascii=False))
