@@ -6,15 +6,18 @@
 - FAB: catálogo telefônico MHT de outubro de 2026 fornecido pelo proprietário; **não publicar o MHT** (contém ramais/contatos).
 - MB: diretório capturado anteriormente; exige reconferência da situação.
 - 20 entradas do CSV estão fora da classificação BR ou sem município/UF válida.
+- Conferência com 5.571 municípios do Supabase: 456 pares cidade/UF únicos, 426 correspondentes e 30 a revisar. Isso representa 1.365 OMs com IBGE conferido e 51 OMs ainda sem vinculação municipal. Nenhuma destas correspondências valida a situação da OM.
 - Coordenadas verificadas: **zero**. Não mostrar distância/tempo até OM.
 
 ## Preparação reproduzível
 Na raiz do repositório:
 ```bash
-python scripts/om-catalog/prepare_catalog.py --input data/om-catalog/source-2026-10-20.csv --out /tmp/bivaque-oms
+python scripts/om-catalog/prepare_catalog.py --input data/om-catalog/source-2026-10-20.csv --crosswalk data/om-catalog/ibge-crosswalk-2026-10-21.csv --out /tmp/bivaque-oms
+python scripts/om-catalog/build_import_sql.py --organizations /tmp/bivaque-oms/organizations.json --out /tmp/bivaque-oms/import-unverified.sql
+node tests/om-catalog/om-directory-smoke.cjs
 python -m unittest discover -s tests/om-catalog -v
 ```
-O pipeline produz `organizations.json`, `site-candidates.json`, `review.json` e `report.json`. IDs são UUIDv5 determinísticos derivados da fonte; sigla não é chave.
+O pipeline produz `organizations.json`, `site-candidates.json`, `review.json` e `report.json`. A carga SQL é uma proposta para ambiente de teste; não foi executada. IDs são UUIDv5 determinísticos derivados da fonte; sigla não é chave.
 
 **Instalações candidatas não são pontos mapeados.** Um agrupamento por endereço é uma sugestão de revisão, não prova de que duas OMs compartilham a mesma instalação física. Apenas `sites.status=verified` com coordenadas do acesso público e fonte conferida pode alimentar distâncias.
 
