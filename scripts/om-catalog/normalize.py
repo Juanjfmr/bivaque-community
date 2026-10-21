@@ -8,6 +8,8 @@ import unicodedata
 from collections import Counter
 from pathlib import Path
 
+FOREIGN_CITIES = {'cidade do mexico','maputo','paramaribo - suriname','roma','teera','washington, dc'}
+
 COLUMNS=['id','forca','sigla','nome_publicado','municipio','uf','categoria','localidade_original','pais_classificacao','endereco_publicado','bairro_publicado','cep','latitude','longitude','fonte_url','fonte_arquivo','data_coleta','origem','situacao_institucional','precisao_localizacao','revisao','observacoes']
 
 def norm(s):
@@ -18,6 +20,8 @@ def build(rows):
     for r in rows:
         force=r['forca'].strip();name=r['nome_publicado'].strip();city=r['municipio'].strip()
         uf=r['uf'].strip().upper();country=r['pais_classificacao'].strip() or 'UNKNOWN'
+        if force == 'EB' and country == 'BR' and norm(city) in FOREIGN_CITIES:
+            country = 'EXTERIOR_REVIEW'
         sigla=r['sigla'].strip();addr=r['endereco_publicado'].strip();cep=re.sub(r'\D','',r['cep'])
         if force not in ('FAB','EB','MB') or not name: raise ValueError('invalid source entry')
         identity='|'.join((force,norm(name),norm(city),uf,country))
