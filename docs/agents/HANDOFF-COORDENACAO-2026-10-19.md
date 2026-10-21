@@ -131,6 +131,36 @@ textos e comportamento). O plano em lotes está em `docs/AUDITORIA_ADERENCIA_202
 
 **Podem esperar:** cobrança (sem CNPJ, com ADR novo), IA documental e mobile.
 
+### 4. Direção visual: decidida em 20/10, branch `codex/lancamento` (commit `293d8d2c`)
+
+A decisão está no `docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md`, e o material, em
+`docs/brand/` (brandbook em PDF, guia, tokens, logos e maquete).
+
+- **A pele do Bivaque real é o brandbook oficial** (Grafite, Papel, Brasa, Noto Serif e Noto Sans), com os
+  ajustes da maquete `docs/brand/maquete-2026-10-20/`:
+  - Brasa só na ação principal e no botão Criar; a cidade em Brasa escurecida `#9E3B2C`;
+  - links, ações secundárias, aba ativa e contadores em Grafite; o vermelho fica só para erro;
+  - cantos de 12 px (abas com 10 px), botão Criar como quadrado de cantos suaves e ícones Outlined;
+  - avatares a partir de 28 px e busca alinhada à esquerda.
+- **Tema claro e escuro desde o porte, com o padrão Automática.** O escuro segue a página 13 do brandbook:
+  - Carvão, Elevado e Brasa Clara;
+  - logo branco inteiro;
+  - fotos 10% mais escuras.
+
+  Este ADR substitui a D31 (light-only).
+- **Toda cor vem de token, com o par claro e escuro.** Cada tela portada é aceita nos dois temas pela
+  comparação de captura.
+- **Pendente com o dono:**
+  - os SVG oficiais do logo (no PDF eles estão em PNG de 1.024 px);
+  - os ícones de app (16, 32 e 48 px, PWA e maskable).
+
+  Até chegarem, use os PNG de `docs/brand/reference/`.
+- **Ordem sugerida:**
+  1. aplicar a pele primeiro no protótipo (R70, junto com a landing v8);
+  2. portar a landing para o Next (R71), que é o piloto do porte visual.
+
+  Assim o protótipo continua sendo a especificação exata do que vai para o Next.
+
 ## Decisões do dono que você não deve reabrir
 
 - O produto é nacional, para as três Forças, organizado por cidade e bairro. Não é um app de transferências.
