@@ -13,10 +13,10 @@ import { saveProfileAction } from "../actions"
 // "Outros", sem categoria livre.
 
 type ProfileRow = {
+  id: string
   display_name: string
   category: ProviderCategory
   bio: string | null
-  contact_phone: string | null
   contact_is_public: boolean
 }
 
@@ -42,13 +42,18 @@ export default async function PrestadorFichaPage() {
   } = await authClient.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await authClient
+  const { data: profile, error: profileError } = await authClient
     .from("provider_profiles")
-    .select("display_name, category, bio, contact_phone, contact_is_public")
+    .select("id, display_name, category, bio, contact_is_public")
     .eq("owner_user_id", user.id)
     .maybeSingle()
 
   const current = (profile ?? null) as ProfileRow | null
+  if (profileError) throw new Error("Falha ao carregar a ficha.")
+  const { data: contactPhone, error: contactError } = current
+    ? await authClient.rpc("get_provider_contact_phone", { p_provider_id: current.id })
+    : { data: null, error: null }
+  if (contactError) throw new Error("Falha ao carregar o telefone da ficha.")
 
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-10">
@@ -121,7 +126,7 @@ export default async function PrestadorFichaPage() {
             id="contactPhone"
             name="contactPhone"
             type="tel"
-            defaultValue={current?.contact_phone ?? ""}
+            defaultValue={contactPhone ?? ""}
             aria-label="Telefone de contato"
             placeholder="92 999999999"
             className="mt-1"

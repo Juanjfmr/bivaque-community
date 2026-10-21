@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(19);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -199,6 +199,23 @@ update public.provider_reach
    set active = true
  where provider_id = '30000000-0000-4000-8000-000000000020';
 
+-- SEC-006: o prestador não grava direto; a ação do servidor reconfere a ficha
+-- e grava com service_role.
+select throws_ok(
+  $$
+    insert into storage.objects (bucket_id, name, owner)
+    values (
+      'provider-photos',
+      '30000000-0000-4000-8000-000000000020/portfolio/antes-depois.webp',
+      '10000000-0000-4000-8000-000000000020'
+    )
+  $$,
+  '42501',
+  null,
+  'active provider cannot upload into the own profile folder directly'
+);
+
+set local role service_role;
 select lives_ok(
   $$
     insert into storage.objects (bucket_id, name, owner)
@@ -208,8 +225,9 @@ select lives_ok(
       '10000000-0000-4000-8000-000000000020'
     )
   $$,
-  'active provider uploads into the own profile folder'
+  'service_role uploads the provider photo for the action'
 );
+set local role authenticated;
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000021', true);
 select throws_ok(

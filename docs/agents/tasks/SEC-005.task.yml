@@ -17,6 +17,9 @@ allowed_paths:
   - apps/web/lib/notifications/
   - tests/unit/infra/
   - tests/unit/notifications/
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
   - docs/agents/tasks/SEC-005.task.yml
 forbidden:
   - push direto na main, merge, deploy ou db push no banco remoto
@@ -28,8 +31,12 @@ acceptance:
   - Teste prova que erro na consulta de preferencias OU de opt-out nao chama o adaptador de envio e deixa o item com erro e nova tentativa agendada, sem laco de retry imediato
   - Teste prova que sem erro o comportamento atual (respeitar preferencia e opt-out) continua
   - Log do erro sem PII (usar o scrubber existente)
+  # SEC-AUD-002 (MEDIUM, 2026-10-19)
+  - A reserva SQL (`private.outbox_prepare_due()`) entrega no maximo o mesmo teto de 5.000 IDs aceito pela rota HTTP, em ordem deterministica e com concorrencia segura; os IDs fora do lote continuam vencidos e elegiveis na chamada seguinte
+  - pgTAP prova que uma fila de 5.001 drena em duas chamadas limitadas, sem repetir ID e sem adiantar `updated_at` dos nao reservados
+  - Autenticacao, fail-closed de preferencia/opt-out, chunks de 100 e limite operacional do consumidor permanecem intactos
 proof:
-  - npx pnpm@11.18.0 test -- tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
   - npx pnpm@11.18.0 gate
 risk: envio de aviso a quem pediu para nao receber
 risk_level: R3
@@ -39,3 +46,78 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Execucao local em 2026-10-19, branch codex/seguranca (implementador Codex).
+# Baseline: proof corrigido -> exit 0, 15 passed em 2 arquivos.
+# TDD RED (teste antes do codigo): mesmo proof -> exit 1, 6 failed, 17 passed.
+# Erros retornados nas consultas de notification_preferences, matriz de canais
+# e notification_opt_outs chamavam send 1 vez; rejeicoes abortavam sem patch.
+# Correcao: consultas inconclusivas nao entram no adaptador; item fica pending
+# com last_error tecnico e updated_at renovado. Nao consome tentativa de envio;
+# o agendador SQL existente espera 60s * 2^attempts antes de selecionar de novo.
+# Erros retornados/rejeitados usam scrubPii antes do log; teste verifica que
+# e-mail e documento ficticios nao aparecem em log, resposta ou patch.
+# TDD GREEN: npx.cmd pnpm@11.18.0 exec vitest run
+# tests/unit/infra/outbox-preferences.test.ts tests/unit/infra/outbox-delivery.test.ts
+# -> exit 0, 25 passed em 2 arquivos. Inclui recuperacao, lote misto, opt-out,
+# matriz desabilitada e os comportamentos anteriores de preferencias/defaults.
+# Primeiro gate: FAIL em typecheck, TS2322 causado pelo diff (lastError opcional
+# recebia undefined). Corrigido com narrowing antes de construir a mutacao;
+# proof repetido apos a correcao -> 25 passed, exit 0.
+# Quadro consultado: DONE-OUTBOX-FOUNDATION (mecanismo historico); sem card
+# SEC-005. BOARD/board.json fora dos allowed_paths, nao alterados.
+# Limites: Docker indisponivel; sem supabase start/test:db/E2E/runtime integrado.
+# Nenhum .env.local criado. Implementado; revisao independente pendente.
+# Gate final: npx.cmd pnpm@11.18.0 gate -> exit 0; lint, typecheck, test e
+# secrets PASS. Unit 1257, mobile 76, web 19, privacy 189, scope 120, sem falhas.
+# Build pulado automaticamente por ausencia de apps/web/.env.local.
+# Correcao da revisao Flash H4/L5, Codex, 2026-10-19, sobre c007bf03 + diff local.
+# RED: outbox-preferences + outbox-delivery, 3 failed e 25 passed; 101/250 IDs eram recusados com invalid_batch.
+# GREEN: mesmos arquivos, 28/28 PASS, com blocos de ate 100, IDs deduplicados e continuidade apos bloco vazio.
+# Rota TypeScript agrega contadores de todos os blocos, preservando consultas fail-closed, opt-out e matriz de canais.
+# Nenhuma migration nesta tarefa; SQL despacha a fila como antes.
+# Teste de recuperacao renomeado para redispatch pelo chamador; removida espera que nao exercitava o agendador SQL.
+# Teste de isOutboxDue permanece identificado como verificacao do calculo de prazo, nao prova do cron real.
+# Gate final exit 0: lint, typecheck, test, secrets PASS; build pulado sem .env.local.
+# test:db da rodada PASS: 136 arquivos, 1875 testes, incluindo outbox-worker.sql.
+# Sem commit/alteracao do quadro fora dos allowed_paths; revisao independente e runtime de entrega pendentes.
+# Coordenador, 2026-10-19: para H4/L5 foi mantida a versao do DeepSeek V4.1 Flash (commit 755c13f5),
+# com teto de 5000 IDs por chamada; a versao do Codex descrita acima ficou guardada fora do repositorio.
+
+# SEC-AUD-002, 2026-10-19, tentativa 1 (DeepSeek V4.1 Flash), sobre o diff SEC006 local.
+# RED/limite: a funcao aplicada reservava todos os vencidos; a rota aceita no maximo 5.000.
+# Migration nova 20261020002739_sec_aud002_outbox_prepare_limit.sql preserva a assinatura
+# private.outbox_prepare_due() e limita a reserva a 5.000, ordenada por updated_at/id e com
+# FOR UPDATE SKIP LOCKED. Itens fora do lote nao tem updated_at alterado.
+# pgTAP novo supabase/tests/outbox-batch-cap.sql (6 casos) cobre 5.001 -> 5.000 + 1, sem repetir ID.
+# NAO EXECUTADO: a tarefa proibe alterar o banco local; coordenador roda reset --no-seed e test:db.
+# Rota HTTP, autenticacao, chunks de 100, fail-closed e adaptadores nao foram alterados.
+# Gate final da rodada SEC-AUD-002: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
+
+# M3 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash):
+# RED: tests/unit/infra/outbox-slow-delivery.test.ts falhou; a primeira mensagem ja entregue
+# continuava pending enquanto a segunda estava presa no adaptador, e um segundo POST a reenviava.
+# RED pgTAP: supabase/tests/outbox-reservation-lease.sql falhou; outbox nao tinha reserved_until
+# e a reserva de 60s permitia outro despachante durante um bloco lento.
+# Correcao escolhida: opcao (a). A rota grava cada mutacao imediatamente depois da entrega, e a
+# reserva SQL ganhou reserved_until de 5 minutos em private.outbox_prepare_due().
+# updated_at continua a ultima escrita e alimenta o backoff; reserved_until so bloqueia outro worker.
+# A rota limpa reserved_until ao gravar sent, failed, pending ou skipped.
+# Migration 20261021174939_sec_aud003_outbox_reservation_lease.sql; types regenerados com reserved_until.
+# outbox-table.sql passou a exigir a coluna. GREEN: unitarios 28/28, pgTAP 6/6, worker 9/9, lote 6/6.
+# Nenhuma coluna de token por item foi adicionada; idempotencia de provedor continua fora do escopo.
+# Confirmacao 2 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash), media:
+# RED unitario: tests/unit/infra/outbox-reservation-owner.test.ts, 4 de 4 falharam; a rota nao recebia
+# token e A reenviava o item que B reservou, alem de poder sobrescrever o resultado de B.
+# RED pgTAP: supabase/tests/outbox-reservation-owner.sql falhou porque outbox nao tinha reserved_by e
+# prepare_due nao devolvia token.
+# Migration 20261021183224_sec_aud004_outbox_reservation_owner.sql adiciona reserved_by; prepare_due
+# grava gen_random_uuid() por chamada e devolve (id, reservation); outbox_dispatch_due leva os IDs
+# e o campo reservation com o token no mesmo POST do cron.
+# Rota: exige reservation; antes de cada envio confere reserved_by e reserved_until; grava o resultado
+# com where id + reserved_by; reserva vencida interrompe o lote e item de outra reserva e pulado.
+# GREEN: 4/4 unitarios novos; outbox-batch + outbox-preferences + outbox-slow-delivery 24/24;
+# pgTAP outbox-table, outbox-worker, outbox-batch-cap, outbox-reservation-lease e
+# outbox-reservation-owner PASS. Types regenerados com reserved_by.
+
+

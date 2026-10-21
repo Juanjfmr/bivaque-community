@@ -1,19 +1,24 @@
 "use client"
 
 import { ImagePlus, X } from "lucide-react"
+import type { Route } from "next"
+import { useRouter } from "next/navigation"
 import { useRef, useState, useTransition } from "react"
 import {
   createPropertyAction,
   removeListingPhotoAction,
   updatePropertyAction,
+  uploadPropertyPhotoAction,
 } from "../../../lib/listings/actions"
 import { ADDRESS_HINT, ADDRESS_MAX } from "../../../lib/listings/address"
+import { allocatePhotoPositions } from "../../../lib/listings/photo-positions"
 import {
   MAX_LISTING_PHOTOS,
   PROPERTY_TYPE_LABELS,
   type PropertyType,
 } from "../../../lib/listings/types"
 import type { PropertyDraftInput } from "../../../lib/listings/validation"
+import { runWithPending, uploadPhotosOneByOne } from "../../../lib/storage/photo-upload-sequence"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 
 // Redesenha a imagem em canvas antes de enviar. O navegador não copia os
@@ -39,6 +44,7 @@ async function stripExifToJpeg(file: File): Promise<File> {
 export interface ExistingPhoto {
   id: string
   path: string
+  position: number
   url: string | null
 }
 
@@ -67,6 +73,7 @@ export function PropertyForm({
   defaults,
   existingPhotos = [],
 }: PropertyFormProps) {
+  const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const [deal, setDeal] = useState<"rent" | "sale">(defaults.deal === "sale" ? "sale" : "rent")
   const [audienceValue, setAudienceValue] = useState<string>(
@@ -77,6 +84,7 @@ export function PropertyForm({
   const [existing, setExisting] = useState<ExistingPhoto[]>(existingPhotos)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [submitting, setSubmitting] = useState(false)
 
   async function onPick(files: FileList | null) {
     if (!files) return
@@ -109,21 +117,79 @@ export function PropertyForm({
     })
   }
 
-  function submit(intent: "publish" | "draft") {
+  async function submit(intent: "publish" | "draft") {
     const form = formRef.current
-    if (!form) return
+    if (!form || submitting) return
     const formData = new FormData(form)
     formData.set("intent", intent)
     if (mode === "edit" && listingId) formData.set("listingId", listingId)
-    for (const photo of photos) formData.append("photos", photo)
+    // SEC-006 (revisão M2): nenhuma foto entra no corpo do anúncio. Cada uma
+    // vai numa chamada própria, com o anúncio já criado, para não estourar o
+    // `bodySizeLimit` de 12 MB. O registro (listings + property_details)
+    // continua sendo criado junto, antes das fotos.
+    formData.delete("photos")
+    const chosen = photos
 
-    startTransition(async () => {
-      const action = mode === "create" ? createPropertyAction : updatePropertyAction
-      const result = await action(formData)
-      if (!result.ok) {
-        setError(result.message ?? "Não foi possível salvar agora.")
-      }
-    })
+    const outcome = await runWithPending(
+      setSubmitting,
+      async () => {
+        const saved =
+          mode === "create"
+            ? await createPropertyAction(formData)
+            : await updatePropertyAction(formData)
+        if (!saved.ok) {
+          return {
+            ok: false as const,
+            message: saved.message ?? "Não foi possível salvar agora.",
+          }
+        }
+        const id = mode === "create" ? saved.listingId : listingId
+        if (id === undefined || id === "") {
+          return { ok: false as const, message: "Não foi possível identificar o anúncio salvo." }
+        }
+
+        const positions = allocatePhotoPositions(
+          existing.map((photo) => photo.position),
+          chosen.length,
+        )
+        const batch = await uploadPhotosOneByOne(chosen, async (photo, index) => {
+          // A posição não é `existing.length + index`: depois de remover uma
+          // foto do meio, essa conta repete uma posição ocupada. O banco agora
+          // tem unicidade e faixa; a tela escolhe a primeira posição livre.
+          const position = positions[index]
+          if (position === undefined) {
+            return { error: "Não há posição livre para esta foto." }
+          }
+          const photoForm = new FormData()
+          photoForm.set("listingId", id)
+          photoForm.set("position", String(position))
+          photoForm.set("photo", photo)
+          return await uploadPropertyPhotoAction(photoForm)
+        })
+        return { ok: true as const, id, failures: batch.failures }
+      },
+      "Não foi possível salvar agora. Tente de novo em instantes.",
+    )
+
+    if (!outcome.ok) {
+      setError(outcome.message)
+      return
+    }
+    if (!outcome.value.ok) {
+      setError(outcome.value.message)
+      return
+    }
+    if (outcome.value.failures.length > 0) {
+      const count = outcome.value.failures.length
+      setError(
+        count === 1
+          ? "O anúncio foi salvo, mas uma foto não pôde ser enviada. Abra o anúncio em Meus imóveis para tentar novamente."
+          : `O anúncio foi salvo, mas ${count} fotos não puderam ser enviadas. Abra o anúncio em Meus imóveis para tentar novamente.`,
+      )
+      return
+    }
+
+    router.push(`/imoveis/${outcome.value.id}` as Route)
   }
 
   const editingAudience = mode === "edit" ? audience.label : null
@@ -438,16 +504,16 @@ export function PropertyForm({
           <>
             <button
               type="button"
-              disabled={pending}
-              onClick={() => submit("draft")}
+              disabled={pending || submitting}
+              onClick={() => void submit("draft")}
               className="min-h-11 rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] disabled:opacity-60"
             >
               Salvar rascunho
             </button>
             <button
               type="button"
-              disabled={pending}
-              onClick={() => submit("publish")}
+              disabled={pending || submitting}
+              onClick={() => void submit("publish")}
               className="min-h-11 rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] disabled:opacity-60"
             >
               Publicar anúncio
@@ -463,8 +529,8 @@ export function PropertyForm({
             </a>
             <button
               type="button"
-              disabled={pending}
-              onClick={() => submit("publish")}
+              disabled={pending || submitting}
+              onClick={() => void submit("publish")}
               className="min-h-11 rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] disabled:opacity-60"
             >
               Salvar alterações

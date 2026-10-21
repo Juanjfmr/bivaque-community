@@ -35,8 +35,12 @@ forbidden:
 acceptance:
   - Inventario de todos os caminhos de upload de imagem do usuario no app listado no PR
   - Teste com JPEG (e PNG/WebP se aceitos) contendo GPS prova que o arquivo gravado nao tem GPS nem EXIF de localizacao, em cada caminho
-  - Upload direto ao Storage pelo cliente, se existir, fica coberto (fechado pela policy ou tratado no servidor), documentado
+  - Upload direto ao Storage pelo cliente fica para a SEC-006 (decisao do coordenador em 2026-10-19); aqui so documentar quais caminhos continuam diretos
   - upload-photo-action recusa conta sem vinculo ao escopo do evento (teste negativo)
+  # SEC-AUD-001 (MEDIUM, 2026-10-19)
+  - A excecao byte a byte do PDF so e aplicada quando os bytes reais tem header PDF; JPEG/PNG com GPS rotulado application/pdf e recusado antes do Storage
+  - PDF verdadeiro continua identico byte a byte, sem reencode, sem parser de assinatura e sem checagem de emissor
+  - Teste positivo usa conteudo PDF real, nao string falsa; testes negativos cobrem JPEG e PNG com metadados e MIME PDF
 proof:
   - npx pnpm@11.18.0 test
   - npx pnpm@11.18.0 gate
@@ -49,3 +53,115 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+# Execucao local 2026-10-19, somente SEC-004, sem git add ou commit.
+# RED: vitest run tests/unit/security/photo-upload-action.test.ts, 4 testes falharam.
+# JPEG, PNG e WebP sinteticos com GPS chegaram ao upload ainda com EXIF.
+# Conta autenticada sem locality_memberships foi aceita pelo upload privilegiado.
+# sharp 0.35.3 consta no lockfile e o modulo local codificou JPEG, PNG e WebP.
+# Nenhuma biblioteca instalada e nenhum arquivo de ambiente criado ou alterado.
+# Baseline reconferida: npx supabase db reset --local --no-seed PASS.
+# npx pnpm 11.18.0 test:db PASS, 135 arquivos e 1842 testes.
+# Inventario web: nove pontos de upload em nove arquivos de implementacao.
+# lib/listings/actions.ts, uploadPhotos, Moradia cria e edita, listing-photos.
+# app/(shell)/mercado/novo/page.tsx, envio direto do navegador, listing-photos.
+# app/(shell)/mercado/[id]/editar/page.tsx, envio direto do navegador, listing-photos.
+# app/(shell)/events/upload-photo-action.ts, publicacao e capa de evento, event-photos.
+# app/(shell)/profile/avatar-actions.ts, uploadAvatarAction, avatars.
+# app/(owner)/communities/actions.ts, faixa e miniatura, community-images.
+# app/(provider)/prestador/actions.ts, addPortfolioPhotoAction, provider-photos.
+# app/(shell)/pedidos/novo/actions.ts, submitServiceRequest, service-request-photos.
+# app/(preauth)/onboarding/document-actions.ts, JPEG e PNG de identidade, verification-documents.
+# Nenhuma rota HTTP de upload, URL assinada de upload ou upload mobile ativo foi encontrado.
+# Rotas de avatar e documento de admissao apenas leem ou assinam arquivos existentes.
+# Todos os nove pontos ainda precisam de limpeza no servidor; canvas nao fecha o contrato.
+# Storage permite INSERT autenticado em avatars, event-photos, listing-photos,
+# community-images, provider-photos e service-request-photos.
+# Storage permite UPDATE autenticado em avatars, event-photos, community-images
+# e service-request-photos; esses caminhos tambem contornam uma limpeza so em actions.
+# verification-documents ja depende de service_role para escrita, sem policy de cliente.
+# BLOQUEIO: fechar o envio direto exige migration nova em supabase/migrations/.
+# Esse caminho nao esta no allowed_paths. Nao foi ampliado nem foi criada migration.
+# Pedido de esclarecimento enviado ao dono; sem resposta, nao inferir autorizacao.
+# Proximo passo: autorizar supabase/migrations/ e retomar a partir dos testes RED.
+# Implementacao, GREEN e revisao independente pendentes. SEC-004 permanece aberta.
+# Gate executado: lint PASS, typecheck PASS, test FAIL nos quatro casos RED novos.
+# Etapas posteriores nao executadas; build pulado pelo gate por falta de .env.local.
+# E2E nao executado nesta etapa bloqueada; sem alegar prova de jornada ou GREEN.
+# Validador task-contract.mjs aplicado ao contrato: valido, R3 e retry_budget 3.
+# Decisao do coordenador (Claude), 2026-10-19, apos o BLOQUEIO acima:
+# a SEC-004 fica restrita aos caminhos que ja passam pelo servidor (actions), sem migration.
+# Limpeza com sharp (ja no lockfile): reencodar e descartar metadados (EXIF, GPS, XMP) em
+# moradia, avatar, comunidade, portfolio, pedido de servico, documento e evento.
+# Mais o negativo de vinculo em upload-photo-action. Mercado direto e as policies de INSERT
+# e UPDATE dos buckets vao para a SEC-006, que libera supabase/migrations/.
+# Retomada 2026-10-19 conforme a decisao acima; registros de BLOQUEIO anteriores sao historicos.
+# Escopo implementado somente nas actions existentes; Mercado direto e policies ficam na SEC-006.
+# RED reproduzido: 4 de 4 testes originais falharam antes de alterar as actions.
+# RED ampliado antes da implementacao: 64 falhas e 20 sucessos em 84 casos.
+# Falhas: EXIF/GPS preservado em todos os caminhos, bytes corrompidos aceitos e evento sem vinculo.
+# Helper unico apps/web/lib/storage/sanitize-image.ts usa sharp 0.35.3 para decodificar e reencodar.
+# autoOrient aplica rotacao e espelhamento antes de descartar EXIF, GPS, XMP e IPTC.
+# Mantidos JPEG, PNG e WebP, MIME, caminhos e modos de sobrescrita; tamanho conferido antes e depois.
+# Imagem corrompida ou MIME divergente e recusado; PDF de identidade segue sem alteracao dos bytes.
+# Moradia criar e editar: listing-photos, JPEG/PNG/WebP, 10 MB, helper no uploadPhotos compartilhado.
+# Avatar: avatars, JPEG/PNG/WebP, 5 MB, uploadAvatarAction.
+# Comunidade faixa e miniatura: community-images, JPEG/PNG/WebP, 10 MB, setCommunityImageAction.
+# Portfolio: provider-photos, JPEG/PNG/WebP, 5 MB, addPortfolioPhotoAction.
+# Pedido: service-request-photos, JPEG/PNG/WebP, 10 MB, submitServiceRequest.
+# Identidade: verification-documents, JPEG/PNG, 10 MB, uploadVerificationDocumentAction; PDF preservado.
+# Evento: event-photos, JPEG/PNG/WebP, 5 MB, uploadPostPhotoAction.
+# Evento reconfere locality_memberships pelo usuario da sessao antes de criar cliente privilegiado.
+# Negativas de evento: sem vinculo, erro de consulta e sem sessao; positivo ignora userId forjado no form.
+# Fixture sintetica verifica diretorio GPS no TIFF e coordenadas no XMP antes de testar a limpeza.
+# GREEN: photo-upload-action.test.ts 84 de 84; sanitize-image.test.ts 10 de 10, total 94.
+# Cada caminho cobre metadados, formato, orientacoes 1 e 6, MIME recusado, excesso de bytes e corrupcao.
+# Helper cobre oito orientacoes EXIF por pixels assimetricos, MIME divergente e excesso apos reencodar.
+# sharp ja estava instalado; declarado como dependencia direta web exata e importer do lock ajustado.
+# Ao executar pnpm exec apos o ajuste, pnpm sincronizou node_modules automaticamente, com zero downloads.
+# Verificacao automatica de dependencias desativada nos comandos seguintes; sem instalacao solicitada.
+# supabase start PASS; primeira consulta de help encontrou telemetria fora do sandbox.
+# SUPABASE_TELEMETRY_DISABLED=1 e DO_NOT_TRACK=1 evitaram essa escrita nos comandos seguintes.
+# db reset --local --no-seed PASS; test:db PASS, 135 arquivos e 1842 testes, sem captura ou dev server.
+# Gate completo PASS: lint, typecheck, test e secrets; build PULADO porque .env.local esta ausente.
+# Gate mediu 1351 unitarios, 76 mobile, 19 web, 189 privacy e 120 scope, todos passando.
+# Nenhum .env.local criado ou alterado, nenhuma migration ou policy alterada, nenhum comando de escrita git.
+# Nenhum push, PR, merge ou deploy; rede nao solicitada e nenhum provedor externo usado nos testes.
+# Quadro consultado por SEC-004 sem card correspondente; registro mantido somente neste contrato.
+# task-contract.mjs validado; implementacao local com testes, revisao independente e E2E pendentes.
+# A prova dos bytes das actions usa Storage mockado; pgTAP e prova separada do banco local real.
+# Decisao do dono, 2026-10-19 (revisao Flash L3): PDF de identidade continua aceito e
+# guardado byte a byte. O gov entrega CIN e CNH digital em PDF assinado; regravar quebraria a
+# assinatura. Registrado no ADR. O teste que preserva o PDF byte a byte e o comportamento correto.
+# Correcao da revisao Flash M1/M2/L2/L7, Codex, 2026-10-19, sobre c007bf03 + diff local.
+# RED: sanitize-image + photo-upload-action, 6 failed e 94 passed.
+# WebP animado orientacao 6 era recusado; PNG valido 16000x16000 era aceito; quatro actions rejeitavam em vez de retornar erro.
+# GREEN: mesmos dois arquivos, 100/100 PASS; open-cap-message.test.ts adicional 3/3 PASS.
+# Helper server-only, limitInputPixels 25000000, mensagem de 25 megapixels; autoOrient so para pagina unica.
+# Comunidade, portfolio e evento retornam erro estruturado do helper; consumidores exibem a mensagem sem sucesso falso.
+# Portfolio ganhou wrapper cliente para feedback e bloqueio durante envio; markup existente foi preservado.
+# Fixtures WebP de duas paginas e PNG monocromatico de 256 MP sinteticos, sem dados reais ou dependencia nova.
+# Mock server-only restrito aos testes; producao mantem a protecao de limite servidor/cliente.
+# Checklist React aplicado aos consumidores; nenhuma aprovacao independente atribuida ao implementador.
+# Gate final exit 0: lint, typecheck, test, secrets PASS; build pulado sem .env.local.
+# test:db da rodada PASS: 136 arquivos, 1875 testes; E2E e revisao independente do diff pendentes.
+# PDF e arquivo SEC-006 preservados; uploads diretos continuam pertencendo exclusivamente a SEC-006.
+# Sem rede solicitada, instalacao, arquivo de ambiente, commit, push, PR, merge ou deploy.
+
+# SEC-AUD-001, 2026-10-19, tentativa 1 (DeepSeek V4.1 Flash), sobre o diff SEC006 local.
+# RED: tests/unit/security/identity-pdf-content.test.ts, JPEG/PNG com GPS rotulados PDF persistiam
+# byte a byte e respondiam ok; o positivo antigo era uma string de PDF falsa.
+# GREEN: 4/4 PASS; conteudo real conferido pelo header %PDF- nos primeiros 1 KiB; imagem disfarcada
+# e recusada antes do Storage; PDF real de fixture minima segue byte a byte e contentType application/pdf.
+# A excecao de PDF continua; nenhuma assinatura/emissor foi validada e nenhum parser novo foi adicionado.
+# Gate/typecheck/lint da area executados nesta rodada; E2E e revisao independente pendentes.
+# Gate final da rodada SEC-AUD-001: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
+
+# SEC-AUD-001 parte 2, revisao final de 2026-10-21 (DeepSeek V4.1 Flash):
+# RED: tests/unit/security/identity-pdf-content.test.ts, 2 de 6 falharam. JPEG e PNG com GPS e
+# %PDF-1.7 embutido depois da assinatura, enviados como application/pdf, respondiam ok e eram
+# guardados byte a byte, porque hasPdfHeader varria os primeiros 1 KiB.
+# Correcao: PDF so e aceito quando os bytes comecam com %PDF- no offset 0, e assinatura de
+# imagem nos primeiros bytes (JPEG, PNG, WebP, GIF) e recusada antes do Storage.
+# Nenhum parser de assinatura ou emissor foi adicionado; PDF real continua byte a byte.
+# GREEN: 6/6 PASS, incluindo PDF real preservado e JPEG/PNG com GPS sem %PDF-.
+

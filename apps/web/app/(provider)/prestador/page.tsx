@@ -76,7 +76,7 @@ export default async function PrestadorHomePage({
 
   const { data: profileRow, error: profileError } = await authClient
     .from("provider_profiles")
-    .select("id, display_name, category, bio, contact_phone")
+    .select("id, display_name, category, bio")
     .eq("owner_user_id", user.id)
     .maybeSingle()
   if (profileError) throw new Error(`Falha ao carregar a ficha: ${profileError.message}`)
@@ -86,8 +86,12 @@ export default async function PrestadorHomePage({
     display_name: string
     category: ProviderCategory
     bio: string | null
-    contact_phone: string | null
   } | null
+
+  const { data: contactPhone, error: contactError } = profile
+    ? await authClient.rpc("get_provider_contact_phone", { p_provider_id: profile.id })
+    : { data: null, error: null }
+  if (contactError) throw new Error("Falha ao carregar o telefone da ficha.")
 
   const { data: accountRow } = await serviceClient
     .from("provider_accounts")
@@ -129,7 +133,7 @@ export default async function PrestadorHomePage({
     catalogCount: catalogCount ?? 0,
     reachCount: reachCount ?? 0,
     portfolioCount: portfolioCount ?? 0,
-    contactPhone: profile?.contact_phone ?? null,
+    contactPhone: contactPhone ?? null,
   })
 
   // A fila é a única parte que depende da migration nova. Um erro aqui vira um

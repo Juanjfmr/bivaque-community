@@ -33,6 +33,7 @@ export default async function EditarImovelPage({ params }: { params: Promise<{ i
   const existingPhotos = property.photos.map((photo) => ({
     id: photo.id,
     path: photo.path,
+    position: photo.position,
     url: signed.get(photo.path) ?? null,
   }))
 

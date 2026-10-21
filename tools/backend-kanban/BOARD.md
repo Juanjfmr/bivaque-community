@@ -6,7 +6,7 @@
 
 > Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos nao substituem entregas de outros agentes.
 
-**Mapa:** 119 frentes · 10 agora · 8 bloqueadas · 59 concluídas · 0 drifts
+**Mapa:** 122 frentes · 13 agora · 8 bloqueadas · 59 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -16,6 +16,9 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MOB-001-SESSION** · P0 · Mobile: contrato R3 de sessão (PKCE + secure-store + revogação)
 - **S6-MOBILE-RUNTIME** · P0 · Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime
+- **SEC-004** · P0 · SEC-004: conferir PDF real antes da exceção de limpeza
+- **SEC-005** · P0 · SEC-005: fila acima de 5.000 avisos continua drenando
+- **SEC-006** · P0 · SEC-006: envio de imagens pelo servidor e integridade das fotos
 - **FIGMA-WEB-ATUAL** · P1 · Figma atual: reconstruir e comprovar todos os ciclos web
 - **G-TASK-3** · P1 · Ficha de prestador (T3)
 - **INDICACOES-AVISO** · P1 · Aviso de pedido de indicação: a cidade fica sabendo em minutos

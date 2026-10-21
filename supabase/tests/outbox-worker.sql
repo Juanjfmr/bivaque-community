@@ -64,7 +64,7 @@ values (
 );
 
 select is_empty(
-  $$ select outbox_prepare_due from private.outbox_prepare_due() $$,
+  $$ select id from private.outbox_prepare_due() $$,
   'opted-out row is not dispatched'
 );
 
@@ -86,7 +86,7 @@ values (
 );
 
 select results_eq(
-  $$ select outbox_prepare_due from private.outbox_prepare_due() $$,
+  $$ select id from private.outbox_prepare_due() $$,
   $$ values ('50000000-0000-4000-8000-000000000002'::uuid) $$,
   'prepare returns due allowed rows'
 );

@@ -35,7 +35,7 @@ acceptance:
   - Quem ainda pode ler conteudo removido (autor, operador) segue o que o codigo de moderacao ja usa, documentado na migration
   - Feed, grupo e publicacao continuam passando nos testes existentes
 proof:
-  - npx supabase db reset
+  - npx supabase db reset --local --no-seed
   - npx pnpm@11.18.0 test:db
   - npx pnpm@11.18.0 gate
   - npx playwright test (specs de comunidade, grupo e publicacao afetadas)
@@ -47,3 +47,32 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Execucao Codex, 2026-10-19 (revisao independente pendente):
+# RED: reset --local --no-seed + test:db: 134 arquivos, 1816 testes, FAIL;
+# moderated-content-select.sql falhou 1-7/9: conteudo removido continuava visivel
+# ao membro/autor e contaminava as contagens. Positivos refinados por ID no GREEN.
+# GREEN: mesmo reset + test:db: 134 arquivos, 1818 testes PASS (11 novos).
+# Gate completo: lint/typecheck/test/secrets PASS; build pulado pelo script sem .env.local.
+# db:lint: exit 0; diagnosticos apenas em extensions (helpers do pgTAP), nenhum em public/private.
+# Leitura removida: autor/membro nao leem; operacao mantem service_role no servidor.
+# E2E comunidade/grupo/publicacao: pendente para CI com seed; banco desta sessao
+# sem seed, sem contas E2E, sem criar .env.local conforme instrucao do dono.
+# Sem mudanca de assinatura do schema publico: tipos nao precisaram regeneracao.
+# Quadro consultado: nenhum card SEC-001; registro mantido neste contrato autorizado.
+# Advisor security --local --level error: No issues found (exit 0).
+# Commit: o sandbox do Codex nao gravou no .git da worktree; o coordenador (Claude) fez o commit
+# 95d5d797 depois de revisar a migration e reconferir test:db (1818 PASS).
+# Correcao da revisao Flash H3/L4, Codex, 2026-10-19, sobre c007bf03 + diff local.
+# Decisao aplicada: autor nao altera/apaga diretamente linha moderada; metadados sociais removidos ficam ocultos.
+# RED: moderated-content-write.sql, 14/33 falharam; test:db 136 arquivos, 1875 testes FAIL.
+# Testes transacionais isolam UPDATE/DELETE com SELECT adicional so na fixture; sem isso o SELECT esconderia o defeito.
+# Migration nova 20261019222259_moderated_content_write_and_interactions.sql preserva dono/escopo e grants.
+# GREEN: reset --local --no-seed + test:db, 136 arquivos, 1875 testes PASS; novos 33/33.
+# account-deletion.sql e account-deletion-possession.sql PASS; operacao service_role continua lendo/moderando.
+# db:lint exit 0, sem erros; advisors security --local --level error --fail-on error, sem achados.
+# Gate final exit 0: lint, typecheck, test, secrets PASS; build pulado sem .env.local.
+# SEC-006 retirada temporariamente em cada suite e restaurada com hash SHA256 identico.
+# Sem nova assinatura publica, sem regenerar tipos; sem alterar quadro fora de allowed_paths.
+# E2E/build e revisao independente deste diff pendentes; nenhuma alegacao de CI ou runtime de navegador.
+# Mudancas deixadas na worktree, sem commit, push, PR, merge ou deploy, conforme coordenador.

@@ -8,7 +8,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(33);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -124,6 +124,22 @@ select isnt_empty(
   $$ select 1 from public.listing_alerts where id = 'c0000000-0000-4000-8000-000000000001' $$,
   'dono vê o próprio alerta'
 );
+-- SEC-006: a foto não é mais gravada pelo cliente. A Server Action reconfere
+-- a posse do anúncio e grava com service_role.
+select throws_ok(
+  $$
+    insert into storage.objects (bucket_id, name, owner)
+    values (
+      'listing-photos',
+      'a0000000-0000-4000-8000-000000000002/foto-2.webp',
+      '10000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  '42501',
+  null,
+  'dono não grava foto direto no bucket; só a ação do servidor'
+);
+set local role service_role;
 select lives_ok(
   $$
     insert into storage.objects (bucket_id, name, owner)
@@ -133,8 +149,9 @@ select lives_ok(
       '10000000-0000-4000-8000-000000000001'
     )
   $$,
-  'dono envia foto para a própria pasta do anúncio'
+  'service_role grava a foto do anúncio para a ação'
 );
+set local role authenticated;
 
 -- ---------------------------------------------------------------------------
 -- member-two: membro da cidade, membership PENDENTE na comunidade A.

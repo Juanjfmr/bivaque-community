@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const AVATAR_BUCKET = "avatars"
@@ -60,7 +61,7 @@ export async function uploadAvatarAction(formData: FormData) {
   const ext = MIME_EXT[file.type]
   if (!ext) throw new Error("formato inválido — use PNG, JPEG ou WebP")
 
-  const buffer = new Uint8Array(await file.arrayBuffer())
+  const buffer = await sanitizeImage(file, MAX_BYTES)
   const supabase = createServiceClient()
   const { error } = await supabase.storage
     .from(AVATAR_BUCKET)

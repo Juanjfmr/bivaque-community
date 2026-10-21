@@ -34,7 +34,7 @@ acceptance:
   - Todo SELECT do app que traz contact_phone usa o caminho novo (rg contact_phone em apps/web) e ficha, busca e painel do prestador continuam passando
   - database.generated.ts atualizado se o schema publico mudar
 proof:
-  - npx supabase db reset
+  - npx supabase db reset --local --no-seed
   - npx pnpm@11.18.0 test:db
   - npx pnpm@11.18.0 gate
   - npx playwright test (specs de prestador, negocio e servicos)
@@ -46,3 +46,41 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Execucao SEC-002 em 2026-10-19 por Codex, revisao independente pendente.
+# Base confrontada c576df2f4c806cdef7f1141cbcd15c4686140f20.
+# RED medido antes da migration com pnpm 11.18.0 test:db.
+# 135 arquivos e 1821 testes, FAIL somente nos negativos 2 e 3 do teste novo.
+# O membro alcancava a ficha e SELECT contact_phone e SELECT * nao lancavam 42501.
+# GREEN depois de npx supabase db reset --local --no-seed e pnpm 11.18.0 test:db.
+# 135 arquivos e 1842 testes PASS, incluindo os 24 casos de provider-contact-privacy.sql.
+# Grants por coluna impedem SELECT direto, JSON da linha, predicados e UPDATE RETURNING.
+# RPC get_provider_contact_phone aplica identidade, ficha nao removida, alcance e visibilidade.
+# Donos leem contato privado pela RPC, membros so leem contato publico dentro do alcance.
+# Operacao mantem SELECT pelo service_role no servidor, sem nova permissao a authenticated.
+# INSERT e UPDATE do contato pelo prestador civil continuam cobertos pelos testes.
+# Inventario web antes da mudanca com rg contact_phone em apps/web.
+# app/(provider)/prestador/page.tsx lia telefone para calcular completude.
+# app/(provider)/prestador/ficha/page.tsx lia telefone para preencher a edicao.
+# app/(provider)/prestador/conta/page.tsx lia telefone para preencher a conta.
+# As tres leituras agora usam get_provider_contact_phone com cliente autenticado.
+# app/(provider)/prestador/actions.ts tem duas gravacoes, saveProfileAction e saveAccountAction.
+# lib/service-requests/completeness.ts tem apenas comentario sobre a origem do campo.
+# Ficha publica, busca e joins usam colunas explicitas sem telefone e permanecem no caminho RLS.
+# Inventario banco antes da mudanca encontrou a coluna e seu check na migration provider_showcase.
+# provider-member-business.sql tinha escrita negativa e leitura direta, esta migrada para a RPC.
+# database.generated.ts tinha Row, Insert e Update do campo e foi regenerado pelo generate:types.
+# A nova migration contem os grants e a unica funcao de aplicacao que referencia contact_phone.
+# Inventario do catalogo local confirmou essa unica funcao e nenhuma view em public ou private.
+# Catalogo de privilegios confirmou authenticated sem SELECT da coluna e service_role com SELECT.
+# db:lint PASS sem erros de schema em public, private ou extensions.
+# Gate PASS em lint, typecheck, test e secrets, com build pulado por ausencia de .env.local.
+# Build PASS separadamente no webServer do Playwright com variaveis temporarias da stack local.
+# E2E provider-vitrine, provider-member-business e journey-pedir-servico acionados com workers=1.
+# Primeira tentativa nao iniciou por falta de variaveis de ambiente, resolvido so no processo.
+# Segunda tentativa iniciou servidor, mas faltou chromium_headless_shell-1161 do Playwright.
+# Resultado E2E 1 falhou, 1 pulado e 13 nao executados com max-failures=1, sem prova de jornada.
+# Banco mantido sem seed, consulta confirmou zero contas das fixtures E2E esperadas.
+# Fechamento das jornadas aguarda ambiente com browser e seed, sem alegar PASS ou revisao independente.
+# Nenhum card encontrado por contact_phone no quadro, evidencia mantida neste contrato autorizado.
+# Sem git add ou commit, sem alteracao de .env.local, SEC-004, prototipo ou afiliacao.

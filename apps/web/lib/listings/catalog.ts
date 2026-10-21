@@ -361,8 +361,10 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
   }
 }
 
-// O caminho do objeto começa pelo id do anúncio — é assim que a policy de
-// storage deriva a leitura do anúncio (ADR de mídia, D2).
+// O caminho do objeto começa pelo id do anúncio - é assim que a policy de
+// storage deriva a leitura do anúncio (ADR de mídia, D2). O sufixo aleatório
+// impede que duas chamadas concorrentes na mesma posição sobrescrevam o objeto
+// uma da outra (`upsert: false` também recusa, mas o caminho já não colide).
 export function buildListingPhotoPath(
   listingId: string,
   position: number,
@@ -370,5 +372,5 @@ export function buildListingPhotoPath(
 ): string {
   const subtype = extension.includes("/") ? (extension.split("/").pop() ?? "jpg") : extension
   const safeExtension = subtype.replace(/[^a-z0-9]/gi, "").toLowerCase() || "jpg"
-  return `${listingId}/${position}-${Date.now()}.${safeExtension}`
+  return `${listingId}/${position}-${Date.now()}-${crypto.randomUUID()}.${safeExtension}`
 }

@@ -12,6 +12,7 @@ import {
   validatePriceCents,
   validateTitle,
 } from "../../../lib/providers/showcase"
+import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda G Task 4 — Server Actions do painel do prestador.
@@ -228,7 +229,9 @@ export async function movePortfolioPhotoDownAction(formData: FormData): Promise<
   await moveRow("provider_portfolio_photos", formData, "down")
 }
 
-export async function addPortfolioPhotoAction(formData: FormData): Promise<void> {
+export async function addPortfolioPhotoAction(
+  formData: FormData,
+): Promise<{ error: string } | undefined> {
   const file = formData.get("file")
   const caption = text(formData, "caption")
 
@@ -246,11 +249,28 @@ export async function addPortfolioPhotoAction(formData: FormData): Promise<void>
   const { client, userId } = await requireAuthClient()
   const profileId = await requireOwnProfileId(client, userId)
 
+  // SEC-006 — mesma autorização da policy provider_photos_insert_owner, agora
+  // reconferida explicitamente porque a gravação usa service_role: a ficha é do
+  // chamador e ele ainda pode gerenciá-la (conta ativa ou alcance próprio).
+  const { data: canManage, error: canManageError } = await client.rpc(
+    "can_manage_provider_profile",
+    { p_provider_id: profileId },
+  )
+  if (canManageError) throw new Error(`Falha ao conferir a ficha: ${canManageError.message}`)
+  if (canManage !== true) throw new Error("Só o dono da ficha pode publicar fotos.")
+
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
   const path = `${profileId}/portfolio/${crypto.randomUUID()}.${extension}`
-  const { error: uploadError } = await client.storage
+  let image: Buffer
+  try {
+    image = await sanitizeImage(file, 5242880)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Não foi possível preparar a imagem." }
+  }
+  const serviceClient = createServiceClient()
+  const { error: uploadError } = await serviceClient.storage
     .from("provider-photos")
-    .upload(path, await file.arrayBuffer(), { contentType: file.type })
+    .upload(path, image, { contentType: file.type })
   if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`)
 
   const { count, error: countError } = await client
@@ -269,6 +289,7 @@ export async function addPortfolioPhotoAction(formData: FormData): Promise<void>
 
   revalidatePath("/prestador/catalogo")
   revalidatePath("/negocio/catalogo")
+  return undefined
 }
 
 export async function updatePhotoCaptionAction(formData: FormData): Promise<void> {
@@ -295,15 +316,31 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
 
   const { data: row, error: readError } = await client
     .from("provider_portfolio_photos")
-    .select("photo_path")
+    .select("photo_path, provider_id")
     .eq("id", photoId)
     .maybeSingle()
   if (readError) throw new Error(`Falha ao localizar a foto: ${readError.message}`)
   if (!row) return
 
-  const { error: storageError } = await client.storage
+  const providerId = row.provider_id as string
+  const photoPath = row.photo_path as string
+
+  // SEC-006 — o objeto foi gravado com service_role (owner nulo), então a
+  // policy de DELETE do cliente não o alcança. A remoção reconfere a mesma
+  // autorização e o mesmo prefixo de pasta da policy antes de apagar.
+  const { data: canManage, error: manageError } = await client.rpc("can_manage_provider_profile", {
+    p_provider_id: providerId,
+  })
+  if (manageError) throw new Error(`Falha ao conferir a ficha: ${manageError.message}`)
+  if (canManage !== true) throw new Error("Só o dono da ficha pode remover fotos.")
+  if (!photoPath.startsWith(`${providerId}/portfolio/`)) {
+    throw new Error("A foto não pertence a esta ficha.")
+  }
+
+  const serviceClient = createServiceClient()
+  const { error: storageError } = await serviceClient.storage
     .from("provider-photos")
-    .remove([row.photo_path as string])
+    .remove([photoPath])
   // Falha de remoção no storage não bloqueia a exclusão da linha: a ficha não
   // pode ficar presa a um objeto órfão; o caminho some da listagem de todo jeito.
   void storageError

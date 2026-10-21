@@ -1,0 +1,181 @@
+task_id: SEC-006
+objective: >
+  Nenhuma imagem de usuario chega ao Storage sem passar pela limpeza do servidor. O envio do Mercado
+  (novo anuncio e editar foto) deixa de gravar direto do navegador e passa por action no servidor com a
+  mesma limpeza da SEC-004; as policies de Storage que permitem INSERT ou UPDATE pelo papel authenticated
+  nos buckets de imagem de usuario sao removidas, e a escrita fica so com as actions (service role com
+  autorizacao reconferida).
+authority:
+  - docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (secao 5, H4)
+  - Decisao do coordenador em 2026-10-19 ao dividir a SEC-004 (inventario do Codex no contrato SEC-004)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Inventario da SEC-004 - mercado/novo/page.tsx e mercado/[id]/editar/page.tsx enviam direto do navegador
+    para listing-photos; Storage permite INSERT authenticated em avatars, event-photos, listing-photos,
+    community-images, provider-photos e service-request-photos, e UPDATE em avatars, event-photos,
+    community-images e service-request-photos. Escrever primeiro o pgTAP em que authenticated grava direto
+    num bucket de imagem e ver passar a escrita (falha do contrato).
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/
+  - apps/web/lib/
+  - apps/web/next.config.ts
+  - tests/unit/
+  - tests/e2e/
+  - tests/fixtures/
+  - docs/agents/tasks/SEC-006.task.yml
+forbidden:
+  - push direto na main, merge, deploy ou db push no banco remoto
+  - commitar segredos ou arquivos .env
+  - afrouxar policy ou grant existente fora do escopo desta tarefa
+  - remover leitura (SELECT) dos buckets ou mudar quem pode ver as imagens
+  - editar o prototipo (prototypes/bivaque-html) ou a referencia HTML congelada
+acceptance:
+  - pgTAP prova que authenticated NAO consegue INSERT nem UPDATE direto nos buckets de imagem de usuario e que a leitura existente continua igual
+  - Mercado novo anuncio e editar foto enviam pela action do servidor, com limpeza de metadados e o mesmo limite de tamanho e formato de antes (ajustar bodySizeLimit se necessario, com justificativa)
+  - Teste prova que a foto do Mercado gravada nao tem EXIF ou GPS
+  - Nenhum outro caminho de upload quebra (testes existentes e E2E de foto)
+  - Revisao Flash M3 - moradia (lib/listings/actions.ts), portfolio (prestador/actions.ts) e pedido (pedidos/novo/actions.ts) ainda gravam com o cliente do usuario; passam a gravar com service role depois de reconferir a mesma autorizacao que a policy exigia, antes de remover as policies
+  # Correcoes da confirmacao de 2026-10-19 (tentativa 1/3).
+  - Mercado editar: toda saida de createImageBitmap, compressao, Server Action, troca e limpeza encerra "Enviando..." e mostra feedback; `finally` cobre excecao e sucesso
+  - Pedido: selecao invalida preserva as fotos e o erro, bloqueia o submit e so limpa o erro numa selecao valida
+  - Moradia: posicao da foto e alocada em vaga livre (buracos e teto), nao por `existing.length + index`
+  - Banco: `listing_photos` tem unicidade (listing_id, position) e faixa 0..11; `service_request_photos` tem faixa 0..5; concorrencia e coberta pela unicidade; duplicadas antigas sao renumeradas sem apagar linhas e o excedente antigo segue legivel
+  - Pedido: upload e linha sao vinculados por RPC transacional que devolve o caminho anterior; retry na mesma posicao troca a linha, compensa objeto sem linha e nunca apaga objeto referenciado por outra chamada
+  - Moradia: criacao de listings + property_details e uma unica RPC transacional, com dono derivado de auth.uid(); teste pgTAP prova rollback sem anuncio orfao
+  - Mercado: troca da foto e uma unica RPC transacional que reconfere o dono; o objeto anterior so e removido depois do commit e falha na limpeza nao desfaz a troca
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 exec vitest run tests/unit/security
+  - npx pnpm@11.18.0 gate
+  - npx playwright test tests/e2e/photo-upload.spec.ts (no CI se nao houver seed local)
+risk: coordenada do aparelho gravada em foto publica por envio direto ao Storage
+risk_level: R3
+adr: docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
+# Execucao SEC-006, 2026-10-19, sobre b025f440 + diff local.
+# RED: supabase test db com security-image-storage.sql -> 137 arquivos, 1918 testes, FAIL.
+# Falhas 1-8, 10, 12 e 43: authenticated ainda fazia INSERT/UPDATE direto em avatars, event-photos,
+# listing-photos, community-images, provider-photos e service-request-photos.
+# O rascunho do teste tinha plan(42) para 43 casos e misturava set_config com a funcao de teste;
+# cada caso virou instrucao propria. O visitante de outra cidade passou a provar a leitura de
+# listing-photos ativa que o ADR de consulta a outra cidade garante, em vez de exigir negacao.
+# GREEN: npx pnpm@11.18.0 test:db -> 137 arquivos, 1923 testes, PASS; security-image-storage.sql ok.
+# Unidade: npx pnpm@11.18.0 exec vitest run tests/unit/security -> 12 arquivos, 201 testes PASS.
+# Gate: npx pnpm@11.18.0 gate -> exit 0; lint, typecheck, test e secrets PASS; build PULADO sem .env.local.
+# MORADIA, PORTFOLIO e PEDIDO gravam com service_role depois de reconferir a autorizacao:
+# listings.owner_user_id, can_manage_provider_profile(provider_id) e service_requests.requester_user_id.
+# MERCADO (novo e editar) envia por uploadListingPhotoAction; formatos JPEG/PNG/WebP e limite de 10 MB
+# preservados; bodySizeLimit 12mb justificado por uma foto de 10 MB por chamada mais multipart.
+# Teste de unidade prova bytes gravados sem EXIF, GPS, XMP ou orientacao nos tres formatos.
+# Upload com service_role deixa owner nulo (conferido na API local do Storage); por isso as remocoes
+# de foto de anuncio e portfolio tambem passaram ao servidor, reconferindo posse e prefixo de pasta,
+# sem alterar as policies de DELETE.
+# Policies removidas (INSERT): avatars_insert_own_folder, event_photos_insert_self,
+# listing_photos_storage_insert_owner, community_images_insert_owner, provider_photos_insert_owner,
+# service_request_photos_storage_insert_owner.
+# Policies removidas (UPDATE): avatars_update_own, event_photos_update_own,
+# community_images_update_owner, service_request_photos_storage_update_owner.
+# SELECT e DELETE preservados; verification-documents nao foi tocado.
+# pgTAP existentes ajustados ao contrato novo: community-images, event-photos-storage, listings-moradia,
+# provider-member-business, provider-showcase-scope e rls-or-column-regression.
+# BLOQUEIO REAL: db reset --local --no-seed recusado pelo guard-rail de permissao nesta execucao
+# nao interativa. A migration nova foi aplicada com supabase migration up --local e test:db passou
+# nesse estado; o replay limpo a partir de banco vazio fica pendente de uma sessao com aprovacao.
+# E2E foto-upload nao rodou: sem seed local e sem apps/web/.env.local.
+# Sem .env.local, instalacao, push, PR, merge, deploy ou db push remoto; nenhuma migration antiga editada.
+# Revisao independente e runtime de entrega continuam pendentes.
+# Revisao do Codex (2026-10-19) - M1, M2 e L3 corrigidos no ciclo TDD.
+# M1 RED: testes/unit/listings/photo-replacement.test.ts -> 2 de 4 falhavam; a falha ao
+# apagar a foto anterior caia no catch e apagava tambem a foto nova, e { ok: false }
+# da remocao era ignorado. GREEN: 4/4 PASS.
+# M1: lib/listings/photo-replacement.ts so desfaz newPath quando a linha nova falha;
+# falha ao remover o objeto anterior vira aviso e a tela mostra que a foto foi trocada.
+# M2 RED: tests/unit/security/photo-upload-per-call.test.ts -> as duas actions novas
+# ainda nao existiam (uploadPropertyPhotoAction e uploadServiceRequestPhotoAction).
+# GREEN: 6/6 PASS (2 chamadas de 7 MB somando 14 MB) e tests/unit/storage/photo-upload-sequence.test.ts 4/4 PASS.
+# M2: Moradia e Pedido criam o registro e enviam uma foto por chamada; cada action
+# reconfere a posse e usa sanitizeImage. runWithPending encerra o pending no finally.
+# L3: o mock de tests/unit/security/image-write-authorization.test.ts registra os filtros e
+# devolve o recurso somente com id e dono corretos; negativos com recurso de outra pessoa
+# para anuncio, pedido, perfil e remocao. pgTAP ganhou objeto com owner nulo gravado
+# pela service role e 3 leituras esperadas; plan(43) -> plan(49).
+# db reset --local --no-seed recusado de novo pelo guard-rail nao interativo; migration up
+# --local disse up to date e test:db passou nesse estado.
+# test:db -> 137 arquivos, 1929 testes PASS. Unidade da area -> 30 arquivos, 361 testes PASS.
+# Confirmacao de 2026-10-19, tentativa 1/3 (DeepSeek V4.1 Flash), checkout .claude/worktrees/seguranca:
+# RED em C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019/sec006-red-1.log:
+# 4 suites novas sem modulo e 15 casos falhando (foto presa, selecao, posicoes, troca nao transacional).
+# GREEN da area: 37 arquivos, 405 testes PASS; todos os unitarios: 158 arquivos, 1443 testes PASS.
+# typecheck PASS. Gate completo PASS: lint, typecheck, test (158 arquivos/1443 testes unitarios,
+# 9/189 privacy, 120 scope), secrets; build PULADO por falta de apps/web/.env.local.
+# O Biome ainda imprime infos de arquivos alheios (arrivals, communities-screen, scripts/load), sem erro.
+# Migration nova 20261019235819_sec006_photo_invariants_and_atomic_writes.sql:
+# renumera duplicadas de listing_photos sem apagar linhas; unique (listing_id, position) e check
+# NOT VALID 0..11; check NOT VALID 0..5 em service_request_photos; RPCs create_property_listing,
+# replace_listing_photo e register_service_request_photo com grants so para authenticated.
+# pgTAP novo supabase/tests/sec006-photo-invariants.sql (31 casos): NAO EXECUTADO nesta sessao porque
+# a tarefa proibe alterar o banco local; o coordenador roda reset --no-seed e test:db depois.
+# E2E foto-upload nao rodou (sem seed/.env.local). Nenhum commit, push, PR, merge ou db push.
+
+
+# Reparo 2/3, 2026-10-19 (DeepSeek V4.1 Flash), sobre o mesmo diff, sem commit:
+# RED em sec006-t2-red-1.log: 14 falhas de composicao/acao; o helper chamava deleteListingPhotoObjectAction
+# ao receber erro generico e apagava o objeto que a RPC podia ter comitado.
+# GREEN: helper + replaceListingPhotoAction + uploadServiceRequestPhotoAction com resultado estruturado.
+# Recusa SQL definitiva = erro PostgREST com code; a action limpa apenas o objeto novo e informa cleanup.
+# Erro de transporte/erro sem code = inconclusivo: nenhum objeto e apagado, a mensagem manda recarregar e o
+# retry substitui a linha. Removido o SELECT imediato, que nao prova rollback por causa de commit atrasado.
+# Composicao real helper+action+runWithPending em photo-replacement-composition.test.ts cobre pending,
+# resposta perdida, objeto referenciado preservado e retry. Testes de commit atrasado nas duas actions.
+# pgTAP sec006-photo-invariants.sql corrigido para private.renumber_listing_photos(); plan(31) mantido.
+# pgTAP continua NAO executado nesta sessao (proibido tocar banco local).
+# Gate final da tentativa 2: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
+
+# Revisao final do lote, 2026-10-21 (DeepSeek V4.1 Flash), H1:
+# RED: supabase/tests/listings-community-scope.sql, 4 de 8 casos falharam no banco local.
+# Pendente em A inseria anuncio, atualizava o anuncio do proprio em A e a RPC criava o registro.
+# Migration 20261021174504_sec006_listing_community_scope.sql recria as policies de INSERT e UPDATE
+# de listings com private.is_community_member(community_id) quando community_id nao e nulo.
+# INSERT mantem dono, suspensao e pedido de exclusao; UPDATE mantem dono e reconfere o publico.
+# create_property_listing e SECURITY INVOKER e herda a policy, coberta pelo mesmo teste.
+# locality_id: o modelo atual nao exige vinculo de localidade para publicar; apenas documentado.
+# GREEN: 8/8 PASS, incluindo comunidade B aprovada e community_id nulo.
+# migration up --local aplicou a migration; db reset continua bloqueado e fica para o coordenador.
+
+# Revisao final do lote, 2026-10-21 (DeepSeek V4.1 Flash), M2:
+# RED: tests/unit/security/installation-lock.test.ts falhou; a migration 20261019235819 nao
+# travava listing_photos, entao uma escrita concorrente podia invalidar a renumeracao antes do UNIQUE.
+# Correcao: lock table public.listing_photos in share row exclusive mode imediatamente antes da
+# renumeracao e do add constraint, ainda na mesma transacao. SHARE ROW EXCLUSIVE bloqueia escrita
+# e preserva SELECT; o comentario da migration registra que a tabela fica travada por pouco tempo.
+# A migration nao foi aplicada em banco remoto (a branch nunca saiu daqui), por isso foi editada.
+# GREEN: 2/2 PASS. O reset limpo que reaplica a migration fica com o coordenador.
+
+# Confirmacao 2 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash), alta:
+# RED: supabase/tests/listing-transition-audience.sql, 5 de 10 casos falharam; transition_listing
+# publicava o rascunho e reativava o pausado em cidade/comunidade sem vinculo.
+# Migration 20261021182942_sec006_listing_transition_audience.sql recria a funcao com o mesmo corpo
+# e assinatura; so quando o destino e `active` (publish/reactivate) exige
+# private.is_locality_member(locality_id) e private.is_community_member(community_id), com erro 42501.
+# Pausar, reservar, vender e encerrar continuam sem a exigencia.
+# GREEN: 10/10 PASS; listing-lifecycle, listings-locality-scope, listings-community-scope,
+# listing-market e listings-moradia seguem PASS.
+
+# M4 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash):
+# RED: tests/unit/listings/photo-row-invariant.test.ts, 2 de 5 falharam. Resposta perdida no
+# transporte rejeitava a action, e erro sem SQLSTATE devolvia a mensagem e apagava o objeto novo.
+# Correcao: uploadPropertyPhotoAction usa isDefiniteSqlRejection (apps/web/lib/storage/rpc-outcome.ts).
+# Recusa SQL definitiva, com codigo, remove o objeto novo; erro de transporte ou erro sem codigo
+# preserva o objeto e pede para recarregar. O teste de 23505 continua exigindo a remocao.
+# GREEN: 5/5 PASS; area de listagens e uploads 217/217 em 17 arquivos.
+
