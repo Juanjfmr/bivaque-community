@@ -225,9 +225,18 @@ describe("SEC-004 recoverable image errors", () => {
 })
 
 it("keeps the identity PDF path byte-for-byte", async () => {
-  const file = new File(["%PDF-1.7 synthetic fixture"], "identity.pdf", { type: "application/pdf" })
+  const pdf = `%PDF-1.7
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [] /Count 0 >>
+endobj
+trailer
+<< /Root 1 0 R >>
+%%EOF
+`
+  const file = new File([pdf], "identity.pdf", { type: "application/pdf" })
   expect(await send(paths[7], file)).toEqual({ ok: true })
-  expect(Buffer.from(mocks.upload.mock.calls[0]?.[1])).toEqual(
-    Buffer.from(await file.arrayBuffer()),
-  )
+  expect(Buffer.from(mocks.upload.mock.calls[0]?.[1])).toEqual(Buffer.from(pdf))
 })

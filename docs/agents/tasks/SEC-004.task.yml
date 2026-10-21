@@ -37,6 +37,10 @@ acceptance:
   - Teste com JPEG (e PNG/WebP se aceitos) contendo GPS prova que o arquivo gravado nao tem GPS nem EXIF de localizacao, em cada caminho
   - Upload direto ao Storage pelo cliente fica para a SEC-006 (decisao do coordenador em 2026-10-19); aqui so documentar quais caminhos continuam diretos
   - upload-photo-action recusa conta sem vinculo ao escopo do evento (teste negativo)
+  # SEC-AUD-001 (MEDIUM, 2026-10-19)
+  - A excecao byte a byte do PDF so e aplicada quando os bytes reais tem header PDF; JPEG/PNG com GPS rotulado application/pdf e recusado antes do Storage
+  - PDF verdadeiro continua identico byte a byte, sem reencode, sem parser de assinatura e sem checagem de emissor
+  - Teste positivo usa conteudo PDF real, nao string falsa; testes negativos cobrem JPEG e PNG com metadados e MIME PDF
 proof:
   - npx pnpm@11.18.0 test
   - npx pnpm@11.18.0 gate
@@ -142,3 +146,12 @@ closure:
 # test:db da rodada PASS: 136 arquivos, 1875 testes; E2E e revisao independente do diff pendentes.
 # PDF e arquivo SEC-006 preservados; uploads diretos continuam pertencendo exclusivamente a SEC-006.
 # Sem rede solicitada, instalacao, arquivo de ambiente, commit, push, PR, merge ou deploy.
+
+# SEC-AUD-001, 2026-10-19, tentativa 1 (DeepSeek V4.1 Flash), sobre o diff SEC006 local.
+# RED: tests/unit/security/identity-pdf-content.test.ts, JPEG/PNG com GPS rotulados PDF persistiam
+# byte a byte e respondiam ok; o positivo antigo era uma string de PDF falsa.
+# GREEN: 4/4 PASS; conteudo real conferido pelo header %PDF- nos primeiros 1 KiB; imagem disfarcada
+# e recusada antes do Storage; PDF real de fixture minima segue byte a byte e contentType application/pdf.
+# A excecao de PDF continua; nenhuma assinatura/emissor foi validada e nenhum parser novo foi adicionado.
+# Gate/typecheck/lint da area executados nesta rodada; E2E e revisao independente pendentes.
+# Gate final da rodada SEC-AUD-001: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.

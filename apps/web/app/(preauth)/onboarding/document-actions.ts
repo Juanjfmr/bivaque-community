@@ -13,6 +13,14 @@ const MAX_BYTES = 10 * 1024 * 1024
 const ORPHAN_MIN_AGE_MS = 60 * 60 * 1000
 const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"])
 
+// SEC-AUD-001: o MIME vem do cliente. A exceção byte a byte do PDF só pode ser
+// aplicada quando os bytes realmente são PDF; verificar a assinatura digital ou
+// o emissor exigiria um parser caro que o ADR não pede. O header `%PDF-` é
+// aceito nos primeiros 1 KiB, como a especificação permite.
+function hasPdfHeader(bytes: Uint8Array): boolean {
+  return Buffer.from(bytes.subarray(0, 1024)).includes("%PDF-")
+}
+
 export type UploadVerificationDocumentResult = { ok: true } | { ok: false; error: string }
 
 async function readSessionUserId(): Promise<string | null> {
@@ -111,10 +119,18 @@ export async function uploadVerificationDocumentAction(
 
   let buffer: Uint8Array
   try {
-    buffer =
-      file.type === "application/pdf"
-        ? new Uint8Array(await file.arrayBuffer())
-        : await sanitizeImage(file, MAX_BYTES)
+    if (file.type === "application/pdf") {
+      const original = new Uint8Array(await file.arrayBuffer())
+      if (!hasPdfHeader(original)) {
+        return {
+          ok: false,
+          error: "O arquivo não é um PDF válido. Envie um PDF, JPEG ou PNG.",
+        }
+      }
+      buffer = original
+    } else {
+      buffer = await sanitizeImage(file, MAX_BYTES)
+    }
   } catch {
     return {
       ok: false,
