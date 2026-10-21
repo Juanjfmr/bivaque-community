@@ -43,6 +43,12 @@ jobs:
             --sites /tmp/om-catalog/military_sites.csv \
             --out /tmp/om-catalog/audit \
             --localities data/om/ibge_localities.csv
+      - name: Prepare offline geocoding batch (no paid API calls)
+        run: |
+          python scripts/om-catalog/geoapify_batch.py \
+            --queue /tmp/om-catalog/audit/geocoding_queue.csv \
+            --out /tmp/om-catalog/geocoding \
+            --max-addresses 537
       - name: Check baseline totals and prohibit false verification
         run: |
           python - <<'PY'
@@ -69,6 +75,7 @@ jobs:
             /tmp/om-catalog/military_sites.csv
             /tmp/om-catalog/review_queue.csv
             /tmp/om-catalog/audit/
+            /tmp/om-catalog/geocoding/
           retention-days: 14
 
   staging-sql:
