@@ -35,7 +35,7 @@ def render(raw_path:Path, ibge_path:Path)->str:
         output.append({'id':r['id'],'force':force,'name':name,'acronym':r['sigla'].strip(),
                       'city':city,'uf':uf})
     output.sort(key=lambda v:(v['uf'],norm(v['city']),v['force'],norm(v['name'])))
-    return json.dumps(output,ensure_ascii=False,separators=(',',':'))+'\n'
+    return json.dumps(output,ensure_ascii=False,indent=2)+'\n'
 
 if __name__=='__main__':
     p=argparse.ArgumentParser()
