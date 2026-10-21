@@ -82,7 +82,7 @@ export default async function ImoveisPage({
   const organizations = localityRow?.localities
     ? listOrganizationsByCity(localityRow.localities.city_name, localityRow.localities.state_code)
     : []
-  const omParam = params.om
+  const omParam = params["om"]
   const selectedOm =
     typeof omParam === "string" && localityRow?.localities
       ? findOrganizationInCity(
