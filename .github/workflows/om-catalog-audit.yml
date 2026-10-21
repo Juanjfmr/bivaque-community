@@ -32,6 +32,8 @@ jobs:
           python-version: "3.12"
       - name: Unit tests (no network)
         run: python -m unittest discover -s tests/om-catalog -v
+      - name: Check public directory snapshot against official-source inventory
+        run: python scripts/om-catalog/export_browser_catalog.py --check
       - name: Rebuild staging datasets
         run: |
           mkdir -p /tmp/om-catalog
