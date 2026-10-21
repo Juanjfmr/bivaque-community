@@ -1,0 +1,102 @@
+name: OM catalog - one-time Geoapify geocoding
+
+# One-shot trigger: ordinary code pushes and PRs never call the paid API.
+on:
+  push:
+    branches:
+      - feat/om-catalog-staging-20261021
+    paths:
+      - data/om/requests/geoapify-20261021.once
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-time-om-geocoding-20261021
+  cancel-in-progress: false
+
+jobs:
+  geocode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Require configured Geoapify GitHub secret
+        run: |
+          if [ -z "$GEOAPIFY_API_KEY" ]; then
+            echo "::error::GEOAPIFY_API_KEY is missing from repository GitHub Actions secrets."
+            exit 2
+          fi
+          echo "Geoapify credential is present; value is not displayed."
+      - name: Recreate reviewed candidate list
+        run: |
+          mkdir -p /tmp/om-batch
+          python scripts/om-catalog/normalize.py data/om/raw_oms_1416.csv /tmp/om-batch
+          python scripts/om-catalog/audit_sites.py \
+            --organizations /tmp/om-batch/military_organizations.csv \
+            --sites /tmp/om-batch/military_sites.csv \
+            --localities data/om/ibge_localities.csv \
+            --out /tmp/om-batch/audit
+          python scripts/om-catalog/geoapify_batch.py \
+            --queue /tmp/om-batch/audit/geocoding_queue.csv \
+            --out /tmp/om-batch/geocoding \
+            --max-addresses 537
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/om-batch/geocoding/geocoding_manifest.json'))
+          assert len(data)==537, f'Unexpected count: {len(data)}'
+          assert len({item['site_id'] for item in data})==537
+          print('Validated 537 publicly sourced textual address candidates.')
+          PY
+      - name: Submit exactly one paid-provider batch
+        run: |
+          python scripts/om-catalog/geoapify_batch.py \
+            --queue /tmp/om-batch/audit/geocoding_queue.csv \
+            --out /tmp/om-batch/geocoding \
+            --operation submit \
+            --max-addresses 537
+      - name: Collect results while available, preserve job if still pending
+        run: |
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/om-batch/geocoding/batch_job.json'))
+          assert len(data['id'])==32
+          print('Batch submitted; keeping its identifier in the artifact.')
+          PY
+          for attempt in $(seq 1 24); do
+            id="$(python -c "import json;print(json.load(open('/tmp/om-batch/geocoding/batch_job.json'))['id'])")"
+            python scripts/om-catalog/geoapify_batch.py \
+              --queue /tmp/om-batch/audit/geocoding_queue.csv \
+              --out /tmp/om-batch/geocoding \
+              --operation collect \
+              --job-id "$id" \
+              --max-addresses 537 > /tmp/om-batch/geocoding/poll_status.json
+            status="$(python -c "import json;print(json.load(open('/tmp/om-batch/geocoding/poll_status.json'))['status'])")"
+            if [ "$status" = "RECEIVED_UNVERIFIED" ]; then
+              python scripts/om-catalog/parse_geoapify_results.py \
+                --manifest /tmp/om-batch/geocoding/geocoding_manifest.json \
+                --results /tmp/om-batch/geocoding/provider_results_unverified.json \
+                --queue /tmp/om-batch/audit/geocoding_queue.csv \
+                --out /tmp/om-batch/geocoding/suggestions_review_only.csv
+              python -c "import csv,collections;rows=list(csv.DictReader(open('/tmp/om-batch/geocoding/suggestions_review_only.csv')));assert len(rows)==537;print('Geocoded candidate rows:',len(rows),'review statuses:',dict(collections.Counter(row['status'] for row in rows)))"
+              exit 0
+            fi
+            echo "Batch pending (check $attempt of 24)"
+            sleep 20
+          done
+          echo "Provider batch still pending; job ID saved as artifact. Do not resubmit."
+      - name: Upload provider responses and manual-review proposals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: om-geoapify-20261021-raw-unverified
+          path: |
+            /tmp/om-batch/geocoding/
+            /tmp/om-batch/audit/site_audit.json
+          retention-days: 14
+          if-no-files-found: warn
