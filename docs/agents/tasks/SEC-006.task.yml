@@ -140,3 +140,14 @@ closure:
 # pgTAP sec006-photo-invariants.sql corrigido para private.renumber_listing_photos(); plan(31) mantido.
 # pgTAP continua NAO executado nesta sessao (proibido tocar banco local).
 # Gate final da tentativa 2: 161 arquivos unitarios/1457 testes, privacy 189, scope 120, lint/typecheck/secrets PASS; build pulado sem .env.local.
+
+# Revisao final do lote, 2026-10-21 (DeepSeek V4.1 Flash), H1:
+# RED: supabase/tests/listings-community-scope.sql, 4 de 8 casos falharam no banco local.
+# Pendente em A inseria anuncio, atualizava o anuncio do proprio em A e a RPC criava o registro.
+# Migration 20261021174504_sec006_listing_community_scope.sql recria as policies de INSERT e UPDATE
+# de listings com private.is_community_member(community_id) quando community_id nao e nulo.
+# INSERT mantem dono, suspensao e pedido de exclusao; UPDATE mantem dono e reconfere o publico.
+# create_property_listing e SECURITY INVOKER e herda a policy, coberta pelo mesmo teste.
+# locality_id: o modelo atual nao exige vinculo de localidade para publicar; apenas documentado.
+# GREEN: 8/8 PASS, incluindo comunidade B aprovada e community_id nulo.
+# migration up --local aplicou a migration; db reset continua bloqueado e fica para o coordenador.
