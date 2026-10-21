@@ -5,14 +5,16 @@ addresses, or military site coordinates. Sources remain in raw_oms_1416.csv.
 """
 import argparse
 import csv
+import hashlib
 import json
+import re
 import re
 import unicodedata
 from pathlib import Path
 
 FOREIGN_CITIES={'cidade do mexico','maputo','paramaribo - suriname','roma','teera','washington, dc'}
 def norm(s):
-    return ''.join(c for c in unicodedata.normalize('NFKD',s.casefold()) if not unicodedata.combining(c)).strip()
+    return re.sub(r'\s+', ' ', ''.join(c for c in unicodedata.normalize('NFKD',s.casefold()) if not unicodedata.combining(c))).strip()
 
 def render(raw_path:Path, ibge_path:Path)->str:
     with ibge_path.open(encoding='utf-8',newline='') as f:
@@ -32,7 +34,9 @@ def render(raw_path:Path, ibge_path:Path)->str:
         key=(force,norm(name),norm(city),uf)
         if key in seen:continue
         seen.add(key)
-        output.append({'id':r['id'],'force':force,'name':name,'acronym':r['sigla'].strip(),
+        identity='|'.join((force,norm(name),norm(city),uf,country))
+        catalog_id=hashlib.sha256(identity.encode()).hexdigest()[:24]
+        output.append({'id':catalog_id,'force':force,'name':name,'acronym':r['sigla'].strip(),
                       'city':city,'uf':uf})
     output.sort(key=lambda v:(v['uf'],norm(v['city']),v['force'],norm(v['name'])))
     return json.dumps(output,ensure_ascii=False,indent=2)+'\n'
