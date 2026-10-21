@@ -157,8 +157,11 @@ jobs:
       - name: Root E2E tests (parallel, excluding @stateful)
         run: pnpm test:e2e
 
+      # O trace de falha vai junto no artefato (test-results/): o relatório só
+      # mostra o passo que travou, e um spec stateful que passa local e falha
+      # aqui não tem outra testemunha do que a tela tinha (PR #98, 21/10/2026).
       - name: Root E2E tests (stateful, serial)
-        run: pnpm test:e2e:stateful
+        run: pnpm test:e2e:stateful --trace=retain-on-failure
 
       - name: Upload Playwright artifacts
         if: always()
