@@ -161,6 +161,16 @@ closure:
 # A migration nao foi aplicada em banco remoto (a branch nunca saiu daqui), por isso foi editada.
 # GREEN: 2/2 PASS. O reset limpo que reaplica a migration fica com o coordenador.
 
+# Confirmacao 2 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash), alta:
+# RED: supabase/tests/listing-transition-audience.sql, 5 de 10 casos falharam; transition_listing
+# publicava o rascunho e reativava o pausado em cidade/comunidade sem vinculo.
+# Migration 20261021182942_sec006_listing_transition_audience.sql recria a funcao com o mesmo corpo
+# e assinatura; so quando o destino e `active` (publish/reactivate) exige
+# private.is_locality_member(locality_id) e private.is_community_member(community_id), com erro 42501.
+# Pausar, reservar, vender e encerrar continuam sem a exigencia.
+# GREEN: 10/10 PASS; listing-lifecycle, listings-locality-scope, listings-community-scope,
+# listing-market e listings-moradia seguem PASS.
+
 # M4 da revisao final, 2026-10-21 (DeepSeek V4.1 Flash):
 # RED: tests/unit/listings/photo-row-invariant.test.ts, 2 de 5 falharam. Resposta perdida no
 # transporte rejeitava a action, e erro sem SQLSTATE devolvia a mensagem e apagava o objeto novo.
