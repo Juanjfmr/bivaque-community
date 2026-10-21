@@ -16,6 +16,10 @@
 -- o check de faixa entra como NOT VALID, então ele vale para toda escrita nova
 -- sem invalidar o histórico. Unicidade + faixa limitam as novas escritas a 12.
 
+-- Bloco de transação explícito: o CLI do Supabase não envolve a migration numa transação,
+-- e o LOCK TABLE abaixo só vale dentro de uma (SQLSTATE 25P01 sem este begin).
+begin;
+
 -- ── 1. Renumeração sem perda ─────────────────────────────────────────────────
 
 create or replace function private.renumber_listing_photos()
@@ -302,3 +306,5 @@ revoke all on function public.register_service_request_photo(uuid, text, integer
   from public, anon;
 grant execute on function public.register_service_request_photo(uuid, text, integer)
   to authenticated;
+
+commit;
