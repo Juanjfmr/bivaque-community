@@ -1,0 +1,38 @@
+name: OM Catalog Audit
+on:
+  pull_request:
+    paths:
+      - 'data/om-catalog/**'
+      - 'scripts/om-catalog/**'
+      - 'tests/om-catalog/**'
+      - 'prototypes/bivaque-html/src/**'
+      - '.github/workflows/om-catalog-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run catalog preparation
+        run: python scripts/om-catalog/prepare_catalog.py --input data/om-catalog/source-2026-10-20.csv --crosswalk data/om-catalog/ibge-crosswalk-2026-10-21.csv --out /tmp/bivaque-om-audit
+      - name: Generate unverified import candidate
+        run: python scripts/om-catalog/build_import_sql.py --organizations /tmp/bivaque-om-audit/organizations.json --out /tmp/bivaque-om-audit/import-unverified.sql
+      - name: Unit tests
+        run: python -m unittest discover -s tests/om-catalog -v
+      - name: Modular UI smoke
+        run: |
+          node --check prototypes/bivaque-html/src/features/transfers/om-directory.js
+          node --check prototypes/bivaque-html/src/features/transfers/om-directory-data.js
+          node tests/om-catalog/om-directory-smoke.cjs
+      - name: Build current modular HTML
+        run: |
+          python scripts/bivaque-html/build.py
+          python scripts/bivaque-html/build.py --check-current

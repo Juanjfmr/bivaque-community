@@ -1,6 +1,7 @@
 async function perform(action,value,el){
  globalActionElement=el;navigationPendingContext=navigationContext();
  if(typeof profileGlobalAction==='function'&&await profileGlobalAction(action,value,el))return;
+ if(await omDirectoryAction(action,value))return;
  if(await messagingAction(action,value,el))return;
  if(await alertAction(action,value))return;
  if(wizardAction(action,value))return;
