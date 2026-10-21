@@ -1,4 +1,5 @@
 name: OM Geoapify batch (one-off)
+# Single authorized run requested on 2026-10-21; rerunning could spend credits.
 on:
   push:
     branches: [feat/om-catalog-staging-20261021]
@@ -30,8 +31,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$GEOAPIFY_API_KEY" ]; then
-            echo '::warning::No GEOAPIFY_API_KEY Actions Secret configured; live geocoding skipped.'
-            exit 0
+            echo '::error::GEOAPIFY_API_KEY Actions Secret missing; aborting without submission.'
+            exit 1
           fi
           python scripts/om-catalog/geoapify_batch.py --queue /tmp/om/audit/geocoding_queue.csv --out /tmp/om/geocoding --operation submit --max-addresses 537
           JOB_ID=$(python -c 'import json;print(json.load(open("/tmp/om/geocoding/batch_job.json"))["id"])')
