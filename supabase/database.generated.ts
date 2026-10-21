@@ -1428,6 +1428,7 @@ export type Database = {
           last_error: string | null
           payload: Json
           recipient: string
+          reserved_by: string | null
           reserved_until: string | null
           status: Database["public"]["Enums"]["outbox_status"]
           type: string
@@ -1441,6 +1442,7 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           recipient: string
+          reserved_by?: string | null
           reserved_until?: string | null
           status?: Database["public"]["Enums"]["outbox_status"]
           type: string
@@ -1454,6 +1456,7 @@ export type Database = {
           last_error?: string | null
           payload?: Json
           recipient?: string
+          reserved_by?: string | null
           reserved_until?: string | null
           status?: Database["public"]["Enums"]["outbox_status"]
           type?: string

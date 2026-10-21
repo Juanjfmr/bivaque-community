@@ -19,6 +19,9 @@ import { POST } from "web/app/api/internal/outbox/route"
 const FIRST = "10000000-0000-4000-8000-000000000001"
 const SECOND = "10000000-0000-4000-8000-000000000002"
 
+// SEC-AUD-004: a segunda chamada so envia o que a reserva dela ainda possui.
+const RESERVATION = "cccccccc-0000-4000-8000-00000000000c"
+
 type Row = {
   id: string
   recipient: string
@@ -30,6 +33,8 @@ type Row = {
   last_error: string | null
   status: "pending" | "sent" | "failed" | "skipped"
   created_at: string
+  reserved_until: string | null
+  reserved_by: string | null
 }
 
 const state = vi.hoisted(() => ({
@@ -70,26 +75,52 @@ function row(id: string): Row {
     last_error: null,
     status: "pending",
     created_at: "1970-01-01T00:00:00.000Z",
+    reserved_until: new Date(Date.now() + 5 * 60_000).toISOString(),
+    reserved_by: RESERVATION,
   }
 }
 
 function outboxTable() {
   return {
-    select: () => {
+    select: (columns: string) => {
+      const filters: Record<string, string> = {}
       let ids: string[] = []
-      let status: string | null = null
+
+      if (columns !== "*") {
+        const builder = {
+          eq: (column: string, value: string) => {
+            filters[column] = value
+            return builder
+          },
+          maybeSingle: async () => {
+            const candidate = filters.id === undefined ? undefined : state.rows.get(filters.id)
+            if (!candidate || candidate.reserved_by !== filters.reserved_by) {
+              return { data: null, error: null }
+            }
+            return {
+              data: {
+                reserved_by: candidate.reserved_by,
+                reserved_until: candidate.reserved_until,
+              },
+              error: null,
+            }
+          },
+        }
+        return builder
+      }
+
       const builder = {
         in: (_column: string, values: string[]) => {
           ids = values
           return builder
         },
-        eq: (_column: string, value: string) => {
-          status = value
+        eq: (column: string, value: string) => {
+          filters[column] = value
           return builder
         },
         limit: async () => ({
           data: [...state.rows.values()].filter(
-            (candidate) => ids.includes(candidate.id) && candidate.status === status,
+            (candidate) => ids.includes(candidate.id) && candidate.status === filters.status,
           ),
           error: null,
         }),
@@ -97,21 +128,30 @@ function outboxTable() {
       return builder
     },
     update: (patch: Partial<Row>) => {
-      let id: string | null = null
+      const filters: Record<string, string> = {}
       const builder = {
-        eq: (_column: string, value: string) => {
-          id = value
+        eq: (column: string, value: string) => {
+          filters[column] = value
           return builder
         },
-        // biome-ignore lint/suspicious/noThenProperty: the mock mirrors Supabase's awaitable builder
-        then: (
-          onFulfilled: (value: { data: null; error: null }) => unknown,
-          onRejected?: (reason: unknown) => unknown,
-        ) => {
-          const target = id === null ? undefined : state.rows.get(id)
-          if (target) Object.assign(target, patch)
-          return Promise.resolve({ data: null, error: null }).then(onFulfilled, onRejected)
-        },
+        select: () => ({
+          // biome-ignore lint/suspicious/noThenProperty: the mock mirrors Supabase's awaitable builder
+          then: (
+            onFulfilled: (value: { data: Array<{ id: string }>; error: null }) => unknown,
+            onRejected?: (reason: unknown) => unknown,
+          ) => {
+            const target = filters.id === undefined ? undefined : state.rows.get(filters.id)
+            const matches =
+              target !== undefined &&
+              (filters.reserved_by === undefined || target.reserved_by === filters.reserved_by)
+            if (target && matches) Object.assign(target, patch)
+
+            return Promise.resolve({
+              data: target && matches ? [{ id: target.id }] : [],
+              error: null,
+            }).then(onFulfilled, onRejected)
+          },
+        }),
       }
       return builder
     },
@@ -150,7 +190,7 @@ function dispatch(ids: string[]) {
     new Request("http://localhost/api/internal/outbox", {
       method: "POST",
       headers: { "x-outbox-secret": "test-secret" },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify({ ids, reservation: RESERVATION }),
     }),
   )
 }

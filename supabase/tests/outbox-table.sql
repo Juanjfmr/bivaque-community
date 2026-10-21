@@ -19,7 +19,8 @@ select columns_are(
     'last_error',
     'created_at',
     'updated_at',
-    'reserved_until'
+    'reserved_until',
+    'reserved_by'
   ],
   -- columns_are compara o CONJUNTO exato: as colunas de fallback saíram com o
   -- canal WhatsApp (18/09/2026) e este teste passa a impedir que voltem por

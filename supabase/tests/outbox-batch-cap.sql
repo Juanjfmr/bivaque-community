@@ -22,7 +22,7 @@ select
 from generate_series(1, 5001) as g;
 
 create temporary table batch_one as
-select id from private.outbox_prepare_due() as due(id);
+select id from private.outbox_prepare_due();
 
 select is(
   (select count(*) from batch_one),
@@ -42,7 +42,7 @@ select is(
 );
 
 create temporary table batch_two as
-select id from private.outbox_prepare_due() as due(id);
+select id from private.outbox_prepare_due();
 
 select is(
   (select count(*) from batch_two),

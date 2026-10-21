@@ -25,6 +25,10 @@ import { createServerClient } from "web/lib/supabase/server"
 
 type QueryResult = { data: unknown; error: { message: string } | null }
 
+// SEC-AUD-004: a rota so envia itens que continuam pertencendo ao token da
+// reserva. O lote de teste simula uma reserva valida deste token.
+const RESERVATION = "cccccccc-0000-4000-8000-00000000000c"
+
 function idFor(index: number): string {
   return `10000000-0000-4000-8000-${String(index).padStart(12, "0")}`
 }
@@ -41,6 +45,8 @@ function rowFor(index: number) {
     last_error: null,
     status: "pending",
     created_at: "1970-01-01T00:00:00.000Z",
+    reserved_until: new Date(Date.now() + 5 * 60_000).toISOString(),
+    reserved_by: RESERVATION,
   }
 }
 
@@ -87,7 +93,20 @@ function clientFor(count: number) {
   )
   const outboxRead = outboxSelect
 
-  const updateBuilder = thenable(() => ({ data: null, error: null }))
+  // A leitura de reserva feita antes de cada envio confirma o token.
+  const reservationCheck = {
+    eq: vi.fn(() => reservationCheck),
+    maybeSingle: vi.fn(async () => ({
+      data: {
+        reserved_by: RESERVATION,
+        reserved_until: new Date(Date.now() + 5 * 60_000).toISOString(),
+      },
+      error: null,
+    })),
+  }
+  outboxRead.select = vi.fn((columns: string) => (columns === "*" ? outboxRead : reservationCheck))
+
+  const updateBuilder = thenable(() => ({ data: [{ id: "persisted" }], error: null }))
   const update = vi.fn(() => updateBuilder)
   outboxRead.update = update
 
@@ -116,7 +135,7 @@ async function dispatch(ids: string[]) {
     new Request("http://localhost/api/internal/outbox", {
       method: "POST",
       headers: { "x-outbox-secret": "test-secret" },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify({ ids, reservation: RESERVATION }),
     }),
   )
   return { response, payload: await response.json(), update, selectedChunkSizes }

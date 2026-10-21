@@ -38,7 +38,7 @@ values (
 );
 
 create temporary table reserved as
-select id from private.outbox_prepare_due() as due(id);
+select id from private.outbox_prepare_due();
 
 select is(
   (select count(*) from reserved),

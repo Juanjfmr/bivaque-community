@@ -19,6 +19,9 @@ import { POST } from "web/app/api/internal/outbox/route"
 
 const send = vi.fn(async () => ({ ok: true }))
 
+// SEC-AUD-004: o lote so e aceito com o token da reserva.
+const RESERVATION = "cccccccc-0000-4000-8000-00000000000c"
+
 vi.mock("web/lib/supabase/server", () => ({
   createServerClient: vi.fn(),
 }))
@@ -76,10 +79,20 @@ function clientFor(
         created_at: "1970-01-01T00:00:00.000Z",
         fallback_channel: null,
         fallback_reason: null,
+        reserved_by: RESERVATION,
+        reserved_until: new Date(Date.now() + 5 * 60_000).toISOString(),
       },
     ],
     error: null,
   })
+  // A rota confere a reserva antes de cada envio, com uma leitura pontual.
+  outboxRead.maybeSingle = vi.fn(async () => ({
+    data: {
+      reserved_by: RESERVATION,
+      reserved_until: new Date(Date.now() + 5 * 60_000).toISOString(),
+    },
+    error: null,
+  }))
   const preferences = query(
     lookups.notification_preferences ?? {
       data: [
@@ -98,7 +111,7 @@ function clientFor(
     lookups.notification_channel_preferences ?? { data: [], error: null },
   )
   const optOut = query(lookups.notification_opt_outs ?? { data: null, error: null })
-  const update = query({ data: null, error: null })
+  const update = query({ data: [{ id: "10000000-0000-4000-8000-000000000001" }], error: null })
   outboxRead.update.mockReturnValue(update)
 
   return {
@@ -123,7 +136,10 @@ async function dispatch(client: ReturnType<typeof clientFor>) {
     new Request("http://localhost/api/internal/outbox", {
       method: "POST",
       headers: { "x-outbox-secret": "test-secret" },
-      body: JSON.stringify({ ids: ["10000000-0000-4000-8000-000000000001"] }),
+      body: JSON.stringify({
+        ids: ["10000000-0000-4000-8000-000000000001"],
+        reservation: RESERVATION,
+      }),
     }),
   )
   return response.json()

@@ -21,6 +21,8 @@ export const dynamic = "force-dynamic"
 
 const MAX_BATCH = 100
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // Teto de segurança do lote total. A reserva SQL entrega no máximo este mesmo
 // número por chamada (SEC-AUD-002); 5.000 cobre uma fila bem acima do volume
 // normal e ainda impede que um payload arbitrário abra milhares de consultas
@@ -86,6 +88,44 @@ async function deliveryLookup<T>(
   }
 }
 
+// A reserva so vale se a linha ainda pertence a este token e nao venceu. A
+// consulta e feita imediatamente antes de cada envio: uma execucao lenta pode
+// ter perdido a reserva para outra no meio do bloco.
+type ReservationStatus = "owned" | "superseded" | "expired" | "unknown"
+
+async function reservationStatus(
+  supabase: ReturnType<typeof createServerClient>,
+  id: string,
+  reservation: string,
+): Promise<ReservationStatus> {
+  const { data, error } = await deliveryLookup<{
+    reserved_by: string | null
+    reserved_until: string | null
+  }>(
+    supabase
+      .from("outbox")
+      .select("reserved_by, reserved_until")
+      .eq("id", id)
+      .eq("reserved_by", reservation)
+      .maybeSingle(),
+  )
+
+  if (error) {
+    log.error("outbox worker reservation lookup failed", {
+      id,
+      error: scrubPii(error.message),
+    })
+    return "unknown"
+  }
+
+  if (data === null || data.reserved_until === null) return "superseded"
+
+  const until = Date.parse(data.reserved_until)
+  if (!Number.isFinite(until) || until <= Date.now()) return "expired"
+
+  return "owned"
+}
+
 export async function POST(request: Request) {
   const expectedSecret = process.env["OUTBOX_WORKER_SECRET"]
   if (!expectedSecret) {
@@ -113,6 +153,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 })
   }
 
+  // SEC-AUD-004: o disparo SQL reserva os itens com um token por chamada. Sem
+  // o token nao ha como provar que o item ainda pertence a esta execucao, e
+  // enviar sem essa prova e exatamente o reenvio duplicado que a correcao
+  // fecha.
+  const rawReservation = (body as { reservation?: unknown }).reservation
+  if (typeof rawReservation !== "string" || !UUID_PATTERN.test(rawReservation)) {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 })
+  }
+
   const ids = [
     ...new Set(rawIds.filter((id): id is string => typeof id === "string" && id.length > 0)),
   ]
@@ -125,7 +174,7 @@ export async function POST(request: Request) {
   const totals: BatchCounts = { processed: 0, sent: 0, skipped: 0, failed: 0, pending: 0 }
 
   for (const chunk of chunksOf(ids, MAX_BATCH)) {
-    const counts = await processBatch(chunk, supabase, now)
+    const counts = await processBatch(chunk, rawReservation, supabase, now)
     if (counts === null) {
       return NextResponse.json({ error: "internal" }, { status: 500 })
     }
@@ -153,6 +202,7 @@ function chunksOf<T>(items: T[], size: number): T[][] {
 // para o chamador responder 500 sem continuar com dados que não conseguiu ler.
 async function processBatch(
   ids: string[],
+  reservation: string,
   supabase: ReturnType<typeof createServerClient>,
   now: number,
 ): Promise<BatchCounts | null> {
@@ -296,6 +346,26 @@ async function processBatch(
   const counts: BatchCounts = { processed: 0, sent: 0, skipped: 0, failed: 0, pending: 0 }
 
   for (const message of messages) {
+    const status = await reservationStatus(supabase, message.id, reservation)
+
+    // A reserva venceu no meio do lote: nada mais desta execucao pode sair.
+    // Os itens restantes ficam `pending` e voltam a ser elegiveis na proxima
+    // chamada de `private.outbox_prepare_due()`.
+    if (status === "expired") {
+      log.info("outbox worker reservation expired mid-batch", {
+        id: message.id,
+        remaining: messages.length - counts.processed - counts.skipped - counts.failed,
+      })
+      break
+    }
+
+    // Outra execucao passou a ser dona do item (ou a consulta foi
+    // inconclusiva): nao envia e nao grava nada.
+    if (status !== "owned") {
+      counts.skipped++
+      continue
+    }
+
     const lastError = lookupErrors.get(message.id)
     const mutation: OutboxMutation = lastError
       ? {
@@ -317,13 +387,20 @@ async function processBatch(
       updated_at: new Date(mutation.updatedAt).toISOString(),
       // A reserva do despachante SQL termina aqui: a mutacao ja foi gravada.
       reserved_until: null,
+      reserved_by: null,
     }
 
     // O patch de fallback saiu com o canal WhatsApp: o banco nao tem mais
     // fallback_channel/fallback_reason e o dominio nao produz mais o campo.
-    const { error: updateError } = await supabase.from("outbox").update(patch).eq("id", mutation.id)
+    // O filtro por `reserved_by` impede que uma execucao atrasada sobrescreva
+    // o resultado de quem tomou a reserva depois dela.
+    const { data: persisted, error: updateError } = await supabase
+      .from("outbox")
+      .update(patch)
+      .eq("id", mutation.id)
+      .eq("reserved_by", reservation)
+      .select("id")
 
-    counts.processed++
     if (updateError) {
       log.error("outbox worker update failed", {
         id: mutation.id,
@@ -333,6 +410,14 @@ async function processBatch(
       counts.failed++
       continue
     }
+
+    if (!persisted || persisted.length === 0) {
+      log.info("outbox worker lost the reservation before writing", { id: mutation.id })
+      counts.skipped++
+      continue
+    }
+
+    counts.processed++
 
     switch (mutation.status) {
       case "sent":
