@@ -20,13 +20,13 @@ function shareWrap(ctx,text,max,lines){
 }
 async function shareCardBlob(d){
  const css=getComputedStyle(document.documentElement),tok=n=>css.getPropertyValue(`--md-sys-color-${n}`).trim()||'#003748';
- const c=document.createElement('canvas');c.width=SHARE_W;c.height=SHARE_H;const g=c.getContext('2d'),font=(w,s)=>`${w} ${s}px "Roboto Flex", system-ui, sans-serif`;
- await Promise.all([document.fonts.load(font(700,64)),document.fonts.load(font(500,40)),document.fonts.load('200px "Material Symbols Rounded"')]).catch(()=>{});
+ const c=document.createElement('canvas');c.width=SHARE_W;c.height=SHARE_H;const g=c.getContext('2d'),font=(w,s)=>`${w} ${s}px "Noto Sans", system-ui, sans-serif`;
+ await Promise.all([document.fonts.load(font(700,64)),document.fonts.load(font(500,40)),document.fonts.load('200px "Material Symbols Outlined"')]).catch(()=>{});
  g.fillStyle='#f9f9fb';g.fillRect(0,0,SHARE_W,SHARE_H);
  const ph=720;
  if(d.photo){try{const img=new Image();img.src=d.photo;await img.decode();const s=Math.max(SHARE_W/img.width,ph/img.height),w=img.width*s,h=img.height*s;g.save();g.beginPath();g.rect(0,0,SHARE_W,ph);g.clip();g.drawImage(img,(SHARE_W-w)/2,(ph-h)/2,w,h);g.restore();}catch{d={...d,photo:''};}}
  // Sem foto: o ícone do anúncio no lugar da imagem.
- if(!d.photo){g.fillStyle='#e7e8ea';g.fillRect(0,0,SHARE_W,ph);g.fillStyle='#71787d';g.font='220px "Material Symbols Rounded"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
+ if(!d.photo){g.fillStyle='#e7e8ea';g.fillRect(0,0,SHARE_W,ph);g.fillStyle='#71787d';g.font='220px "Material Symbols Outlined"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
  g.font=font(700,34);const tw=g.measureText(d.tag).width;g.fillStyle='rgba(20,41,51,.86)';g.beginPath();g.roundRect(48,48,tw+48,64,16);g.fill();g.fillStyle='#fff';g.fillText(d.tag,72,92);
  let y=ph+96;g.fillStyle='#191c1d';g.font=font(800,72);g.fillText(d.big,64,y);
  y+=74;g.font=font(700,50);for(const line of shareWrap(g,d.title,SHARE_W-128,2)){g.fillText(line,64,y);y+=62;}

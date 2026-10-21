@@ -114,7 +114,7 @@ const checkpoints = {
       return names.filter((n) => {
         const s = document.createElement("span")
         s.style.cssText =
-          "font-family:'Material Symbols Rounded';font-size:24px;position:absolute;white-space:nowrap"
+          "font-family:'Material Symbols Outlined';font-size:24px;position:absolute;white-space:nowrap"
         s.textContent = n
         document.body.append(s)
         const w = s.getBoundingClientRect().width

@@ -52,8 +52,8 @@ export async function stabilize(page, { neutralizeInteraction = false } = {}) {
     const frame = () => new Promise((done) => requestAnimationFrame(done))
     await document.fonts.ready
     await Promise.all([
-      document.fonts.load('14px "Roboto Flex"'),
-      document.fonts.load('24px "Material Symbols Rounded"'),
+      document.fonts.load('14px "Noto Sans"'),
+      document.fonts.load('24px "Material Symbols Outlined"'),
     ])
     // Child updates can be scheduled by their parents; repeat until the tree has settled.
     for (let round = 0; round < 4; round++) {
