@@ -1,0 +1,69 @@
+name: OM catalog - reproducible staging audit
+
+on:
+  pull_request:
+    paths:
+      - "data/om/**"
+      - "scripts/om-catalog/**"
+      - "tests/om-catalog/**"
+      - "supabase/migrations/*military*"
+      - ".github/workflows/om-catalog-audit.yml"
+  push:
+    branches:
+      - feat/om-catalog-staging-20261021
+    paths:
+      - "data/om/**"
+      - "scripts/om-catalog/**"
+      - "tests/om-catalog/**"
+      - "supabase/migrations/*military*"
+      - ".github/workflows/om-catalog-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests (no network)
+        run: python -m unittest discover -s tests/om-catalog -v
+      - name: Rebuild staging datasets
+        run: |
+          mkdir -p /tmp/om-catalog
+          python scripts/om-catalog/normalize.py data/om/raw_oms_1416.csv /tmp/om-catalog
+          python scripts/om-catalog/audit_sites.py \
+            --organizations /tmp/om-catalog/military_organizations.csv \
+            --sites /tmp/om-catalog/military_sites.csv \
+            --out /tmp/om-catalog/audit
+      - name: Check baseline totals and prohibit false verification
+        run: |
+          python - <<'PY'
+          import csv,json,pathlib
+          folder=pathlib.Path('/tmp/om-catalog')
+          with (folder/'military_organizations.csv').open() as f:
+              orgs=list(csv.DictReader(f))
+          with (folder/'military_sites.csv').open() as f:
+              sites=list(csv.DictReader(f))
+          report=json.loads((folder/'audit/site_audit.json').read_text())
+          assert len(orgs)==1416, f'Unexpected OM count: {len(orgs)}'
+          assert len(sites)==739, f'Unexpected address candidates: {len(sites)}'
+          assert report['verified_public_access']==0
+          assert report['auto_published']==0
+          assert all(s['geolocation_status']=='UNVERIFIED_TEXT' and not s['latitude'] and not s['longitude'] for s in sites)
+          assert sum(report['sites_by_quality'].values())==len(sites)
+          print(report)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: om-catalog-staging-audit
+          path: |
+            /tmp/om-catalog/military_organizations.csv
+            /tmp/om-catalog/military_sites.csv
+            /tmp/om-catalog/review_queue.csv
+            /tmp/om-catalog/audit/
+          retention-days: 14
