@@ -3,16 +3,16 @@
    aqui ficam compactos, com serviços e oportunidades em carrossel. */
 @media(max-width:1023px){
 .home-mob .page-head{margin-bottom:12px}
-.home-mob .page-head h1{font-size:22px;line-height:28px;letter-spacing:-.3px}
-.h1-city{display:inline-flex;align-items:center;padding:0 2px 0 4px;margin-left:-2px;border-radius:10px;color:var(--md-sys-color-primary);font:inherit;letter-spacing:inherit;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:color-mix(in srgb,var(--md-sys-color-primary) 35%,transparent)}
+.home-mob .page-head h1{font-size:24px;line-height:30px;letter-spacing:-.3px}
+.h1-city{display:inline-flex;align-items:center;padding:0 2px 0 4px;margin-left:-2px;border-radius:10px;color:var(--bv-accent-text);font:inherit;letter-spacing:inherit;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:color-mix(in srgb,var(--bv-accent-text) 35%,transparent)}
 .h1-city md-icon{font-size:22px}
 .home-search-ex{font-weight:500;color:var(--md-sys-color-on-surface)}
 .home-mob .home-search-button>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .home-mob .home-top .intent-grid{margin-top:12px;gap:6px}
 .home-mob .intent{min-height:0;padding:6px 2px;gap:5px;font-size:11.5px}
-.home-mob .intent md-icon{width:46px;height:38px;font-size:22px;border-radius:14px}
+.home-mob .intent md-icon{width:46px;height:38px;font-size:22px;border-radius:12px}
 .home-alerts{display:grid;gap:8px;margin-top:10px}
-.home-hire{display:flex;align-items:center;gap:12px;width:100%;min-width:0;padding:12px 14px;border-radius:16px;text-align:left;font:inherit;font-size:14px;line-height:20px;color:var(--md-sys-color-on-surface);background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.home-hire{display:flex;align-items:center;gap:12px;width:100%;min-width:0;padding:12px 14px;border-radius:12px;text-align:left;font:inherit;font-size:14px;line-height:20px;color:var(--md-sys-color-on-surface);background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
 .home-hire b{display:block;font-weight:650}
 .home-hire small{display:block;color:var(--md-sys-color-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .home-hire .grow{min-width:0}
@@ -23,7 +23,7 @@
 /* Carrossel: dois cartões e meio à vista; o cartão cortado na borda avisa que há mais. */
 .home-mob .home-row{display:flex;gap:10px;overflow-x:auto;margin:0 calc(-1 * var(--space));padding:2px var(--space) 6px;scroll-snap-type:x mandatory;scroll-padding-inline:var(--space);scrollbar-width:none}
 .home-mob .home-row::-webkit-scrollbar{display:none}
-.home-mob .home-row .photo-card{flex:none;width:clamp(150px,41vw,230px);scroll-snap-align:start;border-radius:18px}
+.home-mob .home-row .photo-card{flex:none;width:clamp(150px,41vw,230px);scroll-snap-align:start;border-radius:12px}
 .home-mob .home-row .cover{aspect-ratio:4/3}
 .home-mob .home-row .cover .pill{left:8px;top:8px;padding:3px 8px;font-size:11px}
 .home-mob .home-row .save-card{top:4px;right:4px;transform:scale(.85)}
@@ -53,7 +53,7 @@
 .home-mob .home-event{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:12px;align-items:center}
 .home-mob .home-event .txt{min-width:0;text-align:left}
 .home-mob .home-event .txt small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.home-mob .home-arrival{display:flex;gap:12px;margin-top:24px;padding:14px;border-radius:20px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-surface)}
+.home-mob .home-arrival{display:flex;gap:12px;margin-top:24px;padding:14px;border-radius:12px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-surface)}
 .home-mob .home-arrival>md-icon{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-primary);font-size:22px}
 .home-mob .home-arrival h3{font-size:15px;line-height:21px}
 .home-mob .home-arrival p{font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant)}
