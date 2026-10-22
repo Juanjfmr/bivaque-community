@@ -1,0 +1,142 @@
+task_id: DATA-002
+objective: >
+  O banco ganha a ocultação pessoal e reversível de perguntas (separada da moderação) e os chamados de
+  ajuda com "Meus chamados": só quem tem conta abre, por função com limite por pessoa; cada pessoa lê só
+  os seus; só a operação responde, e a resposta cria o aviso no app e o e-mail na fila de envio.
+authority:
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (seções 2 e 3, aprovado pelo dono em 2026-10-22, chamado só com conta)
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (seções 2.1 e 6, lote 2)
+  - prototypes/bivaque-html/src/features/profile/hidden.js e src/features/support/help.js (branch codex/lancamento)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    origin/main 9853e5fe: não existem hidden_questions nem support_tickets (git grep em
+    supabase/migrations não acha nada); a única ocultação é recommendation_requests.is_deleted, que é
+    moderação global. Escrever primeiro o pgTAP que falha.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/lib/
+  - tests/unit/
+  - docs/agents/tasks/DATA-002.task.yml
+forbidden:
+  - push, merge, deploy, db push ou qualquer comando com --linked
+  - commitar segredos, arquivos .env ou supabase/config.toml
+  - usar is_deleted para a ocultação pessoal
+  - abrir chamado sem conta (decisão do dono)
+  - afrouxar policy ou grant existente fora do escopo
+  - mudar telas (apps/web/app) nesta tarefa
+  - editar prototypes/bivaque-html
+acceptance:
+  - hidden_questions(user_id, request_id, hidden_at) único por par, com ON DELETE CASCADE na pessoa e na pergunta; RLS só do próprio dono para ler, criar e apagar
+  - pgTAP negativo prova que outra pessoa não lê nem apaga a ocultação de alguém, e que ocultar não muda is_deleted nem o que os outros veem
+  - Existe um caminho de leitura da lista da Comunidade que exclui as perguntas ocultadas pelo leitor, e a leitura direta da pergunta continua funcionando
+  - support_tickets com user_id obrigatório, e-mail da conta, assunto em (conta, comunidade, anuncios, seguranca, outro), texto de 10 a 1000 caracteres, situação open/answered, resposta e datas; sem insert/update/delete direto pelo cliente
+  - Função de abertura só para autenticados, com o e-mail da conta e limite de abertura por pessoa; pgTAP prova o limite e a recusa de anônimo
+  - Cada pessoa lê só os próprios chamados (pgTAP negativo)
+  - Função de resposta só para operador (public.is_current_user_operator): grava resposta, muda para answered, cria notificação para o dono e enfileira o e-mail no outbox; pgTAP prova que não operador é recusado
+  - Apagar a conta apaga ocultações e chamados da pessoa
+  - Migrations aplicam a partir do zero (db reset --no-seed) e o test:db inteiro continua verde
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+risk: dado pessoal, RLS e notificação
+adr: docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+# Execucao local em 2026-10-22, branch codex/dados-ocultar-chamados (DeepSeek V4.1 Flash).
+# Pilha local propria desta worktree: projeto bivaque-dados2, portas 56421-56429.
+# supabase/config.toml alterado so nesta worktree e mantido fora do commit (nao aparece
+# em git status). Nada com --linked, sem .env.local, sem push/PR/merge/deploy.
+#
+# TDD RED, antes das migrations: supabase/tests/hidden-questions.sql rodou e parou em
+# 42P01 (relation public.hidden_questions does not exist) com 2 de 26 asserts executados
+# (o primeiro ja media a lista da cidade contra o banco). support-tickets.sql foi escrito
+# antes da migration e a primeira consulta a public.support_tickets falha com 42P01 --
+# o mesmo defeito de tabela ausente, nao uma assercao errada.
+#
+# Migrations aplicadas com npx supabase migration up --local (db reset bloqueado neste
+# ambiente, como o contrato preve):
+#  20261022130511_hidden_questions              tabela, indice, RLS force, grants e 3 policies
+#  20261022130513_community_list_excludes_hidden list_indications com o filtro pessoal + list_hidden_questions
+#  20261022130516_support_tickets               enums, tabela, checks, indices, RLS e grants
+#  20261022130519_support_answered_notification_type  so o valor de enum
+#  20261022130521_support_ticket_functions      open_support_ticket e answer_support_ticket
+#  20261022130524_account_deletion_hidden_and_support  finalize_account_deletion
+# O valor de enum entra em migration propria porque um valor adicionado por ALTER TYPE nao
+# pode ser usado na mesma transacao (20260809184316:18, 20260820052738).
+#
+# Exclusao de conta: a rota chama auth.admin.deleteUser(id, true), que e SOFT delete em
+# auth.users. A linha de origem continua la, entao o ON DELETE CASCADE das FKs nao dispara
+# na purga. Por isso finalize_account_deletion foi recriada identica ao original (comparada
+# linha por linha contra 20260915101543 por script, sem diferenca alem do bloco inserido),
+# com dois DELETE a mais: hidden_questions e support_tickets.
+#
+# pgTAP GREEN:
+#  hidden-questions.sql  26/26 PASS
+#  support-tickets.sql  34/34 PASS
+#  Os dois tambem rodaram por npx pnpm@11.18.0 test:db, que reportou os arquivos como ok.
+#
+# test:db completo nesta pilha: 146 arquivos, 2040 testes, Result: FAIL em 23 arquivos.
+# Todas as falhas sao pre-existentes e de dado de seed: Ana Almeida e Despachante Central
+# (supabase/seed.sql), 14 eventos x 3, 5 eventos concluidos x 1, reports abertos do seed e
+# os 300 usuarios admissao-N@bivaque.example.invalid que o seed.sql:715 cria com
+# verification_outcomes. A pilha local esta com seed aplicado e o pgTAP roda no estado SEM
+# seed. Nenhum dos 23 arquivos toca hidden_questions, support_tickets, list_indications ou
+# finalize_account_deletion. O reset limpo e o test:db completo ficam com o coordenador.
+#
+# db:lint: sem erro de schema (No schema errors found).
+# Gate: npx pnpm@11.18.0 gate -> exit 0; lint, typecheck, test (unit + workspaces + privacy
+# + 120 de scope) e secrets PASS. Build pulado por ausencia de apps/web/.env.local, que o
+# contrato proibe criar.
+# Tipos: npx pnpm@11.18.0 generate:types; so adicoes (hidden_questions, support_tickets,
+# list_hidden_questions, open_support_ticket, answer_support_ticket, os dois enums novos e
+# support_answered em notification_type).
+#
+# Fora do escopo desta tarefa, de proposito: apps/web/app nao foi tocado. A notificacao
+# support_answered ainda cai em nova notificacao e sem destino em deep-links.ts ate o
+# lote de telas da Ajuda. O limite de abertura usa 54000, o codigo da casa para teto.
+# Revisao independente e runtime de tela continuam pendentes.
+#
+# ── Correcao da revisao do Codex (REPROVADO), 2026-10-22 ───────────────────────
+# 4 achados corrigidos com TDD: o pgTAP que falha veio antes da migration.
+# RED medido em support-tickets.sql com 50 asserts: 7 falhas.
+#   not ok 24/25  authenticated ainda tinha SELECT da tabela inteira e de answered_by
+#   not ok 28/29  o titular lia answered_by no proprio chamado (direto e no select *)
+#   not ok 45/46  a purga deixava a resposta support_answered no outbox apos troca de e-mail
+#   not ok 50     a purga do operador preservava answered_by (soft delete, sem cascade)
+# O achado BAIXA 4 era do proprio teste: agora enche cinco abertos, prova a recusa do
+# sexto, responde um e prova que a nova abertura passa (asserts 31-35).
+#
+# Correcoes:
+#  20261022130516: revoke do SELECT de tabela e grant POR COLUNA sem answered_by.
+#    Colunas liberadas: id, user_id, email, topic, body, status, reply, created_at,
+#    answered_at. `select *` e `select answered_by` passam a falhar com 42501.
+#  20261022130524: DELETE do outbox support_answered pelo ticket_id do payload (qualquer
+#    destinatario) ANTES de apagar os chamados, e UPDATE support_tickets
+#    set answered_by = null where answered_by = p_user_id DEPOIS.
+#  apps/web: nada le support_tickets (git grep sem resultado); nenhum consumidor quebrou.
+#
+# Aplicacao local: npx supabase migration up --local respondeu que o banco local ja estava
+# atualizado -- as versoes 20261022130516 e 20261022130524 ja estavam registradas e a edicao
+# do arquivo nao dispara reaplicacao. npx supabase db reset --local --no-seed foi NEGADO
+# pelo harness (permissao nao interativa). Os statements editados foram aplicados na mesma
+# pilha bivaque-dados2 por psql no container: o par revoke/grant por coluna e o
+# CREATE OR REPLACE da funcao, verbatim do arquivo da migration. O replay limpo
+# (db reset --no-seed) continua com o coordenador.
+#
+# GREEN depois da correcao:
+#  support-tickets.sql  50/50 PASS (docker psql na pilha local e via test:db)
+#  npx pnpm@11.18.0 test:db -> Files=146, Tests=2078, Result: PASS (suite inteira)
+#  npx pnpm@11.18.0 db:lint -> No schema errors found
+#  npx pnpm@11.18.0 gate -> GATE VERDE; lint, typecheck, test (120 de scope) e secrets PASS;
+#  build pulado por ausencia de apps/web/.env.local, que o contrato proibe criar.
+# Commits: test(dados) fronteira do limite; fix(dados) answered_by por coluna;
+# fix(dados) purga do outbox e da autoria. Sem push, sem merge, sem --linked.

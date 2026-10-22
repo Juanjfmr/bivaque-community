@@ -119,6 +119,23 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
         subject: "Você recebeu um convite de evento",
         text: "Você foi convidado para um evento. Acesse o Bivaque para responder.",
       }
+    case "support_answered": {
+      // ADR-20261022-fundacao-dados (DATA-002): a resposta do chamado chega por e-mail, como no
+      // protótipo, e fica também em Meus chamados.
+      const reply = typeof payload["reply"] === "string" ? payload["reply"] : ""
+      return {
+        subject: "Respondemos o seu chamado",
+        text: [
+          "A equipe do Bivaque respondeu o seu chamado:",
+          "",
+          reply,
+          "",
+          `A resposta também fica em Meus chamados: ${siteOrigin()}/ajuda`,
+          "",
+          "Se precisar de mais alguma coisa, abra um chamado novo pela Ajuda.",
+        ].join("\n"),
+      }
+    }
     default:
       return {
         subject: "Atualização do Bivaque",
