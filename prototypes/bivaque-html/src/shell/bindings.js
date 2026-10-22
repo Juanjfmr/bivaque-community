@@ -8,7 +8,7 @@ function bindScreen(){
  const bs=$('#biz-search');bs?.addEventListener('input',()=>{bizQuery=bs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{const html=renderBusinesses(),tmp=document.createElement('div');tmp.innerHTML=html;$('#business-results').innerHTML=$('#business-results',tmp).innerHTML;pagedWatch();},120);});
  $('#digest-switch')?.addEventListener('change',e=>mutate(()=>{state.prefs.digest=e.target.selected;},{redraw:false}));
  const gs=$('#group-search');gs?.addEventListener('input',()=>{groupQuery=gs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#groups-body').innerHTML=groupsBody();pagedWatch();},120);});
- const tabs=$('#community-tabs');if(tabs)tabs.activeTabIndex=['ind','grp','biz'].indexOf(communityTab);
+ const tabs=$('#community-tabs');if(tabs)tabs.activeTabIndex=['ind','grp','biz'].indexOf(communityTab);/* Rodada 71: a landing tem observadores próprios; eles nascem e morrem a cada render. */bindLanding();
 }
 function saveRecent(q){q=q.trim();if(!q)return;mutate(()=>{state.recent=[q,...state.recent.filter(x=>x!==q)].slice(0,8);},{redraw:false});}
 function bindDialog(){

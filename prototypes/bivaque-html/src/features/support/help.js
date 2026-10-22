@@ -133,7 +133,7 @@ function accountDelete(){
  const f=$('#delete-word');if(f)f.error=false;
  if(String(f?.value||'').trim().toUpperCase()!==DELETE_WORD)return fieldError(f,`Digite ${DELETE_WORD} para confirmar.`);
  if(!mutate(accountPurge,{redraw:false}))return;
- supportSent=false;entrySampleCity=null;entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);toastClearAll();
+ supportSent=false;entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);toastClearAll();
  navigate('entrar','apagada',{replace:true});
 }
 function renderAccountDeleted(){
