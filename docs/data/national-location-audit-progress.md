@@ -8,13 +8,14 @@
 ## Progresso consolidado
 
 - Fila: 267 candidatos, 259 EB e 8 MB.
-- Lotes concluídos: 01–06 — 150/267 registros (56,2%), todos EB.
-- Resultado acumulado: 56 CORROBORADOS (endereço textual); 21 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 72 INCONCLUSIVOS.
+- Lotes concluídos: 01–07 — 175/267 registros (65,5%), todos EB.
+- Resultado acumulado: 72 CORROBORADOS (endereço textual); 26 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 76 INCONCLUSIVOS.
 - Lote 03: 7 CORROBORADOS; 2 DIVERGENTES; 16 INCONCLUSIVOS.
 - Lote 04: 12 CORROBORADOS; 5 DIVERGENTES; 8 INCONCLUSIVOS. Divergências registradas: 9º B Sup (endereço oficial nº 219 versus nº 1628 no candidato/Geoapify), HGu Marabá (Folha 26 oficial versus Folha 31 Geoapify), e diferenças de bairro para 8ª Cia Intlg e TG Bragança. O registro agrupado com o Comando da 9ª RM também diverge: fonte oficial de 2024 aponta Rua Gen. Napomuceno Costa, 168; os outros elementos agrupados ainda carecem de confirmação.
 - Lote 05: 13 CORROBORADOS; 4 DIVERGENTES; 8 INCONCLUSIVOS. Diferenças cartográficas registradas em bairros/CEP; os casos de 5ª Cia Com Bld (mudança planejada para Ponta Grossa) e registros agrupados sem confirmação individual permanecem pendentes.
 - Lote 06: 13 CORROBORADOS; 6 DIVERGENTES; 6 INCONCLUSIVOS. Entre as divergências: endereço do 1º BE Cmb (fonte oficial nº 135 versus candidato nº 35), 25º B Log Es (fonte de 2022 nº 295 versus candidato nº 395) e divergências de bairro/logradouro nos registros do Rio de Janeiro e Niterói.
-- Próximo registro da fila: 151. Restam 117 candidatos, sendo 109 do EB e todos os 8 registros da MB.
+- Lote 07: 16 CORROBORADOS; 5 DIVERGENTES; 4 INCONCLUSIVOS. Divergências incluem ponto compartilhado entre 17º PE e 5º BEC (Geoapify repetiu coordenadas e retornou apenas avenida), endereço do 17º B Log distinto do endereço oficial de 2025, e resultado da IDQBRN sem número/localidade coerente. CEADEx fica inconclusivo por operar em área compartilhada da EsSLog sem confirmação do nº 325; para o Comando da 17ª Bda há fontes oficiais com endereços de entrega/localização distintos, pendentes de conciliação.
+- Próximo registro da fila: 176. Restam 92 candidatos, sendo 84 do EB e todos os 8 registros da MB.
 - Nenhum ponto militar foi homologado e nenhuma coordenada foi publicada no aplicativo.
 - Nenhuma nova chamada Geoapify foi feita; análise usa somente a execução de referência.
 
@@ -32,6 +33,7 @@ Os inconclusivos permanecem pendentes quando falta fonte oficial individual rece
 - `data/om/evidence/national_location_audit_lote_04.csv`
 - `data/om/evidence/national_location_audit_lote_05.csv`
 - `data/om/evidence/national_location_audit_lote_06.csv`
+- `data/om/evidence/national_location_audit_lote_07.csv`
 
 Cada linha registra OM, Força, município, endereço declarado, resultado Geoapify, URLs, data, classificação, confiança, evidência, ressalva cartográfica e bloqueios de homologação/publicação.
 
