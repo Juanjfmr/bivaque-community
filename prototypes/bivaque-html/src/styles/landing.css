@@ -1,6 +1,8 @@
 /* Rodada 71: landing pública v8 (título F), na pele da marca da R70. Toda cor vem de token com o
    par claro e escuro. As duas exceções são o branco sobre as fotos e o véu delas (--bv-on-photo e
-   --bv-photo-scrim, iguais nos dois temas, porque a foto não acompanha o tema). */
+   --bv-photo-scrim, iguais nos dois temas, porque a foto não acompanha o tema).
+   Rodada 72: alvos de 44 px nos botões inline e nos links do rodapé, e a barra fixa escondida fora
+   do teclado (inert pelo JS + visibility:hidden). */
 .ld{--ld-wrap:1160px;--ld-gap:64px;--ease:cubic-bezier(.2,0,0,1);position:relative;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface)}
 .ld-wrap{max-width:var(--ld-wrap);margin:0 auto;padding:0 20px}
 .ld h1,.ld h2{font-family:var(--md-ref-typeface-brand);font-weight:600;letter-spacing:-.02em;text-wrap:balance}
@@ -47,7 +49,8 @@
 .ld-kicker{margin:0 0 10px;font-size:14px;font-weight:700;letter-spacing:.01em;color:var(--md-sys-color-on-surface-variant)}
 .ld-sec h2{font-size:clamp(26px,3.2vw,38px);line-height:1.12}
 .ld-sub{margin:12px 0 0;font-size:18px;color:var(--md-sys-color-on-surface-variant);max-width:620px}
-.ld-inline{display:inline;padding:0;border:0;background:none;font:inherit;color:var(--md-sys-color-primary);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+/* Alvo de 44 px sem quebrar a linha do texto (Rodada 72). */
+.ld-inline{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;margin:0 -4px;border:0;background:none;font:inherit;color:var(--md-sys-color-primary);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 /* Como funciona: a conversa ilustrativa */
 .ld-ex .ld-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--ld-gap);align-items:center}
 .ld-thread{margin:0;display:grid;gap:16px;padding:24px;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);box-shadow:0 0 0 1px var(--md-sys-color-outline-variant)}
@@ -120,10 +123,10 @@
 .ld-footer .brand-mark .bv-symbol-body,.ld-footer .brand-mark .bv-symbol-threshold{fill:var(--bv-on-photo)}
 .ld-footer nav{display:flex;flex-wrap:wrap;gap:4px 20px}
 .ld-footer small{flex-basis:100%;font-size:13px;color:color-mix(in srgb,var(--bv-on-photo) 62%,transparent)}
-.ld-link{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:none;font:inherit;font-size:14px;color:inherit;text-decoration:none;cursor:pointer}
+.ld-link{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;font:inherit;font-size:14px;color:inherit;text-decoration:none;cursor:pointer}
 .ld-link:hover{text-decoration:underline}
 /* Os links legais vêm de legalLink() (classe .en-inline), feita para o fundo claro da entrada. */
-.ld-footer .en-inline,.ld-sheet-legal .en-inline{display:inline-flex;align-items:center;min-height:44px;color:inherit;font:inherit;font-size:14px;text-decoration:none}
+.ld-footer .en-inline,.ld-sheet-legal .en-inline{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;color:inherit;font:inherit;font-size:14px;text-decoration:none}
 .ld-footer .en-inline:hover,.ld-sheet-legal .en-inline:hover{text-decoration:underline}
 .ld-inline:focus-visible,.ld-link:focus-visible,.ld-text:focus-visible,.ld-menu-btn:focus-visible,.ld-home:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 /* A folha do menu do celular */
@@ -167,8 +170,8 @@
  .ld-final md-filled-button{width:100%}
  .ld-footer .ld-wrap{display:grid}
  .ld-footer nav{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
- .ld-bar{display:block;position:fixed;inset:auto 0 0;z-index:35;padding:10px 20px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--md-sys-color-surface) 92%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--md-sys-color-outline-variant);transform:translateY(100%);transition:transform .22s var(--ease)}
- .ld-bar.ld-show{transform:none}
+ .ld-bar{display:block;position:fixed;inset:auto 0 0;z-index:35;padding:10px 20px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--md-sys-color-surface) 92%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--md-sys-color-outline-variant);transform:translateY(100%);visibility:hidden;transition:transform .22s var(--ease),visibility .22s}
+ .ld-bar.ld-show{transform:none;visibility:visible}
  .ld-bar md-filled-button{width:100%}
 }
 /* No escuro, as fotos ficam 10% mais escuras (brandbook, p. 13), como as demais telas. */

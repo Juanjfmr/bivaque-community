@@ -2,6 +2,8 @@
 // título F, na pele da marca da R70. Um único CTA ("Criar conta") leva ao cadastro; "Entrar" leva
 // ao login; o convite de familiar continua dentro do cadastro, sem CPF. Saiu a amostra por cidade
 // da R53: quem está fora não lê o Bivaque, então a única conversa da página é ilustrativa.
+// Rodada 72: a folha do menu prende o foco (o resto da landing fica inerte) e a barra fixa escondida
+// sai do teclado e da tecnologia assistiva.
 const LANDING_FORCES='Marinha, Exército e Aeronáutica';
 const LANDING_TITLE='Juntos somos mais fortes.';
 const LANDING_LEAD='A família militar se ajuda, em qualquer cidade: pergunte a quem já mora perto, ache serviços e imóveis, passe adiante o que não usa mais. Gratuito para militares, veteranos, pensionistas e suas famílias.';
@@ -112,7 +114,11 @@ function landingMount(el){
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,mobile=matchMedia('(max-width:860px)');
  const observers=[];let heroGone=false,fimIn=false,open=false,lastY=main.scrollTop;
  const watch=(callback,options)=>{const observer=new IntersectionObserver(callback,options);observers.push(observer);return observer;};
- const sync=()=>{top.classList.toggle('ld-show-cta',heroGone);bar.classList.toggle('ld-show',heroGone&&!fimIn);};
+ // Rodada 72: com a folha do menu aberta, o resto da landing sai do alcance do teclado e da tecnologia
+ // assistiva (inert). Fora dela não há o que focar enquanto a folha está aberta.
+ const outside=[$('.ld-skip',el),top,$('#ld-main',el),$('.ld-footer',el),bar].filter(Boolean);
+ const sheetFocusables=()=>$$('a[href],button,md-filled-button,md-outlined-button,md-text-button,[tabindex]:not([tabindex="-1"])',sheet).filter(x=>x.getClientRects().length&&!x.disabled);
+ const sync=()=>{top.classList.toggle('ld-show-cta',heroGone);const barShown=heroGone&&!fimIn;bar.classList.toggle('ld-show',barShown);bar.inert=!barShown;if(barShown)bar.removeAttribute('aria-hidden');else bar.setAttribute('aria-hidden','true');};
  // O topo fica transparente sobre a foto e ganha o fundo da superfície depois dela.
  watch(([entry])=>top.classList.toggle('ld-solid',!entry.isIntersecting),{root:main,rootMargin:'-64px 0px 0px 0px'}).observe(media);
  // O CTA do topo pode nascer abaixo da dobra (celular): o estado dele vem da geometria a cada
@@ -135,6 +141,7 @@ function landingMount(el){
  for(const id of LANDING_ANCHORS)spy.observe($('#'+id,el));
  const setMenu=(state,restore=true)=>{
   open=state;sheet.classList.toggle('ld-open',state);menuBtn.setAttribute('aria-expanded',String(state));main.classList.toggle('ld-locked',state);
+  for(const node of outside)node.inert=state;
   if(state){const close=$('[data-ld-close]',sheet);if(close)close.focus({preventScroll:true});}
   else if(restore)menuBtn.focus({preventScroll:true});
  };
@@ -149,7 +156,17 @@ function landingMount(el){
   if(event.target.closest?.('[data-ld-menu]')){event.preventDefault();setMenu(true);return;}
   if(event.target.closest?.('[data-ld-close]')){event.preventDefault();setMenu(false);}
  };
- const onKey=(event)=>{if(event.key==='Escape'&&open){event.preventDefault();setMenu(false);}};
+ // Tab e Shift+Tab dão a volta dentro da folha: o último item volta ao primeiro, e vice-versa.
+ const onKey=(event)=>{
+  if(!open)return;
+  if(event.key==='Escape'){event.preventDefault();setMenu(false);return;}
+  if(event.key!=='Tab')return;
+  const items=sheetFocusables();if(!items.length)return;
+  const first=items[0],last=items[items.length-1],active=document.activeElement;
+  if(!sheet.contains(active)){event.preventDefault();(event.shiftKey?last:first).focus({preventScroll:true});return;}
+  if(event.shiftKey&&active===first){event.preventDefault();last.focus({preventScroll:true});}
+  else if(!event.shiftKey&&active===last){event.preventDefault();first.focus({preventScroll:true});}
+ };
  const onScroll=()=>{
   const y=main.scrollTop;
   trackHero();
@@ -173,6 +190,7 @@ function landingMount(el){
   main.removeEventListener('scroll',onScroll);
   document.removeEventListener('keydown',onKey);
   main.classList.remove('ld-locked');
+  for(const node of outside)node.inert=false;
  }};
 }
 // Sair: os dados de teste ficam neste dispositivo; entrar de novo volta para o mesmo perfil.
