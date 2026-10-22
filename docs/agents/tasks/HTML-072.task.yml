@@ -1,0 +1,52 @@
+task_id: HTML-072
+objective: >
+  Rodada 72: correções da revisão independente do Codex (gpt-6.1-sol, 22/10/2026) sobre as rodadas 70 e
+  71, que deu REPROVADO com 4 achados MÉDIA e 4 BAIXA. Menu Criar com Brasa só no botão e subtítulos
+  legíveis; paleta do cartão de compartilhamento centralizada; cantos de 12 px na entrada e na ajuda;
+  símbolo oficial em todos os cabeçalhos da entrada; folha do menu da landing com o foco contido; barra
+  fixa escondida fora do teclado; "Fale com a gente" com alvo de 44 px; e provas que deixam de passar sem
+  verificar.
+authority:
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+  - docs/agents/tasks/HTML-070.task.yml e docs/agents/tasks/HTML-071.task.yml (critérios não cumpridos)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base 574365f4 (build 0c579323): o menu Criar pinta todas as opções em Brasa e os subtítulos com
+    opacity .8 dão 3,88:1 (claro) e 4,23:1 (escuro); .en-tile, .help-card e .ticket têm 16 px e a data
+    de chegada 4 px; a entrada usa a letra "B" em .en-mark; Tab sai da folha do menu; o botão da barra
+    fixa escondida recebe foco; "Fale com a gente" tem cerca de 27 px de altura; os checkpoints
+    mobile-menu e no-overflow retornam cedo no 1440 e contam PASS.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-072.task.yml
+forbidden:
+  - editar src/vendor, src/styles/fonts.css, src/data/demo/assets.js, a referência HTML congelada ou a base visual
+  - mudar textos, fluxos ou comportamentos além do que os achados pedem
+  - fazer merge, push, deploy ou git stash
+acceptance:
+  - No menu Criar, só o botão Criar é Brasa; as opções usam tokens neutros e os subtítulos passam de 4,5:1 nos dois temas
+  - share-card.js tem a paleta clara da marca numa única constante nomeada, sem hex soltos no desenho
+  - Datas, .en-tile, .help-card e .ticket com 12 px de canto
+  - Cadastro, login, convite, páginas legais, suporte e boas-vindas usam o símbolo oficial (mark()), sem a letra "B"
+  - Com a folha do menu da landing aberta, Tab e Shift+Tab não saem dela; o fundo fica inerte; Esc fecha e devolve o foco
+  - A barra fixa escondida não recebe foco nem aparece para tecnologia assistiva
+  - "Fale com a gente" tem alvo de pelo menos 44 x 44 px
+  - Nenhum checkpoint conta PASS sem verificar: no 1440, mobile-menu afirma que o botão de menu está oculto e a navegação visível; no-overflow mede também o desktop
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round72-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round71-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round70-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round53-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round54-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: acessibilidade e consistência da marca; sem mudança de dado ou de fluxo
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

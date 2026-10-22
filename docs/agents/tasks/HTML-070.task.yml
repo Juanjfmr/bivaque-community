@@ -32,6 +32,7 @@ acceptance:
   - Cartões, campos e categorias com 12 px de canto; abas e indicador da navegação com 10 px; Criar com 18 px
   - A marca usa o símbolo oficial (Grafite e Brasa no claro; branco inteiro no escuro)
   - Nenhuma cor fixa nova fora dos tokens; as cores fixas que existiam viram token com par claro e escuro
+  - Exceção, definida pelo coordenador na tarefa: o cartão de compartilhamento (share-card.js) é uma imagem desenhada em canvas que sai do app e não acompanha o tema; usa a paleta clara da marca, fixa e centralizada numa constante
   - As provas de rodadas anteriores que não comparam pixel continuam verdes em 375-light
 proof:
   - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round70-proof.mjs
