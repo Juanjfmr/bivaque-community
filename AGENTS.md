@@ -339,6 +339,12 @@ provider** — the global `toast()` helper only renders through it.
   by the owner's decision of 25/09/2026 — see
   [`ADR-20260925-endereco-por-escolha`](docs/decisions/ADR-20260925-endereco-por-escolha.md). Do
   not remove it as a privacy violation.
+  **Location at market standard (owner, 22/10/2026):** CEP and coordinates ARE stored — listing
+  CEP (required for imóvel), geocoded listing/request coordinates, and the member's optional
+  profile CEP and coordinate for distance only, never readable by other members — see
+  [`ADR-20261022-localizacao-padrao-de-mercado`](docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md).
+  The security rigor of Bivaque is at entry (verified link); inside, features follow market
+  standard. Do not treat CEP or coordinates as forbidden.
   > **Open R3 proposal against this line.**
   > [`ADR-20260811-om-declarada`](docs/decisions/ADR-20260811-om-declarada.md) proposes
   > allowing the member to *declare* branch, status, unit and class — distinguishing what the

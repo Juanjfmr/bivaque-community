@@ -56,7 +56,7 @@ Todos tocam dado pessoal e RLS, por isso o risco é R3.
    - **Decisão do dono em 22/10/2026:** a chave **não** vale para anúncio nem pedido. O bairro do item é escolhido
      para aquele item e aparece como foi escolhido. A proteção forte do Bivaque é a entrada com vínculo confirmado:
      lá dentro, entre membros verificados, não precisa do mesmo rigor.
-4. **CEP e coordenada nunca são gravados.**
+4. **CEP e coordenada nunca são gravados.** *Substituído em 22/10/2026 pelo ADR-20261022-localizacao-padrao-de-mercado: CEP e coordenada passam a ser guardados no padrão de mercado.*
    - Todo campo de bairro recusa sequências de 5 ou mais dígitos, com uma regra no banco.
    - A busca por CEP (ViaCEP ou BrasilAPI) e a busca por localização ficam fora deste ADR. A localização, quando
      entrar, escolhe o ponto central mais próximo no próprio aparelho, e a coordenada não sai dele.
