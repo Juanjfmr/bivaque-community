@@ -12,7 +12,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(38);
 
 \ir fixtures/foundation.inc
 
@@ -281,9 +281,72 @@ select throws_ok(
   'chamado ja respondido e recusado'
 );
 
--- 10) respondido deixa de contar como aberto: a pessoa pode abrir outro
+-- ── 10. limite de abertura por pessoa ─────────────────────────────────────
+--
+-- O limite e de cinco ABERTOS. O membro 001 tem 1 aberto da secao 3; os quatro
+-- abaixo fecham a cota. A versao anterior desta suite abria o sexto com um unico
+-- chamado respondido no historico: passaria mesmo se respondidos ainda
+-- consumissem o limite. Aqui a fronteira e exercitada dos dois lados.
+reset role;
+
+insert into public.support_tickets (id, user_id, email, topic, body)
+values
+  ('70000000-0000-4000-8000-000000000011',
+   '10000000-0000-4000-8000-000000000001',
+   'member-one@example.invalid',
+   'outro',
+   'chamado aberto para preencher o limite de abertos'),
+  ('70000000-0000-4000-8000-000000000012',
+   '10000000-0000-4000-8000-000000000001',
+   'member-one@example.invalid',
+   'outro',
+   'chamado aberto para preencher o limite de abertos'),
+  ('70000000-0000-4000-8000-000000000013',
+   '10000000-0000-4000-8000-000000000001',
+   'member-one@example.invalid',
+   'outro',
+   'chamado aberto para preencher o limite de abertos'),
+  ('70000000-0000-4000-8000-000000000014',
+   '10000000-0000-4000-8000-000000000001',
+   'member-one@example.invalid',
+   'outro',
+   'chamado aberto para preencher o limite de abertos');
+
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(
+  (select count(*) from public.support_tickets
+    where user_id = '10000000-0000-4000-8000-000000000001'
+      and status = 'open'),
+  5::bigint,
+  'a pessoa chega a cinco chamados abertos'
+);
+
+select throws_ok(
+  $$ select public.open_support_ticket('outro', 'Este e o sexto chamado aberto da pessoa.') $$,
+  '54000',
+  null,
+  'o sexto chamado aberto e recusado'
+);
+
+-- Responder um dos cinco abertos devolve a vaga.
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-00000000000b', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$ select public.answer_support_ticket(
+       '70000000-0000-4000-8000-000000000011'::uuid,
+       'Resposta que libera uma vaga no limite de abertos.'
+     ) $$,
+  'o operador responde um dos cinco chamados abertos'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
@@ -291,28 +354,12 @@ select lives_ok(
   'chamado respondido libera a vaga de aberto'
 );
 
--- â”€â”€ 11. limite de abertura por pessoa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
--- Fecha o limite de 5 abertos do membro 001 (que tem 1 aberto da secao 3):
--- mais quatro chamados abertos direto, so para preencher a cota.
-reset role;
-
-insert into public.support_tickets (user_id, email, topic, body)
-select '10000000-0000-4000-8000-000000000001',
-       'member-one@example.invalid',
-       'outro',
-       'chamado aberto para preencher o limite de abertos'
-from generate_series(1, 4);
-
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
-select throws_ok(
-  $$ select public.open_support_ticket('outro', 'Este e o sexto chamado aberto da pessoa.') $$,
-  '54000',
-  null,
-  'o sexto chamado aberto e recusado'
+select is(
+  (select count(*) from public.support_tickets
+    where user_id = '10000000-0000-4000-8000-000000000001'
+      and status = 'open'),
+  5::bigint,
+  'a nova abertura devolve a pessoa aos cinco abertos'
 );
 
 -- Limite de 24 h: a quarta pessoa nao tem nenhum aberto.
