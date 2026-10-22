@@ -35,14 +35,20 @@ que a prova não cobre, a rodada usou a opção prevista na tarefa: **todo
 `md-filled-button` é Brasa** (o `danger-fill` continua no erro). Consequência
 registrada: telas com mais de um filled visível ficam com mais de um CTA em Brasa.
 
-Telas com mais de um `md-filled-button` na mesma vista (levantadas no markup):
+Única tela com mais de um `md-filled-button` visível ao mesmo tempo (conferida no código
+pelo coordenador):
 
-- **Editor de anúncio de imóvel** (`propertyWizardActions`): "Continuar" e "Publicar
-  anúncio" na mesma barra.
 - **Comparação de propostas** (`pedido/:id`, `proposalCard`/`prop-actions`): um
-  "Escolher" por proposta.
-- **Painel do Bivaque → cidades** (diálogo de convite): um "Convidar" por cidade.
-- **Ajuda** (`help-card`): um filled por cartão de ajuda.
+  "Escolher" por proposta ainda aberta.
+
+O levantamento do executor listava outras três, que não se confirmam no código:
+
+- **Editor de anúncio de imóvel:** "Continuar" e "Publicar anúncio" estão no markup, mas
+  `show()` exibe um só por etapa ("Publicar" só na última).
+- **Painel do Bivaque → Cidades:** cada cidade abre o próprio diálogo, com um único
+  "Convidar" (embaixador).
+- **Ajuda:** os dois `help-card` são estados diferentes (antes e depois do envio), com um
+  filled cada.
 
 Fora dessas, cada tela medida mostrou um único filled visível: `pedidos`, `ajuda`,
 `dono`, `dono/pendencias`, `anuncio/:id`, `negocio/:id`, `pergunta/:id`,
