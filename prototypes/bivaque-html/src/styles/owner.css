@@ -1,8 +1,8 @@
 /* Rodada 49: Painel do Bivaque. Fora da navegação do app: a barra de cima, a barra lateral, a de
    baixo e o Criar somem; o console tem a própria navegação. */
-:root{--owner-bad:#b3261e;--owner-good:#1f7a45;--owner-warn:#8a5c00}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--owner-bad:#ffb4ab;--owner-good:#8fd6a5;--owner-warn:#f0c46b}}
-:root[data-theme=dark]{--owner-bad:#ffb4ab;--owner-good:#8fd6a5;--owner-warn:#f0c46b}
+:root{--owner-bad:var(--md-sys-color-error);--owner-good:var(--md-sys-color-secondary);--owner-warn:var(--md-sys-color-tertiary)}
+
+
 body.owner-mode #topbar,body.owner-mode #nav,body.owner-mode #fab{display:none}
 body.owner-mode main{inset:0}
 .page.owner-page{max-width:none;padding:0}

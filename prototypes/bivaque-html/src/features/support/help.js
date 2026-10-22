@@ -43,7 +43,7 @@ const topicLabel=id=>(TICKET_TOPICS.find(([v])=>v===id)||TICKET_TOPICS.at(-1))[1
 const ticketsOpen=()=>(state.tickets||[]).filter(t=>t.status==='open');
 // Quem saiu lê estas páginas com o visual da entrada; quem entrou, com a barra do app.
 function supportPage(title,body,sub=''){
- if(state.signedOut)return `<div class="en en-form legal-doc"><header class="en-top">${iconBtn('arrow_back','back','','Voltar')}<span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span></header><h1 class="en-h1" tabindex="-1">${esc(title)}</h1>${sub?`<p class="en-lead">${esc(sub)}</p>`:''}${body}</div>`;
+ if(state.signedOut)return `<div class="en en-form legal-doc"><header class="en-top">${iconBtn('arrow_back','back','','Voltar')}${mark()}<span class="en-brand">Bivaque</span></header><h1 class="en-h1" tabindex="-1">${esc(title)}</h1>${sub?`<p class="en-lead">${esc(sub)}</p>`:''}${body}</div>`;
  return `<article class="legal-doc"><div class="page-head"><div><h1>${esc(title)}</h1>${sub?`<p>${esc(sub)}</p>`:''}</div></div>${body}</article>`;
 }
 function helpContactCard(){return `<div class="help-card"><b>Não achou?</b><p>Respondemos por e-mail em até 2 dias úteis.</p>${btn('Fale com a gente','support-open','contato','filled')}</div>`;}
@@ -133,11 +133,11 @@ function accountDelete(){
  const f=$('#delete-word');if(f)f.error=false;
  if(String(f?.value||'').trim().toUpperCase()!==DELETE_WORD)return fieldError(f,`Digite ${DELETE_WORD} para confirmar.`);
  if(!mutate(accountPurge,{redraw:false}))return;
- supportSent=false;entrySampleCity=null;entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);toastClearAll();
+ supportSent=false;entryCityDraft=null;entryInviteCode='';entryForgotSent='';closePalette(false);toastClearAll();
  navigate('entrar','apagada',{replace:true});
 }
 function renderAccountDeleted(){
- return `<div class="en en-form en-gone"><header class="en-top"><span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span></header><div class="en-gone-in">${icon('check_circle')}<h1 class="en-h1" tabindex="-1">Sua conta foi apagada.</h1><p class="en-lead">Obrigado por ter feito parte. Você pode voltar quando quiser.</p>${btn('Voltar ao início','account-deleted-home','','outlined')}</div></div>`;
+ return `<div class="en en-form en-gone"><header class="en-top">${mark()}<span class="en-brand">Bivaque</span></header><div class="en-gone-in">${icon('check_circle')}<h1 class="en-h1" tabindex="-1">Sua conta foi apagada.</h1><p class="en-lead">Obrigado por ter feito parte. Você pode voltar quando quiser.</p>${btn('Voltar ao início','account-deleted-home','','outlined')}</div></div>`;
 }
 // Os campos voltam ao normal assim que a pessoa digita.
 root.addEventListener('input',e=>{if(['support-text','support-email','delete-word'].includes(e.target?.id))e.target.error=false;});

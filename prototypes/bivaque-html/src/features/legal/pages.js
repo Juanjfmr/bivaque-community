@@ -35,12 +35,13 @@ function entryDraftRestore(){
  const c=$('#en-consent');if(c)c.checked=d.consent;
 }
 function entryDraftPrune(){if(entryDraft&&route.name!=='entrar'&&!legalRoute())entryDraft=null;}
-function legalLink(kind){return `<button type="button" class="en-inline" data-action="open-legal" data-value="${kind}">${esc(LEGAL_DOCS[kind].title)}</button>`;}
+// Rodada 71: o rótulo é opcional para o rodapé da landing caber na maquete ("Privacidade").
+function legalLink(kind,label=''){return `<button type="button" class="en-inline" data-action="open-legal" data-value="${kind}">${esc(label||LEGAL_DOCS[kind].title)}</button>`;}
 // "Li e aceito a Política de privacidade e o Código de conduta" com os dois nomes como links.
 const legalConsentText=()=>`Li e aceito a ${legalLink('privacidade')} e o ${legalLink('conduta')}`;
 function renderLegal(){
  const d=LEGAL_DOCS[route.name],body=`<p class="small muted">Versão de teste · ${LEGAL_VERSION}</p>${d.sections.map(([h,t])=>`<h2 class="legal-h">${esc(h)}</h2><p class="legal-p">${esc(t)}</p>`).join('')}<p class="legal-p muted">${route.name==='privacidade'?legalLink('conduta'):legalLink('privacidade')}</p>`;
- if(state.signedOut)return `<div class="en en-form legal-doc"><header class="en-top">${iconBtn('arrow_back','back','','Voltar')}<span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span></header><h1 class="en-h1" tabindex="-1">${esc(d.title)}</h1>${body}</div>`;
+ if(state.signedOut)return `<div class="en en-form legal-doc"><header class="en-top">${iconBtn('arrow_back','back','','Voltar')}${mark()}<span class="en-brand">Bivaque</span></header><h1 class="en-h1" tabindex="-1">${esc(d.title)}</h1>${body}</div>`;
  return `<article class="legal-doc"><div class="page-head"><h1>${esc(d.title)}</h1></div>${body}</article>`;
 }
 async function legalAction(action,value){

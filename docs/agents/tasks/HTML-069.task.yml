@@ -1,0 +1,46 @@
+task_id: HTML-069
+objective: >
+  Rodada 69: lancamento sem cobranca (decisao do dono em 2026-10-19). A pagina do negocio e gratuita e
+  completa, com conversas sem limite; ninguem aparece como Patrocinado (Inicio, Negocios, pagina do negocio,
+  perguntas, Comunidade); "Planos" explica que os planos pagos vem depois, identificados, e que a ordem das
+  indicacoes nunca e vendida; o Painel do Bivaque mostra "Negocios" sem receita, planos pagos nem
+  vencimentos. O produto pago fica atras de uma chave de laboratorio (window.BIVAQUE_LABS.paidPlans) que as
+  provas dos planos (R06, R35, R52, R63 e R65) ligam para continuar guardando as regras dele.
+authority:
+  - Decisao do dono em 2026-10-19 ("Lancar sem cobranca"), na fila de pendencias antes do backend
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base R68 (3d427b0d): o plano gratis recusa a sexta conversa nova, a Inicio e Negocios mostram
+    Patrocinado, Planos oferece Destaque de momento e Plano do negocio com preco e o Painel mostra receita.
+    Prova round69 em 375-light contra a base R68: 0 de 4 checkpoints PASS.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-069.task.yml
+forbidden:
+  - cobrar de verdade ou integrar meio de pagamento
+  - mudar a ordem das indicacoes da comunidade
+  - editar a referencia HTML congelada, vendor ou a base visual congelada (.visual/**/baseline)
+  - fazer merge, push, deploy ou git stash sem confirmacao
+acceptance:
+  - Sem a chave, nenhum negocio aparece como Patrocinado, nem os marcados como patrocinados no exemplo
+  - A pagina do negocio responde a sexta conversa nova (e as seguintes) sem aviso de limite
+  - Planos explica que a pagina e gratuita e completa, que pagos vem depois e que a ordem nunca e vendida; sem preco e sem escolha
+  - Painel do Bivaque sem indicador de receita; Negocios sem planos pagos, receita ou vencimentos
+  - Com a chave ligada, as provas dos planos (R06, R35, R52, R63, R65) continuam verdes
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round69-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round06-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round63-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round65-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: monetizacao (desligar a cobranca do prototipo); o produto pago volta so com ADR novo e CNPJ
+adr: docs/decisions/ADR-20260820-alcance-pago.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -73,6 +73,11 @@ Primeira rodada do lote mobile.
 Capturas: `.visual/bivaque-html-round35/telas/` (`scripts/bivaque-html/round35-shots.mjs`).
 Maquete: `.visual/bivaque-html-home-mobile/`.
 
+> **Substituído em 21/10/2026 (Rodada 70, ADR-20261020).** A "luz sobre a aba ativa" deu
+> lugar ao pill de 10 px da maquete do brandbook, nos temas claro e escuro. O checkpoint
+> `bar-icons-are-svg-with-light-on-active` da `round35-proof.mjs` mantém o id e passou a
+> afirmar o pill. O resto da rodada continua valendo.
+
 ## Fica para o fechamento do lote
 
 - **Provas antigas que verificam a Início ou a barra do celular** devem mudar, e a mudança é

@@ -21,6 +21,7 @@ import {
 // conduta legíveis (links do aceite que voltam ao mesmo passo sem perder o formulário); pedido depois
 // da escolha (concluir, conversar, desistir, proposta vencida); "Ocultar" pessoal com Desfazer e a
 // lista Ocultados. Um checkpoint por comportamento.
+// Rodada 71: o rodapé da landing v8 é `.ld-footer` e o CTA é "Criar conta"; o resto do fluxo é o mesmo.
 const VALID = "senha1234"
 const req = async (page, id) => (await stored(page)).requests?.find((r) => r.id === id)
 const value = (page, id) => page.locator(`#${id}`).evaluate((el) => el.value)
@@ -40,9 +41,9 @@ async function signOutToLanding(page) {
 }
 async function startSignup(page) {
   await signOutToLanding(page)
-  await page.locator('#main [data-action="entry-join"]').click()
+  await page.locator("#ld-hero-cta").click()
   await settle(page)
-  expect((await routeOf(page)).id === "conta", "Quero fazer parte não abriu a conta")
+  expect((await routeOf(page)).id === "conta", "Criar conta não abriu a conta")
 }
 async function openLegalFromConsent(page, kind) {
   await page
@@ -236,8 +237,8 @@ const checkpoints = {
   async "legal-pages-open-without-an-account"(page) {
     await signOutToLanding(page)
     expect((await routeOf(page)).name === "entrar", "sair não levou à landing")
-    // Rodapé da landing.
-    await page.locator('#main .en-legal [data-action="open-legal"][data-value="conduta"]').click()
+    // Rodapé da landing (R71: a v8 usa `.ld-footer`; saíram "Termos de uso" e "Para negócios").
+    await page.locator('#main .ld-footer [data-action="open-legal"][data-value="conduta"]').click()
     await routeIs(page, "conduta")
     await settle(page)
     expect((await routeOf(page)).name === "conduta", "o link da landing não abriu o código")

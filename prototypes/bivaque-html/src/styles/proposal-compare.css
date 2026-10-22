@@ -1,9 +1,9 @@
 /* Rodada 16: propostas lado a lado, com as linhas alinhadas entre as colunas (subgrid). */
 .prop-sort{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
 .prop-compare{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);grid-template-rows:repeat(6,auto);column-gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 4px 24px;overscroll-behavior-x:contain}
-.prop-compare:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px;border-radius:24px}
-.prop-col{grid-row:span 6;display:grid;grid-template-rows:subgrid;row-gap:8px;padding:16px;border-radius:22px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);scroll-snap-align:start;min-width:0}
-.prop-col.is-chosen{border:2px solid var(--md-sys-color-primary);box-shadow:0 10px 24px -14px rgba(22,78,99,.6)}
+.prop-compare:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px;border-radius:12px}
+.prop-col{grid-row:span 6;display:grid;grid-template-rows:subgrid;row-gap:8px;padding:16px;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant);scroll-snap-align:start;min-width:0}
+.prop-col.is-chosen{border:2px solid var(--md-sys-color-primary);box-shadow:0 10px 24px -14px color-mix(in srgb,var(--md-sys-color-primary) 45%,transparent)}
 .prop-col.is-declined{background:var(--md-sys-color-surface-container-low);border-style:dashed}
 .prop-col.is-declined .prop-price{color:var(--md-sys-color-on-surface-variant)}
 .prop-col header{display:grid;gap:2px}

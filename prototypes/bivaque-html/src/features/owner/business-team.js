@@ -3,7 +3,7 @@
 // Mesmo catálogo do app (Planos para o negócio): preço mensal para a receita, rótulo como no app.
 const OWNER_PLAN_LABEL={free:'Grátis',moment:'Destaque de momento',plan:'Plano do negócio'};
 const OWNER_PLAN_PRICE={moment:{label:'R$ 9,90/semana',month:40},plan:{label:'R$ 39/mês',month:39}};
-function ownerPlan(b){if(state.myBiz&&b.id===state.myBiz.id&&state.subscription?.tier&&state.subscription.tier!=='free')return {tier:state.subscription.tier,renewDays:30,mine:true};return OWNER_DEMO.plans?.[b.id]||{tier:'free'};}
+function ownerPlan(b){if(!paidPlans())return {tier:'free'};if(state.myBiz&&b.id===state.myBiz.id&&state.subscription?.tier&&state.subscription.tier!=='free')return {tier:state.subscription.tier,renewDays:30,mine:true};return OWNER_DEMO.plans?.[b.id]||{tier:'free'};}
 const ownerPlanMonth=p=>OWNER_PLAN_PRICE[p.tier]?.month||0;
 // Planos pagos e receita: negócios do protótipo mais os planos de exemplo das outras cidades.
 function ownerPlansTotal(city=ownerCity){const paid=[...(state.myBiz?.live?[state.myBiz]:[]),...state.biz].filter(b=>(city==='Todas'||b.city===city)&&ownerPlan(b).tier!=='free'),o=Object.entries(OWNER_DEMO.otherPlans||{}).filter(([c])=>city==='Todas'||c===city);return {count:paid.length+o.reduce((s,[,v])=>s+v.count,0),revenue:paid.reduce((s,b)=>s+ownerPlanMonth(ownerPlan(b)),0)+o.reduce((s,[,v])=>s+v.revenue,0)};}
@@ -17,11 +17,20 @@ function renderOwnerBusiness(){
  const all=ownerBizAll(),paid=all.filter(b=>ownerPlan(b).tier!=='free'),tot=ownerPlansTotal(),spon=all.filter(isSpon).length,quotes=Object.entries(OWNER_DEMO.quotesByCity||{}).filter(([c])=>ownerCity==='Todas'||c===ownerCity).reduce((s,[,n])=>s+n,0),reminded=ownerData().reminded||{};
  const due=paid.filter(b=>ownerPlan(b).renewDays<=7).sort((a,b)=>ownerPlan(a).renewDays-ownerPlan(b).renewDays);
  const dueRow=b=>{const p=ownerPlan(b);return `<div class="ow-q ow-q-plan" role="listitem"><span class="ow-ic ow-amber">${icon('event_busy')}</span><span class="t"><b>${esc(b.name)}</b><small>${OWNER_PLAN_LABEL[p.tier]} · ${OWNER_PLAN_PRICE[p.tier]?.label||''} · vence em ${p.renewDays} ${p.renewDays===1?'dia':'dias'}</small></span><span class="ow-acts">${reminded[b.id]?`<span class="ow-sla">Lembrete registrado</span>`:ownerBtn('Lembrar','owner-remind',{id:b.id,title:b.name},'outlined')}</span></div>`;};
+ if(!paidPlans())return ownerBusinessFree(all,quotes);
  return `<h1 class="ow-h1">Negócios e planos</h1><p class="ow-lead">Planos pagos, patrocínios e o que vence nos próximos dias.</p>
  <div class="ow-filters">${filterChips([['Todas','Todas as cidades'],...ownerCities().map(c=>[c,c])],ownerCity,'owner-city')}</div>
  <section class="ow-card"><div class="ow-mini ow-mini-4"><div><small>Planos pagos</small><b>${tot.count}</b></div><div><small>Receita do mês</small><b>R$ ${tot.revenue.toLocaleString('pt-BR')}</b></div><div><small>Patrocinados</small><b>${spon}</b></div><div><small>Pedidos de orçamento (30 dias)</small><b>${quotes}</b></div></div></section>
  <section class="ow-card"><h2>Vencem em 7 dias</h2>${due.length?`<div class="ow-list" role="list">${due.map(dueRow).join('')}</div>`:`<p class="ow-done">${icon('check')}Nenhum plano vence esta semana.</p>`}</section>
  <section class="ow-card"><h2>Todos os negócios</h2>${all.length?`<table class="ow-table"><caption class="ow-sr">Negócios e planos</caption><thead><tr><th scope="col">Negócio</th><th scope="col">Cidade</th><th scope="col">Plano</th><th scope="col" class="n">Indicações</th><th scope="col">Situação</th></tr></thead><tbody>${all.map(ownerBizRow).join('')}</tbody></table>`:`<p class="ow-done">Nenhum negócio nesta cidade.</p>`}</section>`;
+}
+// Rodada 69: sem cobrança no lançamento, a tela mostra os negócios e quem ainda espera o responsável.
+function ownerBusinessFree(all,quotes){
+ const claimed=all.filter(b=>b.claimed!==false).length,row=b=>`<tr><th scope="row"><button type="button" class="ow-link" data-action="open-biz" data-value="${esc(b.id)}">${esc(b.name)}</button><small>${esc(b.cat)}</small></th><td data-label="Cidade">${esc(b.city)}</td><td class="n" data-label="Indicações">${b.recN||0}</td><td data-label="Situação">${ownerClaimPending(b)?'Reivindicação em análise':b.claimed!==false?'Com responsável':'Aguardando responsável'}</td></tr>`;
+ return `<h1 class="ow-h1">Negócios</h1><p class="ow-lead">Lançamento sem cobrança: toda página de negócio é gratuita e ninguém aparece como Patrocinado.</p>
+ <div class="ow-filters">${filterChips([['Todas','Todas as cidades'],...ownerCities().map(c=>[c,c])],ownerCity,'owner-city')}</div>
+ <section class="ow-card"><div class="ow-mini ow-mini-4"><div><small>Negócios</small><b>${all.length}</b></div><div><small>Com responsável</small><b>${claimed}</b></div><div><small>Aguardando responsável</small><b>${all.length-claimed}</b></div><div><small>Pedidos de orçamento (30 dias)</small><b>${quotes}</b></div></div></section>
+ <section class="ow-card"><h2>Todos os negócios</h2>${all.length?`<table class="ow-table"><caption class="ow-sr">Negócios</caption><thead><tr><th scope="col">Negócio</th><th scope="col">Cidade</th><th scope="col" class="n">Indicações</th><th scope="col">Situação</th></tr></thead><tbody>${all.map(row).join('')}</tbody></table>`:`<p class="ow-done">Nenhum negócio nesta cidade.</p>`}</section>`;
 }
 function ownerRemind(id){
  const b=bizById(id);if(!b)return;

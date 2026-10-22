@@ -73,7 +73,7 @@ function ownerHero(){
 }
 function ownerKpis(){
  const cs=OWNER_DEMO.cities,total=ownerCities().reduce((s,c)=>s+cs[c].fam,0),share=ownerCity==='Todas'?1:cs[ownerCity].fam/total;
- return OWNER_DEMO.kpis.map(k=>`<div class="ow-card ow-kpi ow-kpi-${k.id}"><small>${esc(k.label)}</small><div class="v"><b>${ownerNum(k,share)}</b><span class="${k.up?'ow-up':'ow-down'}">${k.delta}</span></div>${ownerSpark(k.series,!k.up)}</div>`).join('');
+ return OWNER_DEMO.kpis.filter(k=>!k.revenue||paidPlans()).map(k=>`<div class="ow-card ow-kpi ow-kpi-${k.id}"><small>${esc(k.label)}</small><div class="v"><b>${ownerNum(k,share)}</b><span class="${k.up?'ow-up':'ow-down'}">${k.delta}</span></div>${ownerSpark(k.series,!k.up)}</div>`).join('');
 }
 function ownerChanges(){
  const list=OWNER_DEMO.changes.filter(c=>ownerCity==='Todas'||c.city===ownerCity);
@@ -89,7 +89,7 @@ function ownerQueueHtml(){
  const list=all.filter(q=>ownerTab==='all'||q.kind===ownerTab);
  return `<section class="ow-card ow-queue" aria-labelledby="ow-q-t"><div class="ow-card-head"><h2 id="ow-q-t">Precisa de você</h2>${btn('Abrir filas','owner-go','filas','text')}</div>${filterChips(OWNER_KINDS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>[k,`${l} · ${count(k)}`]),ownerTab,'owner-tab')}${list.length?`<div class="ow-list" role="list">${list.map(ownerRow).join('')}</div>`:`<p class="ow-done">${icon('check')}Nada esperando por você${ownerCity==='Todas'?'':` em ${esc(ownerCity)}`}.</p>`}</section>`;
 }
-const OWNER_PAGES=[['','Visão geral','home'],['filas','Filas','inbox'],['cidades','Cidades','apartment'],['negocios','Negócios e planos','storefront'],['equipe','Pessoas e equipe','group']];
+const OWNER_PAGES=[['','Visão geral','home'],['filas','Filas','inbox'],['cidades','Cidades','apartment'],['negocios',paidPlans()?'Negócios e planos':'Negócios','storefront'],['equipe','Pessoas e equipe','group']];
 function renderOwner(){
  const name=state.profile.name.split(' ')[0],sub=OWNER_PAGES.some(([p])=>p===(route.id||''))?route.id||'':'',open=ownerQueue().length;
  const nav=OWNER_PAGES.map(([p,l,ic])=>`<button type="button" class="ow-nav-item${p===sub?' on':''}" data-action="owner-go" data-value="${p}"${p===sub?' aria-current="page"':''}>${icon(ic)}${l}${p==='filas'&&open?`<b class="ow-badge" aria-label="${open} abertos">${open}</b>`:''}</button>`).join('');

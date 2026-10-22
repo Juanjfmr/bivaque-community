@@ -154,6 +154,11 @@ async function clipboard(page, mode, shareMode = "absent") {
 
 async function verify(width, theme) {
   const context = await createDeterministicContext(browser, { width, theme })
+  // Rodada 69: o produto pago fica atrás da chave de laboratório. A R01 cobre os planos pagos (preço de
+  // demonstração e ativação), então liga a chave, como as R06, R35, R52, R63 e R65.
+  await context.addInitScript(() => {
+    window.BIVAQUE_LABS = { paidPlans: true }
+  })
   const page = await context.newPage()
   page.setDefaultTimeout(5000)
   page.on("pageerror", (error) =>

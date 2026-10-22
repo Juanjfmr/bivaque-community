@@ -1,0 +1,67 @@
+task_id: HTML-071
+objective: >
+  Rodada 71: a landing pública passa a ser a v8 aprovada (.visual/bivaque-html-landing-v3/v8/maquete-v8.html)
+  com o título F ("Juntos somos mais fortes."), na pele da marca da R70 e nos temas claro e escuro. Sai a
+  landing da R53 (título "Muda a cidade. Fica a sua rede.", dois CTAs e a amostra por cidade). Um único
+  CTA, "Criar conta", leva ao cadastro; "Entrar" leva ao login; o convite de familiar continua dentro do
+  cadastro. As imagens já estão em ASSETS (commit 4d45ceda).
+authority:
+  - Decisão do dono em 2026-10-18 (maquete v8 e título F, docs/agents/HANDOFF-COORDENACAO-2026-10-19.md)
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base 4d45ceda: a landing mostra "Muda a cidade. Fica a sua rede.", os CTAs "Quero fazer parte" e
+    "Recebi um convite de familiar" e a amostra por cidade; não há seções de exemplo, recursos, mudança,
+    passos, perguntas, chamada final nem barra fixa.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-071.task.yml
+forbidden:
+  - editar src/vendor, src/styles/fonts.css, src/data/demo/assets.js, a referência HTML congelada ou a base visual
+  - mudar o fluxo de cadastro, login ou convite (só a landing que leva a eles)
+  - carregar qualquer recurso externo (fonte, imagem ou script)
+  - fazer merge, push, deploy ou git stash
+acceptance:
+  - Quem saiu vê a landing v8 com o título e a linha de apoio do título F, palavra por palavra
+  - Um único CTA, "Criar conta", leva à conta; "Entrar" leva ao login; nenhum "Quero fazer parte" ou amostra
+  - As seções da v8 aparecem na ordem, com os textos da maquete; o rodapé só tem links com destino real
+  - No celular, menu em folha (Esc fecha e devolve o foco) e barra fixa de "Criar conta" depois do topo
+  - Nos dois temas, texto com no mínimo 4,5:1 e CTA em Brasa; nenhuma requisição externa
+  - As provas antigas que afirmavam a landing da R53 passam a afirmar a v8 e continuam verdes
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round71-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round53-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round54-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round56-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round62-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round70-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: primeira impressão pública do produto; a base visual é recongelada no fechamento do lote
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
+
+# Evidência de execução (Rodada 71, 21/10/2026)
+# Base 4d45ceda, build 7dd15d48d9d22cdc: round71 nos 4 contextos = 4/40 (36 checkpoints falham; os 4
+# que passam são mobile-menu e no-overflow em 1440, que só valem abaixo de 861 px). A no-overflow de
+# 375 falha na base: a landing da R53 rola de lado (scrollWidth 900 > clientWidth 360).
+# Candidato build c5d5cddf0af32108: round71 = 40/40, sem erro de JS e sem requisição externa.
+# Provas antigas ajustadas em 375-light: R53 4/4; R54 6/6; R56 6/6; R58 15/15; R62 12/12.
+# round70 em 375-light e 1440-light: 12/12. round19 não foi tocado (o termo Amostra ali é só um
+# comentário de uma função de medição).
+# Contraste medido: corpo sobre surface 11,90:1 (claro) e 14,04:1 (escuro); perguntas iguais;
+# --bv-on-brasa sobre --bv-brasa 5,15:1 e 5,71:1; branco sobre o véu + média da foto 16,90:1 e 17,26:1.
+# Gate verde: lint, typecheck, test e secrets. O build web pulou por falta de apps/web/.env.local,
+# então não há evidência de que o Next compila nesta worktree.
+# Relatório: prototypes/bivaque-html/docs/ROUND_71.md
+# Revisão do coordenador: sobre a foto o símbolo ficava em Grafite e Brasa (quase invisível) e o
+# texto do rodapé herdava a cor de apoio da conversa (.ld-who duplicado). Corrigido em landing.css,
+# com o checkpoint brand-on-dark (vermelho 2/4 antes, verde 4/4 depois). round71 = 44/44; gate verde.

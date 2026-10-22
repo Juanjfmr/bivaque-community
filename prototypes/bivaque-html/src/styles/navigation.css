@@ -6,7 +6,7 @@
  .nav-main.minimized{transform:translateY(100%);pointer-events:none}
  .nav-item{align-content:start;padding-top:12px;gap:4px;font-size:12px;line-height:16px;font-weight:500;letter-spacing:.5px;color:var(--md-sys-color-on-surface-variant)}
  .nav-item[aria-current=page]{font-weight:500;color:var(--md-sys-color-on-surface)}
- .nav-icon{width:56px;border-radius:16px}
+ .nav-icon{width:56px;border-radius:10px}
  .create-fab.compact{bottom:calc(16px + env(safe-area-inset-bottom));width:56px;min-width:56px;--md-filled-tonal-button-leading-space:16px;--md-filled-tonal-button-trailing-space:16px}
  .create-fab.compact .fab-label{max-width:0;opacity:0}
  .create-fab.compact md-icon[slot=icon]{margin-right:0}

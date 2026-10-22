@@ -18,7 +18,7 @@
 .g-rules{margin-top:12px;border-radius:16px;background:var(--md-sys-color-surface-container-low);padding:0 14px}
 .g-rules summary{cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;font-size:14px;font-weight:600;list-style:none}
 .g-rules summary::-webkit-details-marker{display:none}
-.g-rules summary::after{content:'expand_more';font-family:'Material Symbols Outlined','Material Symbols Rounded','Material Icons';margin-left:auto;font-size:22px;transition:transform .2s}
+.g-rules summary::after{content:'expand_more';font-family:'Material Symbols Outlined','Material Icons';margin-left:auto;font-size:22px;transition:transform .2s}
 .g-rules[open] summary::after{transform:rotate(180deg)}
 .g-rules p{padding:0 0 14px;color:var(--md-sys-color-on-surface-variant)}
 .g-rules md-icon{font-size:20px;width:20px;height:20px}

@@ -9,6 +9,6 @@ body.immersive .topbar{transition:background-color .2s,border-color .2s}
 body.immersive .topbar .top-title{transition:opacity .2s}
 body.immersive .topbar:not(.bar-solid){background:transparent;border-bottom-color:transparent}
 body.immersive .topbar:not(.bar-solid) .top-title{opacity:0}
-body.immersive .topbar:not(.bar-solid) md-icon-button{border-radius:50%;background:rgba(16,28,34,.52);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);--md-icon-button-icon-color:#fff;--md-icon-button-hover-icon-color:#fff;--md-icon-button-focus-icon-color:#fff;--md-icon-button-pressed-icon-color:#fff}
+body.immersive .topbar:not(.bar-solid) md-icon-button{border-radius:50%;background:var(--bv-photo-chip);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);--md-icon-button-icon-color:var(--bv-on-photo);--md-icon-button-hover-icon-color:var(--bv-on-photo);--md-icon-button-focus-icon-color:var(--bv-on-photo);--md-icon-button-pressed-icon-color:var(--bv-on-photo)}
 }
 @media(max-width:719px) and (prefers-reduced-motion:reduce){body.immersive .topbar,body.immersive .topbar .top-title{transition:none}}

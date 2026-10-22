@@ -1,0 +1,82 @@
+task_id: HTML-072
+objective: >
+  Rodada 72: correções da revisão independente do Codex (gpt-6.1-sol, 22/10/2026) sobre as rodadas 70 e
+  71, que deu REPROVADO com 4 achados MÉDIA e 4 BAIXA. Menu Criar com Brasa só no botão e subtítulos
+  legíveis; paleta do cartão de compartilhamento centralizada; cantos de 12 px na entrada e na ajuda;
+  símbolo oficial em todos os cabeçalhos da entrada; folha do menu da landing com o foco contido; barra
+  fixa escondida fora do teclado; "Fale com a gente" com alvo de 44 px; e provas que deixam de passar sem
+  verificar.
+authority:
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+  - docs/agents/tasks/HTML-070.task.yml e docs/agents/tasks/HTML-071.task.yml (critérios não cumpridos)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base 574365f4 (build 0c579323): o menu Criar pinta todas as opções em Brasa e os subtítulos com
+    opacity .8 dão 3,88:1 (claro) e 4,23:1 (escuro); .en-tile, .help-card e .ticket têm 16 px e a data
+    de chegada 4 px; a entrada usa a letra "B" em .en-mark; Tab sai da folha do menu; o botão da barra
+    fixa escondida recebe foco; "Fale com a gente" tem cerca de 27 px de altura; os checkpoints
+    mobile-menu e no-overflow retornam cedo no 1440 e contam PASS.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-072.task.yml
+forbidden:
+  - editar src/vendor, src/styles/fonts.css, src/data/demo/assets.js, a referência HTML congelada ou a base visual
+  - mudar textos, fluxos ou comportamentos além do que os achados pedem
+  - fazer merge, push, deploy ou git stash
+acceptance:
+  - No menu Criar, só o botão Criar é Brasa; as opções usam tokens neutros e os subtítulos passam de 4,5:1 nos dois temas
+  - share-card.js tem a paleta clara da marca numa única constante nomeada, sem hex soltos no desenho
+  - Datas, .en-tile, .help-card e .ticket com 12 px de canto
+  - Cadastro, login, convite, páginas legais, suporte e boas-vindas usam o símbolo oficial (mark()), sem a letra "B"
+  - Com a folha do menu da landing aberta, Tab e Shift+Tab não saem dela; o fundo fica inerte; Esc fecha e devolve o foco
+  - A barra fixa escondida não recebe foco nem aparece para tecnologia assistiva
+  - O botão Fale com a gente tem alvo de pelo menos 44 x 44 px
+  - Nenhum checkpoint conta PASS sem verificar: no 1440, mobile-menu afirma que o botão de menu está oculto e a navegação visível; no-overflow mede também o desktop
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round72-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round71-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round70-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round53-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round54-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: acessibilidade e consistência da marca; sem mudança de dado ou de fluxo
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
+
+# Evidência de execução (Rodada 72, 22/10/2026)
+# Base 574365f4, build 0c57932377: round72 nos 4 contextos = 6/28 checkpoints (22 falham). Falham
+# create-menu-neutral no 375 (opção com fundo rgb(184,74,58) e rgb(224,122,90)), share-palette nos
+# quatro, entry-shapes (ticket 16 px), entry-symbol (cadastro sem o símbolo), landing-focus-trap no
+# 375 (#ld-top ativo com a folha aberta), sticky-bar-hidden-from-keyboard no 375 (barra visible e
+# inert false) e inline-targets (Fale com a gente mede 149x27). Os 6 que passam na base são o painel
+# do Criar no 1440 e a forma de desktop dos dois checkpoints de celular.
+# Candidato build ae26590f4da1d27f: round72 = 28/28, sem erro de JS e sem requisição externa;
+# round71 = 44/44 (mobile-menu e no-overflow agora medem no 1440); round70 = 24/24 nos 4 contextos.
+# Provas antigas: R53 4/4 e R54 6/6 em 375-light.
+# Contraste do menu Criar: título 10,78:1 (claro) e 10,50:1 (escuro); subtítulo 5,06:1 e 6,17:1,
+# sobre surface-container-high. Na base os subtítulos davam 3,88:1 e 4,23:1.
+# Cantos de 12 px: data 4->12, .en-tile/.help-card/.ticket/.en-why/.en-inv 16->12, .en-link/.en-file
+# 14->12 e .en-seg 20->12. Só os círculos (.en-av 22 num avatar de 44 e .en-badge 32 num selo de 64)
+# ficaram fora, de propósito.
+# Gate verde: lint, typecheck, test e secrets. O build web pulou por falta de apps/web/.env.local,
+# então não há evidência de que o Next compila nesta worktree.
+# Relatório: prototypes/bivaque-html/docs/ROUND_72.md
+
+# Confirmação do Codex (22/10): REPROVADO — subtítulo do menu Criar 4,40:1 no hover, sync() da barra
+# ignorando a folha aberta e falsos positivos na prova. Coordenador reforçou a prova (vermelho 22/28:
+# create-menu-neutral no 375 com 4,09:1 e 4,39:1 no toque; landing-focus-trap com a barra saindo do
+# isolamento) e corrigiu: opções do Criar em surface-container-lowest; sync() respeita a folha aberta
+# e fechar a folha recalcula a barra. Build b6eb1c5c: round72 28/28, round71 44/44, round70 24/24 nos
+# 4 contextos; R53 4/4 e R54 6/6 em 375-light; gate verde.
+# Segunda confirmação do Codex: APROVADO COM RESSALVAS (sem problema funcional). Fechadas depois:
+# boas-vindas conferem desenho e cores do símbolo; alvos de toque medidos sem arredondar (28/28,
+# gate verde). Ressalva aceita: o teste de isolamento da folha não força a transição de #fim; a
+# correção do sync() foi confirmada pelo Codex por simulação do callback.

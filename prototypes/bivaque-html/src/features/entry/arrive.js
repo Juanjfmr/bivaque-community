@@ -58,7 +58,7 @@ function renderEntryWelcome(){
  const mode=state.mode,home=state.homeCity,turma=mode==='moro'?null:state.groups.find(g=>g.auto&&g.on&&g.city===(mode==='saindo'?state.dest:home));
  const lead=mode==='chegando'?`Seu plano de chegada a ${esc(home)} já está pronto.`:mode==='saindo'?`Seu plano de saída para ${esc(state.dest)} já está pronto.`:`O que a comunidade de ${esc(home)} indica já está à sua espera.`;
  const tiles=[mode==='moro'?['map',`Conhecer ${home}`,'O que a comunidade indica, por assunto.','guia']:['map',mode==='saindo'?'Ver o plano de saída':'Ver o plano de chegada','Moradia, escola, saúde e mudança, na ordem.','inicio'],...(turma?[['group',mode==='saindo'?'Conhecer quem vai com você':'Conhecer quem chega com você',turma.t,'grupo/'+turma.id]]:[])];
- return `<div class="en en-form en-welcome"><header class="en-top"><span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span></header><div class="en-badge" aria-hidden="true">${icon('check')}</div><h1 class="en-h1" tabindex="-1">Você chegou ao Bivaque.</h1><p class="en-lead">${lead}</p>
+ return `<div class="en en-form en-welcome"><header class="en-top">${mark()}<span class="en-brand">Bivaque</span></header><div class="en-badge" aria-hidden="true">${icon('check')}</div><h1 class="en-h1" tabindex="-1">Você chegou ao Bivaque.</h1><p class="en-lead">${lead}</p>
  ${tiles.map(([ic,t,d,to])=>`<button type="button" class="en-tile" data-action="entry-home" data-value="${esc(to)}">${icon(ic)}<span><b>${esc(t)}</b>${esc(d)}</span></button>`).join('')}${btn('Entrar na comunidade','entry-home','comunidade','filled')}</div>`;
 }
 // A entrada em análise na fila do dono: o nome e o que já chegou. A pessoa ainda não escolheu a cidade.

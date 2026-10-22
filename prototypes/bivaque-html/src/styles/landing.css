@@ -1,0 +1,178 @@
+/* Rodada 71: landing pública v8 (título F), na pele da marca da R70. Toda cor vem de token com o
+   par claro e escuro. As duas exceções são o branco sobre as fotos e o véu delas (--bv-on-photo e
+   --bv-photo-scrim, iguais nos dois temas, porque a foto não acompanha o tema).
+   Rodada 72: alvos de 44 px nos botões inline e nos links do rodapé, e a barra fixa escondida fora
+   do teclado (inert pelo JS + visibility:hidden). */
+.ld{--ld-wrap:1160px;--ld-gap:64px;--ease:cubic-bezier(.2,0,0,1);position:relative;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface)}
+.ld-wrap{max-width:var(--ld-wrap);margin:0 auto;padding:0 20px}
+.ld h1,.ld h2{font-family:var(--md-ref-typeface-brand);font-weight:600;letter-spacing:-.02em;text-wrap:balance}
+.ld h1[tabindex="-1"]:focus,.ld h1:focus,#ld-main:focus{outline:none}
+#main.ld-locked{overflow:hidden}
+/* Pular para o conteúdo */
+.ld-skip{position:absolute;left:-9999px;top:0;z-index:70}
+.ld-skip:focus{left:12px;top:12px;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface);text-decoration:none;box-shadow:0 0 0 1px var(--md-sys-color-outline-variant)}
+/* Topo fixo: transparente e branco sobre a foto; superfície translúcida depois dela. */
+.ld-top{position:sticky;top:0;z-index:40;height:72px;margin-bottom:-72px;color:var(--bv-on-photo);transition:background .2s var(--ease),color .2s var(--ease),transform .2s var(--ease)}
+.ld-top-in{display:flex;align-items:center;gap:8px;height:100%}
+.ld-top.ld-solid{background:color-mix(in srgb,var(--md-sys-color-surface) 86%,transparent);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);box-shadow:0 1px 0 var(--md-sys-color-outline-variant);color:var(--md-sys-color-on-surface)}
+.ld-home{display:inline-flex;align-items:center;gap:10px;min-height:44px;color:inherit;text-decoration:none}
+.ld-home .brand-mark{width:34px;height:34px}
+/* Sobre a foto, o símbolo é o branco inteiro (brandbook: fundo escuro, versão branca); com o topo sólido volta às cores do tema. */
+.ld-top:not(.ld-solid) .brand-mark .bv-symbol-body,.ld-top:not(.ld-solid) .brand-mark .bv-symbol-threshold{fill:var(--bv-on-photo)}
+.ld-home b{font-size:19px;font-weight:700}
+.ld-nav{position:relative;display:flex;align-items:center;gap:4px;height:44px;margin:0 auto}
+.ld-nav a{position:relative;z-index:1;display:inline-flex;align-items:center;height:44px;padding:0 14px;border-radius:10px;font-weight:600;font-size:15px;color:inherit;text-decoration:none;opacity:.9}
+.ld-nav a[aria-current="true"]{color:var(--md-sys-color-on-primary-container);opacity:1}
+.ld-pill{position:absolute;top:0;left:0;height:44px;border-radius:10px;background:var(--md-sys-color-primary-container);opacity:0;transition:transform .25s var(--ease),width .25s var(--ease),opacity .2s}
+.ld-actions{display:flex;align-items:center;gap:6px}
+.ld-text{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;font-size:16px;font-weight:600;color:inherit}
+.ld-text:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
+.ld-cta{display:inline-flex;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .2s var(--ease),transform .2s var(--ease),visibility .2s}
+.ld-top.ld-show-cta .ld-cta{opacity:1;visibility:visible;transform:none}
+.ld-menu-btn{display:none;width:48px;height:48px;border-radius:24px;place-items:center;color:inherit}
+.ld-menu-btn md-icon{font-size:24px}
+.ld-top.ld-hide{transform:translateY(-100%)}
+/* Topo com foto */
+.ld-hero{position:relative;display:flex;align-items:center;overflow:hidden;min-height:min(86svh,760px);background:var(--bv-sheet-backdrop);color:var(--bv-on-photo)}
+.ld-hero-media{position:absolute;inset:0;display:block;margin:0}
+.ld-hero-media img{width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+.ld-hero-media::after{content:"";position:absolute;inset:0;background:var(--bv-photo-scrim)}
+.ld-hero-in{position:relative;z-index:2;width:100%;padding-top:88px;padding-bottom:88px}
+.ld-hero-copy{max-width:560px}
+.ld-forces{margin:0;font-size:16px;font-weight:600}
+.ld-hero h1{font-size:clamp(36px,4.8vw,60px);line-height:1.04;margin:12px 0 18px}
+.ld-lead{margin:0 0 28px;font-size:19px;line-height:1.5;max-width:520px}
+.ld-note{margin:14px 0 0;font-size:14px}
+/* Seções */
+.ld-sec{padding:clamp(56px,8vw,112px) 0;scroll-margin-top:72px}
+.ld-alt{background:var(--md-sys-color-surface-container-low)}
+.ld-kicker{margin:0 0 10px;font-size:14px;font-weight:700;letter-spacing:.01em;color:var(--md-sys-color-on-surface-variant)}
+.ld-sec h2{font-size:clamp(26px,3.2vw,38px);line-height:1.12}
+.ld-sub{margin:12px 0 0;font-size:18px;color:var(--md-sys-color-on-surface-variant);max-width:620px}
+/* Alvo de 44 px sem quebrar a linha do texto (Rodada 72). */
+.ld-inline{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;margin:0 -4px;border:0;background:none;font:inherit;color:var(--md-sys-color-primary);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+/* Como funciona: a conversa ilustrativa */
+.ld-ex .ld-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--ld-gap);align-items:center}
+.ld-thread{margin:0;display:grid;gap:16px;padding:24px;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);box-shadow:0 0 0 1px var(--md-sys-color-outline-variant)}
+.ld-thread-top{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--md-sys-color-on-surface-variant)}
+.ld-chip{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:12px;background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface-variant);font-weight:600}
+.ld-illus{margin-left:auto;font-size:12px}
+.ld-msg{display:grid;grid-template-columns:40px 1fr;gap:12px}
+.ld-av{display:grid;place-items:center;width:40px;height:40px;border-radius:20px;font-weight:700;font-size:14px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)}
+.ld-av.b{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.ld-av.c{background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container)}
+.ld-who{font-size:13px;color:var(--md-sys-color-on-surface-variant)}
+.ld-who b{color:var(--md-sys-color-on-surface);font-weight:600}
+.ld-msg p{margin:2px 0 0}
+.ld-msg.q p{font-size:18px;font-weight:600}
+.ld-useful{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--md-sys-color-on-surface-variant)}
+.ld-useful md-icon{font-size:16px;width:16px;height:16px;color:var(--md-sys-color-primary)}
+.ld-done{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);font-size:15px;font-weight:500}
+.ld-done md-icon{flex:none}
+.ld-reveal .ld-msg,.ld-reveal .ld-done{opacity:0;transform:translateY(8px)}
+.ld-reveal.ld-in .ld-msg,.ld-reveal.ld-in .ld-done{opacity:1;transform:none;transition:opacity .4s var(--ease),transform .4s var(--ease)}
+.ld-reveal.ld-in>.ld-msg:nth-child(3){transition-delay:.12s}
+.ld-reveal.ld-in>.ld-msg:nth-child(4){transition-delay:.24s}
+.ld-reveal.ld-in>.ld-done{transition-delay:.4s}
+/* O que tem */
+.ld-feat .ld-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--ld-gap);align-items:start}
+.ld-list{list-style:none;margin:32px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:24px 28px}
+.ld-list li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.ld-list i{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)}
+.ld-list b{display:block;font-size:17px;font-weight:600;margin-bottom:2px}
+.ld-list span{color:var(--md-sys-color-on-surface-variant);font-size:15px}
+.ld-shot{margin:0 0 0 auto;max-width:380px;overflow:hidden;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);box-shadow:0 24px 48px -24px var(--bv-shadow-strong),0 0 0 1px var(--md-sys-color-outline-variant);position:sticky;top:96px}
+.ld-shot img{display:block;width:100%}
+.ld-shot figcaption{padding:12px 16px;font-size:13px;color:var(--md-sys-color-on-surface-variant);border-top:1px solid var(--md-sys-color-outline-variant)}
+/* Mudança de cidade */
+.ld-move .ld-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--ld-gap);align-items:center}
+.ld-move .ld-shot{position:static;margin:0;max-height:560px}
+.ld-move .ld-shot img{height:560px;object-fit:cover;object-position:top}
+.ld-checks{list-style:none;margin:24px 0 0;padding:0;display:grid;gap:12px}
+.ld-checks li{display:flex;align-items:center;gap:12px;font-size:17px}
+.ld-checks md-icon{color:var(--md-sys-color-primary)}
+.ld-move-foot{margin:20px 0 0;color:var(--md-sys-color-on-surface-variant)}
+/* Como participar */
+.ld-steps{list-style:none;margin:36px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:step}
+.ld-steps li{padding:24px;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);box-shadow:0 0 0 1px var(--md-sys-color-outline-variant)}
+.ld-steps li::before{counter-increment:step;content:counter(step);display:grid;place-items:center;width:36px;height:36px;border-radius:18px;margin-bottom:14px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-weight:700}
+.ld-steps b{display:block;font-size:18px;font-weight:600;margin-bottom:4px}
+.ld-steps span{color:var(--md-sys-color-on-surface-variant)}
+/* Perguntas */
+.ld-faq .ld-wrap{display:grid;grid-template-columns:.75fr 1.25fr;gap:var(--ld-gap)}
+.ld-faq details{border-bottom:1px solid var(--md-sys-color-outline-variant)}
+.ld-faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:64px;font-size:17px;font-weight:600;cursor:pointer}
+.ld-faq summary::-webkit-details-marker{display:none}
+.ld-faq summary md-icon{color:var(--md-sys-color-primary);transition:transform .25s var(--ease)}
+.ld-faq details[open] summary md-icon{transform:rotate(180deg)}
+.ld-faq p{margin:0 0 20px;color:var(--md-sys-color-on-surface-variant);max-width:620px}
+/* Chamada final */
+.ld-final{position:relative;overflow:hidden;background:var(--bv-sheet-backdrop);color:var(--bv-on-photo)}
+.ld-final img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ld-final::after{content:"";position:absolute;inset:0;background:var(--bv-photo-scrim)}
+.ld-final .ld-wrap{position:relative;z-index:1;padding-top:clamp(64px,9vw,104px);padding-bottom:clamp(64px,9vw,104px)}
+.ld-final h2{font-size:clamp(28px,3.4vw,42px);max-width:620px}
+.ld-final p{margin:10px 0 28px;font-size:18px}
+/* Rodapé: a faixa escura da marca, com o símbolo branco. */
+.ld-footer{background:var(--bv-sheet-backdrop);color:var(--bv-on-photo);font-size:14px}
+.ld-footer .ld-wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 24px;padding-top:32px;padding-bottom:32px}
+.ld-who{display:flex;align-items:center;gap:10px}
+.ld-who .brand-mark{width:28px;height:28px}
+/* .ld-who também nomeia quem fala na conversa (cor de apoio); no rodapé o texto fica sobre o fundo escuro. */
+.ld-footer .ld-who{color:var(--bv-on-photo)}
+.ld-footer .brand-mark .bv-symbol-body,.ld-footer .brand-mark .bv-symbol-threshold{fill:var(--bv-on-photo)}
+.ld-footer nav{display:flex;flex-wrap:wrap;gap:4px 20px}
+.ld-footer small{flex-basis:100%;font-size:13px;color:color-mix(in srgb,var(--bv-on-photo) 62%,transparent)}
+.ld-link{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;font:inherit;font-size:14px;color:inherit;text-decoration:none;cursor:pointer}
+.ld-link:hover{text-decoration:underline}
+/* Os links legais vêm de legalLink() (classe .en-inline), feita para o fundo claro da entrada. */
+.ld-footer .en-inline,.ld-sheet-legal .en-inline{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;color:inherit;font:inherit;font-size:14px;text-decoration:none}
+.ld-footer .en-inline:hover,.ld-sheet-legal .en-inline:hover{text-decoration:underline}
+.ld-inline:focus-visible,.ld-link:focus-visible,.ld-text:focus-visible,.ld-menu-btn:focus-visible,.ld-home:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+/* A folha do menu do celular */
+.ld-sheet{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;padding:0 20px calc(24px + env(safe-area-inset-bottom));background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);transform:translateY(-100%);visibility:hidden;transition:transform .28s var(--ease),visibility .28s}
+.ld-sheet.ld-open{transform:none;visibility:visible}
+.ld-sheet-head{display:flex;align-items:center;height:56px}
+.ld-sheet-head .ld-menu-btn{display:grid;margin-left:auto}
+.ld-sheet nav{display:grid;margin-top:8px}
+.ld-sheet nav a{display:flex;align-items:center;gap:16px;min-height:56px;font-size:18px;font-weight:600;color:inherit;text-decoration:none;border-bottom:1px solid var(--md-sys-color-outline-variant)}
+.ld-sheet nav md-icon{color:var(--md-sys-color-primary)}
+.ld-sheet-acts{display:grid;gap:12px;margin-top:28px;justify-items:stretch}
+.ld-sheet-acts md-filled-button{width:100%}
+.ld-sheet-acts .ld-link{justify-content:center;color:var(--md-sys-color-primary);font-weight:600}
+.ld-sheet-legal{margin-top:auto;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
+/* Barra fixa do celular */
+.ld-bar{display:none}
+/* Em telas estreitas, "Conversa ilustrativa" desce para a própria linha. */
+@media (max-width:480px){.ld-thread-top{flex-wrap:wrap}.ld-illus{margin-left:0;flex-basis:100%}}
+@media (max-width:860px){
+ .ld{--ld-gap:28px}
+ .ld-top{height:56px;margin-bottom:-56px}
+ .ld-nav,.ld-top .ld-cta{display:none}
+ .ld-menu-btn{display:grid}
+ .ld-hero{display:block;min-height:0}
+ .ld-hero-media{position:relative;height:min(48svh,340px)}
+ .ld-hero-media img{object-position:50% 30%}
+ .ld-hero-media::after{background:linear-gradient(180deg,var(--bv-photo-scrim) 0%,var(--bv-photo-scrim) 72%,var(--bv-sheet-backdrop) 100%)}
+ .ld-hero-in{padding-top:28px;padding-bottom:36px}
+ .ld-hero h1{font-size:clamp(34px,10vw,44px)}
+ .ld-lead{font-size:17px}
+ .ld-hero .ld-hero-copy>md-filled-button{width:100%}
+ .ld-note{text-align:center}
+ .ld-sec{scroll-margin-top:56px}
+ .ld-ex .ld-wrap,.ld-feat .ld-wrap,.ld-move .ld-wrap,.ld-faq .ld-wrap{grid-template-columns:1fr;gap:28px}
+ .ld-list{grid-template-columns:1fr;margin-top:24px}
+ .ld-shot{position:static;max-width:none;margin:0}
+ .ld-move .ld-shot img{height:auto;max-height:480px}
+ .ld-steps{grid-template-columns:1fr;gap:10px}
+ .ld-steps li{display:grid;grid-template-columns:36px 1fr;gap:2px 14px;padding:18px}
+ .ld-steps li::before{margin:0;grid-row:span 2}
+ .ld-final md-filled-button{width:100%}
+ .ld-footer .ld-wrap{display:grid}
+ .ld-footer nav{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+ .ld-bar{display:block;position:fixed;inset:auto 0 0;z-index:35;padding:10px 20px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--md-sys-color-surface) 92%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--md-sys-color-outline-variant);transform:translateY(100%);visibility:hidden;transition:transform .22s var(--ease),visibility .22s}
+ .ld-bar.ld-show{transform:none;visibility:visible}
+ .ld-bar md-filled-button{width:100%}
+}
+/* No escuro, as fotos ficam 10% mais escuras (brandbook, p. 13), como as demais telas. */
+:root[data-theme=dark] .ld-hero-media img,:root[data-theme=dark] .ld-final img{filter:var(--bv-photo-dim)}

@@ -15,6 +15,7 @@ import {
 // Rodada 54: criar conta (aceite obrigatório, senha nunca guardada) e elegibilidade por CPF (dígitos
 // conferidos, CPF nunca guardado), com os resultados: confirmado, não localizado com documento, em
 // análise (conteúdo fechado) e fonte fora do ar.
+// Rodada 71: a landing virou a v8 e o CTA passou a ser "Criar conta" (ação entry-join, a mesma).
 const VALID_CPF = "529.982.247-25"
 async function startOut(page, portal = "verified") {
   await snapshot(page)
@@ -31,7 +32,7 @@ async function startOut(page, portal = "verified") {
   await page.locator('#main [data-action="sign-out"]').click()
   await settle(page)
   await confirmOk(page)
-  await page.locator('#main [data-action="entry-join"]').click()
+  await page.locator("#ld-hero-cta").click()
   await settle(page)
 }
 const err = (page) => page.locator("#en-err").innerText()
@@ -52,7 +53,7 @@ async function sendCpf(page, cpf = VALID_CPF) {
 const checkpoints = {
   async "account-needs-consent-and-never-stores-the-password"(page) {
     await startOut(page)
-    expect((await routeOf(page)).id === "conta", "Quero fazer parte não abriu a conta")
+    expect((await routeOf(page)).id === "conta", "Criar conta não abriu a conta")
     await page.locator('#main [data-action="entry-signup"]').click()
     await settle(page)
     expect(/nome/i.test(await err(page)), `sem nome: ${await err(page)}`)
