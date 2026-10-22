@@ -8,19 +8,22 @@
 ## Progresso consolidado
 
 - Fila: 267 candidatos, 259 EB e 8 MB.
-- Lotes concluídos: 01–10 — 250/267 registros (93,6%), todos EB.
-- Resultado acumulado: 106 CORROBORADOS (endereço textual); 36 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 107 INCONCLUSIVOS.
+- Lotes concluídos: 01–11 — 267/267 registros únicos (100%): 259 EB e 8 MB; a fila não contém registros FAB.
+- Resultado final recalculado a partir dos 267 CSVs: 116 CORROBORADOS (endereço textual); 37 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 113 INCONCLUSIVOS.
+- Cobertura EB: 109 CORROBORADOS, 36 DIVERGENTES, 1 ENDEREÇO DESATUALIZADO, 113 INCONCLUSIVOS (259). Cobertura MB: 7 CORROBORADOS, 1 DIVERGENTE (8). FAB: 0 candidatos na fila.
+- Lote 01: 4 CORROBORADOS; 2 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 18 INCONCLUSIVOS. Lote 02: 6 CORROBORADOS; 2 DIVERGENTES; 17 INCONCLUSIVOS.
 - Lote 03: 7 CORROBORADOS; 2 DIVERGENTES; 16 INCONCLUSIVOS.
 - Lote 04: 12 CORROBORADOS; 5 DIVERGENTES; 8 INCONCLUSIVOS. Divergências registradas: 9º B Sup (endereço oficial nº 219 versus nº 1628 no candidato/Geoapify), HGu Marabá (Folha 26 oficial versus Folha 31 Geoapify), e diferenças de bairro para 8ª Cia Intlg e TG Bragança. O registro agrupado com o Comando da 9ª RM também diverge: fonte oficial de 2024 aponta Rua Gen. Napomuceno Costa, 168; os outros elementos agrupados ainda carecem de confirmação.
 - Lote 05: 13 CORROBORADOS; 4 DIVERGENTES; 8 INCONCLUSIVOS. Diferenças cartográficas registradas em bairros/CEP; os casos de 5ª Cia Com Bld (mudança planejada para Ponta Grossa) e registros agrupados sem confirmação individual permanecem pendentes.
 - Lote 06: 13 CORROBORADOS; 6 DIVERGENTES; 6 INCONCLUSIVOS. Entre as divergências: endereço do 1º BE Cmb (fonte oficial nº 135 versus candidato nº 35), 25º B Log Es (fonte de 2022 nº 295 versus candidato nº 395) e divergências de bairro/logradouro nos registros do Rio de Janeiro e Niterói.
-- Lote 07: 16 CORROBORADOS; 5 DIVERGENTES; 4 INCONCLUSIVOS. Divergências incluem ponto compartilhado entre 17º PE e 5º BEC (Geoapify repetiu coordenadas e retornou apenas avenida), endereço do 17º B Log distinto do endereço oficial de 2025, e resultado da IDQBRN sem número/localidade coerente. CEADEx fica inconclusivo por operar em área compartilhada da EsSLog sem confirmação do nº 325; para o Comando da 17ª Bda há fontes oficiais com endereços de entrega/localização distintos, pendentes de conciliação.
+- Lote 07: 15 CORROBORADOS; 5 DIVERGENTES; 5 INCONCLUSIVOS. Divergências incluem ponto compartilhado entre 17º PE e 5º BEC (Geoapify repetiu coordenadas e retornou apenas avenida), endereço do 17º B Log distinto do endereço oficial de 2025, e resultado da IDQBRN sem número/localidade coerente. CEADEx fica inconclusivo por operar em área compartilhada da EsSLog sem confirmação do nº 325; para o Comando da 17ª Bda há fontes oficiais com endereços de entrega/localização distintos, pendentes de conciliação.
 - Lote 08: 12 CORROBORADOS; 6 DIVERGENTES; 7 INCONCLUSIVOS. Divergências incluem resultados Geoapify em bairro incompatível no 3º B Log, 3º GAAAe, EASA e 12º RC Mec; repetição exata de coordenadas para os endereços nº 2390 e nº 3129 (1º RCC/29º BI Bld); e três comandos com sede/endereço compartilhado na Rua dos Andradas, 562, em Porto Alegre.
 - Lote 09: 13 CORROBORADOS; 2 DIVERGENTES; 10 INCONCLUSIVOS. Divergências incluem endereço do 19º GAC (fonte oficial nº 1340 versus candidato nº 1460) e bairro do 9º B Log; Geoapify também repete ponto sem número entre 1ª Cia Eng Cmb Mec e 2º RCMec. Há pendências de fonte oficial individual para alguns TGs e unidades com resultados somente de rua.
 - Lote 10: 9 CORROBORADOS; 2 DIVERGENTES; 14 INCONCLUSIVOS. Divergências: endereço agregado do 28º BIL/Comando da 11ª Bda em Campinas, pois fonte oficial lista 28º BIL no nº 3628 e o candidato sem número; divergência de bairro da Base Adm Ap Ibirapuera. Muitos TGs permanecem pendentes por ausência de confirmação oficial individual nesta rodada.
-- Próximo registro da fila: 251. Restam 17 candidatos: 9 EB e os 8 registros da MB.
-- Nenhum ponto militar foi homologado e nenhuma coordenada foi publicada no aplicativo.
+- Lote 11: 12 CORROBORADOS; 1 DIVERGENTE; 4 INCONCLUSIVOS. Endereços da Marinha corroborados em nível de via/bairro nas oito OMs; a divergência é o bairro do retorno Geoapify para o 2º BtlOpRib (Mangueirão versus Marambaia oficial). Quatro pendências finais EB incluem falta de confirmação oficial nominal/número ou endereço de ponto.
+- Nenhum ponto militar foi homologado e nenhuma coordenada foi publicada no aplicativo. Os links OSM são prévias de mapa; não houve inspeção independente de ortofoto, perímetro, numeração predial ou acesso.
 - Nenhuma nova chamada Geoapify foi feita; análise usa somente a execução de referência.
+- Relatório final: `docs/data/national-location-audit-report.md`. CSV consolidado: `data/om/evidence/national_location_audit_consolidado.csv`.
 
 ## Critério de interpretação
 
@@ -40,11 +43,11 @@ Os inconclusivos permanecem pendentes quando falta fonte oficial individual rece
 - `data/om/evidence/national_location_audit_lote_08.csv`
 - `data/om/evidence/national_location_audit_lote_09.csv`
 - `data/om/evidence/national_location_audit_lote_10.csv`
+- `data/om/evidence/national_location_audit_lote_11.csv`
+- `data/om/evidence/national_location_audit_consolidado.csv`
 
 Cada linha registra OM, Força, município, endereço declarado, resultado Geoapify, URLs, data, classificação, confiança, evidência, ressalva cartográfica e bloqueios de homologação/publicação.
 
-## Próximos passos
+## Pendência de precisão cartográfica
 
-1. Continuar pela ordem do `267_review_queue.csv` a partir do registro 251, sem repetir fontes e pesquisas já registradas.
-2. Adicionar um CSV por lote de até 25 registros e atualizar este resumo ao concluir cada lote.
-3. Consolidar contagens, divergências e cobertura EB/MB somente após revisar os 267 candidatos.
+A comparação espacial permanece preliminar: os links OSM apenas abrem a prévia gerada pelas coordenadas Geoapify. Não houve inspeção independente de imagem aérea, perímetro, numeração predial, portão ou entrada para os 267 pontos. Assim, o trabalho fecha a revisão documental de endereços e a comparação textual com Geoapify, mas não homologa nem atesta a precisão dos pontos militares. Consulte o relatório consolidado para a interpretação e o detalhamento por registro.
