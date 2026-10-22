@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import test from "node:test"
 
@@ -10,9 +10,10 @@ const proxy = readFileSync(join(root, "apps", "web", "proxy.ts"), "utf8")
 // - item 6: depois de apagar a conta a pessoa vai para /conta-apagada, sem
 //   sessão;
 // - item 2: o convite de familiar por código é público, porque quem chega por
-//   ele ainda não tem conta.
-// A Ajuda pública (item 7) é outra frente e continua exigindo sessão; se alguém
-// a colocar nesta lista "de passagem", este teste falha.
+//   ele ainda não tem conta;
+// - item 7: a Ajuda também é pública (PORT-006). A tela mostra "Meus chamados"
+//   quando há sessão, mas o conteúdo de ajuda não pode depender de entrar —
+//   quem não consegue entrar é quem mais precisa dele.
 function publicPaths() {
   const block = /const PUBLIC_PATHS = \[([\s\S]*?)\]/.exec(proxy)?.[1]
   assert.ok(block, "PUBLIC_PATHS precisa continuar declarada em apps/web/proxy.ts")
@@ -31,9 +32,16 @@ test("o convite de familiar é público sem sessão", () => {
   assert.equal(isPublic("/convite/ABCD1234"), true)
 })
 
-test("a Ajuda continua atrás do portão de sessão", () => {
-  assert.equal(isPublic("/ajuda"), false)
-  assert.equal(publicPaths().includes("/ajuda"), false)
+test("a Ajuda é pública: quem não consegue entrar precisa das respostas", () => {
+  assert.equal(isPublic("/ajuda"), true)
+  assert.equal(publicPaths().includes("/ajuda"), true)
+})
+
+test("a Ajuda mora fora do grupo que exige sessão", () => {
+  // O grupo (shell) tem o portão de sessão no layout e na navegação: uma
+  // página pública dentro dele voltaria a exigir login.
+  assert.equal(existsSync(join(root, "apps", "web", "app", "(shell)", "ajuda")), false)
+  assert.equal(existsSync(join(root, "apps", "web", "app", "(public)", "ajuda", "page.tsx")), true)
 })
 
 test("as rotas novas citam o ADR da entrada", () => {

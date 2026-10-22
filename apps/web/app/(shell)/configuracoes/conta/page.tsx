@@ -151,12 +151,18 @@ export default function ConfiguracoesContaPage() {
     setDeletionDueAt(dueAt)
     setDeletionPending(true)
     deleteModal.close()
+
+    // ADR-20261022-entrada-do-prototipo, item 6: depois do pedido a pessoa vai
+    // para /conta-apagada (pública) — não para o login, que pareceria "sua
+    // conta continua aí, entre de novo".
+    router.replace("/conta-apagada")
+    router.refresh()
   }
 
   // Saída depois do pedido: a sessão já está revogada no servidor, então o
   // signOut do cliente pode falhar — e falhar aqui não pode prender a pessoa
   // numa tela de conta que ela acabou de pedir para excluir. Por isso este
-  // caminho limpa o que dá e SEMPRE volta para o login.
+  // caminho limpa o que dá e SEMPRE segue para a tela de conta apagada.
   const handleLeaveAfterDeletion = async () => {
     setSigningOut(true)
     try {
@@ -171,7 +177,7 @@ export default function ConfiguracoesContaPage() {
       // armazenamento indisponível não impede a saída
     }
     setSigningOut(false)
-    router.replace("/login")
+    router.replace("/conta-apagada")
     router.refresh()
   }
 

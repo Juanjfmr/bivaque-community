@@ -18,10 +18,10 @@ import "./landing.css"
 // todas as imagens precisam carregar antes da captura de comparação, sem
 // lazy-load. Os arquivos já são WebP no tamanho final.
 //
-// O que saiu do protótipo, porque o Next não tem destino público para eles:
-// "Ajuda" (o botão do rodapé e o da folha) e "Fale com a gente" (o convite
-// dentro de Perguntas). Os dois abriam a ajuda do próprio app, que no Next vive
-// em /ajuda, rota autenticada. O registro está em docs/agents/PORT_001.md.
+// O que saiu do protótipo, e por quê: nada de conteúdo. "Ajuda" e "Fale com a
+// gente" voltaram na PORT-006, quando /ajuda passou a ser pública
+// (ADR-20261022-entrada-do-prototipo, item 7): antes os dois abriam uma rota
+// autenticada e por isso tinham ficado de fora da landing.
 const FORCES = "Marinha, Exército e Aeronáutica"
 const TITLE = "Juntos somos mais fortes."
 const LEAD =
@@ -335,6 +335,12 @@ export function LandingPage() {
             <div>
               <p className="ld-kicker">Perguntas</p>
               <h2>Perguntas frequentes</h2>
+              <p className="ld-sub">
+                Outra dúvida?{" "}
+                <Link className="ld-inline" href="/ajuda#fale-com-a-gente">
+                  Fale com a gente
+                </Link>
+              </p>
             </div>
             <div>
               {FAQ.map(([question, answer], index) => (
@@ -369,6 +375,9 @@ export function LandingPage() {
           <nav aria-label="Rodapé">
             <Link className="ld-link" href="/login">
               Entrar
+            </Link>
+            <Link className="ld-link" href="/ajuda">
+              Ajuda
             </Link>
             <Link className="ld-link" href="/privacidade">
               Privacidade
@@ -415,6 +424,9 @@ export function LandingPage() {
           </Link>
         </div>
         <div className="ld-sheet-legal">
+          <Link className="ld-link" href="/ajuda">
+            Ajuda
+          </Link>
           <Link className="ld-link" href="/privacidade">
             Privacidade
           </Link>
