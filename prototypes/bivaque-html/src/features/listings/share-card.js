@@ -19,23 +19,24 @@ function shareWrap(ctx,text,max,lines){
  return out.slice(0,lines);
 }
 // A imagem não acompanha o tema: usa sempre as cores claras da marca (Papel, Grafite e Brasa).
-const SHARE_INK='#253033',SHARE_PAPER='#F2F0EB',SHARE_MUTED='#55625F',SHARE_BRASA='#B84A3A';
+// Rodada 72: toda a paleta do desenho mora nesta constante; nenhum hex solto no resto do arquivo.
+const SHARE_PALETTE={paper:'#F2F0EB',graphite:'#253033',muted:'#55625F',brasa:'#B84A3A',placeholder:'#E8E5DE',placeholderGlyph:'#78807D',tag:'rgba(37,48,51,.86)',footerText:'rgba(242,240,235,.85)'};
 const SHARE_SYMBOL_BODY='M23 5H54C73 5 84 15 84 31C84 42 78 49 67 53C81 57 89 67 89 80C89 91 79 95 63 95H23L14 86V59H36V44H14V14L23 5ZM36 20V40H54C63 40 68 36 68 30C68 24 63 20 54 20H36ZM36 61V80H63C71 80 76 77 76 71C76 65 71 61 63 61H36Z';
 const SHARE_SYMBOL_THRESHOLD='M36 44H48V59H36V44Z';
 async function shareCardBlob(d){
- const c=document.createElement('canvas');c.width=SHARE_W;c.height=SHARE_H;const g=c.getContext('2d'),font=(w,s)=>`${w} ${s}px "Noto Sans", system-ui, sans-serif`;
+ const c=document.createElement('canvas');c.width=SHARE_W;c.height=SHARE_H;const g=c.getContext('2d'),P=SHARE_PALETTE,font=(w,s)=>`${w} ${s}px "Noto Sans", system-ui, sans-serif`;
  await Promise.all([document.fonts.load(font(700,64)),document.fonts.load(font(500,40)),document.fonts.load('200px "Material Symbols Outlined"')]).catch(()=>{});
- g.fillStyle=SHARE_PAPER;g.fillRect(0,0,SHARE_W,SHARE_H);
+ g.fillStyle=P.paper;g.fillRect(0,0,SHARE_W,SHARE_H);
  const ph=720;
  if(d.photo){try{const img=new Image();img.src=d.photo;await img.decode();const s=Math.max(SHARE_W/img.width,ph/img.height),w=img.width*s,h=img.height*s;g.save();g.beginPath();g.rect(0,0,SHARE_W,ph);g.clip();g.drawImage(img,(SHARE_W-w)/2,(ph-h)/2,w,h);g.restore();}catch{d={...d,photo:''};}}
  // Sem foto: o ícone do anúncio no lugar da imagem.
- if(!d.photo){g.fillStyle='#E8E5DE';g.fillRect(0,0,SHARE_W,ph);g.fillStyle='#78807D';g.font='220px "Material Symbols Outlined"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
- g.font=font(700,34);const tw=g.measureText(d.tag).width;g.fillStyle='rgba(37,48,51,.86)';g.beginPath();g.roundRect(48,48,tw+48,64,16);g.fill();g.fillStyle=SHARE_PAPER;g.fillText(d.tag,72,92);
- let y=ph+96;g.fillStyle=SHARE_INK;g.font=font(800,72);g.fillText(d.big,64,y);
+ if(!d.photo){g.fillStyle=P.placeholder;g.fillRect(0,0,SHARE_W,ph);g.fillStyle=P.placeholderGlyph;g.font='220px "Material Symbols Outlined"';g.textAlign='center';g.textBaseline='middle';g.fillText(d.glyph,SHARE_W/2,ph/2+10);g.textAlign='left';g.textBaseline='alphabetic';}
+ g.font=font(700,34);const tw=g.measureText(d.tag).width;g.fillStyle=P.tag;g.beginPath();g.roundRect(48,48,tw+48,64,16);g.fill();g.fillStyle=P.paper;g.fillText(d.tag,72,92);
+ let y=ph+96;g.fillStyle=P.graphite;g.font=font(800,72);g.fillText(d.big,64,y);
  y+=74;g.font=font(700,50);for(const line of shareWrap(g,d.title,SHARE_W-128,2)){g.fillText(line,64,y);y+=62;}
- g.font=font(500,38);g.fillStyle=SHARE_MUTED;for(const line of d.lines){for(const l of shareWrap(g,line,SHARE_W-128,1)){g.fillText(l,64,y);y+=52;}}
- g.fillStyle=SHARE_BRASA;g.fillText(d.place,64,Math.min(y+6,SHARE_H-170));
- g.fillStyle=SHARE_INK;g.fillRect(0,SHARE_H-130,SHARE_W,130);g.save();g.translate(64,SHARE_H-105);g.scale(.8,.8);g.fillStyle=SHARE_PAPER;g.fill(new Path2D(SHARE_SYMBOL_BODY),'evenodd');g.fillStyle=SHARE_BRASA;g.fill(new Path2D(SHARE_SYMBOL_THRESHOLD));g.restore();g.fillStyle=SHARE_PAPER;g.font=font(700,44);g.fillText('Bivaque',168,SHARE_H-70);g.font=font(500,30);g.fillStyle='rgba(242,240,235,.85)';g.fillText('Comunidade de militares e famílias',168,SHARE_H-30);
+ g.font=font(500,38);g.fillStyle=P.muted;for(const line of d.lines){for(const l of shareWrap(g,line,SHARE_W-128,1)){g.fillText(l,64,y);y+=52;}}
+ g.fillStyle=P.brasa;g.fillText(d.place,64,Math.min(y+6,SHARE_H-170));
+ g.fillStyle=P.graphite;g.fillRect(0,SHARE_H-130,SHARE_W,130);g.save();g.translate(64,SHARE_H-105);g.scale(.8,.8);g.fillStyle=P.paper;g.fill(new Path2D(SHARE_SYMBOL_BODY),'evenodd');g.fillStyle=P.brasa;g.fill(new Path2D(SHARE_SYMBOL_THRESHOLD));g.restore();g.fillStyle=P.paper;g.font=font(700,44);g.fillText('Bivaque',168,SHARE_H-70);g.font=font(500,30);g.fillStyle=P.footerText;g.fillText('Comunidade de militares e famílias',168,SHARE_H-30);
  return new Promise(r=>c.toBlob(r,'image/png'));
 }
 async function openShareCard(type,id){
