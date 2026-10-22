@@ -23,6 +23,7 @@ allowed_paths:
   - apps/web/app/brand-tokens.css
   - apps/web/types/
   - apps/web/public/landing/v8/
+  - scripts/port/
   - tests/e2e/landing-v8.spec.ts
   - tests/e2e/manaus-pilot-full-journey.spec.ts
   - tests/e2e/onboarding-holder-family.spec.ts
