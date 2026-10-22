@@ -10,8 +10,9 @@ import {
   toast,
 } from "./proof-harness.mjs"
 
-// Rodada 53: landing pública com a amostra grátis. Quem sai só vê a landing (qualquer rota leva a
-// ela); "Entrar" volta ao mesmo perfil; a amostra troca de cidade sem identificar membros.
+// Rodada 53: landing pública. Quem sai só vê a landing (qualquer rota leva a ela); "Entrar" volta ao
+// mesmo perfil. Rodada 71: a landing é a v8 (título F) e a amostra por cidade saiu — a única conversa
+// da página é ilustrativa, então quem está fora não lê o Bivaque (decisão do dono).
 async function signOut(page) {
   await snapshot(page)
   await go(page, "voce")
@@ -31,31 +32,41 @@ const checkpoints = {
       nav: getComputedStyle(document.querySelector("#nav")).display,
       h1: document.querySelector("#main h1")?.textContent,
     }))
+    // R71: o título da v8 substitui "Muda a cidade. Fica a sua rede.".
     expect(
-      shell.mode && shell.nav === "none" && /Muda a cidade/.test(shell.h1),
+      shell.mode && shell.nav === "none" && /Juntos somos mais fortes/.test(shell.h1),
       `landing: ${JSON.stringify(shell)}`,
     )
     await go(page, "comunidade")
     expect((await routeOf(page)).name === "entrar", "rota interna abriu sem conta")
   },
-  async "free-sample-switches-city"(page) {
+  async "landing-shows-only-the-illustrative-conversation"(page) {
+    // R71: no lugar da amostra por cidade, a landing não pode vazar conteúdo da comunidade. A única
+    // conversa é a ilustrativa, e a decisão do dono é que quem está fora não lê o Bivaque.
     await signOut(page)
-    const cards = () => page.locator("#en-cards").innerText()
+    const state = await stored(page)
+    const text = await page.locator("#main").innerText()
+    expect(/Conversa ilustrativa/.test(text), "sem a conversa ilustrativa")
     expect(
-      /Resolvida/.test(await cards()) && /indicaç/.test(await cards()),
-      `amostra de Manaus: ${await cards()}`,
+      /Resolvida · Marina marcou a indicação que funcionou/.test(text),
+      "a conversa ilustrativa perdeu o desfecho",
     )
-    expect(!/Paulo R\.|Carla R\.|Luana M\./.test(await cards()), "a amostra identifica membros")
-    await page.locator('#main [data-action="entry-sample-city"][data-value="Natal"]').click()
-    await settle(page)
     expect(
-      /Ainda reunindo exemplos de Natal/.test(await cards()),
-      `amostra de Natal: ${await cards()}`,
+      !(await page.locator('#main [data-action="entry-sample-city"], #main #en-cards').count()),
+      "a amostra por cidade continua na landing",
     )
+    expect(!/Amostra/i.test(text), "a landing ainda fala em amostra")
+    const published = state.asks
+      .filter((ask) => ask.city === state.homeCity && ask.status === "ok")
+      .slice(0, 3)
+      .map((ask) => ask.q)
+    expect(published.length > 0, "os exemplos da comunidade não têm perguntas resolvidas")
+    for (const question of published)
+      expect(!text.includes(question), `a landing mostra uma pergunta da comunidade: ${question}`)
   },
   async "sign-in-returns-to-the-same-profile"(page) {
     await signOut(page)
-    await page.locator('#main [data-action="entry-login"]').click()
+    await page.locator('#main [data-action="entry-login"]').first().click()
     await settle(page)
     // Desde a Rodada 55, Entrar tem formulário (modo teste: o e-mail do perfil de exemplo).
     await page.locator("#en-email input").fill("rafael@exemplo.com")

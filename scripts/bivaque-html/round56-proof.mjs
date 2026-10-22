@@ -18,6 +18,7 @@ import {
 // análise na fila do Painel do Bivaque e "Ver a entrada do zero" nos controles do protótipo.
 // Fechamento do lote: perfil novo do zero, paleta fechada para quem saiu, desfazer do dono preso à
 // conta, retomar ou começar de novo, e o aceite do Google que não se pula pelo endereço.
+// Rodada 71: a landing virou a v8; o caminho para a conta continua sendo a ação entry-join.
 const VALID_CPF = "529.982.247-25"
 const click = async (page, action, value) => {
   await page
@@ -41,8 +42,13 @@ async function signOut(page, portal = "verified") {
   await click(page, "sign-out")
   await confirmOk(page)
 }
+async function startSignup(page) {
+  // R71: o CTA da landing é "#ld-hero-cta"; as cópias do topo e da barra ficam ocultas.
+  await page.locator("#ld-hero-cta").click()
+  await settle(page)
+}
 async function createAccount(page, name = "Carla Teste", email = "carla.teste@exemplo.com") {
-  if ((await routeOf(page)).id !== "conta") await click(page, "entry-join")
+  if ((await routeOf(page)).id !== "conta") await startSignup(page)
   await fill(page, "en-name", name)
   await fill(page, "en-email", email)
   await fill(page, "en-pass", "senha1234")
@@ -112,10 +118,10 @@ const checkpoints = {
     expect((await routeOf(page)).id === "aceite", "o endereço pulou o aceite do Google")
     // Quem já começou retoma ou recomeça; o cadastro em andamento não some sem querer.
     await go(page, "entrar")
-    await click(page, "entry-join")
+    await startSignup(page)
     expect(
       /Você já começou a entrada/.test(await page.locator("#main").innerText()),
-      "Quero fazer parte apagou a entrada em andamento",
+      "Criar conta apagou a entrada em andamento",
     )
     await click(page, "entry-resume")
     expect((await routeOf(page)).id === "aceite", "continuar não voltou ao passo")
@@ -178,7 +184,7 @@ const checkpoints = {
     await go(page, "voce")
     await click(page, "sign-out")
     await confirmOk(page)
-    await click(page, "entry-join")
+    await startSignup(page)
     await click(page, "entry-restart")
     await confirmOk(page)
     await createAccount(page, "Bruno Teste", "bruno.teste@exemplo.com")

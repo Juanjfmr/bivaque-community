@@ -18,6 +18,7 @@ import {
 // Rodada 62 (AUDITORIA_FUNCIONAL_2026-10-18, seção D): Ajuda, Fale com a gente, Meus chamados e
 // Apagar a conta. Um checkpoint por comportamento. Fixtures entram pelo armazenamento (`patchState`,
 // que recarrega); o que a prova pode fazer pela tela, faz.
+// Rodada 71: o rodapé da landing v8 é `.ld-footer` e o título da landing é o da v8.
 const TOPICS = [
   ["conta", "Conta e entrada"],
   ["comunidade", "Comunidade"],
@@ -118,7 +119,7 @@ const checkpoints = {
   async "help-opens-without-account-and-from-the-landing-footer"(page) {
     await patchState(page, SIGNED_OUT)
     expect((await routeOf(page)).name === "entrar", "quem saiu não está na entrada")
-    await click(page, '.en-legal [data-action="support-open"][data-value="ajuda"]')
+    await click(page, '.ld-footer [data-action="support-open"][data-value="ajuda"]')
     expect((await routeOf(page)).name === "ajuda", "o rodapé da landing não abriu a Ajuda")
     expect(await entryMode(page), "a Ajuda de quem saiu não usa o visual da entrada")
     expect(await page.locator("#topbar").isHidden(), "a barra do app apareceu para quem saiu")
@@ -393,7 +394,8 @@ const checkpoints = {
     await click(page, '[data-action="account-deleted-home"]')
     const home = await routeOf(page)
     expect(home.name === "entrar" && !home.id, `Voltar ao início foi para ${home.name}/${home.id}`)
-    expect((await mainText(page)).includes("Quero fazer parte"), "não chegou à landing")
+    // R71: o título da v8 substitui o da R53.
+    expect((await mainText(page)).includes("Juntos somos mais fortes."), "não chegou à landing")
     // Quem apagou não volta pela conta antiga.
     await go(page, "entrar/login")
     await fill(page, "en-email", "rafael@exemplo.com")
