@@ -50,9 +50,12 @@ Todos tocam dado pessoal e RLS, por isso o risco é R3.
 3. **Bairro do perfil.**
    - O perfil ganha o bairro (opcional) e a chave "Mostrar meu bairro", ligada por padrão.
    - O bairro é visível só para membros confirmados, como os outros dados do perfil.
-   - Com a chave desligada, ninguém além da própria pessoa recebe o bairro dela, em nenhum conteúdo dela. A regra
-     vale no banco (view, RPC ou permissão por coluna), não só na tela. O dado continua guardado: religar a chave
-     mostra o bairro de novo.
+   - Com a chave desligada, ninguém além da própria pessoa recebe o bairro **do perfil**, nem nos cabeçalhos que o
+     usam (pergunta, resposta, publicação). A regra vale no banco, por uma função de leitura, não só na tela. O dado
+     continua guardado: religar a chave mostra o bairro de novo.
+   - **Decisão do dono em 22/10/2026:** a chave **não** vale para anúncio nem pedido. O bairro do item é escolhido
+     para aquele item e aparece como foi escolhido. A proteção forte do Bivaque é a entrada com vínculo confirmado:
+     lá dentro, entre membros verificados, não precisa do mesmo rigor.
 4. **CEP e coordenada nunca são gravados.**
    - Todo campo de bairro recusa sequências de 5 ou mais dígitos, com uma regra no banco.
    - A busca por CEP (ViaCEP ou BrasilAPI) e a busca por localização ficam fora deste ADR. A localização, quando
@@ -60,6 +63,10 @@ Todos tocam dado pessoal e RLS, por isso o risco é R3.
 5. **O resto continua como está.**
    - Anúncios, pedidos e alertas continuam com o bairro em texto.
    - O vínculo com o catálogo fica para os lotes de Desapegos, Imóveis e Negócios.
+   - **Decisão do dono em 22/10/2026, a aplicar nesses lotes:**
+     - **Imóvel:** bairro obrigatório, e o endereço nunca é guardado, no mesmo padrão do Zap e do QuintoAndar.
+     - **Desapego:** bairro opcional. Anúncio sem bairro aparece na cidade e só fica de fora do filtro por bairro, da
+       distância e do mapa.
 
 ### 2. Ocultar para mim
 
@@ -144,8 +151,8 @@ Nenhuma.
 
 ## Risks
 
-- **Bairro do perfil é dado pessoal.** A chave "Mostrar meu bairro" precisa valer em todas as leituras: os testes
-  negativos cobrem cada caminho.
+- **Bairro do perfil é dado pessoal.** A chave "Mostrar meu bairro" precisa valer em todas as leituras do bairro do
+  perfil: os testes negativos cobrem cada caminho.
 - **Chamado repetido em excesso.** O limite de abertura por pessoa e a função dedicada contêm isso.
 - **A carga das quatro cidades usa pontos aproximados.** Servem para filtro e mapa, não para endereço.
 
