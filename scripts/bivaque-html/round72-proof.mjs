@@ -18,6 +18,18 @@ import {
 // foco, a barra fixa escondida sai do teclado e "Fale com a gente" ganha alvo de 44 px.
 const VALID_CPF = "529.982.247-25"
 
+// O desenho oficial do símbolo (apps/web/public/brand/bivaque-symbol.svg), sem espaços, para comparar
+// com o que a tela desenha.
+const squash = (d) => String(d || "").replace(/\s+/g, "")
+const OFFICIAL = (() => {
+  const svg = readFileSync(
+    resolve(import.meta.dirname, "../../apps/web/public/brand/bivaque-symbol.svg"),
+    "utf8",
+  )
+  const d = (id) => squash(svg.match(new RegExp(`id="${id}"[^>]*?\\sd="([^"]+)"`))?.[1])
+  return { body: d("bivaque-symbol-body"), threshold: d("bivaque-threshold") }
+})()
+
 // ---- cor e contraste (fórmula da WCAG) ----
 function parseColor(value) {
   const text = String(value || "")
@@ -80,6 +92,15 @@ const sameColor = (a, b) => {
   )
 }
 const ratio = (value) => Math.round(value * 100) / 100
+// Compõe uma cor com alfa sobre um fundo opaco e devolve rgb(): é a cor que a pessoa vê. Revisão de
+// confirmação do Codex: sem isso, texto com opacity reduzida passava com o contraste da cor cheia.
+const over = (top, alpha, bottom) => {
+  const t = parseColor(top)
+  const b = parseColor(bottom)
+  const a = (t.a ?? 1) * alpha
+  const mix = (x, y) => Math.round(x * a + y * (1 - a))
+  return `rgb(${mix(t.r, b.r)}, ${mix(t.g, b.g)}, ${mix(t.b, b.b)})`
+}
 
 async function tokens(page, names) {
   return page.evaluate((list) => {
@@ -193,17 +214,17 @@ async function optionBackground(page, index) {
         .map(Number)
       return (parts[3] ?? 1) >= 0.95
     }
-    const queue = [item]
+    // Só o shadow root do botão do Material guarda o fundo; nos filhos do light DOM estão o ícone e o
+    // texto, e o quadrado colorido do ícone não é o fundo atrás do texto.
+    const queue = item.shadowRoot ? [...item.shadowRoot.children] : []
     while (queue.length) {
       const el = queue.shift()
-      if (el !== item) {
-        const bg = getComputedStyle(el).backgroundColor
-        if (opaque(bg)) return bg
-      }
+      const bg = getComputedStyle(el).backgroundColor
+      if (opaque(bg)) return bg
       if (el.shadowRoot) queue.push(...el.shadowRoot.children)
       queue.push(...el.children)
     }
-    for (let node = item.parentElement; node; node = node.parentElement) {
+    for (let node = item; node; node = node.parentElement) {
       const bg = getComputedStyle(node).backgroundColor
       if (opaque(bg)) return bg
     }
@@ -212,20 +233,41 @@ async function optionBackground(page, index) {
 }
 
 const menuTexts = (page) =>
-  page.evaluate(() =>
-    [...document.querySelectorAll("#create-menu .create-menu-action")]
+  page.evaluate(() => {
+    // A opacidade efetiva do texto: o produto das opacidades do elemento até a opção.
+    const opacityOf = (el, stop) => {
+      let value = 1
+      for (let node = el; node && node !== stop.parentElement; node = node.parentElement)
+        value *= Number(getComputedStyle(node).opacity)
+      return value
+    }
+    return [...document.querySelectorAll("#create-menu .create-menu-action")]
       .filter((el) => el.getClientRects().length)
       .map((el) => {
         const title = el.querySelector(".cp-txt b") || el.querySelector(".create-menu-label")
         const sub = el.querySelector(".cp-txt small") || el.querySelector(".create-menu-sub")
+        const style = getComputedStyle(el)
         return {
+          material: Boolean(el.shadowRoot),
           title: (title?.innerText || "").split("\n")[0].trim(),
           titleColor: title ? getComputedStyle(title).color : "",
+          titleOpacity: title ? opacityOf(title, el) : 1,
           subText: sub ? sub.innerText.trim() : "",
           subColor: sub ? getComputedStyle(sub).color : "",
+          subOpacity: sub ? opacityOf(sub, el) : 1,
+          // A camada de estado do Material no toque (a mais forte; o hover usa 0,08).
+          pressedLayer:
+            style.getPropertyValue("--md-filled-tonal-button-pressed-state-layer-color").trim() ||
+            getComputedStyle(document.documentElement)
+              .getPropertyValue("--md-sys-color-on-secondary-container")
+              .trim(),
+          pressedOpacity:
+            Number(
+              style.getPropertyValue("--md-filled-tonal-button-pressed-state-layer-opacity").trim(),
+            ) || 0.12,
         }
-      }),
-  )
+      })
+  })
 
 const checkpoints = {
   async "create-menu-neutral"(page) {
@@ -251,17 +293,26 @@ const checkpoints = {
         !sameColor(background, brasa),
         `a opção "${option.title}" tem fundo Brasa (${background})`,
       )
-      const title = contrast(option.titleColor, background)
-      expect(
-        title >= 4.5,
-        `o título de "${option.title}" tem ${ratio(title)}:1 sobre ${background}`,
-      )
-      if (option.subText) {
-        const sub = contrast(option.subColor, background)
-        expect(
-          sub >= 4.5,
-          `o subtítulo de "${option.title}" tem ${ratio(sub)}:1 sobre ${background}`,
-        )
+      // Em repouso e na interação (a interação não pode derrubar o contraste). No botão do Material a
+      // camada de estado é um pseudo-elemento do ripple: compõe a de toque (a mais forte) pelos
+      // tokens. No painel do desktop o hover troca o próprio fundo: passa o ponteiro e mede.
+      let pressed
+      if (option.material) pressed = over(option.pressedLayer, option.pressedOpacity, background)
+      else {
+        await page.locator("#create-menu .create-menu-action:visible").nth(index).hover()
+        await page.waitForTimeout(250)
+        pressed = await optionBackground(page, index)
+        await page.mouse.move(0, 0)
+      }
+      for (const [state, bg] of [
+        ["em repouso", background],
+        ["na interação", pressed],
+      ]) {
+        const title = contrast(over(option.titleColor, option.titleOpacity, bg), bg)
+        expect(title >= 4.5, `o título de "${option.title}" tem ${ratio(title)}:1 ${state} (${bg})`)
+        if (!option.subText) continue
+        const sub = contrast(over(option.subColor, option.subOpacity, bg), bg)
+        expect(sub >= 4.5, `o subtítulo de "${option.title}" tem ${ratio(sub)}:1 ${state} (${bg})`)
       }
     }
   },
@@ -272,13 +323,15 @@ const checkpoints = {
       "../../prototypes/bivaque-html/src/features/listings/share-card.js",
     )
     const source = readFileSync(file, "utf8")
-    const palette = source.match(/const SHARE_PALETTE\s*=\s*\{([\s\S]*?)\n\}/)
+    // Só o objeto da constante (sem chaves internas) sai da fiscalização; o desenho continua nela.
+    const palette = source.match(/const SHARE_PALETTE\s*=\s*\{([^{}]*)\}/)
     expect(palette, "share-card.js não tem a constante SHARE_PALETTE")
     for (const color of ["#F2F0EB", "#253033", "#B84A3A"])
       expect(new RegExp(color, "i").test(palette[1]), `a paleta do cartão não tem ${color}`)
     const rest = source.replace(palette[0], "")
-    const loose = rest.match(/#[0-9a-fA-F]{6}\b/g)
-    expect(!loose, `hex solto no desenho: ${loose ? loose.join(", ") : ""}`)
+    expect(/shareCardBlob/.test(rest), "a fiscalização perdeu o desenho do cartão")
+    const loose = rest.match(/#[0-9a-fA-F]{3,8}\b|rgba?\(/g)
+    expect(!loose, `cor solta no desenho: ${loose ? loose.join(", ") : ""}`)
   },
 
   async "entry-shapes"(page) {
@@ -329,14 +382,30 @@ const checkpoints = {
         return svg
           ? {
               viewBox: svg.getAttribute("viewBox"),
-              paths: svg.querySelectorAll("path").length,
+              paths: [...svg.querySelectorAll("path")].map((p) => ({
+                d: p.getAttribute("d"),
+                fill: getComputedStyle(p).fill,
+              })),
               letter: document.querySelector("#main header.en-top .en-mark")?.textContent || "",
             }
           : null
       })
       expect(symbol, `o cabeçalho de ${label} não tem o símbolo oficial`)
       expect(symbol.viewBox === "0 0 100 100", `viewBox de ${label}: ${symbol.viewBox}`)
-      expect(symbol.paths === 2, `símbolo de ${label} com ${symbol.paths} caminhos`)
+      expect(symbol.paths.length === 2, `símbolo de ${label} com ${symbol.paths.length} caminhos`)
+      // O desenho é o do SVG oficial, sem redesenho, e as cores são as do tema.
+      const [body, threshold] = symbol.paths
+      expect(squash(body.d) === OFFICIAL.body, `o corpo do símbolo de ${label} não é o oficial`)
+      expect(
+        squash(threshold.d) === OFFICIAL.threshold,
+        `a abertura do símbolo de ${label} não é a oficial`,
+      )
+      const dark = (await tokens(page, [])).theme === "dark"
+      const want = dark ? ["#FFFFFF", "#FFFFFF"] : ["#253033", "#B84A3A"]
+      expect(
+        sameColor(body.fill, want[0]) && sameColor(threshold.fill, want[1]),
+        `cores do símbolo de ${label}: ${body.fill}, ${threshold.fill}`,
+      )
       expect(
         symbol.letter === "",
         `o cabeçalho de ${label} ainda mostra a letra "${symbol.letter}"`,
@@ -373,12 +442,21 @@ const checkpoints = {
     })
     expect(welcome.viewBox === "0 0 100 100", `símbolo das boas-vindas: ${welcome.viewBox}`)
     expect(welcome.letter === "", `as boas-vindas ainda mostram a letra "${welcome.letter}"`)
+    // Os atalhos das boas-vindas (.en-tile) também entram no canto de 12 px do achado 3.
+    expect((await page.locator(".en-tile").count()) > 0, "as boas-vindas não têm .en-tile")
+    expect(
+      (await radius(page, ".en-tile")) === "12px",
+      `en-tile: ${await radius(page, ".en-tile")}`,
+    )
   },
 
   async "landing-focus-trap"(page) {
     await signOut(page)
     const button = page.locator("#ld-top [data-ld-menu]")
-    if (!(await button.isVisible())) {
+    // O ramo é decidido pela largura, não pela visibilidade do botão: um celular que perdesse o botão
+    // do menu cairia no ramo do desktop e escaparia do teste de foco.
+    if (!(await isNarrow(page))) {
+      expect(!(await button.isVisible()), "no desktop o botão do menu apareceu")
       // No desktop não existe folha: o menu do topo é a navegação por âncoras, sempre à vista.
       expect(
         await page.locator("#ld-top .ld-nav").isVisible(),
@@ -387,6 +465,16 @@ const checkpoints = {
       expect(!(await page.locator("#ld-sheet").isVisible()), "a folha do menu apareceu no desktop")
       return
     }
+    // A folha abre com a barra fixa à vista (além do CTA do topo): é o caso em que um observador
+    // pode reativá-la por baixo da folha. Subir um pouco traz o topo de volta, que some ao descer.
+    await scrollTo(page, 1300)
+    await page.waitForFunction(() =>
+      document.getElementById("ld-bar")?.classList.contains("ld-show"),
+    )
+    await scrollTo(page, 1200)
+    await page.waitForFunction(
+      () => !document.getElementById("ld-top")?.classList.contains("ld-hide"),
+    )
     await button.click()
     await settle(page)
     expect((await button.getAttribute("aria-expanded")) === "true", "o botão não abriu a folha")
@@ -410,17 +498,45 @@ const checkpoints = {
     )
     expect(focusables >= 8, `itens focáveis na folha: ${focusables}`)
 
-    const inside = () =>
-      page.evaluate(() => document.getElementById("ld-sheet").contains(document.activeElement))
-    expect(await inside(), "o foco não entrou na folha")
-    for (let step = 0; step < focusables + 2; step++) {
-      await page.keyboard.press("Tab")
-      expect(await inside(), `Tab saiu da folha no passo ${step + 1}`)
+    // O foco fica na folha e anda por ela: um foco preso num único botão também reprova.
+    const where = () =>
+      page.evaluate(() => {
+        const sheet = document.getElementById("ld-sheet")
+        const el = document.activeElement
+        return {
+          inside: sheet.contains(el),
+          key: el
+            ? `${el.tagName}|${el.textContent.trim().slice(0, 40)}|${el.dataset.action || ""}`
+            : "",
+        }
+      })
+    expect((await where()).inside, "o foco não entrou na folha")
+    for (const key of ["Tab", "Shift+Tab"]) {
+      const seen = new Set()
+      for (let step = 0; step < focusables + 2; step++) {
+        await page.keyboard.press(key)
+        const now = await where()
+        expect(now.inside, `${key} saiu da folha no passo ${step + 1}`)
+        seen.add(now.key)
+      }
+      expect(
+        seen.size >= focusables,
+        `${key} passou por ${seen.size} de ${focusables} itens da folha`,
+      )
     }
-    for (let step = 0; step < focusables + 2; step++) {
-      await page.keyboard.press("Shift+Tab")
-      expect(await inside(), `Shift+Tab saiu da folha no passo ${step + 1}`)
-    }
+
+    // Uma atualização dos observadores com a folha aberta (a janela muda de altura) não pode
+    // devolver a barra fixa ao teclado: o isolamento vale enquanto a folha estiver aberta.
+    const viewport = page.viewportSize()
+    await page.setViewportSize({ width: viewport.width, height: Math.round(viewport.height * 0.6) })
+    await page.waitForTimeout(400)
+    await page.setViewportSize(viewport)
+    await page.waitForTimeout(400)
+    const still = await page.evaluate(() => {
+      const bar = document.getElementById("ld-bar")
+      return { inert: bar.inert, aria: bar.getAttribute("aria-hidden") }
+    })
+    expect(still.inert && still.aria === "true", `com a folha aberta a barra saiu do isolamento`)
 
     await page.keyboard.press("Escape")
     await settle(page)
@@ -436,7 +552,17 @@ const checkpoints = {
       ),
     }))
     expect(after.focus, "o foco não voltou ao botão que abriu a folha")
-    expect(!after.inert.length, `o inert continuou em ${after.inert.join(", ")}`)
+    // A barra fixa segue o próprio estado (escondida no topo da página, então inerte); o resto volta.
+    const leftover = after.inert.filter((selector) => selector !== "#ld-bar")
+    expect(!leftover.length, `o inert continuou em ${leftover.join(", ")}`)
+    const bar = await page.evaluate(() => {
+      const el = document.getElementById("ld-bar")
+      return { shown: el.classList.contains("ld-show"), inert: el.inert }
+    })
+    expect(
+      bar.inert === !bar.shown,
+      `ao fechar a folha a barra ficou com inert ${bar.inert} (à vista: ${bar.shown})`,
+    )
   },
 
   async "sticky-bar-hidden-from-keyboard"(page) {
@@ -472,9 +598,10 @@ const checkpoints = {
       }
     })
     expect(!hidden.shown, "a barra fixa já apareceu no topo")
+    // As duas coisas que o relatório promete: inerte e oculta.
     expect(
-      hidden.inert || hidden.visibility === "hidden",
-      `a barra escondida não está inerte nem oculta (${hidden.visibility}, inert ${hidden.inert})`,
+      hidden.inert && hidden.visibility === "hidden",
+      `a barra escondida: visibility ${hidden.visibility}, inert ${hidden.inert}`,
     )
     expect(hidden.aria === "true", `aria-hidden da barra escondida: ${hidden.aria}`)
     expect(!hidden.focused, "o botão da barra escondida recebeu foco")
@@ -499,6 +626,25 @@ const checkpoints = {
     expect(shown.aria !== "true", "a barra à vista continuou oculta para a tecnologia assistiva")
     expect(shown.visibility === "visible", `barra à vista com visibility ${shown.visibility}`)
     expect(shown.focused, "com a barra à vista, o botão não recebeu foco")
+
+    // Com a chamada final na tela, a barra some de novo e sai do teclado.
+    await page.evaluate(() => document.getElementById("fim").scrollIntoView({ block: "center" }))
+    await page.waitForFunction(
+      () => !document.getElementById("ld-bar")?.classList.contains("ld-show"),
+    )
+    await page.waitForTimeout(400)
+    const atEnd = await page.evaluate(() => {
+      const bar = document.getElementById("ld-bar")
+      return {
+        inert: bar.inert,
+        aria: bar.getAttribute("aria-hidden"),
+        visibility: getComputedStyle(bar).visibility,
+      }
+    })
+    expect(
+      atEnd.inert && atEnd.aria === "true" && atEnd.visibility === "hidden",
+      `na chamada final a barra ficou com inert ${atEnd.inert}, aria ${atEnd.aria}, ${atEnd.visibility}`,
+    )
   },
 
   async "inline-targets"(page) {
