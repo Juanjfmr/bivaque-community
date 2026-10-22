@@ -61,3 +61,20 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# Evidência desta execução — 22/10/2026, branch codex/landing-next, host win32.
+# `npx pnpm@11.18.0 gate`: verde (lint sem erro, typecheck ok, unit 189 + 76 dos workspaces,
+# scope 120/120, secrets).
+# `npx pnpm@11.18.0 --filter web build`: exit 0, com as variáveis do Supabase local no
+# ambiente e sem criar apps/web/.env.local.
+# `npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1`:
+# 23 passaram, 10 pulados (a spec só roda em 375 e 1440), 0 falharam.
+# `node scripts/port/compare-landing.mjs`: exit 0, 24 PNGs + report.json em .visual/port-001/.
+# Dobra 375x812 e 1440x900 idênticas nos dois temas.
+# Página inteira: 1440 x 4884 nos dois lados.
+# Em 375, a página inteira mede 6002 no protótipo e 5938 no Next: a diferença de 64 px é a
+# linha de convite à ajuda dentro de Perguntas, que saiu.
+# O que saiu (Ajuda e o convite de contato dentro de Perguntas), as rotas, as decisões que se
+# afastam do protótipo e as diferenças que sobram estão em docs/agents/PORT_001.md.
+# Revisão independente e prova de runtime por terceiro: ainda não houve
+# (reviewer_must_differ_from_executor: true).
