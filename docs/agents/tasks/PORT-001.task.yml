@@ -18,6 +18,12 @@ allowed_paths:
   - apps/web/app/page.tsx
   - apps/web/app/landing/
   - apps/web/app/layout.tsx
+  - apps/web/app/(admin)/layout.tsx
+  - apps/web/app/(owner)/layout.tsx
+  - apps/web/app/(preauth)/layout.tsx
+  - apps/web/app/(provider)/layout.tsx
+  - apps/web/app/(shell)/layout.tsx
+  - apps/web/app/auth/
   - apps/web/app/fonts/
   - apps/web/app/components/material/
   - apps/web/app/brand-tokens.css
