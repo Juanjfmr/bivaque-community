@@ -14,7 +14,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(35);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -217,6 +217,55 @@ select is(
   public.get_profile_neighborhood('10000000-0000-4000-8000-000000000001'),
   'Ponta Negra',
   'co-membro aprovado da comunidade vê o perfil e recebe o bairro com a chave ligada'
+);
+
+-- A chave vale também para quem chega pelo vínculo de comunidade, não só pelo
+-- de cidade: ver o perfil (policy de co-membro) não é permissão para ver o
+-- bairro. Sem este par, uma implementação que só escondesse de quem compartilha
+-- cidade passaria por todas as asserções acima.
+reset role;
+update public.profiles
+   set show_neighborhood = false
+ where user_id = '10000000-0000-4000-8000-000000000001';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000003',
+  true
+);
+
+select is(
+  (
+    select display_name from public.profiles
+     where user_id = '10000000-0000-4000-8000-000000000001'
+  ),
+  'Member One',
+  'com a chave desligada o co-membro continua vendo o perfil (só o bairro sai)'
+);
+
+select is(
+  public.get_profile_neighborhood('10000000-0000-4000-8000-000000000001'),
+  null::text,
+  'co-membro aprovado da comunidade NÃO recebe o bairro com a chave desligada'
+);
+
+reset role;
+update public.profiles
+   set show_neighborhood = true
+ where user_id = '10000000-0000-4000-8000-000000000001';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000003',
+  true
+);
+
+select is(
+  public.get_profile_neighborhood('10000000-0000-4000-8000-000000000001'),
+  'Ponta Negra',
+  'religar a chave devolve o bairro ao co-membro de comunidade'
 );
 
 select set_config(

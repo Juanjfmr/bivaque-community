@@ -17,7 +17,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(41);
+select plan(44);
 
 \ir fixtures/foundation.inc
 
@@ -439,6 +439,20 @@ select is(
   'job de purga agendado no pg_cron'
 );
 
+-- 24e) o bairro está preenchido ANTES da purga: sem esta âncora, um
+--      `neighborhood = null` removido da função passaria despercebido (a
+--      leitura continuaria nula porque nunca houve valor).
+update public.profiles
+   set neighborhood = 'Ponta Negra'
+ where user_id = '10000000-0000-4000-8000-000000000002';
+
+select is(
+  (select neighborhood from public.profiles
+    where user_id = '10000000-0000-4000-8000-000000000002'),
+  'Ponta Negra',
+  'titular tem bairro preenchido antes da purga'
+);
+
 -- 25) depois do vencimento, purga: dado pessoal sai, display_name fica
 --     (a data é fixture do teste; a janela é a do produto)
 update public.account_deletion_requests
@@ -490,11 +504,26 @@ select is(
   'purga apaga preferencia, participacao e lista de espera'
 );
 
+-- 25c) o bairro é dado pessoal: some com a purga
+select is(
+  (select neighborhood from public.profiles
+    where user_id = '10000000-0000-4000-8000-000000000002'),
+  null::text,
+  'purga apaga o bairro do perfil'
+);
+
 -- 26) a purga é idempotente
 select is(
   public.finalize_account_deletion('10000000-0000-4000-8000-000000000002'),
   'already_purged',
   'purga repetida nao repete efeito'
+);
+
+select is(
+  (select neighborhood from public.profiles
+    where user_id = '10000000-0000-4000-8000-000000000002'),
+  null::text,
+  'purga repetida mantem o bairro nulo'
 );
 
 select * from finish();
