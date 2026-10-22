@@ -498,7 +498,8 @@ test.describe("landing v8", () => {
     // universal de globals.css usa `*` e perde para a classe da landing; por
     // isso a medida é na duração computada, e não na presença de `animation`.
     const durations = await page.evaluate(() =>
-      ["#ld-sheet", "#ld-bar"].map((selector) => {
+      // O ícone das perguntas frequentes gira ao abrir: também precisa parar (confirmação do Codex).
+      ["#ld-sheet", "#ld-bar", "#perguntas summary md-icon"].map((selector) => {
         const element = document.querySelector(selector)
         if (!element) throw new Error(`${selector} não está no DOM`)
         return {

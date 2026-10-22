@@ -1177,10 +1177,12 @@ body.ld-locked {
    perde para as transições de classe desta folha: a folha do menu (280 ms) e a
    barra fixa (220 ms) continuavam deslizando mesmo com
    `prefers-reduced-motion: reduce`. A regra abaixo é escopada em `.ld` e repete
-   `.ld-sheet.ld-open`, que redeclara o `transition` com duas classes. */
+   `.ld-sheet.ld-open`, que redeclara o `transition` com duas classes, e
+   `.ld-faq summary md-icon`, o giro do ícone das perguntas. */
 @media (prefers-reduced-motion: reduce) {
   .ld *,
-  .ld-sheet.ld-open {
+  .ld-sheet.ld-open,
+  .ld-faq summary md-icon {
     transition-duration: 0s;
     transition-delay: 0s;
   }
