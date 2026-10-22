@@ -5055,7 +5055,9 @@
       "tests": ["npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 gate"],
       "notes": [
         "Card ausente na consulta inicial por SEC/upload/segurança; criado pelo coordenador para reconciliar a descoberta com o contrato existente, sem nova fila. Evidências locais em C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019."
-      ]
+      ],
+      "completedAt": "2026-10-21",
+      "completedChecklist": [true, true, true, true, true, true]
     },
     {
       "id": "SEC-004",
@@ -5083,7 +5085,9 @@
       ],
       "notes": [
         "Não concluído pelo histórico anterior: novo achado exige reparo e prova. Push/PR aguardam ok de Juan."
-      ]
+      ],
+      "completedAt": "2026-10-21",
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "SEC-005",
@@ -5111,15 +5115,23 @@
       ],
       "notes": [
         "Não concluído pelo histórico anterior: novo achado exige reparo e prova. Push/PR aguardam ok de Juan."
-      ]
+      ],
+      "completedAt": "2026-10-21",
+      "completedChecklist": [true, true, true]
     },
     {
       "phase": "Lote 3 — piloto visual",
       "priority": "P1",
-      "category": "prototype",
+      "category": "frontend",
       "status": "done",
       "description": "Lançamento sem cobrança (R69), pele da marca claro/escuro (R70), landing v8 com título F (R71), correções do Codex (R72). Base visual R72 7e7657c3 congelada com ok do dono.",
-      "checklist": [],
+      "checklist": [
+        "R69 lançamento sem cobrança",
+        "R70 pele da marca claro/escuro",
+        "R71 landing v8 título F",
+        "R72 correções do Codex",
+        "Bateria explicada e base visual R72 congelada"
+      ],
       "proof": ["PR #100 mergeado (3fe41dc3); VISUAL_BASELINE_R72.md; bateria explicada"],
       "tests": [],
       "links": [],
@@ -5127,9 +5139,10 @@
       "updatedAt": "2026-10-22",
       "sourceRevision": "3fe41dc3",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [true, true, true, true, true],
       "id": "LOTE-LANCAMENTO-PROTOTIPO",
-      "title": "Lote Lançamento do protótipo (R69 a R72) e base visual R72"
+      "title": "Lote Lançamento do protótipo (R69 a R72) e base visual R72",
+      "completedAt": "2026-10-22"
     },
     {
       "phase": "Lote 3 — piloto visual",
@@ -5137,7 +5150,13 @@
       "category": "frontend",
       "status": "done",
       "description": "Material Web 2.5.0 por adaptadores cliente, Noto self-hosted, tokens da R70 escopados, landing no HTML do servidor (provider movido para os grupos), CTA como link, themeColor claro/escuro. ADR-20261022-porte-visual-material-web.",
-      "checklist": [],
+      "checklist": [
+        "Material Web por adaptadores cliente",
+        "Tokens escopados e fontes self-hosted",
+        "Landing no HTML do servidor",
+        "CTA como link e themeColor claro/escuro",
+        "Revisão do Codex e e2e verdes"
+      ],
       "proof": [
         "PR #101 mergeado (10653bad); no ar em bivaque-community-web.vercel.app com o título no HTML do servidor; 169 e2e; revisão do Codex com achados corrigidos"
       ],
@@ -5147,9 +5166,10 @@
       "updatedAt": "2026-10-22",
       "sourceRevision": "10653bad",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [true, true, true, true, true],
       "id": "PORT-001",
-      "title": "Landing v8 no Next — piloto do porte visual (R73)"
+      "title": "Landing v8 no Next — piloto do porte visual (R73)",
+      "completedAt": "2026-10-22"
     },
     {
       "phase": "Lote 2 — fundação de dados",
@@ -5157,7 +5177,13 @@
       "category": "backend",
       "status": "done",
       "description": "neighborhoods (4 cidades do protótipo, 43 bairros), busca sem acento, bairro do perfil com Mostrar meu bairro (só o perfil, decisão do dono 22/10).",
-      "checklist": [],
+      "checklist": [
+        "Catálogo e carga das 4 cidades",
+        "Busca sem acento",
+        "Bairro do perfil com Mostrar meu bairro",
+        "Recusa de CEP no bairro em texto",
+        "pgTAP e reset limpo"
+      ],
       "proof": ["PR #99 mergeado; migrations em produção em 22/10"],
       "tests": [],
       "links": [],
@@ -5165,9 +5191,10 @@
       "updatedAt": "2026-10-22",
       "sourceRevision": "7b4c0a0b",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [true, true, true, true, true],
       "id": "DATA-001",
-      "title": "Catálogo de bairros e bairro do perfil"
+      "title": "Catálogo de bairros e bairro do perfil",
+      "completedAt": "2026-10-22"
     },
     {
       "phase": "Lote 2 — fundação de dados",
@@ -5175,7 +5202,13 @@
       "category": "backend",
       "status": "done",
       "description": "hidden_questions; support_tickets só com conta, limite por pessoa, resposta da operação com aviso e e-mail; purga na exclusão.",
-      "checklist": [],
+      "checklist": [
+        "Ocultar para mim separado da moderação",
+        "Chamados só com conta e limite por pessoa",
+        "Resposta da operação com aviso e e-mail",
+        "Purga na exclusão de conta",
+        "pgTAP e reset limpo"
+      ],
       "proof": ["PR #99 mergeado; migrations em produção em 22/10"],
       "tests": [],
       "links": [],
@@ -5183,17 +5216,22 @@
       "updatedAt": "2026-10-22",
       "sourceRevision": "7b4c0a0b",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [true, true, true, true, true],
       "id": "DATA-002",
-      "title": "Ocultar para mim e chamados de ajuda"
+      "title": "Ocultar para mim e chamados de ajuda",
+      "completedAt": "2026-10-22"
     },
     {
       "phase": "Lote 7 — Desapegos e Imóveis",
       "priority": "P1",
-      "category": "docs",
+      "category": "governance",
       "status": "done",
       "description": "ADR-20261022-localizacao-padrao-de-mercado aprovado: rigor na entrada; CEP/coordenada guardados; perfil só para cálculo; unidade declarada para distância própria; BrasilAPI + Google; malha IBGE.",
-      "checklist": [],
+      "checklist": [
+        "ADR aprovado pelo dono",
+        "AGENTS.md atualizado",
+        "Regra antiga marcada como substituída"
+      ],
       "proof": ["PR #102 mergeado (f05fc69b)"],
       "tests": [],
       "links": [],
@@ -5201,9 +5239,10 @@
       "updatedAt": "2026-10-22",
       "sourceRevision": "f05fc69b",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [true, true, true],
       "id": "ADR-LOCALIZACAO",
-      "title": "Localização no padrão de mercado (CEP e coordenada)"
+      "title": "Localização no padrão de mercado (CEP e coordenada)",
+      "completedAt": "2026-10-22"
     },
     {
       "phase": "Lote 7 — Desapegos e Imóveis",
@@ -5211,15 +5250,20 @@
       "category": "backend",
       "status": "next",
       "description": "Substituir os 43 bairros do protótipo pela malha oficial nacional, com nome e centro; ETL única, atualização a cada censo.",
-      "checklist": [],
+      "checklist": [
+        "Baixar a malha de bairros do IBGE (Censo 2022)",
+        "ETL para neighborhoods com nome e centro",
+        "Substituir a carga do protótipo",
+        "pgTAP e reset limpo"
+      ],
       "proof": [],
       "tests": [],
-      "links": [],
+      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["ADR-LOCALIZACAO"],
       "updatedAt": "2026-10-22",
-      "sourceRevision": "",
+      "sourceRevision": "f05fc69b",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [false, false, false, false],
       "id": "DATA-IBGE-BAIRROS",
       "title": "Carga da malha de bairros do IBGE (Censo 2022)"
     },
@@ -5229,15 +5273,21 @@
       "category": "backend",
       "status": "next",
       "description": "CEP no imóvel/desapego/pedido/perfil; geocodificação no servidor (BrasilAPI, Google de reserva, cache); mapa exato ou aproximado no imóvel; coordenada do perfil fora de toda leitura de outro membro; desapego com bairro opcional no protótipo.",
-      "checklist": [],
+      "checklist": [
+        "CEP e coordenada no anúncio, pedido e perfil",
+        "Geocodificação no servidor com cache",
+        "Mapa exato ou aproximado no imóvel",
+        "Coordenada do perfil fora de leitura de terceiros",
+        "Desapego com bairro opcional"
+      ],
       "proof": [],
       "tests": [],
-      "links": [],
+      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["ADR-LOCALIZACAO", "DATA-IBGE-BAIRROS"],
       "updatedAt": "2026-10-22",
-      "sourceRevision": "",
+      "sourceRevision": "f05fc69b",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [false, false, false, false, false],
       "id": "LOC-IMPL",
       "title": "Implementar localização no padrão de mercado"
     },
@@ -5247,15 +5297,18 @@
       "category": "frontend",
       "status": "next",
       "description": "No Next, /ajuda exige sessão; a landing perdeu Ajuda e Fale com a gente. Criar a Ajuda pública e religar os links.",
-      "checklist": [],
+      "checklist": [
+        "Ajuda pública fora do grupo (shell)",
+        "Religar Ajuda e Fale com a gente na landing"
+      ],
       "proof": [],
       "tests": [],
-      "links": [],
+      "links": ["docs/agents/PORT_001.md"],
       "dependencies": [],
       "updatedAt": "2026-10-22",
-      "sourceRevision": "",
+      "sourceRevision": "f05fc69b",
       "blockers": [],
-      "completedChecklist": [],
+      "completedChecklist": [false, false],
       "id": "AJUDA-PUBLICA",
       "title": "Ajuda pública para quem está fora"
     }
