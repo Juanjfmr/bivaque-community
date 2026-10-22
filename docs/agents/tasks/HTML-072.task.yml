@@ -33,7 +33,7 @@ acceptance:
   - Cadastro, login, convite, páginas legais, suporte e boas-vindas usam o símbolo oficial (mark()), sem a letra "B"
   - Com a folha do menu da landing aberta, Tab e Shift+Tab não saem dela; o fundo fica inerte; Esc fecha e devolve o foco
   - A barra fixa escondida não recebe foco nem aparece para tecnologia assistiva
-  - "Fale com a gente" tem alvo de pelo menos 44 x 44 px
+  - O botão Fale com a gente tem alvo de pelo menos 44 x 44 px
   - Nenhum checkpoint conta PASS sem verificar: no 1440, mobile-menu afirma que o botão de menu está oculto e a navegação visível; no-overflow mede também o desktop
 proof:
   - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round72-proof.mjs
