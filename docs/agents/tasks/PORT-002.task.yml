@@ -55,10 +55,10 @@ closure:
   requires_runtime_evidence: true
 
 # ── Evidência de execução — 22/10/2026, branch codex/entrada-base ──
-# Revisão de código confrontada: c8268b55 (adaptadores em 1ac92ca3, casca e
-# tokens em b8214a83, provas em c8268b55).
+# Revisão de código confrontada: a3e71ba3 (adaptadores em 1ac92ca3, casca e
+# tokens em b8214a83, provas em c8268b55, repasse de target em a3e71ba3).
 #
-# npx pnpm@11.18.0 gate — VERDE: lint 7s, typecheck 12s, test 22s, secrets 6s.
+# npx pnpm@11.18.0 gate — VERDE: lint 6s, typecheck 9s, test 21s, secrets 8s.
 #   O gate PULOU o estágio build porque apps/web/.env.local não existe, e o
 #   contrato proíbe criá-lo. O build foi provado em comando próprio, sem ele.
 # npx pnpm@11.18.0 test — unit 1491/1491; workspaces 76/76 no mobile e 19/19 no
