@@ -199,6 +199,17 @@ body.ld-locked {
   height: 34px;
 }
 
+/* As cores do símbolo vêm dos tokens do tema, como em `base.css` do protótipo
+   (`.bv-symbol-body{fill:var(--bv-symbol-body)}`). As duas exceções — sobre a
+   foto e no rodapé — declaram `fill` mais adiante e continuam vencendo. */
+.ld .brand-mark .bv-symbol-body {
+  fill: var(--bv-symbol-body);
+}
+
+.ld .brand-mark .bv-symbol-threshold {
+  fill: var(--bv-symbol-threshold);
+}
+
 /* Sobre a foto, o símbolo é o branco inteiro (brandbook: fundo escuro, versão
    branca); com o topo sólido volta às cores do tema. */
 .ld-top:not(.ld-solid) .brand-mark .bv-symbol-body,
@@ -897,13 +908,20 @@ body.ld-locked {
    sai depois do slide. No protótipo ela transiciona nos dois sentidos, e no
    primeiro quadro a folha ainda é `hidden` — o `focus()` do botão Fechar é
    ignorado e o foco fica no body. Assim a abertura é focável no mesmo evento e o
-   fechamento continua deslizando. */
+   fechamento continua deslizando.
+   `overflow-y: auto` com `max-height: 100dvh`: no celular deitado (812 × 375) a
+   folha é mais alta que a tela, e sem rolagem própria os links legais ficavam
+   fora do alcance do toque — o documento atrás dela está travado por
+   `body.ld-locked`. */
 .ld-sheet {
   position: fixed;
   inset: 0;
   z-index: 60;
   display: flex;
   flex-direction: column;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 20px calc(24px + env(safe-area-inset-bottom));
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
@@ -1152,5 +1170,18 @@ body.ld-locked {
   .ld .ld-hero-media img,
   .ld .ld-final img {
     filter: var(--bv-photo-dim);
+  }
+}
+
+/* Movimento reduzido. O reset de globals.css usa `*`, de especificidade zero, e
+   perde para as transições de classe desta folha: a folha do menu (280 ms) e a
+   barra fixa (220 ms) continuavam deslizando mesmo com
+   `prefers-reduced-motion: reduce`. A regra abaixo é escopada em `.ld` e repete
+   `.ld-sheet.ld-open`, que redeclara o `transition` com duas classes. */
+@media (prefers-reduced-motion: reduce) {
+  .ld *,
+  .ld-sheet.ld-open {
+    transition-duration: 0s;
+    transition-delay: 0s;
   }
 }

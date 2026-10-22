@@ -8,6 +8,7 @@ import { log } from "../../lib/logger"
 import { MemberContextProvider } from "../../lib/member-context"
 import { countUnreadConversations } from "../../lib/messages/unread-conversations"
 import { AppShell } from "../components/bivaque/app-shell"
+import { SupabaseAuthProvider } from "../components/bivaque/supabase-auth-provider"
 import { ToastProvider } from "../components/bivaque/toast"
 
 // Mensagens recentes de terceiros lidas para o badge de conversas do cabeçalho.
@@ -248,7 +249,9 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
     <LocalityContextProvider value={{ current, outbound }}>
       <MemberContextProvider value={{ displayName, communities, unreadCount, unreadConversations }}>
         <ToastProvider>
-          <AppShell>{children}</AppShell>
+          <SupabaseAuthProvider>
+            <AppShell>{children}</AppShell>
+          </SupabaseAuthProvider>
         </ToastProvider>
       </MemberContextProvider>
     </LocalityContextProvider>

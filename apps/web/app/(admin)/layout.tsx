@@ -4,6 +4,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
+import { SupabaseAuthProvider } from "../components/bivaque/supabase-auth-provider"
 import { OperatorNav } from "./operator-nav"
 
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -46,22 +47,27 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <nav aria-label="Painel do operador" className="border-b border-border bg-surface px-6 py-3">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <span className="text-sm font-semibold tracking-tight">BIVAQUE · Operação</span>
-          {/* Os quatro itens viraram componente cliente: só ele sabe qual é a
-              rota atual e pode marcar aria-current (RECON-049, fila do lote M). */}
-          <OperatorNav />
-          <Link
-            href="/inicio"
-            className="ml-auto inline-flex min-h-11 items-center rounded-md px-3 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
-          >
-            Sair da operação
-          </Link>
-        </div>
-      </nav>
-      {children}
-    </div>
+    <SupabaseAuthProvider>
+      <div className="flex min-h-screen flex-col">
+        <nav
+          aria-label="Painel do operador"
+          className="border-b border-border bg-surface px-6 py-3"
+        >
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <span className="text-sm font-semibold tracking-tight">BIVAQUE · Operação</span>
+            {/* Os quatro itens viraram componente cliente: só ele sabe qual é a
+                rota atual e pode marcar aria-current (RECON-049, fila do lote M). */}
+            <OperatorNav />
+            <Link
+              href="/inicio"
+              className="ml-auto inline-flex min-h-11 items-center rounded-md px-3 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
+            >
+              Sair da operação
+            </Link>
+          </div>
+        </nav>
+        {children}
+      </div>
+    </SupabaseAuthProvider>
   )
 }

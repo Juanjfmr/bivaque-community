@@ -117,6 +117,20 @@ async function deepBackground(page: Page, selector: string) {
     })
 }
 
+// A cor de `fill` de um caminho do símbolo dentro de um escopo. `fill` é
+// herdado, então quem responde é a regra que alcança o `<path>` — é isso que
+// prova que a exceção (foto, rodapé) e o tema continuam valendo.
+async function symbolFill(page: Page, scope: string) {
+  return page.evaluate((parent) => {
+    const read = (className: string) => {
+      const path = document.querySelector(`${parent} .brand-mark .${className}`)
+      if (!path) throw new Error(`o símbolo não está em ${parent}`)
+      return getComputedStyle(path).fill
+    }
+    return { body: read("bv-symbol-body"), threshold: read("bv-symbol-threshold") }
+  }, scope)
+}
+
 // O fundo que a pessoa vê atrás de um elemento: sobe até achar uma camada opaca.
 async function backgroundOf(page: Page, selector: string) {
   return page.evaluate((target) => {
@@ -130,6 +144,24 @@ async function backgroundOf(page: Page, selector: string) {
 }
 
 test.describe("landing v8", () => {
+  test("entrega a landing no HTML do servidor, sem executar JavaScript", async ({
+    request,
+  }, testInfo) => {
+    onlyCaptureProjects(testInfo)
+
+    // Given um cliente HTTP puro: nenhum JavaScript é executado, como quem
+    // rastreia a página ou monta a prévia de um link no WhatsApp
+    const response = await request.get("/")
+
+    // Then o servidor responde 200 e o HTML já traz o título e o texto do CTA
+    expect(response.status()).toBe(200)
+    const html = await response.text()
+    expect(html, "o h1 da v8 vem no HTML do servidor").toMatch(
+      /<h1[^>]*>Juntos somos mais fortes\.<\/h1>/,
+    )
+    expect(html, "o texto do CTA vem no HTML do servidor").toContain("Criar conta")
+  })
+
   test("mostra o título, a linha de apoio e as seções na ordem da v8", async ({
     page,
   }, testInfo) => {
@@ -380,6 +412,45 @@ test.describe("landing v8", () => {
     expect(lightSurface).toBe("rgb(242, 240, 235)")
   })
 
+  test("mantém as cores do símbolo na folha do menu e no topo sólido", async ({
+    page,
+  }, testInfo) => {
+    onlyCaptureProjects(testInfo)
+
+    // Os tokens do símbolo (brand-tokens.css): petróleo e terracota no claro;
+    // branco inteiro no escuro.
+    const expected = {
+      light: { body: "rgb(37, 48, 51)", threshold: "rgb(184, 74, 58)" },
+      dark: { body: "rgb(255, 255, 255)", threshold: "rgb(255, 255, 255)" },
+    } as const
+
+    for (const colorScheme of ["light", "dark"] as const) {
+      // Given a landing no tema do sistema
+      await page.emulateMedia({ colorScheme })
+      await openLanding(page)
+
+      // Then o símbolo da folha do menu usa as cores do tema
+      expect(await symbolFill(page, "#ld-sheet"), `folha no ${colorScheme}`).toEqual(
+        expected[colorScheme],
+      )
+
+      // And o do topo sólido, depois da foto, também
+      await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }))
+      await expect(page.locator("#ld-top")).toHaveClass(/ld-solid/)
+      expect(await symbolFill(page, "#ld-top"), `topo sólido no ${colorScheme}`).toEqual(
+        expected[colorScheme],
+      )
+    }
+
+    // And a exceção do rodapé continua valendo: branco sobre o fundo escuro
+    await page.emulateMedia({ colorScheme: "light" })
+    await openLanding(page)
+    expect(await symbolFill(page, ".ld-footer")).toEqual({
+      body: "rgb(255, 255, 255)",
+      threshold: "rgb(255, 255, 255)",
+    })
+  })
+
   test("monta a conversa ao entrar na tela e já montada com movimento reduzido", async ({
     page,
   }, testInfo) => {
@@ -411,6 +482,62 @@ test.describe("landing v8", () => {
     await page.locator("#ld-thread").scrollIntoViewIfNeeded()
     await expect(page.locator("#ld-thread")).toHaveClass(/ld-in/)
     await expect(page.locator("#ld-thread .ld-done")).toHaveCSS("opacity", "1")
+  })
+
+  test("zera as transições da folha e da barra com movimento reduzido", async ({
+    page,
+  }, testInfo) => {
+    onlyCaptureProjects(testInfo)
+    test.skip(testInfo.project.name !== "mobile-375", "PORT-001: a folha e a barra são do celular")
+
+    // Given movimento reduzido
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await openLanding(page)
+
+    // Then nada desliza: as duas transições computadas são de 0 s. O reset
+    // universal de globals.css usa `*` e perde para a classe da landing; por
+    // isso a medida é na duração computada, e não na presença de `animation`.
+    const durations = await page.evaluate(() =>
+      ["#ld-sheet", "#ld-bar"].map((selector) => {
+        const element = document.querySelector(selector)
+        if (!element) throw new Error(`${selector} não está no DOM`)
+        return {
+          selector,
+          values: getComputedStyle(element)
+            .transitionDuration.split(",")
+            .map((value) => value.trim()),
+        }
+      }),
+    )
+    for (const { selector, values } of durations) {
+      expect(values.length, `${selector} declara transição para medir`).toBeGreaterThan(0)
+      expect(values, `${selector} ainda anima com movimento reduzido`).toEqual(
+        values.map(() => "0s"),
+      )
+    }
+  })
+
+  test("a folha rola até os links legais em tela baixa e deitada", async ({ page }, testInfo) => {
+    onlyCaptureProjects(testInfo)
+    test.skip(testInfo.project.name !== "mobile-375", "PORT-001: a folha é do celular")
+
+    // Given o celular deitado, onde a folha é mais alta que a tela
+    await page.setViewportSize({ width: 812, height: 375 })
+    await openLanding(page)
+    await page.locator("#ld-top [data-ld-menu]").click()
+    await expect(page.locator("#ld-sheet")).toHaveClass(/ld-open/)
+
+    // When a pessoa rola até o último link legal
+    const legal = page.locator("#ld-sheet .ld-sheet-legal a").last()
+    await legal.scrollIntoViewIfNeeded()
+
+    // Then ele cabe inteiro na tela e recebe o toque
+    const box = await legal.boundingBox()
+    if (!box) throw new Error("o último link legal não tem caixa")
+    expect(box.y, "o link começa dentro da tela").toBeGreaterThanOrEqual(0)
+    expect(box.y + box.height, "o link termina dentro da tela").toBeLessThanOrEqual(375)
+    await expect(legal).toBeVisible()
+    await legal.click({ trial: true })
   })
 
   test("prende o foco na folha e tira a barra fixa do teclado", async ({ page }, testInfo) => {
