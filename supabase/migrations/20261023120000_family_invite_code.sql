@@ -123,9 +123,12 @@ begin
   from private.family_invite_code_rate_limit();
 
   -- A tabela de tentativas é descartável por desenho: só a janela importa, e
-  -- um dia de histórico é folga suficiente para auditar abuso recente.
+  -- um dia de histórico é folga suficiente para auditar abuso recente. A poda
+  -- é por origem, que é o índice disponível — varrer a tabela inteira a cada
+  -- tentativa seria um preço alto para limpar linhas que ninguém lê.
   delete from private.family_invite_code_attempts
-  where created_at < now() - interval '1 day';
+  where origin_digest = p_origin_digest
+    and created_at < now() - interval '1 day';
 
   select count(*)::integer
   into v_count
