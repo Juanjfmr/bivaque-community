@@ -897,6 +897,32 @@ export type Database = {
           },
         ]
       }
+      hidden_questions: {
+        Row: {
+          hidden_at: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          hidden_at?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hidden_questions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       indication_alert_deliveries: {
         Row: {
           created_at: string
@@ -2254,6 +2280,45 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          answered_at: string | null
+          answered_by: string | null
+          body: string
+          created_at: string
+          email: string
+          id: string
+          reply: string | null
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          topic: Database["public"]["Enums"]["support_ticket_topic"]
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          answered_by?: string | null
+          body: string
+          created_at?: string
+          email: string
+          id?: string
+          reply?: string | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          topic: Database["public"]["Enums"]["support_ticket_topic"]
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          answered_by?: string | null
+          body?: string
+          created_at?: string
+          email?: string
+          id?: string
+          reply?: string | null
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          topic?: Database["public"]["Enums"]["support_ticket_topic"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_group_interests: {
         Row: {
           created_at: string
@@ -2349,6 +2414,27 @@ export type Database = {
         Returns: undefined
       }
       advance_recurring_events: { Args: never; Returns: number }
+      answer_support_ticket: {
+        Args: { p_reply: string; p_ticket_id: string }
+        Returns: {
+          answered_at: string | null
+          answered_by: string | null
+          body: string
+          created_at: string
+          email: string
+          id: string
+          reply: string | null
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          topic: Database["public"]["Enums"]["support_ticket_topic"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "support_tickets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       apply_guide_correction: {
         Args: {
           p_note: string
@@ -2667,6 +2753,17 @@ export type Database = {
           revoked_at: string
         }[]
       }
+      list_hidden_questions: {
+        Args: never
+        Returns: {
+          body: string
+          category: Database["public"]["Enums"]["recommendation_category"]
+          created_at: string
+          hidden_at: string
+          id: string
+          title: string
+        }[]
+      }
       list_indications: {
         Args: {
           p_category?: Database["public"]["Enums"]["recommendation_category"]
@@ -2847,6 +2944,30 @@ export type Database = {
         Returns: string
       }
       open_event_question: { Args: { p_event_id: string }; Returns: string }
+      open_support_ticket: {
+        Args: {
+          p_body: string
+          p_topic: Database["public"]["Enums"]["support_ticket_topic"]
+        }
+        Returns: {
+          answered_at: string | null
+          answered_by: string | null
+          body: string
+          created_at: string
+          email: string
+          id: string
+          reply: string | null
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          topic: Database["public"]["Enums"]["support_ticket_topic"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "support_tickets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       profile_affiliations_for: {
         Args: { p_target_user_id: string }
         Returns: {
@@ -3200,6 +3321,7 @@ export type Database = {
         | "listing_alert"
         | "service_request"
         | "recommendation_request"
+        | "support_answered"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3249,6 +3371,13 @@ export type Database = {
         | "in_conversation"
         | "closed"
         | "cancelled"
+      support_ticket_status: "open" | "answered"
+      support_ticket_topic:
+        | "conta"
+        | "comunidade"
+        | "anuncios"
+        | "seguranca"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3434,6 +3563,7 @@ export const Constants = {
         "listing_alert",
         "service_request",
         "recommendation_request",
+        "support_answered",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
@@ -3488,6 +3618,14 @@ export const Constants = {
         "in_conversation",
         "closed",
         "cancelled",
+      ],
+      support_ticket_status: ["open", "answered"],
+      support_ticket_topic: [
+        "conta",
+        "comunidade",
+        "anuncios",
+        "seguranca",
+        "outro",
       ],
     },
   },

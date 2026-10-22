@@ -50,3 +50,57 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# Execucao local em 2026-10-22, branch codex/dados-ocultar-chamados (DeepSeek V4.1 Flash).
+# Pilha local propria desta worktree: projeto bivaque-dados2, portas 56421-56429.
+# supabase/config.toml alterado so nesta worktree e mantido fora do commit (nao aparece
+# em git status). Nada com --linked, sem .env.local, sem push/PR/merge/deploy.
+#
+# TDD RED, antes das migrations: supabase/tests/hidden-questions.sql rodou e parou em
+# 42P01 (relation public.hidden_questions does not exist) com 2 de 26 asserts executados
+# (o primeiro ja media a lista da cidade contra o banco). support-tickets.sql foi escrito
+# antes da migration e a primeira consulta a public.support_tickets falha com 42P01 --
+# o mesmo defeito de tabela ausente, nao uma assercao errada.
+#
+# Migrations aplicadas com npx supabase migration up --local (db reset bloqueado neste
+# ambiente, como o contrato preve):
+#  20261022130511_hidden_questions              tabela, indice, RLS force, grants e 3 policies
+#  20261022130513_community_list_excludes_hidden list_indications com o filtro pessoal + list_hidden_questions
+#  20261022130516_support_tickets               enums, tabela, checks, indices, RLS e grants
+#  20261022130519_support_answered_notification_type  so o valor de enum
+#  20261022130521_support_ticket_functions      open_support_ticket e answer_support_ticket
+#  20261022130524_account_deletion_hidden_and_support  finalize_account_deletion
+# O valor de enum entra em migration propria porque um valor adicionado por ALTER TYPE nao
+# pode ser usado na mesma transacao (20260809184316:18, 20260820052738).
+#
+# Exclusao de conta: a rota chama auth.admin.deleteUser(id, true), que e SOFT delete em
+# auth.users. A linha de origem continua la, entao o ON DELETE CASCADE das FKs nao dispara
+# na purga. Por isso finalize_account_deletion foi recriada identica ao original (comparada
+# linha por linha contra 20260915101543 por script, sem diferenca alem do bloco inserido),
+# com dois DELETE a mais: hidden_questions e support_tickets.
+#
+# pgTAP GREEN:
+#  hidden-questions.sql  26/26 PASS
+#  support-tickets.sql  34/34 PASS
+#  Os dois tambem rodaram por npx pnpm@11.18.0 test:db, que reportou os arquivos como ok.
+#
+# test:db completo nesta pilha: 146 arquivos, 2040 testes, Result: FAIL em 23 arquivos.
+# Todas as falhas sao pre-existentes e de dado de seed: Ana Almeida e Despachante Central
+# (supabase/seed.sql), 14 eventos x 3, 5 eventos concluidos x 1, reports abertos do seed e
+# os 300 usuarios admissao-N@bivaque.example.invalid que o seed.sql:715 cria com
+# verification_outcomes. A pilha local esta com seed aplicado e o pgTAP roda no estado SEM
+# seed. Nenhum dos 23 arquivos toca hidden_questions, support_tickets, list_indications ou
+# finalize_account_deletion. O reset limpo e o test:db completo ficam com o coordenador.
+#
+# db:lint: sem erro de schema (No schema errors found).
+# Gate: npx pnpm@11.18.0 gate -> exit 0; lint, typecheck, test (unit + workspaces + privacy
+# + 120 de scope) e secrets PASS. Build pulado por ausencia de apps/web/.env.local, que o
+# contrato proibe criar.
+# Tipos: npx pnpm@11.18.0 generate:types; so adicoes (hidden_questions, support_tickets,
+# list_hidden_questions, open_support_ticket, answer_support_ticket, os dois enums novos e
+# support_answered em notification_type).
+#
+# Fora do escopo desta tarefa, de proposito: apps/web/app nao foi tocado. A notificacao
+# support_answered ainda cai em nova notificacao e sem destino em deep-links.ts ate o
+# lote de telas da Ajuda. O limite de abertura usa 54000, o codigo da casa para teto.
+# Revisao independente e runtime de tela continuam pendentes.
