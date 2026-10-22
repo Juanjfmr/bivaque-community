@@ -50,3 +50,23 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Evidência de execução (Rodada 72, 22/10/2026)
+# Base 574365f4, build 0c57932377: round72 nos 4 contextos = 6/28 checkpoints (22 falham). Falham
+# create-menu-neutral no 375 (opção com fundo rgb(184,74,58) e rgb(224,122,90)), share-palette nos
+# quatro, entry-shapes (ticket 16 px), entry-symbol (cadastro sem o símbolo), landing-focus-trap no
+# 375 (#ld-top ativo com a folha aberta), sticky-bar-hidden-from-keyboard no 375 (barra visible e
+# inert false) e inline-targets (Fale com a gente mede 149x27). Os 6 que passam na base são o painel
+# do Criar no 1440 e a forma de desktop dos dois checkpoints de celular.
+# Candidato build ae26590f4da1d27f: round72 = 28/28, sem erro de JS e sem requisição externa;
+# round71 = 44/44 (mobile-menu e no-overflow agora medem no 1440); round70 = 24/24 nos 4 contextos.
+# Provas antigas: R53 4/4 e R54 6/6 em 375-light.
+# Contraste do menu Criar: título 10,78:1 (claro) e 10,50:1 (escuro); subtítulo 5,06:1 e 6,17:1,
+# sobre surface-container-high. Na base os subtítulos davam 3,88:1 e 4,23:1.
+# Cantos de 12 px: data 4->12, .en-tile/.help-card/.ticket/.en-why/.en-inv 16->12, .en-link/.en-file
+# 14->12 e .en-seg 20->12. Só os círculos (.en-av 22 num avatar de 44 e .en-badge 32 num selo de 64)
+# ficaram fora, de propósito.
+# Gate verde: lint, typecheck, test e secrets. O build web pulou por falta de apps/web/.env.local,
+# então não há evidência de que o Next compila nesta worktree.
+# Relatório: prototypes/bivaque-html/docs/ROUND_72.md
+
