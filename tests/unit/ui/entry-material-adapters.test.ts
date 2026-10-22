@@ -1,11 +1,17 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
+// O alias `web` (vitest.config.mjs) resolve para apps/web. O caminho relativo
+// equivalente — três `..` e o caminho completo até o módulo — vira um bloco de
+// 42 caracteres que o scanner de segredos lê como token base64: a exclusão dele
+// só reconhece caminhos que começam num diretório-raiz do repositório. Pelo
+// alias, o mesmo caminho fica abaixo de 40 caracteres e a varredura continua
+// limpa sem abrir exceção em tests/secrets-scan.mjs.
 import {
   passwordFieldType,
   passwordToggleIcon,
   passwordToggleLabel,
-} from "../../../apps/web/app/components/material/password-toggle"
+} from "web/app/components/material/password-toggle"
 import { stripComments } from "./source-scan"
 
 // PORT-002 (lote 4 da entrada): os adaptadores do Material Web.
