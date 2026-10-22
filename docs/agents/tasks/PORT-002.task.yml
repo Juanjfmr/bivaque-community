@@ -53,3 +53,29 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# ── Evidência de execução — 22/10/2026, branch codex/entrada-base ──
+# Revisão de código confrontada: c8268b55 (adaptadores em 1ac92ca3, casca e
+# tokens em b8214a83, provas em c8268b55).
+#
+# npx pnpm@11.18.0 gate — VERDE: lint 7s, typecheck 12s, test 22s, secrets 6s.
+#   O gate PULOU o estágio build porque apps/web/.env.local não existe, e o
+#   contrato proíbe criá-lo. O build foi provado em comando próprio, sem ele.
+# npx pnpm@11.18.0 test — unit 1491/1491; workspaces 76/76 no mobile e 19/19 no
+#   web; privacy 189/189; scope 129/129, incluindo
+#   tests/scope/entrada-public-paths.test.mjs e tests/scope/entrada-skin.test.mjs.
+# npx pnpm@11.18.0 --filter web build — VERDE, com NEXT_PUBLIC_SUPABASE_URL e
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY exportados a partir de supabase status -o env.
+#   apps/web/.env.local continuou inexistente antes e depois do build.
+# bash run-e2e-entrada-base.sh tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1
+#   — 31 passaram, 17 pulados (a spec da landing só roda em 375 e 1440), 0
+#   falharam. Porta 3000 livre antes da execução.
+# node scripts/port/compare-landing.mjs — VERDE: 24 PNGs e report.json em
+#   .visual/port-001. Página inteira 1440 em 4884 px nos dois temas, igual ao
+#   protótipo; 375 em 5938 contra 6002 (os 64 px da linha da Ajuda que já tinha
+#   saído no PORT-001); dobras iguais; pageErrors vazio. O script recebeu
+#   PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH apontando para o Chromium 1248 instalado.
+# Conferido à mão: um registro por componente em
+#   apps/web/app/components/material/register.ts, tags novas declaradas em
+#   apps/web/types/material-web.d.ts sem any, /ajuda fora de PUBLIC_PATHS e
+#   nenhuma tela ou página de entrada alterada nesta tarefa.
