@@ -8,10 +8,10 @@
 ## Progresso consolidado
 
 - Fila: 267 candidatos, 259 EB e 8 MB.
-- Lotes concluídos: 01 e 02 — 50/267 registros (18,7%), todos EB.
-- Resultado acumulado: 11 CORROBORADOS (endereço textual); 4 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 34 INCONCLUSIVOS.
-- Lote 02: 7 CORROBORADOS; 2 DIVERGENTES; 16 INCONCLUSIVOS.
-- Próximo registro da fila: 51. Restam 217 candidatos, incluindo todos os 8 registros da MB.
+- Lotes concluídos: 01–03 — 75/267 registros (28,1%), todos EB.
+- Resultado acumulado: 18 CORROBORADOS (endereço textual); 6 DIVERGENTES; 1 ENDEREÇO DESATUALIZADO; 50 INCONCLUSIVOS.
+- Lote 03: 7 CORROBORADOS; 2 DIVERGENTES; 16 INCONCLUSIVOS.
+- Próximo registro da fila: 76. Restam 192 candidatos, incluindo todos os 8 registros da MB.
 - Nenhum ponto militar foi homologado e nenhuma coordenada foi publicada no aplicativo.
 - Nenhuma nova chamada Geoapify foi feita; análise usa somente a execução de referência.
 
@@ -25,6 +25,7 @@ Os inconclusivos permanecem pendentes quando falta fonte oficial individual rece
 
 - `data/om/evidence/national_location_audit_lote_01.csv`
 - `data/om/evidence/national_location_audit_lote_02.csv`
+- `data/om/evidence/national_location_audit_lote_03.csv`
 
 Cada linha registra OM, Força, município, endereço declarado, resultado Geoapify, URLs, data, classificação, confiança, evidência, ressalva cartográfica e bloqueios de homologação/publicação.
 
