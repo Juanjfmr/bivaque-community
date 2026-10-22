@@ -93,7 +93,8 @@ async function startSignup(page) {
   await page.locator('#main [data-action="sign-out"]').click()
   await settle(page)
   await confirmOk(page)
-  await page.locator('#main [data-action="entry-join"]').click()
+  // R71: a landing v8 repete "Criar conta" (topo, folha, rodapé e barra); o CTA do topo com foto é o #ld-hero-cta.
+  await page.locator("#ld-hero-cta").click()
   await settle(page)
 }
 
