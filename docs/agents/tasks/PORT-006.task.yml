@@ -1,0 +1,65 @@
+task_id: PORT-006
+objective: >
+  Frente D do lote 4: convite de familiar por código digitado em /convite, criando a conta na mesma tela
+  (o link continua valendo e já vem com o código), com código curto de uso único, validade de 7 dias e
+  limite de tentativas; a tela Conta apagada; a Ajuda pública (fora da área logada) com contato por
+  e-mail; e as páginas legais na pele da marca.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - prototypes/bivaque-html/src/features/entry/ (a especificação)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapeamento protótipo x Next de 22/10/2026 (handoff): a tela atual diverge do protótipo nos pontos
+    do objetivo. Base codex/entrada-base com os adaptadores e a casca da PORT-002.
+allowed_paths:
+  - apps/web/app/(preauth)/convite/
+  - apps/web/app/(preauth)/conta-apagada/
+  - apps/web/app/(preauth)/privacidade/
+  - apps/web/app/(preauth)/codigo-de-conduta/
+  - apps/web/app/(shell)/ajuda/
+  - apps/web/app/(public)/
+  - apps/web/app/(shell)/configuracoes/conta/page.tsx
+  - apps/web/app/(shell)/profile/family-invite-section-actions.ts
+  - apps/web/app/(shell)/profile/family-invite-section.tsx
+  - apps/web/app/landing/
+  - apps/web/proxy.ts
+  - apps/web/lib/convite/
+  - apps/web/lib/outbox/
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - tests/unit/
+  - tests/scope/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/PORT-006.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar os adaptadores de apps/web/app/components/material/ ou apps/web/app/components/entry/ (são da base PORT-002; se faltar algo, registre no relatório)
+  - editar arquivos de outra frente do lote 4
+  - editar prototypes/bivaque-html
+acceptance:
+  - O convite ganha código curto (sem caracteres ambíguos), de uso único e validade de 7 dias; aceitar por código cria a conta com o e-mail do convite, a senha e o aceite gravado
+  - Tentativas de código têm limite por origem e por e-mail, com mensagem única para errado, vencido ou usado (pgTAP do limite e dos negativos)
+  - Quem convida vê o código no perfil junto do link
+  - Depois de apagar a conta, a pessoa cai em /conta-apagada (pública)
+  - A Ajuda funciona sem login (proxy libera /ajuda) e com login mostra Meus chamados; o contato de quem está fora é por e-mail; a landing religa Ajuda e Fale com a gente
+  - Páginas legais na pele da marca; comparação de captura e e2e
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test (specs da frente)
+risk: convite, criação de conta e páginas públicas
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

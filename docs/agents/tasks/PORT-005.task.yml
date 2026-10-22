@@ -1,0 +1,58 @@
+task_id: PORT-005
+objective: >
+  Frente C do lote 4: cidade e momento numa tela, como no protótipo (arrive.js) - cidade, momento
+  (Chegando, Moro aqui, Saindo), data de chegada ou de saída, destino ao sair e como quer ser chamado - e
+  as boas-vindas que mudam conforme o momento. O momento e as datas passam a ser guardados (migration) e
+  o provisionamento os recebe. Avatar, Força e interesses saem da entrada.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - prototypes/bivaque-html/src/features/entry/ (a especificação)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapeamento protótipo x Next de 22/10/2026 (handoff): a tela atual diverge do protótipo nos pontos
+    do objetivo. Base codex/entrada-base com os adaptadores e a casca da PORT-002.
+allowed_paths:
+  - apps/web/app/(preauth)/onboarding/locality/
+  - apps/web/app/(preauth)/onboarding/perfil/
+  - apps/web/app/(preauth)/onboarding/welcome/
+  - apps/web/app/(preauth)/onboarding/components/context-steps.tsx
+  - apps/web/app/(preauth)/onboarding/city-storage.ts
+  - apps/web/app/api/onboarding/route.ts
+  - apps/web/lib/onboarding/
+  - apps/web/lib/locality/
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - tests/unit/onboarding/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/PORT-005.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar os adaptadores de apps/web/app/components/material/ ou apps/web/app/components/entry/ (são da base PORT-002; se faltar algo, registre no relatório)
+  - editar arquivos de outra frente do lote 4
+  - editar prototypes/bivaque-html
+acceptance:
+  - Uma tela com cidade, momento, datas, destino e nome, com os textos e validações de arrive.js
+  - Momento e datas guardados com RLS do próprio dono e pgTAP positivo e negativo; Saindo usa o destino e a transferência que já existem quando couber
+  - A ação provision recebe momento e datas e continua exigindo verificação verified
+  - Boas-vindas com blocos conforme o momento, como o protótipo
+  - Comparação de captura e e2e da entrada até as boas-vindas ajustados
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test (specs da frente)
+risk: provisionamento de membro e dado pessoal
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

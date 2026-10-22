@@ -1,0 +1,52 @@
+task_id: PORT-003
+objective: >
+  Frente A do lote 4: as telas de autenticação do Next seguem o protótipo, na pele da marca - criar conta
+  (Google no topo, ou com e-mail, Passo 1 de 3, regra da senha como apoio, aceite), entrar, recuperar e
+  nova senha, o passo Aceite do Google (/consent) e a tela Você já começou (retomar a entrada, com
+  Começar com outra conta confirmado). Sem mudança de banco.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - prototypes/bivaque-html/src/features/entry/ (a especificação)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapeamento protótipo x Next de 22/10/2026 (handoff): a tela atual diverge do protótipo nos pontos
+    do objetivo. Base codex/entrada-base com os adaptadores e a casca da PORT-002.
+allowed_paths:
+  - apps/web/app/(preauth)/login/
+  - apps/web/app/(preauth)/signup/
+  - apps/web/app/(preauth)/recuperar-senha/
+  - apps/web/app/(preauth)/nova-senha/
+  - apps/web/app/(preauth)/consent/
+  - apps/web/app/auth/
+  - apps/web/lib/auth/
+  - tests/unit/auth/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/PORT-003.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar os adaptadores de apps/web/app/components/material/ ou apps/web/app/components/entry/ (são da base PORT-002; se faltar algo, registre no relatório)
+  - editar arquivos de outra frente do lote 4
+  - editar prototypes/bivaque-html
+acceptance:
+  - Telas com os textos, a ordem e os estados de prototypes/bivaque-html/src/features/entry/account.js e login.js, usando os adaptadores e a casca da base
+  - O aceite continua gravado no servidor no cadastro por e-mail e no passo do Google; o desvio do callback (PR 104) segue valendo
+  - Você já começou aparece quando há entrada em andamento e oferece continuar ou começar com outra conta (sai da conta depois da confirmação)
+  - Comparação de captura com o protótipo em 375 e 1440, nos dois temas, para criar conta, entrar e aceite
+  - Os e2e de entrada que afirmavam as telas antigas são ajustados mantendo o que protegem
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test (specs da frente)
+risk: autenticação, cadastro e aceite
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

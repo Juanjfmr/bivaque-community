@@ -1,0 +1,57 @@
+task_id: PORT-004
+objective: >
+  Frente B do lote 4: a elegibilidade segue o protótipo - CPF direto sem a pergunta de vínculo, com Por
+  que o CPF e o link É cônjuge ou dependente para /convite; resultado com fonte fora do ar e Tentar de
+  novo; documento; e a análise pendente com linha do tempo de 4 passos, reenvio de documento e Avise-me
+  quando liberar, que grava a preferência e confirma o aviso por e-mail.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - prototypes/bivaque-html/src/features/entry/ (a especificação)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapeamento protótipo x Next de 22/10/2026 (handoff): a tela atual diverge do protótipo nos pontos
+    do objetivo. Base codex/entrada-base com os adaptadores e a casca da PORT-002.
+allowed_paths:
+  - apps/web/app/(preauth)/onboarding/page.tsx
+  - apps/web/app/(preauth)/onboarding/documento/
+  - apps/web/app/(preauth)/onboarding/status/
+  - apps/web/app/(preauth)/onboarding/components/
+  - apps/web/app/(preauth)/onboarding/document-actions.ts
+  - apps/web/app/(preauth)/onboarding/document-upload.tsx
+  - apps/web/lib/onboarding/
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - tests/unit/onboarding/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/PORT-004.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar os adaptadores de apps/web/app/components/material/ ou apps/web/app/components/entry/ (são da base PORT-002; se faltar algo, registre no relatório)
+  - editar arquivos de outra frente do lote 4
+  - editar prototypes/bivaque-html
+acceptance:
+  - Telas com os textos, a ordem e os estados de account.js (renderEntryCpf, resultado e renderEntryPending), usando a base
+  - A conferência pelo Portal, o documento e a análise manual continuam iguais no servidor (route.ts não muda de contrato)
+  - Avise-me grava a preferência no banco (migration com RLS do próprio dono e pgTAP) e a tela confirma o aviso por e-mail; push fica fora
+  - O ramo de convite de familiar sai desta tela (o convite é da frente D, em /convite)
+  - Comparação de captura com o protótipo e e2e da elegibilidade ajustados
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test (specs da frente)
+risk: verificação de elegibilidade e dado pessoal
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
