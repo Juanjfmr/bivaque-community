@@ -433,9 +433,20 @@ const checkpoints = {
   },
 
   async "mobile-menu"(page) {
-    if (!(await isNarrow(page))) return
     await signOut(page)
     const button = page.locator("#ld-top [data-ld-menu]")
+    // Rodada 72: no desktop o checkpoint não pode passar sem medir. O botão do menu não aparece e a
+    // navegação por âncoras é que está à vista.
+    if (!(await isNarrow(page))) {
+      expect(!(await button.isVisible()), "no desktop o botão do menu apareceu")
+      expect(
+        await page.locator("#ld-top .ld-nav").isVisible(),
+        "no desktop a navegação por âncoras não aparece",
+      )
+      const anchors = await page.locator("#ld-top .ld-nav a[data-landing-anchor]:visible").count()
+      expect(anchors >= 4, `âncoras visíveis no desktop: ${anchors}`)
+      return
+    }
     expect((await button.getAttribute("aria-expanded")) === "false", "o botão já vem aberto")
     await button.click()
     await settle(page)
@@ -507,15 +518,15 @@ const checkpoints = {
   },
 
   async "no-overflow"(page) {
-    if (!(await isNarrow(page))) return
+    // Rodada 72: mede nos dois tamanhos. Antes, no 1440, retornava cedo e contava PASS sem verificar.
     await signOut(page)
     const width = await page.evaluate(() => {
       const main = document.getElementById("main")
-      return { scroll: main.scrollWidth, client: main.clientWidth }
+      return { scroll: main.scrollWidth, client: main.clientWidth, viewport: innerWidth }
     })
     expect(
       width.scroll <= width.client,
-      `a landing rola de lado: ${width.scroll} > ${width.client}`,
+      `a landing rola de lado em ${width.viewport}px: ${width.scroll} > ${width.client}`,
     )
   },
 
