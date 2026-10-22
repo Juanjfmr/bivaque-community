@@ -7,12 +7,13 @@
 --   * cada pessoa le so os proprios chamados;
 --   * so operador responde, e responder grava a resposta, muda a situacao,
 --     cria o aviso no app e enfileira o e-mail no outbox;
+--   * o titular le a resposta, mas NAO le quem respondeu (answered_by);
 --   * apagar a conta apaga os chamados (pela purga e pelo cascade).
 
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(38);
+select plan(44);
 
 \ir fixtures/foundation.inc
 
@@ -265,6 +266,59 @@ select is(
   'A moderacao segue as regras publicadas na Ajuda. Obrigado por perguntar.',
   'o e-mail na fila leva o texto da resposta'
 );
+
+-- ── 8.1. o titular le a resposta, nao quem respondeu ──────────────────────
+--
+-- `answered_by` e dado da operacao. O grant de leitura e por coluna, sem ela:
+-- um grant da tabela inteira entregaria o UUID de quem respondeu em qualquer
+-- `select *` feito pelo dono do chamado.
+
+select is(
+  has_table_privilege('authenticated', 'public.support_tickets', 'SELECT'),
+  false,
+  'authenticated nao tem leitura da tabela inteira de chamados'
+);
+
+select is(
+  has_column_privilege('authenticated', 'public.support_tickets', 'answered_by', 'SELECT'),
+  false,
+  'o grant de leitura nao inclui answered_by'
+);
+
+select is(
+  has_column_privilege('authenticated', 'public.support_tickets', 'reply', 'SELECT'),
+  true,
+  'o grant de leitura inclui a resposta'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(
+  (select count(*) from public.support_tickets
+    where id = '70000000-0000-4000-8000-000000000001'),
+  1::bigint,
+  'o titular continua lendo o proprio chamado depois da resposta'
+);
+
+select throws_ok(
+  $$ select answered_by from public.support_tickets
+      where id = '70000000-0000-4000-8000-000000000001' $$,
+  '42501',
+  null,
+  'o titular nao le answered_by'
+);
+
+select throws_ok(
+  $$ select * from public.support_tickets
+      where id = '70000000-0000-4000-8000-000000000001' $$,
+  '42501',
+  null,
+  'select * tambem nao entrega answered_by'
+);
+
+reset role;
 
 -- 9) um chamado respondido nao se responde duas vezes
 set local role authenticated;

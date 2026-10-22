@@ -3,10 +3,11 @@
 -- O Next mandava a Ajuda por e-mail, sem registro: a pessoa não acompanhava o
 -- que pediu e a operação não tinha fila. Aqui nasce o registro.
 --
--- A tabela não é do cliente. `authenticated` lê só as próprias linhas e NÃO
--- tem insert, update nem delete: abrir e responder passam por função
--- (`open_support_ticket` e `answer_support_ticket`, na migration seguinte). A
--- ausência de grant é a primeira barreira; a policy de select é a segunda.
+-- A tabela não é do cliente. `authenticated` lê só as próprias linhas e só as
+-- colunas do titular (`answered_by` fica fora do grant) e NÃO tem insert, update
+-- nem delete: abrir e responder passam por função (`open_support_ticket` e
+-- `answer_support_ticket`, na migration seguinte). A ausência de grant é a
+-- primeira barreira; a policy de select é a segunda.
 --
 -- O ADR deixa de fora, de propósito: número de protocolo, anexos e conversa
 -- dentro do chamado.
@@ -77,9 +78,24 @@ alter table public.support_tickets force row level security;
 
 revoke all on table public.support_tickets from anon, authenticated;
 
--- Leitura do dono. Escrita não existe para o cliente: as funções da migration
--- seguinte são SECURITY DEFINER e são o único caminho de criação e resposta.
-grant select on table public.support_tickets to authenticated;
+-- Leitura do dono, por COLUNA. `answered_by` fica de fora de propósito: a
+-- identidade de quem responde é da operação e não vira dado de outra pessoa
+-- (mesma regra de `report_resolved` em deep-links.ts). Um grant da tabela
+-- inteira entregaria essa coluna em qualquer `select *` do titular; com grant
+-- por coluna, ela exige um privilégio que o cliente não tem.
+-- Escrita não existe para o cliente: as funções da migration seguinte são
+-- SECURITY DEFINER e são o único caminho de criação e resposta.
+grant select (
+  id,
+  user_id,
+  email,
+  topic,
+  body,
+  status,
+  reply,
+  created_at,
+  answered_at
+) on table public.support_tickets to authenticated;
 
 -- A operação lê pela função de resposta; ainda assim, service_role precisa ler
 -- a tabela para uma eventual conferência administrativa. Escrita continua fora:
