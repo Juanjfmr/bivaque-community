@@ -588,16 +588,23 @@ const checkpoints = {
     await reload(page)
     await go(page, "entrar")
     await settle(page)
-    const hidden = await page.evaluate(() =>
-      [...document.querySelectorAll("#ld-thread .ld-msg, #ld-thread .ld-done")].map(
-        (element) => getComputedStyle(element).opacity,
-      ),
-    )
-    expect(hidden.length === 4, `mensagens da conversa: ${hidden.length}`)
-    expect(
-      hidden.some((opacity) => Number(opacity) < 1),
-      "a conversa já veio montada sem rolar",
-    )
+    const initial = await page.evaluate(() => {
+      const thread = document.getElementById("ld-thread")
+      return {
+        // No tablet (768x1024) a conversa já nasce dentro da primeira tela e se monta logo, que é o
+        // comportamento certo; só abaixo da dobra ela precisa esperar a rolagem.
+        belowFold: thread.getBoundingClientRect().top >= innerHeight,
+        opacities: [...thread.querySelectorAll(".ld-msg, .ld-done")].map(
+          (element) => getComputedStyle(element).opacity,
+        ),
+      }
+    })
+    expect(initial.opacities.length === 4, `mensagens da conversa: ${initial.opacities.length}`)
+    if (initial.belowFold)
+      expect(
+        initial.opacities.some((opacity) => Number(opacity) < 1),
+        "a conversa já veio montada sem rolar",
+      )
     await page.evaluate(() =>
       document.getElementById("ld-thread").scrollIntoView({ block: "center" }),
     )

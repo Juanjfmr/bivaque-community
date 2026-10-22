@@ -129,9 +129,9 @@ const checkpoints = {
         },
       ]
     })
-    // R71: o convite de familiar saiu da landing e fica dentro do cadastro ("É cônjuge ou dependente?").
-    await click(page, "entry-join")
-    await click(page, "entry-invite")
+    // R71: o convite de familiar saiu da landing; o link "É cônjuge ou dependente?" fica no passo do CPF
+    // e leva a #entrar/convite. Esta prova cobre o aceite do convite, então abre a rota direto.
+    await go(page, "entrar/convite")
     await fill(page, "en-code", "DEMO-ERRADO")
     await click(page, "entry-invite-code")
     expect(

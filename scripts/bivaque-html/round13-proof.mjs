@@ -46,12 +46,14 @@ const checkpoints = {
     if (!desktop(page)) return
     const s = await snapshot(page)
     await go(page, "inicio")
+    // R69 (lançamento sem cobrança): ninguém aparece como Patrocinado, nem os negócios marcados como
+    // patrocinados no exemplo. O rótulo pago é guardado pelas provas de planos com a chave de laboratório.
     const spon = s.biz.find((b) => b.city === s.homeCity && b.spon && b.claimed !== false)
-    if (spon) {
-      const card = page.locator(`.home-biz [data-value="${spon.id}"]`)
-      expect(/Patrocinado/.test(await card.innerText()), "patrocinado sem rótulo")
-      expect(await card.isVisible(), "patrocinado escondido nesta largura")
-    }
+    expect(spon, "o exemplo deveria ter um negócio marcado como patrocinado")
+    expect(
+      !/Patrocinado/.test((await page.locator(".home-biz").allInnerTexts()).join(" ")),
+      "a Início mostrou Patrocinado no lançamento sem cobrança",
+    )
     await page.locator(".home-biz .card-link").first().click()
     await settle(page)
     expect((await routeOf(page)).name === "negocio", "cartão de serviço não abriu o negócio")
