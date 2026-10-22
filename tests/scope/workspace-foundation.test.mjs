@@ -63,7 +63,7 @@ test("keeps the Next application on the server runtime", () => {
   assert.match(smokeRoute, /runtime\s*=\s*["']nodejs["']/)
 })
 
-test("uses HeroUI as the only component library", () => {
+test("keeps the component library surface to HeroUI and Material Web during the migration", () => {
   // Given the web package dependencies
   const webPackage = readJson("apps/web/package.json")
   const dependencies = Object.keys(webPackage.dependencies)
@@ -74,8 +74,14 @@ test("uses HeroUI as the only component library", () => {
     prohibitedPackages.some((prefix) => dependency.includes(prefix)),
   )
 
-  // Then direct HeroUI packages are present without a second component library
+  // Then HeroUI continua sendo a biblioteca das telas ainda não portadas e o
+  // Material Web entra como a segunda e única outra, na versão exata do
+  // protótipo. ADR-20261022-porte-visual-material-web, item 4: durante a
+  // migração tela a tela o contrato aceita exatamente essas duas; quando a
+  // última tela for portada, ele volta a exigir uma só.
   assert.equal(dependencies.includes("@heroui/react"), true)
   assert.equal(dependencies.includes("@heroui/styles"), true)
   assert.equal(prohibitedDependency, undefined)
+  assert.equal(dependencies.includes("@material/web"), true)
+  assert.equal(webPackage.dependencies["@material/web"], "2.5.0")
 })

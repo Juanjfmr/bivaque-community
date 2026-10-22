@@ -6,8 +6,10 @@ test("serves the home page", async ({ page }) => {
   // When a browser opens the root route
   await page.goto("/")
 
-  // Then the public landing surface is observable
-  await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+  // Then the public landing surface is observable. PORT-001 (R73): a raiz
+  // passou a ser a landing v8 do protótipo, cujo h1 é "Juntos somos mais
+  // fortes." — o antigo "Bivaque" era o título da landing anterior.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Juntos somos mais fortes.")
 })
 
 test("serves the health endpoint", async ({ request }) => {

@@ -94,6 +94,12 @@ describe("retomar conta e criar conta continuam separados", () => {
     expect(entrySource).toContain("signInWithPassword")
     expect(entrySource).toContain("signUp")
     expect(entrySource).toContain('alternateHref: "/signup"')
-    expect(read(landingPage)).toContain('pathname: "/signup"')
+    // PORT-001 (R73): a landing v8 manda todo "Criar conta" para /signup pelo
+    // adaptador do Material, que com `href` renderiza um <a> no shadow root —
+    // link de verdade, e não mais um <Link href={{ pathname }}> do Next.
+    const landing = read(landingPage)
+    expect(landing).toContain('href="/signup"')
+    expect(landing).not.toContain("data-href")
+    expect(landing).toContain("Criar conta")
   })
 })

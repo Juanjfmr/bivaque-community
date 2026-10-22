@@ -1,0 +1,134 @@
+task_id: PORT-001
+objective: >
+  Rodada 73, piloto do porte visual: a landing pública do Next (rota /) passa a ser a landing v8 do
+  protótipo (R71 e R72), com o título F, na pele da marca, nos temas claro e escuro conforme o sistema,
+  feita com Material Web 2.5.0 por adaptadores cliente, Noto self-hosted e ícones Outlined. Fica igual
+  ao protótipo na comparação de captura em 375 e 1440, sem requisição externa.
+authority:
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+  - prototypes/bivaque-html/docs/ROUND_71.md e ROUND_72.md (a landing aprovada)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    codex/lancamento f78a76c2: apps/web/app/landing/landing.tsx é a landing antiga ("A comunidade vai com
+    você", Public Sans, HeroUI); o layout fixa colorScheme light; @material/web não está no package.json;
+    tests/scope/workspace-foundation.test.mjs exige o HeroUI como única biblioteca.
+allowed_paths:
+  - apps/web/app/page.tsx
+  - apps/web/app/landing/
+  - apps/web/app/layout.tsx
+  - apps/web/app/(admin)/layout.tsx
+  - apps/web/app/(owner)/layout.tsx
+  - apps/web/app/(preauth)/layout.tsx
+  - apps/web/app/(provider)/layout.tsx
+  - apps/web/app/(shell)/layout.tsx
+  - apps/web/app/auth/
+  - apps/web/app/fonts/
+  - apps/web/app/components/material/
+  - apps/web/app/brand-tokens.css
+  - apps/web/types/
+  - apps/web/public/landing/v8/
+  - scripts/port/
+  - tests/e2e/landing-v8.spec.ts
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/onboarding-holder-family.spec.ts
+  - tests/e2e/smoke.spec.ts
+  - tests/scope/workspace-foundation.test.mjs
+  - tests/scope/design-system-contract.test.mjs
+  - tests/unit/
+  - docs/agents/tasks/PORT-001.task.yml
+  - docs/agents/PORT_001.md
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou qualquer .env
+  - instalar pacotes (o coordenador já instalou @material/web@2.5.0)
+  - carregar fonte, imagem ou script de CDN
+  - mudar outras telas além da landing, ou o tema HeroUI das telas ainda não portadas
+  - apagar arquivos existentes de apps/web/public/landing (há spec que usa hero-bivaque-arrival.webp)
+  - editar prototypes/bivaque-html
+acceptance:
+  - A rota / mostra a landing v8 com os textos do protótipo palavra por palavra (título F, seções, perguntas, rodapé)
+  - Todo "Criar conta" leva a /signup e "Entrar" a /login; os links de Privacidade e Código de conduta vão às páginas do Next; o que não tiver destino público no Next sai e é listado em docs/agents/PORT_001.md
+  - Material Web registrado só no cliente, importando só os componentes usados; tags tipadas; sem erro de hidratação no console
+  - Noto Sans, Noto Serif e Material Symbols Outlined via next/font/local; nenhuma requisição externa
+  - Tokens --md-sys-color-* e --bv-* da R70 com par claro e escuro, aplicados por prefers-color-scheme na landing, sem quebrar o tema HeroUI das outras telas
+  - Mesmo comportamento da R72 - menu em folha com foco contido e fundo inerte, barra fixa fora do teclado quando escondida, alvos de 44 px, movimento reduzido
+  - Comparação de captura com o protótipo em 375 e 1440, claro e escuro, salva em .visual/port-001/ lado a lado, e o spec e2e afirma textos, rotas, contraste e ausência de requisição externa
+  - O contrato de escopo aceita exatamente HeroUI e @material/web durante a migração
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts
+risk: primeira impressão pública e arquitetura de componentes
+adr: docs/decisions/ADR-20261022-porte-visual-material-web.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+# Evidência desta execução — 22/10/2026, branch codex/landing-next, host win32.
+# `npx pnpm@11.18.0 gate`: verde (lint, typecheck, unit 1468, privacidade 189, workspaces
+# 76 + 19, scope 120/120, secrets).
+# `npx pnpm@11.18.0 --filter web build`: exit 0, com as variáveis do Supabase local no
+# ambiente e sem criar apps/web/.env.local.
+# `npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1`:
+# 23 passaram, 10 pulados (a spec só roda em 375 e 1440), 0 falharam.
+# `node scripts/port/compare-landing.mjs`: exit 0, 24 PNGs + report.json em .visual/port-001/.
+# Dobra 375x812 e 1440x900 idênticas nos dois temas.
+# Página inteira: 1440 x 4884 nos dois lados.
+# Em 375, a página inteira mede 6002 no protótipo e 5938 no Next: a diferença de 64 px é a
+# linha de convite à ajuda dentro de Perguntas, que saiu.
+# O que saiu (Ajuda e o convite de contato dentro de Perguntas), as rotas, as decisões que se
+# afastam do protótipo e as diferenças que sobram estão em docs/agents/PORT_001.md.
+# Revisão independente e prova de runtime por terceiro: ainda não houve
+# (reviewer_must_differ_from_executor: true).
+
+# Correções da revisão do coordenador — 22/10/2026, branch codex/landing-next, host win32.
+# 1. Criar conta e Entrar são links de verdade: o adaptador passa href ao md-filled-button e
+# o Material Web renderiza um a no shadow root; o data-href e a delegação de clique saíram.
+# 2. themeColor da landing no par claro e escuro; as outras telas seguem com o do layout raiz.
+# `npx pnpm@11.18.0 gate`: verde (lint, typecheck, unit 1468, privacidade 189, workspaces
+# 76 + 19, scope 120/120, secrets).
+# `npx pnpm@11.18.0 --filter web build`: exit 0, com as variáveis do Supabase local no
+# ambiente e sem criar apps/web/.env.local.
+# bash run-e2e-landing.sh tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1:
+# exit 0, 25 passaram, 11 pulados, 0 falharam.
+# Cada Criar conta é um link a href /signup no shadow root: 5 CTAs, focáveis pelo host, e a
+# consulta por papel encontra 5 links com o nome acessível Criar conta.
+# O HTML pré-renderizado de / traz dois meta theme-color com media: F2F0EB no claro e
+# 171E20 no escuro, e nenhum 164734.
+
+# Correções da revisão do Codex — 22/10/2026, branch codex/landing-next, host win32.
+# 0. SSR da landing. O SupabaseAuthProvider saiu do layout raiz — ele devolvia null até
+# montar no cliente e envolvia todo o body — e passou para os layouts de (admin), (owner),
+# (preauth), (provider), (shell) e auth/. A landing ficou fora do provedor. O HTML cru de /
+# agora traz o h1 Juntos somos mais fortes. e o texto Criar conta sem executar JavaScript;
+# teste novo em landing-v8.spec.ts usa request.get e afirma os dois. Confirmação pedida no
+# contrato: rg -n supabase em apps/web/app/landing e apps/web/app/page.tsx não acha nada.
+# 1. Movimento reduzido. landing.css ganhou @media (prefers-reduced-motion: reduce) com
+# .ld * e .ld-sheet.ld-open zerando transition-duration e transition-delay; o reset de
+# globals.css usa * e perdia para as classes da landing. O e2e mede a duração computada da
+# folha e da barra e exige 0s em todas as transições.
+# 2. Folha em tela baixa. A folha recebeu overflow-y auto, max-height 100dvh e
+# overscroll-behavior contain. Em 812x375 o e2e abre a folha, rola até Código de conduta e
+# afirma caixa inteira dentro da tela mais clique.
+# 3. Símbolo. As regras do protótipo entraram limitadas a .ld: fill var(--bv-symbol-body) e
+# fill var(--bv-symbol-threshold); as exceções da foto e do rodapé continuam vencendo. O
+# e2e afirma rgb(37, 48, 51) e rgb(184, 74, 58) no claro, branco nos dois caminhos no
+# escuro, na folha e no topo sólido, e branco no rodapé.
+# 4. Registro e comentários. PORT_001.md, o adaptador e os tipos deixam de prometer
+# funcionamento sem JavaScript: o conteúdo vem no HTML do servidor, o link Criar conta passa
+# a funcionar quando o Material registra o componente e os links nativos seguem no rodapé.
+# npx pnpm@11.18.0 gate: verde (lint, typecheck, unit 1468, privacidade 189, mobile 76, web
+# 19, scope 120, secrets).
+# npx pnpm@11.18.0 --filter web build: exit 0, com as variáveis do Supabase local no
+# ambiente e sem criar apps/web/.env.local.
+# bash run-e2e-landing.sh landing-v8 smoke manaus-pilot-full-journey onboarding-holder-family
+# --workers=1: exit 0, 169 passaram, 17 pulados, 0 falharam.
+# O gate avisa GATE VERDE (build não rodou): a prova de build é o comando acima, rodado
+# nesta mesma sessão com as variáveis exportadas.
+# Revisão independente e prova de runtime por terceiro: ainda não houve para esta rodada
+# (reviewer_must_differ_from_executor: true).

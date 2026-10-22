@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
+import { SupabaseAuthProvider } from "../components/bivaque/supabase-auth-provider"
 import { ProviderShell } from "./provider-shell"
 
 // Shell próprio do prestador (prancha 23; ADR-20260820, D36/D37). O middleware
@@ -67,8 +68,10 @@ export default async function ProviderLayout({ children }: Readonly<{ children: 
   const businessName = profile?.display_name?.trim() || "Meu negócio"
 
   return (
-    <ProviderShell businessName={businessName} categoryLabel={categoryLabel}>
-      {children}
-    </ProviderShell>
+    <SupabaseAuthProvider>
+      <ProviderShell businessName={businessName} categoryLabel={categoryLabel}>
+        {children}
+      </ProviderShell>
+    </SupabaseAuthProvider>
   )
 }

@@ -1,390 +1,430 @@
-"use client"
-
-import { gsap } from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-import {
-  Archive,
-  ArrowRight,
-  Check,
-  ChevronDown,
-  Compass,
-  LockKeyhole,
-  MapPin,
-  MessageCircleQuestion,
-  Route,
-  Search,
-  ShieldCheck,
-  Tent,
-  UsersRound,
-} from "lucide-react"
-import Image from "next/image"
+/* biome-ignore-all lint/performance/noImgElement: fotos finais em WebP com art direction, carregadas antes da captura da comparação (PORT-001) */
 import Link from "next/link"
-import { useLayoutEffect, useRef } from "react"
-import styles from "./landing.module.css"
+import { MaterialFilledButton } from "../components/material/filled-button"
+import { MaterialIcon } from "../components/material/material-icon"
+import { materialSymbols, notoSans, notoSerif } from "../fonts/landing-fonts"
+import "../brand-tokens.css"
+import { BrandMark } from "./brand-mark"
+import { LandingBehavior } from "./landing-behavior"
+import "./landing.css"
 
-gsap.registerPlugin(ScrollTrigger)
+// PORT-001 (R73): a landing v8 do protótipo (R71 e R72), palavra por palavra.
+// Este arquivo é servidor: nenhum texto da página vira estado de cliente. A
+// interatividade mora em <LandingBehavior />, e os CTAs no adaptador cliente do
+// Material Web, que recebe o texto como children daqui.
+//
+// As fotos são <img> e não <Image /> de propósito: o topo usa <picture> para a
+// versão retrato (art direction que o next/image não faz sem getImageProps) e
+// todas as imagens precisam carregar antes da captura de comparação, sem
+// lazy-load. Os arquivos já são WebP no tamanho final.
+//
+// O que saiu do protótipo, porque o Next não tem destino público para eles:
+// "Ajuda" (o botão do rodapé e o da folha) e "Fale com a gente" (o convite
+// dentro de Perguntas). Os dois abriam a ajuda do próprio app, que no Next vive
+// em /ajuda, rota autenticada. O registro está em docs/agents/PORT_001.md.
+const FORCES = "Marinha, Exército e Aeronáutica"
+const TITLE = "Juntos somos mais fortes."
+const LEAD =
+  "A família militar se ajuda, em qualquer cidade: pergunte a quem já mora perto, ache serviços e imóveis, passe adiante o que não usa mais. Gratuito para militares, veteranos, pensionistas e suas famílias."
 
-const NAV_LINKS = [
-  { href: "#por-dentro", label: "Por dentro" },
-  { href: "#pertencimento", label: "Pertencimento" },
-  { href: "#confianca", label: "Confiança" },
-]
+const NAV = [
+  { id: "exemplo", label: "Como funciona", icon: "forum" },
+  { id: "recursos", label: "O que tem", icon: "sell" },
+  { id: "mudanca", label: "Mudança de cidade", icon: "map" },
+  { id: "perguntas", label: "Perguntas", icon: "help" },
+] as const
 
-const STORY_STEPS = [
-  {
-    icon: MessageCircleQuestion,
-    label: "Pergunte",
-    title: "Pergunte a quem conhece o lugar.",
-    copy: "Escola, serviço, mudança ou rotina. A dúvida chega a pessoas que conhecem aquela realidade.",
-  },
-  {
-    icon: UsersRound,
-    label: "Resolva",
-    title: "Receba respostas de quem já viveu isso.",
-    copy: "Quem passou pela mesma situação compartilha referências, cuidados e o caminho que funcionou.",
-  },
-  {
-    icon: Archive,
-    label: "Preserve",
-    title: "Guarde o que pode ajudar outras pessoas.",
-    copy: "O pedido resolvido vira referência e continua disponível para a próxima pessoa que precisar.",
-  },
-]
+const FEATURES = [
+  ["forum", "Indicações", "Pergunte e escolha com base no que funcionou para quem mora perto."],
+  [
+    "sell",
+    "Serviços e negócios",
+    "Profissionais e comércios que outras famílias já contrataram e recomendam.",
+  ],
+  [
+    "apartment",
+    "Imóveis e desapegos",
+    "Aluguel, venda e o que sobrou da mudança, entre famílias militares.",
+  ],
+  [
+    "groups",
+    "Grupos e eventos",
+    "Quem corre, quem tem filhos da mesma idade, quem quer só um café.",
+  ],
+] as const
 
-const BELONGING = [
-  { icon: MapPin, name: "Cidade", copy: "A cidade onde você está ou para onde vai." },
-  {
-    icon: Tent,
-    name: "Comunidade",
-    copy: "As pessoas com quem você divide uma referência, uma fase ou uma história.",
-  },
-  { icon: Compass, name: "Grupo", copy: "Conversas sobre um assunto específico." },
-]
+const CHECKS = [
+  "Moradia: bairros e imóveis indicados",
+  "Escola das crianças",
+  "Saúde e plano",
+  "A mudança, na ordem",
+] as const
 
-const TRUST = [
-  {
-    icon: ShieldCheck,
-    title: "Entrada coerente com cada papel",
-    copy: "A elegibilidade é conferida de acordo com o papel de cada pessoa.",
-  },
-  {
-    icon: LockKeyhole,
-    title: "Seu perfil é para convivência",
-    copy: "CPF, patente, organização militar, endereço e documentos não aparecem no perfil.",
-  },
-  {
-    icon: Search,
-    title: "Encontros pelo que importa",
-    copy: "Você encontra pessoas pelas conversas, pelos interesses e pelas comunidades em comum.",
-  },
-]
+const STEPS = [
+  ["Crie sua conta", "Com e-mail e senha ou com o Google."],
+  [
+    "Confirme seu vínculo",
+    "Informe seu CPF. Quem chegou por convite de um familiar militar não precisa.",
+  ],
+  ["Escolha sua cidade", "Onde você mora ou para onde vai. Qualquer cidade do Brasil."],
+] as const
 
-function Wordmark({ inverse = false }: { inverse?: boolean }) {
+const FAQ = [
+  [
+    "Quem pode participar?",
+    "Militares da Marinha, do Exército e da Aeronáutica, da ativa ou veteranos, pensionistas e as famílias de todos eles.",
+  ],
+  [
+    "É gratuito?",
+    "Sim. Tudo no Bivaque é gratuito: entrar, perguntar, responder e usar o plano de mudança.",
+  ],
+  [
+    "Como familiares participam?",
+    "Quem é militar cria o convite no próprio app e envia. Quem recebe faz o mesmo cadastro, sem a etapa do CPF.",
+  ],
+  [
+    "Como funciona a confirmação pelo CPF?",
+    "Você informa o CPF e o Bivaque confere seu vínculo militar, que é um dado público. O número serve só para isso e não fica salvo. Se a confirmação não sair na hora, o cadastro mostra o que fazer em seguida.",
+  ],
+  [
+    "O Bivaque é ligado às Forças Armadas?",
+    "É uma comunidade independente, feita pela família militar.",
+  ],
+  [
+    "Posso escolher qualquer cidade?",
+    "Sim. Escolha onde você mora ou para onde vai. O que você perguntar e indicar fica lá para quem chegar depois, e você pode chamar quem já conhece.",
+  ],
+] as const
+
+// A pergunta do CPF abre: é a dúvida que trava o cadastro.
+const FAQ_OPEN = 3
+
+function Cta({ id }: Readonly<{ id?: string }>) {
   return (
-    <span className={styles["wordmark"]} data-inverse={inverse}>
-      <Tent aria-hidden="true" strokeWidth={1.8} />
-      <span>Bivaque</span>
-    </span>
+    <MaterialFilledButton href="/signup" id={id}>
+      Criar conta
+    </MaterialFilledButton>
+  )
+}
+
+function Thread() {
+  return (
+    <figure className="ld-thread" id="ld-thread">
+      <div className="ld-thread-top">
+        <span className="ld-chip">Casa</span>Manaus · Adrianópolis
+        <span className="ld-illus">Conversa ilustrativa</span>
+      </div>
+      <div className="ld-msg q">
+        <span className="ld-av q" aria-hidden="true">
+          MA
+        </span>
+        <div>
+          <span className="ld-who">
+            <b>Marina A.</b>
+          </span>
+          <p>Alguém indica um eletricista de confiança aqui no bairro?</p>
+        </div>
+      </div>
+      <div className="ld-msg b">
+        <span className="ld-av b" aria-hidden="true">
+          PS
+        </span>
+        <div>
+          <span className="ld-who">
+            <b>Paulo S.</b>
+          </span>
+          <p>O Sérgio, que refez a fiação aqui de casa. Pontual e cobra o combinado.</p>
+          <span className="ld-useful">
+            <MaterialIcon name="thumb_up" />
+            Marcada como útil
+          </span>
+        </div>
+      </div>
+      <div className="ld-msg c">
+        <span className="ld-av c" aria-hidden="true">
+          RT
+        </span>
+        <div>
+          <span className="ld-who">
+            <b>Renata T.</b>
+          </span>
+          <p>Peça o orçamento por escrito. Comigo foi tranquilo.</p>
+        </div>
+      </div>
+      <div className="ld-done">
+        <MaterialIcon name="check" />
+        Resolvida · Marina marcou a indicação que funcionou
+      </div>
+      <figcaption className="sr">
+        Conversa ilustrativa mostrando uma pergunta resolvida pela comunidade.
+      </figcaption>
+    </figure>
   )
 }
 
 export function LandingPage() {
-  const rootRef = useRef<HTMLDivElement>(null)
-
-  useLayoutEffect(() => {
-    const root = rootRef.current
-    if (!root) return
-
-    const media = gsap.matchMedia()
-    const context = gsap.context(() => {
-      media.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap
-          .timeline({ defaults: { ease: "power3.out" } })
-          .from(`.${styles["header"]}`, { y: -16, duration: 0.6 })
-          .from(
-            `.${styles["heroEyebrow"]}, .${styles["heroTitleLine"]}, .${styles["heroLead"]}, .${styles["heroActions"]}`,
-            { y: 32, duration: 0.75, stagger: 0.08 },
-            "-=0.25",
-          )
-
-        gsap.to(`.${styles["heroImage"]} img`, {
-          scale: 1.06,
-          ease: "none",
-          scrollTrigger: {
-            trigger: `.${styles["hero"]}`,
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.8,
-          },
-        })
-
-        const revealElements = gsap.utils.toArray("[data-reveal]") as HTMLElement[]
-        revealElements.forEach((element) => {
-          gsap.from(element, {
-            y: 36,
-            duration: 0.85,
-            ease: "power3.out",
-            scrollTrigger: { trigger: element, start: "top 86%", once: true },
-          })
-        })
-      })
-
-      media.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
-        const steps = gsap.utils.toArray("[data-story-step]") as HTMLElement[]
-        const panels = gsap.utils.toArray("[data-story-panel]") as HTMLElement[]
-        const activate = (active: number) => {
-          steps.forEach((step, index) => {
-            step.toggleAttribute("data-active", index === active)
-          })
-          panels.forEach((panel, index) => {
-            panel.toggleAttribute("data-active", index === active)
-          })
-        }
-
-        steps.forEach((step, index) => {
-          ScrollTrigger.create({
-            trigger: step,
-            start: "top 58%",
-            end: "bottom 42%",
-            onEnter: () => activate(index),
-            onEnterBack: () => activate(index),
-          })
-        })
-      })
-    }, root)
-
-    const refresh = () => ScrollTrigger.refresh()
-    window.addEventListener("load", refresh, { once: true })
-
-    return () => {
-      window.removeEventListener("load", refresh)
-      media.revert()
-      context.revert()
-    }
-  }, [])
-
   return (
-    <div ref={rootRef} className={styles["root"]}>
-      <header className={styles["header"]}>
-        <Link href="/" className={styles["brandLink"]} aria-label="Bivaque, início">
-          <Wordmark />
-        </Link>
-        <nav className={styles["nav"]} aria-label="Navegação principal">
-          {NAV_LINKS.map((item, index) => (
-            <a key={item.href} href={item.href} aria-current={index === 0 ? "page" : undefined}>
+    <div
+      className={`ld ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
+      id="landing"
+    >
+      <a className="ld-skip" href="#ld-main" data-landing-anchor="ld-main">
+        Pular para o conteúdo
+      </a>
+
+      <header className="ld-top" id="ld-top">
+        <div className="ld-wrap ld-top-in">
+          <a
+            className="ld-home"
+            href="#inicio"
+            data-landing-anchor="inicio"
+            aria-label="Bivaque, início"
+          >
+            <BrandMark />
+            <b>Bivaque</b>
+          </a>
+          <nav className="ld-nav" aria-label="Seções">
+            <span className="ld-pill" aria-hidden="true" />
+            {NAV.map((item) => (
+              <a key={item.id} href={`#${item.id}`} data-landing-anchor={item.id}>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <div className="ld-actions">
+            <Link className="ld-text" href="/login">
+              Entrar
+            </Link>
+            <span className="ld-cta">
+              <Cta />
+            </span>
+            <button
+              type="button"
+              className="ld-menu-btn"
+              data-ld-menu=""
+              aria-label="Abrir menu"
+              aria-expanded={false}
+              aria-controls="ld-sheet"
+            >
+              <MaterialIcon name="menu" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main id="ld-main" tabIndex={-1}>
+        <section className="ld-hero" id="inicio" aria-labelledby="ld-h1">
+          <picture className="ld-hero-media">
+            <source media="(max-width:860px)" srcSet="/landing/v8/hero-retrato.webp" />
+            <img
+              src="/landing/v8/hero.webp"
+              alt="Famílias reunidas num fim de tarde, conversando em volta de uma mesa ao ar livre"
+              width={1536}
+              height={864}
+            />
+          </picture>
+          <div className="ld-wrap ld-hero-in">
+            <div className="ld-hero-copy">
+              <p className="ld-forces">{FORCES}</p>
+              <h1 id="ld-h1">{TITLE}</h1>
+              <p className="ld-lead">{LEAD}</p>
+              <Cta id="ld-hero-cta" />
+              <p className="ld-note">
+                Familiar de militar? O convite leva ao mesmo cadastro, sem CPF.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="ld-sec ld-ex" id="exemplo">
+          <div className="ld-wrap">
+            <div>
+              <p className="ld-kicker">Como funciona</p>
+              <h2>Uma pergunta, várias famílias respondendo</h2>
+              <p className="ld-sub">
+                Quem já passou por isso indica. A indicação que funcionou fica guardada para quem
+                chegar depois.
+              </p>
+            </div>
+            <Thread />
+          </div>
+        </section>
+
+        <section className="ld-sec ld-alt ld-feat" id="recursos">
+          <div className="ld-wrap">
+            <div>
+              <p className="ld-kicker">O que tem</p>
+              <h2>O que a gente resolve junto, na sua cidade</h2>
+              <p className="ld-sub">
+                Cada cidade tem a sua comunidade, feita de quem já passou por lá.
+              </p>
+              <ul className="ld-list">
+                {FEATURES.map(([icon, title, text]) => (
+                  <li key={title}>
+                    <i>
+                      <MaterialIcon name={icon} />
+                    </i>
+                    <div>
+                      <b>{title}</b>
+                      <span>{text}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <figure className="ld-shot">
+              <img
+                src="/landing/v8/app-comunidade.webp"
+                alt="Tela Comunidade do Bivaque com perguntas resolvidas"
+                width={780}
+                height={1400}
+              />
+              <figcaption>Tela da Comunidade no app · dados de exemplo</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section className="ld-sec ld-move" id="mudanca">
+          <div className="ld-wrap">
+            <figure className="ld-shot">
+              <img
+                src="/landing/v8/app-inicio.webp"
+                alt="Tela Início do Bivaque com o plano de chegada"
+                width={780}
+                height={1688}
+              />
+              <figcaption>Plano de chegada no app · dados de exemplo</figcaption>
+            </figure>
+            <div>
+              <p className="ld-kicker">Mudança de cidade</p>
+              <h2>Transferido? Chegue sabendo.</h2>
+              <p className="ld-sub">
+                Um plano para quem vai chegar ou sair, montado com o que a comunidade da cidade já
+                sabe.
+              </p>
+              <ul className="ld-checks">
+                {CHECKS.map((text) => (
+                  <li key={text}>
+                    <MaterialIcon name="check" />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+              <p className="ld-move-foot">Funciona para onde você mora e para onde vai.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="ld-sec ld-alt" id="participar">
+          <div className="ld-wrap">
+            <p className="ld-kicker">Como participar</p>
+            <h2>Três passos para entrar</h2>
+            <ol className="ld-steps">
+              {STEPS.map(([title, text]) => (
+                <li key={title}>
+                  <b>{title}</b>
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="ld-sec ld-faq" id="perguntas">
+          <div className="ld-wrap">
+            <div>
+              <p className="ld-kicker">Perguntas</p>
+              <h2>Perguntas frequentes</h2>
+            </div>
+            <div>
+              {FAQ.map(([question, answer], index) => (
+                <details key={question} open={index === FAQ_OPEN}>
+                  <summary>
+                    {question}
+                    <MaterialIcon name="expand_more" />
+                  </summary>
+                  <p>{answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="ld-final" id="fim">
+          <img src="/landing/v8/encontro.webp" alt="" width={1024} height={768} />
+          <div className="ld-wrap">
+            <h2>Entre na comunidade da sua cidade.</h2>
+            <p>Juntos somos mais fortes.</p>
+            <Cta />
+          </div>
+        </section>
+      </main>
+
+      <footer className="ld-footer">
+        <div className="ld-wrap">
+          <span className="ld-who">
+            <BrandMark />
+            Bivaque · Comunidade independente da família militar
+          </span>
+          <nav aria-label="Rodapé">
+            <Link className="ld-link" href="/login">
+              Entrar
+            </Link>
+            <Link className="ld-link" href="/privacidade">
+              Privacidade
+            </Link>
+            <Link className="ld-link" href="/codigo-de-conduta">
+              Código de conduta
+            </Link>
+          </nav>
+          <small>© 2026 Bivaque</small>
+        </div>
+      </footer>
+
+      <div className="ld-bar" id="ld-bar">
+        <Cta />
+      </div>
+
+      <div className="ld-sheet" id="ld-sheet" role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="ld-sheet-head">
+          <a
+            className="ld-home"
+            href="#inicio"
+            data-landing-anchor="inicio"
+            aria-label="Bivaque, início"
+          >
+            <BrandMark />
+            <b>Bivaque</b>
+          </a>
+          <button type="button" className="ld-menu-btn" data-ld-close="" aria-label="Fechar menu">
+            <MaterialIcon name="close" />
+          </button>
+        </div>
+        <nav aria-label="Seções">
+          {NAV.map((item) => (
+            <a key={item.id} href={`#${item.id}`} data-landing-anchor={item.id}>
+              <MaterialIcon name={item.icon} />
               {item.label}
             </a>
           ))}
         </nav>
-        <Link href="/login" className={styles["headerAction"]}>
-          Entrar <ArrowRight aria-hidden="true" />
-        </Link>
-      </header>
+        <div className="ld-sheet-acts">
+          <Cta />
+          <Link className="ld-link" href="/login">
+            Já tenho conta · Entrar
+          </Link>
+        </div>
+        <div className="ld-sheet-legal">
+          <Link className="ld-link" href="/privacidade">
+            Privacidade
+          </Link>
+          <Link className="ld-link" href="/codigo-de-conduta">
+            Código de conduta
+          </Link>
+        </div>
+      </div>
 
-      <main>
-        <section className={styles["hero"]} aria-labelledby="hero-title">
-          <div className={styles["heroImage"]}>
-            <Image
-              src="/landing/hero-bivaque-arrival.webp"
-              alt="Pessoa chegando a um encontro comunitário, vista de costas, enquanto um veterano oferece uma cadeira"
-              fill
-              priority
-              unoptimized
-              sizes="100vw"
-            />
-          </div>
-          <div className={styles["heroShade"]} aria-hidden="true" />
-          <div className={styles["heroContent"]}>
-            <p className={styles["heroEyebrow"]}>
-              Para militares federais, veteranos, pensionistas e dependentes
-            </p>
-            <h1 id="hero-title" className={styles["heroTitle"]}>
-              <span className={styles["heroTitleLine"]}>Bivaque.</span>
-              <span className={styles["heroTitleLine"]}>A comunidade vai com você.</span>
-            </h1>
-            <p className={styles["heroLead"]}>
-              Encontre quem conhece o lugar, a rotina e as perguntas que chegam com cada mudança.
-              Compartilhe o que aprendeu e facilite o caminho de quem vier depois.
-            </p>
-            <div className={styles["heroActions"]}>
-              <Link href={{ pathname: "/signup" }} className={styles["primaryAction"]}>
-                Quero fazer parte <ArrowRight aria-hidden="true" />
-              </Link>
-              <a href="#por-dentro" className={styles["secondaryAction"]}>
-                Ver como funciona
-              </a>
-            </div>
-          </div>
-          <a className={styles["scrollCue"]} href="#manifesto" aria-label="Ir para o conteúdo">
-            <ChevronDown aria-hidden="true" />
-          </a>
-        </section>
-
-        <section id="manifesto" className={styles["manifesto"]}>
-          <div className={styles["manifestoGrid"]} data-reveal>
-            <p className={styles["kicker"]}>Para cada chegada</p>
-            <h2>Quem chega tem perguntas. Quem já está conhece os caminhos.</h2>
-            <p>
-              Qual escola recebe matrícula no meio do ano? Que serviço conhece a rotina militar?
-              Como funciona a cidade para quem acabou de chegar? No Bivaque, essas respostas vêm de
-              pessoas que já passaram por isso.
-            </p>
-          </div>
-        </section>
-
-        <section id="por-dentro" className={styles["story"]} aria-labelledby="story-title">
-          <div className={styles["storyInner"]}>
-            <div className={styles["storyHeading"]} data-reveal>
-              <p className={styles["kicker"]}>Por dentro do Bivaque</p>
-              <h2 id="story-title">
-                Uma dúvida resolvida hoje vira referência para a próxima chegada.
-              </h2>
-            </div>
-            <div className={styles["storyLayout"]}>
-              <div className={styles["storySteps"]}>
-                {STORY_STEPS.map((step, index) => {
-                  const Icon = step.icon
-                  return (
-                    <article
-                      className={styles["storyStep"]}
-                      key={step.label}
-                      data-story-step
-                      data-active={index === 0 ? "" : undefined}
-                    >
-                      <span className={styles["storyNumber"]}>0{index + 1}</span>
-                      <Icon aria-hidden="true" />
-                      <div>
-                        <p>{step.label}</p>
-                        <h3>{step.title}</h3>
-                        <span>{step.copy}</span>
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-
-              <div className={styles["productStage"]} aria-hidden="true">
-                <div className={styles["productTopbar"]}>
-                  <Wordmark />
-                  <span>Vila do Conde</span>
-                </div>
-                <div className={styles["productBody"]}>
-                  <div className={styles["productPanel"]} data-story-panel data-active>
-                    <span className={styles["productLabel"]}>Nova pergunta</span>
-                    <p>Alguém indica uma escola que aceite transferência no meio do ano?</p>
-                    <div className={styles["productMeta"]}>
-                      <span>Educação</span>
-                      <span>Para a localidade</span>
-                    </div>
-                  </div>
-                  <div className={styles["productPanel"]} data-story-panel>
-                    <span className={styles["productLabel"]}>3 respostas úteis</span>
-                    <p>
-                      Passei por isso no último semestre. A escola aceita, e estes são os documentos
-                      que pediram na matrícula.
-                    </p>
-                    <div className={styles["answerLine"]}>
-                      <Check aria-hidden="true" /> Respondido por quem já viveu isso
-                    </div>
-                  </div>
-                  <div className={styles["productPanel"]} data-story-panel>
-                    <span className={styles["productLabel"]}>Pedido resolvido</span>
-                    <p>
-                      Transferência escolar no meio do ano: referências e documentos necessários.
-                    </p>
-                    <div className={styles["archiveLine"]}>
-                      <Archive aria-hidden="true" /> Guardado no acervo da comunidade
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="pertencimento" className={styles["belonging"]}>
-          <div className={styles["belongingIntro"]} data-reveal>
-            <p className={styles["kicker"]}>Onde você participa</p>
-            <h2>Sua cidade, suas comunidades e os grupos que fazem parte da sua vida.</h2>
-            <p>
-              Você participa da localidade, das comunidades e dos grupos que fazem sentido para a
-              sua rotina. Cada conversa chega às pessoas certas.
-            </p>
-          </div>
-          <div className={styles["belongingLayers"]} data-reveal>
-            {BELONGING.map((item, index) => {
-              const Icon = item.icon
-              return (
-                <div className={styles["belongingLayer"]} key={item.name}>
-                  <span>0{index + 1}</span>
-                  <Icon aria-hidden="true" />
-                  <h3>{item.name}</h3>
-                  <p>{item.copy}</p>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className={styles["transfer"]}>
-          <div className={styles["transferImage"]}>
-            <Image
-              src="/landing/transfer-sunset.jpg"
-              alt="Silhuetas anônimas caminhando ao entardecer"
-              fill
-              unoptimized
-              sizes="100vw"
-            />
-          </div>
-          <div className={styles["transferShade"]} aria-hidden="true" />
-          <div className={styles["transferCopy"]} data-reveal>
-            <Route aria-hidden="true" />
-            <p className={styles["kicker"]}>Na próxima mudança</p>
-            <h2>Conheça o próximo destino antes de chegar.</h2>
-            <p>
-              Encontre referências, comunidades e respostas do novo lugar enquanto mantém acesso ao
-              que construiu na origem.
-            </p>
-          </div>
-        </section>
-
-        <section id="confianca" className={styles["trust"]}>
-          <div className={styles["trustHeading"]} data-reveal>
-            <p className={styles["kicker"]}>Confiança</p>
-            <h2>Uma comunidade feita para conversas que pedem contexto.</h2>
-          </div>
-          <div className={styles["trustList"]}>
-            {TRUST.map((item) => {
-              const Icon = item.icon
-              return (
-                <article className={styles["trustItem"]} key={item.title} data-reveal>
-                  <Icon aria-hidden="true" />
-                  <h3>{item.title}</h3>
-                  <p>{item.copy}</p>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className={styles["closing"]}>
-          <div className={styles["closingCopy"]} data-reveal>
-            <Wordmark inverse />
-            <h2>Você pode chegar com uma pergunta. Logo terá algo para compartilhar.</h2>
-            <p>
-              Entre para conhecer o lugar, resolver dúvidas e deixar a sua experiência disponível
-              para quem chegar depois.
-            </p>
-            <Link href={{ pathname: "/signup" }} className={styles["primaryAction"]}>
-              Quero fazer parte <ArrowRight aria-hidden="true" />
-            </Link>
-          </div>
-          <footer className={styles["footer"]}>
-            <span>Bivaque é uma iniciativa comunitária independente.</span>
-            <span>Sem vínculo oficial com as Forças Armadas.</span>
-          </footer>
-        </section>
-      </main>
+      <LandingBehavior />
     </div>
   )
 }
