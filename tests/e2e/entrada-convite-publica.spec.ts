@@ -22,7 +22,7 @@ test.describe("entrada pública — sem sessão", () => {
     await expect(page.getByText("Obrigado por ter feito parte.")).toBeVisible()
 
     // And a única ação leva para casa
-    const voltar = page.getByRole("link", { name: "Voltar ao início" })
+    const voltar = page.locator("md-outlined-button", { hasText: "Voltar ao início" })
     await expect(voltar).toHaveAttribute("href", "/")
   })
 
@@ -33,7 +33,7 @@ test.describe("entrada pública — sem sessão", () => {
     // Then a tela do código aparece e o campo vem preenchido
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre pelo convite.")
     await expect(page.locator("#en-code")).toHaveValue("7k4m-9qrt")
-    await expect(page.getByRole("button", { name: "Continuar" })).toBeVisible()
+    await expect(page.locator("md-filled-button", { hasText: "Continuar" })).toBeVisible()
   })
 
   test("código errado responde a frase única do ADR", async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe("entrada pública — sem sessão", () => {
     await page.locator("#en-code input").fill("ZZZZZZZZ")
 
     // When a pessoa continua
-    await page.getByRole("button", { name: "Continuar" }).click()
+    await page.locator("md-filled-button", { hasText: "Continuar" }).click()
 
     // Then a resposta não distingue errado de vencido ou usado
     await expect
@@ -72,7 +72,7 @@ test.describe("entrada pública — sem sessão", () => {
     await expect(page.getByRole("heading", { name: "Meus chamados" })).toHaveCount(0)
 
     // And o contato de quem está fora é o e-mail do suporte
-    const contato = page.getByRole("link", { name: "Fale com a gente" })
+    const contato = page.locator("md-filled-button", { hasText: "Fale com a gente" })
     await expect(contato).toHaveAttribute("href", /^mailto:/)
   })
 
