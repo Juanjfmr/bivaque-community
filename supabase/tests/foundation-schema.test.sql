@@ -20,6 +20,8 @@ select columns_are(
     'consent_version',
     'consented_at',
     'bio',
+    'neighborhood',
+    'show_neighborhood',
     'created_at',
     'updated_at'
   ],

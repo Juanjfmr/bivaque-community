@@ -1,0 +1,154 @@
+task_id: DATA-001
+objective: >
+  O banco ganha o catálogo de bairros por cidade (nome, chave normalizada sem acento, zona e ponto
+  central público do bairro), com busca por nome, e o perfil ganha o bairro opcional com a chave
+  "Mostrar meu bairro": desligada, nenhuma leitura de outra pessoa recebe o bairro, e a regra vale no
+  banco. Nenhum campo de bairro aceita CEP (5 ou mais dígitos seguidos).
+authority:
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (seção 1, aprovado pelo dono em 2026-10-22)
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (seções 2.1, 2.2 e 6, lote 2)
+  - prototypes/bivaque-html/src/data/demo/bairros.js, src/shell/hood-picker.js e src/features/profile/hood-privacy.js (branch codex/lancamento)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    origin/main 9853e5fe: não existe tabela de bairros (git grep "neighborhoods" em supabase/migrations
+    não acha nada), profiles não tem bairro nem a chave de exibição, e listings.neighborhood aceita
+    "69057000" (só checa o tamanho, 20260911043053_listings_market_and_homes.sql:51). Escrever primeiro o
+    pgTAP que falha.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/seed.sql
+  - supabase/database.generated.ts
+  - apps/web/lib/
+  - tests/unit/
+  - docs/agents/tasks/DATA-001.task.yml
+forbidden:
+  - push, merge, deploy, db push ou qualquer comando com --linked
+  - commitar segredos, arquivos .env ou supabase/config.toml
+  - gravar CEP, latitude/longitude ou endereço de pessoa em qualquer coluna
+  - afrouxar policy ou grant existente fora do escopo
+  - mudar telas (apps/web/app) nesta tarefa; a interface vem no porte por jornada
+  - editar prototypes/bivaque-html
+acceptance:
+  - neighborhoods tem locality_id, name, name_key (sem acento, minúsculo, único por cidade), zone e centro (lat/lng do bairro), com leitura para autenticados e escrita só da operação
+  - Carga das 4 cidades do protótipo (Manaus, Brasília, Natal, Rio de Janeiro) com os nomes, zonas e pontos de bairros.js, numa migration de dados idempotente
+  - Uma função de busca devolve até 6 bairros da cidade por nome sem acento, os que começam pelo texto primeiro
+  - profiles ganha o bairro (texto, opcional) e show_neighborhood (padrão verdadeiro); gravar um bairro que bate com o catálogo usa a grafia do catálogo
+  - pgTAP negativo prova que outro membro NÃO recebe o bairro com show_neighborhood falso em nenhum caminho de leitura de perfil, e recebe quando verdadeiro; o próprio dono sempre recebe
+  - pgTAP negativo prova que profiles, listings, listing_alerts e service_requests recusam bairro com 5 ou mais dígitos seguidos
+  - Migrations aplicam a partir do zero (db reset --no-seed) e o test:db inteiro continua verde
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+risk: dado pessoal (bairro do perfil) e RLS
+adr: docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidência de execução — 2026-10-22, branch codex/dados-bairros
+#
+# Base: f0d182d7 (branch), origin/main 9853e5fe.
+#
+# TDD vermelho, antes das migrations, na mesma DB local:
+#   npx pnpm@11.18.0 test:db
+#   -> neighborhoods.sql falhou nas 4 asserções de estrutura (has_table,
+#      has_column, col_is_unique, has_function) e parou em 4/20.
+#   -> profile-neighborhood-privacy.sql falhou em 1/32 (função ausente).
+#
+# Migrations criadas:
+#   - 20261022120000_neighborhood_catalog.sql
+#   - 20261022120100_neighborhood_catalog_data.sql
+#   - 20261022120200_profile_neighborhood.sql
+#
+# Aplicação: npx supabase migration up --local aplicou as três (NOTICE esperado
+# de unaccent já existente). As três também rodaram com ON_ERROR_STOP=1 num
+# banco isolado que NÃO tinha as migrations desta tarefa (clone do baseline,
+# com o schema aditivo do DATA-002 presente por dividir o mesmo stack local),
+# sem nenhum erro de aplicação.
+#
+# pgTAP verde desta tarefa:
+#   - neighborhoods.sql: 20/20.
+#   - profile-neighborhood-privacy.sql: 32/32.
+#   - foundation-schema.test.sql e rls-or-column-regression.test.sql (guardas
+#     de coluna de profiles) verdes com as duas colunas novas.
+#
+# npx supabase db reset --local --no-seed: BLOQUEADO pelo ambiente (permission
+# rejected em execução não interativa). O test:db roda, mas contra a DB local
+# com o seed de desenvolvimento: 23 arquivos falham por colisão de fixture com
+# o seed (uuid fixo duplicado, contagem de perfis). O mesmo conjunto falha num
+# clone sem as migrations desta tarefa e nenhuma falha é 42501 — não é
+# regressão desta entrega. Reset limpo + test:db ficam com o coordenador.
+#
+# npx pnpm@11.18.0 gate: lint, typecheck, test e secrets verdes; build pulado
+# (apps/web/.env.local ausente).
+#
+# service_requests não tem coluna de bairro: o campo de localização do pedido é
+# `region` (lido no painel do prestador ao lado da cidade). A regra de CEP foi
+# aplicada nele, sem criar uma segunda coluna de localização.
+#
+# Colisão de ordem com DATA-002: a migration
+# 20261022130524_account_deletion_hidden_and_support (branch
+# codex/dados-ocultar-chamados) redefine finalize_account_deletion DEPOIS desta
+# e precisa manter `neighborhood = null`; a cópia desta tarefa já traz a linha.
+# Quem aplicar por último reconcilia as duas definições.
+#
+# Commits: afed81b3 (catálogo + carga + pgTAP), c2fbd69f (perfil + CEP + tipos).
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidência de execução — 2026-10-22, correções da revisão (achados 2 e 3)
+#
+# Base: bafcf9b3. Escopo: só teste. O achado 1 (bairro em anúncios e pedidos)
+# fica aberto aguardando decisão do dono e NÃO foi tocado aqui.
+#
+# Achado 2 — negativo do co-membro de comunidade, em
+# supabase/tests/profile-neighborhood-privacy.sql (plan 32 -> 35):
+#   o mesmo co-membro aprovado (003) passa a ser exercitado com a chave
+#   DESLIGADA (perfil continua visível, bairro NULL) e depois com a chave
+#   religada (bairro volta). A asserção de perfil visível existe para separar
+#   não ver o bairro de não ver o perfil.
+#   Prova de vermelho: substituí a função no banco local por uma variante em que
+#   a chave só governa o ramo de cidade (o bug descrito na revisão) e rodei o
+#   arquivo:
+#     not ok 18 - co-membro aprovado da comunidade NÃO recebe o bairro com a
+#                 chave desligada
+#     # Looks like you failed 1 test of 35
+#   Restaurada a definição da migration, o mesmo arquivo passa 35/35.
+#
+# Achado 3 — purga do bairro, em supabase/tests/account-deletion.sql
+# (plan 41 -> 44):
+#   24e preenche `neighborhood = Ponta Negra` no titular e confirma que está
+#   gravado; 25c confere NULL depois de `finalize_account_deletion`; 26 confere
+#   NULL outra vez depois da repetição idempotente.
+#   Prova de vermelho: removi `neighborhood = null` da definição vigente da
+#   função no banco local e rodei o arquivo:
+#     not ok 42 - purga apaga o bairro do perfil
+#     not ok 44 - purga repetida mantem o bairro nulo
+#     # Looks like you failed 2 tests of 44
+#   Restaurada a definição, o mesmo arquivo passa 44/44.
+#
+# Verde, lido nesta sessão:
+#   - profile-neighborhood-privacy.sql: 35/35 (nenhum not ok).
+#   - account-deletion.sql: 44/44 (nenhum not ok).
+#   - as duas funções restauradas foram conferidas por prosrc, contendo
+#     `neighborhood = null` e a condição original de `show_neighborhood`.
+#
+# npx pnpm@11.18.0 test:db: `account-deletion.sql ..... ok` e
+# `profile-neighborhood-privacy.sql ..... ok`; Files=146, Tests=2038,
+# Result: FAIL. Os 23 arquivos vermelhos são os da colisão de fixture com o seed
+# de desenvolvimento já registrada acima (o reset --no-seed segue bloqueado:
+# `permission rejected` em execução não interativa, também nesta sessão).
+#
+# npx pnpm@11.18.0 gate: lint, typecheck, test (120/120) e secrets verdes;
+# build pulado por falta de apps/web/.env.local — igual à execução anterior.
+#
+# Nenhum script de depuração ficou no repositório; os arquivos temporários de
+# mutação foram apagados e o banco temporário, removido.
+#
+# Commits: b7ddc7c3 (testes dos achados 2 e 3).
+# ─────────────────────────────────────────────────────────────────────────────
