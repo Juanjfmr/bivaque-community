@@ -29,6 +29,7 @@ allowed_paths:
   - tests/e2e/onboarding-holder-family.spec.ts
   - tests/e2e/smoke.spec.ts
   - tests/scope/workspace-foundation.test.mjs
+  - tests/scope/design-system-contract.test.mjs
   - tests/unit/
   - docs/agents/tasks/PORT-001.task.yml
   - docs/agents/PORT_001.md
