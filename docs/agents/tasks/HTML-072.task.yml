@@ -76,3 +76,7 @@ closure:
 # isolamento) e corrigiu: opções do Criar em surface-container-lowest; sync() respeita a folha aberta
 # e fechar a folha recalcula a barra. Build b6eb1c5c: round72 28/28, round71 44/44, round70 24/24 nos
 # 4 contextos; R53 4/4 e R54 6/6 em 375-light; gate verde.
+# Segunda confirmação do Codex: APROVADO COM RESSALVAS (sem problema funcional). Fechadas depois:
+# boas-vindas conferem desenho e cores do símbolo; alvos de toque medidos sem arredondar (28/28,
+# gate verde). Ressalva aceita: o teste de isolamento da folha não força a transição de #fim; a
+# correção do sync() foi confirmada pelo Codex por simulação do callback.

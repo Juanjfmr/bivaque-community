@@ -437,11 +437,32 @@ const checkpoints = {
       const svg = document.querySelector("#main header.en-top svg.brand-mark")
       return {
         viewBox: svg?.getAttribute("viewBox") || "",
+        paths: [...(svg?.querySelectorAll("path") || [])].map((p) => ({
+          d: p.getAttribute("d"),
+          fill: getComputedStyle(p).fill,
+        })),
         letter: document.querySelector(".en-mark")?.textContent || "",
       }
     })
     expect(welcome.viewBox === "0 0 100 100", `símbolo das boas-vindas: ${welcome.viewBox}`)
     expect(welcome.letter === "", `as boas-vindas ainda mostram a letra "${welcome.letter}"`)
+    // Confirmação do Codex: as boas-vindas também conferem desenho e cores, como os outros cabeçalhos.
+    expect(
+      welcome.paths.length === 2,
+      `símbolo das boas-vindas com ${welcome.paths.length} caminhos`,
+    )
+    expect(
+      squash(welcome.paths[0].d) === OFFICIAL.body &&
+        squash(welcome.paths[1].d) === OFFICIAL.threshold,
+      "o símbolo das boas-vindas não é o oficial",
+    )
+    const welcomeDark = (await tokens(page, [])).theme === "dark"
+    const welcomeWant = welcomeDark ? ["#FFFFFF", "#FFFFFF"] : ["#253033", "#B84A3A"]
+    expect(
+      sameColor(welcome.paths[0].fill, welcomeWant[0]) &&
+        sameColor(welcome.paths[1].fill, welcomeWant[1]),
+      `cores do símbolo das boas-vindas: ${welcome.paths[0].fill}, ${welcome.paths[1].fill}`,
+    )
     // Os atalhos das boas-vindas (.en-tile) também entram no canto de 12 px do achado 3.
     expect((await page.locator(".en-tile").count()) > 0, "as boas-vindas não têm .en-tile")
     expect(
@@ -652,7 +673,8 @@ const checkpoints = {
     const targets = await page.evaluate(() => {
       const size = (el) => {
         const rect = el.getBoundingClientRect()
-        return { width: Math.round(rect.width), height: Math.round(rect.height) }
+        // Sem arredondar: 43,6 px não pode passar como 44 (confirmação do Codex).
+        return { width: rect.width, height: rect.height }
       }
       const inline = document.querySelector("#perguntas .ld-inline")
       return {
