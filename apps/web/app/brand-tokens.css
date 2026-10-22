@@ -1,0 +1,170 @@
+/* PORT-001 (R73) — os tokens da R70 no Next, copiados de
+   prototypes/bivaque-html/src/styles/base.css (ADR-20261022, ADR-20261020).
+
+   O escopo é `.ld`, a raiz da landing: o tema do HeroUI nas telas ainda não
+   portadas não muda. O claro vale por padrão e o escuro entra por
+   prefers-color-scheme, que é o "Automática" do ADR-20261020.
+
+   Toda cor da landing vem daqui. As duas exceções do protótipo continuam as
+   mesmas: --bv-on-photo e --bv-photo-scrim são iguais nos dois temas, porque a
+   foto não acompanha o tema.
+
+   Notação: os valores são exatamente os do base.css do protótipo, escritos em
+   rgb() em vez de hexadecimal. O teste de escopo
+   tests/scope/design-tokens.test.mjs recusa `#` em CSS de apps/web/app fora do
+   globals.css, e este arquivo é a camada de tokens da landing — não um
+   componente com cor solta. A notação não muda nenhuma cor: cada rgb() abaixo é
+   o mesmo byte do hexadecimal da R70, e a comparação de captura prova. */
+.ld {
+  color-scheme: light;
+
+  --md-sys-color-primary: rgb(37 48 51);
+  --md-sys-color-on-primary: rgb(242 240 235);
+  --md-sys-color-primary-container: rgb(221 226 227);
+  --md-sys-color-on-primary-container: rgb(37 48 51);
+  --md-sys-color-secondary: rgb(74 106 110);
+  --md-sys-color-on-secondary: rgb(255 255 255);
+  --md-sys-color-secondary-container: rgb(225 234 235);
+  --md-sys-color-on-secondary-container: rgb(37 48 51);
+  --md-sys-color-tertiary: rgb(158 59 44);
+  --md-sys-color-on-tertiary: rgb(255 255 255);
+  --md-sys-color-tertiary-container: rgb(243 221 215);
+  --md-sys-color-on-tertiary-container: rgb(122 44 32);
+  --md-sys-color-error: rgb(186 26 26);
+  --md-sys-color-on-error: rgb(255 255 255);
+  --md-sys-color-error-container: rgb(255 218 214);
+  --md-sys-color-on-error-container: rgb(65 0 2);
+  --md-sys-color-surface: rgb(242 240 235);
+  --md-sys-color-surface-container-lowest: rgb(255 255 255);
+  --md-sys-color-surface-container-low: rgb(247 245 241);
+  --md-sys-color-surface-container: rgb(238 235 229);
+  --md-sys-color-surface-container-high: rgb(232 229 222);
+  --md-sys-color-surface-container-highest: rgb(225 221 213);
+  --md-sys-color-on-surface: rgb(37 48 51);
+  --md-sys-color-on-surface-variant: rgb(85 98 95);
+  --md-sys-color-outline: rgb(120 128 125);
+  --md-sys-color-outline-variant: rgb(216 212 204);
+  --md-sys-color-inverse-surface: rgb(37 48 51);
+  --md-sys-color-inverse-on-surface: rgb(242 240 235);
+  --md-sys-color-inverse-primary: rgb(224 122 90);
+
+  --bv-brasa: rgb(184 74 58);
+  --bv-on-brasa: rgb(255 255 255);
+  --bv-accent-text: rgb(158 59 44);
+  --bv-photo-dim: none;
+  --bv-symbol-body: rgb(37 48 51);
+  --bv-symbol-threshold: rgb(184 74 58);
+  --bv-on-photo: rgb(255 255 255);
+  --bv-photo-chip: rgb(20 41 51 / 0.84);
+  --bv-photo-chip-hover: rgb(20 41 51 / 0.92);
+  --bv-photo-scrim: rgb(9 14 17 / 0.72);
+  --bv-overlay: rgb(6 10 12);
+  --bv-overlay-control: rgb(255 255 255 / 0.12);
+  --bv-overlay-control-hover: rgb(255 255 255 / 0.22);
+  --bv-scrim: rgb(0 0 0 / 0.32);
+  --bv-scrim-strong: rgb(0 0 0 / 0.45);
+  --bv-shadow: rgb(0 0 0 / 0.16);
+  --bv-shadow-strong: rgb(0 0 0 / 0.3);
+  --bv-sheet-backdrop: rgb(12 17 20);
+
+  /* next/font/local declara --font-noto-sans, --font-noto-serif e
+     --font-material-symbols em apps/web/app/fonts/landing-fonts.ts. Nenhuma
+     fonte vem de CDN. */
+  --md-ref-typeface-plain:
+    var(--font-noto-sans), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --md-ref-typeface-brand: var(--font-noto-serif), Georgia, serif;
+  --md-ref-typeface-symbols: var(--font-material-symbols);
+
+  --md-sys-typescale-body-large-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-body-medium-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-label-large-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-title-medium-font: var(--md-ref-typeface-plain);
+  --md-sys-typescale-headline-small-font: var(--md-ref-typeface-plain);
+
+  --md-filled-button-container-height: 44px;
+  --md-filled-button-leading-space: 24px;
+  --md-filled-button-trailing-space: 24px;
+  --md-filled-button-label-text-line-height: 20px;
+  --md-filled-tonal-button-container-height: 44px;
+  --md-outlined-button-container-height: 44px;
+  --md-text-button-container-height: 44px;
+
+  --md-filled-text-field-container-shape: 12px;
+  --md-outlined-text-field-container-shape: 12px;
+  --md-outlined-select-container-shape: 12px;
+  --md-outlined-select-text-field-container-shape: 12px;
+  --md-dialog-container-shape: 16px;
+  --md-dialog-container-color: var(--md-sys-color-surface-container-lowest);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ld {
+    color-scheme: dark;
+
+    --md-sys-color-primary: rgb(236 234 228);
+    --md-sys-color-on-primary: rgb(23 30 32);
+    --md-sys-color-primary-container: rgb(44 59 62);
+    --md-sys-color-on-primary-container: rgb(236 234 228);
+    --md-sys-color-secondary: rgb(159 188 192);
+    --md-sys-color-on-secondary: rgb(23 30 32);
+    --md-sys-color-secondary-container: rgb(38 58 61);
+    --md-sys-color-on-secondary-container: rgb(236 234 228);
+    --md-sys-color-tertiary: rgb(240 160 138);
+    --md-sys-color-on-tertiary: rgb(23 30 32);
+    --md-sys-color-tertiary-container: rgb(62 42 38);
+    --md-sys-color-on-tertiary-container: rgb(240 160 138);
+    --md-sys-color-error: rgb(255 180 171);
+    --md-sys-color-on-error: rgb(105 0 5);
+    --md-sys-color-error-container: rgb(147 0 10);
+    --md-sys-color-on-error-container: rgb(255 218 214);
+    --md-sys-color-surface: rgb(23 30 32);
+    --md-sys-color-surface-container-lowest: rgb(32 41 43);
+    --md-sys-color-surface-container-low: rgb(28 36 38);
+    --md-sys-color-surface-container: rgb(35 45 47);
+    --md-sys-color-surface-container-high: rgb(42 53 55);
+    --md-sys-color-surface-container-highest: rgb(49 61 63);
+    --md-sys-color-on-surface: rgb(236 234 228);
+    --md-sys-color-on-surface-variant: rgb(169 184 186);
+    --md-sys-color-outline: rgb(125 140 142);
+    --md-sys-color-outline-variant: rgb(51 64 63);
+    --md-sys-color-inverse-surface: rgb(236 234 228);
+    --md-sys-color-inverse-on-surface: rgb(37 48 51);
+    --md-sys-color-inverse-primary: rgb(158 59 44);
+
+    --bv-brasa: rgb(224 122 90);
+    --bv-on-brasa: rgb(23 30 32);
+    --bv-accent-text: rgb(224 122 90);
+    --bv-photo-dim: brightness(0.9);
+    --bv-symbol-body: rgb(255 255 255);
+    --bv-symbol-threshold: rgb(255 255 255);
+    --bv-on-photo: rgb(255 255 255);
+    --bv-photo-chip: rgb(0 0 0 / 0.72);
+    --bv-photo-chip-hover: rgb(0 0 0 / 0.84);
+    --bv-photo-scrim: rgb(9 14 17 / 0.72);
+    --bv-overlay: rgb(2 5 6);
+    --bv-overlay-control: rgb(255 255 255 / 0.16);
+    --bv-overlay-control-hover: rgb(255 255 255 / 0.26);
+    --bv-scrim: rgb(0 0 0 / 0.52);
+    --bv-scrim-strong: rgb(0 0 0 / 0.6);
+    --bv-shadow: rgb(0 0 0 / 0.45);
+    --bv-shadow-strong: rgb(0 0 0 / 0.55);
+    --bv-sheet-backdrop: rgb(10 14 16);
+  }
+}
+
+/* O CTA preenchido é a única ação em Brasa, além do Criar (R70). Os tokens
+   ficam no elemento para que os outros botões do Material não os herdem. */
+.ld md-filled-button {
+  --md-filled-button-container-color: var(--bv-brasa);
+  --md-filled-button-label-text-color: var(--bv-on-brasa);
+  --md-filled-button-hover-label-text-color: var(--bv-on-brasa);
+  --md-filled-button-focus-label-text-color: var(--bv-on-brasa);
+  --md-filled-button-pressed-label-text-color: var(--bv-on-brasa);
+  --md-filled-button-hover-state-layer-color: var(--bv-on-brasa);
+  --md-filled-button-focus-state-layer-color: var(--bv-on-brasa);
+  --md-filled-button-pressed-state-layer-color: var(--bv-on-brasa);
+  --md-filled-button-icon-color: var(--bv-on-brasa);
+  --md-filled-button-hover-icon-color: var(--bv-on-brasa);
+  --md-filled-button-focus-icon-color: var(--bv-on-brasa);
+  --md-filled-button-pressed-icon-color: var(--bv-on-brasa);
+}
