@@ -26,6 +26,10 @@ describe("conta sem aceite passa pela tela de aceite uma vez", () => {
     expect(consentStepTarget(false, "/prestador-convite/abc123")).toBeNull()
   })
 
+  it("a recuperação de senha chega a /nova-senha, mesmo sem aceite", () => {
+    expect(consentStepTarget(false, "/nova-senha")).toBeNull()
+  })
+
   it("quem já aceitou alguma versão segue sem desvio", () => {
     expect(consentStepTarget(true)).toBeNull()
   })
@@ -37,6 +41,7 @@ describe("conta sem aceite passa pela tela de aceite uma vez", () => {
   })
 
   it("falha ao consultar o aceite não deixa a pessoa seguir como se tivesse aceitado", () => {
-    expect(callback).toMatch(/consent lookup failed[\s\S]{0,200}callback-error/)
+    // O ramo é o do erro da consulta (lookupError), não o de "sem usuário" (revisão do Codex).
+    expect(callback).toMatch(/if \(lookupError\) \{[\s\S]{0,160}callback-error/)
   })
 })

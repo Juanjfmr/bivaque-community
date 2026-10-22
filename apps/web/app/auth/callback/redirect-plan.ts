@@ -47,9 +47,10 @@ export function shouldRecordSignupConsent(
  */
 export const CONSENT_STEP_PATH = "/consent"
 
-// O convite de prestador tem fluxo próprio, fora da entrada de membro, e volta
-// ao próprio convite depois do link: desviar para o aceite perderia o convite.
-const OUTSIDE_MEMBER_ENTRY = ["/prestador-convite/"]
+// Destinos que não podem ser desviados: o convite de prestador tem fluxo
+// próprio, fora da entrada de membro; a recuperação de senha precisa chegar a
+// /nova-senha, porque o código do link já foi consumido na troca.
+const OUTSIDE_MEMBER_ENTRY = ["/prestador-convite/", "/nova-senha"]
 
 export function consentStepTarget(
   hasAnyAcceptance: boolean,
