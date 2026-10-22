@@ -20,9 +20,15 @@ export function MaterialFilledButton({
   }, [])
 
   // Com `href`, o Material Web renderiza um `<a>` dentro do shadow root: o CTA
-  // continua sendo um link de verdade (funciona sem JavaScript, o leitor de
-  // tela anuncia "link" e o navegador abre em outra aba). Sem `href`, o mesmo
-  // componente segue sendo um `<button>`. A forma e a cor vêm dos tokens
+  // continua sendo um link de verdade (o leitor de tela anuncia "link", o
+  // navegador abre em outra aba e o clique direito oferece o endereço). Sem
+  // `href`, o mesmo componente segue sendo um `<button>`.
+  //
+  // O `<a>` nasce quando o Material registra o elemento, no efeito deste
+  // adaptador — não antes. O que o HTML do servidor entrega é o conteúdo da
+  // landing (inclusive o rótulo "Criar conta") dentro de `<md-filled-button>`;
+  // sem JavaScript, o CTA não navega. Os links nativos da página (o "Entrar" do
+  // topo e os do rodapé) continuam funcionando. A forma e a cor vêm dos tokens
   // (brand-tokens.css).
   return (
     <md-filled-button className={className} disabled={disabled} href={href} id={id} type={type}>

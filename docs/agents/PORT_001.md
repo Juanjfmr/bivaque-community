@@ -80,14 +80,27 @@ lucide, HeroUI). Nada de `apps/web/public/landing/` fora de `v8/` foi tocado.
 
 ## Correções da revisão do coordenador (22/10/2026)
 
-1. **"Criar conta" e "Entrar" são links de verdade.** O adaptador
+1. **"Criar conta" e "Entrar" são links de verdade — com uma ressalva de SSR.** O adaptador
    (`apps/web/app/components/material/filled-button.tsx`) passa `href` ao
-   `md-filled-button`, e o Material Web renderiza um `<a>` dentro do shadow root — o CTA
-   funciona sem JavaScript, o leitor de tela anuncia "link" e o navegador abre em outra aba.
-   O `data-href` e a delegação de clique que o lia saíram de `landing-behavior.tsx`. O `<a>`
-   do shadow root continua focável pelo host (`delegatesFocus`) e tem o nome acessível do
-   rótulo; `tests/e2e/landing-v8.spec.ts` afirma isso CTA por CTA.
-2. **`themeColor` no par claro e escuro.** `apps/web/app/page.tsx` declara
+   `md-filled-button`, e o Material Web renderiza um `<a>` dentro do shadow root: o leitor de
+   tela anuncia "link", o navegador abre em outra aba e o clique direito oferece o endereço.
+   Esse `<a>` **nasce quando o Material registra o elemento**, no efeito do adaptador — o
+   registro é só do cliente, por `import()` (ADR-20261022). O HTML do servidor entrega o
+   conteúdo da landing, inclusive o rótulo "Criar conta" dentro de `<md-filled-button>`, mas
+   **não** um link alternativo para `/signup`: sem JavaScript o CTA não navega. Os links
+   nativos da página — "Entrar" no topo, Privacidade, Código de conduta e o "Entrar" do
+   rodapé — continuam funcionando sem JavaScript. O `data-href` e a delegação de clique que
+   o lia saíram de `landing-behavior.tsx`. O `<a>` do shadow root continua focável pelo host
+   (`delegatesFocus`) e tem o nome acessível do rótulo; `tests/e2e/landing-v8.spec.ts`
+   afirma isso CTA por CTA.
+2. **A landing vem no HTML do servidor.** O `SupabaseAuthProvider` devolvia `null` até
+   montar no cliente e envolvia todo o `<body>` no layout raiz, então o HTML de `/` saía
+   vazio. Ele saiu do layout raiz e passou para os layouts dos grupos que usam o cliente do
+   navegador: `(admin)`, `(owner)`, `(preauth)`, `(provider)`, `(shell)` e `auth/`. A landing
+   (`apps/web/app/page.tsx`) fica fora do provedor — ela não usa Supabase. O teste "entrega a
+   landing no HTML do servidor, sem executar JavaScript" busca `/` por HTTP puro e afirma o
+   `h1` e o texto do CTA no HTML.
+3. **`themeColor` no par claro e escuro.** `apps/web/app/page.tsx` declara
    `[{ media: "(prefers-color-scheme: light)", color: "#F2F0EB" }, { media: "(prefers-color-scheme: dark)", color: "#171E20" }]`,
    as superfícies dos dois temas em `brand-tokens.css`, no lugar do verde do adapter
    (`#164734`) nos dois. `tests/scope/design-system-contract.test.mjs` passou a exigir o par
@@ -143,7 +156,10 @@ Diferenças visuais que restam, e só elas:
   dois temas (com `page.emulateMedia({ colorScheme })` e os valores reais dos tokens);
   conversa montada/movimento reduzido; foco contido na folha, fundo inerte e barra fixa fora
   do teclado; ausência de rolagem horizontal; registro do Material no cliente sem erro de
-  hidratação.
+  hidratação. Na segunda revisão entraram: a landing no HTML do servidor por `request.get`
+  (sem JavaScript), a folha e a barra com `transition-duration` de `0 s` em movimento
+  reduzido, a folha rolando até o último link legal em 812 × 375 (visível e clicável) e as
+  cores do símbolo na folha e no topo sólido nos dois temas, com a exceção do rodapé.
 - `tests/e2e/smoke.spec.ts`, `manaus-pilot-full-journey.spec.ts` e
   `onboarding-holder-family.spec.ts` passaram a afirmar o texto da v8, com comentário
   "PORT-001". O que eles protegem continua igual: a raiz é pública e não tem o shell do app.
