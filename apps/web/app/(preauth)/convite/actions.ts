@@ -62,6 +62,17 @@ async function requestOriginDigest(): Promise<string> {
   return inviteOriginDigest(originFromForwardedFor(forwarded))
 }
 
+// Endereço canônico do app, para o link de confirmação voltar para cá.
+async function requestOrigin(): Promise<string> {
+  const configured = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/$/, "")
+  if (configured) return configured
+  const headerBag = await headers()
+  const origin = headerBag.get("origin")
+  if (origin) return origin.replace(/\/$/, "")
+  const host = headerBag.get("host") ?? "127.0.0.1:3000"
+  return `http://${host}`
+}
+
 async function authServerClient() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -178,41 +189,60 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
     }
   }
 
-  // 2. A conta.
+  // 2. A conta. Quem volta do link de confirmação já tem sessão com ESTE
+  // e-mail: nesse caso o convite é aceito sem criar conta de novo — é o que
+  // faz o fluxo sobreviver a um provedor que exige confirmar o endereço.
   const auth = await authServerClient()
-  const { data, error } = await auth.auth.signUp({
-    email,
-    password,
-    options: { data: { display_name: name } },
-  })
+  const { data: current } = await auth.auth.getUser()
+  const currentEmail = current.user?.email?.trim().toLowerCase() ?? null
 
-  if (error) {
-    const view = classifySignUp(error)
-    return {
-      ok: false,
-      message: view.message,
-      field: view.outcome === "email-taken" ? "email" : "code",
-    }
-  }
+  let userId: string
+  if (current.user && currentEmail === email) {
+    userId = current.user.id
+  } else {
+    const { data, error } = await auth.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: name },
+        // O link de confirmação volta para a mesma tela, com o código: a
+        // sessão que ele cria é a que aceita o convite.
+        emailRedirectTo: `${await requestOrigin()}/auth/callback?next=${encodeURIComponent(
+          `/convite?codigo=${code}`,
+        )}&consent=${encodeURIComponent(String(CONSENT_VERSION))}`,
+      },
+    })
 
-  const userId = data.user?.id
-  if (!userId) {
-    return {
-      ok: false,
-      message: "Não foi possível criar a conta agora. Tente novamente.",
-      field: "code",
+    if (error) {
+      const view = classifySignUp(error)
+      return {
+        ok: false,
+        message: view.message,
+        field: view.outcome === "email-taken" ? "email" : "code",
+      }
     }
-  }
 
-  if (!data.session) {
-    // Provedor pedindo confirmação de e-mail: sem sessão não há como gravar o
-    // aceite nem aceitar o convite neste instante. A pessoa confirma e volta
-    // pelo caminho de entrada normal — o convite continua válido.
-    return {
-      ok: false,
-      message: "Confirme o e-mail que enviamos e entre pelo link para concluir o convite.",
-      field: "email",
+    const created = data.user?.id
+    if (!created) {
+      return {
+        ok: false,
+        message: "Não foi possível criar a conta agora. Tente novamente.",
+        field: "code",
+      }
     }
+
+    if (!data.session) {
+      // Provedor pedindo confirmação de e-mail: sem sessão não há como gravar o
+      // aceite nem aceitar o convite neste instante. O link do e-mail volta
+      // para cá com o código e conclui o aceite.
+      return {
+        ok: false,
+        message: "Confirme o e-mail que enviamos e abra o link para concluir o convite.",
+        field: "email",
+      }
+    }
+
+    userId = created
   }
 
   // 3. O aceite, no servidor, com o usuário que acabou de nascer — nunca um id

@@ -74,6 +74,18 @@ describe("ações do servidor", () => {
     expect(actions).not.toMatch(/formData\.get\("user/)
   })
 
+  it("fracasso depois do cadastro não vira conta órfã silenciosa", () => {
+    // A conta nasce antes do vínculo: quando o aceite falha, a tela diz que a
+    // conta existe, em vez de fingir que nada aconteceu.
+    expect(actions).toContain("NO_LINK")
+  })
+
+  it("quem volta do link de confirmação aceita sem criar outra conta", () => {
+    expect(actions).toContain("currentEmail === email")
+    expect(actions).toContain("/auth/callback?next=")
+    expect(actions).toContain("/convite?codigo=${code}")
+  })
+
   it("o vínculo é o mesmo do convite por link", () => {
     expect(provision).toContain('rpc("family_invite_code_accept"')
     expect(provision).toContain('"family_accept_holder_locality"')
