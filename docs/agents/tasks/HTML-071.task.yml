@@ -62,3 +62,6 @@ closure:
 # Gate verde: lint, typecheck, test e secrets. O build web pulou por falta de apps/web/.env.local,
 # então não há evidência de que o Next compila nesta worktree.
 # Relatório: prototypes/bivaque-html/docs/ROUND_71.md
+# Revisão do coordenador: sobre a foto o símbolo ficava em Grafite e Brasa (quase invisível) e o
+# texto do rodapé herdava a cor de apoio da conversa (.ld-who duplicado). Corrigido em landing.css,
+# com o checkpoint brand-on-dark (vermelho 2/4 antes, verde 4/4 depois). round71 = 44/44; gate verde.

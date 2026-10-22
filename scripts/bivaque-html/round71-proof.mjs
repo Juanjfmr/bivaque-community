@@ -66,6 +66,20 @@ function parseColor(value) {
       .map(Number)
     return { r: parts[0], g: parts[1], b: parts[2], a: parts[3] === undefined ? 1 : parts[3] }
   }
+  // color-mix(in srgb, ...) é devolvido como color(srgb r g b / a), com canais de 0 a 1.
+  const srgb = text.match(/^color\(srgb ([^)]+)\)$/)
+  if (srgb) {
+    const parts = srgb[1]
+      .split(/[\s/]+/)
+      .filter(Boolean)
+      .map(Number)
+    return {
+      r: parts[0] * 255,
+      g: parts[1] * 255,
+      b: parts[2] * 255,
+      a: parts[3] === undefined ? 1 : parts[3],
+    }
+  }
   throw new Error(`cor não reconhecida: ${value}`)
 }
 const luminance = ({ r, g, b }) => {
@@ -503,6 +517,38 @@ const checkpoints = {
       width.scroll <= width.client,
       `a landing rola de lado: ${width.scroll} > ${width.client}`,
     )
+  },
+
+  // Revisão do coordenador (R71): sobre a foto o símbolo é o branco inteiro (brandbook: fundo escuro,
+  // versão branca); com o topo sólido volta às cores do tema. E o texto do rodapé passa de 4,5:1.
+  async "brand-on-dark"(page) {
+    await signOut(page)
+    const fills = () =>
+      page
+        .locator(".ld-top .brand-mark")
+        .first()
+        .evaluate((svg) => [...svg.querySelectorAll("path")].map((p) => getComputedStyle(p).fill))
+    const white = "rgb(255, 255, 255)"
+    const onPhoto = await fills()
+    expect(
+      onPhoto.length === 2 && onPhoto.every((fill) => fill === white),
+      `símbolo sobre a foto: ${onPhoto.join(", ")}`,
+    )
+    await scrollTo(page, 1600)
+    await page.waitForFunction(() =>
+      document.querySelector(".ld-top")?.classList.contains("ld-solid"),
+    )
+    const solid = await fills()
+    const { theme } = await tokens(page, [])
+    const threshold = theme === "dark" ? white : "rgb(184, 74, 58)"
+    expect(solid[1] === threshold, `abertura do símbolo com o topo sólido: ${solid[1]}`)
+
+    const footerBg = parseColor(await backgroundOf(page, ".ld-footer"))
+    for (const selector of [".ld-footer .ld-who", ".ld-footer small"]) {
+      const color = parseColor(await computed(page, selector, "color"))
+      const value = contrast(over(color, footerBg), footerBg)
+      expect(value >= 4.5, `${selector} com ${ratio(value)}:1 sobre o rodapé`)
+    }
   },
 
   async "reduced-motion"(page) {
