@@ -165,7 +165,7 @@ function Thread() {
 export function LandingPage() {
   return (
     <div
-      className={`ld ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
+      className={`ld bv-skin ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
       id="landing"
     >
       <a className="ld-skip" href="#ld-main" data-landing-anchor="ld-main">
