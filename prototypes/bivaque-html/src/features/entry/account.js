@@ -24,7 +24,7 @@ function validCpf(raw){
  const dv=n=>{let s=0;for(let i=0;i<n;i++)s+=Number(d[i])*(n+1-i);const r=(s*10)%11;return r===10?0:r;};
  return dv(9)===Number(d[9])&&dv(10)===Number(d[10]);
 }
-const entryTop=(back='',right='sair')=>`<header class="en-top">${back?iconBtn('arrow_back','entry-go',back,'Voltar'):''}<span class="en-mark" aria-hidden="true">B</span><span class="en-brand">Bivaque</span>${right==='entrar'?btn('Entrar','entry-login','','text'):btn('Sair','entry-cancel','','text')}</header>`;
+const entryTop=(back='',right='sair')=>`<header class="en-top">${back?iconBtn('arrow_back','entry-go',back,'Voltar'):''}${mark()}<span class="en-brand">Bivaque</span>${right==='entrar'?btn('Entrar','entry-login','','text'):btn('Sair','entry-cancel','','text')}</header>`;
 function entrySteps(n,label){return `<p class="en-step">Passo ${n} de 3 · ${label}</p><div class="en-steps" role="img" aria-label="Passo ${n} de 3">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;}
 function entryPasswordField(id,label){return `<md-outlined-text-field id="${id}" label="${label}" type="password" required minlength="8" autocomplete="${id==='en-pass'?'new-password':'current-password'}" supporting-text="${id==='en-pass'?ENTRY_SENHA_REGRA:''}">${iconBtn('visibility','entry-pass-toggle',id,'Mostrar senha','slot="trailing-icon"')}</md-outlined-text-field>`;}
 function entryDocLabel(d){const kb=(d?.size||0)/1024;return `${d?.type||'Documento'} · ${kb<1024?`${Math.max(1,Math.round(kb))} KB`:`${(kb/1024).toFixed(1).replace('.',',')} MB`}`;}

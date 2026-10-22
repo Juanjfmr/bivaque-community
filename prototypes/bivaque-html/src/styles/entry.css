@@ -1,12 +1,13 @@
 /* Rodada 53: entrada do Bivaque fora da navegação do app, como o Painel do dono. Rodada 71: a
-   landing mudou para src/styles/landing.css; aqui ficam os formulários da entrada e as páginas. */
+   landing mudou para src/styles/landing.css; aqui ficam os formulários da entrada e as páginas.
+   Rodada 72: cantos de 12 px nos cartões e campos da entrada e da ajuda, e o cabeçalho com o símbolo
+   oficial (mark()), no lugar da letra "B" em .en-mark. */
 body.entry-mode #topbar,body.entry-mode #nav,body.entry-mode #fab{display:none}
 body.entry-mode main{inset:0}
 .page.entry-page{max-width:none;padding:0}
 .en{max-width:1180px;margin:0 auto;padding:12px 20px 32px}
 .en-top{display:flex;align-items:center;gap:12px;height:56px}
 .en-top md-text-button{margin-left:auto}
-.en-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-weight:800}
 .en-brand{font-weight:700;font-size:18px}
 .en-lead{margin:0 0 16px;font-size:16px;line-height:24px;color:var(--md-sys-color-on-surface-variant)}
 @media(min-width:900px){
@@ -25,10 +26,10 @@ body.entry-mode main{inset:0}
 .en-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:20px;margin:4px 0 8px}
 .en-err{min-height:20px;margin:0 0 4px;font-size:13px;color:var(--owner-bad)}
 .en-foot{display:flex;align-items:center;justify-content:center;gap:4px;font-size:14px;color:var(--md-sys-color-on-surface-variant);margin:12px 0 0}
-.en-why{display:flex;gap:12px;padding:14px;border-radius:16px;background:var(--md-sys-color-surface-container-low);margin:12px 0;font-size:14px;line-height:20px}
+.en-why{display:flex;gap:12px;padding:14px;border-radius:12px;background:var(--md-sys-color-surface-container-low);margin:12px 0;font-size:14px;line-height:20px}
 .en-why md-icon{flex:none;color:var(--md-sys-color-primary)}
 .en-why b,.en-link b,.en-file b{display:block}
-.en-link,.en-file{display:flex;gap:10px;align-items:center;width:100%;padding:12px 14px;border-radius:14px;border:1px dashed var(--md-sys-color-outline);font-size:14px;line-height:20px;text-align:left;color:inherit;margin:8px 0;cursor:pointer}
+.en-link,.en-file{display:flex;gap:10px;align-items:center;width:100%;padding:12px 14px;border-radius:12px;border:1px dashed var(--md-sys-color-outline);font-size:14px;line-height:20px;text-align:left;color:inherit;margin:8px 0;cursor:pointer}
 .en-link md-icon,.en-file md-icon{flex:none;color:var(--md-sys-color-primary)}
 .en-file input{position:absolute;width:1px;height:1px;opacity:0}
 .en-file:focus-within{outline:2px solid var(--md-sys-color-primary);outline-offset:2px}
@@ -49,14 +50,14 @@ body.entry-mode main{inset:0}
 .en-or::before,.en-or::after{content:"";flex:1;height:1px;background:var(--md-sys-color-outline-variant)}
 .en-hint{font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:12px 0 0}
 .en-foot{flex-wrap:wrap}
-.en-inv{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);margin:4px 0 14px}
+.en-inv{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);margin:4px 0 14px}
 .en-inv b{display:block;font-size:15px}
 .en-av{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:22px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface);font-weight:700}
 /* Rodada 56: passo 3 (cidade, momento e nome) e boas-vindas. */
 .en-form md-outlined-select{width:100%;margin:0 0 4px}
 .en-sub{margin:0 0 14px;font-size:13px;line-height:19px;color:var(--md-sys-color-on-surface-variant)}
 .en-lbl{margin:0 0 6px;font-size:14px}
-.en-seg{display:flex;border:1px solid var(--md-sys-color-outline);border-radius:20px;overflow:hidden;margin:0 0 4px}
+.en-seg{display:flex;border:1px solid var(--md-sys-color-outline);border-radius:12px;overflow:hidden;margin:0 0 4px}
 .en-seg label{flex:1;position:relative}
 .en-seg label+label{border-left:1px solid var(--md-sys-color-outline)}
 .en-seg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
@@ -64,11 +65,11 @@ body.entry-mode main{inset:0}
 .en-seg input:checked+span{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
 .en-seg input:focus-visible+span{outline:2px solid var(--md-sys-color-primary);outline-offset:-3px}
 .en-date{display:grid;gap:4px;margin:0 0 12px;font-size:13px;color:var(--md-sys-color-on-surface-variant)}
-.en-date input{height:52px;padding:0 14px;border:1px solid var(--md-sys-color-outline);border-radius:4px;background:transparent;color:var(--md-sys-color-on-surface);font:inherit;font-size:16px}
+.en-date input{height:52px;padding:0 14px;border:1px solid var(--md-sys-color-outline);border-radius:12px;background:transparent;color:var(--md-sys-color-on-surface);font:inherit;font-size:16px}
 .en-badge{display:grid;place-items:center;width:64px;height:64px;border-radius:32px;margin:28px auto 14px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)}
 .en-welcome .en-h1,.en-welcome .en-lead{text-align:center}
 .en-welcome .en-h1:focus{outline:none}
-.en-tile{display:flex;gap:12px;align-items:flex-start;width:100%;margin:0 0 10px;padding:14px;border:1px solid var(--md-sys-color-outline-variant);border-radius:16px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface-variant);font:inherit;font-size:14px;line-height:20px;text-align:left;cursor:pointer}
+.en-tile{display:flex;gap:12px;align-items:flex-start;width:100%;margin:0 0 10px;padding:14px;border:1px solid var(--md-sys-color-outline-variant);border-radius:12px;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-on-surface-variant);font:inherit;font-size:14px;line-height:20px;text-align:left;cursor:pointer}
 .en-tile md-icon{flex:none;color:var(--md-sys-color-primary)}
 .en-tile b{display:block;font-size:15px;color:var(--md-sys-color-on-surface)}
 .en-tile:focus-visible{outline:2px solid var(--md-sys-color-primary);outline-offset:2px}
@@ -83,7 +84,7 @@ body.entry-mode main{inset:0}
 .settings-links{margin:12px 0 4px}
 .settings-links .list-row{min-height:64px;text-align:left}
 /* Rodada 62: Ajuda, Fale com a gente, Meus chamados e Apagar a conta. */
-.help-card{margin:16px 0;padding:16px;border-radius:16px;text-align:center;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.help-card{margin:16px 0;padding:16px;border-radius:12px;text-align:center;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
 .help-card b{font-size:16px}
 .help-card p{margin:6px 0 12px;font-size:14px;color:var(--md-sys-color-on-surface-variant)}
 .help-card md-filled-button{width:100%}
@@ -103,7 +104,7 @@ body.entry-mode main{inset:0}
 .help-danger{margin-top:4px}
 .legal-doc md-outlined-text-field{width:100%;margin:0 0 4px}
 .legal-doc .list+md-outlined-text-field{margin-top:14px}
-.ticket{padding:14px 16px;border-radius:16px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.ticket{padding:14px 16px;border-radius:12px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
 .ticket-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .ticket p{margin:4px 0 0}
 .ticket-text{font-size:15px;line-height:22px;white-space:pre-wrap;overflow-wrap:anywhere}
