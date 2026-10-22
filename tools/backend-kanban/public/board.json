@@ -997,11 +997,12 @@
         "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
         "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision",
-        "2026-10-22 HRN-004: README aponta para especificacao web e processo atual; PRODUCT_STATUS reconcilia a linha de entrada com email/senha observado no codigo, sem afirmar Google/confirmacao E2E. CLAUDE.md conserva import de AGENTS.md e particularidades do harness; comandos do gate/loop reconciliados no processo e skill locais. Nenhuma linha de fluxo removida ou declarada concluida por leitura estatica."
+        "2026-10-22 HRN-004: README aponta para especificacao web e processo atual; PRODUCT_STATUS reconcilia a linha de entrada com email/senha observado no codigo, sem afirmar Google/confirmacao E2E. CLAUDE.md conserva import de AGENTS.md e particularidades do harness; comandos do gate/loop reconciliados no processo e skill locais. Nenhuma linha de fluxo removida ou declarada concluida por leitura estatica.",
+        "2026-10-22, pedido posterior de eficiencia das instrucoes: AGENTS.md consolida precedencia e consulta dirigida, remove releituras/fila serial ja substituidas e historicos/catalogos redundantes; conserva autorizacao, privacidade, R3, migracoes, revisao independente e board. CLAUDE.md importa a regra compartilhada e limita-se ao harness/grafo com fallback para fonte exata. Comandos reconciliados com package.json, Playwright e loop.mjs. Tamanho UTF-8 conjunto caiu de 29830 para 13776 bytes (54%); test:scope 112/112 PASS. Nenhum fluxo de produto alterado; card amplo permanece aberto. Base confrontada 70227be9; backups locais em .visual/instructions-review-2026-10-22."
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
       "updatedAt": "2026-10-22",
-      "sourceRevision": "50e8ab460525c4377498a83e88e91a837d0d908f",
+      "sourceRevision": "70227be9",
       "dependencies": []
     },
     {
