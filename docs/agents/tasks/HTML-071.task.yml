@@ -1,0 +1,50 @@
+task_id: HTML-071
+objective: >
+  Rodada 71: a landing pública passa a ser a v8 aprovada (.visual/bivaque-html-landing-v3/v8/maquete-v8.html)
+  com o título F ("Juntos somos mais fortes."), na pele da marca da R70 e nos temas claro e escuro. Sai a
+  landing da R53 (título "Muda a cidade. Fica a sua rede.", dois CTAs e a amostra por cidade). Um único
+  CTA, "Criar conta", leva ao cadastro; "Entrar" leva ao login; o convite de familiar continua dentro do
+  cadastro. As imagens já estão em ASSETS (commit 4d45ceda).
+authority:
+  - Decisão do dono em 2026-10-18 (maquete v8 e título F, docs/agents/HANDOFF-COORDENACAO-2026-10-19.md)
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base 4d45ceda: a landing mostra "Muda a cidade. Fica a sua rede.", os CTAs "Quero fazer parte" e
+    "Recebi um convite de familiar" e a amostra por cidade; não há seções de exemplo, recursos, mudança,
+    passos, perguntas, chamada final nem barra fixa.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-071.task.yml
+forbidden:
+  - editar src/vendor, src/styles/fonts.css, src/data/demo/assets.js, a referência HTML congelada ou a base visual
+  - mudar o fluxo de cadastro, login ou convite (só a landing que leva a eles)
+  - carregar qualquer recurso externo (fonte, imagem ou script)
+  - fazer merge, push, deploy ou git stash
+acceptance:
+  - Quem saiu vê a landing v8 com o título e a linha de apoio do título F, palavra por palavra
+  - Um único CTA, "Criar conta", leva à conta; "Entrar" leva ao login; nenhum "Quero fazer parte" ou amostra
+  - As seções da v8 aparecem na ordem, com os textos da maquete; o rodapé só tem links com destino real
+  - No celular, menu em folha (Esc fecha e devolve o foco) e barra fixa de "Criar conta" depois do topo
+  - Nos dois temas, texto com no mínimo 4,5:1 e CTA em Brasa; nenhuma requisição externa
+  - As provas antigas que afirmavam a landing da R53 passam a afirmar a v8 e continuam verdes
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,1440-light,1440-dark node scripts/bivaque-html/round71-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round53-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round54-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round56-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round58-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light node scripts/bivaque-html/round62-proof.mjs
+  - BIVAQUE_HTML_CONTEXTS=375-light,1440-light node scripts/bivaque-html/round70-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: primeira impressão pública do produto; a base visual é recongelada no fechamento do lote
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
