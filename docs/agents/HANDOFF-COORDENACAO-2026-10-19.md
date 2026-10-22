@@ -1,5 +1,8 @@
 # Passagem de bastão da coordenação: Claude (Opus) → Codex
 
+> **Substituído** pelo [HANDOFF-COORDENACAO-2026-10-22](HANDOFF-COORDENACAO-2026-10-22.md). Em especial, a regra
+> "CEP e coordenadas nunca são gravados" foi revogada pelo ADR-20261022-localizacao-padrao-de-mercado.
+
 Data: 19/10/2026, noite. O dono é **Juan**. Responda a ele sempre em português do Brasil, com uma decisão
 por vez. A cota do Opus acabou, e a partir daqui **o Codex coordena**.
 
