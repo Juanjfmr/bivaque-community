@@ -154,6 +154,11 @@ async function clipboard(page, mode, shareMode = "absent") {
 
 async function verify(width, theme) {
   const context = await createDeterministicContext(browser, { width, theme })
+  // Rodada 69: o produto pago fica atrás da chave de laboratório. A R01 cobre os planos pagos (preço de
+  // demonstração e ativação), então liga a chave, como as R06, R35, R52, R63 e R65.
+  await context.addInitScript(() => {
+    window.BIVAQUE_LABS = { paidPlans: true }
+  })
   const page = await context.newPage()
   page.setDefaultTimeout(5000)
   page.on("pageerror", (error) =>
@@ -813,11 +818,10 @@ async function verify(width, theme) {
       }, `negocio/${biz.id}`)
       await action("plans", undefined, { keyboard: true })
       const text = await page.locator("#dialog").innerText()
-      // R69 (lançamento sem cobrança): Planos explica que a página é gratuita e que os pagos vêm depois,
-      // sem preço. O produto pago, atrás da chave de laboratório, é guardado pelas R06, R35, R52, R63 e R65.
-      assert.match(text, /gratuita e completa/i)
-      assert.match(text, /vêm depois/i)
-      assert.doesNotMatch(text, /R\$|9,90|39,90/)
+      assert.match(text, /teste|demonstra/i)
+      assert.match(text, /nenhum pagamento/i)
+      assert.match(text, /9,90/)
+      assert.match(text, /39/)
       await action("close-dialog")
       await expectFocus(page, "plans")
       assert.equal((await state(page)).subscription.tier, fixture.subscription.tier)
