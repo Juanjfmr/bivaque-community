@@ -31,7 +31,8 @@ comparação de captura.
   escondida, alvos de 44 px, conversa que se monta ao entrar na tela e já montada com
   `prefers-reduced-motion`.
 - **Metadados** (`apps/web/app/page.tsx`): título `Bivaque — Juntos somos mais fortes`,
-  descrição igual à linha de apoio, Open Graph e `colorScheme: "light dark"`.
+  descrição igual à linha de apoio, Open Graph, `colorScheme: "light dark"` e `themeColor` no
+  par claro/escuro das superfícies da landing.
 
 Arquivos apagados: `apps/web/app/landing/landing.module.css` e a landing antiga (GSAP,
 lucide, HeroUI). Nada de `apps/web/public/landing/` fora de `v8/` foi tocado.
@@ -64,26 +65,34 @@ lucide, HeroUI). Nada de `apps/web/public/landing/` fora de `v8/` foi tocado.
    de `apps/web/app` fora do `globals.css`, e este arquivo é a camada de tokens da landing,
    não um componente com cor solta. O teste não está nos `allowed_paths` desta tarefa, então
    a notação foi a forma de não abrir uma exceção no contrato de escopo.
-2. **`themeColor` continua vindo do adapter de tokens, e não o par claro/escuro pedido.**
-   `tests/scope/design-system-contract.test.mjs` exige a expressão literal
-   `themeColor: brandTokens.color.accent`, e a forma de lista com `media` não casa com ela.
-   O teste também não está nos `allowed_paths`. O par pronto, para entrar junto com a
-   atualização de uma linha naquele teste:
-   `[{ media: "(prefers-color-scheme: light)", color: "#F2F0EB" }, { media: "(prefers-color-scheme: dark)", color: "#171E20" }]`,
-   que são as superfícies dos dois temas em `brand-tokens.css`. Hoje o navegador usa o verde
-   do adapter (`#164734`) nos dois temas.
-3. **A `visibility` da folha do menu entra na hora e sai depois do slide.** No protótipo ela
+2. **A `visibility` da folha do menu entra na hora e sai depois do slide.** No protótipo ela
    transiciona nos dois sentidos; no primeiro quadro a folha ainda é `hidden`, o `focus()` do
    botão Fechar é ignorado e o foco fica no `body`. Com `visibility 0s` na abertura a folha é
    focável no mesmo evento, e `visibility 0s linear 0.28s` no fechamento mantém a animação.
    Fechada, a folha também recebe `inert`.
-4. **O padding do `md-filled-button` é reposto em CSS.** O preflight do Tailwind
+3. **O padding do `md-filled-button` é reposto em CSS.** O preflight do Tailwind
    (`* { padding: 0 }`) vence o `:host` do Material na cascata da árvore externa: sem repor,
    o CTA perde os 12 px/24 px do componente e o rótulo encosta na borda arredondada. A regra
    em `landing.css` recalcula as mesmas medidas a partir dos tokens do botão
    (`container-height`, `label-text-line-height`, `leading-space`, `trailing-space`).
-5. **A página rola no documento, não em `#main`.** Os observadores, a rolagem e o
+4. **A página rola no documento, não em `#main`.** Os observadores, a rolagem e o
    `ld-locked` foram transpostos para `window`/`body`; o resto do comportamento é o mesmo.
+
+## Correções da revisão do coordenador (22/10/2026)
+
+1. **"Criar conta" e "Entrar" são links de verdade.** O adaptador
+   (`apps/web/app/components/material/filled-button.tsx`) passa `href` ao
+   `md-filled-button`, e o Material Web renderiza um `<a>` dentro do shadow root — o CTA
+   funciona sem JavaScript, o leitor de tela anuncia "link" e o navegador abre em outra aba.
+   O `data-href` e a delegação de clique que o lia saíram de `landing-behavior.tsx`. O `<a>`
+   do shadow root continua focável pelo host (`delegatesFocus`) e tem o nome acessível do
+   rótulo; `tests/e2e/landing-v8.spec.ts` afirma isso CTA por CTA.
+2. **`themeColor` no par claro e escuro.** `apps/web/app/page.tsx` declara
+   `[{ media: "(prefers-color-scheme: light)", color: "#F2F0EB" }, { media: "(prefers-color-scheme: dark)", color: "#171E20" }]`,
+   as superfícies dos dois temas em `brand-tokens.css`, no lugar do verde do adapter
+   (`#164734`) nos dois. `tests/scope/design-system-contract.test.mjs` passou a exigir o par
+   (citando os ADRs 20261022 e 20261020); as outras telas seguem com o `themeColor` do
+   layout raiz.
 
 ## Comparação de captura
 
@@ -128,7 +137,8 @@ Diferenças visuais que restam, e só elas:
 ## Testes
 
 - `tests/e2e/landing-v8.spec.ts` (novo, 375 e 1440): título, linha de apoio e as sete seções
-  na ordem; cada "Criar conta" em `/signup` e "Entrar" em `/login`; Privacidade e Código de
+  na ordem; cada "Criar conta" é um `<a href="/signup">` no shadow root, focável e com o nome
+  acessível do rótulo, e leva a `/signup`; "Entrar" em `/login`; Privacidade e Código de
   conduta nas páginas do Next; nenhuma requisição externa; contraste do corpo e do CTA nos
   dois temas (com `page.emulateMedia({ colorScheme })` e os valores reais dos tokens);
   conversa montada/movimento reduzido; foco contido na folha, fundo inerte e barra fixa fora
@@ -142,9 +152,10 @@ Diferenças visuais que restam, e só elas:
 
 ## Evidência
 
-- `npx pnpm@11.18.0 gate` — verde (lint, typecheck, test, secrets).
+- `npx pnpm@11.18.0 gate` — verde (lint, typecheck, unit 1468, privacidade 189, workspaces
+  76 + 19, scope 120/120, secrets).
 - `npx pnpm@11.18.0 --filter web build` — verde, com as variáveis do Supabase local no
   ambiente e sem `.env.local`.
 - `npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1` —
-  23 passaram, 10 pulados (a spec só roda em 375 e 1440), 0 falharam.
+  25 passaram, 11 pulados (a spec só roda em 375 e 1440), 0 falharam.
 - `node scripts/port/compare-landing.mjs` — 24 PNGs e `report.json` em `.visual/port-001/`.

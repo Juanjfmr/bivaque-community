@@ -64,8 +64,8 @@ closure:
   requires_runtime_evidence: true
 
 # Evidência desta execução — 22/10/2026, branch codex/landing-next, host win32.
-# `npx pnpm@11.18.0 gate`: verde (lint sem erro, typecheck ok, unit 189 + 76 dos workspaces,
-# scope 120/120, secrets).
+# `npx pnpm@11.18.0 gate`: verde (lint, typecheck, unit 1468, privacidade 189, workspaces
+# 76 + 19, scope 120/120, secrets).
 # `npx pnpm@11.18.0 --filter web build`: exit 0, com as variáveis do Supabase local no
 # ambiente e sem criar apps/web/.env.local.
 # `npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1`:
@@ -79,3 +79,18 @@ closure:
 # afastam do protótipo e as diferenças que sobram estão em docs/agents/PORT_001.md.
 # Revisão independente e prova de runtime por terceiro: ainda não houve
 # (reviewer_must_differ_from_executor: true).
+
+# Correções da revisão do coordenador — 22/10/2026, branch codex/landing-next, host win32.
+# 1. Criar conta e Entrar são links de verdade: o adaptador passa href ao md-filled-button e
+# o Material Web renderiza um a no shadow root; o data-href e a delegação de clique saíram.
+# 2. themeColor da landing no par claro e escuro; as outras telas seguem com o do layout raiz.
+# `npx pnpm@11.18.0 gate`: verde (lint, typecheck, unit 1468, privacidade 189, workspaces
+# 76 + 19, scope 120/120, secrets).
+# `npx pnpm@11.18.0 --filter web build`: exit 0, com as variáveis do Supabase local no
+# ambiente e sem criar apps/web/.env.local.
+# bash run-e2e-landing.sh tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1:
+# exit 0, 25 passaram, 11 pulados, 0 falharam.
+# Cada Criar conta é um link a href /signup no shadow root: 5 CTAs, focáveis pelo host, e a
+# consulta por papel encontra 5 links com o nome acessível Criar conta.
+# O HTML pré-renderizado de / traz dois meta theme-color com media: F2F0EB no claro e
+# 171E20 no escuro, e nenhum 164734.
