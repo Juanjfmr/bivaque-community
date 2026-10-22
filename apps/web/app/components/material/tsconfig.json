@@ -1,0 +1,10 @@
+// PORT-002 (lote 4 da entrada): o `jsx: "preserve"` do apps/web/tsconfig.json
+// impede o Vite de transformar `.tsx` no vitest ("Failed to parse source ...
+// make sure to not set jsx to preserve"). O vitest resolve o tsconfig mais
+// próximo de cada arquivo, então este shim devolve o transform automático só aos
+// componentes desta pasta, sem tocar no tsconfig do app.
+{
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}
