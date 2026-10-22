@@ -93,9 +93,22 @@ test("the web token stylesheet is generated from the canonical token source", ()
   assert.equal(result.status, 0, result.stderr || result.stdout)
 })
 
-test("the browser theme color is derived from the token adapter", () => {
+// ADR-20261022 (porte visual da landing) e ADR-20261020 (identidade visual e
+// tema escuro): a landing pinta a barra do navegador com o par claro/escuro das
+// superfícies dela, e não com o verde do adapter nos dois temas. As outras telas
+// continuam com o `themeColor` único do layout raiz.
+test("a landing pinta a barra do navegador com o par claro e escuro", () => {
   const page = read("apps", "web", "app", "page.tsx")
-  assert.match(page, /themeColor:\s*brandTokens\.color\.accent/)
+  const themeColor = page.match(/themeColor:\s*\[[\s\S]*?\n\s*\]/)?.[0] ?? ""
+
+  assert.match(themeColor, /media: "\(prefers-color-scheme: light\)",\s*color: "#F2F0EB"/)
+  assert.match(themeColor, /media: "\(prefers-color-scheme: dark\)",\s*color: "#171E20"/)
+  assert.ok(
+    themeColor.indexOf("prefers-color-scheme: light") <
+      themeColor.indexOf("prefers-color-scheme: dark"),
+    "o par começa no claro e termina no escuro",
+  )
+  assert.doesNotMatch(page, /themeColor:\s*brandTokens\.color\.accent/)
   assert.doesNotMatch(page, /2f7654/i)
 })
 
