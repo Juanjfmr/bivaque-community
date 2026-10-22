@@ -64,6 +64,9 @@ select columns_are(
     'visibility',
     'consent_version',
     'consented_at',
+    -- is_suspended: moderation state, não identidade — autorizada pelo
+    -- ADR-20260901-account-suspension (R3, aprovado em 2026-09-01).
+    'is_suspended',
     'created_at',
     'updated_at'
   ],

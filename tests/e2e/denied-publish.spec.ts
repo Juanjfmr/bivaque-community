@@ -7,11 +7,9 @@
 // classifica como 'server' em lib/composer/publish-error.ts e exibe copy
 // generica identica a qualquer outra negacao (anti-enumeracao §4.3).
 //
-// Persona: membro-suspenso@bivaque.example.invalid (seed em
-// supabase/migrations/20260901124400_member_suspended_seed.sql). Sem
-// comunidade aprovada, portanto /community renderiza CityReference (a
-// cidade inteira como referencia, nao uma vila) e o composer abre no
-// modo city-reach (public.locality_id null).
+// Persona: dono-vila@bivaque.example.invalid, do seed local, com comunidade
+// aprovada. O teste alterna is_suspended e restaura o estado no cleanup;
+// nao depende das contas ficticias retiradas da migration 20260901124400.
 //
 // Cenarios cobertos:
 //   - caminho try/catch do submit: POST /rest/v1/posts retorna 42501

@@ -1,5 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest"
 
+vi.mock("@playwright/test", () => ({ defineConfig: (config: unknown) => config }))
+
 afterEach(() => {
   vi.unstubAllEnvs()
   vi.resetModules()
