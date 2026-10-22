@@ -9,6 +9,7 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 import {
   callbackFailureTarget,
   callbackSuccessTarget,
+  consentStepTarget,
   shouldRecordSignupConsent,
 } from "./redirect-plan"
 
@@ -79,6 +80,32 @@ export async function GET(request: Request) {
     if (consentError) {
       log.error("auth callback consent recording failed", { message: consentError.message })
       return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+    }
+  }
+
+  // Conta sem nenhum aceite gravado — na prática, quem nasceu pelo Google e não
+  // passou pelo formulário de cadastro — vai uma vez à tela de aceite. O autor é
+  // o usuário da sessão trocada, nunca o corpo ou a query.
+  if (!shouldRecordSignupConsent(searchParams.get("consent"), CONSENT_VERSION)) {
+    const userId = data.user?.id
+    if (!userId) {
+      log.error("auth callback consent lookup failed: no user after exchange")
+      return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+    }
+    const service = createServiceClient()
+    const { count, error: lookupError } = await service
+      .from("consent_acceptances")
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", userId)
+    if (lookupError) {
+      log.error("auth callback consent lookup failed", { message: lookupError.message })
+      return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+    }
+    const consentStep = consentStepTarget((count ?? 0) > 0, next)
+    if (consentStep) {
+      const consentUrl = NextResponse.redirect(new URL(consentStep, request.url))
+      consentUrl.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+      return consentUrl
     }
   }
 

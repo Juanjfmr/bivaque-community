@@ -37,3 +37,26 @@ export function shouldRecordSignupConsent(
 ): boolean {
   return consentParam !== null && consentParam === String(currentVersion)
 }
+
+/**
+ * Hotfix de 22/10/2026: a conta criada pelo Google não passa pelo formulário de
+ * cadastro, onde fica a linha do aceite, e sem aceite gravado a entrada recusa a
+ * conferência do CPF. A conta que nunca aceitou nada vai, uma vez, à tela de
+ * aceite (o passo "Aceite" do protótipo). Quem já aceitou qualquer versão segue:
+ * o aceite não reaparece (ADR-20260907-consentimento-no-cadastro).
+ */
+export const CONSENT_STEP_PATH = "/consent"
+
+// Destinos que não podem ser desviados: o convite de prestador tem fluxo
+// próprio, fora da entrada de membro; a recuperação de senha precisa chegar a
+// /nova-senha, porque o código do link já foi consumido na troca.
+const OUTSIDE_MEMBER_ENTRY = ["/prestador-convite/", "/nova-senha"]
+
+export function consentStepTarget(
+  hasAnyAcceptance: boolean,
+  sanitizedNext = "/onboarding",
+): string | null {
+  if (hasAnyAcceptance) return null
+  if (OUTSIDE_MEMBER_ENTRY.some((prefix) => sanitizedNext.startsWith(prefix))) return null
+  return CONSENT_STEP_PATH
+}
