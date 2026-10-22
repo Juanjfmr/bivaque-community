@@ -35,7 +35,8 @@ function entryDraftRestore(){
  const c=$('#en-consent');if(c)c.checked=d.consent;
 }
 function entryDraftPrune(){if(entryDraft&&route.name!=='entrar'&&!legalRoute())entryDraft=null;}
-function legalLink(kind){return `<button type="button" class="en-inline" data-action="open-legal" data-value="${kind}">${esc(LEGAL_DOCS[kind].title)}</button>`;}
+// Rodada 71: o rótulo é opcional para o rodapé da landing caber na maquete ("Privacidade").
+function legalLink(kind,label=''){return `<button type="button" class="en-inline" data-action="open-legal" data-value="${kind}">${esc(label||LEGAL_DOCS[kind].title)}</button>`;}
 // "Li e aceito a Política de privacidade e o Código de conduta" com os dois nomes como links.
 const legalConsentText=()=>`Li e aceito a ${legalLink('privacidade')} e o ${legalLink('conduta')}`;
 function renderLegal(){
