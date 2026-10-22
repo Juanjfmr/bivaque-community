@@ -218,6 +218,8 @@ describe("todo tipo de outbox tem decisao declarada de preferencia", () => {
     community_invite: null,
     family_invite: null,
     provider_invite: null,
+    // DATA-002: a resposta ao chamado que a própria pessoa abriu é transacional.
+    support_answered: null,
   }
 
   it("o adaptador nao monta nenhum tipo sem decisao declarada", () => {

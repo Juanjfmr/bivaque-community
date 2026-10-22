@@ -55,6 +55,10 @@ begin
 
   -- Limite por pessoa. 54000 é o código da casa para teto de abertura
   -- (20260825181742:113, 20260923120000:116), e a tela o traduz em frase.
+  -- Serializa as aberturas da mesma pessoa: sem isso, duas chamadas simultâneas contam o mesmo
+  -- total e as duas passam pelo limite.
+  perform pg_advisory_xact_lock(hashtextextended('support_ticket:' || v_user::text, 0));
+
   select count(*) into v_open
   from public.support_tickets
   where user_id = v_user
@@ -166,7 +170,7 @@ begin
       btrim(v_email),
       'email',
       'support_answered',
-      jsonb_build_object('ticket_id', v_row.id, 'topic', v_row.topic)
+      jsonb_build_object('ticket_id', v_row.id, 'topic', v_row.topic, 'reply', v_row.reply)
     );
   end if;
 

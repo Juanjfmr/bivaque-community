@@ -12,7 +12,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(35);
 
 \ir fixtures/foundation.inc
 
@@ -257,6 +257,13 @@ select results_eq(
       where type = 'support_answered' $$,
   $$ values ('member-two@example.invalid'::text, 'email'::text, 'support_answered'::text) $$,
   'a resposta poe o e-mail na fila de envio para o dono'
+);
+
+-- O e-mail leva a resposta (no protótipo a resposta chega por e-mail).
+select is(
+  (select payload ->> 'reply' from public.outbox where type = 'support_answered'),
+  'A moderacao segue as regras publicadas na Ajuda. Obrigado por perguntar.',
+  'o e-mail na fila leva o texto da resposta'
 );
 
 -- 9) um chamado respondido nao se responde duas vezes
