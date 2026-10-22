@@ -1,0 +1,52 @@
+task_id: DATA-002
+objective: >
+  O banco ganha a ocultação pessoal e reversível de perguntas (separada da moderação) e os chamados de
+  ajuda com "Meus chamados": só quem tem conta abre, por função com limite por pessoa; cada pessoa lê só
+  os seus; só a operação responde, e a resposta cria o aviso no app e o e-mail na fila de envio.
+authority:
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (seções 2 e 3, aprovado pelo dono em 2026-10-22, chamado só com conta)
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (seções 2.1 e 6, lote 2)
+  - prototypes/bivaque-html/src/features/profile/hidden.js e src/features/support/help.js (branch codex/lancamento)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    origin/main 9853e5fe: não existem hidden_questions nem support_tickets (git grep em
+    supabase/migrations não acha nada); a única ocultação é recommendation_requests.is_deleted, que é
+    moderação global. Escrever primeiro o pgTAP que falha.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/lib/
+  - tests/unit/
+  - docs/agents/tasks/DATA-002.task.yml
+forbidden:
+  - push, merge, deploy, db push ou qualquer comando com --linked
+  - commitar segredos, arquivos .env ou supabase/config.toml
+  - usar is_deleted para a ocultação pessoal
+  - abrir chamado sem conta (decisão do dono)
+  - afrouxar policy ou grant existente fora do escopo
+  - mudar telas (apps/web/app) nesta tarefa
+  - editar prototypes/bivaque-html
+acceptance:
+  - hidden_questions(user_id, request_id, hidden_at) único por par, com ON DELETE CASCADE na pessoa e na pergunta; RLS só do próprio dono para ler, criar e apagar
+  - pgTAP negativo prova que outra pessoa não lê nem apaga a ocultação de alguém, e que ocultar não muda is_deleted nem o que os outros veem
+  - Existe um caminho de leitura da lista da Comunidade que exclui as perguntas ocultadas pelo leitor, e a leitura direta da pergunta continua funcionando
+  - support_tickets com user_id obrigatório, e-mail da conta, assunto em (conta, comunidade, anuncios, seguranca, outro), texto de 10 a 1000 caracteres, situação open/answered, resposta e datas; sem insert/update/delete direto pelo cliente
+  - Função de abertura só para autenticados, com o e-mail da conta e limite de abertura por pessoa; pgTAP prova o limite e a recusa de anônimo
+  - Cada pessoa lê só os próprios chamados (pgTAP negativo)
+  - Função de resposta só para operador (public.is_current_user_operator): grava resposta, muda para answered, cria notificação para o dono e enfileira o e-mail no outbox; pgTAP prova que não operador é recusado
+  - Apagar a conta apaga ocultações e chamados da pessoa
+  - Migrations aplicam a partir do zero (db reset --no-seed) e o test:db inteiro continua verde
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+risk: dado pessoal, RLS e notificação
+adr: docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

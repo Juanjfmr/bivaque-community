@@ -1,0 +1,52 @@
+task_id: DATA-001
+objective: >
+  O banco ganha o catálogo de bairros por cidade (nome, chave normalizada sem acento, zona e ponto
+  central público do bairro), com busca por nome, e o perfil ganha o bairro opcional com a chave
+  "Mostrar meu bairro": desligada, nenhuma leitura de outra pessoa recebe o bairro, e a regra vale no
+  banco. Nenhum campo de bairro aceita CEP (5 ou mais dígitos seguidos).
+authority:
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (seção 1, aprovado pelo dono em 2026-10-22)
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md (seções 2.1, 2.2 e 6, lote 2)
+  - prototypes/bivaque-html/src/data/demo/bairros.js, src/shell/hood-picker.js e src/features/profile/hood-privacy.js (branch codex/lancamento)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    origin/main 9853e5fe: não existe tabela de bairros (git grep "neighborhoods" em supabase/migrations
+    não acha nada), profiles não tem bairro nem a chave de exibição, e listings.neighborhood aceita
+    "69057000" (só checa o tamanho, 20260911043053_listings_market_and_homes.sql:51). Escrever primeiro o
+    pgTAP que falha.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/seed.sql
+  - supabase/database.generated.ts
+  - apps/web/lib/
+  - tests/unit/
+  - docs/agents/tasks/DATA-001.task.yml
+forbidden:
+  - push, merge, deploy, db push ou qualquer comando com --linked
+  - commitar segredos, arquivos .env ou supabase/config.toml
+  - gravar CEP, latitude/longitude ou endereço de pessoa em qualquer coluna
+  - afrouxar policy ou grant existente fora do escopo
+  - mudar telas (apps/web/app) nesta tarefa; a interface vem no porte por jornada
+  - editar prototypes/bivaque-html
+acceptance:
+  - neighborhoods tem locality_id, name, name_key (sem acento, minúsculo, único por cidade), zone e centro (lat/lng do bairro), com leitura para autenticados e escrita só da operação
+  - Carga das 4 cidades do protótipo (Manaus, Brasília, Natal, Rio de Janeiro) com os nomes, zonas e pontos de bairros.js, numa migration de dados idempotente
+  - Uma função de busca devolve até 6 bairros da cidade por nome sem acento, os que começam pelo texto primeiro
+  - profiles ganha o bairro (texto, opcional) e show_neighborhood (padrão verdadeiro); gravar um bairro que bate com o catálogo usa a grafia do catálogo
+  - pgTAP negativo prova que outro membro NÃO recebe o bairro com show_neighborhood falso em nenhum caminho de leitura de perfil, e recebe quando verdadeiro; o próprio dono sempre recebe
+  - pgTAP negativo prova que profiles, listings, listing_alerts e service_requests recusam bairro com 5 ou mais dígitos seguidos
+  - Migrations aplicam a partir do zero (db reset --no-seed) e o test:db inteiro continua verde
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+risk: dado pessoal (bairro do perfil) e RLS
+adr: docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
