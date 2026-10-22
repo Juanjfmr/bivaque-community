@@ -1,0 +1,62 @@
+task_id: PORT-001
+objective: >
+  Rodada 73, piloto do porte visual: a landing pública do Next (rota /) passa a ser a landing v8 do
+  protótipo (R71 e R72), com o título F, na pele da marca, nos temas claro e escuro conforme o sistema,
+  feita com Material Web 2.5.0 por adaptadores cliente, Noto self-hosted e ícones Outlined. Fica igual
+  ao protótipo na comparação de captura em 375 e 1440, sem requisição externa.
+authority:
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+  - prototypes/bivaque-html/docs/ROUND_71.md e ROUND_72.md (a landing aprovada)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    codex/lancamento f78a76c2: apps/web/app/landing/landing.tsx é a landing antiga ("A comunidade vai com
+    você", Public Sans, HeroUI); o layout fixa colorScheme light; @material/web não está no package.json;
+    tests/scope/workspace-foundation.test.mjs exige o HeroUI como única biblioteca.
+allowed_paths:
+  - apps/web/app/page.tsx
+  - apps/web/app/landing/
+  - apps/web/app/layout.tsx
+  - apps/web/app/fonts/
+  - apps/web/app/components/material/
+  - apps/web/app/brand-tokens.css
+  - apps/web/types/
+  - apps/web/public/landing/v8/
+  - tests/e2e/landing-v8.spec.ts
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/onboarding-holder-family.spec.ts
+  - tests/e2e/smoke.spec.ts
+  - tests/scope/workspace-foundation.test.mjs
+  - tests/unit/
+  - docs/agents/tasks/PORT-001.task.yml
+  - docs/agents/PORT_001.md
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou qualquer .env
+  - instalar pacotes (o coordenador já instalou @material/web@2.5.0)
+  - carregar fonte, imagem ou script de CDN
+  - mudar outras telas além da landing, ou o tema HeroUI das telas ainda não portadas
+  - apagar arquivos existentes de apps/web/public/landing (há spec que usa hero-bivaque-arrival.webp)
+  - editar prototypes/bivaque-html
+acceptance:
+  - A rota / mostra a landing v8 com os textos do protótipo palavra por palavra (título F, seções, perguntas, rodapé)
+  - Todo "Criar conta" leva a /signup e "Entrar" a /login; os links de Privacidade e Código de conduta vão às páginas do Next; o que não tiver destino público no Next sai e é listado em docs/agents/PORT_001.md
+  - Material Web registrado só no cliente, importando só os componentes usados; tags tipadas; sem erro de hidratação no console
+  - Noto Sans, Noto Serif e Material Symbols Outlined via next/font/local; nenhuma requisição externa
+  - Tokens --md-sys-color-* e --bv-* da R70 com par claro e escuro, aplicados por prefers-color-scheme na landing, sem quebrar o tema HeroUI das outras telas
+  - Mesmo comportamento da R72 - menu em folha com foco contido e fundo inerte, barra fixa fora do teclado quando escondida, alvos de 44 px, movimento reduzido
+  - Comparação de captura com o protótipo em 375 e 1440, claro e escuro, salva em .visual/port-001/ lado a lado, e o spec e2e afirma textos, rotas, contraste e ausência de requisição externa
+  - O contrato de escopo aceita exatamente HeroUI e @material/web durante a migração
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts
+risk: primeira impressão pública e arquitetura de componentes
+adr: docs/decisions/ADR-20261022-porte-visual-material-web.md
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
