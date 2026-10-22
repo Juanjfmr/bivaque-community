@@ -1,4 +1,4 @@
-﻿task_id: DATA-001
+task_id: DATA-001
 objective: >
   O banco ganha o catálogo de bairros por cidade (nome, chave normalizada sem acento, zona e ponto
   central público do bairro), com busca por nome, e o perfil ganha o bairro opcional com a chave
@@ -111,7 +111,7 @@ closure:
 #   o mesmo co-membro aprovado (003) passa a ser exercitado com a chave
 #   DESLIGADA (perfil continua visível, bairro NULL) e depois com a chave
 #   religada (bairro volta). A asserção de perfil visível existe para separar
-#   "não vê o bairro" de "não vê o perfil".
+#   não ver o bairro de não ver o perfil.
 #   Prova de vermelho: substituí a função no banco local por uma variante em que
 #   a chave só governa o ramo de cidade (o bug descrito na revisão) e rodei o
 #   arquivo:
@@ -122,7 +122,7 @@ closure:
 #
 # Achado 3 — purga do bairro, em supabase/tests/account-deletion.sql
 # (plan 41 -> 44):
-#   24e preenche `neighborhood = 'Ponta Negra'` no titular e confirma que está
+#   24e preenche `neighborhood = Ponta Negra` no titular e confirma que está
 #   gravado; 25c confere NULL depois de `finalize_account_deletion`; 26 confere
 #   NULL outra vez depois da repetição idempotente.
 #   Prova de vermelho: removi `neighborhood = null` da definição vigente da
@@ -133,8 +133,8 @@ closure:
 #   Restaurada a definição, o mesmo arquivo passa 44/44.
 #
 # Verde, lido nesta sessão:
-#   - profile-neighborhood-privacy.sql: 35/35 (nenhum "not ok").
-#   - account-deletion.sql: 44/44 (nenhum "not ok").
+#   - profile-neighborhood-privacy.sql: 35/35 (nenhum not ok).
+#   - account-deletion.sql: 44/44 (nenhum not ok).
 #   - as duas funções restauradas foram conferidas por prosrc, contendo
 #     `neighborhood = null` e a condição original de `show_neighborhood`.
 #
