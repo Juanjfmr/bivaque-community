@@ -2575,6 +2575,16 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              p_code_hash: string
+              p_invitee_email_digest: string
+              p_invitee_email_hint: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
       create_group: {
         Args: {
           p_description?: string
@@ -2644,6 +2654,26 @@ export type Database = {
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string
+      }
+      family_invite_code_accept: {
+        Args: {
+          p_accepted_by_user_id: string
+          p_code_hash: string
+          p_origin_digest: string
+        }
+        Returns: string
+      }
+      family_invite_code_preview: {
+        Args: {
+          p_code_hash: string
+          p_email_digest?: string
+          p_origin_digest: string
+        }
+        Returns: {
+          expires_at: string
+          invitee_email_hint: string
+          inviter_name: string
+        }[]
       }
       feed_community: {
         Args: {
@@ -3165,15 +3195,26 @@ export type Database = {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
       }
-      resend_family_invitation: {
-        Args: {
-          p_invitation_id: string
-          p_invitee_email_digest: string
-          p_inviter_user_id: string
-          p_token_digest: string
-        }
-        Returns: string
-      }
+      resend_family_invitation:
+        | {
+            Args: {
+              p_invitation_id: string
+              p_invitee_email_digest: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_code_hash: string
+              p_invitation_id: string
+              p_invitee_email_digest: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
       resolve_report: {
         Args: {
           p_action: string
