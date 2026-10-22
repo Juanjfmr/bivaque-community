@@ -50,3 +50,54 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidência de execução — 2026-10-22, branch codex/dados-bairros
+#
+# Base: f0d182d7 (branch), origin/main 9853e5fe.
+#
+# TDD vermelho, antes das migrations, na mesma DB local:
+#   npx pnpm@11.18.0 test:db
+#   -> neighborhoods.sql falhou nas 4 asserções de estrutura (has_table,
+#      has_column, col_is_unique, has_function) e parou em 4/20.
+#   -> profile-neighborhood-privacy.sql falhou em 1/32 (função ausente).
+#
+# Migrations criadas:
+#   - 20261022120000_neighborhood_catalog.sql
+#   - 20261022120100_neighborhood_catalog_data.sql
+#   - 20261022120200_profile_neighborhood.sql
+#
+# Aplicação: npx supabase migration up --local aplicou as três (NOTICE esperado
+# de unaccent já existente). As três também rodaram com ON_ERROR_STOP=1 num
+# banco isolado que NÃO tinha as migrations desta tarefa (clone do baseline,
+# com o schema aditivo do DATA-002 presente por dividir o mesmo stack local),
+# sem nenhum erro de aplicação.
+#
+# pgTAP verde desta tarefa:
+#   - neighborhoods.sql: 20/20.
+#   - profile-neighborhood-privacy.sql: 32/32.
+#   - foundation-schema.test.sql e rls-or-column-regression.test.sql (guardas
+#     de coluna de profiles) verdes com as duas colunas novas.
+#
+# npx supabase db reset --local --no-seed: BLOQUEADO pelo ambiente (permission
+# rejected em execução não interativa). O test:db roda, mas contra a DB local
+# com o seed de desenvolvimento: 23 arquivos falham por colisão de fixture com
+# o seed (uuid fixo duplicado, contagem de perfis). O mesmo conjunto falha num
+# clone sem as migrations desta tarefa e nenhuma falha é 42501 — não é
+# regressão desta entrega. Reset limpo + test:db ficam com o coordenador.
+#
+# npx pnpm@11.18.0 gate: lint, typecheck, test e secrets verdes; build pulado
+# (apps/web/.env.local ausente).
+#
+# service_requests não tem coluna de bairro: o campo de localização do pedido é
+# `region` (lido no painel do prestador ao lado da cidade). A regra de CEP foi
+# aplicada nele, sem criar uma segunda coluna de localização.
+#
+# Colisão de ordem com DATA-002: a migration
+# 20261022130524_account_deletion_hidden_and_support (branch
+# codex/dados-ocultar-chamados) redefine finalize_account_deletion DEPOIS desta
+# e precisa manter `neighborhood = null`; a cópia desta tarefa já traz a linha.
+# Quem aplicar por último reconcilia as duas definições.
+#
+# Commits: afed81b3 (catálogo + carga + pgTAP), c2fbd69f (perfil + CEP + tipos).
+# ─────────────────────────────────────────────────────────────────────────────
