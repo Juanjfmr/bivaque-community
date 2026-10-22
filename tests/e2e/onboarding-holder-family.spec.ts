@@ -84,8 +84,10 @@ test.describe("onboarding: verified holder and invited family", () => {
     await page.goto("/")
 
     // The root is a public marketing landing; it does not redirect to /login.
+    // PORT-001 (R73): a landing v8 usa "Juntos somos mais fortes."; a raiz
+    // pública e a ausência de redirecionamento continuam sendo o contrato.
     await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
+    await expect(page.getByText("Juntos somos mais fortes.").first()).toBeVisible()
   })
 
   // Renomeado e reescrito em 2026-09-07 com razão explícita: o envio por link

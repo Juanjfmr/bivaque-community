@@ -17,8 +17,10 @@ test.describe("holder onboarding journey", () => {
 
     // Then the public marketing landing is served — anonymous visitors are not
     // redirected to /login (the landing is the acquisition entry point).
+    // PORT-001 (R73): o texto da landing v8 é "Juntos somos mais fortes."; o
+    // que o spec protege continua sendo a raiz pública, sem redirecionamento.
     await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
+    await expect(page.getByText("Juntos somos mais fortes.").first()).toBeVisible()
   })
 
   // Expectativa trocada em 2026-09-07 com razão explícita, não para ficar
@@ -409,7 +411,9 @@ test.describe("preauth routes render no app shell", () => {
 
     // Then the public landing renders and the authenticated app shell (BottomNav)
     // is absent — the landing is its own marketing chrome, not the (shell) layout.
-    await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
+    // PORT-001 (R73): o texto passou a ser o da landing v8; a fronteira que o
+    // spec protege (raiz pública, sem shell do app) não mudou.
+    await expect(page.getByText("Juntos somos mais fortes.").first()).toBeVisible()
     await expect(page.locator(BOTTOM_NAV)).toHaveCount(0)
   })
 
