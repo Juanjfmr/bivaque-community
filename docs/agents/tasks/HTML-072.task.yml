@@ -70,3 +70,9 @@ closure:
 # então não há evidência de que o Next compila nesta worktree.
 # Relatório: prototypes/bivaque-html/docs/ROUND_72.md
 
+# Confirmação do Codex (22/10): REPROVADO — subtítulo do menu Criar 4,40:1 no hover, sync() da barra
+# ignorando a folha aberta e falsos positivos na prova. Coordenador reforçou a prova (vermelho 22/28:
+# create-menu-neutral no 375 com 4,09:1 e 4,39:1 no toque; landing-focus-trap com a barra saindo do
+# isolamento) e corrigiu: opções do Criar em surface-container-lowest; sync() respeita a folha aberta
+# e fechar a folha recalcula a barra. Build b6eb1c5c: round72 28/28, round71 44/44, round70 24/24 nos
+# 4 contextos; R53 4/4 e R54 6/6 em 375-light; gate verde.

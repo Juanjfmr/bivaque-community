@@ -118,7 +118,7 @@ function landingMount(el){
  // assistiva (inert). Fora dela não há o que focar enquanto a folha está aberta.
  const outside=[$('.ld-skip',el),top,$('#ld-main',el),$('.ld-footer',el),bar].filter(Boolean);
  const sheetFocusables=()=>$$('a[href],button,md-filled-button,md-outlined-button,md-text-button,[tabindex]:not([tabindex="-1"])',sheet).filter(x=>x.getClientRects().length&&!x.disabled);
- const sync=()=>{top.classList.toggle('ld-show-cta',heroGone);const barShown=heroGone&&!fimIn;bar.classList.toggle('ld-show',barShown);bar.inert=!barShown;if(barShown)bar.removeAttribute('aria-hidden');else bar.setAttribute('aria-hidden','true');};
+ const sync=()=>{top.classList.toggle('ld-show-cta',heroGone);const barShown=heroGone&&!fimIn;bar.classList.toggle('ld-show',barShown);/* Com a folha aberta a barra continua isolada, mesmo que um observador a mostre por baixo. */const reachable=barShown&&!open;bar.inert=!reachable;if(reachable)bar.removeAttribute('aria-hidden');else bar.setAttribute('aria-hidden','true');};
  // O topo fica transparente sobre a foto e ganha o fundo da superfície depois dela.
  watch(([entry])=>top.classList.toggle('ld-solid',!entry.isIntersecting),{root:main,rootMargin:'-64px 0px 0px 0px'}).observe(media);
  // O CTA do topo pode nascer abaixo da dobra (celular): o estado dele vem da geometria a cada
@@ -142,6 +142,7 @@ function landingMount(el){
  const setMenu=(state,restore=true)=>{
   open=state;sheet.classList.toggle('ld-open',state);menuBtn.setAttribute('aria-expanded',String(state));main.classList.toggle('ld-locked',state);
   for(const node of outside)node.inert=state;
+  sync();/* fechar a folha devolve a barra ao próprio estado (inerte se estiver escondida) */
   if(state){const close=$('[data-ld-close]',sheet);if(close)close.focus({preventScroll:true});}
   else if(restore)menuBtn.focus({preventScroll:true});
  };
