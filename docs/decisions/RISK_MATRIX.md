@@ -10,6 +10,10 @@ do mesmo contrato. O processo atual §0 define a cadência por lote.
    alteração de sua autorização são coisas diferentes.
 2. Reutilize o ADR aprovado que cobre exatamente a execução. Mudar finalidade, público,
    dado, permissão, retenção ou reversibilidade exige reavaliar a decisão.
+   Os ADRs de outubro usam `status: accepted`, com dono/data e `critic_verdict: PASS`;
+   conservar essa aprovação existente. Não exigir renomear status, refazer alternativas
+   ou reabrir a escolha por divergência com o formato antigo. Reenquadrar implementação
+   fora da decisão continua obrigatório; presença desses campos não substitui conferir a autoridade.
 3. Valide o contrato. A elevação automática é conservadora: não remova termos verdadeiros
    nem reduza o nível para obter verde. Registre a divergência e resolva o enquadramento
    antes de executar; o validador atual não implementa um mecanismo de dispensa.

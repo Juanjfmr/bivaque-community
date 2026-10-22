@@ -1,6 +1,8 @@
 task_id: HRN-006
 objective: Consolidar instrucoes operacionais e corrigir descricoes obsoletas do harness
 authority:
+  - Pedido posterior de Juan para reconciliar as mudancas documentais com a main atual
+  - Main 37702a86d25870e5a662d4c766ebde0c2827b88d e PRs 99 a 105 integrados
   - Pedido de Juan para revisar regras, deploy, matriz e Kanban em 2026-10-22
   - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0
   - tools/backend-kanban/public/board.json DRIFT-STATUS-RECONCILIATION
@@ -10,6 +12,13 @@ baseline:
 allowed_paths:
   - AGENTS.md
   - docs/decisions/RISK_MATRIX.md
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md
+  - docs/agents/HANDOFF-COORDENACAO-2026-10-22.md
+  - docs/agents/HANDOFF-COORDENACAO-2026-10-19.md
+  - docs/AUDITORIA_ADERENCIA_2026-10-19.md
   - docs/agents/TASK_CONTRACT.md
   - docs/agents/AGENT_ARCHITECTURE.md
   - docs/agents/tasks/HRN-006.task.yml
@@ -26,6 +35,8 @@ forbidden:
   - publicar, executar operacao remota ou reduzir autorizacao de seguranca
   - descartar alteracoes de outras sessoes
 acceptance:
+  - Autoridade documental segue a main fixada e distingue estado integrado do checkout local
+  - Board conserva os cards integrados e separa provas historicas locais sem fechar trabalho novo
   - Instrucoes remetem ao processo atual e nao exigem prova duplicada
   - Documentacao distingue decisao nova, execucao aprovada e limites do validador
   - Guia distingue deploy existente de protecoes ainda pendentes

@@ -3,6 +3,7 @@
 @AGENTS.md
 
 Shared rules and task-specific reading routes live in `AGENTS.md`; do not duplicate them here.
+Use the current October ADRs/handoff linked there before September reconstruction instructions; check the latest main/PR state before dispatching from this older checkout.
 Respond in Brazilian Portuguese. Local procedures: `.claude/skills/`.
 Before delegation, follow [AGENT_ARCHITECTURE.md](docs/agents/AGENT_ARCHITECTURE.md) and validate the batch contract.
 

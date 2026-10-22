@@ -3,6 +3,11 @@
 O arquivo canônico é [public/board.json](public/board.json); [BOARD.md](BOARD.md) é seu resumo gerado.
 A interface é somente leitura. Git sincroniza o trabalho; não há banco, login ou atualização por drag-and-drop.
 
+Snapshot reconciliado com main `37702a86` (PRs #99–#105). Status importados descrevem essa linha
+integrada; não provam funcionamento no checkout antigo. Antes de escolher trabalho, confira PRs
+posteriores e a base de código. Preserve evidência local antiga com a revisão original, sem
+rebaixar cards já integrados ou confundir a prova de uma branch com a de outra.
+
 ## Consultar e executar
 
 ```sh
