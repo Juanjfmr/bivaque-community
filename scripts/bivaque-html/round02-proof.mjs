@@ -240,7 +240,8 @@ const checkpoints = {
       `Sair não voltou à landing: ${await entryUrl(page)}`,
     )
     expect(JSON.stringify(await stored(page)) === before, "sair gravou dados parciais")
-    await page.locator('#main [data-action="entry-login"]').click()
+    // R71: a landing v8 tem "Entrar" no topo, na folha do menu e no rodapé; o do topo é o primeiro.
+    await page.locator('#main [data-action="entry-login"]').first().click()
     await settle(page)
     await fill(page, "en-email", "joana.teste@exemplo.com")
     await fill(page, "en-pass-login", "senha1234")

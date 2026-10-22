@@ -813,10 +813,11 @@ async function verify(width, theme) {
       }, `negocio/${biz.id}`)
       await action("plans", undefined, { keyboard: true })
       const text = await page.locator("#dialog").innerText()
-      assert.match(text, /teste|demonstra/i)
-      assert.match(text, /nenhum pagamento/i)
-      assert.match(text, /9,90/)
-      assert.match(text, /39/)
+      // R69 (lançamento sem cobrança): Planos explica que a página é gratuita e que os pagos vêm depois,
+      // sem preço. O produto pago, atrás da chave de laboratório, é guardado pelas R06, R35, R52, R63 e R65.
+      assert.match(text, /gratuita e completa/i)
+      assert.match(text, /vêm depois/i)
+      assert.doesNotMatch(text, /R\$|9,90|39,90/)
       await action("close-dialog")
       await expectFocus(page, "plans")
       assert.equal((await state(page)).subscription.tier, fixture.subscription.tier)
