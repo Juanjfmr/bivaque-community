@@ -1,7 +1,7 @@
 # Estado implementado — Bivaque Community
 
 > **O que o produto faz hoje.** Este documento descreve o código que existe, não o produto
-> que foi decidido. Para visão, decisões e roadmap, ver [`BIVAQUE.md`](BIVAQUE.md).
+> que foi decidido. Para a entrega atual, ver a [especificação web](superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md); [`BIVAQUE.md`](BIVAQUE.md) guarda o contexto histórico.
 >
 > Substitui [`docs/journeys/MAP.md`](journeys/MAP.md), que misturava estado e intenção e,
 > por isso, marcava como "Corrigida" linha cujo ciclo de usuário não fechava.
@@ -42,7 +42,7 @@ admissões.
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Login e primeiro acesso | `/login` e `/signup` separam a intenção sem introduzir senha: o e-mail em login usa `shouldCreateUser: false`, o cadastro cria deliberadamente e ambos seguem por link ou Google para `/consent`; CTAs de aquisição da landing apontam para `/signup` | igual | o callback real via link/Google continua fora do E2E porque o mailpit local não responde | `login/components/bivaque-sign-in.tsx`, `signup/page.tsx`, `landing/landing.tsx`, `proxy.ts` `[V]` | B |
+| Login e primeiro acesso | `/login` e `/signup` usam e-mail e senha; Google permanece como alternativa. O cadastro exige aceite e chama `recordConsentAction`; recuperação por `/recuperar-senha` e `/nova-senha`. | contrato da especificação web atual e ADR-20260907-login-com-senha | leitura estática reconciliada em 2026-10-22; confirmação real por e-mail, Google e retomada não foram exercitados nesta revisão | `login/components/bivaque-sign-in.tsx`, `lib/auth/password-auth.ts`, `signup/page.tsx`, `recuperar-senha/page.tsx`, `nova-senha/page.tsx` `[V]` | B |
 | Callback | `next` validado como caminho interno antes do redirect | igual | o E2E do fluxo de admissão rodou (lote 16/08, serial verde); o callback real via magic link continua fora — o mailpit local não responde, specs injetam a sessão | `auth/callback/route.ts`, `lib/security/sanitize-next.ts` `[V]` | A (código feito) |
 | Falha de callback | redireciona para tela humana com "voltar para o login" | tela humana com recomeço | falta o E2E do sad path | `auth/callback/route.ts`, `auth/callback-error/page.tsx` `[V]` | A (código feito) |
 | Gate do shell | proxy checa consentimento, sessão e membership; `/onboarding` e `/onboarding/status` ficam fora do shell; `my_verification_status()` (RPC SECURITY DEFINER, sem parâmetros) faz o roteamento por estado real — `verified` sem membership → `/onboarding/locality`; `pending`/`temporary_error`/`rejected` → `/onboarding/status`; `null` (nunca verificou) → `/onboarding`. (D2 Task 1, commit `331f0f9`.) | derivar do estado real de verificação | falta o E2E dos estados `pending`/`rejected` | `proxy.ts:9-154`, `20260820000002_my_verification_status.sql` `[V]` | D (código feito) |

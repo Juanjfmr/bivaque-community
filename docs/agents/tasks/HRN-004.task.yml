@@ -1,0 +1,65 @@
+task_id: HRN-004
+objective: >
+  A manutencao usa um gate sem build omitido, um build por CI, chamadas RPC
+  baseadas no contrato gerado e preparacao compartilhada das capturas.
+authority:
+  - Pedido do usuario em 2026-10-22 para executar as seis simplificacoes da revisao Ponytail
+  - tools/backend-kanban/public/board.json MVP-05-TEST-BASELINE e PROXY-SURFACE-RISK
+  - docs/decisions/ADR-20260907-login-com-senha.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisao estatica e simulacao de 2026-10-22 mostram npx duplicado no loop,
+    verde sem build no gate e quatro wrappers que repetem funcoes ja geradas.
+allowed_paths:
+  - scripts/gate.mjs
+  - scripts/visual/loop.mjs
+  - scripts/bivaque-html/capture-support.mjs
+  - scripts/bivaque-html/capture-support.test.mjs
+  - scripts/bivaque-html/*-shots.mjs
+  - apps/web/proxy.ts
+  - apps/web/lib/*-rpcs.ts
+  - apps/web/app/(admin)/guide-queue/page.tsx
+  - apps/web/app/(shell)/communities/community-invite-actions.ts
+  - apps/web/app/(shell)/invite/[token]/page.tsx
+  - apps/web/app/(shell)/profile/page.tsx
+  - apps/web/app/(shell)/profile/[userId]/page.tsx
+  - apps/web/app/(shell)/profile/interests-actions.ts
+  - playwright.config.ts
+  - tests/scope/gate-execution.test.mjs
+  - tests/unit/security/proxy-gate.test.ts
+  - tests/unit/playwright-start.test.ts
+  - tests/unit/capture-start.test.ts
+  - README.md
+  - AGENTS.md
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md
+  - .claude/skills/gate-before-done/SKILL.md
+  - CLAUDE.md
+  - docs/PRODUCT_STATUS.md
+  - docs/agents/tasks/HRN-004.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - alterar migrations, dados, policies, RLS ou tipos gerados
+  - remover provas historicas ou mudar o conteudo do prototipo
+  - incorporar alteracoes anteriores de outras sessoes ao commit
+acceptance:
+  - Gate completo executa build e interrompe na primeira falha; fast declara resultado parcial
+  - Loop visual reutiliza o gate sem duplicar executavel ou etapas
+  - Variavel aposentada de bypass nao dispensa o gate de rota
+  - Chamadas RPC conservam argumentos, erros e valores nulos aceitos pelo SQL
+  - CI inicia o build existente e E2E local continua construindo antes de iniciar
+  - Capturadores compartilham preparacao sem alterar cenas, viewports ou transporte
+  - Documentos de entrada apontam para a autoridade atual sem repetir regras compartilhadas
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-004.task.yml
+  - npx pnpm@11.18.0 gate
+  - node --test scripts/bivaque-html/capture-support.test.mjs
+  - npx pnpm@11.18.0 test:e2e
+risk: Roteamento e compatibilidade de chamadas existentes
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

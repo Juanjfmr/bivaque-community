@@ -1,3 +1,29 @@
+import { createServer } from "node:http"
+import { chromium } from "@playwright/test"
+
+export function launchCaptureBrowser(args = []) {
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+  return chromium.launch({ ...(executablePath ? { executablePath } : {}), args })
+}
+
+export async function startCapture(html, args = []) {
+  const server = createServer((_, response) =>
+    response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(html),
+  )
+  await new Promise((resolve, reject) => {
+    server.once("error", reject)
+    server.listen(0, "127.0.0.1", resolve)
+  })
+  try {
+    const browser = await launchCaptureBrowser(args)
+    const url = `http://127.0.0.1:${server.address().port}/`
+    return { server, url, browser }
+  } catch (error) {
+    server.close()
+    throw error
+  }
+}
+
 // Capture support waits for the real UI; it does not replace or hide components.
 export async function createDeterministicContext(browser, { width, theme }) {
   const context = await browser.newContext({

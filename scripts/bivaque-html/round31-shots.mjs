@@ -1,8 +1,6 @@
 import { mkdirSync, readFileSync } from "node:fs"
-import { createServer } from "node:http"
 import { join, resolve } from "node:path"
-import { chromium } from "@playwright/test"
-import { createDeterministicContext } from "./capture-support.mjs"
+import { createDeterministicContext, startCapture } from "./capture-support.mjs"
 
 // Capturas do mapa de bairros com a rede de verdade (Rodada 31): node round31-shots.mjs <pasta>
 // O MapLibre vem do unpkg e o mapa-base do OpenFreeMap, como no aparelho de quem usa.
@@ -10,18 +8,9 @@ const root = resolve(import.meta.dirname, "../..")
 const out = resolve(root, process.argv[2] ?? ".visual/bivaque-html-round31/telas")
 mkdirSync(out, { recursive: true })
 const html = readFileSync(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html"))
-const server = createServer((_, res) =>
-  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(html),
-)
-await new Promise((done) => server.listen(0, "127.0.0.1", done))
-const url = `http://127.0.0.1:${server.address().port}/`
-const browser = await chromium.launch(
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-    ? {
-        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-        args: ["--use-gl=swiftshader", "--enable-webgl"],
-      }
-    : {},
+const { server, url, browser } = await startCapture(
+  html,
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? ["--use-gl=swiftshader", "--enable-webgl"] : [],
 )
 const hosts = new Set()
 for (const [width, theme] of [

@@ -1,57 +1,10 @@
 # Bivaque Community — Claude Code
 
-## Reconstrução funcional web — revisão de 08/09/2026
-
-Leia `docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md` para a entrega atual, somente web: catálogo de rotas, funcionamento, sequência W00–W09 e gates. Substitui o plano anterior de apresentação sem persistência. UI isolada não conclui fluxo; backend, operação e retorno necessários entram na entrega. Mobile não bloqueia conclusão web. Preservar decisões técnicas R3 e registrar bloqueios reais; não reabrir escolhas de produto já autorizadas.
-
-## Owner corrections — 2026-09-07
-
-Read [the six explicit corrections](docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md). They require city-wide questions, event information requests, an optional reason for joining, the exact military label, fast CPF verification with identity/AI fallback, and optional self-declared Armed Force/OM with individual visibility controls. These are current product instructions, not delivered runtime. They supersede conflicting older product prohibitions; retain server authorization, privacy and data-integrity requirements.
-
-> Fonte de verdade: **AGENTS.md** (na raiz). Este CLAUDE.md é uma ponte fina —
-> leia o AGENTS.md inteiro antes de qualquer trabalho, e siga-o.
-
 @AGENTS.md
 
-## Versão atual — leitura obrigatória
-
-Leia [o processo de construção de 06/09/2026](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
-antes de planejar, implementar ou revisar a reconstrução. A autorização atual do usuário
-substitui decisões antigas conflitantes de produto, aparência, navegação e sequência.
-As regras técnicas e de proteção dos dados continuam aplicáveis. A seção 14 explica o que
-é verificação independente e quais camadas ainda dependem de execução externa à sessão.
-
-## Ampliação visual — 07/09/2026
-
-Após o processo, leia o [mapa de telas](docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md) e as [instruções do guia](docs/design/visual-guide-2026-09-06/AGENTS.md). Inspecione a referência da plataforma e os estados de falha antes de implementar. Não confunda imagem gerada com fluxo funcional nem repita onboarding já concluído.
-
-## Regras específicas do Claude Code
-
-- Responda sempre em português brasileiro.
-- Gate obrigatório antes de declarar pronto: `npx pnpm@11.18.0 gate` — ver a skill `gate-before-done`.
-- Plano como contrato: planos vivem em `docs/superpowers/plans/`; execute todo a todo com a skill `plan-execution`; pare se o todo estiver errado ou impossível.
-- Implementação e teste são um todo só — nunca entregue código sem o teste na mesma unidade.
-
-## Arquitetura de agentes (leia antes de delegar)
-
-**[`docs/agents/AGENT_ARCHITECTURE.md`](docs/agents/AGENT_ARCHITECTURE.md)** — sete papéis,
-o laço de execução, os padrões de composição e o roteamento por risco.
-
-- **A unidade de execução é o contrato de tarefa**, não o agente: `docs/agents/tasks/*.task.yml`,
-  validados por `node scripts/agents/task-contract.mjs`. Contrato inválido não vai para execução.
-  Formato em [`docs/agents/TASK_CONTRACT.md`](docs/agents/TASK_CONTRACT.md).
-- **`implementer` ≠ `reviewer` ≠ `runtime-verifier`.** Quem implementou não revisa nem adjudica
-  a própria evidência. Não explique sua solução ao revisor antes do primeiro parecer dele.
-- **Subagente isolado é o default; time é exceção justificada** — agente que conversa produz
-  erro correlacionado, e erro correlacionado some na revisão.
-- **Existir não é evidência.** Fechar tarefa exige comportamento observado — skill `runtime-proof`.
-- **`retry_budget` esgotado nunca vira `PASS`**: vira `FAIL`, `BLOCKED` ou `HUMAN_DECISION`.
-- As skills estão versionadas em `.claude/skills/` — não dependa de skill instalada na máquina.
-- **Armadilhas conhecidas (ver AGENTS.md §Known traps):**
-  - O perfil fantasma "Visual Capture": `.visual/` insere um profile no banco local. Não rodar dev server nem captura visual entre `db:reset` e `test:db`, senão 6 asserts de pgTAP quebram com aparência de regressão real.
-  - `dev-server.pid` / `dev-server.log` stale: apagar e tentar de novo antes de atribuir falha ao código.
-- Supabase: nunca editar migration aplicada; adicionar timestamped via `supabase migration new`. Usar a skill `supabase` (checklist RLS inline) para qualquer schema/policy.
-- Secrets: nunca commitar `.env`; nunca ecoar valor de secret.
+As regras compartilhadas vivem em `AGENTS.md`; este arquivo contém somente particularidades do Claude Code.
+Responda em português brasileiro. A seção 0 do [processo atual](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md) define a cadência enxuta e a ordem de consulta.
+Antes de delegar, siga [AGENT_ARCHITECTURE.md](docs/agents/AGENT_ARCHITECTURE.md) e o contrato validado do lote. As skills locais ficam em `.claude/skills/`.
 
 ## Grafo de código (codebase-memory-mcp)
 

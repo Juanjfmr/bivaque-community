@@ -10,7 +10,6 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
-import { callUserGroupInterestsRpc } from "../../../lib/user-group-interests-rpcs"
 
 type AvailableGroup = {
   id: string
@@ -74,11 +73,11 @@ export async function getUserInterestsDataAction(): Promise<InterestsData | null
 
   const supabase = createServiceClient()
   const [availableResult, recordedResult] = await Promise.all([
-    callUserGroupInterestsRpc(supabase, "list_available_groups_for_interests", {
+    supabase.rpc("list_available_groups_for_interests", {
       p_user_id: userId,
       p_locality_id: localityId,
     }),
-    callUserGroupInterestsRpc(supabase, "list_user_group_interests", {
+    supabase.rpc("list_user_group_interests", {
       p_user_id: userId,
     }),
   ])
@@ -99,7 +98,7 @@ export async function recordUserGroupInterestsAction(formData: FormData) {
     .filter((v): v is string => typeof v === "string" && v.length > 0)
 
   const supabase = createServiceClient()
-  const { error } = await callUserGroupInterestsRpc(supabase, "record_user_group_interests", {
+  const { error } = await supabase.rpc("record_user_group_interests", {
     p_user_id: userId,
     p_locality_id: localityId,
     p_group_ids: groupIds,
@@ -121,7 +120,7 @@ export async function clearUserGroupInterestsAction() {
   if (!userId || !localityId) throw new Error("não autenticado")
 
   const supabase = createServiceClient()
-  const { error } = await callUserGroupInterestsRpc(supabase, "record_user_group_interests", {
+  const { error } = await supabase.rpc("record_user_group_interests", {
     p_user_id: userId,
     p_locality_id: localityId,
     p_group_ids: [] as string[],

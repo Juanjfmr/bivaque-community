@@ -29,18 +29,8 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 const SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"]
 const SUPABASE_ANON_KEY = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 
-// Test-only escape hatch: set BIVAQUE_AUTH_BYPASS=true in apps/web/.env.local
-// (gitignored) to disable the auth/consent gate while developing/QA'ing.
-// It is never set in CI or production, so the gate stays enforced there.
-const AUTH_BYPASS = process.env["BIVAQUE_AUTH_BYPASS"] === "true"
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Test-only: skip every gate when the bypass env var is enabled.
-  if (AUTH_BYPASS) {
-    return NextResponse.next()
-  }
 
   // Public paths bypass all checks — no session round-trip needed.
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {

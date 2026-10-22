@@ -2,7 +2,7 @@ import { Button, Input } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
-import { callGuideCurationRpc } from "../../../lib/guide-curation-rpcs"
+import type { Database } from "supabase/database.generated"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 export const dynamic = "force-dynamic"
@@ -171,7 +171,7 @@ async function promoteReplyToGuideAction(formData: FormData) {
   const cleanPhone = typeof phone === "string" && phone.trim().length > 0 ? phone.trim() : null
 
   const serviceClient = createServiceClient()
-  const { error } = await callGuideCurationRpc(serviceClient, "promote_reply_to_guide_entry", {
+  const { error } = await serviceClient.rpc("promote_reply_to_guide_entry", {
     p_reply_id: replyId,
     p_locality_id: localityId,
     p_category: category as GuideCategory,
@@ -180,7 +180,8 @@ async function promoteReplyToGuideAction(formData: FormData) {
     p_website_url: cleanWebsite,
     p_phone: cleanPhone,
     p_operator_user_id: userId,
-  })
+    // O SQL aceita null; o gerador não representa nulabilidade dos argumentos.
+  } as Database["public"]["Functions"]["promote_reply_to_guide_entry"]["Args"])
 
   if (error) {
     if (error.message.includes("only operators")) {
@@ -253,7 +254,7 @@ export default async function AdminGuidePage() {
       .eq("status", "pending")
       .order("created_at", { ascending: true }),
     localityId
-      ? callGuideCurationRpc(serviceClient, "list_promotable_replies", {
+      ? serviceClient.rpc("list_promotable_replies", {
           p_locality_id: localityId,
           p_limit: 30,
         })

@@ -1,23 +1,13 @@
 import { mkdirSync, readFileSync } from "node:fs"
-import { createServer } from "node:http"
 import { join, resolve } from "node:path"
-import { chromium } from "@playwright/test"
+import { startCapture } from "./capture-support.mjs"
 
 // Captura da microanimação ao indicar (Rodada 34): node round34-shots.mjs <pasta>
 const root = resolve(import.meta.dirname, "../..")
 const out = resolve(root, process.argv[2] ?? ".visual/bivaque-html-round34/telas")
 mkdirSync(out, { recursive: true })
 const html = readFileSync(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html"))
-const server = createServer((_, res) =>
-  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(html),
-)
-await new Promise((done) => server.listen(0, "127.0.0.1", done))
-const url = `http://127.0.0.1:${server.address().port}/`
-const browser = await chromium.launch(
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-    ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
-    : {},
-)
+const { server, url, browser } = await startCapture(html)
 // Contexto comum: o determinístico congela as animações CSS que esta captura quer mostrar.
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 const page = await context.newPage()

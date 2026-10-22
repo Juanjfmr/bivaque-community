@@ -13,7 +13,8 @@ export default defineConfig({
       : {}),
   },
   webServer: {
-    command: "pnpm --filter web build && pnpm --filter web start --hostname 127.0.0.1 --port 3000",
+    // A CI já construiu este candidato; localmente o E2E continua autossuficiente.
+    command: `${process.env.CI ? "" : "pnpm --filter web build && "}pnpm --filter web start --hostname 127.0.0.1 --port 3000`,
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     // The Next production build does not fit the 60s default on a cold

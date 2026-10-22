@@ -11,7 +11,6 @@ import { allowSlidingWindow, LIMITS } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
-import { callCommunityInviteRpc } from "../../../lib/community-invite-rpcs"
 import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createLimiterStore } from "../../../lib/limits"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
@@ -73,11 +72,11 @@ export async function getCommunityInviteDataAction(
   const supabase = createServiceClient()
   const [verifiedResult, memberResult, pendingResult] = await Promise.all([
     supabase.rpc("is_verified_holder", { p_user_id: userId }),
-    callCommunityInviteRpc(supabase, "is_community_member", {
+    supabase.rpc("is_community_member", {
       p_community_id: communityId,
       p_user_id: userId,
     }),
-    callCommunityInviteRpc(supabase, "list_pending_community_invitations", {
+    supabase.rpc("list_pending_community_invitations", {
       p_inviter_user_id: userId,
       p_community_id: communityId,
     }),
@@ -113,16 +112,12 @@ export async function sendCommunityInviteAction(
   const tokenDigest = createHash("sha256").update(token).digest()
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  const { data: inviteId, error } = await callCommunityInviteRpc(
-    supabase,
-    "create_community_invitation",
-    {
-      p_community_id: communityId,
-      p_inviter_user_id: userId,
-      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
-      p_expires_at: expiresAt.toISOString(),
-    },
-  )
+  const { data: inviteId, error } = await supabase.rpc("create_community_invitation", {
+    p_community_id: communityId,
+    p_inviter_user_id: userId,
+    p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
+    p_expires_at: expiresAt.toISOString(),
+  })
 
   if (error) {
     if (error.message.includes("only verified members")) {
@@ -162,7 +157,7 @@ export async function revokeCommunityInviteAction(formData: FormData) {
   if (!userId) throw new Error("não autenticado")
 
   const supabase = createServiceClient()
-  const { error } = await callCommunityInviteRpc(supabase, "revoke_community_invitation", {
+  const { error } = await supabase.rpc("revoke_community_invitation", {
     p_invitation_id: inviteId,
     p_inviter_user_id: userId,
   })
@@ -195,14 +190,10 @@ export async function acceptCommunityInviteAction(
   const tokenDigest = createHash("sha256").update(Buffer.from(token, "hex")).digest()
 
   const supabase = createServiceClient()
-  const { data: communityId, error } = await callCommunityInviteRpc(
-    supabase,
-    "accept_community_invitation",
-    {
-      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
-      p_user_id: userId,
-    },
-  )
+  const { data: communityId, error } = await supabase.rpc("accept_community_invitation", {
+    p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
+    p_user_id: userId,
+  })
 
   if (error) {
     if (error.message.includes("verification required")) {

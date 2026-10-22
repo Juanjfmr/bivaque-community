@@ -1,7 +1,7 @@
 # Bivaque Community
 
-Comunidade local de acesso controlado para militares federais, veteranos e pensionistas
-militares, em piloto na cidade de Manaus. Next.js renderizado no servidor, sobre Supabase.
+Comunidade nacional de acesso controlado para militares federais, veteranos, pensionistas
+militares e famílias. Manaus é uma localidade de referência. Next.js renderizado no servidor, sobre Supabase.
 
 Repositório privado. Não é pacote publicado — não existe `npm install bivaque-community`.
 
@@ -16,7 +16,9 @@ envelhece.
 
 | Pergunta | Documento |
 |---|---|
-| o que o produto **deve** ser — visão, papéis, decisões, monetização, sequenciamento | [`docs/BIVAQUE.md`](docs/BIVAQUE.md) |
+| o que entregar agora — escopo funcional web | [`Especificação web`](docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md) |
+| processo atual e precedência das decisões | [`Processo de construção, seção 0`](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md#0-execução-enxuta-das-pranchas-web--08092026) |
+| visão histórica e decisões compatíveis | [`docs/BIVAQUE.md`](docs/BIVAQUE.md) |
 | o que o código **faz** hoje, e a distância até o alvo | [`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) |
 | comandos, armadilhas de ambiente, contratos de teste | [`AGENTS.md`](AGENTS.md) |
 | decisões de risco alto, como ADR, e a régua que classifica risco | [`docs/decisions/`](docs/decisions/) |

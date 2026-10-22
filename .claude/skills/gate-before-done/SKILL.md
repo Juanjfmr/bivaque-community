@@ -12,7 +12,7 @@ description: >
 "Verifiquei" é um comando, não uma impressão.
 
 ```sh
-npx pnpm@11.18.0 gate          # lint -> typecheck -> test -> secrets; para no primeiro vermelho
+npx pnpm@11.18.0 gate          # lint -> typecheck -> build -> test -> secrets; para no primeiro vermelho
 npx pnpm@11.18.0 gate --fast   # lint + typecheck; loop de edição
 ```
 

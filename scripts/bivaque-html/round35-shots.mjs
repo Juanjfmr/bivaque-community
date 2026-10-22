@@ -1,15 +1,14 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { chromium } from "playwright"
+import { launchCaptureBrowser } from "./capture-support.mjs"
 
 // Rodada 35: capturas da Início do celular e da barra nova (não é prova).
 const root = process.cwd()
 const out = join(root, ".visual/bivaque-html-round35/telas")
 mkdirSync(out, { recursive: true })
 const url = pathToFileURL(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html")).href
-const exe = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-const browser = await chromium.launch(exe ? { executablePath: exe } : {})
+const browser = await launchCaptureBrowser()
 
 async function shot(name, { width, height = 844, dark = false, hash = "inicio", full = false }) {
   const mobile = width < 720

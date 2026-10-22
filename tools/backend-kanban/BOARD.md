@@ -2,7 +2,7 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-10-14
+**Snapshot:** 2026-10-22
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 

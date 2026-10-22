@@ -142,7 +142,7 @@ leaks so far.
 ## Commands (root, pnpm 11.18 pinned, Node >=22)
 
 ```sh
-npx pnpm@11.18.0 gate        # PORTA ÚNICA: lint -> typecheck -> test -> secrets, para no primeiro vermelho
+npx pnpm@11.18.0 gate        # PORTA ÚNICA: lint -> typecheck -> build -> test -> secrets, para no primeiro vermelho
 npx pnpm@11.18.0 gate --fast # só lint + typecheck, para o loop de edição (não autoriza declarar pronto)
 npx pnpm@11.18.0 lint        # biome check . (Biome 2.5.6)
 npx pnpm@11.18.0 typecheck   # tsc --noEmit across all workspaces

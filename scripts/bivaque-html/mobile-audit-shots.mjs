@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { chromium } from "playwright"
+import { launchCaptureBrowser } from "./capture-support.mjs"
 
 // Auditoria do protótipo no celular: captura as telas principais em 390x844 (tela cheia
 // rolável) e as mesmas rotas em 1440 para comparar. Não é prova; só gera as imagens.
@@ -23,11 +23,7 @@ const routes = [
   "guia",
   "salvos",
 ]
-const browser = await chromium.launch(
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-    ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
-    : {},
-)
+const browser = await launchCaptureBrowser()
 for (const [w, h, mobile] of [
   [390, 844, true],
   [1440, 900, false],

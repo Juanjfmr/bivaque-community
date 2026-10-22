@@ -16,7 +16,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
-import { callProfileRpc } from "../../../../lib/profile-rpcs"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
 import { type AffiliationRow, ARMED_FORCES, affiliationFromRows } from "../affiliation"
@@ -115,8 +114,7 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   // Visibility: viewer and target must share a locality. This RPC is the
   // single source of truth (Step 3 of the plan: read every error; no embed
   // across tables without an FK).
-  const { data: isVisible, error: visibilityError } = await callProfileRpc(
-    serviceClient,
+  const { data: isVisible, error: visibilityError } = await serviceClient.rpc(
     "profile_is_visible_to_viewer",
     { p_target_user_id: userId, p_viewer_user_id: viewer.id },
   )
@@ -160,11 +158,11 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
 
   // Posts and events: scoped by the RPC (Step 3: server-side visibility).
   const [postsResult, eventsResult] = await Promise.all([
-    callProfileRpc(serviceClient, "profile_posts_for", {
+    serviceClient.rpc("profile_posts_for", {
       p_target_user_id: userId,
       p_viewer_user_id: viewer.id,
     }),
-    callProfileRpc(serviceClient, "profile_events_for", {
+    serviceClient.rpc("profile_events_for", {
       p_target_user_id: userId,
       p_viewer_user_id: viewer.id,
     }),

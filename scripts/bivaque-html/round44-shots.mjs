@@ -1,14 +1,14 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { chromium } from "playwright"
+import { launchCaptureBrowser } from "./capture-support.mjs"
 
 const root = process.cwd()
 const out = join(root, ".visual/bivaque-html-round44/telas")
 mkdirSync(out, { recursive: true })
 // Rodada 44: busca vazia e digitando (não é prova).
 const url = pathToFileURL(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html")).href
-const b = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH })
+const b = await launchCaptureBrowser()
 const p = await (
   await b.newContext({
     viewport: { width: 390, height: 844 },

@@ -1,15 +1,14 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { chromium } from "playwright"
+import { launchCaptureBrowser } from "./capture-support.mjs"
 
 // Rodada 43: folha dos avisos e passo a passo da instalação no iPhone (não é prova).
 const root = process.cwd()
 const out = join(root, ".visual/bivaque-html-round43/telas")
 mkdirSync(out, { recursive: true })
 const url = pathToFileURL(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html")).href
-const exe = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-const browser = await chromium.launch(exe ? { executablePath: exe } : {})
+const browser = await launchCaptureBrowser()
 const ctx = await browser.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,

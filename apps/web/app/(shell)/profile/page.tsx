@@ -5,7 +5,6 @@ import { ChevronRight, MapPin, Settings } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
-import { callProfileRpc } from "../../../lib/profile-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -165,11 +164,11 @@ export default function ProfilePage() {
         // IS the target — the query returns "posts the user posted in
         // containers they can see". feed_posts(PILOT_LOCALITY_ID) used to leak
         // cross-user content; the RPC replaces it server-side.
-        callProfileRpc(supabase, "profile_posts_for", {
+        supabase.rpc("profile_posts_for", {
           p_target_user_id: user.id,
           p_viewer_user_id: user.id,
         }),
-        callProfileRpc(supabase, "profile_events_for", {
+        supabase.rpc("profile_events_for", {
           p_target_user_id: user.id,
           p_viewer_user_id: user.id,
         }),

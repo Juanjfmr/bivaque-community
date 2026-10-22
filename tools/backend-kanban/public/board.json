@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-10-14",
+  "updatedAt": "2026-10-22",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -203,15 +203,16 @@
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
         "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar.",
-        "Rodada00.1 em2026-10-13: typecheck separado falha TS2688 definicao yargs ausente em apps/mobile; fora do prototipo, diff mobile preservado. Proxima resolucao: reproduzir dependencias/typings no host sem alterar artefatos HTML."
+        "Rodada00.1 em2026-10-13: typecheck separado falha TS2688 definicao yargs ausente em apps/mobile; fora do prototipo, diff mobile preservado. Proxima resolucao: reproduzir dependencias/typings no host sem alterar artefatos HTML.",
+        "2026-10-22 HRN-004: gate completo sem omitir build; --fast declara parcial; loop visual reutiliza o gate. Quatro wrappers RPC removidos e callers usam database.generated.ts, preservando null na curadoria. CI inicia o build existente no E2E. Gate completo local PASS (lint, tipos, build, unit/privacy/scope e segredos); escopo inclui quatro testes novos de execucao do gate e testes de proxy/CI. Revisao e prova dirigida independentes registradas no fechamento do lote; este card permanece aberto pelos requisitos de baseline de banco e CI remoto. Fechamento dirigido: revisao independente PASS; verificador distinto PASS em 21 E2E (perfis/Guia/login, 3 viewports), 6 unitarios e 5 checks gate/capture. Nao substitui a regressao completa ou CI remoto."
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": [
         "Protocolo | ../../docs/superpowers/plans/README.md",
         "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-10-13",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-22",
+      "sourceRevision": "50e8ab460525c4377498a83e88e91a837d0d908f",
       "dependencies": []
     },
     {
@@ -993,11 +994,12 @@
         "provider_accounts expõe drift atual entre runtime e status",
         "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
-        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision"
+        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision",
+        "2026-10-22 HRN-004: README aponta para especificacao web e processo atual; PRODUCT_STATUS reconcilia a linha de entrada com email/senha observado no codigo, sem afirmar Google/confirmacao E2E. CLAUDE.md conserva import de AGENTS.md e particularidades do harness; comandos do gate/loop reconciliados no processo e skill locais. Nenhuma linha de fluxo removida ou declarada concluida por leitura estatica."
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "e0538c0",
+      "updatedAt": "2026-10-22",
+      "sourceRevision": "50e8ab460525c4377498a83e88e91a837d0d908f",
       "dependencies": []
     },
     {
@@ -1812,19 +1814,23 @@
       "priority": "P1",
       "category": "governance",
       "status": "repo",
-      "description": "O inventário da etapa W00 registrou três caminhos que contornam o gate de rota, para decisão consciente e não por descuido. (1) BIVAQUE_AUTH_BYPASS=true faz o proxy retornar next() antes de qualquer verificação (apps/web/proxy.ts:35-43): escape total, documentado como local/QA, sem trava que impeça ligá-lo em ambiente implantado. (2) PUBLIC_PATHS é testado por startsWith, então todo /api/* escapa do proxy (proxy.ts:20) e cada handler se defende sozinho — /api/localities e /api/localities/[uf] não exigem autenticação alguma; e /auth/callback-error fica público de carona com /auth/callback. (3) /landing está em PUBLIC_PATHS sem rota correspondente (proxy.ts:22). Nada disso é vulnerabilidade confirmada por si; é superfície que precisa de decisão registrada antes da publicação, conforme o gate G6.",
+      "description": "O bypass global do proxy foi removido no lote HRN-004 em 2026-10-22. Permanecem para fechamento: prefixos PUBLIC_PATHS e autenticacao propria de cada /api/*, alem da entrada /landing. A remocao do bypass nao certifica os handlers ou substitui prova antes da publicacao.",
       "checklist": [
-        "Decisão registrada sobre impedir BIVAQUE_AUTH_BYPASS fora de ambiente local",
+        "Bypass global removido; teste positivo e negativo do gate com a variavel aposentada ligada",
         "Cada /api/* declara e prova a sua própria exigência de autenticação",
         "Entrada morta /landing removida de PUBLIC_PATHS ou rota criada",
         "Casamento por prefixo revisado para não abrir rota vizinha sem intenção"
       ],
-      "proof": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:e2e"],
+      "proof": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:e2e",
+        "2026-10-22 HRN-004: BIVAQUE_AUTH_BYPASS removido do proxy por autorizacao do usuario. Testes tests/unit/security/proxy-gate.test.ts provam bloqueio de anonimo com a variavel antiga ligada e continuidade do usuario autenticado no onboarding. Sem alteracao de policies ou handlers. Restam a revisao de prefixos, a entrada /landing e a prova de cada API antes de fechar o card."
+      ],
       "tests": [],
       "links": ["docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-10-22",
+      "sourceRevision": "50e8ab460525c4377498a83e88e91a837d0d908f"
     },
     {
       "id": "RECON-W00-FUNDACAO",
@@ -2270,7 +2276,8 @@
         "Rodada10 2026-10-14: candidato 390ab72c; aprovacao visual das 5 telas; round10 72/72 e todas as regressoes, visual e gate verdes sem falhas",
         "Rodada11 2026-10-15: candidato 945ff539; round11 78/78, round08 42/42 (teste do voo passou a medir pelo relogio da animacao; falhava tambem no HEAD), round06 36/36, round01, visual estrito e visual-stability PASS, regressoes 10..00.1 PASS, gate verde",
         "Rodada12 2026-10-15: candidato 3f1a1e0f; round12 54/54, round04 84/84, regressoes 11..00.1 e gate verdes; visual estrito difere so no HTML pelos nomes de categoria aprovados (nova base na Rodada 13)",
-        "Rodada13 2026-10-15: candidato e nova base f63e6a9a; round13 128/128 em 8 contextos, regressoes 12..00.1, visual estrito e visual-stability contra a nova base e gate verdes"
+        "Rodada13 2026-10-15: candidato e nova base f63e6a9a; round13 128/128 em 8 contextos, regressoes 12..00.1, visual estrito e visual-stability contra a nova base e gate verdes",
+        "2026-10-22 HRN-004: 34 capturadores compartilham lancamento do navegador; 24 tambem compartilham servidor HTTP. Cenas, viewports e transporte preservados, incluindo flags WebGL especificas da rodada 31. Teste real capture-support.test.mjs PASS com Chrome; prova e revisao adicionais do lote em .visual/simplification-2026-10-22. Sem alteracao do HTML ou das provas historicas. Verificador independente reexecutou o helper atualizado e round13 (5 PNGs); testes preservam encaminhamento das flags de renderizacao. Demais cenas nao foram reexecutadas."
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2315,8 +2322,8 @@
         "Rodada09 | ../../prototypes/bivaque-html/docs/ROUND_09.md",
         "Rodada10 | ../../prototypes/bivaque-html/docs/ROUND_10.md"
       ],
-      "updatedAt": "2026-10-15",
-      "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
+      "updatedAt": "2026-10-22",
+      "sourceRevision": "50e8ab460525c4377498a83e88e91a837d0d908f",
       "dependencies": [],
       "blockers": [],
       "completedAt": "2026-10-14"

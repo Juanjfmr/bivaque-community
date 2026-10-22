@@ -1,24 +1,13 @@
 import { mkdirSync, readFileSync } from "node:fs"
-import { createServer } from "node:http"
 import { join, resolve } from "node:path"
-import { chromium } from "@playwright/test"
-import { createDeterministicContext } from "./capture-support.mjs"
+import { createDeterministicContext, startCapture } from "./capture-support.mjs"
 
 // Capturas dos filtros em pílulas (Rodada 23): node round23-shots.mjs <pasta>
 const root = resolve(import.meta.dirname, "../..")
 const out = resolve(root, process.argv[2] ?? ".visual/bivaque-html-round23/telas")
 mkdirSync(out, { recursive: true })
 const html = readFileSync(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html"))
-const server = createServer((_, res) =>
-  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(html),
-)
-await new Promise((done) => server.listen(0, "127.0.0.1", done))
-const url = `http://127.0.0.1:${server.address().port}/`
-const browser = await chromium.launch(
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-    ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
-    : {},
-)
+const { server, url, browser } = await startCapture(html)
 const errors = []
 const pill = (page, key) => page.locator(`#main [data-action="catalog-pill"][data-value="${key}"]`)
 const panel = (page) => page.locator("#filter-panel")

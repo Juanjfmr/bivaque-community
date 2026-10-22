@@ -1,15 +1,14 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { chromium } from "playwright"
+import { launchCaptureBrowser } from "./capture-support.mjs"
 
 // Rodada 38: anúncio e negócio com a foto até o topo (não é prova).
 const root = process.cwd()
 const out = join(root, ".visual/bivaque-html-round38/telas")
 mkdirSync(out, { recursive: true })
 const url = pathToFileURL(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html")).href
-const exe = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-const browser = await chromium.launch(exe ? { executablePath: exe } : {})
+const browser = await launchCaptureBrowser()
 const ctx = await browser.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,

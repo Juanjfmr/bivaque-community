@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { chromium } from "playwright"
+import { launchCaptureBrowser } from "./capture-support.mjs"
 
 const root = process.cwd()
 const out = join(root, ".visual/bivaque-html-round41/telas")
@@ -9,7 +9,7 @@ import { mkdirSync } from "node:fs"
 
 mkdirSync(out, { recursive: true })
 const url = pathToFileURL(join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html")).href
-const b = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH })
+const b = await launchCaptureBrowser()
 const ctx = await b.newContext({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,

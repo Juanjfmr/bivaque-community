@@ -1,6 +1,6 @@
 // One iteration of the Bivaque build loop: gates -> build -> serve -> capture -> report.
 //
-//   node scripts/visual/loop.mjs            full run (lint, typecheck, test, build, capture)
+//   node scripts/visual/loop.mjs            full run (gate completo, serve, capture)
 //   node scripts/visual/loop.mjs --fast     skip build/serve, capture against a running dev server
 //
 // Exit code is 0 only when every gate passed AND the visual audit has no high-severity
@@ -146,18 +146,7 @@ function updateLedger(results) {
 async function main() {
   mkdirSync(RUN_DIR, { recursive: true })
 
-  // Biome lint flags codebase-wide pre-existing useLiteralKeys info-level diagnostics
-  // as fixable. Those are not real errors, so we constrain the diagnostic level to
-  // `error` for the loop's gate — the full lint report still runs in CI as today.
-  const lintCmd = [PNPM[0], PNPM[1], "exec", "biome", "check", ".", "--diagnostic-level", "error"]
-  const gates = FAST
-    ? [runGate("lint", PNPM[0], lintCmd)]
-    : [
-        runGate("lint", PNPM[0], lintCmd),
-        runGate("typecheck", PNPM[0], [PNPM[1], "typecheck"]),
-        runGate("test", PNPM[0], [PNPM[1], "test"]),
-        runGate("build", PNPM[0], [PNPM[1], "build"]),
-      ]
+  const gates = [runGate("gate", "node", ["scripts/gate.mjs", ...(FAST ? ["--fast"] : [])])]
 
   const blocked = gates.some((gate) => !gate.passed)
   if (blocked) {

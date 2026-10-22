@@ -14,7 +14,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { callCommunityInviteRpc } from "../../../../lib/community-invite-rpcs"
 import { byteaDigestParam } from "../../../../lib/invites-bytea"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 
@@ -63,14 +62,10 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
   const { createHash } = await import("node:crypto")
   const tokenDigest = createHash("sha256").update(Buffer.from(token, "hex")).digest()
 
-  const { data: communityId, error } = await callCommunityInviteRpc(
-    supabase,
-    "accept_community_invitation",
-    {
-      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
-      p_user_id: user.id,
-    },
-  )
+  const { data: communityId, error } = await supabase.rpc("accept_community_invitation", {
+    p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
+    p_user_id: user.id,
+  })
 
   if (error) {
     if (error.message.includes("verification required")) {
