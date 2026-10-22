@@ -14,6 +14,7 @@ export function MaterialFilledButton({
   href,
   id,
   onClick,
+  target,
   type = "button",
 }: MaterialFilledButtonProperties) {
   useEffect(() => {
@@ -38,6 +39,7 @@ export function MaterialFilledButton({
       href={href}
       id={id}
       onClick={onClick}
+      target={target}
       type={type}
     >
       {children}
