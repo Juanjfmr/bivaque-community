@@ -66,6 +66,8 @@ begin
   -- a ele. Todo o resto do perfil é dado pessoal.
   update public.profiles
      set bio = null,
+         -- DATA-001 (20261022120200): o bairro do perfil é dado pessoal e sai na purga.
+         neighborhood = null,
          consent_version = 0,
          consented_at = null,
          updated_at = now()
