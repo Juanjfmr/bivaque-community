@@ -48,3 +48,17 @@ retry_budget: 3
 on_budget_exhausted: BLOCKED
 closure:
   requires_runtime_evidence: true
+
+# Evidência de execução (Rodada 71, 21/10/2026)
+# Base 4d45ceda, build 7dd15d48d9d22cdc: round71 nos 4 contextos = 4/40 (36 checkpoints falham; os 4
+# que passam são mobile-menu e no-overflow em 1440, que só valem abaixo de 861 px). A no-overflow de
+# 375 falha na base: a landing da R53 rola de lado (scrollWidth 900 > clientWidth 360).
+# Candidato build c5d5cddf0af32108: round71 = 40/40, sem erro de JS e sem requisição externa.
+# Provas antigas ajustadas em 375-light: R53 4/4; R54 6/6; R56 6/6; R58 15/15; R62 12/12.
+# round70 em 375-light e 1440-light: 12/12. round19 não foi tocado (o termo Amostra ali é só um
+# comentário de uma função de medição).
+# Contraste medido: corpo sobre surface 11,90:1 (claro) e 14,04:1 (escuro); perguntas iguais;
+# --bv-on-brasa sobre --bv-brasa 5,15:1 e 5,71:1; branco sobre o véu + média da foto 16,90:1 e 17,26:1.
+# Gate verde: lint, typecheck, test e secrets. O build web pulou por falta de apps/web/.env.local,
+# então não há evidência de que o Next compila nesta worktree.
+# Relatório: prototypes/bivaque-html/docs/ROUND_71.md
