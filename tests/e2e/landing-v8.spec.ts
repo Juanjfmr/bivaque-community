@@ -181,6 +181,60 @@ test.describe("landing v8", () => {
       expect(text.includes(gone), `a landing não deveria dizer "${gone}"`).toBe(false)
   })
 
+  test("cada Criar conta é um link de verdade para /signup", async ({ page }, testInfo) => {
+    onlyCaptureProjects(testInfo)
+
+    // Given a landing pública
+    await openLanding(page)
+
+    // Then o Material Web já registrou o componente e cada CTA tem um <a>
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Boolean(document.getElementById("ld-hero-cta")?.shadowRoot?.querySelector("a")),
+        ),
+      )
+      .toBe(true)
+
+    const ctas = await page.locator("md-filled-button").evaluateAll((hosts) =>
+      hosts
+        .filter((host) => (host.textContent ?? "").replace(/\s+/g, " ").trim() === "Criar conta")
+        .map((host) => {
+          const link = host.shadowRoot?.querySelector("a")
+          return {
+            href: link?.getAttribute("href") ?? null,
+            tag: link?.tagName ?? null,
+          }
+        }),
+    )
+    expect(ctas.length).toBeGreaterThan(0)
+    for (const cta of ctas) {
+      expect(cta.tag, "com href o CTA é um <a>, não um <button>").toBe("A")
+      expect(cta.href, "todo Criar conta leva ao cadastro").toBe("/signup")
+    }
+
+    // And a árvore de acessibilidade expõe cada CTA como link "Criar conta" — o
+    // rótulo entra no <a> do shadow root pelo slot, então quem prova o nome é a
+    // consulta por papel, não o textContent do link.
+    const links = page.getByRole("link", { name: "Criar conta", includeHidden: true })
+    await expect(links).toHaveCount(ctas.length)
+    for (let index = 0; index < ctas.length; index++) {
+      await expect(links.nth(index)).toHaveAttribute("href", "/signup")
+    }
+
+    // And o CTA da dobra é focável, e o foco entra no link do shadow root
+    const focus = await page.locator("#ld-hero-cta").evaluate((host) => {
+      host.focus()
+      const active = host.shadowRoot?.activeElement
+      return {
+        href: active?.getAttribute("href") ?? null,
+        inner: active?.tagName ?? null,
+        outer: document.activeElement === host,
+      }
+    })
+    expect(focus).toEqual({ href: "/signup", inner: "A", outer: true })
+  })
+
   test("leva todo Criar conta para /signup", async ({ page }, testInfo) => {
     onlyCaptureProjects(testInfo)
     const narrow = testInfo.project.name === "mobile-375"

@@ -101,7 +101,7 @@ const FAQ_OPEN = 3
 
 function Cta({ id }: Readonly<{ id?: string }>) {
   return (
-    <MaterialFilledButton data-href="/signup" id={id}>
+    <MaterialFilledButton href="/signup" id={id}>
       Criar conta
     </MaterialFilledButton>
   )

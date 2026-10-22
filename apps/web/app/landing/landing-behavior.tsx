@@ -8,19 +8,11 @@
 // Diferença obrigatória em relação ao protótipo: a página do Next rola no
 // documento (o protótipo rola em #main), então os observadores usam a viewport
 // e a rolagem é lida de window.scrollY.
-import type { Route } from "next"
-import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 const ANCHORS = ["inicio", "exemplo", "recursos", "mudanca", "participar", "perguntas", "fim"]
 
-// Os destinos dos CTAs, escritos no componente de servidor como `data-href`.
-// A lista existe para o `router.push` tipado do Next não receber string solta.
-const DESTINATIONS: readonly Route[] = ["/signup", "/login"]
-
 export function LandingBehavior() {
-  const router = useRouter()
-
   useEffect(() => {
     const landing = document.getElementById("landing")
     const top = document.getElementById("ld-top")
@@ -199,15 +191,8 @@ export function LandingBehavior() {
         setMenu(false)
         return
       }
-      // O CTA do Material é um <button> dentro do shadow root: o evento chega
-      // retargeteado para o host, que carrega o destino.
-      const cta = target.closest<HTMLElement>("[data-href]")
-      if (cta) {
-        event.preventDefault()
-        const href = cta.dataset["href"]
-        const destination = DESTINATIONS.find((route) => route === href)
-        if (destination) router.push(destination)
-      }
+      // Os CTAs do Material não passam por aqui: com `href`, o próprio `<a>`
+      // do shadow root navega sem depender desta ilha.
     }
 
     // Tab e Shift+Tab dão a volta dentro da folha: o último item volta ao
@@ -281,7 +266,7 @@ export function LandingBehavior() {
       for (const node of outside) node.inert = false
       sheet.inert = false
     }
-  }, [router])
+  }, [])
 
   return null
 }

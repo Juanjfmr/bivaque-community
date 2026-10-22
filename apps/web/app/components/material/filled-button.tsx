@@ -10,8 +10,8 @@ import { registerLandingElements } from "./register"
 export function MaterialFilledButton({
   children,
   className,
-  "data-href": dataHref,
   disabled,
+  href,
   id,
   type = "button",
 }: MaterialFilledButtonProperties) {
@@ -19,16 +19,13 @@ export function MaterialFilledButton({
     void registerLandingElements()
   }, [])
 
-  // A forma e a cor vêm dos tokens (brand-tokens.css); o clique é delegado pela
-  // ilha de comportamento, que lê `data-href`.
+  // Com `href`, o Material Web renderiza um `<a>` dentro do shadow root: o CTA
+  // continua sendo um link de verdade (funciona sem JavaScript, o leitor de
+  // tela anuncia "link" e o navegador abre em outra aba). Sem `href`, o mesmo
+  // componente segue sendo um `<button>`. A forma e a cor vêm dos tokens
+  // (brand-tokens.css).
   return (
-    <md-filled-button
-      className={className}
-      data-href={dataHref}
-      disabled={disabled}
-      id={id}
-      type={type}
-    >
+    <md-filled-button className={className} disabled={disabled} href={href} id={id} type={type}>
       {children}
     </md-filled-button>
   )

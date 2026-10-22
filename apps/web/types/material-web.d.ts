@@ -23,8 +23,11 @@ type MaterialBase = Readonly<{
 
 export type MaterialFilledButtonProperties = MaterialBase &
   Readonly<{
-    "data-href"?: string | undefined
+    // PORT-001: com `href` o Material Web renderiza um `<a>` no shadow root, e
+    // o CTA vira navegação de verdade (funciona sem JavaScript e o leitor de
+    // tela anuncia "link"). Sem `href`, o mesmo componente é um `<button>`.
     disabled?: boolean | undefined
+    href?: string | undefined
     type?: "button" | "reset" | "submit" | undefined
   }>
 
