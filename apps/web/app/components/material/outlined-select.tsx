@@ -4,11 +4,12 @@
 // `md-select-option`. A tela passa as opções como dados; o adaptador escreve os
 // `<md-select-option>` no slot do Material, que é o que a seleção lê para
 // montar o menu e o texto exibido.
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type {
   MaterialOutlinedSelectProperties,
   MaterialSelectElement,
 } from "../../../types/material-web"
+import { valueToRestore } from "./controlled-value"
 import { registerOutlinedSelect } from "./register"
 
 export function MaterialOutlinedSelect({
@@ -25,9 +26,15 @@ export function MaterialOutlinedSelect({
   value = "",
 }: MaterialOutlinedSelectProperties) {
   const select = useRef<MaterialSelectElement | null>(null)
+  const ready = useRef(false)
+  const controlled = useRef(value)
+  controlled.current = value
 
-  useEffect(() => {
-    void registerOutlinedSelect()
+  const syncValue = useCallback(() => {
+    const element = select.current
+    if (!element || !ready.current) return
+    const restore = valueToRestore(element.value, controlled.current)
+    if (restore !== undefined) element.value = restore
   }, [])
 
   // A seleção não é um `<select>` nativo: `value` é acessor do elemento e
@@ -36,22 +43,33 @@ export function MaterialOutlinedSelect({
   useEffect(() => {
     let active = true
     void registerOutlinedSelect().then(() => {
-      const element = select.current
-      if (!active || !element || element.value === value) return
-      element.value = value
+      if (!active) return
+      ready.current = true
+      syncValue()
     })
     return () => {
       active = false
     }
-  }, [value])
+  }, [syncValue])
+
+  // A cada render: quando o pai recusa a escolha, a seleção volta ao valor da
+  // prop (e o `selected` das opções também é reescrito pelo render).
+  useEffect(() => {
+    syncValue()
+  })
 
   useEffect(() => {
     const element = select.current
     if (!element) return
-    const handleChange = () => onChange?.(element.value)
+    const handleChange = () => {
+      onChange?.(element.value)
+      // Recusa sem novo render não passaria pelo efeito acima; o microtask
+      // devolve a prop à seleção depois do lote do React.
+      queueMicrotask(syncValue)
+    }
     element.addEventListener("change", handleChange)
     return () => element.removeEventListener("change", handleChange)
-  }, [onChange])
+  }, [onChange, syncValue])
 
   return (
     <md-outlined-select
