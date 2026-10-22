@@ -1,4 +1,4 @@
-task_id: DATA-001
+﻿task_id: DATA-001
 objective: >
   O banco ganha o catálogo de bairros por cidade (nome, chave normalizada sem acento, zona e ponto
   central público do bairro), com busca por nome, e o perfil ganha o bairro opcional com a chave
@@ -100,4 +100,55 @@ closure:
 # Quem aplicar por último reconcilia as duas definições.
 #
 # Commits: afed81b3 (catálogo + carga + pgTAP), c2fbd69f (perfil + CEP + tipos).
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidência de execução — 2026-10-22, correções da revisão (achados 2 e 3)
+#
+# Base: bafcf9b3. Escopo: só teste. O achado 1 (bairro em anúncios e pedidos)
+# fica aberto aguardando decisão do dono e NÃO foi tocado aqui.
+#
+# Achado 2 — negativo do co-membro de comunidade, em
+# supabase/tests/profile-neighborhood-privacy.sql (plan 32 -> 35):
+#   o mesmo co-membro aprovado (003) passa a ser exercitado com a chave
+#   DESLIGADA (perfil continua visível, bairro NULL) e depois com a chave
+#   religada (bairro volta). A asserção de perfil visível existe para separar
+#   "não vê o bairro" de "não vê o perfil".
+#   Prova de vermelho: substituí a função no banco local por uma variante em que
+#   a chave só governa o ramo de cidade (o bug descrito na revisão) e rodei o
+#   arquivo:
+#     not ok 18 - co-membro aprovado da comunidade NÃO recebe o bairro com a
+#                 chave desligada
+#     # Looks like you failed 1 test of 35
+#   Restaurada a definição da migration, o mesmo arquivo passa 35/35.
+#
+# Achado 3 — purga do bairro, em supabase/tests/account-deletion.sql
+# (plan 41 -> 44):
+#   24e preenche `neighborhood = 'Ponta Negra'` no titular e confirma que está
+#   gravado; 25c confere NULL depois de `finalize_account_deletion`; 26 confere
+#   NULL outra vez depois da repetição idempotente.
+#   Prova de vermelho: removi `neighborhood = null` da definição vigente da
+#   função no banco local e rodei o arquivo:
+#     not ok 42 - purga apaga o bairro do perfil
+#     not ok 44 - purga repetida mantem o bairro nulo
+#     # Looks like you failed 2 tests of 44
+#   Restaurada a definição, o mesmo arquivo passa 44/44.
+#
+# Verde, lido nesta sessão:
+#   - profile-neighborhood-privacy.sql: 35/35 (nenhum "not ok").
+#   - account-deletion.sql: 44/44 (nenhum "not ok").
+#   - as duas funções restauradas foram conferidas por prosrc, contendo
+#     `neighborhood = null` e a condição original de `show_neighborhood`.
+#
+# npx pnpm@11.18.0 test:db: `account-deletion.sql ..... ok` e
+# `profile-neighborhood-privacy.sql ..... ok`; Files=146, Tests=2038,
+# Result: FAIL. Os 23 arquivos vermelhos são os da colisão de fixture com o seed
+# de desenvolvimento já registrada acima (o reset --no-seed segue bloqueado:
+# `permission rejected` em execução não interativa, também nesta sessão).
+#
+# npx pnpm@11.18.0 gate: lint, typecheck, test (120/120) e secrets verdes;
+# build pulado por falta de apps/web/.env.local — igual à execução anterior.
+#
+# Nenhum script de depuração ficou no repositório; os arquivos temporários de
+# mutação foram apagados e o banco temporário, removido.
+#
+# Commits: b7ddc7c3 (testes dos achados 2 e 3).
 # ─────────────────────────────────────────────────────────────────────────────
