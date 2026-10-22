@@ -34,7 +34,9 @@ async function startOut(page, prep) {
 const err = (page) => page.locator("#en-err").innerText()
 const click = async (page, action, value) => {
   await page
-    .locator(`#main [data-action="${action}"]${value ? `[data-value="${value}"]` : ""}`)
+    // R71: a landing v8 repete "Criar conta" e "Entrar" no topo (escondido até rolar), na folha do
+    // menu e no rodapé; clica no primeiro que está à vista.
+    .locator(`#main [data-action="${action}"]${value ? `[data-value="${value}"]` : ""}:visible`)
     .first()
     .click()
   await settle(page)
@@ -127,6 +129,8 @@ const checkpoints = {
         },
       ]
     })
+    // R71: o convite de familiar saiu da landing e fica dentro do cadastro ("É cônjuge ou dependente?").
+    await click(page, "entry-join")
     await click(page, "entry-invite")
     await fill(page, "en-code", "DEMO-ERRADO")
     await click(page, "entry-invite-code")
