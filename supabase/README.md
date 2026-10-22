@@ -1,90 +1,70 @@
-# Supabase development baseline
+# Supabase — desenvolvimento e publicação
 
-This directory is the source of truth for the Bivaque Community database. It is
-independent from every other Supabase project and contains no project reference,
-database password, access token, provider credential, or application secret.
+Migrations em `supabase/migrations/` são a fonte do schema. Regras técnicas completas:
+[AGENTS.md](AGENTS.md); autorização de produto e limites compartilhados: [AGENTS raiz](../AGENTS.md).
+Esta documentação não provisiona, vincula ou publica um projeto.
 
-## Environment contract
+## Ambientes e prova local
 
-- Local development uses `config.toml` and the Docker-backed CLI stack.
-- Test, development, and production must be separate hosted Supabase projects.
-- Link only the intended hosted project through an environment-provided project
-  reference. Never commit the generated `.temp` link state or credentials.
-- Run destructive reset commands only against the local stack. Do not use
-  `--linked` with `db reset`.
+Desenvolvimento usa `config.toml` e Docker; ambientes hospedados de teste, desenvolvimento e
+produção são projetos distintos. Confirme projeto/portas antes de operações destrutivas.
+Worktrees isolam arquivos, não o banco. Nunca resete stack compartilhada ou remota para testar.
+Não versione credenciais, referências de projeto geradas ou `.temp`.
 
-The future deployment workflow should keep distinct secret variables for each
-hosted environment and run `db push --dry-run` before `db push`. This baseline
-does not create or link any hosted project.
-
-## Migration workflow
-
-Migrations are imperative and replay in timestamp order:
-
-1. `20260802000100_locality_profile_foundation.sql` creates the public locality,
-   membership, and coarse-profile contract and inserts Manaus.
-2. `20260802000200_private_trust_family_foundation.sql` creates normalized private
-   verification outcomes plus hashed family invitation and account-link records.
-3. `20260802000300_foundation_rls.sql` enables RLS, grants minimum privileges, and
-   adds locality/profile policies.
-
-Create later changes with:
+Use o CLI instalado/pinado pelo repositório:
 
 ```sh
-npx supabase migration new <short_name>
-npx supabase db reset --local
-npx supabase test db
-npx supabase db lint --local --level error
+npx pnpm@11.18.0 exec supabase migration new <name>
+npx pnpm@11.18.0 exec supabase start
+# Somente na stack local isolada e sem processos escrevendo:
+npx pnpm@11.18.0 exec supabase db reset --local --no-seed
+npx pnpm@11.18.0 test:db
+npx pnpm@11.18.0 db:lint
+npx pnpm@11.18.0 generate:types
+# Depois, estado de runtime/E2E separado:
+npx pnpm@11.18.0 exec supabase db reset --local
 ```
 
-Do not edit an applied migration. Add a later migration instead.
+Configure a aplicação para essa stack antes de build/E2E. Tipos gerados contêm somente `public`.
+Fixtures pgTAP são sintéticas/transacionais; `seed.sql` contém personas locais descartáveis.
+Não execute captura/dev server que escreve entre reset sem seed e pgTAP. Não edite migration aplicada;
+a única exceção já autorizada está no [ADR de replay](../docs/decisions/ADR-20261022-replay-fixture-migration.md).
 
-## Privacy boundary
+## Deploy: implementação atual e contrato de publicação
 
-The Data API exposes only `public` and `graphql_public`. Public profiles contain
-only display name, locality, visibility, and timestamps. Verification outcomes,
-family invitations, and family account links live in the unexposed `private`
-schema. Neither `anon` nor `authenticated` has private table privileges; the
-only authenticated capability there is execution of the boolean RLS helper.
+O workflow existente é [deploy-migrations.yml](../.github/workflows/deploy-migrations.yml):
+- dispara em push para `main` ou `workflow_dispatch`;
+- executa um job `gate` com `pnpm gate`;
+- o job `migrate` depende dele, usa o environment `production`, recebe credenciais por secrets,
+  vincula o projeto e executa `supabase db push` no CI.
 
-Portal source data is not part of this baseline. In a future server-only mapper,
-the source label `reformado` may map transiently to the private `veteran` value;
-the source label itself must never be stored or exposed as a public label. Raw
-identifiers, source payloads, military organization, rank, personal address, and
-documents must never be persisted.
+Esse workflow publica **migrations**, não comprova deploy da aplicação web. Nomear um environment
+`production` não comprova que aprovação/proteção esteja configurada no GitHub.
+Não execute link/push produtivo localmente para contornar a pipeline.
 
-Accepted family accounts remain ordinary independent Auth users. The private
-link records invitation provenance only; it does not transfer ownership or grant
-access to another account's profile or data.
+Antes de publicar, exigir a revisão exata com regressão/CI e processo G6, autorização aplicável,
+projeto de destino confirmado, backup/reversão previstos e revisão do conjunto pendente por dry-run.
+Mudanças incompatíveis precisam de sequência compatível entre banco e aplicação; rollback do app
+não reverte o banco. A documentação não substitui esses controles por uma promessa de automação.
 
-## Fixture-safe database tests
+**Lacunas observadas no workflow em 22/10/2026:** o job gate não inicializa a stack nem escreve o env
+antes do build; não há dry-run, exclusão de execuções simultâneas ou guarda explícita de branch no
+disparo manual. Ele também não exige por código o resultado completo de pgTAP/E2E do mesmo SHA.
+São pendências de implementação da pipeline, não passos já entregues. Registrar no Kanban e
+corrigir/revisar o workflow antes de declarar a publicação protegida. Este lote documental não
+executa deploy nem altera secrets, permissões ou a pipeline.
 
-`tests/fixtures/foundation.inc` contains synthetic `example.invalid` identities
-and fixed UUIDs. It is included inside each pgTAP transaction, so the CLI test
-runner rolls it back. Do not copy hosted data, use live Portal calls, or add
-real personal data to fixtures.
+Operação, backup, resposta a falhas e rollback: [PILOT_RUNBOOK.md](../docs/PILOT_RUNBOOK.md).
 
-`seed.sql` is a separate concept and **does carry users**: it is the durable
-LOCAL development seed (the E2E account plus whatever the operator and the
-§10.2 visual capture need), running only on `supabase db reset --local`, with
-credentials that are public and disposable by design. pgTAP fixtures stay
-transactional and stay in `supabase/tests/*` — the two must not be merged.
+## Dados e privacidade
 
-```sh
-npx supabase start
-npx supabase db reset --local
-npx supabase test db
-```
+A Data API não expõe o schema `private`; anon/authenticated não recebem privilégios de tabela nele.
+Preserve RLS forçada, grants mínimos e apenas helpers explicitamente autorizados. Contas familiares
+continuam Auth users independentes; convite não transfere propriedade de dados.
 
-## Generated types command stub
-
-Workspace scripts are owned by the parallel workspace bootstrap and are outside
-this directory's change boundary. Until that bootstrap wires its root command,
-the database types can be generated directly with:
-
-```sh
-npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts
-```
-
-Only the `public` schema is generated for clients. Never generate the private
-trust schema into client-facing types.
+CPF bruto, payload do Portal, OM inferida, patente, endereço residencial e selo público de verificação
+não são persistidos. Force/OM autodeclaradas opcionais e fallback de identidade seguem as
+[correções do dono](../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md) e decisões técnicas
+aplicáveis: leitura por campo, processamento privado e descarte. Não restaurar proibições antigas
+que contradigam a autorização atual; ela não aprova fornecedor ou retenção indefinida.
+Portal é server-only, com fixtures nos testes, sem CPF real ou chamadas live.

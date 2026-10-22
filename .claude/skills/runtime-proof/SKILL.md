@@ -1,51 +1,34 @@
 ---
 name: runtime-proof
-description: >
-  Turn a contract's acceptance criteria into observed runtime behavior, and
-  pick the command that actually proves each one. Use before closing a task,
-  when asked whether something works, or when tempted to conclude from the code
-  that it must work. Existence is not evidence.
+description: Use when selecting evidence for Bivaque acceptance criteria or deciding whether a task can close.
 ---
 
 # runtime-proof
 
-> Existir não é evidência. Comportamento observado é evidência.
+A declared route, policy or component is not observed behavior. Choose the layer where the
+changed property can fail; use `gate-before-done` for the shared gate and documentation exception.
 
-Arquivo criado, rota declarada, componente montado, policy escrita: nada disso prova
-nada. A pergunta é sempre **"o que eu observei rodar?"**.
-
-## Escolha do comando
-
-Qual prova prova o quê — e o que cada uma **não** cobre: `references/proof-catalog.md`.
-
-Regra curta:
-
-| A propriedade é sobre… | Prova |
+| Property | Evidence |
 |---|---|
-| lógica pura, contrato de módulo | `test:unit` |
-| contrato do repositório (script, config, estrutura) | `test:scope` |
-| quem pode ver o quê no banco | `test:db` (pgTAP, com positivo **e** negativo) |
-| ciclo do usuário na tela | `test:e2e` |
-| aparência, alvo de toque, contraste | `node scripts/visual/loop.mjs` |
-| qualquer entrega | `gate` (necessário, nunca suficiente sozinho) |
+| Pure logic/module | Affected unit tests |
+| Repository scripts/config/structure | Scope tests |
+| DB authorization | pgTAP with positive and negative cases and the real caller |
+| User interaction | E2E of the affected flow and main failure/denial paths |
+| Appearance/accessibility | Touched-route captures/audit at 375/768/1440 plus interaction proof |
 
-## Antes de chamar vermelho de regressão
+Database states are separate and exclusive on an isolated stack:
+1. Confirm project/ports and no concurrent writers. Start the local stack, reset without seed,
+   run `test:db` and `db:lint`. Worktrees do not isolate the database.
+2. Reset the same isolated stack WITH seed, set its env before build, then run required E2E.
+   A migration does not justify skipping E2E when the seed can be restored safely.
+3. If the environment cannot support a required proof, record the precise blocker and next step;
+   never bypass admission/authorization or reset a shared/remote database.
 
-Confirme que a falha reproduz num estado limpo. As armadilhas conhecidas (perfil fantasma
-"Visual Capture", `dev-server.pid` velho, Docker parado) estão na skill `gate-before-done`.
+Record revision, command, result and evidence once in the existing card:
+- PASS: every applicable acceptance criterion has its required observation.
+- FAIL: identify introduced, preexisting or known-trap failure using evidence.
+- BLOCKED: required environment/authority is missing; report what did run separately.
 
-## Os dois `db:reset` são deliberados
-
-pgTAP roda contra banco **sem** seed (`db:reset --no-seed`); E2E precisa do oposto, porque
-autentica como usuário semeado. Colapsar os dois em um só deixa seis asserts de perfil
-vermelhos. Se você mexeu em migration, o seed do E2E foi embora: escreva o spec, **commite
-sem executar**, e registre o estado real como "código feito".
-
-## Veredito
-
-Um destes, sempre com o comando e a saída:
-
-- `PASS` — cada item de `acceptance` tem uma observação que o sustenta.
-- `FAIL` — com a classificação: meu diff / pré-existente / armadilha conhecida.
-- `BLOCKED` — o ambiente impede a prova. Diga o que falta e o que **foi** provado.
-  `BLOCKED` não é `PASS`, e não fecha tarefa.
+Skipped tests, stale evidence and exhausted retries never close missing acceptance criteria.
+Independent runtime adjudication follows the risk routing; the implementer's claim alone
+is not independent verification.

@@ -1,0 +1,43 @@
+task_id: HRN-006
+objective: Consolidar instrucoes operacionais e corrigir descricoes obsoletas do harness
+authority:
+  - Pedido de Juan para revisar regras, deploy, matriz e Kanban em 2026-10-22
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0
+  - tools/backend-kanban/public/board.json DRIFT-STATUS-RECONCILIATION
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: runtime-proof manda omitir E2E apos alteracao de migration; execute-task contradiz ajuste de escopo por lote; guia descreve deploy futuro apesar de workflow existente
+allowed_paths:
+  - AGENTS.md
+  - docs/decisions/RISK_MATRIX.md
+  - docs/agents/TASK_CONTRACT.md
+  - docs/agents/AGENT_ARCHITECTURE.md
+  - docs/agents/tasks/HRN-006.task.yml
+  - docs/PILOT_RUNBOOK.md
+  - tools/backend-kanban/README.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - supabase/README.md
+  - .claude/skills/execute-task/SKILL.md
+  - .claude/skills/gate-before-done/SKILL.md
+  - .claude/skills/runtime-proof/SKILL.md
+forbidden:
+  - alterar workflow, validador, vocabulario de elevacao ou controles de producao
+  - publicar, executar operacao remota ou reduzir autorizacao de seguranca
+  - descartar alteracoes de outras sessoes
+acceptance:
+  - Instrucoes remetem ao processo atual e nao exigem prova duplicada
+  - Documentacao distingue decisao nova, execucao aprovada e limites do validador
+  - Guia distingue deploy existente de protecoes ainda pendentes
+  - Kanban registra evidencia uma vez e conserva o fechamento por prova
+proof:
+  - node --test tests/scope/*.test.mjs
+  - npx pnpm@11.18.0 exec vitest run tests/unit/agents/task-contract.test.ts tests/unit/docs/runbook-contract.test.ts
+  - npx pnpm@11.18.0 lint
+risk: manutencao documental sem alterar controles executaveis
+risk_level: R0
+reviewer_must_differ_from_executor: false
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: false

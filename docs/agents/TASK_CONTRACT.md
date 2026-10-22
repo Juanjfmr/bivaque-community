@@ -1,5 +1,7 @@
 # Task contract — formato e semântica
 
+> **Pranchas web, 08/09/2026:** usar um contrato válido por lote de telas relacionadas conforme a seção 0 do [processo](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md). Ampliar o contrato existente para reparos necessários e seguros, em vez de gerar YAML por componente. Contrato e card bastam quando já descrevem a execução; não é necessário um plano separado. Preservar todos os campos e a validação abaixo.
+
 A unidade de execução do harness. Vive em `docs/agents/tasks/<ID>.task.yml`,
 copiado de [`tasks/TEMPLATE.task.yml`](tasks/TEMPLATE.task.yml) e validado por comando:
 
@@ -9,7 +11,8 @@ node scripts/agents/task-contract.mjs <arquivo>  # valida um arquivo
 node scripts/agents/task-contract.mjs --json     # saída estruturada
 ```
 
-Exit 0 = todo contrato válido. **Contrato inválido não vai para execução.**
+Exit 0 = estrutura válida, não autorização nem prova de conclusão. O validador não
+confirma aprovação do ADR ou execução dos testes. **Contrato inválido não vai para execução.**
 
 ## Por que um contrato, e não um pedido
 
@@ -31,7 +34,7 @@ modelo, de harness e de sessão; o contrato continua.
 | `proof` | sim | como a aceitação vira evidência. Pelo menos uma prova **executável** |
 | `risk` | sim | rótulo de categoria, livre (`acessibilidade`, `harness`, `privacidade`) |
 | `risk_level` | sim | `R0`–`R3` da [`RISK_MATRIX`](../decisions/RISK_MATRIX.md) |
-| `adr` | em R3 | caminho para o ADR aprovado em `docs/decisions/` |
+| `adr` | em R2/R3 pela matriz; exigido automaticamente em R3 | caminho para o ADR aprovado em `docs/decisions/`; reutilizar a decisão vigente quando ela já cobre a execução |
 | `reviewer_must_differ_from_executor` | sim | `true` fora de R0. Revisor ancorado não é revisor |
 | `blocked_by` | não | registra que a tarefa é válida mas não pode fechar agora: prova impedida por achado pré-existente ou decisão pendente. O validador marca `BLOQUEADO` |
 | `retry_budget` | não | inteiro 1–5, padrão 3 **aplicado pelo validador** (que reporta o teto efetivo). Tentativas de reparo do mesmo item |

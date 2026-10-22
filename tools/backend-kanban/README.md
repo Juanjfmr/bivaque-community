@@ -1,113 +1,76 @@
 # Bivaque — Kanban local do MVP
 
-Uma superfície web local e versionada para acompanhar o fechamento e lançamento do MVP. Ela não é
-o sistema de tickets, não grava em Supabase e não modifica o frontend produtivo.
+O arquivo canônico é [public/board.json](public/board.json); [BOARD.md](BOARD.md) é seu resumo gerado.
+A interface é somente leitura. Git sincroniza o trabalho; não há banco, login ou atualização por drag-and-drop.
 
-Leia este README junto do [README da raiz](../../README.md). O roteador da raiz aponta para as
-fontes que governam cada decisão:
+## Consultar e executar
 
-- `docs/BIVAQUE.md`: visão e decisões de produto;
-- `docs/PRODUCT_STATUS.md`: estado registrado do runtime;
-- migrations, código e testes: evidência primária do que realmente existe;
-- `docs/superpowers/plans/README.md`: protocolo e ordem das ondas.
+```sh
+node tools/backend-kanban/src/board.mjs --card <ID>
+node tools/backend-kanban/src/board.mjs --search <terms>
+node tools/backend-kanban/src/board.mjs --next
+```
 
-Quando uma dessas fontes diverge da evidência primária, registre o card com `drift` apenas como
-evidência temporária. Drift não é entrega: o próximo passo do agente é reconciliar o texto, mudar o
-código, bloquear com motivo real ou fechar o card com prova.
+Leia BOARD.md uma vez e consulte só o card pertinente. `--next` considera status, prioridade e
+dependências concluídas; não interpreta autorização, ADR, escopo web/mobile ou bloqueios escondidos
+na descrição. É uma sugestão de fila, não permissão para executar. O pedido atual e o processo §0
+prevalecem. Trabalho autônomo resolve um card por commit; não abre um segundo sistema de tarefas.
 
-## Rodar
+## Atualizar uma vez por transição material
 
-Não há dependências para instalar: o servidor usa somente Node.js 22+.
+1. Confirme o que mudou em código, teste, migration ou GitHub. Só começar o trabalho não muda o card.
+2. Edite pelo ID estável, preservando evidências anteriores. Registre a nova prova com revisão,
+   comando/resultado e caminho/link; não copie logs inteiros para o JSON.
+3. Atualize `updatedAt` e `sourceRevision` com o commit confrontado, não um hash futuro do próprio
+   commit. Registre prova, bloqueio, prioridade/status ou conclusão no mesmo commit do trabalho.
+4. Se houver drift, reconcilie a fonte ou deixe bloqueio/ação concreta. Drift é temporário;
+   um card `done` não pode mantê-lo. Um bloqueio de subitem não impede frentes independentes.
+5. Regenere e valide:
 
-Na raiz do repositório:
+```sh
+node tools/backend-kanban/src/board.mjs --write-summary
+node tools/backend-kanban/src/board.mjs --check
+```
+
+Não edite BOARD.md manualmente. Se outra sessão alterou o JSON, reconcilie somente os cards/hunks
+pertinentes; não substitua o arquivo inteiro por uma cópia antiga. Consultas somente leitura não
+exigem atualização. Não gere relatório, handoff e inventário repetindo a mesma conclusão.
+
+## Status e fechamento
+
+| Status | Uso |
+|---|---|
+| `repo` | Triagem ou reconciliação ainda necessária |
+| `next` | Trabalho planejado, sujeito a dependências/autorização |
+| `now` | Frente priorizada, com pendências explícitas |
+| `blocked` | Impedimento concreto registrado em `blockers` |
+| `frozen` | Trabalho deliberadamente suspenso |
+| `done` | Aceitação cumprida, prova registrada, `completedAt`, sem drift aberto |
+
+A validação automática confere schema, IDs, dependências existentes, metadados, prova declarada e
+sincronização do resumo; não executa os comandos citados nem confirma que todo checklist foi cumprido.
+A conclusão exige julgamento sobre evidência real. Não reduza a aceitação para caber no que passou.
+
+Para backend, aplique os itens pertinentes: contrato/schema, migration, constraints/RLS/grants,
+happy/sad path, autorização positiva/negativa, caller real, idempotência/observabilidade/desempenho,
+tipos e documentação. `service_role` não preenche `auth.uid()` automaticamente.
+R0 documental exige verificações documentais, não E2E artificial. As demais provas seguem o risco.
+
+## Descobertas
+
+Pesquise IDs, títulos e checklists antes de criar card. Estenda o card quando o achado pertence ao
+mesmo fechamento. Nova frente exige ID, prioridade/categoria/status, origem, checklist,
+`dependencies` explícitas, `updatedAt` e `sourceRevision` no commit que a revela.
+Se faltar decisão sobre produto, dados pessoais, pagamento ou R3, use `repo` ou `blocked` com motivo;
+descobrir trabalho não autoriza inventar decisão. Vincule ações de incidente ao card existente.
+
+## Interface local
+
+Node >=22, sem dependências adicionais:
 
 ```sh
 npx pnpm@11.18.0 --dir tools/backend-kanban dev
 ```
 
-Abra [http://127.0.0.1:4175](http://127.0.0.1:4175). O servidor escuta apenas em `127.0.0.1`.
-Para outra porta local, use `KANBAN_PORT`, por exemplo no PowerShell:
-
-```powershell
-$env:KANBAN_PORT=4176; npx pnpm@11.18.0 --dir tools/backend-kanban dev
-```
-
-## Dados e atualização por agentes
-
-O arquivo canônico é [`public/board.json`](public/board.json). A interface apenas o carrega e
-projeta: busca e filtros não alteram os dados. Portanto, Git é a única sincronização necessária.
-
-Agentes leem primeiro [`BOARD.md`](BOARD.md), um resumo curto gerado a partir do JSON. Para pegar
-trabalho autonomamente, usam a fila local:
-
-```sh
-node tools/backend-kanban/src/board.mjs --next
-```
-
-O comando escolhe o primeiro card não bloqueado, não concluído, com dependências já fechadas. Depois
-o agente usa o `id` estável para consultar apenas o card relevante no arquivo canônico. `BOARD.md`
-nunca é editado manualmente.
-
-Para atualizar um card:
-
-1. confirme o estado no código, migration, teste ou GitHub;
-2. atualize o card pelo `id` estável, preservando `proof`, `tests` e `links`;
-3. quando houver conflito entre documentação e runtime, preencha `drift` em vez de esconder a
-   diferença, mas continue o trabalho até reconciliar, bloquear por dependência real ou provar a
-   conclusão;
-4. atualize o board apenas quando houver transição material: prova, bloqueio, drift, prioridade,
-   status ou conclusão; apenas começar a trabalhar não muda o card;
-5. só mova para `done` após o checklist aplicável e a prova estarem registrados;
-6. regenere e valide o resumo;
-7. faça um commit pequeno que mencione o `id` do card.
-
-```sh
-node tools/backend-kanban/src/board.mjs --write-summary
-node tools/backend-kanban/src/board.mjs --check
-node tools/backend-kanban/src/board.mjs --next
-node tools/backend-kanban/src/board.mjs --card MVP-02-AUTHZ
-node tools/backend-kanban/src/board.mjs --search service_role
-```
-
-O `test:scope` executado no gate também valida o schema, IDs, estados, Definition of Done e se o
-resumo está sincronizado. Assim, a estrutura é automática; a decisão semântica de mudar um card
-continua baseada em evidência.
-
-Os campos opcionais `owner`, `branch`, `issuePr`, `proof`, `tests`, `blockedBy` e `completedAt`
-estão previstos no formato. Eles permitem que vários agentes contribuam em worktrees diferentes
-sem criar uma segunda fonte de verdade no navegador.
-
-### Tarefas novas
-
-O agente que encontra trabalho ainda não representado procura primeiro IDs, títulos e checklists
-equivalentes. Se pertencer ao mesmo contrato de fechamento, amplia o card existente. Se for uma
-frente realmente nova, cria um card no mesmo commit que revelou a necessidade, com:
-
-- ID estável, prioridade, categoria e status;
-- evidência da origem, checklist e `dependencies` explícitas, mesmo quando vazias;
-- `updatedAt` (`YYYY-MM-DD`) e `sourceRevision` (commit confrontado com o card);
-- `blocked` ou `repo` quando depender de decisão de produto, dados pessoais, pagamento, RLS ou
-  outra fronteira R3.
-
-Descobrir uma necessidade não autoriza o agente a inventar escopo ou decisão soberana.
-
-## Definition of Done
-
-Um card de backend não fica concluído apenas porque há código. Conforme o caso, exige:
-
-- schema/contrato, migration, constraints, RLS/grants;
-- happy path e sad path;
-- teste negativo de autorização e teste do caller real;
-- idempotência, observabilidade e desempenho mínimo;
-- documentação de contrato, tipos gerados e prova registrada.
-
-Para RPCs chamadas por `service_role`, teste o mesmo caller usado em runtime: `service_role` não
-preenche `auth.uid()` automaticamente.
-
-## Limites deliberados
-
-- Nenhuma autenticação, banco, API remota ou colaboração em tempo real.
-- Nenhuma alteração em `apps/web`.
-- Nenhum mecanismo de drag-and-drop: mover status é uma mudança revisável no JSON canônico.
-- IA é consumidora do Bivaque; desligá-la não pode quebrar Community, Marketplace, Events,
-  Search, Guides ou Knowledge.
+Abra http://127.0.0.1:4175. A variável `KANBAN_PORT` muda a porta; o servidor escuta só em loopback.
+Não altera `apps/web` nem Supabase. Autoridade de produto/processo e regras técnicas: [AGENTS.md](../../AGENTS.md).

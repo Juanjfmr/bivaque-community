@@ -1,64 +1,28 @@
 ---
 name: execute-task
-description: >
-  Execute one task contract from docs/agents/tasks/ (or an inline equivalent)
-  end to end. Use when starting implementation work in this repository: it
-  fixes the order — measure baseline, implement inside the boundary, prove in
-  the same unit, hand off to an independent reviewer. Triggers on "implementar",
-  "executar contrato", "corrigir X", "rodar a task".
+description: Use when implementing or repairing a Bivaque task or delegated batch.
 ---
 
 # execute-task
 
-A unidade de execução deste repositório é o **contrato**, não o agente.
-Sem contrato, você não sabe o que é "pronto" — e é assim que escopo cresce sozinho.
+Follow the current process §0 in `docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md`.
+Reuse the selected Kanban card and existing batch contract; do not add a plan or YAML per component.
 
-## 1. Tenha um contrato
+1. Validate the affected contract with `node scripts/agents/task-contract.mjs <path>`.
+   For delegation use a valid YAML; field/risk rules live in `docs/agents/TASK_CONTRACT.md`.
+2. Reproduce its baseline. If it differs, inspect the evidence and reconcile the contract/card
+   before proceeding; ask only when authority or a necessary product decision is missing.
+3. Make the smallest change that satisfies acceptance. Preserve other sessions' edits.
+   `allowed_paths` is scope, not a sandbox: inspect necessary extra hunks, update and revalidate
+   the same contract if safe and already authorized, and review them together. `forbidden`
+   and R3 boundaries still apply; do not broaden authority yourself.
+4. Implementation and proof are one unit. Test both allowed and denied paths where applicable.
+   Applied migrations stay immutable; scope columns and their policies land together.
+5. Use `runtime-proof` to select evidence and `gate-before-done` to close without duplicate runs.
+   Record command, revision, outcome and remaining limitation once in the card.
+6. Follow risk routing in `docs/agents/AGENT_ARCHITECTURE.md`: R0 may close with its applicable
+   checks; other levels need independent review/runtime proof and required ADR/security review.
+   Give the reviewer criteria/reference/diff before any explanation defending the solution.
 
-Existe um em `docs/agents/tasks/<ID>.task.yml`? Valide:
-
-```sh
-node scripts/agents/task-contract.mjs
-```
-
-Não existe? Escreva um a partir de `docs/agents/tasks/TEMPLATE.task.yml` **antes** de
-codar, e valide. Contrato inválido não vai para execução — o validador diz o que falta.
-Campos e semântica: `docs/agents/TASK_CONTRACT.md`.
-
-## 2. Meça o baseline
-
-Reproduza o estado que o contrato declara em `baseline`. Duas saídas possíveis:
-
-- reproduz → siga.
-- **não reproduz** → o contrato está errado. Pare e diga. Plano errado é informação,
-  não obstáculo (`docs/superpowers/plans/README.md`).
-
-## 3. Implemente dentro da cerca
-
-- Só dentro de `allowed_paths`. Precisou sair? Pare e reporte — não amplie sozinho.
-- `forbidden` vale mesmo quando parece a correção certa.
-- Mínimo que satisfaz `acceptance`. Nada especulativo.
-- Implementação e prova são **um todo só**. Nunca entregue código sem a prova na mesma unidade.
-- Via de permissão: teste positivo **e** negativo.
-- Migration aplicada não se edita; coluna de escopo e policy na mesma migration (Padrão 6).
-
-## 4. Prove
-
-Rode o que está em `proof`. Detalhe de qual comando prova o quê: skill `runtime-proof`.
-Antes de declarar pronto: skill `gate-before-done`.
-
-## 5. Entregue para revisão independente
-
-Você **não** revisa o que implementou. Entregue:
-
-- o diff,
-- a saída **lida** do gate,
-- o que ficou fora e por quê.
-
-Não explique sua solução ao revisor antes do primeiro parecer dele: explicação ancora,
-e revisor ancorado não é revisor.
-
-## Orçamento
-
-`retry_budget` (padrão 3) conta tentativas de reparo do **mesmo** item. Esgotou:
-devolva `FAIL`, `BLOCKED` ou `HUMAN_DECISION`. Nunca `PASS`.
+`retry_budget` limits repairs of the same defect. Exhaustion yields FAIL/BLOCKED/HUMAN_DECISION,
+never PASS. A blocked flow does not stop independent work within authorized scope.

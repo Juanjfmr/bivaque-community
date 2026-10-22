@@ -1,5 +1,7 @@
 # Arquitetura de execução por agentes — v1
 
+> **Cadência web atualizada em 08/09/2026:** aplicar a seção 0 do [processo](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md). Um contrato/lote pode incluir 1–3 telas relacionadas e seus reparos. Implementador, revisor e verificador continuam distintos; a revisão e prova ocorrem por lote estável, não por componente. Não repetir exploração, planejamento e documentos de fechamento já cobertos pelo contrato/card. Paralelismo exige isolamento real de arquivos e exclusão de operações sobre banco compartilhado.
+
 > Status: vigente desde 2026-08-22. Substitui a configuração de agentes anterior
 > (`code-reviewer`, `explore-haiku`, `test-writer`, `test-runner`).
 > A auditoria que motivou esta versão está em
@@ -137,7 +139,7 @@ recalculado pelo validador de contrato a partir do que a tarefa **toca**.
 
 | Nível | Composição mínima | Fecha com |
 |---|---|---|
-| R0 | implementer + gate | gate verde |
+| R0 | implementer + verificações aplicáveis | gate em implementação; links/contratos/lint em manutenção exclusivamente documental |
 | R1 | implementer → reviewer → runtime-verifier | prova de runtime |
 | R2 | idem + ADR aprovado | prova de runtime + veredito do revisor |
 | R3 | idem + `security-auditor` em paralelo | prova de runtime + aprovação humana no ADR |
@@ -202,5 +204,6 @@ Honestidade sobre o próprio harness, para não repetir o erro do mapa antigo:
   (papéis, ferramentas, skills, contrato) — não a sequência em tempo de execução.
 - **Nenhuma skill foi medida ainda.** O protocolo A/B está escrito em
   `experiment-protocol`; nenhuma das sete passou por ele. Elas são hipóteses.
-- **O E2E continua exigindo humano** pelos motivos de estado de banco descritos em
-  `docs/superpowers/plans/README.md`. Nenhuma mudança aqui altera isso.
+- **E2E local pode ser executado pelo agente** com stack isolada, reset sem seed para
+  pgTAP e reset com seed para E2E, conforme `AGENTS.md`. Worktrees não isolam banco.
+  Credenciais/serviços indisponíveis produzem BLOCKED; não dispensam a prova.

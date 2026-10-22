@@ -14,6 +14,14 @@ execucao Next.js em producao.
 
 ---
 
+## Publicação: referência operacional
+
+O estado real da pipeline e seus requisitos estão em
+[supabase/README.md — Deploy](../supabase/README.md#deploy-implementação-atual-e-contrato-de-publicação).
+O workflow atual publica migrations, não a aplicação web; suas lacunas não equivalem a controles
+entregues. Antes de publicação, confirmar a revisão validada, destino, autorização, dry-run,
+backup e reversão. Não usar comandos locais para contornar o CI ou registrar deploy sem execução.
+
 ## 1. Pre-requisitos do operador
 
 - Acesso ao dashboard do Supabase do projeto de producao (projeto separado de

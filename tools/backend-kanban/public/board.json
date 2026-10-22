@@ -4,6 +4,35 @@
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
+      "id": "DEPLOY-PIPELINE-GUARDS",
+      "title": "Reconciliar pipeline de migrations com o contrato de publicacao",
+      "phase": "Governança",
+      "priority": "P1",
+      "category": "infra",
+      "status": "repo",
+      "description": "Workflow produtivo existente precisa de preparo de env para build e comprovacao dos controles de publicacao. Alteracoes de secrets, permissoes e operacoes produtivas exigem enquadramento R3 e autorizacao aplicavel; esta descoberta documental nao autoriza deploy.",
+      "checklist": [
+        "Definir contrato e ADR/autorizacao aplicavel antes de alterar fronteiras produtivas",
+        "Preparar stack/env antes do gate com build no job produtivo",
+        "Exigir a regressao aplicavel de banco/E2E contra o mesmo SHA sem duplicar builds desnecessariamente",
+        "Revisar dry-run, backup/reversao, exclusao de execucoes concorrentes e guarda de branch no workflow_dispatch",
+        "Conferir protecao efetiva de main/environment production no GitHub e provar negacoes de publicacao",
+        "Validar pipeline em ambiente seguro; nao provar protecao apenas pela existencia do YAML"
+      ],
+      "proof": [
+        "2026-10-22 HRN-006, base 5ab8f355: .github/workflows/deploy-migrations.yml roda pnpm gate sem stack/env antes do build; migrate depende desse gate e declara environment production, mas nao tem dry-run, concurrency nem guarda explicita de branch no disparo manual. Nao exige por codigo pgTAP/E2E da revisao. Nenhuma operacao produtiva executada nesta revisao. supabase/README.md documenta estado observado e contrato exigido.",
+        "Consulta remota anterior do lote HRN-005 registrou main/protection 404 Branch not protected e rulesets vazio; reconsultar antes de fechamento. Estado de reviewers do environment production nao foi verificado."
+      ],
+      "tests": ["node --test tests/scope/deploy-migrations.test.mjs"],
+      "links": [
+        "Workflow | ../../.github/workflows/deploy-migrations.yml",
+        "Contrato | ../../supabase/README.md"
+      ],
+      "updatedAt": "2026-10-22",
+      "sourceRevision": "5ab8f355",
+      "dependencies": []
+    },
+    {
       "id": "MVP-00-REBASELINE",
       "title": "Rebaseline técnico e contrato de lançamento",
       "phase": "MVP-00",
@@ -998,11 +1027,12 @@
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
         "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision",
         "2026-10-22 HRN-004: README aponta para especificacao web e processo atual; PRODUCT_STATUS reconcilia a linha de entrada com email/senha observado no codigo, sem afirmar Google/confirmacao E2E. CLAUDE.md conserva import de AGENTS.md e particularidades do harness; comandos do gate/loop reconciliados no processo e skill locais. Nenhuma linha de fluxo removida ou declarada concluida por leitura estatica.",
-        "2026-10-22, pedido posterior de eficiencia das instrucoes: AGENTS.md consolida precedencia e consulta dirigida, remove releituras/fila serial ja substituidas e historicos/catalogos redundantes; conserva autorizacao, privacidade, R3, migracoes, revisao independente e board. CLAUDE.md importa a regra compartilhada e limita-se ao harness/grafo com fallback para fonte exata. Comandos reconciliados com package.json, Playwright e loop.mjs. Tamanho UTF-8 conjunto caiu de 29830 para 13776 bytes (54%); test:scope 112/112 PASS. Nenhum fluxo de produto alterado; card amplo permanece aberto. Base confrontada 70227be9; backups locais em .visual/instructions-review-2026-10-22."
+        "2026-10-22, pedido posterior de eficiencia das instrucoes: AGENTS.md consolida precedencia e consulta dirigida, remove releituras/fila serial ja substituidas e historicos/catalogos redundantes; conserva autorizacao, privacidade, R3, migracoes, revisao independente e board. CLAUDE.md importa a regra compartilhada e limita-se ao harness/grafo com fallback para fonte exata. Comandos reconciliados com package.json, Playwright e loop.mjs. Tamanho UTF-8 conjunto caiu de 29830 para 13776 bytes (54%); test:scope 112/112 PASS. Nenhum fluxo de produto alterado; card amplo permanece aberto. Base confrontada 70227be9; backups locais em .visual/instructions-review-2026-10-22.",
+        "2026-10-22 HRN-006, base 5ab8f355: matriz diferencia decisao nova de execucao sob ADR vigente, preserva integralmente os blocos de elevacao e explicita limites do validador. R0 exclusivamente documental usa links/contratos/lint; implementacao/publicacao conservam gates. Kanban documenta --next como sugestao sem autoridade e atualizacao unica por transicao. Skills execute-task/gate-before-done/runtime-proof reconciliadas: baseline independente detectou omissao indevida de E2E, parada automatica por escopo e exigencia universal de gate/revisor; outro agente resolveu os quatro cenarios apos revisao e deu PASS documental. Provas locais: 112 scope, 50 unitarios de contratos/runbook, lint, 27 links locais e comparacao dos blocos de termos PASS. Deploy atual e lacunas explicitados no guia e runbook, com card DEPLOY-PIPELINE-GUARDS em repo; workflows, validador e ambientes nao alterados. Limitacao permanece: validador nao comprova aprovacao/existencia de ADR nem exige adr em R2; proxima resolucao de governanca e implementar testes/checagem compativeis com a matriz, sem dispensar revisao humana. Card amplo permanece aberto. Contrato docs/agents/tasks/HRN-006.task.yml."
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
       "updatedAt": "2026-10-22",
-      "sourceRevision": "70227be9",
+      "sourceRevision": "5ab8f355",
       "dependencies": []
     },
     {
