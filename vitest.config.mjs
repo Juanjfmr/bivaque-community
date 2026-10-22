@@ -10,6 +10,12 @@ export default defineConfig({
       web: resolve(dirname, "apps", "web"),
     },
   },
+  // apps/web/tsconfig.json usa jsx preserve (o Next compila o JSX), e o oxc do
+  // Vite herdaria isso e recusaria os .tsx nos testes que renderizam componentes
+  // (PORT-002). Aqui o JSX vira o runtime automático só para o vitest.
+  oxc: {
+    jsx: { runtime: "automatic" },
+  },
   test: {
     // .claude/worktrees/<name>/ can hold a full nested checkout of this
     // repo (created by the using-git-worktrees skill). Vitest's default

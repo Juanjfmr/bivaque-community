@@ -105,10 +105,10 @@ closure:
 # Achado 5 — provas reais com react-dom/server e função pura.
 #   tests/e2e/entry-kit.spec.ts NÃO foi criado: nenhuma rota existente monta
 #   estes adaptadores (as telas de entrada são das frentes A a D), e montá-los
-#   mudaria o comportamento de uma rota. Para o vitest transformar os .tsx, cada
-#   pasta de componente (material, entry, landing) tem tsconfig.json com
-#   jsx react-jsx, porque apps/web/tsconfig.json usa preserve e o Vite recusa;
-#   tsc -p apps/web continua lendo só o tsconfig do app.
+#   mudaria o comportamento de uma rota. Para o vitest transformar os .tsx, o
+#   vitest.config.mjs da raiz liga oxc.jsx.runtime automatic (o coordenador
+#   trocou por isso os tsconfig.json aninhados que a primeira versão criou);
+#   apps/web/tsconfig.json continua com preserve para o Next.
 # Achado 6 — entry.css repõe padding-block e padding-inline do md-filled-button
 #   em .bv-skin (o Confirmar do diálogo ficava com padding 0); a landing não
 #   importa esta folha. Prova: varredura das duas declarações.
