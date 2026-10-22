@@ -100,3 +100,35 @@ closure:
 # consulta por papel encontra 5 links com o nome acessível Criar conta.
 # O HTML pré-renderizado de / traz dois meta theme-color com media: F2F0EB no claro e
 # 171E20 no escuro, e nenhum 164734.
+
+# Correções da revisão do Codex — 22/10/2026, branch codex/landing-next, host win32.
+# 0. SSR da landing. O SupabaseAuthProvider saiu do layout raiz — ele devolvia null até
+# montar no cliente e envolvia todo o body — e passou para os layouts de (admin), (owner),
+# (preauth), (provider), (shell) e auth/. A landing ficou fora do provedor. O HTML cru de /
+# agora traz o h1 Juntos somos mais fortes. e o texto Criar conta sem executar JavaScript;
+# teste novo em landing-v8.spec.ts usa request.get e afirma os dois. Confirmação pedida no
+# contrato: rg -n supabase em apps/web/app/landing e apps/web/app/page.tsx não acha nada.
+# 1. Movimento reduzido. landing.css ganhou @media (prefers-reduced-motion: reduce) com
+# .ld * e .ld-sheet.ld-open zerando transition-duration e transition-delay; o reset de
+# globals.css usa * e perdia para as classes da landing. O e2e mede a duração computada da
+# folha e da barra e exige 0s em todas as transições.
+# 2. Folha em tela baixa. A folha recebeu overflow-y auto, max-height 100dvh e
+# overscroll-behavior contain. Em 812x375 o e2e abre a folha, rola até Código de conduta e
+# afirma caixa inteira dentro da tela mais clique.
+# 3. Símbolo. As regras do protótipo entraram limitadas a .ld: fill var(--bv-symbol-body) e
+# fill var(--bv-symbol-threshold); as exceções da foto e do rodapé continuam vencendo. O
+# e2e afirma rgb(37, 48, 51) e rgb(184, 74, 58) no claro, branco nos dois caminhos no
+# escuro, na folha e no topo sólido, e branco no rodapé.
+# 4. Registro e comentários. PORT_001.md, o adaptador e os tipos deixam de prometer
+# funcionamento sem JavaScript: o conteúdo vem no HTML do servidor, o link Criar conta passa
+# a funcionar quando o Material registra o componente e os links nativos seguem no rodapé.
+# npx pnpm@11.18.0 gate: verde (lint, typecheck, unit 1468, privacidade 189, mobile 76, web
+# 19, scope 120, secrets).
+# npx pnpm@11.18.0 --filter web build: exit 0, com as variáveis do Supabase local no
+# ambiente e sem criar apps/web/.env.local.
+# bash run-e2e-landing.sh landing-v8 smoke manaus-pilot-full-journey onboarding-holder-family
+# --workers=1: exit 0, 169 passaram, 17 pulados, 0 falharam.
+# O gate avisa GATE VERDE (build não rodou): a prova de build é o comando acima, rodado
+# nesta mesma sessão com as variáveis exportadas.
+# Revisão independente e prova de runtime por terceiro: ainda não houve para esta rodada
+# (reviewer_must_differ_from_executor: true).
