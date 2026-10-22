@@ -1281,6 +1281,44 @@ export type Database = {
         }
         Relationships: []
       }
+      neighborhoods: {
+        Row: {
+          center_lat: number
+          center_lng: number
+          id: string
+          locality_id: string
+          name: string
+          name_key: string
+          zone: string | null
+        }
+        Insert: {
+          center_lat: number
+          center_lng: number
+          id?: string
+          locality_id: string
+          name: string
+          name_key: string
+          zone?: string | null
+        }
+        Update: {
+          center_lat?: number
+          center_lng?: number
+          id?: string
+          locality_id?: string
+          name?: string
+          name_key?: string
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neighborhoods_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_channel_preferences: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]
@@ -1658,6 +1696,8 @@ export type Database = {
           consented_at: string | null
           created_at: string
           display_name: string
+          neighborhood: string | null
+          show_neighborhood: boolean
           updated_at: string
           user_id: string
           visibility: Database["public"]["Enums"]["profile_visibility"]
@@ -1668,6 +1708,8 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name: string
+          neighborhood?: string | null
+          show_neighborhood?: boolean
           updated_at?: string
           user_id: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
@@ -1678,6 +1720,8 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name?: string
+          neighborhood?: string | null
+          show_neighborhood?: boolean
           updated_at?: string
           user_id?: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
@@ -2607,6 +2651,7 @@ export type Database = {
         Returns: string
       }
       get_profile_bio: { Args: { p_user_id: string }; Returns: string }
+      get_profile_neighborhood: { Args: { p_user_id: string }; Returns: string }
       get_provider_contact_phone: {
         Args: { p_provider_id: string }
         Returns: string
@@ -3036,6 +3081,16 @@ export type Database = {
           p_reason: string
         }
         Returns: undefined
+      }
+      search_neighborhoods: {
+        Args: { p_locality_id: string; p_query?: string }
+        Returns: {
+          center_lat: number
+          center_lng: number
+          id: string
+          name: string
+          zone: string
+        }[]
       }
       search_providers: {
         Args: {
