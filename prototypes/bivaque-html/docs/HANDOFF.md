@@ -108,6 +108,13 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   - correções das três revisões (R68).
   Implementado por Opus na sessão principal; revisões do agente revisor, Codex e OpenCode; bateria e base
   visual em [VISUAL_BASELINE_R68](VISUAL_BASELINE_R68.md). Publicado em 19/10 (`3d427b0d…`).
+- **Lote Lançamento, Rodadas 69 a 72 (19 a 22/10):**
+  - lançamento sem cobrança (R69);
+  - pele da marca nos temas claro e escuro (R70);
+  - landing v8 com o título F (R71);
+  - correções da revisão do Codex (R72).
+  Coordenado por Opus e implementado por DeepSeek V4.1 Flash; revisões do Codex; bateria e base visual em
+  [VISUAL_BASELINE_R72](VISUAL_BASELINE_R72.md) (`7e7657c3…`).
 - Teto de tamanho: 2 MB transferidos com gzip (`round09-proof.mjs`); hoje cerca de 1,8 MB.
 - Método combinado com o usuário: cada rodada roda só a prova nova (375 e 1440) e o gate. A
   revisão independente, as provas antigas e o congelamento visual ficam para o fechamento do
