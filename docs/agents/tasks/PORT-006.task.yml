@@ -63,3 +63,41 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# --- Evidência de execução — 22/10/2026, branch codex/entrada-convite ---
+# Revisão de código confrontada: esta mesma árvore, sem commit anterior da
+# frente (o contrato chegou em c52cdaa2). Commits desta execução: 8b4c0771
+# (banco), 8e36c85b (tela do convite), 899e668c (código no e-mail e nas ações
+# do titular), d005d109 (conta apagada, Ajuda pública e páginas legais),
+# 838406f9 (e2e e captura).
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   — 45/45 em 5 arquivos. tests/unit/notifications e tests/unit/profile (o
+#   e-mail e o perfil que esta frente tocou) — 91/91 na mesma execução.
+# npx pnpm@11.18.0 exec vitest run tests/privacy — 189/189, porque
+#   supabase/database.generated.ts foi editado à mão.
+# npx pnpm@11.18.0 exec biome check <arquivos alterados> — 0 erro, 3 avisos
+#   (noDescendingSpecificity nos seletores descendentes de ajuda.css; não
+#   reprovam o gate, que usa biome check sem --error-on-warnings).
+# node --test tests/scope/entrada-public-paths.test.mjs rls-structure
+#   normalize-generated-types invite-digest-serialization
+#   design-system-contract — 25/25.
+#
+# NÃO executados nesta frente, por instrução do lote (máquina com pouca memória
+# e quatro frentes em paralelo): supabase db reset, test:db, db:lint, gate,
+# next build, Playwright e a captura de scripts/port. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#   node scripts/port/compare-entrada-publica.mjs
+#
+# Pendência nomeada: o código NÃO aparece na tela de quem convida
+# (apps/web/app/(shell)/configuracoes/familia/page.tsx), que está fora do
+# allowed_paths. As ações já devolvem { code, token } e o e-mail já leva o
+# código; exibir ao lado do link exige três linhas nessa página.
+# Divergência registrada: o e-mail do convite é digitado na tela, não somente
+# lido, porque o banco guarda só o digest do endereço convidado.
+
