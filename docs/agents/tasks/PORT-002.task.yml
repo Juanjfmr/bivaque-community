@@ -1,0 +1,55 @@
+task_id: PORT-002
+objective: >
+  Base do lote 4 (entrada): o Next ganha os adaptadores Material Web usados nas telas de entrada do
+  protótipo (campo de texto, campo de senha com mostrar/esconder, checkbox, seleção, botões outlined,
+  text e icon, diálogo de confirmação), o layout visual da entrada com os tokens da marca nos dois temas
+  e o cabeçalho com o símbolo e o indicador de passo, e o proxy passa a deixar públicas as rotas que o
+  ADR da entrada exige (conta apagada e convite; a Ajuda pública fica com a frente D). Nenhuma tela de entrada muda de comportamento
+  nesta tarefa; elas serão portadas pelas frentes A a D sobre esta base.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    codex/entrada-adr 2afe0f9c: apps/web/app/components/material/ tem só filled-button, material-icon e
+    register (só o filled-button); os tokens da marca estão escopados na landing (.ld em
+    apps/web/app/brand-tokens.css); proxy.ts PUBLIC_PATHS não tem /ajuda, /conta-apagada nem /convite.
+allowed_paths:
+  - apps/web/app/components/material/
+  - apps/web/app/components/entry/
+  - apps/web/app/brand-tokens.css
+  - apps/web/app/fonts/
+  - apps/web/app/landing/
+  - apps/web/types/material-web.d.ts
+  - apps/web/proxy.ts
+  - tests/unit/
+  - tests/scope/
+  - tests/e2e/entry-kit.spec.ts
+  - docs/agents/tasks/PORT-002.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local
+  - instalar pacotes (o @material/web@2.5.0 já está no package.json)
+  - mudar o comportamento das telas de entrada atuais ou a landing (a landing só pode trocar o import dos tokens, sem mudar o visual)
+  - mudar o tema HeroUI das telas ainda não portadas
+  - editar prototypes/bivaque-html
+acceptance:
+  - Adaptadores cliente para md-outlined-text-field, md-checkbox, md-outlined-select com md-select-option, md-outlined-button, md-text-button, md-icon-button e md-dialog, cada um importando só o seu módulo, com tipos em material-web.d.ts e sem erro de hidratação
+  - Campo de senha com botão mostrar/esconder (rótulo acessível que muda), supporting-text e estado de erro, como entryPasswordField do protótipo
+  - Os tokens da marca deixam de ser exclusivos da landing - uma classe de escopo reutilizável (por exemplo .bv-skin) aplicada pela landing e pelo layout da entrada, sem mudar o visual da landing (comparação de captura da landing igual)
+  - Componentes da entrada em apps/web/app/components/entry/ - casca da tela (topo com símbolo oficial e voltar), indicador de passo (Passo N de 3) e área de erro com role=alert
+  - proxy.ts deixa públicas /conta-apagada e /convite (a Ajuda pública fica com a frente D), e há teste de escopo para isso
+  - Uma página de prova interna não é criada; o spec tests/e2e/entry-kit.spec.ts monta os adaptadores numa rota existente sem mudar o comportamento dela, ou os testes unitários cobrem os adaptadores
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk: base visual da entrada; mexe no proxy de rotas públicas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
