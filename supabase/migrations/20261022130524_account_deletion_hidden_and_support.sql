@@ -3,9 +3,15 @@
 -- hidden_questions e support_tickets tem FK com ON DELETE CASCADE para
 -- auth.users, o que basta se a linha de origem for apagada. A purga real nao
 -- apaga: a rota chama auth.admin.deleteUser(id, true) (soft delete), a linha
--- de auth.users continua la e o cascade nao dispara. Por isso as duas remocoes
+-- de auth.users continua la e o cascade nao dispara. Por isso as remocoes
 -- entram aqui, na mesma funcao que ja apaga o resto do dado pessoal - e na
 -- mesma transacao que marca finalized_at.
+--
+-- Alem das tabelas, a purga resolve o que o cascade nao alcanca:
+--   * a resposta do chamado que ficou no outbox, ligada pelo ticket_id do
+--     payload - o destinatario pode ser um endereco que a pessoa ja trocou;
+--   * a autoria (answered_by) em chamados de terceiros que o operador
+--     respondeu antes de sair.
 --
 -- O resto da funcao e o de 20260915101543, linha por linha. Mudar qualquer
 -- outra coisa aqui seria reabrir uma decisao que nao e desta migration.
@@ -88,7 +94,29 @@ begin
   -- DELETE CASCADE da FK nunca dispara aqui. Sem estas duas linhas, ocultacoes
   -- e chamados ficariam para sempre depois da exclusao.
   delete from public.hidden_questions where user_id = p_user_id;
+
+  -- A resposta do chamado tambem foi para a fila de envio, endereçada ao e-mail
+  -- da epoca. Se a pessoa trocou o endereco antes de excluir a conta,
+  -- purge_account_contact_data (que limpa POR ENDERECO) nao acha essa linha, e
+  -- ela sobreviveria com assunto e texto da resposta. O vinculo e o ticket_id no
+  -- payload, nao o destinatario; por isso a remocao vem antes do chamado.
+  delete from public.outbox o
+   where o.type = 'support_answered'
+     and exists (
+       select 1
+       from public.support_tickets t
+       where t.user_id = p_user_id
+         and t.id::text = o.payload ->> 'ticket_id'
+     );
+
   delete from public.support_tickets where user_id = p_user_id;
+
+  -- A pessoa pode ter respondido chamados de terceiros antes de sair. A resposta
+  -- fica (e dela que o destinatario depende), mas a autoria sai: o ON DELETE SET
+  -- NULL da FK nao dispara, porque a exclusao real e soft delete.
+  update public.support_tickets
+     set answered_by = null
+   where answered_by = p_user_id;
 
   -- Participação sai; posse NÃO é dissolvida (ver rodapé). O trigger
   -- cascade_community_membership_loss recusa remover a linha do dono, e este

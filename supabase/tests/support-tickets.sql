@@ -8,12 +8,13 @@
 --   * so operador responde, e responder grava a resposta, muda a situacao,
 --     cria o aviso no app e enfileira o e-mail no outbox;
 --   * o titular le a resposta, mas NAO le quem respondeu (answered_by);
---   * apagar a conta apaga os chamados (pela purga e pelo cascade).
+--   * apagar a conta apaga os chamados (pela purga e pelo cascade), a resposta
+--     que ficou no outbox e a autoria de quem respondeu.
 
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(44);
+select plan(50);
 
 \ir fixtures/foundation.inc
 
@@ -488,6 +489,49 @@ select is(
   'o chamado da quinta pessoa existe antes da purga'
 );
 
+-- A resposta é enfileirada para o e-mail da conta naquele momento.
+-- O id é capturado como dono do banco: o operador não lê a fila de outra pessoa
+-- (a policy de select é só do titular), e na operação real o id vem da fila.
+select set_config(
+  'bivaque.ticket_005',
+  (select id::text from public.support_tickets
+    where user_id = '10000000-0000-4000-8000-000000000005'),
+  true
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-00000000000b', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$ select public.answer_support_ticket(
+       current_setting('bivaque.ticket_005')::uuid,
+       'Resposta que nao pode sobreviver a exclusao da conta.'
+     ) $$,
+  'o operador responde o chamado antes da exclusao'
+);
+
+reset role;
+
+select is(
+  (select count(*) from public.outbox
+    where payload ->> 'ticket_id' = current_setting('bivaque.ticket_005')),
+  1::bigint,
+  'a resposta esta no outbox antes da exclusao'
+);
+
+-- A pessoa troca o e-mail DEPOIS de receber a resposta. A limpeza por endereço
+-- (purge_account_contact_data) procura o endereço novo; a mensagem antiga do
+-- outbox só sai se a purga souber ligá-la ao chamado pelo payload.
+update auth.users
+   set email = 'non-member-changed@example.invalid'
+ where id = '10000000-0000-4000-8000-000000000005';
+
+select public.purge_account_contact_data(
+  '10000000-0000-4000-8000-000000000005',
+  'non-member-changed@example.invalid'
+);
+
 insert into public.account_deletion_requests (user_id, requested_at, due_at)
 values (
   '10000000-0000-4000-8000-000000000005',
@@ -506,6 +550,20 @@ select is(
     where user_id = '10000000-0000-4000-8000-000000000005'),
   0::bigint,
   'a purga apaga os chamados da pessoa'
+);
+
+select is(
+  (select count(*) from public.outbox
+    where payload ->> 'ticket_id' = current_setting('bivaque.ticket_005')),
+  0::bigint,
+  'a purga apaga do outbox a resposta do chamado, mesmo com o e-mail trocado'
+);
+
+select is(
+  (select count(*) from public.outbox
+    where payload ->> 'reply' = 'Resposta que nao pode sobreviver a exclusao da conta.'),
+  0::bigint,
+  'nem o texto da resposta fica no outbox'
 );
 
 -- O cascade da FK, para o caso de a conta ser apagada de vez.
@@ -529,6 +587,33 @@ select is(
     where user_id = '10000000-0000-4000-8000-000000000003'),
   0::bigint,
   'apagar a conta apaga os chamados pelo cascade'
+);
+
+-- ── 13. a exclusao do operador preserva a resposta e apaga a autoria ──────
+--
+-- A exclusao real e soft delete, logo o ON DELETE SET NULL da FK de
+-- answered_by nao dispara. Sem o UPDATE na purga, o UUID de quem respondeu
+-- ficaria no chamado de outra pessoa para sempre.
+
+insert into public.account_deletion_requests (user_id, requested_at, due_at)
+values (
+  '10000000-0000-4000-8000-00000000000b',
+  now() - interval '16 days',
+  now() - interval '1 day'
+);
+
+select is(
+  public.finalize_account_deletion('10000000-0000-4000-8000-00000000000b'),
+  'purged',
+  'a purga da conta do operador roda'
+);
+
+select is(
+  (select (answered_by is null)::text || '|' || (reply is not null)::text
+     from public.support_tickets
+    where id = '70000000-0000-4000-8000-000000000001'),
+  'true|true',
+  'a purga apaga a autoria (answered_by) e preserva a resposta'
 );
 
 select * from finish();
