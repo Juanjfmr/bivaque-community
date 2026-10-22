@@ -1,14 +1,14 @@
 ---
 id: ADR-20261022-entrada-do-prototipo
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
-accepted_at:
+approved_at: 2026-10-22
+accepted_at: 2026-10-22
 expires_at:
 linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 4)
-critic_verdict: pending
-critic_review: Redigido em 22/10/2026 a partir do mapeamento protótipo × Next da entrada; aguarda aprovação do dono.
+critic_verdict: PASS
+critic_review: Aprovado pelo dono em 22/10/2026, a partir do mapeamento protótipo × Next da entrada.
 ---
 
 # A entrada do Next segue a entrada do protótipo
