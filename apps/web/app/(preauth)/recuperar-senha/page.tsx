@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { submitEntryFormOnEnter } from "../../../lib/auth/entry-enter"
 import { isEntryEmailOk, normalizeEntryEmail } from "../../../lib/auth/entry-form"
 import { classifyEntrySend } from "../../../lib/auth/entry-send"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -144,7 +145,12 @@ export default function RecuperarSenhaPage() {
       ) : (
         // `noValidate`: a validação e a mensagem são desta tela, na frase do
         // protótipo; o balão nativo do navegador não tem tradução nem ordem.
-        <form className="en-form" noValidate onSubmit={handleSubmit}>
+        <form
+          className="en-form"
+          noValidate
+          onKeyDown={submitEntryFormOnEnter}
+          onSubmit={handleSubmit}
+        >
           <h1 className="en-h1">Recuperar a senha.</h1>
           <p className="en-lead">Mandamos um link para criar uma senha nova.</p>
 

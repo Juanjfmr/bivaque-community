@@ -4,6 +4,7 @@ import { CONSENT_VERSION } from "@bivaque/domain"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useRef, useState } from "react"
+import { submitEntryFormOnEnter } from "../../../../lib/auth/entry-enter"
 import {
   type EntryFieldTarget,
   type EntryFormProblem,
@@ -262,17 +263,6 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     }
   }
 
-  // Enter num campo envia o passo, como num formulário. O `<input>` do Material
-  // vive no shadow root e não tem form owner, então a submissão implícita do
-  // navegador não acontece; o evento chega retargetado para o campo.
-  const handleEnter = (event: React.KeyboardEvent<HTMLFormElement>) => {
-    if (event.key !== "Enter" || event.nativeEvent.isComposing) return
-    const target = event.target
-    if (!(target instanceof HTMLElement) || !target.closest("md-outlined-text-field")) return
-    event.preventDefault()
-    event.currentTarget.requestSubmit()
-  }
-
   return (
     <EntryShell
       action={
@@ -286,7 +276,12 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
           quem valida e explica é esta tela, na ordem da especificação. Sem
           `noValidate` o navegador abre o balão nativo dele e a mensagem da
           especificação nunca aparece. */}
-      <form className="en-form" noValidate onKeyDown={handleEnter} onSubmit={handleSubmit}>
+      <form
+        className="en-form"
+        noValidate
+        onKeyDown={submitEntryFormOnEnter}
+        onSubmit={handleSubmit}
+      >
         {mode === "signup" && <EntrySteps label="Conta" step={1} />}
         <h1 className="en-h1">{copy.title}</h1>
 

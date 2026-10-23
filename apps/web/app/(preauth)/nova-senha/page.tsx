@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { submitEntryFormOnEnter } from "../../../lib/auth/entry-enter"
 import { passwordProblem, SENHA_REGRA, SENHA_REGRA_ERRO } from "../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EntryError } from "../../components/entry/entry-error"
@@ -79,7 +80,12 @@ export default function NovaSenhaPage() {
   return (
     <EntryShell backHref="/login">
       {session === "ready" ? (
-        <form className="en-form" noValidate onSubmit={handleSubmit}>
+        <form
+          className="en-form"
+          noValidate
+          onKeyDown={submitEntryFormOnEnter}
+          onSubmit={handleSubmit}
+        >
           <h1 className="en-h1">Crie uma senha nova</h1>
 
           <MaterialPasswordField
