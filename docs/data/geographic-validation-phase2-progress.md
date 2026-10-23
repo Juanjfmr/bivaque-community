@@ -56,23 +56,25 @@ A fila conserva a partição de origem em lotes 01–11 (máximo de 25 registros
 
 ## Catálogo suplementar FAB — progresso até o lote de pesquisa 03
 
-`data/om/evidence/fab_public_address_catalog_phase2.csv` contém 310 linhas nacionais derivadas do catálogo-fonte, preservando IDs, nomes e localidades originais. Os lotes de pesquisa 01–03 cobrem 72 registros; os lotes 01 e 02 têm 25 registros cada e o lote 03 tem 22. Restam 238 registros na fila marcada `PENDENTE`. A pesquisa não altera nem completa silenciosamente as linhas restantes.
+`data/om/evidence/fab_public_address_catalog_phase2.csv` contém 310 linhas nacionais derivadas do catálogo-fonte, preservando IDs, nomes e localidades originais. Os lotes de pesquisa 01–04 cobrem 97 registros; os lotes 01, 02 e 04 têm 25 registros cada e o lote 03 tem 22. Restam 213 registros na fila marcada `PENDENTE`. A pesquisa não altera nem completa silenciosamente as linhas restantes.
 
 Situação dos 310 registros na atualização de 2026-10-23:
 
 | Situação documental | Registros |
 |---|---:|
-| Endereço público, institucional ou publicado confirmado textualmente | 54 |
-| Endereço oficial/publicado incompleto | 4 |
-| Ambiguidade entre endereços ou vínculo pendente | 4 |
+| Endereço público, institucional ou publicado confirmado textualmente | 67 |
+| Endereço oficial/publicado incompleto | 7 |
+| Ambiguidade entre endereços ou vínculo pendente | 7 |
 | Divergência histórica de endereço/CEP | 3 |
-| Sem endereço individualmente confirmado | 243 |
+| Sem endereço individualmente confirmado | 224 |
 | Identidade/Força pendente | 1 |
 | Denominação divergente pendente | 1 |
 
 Os 54 endereços confirmados são endereço textual publicado, não validação cartográfica da instalação. O lote 03 registrou fontes oficiais para CINDACTA II e III, CBNB, COMAER, COMAE, COMPREP, COMGAP, COMGEP, VI e VII COMAR, COPAC, COMARA, CDA, CISCEA, COJAER, DCTA, DECEA e DESTAE-CV/FN/MQ/MS. Permanecem anotadas divergências ou ressalvas: III COMAR (logradouro atual versus referência anterior), VII COMAR (endereços de Manaus distintos), COMARA (CEP conflitante), COMDCIBER (comando conjunto; Força não atribuída), DESTAE-MQ (catálogo atual usa DTCEA-MQ) e estruturas compartilhadas em Brasília, Rio, Guarulhos, São José dos Campos e outras guarnições. Os detalhes, evidências e URLs são mantidos por linha no CSV.
 
 A tabela registra endereços confirmados separadamente dos incompletos, ambíguos e inconclusivos. As 238 linhas ainda marcadas `PENDENTE` aguardam pesquisa individual. Ausência de endereço na fonte-base não é evidência de inexistência ou desativação. A situação institucional do diretório-fonte não demonstra, por si só, atividade atual.
+
+O lote 04 (registros FAB-CAT-20261020-084 a -108) pesquisou 25 DTCEA/DASG. Fontes oficiais permitiram registrar endereço para unidades de Barbacena (incompleto), Guaratinguetá, Marte, Santa Cruz, Santa Maria, Santos (divergência de CEP), São Félix do Araguaia, São Paulo (ambiguidade de CEP), Sinop, Galeão (incompleto), Afonsos, DTCEATM-RJ, Anápolis, Aracaju, Barra do Garças, Belém e Boa Vista (redação ambígua), além de Bom Jesus da Lapa. Para DASG, DTCEA-BI, DTCEA-BR, DTCEA-CC, DTCEA-CG e DTCEA-CO a pesquisa ainda não confirmou endereço individual; Cerro das Tropas tem apenas localidade geral. Endereços vinculados a aeroportos ou guarnições compartilhadas foram registrados como correspondência institucional/publicada, sem inferir ponto físico.
 
 Nenhuma chamada paga à Geoapify foi realizada. Nenhuma coordenada foi atribuída ao catálogo suplementar FAB nem publicada no aplicativo.
  
@@ -90,4 +92,4 @@ Nenhuma chamada paga à Geoapify foi realizada. Nenhuma coordenada foi atribuíd
 - `data/om/evidence/fab_public_address_catalog_phase2.csv` — base suplementar nacional FAB; proveniência preservada e campos de endereço em branco onde não foram comprovados.
 - `docs/data/geographic-validation-phase2-progress.md` — este registro de método e progresso.
 
-**Limite do trabalho desta atualização:** a validação cartográfica dos 116 candidatos foi concluída nos cinco lotes. Os 15 pontos corroborados representam evidência cartográfica pública para o sítio associado, sem homologação institucional da coordenada. A pesquisa da FAB documentou 72/310 registros em três lotes; permanecem 238 na fila de pesquisa, além de casos incompletos ou pendentes de resolução. O cruzamento identifica 304 correspondências exatas com o catálogo Bivaque e seis casos sem correspondência exata para revisão. A base suplementar ainda não é uma cobertura nacional completa de endereços.
+**Limite do trabalho desta atualização:** a validação cartográfica dos 116 candidatos foi concluída nos cinco lotes. Os 15 pontos corroborados representam evidência cartográfica pública para o sítio associado, sem homologação institucional da coordenada. A pesquisa da FAB documentou 97/310 registros em quatro lotes; permanecem 213 na fila de pesquisa, além de casos incompletos ou pendentes de resolução. O cruzamento identifica 304 correspondências exatas com o catálogo Bivaque e seis casos sem correspondência exata para revisão. A base suplementar ainda não é uma cobertura nacional completa de endereços.
