@@ -54,3 +54,35 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# Evidencia (23/10/2026, branch codex/lote5-pergunta, executor DeepSeek V4.1 Flash)
+# migration: supabase/migrations/20261024110000_lote5_pergunta.sql
+#   CHECK do titulo 8..300 (valida, sem not valid: producao nao tem uso real)
+#   edited_at em recommendation_replies e recommendation_requests, com gatilho que so marca quando o CONTEUDO muda
+#   last_resolved_reply_id (FK on delete set null) + trigger validando os dois ponteiros na mesma pergunta
+#   mark_recommendation_reply_resolved grava atual e ultima; mark_recommendation_resolved e a resolvida sem resposta
+#   reopen_recommendation esvazia a atual e mantem a ultima
+#   list_indications ganha p_mine (Minhas / Para ajudar) e, no Para ajudar, sem resposta primeiro
+#   list_question_replies e a leitura da conversa: a resposta removida volta como aviso, sem texto e sem autor
+# pgTAP: supabase/tests/community-question-cycle.sql, 43 asserts (43/43 no test:db)
+# prova: node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+#   resultado: migration aplica limpa (20261024110000 no fim da fila)
+# prova: node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
+#   resultado: PASS, 155 arquivos, 2305 testes, 0 falhas (inclui community-question-cycle 43/43)
+# prova: npx pnpm@11.18.0 gate
+#   resultado: VERDE (lint, typecheck, typecheck:e2e, test 141, secrets); o estagio build e PULADO pelo gate por nao
+#   existir apps/web/.env.local, que este contrato proibe criar
+# prova: npx pnpm@11.18.0 --filter web build (NEXT_PUBLIC_* exportados de npx supabase status -o env, sem .env.local)
+#   resultado: ok, 60 rotas geradas sem erro de prerender
+# prova: node scripts/agents/prova-fila.mjs -- npx supabase db reset --local (com seed), depois
+#   node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 exec playwright test <specs> --workers=1
+#   ambiente: NEXT_PUBLIC_* e SUPABASE_* de supabase status -o env, USER_PASSWORD=bivaque-e2e-local,
+#   PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH para o chromium local (o bundle 1161 nao esta instalado nesta maquina)
+#   resultado: tests/e2e/indicacoes-ciclo-pergunta.spec.ts 3/3; tests/e2e/indicacoes-memoria.spec.ts 6/6;
+#   tests/e2e/recommendation-reply-notify.spec.ts 9/9 (3 viewports, 0 falhas)
+# prova: node scripts/port/compare-pergunta.mjs (pela fila, com sessao de captura)
+#   resultado: .visual/port-pergunta/ com 20 PNG e report.json; 4 pares 375/1440 x claro/escuro, prototipo a esquerda
+#   e Next a direita. A tela do prototipo abre por #comunidade -> primeiro pedido; o Next e o pedido f01 do seed.
+# limite: a captura nao prova interacao; o ciclo tem prova no spec e2e. O banco local e a porta 3000 sao
+#   compartilhados com a frente N2 (COM-001): reset e provas passaram pela fila, na mesma janela.
+# fora do escopo desta tarefa, por decisao do ADR: o aviso de pergunta removida (so a resposta tem aviso aqui),
+#   o botao Bloquear (frente D) e a caixa de pedir no fim da lista (o Next mantem no topo).
