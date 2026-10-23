@@ -15,11 +15,9 @@ import {
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 // Vila Ajuricaba's owner (see community-batch-approval.spec.ts's header for
-// the full seed story). /community's feed only renders when the viewer has
-// a primary community — apps/web/app/(shell)/community/page.tsx:101 skips
-// straight to <CityReference/> otherwise — so the default seedSession()
-// account (deliberately community-less, vila-home.spec.ts) can never see a
-// feed post or its chip, regardless of how many city-reach posts exist.
+// the full seed story). O feed da cidade (Início) rende para qualquer membro da
+// localidade — o chip de alcance não depende de ter comunidade. Desde o lote 5
+// N2 a Comunidade não tem mais feed: o cartão com o chip é o do Início.
 const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
 
 async function signInAs(page: Page, email: string): Promise<void> {
@@ -85,14 +83,19 @@ test.describe("audience selector and reach chip", () => {
     // locality has at least one city-reach post (the dev seed sets this up)
     await signInAs(page, VILA_OWNER_EMAIL)
 
-    // When the member opens the home feed
-    await page.goto("/community")
+    // When the member opens the home feed — desde o lote 5 N2 o feed da cidade
+    // mora no Início, não na Comunidade.
+    await page.goto("/inicio")
 
     // Then a city-reach chip is visible on the city-wide post. The chip
-    // (feed-post.tsx:289) is a static HeroUI Chip, not an interactive
+    // (feed-post-card) is a static HeroUI Chip, not an interactive
     // control — it carries no button role, so a byRole("button") locator
     // never matched even though the chip renders.
-    const chip = page.getByText(/inteira$/i).first()
+    await expect(page.locator("#secao-cidade article").first()).toBeVisible({ timeout: 20000 })
+    const chip = page
+      .locator("#secao-cidade")
+      .getByText(/inteira$/i)
+      .first()
     await expect(chip).toBeVisible()
   })
 })

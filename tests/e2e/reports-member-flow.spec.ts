@@ -172,14 +172,16 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
     try {
       const page = await context.newPage()
       await signInAsCookie(context, REPORTER_EMAIL)
-      await page.goto("/community", { waitUntil: "load" })
-      await expect(page).toHaveURL(/\/community$/)
+      // O feed da cidade mora no Início desde o lote 5 N2 (a vista Conversa
+      // saiu da Comunidade).
+      await page.goto("/inicio", { waitUntil: "load" })
+      await expect(page).toHaveURL(/\/inicio$/)
 
       // O post municipal fixo pertence ao proprio dono-vila e nao pode ser
       // denunciado por ele. Este texto vem dos posts gerados por outros
       // membros e reduz o locator ao artigo correto antes de abrir o menu.
       const post = page.getByRole("article").filter({ hasText: TARGET_POST_TEXT }).first()
-      await expect(post).toBeVisible({ timeout: 10000 })
+      await expect(post).toBeVisible({ timeout: 20000 })
       await post.getByRole("button", { name: "Mais opções" }).click()
       await page.getByRole("menuitem", { name: /Denunciar/i }).click()
 

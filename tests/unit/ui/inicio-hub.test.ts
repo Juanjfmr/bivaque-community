@@ -56,13 +56,13 @@ describe("composição do Início", () => {
   // A descoberta é montada em blocos antes do JSX e desenhada por
   // `discovery.map`; por isso a ordem fixa é medida só dentro do return, e a
   // ordem padrão da descoberta pela declaração dos blocos.
-  it("segue a ordem: retornos, semana, comunidade, descoberta", () => {
+  it("segue a ordem: retornos, semana, cidade, descoberta", () => {
     const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
     const order = [
       "<HubShortcuts",
       "<ReturnStrip />",
       "<WeekEventsCarousel",
-      "<CommunitySection",
+      "<CityFeed",
       "{discovery.map(",
     ].map((marker) => jsx.indexOf(marker))
     for (const position of order) expect(position).toBeGreaterThan(-1)
@@ -81,7 +81,7 @@ describe("composição do Início", () => {
     )
   })
 
-  it("sem comunidade, o convite a entrar vem antes dos atalhos e a prévia some", () => {
+  it("sem comunidade, o convite a entrar vem antes dos atalhos", () => {
     const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
     expect(jsx.indexOf("<JoinCommunityCard />")).toBeLessThan(jsx.indexOf("<HubShortcuts"))
     expect(page).toContain("{hasCommunity ? null : <JoinCommunityCard />}")
@@ -102,11 +102,22 @@ describe("composição do Início", () => {
     expect(inicio("section-nav.tsx")).toContain('aria-label="Voltar aos atalhos"')
   })
 
-  it("a comunidade é prévia, não feed infinito", () => {
-    const section = inicio("community-section.tsx")
-    expect(section).toContain("previewLimit = 3")
-    expect(section).toContain(".slice(0, previewLimit)")
-    expect(section).toContain("Ver todas as publicações")
+  it("o feed da cidade pagina pela própria função e não é mais prévia", () => {
+    // N2: a seção deixou de ser prévia de três publicações da vila porque não
+    // há outro lugar com o feed — a leitura nova (feed_locality) pagina dentro
+    // da função e a tela carrega a próxima ao chegar no fim.
+    const section = inicio("city-feed.tsx")
+    expect(inicio("home-loaders.ts")).toContain('rpc("feed_locality"')
+    expect(section).toContain("appendPage")
+    expect(section).toContain("hasMoreAfter")
+    expect(section).toContain("Carregar mais")
+    expect(section).not.toContain("previewLimit")
+  })
+
+  it("o vazio do feed da cidade é honesto abaixo do limiar de densidade", () => {
+    const section = inicio("city-feed.tsx")
+    expect(section).toContain("isLocalityStale(memberCount)")
+    expect(section).toContain("Você é dos primeiros aqui.")
   })
 
   it("a barra de seções aponta só para seções que a página monta", () => {
@@ -116,7 +127,7 @@ describe("composição do Início", () => {
       "market-strip.tsx",
       "week-events.tsx",
       "questions-guide.tsx",
-      "community-section.tsx",
+      "city-feed.tsx",
     ]
       .map(inicio)
       .join("\n")

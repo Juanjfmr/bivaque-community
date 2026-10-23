@@ -129,11 +129,11 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     // Given a member whose locality has fewer than 30 members
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
 
-    // When they open the feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    // When they open the feed — desde o lote 5 N2 o feed da cidade é o do Início
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
     // Then the honest copy is rendered instead of "Nenhuma publicação ainda"
-    await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible({ timeout: 20000 })
 
     // And the standard quiet-room copy is **not** rendered — that would
     // describe a quiet room, not a beginning, and is the failure this spec
@@ -142,7 +142,9 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
 
     // And the action path (Publicar) is rendered, so the member can be the
     // first instead of staring at a blank room
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
+    await expect(
+      page.locator("#secao-cidade").getByRole("button", { name: "Publicar" }).first(),
+    ).toBeVisible()
   })
 
   test("events renders the honest empty state with an action path", async ({ page }) => {

@@ -38,15 +38,21 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 // Identidades do seed (públicas e descartáveis por design), mesmo padrão de
 // group-event-detail-denials.spec.ts. A fórmula de group_memberships do seed
 // coloca membro-4 no grupo 6 ("Mães da Cidade") e membro-6 apenas no grupo 7.
-// As três personas do cenário de interação precisam de feed de vila real:
-// o seed as aprova na Vila Ajuricaba. Sem comunidade aprovada, /community
-// renderiza CityReference (D48), que não lista posts, e o post nunca
-// renderiza para curtir/comentar/notificar.
+// As três personas do cenário de interação publicam pela linha de publicar da
+// Comunidade (endereço de onde o compositor sai) e o post aparece no feed da
+// cidade, no Início — desde o lote 5 N2 a vista "Conversa" saiu de /community.
 const AUTHOR_EMAIL = "membro-1@bivaque.example.invalid"
 const COMMENTER_EMAIL = "membro-2@bivaque.example.invalid"
 const SECOND_REACTOR_EMAIL = "membro-3@bivaque.example.invalid"
 const GROUP_MEMBER_EMAIL = "membro-4@bivaque.example.invalid"
 const GROUP_OUTSIDER_EMAIL = "membro-6@bivaque.example.invalid"
+
+// O feed onde estas publicações aparecem. As três personas são membros
+// aprovados da Vila Ajuricaba (seed), e a linha de publicar da Comunidade
+// publica com a vila como audiência padrão do seletor; desde o lote 5 N2 o feed
+// da vila vive na página da comunidade (/communities/<id>), porque a vista
+// "Conversa" saiu de /community.
+const VILA_FEED_URL = "/communities/71000000-0000-4000-8000-000000000001"
 
 const PRIVATE_GROUP_ID = "60000000-0000-4000-8000-000000000006"
 const PRIVATE_GROUP_NAME = "Mães da Cidade"
@@ -184,12 +190,16 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
       await expect(modal.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
       await modal.getByLabel("Pergunta").fill(postText)
       await modal.getByRole("button", { name: "Publicar" }).click()
-      await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 15_000 })
+      // O feed da vila mora na página da comunidade desde o lote 5 N2 (a vista
+      // "Conversa" saiu de /community): é lá que a publicação aparece.
+      await expect(modal).toBeHidden({ timeout: 15_000 })
+      await page.goto(`${APP_URL}${VILA_FEED_URL}`, { waitUntil: "load" })
+      await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 20_000 })
     })
 
     // 2. A comentarista curte e comenta
     await withPersona(browser, COMMENTER_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+      await page.goto(`${APP_URL}${VILA_FEED_URL}`, { waitUntil: "load" })
       const post = page.locator("article", { hasText: postText })
       await post.getByRole("button", { name: "Curtir publicação" }).click()
       await expect(post.getByRole("button", { name: "Descurtir publicação" })).toBeVisible({
@@ -205,7 +215,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
 
     // 3. A segunda pessoa também curte
     await withPersona(browser, SECOND_REACTOR_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+      await page.goto(`${APP_URL}${VILA_FEED_URL}`, { waitUntil: "load" })
       const post = page.locator("article", { hasText: postText })
       const reactionCreated = page.waitForResponse(
         (response) =>
@@ -231,7 +241,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
 
     // 4. A autora volta e vê a contagem de duas curtidas
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+      await page.goto(`${APP_URL}${VILA_FEED_URL}`, { waitUntil: "load" })
       await expect(
         page.locator("article", { hasText: postText }).getByRole("button", {
           name: "Curtir publicação",

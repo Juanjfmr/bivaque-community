@@ -60,12 +60,15 @@ describe("lançador de intenções da Home (DS-006)", () => {
     expect(launcher).toContain('aria-labelledby="intent-launcher-titulo"')
   })
 
-  it("quem não tem comunidade é orientado pelo feed, não por um lançador maior", () => {
-    // Desde 25/09/2026 o lançador é uma linha só em todo estado; a explicação
-    // para quem ainda não participa mora no estado vazio do feed, com a ação.
-    const section = read("apps", "web", "app", "(shell)", "inicio", "community-section.tsx")
+  it("quem não publicou ainda é orientado pelo próprio feed, não por um lançador maior", () => {
+    // Desde 25/09/2026 o lançador é uma linha só em todo estado; o caminho de
+    // quem não participa de comunidade mora no JoinCommunityCard do Início, e o
+    // vazio do feed da cidade traz a ação de publicar (N2: o feed é da cidade,
+    // não da vila, então ele não some por falta de comunidade).
+    const section = read("apps", "web", "app", "(shell)", "inicio", "city-feed.tsx")
+    const joinCard = read("apps", "web", "app", "(shell)", "inicio", "join-community.tsx")
     expect(launcher).not.toContain('variant === "explain"')
-    expect(section).toContain("Você ainda não participa de uma comunidade")
-    expect(section).toContain('href="/communities"')
+    expect(section).toContain("Nenhuma publicação ainda")
+    expect(joinCard).toContain('href="/communities"')
   })
 })

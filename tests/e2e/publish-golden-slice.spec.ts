@@ -20,11 +20,12 @@
 //
 // Persona: dono-vila@bivaque.example.invalid — owner aprovada da Vila
 // Ajuricaba (community 71000000-0000-4000-8000-000000000001 segundo o
-// seed local). Mesma identidade usada por vila-home.spec.ts e
-// audience-selector.spec.ts para a vila; é importante NÃO reusar o
-// default session (visual@) que tem comunidade nula, porque sem
-// comunidade /community renderiza CityReference e não há feed onde
-// publicar.
+// seed local). Mesma identidade usada por audience-selector.spec.ts. Desde o
+// lote 5 N2 o feed da VILA vive na página da comunidade
+// (/communities/71000000-...-0001): a linha de publicar da Comunidade continua
+// publicando com a vila como audiência padrão do seletor, e é lá que o post
+// aparece — a vista "Conversa" saiu de /community e o feed da CIDADE mora no
+// Início.
 //
 // Determinístico: serial-safe (workers=1 no playwright.config) e os
 // textos únicos por timestamp impedem colisão com execuções anteriores.
@@ -41,9 +42,11 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const CONSENT_COOKIE = "bivaque-consent-version"
 
-// A mesma persona de vila-home.spec.ts (owner da Vila Ajuricaba, único
+// A mesma persona de audience-selector.spec.ts (owner da Vila Ajuricaba, único
 // membro aprovado que existe no seed).
 const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+const VILA_COMMUNITY_ID = "71000000-0000-4000-8000-000000000001"
+const VILA_FEED_URL = `/communities/${VILA_COMMUNITY_ID}`
 
 // `import.meta.dirname` não funciona aqui — spec é transpilado para CJS e
 // `require` quebra a coleta. Ler a partir do cwd (Playwright é sempre
@@ -193,9 +196,11 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
         .first(),
     ).toBeVisible({ timeout: 5000 })
 
-    // And — o post aparece no feed da vila após o reload do onCreated()
+    // And — o post aparece no feed da VILA (a página da comunidade, desde o
+    // lote 5 N2) após o onCreated
+    await page.goto(VILA_FEED_URL, { waitUntil: "load" })
     const post = page.locator("article", { hasText: postText })
-    await expect(post).toBeVisible({ timeout: 15000 })
+    await expect(post).toBeVisible({ timeout: 20000 })
 
     // And — persiste depois de recarregar (prova de persistência real,
     // não otimista: o post foi mesmo escrito em posts e voltou via RLS).
@@ -252,9 +257,9 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     // And — o modal continua aberto para o caminho de recuperação
     await expect(dialog).toBeVisible()
 
-    // And — o post NÃO chegou ao banco: o feed da vila ainda não o contém
-    // porque a request foi abortada antes de chegar ao PostgREST.
-    await expect(page.locator("article", { hasText: errorPostText })).toHaveCount(0)
+    // And — o post NÃO chegou ao banco. O negativo é provado no fim do teste,
+    // no feed onde ele apareceria (a página da vila desde o lote 5 N2): aqui a
+    // tela da Comunidade não tem mais feed para consultar.
 
     // And — limpamos a interceptação e reescrevemos o rascunho com novo
     // texto para publicar com sucesso
@@ -283,9 +288,13 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
       await expect(dialog.getByTestId("publish-submit")).toContainText(/Publicando/i)
     }
 
-    // And — o post de recuperação aparece no feed
+    // And — o post de recuperação aparece no feed da VILA (a página da comunidade
+    // desde o lote 5 N2) e o que foi abortado não está lá: o negativo é provado
+    // no mesmo feed onde ele apareceria.
+    await page.goto(VILA_FEED_URL, { waitUntil: "load" })
     await expect(page.locator("article", { hasText: recoveryText })).toBeVisible({
-      timeout: 15000,
+      timeout: 20000,
     })
+    await expect(page.locator("article", { hasText: errorPostText })).toHaveCount(0)
   })
 })

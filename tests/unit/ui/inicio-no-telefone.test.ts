@@ -20,9 +20,7 @@ const root = join(import.meta.dirname, "..", "..", "..")
 const read = (...segments: string[]) => readFileSync(join(root, ...segments), "utf8")
 
 const faixa = stripComments(read("apps", "web", "app", "(shell)", "inicio", "return-strip.tsx"))
-const secao = stripComments(
-  read("apps", "web", "app", "(shell)", "inicio", "community-section.tsx"),
-)
+const secao = stripComments(read("apps", "web", "app", "(shell)", "inicio", "city-feed.tsx"))
 
 describe("a faixa de retorno mantém o CTA acessível e com alvo de 44 px", () => {
   it("o rótulo do CTA sai da tela por sr-only, nunca por hidden", () => {
@@ -39,17 +37,17 @@ describe("a faixa de retorno mantém o CTA acessível e com alvo de 44 px", () =
   })
 })
 
-describe("o título da comunidade não disputa a linha com as abas", () => {
-  it("título e 'Ver tudo' numa linha, abas numa linha própria abaixo", () => {
-    // Desde 25/09/2026 a comunidade é uma prévia: o título divide a linha só com
-    // "Ver tudo", e as abas ficam sozinhas logo abaixo — nada empilha a 375.
-    expect(secao).toContain('id="na-comunidade-titulo"')
-    expect(secao).toContain('href="/community"')
+describe("o título do feed da cidade não disputa a linha com as abas", () => {
+  it("título numa linha, abas numa linha própria abaixo", () => {
+    // A seção mantém o arranjo que a prévia da vila já tinha: o título fica
+    // sozinho na linha e as abas descem para uma linha própria — nada empilha
+    // nem espreme o título a 375.
+    expect(secao).toContain('id="na-cidade-titulo"')
     expect(secao).toContain('className="border-b border-ui-line"')
   })
 
   it("o título não é truncado nem limitado por clamp", () => {
-    const titulo = secao.slice(secao.indexOf('id="na-comunidade-titulo"') - 200)
+    const titulo = secao.slice(secao.indexOf('id="na-cidade-titulo"') - 200)
     const linha = titulo.slice(0, titulo.indexOf(">"))
     expect(linha).not.toContain("truncate")
     expect(linha).not.toContain("line-clamp")

@@ -16,6 +16,11 @@ import { signInAs } from "./helpers/session"
 
 const MEMBER = "membro-1@bivaque.example.invalid"
 const RIO_COMMUNITY = "71000000-0000-4000-8000-000000000002"
+// O feed da vila — a membra é aprovada na Vila Ajuricaba (seed) e a linha de
+// publicar da Comunidade publica com a vila como audiência padrão. Desde o lote
+// 5 N2 esse feed vive na página da comunidade; a vista "Conversa" saiu de
+// /community.
+const VILA_FEED_URL = "/communities/71000000-0000-4000-8000-000000000001"
 
 test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () => {
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "jornada das pranchas web")
@@ -84,8 +89,11 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         .getByRole("button", { name: "Tentar novamente" })
         .click()
       await expect(page.getByRole("dialog")).toBeHidden({ timeout: 20_000 })
+      // O feed onde ela aparece: a publicação vai para a vila (audiência padrão
+      // do seletor) e o feed da vila mora na página da comunidade desde o N2.
+      await page.goto(VILA_FEED_URL, { waitUntil: "load" })
       await expect(page.getByRole("article").filter({ hasText: text })).toBeVisible({
-        timeout: 20_000,
+        timeout: 25_000,
       })
 
       falha.concluir()

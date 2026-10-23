@@ -17,7 +17,7 @@ describe("ordem da Home (DS-006)", () => {
   it("o retorno vem antes do lançador, e o feed depois dos dois", () => {
     const retorno = page.indexOf("<ReturnStrip />")
     const lancador = page.indexOf("<IntentLauncher")
-    const feed = page.indexOf("<CommunitySection")
+    const feed = page.indexOf("<CityFeed")
 
     expect(retorno).toBeGreaterThan(-1)
     expect(lancador).toBeGreaterThan(-1)

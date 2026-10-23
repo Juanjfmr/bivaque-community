@@ -156,29 +156,25 @@ async function signInAs(page: Page, email: string): Promise<void> {
 
 test.describe("two localities: each member sees only their own city", () => {
   test("Manaus member sees Manaus feed content", async ({ page }) => {
-    // Given a member whose current locality is Manaus AND who belongs to a
-    // community — /community's feed_community RPC only runs when the viewer
-    // has a primary community (apps/web/app/(shell)/community/page.tsx:101,
-    // "Onda E Task 2"); without one the route renders <CityReference/>
-    // instead, so MANAUS_EMAIL (visual@, deliberately community-less per
-    // vila-home.spec.ts) can never see feed content here regardless of what
-    // marker text exists in the seed. dono-vila@ (Vila Ajuricaba's owner,
-    // see community-batch-approval.spec.ts's header) does have one — found
-    // running the E2E realignment.
+    // Given a member of Manaus. Desde o lote 5 N2 o feed da cidade mora no
+    // Início e rende para qualquer membro da localidade — a dona da Vila
+    // Ajuricaba continua entrando por aqui, como o membro sem comunidade.
     await signInAs(page, VILA_OWNER_EMAIL)
 
-    // When they open the community feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    // When they open the city feed
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
-    // Then the page is interactive (load control — without it the negative
+    // Then the feed is interactive (load control — without it the negative
     // assertions in the sibling test could pass vacuously on an error page)
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({
-      timeout: 15000,
+    await expect(
+      page.locator("#secao-cidade").getByRole("heading", { name: "Na sua cidade" }),
+    ).toBeVisible({
+      timeout: 20000,
     })
 
     // And seeded Manaus post content is rendered for them
     await expect(page.getByText(MANAUS_POST_MARKER).first()).toBeVisible({
-      timeout: 15000,
+      timeout: 20000,
     })
   })
 
@@ -186,12 +182,14 @@ test.describe("two localities: each member sees only their own city", () => {
     // Given a member whose current locality is the second seeded city
     await signInAs(page, SECOND_LOCALITY_EMAIL)
 
-    // When they open the community feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    // When they open the city feed
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
-    // Then the page is interactive for them too
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({
-      timeout: 15000,
+    // Then the feed is interactive for them too
+    await expect(
+      page.locator("#secao-cidade").getByRole("heading", { name: "Na sua cidade" }),
+    ).toBeVisible({
+      timeout: 20000,
     })
 
     // And no Manaus post content is on the page — the feed must resolve from
