@@ -38,7 +38,7 @@ vi.mock("web/lib/convite/provision", () => ({
 //   * aceite recusado depois do cadastro: a resposta diz que a conta existe.
 
 const EMAIL = "familiar@exemplo.com"
-const PASSWORD = "segredo123"
+const SENHA_DE_TESTE = "segredo123"
 const CODE = "7K4M9QRT"
 const USER_ID = "10000000-0000-4000-8000-000000000002"
 
@@ -53,7 +53,7 @@ function formData(overrides: Record<string, string> = {}): FormData {
   data.set("code", CODE)
   data.set("name", "Maria da Silva")
   data.set("email", EMAIL)
-  data.set("password", PASSWORD)
+  data.set("password", SENHA_DE_TESTE)
   data.set("consent", "on")
   for (const [key, value] of Object.entries(overrides)) data.set(key, value)
   return data

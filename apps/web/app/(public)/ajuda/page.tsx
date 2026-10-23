@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr"
-import type { Metadata } from "next"
+import type { Metadata, Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
@@ -29,19 +29,21 @@ export const metadata: Metadata = {
   title: "Ajuda · Bivaque",
 }
 
-const ACCOUNT_LINKS = [
+type DestinationLink = Readonly<{ href: Route; label: string }>
+
+const ACCOUNT_LINKS: DestinationLink[] = [
   { href: "/login", label: "Entrar" },
   { href: "/configuracoes", label: "Configurações" },
 ]
 
-const USAGE_LINKS = [
+const USAGE_LINKS: DestinationLink[] = [
   { href: "/explorar", label: "Explorar" },
   { href: "/salvos", label: "Salvos" },
   { href: "/notifications", label: "Notificações" },
   { href: "/denuncias", label: "Minhas denúncias" },
 ]
 
-const LEGAL_LINKS = [
+const LEGAL_LINKS: DestinationLink[] = [
   { href: "/privacidade", label: "Política de Privacidade" },
   { href: "/codigo-de-conduta", label: "Código de Conduta" },
 ]
@@ -114,7 +116,7 @@ function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
 }
 
-function DestinationList({ links }: Readonly<{ links: Array<{ href: string; label: string }> }>) {
+function DestinationList({ links }: Readonly<{ links: DestinationLink[] }>) {
   return (
     <ul className="help-links">
       {links.map((link) => (

@@ -15,6 +15,7 @@
 // o texto original está registrado no contrato PORT-005 para voltar quando a
 // Início abrir o momento num cartão próprio.
 
+import type { Route } from "next"
 import type { EntryMoment } from "./provision-validation"
 
 /** Rótulos do grupo "Seu momento", na ordem do protótipo. */
@@ -61,7 +62,7 @@ export type WelcomeTile = Readonly<{
   icon: string
   title: string
   description: string
-  href: string
+  href: Route
 }>
 
 export type WelcomeView = Readonly<{
