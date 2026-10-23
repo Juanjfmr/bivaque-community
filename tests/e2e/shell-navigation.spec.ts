@@ -68,9 +68,7 @@ test.describe("BottomNav visibility across viewports", () => {
     expect((await page.locator(SIDEBAR).boundingBox())?.width).toBe(256)
     // A Início também tem um link "Comunidades" no conteúdo: o que se prova
     // aqui é o rótulo visível da barra lateral expandida.
-    await expect(
-      page.locator(SIDEBAR).getByRole("link", { name: "Comunidades" }),
-    ).toBeVisible()
+    await expect(page.locator(SIDEBAR).getByRole("link", { name: "Comunidades" })).toBeVisible()
   })
 })
 
