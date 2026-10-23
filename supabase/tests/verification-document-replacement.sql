@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(21);
 
 \ir fixtures/foundation.inc
 
@@ -122,6 +122,149 @@ select is(
    )),
   1,
   'without a pending document the replacement still registers the file'
+);
+
+-- ── P1 da revisão: a aprovação concorrente não volta para pending ───────────
+--
+-- O pgTAP roda numa única conexão, então não há como abrir a segunda transação
+-- e provar o entrelaçamento real. O que se prova aqui é a sequência de estados
+-- que a trava garante, nas duas ordens possíveis:
+--   aprovar e depois trocar -> a troca é recusada e o resultado segue verified;
+--   trocar e depois decidir pelo id antigo -> a decisão falha e o resultado
+--   segue pending, com o documento novo.
+-- A serialização vem da trava, não da ordem do teste:
+-- replace_verification_document trava a linha do documento pendente e depois a
+-- linha do resultado (FOR UPDATE) antes de decidir qualquer coisa, na mesma
+-- ordem em que decide_verification_document toma as duas. Sem essa trava, a
+-- aprovação commitada no intervalo deixava o delete sem linha pendente, a
+-- função inseria o documento novo e o upsert gravava 'pending' por cima do
+-- 'verified'.
+reset role;
+
+insert into auth.users (id, email)
+values
+  ('10000000-0000-4000-8000-000000000009', 'approved-then-replaced@example.invalid'),
+  ('10000000-0000-4000-8000-00000000000a', 'replaced-then-decided@example.invalid');
+
+insert into public.operators (auth_user_id)
+values ('10000000-0000-4000-8000-000000000001')
+on conflict do nothing;
+
+insert into private.verification_documents (
+  id, user_id, storage_object_path, mime_type, expires_at
+) values (
+  '50000000-0000-4000-8000-000000000009',
+  '10000000-0000-4000-8000-000000000009',
+  '10000000-0000-4000-8000-000000000009/version-1.pdf',
+  'application/pdf',
+  now() + interval '7 days'
+);
+
+insert into private.verification_outcomes (user_id, status)
+values ('10000000-0000-4000-8000-000000000009', 'pending');
+
+insert into private.verification_documents (
+  id, user_id, storage_object_path, mime_type, expires_at
+) values (
+  '50000000-0000-4000-8000-00000000000a',
+  '10000000-0000-4000-8000-00000000000a',
+  '10000000-0000-4000-8000-00000000000a/version-1.pdf',
+  'application/pdf',
+  now() + interval '7 days'
+);
+
+insert into private.verification_outcomes (user_id, status)
+values ('10000000-0000-4000-8000-00000000000a', 'pending');
+
+set local role service_role;
+
+select lives_ok(
+  $$
+    select public.decide_verification_document(
+      '50000000-0000-4000-8000-000000000009'::uuid,
+      'approved'::text,
+      null::text,
+      '10000000-0000-4000-8000-000000000001'::uuid
+    )
+  $$,
+  'aprovar e depois trocar: o operador aprova o documento em análise'
+);
+
+select is(
+  (select status::text from private.verification_outcomes
+   where user_id = '10000000-0000-4000-8000-000000000009'),
+  'verified',
+  'aprovar e depois trocar: o resultado da aprovação fica verified'
+);
+
+select throws_ok(
+  $$
+    select public.replace_verification_document(
+      '10000000-0000-4000-8000-000000000009'::uuid,
+      '10000000-0000-4000-8000-000000000009/version-2.png',
+      'image/png'
+    )
+  $$,
+  'P0001',
+  'user is already verified',
+  'aprovar e depois trocar: a troca é recusada depois da aprovação'
+);
+
+select is(
+  (select status::text from private.verification_outcomes
+   where user_id = '10000000-0000-4000-8000-000000000009'),
+  'verified',
+  'aprovar e depois trocar: a recusa não devolve o resultado para pending'
+);
+
+select is(
+  (select count(*)::integer from private.verification_documents
+   where user_id = '10000000-0000-4000-8000-000000000009'
+     and review_status = 'pending'),
+  0,
+  'aprovar e depois trocar: nenhum documento novo entra na fila'
+);
+
+select is(
+  (
+    select replaced_storage_object_path
+    from public.replace_verification_document(
+      '10000000-0000-4000-8000-00000000000a'::uuid,
+      '10000000-0000-4000-8000-00000000000a/version-2.png',
+      'image/png'
+    )
+  ),
+  '10000000-0000-4000-8000-00000000000a/version-1.pdf',
+  'trocar e depois decidir: a troca substitui o documento em análise'
+);
+
+select throws_ok(
+  $$
+    select public.decide_verification_document(
+      '50000000-0000-4000-8000-00000000000a'::uuid,
+      'approved'::text,
+      null::text,
+      '10000000-0000-4000-8000-000000000001'::uuid
+    )
+  $$,
+  'P0001',
+  'document not found',
+  'trocar e depois decidir: decidir pelo id antigo falha'
+);
+
+select is(
+  (select status::text from private.verification_outcomes
+   where user_id = '10000000-0000-4000-8000-00000000000a'),
+  'pending',
+  'trocar e depois decidir: o resultado continua em análise'
+);
+
+select is(
+  (select storage_object_path from private.verification_documents
+   where user_id = '10000000-0000-4000-8000-00000000000a'
+     and review_status = 'pending'),
+  '10000000-0000-4000-8000-00000000000a/version-2.png',
+  'trocar e depois decidir: a análise pendente é a do documento novo'
 );
 
 set local role authenticated;
