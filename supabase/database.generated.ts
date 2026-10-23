@@ -1456,6 +1456,21 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_release_notices: {
+        Row: {
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           auth_user_id: string
