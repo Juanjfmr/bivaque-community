@@ -25,7 +25,8 @@ const componente = join(
   "indications",
   "indication-detail.tsx",
 )
-const menu = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-menu.tsx")
+const menu = join(root, "apps", "web", "app", "components", "indications", "conversation-menu.tsx")
+const menuDoFeed = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-menu.tsx")
 const cartaoDoFeed = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-card.tsx")
 
 const TITULO = "Preciso de um pedreiro para reparar o muro"
@@ -76,15 +77,18 @@ describe("fiacao do chamador", () => {
     expect(
       rotulos.some((r) => r.includes('overflowTriggerLabel("do pedido", request.title)')),
     ).toBe(true)
-    expect(rotulos.some((r) => r.includes('overflowTriggerLabel("da resposta", reply.body)'))).toBe(
-      true,
-    )
+    expect(rotulos.some((r) => r.includes('overflowTriggerLabel("da resposta", body)'))).toBe(true)
     // Os dois gatilhos do arquivo sao os dois que recebem rotulo.
-    expect((fonte.match(/<LeanOverflowMenu/g) ?? []).length).toBe(rotulos.length)
+    expect((fonte.match(/<ConversationMenu/g) ?? []).length).toBe(rotulos.length)
   })
 
-  it("o default do componente compartilhado continua exatamente 'Mais opções'", () => {
-    expect(fonteMenu).toContain('triggerLabel = "Mais opções"')
+  it("o default do componente compartilhado do feed continua exatamente 'Mais opções'", () => {
+    const fonteFeed = readFileSync(menuDoFeed, "utf8")
+    expect(fonteFeed).toContain('triggerLabel = "Mais opções"')
+    expect(fonteFeed).toContain("aria-label={triggerLabel}")
+    expect(fonteFeed).not.toContain("!important")
+    // O menu das Indicoes exige o rotulo do chamador: o gatilho tem nome
+    // acessivel do que abre, nunca um generico.
     expect(fonteMenu).toContain("aria-label={triggerLabel}")
     expect(fonteMenu).not.toContain("!important")
   })

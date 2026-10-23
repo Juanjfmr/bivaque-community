@@ -170,8 +170,11 @@ describe("nenhum ponto do fluxo repassa erro cru ao usuário", () => {
       "salvar_pedido",
       "remover_pedido_salvo",
       "excluir_resposta",
+      "editar_resposta",
+      "editar_pergunta",
+      "excluir_pergunta",
       "marcar_resposta",
-      "limpar_marca",
+      "resolver_pergunta",
       "reabrir_pedido",
     ]) {
       expect(CODIGO.detalhe).toContain(`"${operacao}"`)
