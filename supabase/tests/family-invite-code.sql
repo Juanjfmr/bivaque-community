@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(39);
+select plan(40);
 
 \ir fixtures/foundation.inc
 
@@ -503,6 +503,38 @@ select is(
   '00000000-0000-4000-8000-000000000001'::uuid,
   'a retomada não cria uma segunda membership corrente'
 );
+
+-- O titular se muda DEPOIS do aceite, e o familiar repete o código: a retomada
+-- não consulta de novo a cidade do titular e não move o familiar sem uma
+-- declaração de mudança (confirmação do Codex, 23/10/2026).
+do $$
+begin
+  perform public.provision_member_locality(
+    '10000000-0000-4000-8000-000000000001'::uuid,
+    '00000000-0000-4000-8000-000000000002'::uuid
+  );
+  perform public.family_invite_code_accept(
+    decode(repeat('a7', 32), 'hex'),
+    '10000000-0000-4000-8000-000000000005'::uuid,
+    decode(repeat('9d', 32), 'hex'),
+    'Familiar da Silva',
+    3
+  );
+end;
+$$;
+
+select is(
+  (
+    select m.locality_id
+    from public.locality_memberships m
+    where m.user_id = '10000000-0000-4000-8000-000000000005'
+      and m.kind = 'current'
+  ),
+  '00000000-0000-4000-8000-000000000001'::uuid,
+  'a retomada depois da mudança do titular mantém o familiar onde estava'
+);
+-- O titular fica na cidade nova: os testes seguintes (limite e permissões) não
+-- dependem da localidade dele.
 
 -- 30 a 33. Limite por origem, contado pelas chamadas da própria função: 15
 -- tentativas erradas da mesma origem ficam gravadas, a 16ª devolve
