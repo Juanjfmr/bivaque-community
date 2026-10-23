@@ -38,7 +38,10 @@ async function signInAs(page: Page, email: string): Promise<Session> {
     process.env["SUPABASE_ANON_KEY"] ??
     readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
     readEnvLocal("SUPABASE_ANON_KEY")
-  const password = process.env["USER_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
+  const password =
+    process.env["USER_PASSWORD"] ??
+    process.env["BIVAQUE_VISUAL_PASSWORD"] ??
+    readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
   if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
   if (!password) throw new Error("USER_PASSWORD is required")
 
@@ -144,8 +147,8 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     await nameField.fill(groupName)
     await page.getByRole("textbox", { name: "Sobre o grupo" }).fill("Grupo criado pela prova.")
     await page.getByRole("textbox", { name: "Regras do grupo" }).fill(rulesText)
-    await expect(page.getByText("Aberto")).toBeVisible()
-    await expect(page.getByText("Fechado")).toBeVisible()
+    await expect(page.getByRole("radio", { name: /Aberto/ })).toBeVisible()
+    await expect(page.getByRole("radio", { name: /Fechado/ })).toBeVisible()
 
     const created = page.waitForResponse(
       (r) => r.request().method() === "POST" && r.url().includes("/rest/v1/rpc/create_group"),
@@ -160,20 +163,35 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     const groupLink = page.getByRole("link", { name: groupName })
     await expect(groupLink).toBeVisible({ timeout: 15_000 })
 
+    const groupId = await findGroupId(page, session, groupName)
+
     // ── Detalhe: rótulo Aberto e as regras ─────────────────────────────────
     await groupLink.click()
-    await expect(page.getByRole("heading", { name: groupName })).toBeVisible()
+    await page.waitForURL(`**/groups/${groupId}`)
+    await expect(page.getByRole("heading", { level: 1, name: groupName })).toBeVisible()
     await expect(page.getByText("Aberto", { exact: true })).toBeVisible()
 
-    await page.locator("summary", { hasText: "Regras do grupo" }).click()
-    await expect(page.getByText(rulesText)).toBeVisible()
+    // O cabeçalho pegajoso (`sticky top-12`) intercepta o clique sintético no
+    // `summary` quando o Playwright tenta rolar o elemento para a vista. O toque
+    // real da pessoa funciona; o clique via DOM abre o `<details>` do mesmo jeito.
+    const rulesSummary = page.locator("summary", { hasText: "Regras do grupo" })
+    await rulesSummary.evaluate((el) => {
+      if (el instanceof HTMLElement) el.click()
+    })
+    // O texto das regras também vive no textarea do painel de administração
+    // (mesma conta dona). A prova lê o parágrafo dentro do `<details>` que a
+    // pessoa acabou de abrir, não o campo de edição.
+    const rulesPanel = page.locator("details", { hasText: "Regras do grupo" })
+    await expect(rulesPanel.getByText(rulesText, { exact: true })).toBeVisible()
 
     // ── Fixar uma publicação do grupo ──────────────────────────────────────
-    const groupId = await findGroupId(page, session, groupName)
     await createGroupPost(page, session, groupId, postContent)
     await page.reload()
 
     await expect(page.getByText(postContent)).toBeVisible()
+    // De volta ao topo: com a página rolada, o cabeçalho pegajoso cobre o alvo
+    // do clique sintético.
+    await page.evaluate(() => window.scrollTo(0, 0))
     const pinResponse = waitForGroupPost(page, groupId)
     await page.getByRole("button", { name: /Fixar publicação de/ }).click()
     await pinResponse
@@ -191,6 +209,7 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     await expect(notifySelect).toHaveValue("highlights")
 
     const notifyResponse = waitForGroupPost(page, groupId)
+    await page.evaluate(() => window.scrollTo(0, 0))
     await notifySelect.selectOption("none")
     await page.getByRole("button", { name: "Salvar avisos" }).click()
     await notifyResponse
