@@ -109,10 +109,11 @@ describe("momento: chegando", () => {
     expect(result.ok).toBe(true)
   })
 
-  it("o 'hoje' da tela é aceito mesmo quando o dia UTC já virou (22h em Manaus)", () => {
-    // 22/10 22h em Manaus (UTC-4) é 23/10 02:00Z. A tela usa o dia LOCAL e
-    // oferece 22/10; o servidor compara com o dia UTC (23) e recusava a data que
-    // a própria tela tinha oferecido. A folga de um dia fecha os dois lados.
+  it("às 22h em Manaus, hoje passa e ontem é recusado", () => {
+    // 22/10 22h em Manaus (UTC-4) é 23/10 02:00Z. O dia UTC já virou, mas o dia
+    // de calendário no fuso do servidor (America/Rio_Branco, UTC-5) ainda é 22.
+    // Antes desta correção o servidor subtraía 24h do dia UTC e aceitava 21/10 —
+    // uma data que, para quem estava em Manaus, era ontem.
     const lateInManaus = new Date("2026-10-23T02:00:00Z")
 
     const today = validateProvisionInput(
@@ -134,14 +135,46 @@ describe("momento: chegando", () => {
     )
     expect(departure.ok).toBe(true)
 
-    // Antes de ontem, para o dia UTC, continua sendo passado — a folga é de um
-    // dia, não de um fuso escolhido a esmo.
     expect(
       validateProvisionInput(
         { arrivalDate: "2026-10-21", displayName: "Ana", ibgeCode: MANAUS, moment: "arriving" },
         lateInManaus,
       ),
     ).toEqual({ ok: false, error: "date is in the past" })
+  })
+
+  it("ao meio-dia em Manaus, ontem também é recusado", () => {
+    // 22/10 12h em Manaus (UTC-4) é 22/10 16:00Z: o dia UTC e o dia local são o
+    // mesmo. O recorte de calendário não muda a resposta — 21/10 continua sendo
+    // ontem, e era exatamente o caso em que a subtração de 24h aprovava ontem.
+    const middayInManaus = new Date("2026-10-22T16:00:00Z")
+
+    expect(
+      validateProvisionInput(
+        { arrivalDate: "2026-10-21", displayName: "Ana", ibgeCode: MANAUS, moment: "arriving" },
+        middayInManaus,
+      ),
+    ).toEqual({ ok: false, error: "date is in the past" })
+
+    expect(
+      validateProvisionInput(
+        {
+          departureDate: "2026-10-21",
+          destinationIbgeCode: BRASILIA,
+          displayName: "Ana",
+          ibgeCode: MANAUS,
+          moment: "leaving",
+        },
+        middayInManaus,
+      ),
+    ).toEqual({ ok: false, error: "date is in the past" })
+
+    expect(
+      validateProvisionInput(
+        { arrivalDate: "2026-10-22", displayName: "Ana", ibgeCode: MANAUS, moment: "arriving" },
+        middayInManaus,
+      ).ok,
+    ).toBe(true)
   })
 
   it("recusa data no passado e data impossível", () => {

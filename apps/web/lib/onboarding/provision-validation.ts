@@ -18,13 +18,15 @@
 //   * saindo: data de saída e destino, e o destino é outra cidade.
 // A data não pode estar no passado — o campo do protótipo já nasce com
 // `min = hoje`, e o servidor não confia no campo. "Hoje" é o mesmo dia nos dois
-// lados: a data do formulário é uma data LOCAL, sem hora, e o servidor compara
-// com o dia UTC com uma folga de um dia para trás. Às 22h em Manaus (23/10
-// 02:00Z) o dia UTC já é 23 e a tela, que usa o dia local do navegador, ainda
-// oferece 22; sem a folga o servidor recusava a data que a própria tela tinha
-// oferecido. Aceitar o dia anterior ao dia UTC é o critério mais simples que
-// cobre todos os fusos do Brasil (UTC-2 a UTC-5): a data local nunca fica mais
-// de um dia atrás do dia UTC.
+// lados: a data do formulário é uma data LOCAL, sem hora, e o servidor a compara
+// com o dia corrente no fuso mais a oeste do Brasil (America/Rio_Branco, UTC-5).
+// Assim a data de ontem em Manaus nunca passa pelo servidor — 21/10 às 12h de
+// 22/10 em Manaus é 21/10, e o hoje do servidor também é 22/10 — e a data de
+// hoje em Manaus nunca é recusada, mesmo às 22h, quando o dia UTC já virou
+// (23/10 02:00Z, 22/10 21:00 em Rio Branco). A folga de um dia em relação ao dia
+// UTC, que existia aqui antes, aceitava 21/10 nesse horário: era o bug.
+// A subtração de 24h não existe mais; o recorte é de calendário, não de
+// aritmética de instante.
 //
 // A existência no catálogo do destino é conferida pela rota, como a da cidade:
 // esta função separa formato de existência para o teste negativo ser possível.
@@ -77,15 +79,27 @@ export const DISPLAY_NAME_MAX_LENGTH = 80
 
 const ISO_DATE_PARTS = /^(\d{4})-(\d{2})-(\d{2})$/
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
+/**
+ * O fuso mais a oeste do Brasil. "Hoje" é o dia de calendário aqui: uma data sem
+ * hora, escolhida por quem está em qualquer fuso brasileiro (UTC-2 a UTC-5),
+ * nunca fica um dia à frente deste recorte.
+ */
+const SERVER_TIME_ZONE = "America/Rio_Branco"
+
+const TODAY_FORMAT = new Intl.DateTimeFormat("en-CA", {
+  day: "2-digit",
+  month: "2-digit",
+  timeZone: SERVER_TIME_ZONE,
+  year: "numeric",
+})
 
 function text(value: string | undefined): string {
   return typeof value === "string" ? value.trim() : ""
 }
 
-/** `AAAA-MM-DD` de um instante, em UTC — o mesmo recorte de lib/locality/move-city. */
+/** `AAAA-MM-DD` do dia corrente no fuso do servidor (en-CA já emite ISO). */
 function toIsoDate(date: Date): string {
-  return date.toISOString().slice(0, 10)
+  return TODAY_FORMAT.format(date)
 }
 
 function isIsoDate(value: string): boolean {
@@ -144,13 +158,14 @@ export function validateProvisionInput(
   const arrivalDate = text(input.arrivalDate)
   const departureDate = text(input.departureDate)
   const destinationIbgeCode = text(input.destinationIbgeCode)
-  // O dia mais antigo que o servidor aceita: o anterior ao dia UTC. A tela usa
-  // o dia local do navegador, que no Brasil pode ser o "ontem" do UTC.
-  const earliestIso = toIsoDate(new Date(today.getTime() - ONE_DAY_MS))
+  // O dia de hoje no fuso do servidor. A tela usa o dia local do navegador; a
+  // comparação é de data de calendário, então o recorte mais a oeste cobre
+  // todos os fusos do Brasil sem aceitar ontem.
+  const todayIso = toIsoDate(today)
 
   const dateProblem = (value: string): ProvisionValidationError | null => {
     if (!isIsoDate(value)) return "date is invalid"
-    if (value < earliestIso) return "date is in the past"
+    if (value < todayIso) return "date is in the past"
     return null
   }
 
