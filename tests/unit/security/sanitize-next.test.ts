@@ -30,6 +30,20 @@ describe("sanitizeNext", () => {
       expect(sanitizeNext(input)).toBe(DEFAULT_NEXT)
     })
 
+    // O parser de URL do navegador e do Node remove TAB, LF e CR antes de
+    // resolver: "/\t/host" vira "//host", um destino de outro domínio. O
+    // filtro precisa recusar o caractere de controle, não só a barra dupla.
+    it.each([
+      ["/\t/exemplo.invalid/pescar"],
+      ["/\n/exemplo.invalid"],
+      ["/\r/exemplo.invalid"],
+      ["/\t\\exemplo.invalid"],
+      ["/community\u0000"],
+      ["/community\u007f"],
+    ])("rejects control characters in %j", (input) => {
+      expect(sanitizeNext(input)).toBe(DEFAULT_NEXT)
+    })
+
     it.each([[null], [undefined], [""]])("rejects %s", (input) => {
       expect(sanitizeNext(input as unknown as string)).toBe(DEFAULT_NEXT)
     })
