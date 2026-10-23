@@ -10,7 +10,7 @@ import { defineConfig } from "@playwright/test"
 //   JOURNEY_BASE_URL=http://127.0.0.1:3211 npx playwright test -c tests/e2e/journeys.playwright.config.ts
 //   node scripts/visual/journey-report.mjs
 
-const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+const chromiumExecutablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
 
 export default defineConfig({
   testDir: ".",
@@ -21,7 +21,7 @@ export default defineConfig({
   workers: 1,
   timeout: 180_000,
   use: {
-    baseURL: process.env.JOURNEY_BASE_URL ?? "http://127.0.0.1:3000",
+    baseURL: process.env["JOURNEY_BASE_URL"] ?? "http://127.0.0.1:3000",
     trace: "retain-on-failure",
     ...(chromiumExecutablePath
       ? { launchOptions: { executablePath: chromiumExecutablePath } }

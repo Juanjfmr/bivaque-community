@@ -256,7 +256,8 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
     )
     const postRows = (await postRes.json()) as Array<{ id: string }>
     expect(postRows).toHaveLength(1)
-    const postId = postRows[0].id
+    const postId = postRows[0]?.id
+    if (!postId) throw new Error("o post recém-publicado não voltou na consulta")
     const notifRes = await api.get(
       `${SUPABASE_URL}/rest/v1/notifications?select=type,target_id&type=eq.comment&target_id=eq.${postId}`,
       { headers },
