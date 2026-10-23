@@ -187,7 +187,7 @@ describe("aceite do convite pela tela", () => {
 
   it("exceção no aceite não vira sucesso silencioso", async () => {
     ;(acceptFamilyInviteCode as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error("Failed to resolve the holder locality: boom"),
+      new Error("family invite acceptance failed: the inviting holder has no current locality"),
     )
 
     const result = await acceptInviteAction(formData())

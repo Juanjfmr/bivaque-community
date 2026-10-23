@@ -81,8 +81,16 @@ describe("ações do servidor", () => {
 
   it("o vínculo é o mesmo do convite por link", () => {
     expect(provision).toContain('rpc("family_invite_code_accept"')
-    expect(provision).toContain('"family_accept_holder_locality"')
-    expect(provision).toContain("provisionMember")
+    expect(provision).toContain("p_display_name")
+    expect(provision).toContain("p_consent_version")
+  })
+
+  it("não provisiona em TypeScript: vínculo, localidade e perfil são uma transação", () => {
+    // Terceira correção: estas duas chamadas eram o segundo request, e a falha
+    // entre ele e o vínculo deixava o convite consumido sem acesso.
+    expect(provision).not.toContain("family_accept_holder_locality")
+    expect(provision).not.toContain("provisionMember")
+    expect(provision).not.toContain("provision_member_locality")
   })
 
   it("lê o status do banco, não o código de erro de uma exceção", () => {

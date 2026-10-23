@@ -1,31 +1,29 @@
+import { CONSENT_VERSION } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 import { acceptFamilyInviteCode, previewFamilyInviteCode } from "web/lib/convite/provision"
 
 // PORT-006 (lote 4 da entrada) — o comportamento do lado servidor do convite,
-// com o cliente Supabase simulado. A revisão independente apontou que provar a
-// ordem por posição de texto no arquivo não prova nada: o que precisa ser
-// provado é a sequência de chamadas ao banco e o que acontece em cada falha.
+// com o cliente Supabase simulado.
 //
-// A ordem do aceite é o contrato do provisionamento:
-//   family_invite_code_accept → family_accept_holder_locality →
-//   (membership corrente?) → provision_member_locality → profiles.upsert
+// Terceira correção (22/10): o aceite passou a ser UMA chamada. Vínculo,
+// localidade do titular, membership e perfil acontecem dentro de
+// `private.family_invite_code_accept`, na mesma transação — nada de
+// provisionamento em TypeScript. O contrato que este arquivo prova é, então:
 //
-// E a conclusão é retomável: quando a localidade ou o provisionamento falha, a
-// nova tentativa recebe o MESMO vínculo do banco (`ok`) e conclui o que faltou,
-// sem mover quem já tem localidade corrente.
+//   * o aceite chama a RPC uma vez, com o nome e a versão do aceite;
+//   * `ok` devolve o vínculo, e nada mais é chamado depois;
+//   * falha de contrato (titular sem localidade corrente, por exemplo) é
+//     exceção com o código preservado, nunca sucesso silencioso;
+//   * status de recusa não provisiona nada.
 
 type RpcReply = { data: unknown; error: { message: string; code?: string } | null }
 
 const CODE_HASH = "a".repeat(64)
 const ORIGIN_DIGEST = "b".repeat(64)
 const LINK_ID = "40000000-0000-4000-8000-000000000001"
-const LOCALITY_ID = "20000000-0000-4000-8000-000000000010"
 const USER_ID = "10000000-0000-4000-8000-000000000002"
 
-function fakeClient(options: {
-  membership?: string[]
-  onRpc?: (name: string) => RpcReply | undefined
-}) {
+function fakeClient(options: { onRpc?: (name: string) => RpcReply | undefined }) {
   const calls: string[] = []
   const rpcArgs: Record<string, Record<string, unknown>> = {}
 
@@ -34,9 +32,6 @@ function fakeClient(options: {
       data: [{ status: "ok", link_id: LINK_ID }],
       error: null,
     },
-    family_accept_holder_locality: { data: LOCALITY_ID, error: null },
-    provision_member_locality: { data: null, error: null },
-    record_consent_acceptance: { data: null, error: null },
   }
 
   const client = {
@@ -48,28 +43,6 @@ function fakeClient(options: {
       const override = options.onRpc?.(name)
       if (override) return override
       return replies[name] ?? { data: null, error: { message: `unexpected rpc ${name}` } }
-    },
-    from(table: string) {
-      const builder = {
-        select() {
-          calls.push(`select:${table}`)
-          return builder
-        },
-        eq() {
-          return builder
-        },
-        limit() {
-          return Promise.resolve({
-            data: (options.membership ?? []).map((localityId) => ({ locality_id: localityId })),
-            error: null,
-          })
-        },
-        async upsert() {
-          calls.push(`upsert:${table}`)
-          return { data: null, error: null }
-        },
-      }
-      return builder
     },
   }
 
@@ -149,28 +122,26 @@ describe("preview do convite por código", () => {
 })
 
 describe("aceite do convite por código", () => {
-  it("vínculo, localidade do titular, membership e perfil — nesta ordem", async () => {
+  it("é uma chamada só: o banco faz vínculo, localidade, membership e perfil", async () => {
     const client = fakeClient({})
 
     const result = await acceptFamilyInviteCode(client as never, ACCEPT_INPUT)
 
     expect(result).toEqual({ status: "ok", linkId: LINK_ID, localityMember: true })
-    expect(client.calls).toEqual([
-      "rpc:family_invite_code_accept",
-      "rpc:family_accept_holder_locality",
-      "select:locality_memberships",
-      "rpc:provision_member_locality",
-      "upsert:profiles",
-    ])
-    // A localidade é resolvida pelo vínculo, nunca pelo formulário.
-    expect(client.rpcArgs["family_accept_holder_locality"]).toEqual({ p_link_id: LINK_ID })
-    expect(client.rpcArgs["provision_member_locality"]).toEqual({
-      p_user_id: USER_ID,
-      p_locality_id: LOCALITY_ID,
+    // Nada de `family_accept_holder_locality`, `provision_member_locality` ou
+    // upsert de perfil aqui: eram exatamente as chamadas que deixavam a pessoa
+    // com convite consumido e sem acesso quando a segunda falhava.
+    expect(client.calls).toEqual(["rpc:family_invite_code_accept"])
+    expect(client.rpcArgs["family_invite_code_accept"]).toEqual({
+      p_accepted_by_user_id: USER_ID,
+      p_code_hash: `\\x${CODE_HASH}`,
+      p_consent_version: CONSENT_VERSION,
+      p_display_name: "Maria da Silva",
+      p_origin_digest: `\\x${ORIGIN_DIGEST}`,
     })
   })
 
-  it("código recusado para antes de qualquer provisionamento", async () => {
+  it("código recusado devolve o status e não provisiona", async () => {
     const client = fakeClient({
       onRpc: () => ({ data: [{ status: "unavailable", link_id: null }], error: null }),
     })
@@ -202,66 +173,27 @@ describe("aceite do convite por código", () => {
     })
   })
 
-  it("falha na localidade do titular não grava nada e a nova tentativa conclui", async () => {
-    // Reprodução do P2 da revisão: o convite fica `accepted` (o vínculo existe
-    // no banco), a consulta da localidade falha e a pessoa fica sem acesso.
-    // Aqui o banco simulado responde `ok` com o MESMO vínculo na segunda
-    // tentativa — é a retomada de 20261023120000.
-    let localityCalls = 0
+  it("titular sem localidade corrente vira exceção, nunca sucesso sem acesso", async () => {
+    // O aceite inteiro roda numa transação: o P0005 desfaz o vínculo e o
+    // convite volta a `pending`. O que o servidor não pode fazer é engolir o
+    // erro e responder `ok` para quem não tem membership.
     const client = fakeClient({
-      onRpc: (name) => {
-        if (name !== "family_accept_holder_locality") return undefined
-        localityCalls += 1
-        return localityCalls === 1
-          ? { data: null, error: { message: "connection reset" } }
-          : { data: LOCALITY_ID, error: null }
-      },
+      onRpc: () => ({
+        data: null,
+        error: { message: "the inviting holder has no current locality", code: "P0005" },
+      }),
     })
 
-    await expect(acceptFamilyInviteCode(client as never, ACCEPT_INPUT)).rejects.toThrow(
-      "Failed to resolve the holder locality",
-    )
-    expect(client.calls).toEqual([
-      "rpc:family_invite_code_accept",
-      "rpc:family_accept_holder_locality",
-    ])
-
-    const retry = await acceptFamilyInviteCode(client as never, ACCEPT_INPUT)
-
-    expect(retry).toEqual({ status: "ok", linkId: LINK_ID, localityMember: true })
-    // A retomada reapresenta o mesmo código e recebe o mesmo vínculo: não
-    // consome outro código nem grava tentativa (o banco devolve `ok`).
-    expect(client.calls).toEqual([
-      "rpc:family_invite_code_accept",
-      "rpc:family_accept_holder_locality",
-      "rpc:family_invite_code_accept",
-      "rpc:family_accept_holder_locality",
-      "select:locality_memberships",
-      "rpc:provision_member_locality",
-      "upsert:profiles",
-    ])
-    expect(client.rpcArgs["family_invite_code_accept"]).toEqual({
-      p_accepted_by_user_id: USER_ID,
-      p_code_hash: `\\x${CODE_HASH}`,
-      p_origin_digest: `\\x${ORIGIN_DIGEST}`,
+    await expect(acceptFamilyInviteCode(client as never, ACCEPT_INPUT)).rejects.toMatchObject({
+      code: "P0005",
     })
   })
 
-  it("na retomada, quem já tem localidade corrente não é movido de volta", async () => {
-    // `provision_member_locality` fecha a corrente e insere a nova; repetir o
-    // caminho numa retomada moveria a pessoa (e, na mesma localidade, a
-    // deixaria sem corrente). O perfil, esse sim, é garantido.
-    const client = fakeClient({ membership: [LOCALITY_ID] })
+  it("resposta sem linha é falha de infraestrutura", async () => {
+    const client = fakeClient({ onRpc: () => ({ data: [], error: null }) })
 
-    const result = await acceptFamilyInviteCode(client as never, ACCEPT_INPUT)
-
-    expect(result).toEqual({ status: "ok", linkId: LINK_ID, localityMember: true })
-    expect(client.calls).toEqual([
-      "rpc:family_invite_code_accept",
-      "rpc:family_accept_holder_locality",
-      "select:locality_memberships",
-      "upsert:profiles",
-    ])
-    expect(client.calls).not.toContain("rpc:provision_member_locality")
+    await expect(acceptFamilyInviteCode(client as never, ACCEPT_INPUT)).rejects.toThrow(
+      "family invite acceptance returned no row",
+    )
   })
 })
