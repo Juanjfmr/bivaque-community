@@ -97,4 +97,33 @@ describe("ações do servidor", () => {
     expect(provision).toContain("byteaDigestParam(input.originDigest)")
     expect(actions).toContain("inviteCodeHash(code)")
   })
+
+  it("lê o status do banco, não o código de erro de uma exceção", () => {
+    // Correção da revisão (22/10): uma exceção desfaz a transação — e o insert
+    // da tentativa —, então o limite só contaria quem acertou.
+    expect(provision).toContain("asFamilyInviteCodeStatus(row.status)")
+    expect(actions).toContain('preview.status !== "ok"')
+    expect(actions).toContain('acceptance.status !== "ok"')
+    expect(actions).not.toContain("P0005")
+  })
+})
+
+const familiaPage = readFileSync(
+  join(process.cwd(), "apps", "web", "app", "(shell)", "configuracoes", "familia", "page.tsx"),
+  "utf8",
+)
+
+describe("tela de quem convida", () => {
+  it("mostra o código ao lado do link e copia a tela do convite já preenchida", () => {
+    expect(familiaPage).toContain("setInviteCode(result.code")
+    // O "copiar" leva a tela do convite já com o código, e não o link antigo.
+    expect(familiaPage).toContain("new URL(`/convite?codigo=")
+  })
+
+  it("avisa que o código também foi para o e-mail e que não volta ao recarregar", () => {
+    // O banco guarda só o hash: o código em claro existe na resposta do envio e
+    // do reenvio, e em nenhum outro lugar.
+    expect(familiaPage).toContain("O código também foi enviado por e-mail")
+    expect(familiaPage).toContain("banco guarda só o hash")
+  })
 })

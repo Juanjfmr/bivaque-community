@@ -21,6 +21,9 @@ allowed_paths:
   - apps/web/app/(shell)/ajuda/
   - apps/web/app/(public)/
   - apps/web/app/(shell)/configuracoes/conta/page.tsx
+  # Autorizado pelo coordenador em 22/10/2026 (correção da revisão): é a tela onde
+  # o código do convite aparece ao lado do link, para quem convida.
+  - apps/web/app/(shell)/configuracoes/familia/page.tsx
   - apps/web/app/(shell)/profile/family-invite-section-actions.ts
   - apps/web/app/(shell)/profile/family-invite-section.tsx
   - apps/web/app/landing/
