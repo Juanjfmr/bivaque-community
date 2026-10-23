@@ -367,10 +367,34 @@ revoke all on function private.family_invite_code_preview(bytea, bytea, bytea) f
 revoke all on function private.family_invite_code_preview(bytea, bytea, bytea) from authenticated;
 grant execute on function private.family_invite_code_preview(bytea, bytea, bytea) to service_role;
 
--- Aceite por código: consume o código e delega o vínculo à função que já
--- existia (20260820000005), que confere o e-mail do aceitante contra o digest
--- do convite e cria `family_account_links`. Nenhuma regra de vínculo é
--- reimplementada aqui.
+-- Aceite por código: consome o código, cria o vínculo e conclui o
+-- provisionamento — tudo na MESMA transação.
+--
+-- O vínculo continua delegado a `private.accept_family_invitation`
+-- (20260820000005), a única porta que cria `family_account_links` e que confere
+-- o e-mail do aceitante contra o digest do convite (20260815130000). Nenhuma
+-- regra de vínculo é reimplementada aqui.
+--
+-- Depois do vínculo, esta função faz o que era o segundo request do servidor
+-- (`apps/web/lib/convite/provision.ts`): resolve a localidade corrente do
+-- titular, provisiona a membership (`public.provision_member_locality`) e grava
+-- o perfil com o nome e a versão do aceite. A diferença não é de estilo: com o
+-- aceite e o provisionamento em transações separadas, dois desfechos ruins eram
+-- possíveis —
+--
+--   * convite consumido sem acesso: o vínculo confirmava, o provisionamento
+--     falhava, e a pessoa ficava com conta e sem acesso. O preview exige
+--     convite `pending`, então a tela nem deixava retomar;
+--   * corrida entre dois aceites: os dois consultavam a ausência de membership
+--     antes de provisionar, e o segundo transformava a corrente recém-criada em
+--     `leaving`.
+--
+-- Numa transação só, qualquer falha desfaz tudo, inclusive o convite voltar a
+-- `pending`: a pessoa digita o código de novo e conclui. O provisionamento fica
+-- sob a trava do próprio convite (`for update`) e não repete
+-- `provision_member_locality` quando a pessoa já está corrente na localidade do
+-- titular — repetir fecharia a corrente e, na mesma localidade, a deixaria sem
+-- corrente nenhuma.
 --
 -- Devolve `status` (`ok`, `unavailable` ou `rate_limited`) e o id do vínculo —
 -- nunca exceção para o resultado do código, pelo mesmo motivo do preview: a
@@ -378,26 +402,22 @@ grant execute on function private.family_invite_code_preview(bytea, bytea, bytea
 -- (e-mail diferente, corrida perdida, revogação no meio), o `status` vira
 -- `unavailable` e a tentativa fica gravada.
 --
--- RETOMADA (a conclusão não é atômica com o provisionamento): o aceite confirma
--- o convite aqui, e quem cria a localidade e o perfil do dependente é o
--- servidor, depois — `family_accept_holder_locality` e `provision_member_
--- locality`. Se esse passo falha, o convite já está `accepted` e o vínculo já
--- existe; sem retomada a pessoa fica com conta e sem acesso, e a nova tentativa
--- é recusada como "usado". Por isso, antes de qualquer contagem, a mesma pessoa
--- que já aceitou ESTE convite recebe `ok` e o vínculo que existe: a nova
--- tentativa conclui o provisionamento sem consumir outro código e sem gravar
--- tentativa. Só o aceitante do próprio convite chega aqui — outro usuário cai
--- na resposta genérica, que é o que mantém o uso único.
+-- Continuam sendo exceção, e não status: entrada inválida (digest com tamanho
+-- errado, nome fora da política de nome, versão de aceite não positiva) e
+-- titular sem localidade corrente. Não são resultado de código errado — são
+-- falha de contrato —, e o aceite inteiro tem de voltar atrás.
 --
--- A escolha (retomada, e não transação única) está explicada no relatório: o
--- provisionamento compartilhado com o titular verificado vive em
--- `apps/web/lib/onboarding/verifyAndProvision.ts`; reimplementá-lo nesta função
--- criaria um segundo caminho de admissão, que é exatamente o que este arquivo
--- evita.
+-- RETOMADA: a mesma pessoa que já aceitou ESTE convite recebe `ok` e o vínculo
+-- que existe. O uso é o vínculo, e ele é único por convite; este é o caminho de
+-- quem perdeu a resposta do primeiro aceite (a conexão caiu depois do commit).
+-- Só o aceitante do próprio convite chega aqui — outro usuário cai na resposta
+-- genérica, que é o que mantém o uso único.
 create function private.family_invite_code_accept(
   p_code_hash bytea,
   p_accepted_by_user_id uuid,
-  p_origin_digest bytea
+  p_origin_digest bytea,
+  p_display_name text,
+  p_consent_version integer
 )
 returns table (
   status text,
@@ -411,6 +431,8 @@ declare
   v_invitation private.family_invitations;
   v_email_digest bytea;
   v_link_id uuid;
+  v_holder_user_id uuid;
+  v_locality_id uuid;
   v_gate text;
 begin
   if p_origin_digest is null or octet_length(p_origin_digest) <> 32 then
@@ -421,6 +443,16 @@ begin
     raise exception 'code hash must be 32 bytes' using errcode = '22023';
   end if;
 
+  -- Mesma política de nome do perfil (20260817040043): recusar aqui evita um
+  -- 23514 vindo do CHECK, que o servidor teria de traduzir sem contexto.
+  if not private.display_name_ok(p_display_name) then
+    raise exception 'display name is not valid' using errcode = '22023';
+  end if;
+
+  if p_consent_version is null or p_consent_version < 1 then
+    raise exception 'consent version must be positive' using errcode = '22023';
+  end if;
+
   select extensions.digest(lower(trim(u.email)), 'sha256')
   into v_email_digest
   from auth.users u
@@ -428,93 +460,138 @@ begin
 
   -- Retomada: este convite já foi aceito por esta mesma pessoa e o vínculo
   -- existe. Devolver o vínculo é idempotente, não é um segundo uso — o uso é o
-  -- vínculo, e ele é único por convite.
-  select link.id
-  into v_link_id
+  -- vínculo, e ele é único por convite. A linha do convite é travada aqui
+  -- também: duas retomadas simultâneas não provisionam duas vezes.
+  select link.id, fi.inviter_user_id
+  into v_link_id, v_holder_user_id
   from private.family_account_links link
   join private.family_invitations fi on fi.id = link.invitation_id
   where fi.code_hash = p_code_hash
     and fi.status = 'accepted'
     and fi.accepted_by_user_id = p_accepted_by_user_id
-    and link.family_user_id = p_accepted_by_user_id;
-
-  if v_link_id is not null then
-    status := 'ok';
-    link_id := v_link_id;
-    return next;
-    return;
-  end if;
-
-  -- A tentativa é contada com o e-mail do aceitante quando existe: é o limite
-  -- por e-mail que impede adivinhar o código de um convite de outra pessoa.
-  v_gate := private.family_invite_code_attempt_gate(p_origin_digest, v_email_digest);
-
-  if v_gate = 'rate_limited' then
-    status := 'rate_limited';
-    return next;
-    return;
-  end if;
-
-  if v_email_digest is null then
-    -- Sem e-mail não há convite a aceitar; a resposta é a mesma dos outros
-    -- casos para não dizer nada sobre o convite.
-    perform private.record_family_invite_code_failure(
-      p_origin_digest,
-      null,
-      p_code_hash
-    );
-
-    status := 'unavailable';
-    return next;
-    return;
-  end if;
-
-  -- `for update` segura a linha: sem ele, dois aceites simultâneos do mesmo
-  -- código passariam os dois pela leitura antes de qualquer update.
-  select fi.*
-  into v_invitation
-  from private.family_invitations fi
-  where fi.code_hash = p_code_hash
-    and fi.status = 'pending'
-    and fi.expires_at > now()
-  for update;
-
-  if not found then
-    perform private.record_family_invite_code_failure(
-      p_origin_digest,
-      v_email_digest,
-      p_code_hash
-    );
-
-    status := 'unavailable';
-    return next;
-    return;
-  end if;
-
-  begin
-    v_link_id := private.accept_family_invitation(
-      v_invitation.token_digest,
-      p_accepted_by_user_id
-    );
-  exception
-    -- E-mail diferente, corrida perdida, revogação no meio: a resposta é a
-    -- mesma do código inexistente. O bloco é uma subtransação: desfaz só o
-    -- vínculo, nunca o insert da tentativa.
-    when sqlstate 'P0001' or sqlstate 'P0002' or sqlstate 'P0003' or sqlstate 'P0004' then
-      v_link_id := null;
-  end;
+    and link.family_user_id = p_accepted_by_user_id
+  for update of fi;
 
   if v_link_id is null then
-    perform private.record_family_invite_code_failure(
-      p_origin_digest,
-      v_email_digest,
-      p_code_hash
-    );
+    -- A tentativa é contada com o e-mail do aceitante quando existe: é o limite
+    -- por e-mail que impede adivinhar o código de um convite de outra pessoa.
+    v_gate := private.family_invite_code_attempt_gate(p_origin_digest, v_email_digest);
 
-    status := 'unavailable';
-    return next;
-    return;
+    if v_gate = 'rate_limited' then
+      status := 'rate_limited';
+      return next;
+      return;
+    end if;
+
+    if v_email_digest is null then
+      -- Sem e-mail não há convite a aceitar; a resposta é a mesma dos outros
+      -- casos para não dizer nada sobre o convite.
+      perform private.record_family_invite_code_failure(
+        p_origin_digest,
+        null,
+        p_code_hash
+      );
+
+      status := 'unavailable';
+      return next;
+      return;
+    end if;
+
+    -- `for update` segura a linha: sem ele, dois aceites simultâneos do mesmo
+    -- código passariam os dois pela leitura antes de qualquer update.
+    select fi.*
+    into v_invitation
+    from private.family_invitations fi
+    where fi.code_hash = p_code_hash
+      and fi.status = 'pending'
+      and fi.expires_at > now()
+    for update;
+
+    if not found then
+      perform private.record_family_invite_code_failure(
+        p_origin_digest,
+        v_email_digest,
+        p_code_hash
+      );
+
+      status := 'unavailable';
+      return next;
+      return;
+    end if;
+
+    begin
+      v_link_id := private.accept_family_invitation(
+        v_invitation.token_digest,
+        p_accepted_by_user_id
+      );
+    exception
+      -- E-mail diferente, corrida perdida, revogação no meio: a resposta é a
+      -- mesma do código inexistente. O bloco é uma subtransação: desfaz só o
+      -- vínculo, nunca o insert da tentativa.
+      when sqlstate 'P0001' or sqlstate 'P0002' or sqlstate 'P0003' or sqlstate 'P0004' then
+        v_link_id := null;
+    end;
+
+    if v_link_id is null then
+      perform private.record_family_invite_code_failure(
+        p_origin_digest,
+        v_email_digest,
+        p_code_hash
+      );
+
+      status := 'unavailable';
+      return next;
+      return;
+    end if;
+
+    v_holder_user_id := v_invitation.inviter_user_id;
   end if;
+
+  -- A localidade do dependente é a corrente do TITULAR no momento do aceite: o
+  -- dependente nunca escolhe a própria localidade. Titular sem localidade
+  -- corrente é falha de contrato, e falha aqui desfaz o aceite inteiro.
+  select m.locality_id
+  into v_locality_id
+  from public.locality_memberships m
+  where m.user_id = v_holder_user_id
+    and m.kind = 'current'
+  order by m.joined_at desc
+  limit 1;
+
+  if v_locality_id is null then
+    raise exception 'the inviting holder has no current locality' using errcode = 'P0005';
+  end if;
+
+  -- Quem já está corrente NA localidade do titular não é provisionado de novo:
+  -- `provision_member_locality` fecha a corrente antes de inserir a nova, então
+  -- repetir moveria a pessoa — e, na mesma localidade, a deixaria sem corrente
+  -- nenhuma (o insert conflita e não vira `current`).
+  if not exists (
+    select 1
+    from public.locality_memberships m
+    where m.user_id = p_accepted_by_user_id
+      and m.locality_id = v_locality_id
+      and m.kind = 'current'
+  ) then
+    perform public.provision_member_locality(p_accepted_by_user_id, v_locality_id);
+  end if;
+
+  -- O mesmo perfil que a rota de provisionamento grava: nome informado, aceite
+  -- na versão que chegou. `consent_version` e `consented_at` só avançam — uma
+  -- retomada não rebaixa o que a pessoa já aceitou.
+  insert into public.profiles (user_id, display_name, visibility, consent_version, consented_at)
+  values (
+    p_accepted_by_user_id,
+    p_display_name,
+    'locality_members'::public.profile_visibility,
+    p_consent_version,
+    now()
+  )
+  on conflict (user_id) do update
+    set display_name = excluded.display_name,
+        visibility = 'locality_members'::public.profile_visibility,
+        consent_version = greatest(profiles.consent_version, excluded.consent_version),
+        consented_at = coalesce(profiles.consented_at, excluded.consented_at);
 
   status := 'ok';
   link_id := v_link_id;
@@ -524,10 +601,10 @@ begin
 end;
 $$;
 
-revoke all on function private.family_invite_code_accept(bytea, uuid, bytea) from public;
-revoke all on function private.family_invite_code_accept(bytea, uuid, bytea) from anon;
-revoke all on function private.family_invite_code_accept(bytea, uuid, bytea) from authenticated;
-grant execute on function private.family_invite_code_accept(bytea, uuid, bytea) to service_role;
+revoke all on function private.family_invite_code_accept(bytea, uuid, bytea, text, integer) from public;
+revoke all on function private.family_invite_code_accept(bytea, uuid, bytea, text, integer) from anon;
+revoke all on function private.family_invite_code_accept(bytea, uuid, bytea, text, integer) from authenticated;
+grant execute on function private.family_invite_code_accept(bytea, uuid, bytea, text, integer) to service_role;
 
 -- Criar convite com código: delega ao criador de 4 argumentos (mesma transação,
 -- mesmas regras de titular verificado e teto de 5) e grava o hash na linha que
@@ -648,7 +725,9 @@ grant execute on function public.family_invite_code_preview(bytea, bytea, bytea)
 create function public.family_invite_code_accept(
   p_code_hash bytea,
   p_accepted_by_user_id uuid,
-  p_origin_digest bytea
+  p_origin_digest bytea,
+  p_display_name text,
+  p_consent_version integer
 )
 returns table (
   status text,
@@ -661,14 +740,16 @@ as $$
   select * from private.family_invite_code_accept(
     p_code_hash,
     p_accepted_by_user_id,
-    p_origin_digest
+    p_origin_digest,
+    p_display_name,
+    p_consent_version
   );
 $$;
 
-revoke all on function public.family_invite_code_accept(bytea, uuid, bytea) from public;
-revoke all on function public.family_invite_code_accept(bytea, uuid, bytea) from anon;
-revoke all on function public.family_invite_code_accept(bytea, uuid, bytea) from authenticated;
-grant execute on function public.family_invite_code_accept(bytea, uuid, bytea) to service_role;
+revoke all on function public.family_invite_code_accept(bytea, uuid, bytea, text, integer) from public;
+revoke all on function public.family_invite_code_accept(bytea, uuid, bytea, text, integer) from anon;
+revoke all on function public.family_invite_code_accept(bytea, uuid, bytea, text, integer) from authenticated;
+grant execute on function public.family_invite_code_accept(bytea, uuid, bytea, text, integer) to service_role;
 
 create function public.create_family_invitation(
   p_inviter_user_id uuid,

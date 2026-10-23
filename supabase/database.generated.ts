@@ -2659,6 +2659,8 @@ export type Database = {
         Args: {
           p_accepted_by_user_id: string
           p_code_hash: string
+          p_consent_version: number
+          p_display_name: string
           p_origin_digest: string
         }
         Returns: {
