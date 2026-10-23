@@ -219,7 +219,7 @@ closure:
 #   ler esse erro como não é familiar é exatamente o defeito silencioso que a
 #   cidade de destino teve nesta frente. Expor o schema private está fora de
 #   questão (invariante de privacidade). A regra foi então para o SQL, como o
-#   primeiro parágrafo do desenho prefere: migration 20261023120000 cria
+#   primeiro parágrafo do desenho prefere: migration 20261023110200 cria
 #   public.has_verified_family_holder(p_user_id uuid), security definer,
 #   service_role apenas, que reusa private.is_verified_holder para o titular e
 #   lê private.family_account_links para o vínculo ATIVO. Nada de regra nova em
@@ -233,7 +233,7 @@ closure:
 #   no formato que o gerador emite (uma linha por chave, alfabético). NÃO rodei
 #   generate:types porque exige o stack local e o coordenador pediu para não
 #   mexer no banco nesta rodada — o drift do CI é a conferência definitiva.
-#   ARQUIVO DA MIGRATION: o timestamp 20261023120000 foi escolhido, não gerado —
+#   ARQUIVO DA MIGRATION: o timestamp 20261023110200 foi escolhido, não gerado —
 #   o relógio da máquina está em 22/10 e supabase migration new criaria um nome
 #   que ordena ANTES de 20261023110000/20261023110100, desta mesma frente. A
 #   função só depende de objetos de agosto, então a ordem é segura nos dois casos.
