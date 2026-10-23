@@ -39,10 +39,16 @@
     // browser de captura é só via scripts/visual/loop.mjs; (2) não navegar
     // no app local durante janelas db:reset → test:db (gatilho do perfil
     // fantasma "Visual Capture" — ver armadilhas no AGENTS.md).
+    //
+    // Desligado em 23/10/2026: cada `opencode run` sobe a própria cadeia
+    // (npx + node, ~230 MB) e ela fica viva depois que a execução termina. Com
+    // execuções paralelas do lote 4 a RAM livre chegou a 0,3 GB, e as tarefas
+    // de implementação não usam o navegador. Religar só numa sessão que vá
+    // depurar o browser, e derrubar a cadeia ao terminar.
     "chrome-devtools": {
       "type": "local",
       "command": ["npx", "chrome-devtools-mcp@latest"],
-      "enabled": true
+      "enabled": false
     }
   }
 }
