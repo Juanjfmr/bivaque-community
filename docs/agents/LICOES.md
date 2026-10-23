@@ -147,3 +147,9 @@ node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2
   `npx supabase status -o env`).
 - O `db reset` direto continua pedindo confirmação e, numa execução sem tela, é recusado. Os dois comandos exatos
   de reset pela fila seguem liberados para casos avulsos.
+
+## Execução sem tela (OpenCode `run`)
+
+Nunca rode comando em segundo plano (`&`, `nohup`, `Start-Process`) nem termine a resposta "esperando" um comando: a
+execução sem tela acaba ali, o comando fica órfão segurando a fila, e a tarefa fica pela metade (aconteceu na
+COM-003, lote 5). Rode as provas em primeiro plano e espere o resultado, mesmo que demore.

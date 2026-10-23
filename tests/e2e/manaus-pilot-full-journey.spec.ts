@@ -142,8 +142,18 @@ test.describe("family invite journey", () => {
     // to the invite screen (front D) in legacy mode, and the token stays out of
     // the URL. The invite screen asks for a new link instead of trusting a
     // token that only this old address knew how to read.
-    await page.waitForURL(/\/convite\?legado=1$/)
-    await expect(page).not.toHaveURL(/invite=/)
+    // Who already has a current locality is sent on from /convite to the
+    // home screen (the invite screen has nothing left to do for a member).
+    await page.waitForURL(/\/inicio$/)
+    await expect(page).not.toHaveURL(/invite=|legado=/)
+  })
+
+  test("the legacy invite screen asks for a new invite", async ({ page }) => {
+    // Given someone without a session who arrives from an old invite link
+    // When the forwarded address opens
+    await page.goto("/convite?legado=1")
+
+    // Then the screen explains that the invite now comes with a code
     await expect(page.getByRole("status")).toContainText("Este link de convite mudou.")
   })
 })
