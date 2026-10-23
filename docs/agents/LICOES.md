@@ -129,3 +129,16 @@ specs e2e dentro do gate (§ Gate) e a fila de provas `scripts/agents/prova-fila
     - Sintoma: quem recarrega no meio do fluxo volta ao começo, ou é movido para outro lugar.
     - Causa: a retomada não tem caminho próprio e reaproveita o início.
     - Jeito certo: um caminho real de retomada, que não move a pessoa de lugar.
+## Provas de banco pela fila
+
+O OpenCode deste repositório libera o `db reset` do banco **local** só por estes dois comandos, exatamente como estão
+(sem nada antes nem depois, nem ponto final):
+
+```
+node scripts/agents/prova-fila.mjs -- npx supabase db reset --local
+node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+```
+
+Qualquer outra forma de `db reset` pede confirmação e, numa execução sem tela, é recusada. Depois do reset, rode o
+pgTAP e o e2e também pela fila (`node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db`), para outra frente
+não resetar o banco no meio da sua prova.

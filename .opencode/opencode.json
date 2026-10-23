@@ -1,6 +1,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
 
+  // 23/10/2026, autorizado pelo dono: o implementador reseta o banco LOCAL e roda as
+  // provas da propria frente, uma de cada vez, pela fila (scripts/agents/prova-fila.mjs).
+  // So os dois comandos exatos abaixo, sem curinga (um `*` deixaria colar `--linked` no fim);
+  // qualquer outro `db reset` continua pedindo confirmacao
+  // (config global) e `--linked` (producao) continua proibido.
+  "permission": {
+    "bash": {
+      "node scripts/agents/prova-fila.mjs -- npx supabase db reset --local": "allow",
+      "node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed": "allow"
+    }
+  },
+
   // Config de projeto. Mescla sobre `~/.config/opencode/opencode.json`.
   // MCP custa contexto em TODA request — só liga aqui o que este repo usa.
 
