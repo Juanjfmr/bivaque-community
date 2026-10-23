@@ -184,3 +184,12 @@ closure:
 # NÃO EXECUTADOS POR MIM, de propósito (instrução do coordenador nesta correção): db reset, test:db,
 # db:lint, gate, build e Playwright. O pgTAP novo (entry-provision-atomic.sql) e o e2e novo são
 # para o coordenador rodar, uma frente por vez, no estado sem seed e depois com seed.
+#
+# COMMITS DA CORREÇÃO (branch codex/entrada-cidade, sem push e sem merge)
+# 9f63f2de fix(db): a entrada grava vínculo, perfil e momento numa transação só
+# 614ab963 fix(web): interesses exigem verificação e usam o vínculo corrente
+# 230a84aa fix(web): o hoje da tela não é recusado pelo servidor
+# a334ee24 fix(web): as boas-vindas não prometem plano que a Início ainda não mostra
+# 1453e684 fix(web): a cidade de destino da saída chega às boas-vindas
+# c3f1906d test(e2e): a jornada da chegada afirma o lead novo das boas-vindas
+# (este commit de documentação é o último da série.)
