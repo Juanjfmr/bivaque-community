@@ -1,4 +1,8 @@
+import { createServerClient } from "@supabase/ssr"
 import type { Metadata } from "next"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import { EntryShell } from "../../components/entry/entry-shell"
 import { InviteForm } from "./invite-form"
 import "./convite.css"
@@ -15,7 +19,43 @@ type ConvitePageProperties = Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }>
 
+// O aceite do código é atômico: quando ele confirma, a pessoa já tem sessão e
+// localidade corrente. Se a resposta se perde e a tela recarrega, ela não pode
+// voltar à etapa do código — o preview recusaria o convite já aceito. Quem já
+// tem localidade corrente segue para a Início.
+async function sessionUserIsMember(): Promise<boolean> {
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey) return false
+
+  const cookieStore = await cookies()
+  const auth = createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      // Leitura pura: a página não escreve sessão.
+      setAll() {},
+    },
+  })
+
+  const {
+    data: { user },
+  } = await auth.auth.getUser()
+  if (!user) return false
+
+  const { data, error } = await createServiceClient()
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", user.id)
+    .eq("kind", "current")
+    .limit(1)
+  return !error && (data?.length ?? 0) > 0
+}
+
 export default async function ConvitePage({ searchParams }: ConvitePageProperties) {
+  if (await sessionUserIsMember()) redirect("/inicio")
+
   const params = await searchParams
   const raw = params["codigo"]
   const initialCode = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "")

@@ -129,4 +129,12 @@ test.describe("Ajuda com sessão", () => {
       page.getByText("Não foi possível carregar seus chamados", { exact: false }),
     ).toHaveCount(0)
   })
+
+  test("o convite leva à Início quem já tem acesso", async ({ page }) => {
+    // O aceite do código é atômico; se a resposta se perde e a tela recarrega,
+    // quem já tem localidade corrente não volta à etapa do código.
+    await page.goto("/convite?codigo=7K4M9QRT")
+
+    await expect(page).toHaveURL(/\/inicio$/, { timeout: 20_000 })
+  })
 })
