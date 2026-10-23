@@ -1,0 +1,56 @@
+task_id: COM-A1
+objective: >
+  Lote 5, tarefa A1: o ciclo da pergunta segue o prototipo. Pergunta de 8 a 300 caracteres; filtros Para ajudar,
+  Resolvidas e Minhas; a autoria edita e exclui pergunta e resposta, com marca editada e edited_at; resolucao dos
+  dois jeitos em dois campos (resolved_reply_id atual e last_resolved_reply_id), com reopen_recommendation
+  reescrita e os rotulos Resolvida e Resolvida por quem perguntou; aviso no lugar do conteudo removido pela
+  moderacao, sem texto e sem autor.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - prototypes/bivaque-html/src/features/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md): as telas e o banco divergem
+    do prototipo nos pontos do objetivo. Base codex/lote5-base (main com os PRs 106 a 111).
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/components/indications/
+  - apps/web/app/(shell)/indicacoes/
+  - apps/web/lib/indications/
+  - apps/web/lib/recommendations/
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-A1.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (o unico permitido e node scripts/agents/prova-fila.mjs -- npx supabase db reset --local)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+acceptance:
+  - Migration na faixa 20261024110000: CHECK do titulo 8..300 (o banco de producao nao tem uso real, nao precisa de not valid), edited_at em recommendation_replies, last_resolved_reply_id, estado de resolvida sem resposta, reopen_recommendation reescrita e parametro Minhas em list_indications
+  - Toda leitura que mostra resolvida passa a ler o estado da pergunta; pgTAP de resolver por resposta, resolver sem resposta, reabrir guardando a ultima, e negativos de quem nao e autora
+  - Telas e textos de prototypes/bivaque-html/src/features/community/ (views.js, question.js, editor.js, manage.js), com edicao e exclusao da autoria (a exclusao da pergunta avisa que leva as respostas)
+  - O aviso de removido nunca expoe texto nem autor (pgTAP ou teste da leitura)
+  - e2e do ciclo pergunta, resposta, resolver, reabrir, editar e excluir, e comparacao de captura
+proof:
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local
+  - e2e da tarefa pela fila
+risk: muda o ciclo de resolucao existente e o CHECK de conteudo
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

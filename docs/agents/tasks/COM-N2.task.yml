@@ -1,0 +1,54 @@
+task_id: COM-N2
+objective: >
+  Lote 5, tarefa N2: o feed da cidade passa para o Inicio, como no prototipo, com uma leitura nova no banco
+  (hoje so ha feed por vila e por grupo) e a regra de leitura publicacoes da cidade da pessoa sem grupo e sem vila
+  (group_id is null and community_id is null), na mesma migration, com prova negativa. A vista Conversa sai da
+  Comunidade.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - prototypes/bivaque-html/src/features/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md): as telas e o banco divergem
+    do prototipo nos pontos do objetivo. Base codex/lote5-base (main com os PRs 106 a 111).
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/(shell)/community/
+  - apps/web/app/components/bivaque/feed-post-shared.tsx
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-N2.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (o unico permitido e node scripts/agents/prova-fila.mjs -- npx supabase db reset --local)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+acceptance:
+  - Migration na faixa 20261024100000 cria a leitura do feed da cidade, paginada, com my_follow e my_reaction como os feeds existentes
+  - A regra de leitura fica na mesma migration, e o pgTAP prova que publicacao de grupo Fechado, de vila e de outra cidade nao aparece, e que a da cidade aparece
+  - O Inicio mostra o feed da cidade no lugar e no formato do prototipo (prototypes/bivaque-html/src/features/home/)
+  - A vista Conversa sai de /community (o view-switch some ou fica so com o que o prototipo tem)
+  - e2e do Inicio com o feed, e comparacao de captura com o prototipo em 375 e 1440 nos dois temas
+proof:
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local
+  - e2e da tarefa pela fila
+risk: leitura nova de conteudo da cidade; risco de vazar grupo Fechado
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

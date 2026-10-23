@@ -1,0 +1,50 @@
+task_id: COM-B1
+objective: >
+  Lote 5, tarefa B1: a base do grupo segue o prototipo. Rotulos Aberto e Fechado com a explicacao de Aberto;
+  regras; aviso por grupo Tudo, Destaques ou Nada; publicacao fixada pelo admin no topo do grupo; listas Proximos
+  de voce e Populares por atividade recente.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - prototypes/bivaque-html/src/features/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md): as telas e o banco divergem
+    do prototipo nos pontos do objetivo. Base codex/lote5-base (main com os PRs 106 a 111).
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/groups/
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-B1.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (o unico permitido e node scripts/agents/prova-fila.mjs -- npx supabase db reset --local)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+acceptance:
+  - Migration na faixa 20261024120000: coluna rules em groups, nivel de aviso por membership, flag de publicacao fixada (uma por grupo, so o admin fixa), com RLS e pgTAP positivo e negativo
+  - Telas e textos de prototypes/bivaque-html/src/features/groups/ (views.js, editors.js, presets.js) para lista, detalhe, criar e gerenciar, com os rotulos Aberto e Fechado
+  - A publicacao fixada tem autor, data, comentarios e denuncia como qualquer publicacao
+  - e2e de criar grupo com regras, fixar publicacao e trocar o aviso; comparacao de captura
+proof:
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local
+  - e2e da tarefa pela fila
+risk: colunas novas em groups e group_memberships com RLS
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
