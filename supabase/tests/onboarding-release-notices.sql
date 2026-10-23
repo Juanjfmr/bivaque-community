@@ -55,14 +55,16 @@ select throws_ok(
   'another authenticated user cannot insert a release notice for someone else'
 );
 
+-- O CTE com UPDATE precisa ficar no nível de cima da consulta (o Postgres
+-- recusa comando que modifica dados dentro de subconsulta).
+with updated as (
+  update public.onboarding_release_notices
+  set requested_at = now()
+  where user_id = '10000000-0000-4000-8000-000000000001'
+  returning 1
+)
 select is(
-  (with updated as (
-    update public.onboarding_release_notices
-    set requested_at = now()
-    where user_id = '10000000-0000-4000-8000-000000000001'
-    returning 1
-  )
-  select count(*)::bigint from updated),
+  (select count(*)::bigint from updated),
   0::bigint,
   'another authenticated user cannot update someone else release notice'
 );
