@@ -29,7 +29,9 @@ regra de negócio:
      Você.
    - O Next ainda tem código de uma versão antiga do produto, as vilas ("Comunidades" no plural, tabela
      `communities`). Vila não existe nesta versão do produto (dono, 23/10/2026).
-   - O feed fica na Comunidade, e não no Início.
+   - O Next tem publicação solta para a cidade inteira (um feed na Comunidade). O protótipo não tem: na cidade só há
+     perguntas e respostas, e publicação só existe dentro de um grupo (`prototypes/bivaque-html/src/features/home/`
+     não tem feed; conferido em 23/10/2026, depois que o mapa afirmou o contrário).
 2. **Pergunta e resposta.**
    - O tamanho da pergunta difere.
    - Faltam filtros.
@@ -73,12 +75,13 @@ comparação de captura em cada tela. **[crítica]** marca o que veio das revis�
 - **O código das vilas sai da tela**, porque vila não existe nesta versão: as rotas antigas redirecionam para a
   Comunidade da cidade, por uma lista fechada de caminhos internos (nunca destino vindo da URL). Nada é movido. As
   tabelas ficam no banco, vazias, até um ADR de remoção.
-- **O feed da cidade fica no Início**, como no protótipo, e a vista "Conversa" sai da Comunidade.
-  - O feed é uma leitura nova, criada por migration, porque hoje só há o feed antigo por vila e o feed por grupo.
-  - A regra de leitura do feed da cidade é: publicações da cidade da pessoa, **sem grupo e sem vila** (a coluna `community_id` ainda existe e precisa ser excluída da leitura)
-    (`group_id is null and community_id is null`).
-  - Isso fica na mesma migration que cria o feed, com prova negativa de que publicação de grupo Fechado e de vila
-    não aparece. **[crítica]**
+- **Sem publicação para a cidade inteira** (escolha do dono, 23/10/2026, seguindo o protótipo):
+  - na cidade, a conversa é feita de perguntas e respostas (Indicações);
+  - publicar só existe dentro de um grupo;
+  - a vista "Conversa" sai da Comunidade, e o Início não ganha feed;
+  - o compositor deixa de oferecer as audiências cidade e vila;
+  - o banco passa a recusar publicação sem grupo (`group_id` obrigatório na inserção), com pgTAP do negativo. Como o
+    banco de produção não tem uso real, não há publicação antiga de cidade para migrar.
 
 ### 2. Pergunta e resposta
 
@@ -190,6 +193,7 @@ comparação de captura em cada tela. **[crítica]** marca o que veio das revis�
   `reopen_recommendation` é reescrita.
 - Excluir grupo vira encerrar. O `delete_group` deixa de aparecer na tela.
 - A trava de local de evento sai, como saiu nos anúncios.
+- A publicação para a cidade inteira deixa de existir: publicar passa a ser só dentro de um grupo.
 - A regra "o produto não tem enquete" (prancha 44) continua valendo neste lote.
 - O bloqueio deixa de ser só das mensagens e deixa de ser visível ao bloqueado.
 - O critério de saída do lote 5 perde a indicação de negócio (lote 6).
@@ -207,7 +211,7 @@ Toda frente:
 | Tarefa | Escopo | Migration (faixa) | Depende de |
 |---|---|---|---|
 | N1 | Barra de baixo, destino de cada entrada, abas da Comunidade, "Conversas" para as mensagens, redirecionamento das rotas antigas de vila, prova de alcance | Sem migration | — |
-| N2 | Feed da cidade no Início, com a regra de leitura e prova negativa; sai a vista "Conversa" | `20261024100000` | — |
+| N2 | Sem publicação para a cidade: sai a vista "Conversa", o compositor só publica em grupo, o banco recusa publicação sem grupo | `20261024100000` | — |
 | A1 | 8 a 300 caracteres, filtros (com "Minhas"), editar e excluir com marca e `edited_at`, resolução em dois campos com os rótulos, aviso de removido sem autor | `20261024110000` | — |
 | B1 | Rótulos, regras, aviso por grupo, publicação fixada, listas | `20261024120000` | — |
 | B2 | Motivo do pedido com as proteções e o limite, convite | `20261024121000` | B1 |
@@ -283,8 +287,8 @@ conhecida), e por isso tem estado explícito em dois campos.
 
 - **O bloqueio precisa filtrar todas as leituras e escritas.** Mitigação: matriz de pgTAP por superfície e por
   operação, e e2e com duas contas.
-- **O feed da cidade pode vazar publicação de grupo ou de vila.** Mitigação: a regra de leitura na mesma migration,
-  com prova negativa.
+- **Publicação sem grupo pode continuar entrando por outro caminho** (RPC antiga, compositor de outra tela).
+  Mitigação: a recusa fica no banco, com pgTAP do negativo, e não só na tela.
 - **O aviso de removido pode vazar o texto ou o autor.** Mitigação: a leitura devolve só o estado, com prova
   negativa.
 - **O evento de grupo Fechado pode vazar por outra superfície** ou por notificação. Mitigação: RLS no evento, aviso
