@@ -42,6 +42,9 @@ test.describe("criar conta, como no protótipo", () => {
     await expect(page.locator("#en-email")).toBeVisible()
     await expect(page.locator("#en-pass")).toBeVisible()
     await expect(page.getByText("Ao menos 8 caracteres, com letras e números.")).toBeVisible()
+    // A nota do Google é do cadastro (`renderEntrySignup` em account.js): quem
+    // entra pelo botão do Google marca o aceite no passo seguinte, não aqui.
+    await expect(page.getByText("Pelo Google, o aceite vem no passo seguinte.")).toBeVisible()
     // O pé da tela repete a navegação recíproca, como no protótipo.
     await expect(page.getByRole("link", { name: "Entrar" }).first()).toHaveAttribute(
       "href",
@@ -115,15 +118,37 @@ test.describe("recuperar a senha, como no protótipo", () => {
     await expect(page.getByRole("status")).toContainText("Confira também o spam")
     expect(recoverRequests).toBe(1)
 
-    // "Usar outro e-mail" volta ao formulário limpo; "Voltar para entrar" leva
-    // ao login.
+    // "Voltar para entrar" leva ao login.
     await expect(page.getByRole("link", { name: "Voltar para entrar" })).toHaveAttribute(
       "href",
       "/login",
     )
+    // "Usar outro e-mail" volta ao formulário, mas o relógio de reenvio continua:
+    // trocar o endereço não é motivo para furar o limite do provedor. O botão
+    // fica "Aguarde mm:ss" e desabilitado até a janela fechar — o que se prova
+    // aqui é que o formulário voltou limpo e o limite sobreviveu.
     await page.getByRole("button", { name: "Usar outro e-mail" }).click()
     await expect(page.locator("#en-email input")).toHaveValue("")
-    await expect(page.getByRole("button", { name: "Enviar link" })).toBeVisible()
+    const resend = page.getByRole("button", { name: /^Aguarde \d{2}:\d{2}$/ })
+    await expect(resend).toBeVisible()
+    await expect(resend).toBeDisabled()
+  })
+
+  test("Enter no campo envia o pedido, como o clique", async ({ page }) => {
+    // Revisão de 22/10/2026 (P2): o Enter no campo do Material não submetia o
+    // formulário, porque o `<input>` vive no shadow root e não tem form owner.
+    let recoverRequests = 0
+    await page.route("**/auth/v1/recover**", async (route) => {
+      recoverRequests += 1
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" })
+    })
+
+    await page.goto("/recuperar-senha")
+    await page.locator("#en-email input").fill("quem-pediu@exemplo.invalid")
+    await page.locator("#en-email input").press("Enter")
+
+    await expect(page.getByRole("status")).toContainText("puder entrar no Bivaque")
+    expect(recoverRequests).toBe(1)
   })
 
   test("e-mail torto não vira 'enviado'", async ({ page }) => {
@@ -147,6 +172,48 @@ test.describe("senha nova", () => {
       "href",
       "/login",
     )
+  })
+
+  test("Enter no campo aplica a regra da tela, sem ida ao provedor", async ({ page, context }) => {
+    // Revisão de 22/10/2026 (P2): o Enter não submetia este formulário.
+    await signInAs(context, NO_MEMBERSHIP)
+    await page.goto("/nova-senha")
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Crie uma senha nova")
+
+    await page.locator("#en-pass input").fill("curta")
+    await page.locator("#en-pass input").press("Enter")
+
+    await expect(page.locator("#en-err")).toHaveText(
+      "A senha precisa ter ao menos 8 caracteres, com letras e números.",
+    )
+  })
+
+  test("Enter envia a senha nova ao provedor", async ({ page, context }) => {
+    // A resposta é de erro de propósito: trocar a senha semeada e navegar não é
+    // o que este caso prova. O que se prova é que o Enter mandou o pedido.
+    let updates = 0
+    await page.route("**/auth/v1/user**", async (route) => {
+      if (route.request().method() !== "PUT") {
+        await route.continue()
+        return
+      }
+      updates += 1
+      await route.fulfill({
+        body: JSON.stringify({ code: 500, msg: "falha simulada" }),
+        contentType: "application/json",
+        status: 500,
+      })
+    })
+
+    await signInAs(context, NO_MEMBERSHIP)
+    await page.goto("/nova-senha")
+    await page.locator("#en-pass input").fill("senha-nova-123")
+    await page.locator("#en-pass input").press("Enter")
+
+    await expect(page.locator("#en-err")).toHaveText(
+      "Não foi possível salvar a senha agora. Peça outro link e tente de novo.",
+    )
+    expect(updates).toBe(1)
   })
 })
 
@@ -179,11 +246,15 @@ test.describe("Você já começou", () => {
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Você já começou a entrada.")
     await expect(page.getByText(`Conta de ${NO_MEMBERSHIP}`)).toBeVisible()
-    // "Continuar de onde parei" aponta para o funil: o proxy resolve o passo.
-    await expect(page.getByRole("link", { name: "Continuar de onde parei" })).toHaveAttribute(
-      "href",
-      "/onboarding",
-    )
+    // A persona semeada não tem nenhum aceite gravado (`consent_acceptances`
+    // não é semeada), então a retomada para no passo Aceite — sem isso a
+    // conferência do CPF responderia 403 consent is required. É o caminho da
+    // revisão de 22/10/2026, e o destino é uma decisão do servidor.
+    const resume = page.getByRole("link", { name: "Continuar de onde parei" })
+    await expect(resume).toHaveAttribute("href", "/consent")
+    await resume.click()
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Antes de entrar, as regras.")
+
     // O cadastro também mostra a retomada, e não deixa a pessoa criar uma
     // segunda conta sem perceber.
     await page.goto("/signup")
