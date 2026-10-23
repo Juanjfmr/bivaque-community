@@ -15,9 +15,11 @@ import { stripComments } from "./source-scan"
 // ferramenta certa: ela falha no dia em que alguém reintroduzir o que saiu. Não
 // descreve o que está escrito hoje — afirma o que NÃO pode voltar.
 //
-// O que fica de fora de propósito: o controle de enquete NA ENTRADA
-// (feed-composer.tsx) já é coberto por
-// tests/unit/ui/no-photo-poll-controls.test.ts:16-19. Aqui é o MODAL.
+// O que fica de fora de propósito: o controle de enquete NA ENTRADA de
+// publicação. A linha que abria o compositor (feed-composer.tsx) e o teste de
+// ausência dela (no-photo-poll-controls.test.ts) saíram no lote 5 N2, quando a
+// linha de publicar deixou de existir: publicar só existe dentro de um grupo,
+// pelo compositor que o shell e o Início abrem. Aqui é o MODAL.
 //
 // LIMITE DESTA PROVA: é leitura de fonte, não comportamento. Ela não exercita
 // clique nenhum; o que exercita comportamento nesta frente é o e2e
