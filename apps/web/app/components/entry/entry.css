@@ -58,9 +58,22 @@
 }
 
 /* O preflight do Tailwind (`* { padding: 0 }`) vence o `:host` do Material na
-   cascata da árvore externa — a lição do PORT-001. O botão preenchido repõe o
-   padding em landing.css; a entrada usa também o outlined e o texto, e repõe os
-   dois aqui, com as mesmas medidas do _shared.scss do @material/web. */
+   cascata da árvore externa — a lição do PORT-001. Na landing o botão preenchido
+   repõe o padding em landing.css; a entrada usa os três (o "Confirmar" do
+   diálogo é preenchido e ficava com `padding: 0px`), então a reposição dos três
+   fica aqui, com as mesmas medidas do _shared.scss do @material/web. */
+.bv-skin md-filled-button {
+  padding-block: calc(
+    (
+      var(--md-filled-button-container-height) -
+      var(--md-filled-button-label-text-line-height, 20px)
+    ) /
+    2
+  );
+  padding-inline: var(--md-filled-button-leading-space, 24px)
+    var(--md-filled-button-trailing-space, 24px);
+}
+
 .bv-skin md-outlined-button {
   padding-block: calc(
     (
@@ -105,6 +118,31 @@
   align-items: center;
   gap: 12px;
   height: 56px;
+}
+
+/* O símbolo do topo. Na landing o tamanho e as cores vêm de `.ld-home
+   .brand-mark` e de `.ld .brand-mark …`; nada disso alcança a entrada, que
+   herdava o tamanho do viewBox (mais de 56 px no cabeçalho) e o preenchimento
+   preto padrão dos dois caminhos, inclusive no tema escuro. As medidas são as do
+   protótipo (`.brand-mark{width:32px;height:32px;flex:none}` em base.css) e as
+   cores são os tokens do tema, como em `base.css` — o par claro/escuro já está
+   em brand-tokens.css sob `.bv-skin`. */
+.bv-entry .en-mark {
+  display: inline-flex;
+  flex: none;
+}
+
+.bv-entry .en-mark .brand-mark {
+  width: 32px;
+  height: 32px;
+}
+
+.bv-entry .en-mark .bv-symbol-body {
+  fill: var(--bv-symbol-body);
+}
+
+.bv-entry .en-mark .bv-symbol-threshold {
+  fill: var(--bv-symbol-threshold);
 }
 
 .bv-entry .en-top md-text-button,

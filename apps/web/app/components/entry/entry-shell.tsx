@@ -20,6 +20,12 @@ import "./entry.css"
 // `components/material/` e `components/entry/`, não `components/` para um
 // arquivo compartilhado, e duplicar o desenho criaria duas fontes para o mesmo
 // símbolo.
+//
+// A correção da revisão pôs o símbolo dentro de `.en-mark`: tamanho e cores
+// dele vivem em landing.css presos a `.ld` e não alcançam a entrada, então o
+// SVG saía no tamanho do viewBox (mais de 56 px) e com os dois caminhos no
+// preto padrão, até no tema escuro. entry.css dá o tamanho do protótipo e as
+// cores dos tokens do `.bv-skin`, sem tocar na landing.
 type EntryShellProperties = Readonly<{
   action?: ReactNode
   backHref?: string | undefined
@@ -38,7 +44,9 @@ export function EntryShell({ action, backHref, children }: EntryShellProperties)
               <MaterialIcon name="arrow_back" />
             </MaterialIconButton>
           ) : null}
-          <BrandMark />
+          <span className="en-mark">
+            <BrandMark />
+          </span>
           <span className="en-brand">Bivaque</span>
           {action ? <div className="en-top-action">{action}</div> : null}
         </header>
