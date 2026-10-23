@@ -217,6 +217,44 @@ test.describe("senha nova", () => {
     )
     expect(updates).toBe(1)
   })
+
+  test("Enter repetido com o envio pendente sai uma vez só", async ({ page, context }) => {
+    // Revisão de 22/10/2026 (P2): o Enter chama requestSubmit() direto e o
+    // botão desabilitado não o segura; a trava do envio precisa barrar o
+    // segundo Enter enquanto o primeiro pedido ainda não voltou.
+    let updates = 0
+    let release: () => void = () => undefined
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    await page.route("**/auth/v1/user**", async (route) => {
+      if (route.request().method() !== "PUT") {
+        await route.continue()
+        return
+      }
+      updates += 1
+      await pending
+      await route.fulfill({
+        body: JSON.stringify({ code: 500, msg: "falha simulada" }),
+        contentType: "application/json",
+        status: 500,
+      })
+    })
+
+    await signInAs(context, NO_MEMBERSHIP)
+    await page.goto("/nova-senha")
+    await page.locator("#en-pass input").fill("senha-nova-123")
+    await page.locator("#en-pass input").press("Enter")
+    await page.locator("#en-pass input").press("Enter")
+    await page.locator("#en-pass input").press("Enter")
+    await expect.poll(() => updates).toBe(1)
+    release()
+
+    await expect(page.locator("#en-err")).toHaveText(
+      "Não foi possível salvar a senha agora. Peça outro link e tente de novo.",
+    )
+    expect(updates).toBe(1)
+  })
 })
 
 test.describe("passo Aceite, do Google", () => {

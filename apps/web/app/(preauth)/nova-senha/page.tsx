@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { submitEntryFormOnEnter } from "../../../lib/auth/entry-enter"
 import { passwordProblem, SENHA_REGRA, SENHA_REGRA_ERRO } from "../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -32,6 +32,9 @@ export default function NovaSenhaPage() {
   const [session, setSession] = useState<"checking" | "ready" | "missing">("checking")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // O Enter chama `requestSubmit()` direto, sem passar pelo botão desabilitado;
+  // a trava em ref vale já no segundo Enter, antes de o `loading` renderizar.
+  const submittingRef = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -50,6 +53,7 @@ export default function NovaSenhaPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (submittingRef.current) return
     // A regra é a mesma do cadastro (`SENHA_REGRA_ERRO`), dita aqui com o
     // apoio do campo em vez de uma frase própria.
     if (passwordProblem(password) !== null) {
@@ -57,6 +61,7 @@ export default function NovaSenhaPage() {
       return
     }
 
+    submittingRef.current = true
     setError(null)
     setLoading(true)
     try {
@@ -73,6 +78,7 @@ export default function NovaSenhaPage() {
     } catch {
       setError("Verifique sua conexão e tente de novo.")
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }

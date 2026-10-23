@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { submitEntryFormOnEnter } from "../../../lib/auth/entry-enter"
 import { isEntryEmailOk, normalizeEntryEmail } from "../../../lib/auth/entry-form"
 import { classifyEntrySend } from "../../../lib/auth/entry-send"
@@ -44,6 +44,9 @@ export default function RecuperarSenhaPage() {
   // falha de rede são do provedor e do transporte: marcar o e-mail como errado
   // por causa deles culparia quem digitou certo.
   const [fieldError, setFieldError] = useState(false)
+  // O Enter chama `requestSubmit()` direto; o `loading` só vale no render
+  // seguinte, e a ref barra o segundo Enter antes disso.
+  const submittingRef = useRef(false)
 
   const counting = cooldown > 0
   useEffect(() => {
@@ -58,7 +61,8 @@ export default function RecuperarSenhaPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (loading || cooldown > 0) return
+    if (submittingRef.current || loading || cooldown > 0) return
+    submittingRef.current = true
     setLoading(true)
     setOffline(false)
     setLimite(null)
@@ -69,6 +73,7 @@ export default function RecuperarSenhaPage() {
     if (!isEntryEmailOk(normalizeEntryEmail(email))) {
       setFalha("Confira o e-mail.")
       setFieldError(true)
+      submittingRef.current = false
       setLoading(false)
       return
     }
@@ -109,6 +114,7 @@ export default function RecuperarSenhaPage() {
       // depender da conta existir.
       setOffline(true)
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
