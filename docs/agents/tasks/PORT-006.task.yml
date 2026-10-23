@@ -168,8 +168,9 @@ closure:
 # open_support_ticket em 20261022130521), family_invite_code_attempt_gate (teto
 # antes do código; devolve ok ou rate_limited) e record_family_invite_code_
 # failure (grava só a tentativa que falhou, sob a mesma trava). O gate é
-# chamado nas duas funções públicas antes de qualquer consulta ao código. O
-# nome antigo sai; a evidência anterior que o cita é histórica.
+# chamado nas duas funções antes de o código ser conferido — no aceite, depois
+# da retomada do próprio vínculo, que não é adivinhação. O nome antigo sai; a
+# evidência anterior que o cita é histórica.
 #
 # P2-2 (limite barrando o aceite correto). O teto conta só falha: erro,
 # vencido, usado, revogado e e-mail diferente gravam linha; código certo não

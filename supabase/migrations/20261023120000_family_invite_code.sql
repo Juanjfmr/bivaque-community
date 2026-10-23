@@ -268,8 +268,8 @@ grant execute on function private.record_family_invite_code_failure(bytea, bytea
 
 -- Preview: valida o código sem sessão e devolve só o que a tela do convite
 -- mostra. `p_email_digest` é opcional: quando a pessoa já digitou o e-mail, a
--- tentativa também conta contra aquele endereço, e o par código + e-mail é
--- conferido antes de a conta existir.
+-- falha também conta contra aquele endereço, e o par código + e-mail é conferido
+-- antes de a conta existir.
 --
 -- O resultado é `status` (`ok`, `unavailable`, `email_mismatch` ou
 -- `rate_limited`), nunca exceção: a exceção desfaria o insert da tentativa e o
