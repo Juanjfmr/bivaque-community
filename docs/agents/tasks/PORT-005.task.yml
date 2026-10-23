@@ -281,3 +281,10 @@ closure:
 # 86c587bb feat(db): a regra do familiar admitido fica numa funcao so
 # a073a8c9 fix(web): o familiar admitido escolhe interesses; verified deixa de ser a unica porta
 # (este commit de documentação é o último da série.)
+#
+# Decisao do coordenador (23/10/2026, confirmacao final do Codex): o hoje do servidor
+# e o dia em America/Rio_Branco (UTC-5). Entre 00h e 01h em Manaus (ou 00h e 02h
+# em Brasilia), a data de ontem ainda passa no servidor, embora a tela a recuse.
+# Aceito como folga conhecida: a data de chegada ou de saida e uma declaracao, sem
+# efeito de seguranca, e fechar a janela exigiria saber o fuso de cada pessoa.
+# Reabrir se a data passar a decidir acesso ou prazo.
