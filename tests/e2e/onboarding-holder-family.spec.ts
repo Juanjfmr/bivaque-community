@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { seedSession } from "./helpers/session"
 
 test.describe("onboarding: verified holder and invited family", () => {
@@ -59,14 +60,16 @@ test.describe("onboarding: verified holder and invited family", () => {
 
   test("onboarding page shows verification flow", async ({ page }) => {
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
     // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
-    // the landmark rather than the Bivaque wordmark.
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Verificar acesso" })).toBeVisible()
+    // the landmark rather than the Bivaque wordmark. PORT-004: a tela é a do
+    // protótipo — CPF direto, sem a pergunta do tipo de vínculo.
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Conferir e continuar" })).toBeVisible()
 
-    const cpfInput = page.getByLabel("CPF")
+    const cpfInput = page.locator("#onboarding-cpf input")
     await expect(cpfInput).toBeVisible()
   })
 

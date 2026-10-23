@@ -1456,6 +1456,21 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_release_notices: {
+        Row: {
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           auth_user_id: string
@@ -2531,6 +2546,10 @@ export type Database = {
         Args: { p_caller_user_id?: string; p_event_id: string }
         Returns: undefined
       }
+      complete_verification_document_removal: {
+        Args: { p_storage_object_path: string }
+        Returns: undefined
+      }
       consume_verification_attempt: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -3159,6 +3178,17 @@ export type Database = {
       replace_listing_photo: {
         Args: { p_listing_id: string; p_path: string; p_position?: number }
         Returns: string[]
+      }
+      replace_verification_document: {
+        Args: {
+          p_mime_type: string
+          p_storage_object_path: string
+          p_user_id: string
+        }
+        Returns: {
+          document_id: string
+          replaced_storage_object_path: string | null
+        }[]
       }
       request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {

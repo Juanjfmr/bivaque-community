@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -71,6 +72,7 @@ test.describe("holder onboarding journey", () => {
   test("accepting consent navigates to onboarding", async ({ page }) => {
     // Given the consent page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/consent")
 
     // When the user explicitly records that they read the legal documents
@@ -84,20 +86,21 @@ test.describe("holder onboarding journey", () => {
     // Then the user is redirected to the onboarding page. Onboarding is a
     // `(preauth)` route with no shell header, so its own H1 is the landmark.
     await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 
   test("onboarding page renders verify eligibility flow", async ({ page }) => {
     // Given the production Next server
     // When a user navigates to the onboarding page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
-    // Then the verify eligibility UI is rendered
-    const verifyButton = page.getByRole("button", { name: "Verificar acesso" })
+    // Then the verify eligibility UI is rendered (PORT-004: CPF direto)
+    const verifyButton = page.locator("#onboarding-cpf-submit")
     await expect(verifyButton).toBeVisible()
 
-    const cpfInput = page.getByLabel("CPF")
+    const cpfInput = page.locator("#onboarding-cpf input")
     await expect(cpfInput).toBeVisible()
     await cpfInput.fill("123.456.789-09")
     await expect(cpfInput).toHaveValue("123.456.789-09")
@@ -124,20 +127,23 @@ test.describe("holder onboarding journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("family invite journey", () => {
-  test("onboarding page with invite token renders family acceptance flow", async ({ page }) => {
-    // Given an invite token in the query string
+  test("an old invite link is forwarded to the invite screen without the token", async ({
+    page,
+  }) => {
+    // Given an invite token in the query string, from a link created before
+    // this deploy
     // When a user opens the onboarding page with an invite token
     await seedSession(page.context())
     await page.goto(
       "/onboarding?invite=0000000000000000000000000000000000000000000000000000000000000000",
     )
 
-    // Then the family acceptance flow is rendered: the page enters the invite
-    // (family) step instead of the eligibility step.
-    await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Aceite seu convite." })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Aceitar convite" })).toBeVisible()
-    await expect(page.getByText(/membro que convidou você/)).toBeVisible()
+    // Then the eligibility step does not accept the invite itself: it forwards
+    // to the invite screen (front D) in legacy mode, and the token stays out of
+    // the URL. The invite screen asks for a new link instead of trusting a
+    // token that only this old address knew how to read.
+    await page.waitForURL(/\/convite\?legado=1$/)
+    await expect(page).not.toHaveURL(/invite=/)
   })
 })
 
@@ -557,10 +563,11 @@ test.describe("preauth page headings", () => {
   test("onboarding page leads with the eligibility heading", async ({ page }) => {
     // Given the onboarding page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 })
 

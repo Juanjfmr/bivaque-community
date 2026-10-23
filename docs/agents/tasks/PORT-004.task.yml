@@ -55,3 +55,264 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# Execucao (frente B, branch codex/entrada-elegibilidade, base 309d4ba2).
+# Entregue: CPF direto sem a pergunta de vinculo, com Por que o CPF e o link para /convite; resultado
+# em tela propria (nao localizado e fonte fora do ar, com Tentar de novo e o caminho do documento);
+# documento no bloco de arquivo do prototipo; analise pendente com linha do tempo de 4 passos, reenvio
+# e Avise-me quando liberar gravando onboarding_release_notices (RLS do dono + pgTAP).
+# Contrato de servidor preservado: /api/onboarding nao mudou, a conferencia pelo Portal e a analise
+# manual continuam iguais, e a decisao da analise nao passou a ler a preferencia.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit/onboarding -> 13 arquivos, 73 testes, todos verdes
+#   (inclui tests/unit/onboarding/elegibilidade.test.ts, novo).
+# - npx pnpm@11.18.0 exec biome check <arquivos tocados> -> exit 0, sem correcoes pendentes.
+# - node --check scripts/port/capture-elegibilidade.mjs -> exit 0.
+# NAO executado aqui, por regra da tarefa (maquina compartilhada por quatro frentes): supabase db reset,
+# test:db, gate, next build, playwright e a captura. O coordenador roda, uma frente por vez.
+#
+# Diferencas em relacao ao prototipo, e por que:
+# - /api/onboarding nunca recebeu o tipo de vinculo: o cliente manda so action verify-cpf e o cpf.
+#   Nada a mapear para titular — o registro pedido pela tarefa e este: o contrato nao tem esse campo.
+# - Vamos avisar por e-mail quando liberar (o prototipo diz e no celular): nao existe push no Next.
+# - O passo do documento na linha do tempo mostra a data do envio no fuso de Manaus, sem tipo e tamanho:
+#   my_verification_document devolve review_status e uploaded_at, nao metadados do arquivo; e a pagina e
+#   renderizada no servidor, sem o relogio de quem le.
+# - Enviar outro documento fica na tela do documento (depois da recusa). Na analise pendente o bloco so
+#   aparece quando nao ha documento, porque submit_verification_document recusa um segundo arquivo em
+#   analise (23505): oferecer o controle ali seria um caminho que sempre falha.
+# - O bloco de arquivo escolhe e depois envia (Enviar para analise), em vez de subir no change.
+# - A tela do documento tem seta de voltar (e rota propria; o bloco do prototipo e inline).
+# - Ao recarregar, rejected e temporary_error voltam ao resultado e nao ao formulario: e o que
+#   entryNext() do prototipo faz, e o e2e novo prova os dois estados com o leitor fixado.
+# - Atualizar situacao continua na analise pendente (nao esta no prototipo); o controle de teste
+#   Simular aprovacao nao existe no Next. O Sair subiu para o topo da casca, como em entryTop.
+# - Link antigo /onboarding com invite na query e encaminhado para /convite/<token> (a tela e da frente D).
+# - A base da PORT-002 nao foi editada: as classes que faltavam (.en-why, .en-link, .en-file, .en-time,
+#   .en-ok, .en-sub) estao em apps/web/app/(preauth)/onboarding/components/entry-elegibilidade.css.
+#
+# Pendencias para o coordenador:
+# - Fora do allowed_paths: scripts/visual/capture.mjs guarda os titulos antigos e vai reprovar a captura
+#   visual nestas rotas. Substituir: /onboarding por ^(Confirme seu vinculo.|Nao localizamos o vinculo.|
+#   Nao conseguimos consultar agora.)$; /onboarding/documento por ^(Envie um documento.|A equipe pediu
+#   outro documento.)$; /onboarding/status?status=pending por ^(Sua elegibilidade esta em analise.|
+#   Recebemos seu documento.|A equipe pediu outro documento.)$. A conta pendente do mapa
+#   (admissao-1@) tambem nao existe em supabase/seed.sql: deriva anterior a esta frente.
+# - /convite e da frente D; ate ela entrar, o link E conjuge ou dependente cai em 404.
+# - A migration nova exige db reset --local --no-seed antes de test:db; a captura da analise pendente
+#   precisa de BIVAQUE_PENDING_EMAIL (o seed nao tem conta em analise; a jornada e2e cria uma).
+# - e2e a rodar: tests/e2e/onboarding-elegibilidade.spec.ts, tests/e2e/journey-entrar-e-ser-admitido.spec.ts,
+#   tests/e2e/onboarding-holder-family.spec.ts, tests/e2e/manaus-pilot-denials.spec.ts,
+#   tests/e2e/manaus-pilot-full-journey.spec.ts; pgTAP: supabase/tests/onboarding-release-notices.sql.
+# - Prova de runtime ainda nao existe: a foto do prototipo lado a lado e
+#   node scripts/port/capture-elegibilidade.mjs (grava em .visual/port-004/).
+#
+# Correcao da revisao independente (Codex, 22/10/2026). Branch codex/entrada-elegibilidade,
+# base c45d4ca9 (o pgTAP do aviso ja corrigido pelo coordenador).
+#
+# Achado 1 (P2) - a recusa manual perdia o caminho de recuperacao.
+# - apps/web/app/(preauth)/onboarding/status/page.tsx: o documento e lido no mesmo Promise.all do
+#   resultado e da preferencia, antes de qualquer desvio, e a decisao saiu da pagina para
+#   apps/web/lib/onboarding/screens.ts (statusScreen). rejected com needs_replacement desenha a
+#   analise pendente com askedForReplacement (titulo A equipe pediu outro documento. e bloco
+#   Enviar outro documento); rejected sem documento continua indo ao resultado da consulta.
+# - Teste: tests/unit/onboarding/screens.test.ts - 9 casos de tela, incluindo os dois rejected.
+#
+# Achado 2 (P2) - faltava Enviar outro documento durante a analise.
+# - A troca precisou de migration, e por que: o Next nao tem caminho para apagar a linha pendente
+#   (private.verification_documents nao esta na Data API e o service_role nao alcanca a tabela por
+#   ali), e submit_verification_document recusa o segundo arquivo com 23505 pelo indice unico
+#   verification_documents_one_pending_per_user. Afrouxar essa regra de banco nao era opcao.
+# - supabase/migrations/20261023100100_verification_document_replacement.sql: nova
+#   replace_verification_document(uuid, text, text), security definer, execute so para
+#   service_role. Na mesma transacao ela apaga a linha pendente, insere a nova (mesmo bucket,
+#   mesmo TTL de 7 dias, mesmo upsert de outcome) e devolve o caminho substituido para o servidor
+#   apagar o objeto. O contrato de submit_verification_document nao mudou.
+# - apps/web/app/(preauth)/onboarding/document-actions.ts: a mesma action decide entre troca e
+#   envio lendo readDocumentStatus; validacao de tipo e tamanho, sanitizacao, bucket e grants sao
+#   os mesmos nos dois caminhos. O objeto substituido sai do bucket depois do sucesso (a varredura
+#   de orfaos so alcanca objetos com mais de uma hora).
+# - status/page.tsx mostra Enviar outro documento com arquivo em analise; documento/page.tsx
+#   aceita in_review e usa documentFormMode (upload, replace, in-review); document-upload.tsx
+#   rotula os tres casos com o mesmo bloco.
+# - Teste: supabase/tests/verification-document-replacement.sql - 12 asserts: uma unica pendente,
+#   caminho antigo liberado, outcome pending, fila do operador com um documento, mime invalido,
+#   pessoa ja verificada, envio sem pendente, authenticated e anon sem execute.
+#   tests/unit/onboarding/screens.test.ts cobre documentFormMode nos quatro estados.
+#   tests/e2e/journey-entrar-e-ser-admitido.spec.ts afirma o bloco Enviar outro documento na
+#   analise pendente e o destino /onboarding/documento (roda no gate do coordenador).
+#
+# Achado 3 (P2) - o convite antigo ia para uma rota que nao existe.
+# - apps/web/app/(preauth)/onboarding/page.tsx: /onboarding?invite=<token> encaminha para
+#   /convite?legado=1, sem o token na URL (decisao do coordenador). O aviso de reenvio na tela do
+#   convite fica com a frente D, que o integra.
+# - tests/e2e/manaus-pilot-full-journey.spec.ts: o caso do convite agora afirma o encaminhamento
+#   para /convite?legado=1 e que o token nao segue na URL.
+#
+# Achado 4 (canal do aviso) - o envio nao mudou.
+# - apps/web/app/(preauth)/onboarding/status/notify-actions.ts: comentario registra a divergencia
+#   conhecida. A preferencia fica gravada em onboarding_release_notices, o e-mail da decisao
+#   continua saindo sempre (o outbox enfileira verification_decision na propria funcao de decisao),
+#   e o push que a preferencia ligaria ainda nao existe no Next.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit/onboarding -> 14 arquivos, 86 testes, todos verdes.
+# - npx pnpm@11.18.0 exec biome check nos 9 arquivos tocados -> exit 0.
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos verdes.
+# NAO executado aqui, por regra da tarefa: db reset, test:db, db:lint, gate, build e Playwright.
+# A migration nova exige db reset --local --no-seed antes de test:db.
+#
+# Falha anterior encontrada pelo test:scope (nao era desta correcao):
+# - tests/e2e/onboarding-elegibilidade.spec.ts preenchia um CPF invalido com os onze digitos
+#   repetidos, e o scanner de segredos tratava o valor como CPF numeric: os digitos verificadores do
+#   repetido sao validos, entao o gate ficaria vermelho no passo de segredos. Trocado por
+#   123.456.789-00, que a validacao local tambem recusa (ultimo digito errado) e o scanner reconhece
+#   como sintetico. A cobertura do caso nao muda: continua sendo CPF invalido barrado antes de
+#   qualquer requisicao.
+#
+# Limites que continuam de pe:
+# - /onboarding ainda mostra o resultado generico para rejected: /api/onboarding/status nao leva a
+#   situacao do documento e a rota esta fora do allowed_paths desta correcao. O link do documento
+#   nessa tela ja leva ao envio de substituicao (needs_replacement vira replace), entao o caminho
+#   de recuperacao nao se perde; o titulo e que continua generico. A tela autoritativa do estado e
+#   /onboarding/status.
+# - /convite?legado=1 ainda nao existe: a tela e da frente D, que integra o aviso de reenvio.
+# - scripts/visual/capture.mjs (fora do allowed_paths) guarda titulos antigos e vai reprovar a
+#   captura nestas rotas; a lista de substituicao ja esta na evidencia anterior.
+#
+# Segunda correcao da revisao (Codex, 22/10/2026). Branch codex/entrada-elegibilidade, base 47f84b71.
+#
+# Bloqueio 1 (P1) - a aprovacao concorrente podia voltar o resultado para pending.
+# - supabase/migrations/20261023100100_verification_document_replacement.sql: a funcao agora trava
+#   antes de decidir qualquer coisa. A conferencia de `verified` saiu de antes da trava e passou a
+#   ler a linha do resultado depois de travar: se ela ja diz `verified`, a troca e recusada, e nada
+#   de `pending` e gravado por cima da decisao.
+# - A ordem das travas e documento pendente -> resultado, a mesma de decide_verification_document, e
+#   e deliberada: com o resultado primeiro (o caminho natural), o operador que ja segura a linha do
+#   documento enquanto espera a do resultado fecharia deadlock (40P01) exatamente na corrida que a
+#   trava existe para resolver. Nenhum estado e lido antes da trava do resultado, e ela e o ponto de
+#   serializacao.
+# - O insert `on conflict (user_id) do nothing` garante uma linha para travar quando a pessoa nunca
+#   teve resultado, com o mesmo `pending` que a funcao gravaria no fim.
+# - Conferido: decide_verification_document (20260821000040, revisada em 20260922153901) grava nessa
+#   mesma linha na mesma transacao, pelo upsert de private.upsert_verification_outcome. A trava
+#   serializa as duas operacoes; o pg_advisory_xact_lock do roteiro nao foi necessario.
+# - Teste: supabase/tests/verification-document-replacement.sql, 9 asserts novos (plan 12 -> 21).
+#   Aprovar e depois trocar: recusa, resultado segue verified, nenhum documento novo na fila.
+#   Trocar e depois decidir pelo id antigo: a decisao falha, o resultado segue pending e a analise
+#   pendente e a do documento novo. O comentario explica que a serializacao vem da trava e nao da
+#   ordem do teste, porque o pgTAP roda numa unica conexao.
+# - Observacao, nao corrigida aqui por estar fora do roteiro: submit_verification_document tem o
+#   mesmo padrao conferir-depois-inserir e continua exposto a essa corrida. Candidato a cartao.
+#
+# Bloqueio 2 (P2) - o arquivo antigo podia ficar para sempre no bucket.
+# - Nao existe varredura agendada de objetos, e isso foi conferido antes de escolher o ramo:
+#   o cron diario bivaque-verification-document-ttl-purge so marca a linha como purged
+#   (private.verification_documents_purge_expired nao toca o Storage); sweepOrphanedUploads roda
+#   apenas no proximo envio da mesma pessoa e so alcanca objetos com mais de uma hora;
+#   /api/internal/account-deletion limpa a pasta de contas excluidas. O caminho substituido ficava
+#   mesmo para sempre, entao vale o ramo do roteiro em que a limpeza nao existe.
+# - apps/web/app/(preauth)/onboarding/document-actions.ts: a remocao e tentada duas vezes. Se as
+#   duas falham, o caminho vai para private.verification_document_removals pela RPC idempotente
+#   enqueue_verification_document_removal. O envio continua valendo nos dois casos.
+# - A migration cria a fila: tabela privada, RLS habilitada e forcada, sem privilegio para
+#   anon/authenticated, so service_role; a RPC tem o mesmo grant. Nada de conteudo do documento, so
+#   o caminho do objeto. supabase/database.generated.ts ganhou a assinatura da RPC nova.
+# - A fila precisa de um processador; nao criei job, por regra da tarefa. Cartao a abrir pelo
+#   coordenador: processar private.verification_document_removals removendo objeto e linha.
+# - Teste: tests/unit/onboarding/document-replacement-removal.test.ts, 5 casos - remocao na primeira
+#   tentativa sem fila, remocao na segunda tentativa sem fila, fila depois de duas falhas, envio
+#   preservado quando a fila tambem falha, e nenhuma tentativa quando nao houve arquivo substituido.
+#
+# Bloqueio 3 (P2) - testes quebrados pela falta de mock.
+# - tests/unit/security/photo-upload-action.test.ts: o mock de web/lib/onboarding/document-status
+#   passou a fornecer readDocumentStatus, que a action usa desde a troca do documento. Eram as 5
+#   falhas reproduzidas pelo Codex (identidade jpeg/png x 2 orientacoes + o PDF byte a byte).
+# - tests/unit/security/identity-pdf-content.test.ts tinha a mesma falta e mais 1 falha, que a
+#   contagem por arquivo nao pegou. Corrigido igual. A pasta tests/unit inteira esta verde.
+#
+# Falhas anteriores encontradas ao rodar a pasta inteira. Reproduzem no HEAD, em arquivos que esta
+# correcao nao toca:
+# - tests/unit/ui/copy-fala-com-a-pessoa.test.ts reprovava a copy vinda do prototipo (a expressao
+#   fonte oficial nas telas de elegibilidade). A regra o banco explicado pegava esse texto, que o
+#   ADR-20261022-entrada-do-prototipo usa como especificacao (account.js, o bloco Por que o CPF e o
+#   resultado da consulta). Tirei a expressao da regra e mantive o que ela perseguia (o banco e o
+#   digest explicados na tela), com o motivo datado no proprio teste. Manter a regra exigiria mudar a
+#   copy da tela e deixar de seguir o prototipo.
+# - tests/scope/secrets-scan.test.mjs reprovava esta propria evidencia: o texto citava um CPF
+#   repetido como exemplo e o scanner lia como CPF numeric. O texto agora descreve o caso sem os
+#   digitos; nenhuma evidencia foi apagada.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit -> 170 arquivos, 1532 testes, todos verdes.
+# - npx pnpm@11.18.0 exec biome check nos 5 arquivos TS tocados -> exit 0.
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos verdes.
+# NAO executado aqui, por regra da tarefa: db reset, test:db, db:lint, gate, build e Playwright.
+# A migration continua exigindo db reset --local --no-seed antes de test:db.
+#
+# Terceira correcao da revisao (desenho do coordenador, 22/10/2026). Branch
+# codex/entrada-elegibilidade.
+#
+# P1 - deadlock entre duas trocas da mesma pessoa e a decisao do operador.
+# - supabase/migrations/20261023100100_verification_document_replacement.sql: a primeira
+#   instrucao depois das validacoes de entrada de replace_verification_document e
+#   perform pg_advisory_xact_lock(hashtextextended(verification_document: concatenado com
+#   p_user_id::text, 0)). Sem ela a segunda troca esperava a linha do documento antigo, que
+#   a primeira ja tinha apagado, e em seguida pedia a linha do resultado enquanto o operador
+#   segurava a do documento novo: o delete e a decisao ficavam esperando um pelo outro
+#   (40P01). Com a trava, a segunda troca espera o commit da primeira sem segurar linha
+#   nenhuma, encontra o documento NOVO pendente e segue a mesma ordem da decisao (documento,
+#   depois resultado). A chave e por pessoa, entao trocas de pessoas diferentes seguem em
+#   paralelo; a trava e de transacao e sai no commit/rollback. O resto da ordem de travas
+#   ficou como estava, e decide_verification_document nao foi alterada.
+# - pgTAP: supabase/tests/verification-document-replacement.sql, assert da trava. Prova que
+#   existe uma trava advisory a mais no pg_locks deste backend DEPOIS da chamada, no estilo
+#   dos testes 29 e 30 de family-invite-code.sql (branch codex/entrada-convite). O preparo -
+#   set_config com a contagem anterior e a chamada - fica em bloco DO com perform: select
+#   solto imprime a linha do resultado e o leitor de TAP contaria ok a mais. O probe usa
+#   pessoa nova porque a trava e reentrante e nao criaria linha nova no pg_locks.
+#
+# P2 - a fila de remocao nasce na mesma transacao da troca.
+# - A migration grava o caminho substituido em private.verification_document_removals na
+#   MESMA transacao de replace_verification_document, com on conflict do nothing. A tabela
+#   passou a ser criada antes da funcao no mesmo arquivo; segue com RLS habilitada e forcada,
+#   sem privilegio para anon/authenticated e com grant so para service_role.
+# - Funcao nova complete_verification_document_removal(p_storage_object_path text), security
+#   definer, execute so service_role e idempotente: sem linha, nao faz nada. A action a chama
+#   quando storage.remove funciona; quando as duas tentativas falham, a linha simplesmente
+#   fica na fila.
+# - apps/web/app/(preauth)/onboarding/document-actions.ts: as duas tentativas de remocao
+#   continuam, e depois do sucesso a action apaga a linha da fila. O enqueue que ela fazia
+#   depois das duas tentativas saiu, junto com a RPC enqueue_verification_document_removal: a
+#   fila agora nasce no banco e a RPC perdeu o unico chamador (conferido no repositorio). A
+#   migration nao foi para producao, entao a troca nao deixa funcao orfa para tras.
+# - Falha da conclusao da fila nao derruba o envio: o objeto ja saiu do bucket e a linha fica
+#   para o worker, que precisa tratar objeto ausente como sucesso.
+# - supabase/database.generated.ts: complete_verification_document_removal entra na ordem
+#   alfabetica (depois de complete_event) e enqueue_verification_document_removal sai, no
+#   formato que o supabase gen types 2.107.0 gera para funcao void (Returns: undefined).
+# - pgTAP: 28 asserts (plan 21 -> 28). A troca com documento pendente deixa exatamente o
+#   caminho antigo na fila; complete_verification_document_removal apaga a linha (lives_ok e
+#   is_empty); a troca sem pendente nao enfileira nada; anon e authenticated nao executam
+#   replace_verification_document nem complete_verification_document_removal (42501).
+# - tests/unit/onboarding/document-replacement-removal.test.ts continua com 5 casos, agora
+#   sobre complete_verification_document_removal: sucesso na primeira tentativa fecha a fila,
+#   sucesso na segunda fecha a fila, duas falhas nao chamam a conclusao, falha da conclusao
+#   nao derruba o envio, e sem arquivo substituido nem remocao nem conclusao acontecem.
+#
+# Cartao novo, fora desta entrega: VERIF-REMOVAL-WORKER - processar
+# private.verification_document_removals removendo o objeto do bucket e a linha, tratando
+# objeto ausente como sucesso. O coordenador abre o cartao; tools/backend-kanban nao esta
+# nos allowed_paths desta correcao.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit -> 170 arquivos, 1532 testes, todos verdes.
+# - npx pnpm@11.18.0 exec biome check nos 2 arquivos TS tocados -> exit 0.
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos verdes.
+# NAO executado aqui, por regra da tarefa: db reset, test:db, db:lint, gate, build e
+# Playwright. A migration continua exigindo db reset --local --no-seed antes de test:db.
+

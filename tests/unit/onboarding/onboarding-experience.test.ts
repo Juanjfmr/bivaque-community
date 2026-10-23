@@ -29,7 +29,11 @@ describe("onboarding experience", () => {
   })
 
   it("separates the board-38 access step from the board-39 locality step", () => {
-    expect(read("page.tsx")).toContain("Verificar meu acesso")
+    // PORT-004 (frente B): a prancha 38 virou a elegibilidade do protótipo
+    // ("Confirme seu vínculo."), com o CPF direto e sem a pergunta do tipo de
+    // vínculo. A prancha 39 continua sendo o passo da cidade.
+    expect(read("page.tsx")).toContain("Confirme seu vínculo.")
+    expect(read("page.tsx")).not.toContain("Como você deseja verificar seu acesso?")
     expect(read("locality/page.tsx")).toContain("Qual cidade você quer explorar?")
     expect(read("welcome/page.tsx")).toContain("Você chegou ao Bivaque.")
   })
