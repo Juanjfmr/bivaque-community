@@ -132,7 +132,9 @@ select columns_are(
   array[
     'id', 'inviter_user_id', 'token_digest', 'invitee_email_digest',
     'invitee_email_hint', 'status', 'expires_at', 'accepted_by_user_id',
-    'accepted_at', 'created_at'
+    'accepted_at', 'created_at',
+    -- PORT-006: o código digitável do convite, só como hash (ADR-20261022-entrada-do-prototipo).
+    'code_hash'
   ],
   'GUARD: family_invitations columns match authorized set'
 );
