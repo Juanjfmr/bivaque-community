@@ -20,13 +20,20 @@ import {
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-// Any Manaus member other than the request's author (visual@bivaque.example.
-// invalid). membro-3 (Diego Almeida) has no other role in this file's fixture.
+// Any Manaus member other than the request's author. membro-3 (Diego Almeida)
+// has no other role in this file's fixture.
 const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"
-// O autor do pedido semeado. NÃO usar seedSession() aqui: ele autentica a
-// dono-vila@ (ver apps/web/.env.local), enquanto o pedido do seed pertence à
-// visual@ — sem esta conta o teste procura o botão de resolver na tela de quem
-// não é autor, e a notificação de resposta nunca chega a quem a escreveu.
+// O pedido do seed que continua ABERTO — a conversa só aceita resposta enquanto
+// a pergunta está aberta (ADR-20261023, seção 2, como no protótipo). f00 está
+// resolvida pelo seed e vive no segundo teste.
+//   f06 'Onde fazer revisão do carro com preço honesto?' -> membro-46
+const OPEN_REQUEST_TITLE = "Onde fazer revisão do carro com preço honesto?"
+const OPEN_REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f06"
+const OPEN_REQUEST_AUTHOR_EMAIL = "membro-46@bivaque.example.invalid"
+// O autor do pedido resolvido do seed. NÃO usar seedSession() aqui: ele
+// autentica a dono-vila@ (ver apps/web/.env.local), enquanto o pedido do seed
+// pertence à visual@ — sem esta conta o teste procura o botão de resolver na
+// tela de quem não é autor.
 const AUTHOR_EMAIL = "visual@bivaque.example.invalid"
 const REQUEST_TITLE = "Alguém conhece um bom encanador?"
 const REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f00"
@@ -74,19 +81,19 @@ async function signInAs(page: Page, email: string): Promise<void> {
 
 test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => {
   test("replying to a request notifies its author (F5 Step 5)", async ({ page, browser }) => {
-    // Given a second member replies to the seeded request authored by
-    // visual@bivaque.example.invalid (seed.sql's "Alguém conhece um bom
-    // encanador?", 80000000-...-000f00)
+    // Given a second member replies to the seeded OPEN request (seed.sql's
+    // "Onde fazer revisão do carro com preço honesto?", 80000000-...-000f06,
+    // autor membro-46). f00 fica resolvida pelo seed e não aceita mais resposta.
     await signInAs(page, REPLIER_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto(REQUEST_PATH)
-    await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
+    await page.goto(OPEN_REQUEST_PATH)
+    await expect(page.getByRole("heading", { level: 1, name: OPEN_REQUEST_TITLE })).toBeVisible()
     // Texto único por execução: a suíte serial passa pelos três projetos no
     // mesmo banco, e a resposta de um projeto anterior continua na página.
     const reply = `Conheço um ótimo, te mando o contato. ${Date.now().toString(36)}`
-    const replyBox = page.getByLabel("Sua indicação")
+    const replyBox = page.getByLabel("Sua resposta")
     await replyBox.fill(reply)
-    await page.getByRole("button", { name: "Responder", exact: true }).click()
+    await page.getByRole("button", { name: "Enviar indicação" }).click()
     // Enviada: o campo esvazia e a resposta entra na lista.
     await expect(replyBox).toHaveValue("")
     await expect(page.getByRole("paragraph").filter({ hasText: reply })).toBeVisible()
@@ -95,9 +102,9 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     // two accounts never share cookies/state
     const authorContext = await browser.newContext()
     const authorPage = await authorContext.newPage()
-    // O autor do pedido do seed é a visual@; o seedSession() aponta para a
-    // dono-vila@, que não receberia notificação nenhuma deste pedido.
-    await signInAs(authorPage, AUTHOR_EMAIL)
+    // O autor do pedido é o membro-46 (seed members 1..300); o seedSession()
+    // aponta para a dono-vila@, que não receberia notificação deste pedido.
+    await signInAs(authorPage, OPEN_REQUEST_AUTHOR_EMAIL)
     await authorPage.goto("/notifications")
     // A RECON-006 (prancha 54) trocou as abas por tema — Vizinhanca, Minha
     // atividade, Alertas — pelo filtro de leitura: Todas e Nao lidas. Nao ha
@@ -122,6 +129,7 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
 
     // When they open their request
     await page.goto(REQUEST_PATH)
+    await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
 
     // Then the "Ajudou a resolver" action is reachable on a reply that is not
     // the marked one (the seed marks the first reply)

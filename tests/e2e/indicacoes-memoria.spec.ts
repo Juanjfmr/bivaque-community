@@ -65,15 +65,15 @@ test.describe("indicações com memória", () => {
       .getByRole("link", { name: new RegExp(question) })
       .click()
     await helper.waitForURL(`**${requestPath}`)
-    await helper.getByLabel("Sua indicação").fill(answer)
-    await helper.getByRole("button", { name: "Responder" }).click()
+    await helper.getByLabel("Sua resposta").fill(answer)
+    await helper.getByRole("button", { name: "Enviar indicação" }).click()
     await expect(helper.getByText("1 resposta")).toBeVisible()
 
     // Quem pediu marca a resposta que resolveu.
     await asker.reload()
     await asker.getByRole("button", { name: /^Ajudou a resolver/ }).click()
     await expect(asker.getByText(/Ajudou a resolver · resposta de/)).toBeVisible()
-    await expect(asker.getByText("Resolvido por quem pediu")).toBeVisible()
+    await expect(asker.getByText("Resolvida")).toBeVisible()
 
     // Uma terceira pessoa procura e vê a resposta sem abrir a conversa.
     const laterContext = await browser.newContext()
@@ -84,7 +84,7 @@ test.describe("indicações com memória", () => {
     const hit = later
       .getByRole("region", { name: "O que você procura?" })
       .getByRole("link", { name: new RegExp(question) })
-    await expect(hit).toContainText("Resolvido")
+    await expect(hit).toContainText("Resolvida")
     await expect(hit).toContainText(answer)
 
     await Promise.all([askerContext.close(), helperContext.close(), laterContext.close()])
