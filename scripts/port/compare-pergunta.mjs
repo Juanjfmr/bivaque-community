@@ -9,11 +9,15 @@ import { createDeterministicContext } from "../bivaque-html/capture-support.mjs"
 //
 // Gera em `.visual/port-pergunta/` os pares lado a lado (protótipo à esquerda,
 // Next à direita) em 375 e 1440, nos temas claro e escuro, do topo e da página
-// inteira. O protótipo é servido do build (`python scripts/bivaque-html/build.py`)
-// e a tela da pergunta é aberta como uma pessoa abre: `#comunidade` → primeiro
-// pedido da lista. O Next é o servidor de produção, e a tela é o pedido semeado
-// resolvido por resposta (a mesma forma nos dois lados: autor, pílula de estado,
-// resposta que resolveu).
+// inteira — e em DOIS ESTADOS, para comparar igual com igual (achado 4 da
+// revisão de 23/10/2026): a pergunta aberta, com a aberta, e a resolvida, com a
+// resolvida, nunca uma aberta contra uma resolvida.
+//
+// O protótipo é servido do build (`python scripts/bivaque-html/build.py`) e a
+// tela da pergunta é aberta como uma pessoa abre: `#comunidade` → o primeiro
+// pedido do filtro do estado ("Para ajudar" na aberta, "Resolvidas" na
+// resolvida). O Next é o servidor de produção e a tela é o pedido semeado: f06
+// (aberto, sem resposta) e f01 (resolvido por resposta).
 //
 //   node scripts/port/compare-pergunta.mjs
 //
@@ -26,11 +30,34 @@ const output = join(root, ".visual/port-pergunta")
 const candidatePath = join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html")
 const buildScript = join(root, "scripts/bivaque-html/build.py")
 const nextUrl = process.env.BIVAQUE_NEXT_URL ?? "http://127.0.0.1:3000"
-const nextPath =
-  process.env.BIVAQUE_PERGUNTA_PATH ?? "/indicacoes/80000000-0000-4000-8000-000000000f01"
 
 const WIDTHS = [375, 1440]
 const THEMES = ["light", "dark"]
+
+// O contêiner que ROLA em cada lado. O protótipo rola dentro de `#main`; o Next
+// (shell) rola dentro do `<main>` do `app-shell`, e o documento tem
+// `overflow-hidden` — medir a janela ali devolvia a altura do viewport, não a do
+// conteúdo. `getElementById("main")` no Next sempre foi nulo.
+const PROTOTYPE_SCROLL = "#main"
+const NEXT_SCROLL = "main"
+
+// Os dois estados equivalentes. O pedido do seed aberto e sem resposta é o f06;
+// o resolvido por resposta é o f01 (a mesma forma dos dois lados: pílula de
+// estado "Sem resposta" / "Resolvida").
+const STATES = [
+  {
+    key: "aberta",
+    prototypeFilter: "help",
+    nextPath:
+      process.env.BIVAQUE_PERGUNTA_ABERTA ?? "/indicacoes/80000000-0000-4000-8000-000000000f06",
+  },
+  {
+    key: "resolvida",
+    prototypeFilter: "ok",
+    nextPath:
+      process.env.BIVAQUE_PERGUNTA_RESOLVIDA ?? "/indicacoes/80000000-0000-4000-8000-000000000f01",
+  },
+]
 
 const pngSize = (buffer) => ({
   width: buffer.readUInt32BE(16),
@@ -194,19 +221,28 @@ async function hidePrototypeScrollbar(page) {
   })
 }
 
-async function capture(page, prefix, width, scrollToTop) {
-  await scrollToTop()
+async function scrollToTop(page, scrollSelector) {
+  await page.evaluate((selector) => {
+    const node = document.querySelector(selector)
+    if (node) node.scrollTop = 0
+    window.scrollTo(0, 0)
+  }, scrollSelector)
+}
+
+async function capture(page, prefix, width, scrollSelector) {
+  await scrollToTop(page, scrollSelector)
   await waitForPage(page)
   const top = await page.screenshot()
-  const height = await page.evaluate(() => {
-    const main = document.getElementById("main")
+  const height = await page.evaluate((selector) => {
+    const node = document.querySelector(selector)
     return Math.max(
       document.documentElement.scrollHeight,
       document.body.scrollHeight,
-      main?.scrollHeight ?? 0,
+      node ? node.scrollHeight : 0,
     )
-  })
+  }, scrollSelector)
   await page.setViewportSize({ width, height: Math.max(height, width === 375 ? 812 : 900) })
+  await scrollToTop(page, scrollSelector)
   await waitForPage(page)
   const full = await page.screenshot()
   writeFileSync(join(output, `${prefix}-topo.png`), top)
@@ -235,13 +271,20 @@ async function sideBySide(browser, label, left, right) {
 }
 
 // A tela da pergunta no protótipo não tem endereço alcançável sem sessão de
-// demonstração: abre-se pela lista, como uma pessoa faz.
-async function openPrototypeQuestion(page) {
+// demonstração: abre-se pela lista, como uma pessoa faz — e pelo filtro do
+// estado, para que os dois lados mostrem o MESMO estado.
+async function openPrototypeQuestion(page, filter) {
   await page.evaluate(() => {
     location.hash = "#comunidade"
   })
   await page.waitForTimeout(350)
-  const row = page.locator('#main [data-action="open-question"]').first()
+  if (filter !== "help") {
+    await page
+      .locator(`${PROTOTYPE_SCROLL} [data-action="question-filter"][data-value="${filter}"]`)
+      .click()
+    await page.waitForTimeout(350)
+  }
+  const row = page.locator(`${PROTOTYPE_SCROLL} [data-action="open-question"]`).first()
   await row.click()
   await page.waitForFunction(() => location.hash.startsWith("#pergunta/"))
   await page.waitForTimeout(350)
@@ -271,7 +314,7 @@ const browser = await chromium.launch(
 
 const report = {
   nextUrl,
-  nextPath,
+  nextPaths: Object.fromEntries(STATES.map((state) => [state.key, state.nextPath])),
   candidateUrl,
   pairs: [],
   pageErrors: [],
@@ -280,65 +323,61 @@ const report = {
 try {
   for (const width of WIDTHS) {
     for (const theme of THEMES) {
-      const label = `${width} ${theme}`
+      for (const state of STATES) {
+        const label = `${width} ${theme} ${state.key}`
 
-      const prototypeContext = await createDeterministicContext(browser, { width, theme })
-      const prototypePage = await prototypeContext.newPage()
-      prototypePage.on("pageerror", (error) =>
-        report.pageErrors.push({ side: "protótipo", label, message: error.message }),
-      )
-      await prototypePage.goto(candidateUrl)
-      await prototypePage.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
-      await hidePrototypeScrollbar(prototypePage)
-      await openPrototypeQuestion(prototypePage)
+        const prototypeContext = await createDeterministicContext(browser, { width, theme })
+        const prototypePage = await prototypeContext.newPage()
+        prototypePage.on("pageerror", (error) =>
+          report.pageErrors.push({ side: "protótipo", label, message: error.message }),
+        )
+        await prototypePage.goto(candidateUrl)
+        await prototypePage.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
+        await hidePrototypeScrollbar(prototypePage)
+        await openPrototypeQuestion(prototypePage, state.prototypeFilter)
 
-      const nextContext = await createDeterministicContext(browser, { width, theme })
-      await nextContext.addCookies(cookies)
-      const nextPage = await nextContext.newPage()
-      nextPage.on("pageerror", (error) =>
-        report.pageErrors.push({ side: "next", label, message: error.message }),
-      )
+        const nextContext = await createDeterministicContext(browser, { width, theme })
+        await nextContext.addCookies(cookies)
+        const nextPage = await nextContext.newPage()
+        nextPage.on("pageerror", (error) =>
+          report.pageErrors.push({ side: "next", label, message: error.message }),
+        )
 
-      const prototypeShots = await capture(
-        prototypePage,
-        `${width}-${theme}-pergunta-prototipo`,
-        width,
-        async () => {
-          await prototypePage.evaluate(() => {
-            const main = document.getElementById("main")
-            if (main) main.scrollTop = 0
-          })
-        },
-      )
+        const prototypeShots = await capture(
+          prototypePage,
+          `${width}-${theme}-${state.key}-pergunta-prototipo`,
+          width,
+          PROTOTYPE_SCROLL,
+        )
 
-      await nextPage.goto(`${nextUrl}${nextPath}`)
-      await nextPage.waitForSelector("h1")
-      const nextShots = await capture(
-        nextPage,
-        `${width}-${theme}-pergunta-next`,
-        width,
-        async () => {
-          await nextPage.evaluate(() => window.scrollTo(0, 0))
-        },
-      )
+        await nextPage.goto(`${nextUrl}${state.nextPath}`)
+        await nextPage.waitForSelector("h1")
+        const nextShots = await capture(
+          nextPage,
+          `${width}-${theme}-${state.key}-pergunta-next`,
+          width,
+          NEXT_SCROLL,
+        )
 
-      writeFileSync(
-        join(output, `${width}-${theme}-pergunta-par.png`),
-        await sideBySide(browser, label, prototypeShots.full, nextShots.full),
-      )
-      report.pairs.push({
-        width,
-        theme,
-        prototype: {
-          hash: await prototypePage.evaluate(() => location.hash),
-          ...pngSize(prototypeShots.full),
-        },
-        next: { path: nextPath, ...pngSize(nextShots.full) },
-      })
-      console.log(`capturado: pergunta ${label}`)
+        writeFileSync(
+          join(output, `${width}-${theme}-${state.key}-pergunta-par.png`),
+          await sideBySide(browser, label, prototypeShots.full, nextShots.full),
+        )
+        report.pairs.push({
+          width,
+          theme,
+          state: state.key,
+          prototype: {
+            hash: await prototypePage.evaluate(() => location.hash),
+            ...pngSize(prototypeShots.full),
+          },
+          next: { path: state.nextPath, ...pngSize(nextShots.full) },
+        })
+        console.log(`capturado: pergunta ${label}`)
 
-      await prototypeContext.close()
-      await nextContext.close()
+        await prototypeContext.close()
+        await nextContext.close()
+      }
     }
   }
 } finally {
