@@ -2805,32 +2805,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      feed_locality: {
-        Args: {
-          p_limit?: number
-          p_locality_id: string
-          p_offset?: number
-          p_order?: string
-        }
-        Returns: {
-          comment_count: number
-          community_id: string
-          content: string
-          created_at: string
-          display_name: string
-          group_id: string
-          id: string
-          link_url: string
-          locality_id: string
-          my_follow: boolean
-          my_reaction: boolean
-          photo_path: string
-          poll_options: Json
-          post_type: Database["public"]["Enums"]["post_type"]
-          reaction_count: number
-          user_id: string
-        }[]
-      }
       feed_posts: {
         Args: { p_locality_id: string; p_order?: string }
         Returns: {

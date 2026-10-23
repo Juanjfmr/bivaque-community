@@ -5,6 +5,10 @@ select plan(30);
 
 \ir fixtures/foundation.inc
 \ir fixtures/community.inc
+-- Lote 5, N2: publicar só existe dentro de um grupo (grupo público de
+-- groups.inc, em Manaus). Os inserts que devem PASSAR trazem `group_id`; os
+-- negativos de membro de fora continuam recusados pela localidade.
+\ir fixtures/groups.inc
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- DENIAL: nonmember cannot interact with the feed
@@ -30,10 +34,11 @@ select is_empty(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000005',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Post de intruso'
     )
@@ -81,10 +86,11 @@ select is_empty(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000003',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Post cross-city'
     )
@@ -112,10 +118,11 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Post anônimo na comunidade'
     )
@@ -125,10 +132,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Assista ao vídeo da semana'
     )
@@ -138,10 +146,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Ofertas do marketplace local'
     )
@@ -151,10 +160,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Conteudo gerado por IA'
     )
@@ -164,10 +174,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Texto com inteligencia artificial'
     )
@@ -179,10 +190,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Minha OM e o batalhao'
     )
@@ -192,10 +204,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Qual a sua patente?'
     )
@@ -205,10 +218,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Meu endereco residencial fica na rua X'
     )
@@ -218,10 +232,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Meu CPF foi bloqueado'
     )
@@ -231,10 +246,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Selo de verificacao para membros'
     )
@@ -244,10 +260,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Posto militar e graduacao militar'
     )
@@ -259,10 +276,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Anuncio comercial com venda de produtos'
     )
@@ -274,10 +292,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Procuro plano de saúde para dependente'
     )
@@ -287,10 +306,11 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Alguém tem o telefone do despachante?'
     )
@@ -302,10 +322,11 @@ select lives_ok(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'link',
       'Confira este link'
     )
@@ -319,10 +340,11 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'video',
       'Assista ao meu video'
     )
@@ -425,10 +447,11 @@ select results_eq(
 -- confirm member-one can create a valid text post
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Ola comunidade!'
     )
