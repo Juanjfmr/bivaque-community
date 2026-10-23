@@ -185,6 +185,20 @@ describe("aceite do convite pela tela", () => {
     expect(calls).toContain("signUp")
   })
 
+  it("nome recusado pelo banco aponta o campo do nome", async () => {
+    // Revisão do GLM 5.3 (P3): o RPC recusa o nome com 22023; sem apontar o
+    // campo, a pessoa repetia o envio com o mesmo nome sem saber o que mudar.
+    ;(acceptFamilyInviteCode as ReturnType<typeof vi.fn>).mockRejectedValue(
+      Object.assign(new Error("display name is not valid"), { code: "22023" }),
+    )
+
+    const result = await acceptInviteAction(formData())
+
+    expect(result).toMatchObject({ ok: false, field: "name" })
+    if (result.ok) throw new Error("expected a denial")
+    expect(result.message).toBe("Confira o nome informado e tente de novo.")
+  })
+
   it("exceção no aceite não vira sucesso silencioso", async () => {
     ;(acceptFamilyInviteCode as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error("family invite acceptance failed: the inviting holder has no current locality"),

@@ -50,6 +50,7 @@ const EMAIL_MISMATCH =
 const CONSENT_FAILED = "Conta criada, mas não foi possível registrar o aceite. Tente entrar."
 const NO_LINK =
   "Sua conta foi criada, mas o convite não pôde ser aceito agora. Fale com quem convidou."
+const NAME_REJECTED = "Confira o nome informado e tente de novo."
 
 export type InvitePreviewResult =
   | {
@@ -167,7 +168,14 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
   }
 
   const code = normalizeInviteCode(read("code"))
-  const name = read("name").replace(/\s+/g, " ")
+  // A política de nome do perfil (private.display_name_ok) exige NFC e recusa
+  // caractere de controle e de direção de texto: o servidor ajusta antes, para
+  // um nome colado de outro lugar não falhar sem a pessoa saber por quê.
+  const name = read("name")
+    .normalize("NFC")
+    .replace(/[\p{Cc}؜‎‏‪- ⁦-⁩]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
   const email = read("email").toLowerCase()
   const password =
     typeof formData.get("password") === "string" ? String(formData.get("password")) : ""
@@ -319,6 +327,12 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
       errorCode: errorCode(error),
       message: error instanceof Error ? error.message : "unknown",
     })
+    // 22023 é a recusa de entrada do RPC; o único valor que vem da pessoa é o
+    // nome (os digests e a versão do aceite são do servidor). Apontar o campo
+    // evita repetir o envio com o mesmo nome sem saber o que mudar.
+    if (errorCode(error) === "22023") {
+      return { ok: false, message: NAME_REJECTED, field: "name" }
+    }
     return { ok: false, message: NO_LINK, field: "code" }
   }
 
