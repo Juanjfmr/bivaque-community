@@ -107,10 +107,12 @@ select lives_ok(
 );
 
 -- Uma linha por pessoa: a entrada acontece uma vez, e a chave primária diz isso.
+-- A segunda linha é coerente (moro aqui, sem datas) para a recusa vir da chave,
+-- não da regra de coerência entre momento e datas.
 select throws_ok(
   $$
     insert into public.member_entry_moments (user_id, moment)
-    values ('10000000-0000-4000-8000-000000000001', 'arriving')
+    values ('10000000-0000-4000-8000-000000000001', 'resident')
   $$,
   '23505', null,
   'o momento é um só por pessoa (o segundo insert colide na chave)'
