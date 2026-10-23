@@ -107,4 +107,77 @@ closure:
 #   tests/e2e/manaus-pilot-full-journey.spec.ts; pgTAP: supabase/tests/onboarding-release-notices.sql.
 # - Prova de runtime ainda nao existe: a foto do prototipo lado a lado e
 #   node scripts/port/capture-elegibilidade.mjs (grava em .visual/port-004/).
+#
+# Correcao da revisao independente (Codex, 22/10/2026). Branch codex/entrada-elegibilidade,
+# base c45d4ca9 (o pgTAP do aviso ja corrigido pelo coordenador).
+#
+# Achado 1 (P2) - a recusa manual perdia o caminho de recuperacao.
+# - apps/web/app/(preauth)/onboarding/status/page.tsx: o documento e lido no mesmo Promise.all do
+#   resultado e da preferencia, antes de qualquer desvio, e a decisao saiu da pagina para
+#   apps/web/lib/onboarding/screens.ts (statusScreen). rejected com needs_replacement desenha a
+#   analise pendente com askedForReplacement (titulo A equipe pediu outro documento. e bloco
+#   Enviar outro documento); rejected sem documento continua indo ao resultado da consulta.
+# - Teste: tests/unit/onboarding/screens.test.ts - 9 casos de tela, incluindo os dois rejected.
+#
+# Achado 2 (P2) - faltava Enviar outro documento durante a analise.
+# - A troca precisou de migration, e por que: o Next nao tem caminho para apagar a linha pendente
+#   (private.verification_documents nao esta na Data API e o service_role nao alcanca a tabela por
+#   ali), e submit_verification_document recusa o segundo arquivo com 23505 pelo indice unico
+#   verification_documents_one_pending_per_user. Afrouxar essa regra de banco nao era opcao.
+# - supabase/migrations/20261023100100_verification_document_replacement.sql: nova
+#   replace_verification_document(uuid, text, text), security definer, execute so para
+#   service_role. Na mesma transacao ela apaga a linha pendente, insere a nova (mesmo bucket,
+#   mesmo TTL de 7 dias, mesmo upsert de outcome) e devolve o caminho substituido para o servidor
+#   apagar o objeto. O contrato de submit_verification_document nao mudou.
+# - apps/web/app/(preauth)/onboarding/document-actions.ts: a mesma action decide entre troca e
+#   envio lendo readDocumentStatus; validacao de tipo e tamanho, sanitizacao, bucket e grants sao
+#   os mesmos nos dois caminhos. O objeto substituido sai do bucket depois do sucesso (a varredura
+#   de orfaos so alcanca objetos com mais de uma hora).
+# - status/page.tsx mostra Enviar outro documento com arquivo em analise; documento/page.tsx
+#   aceita in_review e usa documentFormMode (upload, replace, in-review); document-upload.tsx
+#   rotula os tres casos com o mesmo bloco.
+# - Teste: supabase/tests/verification-document-replacement.sql - 12 asserts: uma unica pendente,
+#   caminho antigo liberado, outcome pending, fila do operador com um documento, mime invalido,
+#   pessoa ja verificada, envio sem pendente, authenticated e anon sem execute.
+#   tests/unit/onboarding/screens.test.ts cobre documentFormMode nos quatro estados.
+#   tests/e2e/journey-entrar-e-ser-admitido.spec.ts afirma o bloco Enviar outro documento na
+#   analise pendente e o destino /onboarding/documento (roda no gate do coordenador).
+#
+# Achado 3 (P2) - o convite antigo ia para uma rota que nao existe.
+# - apps/web/app/(preauth)/onboarding/page.tsx: /onboarding?invite=<token> encaminha para
+#   /convite?legado=1, sem o token na URL (decisao do coordenador). O aviso de reenvio na tela do
+#   convite fica com a frente D, que o integra.
+# - tests/e2e/manaus-pilot-full-journey.spec.ts: o caso do convite agora afirma o encaminhamento
+#   para /convite?legado=1 e que o token nao segue na URL.
+#
+# Achado 4 (canal do aviso) - o envio nao mudou.
+# - apps/web/app/(preauth)/onboarding/status/notify-actions.ts: comentario registra a divergencia
+#   conhecida. A preferencia fica gravada em onboarding_release_notices, o e-mail da decisao
+#   continua saindo sempre (o outbox enfileira verification_decision na propria funcao de decisao),
+#   e o push que a preferencia ligaria ainda nao existe no Next.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit/onboarding -> 14 arquivos, 86 testes, todos verdes.
+# - npx pnpm@11.18.0 exec biome check nos 9 arquivos tocados -> exit 0.
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos verdes.
+# NAO executado aqui, por regra da tarefa: db reset, test:db, db:lint, gate, build e Playwright.
+# A migration nova exige db reset --local --no-seed antes de test:db.
+#
+# Falha anterior encontrada pelo test:scope (nao era desta correcao):
+# - tests/e2e/onboarding-elegibilidade.spec.ts preenchia 111.111.111-11 como CPF invalido, e o
+#   scanner de segredos tratava o valor como CPF numeric: os digitos verificadores do repetido sao
+#   validos, entao o gate ficaria vermelho no passo de segredos. Trocado por 123.456.789-00, que a
+#   validacao local tambem recusa (ultimo digito errado) e o scanner reconhece como sintetico. A
+#   cobertura do caso nao muda: continua sendo CPF invalido barrado antes de qualquer requisicao.
+#
+# Limites que continuam de pe:
+# - /onboarding ainda mostra o resultado generico para rejected: /api/onboarding/status nao leva a
+#   situacao do documento e a rota esta fora do allowed_paths desta correcao. O link do documento
+#   nessa tela ja leva ao envio de substituicao (needs_replacement vira replace), entao o caminho
+#   de recuperacao nao se perde; o titulo e que continua generico. A tela autoritativa do estado e
+#   /onboarding/status.
+# - /convite?legado=1 ainda nao existe: a tela e da frente D, que integra o aviso de reenvio.
+# - scripts/visual/capture.mjs (fora do allowed_paths) guarda titulos antigos e vai reprovar a
+#   captura nestas rotas; a lista de substituicao ja esta na evidencia anterior.
 
