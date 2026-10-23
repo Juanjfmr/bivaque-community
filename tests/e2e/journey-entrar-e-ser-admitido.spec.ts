@@ -151,8 +151,12 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
           await page.goto("/onboarding")
           await expect(page).toHaveURL(/\/onboarding\/locality$/, { timeout: 3_000 })
         }).toPass({ timeout: 30_000 })
-        await page.getByRole("searchbox", { name: "Buscar cidade" }).fill("Manaus")
-        // A busca espera a digitação parar; a pessoa clica na cidade que procurou.
+        // PORT-005: cidade e momento numa tela, como o protótipo.
+        await expect(
+          page.getByRole("heading", { level: 1, name: "Onde e em que momento?" }),
+        ).toBeVisible()
+        await expect(page.getByText("Passo 3 de 3 · Cidade")).toBeVisible()
+        await page.getByRole("searchbox", { name: "Cidade" }).fill("Manaus")
         const city = page
           .getByRole("list", { name: "Cidades disponíveis" })
           .getByRole("button", { name: /Manaus/ })
@@ -168,20 +172,34 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
       "39-web-onboarding-contexto#1",
       page,
       async () => {
-        await page.getByRole("button", { name: "Continuar" }).click()
-        await expect(page).toHaveURL(/\/onboarding\/perfil$/, { timeout: 20_000 })
-        // Força Armada e OM são opcionais e nascem com "Exibir no perfil" desligado.
+        // O momento decide os campos: "Chegando" pede a data de chegada e não
+        // mostra destino; "Saindo" pede data de saída e destino.
+        await page.getByRole("radio", { name: "Saindo" }).check()
+        await expect(page.getByLabel("Data da saída")).toBeVisible()
         await expect(
-          page.getByRole("switch", { name: "Exibir Força Armada no perfil" }),
-        ).not.toBeChecked()
-        await expect(page.getByRole("switch", { name: "Exibir OM no perfil" })).not.toBeChecked()
+          page.getByRole("searchbox", { name: "Destino da transferência" }),
+        ).toBeVisible()
+        await page.getByRole("radio", { name: "Chegando" }).check()
+        await expect(page.getByLabel("Data de chegada")).toBeVisible()
+        await expect(page.getByRole("searchbox", { name: "Destino da transferência" })).toHaveCount(
+          0,
+        )
+
+        await page.locator("#en-date").fill("2030-01-15")
+        // O nome chega sugerido da conta; a pessoa pode trocar (o protótipo pede
+        // "como você quer ser chamado" e não "seu nome completo").
+        const name = page.getByRole("textbox", { name: "Como você quer ser chamado" })
+        await expect(name).toHaveValue("Pessoa Simulada")
       },
       { persona: "visitante admitida por identidade" },
     )
 
-    // Concluir sem personalizar: a etapa final não exige adesão a comunidade.
-    await page.getByRole("button", { name: "Pular por enquanto" }).click()
+    await page.getByRole("button", { name: "Concluir minha entrada" }).click()
     await expect(page).toHaveURL(/\/onboarding\/welcome$/, { timeout: 20_000 })
+    // As boas-vindas mudam com o momento: chegando, o plano de chegada.
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Você chegou ao Bivaque.")
+    await expect(page.getByText("Seu plano de chegada a Manaus já está pronto.")).toBeVisible()
+    await expect(page.getByRole("link", { name: /Ver o plano de chegada/ })).toBeVisible()
     await expect(page.getByRole("link", { name: /Entrar na comunidade/ })).toBeVisible()
 
     entrar.concluir()
