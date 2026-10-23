@@ -129,20 +129,23 @@ test.describe("holder onboarding journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("family invite journey", () => {
-  test("onboarding page with invite token renders family acceptance flow", async ({ page }) => {
-    // Given an invite token in the query string
+  test("an old invite link is forwarded to the invite screen without the token", async ({
+    page,
+  }) => {
+    // Given an invite token in the query string, from a link created before
+    // this deploy
     // When a user opens the onboarding page with an invite token
     await seedSession(page.context())
     await page.goto(
       "/onboarding?invite=0000000000000000000000000000000000000000000000000000000000000000",
     )
 
-    // Then the family acceptance flow is rendered: the page enters the invite
-    // (family) step instead of the eligibility step.
-    await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Aceite seu convite." })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Aceitar convite" })).toBeVisible()
-    await expect(page.getByText(/membro que convidou você/)).toBeVisible()
+    // Then the eligibility step does not accept the invite itself: it forwards
+    // to the invite screen (front D) in legacy mode, and the token stays out of
+    // the URL. The invite screen asks for a new link instead of trusting a
+    // token that only this old address knew how to read.
+    await page.waitForURL(/\/convite\?legado=1$/)
+    await expect(page).not.toHaveURL(/invite=/)
   })
 })
 

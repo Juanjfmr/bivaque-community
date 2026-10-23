@@ -96,10 +96,12 @@ function OnboardingFlow() {
     purgeCpfResidue(sessionStorage)
 
     // O convite de familiar é uma tela própria (`/convite`, frente D). O link
-    // antigo (`/onboarding?invite=<token>`) continua chegando: em vez de
-    // aceitar o convite aqui, ele é encaminhado com o código no caminho.
+    // antigo (`/onboarding?invite=<token>`) continua chegando de convites
+    // criados antes deste deploy; ele não é aceito aqui, e o token não segue na
+    // URL: a tela do convite recebe `legado=1` e pede um link novo. Guardar o
+    // token no endereço só o exporia sem que a tela consiga validá-lo.
     if (inviteToken) {
-      router.replace(`/convite/${encodeURIComponent(inviteToken)}`)
+      router.replace("/convite?legado=1")
       return
     }
 
