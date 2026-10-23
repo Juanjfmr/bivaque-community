@@ -30,7 +30,10 @@ export function IndicationItem({
   compact?: boolean
 }) {
   const status = indicationStatus(row)
-  const answer = row.resolved_reply_body ?? row.matched_reply_body
+  // A resposta que resolveu so conta quando a PERGUNTA esta resolvida: numa
+  // pergunta aberta, so o termo buscado aparece (ADR-20261023, secao 2).
+  const resolvedAnswer = row.is_resolved ? row.resolved_reply_body : null
+  const answer = resolvedAnswer ?? row.matched_reply_body
   const meta = [categoryLabel(row.category), relativeAge(row.created_at, now), row.group_name]
     .filter(Boolean)
     .join(" · ")
@@ -57,15 +60,13 @@ export function IndicationItem({
       </p>
       {answer ? (
         <p className="mt-2 flex gap-2 text-sm text-ui-ink-2">
-          {row.resolved_reply_body ? (
+          {resolvedAnswer ? (
             <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-ui-brand" aria-hidden="true" />
           ) : (
             <MessageCircle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           )}
           <span className={compact ? "line-clamp-1" : "line-clamp-2"}>
-            {row.resolved_reply_body ? (
-              <span className="sr-only">Resposta que resolveu: </span>
-            ) : null}
+            {resolvedAnswer ? <span className="sr-only">Resposta que resolveu: </span> : null}
             {answer}
           </span>
         </p>

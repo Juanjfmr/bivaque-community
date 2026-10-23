@@ -35,6 +35,14 @@ describe("resolution marker (RECON-035)", () => {
     expect(replyResolution({ is_resolved: false, resolved_reply_id: null }, "reply-a")).toBe("open")
   })
 
+  it("um ponteiro sem a pergunta resolvida NAO e a resposta que resolveu", () => {
+    // O estado impossivel {is_resolved: false, resolved_reply_id: "reply-a"}
+    // (achado 3 da revisao de 23/10/2026) nao pode aparecer como marcado.
+    expect(replyResolution({ is_resolved: false, resolved_reply_id: "reply-a" }, "reply-a")).toBe(
+      "open",
+    )
+  })
+
   it("reports resolved-without-a-mark separately", () => {
     expect(replyResolution({ is_resolved: true, resolved_reply_id: null }, "reply-a")).toBe(
       "resolved_without_reply",
@@ -63,6 +71,12 @@ describe("resolution marker (RECON-035)", () => {
     const lib = readFileSync(indicationsLib, "utf8")
     expect(lib).toContain("Resolvida por quem perguntou")
     expect(lib).toContain('return "Resolvida"')
+  })
+
+  it("o salvar virou 'Seguir respostas' (ADR-20261023, secao 2)", () => {
+    const source = readFileSync(detailPath, "utf8")
+    expect(source).toContain('"Seguir respostas"')
+    expect(source).toContain('"Seguindo respostas"')
   })
 
   it("gates every resolution control behind isAuthor", () => {

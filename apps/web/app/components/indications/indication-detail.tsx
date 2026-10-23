@@ -281,7 +281,12 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
   const statusLabel =
     resolvedLabel ??
     indicationStatusLabel({ is_resolved: request.is_resolved, reply_count: replies.length })
-  const resolvedReply = replies.find((reply) => reply.id === request.resolved_reply_id) ?? null
+  // O destaque da resposta que resolveu vem do ESTADO DA PERGUNTA, nunca so do
+  // ponteiro: um estado {is_resolved: false, resolved_reply_id: "x"} nao pode
+  // aparecer como resolvido (ADR-20261023, secao 2).
+  const resolvedReply = request.is_resolved
+    ? (replies.find((reply) => reply.id === request.resolved_reply_id) ?? null)
+    : null
   const nameOf = (userId: string) => names[userId] ?? "Membro"
 
   function openEditQuestion() {
@@ -381,7 +386,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
 
   const deleteReplyCount = replies.length
   const deletingReply = deleteTarget?.kind === "reply" ? deleteTarget.reply : null
-  const deleteIsMarked = deletingReply?.id === request.resolved_reply_id
+  const deleteIsMarked = request.is_resolved && deletingReply?.id === request.resolved_reply_id
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-4 pb-10 sm:pt-6 lg:px-8">
@@ -449,7 +454,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
             ) : (
               <Bookmark size={16} aria-hidden="true" />
             )}
-            {saved ? "Salvo" : "Salvar"}
+            {saved ? "Seguindo respostas" : "Seguir respostas"}
           </Button>
           <div className="ml-auto">
             <ConversationMenu
@@ -540,7 +545,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
             }
             const authorId = reply.author_id ?? ""
             const body = reply.body ?? ""
-            const marked = reply.id === request.resolved_reply_id
+            const marked = request.is_resolved && reply.id === request.resolved_reply_id
             const guide = guideLinks[reply.id]
             const isOwnReply = authorId === viewerId
             return (
