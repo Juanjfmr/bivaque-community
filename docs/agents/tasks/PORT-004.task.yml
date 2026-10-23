@@ -84,6 +84,8 @@ closure:
 #   analise (23505): oferecer o controle ali seria um caminho que sempre falha.
 # - O bloco de arquivo escolhe e depois envia (Enviar para analise), em vez de subir no change.
 # - A tela do documento tem seta de voltar (e rota propria; o bloco do prototipo e inline).
+# - Ao recarregar, rejected e temporary_error voltam ao resultado e nao ao formulario: e o que
+#   entryNext() do prototipo faz, e o e2e novo prova os dois estados com o leitor fixado.
 # - Atualizar situacao continua na analise pendente (nao esta no prototipo); o controle de teste
 #   Simular aprovacao nao existe no Next. O Sair subiu para o topo da casca, como em entryTop.
 # - Link antigo /onboarding com invite na query e encaminhado para /convite/<token> (a tela e da frente D).

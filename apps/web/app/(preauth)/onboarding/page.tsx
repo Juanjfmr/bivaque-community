@@ -139,10 +139,19 @@ function OnboardingFlow() {
           router.replace("/onboarding/status")
           return
         }
-        // `rejected` é a fonte oficial sem o vínculo: `entryNext()` do
-        // protótipo leva de volta ao resultado, não ao formulário. Quem volta
-        // depois vê a mesma resposta e o mesmo caminho do documento.
-        setStep(data.status === "rejected" ? "notfound" : "cpf")
+        // `rejected` e `temporary_error` são resultado, não formulário:
+        // `entryNext()` do protótipo leva os dois de volta ao resultado. Quem
+        // volta depois vê a mesma resposta, com o caminho do documento (e, no
+        // erro temporário, "Tentar de novo").
+        if (data.status === "rejected") {
+          setStep("notfound")
+          return
+        }
+        if (data.status === "temporary_error") {
+          setStep("unavailable")
+          return
+        }
+        setStep("cpf")
       } catch {
         setStep("cpf")
       }

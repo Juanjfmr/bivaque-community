@@ -153,4 +153,15 @@ test.describe("elegibilidade: resultado", () => {
     ).toBeVisible({ timeout: 20_000 })
     await expect(page.locator("#onboarding-cpf input")).toHaveCount(0)
   })
+
+  test("quem volta com a fonte fora do ar vê o resultado com Tentar de novo", async ({ page }) => {
+    // `entryNext()` do protótipo trata `error` como resultado, não como
+    // formulário: a mesma situação tem o mesmo desenho ao recarregar.
+    await openCpf(page, "temporary_error")
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Não conseguimos consultar agora." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator("#onboarding-retry")).toBeVisible()
+  })
 })
