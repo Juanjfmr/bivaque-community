@@ -76,7 +76,10 @@ test.describe("elegibilidade: CPF", () => {
       await route.abort()
     })
 
-    await page.locator("#onboarding-cpf input").fill("111.111.111-11")
+    // CPF sintético com o último dígito verificador errado: o valor é recusado
+    // pela validação local, e o scanner de segredos não o confunde com um CPF
+    // de verdade (o repetido usado antes tinha dígitos verificadores válidos).
+    await page.locator("#onboarding-cpf input").fill("123.456.789-00")
     await page.locator("#onboarding-cpf-submit").click()
 
     await expect(page.getByText("CPF inválido. Confira os 11 dígitos.")).toBeVisible()
