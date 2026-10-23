@@ -32,7 +32,8 @@ test.describe("entrada pública — sem sessão", () => {
 
     // Then a tela do código aparece e o campo vem preenchido
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre pelo convite.")
-    await expect(page.locator("#en-code")).toHaveValue("7k4m-9qrt")
+    // O campo é o md-outlined-text-field: o valor fica no <input> do Material.
+    await expect(page.locator("#en-code input")).toHaveValue(/7k4m-?9qrt/i)
     await expect(page.locator("md-filled-button", { hasText: "Continuar" })).toBeVisible()
   })
 
@@ -65,7 +66,9 @@ test.describe("entrada pública — sem sessão", () => {
       await expect(page.getByRole("heading", { name: topic })).toBeVisible()
     }
 
-    // And a pergunta sobre o convite explica o caminho novo
+    // And a pergunta sobre o convite explica o caminho novo (a resposta abre
+    // ao tocar na pergunta, como no protótipo)
+    await page.getByText("Sou cônjuge ou dependente. Como entro?").click()
     await expect(page.getByText("Pelo convite de quem é militar", { exact: false })).toBeVisible()
 
     // And "Meus chamados" é de quem tem conta

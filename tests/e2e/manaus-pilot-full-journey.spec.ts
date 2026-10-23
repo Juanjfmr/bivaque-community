@@ -484,9 +484,11 @@ test.describe("accessibility across journeys", () => {
     // When the login page is rendered
     await page.goto("/login")
 
-    // Then its own primary controls meet the 44px minimum
-    const submit = page.getByRole("button", { name: "Entrar" })
-    await expect(submit).toBeVisible()
+    // Then its own primary controls meet the 44px minimum. The control is the
+    // Material host (md-filled-button): it is the area that takes the tap; the
+    // inner <button> of its shadow root is only the label box.
+    await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible()
+    const submit = page.locator("md-filled-button", { hasText: /^\s*Entrar\s*$/ })
     const box = await submit.boundingBox()
     expect(box).not.toBeNull()
 

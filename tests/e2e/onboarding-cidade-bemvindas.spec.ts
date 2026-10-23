@@ -24,7 +24,7 @@ const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const VERIFIED_NO_MEMBERSHIP_EMAIL = "verified-no-membership@bivaque.example.invalid"
 
 async function openCityStep(page: import("@playwright/test").Page): Promise<void> {
-  await signInAs(page, VERIFIED_NO_MEMBERSHIP_EMAIL)
+  await signInAs(page.context(), VERIFIED_NO_MEMBERSHIP_EMAIL)
   await page.goto(`${APP_URL}/onboarding/locality`, { waitUntil: "load" })
   await expect(page.getByRole("heading", { name: "Onde e em que momento?" })).toBeVisible({
     timeout: 20_000,
@@ -77,19 +77,19 @@ test.describe("entrada: cidade e momento", () => {
 
     // Sem cidade, a primeira frase do protótipo.
     await page.getByRole("button", { name: "Concluir minha entrada" }).click()
-    await expect(page.getByRole("alert")).toHaveText("Escolha sua cidade.")
+    await expect(page.locator("#en-err")).toHaveText("Escolha sua cidade.")
 
     await pickCity(page, "Manaus")
 
     // Saindo sem data de saída.
     await page.getByRole("radio", { name: "Saindo" }).check()
     await page.getByRole("button", { name: "Concluir minha entrada" }).click()
-    await expect(page.getByRole("alert")).toHaveText("Informe a data da saída.")
+    await expect(page.locator("#en-err")).toHaveText("Informe a data da saída.")
 
     // Com data, mas sem destino.
     await page.locator("#en-date").fill("2030-03-10")
     await page.getByRole("button", { name: "Concluir minha entrada" }).click()
-    await expect(page.getByRole("alert")).toHaveText(
+    await expect(page.locator("#en-err")).toHaveText(
       "Escolha um destino diferente da sua cidade atual.",
     )
     // O destino nunca repete a cidade atual: a lista não oferece Manaus.
@@ -100,11 +100,11 @@ test.describe("entrada: cidade e momento", () => {
     // A data de chegada volta a ser obrigatória em "Chegando".
     await page.getByRole("radio", { name: "Chegando" }).check()
     await page.getByRole("button", { name: "Concluir minha entrada" }).click()
-    await expect(page.getByRole("alert")).toHaveText("Informe a data de chegada.")
+    await expect(page.locator("#en-err")).toHaveText("Informe a data de chegada.")
   })
 
   test("o passo de perfil saiu da entrada e desvia para a cidade", async ({ page }) => {
-    await signInAs(page, VERIFIED_NO_MEMBERSHIP_EMAIL)
+    await signInAs(page.context(), VERIFIED_NO_MEMBERSHIP_EMAIL)
     await page.goto(`${APP_URL}/onboarding/perfil`, { waitUntil: "load" })
     await expect(page).toHaveURL(/\/onboarding\/locality$/, { timeout: 20_000 })
     await expect(page.getByRole("heading", { name: "Onde e em que momento?" })).toBeVisible()
@@ -115,7 +115,7 @@ test.describe("boas-vindas conforme o momento", () => {
   test("quem mora na cidade vê o guia da cidade, não um plano", async ({ page }) => {
     // A conta do seed não declarou momento: o padrão é "moro aqui", o mesmo do
     // protótipo.
-    await signInAs(page, process.env["USER_EMAIL"] ?? "visual@bivaque.example.invalid")
+    await signInAs(page.context(), process.env["USER_EMAIL"] ?? "visual@bivaque.example.invalid")
     await page.goto(`${APP_URL}/onboarding/welcome`, { waitUntil: "load" })
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Você chegou ao Bivaque.", {
