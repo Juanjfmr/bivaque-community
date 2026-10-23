@@ -55,3 +55,54 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# Execucao (frente B, branch codex/entrada-elegibilidade, base 309d4ba2).
+# Entregue: CPF direto sem a pergunta de vinculo, com Por que o CPF e o link para /convite; resultado
+# em tela propria (nao localizado e fonte fora do ar, com Tentar de novo e o caminho do documento);
+# documento no bloco de arquivo do prototipo; analise pendente com linha do tempo de 4 passos, reenvio
+# e Avise-me quando liberar gravando onboarding_release_notices (RLS do dono + pgTAP).
+# Contrato de servidor preservado: /api/onboarding nao mudou, a conferencia pelo Portal e a analise
+# manual continuam iguais, e a decisao da analise nao passou a ler a preferencia.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit/onboarding -> 13 arquivos, 73 testes, todos verdes
+#   (inclui tests/unit/onboarding/elegibilidade.test.ts, novo).
+# - npx pnpm@11.18.0 exec biome check <arquivos tocados> -> exit 0, sem correcoes pendentes.
+# - node --check scripts/port/capture-elegibilidade.mjs -> exit 0.
+# NAO executado aqui, por regra da tarefa (maquina compartilhada por quatro frentes): supabase db reset,
+# test:db, gate, next build, playwright e a captura. O coordenador roda, uma frente por vez.
+#
+# Diferencas em relacao ao prototipo, e por que:
+# - /api/onboarding nunca recebeu o tipo de vinculo: o cliente manda so action verify-cpf e o cpf.
+#   Nada a mapear para titular — o registro pedido pela tarefa e este: o contrato nao tem esse campo.
+# - Vamos avisar por e-mail quando liberar (o prototipo diz e no celular): nao existe push no Next.
+# - O passo do documento na linha do tempo mostra a data do envio no fuso de Manaus, sem tipo e tamanho:
+#   my_verification_document devolve review_status e uploaded_at, nao metadados do arquivo; e a pagina e
+#   renderizada no servidor, sem o relogio de quem le.
+# - Enviar outro documento fica na tela do documento (depois da recusa). Na analise pendente o bloco so
+#   aparece quando nao ha documento, porque submit_verification_document recusa um segundo arquivo em
+#   analise (23505): oferecer o controle ali seria um caminho que sempre falha.
+# - O bloco de arquivo escolhe e depois envia (Enviar para analise), em vez de subir no change.
+# - A tela do documento tem seta de voltar (e rota propria; o bloco do prototipo e inline).
+# - Atualizar situacao continua na analise pendente (nao esta no prototipo); o controle de teste
+#   Simular aprovacao nao existe no Next. O Sair subiu para o topo da casca, como em entryTop.
+# - Link antigo /onboarding com invite na query e encaminhado para /convite/<token> (a tela e da frente D).
+# - A base da PORT-002 nao foi editada: as classes que faltavam (.en-why, .en-link, .en-file, .en-time,
+#   .en-ok, .en-sub) estao em apps/web/app/(preauth)/onboarding/components/entry-elegibilidade.css.
+#
+# Pendencias para o coordenador:
+# - Fora do allowed_paths: scripts/visual/capture.mjs guarda os titulos antigos e vai reprovar a captura
+#   visual nestas rotas. Substituir: /onboarding por ^(Confirme seu vinculo.|Nao localizamos o vinculo.|
+#   Nao conseguimos consultar agora.)$; /onboarding/documento por ^(Envie um documento.|A equipe pediu
+#   outro documento.)$; /onboarding/status?status=pending por ^(Sua elegibilidade esta em analise.|
+#   Recebemos seu documento.|A equipe pediu outro documento.)$. A conta pendente do mapa
+#   (admissao-1@) tambem nao existe em supabase/seed.sql: deriva anterior a esta frente.
+# - /convite e da frente D; ate ela entrar, o link E conjuge ou dependente cai em 404.
+# - A migration nova exige db reset --local --no-seed antes de test:db; a captura da analise pendente
+#   precisa de BIVAQUE_PENDING_EMAIL (o seed nao tem conta em analise; a jornada e2e cria uma).
+# - e2e a rodar: tests/e2e/onboarding-elegibilidade.spec.ts, tests/e2e/journey-entrar-e-ser-admitido.spec.ts,
+#   tests/e2e/onboarding-holder-family.spec.ts, tests/e2e/manaus-pilot-denials.spec.ts,
+#   tests/e2e/manaus-pilot-full-journey.spec.ts; pgTAP: supabase/tests/onboarding-release-notices.sql.
+# - Prova de runtime ainda nao existe: a foto do prototipo lado a lado e
+#   node scripts/port/capture-elegibilidade.mjs (grava em .visual/port-004/).
+
