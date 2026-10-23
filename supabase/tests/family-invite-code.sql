@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(39);
 
 \ir fixtures/foundation.inc
 
@@ -14,6 +14,10 @@ reset role;
 --   02: vencido.
 --   03: já aceito.
 --   05: revogado.
+--   06: válido, mas o titular (non-member) não tem localidade corrente — a
+--       prova da atomicidade do aceite.
+--   07: válido, do titular member-one, para non-member — quem não tem
+--       membership nem perfil ainda, para provar o provisionamento.
 insert into private.family_invitations (
   id,
   inviter_user_id,
@@ -58,6 +62,24 @@ values
     extensions.digest(lower(trim('member-two@example.invalid')), 'sha256'),
     'me***@ex***.invalid',
     decode(repeat('a5', 32), 'hex'),
+    now() + interval '7 days'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000006',
+    '10000000-0000-4000-8000-000000000005',
+    decode(repeat('66', 32), 'hex'),
+    extensions.digest(lower(trim('hidden-member@example.invalid')), 'sha256'),
+    'hi***@ex***.invalid',
+    decode(repeat('a6', 32), 'hex'),
+    now() + interval '7 days'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000007',
+    '10000000-0000-4000-8000-000000000001',
+    decode(repeat('77', 32), 'hex'),
+    extensions.digest(lower(trim('non-member@example.invalid')), 'sha256'),
+    'no***@ex***.invalid',
+    decode(repeat('a7', 32), 'hex'),
     now() + interval '7 days'
   );
 
@@ -214,7 +236,9 @@ select results_eq(
     from public.family_invite_code_accept(
       decode(repeat('a1', 32), 'hex'),
       '10000000-0000-4000-8000-000000000002'::uuid,
-      decode(repeat('9a', 32), 'hex')
+      decode(repeat('9a', 32), 'hex'),
+      'Member Two',
+      3
     )
   $$,
   $$ values ('ok'::text, true) $$,
@@ -241,7 +265,9 @@ select results_eq(
     from public.family_invite_code_accept(
       decode(repeat('a1', 32), 'hex'),
       '10000000-0000-4000-8000-000000000002'::uuid,
-      decode(repeat('9a', 32), 'hex')
+      decode(repeat('9a', 32), 'hex'),
+      'Member Two',
+      3
     )
   $$,
   $$
@@ -264,7 +290,9 @@ select is(
     from public.family_invite_code_accept(
       decode(repeat('a1', 32), 'hex'),
       '10000000-0000-4000-8000-000000000003'::uuid,
-      decode(repeat('9a', 32), 'hex')
+      decode(repeat('9a', 32), 'hex'),
+      'Other Locality',
+      3
     )
   ),
   'unavailable',
@@ -289,7 +317,9 @@ select is(
     from public.family_invite_code_accept(
       decode(repeat('a4', 32), 'hex'),
       '10000000-0000-4000-8000-000000000003'::uuid,
-      decode(repeat('9b', 32), 'hex')
+      decode(repeat('9b', 32), 'hex'),
+      'Other Locality',
+      3
     )
   ),
   'unavailable',
@@ -332,7 +362,9 @@ select is(
     from public.family_invite_code_accept(
       decode(repeat('a4', 32), 'hex'),
       '10000000-0000-4000-8000-000000000002'::uuid,
-      extensions.digest('origin-success', 'sha256')
+      extensions.digest('origin-success', 'sha256'),
+      'Member Two',
+      3
     )
   ),
   'ok',
@@ -345,7 +377,134 @@ select is(
   'preview e aceite com o código certo não gravam tentativa'
 );
 
--- 21 a 24. Limite por origem, contado pelas chamadas da própria função: 15
+-- 21 a 29. Aceite atômico: vínculo, localidade do titular, membership e perfil
+-- na MESMA transação. Antes desta correção o provisionamento era um segundo
+-- request; quando ele falhava, o convite já estava `accepted`, o vínculo
+-- existia e a pessoa ficava sem acesso — e, com dois aceites simultâneos, o
+-- segundo transformava a corrente recém-criada em `leaving`.
+
+-- O titular do convite 06 (non-member) não tem localidade corrente: o contrato
+-- falha alto e o aceite inteiro volta atrás. O aceitante é hidden-member, que
+-- não tem vínculo familiar ainda — um vínculo já existente esbarraria na
+-- unicidade de `family_user_id` antes de chegar à localidade.
+select throws_ok(
+  $$
+    select *
+    from public.family_invite_code_accept(
+      decode(repeat('a6', 32), 'hex'),
+      '10000000-0000-4000-8000-000000000004'::uuid,
+      decode(repeat('9d', 32), 'hex'),
+      'Hidden Member',
+      3
+    )
+  $$,
+  'P0005',
+  null,
+  'aceite com titular sem localidade corrente falha'
+);
+
+select is(
+  (
+    select status::text
+    from private.family_invitations
+    where id = '30000000-0000-4000-8000-000000000006'
+  ),
+  'pending',
+  'a falha desfaz o aceite: o convite continua pending'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from private.family_account_links
+    where invitation_id = '30000000-0000-4000-8000-000000000006'
+  ),
+  0,
+  'a falha desfaz o vínculo: nenhum link fica gravado'
+);
+
+-- Aceite certo de quem ainda não tem nada: o perfil e a membership nascem aqui,
+-- não no servidor.
+select results_eq(
+  $$
+    select status, link_id is not null as has_link
+    from public.family_invite_code_accept(
+      decode(repeat('a7', 32), 'hex'),
+      '10000000-0000-4000-8000-000000000005'::uuid,
+      decode(repeat('9e', 32), 'hex'),
+      'Familiar da Silva',
+      3
+    )
+  $$,
+  $$ values ('ok'::text, true) $$,
+  'o aceite do código devolve ok com o vínculo'
+);
+
+select is(
+  (
+    select m.locality_id
+    from public.locality_memberships m
+    where m.user_id = '10000000-0000-4000-8000-000000000005'
+      and m.kind = 'current'
+  ),
+  '00000000-0000-4000-8000-000000000001'::uuid,
+  'o dependente entra na localidade corrente do titular'
+);
+
+select is(
+  (
+    select p.display_name || '/' || p.consent_version::text
+    from public.profiles p
+    where p.user_id = '10000000-0000-4000-8000-000000000005'
+  ),
+  'Familiar da Silva/3',
+  'o perfil nasce com o nome informado e a versão do aceite'
+);
+
+-- Repetir o aceite do MESMO usuário é retomada: ok, o mesmo vínculo, e a
+-- corrente não se move. `provision_member_locality` fecharia a corrente antes
+-- de inserir a nova, então repetir às cegas deixaria a pessoa sem corrente.
+select results_eq(
+  $$
+    select status, link_id
+    from public.family_invite_code_accept(
+      decode(repeat('a7', 32), 'hex'),
+      '10000000-0000-4000-8000-000000000005'::uuid,
+      decode(repeat('9f', 32), 'hex'),
+      'Familiar da Silva',
+      3
+    )
+  $$,
+  $$
+    select 'ok'::text, id
+    from private.family_account_links
+    where invitation_id = '30000000-0000-4000-8000-000000000007'
+  $$,
+  'repetir o aceite do mesmo usuário devolve ok e o mesmo vínculo'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.locality_memberships
+    where user_id = '10000000-0000-4000-8000-000000000005'
+  ),
+  1,
+  'a retomada não move a corrente: uma única membership, sem linha leaving'
+);
+
+select is(
+  (
+    select m.locality_id
+    from public.locality_memberships m
+    where m.user_id = '10000000-0000-4000-8000-000000000005'
+      and m.kind = 'current'
+  ),
+  '00000000-0000-4000-8000-000000000001'::uuid,
+  'a retomada não cria uma segunda membership corrente'
+);
+
+-- 30 a 33. Limite por origem, contado pelas chamadas da própria função: 15
 -- tentativas erradas da mesma origem ficam gravadas, a 16ª devolve
 -- rate_limited e não é contada, e o código CERTO depois do limite também é
 -- barrado (o teto vem antes da consulta ao código).
@@ -409,7 +568,7 @@ select is(
   'o código certo, depois do limite estourado, também devolve rate_limited'
 );
 
--- 25 e 26. Limite por e-mail: 10 tentativas do mesmo endereço, cada uma de uma
+-- 34 e 35. Limite por e-mail: 10 tentativas do mesmo endereço, cada uma de uma
 -- origem diferente; a 11ª é recusada mesmo vindo de outra origem.
 delete from private.family_invite_code_attempts;
 
@@ -453,7 +612,7 @@ select is(
   'a 11ª tentativa do mesmo e-mail é recusada, mesmo de outra origem'
 );
 
--- 27. O código não é legível por quem tem conta: sem grant na tabela.
+-- 36. O código não é legível por quem tem conta: sem grant na tabela.
 set local role authenticated;
 select throws_ok(
   $$ select code_hash from private.family_invitations limit 1 $$,
@@ -463,7 +622,7 @@ select throws_ok(
 );
 reset role;
 
--- 28. As funções são só do servidor.
+-- 37. As funções são só do servidor.
 set local role anon;
 select throws_ok(
   $$
@@ -479,7 +638,7 @@ select throws_ok(
 );
 reset role;
 
--- 29 e 30. A contagem e o insert ficam sob uma trava de transação: uma pela
+-- 38 e 39. A contagem e o insert ficam sob uma trava de transação: uma pela
 -- origem e outra pelo e-mail, sempre nessa ordem. A prova é o lock existir no
 -- backend desta sessão DEPOIS do gate — uma trava de transação só é liberada no
 -- commit/rollback. Digests novos, para não coincidir com trava já tomada

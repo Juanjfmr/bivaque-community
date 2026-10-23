@@ -93,6 +93,21 @@ describe("código do convite no banco", () => {
     expect(MIGRATION).toMatch(/link\.family_user_id = p_accepted_by_user_id/)
   })
 
+  it("o aceite provisiona na mesma transação do vínculo", () => {
+    // Terceira correção: o provisionamento saiu do segundo request e veio para
+    // dentro do aceite. Sem isso, o convite consumido e a pessoa sem acesso, e
+    // dois aceites concorrentes transformavam a corrente recém-criada em
+    // `leaving`.
+    expect(MIGRATION).toContain("perform public.provision_member_locality(")
+    expect(MIGRATION).toContain(
+      "insert into public.profiles (user_id, display_name, visibility, consent_version, consented_at)",
+    )
+    // Titular sem localidade corrente desfaz o aceite inteiro.
+    expect(MIGRATION).toContain("the inviting holder has no current locality")
+    // Quem já está corrente na localidade do titular não é movido de novo.
+    expect(MIGRATION).toMatch(/and m\.locality_id = v_locality_id/)
+  })
+
   it("a tabela de tentativas é fechada para o cliente", () => {
     expect(MIGRATION).toContain(
       "alter table private.family_invite_code_attempts enable row level security",
@@ -108,7 +123,7 @@ describe("código do convite no banco", () => {
   it("as funções públicas são só do servidor", () => {
     for (const signature of [
       "public.family_invite_code_preview(bytea, bytea, bytea)",
-      "public.family_invite_code_accept(bytea, uuid, bytea)",
+      "public.family_invite_code_accept(bytea, uuid, bytea, text, integer)",
     ]) {
       expect(MIGRATION).toContain(`revoke all on function ${signature} from authenticated`)
       expect(MIGRATION).toContain(`grant execute on function ${signature} to service_role`)
