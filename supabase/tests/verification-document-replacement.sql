@@ -312,6 +312,11 @@ select is(
 -- transação (a trava é reentrante e não criaria linha nova no pg_locks).
 -- O preparo fica em DO: um SELECT solto imprime a linha do resultado e o leitor
 -- de TAP conta "ok" como teste a mais.
+reset role;
+insert into auth.users (id, email)
+values ('10000000-0000-4000-8000-00000000000b', 'lock-probe@example.invalid');
+set local role service_role;
+
 do $$
 begin
   perform set_config(
