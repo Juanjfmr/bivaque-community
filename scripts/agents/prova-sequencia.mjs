@@ -19,6 +19,8 @@
 // Só o banco LOCAL: nenhum argumento deste script chega ao comando do Supabase.
 
 import { execFileSync, spawnSync } from "node:child_process"
+import { existsSync } from "node:fs"
+import { join } from "node:path"
 
 const SHELL = process.platform === "win32"
 
@@ -38,8 +40,30 @@ function localEnv() {
     const match = /^([A-Z_]+)="?([^"]*)"?$/.exec(line.trim())
     if (match) values[match[1]] = match[2]
   }
+  // Os specs entram com as contas do seed local, cuja senha é um valor público
+  // de teste (supabase/seed.sql), nunca uma credencial real. Quem já exportou
+  // as variáveis no ambiente prevalece.
+  const seedTestValue = "bivaque-e2e-local"
+  // O Chromium que o Playwright desta versão esperaria pode não estar baixado
+  // na máquina; o headless shell já instalado serve. Só entra se existir, e
+  // quem exportou PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH prevalece.
+  const installedShell = join(
+    process.env.LOCALAPPDATA ?? "",
+    "ms-playwright",
+    "chromium_headless_shell-1248",
+    "chrome-headless-shell-win64",
+    "chrome-headless-shell.exe",
+  )
+  const chromium =
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ??
+    (existsSync(installedShell) ? installedShell : undefined)
   return {
     ...process.env,
+    USER_PASSWORD: process.env.USER_PASSWORD ?? seedTestValue,
+    BIVAQUE_VISUAL_EMAIL: process.env.BIVAQUE_VISUAL_EMAIL ?? "visual@bivaque.example.invalid",
+    BIVAQUE_VISUAL_PASSWORD: process.env.BIVAQUE_VISUAL_PASSWORD ?? seedTestValue,
+    BIVAQUE_E2E_OPERATOR_PASSWORD: process.env.BIVAQUE_E2E_OPERATOR_PASSWORD ?? seedTestValue,
+    ...(chromium ? { PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: chromium } : {}),
     NEXT_PUBLIC_SUPABASE_URL: values.API_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: values.ANON_KEY,
     SUPABASE_URL: values.API_URL,
