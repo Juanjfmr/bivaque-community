@@ -343,7 +343,10 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         {mode === "signup" && (
           <EntryConsent
             checked={accepted}
-            note="google"
+            // O cadastro leva a nota do Google ("o aceite vem no passo
+            // seguinte"). O valor `google` é o do passo Aceite, onde a frase não
+            // existe — trocá-lo apagava a nota do protótipo no cadastro.
+            note="signup"
             onChange={(checked) => {
               setAccepted(checked)
               clearProblem("consent")
