@@ -334,23 +334,23 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
     await page.getByRole("button", { name: "Criar conta" }).click()
 
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 })
-    await page.getByLabel("CPF").fill("123.456.789-09")
-    await page.getByRole("button", { name: "Verificar acesso" }).click()
-    await expect(page.getByRole("alert").filter({ hasText: "instabilidade" })).toBeVisible({
-      timeout: 20_000,
-    })
+    // A elegibilidade da frente B: CPF direto, Portal fora no stack local, e o
+    // caminho do documento (os mesmos passos da jornada principal acima).
+    await page.locator("#onboarding-cpf input").fill("123.456.789-09")
+    await page.locator("#onboarding-cpf-submit").click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Não conseguimos consultar agora." }),
+    ).toBeVisible({ timeout: 20_000 })
 
-    await page.getByRole("link", { name: "Enviar identidade agora" }).click()
+    await page.getByRole("link", { name: /Enviar um documento/ }).click()
     await expect(page).toHaveURL(/\/onboarding\/documento$/)
-    await page.getByLabel("Documento para análise").setInputFiles({
+    await page.locator("#verification-document").setInputFiles({
       name: "identidade.png",
       mimeType: "image/png",
       buffer: IDENTITY_PNG,
     })
-    await page.getByRole("button", { name: "Enviar para análise" }).click()
-    await expect(page.getByRole("status").filter({ hasText: "Documento enviado" })).toBeVisible({
-      timeout: 20_000,
-    })
+    await page.locator("#document-submit").click()
+    await expect(page).toHaveURL(/\/onboarding\/status$/, { timeout: 20_000 })
 
     const operatorContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     await signInAs(operatorContext, OPERATOR)

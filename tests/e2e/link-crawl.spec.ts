@@ -96,6 +96,15 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "BOTÃO: 'Sua cidade' no cabeçalho > outra cidade (city-switcher, router.push)",
   },
   {
+    route: "/conta-apagada",
+    porta: "FLUXO: redirect depois de apagar a conta em Configurações > Conta (lote 4, PORT-006)",
+  },
+  {
+    route: "/convite",
+    porta:
+      "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
+  },
+  {
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
