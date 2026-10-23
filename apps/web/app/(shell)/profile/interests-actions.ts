@@ -5,6 +5,13 @@
 // §3.2: interests map to groups (no parallel taxonomy). §3.3: private
 // groups only suggest to members of their container. The collection is
 // bounded to one declared purpose (LGPD finalidade declarada — §4.4).
+//
+// PORT-005 (correção do achado P2 da revisão independente): a leitura dos
+// grupos usa service_role, então a sessão sozinha não basta — quem nunca foi
+// verificado (nem pendente, nem recusado) não consulta a lista. A situação vem
+// do banco, pelo usuário da sessão; o cliente não diz nada sobre ela. E a
+// cidade vem do vínculo CORRENTE (`kind = 'current'`), nunca do vínculo de
+// saída: quem está saindo de uma cidade não recebe sugestão de grupos dela.
 
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
@@ -31,6 +38,14 @@ type InterestsData = {
   recorded: UserInterest[]
 }
 
+type ServiceClient = ReturnType<typeof createServiceClient>
+
+type InterestsContext = {
+  localityId: string
+  supabase: ServiceClient
+  userId: string
+}
+
 async function readSessionUserId(): Promise<string | null> {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -52,34 +67,58 @@ async function readSessionUserId(): Promise<string | null> {
   return user?.id ?? null
 }
 
-async function readSessionLocalityId(): Promise<string | null> {
+/**
+ * A sessão, a verificação e a cidade corrente numa leitura só.
+ *
+ * `null` é "sem sessão ou sem vínculo corrente": não há dado de interesse para
+ * ler nem para escrever. A verificação é o único caso que sobe como erro — ela
+ * é uma recusa, não uma ausência, e a lista de grupos nem chega a ser
+ * consultada (é o que o teste prova).
+ */
+async function readVerifiedContext(): Promise<InterestsContext | null> {
   const userId = await readSessionUserId()
   if (!userId) return null
 
   const supabase = createServiceClient()
-  const { data } = await supabase
+
+  const { data: statusRows, error: statusError } = await supabase.rpc("read_verification_status", {
+    p_user_id: userId,
+  })
+  if (statusError) {
+    throw new Error("Não foi possível conferir sua verificação agora. Tente novamente.")
+  }
+
+  const status = (statusRows as { status: string }[] | null)?.[0]?.status ?? null
+  if (status !== "verified") {
+    throw new Error("Conclua a verificação de acesso para escolher interesses.")
+  }
+
+  // Só o vínculo corrente: o de saída é o da cidade que a pessoa está deixando.
+  const { data: membership } = await supabase
     .from("locality_memberships")
     .select("locality_id")
     .eq("user_id", userId)
+    .eq("kind", "current")
     .limit(1)
     .maybeSingle()
 
-  return (data as { locality_id: string } | null)?.locality_id ?? null
+  const localityId = (membership as { locality_id: string } | null)?.locality_id ?? null
+  if (!localityId) return null
+
+  return { localityId, supabase, userId }
 }
 
 export async function getUserInterestsDataAction(): Promise<InterestsData | null> {
-  const userId = await readSessionUserId()
-  const localityId = await readSessionLocalityId()
-  if (!userId || !localityId) return null
+  const context = await readVerifiedContext()
+  if (!context) return null
 
-  const supabase = createServiceClient()
   const [availableResult, recordedResult] = await Promise.all([
-    callUserGroupInterestsRpc(supabase, "list_available_groups_for_interests", {
-      p_user_id: userId,
-      p_locality_id: localityId,
+    callUserGroupInterestsRpc(context.supabase, "list_available_groups_for_interests", {
+      p_user_id: context.userId,
+      p_locality_id: context.localityId,
     }),
-    callUserGroupInterestsRpc(supabase, "list_user_group_interests", {
-      p_user_id: userId,
+    callUserGroupInterestsRpc(context.supabase, "list_user_group_interests", {
+      p_user_id: context.userId,
     }),
   ])
 
@@ -90,20 +129,22 @@ export async function getUserInterestsDataAction(): Promise<InterestsData | null
 }
 
 export async function recordUserGroupInterestsAction(formData: FormData) {
-  const userId = await readSessionUserId()
-  const localityId = await readSessionLocalityId()
-  if (!userId || !localityId) throw new Error("não autenticado")
+  const context = await readVerifiedContext()
+  if (!context) throw new Error("não autenticado")
 
   const groupIds = formData
     .getAll("groupIds")
     .filter((v): v is string => typeof v === "string" && v.length > 0)
 
-  const supabase = createServiceClient()
-  const { error } = await callUserGroupInterestsRpc(supabase, "record_user_group_interests", {
-    p_user_id: userId,
-    p_locality_id: localityId,
-    p_group_ids: groupIds,
-  })
+  const { error } = await callUserGroupInterestsRpc(
+    context.supabase,
+    "record_user_group_interests",
+    {
+      p_user_id: context.userId,
+      p_locality_id: context.localityId,
+      p_group_ids: groupIds,
+    },
+  )
 
   if (error) {
     if (error.message.includes("not in caller locality")) {
@@ -116,16 +157,18 @@ export async function recordUserGroupInterestsAction(formData: FormData) {
 }
 
 export async function clearUserGroupInterestsAction() {
-  const userId = await readSessionUserId()
-  const localityId = await readSessionLocalityId()
-  if (!userId || !localityId) throw new Error("não autenticado")
+  const context = await readVerifiedContext()
+  if (!context) throw new Error("não autenticado")
 
-  const supabase = createServiceClient()
-  const { error } = await callUserGroupInterestsRpc(supabase, "record_user_group_interests", {
-    p_user_id: userId,
-    p_locality_id: localityId,
-    p_group_ids: [] as string[],
-  })
+  const { error } = await callUserGroupInterestsRpc(
+    context.supabase,
+    "record_user_group_interests",
+    {
+      p_user_id: context.userId,
+      p_locality_id: context.localityId,
+      p_group_ids: [] as string[],
+    },
+  )
 
   if (error) {
     throw new Error(error.message)
