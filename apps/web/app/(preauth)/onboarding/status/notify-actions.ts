@@ -9,6 +9,11 @@ import { log } from "../../../../lib/logger"
 // a decisão da análise já avisa e manda e-mail; esta linha só registra que a
 // pessoa quer ser avisada quando liberar.
 //
+// Divergência conhecida (decisão do coordenador, 22/10/2026): a preferência não
+// muda o envio. O e-mail da decisão continua saindo sempre, com ou sem esta
+// linha; o canal que ela ligaria é o push, que ainda não existe no Next. Até
+// existir, a linha é só o registro do pedido — a tela não promete o contrário.
+//
 // A escrita vai pelo cliente com a sessão da pessoa — o `user_id` é
 // `auth.uid()`, não um valor vindo do formulário — e quem autoriza é a policy
 // de RLS (`user_id = auth.uid()`), provada em
