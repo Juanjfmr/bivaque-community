@@ -256,7 +256,7 @@ function OnboardingFlow() {
       <EntryShell action={<EntrySignOut />}>
         <div className="en-form">
           <EntrySteps label="Elegibilidade" step={2} />
-          <EntryHeading>Não localizamos o vínculo.</EntryHeading>
+          <EntryHeading key="notfound">Não localizamos o vínculo.</EntryHeading>
           <p className="en-lead">
             A fonte oficial não confirmou o vínculo deste CPF. Isso acontece com quem passou para a
             reserva há pouco ou com pensionistas recentes.
@@ -291,7 +291,7 @@ function OnboardingFlow() {
       <EntryShell action={<EntrySignOut />}>
         <div className="en-form">
           <EntrySteps label="Elegibilidade" step={2} />
-          <EntryHeading>Não conseguimos consultar agora.</EntryHeading>
+          <EntryHeading key="unavailable">Não conseguimos consultar agora.</EntryHeading>
           <p className="en-lead">{lead}</p>
           <MaterialFilledButton id="onboarding-retry" onClick={restart}>
             Tentar de novo
@@ -317,7 +317,7 @@ function OnboardingFlow() {
     <EntryShell action={<EntrySignOut />}>
       <div className="en-form">
         <EntrySteps label="Elegibilidade" step={2} />
-        <EntryHeading>Confirme seu vínculo.</EntryHeading>
+        <EntryHeading key="cpf">Confirme seu vínculo.</EntryHeading>
         <p className="en-lead">
           Para militares federais ativos, veteranos e pensionistas militares.
         </p>

@@ -9,7 +9,9 @@ import { type ReactNode, useEffect, useRef } from "react"
 //
 // É cliente porque o foco é um efeito do navegador. As telas de servidor
 // (documento e análise) usam este componente; a de CPF também, para que as três
-// se comportem do mesmo jeito.
+// se comportem do mesmo jeito. Quem troca de passo no mesmo endereço dá uma
+// `key` diferente a cada título: sem isso o React reaproveita o elemento e o
+// efeito de foco não roda no passo novo.
 export function EntryHeading({ children }: Readonly<{ children: ReactNode }>) {
   const heading = useRef<HTMLHeadingElement | null>(null)
 
