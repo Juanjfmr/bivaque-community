@@ -3175,6 +3175,17 @@ export type Database = {
         Args: { p_listing_id: string; p_path: string; p_position?: number }
         Returns: string[]
       }
+      replace_verification_document: {
+        Args: {
+          p_mime_type: string
+          p_storage_object_path: string
+          p_user_id: string
+        }
+        Returns: {
+          document_id: string
+          replaced_storage_object_path: string | null
+        }[]
+      }
       request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {
         Args: { p_community_id: string; p_reason?: string }
