@@ -2546,6 +2546,10 @@ export type Database = {
         Args: { p_caller_user_id?: string; p_event_id: string }
         Returns: undefined
       }
+      complete_verification_document_removal: {
+        Args: { p_storage_object_path: string }
+        Returns: undefined
+      }
       consume_verification_attempt: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -2656,10 +2660,6 @@ export type Database = {
       }
       degrade_locality_origins: { Args: never; Returns: number }
       delete_group: { Args: { p_group_id: string }; Returns: undefined }
-      enqueue_verification_document_removal: {
-        Args: { p_storage_object_path: string }
-        Returns: undefined
-      }
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string

@@ -252,20 +252,27 @@ export async function uploadVerificationDocumentAction(
   // e só roda no próximo envio da mesma pessoa. Sem a fila, um caminho órfão
   // ficaria no bucket para sempre, porque nenhuma varredura agendada olha para
   // objetos sem linha — o cron diário de TTL apenas marca a linha como purgada.
-  // A falha aqui não desfaz o envio: o objeto é privado e o caminho fica
-  // registrado em private.verification_document_removals para um processador.
+  // Por isso a fila nasce na MESMA transação da troca: o caminho já está em
+  // private.verification_document_removals antes desta action rodar. Aqui só
+  // falta fechar o ciclo — quando o objeto sai do bucket, a linha da fila é
+  // apagada; quando a remoção falha, a linha fica para o processador da fila
+  // (VERIF-REMOVAL-WORKER). Nada disso desfaz o envio: o contrato da action é o
+  // documento novo já registrado.
   if (supersededPath !== null && supersededPath !== storageObjectPath) {
     const removed = await removeSupersededDocument(supabase, supersededPath)
 
     if (!removed) {
-      const { error: queueError } = await supabase.rpc("enqueue_verification_document_removal", {
-        p_storage_object_path: supersededPath,
-      })
+      log.warn("superseded verification document left in the removal queue", { user_id: userId })
+    } else {
+      const { error: completionError } = await supabase.rpc(
+        "complete_verification_document_removal",
+        { p_storage_object_path: supersededPath },
+      )
 
-      if (queueError) {
-        log.error("superseded verification document could not be queued", { user_id: userId })
-      } else {
-        log.warn("superseded verification document queued for removal", { user_id: userId })
+      if (completionError) {
+        log.warn("superseded verification document removal not closed in the queue", {
+          user_id: userId,
+        })
       }
     }
   }

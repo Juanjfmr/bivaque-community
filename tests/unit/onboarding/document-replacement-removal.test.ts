@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
 
-// PORT-004, P2 da revisão: o arquivo substituído não pode ficar para sempre no
-// bucket. A action tenta a remoção duas vezes; se as duas falham, o caminho vai
-// para a fila privada (enqueue_verification_document_removal). Estes testes
-// fixam as três saídas — remoção na primeira tentativa, na segunda e o resto na
-// fila — sem depender do Storage nem do banco.
+// PORT-004, P2 da revisão (terceira correção): o arquivo substituído não pode
+// ficar para sempre no bucket. A fila nasce na MESMA transação da troca, dentro
+// de replace_verification_document; a action só apaga o objeto do bucket (duas
+// tentativas) e, quando a remoção funciona, apaga a linha da fila por
+// complete_verification_document_removal. Se a remoção falha, a linha fica para
+// o processador da fila. Estes testes fixam as três saídas — remoção na
+// primeira tentativa, na segunda e o resto na fila — sem depender do Storage
+// nem do banco.
 
 const SUPERSEDED_PATH = "fixture-user/superseded-document.pdf"
 const NEW_PATH_PREFIX = "fixture-user/"
@@ -65,6 +68,13 @@ function formWithDocument() {
   return form
 }
 
+function replacementRpc() {
+  return {
+    data: [{ document_id: "fixture-document", replaced_storage_object_path: SUPERSEDED_PATH }],
+    error: null,
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:55321")
@@ -73,22 +83,17 @@ beforeEach(() => {
   mocks.upload.mockResolvedValue({ error: null })
   mocks.rpc.mockImplementation(async (name: string) => {
     if (name === "has_accepted_consent") return { data: true, error: null }
-    if (name === "replace_verification_document") {
-      return {
-        data: [{ document_id: "fixture-document", replaced_storage_object_path: SUPERSEDED_PATH }],
-        error: null,
-      }
-    }
+    if (name === "replace_verification_document") return replacementRpc()
     return { data: null, error: null }
   })
 })
 
-function queueCalls() {
-  return mocks.rpc.mock.calls.filter(([name]) => name === "enqueue_verification_document_removal")
+function completionCalls() {
+  return mocks.rpc.mock.calls.filter(([name]) => name === "complete_verification_document_removal")
 }
 
 describe("troca do documento em análise: remoção do arquivo substituído", () => {
-  it("remove o arquivo antigo na primeira tentativa e não usa a fila", async () => {
+  it("remove o arquivo antigo na primeira tentativa e fecha a linha da fila", async () => {
     mocks.remove.mockResolvedValue({ error: null })
 
     await expect(uploadVerificationDocumentAction(formWithDocument())).resolves.toEqual({
@@ -98,11 +103,12 @@ describe("troca do documento em análise: remoção do arquivo substituído", ()
     expect(mocks.storageFrom).toHaveBeenCalledWith("verification-documents")
     expect(mocks.remove).toHaveBeenCalledOnce()
     expect(mocks.remove).toHaveBeenCalledWith([SUPERSEDED_PATH])
-    expect(queueCalls()).toHaveLength(0)
+    expect(completionCalls()).toHaveLength(1)
+    expect(completionCalls()[0]?.[1]).toEqual({ p_storage_object_path: SUPERSEDED_PATH })
     expect(mocks.upload.mock.calls[0]?.[0]).toMatch(NEW_PATH_PREFIX)
   })
 
-  it("tenta a remoção de novo e não enfileira quando a segunda tentativa funciona", async () => {
+  it("tenta a remoção de novo e fecha a fila quando a segunda tentativa funciona", async () => {
     mocks.remove
       .mockResolvedValueOnce({ error: { message: "storage unavailable" } })
       .mockResolvedValueOnce({ error: null })
@@ -112,10 +118,10 @@ describe("troca do documento em análise: remoção do arquivo substituído", ()
     })
 
     expect(mocks.remove).toHaveBeenCalledTimes(2)
-    expect(queueCalls()).toHaveLength(0)
+    expect(completionCalls()).toHaveLength(1)
   })
 
-  it("enfileira o caminho depois de duas falhas e mantém o envio", async () => {
+  it("deixa o caminho na fila depois de duas falhas e mantém o envio", async () => {
     mocks.remove.mockResolvedValue({ error: { message: "storage unavailable" } })
 
     await expect(uploadVerificationDocumentAction(formWithDocument())).resolves.toEqual({
@@ -123,22 +129,14 @@ describe("troca do documento em análise: remoção do arquivo substituído", ()
     })
 
     expect(mocks.remove).toHaveBeenCalledTimes(2)
-    expect(queueCalls()).toHaveLength(1)
-    expect(queueCalls()[0]?.[1]).toEqual({ p_storage_object_path: SUPERSEDED_PATH })
+    expect(completionCalls()).toHaveLength(0)
   })
 
-  it("registra o envio mesmo quando a fila também falha", async () => {
-    mocks.remove.mockResolvedValue({ error: { message: "storage unavailable" } })
+  it("registra o envio mesmo quando a conclusão da fila falha", async () => {
+    mocks.remove.mockResolvedValue({ error: null })
     mocks.rpc.mockImplementation(async (name: string) => {
       if (name === "has_accepted_consent") return { data: true, error: null }
-      if (name === "replace_verification_document") {
-        return {
-          data: [
-            { document_id: "fixture-document", replaced_storage_object_path: SUPERSEDED_PATH },
-          ],
-          error: null,
-        }
-      }
+      if (name === "replace_verification_document") return replacementRpc()
       return { data: null, error: { message: "queue unavailable", code: "PGRST202" } }
     })
 
@@ -146,10 +144,10 @@ describe("troca do documento em análise: remoção do arquivo substituído", ()
       ok: true,
     })
 
-    expect(queueCalls()).toHaveLength(1)
+    expect(completionCalls()).toHaveLength(1)
   })
 
-  it("não tenta remover nem enfileirar quando não houve arquivo substituído", async () => {
+  it("não tenta remover nem fechar a fila quando não houve arquivo substituído", async () => {
     mocks.rpc.mockImplementation(async (name: string) => {
       if (name === "has_accepted_consent") return { data: true, error: null }
       if (name === "replace_verification_document") {
@@ -166,6 +164,6 @@ describe("troca do documento em análise: remoção do arquivo substituído", ()
     })
 
     expect(mocks.remove).not.toHaveBeenCalled()
-    expect(queueCalls()).toHaveLength(0)
+    expect(completionCalls()).toHaveLength(0)
   })
 })
