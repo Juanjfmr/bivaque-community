@@ -48,3 +48,26 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# --- Evidencia COM-003 (2026-10-23, branch codex/lote5-grupo-base) ---
+# Prova de banco pela fila: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+#   PASS: 155 arquivos, 2296 testes; supabase/tests/group-base.sql 34/34.
+# Tipos regerados depois do reset sem seed: npx pnpm@11.18.0 generate:types
+#   (columns rules e pinned_post_id em groups, notify_level em group_memberships, e as RPCs set_group_rules,
+#   set_group_notify_level, pin_group_post, unpin_group_post, list_group_activity, create_group com p_rules).
+# Gate: npx pnpm@11.18.0 gate -> VERDE (lint, typecheck, typecheck:e2e, test, secrets; o estagio build e pulado
+#   pelo gate porque apps/web/.env.local nao existe nesta maquina).
+# Build: npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   exportados de npx supabase status -o env -> exit 0.
+# db:lint: supabase db lint --local --level error -> No schema errors found.
+# E2E pela fila: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/group-base.spec.ts
+#   PASS: 3 passaram (mobile-375, tablet-768, desktop-1440), 0 falharam.
+#   O host nao tem o bundle chromium 1161 do Playwright 1.51.1; a prova usou o escape hatch
+#   PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH apontando para o Chrome do sistema, e a senha publica do seed
+#   via BIVAQUE_VISUAL_PASSWORD no ambiente (apps/web/.env.local nunca foi criado nem commitado).
+# Divergencia do prototipo decidida pelo ADR secao 3: o aviso fixado e uma publicacao, nao texto; por isso a tela
+#   Gerenciar nao tem campo de aviso fixado e a fixacao vive no feed do grupo.
+# Nao entregue: comparacao de captura prototipo x Next. Os adaptadores em apps/web/app/components/material/
+#   estao fora dos allowed_paths desta tarefa e as telas de grupo ainda nao foram portadas para a pele Material
+#   Web (ADR-20261022, migracao tela a tela); uma comparacao lado a lado registraria so a camada visual antiga.
+#   A captura visual tambem grava o perfil fantasma no banco local compartilhado, que precisa da janela
+#   exclusiva da fila. Fica como proximo passo concreto, junto do porte visual das telas do grupo.
