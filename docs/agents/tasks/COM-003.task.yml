@@ -71,3 +71,6 @@ closure:
 #   Web (ADR-20261022, migracao tela a tela); uma comparacao lado a lado registraria so a camada visual antiga.
 #   A captura visual tambem grava o perfil fantasma no banco local compartilhado, que precisa da janela
 #   exclusiva da fila. Fica como proximo passo concreto, junto do porte visual das telas do grupo.
+# Regressao dos specs de grupo existentes: groups-state-truth.spec.ts e group-admin-cycle.spec.ts
+#   -> 18 passed, 0 falharam (com USER_PASSWORD no ambiente; sem ele os dois specs falham por ambiente,
+#   no requireCredentials, antes de tocar em qualquer tela — nao e defeito do produto).
