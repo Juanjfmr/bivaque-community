@@ -7,9 +7,9 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { CreatePostModal } from "../../components/bivaque/feed-post"
 import { IntentLauncher } from "../../components/bivaque/intent-launcher"
 import { POST_CREATED_EVENT } from "../../components/shell/create-menu"
-import { CommunitySection, type PrimaryCommunity } from "./community-section"
+import { CityFeed } from "./city-feed"
 import { InicioGreeting } from "./greeting"
-import { createRequestGuard, loadPrimaryCommunity } from "./home-loaders"
+import { createRequestGuard, loadPrimaryCommunity, type PrimaryCommunity } from "./home-loaders"
 import { HubShortcuts } from "./hub-shortcuts"
 import { discoverySettled, hubNovelty, hubVisibility, newLabel } from "./hub-view"
 import { JoinCommunityCard } from "./join-community"
@@ -46,7 +46,7 @@ import { WeekEventsCarousel } from "./week-events"
 // useHubData e servidas aos atalhos (contadores), ao trilho e às seções.
 
 const WEEK: SectionLink = { id: "secao-semana", label: "Esta semana" }
-const COMMUNITY: SectionLink = { id: "secao-comunidade", label: "Comunidade" }
+const CITY: SectionLink = { id: "secao-cidade", label: "Cidade" }
 const MARKET: SectionLink = { id: "secao-mercado", label: "Mercado" }
 const QUESTIONS: SectionLink = { id: "secao-perguntas", label: "Perguntas" }
 const GUIDE: SectionLink = { id: "secao-guia", label: "Guia" }
@@ -193,7 +193,7 @@ export default function InicioPage() {
 
   const sections: SectionLink[] = [
     ...(visible.events ? [WEEK] : []),
-    ...(hasCommunity ? [COMMUNITY] : []),
+    CITY,
     ...discovery.flatMap((block) => block.links),
   ]
 
@@ -233,15 +233,15 @@ export default function InicioPage() {
             </div>
           ) : null}
 
-          {hasCommunity ? (
-            <CommunitySection
-              primary={primary}
-              onRetryPrimary={loadPrimary}
-              onPublish={() => handleOpenModal()}
-              refreshKey={refreshKey}
-              novelty={novelty ?? null}
-            />
-          ) : null}
+          {/* O feed da cidade (lote 5, N2): no lugar da prévia da vila, a
+              leitura nova (`feed_locality`) — publicações da cidade da pessoa
+              sem grupo e sem vila. A seção não depende de ter comunidade: quem
+              não tem lê a cidade do mesmo jeito. */}
+          <CityFeed
+            localityId={current.id}
+            onPublish={() => handleOpenModal()}
+            refreshKey={refreshKey}
+          />
 
           {discovery.map((block) =>
             block.node === null ? null : <div key={block.key}>{block.node}</div>,

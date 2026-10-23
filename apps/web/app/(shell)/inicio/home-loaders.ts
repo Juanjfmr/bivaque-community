@@ -9,12 +9,13 @@
 //   quando troca de cidade, comunidade ou nova tentativa dispara outra carga, a
 //   resposta atrasada da carga anterior é descartada em vez de sobrescrever o
 //   contexto atual.
-// - Os loaders só leem pelo mesmo canal de antes: mesmas tabelas, mesmo RPC
-//   feed_community, mesmo filtro de eventos. Nenhuma API ou permissão muda.
+// - Os loaders leem pelo mesmo canal de sempre: mesmas tabelas, RPCs de feed
+//   com a visibilidade revalidada no servidor, mesmo filtro de eventos. Nenhuma
+//   API ou permissão muda.
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
-import { COUNT_CAP } from "./hub-loaders"
+import { FEED_PAGE_SIZE, pageParams } from "../community/feed-pages"
 
 type InicioClient = SupabaseClient<Database>
 
@@ -118,21 +119,23 @@ export async function loadPrimaryCommunity(supabase: InicioClient): Promise<Prim
   }
 }
 
-/** Quantas publicações a prévia do Início lê (mostra 3; conta novidade sobre todas). */
-export const COMMUNITY_PREVIEW_READ = COUNT_CAP
+/** Quantas publicações a primeira página do feed da cidade lê. */
+export const CITY_FEED_PAGE_SIZE = FEED_PAGE_SIZE
 
-export async function loadCommunityFeed(
+// O feed da cidade (lote 5, N2): publicações da localidade da pessoa sem grupo
+// e sem vila, na migration 20261024100000. A regra de leitura mora no servidor
+// (função do banco), como nos outros feeds — a tela nunca filtra escopo por
+// conta própria, porque filtro de cliente é filtro que se contorna.
+export async function loadCityFeed(
   supabase: InicioClient,
-  communityId: string,
+  localityId: string,
+  offset: number,
 ): Promise<FeedOutcome> {
   try {
-    // A prévia mostra 3, mas o selo "N novas" conta sobre o que foi lido: 50
-    // cobre o selo até o teto dele ("50+", hub-loaders COUNT_CAP) sem trazer a
-    // comunidade inteira (350 publicações na Vila Ajuricaba antes deste teto).
-    const { data, error: feedError } = await supabase.rpc("feed_community", {
-      p_community_id: communityId,
+    const { data, error: feedError } = await supabase.rpc("feed_locality", {
+      p_locality_id: localityId,
       p_order: "recent",
-      p_limit: COMMUNITY_PREVIEW_READ,
+      ...pageParams(offset),
     })
 
     if (feedError) {
