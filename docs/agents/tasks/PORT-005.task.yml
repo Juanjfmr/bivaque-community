@@ -56,3 +56,49 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# ── Evidência PORT-005 (frente C), 23/10/2026 ─────────────────────────────────
+# Branch codex/entrada-cidade. Sem push, sem merge, sem instalar pacote.
+#
+# RODADO NESTA SESSÃO
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit            -> verde, sem saída
+# npx pnpm@11.18.0 exec vitest run tests/unit/onboarding   -> 12 arquivos, 85 testes, 0 falhas
+# npx pnpm@11.18.0 exec biome check <arquivos alterados>   -> 41 arquivos, nenhum ajuste pendente
+# node --test tests/scope/design-tokens.test.mjs tests/scope/prancha-coverage.test.mjs tests/scope/navigation.test.mjs
+#                                                          -> 15/15
+#
+# NÃO EXECUTADOS POR MIM (máquina compartilhada, quatro frentes em paralelo). O coordenador roda,
+# uma frente por vez, no estado sem seed:
+#   npx supabase db reset --local --no-seed
+#   npx pnpm@11.18.0 test:db
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/onboarding-cidade-bemvindas.spec.ts tests/e2e/journey-entrar-e-ser-admitido.spec.ts tests/e2e/two-localities.spec.ts tests/e2e/link-crawl.spec.ts --workers=1
+#   node scripts/port/capture-entry.mjs
+#
+# MIGRATION: 20261023110000_member_entry_moments.sql (tabela do dono, CHECK de coerência,
+# RLS ligada e forçada, destino como FK do catálogo, purga da conta).
+# PGTAP: supabase/tests/entry-moments.sql, 19 asserções — coerência dos três momentos, destino
+# fora do catálogo, RLS do dono positiva e negativa, escrita do cliente negada, purga.
+#
+# DECISÃO REGISTRADA (reuso x duplicação): o momento Saindo NÃO chama declare_locality_transfer na
+# entrada. A função troca o vínculo current para a cidade de DESTINO na hora; no protótipo quem
+# sai ainda mora na cidade escolhida (state.homeCity = cidade; state.dest é separado). O que se
+# reusa é provision_member_locality (a casa nos três momentos) e o catálogo localities como único
+# vocabulário de cidade. A transferência segue sendo o mecanismo de mudança pelo perfil.
+#
+# DIFERENÇAS DO PROTÓTIPO: cidade e destino são busca + lista, e não md-outlined-select (catálogo
+# nacional, 5.570 cidades); o cartão da turma não é renderizado (o schema do Next não tem turma
+# automática — não se inventa cohort); foto/Força/interesses saíram da entrada e perfil/ desvia
+# para a cidade.
+#
+# CARGA NÃO COBERTA: a Início ainda não mostra o plano de chegada/saída; o momento está guardado
+# e é de lá que ele vai ler (o cartão aponta para /inicio, como no protótipo).
+#
+# TESTE REMOVIDO, E POR QUÊ: tests/unit/onboarding/interest-options-require-verification.test.ts
+# provava o achado MEDIUM de 22/09/2026 sobre loadInterestOptionsAction (perfil/perfil-actions.ts),
+# que lia grupos de qualquer cidade com service_role conferindo só a sessão. Com interesses fora da
+# entrada, a action e o teste saíram juntos. O caminho de interesses que sobrevive é o do perfil
+# (app/(shell)/profile/interests-actions.ts): ele lê a localidade da própria membership no servidor,
+# nunca do cliente, e a RPC recusa grupo fora da cidade do chamador.
