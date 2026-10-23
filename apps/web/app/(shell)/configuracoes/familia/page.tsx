@@ -273,9 +273,8 @@ export default function ConfiguracoesFamiliaPage() {
                   </p>
                 ) : null}
                 <p className="mt-2 text-xs text-muted">
-                  O código também foi enviado por e-mail. Esta é a única vez que ele aparece aqui: o
-                  banco guarda só o hash, então recarregar a página não o traz de volta. Se perder,
-                  use Reenviar.
+                  O código também foi enviado por e-mail. Ele só aparece aqui agora: se sair desta
+                  página, ele não volta. Se perder, use Reenviar.
                 </p>
               </div>
             )}
