@@ -4,12 +4,15 @@ import { provisionErrorMessage, welcomeBlocks } from "web/lib/onboarding/entry-m
 // PORT-005 (lote 4 da entrada): o que as boas-vindas dizem em cada momento e a
 // tradução dos códigos do `provision`. As frases são as do protótipo
 // (`renderEntryWelcome` e `entryFinish`); o teste é o que impede que elas
-// derivem sem alguém decidir.
+// derivem sem alguém decidir — inclusive a única exceção deliberada: o lead de
+// "Chegando" e de "Saindo" não promete mais um plano pronto, porque a Início
+// ainda não mostra o plano (divergência registrada no contrato PORT-005).
 
 describe("welcomeBlocks", () => {
-  it("chegando: plano de chegada com a cidade escolhida", () => {
+  it("chegando: a chegada declarada, sem prometer plano que a Início não mostra", () => {
     const blocks = welcomeBlocks({ destinationCity: null, homeCity: "Manaus", moment: "arriving" })
-    expect(blocks.lead).toBe("Seu plano de chegada a Manaus já está pronto.")
+    expect(blocks.lead).toBe("Você marcou sua chegada a Manaus.")
+    expect(blocks.lead).not.toMatch(/plano .* pronto/)
     expect(blocks.tiles).toEqual([
       {
         description: "Moradia, escola, saúde e mudança, na ordem.",
@@ -20,13 +23,14 @@ describe("welcomeBlocks", () => {
     ])
   })
 
-  it("saindo: plano de saída com a cidade de destino", () => {
+  it("saindo: a saída declarada para a cidade de destino", () => {
     const blocks = welcomeBlocks({
       destinationCity: "Brasília",
       homeCity: "Manaus",
       moment: "leaving",
     })
-    expect(blocks.lead).toBe("Seu plano de saída para Brasília já está pronto.")
+    expect(blocks.lead).toBe("Você marcou sua saída para Brasília.")
+    expect(blocks.lead).not.toMatch(/plano .* pronto/)
     expect(blocks.tiles[0]?.title).toBe("Ver o plano de saída")
     expect(blocks.tiles[0]?.href).toBe("/inicio")
   })

@@ -7,6 +7,13 @@
 // As frases são as do protótipo, palavra por palavra
 // (prototypes/bivaque-html/src/features/entry/arrive.js): `renderEntryCity` para
 // os rótulos e `renderEntryWelcome` para o lead e os cartões.
+//
+// Uma exceção, decidida pelo coordenador em 23/10/2026: o lead de "Chegando" e
+// de "Saindo" no protótipo afirma um plano pronto ("Seu plano de chegada a X já
+// está pronto.") e a Início do Next ainda não mostra esse plano. Prometer o que
+// não existe é o defeito; a frase passou a afirmar só o que a pessoa declarou, e
+// o texto original está registrado no contrato PORT-005 para voltar quando a
+// Início abrir o momento num cartão próprio.
 
 import type { EntryMoment } from "./provision-validation"
 
@@ -82,7 +89,10 @@ export function welcomeBlocks(view: WelcomeView): WelcomeBlocks {
 
   if (moment === "arriving") {
     return {
-      lead: `Seu plano de chegada a ${homeCity} já está pronto.`,
+      // Protótipo: "Seu plano de chegada a X já está pronto." A Início ainda não
+      // usa o momento — o plano não existe. A frase afirma só o que a pessoa
+      // declarou na tela anterior.
+      lead: `Você marcou sua chegada a ${homeCity}.`,
       tiles: [
         {
           icon: "map",
@@ -96,7 +106,8 @@ export function welcomeBlocks(view: WelcomeView): WelcomeBlocks {
 
   if (moment === "leaving" && destinationCity !== null) {
     return {
-      lead: `Seu plano de saída para ${destinationCity} já está pronto.`,
+      // Protótipo: "Seu plano de saída para X já está pronto." Mesma razão acima.
+      lead: `Você marcou sua saída para ${destinationCity}.`,
       tiles: [
         {
           icon: "map",
