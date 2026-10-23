@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useRef, useState } from "react"
 import { normalizeInviteCode } from "../../../lib/convite/code"
+import { ACCOUNT_STEP_FIELDS, CODE_STEP_FIELDS, stageError } from "../../../lib/convite/form-error"
 import { EntryError } from "../../components/entry/entry-error"
 import { MaterialCheckbox } from "../../components/material/checkbox"
 import { MaterialFilledButton } from "../../components/material/filled-button"
@@ -140,7 +141,7 @@ export function InviteForm({ initialCode }: Readonly<{ initialCode: string }>) {
           required
           value={code}
         />
-        <EntryError />
+        <EntryError>{stageError(error, errorField, CODE_STEP_FIELDS)}</EntryError>
         <MaterialFilledButton disabled={busy} type="submit">
           {busy ? "Conferindo..." : "Continuar"}
         </MaterialFilledButton>
@@ -243,7 +244,7 @@ export function InviteForm({ initialCode }: Readonly<{ initialCode: string }>) {
         }}
       />
 
-      <EntryError>{errorField === "consent" ? error : null}</EntryError>
+      <EntryError>{stageError(error, errorField, ACCOUNT_STEP_FIELDS)}</EntryError>
       <MaterialFilledButton disabled={busy} type="submit">
         {busy ? "Criando sua conta..." : "Aceitar convite"}
       </MaterialFilledButton>

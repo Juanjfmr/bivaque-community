@@ -4,8 +4,14 @@ import { describe, expect, it } from "vitest"
 
 // PORT-006 (lote 4 da entrada): a tela /convite por contrato de fonte, como as
 // demais varreduras de tests/unit/ui (o vitest não monta .tsx de apps/web). O
-// que se prova aqui é a decisão que quebra em silêncio: a ordem código → conta,
-// os textos do protótipo e o fato de a conta não nascer no navegador.
+// que se prova aqui é o que é contrato de arquivo: a casca da PORT-002 e o
+// texto que a tela mostra.
+//
+// As decisões de COMPORTAMENTO saíram daqui na correção da revisão
+// independente: a ordem das chamadas ao banco é provada em
+// invite-actions.test.ts e invite-provision.test.ts, e o lugar do erro é
+// provado em invite-form.test.ts. Procurar "NO_LINK" ou comparar posição de
+// texto no arquivo não provava nenhuma das duas.
 const DIR = join(process.cwd(), "apps", "web", "app", "(preauth)", "convite")
 const page = readFileSync(join(DIR, "page.tsx"), "utf8")
 const form = readFileSync(join(DIR, "invite-form.tsx"), "utf8")
@@ -60,24 +66,11 @@ describe("formulário", () => {
 })
 
 describe("ações do servidor", () => {
-  it("valida o convite antes de criar a conta", () => {
-    const previewIndex = actions.indexOf("previewFamilyInviteCode")
-    const signUpIndex = actions.indexOf("signUp")
-    expect(previewIndex).toBeGreaterThan(-1)
-    expect(signUpIndex).toBeGreaterThan(previewIndex)
-  })
-
   it("grava o aceite no servidor e não aceita consentimento só do cliente", () => {
     expect(actions).toContain("record_consent_acceptance")
     expect(actions).toContain("p_user_id: userId")
     // O id nunca vem do formulário.
     expect(actions).not.toMatch(/formData\.get\("user/)
-  })
-
-  it("fracasso depois do cadastro não vira conta órfã silenciosa", () => {
-    // A conta nasce antes do vínculo: quando o aceite falha, a tela diz que a
-    // conta existe, em vez de fingir que nada aconteceu.
-    expect(actions).toContain("NO_LINK")
   })
 
   it("quem volta do link de confirmação aceita sem criar outra conta", () => {
@@ -90,12 +83,6 @@ describe("ações do servidor", () => {
     expect(provision).toContain('rpc("family_invite_code_accept"')
     expect(provision).toContain('"family_accept_holder_locality"')
     expect(provision).toContain("provisionMember")
-  })
-
-  it("todo digest vai embrulhado para o PostgREST", () => {
-    expect(provision).toContain("byteaDigestParam(input.codeHash)")
-    expect(provision).toContain("byteaDigestParam(input.originDigest)")
-    expect(actions).toContain("inviteCodeHash(code)")
   })
 
   it("lê o status do banco, não o código de erro de uma exceção", () => {
