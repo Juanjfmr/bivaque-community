@@ -3100,6 +3100,19 @@ export type Database = {
         }
         Returns: string
       }
+      provision_member_entry: {
+        Args: {
+          p_arrival_date?: string
+          p_consent_version: number
+          p_departure_date?: string
+          p_destination_locality_id?: string
+          p_display_name: string
+          p_locality_id: string
+          p_moment?: Database["public"]["Enums"]["entry_moment"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       provision_member_locality: {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: undefined
