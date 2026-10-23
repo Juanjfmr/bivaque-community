@@ -19,10 +19,20 @@ export default async function ConvitePage({ searchParams }: ConvitePagePropertie
   const params = await searchParams
   const raw = params["codigo"]
   const initialCode = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "")
+  // Os links antigos (`/onboarding?invite=<token>`, de convites criados antes do
+  // código) chegam aqui com `?legado=1`, sem o token: o convite novo vem com
+  // código, e quem tem só o link antigo precisa pedir o reenvio (PORT-004).
+  const isLegacyLink = params["legado"] === "1"
 
   return (
     <EntryShell backHref="/login">
       <main>
+        {isLegacyLink ? (
+          <p className="en-hint" role="status">
+            Este link de convite mudou. Peça a quem convidou para reenviar o convite: ele agora
+            chega com um código.
+          </p>
+        ) : null}
         <InviteForm initialCode={initialCode} />
       </main>
     </EntryShell>

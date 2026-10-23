@@ -144,6 +144,7 @@ test.describe("family invite journey", () => {
     // token that only this old address knew how to read.
     await page.waitForURL(/\/convite\?legado=1$/)
     await expect(page).not.toHaveURL(/invite=/)
+    await expect(page.getByRole("status")).toContainText("Este link de convite mudou.")
   })
 })
 
