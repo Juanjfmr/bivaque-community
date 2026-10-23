@@ -4,7 +4,7 @@ import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { log } from "../../../lib/logger"
-import { readDocumentPaths } from "../../../lib/onboarding/document-status"
+import { readDocumentPaths, readDocumentStatus } from "../../../lib/onboarding/document-status"
 import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
@@ -187,23 +187,62 @@ export async function uploadVerificationDocumentAction(
     return { ok: false, error: "Não foi possível enviar o arquivo agora. Tente novamente." }
   }
 
-  const { error: rpcError } = await supabase.rpc("submit_verification_document", {
-    p_user_id: userId,
-    p_storage_object_path: storageObjectPath,
-    p_mime_type: file.type,
-  })
+  // Com um documento já em análise, o envio é uma troca: a tabela admite uma
+  // única análise pendente por pessoa (índice único), e a função de troca
+  // substitui a linha em vez de falhar com 23505. Sem documento em análise, é o
+  // envio normal. A validação de tipo e tamanho, o bucket e as policies são os
+  // mesmos nos dois caminhos; o que muda é a função que registra.
+  const currentDocument = await readDocumentStatus(supabase, userId)
+  const isReplacement = currentDocument.situation === "in_review"
 
-  if (rpcError) {
+  let failed = false
+  let errorCode: string | undefined
+  let supersededPath: string | null = null
+
+  if (isReplacement) {
+    const { data, error } = await supabase.rpc("replace_verification_document", {
+      p_user_id: userId,
+      p_storage_object_path: storageObjectPath,
+      p_mime_type: file.type,
+    })
+    failed = error !== null
+    errorCode = error?.code
+    supersededPath = data?.[0]?.replaced_storage_object_path ?? null
+  } else {
+    const { error } = await supabase.rpc("submit_verification_document", {
+      p_user_id: userId,
+      p_storage_object_path: storageObjectPath,
+      p_mime_type: file.type,
+    })
+    failed = error !== null
+    errorCode = error?.code
+  }
+
+  if (failed) {
     await supabase.storage.from(DOCUMENT_BUCKET).remove([storageObjectPath])
     log.error("verification document submission failed", {
       user_id: userId,
-      code: rpcError.code,
+      code: errorCode,
     })
 
-    if (rpcError.code === "23505") {
+    if (errorCode === "23505") {
       return { ok: false, error: "Já existe um documento em análise. Aguarde a decisão." }
     }
     return { ok: false, error: "Não foi possível registrar o envio agora. Tente novamente." }
+  }
+
+  // O arquivo substituído sai do bucket na hora: a linha dele já foi removida
+  // pelo banco, e a varredura de órfãos só alcança objetos com mais de uma hora.
+  // A falha aqui não desfaz o envio — o objeto fica privado e expira com o
+  // resto —, então ela é registrada e o envio segue.
+  if (supersededPath !== null && supersededPath !== storageObjectPath) {
+    const { error: removeError } = await supabase.storage
+      .from(DOCUMENT_BUCKET)
+      .remove([supersededPath])
+
+    if (removeError) {
+      log.warn("superseded verification document not removed", { user_id: userId })
+    }
   }
 
   return { ok: true }

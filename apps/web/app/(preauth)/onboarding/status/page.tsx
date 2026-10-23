@@ -9,6 +9,7 @@ import {
   pendingLead,
   pendingTimeline,
 } from "../../../../lib/onboarding/elegibility"
+import { statusScreen } from "../../../../lib/onboarding/screens"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { EntryShell } from "../../../components/entry/entry-shell"
 import { EntryHeading } from "../components/entry-heading"
@@ -26,21 +27,24 @@ interface OutcomeRpcRow {
 
 // PORT-004 (lote 4, frente B): a análise pendente como `renderEntryPending`.
 //
-// A tela é só de quem está em análise: confirmado vai para a cidade, e o resto
-// (não localizado, fonte fora do ar) é resultado na própria `/onboarding` —
-// antes esta rota desenhava versões antigas desses dois estados, o que fazia a
-// mesma situação aparecer com dois desenhos diferentes.
+// A tela é de quem está em análise — inclusive de quem teve o documento
+// recusado pela equipe, que é o estado "A equipe pediu outro documento." do
+// protótipo. Confirmado vai para a cidade, e o resto (não localizado, fonte
+// fora do ar) é resultado na própria `/onboarding`. Por isso o documento é lido
+// ANTES do desvio: `rejected` sozinho não distingue a recusa da fonte oficial
+// da recusa manual, e desviar primeiro mandava quem teve o arquivo recusado
+// para "Não localizamos o vínculo", sem o caminho de enviar outro.
 //
 // A linha do tempo tem os quatro passos do protótipo. O passo do documento
 // depende da situação real no banco (`readDocumentStatus`): sem documento, o
 // passo atual é a consulta feita pela fonte oficial; com documento em análise,
 // ele vira "Documento enviado" com a data do envio.
 //
-// O bloco de reenvio só aparece quando há o que enviar: o servidor recusa um
-// segundo documento enquanto um está em análise (`submit_verification_document`
-// devolve 23505), então oferecer "Enviar outro documento" aqui seria um caminho
-// que sempre falha. Depois de uma recusa, a pessoa cai na tela do documento,
-// que é onde o reenvio acontece.
+// O bloco de arquivo segue o protótipo: "Enviar um documento" quando não há
+// nada enviado, "Enviar outro documento" quando a equipe recusou o arquivo ou
+// quando um ainda está na fila. A troca em análise usa o mesmo caminho de envio
+// (`/onboarding/documento`), e o servidor substitui o anterior em vez de abrir
+// uma segunda análise.
 export default async function OnboardingStatusPage() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -67,7 +71,7 @@ export default async function OnboardingStatusPage() {
   }
 
   const serviceClient = createServiceClient()
-  const [outcomeResult, membershipResult, noticeResult] = await Promise.all([
+  const [outcomeResult, membershipResult, noticeResult, document] = await Promise.all([
     serviceClient.rpc("read_verification_status", { p_user_id: user.id }),
     serviceClient
       .from("locality_memberships")
@@ -82,6 +86,7 @@ export default async function OnboardingStatusPage() {
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle(),
+    readDocumentStatus(serviceClient, user.id),
   ])
 
   if (outcomeResult.error || membershipResult.error || noticeResult.error) {
@@ -93,23 +98,23 @@ export default async function OnboardingStatusPage() {
   }
 
   const status = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0]?.status ?? null
+  const screen = statusScreen({ status, document: document.situation })
 
-  if (status === "verified") {
+  if (screen.screen === "locality") {
     redirect("/onboarding/locality")
   }
-  if (status !== "pending") {
+  if (screen.screen === "result") {
     redirect("/onboarding")
   }
 
-  const document = await readDocumentStatus(serviceClient, user.id)
-
-  if (document.situation === "needs_replacement") {
-    redirect("/onboarding/documento")
-  }
-
+  const { askedForReplacement } = screen
   const hasDocument = document.situation === "in_review" || document.situation === "approved"
+  const canSendAnotherDocument =
+    askedForReplacement || document.situation === "in_review" || document.situation === "none"
+  const documentBlockTitle =
+    hasDocument || askedForReplacement ? "Enviar outro documento" : "Enviar um documento"
   const steps = pendingTimeline({
-    askedForReplacement: false,
+    askedForReplacement,
     email: user.email ?? "",
     uploadedAt: hasDocument ? document.uploadedAt : null,
   })
@@ -117,7 +122,7 @@ export default async function OnboardingStatusPage() {
   return (
     <EntryShell action={<EntrySignOut />}>
       <div className="en-form">
-        <EntryHeading>{pendingHeadline({ askedForReplacement: false, hasDocument })}</EntryHeading>
+        <EntryHeading>{pendingHeadline({ askedForReplacement, hasDocument })}</EntryHeading>
         <p className="en-lead">{pendingLead(hasDocument)}</p>
 
         <ol className="en-time">
@@ -132,12 +137,13 @@ export default async function OnboardingStatusPage() {
           ))}
         </ol>
 
-        {!hasDocument && (
+        {canSendAnotherDocument && (
           <Link className="en-file" href="/onboarding/documento">
             <MaterialIcon name="upload" />
             <span>
-              <b>Enviar um documento</b>
+              <b>{documentBlockTitle}</b>
               PDF, JPG ou PNG, até 10 MB.
+              {hasDocument ? " O novo substitui o que está na fila." : ""}
             </span>
           </Link>
         )}

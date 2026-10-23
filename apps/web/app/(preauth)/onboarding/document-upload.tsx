@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { type FormEvent, useRef, useState, useTransition } from "react"
+import type { DocumentFormMode } from "../../../lib/onboarding/screens"
 import { EntryError } from "../../components/entry/entry-error"
 import { MaterialFilledButton } from "../../components/material/filled-button"
 import { MaterialIcon } from "../../components/material/material-icon"
@@ -17,15 +18,18 @@ import { uploadVerificationDocumentAction } from "./document-actions"
 // cartão do HeroUI, e o envio confirmado leva para a análise pendente — que é
 // o estado real do servidor depois do registro ("Recebemos seu documento.").
 //
+// O mesmo bloco serve os três casos de `documentFormMode`: primeiro envio,
+// recusa da equipe e troca durante a análise. Nos dois últimos o rótulo é
+// "Enviar outro documento", como no protótipo, e a action decide no servidor
+// se o arquivo entra ou substitui o que está na fila.
+//
 // Diferença registrada: o protótipo envia no `change` do campo de arquivo. Aqui
 // o arquivo é escolhido no mesmo bloco, mas o envio é um segundo gesto
 // explícito ("Enviar para análise"), para uma escolha errada não subir sozinha.
 
-export type DocumentUploadMode = "upload" | "replace"
-
-export default function DocumentUpload({ mode }: Readonly<{ mode: DocumentUploadMode }>) {
+export default function DocumentUpload({ mode }: Readonly<{ mode: DocumentFormMode }>) {
   const router = useRouter()
-  const isReplace = mode === "replace"
+  const replaces = mode !== "upload"
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -60,7 +64,7 @@ export default function DocumentUpload({ mode }: Readonly<{ mode: DocumentUpload
       <label className="en-file" htmlFor="verification-document">
         <MaterialIcon name="upload" />
         <span>
-          <b>{isReplace ? "Enviar outro documento" : "Enviar um documento"}</b>
+          <b>{replaces ? "Enviar outro documento" : "Enviar um documento"}</b>
           PDF, JPG ou PNG, até 10 MB.
         </span>
         <input
@@ -86,7 +90,7 @@ export default function DocumentUpload({ mode }: Readonly<{ mode: DocumentUpload
         id="document-submit"
         onClick={submit}
       >
-        {pending ? "Enviando…" : isReplace ? "Enviar novo arquivo" : "Enviar para análise"}
+        {pending ? "Enviando…" : replaces ? "Enviar novo arquivo" : "Enviar para análise"}
       </MaterialFilledButton>
     </form>
   )

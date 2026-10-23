@@ -145,6 +145,16 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
     ).toBeVisible()
     await expect(page.getByRole("listitem").filter({ hasText: "Documento enviado" })).toBeVisible()
 
+    // PORT-004, achado 2 da revisão: com o arquivo na fila, o bloco de troca
+    // continua na tela ("Enviar outro documento", como no protótipo) e leva ao
+    // envio de substituição. Não se envia o segundo arquivo aqui: o mesmo
+    // documento em análise segue para a decisão do operador logo abaixo.
+    await expect(page.getByRole("link", { name: /Enviar outro documento/ })).toBeVisible()
+    await expect(page.getByRole("link", { name: /Enviar outro documento/ })).toHaveAttribute(
+      "href",
+      "/onboarding/documento",
+    )
+
     // "Avise-me quando liberar" grava a preferência e confirma só por e-mail
     // (não há push no Next). Recarregar prova que a linha ficou no banco: o
     // estado inicial vem do servidor, não da memória da tela.

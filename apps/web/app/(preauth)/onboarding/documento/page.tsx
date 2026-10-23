@@ -2,6 +2,7 @@ import { createServerClient as createSsrServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { readDocumentStatus } from "../../../../lib/onboarding/document-status"
+import { documentFormMode } from "../../../../lib/onboarding/screens"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { EntryShell } from "../../../components/entry/entry-shell"
 import { EntrySteps } from "../../../components/entry/entry-steps"
@@ -23,9 +24,15 @@ interface OutcomeRpcRow {
 // escolhido no próprio bloco.
 //
 // A guarda de servidor não muda: sem sessão vai para o login; quem já é membro
-// vai para a comunidade; quem foi confirmado vai para a cidade; quem está em
-// análise vai para o status; e quem não tem situação volta ao CPF. Quem teve o
-// documento recusado vê o pedido de outro arquivo.
+// vai para a comunidade; quem foi confirmado vai para a cidade; e quem não tem
+// situação volta ao CPF. As três situações de arquivo levam a textos
+// diferentes, e a forma vem de `documentFormMode`:
+// - sem documento: "Envie um documento." (recusa da fonte oficial, fonte fora
+//   do ar ou primeiro envio);
+// - documento recusado pela equipe: "A equipe pediu outro documento.";
+// - documento em análise: "Recebemos seu documento.", com a troca — o novo
+//   arquivo substitui o anterior na fila, sem abrir uma segunda análise.
+// Um documento aprovado não se envia de novo: volta para a linha do tempo.
 export default async function OnboardingDocumentPage() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -81,32 +88,36 @@ export default async function OnboardingDocumentPage() {
 
   const document = await readDocumentStatus(serviceClient, user.id)
 
-  // Com um documento em análise (ou já aprovado) não há o que enviar: a pessoa
-  // volta para a linha do tempo. Sem documento, a tela é o caminho do envio —
-  // inclusive para quem está em análise pela fonte oficial, que no protótipo
-  // recebe "Enviar um documento" na própria análise pendente
-  // (`renderEntryPending`). Antes esta guarda mandava todo `pending` para o
-  // status, e o bloco do protótipo não tinha para onde levar.
-  if (document.situation === "in_review" || document.situation === "approved") {
+  if (document.situation === "approved") {
     redirect("/onboarding/status")
   }
 
-  const isReplace = document.situation === "needs_replacement"
+  const mode = documentFormMode(document.situation)
+  const isReplace = mode === "replace"
+  const isInReview = mode === "in-review"
+
+  const heading = isReplace
+    ? "A equipe pediu outro documento."
+    : isInReview
+      ? "Recebemos seu documento."
+      : "Envie um documento."
+  const lead = isReplace
+    ? "Não foi possível ler o documento enviado. Envie outro que mostre o vínculo, como o contracheque ou a identidade militar."
+    : isInReview
+      ? "Se precisar corrigir, envie outro arquivo: o novo substitui o que está na fila de análise. A equipe responde em até 2 dias úteis."
+      : "Envie um documento que mostre o vínculo, como o contracheque ou a identidade militar. A equipe responde em até 2 dias úteis."
 
   return (
-    <EntryShell action={<EntrySignOut />} backHref="/onboarding">
+    <EntryShell
+      action={<EntrySignOut />}
+      backHref={isReplace || isInReview ? "/onboarding/status" : "/onboarding"}
+    >
       <div className="en-form">
         <EntrySteps label="Elegibilidade" step={2} />
-        <EntryHeading>
-          {isReplace ? "A equipe pediu outro documento." : "Envie um documento."}
-        </EntryHeading>
-        <p className="en-lead">
-          {isReplace
-            ? "Não foi possível ler o documento enviado. Envie outro que mostre o vínculo, como o contracheque ou a identidade militar."
-            : "Envie um documento que mostre o vínculo, como o contracheque ou a identidade militar. A equipe responde em até 2 dias úteis."}
-        </p>
+        <EntryHeading>{heading}</EntryHeading>
+        <p className="en-lead">{lead}</p>
 
-        <DocumentUpload mode={isReplace ? "replace" : "upload"} />
+        <DocumentUpload mode={mode} />
       </div>
     </EntryShell>
   )
