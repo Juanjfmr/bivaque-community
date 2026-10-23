@@ -1,4 +1,4 @@
-task_id: COM-A1
+task_id: COM-002
 objective: >
   Lote 5, tarefa A1: o ciclo da pergunta segue o prototipo. Pergunta de 8 a 300 caracteres; filtros Para ajudar,
   Resolvidas e Minhas; a autoria edita e exclui pergunta e resposta, com marca editada e edited_at; resolucao dos
@@ -25,7 +25,7 @@ allowed_paths:
   - tests/unit/
   - tests/e2e/
   - scripts/port/
-  - docs/agents/tasks/COM-A1.task.yml
+  - docs/agents/tasks/COM-002.task.yml
 forbidden:
   - push, merge, deploy, db push ou --linked
   - db reset fora da fila (o unico permitido e node scripts/agents/prova-fila.mjs -- npx supabase db reset --local)

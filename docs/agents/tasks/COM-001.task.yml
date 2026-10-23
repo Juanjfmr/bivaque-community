@@ -1,4 +1,4 @@
-task_id: COM-N2
+task_id: COM-001
 objective: >
   Lote 5, tarefa N2: o feed da cidade passa para o Inicio, como no prototipo, com uma leitura nova no banco
   (hoje so ha feed por vila e por grupo) e a regra de leitura publicacoes da cidade da pessoa sem grupo e sem vila
@@ -23,7 +23,7 @@ allowed_paths:
   - tests/unit/
   - tests/e2e/
   - scripts/port/
-  - docs/agents/tasks/COM-N2.task.yml
+  - docs/agents/tasks/COM-001.task.yml
 forbidden:
   - push, merge, deploy, db push ou --linked
   - db reset fora da fila (o unico permitido e node scripts/agents/prova-fila.mjs -- npx supabase db reset --local)

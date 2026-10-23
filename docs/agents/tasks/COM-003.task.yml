@@ -1,4 +1,4 @@
-task_id: COM-B1
+task_id: COM-003
 objective: >
   Lote 5, tarefa B1: a base do grupo segue o prototipo. Rotulos Aberto e Fechado com a explicacao de Aberto;
   regras; aviso por grupo Tudo, Destaques ou Nada; publicacao fixada pelo admin no topo do grupo; listas Proximos
@@ -20,7 +20,7 @@ allowed_paths:
   - tests/unit/
   - tests/e2e/
   - scripts/port/
-  - docs/agents/tasks/COM-B1.task.yml
+  - docs/agents/tasks/COM-003.task.yml
 forbidden:
   - push, merge, deploy, db push ou --linked
   - db reset fora da fila (o unico permitido e node scripts/agents/prova-fila.mjs -- npx supabase db reset --local)
