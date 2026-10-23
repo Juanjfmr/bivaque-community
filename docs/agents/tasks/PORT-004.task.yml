@@ -252,4 +252,67 @@ closure:
 # - npx pnpm@11.18.0 test:scope -> 129 testes, todos verdes.
 # NAO executado aqui, por regra da tarefa: db reset, test:db, db:lint, gate, build e Playwright.
 # A migration continua exigindo db reset --local --no-seed antes de test:db.
+#
+# Terceira correcao da revisao (desenho do coordenador, 22/10/2026). Branch
+# codex/entrada-elegibilidade.
+#
+# P1 - deadlock entre duas trocas da mesma pessoa e a decisao do operador.
+# - supabase/migrations/20261023100100_verification_document_replacement.sql: a primeira
+#   instrucao depois das validacoes de entrada de replace_verification_document e
+#   perform pg_advisory_xact_lock(hashtextextended(verification_document: concatenado com
+#   p_user_id::text, 0)). Sem ela a segunda troca esperava a linha do documento antigo, que
+#   a primeira ja tinha apagado, e em seguida pedia a linha do resultado enquanto o operador
+#   segurava a do documento novo: o delete e a decisao ficavam esperando um pelo outro
+#   (40P01). Com a trava, a segunda troca espera o commit da primeira sem segurar linha
+#   nenhuma, encontra o documento NOVO pendente e segue a mesma ordem da decisao (documento,
+#   depois resultado). A chave e por pessoa, entao trocas de pessoas diferentes seguem em
+#   paralelo; a trava e de transacao e sai no commit/rollback. O resto da ordem de travas
+#   ficou como estava, e decide_verification_document nao foi alterada.
+# - pgTAP: supabase/tests/verification-document-replacement.sql, assert da trava. Prova que
+#   existe uma trava advisory a mais no pg_locks deste backend DEPOIS da chamada, no estilo
+#   dos testes 29 e 30 de family-invite-code.sql (branch codex/entrada-convite). O preparo -
+#   set_config com a contagem anterior e a chamada - fica em bloco DO com perform: select
+#   solto imprime a linha do resultado e o leitor de TAP contaria ok a mais. O probe usa
+#   pessoa nova porque a trava e reentrante e nao criaria linha nova no pg_locks.
+#
+# P2 - a fila de remocao nasce na mesma transacao da troca.
+# - A migration grava o caminho substituido em private.verification_document_removals na
+#   MESMA transacao de replace_verification_document, com on conflict do nothing. A tabela
+#   passou a ser criada antes da funcao no mesmo arquivo; segue com RLS habilitada e forcada,
+#   sem privilegio para anon/authenticated e com grant so para service_role.
+# - Funcao nova complete_verification_document_removal(p_storage_object_path text), security
+#   definer, execute so service_role e idempotente: sem linha, nao faz nada. A action a chama
+#   quando storage.remove funciona; quando as duas tentativas falham, a linha simplesmente
+#   fica na fila.
+# - apps/web/app/(preauth)/onboarding/document-actions.ts: as duas tentativas de remocao
+#   continuam, e depois do sucesso a action apaga a linha da fila. O enqueue que ela fazia
+#   depois das duas tentativas saiu, junto com a RPC enqueue_verification_document_removal: a
+#   fila agora nasce no banco e a RPC perdeu o unico chamador (conferido no repositorio). A
+#   migration nao foi para producao, entao a troca nao deixa funcao orfa para tras.
+# - Falha da conclusao da fila nao derruba o envio: o objeto ja saiu do bucket e a linha fica
+#   para o worker, que precisa tratar objeto ausente como sucesso.
+# - supabase/database.generated.ts: complete_verification_document_removal entra na ordem
+#   alfabetica (depois de complete_event) e enqueue_verification_document_removal sai, no
+#   formato que o supabase gen types 2.107.0 gera para funcao void (Returns: undefined).
+# - pgTAP: 28 asserts (plan 21 -> 28). A troca com documento pendente deixa exatamente o
+#   caminho antigo na fila; complete_verification_document_removal apaga a linha (lives_ok e
+#   is_empty); a troca sem pendente nao enfileira nada; anon e authenticated nao executam
+#   replace_verification_document nem complete_verification_document_removal (42501).
+# - tests/unit/onboarding/document-replacement-removal.test.ts continua com 5 casos, agora
+#   sobre complete_verification_document_removal: sucesso na primeira tentativa fecha a fila,
+#   sucesso na segunda fecha a fila, duas falhas nao chamam a conclusao, falha da conclusao
+#   nao derruba o envio, e sem arquivo substituido nem remocao nem conclusao acontecem.
+#
+# Cartao novo, fora desta entrega: VERIF-REMOVAL-WORKER - processar
+# private.verification_document_removals removendo o objeto do bucket e a linha, tratando
+# objeto ausente como sucesso. O coordenador abre o cartao; tools/backend-kanban nao esta
+# nos allowed_paths desta correcao.
+#
+# Verificado nesta sessao:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> exit 0.
+# - npx pnpm@11.18.0 exec vitest run tests/unit -> 170 arquivos, 1532 testes, todos verdes.
+# - npx pnpm@11.18.0 exec biome check nos 2 arquivos TS tocados -> exit 0.
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos verdes.
+# NAO executado aqui, por regra da tarefa: db reset, test:db, db:lint, gate, build e
+# Playwright. A migration continua exigindo db reset --local --no-seed antes de test:db.
 
