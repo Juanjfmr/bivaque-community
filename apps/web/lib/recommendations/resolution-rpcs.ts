@@ -14,7 +14,7 @@ export interface ResolutionRpcs {
   mark_recommendation_reply_resolved: {
     args: { p_request_id: string; p_reply_id: string }
   }
-  clear_recommendation_resolved_reply: {
+  mark_recommendation_resolved: {
     args: { p_request_id: string }
   }
   reopen_recommendation: {

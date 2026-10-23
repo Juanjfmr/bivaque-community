@@ -17,15 +17,16 @@ import { Skeleton } from "../bivaque/skeleton"
 import { AskIndication } from "./ask-indication"
 import { IndicationItem } from "./indication-item"
 
-// A memória da cidade (ADR-20260925-memoria-de-indicacoes): pedir no topo,
-// depois o que já foi pedido — recentes, sem resposta (para quem quer ajudar)
-// e resolvidas (a memória propriamente). Mesma peça na rota /indicacoes e na
-// vista Indicações da Comunidade.
+// A memória da cidade (ADR-20260925-memoria-de-indicacoes; lote 5, ADR-20261023
+// seção 2): pedir no topo, depois o que já foi pedido. Os filtros são os do
+// protótipo — Para ajudar (padrão, pergunta aberta de outra pessoa), Resolvidas e
+// Minhas — e a autoria é filtrada no servidor (`p_mine`). Mesma peça na rota
+// /indicacoes e na vista Indicações da Comunidade.
 
 const FILTERS = [
-  { key: "recentes", label: "Recentes", resolved: null },
-  { key: "sem-resposta", label: "Sem resposta", resolved: false },
-  { key: "resolvidas", label: "Resolvidas", resolved: true },
+  { key: "ajudar", label: "Para ajudar", resolved: false, mine: false },
+  { key: "resolvidas", label: "Resolvidas", resolved: true, mine: null },
+  { key: "minhas", label: "Minhas", resolved: null, mine: true },
 ] as const
 
 type FilterKey = (typeof FILTERS)[number]["key"]
@@ -46,7 +47,7 @@ export function IndicationsPanel({
   autoFocusAsk?: boolean
   initialQuery?: string
 }) {
-  const [filter, setFilter] = useState<FilterKey>("recentes")
+  const [filter, setFilter] = useState<FilterKey>("ajudar")
   const [category, setCategory] = useState<IndicationCategory | null>(null)
   const [list, setList] = useState<ListState>({ kind: "loading" })
   const [loadingMore, setLoadingMore] = useState(false)
@@ -58,12 +59,13 @@ export function IndicationsPanel({
 
   const fetchPage = useCallback(
     async (offset: number) => {
-      const resolved = FILTERS.find((item) => item.key === filter)?.resolved ?? null
+      const active = FILTERS.find((item) => item.key === filter) ?? FILTERS[0]
       const supabase = createBrowserClient()
       return supabase.rpc("list_indications", {
         p_locality_id: localityId,
         ...(category ? { p_category: category } : {}),
-        ...(resolved === null ? {} : { p_resolved: resolved }),
+        ...(active.resolved === null ? {} : { p_resolved: active.resolved }),
+        ...(active.mine === null ? {} : { p_mine: active.mine }),
         p_limit: INDICATION_PAGE_SIZE,
         p_offset: offset,
       })
@@ -112,16 +114,19 @@ export function IndicationsPanel({
   }
 
   const emptyCopy =
-    filter === "sem-resposta"
-      ? { title: "Nenhum pedido esperando resposta", description: "Todo mundo foi atendido." }
+    filter === "ajudar"
+      ? {
+          title: "Ninguém esperando resposta",
+          description: "Você pode buscar uma indicação ou iniciar uma nova pergunta.",
+        }
       : filter === "resolvidas"
         ? {
-            title: "Nenhum pedido resolvido ainda",
+            title: "Nenhuma pergunta resolvida ainda",
             description: "Quando alguém marcar a resposta que resolveu, ela fica guardada aqui.",
           }
         : {
-            title: "Ninguém pediu indicação ainda",
-            description: `Seja a primeira pessoa a perguntar em ${cityName}.`,
+            title: "Você ainda não perguntou nada",
+            description: `Pergunte em uma frase para a comunidade de ${cityName}.`,
           }
 
   return (
@@ -182,6 +187,12 @@ export function IndicationsPanel({
 
       {list.kind === "done" && list.rows.length === 0 ? (
         <EmptyState title={emptyCopy.title} description={emptyCopy.description} />
+      ) : null}
+
+      {list.kind === "done" && filter === "ajudar" && list.rows.length > 0 ? (
+        <p className="text-sm text-ui-ink-2">
+          Perguntas sem resposta aparecem primeiro. Responder leva um minuto.
+        </p>
       ) : null}
 
       {list.kind === "done" && list.rows.length > 0 ? (

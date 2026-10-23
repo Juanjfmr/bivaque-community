@@ -6,8 +6,8 @@ import {
   type IndicationRow,
   indicationHref,
   indicationStatus,
+  indicationStatusLabel,
   relativeAge,
-  STATUS_LABELS,
 } from "../../../lib/indications/indications"
 
 // Um pedido na memória da cidade. O que importa ler de relance é a pergunta e,
@@ -47,7 +47,7 @@ export function IndicationItem({
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[status]}`}
         >
-          {STATUS_LABELS[status]}
+          {indicationStatusLabel(row)}
         </span>
       </div>
       <p

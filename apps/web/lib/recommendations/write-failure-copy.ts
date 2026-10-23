@@ -38,8 +38,11 @@ export const WRITE_FAILURE_COPY = {
   salvar_pedido: "Não foi possível salvar este pedido na sua lista. Tente novamente.",
   remover_pedido_salvo: "Não foi possível remover este pedido da sua lista. Tente novamente.",
   excluir_resposta: "Não foi possível excluir a resposta. Tente novamente.",
+  editar_resposta: "Não foi possível salvar a edição da resposta. Tente novamente.",
+  editar_pergunta: "Não foi possível salvar a edição da pergunta. Tente novamente.",
+  excluir_pergunta: "Não foi possível excluir a pergunta. Tente novamente.",
   marcar_resposta: "Não foi possível marcar a resposta como resolvida. Tente novamente.",
-  limpar_marca: "Não foi possível remover a marca de resolvido. Tente novamente.",
+  resolver_pergunta: "Não foi possível marcar a pergunta como resolvida. Tente novamente.",
   reabrir_pedido: "Não foi possível reabrir o pedido. Tente novamente.",
 } as const
 
