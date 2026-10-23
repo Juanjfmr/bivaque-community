@@ -39,12 +39,11 @@ export function shouldRecordSignupConsent(
 }
 
 /**
- * Hotfix de 22/10/2026 (PR #104, trazido para esta base): a conta criada pelo
- * Google não passa pelo formulário de cadastro, onde fica a linha do aceite, e
- * sem aceite gravado a entrada recusa a conferência do CPF — a pessoa ficava
- * presa. A conta que nunca aceitou nada vai, uma vez, à tela de aceite (o passo
- * "Aceite" do protótipo). Quem já aceitou qualquer versão segue: o aceite não
- * reaparece (ADR-20260907-consentimento-no-cadastro).
+ * Hotfix de 22/10/2026: a conta criada pelo Google não passa pelo formulário de
+ * cadastro, onde fica a linha do aceite, e sem aceite gravado a entrada recusa a
+ * conferência do CPF. A conta que nunca aceitou nada vai, uma vez, à tela de
+ * aceite (o passo "Aceite" do protótipo). Quem já aceitou qualquer versão segue:
+ * o aceite não reaparece (ADR-20260907-consentimento-no-cadastro).
  */
 export const CONSENT_STEP_PATH = "/consent"
 
