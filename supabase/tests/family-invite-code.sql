@@ -484,21 +484,27 @@ reset role;
 -- backend desta sessão DEPOIS do gate — uma trava de transação só é liberada no
 -- commit/rollback. Digests novos, para não coincidir com trava já tomada
 -- (a trava é reentrante e não criaria linha nova no pg_locks).
-select set_config(
-  'bivaque.invite_code_lock_probe',
-  (
-    select count(*)::text
-    from pg_catalog.pg_locks
-    where locktype = 'advisory'
-      and pid = pg_catalog.pg_backend_pid()
-  ),
-  false
-);
+-- As chamadas de preparo ficam em DO: um SELECT solto imprime a linha do
+-- resultado ("19", "ok"), e o leitor de TAP conta "ok" como teste a mais.
+do $$
+begin
+  perform set_config(
+    'bivaque.invite_code_lock_probe',
+    (
+      select count(*)::text
+      from pg_catalog.pg_locks
+      where locktype = 'advisory'
+        and pid = pg_catalog.pg_backend_pid()
+    ),
+    false
+  );
 
-select private.family_invite_code_attempt_gate(
-  decode(repeat('d1', 32), 'hex'),
-  extensions.digest(lower(trim('lock-probe@example.invalid')), 'sha256')
-);
+  perform private.family_invite_code_attempt_gate(
+    decode(repeat('d1', 32), 'hex'),
+    extensions.digest(lower(trim('lock-probe@example.invalid')), 'sha256')
+  );
+end;
+$$;
 
 select is(
   (
@@ -511,10 +517,14 @@ select is(
   'o gate trava pela origem e pelo e-mail'
 );
 
-select private.family_invite_code_attempt_gate(
-  decode(repeat('d2', 32), 'hex'),
-  null
-);
+do $$
+begin
+  perform private.family_invite_code_attempt_gate(
+    decode(repeat('d2', 32), 'hex'),
+    null
+  );
+end;
+$$;
 
 select is(
   (
