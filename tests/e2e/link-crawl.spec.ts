@@ -194,7 +194,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/onboarding/locality",
     porta: "FLUXO: proxy redireciona quem é verificado e ainda não escolheu cidade",
   },
-  { route: "/onboarding/perfil", porta: "FLUXO: passo seguinte à escolha da cidade" },
+  {
+    route: "/onboarding/perfil",
+    porta:
+      "FLUXO: redireciona para a tela de cidade — o passo de personalização saiu da entrada (PORT-005)",
+  },
   { route: "/onboarding/status", porta: "FLUXO: proxy e notificação de entrada recusada" },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding" },
   { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },

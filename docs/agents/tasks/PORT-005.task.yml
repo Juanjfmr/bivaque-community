@@ -27,6 +27,9 @@ allowed_paths:
   - supabase/database.generated.ts
   - tests/unit/onboarding/
   - tests/e2e/
+  # Autorizados pelo coordenador em 23/10/2026, na correção da revisão independente:
+  - apps/web/app/(shell)/profile/interests-actions.ts
+  - tests/unit/profile/
   - scripts/port/
   - docs/agents/tasks/PORT-005.task.yml
 forbidden:
@@ -56,3 +59,225 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# ── Evidência PORT-005 (frente C), 23/10/2026 ─────────────────────────────────
+# Branch codex/entrada-cidade. Sem push, sem merge, sem instalar pacote.
+#
+# RODADO NESTA SESSÃO
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit            -> verde, sem saída
+# npx pnpm@11.18.0 exec vitest run tests/unit/onboarding   -> 12 arquivos, 85 testes, 0 falhas
+# npx pnpm@11.18.0 exec biome check <arquivos alterados>   -> 41 arquivos, nenhum ajuste pendente
+# node --test tests/scope/design-tokens.test.mjs tests/scope/prancha-coverage.test.mjs tests/scope/navigation.test.mjs
+#                                                          -> 15/15
+#
+# NÃO EXECUTADOS POR MIM (máquina compartilhada, quatro frentes em paralelo). O coordenador roda,
+# uma frente por vez, no estado sem seed:
+#   npx supabase db reset --local --no-seed
+#   npx pnpm@11.18.0 test:db
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/onboarding-cidade-bemvindas.spec.ts tests/e2e/journey-entrar-e-ser-admitido.spec.ts tests/e2e/two-localities.spec.ts tests/e2e/link-crawl.spec.ts --workers=1
+#   node scripts/port/capture-entry.mjs
+#
+# MIGRATION: 20261023110000_member_entry_moments.sql (tabela do dono, CHECK de coerência,
+# RLS ligada e forçada, destino como FK do catálogo, purga da conta).
+# PGTAP: supabase/tests/entry-moments.sql, 19 asserções — coerência dos três momentos, destino
+# fora do catálogo, RLS do dono positiva e negativa, escrita do cliente negada, purga.
+#
+# DECISÃO REGISTRADA (reuso x duplicação): o momento Saindo NÃO chama declare_locality_transfer na
+# entrada. A função troca o vínculo current para a cidade de DESTINO na hora; no protótipo quem
+# sai ainda mora na cidade escolhida (state.homeCity = cidade; state.dest é separado). O que se
+# reusa é provision_member_locality (a casa nos três momentos) e o catálogo localities como único
+# vocabulário de cidade. A transferência segue sendo o mecanismo de mudança pelo perfil.
+#
+# DIFERENÇAS DO PROTÓTIPO: cidade e destino são busca + lista, e não md-outlined-select (catálogo
+# nacional, 5.570 cidades); o cartão da turma não é renderizado (o schema do Next não tem turma
+# automática — não se inventa cohort); foto/Força/interesses saíram da entrada e perfil/ desvia
+# para a cidade.
+#
+# CARGA NÃO COBERTA: a Início ainda não mostra o plano de chegada/saída; o momento está guardado
+# e é de lá que ele vai ler (o cartão aponta para /inicio, como no protótipo).
+#
+# TESTE REMOVIDO, E POR QUÊ: tests/unit/onboarding/interest-options-require-verification.test.ts
+# provava o achado MEDIUM de 22/09/2026 sobre loadInterestOptionsAction (perfil/perfil-actions.ts),
+# que lia grupos de qualquer cidade com service_role conferindo só a sessão. Com interesses fora da
+# entrada, a action e o teste saíram juntos. O caminho de interesses que sobrevive é o do perfil
+# (app/(shell)/profile/interests-actions.ts): ele lê a localidade da própria membership no servidor,
+# nunca do cliente, e a RPC recusa grupo fora da cidade do chamador.
+#
+# ── Correção da revisão independente, 23/10/2026 ──────────────────────────────
+# Revisão do Codex sobre o commit 8b20bda5. Quatro achados + prova do destino. O coordenador já
+# havia corrigido o pgTAP da colisão de chave (26c6f48f), com test:db (2155 testes) e db:lint limpos.
+#
+# P1 PROVISIONAMENTO PARCIAL (verifyAndProvision.ts): resolvido pelo caminho preferível, ATÔMICO.
+#   supabase/migrations/20261023110100_entry_provision_atomic.sql cria
+#   public.provision_member_entry(p_user_id, p_locality_id, p_display_name, p_consent_version,
+#   p_moment, p_arrival_date, p_departure_date, p_destination_locality_id): chama
+#   provision_member_locality (a regra de vínculo NÃO foi duplicada), grava o perfil e grava o
+#   momento na MESMA transação. O corpo de uma função PL/pgSQL é atômico: a falha do momento
+#   desfaz vínculo e perfil, então não existe mais estado parcial para retomar — e a tela de
+#   cidade nunca redireciona para /community com a entrada pela metade. service_role apenas.
+#   PROVA: supabase/tests/entry-provision-atomic.sql, 21 asserções — o CHECK de coerência recusa
+#   saindo sem destino e as três tabelas ficam vazias; a FK recusa destino fora do catálogo e o
+#   vínculo volta atrás; provision_member_locality recusa cidade fora do catálogo e o perfil volta
+#   atrás; o caminho feliz grava os três; o convite familiar (sem momento) provisiona e NÃO inventa
+#   momento; authenticated e anon recebem 42501. A rota passou a chamar a função uma vez
+#   (tests/unit/onboarding/provision-requires-verification.test.ts afirma os argumentos exatos).
+#
+# P2 INTERESSES SEM VERIFICAÇÃO (app/(shell)/profile/interests-actions.ts): corrigido. A action
+#   agora confere read_verification_status para o usuário da SESSÃO antes de consultar os grupos
+#   (sem verified, a lista nem é consultada) e lê a cidade só do vínculo corrente
+#   (kind = current), nunca do vínculo de saída. A mesma guarda vale para gravar e limpar.
+#   PROVA: tests/unit/profile/interests-require-verification.test.ts (nunca verificou, pendente,
+#   erro temporário, recusada; positivo verificado; falha de leitura não libera; vínculo de saída
+#   não sugere grupos; sem verificação não grava).
+#
+# P2 O HOJE RECUSADO PELO SERVIDOR (provision-validation.ts): corrigido com a folga de um dia para
+#   trás em relação ao dia UTC — a opção mais simples das duas oferecidas. A data do formulário é
+#   uma data LOCAL sem hora; o Brasil vai de UTC-2 a UTC-5, então a data local nunca fica mais de
+#   um dia atrás do dia UTC. Às 22h de 22/10 em Manaus (23/10 02:00Z) o hoje da tela (22) passa a
+#   ser aceito; antes de ontem, para o dia UTC, continua sendo passado.
+#   PROVA: tests/unit/onboarding/provision-validation.test.ts, caso 22h em Manaus (chegada e
+#   saída em 22/10 aceitas com 23/10 02:00Z; 21/10 recusada).
+#
+# P2 BOAS-VINDAS PROMETENDO PLANO INEXISTENTE (entry-moment.ts): corrigido só o lead. Chegando e
+#   Saindo passam a afirmar o que a pessoa declarou (Você marcou sua chegada a Manaus. / Você
+#   marcou sua saída para Brasília.); cartões, ícones, hrefs e o bloco de moro aqui ficam como no
+#   protótipo.
+#   TEXTO ORIGINAL DO PROTÓTIPO, A RESTAURAR QUANDO A INÍCIO USAR O MOMENTO NUM CARTÃO PRÓPRIO:
+#     chegando -> Seu plano de chegada a <cidade> já está pronto.
+#     saindo   -> Seu plano de saída para <destino> já está pronto.
+#   (prototypes/bivaque-html/src/features/entry/arrive.js, renderEntryWelcome, campo lead.)
+#   PROVA: tests/unit/onboarding/entry-moment.test.ts — os dois leads novos e a asserção negativa
+#   de que não prometem plano pronto.
+#
+# P2 TESTES NÃO PROVAVAM A RESOLUÇÃO DO DESTINO (provision-requires-verification.test.ts): corrigido.
+#   O mock do catálogo responde pelo ibge_code pedido (Manaus e Rio com ids distintos); os negativos
+#   novos são cidade fora do catálogo (400 locality is unknown), destino fora do catálogo (400
+#   destination is unknown) e destino igual à cidade atual (400), todos com zero provisionamentos.
+#   O positivo de Saindo prova que p_locality_id e p_destination_locality_id vêm de cidades
+#   diferentes do catálogo.
+#
+# E2E DA SAÍDA ATÉ AS BOAS-VINDAS: tests/e2e/journey-entrar-e-ser-admitido.spec.ts ganhou
+#   quem sai escolhe destino e vê as boas-vindas da saída — cria a própria conta (única forma de
+#   provisionar de verdade sem mexer em persona semeada), passa pela identidade e pela aprovação do
+#   operador, escolhe Manaus + Saindo + destino Rio de Janeiro e afirma o bloco da saída. Não usa o
+#   ledger de jornada: um segundo spec com o mesmo id apagaria as capturas do primeiro.
+#
+# BUG ENCONTRADO POR ESSE E2E, E CORRIGIDO: a cidade de destino nunca chegava às boas-vindas. A
+#   policy localities_select_same_membership (private.is_locality_member) só deixa o membro ler a
+#   cidade do PRÓPRIO vínculo, e o destino de quem sai é outra cidade: lida no navegador, a linha
+#   voltava vazia e Saindo caía no bloco de moro aqui — erro de leitura disfarçado de estado
+#   normal. Agora app/(preauth)/onboarding/welcome/welcome-actions.ts resolve o destino pela sessão
+#   do próprio chamador (nunca por id vindo do cliente) e lê só o nome do município no catálogo,
+#   que é dado público. PROVA: tests/unit/onboarding/welcome-departure-city.test.ts (sem sessão,
+#   sem momento, moro aqui, saindo com destino, falha de leitura) + o e2e acima.
+#
+# RODADO NESTA SESSÃO (23/10/2026, branch codex/entrada-cidade)
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit                          -> verde, sem saída
+# npx pnpm@11.18.0 exec vitest run tests/unit/onboarding tests/unit/profile -> 17 arquivos, 123 testes, 0 falhas
+# npx pnpm@11.18.0 exec biome check <arquivos alterados>                   -> sem erro nos arquivos desta correção
+# npx pnpm@11.18.0 exec biome check apps/web tests/unit tests/e2e          -> 0 erros (só avisos preexistentes em tests/unit/ui)
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-005.task.yml -> contrato válido
+#
+# NÃO EXECUTADOS POR MIM, de propósito (instrução do coordenador nesta correção): db reset, test:db,
+# db:lint, gate, build e Playwright. O pgTAP novo (entry-provision-atomic.sql) e o e2e novo são
+# para o coordenador rodar, uma frente por vez, no estado sem seed e depois com seed.
+#
+# COMMITS DA CORREÇÃO (branch codex/entrada-cidade, sem push e sem merge)
+# 9f63f2de fix(db): a entrada grava vínculo, perfil e momento numa transação só
+# 614ab963 fix(web): interesses exigem verificação e usam o vínculo corrente
+# 230a84aa fix(web): o hoje da tela não é recusado pelo servidor
+# a334ee24 fix(web): as boas-vindas não prometem plano que a Início ainda não mostra
+# 1453e684 fix(web): a cidade de destino da saída chega às boas-vindas
+# c3f1906d test(e2e): a jornada da chegada afirma o lead novo das boas-vindas
+# (este commit de documentação é o último da série.)
+
+# ── Segunda correção do coordenador (desenho definido em 23/10/2026) ──────────
+# Duas regressões que a correção anterior deixou.
+#
+# P2 FAMILIAR ADMITIDO PERDIA OS INTERESSES (app/(shell)/profile/interests-actions.ts)
+#   A guarda exigia read_verification_status verified da PRÓPRIA pessoa. O
+#   dependente admitido por convite familiar tem vínculo e membership, mas não
+#   tem verificação própria (D16: o convite é a única porta sem CPF) — e passou a
+#   ser recusado. Corrigido.
+#   PROCURA PELA REGRA QUE JÁ DECIDE A ADMISSÃO: não existe. As candidatas foram
+#   lidas e nenhuma cobre o familiar:
+#     private.is_locality_member / private.is_active_locality_member -> só o
+#       vínculo, sem verificação;
+#     private.is_verified_locality_member -> titular verificado com vínculo, sem
+#       família;
+#     private.is_verified_holder / public.is_verified_holder -> só a verificação
+#       própria;
+#     private.has_accepted_family(a, b) -> exige os dois ids, não responde se a
+#       pessoa tem titular verificado, e vive no schema private.
+#   DESVIO REGISTRADO, E POR QUÊ: o desenho previa, como alternativa, ler
+#   family_account_links pelo cliente de serviço. Não é possível em runtime:
+#   supabase/config.toml expõe só public e graphql_public ao Data API, então um
+#   `.from` em family_account_links pelo service client responde erro de schema — e
+#   ler esse erro como não é familiar é exatamente o defeito silencioso que a
+#   cidade de destino teve nesta frente. Expor o schema private está fora de
+#   questão (invariante de privacidade). A regra foi então para o SQL, como o
+#   primeiro parágrafo do desenho prefere: migration 20261023110200 cria
+#   public.has_verified_family_holder(p_user_id uuid), security definer,
+#   service_role apenas, que reusa private.is_verified_holder para o titular e
+#   lê private.family_account_links para o vínculo ATIVO. Nada de regra nova em
+#   TypeScript: a action só pergunta ao banco.
+#   A guarda passou a ser: verified (condição mais estreita que já existia para
+#   o titular) OU has_verified_family_holder; a segunda leitura só acontece para
+#   quem não é verificado; erro de leitura em qualquer uma das duas fecha a porta
+#   (não conseguir conferir não é não ter vínculo). A cidade continua vindo só do
+#   vínculo corrente (`kind = current`).
+#   TIPOS: supabase/database.generated.ts ganhou a entrada da função nova à mão,
+#   no formato que o gerador emite (uma linha por chave, alfabético). NÃO rodei
+#   generate:types porque exige o stack local e o coordenador pediu para não
+#   mexer no banco nesta rodada — o drift do CI é a conferência definitiva.
+#   ARQUIVO DA MIGRATION: o timestamp 20261023110200 foi escolhido, não gerado —
+#   o relógio da máquina está em 22/10 e supabase migration new criaria um nome
+#   que ordena ANTES de 20261023110000/20261023110100, desta mesma frente. A
+#   função só depende de objetos de agosto, então a ordem é segura nos dois casos.
+#   PROVA (unit): tests/unit/profile/interests-require-verification.test.ts 12/12 —
+#   sem verificação e sem familiar a lista nem é consultada (null, pending,
+#   temporary_error, rejected); verificado lê sem consultar o familiar; familiar
+#   admitido consulta, GRAVA e LIMPA; falha de leitura da verificação e falha de
+#   leitura do familiar não liberam; vínculo de saída não sugere grupos; não
+#   admitido não grava nem limpa.
+#   PROVA (banco): supabase/tests/admitted-family-holder.sql, plan(9) — dependente
+#   de titular verificado true; titular verificado false; dependente de titular
+#   não verificado false; sem vínculo false; vínculo removido false; authenticated
+#   e anon sem EXECUTE e 42501 na chamada; service_role executa.
+#
+# P2 ONTEM PASSAVA PELO SERVIDOR (apps/web/lib/onboarding/provision-validation.ts)
+#   A folga de 24 horas sobre o dia UTC aceitava 21/10 às 12h de 22/10 em Manaus.
+#   Corrigido pelo desenho: o servidor recorta o dia de calendário em
+#   America/Rio_Branco (UTC-5, o mais a oeste do Brasil) com
+#   Intl.DateTimeFormat no locale en-CA e no fuso America/Rio_Branco, que emite
+#   AAAA-MM-DD; data menor que esse hoje é recusada. A subtração de 24 horas e o
+#   toIsoDate em UTC saíram.
+#   PROVA: tests/unit/onboarding/provision-validation.test.ts, relógio controlado —
+#   às 22h de 22/10 em Manaus (23/10 02:00Z) a chegada e a saída em 22/10 passam e
+#   21/10 é recusada; às 12h de 22/10 em Manaus (22/10 16:00Z) 21/10 é recusada na
+#   chegada e na saída, e 22/10 passa.
+#
+# RODADO NESTA SESSÃO (branch codex/entrada-cidade, sem push e sem merge)
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit                          -> verde, sem saída
+# npx pnpm@11.18.0 exec vitest run tests/unit/onboarding tests/unit/profile -> 17 arquivos, 127 testes, 0 falhas
+# npx pnpm@11.18.0 exec biome check <arquivos alterados>                   -> sem erro nos arquivos desta correção
+#
+# CONFERÊNCIA DE BANCO SEM test:db: o stack local estava no estado SEM SEED
+# (auth.users = 0) e eu NÃO rodei db reset. A migration nova e o pgTAP novo foram
+# executados num único bloco begin/rollback via psql no container, com o fixtures
+# incluído no fluxo: 9/9 ok em public.has_verified_family_holder e ROLLBACK
+# confirmado (auth.users continuou 0 e a função não ficou no banco). Isso confere
+# sintaxe e comportamento, e NÃO substitui o test:db oficial.
+#
+# NÃO EXECUTADOS POR MIM, de propósito (instrução do coordenador): db reset,
+# test:db, db:lint, gate, build e Playwright. O pgTAP novo e o drift de
+# generate:types ficam para o coordenador rodar, uma frente por vez.
+#
+# COMMITS DA SEGUNDA CORREÇÃO
+# 3fbb1e70 fix(web): o hoje da entrada e o dia no fuso do servidor, nao o dia UTC menos 24h
+# 86c587bb feat(db): a regra do familiar admitido fica numa funcao so
+# a073a8c9 fix(web): o familiar admitido escolhe interesses; verified deixa de ser a unica porta
+# (este commit de documentação é o último da série.)

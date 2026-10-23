@@ -1289,6 +1289,44 @@ export type Database = {
           },
         ]
       }
+      member_entry_moments: {
+        Row: {
+          arrival_date: string | null
+          created_at: string
+          departure_date: string | null
+          destination_locality_id: string | null
+          moment: Database["public"]["Enums"]["entry_moment"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arrival_date?: string | null
+          created_at?: string
+          departure_date?: string | null
+          destination_locality_id?: string | null
+          moment: Database["public"]["Enums"]["entry_moment"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arrival_date?: string | null
+          created_at?: string
+          departure_date?: string | null
+          destination_locality_id?: string | null
+          moment?: Database["public"]["Enums"]["entry_moment"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_entry_moments_destination_locality_id_fkey"
+            columns: ["destination_locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       national_holidays: {
         Row: {
           date: string
@@ -2769,6 +2807,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_verified_family_holder: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       is_account_deletion_pending: { Args: never; Returns: boolean }
       is_account_suspended: { Args: { p_user_id: string }; Returns: boolean }
       is_community_member: {
@@ -3081,6 +3123,19 @@ export type Database = {
         }
         Returns: string
       }
+      provision_member_entry: {
+        Args: {
+          p_arrival_date?: string
+          p_consent_version: number
+          p_departure_date?: string
+          p_destination_locality_id?: string
+          p_display_name: string
+          p_locality_id: string
+          p_moment?: Database["public"]["Enums"]["entry_moment"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       provision_member_locality: {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: undefined
@@ -3369,6 +3424,7 @@ export type Database = {
         | "listing"
         | "event_question"
         | "service_request"
+      entry_moment: "arriving" | "resident" | "leaving"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
@@ -3609,6 +3665,7 @@ export const Constants = {
         "event_question",
         "service_request",
       ],
+      entry_moment: ["arriving", "resident", "leaving"],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
       event_status: ["upcoming", "cancelled", "completed"],
