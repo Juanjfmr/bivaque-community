@@ -158,7 +158,7 @@ test.describe("passo Aceite, do Google", () => {
     await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
   })
 
-  test("com sessão pede o aceite uma vez e leva ao funil", async ({ page, context }) => {
+  test("com sessão nomeia a conta que está aceitando", async ({ page, context }) => {
     await signInAs(context, NO_MEMBERSHIP)
     await page.goto("/consent")
 
