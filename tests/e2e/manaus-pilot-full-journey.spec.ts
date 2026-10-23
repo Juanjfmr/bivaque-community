@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -45,61 +46,61 @@ test.describe("holder onboarding journey", () => {
   })
 
   test("consent page shows terms and accept button", async ({ page }) => {
-    // Given the production Next server
+    // Given the production Next server, com a sessão de quem vai registrar o
+    // aceite (sem sessão, a rota diz o que falta em vez de oferecer o botão)
+    await seedSession(page.context())
     // When a user navigates to the consent page
     await page.goto("/consent")
 
     // Then the terms of use are displayed. "Bem-vindo ao Bivaque" never
     // existed on this page — found realigning this spec against the real
-    // rendered /consent (apps/web/app/(preauth)/consent/page.tsx), which
-    // renders "Termos de uso" plus the Código de conduta and Política de
-    // privacidade sections, no separate welcome line.
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
-    await expect(page.locator("#documents-heading")).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Ler a Política de privacidade completa" }),
-    ).toBeVisible()
-    await expect(page.getByRole("link", { name: "Ler o Código de conduta completo" })).toBeVisible()
+    // rendered /consent (apps/web/app/(preauth)/consent/page.tsx). PORT-003: a
+    // tela passou a ser o passo "Aceite" do protótipo, com os dois documentos
+    // como links na própria frase do aceite.
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Política de privacidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Código de conduta" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
-    await expect(acceptButton).toBeDisabled()
+    // PORT-003: o botão fica ativo como na especificação e o envio sem aceite é
+    // recusado com a explicação; registrar o aceite é o portão de verdade.
+    await acceptButton.click()
+    await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
   })
 
   test("accepting consent navigates to onboarding", async ({ page }) => {
     // Given the consent page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/consent")
 
     // When the user explicitly records that they read the legal documents
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
-    await expect(acceptButton).toBeDisabled()
-    const consentCheckbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    const consentCheckbox = page.getByRole("checkbox", { name: /Li e aceito a/ })
     await consentCheckbox.focus()
     await page.keyboard.press("Space")
     await expect(consentCheckbox).toBeChecked()
-    await expect(acceptButton).toBeEnabled()
     await acceptButton.click()
 
     // Then the user is redirected to the onboarding page. Onboarding is a
     // `(preauth)` route with no shell header, so its own H1 is the landmark.
     await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 
   test("onboarding page renders verify eligibility flow", async ({ page }) => {
     // Given the production Next server
     // When a user navigates to the onboarding page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
-    // Then the verify eligibility UI is rendered
-    const verifyButton = page.getByRole("button", { name: "Verificar acesso" })
+    // Then the verify eligibility UI is rendered (PORT-004: CPF direto)
+    const verifyButton = page.locator("#onboarding-cpf-submit")
     await expect(verifyButton).toBeVisible()
 
-    const cpfInput = page.getByLabel("CPF")
+    const cpfInput = page.locator("#onboarding-cpf input")
     await expect(cpfInput).toBeVisible()
     await cpfInput.fill("123.456.789-09")
     await expect(cpfInput).toHaveValue("123.456.789-09")
@@ -126,20 +127,24 @@ test.describe("holder onboarding journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("family invite journey", () => {
-  test("onboarding page with invite token renders family acceptance flow", async ({ page }) => {
-    // Given an invite token in the query string
+  test("an old invite link is forwarded to the invite screen without the token", async ({
+    page,
+  }) => {
+    // Given an invite token in the query string, from a link created before
+    // this deploy
     // When a user opens the onboarding page with an invite token
     await seedSession(page.context())
     await page.goto(
       "/onboarding?invite=0000000000000000000000000000000000000000000000000000000000000000",
     )
 
-    // Then the family acceptance flow is rendered: the page enters the invite
-    // (family) step instead of the eligibility step.
-    await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Aceite seu convite." })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Aceitar convite" })).toBeVisible()
-    await expect(page.getByText(/membro que convidou você/)).toBeVisible()
+    // Then the eligibility step does not accept the invite itself: it forwards
+    // to the invite screen (front D) in legacy mode, and the token stays out of
+    // the URL. The invite screen asks for a new link instead of trusting a
+    // token that only this old address knew how to read.
+    await page.waitForURL(/\/convite\?legado=1$/)
+    await expect(page).not.toHaveURL(/invite=/)
+    await expect(page.getByRole("status")).toContainText("Este link de convite mudou.")
   })
 })
 
@@ -479,9 +484,11 @@ test.describe("accessibility across journeys", () => {
     // When the login page is rendered
     await page.goto("/login")
 
-    // Then its own primary controls meet the 44px minimum
-    const submit = page.getByRole("button", { name: "Entrar" })
-    await expect(submit).toBeVisible()
+    // Then its own primary controls meet the 44px minimum. The control is the
+    // Material host (md-filled-button): it is the area that takes the tap; the
+    // inner <button> of its shadow root is only the label box.
+    await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible()
+    const submit = page.locator("md-filled-button", { hasText: /^\s*Entrar\s*$/ })
     const box = await submit.boundingBox()
     expect(box).not.toBeNull()
 
@@ -531,10 +538,11 @@ test.describe("accessibility across journeys", () => {
 // purpose in its H1. Indicações is a `(shell)` sidebar entry and is covered in
 // shell-navigation.spec.ts.
 test.describe("preauth page headings", () => {
-  // Realignado em 2026-09-07 à prancha 36-web-auth-entrada: o H1 do entrar é a
+  // Realinhado em 2026-09-07 à prancha 36-web-auth-entrada: o H1 do entrar é a
   // frase da referência, e a marca passou a ser o wordmark sobre a foto (link
-  // para o início), não texto dentro do título. A cobertura de marca continua:
-  // agora pelo link com aria-label, que é o que a tecnologia assistiva lê.
+  // para o início), não texto dentro do título. PORT-003: a entrada segue o
+  // protótipo, onde a marca é o símbolo da casca e a saída é o "Sair" do topo —
+  // o caminho de volta ao início continua existindo, e é isso que se prova.
   test("login page leads with the reference heading and carries the brand link", async ({
     page,
   }) => {
@@ -543,9 +551,8 @@ test.describe("preauth page headings", () => {
 
     // Then its own heading states the purpose and the brand links home
     await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Bivaque, voltar ao início" }).first(),
-    ).toBeVisible()
+    await expect(page.getByText("Bivaque", { exact: true })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Sair" })).toHaveAttribute("href", "/")
   })
 
   test("consent page leads with the terms heading", async ({ page }) => {
@@ -553,18 +560,17 @@ test.describe("preauth page headings", () => {
     await page.goto("/consent")
 
     // Then the terms heading is visible
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
   })
 
   test("onboarding page leads with the eligibility heading", async ({ page }) => {
     // Given the onboarding page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 })
 

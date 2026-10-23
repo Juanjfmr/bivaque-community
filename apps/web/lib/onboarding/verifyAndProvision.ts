@@ -4,6 +4,7 @@ import type { Database } from "supabase/database.generated"
 import { byteaDigestParam } from "../invites-bytea"
 import type { VerificationResult } from "../portal"
 import { createPortalVerificationGuard, verifyCpfWithErrorCode } from "../portal"
+import type { EntryMoment } from "./provision-validation"
 
 // P0 Task 4: eligibility and provisioning split into two phases
 // (ADR-20260816-forma-da-admissao). verify answers "is this person eligible?"
@@ -27,6 +28,18 @@ export interface OnboardingProvisionInput {
   localityId: string
   displayName: string
   consentVersion: number
+  // PORT-005: o momento declarado na entrada. Opcional porque o convite
+  // familiar provisiona sem passar pela tela de cidade — quem entra por
+  // convite não declara chegada, saída nem destino, e as boas-vindas caem no
+  // bloco de quem mora na cidade.
+  entryMoment?: OnboardingEntryMomentInput | undefined
+}
+
+export interface OnboardingEntryMomentInput {
+  moment: EntryMoment
+  arrivalDate: string | null
+  departureDate: string | null
+  destinationLocalityId: string | null
 }
 
 type AnySupabaseClient = SupabaseClient<Database>
@@ -117,7 +130,7 @@ export async function provisionMember(
   supabase: AnySupabaseClient,
   input: OnboardingProvisionInput,
 ): Promise<{ localityMember: boolean }> {
-  const { userId, localityId, displayName, consentVersion } = input
+  const { userId, localityId, displayName, consentVersion, entryMoment } = input
 
   if (consentVersion < CONSENT_VERSION) {
     throw new Error("consent version not accepted")
@@ -128,30 +141,45 @@ export async function provisionMember(
     throw new Error("locality is required to provision a member")
   }
 
-  // Provision through the SECURITY DEFINER helper (migration 20260819021416):
-  // it converts the existing current to leaving and creates the new current,
-  // so the partial unique index on (user_id) WHERE kind = 'current' is never
-  // violated. A direct upsert fails for a user who already holds a current
-  // membership elsewhere — which the T1 model allows.
-  const { error: membershipError } = await supabase.rpc("provision_member_locality", {
+  // PORT-005 (correção P1): uma única chamada grava o vínculo, o perfil e o
+  // momento na MESMA transação (migration 20261023110100). Antes eram três
+  // escritas independentes: se a do momento falhasse, membership e perfil já
+  // estavam gravados, e recarregar a tela desviava para /community com a
+  // entrada pela metade — membro, sem momento, e sem caminho de volta. Agora a
+  // falha não deixa nada para trás, e a pessoa continua na tela de cidade.
+  //
+  // A função reusa `provision_member_locality` (20260819021416): a regra de
+  // "a corrente vira saída, a nova vira corrente" e a conferência de catálogo
+  // continuam num lugar só, e o índice parcial (user_id) WHERE kind = 'current'
+  // nunca é violado.
+  const args = {
     p_user_id: userId,
     p_locality_id: localityId,
-  })
-
-  if (membershipError) {
-    throw new Error(`Failed to create membership: ${membershipError.message}`)
+    p_display_name: displayName,
+    p_consent_version: consentVersion,
+    // Os quatro campos do momento vão juntos ou não vão: o CHECK do banco
+    // recusa momento sem a data que ele pede, e o convite familiar provisiona
+    // sem momento nenhum.
+    ...(entryMoment === undefined
+      ? {}
+      : {
+          p_moment: entryMoment.moment,
+          ...(entryMoment.arrivalDate === null ? {} : { p_arrival_date: entryMoment.arrivalDate }),
+          ...(entryMoment.departureDate === null
+            ? {}
+            : { p_departure_date: entryMoment.departureDate }),
+          ...(entryMoment.destinationLocalityId === null
+            ? {}
+            : { p_destination_locality_id: entryMoment.destinationLocalityId }),
+        }),
   }
 
-  const { error: profileError } = await supabase.from("profiles").upsert({
-    user_id: userId,
-    display_name: displayName,
-    visibility: "locality_members" as const,
-    consent_version: CONSENT_VERSION,
-    consented_at: new Date().toISOString(),
-  })
+  const { error: provisionError } = await supabase.rpc("provision_member_entry", args)
 
-  if (profileError) {
-    throw new Error(`Failed to create profile: ${profileError.message}`)
+  if (provisionError) {
+    // Mensagem genérica: a rota não ecoa erro de banco para o cliente, e o
+    // detalhe fica no log dela.
+    throw new Error(`Failed to provision the member entry: ${provisionError.message}`)
   }
 
   return { localityMember: true }

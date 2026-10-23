@@ -96,6 +96,15 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "BOTÃO: 'Sua cidade' no cabeçalho > outra cidade (city-switcher, router.push)",
   },
   {
+    route: "/conta-apagada",
+    porta: "FLUXO: redirect depois de apagar a conta em Configurações > Conta (lote 4, PORT-006)",
+  },
+  {
+    route: "/convite",
+    porta:
+      "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
+  },
+  {
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
@@ -194,7 +203,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/onboarding/locality",
     porta: "FLUXO: proxy redireciona quem é verificado e ainda não escolheu cidade",
   },
-  { route: "/onboarding/perfil", porta: "FLUXO: passo seguinte à escolha da cidade" },
+  {
+    route: "/onboarding/perfil",
+    porta:
+      "FLUXO: redireciona para a tela de cidade — o passo de personalização saiu da entrada (PORT-005)",
+  },
   { route: "/onboarding/status", porta: "FLUXO: proxy e notificação de entrada recusada" },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding" },
   { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },

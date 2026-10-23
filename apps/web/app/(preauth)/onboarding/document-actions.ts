@@ -4,13 +4,14 @@ import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { log } from "../../../lib/logger"
-import { readDocumentPaths } from "../../../lib/onboarding/document-status"
+import { readDocumentPaths, readDocumentStatus } from "../../../lib/onboarding/document-status"
 import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const DOCUMENT_BUCKET = "verification-documents"
 const MAX_BYTES = 10 * 1024 * 1024
 const ORPHAN_MIN_AGE_MS = 60 * 60 * 1000
+const REMOVAL_ATTEMPTS = 2
 const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"])
 
 // SEC-AUD-001: o MIME vem do cliente. A exceção byte a byte do PDF só pode ser
@@ -108,6 +109,21 @@ async function sweepOrphanedUploads(
   }
 }
 
+// A remoção do arquivo substituído é tentada duas vezes antes de desistir: a
+// falha do Storage costuma ser transitória, e uma segunda chamada resolve a
+// maior parte dos casos. Nada aqui desfaz o envio — o contrato da action é o
+// documento novo já registrado.
+async function removeSupersededDocument(
+  supabase: ReturnType<typeof createServiceClient>,
+  path: string,
+): Promise<boolean> {
+  for (let attempt = 0; attempt < REMOVAL_ATTEMPTS; attempt += 1) {
+    const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([path])
+    if (!error) return true
+  }
+  return false
+}
+
 export async function uploadVerificationDocumentAction(
   formData: FormData,
 ): Promise<UploadVerificationDocumentResult> {
@@ -187,23 +203,78 @@ export async function uploadVerificationDocumentAction(
     return { ok: false, error: "Não foi possível enviar o arquivo agora. Tente novamente." }
   }
 
-  const { error: rpcError } = await supabase.rpc("submit_verification_document", {
-    p_user_id: userId,
-    p_storage_object_path: storageObjectPath,
-    p_mime_type: file.type,
-  })
+  // Com um documento já em análise, o envio é uma troca: a tabela admite uma
+  // única análise pendente por pessoa (índice único), e a função de troca
+  // substitui a linha em vez de falhar com 23505. Sem documento em análise, é o
+  // envio normal. A validação de tipo e tamanho, o bucket e as policies são os
+  // mesmos nos dois caminhos; o que muda é a função que registra.
+  const currentDocument = await readDocumentStatus(supabase, userId)
+  const isReplacement = currentDocument.situation === "in_review"
 
-  if (rpcError) {
+  let failed = false
+  let errorCode: string | undefined
+  let supersededPath: string | null = null
+
+  if (isReplacement) {
+    const { data, error } = await supabase.rpc("replace_verification_document", {
+      p_user_id: userId,
+      p_storage_object_path: storageObjectPath,
+      p_mime_type: file.type,
+    })
+    failed = error !== null
+    errorCode = error?.code
+    supersededPath = data?.[0]?.replaced_storage_object_path ?? null
+  } else {
+    const { error } = await supabase.rpc("submit_verification_document", {
+      p_user_id: userId,
+      p_storage_object_path: storageObjectPath,
+      p_mime_type: file.type,
+    })
+    failed = error !== null
+    errorCode = error?.code
+  }
+
+  if (failed) {
     await supabase.storage.from(DOCUMENT_BUCKET).remove([storageObjectPath])
     log.error("verification document submission failed", {
       user_id: userId,
-      code: rpcError.code,
+      code: errorCode,
     })
 
-    if (rpcError.code === "23505") {
+    if (errorCode === "23505") {
       return { ok: false, error: "Já existe um documento em análise. Aguarde a decisão." }
     }
     return { ok: false, error: "Não foi possível registrar o envio agora. Tente novamente." }
+  }
+
+  // O arquivo substituído sai do bucket na hora: a linha dele já foi removida
+  // pelo banco, e a varredura de órfãos só alcança objetos com mais de uma hora
+  // e só roda no próximo envio da mesma pessoa. Sem a fila, um caminho órfão
+  // ficaria no bucket para sempre, porque nenhuma varredura agendada olha para
+  // objetos sem linha — o cron diário de TTL apenas marca a linha como purgada.
+  // Por isso a fila nasce na MESMA transação da troca: o caminho já está em
+  // private.verification_document_removals antes desta action rodar. Aqui só
+  // falta fechar o ciclo — quando o objeto sai do bucket, a linha da fila é
+  // apagada; quando a remoção falha, a linha fica para o processador da fila
+  // (VERIF-REMOVAL-WORKER). Nada disso desfaz o envio: o contrato da action é o
+  // documento novo já registrado.
+  if (supersededPath !== null && supersededPath !== storageObjectPath) {
+    const removed = await removeSupersededDocument(supabase, supersededPath)
+
+    if (!removed) {
+      log.warn("superseded verification document left in the removal queue", { user_id: userId })
+    } else {
+      const { error: completionError } = await supabase.rpc(
+        "complete_verification_document_removal",
+        { p_storage_object_path: supersededPath },
+      )
+
+      if (completionError) {
+        log.warn("superseded verification document removal not closed in the queue", {
+          user_id: userId,
+        })
+      }
+    }
   }
 
   return { ok: true }

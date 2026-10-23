@@ -1,0 +1,180 @@
+/* PORT-004 (lote 4 da entrada, frente B) — o que a elegibilidade usa do
+   protótipo e a base da PORT-002 ainda não trazia.
+
+   A casca e os formulários vêm de ../../../../components/entry/entry.css, que é
+   da base e não se edita. As regras daqui são as de
+   prototypes/bivaque-html/src/styles/entry.css que faltavam — o bloco "Por que
+   o CPF" (.en-why), o link do convite (.en-link), o bloco de arquivo (.en-file),
+   a linha do tempo da análise (.en-time) e a confirmação (.en-ok) — com as
+   mesmas medidas e os mesmos tokens do tema. O escopo `.bv-entry` faz o que ele
+   já faz na casca: nenhuma tela ainda não portada recebe estas regras.
+
+   Nenhuma cor solta: tudo sai de `var(--md-sys-color-*)`, como em entry.css.
+   `tests/scope/design-tokens.test.mjs` recusa `#` em CSS de apps/web/app. */
+
+/* O botão dentro do <form> não é filho direto de .en-form, e a regra da base
+   alcança só os filhos diretos. As medidas são as mesmas do protótipo. */
+.bv-entry .en-form form > md-filled-button,
+.bv-entry .en-form form > md-outlined-button {
+  width: 100%;
+  height: 52px;
+  margin: 6px 0;
+}
+
+.bv-entry .en-why {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low);
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bv-entry .en-why md-icon {
+  flex: none;
+  color: var(--md-sys-color-primary);
+}
+
+.bv-entry .en-why b,
+.bv-entry .en-link b,
+.bv-entry .en-file b {
+  display: block;
+}
+
+/* No protótipo o convite é um <button>; aqui ele é navegação para /convite, e
+   por isso o sublinhado sai e a cor continua herdada do texto. O bloco de
+   arquivo também é link nas telas de resultado e de análise. */
+.bv-entry a.en-link,
+.bv-entry a.en-file {
+  color: inherit;
+  text-decoration: none;
+}
+
+.bv-entry .en-link,
+.bv-entry .en-file {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--md-sys-color-outline);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  color: inherit;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.bv-entry .en-link md-icon,
+.bv-entry .en-file md-icon {
+  flex: none;
+  color: var(--md-sys-color-primary);
+}
+
+/* O campo de arquivo continua alcançável por teclado, só não é desenhado: quem
+   recebe o clique é o bloco inteiro, como no protótipo. */
+.bv-entry .en-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.bv-entry .en-file:focus-within {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.bv-entry .en-time {
+  list-style: none;
+  margin: 8px 0 16px;
+  padding: 0;
+}
+
+.bv-entry .en-time li {
+  display: flex;
+  gap: 12px;
+  padding: 0 0 14px;
+  position: relative;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bv-entry .en-time li::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 0;
+  width: 2px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.bv-entry .en-time li:last-child::before {
+  display: none;
+}
+
+.bv-entry .en-time i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-highest);
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bv-entry .en-time li.done i {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.bv-entry .en-time li.now i {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bv-entry .en-time b {
+  display: block;
+}
+
+.bv-entry .en-ok {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--md-sys-color-secondary-container);
+  font-size: 14px;
+  margin: 4px 0 8px;
+}
+
+.bv-entry .en-sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* O título recebe o foco ao abrir, para o leitor de tela anunciar o passo. Ele
+   não é interativo, então o contorno não ajuda ninguém — o protótipo também o
+   remove (`.en h1[tabindex="-1"]:focus`). */
+.bv-entry .en-h1:focus {
+  outline: none;
+}
+
+/* O nome do arquivo escolhido, na altura da linha do bloco. */
+.bv-entry .en-file-name {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}

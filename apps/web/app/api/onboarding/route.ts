@@ -23,6 +23,11 @@ interface OnboardingRequestBody {
   state_code?: string
   display_name?: string
   ibge_code?: string
+  // PORT-005 (ADR-20261022, item 3): o momento da entrada.
+  moment?: string
+  arrival_date?: string
+  departure_date?: string
+  destination_ibge_code?: string
 }
 
 export async function POST(request: Request) {
@@ -121,9 +126,19 @@ export async function POST(request: Request) {
       // P0 Task 5: o passo pós-elegibilidade. A localidade é validada contra o
       // catálogo canônico ANTES de provisionar — nunca texto livre de cidade,
       // e nunca um código de formato certo mas ausente do catálogo.
+      //
+      // PORT-005: o momento da entrada entra na mesma validação. Chegando pede a
+      // data de chegada; Saindo pede a data de saída e um destino diferente da
+      // cidade escolhida; Moro aqui não aceita data nem destino. A coerência é
+      // a mesma do CHECK de public.member_entry_moments.
       const validation = validateProvisionInput({
         ibgeCode: typeof body.ibge_code === "string" ? body.ibge_code : "",
         displayName: typeof body.display_name === "string" ? body.display_name : "",
+        moment: typeof body.moment === "string" ? body.moment : "",
+        arrivalDate: typeof body.arrival_date === "string" ? body.arrival_date : "",
+        departureDate: typeof body.departure_date === "string" ? body.departure_date : "",
+        destinationIbgeCode:
+          typeof body.destination_ibge_code === "string" ? body.destination_ibge_code : "",
       })
 
       if (!validation.ok) {
@@ -145,11 +160,40 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "locality is unknown" }, { status: 400 })
       }
 
+      // O destino da saída também é cidade do catálogo: mesma conferência de
+      // existência, e nenhuma mensagem de banco sai daqui.
+      let destinationLocalityId: string | null = null
+      if (validation.moment === "leaving") {
+        const destinationCode = validation.destinationIbgeCode as string
+        const { data: destination, error: destinationError } = await supabase
+          .from("localities")
+          .select("id, ibge_code")
+          .eq("ibge_code", destinationCode)
+          .maybeSingle()
+
+        if (destinationError) {
+          throw new Error(`Failed to validate destination: ${destinationError.message}`)
+        }
+        if (!destination) {
+          return NextResponse.json({ error: "destination is unknown" }, { status: 400 })
+        }
+        destinationLocalityId = destination.id
+      }
+
       const result = await provisionMember(supabase, {
         userId,
         localityId: locality.id,
         displayName: validation.displayName as string,
         consentVersion,
+        entryMoment:
+          validation.moment === undefined
+            ? undefined
+            : {
+                moment: validation.moment,
+                arrivalDate: validation.arrivalDate ?? null,
+                departureDate: validation.departureDate ?? null,
+                destinationLocalityId,
+              },
       })
       return NextResponse.json(result)
     }
