@@ -5,8 +5,8 @@
 // de rodar pela metade. Agente que roda `lint` e declara pronto não passou pelo
 // gate; agente que roda `node scripts/gate.mjs` passou ou não passou.
 //
-//   node scripts/gate.mjs           # lint + typecheck + build + test + secrets
-//   node scripts/gate.mjs --fast    # só lint + typecheck (loop de edição)
+//   node scripts/gate.mjs           # lint + typecheck + typecheck:e2e + build + test + secrets
+//   node scripts/gate.mjs --fast    # só lint + typecheck + typecheck:e2e (loop de edição)
 //   node scripts/gate.mjs --json    # saída estruturada
 //
 // Exit 0 = verde. Exit 1 = vermelho. Não existe amarelo.
@@ -26,17 +26,31 @@ const PNPM = ["npx", "pnpm@11.18.0"]
 // pelo bundler. tsc não olha para ele. Quem descobriu foi o E2E, depois de a
 // suíte rodar ZERO teste e ainda assim retornar sucesso.
 const stages = [
-  { name: "lint", script: "lint", why: "biome check ." },
-  { name: "typecheck", script: "typecheck", why: "tsc --noEmit em todos os workspaces" },
+  { name: "lint", pnpmArgs: ["lint"], why: "biome check ." },
+  { name: "typecheck", pnpmArgs: ["typecheck"], why: "tsc --noEmit em todos os workspaces" },
+  {
+    // Os specs e2e não são um workspace, então `tsc --noEmit` (pnpm -r) não os
+    // enxerga. Sem este estágio, um `signInAs(page)` que devia ser
+    // `signInAs(context)` só aparecia dentro do navegador, depois de subir a
+    // stack inteira. O tsconfig de tests/e2e reusa a base estrita.
+    name: "typecheck:e2e",
+    pnpmArgs: ["exec", "tsc", "-p", "tests/e2e/tsconfig.json"],
+    why: "tsc -p tests/e2e — tipos dos specs e2e, que o tsc dos workspaces não cobre",
+  },
   {
     name: "build",
-    script: "build",
+    pnpmArgs: ["build"],
     why: "next build — limite servidor/cliente, que o typecheck não vê",
     slow: true,
     needsEnv: true,
   },
-  { name: "test", script: "test", why: "unit + privacy + scope", slow: true },
-  { name: "secrets", script: "test:secrets", why: "varredura de credencial inline", slow: true },
+  { name: "test", pnpmArgs: ["test"], why: "unit + privacy + scope", slow: true },
+  {
+    name: "secrets",
+    pnpmArgs: ["test:secrets"],
+    why: "varredura de credencial inline",
+    slow: true,
+  },
 ]
 
 // Next inlina NEXT_PUBLIC_* em tempo de build, então sem o env o build falha
@@ -64,7 +78,7 @@ for (const stage of selected) {
   const started = Date.now()
   if (!AS_JSON) process.stdout.write(`\n── ${stage.name} ── ${stage.why}\n`)
 
-  const run = spawnSync(PNPM[0], [PNPM[1], stage.script], {
+  const run = spawnSync(PNPM[0], [PNPM[1], ...stage.pnpmArgs], {
     stdio: AS_JSON ? "pipe" : "inherit",
     shell: true,
     encoding: "utf8",
