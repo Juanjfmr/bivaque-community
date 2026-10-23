@@ -196,9 +196,10 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
 
     await page.getByRole("button", { name: "Concluir minha entrada" }).click()
     await expect(page).toHaveURL(/\/onboarding\/welcome$/, { timeout: 20_000 })
-    // As boas-vindas mudam com o momento: chegando, o plano de chegada.
+    // As boas-vindas mudam com o momento: chegando, o bloco da chegada. A frase
+    // afirma o que a pessoa declarou — a Início ainda não mostra o plano.
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Você chegou ao Bivaque.")
-    await expect(page.getByText("Seu plano de chegada a Manaus já está pronto.")).toBeVisible()
+    await expect(page.getByText("Você marcou sua chegada a Manaus.")).toBeVisible()
     await expect(page.getByRole("link", { name: /Ver o plano de chegada/ })).toBeVisible()
     await expect(page.getByRole("link", { name: /Entrar na comunidade/ })).toBeVisible()
 
