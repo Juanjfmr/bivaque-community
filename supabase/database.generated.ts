@@ -2788,6 +2788,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_verified_family_holder: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       is_account_deletion_pending: { Args: never; Returns: boolean }
       is_account_suspended: { Args: { p_user_id: string }; Returns: boolean }
       is_community_member: {
