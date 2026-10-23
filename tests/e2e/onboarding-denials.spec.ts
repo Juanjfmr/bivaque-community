@@ -117,7 +117,7 @@ test.describe("consent is enforced at account creation", () => {
     page,
   }) => {
     let signupRequests = 0
-    await page.route("**/auth/v1/signup", async (route) => {
+    await page.route("**/auth/v1/signup**", async (route) => {
       signupRequests += 1
       await route.abort()
     })

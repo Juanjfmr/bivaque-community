@@ -41,7 +41,9 @@ test.describe("criar conta, como no protótipo", () => {
     await expect(page.getByText("Passo 1 de 3 · Conta")).toBeVisible()
     await expect(page.locator("#en-email")).toBeVisible()
     await expect(page.locator("#en-pass")).toBeVisible()
-    await expect(page.getByText("Ao menos 8 caracteres, com letras e números.")).toBeVisible()
+    await expect(
+      page.getByText("Ao menos 8 caracteres, com letras e números.").filter({ visible: true }),
+    ).toBeVisible()
     // A nota do Google é do cadastro (`renderEntrySignup` em account.js): quem
     // entra pelo botão do Google marca o aceite no passo seguinte, não aqui.
     await expect(page.getByText("Pelo Google, o aceite vem no passo seguinte.")).toBeVisible()

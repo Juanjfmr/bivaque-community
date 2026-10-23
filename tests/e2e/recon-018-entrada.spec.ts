@@ -170,7 +170,7 @@ test.describe("prancha 36 — criar conta", () => {
   // lugar certo: nenhuma request de cadastro sai antes do aceite.
   test("o aceite é condição: sem ele nada sai para o provedor", async ({ page }) => {
     let signupRequests = 0
-    await page.route("**/auth/v1/signup", async (route) => {
+    await page.route("**/auth/v1/signup**", async (route) => {
       signupRequests += 1
       await route.abort()
     })
@@ -180,7 +180,9 @@ test.describe("prancha 36 — criar conta", () => {
     // O indicador de passo e a regra da senha como texto de apoio, como no
     // protótipo (`entrySteps(1,'Conta')` e `entryPasswordField`).
     await expect(page.getByText("Passo 1 de 3 · Conta")).toBeVisible()
-    await expect(page.getByText("Ao menos 8 caracteres, com letras e números.")).toBeVisible()
+    await expect(
+      page.getByText("Ao menos 8 caracteres, com letras e números.").filter({ visible: true }),
+    ).toBeVisible()
 
     await page.locator("#en-name input").fill("Ana de Teste")
     await page.locator("#en-email input").fill(MEMBER_EMAIL)
@@ -235,7 +237,7 @@ test.describe("prancha 36 — criar conta", () => {
 
   test("senha curta é barrada no cliente antes da ida ao provedor", async ({ page }) => {
     let requests = 0
-    await page.route("**/auth/v1/signup", async (route) => {
+    await page.route("**/auth/v1/signup**", async (route) => {
       requests += 1
       await route.abort()
     })
