@@ -1,13 +1,13 @@
 ---
 id: ADR-20261023-comunidade-do-prototipo
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
-accepted_at:
+approved_at: 2026-10-23
+accepted_at: 2026-10-23
 expires_at:
 linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 5)
-critic_verdict: REVISE
+critic_verdict: PASS
 critic_review: >
   Duas críticas do DeepSeek V4.1 Flash em 23/10/2026. A primeira comparou com Nextdoor, Grupos do Facebook, Reddit,
   Comunidades do WhatsApp, Discord, Meetup e Stack Overflow. A segunda conferiu o texto contra o banco real e deu NÃO
@@ -27,7 +27,8 @@ regra de negócio:
 1. **Navegação e estrutura.**
    - A barra de baixo do Next é Início, Explorar, Comunidades e Perfil; no protótipo, Início, Comunidade, Conversas e
      Você.
-   - O Next tem o produto das vilas ("Comunidades" no plural), que o protótipo não tem.
+   - O Next ainda tem código de uma versão antiga do produto, as vilas ("Comunidades" no plural, tabela
+     `communities`). Vila não existe nesta versão do produto (dono, 23/10/2026).
    - O feed fica na Comunidade, e não no Início.
 2. **Pergunta e resposta.**
    - O tamanho da pergunta difere.
@@ -51,8 +52,8 @@ regra de negócio:
    - "Ocultar" pergunta existe no banco sem tela.
    - O "Ocultar publicação" volta no recarregar.
 
-**Estado de produção (dono, 23/10/2026):** não há ninguém nem conteúdo nas vilas, e o banco de produção ainda não
-tem uso real. As migrations deste lote não precisam tratar dados antigos.
+**Estado de produção (dono, 23/10/2026):** vila não existe nesta versão, não há ninguém nem conteúdo nas tabelas
+dela, e o banco de produção ainda não tem uso real. As migrations deste lote não precisam tratar dados antigos.
 
 ## Decision
 
@@ -64,17 +65,17 @@ comparação de captura em cada tela. **[crítica]** marca o que veio das revis�
 - A barra de baixo segue o protótipo: Início, Comunidade, Conversas e Você.
 - "Conversas" abre as mensagens privadas, que já existem no Next (`/messages`). O comentário de `bottom-nav.tsx` que
   diz "não há inbox" fica desatualizado e é corrigido junto.
-- Cada entrada que sai da barra atual ganha destino antes da troca: Explorar, Comunidades (vilas), `/groups` (vira
+- Cada entrada que sai da barra atual ganha destino antes da troca: Explorar, Comunidades (código das vilas), `/groups` (vira
   aba), Perfil (vira Você), `/mercado`, `/negocio`, Guia, Agenda e Salvos. A prova é o medidor de alcance que já
   existe (`scripts/visual/flows/reachability.mjs`, card `NAV-BECOS-SEM-SAIDA`): nenhum destino fica sem porta.
   **[crítica]**
 - A Comunidade tem as abas do protótipo. A aba Negócios entra com o lote 6.
-- **As vilas saem da tela**: as rotas redirecionam para a Comunidade da cidade, por uma lista fechada de caminhos
-  internos (nunca destino vindo da URL). Como não há conteúdo nem membros em vilas, nada é movido nem arquivado. As
+- **O código das vilas sai da tela**, porque vila não existe nesta versão: as rotas antigas redirecionam para a
+  Comunidade da cidade, por uma lista fechada de caminhos internos (nunca destino vindo da URL). Nada é movido. As
   tabelas ficam no banco, vazias, até um ADR de remoção.
 - **O feed da cidade fica no Início**, como no protótipo, e a vista "Conversa" sai da Comunidade.
-  - O feed é uma leitura nova, criada por migration, porque hoje só há feed por vila e por grupo.
-  - A regra de leitura do feed da cidade é: publicações da cidade da pessoa, **sem grupo e sem vila**
+  - O feed é uma leitura nova, criada por migration, porque hoje só há o feed antigo por vila e o feed por grupo.
+  - A regra de leitura do feed da cidade é: publicações da cidade da pessoa, **sem grupo e sem vila** (a coluna `community_id` ainda existe e precisa ser excluída da leitura)
     (`group_id is null and community_id is null`).
   - Isso fica na mesma migration que cria o feed, com prova negativa de que publicação de grupo Fechado e de vila
     não aparece. **[crítica]**
@@ -205,7 +206,7 @@ Toda frente:
 
 | Tarefa | Escopo | Migration (faixa) | Depende de |
 |---|---|---|---|
-| N1 | Barra de baixo, destino de cada entrada, abas da Comunidade, "Conversas" para as mensagens, redirecionamento das vilas, prova de alcance | Sem migration | — |
+| N1 | Barra de baixo, destino de cada entrada, abas da Comunidade, "Conversas" para as mensagens, redirecionamento das rotas antigas de vila, prova de alcance | Sem migration | — |
 | N2 | Feed da cidade no Início, com a regra de leitura e prova negativa; sai a vista "Conversa" | `20261024100000` | — |
 | A1 | 8 a 300 caracteres, filtros (com "Minhas"), editar e excluir com marca e `edited_at`, resolução em dois campos com os rótulos, aviso de removido sem autor | `20261024110000` | — |
 | B1 | Rótulos, regras, aviso por grupo, publicação fixada, listas | `20261024120000` | — |
@@ -225,7 +226,7 @@ própria migration, com teste para cada uma.
 
 ## Alternatives considered
 
-- **Manter as vilas visíveis.** Rejeitada: duas noções de comunidade confundem, e não há conteúdo nelas.
+- **Manter as telas de vila.** Rejeitada: vila não existe nesta versão do produto.
 - **Resolver só como no protótipo.** Rejeitada: perde qual resposta resolveu.
 - **Encerrar com 30 dias e sumir.** Rejeitada pelo dono: a memória do grupo ajuda quem chega depois.
 - **Bloqueio só visual, como no Discord.** Rejeitada: mantém o assediador engajado.
@@ -298,7 +299,7 @@ conhecida), e por isso tem estado explícito em dois campos.
 ## Reversal cost
 
 Médio. Telas novas e migrations aditivas. Reescrever `reopen_recommendation` e as policies de `dm_blocks` são as
-mudanças mais sensíveis, cobertas por pgTAP. Esconder as vilas é reversível.
+mudanças mais sensíveis, cobertas por pgTAP. Tirar as telas de vila é reversível.
 
 ## Success metric
 
@@ -309,5 +310,4 @@ mudanças mais sensíveis, cobertas por pgTAP. Esconder as vilas é reversível.
 
 ## Reopen condition
 
-Reabrir se o bloqueio por conteúdo pesar demais nas leituras, se aparecer abuso pelo motivo do pedido, ou se as vilas
-voltarem a ter uso.
+Reabrir se o bloqueio por conteúdo pesar demais nas leituras ou se aparecer abuso pelo motivo do pedido.
