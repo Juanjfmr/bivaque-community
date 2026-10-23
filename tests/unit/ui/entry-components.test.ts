@@ -2,12 +2,10 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
-// PORT-002 (lote 4 da entrada): os componentes da casca da entrada. O vitest
-// não monta `.tsx` de `apps/web` (o `jsx: "preserve"` do app não é aceito pelo
-// transform do teste) e não há ambiente de DOM, então a prova é por contrato de
-// fonte, como nas demais varreduras de `tests/unit/ui`. Cada asserção mira a
-// decisão que quebra em silêncio: o texto do passo, o `role` do erro, a classe
-// dos tokens e o símbolo oficial.
+// PORT-002 (lote 4 da entrada): os componentes da casca da entrada. A prova de
+// markup do símbolo e dos adaptadores vive em entry-material-adapters.test.ts
+// (renderToStaticMarkup); aqui a varredura de fonte mira as decisões que quebram
+// em silêncio: o texto do passo, o `role` do erro e a classe dos tokens.
 const ENTRY_DIR = join(process.cwd(), "apps", "web", "app", "components", "entry")
 const source = (name: string) => readFileSync(join(ENTRY_DIR, name), "utf8")
 

@@ -79,3 +79,53 @@ closure:
 #   apps/web/app/components/material/register.ts, tags novas declaradas em
 #   apps/web/types/material-web.d.ts sem any, /ajuda fora de PUBLIC_PATHS e
 #   nenhuma tela ou página de entrada alterada nesta tarefa.
+#
+# ── Correção da revisão independente — 22/10/2026, branch codex/entrada-base ──
+# Revisão confrontada: 13c34b7e. Commits: fca9a9ff (valor controlado e nome do
+# checkbox), 93e01d8e (diálogo fechado e símbolo da entrada), 083e5183 (provas
+# de servidor e shims de transform).
+#
+# Achado 1 — apps/web/app/components/material/controlled-value.ts (decisão pura
+#   valueToRestore) usada por outlined-text-field.tsx, checkbox.tsx e
+#   outlined-select.tsx: o valor é sincronizado a cada render e num
+#   queueMicrotask depois de input/change, devolvendo a prop quando o pai recusa
+#   a mudança. Provas: casos puros (recusa, aceite, valor igual, troca por
+#   outro) e varredura do uso em tests/unit/ui/entry-material-adapters.test.ts.
+# Achado 2 — checkbox.tsx passa aria-label ao md-checkbox (texto do rótulo quando
+#   é string; prop opcional ariaLabel para rótulo com links), com
+#   aria-describedby no mesmo host ARIA; tipos em
+#   apps/web/types/material-web.d.ts. Provas de markup: aria-label do rótulo
+#   simples e ariaLabel + aria-describedby do aceite composto.
+# Achado 3 — confirm-dialog.tsx monta o conteúdo só depois de registerDialog();
+#   show() espera o mesmo registro. Prova: renderToStaticMarkup com open=false
+#   não contém título, texto, Cancelar nem Confirmar.
+# Achado 4 — entry-shell.tsx envolve o BrandMark em .en-mark; entry.css dá 32 px
+#   e fill: var(--bv-symbol-body / --bv-symbol-threshold) nos dois temas. Prova
+#   de markup: a classe en-mark no HTML do servidor; varredura das regras de CSS.
+# Achado 5 — provas reais com react-dom/server e função pura.
+#   tests/e2e/entry-kit.spec.ts NÃO foi criado: nenhuma rota existente monta
+#   estes adaptadores (as telas de entrada são das frentes A a D), e montá-los
+#   mudaria o comportamento de uma rota. Para o vitest transformar os .tsx, o
+#   vitest.config.mjs da raiz liga oxc.jsx.runtime automatic (o coordenador
+#   trocou por isso os tsconfig.json aninhados que a primeira versão criou);
+#   apps/web/tsconfig.json continua com preserve para o Next.
+# Achado 6 — entry.css repõe padding-block e padding-inline do md-filled-button
+#   em .bv-skin (o Confirmar do diálogo ficava com padding 0); a landing não
+#   importa esta folha. Prova: varredura das duas declarações.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE (exit 0).
+# npx pnpm@11.18.0 exec vitest run tests/unit/ui — VERDE: 34 arquivos,
+#   315/315 testes; entry-material-adapters com 27 testes, incluindo os de SSR.
+# npx pnpm@11.18.0 exec vitest run tests/unit/ui tests/scope/entrada-public-paths
+#   .test.mjs tests/scope/entrada-skin.test.mjs — a parte de tests/unit/ui fecha
+#   verde; os dois arquivos de tests/scope usam node:test e o vitest os reporta
+#   como No test suite found (sem suíte). Isso é anterior a esta correção: a
+#   versão do HEAD, extraída com git show, falha do mesmo jeito. As asserções
+#   rodam e passam; o runner correto é node --test:
+#   npx pnpm@11.18.0 exec node --test tests/scope/entrada-public-paths.test.mjs
+#   tests/scope/entrada-skin.test.mjs — VERDE: 9/9.
+# npx pnpm@11.18.0 exec biome check <13 arquivos alterados> — 0 erros e 2 avisos
+#   pré-existentes em tests/unit/ui/entry-components.test.ts
+#   (noTemplateCurlyInString nas linhas 17 e 22, fora do diff).
+# Não rodei gate, build, Playwright nem servidor, como o contrato pede. Não
+# instalei pacote, não fiz push nem merge.

@@ -9,7 +9,7 @@
 // O diálogo é controlado por `open`: quem chama guarda o booleano e o vira
 // `false` em `onConfirm`/`onCancel`. Fechar pelo Esc ou pelo clique no scrim
 // também passa por `onCancel`, para o estado de fora não ficar preso em aberto.
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type {
   MaterialConfirmDialogProperties,
   MaterialDialogElement,
@@ -35,27 +35,36 @@ export function MaterialConfirmDialog({
   // chamou. Sem ele, o `closed` de uma escolha já tratada chamaria `onCancel`
   // por cima do `onConfirm`.
   const settled = useRef(false)
+  // Antes do registro, `md-dialog` é um elemento desconhecido: o conteúdo no
+  // light DOM aparece como HTML comum, e o diálogo fechado mostraria título,
+  // texto e ações sem JavaScript. Montar o conteúdo só depois do registro
+  // mantém o fechado invisível; o `show()` espera o mesmo registro, então
+  // quando ele roda os slots já estão preenchidos.
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (open) returnFocus.current = document.activeElement
   }, [open])
 
   useEffect(() => {
-    const element = dialog.current
-    if (!element) return
     let active = true
     void registerDialog().then(() => {
-      if (!active) return
-      if (open && !element.open) {
-        settled.current = false
-        void element.show()
-      }
-      if (!open && element.open) void element.close()
+      if (active) setReady(true)
     })
     return () => {
       active = false
     }
-  }, [open])
+  }, [])
+
+  useEffect(() => {
+    const element = dialog.current
+    if (!element || !ready) return
+    if (open && !element.open) {
+      settled.current = false
+      void element.show()
+    }
+    if (!open && element.open) void element.close()
+  }, [open, ready])
 
   useEffect(() => {
     const element = dialog.current
@@ -90,20 +99,24 @@ export function MaterialConfirmDialog({
 
   return (
     <md-dialog ref={dialog}>
-      <div slot="headline">{title}</div>
-      <div slot="content">{text}</div>
-      <div className="dialog-actions" slot="actions">
-        <MaterialTextButton onClick={() => choose(false)} type="button">
-          {cancelLabel}
-        </MaterialTextButton>
-        <MaterialFilledButton
-          className={danger ? "danger-fill" : undefined}
-          onClick={() => choose(true)}
-          type="button"
-        >
-          {confirmLabel}
-        </MaterialFilledButton>
-      </div>
+      {ready ? (
+        <>
+          <div slot="headline">{title}</div>
+          <div slot="content">{text}</div>
+          <div className="dialog-actions" slot="actions">
+            <MaterialTextButton onClick={() => choose(false)} type="button">
+              {cancelLabel}
+            </MaterialTextButton>
+            <MaterialFilledButton
+              className={danger ? "danger-fill" : undefined}
+              onClick={() => choose(true)}
+              type="button"
+            >
+              {confirmLabel}
+            </MaterialFilledButton>
+          </div>
+        </>
+      ) : null}
     </md-dialog>
   )
 }

@@ -138,7 +138,10 @@ export type MaterialOutlinedTextFieldProperties = Omit<
 
 export type MaterialCheckboxElementProperties = MaterialBase &
   Readonly<{
+    // O Material repassa o ARIA do host para o `<input>` do shadow root; é por
+    // aqui que o controle focável ganha nome e descrição.
     "aria-describedby"?: string | undefined
+    "aria-label"?: string | undefined
     checked?: boolean | undefined
     disabled?: boolean | undefined
     ref?: Ref<MaterialCheckboxElement | null> | undefined
@@ -150,6 +153,10 @@ export type MaterialCheckboxProperties = MaterialCheckboxElementProperties &
     // rótulo visível. A cópia do protótipo põe o texto ao lado, dentro do
     // mesmo <label>, para o clique no texto também marcar.
     label: ReactNode
+    // Nome acessível quando `label` é composto (o aceite dos Termos tem links):
+    // o texto puro não cabe no `label` sem perder a marcação. Com `label` string
+    // o adaptador usa o próprio texto e esta prop é desnecessária.
+    ariaLabel?: string | undefined
     onChange?: (checked: boolean) => void
   }>
 
