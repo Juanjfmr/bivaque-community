@@ -163,9 +163,8 @@ describe("o aceite é o mesmo nos dois caminhos", () => {
 
   it("o nome acessível é escrito no controle, não só no texto ao lado", () => {
     // O `<label>` do Material associa o texto ao elemento customizado; o
-    // `<input>` do shadow root precisa do `aria-label`, que o mixin do próprio
-    // componente delega.
-    expect(consent).toContain('setAttribute("aria-label"')
+    // `<input>` do shadow root recebe o nome pelo `ariaLabel` do adaptador.
+    expect(consent).toContain("ariaLabel={name}")
   })
 
   it("só o cadastro leva a nota do Google", () => {

@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect } from "react"
 import { MaterialCheckbox } from "../../../components/material/checkbox"
 
 // A linha do aceite do protótipo (`legalConsentText()` em legal/pages.js,
@@ -14,13 +13,10 @@ import { MaterialCheckbox } from "../../../components/material/checkbox"
 // primeiro ajuste de versão dos documentos (ADR-20260907-consentimento-no-
 // cadastro).
 //
-// O nome acessível é escrito no controle por um motivo concreto: o adaptador da
-// PORT-002 não expõe `aria-label`, e no Material o texto do `<label>` é
-// associado ao elemento customizado (`<md-checkbox>`), não ao `<input>` que vive
-// no shadow root. O `mixinDelegatesAria` do próprio componente move um
-// `aria-label` do host para esse `<input>`; sem ele, quem usa leitor de tela
-// ouve "caixa de seleção" e nada mais. O texto é o mesmo do rótulo visível,
-// então nada é anunciado em dobro.
+// O nome acessível vai pelo `ariaLabel` do adaptador: no Material, o texto do
+// `<label>` nomeia o `<md-checkbox>`, não o `<input>` do shadow root, e o
+// rótulo daqui tem links, então não é string. O texto é o mesmo do rótulo
+// visível, então nada é anunciado em dobro.
 const CHECKBOX_ID = "en-consent"
 const TEXT_ID = "en-consent-t"
 
@@ -40,15 +36,9 @@ type EntryConsentProperties = Readonly<{
 export function EntryConsent({ checked, note, onChange }: EntryConsentProperties) {
   const name = note === "signup" ? `${CONSENT_TEXT} ${SIGNUP_NOTE}` : CONSENT_TEXT
 
-  useEffect(() => {
-    // O elemento já está no DOM quando o efeito roda; se ainda não foi
-    // atualizado pelo Material, o atributo fica no host e é movido para o
-    // `<input>` na atualização seguinte (o mixin observa `aria-label`).
-    document.getElementById(CHECKBOX_ID)?.setAttribute("aria-label", name)
-  }, [name])
-
   return (
     <MaterialCheckbox
+      ariaLabel={name}
       checked={checked}
       className="en-check"
       id={CHECKBOX_ID}
