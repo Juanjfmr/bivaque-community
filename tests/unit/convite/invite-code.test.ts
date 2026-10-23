@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest"
 import {
+  asFamilyInviteCodeStatus,
   INVITE_CODE_ALPHABET,
   INVITE_CODE_FORMAT,
   INVITE_CODE_LENGTH,
   INVITE_CODE_RATE_LIMITED,
   INVITE_CODE_UNAVAILABLE,
-  inviteMessageFor,
+  inviteMessageForStatus,
   isInviteCodeShape,
   normalizeInviteCode,
 } from "web/lib/convite/code"
@@ -104,17 +105,29 @@ describe("digest", () => {
 
 describe("mensagens", () => {
   it("errado, vencido e usado respondem a mesma frase", () => {
-    const one = inviteMessageFor({ code: "P0001" })
+    // O banco devolve status, não exceção (20261023120000): a frase é a mesma
+    // para todos os casos em que o convite não serve, e o status desconhecido
+    // também cai nela — falha fechada.
+    const one = inviteMessageForStatus("unavailable")
     expect(one).toBe(INVITE_CODE_UNAVAILABLE)
-    expect(inviteMessageFor({ code: "P0002" })).toBe(one)
-    expect(inviteMessageFor({ code: "P0003" })).toBe(one)
-    expect(inviteMessageFor({ code: "P0004" })).toBe(one)
-    expect(inviteMessageFor({ code: null })).toBe(one)
+    expect(inviteMessageForStatus(asFamilyInviteCodeStatus("expired"))).toBe(one)
+    expect(inviteMessageForStatus(asFamilyInviteCodeStatus("used"))).toBe(one)
+    expect(inviteMessageForStatus(asFamilyInviteCodeStatus(""))).toBe(one)
   })
 
   it("o limite de tentativas tem frase própria", () => {
-    expect(inviteMessageFor({ code: "54000" })).toBe(INVITE_CODE_RATE_LIMITED)
-    expect(inviteMessageFor({ code: "54000" })).not.toBe(INVITE_CODE_UNAVAILABLE)
+    expect(inviteMessageForStatus("rate_limited")).toBe(INVITE_CODE_RATE_LIMITED)
+    expect(inviteMessageForStatus("rate_limited")).not.toBe(INVITE_CODE_UNAVAILABLE)
+  })
+
+  it("o status do banco é normalizado e não promove valor novo a convite válido", () => {
+    expect(asFamilyInviteCodeStatus("ok")).toBe("ok")
+    expect(asFamilyInviteCodeStatus("email_mismatch")).toBe("email_mismatch")
+    expect(asFamilyInviteCodeStatus("rate_limited")).toBe("rate_limited")
+    expect(asFamilyInviteCodeStatus("unavailable")).toBe("unavailable")
+    expect(asFamilyInviteCodeStatus("ok ")).toBe("unavailable")
+    expect(asFamilyInviteCodeStatus("P0005")).toBe("unavailable")
+    expect(asFamilyInviteCodeStatus("")).toBe("unavailable")
   })
 
   it("o formato diz o tamanho do código", () => {

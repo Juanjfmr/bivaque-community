@@ -5,8 +5,9 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies, headers } from "next/headers"
 import { classifySignUp, passwordProblem } from "../../../lib/auth/password-auth"
 import {
+  type FamilyInviteCodeStatus,
   INVITE_CODE_FORMAT,
-  inviteMessageFor,
+  inviteMessageForStatus,
   isInviteCodeShape,
   normalizeInviteCode,
 } from "../../../lib/convite/code"
@@ -16,7 +17,11 @@ import {
   inviteOriginDigest,
   originFromForwardedFor,
 } from "../../../lib/convite/digest"
-import { acceptFamilyInviteCode, previewFamilyInviteCode } from "../../../lib/convite/provision"
+import {
+  acceptFamilyInviteCode,
+  type FamilyInvitePreview,
+  previewFamilyInviteCode,
+} from "../../../lib/convite/provision"
 import { log } from "../../../lib/logger"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
@@ -103,6 +108,14 @@ function errorCode(error: unknown): string | null {
   return typeof code === "string" ? code : null
 }
 
+// O banco devolve status, não exceção (20261023120000): a exceção desfaria o
+// insert da tentativa e o limite nunca contaria erro. Só `email_mismatch` tem
+// frase própria — a pessoa tem o código certo e digitou outro e-mail; errado,
+// vencido, revogado, usado e limite genérico saem de `inviteMessageForStatus`.
+function previewMessageFor(status: FamilyInviteCodeStatus): string {
+  return status === "email_mismatch" ? EMAIL_MISMATCH : inviteMessageForStatus(status)
+}
+
 export async function previewInviteAction(formData: FormData): Promise<InvitePreviewResult> {
   const rawCode = formData.get("code")
   const code = normalizeInviteCode(typeof rawCode === "string" ? rawCode : "")
@@ -118,6 +131,15 @@ export async function previewInviteAction(formData: FormData): Promise<InvitePre
       codeHash: inviteCodeHash(code),
       originDigest: await requestOriginDigest(),
     })
+
+    if (preview.status !== "ok") {
+      // Tentativa errada é caminho normal, não incidente: o banco já gravou a
+      // tentativa (é isso que faz o limite contar) e a tela recebe a frase
+      // única de sempre.
+      log.warn("family invite code preview denied", { status: preview.status })
+      return { ok: false, message: previewMessageFor(preview.status) }
+    }
+
     return {
       ok: true,
       expiresAt: preview.expiresAt,
@@ -125,15 +147,13 @@ export async function previewInviteAction(formData: FormData): Promise<InvitePre
       inviterName: preview.inviterName,
     }
   } catch (error) {
-    const code_ = errorCode(error)
-    log.warn("family invite code preview denied", { errorCode: code_ })
-    // P0005 é o único caso que merece frase própria: a pessoa tem o código e
-    // digitou outro e-mail. Os demais (inexistente, vencido, usado) respondem
-    // a mesma coisa, como manda o ADR.
-    return {
-      ok: false,
-      message: code_ === "P0005" ? EMAIL_MISMATCH : inviteMessageFor({ code: code_ }),
-    }
+    // Aqui sim é falha de infraestrutura (RPC indisponível, resposta quebrada):
+    // a tela não pode prometer convite válido nem inventar um status.
+    log.error("family invite code preview failed", {
+      errorCode: errorCode(error),
+      message: error instanceof Error ? error.message : "unknown",
+    })
+    return { ok: false, message: inviteMessageForStatus("unavailable") }
   }
 }
 
@@ -176,16 +196,26 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
   const codeHash = inviteCodeHash(code)
   const emailDigest = inviteEmailDigest(email)
 
-  // 1. O convite valida o par código + e-mail ANTES de existir conta.
+  // 1. O convite valida o par código + e-mail ANTES de existir conta. A função
+  // devolve status — inclusive `unavailable` e `rate_limited` — e a tentativa
+  // fica gravada; nenhum desses casos vira exceção.
+  let preview: FamilyInvitePreview
   try {
-    await previewFamilyInviteCode(service, { codeHash, emailDigest, originDigest })
+    preview = await previewFamilyInviteCode(service, { codeHash, emailDigest, originDigest })
   } catch (error) {
-    const errorCodeValue = errorCode(error)
+    log.error("family invite preview failed before signup", {
+      errorCode: errorCode(error),
+      message: error instanceof Error ? error.message : "unknown",
+    })
+    return { ok: false, message: inviteMessageForStatus("unavailable"), field: "code" }
+  }
+
+  if (preview.status !== "ok") {
+    log.warn("family invite code denied before signup", { status: preview.status })
     return {
       ok: false,
-      message:
-        errorCodeValue === "P0005" ? EMAIL_MISMATCH : inviteMessageFor({ code: errorCodeValue }),
-      field: errorCodeValue === "P0005" ? "email" : "code",
+      message: previewMessageFor(preview.status),
+      field: preview.status === "email_mismatch" ? "email" : "code",
     }
   }
 
@@ -259,13 +289,20 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
   }
 
   // 4. O vínculo com o titular (e o provisionamento na localidade dele).
+  // Falha aqui — e-mail diferente, corrida perdida, limite — volta como status,
+  // não como exceção: o RPC confirma a tentativa antes de responder.
   try {
-    await acceptFamilyInviteCode(service, {
+    const acceptance = await acceptFamilyInviteCode(service, {
       codeHash,
       displayName: name.slice(0, 80),
       originDigest,
       userId,
     })
+
+    if (acceptance.status !== "ok") {
+      log.warn("family invite acceptance denied after signup", { status: acceptance.status })
+      return { ok: false, message: NO_LINK, field: "code" }
+    }
   } catch (error) {
     log.error("family invite acceptance failed after signup", {
       errorCode: errorCode(error),

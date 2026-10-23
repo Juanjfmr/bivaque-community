@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { byteaDigestParam } from "../invites-bytea"
 import { provisionMember } from "../onboarding/verifyAndProvision"
+import { asFamilyInviteCodeStatus } from "./code"
 
 // PORT-006 (lote 4 da entrada) — o lado servidor do convite por código.
 //
@@ -21,11 +22,22 @@ import { provisionMember } from "../onboarding/verifyAndProvision"
 
 type AnySupabaseClient = SupabaseClient<Database>
 
-export type FamilyInvitePreview = Readonly<{
-  expiresAt: string
-  inviteeEmailHint: string | null
-  inviterName: string
-}>
+// O banco devolve status, não exceção (20261023120000): a exceção desfaria o
+// insert da tentativa e o limite de tentativas nunca contaria erro. Por isso
+// nenhuma das duas funções abaixo traduz "código errado" em `throw` — só falha
+// de infraestrutura continua sendo exceção.
+export type FamilyInvitePreview =
+  | Readonly<{
+      expiresAt: string
+      inviteeEmailHint: string | null
+      inviterName: string
+      status: "ok"
+    }>
+  | Readonly<{ status: "unavailable" | "email_mismatch" | "rate_limited" }>
+
+export type FamilyInviteAcceptance =
+  | Readonly<{ linkId: string; localityMember: boolean; status: "ok" }>
+  | Readonly<{ status: "unavailable" | "rate_limited" }>
 
 function withCode(error: { code?: string | null; message: string }, prefix: string): Error {
   const wrapped = new Error(`${prefix}: ${error.message}`)
@@ -56,15 +68,19 @@ export async function previewFamilyInviteCode(
   const row = data?.[0]
   if (!row) {
     // Sem linha e sem erro não é "convite válido vazio": é resposta quebrada.
-    const wrapped = new Error("family invite preview returned no row")
-    ;(wrapped as { code?: string | null }).code = "P0001"
-    throw wrapped
+    throw new Error("family invite preview returned no row")
+  }
+
+  const status = asFamilyInviteCodeStatus(row.status)
+  if (status !== "ok") {
+    return { status }
   }
 
   return {
     expiresAt: row.expires_at,
     inviteeEmailHint: row.invitee_email_hint,
     inviterName: row.inviter_name,
+    status,
   }
 }
 
@@ -76,8 +92,8 @@ export async function acceptFamilyInviteCode(
     originDigest: string
     userId: string
   }>,
-): Promise<{ localityMember: boolean }> {
-  const { data: linkId, error } = await supabase.rpc("family_invite_code_accept", {
+): Promise<FamilyInviteAcceptance> {
+  const { data, error } = await supabase.rpc("family_invite_code_accept", {
     p_accepted_by_user_id: input.userId,
     p_code_hash: byteaDigestParam(input.codeHash),
     p_origin_digest: byteaDigestParam(input.originDigest),
@@ -87,9 +103,22 @@ export async function acceptFamilyInviteCode(
     throw withCode(error, "family invite acceptance failed")
   }
 
-  if (!linkId) {
-    throw new Error("family invite acceptance returned no link id")
+  const row = data?.[0]
+  if (!row) {
+    throw new Error("family invite acceptance returned no row")
   }
+
+  const status = asFamilyInviteCodeStatus(row.status)
+  if (status !== "ok") {
+    // O vínculo não existe — e-mail diferente, corrida perdida ou limite —, mas
+    // a tentativa já está gravada no banco: foi a transação do RPC que a
+    // confirmou, justamente porque a função devolve status em vez de lançar.
+    // O aceite nunca devolve `email_mismatch` (lá o código já é a credencial e
+    // a resposta é a genérica); se aparecesse, cairia em `unavailable`.
+    return { status: status === "rate_limited" ? "rate_limited" : "unavailable" }
+  }
+
+  const linkId = row.link_id
 
   // A localidade do dependente é a corrente do titular no momento do aceite —
   // a mesma regra do convite por link (`accept_family_invitation`). O
@@ -107,10 +136,12 @@ export async function acceptFamilyInviteCode(
     throw new Error("the inviting holder has no locality membership")
   }
 
-  return provisionMember(supabase, {
+  const member = await provisionMember(supabase, {
     userId: input.userId,
     localityId: holderLocalityId,
     displayName: input.displayName,
     consentVersion: CONSENT_VERSION,
   })
+
+  return { linkId, localityMember: member.localityMember, status }
 }

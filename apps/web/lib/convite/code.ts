@@ -34,12 +34,26 @@ export function isInviteCodeShape(code: string): boolean {
   return [...code].every((character) => INVITE_CODE_ALPHABET.includes(character))
 }
 
-type InviteError = Readonly<{ code?: string | null }>
+// PORT-006, correção da revisão: o banco NÃO lança mais para o resultado do
+// código. Uma exceção desfaz a transação da chamada, e com ela o insert da
+// tentativa — o limite passaria a contar só quem acertou. O preview e o aceite
+// devolvem `status` (20261023120000), no padrão de `consume_verification_attempt`.
+export type FamilyInviteCodeStatus = "ok" | "unavailable" | "email_mismatch" | "rate_limited"
 
-// Tradução única de erro do banco para a tela. `54000` é o teto de tentativas
-// (a casa usa esse código para limite); qualquer outro estado do convite cai
-// na frase genérica, inclusive os erros que o banco devolve em inglês.
-export function inviteMessageFor(error: InviteError): string {
-  if (error.code === "54000") return INVITE_CODE_RATE_LIMITED
-  return INVITE_CODE_UNAVAILABLE
+// Status desconhecido (ou vindo de uma versão mais nova do banco) cai em
+// `unavailable`: falha fechada. Um valor novo nunca pode virar "convite válido".
+export function asFamilyInviteCodeStatus(value: string): FamilyInviteCodeStatus {
+  if (value === "ok") return "ok"
+  if (value === "email_mismatch") return "email_mismatch"
+  if (value === "rate_limited") return "rate_limited"
+  return "unavailable"
+}
+
+// A frase da tela a partir do status. Errado, vencido, revogado e usado têm a
+// mesma; o limite tem a dele. `email_mismatch` tem frase própria na Server
+// Action, porque é o único caso em que a pessoa tem o código e digitou outro
+// e-mail — aqui ele fica na genérica de propósito, para nenhum caminho novo
+// vazar a distinção por descuido.
+export function inviteMessageForStatus(status: FamilyInviteCodeStatus): string {
+  return status === "rate_limited" ? INVITE_CODE_RATE_LIMITED : INVITE_CODE_UNAVAILABLE
 }
