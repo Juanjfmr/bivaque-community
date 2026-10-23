@@ -83,7 +83,7 @@ async function precedes(page: Page, before: string, after: string): Promise<bool
       }
       return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
     },
-    [before, after],
+    [before, after] as [string, string],
   )
 }
 
