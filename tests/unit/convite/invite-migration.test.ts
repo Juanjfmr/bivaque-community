@@ -53,13 +53,44 @@ describe("código do convite no banco", () => {
     expect(MIGRATION).toContain("v_link_id := null")
   })
 
-  it("as duas funções devolvem status e a tentativa é contada antes da resposta", () => {
+  it("o teto é checado antes do código e só a falha vira tentativa", () => {
     expect(MIGRATION).toMatch(/returns table \(\s*status text/)
-    // O contador devolve texto, não lança: é o insert dele que precisa
-    // sobreviver à resposta.
-    expect(MIGRATION).toContain("v_attempt := private.record_family_invite_code_attempt(")
+    // O gate devolve texto, não lança: é ele que confere o teto antes de o
+    // código ser olhado, para quem estourou continuar barrado até com o código
+    // certo.
+    expect(MIGRATION).toContain(
+      "private.family_invite_code_attempt_gate(p_origin_digest, p_email_digest)",
+    )
     expect(MIGRATION).toContain("return 'rate_limited'")
-    expect(MIGRATION).toContain("return 'ok'")
+    // A gravação é só da tentativa que falhou: o fluxo certo (preview,
+    // validação e aceite) não consome tentativa.
+    expect(MIGRATION).toContain("private.record_family_invite_code_failure(")
+    expect(MIGRATION).not.toContain("record_family_invite_code_attempt")
+  })
+
+  it("contagem e insert ficam sob trava por origem e por e-mail", () => {
+    // Duas chamadas simultâneas leem a mesma contagem sem trava e passam as
+    // duas pelo teto. A trava é de transação, pela origem e depois pelo e-mail
+    // (ordem fixa, para não haver ciclo), como em open_support_ticket.
+    expect(MIGRATION).toContain("pg_catalog.pg_advisory_xact_lock(")
+    expect(MIGRATION).toContain("pg_catalog.hashtextextended(")
+    expect(MIGRATION).toMatch(/family_invite_code:origin:/)
+    expect(MIGRATION).toMatch(/family_invite_code:email:/)
+    expect(MIGRATION).toContain("perform private.lock_family_invite_code_attempts(")
+
+    const helper = MIGRATION.slice(MIGRATION.indexOf("lock_family_invite_code_attempts("))
+    const originLock = helper.indexOf("family_invite_code:origin:")
+    const emailLock = helper.indexOf("family_invite_code:email:")
+    expect(originLock).toBeGreaterThan(-1)
+    expect(emailLock).toBeGreaterThan(originLock)
+  })
+
+  it("o aceite retoma o próprio vínculo em vez de recusar quem já aceitou", () => {
+    // Sem retomada, uma falha no provisionamento deixa o convite `accepted` e a
+    // pessoa sem acesso; a nova tentativa seria recusada como "usado".
+    expect(MIGRATION).toMatch(/fi\.status = 'accepted'/)
+    expect(MIGRATION).toMatch(/fi\.accepted_by_user_id = p_accepted_by_user_id/)
+    expect(MIGRATION).toMatch(/link\.family_user_id = p_accepted_by_user_id/)
   })
 
   it("a tabela de tentativas é fechada para o cliente", () => {

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(30);
 
 \ir fixtures/foundation.inc
 
@@ -231,21 +231,47 @@ select is(
   'o convite aceito por código sai de pending'
 );
 
--- 13. Uso único: o mesmo código não aceita de novo.
-select is(
-  (
-    select status
+-- 13 a 15. Uso único e retomada. O uso é o VÍNCULO, e ele é único por convite:
+-- o mesmo aceitante que repete o código recebe `ok` e o MESMO vínculo (é a
+-- retomada de quem ficou sem provisionamento), e qualquer outra pessoa recebe a
+-- resposta genérica — um segundo vínculo nunca nasce.
+select results_eq(
+  $$
+    select status, link_id
     from public.family_invite_code_accept(
       decode(repeat('a1', 32), 'hex'),
       '10000000-0000-4000-8000-000000000002'::uuid,
       decode(repeat('9a', 32), 'hex')
     )
-  ),
-  'unavailable',
-  'o código de uso único não aceita uma segunda vez'
+  $$,
+  $$
+    select 'ok'::text, id
+    from private.family_account_links
+    where invitation_id = '30000000-0000-4000-8000-000000000001'
+  $$,
+  'o mesmo aceitante recebe ok e o vínculo que já existe (retomada idempotente)'
 );
 
--- 14 e 15. E-mail diferente do convite: mesma resposta — e a tentativa fica
+select is(
+  (select count(*)::integer from private.family_account_links),
+  1,
+  'a retomada não cria um segundo vínculo para o convite'
+);
+
+select is(
+  (
+    select status
+    from public.family_invite_code_accept(
+      decode(repeat('a1', 32), 'hex'),
+      '10000000-0000-4000-8000-000000000003'::uuid,
+      decode(repeat('9a', 32), 'hex')
+    )
+  ),
+  'unavailable',
+  'outra pessoa com o código já usado recebe a resposta genérica'
+);
+
+-- 16 e 17. E-mail diferente do convite: mesma resposta — e a tentativa fica
 -- gravada mesmo com o vínculo falhando dentro de accept_family_invitation.
 delete from private.family_account_links
   where invitation_id = '30000000-0000-4000-8000-000000000001';
@@ -281,7 +307,45 @@ select is(
   'o aceite que falha por e-mail diferente também deixa a tentativa gravada'
 );
 
--- 16 a 19. Limite por origem, contado pelas chamadas da própria função: 15
+-- 18 a 20. O caminho certo não consome tentativa. Antes desta correção, o
+-- preview, a validação antes do cadastro e o aceite gravavam três linhas: quem
+-- começava com 13 erros era barrado no aceite, DEPOIS de a conta existir. Agora
+-- só a tentativa que falhou é gravada.
+delete from private.family_invite_code_attempts;
+
+select is(
+  (
+    select status
+    from public.family_invite_code_preview(
+      decode(repeat('a4', 32), 'hex'),
+      extensions.digest('origin-success', 'sha256'),
+      extensions.digest(lower(trim('member-two@example.invalid')), 'sha256')
+    )
+  ),
+  'ok',
+  'o preview do código certo continua ok'
+);
+
+select is(
+  (
+    select status
+    from public.family_invite_code_accept(
+      decode(repeat('a4', 32), 'hex'),
+      '10000000-0000-4000-8000-000000000002'::uuid,
+      extensions.digest('origin-success', 'sha256')
+    )
+  ),
+  'ok',
+  'o aceite do código certo continua ok'
+);
+
+select is(
+  (select count(*)::integer from private.family_invite_code_attempts),
+  0,
+  'preview e aceite com o código certo não gravam tentativa'
+);
+
+-- 21 a 24. Limite por origem, contado pelas chamadas da própria função: 15
 -- tentativas erradas da mesma origem ficam gravadas, a 16ª devolve
 -- rate_limited e não é contada, e o código CERTO depois do limite também é
 -- barrado (o teto vem antes da consulta ao código).
@@ -345,7 +409,7 @@ select is(
   'o código certo, depois do limite estourado, também devolve rate_limited'
 );
 
--- 20 e 21. Limite por e-mail: 10 tentativas do mesmo endereço, cada uma de uma
+-- 25 e 26. Limite por e-mail: 10 tentativas do mesmo endereço, cada uma de uma
 -- origem diferente; a 11ª é recusada mesmo vindo de outra origem.
 delete from private.family_invite_code_attempts;
 
@@ -389,7 +453,7 @@ select is(
   'a 11ª tentativa do mesmo e-mail é recusada, mesmo de outra origem'
 );
 
--- 22. O código não é legível por quem tem conta: sem grant na tabela.
+-- 27. O código não é legível por quem tem conta: sem grant na tabela.
 set local role authenticated;
 select throws_ok(
   $$ select code_hash from private.family_invitations limit 1 $$,
@@ -399,7 +463,7 @@ select throws_ok(
 );
 reset role;
 
--- 23. As funções são só do servidor.
+-- 28. As funções são só do servidor.
 set local role anon;
 select throws_ok(
   $$
@@ -414,6 +478,54 @@ select throws_ok(
   'anon não executa o preview do código'
 );
 reset role;
+
+-- 29 e 30. A contagem e o insert ficam sob uma trava de transação: uma pela
+-- origem e outra pelo e-mail, sempre nessa ordem. A prova é o lock existir no
+-- backend desta sessão DEPOIS do gate — uma trava de transação só é liberada no
+-- commit/rollback. Digests novos, para não coincidir com trava já tomada
+-- (a trava é reentrante e não criaria linha nova no pg_locks).
+select set_config(
+  'bivaque.invite_code_lock_probe',
+  (
+    select count(*)::text
+    from pg_catalog.pg_locks
+    where locktype = 'advisory'
+      and pid = pg_catalog.pg_backend_pid()
+  ),
+  false
+);
+
+select private.family_invite_code_attempt_gate(
+  decode(repeat('d1', 32), 'hex'),
+  extensions.digest(lower(trim('lock-probe@example.invalid')), 'sha256')
+);
+
+select is(
+  (
+    select count(*)::integer
+    from pg_catalog.pg_locks
+    where locktype = 'advisory'
+      and pid = pg_catalog.pg_backend_pid()
+  ),
+  current_setting('bivaque.invite_code_lock_probe')::integer + 2,
+  'o gate trava pela origem e pelo e-mail'
+);
+
+select private.family_invite_code_attempt_gate(
+  decode(repeat('d2', 32), 'hex'),
+  null
+);
+
+select is(
+  (
+    select count(*)::integer
+    from pg_catalog.pg_locks
+    where locktype = 'advisory'
+      and pid = pg_catalog.pg_backend_pid()
+  ),
+  current_setting('bivaque.invite_code_lock_probe')::integer + 3,
+  'sem e-mail, o gate trava só pela origem'
+);
 
 select * from finish();
 rollback;

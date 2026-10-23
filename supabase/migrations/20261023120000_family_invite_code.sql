@@ -40,7 +40,11 @@
 -- exceção: ali não existe tentativa a contar.
 --
 -- Limite de tentativas por origem e por e-mail: janela móvel de uma hora,
--- contada em tabela, com o status genérico para quem estourou.
+-- contada em tabela, com o status genérico para quem estourou. Só a tentativa
+-- que FALHOU é gravada — o limite existe contra adivinhação, não contra quem
+-- tem o código certo —, e a contagem e o insert ficam sob uma trava de
+-- transação por origem e por e-mail, para duas chamadas simultâneas não lerem
+-- a mesma contagem e passarem as duas pelo teto.
 
 alter table private.family_invitations
   add column code_hash bytea
@@ -94,14 +98,61 @@ revoke all on function private.family_invite_code_rate_limit() from anon;
 revoke all on function private.family_invite_code_rate_limit() from authenticated;
 grant execute on function private.family_invite_code_rate_limit() to service_role;
 
--- Registra a tentativa ou devolve `rate_limited` quando o teto já estourou. A
--- contagem vem ANTES do insert: a décima sexta tentativa da mesma origem é
--- recusada, não a décima sétima — e a recusada não entra na conta, senão o
--- limite nunca deixaria de valer.
-create function private.record_family_invite_code_attempt(
+-- A trava do limite. Contar e inserir são dois passos: sem trava, duas chamadas
+-- simultâneas leem a mesma contagem e as duas passam pelo teto. A trava é de
+-- transação (`pg_advisory_xact_lock`), pela origem e — quando existe — pelo
+-- e-mail, SEMPRE nessa ordem: origem antes do e-mail. A ordem fixa é o que
+-- impede duas chamadas com as mesmas duas chaves de montarem um ciclo; é o
+-- mesmo recurso que `open_support_ticket` já usa (20261022130521).
+--
+-- A chave é o hash do digest, não o digest: `hashtextextended` devolve bigint,
+-- a forma de chave única. O prefixo separa origem de e-mail — sem ele, um
+-- digest de origem igual a um de e-mail cairia na mesma trava sem motivo.
+create function private.lock_family_invite_code_attempts(
   p_origin_digest bytea,
-  p_email_digest bytea,
-  p_code_hash bytea
+  p_email_digest bytea
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      'family_invite_code:origin:' || pg_catalog.encode(p_origin_digest, 'hex'),
+      0
+    )
+  );
+
+  if p_email_digest is not null then
+    perform pg_catalog.pg_advisory_xact_lock(
+      pg_catalog.hashtextextended(
+        'family_invite_code:email:' || pg_catalog.encode(p_email_digest, 'hex'),
+        0
+      )
+    );
+  end if;
+end;
+$$;
+
+revoke all on function private.lock_family_invite_code_attempts(bytea, bytea) from public;
+revoke all on function private.lock_family_invite_code_attempts(bytea, bytea) from anon;
+revoke all on function private.lock_family_invite_code_attempts(bytea, bytea) from authenticated;
+grant execute on function private.lock_family_invite_code_attempts(bytea, bytea) to service_role;
+
+-- O teto, sozinho: devolve `ok` (pode seguir) ou `rate_limited`. É chamado
+-- ANTES de o código ser conferido, em toda tentativa, para que quem estourou
+-- com erros continue barrado até quando apresenta o código certo. Não grava
+-- nada — quem grava é `record_family_invite_code_failure`, e só quando a
+-- tentativa falhou.
+--
+-- A contagem vem antes do insert e a trava segura as duas: a décima sexta
+-- tentativa da mesma origem é recusada, não a décima sétima — e a recusada não
+-- entra na conta, senão o limite nunca deixaria de valer.
+create function private.family_invite_code_attempt_gate(
+  p_origin_digest bytea,
+  p_email_digest bytea
 )
 returns text
 language plpgsql
@@ -118,13 +169,11 @@ begin
     raise exception 'origin digest must be 32 bytes' using errcode = '22023';
   end if;
 
-  if p_code_hash is null or octet_length(p_code_hash) <> 32 then
-    raise exception 'code hash must be 32 bytes' using errcode = '22023';
-  end if;
-
   if p_email_digest is not null and octet_length(p_email_digest) <> 32 then
     raise exception 'email digest must be 32 bytes' using errcode = '22023';
   end if;
+
+  perform private.lock_family_invite_code_attempts(p_origin_digest, p_email_digest);
 
   select window_interval, origin_max, email_max
   into v_window, v_origin_max, v_email_max
@@ -160,18 +209,61 @@ begin
     end if;
   end if;
 
-  insert into private.family_invite_code_attempts (origin_digest, email_digest, code_hash)
-  values (p_origin_digest, p_email_digest, p_code_hash);
-
   return 'ok';
 end;
 $$;
 
-revoke all on function private.record_family_invite_code_attempt(bytea, bytea, bytea) from public;
-revoke all on function private.record_family_invite_code_attempt(bytea, bytea, bytea) from anon;
-revoke all on function private.record_family_invite_code_attempt(bytea, bytea, bytea)
+revoke all on function private.family_invite_code_attempt_gate(bytea, bytea) from public;
+revoke all on function private.family_invite_code_attempt_gate(bytea, bytea) from anon;
+revoke all on function private.family_invite_code_attempt_gate(bytea, bytea) from authenticated;
+grant execute on function private.family_invite_code_attempt_gate(bytea, bytea) to service_role;
+
+-- Registra a tentativa QUE FALHOU: código errado, vencido, usado, revogado ou
+-- e-mail diferente do convite. Tentativa com o código certo não grava linha.
+--
+-- O limite existe para conter adivinhação, não para punir quem acertou, e o
+-- fluxo certo passa por até três chamadas (preview, validação antes do
+-- cadastro e aceite). Contando as três, quem acertava chegava ao bloqueio
+-- depois de a conta já existir — e o aceite era recusado com a conta criada.
+--
+-- A trava é a mesma, na mesma ordem: numa chamada normal o gate já a segurou
+-- nesta transação (a trava de transação é reentrante), e um chamador futuro que
+-- grave sem passar pelo gate continua serializado por origem.
+create function private.record_family_invite_code_failure(
+  p_origin_digest bytea,
+  p_email_digest bytea,
+  p_code_hash bytea
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if p_origin_digest is null or octet_length(p_origin_digest) <> 32 then
+    raise exception 'origin digest must be 32 bytes' using errcode = '22023';
+  end if;
+
+  if p_code_hash is null or octet_length(p_code_hash) <> 32 then
+    raise exception 'code hash must be 32 bytes' using errcode = '22023';
+  end if;
+
+  if p_email_digest is not null and octet_length(p_email_digest) <> 32 then
+    raise exception 'email digest must be 32 bytes' using errcode = '22023';
+  end if;
+
+  perform private.lock_family_invite_code_attempts(p_origin_digest, p_email_digest);
+
+  insert into private.family_invite_code_attempts (origin_digest, email_digest, code_hash)
+  values (p_origin_digest, p_email_digest, p_code_hash);
+end;
+$$;
+
+revoke all on function private.record_family_invite_code_failure(bytea, bytea, bytea) from public;
+revoke all on function private.record_family_invite_code_failure(bytea, bytea, bytea) from anon;
+revoke all on function private.record_family_invite_code_failure(bytea, bytea, bytea)
   from authenticated;
-grant execute on function private.record_family_invite_code_attempt(bytea, bytea, bytea)
+grant execute on function private.record_family_invite_code_failure(bytea, bytea, bytea)
   to service_role;
 
 -- Preview: valida o código sem sessão e devolve só o que a tela do convite
@@ -180,9 +272,12 @@ grant execute on function private.record_family_invite_code_attempt(bytea, bytea
 -- conferido antes de a conta existir.
 --
 -- O resultado é `status` (`ok`, `unavailable`, `email_mismatch` ou
--- `rate_limited`), nunca exceção: a exceção desfaria o insert da tentativa
--- feito por `record_family_invite_code_attempt` e o limite não contaria erro.
--- Os campos da tela só vêm preenchidos quando `status = 'ok'`.
+-- `rate_limited`), nunca exceção: a exceção desfaria o insert da tentativa e o
+-- limite não contaria erro. Os campos da tela só vêm preenchidos quando
+-- `status = 'ok'`.
+--
+-- O teto é conferido primeiro; a falha é registrada no fim (só código certo não
+-- grava nada).
 create function private.family_invite_code_preview(
   p_code_hash bytea,
   p_origin_digest bytea,
@@ -200,15 +295,11 @@ set search_path = ''
 as $$
 declare
   v_invitation private.family_invitations;
-  v_attempt text;
+  v_gate text;
 begin
-  v_attempt := private.record_family_invite_code_attempt(
-    p_origin_digest,
-    p_email_digest,
-    p_code_hash
-  );
+  v_gate := private.family_invite_code_attempt_gate(p_origin_digest, p_email_digest);
 
-  if v_attempt = 'rate_limited' then
+  if v_gate = 'rate_limited' then
     status := 'rate_limited';
     return next;
     return;
@@ -221,8 +312,15 @@ begin
     and fi.status = 'pending'
     and fi.expires_at > now();
 
-  -- Errado, vencido, revogado ou usado: uma resposta só.
+  -- Errado, vencido, revogado ou usado: uma resposta só — e a falha fica
+  -- gravada, porque é ela que o limite conta.
   if not found then
+    perform private.record_family_invite_code_failure(
+      p_origin_digest,
+      p_email_digest,
+      p_code_hash
+    );
+
     status := 'unavailable';
     return next;
     return;
@@ -235,6 +333,12 @@ begin
   -- código certo, então a frase não vira oráculo de convites. O aceite
   -- continua com a resposta genérica, porque lá o código já é a credencial.
   if p_email_digest is not null and p_email_digest <> v_invitation.invitee_email_digest then
+    perform private.record_family_invite_code_failure(
+      p_origin_digest,
+      p_email_digest,
+      p_code_hash
+    );
+
     status := 'email_mismatch';
     return next;
     return;
@@ -272,7 +376,24 @@ grant execute on function private.family_invite_code_preview(bytea, bytea, bytea
 -- nunca exceção para o resultado do código, pelo mesmo motivo do preview: a
 -- tentativa precisa sobreviver à resposta. Quando o vínculo falha por dentro
 -- (e-mail diferente, corrida perdida, revogação no meio), o `status` vira
--- `unavailable` e a tentativa continua gravada.
+-- `unavailable` e a tentativa fica gravada.
+--
+-- RETOMADA (a conclusão não é atômica com o provisionamento): o aceite confirma
+-- o convite aqui, e quem cria a localidade e o perfil do dependente é o
+-- servidor, depois — `family_accept_holder_locality` e `provision_member_
+-- locality`. Se esse passo falha, o convite já está `accepted` e o vínculo já
+-- existe; sem retomada a pessoa fica com conta e sem acesso, e a nova tentativa
+-- é recusada como "usado". Por isso, antes de qualquer contagem, a mesma pessoa
+-- que já aceitou ESTE convite recebe `ok` e o vínculo que existe: a nova
+-- tentativa conclui o provisionamento sem consumir outro código e sem gravar
+-- tentativa. Só o aceitante do próprio convite chega aqui — outro usuário cai
+-- na resposta genérica, que é o que mantém o uso único.
+--
+-- A escolha (retomada, e não transação única) está explicada no relatório: o
+-- provisionamento compartilhado com o titular verificado vive em
+-- `apps/web/lib/onboarding/verifyAndProvision.ts`; reimplementá-lo nesta função
+-- criaria um segundo caminho de admissão, que é exatamente o que este arquivo
+-- evita.
 create function private.family_invite_code_accept(
   p_code_hash bytea,
   p_accepted_by_user_id uuid,
@@ -290,22 +411,45 @@ declare
   v_invitation private.family_invitations;
   v_email_digest bytea;
   v_link_id uuid;
-  v_attempt text;
+  v_gate text;
 begin
+  if p_origin_digest is null or octet_length(p_origin_digest) <> 32 then
+    raise exception 'origin digest must be 32 bytes' using errcode = '22023';
+  end if;
+
+  if p_code_hash is null or octet_length(p_code_hash) <> 32 then
+    raise exception 'code hash must be 32 bytes' using errcode = '22023';
+  end if;
+
   select extensions.digest(lower(trim(u.email)), 'sha256')
   into v_email_digest
   from auth.users u
   where u.id = p_accepted_by_user_id;
 
+  -- Retomada: este convite já foi aceito por esta mesma pessoa e o vínculo
+  -- existe. Devolver o vínculo é idempotente, não é um segundo uso — o uso é o
+  -- vínculo, e ele é único por convite.
+  select link.id
+  into v_link_id
+  from private.family_account_links link
+  join private.family_invitations fi on fi.id = link.invitation_id
+  where fi.code_hash = p_code_hash
+    and fi.status = 'accepted'
+    and fi.accepted_by_user_id = p_accepted_by_user_id
+    and link.family_user_id = p_accepted_by_user_id;
+
+  if v_link_id is not null then
+    status := 'ok';
+    link_id := v_link_id;
+    return next;
+    return;
+  end if;
+
   -- A tentativa é contada com o e-mail do aceitante quando existe: é o limite
   -- por e-mail que impede adivinhar o código de um convite de outra pessoa.
-  v_attempt := private.record_family_invite_code_attempt(
-    p_origin_digest,
-    v_email_digest,
-    p_code_hash
-  );
+  v_gate := private.family_invite_code_attempt_gate(p_origin_digest, v_email_digest);
 
-  if v_attempt = 'rate_limited' then
+  if v_gate = 'rate_limited' then
     status := 'rate_limited';
     return next;
     return;
@@ -314,6 +458,12 @@ begin
   if v_email_digest is null then
     -- Sem e-mail não há convite a aceitar; a resposta é a mesma dos outros
     -- casos para não dizer nada sobre o convite.
+    perform private.record_family_invite_code_failure(
+      p_origin_digest,
+      null,
+      p_code_hash
+    );
+
     status := 'unavailable';
     return next;
     return;
@@ -330,6 +480,12 @@ begin
   for update;
 
   if not found then
+    perform private.record_family_invite_code_failure(
+      p_origin_digest,
+      v_email_digest,
+      p_code_hash
+    );
+
     status := 'unavailable';
     return next;
     return;
@@ -349,6 +505,12 @@ begin
   end;
 
   if v_link_id is null then
+    perform private.record_family_invite_code_failure(
+      p_origin_digest,
+      v_email_digest,
+      p_code_hash
+    );
+
     status := 'unavailable';
     return next;
     return;
