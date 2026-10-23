@@ -29,7 +29,10 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 //
 // A ordem importa e é a mesma das duas telas do protótipo:
 //   1. o código é validado ANTES de existir conta (preview), porque um convite
-//      errado não pode deixar conta criada;
+//      errado não pode deixar conta criada. Quem já tem sessão com o e-mail do
+//      formulário não cria conta, então o preview é dispensado e o próprio
+//      aceite valida o código — é o que permite retomar um convite já aceito
+//      cujo provisionamento ficou pela metade;
 //   2. a conta nasce aqui, no servidor, com a senha e o aceite gravado no
 //      RPC de consentimento — o mesmo `record_consent_acceptance` do cadastro
 //      normal (ADR-20260907-consentimento-no-cadastro);
@@ -196,32 +199,15 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
   const codeHash = inviteCodeHash(code)
   const emailDigest = inviteEmailDigest(email)
 
-  // 1. O convite valida o par código + e-mail ANTES de existir conta. A função
-  // devolve status — inclusive `unavailable` e `rate_limited` — e a tentativa
-  // fica gravada; nenhum desses casos vira exceção.
-  let preview: FamilyInvitePreview
-  try {
-    preview = await previewFamilyInviteCode(service, { codeHash, emailDigest, originDigest })
-  } catch (error) {
-    log.error("family invite preview failed before signup", {
-      errorCode: errorCode(error),
-      message: error instanceof Error ? error.message : "unknown",
-    })
-    return { ok: false, message: inviteMessageForStatus("unavailable"), field: "code" }
-  }
-
-  if (preview.status !== "ok") {
-    log.warn("family invite code denied before signup", { status: preview.status })
-    return {
-      ok: false,
-      message: previewMessageFor(preview.status),
-      field: preview.status === "email_mismatch" ? "email" : "code",
-    }
-  }
-
-  // 2. A conta. Quem volta do link de confirmação já tem sessão com ESTE
-  // e-mail: nesse caso o convite é aceito sem criar conta de novo — é o que
-  // faz o fluxo sobreviver a um provedor que exige confirmar o endereço.
+  // 1. Sessão com ESTE e-mail dispensa conta nova — e dispensa o preview.
+  //
+  // O preview existe por um motivo só: não criar conta órfã quando o código
+  // está errado. Sem cadastro, quem valida o par código + e-mail é o próprio
+  // aceite. Pular o preview neste caminho é o que torna a RETOMADA possível:
+  // depois de uma falha no provisionamento, o convite já está `accepted`, e o
+  // preview responderia `unavailable` antes de o aceite poder devolver o
+  // vínculo que existe. Duas chamadas também contariam duas tentativas contra
+  // o limite, quando o limite só deve contar falha.
   const auth = await authServerClient()
   const { data: current } = await auth.auth.getUser()
   const currentEmail = current.user?.email?.trim().toLowerCase() ?? null
@@ -230,6 +216,31 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
   if (current.user && currentEmail === email) {
     userId = current.user.id
   } else {
+    // 2. Ainda não existe conta: o convite valida o par código + e-mail ANTES
+    // do cadastro. A função devolve status — inclusive `unavailable` e
+    // `rate_limited` — e a tentativa que falhou fica gravada; nenhum desses
+    // casos vira exceção.
+    let preview: FamilyInvitePreview
+    try {
+      preview = await previewFamilyInviteCode(service, { codeHash, emailDigest, originDigest })
+    } catch (error) {
+      log.error("family invite preview failed before signup", {
+        errorCode: errorCode(error),
+        message: error instanceof Error ? error.message : "unknown",
+      })
+      return { ok: false, message: inviteMessageForStatus("unavailable"), field: "code" }
+    }
+
+    if (preview.status !== "ok") {
+      log.warn("family invite code denied before signup", { status: preview.status })
+      return {
+        ok: false,
+        message: previewMessageFor(preview.status),
+        field: preview.status === "email_mismatch" ? "email" : "code",
+      }
+    }
+
+    // 3. A conta.
     const { data, error } = await auth.auth.signUp({
       email,
       password,
@@ -275,7 +286,7 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
     userId = created
   }
 
-  // 3. O aceite, no servidor, com o usuário que acabou de nascer — nunca um id
+  // 4. O aceite, no servidor, com o usuário que acabou de nascer — nunca um id
   // vindo do formulário.
   const { error: consentError } = await service.rpc("record_consent_acceptance", {
     p_user_id: userId,
@@ -288,7 +299,7 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteAcce
     return { ok: false, message: CONSENT_FAILED, field: "consent" }
   }
 
-  // 4. O vínculo com o titular (e o provisionamento na localidade dele).
+  // 5. O vínculo com o titular (e o provisionamento na localidade dele).
   // Falha aqui — e-mail diferente, corrida perdida, limite — volta como status,
   // não como exceção: o RPC confirma a tentativa antes de responder.
   try {

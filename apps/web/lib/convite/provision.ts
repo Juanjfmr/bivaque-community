@@ -15,7 +15,9 @@ import { asFamilyInviteCodeStatus } from "./code"
 //      `private.accept_family_invitation`, via RPC. O provisionamento reusa
 //      `provisionMember`, que é o mesmo caminho do titular verificado: a
 //      localidade é a do convite, o perfil nasce com o aceite gravado e nada
-//      aqui inventa um segundo fluxo de admissão.
+//      aqui inventa um segundo fluxo de admissão. Como o vínculo e o
+//      provisionamento não são a mesma transação, a conclusão é retomável —
+//      ver `ensureFamilyMember`.
 //
 // Nada neste arquivo confia em identidade vinda do cliente: `userId` é sempre
 // resolvido da sessão pela Server Action, nunca do formulário.
@@ -136,7 +138,7 @@ export async function acceptFamilyInviteCode(
     throw new Error("the inviting holder has no locality membership")
   }
 
-  const member = await provisionMember(supabase, {
+  const member = await ensureFamilyMember(supabase, {
     userId: input.userId,
     localityId: holderLocalityId,
     displayName: input.displayName,
@@ -144,4 +146,56 @@ export async function acceptFamilyInviteCode(
   })
 
   return { linkId, localityMember: member.localityMember, status }
+}
+
+// O aceite (vínculo) e o provisionamento são dois passos, e o primeiro confirma
+// no banco antes do segundo. Uma falha no meio — a consulta da localidade ou o
+// RPC de provisionamento — deixaria a conta criada, o convite usado e a pessoa
+// sem acesso, e a nova tentativa receberia "usado". A conclusão é, então,
+// RETOMÁVEL: `family_invite_code_accept` devolve `ok` e o mesmo vínculo para o
+// mesmo aceitante (20261023120000), e esta função conclui o que faltou.
+//
+// A retomada NÃO chama `provisionMember` quando a pessoa já tem localidade
+// corrente: `provision_member_locality` transforma a corrente em `leaving`
+// antes de inserir a nova, então repetir o caminho moveria de volta quem já se
+// estabeleceu — e, na mesma localidade, deixaria a pessoa sem corrente nenhuma
+// (o insert conflita e não vira `current`). O perfil, esse sim, é garantido:
+// uma tentativa anterior pode ter criado a localidade e caído antes do perfil.
+async function ensureFamilyMember(
+  supabase: AnySupabaseClient,
+  input: Readonly<{
+    userId: string
+    localityId: string
+    displayName: string
+    consentVersion: number
+  }>,
+): Promise<{ localityMember: boolean }> {
+  const { data: current, error: currentError } = await supabase
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", input.userId)
+    .eq("kind", "current")
+    .limit(1)
+
+  if (currentError) {
+    throw new Error(`Failed to read the current membership: ${currentError.message}`)
+  }
+
+  if ((current ?? []).length === 0) {
+    return provisionMember(supabase, input)
+  }
+
+  const { error: profileError } = await supabase.from("profiles").upsert({
+    user_id: input.userId,
+    display_name: input.displayName,
+    visibility: "locality_members" as const,
+    consent_version: input.consentVersion,
+    consented_at: new Date().toISOString(),
+  })
+
+  if (profileError) {
+    throw new Error(`Failed to create profile: ${profileError.message}`)
+  }
+
+  return { localityMember: true }
 }
