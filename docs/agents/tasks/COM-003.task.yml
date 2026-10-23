@@ -66,11 +66,16 @@ closure:
 #   via BIVAQUE_VISUAL_PASSWORD no ambiente (apps/web/.env.local nunca foi criado nem commitado).
 # Divergencia do prototipo decidida pelo ADR secao 3: o aviso fixado e uma publicacao, nao texto; por isso a tela
 #   Gerenciar nao tem campo de aviso fixado e a fixacao vive no feed do grupo.
-# Nao entregue: comparacao de captura prototipo x Next. Os adaptadores em apps/web/app/components/material/
-#   estao fora dos allowed_paths desta tarefa e as telas de grupo ainda nao foram portadas para a pele Material
-#   Web (ADR-20261022, migracao tela a tela); uma comparacao lado a lado registraria so a camada visual antiga.
-#   A captura visual tambem grava o perfil fantasma no banco local compartilhado, que precisa da janela
-#   exclusiva da fila. Fica como proximo passo concreto, junto do porte visual das telas do grupo.
+# Captura comparada com o prototipo: scripts/port/compare-groups.mjs (novo nesta entrega).
+#   node scripts/agents/prova-fila.mjs -- node scripts/port/compare-groups.mjs
+#   PASS: 16 pares + report.json em .visual/com-003/ (lista, criar, detalhe e gerenciar x 375/1440 x claro/escuro),
+#   0 erros de pagina; o prototipo vem de `python scripts/bivaque-html/build.py` e o Next de `next start`.
+#   O par de detalhe usa o grupo que o proprio e2e cria (Grupo COM-003 ...), o unico com regras, publicacao
+#   fixada e o dono na sessao; um grupo semeado rende tela vazia e nao serve para julgar as telas entregues.
+#   Por isso o artefato foi produzido com o e2e e a captura na MESMA janela da fila (um unico reset com seed).
+#   Diferenca esperada, registrada no report.json: as telas de grupo ainda nao foram portadas para a pele
+#   Material Web (ADR-20261022, migracao tela a tela), entao o par compara composicao, os rotulos Aberto/Fechado
+#   e os textos, nao a camada visual. O porte visual das telas do grupo segue como proximo passo.
 # Regressao dos specs de grupo existentes: groups-state-truth.spec.ts e group-admin-cycle.spec.ts
 #   -> 18 passed, 0 falharam (com USER_PASSWORD no ambiente; sem ele os dois specs falham por ambiente,
 #   no requireCredentials, antes de tocar em qualquer tela — nao e defeito do produto).
