@@ -599,6 +599,7 @@ export type Database = {
         Row: {
           group_id: string
           joined_at: string
+          notify_level: Database["public"]["Enums"]["group_notify_level"]
           role: Database["public"]["Enums"]["group_membership_role"]
           status: Database["public"]["Enums"]["group_membership_status"]
           user_id: string
@@ -606,6 +607,7 @@ export type Database = {
         Insert: {
           group_id: string
           joined_at?: string
+          notify_level?: Database["public"]["Enums"]["group_notify_level"]
           role?: Database["public"]["Enums"]["group_membership_role"]
           status?: Database["public"]["Enums"]["group_membership_status"]
           user_id: string
@@ -613,6 +615,7 @@ export type Database = {
         Update: {
           group_id?: string
           joined_at?: string
+          notify_level?: Database["public"]["Enums"]["group_notify_level"]
           role?: Database["public"]["Enums"]["group_membership_role"]
           status?: Database["public"]["Enums"]["group_membership_status"]
           user_id?: string
@@ -638,6 +641,8 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          pinned_post_id: string | null
+          rules: string | null
           visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Insert: {
@@ -650,6 +655,8 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          pinned_post_id?: string | null
+          rules?: string | null
           visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Update: {
@@ -662,6 +669,8 @@ export type Database = {
           locality_id?: string
           name?: string
           owner_user_id?: string
+          pinned_post_id?: string | null
+          rules?: string | null
           visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Relationships: [
@@ -684,6 +693,13 @@ export type Database = {
             columns: ["locality_id"]
             isOneToOne: false
             referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "groups_pinned_post_id_fkey"
+            columns: ["pinned_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -2647,6 +2663,7 @@ export type Database = {
           p_description?: string
           p_locality_id: string
           p_name: string
+          p_rules?: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Returns: string
@@ -2895,6 +2912,13 @@ export type Database = {
           revoked_at: string
         }[]
       }
+      list_group_activity: {
+        Args: { p_locality_id: string }
+        Returns: {
+          group_id: string
+          recent_post_count: number
+        }[]
+      }
       list_hidden_questions: {
         Args: never
         Returns: {
@@ -3110,6 +3134,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      pin_group_post: {
+        Args: { p_group_id: string; p_post_id: string }
+        Returns: undefined
+      }
       profile_affiliations_for: {
         Args: { p_target_user_id: string }
         Returns: {
@@ -3278,7 +3306,7 @@ export type Database = {
         }
         Returns: {
           document_id: string
-          replaced_storage_object_path: string | null
+          replaced_storage_object_path: string
         }[]
       }
       request_account_deletion: { Args: never; Returns: Json }
@@ -3379,6 +3407,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_group_notify_level: {
+        Args: {
+          p_group_id: string
+          p_level: Database["public"]["Enums"]["group_notify_level"]
+        }
+        Returns: undefined
+      }
+      set_group_rules: {
+        Args: { p_group_id: string; p_rules: string }
+        Returns: undefined
+      }
       set_profile_bio: { Args: { p_bio: string }; Returns: undefined }
       settle_account_possessions: {
         Args: { p_user_id: string }
@@ -3423,6 +3462,7 @@ export type Database = {
         Args: { p_action: string; p_listing_id: string }
         Returns: Database["public"]["Enums"]["listing_status"]
       }
+      unpin_group_post: { Args: { p_group_id: string }; Returns: undefined }
       update_member_business_page: {
         Args: {
           p_bio?: string
@@ -3477,6 +3517,7 @@ export type Database = {
       event_status: "upcoming" | "cancelled" | "completed"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
+      group_notify_level: "all" | "highlights" | "none"
       group_visibility: "public" | "private"
       listing_condition: "new" | "used"
       listing_deal: "rent" | "sale"
@@ -3718,6 +3759,7 @@ export const Constants = {
       event_status: ["upcoming", "cancelled", "completed"],
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
+      group_notify_level: ["all", "highlights", "none"],
       group_visibility: ["public", "private"],
       listing_condition: ["new", "used"],
       listing_deal: ["rent", "sale"],
