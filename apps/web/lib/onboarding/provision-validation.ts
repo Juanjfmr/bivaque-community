@@ -17,7 +17,14 @@
 //   * moro aqui: nenhuma data, nenhum destino;
 //   * saindo: data de saída e destino, e o destino é outra cidade.
 // A data não pode estar no passado — o campo do protótipo já nasce com
-// `min = hoje`, e o servidor não confia no campo.
+// `min = hoje`, e o servidor não confia no campo. "Hoje" é o mesmo dia nos dois
+// lados: a data do formulário é uma data LOCAL, sem hora, e o servidor compara
+// com o dia UTC com uma folga de um dia para trás. Às 22h em Manaus (23/10
+// 02:00Z) o dia UTC já é 23 e a tela, que usa o dia local do navegador, ainda
+// oferece 22; sem a folga o servidor recusava a data que a própria tela tinha
+// oferecido. Aceitar o dia anterior ao dia UTC é o critério mais simples que
+// cobre todos os fusos do Brasil (UTC-2 a UTC-5): a data local nunca fica mais
+// de um dia atrás do dia UTC.
 //
 // A existência no catálogo do destino é conferida pela rota, como a da cidade:
 // esta função separa formato de existência para o teste negativo ser possível.
@@ -69,6 +76,8 @@ export interface ProvisionValidationResult {
 export const DISPLAY_NAME_MAX_LENGTH = 80
 
 const ISO_DATE_PARTS = /^(\d{4})-(\d{2})-(\d{2})$/
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 function text(value: string | undefined): string {
   return typeof value === "string" ? value.trim() : ""
@@ -135,11 +144,13 @@ export function validateProvisionInput(
   const arrivalDate = text(input.arrivalDate)
   const departureDate = text(input.departureDate)
   const destinationIbgeCode = text(input.destinationIbgeCode)
-  const todayIso = toIsoDate(today)
+  // O dia mais antigo que o servidor aceita: o anterior ao dia UTC. A tela usa
+  // o dia local do navegador, que no Brasil pode ser o "ontem" do UTC.
+  const earliestIso = toIsoDate(new Date(today.getTime() - ONE_DAY_MS))
 
   const dateProblem = (value: string): ProvisionValidationError | null => {
     if (!isIsoDate(value)) return "date is invalid"
-    if (value < todayIso) return "date is in the past"
+    if (value < earliestIso) return "date is in the past"
     return null
   }
 

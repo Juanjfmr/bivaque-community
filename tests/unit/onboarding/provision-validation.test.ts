@@ -11,7 +11,7 @@ import {
 // depende do relógio.
 
 const TODAY = new Date("2026-10-22T12:00:00Z")
-const PAST = "2026-10-21"
+const PAST = "2026-10-20"
 const FUTURE = "2026-11-04"
 const LATER = "2026-11-20"
 
@@ -107,6 +107,41 @@ describe("momento: chegando", () => {
       TODAY,
     )
     expect(result.ok).toBe(true)
+  })
+
+  it("o 'hoje' da tela é aceito mesmo quando o dia UTC já virou (22h em Manaus)", () => {
+    // 22/10 22h em Manaus (UTC-4) é 23/10 02:00Z. A tela usa o dia LOCAL e
+    // oferece 22/10; o servidor compara com o dia UTC (23) e recusava a data que
+    // a própria tela tinha oferecido. A folga de um dia fecha os dois lados.
+    const lateInManaus = new Date("2026-10-23T02:00:00Z")
+
+    const today = validateProvisionInput(
+      { arrivalDate: "2026-10-22", displayName: "Ana", ibgeCode: MANAUS, moment: "arriving" },
+      lateInManaus,
+    )
+    expect(today.ok).toBe(true)
+    expect(today.arrivalDate).toBe("2026-10-22")
+
+    const departure = validateProvisionInput(
+      {
+        departureDate: "2026-10-22",
+        destinationIbgeCode: BRASILIA,
+        displayName: "Ana",
+        ibgeCode: MANAUS,
+        moment: "leaving",
+      },
+      lateInManaus,
+    )
+    expect(departure.ok).toBe(true)
+
+    // Antes de ontem, para o dia UTC, continua sendo passado — a folga é de um
+    // dia, não de um fuso escolhido a esmo.
+    expect(
+      validateProvisionInput(
+        { arrivalDate: "2026-10-21", displayName: "Ana", ibgeCode: MANAUS, moment: "arriving" },
+        lateInManaus,
+      ),
+    ).toEqual({ ok: false, error: "date is in the past" })
   })
 
   it("recusa data no passado e data impossível", () => {
