@@ -227,4 +227,63 @@ closure:
 # pg_locks no backend da sessão depois do gate) e que o teto vale na sequência;
 # duas sessões simultâneas exigiriam dblink, que o banco de teste não tem. A
 # serialização vem de a contagem acontecer depois da trava de transação.
+#
+# ── Terceira correção da revisão — 22/10/2026, mesma branch ──────────────────
+# Revisão confrontada: esta mesma árvore, sobre 548aff7c. O desenho foi definido
+# pelo coordenador e é o que está abaixo; o bloco anterior fica como histórico.
+#
+# 1. ACEITE, VÍNCULO E ACESSO NUMA TRANSAÇÃO SÓ. private.family_invite_code_accept
+# ganhou p_display_name e p_consent_version e passou a fazer, depois do vínculo
+# e sob a trava do próprio convite, o que era o segundo request do servidor:
+# resolve a localidade CORRENTE do titular, chama public.provision_member_locality
+# e grava o perfil no mesmo upsert da rota de provisionamento. Não repete o
+# provisionamento quando a pessoa já é corrente naquela localidade (repetir
+# fecharia a corrente e, na mesma localidade, a deixaria sem corrente).
+# Qualquer falha desfaz tudo, inclusive o convite voltar a pending — não existe
+# mais convite usado sem acesso, e dois aceites concorrentes não transformam a
+# corrente recém-criada em leaving. Falha de contrato continua exceção: digest
+# inválido (22023), nome fora da política de nome (22023), versão de aceite não
+# positiva (22023) e titular sem localidade corrente (P0005). A retomada ficou:
+# o mesmo aceitante que repete o código recebe ok e o MESMO vínculo.
+# apps/web/lib/convite/provision.ts só chama a RPC e traduz o status — o
+# provisionamento em TypeScript (ensureFamilyMember, provisionMember) saiu.
+#
+# 2. ERRO DE CONSENTIMENTO VISÍVEL. `consent` saiu de ACCOUNT_STEP_FIELDS
+# (apps/web/lib/convite/form-error.ts): o checkbox do Material não tem área de
+# erro, então listá-lo escondia a recusa exatamente como o caso do `code` que a
+# correção anterior resolveu. A etapa da conta foi extraída para
+# InviteAccountStep (exportada, sem estado) e o teste de renderização prova os
+# três lugares: erro de código na área da etapa, erro de consentimento na área
+# da etapa, erro genérico na área da etapa — e, como prova negativa, erro de
+# senha no campo e área da etapa vazia.
+#
+# pgTAP (supabase/tests/family-invite-code.sql, 39 asserções): convite 06 tem
+# titular sem localidade corrente, o aceite lança P0005 e o convite continua
+# pending, sem link; convite 07 é aceito por non-member, que passa a ter vínculo,
+# membership corrente na localidade do titular e perfil com nome e versão do
+# aceite; repetir o aceite devolve ok com o mesmo vínculo, uma única membership
+# (nenhuma linha leaving) e a mesma corrente. Preparo em bloco DO com perform,
+# para não imprimir linha solta e quebrar a contagem do TAP.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   tests/unit/profile — 101/101 em 11 arquivos.
+# npx pnpm@11.18.0 exec biome check nos arquivos alterados — 0 erro, 1 aviso
+#   pré-existente (noTemplateCurlyInString em invite-screen.test.ts:79).
+# node --test tests/scope/invite-digest-serialization.test.mjs
+#   normalize-generated-types rls-structure consent-version — 14/14.
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-006.task.yml — ok.
+#
+# NÃO executados, por instrução desta correção: db reset, test:db, db:lint,
+# gate, build e Playwright. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#
+# Limite das provas de banco: as asserções acima não rodaram nesta sessão (o
+# banco é do coordenador). A corrida entre dois aceites continua provada por
+# desenho — o provisionamento acontece depois do `for update` na linha do
+# convite — e não por duas sessões simultâneas, que exigiriam dblink.
 
