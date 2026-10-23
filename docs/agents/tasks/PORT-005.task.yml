@@ -27,6 +27,9 @@ allowed_paths:
   - supabase/database.generated.ts
   - tests/unit/onboarding/
   - tests/e2e/
+  # Autorizados pelo coordenador em 23/10/2026, na correção da revisão independente:
+  - apps/web/app/(shell)/profile/interests-actions.ts
+  - tests/unit/profile/
   - scripts/port/
   - docs/agents/tasks/PORT-005.task.yml
 forbidden:
@@ -102,3 +105,82 @@ closure:
 # entrada, a action e o teste saíram juntos. O caminho de interesses que sobrevive é o do perfil
 # (app/(shell)/profile/interests-actions.ts): ele lê a localidade da própria membership no servidor,
 # nunca do cliente, e a RPC recusa grupo fora da cidade do chamador.
+#
+# ── Correção da revisão independente, 23/10/2026 ──────────────────────────────
+# Revisão do Codex sobre o commit 8b20bda5. Quatro achados + prova do destino. O coordenador já
+# havia corrigido o pgTAP da colisão de chave (26c6f48f), com test:db (2155 testes) e db:lint limpos.
+#
+# P1 PROVISIONAMENTO PARCIAL (verifyAndProvision.ts): resolvido pelo caminho preferível, ATÔMICO.
+#   supabase/migrations/20261023110100_entry_provision_atomic.sql cria
+#   public.provision_member_entry(p_user_id, p_locality_id, p_display_name, p_consent_version,
+#   p_moment, p_arrival_date, p_departure_date, p_destination_locality_id): chama
+#   provision_member_locality (a regra de vínculo NÃO foi duplicada), grava o perfil e grava o
+#   momento na MESMA transação. O corpo de uma função PL/pgSQL é atômico: a falha do momento
+#   desfaz vínculo e perfil, então não existe mais estado parcial para retomar — e a tela de
+#   cidade nunca redireciona para /community com a entrada pela metade. service_role apenas.
+#   PROVA: supabase/tests/entry-provision-atomic.sql, 21 asserções — o CHECK de coerência recusa
+#   saindo sem destino e as três tabelas ficam vazias; a FK recusa destino fora do catálogo e o
+#   vínculo volta atrás; provision_member_locality recusa cidade fora do catálogo e o perfil volta
+#   atrás; o caminho feliz grava os três; o convite familiar (sem momento) provisiona e NÃO inventa
+#   momento; authenticated e anon recebem 42501. A rota passou a chamar a função uma vez
+#   (tests/unit/onboarding/provision-requires-verification.test.ts afirma os argumentos exatos).
+#
+# P2 INTERESSES SEM VERIFICAÇÃO (app/(shell)/profile/interests-actions.ts): corrigido. A action
+#   agora confere read_verification_status para o usuário da SESSÃO antes de consultar os grupos
+#   (sem verified, a lista nem é consultada) e lê a cidade só do vínculo corrente
+#   (kind = current), nunca do vínculo de saída. A mesma guarda vale para gravar e limpar.
+#   PROVA: tests/unit/profile/interests-require-verification.test.ts (nunca verificou, pendente,
+#   erro temporário, recusada; positivo verificado; falha de leitura não libera; vínculo de saída
+#   não sugere grupos; sem verificação não grava).
+#
+# P2 O HOJE RECUSADO PELO SERVIDOR (provision-validation.ts): corrigido com a folga de um dia para
+#   trás em relação ao dia UTC — a opção mais simples das duas oferecidas. A data do formulário é
+#   uma data LOCAL sem hora; o Brasil vai de UTC-2 a UTC-5, então a data local nunca fica mais de
+#   um dia atrás do dia UTC. Às 22h de 22/10 em Manaus (23/10 02:00Z) o hoje da tela (22) passa a
+#   ser aceito; antes de ontem, para o dia UTC, continua sendo passado.
+#   PROVA: tests/unit/onboarding/provision-validation.test.ts, caso 22h em Manaus (chegada e
+#   saída em 22/10 aceitas com 23/10 02:00Z; 21/10 recusada).
+#
+# P2 BOAS-VINDAS PROMETENDO PLANO INEXISTENTE (entry-moment.ts): corrigido só o lead. Chegando e
+#   Saindo passam a afirmar o que a pessoa declarou (Você marcou sua chegada a Manaus. / Você
+#   marcou sua saída para Brasília.); cartões, ícones, hrefs e o bloco de moro aqui ficam como no
+#   protótipo.
+#   TEXTO ORIGINAL DO PROTÓTIPO, A RESTAURAR QUANDO A INÍCIO USAR O MOMENTO NUM CARTÃO PRÓPRIO:
+#     chegando -> Seu plano de chegada a <cidade> já está pronto.
+#     saindo   -> Seu plano de saída para <destino> já está pronto.
+#   (prototypes/bivaque-html/src/features/entry/arrive.js, renderEntryWelcome, campo lead.)
+#   PROVA: tests/unit/onboarding/entry-moment.test.ts — os dois leads novos e a asserção negativa
+#   de que não prometem plano pronto.
+#
+# P2 TESTES NÃO PROVAVAM A RESOLUÇÃO DO DESTINO (provision-requires-verification.test.ts): corrigido.
+#   O mock do catálogo responde pelo ibge_code pedido (Manaus e Rio com ids distintos); os negativos
+#   novos são cidade fora do catálogo (400 locality is unknown), destino fora do catálogo (400
+#   destination is unknown) e destino igual à cidade atual (400), todos com zero provisionamentos.
+#   O positivo de Saindo prova que p_locality_id e p_destination_locality_id vêm de cidades
+#   diferentes do catálogo.
+#
+# E2E DA SAÍDA ATÉ AS BOAS-VINDAS: tests/e2e/journey-entrar-e-ser-admitido.spec.ts ganhou
+#   quem sai escolhe destino e vê as boas-vindas da saída — cria a própria conta (única forma de
+#   provisionar de verdade sem mexer em persona semeada), passa pela identidade e pela aprovação do
+#   operador, escolhe Manaus + Saindo + destino Rio de Janeiro e afirma o bloco da saída. Não usa o
+#   ledger de jornada: um segundo spec com o mesmo id apagaria as capturas do primeiro.
+#
+# BUG ENCONTRADO POR ESSE E2E, E CORRIGIDO: a cidade de destino nunca chegava às boas-vindas. A
+#   policy localities_select_same_membership (private.is_locality_member) só deixa o membro ler a
+#   cidade do PRÓPRIO vínculo, e o destino de quem sai é outra cidade: lida no navegador, a linha
+#   voltava vazia e Saindo caía no bloco de moro aqui — erro de leitura disfarçado de estado
+#   normal. Agora app/(preauth)/onboarding/welcome/welcome-actions.ts resolve o destino pela sessão
+#   do próprio chamador (nunca por id vindo do cliente) e lê só o nome do município no catálogo,
+#   que é dado público. PROVA: tests/unit/onboarding/welcome-departure-city.test.ts (sem sessão,
+#   sem momento, moro aqui, saindo com destino, falha de leitura) + o e2e acima.
+#
+# RODADO NESTA SESSÃO (23/10/2026, branch codex/entrada-cidade)
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit                          -> verde, sem saída
+# npx pnpm@11.18.0 exec vitest run tests/unit/onboarding tests/unit/profile -> 17 arquivos, 123 testes, 0 falhas
+# npx pnpm@11.18.0 exec biome check <arquivos alterados>                   -> sem erro nos arquivos desta correção
+# npx pnpm@11.18.0 exec biome check apps/web tests/unit tests/e2e          -> 0 erros (só avisos preexistentes em tests/unit/ui)
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-005.task.yml -> contrato válido
+#
+# NÃO EXECUTADOS POR MIM, de propósito (instrução do coordenador nesta correção): db reset, test:db,
+# db:lint, gate, build e Playwright. O pgTAP novo (entry-provision-atomic.sql) e o e2e novo são
+# para o coordenador rodar, uma frente por vez, no estado sem seed e depois com seed.
