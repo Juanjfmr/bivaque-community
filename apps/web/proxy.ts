@@ -21,13 +21,15 @@ const PUBLIC_PATHS = [
   "/_next",
   "/landing",
   "/prestador-convite",
-  // ADR-20261022-entrada-do-prototipo, itens 6 e 2: depois de apagar a conta a
-  // pessoa cai em /conta-apagada, e quem chega pelo convite de familiar ainda
-  // não tem conta nem sessão. As duas são públicas; /ajuda NÃO entra aqui,
-  // porque a Ajuda pública é outra frente (item 7) e a rota atual continua no
-  // grupo (shell), que exige sessão.
+  // ADR-20261022-entrada-do-prototipo, itens 6, 2 e 7: depois de apagar a conta
+  // a pessoa cai em /conta-apagada, quem chega pelo convite de familiar ainda
+  // não tem conta nem sessão, e a Ajuda (com as páginas legais) abre para quem
+  // está fora — quem não consegue entrar é justamente quem mais precisa ler as
+  // respostas. As três são públicas. /ajuda mostra "Meus chamados" quando há
+  // sessão, mas o conteúdo de ajuda não depende dela.
   "/conta-apagada",
   "/convite",
+  "/ajuda",
   "/favicon.ico",
   "/icon.svg",
 ]

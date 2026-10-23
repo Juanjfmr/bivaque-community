@@ -15,8 +15,10 @@ import {
 
 // Prancha 52 / C07: criar, copiar e revogar convite familiar. O token aparece
 // uma única vez e nunca é persistido — o banco guarda só o digest (migration
-// 20260815130000). Não há listagem de família alheia: a leitura é das próprias
-// pendências (`list_pending_invites_with_hint`), nunca de outra conta.
+// 20260815130000). O código curto segue a mesma regra: existe só na resposta do
+// envio/reenvio (20261023120000), e o que fica guardado é o hash. Não há
+// listagem de família alheia: a leitura é das próprias pendências
+// (`list_pending_invites_with_hint`), nunca de outra conta.
 
 type PendingInviteRow = {
   id: string
@@ -43,6 +45,10 @@ export default function ConfiguracoesFamiliaPage() {
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
+  // Código curto do convite: só existe na resposta de quem acabou de enviar ou
+  // reenviar. O banco guarda o hash, então recarregar a página não o traz de
+  // volta — a tela diz isso ao lado do valor.
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
   // Convite que gerou o link exibido: é ele que o "Revogar" ao lado do
   // "Copiar" apaga (prancha 76, painel 2). O token só existe nesta tela; o
   // banco guarda o digest.
@@ -95,6 +101,7 @@ export default function ConfiguracoesFamiliaPage() {
       const result = await resendFamilyInviteAction(formData)
       if (result?.token) {
         setInviteLink(`/onboarding?invite=${result.token}`)
+        setInviteCode(result.code ?? null)
         setLinkInviteId(invitationId)
         setResendingId(null)
         setResendEmail("")
@@ -116,6 +123,7 @@ export default function ConfiguracoesFamiliaPage() {
       const result = await sendFamilyInviteAction(formData)
       if (result?.token) {
         setInviteLink(`/onboarding?invite=${result.token}`)
+        setInviteCode(result.code ?? null)
         const fresh = await getFamilyInviteDataAction()
         setData(fresh)
         const newest = [...(fresh?.pending ?? [])].sort(
@@ -130,8 +138,13 @@ export default function ConfiguracoesFamiliaPage() {
 
   const copyLink = async () => {
     if (!inviteLink) return
+    // Com o código em mãos, o que se copia é a tela /convite já preenchida: é o
+    // caminho que o e-mail também entrega, e não depende do link de onboarding.
+    const target = inviteCode
+      ? new URL(`/convite?codigo=${inviteCode}`, window.location.origin).toString()
+      : new URL(inviteLink, window.location.origin).toString()
     try {
-      await navigator.clipboard.writeText(new URL(inviteLink, window.location.origin).toString())
+      await navigator.clipboard.writeText(target)
       setCopied(true)
     } catch {
       setError("Não foi possível copiar o link. Copie manualmente.")
@@ -201,7 +214,7 @@ export default function ConfiguracoesFamiliaPage() {
               Criar convite
             </Button>
             <p className="text-xs text-muted">
-              O link aparece uma única vez. Envie ao familiar antes de fechar esta tela.
+              O link e o código aparecem uma única vez. Envie ao familiar antes de fechar esta tela.
             </p>
 
             {inviteLink && (
@@ -217,7 +230,7 @@ export default function ConfiguracoesFamiliaPage() {
                     className="min-h-11 shrink-0"
                     onPress={copyLink}
                   >
-                    {copied ? "Copiado!" : "Copiar"}
+                    {copied ? "Copiado!" : "Copiar convite"}
                   </Button>
                   {linkInviteId ? (
                     // Sem <form> aqui: este bloco vive DENTRO do form de criar
@@ -242,6 +255,7 @@ export default function ConfiguracoesFamiliaPage() {
                           return
                         }
                         setInviteLink(null)
+                        setInviteCode(null)
                         setLinkInviteId(null)
                         setData(await getFamilyInviteDataAction())
                       }}
@@ -249,6 +263,18 @@ export default function ConfiguracoesFamiliaPage() {
                       Revogar
                     </Button>
                   ) : null}
+                </p>
+                {inviteCode ? (
+                  <p className="mt-2 text-sm">
+                    Código para digitar na tela do convite:{" "}
+                    <span className="font-mono text-base font-semibold tracking-[0.2em]">
+                      {inviteCode}
+                    </span>
+                  </p>
+                ) : null}
+                <p className="mt-2 text-xs text-muted">
+                  O código também foi enviado por e-mail. Ele só aparece aqui agora: se sair desta
+                  página, ele não volta. Se perder, use Reenviar.
                 </p>
               </div>
             )}
@@ -354,7 +380,7 @@ export default function ConfiguracoesFamiliaPage() {
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
         <h3 className="text-sm font-semibold">Se o familiar não abrir a tempo</h3>
         <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted">
-          <li>O link expira em 7 dias e só pode ser usado uma vez.</li>
+          <li>O link e o código expiram em 7 dias e só podem ser usados uma vez.</li>
           <li>
             Se expirar, toque em Reenviar: o link antigo deixa de valer e o novo vale mais 7 dias.
           </li>

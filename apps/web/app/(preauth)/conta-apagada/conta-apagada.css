@@ -1,0 +1,32 @@
+/* PORT-006 (lote 4 da entrada) — a tela Conta apagada, copiada de .en-gone-in
+   em prototypes/bivaque-html/src/styles/entry.css. Só o que a página usa: o
+   glifo grande centralizado, o título e a ação. Cores dos tokens da marca. */
+
+.bv-entry .en-gone-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 96px 12px 0;
+}
+
+.bv-entry .en-gone-in md-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--md-sys-color-primary);
+}
+
+.bv-entry .en-gone-in .en-h1 {
+  margin: 16px 0 8px;
+}
+
+.bv-entry .en-gone-in .en-lead {
+  max-width: 34ch;
+}
+
+.bv-entry .en-gone-in md-outlined-button {
+  width: 100%;
+  height: 52px;
+  margin-top: 8px;
+}
