@@ -54,7 +54,7 @@ export default function OnboardingWelcomePage() {
 
       const userId = session.user.id
 
-      const [momentResult, membershipResult, destinationCity] = await Promise.all([
+      const [momentResult, membershipResult] = await Promise.all([
         supabase.from("member_entry_moments").select("moment").eq("user_id", userId).maybeSingle(),
         supabase
           .from("locality_memberships")
@@ -62,11 +62,6 @@ export default function OnboardingWelcomePage() {
           .eq("user_id", userId)
           .eq("kind", "current")
           .maybeSingle(),
-        // A cidade de destino vem do servidor: a policy de `localities` só deixa
-        // o membro ler a cidade do próprio vínculo, e o destino de quem sai é
-        // outra cidade. Lida aqui, voltava vazia e o bloco da saída virava o de
-        // "moro aqui" (ver welcome-actions.ts).
-        readMyDepartureCityAction(),
       ])
 
       // Falha de leitura não vira tela de boas-vindas com o bloco errado: sem
@@ -87,18 +82,23 @@ export default function OnboardingWelcomePage() {
 
       const moment = (momentResult.data?.moment ?? "resident") as EntryMoment
 
-      const { data: homeLocality, error: localitiesError } = await supabase
-        .from("localities")
-        .select("city_name")
-        .eq("id", homeLocalityId)
-        .maybeSingle()
+      // A cidade de destino vem do SERVIDOR: a policy de `localities` só deixa o
+      // membro ler a cidade do próprio vínculo, e o destino de quem sai é outra
+      // cidade. Lida aqui, voltava vazia e o bloco da saída virava o de "moro
+      // aqui". A falha da action não deixa a tela presa no carregamento: cai no
+      // mesmo caso "destino não legível" que `welcomeBlocks` já trata, em vez de
+      // inventar uma cidade.
+      const [homeLocalityResult, destinationCity] = await Promise.all([
+        supabase.from("localities").select("city_name").eq("id", homeLocalityId).maybeSingle(),
+        moment === "leaving" ? readMyDepartureCityAction().catch(() => null) : null,
+      ])
 
-      if (localitiesError) {
+      if (homeLocalityResult.error) {
         router.replace("/community")
         return
       }
 
-      const homeCity = homeLocality?.city_name
+      const homeCity = homeLocalityResult.data?.city_name
       if (!homeCity) {
         // A cidade do próprio vínculo não legível é falha de leitura, não tela
         // vazia: a pessoa segue para a comunidade, que é o destino do CTA.
