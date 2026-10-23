@@ -255,4 +255,99 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
       await context.close()
     }
   })
+
+  // PORT-005 (correção do achado P2 da revisão independente): o caminho "Saindo"
+  // até as boas-vindas. O primeiro teste para em "Chegando"; o formulário da
+  // saída (data, destino e a exclusão da cidade atual da lista) era provado só
+  // na tela, nunca até as boas-vindas. Esta passagem cria a própria conta — a
+  // única forma de provisionar de verdade sem mexer em persona semeada — e
+  // afirma o bloco da saída, com a cidade de destino.
+  //
+  // Sem o registro de jornada: o ledger é do id `web-entrar-e-ser-admitido`, e
+  // um segundo spec com o mesmo id apagaria as capturas do primeiro. O que este
+  // teste prova é o fim do fluxo, não a prancha.
+  test("quem sai escolhe destino e vê as boas-vindas da saída", async ({ page, browser }) => {
+    const email = `saida-${Date.now().toString(36)}@bivaque.example.invalid`
+
+    await page.goto("/login")
+    await page.getByRole("link", { name: "Criar conta" }).click()
+    await page.getByLabel("Nome").fill("Pessoa Que Sai")
+    await page.getByLabel("E-mail").fill(email)
+    await page.getByRole("textbox", { name: /^Senha/ }).fill(`senha-${Date.now()}`)
+    await page.getByRole("checkbox").check()
+    await page.getByRole("button", { name: "Criar conta" }).click()
+
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 })
+    await page.getByLabel("CPF").fill("123.456.789-09")
+    await page.getByRole("button", { name: "Verificar acesso" }).click()
+    await expect(page.getByRole("alert").filter({ hasText: "instabilidade" })).toBeVisible({
+      timeout: 20_000,
+    })
+
+    await page.getByRole("link", { name: "Enviar identidade agora" }).click()
+    await expect(page).toHaveURL(/\/onboarding\/documento$/)
+    await page.getByLabel("Documento para análise").setInputFiles({
+      name: "identidade.png",
+      mimeType: "image/png",
+      buffer: IDENTITY_PNG,
+    })
+    await page.getByRole("button", { name: "Enviar para análise" }).click()
+    await expect(page.getByRole("status").filter({ hasText: "Documento enviado" })).toBeVisible({
+      timeout: 20_000,
+    })
+
+    const operatorContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    await signInAs(operatorContext, OPERATOR)
+    const operator = await operatorContext.newPage()
+    try {
+      await operator.goto(`/admissions?q=${encodeURIComponent(email)}`)
+      await operator
+        .getByRole("row")
+        .filter({ hasText: email })
+        .getByRole("link", { name: "Abrir" })
+        .click()
+      await expect(operator.getByRole("region", { name: "Resumo da verificação" })).toContainText(
+        "Documento de identidade",
+        { timeout: 20_000 },
+      )
+      await operator.getByRole("button", { name: "Aprovar documento" }).click()
+      await expect(operator.getByRole("button", { name: "Aprovar documento" })).toHaveCount(0, {
+        timeout: 20_000,
+      })
+    } finally {
+      await operatorContext.close()
+    }
+
+    await expect(async () => {
+      await page.goto("/onboarding")
+      await expect(page).toHaveURL(/\/onboarding\/locality$/, { timeout: 3_000 })
+    }).toPass({ timeout: 30_000 })
+
+    await page.getByRole("searchbox", { name: "Cidade" }).fill("Manaus")
+    const city = page
+      .getByRole("list", { name: "Cidades disponíveis" })
+      .getByRole("button", { name: /Manaus/ })
+      .first()
+    await expect(city).toBeVisible({ timeout: 20_000 })
+    await city.click()
+
+    await page.getByRole("radio", { name: "Saindo" }).check()
+    await page.locator("#en-date").fill("2030-03-10")
+    await page.getByRole("searchbox", { name: "Destino da transferência" }).fill("Rio de Janeiro")
+    const destination = page
+      .getByRole("list", { name: "Cidades de destino" })
+      .getByRole("button", { name: /Rio de Janeiro/ })
+      .first()
+    await expect(destination).toBeVisible({ timeout: 20_000 })
+    await destination.click()
+    await expect(destination).toHaveAttribute("aria-pressed", "true")
+
+    await page.getByRole("button", { name: "Concluir minha entrada" }).click()
+    await expect(page).toHaveURL(/\/onboarding\/welcome$/, { timeout: 20_000 })
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Você chegou ao Bivaque.")
+    // O bloco da saída: a frase afirma o que a pessoa declarou, não um plano que
+    // a Início ainda não mostra (divergência registrada no contrato PORT-005).
+    await expect(page.getByText("Você marcou sua saída para Rio de Janeiro.")).toBeVisible()
+    await expect(page.getByRole("link", { name: /Ver o plano de saída/ })).toBeVisible()
+  })
 })

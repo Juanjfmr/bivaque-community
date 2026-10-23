@@ -10,15 +10,19 @@ import { EntryShell } from "../../../components/entry/entry-shell"
 import { MaterialFilledButton } from "../../../components/material/filled-button"
 import { MaterialIcon } from "../../../components/material/material-icon"
 import "../locality/entry-city.css"
+import { readMyDepartureCityAction } from "./welcome-actions"
 
 // PORT-005 (lote 4 da entrada) — as boas-vindas do protótipo
 // (`renderEntryWelcome`, prototypes/bivaque-html/src/features/entry/arrive.js).
 //
 // Os blocos mudam conforme o momento declarado na tela anterior: "Chegando"
 // leva ao plano de chegada, "Saindo" ao plano de saída (com a cidade de
-// destino), "Moro aqui" ao guia da cidade. O momento e as datas são lidos da
-// tabela do dono — a policy de SELECT é a do próprio dono, então quem abre esta
-// tela sem ter passado pela entrada não vê o momento de outra pessoa.
+// destino), "Moro aqui" ao guia da cidade. O momento é lido da tabela do dono —
+// a policy de SELECT é a do próprio dono, então quem abre esta tela sem ter
+// passado pela entrada não vê o momento de outra pessoa. A cidade de destino,
+// que é cidade de OUTRO vínculo, vem de uma action de servidor
+// (welcome-actions.ts): a policy de `localities` só libera a cidade do próprio
+// vínculo.
 //
 // Quem entra pelo convite familiar não declara momento: sem linha na tabela, os
 // blocos caem em "moro aqui", que é o estado padrão do protótipo.
@@ -50,18 +54,19 @@ export default function OnboardingWelcomePage() {
 
       const userId = session.user.id
 
-      const [momentResult, membershipResult] = await Promise.all([
-        supabase
-          .from("member_entry_moments")
-          .select("moment, destination_locality_id")
-          .eq("user_id", userId)
-          .maybeSingle(),
+      const [momentResult, membershipResult, destinationCity] = await Promise.all([
+        supabase.from("member_entry_moments").select("moment").eq("user_id", userId).maybeSingle(),
         supabase
           .from("locality_memberships")
           .select("locality_id")
           .eq("user_id", userId)
           .eq("kind", "current")
           .maybeSingle(),
+        // A cidade de destino vem do servidor: a policy de `localities` só deixa
+        // o membro ler a cidade do próprio vínculo, e o destino de quem sai é
+        // outra cidade. Lida aqui, voltava vazia e o bloco da saída virava o de
+        // "moro aqui" (ver welcome-actions.ts).
+        readMyDepartureCityAction(),
       ])
 
       // Falha de leitura não vira tela de boas-vindas com o bloco errado: sem
@@ -81,25 +86,19 @@ export default function OnboardingWelcomePage() {
       }
 
       const moment = (momentResult.data?.moment ?? "resident") as EntryMoment
-      const destinationLocalityId = momentResult.data?.destination_locality_id ?? null
 
-      const cityIds = destinationLocalityId
-        ? [homeLocalityId, destinationLocalityId]
-        : [homeLocalityId]
-      const { data: localities, error: localitiesError } = await supabase
+      const { data: homeLocality, error: localitiesError } = await supabase
         .from("localities")
-        .select("id, city_name")
-        .in("id", cityIds)
+        .select("city_name")
+        .eq("id", homeLocalityId)
+        .maybeSingle()
 
       if (localitiesError) {
         router.replace("/community")
         return
       }
 
-      const cityName = (id: string | null) =>
-        id ? ((localities ?? []).find((locality) => locality.id === id)?.city_name ?? null) : null
-
-      const homeCity = cityName(homeLocalityId)
+      const homeCity = homeLocality?.city_name
       if (!homeCity) {
         // A cidade do próprio vínculo não legível é falha de leitura, não tela
         // vazia: a pessoa segue para a comunidade, que é o destino do CTA.
@@ -109,11 +108,7 @@ export default function OnboardingWelcomePage() {
 
       setState({
         status: "ready",
-        blocks: welcomeBlocks({
-          moment,
-          homeCity,
-          destinationCity: cityName(destinationLocalityId),
-        }),
+        blocks: welcomeBlocks({ moment, homeCity, destinationCity }),
       })
     }
     run()
