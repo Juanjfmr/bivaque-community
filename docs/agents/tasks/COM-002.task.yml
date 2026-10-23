@@ -55,34 +55,57 @@ on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
 # Evidencia (23/10/2026, branch codex/lote5-pergunta, executor DeepSeek V4.1 Flash)
+# Correcao da revisao independente (Codex, achados 1 a 5). O que a revisao pediu e onde ficou:
+#   1. excluir a resposta que e a resolucao ATUAL reabre a pergunta. Gatilho do banco
+#      (private.reopen_request_on_resolved_reply_delete, before delete em recommendation_replies, security
+#      definer), com os mesmos campos que reopen_recommendation limpa. A ultima resolucao cai junto com a
+#      resposta excluida (FK on delete set null): nao ha o que preservar quando a resposta deixa de existir.
+#      pgTAP do caso (secao 8 do community-question-cycle).
+#   2. a marca de edicao e do banco: o gatilho de edited_at SEMPRE recalcula (pergunta e resposta), e o update
+#      da autoria desceu para as colunas de conteudo, entao um PATCH que tente zerar edited_at e recusado por
+#      permissao. pgTAP do PATCH que tenta zerar edited_at.
+#   3. o update da autoria so alcanca conteudo (title/body na pergunta, body na resposta); a resolucao so muda
+#      pelas RPCs SECURITY DEFINER. resolution.ts, indication-detail.tsx e profile-indications.tsx leem o
+#      ESTADO DA PERGUNTA, nao so o ponteiro; list_indications devolve resolved_reply_body so com is_resolved.
+#      pgTAP negativo do PATCH direto nas colunas de resolucao (42501).
+#   4. o e2e usa o viewport do projeto (testInfo.project.use.viewport); exclui a pergunta COM resposta e confere
+#      por REST, na sessao de quem escreveu a resposta, que a resposta sumiu (positivo antes, negativo depois).
+#      A captura mede o conteiner que rola (main do shell no Next, #main no prototipo) e compara estados iguais,
+#      em dois estados: aberta e resolvida.
+#   5. o rotulo do salvar virou Seguir respostas / Seguindo respostas (ADR-20261023, secao 2); recon-032 atualizado.
 # migration: supabase/migrations/20261024110000_lote5_pergunta.sql
 #   CHECK do titulo 8..300 (valida, sem not valid: producao nao tem uso real)
-#   edited_at em recommendation_replies e recommendation_requests, com gatilho que so marca quando o CONTEUDO muda
-#   last_resolved_reply_id (FK on delete set null) + trigger validando os dois ponteiros na mesma pergunta
+#   edited_at em recommendation_requests e recommendation_replies, com gatilho que sempre recalcula
+#   last_resolved_reply_id (FK on delete set null) + gatilho validando os dois ponteiros na mesma pergunta
 #   mark_recommendation_reply_resolved grava atual e ultima; mark_recommendation_resolved e a resolvida sem resposta
 #   reopen_recommendation esvazia a atual e mantem a ultima
-#   list_indications ganha p_mine (Minhas / Para ajudar) e, no Para ajudar, sem resposta primeiro
+#   excluir a resposta que resolveu reabre a pergunta (gatilho novo)
+#   grant update da autoria restrito a title/body (pergunta) e body (resposta)
+#   list_indications ganha p_mine e, no Para ajudar, sem resposta primeiro; resolved_reply_body so com is_resolved
 #   list_question_replies e a leitura da conversa: a resposta removida volta como aviso, sem texto e sem autor
-# pgTAP: supabase/tests/community-question-cycle.sql, 43 asserts (43/43 no test:db)
-# prova: node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
-#   resultado: migration aplica limpa (20261024110000 no fim da fila)
-# prova: node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
-#   resultado: PASS, 155 arquivos, 2305 testes, 0 falhas (inclui community-question-cycle 43/43)
+# pgTAP: supabase/tests/community-question-cycle.sql, 59 asserts (59/59 no test:db)
+#   supabase/tests/recommendation-resolved-reply.sql: o PATCH direto na resolucao passou a exigir 42501 (a
+#   permissao recusa antes do gatilho), atualizado no mesmo commit do banco
+# prova: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+#   resultado: PASS, 155 arquivos, 2321 testes, 0 falhas (community-question-cycle 59/59)
+# prova: node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
+#   resultado: No schema errors found (extensions, private, public)
 # prova: npx pnpm@11.18.0 gate
-#   resultado: VERDE (lint, typecheck, typecheck:e2e, test 141, secrets); o estagio build e PULADO pelo gate por nao
-#   existir apps/web/.env.local, que este contrato proibe criar
+#   resultado: VERDE (lint, typecheck, typecheck:e2e, test 141, secrets); o estagio build e PULSADO pelo gate por
+#   nao existir apps/web/.env.local, que este contrato proibe criar
 # prova: npx pnpm@11.18.0 --filter web build (NEXT_PUBLIC_* exportados de npx supabase status -o env, sem .env.local)
 #   resultado: ok, 60 rotas geradas sem erro de prerender
-# prova: node scripts/agents/prova-fila.mjs -- npx supabase db reset --local (com seed), depois
-#   node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 exec playwright test <specs> --workers=1
-#   ambiente: NEXT_PUBLIC_* e SUPABASE_* de supabase status -o env, USER_PASSWORD=bivaque-e2e-local,
-#   PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH para o chromium local (o bundle 1161 nao esta instalado nesta maquina)
-#   resultado: tests/e2e/indicacoes-ciclo-pergunta.spec.ts 3/3; tests/e2e/indicacoes-memoria.spec.ts 6/6;
-#   tests/e2e/recommendation-reply-notify.spec.ts 9/9 (3 viewports, 0 falhas)
-# prova: node scripts/port/compare-pergunta.mjs (pela fila, com sessao de captura)
-#   resultado: .visual/port-pergunta/ com 20 PNG e report.json; 4 pares 375/1440 x claro/escuro, prototipo a esquerda
-#   e Next a direita. A tela do prototipo abre por #comunidade -> primeiro pedido; o Next e o pedido f01 do seed.
-# limite: a captura nao prova interacao; o ciclo tem prova no spec e2e. O banco local e a porta 3000 sao
-#   compartilhados com a frente N2 (COM-001): reset e provas passaram pela fila, na mesma janela.
+# prova: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e <specs>
+#   ambiente: USER_PASSWORD=bivaque-e2e-local e PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH para o chromium local
+#   (o bundle headless_shell 1161 nao esta instalado nesta maquina)
+#   resultado: indicacoes-ciclo-pergunta.spec.ts 1 teste, indicacoes-memoria.spec.ts 2, recommendation-reply-notify.spec.ts 3
+#   -> 18/18 nos 3 viewports; recon-032-salvos.spec.ts 6/6 (acompanha a mudanca de rotulo)
+# prova: node scripts/agents/prova-fila.mjs -- node scripts/port/compare-pergunta.mjs (banco recem-semeado, sessao de captura)
+#   resultado: .visual/port-pergunta/ com 40 PNG e report.json; 8 pares (375/1440 x claro/escuro x aberta/resolvida),
+#   pageErrors vazio. Confirmado por leitura das imagens: aberta com Sem resposta nos dois lados e resolvida com
+#   Resolvida nos dois lados. O prototipo abre por #comunidade e o filtro do estado; o Next e o pedido f06 (aberto)
+#   e o f01 (resolvido) do seed
+# limite: a captura nao prova interacao; o ciclo tem prova no spec e2e. O conteudo dos dois lados difere (o conjunto
+#   de dados do prototipo nao e o do seed): a comparacao e de ESTADO de tela, por desenho
 # fora do escopo desta tarefa, por decisao do ADR: o aviso de pergunta removida (so a resposta tem aviso aqui),
-#   o botao Bloquear (frente D) e a caixa de pedir no fim da lista (o Next mantem no topo).
+#   o botao Bloquear (frente D) e a caixa de pedir no fim da lista (o Next mantem no topo)
