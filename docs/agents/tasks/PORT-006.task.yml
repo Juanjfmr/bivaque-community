@@ -153,4 +153,77 @@ closure:
 # errado na mesma hora, da mesma origem, podem esgotar o teto de 15 e trocar a
 # frase esperada por rate_limited. O reset com seed antes do e2e (como no CI)
 # resolve; não é defeito do caminho.
+#
+# ── Segunda correção da revisão independente — 22/10/2026, mesma branch ──────
+# Revisão confrontada: esta mesma árvore, sobre 6e6b041c (base corrigida e
+# code_hash autorizado nas guardas de coluna). Commits desta correção:
+#   09e2891b — banco: trava do limite, só falha conta, retomada do aceite
+#   3e32ab14 — servidor: retomada do provisionamento e preview só sem sessão
+#   aa60be53 — tela: erro sem campo visível aparece na etapa
+# O bloco anterior fica como histórico; aqui ele é corrigido.
+#
+# P2-1 (concorrência do limite). record_family_invite_code_attempt foi partido
+# em três funções: lock_family_invite_code_attempts (pg_advisory_xact_lock com
+# hashtextextended, origem primeiro e e-mail depois, SEMPRE nessa ordem, como
+# open_support_ticket em 20261022130521), family_invite_code_attempt_gate (teto
+# antes do código; devolve ok ou rate_limited) e record_family_invite_code_
+# failure (grava só a tentativa que falhou, sob a mesma trava). O gate é
+# chamado nas duas funções públicas antes de qualquer consulta ao código. O
+# nome antigo sai; a evidência anterior que o cita é histórica.
+#
+# P2-2 (limite barrando o aceite correto). O teto conta só falha: erro,
+# vencido, usado, revogado e e-mail diferente gravam linha; código certo não
+# grava. pgTAP: 15 erros pela função barram a 16ª e o código certo depois do
+# limite; preview e aceite certos deixam a tabela de tentativas vazia.
+#
+# P2-3 (convite consumido sem acesso). Escolha: RETOMADA, não transação única.
+# Atômico exigiria reimplementar o provisionamento (membership + perfil) dentro
+# da migration ou refatorar apps/web/lib/onboarding/verifyAndProvision.ts, que
+# está fora dos allowed_paths — nos dois casos um segundo caminho de admissão,
+# que é o que provision.ts existe para evitar. Então: o aceite devolve ok e o
+# MESMO vínculo quando o próprio aceitante repete o código, e o servidor conclui
+# o provisionamento. Para a retomada ser alcançável, acceptInviteAction deixa de
+# rodar o preview quando já existe sessão com o e-mail do formulário (o preview
+# responderia unavailable e barraria antes do aceite). A retomada não chama
+# provisionMember quando já há localidade corrente: provision_member_locality
+# fecha a corrente antes de inserir a nova, então repetir moveria a pessoa (e,
+# na mesma localidade, a deixaria sem corrente); o perfil é garantido à parte.
+# Provas: pgTAP (mesmo vínculo, segundo vínculo inexistente, outra pessoa recebe
+# a resposta genérica) e tests/unit/convite/invite-provision.test.ts (falha no
+# meio e nova tentativa conclui; quem já tem localidade não é movido).
+#
+# P2-4 (falha invisível no formulário). stageError (apps/web/lib/convite/
+# form-error.ts) decide: erro de campo da etapa atual fica no campo; erro sem
+# campo, ou de campo de outra etapa (field code na etapa da conta), vai para
+# o EntryError da etapa, que tem role=alert. As listas de campos por etapa
+# vivem no mesmo módulo, para o teste usar a lista que o componente usa.
+#
+# P2-5 (testes que não provam). invite-screen.test.ts perdeu a prova por
+# posição de texto e a busca por NO_LINK. No lugar: invite-actions.test.ts roda
+# acceptInviteAction com o cliente Supabase simulado e confere a ordem
+# (preview → signUp → consentimento → aceite; sem preview com sessão do mesmo
+# e-mail) e cada falha (preview recusado, limite, e-mail diferente, cadastro
+# barrado, confirmação pendente, aceite recusado, exceção no aceite);
+# invite-provision.test.ts confere a ordem das chamadas do provisionamento.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   — 75/75 em 8 arquivos. Com tests/unit/onboarding na mesma execução (o
+#   provisionamento que esta correção toca): 138/138 em 20 arquivos.
+# npx pnpm@11.18.0 exec biome check <arquivos alterados> — 0 erro, 1 aviso
+#   pré-existente (noTemplateCurlyInString em invite-screen.test.ts:79).
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-006.task.yml — ok.
+#
+# NÃO executados, por instrução desta correção: db reset, test:db, db:lint,
+# gate, build e Playwright. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#
+# Limite da prova da concorrência: o pgTAP prova que a trava é tomada (linhas em
+# pg_locks no backend da sessão depois do gate) e que o teto vale na sequência;
+# duas sessões simultâneas exigiriam dblink, que o banco de teste não tem. A
+# serialização vem de a contagem acontecer depois da trava de transação.
 
