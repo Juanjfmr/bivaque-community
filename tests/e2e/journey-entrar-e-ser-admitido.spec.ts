@@ -63,11 +63,15 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
         const submit = page.getByRole("button", { name: "Criar conta" })
         await page.getByLabel("Nome").fill("Pessoa Simulada")
         await page.getByLabel("E-mail").fill(email)
-        await page.getByRole("textbox", { name: /^Senha/ }).fill(`senha-${Date.now()}`)
-        // O botão só libera depois do aceite: aceitar é parte do cadastro, não um passo à parte.
-        await expect(submit).toBeDisabled()
+        // O rótulo do campo é "Senha"; a regra vai como texto de apoio, então
+        // `exact` separa os dois na árvore de acessibilidade.
+        await page.getByLabel("Senha", { exact: true }).fill(`senha-${Date.now()}`)
+        // O botão fica ativo, como na especificação, e o envio sem aceite é
+        // recusado com a explicação — aceitar é parte do cadastro, não um passo
+        // à parte.
+        await submit.click()
+        await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
         await page.getByRole("checkbox").check()
-        await expect(submit).toBeEnabled()
       },
       { persona: "visitante" },
     )

@@ -45,27 +45,27 @@ test.describe("holder onboarding journey", () => {
   })
 
   test("consent page shows terms and accept button", async ({ page }) => {
-    // Given the production Next server
+    // Given the production Next server, com a sessão de quem vai registrar o
+    // aceite (sem sessão, a rota diz o que falta em vez de oferecer o botão)
+    await seedSession(page.context())
     // When a user navigates to the consent page
     await page.goto("/consent")
 
     // Then the terms of use are displayed. "Bem-vindo ao Bivaque" never
     // existed on this page — found realigning this spec against the real
-    // rendered /consent (apps/web/app/(preauth)/consent/page.tsx), which
-    // renders "Termos de uso" plus the Código de conduta and Política de
-    // privacidade sections, no separate welcome line.
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
-    await expect(page.locator("#documents-heading")).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Ler a Política de privacidade completa" }),
-    ).toBeVisible()
-    await expect(page.getByRole("link", { name: "Ler o Código de conduta completo" })).toBeVisible()
+    // rendered /consent (apps/web/app/(preauth)/consent/page.tsx). PORT-003: a
+    // tela passou a ser o passo "Aceite" do protótipo, com os dois documentos
+    // como links na própria frase do aceite.
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Política de privacidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Código de conduta" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
-    await expect(acceptButton).toBeDisabled()
+    // PORT-003: o botão fica ativo como na especificação e o envio sem aceite é
+    // recusado com a explicação; registrar o aceite é o portão de verdade.
+    await acceptButton.click()
+    await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
   })
 
   test("accepting consent navigates to onboarding", async ({ page }) => {
@@ -75,12 +75,10 @@ test.describe("holder onboarding journey", () => {
 
     // When the user explicitly records that they read the legal documents
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
-    await expect(acceptButton).toBeDisabled()
-    const consentCheckbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    const consentCheckbox = page.getByRole("checkbox", { name: /Li e aceito a/ })
     await consentCheckbox.focus()
     await page.keyboard.press("Space")
     await expect(consentCheckbox).toBeChecked()
-    await expect(acceptButton).toBeEnabled()
     await acceptButton.click()
 
     // Then the user is redirected to the onboarding page. Onboarding is a
@@ -531,10 +529,11 @@ test.describe("accessibility across journeys", () => {
 // purpose in its H1. Indicações is a `(shell)` sidebar entry and is covered in
 // shell-navigation.spec.ts.
 test.describe("preauth page headings", () => {
-  // Realignado em 2026-09-07 à prancha 36-web-auth-entrada: o H1 do entrar é a
+  // Realinhado em 2026-09-07 à prancha 36-web-auth-entrada: o H1 do entrar é a
   // frase da referência, e a marca passou a ser o wordmark sobre a foto (link
-  // para o início), não texto dentro do título. A cobertura de marca continua:
-  // agora pelo link com aria-label, que é o que a tecnologia assistiva lê.
+  // para o início), não texto dentro do título. PORT-003: a entrada segue o
+  // protótipo, onde a marca é o símbolo da casca e a saída é o "Sair" do topo —
+  // o caminho de volta ao início continua existindo, e é isso que se prova.
   test("login page leads with the reference heading and carries the brand link", async ({
     page,
   }) => {
@@ -543,9 +542,8 @@ test.describe("preauth page headings", () => {
 
     // Then its own heading states the purpose and the brand links home
     await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Bivaque, voltar ao início" }).first(),
-    ).toBeVisible()
+    await expect(page.getByText("Bivaque", { exact: true })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Sair" })).toHaveAttribute("href", "/")
   })
 
   test("consent page leads with the terms heading", async ({ page }) => {
@@ -553,9 +551,7 @@ test.describe("preauth page headings", () => {
     await page.goto("/consent")
 
     // Then the terms heading is visible
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
   })
 
   test("onboarding page leads with the eligibility heading", async ({ page }) => {

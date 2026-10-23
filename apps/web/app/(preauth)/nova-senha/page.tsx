@@ -1,14 +1,15 @@
 "use client"
 
-import { Button } from "@heroui/react"
-import { Eye, EyeOff, Info, Lock } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { passwordProblem } from "../../../lib/auth/password-auth"
+import { passwordProblem, SENHA_REGRA, SENHA_REGRA_ERRO } from "../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
-import styles from "../recuperar-senha/recuperar-senha.module.css"
+import { EntryError } from "../../components/entry/entry-error"
+import { EntryShell } from "../../components/entry/entry-shell"
+import { MaterialFilledButton } from "../../components/material/filled-button"
+import { MaterialPasswordField } from "../../components/material/password-field"
+import { MaterialTextButton } from "../../components/material/text-button"
+import "../login/components/entry-auth.css"
 
 /**
  * Definição da senha nova, depois do link de recuperação.
@@ -17,11 +18,16 @@ import styles from "../recuperar-senha/recuperar-senha.module.css"
  * sessão antes de redirecionar. Sem sessão, esta tela não tem o que fazer — o
  * link expirou, já foi usado, ou alguém abriu a rota direto — e diz isso em vez
  * de apresentar um formulário que vai falhar no envio.
+ *
+ * A especificação do protótipo não tem esta tela: lá o link do e-mail cria a
+ * senha. Aqui ela existe porque o provedor entrega uma sessão de recuperação e
+ * a senha é salva por `updateUser`. A casca, o campo de senha com a regra como
+ * apoio e a linha de erro são os da entrada, para a pessoa não mudar de mundo
+ * no meio do caminho.
  */
 export default function NovaSenhaPage() {
   const router = useRouter()
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [session, setSession] = useState<"checking" | "ready" | "missing">("checking")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -43,9 +49,10 @@ export default function NovaSenhaPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const problem = passwordProblem(password)
-    if (problem) {
-      setError(problem)
+    // A regra é a mesma do cadastro (`SENHA_REGRA_ERRO`), dita aqui com o
+    // apoio do campo em vez de uma frase própria.
+    if (passwordProblem(password) !== null) {
+      setError(SENHA_REGRA_ERRO)
       return
     }
 
@@ -70,85 +77,56 @@ export default function NovaSenhaPage() {
   }
 
   return (
-    <main className={styles["root"]}>
-      <div className={styles["panel"]} aria-hidden="true">
-        <span className={styles["panelWordmark"]}>BIVAQUE</span>
-      </div>
-      <div className={styles["formPane"]}>
-        <section className={styles["card"]} aria-labelledby="nova-senha-title">
-          <h1 id="nova-senha-title">
+    <EntryShell backHref="/login">
+      {session === "ready" ? (
+        <form className="en-form" noValidate onSubmit={handleSubmit}>
+          <h1 className="en-h1">Crie uma senha nova</h1>
+
+          <MaterialPasswordField
+            autocomplete="new-password"
+            error={error !== null ? true : undefined}
+            id="en-pass"
+            label="Senha nova"
+            onChange={(value) => {
+              setPassword(value)
+              setError(null)
+            }}
+            required
+            supportingText={SENHA_REGRA}
+            value={password}
+          />
+
+          <EntryError id="en-err">{error}</EntryError>
+
+          <MaterialFilledButton disabled={loading ? true : undefined} type="submit">
+            {loading ? "Salvando..." : "Salvar senha"}
+          </MaterialFilledButton>
+        </form>
+      ) : (
+        <div className="en-form">
+          <h1 className="en-h1">
             {session === "missing" ? "Este link não vale mais" : "Crie uma senha nova"}
           </h1>
 
-          {session === "checking" && <p className={styles["lead"]}>Conferindo seu link...</p>}
+          {session === "checking" ? <p className="en-lead">Conferindo seu link...</p> : null}
 
-          {session === "missing" && (
+          {session === "missing" ? (
             <>
-              <Info aria-hidden="true" className={styles["stateIcon"]} />
-              <p className={styles["lead"]}>
+              <p className="en-lead">
                 Links de recuperação valem uma vez só e expiram. Peça outro para continuar de onde
                 parou. Se o link já foi usado, a senha que você criou continua valendo — basta
                 entrar com ela.
               </p>
-              <div className={styles["actions"]}>
-                <Link href={{ pathname: "/recuperar-senha" }} className={styles["primaryLink"]}>
-                  Pedir outro link
-                </Link>
-                <Link href={{ pathname: "/login" }} className={styles["outlineLink"]}>
-                  Voltar para entrar
-                </Link>
-              </div>
+              <MaterialFilledButton href="/recuperar-senha" type="button">
+                Pedir outro link
+              </MaterialFilledButton>
+              <MaterialTextButton href="/login" type="button">
+                Voltar para entrar
+              </MaterialTextButton>
             </>
-          )}
-
-          {session === "ready" && (
-            <>
-              <p className={styles["lead"]}>
-                Use ao menos 8 caracteres, misturando letras e números. Uma frase que só você lembra
-                funciona melhor do que uma palavra curta e complicada.
-              </p>
-
-              <form className={styles["form"]} onSubmit={handleSubmit}>
-                <label className={styles["field"]} htmlFor="nova-senha">
-                  <span>Senha nova</span>
-                  <span className={styles["inputShell"]}>
-                    <Lock aria-hidden="true" />
-                    <input
-                      id="nova-senha"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      placeholder="Ao menos 8 caracteres"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      className={styles["revealButton"]}
-                      onClick={() => setShowPassword((shown) => !shown)}
-                      aria-pressed={showPassword}
-                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                    >
-                      {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-                    </button>
-                  </span>
-                </label>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className={styles["primaryButton"] ?? ""}
-                  isDisabled={loading}
-                >
-                  {loading ? "Salvando..." : "Salvar senha"}
-                </Button>
-              </form>
-
-              {error && <FeedbackAlert variant="danger" description={error} />}
-            </>
-          )}
-        </section>
-      </div>
-    </main>
+          ) : null}
+        </div>
+      )}
+    </EntryShell>
   )
 }

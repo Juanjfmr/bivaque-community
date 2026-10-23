@@ -51,9 +51,13 @@ function requirePassword(): string {
   return MEMBER_PASSWORD
 }
 
+// PORT-003: os campos deixaram de ser `<input>` do HeroUI e passaram a ser os do
+// Material Web, com o `<input>` dentro do shadow root. O seletor CSS do
+// Playwright atravessa o shadow root aberto, então `#en-email input` continua
+// sendo o campo digitável — os ids são os da especificação (`entrySignup`).
 async function signInThroughForm(page: import("@playwright/test").Page): Promise<void> {
-  await page.locator("#bivaque-signin-email").fill(MEMBER_EMAIL)
-  await page.locator("#bivaque-signin-password").fill(requirePassword())
+  await page.locator("#en-email input").fill(MEMBER_EMAIL)
+  await page.locator("#en-pass-login input").fill(requirePassword())
   await page.getByRole("button", { name: "Entrar", exact: true }).click()
 }
 
@@ -63,33 +67,39 @@ test.describe("prancha 36 — entrar", () => {
   }) => {
     await page.goto("/login")
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Que bom ter você de volta.")
-    await expect(page.locator("#bivaque-signin-email")).toBeVisible()
-    await expect(page.locator("#bivaque-signin-password")).toBeVisible()
+    await expect(page.locator("#en-email")).toBeVisible()
+    await expect(page.locator("#en-pass-login")).toBeVisible()
     await expect(page.getByRole("button", { name: "Mostrar senha", exact: true })).toBeVisible()
     await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeVisible()
     await expect(page.getByRole("link", { name: "Esqueci minha senha" })).toBeVisible()
     await expect(page.getByRole("link", { name: "Criar conta" })).toBeVisible()
     await expect(page.getByRole("button", { name: /Continuar com Google/ })).toBeVisible()
+    // O separador da especificação, entre o Google e o formulário de e-mail.
+    await expect(page.getByText("ou com e-mail")).toBeVisible()
     // Um único h1 na tela (rubrica de acessibilidade do contrato).
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1)
   })
 
   test("mostrar e ocultar troca o tipo do campo, sem perder o texto", async ({ page }) => {
     await page.goto("/login")
-    await page.locator("#bivaque-signin-password").fill("segredo-123")
+    await page.locator("#en-pass-login input").fill("segredo-123")
     await page.getByRole("button", { name: "Mostrar senha", exact: true }).click()
-    await expect(page.locator("#bivaque-signin-password")).toHaveAttribute("type", "text")
-    await page.getByRole("button", { name: "Ocultar senha", exact: true }).click()
-    await expect(page.locator("#bivaque-signin-password")).toHaveAttribute("type", "password")
-    await expect(page.locator("#bivaque-signin-password")).toHaveValue("segredo-123")
+    await expect(page.locator("#en-pass-login")).toHaveAttribute("type", "text")
+    // O adaptador da PORT-002 chama o estado visível de "Esconder senha"; o
+    // protótipo, de "Ocultar senha". A ação é a mesma e o nome muda com o estado.
+    await page.getByRole("button", { name: "Esconder senha", exact: true }).click()
+    await expect(page.locator("#en-pass-login")).toHaveAttribute("type", "password")
+    await expect(page.locator("#en-pass-login input")).toHaveValue("segredo-123")
   })
 
   test("credencial errada devolve a mensagem única, sem distinguir conta", async ({ page }) => {
     await page.goto("/login")
-    await page.locator("#bivaque-signin-email").fill(MEMBER_EMAIL)
-    await page.locator("#bivaque-signin-password").fill("senha-errada-123")
+    await page.locator("#en-email input").fill(MEMBER_EMAIL)
+    await page.locator("#en-pass-login input").fill("senha-errada-123")
     await page.getByRole("button", { name: "Entrar", exact: true }).click()
-    await expect(page.getByText("E-mail ou senha incorretos.")).toBeVisible()
+    await expect(page.locator("#en-err")).toHaveText("E-mail ou senha incorretos.")
+    // A senha recusada não fica no campo (é o `fail()` da especificação).
+    await expect(page.locator("#en-pass-login input")).toHaveValue("")
     // Anti-enumeração: nada na tela pode insinuar que a conta existe ou não.
     await expect(page.getByText(/não encontrada|não cadastrado|não existe/i)).toHaveCount(0)
   })
@@ -101,8 +111,8 @@ test.describe("prancha 36 — entrar", () => {
       await route.continue()
     })
     await page.goto("/login")
-    await page.locator("#bivaque-signin-email").fill(MEMBER_EMAIL)
-    await page.locator("#bivaque-signin-password").fill(requirePassword())
+    await page.locator("#en-email input").fill(MEMBER_EMAIL)
+    await page.locator("#en-pass-login input").fill(requirePassword())
     // Dois submits no MESMO tick: requestSubmit() dispara o onSubmit de forma
     // síncrona, então a segunda chamada chega antes de o primeiro `await`
     // resolver — é exatamente o disparo duplo que o ref segura. Dois clicks do
@@ -154,26 +164,73 @@ test.describe("prancha 36 — entrar", () => {
 })
 
 test.describe("prancha 36 — criar conta", () => {
-  test("o aceite é condição: sem ele o botão não envia", async ({ page }) => {
+  // PORT-003: a especificação deixa "Criar conta" ativo e explica no envio o
+  // que falta, em vez de desligar o botão. A propriedade que este bloco protege
+  // continua a mesma — não se cria conta sem aceite — e passou a ser medida no
+  // lugar certo: nenhuma request de cadastro sai antes do aceite.
+  test("o aceite é condição: sem ele nada sai para o provedor", async ({ page }) => {
+    let signupRequests = 0
+    await page.route("**/auth/v1/signup", async (route) => {
+      signupRequests += 1
+      await route.abort()
+    })
+
     await page.goto("/signup")
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Vamos começar.")
-    await page.locator("#bivaque-signup-name").fill("Ana de Teste")
-    await page.locator("#bivaque-signup-email").fill(MEMBER_EMAIL)
-    await page.locator("#bivaque-signup-password").fill("senha-forte-123")
-    await expect(page.getByRole("button", { name: "Criar conta", exact: true })).toBeDisabled()
-    await page.locator("#bivaque-signup-consent").check()
-    await expect(page.getByRole("button", { name: "Criar conta", exact: true })).toBeEnabled()
+    // O indicador de passo e a regra da senha como texto de apoio, como no
+    // protótipo (`entrySteps(1,'Conta')` e `entryPasswordField`).
+    await expect(page.getByText("Passo 1 de 3 · Conta")).toBeVisible()
+    await expect(page.getByText("Ao menos 8 caracteres, com letras e números.")).toBeVisible()
+
+    await page.locator("#en-name input").fill("Ana de Teste")
+    await page.locator("#en-email input").fill(MEMBER_EMAIL)
+    await page.locator("#en-pass input").fill("senha-forte-123")
+    // Negativa: sem aceite, a tela recusa e nada vai ao provedor.
+    await page.getByRole("button", { name: "Criar conta", exact: true }).click()
+    await expect(page.locator("#en-err")).toHaveText(
+      "Para criar a conta, aceite a Política de privacidade e o Código de conduta.",
+    )
+    expect(signupRequests).toBe(0)
+
+    // Positiva: com aceite, o caminho abre.
+    await page.locator("#en-consent input").check()
+    await page.getByRole("button", { name: "Criar conta", exact: true }).click()
+    await expect.poll(() => signupRequests).toBe(1)
+  })
+
+  test("a caixa do aceite tem nome acessível e os dois documentos", async ({ page }) => {
+    await page.goto("/signup")
+
+    // O texto do `<label>` é associado ao elemento customizado; o nome do
+    // controle interno é escrito pela tela (ver entry-consent.tsx). Sem isso o
+    // leitor de tela anuncia só "caixa de seleção".
+    const consent = page.getByRole("checkbox", { name: /Li e aceito a/ })
+    await expect(consent).toBeVisible()
+    await expect(consent).not.toBeChecked()
+
+    await expect(page.getByRole("link", { name: "Política de privacidade" })).toHaveAttribute(
+      "href",
+      "/privacidade",
+    )
+    await expect(page.getByRole("link", { name: "Código de conduta" })).toHaveAttribute(
+      "href",
+      "/codigo-de-conduta",
+    )
   })
 
   test("e-mail já cadastrado sugere entrar, sem criar segunda conta", async ({ page }) => {
     await page.goto("/signup")
-    await page.locator("#bivaque-signup-name").fill("Ana de Teste")
-    await page.locator("#bivaque-signup-email").fill(MEMBER_EMAIL)
-    await page.locator("#bivaque-signup-password").fill("senha-forte-123")
-    await page.locator("#bivaque-signup-consent").check()
+    await page.locator("#en-name input").fill("Ana de Teste")
+    await page.locator("#en-email input").fill(MEMBER_EMAIL)
+    await page.locator("#en-pass input").fill("senha-forte-123")
+    await page.locator("#en-consent input").check()
     await page.getByRole("button", { name: "Criar conta", exact: true }).click()
-    await expect(page.getByText("Este e-mail já tem conta no Bivaque.")).toBeVisible()
-    await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
+    await expect(page.locator("#en-err")).toContainText("Este e-mail já tem conta no Bivaque.")
+    // O caminho de saída fica na própria linha do erro: entrar ou recuperar.
+    await expect(page.locator("#en-err").getByRole("link", { name: "Entrar" })).toBeVisible()
+    await expect(
+      page.locator("#en-err").getByRole("link", { name: "recupere a senha" }),
+    ).toBeVisible()
   })
 
   test("senha curta é barrada no cliente antes da ida ao provedor", async ({ page }) => {
@@ -183,12 +240,14 @@ test.describe("prancha 36 — criar conta", () => {
       await route.abort()
     })
     await page.goto("/signup")
-    await page.locator("#bivaque-signup-name").fill("Ana")
-    await page.locator("#bivaque-signup-email").fill("curta@exemplo.invalid")
-    await page.locator("#bivaque-signup-password").fill("abc123")
-    await page.locator("#bivaque-signup-consent").check()
+    await page.locator("#en-name input").fill("Ana")
+    await page.locator("#en-email input").fill("curta@exemplo.invalid")
+    await page.locator("#en-pass input").fill("abc123")
+    await page.locator("#en-consent input").check()
     await page.getByRole("button", { name: "Criar conta", exact: true }).click()
-    await expect(page.getByText("Use ao menos 8 caracteres.")).toBeVisible()
+    await expect(page.locator("#en-err")).toHaveText(
+      "A senha precisa ter ao menos 8 caracteres, com letras e números.",
+    )
     expect(requests).toBe(0)
   })
 })

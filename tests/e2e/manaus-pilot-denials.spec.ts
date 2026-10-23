@@ -358,13 +358,13 @@ test.describe("consent cookie tampering: it is not a gate", () => {
     // When the user navigates to /consent
     await page.goto("/consent")
 
-    // Then the consent page renders regardless of auth state
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the consent page renders regardless of auth state. PORT-003: sem
+    // sessão não há aceite a registrar, então a tela diz o que falta (entrar) em
+    // vez de oferecer um botão que só falha.
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
 
-    // And the accept button is always visible
-    await expect(page.getByRole("button", { name: "Concordar e continuar" })).toBeVisible()
+    // And the way back to the account is always offered
+    await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
   })
 
   test("login page is always accessible regardless of cookie state", async ({ page }) => {
@@ -406,14 +406,16 @@ test.describe("consent cookie tampering: it is not a gate", () => {
 
 test.describe("accessibility on denial pages", () => {
   test("no keyboard trap on consent page", async ({ page }) => {
-    // Given the consent page
+    // Given the consent page, com a sessão de quem vai registrar o aceite: sem
+    // sessão a tela mostra o caminho de volta, e não haveria controle a testar.
+    await seedSession(page.context())
     await page.goto("/consent")
     await page.waitForSelector("button", { timeout: 10000 })
 
-    // Consent requires a deliberate checkbox before the submit control is
-    // enabled. Verify keyboard users can select it and Tab moves focus away;
-    // no control may trap a keyboard user on this pre-auth screen.
-    const checkbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    // Consent requires a deliberate checkbox before the submit is registered.
+    // Verify keyboard users can select it and Tab moves focus away; no control
+    // may trap a keyboard user on this pre-auth screen.
+    const checkbox = page.getByRole("checkbox", { name: /Li e aceito a/ })
     await checkbox.focus()
     await expect(checkbox).toBeFocused()
 
