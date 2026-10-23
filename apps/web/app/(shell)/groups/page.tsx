@@ -1,6 +1,8 @@
 "use client"
 
 import { Button, Chip, Form, Input, Radio, RadioGroup, SearchField, TextArea } from "@heroui/react"
+import type { Route } from "next"
+import Link from "next/link"
 import type { SVGProps } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -49,6 +51,16 @@ function CloseIcon(props: Omit<SVGProps<SVGSVGElement>, "ref">) {
 
 function safeErrorMessage(action: string): string {
   return `Não foi possível ${action}. Tente novamente.`
+}
+
+// O protótipo compara nomes sem acento nem caixa ("Já existe um grupo com esse
+// nome"). A checagem é de tela, sobre os grupos que a pessoa já vê.
+function normalizeName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
 }
 
 function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismiss: () => void }) {
@@ -103,6 +115,7 @@ export default function GroupsPage() {
   const [profileLocalityId, setProfileLocalityId] = useState<string | null>(null)
   const [groups, setGroups] = useState<GroupRow[]>([])
   const [memberships, setMemberships] = useState<MembershipRow[]>([])
+  const [activity, setActivity] = useState<Map<string, number>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -113,7 +126,9 @@ export default function GroupsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [createName, setCreateName] = useState("")
   const [createDescription, setCreateDescription] = useState("")
+  const [createRules, setCreateRules] = useState("")
   const [createVisibility, setCreateVisibility] = useState<"public" | "private">("public")
+  const [createError, setCreateError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
   // Selected group for moderation
@@ -160,18 +175,32 @@ export default function GroupsPage() {
         .select("*")
         .eq("user_id", authData.user.id)
 
-      if (groupsError || membershipsError) {
+      const { data: activityData, error: activityError } = await supabase.rpc(
+        "list_group_activity",
+        { p_locality_id: localityId },
+      )
+
+      if (groupsError || membershipsError || activityError) {
         if (groupsError) console.error("[groups] groups query failed:", groupsError)
         if (membershipsError)
           console.error("[groups] group_memberships query failed:", membershipsError)
+        if (activityError) console.error("[groups] activity query failed:", activityError)
         setError(safeErrorMessage("carregar os grupos"))
         setGroups([])
         setMemberships([])
+        setActivity(new Map())
         return
       }
 
       setGroups((groupsData as GroupRow[] | null) ?? [])
       setMemberships((membershipsData as MembershipRow[] | null) ?? [])
+      setActivity(
+        new Map(
+          ((activityData as { group_id: string; recent_post_count: number }[] | null) ?? []).map(
+            (row) => [row.group_id, Number(row.recent_post_count)],
+          ),
+        ),
+      )
     } catch (err) {
       console.error("[groups] loadData unexpected error:", err)
       setError(safeErrorMessage("carregar os grupos"))
@@ -192,14 +221,27 @@ export default function GroupsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!profileLocalityId) return
+    setCreateError(null)
+
+    const name = createName.trim()
+    if (name.length < 3) {
+      setCreateError("Dê um nome ao grupo, com pelo menos 3 letras.")
+      return
+    }
+    if (groups.some((g) => normalizeName(g.name) === normalizeName(name))) {
+      setCreateError("Já existe um grupo com esse nome. Busque e entre nele.")
+      return
+    }
+
     setCreating(true)
     setError(null)
 
     const args = {
-      p_name: createName,
+      p_name: name,
       p_visibility: createVisibility,
       p_locality_id: profileLocalityId,
-      ...(createDescription ? { p_description: createDescription } : {}),
+      ...(createDescription.trim() ? { p_description: createDescription.trim() } : {}),
+      ...(createRules.trim() ? { p_rules: createRules.trim() } : {}),
     }
     const { error: rpcError } = await supabase.rpc("create_group", args)
     if (rpcError) {
@@ -211,6 +253,7 @@ export default function GroupsPage() {
 
     setCreateName("")
     setCreateDescription("")
+    setCreateRules("")
     setCreateVisibility("public")
     setShowCreate(false)
     await loadData()
@@ -341,18 +384,30 @@ export default function GroupsPage() {
     return groups.filter((g) => g.name.toLowerCase().includes(q))
   }, [groups, searchQuery])
 
-  const { myGroups, nearbyGroups, hasApprovedMemberships } = useMemo(() => {
+  const { myGroups, nearbyGroups, popularGroups, hasApprovedMemberships } = useMemo(() => {
     const approvedMemberIds = new Set(
       memberships.filter((m) => m.status === "approved").map((m) => m.group_id),
     )
     const my = filteredGroups.filter((g) => approvedMemberIds.has(g.id))
     const nearby = filteredGroups.filter((g) => !approvedMemberIds.has(g.id))
+    // "Populares" ordena por atividade recente — publicações nos últimos 30
+    // dias —, nunca pelo número de membros (contrato COM-003). Grupos sem
+    // publicação recente não entram: a seção é de quem está acontecendo.
+    const popular = nearby
+      .filter((g) => (activity.get(g.id) ?? 0) > 0)
+      .sort(
+        (a, b) =>
+          (activity.get(b.id) ?? 0) - (activity.get(a.id) ?? 0) ||
+          a.name.localeCompare(b.name, "pt-BR"),
+      )
+      .slice(0, 5)
     return {
       myGroups: my,
       nearbyGroups: nearby,
+      popularGroups: popular,
       hasApprovedMemberships: memberships.some((m) => m.status === "approved"),
     }
-  }, [filteredGroups, memberships])
+  }, [filteredGroups, memberships, activity])
 
   const recentlyJoinedGroup = useMemo(() => {
     if (!recentlyJoinedGroupId) return null
@@ -387,9 +442,13 @@ export default function GroupsPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{group.name}</h3>
+              <h3 className="font-semibold">
+                <Link href={`/groups/${group.id}` as Route} className="hover:underline">
+                  {group.name}
+                </Link>
+              </h3>
               <Chip size="sm" variant="soft">
-                {group.visibility === "public" ? "Público" : "Privado"}
+                {group.visibility === "public" ? "Aberto" : "Fechado"}
               </Chip>
               <ReportButton targetType="group" targetId={group.id} label="Denunciar" />
             </div>
@@ -404,7 +463,7 @@ export default function GroupsPage() {
                 onPress={() => handleJoin(group.id)}
                 isDisabled={actionLoading === group.id}
               >
-                {group.visibility === "public" ? "Entrar" : "Solicitar"}
+                {group.visibility === "public" ? "Entrar" : "Pedir entrada"}
               </Button>
             )}
 
@@ -548,26 +607,29 @@ export default function GroupsPage() {
           onSubmit={handleCreate}
           className="flex flex-col gap-4 rounded-lg border border-border p-4"
         >
-          <h2 className="text-base font-semibold">Novo grupo</h2>
+          <h2 className="text-base font-semibold">Criar grupo</h2>
 
           <Input
             type="text"
             aria-label="Nome do grupo"
             placeholder="Nome do grupo"
+            minLength={3}
+            maxLength={60}
             value={createName}
             onChange={(e) => setCreateName((e.target as HTMLInputElement).value)}
             required
           />
 
           <TextArea
-            aria-label="Descrição"
-            placeholder="Descrição (opcional)"
+            aria-label="Sobre o grupo"
+            placeholder="Sobre o grupo (opcional)"
+            maxLength={300}
             value={createDescription}
             onChange={(e) => setCreateDescription((e.target as HTMLTextAreaElement).value)}
           />
 
           <RadioGroup
-            aria-label="Visibilidade do grupo"
+            aria-label="Privacidade do grupo"
             value={createVisibility}
             onChange={(value) => setCreateVisibility(value as "public" | "private")}
             isDisabled={creating}
@@ -579,9 +641,9 @@ export default function GroupsPage() {
                   <Radio.Indicator />
                 </Radio.Control>
                 <div className="flex flex-col gap-0.5">
-                  <span>Público</span>
+                  <span>Aberto</span>
                   <span className="text-xs text-muted">
-                    Qualquer membro da comunidade pode entrar.
+                    Qualquer membro verificado da cidade entra com um toque e vê as publicações.
                   </span>
                 </div>
               </Radio.Content>
@@ -592,18 +654,50 @@ export default function GroupsPage() {
                   <Radio.Indicator />
                 </Radio.Control>
                 <div className="flex flex-col gap-0.5">
-                  <span>Privado</span>
-                  <span className="text-xs text-muted">Novos membros precisam de aprovação.</span>
+                  <span>Fechado</span>
+                  <span className="text-xs text-muted">
+                    Quem quiser entrar pede, e você aprova. Só membros veem as publicações.
+                  </span>
                 </div>
               </Radio.Content>
             </Radio>
           </RadioGroup>
 
+          <TextArea
+            aria-label="Regras do grupo"
+            placeholder="Regras do grupo"
+            maxLength={600}
+            value={createRules}
+            onChange={(e) => setCreateRules((e.target as HTMLTextAreaElement).value)}
+          />
+
+          <p className="text-xs text-muted">
+            Quem cria administra o grupo e pode nomear moderadores. Todos os membros do Bivaque são
+            verificados.
+          </p>
+
+          {createError && (
+            <p role="alert" className="text-sm text-danger">
+              {createError}
+            </p>
+          )}
+
           <div className="flex gap-2">
-            <Button type="submit" variant="primary" isDisabled={creating || !createName}>
+            <Button
+              type="submit"
+              variant="primary"
+              isDisabled={creating || createName.trim().length < 3}
+            >
               {creating ? "Criando..." : "Criar"}
             </Button>
-            <Button variant="tertiary" onPress={() => setShowCreate(false)} isDisabled={creating}>
+            <Button
+              variant="tertiary"
+              onPress={() => {
+                setShowCreate(false)
+                setCreateError(null)
+              }}
+              isDisabled={creating}
+            >
               Cancelar
             </Button>
           </div>
@@ -647,7 +741,7 @@ export default function GroupsPage() {
 
           <section className="flex flex-col gap-3" aria-labelledby="nearby-groups-heading">
             <h2 id="nearby-groups-heading" className="text-lg font-semibold tracking-tight">
-              Grupos próximos de você
+              Próximos de você
             </h2>
             {nearbyGroups.length === 0 ? (
               <p className="text-sm text-muted">Nenhum grupo próximo corresponde à busca.</p>
@@ -655,6 +749,15 @@ export default function GroupsPage() {
               <div className="flex flex-col gap-4">{nearbyGroups.map(renderGroupCard)}</div>
             )}
           </section>
+
+          {popularGroups.length > 0 && (
+            <section className="flex flex-col gap-3" aria-labelledby="popular-groups-heading">
+              <h2 id="popular-groups-heading" className="text-lg font-semibold tracking-tight">
+                Populares
+              </h2>
+              <div className="flex flex-col gap-4">{popularGroups.map(renderGroupCard)}</div>
+            </section>
+          )}
         </>
       )}
     </div>
