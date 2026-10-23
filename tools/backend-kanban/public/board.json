@@ -4433,24 +4433,32 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/(preauth)/onboarding/perfil/perfil-actions.ts"],
+      "links": [
+        "apps/web/app/(shell)/profile/interests-actions.ts",
+        "supabase/migrations/20261023120000_admitted_family_holder.sql"
+      ],
       "dependencies": [],
       "proof": [
-        "tests/unit/onboarding/interest-options-require-verification.test.ts 6/6; a lista nem e consultada sem verified"
+        "tests/unit/profile/interests-require-verification.test.ts 12/12: sem verified e sem familiar a lista nem e consultada; verificado le, grava e limpa; familiar admitido le, grava e limpa; falha de leitura de qualquer uma das duas nao libera",
+        "supabase/tests/admitted-family-holder.sql 9/9: dependente de titular verificado true; titular verificado false; dependente de titular nao verificado false; sem vinculo false; vinculo removido false; authenticated e anon 42501; service_role executam"
       ],
-      "tests": ["tests/unit/onboarding/interest-options-require-verification.test.ts"],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "de05e856",
+      "tests": [
+        "tests/unit/profile/interests-require-verification.test.ts",
+        "supabase/tests/admitted-family-holder.sql"
+      ],
+      "updatedAt": "2026-10-22",
+      "sourceRevision": "86c587bb",
       "id": "SEC-INTERESSES-SEM-VERIFICACAO",
       "title": "Personalizacao listava grupos de qualquer cidade para conta nao verificada",
       "priority": "P2",
       "category": "backend",
       "status": "done",
       "completedAt": "2026-09-22",
-      "description": "Achado MEDIUM da auditoria de 22/09/2026. loadInterestOptionsAction (onboarding/perfil) lia list_available_groups_for_interests com service_role e p_locality_id do cliente, conferindo so a sessao. Agora exige verificacao verified pelo usuario da sessao antes de listar.",
+      "description": "Achado MEDIUM da auditoria de 22/09/2026. loadInterestOptionsAction (onboarding/perfil) lia list_available_groups_for_interests com service_role e p_locality_id do cliente, conferindo so a sessao. Com interesses fora da entrada, o caminho que sobreviveu e app/(shell)/profile/interests-actions.ts: admissao conferida no servidor pelo usuario da sessao (verified OU familiar admitido por convite, via public.has_verified_family_holder, migration 20261023120000) e cidade lida so do vinculo corrente, nunca do cliente.",
       "checklist": [
-        "Exigir verified antes de listar [FEITO]",
-        "Teste negativo por situacao e falha de leitura [FEITO]"
+        "Exigir admissao antes de listar [FEITO]",
+        "Teste negativo por situacao e falha de leitura [FEITO]",
+        "Familiar admitido nao perde os interesses [FEITO]"
       ]
     },
     {
