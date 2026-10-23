@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { CURRENT_CONSENT, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -391,12 +392,15 @@ test.describe("consent cookie tampering: it is not a gate", () => {
   test("onboarding renders when consent is present", async ({ page }) => {
     // Given the consent cookie
     await seedSession(page.context())
+    // A conta do seed é verificada e membro, então o leitor de situação é
+    // fixado no transporte para a tela de CPF aparecer (PORT-004).
+    await stubVerificationStatus(page, null)
 
     // When the user navigates to /onboarding
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 })
 

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -71,6 +72,7 @@ test.describe("holder onboarding journey", () => {
   test("accepting consent navigates to onboarding", async ({ page }) => {
     // Given the consent page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/consent")
 
     // When the user explicitly records that they read the legal documents
@@ -86,20 +88,21 @@ test.describe("holder onboarding journey", () => {
     // Then the user is redirected to the onboarding page. Onboarding is a
     // `(preauth)` route with no shell header, so its own H1 is the landmark.
     await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 
   test("onboarding page renders verify eligibility flow", async ({ page }) => {
     // Given the production Next server
     // When a user navigates to the onboarding page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
-    // Then the verify eligibility UI is rendered
-    const verifyButton = page.getByRole("button", { name: "Verificar acesso" })
+    // Then the verify eligibility UI is rendered (PORT-004: CPF direto)
+    const verifyButton = page.locator("#onboarding-cpf-submit")
     await expect(verifyButton).toBeVisible()
 
-    const cpfInput = page.getByLabel("CPF")
+    const cpfInput = page.locator("#onboarding-cpf input")
     await expect(cpfInput).toBeVisible()
     await cpfInput.fill("123.456.789-09")
     await expect(cpfInput).toHaveValue("123.456.789-09")
@@ -561,10 +564,11 @@ test.describe("preauth page headings", () => {
   test("onboarding page leads with the eligibility heading", async ({ page }) => {
     // Given the onboarding page
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
   })
 })
 

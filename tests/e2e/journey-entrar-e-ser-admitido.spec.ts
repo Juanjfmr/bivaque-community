@@ -10,10 +10,13 @@ import { signInAs } from "./helpers/session"
 //
 //   * 37 (confirmar e-mail): o stack local tem enable_confirmations = false, então o cadastro
 //     entra direto e a tela de confirmação não aparece. Lacuna do ambiente, não do app.
-//   * 38#0 (verificar acesso): observada. Sem PORTAL_DADOS_API_KEY a verificação por CPF cai no
-//     erro temporário — o mesmo caminho seguro de um Portal fora do ar.
+//   * 38#0 (elegibilidade): observada. Sem PORTAL_DADOS_API_KEY a verificação por CPF cai no
+//     erro temporário — o mesmo caminho seguro de um Portal fora do ar, que desde a PORT-004 é
+//     uma tela de resultado própria ("Não conseguimos consultar agora."), com "Tentar de novo" e
+//     o caminho do documento.
 //   * Identidade: desde o ADR-20260922-identidade-quando-portal-falha, o erro temporário oferece
-//     "Enviar identidade agora", e a pessoa envia o arquivo. Antes, com o Portal fora, ninguém seguia.
+//     o envio do documento, e a pessoa envia o arquivo. Antes, com o Portal fora, ninguém seguia.
+//     O envio leva à análise pendente, que também guarda a preferência "Avise-me quando liberar".
 //   * 39 (cidade e personalização): observadas desde o ADR-20260922-aprovacao-por-identidade-sem-
 //     cidade. O operador aprova sem cidade, e a pessoa escolhe a cidade depois, como no CPF.
 //
@@ -85,34 +88,72 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
       page,
       async () => {
         await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 })
+        // PORT-004 (frente B): a tela é a do protótipo — CPF direto, sem a
+        // pergunta do tipo de vínculo, com "Por que o CPF" e o link do convite.
         await expect(
-          page.getByRole("heading", { level: 1, name: "Verificar meu acesso" }),
+          page.getByRole("heading", { level: 1, name: "Confirme seu vínculo." }),
         ).toBeVisible()
-        await expect(page.getByRole("navigation", { name: "Seu progresso" })).toContainText(
-          "Concluído",
+        await expect(page.getByText(/Passo 2 de 3 · Elegibilidade/)).toBeVisible()
+        await expect(page.getByText("Por que o CPF")).toBeVisible()
+        await expect(page.getByRole("link", { name: /É cônjuge ou dependente\?/ })).toHaveAttribute(
+          "href",
+          "/convite",
         )
-        await page.getByLabel("CPF").fill("123.456.789-09")
-        await page.getByRole("button", { name: "Verificar acesso" }).click()
-        // Erro temporário: mensagem segura, sem dado do Portal, e a pessoa continua na tela.
-        await expect(page.getByRole("alert").filter({ hasText: "instabilidade" })).toBeVisible({
-          timeout: 20_000,
-        })
+        await page.locator("#onboarding-cpf input").fill("123.456.789-09")
+        await page.locator("#onboarding-cpf-submit").click()
+        // Erro temporário: o resultado virou uma tela própria do protótipo, sem
+        // dado do Portal, com "Tentar de novo" e o caminho do documento.
+        await expect(
+          page.getByRole("heading", { level: 1, name: "Não conseguimos consultar agora." }),
+        ).toBeVisible({ timeout: 20_000 })
         await expect(page).toHaveURL(/\/onboarding$/)
+        await expect(page.getByRole("link", { name: /Enviar um documento/ })).toBeVisible()
       },
       { persona: "visitante" },
     )
 
+    // Tentar de novo volta ao CPF com o campo limpo: o número não fica na tela.
+    await page.getByRole("button", { name: "Tentar de novo" }).click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Confirme seu vínculo." }),
+    ).toBeVisible()
+    await expect(page.locator("#onboarding-cpf input")).toHaveValue("")
+    await page.locator("#onboarding-cpf input").fill("123.456.789-09")
+    await page.locator("#onboarding-cpf-submit").click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Não conseguimos consultar agora." }),
+    ).toBeVisible({ timeout: 20_000 })
+
     // ADR-20260922-identidade-quando-portal-falha: com o Portal fora, a identidade é
     // oferecida na hora. A pessoa envia um arquivo único e completo, e segue.
-    await page.getByRole("link", { name: "Enviar identidade agora" }).click()
+    await page.getByRole("link", { name: /Enviar um documento/ }).click()
     await expect(page).toHaveURL(/\/onboarding\/documento$/)
-    await page.getByLabel("Documento para análise").setInputFiles({
+    await expect(page.getByRole("heading", { level: 1, name: "Envie um documento." })).toBeVisible()
+    await page.locator("#verification-document").setInputFiles({
       name: "identidade.png",
       mimeType: "image/png",
       buffer: IDENTITY_PNG,
     })
-    await page.getByRole("button", { name: "Enviar para análise" }).click()
-    await expect(page.getByRole("status").filter({ hasText: "Documento enviado" })).toBeVisible({
+    await page.locator("#document-submit").click()
+
+    // O envio leva à análise pendente, que é o estado real do servidor depois
+    // do registro — "Recebemos seu documento.", a linha do tempo do protótipo e
+    // o passo do documento já cumprido.
+    await expect(page).toHaveURL(/\/onboarding\/status$/, { timeout: 20_000 })
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Recebemos seu documento." }),
+    ).toBeVisible()
+    await expect(page.getByRole("listitem").filter({ hasText: "Documento enviado" })).toBeVisible()
+
+    // "Avise-me quando liberar" grava a preferência e confirma só por e-mail
+    // (não há push no Next). Recarregar prova que a linha ficou no banco: o
+    // estado inicial vem do servidor, não da memória da tela.
+    await page.locator("#release-notice").click()
+    await expect(page.getByText("Vamos avisar por e-mail quando liberar.")).toBeVisible({
+      timeout: 20_000,
+    })
+    await page.reload()
+    await expect(page.getByText("Vamos avisar por e-mail quando liberar.")).toBeVisible({
       timeout: 20_000,
     })
 
