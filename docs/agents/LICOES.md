@@ -131,14 +131,19 @@ specs e2e dentro do gate (§ Gate) e a fila de provas `scripts/agents/prova-fila
     - Jeito certo: um caminho real de retomada, que não move a pessoa de lugar.
 ## Provas de banco pela fila
 
-O OpenCode deste repositório libera o `db reset` do banco **local** só por estes dois comandos, exatamente como estão
-(sem nada antes nem depois, nem ponto final):
+O banco local e a porta 3000 são compartilhados entre as frentes. A fila (`scripts/agents/prova-fila.mjs`) trava
+**um comando por vez**, então a sequência que precisa do banco num estado conhecido vai num comando só
+(`scripts/agents/prova-sequencia.mjs`), dentro da fila:
 
 ```
-node scripts/agents/prova-fila.mjs -- npx supabase db reset --local
-node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/<spec>.spec.ts
 ```
 
-Qualquer outra forma de `db reset` pede confirmação e, numa execução sem tela, é recusada. Depois do reset, rode o
-pgTAP e o e2e também pela fila (`node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db`), para outra frente
-não resetar o banco no meio da sua prova.
+- `banco`: reset sem seed e pgTAP. Nunca rode o reset e o `test:db` como dois comandos separados: entre eles, outra
+  frente pode resetar o banco com as migrations dela, e o seu pgTAP roda no esquema errado (aconteceu no lote 5).
+- `e2e`: reset com seed e Playwright nos specs dados, com as variáveis do banco local. O build do Next fica fora da
+  fila (`npx pnpm@11.18.0 --filter web build`, com `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` de
+  `npx supabase status -o env`).
+- O `db reset` direto continua pedindo confirmação e, numa execução sem tela, é recusado. Os dois comandos exatos
+  de reset pela fila seguem liberados para casos avulsos.
