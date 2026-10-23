@@ -27,6 +27,10 @@ type Step = "code" | "account"
 
 type Preview = Extract<InvitePreviewResult, { ok: true }>
 
+type AccountDraft = Readonly<{ consent: boolean; email: string; name: string; password: string }>
+
+const EMPTY_DRAFT: AccountDraft = { consent: false, email: "", name: "", password: "" }
+
 const PROFILE_ROW_HINT =
   "Quem é militar cria o código em Você → Família convidada. O convite vale por 7 dias."
 
@@ -37,14 +41,118 @@ function initials(name: string): string {
   return `${first}${last}`.toUpperCase() || "BQ"
 }
 
+// A etapa da conta, sem estado: recebe o que a tela sabe e devolve eventos.
+// Separada do formulário para que o teste de renderização exercite os lugares
+// de erro desta etapa — o campo, o código que já saiu da tela e a recusa de
+// consentimento — sem dirigir o navegador.
+export function InviteAccountStep({
+  busy,
+  draft,
+  error,
+  errorField,
+  onChange,
+  onSubmit,
+  preview,
+}: Readonly<{
+  busy: boolean
+  draft: AccountDraft
+  error: string | null
+  errorField: string | null
+  onChange: (patch: Partial<AccountDraft>) => void
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+  preview: Preview
+}>) {
+  const hint = preview.inviteeEmailHint
+  const supporting = hint
+    ? `O convite vale só para este e-mail: ${hint}`
+    : "O convite vale só para o e-mail que recebeu a mensagem."
+
+  return (
+    <form className="en en-form" onSubmit={onSubmit} noValidate>
+      <div className="en-inv">
+        <span className="en-av" aria-hidden="true">
+          {initials(preview.inviterName)}
+        </span>
+        <span>
+          <b>{preview.inviterName} convidou você</b>
+          para a família no Bivaque.
+        </span>
+      </div>
+      <h1 className="en-h1">Crie sua conta.</h1>
+      <p className="en-lead">Quem convidou já foi verificado. Você não precisa de CPF.</p>
+
+      <MaterialOutlinedTextField
+        autocomplete="name"
+        error={errorField === "name"}
+        errorText={errorField === "name" ? (error ?? undefined) : undefined}
+        id="en-name"
+        label="Nome"
+        maxlength={80}
+        minlength={2}
+        name="name"
+        onChange={(value) => onChange({ name: value })}
+        required
+        value={draft.name}
+      />
+      <MaterialOutlinedTextField
+        autocomplete="email"
+        error={errorField === "email"}
+        errorText={errorField === "email" ? (error ?? undefined) : undefined}
+        id="en-email"
+        inputmode="email"
+        label="E-mail do convite"
+        name="email"
+        onChange={(value) => onChange({ email: value })}
+        required
+        supportingText={supporting}
+        type="email"
+        value={draft.email}
+      />
+      <MaterialPasswordField
+        autocomplete="new-password"
+        error={errorField === "password"}
+        errorText={errorField === "password" ? (error ?? undefined) : undefined}
+        id="en-pass"
+        label="Senha"
+        onChange={(value) => onChange({ password: value })}
+        supportingText="Ao menos 8 caracteres, com letras e números."
+        value={draft.password}
+      />
+
+      <MaterialCheckbox
+        aria-describedby="en-consent-t"
+        checked={draft.consent}
+        className="en-check"
+        id="en-consent"
+        label={
+          <span id="en-consent-t">
+            Li e aceito a{" "}
+            <Link href="/privacidade" target="_blank" rel="noreferrer">
+              Política de privacidade
+            </Link>{" "}
+            e o{" "}
+            <Link href="/codigo-de-conduta" target="_blank" rel="noreferrer">
+              Código de conduta
+            </Link>
+            .
+          </span>
+        }
+        onChange={(checked) => onChange({ consent: checked })}
+      />
+
+      <EntryError>{stageError(error, errorField, ACCOUNT_STEP_FIELDS)}</EntryError>
+      <MaterialFilledButton disabled={busy} type="submit">
+        {busy ? "Criando sua conta..." : "Aceitar convite"}
+      </MaterialFilledButton>
+    </form>
+  )
+}
+
 export function InviteForm({ initialCode }: Readonly<{ initialCode: string }>) {
   const [step, setStep] = useState<Step>("code")
   const [code, setCode] = useState(initialCode)
   const [preview, setPreview] = useState<Preview | null>(null)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [consent, setConsent] = useState(false)
+  const [draft, setDraft] = useState<AccountDraft>(EMPTY_DRAFT)
   const [error, setError] = useState<string | null>(null)
   const [errorField, setErrorField] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -52,6 +160,14 @@ export function InviteForm({ initialCode }: Readonly<{ initialCode: string }>) {
   // Um clique duplo com o request voando contaria duas tentativas contra o
   // limite do código; o ref segura isso no mesmo tick.
   const sending = useRef(false)
+
+  // Qualquer edição limpa o erro: a mensagem que ficou na tela descrevia o
+  // valor anterior.
+  function updateDraft(patch: Partial<AccountDraft>) {
+    setDraft((current) => ({ ...current, ...patch }))
+    setError(null)
+    setErrorField(null)
+  }
 
   async function runPreview(form: FormData) {
     if (sending.current) return
@@ -95,10 +211,10 @@ export function InviteForm({ initialCode }: Readonly<{ initialCode: string }>) {
 
     const form = new FormData()
     form.set("code", code)
-    form.set("name", name)
-    form.set("email", email)
-    form.set("password", password)
-    if (consent) form.set("consent", "on")
+    form.set("name", draft.name)
+    form.set("email", draft.email)
+    form.set("password", draft.password)
+    if (draft.consent) form.set("consent", "on")
 
     try {
       const result = await acceptInviteAction(form)
@@ -150,104 +266,15 @@ export function InviteForm({ initialCode }: Readonly<{ initialCode: string }>) {
     )
   }
 
-  const hint = preview.inviteeEmailHint
-  const supporting = hint
-    ? `O convite vale só para este e-mail: ${hint}`
-    : "O convite vale só para o e-mail que recebeu a mensagem."
-
   return (
-    <form className="en en-form" onSubmit={handleAccount} noValidate>
-      <div className="en-inv">
-        <span className="en-av" aria-hidden="true">
-          {initials(preview.inviterName)}
-        </span>
-        <span>
-          <b>{preview.inviterName} convidou você</b>
-          para a família no Bivaque.
-        </span>
-      </div>
-      <h1 className="en-h1">Crie sua conta.</h1>
-      <p className="en-lead">Quem convidou já foi verificado. Você não precisa de CPF.</p>
-
-      <MaterialOutlinedTextField
-        autocomplete="name"
-        error={errorField === "name"}
-        errorText={errorField === "name" ? (error ?? undefined) : undefined}
-        id="en-name"
-        label="Nome"
-        maxlength={80}
-        minlength={2}
-        name="name"
-        onChange={(value) => {
-          setName(value)
-          setError(null)
-          setErrorField(null)
-        }}
-        required
-        value={name}
-      />
-      <MaterialOutlinedTextField
-        autocomplete="email"
-        error={errorField === "email"}
-        errorText={errorField === "email" ? (error ?? undefined) : undefined}
-        id="en-email"
-        inputmode="email"
-        label="E-mail do convite"
-        name="email"
-        onChange={(value) => {
-          setEmail(value)
-          setError(null)
-          setErrorField(null)
-        }}
-        required
-        supportingText={supporting}
-        type="email"
-        value={email}
-      />
-      <MaterialPasswordField
-        autocomplete="new-password"
-        error={errorField === "password"}
-        errorText={errorField === "password" ? (error ?? undefined) : undefined}
-        id="en-pass"
-        label="Senha"
-        onChange={(value) => {
-          setPassword(value)
-          setError(null)
-          setErrorField(null)
-        }}
-        supportingText="Ao menos 8 caracteres, com letras e números."
-        value={password}
-      />
-
-      <MaterialCheckbox
-        aria-describedby="en-consent-t"
-        checked={consent}
-        className="en-check"
-        id="en-consent"
-        label={
-          <span id="en-consent-t">
-            Li e aceito a{" "}
-            <Link href="/privacidade" target="_blank" rel="noreferrer">
-              Política de privacidade
-            </Link>{" "}
-            e o{" "}
-            <Link href="/codigo-de-conduta" target="_blank" rel="noreferrer">
-              Código de conduta
-            </Link>
-            .
-          </span>
-        }
-        onChange={(checked) => {
-          setConsent(checked)
-          setError(null)
-          setErrorField(null)
-        }}
-      />
-
-      <EntryError>{stageError(error, errorField, ACCOUNT_STEP_FIELDS)}</EntryError>
-      <MaterialFilledButton disabled={busy} type="submit">
-        {busy ? "Criando sua conta..." : "Aceitar convite"}
-      </MaterialFilledButton>
-    </form>
+    <InviteAccountStep
+      busy={busy}
+      draft={draft}
+      error={error}
+      errorField={errorField}
+      onChange={updateDraft}
+      onSubmit={handleAccount}
+      preview={preview}
+    />
   )
 }
