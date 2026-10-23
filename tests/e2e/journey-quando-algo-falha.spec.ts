@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { chooseTestGroup, openComposer, TEST_GROUP_FEED_URL } from "./helpers/composer"
 import { simulateJourney } from "./helpers/journey"
 import { signInAs } from "./helpers/session"
 
@@ -12,15 +13,13 @@ import { signInAs } from "./helpers/session"
 // "Tentar novamente" precisa publicar de verdade quando a rede volta — retomada que só limpa a
 // mensagem não é retomada.
 //
-// @stateful: a retomada publica um post na vila da membra.
+// @stateful: a retomada publica um post no grupo da membra (lote 5 N2:
+// publicar só existe dentro de um grupo, ADR-20261023).
 
 const MEMBER = "membro-1@bivaque.example.invalid"
 const RIO_COMMUNITY = "71000000-0000-4000-8000-000000000002"
-// O feed da vila — a membra é aprovada na Vila Ajuricaba (seed) e a linha de
-// publicar da Comunidade publica com a vila como audiência padrão. Desde o lote
-// 5 N2 esse feed vive na página da comunidade; a vista "Conversa" saiu de
-// /community.
-const VILA_FEED_URL = "/communities/71000000-0000-4000-8000-000000000001"
+// O feed onde a publicação aparece: o do grupo escolhido no compositor.
+const GROUP_FEED_URL = TEST_GROUP_FEED_URL
 
 test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () => {
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "jornada das pranchas web")
@@ -61,9 +60,9 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         "60-web-estados#1",
         page,
         async () => {
-          await page.goto("/community")
-          await page.getByRole("button", { name: /^Escreva/ }).click()
+          await openComposer(page)
           const editor = page.getByRole("dialog")
+          await chooseTestGroup(editor)
           await editor.getByRole("textbox").first().fill(text)
 
           await page.route("**/rest/v1/posts**", (route) =>
@@ -89,9 +88,9 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         .getByRole("button", { name: "Tentar novamente" })
         .click()
       await expect(page.getByRole("dialog")).toBeHidden({ timeout: 20_000 })
-      // O feed onde ela aparece: a publicação vai para a vila (audiência padrão
-      // do seletor) e o feed da vila mora na página da comunidade desde o N2.
-      await page.goto(VILA_FEED_URL, { waitUntil: "load" })
+      // O feed onde ela aparece: a publicação vai para o grupo escolhido no
+      // compositor, e o feed do grupo é a página do grupo.
+      await page.goto(GROUP_FEED_URL, { waitUntil: "load" })
       await expect(page.getByRole("article").filter({ hasText: text })).toBeVisible({
         timeout: 25_000,
       })

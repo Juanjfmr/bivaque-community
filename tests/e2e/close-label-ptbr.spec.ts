@@ -24,6 +24,7 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
+import { openComposer } from "./helpers/composer"
 import {
   CURRENT_CONSENT,
   encodeAuthCookieValue,
@@ -81,14 +82,12 @@ test.describe("o gatilho de fechar fala português", () => {
     test(`compositor: o gatilho de fechar se chama "Fechar" em ${viewport.label}`, async ({
       page,
     }) => {
-      // Given — a owner da vila, no tamanho medido
+      // Given — membro de Manaus, no tamanho medido. Desde o lote 5 N2 o
+      // compositor abre pela linha do Início (ou pelo botão do shell no
+      // telefone): a Comunidade não tem mais feed nem linha de publicar.
       await signInAs(page, VILA_OWNER_EMAIL)
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await page.goto("/community")
-      await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-        timeout: 20000,
-      })
-      await page.getByRole("button", { name: "Publicar" }).first().click()
+      await openComposer(page)
       const dialog = page.getByRole("dialog")
       await expect(dialog).toBeVisible()
 

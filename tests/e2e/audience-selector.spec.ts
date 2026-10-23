@@ -1,24 +1,21 @@
-// Onda E Task 4 — composer shows reach before submit, defaults to the vila,
-// and the city-reach post is rendered with a chip in the feed.
+// Onda E Task 4 — composer shows reach before submit, and a post of a group
+// carries its reach chip in the group feed.
 //
-// Committed without running per README "E2E precisa do dono".
+// Reescrito no lote 5, tarefa N2 (ADR-20261023): publicação passou a existir SÓ
+// dentro de um grupo. Cidade inteira e vila saíram do seletor, então o chip
+// provado é o de GRUPO, no feed do grupo — não há mais publicação de cidade
+// para carregar chip de cidade.
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import {
-  CURRENT_CONSENT,
-  encodeAuthCookieValue,
-  readEnvLocal,
-  seedSession,
-} from "./helpers/session"
+import { chooseTestGroup, openComposer, TEST_GROUP_FEED_URL } from "./helpers/composer"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-// Vila Ajuricaba's owner (see community-batch-approval.spec.ts's header for
-// the full seed story). O feed da cidade (Início) rende para qualquer membro da
-// localidade — o chip de alcance não depende de ter comunidade. Desde o lote 5
-// N2 a Comunidade não tem mais feed: o cartão com o chip é o do Início.
-const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+// Membro verificado de Manaus, aprovado num grupo no seed: é quem tem destino
+// para escolher no compositor.
+const MEMBER_EMAIL = "membro-1@bivaque.example.invalid"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -63,39 +60,35 @@ async function signInAs(page: Page, email: string): Promise<void> {
 
 test.describe("audience selector and reach chip", () => {
   test("the audience notice describes who will read", async ({ page }) => {
-    // Given an authenticated session with a seeded approved community
-    await seedSession(page.context())
+    // Given an authenticated member who belongs to a group
+    await signInAs(page, MEMBER_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    // When the composer opens
-    await page.goto("/community")
-    await page
-      .getByRole("button", { name: /Publicar/ })
-      .first()
-      .click()
+    // When the composer opens and the group is chosen
+    await openComposer(page)
+    const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
 
-    // Then the audience section renders with a notice
-    await expect(page.getByText(/vão ler/i).first()).toBeVisible()
+    // Then the audience section renders with the notice of the chosen group
+    await expect(dialog.getByText(/aprovados deste grupo vão ler/i)).toBeVisible()
   })
 
-  test("city-reach post carries a chip with the locality name in the feed", async ({ page }) => {
-    // Given a session of a member who belongs to a community, whose
-    // locality has at least one city-reach post (the dev seed sets this up)
-    await signInAs(page, VILA_OWNER_EMAIL)
+  test("group post carries a chip with the group reach in the group feed", async ({ page }) => {
+    // Given a member of Manaus (any verified member reads a public group)
+    await signInAs(page, MEMBER_EMAIL)
 
-    // When the member opens the home feed — desde o lote 5 N2 o feed da cidade
-    // mora no Início, não na Comunidade.
-    await page.goto("/inicio")
+    // When the member opens the group feed — é o único feed de publicação que
+    // existe desde o lote 5 N2
+    await page.goto(TEST_GROUP_FEED_URL, { waitUntil: "load" })
 
-    // Then a city-reach chip is visible on the city-wide post. The chip
+    // Then a post of the group carries the group chip. The chip
     // (feed-post-card) is a static HeroUI Chip, not an interactive
     // control — it carries no button role, so a byRole("button") locator
     // never matched even though the chip renders.
-    await expect(page.locator("#secao-cidade article").first()).toBeVisible({ timeout: 20000 })
-    const chip = page
-      .locator("#secao-cidade")
-      .getByText(/inteira$/i)
-      .first()
-    await expect(chip).toBeVisible()
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 20000 })
+    await expect(page.locator('[aria-label="Alcance: só o grupo"]').first()).toBeVisible()
+    // And no city-reach chip is offered: publicar para a cidade inteira deixou
+    // de existir.
+    await expect(page.locator('[aria-label$="inteira"]')).toHaveCount(0)
   })
 })

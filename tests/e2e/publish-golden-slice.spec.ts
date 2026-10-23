@@ -1,13 +1,13 @@
-// Golden-slice E2E: Minha comunidade → compositor → audiência → publicação →
-// feedback → reload → persistência, mais o caminho de erro.
+// Golden-slice E2E: compositor → audiência → publicação → feedback → reload →
+// persistência, mais o caminho de erro.
 //
 // Cobre a fatia W1 do compositor com prova de UI real: dois cenários
 // encadeados na mesma página, ambos terminados por um post visível e
 // persistente no feed.
 //
 //   - Caminho feliz: o membro abre o compositor, escreve texto único
-//     prefixado com "GS-E2E", deixa a audiência default (a sua vila),
-//     confirma que o aviso de audiência descreve quem vai ler, submete
+//     prefixado com "GS-E2E", escolhe o grupo de destino, confirma que o aviso
+//     de audiência descreve quem vai ler, submete
 //     e verifica que aparece um feedback de sucesso (toast OU estado
 //     pending), que o post renderiza no feed e que sobrevive a um reload
 //     — prova de persistência real (não otimista).
@@ -18,14 +18,10 @@
 //     o rascunho é preservado, que o modal continua aberto, e então
 //     limpa a interceptação e publica com sucesso.
 //
-// Persona: dono-vila@bivaque.example.invalid — owner aprovada da Vila
-// Ajuricaba (community 71000000-0000-4000-8000-000000000001 segundo o
-// seed local). Mesma identidade usada por audience-selector.spec.ts. Desde o
-// lote 5 N2 o feed da VILA vive na página da comunidade
-// (/communities/71000000-...-0001): a linha de publicar da Comunidade continua
-// publicando com a vila como audiência padrão do seletor, e é lá que o post
-// aparece — a vista "Conversa" saiu de /community e o feed da CIDADE mora no
-// Início.
+// Persona: membro-1@bivaque.example.invalid — membro verificado de Manaus,
+// aprovado no grupo "Pais e Filhos" (seed). Publicar só existe dentro de um
+// grupo (lote 5 N2, ADR-20261023): o compositor oferece os grupos da pessoa e o
+// post aparece no feed do grupo escolhido.
 //
 // Determinístico: serial-safe (workers=1 no playwright.config) e os
 // textos únicos por timestamp impedem colisão com execuções anteriores.
@@ -34,19 +30,17 @@
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import type { BrowserContext, Page } from "@playwright/test"
+import type { BrowserContext } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
+import { chooseTestGroup, openComposer, TEST_GROUP_FEED_URL } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const CONSENT_COOKIE = "bivaque-consent-version"
 
-// A mesma persona de audience-selector.spec.ts (owner da Vila Ajuricaba, único
-// membro aprovado que existe no seed).
-const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
-const VILA_COMMUNITY_ID = "71000000-0000-4000-8000-000000000001"
-const VILA_FEED_URL = `/communities/${VILA_COMMUNITY_ID}`
+// Membro com grupos no seed (membro-1 é aprovado em "Pais e Filhos").
+const AUTHOR_EMAIL = "membro-1@bivaque.example.invalid"
+const GROUP_FEED_URL = TEST_GROUP_FEED_URL
 
 // `import.meta.dirname` não funciona aqui — spec é transpilado para CJS e
 // `require` quebra a coleta. Ler a partir do cwd (Playwright é sempre
@@ -90,20 +84,20 @@ interface PasswordGrant {
   token_type: string
 }
 
-async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
+async function seedAuthorSession(context: BrowserContext): Promise<void> {
   const { anonKey, password } = requireCredentials()
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: VILA_OWNER_EMAIL, password },
+    data: { email: AUTHOR_EMAIL, password },
   })
   if (response.status() !== 200) {
     await api.dispose()
-    throw new Error(`Password grant for ${VILA_OWNER_EMAIL} failed: ${response.status()}`)
+    throw new Error(`Password grant for ${AUTHOR_EMAIL} failed: ${response.status()}`)
   }
   const grant = (await response.json()) as PasswordGrant
   await api.dispose()
-  const cookieValue = encodeAuthCookieValue(grant, VILA_OWNER_EMAIL)
+  const cookieValue = encodeAuthCookieValue(grant, AUTHOR_EMAIL)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
   await context.addCookies([
@@ -130,40 +124,27 @@ async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
   ])
 }
 
-async function openComposer(page: Page): Promise<void> {
-  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-  // O shell pode estar hidratando quando o Next respondeu. Esperar o h1
-  // da vila aparecer antes de tentar abrir o compositor — sem isso, o
-  // primeiro clique pode cair fora do handler de React e o modal nunca
-  // abre.
-  await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-    timeout: 20000,
-  })
-  await page.getByRole("button", { name: "Publicar" }).first().click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await expect(page.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
-}
-
 test.setTimeout(180_000)
 
 test.describe("golden slice: publicar → feedback → reload → persistência", {
   tag: "@stateful",
 }, () => {
-  test("caminho feliz publica na vila e o post persiste após reload", async ({ page }) => {
-    // Given — sessão da owner aprovada da Vila Ajuricaba
-    await seedVilaOwnerSession(page.context())
+  test("caminho feliz publica no grupo e o post persiste após reload", async ({ page }) => {
+    // Given — sessão do membro aprovado em um grupo
+    await seedAuthorSession(page.context())
 
     const runToken = `gs-e2e-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
-    const postText = `GS-E2E Olá vila, marcador da fatia W1 ${runToken}`
+    const postText = `GS-E2E Olá grupo, marcador da fatia W1 ${runToken}`
 
-    // When — abre o compositor a partir da vila
+    // When — abre o compositor e escolhe o grupo de destino
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
 
-    // And — vê o aviso de audiência descrevendo quem vai ler (a vila)
+    // And — vê o aviso de audiência descrevendo quem vai ler (o grupo)
     const audienceNotice = dialog.getByTestId("audience-notice")
     await expect(audienceNotice).toBeVisible()
-    await expect(audienceNotice).toContainText(/aprovados desta vila/i)
+    await expect(audienceNotice).toContainText(/aprovados deste grupo/i)
 
     // And — digita o texto único e submete
     await dialog.getByLabel("Pergunta").fill(postText)
@@ -184,9 +165,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     // local costuma ser rápida demais para capturar o spinner, então o
     // assert é tolerante. O modal fecha (o contratual em publish-error
     // é success → resetForm + modal.close).
-    const successToast = page
-      .getByText(/Publicado na sua vila|Publicado para toda a cidade/i)
-      .first()
+    const successToast = page.getByText(/Publicado no seu grupo/i).first()
     // Uma espera só para os dois: checar se o diálogo fechou e depois esperar
     // um deles corria — no mobile-375 o diálogo fechou entre as duas leituras
     // e o "Publicando" deixou de existir (CI, 27/09/2026).
@@ -196,9 +175,9 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
         .first(),
     ).toBeVisible({ timeout: 5000 })
 
-    // And — o post aparece no feed da VILA (a página da comunidade, desde o
-    // lote 5 N2) após o onCreated
-    await page.goto(VILA_FEED_URL, { waitUntil: "load" })
+    // And — o post aparece no feed do GRUPO (lote 5 N2: é o único feed em que
+    // uma publicação nova pode aparecer)
+    await page.goto(GROUP_FEED_URL, { waitUntil: "load" })
     const post = page.locator("article", { hasText: postText })
     await expect(post).toBeVisible({ timeout: 20000 })
 
@@ -215,16 +194,17 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
   test("caminho de erro: insert abortado mostra FeedbackAlert, preserva o rascunho, depois publica com sucesso", async ({
     page,
   }) => {
-    // Given — sessão da owner aprovada
-    await seedVilaOwnerSession(page.context())
+    // Given — sessão do membro aprovado em um grupo
+    await seedAuthorSession(page.context())
 
     const runToken = `gs-e2e-err-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
     const errorPostText = `GS-E2E Rascunho do caminho de erro ${runToken}`
     const recoveryText = `GS-E2E Recuperação após erro ${runToken}`
 
-    // When — o compositor está aberto
+    // When — o compositor está aberto, com o grupo de destino escolhido
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
 
     // And — instalamos a interceptação do POST /rest/v1/posts antes de
     // submeter. O erro 500 do PostgREST força o caminho server do
@@ -258,8 +238,8 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     await expect(dialog).toBeVisible()
 
     // And — o post NÃO chegou ao banco. O negativo é provado no fim do teste,
-    // no feed onde ele apareceria (a página da vila desde o lote 5 N2): aqui a
-    // tela da Comunidade não tem mais feed para consultar.
+    // no feed onde ele apareceria (o feed do grupo): o compositor segue aberto,
+    // então não há feed nesta tela para consultar.
 
     // And — limpamos a interceptação e reescrevemos o rascunho com novo
     // texto para publicar com sucesso
@@ -281,17 +261,16 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     // And — feedback de sucesso visível (toast ou modal fechou)
     const modalClosed = await dialog.isHidden().catch(() => false)
     if (modalClosed) {
-      await expect(
-        page.getByText(/Publicado na sua vila|Publicado para toda a cidade/i).first(),
-      ).toBeVisible({ timeout: 5000 })
+      await expect(page.getByText(/Publicado no seu grupo/i).first()).toBeVisible({
+        timeout: 5000,
+      })
     } else {
       await expect(dialog.getByTestId("publish-submit")).toContainText(/Publicando/i)
     }
 
-    // And — o post de recuperação aparece no feed da VILA (a página da comunidade
-    // desde o lote 5 N2) e o que foi abortado não está lá: o negativo é provado
-    // no mesmo feed onde ele apareceria.
-    await page.goto(VILA_FEED_URL, { waitUntil: "load" })
+    // And — o post de recuperação aparece no feed do GRUPO e o que foi abortado
+    // não está lá: o negativo é provado no mesmo feed onde ele apareceria.
+    await page.goto(GROUP_FEED_URL, { waitUntil: "load" })
     await expect(page.locator("article", { hasText: recoveryText })).toBeVisible({
       timeout: 20000,
     })

@@ -66,7 +66,7 @@ describe("linha de publicar", () => {
     // continua existindo (shell e Início o abrem) e publica só em grupo.
     expect(page).not.toContain("FeedComposer")
     expect(page).not.toContain("onOpenModal")
-    expect(composer).toContain('initialAttachment')
+    expect(composer).toContain("initialAttachment")
     expect(composer).toContain("Publicar")
   })
 })

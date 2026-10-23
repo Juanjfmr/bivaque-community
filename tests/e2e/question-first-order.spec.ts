@@ -12,6 +12,8 @@
 //      ["Toda a cidade · Manaus", "Vila Ajuricaba", "Pergunta *", "Detalhes",
 //      "Anexar"]. O commit 0023e0d tirou o seletor de FORMATO da frente e
 //      escreveu essa frase no cabeçalho, mas o seletor de PÚBLICO ficou.
+//      Desde o lote 5 N2 o seletor lista só grupos ("Pais e Filhos", do seed);
+//      a ordem provada é a mesma.
 //   2. Pedir indicação, a 375. O formulário antigo (/recommendations) liderava
 //      por "Categoria" e "Para qual comunidade você está perguntando?". Desde
 //      25/09/2026 é a caixa de pedir das Indicações: a frase vem primeiro, e
@@ -28,6 +30,7 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
+import { openComposer } from "./helpers/composer"
 import {
   CURRENT_CONSENT,
   encodeAuthCookieValue,
@@ -36,7 +39,9 @@ import {
 } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+// Membro verificado de Manaus com grupo no seed (lote 5 N2: publicar só dentro
+// de um grupo, e o compositor abre pela linha do Início).
+const AUTHOR_EMAIL = "membro-1@bivaque.example.invalid"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -91,18 +96,14 @@ test.setTimeout(180_000)
 
 test.describe("a pergunta vem antes do resto", () => {
   test("compositor: pergunta antes do seletor de público", async ({ page }) => {
-    // Given — a owner da vila, que é quem tem feed onde publicar
-    await signInAs(page, VILA_OWNER_EMAIL)
+    // Given — membro aprovado em um grupo, que é quem tem onde publicar
+    await signInAs(page, AUTHOR_EMAIL)
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto("/community")
-    await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-      timeout: 20000,
-    })
-    await page.getByRole("button", { name: "Publicar" }).first().click()
-    await expect(page.getByRole("dialog")).toBeVisible()
-    // A lista de destinos é consulta: sem esperar, o grupo "Quem pode ver?"
-    // pode ainda não estar no DOM e a comparação viraria erro de ausência.
-    await expect(page.getByTestId("audience-notice")).not.toBeEmpty({ timeout: 15000 })
+    await openComposer(page)
+    // A lista de destinos é consulta: sem esperar o grupo aparecer, o bloco
+    // "Quem pode ver?" pode ainda não estar no DOM e a comparação viraria erro
+    // de ausência.
+    await expect(page.getByText("Pais e Filhos", { exact: true })).toBeVisible({ timeout: 15000 })
 
     // Then — o campo da pergunta precede o grupo de destino
     expect(

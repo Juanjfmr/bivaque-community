@@ -60,9 +60,12 @@ describe("composição do Início", () => {
   // ficava entre a semana e a descoberta saiu no lote 5 N2 (ADR-20261023).
   it("segue a ordem: retornos, semana, descoberta", () => {
     const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
-    const order = ["<HubShortcuts", "<ReturnStrip />", "<WeekEventsCarousel", "{discovery.map("].map(
-      (marker) => jsx.indexOf(marker),
-    )
+    const order = [
+      "<HubShortcuts",
+      "<ReturnStrip />",
+      "<WeekEventsCarousel",
+      "{discovery.map(",
+    ].map((marker) => jsx.indexOf(marker))
     for (const position of order) expect(position).toBeGreaterThan(-1)
     expect([...order].sort((a, b) => a - b)).toEqual(order)
 

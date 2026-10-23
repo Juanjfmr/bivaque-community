@@ -31,6 +31,7 @@
 
 import type { BrowserContext, Page } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
+import { chooseTestGroup, openComposer } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -38,10 +39,10 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const FOTO_LIGADA_E_VAZIA = "Anexe a foto ou desligue o anexo de foto para publicar."
 const LINK_LIGADO_E_VAZIO = "Informe o endereço do link ou desligue o anexo de link para publicar."
 
-// A mesma persona de publish-golden-slice.spec.ts e vila-home.spec.ts: owner
-// aprovada da Vila Ajuricaba, o único membro do seed com comunidade aprovada.
-// Sem comunidade /community desenha CityReference e não há feed onde publicar.
-const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+// A mesma persona de publish-golden-slice.spec.ts: membro verificado de Manaus
+// aprovado no grupo "Pais e Filhos". Publicar só existe dentro de um grupo
+// (lote 5 N2, ADR-20261023).
+const AUTHOR_EMAIL = "membro-1@bivaque.example.invalid"
 
 // PNG 1x1 válido, em memória: o PhotoField desenha no canvas e reexporta como
 // JPEG antes de enviar, então o arquivo precisa ser uma imagem de verdade — mas
@@ -81,27 +82,27 @@ interface PasswordGrant {
 }
 
 /**
- * Autentica a owner da vila e devolve o token, para que o spec possa LER de
- * volta o que foi gravado. A asserção de `post_type='text'` é sobre a linha no
- * banco, não sobre o que o cliente disse que ia mandar.
+ * Autentica a autora e devolve o token, para que o spec possa LER de volta o
+ * que foi gravado. A asserção de `post_type='text'` é sobre a linha no banco,
+ * não sobre o que o cliente disse que ia mandar.
  */
-async function signInAsVilaOwner(context: BrowserContext): Promise<string> {
+async function signInAsAuthor(context: BrowserContext): Promise<string> {
   const { anonKey, password } = requireCredentials()
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: VILA_OWNER_EMAIL, password },
+    data: { email: AUTHOR_EMAIL, password },
   })
   if (response.status() !== 200) {
     await api.dispose()
     throw new Error(
-      `Password grant for ${VILA_OWNER_EMAIL} failed with ${response.status()}. Is the local Supabase stack running and seeded?`,
+      `Password grant for ${AUTHOR_EMAIL} failed with ${response.status()}. Is the local Supabase stack running and seeded?`,
     )
   }
   const grant = (await response.json()) as PasswordGrant
   await api.dispose()
 
-  const cookieValue = encodeAuthCookieValue(grant, VILA_OWNER_EMAIL)
+  const cookieValue = encodeAuthCookieValue(grant, AUTHOR_EMAIL)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
   const shared = {
@@ -120,8 +121,8 @@ async function signInAsVilaOwner(context: BrowserContext): Promise<string> {
 }
 
 /** A linha de `public.posts` que o insert gravou, lida de volta pelo PostgREST
- *  com o token da própria autora (a RLS de `posts` deixa a aprovada da vila ler
- *  a publicação da vila). `[]` = nada foi gravado. */
+ *  com o token da própria autora (a RLS de `posts` deixa quem participa do
+ *  grupo ler a publicação do grupo). `[]` = nada foi gravado. */
 async function readPostRow(
   token: string,
   content: string,
@@ -145,20 +146,6 @@ async function readPostRow(
   return rows
 }
 
-/** Abre o compositor pelo caminho determinístico do feed da vila. */
-async function openComposer(page: Page): Promise<void> {
-  // Caminho relativo: o baseURL do playwright.config.ts decide o servidor (o CI serve em :3000).
-  await page.goto("/community", { waitUntil: "load" })
-  // O shell pode estar hidratando quando o Next respondeu; sem esperar o h1 da
-  // vila, o primeiro clique cai fora do handler de React e o modal nunca abre.
-  await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-    timeout: 20000,
-  })
-  await page.getByRole("button", { name: "Publicar" }).first().click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await expect(page.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
-}
-
 /** Conta os POST em /rest/v1/posts que a página dispara. "Não publica" é uma
  *  afirmação sobre a REDE, não sobre a cópia em tela: a frase pode aparecer e o
  *  insert sair mesmo assim. */
@@ -178,12 +165,13 @@ test.setTimeout(180_000)
 
 test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@stateful" }, () => {
   test("1. foto ligada e vazia: não publica e diz o que fazer", async ({ page }) => {
-    const token = await signInAsVilaOwner(page.context())
+    const token = await signInAsAuthor(page.context())
     const marker = uniqueMarker("P1T anexo de foto vazio")
     const inserts = countPublishRequests(page)
 
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
     await dialog.getByLabel("Pergunta").fill(marker)
 
     // When — liga "Foto" e NÃO escolhe arquivo nenhum
@@ -207,12 +195,13 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
   })
 
   test("2. link ligado e vazio: não publica e diz o que fazer", async ({ page }) => {
-    const token = await signInAsVilaOwner(page.context())
+    const token = await signInAsAuthor(page.context())
     const marker = uniqueMarker("P1T anexo de link vazio")
     const inserts = countPublishRequests(page)
 
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
     await dialog.getByLabel("Pergunta").fill(marker)
 
     // When — liga "Link" e NÃO preenche a URL. O seletor abre com o campo de URL
@@ -233,12 +222,13 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
   })
 
   test("3. desligar o anexo volta a publicar — e grava post_type='text'", async ({ page }) => {
-    const token = await signInAsVilaOwner(page.context())
+    const token = await signInAsAuthor(page.context())
     const marker = uniqueMarker("P1T anexo desligado")
     const inserts = countPublishRequests(page)
 
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
     await dialog.getByLabel("Pergunta").fill(marker)
 
     // Given — o anexo de foto chegou a ser ligado e recusado
@@ -284,7 +274,7 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
   test("4. publicar ENQUANTO o envio da foto acontece: não perde a ação em silêncio", async ({
     page,
   }) => {
-    const token = await signInAsVilaOwner(page.context())
+    const token = await signInAsAuthor(page.context())
     const marker = uniqueMarker("P1T envio em curso")
     const inserts = countPublishRequests(page)
 
@@ -302,6 +292,7 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
 
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
     await dialog.getByLabel("Pergunta").fill(marker)
     await dialog.getByRole("button", { name: "Foto", exact: true }).click()
 
@@ -358,9 +349,10 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
 // CONTRÁRIO — que a superfície usada pelos três primeiros testes existe.
 test.describe("instrumento", { tag: "@stateful" }, () => {
   test("o compositor oferece os dois anexos depois da pergunta", async ({ page }) => {
-    await signInAsVilaOwner(page.context())
+    await signInAsAuthor(page.context())
     await openComposer(page)
     const dialog = page.getByRole("dialog")
+    await chooseTestGroup(dialog)
 
     await expect(dialog.getByRole("button", { name: "Foto", exact: true })).toBeVisible()
     await expect(dialog.getByRole("button", { name: "Link", exact: true })).toBeVisible()

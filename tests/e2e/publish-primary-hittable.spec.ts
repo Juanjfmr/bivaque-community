@@ -33,13 +33,13 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
+import { chooseTestGroup, openComposer } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-// A mesma persona de publish-golden-slice.spec.ts ao lado: /community só
-// renderiza feed quando quem olha tem comunidade primária, e o compositor abre
-// a partir do feed da vila.
-const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+// Membro verificado de Manaus com grupo no seed (lote 5 N2: publicar só existe
+// dentro de um grupo, e o compositor abre pela linha do Início).
+const AUTHOR_EMAIL = "membro-1@bivaque.example.invalid"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -75,17 +75,15 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-/** Abre o compositor pela vila e habilita o primário escrevendo a pergunta —
- *  é o estado em que a pessoa clica (desabilitado, `elementFromPoint` ainda
- *  devolveria o botão e a prova não diria nada sobre o clique). */
-async function openComposer(page: Page): Promise<void> {
-  await page.goto("/community")
-  await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-    timeout: 20000,
-  })
-  await page.getByRole("button", { name: "Publicar" }).first().click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await page.getByRole("dialog").getByLabel("Pergunta").fill("sonda de hit-test")
+/** Abre o compositor, escolhe o grupo de destino e habilita o primário
+ *  escrevendo a pergunta — é o estado em que a pessoa clica (desabilitado,
+ *  `elementFromPoint` ainda devolveria o botão e a prova não diria nada sobre o
+ *  clique). */
+async function openComposerForHitTest(page: Page): Promise<void> {
+  await openComposer(page)
+  const dialog = page.getByRole("dialog")
+  await chooseTestGroup(dialog)
+  await dialog.getByLabel("Pergunta").fill("sonda de hit-test")
   // A lista de destinos é consulta: esperar o aviso assentar deixa o layout
   // estável antes de medir o ponto.
   await expect(page.getByTestId("audience-notice")).not.toBeEmpty({ timeout: 15000 })
@@ -104,13 +102,13 @@ test.setTimeout(180_000)
 test.describe("o primário do compositor é alcançável e clicável", () => {
   for (const viewport of VIEWPORTS) {
     test(`hit-test do centro do primário em ${viewport.label}`, async ({ page }) => {
-      // Given — sessão da owner aprovada da Vila Ajuricaba, no tamanho medido
-      await signInAs(page, VILA_OWNER_EMAIL)
+      // Given — sessão do membro aprovado em um grupo, no tamanho medido
+      await signInAs(page, AUTHOR_EMAIL)
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
 
       // When — o compositor abre e o primário fica habilitado, SEM rolagem
       // programática: o estado em que a pessoa encontra a tela.
-      await openComposer(page)
+      await openComposerForHitTest(page)
 
       // Then — o ponto central do primário resolve para o próprio botão (ou um
       // descendente dele), que é o que "clicável" significa no navegador.
