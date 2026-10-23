@@ -434,6 +434,7 @@ declare
   v_holder_user_id uuid;
   v_locality_id uuid;
   v_gate text;
+  v_resumed boolean := false;
 begin
   if p_origin_digest is null or octet_length(p_origin_digest) <> 32 then
     raise exception 'origin digest must be 32 bytes' using errcode = '22023';
@@ -458,10 +459,20 @@ begin
   from auth.users u
   where u.id = p_accepted_by_user_id;
 
+  -- A linha do convite é travada ANTES de qualquer decisão, qualquer que seja o
+  -- status. Dois aceites simultâneos do mesmo código ficam em série: o segundo
+  -- espera aqui e, em Read Committed, cada comando seguinte enxerga o que o
+  -- primeiro confirmou — ele cai na retomada abaixo, em vez de achar só um
+  -- convite `accepted` e responder `unavailable`. Código inexistente não trava
+  -- nada, e a resposta não muda: a trava não vira oráculo.
+  perform 1
+    from private.family_invitations fi
+   where fi.code_hash = p_code_hash
+   for update;
+
   -- Retomada: este convite já foi aceito por esta mesma pessoa e o vínculo
   -- existe. Devolver o vínculo é idempotente, não é um segundo uso — o uso é o
-  -- vínculo, e ele é único por convite. A linha do convite é travada aqui
-  -- também: duas retomadas simultâneas não provisionam duas vezes.
+  -- vínculo, e ele é único por convite.
   select link.id, fi.inviter_user_id
   into v_link_id, v_holder_user_id
   from private.family_account_links link
@@ -469,8 +480,9 @@ begin
   where fi.code_hash = p_code_hash
     and fi.status = 'accepted'
     and fi.accepted_by_user_id = p_accepted_by_user_id
-    and link.family_user_id = p_accepted_by_user_id
-  for update of fi;
+    and link.family_user_id = p_accepted_by_user_id;
+
+  v_resumed := v_link_id is not null;
 
   if v_link_id is null then
     -- A tentativa é contada com o e-mail do aceitante quando existe: é o limite
@@ -547,33 +559,47 @@ begin
     v_holder_user_id := v_invitation.inviter_user_id;
   end if;
 
-  -- A localidade do dependente é a corrente do TITULAR no momento do aceite: o
-  -- dependente nunca escolhe a própria localidade. Titular sem localidade
-  -- corrente é falha de contrato, e falha aqui desfaz o aceite inteiro.
-  select m.locality_id
-  into v_locality_id
-  from public.locality_memberships m
-  where m.user_id = v_holder_user_id
-    and m.kind = 'current'
-  order by m.joined_at desc
-  limit 1;
-
-  if v_locality_id is null then
-    raise exception 'the inviting holder has no current locality' using errcode = 'P0005';
-  end if;
-
-  -- Quem já está corrente NA localidade do titular não é provisionado de novo:
-  -- `provision_member_locality` fecha a corrente antes de inserir a nova, então
-  -- repetir moveria a pessoa — e, na mesma localidade, a deixaria sem corrente
-  -- nenhuma (o insert conflita e não vira `current`).
-  if not exists (
-    select 1
-    from public.locality_memberships m
-    where m.user_id = p_accepted_by_user_id
-      and m.locality_id = v_locality_id
-      and m.kind = 'current'
+  -- Retomada de quem já tem localidade corrente: o acesso já existe e é dele.
+  -- Repetir o código não consulta de novo a cidade do titular — se o titular
+  -- se mudou depois do aceite, a retomada não pode mover o familiar sem uma
+  -- declaração de mudança.
+  if not (
+    v_resumed
+    and exists (
+      select 1
+      from public.locality_memberships m
+      where m.user_id = p_accepted_by_user_id
+        and m.kind = 'current'
+    )
   ) then
-    perform public.provision_member_locality(p_accepted_by_user_id, v_locality_id);
+    -- A localidade do dependente é a corrente do TITULAR no momento do aceite:
+    -- o dependente nunca escolhe a própria localidade. Titular sem localidade
+    -- corrente é falha de contrato, e falha aqui desfaz o aceite inteiro.
+    select m.locality_id
+    into v_locality_id
+    from public.locality_memberships m
+    where m.user_id = v_holder_user_id
+      and m.kind = 'current'
+    order by m.joined_at desc
+    limit 1;
+
+    if v_locality_id is null then
+      raise exception 'the inviting holder has no current locality' using errcode = 'P0005';
+    end if;
+
+    -- Quem já está corrente NA localidade do titular não é provisionado de
+    -- novo: `provision_member_locality` fecha a corrente antes de inserir a
+    -- nova, então repetir moveria a pessoa — e, na mesma localidade, a deixaria
+    -- sem corrente nenhuma (o insert conflita e não vira `current`).
+    if not exists (
+      select 1
+      from public.locality_memberships m
+      where m.user_id = p_accepted_by_user_id
+        and m.locality_id = v_locality_id
+        and m.kind = 'current'
+    ) then
+      perform public.provision_member_locality(p_accepted_by_user_id, v_locality_id);
+    end if;
   end if;
 
   -- O mesmo perfil que a rota de provisionamento grava: nome informado, aceite
