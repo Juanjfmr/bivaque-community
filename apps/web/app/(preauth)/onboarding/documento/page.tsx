@@ -1,12 +1,14 @@
 import { createServerClient as createSsrServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import { readDocumentStatus } from "../../../../lib/onboarding/document-status"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
-import { AdmissionShell } from "../components/admission-shell"
+import { EntryShell } from "../../../components/entry/entry-shell"
+import { EntrySteps } from "../../../components/entry/entry-steps"
+import { EntryHeading } from "../components/entry-heading"
+import { EntrySignOut } from "../components/entry-signout"
+import "../components/entry-elegibilidade.css"
 import DocumentUpload from "../document-upload"
-import styles from "../onboarding.module.css"
 
 export const dynamic = "force-dynamic"
 
@@ -14,6 +16,16 @@ interface OutcomeRpcRow {
   status: string
 }
 
+// PORT-004 (lote 4, frente B): a tela do documento na pele do protótipo. O
+// bloco tracejado com o ícone de envio é o mesmo de `renderEntryResult` e
+// `renderEntryPending`; o envio continua sendo a Server Action que já existia
+// (`document-actions.ts`), agora disparada de um bloco só, com o arquivo
+// escolhido no próprio bloco.
+//
+// A guarda de servidor não muda: sem sessão vai para o login; quem já é membro
+// vai para a comunidade; quem foi confirmado vai para a cidade; quem está em
+// análise vai para o status; e quem não tem situação volta ao CPF. Quem teve o
+// documento recusado vê o pedido de outro arquivo.
 export default async function OnboardingDocumentPage() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -63,15 +75,18 @@ export default async function OnboardingDocumentPage() {
   if (status === "verified") {
     redirect("/onboarding/locality")
   }
-  if (status === "pending") {
-    redirect("/onboarding/status")
-  }
   if (status === null) {
     redirect("/onboarding")
   }
 
   const document = await readDocumentStatus(serviceClient, user.id)
 
+  // Com um documento em análise (ou já aprovado) não há o que enviar: a pessoa
+  // volta para a linha do tempo. Sem documento, a tela é o caminho do envio —
+  // inclusive para quem está em análise pela fonte oficial, que no protótipo
+  // recebe "Enviar um documento" na própria análise pendente
+  // (`renderEntryPending`). Antes esta guarda mandava todo `pending` para o
+  // status, e o bloco do protótipo não tinha para onde levar.
   if (document.situation === "in_review" || document.situation === "approved") {
     redirect("/onboarding/status")
   }
@@ -79,35 +94,20 @@ export default async function OnboardingDocumentPage() {
   const isReplace = document.situation === "needs_replacement"
 
   return (
-    <AdmissionShell
-      stage="access"
-      titleId="document-heading"
-      title={isReplace ? "Precisamos de outro arquivo" : "Enviar identidade"}
-      {...(isReplace
-        ? {}
-        : {
-            description: "Não conseguimos confirmar pelo CPF. Envie sua identidade para continuar.",
-          })}
-    >
-      <div className={styles["stack"]}>
-        {!isReplace && (
-          <p className={styles["statusLead"]}>
-            A conferência do documento pode levar um pouco mais. Você acompanha por aqui.
-          </p>
-        )}
+    <EntryShell action={<EntrySignOut />} backHref="/onboarding">
+      <div className="en-form">
+        <EntrySteps label="Elegibilidade" step={2} />
+        <EntryHeading>
+          {isReplace ? "A equipe pediu outro documento." : "Envie um documento."}
+        </EntryHeading>
+        <p className="en-lead">
+          {isReplace
+            ? "Não foi possível ler o documento enviado. Envie outro que mostre o vínculo, como o contracheque ou a identidade militar."
+            : "Envie um documento que mostre o vínculo, como o contracheque ou a identidade militar. A equipe responde em até 2 dias úteis."}
+        </p>
 
         <DocumentUpload mode={isReplace ? "replace" : "upload"} />
-
-        <Link href="/onboarding" className={styles["backLink"]}>
-          {isReplace ? "Voltar" : "Voltar à verificação"}
-        </Link>
-
-        {isReplace && (
-          <p className={styles["documentFooterNote"]}>
-            Após o reenvio, acompanhe a análise por aqui.
-          </p>
-        )}
       </div>
-    </AdmissionShell>
+    </EntryShell>
   )
 }

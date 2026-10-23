@@ -1,40 +1,28 @@
 "use client"
 
-import { Button } from "@heroui/react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { createBrowserClient } from "../../../../lib/supabase/client"
-import styles from "../onboarding.module.css"
+import { useTransition } from "react"
+import { MaterialTextButton } from "../../../components/material/text-button"
 
-export function StatusActions({ refresh }: { refresh: boolean }) {
+// PORT-004: a análise é decidida no servidor, então a única ação honesta nesta
+// tela é perguntar de novo. O protótipo simulava a aprovação com um controle de
+// teste; no Next a decisão é do operador, e recarregar é o caminho real de quem
+// quer ver se liberou. O "Sair" saiu daqui para o topo da casca, como no
+// protótipo (`entryTop`).
+export function StatusActions() {
   const router = useRouter()
-  const [signingOut, setSigningOut] = useState(false)
-
-  const handleSignOut = async () => {
-    setSigningOut(true)
-    await createBrowserClient().auth.signOut()
-    router.push("/login")
-  }
+  const [pending, startTransition] = useTransition()
 
   return (
-    <div className={styles["form"]}>
-      {refresh && (
-        <Button
-          variant="primary"
-          className={styles["primaryButton"] ?? ""}
-          onPress={() => router.refresh()}
-        >
-          Atualizar situação
-        </Button>
-      )}
-      <Button
-        variant="secondary"
-        className={styles["secondaryButton"] ?? ""}
-        onPress={handleSignOut}
-        isDisabled={signingOut}
-      >
-        {signingOut ? "Saindo..." : "Sair"}
-      </Button>
-    </div>
+    <MaterialTextButton
+      disabled={pending}
+      onClick={() => {
+        startTransition(() => {
+          router.refresh()
+        })
+      }}
+    >
+      {pending ? "Atualizando…" : "Atualizar situação"}
+    </MaterialTextButton>
   )
 }
