@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import type { Database } from "supabase/database.generated"
+import { createServerClient as createServiceClient } from "../supabase/server"
 import type { EntryAccountKind } from "./entry-progress"
 
 /**
@@ -21,6 +22,8 @@ import type { EntryAccountKind } from "./entry-progress"
 
 export type EntrySession = Readonly<{
   accountKind: EntryAccountKind
+  /** Algum aceite gravado? `null` quando a consulta não foi possível. */
+  hasAnyAcceptance: boolean | null
   email: string | null
   hasSession: boolean
   name: string | null
@@ -28,6 +31,7 @@ export type EntrySession = Readonly<{
 
 const ANONYMOUS: EntrySession = {
   accountKind: null,
+  hasAnyAcceptance: null,
   email: null,
   hasSession: false,
   name: null,
@@ -39,6 +43,29 @@ function readName(metadata: unknown): string | null {
   if (typeof metadata !== "object" || metadata === null) return null
   const display = (metadata as { display_name?: unknown }).display_name
   return typeof display === "string" && display.trim().length > 0 ? display.trim() : null
+}
+
+/**
+ * A conta tem algum aceite gravado?
+ *
+ * `consent_acceptances` é do `service_role` — `anon` e `authenticated` não têm
+ * privilégio nela —, então a contagem usa o mesmo cliente privilegiado do
+ * callback. O `userId` vem de `auth.getUser()`, nunca de parâmetro, corpo ou
+ * query. Erro ou ambiente sem a chave respondem `null`: "não sei" não pode
+ * virar "não aceitou", senão o aceite reapareceria para quem já aceitou
+ * (ADR-20260907-consentimento-no-cadastro).
+ */
+async function readAnyAcceptance(userId: string): Promise<boolean | null> {
+  try {
+    const { count, error } = await createServiceClient()
+      .from("consent_acceptances")
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", userId)
+    if (error) return null
+    return (count ?? 0) > 0
+  } catch {
+    return null
+  }
 }
 
 export async function readEntrySession(): Promise<EntrySession> {
@@ -74,8 +101,16 @@ export async function readEntrySession(): Promise<EntrySession> {
         ? (kind as EntryAccountKind)
         : null
 
+    // A retomada ("Continuar de onde parei") precisa saber se a conta já tem
+    // qualquer aceite gravado: sem isso ela caía em /onboarding e a conferência
+    // do CPF recebia `403 consent is required` (P2 da revisão de 22/10/2026).
+    // A consulta só acontece quando a retomada é possível — membro e prestador
+    // não passam por ela.
+    const hasAnyAcceptance = accountKind === null ? await readAnyAcceptance(user.id) : null
+
     return {
       accountKind,
+      hasAnyAcceptance,
       email: user.email ?? null,
       hasSession: true,
       name: readName(user.user_metadata),

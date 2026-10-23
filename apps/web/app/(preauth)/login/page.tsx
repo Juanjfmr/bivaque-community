@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { shouldShowEntryResume } from "../../../lib/auth/entry-progress"
+import { entryResumeTarget, shouldShowEntryResume } from "../../../lib/auth/entry-progress"
 import { readEntrySession } from "../../../lib/auth/entry-session"
 import { BivaqueSignIn } from "./components/bivaque-sign-in"
 import { EntryResume } from "./components/entry-resume"
@@ -19,7 +19,11 @@ export default async function LoginPage() {
   return (
     <Suspense fallback={null}>
       {shouldShowEntryResume(session) ? (
-        <EntryResume email={session.email} name={session.name} />
+        <EntryResume
+          email={session.email}
+          name={session.name}
+          resumeHref={entryResumeTarget(session.hasAnyAcceptance)}
+        />
       ) : (
         <BivaqueSignIn />
       )}

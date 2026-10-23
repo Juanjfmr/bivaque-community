@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { ENTRY_RESUME_PATH } from "../../../../lib/auth/entry-progress"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { EntryError } from "../../../components/entry/entry-error"
 import { EntryShell } from "../../../components/entry/entry-shell"
@@ -18,9 +17,12 @@ import "./entry-auth.css"
 // quem precisa poder retomar. Ver `lib/auth/entry-progress.ts`.
 //
 // O que muda em relação ao protótipo, e por quê:
-//   - "Continuar de onde parei" vai a `/onboarding`, e o proxy resolve o passo
-//     real (CPF, análise ou cidade) com o estado do servidor. O protótipo
-//     calculava o passo no dispositivo porque era ali que o estado vivia;
+//   - "Continuar de onde parei" leva ao passo onde a entrada parou, decidido no
+//     servidor por `entryResumeTarget`: conta sem aceite gravado retoma no passo
+//     Aceite (senão a conferência do CPF recebia `403 consent is required`), e
+//     o proxy resolve CPF, análise ou cidade quando o aceite já existe. O
+//     protótipo calculava o passo no dispositivo porque era ali que o estado
+//     vivia;
 //   - "Começar com outra conta" sai da conta e volta ao cadastro, em vez de
 //     apagar um estado local — no Next a entrada mora na conta, não no
 //     aparelho. A frase de apoio diz isso, porque a do protótipo ("Começar de
@@ -34,9 +36,11 @@ import "./entry-auth.css"
 type EntryResumeProperties = Readonly<{
   email: string | null
   name: string | null
+  /** `entryResumeTarget` — decidido no servidor, nunca na tela. */
+  resumeHref: string
 }>
 
-export function EntryResume({ email, name }: EntryResumeProperties) {
+export function EntryResume({ email, name, resumeHref }: EntryResumeProperties) {
   const [confirming, setConfirming] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
@@ -65,7 +69,7 @@ export function EntryResume({ email, name }: EntryResumeProperties) {
         <h1 className="en-h1">Você já começou a entrada.</h1>
         {account.length > 0 ? <p className="en-lead">{`Conta de ${account}`}</p> : null}
 
-        <MaterialFilledButton href={ENTRY_RESUME_PATH} type="button">
+        <MaterialFilledButton href={resumeHref} type="button">
           Continuar de onde parei
         </MaterialFilledButton>
 
