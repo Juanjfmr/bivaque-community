@@ -3,8 +3,8 @@
 // fixture da captura /salvos. Idempotente por construção: começa limpando.
 //
 // Localizadores: o seed tem UM pedido de indicação e nenhum outro botão
-// "Salvar" visível na página do pedido (o de edição só existe para o autor).
-// O spec afirma essa unicidade (toHaveCount(1)) em vez de assumi-la — se o
+// "Seguir respostas" visível na página do pedido (o de edição só existe para o
+// autor). O spec afirma essa unicidade (toHaveCount(1)) em vez de assumi-la — se o
 // seed ganhar outro pedido, ele falha alto em vez de clicar no card errado.
 
 import { expect, test } from "@playwright/test"
@@ -48,37 +48,39 @@ test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () =>
 
     // ── salvar na origem ─────────────────────────────────────────────────────
     // Desde 25/09/2026 o pedido tem página própria, /indicacoes/<id>
-    // (ADR-20260925-memoria-de-indicacoes), com o "Salvar" no cabeçalho.
+    // (ADR-20260925-memoria-de-indicacoes), com o "Seguir respostas" no cabeçalho.
+    // O rótulo veio do ADR-20261023, seção 2: o salvar passou a ser "seguir
+    // respostas".
     await page.goto(`/indicacoes/${REQUEST_ID}`)
     await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible({
       timeout: 15_000,
     })
     // O estado do toggle vem do servidor; se sobrou um salvamento de execucao
-    // anterior, ele abre como "Salvo" e precisa voltar a "Salvar" antes do
-    // ciclo deste spec.
-    // O seletor anterior era /^Salv/, que casa "Salvar", "Salvo" E qualquer
+    // anterior, ele abre como "Seguindo respostas" e precisa voltar a "Seguir
+    // respostas" antes do ciclo deste spec.
+    // O seletor anterior era /^Salv/, que casava "Salvar", "Salvo" e qualquer
     // outro rótulo começando com "Salv" — resolvia para 2 elementos e falhava
-    // por ambiguidade, não por defeito. Exato resolve o toggle sem depender de
-    // estrutura de card.
-    const saveToggle = page.getByRole("button", { name: /^Salv(ar|o)$/ })
+    // por ambiguidade, não por defeito. O regex exato resolve o toggle sem
+    // depender de estrutura de card.
+    const saveToggle = page.getByRole("button", { name: /^Segu(ir|indo) respostas$/ })
     await expect(saveToggle).toHaveCount(1, { timeout: 10_000 })
     // Estado inicial EXPLÍCITO: o ciclo deste spec grava e o próprio teste não
-    // limpa, então a rodada seguinte abre com "Salvo" e o insert do ciclo bate
-    // em duplicate key (23505) — verificado por REST: a RLS permite o insert e o
-    // 409 vinha do save preexistente. Desmarcar sempre, mesmo que o botão já
-    // esteja em "Salvar" (a espera abaixo é idempotente).
+    // limpa, então a rodada seguinte abre com "Seguindo respostas" e o insert do
+    // ciclo bate em duplicate key (23505) — verificado por REST: a RLS permite o
+    // insert e o 409 vinha do save preexistente. Desmarcar sempre, mesmo que o
+    // botão já esteja em "Seguir respostas" (a espera abaixo é idempotente).
     // A escrita é uma chamada de rede; esperar a RESPOSTA antes de olhar o
     // rótulo evita ler o estado antes de o pedido sair. Sonda em 375/768/1440
     // mostrou o ciclo correto (DELETE 204 -> POST 201), e o spec falhava só em
     // viewport estreito, onde a lista demora mais a montar.
-    if ((await saveToggle.textContent())?.trim() === "Salvo") {
+    if ((await saveToggle.textContent())?.trim() === "Seguindo respostas") {
       const cleared = page.waitForResponse(
         (r) => r.url().includes("recommendation_saves") && r.request().method() === "DELETE",
         { timeout: 10_000 },
       )
       await saveToggle.click()
       await cleared
-      await expect(saveToggle).toHaveText("Salvar", { timeout: 10_000 })
+      await expect(saveToggle).toHaveText("Seguir respostas", { timeout: 10_000 })
     }
     const saved = page.waitForResponse(
       (r) => r.url().includes("recommendation_saves") && r.request().method() === "POST",
@@ -88,14 +90,18 @@ test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () =>
     await saved
     // Estabiliza antes de ler o rótulo. O POST 201 já voltou, mas o React troca
     // o nó do botão ao atualizar o estado, e a asserção sobre o locator antigo
-    // ficava 10s lendo "Salvar" com a escrita já confirmada. Medido com o próprio
-    // spec instrumentado: com esta espera ele passa 2/2 em tablet; sem ela, falha
-    // nos dois viewports estreitos. É limitação de OBSERVAÇÃO do teste, não
-    // defeito do produto — a sonda provou DELETE 204 -> POST 201 -> Salvo.
+    // ficava 10s lendo "Seguir respostas" com a escrita já confirmada. Medido com o
+    // próprio spec instrumentado: com esta espera ele passa 2/2 em tablet; sem ela,
+    // falha nos dois viewports estreitos. É limitação de OBSERVAÇÃO do teste, não
+    // defeito do produto — a sonda provou DELETE 204 -> POST 201 -> Seguindo
+    // respostas.
     await page.waitForTimeout(1500)
-    await expect(page.getByRole("button", { name: /^Salv(ar|o)$/ })).toHaveText("Salvo", {
-      timeout: 10_000,
-    })
+    await expect(page.getByRole("button", { name: /^Segu(ir|indo) respostas$/ })).toHaveText(
+      "Seguindo respostas",
+      {
+        timeout: 10_000,
+      },
+    )
 
     // ── o que foi guardado está no destino, com tipo e conteúdo reais ───────
     await page.goto("/salvos")
@@ -131,15 +137,17 @@ test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () =>
 
     // Volta para a origem: a página do próprio pedido.
     await page.goto(`/indicacoes/${REQUEST_ID}`)
-    await expect(page.getByRole("button", { name: "Salvar", exact: true })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Seguir respostas", exact: true })).toBeVisible({
       timeout: 10_000,
     })
 
     // ── restaura a fixture para a captura visual ─────────────────────────────
-    await page.getByRole("button", { name: "Salvar", exact: true }).click()
-    await expect(page.getByRole("button", { name: "Salvo", exact: true })).toBeVisible({
-      timeout: 10_000,
-    })
+    await page.getByRole("button", { name: "Seguir respostas", exact: true }).click()
+    await expect(page.getByRole("button", { name: "Seguindo respostas", exact: true })).toBeVisible(
+      {
+        timeout: 10_000,
+      },
+    )
 
     await context.close()
   })
