@@ -235,11 +235,11 @@ async function capture(page, prefix, width, scrollSelector) {
   const top = await page.screenshot()
   const height = await page.evaluate((selector) => {
     const node = document.querySelector(selector)
-    return Math.max(
-      document.documentElement.scrollHeight,
-      document.body.scrollHeight,
-      node ? node.scrollHeight : 0,
-    )
+    const page = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)
+    // O conteúdo rola dentro do contêiner, abaixo do cabeçalho: a altura
+    // inteira é a da página com a parte visível do contêiner trocada pelo
+    // conteúdo todo dele (cabeçalho e barra de baixo continuam na conta).
+    return node ? page - node.clientHeight + node.scrollHeight : page
   }, scrollSelector)
   await page.setViewportSize({ width, height: Math.max(height, width === 375 ? 812 : 900) })
   await scrollToTop(page, scrollSelector)
