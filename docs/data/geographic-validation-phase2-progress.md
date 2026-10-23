@@ -2,7 +2,7 @@
 
 **Projeto:** Bivaque — `Juanjfmr/bivaque-community`  
 **Branch:** `feat/om-catalog-staging-20261021`  
-**Data da consulta:** 2026-10-22  
+**Data da atualização:** 2026-10-23  
 **Base de referência:** commit `4edd633ce0c64f6aa9c66eb9229d3559a06c00a3`  
 
 ## Escopo e preservação
@@ -54,12 +54,28 @@ Nos lotes 01–02, a evidência direta geralmente corresponde a objetos/áreas n
 
 A fila conserva a partição de origem em lotes 01–11 (máximo de 25 registros por lote). Não registrar acesso controlado, perímetro interno ou infraestrutura sensível.
 
-## Catálogo suplementar FAB — lote de pesquisa 01
+## Catálogo suplementar FAB — progresso até o lote de pesquisa 03
 
-`data/om/evidence/fab_public_address_catalog_phase2.csv` contém 310 linhas nacionais derivadas do catálogo-fonte e preserva os IDs, nomes e localidades originais. O lote 01 abrange os primeiros 25 registros domésticos do inventário. Após os lotes de pesquisa 01 e 02 (50/310 registros), 37 endereços estão classificados como confirmados/publicados; quatro como publicados incompletos; três com ambiguidade entre fontes; um com divergência histórica de número; 265 ainda estão sem endereço individual confirmado. O lote 02 incluiu endereços oficiais para CEAP, CAE, CCA-BR, CCA-SJ, CCA-RJ, CECOMSAER, CENCIAR, CEPE, CGNA, CIAAR, CIAER, CENIPA, CEMAL, CPORAER-SJ, CIMAER, CELOG, CTLA, CGABEG e CINDACTA I. Foram marcados conflitos ou incompletudes para CPBV (localidade-fonte Brasília vs. instalação no Pará), CECAT (vínculo de endereços contraditório), CENDOC (nº atual 1.200 vs. publicação anterior nº 1.000), CLBI e CLA (referência territorial sem endereço viário completo) e CINDACTA IV (documentos com endereços diferentes). Fontes e limites estão individualizados na tabela. Nenhuma recebeu coordenadas nem validação cartográfica. Os outros 260 registros nacionais ainda estão pendentes de pesquisa.
+`data/om/evidence/fab_public_address_catalog_phase2.csv` contém 310 linhas nacionais derivadas do catálogo-fonte, preservando IDs, nomes e localidades originais. Os lotes de pesquisa 01–03 cobrem 72 registros; os lotes 01 e 02 têm 25 registros cada e o lote 03 tem 22. Restam 238 registros na fila marcada `PENDENTE`. A pesquisa não altera nem completa silenciosamente as linhas restantes.
 
-Endereços de contato ou de atendimento não foram convertidos em coordenadas de entrada. A página da AFA voltada a visitantes é tratada como fonte de endereço público, mas ainda não confere precisão métrica. Para as demais unidades, endereço de atendimento não significa que a instalação, portão ou acesso esteja exatamente no ponto associado.
+Situação dos 310 registros na atualização de 2026-10-23:
 
+| Situação documental | Registros |
+|---|---:|
+| Endereço público, institucional ou publicado confirmado textualmente | 54 |
+| Endereço oficial/publicado incompleto | 4 |
+| Ambiguidade entre endereços ou vínculo pendente | 4 |
+| Divergência histórica de endereço/CEP | 3 |
+| Sem endereço individualmente confirmado | 243 |
+| Identidade/Força pendente | 1 |
+| Denominação divergente pendente | 1 |
+
+Os 54 endereços confirmados são endereço textual publicado, não validação cartográfica da instalação. O lote 03 registrou fontes oficiais para CINDACTA II e III, CBNB, COMAER, COMAE, COMPREP, COMGAP, COMGEP, VI e VII COMAR, COPAC, COMARA, CDA, CISCEA, COJAER, DCTA, DECEA e DESTAE-CV/FN/MQ/MS. Permanecem anotadas divergências ou ressalvas: III COMAR (logradouro atual versus referência anterior), VII COMAR (endereços de Manaus distintos), COMARA (CEP conflitante), COMDCIBER (comando conjunto; Força não atribuída), DESTAE-MQ (catálogo atual usa DTCEA-MQ) e estruturas compartilhadas em Brasília, Rio, Guarulhos, São José dos Campos e outras guarnições. Os detalhes, evidências e URLs são mantidos por linha no CSV.
+
+A tabela registra endereços confirmados separadamente dos incompletos, ambíguos e inconclusivos. As 238 linhas ainda marcadas `PENDENTE` aguardam pesquisa individual. Ausência de endereço na fonte-base não é evidência de inexistência ou desativação. A situação institucional do diretório-fonte não demonstra, por si só, atividade atual.
+
+Nenhuma chamada paga à Geoapify foi realizada. Nenhuma coordenada foi atribuída ao catálogo suplementar FAB nem publicada no aplicativo.
+ 
 ## Pendências prioritárias
 
 1. Resolver individualmente a camada cartográfica dos 116 corroborados, começando pelos registros com pontos repetidos, resultados Geoapify do tipo `street`, endereço sem número e instalações compartilhadas já sinalizadas na Fase 1.
@@ -74,4 +90,4 @@ Endereços de contato ou de atendimento não foram convertidos em coordenadas de
 - `data/om/evidence/fab_public_address_catalog_phase2.csv` — base suplementar nacional FAB; proveniência preservada e campos de endereço em branco onde não foram comprovados.
 - `docs/data/geographic-validation-phase2-progress.md` — este registro de método e progresso.
 
-**Limite do trabalho desta atualização:** a validação cartográfica dos 116 candidatos foi concluída em cinco lotes. Os 15 pontos corroborados representam evidência cartográfica pública para o sítio associado, sem homologação institucional da coordenada. A cobertura da FAB permanece incompleta: 18 endereços institucionais/publicados confirmados em nível documental, um endereço oficial incompleto, uma divergência entre fontes e 290 registros sem endereço individualmente confirmado. O arquivo identifica os 304 cruzamentos exatos com o catálogo Bivaque e mantém seis casos sem correspondência exata para revisão.
+**Limite do trabalho desta atualização:** a validação cartográfica dos 116 candidatos foi concluída nos cinco lotes. Os 15 pontos corroborados representam evidência cartográfica pública para o sítio associado, sem homologação institucional da coordenada. A pesquisa da FAB documentou 72/310 registros em três lotes; permanecem 238 na fila de pesquisa, além de casos incompletos ou pendentes de resolução. O cruzamento identifica 304 correspondências exatas com o catálogo Bivaque e seis casos sem correspondência exata para revisão. A base suplementar ainda não é uma cobertura nacional completa de endereços.
