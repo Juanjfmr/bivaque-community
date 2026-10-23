@@ -15,7 +15,10 @@
 --   6. `list_indications` ganha `p_mine` (Minhas / Para ajudar) e, no filtro
 --      "Para ajudar", quem ainda nao tem resposta aparece primeiro;
 --   7. `list_question_replies` e o caminho de leitura da conversa: a resposta
---      removida pela moderacao volta como aviso, sem texto e sem autor.
+--      removida pela moderacao volta como aviso, sem texto e sem autor;
+--   8. excluir a resposta que e a resolucao ATUAL reabre a pergunta (gatilho);
+--   9. a autoria so escreve CONTEUDO: o grant de update desce para as colunas
+--      title/body (pergunta) e body (resposta). A resolucao muda so pelas RPCs.
 --
 -- O banco de producao nao tem uso real (dono, 23/10/2026): o CHECK do titulo
 -- entra validando, sem `not valid`. As colunas novas entram junto das policies
@@ -41,15 +44,21 @@ alter table public.recommendation_replies
 -- A marca e do BANCO: quem escreve o texto de novo ganha o instante gravado sem
 -- depender do cliente. A moderacao (is_deleted) nao mexe no texto, entao nao
 -- marca edicao.
+--
+-- O gatilho SEMPRE recalcula `edited_at`: se o texto mudou, grava o instante; em
+-- qualquer outra escrita — inclusive um PATCH que tente zerar a coluna — mantem o
+-- que ja estava. Assim a marca nao pode ser apagada por um cliente (achado 2 da
+-- revisao de 23/10/2026).
 create function private.mark_recommendation_reply_edited()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  if new.body is distinct from old.body then
-    new.edited_at = now();
-  end if;
+  new.edited_at = case
+    when new.body is distinct from old.body then now()
+    else old.edited_at
+  end;
   return new;
 end;
 $$;
@@ -73,22 +82,26 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  new.edited_at = now();
+  -- Sempre recalcula. Só o CONTEUDO marca edicao; resolver, reabrir, trocar o
+  -- marcador ou tentar zerar `edited_at` preservam o instante que ja estava.
+  if new.title is distinct from old.title
+    or new.body is distinct from old.body
+    or new.category is distinct from old.category
+  then
+    new.edited_at = now();
+  else
+    new.edited_at = old.edited_at;
+  end if;
   return new;
 end;
 $$;
 
--- Só o CONTEUDO muda a marca. Resolver, reabrir ou trocar o marcador nao sao
--- edicoes e nao mexem em `edited_at`.
+-- O gatilho sem `when`: ele roda em toda escrita da linha e decide dentro da
+-- funcao. Com o `when` antigo, um PATCH que so mexesse em `edited_at` nao
+-- disparava o gatilho e apagava a marca (achado 2 da revisao).
 create trigger recommendation_requests_mark_edited
 before update on public.recommendation_requests
-for each row
-when (
-  new.title is distinct from old.title
-  or new.body is distinct from old.body
-  or new.category is distinct from old.category
-)
-execute function private.mark_recommendation_request_edited();
+for each row execute function private.mark_recommendation_request_edited();
 
 revoke all on function private.mark_recommendation_request_edited() from public;
 
@@ -341,6 +354,64 @@ revoke all on function public.reopen_recommendation(uuid) from anon;
 revoke all on function public.reopen_recommendation(uuid) from authenticated;
 grant execute on function public.reopen_recommendation(uuid) to authenticated;
 
+-- ── 5b. excluir a resposta que resolveu reabre a pergunta ───────────────────
+--
+-- A FK de `resolved_reply_id` sozinha limpa o ponteiro: `is_resolved` ficaria
+-- verdadeiro e a pergunta apareceria resolvida sem a resposta que a resolveu. Ao
+-- excluir a resposta que e a resolucao ATUAL, a pergunta volta a aberta, com os
+-- mesmos campos que `reopen_recommendation` limpa (prototipo, manage.js:65).
+--
+-- A ULTIMA resolucao segue a FK: como a resposta deixou de existir, o
+-- `last_resolved_reply_id` cai para nulo no mesmo DELETE (on delete set null), e
+-- e por isso que nao ha o que preservar ali.
+--
+-- SECURITY DEFINER: quem exclui a resposta pode NAO ser a autora da pergunta, e
+-- sem isso a policy recommendation_requests_update_own esconderia a linha e o
+-- UPDATE nao afetaria nada.
+
+create function private.reopen_request_on_resolved_reply_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.recommendation_requests
+  set is_resolved = false,
+      resolved_at = null,
+      resolved_by = null,
+      resolved_reply_id = null
+  where id = old.request_id
+    and resolved_reply_id = old.id;
+  return old;
+end;
+$$;
+
+revoke all on function private.reopen_request_on_resolved_reply_delete() from public;
+
+drop trigger if exists recommendation_replies_reopen_on_delete
+  on public.recommendation_replies;
+create trigger recommendation_replies_reopen_on_delete
+  before delete on public.recommendation_replies
+  for each row
+  execute function private.reopen_request_on_resolved_reply_delete();
+
+-- ── 5c. a autoria so escreve CONTEUDO ──────────────────────────────────────
+--
+-- A resolucao e a marca de edicao sao do BANCO: RPC e gatilho. O grant da
+-- autoria desce para as colunas de conteudo, entao um PATCH direto nas colunas
+-- de resolucao (`is_resolved`, `resolved_reply_id`, `last_resolved_reply_id`,
+-- `resolved_at`, `resolved_by`) ou em `edited_at` e recusado por permissao,
+-- antes mesmo da policy. Os RPCs SECURITY DEFINER continuam escrevendo tudo, e
+-- por isso os grants de tabela das bases (20260802001100, 20260815220000)
+-- seguem valendo; aqui so o UPDATE da autoria fica mais estreito.
+
+revoke update on table public.recommendation_requests from authenticated;
+grant update (title, body) on table public.recommendation_requests to authenticated;
+
+revoke update on table public.recommendation_replies from authenticated;
+grant update (body) on table public.recommendation_replies to authenticated;
+
 -- ── 6. a lista da memoria ganha "Minhas" ───────────────────────────────────
 --
 -- `p_mine` e tri-estado: nulo = as duas autorias (padrao), verdadeiro = so os
@@ -446,10 +517,14 @@ as $$
     s.group_id,
     s.group_name,
     s.reply_count,
+    -- A resposta que resolveu so aparece quando a PERGUNTA diz que esta
+    -- resolvida: a leitura olha o estado da pergunta, nunca so o ponteiro
+    -- (contrato do ADR-20261023, secao 2).
     (
       select rep.body
       from public.recommendation_replies rep
-      where rep.id = s.resolved_reply_id
+      where s.is_resolved
+        and rep.id = s.resolved_reply_id
     ),
     s.matched_reply_body
   from scored s

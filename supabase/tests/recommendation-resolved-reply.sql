@@ -157,17 +157,19 @@ select throws_ok(
 );
 
 -- ── NEGATIVE: PATCH direto (sem interface) não burla a regra ────────────────
--- A autora tem RLS para atualizar a própria linha; o trigger recusa apontar
--- para resposta de outra pergunta.
+-- Desde o lote 5 (COM-002) a autoria só tem update nas colunas de conteúdo: um
+-- PATCH direto em `resolved_reply_id` é recusado por PERMISSÃO, antes de a
+-- policy ou o trigger validarem o ponteiro. O RPC SECURITY DEFINER continua
+-- sendo o único caminho de escrita da resolução.
 select throws_ok(
   $$
     update public.recommendation_requests
     set resolved_reply_id = '80000000-0000-4000-8000-000000000037'::uuid
     where id = '70000000-0000-4000-8000-000000000035'::uuid
   $$,
-  '23514',
+  '42501',
   null,
-  'R35-: update direto para resposta alheia é recusado pelo trigger'
+  'R35-: update direto na resolução é recusado por permissão'
 );
 
 -- ── POSITIVE: idempotência e troca da resposta marcada ──────────────────────

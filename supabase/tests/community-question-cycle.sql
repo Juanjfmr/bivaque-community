@@ -7,8 +7,11 @@
 --     resposta esvazia a atual e mantem a ultima; reabrir mantem a ultima;
 --   * quem nao e a autora nao marca, nao resolve e nao reabre (positivo e
 --     negativo por via de permissao);
---   * a resposta de OUTRA pergunta e recusada pelo RPC, pelo trigger e no PATCH
---     direto;
+--   * a autoria so escreve CONTEUDO: o PATCH direto nas colunas de resolucao ou
+--     em `edited_at` e recusado por permissao;
+--   * excluir a resposta que resolveu reabre a pergunta; excluir a pergunta leva
+--     as respostas junto (cascade);
+--   * a resposta de OUTRA pergunta e recusada pelo RPC e pelo gatilho;
 --   * `list_indications` separa "Minhas" e "Para ajudar" pela autoria, no
 --     servidor, e no "Para ajudar" quem nao tem resposta vem primeiro;
 --   * a leitura da conversa (`list_question_replies`) devolve a resposta
@@ -18,7 +21,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(59);
 
 \ir fixtures/foundation.inc
 \ir fixtures/recommendations.inc
@@ -250,9 +253,9 @@ select throws_ok(
     set resolved_reply_id = '61000000-0000-4000-8000-000000000003'::uuid
     where id = '60000000-0000-4000-8000-000000000001'::uuid
   $$,
-  '23514',
+  '42501',
   null,
-  'o PATCH direto da resolucao atual para resposta alheia e recusado'
+  'o PATCH direto na resolucao atual e recusado por permissao'
 );
 
 select throws_ok(
@@ -261,9 +264,56 @@ select throws_ok(
     set last_resolved_reply_id = '61000000-0000-4000-8000-000000000003'::uuid
     where id = '60000000-0000-4000-8000-000000000001'::uuid
   $$,
-  '23514',
+  '42501',
   null,
-  'o PATCH direto da ultima resolucao para resposta alheia e recusado'
+  'o PATCH direto na ultima resolucao e recusado por permissao'
+);
+
+select throws_ok(
+  $$
+    update public.recommendation_requests
+    set is_resolved = true
+    where id = '60000000-0000-4000-8000-000000000001'::uuid
+  $$,
+  '42501',
+  null,
+  'o PATCH direto de is_resolved e recusado por permissao'
+);
+
+select throws_ok(
+  $$
+    update public.recommendation_requests
+    set edited_at = null
+    where id = '60000000-0000-4000-8000-000000000001'::uuid
+  $$,
+  '42501',
+  null,
+  'a autoria nao consegue apagar a marca de edicao da pergunta'
+);
+
+-- A resposta: a autoria (member-two) so escreve o corpo.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+
+select throws_ok(
+  $$
+    update public.recommendation_replies
+    set edited_at = null
+    where id = '61000000-0000-4000-8000-000000000002'::uuid
+  $$,
+  '42501',
+  null,
+  'a autoria nao consegue apagar a marca de edicao da resposta'
+);
+
+select throws_ok(
+  $$
+    update public.recommendation_replies
+    set is_deleted = true
+    where id = '61000000-0000-4000-8000-000000000002'::uuid
+  $$,
+  '42501',
+  null,
+  'a autoria nao consegue marcar a propria resposta como removida'
 );
 
 -- ── 5b. editar a pergunta grava a data da edicao ───────────────────────────
@@ -446,6 +496,124 @@ select throws_ok(
   'P0002',
   null,
   'quem nao e membro de cidade nenhuma nao le a conversa'
+);
+
+-- ── 8. excluir a resposta que resolveu reabre a pergunta ───────────────────
+-- A pergunta 003 (member-two) tem a resposta 004 (member-one). member-two marca
+-- essa resposta como resolucao e member-one — quem escreveu a resposta, nao a
+-- pergunta — a exclui, como pode no prototipo (manage.js:65).
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.mark_recommendation_reply_resolved(
+      '60000000-0000-4000-8000-000000000003'::uuid,
+      '61000000-0000-4000-8000-000000000004'::uuid
+    )
+  $$,
+  'a autora marca a resposta da propria pergunta'
+);
+
+select is(
+  (select is_resolved from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000003'),
+  true,
+  'a pergunta esta resolvida antes da exclusao'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
+select lives_ok(
+  $$
+    delete from public.recommendation_replies
+    where id = '61000000-0000-4000-8000-000000000004'::uuid
+  $$,
+  'quem escreveu a resposta exclui a propria resposta'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+
+select is(
+  (select is_resolved from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000003'),
+  false,
+  'excluir a resposta que resolveu reabre a pergunta'
+);
+
+select is(
+  (select resolved_reply_id from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000003'),
+  null::uuid,
+  'a resolucao atual e esvaziada'
+);
+
+select is(
+  (select resolved_at from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000003'),
+  null::timestamptz,
+  'o instante da resolucao e limpo'
+);
+
+select is(
+  (select resolved_by from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000003'),
+  null::uuid,
+  'quem resolveu e limpo'
+);
+
+select is(
+  (select last_resolved_reply_id from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000003'),
+  null::uuid,
+  'a ultima resolucao cai com a resposta excluida (on delete set null)'
+);
+
+-- ── 9. excluir a pergunta leva as respostas (cascade) ──────────────────────
+-- member-one (001) pergunta e member-two (002) responde: a resposta tem de ser
+-- de outro membro, porque a policy de insert exige author_id = auth.uid().
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
+select lives_ok(
+  $$
+    insert into public.recommendation_requests (id, author_id, locality_id, title, body, category)
+    values ('60000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000001', 'Preciso de um jardineiro', '',
+            'servicos_locais')
+  $$,
+  'a autora cria uma pergunta nova'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+
+select lives_ok(
+  $$
+    insert into public.recommendation_replies (id, request_id, author_id, body)
+    values ('61000000-0000-4000-8000-000000000005', '60000000-0000-4000-8000-000000000005',
+            '10000000-0000-4000-8000-000000000002', 'Chamo o Seu Jorge, ele cuida do quintal.')
+  $$,
+  'outra pessoa responde a pergunta'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
+select lives_ok(
+  $$
+    delete from public.recommendation_requests
+    where id = '60000000-0000-4000-8000-000000000005'::uuid
+  $$,
+  'a autora exclui a propria pergunta com resposta'
+);
+
+reset role;
+
+select is(
+  (select count(*)::integer from public.recommendation_replies
+    where request_id = '60000000-0000-4000-8000-000000000005'),
+  0,
+  'excluir a pergunta leva as respostas junto'
 );
 
 select * from finish();
