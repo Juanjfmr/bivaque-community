@@ -11,6 +11,7 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 const DOCUMENT_BUCKET = "verification-documents"
 const MAX_BYTES = 10 * 1024 * 1024
 const ORPHAN_MIN_AGE_MS = 60 * 60 * 1000
+const REMOVAL_ATTEMPTS = 2
 const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"])
 
 // SEC-AUD-001: o MIME vem do cliente. A exceção byte a byte do PDF só pode ser
@@ -106,6 +107,21 @@ async function sweepOrphanedUploads(
   if (orphans.length > 0) {
     await supabase.storage.from(DOCUMENT_BUCKET).remove(orphans)
   }
+}
+
+// A remoção do arquivo substituído é tentada duas vezes antes de desistir: a
+// falha do Storage costuma ser transitória, e uma segunda chamada resolve a
+// maior parte dos casos. Nada aqui desfaz o envio — o contrato da action é o
+// documento novo já registrado.
+async function removeSupersededDocument(
+  supabase: ReturnType<typeof createServiceClient>,
+  path: string,
+): Promise<boolean> {
+  for (let attempt = 0; attempt < REMOVAL_ATTEMPTS; attempt += 1) {
+    const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([path])
+    if (!error) return true
+  }
+  return false
 }
 
 export async function uploadVerificationDocumentAction(
@@ -232,16 +248,25 @@ export async function uploadVerificationDocumentAction(
   }
 
   // O arquivo substituído sai do bucket na hora: a linha dele já foi removida
-  // pelo banco, e a varredura de órfãos só alcança objetos com mais de uma hora.
-  // A falha aqui não desfaz o envio — o objeto fica privado e expira com o
-  // resto —, então ela é registrada e o envio segue.
+  // pelo banco, e a varredura de órfãos só alcança objetos com mais de uma hora
+  // e só roda no próximo envio da mesma pessoa. Sem a fila, um caminho órfão
+  // ficaria no bucket para sempre, porque nenhuma varredura agendada olha para
+  // objetos sem linha — o cron diário de TTL apenas marca a linha como purgada.
+  // A falha aqui não desfaz o envio: o objeto é privado e o caminho fica
+  // registrado em private.verification_document_removals para um processador.
   if (supersededPath !== null && supersededPath !== storageObjectPath) {
-    const { error: removeError } = await supabase.storage
-      .from(DOCUMENT_BUCKET)
-      .remove([supersededPath])
+    const removed = await removeSupersededDocument(supabase, supersededPath)
 
-    if (removeError) {
-      log.warn("superseded verification document not removed", { user_id: userId })
+    if (!removed) {
+      const { error: queueError } = await supabase.rpc("enqueue_verification_document_removal", {
+        p_storage_object_path: supersededPath,
+      })
+
+      if (queueError) {
+        log.error("superseded verification document could not be queued", { user_id: userId })
+      } else {
+        log.warn("superseded verification document queued for removal", { user_id: userId })
+      }
     }
   }
 

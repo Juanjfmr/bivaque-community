@@ -2656,6 +2656,10 @@ export type Database = {
       }
       degrade_locality_origins: { Args: never; Returns: number }
       delete_group: { Args: { p_group_id: string }; Returns: undefined }
+      enqueue_verification_document_removal: {
+        Args: { p_storage_object_path: string }
+        Returns: undefined
+      }
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string
