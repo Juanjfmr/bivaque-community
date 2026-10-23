@@ -9,13 +9,16 @@
 //   quando troca de cidade, comunidade ou nova tentativa dispara outra carga, a
 //   resposta atrasada da carga anterior é descartada em vez de sobrescrever o
 //   contexto atual.
-// - Os loaders leem pelo mesmo canal de sempre: mesmas tabelas, RPCs de feed
-//   com a visibilidade revalidada no servidor, mesmo filtro de eventos. Nenhuma
-//   API ou permissão muda.
+// - Os loaders leem pelo mesmo canal de sempre: mesmas tabelas e RLS de
+//   leitura, mesmo filtro de eventos. Nenhuma API ou permissão muda.
+//
+// O feed saiu daqui no lote 5 (tarefa N2 — ADR-20261023): o Início não publica
+// nem lista publicações da cidade, então `loadCityFeed`/`loadFollowedFeed` e a
+// leitura `feed_locality` nem chegaram ao banco. O que resta nesta página é a
+// comunidade primária (saudação e convite a entrar) e o próximo encontro.
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
-import { FEED_PAGE_SIZE, pageParams } from "../community/feed-pages"
 
 type InicioClient = SupabaseClient<Database>
 
@@ -24,10 +27,6 @@ export type PrimaryCommunity =
   | { status: "error" }
   | { status: "none" }
   | { status: "ready"; id: string; name: string | null }
-
-export const FEED_ERROR_MESSAGE = "Não foi possível carregar as publicações. Tente novamente."
-
-export type FeedOutcome = { status: "ok"; posts: unknown[] } | { status: "error"; message: string }
 
 export type NextEvent = {
   id: string
@@ -116,52 +115,6 @@ export async function loadPrimaryCommunity(supabase: InicioClient): Promise<Prim
     // Rejeição de rede (getUser/arquitetura offline) é erro recuperável na
     // seção — nunca carregamento infinito nem rejection não tratada.
     return { status: "error" }
-  }
-}
-
-/** Quantas publicações a primeira página do feed da cidade lê. */
-export const CITY_FEED_PAGE_SIZE = FEED_PAGE_SIZE
-
-// O feed da cidade (lote 5, N2): publicações da localidade da pessoa sem grupo
-// e sem vila, na migration 20261024100000. A regra de leitura mora no servidor
-// (função do banco), como nos outros feeds — a tela nunca filtra escopo por
-// conta própria, porque filtro de cliente é filtro que se contorna.
-export async function loadCityFeed(
-  supabase: InicioClient,
-  localityId: string,
-  offset: number,
-): Promise<FeedOutcome> {
-  try {
-    const { data, error: feedError } = await supabase.rpc("feed_locality", {
-      p_locality_id: localityId,
-      p_order: "recent",
-      ...pageParams(offset),
-    })
-
-    if (feedError) {
-      // O erro é lido e devolvido como estado recuperável — renderizar lista
-      // vazia no lugar de uma consulta que falhou é o bug que a casa proíbe.
-      return { status: "error", message: FEED_ERROR_MESSAGE }
-    }
-
-    return { status: "ok", posts: (data as unknown[] | null) ?? [] }
-  } catch {
-    return { status: "error", message: FEED_ERROR_MESSAGE }
-  }
-}
-
-// A aba "Acompanhando" (prancha 01) lê o mesmo canal dos outros feeds:
-// o RPC feed_following revalida a matriz de visibilidade no servidor — seguir
-// um post nunca concede leitura que a pessoa já não teria.
-export async function loadFollowedFeed(supabase: InicioClient): Promise<FeedOutcome> {
-  try {
-    const { data, error } = await supabase.rpc("feed_following")
-    if (error) {
-      return { status: "error", message: FEED_ERROR_MESSAGE }
-    }
-    return { status: "ok", posts: (data as unknown[] | null) ?? [] }
-  } catch {
-    return { status: "error", message: FEED_ERROR_MESSAGE }
   }
 }
 

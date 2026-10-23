@@ -1,29 +1,29 @@
 "use client"
 
-// Audiência de publicação (RECON-014). A lista de destinos vem SEMPRE de
-// consulta real — comunidade e grupo em que a pessoa é aprovada — nunca de
-// lista fixa. Cidade inteira é o único destino sempre disponível para quem é
-// membro ativo da localidade (a RLS posts_insert_locality_member confirma no
-// servidor; a UI não inventa permissão).
+// Audiência de publicação (RECON-014; lote 5, tarefa N2). A lista de destinos
+// vem SEMPRE de consulta real — os GRUPOS em que a pessoa é aprovada —, nunca
+// de lista fixa. Publicar existe só dentro de um grupo (ADR-20261023): cidade e
+// vila saíram do seletor, e a RLS posts_insert_locality_member recusa no
+// servidor qualquer publicação sem grupo (migration 20261024100000). A tela não
+// inventa permissão: quem decide é o banco.
+//
+// `AudienceDestination.kind` ainda conhece "city" e "community" porque a tela
+// de EDIÇÃO mostra o destino de publicações antigas (de cidade e de vila), que
+// continuam no banco. O compositor só constrói destinos de grupo.
 
 import { Button, Radio, RadioGroup, Spinner } from "@heroui/react"
 import { Building2, Trees, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import {
-  type AudienceKey,
-  CITY_AUDIENCE_KEY,
-  communityAudienceKey,
-  groupAudienceKey,
-} from "./feed-post-shared"
+import { type AudienceKey, groupAudienceKey } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
 import { Skeleton } from "./skeleton"
 
 export interface AudienceDestination {
   key: AudienceKey
   kind: "city" | "community" | "group"
-  /** cidade: nome da localidade; comunidade/grupo: nome real da linha */
+  /** grupo: nome real da linha; na edição, também cidade/comunidade antigas */
   name: string
   description: string
 }
@@ -31,18 +31,8 @@ export interface AudienceDestination {
 interface AudienceState {
   loading: boolean
   error: string | null
-  communities: AudienceDestination[]
   groups: AudienceDestination[]
   retry: () => void
-}
-
-export function cityDestination(cityName: string): AudienceDestination {
-  return {
-    key: CITY_AUDIENCE_KEY,
-    kind: "city",
-    name: `Toda a cidade · ${cityName}`,
-    description: "Membros do Bivaque nesta cidade",
-  }
 }
 
 export function usePostAudience(localityId: string): AudienceState {
@@ -50,7 +40,6 @@ export function usePostAudience(localityId: string): AudienceState {
   const [attempt, setAttempt] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [communities, setCommunities] = useState<AudienceDestination[]>([])
   const [groups, setGroups] = useState<AudienceDestination[]>([])
 
   const retry = useCallback(() => setAttempt((prev) => prev + 1), [])
@@ -70,75 +59,44 @@ export function usePostAudience(localityId: string): AudienceState {
         return
       }
 
-      const [memberships, groupMemberships] = await Promise.all([
-        supabase
-          .from("community_memberships")
-          .select("community_id")
-          .eq("user_id", user.id)
-          .eq("status", "approved"),
-        supabase
-          .from("group_memberships")
-          .select("group_id")
-          .eq("user_id", user.id)
-          .eq("status", "approved"),
-      ])
+      const { data: groupMemberships, error: groupsError } = await supabase
+        .from("group_memberships")
+        .select("group_id")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
       if (cancelled) return
 
-      if (memberships.error || groupMemberships.error) {
-        // Não oferecemos silenciosamente a cidade quando a vila default ainda
-        // está selecionada — o aviso de audiência tem que refletir o que o
-        // membro pode escolher (DS-002/DS-014). Com a lista indisponível, só
-        // a cidade resta, e o aviso diz exatamente isso.
-        setError(
-          "Não foi possível carregar suas comunidades e grupos. O post será publicado para toda a cidade.",
-        )
-        setCommunities([])
+      if (groupsError) {
+        // Sem a lista não há destino nenhum: a publicação não sai para lugar
+        // nenhum "por padrão". O aviso diz exatamente isso, em vez de inventar
+        // um destino que o banco vai recusar.
+        setError("Não foi possível carregar seus grupos. Tente de novo.")
         setGroups([])
         setLoading(false)
         return
       }
 
-      const communityIds = ((memberships.data as { community_id: string }[] | null) ?? []).map(
-        (row) => row.community_id,
-      )
-      const groupIds = ((groupMemberships.data as { group_id: string }[] | null) ?? []).map(
+      const groupIds = ((groupMemberships as { group_id: string }[] | null) ?? []).map(
         (row) => row.group_id,
       )
 
-      const [communitiesResult, groupsResult] = await Promise.all([
-        communityIds.length > 0
-          ? supabase.from("communities").select("id, name").in("id", communityIds)
-          : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
+      const groupsResult =
         groupIds.length > 0
-          ? supabase
+          ? await supabase
               .from("groups")
               .select("id, name")
               .in("id", groupIds)
               .eq("locality_id", localityId)
-          : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
-      ])
+          : { data: [] as { id: string; name: string }[], error: null }
       if (cancelled) return
 
-      if (communitiesResult.error || groupsResult.error) {
-        setError(
-          "Não foi possível carregar suas comunidades e grupos. Você ainda pode publicar para a cidade inteira.",
-        )
-        setCommunities([])
+      if (groupsResult.error) {
+        setError("Não foi possível carregar seus grupos. Tente de novo.")
         setGroups([])
         setLoading(false)
         return
       }
 
-      setCommunities(
-        ((communitiesResult.data as { id: string; name: string }[] | null) ?? []).map(
-          (community) => ({
-            key: communityAudienceKey(community.id),
-            kind: "community" as const,
-            name: community.name,
-            description: "Membros do Bivaque nesta comunidade",
-          }),
-        ),
-      )
       setGroups(
         ((groupsResult.data as { id: string; name: string }[] | null) ?? []).map((group) => ({
           key: groupAudienceKey(group.id),
@@ -154,7 +112,7 @@ export function usePostAudience(localityId: string): AudienceState {
     }
   }, [supabase, localityId, attempt])
 
-  return { loading, error, communities, groups, retry }
+  return { loading, error, groups, retry }
 }
 
 export function DestinationIcon({
@@ -219,7 +177,7 @@ export function AudiencePicker({
           </Radio>
         ))}
         {loading ? (
-          <div role="status" aria-label="Carregando suas comunidades e grupos">
+          <div role="status" aria-label="Carregando seus grupos">
             <Skeleton className="h-10 w-2/3" />
             <Skeleton className="mt-2 h-10 w-1/2" />
           </div>
@@ -228,8 +186,8 @@ export function AudiencePicker({
 
       {loading ? (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted" aria-live="polite">
-          <Spinner size="sm" aria-label="Carregando suas comunidades e grupos" />
-          Carregando suas comunidades e grupos…
+          <Spinner size="sm" aria-label="Carregando seus grupos" />
+          Carregando seus grupos…
         </div>
       ) : null}
 
@@ -237,7 +195,7 @@ export function AudiencePicker({
         <div className="mt-2" data-testid="communities-error">
           <FeedbackAlert
             variant="danger"
-            title="Não foi possível listar suas comunidades e grupos"
+            title="Não foi possível listar seus grupos"
             description={error}
             actions={
               <Button size="sm" variant="tertiary" onPress={onRetry}>
@@ -251,9 +209,10 @@ export function AudiencePicker({
   )
 }
 
-// O aviso de audiência descreve quem vai ler o destino ESCOLHIDO. A copy de
-// vila é travada pelo E2E do golden slice ("aprovados desta vila") — mudar é
-// quebrar a prova de alcance, não só o texto.
+// O aviso de audiência descreve quem vai ler o destino ESCOLHIDO. O compositor
+// só escolhe grupo (lote 5 N2); as frases de vila e de cidade continuam aqui
+// porque a tela de EDIÇÃO descreve o destino de publicações antigas desses
+// alcances (elas seguem no banco, mesmo sem compositor que as crie).
 export function audienceNoticeText(
   kind: AudienceDestination["kind"],
   cityName: string | null,

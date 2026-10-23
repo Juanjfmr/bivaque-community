@@ -9,33 +9,30 @@ import {
 } from "../../../apps/web/app/(shell)/community/feed-pages"
 import { stripComments } from "./source-scan"
 
-// A Comunidade e o feed da cidade depois do lote 5, tarefa N2 (ADR-20261023).
-// LIMITE: leitura de fonte; o comportamento em navegador é provado pelos e2e
-// (inicio-feed-cidade, audience-selector, empty-locality, two-localities) e pela
-// captura da tela.
+// A Comunidade depois do lote 5, tarefa N2 (ADR-20261023): sem feed, sem a
+// vista "Conversa" e sem linha de publicar. LIMITE: leitura de fonte; o
+// comportamento em navegador é provado pelos e2e (inicio-sem-feed,
+// audience-selector, empty-locality, two-localities) e pela captura da tela.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const web = (...segments: string[]) =>
   readFileSync(join(root, "apps", "web", "app", ...segments), "utf8")
 
 const page = stripComments(web("(shell)", "community", "page.tsx"))
-const composer = web("components", "bivaque", "feed-composer.tsx")
-const cityFeed = web("(shell)", "inicio", "city-feed.tsx")
-const homeLoaders = web("(shell)", "inicio", "home-loaders.ts")
+const homeLoaders = stripComments(web("(shell)", "inicio", "home-loaders.ts"))
+const composer = stripComments(web("components", "bivaque", "feed-post-create.tsx"))
 
 describe("página da Comunidade", () => {
-  it("segue a ordem: quem é a comunidade, publicar, indicações", () => {
+  it("segue a ordem: quem é a comunidade, indicações", () => {
     const jsx = page.slice(page.indexOf("<CommunityHeader"))
-    const order = ["<CommunityHeader", "<FeedComposer", "<IndicationsPanel"].map((marker) =>
-      jsx.indexOf(marker),
-    )
+    const order = ["<CommunityHeader", "<IndicationsPanel"].map((marker) => jsx.indexOf(marker))
     for (const position of order) expect(position).toBeGreaterThan(-1)
     expect([...order].sort((a, b) => a - b)).toEqual(order)
   })
 
   it("a vista Conversa saiu: nenhum feed, nenhuma aba, nenhum trilho", () => {
-    // O feed da cidade mora no Início (leitura nova `feed_locality`); não há
-    // duas telas com o mesmo feed nem uma aba "Conversa" a manter.
+    // O Início também não ganhou feed: na cidade a conversa é de perguntas e
+    // respostas, e publicar só existe dentro de um grupo.
     expect(page).not.toContain("Conversa")
     expect(page).not.toContain("<Tabs")
     expect(page).not.toContain("FeedPost")
@@ -64,10 +61,13 @@ describe("página da Comunidade", () => {
 })
 
 describe("linha de publicar", () => {
-  it("tem o campo, o atalho de link e o botão Publicar", () => {
-    expect(composer).toContain('onOpenModal("link")')
-    expect(composer).toContain('aria-label="Nova publicação com link"')
-    expect(composer).toMatch(/>\s*Publicar\s*</)
+  it("saiu da Comunidade: a publicação acontece pelo compositor, dentro de um grupo", () => {
+    // A linha de publicar da Comunidade foi removida no lote 5 N2. O compositor
+    // continua existindo (shell e Início o abrem) e publica só em grupo.
+    expect(page).not.toContain("FeedComposer")
+    expect(page).not.toContain("onOpenModal")
+    expect(composer).toContain('initialAttachment')
+    expect(composer).toContain("Publicar")
   })
 })
 
@@ -82,24 +82,15 @@ describe("cabeçalho da comunidade", () => {
   })
 })
 
-describe("o feed da cidade no Início", () => {
-  it("lê a cidade pela função paginada do banco, com p_limit/p_offset", () => {
-    expect(homeLoaders).toContain('rpc("feed_locality"')
-    expect(homeLoaders).toContain("...pageParams(offset)")
-    expect(cityFeed).toContain("appendPage")
-    expect(cityFeed).toContain("hasMoreAfter")
-  })
-
-  it("as duas abas: a cidade (feed_locality) e o que a pessoa acompanha", () => {
-    expect(cityFeed).toContain("loadCityFeed")
-    expect(cityFeed).toContain("loadFollowedFeed")
-    expect(homeLoaders).toContain('rpc("feed_following")')
-  })
-
-  it("chegar ao fim carrega sozinho, e o botão fica para teclado e falha", () => {
-    expect(cityFeed).toContain("new IntersectionObserver(")
-    expect(cityFeed).toContain('"Carregar mais"')
-    expect(cityFeed).toContain("Não foi possível carregar mais publicações.")
+describe("o Início não lê feed", () => {
+  it("nenhuma leitura de publicações da cidade no Início", () => {
+    // Lote 5, N2: a leitura `feed_locality` que a versão anterior usava nem
+    // chegou ao banco — a migration 20261024100000 passou a recusar publicação
+    // sem grupo, e sem publicação de cidade não há feed de cidade.
+    expect(homeLoaders).not.toContain("feed_locality")
+    expect(homeLoaders).not.toContain("feed_community")
+    expect(homeLoaders).not.toContain("feed_following")
+    expect(homeLoaders).not.toContain("loadCityFeed")
   })
 })
 
@@ -121,10 +112,8 @@ describe("feed em páginas", () => {
   })
 
   // Migration 20260925213256: a página é escolhida DENTRO da função, antes das
-  // contagens. Nem o feed da cidade nem o detalhe da comunidade pedem o feed
-  // inteiro.
-  it("o feed da cidade e o detalhe da comunidade nunca pedem o feed inteiro", () => {
-    expect(homeLoaders).toContain("pageParams(offset)")
+  // contagens. O detalhe da comunidade nunca pede o feed inteiro.
+  it("o detalhe da comunidade nunca pede o feed inteiro", () => {
     expect(homeLoaders).not.toContain(".range(")
     const detail = web("(shell)", "communities", "[id]", "community-detail-loaders.ts")
     expect(detail).toContain("p_limit: COMMUNITY_DETAIL_FEED")

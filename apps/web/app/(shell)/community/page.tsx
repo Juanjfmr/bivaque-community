@@ -6,8 +6,6 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { ErrorState } from "../../components/bivaque/error-state"
-import { FeedComposer } from "../../components/bivaque/feed-composer"
-import { CreatePostModal } from "../../components/bivaque/feed-post"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 import { IndicationsPanel } from "../../components/indications/indications-panel"
 import {
@@ -19,21 +17,20 @@ import { JoinCommunityCard } from "../inicio/join-community"
 import { CommunityHeader } from "./community-header"
 import { useCommunityHeader } from "./use-community-header"
 
-// A Comunidade sem a vista "Conversa" (lote 5, tarefa N2 — ADR-20261023,
-// "Navegação e estrutura").
+// A Comunidade sem feed e sem a vista "Conversa" (lote 5, tarefa N2 —
+// ADR-20261023, "Navegação e estrutura").
 //
-// O feed da cidade passou para o Início (leitura nova `feed_locality`, migration
-// 20261024100000) e a vista "Conversa" sai daqui: não há duas telas com o mesmo
-// feed. O que fica é o que a Comunidade é neste lote — a memória da cidade, ou
-// seja o painel de Indicações. `?vista=indicacoes` continua sendo o endereço
-// canônico dessa vista (é o href de `INDICATIONS_HREF` e o destino dos links
-// antigos e das notificações), precedido do cabeçalho da comunidade da pessoa,
-// ou do convite a entrar quando ela não tem nenhuma.
+// Não existe publicação para a cidade inteira: na cidade a conversa é de
+// perguntas e respostas — o painel de Indicações — e publicar acontece só
+// dentro de um grupo, pelo compositor que o shell e o Início abrem. Por isso
+// saíram daqui a vista "Conversa", o feed e a linha de publicar. A leitura
+// nova `feed_locality` que a versão anterior desta tela usava nem chegou ao
+// banco: a migration 20261024100000 passou a recusar publicação sem grupo.
 //
-// A linha de publicar continua: é a entrada do compositor que já existe
-// (`CreatePostModal`), não o feed. Ela publica para onde o seletor de audiência
-// do próprio compositor disser; o que a pessoa publica aparece no feed da
-// cidade, no Início.
+// `?vista=indicacoes` continua sendo o endereço canônico desta vista (é o href
+// de `INDICATIONS_HREF` e o destino dos links antigos e das notificações),
+// precedido do cabeçalho da comunidade da pessoa, ou do convite a entrar quando
+// ela não tem nenhuma.
 //
 // Nada aqui lê conteúdo por conta própria e nada filtra escopo no cliente: o
 // painel de Indicações resolve a leitura e as permissões no servidor.
@@ -42,8 +39,6 @@ export default function CommunityPage() {
   const { current } = useLocalityContext()
   const { communities } = useMemberContext()
   const [primary, setPrimary] = useState<PrimaryCommunity>({ status: "loading" })
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
   const supabase = createBrowserClient()
   const guardRef = useRef(createRequestGuard())
 
@@ -68,16 +63,6 @@ export default function CommunityPage() {
   useEffect(() => {
     loadPrimary()
   }, [loadPrimary])
-
-  const handleOpenModal = useCallback((attachment?: string) => {
-    setEntryAttachment(attachment)
-    setShowCreateModal(true)
-  }, [])
-
-  const handleCreated = useCallback(() => {
-    setShowCreateModal(false)
-    setEntryAttachment(undefined)
-  }, [])
 
   const cityLabel = current.stateCode
     ? `${current.cityName}, ${current.stateCode}`
@@ -110,16 +95,6 @@ export default function CommunityPage() {
         {/* Sem comunidade aprovada, o passo que falta vem antes do painel. */}
         {primary.status === "none" ? <JoinCommunityCard /> : null}
 
-        {/* A linha de publicar: entrada do compositor existente. Fica fora do
-            estado de carregamento para não capturar o que a pessoa digitar
-            antes de a página saber onde ela está. */}
-        {primary.status !== "loading" && primary.status !== "error" ? (
-          <FeedComposer
-            onOpenModal={handleOpenModal}
-            communityName={primary.status === "ready" ? primary.name : null}
-          />
-        ) : null}
-
         <IndicationsPanel
           localityId={current.id}
           cityName={current.cityName}
@@ -127,19 +102,6 @@ export default function CommunityPage() {
           initialQuery={initialQuery}
         />
       </div>
-
-      {showCreateModal && (
-        <CreatePostModal
-          localityId={current.id}
-          initialAttachment={entryAttachment}
-          defaultCommunityId={primaryCommunityId ?? undefined}
-          onCreated={handleCreated}
-          onClose={() => {
-            setShowCreateModal(false)
-            setEntryAttachment(undefined)
-          }}
-        />
-      )}
     </div>
   )
 }

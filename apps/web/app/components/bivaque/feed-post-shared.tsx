@@ -61,27 +61,22 @@ export function splitPostContent(content: string): { content: string; details: s
   }
 }
 
-// Identificador estável de destino da audiência. "city" é sempre disponível;
-// comunidade e grupo vêm da consulta real (feed-post-audience).
+// Identificador estável do destino da publicação (lote 5, tarefa N2 —
+// ADR-20261023-comunidade-do-prototipo). Publicar existe só dentro de um
+// grupo: a chave é sempre `group:<id>`, e vem da consulta real
+// (feed-post-audience), nunca de lista fixa. Não há chave de "cidade" nem de
+// "vila" porque o compositor não oferece essas audiências — e o banco recusa
+// publicação sem grupo (migration 20261024100000).
 export type AudienceKey = string
-export const CITY_AUDIENCE_KEY = "__city__"
-
-export function communityAudienceKey(communityId: string): AudienceKey {
-  return `community:${communityId}`
-}
 
 export function groupAudienceKey(groupId: string): AudienceKey {
   return `group:${groupId}`
 }
 
-export function parseAudienceKey(key: AudienceKey): {
-  kind: "city" | "community" | "group"
-  id: string | null
-} {
-  if (key === CITY_AUDIENCE_KEY) return { kind: "city", id: null }
-  if (key.startsWith("community:")) return { kind: "community", id: key.slice(10) }
-  if (key.startsWith("group:")) return { kind: "group", id: key.slice(6) }
-  return { kind: "city", id: null }
+/** O destino de ESCRITA sai daqui, nunca da lista já resolvida para exibir:
+ *  `null` significa que a pessoa ainda não escolheu um grupo. */
+export function parseAudienceKey(key: AudienceKey): { kind: "group"; id: string } | null {
+  return key.startsWith("group:") ? { kind: "group", id: key.slice(6) } : null
 }
 
 export interface CurrentUser {

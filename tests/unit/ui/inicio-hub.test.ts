@@ -8,6 +8,7 @@ import {
   guideCategoryLabel,
   type HubEvent,
 } from "../../../apps/web/app/(shell)/inicio/hub-loaders"
+import { stripComments } from "./source-scan"
 
 // O Início como atalho do Bivaque (25/09/2026). A parte pura dos carregadores
 // é provada aqui; a composição da página, por leitura de fonte. LIMITE: nada
@@ -55,16 +56,13 @@ describe("composição do Início", () => {
 
   // A descoberta é montada em blocos antes do JSX e desenhada por
   // `discovery.map`; por isso a ordem fixa é medida só dentro do return, e a
-  // ordem padrão da descoberta pela declaração dos blocos.
-  it("segue a ordem: retornos, semana, cidade, descoberta", () => {
+  // ordem padrão da descoberta pela declaração dos blocos. O feed da cidade que
+  // ficava entre a semana e a descoberta saiu no lote 5 N2 (ADR-20261023).
+  it("segue a ordem: retornos, semana, descoberta", () => {
     const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
-    const order = [
-      "<HubShortcuts",
-      "<ReturnStrip />",
-      "<WeekEventsCarousel",
-      "<CityFeed",
-      "{discovery.map(",
-    ].map((marker) => jsx.indexOf(marker))
+    const order = ["<HubShortcuts", "<ReturnStrip />", "<WeekEventsCarousel", "{discovery.map("].map(
+      (marker) => jsx.indexOf(marker),
+    )
     for (const position of order) expect(position).toBeGreaterThan(-1)
     expect([...order].sort((a, b) => a - b)).toEqual(order)
 
@@ -102,22 +100,16 @@ describe("composição do Início", () => {
     expect(inicio("section-nav.tsx")).toContain('aria-label="Voltar aos atalhos"')
   })
 
-  it("o feed da cidade pagina pela própria função e não é mais prévia", () => {
-    // N2: a seção deixou de ser prévia de três publicações da vila porque não
-    // há outro lugar com o feed — a leitura nova (feed_locality) pagina dentro
-    // da função e a tela carrega a próxima ao chegar no fim.
-    const section = inicio("city-feed.tsx")
-    expect(inicio("home-loaders.ts")).toContain('rpc("feed_locality"')
-    expect(section).toContain("appendPage")
-    expect(section).toContain("hasMoreAfter")
-    expect(section).toContain("Carregar mais")
-    expect(section).not.toContain("previewLimit")
-  })
-
-  it("o vazio do feed da cidade é honesto abaixo do limiar de densidade", () => {
-    const section = inicio("city-feed.tsx")
-    expect(section).toContain("isLocalityStale(memberCount)")
-    expect(section).toContain("Você é dos primeiros aqui.")
+  it("o Início não monta feed nem prévia de vila", () => {
+    // Lote 5, N2 (ADR-20261023): na cidade a conversa é de perguntas e
+    // respostas, e publicar só existe dentro de um grupo. A seção de feed da
+    // cidade saiu com a leitura `feed_locality`, que nem chegou ao banco — a
+    // migration 20261024100000 passou a recusar publicação sem grupo.
+    const loaders = stripComments(inicio("home-loaders.ts"))
+    expect(page).not.toContain("<CityFeed")
+    expect(page).not.toContain("<CommunitySection")
+    expect(loaders).not.toContain("feed_locality")
+    expect(loaders).not.toContain("feed_community")
   })
 
   it("a barra de seções aponta só para seções que a página monta", () => {
@@ -127,7 +119,6 @@ describe("composição do Início", () => {
       "market-strip.tsx",
       "week-events.tsx",
       "questions-guide.tsx",
-      "city-feed.tsx",
     ]
       .map(inicio)
       .join("\n")

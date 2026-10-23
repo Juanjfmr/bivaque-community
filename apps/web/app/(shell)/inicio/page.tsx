@@ -6,8 +6,6 @@ import { useMemberContext } from "../../../lib/member-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { CreatePostModal } from "../../components/bivaque/feed-post"
 import { IntentLauncher } from "../../components/bivaque/intent-launcher"
-import { POST_CREATED_EVENT } from "../../components/shell/create-menu"
-import { CityFeed } from "./city-feed"
 import { InicioGreeting } from "./greeting"
 import { createRequestGuard, loadPrimaryCommunity, type PrimaryCommunity } from "./home-loaders"
 import { HubShortcuts } from "./hub-shortcuts"
@@ -29,8 +27,13 @@ import { WeekEventsCarousel } from "./week-events"
 // (barra de seções fixa ao rolar), HoneyBook (o resumo do dia em números).
 //
 // Ordem de relevância: o que é seu (retornos) → o que tem data (esta semana) →
-// a sua comunidade → descoberta (Mercado, perguntas, Guia, Imóveis). O feed
-// inteiro mora em /community; aqui a comunidade é uma prévia.
+// a descoberta (Mercado, perguntas, Guia, Imóveis).
+//
+// O Início NÃO tem feed (lote 5, tarefa N2 — ADR-20261023-comunidade-do-prototipo):
+// na cidade a conversa é de perguntas e respostas, e publicar existe só dentro
+// de um grupo, no compositor que o atalho abre. As versões anteriores desta
+// página mostraram uma prévia da vila e, depois, um feed da cidade; as duas
+// saíram, e a leitura nova `feed_locality` que as serviria nem chegou ao banco.
 //
 // Três regras de hub (25/09/2026, segunda rodada):
 // - Seção pronta e vazia não aparece; quem não tem comunidade recebe no topo o
@@ -41,12 +44,11 @@ import { WeekEventsCarousel } from "./week-events"
 // - Seção com novidade leva o selo "N novos"; o atalho, o ponto.
 //
 // A comunidade primária — a mais antiga entre as aprovadas, mesma resolução
-// da rota /community — é lida uma vez aqui e serve à saudação, à prévia e à
-// audiência padrão do modal de publicação. As verticais são lidas uma vez pelo
-// useHubData e servidas aos atalhos (contadores), ao trilho e às seções.
+// da rota /community — é lida uma vez aqui e serve à saudação e ao convite a
+// entrar. As verticais são lidas uma vez pelo useHubData e servidas aos
+// atalhos (contadores), ao trilho e às seções.
 
 const WEEK: SectionLink = { id: "secao-semana", label: "Esta semana" }
-const CITY: SectionLink = { id: "secao-cidade", label: "Cidade" }
 const MARKET: SectionLink = { id: "secao-mercado", label: "Mercado" }
 const QUESTIONS: SectionLink = { id: "secao-perguntas", label: "Perguntas" }
 const GUIDE: SectionLink = { id: "secao-guia", label: "Guia" }
@@ -72,7 +74,6 @@ export default function InicioPage() {
   // anexo (o lançador passa "text") e o `post_type` é derivado do anexo real no
   // compositor. Nada aqui decide o formato por conta própria.
   const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
-  const [refreshKey, setRefreshKey] = useState(0)
   const supabase = createBrowserClient()
   const guardRef = useRef(createRequestGuard())
   const shortcutsRef = useRef<HTMLElement>(null)
@@ -104,16 +105,10 @@ export default function InicioPage() {
   }, [])
 
   const handleCreated = useCallback(() => {
-    setRefreshKey((prev) => prev + 1)
-    loadPrimary()
-  }, [loadPrimary])
-
-  // Pergunta publicada pelo menu de criação do shell: a prévia da comunidade
-  // recarrega como se tivesse sido publicada daqui.
-  useEffect(() => {
-    window.addEventListener(POST_CREATED_EVENT, handleCreated)
-    return () => window.removeEventListener(POST_CREATED_EVENT, handleCreated)
-  }, [handleCreated])
+    // Publicar não muda nada na tela: o Início não tem feed (lote 5, N2) e a
+    // publicação vai para um grupo, que tem feed próprio. A saudação e o
+    // convite leem a comunidade primária, que não depende da publicação.
+  }, [])
 
   const counts = hubNovelty(hub.data, novelty)
   const visible = hubVisibility(hub.data)
@@ -193,7 +188,6 @@ export default function InicioPage() {
 
   const sections: SectionLink[] = [
     ...(visible.events ? [WEEK] : []),
-    CITY,
     ...discovery.flatMap((block) => block.links),
   ]
 
@@ -221,8 +215,9 @@ export default function InicioPage() {
           <ReturnStrip />
 
           {/* No telefone quem publica é o botão flutuante do shell; do tablet
-              para cima, a linha de publicação continua à mão, logo acima da
-              comunidade (e abre com a comunidade primária como audiência). */}
+              para cima, a linha de publicação continua à mão. Ela abre o
+              compositor, que desde o lote 5 N2 publica SÓ dentro de um grupo —
+              a pessoa escolhe o grupo ali mesmo. */}
           <div className="hidden md:block">
             <IntentLauncher onAskQuestion={() => handleOpenModal("text")} />
           </div>
@@ -232,16 +227,6 @@ export default function InicioPage() {
               <WeekEventsCarousel state={hub.data.events} onRetry={hub.reload} />
             </div>
           ) : null}
-
-          {/* O feed da cidade (lote 5, N2): no lugar da prévia da vila, a
-              leitura nova (`feed_locality`) — publicações da cidade da pessoa
-              sem grupo e sem vila. A seção não depende de ter comunidade: quem
-              não tem lê a cidade do mesmo jeito. */}
-          <CityFeed
-            localityId={current.id}
-            onPublish={() => handleOpenModal()}
-            refreshKey={refreshKey}
-          />
 
           {discovery.map((block) =>
             block.node === null ? null : <div key={block.key}>{block.node}</div>,
@@ -259,7 +244,6 @@ export default function InicioPage() {
         <CreatePostModal
           localityId={current.id}
           initialAttachment={entryAttachment}
-          defaultCommunityId={primary.status === "ready" ? primary.id : undefined}
           onCreated={handleCreated}
           onClose={() => {
             setShowCreateModal(false)

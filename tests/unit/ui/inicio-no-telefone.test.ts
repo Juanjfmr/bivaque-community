@@ -20,7 +20,6 @@ const root = join(import.meta.dirname, "..", "..", "..")
 const read = (...segments: string[]) => readFileSync(join(root, ...segments), "utf8")
 
 const faixa = stripComments(read("apps", "web", "app", "(shell)", "inicio", "return-strip.tsx"))
-const secao = stripComments(read("apps", "web", "app", "(shell)", "inicio", "city-feed.tsx"))
 
 describe("a faixa de retorno mantém o CTA acessível e com alvo de 44 px", () => {
   it("o rótulo do CTA sai da tela por sr-only, nunca por hidden", () => {
@@ -37,20 +36,6 @@ describe("a faixa de retorno mantém o CTA acessível e com alvo de 44 px", () =
   })
 })
 
-describe("o título do feed da cidade não disputa a linha com as abas", () => {
-  it("título numa linha, abas numa linha própria abaixo", () => {
-    // A seção mantém o arranjo que a prévia da vila já tinha: o título fica
-    // sozinho na linha e as abas descem para uma linha própria — nada empilha
-    // nem espreme o título a 375.
-    expect(secao).toContain('id="na-cidade-titulo"')
-    expect(secao).toContain('className="border-b border-ui-line"')
-  })
-
-  it("o título não é truncado nem limitado por clamp", () => {
-    const titulo = secao.slice(secao.indexOf('id="na-cidade-titulo"') - 200)
-    const linha = titulo.slice(0, titulo.indexOf(">"))
-    expect(linha).not.toContain("truncate")
-    expect(linha).not.toContain("line-clamp")
-    expect(linha).not.toContain("whitespace-nowrap")
-  })
-})
+// O "título que não disputa a linha com as abas" era da seção de feed, que saiu
+// do Início no lote 5 N2 (ADR-20261023): não há mais título com abas nesta
+// página para a guarda proteger.

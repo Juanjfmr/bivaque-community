@@ -1,8 +1,15 @@
 "use client"
 
 // Criação de publicação (prancha 44 painel 1 + prancha 45). Composição: a
-// PERGUNTA primeiro, depois destino real ("Quem pode ver?"), detalhes
+// PERGUNTA primeiro, depois o destino real ("Quem pode ver?"), detalhes
 // opcionais, anexo opcional e a prévia "Como sua publicação será vista".
+//
+// Publicar existe SÓ dentro de um grupo (lote 5, tarefa N2 —
+// ADR-20261023-comunidade-do-prototipo). O seletor de destino lista os grupos
+// em que a pessoa é aprovada; cidade inteira e vila saíram, e a RLS
+// posts_insert_locality_member recusa no servidor qualquer publicação sem
+// grupo (migration 20261024100000). Quem não participa de grupo nenhum recebe
+// o caminho para entrar em um, não um destino inventado.
 //
 // A intenção já foi escolhida na tela anterior ("Fazer uma pergunta" /
 // "Pedir uma indicação"), então este modal NÃO pergunta o formato de novo:
@@ -19,6 +26,8 @@
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Input, Modal, Spinner, TextArea, useOverlayState } from "@heroui/react"
 import { ImagePlus, Link2 } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import {
@@ -28,7 +37,6 @@ import {
   type PostAttachment,
 } from "../../../lib/composer/post-attachment"
 import { classifyPublishError } from "../../../lib/composer/publish-error"
-import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { ModalCloseTrigger } from "./close-button"
 import { ConnectionLostState } from "./error-state"
@@ -36,7 +44,6 @@ import {
   type AudienceDestination,
   AudiencePicker,
   audienceNoticeText,
-  cityDestination,
   usePostAudience,
 } from "./feed-post-audience"
 import {
@@ -52,7 +59,6 @@ import { PostPiiWarning } from "./feed-post-pii-warning"
 import { PostPreview } from "./feed-post-preview"
 import {
   type AudienceKey,
-  CITY_AUDIENCE_KEY,
   composePostContent,
   parseAudienceKey,
   useCurrentUser,
@@ -66,7 +72,6 @@ interface CreatePostModalProps {
    *  escolhe o formato — o `post_type` sai do anexo real (`derived`), então
    *  abrir por aqui e não anexar nada publica uma pergunta de texto. */
   initialAttachment?: string | undefined
-  defaultCommunityId?: string | undefined
   onCreated: () => void
   onClose: () => void
 }
@@ -76,12 +81,10 @@ const AUTOSAVE_DELAY_MS = 400
 export function CreatePostModal({
   localityId,
   initialAttachment,
-  defaultCommunityId,
   onCreated,
   onClose,
 }: CreatePostModalProps) {
   const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
-  const { current: locality } = useLocalityContext()
   const initialDraft = useRef(loadPostDraft())
   const [attachment, setAttachment] = useState<PostAttachment>(() => {
     const draft = initialDraft.current
@@ -101,32 +104,31 @@ export function CreatePostModal({
   const [errorKind, setErrorKind] = useState<"network" | "server" | null>(null)
   const [photoError, setPhotoError] = useState("")
   const [piiWarning, setPiiWarning] = useState(false)
-  const [audienceKey, setAudienceKey] = useState<AudienceKey>(
-    defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY,
-  )
+  // Nada escolhido no começo: o destino começa vazio e quem escolhe é a pessoa.
+  // Pré-selecionar um grupo faria a publicação sair para um público que ela não
+  // olhou — é a mesma classe do vazamento por desatenção que a onda E fechou,
+  // agora com grupos.
+  const [audienceKey, setAudienceKey] = useState<AudienceKey>("")
   const [draftRestored, setDraftRestored] = useState(hasDraftContent(initialDraft.current))
-  // Dito quando a audiência cai da vila para a cidade sem a pessoa ter pedido.
-  const [audienceFallback, setAudienceFallback] = useState("")
   const [storageUnavailable, setStorageUnavailable] = useState(false)
   const dialogContentRef = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
 
   const audience = usePostAudience(localityId)
   const currentUser = useCurrentUser()
-  const city = cityDestination(locality?.cityName ?? "")
-  const destinations: AudienceDestination[] = [city, ...audience.communities, ...audience.groups]
-  // `selected` existe para EXIBIR o destino (o nome no seletor). Ele cai para a
-  // cidade quando a chave ainda não está na lista — e a lista chega depois,
-  // porque é uma consulta.
-  const selected = destinations.find((d) => d.key === audienceKey) ?? city
-  // O DESTINO REAL vem da chave escolhida, nunca dessa degradação. Derivar o
-  // tipo de `selected` fazia quem abrisse o compositor e publicasse antes da
-  // lista carregar mandar o post para a CIDADE INTEIRA em vez da vila — com o
-  // aviso concordando com o erro. É a corrida de alcance que a onda E chamou
-  // de vazamento por desatenção, e ela entrou na separação da RECON-014: a
-  // versão anterior montava o insert a partir do communityId direto, sem
-  // passar por uma lista que pode estar vazia.
-  const selectedKind = parseAudienceKey(audienceKey)
+  // O compositor oferece SÓ grupos (lote 5 N2): cidade e vila saíram do
+  // seletor, e o banco recusa publicação sem grupo.
+  const destinations: AudienceDestination[] = audience.groups
+  const selected: AudienceDestination | null =
+    destinations.find((destination) => destination.key === audienceKey) ?? null
+  const hasGroups = audience.groups.length > 0
+  // O DESTINO REAL vem do destino DA LISTA, nunca de uma chave solta: se o
+  // grupo saiu da lista (a pessoa deixou de participar), não há destino — e o
+  // envio não acontece. Derivar do destino exibido degradava para a cidade
+  // quando a lista ainda não tinha chegado, e quem publicasse nessa janela
+  // mandava o post para um público que não escolheu. Aqui a lista é a única
+  // fonte, e `null` = nada escolhido.
+  const selectedGroup = selected ? parseAudienceKey(selected.key) : null
 
   useEffect(() => {
     if (!modal.isOpen) {
@@ -144,35 +146,6 @@ export function CreatePostModal({
       focusable.focus()
     }
   }, [modal.isOpen])
-
-  // A audiência default só pode ser uma comunidade real da pessoa. Se a lista
-  // carregou e não contém a pré-seleção, o destino volta para a cidade — o
-  // aviso de audiência nunca descreve um destino que não estava disponível.
-  //
-  // E a troca é DITA. Cair da vila para a cidade alarga o alcance do que a
-  // pessoa vai escrever; fazer isso em silêncio é o vazamento por desatenção
-  // que a onda E documentou. A versão anterior deste componente avisava neste
-  // caso e a separação da RECON-014 perdeu o aviso — ele volta aqui.
-  useEffect(() => {
-    if (audience.loading || audience.error) return
-    if (selectedKind.kind === "community" && defaultCommunityId) {
-      const stillThere = audience.communities.some(
-        (d) => d.key === `community:${defaultCommunityId}`,
-      )
-      if (!stillThere) {
-        setAudienceKey(CITY_AUDIENCE_KEY)
-        setAudienceFallback(
-          "Sua vila não está disponível agora. O destino mudou para toda a cidade — confira antes de publicar.",
-        )
-      }
-    }
-  }, [
-    audience.loading,
-    audience.error,
-    audience.communities,
-    defaultCommunityId,
-    selectedKind.kind,
-  ])
 
   // Trocar de anexo LIMPA o outro. É o que mantém o estado representável no
   // banco: `photo_path` e `link_url` não coexistem sob as CHECKs de
@@ -239,14 +212,12 @@ export function CreatePostModal({
     setPhotoError("")
     setPiiWarning(false)
     setDraftRestored(false)
-    // PRIVACY (Step 3 da onda E): depois de publicar na vila, o seletor
-    // CONTINUA na vila. Zerar para cidade fazia o segundo post da sessão sair
-    // para a cidade inteira sem a pessoa ter escolhido — exatamente o
-    // vazamento por desatenção que o plano mandou evitar.
-    setAudienceKey((prev) =>
-      prev === CITY_AUDIENCE_KEY || audience.error ? CITY_AUDIENCE_KEY : prev,
-    )
-  }, [audience.error])
+    // PRIVACY (Step 3 da onda E; vila → grupo no lote 5 N2): a audiência NÃO é
+    // tocada. Zerar o destino no fim do envio fazia a publicação seguinte sair
+    // para um público que a pessoa não tinha escolhido — o vazamento por
+    // desatenção que a onda E fechou. Aqui o destino só muda quando a própria
+    // pessoa o escolhe no seletor.
+  }, [])
 
   const handleSubmit = useCallback(async () => {
     setError("")
@@ -255,6 +226,13 @@ export function CreatePostModal({
 
     if (!content.trim()) {
       setError("A publicação precisa de texto.")
+      return
+    }
+    // Sem grupo não há publicação (ADR-20261023; o banco recusa na policy de
+    // insert). O caminho existe aqui porque Enter/atalho não passam pelo botão
+    // desabilitado — e a mensagem diz o que fazer, em vez de falhar no servidor.
+    if (!selectedGroup) {
+      setError("Escolha um grupo para publicar.")
       return
     }
     // O anexo escolhido e o anexo publicado têm de ser o mesmo. Sem esta
@@ -277,15 +255,15 @@ export function CreatePostModal({
 
     setSubmitting(true)
 
-    // Mesma fonte do aviso: a chave que a pessoa escolheu, não o destino
-    // resolvido para exibição.
-    const kind = parseAudienceKey(audienceKey)
+    // O destino sai do grupo RESOLVIDO na lista (ver `selectedGroup`):
+    // `community_id` não é mais usado para publicar, e a publicação tem sempre
+    // `group_id` — o banco exige.
     const insertData = {
       locality_id: localityId,
       post_type: derived.postType,
       content: composed,
-      community_id: kind.kind === "community" ? kind.id : null,
-      group_id: kind.kind === "group" ? kind.id : null,
+      community_id: null,
+      group_id: selectedGroup.id,
     } as const
 
     // Tipo e extras saem do MESMO objeto `derived`: a coluna extra nunca entra
@@ -315,25 +293,11 @@ export function CreatePostModal({
     // pela ação concluída da pessoa — nunca antes, nunca sozinho.
     clearPostDraft()
     resetForm()
-    showToast(
-      kind.kind === "community"
-        ? {
-            title: "Publicado na sua vila",
-            description: "Os aprovados desta vila podem ler agora.",
-            variant: "success",
-          }
-        : kind.kind === "group"
-          ? {
-              title: "Publicado no seu grupo",
-              description: "Os aprovados deste grupo podem ler agora.",
-              variant: "success",
-            }
-          : {
-              title: "Publicado para toda a cidade",
-              description: `Os membros verificados de ${locality?.cityName ?? "sua cidade"} podem ler agora.`,
-              variant: "success",
-            },
-    )
+    showToast({
+      title: "Publicado no seu grupo",
+      description: "Os aprovados deste grupo podem ler agora.",
+      variant: "success",
+    })
     onCreated()
     modal.close()
     setSubmitting(false)
@@ -345,9 +309,8 @@ export function CreatePostModal({
     photoPath,
     linkUrl,
     piiWarning,
-    audienceKey,
+    selectedGroup,
     localityId,
-    locality?.cityName,
     supabase,
     resetForm,
     onCreated,
@@ -368,14 +331,13 @@ export function CreatePostModal({
     discardConfirm.close()
   }, [discardConfirm])
 
-  const placeName =
-    selectedKind.kind === "city"
-      ? (locality?.cityName ?? null)
-      : selected.kind !== "city"
-        ? selected.name
-        : null
+  // Nome do lugar de visibilidade: o grupo escolhido. Sem escolha, a prévia e o
+  // aviso dizem que falta escolher, e não descrevem um público que não existe.
+  const placeName = selected ? selected.name : null
 
-  const audienceNotice = audienceNoticeText(selectedKind.kind, locality?.cityName ?? null)
+  const audienceNotice = selected
+    ? audienceNoticeText(selected.kind, null)
+    : "Escolha um grupo para publicar."
 
   return (
     <>
@@ -436,13 +398,33 @@ export function CreatePostModal({
 
                     <div className="mt-4">
                       <AudiencePicker
-                        value={selected.key}
+                        value={audienceKey}
                         onChange={setAudienceKey}
                         destinations={destinations}
                         loading={audience.loading}
                         error={audience.error}
                         onRetry={audience.retry}
                       />
+                      {/* Sem grupo nenhum, o caminho é entrar em um — não um
+                          destino inventado. O aviso repete o que o seletor não
+                          tem para mostrar. */}
+                      {!audience.loading && !audience.error && !hasGroups ? (
+                        <div className="mt-2">
+                          <FeedbackAlert
+                            variant="info"
+                            title="Você ainda não participa de um grupo"
+                            description="Publicar acontece dentro de um grupo. Veja os grupos da sua cidade e entre em um para publicar."
+                            actions={
+                              <Link
+                                href={"/groups" as Route}
+                                className="inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand"
+                              >
+                                Ver grupos
+                              </Link>
+                            }
+                          />
+                        </div>
+                      ) : null}
                       <p
                         aria-live="polite"
                         className="mt-2 text-xs text-muted"
@@ -450,11 +432,6 @@ export function CreatePostModal({
                       >
                         {audienceNotice}
                       </p>
-                      {audienceFallback.length > 0 && (
-                        <div className="mt-2">
-                          <FeedbackAlert variant="warning" description={audienceFallback} />
-                        </div>
-                      )}
                     </div>
 
                     <div className="mt-4">
@@ -603,7 +580,7 @@ export function CreatePostModal({
                 </Button>
                 <Button
                   onPress={handleSubmit}
-                  isDisabled={submitting || !content.trim()}
+                  isDisabled={submitting || !content.trim() || !selectedGroup}
                   variant="primary"
                   aria-busy={submitting}
                   data-testid="publish-submit"

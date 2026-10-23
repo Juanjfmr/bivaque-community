@@ -2,25 +2,22 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
-// Onda E Task 4 Step 3 — guard for the audience-selector privacy bug.
+// Onda E Task 4 Step 3 — guard for the audience-selector privacy bug, kept
+// through the lote 5 N2 change (publicar só dentro de um grupo).
 //
 // The composer resetForm used to call setCommunityId(null), which made the
 // SECOND post in a session publish to city-wide reach by default — exactly
 // the leak-by-inattention the plan §Task 4 step 3 calls out ("isso é bug de
-// privacidade, não de UX"). The fix is to keep the audience the person was
-// already on. This test fails the build if a future refactor re-introduces
-// the reset-to-city behaviour.
+// privacidade, não de UX"). RECON-014 turned that into an audienceKey that fell
+// back to the city key, and the lote 5 N2 pulled city and vila out of the
+// selector altogether: the group the person chooses is the only destination,
+// and the reset must not touch it at all. What is locked is the same property
+// in all three mechanisms: leaving the submit never moves the next publication
+// to an audience the person did not choose.
 //
-// Reapontado na RECON-014: feed-post.tsx passou a ser barril e o composer
-// mora em feed-post-create.tsx. O mecanismo também mudou — o seletor deixou
-// de guardar `communityId` solto e passou a guardar uma `audienceKey`, com a
-// cidade como uma chave entre outras. A propriedade trancada é a mesma e
-// continua sendo a que importa: sair do envio NÃO pode empurrar a próxima
-// publicação para a cidade inteira sem a pessoa ter escolhido.
-//
-// O teste lê o texto-fonte de propósito. É frágil a refatoração — foi o que
-// aconteceu aqui — mas é o que consegue afirmar "esta linha nunca volta"
-// sobre um componente que só se comporta em navegador.
+// The test reads the source text on purpose. It is fragile to refactoring —
+// that has already happened here twice — but it is the only way to assert "this
+// line never comes back" about a component that only behaves in a browser.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const composerPath = join(
@@ -42,8 +39,8 @@ function resetFormBody(): string {
   return match ? match[1] : ""
 }
 
-describe("audience selector keeps the vila on reset (E4 Step 3)", () => {
-  it("resetForm does not zero the audience back to city-wide", () => {
+describe("o reset do compositor não escolhe destino pela pessoa (E4 Step 3)", () => {
+  it("resetForm não força a chave da cidade", () => {
     const body = resetFormBody()
 
     // O bug original, no mecanismo antigo.
@@ -54,13 +51,11 @@ describe("audience selector keeps the vila on reset (E4 Step 3)", () => {
     expect(body).not.toMatch(/setAudienceKey\(\s*CITY_AUDIENCE_KEY\s*\)/)
   })
 
-  it("resetForm preserves the audience the member was already on", () => {
+  it("resetForm não toca na audiência: quem escolhe o grupo é a pessoa", () => {
     const body = resetFormBody()
 
-    // A audiência tem que ser derivada do valor anterior. Um set com valor
-    // constante — qualquer que seja — perde a escolha da pessoa; o que
-    // preserva é a forma funcional, que recebe o estado anterior.
-    expect(body).toMatch(/setAudienceKey\(\s*\(\s*prev\s*\)\s*=>/)
-    expect(body).toMatch(/\bprev\b/)
+    // Com a cidade e a vila fora do seletor, qualquer set de audiência aqui só
+    // pode perder a escolha dela. O que preserva é não escrever nada.
+    expect(body).not.toMatch(/setAudienceKey\(/)
   })
 })
