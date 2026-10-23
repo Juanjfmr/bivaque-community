@@ -34,13 +34,32 @@ describe("código do convite no banco", () => {
     expect(MIGRATION).toContain("v_invitation.token_digest")
   })
 
-  it("errado, vencido e usado têm o mesmo erro; limite tem outro", () => {
-    expect(MIGRATION).toContain("family_invite_code_unavailable")
-    expect(MIGRATION).toContain("errcode = 'P0001'")
-    expect(MIGRATION).toContain("using errcode = '54000'")
+  it("errado, vencido e usado têm o mesmo status; o limite tem outro", () => {
+    // Revisão do coordenador (22/10): a função NÃO lança para o resultado do
+    // código. Uma exceção desfaz a transação da chamada — e o insert da
+    // tentativa junto —, e o limite passa a contar só quem acertou.
+    expect(MIGRATION).toContain("status := 'unavailable'")
+    expect(MIGRATION).toContain("status := 'email_mismatch'")
+    expect(MIGRATION).toContain("status := 'rate_limited'")
+    expect(MIGRATION).not.toContain("family_invite_code_unavailable")
+    expect(MIGRATION).not.toContain("using errcode = 'P0001'")
+    expect(MIGRATION).not.toContain("using errcode = '54000'")
+    // Entrada inválida (digest com tamanho errado) continua sendo exceção.
+    expect(MIGRATION).toContain("using errcode = '22023'")
     // A função de aceite não pode deixar vazar o erro específico do
-    // accept_family_invitation (vencido P0002, usado P0003, revogado P0004).
+    // accept_family_invitation (vencido P0002, usado P0003, revogado P0004):
+    // o bloco é subtransação e o status vira `unavailable`.
     expect(MIGRATION).toMatch(/when sqlstate 'P0001' or sqlstate 'P0002'/)
+    expect(MIGRATION).toContain("v_link_id := null")
+  })
+
+  it("as duas funções devolvem status e a tentativa é contada antes da resposta", () => {
+    expect(MIGRATION).toMatch(/returns table \(\s*status text/)
+    // O contador devolve texto, não lança: é o insert dele que precisa
+    // sobreviver à resposta.
+    expect(MIGRATION).toContain("v_attempt := private.record_family_invite_code_attempt(")
+    expect(MIGRATION).toContain("return 'rate_limited'")
+    expect(MIGRATION).toContain("return 'ok'")
   })
 
   it("a tabela de tentativas é fechada para o cliente", () => {

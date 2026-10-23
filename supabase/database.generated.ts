@@ -2661,7 +2661,10 @@ export type Database = {
           p_code_hash: string
           p_origin_digest: string
         }
-        Returns: string
+        Returns: {
+          link_id: string
+          status: string
+        }[]
       }
       family_invite_code_preview: {
         Args: {
@@ -2673,6 +2676,7 @@ export type Database = {
           expires_at: string
           invitee_email_hint: string
           inviter_name: string
+          status: string
         }[]
       }
       feed_community: {
