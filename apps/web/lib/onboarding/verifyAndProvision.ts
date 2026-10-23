@@ -4,6 +4,7 @@ import type { Database } from "supabase/database.generated"
 import { byteaDigestParam } from "../invites-bytea"
 import type { VerificationResult } from "../portal"
 import { createPortalVerificationGuard, verifyCpfWithErrorCode } from "../portal"
+import type { EntryMoment } from "./provision-validation"
 
 // P0 Task 4: eligibility and provisioning split into two phases
 // (ADR-20260816-forma-da-admissao). verify answers "is this person eligible?"
@@ -27,6 +28,18 @@ export interface OnboardingProvisionInput {
   localityId: string
   displayName: string
   consentVersion: number
+  // PORT-005: o momento declarado na entrada. Opcional porque o convite
+  // familiar provisiona sem passar pela tela de cidade — quem entra por
+  // convite não declara chegada, saída nem destino, e as boas-vindas caem no
+  // bloco de quem mora na cidade.
+  entryMoment?: OnboardingEntryMomentInput | undefined
+}
+
+export interface OnboardingEntryMomentInput {
+  moment: EntryMoment
+  arrivalDate: string | null
+  departureDate: string | null
+  destinationLocalityId: string | null
 }
 
 type AnySupabaseClient = SupabaseClient<Database>
@@ -117,7 +130,7 @@ export async function provisionMember(
   supabase: AnySupabaseClient,
   input: OnboardingProvisionInput,
 ): Promise<{ localityMember: boolean }> {
-  const { userId, localityId, displayName, consentVersion } = input
+  const { userId, localityId, displayName, consentVersion, entryMoment } = input
 
   if (consentVersion < CONSENT_VERSION) {
     throw new Error("consent version not accepted")
@@ -152,6 +165,24 @@ export async function provisionMember(
 
   if (profileError) {
     throw new Error(`Failed to create profile: ${profileError.message}`)
+  }
+
+  // PORT-005: o momento declarado (chegando, moro aqui ou saindo), com a data
+  // que ele pede e o destino da saída. O CHECK do banco repete a coerência que
+  // a rota já validou; uma falha aqui não pode virar boas-vindas silenciosas
+  // sem momento, então ela sobe como erro.
+  if (entryMoment) {
+    const { error: momentError } = await supabase.from("member_entry_moments").upsert({
+      user_id: userId,
+      moment: entryMoment.moment,
+      arrival_date: entryMoment.arrivalDate,
+      departure_date: entryMoment.departureDate,
+      destination_locality_id: entryMoment.destinationLocalityId,
+    })
+
+    if (momentError) {
+      throw new Error(`Failed to store the entry moment: ${momentError.message}`)
+    }
   }
 
   return { localityMember: true }

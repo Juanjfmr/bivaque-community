@@ -14,6 +14,9 @@ import { createServerClient } from "web/lib/supabase/server"
 const mockRpc = vi.fn()
 const mockFrom = vi.fn()
 const mockGetUser = vi.fn()
+// PORT-005: o momento declarado na entrada é gravado por upsert na tabela do
+// dono, depois do perfil. O mock registra o que a rota mandou.
+const mockMomentUpsert = vi.fn(async () => ({ error: null }))
 let verificationStatus: string | null = null
 
 beforeEach(() => {
@@ -48,6 +51,9 @@ beforeEach(() => {
       }
       return query
     }
+    if (table === "member_entry_moments") {
+      return { upsert: mockMomentUpsert }
+    }
     const write = {
       upsert: async () => ({ error: null }),
       select: () => write,
@@ -69,11 +75,17 @@ afterEach(() => {
   verificationStatus = null
 })
 
-function provisionRequest(): Request {
+function provisionRequest(body: Record<string, unknown> = {}): Request {
   return new Request("http://localhost/api/onboarding", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: "Bearer token" },
-    body: JSON.stringify({ action: "provision", ibge_code: "1302603", display_name: "Pessoa" }),
+    body: JSON.stringify({
+      action: "provision",
+      ibge_code: "1302603",
+      display_name: "Pessoa",
+      moment: "resident",
+      ...body,
+    }),
   })
 }
 
@@ -128,6 +140,90 @@ describe("provision exige verificação", () => {
     })
     const response = await POST(provisionRequest())
     expect(response.status).toBeGreaterThanOrEqual(500)
+    expect(provisionCalls()).toBe(0)
+  })
+})
+
+// PORT-005: o provisionamento recebe o momento da entrada, a data que ele pede
+// e o destino da saída. O momento é obrigatório: uma entrada sem momento chega
+// a um membro sem plano, e as boas-vindas ficariam num bloco inventado.
+describe("provision exige o momento da entrada", () => {
+  it("grava o momento e a data de chegada", async () => {
+    verificationStatus = "verified"
+    const response = await POST(
+      provisionRequest({ arrival_date: "2026-11-04", moment: "arriving" }),
+    )
+    expect(response.status).toBe(200)
+    expect(mockMomentUpsert).toHaveBeenCalledWith({
+      arrival_date: "2026-11-04",
+      departure_date: null,
+      destination_locality_id: null,
+      moment: "arriving",
+      user_id: "10000000-0000-4000-8000-000000000002",
+    })
+  })
+
+  it("grava o destino da saída já resolvido no catálogo", async () => {
+    verificationStatus = "verified"
+    const response = await POST(
+      provisionRequest({
+        departure_date: "2026-11-20",
+        destination_ibge_code: "1302603",
+        ibge_code: "5300108",
+        moment: "leaving",
+      }),
+    )
+    // A cidade escolhida é Brasília e o destino é Manaus; o mock do catálogo
+    // devolve sempre o mesmo id, então o que se prova aqui é que o destino foi
+    // resolvido ANTES de gravar, não o id do catálogo.
+    expect(response.status).toBe(200)
+    expect(mockMomentUpsert).toHaveBeenCalledWith({
+      arrival_date: null,
+      departure_date: "2026-11-20",
+      destination_locality_id: "00000000-0000-4000-8000-000000000001",
+      moment: "leaving",
+      user_id: "10000000-0000-4000-8000-000000000002",
+    })
+  })
+
+  it("recusa momento ausente, momento desconhecido e saída sem destino", async () => {
+    verificationStatus = "verified"
+
+    const missing = await POST(provisionRequest({ moment: undefined }))
+    expect(missing.status).toBe(400)
+    expect(await missing.json()).toEqual({ error: "moment is required" })
+
+    const unknown = await POST(provisionRequest({ moment: "chegando" }))
+    expect(unknown.status).toBe(400)
+    expect(await unknown.json()).toEqual({ error: "moment is required" })
+
+    const noDestination = await POST(
+      provisionRequest({ departure_date: "2026-11-20", moment: "leaving" }),
+    )
+    expect(noDestination.status).toBe(400)
+    expect(await noDestination.json()).toEqual({ error: "destination is required" })
+
+    expect(provisionCalls()).toBe(0)
+    expect(mockMomentUpsert).not.toHaveBeenCalled()
+  })
+
+  it("recusa data no passado e data de saída em quem chega", async () => {
+    verificationStatus = "verified"
+
+    const past = await POST(provisionRequest({ arrival_date: "2020-01-01", moment: "arriving" }))
+    expect(past.status).toBe(400)
+    expect(await past.json()).toEqual({ error: "date is in the past" })
+
+    const mixed = await POST(
+      provisionRequest({
+        arrival_date: "2030-01-01",
+        departure_date: "2030-02-01",
+        moment: "arriving",
+      }),
+    )
+    expect(mixed.status).toBe(400)
+    expect(await mixed.json()).toEqual({ error: "departure_date is not allowed" })
+
     expect(provisionCalls()).toBe(0)
   })
 })

@@ -1,53 +1,166 @@
-import { ArrowRight } from "lucide-react"
+"use client"
+
 import Link from "next/link"
-import { ContextSteps } from "../components/context-steps"
-import styles from "../onboarding.module.css"
+import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { type WelcomeBlocks, welcomeBlocks } from "../../../../lib/onboarding/entry-moment"
+import type { EntryMoment } from "../../../../lib/onboarding/provision-validation"
+import { createBrowserClient } from "../../../../lib/supabase/client"
+import { EntryShell } from "../../../components/entry/entry-shell"
+import { MaterialFilledButton } from "../../../components/material/filled-button"
+import { MaterialIcon } from "../../../components/material/material-icon"
+import "../locality/entry-city.css"
+
+// PORT-005 (lote 4 da entrada) — as boas-vindas do protótipo
+// (`renderEntryWelcome`, prototypes/bivaque-html/src/features/entry/arrive.js).
+//
+// Os blocos mudam conforme o momento declarado na tela anterior: "Chegando"
+// leva ao plano de chegada, "Saindo" ao plano de saída (com a cidade de
+// destino), "Moro aqui" ao guia da cidade. O momento e as datas são lidos da
+// tabela do dono — a policy de SELECT é a do próprio dono, então quem abre esta
+// tela sem ter passado pela entrada não vê o momento de outra pessoa.
+//
+// Quem entra pelo convite familiar não declara momento: sem linha na tabela, os
+// blocos caem em "moro aqui", que é o estado padrão do protótipo.
+//
+// O protótipo tem um terceiro cartão, a turma (grupo automático de quem chega ou
+// sai no mesmo ciclo). O schema do Next não tem turma automática — não existe
+// cohort em `groups` —, então o cartão não é renderizado em vez de apontar para
+// um grupo inventado. Registrado no relatório da frente.
+
+const BADGE_ICON = "check"
+
+type WelcomeState = { status: "loading" } | { blocks: WelcomeBlocks; status: "ready" }
 
 export default function OnboardingWelcomePage() {
+  const router = useRouter()
+  const supabase = useMemo(() => createBrowserClient(), [])
+  const [state, setState] = useState<WelcomeState>({ status: "loading" })
+  const heading = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    const run = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session) {
+        router.replace("/login?return=/onboarding/welcome")
+        return
+      }
+
+      const userId = session.user.id
+
+      const [momentResult, membershipResult] = await Promise.all([
+        supabase
+          .from("member_entry_moments")
+          .select("moment, destination_locality_id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("locality_memberships")
+          .select("locality_id")
+          .eq("user_id", userId)
+          .eq("kind", "current")
+          .maybeSingle(),
+      ])
+
+      // Falha de leitura não vira tela de boas-vindas com o bloco errado: sem
+      // saber o momento, a pessoa entra na comunidade e mantém o que declarou
+      // (a linha continua no banco, para a Início). `maybeSingle` devolve
+      // `error: null` quando não há linha — só o erro de verdade cai aqui.
+      if (membershipResult.error || momentResult.error) {
+        router.replace("/community")
+        return
+      }
+
+      const homeLocalityId = membershipResult.data?.locality_id
+      if (!homeLocalityId) {
+        // Sem vínculo não há cidade para celebrar: a pessoa volta para a escolha.
+        router.replace("/onboarding/locality")
+        return
+      }
+
+      const moment = (momentResult.data?.moment ?? "resident") as EntryMoment
+      const destinationLocalityId = momentResult.data?.destination_locality_id ?? null
+
+      const cityIds = destinationLocalityId
+        ? [homeLocalityId, destinationLocalityId]
+        : [homeLocalityId]
+      const { data: localities, error: localitiesError } = await supabase
+        .from("localities")
+        .select("id, city_name")
+        .in("id", cityIds)
+
+      if (localitiesError) {
+        router.replace("/community")
+        return
+      }
+
+      const cityName = (id: string | null) =>
+        id ? ((localities ?? []).find((locality) => locality.id === id)?.city_name ?? null) : null
+
+      const homeCity = cityName(homeLocalityId)
+      if (!homeCity) {
+        // A cidade do próprio vínculo não legível é falha de leitura, não tela
+        // vazia: a pessoa segue para a comunidade, que é o destino do CTA.
+        router.replace("/community")
+        return
+      }
+
+      setState({
+        status: "ready",
+        blocks: welcomeBlocks({
+          moment,
+          homeCity,
+          destinationCity: cityName(destinationLocalityId),
+        }),
+      })
+    }
+    run()
+  }, [router, supabase])
+
+  useEffect(() => {
+    if (state.status !== "ready") return
+    // O título recebe o foco ao abrir, como no protótipo: o leitor de tela
+    // anuncia a tela nova em vez de começar do topo do documento.
+    heading.current?.focus()
+  }, [state.status])
+
+  if (state.status === "loading") {
+    return (
+      <EntryShell>
+        <div className="en-form">
+          <p className="en-sub" role="status">
+            Preparando suas boas-vindas...
+          </p>
+        </div>
+      </EntryShell>
+    )
+  }
+
   return (
-    <ContextSteps
-      current="concluir"
-      titleId="welcome-heading"
-      title="Você chegou ao Bivaque."
-      description="Tudo pronto. Escolha por onde quer começar."
-    >
-      <div className={styles["stack"]}>
-        <Link href="/community" className={styles["primaryLink"]}>
-          Entrar na comunidade <ArrowRight aria-hidden="true" />
-        </Link>
+    <EntryShell>
+      <div className="en-form en-welcome">
+        <div aria-hidden="true" className="en-badge">
+          <MaterialIcon name={BADGE_ICON} />
+        </div>
+        <h1 className="en-h1" ref={heading} tabIndex={-1}>
+          Você chegou ao Bivaque.
+        </h1>
+        <p className="en-lead">{state.blocks.lead}</p>
 
-        <ul className={styles["actionList"]} aria-label="Primeiros passos">
-          <li>
-            <Link href="/localidade" className={styles["actionItem"]}>
-              <div>
-                <strong>Conhecer minha cidade</strong>
-                <span>Veja referências e o que está acontecendo perto de você.</span>
-              </div>
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          </li>
+        {state.blocks.tiles.map((tile) => (
+          <Link className="en-tile" href={tile.href} key={tile.href}>
+            <MaterialIcon name={tile.icon} />
+            <span>
+              <b>{tile.title}</b>
+              {tile.description}
+            </span>
+          </Link>
+        ))}
 
-          <li>
-            <Link href="/profile" className={styles["actionItem"]}>
-              <div>
-                <strong>Completar meu perfil</strong>
-                <span>Escolha como outros membros encontram você.</span>
-              </div>
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          </li>
-
-          <li>
-            <Link href="/groups" className={styles["actionItem"]}>
-              <div>
-                <strong>Encontrar um grupo</strong>
-                <span>Aproxime-se por interesse e contexto.</span>
-              </div>
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          </li>
-        </ul>
+        <MaterialFilledButton href="/community">Entrar na comunidade</MaterialFilledButton>
       </div>
-    </ContextSteps>
+    </EntryShell>
   )
 }
