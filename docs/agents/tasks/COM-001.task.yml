@@ -52,3 +52,20 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# evidencia COM-001 — branch codex/lote5-feed, 23/10/2026 (todas as provas abaixo foram rodadas e lidas nesta sessao)
+# test:db: PASS — 155 arquivos, 2277 testes; supabase/tests/feed-cidade.sql ok (15 asserts: positivo da cidade, contagens, my_reaction, my_follow, paginacao e os negativos de vila, grupo Fechado, grupo Aberto, outra cidade, removida e nao-membro)
+# gate: VERDE em lint, typecheck, typecheck:e2e, test e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — pnpm --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de supabase status -o env (sem criar arquivo de env)
+# e2e 1: inicio-feed-cidade 9 passou 0 falhou (3 testes x 3 projetos, pela fila, --workers=1); junto no mesmo comando: audience-selector, empty-locality, two-localities, indicacoes-memoria, question-first-order, close-label-ptbr, inicio-phone-typography, feed-attachment-publish — 120 passou, 2 skipped, 0 falhou
+# e2e 2: shell-navigation, ds-029-conformance-probes, journey-quando-algo-falha, manaus-pilot-full-journey, synthetic-people-interaction, publish-golden-slice, reports-member-flow — 170 passou, 8 skipped, 5 falhou na primeira rodada, das quais 3 eram o mesmo teste pre-existente (manaus-pilot-full-journey linha 130, convite legado) e 2 eram destas mudancas, corrigidas abaixo
+# e2e 3: apos as correcoes, shell-navigation, journey-quando-algo-falha e synthetic-people-interaction — 25 passou, 8 skipped, 0 falhou
+# e2e (classificacao): manaus-pilot-full-journey linha 130 falha igual no estado limpo — mudancas guardadas com git stash e o teste rodado de novo —, portanto nao e regressao desta tarefa
+# visual: captura do loop da casa valida e autenticada em 375/768/1440, HTTP 200, 0 findings, em .visual/com-001/com-001-inicio4 (report.md e shots) e capturas de tema em .visual/com-001/temas
+# visual (limite): os dois temas saem byte-identicos porque com prefers-color-scheme dark o shell continua claro (sonda .visual/com-001/theme-probe.mjs: darkMedia=true e bodyBg rgb(241,242,238)); o comportamento e anterior a esta tarefa, que nao toca em tema
+# visual (limite): as capturas full do loop saem no tamanho do viewport porque o shell rola em container proprio; o abaixo da dobra do feed (Carregar mais e fim de lista voce esta em dia) nao entra em imagem — a prova de comportamento esta nos e2e
+# review visual (subagente observer): o prototipo nao tem feed no Inicio (features/home); a divergencia de produto registrada e que o Inicio do Next pos o feed ANTES das secoes de perguntas e Guia, invertendo a prioridade do prototipo (A comunidade procura primeiro). A escolha foi o slot da antiga previa da vila, preservando a ordem dos blocos do Inicio; fica como ponto de revisao do dono
+# review visual (subagente observer): /community nao tem resto de feed nem aba Conversa; os rotulos das abas que aparecem la sao do painel de Indicacoes (taxonomia da tarefa A1, fora do escopo deste contrato)
+# pendente: o link Ver todas as publicacoes em apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx aponta para /community, que deixou de ter feed; corrigir pertence a N1 (arquivo fora dos allowed_paths do COM-001)
+# pendente: o card do quadro que o ADR manda criar por frente nao existe para o COM-001 e tools/backend-kanban/public/board.json esta fora dos allowed_paths; nenhuma transicao de quadro foi feita
+# pendente: docs/PRODUCT_STATUS.md ainda descreve a vista Conversa em /community; tambem esta fora dos allowed_paths deste contrato
