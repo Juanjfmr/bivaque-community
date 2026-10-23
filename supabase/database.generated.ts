@@ -2063,6 +2063,7 @@ export type Database = {
           author_id: string
           body: string
           created_at: string
+          edited_at: string | null
           id: string
           is_deleted: boolean
           request_id: string
@@ -2071,6 +2072,7 @@ export type Database = {
           author_id: string
           body: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_deleted?: boolean
           request_id: string
@@ -2079,6 +2081,7 @@ export type Database = {
           author_id?: string
           body?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_deleted?: boolean
           request_id?: string
@@ -2135,10 +2138,12 @@ export type Database = {
           body: string
           category: Database["public"]["Enums"]["recommendation_category"]
           created_at: string
+          edited_at: string | null
           group_id: string | null
           id: string
           is_deleted: boolean
           is_resolved: boolean
+          last_resolved_reply_id: string | null
           locality_id: string | null
           resolved_at: string | null
           resolved_by: string | null
@@ -2151,10 +2156,12 @@ export type Database = {
           body: string
           category?: Database["public"]["Enums"]["recommendation_category"]
           created_at?: string
+          edited_at?: string | null
           group_id?: string | null
           id?: string
           is_deleted?: boolean
           is_resolved?: boolean
+          last_resolved_reply_id?: string | null
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
@@ -2167,10 +2174,12 @@ export type Database = {
           body?: string
           category?: Database["public"]["Enums"]["recommendation_category"]
           created_at?: string
+          edited_at?: string | null
           group_id?: string | null
           id?: string
           is_deleted?: boolean
           is_resolved?: boolean
+          last_resolved_reply_id?: string | null
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
@@ -2184,6 +2193,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_requests_last_resolved_reply_id_fkey"
+            columns: ["last_resolved_reply_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_replies"
             referencedColumns: ["id"]
           },
           {
@@ -2911,6 +2927,7 @@ export type Database = {
           p_category?: Database["public"]["Enums"]["recommendation_category"]
           p_limit?: number
           p_locality_id: string
+          p_mine?: boolean
           p_offset?: number
           p_query?: string
           p_resolved?: boolean
@@ -3001,6 +3018,17 @@ export type Database = {
           reply_id: string
           request_category: Database["public"]["Enums"]["recommendation_category"]
           request_title: string
+        }[]
+      }
+      list_question_replies: {
+        Args: { p_request_id: string }
+        Returns: {
+          author_id: string
+          body: string
+          created_at: string
+          edited_at: string
+          id: string
+          is_removed: boolean
         }[]
       }
       list_user_group_interests: {
@@ -3278,7 +3306,7 @@ export type Database = {
         }
         Returns: {
           document_id: string
-          replaced_storage_object_path: string | null
+          replaced_storage_object_path: string
         }[]
       }
       request_account_deletion: { Args: never; Returns: Json }
