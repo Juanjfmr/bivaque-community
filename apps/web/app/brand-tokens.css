@@ -1,9 +1,17 @@
-/* PORT-001 (R73) — os tokens da R70 no Next, copiados de
+/* PORT-001 (R73) e PORT-002 — os tokens da R70 no Next, copiados de
    prototypes/bivaque-html/src/styles/base.css (ADR-20261022, ADR-20261020).
 
-   O escopo é `.ld`, a raiz da landing: o tema do HeroUI nas telas ainda não
-   portadas não muda. O claro vale por padrão e o escuro entra por
+   O escopo é `.bv-skin`, a classe que toda tela portada carrega: na landing ela
+   convive com `.ld`, e a entrada a aplica na casca. O tema do HeroUI nas telas
+   ainda não portadas não muda. O claro vale por padrão e o escuro entra por
    prefers-color-scheme, que é o "Automática" do ADR-20261020.
+
+   PORT-002: o escopo era `.ld`. Enquanto a landing era a única tela portada,
+   prender os tokens à raiz dela era o menor escopo possível; com a entrada,
+   isso obrigaria a copiar o bloco ou a mentir dizendo que a entrada é a
+   landing. `.bv-skin` é a mesma declaração, com o mesmo par de temas e os
+   mesmos valores — a landing só passou a carregar as duas classes no mesmo
+   elemento, e a comparação de captura continua igual.
 
    Toda cor da landing vem daqui. As duas exceções do protótipo continuam as
    mesmas: --bv-on-photo e --bv-photo-scrim são iguais nos dois temas, porque a
@@ -12,10 +20,10 @@
    Notação: os valores são exatamente os do base.css do protótipo, escritos em
    rgb() em vez de hexadecimal. O teste de escopo
    tests/scope/design-tokens.test.mjs recusa `#` em CSS de apps/web/app fora do
-   globals.css, e este arquivo é a camada de tokens da landing — não um
+   globals.css, e este arquivo é a camada de tokens das telas portadas — não um
    componente com cor solta. A notação não muda nenhuma cor: cada rgb() abaixo é
    o mesmo byte do hexadecimal da R70, e a comparação de captura prova. */
-.ld {
+.bv-skin {
   color-scheme: light;
 
   --md-sys-color-primary: rgb(37 48 51);
@@ -98,7 +106,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .ld {
+  .bv-skin {
     color-scheme: dark;
 
     --md-sys-color-primary: rgb(236 234 228);
@@ -152,8 +160,10 @@
   }
 }
 
-/* O CTA preenchido é a única ação em Brasa, além do Criar (R70). Os tokens
-   ficam no elemento para que os outros botões do Material não os herdem. */
+/* O CTA preenchido da landing é a única ação em Brasa, além do Criar (R70). A
+   regra continua presa a `.ld`: na entrada, o botão preenchido é o do Material
+   (primary), como no protótipo. Os tokens ficam no elemento para que os outros
+   botões do Material não os herdem. */
 .ld md-filled-button {
   --md-filled-button-container-color: var(--bv-brasa);
   --md-filled-button-label-text-color: var(--bv-on-brasa);

@@ -1,0 +1,39 @@
+/* PORT-006 (lote 4 da entrada) — a pele das páginas legais, copiada de
+   .legal-doc / .legal-h / .legal-p em prototypes/bivaque-html/src/styles/entry.css.
+   Importada por /privacidade e /codigo-de-conduta: são as duas leituras do mesmo
+   documento, e elas precisam parecer a mesma página. */
+
+.bv-entry .legal-doc {
+  max-width: 640px;
+}
+
+.bv-entry .legal-h {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 650;
+  margin: 20px 0 4px;
+}
+
+.bv-entry .legal-p {
+  margin: 0 0 8px;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .legal-p strong,
+.bv-entry .legal-list strong {
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
+}
+
+.bv-entry .legal-list {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--md-sys-color-on-surface-variant);
+}

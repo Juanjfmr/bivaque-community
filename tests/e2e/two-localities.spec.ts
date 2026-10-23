@@ -300,9 +300,7 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     await page.waitForURL(/\/onboarding\/locality/, { timeout: 10000 })
 
     // And the locality chooser is rendered
-    await expect(
-      page.getByRole("heading", { name: "Qual cidade você quer explorar?" }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Onde e em que momento?" })).toBeVisible()
 
     // And the geographic waitlist form is NOT rendered on the eligible path
     await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toHaveCount(0)
@@ -317,21 +315,19 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     await page.goto(`${APP_URL}/onboarding/locality`, { waitUntil: "load" })
 
     // Then the locality chooser heading is visible
-    await expect(
-      page.getByRole("heading", { name: "Qual cidade você quer explorar?" }),
-    ).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Onde e em que momento?" })).toBeVisible({
       timeout: 15000,
     })
 
-    // A tela foi redesenhada na reconstrução: saíram os dois Select (UF e
-    // cidade) e entrou um SearchField que filtra a lista de cidades do catálogo,
-    // com a lista rotulada "Cidades disponíveis". O spec continuava procurando
-    // o accname composto do Select antigo ("Selecione o estado Estado"), que
-    // não existe mais — por isso falhava com "element not found".
-    await expect(page.getByLabel("Buscar cidade")).toBeVisible({ timeout: 15000 })
+    // PORT-005: a tela agora é a do protótipo — cidade, momento, datas e nome na
+    // mesma página. A cidade continua sendo busca por nome com lista de
+    // resultados (o catálogo é nacional, 5.570 cidades, e não caberia num
+    // select), e a lista segue rotulada "Cidades disponíveis".
+    await expect(page.getByRole("searchbox", { name: "Cidade" })).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole("list", { name: "Cidades disponíveis" })).toBeVisible({
       timeout: 15000,
     })
+    await expect(page.getByRole("radiogroup", { name: "Seu momento" })).toBeVisible()
 
     // And the waitlist entry point is not on this page — the eligible path
     // never offers the geographic waitlist.

@@ -1,0 +1,110 @@
+task_id: PORT-003
+objective: >
+  Frente A do lote 4: as telas de autenticação do Next seguem o protótipo, na pele da marca - criar conta
+  (Google no topo, ou com e-mail, Passo 1 de 3, regra da senha como apoio, aceite), entrar, recuperar e
+  nova senha, o passo Aceite do Google (/consent) e a tela Você já começou (retomar a entrada, com
+  Começar com outra conta confirmado). Sem mudança de banco.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - prototypes/bivaque-html/src/features/entry/ (a especificação)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapeamento protótipo x Next de 22/10/2026 (handoff): a tela atual diverge do protótipo nos pontos
+    do objetivo. Base codex/entrada-base com os adaptadores e a casca da PORT-002.
+allowed_paths:
+  - apps/web/app/(preauth)/login/
+  - apps/web/app/(preauth)/signup/
+  - apps/web/app/(preauth)/recuperar-senha/
+  - apps/web/app/(preauth)/nova-senha/
+  - apps/web/app/(preauth)/consent/
+  - apps/web/app/auth/
+  - apps/web/lib/auth/
+  - tests/unit/auth/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/PORT-003.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar os adaptadores de apps/web/app/components/material/ ou apps/web/app/components/entry/ (são da base PORT-002; se faltar algo, registre no relatório)
+  - editar arquivos de outra frente do lote 4
+  - editar prototypes/bivaque-html
+acceptance:
+  - Telas com os textos, a ordem e os estados de prototypes/bivaque-html/src/features/entry/account.js e login.js, usando os adaptadores e a casca da base
+  - O aceite continua gravado no servidor no cadastro por e-mail e no passo do Google; o desvio do callback (PR 104) segue valendo
+  - Você já começou aparece quando há entrada em andamento e oferece continuar ou começar com outra conta (sai da conta depois da confirmação)
+  - Comparação de captura com o protótipo em 375 e 1440, nos dois temas, para criar conta, entrar e aceite
+  - Os e2e de entrada que afirmavam as telas antigas são ajustados mantendo o que protegem
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test (specs da frente)
+risk: autenticação, cadastro e aceite
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+# Execucao de 2026-10-22 (frente A), branch codex/entrada-auth.
+# Feito: criar conta (Google no topo, ou com e-mail, Passo 1 de 3, regra da senha como
+# apoio, aceite com os dois documentos), entrar, recuperar e nova senha na casca da base;
+# /consent como o passo Aceite do prototipo, com o desvio do callback do PR 104 trazido
+# para esta base; e Voce ja comecou em /login e /signup, decidido no servidor.
+# Prova rodada nesta sessao, com a saida lida:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> sem erro
+# - npx pnpm@11.18.0 exec vitest run tests/unit/auth tests/unit/ui -> 42 arquivos, 383 testes, todos passando
+# - npx pnpm@11.18.0 exec biome check <caminhos alterados> -> sem achado
+# - node tests/secrets-scan.mjs -> limpo
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos passando
+# NAO rodado aqui, por instrucao da tarefa (maquina compartilhada): gate, next build,
+# db:reset, test:db, test:e2e e scripts/visual/loop.mjs. O coordenador roda uma frente por vez.
+# PENDENCIA DE BASE fora do allowed_paths: scripts/visual/capture.mjs fixa os titulos antigos
+# de /consent (Antes de entrar, conheca as regras.) e /recuperar-senha (Esqueceu sua senha?).
+# Os titulos agora sao os do prototipo (Antes de entrar, as regras. e Recuperar a senha.),
+# entao essas duas linhas de HEADINGS mudam no mesmo commit que integrar esta frente.
+# PENDENCIA DE BASE 2: o adaptador de senha da PORT-002 chama o estado visivel de
+# Esconder senha; o prototipo chama de Ocultar senha. A acao e identica e o nome acompanha
+# o estado; ajustar o adaptador exige editar components/entry ou material, proibido aqui.
+# Correcao da revisao independente de 22/10/2026, sobre a base c4715d4f (o aceite pelo
+# ariaLabel do adaptador, mantido como estava).
+# P2 - a retomada pulava o aceite pendente. entry-progress.entryResumeTarget decide o
+# destino com consentStepTarget, a mesma funcao do callback, e nao com uma copia da regra;
+# entry-session le se a conta tem qualquer aceite gravado (consent_acceptances, escopada
+# pelo usuario da sessao); /login e /signup passam o destino ao EntryResume. Sem aceite
+# vai a /consent, com aceite segue /onboarding, e leitura inconclusiva nao inventa aceite.
+# Teste: tests/unit/auth/entry-resume.test.ts prova as duas pontas da decisao, a paridade
+# com o callback e o caso inconclusivo; o e2e da frente retoma na persona semeada sem
+# aceite e chega ao passo Aceite.
+# P2 - o Enter nao enviava a recuperacao nem a senha nova. A regra que ja existia no login
+# virou apps/web/lib/auth/entry-enter.ts e as tres telas usam o mesmo tratador.
+# Teste: tests/unit/auth/entry-enter.test.ts (positivo e negativos) e dois casos novos no
+# e2e da frente, que contam os envios de recover e de updateUser.
+# P2 - o e2e falhava depois de trocar o e-mail. startOver preserva o cooldown de proposito,
+# porque o limite e do provedor; o teste passou a esperar Aguarde mm:ss desabilitado em vez
+# de Enviar link. O componente nao mudou.
+# P3 - faltava a nota do Google. O cadastro pedia note=google, o valor do passo Aceite, e a
+# frase do prototipo nao aparecia em lugar nenhum; agora pede note=signup, e o passo Aceite
+# continua sem nota. Teste: tests/unit/auth/entry-form.test.ts e o e2e do cadastro.
+# Achado 4 do Codex (open redirect por TAB em sanitize-next): fora desta correcao por
+# instrucao; o hotfix do PR 106 o corrige quando a main entrar.
+# Prova rodada nesta sessao, com a saida lida:
+# - npx pnpm@11.18.0 exec tsc -p apps/web --noEmit -> sem erro
+# - npx pnpm@11.18.0 exec vitest run tests/unit/auth tests/unit/ui -> 43 arquivos, 408 testes, todos passando
+# - npx pnpm@11.18.0 exec biome check <13 arquivos alterados> -> sem achado
+# - npx pnpm@11.18.0 test:scope -> 129 testes, todos passando (extra, para conferir escopo)
+# NAO rodado aqui, por instrucao da tarefa: gate, next build, Playwright, db:reset, test:db
+# e scripts/visual/loop.mjs. O coordenador roda depois.
+# DEPENDENCIA DE AMBIENTE: a leitura do aceite usa o cliente de servico (SUPABASE_URL e
+# SUPABASE_SERVICE_ROLE_KEY), como o callback. Sem essa chave a leitura devolve null e a
+# retomada cai no funil, nunca no passo Aceite. O CI ja escreve as duas variaveis em
+# apps/web/.env.local antes do build e do e2e.
+# PENDENCIA NOVA para a integracao: o e2e de retomada espera /consent porque a persona
+# verificada sem membership nao tem aceite no seed. Se o seed ganhar uma aceitacao para
+# essa persona, a expectativa volta a /onboarding no mesmo commit.
+
+
