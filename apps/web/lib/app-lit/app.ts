@@ -138,7 +138,7 @@ export function mountApp(root: HTMLElement): () => void {
     if (main) {
       const behavior = main.style.scrollBehavior
       main.style.scrollBehavior = "auto"
-      main.scrollTop = context.scroll
+      main.scrollTo({ top: context.scroll, behavior: "instant" })
       main.style.scrollBehavior = behavior
     }
     focus(context.focus)
@@ -778,8 +778,8 @@ export function mountApp(root: HTMLElement): () => void {
   const onPopState = (event: PopStateEvent) => {
     if (askOpen) {
       askOpen = false
+      restorePending = true
       view()
-      focus('[data-focus="ask"]')
       return
     }
     route = parseAppHash(location.hash)
@@ -801,10 +801,33 @@ export function mountApp(root: HTMLElement): () => void {
   const onHashChange = () => {
     const next = parseAppHash(location.hash)
     if (next.name !== route.name || next.id !== route.id) {
+      const parent = { ...route }
       route = next
-      context = { ...context, route }
+      if (next.name === "comunidade") filter = "ajudar"
+      if (next.name === "minhas") filter = "minhas"
+      if (["inicio", "comunidade", "minhas"].includes(next.name)) rows = []
+      context = {
+        ...context,
+        route,
+        parent,
+        origin:
+          next.name === "inicio" ||
+          next.name === "comunidade" ||
+          next.name === "conversas" ||
+          next.name === "voce"
+            ? next.name
+            : context.origin,
+        filter,
+        scroll: 0,
+        focus: null,
+      }
+      history.replaceState({ ...history.state, parent, navigation: context }, "", location.href)
       if (route.name === "pergunta") void loadDetail(route.id ?? "")
-      else void loadFirst()
+      else if (["inicio", "comunidade", "minhas"].includes(route.name)) void loadFirst()
+      else {
+        loading = false
+        view()
+      }
     }
   }
   root.addEventListener("scroll", onScroll, true)

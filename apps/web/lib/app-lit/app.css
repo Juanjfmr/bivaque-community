@@ -23,6 +23,7 @@ body.app-lit-body {
 }
 #app-lit main {
   inset-inline-start: var(--rail);
+  scroll-behavior: auto;
 }
 #app-lit .page {
   animation: appear 0.2s ease-out;
