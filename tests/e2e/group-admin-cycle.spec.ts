@@ -125,7 +125,11 @@ test.describe("group admin cycle", { tag: "@stateful" }, () => {
     // O botão da lista para grupo Fechado leva ao detalhe com o diálogo aberto.
     await page.goto("/groups")
     await page.getByPlaceholder("Buscar grupos...").fill("Pesca e Trilha")
-    await page.getByRole("button", { name: "Pedir entrada", exact: true }).click()
+    // O grupo aparece em "Próximos de você" e em "Populares": o pedido sai de uma lista só.
+    await page
+      .getByLabel("Próximos de você")
+      .getByRole("button", { name: "Pedir entrada", exact: true })
+      .click()
     await expect(page).toHaveURL(new RegExp(`/groups/${PRIVATE_GROUP_ID}\\?pedir=1`))
     const reason = page.getByLabel(/Por que você quer entrar/)
     await expect(reason).toBeVisible()
