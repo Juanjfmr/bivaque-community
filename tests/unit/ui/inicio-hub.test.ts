@@ -82,11 +82,9 @@ describe("composição do Início", () => {
     )
   })
 
-  it("sem comunidade, o convite a entrar vem antes dos atalhos", () => {
-    const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
-    expect(jsx.indexOf("<JoinCommunityCard />")).toBeLessThan(jsx.indexOf("<HubShortcuts"))
-    expect(page).toContain("{hasCommunity ? null : <JoinCommunityCard />}")
-    expect(inicio("join-community.tsx")).toContain('href="/communities"')
+  it("não chama para entrar numa vila", () => {
+    // Lote 5, N1: vila não existe nesta versão; o card de entrar numa comunidade saiu do Início.
+    expect(page).not.toContain("<JoinCommunityCard")
   })
 
   it("seção pronta e vazia não é desenhada", () => {

@@ -39,6 +39,8 @@ allowed_paths:
   - tests/e2e/
   - scripts/port/
   - docs/agents/tasks/COM-004.task.yml
+  - apps/web/app/(shell)/inicio/page.tsx (autorizado pelo coordenador em 24/10/2026, so para tirar o card de vila)
+  - tests/unit/ui/inicio-hub.test.ts
 forbidden:
   - push, merge, deploy, db push ou --linked
   - db reset fora da fila (os unicos permitidos sao node scripts/agents/prova-fila.mjs -- npx supabase db reset --local e --local --no-seed)

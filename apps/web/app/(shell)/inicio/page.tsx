@@ -10,7 +10,6 @@ import { InicioGreeting } from "./greeting"
 import { createRequestGuard, loadPrimaryCommunity, type PrimaryCommunity } from "./home-loaders"
 import { HubShortcuts } from "./hub-shortcuts"
 import { discoverySettled, hubNovelty, hubVisibility, newLabel } from "./hub-view"
-import { JoinCommunityCard } from "./join-community"
 import { MarketStrip, PropertyStrip } from "./market-strip"
 import { orderByNovelty } from "./novelty"
 import { GuideNews, OpenQuestions } from "./questions-guide"
@@ -112,7 +111,6 @@ export default function InicioPage() {
 
   const counts = hubNovelty(hub.data, novelty)
   const visible = hubVisibility(hub.data)
-  const hasCommunity = primary.status !== "none"
 
   // Perguntas e Guia andam juntos (lado a lado no desktop largo); Mercado e
   // Imóveis são faixas próprias.
@@ -196,9 +194,6 @@ export default function InicioPage() {
       <div className="mx-auto flex w-full max-w-[72rem] flex-1 gap-8 px-4 pt-4 pb-8 sm:pt-6 md:pb-10 lg:px-8">
         <div className="min-w-0 flex-1 space-y-5 sm:space-y-6">
           <InicioGreeting communityName={primary.status === "ready" ? primary.name : null} />
-
-          {/* Sem comunidade, o passo que falta vem antes de tudo. */}
-          {hasCommunity ? null : <JoinCommunityCard />}
 
           <HubShortcuts
             ref={shortcutsRef}
