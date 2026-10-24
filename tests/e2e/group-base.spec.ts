@@ -94,11 +94,15 @@ async function findGroupId(page: Page, session: Session, name: string): Promise<
   return id
 }
 
+// A publicação de preparo tem data conhecida: a prova confere que o cartão da
+// fixada mostra a data real da publicação, não um rótulo inventado. Doze dias
+// atrás cai na faixa em que o cartão mostra a data completa (≥ 7 dias).
 async function createGroupPost(
   page: Page,
   session: Session,
   groupId: string,
   content: string,
+  createdAt: string,
 ): Promise<void> {
   const response = await page.context().request.post(`${SUPABASE_URL}/rest/v1/posts`, {
     headers: {
@@ -113,6 +117,7 @@ async function createGroupPost(
       group_id: groupId,
       post_type: "text",
       content,
+      created_at: createdAt,
     },
   })
   if (response.status() >= 300) {
@@ -129,15 +134,22 @@ function waitForGroupPost(page: Page, groupId: string) {
   )
 }
 
+// O ciclo é longo (cria grupo pela tela, cria e fixa a publicação, responde,
+// denuncia e troca o aviso, nos três tamanhos): o teto padrão de 30 s não cabe.
+// Mesmo remédio de close-label-ptbr.spec.ts e feed-attachment-publish.spec.ts.
+test.setTimeout(120_000)
+
 test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
   test("cria grupo com regras, fixa a publicação e troca o aviso", async ({ page }) => {
     const session = await signInAs(page, VISUAL_EMAIL)
-    await page.setViewportSize({ width: 1280, height: 900 })
 
     const suffix = Date.now()
     const groupName = `Grupo COM-003 ${suffix}`
     const rulesText = "Regras COM-003: respeito, sem dado pessoal de terceiros."
     const postContent = "Publicação que a prova do COM-003 vai fixar no topo."
+    const commentText = "Primeira resposta da prova do COM-003."
+    const postCreatedAt = new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
+    const postDate = new Date(postCreatedAt).toLocaleDateString("pt-BR")
 
     // ── Criar grupo, com as regras e o rótulo Aberto ────────────────────────
     await page.goto("/groups")
@@ -171,13 +183,10 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     await expect(page.getByRole("heading", { level: 1, name: groupName })).toBeVisible()
     await expect(page.getByText("Aberto", { exact: true })).toBeVisible()
 
-    // O cabeçalho pegajoso (`sticky top-12`) intercepta o clique sintético no
-    // `summary` quando o Playwright tenta rolar o elemento para a vista. O toque
-    // real da pessoa funciona; o clique via DOM abre o `<details>` do mesmo jeito.
+    // O resumo de "Regras do grupo" abre com o clique de verdade do Playwright —
+    // nunca um `el.click()` pelo DOM, que passaria por fora do teste de alvo.
     const rulesSummary = page.locator("summary", { hasText: "Regras do grupo" })
-    await rulesSummary.evaluate((el) => {
-      if (el instanceof HTMLElement) el.click()
-    })
+    await rulesSummary.click()
     // O texto das regras também vive no textarea do painel de administração
     // (mesma conta dona). A prova lê o parágrafo dentro do `<details>` que a
     // pessoa acabou de abrir, não o campo de edição.
@@ -185,12 +194,12 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     await expect(rulesPanel.getByText(rulesText, { exact: true })).toBeVisible()
 
     // ── Fixar uma publicação do grupo ──────────────────────────────────────
-    await createGroupPost(page, session, groupId, postContent)
+    await createGroupPost(page, session, groupId, postContent, postCreatedAt)
     await page.reload()
 
     await expect(page.getByText(postContent)).toBeVisible()
     // De volta ao topo: com a página rolada, o cabeçalho pegajoso cobre o alvo
-    // do clique sintético.
+    // do clique.
     await page.evaluate(() => window.scrollTo(0, 0))
     const pinResponse = waitForGroupPost(page, groupId)
     await page.getByRole("button", { name: /Fixar publicação de/ }).click()
@@ -201,8 +210,22 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     // A publicação fixada é uma publicação comum: autor, data, comentários e
     // denúncia continuam ali.
     await expect(pinned.getByText(VISUAL_DISPLAY_NAME)).toBeVisible()
+    await expect(pinned.getByText(postDate)).toBeVisible()
     await expect(pinned.getByRole("button", { name: /Responder/ })).toBeVisible()
     await expect(page.getByRole("button", { name: "Desafixar" })).toBeVisible()
+
+    // ── Responder de verdade, de dentro da fixada ──────────────────────────
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await pinned.getByRole("button", { name: /Responder/ }).click()
+    await pinned.getByRole("textbox", { name: "Comentário" }).fill(commentText)
+    await pinned.getByRole("button", { name: "Enviar comentário" }).click()
+    await expect(pinned.getByText(commentText)).toBeVisible({ timeout: 15_000 })
+
+    // ── A denúncia abre a partir da fixada ────────────────────────────────
+    await pinned.getByRole("button", { name: "Mais opções" }).click()
+    await page.getByRole("menuitem", { name: "Denunciar publicação" }).click()
+    await expect(page.getByText("Por que você está denunciando esta publicação?")).toBeVisible()
+    await page.getByRole("button", { name: "Cancelar" }).click()
 
     // ── Trocar o aviso do grupo ────────────────────────────────────────────
     const notifySelect = page.getByLabel("Avisos do grupo")
@@ -214,9 +237,16 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Salvar avisos" }).click()
     await notifyResponse
 
-    // Recarrega para provar a persistência: o valor e a dica vêm do banco.
+    // Recarrega para provar a persistência: o valor e a dica vêm do banco, e o
+    // comentário enviado de dentro da fixada continua na publicação.
     await page.reload()
     await expect(page.getByLabel("Avisos do grupo")).toHaveValue("none")
     await expect(page.getByText("As publicações aparecem só na Início")).toBeVisible()
+    // O comentário enviado de dentro da fixada continua na publicação: a lista
+    // carrega ao abrir "Responder", como qualquer pessoa faria.
+    const pinnedAfterReload = page.getByRole("region", { name: "Aviso fixado" })
+    // Depois do comentário o rodapé passa a mostrar "1 resposta".
+    await pinnedAfterReload.getByRole("button", { name: /Responder|resposta/ }).click()
+    await expect(pinnedAfterReload.getByText(commentText)).toBeVisible({ timeout: 15_000 })
   })
 })
