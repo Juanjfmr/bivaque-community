@@ -71,9 +71,14 @@ grant select (group_id, user_id, role, status, joined_at)
 
 revoke update on table public.group_memberships from anon, authenticated;
 
--- `role` e `status` continuam escrevíveis pelo moderador (a policy
--- `group_memberships_update_moderator` decide a linha); `notify_level`, não.
-grant update (role, status) on table public.group_memberships to authenticated;
+-- Nenhuma escrita direta de `role` ou `status`. A policy antiga
+-- `group_memberships_update_moderator` deixava o moderador editar a PRÓPRIA
+-- participação e virar `owner`, escapando de todos os gates de dono
+-- (escalada de privilégio anterior a este lote, achada na revisão da COM-003).
+-- Aprovar, nomear e tirar moderador e passar a administração já são RPCs
+-- definer (`approve_group_member`, `add/remove_group_moderator`,
+-- `transfer_group_ownership`), e a tela não escreve nesta tabela.
+drop policy group_memberships_update_moderator on public.group_memberships;
 
 -- ── Gerenciar o grupo é do admin ────────────────────────────────────────────
 -- O protótipo só oferece Gerenciar a `role === 'admin'` (groups/views.js,

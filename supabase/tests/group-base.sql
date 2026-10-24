@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(68);
+select plan(69);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -399,15 +399,31 @@ select throws_ok(
   'o moderador não muda o aviso de outra pessoa'
 );
 
--- O moderador continua alcançando os campos que administra (role/status).
-select lives_ok(
+-- Papel e status só mudam pelas RPCs: a escrita direta do moderador é
+-- recusada, inclusive na própria participação (a autopromoção a dono era a
+-- escalada que fazia o moderador passar nos gates de dono).
+select throws_ok(
   $$
     update public.group_memberships
     set status = 'approved'
     where group_id = '40000000-0000-4000-8000-000000000001'
       and user_id = '10000000-0000-4000-8000-000000000002'
   $$,
-  'o moderador continua administrando role e status'
+  '42501',
+  null,
+  'o moderador não muda status de outra pessoa pela escrita direta'
+);
+
+select throws_ok(
+  $$
+    update public.group_memberships
+    set role = 'owner'
+    where group_id = '40000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000005'
+  $$,
+  '42501',
+  null,
+  'o moderador não se promove a dono pela escrita direta'
 );
 
 reset role;
