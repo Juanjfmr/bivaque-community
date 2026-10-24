@@ -9,6 +9,7 @@ import { FeedPost } from "../../../components/bivaque/feed-post"
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
 type FeedGroupRow = Database["public"]["Functions"]["feed_group"]["Returns"][number]
+type NotifyLevel = MembershipRow["notify_level"]
 type MemberListRow = {
   user_id: string
   role: MembershipRow["role"]
@@ -16,12 +17,23 @@ type MemberListRow = {
   joined_at: string
 }
 
+// Aviso por grupo (protótipo `presets.js` NOTIF): Tudo, Destaques ou Nada.
+const NOTIFY_LEVELS: ReadonlyArray<{ value: NotifyLevel; label: string; hint: string }> = [
+  { value: "all", label: "Tudo", hint: "Toda publicação do grupo" },
+  {
+    value: "highlights",
+    label: "Destaques",
+    hint: "Respostas a você, eventos e aviso fixado",
+  },
+  { value: "none", label: "Nada", hint: "As publicações aparecem só na Início" },
+]
+
 // ── Server actions (writes) ──────────────────────────────────────────────────
 // Authenticate from cookies, write through the authenticated client so RLS
-// decides. The pattern is the same as communities/actions.ts. completeEvent
-// stays on service_role because the RPC is service_role-only; the others
-// were broken before (createServiceClient() with persistSession: false made
-// getUser() return null — Step 1 of the plan recorded the measurement).
+// and the security-definer RPCs decide. completeEvent stays on service_role
+// because the RPC is service_role-only; the others were broken before
+// (createServiceClient() with persistSession: false made getUser() return
+// null — Step 1 of the plan recorded the measurement).
 
 async function getAuthClient() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -52,11 +64,9 @@ async function joinGroupAction(formData: FormData) {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  // desiredStatus used to come from the form. The plan removes that: the
-  // server derives status from groups.visibility through join_group
-  // (public → approved, private → pending). The form can still send
-  // desiredStatus for now, and it is silently ignored — Step 5 of the
-  // plan removes the hidden field from the markup.
+  // The server derives status from groups.visibility through join_group
+  // (public → approved, private → pending); the form's hidden field is
+  // ignored on purpose.
   const { error } = await supabase.rpc("join_group", { p_group_id: groupId })
   if (error) throw new Error(error.message)
 
@@ -75,13 +85,6 @@ async function leaveGroupAction(formData: FormData) {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  // group_memberships has no delete policy for authenticated today (the
-  // snapshot test records it). The fix has to add the policy — that is
-  // the next commit, this one only fixes the authentication. The delete
-  // will still be denied by RLS until the policy lands; the action stops
-  // being broken in the way it was (silent escalation via service_role)
-  // and starts being broken in the visible way (RLS denial the page
-  // can show).
   const { error } = await supabase
     .from("group_memberships")
     .delete()
@@ -109,12 +112,107 @@ async function transferOwnershipAction(formData: FormData) {
   if (!user) throw new Error("unauthenticated")
 
   // transfer_group_ownership is granted to authenticated and the RPC
-  // itself checks that the caller is the current owner. The action now
-  // matches the convention of communities/actions.ts.
+  // itself checks that the caller is the current owner.
   const { error } = await supabase.rpc("transfer_group_ownership", {
     p_group_id: groupId,
     p_new_owner_user_id: newOwnerId,
   })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+// B1: as regras do grupo (protótipo `editors.js`, "Regras do grupo", ≤ 600).
+async function setGroupRulesAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+  const rules = formData.get("rules")
+  if (typeof rules !== "string") throw new Error("rules required")
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // set_group_rules is security definer and gates on is_group_owner: gerenciar
+  // o grupo é do admin (protótipo `groups/views.js`), não do moderador.
+  const { error } = await supabase.rpc("set_group_rules", {
+    p_group_id: groupId,
+    p_rules: rules,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+// B1: o aviso por grupo (Tudo, Destaques ou Nada) da própria pessoa.
+async function setNotifyLevelAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+  const level = formData.get("level")
+  if (level !== "all" && level !== "highlights" && level !== "none") {
+    throw new Error("level required")
+  }
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // set_group_notify_level touches only the caller's own approved membership.
+  const { error } = await supabase.rpc("set_group_notify_level", {
+    p_group_id: groupId,
+    p_level: level,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+}
+
+// B1: a publicação fixada (uma por grupo, só o admin). O gatilho no banco
+// confere que a publicação é do próprio grupo e não está removida, e a RPC
+// exige is_group_owner.
+async function pinPostAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  const postId = formData.get("postId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+  if (typeof postId !== "string" || postId.length === 0) throw new Error("postId required")
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  const { error } = await supabase.rpc("pin_group_post", {
+    p_group_id: groupId,
+    p_post_id: postId,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+async function unpinPostAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  const { error } = await supabase.rpc("unpin_group_post", { p_group_id: groupId })
   if (error) throw new Error(error.message)
 
   revalidatePath(`/groups/${groupId}`)
@@ -229,9 +327,13 @@ export {
   deleteGroupAction,
   joinGroupAction,
   leaveGroupAction,
+  pinPostAction,
   rejectMembershipAction,
   removeMemberAction,
+  setGroupRulesAction,
+  setNotifyLevelAction,
   transferOwnershipAction,
+  unpinPostAction,
 }
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -279,15 +381,29 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     notFound()
   }
 
+  // A linha da própria participação, coluna a coluna: `notify_level` está fora
+  // do grant de SELECT de `authenticated` (o aviso é da própria pessoa) e um
+  // `select *` seria negado pela coluna revogada.
   const { data: membershipData, error: membershipError } = await authClient
     .from("group_memberships")
-    .select("*")
+    .select("group_id, user_id, role, status, joined_at")
     .eq("group_id", group.id)
     .eq("user_id", user.id)
     .maybeSingle()
 
   if (membershipError) throw new Error(`failed to read membership: ${membershipError.message}`)
   const membership = membershipData as MembershipRow | null
+
+  // O nível de aviso vem do RPC: a coluna não é legível pela Data API, e a
+  // função devolve só a linha de quem chama, só a aprovada.
+  const { data: notifyLevelData, error: notifyLevelError } = await authClient.rpc(
+    "my_group_notify_level",
+    { p_group_id: group.id },
+  )
+  if (notifyLevelError) {
+    throw new Error(`failed to read notify level: ${notifyLevelError.message}`)
+  }
+  const myNotifyLevel = (notifyLevelData as NotifyLevel | null) ?? null
 
   const { data: membersData, error: membersError } = await authClient
     .from("group_memberships")
@@ -334,15 +450,32 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   // F8: moderator can reject/remove members. Owner is implicitly a moderator.
   const isModerator = isOwner || membership?.role === "moderator"
 
+  // A publicação fixada é uma publicação comum do grupo: ela já vem no feed,
+  // com autor, data, comentários e denúncia. Um id que não está no feed (não
+  // visível, removido) simplesmente não renderiza o destaque.
+  const pinnedPost = group.pinned_post_id
+    ? (feed.find((post) => post.id === group.pinned_post_id) ?? null)
+    : null
+  const feedWithoutPinned = pinnedPost ? feed.filter((post) => post.id !== pinnedPost.id) : feed
+
+  const currentLevel =
+    NOTIFY_LEVELS.find((level) => level.value === myNotifyLevel) ?? NOTIFY_LEVELS[1]
+  if (!currentLevel) throw new Error("notify level definition missing")
+
   return (
     <div className="flex flex-1 flex-col">
-      <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
+      {/* O cabeçalho é pegajoso DENTRO do contêiner de rolagem (`main`,
+          `overflow-y-auto`). Com `top-12` ele era empurrado 48 px para baixo e
+          cobria o primeiro bloco de conteúdo — a 375 px ninguém conseguia tocar
+          em "Regras do grupo", que ficava embaixo dele. `top-0` gruda no topo
+          do próprio contêiner, sem sobrepor o conteúdo. */}
+      <div className="sticky top-0 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-baseline gap-2">
               <h1 className="truncate text-lg font-semibold tracking-tight">{group.name}</h1>
               <span className="shrink-0 text-xs uppercase tracking-wide text-muted">
-                {group.visibility === "public" ? "público" : "privado"}
+                {group.visibility === "public" ? "Aberto" : "Fechado"}
               </span>
             </div>
             {group.description && <p className="mt-1 text-sm text-muted">{group.description}</p>}
@@ -384,6 +517,62 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pt-4 pb-8">
+        {group.rules && (
+          <details className="rounded-md border border-border px-3 py-2">
+            <summary className="cursor-pointer text-sm font-semibold tracking-tight">
+              Regras do grupo
+            </summary>
+            <p className="mt-2 text-sm whitespace-pre-wrap text-muted">{group.rules}</p>
+          </details>
+        )}
+
+        {isApproved && (
+          <form
+            action={setNotifyLevelAction}
+            className="flex flex-wrap items-end gap-3 rounded-md border border-border px-3 py-3"
+          >
+            <input type="hidden" name="groupId" value={group.id} />
+            <div className="flex flex-col gap-1">
+              <label htmlFor="notify-level" className="text-sm font-semibold tracking-tight">
+                Avisos do grupo
+              </label>
+              <select
+                id="notify-level"
+                name="level"
+                defaultValue={myNotifyLevel ?? "highlights"}
+                className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
+              >
+                {NOTIFY_LEVELS.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-muted">{currentLevel.hint}</span>
+            </div>
+            <Button type="submit" size="sm" variant="tertiary">
+              Salvar avisos
+            </Button>
+          </form>
+        )}
+
+        {pinnedPost && (
+          <section aria-labelledby="pinned-heading" className="flex flex-col gap-2">
+            <h2 id="pinned-heading" className="text-sm font-semibold tracking-tight">
+              Aviso fixado
+            </h2>
+            <FeedPost post={pinnedPost} />
+            {isOwner && (
+              <form action={unpinPostAction} className="flex justify-end">
+                <input type="hidden" name="groupId" value={group.id} />
+                <Button type="submit" size="sm" variant="tertiary">
+                  Desafixar
+                </Button>
+              </form>
+            )}
+          </section>
+        )}
+
         {members.length > 0 && (
           <section aria-labelledby="members-heading">
             <h2 id="members-heading" className="mb-2 text-sm font-semibold tracking-tight">
@@ -471,6 +660,26 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                 </form>
               </div>
             )}
+
+            {isOwner && (
+              <form action={setGroupRulesAction} className="mt-3 flex flex-col gap-2">
+                <input type="hidden" name="groupId" value={group.id} />
+                <label htmlFor="group-rules" className="text-sm font-semibold tracking-tight">
+                  Regras do grupo
+                </label>
+                <textarea
+                  id="group-rules"
+                  name="rules"
+                  rows={3}
+                  maxLength={600}
+                  defaultValue={group.rules ?? ""}
+                  className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
+                />
+                <Button type="submit" size="sm" variant="tertiary" className="self-start">
+                  Salvar regras
+                </Button>
+              </form>
+            )}
           </section>
         )}
 
@@ -478,12 +687,30 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           <h2 id="group-feed-heading" className="mb-2 text-sm font-semibold tracking-tight">
             Publicações
           </h2>
-          {feed.length > 0 ? (
+          {feedWithoutPinned.length > 0 ? (
             <div className="space-y-2">
-              {feed.map((post, index) => (
-                <FeedPost key={post.id} post={post} index={index} />
+              {feedWithoutPinned.map((post, index) => (
+                <div key={post.id} className="space-y-1">
+                  {isOwner && (
+                    <form action={pinPostAction} className="flex justify-end">
+                      <input type="hidden" name="groupId" value={group.id} />
+                      <input type="hidden" name="postId" value={post.id} />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        variant="tertiary"
+                        aria-label={`Fixar publicação de ${post.display_name ?? "membro"}`}
+                      >
+                        Fixar
+                      </Button>
+                    </form>
+                  )}
+                  <FeedPost post={post} index={index} />
+                </div>
               ))}
             </div>
+          ) : pinnedPost ? (
+            <p className="text-sm text-muted">Nenhuma outra publicação ainda.</p>
           ) : (
             <p className="text-sm text-muted">Nenhuma publicação ainda.</p>
           )}

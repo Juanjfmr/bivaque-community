@@ -56,6 +56,7 @@ export function rendersWithActor(notification: NotificationRow): boolean {
   switch (notification.type) {
     case "comment":
     case "group_admission":
+    case "group_post":
     case "invitation_accepted":
     case "event_rsvp":
     case "event_change":
@@ -73,6 +74,14 @@ export function formatNotificationLabel(notification: NotificationRow): string {
       return "comentou na sua publicação"
     case "group_admission":
       return "aprovou sua entrada no grupo"
+    case "group_post":
+      // O aviso de grupo carrega dois fatos e a `action` os separa: publicação
+      // nova no grupo (Tudo) e publicação fixada pelo admin (Tudo e Destaques).
+      // É o `NOTIF` de presets.js: Tudo recebe a publicação, Destaques recebe a
+      // fixada e a resposta ao que a pessoa escreveu.
+      return notification.action === "pinned"
+        ? "fixou uma publicação no grupo"
+        : "publicou no grupo"
     case "invitation_accepted":
       return "aceitou seu convite de família"
     case "event_rsvp":
@@ -140,6 +149,9 @@ export function resolveNotificationHref(
     case "comment":
       return `/community?post=${notification.target_id}`
     case "group_admission":
+      return `/groups/${notification.target_id}`
+    case "group_post":
+      // O alvo é o grupo: a publicação vive no feed dele.
       return `/groups/${notification.target_id}`
     case "invitation_accepted":
       // O perfil de terceiro é /profile/[userId]. Sem ator (linha de convite

@@ -48,3 +48,87 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# --- Evidencia COM-003 (2026-10-23, branch codex/lote5-grupo-base) ---
+# Prova de banco pela fila: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+#   PASS: 155 arquivos, 2296 testes; supabase/tests/group-base.sql 34/34.
+# Tipos regerados depois do reset sem seed: npx pnpm@11.18.0 generate:types
+#   (columns rules e pinned_post_id em groups, notify_level em group_memberships, e as RPCs set_group_rules,
+#   set_group_notify_level, pin_group_post, unpin_group_post, list_group_activity, create_group com p_rules).
+# Gate: npx pnpm@11.18.0 gate -> VERDE (lint, typecheck, typecheck:e2e, test, secrets; o estagio build e pulado
+#   pelo gate porque apps/web/.env.local nao existe nesta maquina).
+# Build: npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   exportados de npx supabase status -o env -> exit 0.
+# db:lint: supabase db lint --local --level error -> No schema errors found.
+# E2E pela fila: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/group-base.spec.ts
+#   PASS: 3 passaram (mobile-375, tablet-768, desktop-1440), 0 falharam.
+#   O host nao tem o bundle chromium 1161 do Playwright 1.51.1; a prova usou o escape hatch
+#   PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH apontando para o Chrome do sistema, e a senha publica do seed
+#   via BIVAQUE_VISUAL_PASSWORD no ambiente (apps/web/.env.local nunca foi criado nem commitado).
+# Divergencia do prototipo decidida pelo ADR secao 3: o aviso fixado e uma publicacao, nao texto; por isso a tela
+#   Gerenciar nao tem campo de aviso fixado e a fixacao vive no feed do grupo.
+# Captura comparada com o prototipo: scripts/port/compare-groups.mjs (novo nesta entrega).
+#   node scripts/agents/prova-fila.mjs -- node scripts/port/compare-groups.mjs
+#   PASS: 16 pares + report.json em .visual/com-003/ (lista, criar, detalhe e gerenciar x 375/1440 x claro/escuro),
+#   0 erros de pagina; o prototipo vem de `python scripts/bivaque-html/build.py` e o Next de `next start`.
+#   O par de detalhe usa o grupo que o proprio e2e cria (Grupo COM-003 ...), o unico com regras, publicacao
+#   fixada e o dono na sessao; um grupo semeado rende tela vazia e nao serve para julgar as telas entregues.
+#   Por isso o artefato foi produzido com o e2e e a captura na MESMA janela da fila (um unico reset com seed).
+#   Diferenca esperada, registrada no report.json: as telas de grupo ainda nao foram portadas para a pele
+#   Material Web (ADR-20261022, migracao tela a tela), entao o par compara composicao, os rotulos Aberto/Fechado
+#   e os textos, nao a camada visual. O porte visual das telas do grupo segue como proximo passo.
+# Regressao dos specs de grupo existentes: groups-state-truth.spec.ts e group-admin-cycle.spec.ts
+#   -> 18 passed, 0 falharam (com USER_PASSWORD no ambiente; sem ele os dois specs falham por ambiente,
+#   no requireCredentials, antes de tocar em qualquer tela — nao e defeito do produto).
+# --- Correcao da revisao independente (24/10/2026, mesma branch codex/lote5-grupo-base) ---
+# A migration 20261024120000 ainda nao foi para a main: foi editada no lugar, como o coordenador pediu.
+# Achados fechados:
+# 1. P1 admin. set_group_rules, pin_group_post e unpin_group_post exigem is_group_owner, e a policy
+#    groups_update_owner passa a exigir o dono. O moderador nao muda regras nem fixacao pela RPC nem
+#    pela escrita direta (a linha fica invisivel para o UPDATE e o valor nao muda). pgTAP: moderador
+#    recusado nas duas vias, membro comum recusado na escrita direta, dono passa.
+# 2. P2 aviso por grupo. Grant por coluna, no padrao da SEC-002: authenticated perde SELECT e UPDATE em
+#    notify_level e mantem role e status. Ninguem le o aviso de outra pessoa e o moderador nao muda o
+#    alheio. A propria pessoa le pelo RPC novo public.my_group_notify_level e escreve pelo
+#    set_group_notify_level; nenhuma coluna nova e nenhuma policy nova.
+# 3. P2 aviso ligado aos avisos de grupo. Nada: nenhum aviso de grupo; Destaques: publicacao fixada e
+#    resposta ao que a pessoa escreveu; Tudo: tambem publicacao nova. Produtores novos
+#    private.notify_group_post (insert em posts com group_id) e private.notify_group_pin (mudanca de
+#    pinned_post_id em groups), e private.notify_comment consulta o nivel quando a publicacao e de
+#    grupo. Tipo novo group_post, com action created e pinned. pgTAP de cada nivel, contando por
+#    destinatario.
+#    Divergencia do prototipo, dita: NOTIF.destaques tambem lista eventos; o aviso de evento segue no
+#    produtor proprio do evento (event_rsvp/event_change) e o nivel do grupo governa o conteudo do
+#    grupo, porque o encontro no feed do grupo e a frente C1, nao esta.
+#    Ampliacao de escopo declarada: um tipo de notificacao sem destino e o defeito que o proprio
+#    apps/web/app/(shell)/notifications/deep-links.ts nomeia, entao o consumidor ganhou o caso
+#    group_post (rotulo por action e destino /groups/<id>) e a pagina de notificacoes passou a ler o
+#    nome do grupo. Os dois arquivos estao fora de allowed_paths; entregar o produtor sem destino foi
+#    considerado pior que a ampliacao minima, que fica registrada aqui.
+# 4. P2 negativo do pgTAP. Leitura da publicacao fixada do grupo Fechado por membro da localidade que
+#    nao e membro: recusada — e o grupo continua visivel, o que e recusado e a publicacao.
+# 5. P2 e2e. Saiu o setViewportSize (cada projeto no proprio tamanho), o resumo das regras abre com
+#    clique de verdade do Playwright (nao mais el.click pelo DOM), e a prova cobre data da publicacao
+#    (created_at conhecido), resposta enviada de verdade e a denuncia que abre. O clique real expos um
+#    defeito de tela: o cabecalho pegajoso da pagina do grupo usava sticky top-12 dentro do contenedor
+#    de rolagem (main overflow-y-auto) e cobria o primeiro bloco de conteudo — a 375 nao havia como
+#    tocar em Regras do grupo. Virou top-0, no padrao de /messages e /community.
+# Prova de banco pela fila: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+#   PASS: 155 arquivos, 2330 testes; supabase/tests/group-base.sql 68/68 (inclui group-admin-cycle.sql,
+#   group-join-status.sql e group-membership-self-visibility.sql, os vizinhos que leem participacao).
+# Tipos: npx pnpm@11.18.0 generate:types com o banco resetado sem seed -> RPC my_group_notify_level e o
+#   valor group_post em notification_type no supabase/database.generated.ts.
+# Gate: node scripts/gate.mjs -> VERDE (lint, typecheck, typecheck:e2e, test, secrets; o estagio build e
+#   pulado pelo gate porque apps/web/.env.local nao existe nesta maquina).
+# Build: npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   do stack local -> exit 0; o webServer do e2e recompilou a mesma revisao antes de servir.
+# db:lint: supabase db lint --local --level error -> No schema errors found, no estado sem seed da fila.
+# E2E pela fila: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/group-base.spec.ts
+#   PASS: 3 passaram (mobile-375, tablet-768, desktop-1440), 43.3s, sem exportar nada — o
+#   prova-sequencia passa as contas do seed e o Chromium instalado.
+#   A porta 3000 estava presa por um next start de outra lane, e o reuseExistingServer do Playwright
+#   estava testando o build de outro worktree: a prova foi repetida com a fila segurando a trava e
+#   liberando a porta antes de subir o proprio servidor (.visual/com-003/fila-e2e.mjs, nao versionado).
+#   O PASS acima e contra o build desta revisao.
+# Nao rodei de novo, nesta sessao, os specs e2e vizinhos de grupo (groups-state-truth.spec.ts,
+#   group-admin-cycle.spec.ts): eles cobrem o ciclo de administracao, que segue do dono, e o pgTAP
+#   equivalente (group-admin-cycle.sql) rodou verde no test:db desta prova.

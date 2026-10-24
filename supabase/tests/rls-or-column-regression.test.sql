@@ -312,13 +312,14 @@ select results_eq(
       and policyname in (
         'group_memberships_select',
         'group_memberships_insert_self',
-        'group_memberships_update_moderator',
         'group_memberships_delete_self',
         'group_memberships_delete_moderator'
       )
   $$,
-  array[5::bigint],
-  'GUARD: all 5 group_memberships policies intact'
+  -- COM-003 (lote 5): sai group_memberships_update_moderator, que deixava o
+  -- moderador se promover a dono; papel e status só mudam por RPC definer.
+  array[4::bigint],
+  'GUARD: all 4 group_memberships policies intact'
 );
 
 select results_eq(
@@ -576,8 +577,8 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'group_memberships'
   $$,
-  array[5::bigint],
-  'GUARD: group_memberships has exactly 5 policies'
+  array[4::bigint],
+  'GUARD: group_memberships has exactly 4 policies'
 );
 
 select results_eq(
