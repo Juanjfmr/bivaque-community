@@ -7,14 +7,14 @@ approved_at:
 accepted_at:
 expires_at:
 linked_plan: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
-critic_verdict: pending
+critic_verdict: PASS-PENDENTE
 critic_review: >
-  Primeira crítica do Codex (gpt-6.1-sol) em 24/10/2026: NÃO PRONTO, com seis pontos. (1) A vila também está presa a
-  prestadores e anúncios, e a exclusão de conta lê essas tabelas. (2) pg_depend não enxerga o corpo das funções nem
-  vínculo sem FK. (3) A matriz deixava de fora suspensão, membro só leitura, permissão por coluna, transições e
-  conteúdo moderado, e travar nome de policy não pega USING (true). (4) "Também perguntar à cidade" mexe nas
-  Indicações. (5) O bloqueio não cabe num booleano. (6) Branch única não protege o deploy. Esta versão incorpora os
-  seis.
+  Duas críticas do Codex (gpt-6.1-sol) em 24/10/2026. A primeira deu NÃO PRONTO com seis pontos: a vila presa a
+  prestadores, anúncios e exclusão de conta; pg_depend sem o corpo das funções nem vínculo sem FK; matriz sem
+  suspensão, só leitura, colunas, transições e conteúdo moderado; "Também perguntar à cidade" mexendo nas
+  Indicações; bloqueio que não cabe num booleano; deploy sem ensaio. A segunda deu cinco resolvidos e um parcial:
+  relaxar o CHECK de origem das perguntas abria inserção sem conferir participação, pela policy de INSERT atual.
+  Esta versão fecha esse ponto (seção 1). Falta a terceira conferência.
 ---
 
 # O domínio da Comunidade é redesenhado a partir do protótipo
@@ -58,8 +58,16 @@ no lugar; a vila sai na mesma leva**, inclusive dos pontos da fundação que dep
   (`hidden_posts`);
 - o vínculo opcional do evento com um grupo;
 - "Também perguntar à cidade": a pergunta feita num grupo Aberto aparece também nas Indicações da cidade, com o
-  nome do grupo. Isso muda o CHECK de origem de `recommendation_requests` e as leituras que dependem dele. O resto
-  das Indicações, portado na COM-002, fica como está.
+  nome do grupo. Isso muda, numa migration só:
+  - o CHECK de origem de `recommendation_requests`, que passa a aceitar cidade e grupo juntos;
+  - **a policy de INSERT**, que hoje aceita cidade e grupo preenchidos sem conferir participação em nenhum dos dois,
+    porque o CHECK atual impede essa combinação. Ela passa a exigir que quem pergunta seja membro ativo do grupo,
+    que o grupo esteja Aberto e não Encerrado, e que a cidade da pergunta seja a do grupo, como no protótipo
+    (`src/features/groups/handlers.js:30`);
+  - as leituras que dependem da origem.
+  O CHECK nunca é relaxado sem a policy nova na mesma migration. Os negativos por escrita direta na tabela (não
+  membro, grupo Fechado, grupo Encerrado, cidade diferente da do grupo) entram na suíte. O resto das Indicações,
+  portado na COM-002, fica como está.
 
 **Muda só onde a vila toca:**
 - **Anúncio:** a audiência passa a ser só a cidade. Sai `listings.community_id`, com o CHECK de audiência exclusiva e
