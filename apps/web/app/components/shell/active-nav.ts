@@ -31,69 +31,72 @@ export type ActiveNav =
 
 // Os quatro containers primários. Os ids são os mesmos de NAV_ITEMS em
 // bottom-nav.tsx — se um item nascer aqui com outro id, o teste falha.
-export const PRIMARY_CONTAINERS = ["inicio", "explorar", "comunidades", "perfil"] as const
+//
+// Lote 5, tarefa N1 (ADR-20261023-comunidade-do-prototipo, "Navegação e
+// estrutura"): a barra segue o protótipo — Início, Comunidade, Conversas e
+// Você. Isto substitui os containers Início/Explorar/Comunidades/Perfil do
+// PROCESSO-DE-CONSTRUCAO §7, que a reconstrução de 2026-09-06 tinha fixado.
+export const PRIMARY_CONTAINERS = ["inicio", "comunidade", "conversas", "voce"] as const
 
 export type PrimaryContainer = (typeof PRIMARY_CONTAINERS)[number]
 
 // Destinos secundários que representam a si mesmos na lateral porque têm item
-// próprio desenhado em app-shell.tsx. `/notifications` fica DE FORA de
-// propósito: o contrato DS-011 (tests/e2e/nav-container-invariant.spec.ts)
-// exige que ela continue caindo em "perfil". Só `/salvos` acende a si mesma.
-export const SECONDARY_SELF_ROUTES = ["/salvos"] as const
+// próprio desenhado em app-shell.tsx. A lista ficou VAZIA no lote 5 N1: o
+// protótipo põe Salvos em Você (activeTab() devolve 'voce' para salvos), então
+// /salvos acende Você — não a si mesmo. A entrada segunda da lateral continua
+// existindo como atalho, mas não é mais um destino primário autônomo.
+export const SECONDARY_SELF_ROUTES = [] as const
 
 // A que container cada ÁREA pertence. É a regra de produto, não uma lista de
 // telas: o prefixo da área resolve, e a tela herda o container do pai
-// conceitual (DESIGN_SYSTEM §7.1; PROCESSO-DE-CONSTRUCAO §7):
+// conceitual (prototypes/bivaque-html/src/shell/navigation.js activeTab):
 //
-//   Explorar    → descoberta, busca, Guia, Mercado, serviços, moradia, eventos
-//   Comunidades → comunidades e grupos (grupos vivem dentro de uma comunidade)
-//   Perfil      → dados da pessoa, conta, notificações e a conversa contextual
+//   Início     → descoberta da cidade (Guia, Mercado, Imóveis, encontros,
+//                serviços) — o antigo Explorar vive aqui.
+//   Comunidade → a Comunidade da cidade: perguntas e respostas (Indicações) e
+//                os Grupos; também as rotas antigas de vila, que redirecionam.
+//   Conversas  → as mensagens privadas.
+//   Você       → a pessoa: perfil, conta, notificações, Salvos, Meus anúncios,
+//                Bloqueados, Privacidade, Conduta e Ajuda.
 //
 // Ordem importa: o prefixo mais específico primeiro. A comparação é por
 // fronteira (`matches`), então `/prestadores` não casa `/prestador`.
 export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]> = [
   ["/inicio", "inicio"],
-  ["/explorar", "explorar"],
-  ["/guide", "explorar"],
-  ["/events", "explorar"],
-  ["/mercado", "explorar"],
-  // Decisão do dono em 12/09/2026, contra o DESIGN_SYSTEM §7, que manda a
-  // gestão dos próprios anúncios para Perfil. Os cinco caminhos de entrada
-  // desta tela estão todos dentro do Mercado, e Perfil não tem nenhum. O §7
-  // não está errado, está não construído: no dia em que Perfil ganhar uma
-  // entrada para cá, esta linha muda junto com ela. Comparar com /salvos, que
-  // é igualmente "coisa da pessoa" e fica em Perfil — porque tem item próprio
-  // na lateral, isto é, é alcançável de lá.
-  ["/meus-anuncios", "explorar"],
-  ["/imoveis", "explorar"],
-  ["/recommendations", "explorar"],
-  // Indicações é uma vista da comunidade (ADR-20260925-memoria-de-indicacoes).
-  ["/indicacoes", "comunidades"],
-  ["/prestadores", "explorar"],
-  ["/communities", "comunidades"],
-  ["/community", "comunidades"],
-  ["/groups", "comunidades"],
-  ["/profile", "perfil"],
-  ["/negocio", "perfil"],
-  ["/configuracoes", "perfil"],
-  ["/messages", "perfil"],
-  ["/notifications", "perfil"],
-  // A conversa contextual membro↔prestador vive em Perfil, e o pedido é o
-  // workspace dessa conversa (DESIGN_SYSTEM §7.1).
-  ["/pedidos", "perfil"],
-  ["/denuncias", "perfil"],
-  ["/ajuda", "perfil"],
-  // Não existe container "cidade" nesta versão (PROCESSO §7), então a pergunta
-  // é de onde se chega aqui. Dentro do shell, os dois únicos links para
-  // /localidade estão em Explorar — `explorar/busca` e `explorar/servicos`. O
-  // terceiro é a tela de boas-vindas do onboarding, que roda fora do shell e
-  // não tem lateral para acender. A lateral responde "onde estou e como volto",
-  // não "de quem é o dado": acender Perfil aqui mandaria a pessoa para um
-  // container que não alcança esta tela.
-  ["/localidade", "explorar"],
-  // Consulta a outra cidade (25/09/2026): é descoberta — Guia, encontros e
-  // anúncios de outro lugar —, e a volta é pelo mesmo caminho de /localidade.
-  ["/cidade", "explorar"],
+  // O Explorar do §7 some da barra: a descoberta é do Início, como no protótipo.
+  ["/explorar", "inicio"],
+  ["/guide", "inicio"],
+  ["/events", "inicio"],
+  ["/mercado", "inicio"],
+  ["/imoveis", "inicio"],
+  ["/prestadores", "inicio"],
+  ["/localidade", "inicio"],
+  ["/cidade", "inicio"],
+  // Indicações é a vista de perguntas da Comunidade; /recommendations é a rota
+  // aposentada que redireciona para ela.
+  ["/recommendations", "comunidade"],
+  ["/indicacoes", "comunidade"],
+  // As vilas saíram da tela no lote 5 N1; /communities e /groups e /community
+  // são a Comunidade da cidade (as duas primeiras redirecionam para a última).
+  ["/communities", "comunidade"],
+  ["/community", "comunidade"],
+  ["/groups", "comunidade"],
+  ["/messages", "conversas"],
+  ["/profile", "voce"],
+  // Salvos é coisa da pessoa (activeTab() do protótipo → 'voce'); deixou de ser
+  // um destino secundário autônomo no lote 5 N1.
+  ["/salvos", "voce"],
+  ["/negocio", "voce"],
+  ["/configuracoes", "voce"],
+  ["/notifications", "voce"],
+  // A conversa contextual membro↔prestador vive em Você, e o pedido é o
+  // workspace dessa conversa.
+  ["/pedidos", "voce"],
+  ["/denuncias", "voce"],
+  ["/ajuda", "voce"],
+  // "Meus anúncios" é coisa da pessoa (activeTab() do protótipo → 'voce'),
+  // embora o caminho de entrada esteja no Mercado.
+  ["/meus-anuncios", "voce"],
 ]
 
 // Rotas que renderizam FORA do shell do membro: funil de entrada, onboarding,

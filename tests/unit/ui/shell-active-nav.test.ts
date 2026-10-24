@@ -16,11 +16,14 @@ const bottomNav = join(root, "apps", "web", "app", "components", "bivaque", "bot
 
 // Espelha NAV_ITEMS de bottom-nav.tsx. O teste abaixo lê o arquivo e confere
 // cada href, então mudar a navegação real sem a fixture aqui falha alto.
+//
+// Lote 5, tarefa N1 (ADR-20261023-comunidade-do-prototipo): a barra passa a
+// Início / Comunidade / Conversas / Você, como o activeTab() do protótipo.
 const PRIMARY = [
   { id: "inicio", href: "/inicio" },
-  { id: "explorar", href: "/explorar" },
-  { id: "comunidades", href: "/communities" },
-  { id: "perfil", href: "/profile" },
+  { id: "comunidade", href: "/community" },
+  { id: "conversas", href: "/messages" },
+  { id: "voce", href: "/profile" },
 ]
 
 function isDeclaredContainer(pathname: string): boolean {
@@ -30,56 +33,52 @@ function isDeclaredContainer(pathname: string): boolean {
 }
 
 describe("resolveActiveNav deriva o item ativo da rota", () => {
-  it("/salvos acende Salvos, nunca Perfil — o defeito do RECON-038", () => {
-    expect(resolveActiveNav("/salvos", PRIMARY)).toEqual({
-      kind: "secondary",
-      href: "/salvos",
-    })
-  })
-
-  it("/salvos/... também acende Salvos", () => {
-    expect(resolveActiveNav("/salvos/abc", PRIMARY)).toEqual({
-      kind: "secondary",
-      href: "/salvos",
-    })
+  it("Salvos acende Você, como no activeTab() do protótipo", () => {
+    // O protótipo devolve 'voce' para salvos (navigation.js:54). A entrada
+    // secundária da lateral continua existindo como atalho, mas não é mais um
+    // destino primário autônomo.
+    expect(resolveActiveNav("/salvos", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
+    expect(resolveActiveNav("/salvos/abc", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
   })
 
   it("cada container primário acende a si mesmo", () => {
     expect(resolveActiveNav("/inicio", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
-    expect(resolveActiveNav("/explorar", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
-    expect(resolveActiveNav("/explorar/servicos", PRIMARY)).toEqual({
-      kind: "primary",
-      id: "explorar",
-    })
-    expect(resolveActiveNav("/communities", PRIMARY)).toEqual({
-      kind: "primary",
-      id: "comunidades",
-    })
-    expect(resolveActiveNav("/profile", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
+    expect(resolveActiveNav("/community", PRIMARY)).toEqual({ kind: "primary", id: "comunidade" })
+    expect(resolveActiveNav("/messages", PRIMARY)).toEqual({ kind: "primary", id: "conversas" })
+    expect(resolveActiveNav("/profile", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
   })
 
-  it("preserva o fallback DS-011: mensagens e notificações caem em Perfil", () => {
-    expect(resolveActiveNav("/messages", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
-    expect(resolveActiveNav("/notifications", PRIMARY)).toEqual({
+  it("o Explorar do §7 some da barra: a descoberta acende Início", () => {
+    expect(resolveActiveNav("/explorar", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
+    expect(resolveActiveNav("/explorar/servicos", PRIMARY)).toEqual({
       kind: "primary",
-      id: "perfil",
+      id: "inicio",
     })
-    expect(resolveActiveNav("/denuncias/nova", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
-    expect(resolveActiveNav("/ajuda", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
+  })
+
+  it("mensagens e notificações: Conversas e Você, respectivamente", () => {
+    expect(resolveActiveNav("/messages", PRIMARY)).toEqual({ kind: "primary", id: "conversas" })
+    expect(resolveActiveNav("/messages/abc", PRIMARY)).toEqual({
+      kind: "primary",
+      id: "conversas",
+    })
+    expect(resolveActiveNav("/notifications", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
+    expect(resolveActiveNav("/denuncias/nova", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
+    expect(resolveActiveNav("/ajuda", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
   })
 
   it("RECON-042: a área manda, não o último recurso", () => {
-    expect(resolveActiveNav("/guide", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
-    expect(resolveActiveNav("/events", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
+    expect(resolveActiveNav("/guide", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
+    expect(resolveActiveNav("/events", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
     expect(resolveActiveNav("/recommendations", PRIMARY)).toEqual({
       kind: "primary",
-      id: "explorar",
+      id: "comunidade",
     })
-    expect(resolveActiveNav("/configuracoes", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
+    expect(resolveActiveNav("/configuracoes", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
     for (const section of ["conta", "notificacoes", "familia", "bloqueados"]) {
       expect(resolveActiveNav(`/configuracoes/${section}`, PRIMARY)).toEqual({
         kind: "primary",
-        id: "perfil",
+        id: "voce",
       })
     }
   })
@@ -89,8 +88,8 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     expect(resolveActiveNav("/rota-nova-qualquer", PRIMARY)).toEqual({ kind: "none" })
   })
 
-  it("só /salvos é destino secundário que acende a si mesmo", () => {
-    expect([...SECONDARY_SELF_ROUTES]).toEqual(["/salvos"])
+  it("nenhum destino secundário acende a si mesmo depois do lote 5 N1", () => {
+    expect([...SECONDARY_SELF_ROUTES]).toEqual([])
   })
 })
 
@@ -145,10 +144,10 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
     }
   })
 
-  it("a gestão do negócio do membro pertence ao espaço Perfil", () => {
+  it("a gestão do negócio do membro pertence ao espaço Você", () => {
     expect(resolveActiveNav("/negocio/catalogo", PRIMARY)).toEqual({
       kind: "primary",
-      id: "perfil",
+      id: "voce",
     })
   })
 })
@@ -156,7 +155,8 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
 // 25/09/2026: a barra inferior do celular tinha regra própria (prefixo do item,
 // senão "Início") e acendia Início em /community, /guide, /events, /mercado e
 // /cidade, enquanto a lateral acendia o lugar certo. Agora as duas usam
-// resolveActiveNav — a mesma resposta nos dois tamanhos.
+// resolveActiveNav — a mesma resposta nos dois tamanhos. Lote 5 N1: os
+// destinos continuam declarados, agora contra as quatro entradas do protótipo.
 describe("barra inferior do celular usa a mesma regra da lateral", () => {
   const bottomNavSource = readFileSync(bottomNav, "utf8")
 
@@ -166,14 +166,15 @@ describe("barra inferior do celular usa a mesma regra da lateral", () => {
   })
 
   it.each([
-    ["/community", "comunidades"],
-    ["/guide", "explorar"],
-    ["/events/abc", "explorar"],
-    ["/mercado", "explorar"],
-    ["/cidade/abc", "explorar"],
-    ["/indicacoes", "comunidades"],
-    ["/indicacoes/abc", "comunidades"],
-    ["/notifications", "perfil"],
+    ["/community", "comunidade"],
+    ["/guide", "inicio"],
+    ["/events/abc", "inicio"],
+    ["/mercado", "inicio"],
+    ["/cidade/abc", "inicio"],
+    ["/indicacoes", "comunidade"],
+    ["/indicacoes/abc", "comunidade"],
+    ["/notifications", "voce"],
+    ["/messages/abc", "conversas"],
   ])("%s acende %s", (path, id) => {
     expect(resolveActiveNav(path, PRIMARY)).toEqual({ kind: "primary", id })
   })

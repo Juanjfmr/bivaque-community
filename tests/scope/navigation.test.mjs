@@ -3,12 +3,11 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import test from "node:test"
 
-// PROCESSO-DE-CONSTRUCAO.md §7 — navegação-alvo da reconstrução 2026-09-06.
-// Substitui os quatro containers históricos (cidade/community/groups/me) do
-// ADR-20260816. Os novos containers derivam do modelo de produto da versão
-// atual: Início (home de quem participa), Explorar (descoberta — inclui Guia
-// e Mercado como entradas), Comunidades (minhas + descoberta), Perfil (o
-// membro: perfil, conta, notificações, mensagens contextuais).
+// ADR-20261023-comunidade-do-prototipo §"Navegação e estrutura" (aceito pelo
+// dono em 2026-10-23) — a barra segue o protótipo, que substitui os quatro
+// containers do PROCESSO-DE-CONSTRUCAO §7 (Início/Explorar/Comunidades/Perfil).
+// Os containers passam a Início (home e descoberta), Comunidade (perguntas e
+// respostas e grupos), Conversas (mensagens privadas) e Você (a pessoa).
 // Este teste é a task: é a única coisa que impede a divergência entre spec e código voltar.
 // (a) NAV_ITEMS tem exatamente esses quatro ids.
 // (b) O número de itens respeita o teto de 5 (iOS HIG / Material).
@@ -39,7 +38,7 @@ const guideSource = readFileSync(GUIDE_PATH, "utf8")
 
 test("NAV_ITEMS is exactly the four product-model containers", () => {
   const ids = navItemIds(navSource)
-  assert.deepEqual(ids, ["inicio", "explorar", "comunidades", "perfil"])
+  assert.deepEqual(ids, ["inicio", "comunidade", "conversas", "voce"])
 })
 
 test("navigation item count respects the declared ceiling of five", () => {
@@ -49,8 +48,9 @@ test("navigation item count respects the declared ceiling of five", () => {
 
 test("no top-level nav tab for folded destinations", () => {
   const ids = navItemIds(navSource)
-  // events/messages/indications never were containers; groups and cidade were
-  // folded into comunidades/inicio by PROCESSO-DE-CONSTRUCAO §7.
+  // events/indications never were containers; /groups (a aba da Comunidade) e
+  // cidade seguem fora da barra. "Conversas" agora É um container (o protótipo
+  // põe as mensagens na barra); o que não pode voltar é um item "messages".
   for (const forbidden of ["events", "messages", "indications", "groups", "cidade"]) {
     assert.ok(!ids.includes(forbidden), `"${forbidden}" must not be a top-level container`)
   }

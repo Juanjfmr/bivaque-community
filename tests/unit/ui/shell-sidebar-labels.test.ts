@@ -9,11 +9,14 @@ const bottomNav = join(root, "apps", "web", "app", "components", "bivaque", "bot
 // O destino que cada rótulo de item da lateral promete. É a régua do defeito 1:
 // se um item chamado "Configurações" apontar para a área de outro rótulo, o
 // teste reprova — e vale para o próximo item, não só para este.
+//
+// Lote 5 N1 (ADR-20261023-comunidade-do-prototipo): a navegação primária passa a
+// Início / Comunidade / Conversas / Você, como o activeTab() do protótipo.
 const DESTINO_POR_ROTULO: Record<string, string> = {
   Início: "/inicio",
-  Explorar: "/explorar",
-  Comunidades: "/communities",
-  Perfil: "/profile",
+  Comunidade: "/community",
+  Conversas: "/messages",
+  Você: "/profile",
   Salvos: "/salvos",
   Notificações: "/notifications",
   Configurações: "/configuracoes",

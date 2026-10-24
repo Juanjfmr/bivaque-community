@@ -354,13 +354,16 @@ interação. “Está bonito em uma tela” não é aceite.
 ### 7.1 Shell, escopo e navegação
 
 Navegação primária responde **o que fazer**; escopo responde **onde e com quem**. O membro vê
-containers estáveis para `inicio` (Início), `explorar` (Explorar), `comunidades` (Comunidades) e
-`perfil` (Perfil); cada rota de detalhe mantém seu pai conceitual em todos os tamanhos. Guia e
-vitrine vivem em Explorar; grupos vivem dentro de uma comunidade; conta, notificações e a conversa
-contextual membro↔prestador vivem em Perfil. **Não existe inbox nem DM geral entre membros.**
-Mensagens só surgem como conversa contextual membro↔prestador, no shell e permissões próprios.
-Papéis privilegiados e prestador têm shells próprios. Esta lista substitui os containers históricos
-do `ADR-20260816-shells-e-navegacao` por autorização do PROCESSO-DE-CONSTRUCAO §7 (2026-09-06).
+containers estáveis para `inicio` (Início), `comunidade` (Comunidade), `conversas` (Conversas) e
+`voce` (Você); cada rota de detalhe mantém seu pai conceitual em todos os tamanhos. O Início reúne
+a descoberta da cidade (Guia, Mercado, Imóveis, encontros e serviços). A `comunidade` da cidade é
+perguntas e respostas (Indicações) e Grupos — **não existe publicação para a cidade inteira**:
+publicar acontece dentro de um grupo. `conversas` são as mensagens privadas (`/messages`), a caixa
+de conversas. `voce` reúne o perfil, a conta, as notificações, Salvos, Meus anúncios, Bloqueados,
+Privacidade, Conduta e Ajuda. Papéis privilegiados e prestador têm shells próprios. Esta lista
+substitui os containers Início/Explorar/Comunidades/Perfil do PROCESSO-DE-CONSTRUCAO §7 por
+decisão do `ADR-20261023-comunidade-do-prototipo` (2026-10-23), que segue o protótipo: a vila saiu
+desta versão e as rotas antigas dela redirecionam para a Comunidade da cidade.
 
 O escopo ativo fica visível onde altera conteúdo, permissão ou audiência. Nunca codifique
 Manaus como rótulo universal; a origem vem do estado real de membership.

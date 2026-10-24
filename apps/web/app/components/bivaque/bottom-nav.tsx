@@ -1,14 +1,14 @@
 "use client"
 
 import {
+  ChatBubbleLeftRightIcon,
   HomeIcon,
-  MagnifyingGlassIcon,
   UserCircleIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline"
 import {
+  ChatBubbleLeftRightIcon as ChatBubbleLeftRightSolid,
   HomeIcon as HomeSolid,
-  MagnifyingGlassIcon as MagnifyingGlassSolid,
   UserCircleIcon as UserCircleSolid,
   UserGroupIcon as UserGroupSolid,
 } from "@heroicons/react/24/solid"
@@ -28,18 +28,27 @@ export interface NavItem {
 
 // ── Os containers de navegação ──────────────────────────────────────────────
 //
-// A navegação do shell do membro espelha o MODELO DE PRODUTO da versão de
-// 2026-09-06 (docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7),
-// que substitui os quatro containers históricos do ADR-20260816. São quatro:
+// A barra de baixo segue o protótipo (ADR-20261023-comunidade-do-prototipo,
+// seção "Navegação e estrutura"), que substitui os quatro containers do
+// PROCESSO-DE-CONSTRUCAO §7 (Início/Explorar/Comunidades/Perfil). São quatro,
+// como em prototypes/bivaque-html/src/shell/navigation.js:65:
 //
-//   - "inicio"      → home de quem participa: a chegada, o que está acontecendo
-//                     na cidade e nas comunidades da pessoa (prancha 01).
-//   - "explorar"    → descoberta: busca de serviços e prestadores, com entradas
-//                     explícitas para Guia e Mercado (prancha 61).
-//   - "comunidades" → minhas comunidades + descoberta + apresentação; grupos
-//                     vivem dentro de uma comunidade, não como aba.
-//   - "perfil"      → o membro: perfil, conta, notificações e a conversa
-//                     contextual membro↔prestador. Não há inbox nem DM geral.
+//   - "inicio"     → o Início: a descoberta da cidade (Guia, Mercado, Imóveis,
+//                    encontros, serviços), como no activeTab() do protótipo.
+//   - "comunidade" → a Comunidade da cidade (o `#comunidade` do protótipo):
+//                    perguntas e respostas (Indicações) e os Grupos. A vila
+//                    saiu desta versão; as rotas antigas redirecionam para cá.
+//   - "conversas"  → as mensagens privadas, em /messages. O protótipo põe
+//                    "Conversas" na barra e abre a caixa de conversas; o
+//                    comentário que dizia "não há inbox" era da versão anterior
+//                    e está corrigido.
+//   - "voce"       → a pessoa: o que antes era Perfil, mais Salvos, Meus
+//                    anúncios, Ocultados, Bloqueados, Privacidade, Conduta e
+//                    Ajuda, como no activeTab() do protótipo.
+//
+// Explorar, /mercado, /negocio, Guia, Agenda e Salvos saem da barra e ganham
+// porta dentro dessas quatro entradas (prova em
+// scripts/visual/flows/reachability.mjs, card NAV-BECOS-SEM-SAIDA).
 //
 // REGRA FALSIFICÁVEL (ADR-20260816, regra 2, preservada): se um destino novo
 // não couber em nenhum container, o destino está confuso — pare e reporte;
@@ -54,25 +63,25 @@ export const NAV_ITEMS: NavItem[] = [
     IconActive: HomeSolid,
   },
   {
-    id: "explorar",
-    label: "Explorar",
-    shortLabel: "Explorar",
-    href: "/explorar",
-    Icon: MagnifyingGlassIcon,
-    IconActive: MagnifyingGlassSolid,
-  },
-  {
-    id: "comunidades",
-    label: "Comunidades",
-    shortLabel: "Comunidades",
-    href: "/communities",
+    id: "comunidade",
+    label: "Comunidade",
+    shortLabel: "Comunidade",
+    href: "/community",
     Icon: UserGroupIcon,
     IconActive: UserGroupSolid,
   },
   {
-    id: "perfil",
-    label: "Perfil",
-    shortLabel: "Perfil",
+    id: "conversas",
+    label: "Conversas",
+    shortLabel: "Conversas",
+    href: "/messages",
+    Icon: ChatBubbleLeftRightIcon,
+    IconActive: ChatBubbleLeftRightSolid,
+  },
+  {
+    id: "voce",
+    label: "Você",
+    shortLabel: "Você",
     href: "/profile",
     Icon: UserCircleIcon,
     IconActive: UserCircleSolid,
@@ -110,13 +119,13 @@ export function BottomNav() {
   // casava só o prefixo do item e caía em "Início" para todo o resto — então
   // /community, /guide, /events, /mercado e /cidade acendiam Início no celular
   // enquanto a lateral do desktop acendia o lugar certo (25/09/2026). Salvos,
-  // que na lateral tem item próprio, fica em Perfil aqui (é coisa da pessoa);
+  // que o protótipo põe em Você, fica em Você aqui também (é coisa da pessoa);
   // O componente de abas não tem "nenhuma selecionada"; "Início" fica só como
   // último recurso para rota sem área declarada — o que, dentro do shell, o
   // teste de escopo de active-nav já impede.
   const active = resolveActiveNav(pathname, items)
   const selectedKey =
-    active.kind === "primary" ? active.id : active.kind === "secondary" ? "perfil" : "inicio"
+    active.kind === "primary" ? active.id : active.kind === "secondary" ? "voce" : "inicio"
 
   return (
     <nav
