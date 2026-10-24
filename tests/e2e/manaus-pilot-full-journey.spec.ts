@@ -183,13 +183,14 @@ test.describe("community feed", () => {
     // Then the community page renders. A conta do seedSession() não tem
     // comunidade: a Comunidade mostra o que ela é desde o lote 5 N2 — o painel
     // de Indicações da cidade, com o convite a entrar numa comunidade acima.
-    // O feed da cidade não mora mais aqui; ele vive no Início.
+    // Não há feed da cidade aqui, e a linha de "Publicar" saiu com ele:
+    // publicar existe só dentro de um grupo.
     await expect(
       page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
     ).toBeVisible({
       timeout: 15000,
     })
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
+    await expect(page.getByRole("button", { name: "Publicar" })).toHaveCount(0)
   })
 
   test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
