@@ -1,46 +1,10 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
-import { notFound, redirect } from "next/navigation"
-import type { Database } from "supabase/database.generated"
-import { createServerClient as createCatalogClient } from "../../../../lib/supabase/server"
-import { isUuid } from "./community-detail-data"
-import { loadCommunityDetail } from "./community-detail-loaders"
-import { CommunityDetailScreen } from "./community-detail-screen"
+import { redirect } from "next/navigation"
+import { vilaRedirectFor } from "../../../components/shell/vila-redirects"
 
-export default async function CommunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: communityId } = await params
-  if (!isUuid(communityId)) {
-    notFound()
-  }
+// O detalhe da vila sai da tela (ADR-20261023-comunidade-do-prototipo); o
+// endereço antigo leva à Comunidade da cidade. A leitura que alimentava a tela
+// (community-detail-loaders.ts) segue no repositório, sem rota.
 
-  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
-  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
-  }
-
-  const cookieStore = await cookies()
-  const supabase = createServerClient<Database>(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll() {},
-    },
-  })
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    redirect(`/login?return=/communities/${communityId}`)
-  }
-
-  // O catálogo de cidades só nomeia a cidade para quem é de fora; ver resolveCityLabel.
-  const view = await loadCommunityDetail(supabase, communityId, user.id, createCatalogClient)
-  if (view.status === "not-found") {
-    notFound()
-  }
-
-  return <CommunityDetailScreen view={view} />
+export default function CommunityDetailPage() {
+  redirect(vilaRedirectFor("/communities/[id]"))
 }

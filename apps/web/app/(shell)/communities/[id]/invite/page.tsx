@@ -1,30 +1,10 @@
-// Onda E Task 6 — community member invite management page (server shell).
-//
-// The form + token display lives in the client `CommunityInviteSection`
-// (this page is a server component because the route is auth-gated by the
-// shell layout, but the action needs to capture the token). The data is
-// fetched on the client by the section.
+import { redirect } from "next/navigation"
+import { vilaRedirectFor } from "../../../../components/shell/vila-redirects"
 
-import { CommunityInviteSection } from "./invite-section"
+// Convite de vila sai da tela (ADR-20261023-comunidade-do-prototipo). O
+// endereço antigo leva à Comunidade da cidade. O formulário do convite
+// (invite-section.tsx) e a ação seguem no repositório, sem rota.
 
-interface PageProps {
-  params: Promise<{ id: string }>
-}
-
-export default async function CommunityInvitePage({ params }: PageProps) {
-  const { id: communityId } = await params
-
-  return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pt-6 pb-8">
-      <header>
-        <h1 className="text-lg font-semibold tracking-tight">Convidar membros</h1>
-        <p className="mt-1 text-sm text-muted">
-          O link vale só para esta comunidade. Quem aceitar ainda passa pela aprovação de quem cuida
-          dela.
-        </p>
-      </header>
-
-      <CommunityInviteSection communityId={communityId} />
-    </div>
-  )
+export default function CommunityInvitePage() {
+  redirect(vilaRedirectFor("/communities/[id]/invite"))
 }
