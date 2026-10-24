@@ -165,17 +165,18 @@ regras do domínio.
 - **D1 e D2** (bloqueio) viram a frente que implementa o corpo da função de bloqueio, depois do redesenho. **D3**
   (`hidden_posts`) entra no redesenho.
 
-### 6. Decisão do dono que falta: quem convida prestador
+### 6. Quem convida prestador
 
-Sem a vila, o prestador continua preso à cidade (`provider_accounts.locality_id` já é obrigatório), mas alguém
-precisa convidar e atestar. **[a decidir pelo dono antes de R2]**
+Sem a vila, o prestador continua preso à cidade (`provider_accounts.locality_id` já é obrigatório). **Só o operador
+convida e atesta prestador** (dono, 24/10/2026). Os membros deixam de convidar. A indicação de negócio por membros
+volta com o lote 6 (Negócios), com regra própria.
 
 ### 7. Frentes
 
 | Tarefa | Escopo | Quem | Depende de |
 |---|---|---|---|
 | R1 | Retrato do domínio e de tudo que toca a vila, pelas três fontes | modelo barato, sem decisão | — |
-| R2 | Matriz de permissão, com colunas, transições e o contrato do bloqueio | rascunho por modelo, revisão do coordenador, aprovação do dono | R1, seção 6 |
+| R2 | Matriz de permissão, com colunas, transições e o contrato do bloqueio | rascunho por modelo, revisão do coordenador, aprovação do dono | R1 |
 | R3 | Migration de redesenho e saída da vila no banco, testes negativos adaptados, suíte nova, teste que trava as definições, seed | implementador, revisor diferente e revisão de segurança | R2 |
 | R4 | Saída da vila no app: rotas, bibliotecas, tipos, prestador e anúncio | implementador | R3 |
 | R5 | Telas de grupo e de publicação na pele Material, sobre o esquema novo | implementador, por tela | R3 |
