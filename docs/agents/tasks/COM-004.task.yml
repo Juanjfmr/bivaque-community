@@ -158,3 +158,16 @@ closure:
 #   189 privacy, 141 scope, secrets); build PULADO pela ausencia esperada de apps/web/.env.local.
 # PROVAS DO COORDENADOR: build e e2e pendentes; banco/test:db nao se aplica. Nenhum build ou e2e executado.
 # COMMIT: 6d0796b3 fix(web): store nav origin per history entry.
+# Quarta correcao independente (24/10/2026, branch codex/lote5-nav):
+# ATIVO: app-shell observa useSearchParams().toString() junto de origin/pathname; a origem atual da entrada
+#   e reposta quando o router.replace do Mercado troca a busca e remove o estado customizado.
+# NEXT: node_modules/next/dist/client/components/app-router.js:43-73 mostra que HistoryUpdater so espalha
+#   window.history.state quando preserveCustomHistoryState esta true; router.replace usa a substituicao
+#   sem esse estado. Por isso o pathname sozinho nao detectava o caso.
+# UNIT: shell-active-nav testa a origem apos replace sem custom state e a dependencia da busca. Gate: 1717
+#   unit, 76 mobile, 19 web, 189 privacy, 141 scope PASS.
+# E2E: shell-navigation.spec.ts cobre Inicio -> Mercado -> Voce -> voltar -> ordenar -> reload, e goForward()
+#   restaurando o estado da entrada. Typecheck:e2e PASS; navegador/e2e nao rodaram por instrucao do adendo.
+# GATE: npx pnpm@11.18.0 gate -> VERDE (lint, typecheck, typecheck:e2e, testes, secrets); build pulado
+#   pela ausencia esperada de apps/web/.env.local.
+# PENDENTE COORDENADOR: e2e e build; test:db nao se aplica, sem mudanca de banco. git diff --check PASS.

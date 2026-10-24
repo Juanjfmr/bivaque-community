@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react"
 import { Bell, Bookmark, Lightbulb, MapPin, MessageCircle, Settings } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
@@ -57,11 +57,14 @@ const CreatePostModal = dynamic(
 
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
+  const search = useSearchParams().toString()
   const [origin, setOrigin] = useState<PrimaryContainer>("inicio")
+  // A filter replace drops history state without changing the path.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: search changes must rerun this effect.
   useEffect(() => {
     const entryOrigin = rememberNavigationOrigin(pathname, NAV_ITEMS, origin)
     if (entryOrigin !== origin) setOrigin(entryOrigin)
-  }, [origin, pathname])
+  }, [origin, pathname, search])
   const activeNav = resolveActiveNav(pathname, NAV_ITEMS, origin)
   const searchRowRef = useRef<HTMLDivElement>(null)
   const { hidden: searchHidden } = useHideOnScroll({ keepWhileFocused: searchRowRef })

@@ -216,6 +216,49 @@ test("a mesma URL aberta por outra raiz recebe a origem dessa entrada", async ({
   }
 })
 
+test("trocar a ordenação no Mercado preserva a origem depois de voltar e recarregar", async ({
+  page,
+  context,
+}) => {
+  await signInAs(context, "dono-vila@bivaque.example.invalid")
+  await page.goto("/inicio")
+  await page.goto("/mercado")
+  await page.goto("/profile")
+  await expect(page).toHaveURL(/\/profile$/)
+  await page.goBack()
+  await expect(page).toHaveURL(/\/mercado(?:\?.*)?$/)
+  await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
+
+  await page.getByLabel("Ordenação").selectOption("price_asc")
+  await expect(page).toHaveURL(/sort=price_asc/)
+  await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
+  await page.reload()
+  await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
+  if (await navWidthIsMobile(page)) {
+    await expect(page.locator(BOTTOM_NAV).locator('a[href="/inicio"]')).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
+  } else {
+    await expect(page.locator(SIDEBAR).locator('a[href="/inicio"]')).toHaveAttribute(
+      "aria-current",
+      "page",
+    )
+  }
+})
+
+test("avançar restaura a origem guardada na entrada do Mercado", async ({ page, context }) => {
+  await signInAs(context, "dono-vila@bivaque.example.invalid")
+  await page.goto("/inicio")
+  await page.goto("/mercado")
+  await page.goto("/profile")
+  await page.goBack()
+  await expect(page).toHaveURL(/\/mercado(?:\?.*)?$/)
+  await page.goForward()
+  await expect(page).toHaveURL(/\/profile$/)
+  await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("voce")
+})
+
 test.describe("abas da Comunidade (renderCommunity)", () => {
   test("tem Indicações e Grupos; Grupos abre a lista de grupos", async ({ page, context }) => {
     await signInAs(context, "dono-vila@bivaque.example.invalid")

@@ -119,6 +119,33 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     }
   })
 
+  it("repõe a origem após router.replace trocar só a busca", () => {
+    const source = readFileSync(appShell, "utf8")
+    expect(source).toContain("const search = useSearchParams().toString()")
+    expect(source).toContain("[origin, pathname, search]")
+
+    let currentState: Record<string, unknown> = { bivaqueOrigem: "inicio" }
+    vi.stubGlobal("window", {
+      history: {
+        get state() {
+          return currentState
+        },
+        replaceState: (state: Record<string, unknown>) => {
+          currentState = state
+        },
+      },
+      sessionStorage: { getItem: () => "inicio", setItem: () => undefined },
+    })
+    try {
+      // Next 16 router.replace atualiza a URL sem preservar custom history state.
+      currentState = { __NA: true }
+      expect(rememberNavigationOrigin("/mercado", PRIMARY, "inicio")).toBe("inicio")
+      expect(currentState.bivaqueOrigem).toBe("inicio")
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it("cada container primário acende a si mesmo", () => {
     expect(resolveActiveNav("/inicio", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
     expect(resolveActiveNav("/community", PRIMARY)).toEqual({ kind: "primary", id: "comunidade" })
