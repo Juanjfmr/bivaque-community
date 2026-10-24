@@ -122,32 +122,29 @@ test.describe("group admin cycle", { tag: "@stateful" }, () => {
     // groups at all — a clean slate to exercise the real request flow.
     await seedSession(page.context())
 
-    // When they request entry to a private group
-    await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
-
-    // Idempotente: com a self-visibility da própria linha (20260825143505),
-    // um pedido pendente deixado por uma execução anterior já renderiza
-    // "Cancelar pedido" na carga da página. O clique em "Pedir entrada"
-    // acontece só quando o botão existe; a asserção final vale nos dois
-    // caminhos.
-    const pedir = page.getByRole("button", { name: "Pedir entrada" })
-    if (await pedir.isVisible().catch(() => false)) {
-      // "Pedir entrada" é um form action: o clique dispara um POST que revalida
-      // a rota. Esperar a RESPOSTA antes de asserir evita correr contra a
-      // navegação — medido em sonda, o POST 200 leva alguns segundos e só então
-      // o botão vira "Cancelar pedido". Sem esta espera o teste falhava nos três
-      // viewports, inclusive em modo serial.
-      const requested = page.waitForResponse(
-        (r) => r.request().method() === "POST" && r.url().includes(`/groups/${PRIVATE_GROUP_ID}`),
-        { timeout: 15_000 },
-      )
-      await pedir.click()
-      await requested
-    }
+    // O botão da lista para grupo Fechado leva ao detalhe com o diálogo aberto.
+    await page.goto("/groups")
+    await page.getByPlaceholder("Buscar grupos...").fill("Pesca e Trilha")
+    // O grupo aparece em "Próximos de você" e em "Populares": o pedido sai de uma lista só.
+    await page
+      .getByLabel("Próximos de você")
+      .getByRole("button", { name: "Pedir entrada", exact: true })
+      .click()
+    await expect(page).toHaveURL(new RegExp(`/groups/${PRIVATE_GROUP_ID}\\?pedir=1`))
+    const reason = page.getByLabel(/Por que você quer entrar/)
+    await expect(reason).toBeVisible()
+    await reason.fill("Pedido da prova do ciclo de administração.")
+    const requested = page.waitForResponse((r) => r.url().includes("/rest/v1/rpc/join_group"), {
+      timeout: 20_000,
+    })
+    await page.getByRole("button", { name: "Enviar pedido" }).click()
+    await requested
 
     // Then the cancel button is visible, replacing the request button
     await expect(page.getByRole("button", { name: /Cancelar pedido/i })).toBeVisible({
       timeout: 15000,
     })
+    await page.getByRole("button", { name: /Cancelar pedido/i }).click()
+    await expect(page.getByRole("button", { name: "Pedir entrada", exact: true })).toBeVisible()
   })
 })

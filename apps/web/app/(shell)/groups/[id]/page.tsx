@@ -5,6 +5,9 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { FeedPost } from "../../../components/bivaque/feed-post"
+import { GroupInviteButton } from "./group-invite-button"
+import { GroupJoinRequest } from "./group-join-request"
+import { GroupJoinRequests } from "./group-join-requests"
 
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
@@ -336,8 +339,14 @@ export {
   unpinPostAction,
 }
 
-export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: groupId } = await params
+export default async function GroupDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ pedir?: string }>
+}) {
+  const [{ id: groupId }, query] = await Promise.all([params, searchParams])
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -481,12 +490,15 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             {group.description && <p className="mt-1 text-sm text-muted">{group.description}</p>}
           </div>
           {isApproved ? (
-            <form action={leaveGroupAction}>
-              <input type="hidden" name="groupId" value={group.id} />
-              <Button type="submit" size="sm" variant="tertiary">
-                Sair
-              </Button>
-            </form>
+            <div className="flex shrink-0 items-center gap-2">
+              <GroupInviteButton groupName={group.name} path={`/groups/${group.id}`} />
+              <form action={leaveGroupAction}>
+                <input type="hidden" name="groupId" value={group.id} />
+                <Button type="submit" size="sm" variant="tertiary">
+                  Sair
+                </Button>
+              </form>
+            </div>
           ) : isPending ? (
             <div className="flex items-center gap-2">
               <Button size="sm" variant="tertiary" isDisabled>
@@ -500,18 +512,16 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                 </Button>
               </form>
             </div>
-          ) : (
+          ) : group.visibility === "public" ? (
             <form action={joinGroupAction}>
               <input type="hidden" name="groupId" value={group.id} />
-              <input
-                type="hidden"
-                name="desiredStatus"
-                value={group.visibility === "public" ? "approved" : "pending"}
-              />
+              <input type="hidden" name="desiredStatus" value="approved" />
               <Button type="submit" size="sm" variant="primary">
-                {group.visibility === "public" ? "Entrar" : "Pedir entrada"}
+                Entrar
               </Button>
             </form>
+          ) : (
+            <GroupJoinRequest groupId={group.id} initialOpen={query.pedir === "1"} />
           )}
         </div>
       </div>
@@ -525,6 +535,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <p className="mt-2 text-sm whitespace-pre-wrap text-muted">{group.rules}</p>
           </details>
         )}
+
+        <GroupJoinRequests groupId={group.id} />
 
         {isApproved && (
           <form
