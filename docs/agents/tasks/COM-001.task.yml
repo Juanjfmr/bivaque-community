@@ -1,11 +1,11 @@
 task_id: COM-001
 objective: >
-  Lote 5, tarefa N2: o feed da cidade passa para o Inicio, como no prototipo, com uma leitura nova no banco
-  (hoje so ha feed por vila e por grupo) e a regra de leitura publicacoes da cidade da pessoa sem grupo e sem vila
-  (group_id is null and community_id is null), na mesma migration, com prova negativa. A vista Conversa sai da
-  Comunidade.
+  Lote 5, tarefa N2 (revisao de 23/10/2026): sem publicacao para a cidade inteira, como no prototipo. O feed da
+  cidade sai — o Inicio nao mostra feed e a leitura feed_locality nem chega ao banco —, o compositor publica so
+  dentro de um grupo, o banco recusa publicacao sem grupo na policy de insert (nao num CHECK, para o seed antigo
+  continuar carregando) e a linha de publicar sai de /community. A vista Conversa continua fora da Comunidade.
 authority:
-  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23; item Sem publicacao para a cidade inteira)
   - docs/agents/mapas/lote5-comunidade.md
   - prototypes/bivaque-html/src/features/ (a especificacao)
 baseline:
@@ -20,6 +20,13 @@ allowed_paths:
   - apps/web/app/(shell)/inicio/
   - apps/web/app/(shell)/community/
   - apps/web/app/components/bivaque/feed-post-shared.tsx
+  # Autorizado pelo coordenador na correção de 23/10/2026 (achado P3): o
+  # arquivo foi excluído na versão anterior da tarefa sem constar do contrato.
+  - apps/web/app/components/bivaque/feed-composer.tsx
+  - apps/web/app/components/bivaque/feed-post-create.tsx
+  - apps/web/app/components/bivaque/feed-post-audience.tsx
+  - apps/web/app/components/bivaque/feed-post-card.tsx
+  - apps/web/app/components/shell/create-menu.tsx
   - tests/unit/
   - tests/e2e/
   - scripts/port/
@@ -32,11 +39,10 @@ forbidden:
   - editar arquivos de outra tarefa do lote 5
   - editar prototypes/bivaque-html
 acceptance:
-  - Migration na faixa 20261024100000 cria a leitura do feed da cidade, paginada, com my_follow e my_reaction como os feeds existentes
-  - A regra de leitura fica na mesma migration, e o pgTAP prova que publicacao de grupo Fechado, de vila e de outra cidade nao aparece, e que a da cidade aparece
-  - O Inicio mostra o feed da cidade no lugar e no formato do prototipo (prototypes/bivaque-html/src/features/home/)
-  - A vista Conversa sai de /community (o view-switch some ou fica so com o que o prototipo tem)
-  - e2e do Inicio com o feed, e comparacao de captura com o prototipo em 375 e 1440 nos dois temas
+  - Migration na faixa 20261024100000 recusa publicacao sem grupo na policy de insert (group_id is not null); o pgTAP prova o positivo (grupo de que se participa) e os negativos (cidade sem grupo, vila sem grupo, grupo Fechado sem participacao)
+  - O Inicio nao mostra feed da cidade; a Comunidade fica com o painel de Indicacoes, sem feed, sem vista Conversa e sem linha de publicar
+  - O compositor so oferece os grupos da pessoa; sem grupo nenhum, o estado honesto leva a /groups e o primario fica desabilitado
+  - e2e do Inicio sem feed e do compositor so em grupo, alem dos specs realinhados ao feed do grupo
 proof:
   - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
   - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
@@ -44,7 +50,7 @@ proof:
   - npx pnpm@11.18.0 --filter web build
   - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local
   - e2e da tarefa pela fila
-risk: leitura nova de conteudo da cidade; risco de vazar grupo Fechado
+risk: policy de insert de posts muda; publicacao sem grupo passa a ser recusada, e o chip de alcance do grupo passa a renderizar
 adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
 risk_level: R3
 reviewer_must_differ_from_executor: true
@@ -52,3 +58,57 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# evidencia COM-001 — revisao de 23/10/2026 (sem feed da cidade), branch codex/lote5-feed
+# (todas as provas abaixo foram rodadas e lidas nesta sessao)
+# test:db: PASS — 155 arquivos, 2266 testes. supabase/tests/publicacao-so-em-grupo.sql ok (4 asserts: positivo de publicar no grupo de que se participa e negativos de cidade sem grupo, vila sem grupo e grupo Fechado sem participacao)
+# test:db (realinhamento): os pgTAP que publicavam na cidade passaram a publicar no grupo das fixtures — community-feed-happy-path (8 inserts), community-feed-denials (19), event-photos-storage (1), full-regression (2, no grupo de regression.inc) e transfer-degradation (2, um grupo novo no destino); transfer-degradation e full-regression nao mudam nenhuma contagem
+# generate:types: feed_locality saiu do database.generated.ts (26 linhas) e nada mais mudou — a leitura nova nao existe no banco
+# gate: VERDE em lint, typecheck, typecheck:e2e, test e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — pnpm --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de supabase status -o env (sem criar arquivo de env); rodado duas vezes, antes e depois do fix do chip
+# e2e 1: inicio-sem-feed (4 testes), publish-golden-slice (2), question-first-order (3), audience-selector (2), empty-locality (3) — 42 passou, 0 falhou (3 projetos, pela fila, --workers=1)
+# e2e 2: two-localities (8), reports-member-flow (1), synthetic-people-interaction (2), journey-quando-algo-falha (1), denied-publish (1), feed-attachment-publish (5), publish-primary-hittable (5), photo-upload (1), close-label-ptbr (4), ds-029-conformance-probes (6), indicacoes-memoria (1), shell-navigation (6) — 127 passou, 8 skipped, 0 falhou
+# e2e (ambiente): o host nao tem o bundle do Playwright da revisao pedida (chromium_headless_shell-1161) e as revisoes instaladas sao outras; usei PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH com o Chrome do sistema, o escape hatch que o AGENTS do repositorio autoriza
+# e2e (ambiente, primeira rodada): uma rodada com servidor proprio iniciado sem SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY fez /admissions e a resolucao de denuncia devolverem 500 e o onboarding nao listar as cidades; nao era o diff — com o servidor do Playwright, que herda o env de supabase status, os mesmos specs passaram (127/127)
+# e2e (correcao 1): audience-selector esperava o chip de alcance no feed do grupo, e o cartao so o renderizava com community_id === null; feed_group nao devolve community_id, entao o chip nunca saia ali. O cartao passou a decidir pelo group_id e o teste fica verde (fix commitado em fix(web))
+# e2e (correcao 2): denied-publish usava getByLabel de pagina inteira, e o Inicio tem a secao Perguntas abertas; o locator foi escopado ao dialogo
+# e2e (limite): o negativo do BANCO para publicacao sem grupo e o pgTAP (supabase/tests/publicacao-so-em-grupo.sql); o e2e prova que a tela nao oferece o que o banco recusaria
+# visual: NAO rodei o loop visual nesta revisao — a prova de tela vem dos e2e acima; a comparacao de captura com o prototipo nao foi refeita
+# resolvido na correcao de 23/10/2026 (autorizado pelo coordenador so nesse trecho): manaus-pilot-full-journey.spec.ts linha 192 deixou de exigir Publicar em /community e passou a afirmar a ausencia; os testes do convite legado nao foram tocados
+# pendente: o botao Acompanhar continua no cartao sem lista que o mostre — a aba Acompanhando saiu com o feed; feed_following segue no banco sem tela
+# pendente: o link Ver todas as publicacoes em apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx aponta para /community, que nao tem feed; corrigir pertence a N1 (arquivo fora dos allowed_paths do COM-001)
+# pendente: docs/PRODUCT_STATUS.md ainda descreve a vista Conversa em /community e o feed da cidade; tambem esta fora dos allowed_paths deste contrato
+# pendente: o card do quadro que o ADR manda criar por frente nao existe para o COM-001 e tools/backend-kanban/public/board.json esta fora dos allowed_paths; nenhuma transicao de quadro foi feita
+# pendente: alem do feed-post-*, esta revisao tocou feed-post-card.tsx (chip de alcance do grupo) e create-menu.tsx (foco de volta ao gatilho, exigido pelo DS-029); os dois entraram no allowed_paths deste contrato com justificativa no corpo do commit
+
+# evidencia COM-001 — primeira versao (feed da cidade no Inicio), branch codex/lote5-feed, 23/10/2026
+# SUPERADA pela decisao do dono registrada no ADR em 23/10/2026: o Inicio nao tem feed. Fica como registro do que foi entregue e medido antes da revisao.
+# test:db: PASS — 155 arquivos, 2277 testes; supabase/tests/feed-cidade.sql ok (15 asserts: positivo da cidade, contagens, my_reaction, my_follow, paginacao e os negativos de vila, grupo Fechado, grupo Aberto, outra cidade, removida e nao-membro)
+# gate: VERDE em lint, typecheck, typecheck:e2e, test e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — pnpm --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de supabase status -o env (sem criar arquivo de env)
+# e2e 1: inicio-feed-cidade 9 passou 0 falhou (3 testes x 3 projetos, pela fila, --workers=1); junto no mesmo comando: audience-selector, empty-locality, two-localities, indicacoes-memoria, question-first-order, close-label-ptbr, inicio-phone-typography, feed-attachment-publish — 120 passou, 2 skipped, 0 falhou
+# e2e 2: shell-navigation, ds-029-conformance-probes, journey-quando-algo-falha, manaus-pilot-full-journey, synthetic-people-interaction, publish-golden-slice, reports-member-flow — 170 passou, 8 skipped, 5 falhou na primeira rodada, das quais 3 eram o mesmo teste pre-existente (manaus-pilot-full-journey linha 130, convite legado) e 2 eram destas mudancas, corrigidas abaixo
+# e2e 3: apos as correcoes, shell-navigation, journey-quando-algo-falha e synthetic-people-interaction — 25 passou, 8 skipped, 0 falhou
+# e2e (classificacao): manaus-pilot-full-journey linha 130 falha igual no estado limpo — mudancas guardadas com git stash e o teste rodado de novo —, portanto nao e regressao desta tarefa
+# visual: captura do loop da casa valida e autenticada em 375/768/1440, HTTP 200, 0 findings, em .visual/com-001/com-001-inicio4 (report.md e shots) e capturas de tema em .visual/com-001/temas
+# visual (limite): os dois temas saem byte-identicos porque com prefers-color-scheme dark o shell continua claro (sonda .visual/com-001/theme-probe.mjs: darkMedia=true e bodyBg rgb(241,242,238)); o comportamento e anterior a esta tarefa, que nao toca em tema
+# visual (limite): as capturas full do loop saem no tamanho do viewport porque o shell rola em container proprio; o abaixo da dobra do feed (Carregar mais e fim de lista voce esta em dia) nao entra em imagem — a prova de comportamento esta nos e2e
+# review visual (subagente observer): o prototipo nao tem feed no Inicio (features/home); a divergencia de produto registrada e que o Inicio do Next pos o feed ANTES das secoes de perguntas e Guia, invertendo a prioridade do prototipo (A comunidade procura primeiro). A escolha foi o slot da antiga previa da vila, preservando a ordem dos blocos do Inicio; fica como ponto de revisao do dono
+# review visual (subagente observer): /community nao tem resto de feed nem aba Conversa; os rotulos das abas que aparecem la sao do painel de Indicacoes (taxonomia da tarefa A1, fora do escopo deste contrato)
+# pendente: o link Ver todas as publicacoes em apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx aponta para /community, que deixou de ter feed; corrigir pertence a N1 (arquivo fora dos allowed_paths do COM-001)
+
+# evidencia COM-001 — correcao da revisao independente (23/10/2026), branch codex/lote5-feed
+# (todas as provas abaixo foram rodadas e lidas nesta sessao, sobre esta revisao)
+# banco: PASS — node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco — 155 arquivos, 2272 testes
+# banco (P1 update): supabase/tests/publicacao-so-em-grupo.sql com 9 asserts — positivo de publicar no grupo, positivo de edicao mantendo o grupo, negativos de update tirando o grupo e update trocando de grupo (gatilho BEFORE UPDATE), cidade sem grupo, vila sem grupo, nao-membro do grupo Fechado, o perfil listando o post de grupo e o perfil NAO listando o post sem grupo
+# banco (P1 policy): a policy de insert voltou a exigir not private.account_deletion_requested(...), a condicao que a recriacao anterior tinha perdido; o gatilho nao toca o INSERT para o seed com publicacoes antigas de cidade continuar carregando
+# banco (P1 perfil): profile_posts_for passa a devolver so publicacao com grupo e participacao aprovada no grupo; supabase/tests/other-member-profile.sql realinhado prova a visibilidade por grupo
+# banco (P1 exclusao): supabase/tests/account-deletion.sql com 45 asserts — o titular publica no grupo de que participa ANTES do pedido e a recusa de 17c vem da exclusao pedida, nao da falta de grupo
+# db:lint: PASS — No schema errors found
+# gate: VERDE em lint, typecheck, typecheck:e2e, test e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de npx supabase status -o env (sem criar arquivo de env)
+# e2e: inicio-sem-feed, manaus-pilot-full-journey e account-deletion-ui pela fila, --workers=1 — 138 passou, 0 falhou (3 projetos); o spec do Inicio clica de verdade em Ver grupos e prova /groups usavel, sem o compositor por cima; manaus-pilot deixou de exigir Publicar em /community
+# e2e (ambiente): o bundle chromium_headless_shell-1248 esta instalado e o prova-sequencia o usa como PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH; nenhuma variavel extra exportada
+# achado P2 (Ver grupos): feed-post-create.tsx fecha o compositor (modal.close) antes de navegar
+# achado P3: feed-composer.tsx entrou em allowed_paths deste contrato, autorizado pelo coordenador (achado da revisao)
+# visual: NAO rodei o loop visual nesta correcao — a prova de tela vem dos e2e acima; a comparacao de captura com o prototipo nao foi refeita

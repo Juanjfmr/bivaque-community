@@ -95,8 +95,10 @@ test.describe("indicações com memória", () => {
   }) => {
     await signInAs(page.context(), LATER)
     await page.goto("/community")
-    await page.getByRole("tab", { name: "Indicações" }).click()
-    await expect(page).toHaveURL(/\/community\?vista=indicacoes$/)
+    await expect(page).toHaveURL(/\/community/)
     await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
+    // Desde o lote 5 N2 a Comunidade não tem aba "Conversa": a vista de
+    // indicações é o que a rota mostra, e /indicacoes continua chegando nela.
+    await expect(page.getByRole("tab", { name: "Conversa" })).toHaveCount(0)
   })
 })

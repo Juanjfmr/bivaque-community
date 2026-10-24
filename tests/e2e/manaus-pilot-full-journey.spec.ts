@@ -181,11 +181,16 @@ test.describe("community feed", () => {
     await page.goto("/community")
 
     // Then the community page renders. A conta do seedSession() não tem
-    // comunidade: a Comunidade mostra a referência da cidade, com o nome dela.
-    await expect(page.getByRole("heading", { level: 1, name: "Manaus", exact: true })).toBeVisible({
+    // comunidade: a Comunidade mostra o que ela é desde o lote 5 N2 — o painel
+    // de Indicações da cidade, com o convite a entrar numa comunidade acima.
+    // Não há feed da cidade aqui, e a linha de "Publicar" saiu com ele:
+    // publicar existe só dentro de um grupo.
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
+    ).toBeVisible({
       timeout: 15000,
     })
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
+    await expect(page.getByRole("button", { name: "Publicar" })).toHaveCount(0)
   })
 
   test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
@@ -194,7 +199,9 @@ test.describe("community feed", () => {
     await page.goto("/community")
 
     // Then the community page renders without horizontal overflow
-    await expect(page.getByRole("heading", { level: 1, name: "Manaus", exact: true })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
+    ).toBeVisible({
       timeout: 15000,
     })
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
@@ -290,13 +297,14 @@ test.describe("recommendations journey", () => {
   })
 
   // /recommendations foi aposentada em 25/09/2026 (ADR-20260925-memoria-de-indicacoes):
-  // o endereço antigo leva à vista Indicações da Comunidade.
+  // o endereço antigo leva à vista Indicações da Comunidade. Desde o lote 5 N2 a
+  // Comunidade não tem mais a aba "Conversa": a Indicações é o que ela mostra, e
+  // o endereço canônico continua carregando o parâmetro.
   test("recommendations leva à vista Indicações da Comunidade", async ({ page, context }) => {
     await seedSession(context)
     await page.goto("/recommendations")
     await page.waitForURL(/\/community\?vista=indicacoes$/)
     await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
-    await expect(page.getByRole("tab", { name: "Indicações", selected: true })).toBeVisible()
   })
 
   test("a aba antiga de pedir chega à caixa de pedir focada", async ({ page, context }) => {

@@ -3278,7 +3278,7 @@ export type Database = {
         }
         Returns: {
           document_id: string
-          replaced_storage_object_path: string | null
+          replaced_storage_object_path: string
         }[]
       }
       request_account_deletion: { Args: never; Returns: Json }

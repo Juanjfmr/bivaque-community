@@ -52,7 +52,10 @@ test.describe("BottomNav visibility across viewports", () => {
     const sidebar = page.locator(SIDEBAR)
     await expect(sidebar).toBeVisible()
     expect((await sidebar.boundingBox())?.width).toBe(64)
-    await expect(page.getByRole("link", { name: "Comunidades" })).toBeAttached()
+    // A Início também tem um link "Comunidades" no conteúdo (o convite do
+    // JoinCommunityCard, "Ver comunidades"): o que se prova é o item da barra
+    // lateral, então o locator é escopado nela — como no teste de 1440px.
+    await expect(sidebar.getByRole("link", { name: "Comunidades" })).toBeAttached()
   })
 
   test("expands the sidebar at 1440px", async ({ page, context }) => {

@@ -60,12 +60,13 @@ const VERIFIED_NO_MEMBERSHIP_EMAIL =
 // scoped to a pilot constant instead of the member's locality. The community
 // page heading cannot anchor locality (it shows the primary community name,
 // with "Manaus, AM" only as a fallback), so content markers carry the proof.
-// Texto-base real de um post do seed (supabase/seed.sql L516, renderizado nos
-// ~33 posts de Manaus). O marcador anterior ("Alguém sabe se funciona também
-// no feriado?") só existia em comments e nunca aparecia no feed — o teste
-// positivo falhava e o negativo passava por vacuidade.
-const MANAUS_POST_MARKER =
-  "A feira do fim de semana abriu mais cedo e estava tranquila na primeira hora."
+//
+// O marcador de FEED virou marcador de PERGUNTAS no lote 5, tarefa N2
+// (ADR-20261023): a cidade não tem feed — a conversa é de perguntas e respostas
+// (Indicações), e a seção "Perguntas abertas" do Início é o que resta da
+// conversa da cidade. A pergunta abaixo é do seed (supabase/seed.sql), aberta e
+// entre as três mais recentes de Manaus.
+const MANAUS_QUESTION_MARKER = "Alguém conhece ortopedista bom?"
 const MANAUS_EVENT_TITLE = "Torneio amistoso de futebol"
 const MANAUS_GUIDE_ENTRY = "Escola Modelo do Centro"
 
@@ -155,48 +156,42 @@ async function signInAs(page: Page, email: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 test.describe("two localities: each member sees only their own city", () => {
-  test("Manaus member sees Manaus feed content", async ({ page }) => {
-    // Given a member whose current locality is Manaus AND who belongs to a
-    // community — /community's feed_community RPC only runs when the viewer
-    // has a primary community (apps/web/app/(shell)/community/page.tsx:101,
-    // "Onda E Task 2"); without one the route renders <CityReference/>
-    // instead, so MANAUS_EMAIL (visual@, deliberately community-less per
-    // vila-home.spec.ts) can never see feed content here regardless of what
-    // marker text exists in the seed. dono-vila@ (Vila Ajuricaba's owner,
-    // see community-batch-approval.spec.ts's header) does have one — found
-    // running the E2E realignment.
+  test("Manaus member sees the questions of their own city", async ({ page }) => {
+    // Given a member of Manaus (a dona da Vila Ajuricaba é membro da
+    // localidade, como qualquer outro; a comunidade não muda o escopo da
+    // cidade)
     await signInAs(page, VILA_OWNER_EMAIL)
 
-    // When they open the community feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    // When they open the Início
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
-    // Then the page is interactive (load control — without it the negative
-    // assertions in the sibling test could pass vacuously on an error page)
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({
-      timeout: 15000,
-    })
+    // Then the city section is interactive (load control — without it the
+    // negative assertions in the sibling test could pass vacuously on an error
+    // page)
+    await expect(page.locator("#secao-perguntas")).toBeVisible({ timeout: 20000 })
 
-    // And seeded Manaus post content is rendered for them
-    await expect(page.getByText(MANAUS_POST_MARKER).first()).toBeVisible({
-      timeout: 15000,
+    // And an open Manaus question is rendered for them
+    await expect(page.getByText(MANAUS_QUESTION_MARKER).first()).toBeVisible({
+      timeout: 20000,
     })
   })
 
-  test("second-locality member sees no Manaus feed or event content", async ({ page }) => {
+  test("second-locality member sees no Manaus question or event content", async ({ page }) => {
     // Given a member whose current locality is the second seeded city
     await signInAs(page, SECOND_LOCALITY_EMAIL)
 
-    // When they open the community feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    // When they open the Início
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
-    // Then the page is interactive for them too
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({
-      timeout: 15000,
+    // Then the page rendered for them (positive anchor: the greeting h1)
+    await expect(page.locator("main").getByRole("heading", { level: 1 })).toBeVisible({
+      timeout: 20000,
     })
 
-    // And no Manaus post content is on the page — the feed must resolve from
-    // the member's locality, not a pilot constant.
-    await expect(page.getByText(MANAUS_POST_MARKER)).toHaveCount(0)
+    // And no Manaus question is on the page — the section must resolve from the
+    // member's locality, not a pilot constant
+    await expect(page.locator("#secao-perguntas")).toHaveCount(0)
+    await expect(page.getByText(MANAUS_QUESTION_MARKER)).toHaveCount(0)
 
     // And no Manaus event title leaks through the right rail or anywhere else
     await expect(page.getByText(MANAUS_EVENT_TITLE)).toHaveCount(0)

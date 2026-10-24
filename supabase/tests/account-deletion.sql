@@ -17,7 +17,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(44);
+select plan(45);
 
 \ir fixtures/foundation.inc
 
@@ -42,6 +42,31 @@ values (
   '10000000-0000-4000-8000-000000000001',
   'text',
   'publicacao do membro que foi denunciada'
+);
+
+-- Um grupo real do titular 002 para a negativa de publicação (17c): desde a
+-- migration 20261024100000 a policy de insert exige `group_id`, então a recusa
+-- tem de vir da exclusão pedida, não da falta de grupo. O grupo é público e da
+-- mesma localidade do titular, e ele é membro aprovado.
+insert into public.groups (
+  id, name, description, visibility, locality_id, created_by, owner_user_id
+)
+values (
+  '83000000-0000-4000-8000-000000000001',
+  'Grupo do titular',
+  'Grupo de teste da exclusao de conta',
+  'public',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  '10000000-0000-4000-8000-000000000002'
+);
+
+insert into public.group_memberships (group_id, user_id, role, status)
+values (
+  '83000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  'owner',
+  'approved'
 );
 
 insert into public.reports (id, reporter_user_id, target_type, target_id, reason)
@@ -106,6 +131,24 @@ select lives_ok(
              '10000000-0000-4000-8000-000000000001',
              'comentario antes do pedido') $$,
   'membro comenta na publicacao do titular antes do pedido'
+);
+reset role;
+
+-- 2b) o titular publica num grupo de que participa ANTES do pedido: é o
+--     contraste da negativa de 17c, que agora precisa de um grupo real (a
+--     policy de insert exige group_id desde a migration 20261024100000).
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$ insert into public.posts (locality_id, user_id, group_id, post_type, content)
+     values ('00000000-0000-4000-8000-000000000001',
+             '10000000-0000-4000-8000-000000000002',
+             '83000000-0000-4000-8000-000000000001',
+             'text',
+             'publicacao do titular no grupo antes do pedido') $$,
+  'titular publica no grupo de que participa antes do pedido'
 );
 reset role;
 
@@ -287,15 +330,18 @@ reset role;
 
 -- 17c) a PRÓPRIA conta que está saindo também não publica: o PostgREST confia
 --      no JWT e não consulta auth.sessions nem banned_until, então o banimento
---      sozinho deixaria a conta escrevendo por até jwt_expiry (3600s).
+--      sozinho deixaria a conta escrevendo por até jwt_expiry (3600s). A
+--      tentativa é num grupo de que o titular participa (senão a recusa viria
+--      da falta de grupo, e não da exclusão pedida).
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
-  $$ insert into public.posts (locality_id, user_id, post_type, content)
+  $$ insert into public.posts (locality_id, user_id, group_id, post_type, content)
      values ('00000000-0000-4000-8000-000000000001',
              '10000000-0000-4000-8000-000000000002',
+             '83000000-0000-4000-8000-000000000001',
              'text',
              'publicacao depois do pedido de exclusao') $$,
   '42501',

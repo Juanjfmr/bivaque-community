@@ -3,9 +3,11 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 // DS-006: na Home de membro ativo o retorno relevante vem ANTES do lançador
-// compacto de intenções, e o lançador não pode virar hero — o primeiro item do
-// feed tem de continuar dentro da dobra em 768 e 1440 (a medida foi feita no
-// navegador; aqui fica a guarda de composição que impede a regressão silenciosa).
+// compacto de intenções, e o lançador não pode virar hero — o primeiro bloco de
+// descoberta tem de continuar dentro da dobra em 768 e 1440 (a medida foi feita
+// no navegador; aqui fica a guarda de composição que impede a regressão
+// silenciosa). O feed da cidade que ficava depois dos dois saiu no lote 5 N2
+// (ADR-20261023): a descoberta é o que fecha a coluna.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const read = (...segments: string[]) => readFileSync(join(root, ...segments), "utf8")
@@ -14,16 +16,16 @@ const page = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
 const launcher = read("apps", "web", "app", "components", "bivaque", "intent-launcher.tsx")
 
 describe("ordem da Home (DS-006)", () => {
-  it("o retorno vem antes do lançador, e o feed depois dos dois", () => {
+  it("o retorno vem antes do lançador, e a descoberta depois dos dois", () => {
     const retorno = page.indexOf("<ReturnStrip />")
     const lancador = page.indexOf("<IntentLauncher")
-    const feed = page.indexOf("<CommunitySection")
+    const descoberta = page.indexOf("{discovery.map(")
 
     expect(retorno).toBeGreaterThan(-1)
     expect(lancador).toBeGreaterThan(-1)
-    expect(feed).toBeGreaterThan(-1)
+    expect(descoberta).toBeGreaterThan(-1)
     expect(retorno).toBeLessThan(lancador)
-    expect(lancador).toBeLessThan(feed)
+    expect(lancador).toBeLessThan(descoberta)
   })
 
   it("a saudação continua sendo o primeiro bloco e o h1 da rota", () => {

@@ -8,6 +8,7 @@ import {
   guideCategoryLabel,
   type HubEvent,
 } from "../../../apps/web/app/(shell)/inicio/hub-loaders"
+import { stripComments } from "./source-scan"
 
 // O Início como atalho do Bivaque (25/09/2026). A parte pura dos carregadores
 // é provada aqui; a composição da página, por leitura de fonte. LIMITE: nada
@@ -55,14 +56,14 @@ describe("composição do Início", () => {
 
   // A descoberta é montada em blocos antes do JSX e desenhada por
   // `discovery.map`; por isso a ordem fixa é medida só dentro do return, e a
-  // ordem padrão da descoberta pela declaração dos blocos.
-  it("segue a ordem: retornos, semana, comunidade, descoberta", () => {
+  // ordem padrão da descoberta pela declaração dos blocos. O feed da cidade que
+  // ficava entre a semana e a descoberta saiu no lote 5 N2 (ADR-20261023).
+  it("segue a ordem: retornos, semana, descoberta", () => {
     const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
     const order = [
       "<HubShortcuts",
       "<ReturnStrip />",
       "<WeekEventsCarousel",
-      "<CommunitySection",
       "{discovery.map(",
     ].map((marker) => jsx.indexOf(marker))
     for (const position of order) expect(position).toBeGreaterThan(-1)
@@ -81,7 +82,7 @@ describe("composição do Início", () => {
     )
   })
 
-  it("sem comunidade, o convite a entrar vem antes dos atalhos e a prévia some", () => {
+  it("sem comunidade, o convite a entrar vem antes dos atalhos", () => {
     const jsx = page.slice(page.indexOf('<div className="flex flex-1 flex-col">'))
     expect(jsx.indexOf("<JoinCommunityCard />")).toBeLessThan(jsx.indexOf("<HubShortcuts"))
     expect(page).toContain("{hasCommunity ? null : <JoinCommunityCard />}")
@@ -102,11 +103,16 @@ describe("composição do Início", () => {
     expect(inicio("section-nav.tsx")).toContain('aria-label="Voltar aos atalhos"')
   })
 
-  it("a comunidade é prévia, não feed infinito", () => {
-    const section = inicio("community-section.tsx")
-    expect(section).toContain("previewLimit = 3")
-    expect(section).toContain(".slice(0, previewLimit)")
-    expect(section).toContain("Ver todas as publicações")
+  it("o Início não monta feed nem prévia de vila", () => {
+    // Lote 5, N2 (ADR-20261023): na cidade a conversa é de perguntas e
+    // respostas, e publicar só existe dentro de um grupo. A seção de feed da
+    // cidade saiu com a leitura `feed_locality`, que nem chegou ao banco — a
+    // migration 20261024100000 passou a recusar publicação sem grupo.
+    const loaders = stripComments(inicio("home-loaders.ts"))
+    expect(page).not.toContain("<CityFeed")
+    expect(page).not.toContain("<CommunitySection")
+    expect(loaders).not.toContain("feed_locality")
+    expect(loaders).not.toContain("feed_community")
   })
 
   it("a barra de seções aponta só para seções que a página monta", () => {
@@ -116,7 +122,6 @@ describe("composição do Início", () => {
       "market-strip.tsx",
       "week-events.tsx",
       "questions-guide.tsx",
-      "community-section.tsx",
     ]
       .map(inicio)
       .join("\n")
