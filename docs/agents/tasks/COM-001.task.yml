@@ -20,6 +20,9 @@ allowed_paths:
   - apps/web/app/(shell)/inicio/
   - apps/web/app/(shell)/community/
   - apps/web/app/components/bivaque/feed-post-shared.tsx
+  # Autorizado pelo coordenador na correção de 23/10/2026 (achado P3): o
+  # arquivo foi excluído na versão anterior da tarefa sem constar do contrato.
+  - apps/web/app/components/bivaque/feed-composer.tsx
   - apps/web/app/components/bivaque/feed-post-create.tsx
   - apps/web/app/components/bivaque/feed-post-audience.tsx
   - apps/web/app/components/bivaque/feed-post-card.tsx
@@ -71,7 +74,7 @@ closure:
 # e2e (correcao 2): denied-publish usava getByLabel de pagina inteira, e o Inicio tem a secao Perguntas abertas; o locator foi escopado ao dialogo
 # e2e (limite): o negativo do BANCO para publicacao sem grupo e o pgTAP (supabase/tests/publicacao-so-em-grupo.sql); o e2e prova que a tela nao oferece o que o banco recusaria
 # visual: NAO rodei o loop visual nesta revisao — a prova de tela vem dos e2e acima; a comparacao de captura com o prototipo nao foi refeita
-# pendente: manaus-pilot-full-journey.spec.ts nao foi tocado, como o contrato pede (a falha da linha 130 e do lote 4). Ele afirma o botao Publicar em /community, que esta revisao tirou: essa linha precisa sair junto com a correcao do convite legado, no mesmo arquivo do coordenador
+# resolvido na correcao de 23/10/2026 (autorizado pelo coordenador so nesse trecho): manaus-pilot-full-journey.spec.ts linha 192 deixou de exigir Publicar em /community e passou a afirmar a ausencia; os testes do convite legado nao foram tocados
 # pendente: o botao Acompanhar continua no cartao sem lista que o mostre — a aba Acompanhando saiu com o feed; feed_following segue no banco sem tela
 # pendente: o link Ver todas as publicacoes em apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx aponta para /community, que nao tem feed; corrigir pertence a N1 (arquivo fora dos allowed_paths do COM-001)
 # pendente: docs/PRODUCT_STATUS.md ainda descreve a vista Conversa em /community e o feed da cidade; tambem esta fora dos allowed_paths deste contrato
@@ -93,3 +96,19 @@ closure:
 # review visual (subagente observer): o prototipo nao tem feed no Inicio (features/home); a divergencia de produto registrada e que o Inicio do Next pos o feed ANTES das secoes de perguntas e Guia, invertendo a prioridade do prototipo (A comunidade procura primeiro). A escolha foi o slot da antiga previa da vila, preservando a ordem dos blocos do Inicio; fica como ponto de revisao do dono
 # review visual (subagente observer): /community nao tem resto de feed nem aba Conversa; os rotulos das abas que aparecem la sao do painel de Indicacoes (taxonomia da tarefa A1, fora do escopo deste contrato)
 # pendente: o link Ver todas as publicacoes em apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx aponta para /community, que deixou de ter feed; corrigir pertence a N1 (arquivo fora dos allowed_paths do COM-001)
+
+# evidencia COM-001 — correcao da revisao independente (23/10/2026), branch codex/lote5-feed
+# (todas as provas abaixo foram rodadas e lidas nesta sessao, sobre esta revisao)
+# banco: PASS — node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco — 155 arquivos, 2272 testes
+# banco (P1 update): supabase/tests/publicacao-so-em-grupo.sql com 9 asserts — positivo de publicar no grupo, positivo de edicao mantendo o grupo, negativos de update tirando o grupo e update trocando de grupo (gatilho BEFORE UPDATE), cidade sem grupo, vila sem grupo, nao-membro do grupo Fechado, o perfil listando o post de grupo e o perfil NAO listando o post sem grupo
+# banco (P1 policy): a policy de insert voltou a exigir not private.account_deletion_requested(...), a condicao que a recriacao anterior tinha perdido; o gatilho nao toca o INSERT para o seed com publicacoes antigas de cidade continuar carregando
+# banco (P1 perfil): profile_posts_for passa a devolver so publicacao com grupo e participacao aprovada no grupo; supabase/tests/other-member-profile.sql realinhado prova a visibilidade por grupo
+# banco (P1 exclusao): supabase/tests/account-deletion.sql com 45 asserts — o titular publica no grupo de que participa ANTES do pedido e a recusa de 17c vem da exclusao pedida, nao da falta de grupo
+# db:lint: PASS — No schema errors found
+# gate: VERDE em lint, typecheck, typecheck:e2e, test e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de npx supabase status -o env (sem criar arquivo de env)
+# e2e: inicio-sem-feed, manaus-pilot-full-journey e account-deletion-ui pela fila, --workers=1 — 138 passou, 0 falhou (3 projetos); o spec do Inicio clica de verdade em Ver grupos e prova /groups usavel, sem o compositor por cima; manaus-pilot deixou de exigir Publicar em /community
+# e2e (ambiente): o bundle chromium_headless_shell-1248 esta instalado e o prova-sequencia o usa como PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH; nenhuma variavel extra exportada
+# achado P2 (Ver grupos): feed-post-create.tsx fecha o compositor (modal.close) antes de navegar
+# achado P3: feed-composer.tsx entrou em allowed_paths deste contrato, autorizado pelo coordenador (achado da revisao)
+# visual: NAO rodei o loop visual nesta correcao — a prova de tela vem dos e2e acima; a comparacao de captura com o prototipo nao foi refeita
