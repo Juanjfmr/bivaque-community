@@ -135,7 +135,12 @@ export function mountApp(root: HTMLElement): () => void {
     if (!restorePending) return
     restorePending = false
     const main = root.querySelector<HTMLElement>("main")
-    if (main) main.scrollTop = context.scroll
+    if (main) {
+      const behavior = main.style.scrollBehavior
+      main.style.scrollBehavior = "auto"
+      main.scrollTop = context.scroll
+      main.style.scrollBehavior = behavior
+    }
     focus(context.focus)
   }
   const title = () =>
@@ -219,7 +224,7 @@ export function mountApp(root: HTMLElement): () => void {
       <div class="home-top"><button class="home-search-button" type="button" aria-label="Buscar no Bivaque" @click=${() => navigate({ name: "comunidade", id: null })}>⌕ <span>Busque <b>indicações para sua cidade</b></span></button>
         <nav class="intent-grid" aria-label="Áreas"><button class="intent" type="button">Negócios</button><button class="intent" type="button">Desapegos</button><button class="intent" type="button">Imóveis</button><button class="intent" type="button" data-focus="home-indications" @click=${() => navigate({ name: "comunidade", id: null })}>Indicações</button></nav>
       </div><section class="section"><div class="section-title"><h2>A comunidade procura</h2></div>
-      ${loading ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows.slice(0, 2)) : empty("Uma pergunta pode ajudar muita gente", "Busque uma indicação ou compartilhe uma dúvida com sua cidade.")}</section>
+      ${loading && !rows.length ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows.slice(0, 2)) : empty("Uma pergunta pode ajudar muita gente", "Busque uma indicação ou compartilhe uma dúvida com sua cidade.")}</section>
     </section>`
   }
   function filterChips() {
@@ -239,13 +244,13 @@ export function mountApp(root: HTMLElement): () => void {
       </div>
       <section class="context-strip"><span aria-hidden="true">◷</span><span><b>${resolvedCount} indicações resolvidas</b><br>Busque uma resposta antes de perguntar.</span></section>
       ${filterChips()}<div class="section-title"><h2>Indicações</h2><md-filled-tonal-button data-focus="ask" @click=${openAsk}>Perguntar</md-filled-tonal-button></div>
-      ${loading ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows) : empty(filter === "ajudar" ? "Ninguém esperando resposta" : "Nenhuma pergunta por aqui", "Você pode buscar uma indicação ou iniciar uma nova pergunta.")}
+      ${loading && !rows.length ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows) : empty(filter === "ajudar" ? "Ninguém esperando resposta" : "Nenhuma pergunta por aqui", "Você pode buscar uma indicação ou iniciar uma nova pergunta.")}
       ${hasMore ? html`<div class="paged-foot"><md-outlined-button ?disabled=${loadingMore} @click=${loadMore}>${loadingMore ? "Carregando…" : "Carregar mais"}</md-outlined-button></div>` : nothing}`
   }
   function mine() {
     return html`${heading("Minhas perguntas e indicações", "Seu histórico de participação na comunidade.")}
       <div class="section-title"><h2>Indicações</h2><md-filled-tonal-button data-focus="ask" @click=${openAsk}>Perguntar</md-filled-tonal-button></div>
-      ${loading ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows) : empty("Seu histórico começa aqui", "Uma dúvida sua pode virar uma resposta útil para outras famílias.")}`
+      ${loading && !rows.length ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows) : empty("Seu histórico começa aqui", "Uma dúvida sua pode virar uma resposta útil para outras famílias.")}`
   }
   function detailView() {
     if (detailError) return retry(detailError, () => void loadDetail(route.id ?? ""))
@@ -329,6 +334,7 @@ export function mountApp(root: HTMLElement): () => void {
     route = next
     if (next.name === "comunidade") filter = "ajudar"
     if (next.name === "minhas") filter = "minhas"
+    if (["inicio", "comunidade", "minhas"].includes(next.name)) rows = []
     context = {
       ...context,
       route,
@@ -374,7 +380,6 @@ export function mountApp(root: HTMLElement): () => void {
     const ticket = ++generation
     loading = true
     listError = ""
-    rows = []
     view()
     const active = FILTERS.find((item) => item.id === filter) ?? {
       id: "ajudar" as const,
@@ -430,6 +435,7 @@ export function mountApp(root: HTMLElement): () => void {
   function changeFilter(next: Filter) {
     filter = next
     context.filter = next
+    rows = []
     saveContext(`[data-focus="filter:${next}"]`)
     void loadFirst()
   }
@@ -783,6 +789,7 @@ export function mountApp(root: HTMLElement): () => void {
         ? { ...INITIAL, ...restored }
         : { ...INITIAL, route }
     filter = context.filter
+    if (["inicio", "comunidade", "minhas"].includes(route.name)) rows = []
     restorePending = true
     if (route.name === "pergunta") void loadDetail(route.id ?? "")
     else if (["comunidade", "minhas", "inicio"].includes(route.name)) void loadFirst()
