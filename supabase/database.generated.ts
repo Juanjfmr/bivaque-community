@@ -595,6 +595,64 @@ export type Database = {
           },
         ]
       }
+      group_join_attempts: {
+        Row: {
+          attempted_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_attempts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_join_reasons: {
+        Row: {
+          created_at: string
+          group_id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_reasons_group_id_user_id_fkey"
+            columns: ["group_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "group_memberships"
+            referencedColumns: ["group_id", "user_id"]
+          },
+        ]
+      }
       group_memberships: {
         Row: {
           group_id: string
@@ -2896,7 +2954,10 @@ export type Database = {
       }
       is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
-      join_group: { Args: { p_group_id: string }; Returns: undefined }
+      join_group: {
+        Args: { p_group_id: string; p_reason?: string }
+        Returns: undefined
+      }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }
       list_available_groups_for_interests: {
         Args: { p_locality_id: string; p_user_id: string }
