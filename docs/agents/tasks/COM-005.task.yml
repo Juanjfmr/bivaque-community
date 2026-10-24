@@ -1,0 +1,54 @@
+task_id: COM-005
+objective: >
+  Lote 5, tarefa B2: motivo no pedido de entrada do grupo Fechado, com as protecoes do ADR, e o convite como
+  link para a tela do grupo.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - docs/agents/LICOES.md
+  - prototypes/bivaque-html/src/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md). Base codex/lote5-base com
+    COM-001, COM-002 e COM-003 ja integradas.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/groups/
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-005.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (os unicos permitidos sao node scripts/agents/prova-fila.mjs -- npx supabase db reset --local e --local --no-seed)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+  - rodar qualquer comando em segundo plano ou terminar com comando ainda rodando
+  - criar ou mudar policies de encerrar grupo (sao da COM-006)
+acceptance:
+  - Migration na faixa 20261024121000. O pedido ao grupo Fechado aceita motivo de ate 300 caracteres (CHECK no banco); so quem aprova no grupo (dono e moderador) e a propria pessoa leem o motivo, provado por pgTAP positivo e negativo (outro membro, nao membro, anonimo)
+  - O motivo e apagado quando o pedido e aprovado ou recusado, e um job pg_cron (a extensao ja esta habilitada no projeto) apaga o motivo de pedido sem decisao com mais de 30 dias; pgTAP das tres vias
+  - No maximo 3 pedidos da mesma pessoa ao mesmo grupo em 30 dias, contados numa tabela propria de tentativas (recusar apaga a linha de participacao), com RLS fechada e pgTAP do quarto pedido recusado
+  - A tela do pedido avisa para nao incluir endereco, telefone, CPF ou dados de saude, com o texto e o layout de prototypes/bivaque-html/src/features/groups/
+  - Convite e um botao que copia ou compartilha o link da tela do grupo; no grupo Fechado o link leva ao pedido, nunca a entrada direta; e2e dos dois casos
+  - A nova UI fica em componentes novos dentro de apps/web/app/(shell)/groups/[id]/, e page.tsx so ganha o import e a linha que renderiza, para reduzir conflito entre COM-005, COM-006 e COM-007
+  - e2e nos tres viewports de pedir com motivo, aprovar e ver o motivo sumir
+proof:
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - npx pnpm@11.18.0 generate:types logo depois da prova de banco
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de npx supabase status -o env
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e (specs da tarefa)
+risk: dado pessoal em texto livre; RLS de leitura do motivo; job agendado
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

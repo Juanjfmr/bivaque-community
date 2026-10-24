@@ -1,0 +1,49 @@
+task_id: COM-007
+objective: >
+  Lote 5, tarefa B4: o codigo de conduta ganha a regra sobre criancas e menores, e a denuncia de publicacao e
+  de comentario funciona de dentro do grupo, como no feed da cidade.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - docs/agents/LICOES.md
+  - prototypes/bivaque-html/src/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md). Base codex/lote5-base com
+    COM-001, COM-002 e COM-003 ja integradas.
+allowed_paths:
+  - apps/web/app/(preauth)/codigo-de-conduta/
+  - apps/web/app/(shell)/groups/
+  - apps/web/lib/reports/
+  - tests/unit/
+  - tests/e2e/
+  - docs/agents/tasks/COM-007.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (os unicos permitidos sao node scripts/agents/prova-fila.mjs -- npx supabase db reset --local e --local --no-seed)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+  - rodar qualquer comando em segundo plano ou terminar com comando ainda rodando
+  - migration nova (esta tarefa nao tem banco; se a denuncia de dentro do grupo exigir banco, pare e reporte)
+  - marcar grupo como grupo com criancas
+acceptance:
+  - O codigo de conduta tem a regra de nao publicar foto, nome ou escola de crianca de outra familia sem autorizacao, com o texto do prototipo (prototypes/bivaque-html/src/features/legal/) se houver, e ela vale para todos os grupos
+  - Denunciar publicacao e comentario de dentro do grupo, com o mesmo fluxo e os mesmos motivos da denuncia que ja existe, e a denuncia de fato enviada e gravada (e2e conferindo pela leitura de quem denunciou)
+  - Negativo, quem nao le o grupo Fechado nao chega a denunciar conteudo dele pela tela (e2e)
+  - A nova UI fica em componentes novos dentro de apps/web/app/(shell)/groups/[id]/, e page.tsx so ganha o import e a linha que renderiza, para reduzir conflito entre COM-005, COM-006 e COM-007
+  - e2e nos tres viewports
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de npx supabase status -o env
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e (specs da tarefa)
+risk: denuncia que parece enviada sem ser gravada
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

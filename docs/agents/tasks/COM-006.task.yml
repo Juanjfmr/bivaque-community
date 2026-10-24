@@ -1,0 +1,55 @@
+task_id: COM-006
+objective: >
+  Lote 5, tarefa B3: para sair, o admin passa a administracao a outro membro; encerrar substitui excluir, com
+  grupo so leitura, sem prazo, e o admin pode reabrir.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - docs/agents/LICOES.md
+  - prototypes/bivaque-html/src/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md). Base codex/lote5-base com
+    COM-001, COM-002 e COM-003 ja integradas.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/groups/
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-006.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (os unicos permitidos sao node scripts/agents/prova-fila.mjs -- npx supabase db reset --local e --local --no-seed)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+  - rodar qualquer comando em segundo plano ou terminar com comando ainda rodando
+  - reescrever join_group ou approve_group_member com create or replace (o pedido com motivo e da COM-005); a recusa de pedido em grupo encerrado vai por trigger ou policy
+acceptance:
+  - Migration na faixa 20261024122000. Coluna de encerrado em groups e RPCs close_group e reopen_group so do dono, com pgTAP positivo e negativo (moderador, membro, nao membro)
+  - Grupo encerrado e so leitura no banco: recusa publicacao, comentario, reacao, evento novo e pedido ou entrada nova, por policy ou trigger, com pgTAP de cada negativo; quem ja participava continua lendo
+  - Encerrar descarta os pedidos pendentes (pgTAP)
+  - Encerrado sai da busca e das listas Proximos de voce e Populares, e continua em Meus grupos de quem participa (pgTAP e e2e)
+  - O dono nao sai do grupo sem antes passar a administracao (transfer_group_ownership, que ja existe); a tela de sair do prototipo guia a escolha do novo admin; pgTAP de que o dono nao sai sem passar
+  - delete_group deixa de aparecer na tela; o botao vira Encerrar grupo, e o grupo encerrado mostra o aviso e Reabrir para o dono, com os textos de prototypes/bivaque-html/src/features/groups/
+  - A nova UI fica em componentes novos dentro de apps/web/app/(shell)/groups/[id]/, e page.tsx so ganha o import e a linha que renderiza, para reduzir conflito entre COM-005, COM-006 e COM-007
+  - e2e nos tres viewports de encerrar, ver so leitura como membro, reabrir, e do dono passando a administracao antes de sair
+proof:
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - npx pnpm@11.18.0 generate:types logo depois da prova de banco
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de npx supabase status -o env
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e (specs da tarefa e os specs de grupo existentes)
+risk: mudanca de visibilidade e de escrita em grupos; policies de varias tabelas
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

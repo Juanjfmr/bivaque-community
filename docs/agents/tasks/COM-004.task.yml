@@ -1,0 +1,59 @@
+task_id: COM-004
+objective: >
+  Lote 5, tarefa N1: a navegacao segue o prototipo. Barra de baixo Inicio, Comunidade, Conversas e Voce;
+  Conversas abre /messages; abas da Comunidade do prototipo (sem a aba Negocios, que e do lote 6); as rotas
+  antigas de vila redirecionam para a Comunidade da cidade; nenhum destino que sai da barra fica sem porta.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - docs/agents/LICOES.md
+  - prototypes/bivaque-html/src/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md). Base codex/lote5-base com
+    COM-001, COM-002 e COM-003 ja integradas.
+allowed_paths:
+  - apps/web/app/components/bivaque/bottom-nav.tsx
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/
+  - apps/web/app/(shell)/communities/
+  - apps/web/app/(owner)/communities/
+  - apps/web/app/(shell)/community/
+  - apps/web/app/(shell)/explorar/
+  - apps/web/app/(shell)/profile/
+  - scripts/visual/flows/
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-004.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (os unicos permitidos sao node scripts/agents/prova-fila.mjs -- npx supabase db reset --local e --local --no-seed)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+  - rodar qualquer comando em segundo plano ou terminar com comando ainda rodando
+  - migration nova (esta tarefa nao tem banco)
+  - aceitar destino de redirecionamento vindo da URL; a lista de caminhos e fechada no codigo
+acceptance:
+  - NAV_ITEMS com Inicio, Comunidade, Conversas e Voce, com rotulos, ordem, icones e estado ativo de prototypes/bivaque-html/src/shell/navigation.js (funcao activeTab), e o comentario de bottom-nav.tsx corrigido
+  - Conversas leva a /messages e fica ativa em /messages e na conversa aberta; Voce reune o que hoje esta em Perfil
+  - Cada destino que sai da barra (Explorar, Comunidades, /groups, Perfil, /mercado, /negocio, Guia, Agenda, Salvos) tem porta a partir de uma das quatro entradas, provado por scripts/visual/flows/reachability.mjs sem destino orfao
+  - As rotas de vila (/communities, /communities/[id] e filhas, e as de (owner)/communities) redirecionam para /community por lista fechada no codigo; nada e apagado no banco; teste unitario da lista e e2e de que uma rota antiga cai em /community
+  - Abas da Comunidade do prototipo (renderCommunity em prototypes/bivaque-html/src/features/community/), com Grupos como aba
+  - e2e nos tres viewports da barra, das abas e do redirecionamento; comparacao de captura da barra e da Comunidade com o prototipo
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de npx supabase status -o env
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e (specs da tarefa e tests/e2e/shell-navigation.spec.ts)
+  - node scripts/visual/flows/reachability.mjs
+risk: troca da navegacao principal; destinos sem porta
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
