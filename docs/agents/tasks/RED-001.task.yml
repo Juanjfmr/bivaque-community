@@ -43,3 +43,12 @@ retry_budget: 2
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+parte_a:
+  status: concluida
+  evidencia:
+    - docs/agents/redesenho/R1-retrato.md gerado mecanicamente de docs/agents/redesenho/schema-dump.sql
+    - scripts/redesenho/retrato.mjs
+    - scripts/redesenho/conferir-retrato.test.mjs passou: 1 teste
+  contagens: tabelas_encontradas=23/23 policies=54 triggers=28 grants=54 funcoes=133 ids=678
+  escopo: extracao mecanica; avaliacao das regras e consumidores fica para a parte seguinte
