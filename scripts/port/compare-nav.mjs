@@ -209,6 +209,7 @@ try {
       await nextContext.addCookies(auth.cookies)
       const prototypePage = await prototypeContext.newPage()
       const nextPage = await nextContext.newPage()
+      await nextPage.emulateMedia({ colorScheme: theme })
       await prototypePage.goto(candidateUrl)
       await prototypePage.waitForFunction(() => window.Bivaque?.inspect().officialComponents)
       await prototypePage.addStyleTag({

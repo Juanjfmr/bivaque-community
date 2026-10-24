@@ -101,29 +101,44 @@ export const SHARED_AREAS = [
   "/cidade",
 ] as const
 
-const ORIGIN_KEY = "bivaque:navigation-origin"
+const ORIGIN_KEY = "bivaque:navigation-origins"
 
-export function readNavigationOrigin(): PrimaryContainer {
+function readNavigationOrigins(): Record<string, PrimaryContainer> {
   try {
-    const value = window.sessionStorage.getItem(ORIGIN_KEY)
-    return PRIMARY_CONTAINERS.find((id) => id === value) ?? "inicio"
+    const value = JSON.parse(window.sessionStorage.getItem(ORIGIN_KEY) ?? "{}") as Record<
+      string,
+      unknown
+    >
+    return Object.fromEntries(
+      Object.entries(value).filter((entry): entry is [string, PrimaryContainer] =>
+        PRIMARY_CONTAINERS.some((id) => id === entry[1]),
+      ),
+    )
   } catch {
-    return "inicio"
+    return {}
   }
 }
 
 export function rememberNavigationOrigin(
   pathname: string,
+  search: string,
   primary: readonly PrimaryNavItem[],
-): PrimaryContainer | null {
+  fallback: PrimaryContainer,
+): PrimaryContainer {
+  const key = `${pathname}${search ? `?${search}` : ""}`
+  const origins = readNavigationOrigins()
   const root = primary.find((item) => item.href === pathname)
-  if (!root || !PRIMARY_CONTAINERS.some((id) => id === root.id)) return null
+  const origin =
+    root && PRIMARY_CONTAINERS.some((id) => id === root.id)
+      ? (root.id as PrimaryContainer)
+      : (origins[key] ?? fallback)
+  origins[key] = origin
   try {
-    window.sessionStorage.setItem(ORIGIN_KEY, root.id)
+    window.sessionStorage.setItem(ORIGIN_KEY, JSON.stringify(origins))
   } catch {
     // Navigation still works when browser storage is unavailable.
   }
-  return root.id as PrimaryContainer
+  return origin
 }
 
 // Rotas que renderizam FORA do shell do membro: funil de entrada, onboarding,

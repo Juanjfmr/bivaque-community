@@ -139,13 +139,29 @@ test.describe("Você reúne o que era Perfil", () => {
     }
   })
 
-  test("Você → Salvos → anúncio mantém Você ativo", async ({ page, context }) => {
+  test("Você → Salvos → anúncio mantém Você ativo ao voltar do Início", async ({
+    page,
+    context,
+  }) => {
     await signInAs(context, "dono-vila@bivaque.example.invalid")
     await page.goto("/profile")
-    await page.waitForFunction(() => sessionStorage.getItem("bivaque:navigation-origin") === "voce")
+    await page.waitForFunction(
+      () =>
+        JSON.parse(sessionStorage.getItem("bivaque:navigation-origins") ?? "{}")["/profile"] ===
+        "voce",
+    )
     await page.getByRole("link", { name: "Salvos", exact: true }).last().click()
     await expect(page).toHaveURL(/\/salvos$/)
     await page.locator('a[href="/mercado/b1000000-0000-4000-8000-000000000001"]').click()
+    await expect(page).toHaveURL(/\/mercado\/b1000000-0000-4000-8000-000000000001$/)
+
+    if (await navWidthIsMobile(page)) {
+      await page.locator(BOTTOM_NAV).getByRole("tab", { name: "Início", exact: true }).click()
+    } else {
+      await page.locator(SIDEBAR).getByRole("link", { name: "Início", exact: true }).click()
+    }
+    await expect(page).toHaveURL(/\/inicio$/)
+    await page.goBack()
     await expect(page).toHaveURL(/\/mercado\/b1000000-0000-4000-8000-000000000001$/)
 
     if (await navWidthIsMobile(page)) {

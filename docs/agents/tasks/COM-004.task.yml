@@ -129,3 +129,15 @@ closure:
 #   o arquivo permaneceu inalterado e a entrada antiga continua la.
 # COMMIT: tentativa local falhou ao criar .git/worktrees/lote5-nav/index.lock (Permission denied); mudancas
 #   permanecem staged/unstaged no worktree e aguardam commit pelo coordenador.
+# Segunda correcao independente (24/10/2026, branch codex/lote5-nav):
+# ATIVO: active-nav.ts grava o container por caminho + busca em sessionStorage, sem tocar history.state.
+#   app-shell.tsx consulta a chave da URL atual; rotas com container proprio continuam fixas.
+# UNIT: shell-active-nav cobre Voce -> Salvos -> anuncio -> Inicio -> volta a entrada do anuncio, e storage indisponivel.
+# E2E: shell-navigation.spec.ts cobre o mesmo fluxo usando page.goBack(); typecheck:e2e passou. Playwright nao rodou.
+# TEMA: compare-nav.mjs emula explicitamente prefers-color-scheme na pagina Next. O Next usa essa preferencia
+#   apenas nos tokens sob .bv-skin; o shell de /inicio e /community nao usa essa classe e segue claro. O ADR-20261022
+#   exige tema automatico pelo sistema; registrar como achado para correcao posterior, sem mudar o tema nesta tarefa.
+# GATE: npx pnpm@11.18.0 gate -> VERDE (lint, typecheck, typecheck:e2e, test 1716 unit + 76 mobile + 19 web +
+#   189 privacy + 141 scope, secrets); build PULADO por falta de apps/web/.env.local.
+# OUTRAS PROVAS: sem banco/migration; test:db, build, comparacao de captura e e2e pendentes para coordenador,
+#   conforme o adendo. git diff --check PASS. Nenhum commit criado nesta execucao.

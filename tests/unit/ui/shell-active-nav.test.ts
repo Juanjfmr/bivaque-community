@@ -6,7 +6,6 @@ import {
   declaredContainerFor,
   livesOutsideShell,
   PRIMARY_CONTAINERS,
-  readNavigationOrigin,
   rememberNavigationOrigin,
   resolveActiveNav,
   SECONDARY_SELF_ROUTES,
@@ -54,7 +53,7 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     })
   })
 
-  it("guarda a última aba raiz na sessão e tolera storage indisponível", () => {
+  it("restaura a origem da própria entrada ao voltar no histórico", () => {
     const values = new Map<string, string>()
     try {
       vi.stubGlobal("window", {
@@ -63,8 +62,19 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
           setItem: (key: string, value: string) => values.set(key, value),
         },
       })
-      expect(rememberNavigationOrigin("/profile", PRIMARY)).toBe("voce")
-      expect(readNavigationOrigin()).toBe("voce")
+      expect(rememberNavigationOrigin("/profile", "", PRIMARY, "inicio")).toBe("voce")
+      expect(rememberNavigationOrigin("/salvos", "", PRIMARY, "voce")).toBe("voce")
+      const announcement = "/mercado/anuncio-1"
+      expect(rememberNavigationOrigin(announcement, "", PRIMARY, "voce")).toBe("voce")
+      expect(rememberNavigationOrigin("/inicio", "", PRIMARY, "voce")).toBe("inicio")
+
+      // page.goBack() returns to the existing announcement history entry.
+      expect(rememberNavigationOrigin(announcement, "", PRIMARY, "inicio")).toBe("voce")
+      expect(resolveActiveNav(announcement, PRIMARY, "voce")).toEqual({
+        kind: "primary",
+        id: "voce",
+      })
+      expect(values.get("bivaque:navigation-origins")).toContain('"/inicio":"inicio"')
 
       vi.stubGlobal("window", {
         sessionStorage: {
@@ -76,8 +86,7 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
           },
         },
       })
-      expect(rememberNavigationOrigin("/community", PRIMARY)).toBe("comunidade")
-      expect(readNavigationOrigin()).toBe("inicio")
+      expect(rememberNavigationOrigin("/community", "", PRIMARY, "inicio")).toBe("comunidade")
     } finally {
       vi.unstubAllGlobals()
     }
