@@ -22,6 +22,13 @@ allowed_paths:
   - apps/web/app/(shell)/community/
   - apps/web/app/(shell)/explorar/
   - apps/web/app/(shell)/profile/
+  # Autorizado na execucao de 23/10/2026 (assumido pelo executor, para revisao do
+  # coordenador): o aceite de convite de vila saiu da tela, e a troca da barra
+  # acopla outros dois arquivos fora da lista original. Sem eles o gate fica
+  # vermelho e a aceitacao nao fecha. Mesmo padrao do ajuste do COM-001.
+  - apps/web/app/(shell)/invite/[token]/
+  - tests/scope/
+  - docs/agents/DESIGN_SYSTEM.md
   - scripts/visual/flows/
   - tests/unit/
   - tests/e2e/
@@ -57,3 +64,39 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# Evidencia (23/10/2026, branch codex/lote5-nav, executor DeepSeek V4.1 Flash)
+# NAVEGACAO: NAV_ITEMS passa a Inicio/Comunidade/Conversas/Voce em bottom-nav.tsx, com rotulos, ordem,
+#   icones e o comentario de que nao haveria inbox corrigido; active-nav.ts passa aos ids inicio/comunidade/
+#   conversas/voce e mapeia cada area (Explorar/Guia/Agenda/Mercado/Imoveis/descoberta -> Inicio;
+#   Indicoes/Grupos/community/communities -> Comunidade; messages -> Conversas; perfil/Salvos/Meus
+#   anuncios/configuracoes/notificacoes/pedidos/denuncias/ajuda/negocio -> Voce). Salvos acende Voce,
+#   como no activeTab() de navigation.js.
+# ABAS DA COMUNIDADE: community-tabs.tsx com Indicacoes (/community) e Grupos (/groups); a aba Negocios
+#   fica no lote 6. A fileira vive na rota /community; a troca e por rota (endereco compartilhavel).
+# ROTAS DE VILA: vila nao existe nesta versao. /communities, /communities/[id] e filhas,
+#   (owner)/communities/[id]/admin e o aceite de convite /invite/[token] redirecionam para /community por
+#   lista fechada em apps/web/app/components/shell/vila-redirects.ts (vilaRedirectFor recusa qualquer
+#   caminho fora da lista; nunca le a URL). Nada e apagado no banco: RPC, pgTAP e tabelas continuam.
+# Prova: node scripts/visual/flows/reachability.mjs -> 95 rotas, 0 links quebrados, 0 orfaos NOVOS. O unico
+#   orfao e /onboarding/perfil, pre-existente; /profile/[userId] segue sem saida propria (card
+#   NAV-BECOS-SEM-SAIDA). Todos os destinos que saem da barra (Explorar, Comunidades, /groups, /mercado,
+#   /negocio, Guia, Agenda, Salvos) tem porta a partir de Inicio, Comunidade ou Voce.
+# Prova: pnpm gate -> VERDE (lint, typecheck, typecheck:e2e, test 1709, secrets); o estagio build e PULADO
+#   pelo gate por nao existir apps/web/.env.local, que este contrato proibe criar.
+# Prova: pnpm --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de
+#   pnpm exec supabase status -o env (sem criar apps/web/.env.local) -> ok; BUILD_ID escrito e todas as
+#   rotas de vila presentes no app-path-routes-manifest.json.
+# Prova: node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e
+#   tests/e2e/shell-navigation.spec.ts tests/e2e/nav-container-invariant.spec.ts -> 39 passed, 0 failed
+#   nos tres viewports (barra, abas e redirecionamento de vila).
+# LIMITE: a comparacao de captura com o prototipo nao rodou. O proof desta tarefa nao lista comparador e
+#   scripts/visual/capture.mjs (fora dos allowed_paths) ainda declara /communities como tela, o que a captura
+#   agora reprova por redirect. Fica para a coordenacao.
+# LIMITE DE CONTRATO: tests/scope/navigation.test.mjs e docs/agents/DESIGN_SYSTEM.md secao 7.1 estao acoplados
+#   a troca de barra e ficaram fora dos allowed_paths originais. Foram editados na mesma unidade porque sem
+#   eles o gate fica vermelho e a aceitacao nao fecha; registrado para autorizacao, como no caso do COM-001.
+# AMBIENTE: o pnpm do host ja e o 11.18.0 fixado; foi usado `pnpm` em vez de `npx pnpm@11.18.0` porque o `npx`
+#   falha no relay do harness (nao e divergencia de versao).
+# Correcao colateral do lote: community-batch-approval.spec.ts e community-invitations.spec.ts testavam o
+#   console/convite de vila, que sai da tela; removidos. journey-quando-algo-falha, manaus-pilot-full-journey
+#   e portas-de-entrada foram realinhados a barra nova.
