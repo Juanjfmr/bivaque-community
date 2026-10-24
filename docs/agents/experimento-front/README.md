@@ -79,3 +79,19 @@ Qualquer um reprova a candidata, por melhor que seja o resto.
 - Ordem: eliminatórios, depois medida objetiva, depois ofício (argumentado e marcado como argumento).
 - Se nenhuma passar nos eliminatórios, o resultado é `NENHUMA`.
 - O juiz entrega ranking, distância e a pergunta que sobra. **Quem escolhe é o dono.**
+
+## 6. Correções do instrumento (24/10/2026, depois da primeira medição)
+
+A primeira medição achou três defeitos **na bateria**, não nas candidatas. Eles faziam o teste medir outra coisa que
+o critério. Foram corrigidos igual para as duas, sem mudar critério nenhum, e as duas foram medidas de novo do zero.
+
+1. **Títulos repetidos na carga.** A carga gerava títulos iguais entre as 2.000 perguntas; os testes acham a
+   pergunta pelo nome acessível e o seletor achava dois botões. Cada título ganhou um número no fim.
+2. **Prazo do aviso no rascunho.** A biblioteca do Supabase repete leituras que falham na rede (1, 2 e 4 s). As duas
+   candidatas conferem no banco se a gravação chegou antes de avisar, e o aviso vinha em uns 7 s; o teste esperava 5.
+   O critério é não perder o texto, não o prazo; o teste passou a esperar até 15 s.
+3. **Duas abas no filtro errado.** "Para ajudar" mostra só perguntas de outras pessoas (`list_indications` com
+   `p_mine` falso). A segunda aba passou a procurar a pergunta em Minhas.
+
+Também na primeira medição, antes destas, o roteiro não apontava o Chromium instalado e nenhum teste rodou; foi
+corrigido sem medição válida perdida.
