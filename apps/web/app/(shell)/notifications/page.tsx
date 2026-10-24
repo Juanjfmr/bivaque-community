@@ -141,7 +141,9 @@ async function loadEnrichment(
     ),
   ]
   const postIds = notifications.filter((n) => n.type === "comment").map((n) => n.target_id)
-  const groupIds = notifications.filter((n) => n.type === "group_admission").map((n) => n.target_id)
+  const groupIds = notifications
+    .filter((n) => n.type === "group_admission" || n.type === "group_post")
+    .map((n) => n.target_id)
   const eventIds = notifications
     .filter(
       (n) => n.type === "event_rsvp" || n.type === "event_change" || n.type === "event_reminder",
@@ -222,7 +224,7 @@ async function loadEnrichment(
     const key =
       n.type === "comment"
         ? `post:${n.target_id}`
-        : n.type === "group_admission"
+        : n.type === "group_admission" || n.type === "group_post"
           ? `group:${n.target_id}`
           : n.type === "event_rsvp" || n.type === "event_change" || n.type === "event_reminder"
             ? `event:${n.target_id}`

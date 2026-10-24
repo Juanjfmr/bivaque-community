@@ -172,7 +172,7 @@ export default function GroupsPage() {
 
       const { data: membershipsData, error: membershipsError } = await supabase
         .from("group_memberships")
-        .select("*")
+        .select("group_id, user_id, role, status, joined_at")
         .eq("user_id", authData.user.id)
 
       const { data: activityData, error: activityError } = await supabase.rpc(
@@ -356,7 +356,7 @@ export default function GroupsPage() {
   const loadGroupMembers = async (groupId: string) => {
     const { data, error } = await supabase
       .from("group_memberships")
-      .select("*")
+      .select("group_id, user_id, role, status, joined_at")
       .eq("group_id", groupId)
     if (error) {
       console.error("[groups] loadGroupMembers failed:", error)

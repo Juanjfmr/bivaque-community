@@ -137,7 +137,8 @@ async function setGroupRulesAction(formData: FormData) {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  // set_group_rules is security definer and gates on is_group_moderator.
+  // set_group_rules is security definer and gates on is_group_owner: gerenciar
+  // o grupo é do admin (protótipo `groups/views.js`), não do moderador.
   const { error } = await supabase.rpc("set_group_rules", {
     p_group_id: groupId,
     p_rules: rules,
@@ -175,7 +176,8 @@ async function setNotifyLevelAction(formData: FormData) {
 }
 
 // B1: a publicação fixada (uma por grupo, só o admin). O gatilho no banco
-// confere que a publicação é do próprio grupo e não está removida.
+// confere que a publicação é do próprio grupo e não está removida, e a RPC
+// exige is_group_owner.
 async function pinPostAction(formData: FormData) {
   "use server"
   const groupId = formData.get("groupId")
@@ -379,15 +381,29 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     notFound()
   }
 
+  // A linha da própria participação, coluna a coluna: `notify_level` está fora
+  // do grant de SELECT de `authenticated` (o aviso é da própria pessoa) e um
+  // `select *` seria negado pela coluna revogada.
   const { data: membershipData, error: membershipError } = await authClient
     .from("group_memberships")
-    .select("*")
+    .select("group_id, user_id, role, status, joined_at")
     .eq("group_id", group.id)
     .eq("user_id", user.id)
     .maybeSingle()
 
   if (membershipError) throw new Error(`failed to read membership: ${membershipError.message}`)
   const membership = membershipData as MembershipRow | null
+
+  // O nível de aviso vem do RPC: a coluna não é legível pela Data API, e a
+  // função devolve só a linha de quem chama, só a aprovada.
+  const { data: notifyLevelData, error: notifyLevelError } = await authClient.rpc(
+    "my_group_notify_level",
+    { p_group_id: group.id },
+  )
+  if (notifyLevelError) {
+    throw new Error(`failed to read notify level: ${notifyLevelError.message}`)
+  }
+  const myNotifyLevel = (notifyLevelData as NotifyLevel | null) ?? null
 
   const { data: membersData, error: membersError } = await authClient
     .from("group_memberships")
@@ -443,12 +459,17 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const feedWithoutPinned = pinnedPost ? feed.filter((post) => post.id !== pinnedPost.id) : feed
 
   const currentLevel =
-    NOTIFY_LEVELS.find((level) => level.value === membership?.notify_level) ?? NOTIFY_LEVELS[1]
+    NOTIFY_LEVELS.find((level) => level.value === myNotifyLevel) ?? NOTIFY_LEVELS[1]
   if (!currentLevel) throw new Error("notify level definition missing")
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
+      {/* O cabeçalho é pegajoso DENTRO do contêiner de rolagem (`main`,
+          `overflow-y-auto`). Com `top-12` ele era empurrado 48 px para baixo e
+          cobria o primeiro bloco de conteúdo — a 375 px ninguém conseguia tocar
+          em "Regras do grupo", que ficava embaixo dele. `top-0` gruda no topo
+          do próprio contêiner, sem sobrepor o conteúdo. */}
+      <div className="sticky top-0 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-baseline gap-2">
@@ -518,7 +539,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
               <select
                 id="notify-level"
                 name="level"
-                defaultValue={membership?.notify_level ?? "highlights"}
+                defaultValue={myNotifyLevel ?? "highlights"}
                 className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
               >
                 {NOTIFY_LEVELS.map((level) => (
@@ -541,7 +562,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
               Aviso fixado
             </h2>
             <FeedPost post={pinnedPost} />
-            {isModerator && (
+            {isOwner && (
               <form action={unpinPostAction} className="flex justify-end">
                 <input type="hidden" name="groupId" value={group.id} />
                 <Button type="submit" size="sm" variant="tertiary">
@@ -640,7 +661,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
               </div>
             )}
 
-            {isModerator && (
+            {isOwner && (
               <form action={setGroupRulesAction} className="mt-3 flex flex-col gap-2">
                 <input type="hidden" name="groupId" value={group.id} />
                 <label htmlFor="group-rules" className="text-sm font-semibold tracking-tight">
@@ -670,7 +691,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <div className="space-y-2">
               {feedWithoutPinned.map((post, index) => (
                 <div key={post.id} className="space-y-1">
-                  {isModerator && (
+                  {isOwner && (
                     <form action={pinPostAction} className="flex justify-end">
                       <input type="hidden" name="groupId" value={group.id} />
                       <input type="hidden" name="postId" value={post.id} />
