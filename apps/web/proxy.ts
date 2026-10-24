@@ -120,6 +120,12 @@ export async function proxy(request: NextRequest) {
   // defeito do RUN-001, e nenhuma das plataformas que este público usa
   // interrompe quem já aceitou.
 
+  if (!user && pathname === "/app") {
+    // The browser can preserve /app#fragment here; authenticated requests still
+    // pass through the normal account-kind and locality gates below.
+    return supabaseResponse
+  }
+
   if (!user) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)

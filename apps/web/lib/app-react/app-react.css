@@ -1,0 +1,350 @@
+:root {
+  --app-bg: #f2f0eb;
+  --app-surface: #fff;
+  --app-ink: #253033;
+  --app-muted: #586569;
+  --app-line: #d5d3cc;
+  --app-brand: #536f69;
+  --app-soft: #e2ebe7;
+  --app-shadow: 0 2px 8px #202b2b12;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bg: #171e20;
+    --app-surface: #222c2e;
+    --app-ink: #eceae4;
+    --app-muted: #bec6c5;
+    --app-line: #465052;
+    --app-brand: #a8c1b6;
+    --app-soft: #31413c;
+    --app-shadow: 0 2px 10px #0005;
+  }
+}
+.app-react {
+  position: fixed;
+  inset: 0;
+  background: var(--app-bg);
+  color: var(--app-ink);
+  font:
+    16px / 1.5 system-ui,
+    sans-serif;
+}
+.app-top {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 max(20px, calc((100vw - 1120px) / 2));
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface);
+  font-weight: 700;
+}
+.app-frame {
+  height: calc(100% - 64px);
+  display: flex;
+  max-width: 1200px;
+  margin: auto;
+}
+.app-nav {
+  width: 96px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 0;
+  border-right: 1px solid var(--app-line);
+  background: var(--app-surface);
+}
+.app-nav button {
+  width: 100%;
+  min-height: 64px;
+  border: 0;
+  background: none;
+  color: var(--app-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.app-nav button[aria-current="page"] {
+  color: var(--app-brand);
+  font-weight: 700;
+}
+.app-nav .app-create {
+  margin: 18px 0;
+  min-height: 52px;
+  background: var(--app-brand);
+  color: #fff;
+  border-radius: 16px;
+  width: 54px;
+  font-size: 22px;
+}
+.app-main {
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  padding: 30px clamp(20px, 5vw, 72px) 80px;
+}
+.app-content {
+  max-width: 760px;
+  margin: auto;
+}
+.app-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.app-head h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+.app-head p,
+.app-muted {
+  color: var(--app-muted);
+}
+.app-button,
+md-filled-button {
+  font: inherit;
+}
+.app-button {
+  min-height: 44px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  padding: 0 16px;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  cursor: pointer;
+}
+.app-button:hover {
+  background: var(--app-soft);
+}
+.app-button.primary {
+  background: var(--app-brand);
+  color: #fff;
+  border-color: transparent;
+}
+.app-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-line);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--app-shadow);
+  margin: 14px 0;
+}
+.app-context {
+  background: var(--app-soft);
+  border-radius: 16px;
+  padding: 15px 18px;
+  margin: 16px 0;
+}
+.app-tabs,
+.app-filters {
+  display: flex;
+  gap: 8px;
+  overflow: auto;
+  margin: 16px 0;
+}
+.app-tabs [role="tab"] {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  padding: 12px 16px;
+  color: var(--app-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.app-tabs [aria-selected="true"] {
+  color: var(--app-brand);
+  border-color: var(--app-brand);
+  font-weight: 700;
+}
+.app-filters button[aria-pressed="true"] {
+  background: var(--app-ink);
+  color: var(--app-surface);
+}
+.app-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+.app-question {
+  display: block;
+  text-align: left;
+  width: 100%;
+  min-height: 68px;
+  cursor: pointer;
+}
+.app-question strong {
+  display: block;
+  font-size: 17px;
+}
+.app-meta {
+  font-size: 13px;
+  color: var(--app-muted);
+}
+.app-detail {
+  white-space: pre-wrap;
+}
+.app-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.app-error {
+  padding: 14px;
+  border: 1px solid #b23b36;
+  border-radius: 12px;
+  color: #a22;
+}
+.app-home-search {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  text-align: left;
+  color: var(--app-muted);
+}
+.app-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+.app-shortcuts button {
+  min-height: 74px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-line);
+  color: var(--app-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.app-reply {
+  margin: 12px 0 12px 24px;
+}
+.app-compose {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+.app-compose textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  font: inherit;
+}
+.app-dialog {
+  width: min(600px, calc(100vw - 32px));
+  max-height: 85vh;
+  border: 0;
+  border-radius: 20px;
+  padding: 24px;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  box-shadow: 0 10px 50px #0005;
+}
+.app-dialog::backdrop {
+  background: #1119;
+}
+.app-dialog textarea {
+  min-height: 130px;
+}
+.app-spacer {
+  height: 60px;
+}
+.app-appbusy {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+:focus-visible {
+  outline: 3px solid #b0713e;
+  outline-offset: 2px;
+}
+@media (max-width: 719px) {
+  .app-top {
+    height: 56px;
+    padding: 0 18px;
+  }
+  .app-frame {
+    height: calc(100% - 56px);
+  }
+  .app-main {
+    padding: 22px 16px calc(100px + env(safe-area-inset-bottom));
+  }
+  .app-nav {
+    position: fixed;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: 76px;
+    padding: 0;
+    flex-direction: row;
+    justify-content: space-around;
+    border: 0;
+    border-top: 1px solid var(--app-line);
+    gap: 0;
+  }
+  .app-nav button {
+    height: 100%;
+    min-height: 50px;
+    font-size: 11px;
+  }
+  .app-nav .app-create {
+    margin: 0;
+    width: 52px;
+    min-height: 52px;
+    border-radius: 16px;
+  }
+  .app-head h1 {
+    font-size: 26px;
+  }
+  .app-shortcuts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+    animation: none;
+    transition: none;
+  }
+}
+md-filled-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--app-brand);
+  color: white;
+  cursor: pointer;
+  font:
+    600 14px / 20px system-ui,
+    sans-serif;
+}
+md-filled-button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+body:has(.app-react) {
+  background: var(--app-bg);
+}
