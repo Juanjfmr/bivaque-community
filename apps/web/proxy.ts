@@ -121,6 +121,9 @@ export async function proxy(request: NextRequest) {
   // interrompe quem já aceitou.
 
   if (!user) {
+    // `/app` reads the hash in the browser so it can return to the exact
+    // fragment after login; HTTP requests never include URL fragments.
+    if (pathname === "/app") return supabaseResponse
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)

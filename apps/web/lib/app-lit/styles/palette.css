@@ -1,0 +1,31 @@
+/* Rodada 70 (ADR-20261020): a pele é a da marca. Os tokens principais nascem em base.css; aqui ficam
+   só os complementos que o Material usa (dimensão, brilho, scrim, sucesso e as cores fixas do sistema). */
+:root {
+  --md-sys-color-surface-dim: #e1ddd5;
+  --md-sys-color-surface-bright: #ffffff;
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-primary-fixed: #dde2e3;
+  --md-sys-color-primary-fixed-dim: #c9d1d2;
+  --md-sys-color-on-primary-fixed: #253033;
+  --md-sys-color-tertiary-fixed: #f3ddd7;
+  --md-sys-color-on-tertiary-fixed: #7a2c20;
+  --md-sys-color-success: #4a6a6e;
+  --md-sys-color-on-success: #ffffff;
+  --md-sys-color-success-container: #e1eaeb;
+  --md-sys-color-on-success-container: #253033;
+  --bottom: 80px;
+}
+:root[data-theme="dark"] {
+  --md-sys-color-surface-dim: #171e20;
+  --md-sys-color-surface-bright: #313d3f;
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-primary-fixed: #dde2e3;
+  --md-sys-color-primary-fixed-dim: #c9d1d2;
+  --md-sys-color-on-primary-fixed: #253033;
+  --md-sys-color-tertiary-fixed: #3e2a26;
+  --md-sys-color-on-tertiary-fixed: #f0a08a;
+  --md-sys-color-success: #9fbcc0;
+  --md-sys-color-on-success: #171e20;
+  --md-sys-color-success-container: #263a3d;
+  --md-sys-color-on-success-container: #eceae4;
+}

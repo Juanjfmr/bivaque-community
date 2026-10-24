@@ -1,0 +1,315 @@
+/* Rodada 35: Início do celular e do tablet (abaixo de 1024 px) com a organização da Início do
+   desktop, aprovada em 17/10/2026 (versão 6 da maquete). Os blocos são os mesmos do desktop;
+   aqui ficam compactos, com serviços e oportunidades em carrossel. */
+@media (max-width: 1023px) {
+  .home-mob .page-head {
+    margin-bottom: 12px;
+  }
+  .home-mob .page-head h1 {
+    font-size: 24px;
+    line-height: 30px;
+    letter-spacing: -0.3px;
+  }
+  .h1-city {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 2px 0 4px;
+    margin-left: -2px;
+    border-radius: 10px;
+    color: var(--bv-accent-text);
+    font: inherit;
+    letter-spacing: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    text-decoration-color: color-mix(in srgb, var(--bv-accent-text) 35%, transparent);
+  }
+  .h1-city md-icon {
+    font-size: 22px;
+  }
+  .home-search-ex {
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+  }
+  .home-mob .home-search-button > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .home-mob .home-top .intent-grid {
+    margin-top: 12px;
+    gap: 6px;
+  }
+  .home-mob .intent {
+    min-height: 0;
+    padding: 6px 2px;
+    gap: 5px;
+    font-size: 11.5px;
+  }
+  .home-mob .intent md-icon {
+    width: 46px;
+    height: 38px;
+    font-size: 22px;
+    border-radius: 12px;
+  }
+  .home-alerts {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .home-hire {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-align: left;
+    font: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface-container-lowest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .home-hire b {
+    display: block;
+    font-weight: 650;
+  }
+  .home-hire small {
+    display: block;
+    color: var(--md-sys-color-on-surface-variant);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .home-hire .grow {
+    min-width: 0;
+  }
+  .home-hire > md-icon:first-child {
+    color: var(--md-sys-color-primary);
+  }
+  .home-mob .section {
+    margin-top: 24px;
+  }
+  .home-mob .section-title {
+    margin-bottom: 2px;
+  }
+  .home-sub {
+    margin: 0 0 10px;
+  }
+  /* Carrossel: dois cartões e meio à vista; o cartão cortado na borda avisa que há mais. */
+  .home-mob .home-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    margin: 0 calc(-1 * var(--space));
+    padding: 2px var(--space) 6px;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--space);
+    scrollbar-width: none;
+  }
+  .home-mob .home-row::-webkit-scrollbar {
+    display: none;
+  }
+  .home-mob .home-row .photo-card {
+    flex: none;
+    width: clamp(150px, 41vw, 230px);
+    scroll-snap-align: start;
+    border-radius: 12px;
+  }
+  .home-mob .home-row .cover {
+    aspect-ratio: 4 / 3;
+  }
+  .home-mob .home-row .cover .pill {
+    left: 8px;
+    top: 8px;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  .home-mob .home-row .save-card {
+    top: 4px;
+    right: 4px;
+    transform: scale(0.85);
+  }
+  .home-mob .home-row .card-link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .home-mob .home-row .card-body {
+    flex: 1;
+    padding: 10px 12px 12px;
+    gap: 2px;
+  }
+  .home-mob .home-row .card-body h3 {
+    font-size: 14px;
+    line-height: 19px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .home-mob .home-row .price {
+    font-size: 16px;
+    line-height: 22px;
+  }
+  .home-mob .home-row .card-meta {
+    font-size: 12px;
+    line-height: 17px;
+  }
+  .home-mob .home-row .photo-card:not(.home-biz) .card-line {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .home-mob .home-row .photo-card:not(.home-biz) .card-line md-icon {
+    vertical-align: -3px;
+    margin-right: 3px;
+  }
+  .home-mob .home-row .card-body .pill {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .home-mob .home-biz .card-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .home-mob .home-biz-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+  .home-mob .home-biz-go {
+    display: none;
+  }
+  .home-mob .home-biz .card-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 4px;
+    font-size: 11px;
+  }
+  /* Grupos e encontro: lista com divisória, sem moldura extra. */
+  .home-mob .home-card:not(.home-arrival) {
+    margin-top: 24px;
+  }
+  .home-mob .home-card:not(.home-arrival) .section-title h2 {
+    font-size: 20px;
+  }
+  .home-mob .home-card:not(.home-arrival) .list {
+    padding: 0 14px;
+  }
+  .home-mob .home-card .list-row {
+    padding: 10px 0;
+    gap: 12px;
+    min-height: 0;
+  }
+  .home-mob .home-card .avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+  .home-mob .home-card .txt > b {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .home-mob .home-meta {
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .home-mob .home-meta > span:not(:first-child)::before {
+    content: "·";
+    margin-right: 6px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+  .home-mob .home-meta-group {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .home-mob .home-activity {
+    color: var(--md-sys-color-primary);
+    font-weight: 600;
+  }
+  .home-mob .home-event {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 12px;
+    align-items: center;
+  }
+  .home-mob .home-event .txt {
+    min-width: 0;
+    text-align: left;
+  }
+  .home-mob .home-event .txt small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .home-mob .home-arrival {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-surface);
+  }
+  .home-mob .home-arrival > md-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container-lowest);
+    color: var(--md-sys-color-primary);
+    font-size: 22px;
+  }
+  .home-mob .home-arrival h3 {
+    font-size: 15px;
+    line-height: 21px;
+  }
+  .home-mob .home-arrival p {
+    font-size: 13px;
+    line-height: 19px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+  .home-mob .home-arrival md-text-button {
+    margin-left: -12px;
+  }
+  /* "Tem um negócio?" no fim, como linha discreta. */
+  .home-biz-cta {
+    margin-top: 28px;
+    padding: 16px 2px 0;
+    border-radius: 0;
+    background: none;
+    color: var(--md-sys-color-on-surface-variant);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .home-biz-cta b {
+    color: var(--md-sys-color-on-surface);
+  }
+}
