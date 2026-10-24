@@ -6,10 +6,11 @@ import {
   replyResolution,
 } from "../../../apps/web/lib/recommendations/resolution"
 
-// RECON-035 — a resposta que resolveu. Desde 25/09/2026 a conversa do pedido é
-// a tela de detalhe das indicações (ADR-20260925-memoria-de-indicacoes); o
-// rótulo da marca continua o da decisão do dono de 09/09: "Ajudou a resolver".
-// O selo do pedido diz "Resolvido por quem pediu", sem gênero fixo.
+// RECON-035 + lote 5 (ADR-20261023, seção 2) — a resposta que resolveu e a
+// resolução sem resposta. Desde 25/09/2026 a conversa do pedido é a tela de
+// detalhe das indicações (ADR-20260925-memoria-de-indicacoes); o rótulo da marca
+// continua "Ajudou a resolver", e os rótulos do estado passaram a ser "Resolvida"
+// (com resposta marcada) e "Resolvida por quem perguntou" (sem resposta).
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const detailPath = join(
@@ -21,6 +22,7 @@ const detailPath = join(
   "indications",
   "indication-detail.tsx",
 )
+const indicationsLib = join(root, "apps", "web", "lib", "indications", "indications.ts")
 
 describe("resolution marker (RECON-035)", () => {
   it("marks only the reply the asker chose", () => {
@@ -31,6 +33,14 @@ describe("resolution marker (RECON-035)", () => {
 
   it("reports an open request with no mark as open", () => {
     expect(replyResolution({ is_resolved: false, resolved_reply_id: null }, "reply-a")).toBe("open")
+  })
+
+  it("um ponteiro sem a pergunta resolvida NAO e a resposta que resolveu", () => {
+    // O estado impossivel {is_resolved: false, resolved_reply_id: "reply-a"}
+    // (achado 3 da revisao de 23/10/2026) nao pode aparecer como marcado.
+    expect(replyResolution({ is_resolved: false, resolved_reply_id: "reply-a" }, "reply-a")).toBe(
+      "open",
+    )
   })
 
   it("reports resolved-without-a-mark separately", () => {
@@ -47,7 +57,7 @@ describe("resolution marker (RECON-035)", () => {
   it("writes through the server RPCs, never a direct table update", () => {
     const source = readFileSync(detailPath, "utf8")
     expect(source).toContain("mark_recommendation_reply_resolved")
-    expect(source).toContain("clear_recommendation_resolved_reply")
+    expect(source).toContain("mark_recommendation_resolved")
     expect(source).toContain("reopen_recommendation")
     expect(source).toContain("callResolutionRpc")
     expect(source).not.toMatch(/\.update\(\s*\{[^}]*resolved_reply_id/)
@@ -57,14 +67,22 @@ describe("resolution marker (RECON-035)", () => {
     const source = readFileSync(detailPath, "utf8")
     expect(source).toContain("resolved_reply_id")
     expect(source).toContain("Ajudou a resolver")
-    expect(source).toContain("Resolvido por quem pediu")
-    expect(source).toContain("Remover marca")
+    expect(source).toContain("resolutionLabel")
+    const lib = readFileSync(indicationsLib, "utf8")
+    expect(lib).toContain("Resolvida por quem perguntou")
+    expect(lib).toContain('return "Resolvida"')
+  })
+
+  it("o salvar virou 'Seguir respostas' (ADR-20261023, secao 2)", () => {
+    const source = readFileSync(detailPath, "utf8")
+    expect(source).toContain('"Seguir respostas"')
+    expect(source).toContain('"Seguindo respostas"')
   })
 
   it("gates every resolution control behind isAuthor", () => {
     const source = readFileSync(detailPath, "utf8")
     // A fileira de ações da resposta só existe para quem perguntou; dentro
-    // dela, marcar e remover a marca se excluem.
+    // dela, marcar e reabrir se excluem.
     expect(source).toContain("{isAuthor ? (")
     expect(source).toContain("{!marked ? (")
     expect(source).toContain("{marked ? (")

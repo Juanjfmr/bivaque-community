@@ -9,8 +9,8 @@ export const MEMBRO_1_EMAIL = "membro-1@bivaque.example.invalid"
 export const MEMBRO_1_USER_ID = "30000000-0000-4000-8000-000000000001"
 export const PRESTADOR_EMAIL = "prestador-seed@bivaque.example.invalid"
 
-// unico pedido de indicacao do seed; origem do toggle Salvar e fixture da
-// captura /salvos
+// unico pedido de indicacao do seed; origem do toggle "Seguir respostas" e
+// fixture da captura /salvos
 export const REQUEST_ID = "80000000-0000-4000-8000-000000000f00"
 export const REQUEST_TITLE = "Alguém conhece um bom encanador?"
 

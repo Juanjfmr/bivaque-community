@@ -67,4 +67,11 @@ describe("suas indicações", () => {
     expect(indications).not.toMatch(/count\(\*\)|resolveram|pontos|ranking/i)
     expect(indications).not.toMatch(/ajudou a resolver \d|\d+ vezes/i)
   })
+
+  it("a marca da resposta vem do estado da pergunta, nao so do ponteiro", () => {
+    // Achado 3 da revisao de 23/10/2026: so mostra "ajudou" quando a pergunta
+    // esta resolvida E esta resposta e a resolucao atual.
+    expect(indications).toContain("is_resolved")
+    expect(indications).toContain("row.request?.is_resolved === true")
+  })
 })
