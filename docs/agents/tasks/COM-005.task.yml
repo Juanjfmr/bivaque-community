@@ -52,3 +52,17 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# evidencia COM-005 — executada em 23/10/2026 na branch codex/lote5-grupo-pedido
+# (todas as provas abaixo foram rodadas e lidas nesta sessao)
+# test:db: PASS — 158 arquivos, 2437 testes. supabase/tests/group-join-reason.sql ok (37 asserts: estrutura e RLS fechada das duas tabelas novas; job pg_cron agendado; matriz de leitura do motivo com positivos do autor, do dono e do moderador e negativos de outro membro, de nao membro e do anon; aprovacao e recusa apagando o motivo; a tentativa sobrevivendo a recusa; o quarto pedido recusado com 54000 sem criar participacao; CHECK de 300 caracteres; limpeza do pedido sem decisao ha mais de 30 dias)
+# generate:types: ok — database.generated.ts ganhou group_join_reasons, group_join_attempts e join_group(p_group_id, p_reason?)
+# gate: VERDE em lint, typecheck, typecheck:e2e, test (141 scope) e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — pnpm --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de supabase status -o env, sem criar arquivo de env
+# e2e: group-join-reason.spec.ts (1 teste x 3 projetos) e group-admin-cycle.spec.ts (3 testes x 3 projetos) — 12 passou, 0 falhou, pela fila, --workers=1. O spec proprio pede com motivo, ve o aviso do que nao incluir, aprova e ve o motivo sumir, e prova o convite nos dois casos (o link do Fechado leva ao pedido, nunca a entrada direta; o do Aberto entra direto); o ciclo de administracao passou a pedir pelo dialogo novo
+# e2e (ambiente): uma rodada da prova combinada falhou com ERR_CONNECTION_REFUSED nos 12 testes por o webServer nao ter subido; repetida em seguida, 12/12. Nao era o diff; a rodada limpa esta no commit do e2e
+# e2e (ambiente): o clique no Radio do HeroUI e interceptado no formulario de criar grupo; a prova cria os grupos do cenario pela RPC create_group (a API autenticada), e nao pela tela
+# ambiente: o npx deste shell esta quebrado (erro do relay WSL); generate:types usou node_modules/.bin/supabase e o build usou o pnpm 11.18.0 do PATH
+# desenho: o motivo so e reescrito em pedido novo — pedido ja pendente nao consome tentativa nem troca o texto, como no community_join_reasons; a recusa apaga o motivo pelo on delete cascade da participacao, e a aprovacao o apaga na RPC approve_group_member
+# pendente: a fila de pedidos do moderador ficou no detalhe do grupo (componente de servidor GroupJoinRequests), sem usar o painel Gerenciar da lista; dono pelo owner_user_id e dono pela linha de participacao sao ambos aceitos
+# pendente: transicao de quadro (tools/backend-kanban/public/board.json) esta fora dos allowed_paths deste contrato — nenhuma foi feita
