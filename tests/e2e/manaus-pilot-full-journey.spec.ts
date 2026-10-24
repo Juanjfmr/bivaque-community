@@ -257,13 +257,13 @@ test.describe("groups journey", () => {
       await expect(nav).toBeVisible()
       const tabs = nav.getByRole("tab")
       await expect(tabs).toHaveCount(4)
-      // Containers de PROCESSO-DE-CONSTRUCAO §7, travados em
-      // tests/scope/navigation.test.mjs:42. Substituíram os quatro do
-      // ADR-20260816 em 2026-09-08.
+      // Containers de ADR-20261023-comunidade-do-prototipo, travados em
+      // tests/scope/navigation.test.mjs. Substituíram os quatro do
+      // PROCESSO-DE-CONSTRUCAO §7 em 2026-10-23.
       await expect(tabs.nth(0)).toContainText("Início")
-      await expect(tabs.nth(1)).toContainText("Explorar")
-      await expect(tabs.nth(2)).toContainText("Comunidades")
-      await expect(tabs.nth(3)).toContainText("Perfil")
+      await expect(tabs.nth(1)).toContainText("Comunidade")
+      await expect(tabs.nth(2)).toContainText("Conversas")
+      await expect(tabs.nth(3)).toContainText("Você")
     } else {
       // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible.
       // A sidebar ganhou seções além da primária (secundária, comunidades,
@@ -272,7 +272,7 @@ test.describe("groups journey", () => {
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
-      for (const href of ["/inicio", "/explorar", "/communities", "/profile"]) {
+      for (const href of ["/inicio", "/community", "/messages", "/profile"]) {
         await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
       }
     }

@@ -54,11 +54,16 @@ test.describe("portas de entrada", () => {
 })
 
 // O cabeçalho aparece nas três larguras, então esta porta é provada nas três.
+// Com "Conversas" agora na navegação primária (lote 5 N1), o locator é escopado
+// ao cabeçalho: em desktop a lateral também tem um link "Conversas".
 test.describe("porta da caixa de conversas", () => {
   test("o ícone de conversas do cabeçalho abre a caixa", async ({ page }) => {
     await signInAs(page.context(), OTHER)
     await page.goto("/inicio")
-    await page.getByRole("link", { name: /^Conversas/ }).click()
+    await page
+      .locator("header")
+      .getByRole("link", { name: /^Conversas/ })
+      .click()
     await expect(page).toHaveURL(/\/messages/)
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
   })

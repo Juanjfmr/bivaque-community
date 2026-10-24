@@ -5,9 +5,11 @@ import { signInAs } from "./helpers/session"
 
 // Jornada simulada — web-quando-algo-falha (prancha 60).
 //
-// 60#0, acesso indisponível: a membra de Manaus abre uma comunidade do Rio. A resposta certa não
-// é erro nem "tentar de novo" — recarregar não muda autorização —, é dizer o que aconteceu e o
-// caminho legítimo. O negativo de autorização vem junto: a área de operação não abre para ela.
+// 60#0, endereço de vila: a membra de Manaus abre o endereço de uma comunidade
+// de outra cidade. Vila não existe nesta versão (ADR-20261023-comunidade-do-
+// prototipo): o endereço antigo não abre uma tela de negação — ele redireciona
+// para a Comunidade da cidade. O negativo de autorização da operação continua
+// vindo antes, e não muda com isto.
 //
 // 60#1, falha de conexão e retomada: a rede cai no momento de publicar. O texto precisa ficar, e
 // "Tentar novamente" precisa publicar de verdade quando a rede volta — retomada que só limpa a
@@ -42,16 +44,10 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         "60-web-estados#0",
         page,
         async () => {
+          // O endereço antigo de uma vila de outra cidade deixa de existir como
+          // tela: cai na Comunidade da cidade.
           await page.goto(`/communities/${RIO_COMMUNITY}`)
-          const state = page
-            .getByRole("status")
-            .filter({ hasText: "Você ainda não tem acesso a esta comunidade." })
-          await expect(state).toBeVisible({ timeout: 20_000 })
-          // Diz onde a comunidade fica (COMM-CIDADE-ROTULO) e o caminho legítimo.
-          await expect(state).toContainText("fica em Rio de Janeiro, RJ")
-          await expect(state).not.toContainText("outra cidade")
-          await expect(state.getByRole("link", { name: "Trocar de cidade" })).toBeVisible()
-          await expect(state.getByRole("button", { name: /Tentar/ })).toHaveCount(0)
+          await expect(page).toHaveURL(/\/community$/, { timeout: 20_000 })
         },
         { persona: "membra de outra cidade" },
       )
