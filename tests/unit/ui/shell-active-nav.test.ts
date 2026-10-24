@@ -53,30 +53,55 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     })
   })
 
-  it("restaura a origem da própria entrada ao voltar no histórico", () => {
+  it("grava a origem em cada entrada e a restaura sem depender da URL", () => {
     const values = new Map<string, string>()
+    let currentState: Record<string, unknown> = { __NA: true, marker: "preserved" }
+    const replaceState = (state: Record<string, unknown>) => {
+      currentState = state
+    }
     try {
       vi.stubGlobal("window", {
+        history: {
+          get state() {
+            return currentState
+          },
+          replaceState,
+        },
         sessionStorage: {
           getItem: (key: string) => values.get(key) ?? null,
           setItem: (key: string, value: string) => values.set(key, value),
         },
       })
-      expect(rememberNavigationOrigin("/profile", "", PRIMARY, "inicio")).toBe("voce")
-      expect(rememberNavigationOrigin("/salvos", "", PRIMARY, "voce")).toBe("voce")
+      expect(rememberNavigationOrigin("/profile", PRIMARY, "inicio")).toBe("voce")
+      expect(currentState).toMatchObject({ bivaqueOrigem: "voce", __NA: true, marker: "preserved" })
+      expect(rememberNavigationOrigin("/salvos", PRIMARY, "voce")).toBe("voce")
       const announcement = "/mercado/anuncio-1"
-      expect(rememberNavigationOrigin(announcement, "", PRIMARY, "voce")).toBe("voce")
-      expect(rememberNavigationOrigin("/inicio", "", PRIMARY, "voce")).toBe("inicio")
+      expect(rememberNavigationOrigin(announcement, PRIMARY, "inicio")).toBe("voce")
+      const voceEntry = currentState
+      expect(values.get("bivaque:last-navigation-root")).toBe("voce")
 
-      // page.goBack() returns to the existing announcement history entry.
-      expect(rememberNavigationOrigin(announcement, "", PRIMARY, "inicio")).toBe("voce")
+      currentState = {}
+      expect(rememberNavigationOrigin("/inicio", PRIMARY, "voce")).toBe("inicio")
+      currentState = voceEntry
+      expect(rememberNavigationOrigin(announcement, PRIMARY, "inicio")).toBe("voce")
       expect(resolveActiveNav(announcement, PRIMARY, "voce")).toEqual({
         kind: "primary",
         id: "voce",
       })
-      expect(values.get("bivaque:navigation-origins")).toContain('"/inicio":"inicio"')
 
+      // Uma entrada nova para a mesma URL recebe a ultima raiz visitada.
+      currentState = {}
+      expect(rememberNavigationOrigin(announcement, PRIMARY, "voce")).toBe("inicio")
+      expect(currentState.bivaqueOrigem).toBe("inicio")
+
+      currentState = voceEntry
       vi.stubGlobal("window", {
+        history: {
+          get state() {
+            return currentState
+          },
+          replaceState,
+        },
         sessionStorage: {
           getItem: () => {
             throw new Error("storage disabled")
@@ -86,7 +111,9 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
           },
         },
       })
-      expect(rememberNavigationOrigin("/community", "", PRIMARY, "inicio")).toBe("comunidade")
+      expect(rememberNavigationOrigin(announcement, PRIMARY, "inicio")).toBe("voce")
+      currentState = {}
+      expect(rememberNavigationOrigin("/community", PRIMARY, "inicio")).toBe("comunidade")
     } finally {
       vi.unstubAllGlobals()
     }

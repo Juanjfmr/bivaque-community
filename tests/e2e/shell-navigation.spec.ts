@@ -145,15 +145,25 @@ test.describe("Você reúne o que era Perfil", () => {
   }) => {
     await signInAs(context, "dono-vila@bivaque.example.invalid")
     await page.goto("/profile")
-    await page.waitForFunction(
-      () =>
-        JSON.parse(sessionStorage.getItem("bivaque:navigation-origins") ?? "{}")["/profile"] ===
-        "voce",
-    )
+    await page.waitForFunction(() => window.history.state?.bivaqueOrigem === "voce")
     await page.getByRole("link", { name: "Salvos", exact: true }).last().click()
     await expect(page).toHaveURL(/\/salvos$/)
     await page.locator('a[href="/mercado/b1000000-0000-4000-8000-000000000001"]').click()
     await expect(page).toHaveURL(/\/mercado\/b1000000-0000-4000-8000-000000000001$/)
+    await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("voce")
+    await page.reload()
+    await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("voce")
+    if (await navWidthIsMobile(page)) {
+      await expect(page.locator(BOTTOM_NAV).locator('a[href="/profile"]')).toHaveAttribute(
+        "aria-selected",
+        "true",
+      )
+    } else {
+      await expect(page.locator(SIDEBAR).locator('a[href="/profile"]')).toHaveAttribute(
+        "aria-current",
+        "page",
+      )
+    }
 
     if (await navWidthIsMobile(page)) {
       await page.locator(BOTTOM_NAV).getByRole("tab", { name: "Início", exact: true }).click()
@@ -175,6 +185,35 @@ test.describe("Você reúne o que era Perfil", () => {
       )
     }
   })
+})
+
+test("a mesma URL aberta por outra raiz recebe a origem dessa entrada", async ({
+  page,
+  context,
+}) => {
+  await signInAs(context, "dono-vila@bivaque.example.invalid")
+  await page.goto("/profile")
+  await page.getByRole("link", { name: "Salvos", exact: true }).last().click()
+  await page.locator('a[href="/mercado/b1000000-0000-4000-8000-000000000001"]').click()
+  await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("voce")
+
+  await page.goto("/inicio")
+  await page.waitForFunction(() => window.history.state?.bivaqueOrigem === "inicio")
+  await page.locator('a[href="/mercado"]').first().click()
+  await expect(page).toHaveURL(/\/mercado$/)
+  await page.locator('a[href="/mercado/b1000000-0000-4000-8000-000000000001"]').click()
+  await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
+  if (await navWidthIsMobile(page)) {
+    await expect(page.locator(BOTTOM_NAV).locator('a[href="/inicio"]')).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
+  } else {
+    await expect(page.locator(SIDEBAR).locator('a[href="/inicio"]')).toHaveAttribute(
+      "aria-current",
+      "page",
+    )
+  }
 })
 
 test.describe("abas da Comunidade (renderCommunity)", () => {

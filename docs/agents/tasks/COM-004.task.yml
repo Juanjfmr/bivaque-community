@@ -141,3 +141,20 @@ closure:
 #   189 privacy + 141 scope, secrets); build PULADO por falta de apps/web/.env.local.
 # OUTRAS PROVAS: sem banco/migration; test:db, build, comparacao de captura e e2e pendentes para coordenador,
 #   conforme o adendo. git diff --check PASS. Nenhum commit criado nesta execucao.
+# Terceira correcao (24/10/2026, branch codex/lote5-nav):
+# ATIVO: removida a tabela bivaque:navigation-origins indexada por URL. A origem de cada entrada fica em
+#   history.state.bivaqueOrigem; replaceState preserva os campos existentes. Voltar, avancar e recarregar leem
+#   a origem da propria entrada. Rotas com container proprio usam sua aba; destinos compartilhados usam a ultima
+#   raiz em sessionStorage (com try/catch). A regra activeTab do prototipo esta em prototypes/bivaque-html/src/shell/navigation.js:54.
+# NEXT: node_modules/next/dist/client/components/app-router.js confirma que Next 16 copia __NA e
+#   __PRIVATE_NEXTJS_INTERNALS_TREE para replaceState nativo e preserva estado customizado na atualizacao inicial.
+# RECARGA: SavedCard em apps/web/app/(shell)/salvos/page.tsx:313 usa <a href={item.href}> e recarrega o documento.
+#   Essa pagina esta fora dos allowed_paths do contrato; a recarga foi mantida e sua retomada coberta via state.
+# UNIT: shell-active-nav cobre raiz dedicada, destino compartilhado, mesma URL em nova entrada, restauracao da
+#   entrada anterior, reload por state, preservacao dos campos do Next e sessionStorage indisponivel: 32 PASS.
+# E2E: shell-navigation.spec.ts cobre Voce -> Salvos -> anuncio -> reload -> Inicio -> goBack, e reabertura do
+#   mesmo anuncio pela porta de Mercado em Inicio sem herdar Voce. Typecheck do spec passou no gate; e2e pendente.
+# GATE: npx pnpm@11.18.0 gate: VERDE (lint, typecheck, typecheck:e2e, 1716 unit, 76 mobile, 19 web,
+#   189 privacy, 141 scope, secrets); build PULADO pela ausencia esperada de apps/web/.env.local.
+# PROVAS DO COORDENADOR: build e e2e pendentes; banco/test:db nao se aplica. Nenhum build ou e2e executado.
+# COMMIT: 6d0796b3 fix(web): store nav origin per history entry.

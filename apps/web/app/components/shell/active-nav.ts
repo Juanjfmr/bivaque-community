@@ -101,42 +101,47 @@ export const SHARED_AREAS = [
   "/cidade",
 ] as const
 
-const ORIGIN_KEY = "bivaque:navigation-origins"
+const LAST_ROOT_KEY = "bivaque:last-navigation-root"
+const HISTORY_ORIGIN_KEY = "bivaqueOrigem"
 
-function readNavigationOrigins(): Record<string, PrimaryContainer> {
+function isPrimaryContainer(value: unknown): value is PrimaryContainer {
+  return PRIMARY_CONTAINERS.some((id) => id === value)
+}
+
+function readLastRoot(): PrimaryContainer | null {
   try {
-    const value = JSON.parse(window.sessionStorage.getItem(ORIGIN_KEY) ?? "{}") as Record<
-      string,
-      unknown
-    >
-    return Object.fromEntries(
-      Object.entries(value).filter((entry): entry is [string, PrimaryContainer] =>
-        PRIMARY_CONTAINERS.some((id) => id === entry[1]),
-      ),
-    )
+    const value: unknown = window.sessionStorage.getItem(LAST_ROOT_KEY)
+    return isPrimaryContainer(value) ? value : null
   } catch {
-    return {}
+    return null
   }
 }
 
 export function rememberNavigationOrigin(
   pathname: string,
-  search: string,
   primary: readonly PrimaryNavItem[],
   fallback: PrimaryContainer,
 ): PrimaryContainer {
-  const key = `${pathname}${search ? `?${search}` : ""}`
-  const origins = readNavigationOrigins()
-  const root = primary.find((item) => item.href === pathname)
-  const origin =
-    root && PRIMARY_CONTAINERS.some((id) => id === root.id)
-      ? (root.id as PrimaryContainer)
-      : (origins[key] ?? fallback)
-  origins[key] = origin
+  const root = primary.find((item) => matches(pathname, item.href))
+  const owner = AREA_CONTAINERS.find(([prefix]) => matches(pathname, prefix))?.[1]
+  const previousOrigin: unknown = window.history.state?.[HISTORY_ORIGIN_KEY]
+  const origin = isPrimaryContainer(previousOrigin)
+    ? previousOrigin
+    : root && isPrimaryContainer(root.id)
+      ? root.id
+      : (owner ??
+        (SHARED_AREAS.some((prefix) => matches(pathname, prefix)) ? readLastRoot() : null) ??
+        fallback)
+
   try {
-    window.sessionStorage.setItem(ORIGIN_KEY, JSON.stringify(origins))
+    if (root && isPrimaryContainer(root.id)) {
+      window.sessionStorage.setItem(LAST_ROOT_KEY, root.id)
+    }
   } catch {
-    // Navigation still works when browser storage is unavailable.
+    // History state still preserves this entry when session storage is unavailable.
+  }
+  if (!isPrimaryContainer(previousOrigin)) {
+    window.history.replaceState({ ...window.history.state, [HISTORY_ORIGIN_KEY]: origin }, "")
   }
   return origin
 }
