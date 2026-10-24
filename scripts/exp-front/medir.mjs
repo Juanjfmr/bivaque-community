@@ -21,6 +21,10 @@ const run = (command, args, options = {}) => {
   return result
 }
 
+// Contas do seed local: valor público de teste (supabase/seed.sql), não credencial real,
+// como em scripts/agents/prova-sequencia.mjs.
+const seedTestValue = "bivaque-e2e-local"
+
 function localEnv() {
   const output = execFileSync("npx", ["supabase", "status", "-o", "env"], {
     cwd: root,
@@ -41,7 +45,7 @@ function localEnv() {
     NEXT_PUBLIC_SUPABASE_URL: values.API_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: values.ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: values.SERVICE_ROLE_KEY,
-    USER_PASSWORD: "bivaque-e2e-local",
+    USER_PASSWORD: process.env.USER_PASSWORD ?? seedTestValue,
     USER_EMAIL: "visual@bivaque.example.invalid",
   }
 }

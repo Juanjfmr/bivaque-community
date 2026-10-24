@@ -1,7 +1,10 @@
+// Valor público de teste do seed local (supabase/seed.sql), não credencial real.
+const seedTestValue = "bivaque-e2e-local"
+
 export async function sessionCookies(email = "visual@bivaque.example.invalid") {
   const url = process.env.SUPABASE_URL
   const anonKey = process.env.SUPABASE_ANON_KEY
-  const password = process.env.USER_PASSWORD ?? "bivaque-e2e-local"
+  const password = process.env.USER_PASSWORD ?? seedTestValue
   if (!url || !anonKey)
     throw new Error("SUPABASE_URL e SUPABASE_ANON_KEY devem vir de supabase status -o env")
   const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
