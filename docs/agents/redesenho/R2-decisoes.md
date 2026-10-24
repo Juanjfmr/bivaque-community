@@ -2,7 +2,7 @@
 
 Os quatro rascunhos da matriz deixaram 31 perguntas. O coordenador fechou 29 em 24/10/2026 por uma regra só: **o
 protótipo decide; onde ele não decide, vale o ADR; onde nenhum dos dois decide, fica o comportamento atual e mais
-seguro.** As duas que são decisão de produto foram ao dono (seção 2).
+seguro.** As duas que são decisão de produto foram ao dono, que decidiu em 24/10/2026 (seção 2).
 
 ## 1. Fechadas pelo coordenador
 
@@ -32,9 +32,9 @@ seguro.** As duas que são decisão de produto foram ao dono (seção 2).
 | F9 | Retenção da denúncia | Como hoje. O prazo já está pendente com o dono, para a política de privacidade (ADR-20261023, seção 2), e não trava a migration | ADR-20261023 |
 | F10 | `notification_type_enabled` e `notification_type_key` | Ficam, com a mesma assinatura; os tipos acompanham comentário e evento | Comportamento atual |
 
-## 2. Para o dono
+## 2. Decididas pelo dono (24/10/2026)
 
-| # | Pergunta | Recomendação |
+| # | Pergunta | Decisão |
 |---|---|---|
-| G2, G6 | Quem é de outra cidade vê nome, descrição e regras de um grupo Fechado? | Não: grupo é da cidade, e a descoberta fica na cidade escolhida |
+| G2, G6 | Quem é de outra cidade vê nome, descrição e regras de um grupo Fechado? | Não, salvo quem declarou transferência para a cidade do grupo (`declare_locality_transfer`). O conteúdo continua só dos membros |
 | E1 | A pergunta feita num grupo Aberto com "também perguntar à cidade": o que acontece com ela na cidade se o grupo fechar, encerrar ou o autor sair? | Continua na cidade: foi feita para a cidade, com aviso. Só o nome do grupo deixa de levar ao grupo para quem não pode lê-lo |
