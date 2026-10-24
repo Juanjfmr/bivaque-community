@@ -15,10 +15,13 @@ import {
 } from "../inicio/home-loaders"
 import { JoinCommunityCard } from "../inicio/join-community"
 import { CommunityHeader } from "./community-header"
+import { CommunityTabs } from "./community-tabs"
 import { useCommunityHeader } from "./use-community-header"
 
 // A Comunidade sem feed e sem a vista "Conversa" (lote 5, tarefa N2 —
-// ADR-20261023, "Navegação e estrutura").
+// ADR-20261023, "Navegação e estrutura"). As abas do protótipo entram aqui no
+// lote 5 N1 (CommunityTabs): Indicações (esta vista) e Grupos (a rota /groups).
+// A aba Negócios entra com o lote 6.
 //
 // Não existe publicação para a cidade inteira: na cidade a conversa é de
 // perguntas e respostas — o painel de Indicações — e publicar acontece só
@@ -94,6 +97,10 @@ export default function CommunityPage() {
 
         {/* Sem comunidade aprovada, o passo que falta vem antes do painel. */}
         {primary.status === "none" ? <JoinCommunityCard /> : null}
+
+        {/* As abas do protótipo (lote 5 N1): Indicações e Grupos. A aba
+            Negócios entra com o lote 6. */}
+        <CommunityTabs />
 
         <IndicationsPanel
           localityId={current.id}

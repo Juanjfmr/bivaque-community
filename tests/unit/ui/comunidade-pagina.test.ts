@@ -30,11 +30,10 @@ describe("página da Comunidade", () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order)
   })
 
-  it("a vista Conversa saiu: nenhum feed, nenhuma aba, nenhum trilho", () => {
+  it("a vista Conversa saiu: nenhum feed, nenhuma aba de conversa, nenhum trilho", () => {
     // O Início também não ganhou feed: na cidade a conversa é de perguntas e
     // respostas, e publicar só existe dentro de um grupo.
     expect(page).not.toContain("Conversa")
-    expect(page).not.toContain("<Tabs")
     expect(page).not.toContain("FeedPost")
     expect(page).not.toContain("feed_community")
     expect(page).not.toContain("feed_right_rail")
@@ -57,6 +56,24 @@ describe("página da Comunidade", () => {
     // que falhou é o bug que a casa proíbe.
     expect(page).toContain("<ErrorState")
     expect(page).toContain("onRetry={loadPrimary}")
+  })
+})
+
+describe("abas da Comunidade (lote 5 N1)", () => {
+  const tabs = stripComments(web("(shell)", "community", "community-tabs.tsx"))
+
+  it("a Comunidade monta a fileira de abas do protótipo", () => {
+    // renderCommunity do protótipo: Indicações / Grupos (/Negócios entra no lote 6).
+    expect(page).toContain("<CommunityTabs />")
+    expect(tabs).toContain("Indicações")
+    expect(tabs).toContain("Grupos")
+    // A aba Negócios é do lote 6: não entra agora.
+    expect(tabs).not.toContain("Negócios")
+  })
+
+  it("cada aba é um endereço próprio, sem estado escondido", () => {
+    expect(tabs).toContain('const GRUPOS_HREF: Route = "/groups"')
+    expect(tabs).toContain('const INDICACOES_HREF: Route = "/community"')
   })
 })
 
