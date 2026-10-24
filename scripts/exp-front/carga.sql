@@ -118,11 +118,13 @@ select
   id,
   author_id,
   '00000000-0000-4000-8000-000000000001',
+  -- O número no fim deixa cada título único: os testes acham a pergunta pelo nome
+  -- acessível, e títulos repetidos faziam o seletor achar dois botões (EXP-001).
   case n % 3
     when 0 then 'Alguém recomenda ' || assunto || ' na região de ' || bairro || '?'
     when 1 then 'Que experiência vocês tiveram com ' || assunto || ' perto de ' || bairro || '?'
     else 'Conhecem uma boa opção de ' || assunto || ' em ' || bairro || '?'
-  end,
+  end || ' (nº ' || n || ')',
   contexto || ' A região que estamos considerando é ' || bairro || '.',
   category,
   created_at

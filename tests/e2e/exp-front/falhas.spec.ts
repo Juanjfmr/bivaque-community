@@ -63,6 +63,9 @@ test.describe("EXP-001 falhas", () => {
     await expect(page.getByRole("heading", { name: title })).toBeVisible()
     await other.bringToFront()
     await other.reload()
+    // "Para ajudar" mostra só perguntas de outras pessoas (list_indications com p_mine falso);
+    // a pergunta que a própria pessoa publicou aparece em Minhas (correção do instrumento, EXP-001).
+    await other.getByRole("button", { name: "Minhas", exact: true }).click()
     await expect(
       other
         .getByRole("list", { name: "Perguntas" })

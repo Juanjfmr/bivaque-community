@@ -105,9 +105,12 @@ test.describe("EXP-001 eliminatórios", () => {
     await textbox.fill("Preciso de indicação para uma escola")
     await page.route(`**${insertPath}**`, (route) => route.abort("failed"))
     await page.getByRole("button", { name: "Publicar pergunta", exact: true }).click()
+    // A biblioteca do Supabase repete leituras que falham na rede (1, 2 e 4 s). Quem confere
+    // no banco se a gravação chegou antes de avisar leva uns 7 s; o critério é não perder o
+    // texto, não o prazo do aviso (correção do instrumento, EXP-001).
     await expect(
       page.getByRole("alert").getByText("Não foi possível publicar. Sua pergunta continua aqui."),
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 15_000 })
     await expect(textbox).toHaveValue("Preciso de indicação para uma escola")
   })
 
