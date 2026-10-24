@@ -7,14 +7,14 @@ approved_at:
 accepted_at:
 expires_at:
 linked_plan: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
-critic_verdict: PASS-PENDENTE
+critic_verdict: PASS
 critic_review: >
   Duas críticas do Codex (gpt-6.1-sol) em 24/10/2026. A primeira deu NÃO PRONTO com seis pontos: a vila presa a
   prestadores, anúncios e exclusão de conta; pg_depend sem o corpo das funções nem vínculo sem FK; matriz sem
   suspensão, só leitura, colunas, transições e conteúdo moderado; "Também perguntar à cidade" mexendo nas
   Indicações; bloqueio que não cabe num booleano; deploy sem ensaio. A segunda deu cinco resolvidos e um parcial:
   relaxar o CHECK de origem das perguntas abria inserção sem conferir participação, pela policy de INSERT atual.
-  Esta versão fecha esse ponto (seção 1). Falta a terceira conferência.
+  A terceira conferência confirmou que a seção 1 fecha esse ponto, sem furo novo: PRONTO.
 ---
 
 # O domínio da Comunidade é redesenhado a partir do protótipo
