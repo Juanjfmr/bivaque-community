@@ -1,0 +1,45 @@
+task_id: RED-001
+objective: >
+  Redesenho da Comunidade, frente R1: o retrato do estado atual do dominio e de tudo que toca a vila, pelas tres
+  fontes do ADR (catalogo, definicoes e vinculos sem FK com os consumidores), com cada regra numerada para a matriz
+  de permissao referenciar.
+authority:
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md (aceito pelo dono em 2026-10-24), secao 3 item 1
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O inventario de 24/10/2026 (docs/agents/inventario/2026-10-24-banco-codigo-testes.md) agrupou por dominio e nao
+    enumera policies, triggers nem funcoes. O ADR exige o retrato objeto a objeto antes da matriz.
+allowed_paths:
+  - docs/agents/redesenho/
+  - scripts/redesenho/
+  - docs/agents/tasks/RED-001.task.yml
+forbidden:
+  - editar qualquer arquivo fora de allowed_paths
+  - migration, db reset, e2e ou build
+  - push, merge, deploy, db push ou --linked
+  - decidir o que muda; o retrato descreve, a matriz (R2) decide
+  - rodar comando em segundo plano ou terminar com comando ainda rodando
+acceptance:
+  - docs/agents/redesenho/R1-retrato.md com uma secao por tabela do dominio (groups, group_memberships, group_join_reasons, group_join_attempts, posts, comments, post_reactions, post_saves, post_follows, events na parte de grupo, recommendation_requests na parte de origem) e por tabela da vila (communities, community_memberships, community_invitations, community_join_reasons)
+  - Para cada tabela, tirado do despejo do esquema e nao do historico de migrations, colunas com tipo e default, CHECKs, FKs, indices unicos, RLS ligado e forcado, cada policy com o texto integral de USING e WITH CHECK, triggers com a funcao chamada, grants por tabela e por coluna
+  - Cada funcao public e private que le ou escreve tabela do dominio ou da vila, com o que faz em uma linha, as tabelas que toca, SECURITY DEFINER ou INVOKER, search_path e quem pode executar
+  - Cada regra recebe um id estavel (R1-001, R1-002...) e uma linha que diz o que ela protege, em portugues simples
+  - Secao de vinculos sem FK e consumidores - provider_reach.scope_id, reports.target_id, contexto das mensagens, destino e tipo das notificacoes, caminhos de storage, provider_accounts, provider_invitations, listings, finalize_account_deletion, apps/web, apps/mobile, supabase/seed.sql e os testes (supabase/tests, tests/e2e, tests/unit, tests/scope) que tocam cada tabela
+  - Secao de valores de enum do dominio e da vila, com onde cada valor e usado
+  - Secao de testes negativos existentes do dominio, arquivo e nome do teste, com o id da regra que cada um prova
+  - Contagem no fim por tabela - colunas, policies, triggers, funcoes e testes negativos
+proof:
+  - node --test scripts/redesenho/conferir-retrato.test.mjs (teste que le o despejo e o retrato)
+  - o script conta no despejo as policies, triggers, grants e funcoes de cada tabela do retrato e falha se a contagem do retrato divergir ou se algum nome do despejo faltar no retrato
+  - o despejo do esquema usado como fonte esta em docs/agents/redesenho/schema-dump.sql, gerado pelo coordenador
+  - conferencia por amostra pelo coordenador - 10 policies e 5 funcoes do retrato contra o despejo
+risk: uma regra fora do retrato some no redesenho
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
