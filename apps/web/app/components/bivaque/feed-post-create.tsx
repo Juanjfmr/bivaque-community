@@ -417,6 +417,11 @@ export function CreatePostModal({
                             actions={
                               <Link
                                 href={"/groups" as Route}
+                                // Fecha o compositor ANTES de navegar: ele é
+                                // montado pelo shell e, sem isto, o diálogo
+                                // continua por cima de /groups (o shell não
+                                // desmonta na navegação client-side).
+                                onClick={() => modal.close()}
                                 className="inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand"
                               >
                                 Ver grupos

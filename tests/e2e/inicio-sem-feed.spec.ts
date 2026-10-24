@@ -114,5 +114,19 @@ test.describe("o compositor publica só em grupo", () => {
 
     await dialog.getByLabel("Pergunta").fill("Tentativa sem grupo")
     await expect(dialog.getByTestId("publish-submit")).toBeDisabled()
+
+    // "Ver grupos" tem de FECHAR o compositor antes de navegar: ele é montado
+    // pelo shell, e sem fechar o diálogo continua por cima de /groups.
+    await dialog.getByRole("link", { name: "Ver grupos" }).click()
+
+    await expect(page).toHaveURL(/\/groups/)
+    await expect(page.getByRole("dialog")).toHaveCount(0)
+    await expect(page.getByRole("heading", { name: "Grupos", exact: true })).toBeVisible({
+      timeout: 20000,
+    })
+
+    // Usável de verdade com o compositor fora do caminho: a busca responde.
+    await page.getByLabel("Buscar grupos").fill("zzz-sem-grupo")
+    await expect(page.getByText(/Nenhum grupo encontrado/)).toBeVisible()
   })
 })
