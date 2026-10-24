@@ -209,10 +209,10 @@ test("a mesma URL aberta por outra raiz recebe a origem dessa entrada", async ({
       "true",
     )
   } else {
-    await expect(page.locator(SIDEBAR).locator('a[href="/inicio"]')).toHaveAttribute(
-      "aria-current",
-      "page",
-    )
+    // O logo da lateral também aponta para /inicio: o ativo é o da navegação principal.
+    await expect(
+      page.locator(SIDEBAR).locator('nav[aria-label="Navegação principal"] a[href="/inicio"]'),
+    ).toHaveAttribute("aria-current", "page")
   }
 })
 
