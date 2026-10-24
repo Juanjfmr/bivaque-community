@@ -116,7 +116,6 @@ export const HEADINGS = {
   // isso que a captura registra; a rota declara expectedPath para o destino.
   "/configuracoes": "^Configurações · Notificações$",
   "/groups": "Grupos",
-  "/communities": "Comunidades",
   // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
   // Ajuricaba" para a conta de captura), caindo para "Cidade, UF" só quando não
   // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
@@ -140,16 +139,10 @@ export const HEADINGS = {
   // Named by their own data: the community, the guide entry, the group, the
   // event, the member and the city carry the title. The fixture id pins WHICH
   // record; the h1 text belongs to the seed, not to this file.
-  "/communities/71000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  // Comunidade de OUTRA cidade vista por quem não é da cidade: é a instância da
-  // prancha 60 (estado de acesso negado). O título continua sendo o nome da
-  // comunidade — o h1 é o dado.
-  "/communities/71000000-0000-4000-8000-000000000002": DYNAMIC_HEADING,
   "/guide/a0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   // Grupos vivem em 60000000-… no seed; 70000000-… é a faixa dos EVENTOS, então
   // o id antigo capturava o não-encontrado e a rota declarava "sem h1".
   "/groups/60000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
   "/profile": DYNAMIC_HEADING,
   "/profile/editar": "^Editar perfil$",
@@ -188,8 +181,6 @@ export const HEADINGS = {
   "/events/novo": "^Novo evento$",
   "/events/70000000-0000-4000-8000-000000000005/perguntas":
     "^(Sua pergunta|Perguntas sobre este evento)$",
-  "/communities/71000000-0000-4000-8000-000000000001/admin/media": "^Imagens da comunidade$",
-  "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
   // O h1 é "Seu guia de {cidade}": prefixo fixo, a cidade é dado.
   "/guide?q=escola": "^Seu guia de ",
@@ -372,33 +363,6 @@ export const ROUTES = [
     auth: true,
   },
   { path: "/community", name: "community", auth: true },
-  { path: "/communities", name: "communities", auth: true },
-  // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000001",
-    name: "community-detail",
-    auth: true,
-  },
-  // Prancha 60, painel 1: a comunidade de OUTRA cidade (Vila Petrópolis, Rio)
-  // aberta pela conta de captura (Manaus). A pessoa vê a apresentação e o estado
-  // de acesso negado — a cópia é declarada aqui, e só ela é tolerada; qualquer
-  // outra indisponibilidade (404, Application error) continua reprovando.
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000002",
-    name: "community-outsider",
-    auth: true,
-    expectedFallback: "^Você ainda não tem acesso",
-  },
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
-    name: "community-admin-media",
-    auth: true,
-  },
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000001/admin/pending",
-    name: "community-admin-pending",
-    auth: true,
-  },
   {
     path: "/auth/callback-error",
     name: "auth-callback-error",
@@ -498,11 +462,6 @@ export const ROUTES = [
     name: "pedido-detalhe",
     auth: true,
     account: "membro1",
-  },
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
-    name: "provider-indicar",
-    auth: true,
   },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },

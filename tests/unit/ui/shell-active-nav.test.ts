@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   AREA_CONTAINERS,
   declaredContainerFor,
   livesOutsideShell,
   PRIMARY_CONTAINERS,
+  readNavigationOrigin,
+  rememberNavigationOrigin,
   resolveActiveNav,
   SECONDARY_SELF_ROUTES,
 } from "../../../apps/web/app/components/shell/active-nav"
@@ -39,6 +41,46 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     // destino primário autônomo.
     expect(resolveActiveNav("/salvos", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
     expect(resolveActiveNav("/salvos/abc", PRIMARY)).toEqual({ kind: "primary", id: "voce" })
+  })
+
+  it("os destinos compartilhados herdam a última aba raiz e os pessoais ficam fixos", () => {
+    expect(resolveActiveNav("/mercado", PRIMARY, "voce")).toEqual({
+      kind: "primary",
+      id: "voce",
+    })
+    expect(resolveActiveNav("/salvos", PRIMARY, "inicio")).toEqual({
+      kind: "primary",
+      id: "voce",
+    })
+  })
+
+  it("guarda a última aba raiz na sessão e tolera storage indisponível", () => {
+    const values = new Map<string, string>()
+    try {
+      vi.stubGlobal("window", {
+        sessionStorage: {
+          getItem: (key: string) => values.get(key) ?? null,
+          setItem: (key: string, value: string) => values.set(key, value),
+        },
+      })
+      expect(rememberNavigationOrigin("/profile", PRIMARY)).toBe("voce")
+      expect(readNavigationOrigin()).toBe("voce")
+
+      vi.stubGlobal("window", {
+        sessionStorage: {
+          getItem: () => {
+            throw new Error("storage disabled")
+          },
+          setItem: () => {
+            throw new Error("storage disabled")
+          },
+        },
+      })
+      expect(rememberNavigationOrigin("/community", PRIMARY)).toBe("comunidade")
+      expect(readNavigationOrigin()).toBe("inicio")
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it("cada container primário acende a si mesmo", () => {
@@ -95,7 +137,9 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
 
 describe("app-shell usa o resolvedor e não reintroduz o fallback por vizinhança", () => {
   it("chama resolveActiveNav", () => {
-    expect(readFileSync(appShell, "utf8")).toContain("resolveActiveNav(pathname, NAV_ITEMS)")
+    expect(readFileSync(appShell, "utf8")).toContain(
+      "resolveActiveNav(pathname, NAV_ITEMS, origin)",
+    )
   })
 
   it("não trata /salvos como rota pessoal que cai em Perfil", () => {
@@ -152,17 +196,14 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
   })
 })
 
-// 25/09/2026: a barra inferior do celular tinha regra própria (prefixo do item,
-// senão "Início") e acendia Início em /community, /guide, /events, /mercado e
-// /cidade, enquanto a lateral acendia o lugar certo. Agora as duas usam
-// resolveActiveNav — a mesma resposta nos dois tamanhos. Lote 5 N1: os
-// destinos continuam declarados, agora contra as quatro entradas do protótipo.
+// As duas barras usam resolveActiveNav. Destinos compartilhados recebem a
+// última raiz visitada, como origin em activeTab() do protótipo.
 describe("barra inferior do celular usa a mesma regra da lateral", () => {
   const bottomNavSource = readFileSync(bottomNav, "utf8")
 
   it("resolve a aba pelo active-nav, não por prefixo próprio", () => {
-    expect(bottomNavSource).toContain("resolveActiveNav(pathname, items)")
-    expect(bottomNavSource).not.toContain("pathname.startsWith(`${item.href}/`)")
+    expect(bottomNavSource).toContain("resolveActiveNav(pathname, items, origin)")
+    expect(bottomNavSource).not.toContain(`pathname.startsWith(\`\${item.href}/\`)`)
   })
 
   it.each([
@@ -178,4 +219,11 @@ describe("barra inferior do celular usa a mesma regra da lateral", () => {
   ])("%s acende %s", (path, id) => {
     expect(resolveActiveNav(path, PRIMARY)).toEqual({ kind: "primary", id })
   })
+
+  it.each(["/explorar", "/guide", "/events/abc", "/mercado", "/cidade/abc"])(
+    "%s herda a última aba raiz",
+    (path) => {
+      expect(resolveActiveNav(path, PRIMARY, "voce")).toEqual({ kind: "primary", id: "voce" })
+    },
+  )
 })

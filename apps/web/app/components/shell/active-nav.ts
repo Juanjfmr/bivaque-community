@@ -51,8 +51,7 @@ export const SECONDARY_SELF_ROUTES = [] as const
 // telas: o prefixo da área resolve, e a tela herda o container do pai
 // conceitual (prototypes/bivaque-html/src/shell/navigation.js activeTab):
 //
-//   Início     → descoberta da cidade (Guia, Mercado, Imóveis, encontros,
-//                serviços) — o antigo Explorar vive aqui.
+//   Início     → só rotas com dono fixo; destinos compartilhados herdam `origin`.
 //   Comunidade → a Comunidade da cidade: perguntas e respostas (Indicações) e
 //                os Grupos; também as rotas antigas de vila, que redirecionam.
 //   Conversas  → as mensagens privadas.
@@ -63,15 +62,6 @@ export const SECONDARY_SELF_ROUTES = [] as const
 // fronteira (`matches`), então `/prestadores` não casa `/prestador`.
 export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]> = [
   ["/inicio", "inicio"],
-  // O Explorar do §7 some da barra: a descoberta é do Início, como no protótipo.
-  ["/explorar", "inicio"],
-  ["/guide", "inicio"],
-  ["/events", "inicio"],
-  ["/mercado", "inicio"],
-  ["/imoveis", "inicio"],
-  ["/prestadores", "inicio"],
-  ["/localidade", "inicio"],
-  ["/cidade", "inicio"],
   // Indicações é a vista de perguntas da Comunidade; /recommendations é a rota
   // aposentada que redireciona para ela.
   ["/recommendations", "comunidade"],
@@ -98,6 +88,43 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   // embora o caminho de entrada esteja no Mercado.
   ["/meus-anuncios", "voce"],
 ]
+
+// activeTab() returns `origin` for discovery destinations without a dedicated tab.
+export const SHARED_AREAS = [
+  "/explorar",
+  "/guide",
+  "/events",
+  "/mercado",
+  "/imoveis",
+  "/prestadores",
+  "/localidade",
+  "/cidade",
+] as const
+
+const ORIGIN_KEY = "bivaque:navigation-origin"
+
+export function readNavigationOrigin(): PrimaryContainer {
+  try {
+    const value = window.sessionStorage.getItem(ORIGIN_KEY)
+    return PRIMARY_CONTAINERS.find((id) => id === value) ?? "inicio"
+  } catch {
+    return "inicio"
+  }
+}
+
+export function rememberNavigationOrigin(
+  pathname: string,
+  primary: readonly PrimaryNavItem[],
+): PrimaryContainer | null {
+  const root = primary.find((item) => item.href === pathname)
+  if (!root || !PRIMARY_CONTAINERS.some((id) => id === root.id)) return null
+  try {
+    window.sessionStorage.setItem(ORIGIN_KEY, root.id)
+  } catch {
+    // Navigation still works when browser storage is unavailable.
+  }
+  return root.id as PrimaryContainer
+}
 
 // Rotas que renderizam FORA do shell do membro: funil de entrada, onboarding,
 // console do operador, painel do prestador e raiz pública. Não têm lateral, e
@@ -133,7 +160,8 @@ function matches(pathname: string, href: string): boolean {
 // declarado. `null` é o sinal que o teste usa para reprovar — nunca um vizinho.
 export function declaredContainerFor(pathname: string): PrimaryContainer | null {
   const area = AREA_CONTAINERS.find(([prefix]) => matches(pathname, prefix))
-  return area ? area[1] : null
+  if (area) return area[1]
+  return SHARED_AREAS.some((prefix) => matches(pathname, prefix)) ? "inicio" : null
 }
 
 // Rotas que sabidamente vivem fora do shell do membro (sem lateral).
@@ -141,12 +169,20 @@ export function livesOutsideShell(pathname: string): boolean {
   return OUTSIDE_SHELL_PREFIXES.some((prefix) => matches(pathname, prefix))
 }
 
-export function resolveActiveNav(pathname: string, primary: readonly PrimaryNavItem[]): ActiveNav {
+export function resolveActiveNav(
+  pathname: string,
+  primary: readonly PrimaryNavItem[],
+  origin: PrimaryContainer = "inicio",
+): ActiveNav {
   const secondary = SECONDARY_SELF_ROUTES.find((href) => matches(pathname, href))
   if (secondary) return { kind: "secondary", href: secondary }
 
   const primaryMatch = primary.find((item) => matches(pathname, item.href))
   if (primaryMatch) return { kind: "primary", id: primaryMatch.id }
+
+  if (SHARED_AREAS.some((prefix) => matches(pathname, prefix))) {
+    return { kind: "primary", id: origin }
+  }
 
   const container = declaredContainerFor(pathname)
   if (container) return { kind: "primary", id: container }

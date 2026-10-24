@@ -1,22 +1,12 @@
 "use client"
 
 import { Button, Modal, useOverlayState } from "@heroui/react"
-import {
-  Bookmark,
-  ChevronRight,
-  ClipboardList,
-  MapPin,
-  MessageCircle,
-  Pencil,
-  Settings,
-  Tag,
-} from "lucide-react"
+import { Bookmark, ClipboardList, MapPin, MessageCircle, Pencil, Settings, Tag } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Suspense, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
-import { useMemberContext } from "../../../lib/member-context"
 import { bioFromRow } from "../../../lib/profile/bio"
 import { callProfileBioRpc } from "../../../lib/profile/profile-bio-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -91,7 +81,6 @@ const OWNER_SHORTCUTS = [
 export default function ProfilePage() {
   const router = useRouter()
   const { current } = useLocalityContext()
-  const { communities } = useMemberContext()
   const [identity, setIdentity] = useState<Identity | null>(null)
   const [hasBusinessPage, setHasBusinessPage] = useState(false)
   const [error, setError] = useState("")
@@ -293,66 +282,6 @@ export default function ProfilePage() {
             </li>
           ) : null}
         </ul>
-      </section>
-
-      <section
-        aria-labelledby="perfil-comunidades"
-        className="rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line sm:p-5"
-      >
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 id="perfil-comunidades" className="text-base font-semibold text-ui-ink">
-            Suas comunidades
-          </h2>
-          <Link
-            href="/communities"
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand transition-colors"
-          >
-            Ver todas
-          </Link>
-        </div>
-        {communities.length === 0 ? (
-          <p className="mt-2 text-sm text-ui-ink-2">
-            Você ainda não entrou em uma comunidade.{" "}
-            <Link
-              href="/communities"
-              className="inline-flex min-h-11 items-center font-semibold text-ui-brand transition-colors"
-            >
-              Encontre a sua
-            </Link>
-            .
-          </p>
-        ) : (
-          <ul className="mt-2 divide-y divide-ui-line">
-            {communities.map((community) => (
-              <li key={community.id}>
-                <Link
-                  href={`/communities/${community.id}` as Route}
-                  className="flex min-h-12 items-center gap-3 py-2 transition-colors hover:text-ui-brand"
-                >
-                  {community.thumbnailUrl ? (
-                    // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado
-                    <img
-                      src={community.thumbnailUrl}
-                      alt=""
-                      className="h-9 w-9 shrink-0 rounded-ui object-cover"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden="true"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-ui bg-ui-brand-soft text-sm font-semibold text-ui-brand"
-                    >
-                      {community.name.trim().charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-ui-ink">
-                    {community.name}
-                  </span>
-                  <ChevronRight size={16} className="shrink-0 text-ui-ink-2" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
       <ProfileIndications userId={identity.userId} />

@@ -1,8 +1,6 @@
 "use client"
 
-import { ChevronRight, MapPin, UserPlus } from "lucide-react"
-import type { Route } from "next"
-import Link from "next/link"
+import { MapPin } from "lucide-react"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import type { CommunityHeaderData } from "./use-community-header"
 
@@ -57,13 +55,11 @@ function MemberStack({
 }
 
 export function CommunityHeader({
-  communityId,
   name,
   thumbnailUrl,
   cityLabel,
   data,
 }: {
-  communityId: string
   name: string
   thumbnailUrl: string | null
   cityLabel: string
@@ -82,26 +78,8 @@ export function CommunityHeader({
       <div className="px-4 pb-4 sm:px-5 sm:pb-5">
         {/* Só o quadrado sobe sobre a capa (e fica acima dela: `relative`);
             as ações ficam abaixo da borda, onde o toque não disputa a imagem. */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="relative -mt-8 sm:-mt-10">
-            <CommunityTile name={name} thumbnailUrl={thumbnailUrl} />
-          </div>
-          <div className="mt-3 flex items-center gap-1">
-            <Link
-              href={`/communities/${communityId}/invite` as Route}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-ui-surface px-3 text-sm font-semibold text-ui-ink shadow-ui ring-1 ring-ui-line transition-colors hover:bg-ui-subtle"
-            >
-              <UserPlus size={16} aria-hidden="true" />
-              Convidar
-            </Link>
-            <Link
-              href={`/communities/${communityId}` as Route}
-              className="inline-flex min-h-11 items-center gap-0.5 rounded-full px-3 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
-            >
-              Sobre
-              <ChevronRight size={16} aria-hidden="true" />
-            </Link>
-          </div>
+        <div className="relative -mt-8 sm:-mt-10">
+          <CommunityTile name={name} thumbnailUrl={thumbnailUrl} />
         </div>
 
         <h1 className="mt-3 text-xl leading-tight font-semibold tracking-tight text-ui-ink sm:text-2xl">

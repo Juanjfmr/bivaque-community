@@ -4,15 +4,18 @@ import { brandTokens } from "@bivaque/tokens"
 import type { LucideIcon } from "lucide-react"
 import { Bell, Bookmark, Lightbulb, MapPin, MessageCircle, Settings } from "lucide-react"
 import dynamic from "next/dynamic"
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { type ReactNode, useCallback, useRef, useState } from "react"
-import { communityImageAltText } from "../../../lib/communities/community-media"
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { GlobalSearchField } from "../search/global-search-field"
-import { resolveActiveNav } from "../shell/active-nav"
+import {
+  type PrimaryContainer,
+  readNavigationOrigin,
+  rememberNavigationOrigin,
+  resolveActiveNav,
+} from "../shell/active-nav"
 import { CitySwitcher } from "../shell/city-switcher"
 import { CreateButton, CreateFab, POST_CREATED_EVENT } from "../shell/create-menu"
 import { showsCreateAction } from "../shell/create-visibility"
@@ -55,11 +58,15 @@ const CreatePostModal = dynamic(
 
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
-  const activeNav = resolveActiveNav(pathname, NAV_ITEMS)
+  const [origin, setOrigin] = useState<PrimaryContainer>("inicio")
+  useEffect(() => {
+    setOrigin(rememberNavigationOrigin(pathname, NAV_ITEMS) ?? readNavigationOrigin())
+  }, [pathname])
+  const activeNav = resolveActiveNav(pathname, NAV_ITEMS, origin)
   const searchRowRef = useRef<HTMLDivElement>(null)
   const { hidden: searchHidden } = useHideOnScroll({ keepWhileFocused: searchRowRef })
   const { current } = useLocalityContext()
-  const { communities, displayName, unreadCount, unreadConversations } = useMemberContext()
+  const { displayName, unreadCount, unreadConversations } = useMemberContext()
   const cityLabel = `${current.cityName}, ${current.stateCode}`
   // Criar está em toda rota do membro, menos onde atrapalha (conversa aberta,
   // formulário, configurações) — ver create-visibility.ts.
@@ -122,26 +129,6 @@ export function AppShell({ children }: AppShellProperties) {
             badge={unreadCount}
           />
         </nav>
-
-        {/* Sem comunidade aprovada, a seção inteira some — nunca um título vazio. */}
-        {communities.length > 0 && (
-          <section
-            aria-label="Minhas comunidades"
-            className="mt-4 flex min-h-0 flex-col gap-1 overflow-y-auto border-t border-ui-line px-3 pt-4 md:max-lg:px-2"
-          >
-            <p className="px-3 pb-1 text-xs font-semibold tracking-wide text-ui-ink-2 uppercase md:max-lg:sr-only">
-              Minhas comunidades
-            </p>
-            {communities.map((community) => (
-              <SidebarCommunityItem
-                key={community.id}
-                id={community.id}
-                name={community.name}
-                thumbnailUrl={community.thumbnailUrl}
-              />
-            ))}
-          </section>
-        )}
 
         <div className="flex-1" />
 
@@ -263,7 +250,7 @@ export function AppShell({ children }: AppShellProperties) {
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav origin={origin} />
 
       {showCreate ? <CreateFab onAsk={openAsk} /> : null}
 
@@ -309,41 +296,6 @@ function SidebarSecondaryItem({
           {badge}
         </span>
       )}
-    </a>
-  )
-}
-
-// Miniatura real quando a comunidade tem uma; a inicial é o recuo honesto.
-function SidebarCommunityItem({
-  id,
-  name,
-  thumbnailUrl,
-}: {
-  id: string
-  name: string
-  thumbnailUrl: string | null
-}) {
-  return (
-    <a href={`/communities/${id}`} className={`${NAV_LINK} ${NAV_IDLE}`}>
-      {thumbnailUrl ? (
-        <Image
-          src={thumbnailUrl}
-          alt={communityImageAltText("thumbnail")}
-          width={28}
-          height={28}
-          unoptimized
-          loading="lazy"
-          className="h-7 w-7 shrink-0 rounded-ui object-cover"
-        />
-      ) : (
-        <span
-          aria-hidden="true"
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-ui bg-ui-brand-soft text-xs font-semibold text-ui-brand"
-        >
-          {name.charAt(0).toUpperCase()}
-        </span>
-      )}
-      <span className={`min-w-0 truncate ${RAIL_LABEL}`}>{name}</span>
     </a>
   )
 }

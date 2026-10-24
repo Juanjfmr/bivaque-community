@@ -19,7 +19,11 @@ allowed_paths:
   - apps/web/app/components/shell/
   - apps/web/app/(shell)/communities/
   - apps/web/app/(owner)/communities/
+  # Autorizacoes do coordenador em 24/10/2026: os edits anteriores em
+  # tests/scope/navigation.test.mjs e DESIGN_SYSTEM.md foram aceitos; autorizados
+  # tambem os novos layouts community/groups e capture.mjs para retirar /communities.
   - apps/web/app/(shell)/community/
+  - apps/web/app/(shell)/groups/layout.tsx
   - apps/web/app/(shell)/explorar/
   - apps/web/app/(shell)/profile/
   # Autorizado na execucao de 23/10/2026 (assumido pelo executor, para revisao do
@@ -30,6 +34,7 @@ allowed_paths:
   - tests/scope/
   - docs/agents/DESIGN_SYSTEM.md
   - scripts/visual/flows/
+  - scripts/visual/capture.mjs
   - tests/unit/
   - tests/e2e/
   - scripts/port/
@@ -54,7 +59,8 @@ acceptance:
 proof:
   - npx pnpm@11.18.0 gate
   - npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de npx supabase status -o env
-  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e (specs da tarefa e tests/e2e/shell-navigation.spec.ts)
+  - node scripts/agents/prova-fila.mjs -- node scripts/port/compare-nav.mjs
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/shell-navigation.spec.ts tests/e2e/nav-container-invariant.spec.ts
   - node scripts/visual/flows/reachability.mjs
 risk: troca da navegacao principal; destinos sem porta
 adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
@@ -100,3 +106,24 @@ closure:
 # Correcao colateral do lote: community-batch-approval.spec.ts e community-invitations.spec.ts testavam o
 #   console/convite de vila, que sai da tela; removidos. journey-quando-algo-falha, manaus-pilot-full-journey
 #   e portas-de-entrada foram realinhados a barra nova.
+# Correcao da revisao independente (24/10/2026, branch codex/lote5-nav):
+# ABAS: CommunityTabs agora esta nos layouts de /community e /groups; a rota /groups seleciona Grupos e
+#   Indicações volta para /community. O e2e cobre visibilidade/seleção e o retorno.
+# VILA: removidas entradas de vila da Comunidade, do Perfil e da lateral; capture.mjs nao captura mais /communities.
+#   O link do cartao do Início continua em (shell)/inicio/join-community.tsx, fora dos allowed_paths; nao editado.
+# ATIVO: rotas compartilhadas (incluindo /mercado) herdam origin, gravado em sessionStorage com try/catch;
+#   destinos pessoais e areas fixas mantêm o proprio container. Unit cobre origem compartilhada, rota fixa e storage.
+# E2E: shell-navigation.spec.ts agora clica em Conversas, abre conversa e verifica a aba; testa Você → Salvos →
+#   anúncio e Grupos → Indicações. Typecheck dos specs passou, mas navegador/e2e nao rodaram neste ambiente.
+# CAPTURA: scripts/port/compare-nav.mjs cria pares prototipo/Next da barra no Inicio e da Comunidade, em 375/1440,
+#   claro/escuro. Diferenca esperada registrada no report: a aba Negócios segue fora do Next ate o lote 6.
+#   A comparacao nao rodou porque o adendo desta execucao proibe prova-fila.
+# PROVAS LOCAIS: unit shell-active-nav 32 PASS; tsc apps/web e tests/e2e PASS; Biome nos 14 arquivos PASS;
+#   node --check compare-nav PASS; task-contract COM-004 PASS; git diff --check PASS.
+# GATE: npx pnpm@11.18.0 gate nao iniciou porque o PowerShell bloqueou npx.ps1; npx.cmd tentou buscar pnpm@11.18.0
+#   e recebeu EACCES no registry.npmjs.org. Gate completo, build, comparator e e2e ficam pendentes para coordenador.
+# BANCO: sem migration; test:db nao se aplica. O adendo vedou reset, pgTAP e generate:types.
+# PENDENCIA DE ESCOPO: foi pedida autorizacao para incluir o arquivo JoinCommunityCard do Início; sem resposta,
+#   o arquivo permaneceu inalterado e a entrada antiga continua la.
+# COMMIT: tentativa local falhou ao criar .git/worktrees/lote5-nav/index.lock (Permission denied); mudancas
+#   permanecem staged/unstaged no worktree e aguardam commit pelo coordenador.

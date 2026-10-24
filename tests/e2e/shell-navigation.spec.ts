@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
+import { BOTTOM_NAV, SIDEBAR, seedSession, signInAs } from "./helpers/session"
 
 // A barra de baixo do protótipo (lote 5, tarefa N1 —
 // ADR-20261023-comunidade-do-prototipo, "Navegação e estrutura"): Início,
@@ -72,9 +72,23 @@ test.describe("a barra segue o protótipo em três larguras", () => {
 })
 
 test.describe("Conversas abre a caixa de mensagens", () => {
-  test("leva a /messages e fica ativa lá", async ({ page, context }) => {
+  test("a barra abre uma conversa e continua ativa", async ({ page, context }) => {
     await seedSession(context)
-    await page.goto("/messages")
+    await page.goto("/inicio")
+
+    if (await navWidthIsMobile(page)) {
+      await page.locator(BOTTOM_NAV).getByRole("tab", { name: "Conversas", exact: true }).click()
+    } else {
+      await page.locator(SIDEBAR).getByRole("link", { name: "Conversas" }).click()
+    }
+    await expect(page).toHaveURL(/\/messages$/)
+    await expect(page.getByRole("heading", { name: "Mensagens" })).toBeVisible()
+
+    const conversation = page.getByRole("option").first()
+    await expect(conversation).toBeVisible({ timeout: 15_000 })
+    await conversation.click()
+    await expect(page).toHaveURL(/\/messages\/[0-9a-f-]{36}$/i)
+    await expect(page.getByLabel("Digite sua mensagem")).toBeVisible()
 
     const nav = page.locator(BOTTOM_NAV)
     if (await navWidthIsMobile(page)) {
@@ -124,12 +138,38 @@ test.describe("Você reúne o que era Perfil", () => {
       )
     }
   })
+
+  test("Você → Salvos → anúncio mantém Você ativo", async ({ page, context }) => {
+    await signInAs(context, "dono-vila@bivaque.example.invalid")
+    await page.goto("/profile")
+    await page.waitForFunction(() => sessionStorage.getItem("bivaque:navigation-origin") === "voce")
+    await page.getByRole("link", { name: "Salvos", exact: true }).last().click()
+    await expect(page).toHaveURL(/\/salvos$/)
+    await page.locator('a[href="/mercado/b1000000-0000-4000-8000-000000000001"]').click()
+    await expect(page).toHaveURL(/\/mercado\/b1000000-0000-4000-8000-000000000001$/)
+
+    if (await navWidthIsMobile(page)) {
+      await expect(
+        page.locator(BOTTOM_NAV).getByRole("tab", { name: "Você", exact: true }),
+      ).toHaveAttribute("aria-selected", "true")
+    } else {
+      await expect(page.locator(SIDEBAR).getByRole("link", { name: "Você" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      )
+    }
+  })
 })
 
 test.describe("abas da Comunidade (renderCommunity)", () => {
   test("tem Indicações e Grupos; Grupos abre a lista de grupos", async ({ page, context }) => {
-    await seedSession(context)
+    await signInAs(context, "dono-vila@bivaque.example.invalid")
     await page.goto("/community")
+
+    await expect(page.getByRole("link", { name: "Ver comunidades", exact: true })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: "Convidar", exact: true })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: "Sobre", exact: true })).toHaveCount(0)
+    await expect(page.locator('a[href^="/communities"]')).toHaveCount(0)
 
     await expect(page.getByRole("tab", { name: "Indicações", exact: true })).toBeVisible()
     const grupos = page.getByRole("tab", { name: "Grupos", exact: true })
@@ -139,6 +179,16 @@ test.describe("abas da Comunidade (renderCommunity)", () => {
 
     await grupos.click()
     await expect(page).toHaveURL(/\/groups$/)
+    await expect(page.getByRole("tab", { name: "Grupos", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
+    await page.getByRole("tab", { name: "Indicações", exact: true }).click()
+    await expect(page).toHaveURL(/\/community$/)
+    await expect(page.getByRole("tab", { name: "Indicações", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    )
   })
 })
 

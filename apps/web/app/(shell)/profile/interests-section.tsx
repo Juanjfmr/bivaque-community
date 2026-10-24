@@ -97,8 +97,7 @@ export function InterestsSection() {
           <p className="text-sm font-medium">Sua cidade ainda não tem grupos públicos.</p>
           <p className="mt-2 text-sm text-muted">
             Você pode ser o primeiro: criar um grupo é o caminho que faz a cidade parar de parecer
-            vazia. Convidar um membro para uma vila também ajuda — quem chega pode encontrar gente
-            com interesses em comum.
+            vazia e encontrar gente com interesses em comum.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
@@ -106,12 +105,6 @@ export function InterestsSection() {
               className="inline-flex min-h-11 items-center rounded-full bg-[var(--accent)] px-4 text-sm font-semibold text-[var(--accent-foreground)] hover:opacity-90"
             >
               Criar o primeiro grupo
-            </Link>
-            <Link
-              href="/communities"
-              className="inline-flex min-h-11 items-center rounded-full bg-[var(--surface)] border border-border px-4 text-sm font-medium text-foreground hover:bg-[var(--surface-sunken)]"
-            >
-              Ver vilas disponíveis
             </Link>
           </div>
         </div>

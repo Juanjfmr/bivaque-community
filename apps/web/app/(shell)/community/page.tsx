@@ -13,9 +13,7 @@ import {
   loadPrimaryCommunity,
   type PrimaryCommunity,
 } from "../inicio/home-loaders"
-import { JoinCommunityCard } from "../inicio/join-community"
 import { CommunityHeader } from "./community-header"
-import { CommunityTabs } from "./community-tabs"
 import { useCommunityHeader } from "./use-community-header"
 
 // A Comunidade sem feed e sem a vista "Conversa" (lote 5, tarefa N2 —
@@ -73,7 +71,7 @@ export default function CommunityPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mx-auto w-full max-w-[72rem] space-y-4 px-4 pt-4 pb-8 sm:pt-6 md:pb-10 lg:px-8">
+      <div className="w-full space-y-4 pb-8 md:pb-10">
         {primary.status === "error" ? (
           <ErrorState
             message="Não foi possível identificar a sua comunidade. Tente novamente."
@@ -85,7 +83,6 @@ export default function CommunityPage() {
           </div>
         ) : primary.status === "ready" ? (
           <CommunityHeader
-            communityId={primary.id}
             name={primary.name ?? "Comunidade"}
             thumbnailUrl={thumbnailUrl}
             cityLabel={cityLabel}
@@ -94,13 +91,6 @@ export default function CommunityPage() {
         ) : (
           <h1 className="text-xl font-semibold tracking-tight text-ui-ink">Comunidade</h1>
         )}
-
-        {/* Sem comunidade aprovada, o passo que falta vem antes do painel. */}
-        {primary.status === "none" ? <JoinCommunityCard /> : null}
-
-        {/* As abas do protótipo (lote 5 N1): Indicações e Grupos. A aba
-            Negócios entra com o lote 6. */}
-        <CommunityTabs />
 
         <IndicationsPanel
           localityId={current.id}

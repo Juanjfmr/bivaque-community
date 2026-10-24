@@ -24,14 +24,12 @@ describe("o perfil mostra; a edição fica à parte", () => {
     expect(view).toContain('href="/profile/editar"')
   })
 
-  it("a ordem: quem é, seu espaço, comunidades, indicações, cidade", () => {
-    const order = [
-      "<h1",
-      'id="perfil-atalhos"',
-      'id="perfil-comunidades"',
-      "<ProfileIndications",
-      "<CitySection />",
-    ].map((marker) => view.indexOf(marker))
+  it("a ordem: quem é, seu espaço, indicações, cidade", () => {
+    // Lote 5, N1: a seção de comunidades (vila) saiu do perfil.
+    expect(view).not.toContain('id="perfil-comunidades"')
+    const order = ["<h1", 'id="perfil-atalhos"', "<ProfileIndications", "<CitySection />"].map(
+      (marker) => view.indexOf(marker),
+    )
     for (const position of order) expect(position).toBeGreaterThan(-1)
     expect([...order].sort((a, b) => a - b)).toEqual(order)
   })

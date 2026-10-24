@@ -45,10 +45,10 @@ describe("página da Comunidade", () => {
     expect(page).not.toContain("ToggleButton")
   })
 
-  it("sem comunidade, o convite a entrar vem antes do painel", () => {
-    const jsx = page.slice(page.indexOf("<JoinCommunityCard />"))
-    expect(page).toContain('primary.status === "none" ? <JoinCommunityCard />')
-    expect(jsx.indexOf("<IndicationsPanel")).toBeGreaterThan(jsx.indexOf("<JoinCommunityCard />"))
+  it("não chama para entrar numa vila", () => {
+    // Lote 5, N1: vila não existe nesta versão; o card de entrar numa comunidade saiu.
+    expect(page).not.toContain("<JoinCommunityCard")
+    expect(page).toContain("<IndicationsPanel")
   })
 
   it("leitura de comunidade que falha vira estado de erro recuperável", () => {
@@ -64,7 +64,9 @@ describe("abas da Comunidade (lote 5 N1)", () => {
 
   it("a Comunidade monta a fileira de abas do protótipo", () => {
     // renderCommunity do protótipo: Indicações / Grupos (/Negócios entra no lote 6).
-    expect(page).toContain("<CommunityTabs />")
+    // A fileira mora nos layouts de /community e de /groups, para não sumir ao trocar de aba.
+    expect(web("(shell)", "community", "layout.tsx")).toContain("<CommunityTabs")
+    expect(web("(shell)", "groups", "layout.tsx")).toContain("<CommunityTabs")
     expect(tabs).toContain("Indicações")
     expect(tabs).toContain("Grupos")
     // A aba Negócios é do lote 6: não entra agora.
@@ -90,12 +92,13 @@ describe("linha de publicar", () => {
 
 describe("cabeçalho da comunidade", () => {
   const header = web("(shell)", "community", "community-header.tsx")
-  it("tem capa, descrição, fileira de membros, Convidar e Sobre", () => {
+  it("tem capa, descrição e fileira de membros, sem as portas da vila", () => {
     expect(header).toContain("data.bannerUrl ?")
     expect(header).toContain("data.description ?")
     expect(header).toContain("<MemberStack")
-    expect(header).toContain("/invite` as Route")
-    expect(header).toMatch(/>\s*Sobre\s*</)
+    // Lote 5, N1: Convidar e Sobre levavam a rotas de vila, que só redirecionam.
+    expect(header).not.toContain("/invite` as Route")
+    expect(header).not.toMatch(/>\s*Sobre\s*</)
   })
 })
 
