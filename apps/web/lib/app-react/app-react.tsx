@@ -48,6 +48,8 @@ export function AppReact() {
     draftId = useRef(""),
     wasDialog = useRef(false)
   const pendingRestore = useRef<AppNavigation | null>(null)
+  const pendingListRestoreAt = useRef(0)
+  const listRevisionRef = useRef(0)
   const [route, setRoute] = useState<AppRoute>({ name: "inicio" }),
     [origin, setOrigin] = useState<AppNavigation["origin"]>("inicio"),
     [filter, setFilter] = useState<Filter>("help"),
@@ -57,6 +59,7 @@ export function AppReact() {
     [ready, setReady] = useState(false)
   const [communityTab, setCommunityTab] = useState<"ind" | "grp">("ind")
   const [resolvedCount, setResolvedCount] = useState(0)
+  const [listRevision, setListRevision] = useState(0)
   const [suggestions, setSuggestions] = useState<IndicationRow[]>([])
   const [listing, setListing] = useState<Listing>({ kind: "loading" }),
     [detail, setDetail] = useState<Detail>({ kind: "loading" }),
@@ -130,6 +133,7 @@ export function AppReact() {
       setOrigin(nav.origin)
       setFilter(nav.filter)
       pendingRestore.current = nav
+      pendingListRestoreAt.current = listRevisionRef.current + 1
       setReady(true)
     })()
     return () => {
@@ -159,6 +163,7 @@ export function AppReact() {
   const restore = useCallback(() => {
     const nav = navigation()
     pendingRestore.current = nav
+    pendingListRestoreAt.current = listRevisionRef.current + 1
     setRoute(nav.route)
     setOrigin(nav.origin)
     setFilter(nav.filter)
@@ -205,7 +210,11 @@ export function AppReact() {
         wasDialog.current = false
         setDialog(false)
         dialogEl.current?.close()
-        requestAnimationFrame(() => trigger.current?.focus())
+        const nav = navigation()
+        requestAnimationFrame(() => {
+          if (main.current) main.current.scrollTop = nav.scroll
+          trigger.current?.focus({ preventScroll: true })
+        })
         return
       }
       restore()
@@ -216,7 +225,7 @@ export function AppReact() {
       window.removeEventListener("popstate", pop)
       window.removeEventListener("pagehide", saveContext)
     }
-  }, [restore, saveContext])
+  }, [navigation, restore, saveContext])
   useEffect(() => {
     if (!locality) return
     void supabase
@@ -256,22 +265,9 @@ export function AppReact() {
             }
           : { kind: "done", rows: got },
       )
+      listRevisionRef.current += 1
+      setListRevision(listRevisionRef.current)
       setOffset(skip + got.length)
-      if (!skip && pendingRestore.current) {
-        const nav = pendingRestore.current
-        pendingRestore.current = null
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            if (main.current) main.current.scrollTop = nav.scroll
-            const target = nav.focus
-              ? document.querySelector<HTMLElement>(`[data-focus-key="${CSS.escape(nav.focus)}"]`)
-              : null
-            ;(target ?? document.querySelector<HTMLElement>(".app-main h1"))?.focus({
-              preventScroll: true,
-            })
-          }),
-        )
-      }
     },
     [locality, supabase],
   )
@@ -279,6 +275,24 @@ export function AppReact() {
     if (ready && locality && ["inicio", "comunidade", "minhas"].includes(route.name))
       void loadList(route.name === "minhas" ? "mine" : filter)
   }, [ready, locality, route.name, filter, loadList])
+  useEffect(() => {
+    const nav = pendingRestore.current
+    if (
+      !nav ||
+      listRevision < pendingListRestoreAt.current ||
+      listing.kind !== "done" ||
+      route.name === "pergunta"
+    )
+      return
+    pendingRestore.current = null
+    if (main.current) main.current.scrollTop = nav.scroll
+    const target = nav.focus
+      ? document.querySelector<HTMLElement>(`[data-focus-key="${CSS.escape(nav.focus)}"]`)
+      : null
+    ;(target ?? document.querySelector<HTMLElement>(".app-main h1"))?.focus({
+      preventScroll: true,
+    })
+  }, [listRevision, listing.kind, route.name])
   const loadDetail = useCallback(async () => {
     if (!locality || !route.id) return
     setDetail({ kind: "loading" })
@@ -378,6 +392,7 @@ export function AppReact() {
     )
   }
   const openAsk = () => {
+    saveContext()
     draftId.current = crypto.randomUUID()
     setTitle("")
     setBody("")
