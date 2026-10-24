@@ -53,3 +53,6 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+# --- CANCELADO em 24/10/2026 ---
+# O ADR-20261024-redesenho-da-comunidade (aceito pelo dono em 24/10/2026) absorve
+# este escopo no redesenho do dominio da Comunidade. Nao despachar.
