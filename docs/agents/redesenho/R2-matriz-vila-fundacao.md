@@ -8,7 +8,7 @@ Rascunho sujeito à aprovação do dono antes da migration. Atores, estados, val
 
 ## 2. Matriz por objeto
 
-Objetos de vila são removidos na mesma leva e não têm leitura nem escrita após ela; referências antigas não concedem acesso. Nas demais tabelas, `sim` presume sessão válida, conta não suspensa e sem exclusão aberta, salvo linha que explicite outra condição. Os atores e a ordem das colunas são exatamente os de `R2-comum.md`; `dono`, `moderador` e `membro` são papéis do grupo, e não substituem a condição explícita de titular (`próprio`) ou autoria (`autor`) para objetos sem grupo. Itens de operador são mediados por RPC/rota restrita e revalidam o papel no servidor.
+Objetos de vila são removidos na mesma leva e não têm leitura nem escrita após ela; referências antigas não concedem acesso. Nas demais tabelas, `sim` presume sessão válida, conta não suspensa e sem exclusão aberta, salvo linha que explicite outra condição. `suspenso` e `em-exclusao` são estados de conta, não papéis: só podem exercer permissões derivadas de titularidade, autoria ou escopo que já possuam, sujeitas aos controles de conta, que podem retirar acesso e nunca concedê-lo. Os atores e a ordem das colunas são exatamente os de `R2-comum.md`; `dono`, `moderador` e `membro` são papéis do grupo, e não substituem a condição explícita de titular (`próprio`) ou autoria (`autor`) para objetos sem grupo. Itens de operador são mediados por RPC/rota restrita e revalidam o papel no servidor.
 
 ### `communities`
 
@@ -67,7 +67,7 @@ Objetos de vila são removidos na mesma leva e não têm leitura nem escrita ap�
 
 | Ação | dono | moderador | membro | membro-so-leitura | pedido-pendente | cidade | outra-cidade | suspenso | em-exclusao | operador | anonimo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ler e marcar como lida notificação própria | sim | sim | sim | nao | nao | nao | nao | nao | nao | so-rpc | nao |
+| ler e marcar como lida notificação própria | sim se destinatário | sim se destinatário | sim se destinatário | sim se destinatário | sim se destinatário | sim se destinatário | sim se destinatário | sim se destinatário e controles de conta permitirem | sim se destinatário e controles de conta permitirem | so-rpc | nao |
 | inserir/alterar notificação para si ou terceiro | nao | nao | nao | nao | nao | nao | nao | nao | nao | so-rpc | nao |
 | gerar notificação a terceiro | nao | nao | nao | nao | nao | nao | nao | nao | nao | so-rpc | nao |
 
@@ -75,7 +75,7 @@ Objetos de vila são removidos na mesma leva e não têm leitura nem escrita ap�
 
 | Ação | dono | moderador | membro | membro-so-leitura | pedido-pendente | cidade | outra-cidade | suspenso | em-exclusao | operador | anonimo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| criar denúncia sobre conteúdo acessível, inclusive bloqueado | sim se elegível | sim se elegível | sim se elegível | nao | nao | sim se conteúdo acessível | nao | nao | nao | nao | nao |
+| criar denúncia sobre conteúdo acessível, inclusive bloqueado | sim se consegue ler o conteúdo | sim se consegue ler o conteúdo | sim se consegue ler o conteúdo | sim se consegue ler o conteúdo, inclusive em grupo Encerrado | sim se consegue ler o conteúdo | sim se consegue ler o conteúdo | nao | sim se consegue ler o conteúdo e controles de conta permitirem | sim se consegue ler o conteúdo e controles de conta permitirem | nao | nao |
 | ler própria denúncia | sim se denunciante | sim se denunciante | sim se denunciante | nao | nao | nao | nao | nao | nao | so-rpc | nao |
 | ler fila/detalhes e resolver | nao | nao | nao | nao | nao | nao | nao | nao | nao | so-rpc | nao |
 | alterar estado/nota operacional diretamente | nao | nao | nao | nao | nao | nao | nao | nao | nao | so-rpc | nao |

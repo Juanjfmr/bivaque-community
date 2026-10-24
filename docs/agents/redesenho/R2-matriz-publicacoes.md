@@ -1,6 +1,6 @@
 # R2 — Matriz de permissão: publicações
 
-Rascunho para aprovação do dono. Estados e atores seguem `R2-comum.md`; o grupo fornece o escopo e a visibilidade às publicações. Publicação é sempre vinculada a um grupo. Grupo Aberto: membros verificados da cidade podem ler; Fechado: somente participantes; Encerrado: participantes anteriores leem, sem interação. “Outra cidade” não recebe acesso por mudar filtro ou URL. Conteúdo moderado como removido não volta por ação do autor; denúncia continua permitida mesmo quando o conteúdo está oculto/bloqueado.
+Rascunho para aprovação do dono. Estados e atores seguem `R2-comum.md`; o grupo fornece o escopo e a visibilidade às publicações. Publicação é sempre vinculada a um grupo. Grupo Aberto: membros verificados da cidade podem ler; Fechado: somente participantes; Encerrado: participantes anteriores leem, sem interação. `suspenso` e `em-exclusao` são estados de conta, não vínculos: suas permissões de leitura dependem do mesmo vínculo/escopo do ator equivalente, sujeitas aos controles de conta, que só podem retirar permissões. “Outra cidade” não recebe acesso por mudar filtro ou URL. Conteúdo moderado como removido não volta por ação do autor; denúncia continua permitida mesmo quando o conteúdo está oculto/bloqueado.
 
 ## 1. Objetos do grupo
 
@@ -82,7 +82,7 @@ Vínculo pessoal `(user_id, post_id)`, sem ocultar para outras pessoas nem retir
 
 ## 5. Bloqueio
 
-As leituras de feed, detalhe, comentários, reações/contagens, salvos, seguidos, perfil e atividade consultam `private.block_allows(actor, author, 'ler')`, propagando a filtragem aos dados agregados e prévias. Criar comentário usa `comentar`; reagir usa `reagir`; notificações de publicação/comentário usam `notificar` para cada destinatário. Salvar/seguir são ações sobre conteúdo: recomendação é consultar `ler` e `reagir` antes de criar vínculo. Excluir vínculo próprio, editar/excluir o próprio conteúdo e denunciar não chamam bloqueio; denúncia permanece disponível a quem bloqueou. “Ver mesmo assim” só é parâmetro do detalhe por quem bloqueou, não concede escrita, agregação nem notificação. Operador não é afetado. `notify_group_post`, `notify_group_pin` e `notify_comment` devem filtrar cada destinatário antes de enfileirar; o worker/outbox deve conferir novamente antes de envio. Corpo da função de bloqueio continua `true` nesta leva.
+As leituras de feed, detalhe, comentários, reações/contagens, salvos, seguidos, perfil e atividade consultam `private.block_allows(actor, author, 'ler')`, propagando a filtragem aos dados agregados e prévias. Criar comentário usa `comentar`; reagir usa `reagir`; notificações de publicação/comentário usam `notificar` para cada destinatário. Salvar/seguir exigem somente leitura autorizada (`ler`), sem consultar `reagir`. Excluir vínculo próprio, editar/excluir o próprio conteúdo e denunciar não chamam bloqueio; denúncia permanece disponível a quem bloqueou. “Ver mesmo assim” só é parâmetro do detalhe por quem bloqueou, não concede escrita, agregação nem notificação. Operador não é afetado. `notify_group_post`, `notify_group_pin` e `notify_comment` devem filtrar cada destinatário antes de enfileirar; o worker/outbox deve conferir novamente antes de envio. Corpo da função de bloqueio continua `true` nesta leva.
 
 ## 6. Regras do retrato
 
@@ -199,7 +199,7 @@ As leituras de feed, detalhe, comentários, reações/contagens, salvos, seguido
 | R1-291 | public.feed_group | feed de grupo | mudada | Preservar feed do protótipo com checagem do chamador, estado do grupo, conteúdo e bloqueio. |
 | R1-292 | public.feed_posts | feed agregado de cidade | mudada | Recriar apenas como agregação autorizada de grupos e da cidade; acesso direto precisa validar membro e não pode contornar grupo Fechado. |
 | R1-293 | public.finalize_account_deletion | limpeza de dados da conta | mudada | Remover referências à vila e manter limpeza de reações, salvos, follows e autoria conforme política aprovada de exclusão. |
-| R1-303 | public.list_group_activity | atividade do grupo | mantida | Mantém atividade restrita ao grupo; a política de leitura do post aplica escopo e bloqueio sem ampliar o acesso. |
+| R1-303 | public.list_group_activity | atividade do grupo | mudada | Como SECURITY DEFINER não passa pela RLS: contar somente publicações legíveis pelo leitor, considerando estado do grupo, visibilidade, conteúdo não removido e `block_allows(ler)`. |
 | R1-307 | public.list_open_reports | fila de denúncias | mantida | Acesso restrito à operação, preservando evidência de publicação/comentário. |
 | R1-318 | public.pin_group_post | fixar publicação | mantida | Ato restrito a papel autorizado e publicação do próprio grupo; conteúdo oculto/removido não deve ser fixado. |
 | R1-320 | public.profile_posts_for | publicações no perfil | mantida | Mantém publicações de perfil condicionadas à leitura autorizada do conteúdo e não amplia escopo de grupo. |

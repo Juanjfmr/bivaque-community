@@ -8,14 +8,14 @@ Parte do rascunho R2, sujeita à aprovação do dono antes da migration. Atores,
 
 ## 2. Matriz por objeto
 
-Nas tabelas abaixo, cada célula indica `aberto / fechado / encerrado`. “Membro” inclui dono, moderador e membro aprovado, salvo a ação administrativa que explicita papel. Grupo encerrado só é visível para quem participava dele; fica fora de busca e listas públicas. Operador acessa funções administrativas restritas, sem virar membro. `suspenso` e `em-exclusao` não recebem permissão de escrita nesta proposta, até decisão do dono.
+Nas tabelas abaixo, cada célula indica `aberto / fechado / encerrado`. “Membro” inclui dono, moderador e membro aprovado, salvo a ação administrativa que explicita papel. Grupo encerrado só é visível para quem participava dele; fica fora de busca e listas públicas. Operador acessa funções administrativas restritas, sem virar membro. `suspenso` e `em-exclusao` são estados de conta, não vínculos: qualquer leitura nessas colunas exige o mesmo vínculo/escopo e participação que autorizaria o ator equivalente, e os controles de conta podem retirar esse acesso; o estado nunca o concede. Não recebem escrita nesta proposta.
 
 ### `groups`
 
 | Ação | dono | moderador | membro | membro-so-leitura | pedido-pendente | cidade | outra-cidade | suspenso | em-exclusao | operador | anonimo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ler apresentação e regras | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / não | sim / sim / não | não / não / não | sim / sim / sim | sim / sim / sim | sim / sim / sim | não / não / não |
-| ler conteúdo e lista de membros | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / sim | não / não / não | sim / não / não | não / não / não | sim / sim / sim | sim / sim / sim | sim / sim / sim | não / não / não |
+| ler apresentação e regras | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / não | sim / sim / não | não / não / não | sim se também tiver acesso autorizado ao grupo / idem / idem | sim se também tiver acesso autorizado ao grupo / idem / idem | sim / sim / sim | não / não / não |
+| ler conteúdo e lista de membros | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / sim | não / não / não | sim / não / não | não / não / não | sim se também for membro do grupo (Encerrado só se participou) / idem / idem | sim se também for membro do grupo (Encerrado só se participou) / idem / idem | sim / sim / sim | não / não / não |
 | criar grupo | sim se verificado na cidade | sim se verificado na cidade | sim se verificado na cidade | nao | nao | sim se verificado na cidade | nao | nao | nao | so-rpc | nao |
 | editar nome, descrição, regras e aberto/fechado | sim / sim / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | so-rpc / so-rpc / so-rpc | nao / nao / nao |
 | pedir reabertura / reabrir | nao / nao / sim se dono, sem prazo no protótipo | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | so-rpc / so-rpc / so-rpc | nao / nao / nao |
@@ -27,7 +27,7 @@ Nas tabelas abaixo, cada célula indica `aberto / fechado / encerrado`. “Membr
 
 | Ação | dono | moderador | membro | membro-so-leitura | pedido-pendente | cidade | outra-cidade | suspenso | em-exclusao | operador | anonimo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ler vínculo/roster | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / sim | nao / nao / nao | sim / nao / nao | nao / nao / nao | sim / sim / sim | sim / sim / sim | sim / sim / sim | nao / nao / nao |
+| ler vínculo/roster | sim / sim / sim | sim / sim / sim | sim / sim / sim | sim / sim / sim | nao / nao / nao | sim / nao / nao | nao / nao / nao | sim se também tiver vínculo autorizado / idem / idem | sim se também tiver vínculo autorizado / idem / idem | sim / sim / sim | nao / nao / nao |
 | entrar em grupo Aberto | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | sim / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | so-rpc | nao |
 | pedir entrada em grupo Fechado | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / sim / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | so-rpc | nao |
 | cancelar próprio pedido | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / sim / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | nao / nao / nao | so-rpc | nao |
@@ -211,7 +211,7 @@ Cada ID abaixo vem da seção correspondente de [`R1-retrato.md`](./R1-retrato.m
 | R1-231 | enforce_group_join_attempt_limit | bloqueia excesso de pedidos | mantida | Conserva limite de três tentativas em 30 dias. |
 | R1-264 | reports_block_self | impede denúncia própria | mantida | Proteção contra autorrelato permanece no conteúdo de grupo. |
 | R1-288 | delete_group | exclusão física/lógica de grupo | mudada | Operação é substituída por encerrar sem exclusão; autorização administrativa permanece. |
-| R1-303 | list_group_activity | atividade por grupo/localidade | mantida | Continua agregada por localidade, sem expor conteúdo fechado. |
+| R1-303 | list_group_activity | atividade por grupo/localidade | mudada | Como SECURITY DEFINER não passa pela RLS: contar somente publicações legíveis pelo leitor, considerando estado do grupo, visibilidade, conteúdo não removido e `block_allows(ler)`. |
 | R1-305 | list_indications | inclui origem de pergunta em grupo | mudada | Leitura passa a aceitar origem dupla somente conforme regra do ADR-20261024. |
 | R1-307 | list_open_reports | resolve alvo de denúncia do grupo | mantida | Operador autorizado conserva acesso à evidência necessária. |
 | R1-318 | pin_group_post | fixa publicação do grupo | mantida | Ação segue restrita ao admin e à publicação do mesmo grupo. |
