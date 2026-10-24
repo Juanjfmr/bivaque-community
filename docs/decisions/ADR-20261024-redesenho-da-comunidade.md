@@ -1,10 +1,10 @@
 ---
 id: ADR-20261024-redesenho-da-comunidade
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
-accepted_at:
+approved_at: 2026-10-24
+accepted_at: 2026-10-24
 expires_at:
 linked_plan: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
 critic_verdict: PASS
