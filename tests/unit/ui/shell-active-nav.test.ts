@@ -72,7 +72,7 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
           setItem: (key: string, value: string) => values.set(key, value),
         },
       })
-      expect(rememberNavigationOrigin("/profile", PRIMARY, "inicio")).toBe("voce")
+      expect(rememberNavigationOrigin("/profile", PRIMARY, null)).toBe("voce")
       expect(currentState).toMatchObject({ bivaqueOrigem: "voce", __NA: true, marker: "preserved" })
       expect(rememberNavigationOrigin("/salvos", PRIMARY, "voce")).toBe("voce")
       const announcement = "/mercado/anuncio-1"
@@ -89,9 +89,19 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
         id: "voce",
       })
 
-      // Uma entrada nova para a mesma URL recebe a ultima raiz visitada.
+      // Uma entrada inicial sem estado usa a ultima raiz salva.
       currentState = {}
-      expect(rememberNavigationOrigin(announcement, PRIMARY, "voce")).toBe("inicio")
+      expect(rememberNavigationOrigin(announcement, PRIMARY, null)).toBe("inicio")
+      expect(currentState.bivaqueOrigem).toBe("inicio")
+
+      // Trocar o filtro depois de voltar herda a origem da entrada restaurada,
+      // ainda que sessionStorage guarde outra aba raiz.
+      values.set("bivaque:last-navigation-root", "voce")
+      currentState = { bivaqueOrigem: "inicio" }
+      const restoredOrigin = rememberNavigationOrigin(announcement, PRIMARY, "voce")
+      expect(restoredOrigin).toBe("inicio")
+      currentState = {} // router.replace remove o state ao trocar o filtro
+      expect(rememberNavigationOrigin(announcement, PRIMARY, restoredOrigin)).toBe("inicio")
       expect(currentState.bivaqueOrigem).toBe("inicio")
 
       currentState = voceEntry

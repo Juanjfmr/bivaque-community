@@ -18,7 +18,7 @@ import type { ElementType, SVGProps } from "react"
 import { type PrimaryContainer, resolveActiveNav } from "../shell/active-nav"
 
 export interface NavItem {
-  id: string
+  id: PrimaryContainer
   label: string
   shortLabel?: string
   href: string
@@ -110,7 +110,13 @@ function NavIcon({
   )
 }
 
-export function BottomNav({ origin }: { origin: PrimaryContainer }) {
+export function BottomNav({
+  origin,
+  onNavigate,
+}: {
+  origin: PrimaryContainer
+  onNavigate: (origin: PrimaryContainer) => void
+}) {
   const pathname = usePathname()
 
   const items = NAV_ITEMS
@@ -140,6 +146,7 @@ export function BottomNav({ origin }: { origin: PrimaryContainer }) {
               key={item.id}
               id={item.id}
               href={item.href}
+              onClick={() => onNavigate(item.id)}
               className="flex h-16 min-w-11 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium text-ui-ink-2 data-[selected=true]:text-ui-brand"
             >
               {/* Pílula atrás do ícone ativo, como na prancha 00. */}

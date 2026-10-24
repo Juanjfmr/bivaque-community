@@ -120,18 +120,18 @@ function readLastRoot(): PrimaryContainer | null {
 export function rememberNavigationOrigin(
   pathname: string,
   primary: readonly PrimaryNavItem[],
-  fallback: PrimaryContainer,
+  currentOrigin: PrimaryContainer | null,
 ): PrimaryContainer {
   const root = primary.find((item) => matches(pathname, item.href))
   const owner = AREA_CONTAINERS.find(([prefix]) => matches(pathname, prefix))?.[1]
   const previousOrigin: unknown = window.history.state?.[HISTORY_ORIGIN_KEY]
-  const origin = isPrimaryContainer(previousOrigin)
-    ? previousOrigin
-    : root && isPrimaryContainer(root.id)
-      ? root.id
-      : (owner ??
-        (SHARED_AREAS.some((prefix) => matches(pathname, prefix)) ? readLastRoot() : null) ??
-        fallback)
+  const origin =
+    (root && isPrimaryContainer(root.id) ? root.id : null) ??
+    owner ??
+    (isPrimaryContainer(previousOrigin) ? previousOrigin : null) ??
+    currentOrigin ??
+    readLastRoot() ??
+    "inicio"
 
   try {
     if (root && isPrimaryContainer(root.id)) {
@@ -140,7 +140,7 @@ export function rememberNavigationOrigin(
   } catch {
     // History state still preserves this entry when session storage is unavailable.
   }
-  if (!isPrimaryContainer(previousOrigin)) {
+  if (previousOrigin !== origin) {
     window.history.replaceState({ ...window.history.state, [HISTORY_ORIGIN_KEY]: origin }, "")
   }
   return origin

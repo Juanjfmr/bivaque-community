@@ -59,10 +59,12 @@ export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
   const search = useSearchParams().toString()
   const [origin, setOrigin] = useState<PrimaryContainer>("inicio")
+  const originRef = useRef<PrimaryContainer | null>(null)
   // A filter replace drops history state without changing the path.
   // biome-ignore lint/correctness/useExhaustiveDependencies: search changes must rerun this effect.
   useEffect(() => {
-    const entryOrigin = rememberNavigationOrigin(pathname, NAV_ITEMS, origin)
+    const entryOrigin = rememberNavigationOrigin(pathname, NAV_ITEMS, originRef.current)
+    originRef.current = entryOrigin
     if (entryOrigin !== origin) setOrigin(entryOrigin)
   }, [origin, pathname, search])
   const activeNav = resolveActiveNav(pathname, NAV_ITEMS, origin)
@@ -253,7 +255,13 @@ export function AppShell({ children }: AppShellProperties) {
         </main>
       </div>
 
-      <BottomNav origin={origin} />
+      <BottomNav
+        origin={origin}
+        onNavigate={(nextOrigin) => {
+          originRef.current = nextOrigin
+          setOrigin(nextOrigin)
+        }}
+      />
 
       {showCreate ? <CreateFab onAsk={openAsk} /> : null}
 

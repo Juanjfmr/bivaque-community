@@ -171,3 +171,13 @@ closure:
 # GATE: npx pnpm@11.18.0 gate -> VERDE (lint, typecheck, typecheck:e2e, testes, secrets); build pulado
 #   pela ausencia esperada de apps/web/.env.local.
 # PENDENTE COORDENADOR: e2e e build; test:db nao se aplica, sem mudanca de banco. git diff --check PASS.
+# Quinta correcao (24/10/2026):
+# ATIVO: AppShell guarda a origem da entrada atual em ref; destinos com container proprio definem sua origem,
+#   e entradas compartilhadas sem estado herdam a origem da entrada anterior. sessionStorage fica como fonte
+#   apenas quando ainda nao ha origem corrente, como na primeira entrada sem estado da sessao.
+# BARRA: clicar em uma aba atualiza o ref antes da navegacao; a entrada raiz seguinte grava a aba propria.
+# UNIT: shell-active-nav verifica troca de filtro apos voltar usando a origem restaurada mesmo com a ultima
+#   raiz em sessionStorage diferente (1717 testes unitarios PASS no gate).
+# GATE: npx pnpm@11.18.0 gate -> VERDE: lint, typecheck, typecheck:e2e, unit 1717, mobile 76, web 19,
+#   privacy 189, scope 141 e secrets. Build PULADO por ausencia esperada de apps/web/.env.local.
+# PENDENTE COORDENADOR: build e e2e; banco/test:db nao se aplica, sem migration. git diff --check PASS.
