@@ -10,6 +10,7 @@ import {
   type AppRoute,
   activeAppTab,
   appHash,
+  needsCommunityParent,
   parseAppHash,
 } from "./navigation"
 import "./app-react.css"
@@ -109,6 +110,18 @@ export function AppReact() {
           localities: { city_name: string } | null
         },
         nav = navigation()
+      if (needsCommunityParent(nav.route, history.state)) {
+        const parent = { name: "comunidade" } as const,
+          parentNav: AppNavigation = {
+            route: parent,
+            origin: "comunidade",
+            filter: "help",
+            scroll: 0,
+            focus: null,
+          }
+        history.replaceState({ bivaque: true, navigation: parentNav }, "", appHash(parent))
+        history.pushState({ bivaque: true, parent, navigation: nav }, "", appHash(nav.route))
+      }
       history.replaceState({ ...history.state, bivaque: true, navigation: nav }, "", location.href)
       setUser(u.id)
       setLocality(member.locality_id)
@@ -270,12 +283,20 @@ export function AppReact() {
     if (!locality || !route.id) return
     setDetail({ kind: "loading" })
     const id = route.id
-    const [q, r, s] = await Promise.all([
-      supabase
-        .from("recommendation_requests")
-        .select("id,author_id,title,body,category,created_at,is_resolved,resolved_reply_id")
-        .eq("id", id)
-        .maybeSingle(),
+    const q = await supabase
+      .from("recommendation_requests")
+      .select("id,author_id,title,body,category,created_at,is_resolved,resolved_reply_id")
+      .eq("id", id)
+      .maybeSingle()
+    if (q.error) {
+      setDetail({ kind: "error" })
+      return
+    }
+    if (!q.data) {
+      setDetail({ kind: "missing" })
+      return
+    }
+    const [r, s] = await Promise.all([
       supabase.rpc("list_question_replies", { p_request_id: id }),
       supabase
         .from("recommendation_saves")
@@ -284,12 +305,8 @@ export function AppReact() {
         .eq("request_id", id)
         .maybeSingle(),
     ])
-    if (q.error || r.error || s.error) {
+    if (r.error || s.error) {
       setDetail({ kind: "error" })
-      return
-    }
-    if (!q.data) {
-      setDetail({ kind: "missing" })
       return
     }
     setDetail({
@@ -498,7 +515,10 @@ export function AppReact() {
             aria-label={row.title}
             aria-describedby={`meta-${row.id}`}
             data-focus-key={`question-${row.id}`}
-            onClick={() => go({ name: "pergunta", id: row.id })}
+            onClick={(event) => {
+              event.currentTarget.focus()
+              go({ name: "pergunta", id: row.id })
+            }}
           >
             <span id={`meta-${row.id}`} className="app-meta">
               {row.category.replaceAll("_", " ")} ·{" "}
@@ -742,7 +762,7 @@ export function AppReact() {
           </button>
           <span aria-hidden="true">Criar</span>
         </nav>
-        <main className="app-main" ref={main}>
+        <main className="app-main" ref={main} onScroll={saveContext}>
           {route.name === "inicio" ? (
             <div className="app-content">
               <header className="app-head">

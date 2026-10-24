@@ -32,6 +32,9 @@ export function parseAppHash(hash: string): AppRoute {
 export function appHash(route: AppRoute): string {
   return `#${route.name}${route.id ? `/${encodeURIComponent(route.id)}` : ""}`
 }
+export function needsCommunityParent(route: AppRoute, state: unknown): boolean {
+  return route.name === "pergunta" && !(state as { bivaque?: boolean } | null)?.bivaque
+}
 export function activeAppTab(
   route: AppRoute,
   origin: AppNavigation["origin"],

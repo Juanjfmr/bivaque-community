@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { activeAppTab, appHash, parseAppHash } from "../../../apps/web/lib/app-react/navigation"
+import {
+  activeAppTab,
+  appHash,
+  needsCommunityParent,
+  parseAppHash,
+} from "../../../apps/web/lib/app-react/navigation"
 
 describe("navigation fragments in /app", () => {
   it("defaults to home and encodes question identifiers", () => {
@@ -12,5 +17,10 @@ describe("navigation fragments in /app", () => {
     expect(parseAppHash("#comunidade/extra")).toEqual({ name: "indisponivel" })
     expect(activeAppTab({ name: "pergunta", id: "q" }, "inicio")).toBe("comunidade")
     expect(activeAppTab({ name: "minhas" }, "voce")).toBe("comunidade")
+  })
+  it("seeds a Community history entry only for a direct question link", () => {
+    expect(needsCommunityParent({ name: "pergunta", id: "q" }, null)).toBe(true)
+    expect(needsCommunityParent({ name: "pergunta", id: "q" }, { bivaque: true })).toBe(false)
+    expect(needsCommunityParent({ name: "comunidade" }, null)).toBe(false)
   })
 })
