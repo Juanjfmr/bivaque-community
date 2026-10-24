@@ -3067,6 +3067,10 @@ export type Database = {
         Returns: undefined
       }
       my_account_kind: { Args: never; Returns: string }
+      my_group_notify_level: {
+        Args: { p_group_id: string }
+        Returns: Database["public"]["Enums"]["group_notify_level"]
+      }
       my_verification_document: {
         Args: { p_user_id: string }
         Returns: {
@@ -3551,6 +3555,7 @@ export type Database = {
         | "service_request"
         | "recommendation_request"
         | "support_answered"
+        | "group_post"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3795,6 +3800,7 @@ export const Constants = {
         "service_request",
         "recommendation_request",
         "support_answered",
+        "group_post",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

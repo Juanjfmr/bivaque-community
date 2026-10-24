@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(68);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -12,11 +12,14 @@ select plan(34);
 -- member-two (002): membro aprovado, papel `member`, no grupo 001.
 -- member-four (004): mora na localidade 001 e NÃO participa de grupo nenhum.
 -- member-three (003): mora em outra localidade (0002).
+-- non-member (005): moderador (papel `moderator`) do grupo 001, criado abaixo —
+--   o papel que a revisão apontou como capaz de fixar publicação e mudar regras.
 --
 -- Publicações de preparo (superusuário, antes dos papéis):
 --   7000…0001 e 7000…0002  recentes no grupo 001  → contam na atividade
 --   7000…0003             antiga (40 dias) no 001 → não conta
---   7000…0004             recente no grupo 002    → fixação estrangeira
+--   7000…0004             recente no grupo 002    → fixação estrangeira e
+--                                                    leitura negada a não-membro
 --   7000…0005             removida no grupo 001    → fixação recusada
 
 insert into public.posts (
@@ -59,8 +62,17 @@ values
     'text', 'Publicação removida', now() - interval '1 day', true
   );
 
+-- O moderador do grupo 001 (papel que não administra).
+insert into public.group_memberships (group_id, user_id, role, status)
+values (
+  '40000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000005',
+  'moderator',
+  'approved'
+);
+
 -- ═══════════════════════════════════════════════════════════════════════════════
--- Estrutura: as colunas e o tipo novo
+-- Estrutura: as colunas, o tipo novo e a privacidade do aviso
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 select has_column('public', 'groups', 'rules', 'groups tem a coluna rules');
@@ -82,6 +94,34 @@ select results_eq(
   $$,
   $$ values ('all'::text), ('highlights'::text), ('none'::text) $$,
   'o nível de aviso tem Tudo, Destaques e Nada'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from pg_enum e
+    join pg_type t on t.oid = e.enumtypid
+    where t.typname = 'notification_type'
+      and e.enumlabel = 'group_post'
+  ),
+  1,
+  'a caixa de notificações tem o aviso de grupo'
+);
+
+select is(
+  has_column_privilege(
+    'authenticated', 'public.group_memberships', 'notify_level', 'SELECT'
+  ),
+  false,
+  'authenticated não lê notify_level por SELECT'
+);
+
+select is(
+  has_column_privilege(
+    'authenticated', 'public.group_memberships', 'notify_level', 'UPDATE'
+  ),
+  false,
+  'authenticated não escreve notify_level por UPDATE'
 );
 
 select results_eq(
@@ -120,7 +160,7 @@ select results_eq(
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- Regras do grupo: o dono escreve, quem não administra não
+-- Regras do grupo: o dono escreve, o moderador e quem não administra não
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 set local role authenticated;
@@ -185,6 +225,70 @@ select throws_ok(
 
 reset role;
 
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.set_group_rules(
+      '40000000-0000-4000-8000-000000000001', 'Regras do moderador'
+    )
+  $$,
+  null,
+  'moderador não define as regras do grupo pela RPC'
+);
+
+-- Escrita direta das regras pelo moderador: a policy de UPDATE de groups exige
+-- o dono, então a linha não é alcançada e não há erro.
+select lives_ok(
+  $$
+    update public.groups
+    set rules = 'regras do moderador'
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  'escrita direta das regras pelo moderador não levanta erro'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select rules from public.groups
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  $$ values ('Regras do grupo teste'::text) $$,
+  'as regras não mudaram pela escrita do moderador'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    update public.groups
+    set rules = 'regras de quem não administra'
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  'escrita direta das regras por membro comum não levanta erro'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select rules from public.groups
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  $$ values ('Regras do grupo teste'::text) $$,
+  'as regras não mudaram pela escrita do membro comum'
+);
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Aviso por grupo: a própria pessoa, e só ela
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -204,6 +308,10 @@ select lives_ok(
   'membro aprovado troca o próprio aviso'
 );
 
+reset role;
+
+-- A coluna está revogada para `authenticated`: a leitura da prova é do
+-- superusuário, e o RPC do próprio dono vem logo abaixo.
 select results_eq(
   $$
     select notify_level::text
@@ -213,6 +321,20 @@ select results_eq(
   $$,
   $$ values ('all'::text) $$,
   'o nível de aviso fica gravado na participação'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  $$
+    select public.my_group_notify_level('40000000-0000-4000-8000-000000000001')
+  $$,
+  $$ values ('all'::public.group_notify_level) $$,
+  'a própria pessoa lê o próprio aviso pelo RPC'
 );
 
 reset role;
@@ -231,6 +353,61 @@ select throws_ok(
   $$,
   null,
   'quem não participa não troca aviso de grupo'
+);
+
+select is(
+  public.my_group_notify_level('40000000-0000-4000-8000-000000000001'),
+  null::public.group_notify_level,
+  'quem não participa não lê aviso de grupo'
+);
+
+reset role;
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select notify_level
+    from public.group_memberships
+    where group_id = '40000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000001'
+  $$,
+  null,
+  'a pessoa não lê o aviso de outra pela Data API'
+);
+
+reset role;
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    update public.group_memberships
+    set notify_level = 'none'
+    where group_id = '40000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000001'
+  $$,
+  null,
+  'o moderador não muda o aviso de outra pessoa'
+);
+
+-- O moderador continua alcançando os campos que administra (role/status).
+select lives_ok(
+  $$
+    update public.group_memberships
+    set status = 'approved'
+    where group_id = '40000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000002'
+  $$,
+  'o moderador continua administrando role e status'
 );
 
 reset role;
@@ -307,6 +484,25 @@ reset role;
 
 set local role authenticated;
 select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.pin_group_post(
+      '40000000-0000-4000-8000-000000000001',
+      '70000000-0000-4000-8000-000000000002'
+    )
+  $$,
+  null,
+  'moderador não fixa publicação pela RPC'
+);
+
+reset role;
+
+set local role authenticated;
+select set_config(
   'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -353,8 +549,8 @@ select results_eq(
   'só uma publicação fica fixada por grupo'
 );
 
--- Atualização direta da coluna (authenticated tem UPDATE em groups): o gatilho
--- recusa a publicação de outro grupo mesmo por fora da RPC.
+-- Atualização direta da coluna (o dono tem UPDATE em groups): o gatilho recusa
+-- a publicação de outro grupo mesmo por fora da RPC.
 select throws_ok(
   $$
     update public.groups
@@ -391,33 +587,69 @@ select throws_ok(
   'membro comum não desafixa publicação'
 );
 
--- Escrita direta das regras por quem não administra: a policy de UPDATE de
--- groups exige moderador, então a linha não é alcançada e não há erro.
+-- Escrita direta da fixação por quem não administra: a policy exige o dono, e
+-- a linha não é alcançada.
 select lives_ok(
   $$
     update public.groups
-    set rules = 'regras de quem não administra'
+    set pinned_post_id = '70000000-0000-4000-8000-000000000001'
     where id = '40000000-0000-4000-8000-000000000001'
   $$,
-  'escrita direta das regras por membro comum não levanta erro'
+  'escrita direta da fixação pelo membro comum não levanta erro'
 );
 
 reset role;
+
+select results_eq(
+  $$
+    select pinned_post_id
+    from public.groups
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  $$ values ('70000000-0000-4000-8000-000000000002'::uuid) $$,
+  'a fixação não mudou pela escrita do membro comum'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.unpin_group_post('40000000-0000-4000-8000-000000000001')
+  $$,
+  null,
+  'moderador não desafixa publicação pela RPC'
+);
+
+select lives_ok(
+  $$
+    update public.groups
+    set pinned_post_id = '70000000-0000-4000-8000-000000000001'
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  'escrita direta da fixação pelo moderador não levanta erro'
+);
+
+reset role;
+
+select results_eq(
+  $$
+    select pinned_post_id
+    from public.groups
+    where id = '40000000-0000-4000-8000-000000000001'
+  $$,
+  $$ values ('70000000-0000-4000-8000-000000000002'::uuid) $$,
+  'a fixação não mudou pela escrita do moderador'
+);
 
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
-
-select results_eq(
-  $$
-    select rules from public.groups
-    where id = '40000000-0000-4000-8000-000000000001'
-  $$,
-  $$ values ('Regras do grupo teste'::text) $$,
-  'as regras não mudaram pela escrita do membro comum'
-);
 
 select lives_ok(
   $$
@@ -436,9 +668,67 @@ select results_eq(
   'desafixar limpa a publicação fixada'
 );
 
+reset role;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Grupo Fechado: a publicação fixada não é lida por quem não é membro
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.pin_group_post(
+      '40000000-0000-4000-8000-000000000002',
+      '70000000-0000-4000-8000-000000000004'
+    )
+  $$,
+  'dono fixa uma publicação no grupo Fechado'
+);
+
+reset role;
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+-- Membro da localidade, não membro do grupo Fechado: vê o grupo (e o id da
+-- fixada), nunca a publicação fixada.
+select isnt_empty(
+  $$
+    select id
+    from public.groups
+    where id = '40000000-0000-4000-8000-000000000002'
+  $$,
+  'quem não é membro continua vendo o grupo Fechado'
+);
+
+select is_empty(
+  $$
+    select id
+    from public.posts
+    where id = '70000000-0000-4000-8000-000000000004'
+  $$,
+  'quem não é membro não lê a publicação fixada do grupo Fechado'
+);
+
+reset role;
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Criar grupo com regras
 -- ═══════════════════════════════════════════════════════════════════════════════
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
@@ -473,6 +763,8 @@ select results_eq(
   'quem cria o grupo entra como dono aprovado'
 );
 
+reset role;
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Populares: atividade recente, não número de membros
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -486,8 +778,6 @@ select results_eq(
   $$ values (2::bigint) $$,
   'a atividade conta só as publicações dos últimos 30 dias'
 );
-
-reset role;
 
 set local role authenticated;
 select set_config(
@@ -504,6 +794,292 @@ select is_empty(
 );
 
 reset role;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- O nível de aviso decide os avisos de grupo (NOTIF de presets.js)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Nada: resposta a uma publicação do grupo não avisa o autor.
+update public.group_memberships
+set notify_level = 'none'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000001';
+
+insert into public.comments (post_id, user_id, content)
+values (
+  '70000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  'Comentário um no nível nada'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000001'
+      and type = 'comment'
+      and target_id = '70000000-0000-4000-8000-000000000001'
+  ),
+  0,
+  'Nada: resposta a publicação de grupo não avisa'
+);
+
+-- Destaques: resposta a você avisa.
+update public.group_memberships
+set notify_level = 'highlights'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000001';
+
+insert into public.comments (post_id, user_id, content)
+values (
+  '70000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  'Comentário dois no nível destaques'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000001'
+      and type = 'comment'
+      and target_id = '70000000-0000-4000-8000-000000000001'
+  ),
+  1,
+  'Destaques: resposta a você avisa'
+);
+
+-- Tudo: resposta a você avisa.
+update public.group_memberships
+set notify_level = 'all'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000001';
+
+insert into public.comments (post_id, user_id, content)
+values (
+  '70000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  'Comentário três no nível tudo'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000001'
+      and type = 'comment'
+      and target_id = '70000000-0000-4000-8000-000000000001'
+  ),
+  2,
+  'Tudo: resposta a você avisa'
+);
+
+-- Publicação nova no grupo: só quem escolheu Tudo recebe.
+update public.group_memberships
+set notify_level = 'none'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000002';
+
+insert into public.posts (locality_id, user_id, group_id, post_type, content)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000001',
+  'text',
+  'Publicação de grupo no nível nada'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'created'
+  ),
+  0,
+  'Nada: publicação nova no grupo não avisa'
+);
+
+update public.group_memberships
+set notify_level = 'highlights'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000002';
+
+insert into public.posts (locality_id, user_id, group_id, post_type, content)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000001',
+  'text',
+  'Publicação de grupo no nível destaques'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'created'
+  ),
+  0,
+  'Destaques: publicação nova no grupo não avisa'
+);
+
+update public.group_memberships
+set notify_level = 'all'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000002';
+
+insert into public.posts (locality_id, user_id, group_id, post_type, content)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000001',
+  'text',
+  'Publicação de grupo no nível tudo'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'created'
+  ),
+  1,
+  'Tudo: publicação nova no grupo avisa'
+);
+
+-- Publicação fixada: Tudo e Destaques recebem; Nada, não.
+-- As fixações das seções anteriores (sempre com a conta dona) já deixaram
+-- avisos de fixada para quem estava em Tudo ou Destaques: a prova começa do
+-- zero para contar só o que ela mesma provoca.
+delete from public.notifications
+where type = 'group_post' and action = 'pinned';
+
+update public.group_memberships
+set notify_level = 'none'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000002';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.pin_group_post(
+      '40000000-0000-4000-8000-000000000001',
+      '70000000-0000-4000-8000-000000000002'
+    )
+  $$,
+  'dono fixa a publicação para a prova do aviso'
+);
+
+reset role;
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'pinned'
+  ),
+  0,
+  'Nada: publicação fixada não avisa'
+);
+
+update public.group_memberships
+set notify_level = 'highlights'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000002';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.pin_group_post(
+      '40000000-0000-4000-8000-000000000001',
+      '70000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  'dono troca a publicação fixada'
+);
+
+reset role;
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'pinned'
+  ),
+  1,
+  'Destaques: publicação fixada avisa'
+);
+
+update public.group_memberships
+set notify_level = 'all'
+where group_id = '40000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000002';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.pin_group_post(
+      '40000000-0000-4000-8000-000000000001',
+      '70000000-0000-4000-8000-000000000002'
+    )
+  $$,
+  'dono fixa outra publicação'
+);
+
+reset role;
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'pinned'
+  ),
+  2,
+  'Tudo: publicação fixada avisa'
+);
+
+select is(
+  (
+    select count(*)::integer from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000001'
+      and type = 'group_post'
+      and action = 'pinned'
+  ),
+  0,
+  'quem fixa não se avisa'
+);
+
+select results_eq(
+  $$
+    select target_type, target_id
+    from public.notifications
+    where recipient_user_id = '10000000-0000-4000-8000-000000000002'
+      and type = 'group_post'
+      and action = 'pinned'
+    order by created_at
+    limit 1
+  $$,
+  $$ values ('group'::text, '40000000-0000-4000-8000-000000000001'::uuid) $$,
+  'o aviso de grupo aponta para o grupo'
+);
 
 select * from finish();
 rollback;

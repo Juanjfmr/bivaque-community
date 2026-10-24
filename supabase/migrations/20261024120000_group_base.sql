@@ -4,20 +4,38 @@
 --   1. `groups.rules` — as regras do grupo (o protótipo chama de "Regras do
 --      grupo", ≤ 600 caracteres).
 --   2. `group_memberships.notify_level` — o aviso por grupo: Tudo, Destaques
---      ou Nada (o `NOTIF` de presets.js).
+--      ou Nada (o `NOTIF` de presets.js), ligado a quem gera os avisos de
+--      grupo nesta mesma migration.
 --   3. `groups.pinned_post_id` — a publicação fixada, uma por grupo por
 --      construção (uma coluna só), e ela continua sendo uma publicação comum:
 --      autor, data, comentários e denúncia vêm do próprio post.
 --
--- Nenhuma policy nova em `groups`/`group_memberships`: o teste de estrutura
--- (rls-or-column-regression.test.sql, GUARD 10) fixa a contagem de policies
--- das duas tabelas. As escritas passam por funções security definer, como as
--- outras RPCs de grupo. A coluna nova e a regra que a lê (o gatilho que
--- confere se a publicação fixada é do próprio grupo) entram juntas.
+-- Correção da revisão independente (COM-003, 23/10/2026):
+--   - Gerenciar é do admin (o `role === 'admin'` do protótipo = o dono no
+--     banco): regras, fixar e desafixar exigem `is_group_owner`, na RPC e na
+--     escrita direta. A policy de UPDATE de `groups` passa a exigir o dono,
+--     então o moderador não alcança a linha pela Data API.
+--   - `notify_level` é da própria pessoa: lido pelo RPC e escrito só pelo RPC.
+--     O grant por coluna fecha a leitura de outros e a escrita por moderador.
+--   - O nível de aviso passa a decidir os avisos de grupo (Nada: nenhum;
+--     Destaques: publicação fixada e resposta ao que a pessoa escreveu;
+--     Tudo: também publicações novas), como o `NOTIF` do protótipo.
+--
+-- A policy de UPDATE de `groups` já existia (`groups_update_owner`, 016): é
+-- recriada apertada, sem mudar a contagem fixada pelo teste de estrutura
+-- (rls-or-column-regression.test.sql, GUARD 10). Nenhuma policy nova em
+-- `groups`/`group_memberships`.
 
 -- ── Nível de aviso por participação ─────────────────────────────────────────
 
 create type public.group_notify_level as enum ('all', 'highlights', 'none');
+
+-- ── Aviso de grupo na caixa de notificações ─────────────────────────────────
+-- Um tipo novo para conteúdo de grupo (publicação e fixada). A `action`
+-- separa o que o produtor escreveu: `created` (publicação nova) e `pinned`
+-- (publicação fixada).
+
+alter type public.notification_type add value if not exists 'group_post';
 
 -- ── Colunas novas ───────────────────────────────────────────────────────────
 
@@ -39,11 +57,43 @@ create index posts_group_created_idx
   on public.posts (group_id, created_at desc)
   where group_id is not null;
 
+-- ── O aviso por grupo é da própria pessoa ───────────────────────────────────
+-- RLS garante linhas, não colunas: sem isto, o membro da localidade lê o
+-- `notify_level` de qualquer participação de grupo aberto, e o moderador
+-- alcança a coluna de outra pessoa pela escrita direta. O grant por coluna,
+-- no padrão da SEC-002 (20261019205306), fecha os dois; quem lê e escreve o
+-- próprio nível passa pelos RPCs, que rodam como definer.
+
+revoke select on table public.group_memberships from anon, authenticated;
+
+grant select (group_id, user_id, role, status, joined_at)
+  on table public.group_memberships to authenticated;
+
+revoke update on table public.group_memberships from anon, authenticated;
+
+-- `role` e `status` continuam escrevíveis pelo moderador (a policy
+-- `group_memberships_update_moderator` decide a linha); `notify_level`, não.
+grant update (role, status) on table public.group_memberships to authenticated;
+
+-- ── Gerenciar o grupo é do admin ────────────────────────────────────────────
+-- O protótipo só oferece Gerenciar a `role === 'admin'` (groups/views.js,
+-- editors.js `openManage`), que no banco é o dono. A policy de UPDATE passa a
+-- exigir o dono, o mesmo limite das RPCs de regras e de fixação: sem isso, o
+-- moderador muda `rules` e `pinned_post_id` pela Data API.
+
+drop policy groups_update_owner on public.groups;
+
+create policy groups_update_owner
+on public.groups
+for update
+to authenticated
+using (private.is_group_owner(id));
+
 -- ── Integridade da publicação fixada ────────────────────────────────────────
--- `authenticated` tem UPDATE em `groups` (016, para o RLS recusar em silêncio),
--- então a coluna é alcançável sem passar pela RPC. O gatilho confere a regra
--- nos dois caminhos: a publicação fixada precisa existir, ser do próprio grupo
--- e não estar removida. Uma por grupo já é garantia da coluna única.
+-- A coluna é alcançável por quem tem UPDATE em `groups`, então o gatilho
+-- confere a regra nos dois caminhos: a publicação fixada precisa existir, ser
+-- do próprio grupo e não estar removida. Uma por grupo já é garantia da
+-- coluna única.
 
 create function private.guard_group_pinned_post()
 returns trigger
@@ -159,8 +209,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not private.is_group_moderator(p_group_id) then
-    raise exception 'only group moderators can change the rules';
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can change the rules';
   end if;
 
   update public.groups
@@ -181,7 +231,8 @@ grant execute on function public.set_group_rules(uuid, text) to authenticated;
 
 -- ── Public RPC: aviso por grupo (a própria pessoa) ──────────────────────────
 -- Só a própria linha: não há policy de update de participação para o membro
--- comum, e a RPC não aceita um user_id — sempre o do chamador.
+-- comum, a RPC não aceita um user_id — sempre o do chamador — e a coluna está
+-- fora do grant de update de `authenticated`.
 
 create function public.set_group_notify_level(
   p_group_id uuid,
@@ -215,6 +266,30 @@ revoke all on function public.set_group_notify_level(uuid, public.group_notify_l
 grant execute on function public.set_group_notify_level(uuid, public.group_notify_level)
   to authenticated;
 
+-- ── Public RPC: ler o próprio aviso (a coluna está revogada) ────────────────
+-- `notify_level` não é legível por SELECT para `authenticated`; a tela lê pelo
+-- próprio RPC. Devolve só a linha de quem chama, e só a aprovada.
+
+create function public.my_group_notify_level(p_group_id uuid)
+returns public.group_notify_level
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select gm.notify_level
+  from public.group_memberships gm
+  where gm.group_id = p_group_id
+    and gm.user_id = (select auth.uid())
+    and gm.status = 'approved';
+$$;
+
+revoke all on function public.my_group_notify_level(uuid) from public;
+revoke all on function public.my_group_notify_level(uuid) from anon;
+revoke all on function public.my_group_notify_level(uuid) from authenticated;
+
+grant execute on function public.my_group_notify_level(uuid) to authenticated;
+
 -- ── Public RPC: fixar / desafixar publicação (admin) ────────────────────────
 
 create function public.pin_group_post(
@@ -227,8 +302,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not private.is_group_moderator(p_group_id) then
-    raise exception 'only group moderators can pin publications';
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can pin publications';
   end if;
 
   -- O gatilho guard_group_pinned_post confere que a publicação é do grupo e
@@ -266,8 +341,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not private.is_group_moderator(p_group_id) then
-    raise exception 'only group moderators can unpin publications';
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can unpin publications';
   end if;
 
   update public.groups
@@ -285,6 +360,155 @@ revoke all on function public.unpin_group_post(uuid) from anon;
 revoke all on function public.unpin_group_post(uuid) from authenticated;
 
 grant execute on function public.unpin_group_post(uuid) to authenticated;
+
+-- ── O nível de aviso decide os avisos de grupo ──────────────────────────────
+-- `NOTIF` de presets.js: Tudo recebe toda publicação do grupo; Destaques
+-- recebe a publicação fixada e a resposta ao que a pessoa escreveu; Nada não
+-- recebe aviso de grupo. O protótipo lista "eventos" em Destaques: o aviso de
+-- evento é do evento (event_rsvp/event_change, próprios) e continua como está;
+-- o nível do grupo governa o conteúdo do grupo.
+--
+-- Quem não é membro aprovado do grupo não recebe aviso de grupo — quem saiu
+-- deixou de ver o conteúdo, e avisar seria devolver o que a saída tirou.
+
+create function private.group_notify_allows(
+  p_group_id uuid,
+  p_kind text,
+  p_user_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    (
+      select case
+        when gm.notify_level = 'all' then true
+        when gm.notify_level = 'highlights' then p_kind <> 'post'
+        else false
+      end
+      from public.group_memberships gm
+      where gm.group_id = p_group_id
+        and gm.user_id = p_user_id
+        and gm.status = 'approved'
+    ),
+    false
+  );
+$$;
+
+revoke all on function private.group_notify_allows(uuid, text, uuid) from public;
+revoke all on function private.group_notify_allows(uuid, text, uuid) from anon;
+revoke all on function private.group_notify_allows(uuid, text, uuid) from authenticated;
+
+-- Publicação nova em grupo → quem escolheu Tudo (o autor não se avisa).
+
+create function private.notify_group_post()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.group_id is null or new.is_deleted then
+    return new;
+  end if;
+
+  insert into public.notifications
+    (recipient_user_id, actor_user_id, type, action, target_type, target_id)
+  select gm.user_id, new.user_id, 'group_post', 'created', 'group', new.group_id
+  from public.group_memberships gm
+  where gm.group_id = new.group_id
+    and gm.status = 'approved'
+    and gm.user_id <> new.user_id
+    and private.group_notify_allows(new.group_id, 'post', gm.user_id)
+    and private.notification_channel_allows('group_post', 'in_app', gm.user_id);
+
+  return new;
+end;
+$$;
+
+create trigger notify_group_post_trigger
+after insert on public.posts
+for each row
+execute function private.notify_group_post();
+
+-- Publicação fixada → Tudo e Destaques (quem fixa não se avisa).
+
+create function private.notify_group_pin()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid;
+begin
+  if new.pinned_post_id is null
+     or new.pinned_post_id is not distinct from old.pinned_post_id then
+    return new;
+  end if;
+
+  v_actor := (select auth.uid());
+
+  insert into public.notifications
+    (recipient_user_id, actor_user_id, type, action, target_type, target_id)
+  select gm.user_id, v_actor, 'group_post', 'pinned', 'group', new.id
+  from public.group_memberships gm
+  where gm.group_id = new.id
+    and gm.status = 'approved'
+    and gm.user_id is distinct from v_actor
+    and private.group_notify_allows(new.id, 'highlight', gm.user_id)
+    and private.notification_channel_allows('group_post', 'in_app', gm.user_id);
+
+  return new;
+end;
+$$;
+
+create trigger notify_group_pin_trigger
+after update of pinned_post_id on public.groups
+for each row
+execute function private.notify_group_pin();
+
+-- Comentário em publicação de grupo → o autor da publicação, pelo nível dele.
+-- Este é o produtor que já existia (private.notify_comment): a resposta ao que
+-- a pessoa escreveu agora passa pelo aviso do grupo. Fora de grupo, nada muda.
+
+create or replace function private.notify_comment()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_post_author uuid;
+  v_post_group uuid;
+begin
+  select p.user_id, p.group_id into v_post_author, v_post_group
+  from public.posts p
+  where p.id = new.post_id;
+
+  -- Actor must not self-notify.
+  if v_post_author is null or v_post_author = new.user_id then
+    return new;
+  end if;
+
+  if v_post_group is not null
+     and not private.group_notify_allows(v_post_group, 'highlight', v_post_author) then
+    return new;
+  end if;
+
+  if private.notification_channel_allows('comment', 'in_app', v_post_author) then
+    insert into public.notifications
+      (recipient_user_id, actor_user_id, type, action, target_type, target_id)
+    values
+      (v_post_author, new.user_id, 'comment', 'created', 'post', new.post_id);
+  end if;
+
+  return new;
+end;
+$$;
 
 -- ── Public RPC: atividade recente dos grupos (Populares) ────────────────────
 -- O seletor de "Populares" ordena por atividade recente — publicações dos
