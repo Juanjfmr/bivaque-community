@@ -230,7 +230,7 @@ test("trocar a ordenação no Mercado preserva a origem depois de voltar e recar
   await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
 
   await page.getByLabel("Ordenação").selectOption("price_asc")
-  await expect(page).toHaveURL(/sort=price_asc/)
+  await expect(page).toHaveURL(/ordem=price_asc/)
   await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
   await page.reload()
   await expect.poll(() => page.evaluate(() => window.history.state?.bivaqueOrigem)).toBe("inicio")
