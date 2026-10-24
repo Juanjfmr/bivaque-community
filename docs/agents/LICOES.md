@@ -153,3 +153,10 @@ node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2
 Nunca rode comando em segundo plano (`&`, `nohup`, `Start-Process`) nem termine a resposta "esperando" um comando: a
 execução sem tela acaba ali, o comando fica órfão segurando a fila, e a tarefa fica pela metade (aconteceu na
 COM-003, lote 5). Rode as provas em primeiro plano e espere o resultado, mesmo que demore.
+
+## Porta 3000 presa por servidor de outra frente
+
+O Playwright reaproveita um servidor que já esteja na porta 3000 (`reuseExistingServer`). Um `next start` esquecido
+por outra frente faz o e2e passar testando o build do outro worktree (visto na COM-003). O
+`prova-sequencia.mjs e2e` encerra o que estiver na porta 3000 antes de subir o servidor, porque quem roda segura a
+fila. Rode o e2e sempre por ele, nunca com o Playwright direto.
