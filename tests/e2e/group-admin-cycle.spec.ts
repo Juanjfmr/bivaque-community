@@ -132,16 +132,17 @@ test.describe("group admin cycle", { tag: "@stateful" }, () => {
     // caminhos.
     const pedir = page.getByRole("button", { name: "Pedir entrada" })
     if (await pedir.isVisible().catch(() => false)) {
-      // "Pedir entrada" é um form action: o clique dispara um POST que revalida
-      // a rota. Esperar a RESPOSTA antes de asserir evita correr contra a
-      // navegação — medido em sonda, o POST 200 leva alguns segundos e só então
-      // o botão vira "Cancelar pedido". Sem esta espera o teste falhava nos três
-      // viewports, inclusive em modo serial.
-      const requested = page.waitForResponse(
-        (r) => r.request().method() === "POST" && r.url().includes(`/groups/${PRIVATE_GROUP_ID}`),
-        { timeout: 15_000 },
-      )
+      // COM-005: o pedido do grupo Fechado agora sai do diálogo, com o motivo
+      // opcional; o RPC é chamado pelo cliente. Esperar a resposta da RPC antes
+      // de asserir evita correr com a revalidação da rota.
       await pedir.click()
+      const reason = page.getByLabel(/Por que você quer entrar/)
+      await expect(reason).toBeVisible()
+      await reason.fill("Pedido da prova do ciclo de administração.")
+      const requested = page.waitForResponse((r) => r.url().includes("/rest/v1/rpc/join_group"), {
+        timeout: 20_000,
+      })
+      await page.getByRole("button", { name: "Enviar pedido" }).click()
       await requested
     }
 
