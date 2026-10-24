@@ -66,3 +66,11 @@ closure:
 # desenho: o motivo so e reescrito em pedido novo — pedido ja pendente nao consome tentativa nem troca o texto, como no community_join_reasons; a recusa apaga o motivo pelo on delete cascade da participacao, e a aprovacao o apaga na RPC approve_group_member
 # pendente: a fila de pedidos do moderador ficou no detalhe do grupo (componente de servidor GroupJoinRequests), sem usar o painel Gerenciar da lista; dono pelo owner_user_id e dono pela linha de participacao sao ambos aceitos
 # pendente: transicao de quadro (tools/backend-kanban/public/board.json) esta fora dos allowed_paths deste contrato — nenhuma foi feita
+#
+# correcao da revisao independente — 24/10/2026, branch codex/lote5-grupo-pedido
+# apps/web: busca confirmou que nao ha INSERT em group_memberships; ha leituras, deletes e RPC join_group. A migration revoga INSERT de authenticated e remove group_memberships_insert_self.
+# Banco: migration ajustada no lugar; limite passou a trigger before insert nomeado group_join_attempt_limit_before_insert; join_group nao conta separadamente. pgTAP acrescenta recusa de INSERT direto e quatro ciclos aceitos em grupo Aberto.
+# UI/E2E: CTA de grupo Fechado na lista abre o detalhe com o dialogo; o e2e prova essa rota. Apos aprovar, o spec consulta group_join_reasons pela API autenticada como autor e dono e exige lista vazia.
+# Provas deste ambiente: npx pnpm@11.18.0 gate nao iniciou; PowerShell bloqueou npx.ps1. npx.cmd pnpm@11.18.0 gate tentou buscar pnpm no registry e falhou com EACCES de rede antes de qualquer estagio.
+# Commit: tentativa de git add/commit falhou antes de criar o indice porque .git/worktrees/lote5-grupo-pedido/index.lock recebeu Permission denied; arquivos continuam modificados e sem commit.
+# Pendente para o coordenador: pgTAP pela fila, generate:types, gate, build e2e pela fila (group-admin-cycle.spec.ts e group-join-reason.spec.ts); ambiente CLI sem Docker e sem acesso ao registry. Tipos gerados nao mudaram porque schema publico e assinatura da RPC permaneceram iguais.

@@ -74,6 +74,14 @@ async function createGroup(
   return findGroupId(api, name)
 }
 
+async function expectNoJoinReason(api: APIRequestContext, groupId: string): Promise<void> {
+  const response = await api.get(
+    `/rest/v1/group_join_reasons?select=group_id,user_id,reason&group_id=eq.${groupId}`,
+  )
+  expect(response.ok()).toBe(true)
+  expect(await response.json()).toEqual([])
+}
+
 // Cada ação de tela é uma escrita: o cliente faz POST na rota (Server Action)
 // ou na RPC. Esperar a resposta antes de asserir evita correr com a navegação.
 function waitForGroupPost(page: Page, groupId: string) {
@@ -116,13 +124,17 @@ test.describe("COM-005 — motivo no pedido e convite", { tag: "@stateful" }, ()
 
     // ── O convidado abre o link do Fechado: pede, nunca entra direto ───────
     await signInAs(context, REQUESTER_EMAIL)
-    await page.goto(`/groups/${privateId}`)
+    const requesterApi = await apiForSession(context)
+    await page.goto("/groups")
+    await page.getByPlaceholder("Buscar grupos...").fill(privateName)
+    await page.getByRole("button", { name: "Pedir entrada", exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/groups/${privateId}\\?pedir=1`))
     await expect(page.getByRole("heading", { level: 1, name: privateName })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Pedido de entrada" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Pedir entrada" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Sair" })).toHaveCount(0)
 
     // ── O pedido, com o aviso do motivo ────────────────────────────────────
-    await page.getByRole("button", { name: "Pedir entrada" }).click()
     await expect(
       page.getByText(/Não inclua endereço, telefone, CPF ou dados de saúde/),
     ).toBeVisible()
@@ -139,6 +151,7 @@ test.describe("COM-005 — motivo no pedido e convite", { tag: "@stateful" }, ()
 
     // ── O dono vê o motivo e aprova; o motivo some ─────────────────────────
     await signInAs(context, VISUAL_EMAIL)
+    const approverApi = await apiForSession(context)
     await page.goto(`/groups/${privateId}`)
     await expect(page.getByRole("heading", { name: "Pedidos de entrada" })).toBeVisible()
     await expect(page.getByText(reason)).toBeVisible()
@@ -149,6 +162,8 @@ test.describe("COM-005 — motivo no pedido e convite", { tag: "@stateful" }, ()
 
     await expect(page.getByRole("heading", { name: "Pedidos de entrada" })).toHaveCount(0)
     await expect(page.getByText(reason)).toHaveCount(0)
+    await expectNoJoinReason(requesterApi, privateId)
+    await expectNoJoinReason(approverApi, privateId)
 
     // ── Quem pediu agora é membro ──────────────────────────────────────────
     await signInAs(context, REQUESTER_EMAIL)
@@ -163,5 +178,8 @@ test.describe("COM-005 — motivo no pedido e convite", { tag: "@stateful" }, ()
     await enter.click()
     await entered
     await expect(page.getByRole("button", { name: "Sair" })).toBeVisible({ timeout: 20_000 })
+    await requesterApi.dispose()
+    await approverApi.dispose()
+    await ownerApi.dispose()
   })
 })

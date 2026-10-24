@@ -339,8 +339,14 @@ export {
   unpinPostAction,
 }
 
-export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: groupId } = await params
+export default async function GroupDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ pedir?: string }>
+}) {
+  const [{ id: groupId }, query] = await Promise.all([params, searchParams])
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -515,7 +521,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
               </Button>
             </form>
           ) : (
-            <GroupJoinRequest groupId={group.id} />
+            <GroupJoinRequest groupId={group.id} initialOpen={query.pedir === "1"} />
           )}
         </div>
       </div>

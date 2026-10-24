@@ -87,8 +87,8 @@ revoke all on table public.group_join_attempts from anon, authenticated;
 -- ── Consumo atômico da tentativa ────────────────────────────────────────────
 -- A trava de aviso serializa (grupo, pessoa): sem ela dois pedidos simultâneos
 -- contam dois e passam os dois na terceira vaga (licão 19 do lote 4). Devolve
--- `false` no quarto pedido, sem lançar — o RPC levanta o erro depois, e nenhuma
--- tentativa é perdida no rollback de uma exceção.
+-- `false` no quarto pedido, sem lançar — o gatilho levanta o erro depois, e
+-- nenhuma tentativa é perdida no rollback de uma exceção.
 
 create function private.consume_group_join_attempt(
   p_group_id uuid,
@@ -128,7 +128,45 @@ revoke all on function private.consume_group_join_attempt(uuid, uuid) from publi
 revoke all on function private.consume_group_join_attempt(uuid, uuid) from anon;
 revoke all on function private.consume_group_join_attempt(uuid, uuid) from authenticated;
 
--- ── 3. join_group ganha o motivo e o limite ─────────────────────────────────
+-- A cota pertence à tabela, não ao caminho de escrita. A RPC join_group e
+-- qualquer futura via autorizada passam pelo mesmo gatilho antes do INSERT.
+create function private.enforce_group_join_attempt_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.status = 'pending' then
+    if exists (
+      select 1 from public.groups
+      where id = new.group_id and visibility = 'private'
+    ) then
+      if not private.consume_group_join_attempt(new.group_id, new.user_id) then
+        raise exception 'maximum 3 join requests per group in 30 days'
+          using errcode = '54000';
+      end if;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function private.enforce_group_join_attempt_limit() from public;
+revoke all on function private.enforce_group_join_attempt_limit() from anon;
+revoke all on function private.enforce_group_join_attempt_limit() from authenticated;
+
+create trigger group_join_attempt_limit_before_insert
+before insert on public.group_memberships
+for each row execute function private.enforce_group_join_attempt_limit();
+
+-- O app não insere memberships pela Data API; joins e pedidos usam join_group.
+-- Fechar a escrita direta evita contornar a validação/decisão da RPC.
+revoke insert on table public.group_memberships from anon, authenticated;
+drop policy if exists group_memberships_insert_self on public.group_memberships;
+
+-- ── 3. join_group ganha o motivo ────────────────────────────────────────────
 -- A assinatura de um argumento é derrubada em vez de sobrecarregada: duas
 -- versões visíveis ao PostgREST criam ambiguidade na chamada sem o motivo
 -- (mesmo padrão de `request_community_membership`). O argumento novo é
@@ -184,11 +222,6 @@ begin
       and user_id = v_me
   ) then
     return;
-  end if;
-
-  if not private.consume_group_join_attempt(p_group_id, v_me) then
-    raise exception 'maximum 3 join requests per group in 30 days'
-      using errcode = '54000';
   end if;
 
   insert into public.group_memberships (group_id, user_id, role, status)

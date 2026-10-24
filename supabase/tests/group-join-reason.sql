@@ -7,6 +7,7 @@
 --   - o motivo sumindo na aprovação (RPC) e na recusa (delete da participação);
 --   - o limite de 3 pedidos em 30 dias contado em tabela própria, que sobrevive
 --     à recusa;
+--   - a escrita direta de membership recusada e quatro entradas em grupo Aberto;
 --   - o job de limpeza apagando o motivo de pedido sem decisão há 30 dias.
 --
 -- Personas (fixtures/foundation.inc + groups.inc):
@@ -19,7 +20,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(37);
+select plan(46);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -57,6 +58,15 @@ values
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001'
+  ),
+  (
+    '40000000-0000-4000-8000-000000000006',
+    'Grupo Aberto COM-005',
+    'Entradas sem limite',
+    'public',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001'
   );
 
 insert into public.group_memberships (group_id, user_id, role, status)
@@ -66,6 +76,7 @@ values
   ('40000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000005', 'moderator', 'approved'),
   ('40000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
   ('40000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
+  ('40000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
   ('40000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000002', 'member', 'pending'),
   ('40000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000003', 'member', 'pending');
 
@@ -238,6 +249,51 @@ select throws_ok(
 reset role;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- A escrita direta é fechada; a UI usa a RPC join_group.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok(
+  $$
+    insert into public.group_memberships (group_id, user_id, role, status)
+    values (
+      '40000000-0000-4000-8000-000000000003',
+      '10000000-0000-4000-8000-000000000004',
+      'member',
+      'pending'
+    )
+  $$,
+  '42501',
+  null,
+  'authenticated não insere pedido direto em group_memberships'
+);
+
+reset role;
+
+-- Grupo Aberto continua sem limite, mesmo após quatro ciclos de entrada/saída.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select lives_ok($$ select public.join_group('40000000-0000-4000-8000-000000000006') $$, 'primeira entrada em grupo Aberto aceita');
+select lives_ok($$ delete from public.group_memberships where group_id = '40000000-0000-4000-8000-000000000006' and user_id = '10000000-0000-4000-8000-000000000004' $$, 'saída do grupo Aberto após primeira entrada');
+select lives_ok($$ select public.join_group('40000000-0000-4000-8000-000000000006') $$, 'segunda entrada em grupo Aberto aceita');
+select lives_ok($$ delete from public.group_memberships where group_id = '40000000-0000-4000-8000-000000000006' and user_id = '10000000-0000-4000-8000-000000000004' $$, 'saída do grupo Aberto após segunda entrada');
+select lives_ok($$ select public.join_group('40000000-0000-4000-8000-000000000006') $$, 'terceira entrada em grupo Aberto aceita');
+select lives_ok($$ delete from public.group_memberships where group_id = '40000000-0000-4000-8000-000000000006' and user_id = '10000000-0000-4000-8000-000000000004' $$, 'saída do grupo Aberto após terceira entrada');
+select lives_ok($$ select public.join_group('40000000-0000-4000-8000-000000000006') $$, 'quarta entrada em grupo Aberto aceita');
+
+reset role;
+
+select is(
+  (
+    select count(*)::integer from public.group_join_attempts
+    where group_id = '40000000-0000-4000-8000-000000000006'
+      and user_id = '10000000-0000-4000-8000-000000000004'
+  ),
+  0,
+  'entradas em grupo Aberto não consomem tentativas limitadas'
+);
+
 -- Aprovar apaga o motivo
 -- ═══════════════════════════════════════════════════════════════════════════════
 

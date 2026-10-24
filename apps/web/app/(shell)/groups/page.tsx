@@ -3,6 +3,7 @@
 import { Button, Chip, Form, Input, Radio, RadioGroup, SearchField, TextArea } from "@heroui/react"
 import type { Route } from "next"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import type { SVGProps } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -109,6 +110,7 @@ function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismis
 }
 
 export default function GroupsPage() {
+  const router = useRouter()
   const supabase = createBrowserClient()
 
   const [userId, setUserId] = useState<string | null>(null)
@@ -460,7 +462,11 @@ export default function GroupsPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onPress={() => handleJoin(group.id)}
+                onPress={() =>
+                  group.visibility === "public"
+                    ? handleJoin(group.id)
+                    : router.push(`/groups/${group.id}?pedir=1` as Route)
+                }
                 isDisabled={actionLoading === group.id}
               >
                 {group.visibility === "public" ? "Entrar" : "Pedir entrada"}

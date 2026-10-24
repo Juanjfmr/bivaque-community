@@ -19,10 +19,16 @@ import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 
 const REASON_MAX = 300
 
-export function GroupJoinRequest({ groupId }: { groupId: string }) {
+export function GroupJoinRequest({
+  groupId,
+  initialOpen = false,
+}: {
+  groupId: string
+  initialOpen?: boolean
+}) {
   const supabase = createBrowserClient()
   const router = useRouter()
-  const modal = useOverlayState()
+  const modal = useOverlayState({ defaultOpen: initialOpen })
   const [reason, setReason] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
