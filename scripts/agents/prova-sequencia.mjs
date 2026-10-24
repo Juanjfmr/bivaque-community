@@ -72,6 +72,28 @@ function localEnv() {
   }
 }
 
+function freePort(port) {
+  const pids = new Set()
+  if (process.platform === "win32") {
+    const output = spawnSync("netstat", ["-ano", "-p", "TCP"], { encoding: "utf8" }).stdout ?? ""
+    for (const line of output.split(/\r?\n/)) {
+      const parts = line.trim().split(/\s+/)
+      if (parts[1]?.endsWith(`:${port}`) && parts[3] === "LISTENING") pids.add(parts[4])
+    }
+  } else {
+    const output =
+      spawnSync("lsof", ["-ti", `tcp:${port}`, "-sTCP:LISTEN"], { encoding: "utf8" }).stdout ?? ""
+    for (const pid of output.split(/\s+/)) if (pid) pids.add(pid)
+  }
+  for (const pid of pids) {
+    if (!/^\d+$/.test(pid) || pid === "0") continue
+    console.log(`prova-sequencia: a porta ${port} estava presa pelo processo ${pid}; encerrando.`)
+    if (process.platform === "win32")
+      spawnSync("taskkill", ["/PID", pid, "/T", "/F"], { stdio: "inherit" })
+    else spawnSync("kill", ["-9", pid], { stdio: "inherit" })
+  }
+}
+
 const [mode, ...specs] = process.argv.slice(2)
 
 if (mode === "banco") {
@@ -87,6 +109,11 @@ if (mode === "e2e") {
   }
   const reset = run("npx", ["supabase", "db", "reset", "--local"])
   if (reset !== 0) process.exit(reset)
+  // O Playwright reaproveita um servidor que já esteja na porta 3000
+  // (`reuseExistingServer`). Um `next start` esquecido por outra frente faria
+  // esta prova passar testando o build do outro worktree (visto na COM-003).
+  // Quem chega aqui segura a fila, então o que estiver na porta é resto: sai.
+  freePort(3000)
   process.exit(
     run(
       "npx",
