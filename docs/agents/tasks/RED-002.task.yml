@@ -1,0 +1,47 @@
+task_id: RED-002
+objective: >
+  Redesenho da Comunidade, frente R2: o rascunho da matriz de permissao, em quatro partes (grupos, publicacoes,
+  evento e pergunta, vila e fundacao), com cada regra do retrato marcada como mantida, mudada ou removida, e as
+  perguntas ao dono. A matriz e a especificacao dos testes e so vale depois da aprovacao do dono.
+authority:
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md (aceito pelo dono em 2026-10-24), secoes 1 a 4
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+  - docs/agents/redesenho/R2-comum.md (atores, estados, formato e contrato do bloqueio, fixados pelo coordenador)
+  - docs/agents/redesenho/R1-retrato.md
+  - prototypes/bivaque-html/src/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O retrato (RED-001) lista 678 regras das 23 tabelas do dominio, da vila e da fundacao onde a vila toca, sem
+    decisao. O ADR exige a matriz aprovada pelo dono antes da migration de redesenho.
+allowed_paths:
+  - docs/agents/redesenho/R2-matriz-grupos.md
+  - docs/agents/redesenho/R2-matriz-publicacoes.md
+  - docs/agents/redesenho/R2-matriz-evento-pergunta.md
+  - docs/agents/redesenho/R2-matriz-vila-fundacao.md
+  - docs/agents/tasks/RED-002.task.yml
+forbidden:
+  - editar R2-comum.md, R1-retrato.md, o despejo, scripts ou qualquer arquivo fora de allowed_paths
+  - migration, db reset, e2e ou build
+  - push, merge, deploy, db push ou --linked
+  - inventar regra de produto; o que o prototipo e os ADRs nao decidem vira pergunta ao dono, com recomendacao
+  - rodar comando em segundo plano ou terminar com comando ainda rodando
+acceptance:
+  - Cada rascunho segue o formato da secao 4 de R2-comum.md, com os atores e estados da parte comum
+  - Toda regra do retrato das tabelas do rascunho tem decisao (mantida, mudada ou removida) e motivo
+  - Toda celula nao vira teste negativo; as condicoes estao em portugues simples
+  - Permissao por coluna, transicoes e uso do bloqueio por acao estao escritos
+  - Os testes negativos existentes estao ligados aos ids das regras
+  - As perguntas ao dono vem com recomendacao
+proof:
+  - node --test scripts/redesenho/conferir-matriz.test.mjs (toda regra do retrato tem uma decisao so)
+  - revisao do coordenador por amostra contra o retrato e o prototipo
+  - aprovacao do dono
+risk: uma regra de seguranca marcada como removida sem querer, ou uma regra de produto inventada
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
