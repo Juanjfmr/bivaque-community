@@ -140,11 +140,11 @@ Cada ID abaixo vem da seção correspondente de [`R1-retrato.md`](./R1-retrato.m
 | R1-200 | group_membership_role | valores de papel | mantida | Papéis atuais seguem úteis; atribuição só por RPC autorizada. |
 | R1-201 | group_membership_status | valores de status | mudada | Precisa refletir pedido/ativo e os estados definidos para associação no novo fluxo. |
 | R1-202 | group_notify_level | opções de aviso | mantida | `all`, `highlights`, `none` correspondem a Tudo, Destaques e Nada. |
-| R1-217 | can_dm_between | autorização de conversa contextual | mantida | Continua exigindo acesso válido ao contexto e consulta bloqueio. |
-| R1-219 | can_receive_invite_to_event | elegibilidade por evento/grupo | mantida | Mantém privacidade do evento ligado ao grupo. |
+| R1-217 | can_dm_between | autorização de conversa contextual | mudada | Só autoriza se as duas pessoas ainda podem ler agora o objeto contextual, além de aplicar bloqueio. |
+| R1-219 | can_receive_invite_to_event | elegibilidade por evento/grupo | mudada | Remove a vila e valida elegibilidade conforme os estados novos do grupo; adaptação do auxiliar ocorre na mesma migration. |
 | R1-222 | cascade_community_membership_downgrade | cascata de perda de acesso da vila | removida | A vila e sua associação deixam o produto e o banco nesta leva. |
 | R1-223 | cascade_community_membership_loss | cascata de perda de acesso da vila | removida | Não há associação à vila para propagar; demais consumidores de grupo devem usar regras diretas. |
-| R1-229 | dm_context_valid | valida contexto de conversa | mantida | Grupo continua contexto válido somente para participantes autorizados. |
+| R1-229 | dm_context_valid | valida contexto de conversa | mudada | Revalida no corpo se as duas pessoas ainda podem ler agora o grupo contextual; vínculos históricos não bastam. |
 | R1-233 | group_notify_allows | destinatário/preferência de notificação | mantida | Preferência continua pessoal; entrega também verifica bloqueio. |
 | R1-237 | indication_recipients | destinatários de pergunta em grupo | mudada | Considera membro ativo, grupo Aberto e localidade correspondente ao “Também perguntar à cidade”. |
 | R1-244 | is_group_member | identifica membro ativo | mantida | Baseia acesso em vínculo ativo, não em pedido pendente. |
@@ -152,7 +152,7 @@ Cada ID abaixo vem da seção correspondente de [`R1-retrato.md`](./R1-retrato.m
 | R1-246 | is_group_owner | identifica dono atual | mantida | Mantém verificação de dono, alinhada à transferência por RPC. |
 | R1-254 | notify_group_pin | avisa sobre publicação fixada | mantida | Mantém evento de notificação e acrescenta consulta de bloqueio. |
 | R1-255 | notify_group_post | avisa nova publicação | mantida | Mantém preferência por grupo e consulta bloqueio antes de notificar. |
-| R1-270 | add_group_moderator | nomeia moderador | mantida | Ação administrativa segue restrita ao dono e ao fluxo RPC. |
+| R1-270 | add_group_moderator | nomeia moderador | mudada | A RPC autoriza somente `private.is_group_owner`; moderador não pode promover membros. |
 | R1-282 | create_group | cria grupo | mudada | Criação passa a exigir membro verificado da localidade e estado Aberto/Fechado, sem vila. |
 | R1-283 | create_group_in_community | cria grupo dentro da vila | removida | A hierarquia intermediária é removida; grupos pertencem diretamente à cidade. |
 | R1-289 | feed_community | feed da vila | removida | A vila sai; o feed de grupos permanece na função própria. |
@@ -160,13 +160,13 @@ Cada ID abaixo vem da seção correspondente de [`R1-retrato.md`](./R1-retrato.m
 | R1-291 | feed_group | leitura do feed do grupo | mudada | Aplica os três estados, membership e bloqueio; encerrado é leitura só por participante. |
 | R1-292 | feed_posts | leitura agregada de publicações | mudada | Remove escopo de vila e não contorna visibilidade do grupo. |
 | R1-293 | finalize_account_deletion | limpeza de vínculos da conta | mudada | Mantém limpeza de associações/grupos, removendo somente ramos da vila conforme ADR. |
-| R1-300 | list_available_groups_for_interests | sugestão/lista de grupos por interesse | mantida | Mantém filtro de localidade e não expõe conteúdo fechado; uso de interesses segue serviço existente. |
+| R1-300 | list_available_groups_for_interests | sugestão/lista de grupos por interesse | mudada | Mantém filtro de localidade, não expõe conteúdo fechado e exclui grupos Encerrados dos resultados. |
 | R1-315 | my_group_notify_level | lê preferência individual | mantida | Retorna apenas a preferência do próprio usuário. |
-| R1-320 | profile_posts_for | posts do perfil condicionado a grupo | mantida | Não revela publicação de grupo fechado a não membro. |
-| R1-327 | remove_group_moderator | remove moderador | mantida | Somente dono por RPC; não remove a proteção contra autoelevação. |
+| R1-320 | profile_posts_for | posts do perfil condicionado a grupo | mudada | O corpo usa `private.can_access_post` (ou os mesmos filtros) e `private.block_allows(..., 'ler')`. |
+| R1-327 | remove_group_moderator | remove moderador | mudada | A RPC autoriza somente `private.is_group_owner`; moderador não pode rebaixar moderadores. |
 | R1-338 | set_group_notify_level | altera aviso individual | mantida | RPC altera somente preferência do chamador no próprio vínculo ativo. |
 | R1-340 | settle_account_possessions | transfere/encerra posses na conta | mudada | Mantém tratamento de grupo e retira operações específicas de vila; detalhe de encerramento da conta fica fora desta matriz. |
-| R1-341 | suggest_groups_for_user | sugere grupos | mantida | Sem exposição de conteúdo fechado; encerra grupos fora de resultados. |
+| R1-341 | suggest_groups_for_user | sugere grupos | mudada | Sem exposição de conteúdo fechado e com grupos Encerrados excluídos dos resultados. |
 | R1-343 | transfer_group_ownership | transfere propriedade | mantida | Mantém transferência explícita para outro membro antes da saída do dono. |
 | R1-092 | groups | FK opcional para vila | removida | `community_id` sai na mesma leva que a vila. |
 | R1-093 | groups | data de criação | mantida | Metadado de grupo continua. |

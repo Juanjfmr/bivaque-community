@@ -202,7 +202,7 @@ As leituras de feed, detalhe, comentários, reações/contagens, salvos, seguido
 | R1-303 | public.list_group_activity | atividade do grupo | mudada | Como SECURITY DEFINER não passa pela RLS: contar somente publicações legíveis pelo leitor, considerando estado do grupo, visibilidade, conteúdo não removido e `block_allows(ler)`. |
 | R1-307 | public.list_open_reports | fila de denúncias | mantida | Acesso restrito à operação, preservando evidência de publicação/comentário. |
 | R1-318 | public.pin_group_post | fixar publicação | mantida | Ato restrito a papel autorizado e publicação do próprio grupo; conteúdo oculto/removido não deve ser fixado. |
-| R1-320 | public.profile_posts_for | publicações no perfil | mantida | Mantém publicações de perfil condicionadas à leitura autorizada do conteúdo e não amplia escopo de grupo. |
+| R1-320 | public.profile_posts_for | publicações no perfil | mudada | O corpo usa `private.can_access_post` (ou os mesmos filtros) e `private.block_allows(..., 'ler')`, sem ampliar escopo de grupo. |
 | R1-332 | public.resolve_report | resolver denúncia | mantida | Resolução continua restrita ao operador e não elimina evidência do conteúdo reportado. |
 
 ## 7. Testes negativos existentes

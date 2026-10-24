@@ -244,12 +244,12 @@ Cada ID desta parte recebe uma decisão única. Regras compartilhadas preservam 
 | R1-212 | reports | report_status: open/resolved | mantida | Preserva validacao, integridade ou fronteira de acesso; nenhum ADR autoriza afrouxar esta protecao. |
 | R1-213 | reports | report_target_type: tipos de alvo de denuncia | mantida | Preserva validacao, integridade ou fronteira de acesso; nenhum ADR autoriza afrouxar esta protecao. |
 | R1-218 | function | private.can_read_listing | mudada | Remove dependencia de vila e conserva validacao/autorizacao aplicavel no escopo de cidade ou operador definido. |
-| R1-219 | function | private.can_receive_invite_to_event | mantida | Preserva validacao, integridade ou fronteira de acesso; nenhum ADR autoriza afrouxar esta protecao. |
+| R1-219 | function | private.can_receive_invite_to_event | mudada | Remove `community_id` e valida elegibilidade conforme os estados novos do grupo, na mesma migration. |
 | R1-220 | function | private.can_see_provider | mudada | Remove dependencia de vila e conserva validacao/autorizacao aplicavel no escopo de cidade ou operador definido. |
 | R1-221 | function | private.can_user_read_listing | mudada | Remove dependencia de vila e conserva validacao/autorizacao aplicavel no escopo de cidade ou operador definido. |
 | R1-223 | function | private.cascade_community_membership_loss | removida | Vila nao existe no produto; regra exclusiva sai com tabela, coluna ou bucket conforme ADR-20261024 secao 4. |
 | R1-228 | function | private.dispatch_listing_alerts | mudada | Remove dependencia de vila e conserva validacao/autorizacao aplicavel no escopo de cidade ou operador definido. |
-| R1-229 | function | private.dm_context_valid | mantida | Preserva validacao, integridade ou fronteira de acesso; nenhum ADR autoriza afrouxar esta protecao. |
+| R1-229 | function | private.dm_context_valid | mudada | Revalida no corpo se as duas pessoas ainda podem ler agora o objeto contextual; vínculos históricos não bastam. |
 | R1-230 | function | private.enforce_group_community_membership | removida | Vila nao existe no produto; regra exclusiva sai com tabela, coluna ou bucket conforme ADR-20261024 secao 4. |
 | R1-238 | function | private.is_community_image_owner | removida | Vila nao existe no produto; regra exclusiva sai com tabela, coluna ou bucket conforme ADR-20261024 secao 4. |
 | R1-239 | function | private.is_community_member | removida | Vila nao existe no produto; regra exclusiva sai com tabela, coluna ou bucket conforme ADR-20261024 secao 4. |

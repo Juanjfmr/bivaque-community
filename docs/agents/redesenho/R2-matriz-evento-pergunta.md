@@ -126,14 +126,14 @@ Cada ID de `events`, `event_rsvps` e `recommendation_requests`, incluindo enum, 
 | R1-458 | events | UPDATE de capa pelo service_role | mantida | Preserva rotina interna autorizada de arquivo. |
 | R1-199 | events | valores de status do evento | mantida | `upcoming`, `cancelled` e `completed` continuam necessários e controlados. |
 | R1-214 | private.can_access_event | acesso calculado ao evento | mudada | Implementa visibilidade de grupo aberto/fechado/encerrado sem vila. |
-| R1-219 | private.can_receive_invite_to_event | elegibilidade para receber convite | mantida | Mantém validação de elegibilidade; `list_invitable_members_for_event` continua responsável pelo filtro de escopo e visibilidade do grupo. |
+| R1-219 | private.can_receive_invite_to_event | elegibilidade para receber convite | mudada | Remove a leitura de `community_id` e valida elegibilidade conforme os estados novos do grupo; adaptação do auxiliar e chamadores ocorre na mesma migration. |
 | R1-225 | private.default_event_rsvp_occurrence | ocorrência padrão da confirmação | mantida | Mantém integridade temporal da recorrência. |
 | R1-232 | private.event_rsvps_block_self | impede organizador de confirmar presença própria | mantida | Proteção de integridade fica até o dono resolver a diferença com o protótipo. |
 | R1-243 | private.is_event_locality_member | membership de cidade para evento | mantida | Preserva verificação de cidade; acesso de grupo também exige membership do grupo. |
 | R1-252 | private.notify_event_rsvp | aviso de confirmação | mudada | Confere escopo atual e bloqueio antes de notificar. |
 | R1-266 | private.send_recurring_event_reminders | lembretes recorrentes | mudada | Revalida acesso, RSVP e bloqueio no envio; omite detalhe privado do grupo. |
 | R1-271 | public.advance_recurring_events | avanço de ocorrência recorrente | mantida | Mantém rotina e vínculos sob as constraints vigentes. |
-| R1-278 | public.complete_event | conclusão do evento | mantida | Mantém transição por função autorizada. |
+| R1-278 | public.complete_event | conclusão do evento | mudada | Usa `auth.uid()` como identidade; aceita `p_caller_user_id` somente quando igual à sessão e recusa evento de grupo Encerrado. |
 | R1-306 | public.list_invitable_members_for_event | lista de membros elegíveis para convite | mudada | Filtra por escopo novo e não revela membros/evento a não participantes. |
 | R1-317 | public.open_event_question | abertura contextual de pergunta sobre evento | mantida | Mantém fluxo com validação de leitura do evento e do autor. |
 | R1-319 | public.profile_events_for | eventos exibidos no perfil | mudada | Aplica visibilidade de grupo e bloqueio na leitura do perfil. |
@@ -158,8 +158,8 @@ Cada ID de `events`, `event_rsvps` e `recommendation_requests`, incluindo enum, 
 | R1-431 | event_rsvps | privilégios operacionais do service_role | mantida | Mantém uso interno sem expor esses privilégios ao membro. |
 | R1-432 | event_rsvps | SELECT/INSERT/DELETE/UPDATE autenticado | mudada | Mantém privilégios necessários com RLS e grants por coluna mínimos. |
 | R1-198 | event_rsvps | valores de status | mantida | `interested`, `going` e `not_going` permanecem os estados atuais. |
-| R1-217 | private.can_dm_between | autorização de conversa contextual | mantida | Mantém a autorização de mensagens e exige contexto/evento ainda legível. |
-| R1-229 | private.dm_context_valid | validação de contexto de mensagem | mantida | Preserva validação do contexto; permissões de leitura do objeto seguem as policies/RPCs próprias. |
+| R1-217 | private.can_dm_between | autorização de conversa contextual | mudada | Só autoriza se as duas pessoas ainda podem ler agora o objeto do contexto (evento, pergunta ou grupo), além de aplicar bloqueio. |
+| R1-229 | private.dm_context_valid | validação de contexto de mensagem | mudada | Revalida no corpo se as duas pessoas ainda podem ler agora o evento ou a pergunta contextual; vínculos históricos não bastam. |
 | R1-250 | private.notify_event_change | notificação de mudança de evento | mudada | Confere escopo e bloqueio no envio e não inclui local privado. |
 | R1-266 | private.send_recurring_event_reminders | lembretes recorrentes | mudada | Mesma decisão em `events`: revalida destinatário, RSVP, acesso e bloqueio. |
 | R1-293 | public.finalize_account_deletion | limpeza de confirmações na exclusão de conta | mudada | Remove referências da vila e conserva a limpeza das RSVP próprias para evitar dado pessoal órfão. |
@@ -204,10 +204,10 @@ Cada ID de `events`, `event_rsvps` e `recommendation_requests`, incluindo enum, 
 | R1-663 | recommendation_requests | UPDATE de soft delete pelo service_role | mantida | Preserva exclusão lógica restrita à operação interna. |
 | R1-664 | recommendation_requests | UPDATE do título pelo autor | mantida | Preserva edição explícita do título sob policy autoral. |
 | R1-211 | recommendation_requests | categorias de indicação | mantida | Mantém conjunto atual de categorias validado. |
-| R1-217 | private.can_dm_between | autorização de conversa contextual | mantida | Mantém autorização de conversa e exige contexto de pergunta ainda acessível. |
+| R1-217 | private.can_dm_between | autorização de conversa contextual | mudada | Só autoriza se as duas pessoas ainda podem ler agora a pergunta contextual, além de aplicar bloqueio. |
 | R1-226 | private.dispatch_indication_alerts | destinatários de alertas imediatos | mudada | Resolve a dupla origem sem duplicar destinatário e aplica escopo/bloqueio no envio. |
 | R1-227 | private.dispatch_indication_digest | destinatários do resumo de indicações | mudada | Resolve cidade+grupo e revalida visibilidade antes de incluir pergunta no resumo. |
-| R1-229 | private.dm_context_valid | validação de contexto de mensagem | mantida | Preserva validação do contexto; autorização da pergunta segue as policies/RPCs próprias. |
+| R1-229 | private.dm_context_valid | validação de contexto de mensagem | mudada | Revalida no corpo se as duas pessoas ainda podem ler agora a pergunta contextual; autoria ou participação histórica não bastam. |
 | R1-235 | private.guide_candidate_enqueue | entrada de candidata ao Guia | mantida | Mantém fila e elegibilidade atual; pergunta de grupo continua subordinada ao seu acesso. |
 | R1-236 | private.guide_candidate_select_due | seleção de candidata vencida do Guia | mantida | Mantém seleção e critérios atuais de elegibilidade. |
 | R1-237 | private.indication_recipients | lista de destinatários da indicação | mudada | Deduplica cidade/grupo e só inclui leitores autorizados pela origem. |
@@ -221,7 +221,7 @@ Cada ID de `events`, `event_rsvps` e `recommendation_requests`, incluindo enum, 
 | R1-307 | public.list_open_reports | listagem operacional de denúncias abertas | mantida | Mantém acesso operacional restrito e evidência para revisão. |
 | R1-309 | public.list_promotable_replies | respostas elegíveis para promoção ao Guia | mantida | Mantém critérios e autorização atuais, respeitando escopo de leitura. |
 | R1-310 | public.list_question_replies | leitura de respostas da pergunta | mudada | Herda escopo da pergunta, exclusão/moderação e bloqueio. |
-| R1-312 | public.mark_recommendation_reply_resolved | resolução por resposta | mantida | Mantém a RPC como via autorizada de transição. |
+| R1-312 | public.mark_recommendation_reply_resolved | resolução por resposta | mudada | Mantém a RPC como via autorizada e recusa a mutação quando a pergunta pertence a grupo Encerrado. |
 | R1-313 | public.mark_recommendation_resolved | resolução sem resposta | mantida | Mantém a RPC e o estado atual da pergunta. |
 | R1-321 | public.promote_reply_to_guide_entry | promoção de resposta ao Guia | mantida | Mantém promoção explícita e registro de origem. |
 | R1-328 | public.reopen_recommendation | reabertura da pergunta | mantida | Mantém reabertura e preservação da última resolução. |
