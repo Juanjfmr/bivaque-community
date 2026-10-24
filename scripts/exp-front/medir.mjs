@@ -38,8 +38,21 @@ function localEnv() {
   }
   if (!values.API_URL || !values.ANON_KEY || !values.SERVICE_ROLE_KEY)
     throw new Error("supabase status não forneceu API_URL, ANON_KEY e SERVICE_ROLE_KEY locais")
+  // O Chromium que esta versão do Playwright esperaria pode não estar baixado; o
+  // headless shell já instalado serve, como em scripts/agents/prova-sequencia.mjs.
+  const installedShell = join(
+    process.env.LOCALAPPDATA ?? "",
+    "ms-playwright",
+    "chromium_headless_shell-1248",
+    "chrome-headless-shell-win64",
+    "chrome-headless-shell.exe",
+  )
+  const chromium =
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ??
+    (existsSync(installedShell) ? installedShell : undefined)
   return {
     ...process.env,
+    ...(chromium ? { PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: chromium } : {}),
     SUPABASE_URL: values.API_URL,
     SUPABASE_ANON_KEY: values.ANON_KEY,
     NEXT_PUBLIC_SUPABASE_URL: values.API_URL,
