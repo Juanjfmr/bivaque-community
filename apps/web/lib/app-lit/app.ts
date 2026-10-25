@@ -98,8 +98,11 @@ export function mountApp(root: HTMLElement): () => void {
   let answerDraft = ""
   let feedback = ""
   let similar: Row[] = []
+  let groupsSelected = false
+  let publishing = false
   let requestKey = ""
   let generation = 0
+  let similarGeneration = 0
   let restorePending = false
   const media = matchMedia("(prefers-color-scheme: dark)")
   const setTheme = () => {
@@ -187,7 +190,7 @@ export function mountApp(root: HTMLElement): () => void {
       symbol: string,
     ) => html`<button class="nav-item" type="button"
       aria-current=${active === name ? "page" : nothing} data-focus=${`nav:${name}`} @click=${() => navigate({ name, id: null })}>
-      <span class="nav-icon" aria-hidden="true">${symbol}</span><span>${label}</span></button>`
+      <span class="nav-icon material-symbols-outlined" aria-hidden="true">${symbol}</span><span>${label}</span></button>`
     const isDetail = route.name === "pergunta"
     const mainContent =
       route.name === "inicio"
@@ -206,9 +209,9 @@ export function mountApp(root: HTMLElement): () => void {
       html`
       <header class="topbar"><div class="topbar-in">${isDetail ? html`<button class="app-back" type="button" aria-label="Voltar" @click=${back}>‹</button>` : nothing}<span class="brand">${route.name === "inicio" ? "Bivaque" : title()}</span><span class="city-label">${cityName}</span></div></header>
       <nav class="nav-main" aria-label="Navegação principal">
-        ${nav("inicio", "Início", "⌂")}${nav("comunidade", "Comunidade", "♧")}
-        <span class="nav-create-slot" aria-hidden="true">Criar</span>${nav("conversas", "Conversas", "◌")}${nav("voce", "Você", "○")}
-      </nav><md-filled-tonal-button class="create-fab" aria-label="Criar" @click=${openAsk}><span slot="icon">+</span><span class="fab-label">Criar</span></md-filled-tonal-button>
+        ${nav("inicio", "Início", "home")}${nav("comunidade", "Comunidade", "groups")}
+        <span class="nav-create-slot" aria-hidden="true">Criar</span>${nav("conversas", "Conversas", "forum")}${nav("voce", "Você", "person")}
+      </nav><md-filled-tonal-button class="create-fab" aria-label="Criar" @click=${openAsk}><span class="material-symbols-outlined" slot="icon">add</span><span class="fab-label">Criar</span></md-filled-tonal-button>
       <main id="main" role="main"><div class="page ${isDetail ? "detail-page" : ""}">${mainContent}</div></main>
       ${askOpen ? askDialog() : nothing}
       ${feedback ? html`<p class="snackbar show" role="status">${feedback}</p>` : nothing}
@@ -236,16 +239,24 @@ export function mountApp(root: HTMLElement): () => void {
   function community() {
     return html`${heading("Comunidade", "O que a comunidade sabe fica disponível para quem chegar depois.")}
       <div class="tabs-wrap" role="tablist" aria-label="Comunidade">
-        <md-primary-tab role="tab" aria-selected="true" data-focus="tab:ind">Indicações</md-primary-tab>
-        <md-primary-tab role="tab" aria-selected="false" @click=${() => {
-          feedback = "Grupos em breve"
+        <md-primary-tab role="tab" aria-selected=${String(!groupsSelected)} data-focus="tab:ind" @click=${() => {
+          groupsSelected = false
+          view()
+        }}>Indicações</md-primary-tab>
+        <md-primary-tab role="tab" aria-selected=${String(groupsSelected)} @click=${() => {
+          groupsSelected = true
           view()
         }}>Grupos</md-primary-tab>
       </div>
+      ${
+        groupsSelected
+          ? empty("Em breve", "")
+          : html`
       <section class="context-strip"><span aria-hidden="true">◷</span><span><b>${resolvedCount} indicações resolvidas</b><br>Busque uma resposta antes de perguntar.</span></section>
       ${filterChips()}<div class="section-title"><h2>Indicações</h2><md-filled-tonal-button data-focus="ask" @click=${openAsk}>Perguntar</md-filled-tonal-button></div>
       ${loading && !rows.length ? questionsLoading() : listError ? retry(listError, loadFirst) : rows.length ? questionList(rows) : empty(filter === "ajudar" ? "Ninguém esperando resposta" : "Nenhuma pergunta por aqui", "Você pode buscar uma indicação ou iniciar uma nova pergunta.")}
       ${hasMore ? html`<div class="paged-foot"><md-outlined-button ?disabled=${loadingMore} @click=${loadMore}>${loadingMore ? "Carregando…" : "Carregar mais"}</md-outlined-button></div>` : nothing}`
+      }`
   }
   function mine() {
     return html`${heading("Minhas perguntas e indicações", "Seu histórico de participação na comunidade.")}
@@ -324,7 +335,7 @@ export function mountApp(root: HTMLElement): () => void {
           <option value="saude_bem_estar">Saúde</option><option value="servicos_locais">Serviços locais</option><option value="educacao">Educação</option><option value="moradia">Moradia</option><option value="transporte">Transporte</option><option value="alimentacao">Alimentação</option><option value="esporte_lazer">Esporte e lazer</option><option value="outros">Outros</option></select>
         ${feedback ? html`<p role="alert">Não foi possível publicar. Sua pergunta continua aqui.</p>` : nothing}
       </div><div slot="actions" class="dialog-actions"><md-text-button @click=${closeAsk}>Cancelar</md-text-button>
-        <md-filled-button ?disabled=${askDraft.trim().length < 8} @click=${publish}>Publicar pergunta</md-filled-button></div>
+        <md-filled-button ?disabled=${askDraft.trim().length < 8 || publishing} @click=${publish}>${publishing ? "Publicando…" : "Publicar pergunta"}</md-filled-button></div>
     </md-dialog>`
   }
 
@@ -405,6 +416,10 @@ export function mountApp(root: HTMLElement): () => void {
   }
   async function loadMore() {
     if (loadingMore) return
+    const ticket = generation
+    const currentRoute = route.name
+    const currentFilter = filter
+    const offset = rows.length
     loadingMore = true
     view()
     const active = FILTERS.find((item) => item.id === filter) ?? {
@@ -418,8 +433,13 @@ export function mountApp(root: HTMLElement): () => void {
       ...(active.resolved === undefined ? {} : { p_resolved: active.resolved }),
       ...(active.mine === undefined ? {} : { p_mine: active.mine }),
       p_limit: PAGE_SIZE,
-      p_offset: rows.length,
+      p_offset: offset,
     })
+    if (ticket !== generation || currentRoute !== route.name || currentFilter !== filter) {
+      loadingMore = false
+      view()
+      return
+    }
     loadingMore = false
     if (result.error) {
       listError = FAILURE
@@ -519,6 +539,7 @@ export function mountApp(root: HTMLElement): () => void {
     requestAnimationFrame(() => root.querySelector<HTMLElement>("#ask-title")?.focus())
   }
   function closeAsk() {
+    similarGeneration++
     if (history.state?.askDialog) history.back()
     else {
       askOpen = false
@@ -527,6 +548,7 @@ export function mountApp(root: HTMLElement): () => void {
     }
   }
   async function searchSimilar() {
+    const ticket = ++similarGeneration
     const query = askDraft.trim()
     if (query.length < 3) {
       similar = []
@@ -538,83 +560,92 @@ export function mountApp(root: HTMLElement): () => void {
       p_query: query,
       p_limit: 5,
     })
+    if (ticket !== similarGeneration || !askOpen || query !== askDraft.trim()) return
     similar = result.error ? [] : (result.data ?? [])
     view()
   }
   async function publish() {
+    if (publishing) return
     const text = askDraft.trim()
     if (text.length < 8 || text.length > 300) {
       feedback = "Escreva uma pergunta com pelo menos 8 caracteres."
       view()
       return
     }
-    const {
-      data: { user },
-    } = await db.auth.getUser()
-    if (!user) {
-      feedback = "Sua sessão expirou. Entre de novo para publicar."
-      view()
-      return
-    }
-    const existing = await db
-      .from("recommendation_requests")
-      .select("id")
-      .eq("id", requestKey)
-      .maybeSingle()
-    if (existing.error) {
-      feedback = "Não foi possível publicar. Sua pergunta continua aqui."
-      view()
-      return
-    }
-    if (existing.data) {
+    publishing = true
+    view()
+    try {
+      const {
+        data: { user },
+      } = await db.auth.getUser()
+      if (!user) {
+        feedback = "Sua sessão expirou. Entre de novo para publicar."
+        view()
+        return
+      }
+      const existing = await db
+        .from("recommendation_requests")
+        .select("id")
+        .eq("id", requestKey)
+        .maybeSingle()
+      if (existing.error) {
+        feedback = "Não foi possível publicar. Sua pergunta continua aqui."
+        view()
+        return
+      }
+      if (existing.data) {
+        askOpen = false
+        feedback = ""
+        history.replaceState({ ...history.state, askDialog: false }, "", location.href)
+        route = { name: "pergunta", id: requestKey }
+        context = {
+          ...context,
+          route,
+          parent: { ...context.route },
+          focus: null,
+          scroll: 0,
+        }
+        history.pushState({ parent: context.parent, navigation: context }, "", appHash(route))
+        void loadDetail(requestKey)
+        view()
+        return
+      }
+      const result = await db
+        .from("recommendation_requests")
+        .insert({
+          id: requestKey,
+          author_id: user.id,
+          locality_id: localityId,
+          title: text,
+          body: askDetails.trim(),
+          category: askCategory,
+        })
+        .select("id")
+        .single()
+      if (result.error) {
+        feedback = "Não foi possível publicar. Sua pergunta continua aqui."
+        view()
+        return
+      }
+      const id = result.data.id
       askOpen = false
       feedback = ""
       history.replaceState({ ...history.state, askDialog: false }, "", location.href)
-      route = { name: "pergunta", id: requestKey }
+      route = { name: "pergunta", id }
       context = {
         ...context,
         route,
-        parent: { name: "comunidade", id: null },
+        parent: { ...context.route },
         focus: null,
         scroll: 0,
       }
       history.pushState({ parent: context.parent, navigation: context }, "", appHash(route))
-      void loadDetail(requestKey)
+      void loadDetail(id)
       view()
-      return
+    } finally {
+      publishing = false
+      if (askOpen) view()
     }
-    const result = await db
-      .from("recommendation_requests")
-      .insert({
-        id: requestKey,
-        author_id: user.id,
-        locality_id: localityId,
-        title: text,
-        body: askDetails.trim(),
-        category: askCategory,
-      })
-      .select("id")
-      .single()
-    if (result.error) {
-      feedback = "Não foi possível publicar. Sua pergunta continua aqui."
-      view()
-      return
-    }
-    const id = result.data.id
-    askOpen = false
-    feedback = ""
-    history.replaceState({ ...history.state, askDialog: false }, "", location.href)
-    route = { name: "pergunta", id }
-    context = {
-      ...context,
-      route,
-      parent: { name: "comunidade", id: null },
-      focus: null,
-      scroll: 0,
-    }
-    history.pushState({ parent: context.parent, navigation: context }, "", appHash(route))
-    void loadDetail(id)
-    view()
   }
   async function sendAnswer() {
     if (answerDraft.trim().length < 5 || !detail) {
@@ -778,8 +809,11 @@ export function mountApp(root: HTMLElement): () => void {
   const onPopState = (event: PopStateEvent) => {
     if (askOpen) {
       askOpen = false
-      restorePending = true
+      similarGeneration++
+      context = { ...context, focus: '[data-focus="ask"]' }
+      restorePending = false
       view()
+      focus('[data-focus="ask"]')
       return
     }
     route = parseAppHash(location.hash)
