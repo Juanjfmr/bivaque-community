@@ -59,9 +59,24 @@ try{
       await page.getByRole("heading",{name:"Alertas de busca"}).waitFor();
       await page.getByRole("button",{name:"Fechar"}).click();
    }
+   await page.goto("http://127.0.0.1:"+port+base+"/busca/",{waitUntil:"domcontentloaded"});
+   await page.getByRole("heading",{name:/Buscar em/}).first().waitFor();
+   await page.getByRole("textbox",{name:"Buscar em todos os módulos"}).fill("inventário");
+   await page.getByText("Indicações e respostas",{exact:false}).first().waitFor();
+   await page.getByText("Paulo R.:",{exact:false}).first().waitFor();
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2),false,"Horizontal overflow search "+width+"/"+theme);
+   await page.screenshot({path:resolve(import.meta.dirname,"../visual-qa/busca-"+width+"-"+theme+".png"),fullPage:true,animations:"disabled"});
+   if(width===375&&theme==="light"){
+     await page.getByRole("textbox",{name:"Buscar em todos os módulos"}).press("Enter");
+     await page.reload({waitUntil:"domcontentloaded"});
+     await page.getByRole("textbox",{name:"Buscar em todos os módulos"}).fill("");
+     await page.getByText("Buscas recentes").first().waitFor();
+     await page.getByRole("button",{name:/inventário/}).first().click();
+     await page.getByText("Paulo R.:").first().waitFor();
+   }
    await context.close();
   }
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
- console.log("Visual smoke passed; 12 screenshots captured.");
+ console.log("Visual smoke passed; 18 screenshots captured.");
 }finally{await browser.close();await new Promise(ok=>srv.close(ok))}
