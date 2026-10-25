@@ -1,16 +1,18 @@
 import { readFileSync } from "node:fs";
 const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
-function readBlock(selector) {
-  const escaped=selector.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&");
-  const match=css.match(new RegExp(escaped+"\\s*\\{([\\s\\S]*?)\\n\\}"));
-  if (!match) throw new Error("Missing theme "+selector);
-  return Object.fromEntries([...match[1].matchAll(/^\\s*(--[a-z0-9-]+):\\s*([^;]+);/gm)].map(v=>[v[1],v[2].trim()]));
+
+function readBlock(theme) {
+  const regex=theme==="light"?/:root\s*\{([\s\S]*?)\n\}/:/\.dark\s*\{([\s\S]*?)\n\}/;
+  const match=css.match(regex);
+  if (!match) throw new Error("Missing theme "+theme);
+  return Object.fromEntries([...match[1].matchAll(/^\s*(--[a-z0-9-]+):\s*([^;]+);/gm)].map(v=>[v[1],v[2].trim()]));
 }
-const root=readBlock(":root"), dark={...root,...readBlock(".dark")};
+
+const root=readBlock("light"), dark={...root,...readBlock("dark")};
 function resolve(map,name,depth=0){
   if(depth>8)throw Error("Token reference loop: "+name);
   const raw=map[name]; if(!raw)throw Error("Missing token "+name);
-  const ref=raw.match(/^var\\((--[a-z0-9-]+)\\)$/);
+  const ref=raw.match(/^var\((--[a-z0-9-]+)\)$/);
   if(ref)return resolve(map,ref[1],depth+1);
   if(!/^#[0-9a-f]{6}$/i.test(raw))throw Error("Not a hex text color: "+name+"="+raw);
   return raw;
