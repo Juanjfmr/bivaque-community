@@ -131,6 +131,7 @@ export default function LibraryApp(){
   const catalogFilters=filtersByMarket[kindKey];
   const setCatalogFilters=(action:React.SetStateAction<CatalogFilters>)=>setFiltersByMarket(prev=>({...prev,[kindKey]:typeof action==="function"?(action as (v:CatalogFilters)=>CatalogFilters)(prev[kindKey]):action}));
   const [catalogDraft,setCatalogDraft]=React.useState<CatalogFilters>(initialCatalogFilters);
+  const [draftCategory,setDraftCategory]=React.useState("Todos");
   const [replyTo,setReplyTo]=React.useState<string|null>(null);
   const [replyDraft,setReplyDraft]=React.useState("");
   const [origin,setOrigin]=React.useState<{question:string,author:string,text:string}|null>(null);
@@ -165,8 +166,8 @@ export default function LibraryApp(){
   ].map(([kind,subtitle,Icon])=><DropdownMenuItem key={kind as string} className="min-h-[52px] cursor-pointer gap-3 rounded-lg px-3 py-2" onSelect={()=>openCreate(kind as string)}><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">{React.createElement(Icon as typeof Plus,{className:"size-[19px]"})}</span><span className="min-w-0"><strong className="block text-[13px] font-medium">{kind as string}</strong><span className="block text-[11px] text-muted-foreground">{subtitle as string}</span></span></DropdownMenuItem>);
   function submitCreate(e:React.FormEvent){e.preventDefault();if(!title.trim()||!description.trim()){toast.error("Preencha título e descrição");return;}setPosts(a=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType},...a]);setComposeOpen(false);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.")}
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
-  function openFilters(section="all"){setFilterSection(section);setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
-  function applyFilters(){setCatalogFilters({...catalogDraft});setFiltersOpen(false);setMobileFiltersOpen(false)}
+  function openFilters(section="all"){setFilterSection(section);setDraftCategory(category);setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
+  function applyFilters(){setCatalogFilters({...catalogDraft});setCategory(draftCategory);setFiltersOpen(false);setMobileFiltersOpen(false)}
   function clearFilters(){setCatalogDraft({...initialCatalogFilters});setCatalogFilters({...initialCatalogFilters});setCategory("Todos")}
   function updateDraft<K extends keyof CatalogFilters>(key:K,value:CatalogFilters[K]){setCatalogDraft(d=>({...d,[key]:value}))}
   const alertAttributes=()=>({...catalogFilters,category});
@@ -191,31 +192,35 @@ export default function LibraryApp(){
   function send(e:React.FormEvent){e.preventDefault();if(!message.trim())return;setChats(a=>a.map(c=>c.id===chatId?{...c,messages:[...c.messages,{self:true,body:message.trim()}]}:c));setMessage("");toast.info("Mensagem registrada localmente")}
   const allSaved=allItems.filter(x=>saved.includes(x.id));
   const housingCost=(h:(typeof HOUSING)[number])=>h.type==="Aluguel"?h.price+(h.condo||0):h.price;
-  const filtered=allItems.filter(x=>{
+  function itemMatches(x:Item,criteria:CatalogFilters,selectedCategory:string):boolean{
     if(x.city!==city)return false;
     if(!["busca","inicio","salvos"].includes(slug)&&x.kind!==(slug==="negocios"?"servicos":slug))return false;
     if(slug==="salvos"&&!saved.includes(x.id))return false;
-    if(category!=="Todos"&&x.badge!==category)return false;
+    if(selectedCategory!=="Todos"&&x.badge!==selectedCategory)return false;
     if(query&&!(x.title+" "+x.meta+" "+x.description).toLowerCase().includes(query.toLowerCase()))return false;
     const h=x.kind==="imoveis"?HOUSING.find(v=>v.id===x.id):null;
     const d=x.kind==="desapegos"?CLASSIFIEDS.find(v=>v.id===x.id):null;
     const val=h?housingCost(h):d?.price;
-    if(["imoveis","desapegos"].includes(slug)&&val!=null&&catalogFilters.min&&val<Number(catalogFilters.min))return false;
-    if(["imoveis","desapegos"].includes(slug)&&val!=null&&catalogFilters.max&&val>Number(catalogFilters.max))return false;
+    if(["imoveis","desapegos"].includes(slug)&&val!=null&&criteria.min&&val<Number(criteria.min))return false;
+    if(["imoveis","desapegos"].includes(slug)&&val!=null&&criteria.max&&val>Number(criteria.max))return false;
     if(h&&slug==="imoveis"){
-      if(h.bedrooms<catalogFilters.beds)return false;
-      if(h.parking<catalogFilters.parking||h.area<catalogFilters.area)return false;
-      if(catalogFilters.pets&&!h.pets||catalogFilters.furnished&&!h.furnished)return false;
-      if(catalogFilters.availability&&catalogFilters.availability!=="all"&&h.available!==catalogFilters.availability&&!(catalogFilters.availability==="60"&&["now","30"].includes(h.available||""))&&!(catalogFilters.availability==="30"&&h.available==="now"))return false;
-      if(catalogFilters.om!=="Todas"&&h.om!==catalogFilters.om)return false;
+      if(h.bedrooms<criteria.beds)return false;
+      if(h.parking<criteria.parking||h.area<criteria.area)return false;
+      if(criteria.pets&&!h.pets||criteria.furnished&&!h.furnished)return false;
+      if(criteria.availability&&criteria.availability!=="all"&&h.available!==criteria.availability&&!(criteria.availability==="60"&&["now","30"].includes(h.available||""))&&!(criteria.availability==="30"&&h.available==="now"))return false;
+      if(criteria.om!=="Todas"&&h.om!==criteria.om)return false;
     }
     if(d&&slug==="desapegos"){
-      if(catalogFilters.condition!=="Todos"&&d.condition!==catalogFilters.condition)return false;
-      if(catalogFilters.pickup!=="Todos"&&d.pickup!==catalogFilters.pickup&&!(catalogFilters.pickup==="30"&&d.pickup==="now"))return false;
+      if(criteria.condition!=="Todos"&&d.condition!==criteria.condition)return false;
+      if(criteria.pickup!=="Todos"&&d.pickup!==criteria.pickup&&!(criteria.pickup==="30"&&d.pickup==="now"))return false;
     }
-    if(["imoveis","desapegos"].includes(slug)&&(h||d)&&catalogFilters.hoods.length&&!catalogFilters.hoods.includes((h||d)!.hood))return false;
+    if(["imoveis","desapegos"].includes(slug)&&(h||d)&&criteria.hoods.length&&!criteria.hoods.includes((h||d)!.hood))return false;
     return true;
   });
+
+  }
+  const filtered=allItems.filter(x=>itemMatches(x,catalogFilters,category));
+  const draftCount=allItems.filter(x=>itemMatches(x,catalogDraft,draftCategory)).length;
   const ordered=[...filtered].sort((a,b)=>{
     const cost=(v:Item)=>{const h=HOUSING.find(z=>z.id===v.id);return h?housingCost(h):CLASSIFIEDS.find(z=>z.id===v.id)?.price||0};
     return sort==="Menor preço"?cost(a)-cost(b):sort==="Maior preço"?cost(b)-cost(a):0;
@@ -311,6 +316,7 @@ export default function LibraryApp(){
       {!isProvider&&slug!=="salvos"&&<div className="flex items-center gap-2 overflow-x-auto pb-2" role="group" aria-label="Filtros rápidos">
         <Button variant="outline" size="sm" className="min-h-11 shrink-0 rounded-full bg-card text-[12px] shadow-none" onClick={()=>openFilters("all")}><SlidersHorizontal className="size-4"/>Filtros {activeFilters>0&&<Badge variant="secondary">{activeFilters}</Badge>}</Button>
         {isHousing?<>
+          <Button size="sm" variant="outline" className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>openFilters("ptype")}>{category==="Todos"?"Tipo":category}<ChevronRight className="size-3.5"/></Button>
           <Button size="sm" variant="outline" className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>openFilters("price")}>{catalogFilters.min||catalogFilters.max?(catalogFilters.max?"Até "+money(Number(catalogFilters.max)):"A partir de "+money(Number(catalogFilters.min))):"Total por mês"} <ChevronRight className="size-3.5"/></Button>
           <Button size="sm" variant="outline" className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>openFilters("beds")}>{catalogFilters.beds?catalogFilters.beds+"+ quartos":"Quartos e vagas"} <ChevronRight className="size-3.5"/></Button>
           <Button size="sm" variant="outline" className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>openFilters("hood")}>{catalogFilters.hoods.length?catalogFilters.hoods.join(", "):"Bairro"} <ChevronRight className="size-3.5"/></Button>
@@ -318,6 +324,7 @@ export default function LibraryApp(){
           <Button size="sm" variant={catalogFilters.pets?"secondary":"outline"} aria-pressed={catalogFilters.pets} className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>setCatalogFilters(v=>({...v,pets:!v.pets}))}>Aceita pets</Button>
           <Button size="sm" variant={catalogFilters.furnished?"secondary":"outline"} aria-pressed={catalogFilters.furnished} className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>setCatalogFilters(v=>({...v,furnished:!v.furnished}))}>Mobiliado</Button>
         </>:<>
+          <Button variant="outline" size="sm" className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>openFilters("cat")}>{category==="Todos"?"Categoria":category}<ChevronRight className="size-3.5"/></Button>
           {(["price","cond","pickup","hood"] as const).map((type)=><Button key={type} size="sm" variant="outline" className="min-h-11 shrink-0 rounded-full shadow-none" onClick={()=>openFilters(type)}>{({price:"Preço",cond:catalogFilters.condition==="Todos"?"Estado":catalogFilters.condition,pickup:"Retirada",hood:catalogFilters.hoods.length?catalogFilters.hoods.join(", "):"Bairro"})[type]} <ChevronRight className="size-3.5"/></Button>)}
         </>}
       </div>}
