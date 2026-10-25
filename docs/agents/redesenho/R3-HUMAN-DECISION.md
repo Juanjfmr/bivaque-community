@@ -1,5 +1,10 @@
 # R3 — orçamento esgotado, 25/10/2026
 
+**Atualização do dono em 25/10: "Pode dividir".** A autorização para lotes menores
+foi concedida. RED-004 inicia a retomada com até três rodadas próprias; acompanhe
+`STATUS.md` nesta pasta. O restante deste relatório preserva o bloqueio e as provas
+históricas; a autorização não aprova a migration nem resolve as falhas abaixo.
+
 **HUMAN_DECISION / bloqueada. Não pronta; nenhum pedido de merge.**
 
 O contrato RED-003 fixa `retry_budget: 3` e `on_budget_exhausted: HUMAN_DECISION`.

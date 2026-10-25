@@ -1,0 +1,57 @@
+task_id: RED-004
+objective: Corrigir seis fixtures remanescentes e os bloqueios conhecidos do gate sem alterar a migration ou permissões da R3.
+authority:
+  - Autorização do dono em 25/10/2026 - Pode dividir, até três rodadas próprias por lote
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+  - docs/agents/tasks/RED-003.task.yml
+  - docs/agents/redesenho/R2-comum.md
+  - docs/agents/redesenho/R2-decisoes.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Checkpoint 64dc6218, prova test-db-9 com 154 arquivos e 1734 asserções executadas, FAIL; seis fixtures listadas ainda abortam por schema legado, gate falha em quatro erros de lint conhecidos.
+allowed_paths:
+  - supabase/tests/declared-arrivals.sql
+  - supabase/tests/listing-alerts.sql
+  - supabase/tests/listing-lifecycle.sql
+  - supabase/tests/listing-market.sql
+  - supabase/tests/listings-moradia.sql
+  - supabase/tests/endereco-por-escolha.sql
+  - scripts/redesenho/conferir-matriz.test.mjs
+  - scripts/redesenho/conferir-retrato.test.mjs
+  - scripts/redesenho/retrato.mjs
+  - scripts/gate.mjs
+  - docs/agents/redesenho/STATUS.md
+  - docs/agents/redesenho/R3-evidencias.md
+  - docs/agents/redesenho/R3-RED-004.md
+forbidden:
+  - alterar migration, seed, tipos gerados, matrizes aprovadas ou permissões para fazer teste passar
+  - remover negativos, excluir arquivos de teste, reduzir plano ou trocar expectativa para esconder falha
+  - editar outros testes ou instrumentos do gate e scanner de segredos
+  - instalar pacotes, abrir subagentes, segundo plano, push, merge ou deploy
+  - db push, --linked, reset fora da fila, criar env.local ou imprimir chaves
+  - alterar outro worktree, incluindo o STATUS da frente app
+acceptance:
+  - Ler apenas trechos das autoridades e da migration pertinentes às seis fixtures; usar o log test-db-9 e triagem RED-003 como diagnóstico, não como autoridade de permissão
+  - Adaptar somente fixtures e chamadas obsoletas nas seis suítes ao schema aprovado; preservar positivos e todos os negativos de cidade, operador, privacidade, ciclo de anúncio e endereço
+  - Seis arquivos terminam sem ERROR, Bad plan ou asserção falha; registrar plano e asserções executadas por arquivo, sem confundir total executado da suíte com total aprovado
+  - Falhas de comportamento ou em outros arquivos ficam mapeadas para lote posterior com caminho e erro; não alterar migration nem outros testes para resolver fora do escopo
+  - Corrigir apenas formatação e nome local escape nos três scripts conhecidos, preservando seu comportamento; os dois testes de conferência passam
+  - No gate aceitar configuração por arquivo existente OU pelas duas variáveis públicas de processo NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY, conforme solução já provada no worktree app; manter todos os estágios e falhar sem falsear ou pular build
+  - Executar gate com configuração pública da stack local somente no processo, sem criar env nem imprimir chaves; registrar todas as falhas e etapas não executadas, sem expandir escopo para corrigir outras causas
+  - Corrigir em R3-evidencias a afirmação obsoleta sobre conferir-retrato e a contagem do arquivo evento-pergunta apontadas na triagem F2 e F3; não inventar execução ou alterar SQL fora das seis fixtures
+  - R3-RED-004.md mapeia cada negativo antigo preservado para sua asserção atual e registra revisão, hash inalterado da migration, provas, limites e pendências para os próximos lotes
+  - Ao terminar escrever no STATUS desta frente o que fez, números por arquivo, gate, rodadas próprias consumidas, o que não conseguiu e dúvidas; máximo três rodadas, sem se declarar aprovado
+proof:
+  - node --test scripts/redesenho/conferir-retrato.test.mjs scripts/redesenho/conferir-matriz.test.mjs
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 gate
+  - Teste das seis fixtures pela fila com contagem de planos e negativos preservados, mesmo que a suíte completa registre falhas fora deste lote
+risk: preservação de provas de autorização e adaptação de fixtures
+risk_level: R3
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
