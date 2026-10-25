@@ -1,0 +1,51 @@
+name: Bivaque — prévia temporária no GitHub Pages
+on:
+  push:
+    branches:
+      - feat/github-pages-preview-20261025
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-preview-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: bivaque-pages-preview
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - name: Obter código da branch experimental
+        uses: actions/checkout@v4
+      - name: Preparar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Gerar exportação estática para Pages
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Enviar arquivos estáticos
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: prototypes/bivaque-next-shadcn/out
+      - name: Publicar prévia no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
