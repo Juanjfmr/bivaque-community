@@ -103,6 +103,20 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
   Coordenador recusou exclusões integrais de testes mistos (transfer-scope-denials,
   declared-arrivals e community-feeds): continham proteções de cidade/operador/grupos
   que devem permanecer. Exigida recuperação/adaptação e mapa antigo → novo.
+- **R3 bloqueada / HUMAN_DECISION por orçamento.** Mesmo erro em declared-arrivals:31
+  e listing-alerts:54 nas provas 7, 8 e 9. Última: 154 arquivos, 1734 asserções
+  executadas, Result FAIL; não são 1734 aprovadas. Produtor encerrado, sem nova rodada.
+- Rascunho preservado em `64dc6218` (codex/redesenho-r3), sem integração. Relatório
+  `docs/agents/redesenho/R3-HUMAN-DECISION.md`; SHA da migration registrado ali.
+- Coordenador repetiu `db:lint` pela fila: exit 0. Gate: FAIL no lint, quatro erros
+  de base já reproduzidos; demais etapas não rodaram. Secrets separado passou após
+  staging do checkpoint. Revisão final de segurança, golden e tipos ainda pendentes.
+- Dono recebeu uma decisão assíncrona: recomendação de novo orçamento explícito de
+  três tentativas por lote menor, iniciando fixtures. Aguardando resposta; app continua.
+- 1b: contrato clarificado em `0443bbc9`: retorno navegador/sistema fecha modal;
+  lógica do botão Voltar fica também no unitário, sem exigir clique atrás de modal.
+  Referência confirmada no Material Web 2.5.0 (show usa showModal). Produtor trocou
+  a sobreposição de prova para Radix e está corrigindo persistência/rolagem/foco.
 - Revisão do coordenador também recusou o instrumento inicial de definições que
   verificava apenas nomes/substrings. Exigida comparação integral normalizada das
   policies, triggers e grants, com negativo de mutação mantendo o nome da policy.
