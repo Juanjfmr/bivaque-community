@@ -1,0 +1,46 @@
+name: Bivaque R72 — catálogo, mapa e alertas
+on:
+  push:
+    branches: [feat/r72-catalog-map-alerts-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-r72-catalog-map-alerts-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-r72-catalog-map
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Test geographic correctness and saved search identity
+        run: node --test scripts/catalog-r72.test.mjs
+      - name: Check Bivaque color contrast
+        run: node scripts/verify-contrast.mjs
+      - name: Build and check Next.js TypeScript
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Check static routes and map/alert UI integration
+        run: |
+          test -f out/imoveis/index.html
+          test -f out/desapegos/index.html
+          test -f out/anuncio/h1/index.html
+          test -f out/pergunta/q1/index.html
+          grep -q 'CatalogMap' components/library-app.tsx
+          grep -q 'saved searches' components/library-app.tsx || grep -q 'Alertas de busca' components/library-app.tsx
+          grep -q 'Ver só este bairro na lista' components/modules/catalog-map.tsx
+          grep -q 'Fechar sem aplicar' components/library-app.tsx
