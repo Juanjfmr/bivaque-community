@@ -521,7 +521,7 @@ export default function LibraryApp(){
         <Button aria-label="Preferências" size="icon" variant="ghost" onClick={()=>navigate("voce")} className="size-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"><Settings/></Button>
       </SidebarFooter>
     </Sidebar>
-    <SidebarInset>
+    <SidebarInset className="min-w-0">
       <header className="flex h-[64px] shrink-0 items-center gap-2 border-b border-border/75 bg-background px-3 sm:px-5 xl:px-8">
         <button aria-label="Bivaque — voltar ao início" onClick={()=>navigate("inicio")} className="flex min-h-11 items-center gap-2">
           <img src={brandAssetBase+"/brand/bivaque-symbol.svg"} className="size-8 dark:hidden" alt="Bivaque"/>
@@ -534,7 +534,7 @@ export default function LibraryApp(){
         <Select value={city} onValueChange={setCity}><SelectTrigger aria-label="Selecionar cidade" className="h-10 w-[112px] rounded-lg border-border/70 bg-card px-2 text-[12px] shadow-none min-[420px]:w-[145px]"><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
         <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="hidden size-11 min-[720px]:inline-flex" aria-label="Aparência"><SunMoon/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aparência</DropdownMenuLabel><DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/>Automática</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/>Clara</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/>Escura</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       </header>
-      <main className={"mx-auto w-full space-y-6 px-4 pb-36 pt-5 sm:px-6 sm:pt-7 xl:px-9 min-[720px]:pb-16 "+(slug==="inicio"?"max-w-[1360px]":"max-w-[1210px]")}>{pageContent}</main>
+      <main className={"mx-auto min-w-0 w-full space-y-6 px-4 pb-36 pt-5 sm:px-6 sm:pt-7 xl:px-9 min-[720px]:pb-16 "+(slug==="inicio"?"max-w-[1360px]":"max-w-[1210px]")}>{pageContent}</main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card px-2 pb-[env(safe-area-inset-bottom)] min-[720px]:hidden" aria-label="Navegação principal mobile">
         <div className="mx-auto grid h-[76px] max-w-[540px] grid-cols-4 items-center">
           {routes.filter(x=>["inicio","comunidade","conversas","voce"].includes(x.slug)).map(x=><button key={x.slug} onClick={()=>navigate(x.slug)} aria-current={slug===x.slug?"page":undefined} className={"flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] "+(slug===x.slug?"font-semibold text-foreground":"text-muted-foreground")}>
