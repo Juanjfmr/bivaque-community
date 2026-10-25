@@ -9,7 +9,7 @@ import {
   Bookmark, Plus, ChevronRight, Check, Bell, Filter, Settings, Shield,
   MapPin, Heart, ArrowRight, ArrowLeft, Send, CircleHelp, Clock, ListChecks,
   LogOut, CircleCheck, Eye, ExternalLink, Star, SlidersHorizontal, Menu,
-  SunMoon, Sun, Moon, Monitor,
+  SunMoon, Sun, Moon, Monitor, Map as MapIcon, List as ListIcon, BellOff, Trash2, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -44,6 +44,8 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from "@/components/ui/combobox";
+import { CatalogMap } from "@/components/modules/catalog-map";
+import { activeFilterCount, findMatchingAlert, alertLabel, type SavedSearchAlert } from "@/lib/catalog-alerts.mjs";
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
 
 type Item = { city: string; id: string; title: string; description: string; meta: string; image?: string; price?: string; badge?: string; kind: string };
@@ -118,7 +120,16 @@ export default function LibraryApp(){
   const [detailOpen,setDetailOpen]=React.useState(false);
   const [filtersOpen,setFiltersOpen]=React.useState(false);
   const [mobileFiltersOpen,setMobileFiltersOpen]=React.useState(false);
-  const [catalogFilters,setCatalogFilters]=React.useState<CatalogFilters>(initialCatalogFilters);
+  const [filterSection,setFilterSection]=React.useState("all");
+  const [catalogView,setCatalogView]=React.useState<"list"|"map">("list");
+  const [alerts,setAlerts]=React.useState<SavedSearchAlert[]>([]);
+  const [alertsOpen,setAlertsOpen]=React.useState(false);
+  const [deletedAlert,setDeletedAlert]=React.useState<SavedSearchAlert|null>(null);
+  const [restoreAlert,setRestoreAlert]=React.useState<SavedSearchAlert|null>(null);
+  const kindKey: "imoveis"|"desapegos" = slug==="desapegos"?"desapegos":"imoveis";
+  const [filtersByMarket,setFiltersByMarket]=React.useState<Record<"imoveis"|"desapegos",CatalogFilters>>({imoveis:{...initialCatalogFilters},desapegos:{...initialCatalogFilters}});
+  const catalogFilters=filtersByMarket[kindKey];
+  const setCatalogFilters=(action:React.SetStateAction<CatalogFilters>)=>setFiltersByMarket(prev=>({...prev,[kindKey]:typeof action==="function"?(action as (v:CatalogFilters)=>CatalogFilters)(prev[kindKey]):action}));
   const [catalogDraft,setCatalogDraft]=React.useState<CatalogFilters>(initialCatalogFilters);
   const [replyTo,setReplyTo]=React.useState<string|null>(null);
   const [replyDraft,setReplyDraft]=React.useState("");
@@ -133,10 +144,16 @@ export default function LibraryApp(){
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{})}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
+  React.useEffect(()=>{const v=readStore();if(v){
+    setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);
+    const restored=v.filtersByMarket||{imoveis:{...initialCatalogFilters,...v.catalogFilters},desapegos:{...initialCatalogFilters}};
+    setFiltersByMarket({imoveis:{...initialCatalogFilters,...restored.imoveis},desapegos:{...initialCatalogFilters,...restored.desapegos}});
+    setAlerts(Array.isArray(v.alerts)?v.alerts:[]);
+    setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});
+  }setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
-  React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
+  React.useEffect(()=>{if(slug!=="busca")setQuery("");setTab("Indicações");setCatalogView("list");if(restoreAlert&&slug===restoreAlert.kind){setCategory((restoreAlert.attrs as CatalogFilters&{category?:string}).category||"Todos");setRestoreAlert(null)}else if(!restoreAlert)setCategory("Todos")},[slug,restoreAlert]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function openItemPage(v:Item){navigate((v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id)}
@@ -148,10 +165,28 @@ export default function LibraryApp(){
   ].map(([kind,subtitle,Icon])=><DropdownMenuItem key={kind as string} className="min-h-[52px] cursor-pointer gap-3 rounded-lg px-3 py-2" onSelect={()=>openCreate(kind as string)}><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">{React.createElement(Icon as typeof Plus,{className:"size-[19px]"})}</span><span className="min-w-0"><strong className="block text-[13px] font-medium">{kind as string}</strong><span className="block text-[11px] text-muted-foreground">{subtitle as string}</span></span></DropdownMenuItem>);
   function submitCreate(e:React.FormEvent){e.preventDefault();if(!title.trim()||!description.trim()){toast.error("Preencha título e descrição");return;}setPosts(a=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType},...a]);setComposeOpen(false);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.")}
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
-  function openFilters(){setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
+  function openFilters(section="all"){setFilterSection(section);setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
   function applyFilters(){setCatalogFilters({...catalogDraft});setFiltersOpen(false);setMobileFiltersOpen(false)}
   function clearFilters(){setCatalogDraft({...initialCatalogFilters});setCatalogFilters({...initialCatalogFilters});setCategory("Todos")}
   function updateDraft<K extends keyof CatalogFilters>(key:K,value:CatalogFilters[K]){setCatalogDraft(d=>({...d,[key]:value}))}
+  const alertAttributes=()=>({...catalogFilters,category});
+  const matchedAlert=findMatchingAlert(alerts,kindKey,city,alertAttributes());
+  const activeFilters=activeFilterCount(alertAttributes(),{housing:kindKey==="imoveis"})+(category!=="Todos"?1:0);
+  function saveSearchAlert(){
+    if(!activeFilters){toast.info("Escolha ao menos um filtro para salvar a busca.");return}
+    if(matchedAlert){setAlertsOpen(true);return}
+    const attrs=alertAttributes();
+    const next:SavedSearchAlert={id:"alert-"+Date.now(),kind:kindKey,city,attrs,label:alertLabel(kindKey,attrs),enabled:true,created:Date.now()};
+    setAlerts(v=>[next,...v]);toast.success("Busca salva neste navegador. Notificações automáticas ainda não estão disponíveis.");
+  }
+  function openSavedAlert(alert:SavedSearchAlert){
+    setAlertsOpen(false);setCity(alert.city);
+    setFiltersByMarket(v=>({...v,[alert.kind]:{...initialCatalogFilters,...alert.attrs}}));
+    setRestoreAlert(alert);
+    navigate(alert.kind);
+  }
+  function removeAlert(alert:SavedSearchAlert){setAlerts(v=>v.filter(x=>x.id!==alert.id));setDeletedAlert(alert)}
+  function undoAlert(){if(deletedAlert){setAlerts(v=>[deletedAlert,...v]);setDeletedAlert(null)}}
   function submitReply(e:React.FormEvent){e.preventDefault();if(!replyTo||!replyDraft.trim())return;setReplies(r=>({...r,[replyTo]:[...(r[replyTo]||[]),replyDraft.trim()]}));setReplyTo(null);setReplyDraft("");toast.success("Resposta registrada localmente")}
   function send(e:React.FormEvent){e.preventDefault();if(!message.trim())return;setChats(a=>a.map(c=>c.id===chatId?{...c,messages:[...c.messages,{self:true,body:message.trim()}]}:c));setMessage("");toast.info("Mensagem registrada localmente")}
   const allSaved=allItems.filter(x=>saved.includes(x.id));
