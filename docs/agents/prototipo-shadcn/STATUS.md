@@ -33,12 +33,13 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 ## Estado atual para retomada
 
 - **1a concluída localmente** em `5fc9fc77`, com gate completo e runtime independente.
-- **1b em implementação/revisão**, sessão `ses_e8d26290affezIzEFOzk3S6WMD`.
-  Unitários: 38/38 passaram. Última bateria 375: **86/94 passaram, 8 falharam**.
-  Falhas: quatro retornos entre entradas de mesma URL/origens distintas;
-  dois endereços opcionais com `/undefined`; `/app` sem redirect; fallback de ID ausente.
-  Novo reparo em andamento; gate da 1b e bateria em 768/1440 ainda não executados.
-  Isso não é aceite. 1c–1e ainda não despachadas.
+- **1b julgada pelo Codex: CORREÇÕES**, sem aprovação ou commit da implementação.
+  Gate completo verde, 38/38 unitários e 288/288 E2E nos três tamanhos na árvore local.
+  Prova HTTP adicional confirmou `/app` com 404 e sugestão do Vite, enquanto `/app/`
+  responde 200 com o HTML do app. A bateria verde não cobria o endereço sem barra.
+  Lista única no contrato `APP-006.task.yml`: endereço sem barra, carga ativa fora do
+  render e registro da pendência do catálogo. Nova cadeia APP-006 preparada para despacho;
+  marcador `.visual/coordenacao/APP-006-PRONTO.txt`. 1c–1e ainda não despachadas.
 - **R3 bloqueada por orçamento**, checkpoint WIP `64dc6218` no worktree separado.
   Última suíte: 154 arquivos, 1734 asserções executadas, resultado FAIL; db:lint passou.
   Gate parou em quatro erros de lint reproduzidos na base. Revisão de segurança final pendente.
@@ -110,6 +111,64 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
   Pedido também scroll/foco reais no Avançar. Parecer detalhado em
   `.visual/coordenacao/APP-002-revisao-instrumento-1.md`. 1c não liberada.
 
+### 1b — relato do executor (DeepSeek V4.1 Flash, 25/10/2026)
+
+Entregue **navegação**, não jornada: 33 endereços reais em `/app/<nome>` com parâmetro
+codificado, Mercado como rota adicional `/app/mercado` (Desapegos selecionado), Conversas
+só como ícone do topo, aba ativa pelo dono da tela com origem por entrada onde há mais de
+uma porta, estado por entrada no roteador (origem, pai, rolagem, descritor de foco,
+filtros, sobreposição), Voltar fechando sobreposição antes de trocar de rota, restauração
+de rolagem e foco esperando carga explícita, e cancelamento ao sair da rota. Casca com a
+barra nova; telas vazias com controles fictícios que só existem em **modo de prova**
+(global de janela ligado pela fixture; nada no uso normal, nada no histórico). TanStack
+Router é o único dono do histórico: nenhum `pushState`/`history.state` cru no app, e o
+instrumento nunca lê estado interno.
+
+Arquivos: `apps/app/lib/navegacao/*` (rotas, abas, entrada, transicoes, restauracao, dom,
+react), `apps/app/src/{roteador.tsx,titulos.ts,modo-de-prova.ts,casca,telas,contexto}`,
+`apps/app/tests/{navegacao,e2e}`, `apps/app/playwright.config.ts`, `apps/app/tsconfig.json`,
+`apps/app/package.json` (só os scripts `test` e `test:e2e`; **zero dependência nova**),
+`docs/agents/prototipo-shadcn/APP-002-cobertura.md`.
+
+Provas executadas nesta revisão:
+
+- Unitários do app: **38/38**, 5 arquivos, verde.
+- `typecheck` do app (inclui `tests/` e a config de e2e): verde.
+- `build` do app: verde.
+- e2e do app contra o build desta revisão, `vite preview` na 3200, três projetos:
+  **288 passaram, 0 falharam** (96 testes × 375/768/1440).
+- Gate (variáveis públicas da stack local exportadas no processo, sem `.env.local`):
+  `lint` ok (9s), `typecheck` ok (20s), `typecheck:e2e` ok (7s), `build` ok (76s),
+  `build:app` ok (13s); **parou em `test`** — 1 falha de 189 na etapa de escopo, causada
+  por `node tests/secrets-scan.mjs` reprovar um token de 40+ caracteres em
+  `tools/backend-kanban/public/board.json:5369`. O arquivo **não faz parte deste diff**
+  (nada modificado nele) e foi tocado por último em `d61b7cc3`, antes desta etapa; é o
+  hash de revisão que o próprio contrato do quadro guarda. Fora dos allowed_paths, não foi
+  tocado, e o instrumento do gate não foi alterado. **Gate não fecha verde por causa disso.**
+
+Rodadas próprias de reparo: 2 nesta sessão (formatação/lint; e a rodada que corrigiu a
+leitura de carga pelo roteador + assinatura de `materializarEntrada`). Somadas às rodadas
+anteriores à decisão do dono, o total **ultrapassa `retry_budget: 3`** — registrado como
+está, sem esconder.
+
+Dúvidas para o julgamento:
+
+1. O host estático desta onda só atende `/app/` (com barra); `/app` devolve a mensagem do
+   Vite. A bateria prova `/app/` como endereço do Início. Na publicação conjunta (ADR §8),
+   o proxy de `/app/*` precisa responder `/app` sem barra.
+2. O achado do `secrets-scan` no `board.json` é falso positivo de heurística sobre um hash
+   de documentação; quem corrige é o dono/coordenador (fora do escopo desta etapa).
+3. `/app/mercado` e `/app/desapegos` mostram hoje o mesmo conteúdo de sub-aba; a onda 5
+   decide se o conteúdo de Negócios muda essa relação.
+4. O menu Criar fica com as sete escolhas do inventário §4 desabilitadas até a 1c ligar
+   cada fluxo — é placeholder explícito, não jornada.
+5. As escritas de estado usam o caminho efetivamente casado (`routeId`); se a árvore
+   migrar para rotas por arquivo, esse ponto precisa ser revisto.
+6. Cada evento de rolagem faz uma reescrita de estado da entrada (aceitável nas telas de
+   prova; otimizar quando a 1c trouxer as telas de verdade).
+
+Não há aprovação visual nem fechamento da onda 1: 1c, 1d e 1e seguem não despachadas.
+
 ## R3
 
 - RED-003 validado R3, orçamento 3; contrato commitado no worktree R3 em `5e43e7d7`.
@@ -167,5 +226,32 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 
 ## Próxima decisão
 
-Recomendação: manter a sequência 1a → bateria 1b → casca 1c → dados 1d → instrumentos 1e,
-com R3 independente. Não há nova decisão do dono necessária neste momento.
+Recomendação: concluir o lote de correções APP-006 antes de liberar 1c. R3 permanece
+com a decisão de orçamento já solicitada; sua triagem terminou, sem aprovação de segurança.
+
+## Julgamento do Codex — 25/10/2026, após as duas cadeias
+
+- Lidos STATUS, triagem Qwen e trechos do diff da APP-002. Triagem não substituiu decisão.
+- Corrigido erro do próprio coordenador no quadro: o prefixo `SHA` estava colado ao hash,
+  criando um token que escapava da exclusão de digest do scanner. Separado por espaço;
+  scanner e expectativas de segurança preservados. Resumo do quadro regenerado.
+- Gate executado uma vez: lint 8s, types 15s, types E2E 5s, build Next 55s,
+  build app 9s, test 34s, secrets 6s. Todas as sete etapas passaram, sem build pulado.
+  Nenhum arquivo env criado; configuração pública da stack local somente no processo.
+- Provas focais do julgador: unitários 38/38, cinco arquivos; E2E 288/288,
+  96 casos em cada tamanho 375/768/1440, duração 1,3 min.
+- Logs `.visual/coordenacao/APP-002-julgamento-{gate,unit,e2e,raiz}.log`.
+  A primeira tentativa do probe HTTP teve erro de quoting do comando do julgador,
+  antes de executar; o probe corrigido confirmou 404 sem barra e 200 com barra.
+- Decisão **CORREÇÕES**: contrato exige `/app` e a prova só visitava `/app/`.
+  O achado de mutação de contexto durante render também foi confirmado em
+  `TelaDeProva.tsx:48`; o título condicionado do catálogo fica como pendência explícita.
+- Lista única validada em `docs/agents/tasks/APP-006.task.yml`, R2, máximo de três
+  rodadas próprias. É o lote de achados deste julgamento, conforme o fluxo vigente;
+  não aprova a APP-002 nem apaga o histórico de orçamento excedido do produtor.
+- Baseline de 40 arquivos preservada em `.visual/coordenacao/APP-006-base/manifesto.json`
+  e cópias correspondentes, para distinguir novos reparos do diff anterior sem commit.
+- R3: marcador RED-003 recebido e triagem lida. Não houve nova prova de banco,
+  retomada de implementação nem aprovação de permissões nesta sessão dedicada à 1b.
+  F1/F2/F3 da triagem (lint, evidência de conferência e contagem SQL) ficam para seu julgamento.
+- Nada foi integrado, publicado, enviado para merge ou aprovado visualmente.

@@ -1,0 +1,41 @@
+task_id: APP-006
+objective: Fechar os achados do julgamento da navegação 1b sem iniciar a casca 1c.
+authority:
+  - docs/agents/prototipo-shadcn/STATUS.md fluxo vigente decidido pelo dono em 25/10
+  - docs/agents/tasks/APP-002.task.yml
+  - docs/decisions/ADR-20261024-front-react-spa.md seção 3
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Julgamento APP-002 confirma contrato de /app sem barra ainda não atendido; bateria só visita /app/ e triagem aponta mutação compartilhada durante render e dívida do catálogo não registrada.
+allowed_paths:
+  - apps/app/vite.config.ts
+  - apps/app/src/contexto/cargas.tsx
+  - apps/app/src/telas/TelaDeProva.tsx
+  - apps/app/tests/e2e/
+  - docs/agents/prototipo-shadcn/APP-002-cobertura.md
+  - docs/agents/prototipo-shadcn/STATUS.md
+forbidden:
+  - instalar pacotes, mudar dependências, lockfile, gate ou scanner de segredos
+  - alterar outros worktrees, banco, API, env.local, push, merge ou deploy
+  - criar subagentes, processos em segundo plano ou implementar a onda 1c
+  - ler history.state, diagnóstico numérico do app ou enfraquecer provas existentes
+acceptance:
+  - Correção 1 obrigatória - /app e /app/ abrem Início no preview real da porta 3200, com h1 Bivaque, casca, aba Início e foco corretos; pode redirecionar para endereço válido do app, sem texto de sugestão do Vite
+  - Escrever primeiro o caso negativo de /app sem barra, provar falha antes do reparo e preservar o caso /app/ e todos os 288 casos existentes
+  - Correção 2 - registrar a carga ativa após o commit do React e limpar a referência ao desmontar sem apagar a carga da tela seguinte; não mutar porta.atual no corpo do render
+  - Preservar espera por elementos reais e cancelamento da restauração tardia; a resposta antiga não pode mudar scroll ou foco da tela nova
+  - Correção 3 documental - registrar no mapa de cobertura o título condicionado do catálogo legado como pendência da tela futura, sem alegar equivalente completo nem implementar conteúdo agora
+  - Executar gate completo e testes da etapa sozinho com no máximo três rodadas próprias neste lote novo; obter variáveis públicas da stack local apenas no processo, sem criar arquivo env nem imprimir chaves
+  - Terminar escrevendo no STATUS provas com números, logs, rodadas consumidas, falhas classificadas, limitações e dúvidas; não apagar histórico das rodadas anteriores nem se declarar aprovado
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - Teste /app e /app/ contra preview real nos três viewports com URL título aba e foco
+risk: navegação e ciclo de vida do carregamento
+risk_level: R2
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
