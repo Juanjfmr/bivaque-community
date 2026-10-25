@@ -1,0 +1,7 @@
+:HL["/bivaque-community/_next/static/chunks/14bg8-abxonyh.css","style"]
+:HL["/bivaque-community/_next/static/media/noto_sans-s.p.05o5-i1cea2yx.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/bivaque-community/_next/static/media/noto_serif-s.p.2v5sa_tq9g0ze.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+3:[["children",{"s":"__PAGE__","h":160}]]
+2:[["children",{"s":{"n":"id","t":"d","k":"d1","s":[]},"h":65632,"c":"$Q3"}]]
+1:[["children",{"s":{"n":"section","t":"d","k":"anuncio","s":[]},"h":196704,"c":"$Q2"}]]
+0:{"b":"noxGnQZZGKu_NOQdxQpi0","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
