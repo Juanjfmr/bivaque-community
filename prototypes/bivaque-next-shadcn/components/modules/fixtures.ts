@@ -58,3 +58,17 @@ export const BENEFITS:Benefit[]=[
 export const VILLAS=[{id:"v1",name:"Vila Ajuricaba",city:"Manaus",members:820,access:"Acesso restrito",description:"Comunidade residencial demonstrativa com avisos, solicitações e eventos."},{id:"v2",name:"Vila Militar do Sudoeste",city:"Brasília",members:146,access:"Acesso restrito",description:"Exemplo hipotético para testar o módulo de vilas."}];
 export const ARRIVAL_STEPS=[{id:"t1",title:"Definir a organização militar de destino",detail:"Escolha sua OM para orientar a busca de moradia."},{id:"t2",title:"Pesquisar bairros e moradia",detail:"Compare o orçamento e a rotina de deslocamentos."},{id:"t3",title:"Solicitar propostas de mudança",detail:"Confirme embalagem, seguro, datas e montagem."},{id:"t4",title:"Organizar escola e serviços",detail:"Valide vagas, horários e disponibilidade."},{id:"t5",title:"Conhecer grupos e pessoas",detail:"Encontre a comunidade e eventos locais."}];
 export const BRASILIA_GUIDE=[{title:"Moradia e bairros",body:"Considere Asa Norte, Asa Sul, Sudoeste e Águas Claras. Visite os imóveis e confira tempo de trajeto, condomínio e custos.",type:"Moradia"},{title:"Vida escolar",body:"Busque informações sobre matrícula, turno e trajeto. Confirme vagas e documentação com a escola.",type:"Família"},{title:"Documentos e serviços",body:"Confira os procedimentos de transferência na sua organização e as exigências dos prestadores antes de contratar.",type:"Serviços"},{title:"Transporte e rotina",body:"Compare horários reais de deslocamento, estacionamento, transporte público e vias de acesso.",type:"Cidade"}];
+
+
+export type Talent={id:string;name:string;area:string;experience:string;city:string;skills:string[];description:string};
+export type Ride={id:string;origin:string;destination:string;city:string;when:string;seats:number;driver:string;notes:string};
+export const TALENTS:Talent[]=[
+{id:"tal1",name:"Fernanda R.",area:"Administração e finanças",experience:"Projetos e gestão",city:"Brasília",skills:["Excel","Gestão de processos","Relatórios"],description:"Perfil profissional totalmente fictício para explorar conexões de competências."},
+{id:"tal2",name:"Lucas M.",area:"Tecnologia",experience:"Desenvolvimento web",city:"Brasília",skills:["React","TypeScript","Design de produto"],description:"Exemplo de perfil de talento. Não representa vínculo ou serviço real."},
+{id:"tal3",name:"Ana P.",area:"Educação",experience:"Aulas e orientação",city:"Brasília",skills:["Matemática","Reforço","Didática"],description:"Exemplo ilustrativo de competências compartilhadas na comunidade."}
+];
+export const RIDES:Ride[]=[
+{id:"car1",origin:"Asa Norte",destination:"Águas Claras",city:"Brasília",when:"Segunda · 07h30",seats:2,driver:"Marcos T.",notes:"Trajeto demonstrativo; embarque e detalhes combinados somente entre participantes."},
+{id:"car2",origin:"Sudoeste",destination:"Asa Sul",city:"Brasília",when:"Quarta · 08h00",seats:1,driver:"Paula R.",notes:"Carona ilustrativa para discussão do módulo; não existe reserva real."},
+{id:"car3",origin:"Taguatinga",destination:"Plano Piloto",city:"Brasília",when:"Sexta · 18h30",seats:3,driver:"Carlos N.",notes:"Exemplo fictício de compartilhamento de deslocamento."}
+];
