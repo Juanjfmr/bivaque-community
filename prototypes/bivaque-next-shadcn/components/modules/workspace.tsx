@@ -48,9 +48,10 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
  const place=city.split(" - ")[0];
  useEffect(()=>{try{const s=localStorage.getItem("bivaque-shadcn-modules-lab-v1");if(s){const v=JSON.parse(s) as Partial<Lab>;setDb({...initial,...v,followed:v.followed||[],recommended:v.recommended||[],resolvedAnswers:{...initial.resolvedAnswers,...(v.resolvedAnswers||{})}});}}catch{}setLoaded(true);},[]);
  useEffect(()=>{if(loaded){try{localStorage.setItem("bivaque-shadcn-modules-lab-v1",JSON.stringify(db))}catch{}}},[db,loaded]);
- useEffect(()=>{if(initialDetail){setDetail(initialDetail);onDetailConsumed?.()}},[initialDetail]);
+
  useEffect(()=>{const handle=()=>{setComposeType("Pergunta");setCompose(true)};document.addEventListener("bivaque:compose",handle);return()=>document.removeEventListener("bivaque:compose",handle)},[]);
  useEffect(()=>{setTerm(page==="Busca"?searchQuery:"");setFilter("Todos");setDetail(null);setWorkTab("Todos");if(page==="Comunidade")setCommunityTab("ind");},[page,searchQuery]);
+ useEffect(()=>{if(initialDetail){setDetail(initialDetail);onDetailConsumed?.()}},[initialDetail]);
  const update=(f:(s:Lab)=>Lab)=>setDb(f);
  const markUseful=(id:string)=>{update(s=>({...s,useful:s.useful.includes(id)?s.useful.filter(x=>x!==id):[...s.useful,id]}));onNotify("Avaliação registrada","Seu gesto foi salvo no modo de teste.")};
  const startConversation=(name:string,context:string)=>{const existing=db.threads.find(x=>x.name===name&&x.context===context);if(existing){setActiveThread(existing.id);}else{const id="thread-"+uid();update(s=>({...s,threads:[{id,name,context,avatar:ini(name),read:true,messages:[{id:uid(),mine:true,text:"Olá! Tenho interesse em saber mais sobre "+context+".",time:currentTime()}]},...s.threads]}));setActiveThread(id)};setDetail(null);onNavigate("Conversas");onNotify("Conversa aberta","Mensagens locais, sem envio real.")};
