@@ -50,10 +50,11 @@
   --radius-sm: calc(var(--radius) * .67);
   --radius-md: calc(var(--radius) * .833333);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.333333);
+  --radius-xl: var(--radius); /* R72 cards remain 12px, not the shadcn 16px default */
 }
 
 :root {
+  color-scheme: light;
   /* Approved brand primitives */
   --bivaque-graphite: #253033;
   --bivaque-paper: #F2F0EB;
@@ -113,6 +114,7 @@
   --sidebar-ring: var(--bivaque-mist);
 }
 .dark {
+  color-scheme: dark;
   --background: var(--bivaque-charcoal);
   --foreground: #ECEAE4;
   --card: var(--bivaque-raised);
@@ -155,4 +157,6 @@
 @layer base {
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground font-sans; }
+  /* R72: reduce photography luminance 10% in the dark theme; do not darken logos. */
+  .dark main img { filter: brightness(.9); }
 }
