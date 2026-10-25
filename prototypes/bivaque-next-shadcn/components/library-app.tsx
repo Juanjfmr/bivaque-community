@@ -299,28 +299,32 @@ export default function LibraryApp(){
         </SidebarMenuButton>
       </SidebarMenuItem></SidebarMenu></SidebarHeader>
       <SidebarContent>
-        {["principal","explorar","futuro"].map(group=><SidebarGroup key={group}><SidebarGroupLabel>{group==="principal"?"Navegação":group==="explorar"?"Explorar":"Experimentais"}</SidebarGroupLabel><SidebarMenu>{routes.filter(x=>x.group===group).map(x=><SidebarMenuItem key={x.slug}><SidebarMenuButton asChild isActive={slug===x.slug} tooltip={x.label}><a href={"/bivaque-community/"+x.slug+"/"} onClick={e=>{e.preventDefault();navigate(x.slug)}}><x.icon/><span>{x.label}</span></a></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarGroup>)}
-      </SidebarContent>
+        <SidebarGroup><SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[.12em]">Navegação</SidebarGroupLabel><SidebarMenu>{routes.filter(x=>["inicio","comunidade","conversas","voce"].includes(x.slug)).map(x=><SidebarMenuItem key={x.slug}><SidebarMenuButton asChild isActive={slug===x.slug} tooltip={x.label} className="h-10 rounded-lg"><a href={"/bivaque-community/"+x.slug+"/"} onClick={e=>{e.preventDefault();navigate(x.slug)}}><x.icon className="size-[17px] stroke-[1.7]"/><span className="text-[13px]">{x.label}</span></a></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarGroup>
+        <SidebarGroup><SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[.12em]">Descobrir</SidebarGroupLabel><SidebarMenu>{routes.filter(x=>["imoveis","servicos","desapegos","grupos","movimentacao","guia"].includes(x.slug)).map(x=><SidebarMenuItem key={x.slug}><SidebarMenuButton asChild isActive={slug===x.slug} tooltip={x.label} className="h-10 rounded-lg"><a href={"/bivaque-community/"+x.slug+"/"} onClick={e=>{e.preventDefault();navigate(x.slug)}}><x.icon className="size-[17px] stroke-[1.7]"/><span className="text-[13px]">{x.label}</span></a></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarGroup>
+        <SidebarGroup><SidebarMenu><SidebarMenuItem><DropdownMenu><DropdownMenuTrigger asChild><SidebarMenuButton tooltip="Outros espaços" className="h-10 rounded-lg"><Menu className="size-[17px]"/><span className="text-[13px]">Outros espaços</span><ChevronRight className="ml-auto size-3.5"/></SidebarMenuButton></DropdownMenuTrigger><DropdownMenuContent align="start" side="right" className="min-w-52">{routes.filter(x=>["pedidos","agenda","vilas","clube","talentos","caronas"].includes(x.slug)).map(x=><DropdownMenuItem key={x.slug} onSelect={()=>navigate(x.slug)}><x.icon className="size-4"/>{x.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu></SidebarMenuItem></SidebarMenu></SidebarGroup>
+            </SidebarContent>
       <SidebarSeparator/>
       <SidebarFooter><SidebarMenu><SidebarMenuItem><SidebarMenuButton onClick={()=>navigate("salvos")} tooltip="Salvos"><Bookmark/><span>Salvos</span></SidebarMenuButton></SidebarMenuItem><SidebarMenuItem><SidebarMenuButton onClick={()=>navigate("voce")} tooltip="Configurações"><Settings/><span>Preferências</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarFooter>
     </Sidebar>
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b px-4 lg:px-6">
-        <SidebarTrigger/><Separator orientation="vertical" className="mr-1 h-5"/>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{page.label}</span>
-        <Button variant="outline" size="icon" onClick={()=>setSearchOpen(true)} aria-label="Pesquisar"><Search/></Button>
-        <DropdownMenu><DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Aparência" title="Aparência"><SunMoon/></Button>
-        </DropdownMenuTrigger><DropdownMenuContent align="end">
-          <DropdownMenuLabel>Aparência</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/> Automática</DropdownMenuItem>
-          <DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/> Clara</DropdownMenuItem>
-          <DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/> Escura</DropdownMenuItem>
-        </DropdownMenuContent></DropdownMenu>
-        <Select value={city} onValueChange={setCity}><SelectTrigger className="w-32 sm:w-44"><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><UserRound/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Conta demonstrativa</DropdownMenuLabel><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>navigate("voce")}>Perfil</DropdownMenuItem><DropdownMenuItem onSelect={()=>navigate("salvos")}>Salvos</DropdownMenuItem><DropdownMenuItem onSelect={()=>toast.info("Nenhuma conta conectada")}>Sair</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+      <header className="flex h-[54px] shrink-0 items-center gap-2 border-b border-border/75 bg-background/95 px-3 backdrop-blur-sm sm:h-[62px] sm:gap-3 sm:px-5 xl:px-8">
+        <SidebarTrigger className="size-9 shrink-0"/>
+        <Separator orientation="vertical" className="mr-1 hidden h-5 sm:block"/>
+        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold sm:text-sm">{slug==="inicio"?"Bivaque":page.label}</span>
+        <span className="hidden rounded-full border border-border/70 px-2.5 py-1 text-[10px] text-muted-foreground lg:inline">Prévia visual</span>
+        <Button variant="ghost" size="icon" className="size-9" onClick={()=>setSearchOpen(true)} aria-label="Pesquisar"><Search className="size-[18px]"/></Button>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="hidden size-9 sm:inline-flex" aria-label="Aparência"><SunMoon className="size-[18px]"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aparência</DropdownMenuLabel><DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/> Automática</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/> Clara</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/> Escura</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+        <Select value={city} onValueChange={setCity}><SelectTrigger className="h-9 w-[114px] rounded-lg border-border/75 bg-card px-2.5 text-[11px] shadow-none sm:w-[150px]"><MapPin className="mr-1.5 hidden size-3.5 sm:block"/><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="hidden size-9 sm:inline-flex" aria-label="Seu perfil"><UserRound className="size-[18px]"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Conta demonstrativa</DropdownMenuLabel><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>navigate("voce")}>Perfil</DropdownMenuItem><DropdownMenuItem onSelect={()=>navigate("salvos")}>Salvos</DropdownMenuItem><DropdownMenuItem onSelect={()=>toast.info("Nenhuma conta conectada")}>Sair</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       </header>
-      <main className="mx-auto w-full max-w-7xl space-y-6 p-4 pb-16 lg:p-8">{pageContent}</main>
+      <main className="mx-auto w-full max-w-[1210px] space-y-6 px-4 pb-28 pt-5 sm:px-6 sm:pb-14 sm:pt-7 xl:px-9">{pageContent}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl sm:hidden" aria-label="Navegação principal mobile"><div className="mx-auto grid max-w-[520px] grid-cols-5 items-center">
+        <button onClick={()=>navigate("inicio")} className={"flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] "+(slug==="inicio"?"font-semibold text-foreground":"text-muted-foreground")} aria-current={slug==="inicio"?"page":undefined}><Home className="size-5 stroke-[1.7]"/>Início</button>
+        <button onClick={()=>setSearchOpen(true)} className="flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground"><Search className="size-5 stroke-[1.7]"/>Busca</button>
+        <button onClick={()=>openCreate("Pergunta")} className="flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] font-semibold text-bivaque-city" aria-label="Criar publicação"><span className="flex size-8 items-center justify-center rounded-xl bg-bivaque-brasa text-bivaque-brasa-foreground"><Plus className="size-[18px]"/></span>Criar</button>
+        <button onClick={()=>navigate("conversas")} className={"flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] "+(slug==="conversas"?"font-semibold text-foreground":"text-muted-foreground")} aria-current={slug==="conversas"?"page":undefined}><MessageCircle className="size-5 stroke-[1.7]"/>Conversas</button>
+        <button onClick={()=>navigate("voce")} className={"flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] "+(slug==="voce"?"font-semibold text-foreground":"text-muted-foreground")} aria-current={slug==="voce"?"page":undefined}><UserRound className="size-5 stroke-[1.7]"/>Você</button>
+      </div></nav>
     </SidebarInset>
 
     <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar no Bivaque" description="Pesquisa e navegação nos dados demonstrativos">
