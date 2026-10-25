@@ -1,0 +1,43 @@
+name: Bivaque R72 — verificar porte shadcn
+on:
+  push:
+    branches: [feat/port-r72-shadcn-p0-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-r72-shadcn-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-r72-port-check
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check brand token contrast
+        run: node scripts/verify-contrast.mjs
+      - name: Build and typecheck static routes
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Check routes and brand assets
+        run: |
+          test -f out/index.html
+          test -f out/comunidade/index.html
+          test -f out/imoveis/index.html
+          test -f out/desapegos/index.html
+          test -f out/servicos/index.html
+          test -f out/brand/bivaque-symbol-white.svg
+          grep -q '/bivaque-community/_next/static' out/index.html
