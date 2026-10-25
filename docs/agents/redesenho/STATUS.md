@@ -6,20 +6,23 @@ Nenhuma permissão, migration ou integração foi aprovada por essa autorizaçã
 
 ## Lote atual
 
-- RED-005 **APROVADO localmente pelo Codex em 25/10**, somente no escopo das seis
-  suítes: 90/90 asserções, db:lint exit 0 e gate completo verde, incluindo build.
-  Agregado permanece FAIL: 154 arquivos/1959 executadas, 53 arquivos vermelhos
-  (35 abortos e 18 falhas de asserção). Sem aprovação global de permissões/RLS.
-- RED-006 é o próximo lote autorizado: seis suítes de pedidos de serviço/conversas;
-  contrato ../tasks/RED-006.task.yml validado R3, máximo três rodadas próprias.
-- Próximo marcador R3: .visual/coordenacao/RED-006-PRONTO.txt.
-- APP-003-C1 segue isolada no outro worktree; não editar seu STATUS nem quadro.
-- Julgamento de permissões e revisão independente de segurança final seguem pendentes.
+- RED-006 **CORREÇÕES no julgamento do Codex em 25/10**. As seis suítes medem
+  94/94 asserções verdes e db:lint passou, porém a leitura negada a outra cidade
+  ocorre sobre tabela vazia. Faltam negativas do canal de purga, e o mapa confunde
+  extinção de regra da vila com montagem equivalente. Nenhuma aprovação deste lote.
+- Lista única ../tasks/RED-006-correcoes-1.md. Retomada RED-006-C1 somente na rodada
+  restante 3/3 do mesmo orçamento; se falhar, HUMAN_DECISION real. Sem RED-007.
+- Próximo marcador R3: .visual/coordenacao/RED-006-C1-PRONTO.txt.
+- Agregado medido pelo julgador: FAIL, 154 arquivos/2038 executadas, 47 arquivos
+  vermelhos (29 abortos + 18 falhas de asserção). Permissões/RLS e segurança pendentes.
+- APP-003-C1 continua isolada; quadro e STATUS do app permanecem intocados.
 
 ## Próximos lotes autorizados
 
 1. Demais fixtures remanescentes, em lotes pequenos definidos após o julgamento atual
-   (a classe A caiu de 41 para 35 abortos, exatamente os seis deste lote).
+   (a classe A caiu de 41 (RED-004) para 35 (RED-005) e para 29 abortos agora, exatamente
+   os seis lotes já entregues). `event-question-with-service-request.sql` carrega a mesma
+   montagem obsoleta e entra no próximo lote (ver RED-006 §5).
 2. Permissões/transições, cobertura por célula, golden e tipos públicos, também subdivididos
    se necessário. A matriz aprovada continua sendo a autoridade.
 3. Prova final pela fila, gate completo e revisão independente de segurança.
@@ -38,6 +41,104 @@ instalação, subagentes ou segundo plano; reset e pgTAP só pela fila.
   rest, kong, inbucket, studio. Nenhuma outra frente usou esta fila nesta janela.
 - As duas variáveis públicas do gate foram derivadas de `supabase status -o env` **no mesmo
   processo** do comando; nenhuma chave foi impressa e nenhum `env` foi criado.
+
+## Confirmação alvo/ambiente da RED-006 (executor, 25/10/2026)
+
+Worktree `C:\Users\juana\.codex\worktrees\redesenho-r3\bivaque-community`, branch
+`codex/redesenho-r3`, base **`b0e4e7a4`** (lida em `RED-006-base.txt`). Alvo local:
+contêiner `supabase_db_bivaque-community` (healthy) e demais serviços do projeto
+`bivaque-community`; nenhum outro projeto com esse nome. Porta 3000 **livre** antes das
+provas; trava da fila (`%TEMP%\bivaque-prova-fila.lock`) **ausente**; captura visual deste
+worktree **não rodando** (`dev-server.pid`/`.log` ausentes) — a armadilha do "perfil
+fantasma" fica fora. Reset e pgTAP **só** pela fila do contrato. As duas variáveis públicas
+do gate foram derivadas de `supabase status -o env` **no mesmo processo**, sem imprimir
+chave e sem criar `env.local`.
+
+## RED-006 — o que foi feito
+
+Executado **inteiro** em **2 rodadas próprias de 3**. A rodada 1 corrigiu as fixtures legadas
+e fechou as seis verdes; a rodada 2 trocou o papel da ação de cancelamento para o papel real
+(`service_role`, com ator explícito) e reconfirmou as seis. Sem `BLOCKED`/`HUMAN_DECISION`.
+
+### Arquivos e números por arquivo
+
+| Arquivo | Plano | Rodada 1 | Rodada 2 | Mudança |
+|---|---|---|---|---|
+| `supabase/tests/service-request-cancelled-notice.sql` | 8 | ok | ok | `communities` (vila) sai; `provider_accounts` 3 valores→3; `settle_account_possessions` medido como `service_role` |
+| `supabase/tests/service-request-first-reply-notice.sql` | 8 | ok | ok | `provider_reach` `community`→`locality` |
+| `supabase/tests/service-request-open-cap.sql` | 8 | ok | ok | idem (duas contas) |
+| `supabase/tests/service-request-conversation-per-request.sql` | 13 | ok | ok | idem |
+| `supabase/tests/service-request-tracking.sql` | 26 | ok | ok | idem + comentário vila→cidade |
+| `supabase/tests/service-requests.sql` | 31 | ok | ok | `provider_reach` do painel →`locality`; negativo "fora do alcance" retargetado de vila (002) para **outra cidade** (003) |
+
+**94 asserções** (8+13+8+8+26+31), todas verdes. Nenhum `select plan()` reduzido; nenhum
+negativo apagado. Mapa completo antigo→atual em `R3-RED-006.md` §3.
+
+### As quatro falhas prévias de `service-requests` (classificação individual)
+
+Registradas na RED-005 (15 executadas, 4 vermelhas, aborto na linha 291). **Uma causa raiz:**
+fronteira de alcance vila→cidade (`R1-220`, `mudada`) tornou o ator 002 (mesma cidade)
+**dentro** do alcance, então o `throws_ok` "fora do alcance não cria" passou a não lançar e o
+pedido vazado contaminou os contadores das outras três. **Nenhum defeito real de autorização.**
+A negativa foi retargetada para 003 (localidade B, `42501`), sem afrouxar expectativa. Detalhe
+individual em `R3-RED-006.md` §4.
+
+### Agregado (rodada 2, FAIL)
+
+154 arquivos, **2038 asserções executadas**, **47 vermelhos = 29 abortos + 18 falhas de
+asserção**. Abortos caíram **35→29** (as seis deste lote); falhas de asserção seguem 18;
+executadas subiram **1959→2038 (+79)** = plano inteiro do lote (94) menos os 15 que
+`service-requests` rodava antes do aborto. Classificação em `R3-RED-006.md` §5.
+
+### Instrumento e gate
+
+- **Nada do instrumento foi tocado** (gate, scripts, fixtures compartilhadas, seed, tipos,
+  matrizes intactos). `git status` mostra só as seis suítes (rodada 2).
+- `db:lint`: "No schema errors found", exit 0.
+- Gate completo: verde com as duas variáveis públicas no processo, sem `env.local`.
+- Migration intacta: SHA256 `56CAD1E65F941627836951DF1C93EDB61CC403BBB285BFB21787332D4F7D1FA3`.
+- Depois dos escritos documentais, `lint` (exit 0; 11 warnings + 50 infos não bloqueantes, como na
+  RED-005) e `test:secrets` (exit 0) foram reconfirmados no estado final; o gate completo acima mede
+  o código, que os documentais não alteram.
+
+### Provas (todas nesta sessão, saída real)
+
+- `node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco`
+  (rodada 1) → as seis `ok`; **154 arquivos, 2038 asserções, FAIL**, 47 vermelhos.
+  Log `RED-006-banco-1.log`.
+- Mesmo comando (rodada 2, após `service_role`) → as seis `ok`; **154 arquivos, 2038
+  asserções, FAIL**, 47 vermelhos (29+18). Log `RED-006-banco-2.log`.
+- `node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint` → exit 0. Log `RED-006-db-lint.log`.
+- `npx pnpm@11.18.0 gate` → **GATE VERDE**: lint 8s / typecheck 22s / typecheck:e2e 8s /
+  **build 62s (não pulado)** / test 31s / secrets 11s; escopo 141/141. Log `RED-006-gate.log`.
+
+### Dependência concreta fora do lote
+
+`event-question-with-service-request.sql` aborta (linha 48) com a **mesma** montagem obsoleta
+de `provider_reach` (`community`/3 valores), fora de `allowed_paths`; não corrigido, registrado
+para o próximo lote de fixtures. Não é defeito de autorização.
+
+### Documentais
+
+`R3-RED-006.md` criado, com mapa antigo→atual por arquivo, planos, contagem por função, papel de
+medição, as quatro falhas classificadas, agregado, limitações e dúvidas.
+
+### Estado e dúvidas (RED-006)
+
+Execução comprovada nas seis suítes (8+13+8+8+26+31 = 94 asserções, todas `ok`), `db:lint` exit 0
+e gate verde com build. **Não me declaro aprovado**: julgamento de permissão/RLS e revisão
+independente continuam com o Codex; o banco completo segue sem PASS. Nenhum commit.
+
+1. **Contradição interna da matriz** (não alterei nada): `R1-155` (`provider_accounts.community id`)
+   está `mantida`, mas a seção 3 e a migration removem a coluna. Segui a seção 3 e a migration.
+2. **Retarget do negativo "fora do alcance"** de vila (002) para outra cidade (003), mantendo
+   classe e polaridade, em vez de apagar o negativo. Se o Codex preferir outra montagem, é decisão
+   da revisão.
+3. **Papel de `settle_account_possessions`**: `EXECUTE` só de `service_role`; medido com
+   `set local role service_role` + ator explícito. Não há papel "sem serviço" estável para medir o
+   grant ausente aqui.
+4. **`event-question-with-service-request.sql`** carrega a mesma montagem obsoleta e segue abortando;
+   fora de `allowed_paths`, registrado como dependência do próximo lote.
 
 ## RED-005 — o que foi feito
 
@@ -244,3 +345,41 @@ Uma execução de banco pela fila, db:lint pela fila e gate; julgamento ainda pe
 
 Fonte aprovada RED-005: commit 5f5de530. Contrato seguinte RED-006 validado separadamente;
 provas históricas da RED-004 e julgamento da RED-005 não devem ser repetidos por marcador antigo.
+## Prova do julgador RED-006 — alvo confirmado, 25/10/2026
+
+Stack local supabase_db_bivaque-community porta 55322, sem servidor na porta 3000.
+Migration SHA256 56CAD1E65F941627836951DF1C93EDB61CC403BBB285BFB21787332D4F7D1FA3.
+Prova pela fila e gate uma vez; julgamento pendente, sem aprovação por relato.
+## Julgamento RED-006 — Codex, 25/10/2026, CORREÇÕES
+
+- Marcador RED-006-PRONTO.txt de 2026-10-25T19:23:03.3775217-04:00 tratado,
+  executor=0, triagem=0. Não repetir este marcador como entrega nova.
+- Conferidos STATUS, relato, triagem e hunks das seis suítes, fixtures e definições
+  pertinentes. Provas próprias uma vez: banco pela fila confirma seis arquivos ok,
+  planos 8+13+8+8+26+31=94, agregado FAIL 154 arquivos/2038 executadas e
+  47 arquivos vermelhos (29 abortos + 18 falhas de asserção). db:lint exit 0.
+- A classificação das quatro falhas antigas de service-requests é coerente: ator 002
+  está na cidade do alcance após a remoção da vila; sua criação inesperada contaminava
+  as leituras e a contagem. Isso não prova o novo negativo de leitura: agora, quando
+  ele roda, ainda não há pedido algum. A medição retargetada precisa de dado existente
+  e positivo autorizado antes da negação, preservando o terceiro 002 da mesma cidade.
+- settle_account_possessions tem EXECUTE somente para service_role na definição lida.
+  Aceita-se esse canal para o efeito da purga, com ajuste técnico explícito no contrato;
+  faltam chamadas negadas authenticated/anon. p_user_id é a conta-alvo, não um ator
+  autenticado. O parâmetro não prova autorização e postgres só observa efeitos.
+- A antiga condição 002 pending na vila foi extinta; o negativo com 003 em outra cidade
+  é novo e independente. A afirmação de nenhuma extinção e mera montagem equivalente
+  deve ser corrigida, com R1-220/ADR. As descrições de 002/003 como verificados também
+  excedem a fixture, que só registra outcome de 001; corrigir texto sem shared fixtures.
+- Lista única RED-006-correcoes-1.md, contrato R3 validado, mesma etapa/budget. C1
+  usa somente a rodada restante 3/3 após as duas do executor, nunca um lote artificial.
+- Logs .visual/coordenacao/RED-006-julgamento-{banco,db-lint,gate}.log e classificação
+  de cada arquivo vermelho em RED-006-julgamento-falhas.md. Gate completo exit 0:
+  lint 6s, types 20s, types E2E 5s, build 72s, test 26s, secrets 7s. Escopo 141/141,
+  nenhuma etapa pulada. O verde não resolve os defeitos de medição acima; CORREÇÕES.
+- Migration SHA256 intacto: 56CAD1E65F941627836951DF1C93EDB61CC403BBB285BFB21787332D4F7D1FA3.
+  Código e relato do produtor continuam WIP sem commit/aprovação. Apenas contrato,
+  tarefa de correções e STATUS entram no commit do julgamento. Sem merge/push/deploy.
+- Disco antes do lote: 31 GiB livres. Segurança final independente permanece pendente.
+- Próxima: RED-006-C1, aguardando .visual/coordenacao/RED-006-C1-PRONTO.txt;
+  app APP-003-C1, aguardando .visual/coordenacao/APP-003-C1-PRONTO.txt.
