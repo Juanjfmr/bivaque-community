@@ -1,0 +1,3 @@
+import * as React from "react";import {cva,type VariantProps} from "class-variance-authority";import {cn} from "@/lib/utils";
+const variants=cva("inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-5", {variants:{variant:{default:"border-transparent bg-[var(--soft)] text-[var(--ink)]",outline:"border-[var(--stroke)] text-[var(--muted)]",accent:"border-transparent bg-[var(--brasa)]/10 text-[var(--brasa)]",success:"border-transparent bg-emerald-600/10 text-emerald-700 dark:text-emerald-300"}},defaultVariants:{variant:"default"}});
+export function Badge({className,variant,...props}:React.ComponentProps<"span">&VariantProps<typeof variants>){return <span data-slot="badge" className={cn(variants({variant}),className)} {...props}/>;}
