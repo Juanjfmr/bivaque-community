@@ -1,0 +1,45 @@
+name: Bivaque — verificar composição dos módulos shadcn
+on:
+  push:
+    branches:
+      - feat/shadcn-module-fit-20261025
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-module-fit-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: bivaque-module-fit-check
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install application
+        run: npm ci --no-audit --no-fund
+      - name: Install official components for product journeys
+        run: npx --yes shadcn@latest add item command popover combobox drawer field aspect-ratio toggle-group empty -y
+      - name: Commit generated components
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prototypes/bivaque-next-shadcn/components/ui prototypes/bivaque-next-shadcn/app/globals.css prototypes/bivaque-next-shadcn/package.json prototypes/bivaque-next-shadcn/package-lock.json prototypes/bivaque-next-shadcn/components.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(shadcn): install official product-specific components [skip ci]"
+            git push origin HEAD:feat/shadcn-module-fit-20261025
+          fi
+      - name: Build static GitHub Pages bundle
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
