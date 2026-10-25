@@ -21,9 +21,9 @@ type Message={id:string;text:string;mine:boolean;time:string};
 type Thread={id:string;name:string;context:string;avatar:string;messages:Message[];read:boolean};
 type Lab={
  housing:Housing[];classifieds:Classified[];providers:Provider[];questions:Question[];groups:Group[];events:Event[];requests:Request[];
- joined:string[];going:string[];steps:string[];rideInterest:string[];talents:Talent[];rides:Ride[];useful:string[];likes:string[];villaAccess:string[];villaRequests:string[];threads:Thread[];privacy:"Somente grupos"|"Minha cidade"|"Somente eu";showSetup:boolean;
+ joined:string[];going:string[];steps:string[];rideInterest:string[];followed:string[];recommended:string[];resolvedAnswers:Record<string,string>;talents:Talent[];rides:Ride[];useful:string[];likes:string[];villaAccess:string[];villaRequests:string[];threads:Thread[];privacy:"Somente grupos"|"Minha cidade"|"Somente eu";showSetup:boolean;
 };
-const initial:Lab={housing:HOUSING,classifieds:CLASSIFIEDS,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS,requests:REQUESTS,joined:["g1"],going:[],steps:[],rideInterest:[],talents:TALENTS,rides:RIDES,useful:[],likes:[],villaAccess:[],villaRequests:[],threads:[{id:"t1",name:"Mariana R.",context:"Apartamento 3 quartos na Asa Norte",avatar:"MR",read:false,messages:[{id:"m1",text:"Olá! Gostaria de saber mais sobre o apartamento.",mine:true,time:"Ontem"},{id:"m2",text:"Claro. Posso compartilhar mais detalhes pelo Bivaque.",mine:false,time:"Hoje"}]},{id:"t2",name:"Mudanças Planalto",context:"Solicitação de orçamento",avatar:"MP",read:false,messages:[{id:"m3",text:"Recebemos sua solicitação de orçamento. Conte mais sobre o volume da mudança.",mine:false,time:"Hoje"}]}],privacy:"Somente grupos",showSetup:true};
+const initial:Lab={housing:HOUSING,classifieds:CLASSIFIEDS,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS,requests:REQUESTS,joined:["g1"],going:[],steps:[],rideInterest:[],followed:[],recommended:[],resolvedAnswers:{},talents:TALENTS,rides:RIDES,useful:[],likes:[],villaAccess:[],villaRequests:[],threads:[{id:"t1",name:"Mariana R.",context:"Apartamento 3 quartos na Asa Norte",avatar:"MR",read:false,messages:[{id:"m1",text:"Olá! Gostaria de saber mais sobre o apartamento.",mine:true,time:"Ontem"},{id:"m2",text:"Claro. Posso compartilhar mais detalhes pelo Bivaque.",mine:false,time:"Hoje"}]},{id:"t2",name:"Mudanças Planalto",context:"Solicitação de orçamento",avatar:"MP",read:false,messages:[{id:"m3",text:"Recebemos sua solicitação de orçamento. Conte mais sobre o volume da mudança.",mine:false,time:"Hoje"}]}],privacy:"Somente grupos",showSetup:true};
 type Props={page:string;city:string;saved:string[];onSave:(id:string)=>void;onNavigate:(page:string)=>void;onNotify:(title:string,message:string)=>void;searchQuery?:string};
 type Detail={type:"housing"|"classified"|"provider"|"question"|"group"|"event"|"request"|"villa";id:string}|null;
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -36,15 +36,18 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
  const [db,setDb]=useState<Lab>(initial),[loaded,setLoaded]=useState(false);
  const [detail,setDetail]=useState<Detail>(null);
  const [term,setTerm]=useState(""),[filter,setFilter]=useState("Todos"),[order,setOrder]=useState("Recentes");
+ const [communityTab,setCommunityTab]=useState<"ind"|"grp"|"biz">("ind");
+ const [catalogView,setCatalogView]=useState<"grid"|"compact">("grid");
+ const [filterDraft,setFilterDraft]=useState({maxPrice:"",minBeds:"0",onlyPets:false,onlyFurnished:false,includeSale:"Todos",selectedOm:"Comando da Aeronáutica"});
  const [workTab,setWorkTab]=useState("Todos"),[workQuery,setWorkQuery]=useState("");
  const [compose,setCompose]=useState(false),[composeType,setComposeType]=useState("Pergunta"),[composeTitle,setComposeTitle]=useState(""),[composeDetail,setComposeDetail]=useState(""),[composePrice,setComposePrice]=useState(""),[composeCategory,setComposeCategory]=useState("Casa"),[composeHood,setComposeHood]=useState("Asa Norte");
  const [draft,setDraft]=useState(""),[selectedOm,setSelectedOm]=useState("Comando da Aeronáutica"),[onlyPets,setOnlyPets]=useState(false),[onlyFurnished,setOnlyFurnished]=useState(false),[minBeds,setMinBeds]=useState("0"),[maxPrice,setMaxPrice]=useState(""),[includeSale,setIncludeSale]=useState("Todos"),[filterPanel,setFilterPanel]=useState(false);
  const [compare,setCompare]=useState<string[]>([]),[activeThread,setActiveThread]=useState("t1"),[villaMode,setVillaMode]=useState<"morador"|"gestao">("morador"),[selectedVilla,setSelectedVilla]=useState("v1");
  const place=city.split(" - ")[0];
- useEffect(()=>{try{const s=localStorage.getItem("bivaque-shadcn-modules-lab-v1");if(s){const v=JSON.parse(s) as Partial<Lab>;setDb({...initial,...v});}}catch{}setLoaded(true);},[]);
+ useEffect(()=>{try{const s=localStorage.getItem("bivaque-shadcn-modules-lab-v1");if(s){const v=JSON.parse(s) as Partial<Lab>;setDb({...initial,...v,followed:v.followed||[],recommended:v.recommended||[],resolvedAnswers:v.resolvedAnswers||{}});}}catch{}setLoaded(true);},[]);
  useEffect(()=>{if(loaded){try{localStorage.setItem("bivaque-shadcn-modules-lab-v1",JSON.stringify(db))}catch{}}},[db,loaded]);
  useEffect(()=>{const handle=()=>{setComposeType("Pergunta");setCompose(true)};document.addEventListener("bivaque:compose",handle);return()=>document.removeEventListener("bivaque:compose",handle)},[]);
- useEffect(()=>{setTerm(page==="Busca"?searchQuery:"");setFilter("Todos");setDetail(null);setWorkTab("Todos");},[page,searchQuery]);
+ useEffect(()=>{setTerm(page==="Busca"?searchQuery:"");setFilter("Todos");setDetail(null);setWorkTab("Todos");if(page==="Comunidade")setCommunityTab("ind");},[page,searchQuery]);
  const update=(f:(s:Lab)=>Lab)=>setDb(f);
  const markUseful=(id:string)=>{update(s=>({...s,useful:s.useful.includes(id)?s.useful.filter(x=>x!==id):[...s.useful,id]}));onNotify("Avaliação registrada","Seu gesto foi salvo no modo de teste.")};
  const startConversation=(name:string,context:string)=>{const existing=db.threads.find(x=>x.name===name&&x.context===context);if(existing){setActiveThread(existing.id);}else{const id="thread-"+uid();update(s=>({...s,threads:[{id,name,context,avatar:ini(name),read:true,messages:[{id:uid(),mine:true,text:"Olá! Tenho interesse em saber mais sobre "+context+".",time:currentTime()}]},...s.threads]}));setActiveThread(id)};setDetail(null);onNavigate("Conversas");onNotify("Conversa aberta","Mensagens locais, sem envio real.")};
@@ -75,7 +78,18 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
  const boxes=(count:number)=>Array.from({length:count},(_,i)=>i);
  const createCard=(type:NonNullable<Detail>["type"],id:string,src:string,title:string,eyebrow:string,summary:string,foot:string)=><Card className="mw-item-card" key={id}><button className="mw-item-picture" onClick={()=>setDetail({type,id})}>{image(src,title)}<span>{eyebrow}</span></button>{heart(id)}<button className="mw-item-body" onClick={()=>setDetail({type,id})}><h3>{title}</h3><p>{summary}</p><strong>{foot}</strong><span className="mw-more">Ver detalhes <ArrowUpRight size={14}/></span></button></Card>;
  const valuesDb=db.housing.filter(x=>x.city===place);
- const pageHousing=()=>{const categories=["Todos","Aluguel","Venda"];const filtered=valuesDb.filter(v=>(filter==="Todos"||v.type===filter)&&(includeSale==="Todos"||v.type===includeSale)&&(!term||((v.title+" "+v.hood+" "+v.om).toLowerCase().includes(term.toLowerCase())))&&(!onlyPets||v.pets)&&(!onlyFurnished||v.furnished)&&v.bedrooms>=Number(minBeds)&&(!maxPrice||v.price<=Number(maxPrice)));const ordered=[...filtered].sort((a,b)=>order==="Menor preço"?a.price-b.price:order==="Maior preço"?b.price-a.price:0);return <>
+ const openHousingFilters=()=>{
+   setFilterDraft({maxPrice,minBeds,onlyPets,onlyFurnished,includeSale,selectedOm});
+   setFilterPanel(true);
+ };
+ const applyHousingFilters=()=>{
+   setMaxPrice(filterDraft.maxPrice);setMinBeds(filterDraft.minBeds);
+   setOnlyPets(filterDraft.onlyPets);setOnlyFurnished(filterDraft.onlyFurnished);
+   setIncludeSale(filterDraft.includeSale);setSelectedOm(filterDraft.selectedOm);setFilterPanel(false);
+ };
+ const toggleFollow=(id:string)=>update(db=>({...db,followed:db.followed.includes(id)?db.followed.filter(x=>x!==id):[...db.followed,id]}));
+ const markResolved=(qid:string,answerId:string)=>update(db=>({...db,resolvedAnswers:{...db.resolvedAnswers,[qid]:answerId},questions:db.questions.map(q=>q.id===qid?{...q,resolved:true}:q)}));
+  const pageHousing=()=>{const categories=["Todos","Aluguel","Venda"];const filtered=valuesDb.filter(v=>(filter==="Todos"||v.type===filter)&&(includeSale==="Todos"||v.type===includeSale)&&(!term||((v.title+" "+v.hood+" "+v.om).toLowerCase().includes(term.toLowerCase())))&&(!onlyPets||v.pets)&&(!onlyFurnished||v.furnished)&&v.bedrooms>=Number(minBeds)&&(!maxPrice||v.price<=Number(maxPrice)));const ordered=[...filtered].sort((a,b)=>order==="Menor preço"?a.price-b.price:order==="Maior preço"?b.price-a.price:0);return <>
  {head("MORADIA","Imóveis","Encontre opções para alugar ou comprar entre membros da comunidade.", "Anunciar imóvel",()=>openComposer("Imóvel"))}
  {helper("Demonstração com imóveis fictícios. Filtro por OM é contextual, sem cálculo ou certificação de distância.")}
  <div className="mw-top-filters"><div className="mw-search"><Search size={18}/><Input aria-label="Buscar imóveis" placeholder="Busque bairro, imóvel ou OM…" value={term} onChange={e=>setTerm(e.target.value)}/></div><Button variant="outline" onClick={()=>setFilterPanel(true)}><SlidersHorizontal size={16}/>Filtros</Button></div>
