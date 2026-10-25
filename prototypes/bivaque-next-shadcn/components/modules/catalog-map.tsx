@@ -24,7 +24,7 @@ function loadMap():Promise<GL>{
  const w=window as unknown as {maplibregl?:GL};
  if(w.maplibregl)return Promise.resolve(w.maplibregl);
  if(loader)return loader;
- loader=new Promise((resolve,reject)=>{
+ loader=new Promise<GL>((resolve,reject)=>{
    if(!document.querySelector('link[data-bivaque-map]')){const css=document.createElement("link");css.rel="stylesheet";css.href=SOURCE_CSS;css.dataset.bivaqueMap="true";document.head.appendChild(css);}
    const script=document.createElement("script");script.src=SOURCE_JS;script.async=true;script.dataset.bivaqueMap="true";
    const timeout=setTimeout(()=>{script.remove();reject(new Error("tempo esgotado"))},15000);
@@ -32,7 +32,7 @@ function loadMap():Promise<GL>{
    script.onerror=()=>{clearTimeout(timeout);script.remove();reject(new Error("falha de rede"))};
    document.head.appendChild(script);
  }).catch(error=>{loader=null;throw error});
- return loader;
+ return loader!;
 }
 export function CatalogMap({city,listings,onOpen,onFilter}:{city:string;listings:Listing[];onOpen:(id:string)=>void;onFilter:(hood:string)=>void}){
  const container=React.useRef<HTMLDivElement|null>(null);
