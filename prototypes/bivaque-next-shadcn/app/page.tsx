@@ -1,2 +1,2 @@
-import ConceptScreen from "@/components/concept-screen";
-export default function Page() {return <ConceptScreen/>;}
+import LibraryApp from "@/components/library-app";
+export default function Page(){return <LibraryApp/>;}
