@@ -16,19 +16,26 @@
 - Dark theme: appropriate foreground contrast.
 - Other cities: no Brasília items attributed elsewhere.
 ### Task 1: Shell
-- [ ] Compact sidebar to only high priority destinations, preserve others via More.
-- [ ] Slim responsive header and mobile bottom navigation.
-- [ ] Verify Next build.
+- [x] Compact sidebar to only high priority destinations, preserve others via More.
+- [x] Slim responsive header and mobile bottom navigation.
+- [x] Verify Next build.
 ### Task 2: Editorial Home
-- [ ] Rebuild header, search, four discovery intents without stock skyscraper hero.
-- [ ] Put residential photography first and community as human-centric rows.
-- [ ] Verify Next build.
+- [x] Rebuild header, search, four discovery intents without stock skyscraper hero.
+- [x] Put residential photography first and community as human-centric rows.
+- [x] Verify Next build.
 ### Task 3: Separate module grammar
-- [ ] Imóveis: image-first catalog with low chrome.
-- [ ] Comunidade: post-like rows, inline answer context, no enclosing support-card.
-- [ ] Negócios: information-rich provider rows with useful imagery.
-- [ ] Keep shadcn detail and action affordances.
+- [x] Imóveis: image-first catalog with low chrome.
+- [x] Comunidade: post-like rows, inline answer context, no enclosing support-card.
+- [x] Negócios: information-rich provider rows with useful imagery.
+- [x] Keep shadcn detail and action affordances.
 ### Task 4: Deploy and review
-- [ ] Run compile and token checks in isolated branch.
-- [ ] Promote to GitHub Pages preview branch only if passed.
-- [ ] Verify exported root and module URLs. State absence of browser screenshot QA honestly.
+- [x] Run compile and token checks in isolated branch.
+- [x] Promote to GitHub Pages preview branch only if passed.
+- [x] Verify exported root and module URLs. State absence of browser screenshot QA honestly.
+
+## Verification ledger — 2026-10-25
+- GitHub Actions visual verification: run 40225614192, result success (npm ci, WCAG contrast, static text smoke checks, Next.js TypeScript/build, exported routes).
+- GitHub Pages publishing: run 40225692647, result success; source output mirrored to branch root; published Home/Imóveis/Comunidade/Serviços are Next.js static HTML with /bivaque-community/_next/static assets and no README.
+- Default competing GitHub Pages build 40225750827 deployed with failure after building; custom workflow succeeded. Root export remains verified. A single-source GitHub Pages configuration should eventually replace the dual workflow to avoid competition.
+- Limitation: no direct pixel-level browser screenshots or user-device validation; do not claim identical visual results across 375/768/1440.
+- Lovable independent visual spike: project acba36ba-2a74-4c69-913f-9178f4eb730b (ready). GitHub Pages remains canonical test preview.
