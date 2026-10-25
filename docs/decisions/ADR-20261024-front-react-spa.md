@@ -1,10 +1,10 @@
 ---
 id: ADR-20261024-front-react-spa
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
-accepted_at:
+approved_at: 2026-10-25
+accepted_at: 2026-10-25
 expires_at:
 linked_plan: docs/agents/experimento-front/README.md (EXP-001)
 critic_verdict: PASS
@@ -48,23 +48,51 @@ O dono decidiu (24/10/2026): a prioridade é a web, e o app de loja (iPhone e An
 - Componentes **shadcn/ui** (Radix e Tailwind), com o código no próprio repositório. O que o shadcn não tem (barra de
   navegação, botão "Criar", chips, linha de pergunta) é feito com Radix e Tailwind.
 - **Sai o Material Web** do app. Sai também o HeroUI, à medida que as telas antigas saem.
-- O protótipo em shadcn (`apps/prototipo`, PROTO-001) é o começo do app: quando a primeira jornada for aprovada, ele
-  passa para Vite e vira o app.
+- **O protótipo inteiro é refeito em shadcn, já em Vite** (dono, 25/10/2026): as 33 rotas, os 81 diálogos e editores,
+  as 289 ações e as 40 animações do inventário `docs/agents/prototipo-shadcn/inventario.md`, com dados de
+  demonstração. Ele nasce em `apps/app` e é o próprio app: cada jornada é depois ligada ao banco.
+  O `apps/prototipo` (PROTO-001, em Next) serve de fonte de tema, componentes e dados, e sai quando a onda 1 terminar.
+- As telas não dependem de nada específico do roteador: o roteamento fica numa camada fina, para trocar de hospedeiro
+  sem reescrever as telas, se a prova vertical (seção 7) exigir.
 
 ### 2. O visual
 
-- Os tokens do protótipo (cores dos dois temas, tipografia Noto, raios, espaçamentos) são traduzidos para o tema do
-  shadcn. O tema segue o sistema.
-- O protótipo HTML continua sendo a especificação de telas, textos e comportamento até cada jornada estar aprovada
-  pelo dono no app novo. Depois disso, a referência daquela jornada passa a ser o app novo.
-- Ícones `lucide-react`, decorativos com `aria-hidden`.
+- Os tokens do protótipo (cores dos dois temas, tipografia Noto, raios, espaçamentos, movimento) são traduzidos para
+  o tema do shadcn. O tema segue o sistema.
+- **Ícones: os Material Symbols do protótipo**, hospedados localmente, com só os ícones usados (o inventário lista
+  100), decorativos com `aria-hidden` (o texto do ícone nunca entra no nome acessível). Fidelidade pede os mesmos
+  ícones (dono, 25/10/2026).
+- O protótipo HTML continua sendo a especificação de telas, textos e comportamento até cada onda estar aprovada pelo
+  dono no app novo. Depois disso, a referência daquela parte passa a ser o app novo.
 
-### 3. A navegação (provisório)
+### 3. A navegação
 
-- Rotas de verdade, aba ativa pelo endereço e voltar do navegador.
-- Sai a regra do protótipo de "origem por entrada do histórico".
-- **Provisório:** o dono confirma depois de usar o protótipo em shadcn. Se ele quiser a regra do protótipo, ela volta
-  com o TanStack Router, que deixa o app controlar o histórico.
+- **Comportamento fiel ao protótipo** (dono, 25/10/2026), com o app como único dono do histórico (TanStack Router):
+  - voltar fecha diálogo, folha e menu antes de sair da tela, inclusive o voltar do sistema no app de loja;
+  - voltar e avançar restauram rolagem, filtros e foco de cada entrada;
+  - a origem de cada entrada do histórico é guardada com ela (seção 3.2).
+- **Endereços de verdade** (`/comunidade`, `/pergunta/<id>`) no lugar do `#` do protótipo, pelos links de notificação,
+  de e-mail, de compartilhamento e de abertura direta no app de loja.
+- Restaurar rolagem com dados reais espera a lista carregar. A navegação é a primeira entrega da onda 1, com bateria
+  de testes antes de qualquer tela.
+
+#### 3.1 A barra (dono, 25/10/2026; muda o protótipo)
+
+- A barra passa a ser **Início · Comunidade · [Criar] · Mercado · Você**, duas abas de cada lado do "Criar".
+- **Conversas sai da barra** e vira um ícone no topo, com o contador de não lidas, como no Instagram e no Facebook.
+- **Mercado** é uma aba nova, com as sub-abas **Desapegos, Imóveis e Negócios** (Negócios recebe o conteúdo com o
+  lote 6). O anúncio e o negócio passam a ter dono fixo: a aba Mercado.
+- O Início mantém dois ou três atalhos para dentro do Mercado.
+- O topo no celular fica com a cidade, os avisos e as conversas. A busca vai para dentro das telas que buscam, se o
+  espaço em 375 px pedir.
+
+#### 3.2 A aba ativa
+
+- Toda tela com dono só acende a aba dela (pergunta → Comunidade; anúncio e negócio → Mercado; conversa → nenhuma aba,
+  é o ícone do topo).
+- A **regra de origem por entrada** vale só para o que ainda tem mais de uma porta: Salvos, Meus anúncios, a busca e
+  os destinos de notificação. Nesses, acende a aba de onde a pessoa veio, guardada na entrada do histórico, e
+  voltar ou avançar restauram a aba certa.
 
 ### 4. O servidor e a landing
 
@@ -168,7 +196,8 @@ mesmo build é o caminho usual para levar um app web à loja sem reescrever.
 
 ## Proposed divergence from baseline
 
-Nenhuma no app. A navegação simplificada diverge do protótipo, e é provisória (seção 3).
+Do protótipo: endereços de verdade no lugar do `#`, a barra nova com Conversas no topo e a aba Mercado, e a regra
+de origem reduzida às telas com mais de uma porta (seção 3). Todas decididas pelo dono em 25/10/2026.
 
 ## Evidence and sources
 
@@ -191,6 +220,8 @@ Nenhuma no app. A navegação simplificada diverge do protótipo, e é provisór
   visual do dono por jornada e comparação de captura.
 - **Duas formas de sessão** (cookie na web, token no app de loja). Mitigação: o resolvedor único e o contrato da
   seção 5, com teste de cada item.
+- **A navegação fiel** é a parte mais cara e a que mais falhou nas tentativas anteriores. Mitigação: módulo único,
+  primeira entrega da onda 1, com bateria de testes de cada regra antes de qualquer tela.
 - **Login Google no app de loja.** Mitigação: navegador do sistema e prova de fumaça na prova vertical, antes de
   qualquer retirada.
 - **Converter ações de servidor em API** pode deixar uma regra só no código antigo. Mitigação: cada rota nova repete
