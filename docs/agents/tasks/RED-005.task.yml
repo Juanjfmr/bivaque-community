@@ -1,0 +1,50 @@
+task_id: RED-005
+objective: Adaptar seis suítes de prestador e consulta entre cidades ao esquema R3 aprovado, preservando suas fronteiras de acesso.
+authority:
+  - Autorização do dono em 25/10/2026 para lotes menores com até três rodadas próprias
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+  - docs/agents/redesenho/R2-comum.md
+  - docs/agents/redesenho/R2-decisoes.md
+  - docs/agents/redesenho/R2-matriz-vila-fundacao.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Prova RED-004-julgamento-banco registra FAIL agregado em 154 arquivos e 1875 asserções; provider-invitation e consulta-outra-cidade abortam em community_id, provider-revocation em communities, demais suítes do lote constam da lista remanescente.
+allowed_paths:
+  - supabase/tests/consulta-outra-cidade.sql
+  - supabase/tests/provider-invitation.sql
+  - supabase/tests/provider-invitation-read.sql
+  - supabase/tests/provider-account-boundary.sql
+  - supabase/tests/provider-revocation.sql
+  - supabase/tests/provider-showcase-scope.sql
+  - docs/agents/redesenho/STATUS.md
+  - docs/agents/redesenho/R3-RED-005.md
+forbidden:
+  - alterar migration, seed, tipos gerados, fixtures compartilhadas, matrizes, scripts, gate ou outros testes
+  - conceder grants ou trocar policies e expectativas para esconder falha real de autorização
+  - excluir testes mistos ou reduzir plano para esconder casos; negativos não exclusivos da vila continuam obrigatórios
+  - instalar pacotes, abrir subagentes, segundo plano, push, merge ou deploy
+  - db push, --linked, reset fora da fila, criar env.local, imprimir chaves ou alterar outro worktree
+acceptance:
+  - Ler somente trechos pertinentes das autoridades, das seis suítes e das definições SQL usadas, nunca migration ou matriz inteiras
+  - Corrigir fixtures e chamadas RPC obsoletas nas seis suítes sem alterar produção; abandonar dependência da vila segundo decisões aprovadas, mantendo cidade, titularidade e conta independente de prestador
+  - Convite e atestado de prestador são exclusivos de operador segundo a matriz; transformar cenários antigos de poder do morador apenas quando a decisão aprovada mudou esse poder, com positivo do operador e negativo do morador explicitamente mapeados
+  - Preservar negativos de anônimo, conta alheia, campo privado, revogação e escrita não autorizada; um caso exclusivo da vila extinto deve ter ID R1 e justificativa no mapa, sem alegar equivalência semântica com outro negativo
+  - Fixtures podem preparar dados como postgres; ações e negações de acesso devem exercitar o papel autenticado ou anônimo pertinente e identidade coerente, sem usar superusuário como prova de RLS
+  - Preservar a consulta autorizada a conteúdo ativo de outra cidade e a proteção de rascunhos, endereços privados e conta sem cidade, conforme os contratos vigentes
+  - Seis arquivos devem concluir sem abortos ou planos interrompidos e com asserções verdes; se houver defeito real da migration ou permissão, não repetir tentativas sem mudança nem afrouxar teste, registrar dependência concreta e limite do lote
+  - Suíte completa pode continuar vermelha fora destas seis suítes, com falhas e números explicitamente classificados, sem afirmar que o banco completo passou
+  - Rodar prova de banco pela fila, db lint e gate completo com variáveis públicas locais no processo, sem env; gate já aceita essas variáveis na base deste lote e não pode ser alterado
+  - Terminar com mapa antigo para atual, planos e resultados por arquivo, hash inalterado da migration, logs, rodadas consumidas, pendências e dúvidas no R3-RED-005.md e no STATUS desta frente
+proof:
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 gate
+  - Teste das seis suítes com positivos e negativos identificados, sem confundir asserções executadas do agregado com asserções aprovadas
+risk: testes de convites privacidade conta e revogação de prestadores
+risk_level: R3
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
