@@ -125,7 +125,7 @@ export default function LibraryApp(){
   const [alerts,setAlerts]=React.useState<SavedSearchAlert[]>([]);
   const [alertsOpen,setAlertsOpen]=React.useState(false);
   const [deletedAlert,setDeletedAlert]=React.useState<SavedSearchAlert|null>(null);
-  const [restoreAlert,setRestoreAlert]=React.useState<SavedSearchAlert|null>(null);
+  const restoreAlert=React.useRef<SavedSearchAlert|null>(null);
   const kindKey: "imoveis"|"desapegos" = slug==="desapegos"?"desapegos":"imoveis";
   const [filtersByMarket,setFiltersByMarket]=React.useState<Record<"imoveis"|"desapegos",CatalogFilters>>({imoveis:{...initialCatalogFilters},desapegos:{...initialCatalogFilters}});
   const catalogFilters=filtersByMarket[kindKey];
@@ -154,7 +154,7 @@ export default function LibraryApp(){
   }setLoaded(true)},[]);
   React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
-  React.useEffect(()=>{if(slug!=="busca")setQuery("");setTab("Indicações");setCatalogView("list");if(restoreAlert&&slug===restoreAlert.kind){setCategory((restoreAlert.attrs as CatalogFilters&{category?:string}).category||"Todos");setRestoreAlert(null)}else if(!restoreAlert)setCategory("Todos")},[slug,restoreAlert]);
+  React.useEffect(()=>{if(slug!=="busca")setQuery("");setTab("Indicações");setCatalogView("list");const pending=restoreAlert.current;if(pending&&pending.kind===slug)setCategory((pending.attrs as CatalogFilters&{category?:string}).category||"Todos");else setCategory("Todos");restoreAlert.current=null},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function openItemPage(v:Item){navigate((v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id)}
@@ -183,7 +183,8 @@ export default function LibraryApp(){
   function openSavedAlert(alert:SavedSearchAlert){
     setAlertsOpen(false);setCity(alert.city);
     setFiltersByMarket(v=>({...v,[alert.kind]:{...initialCatalogFilters,...alert.attrs}}));
-    setRestoreAlert(alert);
+    restoreAlert.current=alert;
+    if(slug===alert.kind){setCategory((alert.attrs as CatalogFilters&{category?:string}).category||"Todos");restoreAlert.current=null;}
     navigate(alert.kind);
   }
   function removeAlert(alert:SavedSearchAlert){setAlerts(v=>v.filter(x=>x.id!==alert.id));setDeletedAlert(alert)}
@@ -555,6 +556,21 @@ export default function LibraryApp(){
         <CommandSeparator/><CommandGroup heading="Resultados e anúncios">{allItems.filter(x=>x.city===city).slice(0,12).map(x=><CommandItem key={x.id} value={x.title+" "+x.meta} onSelect={()=>{setSearchOpen(false);setDetail(x);setDetailOpen(true)}}><Search/>{x.title}<span className="ml-auto text-xs text-muted-foreground">{x.kind==="imoveis"?"Imóvel":x.kind==="servicos"?"Serviço":"Desapego"}</span></CommandItem>)}</CommandGroup>
       </CommandList>
     </CommandDialog>
+    <Dialog open={alertsOpen} onOpenChange={setAlertsOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-[560px]">
+      <DialogHeader><DialogTitle>Alertas de busca</DialogTitle><DialogDescription>Buscas guardadas somente neste navegador. Esta prévia não envia notificações, não monitora anúncios novos nem ativa push.</DialogDescription></DialogHeader>
+      <div className="space-y-3">
+        {deletedAlert&&<div className="flex items-center gap-2 rounded-lg bg-secondary p-3 text-xs" role="status"><span className="flex-1">Alerta removido: {deletedAlert.label}</span><Button size="sm" className="min-h-11" variant="outline" onClick={undoAlert}><Undo2/>Desfazer</Button></div>}
+        {alerts.length?alerts.map(a=><div key={a.id} className="space-y-3 rounded-lg border p-3">
+          <div className="flex items-start gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary">{a.enabled?<Bell className="size-5"/>:<BellOff className="size-5"/>}</span><div className="min-w-0 flex-1"><strong className="block text-[13px]">{a.label}</strong><p className="mt-1 text-[12px] text-muted-foreground">{a.city} · {a.kind==="imoveis"?"Imóveis":"Desapegos"} · {a.enabled?"Salva":"Pausada"}</p></div></div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" className="min-h-11" onClick={()=>openSavedAlert(a)}>Abrir busca <ArrowRight className="size-4"/></Button>
+            <Button size="sm" variant="outline" className="min-h-11" onClick={()=>setAlerts(v=>v.map(x=>x.id===a.id?{...x,enabled:!x.enabled}:x))}>{a.enabled?"Pausar":"Reativar"}</Button>
+            <Button size="sm" variant="ghost" className="min-h-11 text-destructive" aria-label={"Excluir alerta "+a.label} onClick={()=>removeAlert(a)}><Trash2 className="size-4"/>Excluir</Button>
+          </div>
+        </div>):<div className="py-6 text-center text-[13px] text-muted-foreground">Nenhum alerta salvo. Selecione filtros de Imóveis ou Desapegos e toque em Avise-me.</div>}
+      </div>
+      <DialogFooter><Button variant="outline" onClick={()=>setAlertsOpen(false)}>Fechar</Button></DialogFooter>
+    </DialogContent></Dialog>
     <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}><SheetContent side="right" className="overflow-y-auto sm:max-w-md"><SheetHeader><SheetTitle>{filterSection==="all"?"Filtros":({ptype:"Tipo de imóvel",cat:"Categoria",price:"Preço",beds:"Quartos e vagas",hood:"Bairro",avail:"Disponibilidade",cond:"Estado",pickup:"Retirada"} as Record<string,string>)[filterSection]}</SheetTitle><SheetDescription>Refine os anúncios sem alterar os valores do servidor.</SheetDescription></SheetHeader><div className="space-y-5 px-4 py-5">{filterFields}</div><div className="flex gap-2 border-t p-4"><Button variant="outline" className="flex-1 min-h-11" onClick={()=>setFiltersOpen(false)}>Cancelar</Button><Button className="flex-1 min-h-11" onClick={applyFilters}>Ver {draftCount} resultados</Button></div></SheetContent></Sheet>
     <Drawer open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}><DrawerContent><DrawerHeader><DrawerTitle>{filterSection==="all"?"Filtros":({ptype:"Tipo de imóvel",cat:"Categoria",price:"Preço",beds:"Quartos e vagas",hood:"Bairro",avail:"Disponibilidade",cond:"Estado",pickup:"Retirada"} as Record<string,string>)[filterSection]}</DrawerTitle><DrawerDescription>Escolha os critérios e aplique os filtros.</DrawerDescription></DrawerHeader><div className="max-h-[60vh] space-y-4 overflow-y-auto px-4 pb-4">{filterFields}</div><DrawerFooter><Button className="min-h-11" onClick={applyFilters}>Ver {draftCount} resultados</Button><DrawerClose asChild><Button variant="outline">Cancelar</Button></DrawerClose></DrawerFooter></DrawerContent></Drawer>
 
