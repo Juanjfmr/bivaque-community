@@ -125,7 +125,7 @@ export default function LibraryApp(){
   const [loaded,setLoaded]=React.useState(false);
   React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[])}setLoaded(true)},[]);
   React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats,endorsed}))},[loaded,city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats,endorsed]);
-  React.useEffect(()=>{setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
+  React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function toggle(id:string,arr:string[],setter:React.Dispatch<React.SetStateAction<string[]>>){setter(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
