@@ -34,6 +34,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Item, ItemGroup, ItemContent, ItemDescription, ItemTitle, ItemMedia, ItemActions, ItemSeparator } from "@/components/ui/item";
+import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from "@/components/ui/combobox";
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
 
 type Item = { city: string; id: string; title: string; description: string; meta: string; image?: string; price?: string; badge?: string; kind: string };
@@ -96,6 +104,12 @@ export default function LibraryApp(){
   const [detail,setDetail]=React.useState<Item|null>(null);
   const [detailOpen,setDetailOpen]=React.useState(false);
   const [filtersOpen,setFiltersOpen]=React.useState(false);
+  const [mobileFiltersOpen,setMobileFiltersOpen]=React.useState(false);
+  const [omSearchOpen,setOmSearchOpen]=React.useState(false);
+  const [replyTo,setReplyTo]=React.useState<string|null>(null);
+  const [replyDraft,setReplyDraft]=React.useState("");
+  const [origin,setOrigin]=React.useState<{question:string,author:string,text:string}|null>(null);
+  const [endorsed,setEndorsed]=React.useState<string[]>([]);
   const [composeOpen,setComposeOpen]=React.useState(false);
   const [composeType,setComposeType]=React.useState("Pergunta");
   const [title,setTitle]=React.useState("");const [description,setDescription]=React.useState("");
@@ -107,8 +121,8 @@ export default function LibraryApp(){
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[])}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats}))},[loaded,city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats]);
+  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[])}setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats,endorsed}))},[loaded,city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats,endorsed]);
   React.useEffect(()=>{setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
@@ -116,6 +130,8 @@ export default function LibraryApp(){
   function openCreate(v="Pergunta"){setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
   function submitCreate(e:React.FormEvent){e.preventDefault();if(!title.trim()||!description.trim()){toast.error("Preencha título e descrição");return;}setPosts(a=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType},...a]);setComposeOpen(false);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.")}
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
+  function openFilters(){if(typeof window!=="undefined"&&window.matchMedia("(max-width: 639px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
+  function submitReply(e:React.FormEvent){e.preventDefault();if(!replyTo||!replyDraft.trim())return;setReplies(r=>({...r,[replyTo]:[...(r[replyTo]||[]),replyDraft.trim()]}));setReplyTo(null);setReplyDraft("");toast.success("Resposta registrada localmente")}
   function send(e:React.FormEvent){e.preventDefault();if(!message.trim())return;setChats(a=>a.map(c=>c.id===chatId?{...c,messages:[...c.messages,{self:true,body:message.trim()}]}:c));setMessage("");toast.info("Mensagem registrada localmente")}
   const allSaved=allItems.filter(x=>saved.includes(x.id));
   const filtered=allItems.filter(x=>x.city===city&&(slug==="busca"||slug==="inicio"||slug==="salvos"?true:x.kind===(slug==="negocios"?"servicos":slug))&&(slug!=="salvos"||saved.includes(x.id))&&(category==="Todos"||category===x.badge)&&(!query||(x.title+" "+x.meta+" "+x.description).toLowerCase().includes(query.toLowerCase()))&&
