@@ -48,7 +48,11 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 - Verificador de runtime independente confirmou HTTP 200, título/h1 Bivaque e reload
   em 375×812, 768×1024 e 1440×900; nenhum erro JS, console, rede ou asset.
   Relatório: `.visual/coordenacao/runtime-1a/runtime-report.json`.
-- Cinco contratos APP-001 a APP-005 válidos. 1b será executada pelo DeepSeek após commit da 1a.
+- Cinco contratos APP-001 a APP-005 válidos.
+- 1a commitada em `5fc9fc77`; contratos 1b–1e em `90541c7c`. Revisão final dos
+  instrumentos da 1a pelo Luna sem bloqueios; cinco testes focais passaram.
+- 1b despachada ao DeepSeek V4.1 Flash, sem delegação interna, no mesmo worktree
+  app após parar preview da 1a. Log `.visual/coordenacao/APP-002-deepseek.log`.
 
 ## R3
 
@@ -61,7 +65,15 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
   coordenador interrompeu pai e filhos antes de escrita, confirmou modelo DeepSeek
   nos três e retomou o pai com proibição explícita de delegar. Um executor nesta frente.
 - Processos `chrome-devtools-mcp` remanescentes foram encerrados após a interrupção.
-- Revisão do coordenador e revisão independente de segurança ainda não executadas.
+- Revisões finais do coordenador e de segurança aguardam snapshot estável e provas.
+- Primeira revisão estática independente de segurança: **FAIL parcial**, oito HIGH
+  (conta restrita, não participante escrevendo, escopo de evento, transplante de comentário,
+  identidades de reações, consumidores de bloqueio, entrega de notificações e grupo
+  encerrado). Também identificadas dependências que bloqueiam DROP TYPE/replay.
+- Relatório preservado em `b1362bf1`, `docs/agents/redesenho/R3-revisao-seguranca-1.md`
+  no worktree R3, com SHA256 do snapshot de 2863 linhas. Coordenador confirmou problemas
+  próprios de escrita/grants/transições. Rodada de reparo 1/3 enviada ao produtor.
+- Não há PASS da R3; suite/seed/cobertura em produção, fila ainda não executada.
 - R4/R5/R6 e integração final não fazem parte desta entrega de banco.
 
 ## Próxima decisão
