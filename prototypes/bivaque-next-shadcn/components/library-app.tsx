@@ -304,7 +304,7 @@ export default function LibraryApp(){
     </div>;
   }
   function searchPage(){
-    const sections=buildSearchSections({query,city,items:allItems,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS});
+    const sections=buildSearchSections({query,city,items:allItems,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS,replies});
     const names=[["all","Tudo"],["items","Anúncios"],["biz","Negócios"],["asks","Indicações"],["groups","Grupos"],["events","Encontros"]] as const;
     const definitions=[["items","Anúncios",ShoppingBag],["biz","Negócios",BriefcaseBusiness],["asks","Indicações e respostas",MessageCircle],["groups","Grupos",Users],["events","Encontros",CalendarDays]] as const;
     const totals=countSearchResults(sections);
@@ -595,7 +595,7 @@ export default function LibraryApp(){
         <CommandGroup heading="Explorar">{routes.filter(x=>["imoveis","desapegos","servicos","comunidade","grupos","agenda"].includes(x.slug)).map(x=><CommandItem key={x.slug} value={x.label} onSelect={()=>{setSearchOpen(false);navigate(x.slug)}}><x.icon className="size-4"/>{x.label}</CommandItem>)}</CommandGroup>
         <CommandSeparator/>
         {(()=>{
-          const result=buildSearchSections({query,city,items:allItems,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS});
+          const result=buildSearchSections({query,city,items:allItems,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS,replies});
           return (["items","biz","asks","groups","events"] as const).map(key=>result[key].length?<CommandGroup key={key} heading={({items:"Anúncios",biz:"Negócios",asks:"Indicações e respostas",groups:"Grupos",events:"Encontros"})[key]}>{result[key].slice(0,4).map(hit=><CommandItem key={key+hit.id} value={[hit.title,hit.meta,hit.snippet].filter(Boolean).join(" ")} onSelect={()=>openSearchHit(hit)}><Search className="size-4"/><span className="line-clamp-1 flex-1">{hit.title}</span><span className="text-xs text-muted-foreground">{hit.snippet?"Na resposta":""}</span></CommandItem>)}</CommandGroup>:null)
         })()}
       </CommandList>
