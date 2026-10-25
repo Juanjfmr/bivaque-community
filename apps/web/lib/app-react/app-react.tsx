@@ -1,8 +1,14 @@
 "use client"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { registerFilledButton } from "../../app/components/material/register"
+import { registerFilledButton, registerIconButton } from "../../app/components/material/register"
+import type {} from "../../types/material-web"
 import type { IndicationRow } from "../indications/indications"
-import { INDICATION_PAGE_SIZE, suggestCategory, titleProblem } from "../indications/indications"
+import {
+  categoryLabel,
+  INDICATION_PAGE_SIZE,
+  suggestCategory,
+  titleProblem,
+} from "../indications/indications"
 import { callResolutionRpc } from "../recommendations/resolution-rpcs"
 import { createBrowserClient } from "../supabase/client"
 import {
@@ -21,7 +27,7 @@ type Request = {
   author_id: string
   title: string
   body: string
-  category: string
+  category: IndicationRow["category"]
   created_at: string
   is_resolved: boolean
   resolved_reply_id: string | null
@@ -43,8 +49,9 @@ export function AppReact() {
   const supabase = createBrowserClient(),
     main = useRef<HTMLElement>(null),
     dialogEl = useRef<HTMLDialogElement>(null),
-    trigger = useRef<HTMLButtonElement>(null),
+    trigger = useRef<HTMLElement>(null),
     generation = useRef(0),
+    detailGeneration = useRef(0),
     draftId = useRef(""),
     wasDialog = useRef(false)
   const pendingRestore = useRef<AppNavigation | null>(null)
@@ -70,6 +77,7 @@ export function AppReact() {
     [busy, setBusy] = useState(false),
     [answer, setAnswer] = useState(""),
     [offset, setOffset] = useState(0)
+  const [actionError, setActionError] = useState("")
   const navigation = useCallback((hash = window.location.hash): AppNavigation => {
     const saved = window.history.state?.navigation as AppNavigation | undefined,
       parsed = parseAppHash(hash)
@@ -79,6 +87,21 @@ export function AppReact() {
   }, [])
   useEffect(() => {
     void registerFilledButton()
+    void registerIconButton()
+    void import("@material/web/button/filled-tonal-button.js")
+    void import("@material/web/tabs/tabs.js")
+    void import("@material/web/tabs/primary-tab.js")
+  }, [])
+  useEffect(() => {
+    const applyTheme = () => {
+      document.documentElement.dataset["theme"] = matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+    }
+    applyTheme()
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme)
+    return () =>
+      matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", applyTheme)
   }, [])
   useEffect(() => {
     let alive = true
@@ -295,13 +318,15 @@ export function AppReact() {
   }, [listRevision, listing.kind, route.name])
   const loadDetail = useCallback(async () => {
     if (!locality || !route.id) return
-    setDetail({ kind: "loading" })
+    const ticket = ++detailGeneration.current
     const id = route.id
+    setDetail({ kind: "loading" })
     const q = await supabase
       .from("recommendation_requests")
       .select("id,author_id,title,body,category,created_at,is_resolved,resolved_reply_id")
       .eq("id", id)
       .maybeSingle()
+    if (ticket !== detailGeneration.current || route.name !== "pergunta" || route.id !== id) return
     if (q.error) {
       setDetail({ kind: "error" })
       return
@@ -319,6 +344,7 @@ export function AppReact() {
         .eq("request_id", id)
         .maybeSingle(),
     ])
+    if (ticket !== detailGeneration.current || route.name !== "pergunta" || route.id !== id) return
     if (r.error || s.error) {
       setDetail({ kind: "error" })
       return
@@ -329,7 +355,7 @@ export function AppReact() {
       replies: (r.data ?? []) as Reply[],
       following: !!s.data,
     })
-  }, [locality, route.id, supabase, user])
+  }, [locality, route.id, route.name, supabase, user])
   useEffect(() => {
     if (ready && route.name === "pergunta") void loadDetail()
   }, [ready, route.name, loadDetail])
@@ -488,28 +514,33 @@ export function AppReact() {
   }
   const send = async () => {
     if (detail.kind !== "done" || answer.trim().length < 5) return
+    setActionError("")
     const { error: e } = await supabase
       .from("recommendation_replies")
       .insert({ request_id: detail.request.id, author_id: user, body: answer.trim() })
     if (!e) {
       setAnswer("")
       await loadDetail()
-    }
+    } else setActionError("Não foi possível enviar sua indicação. Tente novamente.")
   }
   const solve = async (id: string) => {
     if (detail.kind !== "done") return
+    setActionError("")
     const { error: e } = await callResolutionRpc(supabase, "mark_recommendation_reply_resolved", {
       p_request_id: detail.request.id,
       p_reply_id: id,
     })
     if (!e) await loadDetail()
+    else setActionError("Não foi possível marcar a resposta como resolvida. Tente novamente.")
   }
   const reopen = async () => {
     if (detail.kind !== "done") return
+    setActionError("")
     const { error: e } = await callResolutionRpc(supabase, "reopen_recommendation", {
       p_request_id: detail.request.id,
     })
     if (!e) await loadDetail()
+    else setActionError("Não foi possível reabrir a pergunta. Tente novamente.")
   }
   if (!ready)
     return (
@@ -521,12 +552,12 @@ export function AppReact() {
     )
   const active = activeAppTab(route, origin)
   const questions = (data: IndicationRow[]) => (
-    <ul className="app-list" aria-label="Perguntas">
+    <ul className="list" aria-label="Perguntas">
       {data.map((row) => (
         <li key={row.id}>
           <button
             type="button"
-            className="app-card app-question"
+            className="list-row app-question"
             aria-label={row.title}
             aria-describedby={`meta-${row.id}`}
             data-focus-key={`question-${row.id}`}
@@ -535,19 +566,24 @@ export function AppReact() {
               go({ name: "pergunta", id: row.id })
             }}
           >
-            <span id={`meta-${row.id}`} className="app-meta">
-              {row.category.replaceAll("_", " ")} ·{" "}
-              {new Date(row.created_at).toLocaleDateString("pt-BR")}
+            <span className="avatar" aria-hidden="true">
+              {row.title.slice(0, 1).toLocaleUpperCase("pt-BR")}
             </span>
-            <strong>{row.title}</strong>
-            {row.body && <span className="app-muted">{row.body}</span>}
-            <span className="app-meta">
-              {row.is_resolved
-                ? "Resolvida"
-                : row.reply_count
-                  ? `${row.reply_count} respostas`
-                  : "Sem resposta"}
+            <span className="txt">
+              <b>{row.title}</b>
+              <small id={`meta-${row.id}`}>
+                {categoryLabel(row.category)} ·{" "}
+                {new Date(row.created_at).toLocaleDateString("pt-BR")}
+              </small>
+              <span className="question-status">
+                {row.is_resolved
+                  ? "Resolvida"
+                  : row.reply_count
+                    ? `${row.reply_count} respostas`
+                    : "Sem resposta"}
+              </span>
             </span>
+            <md-icon>chevron_right</md-icon>
           </button>
         </li>
       ))}
@@ -570,7 +606,7 @@ export function AppReact() {
         </button>
       </div>
     ) : listing.rows.length === 0 ? (
-      <section className="app-card">
+      <section className="context-strip">
         <h3>
           {mine
             ? "Seu histórico começa aqui"
@@ -596,42 +632,40 @@ export function AppReact() {
     )
   const community = (mine = false) => (
     <>
-      <header className="app-head">
+      <header className="page-head">
         <div>
           <h1 tabIndex={-1} data-focus-key={mine ? "mine-heading" : "community-heading"}>
             {mine ? "Minhas perguntas e indicações" : "Comunidade"}
           </h1>
           {!mine && <p>O que a comunidade sabe fica disponível para quem chegar depois.</p>}
         </div>
-        <button type="button" ref={trigger} className="app-button primary" onClick={openAsk}>
-          Perguntar
-        </button>
+        <md-filled-tonal-button ref={trigger} className="ask-inline" onClick={openAsk}>
+          <md-icon slot="icon">edit_square</md-icon> Perguntar
+        </md-filled-tonal-button>
       </header>
       {!mine && (
         <>
-          <div className="app-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={communityTab === "ind"}
-              onClick={() => setCommunityTab("ind")}
-            >
-              Indicações
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={communityTab === "grp"}
-              onClick={() => setCommunityTab("grp")}
-            >
-              Grupos
-            </button>
+          <div className="tabs-wrap app-tabs">
+            <md-tabs>
+              <md-primary-tab
+                active={communityTab === "ind"}
+                onClick={() => setCommunityTab("ind")}
+              >
+                Indicações
+              </md-primary-tab>
+              <md-primary-tab
+                active={communityTab === "grp"}
+                onClick={() => setCommunityTab("grp")}
+              >
+                Grupos
+              </md-primary-tab>
+            </md-tabs>
           </div>
-          <div className="app-context">
+          <div className="context-strip">
             {resolvedCount} indicações resolvidas. Busque uma resposta antes de perguntar.
           </div>
           {communityTab === "grp" ? (
-            <section className="app-card">
+            <section className="context-strip">
               <h2>Grupos</h2>
               <p>Em breve</p>
             </section>
@@ -648,7 +682,7 @@ export function AppReact() {
                   <button
                     type="button"
                     key={key}
-                    className="app-button"
+                    className="filter-chip"
                     aria-pressed={filter === key}
                     data-focus-key={`filter-${key}`}
                     onClick={() => chooseFilter(key)}
@@ -683,18 +717,18 @@ export function AppReact() {
       </>
     ) : (
       <>
-        <button type="button" className="app-button" onClick={back}>
+        <button type="button" className="app-button back-button" onClick={back}>
           Voltar
         </button>
-        <article className="app-card">
+        <article className="question">
           <p className="app-meta">
-            {detail.request.category.replaceAll("_", " ")} ·{" "}
+            {categoryLabel(detail.request.category)} ·{" "}
             {new Date(detail.request.created_at).toLocaleDateString("pt-BR")}
           </p>
           <h1 tabIndex={-1} data-focus-key="question-heading">
             {detail.request.title}
           </h1>
-          {detail.request.body && <p className="app-detail">{detail.request.body}</p>}
+          {detail.request.body && <p className="detail-copy">{detail.request.body}</p>}
           <div className="app-row">
             <span>{detail.request.is_resolved ? "Resolvida" : "Indicação da comunidade"}</span>
             <button
@@ -710,14 +744,14 @@ export function AppReact() {
         <section>
           <h2>Respostas</h2>
           {detail.replies.length ? (
-            <ul className="app-list" aria-label="Respostas">
+            <ul className="stack" aria-label="Respostas">
               {detail.replies.map((reply) => (
-                <li key={reply.id} className="app-card app-reply">
+                <li key={reply.id} className="answer">
                   {reply.is_removed ? (
                     <p>Resposta removida pela moderação.</p>
                   ) : (
                     <>
-                      <p className="app-detail">{reply.body}</p>
+                      <p className="detail-copy">{reply.body}</p>
                       {detail.request.author_id === user && !detail.request.is_resolved && (
                         <button
                           type="button"
@@ -741,6 +775,11 @@ export function AppReact() {
             Reabrir pergunta
           </button>
         )}
+        {actionError && (
+          <p className="app-error" role="alert">
+            {actionError}
+          </p>
+        )}
         {!detail.request.is_resolved && (
           <div className="app-compose">
             <label htmlFor="answer-box">Sua resposta</label>
@@ -761,41 +800,67 @@ export function AppReact() {
     <div className="app-react">
       <header className="app-top">Bivaque · {city}</header>
       <div className="app-frame">
-        <nav className="app-nav" aria-label="Navegação principal">
+        <nav className="nav-main" aria-label="Navegação principal">
+          <div className="rail-brand" aria-hidden="true">
+            <span className="brand-mark">B</span>
+          </div>
           {(["inicio", "comunidade", "conversas", "voce"] as const).map((name, i) => (
             <button
               type="button"
+              className="nav-item"
               key={name}
+              aria-label={["Início", "Comunidade", "Conversas", "Você"][i]}
               aria-current={active === name ? "page" : undefined}
               onClick={() => go({ name })}
             >
-              {["Início", "Comunidade", "Conversas", "Você"][i]}
+              <md-icon>{["home", "groups", "chat_bubble", "person"][i]}</md-icon>
+              <span>{["Início", "Comunidade", "Conversas", "Você"][i]}</span>
             </button>
           ))}
-          <button type="button" className="app-create" aria-label="Criar" onClick={openAsk}>
-            +
-          </button>
-          <span aria-hidden="true">Criar</span>
         </nav>
+        <button type="button" className="create-fab" aria-label="Criar" onClick={openAsk}>
+          <md-icon>add</md-icon>
+          <span className="fab-label">Criar</span>
+        </button>
         <main className="app-main" ref={main} onScroll={saveContext}>
           {route.name === "inicio" ? (
-            <div className="app-content">
-              <header className="app-head">
+            <div className="app-content home-mob">
+              <header className="page-head">
                 <h1 tabIndex={-1}>O que você precisa em {city}</h1>
               </header>
-              <button type="button" className="app-home-search" aria-label="Buscar no Bivaque">
-                ⌕　Busque “diarista de confiança”
+              <button type="button" className="home-search-button" aria-label="Buscar no Bivaque">
+                <md-icon>search</md-icon>
+                <span>Busque “diarista de confiança”</span>
               </button>
-              <nav className="app-shortcuts" aria-label="Áreas">
-                <button type="button">Negócios</button>
-                <button type="button">Desapegos</button>
-                <button type="button">Imóveis</button>
-                <button type="button" onClick={() => go({ name: "comunidade" })}>
-                  Indicações
+              <nav className="intent-grid" aria-label="Áreas">
+                <button type="button" className="intent">
+                  <md-icon>storefront</md-icon>
+                  <span>Negócios</span>
+                </button>
+                <button type="button" className="intent">
+                  <md-icon>sell</md-icon>
+                  <span>Desapegos</span>
+                </button>
+                <button type="button" className="intent">
+                  <md-icon>apartment</md-icon>
+                  <span>Imóveis</span>
+                </button>
+                <button type="button" className="intent" onClick={() => go({ name: "comunidade" })}>
+                  <md-icon>volunteer_activism</md-icon>
+                  <span>Indicações</span>
                 </button>
               </nav>
-              <section className="app-card">
-                <h2>A comunidade procura</h2>
+              <section className="section">
+                <div className="section-title">
+                  <h2>A comunidade procura</h2>
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() => go({ name: "comunidade" })}
+                  >
+                    Ver perguntas
+                  </button>
+                </div>
                 {list(false, true)}
               </section>
             </div>

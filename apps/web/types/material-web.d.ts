@@ -224,13 +224,17 @@ declare module "react" {
       "md-checkbox": MaterialCheckboxElementProperties
       "md-dialog": MaterialDialogElementProperties
       "md-filled-button": MaterialFilledButtonProperties
+      "md-filled-tonal-button": MaterialFilledButtonProperties &
+        Readonly<{ ref?: Ref<HTMLElement | null> | undefined }>
       "md-icon": MaterialIconProperties
       "md-icon-button": MaterialIconButtonElementProperties
+      "md-primary-tab": MaterialButtonElementProperties & Readonly<{ active?: boolean | undefined }>
       "md-outlined-button": MaterialActionButtonProperties
       "md-outlined-select": MaterialOutlinedSelectElementProperties
       "md-outlined-text-field": MaterialTextFieldElementProperties
       "md-select-option": MaterialSelectOptionElementProperties
       "md-text-button": MaterialActionButtonProperties
+      "md-tabs": MaterialBase
     }
   }
 }
