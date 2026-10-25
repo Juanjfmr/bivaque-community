@@ -1,0 +1,52 @@
+name: Bivaque UI — instalar componentes oficiais shadcn e validar
+on:
+  push:
+    branches:
+      - feat/shadcn-library-only-20261025
+    paths:
+      - 'prototypes/bivaque-next-shadcn/components/library-app.tsx'
+      - 'prototypes/bivaque-next-shadcn/components.json'
+      - '.github/workflows/bivaque-shadcn-library-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bivaque-shadcn-library-check
+  cancel-in-progress: true
+
+jobs:
+  shadcn:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências da aplicação
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Instalar CSS oficial e componentes pela CLI
+        run: |
+          npm install --no-package-lock --no-audit --no-fund tw-animate-css
+          npx --yes shadcn@latest add sidebar button card badge avatar input label textarea select tabs dialog sheet accordion alert checkbox dropdown-menu tooltip separator table progress carousel scroll-area sonner skeleton -y -o
+      - name: Versionar componentes gerados sem personalizações
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/ui components.json app/globals.css package.json lib/utils.ts || true
+          git add hooks || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(shadcn): commit official CLI-generated primitives [skip ci]"
+            git push origin HEAD:feat/shadcn-library-only-20261025
+          fi
+      - name: Validar TypeScript e exportação estática
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
