@@ -45,6 +45,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from "@/components/ui/combobox";
 import { CatalogMap } from "@/components/modules/catalog-map";
+import {buildSearchSections,countSearchResults,type SearchGroups,type SearchHit} from "@/lib/integrated-search.mjs";
 import { activeFilterCount, findMatchingAlert, alertLabel, type SavedSearchAlert } from "@/lib/catalog-alerts.mjs";
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
 
@@ -100,6 +101,8 @@ export default function LibraryApp(){
   const page=routes.find(v=>v.slug===slug)||routes[0];
   const [city,setCity]=React.useState(INITIAL_CITY);
   const [query,setQuery]=React.useState("");
+  const [searchScope,setSearchScope]=React.useState("all");
+  const [recentSearches,setRecentSearches]=React.useState<string[]>([]);
   const [category,setCategory]=React.useState("Todos");
   const [sort,setSort]=React.useState("Mais recentes");
   const [saved,setSaved]=React.useState<string[]>([]);
@@ -150,14 +153,19 @@ export default function LibraryApp(){
     const restored=v.filtersByMarket||{imoveis:{...initialCatalogFilters,...v.catalogFilters},desapegos:{...initialCatalogFilters}};
     setFiltersByMarket({imoveis:{...initialCatalogFilters,...restored.imoveis},desapegos:{...initialCatalogFilters,...restored.desapegos}});
     setAlerts(Array.isArray(v.alerts)?v.alerts:[]);
+    setRecentSearches(Array.isArray(v.recentSearches)?v.recentSearches:[]);
     setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});
   }setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,recentSearches,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,recentSearches,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setTab("Indicações");setCatalogView("list");const pending=restoreAlert.current;if(pending&&pending.kind===slug)setCategory((pending.attrs as CatalogFilters&{category?:string}).category||"Todos");else setCategory("Todos");restoreAlert.current=null},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function openItemPage(v:Item){navigate((v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id)}
+  function keepRecent(text:string){const value=text.trim();if(value.length>=2)setRecentSearches(v=>[value,...v.filter(x=>x.toLowerCase()!==value.toLowerCase())].slice(0,5))}
+  function startSearch(text:string){const value=text.trim();setQuery(value);setSearchScope("all");keepRecent(value);setSearchOpen(false);navigate("busca")}
+  function openSearchHit(hit:SearchHit){const target=hit.type==="negocio"?"negocio":hit.type==="pergunta"?"pergunta":hit.type==="grupo"?"grupo":hit.type==="evento"?"evento":"anuncio";setSearchOpen(false);keepRecent(query);navigate(target+"/"+hit.id)}
+
   function toggle(id:string,arr:string[],setter:React.Dispatch<React.SetStateAction<string[]>>){setter(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
   function openCreate(v="Pergunta"){setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
 
@@ -293,6 +301,38 @@ export default function LibraryApp(){
         {nextEvent&&<section className="rounded-xl border bg-card p-4"><div className="flex items-center justify-between"><h2 className="text-[17px] font-semibold">Próximo encontro</h2><Button variant="ghost" size="sm" onClick={()=>navigate("agenda")}>Agenda</Button></div><div className="mt-3 flex items-center gap-3"><CalendarDays className="size-8 shrink-0"/><span className="flex-1"><strong className="block text-[13px]">{nextEvent.title}</strong><span className="text-[11px] text-muted-foreground">{nextEvent.when} · {nextEvent.place}</span></span></div><Button variant={going.includes(nextEvent.id)?"outline":"secondary"} size="sm" className="mt-3 w-full" onClick={()=>toggle(nextEvent.id,going,setGoing)}>{going.includes(nextEvent.id)?"Confirmado":"Vou participar"}</Button></section>}
         <section className="rounded-xl border bg-card p-4"><h2 className="text-[17px] font-semibold">{moment==="chegando"?"Chegando a "+city+"?":moment==="saindo"?"Vai sair de "+city+"?":"Ajude quem está chegando"}</h2><p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{moment==="moro"?"Uma indicação sua pode facilitar a chegada de outra família.":"Prepare moradia, serviços, documentação e contatos."}</p><div className="mt-3 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={()=>navigate(moment==="moro"?"comunidade":"movimentacao")}>{moment==="moro"?"Ajudar quem chega":"Ver plano"}<ArrowRight/></Button><Select value={moment} onValueChange={setMoment}><SelectTrigger className="h-10 w-[135px] text-[11px]" aria-label="Momento da movimentação"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="moro">Moro na cidade</SelectItem><SelectItem value="chegando">Estou chegando</SelectItem><SelectItem value="saindo">Estou saindo</SelectItem></SelectContent></Select></div></section>
       </aside>
+    </div>;
+  }
+  function searchPage(){
+    const sections=buildSearchSections({query,city,items:allItems,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS});
+    const names=[["all","Tudo"],["items","Anúncios"],["biz","Negócios"],["asks","Indicações"],["groups","Grupos"],["events","Encontros"]] as const;
+    const definitions=[["items","Anúncios",ShoppingBag],["biz","Negócios",BriefcaseBusiness],["asks","Indicações e respostas",MessageCircle],["groups","Grupos",Users],["events","Encontros",CalendarDays]] as const;
+    const totals=countSearchResults(sections);
+    const targetScope=(v:string)=>setSearchScope(v);
+    const drawRow=(hit:SearchHit)=><button key={hit.type+hit.id} onClick={()=>openSearchHit(hit)} className="group flex min-h-[71px] w-full items-center gap-3 border-b border-border/70 py-3 text-left last:border-0 hover:bg-secondary/45">
+      {hit.image?<img src={hit.image} className="size-[62px] shrink-0 rounded-lg object-cover" alt=""/>:<span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-secondary">{hit.type==="pergunta"?<MessageCircle/>:hit.type==="grupo"?<Users/>:<CalendarDays/>}</span>}
+      <span className="min-w-0 flex-1"><strong className="block text-[13px] font-semibold leading-snug">{hit.title}</strong><span className="mt-1 block text-[11px] text-muted-foreground">{hit.meta}</span>{hit.snippet&&<span className="mt-1.5 block line-clamp-2 text-[12px] italic leading-relaxed text-muted-foreground">Resposta encontrada: “{hit.snippet}”</span>}</span>
+      {hit.price&&<span className="hidden shrink-0 text-[12px] font-semibold sm:block">{hit.price}</span>}<ChevronRight className="size-4 shrink-0 text-muted-foreground"/>
+    </button>;
+    return <div className="mx-auto max-w-5xl space-y-6">
+      <header className="space-y-2 border-b pb-4"><p className="text-[11px] font-semibold uppercase tracking-wider text-bivaque-city">Busca local</p><h1 className="font-serif text-[27px] font-semibold tracking-tight sm:text-[35px]">Buscar em {city}</h1><p className="text-[12px] text-muted-foreground">Encontre anúncios, prestadores, perguntas e experiências de outras pessoas.</p></header>
+      <div className="relative"><Search className="absolute left-4 top-[14px] size-5 text-muted-foreground"/><Input aria-label="Buscar no Bivaque" placeholder="O que você procura?" value={query} onChange={e=>{setQuery(e.target.value);setSearchScope("all")}} onKeyDown={e=>{if(e.key==="Enter")keepRecent(query)}} className="h-12 rounded-xl bg-card pl-11 pr-14 text-[14px]"/>{query&&<Button size="sm" variant="ghost" className="absolute right-1 top-1 min-h-10" aria-label="Limpar pesquisa" onClick={()=>{setQuery("");setSearchScope("all")}}>Limpar</Button>}</div>
+      <div className="overflow-x-auto"><ToggleGroup type="single" variant="outline" value={searchScope} onValueChange={v=>targetScope(v||"all")} className="justify-start gap-2">{names.map(([value,label])=><ToggleGroupItem key={value} value={value} className="min-h-11 shrink-0 rounded-full border-border px-4 text-[12px] data-[state=on]:bg-foreground data-[state=on]:text-background">{label}</ToggleGroupItem>)}</ToggleGroup></div>
+      {!query.trim()?<div className="grid gap-7 md:grid-cols-2">
+        {recentSearches.length>0&&<section className="space-y-3"><div className="flex items-center justify-between"><h2 className="text-[18px] font-semibold">Buscas recentes</h2><Button size="sm" variant="ghost" onClick={()=>setRecentSearches([])}>Limpar</Button></div><div className="divide-y divide-border/75">{recentSearches.map(t=><button className="flex min-h-12 w-full items-center gap-3 text-left text-[13px]" key={t} onClick={()=>startSearch(t)}><Clock className="size-4 text-muted-foreground"/><span className="flex-1">{t}</span><ArrowRight className="size-4"/></button>)}</div></section>}
+        <section className="space-y-3"><h2 className="text-[18px] font-semibold">Explorar em {city}</h2><div className="grid grid-cols-2 gap-2">{[["Imóveis","imoveis",Building2],["Desapegos","desapegos",ShoppingBag],["Serviços","servicos",BriefcaseBusiness],["Comunidade","comunidade",MessageCircle],["Grupos","grupos",Users],["Agenda","agenda",CalendarDays]].map(([name,to,Icon])=><button key={String(to)} onClick={()=>navigate(String(to))} className="flex min-h-[62px] items-center gap-2 rounded-lg border bg-card px-3 text-left text-[12px] font-medium">{React.createElement(Icon as typeof Search,{className:"size-[19px]"})}{String(name)}</button>)}</div></section>
+        <section className="space-y-3"><h2 className="text-[18px] font-semibold">Sugestões</h2><div className="divide-y divide-border/75">{["escola","berço","mudança","mecânico"].map(t=><button key={t} onClick={()=>startSearch(t)} className="flex min-h-12 w-full items-center gap-3 text-left text-[13px]"><Search className="size-4 text-muted-foreground"/><span className="flex-1">{t}</span><ArrowRight className="size-4"/></button>)}</div></section>
+      </div>:<div className="space-y-6">
+        <p role="status" className="text-[12px] text-muted-foreground">{searchScope==="all"?totals:(sections[searchScope as keyof SearchGroups]||[]).length} resultados ilustrativos em {city} para “{query}”</p>
+        {(searchScope==="all"?definitions:definitions.filter(x=>x[0]===searchScope)).map(([id,title,Icon])=>{
+          const values=sections[id];
+          if(!values.length)return null;
+          const shown=searchScope==="all"?values.slice(0,id==="asks"?5:4):values;
+          return <section key={id} className="space-y-2"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-2"><h2 className="flex items-center gap-2 text-[17px] font-semibold"><Icon className="size-[18px]"/>{title} <span className="text-xs font-normal text-muted-foreground">({values.length})</span></h2>{searchScope==="all"&&values.length>shown.length&&<Button size="sm" variant="ghost" className="min-h-11" onClick={()=>setSearchScope(id)}>Ver todos <ArrowRight className="size-4"/></Button>}</div><div>{shown.map(drawRow)}</div></section>
+        })}
+        {(searchScope==="all"?totals===0:sections[searchScope as keyof SearchGroups].length===0)&&<div className="space-y-3 rounded-xl border bg-card p-6 text-center"><h2 className="font-serif text-xl">Nada sobre “{query}”</h2><p className="text-[13px] text-muted-foreground">Tente termos mais simples ou peça uma indicação à comunidade.</p><Button variant="outline" onClick={()=>openCreate("Pergunta")}><MessageCircle className="size-4"/>Pedir indicação</Button></div>}
+      </div>}
+      <p className="border-t pt-3 text-[11px] text-muted-foreground">Resultados de demonstração; perfis, anúncios e indicações não representam pessoas nem negócios reais.</p>
     </div>;
   }
   function marketplace(){
@@ -459,7 +499,7 @@ export default function LibraryApp(){
     }
     return <p className="text-sm text-muted-foreground">Página não encontrada na demonstração.</p>;
   }
-  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="busca"?<div className="space-y-5">{header}<Input autoFocus placeholder="Pesquisar em todos os módulos…" value={query} onChange={e=>setQuery(e.target.value)}/>{showItems(ordered)}</div>:homePage();
+  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="busca"?searchPage():homePage();
 
   const oms=["Todas",...new Set(HOUSING.map(h=>h.om))];
   const relevantHoods=[...new Set((slug==="imoveis"?HOUSING:CLASSIFIEDS).filter(x=>x.city===city).map(x=>x.hood))];
@@ -549,12 +589,17 @@ export default function LibraryApp(){
       </div>
     </SidebarInset>
 
-    <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar no Bivaque" description="Pesquisa e navegação nos dados demonstrativos">
-      <CommandInput value={query} onValueChange={setQuery} placeholder="Imóveis, serviços, grupos, perguntas..." onKeyDown={e=>{if(e.key==="Enter"&&query.trim()){setSearchOpen(false);navigate("busca")}}}/>
-      <CommandList><CommandEmpty>Nenhum resultado. Pressione Enter para procurar em todos os módulos.</CommandEmpty>
-        <CommandGroup heading="Módulos">{routes.filter(x=>x.group==="principal"||x.group==="explorar").map(x=><CommandItem key={x.slug} value={x.label} onSelect={()=>{setSearchOpen(false);navigate(x.slug)}}><x.icon/>{x.label}</CommandItem>)}</CommandGroup>
-        <CommandSeparator/><CommandGroup heading="Resultados e anúncios">{allItems.filter(x=>x.city===city).slice(0,12).map(x=><CommandItem key={x.id} value={x.title+" "+x.meta} onSelect={()=>{setSearchOpen(false);setDetail(x);setDetailOpen(true)}}><Search/>{x.title}<span className="ml-auto text-xs text-muted-foreground">{x.kind==="imoveis"?"Imóvel":x.kind==="servicos"?"Serviço":"Desapego"}</span></CommandItem>)}</CommandGroup>
+    <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar no Bivaque" description="Pesquisar em módulos e dados ilustrativos da cidade selecionada">
+      <CommandInput value={query} onValueChange={setQuery} placeholder="Busque anúncios, serviços, respostas ou grupos..." onKeyDown={e=>{if(e.key==="Enter"&&query.trim()){e.preventDefault();startSearch(query)}}}/>
+      <CommandList><CommandEmpty>Sem resultado imediato. Enter abre a busca completa.</CommandEmpty>
+        <CommandGroup heading="Explorar">{routes.filter(x=>["imoveis","desapegos","servicos","comunidade","grupos","agenda"].includes(x.slug)).map(x=><CommandItem key={x.slug} value={x.label} onSelect={()=>{setSearchOpen(false);navigate(x.slug)}}><x.icon className="size-4"/>{x.label}</CommandItem>)}</CommandGroup>
+        <CommandSeparator/>
+        {(()=>{
+          const result=buildSearchSections({query,city,items:allItems,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS});
+          return (["items","biz","asks","groups","events"] as const).map(key=>result[key].length?<CommandGroup key={key} heading={({items:"Anúncios",biz:"Negócios",asks:"Indicações e respostas",groups:"Grupos",events:"Encontros"})[key]}>{result[key].slice(0,4).map(hit=><CommandItem key={key+hit.id} value={[hit.title,hit.meta,hit.snippet].filter(Boolean).join(" ")} onSelect={()=>openSearchHit(hit)}><Search className="size-4"/><span className="line-clamp-1 flex-1">{hit.title}</span><span className="text-xs text-muted-foreground">{hit.snippet?"Na resposta":""}</span></CommandItem>)}</CommandGroup>:null)
+        })()}
       </CommandList>
+      <div className="border-t px-4 py-2 text-[11px] text-muted-foreground">Enter: buscar em todos os módulos · Ctrl K: abrir</div>
     </CommandDialog>
     <Dialog open={alertsOpen} onOpenChange={setAlertsOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-[560px]">
       <DialogHeader><DialogTitle>Alertas de busca</DialogTitle><DialogDescription>Buscas guardadas somente neste navegador. Esta prévia não envia notificações, não monitora anúncios novos nem ativa push.</DialogDescription></DialogHeader>

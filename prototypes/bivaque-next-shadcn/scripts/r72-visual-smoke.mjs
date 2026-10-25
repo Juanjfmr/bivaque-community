@@ -59,6 +59,23 @@ try{
       await page.getByRole("heading",{name:"Alertas de busca"}).waitFor();
       await page.getByRole("button",{name:"Fechar"}).click();
    }
+   if(width===375&&theme==="light"){
+      await page.goto("http://127.0.0.1:"+port+base+"/busca/",{waitUntil:"domcontentloaded"});
+      await page.getByRole("heading",{name:"Buscar em Brasília"}).waitFor({timeout:12000});
+      const box=page.getByRole("textbox",{name:"Buscar no Bivaque"});
+      await box.fill("cobertura danos");
+      await page.getByText("Resposta encontrada:",{exact:false}).first().waitFor({timeout:8000});
+      await page.getByRole("button",{name:/Qual empresa de mudança/}).first().click();
+      await page.waitForURL("**/pergunta/q3/");
+      await page.getByRole("heading",{name:/Qual empresa de mudança/}).first().waitFor();
+      await page.goto("http://127.0.0.1:"+port+base+"/busca/",{waitUntil:"domcontentloaded"});
+      await page.getByRole("textbox",{name:"Buscar no Bivaque"}).fill("mecânico");
+      await page.getByText("Oficina Militar Motors").first().waitFor({timeout:8000});
+      await page.screenshot({path:resolve(import.meta.dirname,"../visual-qa/search-375-light.png"),fullPage:true,animations:"disabled"});
+      await page.goto("http://127.0.0.1:"+port+base+"/");
+      await page.keyboard.press("Control+k");
+      await page.getByPlaceholder("Busque anúncios, serviços, respostas ou grupos...").waitFor({timeout:8000});
+    }
    await context.close();
   }
  }

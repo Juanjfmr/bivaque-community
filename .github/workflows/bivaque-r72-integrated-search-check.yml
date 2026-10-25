@@ -1,0 +1,42 @@
+name: Bivaque R72 — busca integrada
+on:
+  push:
+    branches: [feat/r72-integrated-search-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-r72-integrated-search-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-r72-integrated-search
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Test R72 geography, saved searches and integrated discovery
+        run: node --test scripts/catalog-r72.test.mjs scripts/integrated-search.test.mjs
+      - name: Check brand contrast
+        run: node scripts/verify-contrast.mjs
+      - name: Build Next.js including static search route
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Verify search static route
+        run: |
+          test -f out/busca/index.html
+          test -f out/pergunta/q1/index.html
+          test -f out/grupo/g1/index.html
+          grep -q 'buildSearchSections' components/library-app.tsx
