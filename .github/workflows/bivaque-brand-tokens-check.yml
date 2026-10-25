@@ -25,6 +25,8 @@ jobs:
           node-version: '22'
       - name: Instalar dependências congeladas
         run: npm ci --no-audit --no-fund
+      - name: Verificar contraste WCAG dos tokens semânticos
+        run: node scripts/verify-contrast.mjs
       - name: TypeScript e build estático do Next.js
         env:
           GITHUB_PAGES: 'true'
