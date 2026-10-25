@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -40,6 +40,26 @@ jobs:
           GITHUB_PAGES: 'true'
           NEXT_TELEMETRY_DISABLED: '1'
         run: npm run build
+      - name: Publicar arquivos estáticos também na raiz da branch de testes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE"
+          BUILD="$PWD/out"
+          # O Pages configurado como fonte branch/root não deve servir README via Jekyll.
+          # Versione EXCLUSIVAMENTE artefatos exportados, sem alterar a main.
+          find "$BUILD" -type f -printf '%P\\0' > /tmp/bivaque-static-paths
+          cp -a "$BUILD"/. "$ROOT"/
+          touch "$ROOT"/.nojekyll
+          printf '.nojekyll\\0' >> /tmp/bivaque-static-paths
+          cd "$ROOT"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f --pathspec-from-file=/tmp/bivaque-static-paths --pathspec-file-nul
+          if ! git diff --cached --quiet; then
+            git commit -m "ci(preview): mirror exported Next.js site into Pages branch root [skip ci]"
+            git push origin HEAD:refs/heads/feat/github-pages-preview-20261025
+          fi
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
       - name: Enviar arquivos estáticos
