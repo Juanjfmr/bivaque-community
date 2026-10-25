@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { seedSession } from "../helpers/session"
+import { seedSession, signInAs } from "../helpers/session"
 
 const title = 'Pergunta de escape <img src=x onerror="window.__xss=1">"\''
 
@@ -23,8 +23,27 @@ async function expectScrollNear(page: import("@playwright/test").Page, expected:
     .toBeLessThanOrEqual(expected + 24)
 }
 
+async function questionList(page: import("@playwright/test").Page) {
+  const list = page.getByRole("list", { name: "Perguntas" })
+  await expect(list).not.toHaveAttribute("aria-busy", "true")
+  await expect.poll(() => list.getByRole("listitem").count()).toBeGreaterThan(0)
+  return list
+}
+
+async function expectNavigation(
+  page: import("@playwright/test").Page,
+  route: string,
+  routeId: string,
+  parent: string,
+  origin: string,
+) {
+  await expect
+    .poll(() => page.evaluate(() => (history.state as { navigation?: unknown })?.navigation))
+    .toMatchObject({ route: { name: route, id: routeId }, parent: { name: parent }, origin })
+}
+
 async function openFirstQuestion(page: import("@playwright/test").Page) {
-  const item = page.getByRole("list", { name: "Perguntas" }).getByRole("listitem").first()
+  const item = (await questionList(page)).getByRole("listitem").first()
   const button = item.getByRole("button")
   await button.scrollIntoViewIfNeeded()
   const scroll = await page.getByRole("main").evaluate((node) => node.scrollTop)
@@ -84,23 +103,44 @@ test.describe("EXP-001 navegação", () => {
   })
 
   test("Mesma pergunta a partir de Início e Minhas", async ({ page }) => {
-    await enter(page, "#inicio")
-    const homeQuestion = await openFirstQuestion(page)
+    await signInAs(page.context(), "visual@bivaque.example.invalid")
+    await page.goto("/app#inicio")
+    await questionList(page)
+    const homeButton = page.getByRole("button", { name: title, exact: true })
+    await homeButton.scrollIntoViewIfNeeded()
+    const homeScroll = await page.getByRole("main").evaluate((node) => node.scrollTop)
+    await homeButton.click()
+    await expect(page).toHaveURL(/#pergunta\//)
+    const questionUrl = page.url()
+    const questionId = new URL(questionUrl).hash.split("/")[1] ?? ""
+    expect(questionId).toBe("e0000000-0000-4000-8000-00000000f001")
     await expect(activeTab(page)).toHaveAttribute("aria-current", "page")
+    await expectNavigation(page, "pergunta", questionId, "inicio", "inicio")
     await page.goBack()
     await expect(page).toHaveURL(/#inicio$/)
     await expect(activeTab(page, "Início")).toHaveAttribute("aria-current", "page")
-    await expectScrollNear(page, 0)
-    await expect(
-      page.getByRole("button", { name: homeQuestion.buttonName, exact: true }),
-    ).toBeFocused()
-    await enter(page, "#minhas")
-    const opened = await openFirstQuestion(page)
+    await expectScrollNear(page, homeScroll)
+    await expect(homeButton).toBeFocused()
+
+    await page.goto("/app#minhas")
+    const secondList = await questionList(page)
+    const secondButton = secondList.getByRole("button", { name: title, exact: true })
+    await expect(secondButton).toBeVisible()
+    await secondButton.scrollIntoViewIfNeeded()
+    const secondScroll = await page.getByRole("main").evaluate((node) => node.scrollTop)
+    const secondOrigin = await page.evaluate(
+      () => (history.state as { navigation?: { origin?: string } })?.navigation?.origin ?? "inicio",
+    )
+    expect(["inicio", "comunidade", "conversas", "voce"]).toContain(secondOrigin)
+    await secondButton.click()
+    await expect(page).toHaveURL(questionUrl)
+    await expect(activeTab(page)).toHaveAttribute("aria-current", "page")
+    await expectNavigation(page, "pergunta", questionId, "minhas", secondOrigin)
     await page.goBack()
     await expect(page).toHaveURL(/#minhas$/)
-    await expect(page.getByRole("button", { name: opened.buttonName, exact: true })).toBeFocused()
-    await expect(page.getByRole("button", { name: opened.buttonName, exact: true })).toBeVisible()
-    await expectScrollNear(page, opened.scroll)
+    await expect(activeTab(page)).toHaveAttribute("aria-current", "page")
+    await expectScrollNear(page, secondScroll)
+    await expect(page.getByRole("button", { name: title, exact: true })).toBeFocused()
   })
 
   test("Recarregar no detalhe", async ({ page }) => {
