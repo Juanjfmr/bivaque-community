@@ -24,7 +24,7 @@ type Lab={
  joined:string[];going:string[];steps:string[];rideInterest:string[];followed:string[];recommended:string[];resolvedAnswers:Record<string,string>;talents:Talent[];rides:Ride[];useful:string[];likes:string[];villaAccess:string[];villaRequests:string[];threads:Thread[];privacy:"Somente grupos"|"Minha cidade"|"Somente eu";showSetup:boolean;
 };
 const initial:Lab={housing:HOUSING,classifieds:CLASSIFIEDS,providers:PROVIDERS,questions:QUESTIONS,groups:GROUPS,events:EVENTS,requests:REQUESTS,joined:["g1"],going:[],steps:[],rideInterest:[],followed:[],recommended:[],resolvedAnswers:{"q3":"q3-a0"},talents:TALENTS,rides:RIDES,useful:[],likes:[],villaAccess:[],villaRequests:[],threads:[{id:"t1",name:"Mariana R.",context:"Apartamento 3 quartos na Asa Norte",avatar:"MR",read:false,messages:[{id:"m1",text:"Olá! Gostaria de saber mais sobre o apartamento.",mine:true,time:"Ontem"},{id:"m2",text:"Claro. Posso compartilhar mais detalhes pelo Bivaque.",mine:false,time:"Hoje"}]},{id:"t2",name:"Mudanças Planalto",context:"Solicitação de orçamento",avatar:"MP",read:false,messages:[{id:"m3",text:"Recebemos sua solicitação de orçamento. Conte mais sobre o volume da mudança.",mine:false,time:"Hoje"}]}],privacy:"Somente grupos",showSetup:true};
-type Props={page:string;city:string;saved:string[];onSave:(id:string)=>void;onNavigate:(page:string)=>void;onNotify:(title:string,message:string)=>void;searchQuery?:string};
+type Props={page:string;city:string;saved:string[];onSave:(id:string)=>void;onNavigate:(page:string)=>void;onNotify:(title:string,message:string)=>void;searchQuery?:string; initialDetail?:{type:"housing"|"classified"|"provider";id:string}|null;onDetailConsumed?:()=>void};
 type Detail={type:"housing"|"classified"|"provider"|"question"|"group"|"event"|"request"|"villa";id:string}|null;
 const uid=()=>Math.random().toString(36).slice(2,10);
 const ini=(v:string)=>v.split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase();
@@ -32,7 +32,7 @@ const money=(v:number)=>new Intl.NumberFormat("pt-BR",{style:"currency",currency
 const emptyPhoto="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=840&q=80";
 const navItems=[["Imóveis","Encontrar moradia",House],["Desapegos","Comprar e vender",Tags],["Serviços","Buscar profissionais",BriefcaseBusiness],["Comunidade","Pedir indicações",MessageCircle],["Movimentação","Planejar transferência",Compass],["Vilas","Acessar comunidade",Building2]] as const;
 const currentTime=()=>new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(new Date());
-export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,searchQuery=""}:Props){
+export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,searchQuery="",initialDetail,onDetailConsumed}:Props){
  const [db,setDb]=useState<Lab>(initial),[loaded,setLoaded]=useState(false);
  const [detail,setDetail]=useState<Detail>(null);
  const [term,setTerm]=useState(""),[filter,setFilter]=useState("Todos"),[order,setOrder]=useState("Recentes");
@@ -48,6 +48,7 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
  const place=city.split(" - ")[0];
  useEffect(()=>{try{const s=localStorage.getItem("bivaque-shadcn-modules-lab-v1");if(s){const v=JSON.parse(s) as Partial<Lab>;setDb({...initial,...v,followed:v.followed||[],recommended:v.recommended||[],resolvedAnswers:{...initial.resolvedAnswers,...(v.resolvedAnswers||{})}});}}catch{}setLoaded(true);},[]);
  useEffect(()=>{if(loaded){try{localStorage.setItem("bivaque-shadcn-modules-lab-v1",JSON.stringify(db))}catch{}}},[db,loaded]);
+ useEffect(()=>{if(initialDetail){setDetail(initialDetail);onDetailConsumed?.()}},[initialDetail]);
  useEffect(()=>{const handle=()=>{setComposeType("Pergunta");setCompose(true)};document.addEventListener("bivaque:compose",handle);return()=>document.removeEventListener("bivaque:compose",handle)},[]);
  useEffect(()=>{setTerm(page==="Busca"?searchQuery:"");setFilter("Todos");setDetail(null);setWorkTab("Todos");if(page==="Comunidade")setCommunityTab("ind");},[page,searchQuery]);
  const update=(f:(s:Lab)=>Lab)=>setDb(f);
@@ -157,7 +158,7 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
        {questionFilter==="Para ajudar"&&visible.length>0?<p className="mw-community-note"><Heart size={15}/> Perguntas sem resposta aparecem primeiro. Uma resposta pode ajudar outra família.</p>:null}
        <div className="mw-question-feed">{visible.map(q=><Card className="mw-question-entry" key={q.id}>
          <button className="mw-question-main" onClick={()=>setDetail({type:"question",id:q.id})}><Avatar><AvatarFallback>{ini(q.author)}</AvatarFallback></Avatar><div><span className="mw-meta">{q.author} · {q.category} · {q.date}</span><h3>{q.title}</h3><span className="mw-meta">{q.answers.length} respostas · {q.helped} pessoas ajudadas</span></div><ChevronRight size={18}/></button>
-         <div className="mw-question-foot"><Badge variant={q.resolved?"secondary":"outline"}>{q.resolved?"Resolvida":q.answers.length?String(q.answers.length)+" respostas":"Sem resposta"}</Badge><Button variant="ghost" onClick={()=>setDetail({type:"question",id:q.id})}>{q.resolved?"Ver solução":"Responder"} <ArrowRight size={15}/></Button></div>
+         <div className="mw-question-foot"><Badge variant={q.resolved?"success":"outline"}>{q.resolved?"Resolvida":q.answers.length?String(q.answers.length)+" respostas":"Sem resposta"}</Badge><Button variant="ghost" onClick={()=>setDetail({type:"question",id:q.id})}>{q.resolved?"Ver solução":"Responder"} <ArrowRight size={15}/></Button></div>
        </Card>)}</div>
        {!visible.length&&noResults(questionFilter==="Para ajudar"?"Ninguém esperando resposta":"Nenhuma pergunta por aqui",()=>{setTerm("");setQuestionFilter("Para ajudar")})}
        {helper("Publicações e respostas fictícias. 'Resolvida' significa que o autor escolheu uma resposta no modo de teste.")}
@@ -238,14 +239,15 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
    return <>
      <div className="mw-question-detail-author"><Avatar><AvatarFallback>{ini(q.author)}</AvatarFallback></Avatar><div><strong>{q.author}</strong><small>{q.city} · {q.category} · {q.date}</small></div><Button variant="ghost" aria-label={db.followed.includes(q.id)?"Parar de seguir pergunta":"Seguir pergunta"} onClick={()=>toggleFollow(q.id)}><Bell size={17} fill={db.followed.includes(q.id)?"currentColor":"none"}/>{db.followed.includes(q.id)?"Seguindo":"Seguir"}</Button></div>
      <h2>{q.title}</h2>
-     <Badge variant={q.resolved?"secondary":"outline"}>{q.resolved?"Resolvida":q.answers.length+" respostas"}</Badge>
+     <Badge variant={q.resolved?"success":"outline"}>{q.resolved?"Resolvida":q.answers.length+" respostas"}</Badge>
+     {q.resolved&&q.author==="Você"&&<Button variant="outline" onClick={()=>{update(db=>({...db,questions:db.questions.map(x=>x.id===q.id?{...x,resolved:false}:x),resolvedAnswers:Object.fromEntries(Object.entries(db.resolvedAnswers).filter(([key])=>key!==q.id))}));onNotify("Pergunta reaberta","Agora é possível receber novas indicações.")}}><ArrowLeft size={15}/> Reabrir pergunta</Button>}
      <Separator className="my-3"/>
      <div className="mw-community-section-head"><h3>Respostas</h3><span>{q.answers.length}</span></div>
      <div className="mw-stack">{q.answers.map((answer,index)=>{
        const id=q.id+"-a"+index;const solved=selected===id;
        return <Card className={"mw-answer mw-answer-card "+(solved?"accepted":"")} key={id}>
          <Avatar><AvatarFallback>{ini(answer.author)}</AvatarFallback></Avatar>
-         <div><div className="mw-answer-header"><strong>{answer.author}</strong>{solved&&<Badge variant="secondary"><CheckCircle2 size={13}/> Ajudou a resolver</Badge>}</div><small>{answer.date} · {answer.author==="Você"?"Sua indicação":"Membro da comunidade (fictício)"}</small>
+         <div><div className="mw-answer-header"><strong>{answer.author}</strong>{solved&&<Badge variant="success"><CheckCircle2 size={13}/> Ajudou a resolver</Badge>}</div><small>{answer.date} · {answer.author==="Você"?"Sua indicação":"Membro da comunidade (fictício)"}</small>
            <p>{answer.text}</p>
            <div className="mw-answer-actions">{q.author==="Você"?<Button variant="outline" onClick={()=>{markResolved(q.id,id);onNotify("Pergunta resolvida","A resposta selecionada ficou vinculada à resolução.")}}><CheckCircle2 size={15}/>{solved?"Resposta escolhida":"Ajudou a resolver"}</Button>:
              <Button variant="ghost" onClick={()=>markUseful(id)}><Heart size={15} fill={db.useful.includes(id)?"currentColor":"none"}/>{db.useful.includes(id)?"Marcado útil":"Útil"}</Button>}
