@@ -444,3 +444,36 @@ h2{font-size:16px;letter-spacing:-.025em}
 .r72-shell .market-card .market-visual .photo{background:var(--soft)}
 .r72-shell .market-card .r72-card-price{color:var(--ink)}
 @media(max-width:1023px){.r72-home-row .market-card .r72-card-price{font-size:16px}}
+
+
+/* R72 listing filters and community surface parity */
+.r72-catalog-head{align-items:flex-start;gap:12px;margin-bottom:18px}
+.r72-catalog-head h1{font-family:NotoSerif,Georgia,serif;font-size:clamp(24px,4vw,34px);font-weight:600;letter-spacing:-.6px}
+.r72-catalog-head p{font-size:14px;line-height:20px;margin-top:6px}
+.r72-catalog-head>button{white-space:nowrap}
+.r72-filter-pills{display:flex;gap:8px;align-items:center;margin:14px 0 16px;white-space:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+.r72-filter-pills::-webkit-scrollbar{display:none}
+.r72-filter-pills>button{flex-shrink:0}
+.r72-fpill{flex-shrink:0!important;min-height:41px!important;border:1px solid var(--stroke)!important;border-radius:12px!important;background:var(--panel)!important;font-size:12px!important;padding:0 12px!important;font-weight:650!important;color:var(--ink)!important}
+.r72-fpill.on{background:var(--soft)!important;border-color:var(--ink)!important}
+.r72-mobile-filter-text{display:none}
+.r72-catalog-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;margin:10px 0 15px;font-size:14px}
+.r72-catalog-bar strong{font-weight:650}
+.r72-catalog-bar button{font-size:12px!important;color:var(--ink)!important}
+.r72-filter-sheet>div>h3{font-size:16px;font-weight:700}
+.r72-community-tabs{display:flex;width:100%;border-radius:0;border-bottom:1px solid var(--stroke);background:none;padding:0;gap:0;height:52px}
+.r72-community-tabs button{height:52px!important;min-height:52px!important;flex:1!important;max-width:190px;border-radius:0!important;box-shadow:none!important;border-bottom:3px solid transparent;background:none!important;font-size:14px!important;font-weight:600!important;color:var(--muted)!important}
+.r72-community-tabs button[data-state=active]{border-color:var(--ink);color:var(--ink)!important}
+.r72-community-note{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:12px;background:var(--soft);margin:18px 0 12px}
+.r72-community-note strong{font-size:14px;display:block}
+.r72-community-note small{display:block;margin-top:3px;font-size:12px;color:var(--muted)}
+.r72-community-filters{display:flex;align-items:center;gap:9px;overflow-x:auto;scrollbar-width:none;margin:12px 0 18px}
+.r72-community-filters button{white-space:nowrap;flex-shrink:0;font-size:12px!important}
+@media(max-width:719px){
+ .r72-catalog-head h1{font-size:24px}
+ .r72-catalog-head>button{font-size:11px!important;padding:0 9px!important}
+ .r72-desktop-filter-text{display:none}
+ .r72-mobile-filter-text{display:inline}
+ .r72-community-tabs button{font-size:12px!important}
+ .r72-filter-pills{margin-left:-16px;margin-right:-16px;padding-inline:16px}
+}
