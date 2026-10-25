@@ -40,20 +40,22 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 ## Estado atual para retomada
 
 - **1a concluída localmente** em `5fc9fc77`, com gate completo e runtime independente.
-- **1b julgada pelo Codex: CORREÇÕES**, sem aprovação ou commit da implementação.
-  Gate completo verde, 38/38 unitários e 288/288 E2E nos três tamanhos na árvore local.
-  Prova HTTP adicional confirmou `/app` com 404 e sugestão do Vite, enquanto `/app/`
-  responde 200 com o HTML do app. A bateria verde não cobria o endereço sem barra.
-  Lista única no contrato `APP-006.task.yml`: endereço sem barra, carga ativa fora do
-  render e registro da pendência do catálogo. Nova cadeia APP-006 preparada para despacho;
-  marcador `.visual/coordenacao/APP-006-PRONTO.txt`. 1c–1e ainda não despachadas.
+- **1b e reparos APP-006 aprovados localmente pelo Codex em 25/10**, após repetir provas.
+  Gate completo verde, 38/38 unitários do app e **291/291 E2E** em 375/768/1440.
+  `/app` sem barra agora chega ao Início; registro da carga ocorre após o commit React.
+  Histórico, origem, filtros, foco, rolagem e overlays da bateria anterior preservados.
+  1c liberada pelo contrato APP-003; cadeia preparada para lançamento após os commits.
+  Próximo marcador app: `.visual/coordenacao/APP-003-PRONTO.txt`. 1d e 1e ainda não iniciadas.
 - **R3 com divisão autorizada pelo dono**, checkpoint WIP `64dc6218` no worktree separado.
   Última suíte: 154 arquivos, 1734 asserções executadas, resultado FAIL; db:lint passou.
   Gate parou em quatro erros de lint reproduzidos na base. Revisão de segurança final pendente.
   Primeiro lote RED-004: seis fixtures de chegada/anúncios/endereço, lint conhecido e
   gate aceitando variáveis públicas do processo. Migration e permissões ficam intactas.
   Relato do executor em `docs/agents/redesenho/STATUS.md` no worktree R3; marcador
-  `.visual/coordenacao/RED-004-PRONTO.txt`. Nenhum aceite do banco foi concedido.
+  `.visual/coordenacao/RED-004-PRONTO.txt` recebido. Executor relata seis fixtures verdes,
+  gate verde e suíte completa ainda FAIL (154 arquivos, 1875 asserções executadas).
+  Triagem Qwen recebida; **próximo julgamento prioritário: RED-004**, em sessão própria.
+  Nenhum aceite do banco ou de permissões foi concedido.
 - Aprovação visual da onda 1 ainda pendente; nenhuma prova vertical autorizada nesta execução.
 
 ## Decisões do dono
@@ -235,8 +237,8 @@ Não há aprovação visual nem fechamento da onda 1: 1c, 1d e 1e seguem não de
 
 ## Próxima decisão
 
-Recomendação: concluir o lote de correções APP-006 antes de liberar 1c. O dono autorizou
-a divisão da R3; RED-004 segue em paralelo, sem aprovação de segurança do banco.
+Recomendação: executar 1c pela cadeia APP-003 e julgar RED-004 na próxima sessão.
+A divisão da R3 está autorizada; não é necessário pedir novamente por lote dentro dela.
 
 ## Julgamento do Codex — 25/10/2026, após as duas cadeias
 
@@ -264,3 +266,120 @@ a divisão da R3; RED-004 segue em paralelo, sem aprovação de segurança do ba
   retomada de implementação nem aprovação de permissões nesta sessão dedicada à 1b.
   F1/F2/F3 da triagem (lint, evidência de conferência e contagem SQL) ficam para seu julgamento.
 - Nada foi integrado, publicado, enviado para merge ou aprovado visualmente.
+
+## Lote APP-006 — executor (DeepSeek V4.1 Flash), 25/10/2026
+
+Contrato `docs/agents/tasks/APP-006.task.yml` (R2, teto de três rodadas). Sem subagentes,
+sem instalação, sem processo em segundo plano, sem commit. Só `allowed_paths`.
+
+### O que foi feito
+
+- **Correção 1 — `/app` sem barra.** `apps/app/vite.config.ts` ganhou o plugin
+  `bivaque-app-endereco-sem-barra`: um apelido nos `middlewares` do dev e do preview que
+  responde 308 de `/app` (e de `/app?…`) para `/app/`. O host estático deixa de devolver a
+  sugestão do Vite ("did you mean /app/") e os dois endereços abrem o mesmo Início.
+- **Teste primeiro.** O caso negativo de `/app` sem barra entrou em
+  `apps/app/tests/e2e/rotas.spec.ts` antes do reparo e falhou nas três larguras; o caso de
+  `/app/` foi preservado e ganhou URL, casca e foco; nenhum dos 288 casos anteriores foi
+  alterado.
+- **Correção 2 — carga ativa fora do render.** `apps/app/src/contexto/cargas.tsx` deixou de
+  expor `atual` como campo escrevível: a carga ativa virou um `useRef` com leitura por
+  `get atual`, escrita por `ativar` e limpeza por `desativar`, que **só limpa se a marca
+  ainda for a desta tela**. `apps/app/src/telas/TelaDeProva.tsx` perdeu o `porta.atual = carga`
+  do corpo do render e passou a registrar a carga num efeito, com limpeza no desmonte. A
+  espera por elementos reais, a confirmação após a montagem e o `AbortSignal` da restauração
+  ficaram intactos (o e2e de rolagem/foco continua verde).
+- **Correção 3 — documental.** `docs/agents/prototipo-shadcn/APP-002-cobertura.md`: nova
+  seção "Pendências registradas" com o título condicionado do catálogo legado
+  (`inventario.md` §1 rota 7; `catalogKind()==='imovel'` → "Imóveis", senão "Desapegos";
+  `features/listings/catalog.js:11`) como pendência da tela futura, sem alegar equivalente
+  completo e sem implementar conteúdo; a nota de que `/app` sem barra "não é servido" foi
+  corrigida para o comportamento atual.
+
+### Provas com números
+
+- **Rodada 1 — caso negativo antes do reparo.** `rotas.spec.ts` isolado: **126 passou, 3
+  falhou** (as três do caso novo, uma por 375/768/1440; `did you mean to visit /app/` no
+  corpo). O caso `/app/` com casca e foco já passava. Log:
+  `.visual/coordenacao/APP-006-rodada1-vermelho.log`.
+- **Rodada 2 — implementação + bateria do app.** `build` do app verde (265 módulos,
+  JS 340,18 kB / gzip 109,71 kB). `test:e2e`: **291 passou, 0 falhou** (97 casos × 3),
+  1,7 min. Log: `.visual/coordenacao/APP-006-rodada2-e2e.log`.
+- **Rodada 3 — formatação, gate e e2e final.** Gate completo com as variáveis públicas
+  derivadas da stack local no mesmo processo (`HOST=127.0.0.1`, `ANON_CHARS=153`; nenhum
+  `.env.local` criado, nenhuma chave impressa): **VERDE**, sem etapa pulada — lint 7s,
+  typecheck 17s, typecheck:e2e 7s, build Next 67s, build:app 13s, test 38s, secrets 9s.
+  Unitários 1726/1726 (185 arquivos), app 38/38, mobile 76/76, web 19/19, privacidade
+  189/189, escopo **pass 143 / fail 0**, secrets sem achado. E2E do app de novo:
+  **291 passou, 0 falhou**. Logs: `.visual/coordenacao/APP-006-gate-rodada3b.log` e
+  `.visual/coordenacao/APP-006-rodada3-e2e.log`.
+- `HEAD` e o hash de `board.json` foram lidos antes e depois do gate verde e não mudaram
+  (`0af0d7ee`; `2cc956e2…`).
+
+### Rodadas e falhas classificadas
+
+- Rodadas próprias: **3** (caso vermelho; implementação + bateria; formatação + gate + e2e),
+  dentro do teto. Tentativas de gate: **3** — duas vermelhas, uma verde.
+- **F1 — defeito meu, reparado:** a primeira tentativa de gate parou no lint com **3 erros**
+  de formatação nos meus dois arquivos (`cargas.tsx`, `vite.config.ts`; import fora de
+  ordem). Corrigidos com `biome check --write` apenas nesses dois arquivos.
+- **F2 — interferência de árvore compartilhada, não do diff:** a segunda tentativa parou no
+  lint com **1 erro de formatação em `tools/backend-kanban/public/board.json`** (fora dos
+  `allowed_paths`). No mesmo minuto, o `HEAD` deste worktree mudou: o commit `0af0d7ee`
+  ("registra autorização e retomada da R3 por lotes", 15:11:43) reescreveu `board.json` e
+  `BOARD.md` durante a leitura do lint — estado transitório de um arquivo que eu não toquei.
+  Não era o meu diff: `git status` nunca mostrou esse arquivo, e ler o mesmo `biome check`
+  com a árvore parada deu verde (arquivo e `HEAD` estáveis antes e depois). Log do gate
+  vermelho: `.visual/coordenacao/APP-006-gate-rodada3b.log` (equivalente, `.visual/coordenacao/
+  APP-006-gate.log`). O scanner de segredos não foi tocado.
+
+### O que não consegui fazer / limitações
+
+- **Sem verificação independente.** Eu sou o executor: as provas acima são minhas. Revisor e
+  verificador de runtime precisam ser outros, e ninguém revisou este diff.
+- **O reparo de `/app` é do host local.** Ele vive no dev/preview do Vite. A publicação
+  conjunta do ADR §8 (proxy de `/app/*`) não foi exercitada aqui: quem ligar o proxy ainda
+  precisa mandar `/app` ao build do app. Não medi o proxy.
+- **`/app?consulta`** é tratado pelo apelido, mas o e2e mede apenas o endereço sem consulta.
+- **E2E do web (raiz) não rodou** — fora da lista de provas do contrato; o gate é a
+  autoridade e ele não inclui `test:e2e` do web.
+- R3, banco, API, `env.local`, worktrees irmãos, quadro e scanner: intocados.
+
+### Dúvidas
+
+1. **308** foi a escolha para preservar método e consulta; o contrato permite redirecionar,
+   mas se o endereço final tiver de permanecer `/app`, a correção é outra (servir ou
+   reescrever, não redirecionar).
+2. O **título condicionado** do catálogo (`Imóveis` × `Desapegos`) fica para a tela da onda
+   de telas: 1c ou a onda de listagens? Registrei como pendência, sem cartão no quadro —
+   `allowed_paths` não incluíam o quadro.
+3. **Árvore compartilhada:** o commit `0af0d7ee` apareceu neste worktree durante a execução.
+   Se outra sessão continua escrevendo aqui, o gate de quem vier depois pode sofrer a mesma
+   colisão; vale confirmar que as frentes não compartilham o mesmo diretório de trabalho.
+4. Nada foi commitado e não há acompanhamento desta sessão. **Não me declaro aprovado:** este
+   lote aguarda o julgamento do Codex.
+
+## Julgamento APP-006 — Codex, 25/10/2026
+
+- Decisão: APROVADO localmente, incluindo a implementação da navegação APP-002 que
+  permanecia sem commit até o fechamento destes achados. Não é aceite visual da onda 1.
+- Lidos relato do executor, triagem Qwen e diffs dos seis arquivos contra a baseline.
+  Nenhum bloqueio no diff; 34 outros arquivos da baseline permaneceram intactos.
+- Prova do julgador executada uma vez: gate completo VERDE, sem etapas puladas:
+  lint 10s, types 15s, types E2E 5s, Next 59s, app 10s, test 36s, secrets 6s.
+  Unitários do app 38/38 e escopo 143/143; E2E 291/291 (97 por viewport), duração 1,3 min.
+- Logs `.visual/coordenacao/APP-006-julgamento-gate.log` e
+  `.visual/coordenacao/APP-006-julgamento-e2e.log`; configuração pública local no processo,
+  sem arquivo env. Novos arquivos do app foram staged antes do gate para entrar no scanner.
+- O 308 do dev/preview é aceito; a publicação conjunta continua fora desta etapa.
+  A pendência do título condicionado do catálogo pertence à onda 5 (Mercado), não à 1c.
+  Corrigidos caminho/linha da referência e texto antigo sobre quem executa o gate.
+- Aceite da 1c permanece funcional/técnico; comparação completa e aprovação visual
+  do dono serão no fim da 1e, antes de prova vertical ou ondas 2 a 8.
+- APP-003 validado R2 e adaptado ao fluxo vigente: executor registra STATUS e tem
+  até três rodadas próprias. Sem dependências novas ou delegação interna.
+- R3: RED-004 terminou e tem triagem. Ainda não foi julgada nesta sessão, dedicada à APP-006.
+  Próxima sessão deve priorizar seu julgamento de fixtures; nenhuma aprovação de RLS inferida.
+- Evitar repetir a colisão de escrita no quadro: depois de lançar APP-003, esta árvore
+  fica com o executor. Andamento/julgamento da R3 deve ser registrado no STATUS de seu
+  próprio worktree e consolidado aqui no intervalo entre cadeias, preservando as duas frentes.
