@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import {
   Home, Search, Building2, ShoppingBag, BriefcaseBusiness, Users, MessageCircle,
   ClipboardList, MapPinned, Compass, CalendarDays, Ticket, Car, UserRound,
   Bookmark, Plus, ChevronRight, Check, Bell, Filter, Settings, Shield,
   MapPin, Heart, ArrowRight, Send, CircleHelp, Clock, ListChecks,
   LogOut, CircleCheck, Eye, ExternalLink, Star, SlidersHorizontal, Menu,
+  SunMoon, Sun, Moon, Monitor,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -78,10 +80,13 @@ const allItems: Item[] = [
 ];
 const options=["Pergunta","Imóvel","Desapego","Negócio","Pedido","Grupo","Encontro","Talento","Carona"];
 const store="bivaque-library-only-v1";
+const brandAssetBase=process.env.NEXT_PUBLIC_BASE_PATH || "";
+const createButtonClass="bg-bivaque-brasa text-bivaque-brasa-foreground hover:bg-bivaque-brasa-hover border-transparent";
 const readStore=()=>{if(typeof window==="undefined")return null;try{return JSON.parse(localStorage.getItem(store)||"null")}catch{return null}};
 const initials=(name:string)=>name.split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
 export default function LibraryApp(){
+  const {setTheme}=useTheme();
   const router=useRouter();const path=usePathname();
   const slug=path.split("/").filter(Boolean).pop()||"inicio";
   const page=routes.find(v=>v.slug===slug)||routes[0];
@@ -153,9 +158,9 @@ export default function LibraryApp(){
   const pageTitle=page.label;
   const isMarketplace=["imoveis","desapegos","servicos","negocios","salvos"].includes(slug);
   const showItems=(items:Item[])=>items.length?<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(card)}</div>:<Alert><CircleHelp/><AlertTitle>Nenhum resultado</AlertTitle><AlertDescription>Altere os filtros ou selecione outra cidade.</AlertDescription></Alert>;
-  const createButton=<Button onClick={()=>openCreate(slug==="imoveis"?"Imóvel":slug==="desapegos"?"Desapego":slug==="servicos"?"Negócio":slug==="pedidos"?"Pedido":slug==="grupos"?"Grupo":slug==="agenda"?"Encontro":"Pergunta")}><Plus/>Criar</Button>;
+  const createButton=<Button className={createButtonClass} onClick={()=>openCreate(slug==="imoveis"?"Imóvel":slug==="desapegos"?"Desapego":slug==="servicos"?"Negócio":slug==="pedidos"?"Pedido":slug==="grupos"?"Grupo":slug==="agenda"?"Encontro":"Pergunta")}><Plus/>Criar</Button>;
   function notice(){return <Alert><Shield/><AlertTitle>Prévia demonstrativa</AlertTitle><AlertDescription>Todos os perfis, avaliações, imóveis, propostas, preços e eventos são fictícios. Nenhuma ação envia informações para terceiros.</AlertDescription></Alert>}
-  const header=<div className="flex flex-wrap items-start justify-between gap-4"><div className="space-y-1"><h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1><p className="text-sm text-muted-foreground">{slug==="inicio"?"A rede que acompanha a vida militar.":slug==="movimentacao"?"Planeje sua chegada e compartilhe experiências.":slug==="comunidade"?"O conhecimento da comunidade fica acessível a quem chegar depois.":"Explore possibilidades da comunidade militar em "+city+"."}</p></div>{slug!=="voce"&&slug!=="conversas"&&slug!=="salvos"&&slug!=="busca"&&createButton}</div>;
+  const header=<div className="flex flex-wrap items-start justify-between gap-4"><div className="space-y-1"><h1 className="font-serif text-3xl font-semibold tracking-tight">{pageTitle}</h1><p className="text-sm text-muted-foreground">{slug==="inicio"?"A rede que acompanha a vida militar.":slug==="movimentacao"?"Planeje sua chegada e compartilhe experiências.":slug==="comunidade"?"O conhecimento da comunidade fica acessível a quem chegar depois.":"Explore possibilidades da comunidade militar em "+city+"."}</p></div>{slug!=="voce"&&slug!=="conversas"&&slug!=="salvos"&&slug!=="busca"&&createButton}</div>;
   function homePage(){
     const homes=allItems.filter(x=>x.kind==="imoveis"&&x.city===city).slice(0,3);
     const providers=PROVIDERS.filter(x=>x.city===city).sort((a,b)=>b.recommendations-a.recommendations);
@@ -169,7 +174,7 @@ export default function LibraryApp(){
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/25"/>
           <div className="relative z-10 max-w-xl space-y-4 p-6 text-white sm:p-9">
             <Badge variant="secondary" className="w-fit">BIVAQUE · COMUNIDADE MILITAR</Badge>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">O que você precisa em {city}?</h1>
+            <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">O que você precisa em {city}?</h1>
             <p className="max-w-md text-sm leading-relaxed text-white/85">Moradia, serviços, pessoas e experiências úteis em cada nova etapa da vida militar.</p>
             <Button variant="secondary" className="w-full justify-start text-foreground sm:max-w-md" onClick={()=>setSearchOpen(true)}><Search/>Buscar no Bivaque<span className="ml-auto text-xs text-muted-foreground">Ctrl K</span></Button>
           </div>
@@ -181,15 +186,15 @@ export default function LibraryApp(){
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(275px,1fr)]">
         <div className="min-w-0 space-y-7">
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2"><div><h2 className="text-xl font-semibold tracking-tight">Serviços da comunidade</h2><p className="text-sm text-muted-foreground">Indicações orgânicas, sem classificação por estrelas.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("servicos")}>Ver todos <ArrowRight/></Button></div>
+            <div className="flex items-center justify-between gap-2"><div><h2 className="font-serif text-xl font-semibold tracking-tight">Serviços da comunidade</h2><p className="text-sm text-muted-foreground">Indicações orgânicas, sem classificação por estrelas.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("servicos")}>Ver todos <ArrowRight/></Button></div>
             {providers.length?<ItemGroup className="rounded-xl border bg-card p-2">{providers.slice(0,4).map(p=><Item key={p.id} variant="default" size="sm"><ItemMedia variant="image"><img alt="" src={p.image} className="size-14 rounded-md object-cover"/></ItemMedia><ItemContent><ItemTitle>{p.name}</ItemTitle><ItemDescription>{p.category} · {p.hood} · {p.recommendations} indicações fictícias</ItemDescription></ItemContent><ItemActions><Button variant="outline" size="sm" onClick={()=>{setDetail(allItems.find(x=>x.id===p.id)||null);setDetailOpen(true)}}>Ver ficha <ChevronRight/></Button></ItemActions></Item>)}</ItemGroup>:<Alert><CircleHelp/><AlertTitle>Sem serviços demonstrativos nesta cidade</AlertTitle></Alert>}
           </section>
           <section className="space-y-3">
-            <div className="flex items-center justify-between"><div><h2 className="text-xl font-semibold tracking-tight">Imóveis da comunidade</h2><p className="text-sm text-muted-foreground">Anúncios ilustrativos para explorar.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("imoveis")}>Ver todos <ArrowRight/></Button></div>
+            <div className="flex items-center justify-between"><div><h2 className="font-serif text-xl font-semibold tracking-tight">Imóveis da comunidade</h2><p className="text-sm text-muted-foreground">Anúncios ilustrativos para explorar.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("imoveis")}>Ver todos <ArrowRight/></Button></div>
             {homes.length?<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{homes.map(card)}</div>:<Alert><CircleHelp/><AlertTitle>Sem imóveis demonstrativos em {city}</AlertTitle></Alert>}
           </section>
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2"><h2 className="text-xl font-semibold tracking-tight">Continue explorando</h2><Button variant="ghost" size="sm" onClick={()=>navigate("movimentacao")}>Movimentação <ArrowRight/></Button></div>
+            <div className="flex items-center justify-between gap-2"><h2 className="font-serif text-xl font-semibold tracking-tight">Continue explorando</h2><Button variant="ghost" size="sm" onClick={()=>navigate("movimentacao")}>Movimentação <ArrowRight/></Button></div>
             <div className="grid gap-3 sm:grid-cols-2">{routes.filter(x=>["movimentacao","guia","pedidos","vilas","clube","agenda"].includes(x.slug)).map(x=><Item variant="outline" key={x.slug} className="cursor-pointer" onClick={()=>navigate(x.slug)}><ItemMedia variant="icon"><x.icon/></ItemMedia><ItemContent><ItemTitle>{x.label}</ItemTitle><ItemDescription>{x.slug==="movimentacao"?"Organize sua transferência":x.slug==="guia"?"Conheça a próxima cidade":x.slug==="pedidos"?"Solicite e compare orçamentos":x.slug==="vilas"?"Convivência e administração":"Conecte-se com a comunidade"}</ItemDescription></ItemContent><ItemActions><ChevronRight className="size-4 text-muted-foreground"/></ItemActions></Item>)}</div>
           </section>
         </div>
@@ -218,7 +223,7 @@ export default function LibraryApp(){
     const opts=["Todos",...new Set(isHousing?HOUSING.map(x=>x.type):isProvider?PROVIDERS.map(x=>x.category):CLASSIFIEDS.map(x=>x.category))];
     const data=ordered;
     return <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><Badge variant="outline">{isHousing?"MORADIA":isProvider?"SERVIÇOS":"COMUNIDADE"}</Badge><h1 className="text-3xl font-bold tracking-tight">{isHousing?"Imóveis":isProvider?"Negócios e serviços":slug==="desapegos"?"Desapegos":"Itens salvos"}</h1><p className="text-sm text-muted-foreground">{isHousing?"Encontre imóveis e filtre por organização militar.":isProvider?"Descubra quem pode ajudar. Recomendações não são verificações.":"Anúncios compartilhados pela comunidade."}</p></div>{slug!=="salvos"&&<Button variant="outline" onClick={()=>openCreate(isHousing?"Imóvel":isProvider?"Negócio":"Desapego")}><Plus/>Anunciar</Button>}</div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><Badge variant="outline">{isHousing?"MORADIA":isProvider?"SERVIÇOS":"COMUNIDADE"}</Badge><h1 className="text-3xl font-bold tracking-tight">{isHousing?"Imóveis":isProvider?"Negócios e serviços":slug==="desapegos"?"Desapegos":"Itens salvos"}</h1><p className="text-sm text-muted-foreground">{isHousing?"Encontre imóveis e filtre por organização militar.":isProvider?"Descubra quem pode ajudar. Recomendações não são verificações.":"Anúncios compartilhados pela comunidade."}</p></div>{slug!=="salvos"&&<Button className={createButtonClass} onClick={()=>openCreate(isHousing?"Imóvel":isProvider?"Negócio":"Desapego")}><Plus/>Anunciar</Button>}</div>
       {notice()}
       {isProvider&&<Alert><BriefcaseBusiness/><AlertTitle>Precisa contratar?</AlertTitle><AlertDescription><span>Publique sua necessidade e compare propostas antes de decidir.</span><Button className="mt-2" variant="outline" size="sm" onClick={()=>navigate("pedidos")}>Criar pedido <ArrowRight/></Button></AlertDescription></Alert>}
       <div className="space-y-3">
@@ -246,7 +251,7 @@ export default function LibraryApp(){
     const all=[...mine,...existing].filter(q=>(category==="Todos"||category==="Para ajudar")&&!resolved.includes(q.id)&&q.author!=="Você"||category==="Resolvidas"&&resolved.includes(q.id)||category==="Minhas"&&q.author==="Você");
     const orderedQuestions=[...all].sort((a,b)=>a.allReplies.length-b.allReplies.length);
     return <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><Badge variant="outline">MEMÓRIA COLETIVA</Badge><h1 className="text-3xl font-bold tracking-tight">Comunidade</h1><p className="text-sm text-muted-foreground">O que a comunidade sabe fica disponível para quem chegar depois.</p></div><Button variant="outline" onClick={()=>openCreate(tab==="Grupos"?"Grupo":"Pergunta")}><Plus/>{tab==="Grupos"?"Criar grupo":"Perguntar"}</Button></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><Badge variant="outline">MEMÓRIA COLETIVA</Badge><h1 className="font-serif text-3xl font-semibold tracking-tight">Comunidade</h1><p className="text-sm text-muted-foreground">O que a comunidade sabe fica disponível para quem chegar depois.</p></div><Button className={createButtonClass} onClick={()=>openCreate(tab==="Grupos"?"Grupo":"Pergunta")}><Plus/>{tab==="Grupos"?"Criar grupo":"Perguntar"}</Button></div>
       {notice()}
       <Tabs value={tab} onValueChange={v=>{setTab(v);setCategory("Todos")}} className="space-y-4">
         <TabsList className="w-full justify-start sm:w-auto"><TabsTrigger value="Indicações">Indicações</TabsTrigger><TabsTrigger value="Grupos">Grupos</TabsTrigger><TabsTrigger value="Negócios">Negócios</TabsTrigger></TabsList>
@@ -254,7 +259,7 @@ export default function LibraryApp(){
           <Alert><CircleCheck/><AlertTitle>{QUESTIONS.filter(q=>q.city===city&&resolved.includes(q.id)).length} indicações resolvidas</AlertTitle><AlertDescription>Busque uma resposta antes de perguntar. As perguntas sem respostas aparecem primeiro.</AlertDescription></Alert>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <ToggleGroup type="single" variant="outline" value={category==="Todos"?"Para ajudar":category} onValueChange={v=>setCategory(v||"Para ajudar")} className="justify-start"><ToggleGroupItem value="Para ajudar">Para ajudar</ToggleGroupItem><ToggleGroupItem value="Resolvidas">Resolvidas</ToggleGroupItem><ToggleGroupItem value="Minhas">Minhas</ToggleGroupItem></ToggleGroup>
-            <Button size="sm" onClick={()=>openCreate("Pergunta")}><Plus/>Perguntar</Button>
+            <Button size="sm" className={createButtonClass} onClick={()=>openCreate("Pergunta")}><Plus/>Perguntar</Button>
           </div>
           {orderedQuestions.length?<ItemGroup className="space-y-3">{orderedQuestions.map(q=><Card key={q.id}><CardContent className="space-y-3 pt-4">
             <Item size="sm" className="px-0"><ItemMedia><Avatar><AvatarFallback>{initials(q.author)}</AvatarFallback></Avatar></ItemMedia><ItemContent><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{q.category}</Badge>{resolved.includes(q.id)&&<Badge variant="secondary">Resolvida</Badge>}</div><ItemTitle className="pt-1 text-base leading-snug">{q.title}</ItemTitle><ItemDescription>{q.author} · {q.date} · {q.allReplies.length} respostas</ItemDescription></ItemContent></Item>
@@ -294,7 +299,14 @@ export default function LibraryApp(){
   </FieldGroup>;
   return <TooltipProvider><SidebarProvider>
     <Sidebar collapsible="icon">
-      <SidebarHeader><Button variant="ghost" className="justify-start font-semibold" onClick={()=>navigate("inicio")}><Shield/> Bivaque</Button></SidebarHeader>
+      <SidebarHeader><SidebarMenu><SidebarMenuItem>
+        <SidebarMenuButton asChild size="lg" tooltip="Bivaque" className="h-12">
+          <a href={brandAssetBase+"/"} onClick={e=>{e.preventDefault();navigate("inicio")}} aria-label="Bivaque — início" className="flex items-center">
+            <img src={brandAssetBase+"/brand/bivaque-logo-horizontal-white.svg"} alt="Bivaque" className="h-8 w-36 object-contain object-left group-data-[collapsible=icon]:hidden"/>
+            <img src={brandAssetBase+"/brand/bivaque-symbol-white.svg"} alt="" aria-hidden="true" className="hidden size-7 shrink-0 group-data-[collapsible=icon]:block"/>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem></SidebarMenu></SidebarHeader>
       <SidebarContent>
         {["principal","explorar","futuro"].map(group=><SidebarGroup key={group}><SidebarGroupLabel>{group==="principal"?"Navegação":group==="explorar"?"Explorar":"Experimentais"}</SidebarGroupLabel><SidebarMenu>{routes.filter(x=>x.group===group).map(x=><SidebarMenuItem key={x.slug}><SidebarMenuButton asChild isActive={slug===x.slug} tooltip={x.label}><a href={"/bivaque-community/"+x.slug+"/"} onClick={e=>{e.preventDefault();navigate(x.slug)}}><x.icon/><span>{x.label}</span></a></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarGroup>)}
       </SidebarContent>
@@ -306,6 +318,14 @@ export default function LibraryApp(){
         <SidebarTrigger/><Separator orientation="vertical" className="mr-1 h-5"/>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{page.label}</span>
         <Button variant="outline" size="icon" onClick={()=>setSearchOpen(true)} aria-label="Pesquisar"><Search/></Button>
+        <DropdownMenu><DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Aparência" title="Aparência"><SunMoon/></Button>
+        </DropdownMenuTrigger><DropdownMenuContent align="end">
+          <DropdownMenuLabel>Aparência</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/> Automática</DropdownMenuItem>
+          <DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/> Clara</DropdownMenuItem>
+          <DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/> Escura</DropdownMenuItem>
+        </DropdownMenuContent></DropdownMenu>
         <Select value={city} onValueChange={setCity}><SelectTrigger className="w-32 sm:w-44"><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><UserRound/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Conta demonstrativa</DropdownMenuLabel><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>navigate("voce")}>Perfil</DropdownMenuItem><DropdownMenuItem onSelect={()=>navigate("salvos")}>Salvos</DropdownMenuItem><DropdownMenuItem onSelect={()=>toast.info("Nenhuma conta conectada")}>Sair</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       </header>
@@ -327,7 +347,7 @@ export default function LibraryApp(){
         <Field><FieldLabel>Tipo de publicação</FieldLabel><Select value={composeType} onValueChange={setComposeType}><SelectTrigger className="w-full"><SelectValue/></SelectTrigger><SelectContent>{options.map(x=><SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></Field>
         <Field><FieldLabel htmlFor="post-title">Título</FieldLabel><Input id="post-title" required minLength={3} maxLength={140} value={title} onChange={e=>setTitle(e.target.value)}/></Field>
         <Field><FieldLabel htmlFor="post-desc">Descrição</FieldLabel><Textarea id="post-desc" required minLength={8} rows={4} value={description} onChange={e=>setDescription(e.target.value)}/><FieldDescription>Adicione informações úteis, sem dados pessoais ou militares sigilosos.</FieldDescription></Field>
-      </FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={()=>setComposeOpen(false)}>Cancelar</Button><Button type="submit">Salvar demonstração</Button></DialogFooter></form>
+      </FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={()=>setComposeOpen(false)}>Cancelar</Button><Button type="submit" className={createButtonClass}>Salvar demonstração</Button></DialogFooter></form>
     </DialogContent></Dialog>
     <Dialog open={replyTo!==null} onOpenChange={o=>{if(!o)setReplyTo(null)}}><DialogContent><DialogHeader><DialogTitle>Responder à comunidade</DialogTitle><DialogDescription>Compartilhe uma indicação. Sua resposta ficará apenas neste navegador.</DialogDescription></DialogHeader>
       <form className="space-y-4" onSubmit={submitReply}><Field><FieldLabel htmlFor="reply-text">Sua experiência</FieldLabel><Textarea id="reply-text" rows={5} value={replyDraft} required minLength={3} maxLength={2000} onChange={e=>setReplyDraft(e.target.value)} placeholder="Compartilhe o que realmente ajudou..."/><FieldDescription>Respostas não são verificações institucionais.</FieldDescription></Field><DialogFooter><Button type="button" variant="outline" onClick={()=>setReplyTo(null)}>Cancelar</Button><Button type="submit"><Send/>Responder</Button></DialogFooter></form>
