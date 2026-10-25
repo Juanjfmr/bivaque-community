@@ -30,18 +30,16 @@ jobs:
         with:
           node-version: '22'
       - name: Instalar dependências da aplicação
-        run: npm install --no-package-lock --no-audit --no-fund
-      - name: Disponibilizar pnpm do monorepo
-        run: npm install --global pnpm@11.18.0
+        run: npm install --package-lock --no-audit --no-fund
       - name: Instalar CSS oficial e componentes pela CLI
         run: |
-          npm install --no-package-lock --no-audit --no-fund tw-animate-css
+          npm install --no-audit --no-fund tw-animate-css
           npx --yes shadcn@latest add sidebar button card badge avatar input label textarea select tabs dialog sheet accordion alert checkbox dropdown-menu tooltip separator table progress carousel scroll-area sonner skeleton -y -o
       - name: Versionar componentes gerados sem personalizações
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add components/ui components.json app/globals.css package.json lib/utils.ts || true
+          git add components/ui components.json app/globals.css package.json package-lock.json lib/utils.ts || true
           git add hooks || true
           if ! git diff --cached --quiet; then
             git commit -m "chore(shadcn): commit official CLI-generated primitives [skip ci]"
