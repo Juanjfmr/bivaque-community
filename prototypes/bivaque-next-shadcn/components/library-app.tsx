@@ -163,58 +163,37 @@ export default function LibraryApp(){
   const header=<div className="flex flex-wrap items-start justify-between gap-4"><div className="space-y-1"><h1 className="font-serif text-3xl font-semibold tracking-tight">{pageTitle}</h1><p className="text-sm text-muted-foreground">{slug==="inicio"?"A rede que acompanha a vida militar.":slug==="movimentacao"?"Planeje sua chegada e compartilhe experiências.":slug==="comunidade"?"O conhecimento da comunidade fica acessível a quem chegar depois.":"Explore possibilidades da comunidade militar em "+city+"."}</p></div>{slug!=="voce"&&slug!=="conversas"&&slug!=="salvos"&&slug!=="busca"&&createButton}</div>;
   function homePage(){
     const homes=allItems.filter(x=>x.kind==="imoveis"&&x.city===city).slice(0,3);
-    const providers=PROVIDERS.filter(x=>x.city===city).sort((a,b)=>b.recommendations-a.recommendations);
-    const qs=QUESTIONS.filter(x=>x.city===city).filter(x=>!resolved.includes(x.id)).slice(0,3);
-    const shortcuts=[["Imóveis",Building2,"imoveis"],["Serviços",BriefcaseBusiness,"servicos"],["Desapegos",ShoppingBag,"desapegos"],["Indicações",MessageCircle,"comunidade"]] as const;
-    return <div className="space-y-7">
-      <Alert><Shield/><AlertTitle>Exploração com dados fictícios</AlertTitle><AlertDescription>Você está testando os componentes e jornadas do Bivaque. Não há perfis, avaliações ou anúncios reais.</AlertDescription></Alert>
-      <Card className="overflow-hidden">
-        <div className="relative isolate min-h-64 overflow-hidden bg-muted sm:min-h-72">
-          <img className="absolute inset-0 size-full object-cover" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1300&q=85" alt="" aria-hidden="true"/>
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--bivaque-hero-scrim-strong),var(--bivaque-hero-scrim-mid),var(--bivaque-hero-scrim-weak))]"/>
-          <div className="relative z-10 max-w-xl space-y-4 p-6 text-[var(--bivaque-hero-text)] sm:p-9">
-            <Badge variant="secondary" className="w-fit">BIVAQUE · COMUNIDADE MILITAR</Badge>
-            <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">O que você precisa em {city}?</h1>
-            <p className="max-w-md text-sm leading-relaxed text-[var(--bivaque-hero-muted)]">Moradia, serviços, pessoas e experiências úteis em cada nova etapa da vida militar.</p>
-            <Button variant="secondary" className="w-full justify-start text-foreground sm:max-w-md" onClick={()=>setSearchOpen(true)}><Search/>Buscar no Bivaque<span className="ml-auto text-xs text-muted-foreground">Ctrl K</span></Button>
-          </div>
+    const providers=PROVIDERS.filter(x=>x.city===city);
+    const questions=QUESTIONS.filter(x=>x.city===city&&!resolved.includes(x.id)).slice(0,3);
+    const intents=[{label:"Imóveis",detail:"Encontre seu lugar",slug:"imoveis",icon:Building2},{label:"Serviços",detail:"Resolva o dia a dia",slug:"servicos",icon:BriefcaseBusiness},{label:"Desapegos",detail:"De pessoa para pessoa",slug:"desapegos",icon:ShoppingBag},{label:"Comunidade",detail:"Pergunte e indique",slug:"comunidade",icon:MessageCircle}];
+    return <div className="space-y-9 sm:space-y-11">
+      <div className="flex items-center gap-2 text-[11px] font-medium tracking-wide text-muted-foreground"><span className="size-1.5 rounded-full bg-bivaque-brasa"/>{city} <span className="text-border">/</span> Exploração local <span className="ml-auto text-[10px] font-normal">Dados ilustrativos</span></div>
+      <section className="grid items-end gap-5 border-b border-border/80 pb-7 md:grid-cols-[1fr_270px] md:gap-10">
+        <div className="space-y-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-bivaque-city">A rede que acompanha a vida militar</p>
+          <h1 className="max-w-[690px] font-serif text-[clamp(2rem,4.2vw,3.35rem)] font-medium leading-[1.1] tracking-[-.045em]">A vida muda de cidade. <span className="text-muted-foreground">Sua rede acompanha.</span></h1>
+          <p className="max-w-xl text-[13px] leading-relaxed text-muted-foreground sm:text-sm">Encontre moradia, boas indicações e pessoas que conhecem o caminho em {city}.</p>
         </div>
-        <CardContent className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4">
-          {shortcuts.map(([name,Icon,to])=><Button key={name} variant="outline" className="h-12 justify-start gap-2" onClick={()=>navigate(to)}><Icon/>{name}</Button>)}
-        </CardContent>
-      </Card>
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(275px,1fr)]">
-        <div className="min-w-0 space-y-7">
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2"><div><h2 className="font-serif text-xl font-semibold tracking-tight">Serviços da comunidade</h2><p className="text-sm text-muted-foreground">Indicações orgânicas, sem classificação por estrelas.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("servicos")}>Ver todos <ArrowRight/></Button></div>
-            {providers.length?<ItemGroup className="rounded-xl border bg-card p-2">{providers.slice(0,4).map(p=><Item key={p.id} variant="default" size="sm"><ItemMedia variant="image"><img alt="" src={p.image} className="size-14 rounded-md object-cover"/></ItemMedia><ItemContent><ItemTitle>{p.name}</ItemTitle><ItemDescription>{p.category} · {p.hood} · {p.recommendations} indicações fictícias</ItemDescription></ItemContent><ItemActions><Button variant="outline" size="sm" onClick={()=>{setDetail(allItems.find(x=>x.id===p.id)||null);setDetailOpen(true)}}>Ver ficha <ChevronRight/></Button></ItemActions></Item>)}</ItemGroup>:<Alert><CircleHelp/><AlertTitle>Sem serviços demonstrativos nesta cidade</AlertTitle></Alert>}
-          </section>
-          <section className="space-y-3">
-            <div className="flex items-center justify-between"><div><h2 className="font-serif text-xl font-semibold tracking-tight">Imóveis da comunidade</h2><p className="text-sm text-muted-foreground">Anúncios ilustrativos para explorar.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("imoveis")}>Ver todos <ArrowRight/></Button></div>
-            {homes.length?<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{homes.map(card)}</div>:<Alert><CircleHelp/><AlertTitle>Sem imóveis demonstrativos em {city}</AlertTitle></Alert>}
-          </section>
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2"><h2 className="font-serif text-xl font-semibold tracking-tight">Continue explorando</h2><Button variant="ghost" size="sm" onClick={()=>navigate("movimentacao")}>Movimentação <ArrowRight/></Button></div>
-            <div className="grid gap-3 sm:grid-cols-2">{routes.filter(x=>["movimentacao","guia","pedidos","vilas","clube","agenda"].includes(x.slug)).map(x=><Item variant="outline" key={x.slug} className="cursor-pointer" onClick={()=>navigate(x.slug)}><ItemMedia variant="icon"><x.icon/></ItemMedia><ItemContent><ItemTitle>{x.label}</ItemTitle><ItemDescription>{x.slug==="movimentacao"?"Organize sua transferência":x.slug==="guia"?"Conheça a próxima cidade":x.slug==="pedidos"?"Solicite e compare orçamentos":x.slug==="vilas"?"Convivência e administração":"Conecte-se com a comunidade"}</ItemDescription></ItemContent><ItemActions><ChevronRight className="size-4 text-muted-foreground"/></ItemActions></Item>)}</div>
-          </section>
-        </div>
-        <aside className="space-y-5">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Perguntas que precisam de ajuda</CardTitle><CardDescription>Conhecimento compartilhado da comunidade.</CardDescription></CardHeader>
-            <CardContent>{qs.length?<ItemGroup>{qs.map((q,i)=><React.Fragment key={q.id}><Item size="sm" className="px-0"><ItemMedia><Avatar><AvatarFallback>{initials(q.author)}</AvatarFallback></Avatar></ItemMedia><ItemContent><ItemTitle className="line-clamp-2">{q.title}</ItemTitle><ItemDescription>{q.answers.length+(replies[q.id]?.length||0)} respostas · {q.category}</ItemDescription></ItemContent><ItemActions><Button variant="ghost" size="icon" aria-label="Ver pergunta" onClick={()=>{navigate("comunidade");setTab("Indicações")}}><ChevronRight/></Button></ItemActions></Item>{i<qs.length-1&&<ItemSeparator/>}</React.Fragment>)}</ItemGroup>:<p className="text-sm text-muted-foreground">Nenhuma pergunta em aberto nos dados de {city}.</p>}</CardContent>
-            <CardFooter><Button variant="outline" className="w-full" onClick={()=>navigate("comunidade")}>Abrir Comunidade</Button></CardFooter>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-base">Seus grupos</CardTitle><CardDescription>Compartilhe o que importa.</CardDescription></CardHeader>
-            <CardContent><ItemGroup>{GROUPS.filter(x=>x.city===city).slice(0,3).map(g=><Item key={g.id} size="sm" className="px-0"><ItemMedia><Avatar><AvatarFallback>{initials(g.name)}</AvatarFallback></Avatar></ItemMedia><ItemContent><ItemTitle>{g.name}</ItemTitle><ItemDescription>{g.members} integrantes</ItemDescription></ItemContent><ItemActions><Button size="icon" variant="ghost" aria-label="Abrir grupos" onClick={()=>navigate("grupos")}><ChevronRight/></Button></ItemActions></Item>)}</ItemGroup></CardContent>
-            <CardFooter><Button className="w-full" variant="outline" onClick={()=>navigate("grupos")}>Ver grupos</Button></CardFooter>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-base">Próximos encontros</CardTitle></CardHeader>
-            <CardContent><ItemGroup>{EVENTS.filter(x=>x.city===city).slice(0,2).map(e=><Item key={e.id} size="sm" className="px-0"><ItemMedia variant="icon"><CalendarDays/></ItemMedia><ItemContent><ItemTitle>{e.title}</ItemTitle><ItemDescription>{e.when} · {e.place}</ItemDescription></ItemContent></Item>)}</ItemGroup></CardContent>
-            <CardFooter><Button variant="outline" className="w-full" onClick={()=>navigate("agenda")}>Abrir agenda</Button></CardFooter>
-          </Card>
-        </aside>
+        <Button variant="outline" className="h-12 justify-start rounded-xl bg-card px-4 text-[13px] text-muted-foreground shadow-none md:mb-1" onClick={()=>setSearchOpen(true)}><Search className="size-[18px]"/> Buscar no Bivaque <span className="ml-auto hidden text-[10px] text-muted-foreground/70 sm:inline">Ctrl K</span></Button>
+      </section>
+      <section className="space-y-4" aria-label="O que você precisa">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">{intents.map(({label,detail,slug:to,icon:Icon})=><button key={to} onClick={()=>navigate(to)} className="group flex min-h-[88px] items-start gap-3 rounded-xl border border-border/75 bg-card/75 p-3.5 text-left transition-colors hover:border-sidebar-ring hover:bg-card sm:min-h-[98px] sm:p-4"><span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground"><Icon className="size-[17px] stroke-[1.65]"/></span><span className="min-w-0 space-y-1"><strong className="block text-[13px] font-semibold leading-tight">{label}</strong><small className="block text-[11px] leading-snug text-muted-foreground">{detail}</small></span></button>)}</div>
+      </section>
+      <section className="space-y-4">
+        <div className="flex items-end justify-between gap-3"><div className="space-y-1"><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-bivaque-city">Moradia</p><h2 className="font-serif text-[25px] font-medium leading-tight tracking-[-.025em] sm:text-[29px]">Encontre um lugar para chamar de seu</h2></div><Button variant="ghost" size="sm" className="shrink-0 text-xs" onClick={()=>navigate("imoveis")}>Ver imóveis <ArrowRight className="size-3.5"/></Button></div>
+        {homes.length?<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">{homes.map(v=><article key={v.id} className="group min-w-0"><button className="relative block w-full overflow-hidden rounded-xl bg-muted text-left" onClick={()=>{setDetail(v);setDetailOpen(true)}}><AspectRatio ratio={1.52}><img src={v.image} alt={v.title} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"/></AspectRatio><span className="absolute bottom-3 left-3 rounded-md bg-card/95 px-2.5 py-1 text-[11px] font-semibold text-card-foreground">{v.badge}</span></button><div className="flex items-start justify-between gap-2 pt-3"><div className="min-w-0"><h3 className="line-clamp-1 text-[13px] font-semibold leading-snug">{v.title}</h3><p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">{v.meta}</p><p className="mt-2 text-[15px] font-semibold tracking-tight">{v.price}</p></div><Button variant="ghost" size="icon" className="-mr-2 -mt-1 shrink-0" aria-label={saved.includes(v.id)?"Remover dos salvos":"Salvar imóvel"} onClick={()=>toggle(v.id,saved,setSaved)}><Heart className={"size-[17px] "+(saved.includes(v.id)?"fill-current":"")}/></Button></div></article>)}</div>:<p className="py-6 text-sm text-muted-foreground">Não há imóveis ilustrativos cadastrados para esta cidade.</p>}
+      </section>
+      <div className="grid items-start gap-9 border-t border-border/80 pt-7 lg:grid-cols-[minmax(0,1.25fr)_minmax(290px,.85fr)] lg:gap-11">
+        <section className="min-w-0 space-y-5">
+          <div className="flex items-end justify-between gap-2"><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-bivaque-city">Troca de experiências</p><h2 className="mt-1 font-serif text-[25px] font-medium tracking-[-.025em]">A comunidade responde</h2></div><Button variant="ghost" size="sm" className="text-xs" onClick={()=>navigate("comunidade")}>Ver conversas <ArrowRight className="size-3.5"/></Button></div>
+          {questions.length?<div className="divide-y divide-border/70">{questions.map(q=><button key={q.id} onClick={()=>navigate("comunidade")} className="flex w-full items-start gap-3 py-[17px] text-left first:pt-0 hover:text-bivaque-city"><Avatar className="mt-1 size-9"><AvatarFallback className="text-[11px]">{initials(q.author)}</AvatarFallback></Avatar><span className="min-w-0 flex-1"><span className="block text-[11px] text-muted-foreground">{q.author} · {q.category}</span><strong className="mt-1 block text-[14px] font-medium leading-[1.4]">{q.title}</strong><span className="mt-1.5 block text-[11px] text-muted-foreground">{q.answers.length+(replies[q.id]?.length||0)} respostas</span></span><ChevronRight className="mt-5 size-4 shrink-0 text-muted-foreground"/></button>)}</div>:<p className="text-sm text-muted-foreground">Ainda não há perguntas ilustrativas nesta cidade.</p>}
+          <Button size="sm" variant="outline" className="shadow-none" onClick={()=>openCreate("Pergunta")}><MessageCircle className="size-4"/> Fazer uma pergunta</Button>
+        </section>
+        <section className="min-w-0 space-y-4">
+          <div className="flex items-end justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-bivaque-city">Na sua cidade</p><h2 className="mt-1 font-serif text-[25px] font-medium tracking-[-.025em]">Quem pode ajudar</h2></div><Button variant="ghost" size="sm" className="text-xs" onClick={()=>navigate("servicos")}>Ver todos <ArrowRight className="size-3.5"/></Button></div>
+          {providers.length?<div className="divide-y divide-border/70">{providers.slice(0,4).map(p=><button key={p.id} className="flex w-full items-center gap-3 py-3 text-left first:pt-0" onClick={()=>{setDetail(allItems.find(x=>x.id===p.id)||null);setDetailOpen(true)}}><img src={p.image} alt="" className="size-[58px] shrink-0 rounded-lg object-cover"/><span className="min-w-0 flex-1"><strong className="block truncate text-[13px] font-semibold">{p.name}</strong><span className="mt-1 block text-[11px] text-muted-foreground">{p.category} · {p.hood}</span><span className="mt-1 block text-[10px] text-muted-foreground">{p.recommendations} indicações ilustrativas</span></span><ChevronRight className="size-4 shrink-0 text-muted-foreground"/></button>)}</div>:<p className="text-sm text-muted-foreground">Sem prestadores de exemplo em {city}.</p>}
+          <button onClick={()=>navigate("movimentacao")} className="flex w-full items-center gap-3 rounded-lg bg-secondary/70 px-4 py-3.5 text-left hover:bg-secondary"><Compass className="size-5 text-bivaque-city"/><span className="flex-1"><strong className="block text-[12px] font-semibold">Chegando a uma nova cidade?</strong><span className="text-[11px] text-muted-foreground">Veja o guia de movimentação</span></span><ArrowRight className="size-4 text-muted-foreground"/></button>
+        </section>
       </div>
     </div>;
   }
