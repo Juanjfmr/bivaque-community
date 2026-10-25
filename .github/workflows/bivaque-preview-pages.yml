@@ -38,6 +38,7 @@ jobs:
       - name: Gerar exportação estática para Pages
         env:
           GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
           NEXT_TELEMETRY_DISABLED: '1'
         run: npm run build
       - name: Publicar arquivos estáticos também na raiz da branch de testes
