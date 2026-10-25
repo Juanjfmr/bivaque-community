@@ -1,0 +1,46 @@
+name: Bivaque R72 — busca integrada
+on:
+  push:
+    branches: [feat/r72-unified-search-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-r72-search-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-r72-search
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependency lock
+        run: npm ci --no-audit --no-fund
+      - name: Test R72 semantics (city, privacy, snippets)
+        run: |
+          node --test scripts/unified-search.test.mjs
+          node --test scripts/catalog-r72.test.mjs
+          node scripts/verify-contrast.mjs
+      - name: Build Next.js and static routes
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Verify search and detail static pages
+        run: |
+          test -f out/busca/index.html
+          test -f out/pergunta/q1/index.html
+          test -f out/grupo/g1/index.html
+          test -f out/negocio/s1/index.html
+          grep -q '/bivaque-community/_next/static' out/busca/index.html
+          grep -q 'Busca completa' components/library-app.tsx
+          grep -q 'snippet' lib/unified-search.mjs
