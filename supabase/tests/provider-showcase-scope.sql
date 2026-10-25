@@ -3,42 +3,42 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(19);
 
+-- RED-005 — alcance da vitrine de prestador no esquema aprovado.
+--
+-- A vila saiu (ADR-20261024 §1 e §4): `provider_reach` só tem escopo de
+-- LOCALIDADE (`R1-209` mudada) e `provider_accounts` já não carrega
+-- `community_id`. Quem lê a ficha é morador verificado da cidade do alcance;
+-- quem não é dessa cidade não lê. O que nega leitura dentro da cidade é o
+-- alcance inativo e a ficha removida, não o vínculo de vila — que deixou de
+-- existir como fronteira de audiência.
+
 \ir fixtures/foundation.inc
-\ir fixtures/communities.inc
 
 insert into auth.users (id, email)
 values
-  ('10000000-0000-4000-8000-000000000006', 'city-only@example.invalid'),
   ('10000000-0000-4000-8000-000000000020', 'provider-a@example.invalid'),
-  ('10000000-0000-4000-8000-000000000021', 'provider-b@example.invalid');
-
-insert into public.locality_memberships (user_id, locality_id)
-values (
-  '10000000-0000-4000-8000-000000000006',
-  '00000000-0000-4000-8000-000000000001'
-);
-
-update public.communities
-   set owner_user_id = '10000000-0000-4000-8000-000000000002'
- where id = '70000000-0000-4000-8000-000000000002';
+  ('10000000-0000-4000-8000-000000000021', 'provider-b@example.invalid'),
+  ('10000000-0000-4000-8000-000000000022', 'provider-removed@example.invalid');
 
 insert into public.provider_accounts (
   auth_user_id,
   invited_by,
-  community_id,
   locality_id
 )
 values
   (
     '10000000-0000-4000-8000-000000000020',
     '10000000-0000-4000-8000-000000000001',
-    '70000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001'
   ),
   (
     '10000000-0000-4000-8000-000000000021',
-    '10000000-0000-4000-8000-000000000002',
-    '70000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    '00000000-0000-4000-8000-000000000001'
+  ),
+  (
+    '10000000-0000-4000-8000-000000000022',
+    '10000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001'
   );
 
@@ -57,20 +57,37 @@ values
     'Marmitas da Vizinha',
     'alimentacao',
     'Almoço sob encomenda'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000022',
+    '10000000-0000-4000-8000-000000000022',
+    'Ficha removida',
+    'alimentacao',
+    'Perfil que saiu do ar por moderação'
   );
+
+update public.provider_profiles
+   set is_deleted = true
+ where id = '30000000-0000-4000-8000-000000000022';
 
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values
   (
     '30000000-0000-4000-8000-000000000020',
-    'community',
-    '70000000-0000-4000-8000-000000000001',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
     'free'
   ),
   (
     '30000000-0000-4000-8000-000000000021',
-    'community',
-    '70000000-0000-4000-8000-000000000002',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
+    'free'
+  ),
+  (
+    '30000000-0000-4000-8000-000000000022',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
     'free'
   );
 
@@ -107,40 +124,50 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select isnt_empty(
   $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000020' $$,
-  'approved member of community A sees its provider profile'
+  'verified member of the reach locality sees its provider profile'
 );
 select isnt_empty(
   $$ select 1 from public.provider_catalog_items where provider_id = '30000000-0000-4000-8000-000000000020' $$,
-  'approved member of community A sees its provider catalog'
+  'verified member of the reach locality sees its provider catalog'
 );
 select isnt_empty(
   $$ select 1 from public.provider_portfolio_photos where provider_id = '30000000-0000-4000-8000-000000000020' $$,
-  'approved member of community A sees its provider portfolio'
+  'verified member of the reach locality sees its provider portfolio'
 );
 
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 
 select is_empty(
   $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000020' $$,
-  'member of community B does not see community A provider profile'
+  'member of another locality does not see the provider profile'
 );
 select is_empty(
   $$ select 1 from public.provider_catalog_items where provider_id = '30000000-0000-4000-8000-000000000020' $$,
-  'member of community B does not see community A provider catalog'
+  'member of another locality does not see the provider catalog'
 );
 select is_empty(
   $$ select 1 from public.provider_portfolio_photos where provider_id = '30000000-0000-4000-8000-000000000020' $$,
-  'member of community B does not see community A provider portfolio'
-);
-select is_empty(
-  $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000020' $$,
-  'pending membership in community A does not grant provider visibility'
+  'member of another locality does not see the provider portfolio'
 );
 
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000006', true);
+-- Alcance de outra cidade com a ficha fora do ar: o alcance inativo é a
+-- fronteira que sobrou dentro da cidade (a antiga negação por vínculo de vila
+-- foi extinta com a vila).
+reset role;
+update public.provider_reach
+   set active = false
+ where provider_id = '30000000-0000-4000-8000-000000000021';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
 select is_empty(
-  $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000020' $$,
-  'locality member without a community does not see free community reach'
+  $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000022' $$,
+  'member of the city does not see a removed provider profile'
+);
+select is_empty(
+  $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000021' $$,
+  'member of the city does not see a provider with inactive reach'
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000020', true);
@@ -153,6 +180,12 @@ select isnt_empty(
   'provider sees the own profile without active reach'
 );
 
+reset role;
+update public.provider_reach
+   set active = true
+ where provider_id = '30000000-0000-4000-8000-000000000020';
+
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000021', true);
 select is_empty(
   $$ select 1 from public.provider_profiles where id = '30000000-0000-4000-8000-000000000020' $$,
@@ -186,13 +219,13 @@ select throws_ok(
     values (
       '30000000-0000-4000-8000-000000000020',
       'locality',
-      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000002',
       'paid'
     )
   $$,
   '42501',
   null,
-  'provider cannot grant paid locality reach to itself'
+  'provider cannot grant paid reach to itself'
 );
 
 update public.provider_reach
@@ -251,17 +284,17 @@ select isnt_empty(
      where bucket_id = 'provider-photos'
        and name = '30000000-0000-4000-8000-000000000020/portfolio/antes-depois.webp'
   $$,
-  'member in scope reads provider photo'
+  'member in the reach locality reads the provider photo'
 );
 
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select is_empty(
   $$
     select 1 from storage.objects
      where bucket_id = 'provider-photos'
        and name = '30000000-0000-4000-8000-000000000020/portfolio/antes-depois.webp'
   $$,
-  'member outside scope cannot read provider photo'
+  'member outside the reach locality cannot read the provider photo'
 );
 
 reset role;

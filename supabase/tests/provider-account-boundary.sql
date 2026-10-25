@@ -4,60 +4,58 @@ create extension if not exists pgtap with schema extensions;
 select plan(10);
 
 \ir fixtures/foundation.inc
+\ir fixtures/communities.inc
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Fixture: provider-one (prestador civil, sem locality_memberships) +
--- uma comunidade em Manaus para amarrar a indicação.
+-- RED-005 — fronteira da conta de prestador no esquema aprovado.
+--
+-- A vila saiu (ADR-20261024 §4): o prestador já não é atestado por uma
+-- comunidade. Ele é conta independente (`provider_accounts.locality_id`), sem
+-- `locality_memberships` e sem vínculo de grupo — e por isso não lê conteúdo
+-- de membro. `communities.inc` entra só como fixture de GRUPOS: o que a
+-- fronteira dele continua vedando (perfis, grupos, publicações, eventos,
+-- escrita) agora precisa existir para a negativa não ser vazia.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 insert into auth.users (id, email)
-values ('60000000-0000-4000-8000-000000000001', 'provider-one@example.invalid');
-
-insert into public.communities (
-  id, locality_id, name, created_by, owner_user_id
-)
-values (
-  '50000000-0000-4000-8000-000000000001',
-  '00000000-0000-4000-8000-000000000001',
-  'Vila Teste',
-  '10000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000001'
-);
+values
+  ('60000000-0000-4000-8000-000000000001', 'provider-one@example.invalid'),
+  ('60000000-0000-4000-8000-000000000002', 'provider-two@example.invalid');
 
 insert into public.provider_accounts (
   auth_user_id, invited_by, locality_id
 )
+values
+  (
+    '60000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '00000000-0000-4000-8000-000000000001'
+  ),
+  (
+    '60000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    '00000000-0000-4000-8000-000000000001'
+  );
+
+-- Ficha própria do prestador. A apresentação que ele lê não é mais a da
+-- comunidade (removida com a vila): é a linha dele.
+insert into public.provider_profiles (id, owner_user_id, display_name, category, bio)
 values (
+  '30000000-0000-4000-8000-000000000001',
   '60000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000001',
-  '50000000-0000-4000-8000-000000000001',
-  '00000000-0000-4000-8000-000000000001'
+  'Prestador civil',
+  'assistencia_tecnica',
+  'Atende a cidade sem vínculo de grupo'
 );
 
--- Um segundo prestador, em outra comunidade, para provar que o
--- `provider_accounts_select_self` filtra só a própria linha.
-insert into auth.users (id, email)
-values ('60000000-0000-4000-8000-000000000002', 'provider-two@example.invalid');
-
-insert into public.communities (
-  id, locality_id, name, created_by, owner_user_id
-)
+-- Encontro da cidade, para a negativa de eventos não ser vazia.
+insert into public.events (id, organizer_id, locality_id, title, starts_at)
 values (
-  '50000000-0000-4000-8000-000000000002',
+  'c3000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001',
-  'Vila Teste Dois',
-  '10000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000001'
-);
-
-insert into public.provider_accounts (
-  auth_user_id, invited_by, locality_id
-)
-values (
-  '60000000-0000-4000-8000-000000000002',
-  '10000000-0000-4000-8000-000000000001',
-  '50000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000001'
+  'Encontro da cidade',
+  now() + interval '3 days'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -87,14 +85,13 @@ select is_empty(
   'provider sees no groups'
 );
 
--- DECISÃO DO DONO (15/09/2026): a apresentação da comunidade (nome, cidade,
--- descrição) não é sigilosa, e o prestador é conta autenticada — ele lê a LINHA.
--- O que a fronteira dele continua vedando é o conteúdo: perfis (acima), grupos
--- (acima), eventos e escrita (abaixo).
+-- O que substitui a antiga leitura da apresentação da vila: o prestador é
+-- conta autenticada e lê a PRÓPRIA linha (titularidade). O conteúdo alheio
+-- continua vedado acima e abaixo.
 select isnt_empty(
-  $$ select 1 from public.communities
-     where id = '50000000-0000-4000-8000-000000000001' $$,
-  'provider reads the community presentation, not its content'
+  $$ select 1 from public.provider_profiles
+     where owner_user_id = '60000000-0000-4000-8000-000000000001' $$,
+  'provider reads the own provider row, not member content'
 );
 
 select is_empty(
@@ -104,10 +101,11 @@ select is_empty(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '60000000-0000-4000-8000-000000000001',
+      '80000000-0000-4000-8000-000000000001',
       'text',
       'provider tentando postar'
     )

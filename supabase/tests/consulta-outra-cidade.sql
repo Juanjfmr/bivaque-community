@@ -1,10 +1,16 @@
--- Consulta a outra cidade (migration 20260925161111_consulta_outra_cidade).
+-- Consulta a outra cidade (migration 20260925161111), no esquema aprovado.
 --
 -- Membro verificado de uma cidade LÊ o que é público de outra: catálogo,
 -- Guia aprovado e artigo publicado, encontro de alcance cidade, anúncio ativo
 -- de alcance cidade (linha, detalhe de imóvel e foto). E só lê: não confirma
--- presença, não vê quem vai, não vê rascunho nem anúncio de comunidade, não vê
--- encontro de comunidade. Quem não tem cidade (não verificado) não consulta.
+-- presença, não vê quem vai, não vê rascunho nem anúncio pausado, e não lê
+-- encontro de alcance grupo. Quem não tem cidade (não verificado) não consulta.
+--
+-- RED-005: a vila saiu (ADR-20261024 §1). O encontro de alcance vila e o
+-- anúncio de alcance vila foram extintos com ela — o segundo escopo que
+-- sobrevive é o GRUPO (encontro) e o que nega leitura dentro da cidade é o
+-- status do anúncio (rascunho/pausado). São casos novos e independentes,
+-- não a mesma fronteira de audiência da vila.
 --
 -- Cidade A = 00000000-…-0001 (member-one, dono de tudo aqui).
 -- Cidade B = 00000000-…-0002 (other-locality: o visitante).
@@ -30,20 +36,20 @@ values
   ('c2000000-0000-4000-8000-000000000001', 'c1000000-0000-4000-8000-000000000001', 'Como chegar', 'published'),
   ('c2000000-0000-4000-8000-000000000002', 'c1000000-0000-4000-8000-000000000003', 'Rascunho do guia', 'draft');
 
-insert into public.events (id, organizer_id, locality_id, community_id, title, starts_at)
+insert into public.events (id, organizer_id, locality_id, group_id, title, starts_at)
 values
   ('c3000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', null, 'Encontro da cidade', now() + interval '3 days'),
-  ('c3000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', 'Encontro da vila', now() + interval '3 days');
+  ('c3000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', '80000000-0000-4000-8000-000000000002', 'Encontro do grupo fechado', now() + interval '3 days');
 
 insert into public.event_rsvps (event_id, user_id, status, occurrence_date)
 values ('c3000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', 'going', (now() + interval '3 days')::date);
 
-insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, community_id, neighborhood, category, price_cents, condition)
+insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, neighborhood, category, price_cents, condition)
 values
-  ('c4000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'property', 'active', 'Apartamento da cidade A', null, '00000000-0000-4000-8000-000000000001', null, 'Centro', null, null, null),
-  ('c4000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'property', 'draft', 'Rascunho da cidade A', null, '00000000-0000-4000-8000-000000000001', null, 'Centro', null, null, null),
-  ('c4000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Item da vila', 'Só da vila.', null, 'Vila', 'outros', 1000, 'used'),
-  ('c4000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Berço da cidade A', 'Pouco uso.', '00000000-0000-4000-8000-000000000001', null, 'Centro', 'outros', 25000, 'used');
+  ('c4000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'property', 'active', 'Apartamento da cidade A', null, '00000000-0000-4000-8000-000000000001', 'Centro', null, null, null),
+  ('c4000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'property', 'draft', 'Rascunho da cidade A', null, '00000000-0000-4000-8000-000000000001', 'Centro', null, null, null),
+  ('c4000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000001', 'item', 'paused', 'Anúncio pausado da cidade A', 'Fora do ar por enquanto.', '00000000-0000-4000-8000-000000000001', 'Centro', 'outros', 1000, 'used'),
+  ('c4000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Berço da cidade A', 'Pouco uso.', '00000000-0000-4000-8000-000000000001', 'Centro', 'outros', 25000, 'used');
 
 insert into public.property_details (listing_id, deal, property_type, rent_cents)
 values ('c4000000-0000-4000-8000-000000000001', 'rent', 'apartment', 180000);
@@ -52,12 +58,12 @@ insert into public.listing_photos (id, listing_id, path, position)
 values ('c5000000-0000-4000-8000-000000000001', 'c4000000-0000-4000-8000-000000000001', 'c4000000-0000-4000-8000-000000000001/capa.webp', 0);
 
 insert into public.listing_photos (id, listing_id, path, position)
-values ('c5000000-0000-4000-8000-000000000002', 'c4000000-0000-4000-8000-000000000003', 'c4000000-0000-4000-8000-000000000003/vila.webp', 0);
+values ('c5000000-0000-4000-8000-000000000002', 'c4000000-0000-4000-8000-000000000003', 'c4000000-0000-4000-8000-000000000003/pausado.webp', 0);
 
 insert into storage.objects (bucket_id, name, owner)
 values
   ('listing-photos', 'c4000000-0000-4000-8000-000000000001/capa.webp', '10000000-0000-4000-8000-000000000001'),
-  ('listing-photos', 'c4000000-0000-4000-8000-000000000003/vila.webp', '10000000-0000-4000-8000-000000000001');
+  ('listing-photos', 'c4000000-0000-4000-8000-000000000003/pausado.webp', '10000000-0000-4000-8000-000000000001');
 
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -87,7 +93,7 @@ select results_eq(
 select results_eq(
   $$ select title from public.events where id::text like 'c3000000-%' $$,
   $$ values ('Encontro da cidade'::text) $$,
-  'o visitante lê o encontro de alcance cidade, não o da vila'
+  'o visitante lê o encontro de alcance cidade, não o de grupo fechado'
 );
 select is_empty(
   $$ select 1 from public.event_rsvps where event_id = 'c3000000-0000-4000-8000-000000000001' $$,
@@ -105,19 +111,19 @@ select throws_ok(
 select results_eq(
   $$ select title from public.listings where id::text like 'c4000000-%' order by title $$,
   $$ values ('Apartamento da cidade A'::text), ('Berço da cidade A'::text) $$,
-  'o visitante lê anúncio ativo de alcance cidade, não o rascunho'
+  'o visitante lê anúncio ativo de alcance cidade, não o rascunho nem o pausado'
 );
 select is_empty(
   $$ select 1 from public.listings where id = 'c4000000-0000-4000-8000-000000000003' $$,
-  'o visitante não lê anúncio de alcance comunidade'
+  'o visitante não lê anúncio pausado de outra cidade'
 );
 select is_empty(
   $$
     select 1 from public.listing_photos where listing_id = 'c4000000-0000-4000-8000-000000000003'
     union all
-    select 1 from storage.objects where name = 'c4000000-0000-4000-8000-000000000003/vila.webp'
+    select 1 from storage.objects where name = 'c4000000-0000-4000-8000-000000000003/pausado.webp'
   $$,
-  'a foto de anúncio de comunidade continua fechada a quem consulta'
+  'a foto de anúncio pausado continua fechada a quem consulta'
 );
 select is_empty(
   $$ select 1 from public.listings where status <> 'active' and owner_user_id <> (select auth.uid()) $$,
