@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest"
 import {
-  combina,
   criarFonteDeDemonstracao,
   FALHA_DA_DEMONSTRACAO,
+} from "../../../apps/prototipo/lib/demo/dados"
+import {
+  combina,
   normalizar,
   quandoRelativo,
   termosDeBusca,
-} from "../../../apps/prototipo/lib/demo/dados"
+} from "../../../apps/prototipo/lib/texto"
 
 // PROTO-001 — a interface das Indicações, exercitada pela demonstração. A tela
 // fala só com esta interface; por isso o teste bate nela, e não no HTML.
@@ -88,6 +90,13 @@ describe("listar", () => {
     await expect(comFalha.listar({ ...PEDIDO, filtro: "para-ajudar" })).rejects.toThrow(
       FALHA_DA_DEMONSTRACAO,
     )
+  })
+
+  it("a falha é uma vez só: o 'Tentar de novo' tem o que tentar", async () => {
+    const comFalha = criarFonteDeDemonstracao({ atrasoMs: 0, falharQuandoPedido: () => true })
+    await expect(comFalha.listar({ ...PEDIDO, filtro: "para-ajudar" })).rejects.toThrow()
+    const depois = await comFalha.listar({ ...PEDIDO, filtro: "para-ajudar" })
+    expect(depois.total).toBe(6)
   })
 })
 

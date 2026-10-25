@@ -30,8 +30,10 @@ export const ATALHOS = [
   { id: "indicacoes", rotulo: "Indicações" },
 ] as const
 
+export const EM_BREVE_SELO = "Em breve"
+
 export const INICIO = {
-  titulo: (cidade: string) => `O que você precisa em ${cidade}`,
+  tituloAntes: "O que você precisa em",
   buscar: "Buscar no Bivaque",
   buscarNota: "A busca ainda não funciona aqui.",
   perguntas: "A comunidade procura",

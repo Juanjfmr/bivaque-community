@@ -20,85 +20,13 @@ import type {
   PedidoDeListagem,
   Resposta,
 } from "../dados/indicacoes"
+import { combina, termosDeBusca } from "../texto"
 import { CIDADE, PESSOA } from "./textos"
 
 export const FALHA_DA_DEMONSTRACAO =
   "Não conseguimos carregar as indicações. Tente de novo em alguns minutos."
 
 const UM_DIA = 24 * 60 * 60 * 1000
-
-// ── parecidas: os mesmos termos e sinônimos da busca do protótipo ───────────
-// (`features/search/views.js`: queryTerms e matches).
-
-const PARADAS = new Set([
-  "de",
-  "da",
-  "do",
-  "das",
-  "dos",
-  "em",
-  "no",
-  "na",
-  "para",
-  "com",
-  "um",
-  "uma",
-  "por",
-  "perto",
-])
-
-const SINONIMOS: Record<string, string> = {
-  dentista: "odonto odontopediatra odontopediatria",
-  pediatra: "pediatria",
-  escola: "colegio escolas",
-  mecanico: "mecanica oficina",
-  eletricista: "eletrica",
-  diarista: "faxina limpeza",
-  mudanca: "transportadora frete",
-  berco: "berço",
-  imovel: "apartamento casa imóveis",
-  saude: "odontopediatria pediatra clinica",
-  pets: "veterinario veterinaria",
-  climatizacao: "ar condicionado split",
-  carro: "mecanica oficina despachante",
-  casa: "eletrica limpeza reparos",
-  aula: "aulas reforco",
-}
-
-export function normalizar(texto: string): string {
-  return texto
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-}
-
-export function termosDeBusca(texto: string): string[] {
-  return normalizar(texto)
-    .split(/[^a-z0-9]+/)
-    .filter((palavra) => palavra.length > 1 && !PARADAS.has(palavra))
-}
-
-export function combina(texto: string, alvo: string): boolean {
-  const termos = termosDeBusca(texto)
-  if (termos.length === 0) return true
-  const palheiro = normalizar(alvo)
-  return termos.every((termo) => {
-    if (palheiro.includes(termo)) return true
-    const sinonimos = (SINONIMOS[termo] ?? "").split(" ").filter(Boolean).map(normalizar)
-    return sinonimos.some((sinonimo) => palheiro.includes(sinonimo))
-  })
-}
-
-// ── quando: a idade do registro em palavras, como o protótipo escreve ──────
-
-export function quandoRelativo(iso: string, agora: number = Date.now()): string {
-  const dias = Math.floor((agora - Date.parse(iso)) / UM_DIA)
-  if (dias <= 0) return "agora"
-  if (dias === 1) return "ontem"
-  if (dias < 7) return `há ${dias} dias`
-  const semanas = Math.floor(dias / 7)
-  return semanas === 1 ? "semana passada" : `há ${semanas} semanas`
-}
 
 // ── a semente: as perguntas e respostas do protótipo ───────────────────────
 
@@ -249,8 +177,9 @@ const SEMENTE: SementeDePergunta[] = [
 type OpcoesDaDemonstracao = {
   // O atraso existe para o caminho de carregamento ser visível e verificável.
   atrasoMs?: number
-  // Com `?estado=erro` na barra de endereço, a leitura falha de propósito: é o
-  // caminho de erro do protótipo (a tela mostra "Tentar de novo").
+  // Com `?estado=erro` na barra de endereço, a PRIMEIRA leitura falha de
+  // propósito: é o caminho de erro do protótipo, e o "Tentar de novo" tem o que
+  // tentar — a leitura seguinte passa.
   falharQuandoPedido?: () => boolean
   agora?: () => number
 }
@@ -273,6 +202,7 @@ export function criarFonteDeDemonstracao(opcoes: OpcoesDaDemonstracao = {}): Fon
   const indicacoes: Indicacao[] = []
   const respostas = new Map<string, Resposta[]>()
   let proximo = 1
+  let falhaConsumida = false
 
   for (const semente of SEMENTE) {
     const created_at = somarAtras(semente.diasAtras, semente.minutosAtras, criadoEm)
@@ -316,7 +246,10 @@ export function criarFonteDeDemonstracao(opcoes: OpcoesDaDemonstracao = {}): Fon
 
   async function esperar(): Promise<void> {
     if (atrasoMs > 0) await new Promise((resolve) => setTimeout(resolve, atrasoMs))
-    if (falharQuandoPedido()) throw new Error(FALHA_DA_DEMONSTRACAO)
+    if (!falhaConsumida && falharQuandoPedido()) {
+      falhaConsumida = true
+      throw new Error(FALHA_DA_DEMONSTRACAO)
+    }
   }
 
   function achar(indicacaoId: string): Indicacao {

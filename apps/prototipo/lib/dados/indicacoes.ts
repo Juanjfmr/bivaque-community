@@ -11,7 +11,7 @@
 // EXCEÇÃO, porque a implementação real precisa juntar o perfil público e o
 // estado de quem lê, que o RPC não devolve.
 
-import { criarFonteDeDemonstracao } from "../demo/dados"
+import { CIDADE_DA_DEMONSTRACAO, criarFonteDeDemonstracao } from "../demo/dados"
 
 export type Categoria =
   | "servicos_locais"
@@ -112,4 +112,11 @@ let fonte: FonteDeIndicacoes | null = null
 export function fonteDeIndicacoes(): FonteDeIndicacoes {
   fonte ??= criarFonteDeDemonstracao()
   return fonte
+}
+
+// A cidade que se está lendo. Hoje é a da demonstração; quando o banco entrar,
+// vem da sessão. As telas perguntam aqui em vez de carregar o texto da
+// demonstração.
+export function cidadeAtual(): string {
+  return CIDADE_DA_DEMONSTRACAO
 }
