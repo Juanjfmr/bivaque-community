@@ -428,3 +428,19 @@ h2{font-size:16px;letter-spacing:-.025em}
  .r72-guide-section{order:8}
  .r72-business-cta{order:9}
 }
+
+
+/* Price-first classified layout — mirrors R72 photoCard / card-body hierarchy. */
+.r72-card-price{font-size:19px;line-height:26px;font-weight:750;letter-spacing:-.3px;margin-bottom:3px}
+.r72-card-line{display:flex;align-items:center;font-size:11px;line-height:16px;margin-top:6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r72-home-row .market-card .market-copy h3{font-size:14px;line-height:19px;min-height:0;margin:0 0 3px}
+.r72-home-row .market-card .market-copy .small{margin:0;font-size:12px}
+.r72-home-row .market-card .r72-card-price{font-size:16px;line-height:22px}
+.r72-home-row .market-card .market-copy{display:flex;flex-direction:column;gap:2px}
+.r72-home-row .market-card .market-copy>p{margin:0}
+.r72-home-row .market-card .r72-card-line{margin-top:4px}
+.r72-shell .market-card .market-category{top:8px;left:8px}
+.r72-shell .market-card .save-icon{top:4px;right:4px}
+.r72-shell .market-card .market-visual .photo{background:var(--soft)}
+.r72-shell .market-card .r72-card-price{color:var(--ink)}
+@media(max-width:1023px){.r72-home-row .market-card .r72-card-price{font-size:16px}}
