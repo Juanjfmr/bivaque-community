@@ -10,7 +10,12 @@ import test from "node:test"
 
 const dir = join(process.cwd(), "docs", "agents", "redesenho")
 const DRAFTS = {
-  "R2-matriz-grupos.md": ["groups", "group_memberships", "group_join_reasons", "group_join_attempts"],
+  "R2-matriz-grupos.md": [
+    "groups",
+    "group_memberships",
+    "group_join_reasons",
+    "group_join_attempts",
+  ],
   "R2-matriz-publicacoes.md": ["posts", "comments", "post_reactions", "post_saves", "post_follows"],
   "R2-matriz-evento-pergunta.md": ["events", "event_rsvps", "recommendation_requests"],
   "R2-matriz-vila-fundacao.md": [

@@ -19,10 +19,12 @@ test("creates the approved workspace roots", () => {
     .sort()
 
   // Then the existing workspace roots are present. apps/mobile is an approved,
-  // optional React Native + Expo root; no arbitrary third application is allowed.
+  // optional React Native + Expo root. apps/prototipo is the shadcn/ui prototype
+  // approved by the owner on 2026-10-24 (interface only, demo data). No arbitrary
+  // other application is allowed.
   assert.deepEqual(pathStates, [true, true, true, true])
   assert.deepEqual(
-    appRoots.filter((appRoot) => !["mobile", "web"].includes(appRoot)),
+    appRoots.filter((appRoot) => !["mobile", "prototipo", "web"].includes(appRoot)),
     [],
   )
   assert.equal(appRoots.includes("web"), true)
