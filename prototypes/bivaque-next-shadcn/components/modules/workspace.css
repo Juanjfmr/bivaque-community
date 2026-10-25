@@ -288,3 +288,10 @@
  .mw-question-main{padding:12px;gap:8px}
  .mw-question-main h3{font-size:12px}
 }
+
+
+.mw-results-count{font-size:11px;color:#819487;margin:0 0 20px!important}
+.mw-search-section{margin:0 0 28px}
+.mw-search-section .mw-section-title{margin-bottom:12px}
+.mw-search-section .mw-question-main>svg:first-child{flex-shrink:0;color:#427d55;margin-top:9px}
+@media(max-width:700px){.mw-search-section{margin-bottom:25px}}
