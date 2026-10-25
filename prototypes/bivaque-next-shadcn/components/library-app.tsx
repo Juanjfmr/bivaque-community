@@ -171,11 +171,11 @@ export default function LibraryApp(){
       <Card className="overflow-hidden">
         <div className="relative isolate min-h-64 overflow-hidden bg-muted sm:min-h-72">
           <img className="absolute inset-0 size-full object-cover" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1300&q=85" alt="" aria-hidden="true"/>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/25"/>
-          <div className="relative z-10 max-w-xl space-y-4 p-6 text-white sm:p-9">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,var(--bivaque-hero-scrim-strong),var(--bivaque-hero-scrim-mid),var(--bivaque-hero-scrim-weak))]"/>
+          <div className="relative z-10 max-w-xl space-y-4 p-6 text-[var(--bivaque-hero-text)] sm:p-9">
             <Badge variant="secondary" className="w-fit">BIVAQUE · COMUNIDADE MILITAR</Badge>
             <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">O que você precisa em {city}?</h1>
-            <p className="max-w-md text-sm leading-relaxed text-white/85">Moradia, serviços, pessoas e experiências úteis em cada nova etapa da vida militar.</p>
+            <p className="max-w-md text-sm leading-relaxed text-[var(--bivaque-hero-muted)]">Moradia, serviços, pessoas e experiências úteis em cada nova etapa da vida militar.</p>
             <Button variant="secondary" className="w-full justify-start text-foreground sm:max-w-md" onClick={()=>setSearchOpen(true)}><Search/>Buscar no Bivaque<span className="ml-auto text-xs text-muted-foreground">Ctrl K</span></Button>
           </div>
         </div>
