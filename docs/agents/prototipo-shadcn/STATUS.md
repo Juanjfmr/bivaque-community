@@ -3,6 +3,20 @@
 Autoridade: PLANO-ONDAS.md e ADR-20261024-front-react-spa aceito em 25/10.
 Este registro é de execução local; nenhum merge, push para main ou deploy foi feito.
 
+## Estado atual para retomada
+
+- **1a concluída localmente** em `5fc9fc77`, com gate completo e runtime independente.
+- **1b em implementação/revisão**, sessão `ses_e8d26290affezIzEFOzk3S6WMD`.
+  Último recorte de rolagem/foco: 5/6 passaram em 375; o sexto tinha uma exigência
+  incorreta de foco após clicar no liberador da carga e está sendo corrigido.
+  Isso não é aceite da bateria completa. 1c–1e ainda não despachadas.
+- **R3 bloqueada por orçamento**, checkpoint WIP `64dc6218` no worktree separado.
+  Última suíte: 154 arquivos, 1734 asserções executadas, resultado FAIL; db:lint passou.
+  Gate parou em quatro erros de lint reproduzidos na base. Revisão de segurança final pendente.
+  Pedido ao dono: autorizar lotes menores com novo teto de três tentativas por lote,
+  ou manter bloqueada até o Claude. Sem resposta, não retomar a implementação R3.
+- Aprovação visual da onda 1 ainda pendente; nenhuma prova vertical autorizada nesta execução.
+
 ## Decisões do dono
 
 - SPA React/Vite/TanStack/shadcn, barra Início · Comunidade · Criar · Mercado · Você.
