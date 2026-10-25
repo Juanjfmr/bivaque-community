@@ -5337,14 +5337,16 @@
         "25/10: gate completo APP-001 verde sem pular build; 143/143 escopo, 1726 unitários, 76 mobile, 19 web e 189 privacidade; runtime independente 3/3 viewports, reload sem erros. Onda 1 ainda em andamento.",
         "25/10: bateria 1b escrita antes de implementação; instrumento e2e ainda FAIL na revisão do coordenador, sem liberação da 1c.",
         "25/10 julgamento Codex: gate completo verde; 38/38 unitários e 288/288 E2E em 375/768/1440. CORREÇÕES por /app responder 404 enquanto /app/ responde 200; carga ativa mutada no render e dívida do catálogo. Contrato APP-006 R2 validado; 1c não liberada. Logs em .visual/coordenacao/APP-002-julgamento-*.log; árvore da 1b ainda sem commit.",
-        "25/10 julgamento APP-006 APROVADO localmente e navegação integrada em abc67b54: gate completo sem pular etapas, app 38/38, escopo 143/143, E2E 291/291 nos três viewports. /app sem barra, foco/carga e controles anteriores provados. 1c liberada por APP-003; comparação visual e aceite do dono aguardam 1e, sem avanço às ondas 2 a 8."
+        "25/10 julgamento APP-006 APROVADO localmente e navegação integrada em abc67b54: gate completo sem pular etapas, app 38/38, escopo 143/143, E2E 291/291 nos três viewports. /app sem barra, foco/carga e controles anteriores provados. 1c liberada por APP-003; comparação visual e aceite do dono aguardam 1e, sem avanço às ondas 2 a 8.",
+        "25/10 julgamento APP-003 CORREÇÕES: gate FAIL lint11erros; app77/77 unitários. Sem nova prova de build/E2E. Lista única APP-003-correcoes-1.md; retomada C1 usa apenas rodada restante3/3. Código 1c sem aprovação."
       ],
       "links": [
         "docs/agents/tasks/APP-001.task.yml",
         "docs/agents/prototipo-shadcn/STATUS.md",
         "docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/tasks/APP-006.task.yml",
-        "docs/agents/tasks/APP-003.task.yml"
+        "docs/agents/tasks/APP-003.task.yml",
+        "docs/agents/tasks/APP-003-correcoes-1.md"
       ],
       "sourceRevision": "abc67b54",
       "phase": "SPA e redesenho — outubro",
@@ -5360,7 +5362,7 @@
       "id": "RED-003",
       "title": "Comunidade: R3 migration e pgTAP da matriz aprovada",
       "category": "backend",
-      "description": "Matriz R2 aprovada pelo dono em 25/10 em 66eda09b. Contrato válido R3 no worktree codex/redesenho-r3; DeepSeek em execução. Exige revisão do coordenador, segurança independente e provas pela fila.",
+      "description": "R3 em lotes autorizados pelo dono. RED-004 aprovado somente como fixtures; RED-005 aguarda julgamento no worktree próprio. Exige provas pela fila, julgamento de permissões/RLS e segurança independente final.",
       "checklist": [
         "Migration e seed conforme matriz",
         "Negativos por célula e proteção das definições",
@@ -5372,10 +5374,11 @@
         "25/10: revisão independente estática FAIL parcial, 8 HIGH e dependências bloqueando replay; relatório em b1362bf1 no worktree R3, rodada de reparo 1/3; sem prova de banco ou PASS.",
         "25/10: primeiro replay pela fila FAIL antes de pgTAP, SQLSTATE2BP01 no DROP can_read_listing com cinco policies dependentes; relatório f1bd28ce, migration SHA 5CD18B010992C9D534A5E29578986B5FC28A50438C159037B9DF0CDA871D81D3. Quatro erros de lint reproduzidos no R2 limpo, contrato ampliado para correção mínima.",
         "25/10 checkpoint64dc6218: pgTAP154arquivos/1734asserções executadas, FAIL; db:lint exit0 confirmado pelo coordenador; gate FAIL lint4erros da base; secrets separado passou. Sem revisão final de segurança nem autorização de integração.",
-        "25/10 dono autorizou dividir a R3 em lotes menores, até três rodadas próprias por lote. RED-004 validado R3 em 9ebc90b2: seis fixtures, lint conhecido e gate com variáveis públicas do processo; migration e permissões fora do escopo. Retomada não significa aprovação do banco."
+        "25/10 dono autorizou dividir a R3 em lotes menores, até três rodadas próprias por lote. RED-004 validado R3 em 9ebc90b2: seis fixtures, lint conhecido e gate com variáveis públicas do processo; migration e permissões fora do escopo. Retomada não significa aprovação do banco.",
+        "25/10 RED-004 aprovado no escopo em b57f1035: seis suítes/148asserções, conferências2/2, db:lint e gate completos verdes. Banco agregado154arquivos/1875executadas FAIL59arquivos. RED-005 entregue com triagem, ainda sem julgamento. Permissões/RLS e revisão final pendentes."
       ],
       "links": ["docs/agents/prototipo-shadcn/STATUS.md"],
-      "sourceRevision": "9ebc90b2",
+      "sourceRevision": "b57f1035",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",

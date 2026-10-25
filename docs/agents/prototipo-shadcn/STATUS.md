@@ -39,6 +39,9 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 
 ## Estado atual para retomada
 
+**Último julgamento: APP-003 CORREÇÕES; retomada APP-003-C1, rodada restante 3/3.**
+**Marcador atual: .visual/coordenacao/APP-003-C1-PRONTO.txt; R3 RED-005 pronto para julgar.**
+
 - **1a concluída localmente** em `5fc9fc77`, com gate completo e runtime independente.
 - **1b e reparos APP-006 aprovados localmente pelo Codex em 25/10**, após repetir provas.
   Gate completo verde, 38/38 unitários do app e **291/291 E2E** em 375/768/1440.
@@ -383,3 +386,26 @@ sem instalação, sem processo em segundo plano, sem commit. Só `allowed_paths`
 - Evitar repetir a colisão de escrita no quadro: depois de lançar APP-003, esta árvore
   fica com o executor. Andamento/julgamento da R3 deve ser registrado no STATUS de seu
   próprio worktree e consolidado aqui no intervalo entre cadeias, preservando as duas frentes.
+
+## Julgamento APP-003 — Codex, 25/10/2026, correções
+
+- Marcador APP-003-PRONTO.txt de 2026-10-25T18:42:44.3729628-04:00 tratado:
+  executor=1, triagem=0. Decisão CORREÇÕES; nenhuma aprovação da 1c.
+- DeepSeek encerrou por HTTP400 data_inspection_failed antes do relato e mapa de cobertura.
+  Lidos triagem Qwen e hunks; confirmados ícone externo lucide sem dependência declarada,
+  mapa ausente, medição incorreta de nome acessível e seletor de marca sem consumidor.
+- Provas próprias uma vez: gate FAIL lint, 11 erros, 16 warnings, 51 infos; app unitários
+  77/77 em 10 arquivos. Types/build/E2E não executados pelo julgador após lint vermelho;
+  o PASS anterior de 291 E2E continua evidência da 1b em abc67b54, não da árvore atual.
+  Logs APP-003-julgamento-gate.log e APP-003-julgamento-unit.log em .visual/coordenacao.
+- Lista única docs/agents/tasks/APP-003-correcoes-1.md. Retomada APP-003-C1 na rodada
+  restante 3/3 do mesmo orçamento; se falhar, HUMAN_DECISION real, sem lote artificial.
+  index.html incluído explicitamente no allowed_paths para theme-color. Código WIP
+  permanece sem commit; somente documentos/contrato/quadro entram no commit do julgamento.
+- Consolidação R3: RED-004 aprovado no escopo em b57f1035, seis suítes/148 asserções,
+  conferências 2/2, db:lint e gate completos verdes. Agregado 154 arquivos/1875 executadas
+  FAIL em 59 arquivos; sem aprovação de permissões/RLS. RED-005 tem marcador e triagem,
+  ainda aguarda julgamento; os números do executor são apenas relatos.
+- Disco antes da retomada: df -h /c, 31 GiB disponíveis. Sem merge/push/deploy.
+- Próxima app: APP-003-C1, aguardando .visual/coordenacao/APP-003-C1-PRONTO.txt.
+  Próxima R3: julgamento RED-005, .visual/coordenacao/RED-005-PRONTO.txt já recebido.

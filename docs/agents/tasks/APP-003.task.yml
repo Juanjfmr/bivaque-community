@@ -8,6 +8,7 @@ baseline:
   status: FAIL-EVIDENCED
   evidence: Base APP-001 em 25/10/2026 contém somente h1 e não possui casca, componentes nem fontes locais.
 allowed_paths:
+  - apps/app/index.html
   - docs/agents/prototipo-shadcn/STATUS.md
   - apps/app/src/
   - apps/app/lib/
