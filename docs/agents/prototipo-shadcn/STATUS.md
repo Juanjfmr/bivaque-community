@@ -1,3 +1,30 @@
+# Fluxo vigente — decisão do dono em 25/10/2026
+
+Esta decisão substitui o ajuste de custo anterior e vale daqui em diante.
+
+- DeepSeek V4.1 Flash executa cada etapa inteira sozinho: implementa, roda gate e testes,
+  corrige em no máximo três rodadas próprias e registra neste STATUS o que fez, provas
+  com números, o que não conseguiu e dúvidas. Sem subagentes, instalação de pacotes ou
+  mudanças fora dos allowed_paths. Este STATUS passa a integrar o escopo documental
+  autorizado de cada etapa; o coordenador incorpora o registro da frente R3 separada.
+- Qwen 3.8 Flash faz segundo olhar somente leitura após o DeepSeek: contrato versus diff,
+  testes que leem estado interno ou número informado pelo app, inventário sem equivalente,
+  ícones sem aria-hidden, dependência nova e arquivos fora do escopo. Registra achados em
+  `.visual/coordenacao/<ETAPA>-triagem.md`. Triagem não é aprovação.
+- Codex julga uma etapa por sessão: lê STATUS, triagem e trechos do diff; roda as provas
+  uma vez; aprova e commita ou entrega lista única de correções em arquivo de tarefa.
+  Dispara a próxima cadeia e encerra a sessão, sem acompanhamento contínuo.
+- R3 permanece sob julgamento do Codex para permissões/RLS e revisão de segurança
+  independente final; essas decisões não passam aos modelos flash.
+- Cada cadeia `.visual/coordenacao/<ETAPA>-cadeia.ps1` executa DeepSeek, Qwen, limpeza dos
+  processos chrome-devtools-mcp e grava `<ETAPA>-PRONTO.txt` com data/hora. O dono abre
+  nova sessão quando esse arquivo aparecer. PRONTO significa cadeia encerrada, não PASS.
+- Ler por trechos com rg/Select-String/-TotalCount/-Tail; nunca inventário ou migration
+  inteiros. Subagente somente para revisão de segurança final da R3.
+- As execuções atuais devem terminar sem acompanhamento. Encadear Qwen ao término;
+  não retomar automaticamente uma implementação R3 já encerrada por orçamento.
+- Encerrar cada sessão com a próxima etapa e seu arquivo PRONTO das duas frentes.
+
 # Coordenação — 25/10/2026
 
 Autoridade: PLANO-ONDAS.md e ADR-20261024-front-react-spa aceito em 25/10.
