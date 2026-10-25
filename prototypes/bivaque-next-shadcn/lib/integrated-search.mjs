@@ -16,7 +16,7 @@ export function isMatch(query,text){
   if(!words.length)return false;
   return words.every(word=>content.includes(word)||(SYNONYMS[word]||"").split(" ").some(s=>s&&content.includes(s)));
 }
-export function buildSearchSections({query,city,items=[],providers=[],questions=[],groups=[],events=[]}){
+export function buildSearchSections({query,city,items=[],providers=[],questions=[],groups=[],events=[],replies={}}){
   const q=query.trim();
   const sections={items:[],biz:[],asks:[],groups:[],events:[]};
   if(!queryWords(q).length)return sections;
@@ -33,7 +33,8 @@ export function buildSearchSections({query,city,items=[],providers=[],questions=
   for(const ask of questions){
     if(ask.city!==city)continue;
     const direct=isMatch(q,[ask.title,ask.category,ask.author].join(" "));
-    const answer=ask.answers.find(a=>isMatch(q,a.text));
+    const answers=[...ask.answers,...(replies[ask.id]||[]).map(text=>({author:"Você",text}))];
+    const answer=answers.find(a=>isMatch(q,a.text));
     if(direct||answer){
       const snippet=!direct&&answer?answer.author+": "+answer.text.slice(0,140):"";
       sections.asks.push({id:ask.id,title:ask.title,meta:ask.category+" · "+ask.author,snippet,type:"pergunta"});
