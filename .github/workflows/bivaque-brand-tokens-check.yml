@@ -1,0 +1,49 @@
+name: Bivaque — validar tokens oficiais no shadcn
+on:
+  push:
+    branches:
+      - feat/shadcn-bivaque-tokens-20261025
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-brand-tokens-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-tokens-review
+  cancel-in-progress: true
+jobs:
+  static-and-brand:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências congeladas
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript e build estático do Next.js
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Testar artefatos e caminhos da marca
+        shell: bash
+        run: |
+          test -f out/index.html
+          test -f out/comunidade/index.html
+          test -f out/imoveis/index.html
+          test -f out/servicos/index.html
+          test -f out/brand/bivaque-logo-horizontal-white.svg
+          test -f out/brand/bivaque-symbol-white.svg
+          grep -q 'bivaque-logo-horizontal-white.svg' out/index.html
+          grep -q '/bivaque-community/_next/static' out/index.html
+          grep -q '#253033' app/globals.css
+          grep -q '#F2F0EB' app/globals.css
+          grep -q '#B84A3A' app/globals.css
+          grep -q '#171E20' app/globals.css
+          grep -q '#E07A5A' app/globals.css
