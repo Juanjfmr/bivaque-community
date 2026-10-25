@@ -1,0 +1,49 @@
+task_id: APP-002
+objective: As 33 rotas reais preservam origem, filtros, foco e rolagem por entrada e fecham sobreposições antes de sair.
+authority:
+  - docs/agents/prototipo-shadcn/PLANO-ONDAS.md onda 1b
+  - docs/decisions/ADR-20261024-front-react-spa.md seção 3
+  - docs/agents/prototipo-shadcn/inventario.md seções 1 e 5
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: apps/app/src/main.tsx tem somente rota índice em 25/10/2026; nenhuma bateria de navegação existe.
+allowed_paths:
+  - apps/app/src/
+  - apps/app/lib/navegacao/
+  - apps/app/tests/
+  - apps/app/playwright.config.ts
+  - apps/app/tsconfig.json
+  - apps/app/package.json
+  - docs/agents/prototipo-shadcn/APP-002-cobertura.md
+forbidden:
+  - instalar pacote, alterar lockfile ou dependências, implementar telas de produto
+  - escrita no banco, env.local, API real, push, merge ou deploy
+  - manipular history.state ou pushState fora do TanStack Router
+  - testes lendo estado interno do histórico, mocks que substituem o roteador ou timeouts como prova de restauração
+  - alterar instrumentos do gate, protótipo HTML ou outros worktrees
+acceptance:
+  - Escrever e executar a bateria de testes antes da implementação; registrar falhas iniciais e finais, sem adaptar expectativas para caber no código
+  - As 33 rotas da seção 1 têm URL real /app/nome e parâmetros codificados; /app leva ao início; Mercado é rota adicional /app/mercado com suas sub-abas; inválidas e IDs ausentes têm fallback visível
+  - TanStack Router é o único dono do histórico; camada fina independente das futuras telas, estado tipado por entrada, sem singleton de origem/filtro compartilhado entre entradas
+  - Cada entrada guarda origem, scroll, descritor de foco, filtros e sobreposição; atualizar filtro não empilha histórico, reload restaura estado da entrada
+  - Pergunta, grupo, publicação e Minhas ativam Comunidade; anúncio e negócio e catálogos ativam Mercado; Conversas e conversa ativam somente ícone no topo, nenhuma aba inferior
+  - Salvos, Meus anúncios, busca e destinos de notificação restauram origem por entrada; não sobrescrever dono fixo de pergunta/anúncio/negócio por origem
+  - Voltar do navegador e botão Voltar fecham diálogo, folha e menu antes de trocar rota; avançar restaura entrada correta; fechamento por Escape/clique devolve foco e não deixa entrada fantasma
+  - Rolagem e foco restauram somente após dados e elementos existirem, inclusive carregamento atrasado real com lista; alvo ausente usa h1; sem setTimeout arbitrário fixo
+  - Link direto de detalhe foca h1 e Voltar usa pai sem sair do app; parâmetros Unicode/espaço codificam e recarregam corretamente
+  - Bateria unitária cobre regras; e2e nas rotas vazias com controles de prova cobre todas as URLs, abas, filtros, scroll, foco, reload, voltar/avançar, overlays, link direto e atraso de lista em 375/768/1440
+  - E2E mede só URL e comportamento visível, nunca history.state; fixtures só em modo de teste explícito sem contaminar futura interface; mapa regra para arquivo/teste em APP-002-cobertura.md
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate
+risk: navegação e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

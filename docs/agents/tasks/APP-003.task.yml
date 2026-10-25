@@ -1,0 +1,46 @@
+task_id: APP-003
+objective: A casca do app e os componentes comuns reproduzem o protótipo nos dois temas com a barra nova e acessibilidade.
+authority:
+  - docs/agents/prototipo-shadcn/PLANO-ONDAS.md onda 1c
+  - docs/decisions/ADR-20261024-front-react-spa.md seções 2 e 3
+  - docs/agents/prototipo-shadcn/inventario.md seções 5, 6, 7 e 9
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Base APP-001 em 25/10/2026 contém somente h1 e não possui casca, componentes nem fontes locais.
+allowed_paths:
+  - apps/app/src/
+  - apps/app/lib/
+  - apps/app/components/
+  - apps/app/public/
+  - apps/app/tests/
+  - docs/agents/prototipo-shadcn/APP-003-cobertura.md
+forbidden:
+  - alterar bateria de navegação para esconder regressão
+  - instalar dependências ou usar pacote cn, HeroUI, Material Web ou dependência externa de ícones
+  - implementar telas de produto das ondas 2 a 8, API ou escrita em banco
+  - delegar, criar subagentes, segundo plano, push, merge ou deploy
+  - criar env.local ou retirar apps/prototipo antes do aceite do dono
+acceptance:
+  - Preservar bateria e comportamento aprovado da APP-002; testes novos precedem comportamento novo
+  - Topo por rota com cidade e troca de cidade, avisos com contador e Conversas com contador; navegação inferior e lateral Início Comunidade Criar Mercado Você, aba ativa segundo ADR
+  - Casca inclui menu Criar e minimização ao rolar; overlays usam Radix e o mecanismo único de histórico da 1b, sem reiniciar ou competir com o roteador
+  - Tokens claros e escuros de apps/prototipo/app/globals.css traduzidos para @theme; tema acompanha sistema inclusive mudança ao vivo; Noto e Material Symbols locais dos mesmos arquivos do protótipo
+  - Os 100 ícones inventariados possuem equivalente Material Symbols local e aria-hidden; sem rede para fonte, sem texto de ícone em nome acessível
+  - Mapear cada um dos 40 movimentos da seção 6 para implementação e teste ou consumidor futuro explícito; reduced-motion suprime movimento, sem remover feedback funcional
+  - Mapear os 52 componentes da seção 7 para equivalentes reutilizáveis e seus testes; reutilizar código shadcn do apps/prototipo e utilitário cn local, não duplicar componente por tela
+  - Casca 375/768/1440 sem overflow; alvos 44px, teclado, nome acessível, foco preso em diálogo e devolvido ao acionador; modo escuro mantém textos legíveis
+  - Conteúdo de jornada continua vazio; uma galeria de prova apenas em modo explícito exercita componentes e estados sem inventar produto nem aparecer na navegação real
+  - APP-003-cobertura.md relaciona ids de ações/overlays da casca e itens de movimento/componentes/ícones a arquivos e testes; itens de ondas futuras não são declarados entregues
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate
+  - Capturas comparadas 375 e 1440 nos dois temas pela ferramenta APP-005
+risk: navegação movimento acessibilidade e visual
+risk_level: R2
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

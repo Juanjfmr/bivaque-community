@@ -1,0 +1,39 @@
+task_id: APP-004
+objective: Os dados de demonstração do protótipo chegam ao app por interfaces tipadas no formato público vigente.
+authority:
+  - docs/agents/prototipo-shadcn/PLANO-ONDAS.md onda 1d
+  - docs/agents/prototipo-shadcn/inventario.md seção 8
+  - docs/decisions/ADR-20261024-front-react-spa.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: apps/app não tem lib/demo nem lib/dados na base APP-001 confrontada em 25/10/2026.
+allowed_paths:
+  - apps/app/lib/demo/
+  - apps/app/lib/dados/
+  - apps/app/tests/
+  - docs/agents/prototipo-shadcn/APP-004-cobertura.md
+forbidden:
+  - alterar telas, casca, navegação ou código fonte do protótipo
+  - instalar pacotes, delegar ou criar subagentes
+  - alterar supabase, criar conexão com banco ou importar cliente de serviço
+  - copiar modelo legado da vila como produto ou expor filiação militar
+  - env.local, push, merge, deploy ou segundo plano
+acceptance:
+  - Entidades e registros de prototypes/bivaque-html/src/data/demo portados com mesmos textos, ids, imagens e relações, com origem rastreável, sem avaliação de strings arbitrárias em runtime
+  - Interfaces lib/dados derivam tipos do supabase/database.generated.ts público por projeção explícita; não falsificam row completa nem usam any ou as unknown as para esconder divergência
+  - Campos demonstrativos sem equivalente no banco ficam em tipos de apresentação explícitos e registrados no mapa; não geram schema novo nem alegam backend entregue
+  - Consumers futuros dependem apenas das interfaces; implementação demo isolada, sem importar dados demo diretamente das telas
+  - Testes de integridade cobrem ids únicos, referências resolvidas, listas e detalhes coerentes, vazios e indisponível; dados sintéticos nunca usam credenciais reais
+  - APP-004-cobertura.md relaciona todas as entidades da seção 8, contagens e origem; diferenças necessárias ao modelo público vigente explicitadas
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 gate
+risk: contratos de demonstração tipados
+risk_level: R2
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

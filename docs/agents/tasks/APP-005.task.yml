@@ -1,0 +1,42 @@
+task_id: APP-005
+objective: A onda 1 é medida por pares de captura rastreáveis e uma conferência honesta de cobertura do inventário.
+authority:
+  - docs/agents/prototipo-shadcn/PLANO-ONDAS.md onda 1e e seção 3
+  - docs/agents/prototipo-shadcn/inventario.md
+  - docs/decisions/ADR-20261024-front-react-spa.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Captura histórica existe somente em .visual/proto/captura.mjs no worktree proto-shadcn; não inclui app Vite nem dark 1440 nem inventário completo.
+allowed_paths:
+  - scripts/app/
+  - tests/scope/app-instrumentos.test.mjs
+  - docs/agents/prototipo-shadcn/cobertura.json
+  - docs/agents/prototipo-shadcn/APP-005-cobertura.md
+forbidden:
+  - alterar app, protótipo ou expectativas para esconder diferença
+  - instalar dependências, delegar ou criar subagentes
+  - banco, criação de perfil fantasma ou uso de credenciais
+  - falsear pronto para item de onda futura ou engolir erro de navegação/captura
+  - env.local, push, merge, deploy ou segundo plano
+acceptance:
+  - Generalizar captura histórica fornecida pelo coordenador; protótipo HTML servido localmente à esquerda e app novo à direita, sem navegador MCP e sem escrita em banco
+  - Capturar todas as rotas da onda 1 em 375 e 1440, claro e escuro, incluindo casca e overlays comuns; três viewports também no teste de interação, sem afirmar que captura prova comportamento
+  - Validar rota e título esperados, boot completo e fonts.ready; zero catch vazio ou fallback silencioso para captura de login, erro ou rota errada; encerrar navegador/servidores próprios em finally
+  - Salvar PNG de cada lado e par lado a lado, índice HTML navegável, manifesto com rota/viewport/tema/hash de fontes e revisão exata; usar biblioteca já instalada para compor PNG
+  - Conferência lista IDs do inventário sem equivalente real por onda, associa arquivo e teste e detecta arquivo inexistente, teste ausente, duplicata e item marcado pronto sem prova
+  - Escopo 1 usa ids estáveis rastreáveis para seções sem id literal; não confundir legenda do checklist com implementação; itens 2 a 8 explicitamente pendentes
+  - Um teste ou self-check verifica ordem esquerda/direita, matriz de captura completa e falha em destino incorreto; fixtures sintéticas para conferir cobertura antes de julgar app
+  - Instrumentos entregues para revisão por modelo diferente do DeepSeek antes de usar seus resultados no aceite da onda; coordenador olha cada par, dono aprova visual depois
+proof:
+  - node --test tests/scope/app-instrumentos.test.mjs
+  - node scripts/app/conferir-cobertura.mjs
+  - node scripts/app/capturar.mjs
+  - npx pnpm@11.18.0 gate
+risk: instrumento de medição visual e funcional
+risk_level: R2
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
