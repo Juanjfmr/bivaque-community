@@ -8,6 +8,7 @@ baseline:
   status: FAIL-EVIDENCED
   evidence: Base APP-001 em 25/10/2026 contém somente h1 e não possui casca, componentes nem fontes locais.
 allowed_paths:
+  - docs/agents/prototipo-shadcn/STATUS.md
   - apps/app/src/
   - apps/app/lib/
   - apps/app/components/
@@ -21,6 +22,7 @@ forbidden:
   - delegar, criar subagentes, segundo plano, push, merge ou deploy
   - criar env.local ou retirar apps/prototipo antes do aceite do dono
 acceptance:
+  - Seguir o fluxo vigente no topo do STATUS; executar a etapa sozinho com até três rodadas próprias e terminar registrando o que fez, provas com números, limitações e dúvidas, sem se declarar aprovado
   - Preservar bateria e comportamento aprovado da APP-002; testes novos precedem comportamento novo
   - Topo por rota com cidade e troca de cidade, avisos com contador e Conversas com contador; navegação inferior e lateral Início Comunidade Criar Mercado Você, aba ativa segundo ADR
   - Casca inclui menu Criar e minimização ao rolar; overlays usam Radix e o mecanismo único de histórico da 1b, sem reiniciar ou competir com o roteador
@@ -35,7 +37,7 @@ proof:
   - npx pnpm@11.18.0 --filter @bivaque/app test
   - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
   - npx pnpm@11.18.0 gate
-  - Capturas comparadas 375 e 1440 nos dois temas pela ferramenta APP-005
+  - E2E de casca nos três tamanhos e dois temas; comparação visual completa da onda 1 será feita pela ferramenta APP-005 após a sequência 1c e 1d
 risk: navegação movimento acessibilidade e visual
 risk_level: R2
 adr: docs/decisions/ADR-20261024-front-react-spa.md

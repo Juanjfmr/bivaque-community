@@ -5336,15 +5336,17 @@
         "25/10: contrato APP-001 válido R1; baseline focal 0/2 e depois 6/6 no escopo, sem alegar gate completo",
         "25/10: gate completo APP-001 verde sem pular build; 143/143 escopo, 1726 unitários, 76 mobile, 19 web e 189 privacidade; runtime independente 3/3 viewports, reload sem erros. Onda 1 ainda em andamento.",
         "25/10: bateria 1b escrita antes de implementação; instrumento e2e ainda FAIL na revisão do coordenador, sem liberação da 1c.",
-        "25/10 julgamento Codex: gate completo verde; 38/38 unitários e 288/288 E2E em 375/768/1440. CORREÇÕES por /app responder 404 enquanto /app/ responde 200; carga ativa mutada no render e dívida do catálogo. Contrato APP-006 R2 validado; 1c não liberada. Logs em .visual/coordenacao/APP-002-julgamento-*.log; árvore da 1b ainda sem commit."
+        "25/10 julgamento Codex: gate completo verde; 38/38 unitários e 288/288 E2E em 375/768/1440. CORREÇÕES por /app responder 404 enquanto /app/ responde 200; carga ativa mutada no render e dívida do catálogo. Contrato APP-006 R2 validado; 1c não liberada. Logs em .visual/coordenacao/APP-002-julgamento-*.log; árvore da 1b ainda sem commit.",
+        "25/10 julgamento APP-006 APROVADO localmente e navegação integrada em abc67b54: gate completo sem pular etapas, app 38/38, escopo 143/143, E2E 291/291 nos três viewports. /app sem barra, foco/carga e controles anteriores provados. 1c liberada por APP-003; comparação visual e aceite do dono aguardam 1e, sem avanço às ondas 2 a 8."
       ],
       "links": [
         "docs/agents/tasks/APP-001.task.yml",
         "docs/agents/prototipo-shadcn/STATUS.md",
         "docs/decisions/ADR-20261024-front-react-spa.md",
-        "docs/agents/tasks/APP-006.task.yml"
+        "docs/agents/tasks/APP-006.task.yml",
+        "docs/agents/tasks/APP-003.task.yml"
       ],
-      "sourceRevision": "3f356f2d",
+      "sourceRevision": "abc67b54",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",
@@ -5352,7 +5354,7 @@
       "dependencies": [],
       "updatedAt": "2026-10-25",
       "blockers": [],
-      "completedChecklist": [true, false, false, false, false]
+      "completedChecklist": [true, true, false, false, false]
     },
     {
       "id": "RED-003",
