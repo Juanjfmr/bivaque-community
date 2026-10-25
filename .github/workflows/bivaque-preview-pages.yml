@@ -48,10 +48,10 @@ jobs:
           BUILD="$PWD/out"
           # O Pages configurado como fonte branch/root não deve servir README via Jekyll.
           # Versione EXCLUSIVAMENTE artefatos exportados, sem alterar a main.
-          find "$BUILD" -type f -printf '%P\\0' > /tmp/bivaque-static-paths
+          find "$BUILD" -type f -printf '%P\0' > /tmp/bivaque-static-paths
           cp -a "$BUILD"/. "$ROOT"/
           touch "$ROOT"/.nojekyll
-          printf '.nojekyll\\0' >> /tmp/bivaque-static-paths
+          printf '.nojekyll\0' >> /tmp/bivaque-static-paths
           cd "$ROOT"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
