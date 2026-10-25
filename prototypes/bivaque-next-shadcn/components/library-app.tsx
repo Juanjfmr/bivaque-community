@@ -135,6 +135,10 @@ export default function LibraryApp(){
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function toggle(id:string,arr:string[],setter:React.Dispatch<React.SetStateAction<string[]>>){setter(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
   function openCreate(v="Pergunta"){setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
+
+  const createMenuActions=()=>[
+    ["Pergunta","Pedir uma indicação",MessageCircle],["Desapego","Anunciar um item",ShoppingBag],["Imóvel","Anunciar moradia",Building2],["Negócio","Cadastrar serviço",BriefcaseBusiness],["Pedido","Pedir propostas",ClipboardList],["Grupo","Reunir a comunidade",Users],["Encontro","Organizar um encontro",CalendarDays],
+  ].map(([kind,subtitle,Icon])=><DropdownMenuItem key={kind as string} className="min-h-[52px] cursor-pointer gap-3 rounded-lg px-3 py-2" onSelect={()=>openCreate(kind as string)}><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">{React.createElement(Icon as typeof Plus,{className:"size-[19px]"})}</span><span className="min-w-0"><strong className="block text-[13px] font-medium">{kind as string}</strong><span className="block text-[11px] text-muted-foreground">{subtitle as string}</span></span></DropdownMenuItem>);
   function submitCreate(e:React.FormEvent){e.preventDefault();if(!title.trim()||!description.trim()){toast.error("Preencha título e descrição");return;}setPosts(a=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType},...a]);setComposeOpen(false);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.")}
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
   function openFilters(){setDraftPrice(maxPrice);setDraftBeds(minBeds);setDraftOm(om);if(typeof window!=="undefined"&&window.matchMedia("(max-width: 639px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
@@ -288,43 +292,60 @@ export default function LibraryApp(){
     <Field><FieldLabel>Organização militar de referência</FieldLabel><Combobox items={oms} value={draftOm} onValueChange={v=>setDraftOm(v||"Todas")}><ComboboxInput placeholder="Pesquisar organização militar..."/><ComboboxContent><ComboboxEmpty>Organização não encontrada.</ComboboxEmpty><ComboboxList>{oms.map(v=><ComboboxItem key={v} value={v}>{v}</ComboboxItem>)}</ComboboxList></ComboboxContent></Combobox><FieldDescription>Vínculo ilustrativo. Não representa proximidade ou homologação geográfica.</FieldDescription></Field>
     <Alert><MapPinned/><AlertTitle>Geografia não homologada</AlertTitle><AlertDescription>Os resultados não utilizam distâncias validadas a organizações militares.</AlertDescription></Alert>
   </FieldGroup>;
-  return <TooltipProvider><SidebarProvider>
-    <Sidebar collapsible="icon">
-      <SidebarHeader><SidebarMenu><SidebarMenuItem>
-        <SidebarMenuButton asChild size="lg" tooltip="Bivaque" className="h-12">
-          <a href={brandAssetBase+"/"} onClick={e=>{e.preventDefault();navigate("inicio")}} aria-label="Bivaque — início" className="flex items-center">
-            <img src={brandAssetBase+"/brand/bivaque-logo-horizontal-white.svg"} alt="Bivaque" className="h-8 w-36 object-contain object-left group-data-[collapsible=icon]:hidden"/>
-            <img src={brandAssetBase+"/brand/bivaque-symbol-white.svg"} alt="" aria-hidden="true" className="hidden size-7 shrink-0 group-data-[collapsible=icon]:block"/>
-          </a>
-        </SidebarMenuButton>
-      </SidebarMenuItem></SidebarMenu></SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup><SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[.12em]">Navegação</SidebarGroupLabel><SidebarMenu>{routes.filter(x=>["inicio","comunidade","conversas","voce"].includes(x.slug)).map(x=><SidebarMenuItem key={x.slug}><SidebarMenuButton asChild isActive={slug===x.slug} tooltip={x.label} className="h-10 rounded-lg"><a href={"/bivaque-community/"+x.slug+"/"} onClick={e=>{e.preventDefault();navigate(x.slug)}}><x.icon className="size-[17px] stroke-[1.7]"/><span className="text-[13px]">{x.label}</span></a></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarGroup>
-        <SidebarGroup><SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[.12em]">Descobrir</SidebarGroupLabel><SidebarMenu>{routes.filter(x=>["imoveis","servicos","desapegos","grupos","movimentacao","guia"].includes(x.slug)).map(x=><SidebarMenuItem key={x.slug}><SidebarMenuButton asChild isActive={slug===x.slug} tooltip={x.label} className="h-10 rounded-lg"><a href={"/bivaque-community/"+x.slug+"/"} onClick={e=>{e.preventDefault();navigate(x.slug)}}><x.icon className="size-[17px] stroke-[1.7]"/><span className="text-[13px]">{x.label}</span></a></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarGroup>
-        <SidebarGroup><SidebarMenu><SidebarMenuItem><DropdownMenu><DropdownMenuTrigger asChild><SidebarMenuButton tooltip="Outros espaços" className="h-10 rounded-lg"><Menu className="size-[17px]"/><span className="text-[13px]">Outros espaços</span><ChevronRight className="ml-auto size-3.5"/></SidebarMenuButton></DropdownMenuTrigger><DropdownMenuContent align="start" side="right" className="min-w-52">{routes.filter(x=>["pedidos","agenda","vilas","clube","talentos","caronas"].includes(x.slug)).map(x=><DropdownMenuItem key={x.slug} onSelect={()=>navigate(x.slug)}><x.icon className="size-4"/>{x.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu></SidebarMenuItem></SidebarMenu></SidebarGroup>
-            </SidebarContent>
-      <SidebarSeparator/>
-      <SidebarFooter><SidebarMenu><SidebarMenuItem><SidebarMenuButton onClick={()=>navigate("salvos")} tooltip="Salvos"><Bookmark/><span>Salvos</span></SidebarMenuButton></SidebarMenuItem><SidebarMenuItem><SidebarMenuButton onClick={()=>navigate("voce")} tooltip="Configurações"><Settings/><span>Preferências</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarFooter>
+  return <TooltipProvider><SidebarProvider style={{"--sidebar-width":"6rem"} as React.CSSProperties}>
+    <Sidebar collapsible="none" className="hidden min-[720px]:flex">
+      <SidebarHeader className="items-center gap-2 px-1 pt-5 pb-3">
+        <button onClick={()=>navigate("inicio")} aria-label="Bivaque — início" className="flex h-[44px] w-full items-center justify-center">
+          <img src={brandAssetBase+"/brand/bivaque-symbol-white.svg"} className="size-10" alt="Bivaque"/>
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button className={createButtonClass+" mt-2 size-14 rounded-[18px] shadow-sm"} size="icon" aria-label="Criar no Bivaque"><Plus className="size-6"/></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="right" sideOffset={12} className="w-[265px] space-y-1 p-2"><DropdownMenuLabel className="text-xs">O que deseja criar?</DropdownMenuLabel>{createMenuActions()}</DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarHeader>
+      <SidebarContent className="pt-1">
+        <SidebarGroup className="px-1">
+          <SidebarMenu className="gap-1">
+            {routes.filter(x=>["inicio","comunidade","conversas","voce"].includes(x.slug)).map(x=><SidebarMenuItem key={x.slug}>
+              <SidebarMenuButton isActive={slug===x.slug} tooltip={x.label} onClick={()=>navigate(x.slug)} className="h-[69px] w-full flex-col justify-center gap-1 rounded-xl px-1 py-1 text-[11px] text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold">
+                <x.icon className="!size-[24px] stroke-[1.9]"/><span>{x.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>)}
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="items-center gap-2 px-1 pb-4">
+        <DropdownMenu><DropdownMenuTrigger asChild><Button aria-label="Mais espaços" variant="ghost" size="icon" className="size-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"><Menu/></Button></DropdownMenuTrigger><DropdownMenuContent side="right" align="end" className="w-56">
+          {routes.filter(x=>["imoveis","servicos","desapegos","grupos","movimentacao","guia","pedidos","agenda","vilas","clube","salvos"].includes(x.slug)).map(x=><DropdownMenuItem key={x.slug} onSelect={()=>navigate(x.slug)}><x.icon className="size-4"/>{x.label}</DropdownMenuItem>)}
+        </DropdownMenuContent></DropdownMenu>
+        <Button aria-label="Preferências" size="icon" variant="ghost" onClick={()=>navigate("voce")} className="size-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"><Settings/></Button>
+      </SidebarFooter>
     </Sidebar>
     <SidebarInset>
-      <header className="flex h-[54px] shrink-0 items-center gap-2 border-b border-border/75 bg-background/95 px-3 backdrop-blur-sm sm:h-[62px] sm:gap-3 sm:px-5 xl:px-8">
-        <SidebarTrigger className="size-9 shrink-0"/>
-        <Separator orientation="vertical" className="mr-1 hidden h-5 sm:block"/>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold sm:text-sm">{slug==="inicio"?"Bivaque":page.label}</span>
-        <span className="hidden rounded-full border border-border/70 px-2.5 py-1 text-[10px] text-muted-foreground lg:inline">Prévia visual</span>
-        <Button variant="ghost" size="icon" className="size-9" onClick={()=>setSearchOpen(true)} aria-label="Pesquisar"><Search className="size-[18px]"/></Button>
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="hidden size-9 sm:inline-flex" aria-label="Aparência"><SunMoon className="size-[18px]"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aparência</DropdownMenuLabel><DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/> Automática</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/> Clara</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/> Escura</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-        <Select value={city} onValueChange={setCity}><SelectTrigger className="h-9 w-[114px] rounded-lg border-border/75 bg-card px-2.5 text-[11px] shadow-none sm:w-[150px]"><MapPin className="mr-1.5 hidden size-3.5 sm:block"/><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="hidden size-9 sm:inline-flex" aria-label="Seu perfil"><UserRound className="size-[18px]"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Conta demonstrativa</DropdownMenuLabel><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>navigate("voce")}>Perfil</DropdownMenuItem><DropdownMenuItem onSelect={()=>navigate("salvos")}>Salvos</DropdownMenuItem><DropdownMenuItem onSelect={()=>toast.info("Nenhuma conta conectada")}>Sair</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+      <header className="flex h-[64px] shrink-0 items-center gap-2 border-b border-border/75 bg-background px-3 sm:px-5 xl:px-8">
+        <button aria-label="Bivaque — voltar ao início" onClick={()=>navigate("inicio")} className="flex min-h-11 items-center gap-2">
+          <img src={brandAssetBase+"/brand/bivaque-symbol.svg"} className="size-8 dark:hidden" alt="Bivaque"/>
+          <img src={brandAssetBase+"/brand/bivaque-symbol-white.svg"} className="hidden size-8 dark:block" alt=""/>
+          <span className="hidden text-[18px] font-semibold min-[420px]:block">{slug==="inicio"?"Bivaque":page.label}</span>
+        </button>
+        <span className="min-w-0 flex-1"/>
+        <Button variant="ghost" size="icon" className="size-11" onClick={()=>setSearchOpen(true)} aria-label="Pesquisar"><Search className="size-[22px]"/></Button>
+        <Select value={city} onValueChange={setCity}><SelectTrigger aria-label="Selecionar cidade" className="h-10 w-[112px] rounded-lg border-border/70 bg-card px-2 text-[12px] shadow-none min-[420px]:w-[145px]"><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="hidden size-11 min-[720px]:inline-flex" aria-label="Aparência"><SunMoon/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aparência</DropdownMenuLabel><DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/>Automática</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/>Clara</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/>Escura</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       </header>
       <main className="mx-auto w-full max-w-[1210px] space-y-6 px-4 pb-28 pt-5 sm:px-6 sm:pb-14 sm:pt-7 xl:px-9">{pageContent}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl sm:hidden" aria-label="Navegação principal mobile"><div className="mx-auto grid max-w-[520px] grid-cols-5 items-center">
-        <button onClick={()=>navigate("inicio")} className={"flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] "+(slug==="inicio"?"font-semibold text-foreground":"text-muted-foreground")} aria-current={slug==="inicio"?"page":undefined}><Home className="size-5 stroke-[1.7]"/>Início</button>
-        <button onClick={()=>setSearchOpen(true)} className="flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground"><Search className="size-5 stroke-[1.7]"/>Busca</button>
-        <button onClick={()=>openCreate("Pergunta")} className="flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] font-semibold text-bivaque-city" aria-label="Criar publicação"><span className="flex size-8 items-center justify-center rounded-xl bg-bivaque-brasa text-bivaque-brasa-foreground"><Plus className="size-[18px]"/></span>Criar</button>
-        <button onClick={()=>navigate("conversas")} className={"flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] "+(slug==="conversas"?"font-semibold text-foreground":"text-muted-foreground")} aria-current={slug==="conversas"?"page":undefined}><MessageCircle className="size-5 stroke-[1.7]"/>Conversas</button>
-        <button onClick={()=>navigate("voce")} className={"flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[10px] "+(slug==="voce"?"font-semibold text-foreground":"text-muted-foreground")} aria-current={slug==="voce"?"page":undefined}><UserRound className="size-5 stroke-[1.7]"/>Você</button>
-      </div></nav>
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card px-2 pb-[env(safe-area-inset-bottom)] min-[720px]:hidden" aria-label="Navegação principal mobile">
+        <div className="mx-auto grid h-[76px] max-w-[540px] grid-cols-4 items-center">
+          {routes.filter(x=>["inicio","comunidade","conversas","voce"].includes(x.slug)).map(x=><button key={x.slug} onClick={()=>navigate(x.slug)} aria-current={slug===x.slug?"page":undefined} className={"flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] "+(slug===x.slug?"font-semibold text-foreground":"text-muted-foreground")}>
+            <span className={"flex h-8 w-14 items-center justify-center rounded-[10px] "+(slug===x.slug?"bg-secondary":"")}><x.icon className="size-[23px] stroke-[1.9]"/></span>{x.label}
+          </button>)}
+        </div>
+      </nav>
+      <div className="fixed bottom-[calc(92px+env(safe-area-inset-bottom))] right-4 z-50 min-[720px]:hidden">
+        <DropdownMenu><DropdownMenuTrigger asChild><Button className={createButtonClass+" h-14 min-w-14 gap-2 rounded-[18px] px-4 shadow-lg"} aria-label="Abrir menu Criar"><Plus className="size-6"/><span className="font-semibold">Criar</span></Button></DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="end" sideOffset={14} className="w-[min(300px,calc(100vw-32px))] space-y-1 rounded-[18px] border-border bg-popover p-2 shadow-lg"><DropdownMenuLabel className="px-3 text-xs">O que deseja criar?</DropdownMenuLabel>{createMenuActions()}</DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </SidebarInset>
 
     <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar no Bivaque" description="Pesquisa e navegação nos dados demonstrativos">
