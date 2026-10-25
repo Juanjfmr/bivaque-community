@@ -1,6 +1,6 @@
 /* Fictional content for the Bivaque visual lab. No real profiles, permissions, listings or endorsements. */
 export type Housing={id:string;title:string;city:string;hood:string;type:"Aluguel"|"Venda";price:number;priceLabel:string;condo?:number;available?:string;bedrooms:number;parking:number;area:number;pets:boolean;furnished:boolean;om:string;image:string;description:string;owner:string};
-export type Classified={id:string;title:string;category:string;city:string;hood:string;price:number;condition:string;image:string;owner:string;description:string};
+export type Classified={id:string;title:string;category:string;city:string;hood:string;price:number;condition:string;pickup?:string;image:string;owner:string;description:string};
 export type Provider={id:string;name:string;category:string;city:string;hood:string;recommendations:number;verified:boolean;benefit?:string;image:string;services:string[];description:string};
 export type Question={id:string;author:string;title:string;category:string;city:string;answers:{author:string;text:string;date:string}[];resolved:boolean;helped:number;date:string};
 export type Group={id:string;name:string;city:string;description:string;members:number;open:boolean;posts:{id:string;author:string;text:string;date:string;likes:number}[]};
