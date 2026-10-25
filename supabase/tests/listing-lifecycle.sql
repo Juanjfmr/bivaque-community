@@ -12,23 +12,23 @@ select plan(24);
 
 set local role postgres;
 
--- 001 = dono, membro da cidade 1 e da comunidade A (aprovado)
--- 002 = cidade 1, comunidade A pendente, comunidade B aprovado (não é dono)
+-- 001 = dono e membro da cidade 1
+-- 002 = cidade 1, não é dono
 insert into public.listings (
-  id, owner_user_id, kind, status, locality_id, community_id,
+  id, owner_user_id, kind, status, locality_id,
   category, title, description, price_cents, condition, neighborhood
 )
 values
   (
     'a1000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'active', '00000000-0000-4000-8000-000000000001', null,
+    'item', 'active', '00000000-0000-4000-8000-000000000001',
     'casa_moveis', 'Mesa de jantar', 'Mesa usada, sem detalhes.', 65000, 'used', 'Centro'
   ),
   (
     'a1000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'draft', '00000000-0000-4000-8000-000000000001', null,
+    'item', 'draft', '00000000-0000-4000-8000-000000000001',
     'eletronicos', 'Rascunho de TV', 'Ainda não publicada.', 90000, 'used', 'Centro'
   );
 

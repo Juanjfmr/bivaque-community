@@ -3,18 +3,22 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(8);
 
--- Onda T Task 5: o sinal de quem está chegando.
+-- Onda T Task 5 — o sinal de quem está chegando, no esquema aprovado.
 --
--- member-two is already a pending request on Vila Ajuricaba (communities.inc)
--- and already a Manaus member (foundation.inc, kind='current' by default).
--- We add a kind='leaving' row pointing at Fixture City to simulate a
--- declared transfer INTO Manaus — the RPC only reads the kind/leaving_at
--- shape, it does not care which direction the transfer actually ran in a
--- fixture. hidden-member is added as a second pending request with no
--- leaving row, to prove the organic (non-transferred) case stays null.
+-- A vila saiu (ADR-20261024 §4, R1-301 removida): a fila de chegada da
+-- comunidade (`list_community_pending_arrivals`) não existe mais. O sinal de
+-- chegada que sobrevive é o de LOCALIDADE, em `locality_memberships`
+-- (`kind='leaving'` com `leaving_at`), alimentado por `declare_locality_transfer`
+-- e lido no console do fundador por `list_locality_arrivals_volume`. Os
+-- testes exclusivos da fila extinta saem com ela. Os novos casos de localidade
+-- não substituem semanticamente a negação de moderador da vila; as proteções
+-- remanescentes de cidade e operador continuam sendo testadas.
+--
+-- member-two tem vínculo atual com Manaus (foundation.inc) e ganha a linha de
+-- saída apontando para Fixture City, como se a transferência para Manaus tivesse
+-- sido declarada. Os demais seguem orgânicos (sem sinal de chegada).
 
 \ir fixtures/foundation.inc
-\ir fixtures/communities.inc
 
 reset role;
 
@@ -27,82 +31,60 @@ values (
   'active'
 );
 
-insert into public.community_memberships (community_id, user_id, role, status)
-values ('70000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000005', 'member', 'pending');
-
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-00000000000c', 'operator-arrivals@example.invalid');
 
 insert into public.operators (auth_user_id, notes)
 values ('10000000-0000-4000-8000-00000000000c', 'fixture: operator for arrivals volume');
 
--- 1. The transferring pending requester surfaces the origin city and date.
+-- 1. A chegada declarada carrega a data.
 select is(
   (
-    select arriving_from_locality_name
-    from public.list_community_pending_arrivals(
-      '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000001'
-    )
+    select leaving_at
+    from public.locality_memberships
     where user_id = '10000000-0000-4000-8000-000000000002'
-  ),
-  'Fixture City',
-  'a pending requester with a declared transfer shows the origin city'
-);
-
-select is(
-  (
-    select arriving_at
-    from public.list_community_pending_arrivals(
-      '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000001'
-    )
-    where user_id = '10000000-0000-4000-8000-000000000002'
+      and kind = 'leaving'
+      and locality_id = '00000000-0000-4000-8000-000000000002'
   ),
   (current_date + interval '30 days')::date,
-  'the declared arrival date matches the leaving row'
+  'a linha de saída declarada carrega a data de chegada'
 );
 
--- 2. An organic (non-transferred) pending requester shows no arrival signal.
+-- 2. Um vínculo orgânico (sem transferência) não traz sinal de chegada.
 select is(
   (
-    select arriving_from_locality_name
-    from public.list_community_pending_arrivals(
-      '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000001'
-    )
-    where user_id = '10000000-0000-4000-8000-000000000005'
+    select count(*)::integer
+    from public.locality_memberships
+    where user_id = '10000000-0000-4000-8000-000000000001'
+      and kind = 'leaving'
   ),
-  null,
-  'a pending requester with no declared transfer shows no origin city (negative)'
+  0,
+  'um membro sem transferência declarada não carrega sinal de chegada (negativo)'
 );
 
--- 3. No affiliation field of any kind exists on the return shape — the
--- function signature is the contract, and this is what stops "força/OM/
--- posto/turma" from ever being added to this RPC without the diff showing
--- up here first.
+-- 3. Nenhum campo de afiliação (força/OM/posto/turma) na assinatura — a
+-- assinatura é o contrato, e é aqui que qualquer coluna nova apareceria.
 select is(
-  pg_get_function_result('public.list_community_pending_arrivals(uuid, uuid, int)'::regprocedure),
-  'TABLE(user_id uuid, display_name text, requested_at timestamp with time zone, arriving_from_locality_name text, arriving_at date)',
-  'the return shape carries only name, dates and the origin city name (negative)'
+  pg_get_function_result('public.declare_locality_transfer(uuid, date)'::regprocedure),
+  'TABLE(current_locality_id uuid, leaving_locality_id uuid, leaving_at date)',
+  'a assinatura só carrega cidades e data, nenhuma afiliação (negativo)'
 );
 
--- 4. A non-moderator cannot list the queue.
+-- 4. Declarar chegada para a própria cidade é recusado.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select throws_ok(
   $$
-    select * from public.list_community_pending_arrivals(
-      '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000002'
+    select * from public.declare_locality_transfer(
+      '00000000-0000-4000-8000-000000000001',
+      (current_date + interval '30 days')::date
     )
   $$,
-  '42501',
+  '23514',
   null,
-  'a non-moderator is denied the community arrivals queue (negative)'
+  'declarar chegada para a própria cidade é recusado (negativo)'
 );
 
--- 5. The founder console: volume of declared arrivals per destination
--- locality. Only member-two counts (the only kind='leaving' holder here),
--- landing on Manaus (the destination their kind='current' row points at).
+-- 5. O console do fundador conta uma chegada declarada em Manaus.
 select is(
   (
     select arrivals_count
@@ -110,7 +92,7 @@ select is(
     where locality_id = '00000000-0000-4000-8000-000000000001'
   ),
   1::bigint,
-  'the founder console counts one declared arrival into Manaus'
+  'o console do fundador conta uma chegada declarada em Manaus'
 );
 
 select ok(
@@ -119,17 +101,34 @@ select ok(
     from public.list_locality_arrivals_volume('10000000-0000-4000-8000-00000000000c')
     where locality_id = '00000000-0000-4000-8000-000000000002'
   ),
-  'Fixture City is the origin, not a destination, so it carries no arrivals (negative)'
+  'Fixture City é origem, não destino, então não carrega chegada (negativo)'
 );
 
--- 6. A non-operator cannot read the founder console's volume.
+-- 6. Um não-operador é barrado no console do fundador.
 select throws_ok(
   $$
     select * from public.list_locality_arrivals_volume('10000000-0000-4000-8000-000000000001')
   $$,
   '42501',
   null,
-  'a non-operator is denied the founder console arrivals volume (negative)'
+  'um não-operador é barrado no volume de chegadas do fundador (negativo)'
+);
+
+-- 7. Declarar chegada dentro do catálogo devolve a origem e a data.
+select results_eq(
+  $$
+    select current_locality_id, leaving_locality_id, leaving_at
+    from public.declare_locality_transfer(
+      '00000000-0000-4000-8000-000000000002',
+      (current_date + interval '30 days')::date
+    )
+  $$,
+  $$ values (
+       '00000000-0000-4000-8000-000000000002'::uuid,
+       '00000000-0000-4000-8000-000000000001'::uuid,
+       (current_date + interval '30 days')::date
+     ) $$,
+  'declarar chegada no catálogo devolve a origem e a data'
 );
 
 select * from finish();

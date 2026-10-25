@@ -11,53 +11,55 @@ select plan(37);
 -- o dono vê o próprio, a foto herda o acesso do anúncio e o interesse reusa a
 -- conversa contextual de forma idempotente. Casos positivos e negativos.
 --
--- Diferenças do schema: a coluna de dono é `owner_user_id`; o público é derivado
--- de qual FK está preenchida (`locality_id` exclusivo de `community_id`), sem
--- `audience_type`; a foto guarda `path`; `condition` tem dois valores; e o
+-- Diferenças do schema: a coluna de dono é `owner_user_id`; a audiência do anúncio
+-- é só a localidade (`locality_id`), sem `community_id` e sem `audience_type`
+-- (ADR-20261024 §1); a foto guarda `path`; `condition` tem dois valores; e o
 -- `item` exige categoria, descrição, preço, bairro e condição no banco.
 
 set local role postgres;
 
--- Público do cenário:
---   001 = dono, membro da cidade 1 e da comunidade A (aprovado)
---   002 = cidade 1, comunidade A pendente, comunidade B aprovado
+-- Público do cenário (a vila saiu, ADR-20261024 §4: audiência é só cidade):
+--   001 = dono, membro da cidade 1
+--   002 = membro da cidade 1 (não é dono de 001/002/003)
 --   003 = outra cidade (locality 2)
---   004 = cidade 1, comunidade A aprovado (não é de B)
---   005 = sem cidade e sem comunidade
+--   004 = membro da cidade 1
+--   005 = sem cidade
+-- 003 é rascunho de 004; 005 é rascunho de 002 — o anúncio que cada um não
+-- alcança é o que não é seu e não está publicado.
 insert into public.listings (
-  id, owner_user_id, kind, status, locality_id, community_id,
+  id, owner_user_id, kind, status, locality_id,
   category, title, description, price_cents, condition, neighborhood
 )
 values
   (
     'a0000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'active', '00000000-0000-4000-8000-000000000001', null,
+    'item', 'active', '00000000-0000-4000-8000-000000000001',
     'casa_moveis', 'Mesa de jantar', 'Mesa usada, sem detalhes.', 65000, 'used', 'Centro'
   ),
   (
     'a0000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'draft', '00000000-0000-4000-8000-000000000001', null,
+    'item', 'draft', '00000000-0000-4000-8000-000000000001',
     'eletronicos', 'Rascunho de TV', 'Ainda não publicada.', 90000, 'used', 'Centro'
   ),
   (
     'a0000000-0000-4000-8000-000000000003',
-    '10000000-0000-4000-8000-000000000001',
-    'item', 'active', null,
-    'esporte', 'Bicicleta aro 29', 'Bicicleta da vila.', 120000, 'new', 'Vila'
+    '10000000-0000-4000-8000-000000000004',
+    'item', 'draft', '00000000-0000-4000-8000-000000000001',
+    'esporte', 'Bicicleta aro 29', 'Rascunho do vizinho.', 120000, 'new', 'Centro'
   ),
   (
     'a0000000-0000-4000-8000-000000000004',
     '10000000-0000-4000-8000-000000000003',
-    'item', 'active', '00000000-0000-4000-8000-000000000002', null,
+    'item', 'active', '00000000-0000-4000-8000-000000000002',
     'infantil', 'Carrinho de bebê', 'Item da outra cidade.', 40000, 'used', 'Bairro X'
   ),
   (
     'a0000000-0000-4000-8000-000000000005',
-    '10000000-0000-4000-8000-000000000001',
-    'item', 'active', null,
-    'outros', 'Furadeira', 'Item da comunidade B.', 20000, 'used', 'Vila Viz'
+    '10000000-0000-4000-8000-000000000002',
+    'item', 'draft', '00000000-0000-4000-8000-000000000001',
+    'outros', 'Furadeira', 'Rascunho do próprio dono.', 20000, 'used', 'Centro'
   );
 
 -- ── alcance de leitura: quem alcança o público vê, quem não alcança não vê ────
@@ -82,12 +84,12 @@ select is_empty(
 
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  '002 não vê o anúncio da comunidade A, onde o pedido está pendente'
+  '002 não vê o rascunho de outro membro da cidade (negativo)'
 );
 
 select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000005' $$,
-  '002 vê o anúncio da comunidade B, onde é aprovado'
+  '002 vê o próprio rascunho'
 );
 
 -- Consulta a outra cidade (20260925161111): anúncio ativo de alcance cidade é consultável.
@@ -96,7 +98,7 @@ select isnt_empty(
   '002 consulta o anúncio ativo de outra cidade'
 );
 
--- 004 = aprovado na comunidade A, não em B, e morador da cidade 1
+-- 004 = morador da cidade 1, dono do rascunho 003
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
@@ -107,12 +109,12 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  '004 vê o anúncio da comunidade A, onde é aprovado'
+  '004 vê o próprio rascunho'
 );
 
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000005' $$,
-  '004 não vê o anúncio da comunidade B'
+  '004 não vê o rascunho alheio (negativo)'
 );
 
 -- 003 = outra cidade
@@ -134,7 +136,7 @@ select isnt_empty(
   '003 consulta o anúncio ativo de cidade alheia'
 );
 
--- 005 = sem cidade nem comunidade
+-- 005 = sem cidade
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
@@ -150,7 +152,7 @@ select is_empty(
 
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  '005 (sem vínculo) não vê anúncio de comunidade'
+  '005 (sem vínculo) não vê rascunho alheio (negativo)'
 );
 
 -- dono vê o próprio rascunho
@@ -237,17 +239,15 @@ select lives_ok(
 select lives_ok(
   $$
     insert into public.listings (
-      owner_user_id, kind, status, community_id, category, title, description,
-      price_cents, condition, neighborhood
+      owner_user_id, kind, status, locality_id, title, description
     )
     values (
       '10000000-0000-4000-8000-000000000002',
-      'item', 'active',
-      'outros', 'Item da comunidade B', 'Aprovado na comunidade B.', 1000,
-      'used', 'Vila Viz'
+      'property', 'active', '00000000-0000-4000-8000-000000000001',
+      'Apartamento do morador', 'Publicado para a própria cidade.'
     )
   $$,
-  'membro aprovado publica item na comunidade'
+  'morador publica imóvel para a própria cidade'
 );
 
 -- ── edição: público imutável, dono imutável ──────────────────────────────────
@@ -273,8 +273,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$
     update public.listings
-       set community_id = '70000000-0000-4000-8000-000000000001',
-           locality_id = null
+       set locality_id = null
      where id = 'a0000000-0000-4000-8000-000000000001'
   $$,
   42501,
@@ -351,8 +350,8 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
--- Consulta a outra cidade (20260925161111): a foto segue o anúncio; a negação para
--- anúncio de comunidade está em consulta-outra-cidade.sql.
+-- Consulta a outra cidade (20260925161111): a foto segue o anúncio ativo; a
+-- negação para rascunho alheio está no bloco de rascunho deste arquivo.
 select isnt_empty(
   $$
     select 1 from public.listing_photos
@@ -504,8 +503,8 @@ select set_config(
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- Consulta a outra cidade (20260925161111): quem consulta pode chamar o anunciante —
--- é o caso de quem compra ou aluga na cidade para onde vai. A negação para
--- anúncio de comunidade continua no bloco de comunidade deste arquivo.
+-- é o caso de quem compra ou aluga na cidade para onde vai. A negação do rascunho
+-- continua no fim deste arquivo.
 select lives_ok(
   $$
     select public.open_conversation(

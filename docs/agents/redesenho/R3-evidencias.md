@@ -14,7 +14,7 @@ Executor único; as provas de banco e o gate final são do coordenador pela fila
 | `supabase/migrations/20261025113717_redesenho_comunidade.sql` | migration do redesenho (uma transação, `begin;`/`commit;`) |
 | `supabase/tests/redesenho-grupos.sql` | 42 asserções |
 | `supabase/tests/redesenho-publicacoes.sql` | 26 asserções |
-| `supabase/tests/redesenho-evento-pergunta.sql` | 24 asserções |
+| `supabase/tests/redesenho-evento-pergunta.sql` | 26 asserções |
 | `supabase/tests/redesenho-vila.sql` | 28 asserções |
 | `supabase/tests/redesenho-bloqueio.sql` | 12 asserções |
 | `supabase/tests/redesenho-definicoes.sql` | 12 asserções (golden + self-check) |
@@ -47,7 +47,11 @@ $ node --test scripts/redesenho/conferir-matriz.test.mjs
 ✔ toda regra do retrato tem uma decisão só na matriz
 ```
 
-`conferir-retrato.test.mjs` não foi executado (não está na lista de provas da tarefa).
+`conferir-retrato.test.mjs` **faz parte** da lista de provas do contrato (a emenda
+`f1bd28ce` acrescentou `node --test scripts/redesenho/conferir-retrato.test.mjs
+scripts/redesenho/conferir-matriz.test.mjs`). O texto anterior, que o dizia fora da
+lista, ficou obsoleto e foi corrigido na RED-004. Os dois testes de conferência foram
+executados pela primeira vez na RED-004 (`2/2` passam); ver `R3-RED-004.md`.
 
 ## Decisões onde a matriz divergia do ADR (registradas, não escondidas)
 

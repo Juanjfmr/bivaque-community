@@ -29,31 +29,34 @@ select results_eq(
 );
 
 -- Fixtures de anúncio criadas como superusuário (RLS não se aplica a ele).
-insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, community_id, neighborhood, category, price_cents, condition)
+-- A vila saiu (ADR-20261024 §4): o público do anúncio é sempre a cidade, e o
+-- rascunho é do dono. 003 é o rascunho de outro membro da cidade — o anúncio
+-- que quem não é dono não alcança.
+insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, neighborhood, category, price_cents, condition)
 values
   (
     'a0000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
     'property', 'draft', 'Rascunho do dono', null,
-    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras', null, null, null
+    '00000000-0000-4000-8000-000000000001', 'Águas Claras', null, null, null
   ),
   (
     'a0000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000001',
     'property', 'active', 'Apartamento de 2 quartos', 'Sala integrada à varanda.',
-    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras', null, null, null
+    '00000000-0000-4000-8000-000000000001', 'Águas Claras', null, null, null
   ),
   (
     'a0000000-0000-4000-8000-000000000003',
-    '10000000-0000-4000-8000-000000000001',
-    'property', 'active', 'Casa na vila', 'Quintal amplo.',
-    null, 'Vila Ajuricaba', null, null, null
+    '10000000-0000-4000-8000-000000000004',
+    'property', 'draft', 'Casa do vizinho', 'Quintal amplo.',
+    '00000000-0000-4000-8000-000000000001', 'Águas Claras', null, null, null
   ),
   (
     'a0000000-0000-4000-8000-000000000004',
     '10000000-0000-4000-8000-000000000001',
     'item', 'active', 'Item sem imóvel', 'Descrição do item.',
-    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras', 'outros', 1000, 'used'
+    '00000000-0000-4000-8000-000000000001', 'Águas Claras', 'outros', 1000, 'used'
   );
 
 -- D6: IPTU ausente é NULL — nunca 0, nunca somado.
@@ -154,7 +157,7 @@ select lives_ok(
 set local role authenticated;
 
 -- ---------------------------------------------------------------------------
--- member-two: membro da cidade, membership PENDENTE na comunidade A.
+-- member-two: membro da cidade 1.
 -- ---------------------------------------------------------------------------
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 
@@ -168,7 +171,7 @@ select isnt_empty(
 );
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  'membership pendente na comunidade não vê anúncio de público comunidade'
+  'rascunho de outro membro da cidade não é visível (negativo)'
 );
 select isnt_empty(
   $$ select 1 from public.property_details where listing_id = 'a0000000-0000-4000-8000-000000000002' $$,
@@ -233,19 +236,19 @@ select throws_ok(
 );
 
 -- ---------------------------------------------------------------------------
--- other-locality: fora da cidade e fora da comunidade.
+-- other-locality: membro de outra cidade.
 -- ---------------------------------------------------------------------------
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 
 -- Consulta a outra cidade (20260925161111): imóvel ativo de alcance cidade é
--- consultável, com detalhe e foto; o de comunidade, não.
+-- consultável, com detalhe e foto; rascunho alheio, não.
 select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000002' $$,
   'membro de outra cidade consulta anúncio de público cidade'
 );
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  'não membro não vê anúncio de público comunidade'
+  'quem não é dono não vê rascunho alheio (negativo)'
 );
 select isnt_empty(
   $$ select 1 from public.property_details where listing_id = 'a0000000-0000-4000-8000-000000000002' $$,
@@ -265,25 +268,25 @@ select isnt_empty(
 );
 
 -- ---------------------------------------------------------------------------
--- Membro aprovado na comunidade A vê o anúncio de público comunidade.
+-- O dono do rascunho vê o próprio rascunho.
 -- ---------------------------------------------------------------------------
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
 select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  'membro aprovado vê anúncio de público comunidade'
+  'o dono vê o próprio rascunho'
 );
 
 -- ---------------------------------------------------------------------------
--- Sem membership: não vê nada.
+-- Sem cidade: não vê nada.
 -- ---------------------------------------------------------------------------
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true);
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000002' $$,
-  'conta sem membership não vê anúncio de público cidade'
+  'conta sem cidade não vê anúncio de público cidade (negativo)'
 );
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
-  'conta sem membership não vê anúncio de público comunidade'
+  'conta sem cidade não vê rascunho alheio (negativo)'
 );
 
 -- ---------------------------------------------------------------------------
@@ -294,8 +297,7 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001
 select throws_ok(
   $$
     update public.listings
-       set locality_id = null,
-           community_id = '70000000-0000-4000-8000-000000000001'
+       set locality_id = null
      where id = 'a0000000-0000-4000-8000-000000000002'
   $$,
   '42501',

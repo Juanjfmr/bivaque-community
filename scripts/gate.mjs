@@ -61,8 +61,15 @@ const stages = [
 // A saída então PULA o estágio — e diz que pulou, na linha do resumo. Pular em
 // silêncio é exatamente o que produziu o problema que este estágio existe para
 // pegar: um verde que afirmava mais do que tinha verificado.
+//
+// A configuração pode vir de duas portas, e as duas valem o mesmo: o arquivo
+// `apps/web/.env.local` (uso local/CI, como antes) OU as duas variáveis públicas
+// já no processo (`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+// Quem exporta as variáveis — derivadas da stack local — não precisa criar env.
 const ENV_FILE = "apps/web/.env.local"
-const hasEnv = existsSync(ENV_FILE)
+const PROCESS_ENV_KEYS = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+const hasProcessEnv = PROCESS_ENV_KEYS.every((key) => Boolean(process.env[key]))
+const hasEnv = existsSync(ENV_FILE) || hasProcessEnv
 
 const skipped = []
 const selected = (FAST ? stages.filter((stage) => !stage.slow) : stages).filter((stage) => {
@@ -105,7 +112,8 @@ if (AS_JSON) {
   console.log("\n────────────────────────────────")
   for (const result of results)
     console.log(`${result.ok ? "  ok " : "FAIL "} ${result.stage} (${result.seconds}s)`)
-  for (const name of skipped) console.log(`PULOU ${name} (falta ${ENV_FILE})`)
+  for (const name of skipped)
+    console.log(`PULOU ${name} (falta ${ENV_FILE} ou ${PROCESS_ENV_KEYS.join(" + ")})`)
 
   if (failed) {
     console.log(`\nGATE VERMELHO — parou em \`${failed.stage}\`.`)
@@ -119,7 +127,7 @@ if (AS_JSON) {
     if (FAST) console.log("--fast não autoriza declarar pronto. Rode o gate completo antes.")
     if (skipped.includes("build"))
       console.log(
-        `Verde sem build não prova que compila. Suba a stack e escreva ${ENV_FILE} antes de declarar pronto.`,
+        `Verde sem build não prova que compila. Suba a stack e escreva ${ENV_FILE} — ou exporte ${PROCESS_ENV_KEYS.join(" e ")} — antes de declarar pronto.`,
       )
   }
 }

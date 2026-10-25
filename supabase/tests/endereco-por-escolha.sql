@@ -70,15 +70,16 @@ select results_eq(
   'quem lê o anúncio lê o endereço publicado'
 );
 
--- Anúncio de comunidade: quem não é da comunidade não lê nem o endereço.
+-- Anúncio de outro membro: rascunho alheio. Quem não é dono não lê nem o
+-- endereço (a vila saiu, ADR-20261024 §4: audiência é só cidade).
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-insert into public.listings (id, owner_user_id, kind, status, title, description, community_id, neighborhood, category, price_cents, condition, address)
-values ('d1000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Berço da vila', 'Só da vila.', 'Vila', 'outros', 100, 'used', 'Travessa da Vila, 7');
+insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, neighborhood, category, price_cents, condition, address)
+values ('d1000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'item', 'draft', 'Berço reservado', 'Ainda não publicado.', '00000000-0000-4000-8000-000000000001', 'Centro', 'outros', 100, 'used', 'Travessa do Dono, 7');
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select is_empty(
   $$ select address from public.listings where id = 'd1000000-0000-4000-8000-000000000002' $$,
-  'quem não alcança o anúncio de comunidade não lê o endereço'
+  'quem não é dono não lê o endereço do rascunho alheio (negativo)'
 );
 
 -- Quem não tem cidade não lê anúncio nenhum, com ou sem endereço.
