@@ -295,3 +295,24 @@
 .mw-search-section .mw-section-title{margin-bottom:12px}
 .mw-search-section .mw-question-main>svg:first-child{flex-shrink:0;color:#427d55;margin-top:9px}
 @media(max-width:700px){.mw-search-section{margin-bottom:25px}}
+
+
+/* Future modules in the experimental navigation */
+.mw-talent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.mw-talent-card{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:18px;min-width:0}
+.mw-talent-card [data-slot=avatar]{width:51px;height:51px}
+.mw-talent-card [data-slot=avatar-fallback]{background:#e3eee6;color:#326d43;font-size:14px;font-weight:750}
+.mw-talent-card h3{font-size:15px}
+.mw-talent-card small{font-size:11px;color:#7c9082}
+.mw-talent-card p{font-size:11px;line-height:1.55;flex:1}
+.mw-talent-card .mw-tags{gap:5px}
+.mw-talent-card button{margin-top:8px;width:100%}
+.mw-ride-grid{display:grid;gap:12px}
+.mw-ride-card{display:flex;align-items:center;gap:15px;padding:17px}
+.mw-ride-icon{width:54px;height:54px;border-radius:12px;background:#edf4ec;color:#376849;display:grid;place-items:center;flex-shrink:0}
+.mw-ride-card>div:nth-child(2){flex:1;display:flex;align-items:flex-start;flex-direction:column;gap:8px;min-width:0}
+.mw-ride-card h3{display:flex;align-items:center;gap:8px;font-size:16px}
+.mw-ride-card p{font-size:11px}
+.mw-ride-card .mw-meta{display:flex;align-items:center;gap:5px}
+@media(max-width:1100px){.mw-talent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.mw-talent-grid{grid-template-columns:1fr}.mw-ride-card{flex-wrap:wrap;padding:13px;gap:10px}.mw-ride-card>div:nth-child(2){flex-basis:calc(100% - 65px)}.mw-ride-card>button{width:100%}.mw-ride-card h3{font-size:13px}}
