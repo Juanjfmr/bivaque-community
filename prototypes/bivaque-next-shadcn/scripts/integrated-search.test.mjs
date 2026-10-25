@@ -13,3 +13,13 @@ test("answer-only result preserves source and snippet",()=>{const r=buildSearchS
 test("mixed modules are city scoped and closed groups hidden",()=>{const r=buildSearchSections({...demo,query:"mudança"});assert.equal(r.items.length,0);assert.equal(r.biz.length,1);assert.equal(r.asks.length,1);assert.equal(r.groups.length,0)});
 test("suggestion state on blank query is empty, not everything",()=>{assert.equal(countSearchResults(buildSearchSections({...demo,query:"  "})),0)});
 test("housing, groups and events match by their own copy",()=>{const r=buildSearchSections({...demo,query:"asa norte"});assert.equal(r.items.length,1);assert.equal(r.biz.length,1);const g=buildSearchSections({...demo,query:"escolas"});assert.deepEqual(g.groups.map(x=>x.id),["g1"]);const e=buildSearchSections({...demo,query:"parque"});assert.equal(e.events.length,1)});
+
+test("search sees responses added locally, without crossing city",()=>{
+ const replies={q1:["Indico o centro OdontoBras como clínica perto do quartel"]};
+ const r=buildSearchSections({...demo,query:"OdontoBras",replies});
+ assert.equal(r.asks.length,1);
+ assert.equal(r.asks[0].id,"q1");
+ assert.match(r.asks[0].snippet,/Você:.*OdontoBras/);
+ const other=buildSearchSections({...demo,query:"OdontoBras",city:"Manaus",replies});
+ assert.equal(other.asks.length,0);
+});
