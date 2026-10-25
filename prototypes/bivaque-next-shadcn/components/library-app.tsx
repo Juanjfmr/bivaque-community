@@ -47,6 +47,8 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, C
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
 
 type Item = { city: string; id: string; title: string; description: string; meta: string; image?: string; price?: string; badge?: string; kind: string };
+type CatalogFilters = {min:string;max:string;hoods:string[];parking:number;area:number;pets:boolean;furnished:boolean;availability:string;condition:string;pickup:string;om:string};
+const initialCatalogFilters:CatalogFilters={min:"",max:"",hoods:[],parking:0,area:0,pets:false,furnished:false,availability:"",condition:"Todos",pickup:"Todos",om:"Todas"};
 type Chat = { id: string; name: string; context: string; messages: { self: boolean; body: string }[] };
 type Post = { id: string; title: string; detail: string; kind: string };
 const routes = [
@@ -112,9 +114,8 @@ export default function LibraryApp(){
   const [detailOpen,setDetailOpen]=React.useState(false);
   const [filtersOpen,setFiltersOpen]=React.useState(false);
   const [mobileFiltersOpen,setMobileFiltersOpen]=React.useState(false);
-  const [draftPrice,setDraftPrice]=React.useState("Sem limite");
-  const [draftBeds,setDraftBeds]=React.useState("Qualquer");
-  const [draftOm,setDraftOm]=React.useState("Todas");
+  const [catalogFilters,setCatalogFilters]=React.useState<CatalogFilters>(initialCatalogFilters);
+  const [catalogDraft,setCatalogDraft]=React.useState<CatalogFilters>(initialCatalogFilters);
   const [replyTo,setReplyTo]=React.useState<string|null>(null);
   const [replyDraft,setReplyDraft]=React.useState("");
   const [origin,setOrigin]=React.useState<{question:string,author:string,text:string}|null>(null);
@@ -123,15 +124,13 @@ export default function LibraryApp(){
   const [composeType,setComposeType]=React.useState("Pergunta");
   const [title,setTitle]=React.useState("");const [description,setDescription]=React.useState("");
   const [searchOpen,setSearchOpen]=React.useState(false);
-  const [maxPrice,setMaxPrice]=React.useState("Sem limite");
   const [minBeds,setMinBeds]=React.useState("Qualquer");
-  const [om,setOm]=React.useState("Todas");
   const [villaAccess,setVillaAccess]=React.useState(false);
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[])}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,steps,likes,followed,resolved,posts,replies,chats,endorsed}))},[loaded,city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats,endorsed]);
+  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[])}setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed}))},[loaded,city,saved,joined,going,steps,likes,followed,resolved,posts,replies,chats,endorsed]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
@@ -144,16 +143,43 @@ export default function LibraryApp(){
   ].map(([kind,subtitle,Icon])=><DropdownMenuItem key={kind as string} className="min-h-[52px] cursor-pointer gap-3 rounded-lg px-3 py-2" onSelect={()=>openCreate(kind as string)}><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">{React.createElement(Icon as typeof Plus,{className:"size-[19px]"})}</span><span className="min-w-0"><strong className="block text-[13px] font-medium">{kind as string}</strong><span className="block text-[11px] text-muted-foreground">{subtitle as string}</span></span></DropdownMenuItem>);
   function submitCreate(e:React.FormEvent){e.preventDefault();if(!title.trim()||!description.trim()){toast.error("Preencha título e descrição");return;}setPosts(a=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType},...a]);setComposeOpen(false);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.")}
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
-  function openFilters(){setDraftPrice(maxPrice);setDraftBeds(minBeds);setDraftOm(om);if(typeof window!=="undefined"&&window.matchMedia("(max-width: 639px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
-  function applyFilters(){setMaxPrice(draftPrice);setMinBeds(draftBeds);setOm(draftOm);setFiltersOpen(false);setMobileFiltersOpen(false)}
+  function openFilters(){setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
+  function applyFilters(){setCatalogFilters({...catalogDraft});setFiltersOpen(false);setMobileFiltersOpen(false)}
+  function clearFilters(){setCatalogDraft({...initialCatalogFilters});setCatalogFilters({...initialCatalogFilters});setCategory("Todos");setMinBeds("Qualquer")}
+  function updateDraft<K extends keyof CatalogFilters>(key:K,value:CatalogFilters[K]){setCatalogDraft(d=>({...d,[key]:value}))}
   function submitReply(e:React.FormEvent){e.preventDefault();if(!replyTo||!replyDraft.trim())return;setReplies(r=>({...r,[replyTo]:[...(r[replyTo]||[]),replyDraft.trim()]}));setReplyTo(null);setReplyDraft("");toast.success("Resposta registrada localmente")}
   function send(e:React.FormEvent){e.preventDefault();if(!message.trim())return;setChats(a=>a.map(c=>c.id===chatId?{...c,messages:[...c.messages,{self:true,body:message.trim()}]}:c));setMessage("");toast.info("Mensagem registrada localmente")}
   const allSaved=allItems.filter(x=>saved.includes(x.id));
-  const filtered=allItems.filter(x=>x.city===city&&(slug==="busca"||slug==="inicio"||slug==="salvos"?true:x.kind===(slug==="negocios"?"servicos":slug))&&(slug!=="salvos"||saved.includes(x.id))&&(category==="Todos"||category===x.badge)&&(!query||(x.title+" "+x.meta+" "+x.description).toLowerCase().includes(query.toLowerCase()))&&
-    (!maxPrice||maxPrice==="Sem limite"||x.kind!=="imoveis"||HOUSING.find(h=>h.id===x.id)!.price<=Number(maxPrice))&&
-    (minBeds==="Qualquer"||x.kind!=="imoveis"||HOUSING.find(h=>h.id===x.id)!.bedrooms>=Number(minBeds))&&
-    (om==="Todas"||x.kind!=="imoveis"||HOUSING.find(h=>h.id===x.id)!.om===om));
-  const ordered=[...filtered].sort((a,b)=>sort==="Menor preço"?Number((HOUSING.find(h=>h.id===a.id)||CLASSIFIEDS.find(h=>h.id===a.id))?.price||0)-Number((HOUSING.find(h=>h.id===b.id)||CLASSIFIEDS.find(h=>h.id===b.id))?.price||0):0);
+  const housingCost=(h:(typeof HOUSING)[number])=>h.type==="Aluguel"?h.price+(h.condo||0):h.price;
+  const filtered=allItems.filter(x=>{
+    if(x.city!==city)return false;
+    if(!["busca","inicio","salvos"].includes(slug)&&x.kind!==(slug==="negocios"?"servicos":slug))return false;
+    if(slug==="salvos"&&!saved.includes(x.id))return false;
+    if(category!=="Todos"&&x.badge!==category)return false;
+    if(query&&!(x.title+" "+x.meta+" "+x.description).toLowerCase().includes(query.toLowerCase()))return false;
+    const h=x.kind==="imoveis"?HOUSING.find(v=>v.id===x.id):null;
+    const d=x.kind==="desapegos"?CLASSIFIEDS.find(v=>v.id===x.id):null;
+    const val=h?housingCost(h):d?.price;
+    if(val!=null&&catalogFilters.min&&val<Number(catalogFilters.min))return false;
+    if(val!=null&&catalogFilters.max&&val>Number(catalogFilters.max))return false;
+    if(h){
+      if(minBeds!=="Qualquer"&&h.bedrooms<Number(minBeds))return false;
+      if(h.parking<catalogFilters.parking||h.area<catalogFilters.area)return false;
+      if(catalogFilters.pets&&!h.pets||catalogFilters.furnished&&!h.furnished)return false;
+      if(catalogFilters.availability&&catalogFilters.availability!=="all"&&h.available!==catalogFilters.availability&&!(catalogFilters.availability==="60"&&["now","30"].includes(h.available||""))&&!(catalogFilters.availability==="30"&&h.available==="now"))return false;
+      if(catalogFilters.om!=="Todas"&&h.om!==catalogFilters.om)return false;
+    }
+    if(d){
+      if(catalogFilters.condition!=="Todos"&&d.condition!==catalogFilters.condition)return false;
+      if(catalogFilters.pickup!=="Todos"&&d.pickup!==catalogFilters.pickup&&!(catalogFilters.pickup==="30"&&d.pickup==="now"))return false;
+    }
+    if((h||d)&&catalogFilters.hoods.length&&!catalogFilters.hoods.includes((h||d)!.hood))return false;
+    return true;
+  });
+  const ordered=[...filtered].sort((a,b)=>{
+    const cost=(v:Item)=>{const h=HOUSING.find(z=>z.id===v.id);return h?housingCost(h):CLASSIFIEDS.find(z=>z.id===v.id)?.price||0};
+    return sort==="Menor preço"?cost(a)-cost(b):sort==="Maior preço"?cost(b)-cost(a):0;
+  });
   function card(v:Item){
     return <Card key={v.id} className="overflow-hidden">
       {v.image?<button type="button" onClick={()=>{setDetail(v);setDetailOpen(true)}} className="w-full text-left"><AspectRatio ratio={16/9}><img src={v.image} alt={v.title} loading="lazy" className="size-full object-cover"/></AspectRatio></button>:null}
