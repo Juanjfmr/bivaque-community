@@ -241,3 +241,6 @@ Uma execução de banco pela fila, db:lint pela fila e gate; julgamento ainda pe
   central e quadro serão consolidados no intervalo sem produtor app, para evitar colisão.
 - Próxima: RED-006, aguardando .visual/coordenacao/RED-006-PRONTO.txt.
   App: APP-003-C1, aguardando .visual/coordenacao/APP-003-C1-PRONTO.txt.
+
+Fonte aprovada RED-005: commit 5f5de530. Contrato seguinte RED-006 validado separadamente;
+provas históricas da RED-004 e julgamento da RED-005 não devem ser repetidos por marcador antigo.

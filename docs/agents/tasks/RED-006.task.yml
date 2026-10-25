@@ -1,0 +1,52 @@
+task_id: RED-006
+objective: Adaptar fixtures de seis suítes de pedidos de serviço e suas conversas ao esquema R3 aprovado, preservando privacidade e ciclo do pedido.
+authority:
+  - Autorização do dono em 25/10/2026 para lotes menores com até três rodadas próprias
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+  - docs/agents/redesenho/R2-comum.md
+  - docs/agents/redesenho/R2-decisoes.md F1 F3 F5 F10
+  - docs/agents/redesenho/R2-matriz-vila-fundacao.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: RED-005-julgamento-banco registra 154 arquivos e 1959 asserções executadas com FAIL; cancelled-notice aborta em public.communities ausente e as outras cinco em INSERT com mais colunas que valores. service-requests já tem quatro falhas antes do aborto; classificar individualmente, sem presumir fixture.
+allowed_paths:
+  - supabase/tests/service-request-cancelled-notice.sql
+  - supabase/tests/service-request-conversation-per-request.sql
+  - supabase/tests/service-request-first-reply-notice.sql
+  - supabase/tests/service-request-open-cap.sql
+  - supabase/tests/service-request-tracking.sql
+  - supabase/tests/service-requests.sql
+  - docs/agents/redesenho/STATUS.md
+  - docs/agents/redesenho/R3-RED-006.md
+forbidden:
+  - alterar migration, seed, tipos gerados, fixtures compartilhadas, matrizes, scripts, gate ou outros testes
+  - conceder grants ou trocar policies e expectativas para esconder falha real de autorização
+  - reduzir plano ou excluir negativos não exclusivos da vila; usar postgres para alegar ação autorizada ou RLS
+  - instalar pacotes, abrir subagentes, segundo plano, escrever PRONTO, commit, push, merge ou deploy
+  - db push, --linked, reset fora da fila, criar env.local, imprimir chaves ou alterar outro worktree
+acceptance:
+  - Ler por trechos as seis suítes e autoridades pertinentes, nunca migration ou matriz inteiras
+  - Corrigir montagem obsoleta de prestador e alcance de cidade sem recriar vila nem alterar produção; contratos de conta e convite de operador permanecem vigentes
+  - Preservar ciclo real de pedido e conversa, participantes, titularidade, revogação e negativos de terceiro e conta sem acesso; revalidar contexto na ação conforme F5
+  - Aviso de primeira resposta sai uma vez para quem pediu, sem ator, respeita preferência e não avisa terceiro; cancelamento avisa somente a outra ponta conforme teste vigente
+  - Preservar limitação de pedidos abertos, isolamento de conversa por pedido, acompanhamento e transições autorizadas; não confundir regra de cidade com antiga vila
+  - Ações e negações usam papel authenticated ou anon e identidade coerente; postgres somente prepara fixtures e observa estado, nunca é prova de RLS
+  - Registrar mapa antigo para atual e cada negativo exclusivo da vila extinto com ID R1 e decisão; novos negativos são independentes e não substituem silenciosamente os antigos não exclusivos da vila
+  - Seis suítes concluem sem aborto ou plano interrompido e com asserções verdes; planos-base são 8 13 8 8 26 31, total 94, podendo aumentar por cobertura necessária, nunca diminuir para esconder falha
+  - Classificar as quatro falhas anteriores ao aborto de service-requests individualmente; se defeito real de autorização fora do escopo, preservar teste vermelho e registrar dependência concreta sem tentativas idênticas ou nova expectativa permissiva
+  - Rodar prova exata de banco pela fila, db lint pela fila e gate completo com variáveis públicas locais no processo, sem env; agregado vermelho deve permanecer explícito se pendências fora do lote
+  - No máximo três rodadas próprias no lote; orçamento esgotado gera HUMAN_DECISION real, sem lote artificial para repetir defeito
+  - Terminar escrevendo STATUS e R3-RED-006.md com planos e resultados por arquivo, logs, mapa, hash inalterado da migration, rodadas e limites, sem declarar banco completo ou segurança aprovados
+proof:
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 gate
+  - Seis suítes medidas com positivos e negativos sem superusuário na ação de acesso
+risk: privacidade de pedidos e conversas notificações e fronteira de prestador
+risk_level: R3
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
