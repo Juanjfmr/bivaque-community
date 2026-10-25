@@ -4,6 +4,8 @@ Os quatro rascunhos da matriz deixaram 31 perguntas. O coordenador fechou 29 em 
 protótipo decide; onde ele não decide, vale o ADR; onde nenhum dos dois decide, fica o comportamento atual e mais
 seguro.** As duas que são decisão de produto foram ao dono, que decidiu em 24/10/2026 (seção 2).
 
+**Matriz aprovada pelo dono em 25/10/2026.** A R3 (migration e pgTAP) pode começar a partir dela.
+
 ## 1. Fechadas pelo coordenador
 
 | # | Pergunta | Decisão | Base |
