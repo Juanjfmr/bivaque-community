@@ -57,6 +57,7 @@ export default function ConceptScreen(){
  const [saved,setSaved]=useState<string[]>([]);
  const [dialog,setDialog]=useState<"create"|"contact"|"search"|"listing"|"service"|null>(null);
  const [selected,setSelected]=useState<string>("");
+ const [pendingDetail,setPendingDetail]=useState<{type:"housing"|"classified"|"provider";id:string}|null>(null);
  const [query,setQuery]=useState("");
  const [toast,setToast]=useState<ToastState|null>(null);
  const [mobileSheet,setMobileSheet]=useState(false);
@@ -80,7 +81,8 @@ export default function ConceptScreen(){
  const createAction=()=>{if(page==="Início"){setPendingComposer(true);switchPage("Comunidade");return;}document.dispatchEvent(new Event("bivaque:compose"));};
  useEffect(()=>{if(pendingComposer&&page!=="Início"){document.dispatchEvent(new Event("bivaque:compose"));setPendingComposer(false)}},[page,pendingComposer]);
  const save=(id:string)=>{setSaved(a=>a.includes(id)?a.filter(x=>x!==id):[...a,id]);notify(saved.includes(id)?"Removido dos favoritos":"Salvo nos favoritos",saved.includes(id)?"Você pode salvar novamente quando quiser.":"Este item foi adicionado à sua lista pessoal.");};
- const launch=(mode:"listing"|"service",id:string)=>{setSelected(id);setDialog(mode)};
+ const toActualId=(id:string)=>({"p1":"h1","p2":"h2","p3":"h3","p4":"d1","p5":"d2","p6":"d3"} as Record<string,string>)[id]||id;
+ const launch=(mode:"listing"|"service",id:string)=>{const listing=listings.find(x=>x.id===id);const type=mode==="service"?"provider":listing?.kind==="Desapegos"?"classified":"housing";setPendingDetail({type,id:toActualId(id)});switchPage(type==="provider"?"Serviços":type==="classified"?"Desapegos":"Imóveis")};
  const filtered=useMemo(()=>{
  const all=tab==="Desapegos"?listings.filter(x=>x.kind==="Desapegos"):tab==="Serviços"?[]:listings.filter(x=>x.kind==="Imóveis");
  return all.filter(x=>(viewMode!=="Salvos"||saved.includes(x.id))&&(category==="Todos"||category==="Casas"&&x.name.includes("Casa")||category==="Apartamentos"&&x.name.includes("Apartamento")||category==="R$ 2–5 mil"&&/R\$ [2345]\./.test(x.price)||category==="Até R$ 2 mil"&&x.price.includes("800")||category==="R$ 5 mil+"&&x.price.includes("6.800")||category==="Para temporada"&&x.name.includes("Kitnet"))&&(!query||x.name.toLowerCase().includes(query.toLowerCase())||x.hood.toLowerCase().includes(query.toLowerCase())));
@@ -88,7 +90,7 @@ export default function ConceptScreen(){
  const listingCard=(v:Listing,featured=false)=><Card className={"concept-listing "+(featured?"featured":"")} key={v.id}>
   <div className="concept-cover" onClick={()=>launch("listing",v.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter")launch("listing",v.id)}}>
    <Photo src={v.image} alt={v.name}/><span className={"concept-image-tag "+(v.tag==="Novo"?"new":"")}>{v.tag}</span>
-   <button aria-label={saved.includes(v.id)?"Remover dos favoritos":"Salvar anúncio"} className="concept-heart" onClick={e=>{e.stopPropagation();save(v.id)}}><Heart size={16} fill={saved.includes(v.id)?"currentColor":"none"}/></button>
+   <button aria-label={saved.includes(toActualId(v.id))?"Remover dos favoritos":"Salvar anúncio"} className="concept-heart" onClick={e=>{e.stopPropagation();save(toActualId(v.id))}}><Heart size={16} fill={saved.includes(toActualId(v.id))?"currentColor":"none"}/></button>
   </div>
   <button className="concept-card-body" onClick={()=>launch("listing",v.id)}>
    <strong>{v.name}</strong><small><MapPin size={12}/>{v.hood}</small><b>{v.price}<em>{v.kind==="Imóveis"?" / mês":""}</em></b><span className="concept-card-facts">{v.details}</span>
@@ -97,7 +99,7 @@ export default function ConceptScreen(){
  <div className="concept-cover" role="button" tabIndex={0} onClick={()=>launch("service",v.id)} onKeyDown={e=>{if(e.key==="Enter")launch("service",v.id)}}>
  <Photo src={v.image} alt={v.name}/>{v.badge&&<span className="concept-service-tag"><ShieldCheck size={12}/>{v.badge}</span>}
  <button className="concept-heart" aria-label={saved.includes(v.id)?"Remover dos favoritos":"Salvar serviço"} onClick={e=>{e.stopPropagation();save(v.id)}}><Heart size={16} fill={saved.includes(v.id)?"currentColor":"none"}/></button></div>
- <button className="concept-card-body" onClick={()=>launch("service",v.id)}><strong>{v.name}</strong><small>{v.sub}</small><span className="concept-location"><MapPin size={12}/>{v.hood}</span><span className="concept-rating"><Star size={13} fill="currentColor"/><b>{v.rating}</b><span>({v.reviews})</span></span></button>
+ <button className="concept-card-body" onClick={()=>launch("service",v.id)}><strong>{v.name}</strong><small>{v.sub}</small><span className="concept-location"><MapPin size={12}/>{v.hood}</span><span className="concept-rating"><Users size={13}/><b>Ficha demonstrativa</b></span></button>
  </Card>;
  const title=<><span>O que você precisa</span><span>em {city.split(" - ")[0]}?</span></>;
  const sectionTitle=(t:string,action:()=>void)=><div className="concept-section-title"><div><h2>{t}</h2></div><button onClick={action}>Ver todos <ArrowRight size={15}/></button></div>;
@@ -122,7 +124,7 @@ export default function ConceptScreen(){
   <TabsContent value="Pedidos"><div className="concept-request"><ClipboardList size={28}/><h3>Precisa contratar um serviço?</h3><p>Descreva sua necessidade para receber propostas da comunidade.</p><Button onClick={()=>switchPage("Pedidos")}><Plus size={16}/> Criar pedido</Button></div></TabsContent></Tabs></section>
   <section className="concept-hub"><div className="concept-section-title"><h2>Mais no Bivaque</h2><button onClick={()=>switchPage("Movimentação")}>Explorar módulos <ArrowRight size={15}/></button></div><div className="concept-hub-grid">{([{label:"Movimentação",Icon:Compass,desc:"Sua chegada ou saída"},{label:"Vilas",Icon:Building2,desc:"Comunidade privada"},{label:"Clube",Icon:Heart,desc:"Benefícios e parceiros"},{label:"Agenda",Icon:CalendarDays,desc:"Encontros e eventos"},{label:"Grupos",Icon:Users,desc:"Pessoas com interesses"},{label:"Pedidos",Icon:ClipboardList,desc:"Compare propostas"},{label:"Talentos",Icon:UserRound,desc:"Conhecimentos e habilidades"},{label:"Caronas",Icon:Car,desc:"Compartilhe trajetos"}] as const).map(({label,Icon,desc})=><button key={label} onClick={()=>switchPage(label)}><Icon size={22}/><strong>{label}</strong><small>{desc}</small><ArrowRight size={14}/></button>)}</div></section>
   </div>{side}</div>;
- const subPage=<ModuleWorkspace page={page} city={city} searchQuery={query} saved={saved} onSave={save} onNavigate={next=>switchPage(next as Page)} onNotify={notify}/>;
+ const subPage=<ModuleWorkspace page={page} city={city} searchQuery={query} saved={saved} onSave={save} onNavigate={next=>switchPage(next as Page)} onNotify={notify} initialDetail={pendingDetail} onDetailConsumed={()=>setPendingDetail(null)}/>;
 
  const selectedListing=listings.find(x=>x.id===selected);
  const selectedService=services.find(x=>x.id===selected);
