@@ -7,7 +7,7 @@ import {
   Home, Search, Building2, ShoppingBag, BriefcaseBusiness, Users, MessageCircle,
   ClipboardList, MapPinned, Compass, CalendarDays, Ticket, Car, UserRound,
   Bookmark, Plus, ChevronRight, Check, Bell, Filter, Settings, Shield,
-  MapPin, Heart, ArrowRight, Send, CircleHelp, Clock, ListChecks,
+  MapPin, Heart, ArrowRight, ArrowLeft, Send, CircleHelp, Clock, ListChecks,
   LogOut, CircleCheck, Eye, ExternalLink, Star, SlidersHorizontal, Menu,
   SunMoon, Sun, Moon, Monitor,
 } from "lucide-react";
@@ -90,7 +90,11 @@ const initials=(name:string)=>name.split(/\s+/).slice(0,2).map(x=>x[0]).join("")
 export default function LibraryApp(){
   const {setTheme}=useTheme();
   const router=useRouter();const path=usePathname();
-  const slug=path.split("/").filter(Boolean).pop()||"inicio";
+  const parts=path.split("/").filter(Boolean);
+  const detailSections=["anuncio","negocio","pergunta","grupo","evento","pedido"];
+  const detailAt=parts.findIndex(v=>detailSections.includes(v));
+  const slug=detailAt>=0?parts[detailAt]:parts.at(-1)||"inicio";
+  const detailId=detailAt>=0?parts[detailAt+1]||null:null;
   const page=routes.find(v=>v.slug===slug)||routes[0];
   const [city,setCity]=React.useState(INITIAL_CITY);
   const [query,setQuery]=React.useState("");
@@ -134,6 +138,7 @@ export default function LibraryApp(){
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
+  function openItemPage(v:Item){navigate((v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id)}
   function toggle(id:string,arr:string[],setter:React.Dispatch<React.SetStateAction<string[]>>){setter(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
   function openCreate(v="Pergunta"){setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
 
@@ -336,7 +341,7 @@ export default function LibraryApp(){
   function rides(){return <div className="space-y-5">{header}{notice()}<div className="grid gap-4 sm:grid-cols-2">{RIDES.filter(t=>t.city===city).map(t=><Card key={t.id}><CardHeader><CardTitle>{t.origin} → {t.destination}</CardTitle><CardDescription>{t.when}</CardDescription></CardHeader><CardContent><p>{t.notes}</p><Badge variant="secondary">{t.seats} vagas fictícias</Badge></CardContent><CardFooter><Button variant="outline" onClick={()=>contact(t.driver,t.origin+" – "+t.destination)}>Tenho interesse</Button></CardFooter></Card>)}</div></div>}
   function you(){return <div className="space-y-5">{header}<Card><CardHeader><Avatar><AvatarFallback>CO</AvatarFallback></Avatar><CardTitle>Perfil de demonstração</CardTitle><CardDescription>Sem verificação militar ou autenticação real</CardDescription></CardHeader><CardContent><div className="flex gap-3"><Badge variant="outline">{saved.length} itens salvos</Badge><Badge variant="outline">{joined.length} grupos</Badge><Badge variant="outline">{going.length} eventos</Badge></div></CardContent></Card><Tabs defaultValue="Salvos"><TabsList><TabsTrigger value="Salvos">Salvos</TabsTrigger><TabsTrigger value="Publicações">Publicações</TabsTrigger><TabsTrigger value="Privacidade">Privacidade</TabsTrigger></TabsList><TabsContent value="Salvos">{showItems(allSaved)}</TabsContent><TabsContent value="Publicações"><div className="grid gap-3">{posts.length?posts.map(p=><Card key={p.id}><CardHeader><CardTitle>{p.title}</CardTitle><CardDescription>{p.kind}</CardDescription></CardHeader><CardContent>{p.detail}</CardContent><CardFooter><Button variant="destructive" onClick={()=>setPosts(a=>a.filter(x=>x.id!==p.id))}>Excluir</Button></CardFooter></Card>):<Alert><InfoIcon/><AlertTitle>Nenhuma publicação</AlertTitle><AlertDescription>Use o botão Criar para testar uma publicação.</AlertDescription></Alert>}</div></TabsContent><TabsContent value="Privacidade"><Card><CardHeader><CardTitle>Dados de demonstração</CardTitle><CardDescription>Seus testes são salvos somente neste navegador.</CardDescription></CardHeader><CardFooter><Button variant="outline" onClick={()=>{if(window.confirm("Restaurar dados locais desta prévia?")){localStorage.removeItem(store);window.location.reload()}}}>Restaurar demonstração</Button></CardFooter></Card></TabsContent></Tabs></div>}
   function InfoIcon(){return <CircleHelp/>}
-  const pageContent=slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="busca"?<div className="space-y-5">{header}<Input autoFocus placeholder="Pesquisar em todos os módulos…" value={query} onChange={e=>setQuery(e.target.value)}/>{showItems(ordered)}</div>:homePage();
+  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="busca"?<div className="space-y-5">{header}<Input autoFocus placeholder="Pesquisar em todos os módulos…" value={query} onChange={e=>setQuery(e.target.value)}/>{showItems(ordered)}</div>:homePage();
 
   const oms=["Todas",...new Set(HOUSING.map(h=>h.om))];
   const relevantHoods=[...new Set((slug==="imoveis"?HOUSING:CLASSIFIEDS).filter(x=>x.city===city).map(x=>x.hood))];
@@ -390,9 +395,10 @@ export default function LibraryApp(){
         <button aria-label="Bivaque — voltar ao início" onClick={()=>navigate("inicio")} className="flex min-h-11 items-center gap-2">
           <img src={brandAssetBase+"/brand/bivaque-symbol.svg"} className="size-8 dark:hidden" alt="Bivaque"/>
           <img src={brandAssetBase+"/brand/bivaque-symbol-white.svg"} className="hidden size-8 dark:block" alt=""/>
-          <span className="hidden text-[18px] font-semibold min-[420px]:block">{slug==="inicio"?"Bivaque":page.label}</span>
+          <span className="hidden text-[18px] font-semibold min-[420px]:block">{slug==="inicio"?"Bivaque":detailId?({anuncio:"Anúncio",negocio:"Negócio local",pergunta:"Indicação",grupo:"Grupo",evento:"Encontro",pedido:"Pedido de serviço"} as Record<string,string>)[slug]:page.label}</span>
         </button>
         <span className="min-w-0 flex-1"/>
+        {detailId&&<Button variant="ghost" size="icon" className="size-11" onClick={()=>navigate(({anuncio:"imoveis",negocio:"servicos",pergunta:"comunidade",grupo:"grupos",evento:"agenda",pedido:"pedidos"} as Record<string,string>)[slug])} aria-label="Voltar"><ArrowLeft/></Button>}
         <Button variant="ghost" size="icon" className="size-11" onClick={()=>setSearchOpen(true)} aria-label="Pesquisar"><Search className="size-[22px]"/></Button>
         <Select value={city} onValueChange={setCity}><SelectTrigger aria-label="Selecionar cidade" className="h-10 w-[112px] rounded-lg border-border/70 bg-card px-2 text-[12px] shadow-none min-[420px]:w-[145px]"><SelectValue/></SelectTrigger><SelectContent>{CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
         <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="hidden size-11 min-[720px]:inline-flex" aria-label="Aparência"><SunMoon/></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Aparência</DropdownMenuLabel><DropdownMenuItem onSelect={()=>setTheme("system")}><Monitor/>Automática</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("light")}><Sun/>Clara</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTheme("dark")}><Moon/>Escura</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
