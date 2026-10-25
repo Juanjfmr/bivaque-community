@@ -127,7 +127,7 @@
   --muted-foreground: #A9B8BA;
   --accent: #334144;
   --accent-foreground: #F2F0EB;
-  --destructive: #EF8F86;
+  --destructive: #B13C36; /* Contrast-safe destructive with white text (5.88:1). */
   --border: #33403F;
   --input: #33403F;
   --ring: var(--bivaque-mist);
