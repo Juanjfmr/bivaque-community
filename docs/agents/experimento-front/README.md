@@ -112,3 +112,4 @@ corrigido sem medição válida perdida.
    medidas compatíveis com o que o contrato pede.
 4. **Capturas de estado.** Carregando e erro guardam apenas a captura da candidata; a diferença de pixels fica só
    para o estado normal, pois o protótipo não implementa aqueles estados. Isso evita comparar telas diferentes.
+- Revisão do coordenador na versão 2: o caso "Mesma pergunta" não lê `history.state` nem outro estado interno. A origem de cada entrada é conferida pelo que se vê: URL, aba ativa, destino do voltar, rolagem e foco. Ler o formato interno do protótipo acoplaria o teste a uma implementação.

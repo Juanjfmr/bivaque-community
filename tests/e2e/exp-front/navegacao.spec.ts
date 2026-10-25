@@ -30,18 +30,6 @@ async function questionList(page: import("@playwright/test").Page) {
   return list
 }
 
-async function expectNavigation(
-  page: import("@playwright/test").Page,
-  route: string,
-  routeId: string,
-  parent: string,
-  origin: string,
-) {
-  await expect
-    .poll(() => page.evaluate(() => (history.state as { navigation?: unknown })?.navigation))
-    .toMatchObject({ route: { name: route, id: routeId }, parent: { name: parent }, origin })
-}
-
 async function openFirstQuestion(page: import("@playwright/test").Page) {
   const item = (await questionList(page)).getByRole("listitem").first()
   const button = item.getByRole("button")
@@ -115,7 +103,6 @@ test.describe("EXP-001 navegação", () => {
     const questionId = new URL(questionUrl).hash.split("/")[1] ?? ""
     expect(questionId).toBe("e0000000-0000-4000-8000-00000000f001")
     await expect(activeTab(page)).toHaveAttribute("aria-current", "page")
-    await expectNavigation(page, "pergunta", questionId, "inicio", "inicio")
     await page.goBack()
     await expect(page).toHaveURL(/#inicio$/)
     await expect(activeTab(page, "Início")).toHaveAttribute("aria-current", "page")
@@ -128,14 +115,9 @@ test.describe("EXP-001 navegação", () => {
     await expect(secondButton).toBeVisible()
     await secondButton.scrollIntoViewIfNeeded()
     const secondScroll = await page.getByRole("main").evaluate((node) => node.scrollTop)
-    const secondOrigin = await page.evaluate(
-      () => (history.state as { navigation?: { origin?: string } })?.navigation?.origin ?? "inicio",
-    )
-    expect(["inicio", "comunidade", "conversas", "voce"]).toContain(secondOrigin)
     await secondButton.click()
     await expect(page).toHaveURL(questionUrl)
     await expect(activeTab(page)).toHaveAttribute("aria-current", "page")
-    await expectNavigation(page, "pergunta", questionId, "minhas", secondOrigin)
     await page.goBack()
     await expect(page).toHaveURL(/#minhas$/)
     await expect(activeTab(page)).toHaveAttribute("aria-current", "page")
