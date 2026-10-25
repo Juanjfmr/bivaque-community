@@ -1,0 +1,45 @@
+name: Bivaque R72 — inspeção visual Chromium
+on:
+  push:
+    branches: [feat/r72-catalog-map-alerts-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-r72-browser-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-r72-browser-smoke
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm ci --no-audit --no-fund
+      - name: Instalar Chromium Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit playwright
+          npx playwright install chromium --with-deps
+      - name: Gerar HTML estático
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Exercitar navegação e capturar 375, 768 e 1440 px
+        run: node scripts/r72-visual-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bivaque-r72-visual-qa
+          path: prototypes/bivaque-next-shadcn/visual-qa/*.png
+          if-no-files-found: ignore
+          retention-days: 14
