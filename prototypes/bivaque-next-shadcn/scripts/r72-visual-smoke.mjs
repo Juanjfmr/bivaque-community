@@ -38,11 +38,11 @@ try{
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2),false,"Horizontal overflow listings "+width+"/"+theme);
    await page.screenshot({path:resolve(import.meta.dirname,"../visual-qa/imoveis-"+width+"-"+theme+".png"),fullPage:true,animations:"disabled"});
    if(width===375&&theme==="light"){
-      await page.getByRole("button",{name:"Mapa"}).click();
+      await page.locator('[data-slot="toggle-group-item"]').filter({hasText:"Mapa"}).first().click();
       await page.getByRole("region",{name:"Mapa aproximado de anúncios por bairro"}).waitFor({timeout:15000});
       await page.getByRole("button",{name:/Asa Norte/}).first().click();
       await page.getByRole("button",{name:/Ver só este bairro na lista/}).click();
-      assert.equal(await page.getByRole("button",{name:"Lista"}).getAttribute("data-state"),"on");
+      assert.equal(await page.locator('[data-slot="toggle-group-item"]').filter({hasText:"Lista"}).first().getAttribute("data-state"),"on");
       await page.getByRole("button",{name:/Total por mês/}).first().click();
       await page.getByPlaceholder("Máximo (R$)").fill("3500");
       await page.getByRole("button",{name:/Ver \d+ resultados/}).last().click();
