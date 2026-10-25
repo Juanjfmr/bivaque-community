@@ -22,6 +22,9 @@ allowed_paths:
   - supabase/seed.sql
   - supabase/database.generated.ts
   - docs/agents/redesenho/R3-*.md
+  - scripts/redesenho/conferir-matriz.test.mjs
+  - scripts/redesenho/conferir-retrato.test.mjs
+  - scripts/redesenho/retrato.mjs
 forbidden:
   - alterar migration já aplicada ou editar as matrizes aprovadas
   - alterar apps, contratos TypeScript ou fundação além dos pontos que perdem a vila
@@ -30,6 +33,7 @@ forbidden:
   - criar .env.local, imprimir credenciais, alterar instrumentos para esconder falhas
   - remover negativos existentes que não sejam exclusivos da vila
 acceptance:
+  - Corrigir somente formatação e o nome local escape nos três scripts R1/R2, quatro erros de lint reproduzidos no checkout limpo 66eda09b; preservar comportamento e expectativas do instrumento e provar os dois testes de conferência
   - Ler R1-retrato.md e schema-dump.sql, as quatro matrizes inteiras, R2-comum e R2-decisoes antes de escrever; decisões prevalecem sobre perguntas antigas dos rascunhos.
   - Uma migration criada pela CLI fixa, com BEGIN/COMMIT, substitui nome a nome os objetos enumerados em R1; nenhum DROP por padrão de nome e nenhum CASCADE cego. Reservada a faixa 20261025100000 do ADR; se a CLI emitir data atual diferente, conservar o nome gerado e registrar a equivalência em R3-evidencias.md sem colisão.
   - Retirar vila, dependências, buckets e enums exclusivos; groups usa locality_id, prestador só recebe convite/atestado de operador, anúncio usa cidade, exclusão de conta continua funcionando. Seed sintético acompanha o novo esquema, separado das fixtures.
@@ -43,6 +47,7 @@ acceptance:
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RED-003.task.yml
   - node scripts/redesenho/conferir-matriz.test.mjs
+  - node --test scripts/redesenho/conferir-retrato.test.mjs scripts/redesenho/conferir-matriz.test.mjs
   - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
   - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
   - npx pnpm@11.18.0 gate
