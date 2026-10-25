@@ -2,6 +2,13 @@
 
 Esta decisão substitui o ajuste de custo anterior e vale daqui em diante.
 
+**Autorização adicional do dono — 25/10/2026:** "Pode dividir". R3 retomada em
+lotes menores, cada um com até três rodadas próprias. O primeiro é RED-004,
+limitado a seis fixtures remanescentes, lint conhecido e configuração do gate.
+Demais fixtures seguem em lotes pequenos; depois vêm permissões/golden/tipos e
+prova final com revisão independente de segurança. Não pedir nova autorização
+para cada lote já abrangido por esta divisão; orçamento esgotado volta a decisão humana.
+
 - DeepSeek V4.1 Flash executa cada etapa inteira sozinho: implementa, roda gate e testes,
   corrige em no máximo três rodadas próprias e registra neste STATUS o que fez, provas
   com números, o que não conseguiu e dúvidas. Sem subagentes, instalação de pacotes ou
@@ -40,11 +47,13 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
   Lista única no contrato `APP-006.task.yml`: endereço sem barra, carga ativa fora do
   render e registro da pendência do catálogo. Nova cadeia APP-006 preparada para despacho;
   marcador `.visual/coordenacao/APP-006-PRONTO.txt`. 1c–1e ainda não despachadas.
-- **R3 bloqueada por orçamento**, checkpoint WIP `64dc6218` no worktree separado.
+- **R3 com divisão autorizada pelo dono**, checkpoint WIP `64dc6218` no worktree separado.
   Última suíte: 154 arquivos, 1734 asserções executadas, resultado FAIL; db:lint passou.
   Gate parou em quatro erros de lint reproduzidos na base. Revisão de segurança final pendente.
-  Pedido ao dono: autorizar lotes menores com novo teto de três tentativas por lote,
-  ou manter bloqueada até o Claude. Sem resposta, não retomar a implementação R3.
+  Primeiro lote RED-004: seis fixtures de chegada/anúncios/endereço, lint conhecido e
+  gate aceitando variáveis públicas do processo. Migration e permissões ficam intactas.
+  Relato do executor em `docs/agents/redesenho/STATUS.md` no worktree R3; marcador
+  `.visual/coordenacao/RED-004-PRONTO.txt`. Nenhum aceite do banco foi concedido.
 - Aprovação visual da onda 1 ainda pendente; nenhuma prova vertical autorizada nesta execução.
 
 ## Decisões do dono
@@ -226,8 +235,8 @@ Não há aprovação visual nem fechamento da onda 1: 1c, 1d e 1e seguem não de
 
 ## Próxima decisão
 
-Recomendação: concluir o lote de correções APP-006 antes de liberar 1c. R3 permanece
-com a decisão de orçamento já solicitada; sua triagem terminou, sem aprovação de segurança.
+Recomendação: concluir o lote de correções APP-006 antes de liberar 1c. O dono autorizou
+a divisão da R3; RED-004 segue em paralelo, sem aprovação de segurança do banco.
 
 ## Julgamento do Codex — 25/10/2026, após as duas cadeias
 

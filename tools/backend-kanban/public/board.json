@@ -5369,18 +5369,20 @@
         "25/10: conferir-matriz.test.mjs 1/1; contrato RED-003 validado R3, retry 3",
         "25/10: revisão independente estática FAIL parcial, 8 HIGH e dependências bloqueando replay; relatório em b1362bf1 no worktree R3, rodada de reparo 1/3; sem prova de banco ou PASS.",
         "25/10: primeiro replay pela fila FAIL antes de pgTAP, SQLSTATE2BP01 no DROP can_read_listing com cinco policies dependentes; relatório f1bd28ce, migration SHA 5CD18B010992C9D534A5E29578986B5FC28A50438C159037B9DF0CDA871D81D3. Quatro erros de lint reproduzidos no R2 limpo, contrato ampliado para correção mínima.",
-        "25/10 checkpoint64dc6218: pgTAP154arquivos/1734asserções executadas, FAIL; db:lint exit0 confirmado pelo coordenador; gate FAIL lint4erros da base; secrets separado passou. Sem revisão final de segurança nem autorização de integração."
+        "25/10 checkpoint64dc6218: pgTAP154arquivos/1734asserções executadas, FAIL; db:lint exit0 confirmado pelo coordenador; gate FAIL lint4erros da base; secrets separado passou. Sem revisão final de segurança nem autorização de integração.",
+        "25/10 dono autorizou dividir a R3 em lotes menores, até três rodadas próprias por lote. RED-004 validado R3 em 9ebc90b2: seis fixtures, lint conhecido e gate com variáveis públicas do processo; migration e permissões fora do escopo. Retomada não significa aprovação do banco."
       ],
       "links": ["docs/agents/prototipo-shadcn/STATUS.md"],
-      "sourceRevision": "64dc6218",
+      "sourceRevision": "9ebc90b2",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "blocked",
+      "status": "now",
       "tests": [],
       "dependencies": [],
       "updatedAt": "2026-10-25",
       "blockers": [
-        "Orçamento de três tentativas esgotado: mesmos erros nas provas 7–9; aguarda decisão explícita do dono sobre novo orçamento em lotes menores."
+        "Banco completo ainda sem PASS; fixtures e permissões remanescentes",
+        "Revisão final independente de segurança pendente"
       ],
       "completedChecklist": [false, false, false, false]
     }
