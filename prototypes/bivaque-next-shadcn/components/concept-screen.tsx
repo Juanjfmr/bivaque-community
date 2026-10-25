@@ -68,6 +68,8 @@ export default function ConceptScreen(){
  const [notifications,setNotifications]=useState(3);
  const [sort,setSort]=useState("Relevância");
  const [viewMode,setViewMode]=useState<"Todos"|"Salvos">("Todos");
+ useEffect(()=>{try{const savedCity=localStorage.getItem("bivaque-visual-lab-city");if(savedCity)setCity(savedCity);}catch{}},[]);
+ useEffect(()=>{try{localStorage.setItem("bivaque-visual-lab-city",city)}catch{}},[city]);
  useEffect(()=>{try{setSaved(JSON.parse(localStorage.getItem("bivaque-conceito-salvos")||"[]"));}catch{}},[]);
  useEffect(()=>{try{localStorage.setItem("bivaque-conceito-salvos",JSON.stringify(saved));}catch{}},[saved]);
  useEffect(()=>{const keys=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();setDialog("search")}};document.addEventListener("keydown",keys);return()=>document.removeEventListener("keydown",keys)},[]);
