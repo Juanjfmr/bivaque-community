@@ -99,6 +99,10 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
   (organizador conta uma vez, teste inicial negava). Pode iterar banco exclusivamente
   pelo comando da fila, em primeiro plano; gate final e revisões seguem separados.
   Log da retomada: `.visual/coordenacao/RED-003-replay-reparo.log` no worktree R3.
+- Iteração do produtor chegou ao pgTAP, ainda vermelho por fixtures/contratos antigos.
+  Coordenador recusou exclusões integrais de testes mistos (transfer-scope-denials,
+  declared-arrivals e community-feeds): continham proteções de cidade/operador/grupos
+  que devem permanecer. Exigida recuperação/adaptação e mapa antigo → novo.
 - Revisão do coordenador também recusou o instrumento inicial de definições que
   verificava apenas nomes/substrings. Exigida comparação integral normalizada das
   policies, triggers e grants, com negativo de mutação mantendo o nome da policy.
