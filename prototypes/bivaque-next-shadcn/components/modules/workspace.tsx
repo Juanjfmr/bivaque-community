@@ -208,7 +208,29 @@ export function ModuleWorkspace({page,city,saved,onSave,onNavigate,onNotify,sear
  const detailContent=()=>{if(!detail||!active)return null;
  if(detail.type==="housing"){const x=active as Housing;return <><img className="mw-detail-photo" src={x.image} alt={x.title}/><h2>{x.title}</h2><strong className="mw-price">{x.priceLabel}</strong><p className="mw-detail-meta"><MapPin size={15}/>{x.hood} · {x.city}</p><p>{x.description}</p><div className="mw-tags"><Badge variant="outline">{x.bedrooms} quartos</Badge><Badge variant="outline">{x.area} m²</Badge><Badge variant="outline">{x.parking} vagas</Badge><Badge variant="outline">{x.pets?"Aceita pets":"Consulte pets"}</Badge></div><Card className="mw-context-card"><MapPinned size={20}/><div><strong>Organização militar de referência</strong><p>{x.om} · Vínculo apenas ilustrativo, sem distância validada.</p></div></Card><div className="mw-actions"><Button onClick={()=>startConversation(x.owner,x.title)}><MessageCircle size={17}/>Entrar em contato</Button><Button variant="outline" onClick={()=>onSave(x.id)}><Heart size={17}/> {liked(x.id)?"Remover salvo":"Salvar"}</Button></div></>}
  if(detail.type==="classified"){const x=active as Classified;return <><img className="mw-detail-photo" src={x.image} alt={x.title}/><h2>{x.title}</h2><strong className="mw-price">{money(x.price)}</strong><p className="mw-detail-meta"><MapPin size={15}/>{x.hood} · {x.condition}</p><p>{x.description}</p><div className="mw-actions"><Button onClick={()=>startConversation(x.owner,x.title)}><MessageCircle size={17}/>Perguntar ao vendedor</Button><Button variant="outline" onClick={()=>onSave(x.id)}><Bookmark size={17}/> Salvar</Button></div></>}
- if(detail.type==="provider"){const x=active as Provider;return <><img className="mw-detail-photo" src={x.image} alt={x.name}/><Badge variant="outline">{x.category}</Badge><h2>{x.name}</h2><p>{x.description}</p><p className="mw-detail-meta"><MapPin size={15}/>{x.hood} · {x.city}</p><div className="mw-tags">{x.services.map(s=><Badge key={s} variant="outline">{s}</Badge>)}</div><Card className="mw-context-card"><Heart size={21}/><div><strong>{x.recommendations} recomendações fictícias</strong><p>Não constituem avaliação ou credencial verificada.</p></div></Card>{x.benefit&&<Card className="mw-context-card"><Tag size={21}/><div><strong>Benefício ilustrativo</strong><p>{x.benefit}</p></div></Card>}<div className="mw-actions"><Button onClick={()=>startConversation(x.name,"Serviço: "+x.services[0])}><MessageCircle size={17}/>Solicitar orçamento</Button><Button variant="outline" onClick={()=>onNavigate("Pedidos")}>Criar pedido</Button></div></>}
+
+ if(detail.type==="provider"){
+   const provider=active as Provider;
+   const count=provider.recommendations+(db.recommended.includes(provider.id)?1:0);
+   const related=db.questions.filter(q=>q.city===provider.city&&
+      (q.category==="Movimentação"&&provider.category==="Mudanças"||q.category==="Casa"&&provider.category==="Manutenção"||q.category==="Saúde"&&provider.category==="Saúde"));
+   return <>
+     <img className="mw-detail-photo" src={provider.image} alt={provider.name}/>
+     <Badge variant="outline">{provider.category}</Badge><h2>{provider.name}</h2>
+     <p className="mw-detail-meta"><MapPin size={15}/>{provider.hood} · {provider.city}</p>
+     {!provider.verified&&<Card className="mw-context-card"><Info size={20}/><div><strong>Ficha não verificada</strong><p>Perfil criado para demonstração. Nenhum responsável confirmou as informações.</p></div></Card>}
+     {provider.benefit&&<Card className="mw-context-card"><Tag size={21}/><div><strong>Benefício para a comunidade — exemplo</strong><p>{provider.benefit}</p></div></Card>}
+     <section className="mw-business-section"><h3>Como pode ajudar</h3><p>{provider.description}</p></section>
+     <section className="mw-business-section"><h3>Serviços</h3><div className="mw-tags">{provider.services.map(v=><Badge key={v} variant="outline"><Check size={12}/>{v}</Badge>)}</div></section>
+     <section className="mw-business-section"><h3>Onde atende</h3><span className="mw-detail-meta"><MapPin size={15}/>{provider.hood}</span></section>
+     <section className="mw-business-section"><h3>O que a comunidade diz</h3>
+       <Card className="mw-business-proof"><Users size={19}/><div><strong>{count} indicações fictícias</strong><small>Sem nota pública, sem ranking comprado e sem verificação de prestador.</small></div></Card>
+       <Button variant="outline" onClick={()=>{update(db=>({...db,recommended:db.recommended.includes(provider.id)?db.recommended.filter(x=>x!==provider.id):[...db.recommended,provider.id]}));onNotify("Indicação local atualizada","Esta ação não gera avaliação pública real.")}}><Heart size={16} fill={db.recommended.includes(provider.id)?"currentColor":"none"}/>{db.recommended.includes(provider.id)?"Remover minha indicação":"Também indico"}</Button>
+     </section>
+     {related.length>0&&<section className="mw-related-business"><h3>Origem de relatos relacionados</h3>{related.map(q=><button key={q.id} onClick={()=>setDetail({type:"question",id:q.id})}><MessageCircle size={17}/><span><strong>{q.title}</strong><small>{q.answers.length} respostas · {q.category}</small></span><ChevronRight size={16}/></button>)}</section>}
+     <div className="mw-actions"><Button onClick={()=>startConversation(provider.name,"Orçamento de "+(provider.services[0]||"serviço"))}><MessageCircle size={17}/> Pedir orçamento</Button><Button variant="outline" onClick={()=>{setDetail(null);onNavigate("Pedidos")}}><ClipboardList size={16}/> Pedido aberto</Button><Button variant="ghost" onClick={()=>onNotify("Denúncia simulada","A moderação real não está conectada.")}><Flag size={15}/>Denunciar página</Button></div>
+   </>;
+ }
 
  if(detail.type==="question"){
    const q=active as Question;const selected=db.resolvedAnswers[q.id]||"";
