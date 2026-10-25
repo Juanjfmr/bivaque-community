@@ -23,27 +23,224 @@ type Listing={id:string,title:string,kind:"desapego"|"imovel",category:string,pr
 type Business={id:string,name:string,category:string,hood:string,rec:number,image?:string,description:string};
 type Question={id:string,title:string,detail:string,answers:number,tag:string,author:string};
 const listings:Listing[]=[
-{id:"a1",title:"Berço de madeira com colchão",kind:"desapego",category:"Infantil",price:"R$ 450",hood:"Parque 10",desc:"Em ótimo estado, retirada a combinar."},
-{id:"a2",title:"Apartamento com 2 quartos",kind:"imovel",category:"Aluguel",price:"R$ 2.300/mês",hood:"Adrianópolis",image:"/landing/hero.webp",desc:"Próximo de serviços e com vaga coberta."},
-{id:"a3",title:"Mesa de jantar para seis lugares",kind:"desapego",category:"Casa",price:"R$ 680",hood:"Flores",desc:"Mesa com seis cadeiras, ótima conservação."},
-{id:"a4",title:"Casa com quintal e garagem",kind:"imovel",category:"Venda",price:"R$ 480 mil",hood:"Ponta Negra",desc:"Casa espaçosa, bairro residencial."},
-{id:"a5",title:"Bicicleta urbana aro 29",kind:"desapego",category:"Esporte",price:"R$ 850",hood:"Vieiralves",desc:"Bicicleta revisada, pronta para uso."},
-{id:"a6",title:"Apartamento mobiliado",kind:"imovel",category:"Aluguel",price:"R$ 2.800/mês",hood:"Aleixo",desc:"Com móveis e eletrodomésticos."}
+ {
+  "id": "i1",
+  "title": "Sofá retrátil seminovo",
+  "kind": "desapego",
+  "category": "Casa",
+  "price": "R$ 800",
+  "hood": "Ponta Negra",
+  "image": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+  "desc": "Três lugares, tecido suede cinza, retrátil e reclinável. Dois anos de uso, sem manchas. Retirada no prédio."
+ },
+ {
+  "id": "i2",
+  "title": "Apartamento 3 quartos",
+  "kind": "imovel",
+  "category": "Aluguel",
+  "price": "R$ 3.200/mês",
+  "hood": "Ponta Negra",
+  "image": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d",
+  "desc": "98 m², 2 vagas, área de lazer completa. Condomínio de R$ 720. Disponível a partir de dezembro."
+ },
+ {
+  "id": "i3",
+  "title": "Berço com colchão",
+  "kind": "desapego",
+  "category": "Infantil",
+  "price": "R$ 450",
+  "hood": "Flores",
+  "image": "https://images.unsplash.com/photo-1774578342155-8d7e44a18bfd",
+  "desc": "Berço americano de madeira com colchão novo. Desmontado para facilitar o transporte."
+ },
+ {
+  "id": "i4",
+  "title": "Geladeira duplex 400 L",
+  "kind": "desapego",
+  "category": "Casa",
+  "price": "R$ 1.500",
+  "hood": "Dom Pedro",
+  "image": "https://images.unsplash.com/photo-1721613877687-c9099b698faa",
+  "desc": "Frost free, inox, funcionando perfeitamente. Vendo por causa da transferência."
+ },
+ {
+  "id": "i5",
+  "title": "Apartamento 2 quartos",
+  "kind": "imovel",
+  "category": "Aluguel",
+  "price": "R$ 2.400/mês",
+  "hood": "Flores",
+  "image": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0",
+  "desc": "70 m², varanda, uma vaga. Perto de mercado e farmácia. Condomínio de R$ 480."
+ },
+ {
+  "id": "i6",
+  "title": "Mesa de jantar 6 lugares",
+  "kind": "desapego",
+  "category": "Casa",
+  "price": "R$ 600",
+  "hood": "Adrianópolis",
+  "image": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0",
+  "desc": "Tampo de vidro e seis cadeiras estofadas. Pequeno risco num dos pés, sem afetar o uso."
+ }
 ];
 const businesses:Business[]=[
-{id:"b1",name:"Reparos e elétrica residencial",category:"Manutenção",hood:"Parque 10",rec:18,image:"/landing/comunidade.webp",description:"Pequenos reparos, elétrica e manutenção residencial."},
-{id:"b2",name:"Mudanças e transportes",category:"Mudanças",hood:"Cidade Nova",rec:12,description:"Transporte de móveis e mudanças residenciais."},
-{id:"b3",name:"Aulas de reforço escolar",category:"Educação",hood:"Adrianópolis",rec:9,description:"Acompanhamento escolar individual."},
-{id:"b4",name:"Limpeza e organização",category:"Casa",hood:"Flores",rec:7,description:"Limpeza residencial e organização de ambientes."}
+ {
+  "id": "b4",
+  "name": "Bolos da Cláudia",
+  "category": "Comida",
+  "hood": "Dom Pedro",
+  "rec": 12,
+  "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
+  "description": "Bolo de aniversário · Docinhos · Kit festa"
+ },
+ {
+  "id": "b9",
+  "name": "Sorriso Kids Odontopediatria",
+  "category": "Saúde",
+  "hood": "Planalto",
+  "rec": 9,
+  "image": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5",
+  "description": "Consulta infantil · Ortodontia · Atendimento pelo plano"
+ },
+ {
+  "id": "b5",
+  "name": "Prof. Sérgio, matemática",
+  "category": "Aulas",
+  "hood": "Planalto",
+  "rec": 8,
+  "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b",
+  "description": "Reforço escolar · Preparatório EsPCEx e EEAR · Aulas on-line"
+ },
+ {
+  "id": "b8",
+  "name": "Clínica Vet 24h Turismo",
+  "category": "Pets",
+  "hood": "Ponta Negra",
+  "rec": 7,
+  "image": "https://images.unsplash.com/photo-1548199973-03cce0bbc87b",
+  "description": "Pronto-atendimento 24h · Vacinas · Banho e tosa"
+ },
+ {
+  "id": "b7",
+  "name": "Oficina do Seu Raimundo",
+  "category": "Mecânica",
+  "hood": "Djalma Batista",
+  "rec": 6,
+  "image": "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3",
+  "description": "Revisão · Freios e suspensão · Troca de óleo"
+ },
+ {
+  "id": "b2",
+  "name": "Mudanças Rio Negro",
+  "category": "Mudança",
+  "hood": "Toda Manaus",
+  "rec": 5,
+  "image": "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7",
+  "description": "Mudança em Manaus · Mudança interestadual · Embalagem e montagem · Guarda-móveis"
+ },
+ {
+  "id": "b6",
+  "name": "Jorge Eletricista",
+  "category": "Elétrica",
+  "hood": "Flores",
+  "rec": 4,
+  "image": "https://images.unsplash.com/photo-1581092921461-eab62e97a780",
+  "description": "Chuveiro e tomadas · Quadro de luz · Ventilador de teto"
+ },
+ {
+  "id": "b1",
+  "name": "Amazon Climatização",
+  "category": "Climatização",
+  "hood": "Planalto",
+  "rec": 3,
+  "image": "https://images.unsplash.com/photo-1581092921461-eab62e97a780",
+  "description": "Limpeza de split · Instalação de split · Recarga de gás · Contrato para condomínio"
+ },
+ {
+  "id": "b3",
+  "name": "Frio Norte Refrigeração",
+  "category": "Refrigeração",
+  "hood": "Flores",
+  "rec": 2,
+  "image": "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1",
+  "description": "Conserto de geladeira · Freezer e frigobar · Máquina de lavar"
+ }
 ];
 const questions:Question[]=[
-{id:"q1",title:"Alguém indica pediatra que atenda pelo plano?",detail:"Procuro recomendações de famílias da região, de preferência com experiência em crianças pequenas.",answers:3,tag:"Saúde e família",author:"Mariana C."},
-{id:"q2",title:"Qual escola infantil recomendam próximo ao Parque 10?",detail:"Preferência por período integral e referências de outras famílias.",answers:1,tag:"Escolas",author:"Renata A."},
-{id:"q3",title:"Empresa confiável para mudança entre cidades?",detail:"Mudança prevista para o próximo mês. Quem já contratou e indica?",answers:2,tag:"Movimentação",author:"Carlos T."},
-{id:"q4",title:"Como é morar perto da área militar?",detail:"Quero entender bairros, deslocamentos e serviços próximos.",answers:5,tag:"Moradia",author:"Paulo R."}
+ {
+  "id": "a1",
+  "title": "Pediatra que atenda pelo plano da Força perto do Parque 10?",
+  "detail": "chegou há 3 dias. Saúde, Parque 10",
+  "answers": 0,
+  "tag": "Saúde, Parque 10",
+  "author": "Carla R."
+ },
+ {
+  "id": "a6",
+  "title": "Diarista de confiança que atenda no Planalto?",
+  "detail": "chegou semana passada. Casa, Planalto",
+  "answers": 0,
+  "tag": "Casa, Planalto",
+  "author": "Jéssica L."
+ },
+ {
+  "id": "a7",
+  "title": "Academia que abra às 5h perto do Dom Pedro?",
+  "detail": "chega em dezembro. Esporte, Dom Pedro",
+  "answers": 0,
+  "tag": "Esporte, Dom Pedro",
+  "author": "Diego F."
+ },
+ {
+  "id": "a8",
+  "title": "Pet shop com banho e tosa que busque em casa na Ponta Negra?",
+  "detail": "chegou há 2 semanas. Pets, Ponta Negra",
+  "answers": 0,
+  "tag": "Pets, Ponta Negra",
+  "author": "Bruna S."
+ },
+ {
+  "id": "a2",
+  "title": "Escola com vaga no 3º ano perto do Planalto?",
+  "detail": "chega em novembro. Educação, Planalto",
+  "answers": 1,
+  "tag": "Educação, Planalto",
+  "author": "Marcos T."
+ },
+ {
+  "id": "a3",
+  "title": "Mecânico de confiança para Hilux na Zona Centro-Sul",
+  "detail": "mora no Adrianópolis. Carro, Centro-Sul",
+  "answers": 2,
+  "tag": "Carro, Centro-Sul",
+  "author": "Renato A."
+ }
 ];
 const steps=["Conhecer bairros e distâncias","Pesquisar moradia","Organizar a mudança","Encontrar serviços essenciais","Conhecer a comunidade"];
-const groups=[{id:"1",name:"Vila Ajuricaba",initials:"VA",count:"4 novas publicações",desc:"Vizinhança e convivência"},{id:"2",name:"Famílias da cidade",initials:"FA",count:"2 conversas recentes",desc:"Apoio a quem está chegando"},{id:"3",name:"Movimentação e chegada",initials:"MC",count:"Guia compartilhado",desc:"Dicas para transferências"}];
+const groups=[
+ {
+  "id": "k2",
+  "name": "Vizinhos do Planalto e do Dom Pedro",
+  "initials": "Vd",
+  "count": "212 membros",
+  "desc": "Indicações, achados e avisos do bairro."
+ },
+ {
+  "id": "k3",
+  "name": "Famílias com crianças pequenas",
+  "initials": "Fc",
+  "count": "540 membros",
+  "desc": "Pediatras, escolas, festas e trocas de roupa infantil."
+ },
+ {
+  "id": "k4",
+  "name": "Pedal e corrida na orla",
+  "initials": "Pe",
+  "count": "96 membros",
+  "desc": "Treinos em grupo aos fins de semana, com saída do calçadão da Ponta Negra."
+ }
+];
 const places=["Manaus","Brasília","Rio de Janeiro","Natal","São Paulo","Belém","Recife","Porto Alegre","Campo Grande"];
 const navPrimary=[["inicio","Início",Home],["comunidade","Comunidade",Users],["conversas","Conversas",MessagesSquare],["voce","Você",UserRound]] as const;
 const navExplore=[["negocios","Negócios",Store],["desapegos","Desapegos",ShoppingBag],["imoveis","Imóveis",Building2],["guia","Guia de chegada",Compass],["agenda","Agenda",CalendarDays],["pedidos","Serviços",HandHeart]] as const;
@@ -75,10 +272,10 @@ export function Screen({slug}:{slug:string[]}){
  
  const homeHire=<button className="r72-hire" onClick={()=>openCreate("pedido")}><BriefcaseBusiness size={23}/><span className="grow"><strong>Precisa contratar?</strong><small>Descreva o que precisa e receba propostas.</small></span><ChevronRight size={19}/></button>;
  const homeGroup=<Card className="r72-side-card r72-group-card"><div className="r72-side-title"><h2>Nos seus grupos</h2><Button variant="ghost" size="sm" asChild><Link href="/grupo/1">Ver grupos<ChevronRight size={15}/></Link></Button></div><div>{groups.slice(0,2).map(g=><Link className="r72-group-row" href={"/grupo/"+g.id} key={g.id}><Avatar className="size-10"><AvatarFallback>{g.initials}</AvatarFallback></Avatar><span className="grow"><strong>{g.name}</strong><small>{g.count} · {g.desc}</small></span><ChevronRight size={17}/></Link>)}</div></Card>;
- const homeEvent=<Card className="r72-side-card r72-event-card"><div className="r72-side-title"><h2>Próximo encontro</h2><Button variant="ghost" size="sm" asChild><Link href="/agenda">Agenda<ChevronRight size={15}/></Link></Button></div><div className="r72-event-content"><Link href="/agenda" className="r72-date"><small>OUT</small><strong>31</strong></Link><div className="grow"><Link href="/agenda"><strong>Encontro da comunidade</strong></Link><small>Sáb · 16h · {city}</small><Button variant="outline" size="sm" onClick={()=>{setRsvps(a=>a.includes("encontro")?a.filter(v=>v!=="encontro"):[...a,"encontro"]);inform("Presença demonstrativa atualizada.");}}>{rsvps.includes("encontro")?<Check size={15}/>:null}{rsvps.includes("encontro")?"Confirmado":"Vou"}</Button></div></div></Card>;
+ const homeEvent=<Card className="r72-side-card r72-event-card"><div className="r72-side-title"><h2>Próximo encontro</h2><Button variant="ghost" size="sm" asChild><Link href="/agenda">Agenda<ChevronRight size={15}/></Link></Button></div><div className="r72-event-content"><Link href="/agenda" className="r72-date"><small>OUT</small><strong>24</strong></Link><div className="grow"><Link href="/agenda"><strong>Despedida de quem sai em dezembro</strong></Link><small>Sex · 19h30 · {city}</small><Button variant="outline" size="sm" onClick={()=>{setRsvps(a=>a.includes("encontro")?a.filter(v=>v!=="encontro"):[...a,"encontro"]);inform("Presença demonstrativa atualizada.");}}>{rsvps.includes("encontro")?<Check size={15}/>:null}{rsvps.includes("encontro")?"Confirmado":"Vou"}</Button></div></div></Card>;
  const homeArrival=<Card className="r72-arrival"><Compass size={24}/><span className="grow"><strong>Chegando a {city}?</strong><small>Conheça bairros, serviços e orientações para sua mudança.</small><Button size="sm" variant="ghost" asChild><Link href="/guia">Ver guia de chegada<ChevronRight size={14}/></Link></Button></span></Card>;
  const homeSections=<>
- <section className="r72-section r72-service-section">{section("Serviços recomendados","/negocios","Indicados pela comunidade de "+city)}<div className="r72-home-row">{businesses.slice(0,4).map(businessCard)}</div></section>
+ <section className="r72-section r72-service-section">{section("Serviços recomendados","/negocios","Indicados pela comunidade de "+city)}<div className="r72-home-row">{[...businesses].sort((a,b)=>b.rec-a.rec).slice(0,4).map(businessCard)}</div></section>
  <section className="r72-section r72-item-section">{section("Oportunidades perto de você","/desapegos")}<div className="r72-home-row">{listings.slice(0,4).map(listingCard)}</div></section>
  <div className="r72-mobile-side">{homeGroup}{homeEvent}{homeArrival}</div>
  <section className="r72-business-cta"><Store size={21}/><span className="grow"><strong>Tem um negócio?</strong><small>Crie sua página e receba pedidos da comunidade.</small></span><Button variant="ghost" size="sm" onClick={()=>openCreate("negocio")}>Criar página<ChevronRight size={15}/></Button></section>
