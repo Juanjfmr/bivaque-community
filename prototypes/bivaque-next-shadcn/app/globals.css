@@ -2,7 +2,16 @@
 @import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * BIVAQUE → shadcn/ui semantic adapter
+ * Source: docs/brand/reference/brand-tokens.json
+ * Approved behavior: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+ * Brand primitives are literal; any additional UI tones are derived roles.
+ * Brasa is reserved for Criar and decisive CTAs, never routine navigation.
+ */
 @theme inline {
+  --font-sans: var(--font-noto-sans);
+  --font-serif: var(--font-noto-serif);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -29,81 +38,115 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-bivaque-brasa: var(--bivaque-create);
+  --color-bivaque-brasa-foreground: var(--bivaque-create-foreground);
+  --color-bivaque-brasa-hover: var(--bivaque-create-hover);
+  --color-bivaque-city: var(--bivaque-city);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * .67);
+  --radius-md: calc(var(--radius) * .833333);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-xl: calc(var(--radius) * 1.333333);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Approved brand primitives */
+  --bivaque-graphite: #253033;
+  --bivaque-paper: #F2F0EB;
+  --bivaque-brasa: #B84A3A;
+  --bivaque-charcoal: #171E20;
+  --bivaque-raised: #20292B;
+  --bivaque-mist: #78979B;
+  --bivaque-brasa-light: #E07A5A;
+
+  /* Semantic decisions. White/sunken/line/muted are derived UI tokens
+     from approved 2026-10-20 maquette, not additional brand colors. */
+  --radius: .75rem;
+  --background: var(--bivaque-paper);
+  --foreground: var(--bivaque-graphite);
+  --card: #FFFFFF;
+  --card-foreground: var(--bivaque-graphite);
+  --popover: #FFFFFF;
+  --popover-foreground: var(--bivaque-graphite);
+  --primary: var(--bivaque-graphite);
+  --primary-foreground: var(--bivaque-paper);
+  --secondary: #E8E5DE;
+  --secondary-foreground: var(--bivaque-graphite);
+  --muted: #E8E5DE;
+  --muted-foreground: #55625F;
+  --accent: #DDE2E3;
+  --accent-foreground: var(--bivaque-graphite);
+  --destructive: #AD3535;
+  --border: #D8D4CC;
+  --input: #D8D4CC;
+  --ring: var(--bivaque-mist);
+  --chart-1: var(--bivaque-graphite);
+  --chart-2: var(--bivaque-mist);
+  --chart-3: var(--bivaque-brasa);
+  --chart-4: #66787A;
+  --chart-5: #D2C9BA;
+
+  /* Brasa is deliberately separate from shadcn primary. */
+  --bivaque-create: var(--bivaque-brasa);
+  --bivaque-create-foreground: #FFFFFF;
+  --bivaque-create-hover: #9E3B2C;
+  --bivaque-city: #9E3B2C;
+
+  /* Institutional sidebar; all shades are dark-side derivatives of Grafite. */
+  --sidebar: var(--bivaque-graphite);
+  --sidebar-foreground: var(--bivaque-paper);
+  --sidebar-primary: var(--bivaque-paper);
+  --sidebar-primary-foreground: var(--bivaque-graphite);
+  --sidebar-accent: #39474A;
+  --sidebar-accent-foreground: var(--bivaque-paper);
+  --sidebar-border: #465558;
+  --sidebar-ring: var(--bivaque-mist);
+}
+.dark {
+  --background: var(--bivaque-charcoal);
+  --foreground: #ECEAE4;
+  --card: var(--bivaque-raised);
+  --card-foreground: #ECEAE4;
+  --popover: var(--bivaque-raised);
+  --popover-foreground: #ECEAE4;
+  --primary: #ECEAE4;
+  --primary-foreground: var(--bivaque-charcoal);
+  --secondary: #2A3537;
+  --secondary-foreground: #ECEAE4;
+  --muted: #2A3537;
+  --muted-foreground: #A9B8BA;
+  --accent: #334144;
+  --accent-foreground: #F2F0EB;
+  --destructive: #EF8F86;
+  --border: #33403F;
+  --input: #33403F;
+  --ring: var(--bivaque-mist);
+  --chart-1: var(--bivaque-mist);
+  --chart-2: var(--bivaque-brasa-light);
+  --chart-3: #ECEAE4;
+  --chart-4: #69868A;
+  --chart-5: #BFAE99;
+
+  --bivaque-create: var(--bivaque-brasa-light);
+  --bivaque-create-foreground: var(--bivaque-charcoal);
+  --bivaque-create-hover: #F09376;
+  --bivaque-city: var(--bivaque-brasa-light);
+
+  --sidebar: var(--bivaque-raised);
+  --sidebar-foreground: #ECEAE4;
+  --sidebar-primary: #ECEAE4;
+  --sidebar-primary-foreground: var(--bivaque-charcoal);
+  --sidebar-accent: #2A3537;
+  --sidebar-accent-foreground: #ECEAE4;
+  --sidebar-border: #33403F;
+  --sidebar-ring: var(--bivaque-mist);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
 @layer base {
   * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground; }
+  body { @apply bg-background text-foreground font-sans; }
 }
