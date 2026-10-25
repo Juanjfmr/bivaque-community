@@ -1,0 +1,56 @@
+task_id: RED-003
+objective: >
+  O banco aplica integralmente a matriz R2 aprovada, substituindo as regras da Comunidade
+  em uma migration transacional, retirando a vila sem perder proteções da fundação.
+authority:
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+  - docs/agents/redesenho/R2-comum.md
+  - docs/agents/redesenho/R2-decisoes.md
+  - docs/agents/redesenho/R2-matriz-grupos.md
+  - docs/agents/redesenho/R2-matriz-publicacoes.md
+  - docs/agents/redesenho/R2-matriz-evento-pergunta.md
+  - docs/agents/redesenho/R2-matriz-vila-fundacao.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Base 66eda09b em 25/10/2026; conferir-matriz.test.mjs passou 1/1.
+    Ainda existem communities e community_id no schema-dump.sql de R1 e nas migrations;
+    não existe migration de redesenho nem hidden_posts nesta base.
+allowed_paths:
+  - supabase/migrations/*_redesenho_comunidade.sql
+  - supabase/tests/
+  - supabase/seed.sql
+  - supabase/database.generated.ts
+  - docs/agents/redesenho/R3-*.md
+forbidden:
+  - alterar migration já aplicada ou editar as matrizes aprovadas
+  - alterar apps, contratos TypeScript ou fundação além dos pontos que perdem a vila
+  - instalar pacotes, executar comandos em segundo plano, push, merge ou deploy
+  - db push, --linked, reset fora da fila ou apagar dados do dono
+  - criar .env.local, imprimir credenciais, alterar instrumentos para esconder falhas
+  - remover negativos existentes que não sejam exclusivos da vila
+acceptance:
+  - Ler R1-retrato.md e schema-dump.sql, as quatro matrizes inteiras, R2-comum e R2-decisoes antes de escrever; decisões prevalecem sobre perguntas antigas dos rascunhos.
+  - Uma migration criada pela CLI fixa, com BEGIN/COMMIT, substitui nome a nome os objetos enumerados em R1; nenhum DROP por padrão de nome e nenhum CASCADE cego. Reservada a faixa 20261025100000 do ADR; se a CLI emitir data atual diferente, conservar o nome gerado e registrar a equivalência em R3-evidencias.md sem colisão.
+  - Retirar vila, dependências, buckets e enums exclusivos; groups usa locality_id, prestador só recebe convite/atestado de operador, anúncio usa cidade, exclusão de conta continua funcionando. Seed sintético acompanha o novo esquema, separado das fixtures.
+  - Cada célula permitida e cada não pode da matriz tem pgTAP identificável por arquivo, objeto, ação, ator e estado; incluir escrita direta e RPC. Não usar testes tautológicos nem apenas procurar strings SQL. R3-cobertura.md mapeia cada célula para teste executável.
+  - Provar colunas e transições imutáveis, privacidade de notify_level e motivos, antipromoção, tentativas 3/30 dias, concorrência, suspensão/exclusão e grupo encerrado. Ausência de linha por RLS exige contagem e estado persistido, não apenas ausência de erro.
+  - Pergunta com dupla origem exige participante ativo de grupo Aberto e mesma cidade, com CHECK e policy juntos; negativos diretos para não membro, Fechado, Encerrado e cidade diferente. Projeção na cidade permanece após fechar/encerrar/sair conforme E1.
+  - Evento da cidade permanece; evento de grupo herda acesso; organizador conta uma vez; conclusão/cancelamento não autorizam conta alheia. Moderado não volta pelo autor e evidência continua restrita ao operador. Conta suspensa/em exclusão nunca ganha acesso.
+  - private.block_allows(uuid,uuid,text) stable security definer search_path vazio retorna true nesta etapa; assinatura e consumidores de leitura/interação/notificação completos, sem implementar bloqueio D1/D2. Testar consumidores substituindo corpo só na transação de teste.
+  - RLS ligada e forçada, grants mínimos e funções privilegiadas sem EXECUTE PUBLIC indevido. Teste fixa USING/WITH CHECK normalizados, triggers e grants, falhando por regra nova, USING true ou grant extra. Tipos públicos apenas; private continua fora da Data API.
+  - Suíte antiga adaptada preserva negativos e fundação. Evidências registram revisão exata, números, falhas e limites; R4/R5/R6 são posteriores, sem alegar integração ou deploy pronto.
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RED-003.task.yml
+  - node scripts/redesenho/conferir-matriz.test.mjs
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 gate
+risk: migration RLS grants privacidade e saída da vila
+risk_level: R3
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
