@@ -200,7 +200,6 @@ select is(
 reset role;
 insert into public.community_memberships (community_id, user_id, role, status)
 values (
-  '70000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000003',
   'member',
   'approved'
@@ -418,11 +417,10 @@ select lives_ok(
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000025', 'provider-neighborhood@example.invalid');
 
-insert into public.provider_accounts (auth_user_id, invited_by, community_id, locality_id)
+insert into public.provider_accounts (auth_user_id, invited_by, locality_id)
 values (
   '10000000-0000-4000-8000-000000000025',
   '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001'
 );
 

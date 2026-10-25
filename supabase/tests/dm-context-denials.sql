@@ -14,12 +14,11 @@ set local role postgres;
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000025', 'provider-dm-denials@example.invalid');
 insert into public.provider_accounts (
-  auth_user_id, invited_by, community_id, locality_id
+  auth_user_id, invited_by, locality_id
 )
 values (
   '10000000-0000-4000-8000-000000000025',
   '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001'
 );
 insert into public.provider_profiles (
@@ -34,8 +33,8 @@ values (
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values (
   '30000000-0000-4000-8000-000000000025',
-  'community',
-  '70000000-0000-4000-8000-000000000001',
+  'locality',
+  '00000000-0000-4000-8000-000000000001',
   'free'
 );
 insert into public.groups (

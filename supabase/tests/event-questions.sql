@@ -26,7 +26,7 @@ insert into public.groups (id, name, visibility, locality_id, created_by, owner_
 values (
   '40000000-0000-4000-8000-000000000077',
   'Grupo Fechado da Pergunta',
-  'private',
+  'closed',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000010',
   '10000000-0000-4000-8000-000000000010'

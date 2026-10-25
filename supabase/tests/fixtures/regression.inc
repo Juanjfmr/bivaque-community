@@ -46,13 +46,29 @@ values (
 -- COMMUNITY FEED: posts and comments
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+insert into public.groups (id, name, visibility, locality_id, created_by, owner_user_id)
+values (
+  'e0000000-0000-4000-8000-000000000009',
+  'Grupo de Regressão',
+  'open',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001'
+);
+
+insert into public.group_memberships (group_id, user_id, role, status)
+values
+  ('e0000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
+  ('e0000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000002', 'member', 'approved');
+
 insert into public.posts (
-  id, locality_id, user_id, post_type, content, created_at
+  id, locality_id, user_id, group_id, post_type, content, created_at
 )
 values (
   'e0000000-0000-4000-8000-000000000010',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000001',
+  'e0000000-0000-4000-8000-000000000009',
   'text',
   'Post de regressao do Bivaque!',
   '2026-08-02 14:00:00+00'

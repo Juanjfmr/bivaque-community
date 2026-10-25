@@ -9,12 +9,29 @@
 --   hidden-member (004): Manaus member, not verified
 --   non-member   (005): authenticated, no membership, no verification
 
+-- RED-003: publicação pertence a um grupo (a vila saiu).
+insert into public.groups (id, name, visibility, locality_id, created_by, owner_user_id)
+values (
+  '40000000-0000-4000-8000-000000000009',
+  'Grupo do Feed',
+  'open',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001'
+);
+
+insert into public.group_memberships (group_id, user_id, role, status)
+values
+  ('40000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
+  ('40000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000002', 'member', 'approved');
+
 -- seed a text post by member-one for read-back tests
-insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+insert into public.posts (id, locality_id, user_id, group_id, post_type, content, created_at)
 values (
   '40000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000009',
   'text',
   'Bem-vindos ao Bivaque Manaus!',
   '2026-08-02 14:00:00+00'

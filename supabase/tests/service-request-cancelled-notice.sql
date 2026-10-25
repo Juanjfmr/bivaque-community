@@ -23,7 +23,7 @@ insert into public.operators (auth_user_id)
 -- é FK para provider_accounts.auth_user_id). Inverter isso falha no FK.
 insert into public.communities (id, name, locality_id, created_by, owner_user_id)
 values ('71000000-0000-4000-8000-0000000000a1', 'Comunidade A', '00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001');
-insert into public.provider_accounts (auth_user_id, invited_by, community_id, locality_id)
+insert into public.provider_accounts (auth_user_id, invited_by, locality_id)
 values ('10000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', '71000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000001');
 insert into public.provider_profiles (id, owner_user_id, display_name, category)
 values ('30000000-0000-4000-8000-0000000000b1', '10000000-0000-4000-8000-000000000005', 'Prestador 005', 'assistencia_tecnica');

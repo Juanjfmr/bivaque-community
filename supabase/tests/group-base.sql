@@ -823,7 +823,6 @@ where group_id = '40000000-0000-4000-8000-000000000001'
 
 insert into public.comments (post_id, user_id, content)
 values (
-  '70000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000002',
   'Comentário um no nível nada'
 );
@@ -847,7 +846,6 @@ where group_id = '40000000-0000-4000-8000-000000000001'
 
 insert into public.comments (post_id, user_id, content)
 values (
-  '70000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000002',
   'Comentário dois no nível destaques'
 );
@@ -871,7 +869,6 @@ where group_id = '40000000-0000-4000-8000-000000000001'
 
 insert into public.comments (post_id, user_id, content)
 values (
-  '70000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000002',
   'Comentário três no nível tudo'
 );

@@ -9,12 +9,29 @@
 --   hidden-member (004): Manaus member, not verified
 --   non-member   (005): authenticated, no membership, no verification
 
+-- RED-003: a publicação pertence a um grupo.
+insert into public.groups (id, name, visibility, locality_id, created_by, owner_user_id)
+values (
+  '60000000-0000-4000-8000-000000000009',
+  'Grupo de Denúncia',
+  'open',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001'
+);
+
+insert into public.group_memberships (group_id, user_id, role, status)
+values
+  ('60000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
+  ('60000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000002', 'member', 'approved');
+
 -- Create a post by member-one for testing
-insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+insert into public.posts (id, locality_id, user_id, group_id, post_type, content, created_at)
 values (
   '60000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000001',
+  '60000000-0000-4000-8000-000000000009',
   'text',
   'Post para teste de denuncia',
   '2026-08-02 15:00:00+00'

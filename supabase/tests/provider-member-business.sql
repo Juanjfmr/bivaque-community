@@ -9,12 +9,11 @@ select plan(42);
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000020', 'civil-provider@example.invalid');
 insert into public.provider_accounts (
-  auth_user_id, invited_by, community_id, locality_id
+  auth_user_id, invited_by, locality_id
 )
 values (
   '10000000-0000-4000-8000-000000000020',
   '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001'
 );
 

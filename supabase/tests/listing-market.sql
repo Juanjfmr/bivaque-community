@@ -44,7 +44,7 @@ values
   (
     'a0000000-0000-4000-8000-000000000003',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'active', null, '70000000-0000-4000-8000-000000000001',
+    'item', 'active', null,
     'esporte', 'Bicicleta aro 29', 'Bicicleta da vila.', 120000, 'new', 'Vila'
   ),
   (
@@ -56,7 +56,7 @@ values
   (
     'a0000000-0000-4000-8000-000000000005',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'active', null, '70000000-0000-4000-8000-000000000002',
+    'item', 'active', null,
     'outros', 'Furadeira', 'Item da comunidade B.', 20000, 'used', 'Vila Viz'
   );
 
@@ -242,7 +242,7 @@ select lives_ok(
     )
     values (
       '10000000-0000-4000-8000-000000000002',
-      'item', 'active', '70000000-0000-4000-8000-000000000002',
+      'item', 'active',
       'outros', 'Item da comunidade B', 'Aprovado na comunidade B.', 1000,
       'used', 'Vila Viz'
     )

@@ -1,58 +1,23 @@
--- Community entity fixtures: extends foundation.inc with two communities in
--- the same Manaus locality, plus the actor memberships that the scope test
--- pivots on. Must be included AFTER foundation.inc inside a transaction.
--- Uses example.invalid identities and fixed UUIDs. Never real data.
+-- RED-003: a vila saiu. Este arquivo vira a fixture de GRUPOS da cidade de
+-- Manaus, mantendo os UUIDs de grupo (800…001..003) e de publicação
+-- (900…002/003) que os testes já usavam, agora no esquema novo.
+-- Deve ser incluído DEPOIS de foundation.inc, dentro da transação do teste.
 
--- foundation.inc already provides:
---   member-one   (001): verified active_federal_military, Manaus member, locality_members
---   member-two   (002): Manaus member, locality_members
---   other-locality (003): verified military_pensioner, test-other-locality member
---   hidden-member (004): Manaus member, hidden visibility
---   non-member   (005): authenticated, no membership, no verification
-
-insert into public.communities (
-  id, locality_id, name, description, created_by, owner_user_id
-)
-values
-  (
-    '70000000-0000-4000-8000-000000000001',
-    '00000000-0000-4000-8000-000000000001',
-    'Vila Ajuricaba',
-    'Moradores da vila',
-    '10000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000001'
-  ),
-  (
-    '70000000-0000-4000-8000-000000000002',
-    '00000000-0000-4000-8000-000000000001',
-    'Vila Vizinha',
-    'Outra vila da mesma cidade',
-    '10000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000001'
-  );
-
-insert into public.community_memberships (community_id, user_id, role, status)
-values
-  ('70000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
-  ('70000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000004', 'member', 'approved'),
-  ('70000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', 'member', 'pending'),
-  ('70000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', 'member', 'approved');
-
--- Internal groups of the Ajuricaba community (community A):
---   001 = public   "Vendas da vila" -001 owned
---   002 = private  "Sindicos"      -001 owned
---   003 = public   "Jardinagem"    -004 owned (transferred on 004's removal)
+-- Grupos:
+--   800…001 Aberto  "Vendas"    -001 dono
+--   800…002 Fechado "Sindicos"  -001 dono
+--   800…003 Aberto  "Jardinagem" -004 dono (morador comum)
 insert into public.groups (
-  id, name, description, visibility, locality_id, community_id, created_by, owner_user_id
+  id, name, description, visibility, status, locality_id, created_by, owner_user_id
 )
 values
   (
     '80000000-0000-4000-8000-000000000001',
-    'Vendas da vila',
+    'Vendas da cidade',
     'Repasses entre moradores',
-    'public',
+    'open',
+    'active',
     '00000000-0000-4000-8000-000000000001',
-    '70000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001'
   ),
@@ -60,45 +25,28 @@ values
     '80000000-0000-4000-8000-000000000002',
     'Sindicos',
     'Coordenacao interna',
-    'private',
+    'closed',
+    'active',
     '00000000-0000-4000-8000-000000000001',
-    '70000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001'
+  ),
+  (
+    '80000000-0000-4000-8000-000000000003',
+    'Jardinagem',
+    'Grupo criado por um morador comum',
+    'open',
+    'active',
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000004'
   );
 
-insert into public.groups (
-  id, name, description, visibility, locality_id, community_id, created_by, owner_user_id
-)
-values (
-  '80000000-0000-4000-8000-000000000003',
-  'Jardinagem',
-  'Grupo criado por um morador comum',
-  'public',
-  '00000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000004',
-  '10000000-0000-4000-8000-000000000004'
-);
-
-insert into public.group_memberships (group_id, user_id, role, status)
+insert into public.group_memberships (group_id, user_id, role, status, notify_level)
 values
-  ('80000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
-  ('80000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
-  ('80000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000004', 'owner', 'approved');
-
-insert into public.posts (
-  id, locality_id, user_id, community_id, post_type, content, created_at
-)
-values (
-  '90000000-0000-4000-8000-000000000001',
-  '00000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
-  'text',
-  'Caiu a agua na quadra 3',
-  '2026-08-04 09:00:00+00'
-);
+  ('80000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'owner', 'approved', 'all'),
+  ('80000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'owner', 'approved', 'highlights'),
+  ('80000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000004', 'owner', 'approved', 'all');
 
 insert into public.posts (
   id, locality_id, user_id, group_id, post_type, content, created_at

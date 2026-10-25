@@ -73,7 +73,7 @@ select results_eq(
 -- Anúncio de comunidade: quem não é da comunidade não lê nem o endereço.
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 insert into public.listings (id, owner_user_id, kind, status, title, description, community_id, neighborhood, category, price_cents, condition, address)
-values ('d1000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Berço da vila', 'Só da vila.', '70000000-0000-4000-8000-000000000001', 'Vila', 'outros', 100, 'used', 'Travessa da Vila, 7');
+values ('d1000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Berço da vila', 'Só da vila.', 'Vila', 'outros', 100, 'used', 'Travessa da Vila, 7');
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select is_empty(

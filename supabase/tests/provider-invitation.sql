@@ -16,13 +16,11 @@ values
 insert into public.provider_accounts (
   auth_user_id,
   invited_by,
-  community_id,
   locality_id
 )
 values (
   '10000000-0000-4000-8000-000000000030',
   '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001'
 );
 
@@ -36,7 +34,6 @@ select set_config(
 select lives_ok(
   $$
     select public.create_provider_invitation(
-      '70000000-0000-4000-8000-000000000001',
       'new-provider@example.invalid',
       'Climatiza Manaus'
     )
@@ -69,7 +66,6 @@ select set_config(
 select throws_ok(
   $$
     select public.create_provider_invitation(
-      '70000000-0000-4000-8000-000000000001',
       'denied-city-member@example.invalid',
       'Prestador sem vila'
     )
@@ -88,7 +84,6 @@ select set_config(
 select throws_ok(
   $$
     select public.create_provider_invitation(
-      '70000000-0000-4000-8000-000000000001',
       'denied-provider@example.invalid',
       'Prestador convidando'
     )
@@ -114,7 +109,6 @@ values
   (
     '40000000-0000-4000-8000-000000000020',
     '10000000-0000-4000-8000-000000000001',
-    '70000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001',
     'Prestador alvo',
     digest(decode(repeat('a1', 32), 'hex'), 'sha256'),
@@ -124,7 +118,6 @@ values
   (
     '40000000-0000-4000-8000-000000000021',
     '10000000-0000-4000-8000-000000000001',
-    '70000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001',
     'Prestador expirado',
     digest(decode(repeat('a2', 32), 'hex'), 'sha256'),
@@ -257,7 +250,6 @@ select lives_ok(
     begin
       for i in 1..5 loop
         perform public.create_provider_invitation(
-          '70000000-0000-4000-8000-000000000001',
           'quota-provider@example.invalid',
           'Prestador da cota'
         );
@@ -271,7 +263,6 @@ select lives_ok(
 select throws_ok(
   $$
     select public.create_provider_invitation(
-      '70000000-0000-4000-8000-000000000001',
       'sixth-provider@example.invalid',
       'Sexto prestador'
     )

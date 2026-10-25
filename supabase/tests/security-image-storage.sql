@@ -18,15 +18,15 @@ select plan(49);
 
 insert into auth.users (id, email) values
   ('10000000-0000-4000-8000-000000000025', 'image-provider@example.invalid');
-insert into public.provider_accounts (auth_user_id, invited_by, community_id, locality_id)
+insert into public.provider_accounts (auth_user_id, invited_by, locality_id)
 values ('10000000-0000-4000-8000-000000000025', '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001');
+  '00000000-0000-4000-8000-000000000001');
 insert into public.provider_profiles (id, owner_user_id, display_name, category)
 values ('30000000-0000-4000-8000-000000000025', '10000000-0000-4000-8000-000000000025',
   'Image provider', 'assistencia_tecnica');
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
-values ('30000000-0000-4000-8000-000000000025', 'community',
-  '70000000-0000-4000-8000-000000000001', 'free');
+values ('30000000-0000-4000-8000-000000000025', 'locality',
+  '00000000-0000-4000-8000-000000000001', 'free');
 insert into public.listings (id, owner_user_id, kind, status, title, locality_id)
 values ('a0000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001',
   'property', 'active', 'Image fixture', '00000000-0000-4000-8000-000000000001');

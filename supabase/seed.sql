@@ -762,7 +762,7 @@ select
     'Indicações de quem faz um bom serviço e resolve rápido.',
     'Roteiros de fim de semana, trilhas leves e pontos de pesca.'
   ])[i],
-  (case when i in (6, 8) then 'private' else 'public' end)::group_visibility,
+  (case when i in (6, 8) then 'closed' else 'open' end)::group_visibility,
   '00000000-0000-4000-8000-000000000001',
   ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
   ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
@@ -783,16 +783,10 @@ from generate_series(1, 300) as i, generate_series(0, 2) as g
 where g <= (i % 3)
 on conflict (group_id, user_id) do nothing;
 
--- ── Vila Ajuricaba (comunidade), para os specs de E2E de comunidade ───────
--- public.communities estava com zero linhas: nenhuma das ~300 contas de
--- membro pertence a uma comunidade, então tests/e2e/community-batch-
--- approval.spec.ts, community-invitations.spec.ts e vila-home.spec.ts não
--- tinham como passar — encontrado realinhando os specs de E2E. A conta
--- dona é dedicada (dono-vila@), não a visual@ padrão: vila-home.spec.ts
--- precisa da MESMA conta seedSession() ser simultaneamente "sem comunidade
--- aprovada" (seu segundo teste) e "membro aprovado da Vila Ajuricaba" (seu
--- primeiro teste) — mutuamente exclusivo para uma única conta. A conta
--- visual@ permanece sem comunidade, como antes.
+-- ── Conta dedicada dono-vila@ (RED-003: a vila saiu; a conta fica) ───────
+-- A conta e a associação à cidade permanecem para os cenários de captura; os
+-- inserts de public.communities e community_memberships foram removidos com a
+-- vila. A conta visual@ segue sem vínculo de vila.
 insert into auth.users (
   instance_id,
   id,
@@ -856,90 +850,6 @@ values
   )
 on conflict (user_id) do nothing;
 
-insert into public.communities (id, locality_id, name, description, created_by, owner_user_id, created_at)
-values (
-  '71000000-0000-4000-8000-000000000001',
-  '00000000-0000-4000-8000-000000000001',
-  'Vila Ajuricaba',
-  'A vila do bairro Ajuricaba, para quem mora ou já morou por perto.',
-  '20000000-0000-4000-8000-000000000008',
-  '20000000-0000-4000-8000-000000000008',
-  now() - interval '80 days'
-)
-on conflict (id) do nothing;
-
-insert into public.community_memberships (community_id, user_id, role, status, joined_at)
-values
-  (
-    '71000000-0000-4000-8000-000000000001',
-    '20000000-0000-4000-8000-000000000008',
-    'owner',
-    'approved',
-    now() - interval '80 days'
-  )
-on conflict (community_id, user_id) do nothing;
-
--- Um membro aprovado comum, elegível para promoção a moderador
--- (community-batch-approval.spec.ts "promote page lists eligible members").
-insert into public.community_memberships (community_id, user_id, role, status, joined_at)
-values (
-  '71000000-0000-4000-8000-000000000001',
-  ('30000000-0000-4000-8000-' || lpad(to_hex(25), 12, '0'))::uuid,
-  'member',
-  'approved',
-  now() - interval '20 days'
-)
-on conflict (community_id, user_id) do nothing;
-
--- Cinco pedidos pendentes: community-batch-approval.spec.ts aprova 3 de 5 e
--- espera exatamente 2 restantes.
-insert into public.community_memberships (community_id, user_id, role, status, joined_at)
-select
-  '71000000-0000-4000-8000-000000000001'::uuid,
-  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
-  'member'::community_membership_role,
-  'pending'::community_membership_status,
-  now() - make_interval(days => 30 - i)
-from generate_series(20, 24) as i
-on conflict (community_id, user_id) do nothing;
-
--- ═══ Aprovações extras na Ajuricaba e a vila do Rio (reconciliação E2E) ═══
--- Duas premissas de spec que o seed não provia, achadas reconciliando o lote
--- funcional de 2026-08-25:
---
--- * synthetic-people-interaction.spec.ts precisa de três contas com feed de
---   vila real (autor, comentarista e segunda reação). Sem aprovação na vila,
---   essas contas caem na CityReference (D48), que não lista posts — o post
---   nunca renderiza e o cenário morre no primeiro passo.
--- * empty-locality.spec.ts espera que um membro COM comunidade aprovada numa
---   localidade abaixo do limiar §3.4 veja "Você é dos primeiros aqui." no
---   FEED da vila. O Rio tinha membros mas nenhuma vila: o /community de
---   membro-vazia@ renderizava CityReference e o estado vazio do feed nunca
---   aparecia.
-insert into public.community_memberships (community_id, user_id, role, status, joined_at)
-values
-  (
-    '71000000-0000-4000-8000-000000000001',
-    ('30000000-0000-4000-8000-' || lpad(to_hex(1), 12, '0'))::uuid,
-    'member',
-    'approved',
-    now() - interval '15 days'
-  ),
-  (
-    '71000000-0000-4000-8000-000000000001',
-    ('30000000-0000-4000-8000-' || lpad(to_hex(2), 12, '0'))::uuid,
-    'member',
-    'approved',
-    now() - interval '15 days'
-  ),
-  (
-    '71000000-0000-4000-8000-000000000001',
-    ('30000000-0000-4000-8000-' || lpad(to_hex(3), 12, '0'))::uuid,
-    'member',
-    'approved',
-    now() - interval '15 days'
-  )
-on conflict (community_id, user_id) do nothing;
 
 -- Owner dedicada do Rio, mesmo padrão de dono-vila@ (próximo id livre da faixa).
 insert into auth.users (
@@ -1004,36 +914,6 @@ values
   )
 on conflict (user_id) do nothing;
 
-insert into public.communities (id, locality_id, name, description, created_by, owner_user_id, created_at)
-select
-  '71000000-0000-4000-8000-000000000002',
-  id,
-  'Vila Petrópolis',
-  'A vila do bairro Petrópolis, para quem mora ou já morou por perto.',
-  '20000000-0000-4000-8000-000000000009',
-  '20000000-0000-4000-8000-000000000009',
-  now() - interval '40 days'
-from public.localities
-where ibge_code = '3304557'
-on conflict (id) do nothing;
-
-insert into public.community_memberships (community_id, user_id, role, status, joined_at)
-values
-  (
-    '71000000-0000-4000-8000-000000000002',
-    '20000000-0000-4000-8000-000000000009',
-    'owner',
-    'approved',
-    now() - interval '40 days'
-  ),
-  (
-    '71000000-0000-4000-8000-000000000002',
-    '20000000-0000-4000-8000-000000000005',  -- membro-vazia@
-    'member',
-    'approved',
-    now() - interval '15 days'
-  )
-on conflict (community_id, user_id) do nothing;
 
 -- ═══ Prestador semeado para os E2E da vitrine (onda G Task 9) ═══
 -- Conta dedicada no mesmo padrão de credenciais públicas de descarte.
@@ -1081,12 +961,11 @@ values
 on conflict (id) do nothing;
 
 insert into public.provider_accounts (
-  auth_user_id, invited_by, community_id, locality_id
+  auth_user_id, invited_by, locality_id
 )
 values (
   '20000000-0000-4000-8000-00000000000a',
   '20000000-0000-4000-8000-000000000008',  -- dono-vila@ atestou
-  '71000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001'
 );
 
@@ -1116,8 +995,8 @@ values (
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values (
   '30000000-0000-4000-8000-000000000010',
-  'community',
-  '71000000-0000-4000-8000-000000000001',
+  'locality',
+  '00000000-0000-4000-8000-000000000001',
   'free'
 );
 
@@ -1184,16 +1063,15 @@ values
   )
 on conflict (id) do nothing;
 
--- Post de alcance municipal (community_id IS NULL), para
--- vila-home.spec.ts: aparece no feed de qualquer vila, inclusive a Vila
--- Ajuricaba.
-insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+-- Publicação no grupo (RED-003: toda publicação pertence a um grupo).
+insert into public.posts (id, locality_id, user_id, group_id, post_type, content, created_at)
 values (
   '80000000-0000-4000-8000-000000000f01',
   '00000000-0000-4000-8000-000000000001',
   '20000000-0000-4000-8000-000000000008',
+  '60000000-0000-4000-8000-000000000001',
   'text',
-  'Aviso da cidade para todas as vilas',
+  'Aviso do grupo para os membros',
   now() - interval '2 days'
 )
 on conflict (id) do nothing;
@@ -1216,7 +1094,7 @@ select
   case
     when i % 7 = 0
       then ('60000000-0000-4000-8000-' || lpad(to_hex(1 + (i % 8)), 12, '0'))::uuid
-    else null
+    else ('60000000-0000-4000-8000-' || lpad(to_hex(1 + (i % 8)), 12, '0'))::uuid
   end,
   'text',
   (array[
@@ -1458,11 +1336,12 @@ on conflict (id) do nothing;
 -- 1) Publicação do titular + resposta de terceiro. A notificação não-lida que
 --    faz a faixa de atividade aparecer nasce do trigger notify_comment, não de
 --    um INSERT à mão: o shape tem de ser o do produto.
-insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+insert into public.posts (id, locality_id, user_id, group_id, post_type, content, created_at)
 values (
   'b0000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001',
   '20000000-0000-4000-8000-000000000001',
+  '60000000-0000-4000-8000-000000000001',
   'text',
   'Chegamos em Manaus no mês passado. Alguma dica de escola perto do Centro?',
   now() - interval '2 days'
@@ -1480,11 +1359,12 @@ values (
 -- Publicação da CONTA DE CAPTURA (dono-vila@). O item "Editar publicação" só
 -- aparece para o próprio autor, então o cenário BIVAQUE_VISUAL_SCENARIO=edit
 -- precisa de um post dela — a fixture acima é do outro membro.
-insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+insert into public.posts (id, locality_id, user_id, group_id, post_type, content, created_at)
 values (
   'b0000000-0000-4000-8000-000000000002',
   '00000000-0000-4000-8000-000000000001',
   '20000000-0000-4000-8000-000000000008',
+  '60000000-0000-4000-8000-000000000001',
   'text',
   'Abrimos a horta comunitária da vila neste sábado. Quem quiser ajudar, chegue às 8h.',
   now() - interval '6 hours'
@@ -1833,7 +1713,6 @@ commit;
 -- real só existe no payload do outbox, no momento da emissão).
 insert into private.provider_invitations (
   inviter_user_id,
-  community_id,
   locality_id,
   display_name,
   token_digest,
@@ -1843,7 +1722,6 @@ insert into private.provider_invitations (
 )
 values (
   '20000000-0000-4000-8000-000000000008',
-  '71000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001',
   'Eletricista do Bairro',
   extensions.digest(decode(repeat('ab', 32), 'hex'), 'sha256'),

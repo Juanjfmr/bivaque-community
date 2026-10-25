@@ -42,11 +42,31 @@ values
     '2026-08-02 12:00:00+00'
   );
 
+-- RED-003: a publicação pertence a um grupo; o grupo nasce antes dela.
+insert into public.groups (id, name, visibility, locality_id, created_by, owner_user_id)
+values (
+  '40000000-0000-4000-8000-000000000009',
+  'Grupo de Notificação do Autor',
+  'open',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000010',
+  '10000000-0000-4000-8000-000000000010'
+);
+
+insert into public.group_memberships (group_id, user_id, role, status)
+values (
+  '40000000-0000-4000-8000-000000000009',
+  '10000000-0000-4000-8000-000000000010',
+  'owner',
+  'approved'
+);
+
 -- Post for comment-notification testing (author = recipient-user-10).
 insert into public.posts (
   id,
   locality_id,
   user_id,
+  group_id,
   post_type,
   content
 )
@@ -54,6 +74,7 @@ values (
   '40000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000010',
+  '40000000-0000-4000-8000-000000000009',
   'text',
   'Post para teste de notificacao'
 );
@@ -70,7 +91,7 @@ insert into public.groups (
 values (
   '40000000-0000-4000-8000-000000000002',
   'Grupo de Notificacao',
-  'public',
+  'open',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000011',
   '10000000-0000-4000-8000-000000000011'

@@ -42,7 +42,7 @@ values
   (
     'b1000000-0000-4000-8000-000000000003',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'paused', null, '70000000-0000-4000-8000-000000000002',
+    'item', 'paused', null,
     'casa_moveis', 'Pausado em comunidade sem vinculo', 'Anuncio legado.', 30000, 'used', 'Centro'
   ),
   -- publico com vinculo: cidade 0001 e comunidade A
@@ -55,7 +55,7 @@ values
   (
     'b1000000-0000-4000-8000-000000000005',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'paused', null, '70000000-0000-4000-8000-000000000001',
+    'item', 'paused', null,
     'casa_moveis', 'Pausado na comunidade A', 'Anuncio legado com vinculo.', 50000, 'used', 'Centro'
   );
 

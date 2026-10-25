@@ -33,7 +33,7 @@ values
 insert into public.events (id, organizer_id, locality_id, community_id, title, starts_at)
 values
   ('c3000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', null, 'Encontro da cidade', now() + interval '3 days'),
-  ('c3000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', '70000000-0000-4000-8000-000000000001', 'Encontro da vila', now() + interval '3 days');
+  ('c3000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001', 'Encontro da vila', now() + interval '3 days');
 
 insert into public.event_rsvps (event_id, user_id, status, occurrence_date)
 values ('c3000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', 'going', (now() + interval '3 days')::date);
@@ -42,7 +42,7 @@ insert into public.listings (id, owner_user_id, kind, status, title, description
 values
   ('c4000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'property', 'active', 'Apartamento da cidade A', null, '00000000-0000-4000-8000-000000000001', null, 'Centro', null, null, null),
   ('c4000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'property', 'draft', 'Rascunho da cidade A', null, '00000000-0000-4000-8000-000000000001', null, 'Centro', null, null, null),
-  ('c4000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Item da vila', 'Só da vila.', null, '70000000-0000-4000-8000-000000000001', 'Vila', 'outros', 1000, 'used'),
+  ('c4000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Item da vila', 'Só da vila.', null, 'Vila', 'outros', 1000, 'used'),
   ('c4000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000001', 'item', 'active', 'Berço da cidade A', 'Pouco uso.', '00000000-0000-4000-8000-000000000001', null, 'Centro', 'outros', 25000, 'used');
 
 insert into public.property_details (listing_id, deal, property_type, rent_cents)

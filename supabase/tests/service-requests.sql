@@ -45,12 +45,11 @@ insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000025', 'provider-request@example.invalid');
 
 insert into public.provider_accounts (
-  auth_user_id, invited_by, community_id, locality_id
+  auth_user_id, invited_by, locality_id
 )
 values (
   '10000000-0000-4000-8000-000000000025',
   '10000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000001'
 );
 
@@ -65,8 +64,8 @@ values (
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values (
   '30000000-0000-4000-8000-000000000025',
-  'community',
-  '70000000-0000-4000-8000-000000000001',
+  'locality',
+  '00000000-0000-4000-8000-000000000001',
   'free'
 );
 
@@ -250,18 +249,16 @@ values
   ('10000000-0000-4000-8000-000000000020', 'sr-provider-a@example.invalid'),
   ('10000000-0000-4000-8000-000000000021', 'sr-provider-b@example.invalid');
 
-insert into public.provider_accounts (auth_user_id, invited_by, community_id, locality_id)
+insert into public.provider_accounts (auth_user_id, invited_by, locality_id)
 values
   (
     '10000000-0000-4000-8000-000000000020',
     '10000000-0000-4000-8000-000000000001',
-    '70000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001'
   ),
   (
     '10000000-0000-4000-8000-000000000021',
     '10000000-0000-4000-8000-000000000002',
-    '70000000-0000-4000-8000-000000000002',
     '00000000-0000-4000-8000-000000000001'
   );
 
@@ -285,13 +282,11 @@ values
   (
     '30000000-0000-4000-8000-000000000020',
     'community',
-    '70000000-0000-4000-8000-000000000001',
     'free'
   ),
   (
     '30000000-0000-4000-8000-000000000021',
     'community',
-    '70000000-0000-4000-8000-000000000002',
     'free'
   );
 

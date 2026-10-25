@@ -44,7 +44,7 @@ values (
 );
 
 insert into public.provider_accounts (
-  auth_user_id, invited_by, community_id, locality_id
+  auth_user_id, invited_by, locality_id
 )
 values (
   'b2000000-0000-4000-8000-000000000001',

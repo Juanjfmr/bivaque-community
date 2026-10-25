@@ -28,16 +28,15 @@ select plan(4);
 -- prova por participação de grupo. `posts_single_scope` exige escopo exclusivo
 -- (grupo XOR comunidade), por isso as linhas têm só `group_id`.
 insert into public.groups (
-  id, name, description, visibility, locality_id, community_id,
+  id, name, description, visibility, locality_id,
   created_by, owner_user_id
 )
 values (
   '81000000-0000-4000-8000-000000000001',
   'Grupo da Vizinha',
   'Grupo de teste da visibilidade de perfil',
-  'private',
+  'closed',
   '00000000-0000-4000-8000-000000000001',
-  '70000000-0000-4000-8000-000000000002',
   '10000000-0000-4000-8000-000000000002',
   '10000000-0000-4000-8000-000000000002'
 );
