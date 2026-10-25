@@ -45,6 +45,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from "@/components/ui/combobox";
 import { CatalogMap } from "@/components/modules/catalog-map";
+import { unifiedResults, totalResults, suggestions, GROUP_DEFS, type SearchTab, type SearchResults } from "@/lib/unified-search.mjs";
 import { activeFilterCount, findMatchingAlert, alertLabel, type SavedSearchAlert } from "@/lib/catalog-alerts.mjs";
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
 
@@ -141,6 +142,8 @@ export default function LibraryApp(){
   const [composeType,setComposeType]=React.useState("Pergunta");
   const [title,setTitle]=React.useState("");const [description,setDescription]=React.useState("");
   const [searchOpen,setSearchOpen]=React.useState(false);
+  const [searchTab,setSearchTab]=React.useState<SearchTab>("all");
+  const [recentSearches,setRecentSearches]=React.useState<string[]>([]);
   const [villaAccess,setVillaAccess]=React.useState(false);
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
@@ -149,10 +152,10 @@ export default function LibraryApp(){
     setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);
     const restored=v.filtersByMarket||{imoveis:{...initialCatalogFilters,...v.catalogFilters},desapegos:{...initialCatalogFilters}};
     setFiltersByMarket({imoveis:{...initialCatalogFilters,...restored.imoveis},desapegos:{...initialCatalogFilters,...restored.desapegos}});
-    setAlerts(Array.isArray(v.alerts)?v.alerts:[]);
+    setAlerts(Array.isArray(v.alerts)?v.alerts:[]);setRecentSearches(Array.isArray(v.recentSearches)?v.recentSearches:[]);
     setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});
   }setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,recentSearches,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,filtersByMarket,alerts,recentSearches,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setTab("Indicações");setCatalogView("list");const pending=restoreAlert.current;if(pending&&pending.kind===slug)setCategory((pending.attrs as CatalogFilters&{category?:string}).category||"Todos");else setCategory("Todos");restoreAlert.current=null},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
@@ -217,6 +220,38 @@ export default function LibraryApp(){
     }
     if(["imoveis","desapegos"].includes(slug)&&(h||d)&&criteria.hoods.length&&!criteria.hoods.includes((h||d)!.hood))return false;
     return true;
+  }
+  const searchResults=unifiedResults({city,query,items:allItems,questions:QUESTIONS,groups:GROUPS,events:EVENTS,posts,replies,joined});
+  const searchCounts=totalResults(searchResults,searchTab);
+  const searchUniverse=[
+    ...recentSearches,"escola","berço","mudança","mecânico","pediatra","imóveis","desapegos","saúde","casa","serviços",
+    ...allItems.filter(v=>v.city===city).map(v=>v.badge||""),
+    ...PROVIDERS.filter(v=>v.city===city).flatMap(v=>[v.category,...v.services]),
+    ...allItems.filter(v=>v.city===city).map(v=>v.meta.split(" · ")[0])
+  ];
+  const searchHints=suggestions(query,searchUniverse,2);
+  function rememberSearch(term:string){
+    const value=term.trim();if(!value)return;
+    setRecentSearches(curr=>[value,...curr.filter(x=>x.toLowerCase()!==value.toLowerCase())].slice(0,5));
+  }
+  function submitSearch(){rememberSearch(query);setSearchOpen(false);setSearchTab("all");navigate("busca")}
+  function goToSearchResult(kind:"items"|"biz"|"asks"|"groups"|"events",id:string){
+    rememberSearch(query);
+    setSearchOpen(false);
+    if(kind==="items"||kind==="biz"){
+      const v=allItems.find(x=>x.id===id);
+      if(v)openItemPage(v);
+      return;
+    }
+    if(kind==="asks"){
+      if(id.startsWith("local-")){
+        const local=posts.find(x=>x.id===id);
+        if(local)setOrigin({question:local.title,author:"Você",text:local.detail});
+        return;
+      }
+      navigate("pergunta/"+id);return;
+    }
+    navigate((kind==="groups"?"grupo":"evento")+"/"+id);
   }
   const filtered=allItems.filter(x=>itemMatches(x,catalogFilters,category));
   const draftCount=allItems.filter(x=>itemMatches(x,catalogDraft,draftCategory)).length;
