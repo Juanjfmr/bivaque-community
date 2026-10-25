@@ -1,2 +1,279 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* PROTO-001 — tema do Bivaque traduzido para as variáveis do shadcn/ui.
+
+   As cores, a tipografia e os raios vêm da R70 do protótipo de HTML
+   (`prototypes/bivaque-html/src/styles/base.css`), a mesma pele que o
+   `apps/web/app/brand-tokens.css` já usa. A notação muda (hexadecimal vira o
+   mesmo valor em `rgb()`, como no apps/web), a cor não.
+
+   O bloco `@theme inline` que o shadcn normalmente escreve aqui não existe: o
+   parser de CSS do Biome recusa `@theme` sem a opção `tailwindDirectives`, que
+   só se liga no `biome.json` — fora do alcance desta tarefa. As variáveis
+   abaixo fazem o mesmo trabalho, e os componentes deste app pedem as cores por
+   valor arbitrário (por exemplo `bg-(--card)`), que é o mesmo `@theme` sem o
+   açúcar. Trocar isso pelo bloco do shadcn é ligar a opção no `biome.json`.
+
+   Dois vocabulários no mesmo lugar, de propósito:
+   - os nomes do shadcn (`--background`, `--card`, `--primary`, …) ligam os
+     componentes de `components/ui/` a este tema;
+   - os nomes da marca (`--surface`, `--on-surface`, `--brasa`, …) ficam com os
+     valores do protótipo, para a tradução ser auditável contra o base.css. */
+
+:root {
+  color-scheme: light;
+
+  /* ── papéis do shadcn ─────────────────────────────────────────────────── */
+  --background: rgb(242 240 235);
+  --foreground: rgb(37 48 51);
+  --card: rgb(255 255 255);
+  --card-foreground: rgb(37 48 51);
+  --popover: rgb(255 255 255);
+  --popover-foreground: rgb(37 48 51);
+  --primary: rgb(37 48 51);
+  --primary-foreground: rgb(242 240 235);
+  --secondary: rgb(225 234 235);
+  --secondary-foreground: rgb(37 48 51);
+  --muted: rgb(238 235 229);
+  --muted-foreground: rgb(85 98 95);
+  --accent: rgb(232 229 222);
+  --accent-foreground: rgb(37 48 51);
+  --destructive: rgb(186 26 26);
+  --destructive-foreground: rgb(255 255 255);
+  --border: rgb(216 212 204);
+  --input: rgb(216 212 204);
+  --ring: rgb(37 48 51);
+  --success: rgb(74 106 110);
+  --success-foreground: rgb(255 255 255);
+  --brasa: rgb(184 74 58);
+  --brasa-foreground: rgb(255 255 255);
+  --accent-text: rgb(158 59 44);
+
+  /* ── a pele do protótipo, valor por valor ─────────────────────────────── */
+  --surface: rgb(242 240 235);
+  --surface-lowest: rgb(255 255 255);
+  --surface-low: rgb(247 245 241);
+  --surface-container: rgb(238 235 229);
+  --surface-high: rgb(232 229 222);
+  --surface-highest: rgb(225 221 213);
+  --on-surface: rgb(37 48 51);
+  --on-surface-variant: rgb(85 98 95);
+  --outline: rgb(120 128 125);
+  --outline-variant: rgb(216 212 204);
+  --primary-container: rgb(221 226 227);
+  --on-primary-container: rgb(37 48 51);
+  --secondary-container: rgb(225 234 235);
+  --on-secondary-container: rgb(37 48 51);
+  --tertiary: rgb(158 59 44);
+  --tertiary-container: rgb(243 221 215);
+  --on-tertiary-container: rgb(122 44 32);
+  --inverse-surface: rgb(37 48 51);
+  --inverse-on-surface: rgb(242 240 235);
+  --scrim: rgb(0 0 0 / 0.32);
+  --shadow-soft: rgb(0 0 0 / 0.16);
+  --shadow-strong: rgb(0 0 0 / 0.3);
+
+  /* ── tipos, raios e medidas ───────────────────────────────────────────── */
+  --font-plain:
+    var(--font-noto-sans), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-brand: var(--font-noto-serif), Georgia, serif;
+  --type-body-size: 16px;
+  --type-body-line: 1.5;
+  --type-title-size: clamp(24px, 4vw, 34px);
+  --type-title-line: 1.2;
+  --type-title-tracking: -0.6px;
+  --type-section-size: 21px;
+  --type-section-line: 28px;
+  --type-card-size: 17px;
+  --type-card-line: 24px;
+  --type-meta-size: 14px;
+  --type-meta-line: 20px;
+  --type-tiny-size: 12px;
+  --type-tiny-line: 18px;
+
+  --radius: 0.75rem;
+  --radius-pill: 0.5rem;
+  --radius-chip: 0.75rem;
+  --radius-card: 1rem;
+  --radius-dialog: 1rem;
+
+  --space: 20px;
+  --max: 1120px;
+  --rail: 0px;
+  --bottom: 84px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --space: 28px;
+    --rail: 96px;
+    --bottom: 0px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --background: rgb(23 30 32);
+    --foreground: rgb(236 234 228);
+    --card: rgb(32 41 43);
+    --card-foreground: rgb(236 234 228);
+    --popover: rgb(32 41 43);
+    --popover-foreground: rgb(236 234 228);
+    --primary: rgb(236 234 228);
+    --primary-foreground: rgb(23 30 32);
+    --secondary: rgb(38 58 61);
+    --secondary-foreground: rgb(236 234 228);
+    --muted: rgb(35 45 47);
+    --muted-foreground: rgb(169 184 186);
+    --accent: rgb(42 53 55);
+    --accent-foreground: rgb(236 234 228);
+    --destructive: rgb(255 180 171);
+    --destructive-foreground: rgb(105 0 5);
+    --border: rgb(51 64 63);
+    --input: rgb(51 64 63);
+    --ring: rgb(236 234 228);
+    --success: rgb(159 188 192);
+    --success-foreground: rgb(23 30 32);
+    --brasa: rgb(224 122 90);
+    --brasa-foreground: rgb(23 30 32);
+    --accent-text: rgb(224 122 90);
+
+    --surface: rgb(23 30 32);
+    --surface-lowest: rgb(32 41 43);
+    --surface-low: rgb(28 36 38);
+    --surface-container: rgb(35 45 47);
+    --surface-high: rgb(42 53 55);
+    --surface-highest: rgb(49 61 63);
+    --on-surface: rgb(236 234 228);
+    --on-surface-variant: rgb(169 184 186);
+    --outline: rgb(125 140 142);
+    --outline-variant: rgb(51 64 63);
+    --primary-container: rgb(44 59 62);
+    --on-primary-container: rgb(236 234 228);
+    --secondary-container: rgb(38 58 61);
+    --on-secondary-container: rgb(236 234 228);
+    --tertiary: rgb(240 160 138);
+    --tertiary-container: rgb(62 42 38);
+    --on-tertiary-container: rgb(240 160 138);
+    --inverse-surface: rgb(236 234 228);
+    --inverse-on-surface: rgb(37 48 51);
+    --scrim: rgb(0 0 0 / 0.52);
+    --shadow-soft: rgb(0 0 0 / 0.45);
+    --shadow-strong: rgb(0 0 0 / 0.55);
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-plain);
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-line);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--font-brand);
+    font-size: var(--type-title-size);
+    line-height: var(--type-title-line);
+    letter-spacing: var(--type-title-tracking);
+    font-weight: 600;
+  }
+
+  h2 {
+    font-size: var(--type-section-size);
+    line-height: var(--type-section-line);
+    letter-spacing: -0.2px;
+    font-weight: 650;
+  }
+
+  h3 {
+    font-size: var(--type-card-size);
+    line-height: var(--type-card-line);
+    font-weight: 600;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* O atalho do Início e o resumo de resolvidas são cartões sem borda forte,
+     como no protótipo: superfície mais clara, canto de 12 px. */
+  .bv-tile {
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-chip);
+    background: var(--surface-lowest);
+  }
+
+  /* A faixa de contexto ("N indicações resolvidas") e o fim de bloco da lista. */
+  .bv-strip {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-chip);
+    background: var(--surface-low);
+    color: var(--on-surface);
+  }
+
+  .bv-strip-note {
+    background: var(--secondary-container);
+    color: var(--on-secondary-container);
+  }
+}
+
+@layer utilities {
+  /* A ilustração do estado vazio respira e cintila; com movimento reduzido, para. */
+  .bv-empty-float {
+    animation: bv-empty-float 5s ease-in-out infinite;
+  }
+
+  .bv-empty-twinkle {
+    animation: bv-empty-twinkle 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes bv-empty-float {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes bv-empty-twinkle {
+  50% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+    transition-duration: 0s;
+    scroll-behavior: auto;
+  }
+}
