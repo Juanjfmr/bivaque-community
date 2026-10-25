@@ -622,11 +622,23 @@ export default function LibraryApp(){
       </div>
     </SidebarInset>
 
-    <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar no Bivaque" description="Pesquisa e navegação nos dados demonstrativos">
-      <CommandInput value={query} onValueChange={setQuery} placeholder="Imóveis, serviços, grupos, perguntas..." onKeyDown={e=>{if(e.key==="Enter"&&query.trim()){setSearchOpen(false);navigate("busca")}}}/>
-      <CommandList><CommandEmpty>Nenhum resultado. Pressione Enter para procurar em todos os módulos.</CommandEmpty>
-        <CommandGroup heading="Módulos">{routes.filter(x=>x.group==="principal"||x.group==="explorar").map(x=><CommandItem key={x.slug} value={x.label} onSelect={()=>{setSearchOpen(false);navigate(x.slug)}}><x.icon/>{x.label}</CommandItem>)}</CommandGroup>
-        <CommandSeparator/><CommandGroup heading="Resultados e anúncios">{allItems.filter(x=>x.city===city).slice(0,12).map(x=><CommandItem key={x.id} value={x.title+" "+x.meta} onSelect={()=>{setSearchOpen(false);setDetail(x);setDetailOpen(true)}}><Search/>{x.title}<span className="ml-auto text-xs text-muted-foreground">{x.kind==="imoveis"?"Imóvel":x.kind==="servicos"?"Serviço":"Desapego"}</span></CommandItem>)}</CommandGroup>
+    <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar no Bivaque" description={"Pesquisar anúncios, negócios e comunidade em "+city}>
+      <CommandInput value={query} onValueChange={setQuery} placeholder="Serviços, imóveis, perguntas, bairros..."/>
+      <CommandList>
+        {query.trim()&&<CommandGroup heading="Busca completa">
+          <CommandItem value={query+" busca completa"} onSelect={submitSearch}><Search className="size-4"/>Ver todos os resultados para “{query}”<span className="ml-auto text-xs text-muted-foreground">{totalResults(searchResults)} resultados</span></CommandItem>
+        </CommandGroup>}
+        {!query.trim()&&recentSearches.length>0&&<CommandGroup heading="Recentes">{recentSearches.map(r=><CommandItem key={r} value={r} onSelect={()=>{setQuery(r);setSearchTab("all");setSearchOpen(false);navigate("busca")}}><Clock className="size-4"/>{r}</CommandItem>)}</CommandGroup>}
+        <CommandGroup heading="Explorar módulos">{routes.filter(x=>x.group==="principal"||x.group==="explorar").map(x=><CommandItem key={x.slug} value={x.label} onSelect={()=>{setSearchOpen(false);navigate(x.slug)}}><x.icon/>{x.label}</CommandItem>)}</CommandGroup>
+        {query.trim()&&<><CommandSeparator/>
+          {GROUP_DEFS.filter(d=>searchResults[d.key].length).map(d=><CommandGroup heading={d.title} key={d.key}>
+            {searchResults[d.key].slice(0,4).map(result=><CommandItem key={result.id} value={query+" "+d.key+" "+result.id+" "+(("title" in result)?result.title:("name" in result)?result.name:"")+" "+(("snippet" in result)?result.snippet?.text||"":"")} onSelect={()=>goToSearchResult(d.key,result.id)}>
+              {d.key==="asks"?<MessageCircle className="size-4"/>:d.key==="groups"?<Users className="size-4"/>:d.key==="events"?<CalendarDays className="size-4"/>:<Search className="size-4"/>}
+              <span className="min-w-0 flex-1 truncate">{("title" in result)?result.title:("name" in result)?result.name:""}</span><ChevronRight className="size-4 text-muted-foreground"/>
+            </CommandItem>)}
+          </CommandGroup>)}
+        </>}
+        <CommandEmpty>Nada encontrado nesta cidade. Experimente a busca completa.</CommandEmpty>
       </CommandList>
     </CommandDialog>
     <Dialog open={alertsOpen} onOpenChange={setAlertsOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-[560px]">
