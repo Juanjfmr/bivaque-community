@@ -5334,7 +5334,8 @@
       ],
       "proof": [
         "25/10: contrato APP-001 válido R1; baseline focal 0/2 e depois 6/6 no escopo, sem alegar gate completo",
-        "25/10: gate completo APP-001 verde sem pular build; 143/143 escopo, 1726 unitários, 76 mobile, 19 web e 189 privacidade; runtime independente 3/3 viewports, reload sem erros. Onda 1 ainda em andamento."
+        "25/10: gate completo APP-001 verde sem pular build; 143/143 escopo, 1726 unitários, 76 mobile, 19 web e 189 privacidade; runtime independente 3/3 viewports, reload sem erros. Onda 1 ainda em andamento.",
+        "25/10: bateria 1b escrita antes de implementação; instrumento e2e ainda FAIL na revisão do coordenador, sem liberação da 1c."
       ],
       "links": [
         "docs/agents/tasks/APP-001.task.yml",
@@ -5364,7 +5365,8 @@
       ],
       "proof": [
         "25/10: conferir-matriz.test.mjs 1/1; contrato RED-003 validado R3, retry 3",
-        "25/10: revisão independente estática FAIL parcial, 8 HIGH e dependências bloqueando replay; relatório em b1362bf1 no worktree R3, rodada de reparo 1/3; sem prova de banco ou PASS."
+        "25/10: revisão independente estática FAIL parcial, 8 HIGH e dependências bloqueando replay; relatório em b1362bf1 no worktree R3, rodada de reparo 1/3; sem prova de banco ou PASS.",
+        "25/10: primeiro replay pela fila FAIL antes de pgTAP, SQLSTATE2BP01 no DROP can_read_listing com cinco policies dependentes; relatório f1bd28ce, migration SHA5CD18B010992C9D534A5E29578986B5FC28A50438C159037B9DF0CDA871D81D3. Quatro erros de lint reproduzidos no R2 limpo, contrato ampliado para correção mínima."
       ],
       "links": ["docs/agents/prototipo-shadcn/STATUS.md"],
       "sourceRevision": "66eda09b",

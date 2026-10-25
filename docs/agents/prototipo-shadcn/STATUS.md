@@ -53,6 +53,19 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
   instrumentos da 1a pelo Luna sem bloqueios; cinco testes focais passaram.
 - 1b despachada ao DeepSeek V4.1 Flash, sem delegação interna, no mesmo worktree
   app após parar preview da 1a. Log `.visual/coordenacao/APP-002-deepseek.log`.
+  Sessão OpenCode: `ses_e8d26290affezIzEFOzk3S6WMD`.
+- Primeira leitura do instrumento 1b pelo coordenador: quatro arquivos unitários
+  escritos antes da implementação; **FAIL parcial** no teste que impõe restauração
+  após teto de quadros, sem esperar carga real. Solicitada carga pendente/liberação
+  explícita e cancelamento por navegação; e2e ainda não revisado. Instrumento sem aceite.
+- Mesmo parecer inicial pediu retirar espelho interno de rolagem do apoio e2e e
+  impedir reaproveitamento de servidor velho. Produtor já corrigiu a unidade de
+  restauração para carga explícita; falta revisão final da bateria inteira.
+- Revisão dos seis specs e2e: ainda FAIL do instrumento por dispatch/force atrás
+  de modal, auto-scroll/colapso da lista invalidando posição esperada, cancelamento
+  sem liberar resposta antiga e falta de mesma URL com origens distintas no histórico.
+  Pedido também scroll/foco reais no Avançar. Parecer detalhado em
+  `.visual/coordenacao/APP-002-revisao-instrumento-1.md`. 1c não liberada.
 
 ## R3
 
@@ -60,6 +73,7 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 - Conferência R1 → R2: 1 teste, 1 passou, 0 falhou, em `66eda09b`.
 - DeepSeek V4.1 Flash despachado via OpenCode; somente migration, pgTAP, seed, tipos
   públicos e documentação R3. Logs em `.visual/coordenacao/RED-003-deepseek.log` no worktree R3.
+  Sessão OpenCode: `ses_e8d30784cffe1fTC0bMd8NMzO0`; retomada em `RED-003-retomada.log`.
 - Implementação em andamento; prova de banco pela fila ainda não executada.
 - Primeira execução tentou delegar internamente para três filhos no mesmo checkout;
   coordenador interrompeu pai e filhos antes de escrita, confirmou modelo DeepSeek
@@ -73,7 +87,21 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 - Relatório preservado em `b1362bf1`, `docs/agents/redesenho/R3-revisao-seguranca-1.md`
   no worktree R3, com SHA256 do snapshot de 2863 linhas. Coordenador confirmou problemas
   próprios de escrita/grants/transições. Rodada de reparo 1/3 enviada ao produtor.
-- Não há PASS da R3; suite/seed/cobertura em produção, fila ainda não executada.
+- Não há PASS da R3; suíte/seed/cobertura ainda incompletos na entrega intermediária.
+- Primeiro replay pela fila executado pelo coordenador: **FAIL antes de pgTAP**,
+  SQLSTATE 2BP01 na instrução 58 (DROP de can_read_listing com cinco policies
+  dependentes). Alvo local conferido, sem servidor na porta 3000. Log
+  `.visual/coordenacao/R3-banco-1.log`; SHA da migration no relatório `R3-prova-1.md`.
+- Relatório e contrato atualizado em `f1bd28ce`. Quatro erros de lint reproduzidos
+  no R2 limpo (três formatações e nome local escape); contrato permite só corrigir
+  esses pontos e exige manter testes dos instrumentos. Não são falhas da migration.
+- Produtor retomado para replay, suíte antiga, cobertura/golden e correção E3
+  (organizador conta uma vez, teste inicial negava). Pode iterar banco exclusivamente
+  pelo comando da fila, em primeiro plano; gate final e revisões seguem separados.
+  Log da retomada: `.visual/coordenacao/RED-003-replay-reparo.log` no worktree R3.
+- Revisão do coordenador também recusou o instrumento inicial de definições que
+  verificava apenas nomes/substrings. Exigida comparação integral normalizada das
+  policies, triggers e grants, com negativo de mutação mantendo o nome da policy.
 - R4/R5/R6 e integração final não fazem parte desta entrega de banco.
 
 ## Próxima decisão
