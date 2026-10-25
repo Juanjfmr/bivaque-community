@@ -1,7 +1,7 @@
-:HL["/bivaque-community/_next/static/chunks/3mnzvma7165tc.css","style"]
+:HL["/bivaque-community/_next/static/chunks/40e2y7zctuinz.css","style"]
 :HL["/bivaque-community/_next/static/media/noto_sans-s.p.05o5-i1cea2yx.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/bivaque-community/_next/static/media/noto_serif-s.p.2v5sa_tq9g0ze.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 3:[["children",{"s":"__PAGE__","h":160}]]
 2:[["children",{"s":{"n":"id","t":"d","k":"s3","s":[]},"h":65632,"c":"$Q3"}]]
 1:[["children",{"s":{"n":"section","t":"d","k":"negocio","s":[]},"h":196704,"c":"$Q2"}]]
-0:{"b":"lhNq_EFY4kVaOhfHObPqu","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"ystOxGvQ7de7Xv_h5zo3d","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}

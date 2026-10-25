@@ -1,4 +1,4 @@
-:HL["/bivaque-community/_next/static/chunks/3mnzvma7165tc.css","style"]
+:HL["/bivaque-community/_next/static/chunks/40e2y7zctuinz.css","style"]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"/_not-found","h":96,"c":"$Q2"}]]
-0:{"b":"lhNq_EFY4kVaOhfHObPqu","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"ystOxGvQ7de7Xv_h5zo3d","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
