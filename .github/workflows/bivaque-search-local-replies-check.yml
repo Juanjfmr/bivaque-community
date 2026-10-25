@@ -1,0 +1,38 @@
+name: Bivaque R72 — respostas pesquisáveis
+on:
+  push:
+    branches: [feat/r72-search-local-replies-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-search-local-replies-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Search privacy and local reply tests
+        run: |
+          node --test scripts/integrated-search.test.mjs
+          node --test scripts/catalog-r72.test.mjs
+          node scripts/verify-contrast.mjs
+      - name: Static production build
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Search route static check
+        run: |
+          test -f out/busca/index.html
+          test -f out/pergunta/q1/index.html
