@@ -28,7 +28,7 @@ acceptance:
   - Cada entrada guarda origem, scroll, descritor de foco, filtros e sobreposição; atualizar filtro não empilha histórico, reload restaura estado da entrada
   - Pergunta, grupo, publicação e Minhas ativam Comunidade; anúncio e negócio e catálogos ativam Mercado; Conversas e conversa ativam somente ícone no topo, nenhuma aba inferior
   - Salvos, Meus anúncios, busca e destinos de notificação restauram origem por entrada; não sobrescrever dono fixo de pergunta/anúncio/negócio por origem
-  - Voltar do navegador e botão Voltar fecham diálogo, folha e menu antes de trocar rota; avançar restaura entrada correta; fechamento por Escape/clique devolve foco e não deixa entrada fantasma
+  - Voltar do navegador/sistema fecha diálogo, folha e menu antes de trocar rota; decisão pura do botão Voltar segue a mesma regra e é testada por unidade, sem exigir clique atrás de modal; avançar restaura entrada correta; Escape/clique devolve foco sem entrada fantasma
   - Rolagem e foco restauram somente após dados e elementos existirem, inclusive carregamento atrasado real com lista; alvo ausente usa h1; sem setTimeout arbitrário fixo
   - Link direto de detalhe foca h1 e Voltar usa pai sem sair do app; parâmetros Unicode/espaço codificam e recarregam corretamente
   - Bateria unitária cobre regras; e2e nas rotas vazias com controles de prova cobre todas as URLs, abas, filtros, scroll, foco, reload, voltar/avançar, overlays, link direto e atraso de lista em 375/768/1440
