@@ -7,9 +7,11 @@ Este registro é de execução local; nenhum merge, push para main ou deploy foi
 
 - **1a concluída localmente** em `5fc9fc77`, com gate completo e runtime independente.
 - **1b em implementação/revisão**, sessão `ses_e8d26290affezIzEFOzk3S6WMD`.
-  Último recorte de rolagem/foco: 5/6 passaram em 375; o sexto tinha uma exigência
-  incorreta de foco após clicar no liberador da carga e está sendo corrigido.
-  Isso não é aceite da bateria completa. 1c–1e ainda não despachadas.
+  Unitários: 38/38 passaram. Última bateria 375: **86/94 passaram, 8 falharam**.
+  Falhas: quatro retornos entre entradas de mesma URL/origens distintas;
+  dois endereços opcionais com `/undefined`; `/app` sem redirect; fallback de ID ausente.
+  Novo reparo em andamento; gate da 1b e bateria em 768/1440 ainda não executados.
+  Isso não é aceite. 1c–1e ainda não despachadas.
 - **R3 bloqueada por orçamento**, checkpoint WIP `64dc6218` no worktree separado.
   Última suíte: 154 arquivos, 1734 asserções executadas, resultado FAIL; db:lint passou.
   Gate parou em quatro erros de lint reproduzidos na base. Revisão de segurança final pendente.
