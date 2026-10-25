@@ -35,8 +35,16 @@ try{
    await page.screenshot({path:resolve(import.meta.dirname,"../visual-qa/home-"+width+"-"+theme+".png"),fullPage:true,animations:"disabled"});
    await page.goto("http://127.0.0.1:"+port+base+"/imoveis/",{waitUntil:"domcontentloaded"});
    await page.getByRole("heading",{name:"Imóveis"}).first().waitFor({timeout:12000});
-   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2),false,"Horizontal overflow listings "+width+"/"+theme);
    await page.screenshot({path:resolve(import.meta.dirname,"../visual-qa/imoveis-"+width+"-"+theme+".png"),fullPage:true,animations:"disabled"});
+   const over=await page.evaluate(()=>{
+      const limit=innerWidth;
+      return {viewport:limit,scrollWidth:document.documentElement.scrollWidth,offenders:[...document.querySelectorAll("body *")].flatMap(el=>{
+        const r=el.getBoundingClientRect();
+        return r.right>limit+2&&r.width>0&&getComputedStyle(el).display!=="none"?[{tag:el.tagName,cl:String(el.className).slice(0,130),text:(el.textContent||"").slice(0,45),left:Math.round(r.left),right:Math.round(r.right)}]:[]
+      }).slice(0,20)};
+   });
+   if(over.scrollWidth>width+2)console.error("OVERFLOW",JSON.stringify(over));
+   assert.equal(over.scrollWidth>width+2,false,"Horizontal overflow listings "+width+"/"+theme);
    if(width===375&&theme==="light"){
       await page.locator('[data-slot="toggle-group-item"]').filter({hasText:"Mapa"}).first().click();
       await page.getByRole("region",{name:"Mapa aproximado de anúncios por bairro"}).waitFor({timeout:15000});
