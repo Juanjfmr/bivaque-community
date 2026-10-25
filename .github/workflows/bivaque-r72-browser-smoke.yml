@@ -1,7 +1,7 @@
-name: Bivaque R72 — inspeção visual Chromium
+name: Bivaque R72 — inspeção visual Chromium e Busca
 on:
   push:
-    branches: [feat/r72-catalog-map-alerts-20261025]
+    branches: [feat/r72-unified-search-20261025]
     paths:
       - 'prototypes/bivaque-next-shadcn/**'
       - '.github/workflows/bivaque-r72-browser-smoke.yml'
@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: bivaque-r72-browser-smoke
+  group: bivaque-r72-search-browser-smoke
   cancel-in-progress: true
 jobs:
   smoke:
