@@ -41,3 +41,16 @@ jobs:
           test -f out/servicos/index.html
           test -f out/brand/bivaque-symbol-white.svg
           grep -q '/bivaque-community/_next/static' out/index.html
+          test -f out/anuncio/h1/index.html
+          test -f out/anuncio/d1/index.html
+          test -f out/negocio/s1/index.html
+          test -f out/pergunta/q1/index.html
+          test -f out/grupo/g1/index.html
+          test -f out/evento/e1/index.html
+          test -f out/pedido/r1/index.html
+          grep -q 'O que você precisa em' components/library-app.tsx
+          grep -q 'Serviços recomendados' components/library-app.tsx
+          grep -q 'Oportunidades perto de você' components/library-app.tsx
+          grep -q 'Navegação principal mobile' components/library-app.tsx
+          grep -q 'grid-cols-4 items-center' components/library-app.tsx
+          grep -q 'Total por mês' components/library-app.tsx
