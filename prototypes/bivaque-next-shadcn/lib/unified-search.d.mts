@@ -1,0 +1,16 @@
+export type SearchListing={id:string;city:string;kind:string;title:string;description:string;meta:string;badge?:string;image?:string;price?:string};
+export type SearchQuestion={id:string;city:string;title:string;author:string;category:string;date?:string;description?:string;answers?:{author:string;text:string;date:string}[]};
+export type SearchGroup={id:string;city:string;name:string;description:string;open:boolean;posts?:{text:string}[]};
+export type SearchEvent={id:string;city:string;title:string;description:string;place:string;category?:string};
+export type SearchPost={id:string;kind:string;title:string;detail:string;city?:string};
+export type SearchAnswer={author:string;text:string;date:string};
+export type MatchedQuestion=SearchQuestion&{answerCount:number;viaAnswer:boolean;snippet:{author:string;text:string}|null};
+export type SearchResults={items:SearchListing[];biz:SearchListing[];asks:MatchedQuestion[];groups:SearchGroup[];events:SearchEvent[]};
+export type SearchTab="all"|"items"|"biz"|"asks"|"groups"|"events";
+export const GROUP_DEFS:ReadonlyArray<{key:Exclude<SearchTab,"all">;title:string;noun:string;cap:number}>;
+export function norm(value:unknown):string;
+export function queryTerms(q:string):string[];
+export function matchesSearch(query:string,text:string):boolean;
+export function unifiedResults(input:{city:string;query:string;items:SearchListing[];questions:SearchQuestion[];groups:SearchGroup[];events:SearchEvent[];posts?:SearchPost[];replies?:Record<string,string[]>;joined?:string[]}):SearchResults;
+export function totalResults(results:SearchResults,tab?:SearchTab):number;
+export function suggestions(q:string,universe:string[],max?:number):string[];
