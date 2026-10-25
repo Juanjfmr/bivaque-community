@@ -153,12 +153,63 @@ export default function LibraryApp(){
   const createButton=<Button onClick={()=>openCreate(slug==="imoveis"?"Imóvel":slug==="desapegos"?"Desapego":slug==="servicos"?"Negócio":slug==="pedidos"?"Pedido":slug==="grupos"?"Grupo":slug==="agenda"?"Encontro":"Pergunta")}><Plus/>Criar</Button>;
   function notice(){return <Alert><Shield/><AlertTitle>Prévia demonstrativa</AlertTitle><AlertDescription>Todos os perfis, avaliações, imóveis, propostas, preços e eventos são fictícios. Nenhuma ação envia informações para terceiros.</AlertDescription></Alert>}
   const header=<div className="flex flex-wrap items-start justify-between gap-4"><div className="space-y-1"><h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1><p className="text-sm text-muted-foreground">{slug==="inicio"?"A rede que acompanha a vida militar.":slug==="movimentacao"?"Planeje sua chegada e compartilhe experiências.":slug==="comunidade"?"O conhecimento da comunidade fica acessível a quem chegar depois.":"Explore possibilidades da comunidade militar em "+city+"."}</p></div>{slug!=="voce"&&slug!=="conversas"&&slug!=="salvos"&&slug!=="busca"&&createButton}</div>;
-  function homePage(){return <div className="space-y-8">
-    <Card><CardHeader><Badge variant="secondary" className="w-fit">BIVAQUE · COMUNIDADE MILITAR</Badge><CardTitle className="text-2xl sm:text-3xl">O que você precisa em {city}?</CardTitle><CardDescription>Encontre moradia, serviços e pessoas de confiança em sua próxima cidade.</CardDescription></CardHeader><CardContent className="space-y-4"><Button variant="outline" className="w-full justify-start text-muted-foreground" onClick={()=>setSearchOpen(true)}><Search/>Buscar serviços, imóveis, perguntas, grupos…</Button><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{routes.filter(x=>["servicos","desapegos","imoveis","comunidade"].includes(x.slug)).map(x=><Button key={x.slug} variant="secondary" onClick={()=>navigate(x.slug)}><x.icon/>{x.label}</Button>)}</div></CardContent></Card>
-    <section className="space-y-4"><div className="flex items-center justify-between"><h2 className="text-xl font-semibold">Serviços recomendados</h2><Button variant="ghost" onClick={()=>navigate("servicos")}>Ver todos <ArrowRight/></Button></div><Carousel opts={{align:"start"}} className="w-full"><CarouselContent>{allItems.filter(x=>x.kind==="servicos"&&x.city===city).map(x=><CarouselItem className="basis-[85%] sm:basis-1/2 lg:basis-1/3" key={x.id}>{card(x)}</CarouselItem>)}</CarouselContent><CarouselPrevious className="left-2"/><CarouselNext className="right-2"/></Carousel></section>
-    <section className="space-y-4"><div className="flex items-center justify-between"><h2 className="text-xl font-semibold">Imóveis da comunidade</h2><Button variant="ghost" onClick={()=>navigate("imoveis")}>Ver todos <ArrowRight/></Button></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{allItems.filter(x=>x.kind==="imoveis"&&x.city===city).slice(0,3).map(card)}</div></section>
-    <section className="space-y-4"><h2 className="text-xl font-semibold">Mais no Bivaque</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{routes.filter(x=>["movimentacao","grupos","guia","pedidos","agenda","vilas","clube","talentos","caronas"].includes(x.slug)).map(x=><Card key={x.slug}><CardHeader><x.icon className="size-6"/><CardTitle>{x.label}</CardTitle><CardDescription>Explore o módulo e seus conteúdos demonstrativos.</CardDescription></CardHeader><CardFooter><Button variant="outline" className="w-full" onClick={()=>navigate(x.slug)}>Explorar <ArrowRight/></Button></CardFooter></Card>)}</div></section>
-  </div>}
+  function homePage(){
+    const homes=allItems.filter(x=>x.kind==="imoveis"&&x.city===city).slice(0,3);
+    const providers=PROVIDERS.filter(x=>x.city===city).sort((a,b)=>b.recommendations-a.recommendations);
+    const qs=QUESTIONS.filter(x=>x.city===city).filter(x=>!resolved.includes(x.id)).slice(0,3);
+    const shortcuts=[["Imóveis",Building2,"imoveis"],["Serviços",BriefcaseBusiness,"servicos"],["Desapegos",ShoppingBag,"desapegos"],["Indicações",MessageCircle,"comunidade"]] as const;
+    return <div className="space-y-7">
+      <Alert><Shield/><AlertTitle>Exploração com dados fictícios</AlertTitle><AlertDescription>Você está testando os componentes e jornadas do Bivaque. Não há perfis, avaliações ou anúncios reais.</AlertDescription></Alert>
+      <Card className="overflow-hidden">
+        <div className="relative isolate min-h-64 overflow-hidden bg-muted sm:min-h-72">
+          <img className="absolute inset-0 size-full object-cover" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1300&q=85" alt="" aria-hidden="true"/>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/25"/>
+          <div className="relative z-10 max-w-xl space-y-4 p-6 text-white sm:p-9">
+            <Badge variant="secondary" className="w-fit">BIVAQUE · COMUNIDADE MILITAR</Badge>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">O que você precisa em {city}?</h1>
+            <p className="max-w-md text-sm leading-relaxed text-white/85">Moradia, serviços, pessoas e experiências úteis em cada nova etapa da vida militar.</p>
+            <Button variant="secondary" className="w-full justify-start text-foreground sm:max-w-md" onClick={()=>setSearchOpen(true)}><Search/>Buscar no Bivaque<span className="ml-auto text-xs text-muted-foreground">Ctrl K</span></Button>
+          </div>
+        </div>
+        <CardContent className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4">
+          {shortcuts.map(([name,Icon,to])=><Button key={name} variant="outline" className="h-12 justify-start gap-2" onClick={()=>navigate(to)}><Icon/>{name}</Button>)}
+        </CardContent>
+      </Card>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(275px,1fr)]">
+        <div className="min-w-0 space-y-7">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2"><div><h2 className="text-xl font-semibold tracking-tight">Serviços da comunidade</h2><p className="text-sm text-muted-foreground">Indicações orgânicas, sem classificação por estrelas.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("servicos")}>Ver todos <ArrowRight/></Button></div>
+            {providers.length?<ItemGroup className="rounded-xl border bg-card p-2">{providers.slice(0,4).map(p=><Item key={p.id} variant="default" size="sm"><ItemMedia variant="image"><img alt="" src={p.image} className="size-14 rounded-md object-cover"/></ItemMedia><ItemContent><ItemTitle>{p.name}</ItemTitle><ItemDescription>{p.category} · {p.hood} · {p.recommendations} indicações fictícias</ItemDescription></ItemContent><ItemActions><Button variant="outline" size="sm" onClick={()=>{setDetail(allItems.find(x=>x.id===p.id)||null);setDetailOpen(true)}}>Ver ficha <ChevronRight/></Button></ItemActions></Item>)}</ItemGroup>:<Alert><CircleHelp/><AlertTitle>Sem serviços demonstrativos nesta cidade</AlertTitle></Alert>}
+          </section>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between"><div><h2 className="text-xl font-semibold tracking-tight">Imóveis da comunidade</h2><p className="text-sm text-muted-foreground">Anúncios ilustrativos para explorar.</p></div><Button variant="ghost" size="sm" onClick={()=>navigate("imoveis")}>Ver todos <ArrowRight/></Button></div>
+            {homes.length?<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{homes.map(card)}</div>:<Alert><CircleHelp/><AlertTitle>Sem imóveis demonstrativos em {city}</AlertTitle></Alert>}
+          </section>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2"><h2 className="text-xl font-semibold tracking-tight">Continue explorando</h2><Button variant="ghost" size="sm" onClick={()=>navigate("movimentacao")}>Movimentação <ArrowRight/></Button></div>
+            <div className="grid gap-3 sm:grid-cols-2">{routes.filter(x=>["movimentacao","guia","pedidos","vilas","clube","agenda"].includes(x.slug)).map(x=><Item variant="outline" key={x.slug} className="cursor-pointer" onClick={()=>navigate(x.slug)}><ItemMedia variant="icon"><x.icon/></ItemMedia><ItemContent><ItemTitle>{x.label}</ItemTitle><ItemDescription>{x.slug==="movimentacao"?"Organize sua transferência":x.slug==="guia"?"Conheça a próxima cidade":x.slug==="pedidos"?"Solicite e compare orçamentos":x.slug==="vilas"?"Convivência e administração":"Conecte-se com a comunidade"}</ItemDescription></ItemContent><ItemActions><ChevronRight className="size-4 text-muted-foreground"/></ItemActions></Item>)}</div>
+          </section>
+        </div>
+        <aside className="space-y-5">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Perguntas que precisam de ajuda</CardTitle><CardDescription>Conhecimento compartilhado da comunidade.</CardDescription></CardHeader>
+            <CardContent>{qs.length?<ItemGroup>{qs.map((q,i)=><React.Fragment key={q.id}><Item size="sm" className="px-0"><ItemMedia><Avatar><AvatarFallback>{initials(q.author)}</AvatarFallback></Avatar></ItemMedia><ItemContent><ItemTitle className="line-clamp-2">{q.title}</ItemTitle><ItemDescription>{q.answers.length+(replies[q.id]?.length||0)} respostas · {q.category}</ItemDescription></ItemContent><ItemActions><Button variant="ghost" size="icon" aria-label="Ver pergunta" onClick={()=>{navigate("comunidade");setTab("Indicações")}}><ChevronRight/></Button></ItemActions></Item>{i<qs.length-1&&<ItemSeparator/>}</React.Fragment>)}</ItemGroup>:<p className="text-sm text-muted-foreground">Nenhuma pergunta em aberto nos dados de {city}.</p>}</CardContent>
+            <CardFooter><Button variant="outline" className="w-full" onClick={()=>navigate("comunidade")}>Abrir Comunidade</Button></CardFooter>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Seus grupos</CardTitle><CardDescription>Compartilhe o que importa.</CardDescription></CardHeader>
+            <CardContent><ItemGroup>{GROUPS.filter(x=>x.city===city).slice(0,3).map(g=><Item key={g.id} size="sm" className="px-0"><ItemMedia><Avatar><AvatarFallback>{initials(g.name)}</AvatarFallback></Avatar></ItemMedia><ItemContent><ItemTitle>{g.name}</ItemTitle><ItemDescription>{g.members} integrantes</ItemDescription></ItemContent><ItemActions><Button size="icon" variant="ghost" aria-label="Abrir grupos" onClick={()=>navigate("grupos")}><ChevronRight/></Button></ItemActions></Item>)}</ItemGroup></CardContent>
+            <CardFooter><Button className="w-full" variant="outline" onClick={()=>navigate("grupos")}>Ver grupos</Button></CardFooter>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Próximos encontros</CardTitle></CardHeader>
+            <CardContent><ItemGroup>{EVENTS.filter(x=>x.city===city).slice(0,2).map(e=><Item key={e.id} size="sm" className="px-0"><ItemMedia variant="icon"><CalendarDays/></ItemMedia><ItemContent><ItemTitle>{e.title}</ItemTitle><ItemDescription>{e.when} · {e.place}</ItemDescription></ItemContent></Item>)}</ItemGroup></CardContent>
+            <CardFooter><Button variant="outline" className="w-full" onClick={()=>navigate("agenda")}>Abrir agenda</Button></CardFooter>
+          </Card>
+        </aside>
+      </div>
+    </div>;
+  }
   function marketplace(){const opts=["Todos",...new Set((slug==="imoveis"?HOUSING.map(x=>x.type):slug==="desapegos"?CLASSIFIEDS.map(x=>x.category):PROVIDERS.map(x=>x.category)))];return <div className="space-y-5">
     {header}{notice()}
     <div className="flex flex-wrap items-center gap-2"><div className="relative min-w-48 flex-1"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="pl-9" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar no catálogo…"/></div><Select value={category} onValueChange={setCategory}><SelectTrigger className="w-40"><SelectValue placeholder="Categoria"/></SelectTrigger><SelectContent>{opts.map(x=><SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select><Button variant="outline" onClick={()=>setFiltersOpen(true)}><SlidersHorizontal/>Filtros</Button></div>
