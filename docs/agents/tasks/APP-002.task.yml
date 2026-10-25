@@ -8,6 +8,7 @@ baseline:
   status: FAIL-EVIDENCED
   evidence: apps/app/src/main.tsx tem somente rota índice em 25/10/2026; nenhuma bateria de navegação existe.
 allowed_paths:
+  - docs/agents/prototipo-shadcn/STATUS.md
   - apps/app/src/
   - apps/app/lib/navegacao/
   - apps/app/tests/
