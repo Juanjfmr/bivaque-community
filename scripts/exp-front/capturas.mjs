@@ -34,6 +34,7 @@ const report = {
   prototypeUrl: `http://127.0.0.1:${server.address().port}`,
   candidateUrl: "http://127.0.0.1:3000/app",
   pairs: [],
+  candidateOnlyCaptures: [],
 }
 
 try {
@@ -75,11 +76,15 @@ try {
       ]) {
         await setup()
         await candidate.waitForTimeout(state === "carregando" ? 200 : 500)
-        const refShot = await reference.screenshot({ fullPage: true })
         const appShot = await candidate.screenshot({ fullPage: true })
         const name = `${width}-${theme}-${state}`
-        writeFileSync(join(output, `${name}-prototipo.png`), refShot)
         writeFileSync(join(output, `${name}-candidata.png`), appShot)
+        if (state !== "normal") {
+          report.candidateOnlyCaptures.push({ name, candidate: `${name}-candidata.png` })
+          continue
+        }
+        const refShot = await reference.screenshot({ fullPage: true })
+        writeFileSync(join(output, `${name}-prototipo.png`), refShot)
         const ref = await sharp(refShot).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
         const app = await sharp(appShot)
           .resize(ref.info.width, ref.info.height, { fit: "fill" })
