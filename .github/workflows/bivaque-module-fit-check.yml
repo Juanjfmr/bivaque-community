@@ -33,7 +33,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add prototypes/bivaque-next-shadcn/components/ui prototypes/bivaque-next-shadcn/app/globals.css prototypes/bivaque-next-shadcn/package.json prototypes/bivaque-next-shadcn/package-lock.json prototypes/bivaque-next-shadcn/components.json
+          git add components/ui app/globals.css package.json package-lock.json components.json
           if ! git diff --cached --quiet; then
             git commit -m "chore(shadcn): install official product-specific components [skip ci]"
             git push origin HEAD:feat/shadcn-module-fit-20261025
