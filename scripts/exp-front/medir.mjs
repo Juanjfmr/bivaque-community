@@ -5,8 +5,9 @@ import { join, resolve } from "node:path"
 
 const root = resolve(import.meta.dirname, "../..")
 const label = process.argv[2]
+const gateLog = process.argv[3]
 if (!label || !/^[a-zA-Z0-9._-]+$/.test(label))
-  throw new Error("uso: node scripts/exp-front/medir.mjs <rótulo simples>")
+  throw new Error("uso: node scripts/exp-front/medir.mjs <rótulo simples> [log-do-gate]")
 const output = join(root, ".visual/exp-front", label)
 mkdirSync(output, { recursive: true })
 const windows = process.platform === "win32"
@@ -81,17 +82,63 @@ function freePort(port) {
     })
 }
 
-function flatten(suite, rows = []) {
-  for (const spec of suite.specs ?? [])
-    for (const test of spec.tests ?? [])
-      for (const result of test.results ?? [])
-        rows.push({ title: test.title, file: spec.file, status: result.status })
-  for (const child of suite.suites ?? []) flatten(child, rows)
+function flatten(suites, rows = []) {
+  for (const suite of Array.isArray(suites) ? suites : [suites]) {
+    for (const spec of suite.specs ?? [])
+      for (const test of spec.tests ?? []) {
+        const result = test.results?.at(-1)
+        rows.push({
+          title: spec.title,
+          file: spec.file,
+          project: test.projectName ?? test.projectId ?? "desconhecido",
+          status: result?.status ?? "sem resultado",
+        })
+      }
+    flatten(suite.suites ?? [], rows)
+  }
   return rows
 }
 
+const projects = ["mobile-375", "tablet-768", "desktop-1440"]
+function byProject(rows) {
+  return Object.fromEntries(
+    projects.map((project) => {
+      const runs = rows.filter((row) => row.project === project)
+      return [
+        project,
+        runs.length > 0 && runs.every((row) => row.status === "passed") ? "passou" : "não passou",
+      ]
+    }),
+  )
+}
+
+function gateResult(path) {
+  if (!path) return null
+  const contents = readFileSync(resolve(root, path), "utf8")
+  try {
+    const report = JSON.parse(contents)
+    return {
+      arquivo: path,
+      passou: report.green === true,
+      modo: report.fast ? "fast" : "completo",
+      pulou: report.skipped ?? [],
+    }
+  } catch {
+    const passou = /GATE VERDE/.test(contents)
+    const falhou = /GATE VERMELHO/.test(contents)
+    return { arquivo: path, passou: passou ? true : falhou ? false : null }
+  }
+}
+
 let server
-const summary = { label, eliminatorios: {}, navegacao: [], celular: null, capturas: null }
+const summary = {
+  label,
+  gate: gateResult(gateLog),
+  eliminatorios: {},
+  navegacao: [],
+  celular: null,
+  capturas: null,
+}
 let exitCode = 0
 try {
   run("npx", ["supabase", "db", "reset", "--local"])
@@ -142,10 +189,7 @@ try {
     "tests/e2e/exp-front/falhas.spec.ts",
     "tests/e2e/exp-front/tema.spec.ts",
   ]
-  const projects = ["mobile-375", "tablet-768", "desktop-1440"].flatMap((project) => [
-    "--project",
-    project,
-  ])
+  const projectArgs = projects.flatMap((project) => ["--project", project])
   const result = spawnSync(
     "npx",
     [
@@ -154,7 +198,7 @@ try {
       "playwright",
       "test",
       ...specs,
-      ...projects,
+      ...projectArgs,
       "--workers=1",
       "--reporter=json",
     ],
@@ -172,21 +216,31 @@ try {
   const navigationRows = rows.filter((row) => row.file?.endsWith("navegacao.spec.ts"))
   summary.navegacao = [...new Set(navigationRows.map((row) => row.title))].map((title) => {
     const runs = navigationRows.filter((row) => row.title === title)
+    const porProjeto = byProject(runs)
     return {
       caso: title,
-      passou: runs.length === 3 && runs.every((row) => row.status === "passed"),
-      projetos: runs.map((row) => ({ arquivo: row.file, status: row.status })),
+      passou: projects.every((project) => porProjeto[project] === "passou"),
+      porProjeto,
     }
   })
-  for (const key of ["acesso", "sem duplicar", "rascunho", "escape"]) {
-    const runs = rows.filter((row) => row.title.toLowerCase().includes(key))
-    summary.eliminatorios[key] =
-      runs.length === 3 && runs.every((row) => row.status === "passed") ? "passou" : "não passou"
+  for (const [key, pattern] of Object.entries({
+    acesso: /^acesso:/i,
+    "sem duplicar": /^sem duplicar:/i,
+    rascunho: /^rascunho:/i,
+    escape: /^escape:/i,
+  })) {
+    const runs = rows.filter((row) => pattern.test(row.title))
+    const porProjeto = byProject(runs)
+    summary.eliminatorios[key] = {
+      passou: projects.every((project) => porProjeto[project] === "passou"),
+      porProjeto,
+    }
   }
-  summary.eliminatorios.navegacao =
-    summary.navegacao.length === 9 && summary.navegacao.every((test) => test.passou)
-      ? "passou"
-      : "não passou"
+  const navigationByProject = byProject(navigationRows)
+  summary.eliminatorios.navegacao = {
+    passou: projects.every((project) => navigationByProject[project] === "passou"),
+    porProjeto: navigationByProject,
+  }
   if (result.status !== 0) exitCode = result.status ?? 1
   run("node", ["scripts/exp-front/capturas.mjs", label], { env })
   run("node", ["scripts/exp-front/celular.mjs", label], { env })

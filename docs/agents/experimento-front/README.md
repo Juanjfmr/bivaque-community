@@ -95,3 +95,21 @@ o critério. Foram corrigidos igual para as duas, sem mudar critério nenhum, e 
 
 Também na primeira medição, antes destas, o roteiro não apontava o Chromium instalado e nenhum teste rodou; foi
 corrigido sem medição válida perdida.
+
+### Versão 2 do instrumento (24/10/2026)
+
+1. **Mesma pergunta em duas origens.** A carga garante que a pergunta `f001` da conta visual apareça na faixa do
+   Início e em Minhas: o protótipo inclui perguntas próprias no Início, mas a faixa mostra só duas; as demais
+   perguntas da carga recebem ao menos uma resposta para não ocultar `f001` na ordenação. O teste espera a lista
+   pronta, confere o mesmo ID, `parent`, `origin`, aba ativa, foco e rolagem após cada retorno. Isso corrige o caso
+   medido sem alterar o critério.
+2. **Resumo do Playwright.** O agregador percorre a árvore de suítes, lê o título do spec e o projeto de cada
+   execução; registra cada eliminatório por projeto e os dez casos de navegação. Um caminho opcional para o log do
+   gate inclui seu resultado no resumo. Isso evita classificar incorretamente os resultados individuais.
+3. **Métricas de celular.** Cada interação tem 20 amostras, mediana e p95; o cache frio só fica pronto quando há
+   perguntas na lista. O roteiro carrega dez páginas contando os itens a cada avanço e mede quadros durante a
+   rolagem; bytes separam abertura fria e sessão, e memória arredondada aparece como “sem precisão”. Isso torna as
+   medidas compatíveis com o que o contrato pede.
+4. **Capturas de estado.** Carregando e erro guardam apenas a captura da candidata; a diferença de pixels fica só
+   para o estado normal, pois o protótipo não implementa aqueles estados. Isso evita comparar telas diferentes.
+- Revisão do coordenador na versão 2: o caso "Mesma pergunta" não lê `history.state` nem outro estado interno. A origem de cada entrada é conferida pelo que se vê: URL, aba ativa, destino do voltar, rolagem e foco. Ler o formato interno do protótipo acoplaria o teste a uma implementação.

@@ -145,7 +145,8 @@ values (
 )
 on conflict (id) do nothing;
 
--- De zero a seis respostas por item, sem respostas fora de ordem.
+-- Cada pergunta do volume recebe ao menos uma resposta; f001 fica sem resposta para
+-- aparecer de forma determinística na faixa do Início e também em Minhas da conta visual.
 with seed_authors as (
   select array_agg(lm.user_id order by lm.user_id) as ids
   from public.locality_memberships lm
@@ -154,7 +155,10 @@ with seed_authors as (
     and lm.user_id <> 'e0000000-0000-4000-8000-00000000a003'
 ), volume as (
   select n,
-    case when n <= 603 and n not between 3 and 5 then 1 + n % 6 else n % 7 end as reply_count
+    case
+      when n between 3 and 5 then n % 7
+      else greatest(1, case when n <= 603 then 1 + n % 6 else n % 7 end)
+    end as reply_count
   from generate_series(1, 2000) as g(n)
 ), replies as (
   select
