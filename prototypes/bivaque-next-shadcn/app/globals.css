@@ -409,3 +409,22 @@ h2{font-size:16px;letter-spacing:-.025em}
 }
 @media(max-width:375px){.r72-page{padding-left:16px;padding-right:16px;--home-gutter:16px}.r72-home-row{--home-gutter:16px}.r72-home .r72-intent{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.r72-bottom,.r72-floating-create{transition:none}}
+
+
+.r72-resume{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--stroke);border-radius:12px;background:var(--panel);padding:13px 16px;margin-top:10px}
+.r72-resume strong{display:block;font-size:14px}
+.r72-resume small{display:block;font-size:12px;color:var(--muted)}
+.r72-resume>svg{flex-shrink:0}
+@media(max-width:1023px){
+ .r72-home-main{display:flex;flex-direction:column;align-items:stretch}
+ .r72-home-heading{order:0}
+ .r72-home-top{order:1}
+ .r72-home-alerts{order:2}
+ .r72-resume{order:3}
+ .r72-service-section{order:4}
+ .r72-item-section{order:5}
+ .r72-mobile-side{order:6}
+ .r72-question-section{order:7}
+ .r72-guide-section{order:8}
+ .r72-business-cta{order:9}
+}
