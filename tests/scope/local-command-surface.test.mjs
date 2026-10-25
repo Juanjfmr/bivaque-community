@@ -15,7 +15,7 @@ test("exposes the local root command surface", () => {
   const scripts = rootPackage.scripts
 
   // Then build, database, and E2E commands are available from the root
-  assert.equal(scripts.build, "pnpm --filter web build")
+  assert.equal(scripts.build, "pnpm --filter web build && pnpm --filter @bivaque/app build")
   assert.equal(scripts["db:reset"], "supabase db reset --local")
   assert.equal(scripts["test:db"], "supabase test db")
   assert.equal(scripts["db:test"], undefined)

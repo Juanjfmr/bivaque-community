@@ -60,7 +60,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/web/app/ui-theme.css"],
+      "includes": ["apps/web/app/ui-theme.css", "apps/app/**/*.css"],
       "css": {
         "parser": {
           "tailwindDirectives": true

@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: "Noto Sans", sans-serif;
+}

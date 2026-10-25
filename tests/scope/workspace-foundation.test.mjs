@@ -24,7 +24,7 @@ test("creates the approved workspace roots", () => {
   // other application is allowed.
   assert.deepEqual(pathStates, [true, true, true, true])
   assert.deepEqual(
-    appRoots.filter((appRoot) => !["mobile", "prototipo", "web"].includes(appRoot)),
+    appRoots.filter((appRoot) => !["app", "mobile", "prototipo", "web"].includes(appRoot)),
     [],
   )
   assert.equal(appRoots.includes("web"), true)

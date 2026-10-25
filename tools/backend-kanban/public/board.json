@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-10-22",
+  "updatedAt": "2026-10-25",
   "sourcePolicy": "Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos nao substituem entregas de outros agentes.",
   "cards": [
     {
@@ -5319,6 +5319,60 @@
       "completedChecklist": [false, false],
       "id": "AJUDA-PUBLICA",
       "title": "Ajuda pública para quem está fora"
+    },
+    {
+      "id": "APP-001",
+      "title": "SPA nova: onda 1, base e navegação",
+      "category": "frontend",
+      "description": "Onda 1a a 1e do PLANO-ONDAS, conforme ADR de 24/10 aceito em 25/10. Codex coordena, DeepSeek implementa 1b em diante. Aceite visual do dono antes da prova vertical.",
+      "checklist": [
+        "Esqueleto e gate com versões fixas",
+        "Navegação testada antes das telas",
+        "Casca, componentes e movimento",
+        "Dados por interfaces",
+        "Instrumentos revisados e capturas aprovadas"
+      ],
+      "proof": [
+        "25/10: contrato APP-001 válido R1; baseline focal 0/2 e depois 6/6 no escopo, sem alegar gate completo",
+        "25/10: gate completo APP-001 verde sem pular build; 143/143 escopo, 1726 unitários, 76 mobile, 19 web e 189 privacidade; runtime independente 3/3 viewports, reload sem erros. Onda 1 ainda em andamento."
+      ],
+      "links": [
+        "docs/agents/tasks/APP-001.task.yml",
+        "docs/agents/prototipo-shadcn/STATUS.md",
+        "docs/decisions/ADR-20261024-front-react-spa.md"
+      ],
+      "sourceRevision": "4e16b026",
+      "phase": "SPA e redesenho — outubro",
+      "priority": "P1",
+      "status": "now",
+      "tests": [],
+      "dependencies": [],
+      "updatedAt": "2026-10-25",
+      "blockers": [],
+      "completedChecklist": [true, false, false, false, false]
+    },
+    {
+      "id": "RED-003",
+      "title": "Comunidade: R3 migration e pgTAP da matriz aprovada",
+      "category": "backend",
+      "description": "Matriz R2 aprovada pelo dono em 25/10 em 66eda09b. Contrato válido R3 no worktree codex/redesenho-r3; DeepSeek em execução. Exige revisão do coordenador, segurança independente e provas pela fila.",
+      "checklist": [
+        "Migration e seed conforme matriz",
+        "Negativos por célula e proteção das definições",
+        "Prova de banco pela fila e db lint",
+        "Revisão independente de segurança"
+      ],
+      "proof": ["25/10: conferir-matriz.test.mjs 1/1; contrato RED-003 validado R3, retry 3"],
+      "links": ["docs/agents/prototipo-shadcn/STATUS.md"],
+      "sourceRevision": "66eda09b",
+      "phase": "SPA e redesenho — outubro",
+      "priority": "P1",
+      "status": "now",
+      "tests": [],
+      "dependencies": [],
+      "updatedAt": "2026-10-25",
+      "blockers": [],
+      "completedChecklist": [false, false, false, false]
     }
   ]
 }

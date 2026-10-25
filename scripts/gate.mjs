@@ -39,10 +39,16 @@ const stages = [
   },
   {
     name: "build",
-    pnpmArgs: ["build"],
+    pnpmArgs: ["--filter", "web", "build"],
     why: "next build — limite servidor/cliente, que o typecheck não vê",
     slow: true,
     needsEnv: true,
+  },
+  {
+    name: "build:app",
+    pnpmArgs: ["--filter", "@bivaque/app", "build"],
+    why: "Vite — build estático do app",
+    slow: true,
   },
   { name: "test", pnpmArgs: ["test"], why: "unit + privacy + scope", slow: true },
   {
@@ -62,7 +68,9 @@ const stages = [
 // silêncio é exatamente o que produziu o problema que este estágio existe para
 // pegar: um verde que afirmava mais do que tinha verificado.
 const ENV_FILE = "apps/web/.env.local"
-const hasEnv = existsSync(ENV_FILE)
+const hasEnv =
+  existsSync(ENV_FILE) ||
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
 const skipped = []
 const selected = (FAST ? stages.filter((stage) => !stage.slow) : stages).filter((stage) => {
