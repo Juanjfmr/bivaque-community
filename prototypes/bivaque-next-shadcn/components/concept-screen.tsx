@@ -1,5 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
+import {usePathname,useRouter} from "next/navigation";
+import {ModuleWorkspace} from "./modules/workspace";
 import {Home,Users,MessageCircle,UserRound,Building2,BriefcaseBusiness,Tags,Store,MapPinned,ClipboardList,ChevronDown,ChevronRight,ArrowRight,Search,Bell,Plus,Heart,Bookmark,MapPin,ShieldCheck,Star,CalendarDays,Sun,Clock,SlidersHorizontal,Check,X,Menu,Send,AlignLeft,Settings2,Compass,Wifi,Command,ArrowLeft,House,GraduationCap,FileText,LifeBuoy,MoreHorizontal,Mail,Eye,CheckCircle2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
@@ -19,7 +21,8 @@ import "./concept.css";
 
 type Service={id:string,name:string,sub:string,price:string,hood:string,rating:string,reviews:number,image:string,badge?:string};
 type Listing={id:string,name:string,hood:string,price:string,details:string,image:string,tag:string,kind:"Imóveis"|"Desapegos"};
-type Page="Início"|"Comunidade"|"Conversas"|"Você"|"Imóveis"|"Serviços"|"Desapegos"|"Grupos"|"Guia da Cidade"|"Pedidos";
+type Page="Início"|"Comunidade"|"Conversas"|"Você"|"Imóveis"|"Serviços"|"Desapegos"|"Grupos"|"Guia da Cidade"|"Pedidos"|"Movimentação"|"Vilas"|"Clube"|"Agenda"|"Negócios"|"Salvos";
+const routeSlugs:Record<Page,string>={"Início":"inicio","Comunidade":"comunidade","Conversas":"conversas","Você":"voce","Imóveis":"imoveis","Serviços":"servicos","Desapegos":"desapegos","Grupos":"grupos","Guia da Cidade":"guia","Pedidos":"pedidos","Movimentação":"movimentacao","Vilas":"vilas","Clube":"clube","Agenda":"agenda","Negócios":"negocios","Salvos":"salvos"};
 type ToastState={title:string,message:string};
 const image=(id:string,w=650)=>"https://images.unsplash.com/"+id+"?auto=format&fit=crop&w="+w+"&q=80";
 const services:Service[]=[
@@ -41,11 +44,12 @@ const categories=["Todos","Casas","Apartamentos","Para temporada","Até R$ 2 mil
 const cities=["Brasília - DF","Manaus - AM","Rio de Janeiro - RJ","Natal - RN","Belém - PA","Recife - PE"];
 const nav: {label:Page,Icon:typeof Home}[]=[
 {label:"Início",Icon:Home},{label:"Comunidade",Icon:Users},{label:"Conversas",Icon:MessageCircle},{label:"Você",Icon:UserRound},
-{label:"Imóveis",Icon:Building2},{label:"Serviços",Icon:BriefcaseBusiness},{label:"Desapegos",Icon:Tags},{label:"Grupos",Icon:Users},{label:"Guia da Cidade",Icon:MapPinned},{label:"Pedidos",Icon:ClipboardList}
+{label:"Imóveis",Icon:Building2},{label:"Serviços",Icon:BriefcaseBusiness},{label:"Desapegos",Icon:Tags},{label:"Grupos",Icon:Users},{label:"Guia da Cidade",Icon:MapPinned},{label:"Movimentação",Icon:Compass},{label:"Pedidos",Icon:ClipboardList},{label:"Agenda",Icon:CalendarDays},{label:"Vilas",Icon:Building2},{label:"Clube",Icon:Heart},{label:"Salvos",Icon:Bookmark}
 ];
 function Brand({small=false}:{small?:boolean}){return <span className={"concept-brand "+(small?"compact":"")}><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4 42 23l-5 5-15-14L7 28l-5-5L22 4Z" fill="currentColor"/><path d="M22 18 38 33l-5 5-11-10L11 38l-5-5 16-15Z" fill="currentColor"/></svg><strong>Bivaque</strong></span>;}
 function Photo({src,alt}:{src:string,alt:string}){return <img className="concept-photo" src={src} alt={alt} loading="lazy"/>;}
 export default function ConceptScreen(){
+ const router=useRouter();const pathname=usePathname();
  const [page,setPage]=useState<Page>("Início");
  const [city,setCity]=useState("Brasília - DF");
  const [tab,setTab]=useState("Imóveis");
@@ -68,7 +72,9 @@ export default function ConceptScreen(){
  useEffect(()=>{try{localStorage.setItem("bivaque-conceito-salvos",JSON.stringify(saved));}catch{}},[saved]);
  useEffect(()=>{const keys=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();setDialog("search")}};document.addEventListener("keydown",keys);return()=>document.removeEventListener("keydown",keys)},[]);
  const notify=(title:string,message:string)=>setToast({title,message});
- const switchPage=(next:Page)=>{setPage(next);setMobileSheet(false);setViewMode("Todos");window.scrollTo({top:0,behavior:"smooth"})};
+ const switchPage=(next:Page)=>{setPage(next);setMobileSheet(false);setViewMode("Todos");router.push("/"+routeSlugs[next]);window.scrollTo({top:0,behavior:"smooth"})};
+ useEffect(()=>{const segment=pathname.split("/").filter(Boolean)[0]||"inicio";const matched=(Object.keys(routeSlugs) as Page[]).find(x=>routeSlugs[x]===segment);if(matched)setPage(matched);},[pathname]);
+ const createAction=()=>{if(page==="Início"){setDialog("create");return;}document.dispatchEvent(new Event("bivaque:compose"));};
  const save=(id:string)=>{setSaved(a=>a.includes(id)?a.filter(x=>x!==id):[...a,id]);notify(saved.includes(id)?"Removido dos favoritos":"Salvo nos favoritos",saved.includes(id)?"Você pode salvar novamente quando quiser.":"Este item foi adicionado à sua lista pessoal.");};
  const launch=(mode:"listing"|"service",id:string)=>{setSelected(id);setDialog(mode)};
  const filtered=useMemo(()=>{
@@ -97,7 +103,7 @@ export default function ConceptScreen(){
   <Card className="concept-side-card"><div className="concept-side-title"><h3>Guia de chegada</h3><button onClick={()=>switchPage("Guia da Cidade")}>Ver todos</button></div>{[{Icon:House,title:"Morando em Brasília",hint:"Bairros, escolas, saúde e mais"},{Icon:FileText,title:"Documentação militar",hint:"Links e orientações úteis"},{Icon:Users,title:"Rede de apoio",hint:"Serviços confiáveis da comunidade"}].map(({Icon,title,hint})=><button className="concept-guide-row" key={title} onClick={()=>switchPage("Guia da Cidade")}><span><Icon size={19}/></span><div><strong>{title}</strong><small>{hint}</small></div></button>)}</Card>
  </aside>;
  const explore=(list:Page[])=>list.map(label=>{const Icon=nav.find(n=>n.label===label)?.Icon||Compass;return <button className={"concept-nav-link "+(page===label?"active":"")} key={label} onClick={()=>switchPage(label)}><Icon size={19}/><span>{label}</span>{label==="Conversas"&&notifications>0&&<b className="concept-count">{notifications}</b>}</button>});
- const sidebar=<aside className="concept-sidebar"><div className="concept-sidebar-brand"><Brand/></div><div className="concept-nav-main">{explore(["Início","Comunidade","Conversas","Você"])}</div><Separator className="concept-nav-separator"/><span className="concept-nav-caption">Explorar</span><div className="concept-nav-explore">{explore(["Imóveis","Serviços","Desapegos","Grupos","Guia da Cidade","Pedidos"])}</div><div className="concept-sidebar-promo"><span>Força que conecta<br/>gera oportunidades.</span><small>A rede acompanha a vida militar.</small></div></aside>;
+ const sidebar=<aside className="concept-sidebar"><div className="concept-sidebar-brand"><Brand/></div><div className="concept-nav-main">{explore(["Início","Comunidade","Conversas","Você"])}</div><Separator className="concept-nav-separator"/><span className="concept-nav-caption">Explorar</span><div className="concept-nav-explore">{explore(["Imóveis","Serviços","Desapegos","Grupos","Movimentação","Guia da Cidade","Vilas","Clube","Agenda","Pedidos"])}</div><div className="concept-sidebar-promo"><span>Força que conecta<br/>gera oportunidades.</span><small>A rede acompanha a vida militar.</small></div></aside>;
  const mobileShortcuts=[{name:"Negócios",Icon:BriefcaseBusiness,target:"Serviços" as Page},{name:"Desapegos",Icon:Tags,target:"Desapegos" as Page},{name:"Imóveis",Icon:House,target:"Imóveis" as Page},{name:"Indicações",Icon:Star,target:"Comunidade" as Page}];
  const home=<div className="concept-grid"><div className="concept-center"><div className="concept-hero">
    <div className="concept-hero-image"/><div className="concept-hero-overlay"/>
@@ -109,18 +115,11 @@ export default function ConceptScreen(){
   <TabsContent value="Imóveis"><div className="concept-filters"><div className="concept-filter-scroll">{categories.map(c=><Button className={category===c?"selected":""} key={c} variant="outline" size="sm" onClick={()=>setCategory(c)}>{c}</Button>)}</div><Button className="concept-filter-button" size="sm" variant="outline" onClick={()=>setFilterSheet(true)}><SlidersHorizontal size={16}/> Filtros</Button></div><div className="concept-listing-grid">{filtered.map(v=>listingCard(v))}</div>{filtered.length===0&&<p className="concept-no-result">Nenhum imóvel corresponde aos filtros. <button onClick={()=>{setCategory("Todos");setViewMode("Todos")}}>Limpar filtros</button></p>}</TabsContent>
   <TabsContent value="Desapegos"><div className="concept-filters"><span className="concept-tab-hint">Itens disponíveis na comunidade</span><Button size="sm" variant="outline" onClick={()=>setFilterSheet(true)}><SlidersHorizontal size={16}/> Filtros</Button></div><div className="concept-listing-grid">{filtered.map(v=>listingCard(v))}</div>{!filtered.length&&<p className="concept-no-result">Nenhum item salvo nesta seleção.</p>}</TabsContent>
   <TabsContent value="Serviços"><div className="concept-listing-grid concept-tab-services">{services.map(v=>serviceCard(v))}</div></TabsContent>
-  <TabsContent value="Pedidos"><div className="concept-request"><ClipboardList size={28}/><h3>Precisa contratar um serviço?</h3><p>Descreva sua necessidade para receber propostas da comunidade.</p><Button onClick={()=>setDialog("create")}><Plus size={16}/> Criar pedido</Button></div></TabsContent></Tabs></section>
+  <TabsContent value="Pedidos"><div className="concept-request"><ClipboardList size={28}/><h3>Precisa contratar um serviço?</h3><p>Descreva sua necessidade para receber propostas da comunidade.</p><Button onClick={()=>switchPage("Pedidos")}><Plus size={16}/> Criar pedido</Button></div></TabsContent></Tabs></section>
+  <section className="concept-hub"><div className="concept-section-title"><h2>Mais no Bivaque</h2><button onClick={()=>switchPage("Movimentação")}>Explorar módulos <ArrowRight size={15}/></button></div><div className="concept-hub-grid">{([{label:"Movimentação",Icon:Compass,desc:"Sua chegada ou saída"},{label:"Vilas",Icon:Building2,desc:"Comunidade privada"},{label:"Clube",Icon:Heart,desc:"Benefícios e parceiros"},{label:"Agenda",Icon:CalendarDays,desc:"Encontros e eventos"},{label:"Grupos",Icon:Users,desc:"Pessoas com interesses"},{label:"Pedidos",Icon:ClipboardList,desc:"Compare propostas"}] as const).map(({label,Icon,desc})=><button key={label} onClick={()=>switchPage(label)}><Icon size={22}/><strong>{label}</strong><small>{desc}</small><ArrowRight size={14}/></button>)}</div></section>
   </div>{side}</div>;
- const subPage=<div className="concept-subpage"><div className="concept-subpage-head"><div><p className="concept-eyebrow">COMUNIDADE BIVAQUE</p><h1>{page}</h1><p>Explore oportunidades e conexões em {city}.</p></div><Button onClick={()=>setDialog("create")}><Plus size={17}/> Criar</Button></div>
- {page==="Imóveis"||page==="Desapegos"?<><div className="concept-secondary-toolbar"><Input placeholder="Buscar na categoria..." value={query} onChange={e=>setQuery(e.target.value)}/><Button variant="outline" onClick={()=>setFilterSheet(true)}><SlidersHorizontal size={16}/> Filtros</Button></div><div className="concept-listing-grid">{listings.filter(v=>v.kind===page&&(!query||v.name.toLowerCase().includes(query.toLowerCase()))).map(v=>listingCard(v))}</div></>:
- page==="Serviços"?<><div className="concept-secondary-toolbar"><Input placeholder="Buscar um serviço..." value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="concept-services-grid">{services.filter(v=>v.name.toLowerCase().includes(query.toLowerCase())||!query).map(v=>serviceCard(v))}</div></>:
- page==="Guia da Cidade"?<Card className="concept-guide-full"><h2>Organize sua chegada a Brasília</h2><p>Checklist demonstrativo para uma nova movimentação.</p><Progress value={guideSteps.length/4*100}/>{["Pesquisar moradia","Ver escolas próximas","Separar documentação","Conhecer o bairro"].map(v=><label key={v}><Checkbox checked={guideSteps.includes(v)} onCheckedChange={()=>setGuideSteps(xs=>xs.includes(v)?xs.filter(x=>x!==v):[...xs,v])}/>{v}</label>)}</Card>:
- page==="Grupos"?<div className="concept-sub-groups">{groups.map(g=><Card key={g.name}><Avatar><AvatarFallback>{g.initials}</AvatarFallback></Avatar><strong>{g.name}</strong><span>{g.count}</span><Button variant="outline" onClick={()=>notify("Grupo demonstrativo",g.name)}>Conhecer grupo</Button></Card>)}</div>:
- page==="Comunidade"?<Card className="concept-community"><h2>Uma comunidade que compartilha experiências</h2>{["Qual escola infantil vocês recomendam na Asa Norte?","Alguém indica um profissional para pequenos reparos?","Bons bairros para famílias que chegam a Brasília?"].map((q,i)=><button key={q} onClick={()=>notify("Pergunta da comunidade","Este tópico usa dados fictícios para demonstração.")}><Avatar><AvatarFallback>{["MP","LC","AR"][i]}</AvatarFallback></Avatar><span><strong>{q}</strong><small>{i+2} respostas · Brasília - DF</small></span><ChevronRight size={18}/></button>)}</Card>:
- page==="Conversas"?<Card className="concept-community"><h2>Suas conversas</h2>{["Oficina Militar Motors","Contato sobre imóvel","Famílias Militares"].map((v,i)=><button key={v} onClick={()=>{setNotifications(0);notify("Conversa demonstrativa",v)}}><Avatar><AvatarFallback>{["OM","AI","FM"][i]}</AvatarFallback></Avatar><span><strong>{v}</strong><small>Toque para visualizar o contato</small></span><ChevronRight size={18}/></button>)}</Card>:
- page==="Você"?<Card className="concept-guide-full"><Avatar className="concept-profile-avatar"><AvatarFallback>CO</AvatarFallback></Avatar><h2>Cap. Oliveira</h2><p>Perfil de demonstração · {city}</p><Separator className="my-4"/><Button variant="outline" onClick={()=>setViewMode(x=>x==="Salvos"?"Todos":"Salvos")}><Bookmark size={15}/> {saved.length} itens salvos</Button><Button variant="outline" onClick={()=>notify("Configurações","Estas opções são demonstrativas.")}><Settings2 size={15}/> Preferências</Button></Card>:
- <Card className="concept-request"><ClipboardList size={30}/><h2>Pedidos da comunidade</h2><p>Descreva o que procura e acompanhe suas solicitações.</p>{posted.map((v,i)=><div className="concept-posted" key={i}>{v}</div>)}<Button onClick={()=>setDialog("create")}><Plus size={17}/> Fazer um pedido</Button></Card>}
- </div>;
+ const subPage=<ModuleWorkspace page={page} city={city} saved={saved} onSave={save} onNavigate={next=>switchPage(next as Page)} onNotify={notify}/>;
+
  const selectedListing=listings.find(x=>x.id===selected);
  const selectedService=services.find(x=>x.id===selected);
  return <TooltipProvider><div className="concept">
@@ -131,13 +130,13 @@ export default function ConceptScreen(){
    <button className="concept-top-search" onClick={()=>setDialog("search")}><Search size={17}/><span>Buscar imóveis, serviços, pessoas, grupos...</span><kbd>⌘ K</kbd></button>
    <div className="concept-topbar-actions"><Tooltip><TooltipTrigger asChild><button className="concept-icon-btn" aria-label="Avisos" onClick={()=>{setNotifications(0);notify("Seus avisos","Nenhuma pendência importante nesta demonstração.")}}><Bell size={20}/>{notifications>0&&<i/>}</button></TooltipTrigger><TooltipContent>Avisos</TooltipContent></Tooltip>
    <DropdownMenu><DropdownMenuTrigger className="concept-user-menu"><Avatar><AvatarFallback>CO</AvatarFallback></Avatar><span>Cap. Oliveira</span><ChevronDown size={14}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Conta demonstrativa</DropdownMenuLabel><DropdownMenuItem onSelect={()=>switchPage("Você")}>Meu perfil</DropdownMenuItem><DropdownMenuItem onSelect={()=>switchPage("Conversas")}>Conversas</DropdownMenuItem><DropdownMenuSeparator/><DropdownMenuItem onSelect={()=>notify("Modo de teste","Nenhuma informação real é enviada.")}>Informações da prévia</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-   <Button className="concept-publish" onClick={()=>setDialog("create")}><Plus size={17}/> Publicar</Button></div>
+   <Button className="concept-publish" onClick={createAction}><Plus size={17}/> Publicar</Button></div>
   </header>
   <div className="concept-content">{page==="Início"?home:subPage}</div>
   </div>
   <nav className="concept-bottom-nav" aria-label="Navegação mobile">
   {([{label:"Início",Icon:Home},{label:"Comunidade",Icon:Users}] as const).map(({label,Icon})=><button className={page===label?"active":""} key={label} onClick={()=>switchPage(label)}><Icon size={19}/><span>{label}</span></button>)}
-  <button className="concept-mobile-plus" aria-label="Criar" onClick={()=>setDialog("create")}><Plus size={25}/></button>
+  <button className="concept-mobile-plus" aria-label="Criar" onClick={createAction}><Plus size={25}/></button>
   {([{label:"Conversas",Icon:MessageCircle},{label:"Você",Icon:UserRound}] as const).map(({label,Icon})=><button className={page===label?"active":""} key={label} onClick={()=>switchPage(label)}><Icon size={19}/><span>{label}</span>{label==="Conversas"&&notifications>0&&<i>{notifications}</i>}</button>)}
   </nav>
   <Sheet open={mobileSheet} onOpenChange={setMobileSheet}><SheetContent side="left" title="Bivaque" className="concept-menu-sheet"><div className="concept-sheet-nav">{nav.map(({label,Icon})=><button key={label} onClick={()=>switchPage(label)}><Icon size={19}/>{label}</button>)}</div></SheetContent></Sheet>
