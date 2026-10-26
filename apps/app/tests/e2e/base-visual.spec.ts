@@ -32,7 +32,7 @@ test("V13: filtros continuam em uma faixa sem selecionar duas linhas", async ({ 
     })
 
   await expect.poll(coincideComSelecionado).toBe(true)
-  await faixa.getByRole("button", { name: "Filtrar por Encontros" }).click()
+  await faixa.locator('[data-chip="events"]').click()
   await expect(faixa.locator('[data-chip="events"]')).toHaveAttribute("data-estado", "on")
   await expect.poll(coincideComSelecionado).toBe(true)
 })
