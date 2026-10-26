@@ -21,8 +21,12 @@ export function guardarEstadoLocal(cidade: string, id: string, estado: EstadoDoG
 }
 export function lerRascunhosDoGrupo(cidade: string, id: string): string[] {
   try {
-    const valor: unknown = JSON.parse(sessionStorage.getItem(chave(cidade, id, "rascunhos")) ?? "[]")
-    return Array.isArray(valor) ? valor.filter((item): item is string => typeof item === "string").slice(0, 10) : []
+    const valor: unknown = JSON.parse(
+      sessionStorage.getItem(chave(cidade, id, "rascunhos")) ?? "[]",
+    )
+    return Array.isArray(valor)
+      ? valor.filter((item): item is string => typeof item === "string").slice(0, 10)
+      : []
   } catch {
     return []
   }
@@ -31,14 +35,21 @@ export function guardarRascunhoDoGrupo(cidade: string, id: string, texto: string
   const limpa = texto.trim()
   if (limpa.length < 10 || limpa.length > 2000) return null
   try {
-    const resultado = [limpa, ...lerRascunhosDoGrupo(cidade, id).filter((item) => item !== limpa)].slice(0, 10)
+    const resultado = [
+      limpa,
+      ...lerRascunhosDoGrupo(cidade, id).filter((item) => item !== limpa),
+    ].slice(0, 10)
     sessionStorage.setItem(chave(cidade, id, "rascunhos"), JSON.stringify(resultado))
     return resultado
   } catch {
     return null
   }
 }
-export function excluirRascunhoDoGrupo(cidade: string, id: string, indice: number): string[] | null {
+export function excluirRascunhoDoGrupo(
+  cidade: string,
+  id: string,
+  indice: number,
+): string[] | null {
   try {
     const atual = lerRascunhosDoGrupo(cidade, id)
     if (!Number.isInteger(indice) || indice < 0 || indice >= atual.length) return null

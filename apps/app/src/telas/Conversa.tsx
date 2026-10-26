@@ -6,12 +6,16 @@ import { useEffect, useMemo, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
 import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  guardarMensagemDePrevia,
+  lerMensagensDePrevia,
+  origemDaConversa,
+} from "@/lib/contexto-conversa"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
-import { guardarMensagemDePrevia, lerMensagensDePrevia, origemDaConversa } from "@/lib/contexto-conversa"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
@@ -124,7 +128,9 @@ export function Conversa() {
     <section data-tela="conversa" className="grid min-w-0 gap-3 pb-3">
       <div className="flex min-w-0 items-center gap-3 px-1 py-2">
         <Avatar size="lg" className="size-11 shrink-0">
-          <AvatarFallback className="bg-(--secondary-container) font-semibold">{iniciais(quem)}</AvatarFallback>
+          <AvatarFallback className="bg-(--secondary-container) font-semibold">
+            {iniciais(quem)}
+          </AvatarFallback>
         </Avatar>
         <span className="grid min-w-0 gap-0.5">
           <h1
@@ -175,17 +181,32 @@ export function Conversa() {
             )
           })}
           {novas.map((item) => (
-            <div key={item.id} data-mensagem-previa="sim" className="ml-auto grid max-w-[86%] gap-1">
-              <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">{item.conteudo}</p>
-              <small className="text-right text-[11px] text-(--on-surface-variant)">Só na sua sessão · não enviada</small>
+            <div
+              key={item.id}
+              data-mensagem-previa="sim"
+              className="ml-auto grid max-w-[86%] gap-1"
+            >
+              <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">
+                {item.conteudo}
+              </p>
+              <small className="text-right text-[11px] text-(--on-surface-variant)">
+                Só na sua sessão · não enviada
+              </small>
             </div>
           ))}
         </div>
       )}
 
-      <div data-compositor-conversa="sim" className="sticky z-10 grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)] bottom-[calc(var(--altura-da-barra,64px)+env(safe-area-inset-bottom)+8px)] md:bottom-3">
+      <div
+        data-compositor-conversa="sim"
+        className="sticky z-10 grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)] bottom-[calc(var(--altura-da-barra,64px)+env(safe-area-inset-bottom)+8px)] md:bottom-3"
+      >
         <fieldset aria-label="Respostas rápidas" className="flex gap-2 overflow-x-auto pb-0.5">
-          {["Ainda está disponível?", "Podemos combinar a retirada?", "Obrigado, vou confirmar."].map((opcao) => (
+          {[
+            "Ainda está disponível?",
+            "Podemos combinar a retirada?",
+            "Obrigado, vou confirmar.",
+          ].map((opcao) => (
             <button
               type="button"
               key={opcao}
@@ -199,7 +220,10 @@ export function Conversa() {
         </fieldset>
         <form
           className="flex min-w-0 items-end gap-2"
-          onSubmit={(evento) => { evento.preventDefault(); adicionarPrevia() }}
+          onSubmit={(evento) => {
+            evento.preventDefault()
+            adicionarPrevia()
+          }}
         >
           <div className="min-w-0 flex-1">
             <Campo
@@ -221,7 +245,11 @@ export function Conversa() {
             Adicionar
           </Botao>
         </form>
-        {erroLocal === "" ? null : <p role="alert" className="text-xs text-(--destructive)">{erroLocal}</p>}
+        {erroLocal === "" ? null : (
+          <p role="alert" className="text-xs text-(--destructive)">
+            {erroLocal}
+          </p>
+        )}
       </div>
     </section>
   )

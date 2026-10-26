@@ -145,59 +145,62 @@ export function Grupo() {
         pendente={apresentacao["pending"] === true}
         admin={apresentacao["role"] === "admin"}
         sobre={texto(apresentacao["about"], grupo.description ?? "")}
-        regras={texto(apresentacao["rules"], "Respeite todos os membros e mantenha as conversas pertinentes.")}
+        regras={texto(
+          apresentacao["rules"],
+          "Respeite todos os membros e mantenha as conversas pertinentes.",
+        )}
         pedidos={pedidos}
       >
-      {fixado === "" ? null : (
-        <p className="flex items-center gap-2 rounded-2xl bg-(--secondary-container) px-4 py-3 text-sm">
-          <Icone nome="pin" className="size-5 shrink-0" />
-          {fixado}
-        </p>
-      )}
+        {fixado === "" ? null : (
+          <p className="flex items-center gap-2 rounded-2xl bg-(--secondary-container) px-4 py-3 text-sm">
+            <Icone nome="pin" className="size-5 shrink-0" />
+            {fixado}
+          </p>
+        )}
 
-      {publicacoes.length === 0 ? (
-        <EstadoVazio
-          titulo="Ainda sem publicações"
-          texto="Quando alguém escrever no grupo, o que importa aparece aqui."
-          icone="forum"
-        />
-      ) : (
-        <div className="grid gap-3">
-          {publicacoes.map((item) => {
-            const dadosDaPublicacao = registro(item.apresentacao)
-            const encontro = registro(dadosDaPublicacao["event"])
-            return (
-              <CartaoDePublicacao
-                key={item.id}
-                publicacao={{
-                  id: item.id,
-                  tipo: tipoDe(dadosDaPublicacao["tipo"]),
-                  autor: texto(dadosDaPublicacao["author"], "Membro do grupo"),
-                  quando: quandoDe(dadosDaPublicacao["at"]),
-                  texto: texto(dadosDaPublicacao["text"], item.content),
-                  resolvida: dadosDaPublicacao["resolved"] === true,
-                  comentarios: comentarios.get(item.id) ?? 0,
-                  uteis: numero(dadosDaPublicacao["useful"]),
-                  util: dadosDaPublicacao["liked"] === true || uteis.has(item.id),
-                  ...(Object.keys(encontro).length === 0
-                    ? {}
-                    : {
-                        encontro: {
-                          data: `${texto(encontro["date"])} ${texto(encontro["time"])}`.trim(),
-                          local: texto(encontro["place"]),
-                          confirmado: encontro["on"] === true,
-                        },
-                      }),
-                }}
-                aoMarcarUtil={() => alternarUtil(item.id)}
-                aoComentar={() =>
-                  void navegacao.irPara("publicacao", { parametros: { id: item.id } })
-                }
-              />
-            )
-          })}
-        </div>
-      )}
+        {publicacoes.length === 0 ? (
+          <EstadoVazio
+            titulo="Ainda sem publicações"
+            texto="Quando alguém escrever no grupo, o que importa aparece aqui."
+            icone="forum"
+          />
+        ) : (
+          <div className="grid gap-3">
+            {publicacoes.map((item) => {
+              const dadosDaPublicacao = registro(item.apresentacao)
+              const encontro = registro(dadosDaPublicacao["event"])
+              return (
+                <CartaoDePublicacao
+                  key={item.id}
+                  publicacao={{
+                    id: item.id,
+                    tipo: tipoDe(dadosDaPublicacao["tipo"]),
+                    autor: texto(dadosDaPublicacao["author"], "Membro do grupo"),
+                    quando: quandoDe(dadosDaPublicacao["at"]),
+                    texto: texto(dadosDaPublicacao["text"], item.content),
+                    resolvida: dadosDaPublicacao["resolved"] === true,
+                    comentarios: comentarios.get(item.id) ?? 0,
+                    uteis: numero(dadosDaPublicacao["useful"]),
+                    util: dadosDaPublicacao["liked"] === true || uteis.has(item.id),
+                    ...(Object.keys(encontro).length === 0
+                      ? {}
+                      : {
+                          encontro: {
+                            data: `${texto(encontro["date"])} ${texto(encontro["time"])}`.trim(),
+                            local: texto(encontro["place"]),
+                            confirmado: encontro["on"] === true,
+                          },
+                        }),
+                  }}
+                  aoMarcarUtil={() => alternarUtil(item.id)}
+                  aoComentar={() =>
+                    void navegacao.irPara("publicacao", { parametros: { id: item.id } })
+                  }
+                />
+              )
+            })}
+          </div>
+        )}
       </InteracoesDoGrupo>
     </section>
   )

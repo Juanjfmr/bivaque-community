@@ -4,15 +4,15 @@ import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { lerMensagensDePrevia, origemDaConversa } from "@/lib/contexto-conversa"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
-import { origemDaConversa, lerMensagensDePrevia } from "@/lib/contexto-conversa"
-import { iniciais } from "@/lib/texto"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { iniciais } from "@/lib/texto"
 import { useCasca } from "@/src/contexto/casca"
 import { registro, texto } from "@/src/telas/comum"
 
@@ -93,29 +93,41 @@ export function Conversas() {
                 <button
                   type="button"
                   className="bv-press flex min-h-14 w-full min-w-0 items-center gap-3 text-left"
-                  onClick={() => void navegacao.irPara("conversa", { parametros: { id: conversa.id } })}
+                  onClick={() =>
+                    void navegacao.irPara("conversa", { parametros: { id: conversa.id } })
+                  }
                 >
                   <Avatar size="lg">
-                    <AvatarFallback className="bg-(--secondary-container) font-semibold">{iniciais(nome)}</AvatarFallback>
+                    <AvatarFallback className="bg-(--secondary-container) font-semibold">
+                      {iniciais(nome)}
+                    </AvatarFallback>
                   </Avatar>
                   <span className="grid min-w-0 flex-1 gap-1">
                     <b className="truncate text-sm">{nome}</b>
                     <span className="truncate text-[13px] text-(--on-surface-variant)">
-                      {resumo === undefined ? (ultima || "Comece a conversa") : `Prévia não enviada: ${resumo.conteudo}`}
+                      {resumo === undefined
+                        ? ultima || "Comece a conversa"
+                        : `Prévia não enviada: ${resumo.conteudo}`}
                     </span>
                   </span>
-                  <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
+                  <Icone
+                    nome="chevron_right"
+                    className="size-5 shrink-0 text-(--on-surface-variant)"
+                  />
                 </button>
                 {origem === null ? null : (
                   <ContextoDaConversa
                     origem={origem}
                     compacto
-                    {...(origem.id === null ? {} : {
-                      aoAbrir: () => void navegacao.irPara(
-                        origem.tipo === "anuncio" ? "anuncio" : "negocio",
-                        { parametros: { id: origem.id ?? "" } },
-                      ),
-                    })}
+                    {...(origem.id === null
+                      ? {}
+                      : {
+                          aoAbrir: () =>
+                            void navegacao.irPara(
+                              origem.tipo === "anuncio" ? "anuncio" : "negocio",
+                              { parametros: { id: origem.id ?? "" } },
+                            ),
+                        })}
                   />
                 )}
               </article>
