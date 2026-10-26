@@ -236,7 +236,12 @@ export function ListaDeMercado({
         }
         acao={
           inicial === "imoveis" ? (
-            <Botao data-acao="anunciar-imovel" icone="add" tom="tonal" onClick={() => setCriandoImovel(true)}>
+            <Botao
+              data-acao="anunciar-imovel"
+              icone="add"
+              tom="tonal"
+              onClick={() => setCriandoImovel(true)}
+            >
               Anunciar imóvel
             </Botao>
           ) : undefined
