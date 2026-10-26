@@ -95,7 +95,9 @@ try {
   browser = await chromium.launch(executablePath ? { executablePath } : {})
   const rotas = mobileR72
     ? ROTAS.filter((rota) => ["inicio", "busca", "comunidade", "imoveis"].includes(rota.nome))
-    : amostra ? ROTAS.filter((rota) => rota.nome === "inicio") : ROTAS
+    : amostra
+      ? ROTAS.filter((rota) => rota.nome === "inicio")
+      : ROTAS
   const nomes = [
     ...rotas.map((rota) => rota.nome),
     ...(amostra || mobileR72 ? [] : ["entrada-sem-estado"]),
@@ -121,7 +123,16 @@ try {
       const parContext = await browser.newContext({
         viewport: {
           width: largura * 2 + 16,
-          height: (mobileR72 ? largura === 320 ? 700 : largura === 375 ? 812 : 932 : largura === 375 ? 812 : 900) + 36,
+          height:
+            (mobileR72
+              ? largura === 320
+                ? 700
+                : largura === 375
+                  ? 812
+                  : 932
+              : largura === 375
+                ? 812
+                : 900) + 36,
         },
       })
       try {
