@@ -9,7 +9,7 @@ import {
   Bookmark, Plus, ChevronRight, Check, Bell, Filter, Settings, Shield,
   MapPin, Heart, ArrowRight, ArrowLeft, Send, CircleHelp, Clock, ListChecks,
   LogOut, CircleCheck, Eye, ExternalLink, Star, SlidersHorizontal, Menu,
-  SunMoon, Sun, Moon, Monitor, Flag, Pencil, PauseCircle, PlayCircle,
+  SunMoon, Sun, Moon, Monitor, Flag, Pencil, PauseCircle, PlayCircle, ImageIcon, Share2, ZoomIn, ThumbsUp, SendHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -53,6 +53,7 @@ type CatalogFilters = {min:string;max:string;hoods:string[];beds:number;parking:
 const initialCatalogFilters:CatalogFilters={min:"",max:"",hoods:[],beds:0,parking:0,area:0,pets:false,furnished:false,availability:"",condition:"Todos",pickup:"Todos",om:"Todas"};
 type Chat = { id: string; name: string; context: string; messages: { self: boolean; body: string }[] };
 type Post = { id: string; title: string; detail: string; kind: string; city?: string; status?:"ativo"|"pausado" };
+type DemoGroupPost = { id:string; groupId:string; author:string; text:string; likes:number; date:string; replies:string[] };
 const routes = [
   { label: "Início", slug: "inicio", icon: Home, group: "principal" },
   { label: "Comunidade", slug: "comunidade", icon: Users, group: "principal" },
@@ -106,6 +107,11 @@ export default function LibraryApp(){
   const [sort,setSort]=React.useState("Mais recentes");
   const [saved,setSaved]=React.useState<string[]>([]);
   const [joined,setJoined]=React.useState<string[]>(["g1"]);
+  const [groupRequests,setGroupRequests]=React.useState<string[]>([]);
+  const [groupPosts,setGroupPosts]=React.useState<DemoGroupPost[]>([]);
+  const [groupText,setGroupText]=React.useState("");
+  const [groupReply,setGroupReply]=React.useState<Record<string,string>>({});
+  const [groupLikes,setGroupLikes]=React.useState<string[]>([]);
   const [going,setGoing]=React.useState<string[]>([]);
   const [moment,setMoment]=React.useState("moro");
   const [lastViewed,setLastViewed]=React.useState<string|null>(null);
@@ -120,6 +126,7 @@ export default function LibraryApp(){
   const [message,setMessage]=React.useState("");
   const [detail,setDetail]=React.useState<Item|null>(null);
   const [detailOpen,setDetailOpen]=React.useState(false);
+  const [zoomImage,setZoomImage]=React.useState<{url:string;title:string}|null>(null);
   const [filtersOpen,setFiltersOpen]=React.useState(false);
   const [mobileFiltersOpen,setMobileFiltersOpen]=React.useState(false);
   const [catalogFilters,setCatalogFilters]=React.useState<CatalogFilters>(initialCatalogFilters);
@@ -142,8 +149,8 @@ export default function LibraryApp(){
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports]);
+  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGroupRequests(v.groupRequests||[]);setGroupPosts(v.groupPosts||[]);setGroupLikes(v.groupLikes||[]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,groupRequests,groupPosts,groupLikes,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,groupRequests,groupPosts,groupLikes,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
@@ -152,9 +159,9 @@ export default function LibraryApp(){
   function toggle(id:string,arr:string[],setter:React.Dispatch<React.SetStateAction<string[]>>){setter(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
   function openCreate(v="Pergunta"){setEditingId(null);setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
   function editPost(p:Post){setEditingId(p.id);setComposeType(p.kind);setTitle(p.title);setDescription(p.detail);setComposeOpen(true);}
-  function openReport(section:string,id:string,title:string){
+  function openReport(section:string,id:string,title:string,route?:string){
     setReportReason("Conteúdo inadequado");
-    setReportTarget({section,id,title,route:section==="conversa"?"conversas":section+"/"+id});
+    setReportTarget({section,id,title,route:route||(section==="conversa"?"conversas":section+"/"+id)});
   }
   function submitReport(e:React.FormEvent){
     e.preventDefault();
@@ -177,6 +184,29 @@ export default function LibraryApp(){
     else{setPosts(old=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType,city,status:"ativo"},...old]);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.");}
     setEditingId(null);setComposeOpen(false);
   }
+  function joinGroup(id:string,open:boolean){
+    if(joined.includes(id)){setJoined(v=>v.filter(x=>x!==id));setGroupRequests(v=>v.filter(x=>x!==id));toast.info("Você saiu do grupo de demonstração");return;}
+    if(!open){setGroupRequests(v=>v.includes(id)?v.filter(x=>x!==id):[...v,id]);toast.info("Solicitação fictícia atualizada neste navegador");return;}
+    setJoined(v=>[...v,id]);toast.success("Participação demonstrativa registrada");
+  }
+  function submitGroupPost(e:React.FormEvent,groupId:string){
+    e.preventDefault();const text=groupText.trim();
+    if(text.length<8)return;
+    setGroupPosts(v=>[{id:"gp-local-"+Date.now(),groupId,author:"Você",text,likes:0,date:"Agora",replies:[]},...v]);
+    setGroupText("");toast.success("Publicação visível apenas neste navegador");
+  }
+  function submitGroupReply(e:React.FormEvent,postId:string){
+    e.preventDefault();const text=(groupReply[postId]||"").trim();
+    if(text.length<3)return;
+    setGroupPosts(v=>v.map(p=>p.id===postId?{...p,replies:[...p.replies,text]}:p));
+    setGroupReply(v=>({...v,[postId]:""}));toast.info("Comentário salvo localmente");
+  }
+  function shareDemoLink(){const link=window.location.href;
+    if(navigator.share){void navigator.share({title:"Bivaque — prévia demonstrativa",url:link}).catch(()=>{});
+    }else if(navigator.clipboard){void navigator.clipboard.writeText(link).then(()=>toast.success("Link da prévia copiado"),()=>toast.error("Não foi possível copiar o link"));
+    }else{toast.info("Use o endereço do navegador para compartilhar");}
+  }
+  function explorePublicArea(hood:string){const query=encodeURIComponent(hood+", "+city+", Brasil");window.open("https://www.openstreetmap.org/search?query="+query,"_blank","noopener,noreferrer");}
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
   function openFilters(){setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
   function applyFilters(){setCatalogFilters({...catalogDraft});setFiltersOpen(false);setMobileFiltersOpen(false)}
@@ -184,10 +214,10 @@ export default function LibraryApp(){
   function updateDraft<K extends keyof CatalogFilters>(key:K,value:CatalogFilters[K]){setCatalogDraft(d=>({...d,[key]:value}))}
   function submitReply(e:React.FormEvent){e.preventDefault();if(!replyTo||!replyDraft.trim())return;setReplies(r=>({...r,[replyTo]:[...(r[replyTo]||[]),replyDraft.trim()]}));setReplyTo(null);setReplyDraft("");toast.success("Resposta registrada localmente")}
   function send(e:React.FormEvent){e.preventDefault();if(!message.trim())return;setChats(a=>a.map(c=>c.id===chatId?{...c,messages:[...c.messages,{self:true,body:message.trim()}]}:c));setMessage("");toast.info("Mensagem registrada localmente")}
-  const allSaved=allItems.filter(x=>saved.includes(x.id));
+  const allSaved=allItems.filter(x=>saved.includes(x.id)&&!hiddenByDemo(x.kind==="servicos"?"negocio":"anuncio",x.id));
   const housingCost=(h:(typeof HOUSING)[number])=>h.type==="Aluguel"?h.price+(h.condo||0):h.price;
   const filtered=allItems.filter(x=>{
-    if(x.city!==city)return false;
+    if(x.city!==city||hiddenByDemo(x.kind==="servicos"?"negocio":"anuncio",x.id))return false;
     if(!["busca","inicio","salvos"].includes(slug)&&x.kind!==(slug==="negocios"?"servicos":slug))return false;
     if(slug==="salvos"&&!saved.includes(x.id))return false;
     if(category!=="Todos"&&x.badge!==category)return false;
@@ -217,7 +247,7 @@ export default function LibraryApp(){
   });
   // Índice local multímódulo. Nunca mistura dados de cidades nem consulta terceiros.
   const searchRecords=[
-    ...allItems.filter(v=>v.city===city).map(v=>({id:v.id,title:v.title,meta:v.meta,kind:v.kind,to:(v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id})),
+    ...allItems.filter(v=>v.city===city&&!hiddenByDemo(v.kind==="servicos"?"negocio":"anuncio",v.id)).map(v=>({id:v.id,title:v.title,meta:v.meta,kind:v.kind,to:(v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id})),
     ...QUESTIONS.filter(v=>v.city===city).map(v=>({id:v.id,title:v.title,meta:"Indicação · "+v.category,kind:"comunidade",to:"pergunta/"+v.id})),
     ...GROUPS.filter(v=>v.city===city).map(v=>({id:v.id,title:v.name,meta:"Grupo · "+v.description,kind:"grupos",to:"grupo/"+v.id})),
     ...EVENTS.filter(v=>v.city===city).map(v=>({id:v.id,title:v.title,meta:"Encontro · "+v.place,kind:"agenda",to:"evento/"+v.id})),
@@ -256,13 +286,13 @@ export default function LibraryApp(){
   function notice(){return <Alert><Shield/><AlertTitle>Prévia demonstrativa</AlertTitle><AlertDescription>Todos os perfis, avaliações, imóveis, propostas, preços e eventos são fictícios. As interações de teste ficam neste navegador. Algumas imagens são carregadas de serviços externos.</AlertDescription></Alert>}
   const header=<div className="flex flex-wrap items-start justify-between gap-4"><div className="space-y-1"><h1 className="font-serif text-3xl font-semibold tracking-tight">{pageTitle}</h1><p className="text-sm text-muted-foreground">{slug==="inicio"?"A rede que acompanha a vida militar.":slug==="movimentacao"?"Planeje sua chegada e compartilhe experiências.":slug==="comunidade"?"O conhecimento da comunidade fica acessível a quem chegar depois.":"Explore possibilidades da comunidade militar em "+city+"."}</p></div>{slug!=="voce"&&slug!=="conversas"&&slug!=="salvos"&&slug!=="busca"&&createButton}</div>;
   function homePage(){
-    const services=PROVIDERS.filter(x=>x.city===city).sort((a,b)=>b.recommendations-a.recommendations).slice(0,4);
-    const opportunities=allItems.filter(x=>x.city===city&&(x.kind==="desapegos"||x.kind==="imoveis")).slice(0,4);
-    const qs=QUESTIONS.filter(q=>q.city===city&&!resolved.includes(q.id)).sort((a,b)=>a.answers.length-b.answers.length).slice(0,2);
-    const groups=GROUPS.filter(g=>g.city===city&&joined.includes(g.id));
+    const services=PROVIDERS.filter(x=>x.city===city&&!hiddenByDemo("negocio",x.id)).sort((a,b)=>b.recommendations-a.recommendations).slice(0,4);
+    const opportunities=allItems.filter(x=>x.city===city&&(x.kind==="desapegos"||x.kind==="imoveis")&&!hiddenByDemo("anuncio",x.id)).slice(0,4);
+    const qs=QUESTIONS.filter(q=>q.city===city&&!resolved.includes(q.id)&&!hiddenByDemo("pergunta",q.id)).sort((a,b)=>a.answers.length-b.answers.length).slice(0,2);
+    const groups=GROUPS.filter(g=>g.city===city&&joined.includes(g.id)&&!hiddenByDemo("grupo",g.id));
     const groupPosts=groups.flatMap(g=>g.posts.map(p=>({g,p}))).slice(0,2);
     const nextEvent=EVENTS.find(e=>e.city===city);
-    const viewed=lastViewed?allItems.find(x=>x.id===lastViewed&&x.city===city):null;
+    const viewed=lastViewed?allItems.find(x=>x.id===lastViewed&&x.city===city&&!hiddenByDemo(x.kind==="servicos"?"negocio":"anuncio",x.id)):null;
     const isMoving=moment!=="moro";
     const actions=[["Negócios",BriefcaseBusiness,"servicos"],["Desapegos",ShoppingBag,"desapegos"],["Imóveis",Building2,"imoveis"],["Indicações",Heart,"comunidade"]] as const;
     const homeSection=(heading:string,actionLabel:string,action:string)=> <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[20px] font-semibold tracking-tight">{heading}</h2><Button size="sm" variant="ghost" className="min-h-11 shrink-0 px-2 text-[12px]" onClick={()=>navigate(action)}>{actionLabel}<ArrowRight className="size-4"/></Button></div>;
