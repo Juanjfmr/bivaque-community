@@ -168,9 +168,14 @@ try {
   await p1.getByRole("heading",{name:"Comparar imóveis salvos"}).waitFor();
   await p1.getByText("Total mensal").waitFor();
   await p1.goto(url+"imoveis/",{waitUntil:"domcontentloaded"});
+  await p1.getByPlaceholder("Bairro, endereço ou imóvel").fill("Asa Norte");
   await p1.getByRole("button",{name:"Salvar busca"}).click();
   await p1.goto(url+"alertas/",{waitUntil:"domcontentloaded"});
   await p1.getByRole("heading",{name:"Buscas salvas"}).waitFor();
+  await p1.getByRole("button",{name:"Reabrir busca e filtros"}).click();
+  await p1.getByPlaceholder("Bairro, endereço ou imóvel").waitFor();
+  assert.equal(await p1.getByPlaceholder("Bairro, endereço ou imóvel").inputValue(),"Asa Norte","Saved query must be restored");
+  await p1.goto(url+"alertas/",{waitUntil:"domcontentloaded"});
   await p1.getByRole("button",{name:"Excluir alerta"}).click();
   await p1.getByText("Nenhuma busca salva").waitFor();
   assert.deepEqual(p1Errors,[],"P1 browser journey JS errors");
