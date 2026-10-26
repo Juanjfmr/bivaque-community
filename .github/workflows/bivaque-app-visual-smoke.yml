@@ -47,6 +47,9 @@ jobs:
       - name: Capture app screens (not proof mode)
         run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/visual-capture.spec.ts
 
+      - name: Capture real mobile conversations and groups
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/conversas-grupos-visual.spec.ts
+
       - name: Save test and screenshot evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -56,3 +59,4 @@ jobs:
           path: |
             apps/app/test-results/
             apps/app/artifacts/visual/
+            apps/app/artifacts/visual-mobile/
