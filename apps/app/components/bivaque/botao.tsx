@@ -19,9 +19,9 @@ import { Icone } from "./icone"
 
 export type TomDoBotao = "preenchido" | "tonal" | "texto" | "contornado" | "perigo"
 
-const VARIANTE: Record<TomDoBotao, "default" | "secondary" | "ghost" | "outline" | "destructive"> =
+const VARIANTE: Record<TomDoBotao, "brasa" | "secondary" | "ghost" | "outline" | "destructive"> =
   {
-    preenchido: "default",
+    preenchido: "brasa",
     tonal: "secondary",
     texto: "ghost",
     contornado: "outline",
