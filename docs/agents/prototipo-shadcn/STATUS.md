@@ -9,6 +9,34 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Nenhum merge, push ou deploy autorizado.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Revisão visual solicitada pelo dono — 26/10/2026
+
+**Parecer Codex: CORREÇÕES; não recomendo aceite visual ainda.** Relatório único
+em [REVISAO-VISUAL-20261026.md](REVISAO-VISUAL-20261026.md), com 12 achados,
+evidências e registro das 38 cenas nos quatro pares de tamanho/tema.
+
+Revisados os 152 pares existentes (19 pranchas, 12 ampliações), após reconferir
+174/174 fontes, hash do HTML e 152/152 hashes dos PNGs. Fonte 9af6b5aa permanece
+inalterada. Inspeção pontual no navegador confirmou Noto Sans real no h2 do anúncio
+e famílias CSS corretas; não foi registrada falha de fonte sem evidência.
+
+Primeira recomendação: corrigir V01 (largura/posição da folha Cidade desktop),
+V02 (busca duplicada) e V03 (densidade/título contextual do topo em 375 px).
+Mercado na navegação, Conversas/cidade no topo são autorizados pelo ADR §3.1;
+não desfazer essas decisões para copiar a referência antiga. Momento/chegada/saída
+continuam na onda 8, conforme o mapa APP-003; V01 não amplia esse escopo.
+
+Demais achados: imagens locais omitidas pelos consumidores, Início sem composição
+desktop/carrossel, detalhes sem organização/ações persistentes, chat simplificado,
+controles de listas/grupos ausentes, entrada e outras telas V1 incompletas. São
+pendências reais de apresentação e conteúdo; o gate verde não as aprova.
+
+Esta rodada alterou somente documentação/quadro. Não repetiu gate, E2E ou captura;
+usa as provas anteriores da mesma fonte com seu alcance declarado. Sem medição
+nova de contraste, leitor de tela, teclado virtual, movimento ou comparação em
+768 px. O aceite final continua com o dono, após correções; sem avanço de ondas,
+merge/push/deploy ou novo julgamento de R3. Monitor preservado pausado.
+
 ### Retomada autorizada — 26/10/2026
 
 O dono respondeu "Então corrija" ao bloqueio da varredura. Autoriza a correção
