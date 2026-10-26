@@ -13,20 +13,25 @@ for (const cena of CENAS) {
       await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
       await page.goto(cena.rota)
       await expect(page.locator(`[data-tela="${cena.seletor}"]`)).toBeVisible()
-      if (cena.id === "conversa") await expect(page.locator('[data-compositor-conversa="sim"]')).toBeVisible()
+      if (cena.id === "conversa")
+        await expect(page.locator('[data-compositor-conversa="sim"]')).toBeVisible()
       else await expect(page.locator('[data-controles-grupo="sim"]')).toBeVisible()
       await page.evaluate(async () => {
         await document.fonts.ready
-        await Promise.all(Array.from(document.images).map((img) =>
-          img.complete ? Promise.resolve() : img.decode().catch(() => {}),
-        ))
+        await Promise.all(
+          Array.from(document.images).map((img) =>
+            img.complete ? Promise.resolve() : img.decode().catch(() => {}),
+          ),
+        )
       })
       await page.screenshot({
         path: `artifacts/visual-mobile/${testInfo.project.name}-${cena.id}-${tema}.png`,
         animations: "disabled",
       })
       if ((page.viewportSize()?.width ?? 0) < 720) {
-        await page.locator("#conteudo").evaluate((el) => { el.scrollTop = el.scrollHeight - el.clientHeight })
+        await page.locator("#conteudo").evaluate((el) => {
+          el.scrollTop = el.scrollHeight - el.clientHeight
+        })
         await page.screenshot({
           path: `artifacts/visual-mobile/${testInfo.project.name}-${cena.id}-${tema}-fim.png`,
           animations: "disabled",
