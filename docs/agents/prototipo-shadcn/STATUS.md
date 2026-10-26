@@ -1,4 +1,20 @@
-# Fluxo vigente — decisão do dono em 25/10/2026
+# Fluxo vigente — Codex assume o front, decisão do dono em 25/10/2026
+
+O dono autorizou: "Então pode fazer", aceitando a recomendação de o Codex assumir
+apps/app até as capturas da onda 1. Esta decisão substitui os papéis/cadência anteriores
+SOMENTE no front: Codex implementa, corrige e verifica 1c, 1d e 1e diretamente, mantendo
+os critérios e a revisão de instrumentos por modelo diferente do produtor.
+DeepSeek não recebe novas execuções do app. A cadeia APP-003-C1 e sua triagem foram
+encerradas para a troca de escritor, preservando o WIP. O orçamento Flash 3/3 permanece
+encerrado; a intervenção direta do Codex foi autorizada agora pelo dono.
+R3 continua isolada no fluxo atual, com RED-007 em andamento, sem aprovação global de RLS.
+Parada obrigatória no fim da onda 1: capturas HTML à esquerda/app à direita e aceite
+visual do dono antes de prova vertical e ondas 2 a 8. Sem merge/push/deploy.
+O gate completo continua obrigatório, com variáveis públicas locais somente no processo;
+build pulado não é PASS. Não criar env.local. Monitor não deve competir com o escritor
+Codex enquanto existir .visual/coordenacao/APP-CODEX-ATIVO.txt.
+
+# Fluxo anterior — histórico de 25/10/2026
 
 Esta decisão substitui o ajuste de custo anterior e vale daqui em diante.
 
@@ -409,3 +425,99 @@ sem instalação, sem processo em segundo plano, sem commit. Só `allowed_paths`
 - Disco antes da retomada: df -h /c, 31 GiB disponíveis. Sem merge/push/deploy.
 - Próxima app: APP-003-C1, aguardando .visual/coordenacao/APP-003-C1-PRONTO.txt.
   Próxima R3: julgamento RED-005, .visual/coordenacao/RED-005-PRONTO.txt já recebido.
+
+
+## APP-003-C1 — execução da lista única de correções, rodada 3/3 (DeepSeek V4.1 Flash)
+
+Sessão de 25/10/2026, contra o WIP `b19e2982` (base de julgamento `d4810b41`).
+Sem commit, sem push, sem PRONTO. Trabalho preservado; nada fora de allowed_paths.
+
+### O que foi feito (os oito itens)
+
+1. Gate do julgador (lint): os 11 erros em allowed_paths corrigidos, sem supressão
+   e sem reduzir regra — `findIndex`→`indexOf` e papel literal por ramo em
+   `src/casca/MenuCriar.tsx`; `autoFocus`→foco por ref/efeito em
+   `src/casca/BarraDoTopo.tsx`; hífen acessível do puxador (`span`+`role`→`button`)
+   em `components/bivaque/sobreposicao.tsx`; deps de efeito provados por uso
+   (avisos, chips-de-filtro, lista-paginada); `key` sem índice em `avatar.tsx`;
+   fallback genérico da fonte em `src/styles.css`. Warnings preexistentes de
+   `apps/web` classificados e preservados.
+2. `components/ui/dialog.tsx` (lucide-react, sem consumidor) removido; nenhuma
+   dependência, package.json ou lockfile novo.
+3. Instrumentos: `acessibilidade.spec.ts` passou a medir nome acessível com
+   `toHaveAccessibleName` no alvo focado real (sem `textContent`); `casca.spec.ts`
+   confrontou a marca com o componente (`data-marca="simbolo"`, não `"topo"`).
+4. `mostraChipDeCidade` e seus testes (regra antiga de esconder a cidade) removidos;
+   a cidade no topo a 375/768/1440 fica provada pelo caso que roda nos três projetos.
+5. "Limpar busca" limpa o campo local; caso externo de digitar/limpar em
+   `casca.spec.ts`. Ícone morto de "Você" corrigido (`person`).
+6. `docs/agents/prototipo-shadcn/APP-003-cobertura.md` escrito: 52 componentes,
+   40 movimentos (itens de onda futura explícitos), 100 ícones, ações/overlays,
+   cada um com arquivo e teste.
+7. `index.html` mantido (theme-color) e tema acompanhando o sistema, inclusive ao vivo.
+8. Provas rodadas: gate, unitários e bateria E2E inteira nos três tamanhos.
+
+### Defeitos reais encontrados e corrigidos (fora da lista, mas dentro da onda)
+
+- **Foco não voltava ao acionador sem `data-valor`** (o Criar, o chip de cidade, o
+  exemplo da galeria): `seletorDoDescritor` exigia `[data-valor=""]`. Correção em
+  `lib/navegacao/entrada.ts` + teste em `tests/navegacao/entrada.test.ts`.
+- **Foco inicial do menu Criar** ia para o botão de fechar: `onOpenAutoFocus` com
+  `preventDefault` e foco na primeira escolha.
+- **Minimização da navegação nunca acontecia**: o atualizador funcional de estado
+  rodava depois de `ultimoY` ser sobrescrito; trocado por decisão síncrona com ref
+  (`src/casca/Casca.tsx`).
+- **Animação de troca de página nunca disparava**: a URL (`useLocation`) e os
+  `matches` do roteador chegam em commits diferentes; a chave passou a ser o nome
+  da rota resolvida. E o `animationend` de descendente derrubava a entrada.
+- **Overflow horizontal** no primeiro quadro (antes da fonte de ícones carregar a
+  ligadura é texto largo): `grid-template-columns: minmax(0,1fr)` na casca e
+  `overflow: clip` na barra, no conteúdo e na navegação.
+- **Galeria não restaurava foco**: faltava `useRolagemEFoco`; e a rota `/galeria`
+  caía no guard de `indisponivel` por nome — o guard agora distingue pelo caminho
+  (`lib/navegacao/react.tsx`), sem mudar o comportamento da rota de fallback.
+
+### Provas (números reais desta sessão)
+
+- `npx pnpm@11.18.0 gate` — **VERDE**: lint ok, typecheck ok, typecheck:e2e ok,
+  build:app ok, test ok, secrets ok. `build` (web) **PULOU** por falta de
+  `apps/web/.env.local` (não criado, conforme o contrato). Primeira passagem teve
+  um timeout flaky de `tests/privacy/product-boundaries-and-pii.test.ts` sob carga;
+  reexecução verde e o arquivo isolado passa em 1,2 s. Logs:
+  `.visual/coordenacao/APP-003-C1-gate.log`, `-gate2.log`, `-gate3.log`.
+- `npx pnpm@11.18.0 --filter @bivaque/app test` — **76/76 em 10 arquivos** (era 77;
+  caiu o caso do chip de cidade removido). Log `APP-003-C1-unit.log`.
+- `npx pnpm@11.18.0 --filter @bivaque/app test:e2e` — **474 passed, 12 skipped,
+  6 failed** (6,8 min), nos três viewports. Logs `APP-003-C1-e2e.log` (1ª),
+  `-e2e2.log`, `-e2e3.log`, `-e2e4.log` (final).
+  - 5 falhas reais = conflito com a bateria da APP-002 (abaixo).
+  - 1 falha flaky (`rolagem-foco.spec.ts:62`, tablet-768): reprovada uma vez sob
+    carga e **verde no reteste** (7/7 em 17,5 s) — `APP-003-C1-rolagem-reteste.log`.
+    Não alterei a bateria.
+
+### Falha que impede o fechamento — HUMAN_DECISION
+
+Cinco casos **da bateria aprovada da APP-002**, só em 375 px:
+`abas.spec.ts:151` (Salvos, Meus anúncios, busca, destino de aviso — 4) e
+`sobreposicoes.spec.ts:57` (fecha o menu Criar). Os dois fluxos clicam a barra de
+baixo (`[data-aba]`, `[data-acao="criar"]`) **a partir de uma tela de dentro** no
+celular. A §5.3 do inventário e o protótipo escondem a barra inferior em rotas não
+raiz (`syncMobileNavigation`), e a 1c implementa isso — o caso novo
+`casca.spec.ts` (linhas 141-155) confirma a barra oculta em `/app/salvos` a 375.
+
+Não há como satisfazer as duas coisas ao mesmo tempo: ou a barra continua visível
+nas telas de dentro no celular (contra a §5.3 e contra o caso novo), ou os cinco
+casos da bateria aprovada mudam de fluxo. O contrato **proíbe alterar a bateria de
+navegação para esconder a regressão**, então não toquei em `abas.spec.ts` nem em
+`sobreposicoes.spec.ts`. Decisão do dono necessária: (a) a §5.3 prevalece e a
+bateria de navegação é adaptada em sessão própria, ou (b) a barra permanece
+visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
+
+### Limites e dúvidas
+
+- O `build` do web não rodou (sem `.env.local`); o `build:app` (Vite) rodou e passou.
+- O instrumento de tema mede a **cor resolvida** do token (o build minifica
+  `rgb(...)` para hex), e não o texto bruto do token.
+- Não escrevi PRONTO e não commitei nada; a decisão e o commit são do julgador.
+- Nenhuma tela das ondas 2 a 8 foi implementada; a galeria continua prova, fora da
+  navegação real e só com o modo de prova ligado.
