@@ -30,6 +30,16 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
           NEXT_TELEMETRY_DISABLED: '1'
         run: npm run build
+      - name: Prepare export for isolated review
+        run: |
+          mkdir -p standalone-preview/bivaque-community
+          cp -a out/. standalone-preview/bivaque-community/
+      - name: Retain fully compiled standalone preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: bivaque-r72-next-shadcn-static-preview
+          path: prototypes/bivaque-next-shadcn/standalone-preview/
+          retention-days: 14
       - name: Prepare headless Chromium
         run: |
           npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.57.0
