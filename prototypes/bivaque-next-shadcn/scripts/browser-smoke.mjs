@@ -1,0 +1,61 @@
+// Real Chromium smoke tests and visual captures for the isolated shadcn branch.
+// R72 remains the visual authority; these screenshots are for manual comparison.
+import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
+import { chromium } from "playwright";
+
+const url = "http://127.0.0.1:4173/bivaque-community/";
+const output = "qa-artifacts";
+await mkdir(output, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const results = [];
+try {
+  for (const width of [375, 768, 1440]) {
+    for (const theme of ["light", "dark"]) {
+      const context = await browser.newContext({viewport:{width,height:850},colorScheme:theme,deviceScaleFactor:1});
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", error => errors.push(error.message));
+      await page.goto(url + "inicio/", {waitUntil:"domcontentloaded"});
+      await page.getByRole("heading",{name:/O que você precisa em/}).waitFor({timeout:20000});
+      await page.waitForTimeout(300);
+      const metrics=await page.evaluate(()=>({w:window.innerWidth,scroll:document.documentElement.scrollWidth}));
+      assert.ok(metrics.scroll<=metrics.w+2, "Horizontal overflow "+width+"/"+theme+" "+JSON.stringify(metrics));
+      assert.deepEqual(errors,[],"JavaScript page errors in "+width+"/"+theme);
+      const nav=page.getByRole("navigation",{name:"Navegação principal mobile"});
+      assert.equal(await nav.isVisible(),width<720,"Unexpected bottom nav at "+width);
+      if(width<720)assert.equal(await nav.getByRole("button",{name:"Abrir menu Criar"}).isVisible(),true);
+      await page.screenshot({path:output+"/inicio-"+width+"-"+theme+".png",fullPage:true,animations:"disabled"});
+      results.push({width,theme,overflow:metrics.scroll-metrics.w,jsErrors:errors.length});
+      await context.close();
+    }
+  }
+  // Browser flows rather than source-only checks.
+  const context=await browser.newContext({viewport:{width:375,height:850},colorScheme:"light"});
+  const page=await context.newPage();
+  const failures=[];
+  page.on("pageerror",err=>failures.push(err.message));
+  await page.goto(url+"inicio/",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:/O que você precisa em/}).waitFor();
+  await page.getByRole("navigation",{name:"Navegação principal mobile"}).getByRole("button",{name:"Abrir menu Criar"}).click();
+  await page.getByRole("menuitem",{name:/Anunciar moradia/}).click();
+  await page.locator("#post-title").fill("Moradia de teste QA");
+  await page.locator("#post-desc").fill("Rascunho de exemplo para verificar a persistência local.");
+  await page.getByRole("button",{name:"Salvar demonstração"}).click();
+  await page.goto(url+"imoveis/",{waitUntil:"domcontentloaded"});
+  await page.getByText("Moradia de teste QA").waitFor({timeout:10000});
+  // The search must find community groups, not just classified ads.
+  await page.goto(url+"busca/",{waitUntil:"domcontentloaded"});
+  await page.locator("#global-search").fill("Famílias militares em Brasília");
+  await page.getByRole("button",{name:/Famílias militares em Brasília/}).waitFor();
+  // Switching city cannot preserve filter data nor expose the Brasília guide.
+  await page.getByRole("button",{name:"Selecionar cidade"}).click();
+  await page.getByRole("option",{name:"Manaus"}).click();
+  await page.goto(url+"guia/",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"Guia de Manaus em preparação"}).waitFor();
+  assert.equal(await page.getByText("Considere Asa Norte").count(),0);
+  assert.deepEqual(failures,[],"Browser flow JS failures");
+  await page.screenshot({path:output+"/guia-manaus-empty-375.png",fullPage:true});
+  await context.close();
+  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation"]},null,2)+"\n");
+} finally {await browser.close();}
