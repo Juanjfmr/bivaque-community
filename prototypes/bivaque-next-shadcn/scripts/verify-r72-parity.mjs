@@ -132,3 +132,14 @@ test("R72 help, conduct, privacy, free plans and support have static routes",()=
   has(appInfo,"Sem cobrança");
   has(support,"Ela permanece somente neste navegador.");
 });
+
+test("R72 saved comparison and local search alerts have reachable controls",()=>{
+ const extras=read("components/r72-catalog-extras.tsx"),routes=read("app/[section]/page.tsx");
+ for(const r of ["comparar","alertas"])has(routes,'\"'+r+'\"');
+ has(app,"saveCatalogSearch");
+ has(app,"Comparar imóveis salvos");
+ has(app,"SearchAlertsPage");
+ has(extras,"Total mensal");
+ has(extras,"Sem distância até OM homologada");
+ has(extras,"Não enviam e-mail, push nem vigiam anúncios reais");
+});
