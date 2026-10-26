@@ -231,12 +231,12 @@ export function ListaDeMercado({
         titulo={titulo}
         subtitulo={
           inicial === "imoveis"
-            ? `Casas e apartamentos em ${casca.cidade}.`
+            ? "Aluguel e venda"
             : `O que a comunidade de ${casca.cidade} está anunciando.`
         }
         acao={
           inicial === "imoveis" ? (
-            <Botao data-acao="anunciar-imovel" icone="add" onClick={() => setCriandoImovel(true)}>
+            <Botao data-acao="anunciar-imovel" icone="add" tom="tonal" onClick={() => setCriandoImovel(true)}>
               Anunciar imóvel
             </Botao>
           ) : undefined
