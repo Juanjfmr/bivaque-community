@@ -1,4 +1,5 @@
 name: Bivaque P2 Format Once
+# rerun after P2 field corrections
 on:
   pull_request:
     paths:
