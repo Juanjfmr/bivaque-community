@@ -14,6 +14,7 @@ import {
   guardarMensagemDePrevia,
   lerMensagensDePrevia,
   origemDaConversa,
+  type MensagemDePrevia,
 } from "@/lib/contexto-conversa"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
@@ -41,7 +42,7 @@ export function Conversa() {
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [rascunho, setRascunho] = useState("")
-  const [novas, setNovas] = useState<readonly string[]>([])
+  const [novas, setNovas] = useState<readonly MensagemDePrevia[]>([])
   const [erroLocal, setErroLocal] = useState("")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
