@@ -3,10 +3,14 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
-import { LinhaDeLista } from "@/components/bivaque/lista"
+import { Icone } from "@/components/bivaque/icone"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { origemDaConversa, lerMensagensDePrevia } from "@/lib/contexto-conversa"
+import { iniciais } from "@/lib/texto"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
@@ -47,6 +51,7 @@ export function Conversas() {
       conversa,
       apresentacao: registro(conversa.apresentacao),
       ultima: ultimaMensagem(dados, conversa.id),
+      origem: origemDaConversa(conversa, dados),
     }))
   }, [dados])
 
@@ -75,15 +80,47 @@ export function Conversas() {
         />
       ) : (
         <div className="grid gap-2">
-          {conversas.map(({ conversa, apresentacao, ultima }) => (
-            <LinhaDeLista
-              key={conversa.id}
-              icone="chat_bubble"
-              titulo={texto(apresentacao["who"], "Conversa")}
-              subtitulo={ultima === "" ? "Comece a conversa" : ultima}
-              onClick={() => void navegacao.irPara("conversa", { parametros: { id: conversa.id } })}
-            />
-          ))}
+          {conversas.map(({ conversa, apresentacao, ultima, origem }) => {
+            const nome = texto(apresentacao["who"], "Conversa")
+            const mensagensLocais = lerMensagensDePrevia(casca.cidade, conversa.id)
+            const resumo = mensagensLocais[mensagensLocais.length - 1]
+            return (
+              <article
+                key={conversa.id}
+                data-thread={conversa.id}
+                className="grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+              >
+                <button
+                  type="button"
+                  className="bv-press flex min-h-14 w-full min-w-0 items-center gap-3 text-left"
+                  onClick={() => void navegacao.irPara("conversa", { parametros: { id: conversa.id } })}
+                >
+                  <Avatar size="lg">
+                    <AvatarFallback className="bg-(--secondary-container) font-semibold">{iniciais(nome)}</AvatarFallback>
+                  </Avatar>
+                  <span className="grid min-w-0 flex-1 gap-1">
+                    <b className="truncate text-sm">{nome}</b>
+                    <span className="truncate text-[13px] text-(--on-surface-variant)">
+                      {resumo === undefined ? (ultima || "Comece a conversa") : `Prévia não enviada: ${resumo}`}
+                    </span>
+                  </span>
+                  <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
+                </button>
+                {origem === null ? null : (
+                  <ContextoDaConversa
+                    origem={origem}
+                    compacto
+                    {...(origem.id === null ? {} : {
+                      aoAbrir: () => void navegacao.irPara(
+                        origem.tipo === "anuncio" ? "anuncio" : "negocio",
+                        { parametros: { id: origem.id ?? "" } },
+                      ),
+                    })}
+                  />
+                )}
+              </article>
+            )
+          })}
         </div>
       )}
     </section>
