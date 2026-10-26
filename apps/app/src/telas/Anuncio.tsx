@@ -88,7 +88,7 @@ export function Anuncio() {
     <section data-tela="anuncio" className="grid gap-2">
       <div className="relative">
         <Capa
-          fonte={null}
+          fonte={texto(apresentacao["imagem"])}
           alt={texto(apresentacao["title"], anuncio.title)}
           icone={iconeDeDado(apresentacao["icon"])}
         />
