@@ -1,3 +1,23 @@
 "use client";
-import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card";
-export function R72Info(){return <Card><CardHeader><CardTitle>Ajuda</CardTitle></CardHeader><CardContent>Informações demonstrativas do Bivaque.</CardContent></Card>}
+import * as React from "react";
+import Link from "next/link";
+import {Button} from "@/components/ui/button";
+import {Card,CardHeader,CardTitle,CardDescription,CardContent} from "@/components/ui/card";
+import {Accordion,AccordionItem,AccordionTrigger,AccordionContent} from "@/components/ui/accordion";
+import {Badge} from "@/components/ui/badge";
+import {ArrowRight} from "lucide-react";
+const legal={
+ privacidade:[["O que guardamos","Esta prévia mantém interações fictícias neste navegador. Não há conexão com cadastro ou verificação militar."],["Quem vê","Os conteúdos criados neste laboratório não são compartilhados com outros membros. Fotos ilustrativas podem ser carregadas de serviços externos."],["Seus direitos","Apague os dados locais da demonstração no perfil. Não existe conta real nesta prévia."],["Cuidado com os dados","Não informe informações pessoais, familiares, documentos, endereços exatos ou conteúdo militar sigiloso."]],
+ conduta:[["Respeito","Trate cada pessoa com educação. Não ofenda, ameace ou persiga."],["Não discriminação","Não são aceitos preconceitos de origem, cor, religião, gênero, orientação ou condição da família."],["Privacidade","Não publique dados, documentos nem fotos de outras pessoas sem permissão."],["Comércio","Não ofereça produtos que não pode entregar. O Bivaque não intermedeia pagamento."],["Denunciar","Use Denunciar no conteúdo. Nesta prévia a ação só chega ao painel fictício."]],
+};
+const help=[
+ {label:"Conta e entrada",qas:[["Quem pode participar?","Militares, veteranos, pensionistas e seus familiares na proposta nacional do Bivaque."],["Como é feita a verificação?","A verificação real depende de autenticação e infraestrutura próprias. Este protótipo simula a jornada sem coletar documentos."],["Como o familiar entra?","O produto real prevê convite de quem tem vínculo validado. Esta versão não emite convites."]]},
+ {label:"Comunidade e grupos",qas:[["Como faço uma pergunta?","Abra Comunidade e escolha Criar → Pergunta. O rascunho é local."],["Como entro em grupos restritos?","Solicite acesso na página do grupo. O pedido fica pendente no navegador, sem aprovação automática."],["Como denuncio?","Selecione Denunciar na publicação e consulte o resultado no Painel de moderação demonstrativo."]]},
+ {label:"Imóveis e negócios",qas:[["Como anuncio?","Use Criar para testar o anúncio. Somente um rascunho local é salvo."],["Como funciona a localização?","A prévia informa bairro aproximado, sem calcular distâncias nem compartilhar endereços de residências."],["Posso fazer pagamentos?","Não. O lançamento é gratuito e esta prévia não aceita pagamentos."]]},
+];
+export function R72Info({kind}:{kind:"ajuda"|"privacidade"|"conduta"|"planos"}){
+ const title=kind==="ajuda"?"Ajuda":kind==="privacidade"?"Política de privacidade":kind==="conduta"?"Código de conduta":"Planos do Bivaque";
+ return <article className="mx-auto max-w-3xl space-y-6"><header className="space-y-3 border-b pb-5"><h1 className="font-serif text-3xl">{title}</h1><p className="text-sm text-muted-foreground">Informações referentes exclusivamente à demonstração. A documentação jurídica definitiva depende de aprovação.</p></header>
+ {kind==="ajuda"?<div className="space-y-4">{help.map(t=><Card key={t.label}><CardHeader><CardTitle>{t.label}</CardTitle></CardHeader><CardContent><Accordion type="single" collapsible>{t.qas.map(([q,a],i)=><AccordionItem value={String(i)} key={q}><AccordionTrigger className="text-left">{q}</AccordionTrigger><AccordionContent>{a}</AccordionContent></AccordionItem>)}</Accordion></CardContent></Card>)}<Button asChild><Link href="/contato/">Fale com a gente <ArrowRight/></Link></Button></div>:kind==="planos"?<div className="grid gap-4 sm:grid-cols-2"><Card><CardHeader><Badge variant="secondary">Lançamento</Badge><CardTitle>Gratuito</CardTitle><CardDescription>Comunidade, perguntas, anúncios e movimentação.</CardDescription></CardHeader><CardContent><strong className="text-2xl">R$ 0</strong><p className="mt-2 text-sm text-muted-foreground">Nesta prévia, tudo é fictício.</p></CardContent></Card><Card><CardHeader><Badge variant="outline">Futuro</Badge><CardTitle>Planos comerciais</CardTitle><CardDescription>Sem cobrança, preço ou patrocínio nesta fase.</CardDescription></CardHeader></Card></div>:<><Badge variant="outline">Versão de teste · 18/10/2026</Badge>{legal[kind].map(([h,p])=><section className="space-y-2" key={h}><h2 className="font-semibold">{h}</h2><p className="text-sm leading-relaxed text-muted-foreground">{p}</p></section>)}<Button asChild variant="outline"><Link href={kind==="privacidade"?"/conduta/":"/privacidade/"}>{kind==="privacidade"?"Código de conduta":"Política de privacidade"} <ArrowRight/></Link></Button></>}
+ </article>;
+}
