@@ -48,29 +48,22 @@ test("mobile: topo e barra inferior cabem inteiros, com alvos de toque", async (
   await expect(page).toHaveURL(/\/app\/mercado$/)
 })
 
-test("mobile: cards ocupam uma coluna e foto abre o anúncio", async ({ page }) => {
+test("mobile: carrossel mostra próximo cartão e foto abre o anúncio", async ({ page }) => {
   const largura = page.viewportSize()?.width ?? 0
   test.skip(largura >= 720, "Critério de cards grandes apenas no mobile")
 
   await page.goto("/app/inicio")
-  const grade = page.locator('[data-tela="inicio"] [data-grade="cartoes"]').first()
+  const grade = page.locator('[data-tela="inicio"] [data-grade="carrossel-mobile"]').first()
   await expect(grade).toBeVisible()
   const itens = grade.locator("[data-cartao]")
   await expect(itens.first()).toBeVisible()
-  const colunas = await itens.evaluateAll((elementos) =>
-    elementos.slice(0, 2).map((elemento) => {
-      const caixa = elemento.getBoundingClientRect()
-      return { x: caixa.x, largura: caixa.width }
-    }),
-  )
-  if (colunas.length === 2) {
-    const primeiro = colunas[0]
-    const segundo = colunas[1]
-    if (primeiro && segundo) {
-      expect(Math.abs(primeiro.x - segundo.x)).toBeLessThan(2)
-      expect(primeiro.largura).toBeGreaterThan(largura * 0.8)
-    }
-  }
+  const dimensoes = await grade.evaluate((elemento) => ({
+    largura: elemento.clientWidth,
+    rolagem: elemento.scrollWidth,
+    primeira: elemento.querySelector("[data-cartao]")?.getBoundingClientRect().width ?? 0,
+  }))
+  expect(dimensoes.rolagem).toBeGreaterThan(dimensoes.largura)
+  expect(dimensoes.primeira).toBeLessThan(dimensoes.largura)
 
   // Não pode ser necessário encontrar uma ação escondida sob a foto.
   await page.goto("/app/desapegos")
