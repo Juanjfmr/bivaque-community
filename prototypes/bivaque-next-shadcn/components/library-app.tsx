@@ -111,6 +111,7 @@ export default function LibraryApp(){
   const [groupPosts,setGroupPosts]=React.useState<DemoGroupPost[]>([]);
   const [groupText,setGroupText]=React.useState("");
   const [groupReply,setGroupReply]=React.useState<Record<string,string>>({});
+  const [groupComments,setGroupComments]=React.useState<Record<string,string[]>>({});
   const [groupLikes,setGroupLikes]=React.useState<string[]>([]);
   const [going,setGoing]=React.useState<string[]>([]);
   const [moment,setMoment]=React.useState("moro");
@@ -149,8 +150,8 @@ export default function LibraryApp(){
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGroupRequests(v.groupRequests||[]);setGroupPosts(v.groupPosts||[]);setGroupLikes(v.groupLikes||[]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,groupRequests,groupPosts,groupLikes,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,groupRequests,groupPosts,groupLikes,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports]);
+  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGroupRequests(v.groupRequests||[]);setGroupPosts(v.groupPosts||[]);setGroupLikes(v.groupLikes||[]);setGroupComments(v.groupComments||{});setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
@@ -198,7 +199,7 @@ export default function LibraryApp(){
   function submitGroupReply(e:React.FormEvent,postId:string){
     e.preventDefault();const text=(groupReply[postId]||"").trim();
     if(text.length<3)return;
-    setGroupPosts(v=>v.map(p=>p.id===postId?{...p,replies:[...p.replies,text]}:p));
+    setGroupComments(v=>({...v,[postId]:[...(v[postId]||[]),text]}));
     setGroupReply(v=>({...v,[postId]:""}));toast.info("Comentário salvo localmente");
   }
   function shareDemoLink(){const link=window.location.href;
