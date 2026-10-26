@@ -1,5 +1,28 @@
 # APP-007 — bloqueio do fechamento, 26/10/2026
 
+## Resolução — 26/10/2026
+
+Bloqueio técnico superado pela autorização abaixo. Correção **b0416a49**:
+leituras aguardadas em lotes de 32 e coleta por dirents, preservando regras,
+fontes, erros e ordem, sem aumentar timeout. Qwen aprovou o instrumento final
+em `.visual/coordenacao/APP-SCAN-ASYNC-revisao.md`. Gate completo VERDE:
+privacidade 189/189, raiz 1.726/1.726, app 84/84, mobile 76/76, web 19/19,
+escopo 150/150 e segredos PASS; log APP-SCAN-ASYNC-gate.log.
+Conferência estrutural também PASS. Fonte do app integrada localmente em
+**9af6b5aa**; aceite visual e jornadas incompletas continuam pendentes.
+As listas seguintes ficam como histórico dos FAILs, não como bloqueio atual.
+
+## Retomada autorizada pelo dono
+
+"Então corrija" autorizou nova correção focal em 26/10. O primeiro ajuste,
+usando dirents e as mesmas fontes, ainda excedeu o limite no gate: 5.085 ms.
+Log `.visual/coordenacao/APP-SCAN-gate-dirent-fail.log`. Esse FAIL foi preservado.
+A correção seguinte usa leituras aguardadas em lotes limitados, com a mesma
+ordem e regras. Não é renovação automática nem novo lote artificial: é a mesma
+tarefa retomada explicitamente pelo dono. Gate e revisão final em andamento.
+
+## Histórico das três tentativas anteriores à autorização
+
 Os três defeitos da V1 foram corrigidos; o fechamento técnico continua **FAIL**.
 Três execuções completas do gate falharam por timeout, sem alterar os limites:
 

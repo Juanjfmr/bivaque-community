@@ -9,7 +9,61 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Nenhum merge, push ou deploy autorizado.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
-## APP-007 — reparos medidos; fechamento FAIL/HUMAN_DECISION, 26/10/2026
+### Retomada autorizada — 26/10/2026
+
+O dono respondeu "Então corrija" ao bloqueio da varredura. Autoriza a correção
+focal do instrumento e nova prova global pelo Codex; preservado o FAIL anterior.
+A comparação começa pela coleta/leitura/regex na árvore atual e na base limpa.
+Não ampliar timeout, reduzir fontes ou declarar PASS por teste focal.
+
+## APP-007 — bloqueio resolvido e fechamento técnico, 26/10/2026
+
+- Autorização direta "Então corrija" executada. Auditor corrigido em **b0416a49**:
+  coleta por dirents, stat preservado para links, leituras aguardadas em lotes
+  de 32, mesma ordem/regexes/extensões/exclusões e seis testes originais.
+  Sem timeout ampliado, cache de fonte, dependência nova ou custo fora do teste.
+- Diagnóstico inicial: filesystem respondeu por 5,34 dos 5,57 s. Primeiro
+  ajuste de coleta foi insuficiente no gate (5.085 ms; FAIL preservado).
+  Com leituras em lotes, ensaio alternado deu 0,24–0,71 s contra 1,19–2,71 s
+  do original, sobre os mesmos **1.786 caminhos**. Fixture independente
+  confrontou o fonte Git 7f48b14e e o atual: hits diretos/via junction, exclusões,
+  link quebrado, EACCES, 69 hits em três lotes, ordem fora de conclusão e teto
+  externo de 32 leituras. Artefatos APP-SCAN-paridade-assincrona.* em `.visual/coordenacao/`.
+- A base limpa temporária foi movida para fora do workspace após se detectar
+  descoberta duplicada de testes. O resultado duplicado 378/378 foi descartado
+  como prova canônica; focal correto **189/189**, nove arquivos, e execução
+  global posterior também 189/189. Base preservada em
+  `C:/Users/juana/.codex/tmp/bivaque-app-scan-20261026-7f48b14e`.
+- Qwen aprovou a versão final para medição, sem correções exigidas:
+  `.visual/coordenacao/APP-SCAN-ASYNC-revisao.md`. Limites registrados: atraso
+  forçado só no primeiro lote; ordem do fixture depende do host NTFS e falha
+  vermelho se divergir; diagnóstico isolado não substitui Vitest. Sem aprovação
+  de UI/RLS por essa revisão. Processos próprios da revisão encerrados; nenhum
+  chrome-devtools-mcp próprio pendente.
+- **Gate completo VERDE**, com públicas locais somente no processo e
+  `VITEST_MAX_WORKERS=1`: lint 21 s, tipos 35 s, tipos E2E 16 s, Next 158 s,
+  Vite 57 s, testes 117 s, segredos 16 s. Raiz **1.726/1.726**, app **84/84**,
+  mobile **76/76**, web **19/19**, privacidade **189/189**, escopo **150/150**,
+  secrets PASS. Treze warnings e 51 infos de lint, avisos de fontes públicas
+  no build e chunk grande foram não bloqueantes; nenhum build pulado.
+  Log `.visual/coordenacao/APP-SCAN-ASYNC-gate.log` (também final-gate).
+- Conferência estrutural de **1.203 entradas PASS**, log APP-SCAN-cobertura.log.
+  As **174 fontes do app continuam idênticas** à captura e aos E2E anteriores:
+  preservados **509 passed/16 skipped** e **152 pares**, sem fingir nova execução
+  de navegador ou nova captura. Esses resultados cobrem a mesma fonte; o gate
+  acima é novo. Manifesto original base 651ebea6 sujo permanece histórico.
+- Base e V1 preservadas e commitadas localmente em **9af6b5aa**, incluindo os
+  três reparos de navegação/resposta/indisponível. Associação dos hashes da captura
+  à fonte integrada em `.visual/coordenacao/APP-SCAN-fontes-integradas.json`.
+  Isso encerra APP-007 tecnicamente; não aprova todas as jornadas V1.
+- **Pendente do dono: aceite visual da onda 1.** Pares em
+  `.visual/onda-1/pares-2026-10-26T11-41-20-974Z/index.html`, HTML à esquerda.
+  Diferenças de fotos, coluna desktop, topo/cidade e telas incompletas continuam
+  explícitas. Não iniciar prova vertical/ondas seguintes por este PASS, nem
+  remover apps/prototipo. R3/RED-007 e revisão final de segurança continuam
+  independentes e não foram julgadas neste reparo. Sem merge/push/deploy/env.local.
+
+## Histórico APP-007 — FAIL anterior à correção autorizada, 26/10/2026
 
 - Codex preservou a fundação e as telas V1 do DeepSeek. Corrigiu resposta que
   era descartada, paleta fora do histórico e carregamento infinito em sete

@@ -5324,7 +5324,7 @@
       "id": "APP-001",
       "title": "SPA nova: onda 1, base e navegação",
       "category": "frontend",
-      "description": "Onda 1a a 1e do PLANO-ONDAS. Codex reassumiu em 26/10, preservou a V1 do DeepSeek e mediu os reparos APP-007. Fechamento bloqueado por timeout de privacidade; sem aceite visual ou ondas 2–8 aprovadas.",
+      "description": "Codex preservou a base e V1 DeepSeek em 9af6b5aa. APP-007 encerrada tecnicamente após correção do auditor b0416a49, revisão independente e gate completo verde. Aceite visual da onda 1 e jornadas V1 incompletas continuam pendentes.",
       "checklist": [
         "Esqueleto e gate com versões fixas",
         "Navegação testada antes das telas",
@@ -5339,7 +5339,8 @@
         "25/10 julgamento Codex: gate completo verde; 38/38 unitários e 288/288 E2E em 375/768/1440. CORREÇÕES por /app responder 404 enquanto /app/ responde 200; carga ativa mutada no render e dívida do catálogo. Contrato APP-006 R2 validado; 1c não liberada. Logs em .visual/coordenacao/APP-002-julgamento-*.log; árvore da 1b ainda sem commit.",
         "25/10 julgamento APP-006 APROVADO localmente e navegação integrada em abc67b54: gate completo sem pular etapas, app 38/38, escopo 143/143, E2E 291/291 nos três viewports. /app sem barra, foco/carga e controles anteriores provados. 1c liberada por APP-003; comparação visual e aceite do dono aguardam 1e, sem avanço às ondas 2 a 8.",
         "25/10 julgamento APP-003 CORREÇÕES: gate FAIL lint11erros; app77/77 unitários. Sem nova prova de build/E2E. Lista única APP-003-correcoes-1.md; retomada C1 usa apenas rodada restante3/3. Código 1c sem aprovação.",
-        "26/10 APP-007: três defeitos V1 corrigidos em WIP; Qwen aprovou instrumento focal; E2E completo 509 passed/16 skipped/0 failed; app84/84; scope150/150 e secrets separados verdes. Gate FAIL após três tentativas, privacidade188/189; focal6/6. Captura atual152pares em .visual/onda-1/pares-2026-10-26T11-41-20-974Z/, manifesto base651ebea6 sujo. Conferência de cobertura recusa gate vermelho. Não aprova onda1, ondas2–8 ou RLS."
+        "26/10 APP-007: três defeitos V1 corrigidos em WIP; Qwen aprovou instrumento focal; E2E completo 509 passed/16 skipped/0 failed; app84/84; scope150/150 e secrets separados verdes. Gate FAIL após três tentativas, privacidade188/189; focal6/6. Captura atual152pares em .visual/onda-1/pares-2026-10-26T11-41-20-974Z/, manifesto base651ebea6 sujo. Conferência de cobertura recusa gate vermelho. Não aprova onda1, ondas2–8 ou RLS.",
+        "26/10: dono autorizou Então corrija. Auditor b0416a49 usa leituras aguardadas em lotes32, sem relaxar fontes/timeout; Qwen aprovou instrumento final. Gate completo VERDE: raiz1726/app84/mobile76/web19/privacidade189/escopo150/secrets. Conferência1203entradas PASS. Fonte app9af6b5aa idêntica em174hashes aos E2E509passed16skipped e152pares anteriores; não se alegam novos E2E/capturas. APP-007 fechada tecnicamente, aceite visual pendente. Logs APP-SCAN-ASYNC-gate.log e APP-SCAN-cobertura.log."
       ],
       "links": [
         "docs/agents/tasks/APP-001.task.yml",
@@ -5352,16 +5353,15 @@
         "docs/agents/tasks/APP-007-bloqueio.md",
         "docs/agents/prototipo-shadcn/APP-005-cobertura.md"
       ],
-      "sourceRevision": "651ebea6",
+      "sourceRevision": "9af6b5aab57da01ae8a431cd8c8406c5ddf02c8a",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "blocked",
+      "status": "now",
       "tests": [],
       "dependencies": [],
       "updatedAt": "2026-10-26",
       "blockers": [
-        "APP-007: três gates vermelhos por timeout; último em privacidade 188/189. Orçamento encerrado, lista única APP-007-bloqueio.md; sem commit funcional aprovado.",
-        "Fidelidade visual e aceite do dono pendentes; não avançar prova vertical nem remover apps/prototipo."
+        "Aceite visual do dono para a onda 1 pendente; diferenças da V1 registradas no STATUS. Sem prova vertical ou remoção de apps/prototipo."
       ],
       "completedChecklist": [true, true, false, true, false]
     },

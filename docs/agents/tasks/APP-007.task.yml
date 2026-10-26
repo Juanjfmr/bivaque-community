@@ -1,6 +1,7 @@
 task_id: APP-007
 objective: A V1 permite responder sem perder texto, fechar a paleta por Voltar e sair do carregamento de registros inexistentes, com provas no modo normal.
 authority:
+  - Decisão direta do dono em 26/10/2026, Então corrija, autorizando correção focal da varredura e nova prova global
   - Decisão direta do dono em 26/10/2026, Segue você agora, após a revisão da V1
   - docs/decisions/ADR-20261024-front-react-spa.md
   - docs/agents/prototipo-shadcn/STATUS.md
@@ -8,6 +9,7 @@ baseline:
   status: FAIL-EVIDENCED
   evidence: APP-ONDAS-runtime-Codex.json reproduz os três defeitos; APP-REAL-C1-vermelho-mobile.log tem 2 falhas e APP-REAL-C1-vermelho-desktop.log tem 1 falha no navegador.
 allowed_paths:
+  - tests/privacy/product-boundaries-and-pii.test.ts
   - apps/app/src/telas/
   - apps/app/src/casca/
   - apps/app/lib/navegacao/entrada.ts
@@ -25,6 +27,8 @@ forbidden:
   - alegar ondas 2 a 8 completas, aceite visual ou segurança do banco por este reparo
   - merge, push, deploy, force-push ou env.local
 acceptance:
+  - Varredura preserva fontes, exclusões e resultados, reduz custo de filesystem e mantém o timeout original, com revisão independente
+  - Leituras aguardadas em lotes de até 32 preservam ordem e propagam erro; paridade cobre hits reais, links, conclusão fora de ordem e EACCES
   - Resposta não vazia entra na lista da pergunta em memória, mantém entradas repetidas distintas e só então limpa o campo
   - Paleta usa o histórico único; Voltar fecha antes de sair, escolha não deixa camada fantasma e diálogo mantém foco contido e devolvido
   - Sete detalhes diferenciam carga pendente de registro não encontrado e oferecem retorno ao Início
