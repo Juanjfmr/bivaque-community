@@ -22,14 +22,21 @@ export function Grade({
     lista: "grid gap-2",
     pilha: "grid gap-3",
   } as const
+  if (formato === "carrossel-mobile") {
+    return (
+      <div
+        data-grade={formato}
+        className={cn(formatos[formato], className)}
+        tabIndex={0}
+        role="region"
+        aria-label="Deslize para explorar cartões"
+      >
+        {children}
+      </div>
+    )
+  }
   return (
-    <div
-      data-grade={formato}
-      className={cn(formatos[formato], className)}
-      tabIndex={formato === "carrossel-mobile" ? 0 : undefined}
-      role={formato === "carrossel-mobile" ? "region" : undefined}
-      aria-label={formato === "carrossel-mobile" ? "Deslize para explorar cartões" : undefined}
-    >
+    <div data-grade={formato} className={cn(formatos[formato], className)}>
       {children}
     </div>
   )
