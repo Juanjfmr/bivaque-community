@@ -50,7 +50,7 @@ test("R72 P0: Perguntar salva apenas nesta sessão e abre detalhe válido", asyn
   await expect(page).toHaveURL(/\/app\/pergunta\/pergunta-demo-/)
   await expect(page.getByText("Alguém indica uma escola para crianças pequenas?")).toBeVisible()
   await page.goto("/app/comunidade")
-  await page.getByRole("button", { name: "Filtrar por Minhas" }).click()
+  await page.locator('[data-tela="comunidade"] [data-chip="mine"]').click()
   await expect(page.getByText("Alguém indica uma escola para crianças pequenas?")).toBeVisible()
 })
 
