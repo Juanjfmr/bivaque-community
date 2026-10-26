@@ -36,6 +36,7 @@ export function BarraDoTopo({
     <header
       data-casca="topo"
       data-topo="barra"
+      data-rota={rota.nome}
       data-docada={docada ? "sim" : "nao"}
       data-titulo-pode-subir={podeSubir ? "sim" : "nao"}
     >
