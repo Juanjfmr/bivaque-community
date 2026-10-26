@@ -233,6 +233,8 @@ export function Busca() {
                       anuncio={{
                         id: anuncio.id,
                         fonte: texto(apresentacao["imagem"]),
+                        rotulo: texto(apresentacao["flag"]) || undefined,
+                        porMes: texto(apresentacao["per"]) === "/mês",
                         titulo: texto(apresentacao["title"], anuncio.title),
                         preco:
                           typeof anuncio.price_cents === "number"
