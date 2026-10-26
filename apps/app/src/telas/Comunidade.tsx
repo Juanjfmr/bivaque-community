@@ -216,6 +216,7 @@ export function Comunidade() {
                 key={negocio.id}
                 negocio={{
                   id: negocio.id,
+                  fonte: texto(apresentacao["imagem"]),
                   nome: texto(apresentacao["name"], negocio.display_name),
                   categoria: texto(apresentacao["cat"], negocio.category ?? ""),
                   cidade: casca.cidade,
