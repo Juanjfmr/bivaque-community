@@ -82,7 +82,7 @@ export function MeusAnuncios() {
             </div>
           ))}
         </section>
-      ) : null}
+      )}
 
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
