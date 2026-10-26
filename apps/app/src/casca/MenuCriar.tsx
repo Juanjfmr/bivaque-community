@@ -8,16 +8,16 @@ import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
 import { Icone } from "@/components/bivaque/icone"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao } from "@/lib/navegacao/react"
-import { CHAVE_ABERTURA_IMOVEL, PEDIDO_CRIAR_IMOVEL } from "@/lib/rascunhos-imoveis"
 import {
   CHAVE_ABERTURA_PERGUNTA,
   PEDIDO_PERGUNTAR,
   TIPOS_RASCUNHO,
   type TipoRascunho,
 } from "@/lib/rascunhos-criacao"
-import { useCasca } from "@/src/contexto/casca"
+import { CHAVE_ABERTURA_IMOVEL, PEDIDO_CRIAR_IMOVEL } from "@/lib/rascunhos-imoveis"
 import { cn } from "@/lib/utils"
 import { useStateComMidia } from "@/src/casca/midia"
+import { useCasca } from "@/src/contexto/casca"
 
 /**
  * O menu Criar (inventário §5.4).
@@ -86,7 +86,10 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
     const menu = popup.current
     const ancora = document.querySelector('[data-criar="botao"]')?.getBoundingClientRect()
     if (!menu || !ancora) return
-    const largura = Math.min(painel || tipo !== null || concluido ? 620 : 262, window.innerWidth - 24)
+    const largura = Math.min(
+      painel || tipo !== null || concluido ? 620 : 262,
+      window.innerWidth - 24,
+    )
     const central = window.innerWidth < 720
     const esquerda = painel
       ? ancora.left
@@ -136,7 +139,11 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       data-escolha={escolha.id}
       onClick={() => {
         if (escolha.id === "ask") {
-          try { window.sessionStorage.setItem(CHAVE_ABERTURA_PERGUNTA, "1") } catch { /* sem storage */ }
+          try {
+            window.sessionStorage.setItem(CHAVE_ABERTURA_PERGUNTA, "1")
+          } catch {
+            /* sem storage */
+          }
           void navegacao.irPara("comunidade").then(() => {
             window.dispatchEvent(new Event(PEDIDO_PERGUNTAR))
           })
@@ -254,13 +261,19 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           ) : null}
 
           {tipo !== null ? (
-            <div data-criar-etapa="formulario" className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2">
+            <div
+              data-criar-etapa="formulario"
+              className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2"
+            >
               <FormularioDeCriacao
                 key={tipo}
                 tipo={tipo}
                 cidade={casca.cidade}
                 aoCancelar={() => setTipo(null)}
-                aoConcluir={() => { setTipo(null); setConcluido(true) }}
+                aoConcluir={() => {
+                  setTipo(null)
+                  setConcluido(true)
+                }}
               />
             </div>
           ) : concluido ? (
@@ -270,8 +283,12 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
                 Este conteúdo não foi publicado. Você pode consultá-lo e excluí-lo em Meus anúncios.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>Ver meus rascunhos</Botao>
-                <Botao tom="contornado" onClick={() => setConcluido(false)}>Criar outro</Botao>
+                <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>
+                  Ver meus rascunhos
+                </Botao>
+                <Botao tom="contornado" onClick={() => setConcluido(false)}>
+                  Criar outro
+                </Botao>
               </div>
             </div>
           ) : painel ? (

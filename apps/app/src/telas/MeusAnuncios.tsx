@@ -12,13 +12,13 @@ import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
 import {
   DEFINICOES_CRIAR,
   excluirRascunhoCriacao,
   lerRascunhosCriacao,
   type RascunhoCriacao,
 } from "@/lib/rascunhos-criacao"
+import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
 import { registro, texto } from "@/src/telas/comum"
 
@@ -106,10 +106,16 @@ export function MeusAnuncios() {
             Pedidos, encontros, negócios e desapegos ainda não são visíveis para outros membros.
           </p>
           {outros.map((item) => (
-            <article key={item.id} data-rascunho-criacao={item.tipo} className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)">
+            <article
+              key={item.id}
+              data-rascunho-criacao={item.tipo}
+              className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)"
+            >
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <span className="grid min-w-0 grow gap-1">
-                  <small className="text-xs font-medium text-(--on-surface-variant)">{DEFINICOES_CRIAR[item.tipo].nome}</small>
+                  <small className="text-xs font-medium text-(--on-surface-variant)">
+                    {DEFINICOES_CRIAR[item.tipo].nome}
+                  </small>
                   <b className="break-words text-sm">{item.titulo}</b>
                   <small className="text-xs text-(--on-surface-variant)">{item.complemento}</small>
                 </span>
@@ -117,20 +123,32 @@ export function MeusAnuncios() {
                   tom="texto"
                   data-acao="detalhes-rascunho"
                   aria-expanded={expandido === item.id}
-                  onClick={() => setExpandido((atual) => atual === item.id ? null : item.id)}
+                  onClick={() => setExpandido((atual) => (atual === item.id ? null : item.id))}
                 >
                   {expandido === item.id ? "Fechar" : "Ver"}
                 </Botao>
               </div>
               {expandido === item.id ? (
-                <div data-detalhes-rascunho={item.id} className="grid gap-2 border-t border-(--outline-variant) pt-2">
+                <div
+                  data-detalhes-rascunho={item.id}
+                  className="grid gap-2 border-t border-(--outline-variant) pt-2"
+                >
                   <p className="whitespace-pre-wrap break-words text-sm">{item.descricao}</p>
-                  {item.valor === null ? null : <p className="text-sm">Preço solicitado: {moeda(item.valor)}</p>}
-                  {item.horario === null ? null : <p className="text-sm">Data informada: {item.horario.replace("T", " ")}</p>}
+                  {item.valor === null ? null : (
+                    <p className="text-sm">Preço solicitado: {moeda(item.valor)}</p>
+                  )}
+                  {item.horario === null ? null : (
+                    <p className="text-sm">Data informada: {item.horario.replace("T", " ")}</p>
+                  )}
                   {confirmar === item.id ? (
-                    <fieldset aria-label="Confirmar exclusão" className="flex flex-wrap items-center justify-end gap-2">
+                    <fieldset
+                      aria-label="Confirmar exclusão"
+                      className="flex flex-wrap items-center justify-end gap-2"
+                    >
                       <small className="text-xs">Excluir rascunho desta sessão?</small>
-                      <Botao tom="texto" onClick={() => setConfirmar(null)}>Cancelar</Botao>
+                      <Botao tom="texto" onClick={() => setConfirmar(null)}>
+                        Cancelar
+                      </Botao>
                       <Botao
                         tom="contornado"
                         data-acao="confirmar-exclusao-rascunho"
@@ -150,14 +168,24 @@ export function MeusAnuncios() {
                     </fieldset>
                   ) : (
                     <div className="flex justify-end">
-                      <Botao tom="texto" data-acao="excluir-rascunho-criacao" onClick={() => setConfirmar(item.id)}>Excluir rascunho</Botao>
+                      <Botao
+                        tom="texto"
+                        data-acao="excluir-rascunho-criacao"
+                        onClick={() => setConfirmar(item.id)}
+                      >
+                        Excluir rascunho
+                      </Botao>
                     </div>
                   )}
                 </div>
               ) : null}
             </article>
           ))}
-          {erroLocal === "" ? null : <p role="alert" className="text-xs text-(--destructive)">{erroLocal}</p>}
+          {erroLocal === "" ? null : (
+            <p role="alert" className="text-xs text-(--destructive)">
+              {erroLocal}
+            </p>
+          )}
         </section>
       )}
 

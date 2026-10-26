@@ -19,12 +19,21 @@ export type TipoRascunho = (typeof TIPOS_RASCUNHO)[number]
 
 export const DEFINICOES_CRIAR: Record<
   TipoRascunho,
-  { titulo: string; nome: string; contexto: string; principal: string; detalhe: string; secundario: string; exemplo: string }
+  {
+    titulo: string
+    nome: string
+    contexto: string
+    principal: string
+    detalhe: string
+    secundario: string
+    exemplo: string
+  }
 > = {
   "create-request": {
     titulo: "Pedir um serviço",
     nome: "Pedido de serviço",
-    contexto: "Descreva a necessidade para comparar empresas locais quando o serviço estiver disponível.",
+    contexto:
+      "Descreva a necessidade para comparar empresas locais quando o serviço estiver disponível.",
     principal: "Qual serviço você precisa?",
     detalhe: "Descreva o serviço",
     secundario: "Bairro de atendimento",
@@ -51,7 +60,8 @@ export const DEFINICOES_CRIAR: Record<
   "create-event": {
     titulo: "Criar encontro",
     nome: "Encontro",
-    contexto: "Planeje um encontro para a comunidade. Nenhum convite será enviado nesta demonstração.",
+    contexto:
+      "Planeje um encontro para a comunidade. Nenhum convite será enviado nesta demonstração.",
     principal: "Nome do encontro",
     detalhe: "O que será feito?",
     secundario: "Local do encontro",
@@ -80,7 +90,10 @@ export type RascunhoCriacao = {
   criadoEm: string
 }
 
-type Formulario = Pick<RascunhoCriacao, "titulo" | "complemento" | "descricao" | "valor" | "horario">
+type Formulario = Pick<
+  RascunhoCriacao,
+  "titulo" | "complemento" | "descricao" | "valor" | "horario"
+>
 
 function chave(cidade: string): string {
   return `bivaque:criacao-rascunhos:${cidade.trim().toLocaleLowerCase("pt-BR")}`
@@ -131,10 +144,12 @@ export function criarRascunhoCriacao(
     complemento.length > 100 ||
     descricao.length < 10 ||
     descricao.length > 1200 ||
-    ((tipo === "create-item") && (formulario.valor === null || formulario.valor <= 0)) ||
-    ((tipo === "create-event") && (!formulario.horario || Number.isNaN(Date.parse(formulario.horario)))) ||
+    (tipo === "create-item" && (formulario.valor === null || formulario.valor <= 0)) ||
+    (tipo === "create-event" &&
+      (!formulario.horario || Number.isNaN(Date.parse(formulario.horario)))) ||
     (formulario.valor !== null && (!Number.isFinite(formulario.valor) || formulario.valor < 0))
-  ) return null
+  )
+    return null
   const item: RascunhoCriacao = {
     id: idLocal("rascunho-criacao-"),
     tipo,
@@ -147,7 +162,10 @@ export function criarRascunhoCriacao(
     criadoEm: new Date().toISOString(),
   }
   try {
-    window.sessionStorage.setItem(chave(cidade), JSON.stringify([item, ...lerRascunhosCriacao(cidade)].slice(0, 30)))
+    window.sessionStorage.setItem(
+      chave(cidade),
+      JSON.stringify([item, ...lerRascunhosCriacao(cidade)].slice(0, 30)),
+    )
     return item
   } catch {
     return null
@@ -156,7 +174,10 @@ export function criarRascunhoCriacao(
 
 export function excluirRascunhoCriacao(cidade: string, id: string): boolean {
   try {
-    window.sessionStorage.setItem(chave(cidade), JSON.stringify(lerRascunhosCriacao(cidade).filter((item) => item.id !== id)))
+    window.sessionStorage.setItem(
+      chave(cidade),
+      JSON.stringify(lerRascunhosCriacao(cidade).filter((item) => item.id !== id)),
+    )
     return true
   } catch {
     return false

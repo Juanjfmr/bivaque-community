@@ -84,14 +84,20 @@ export function Comunidade() {
 
   useEffect(() => {
     const abrirPergunta = () => {
-      try { window.sessionStorage.removeItem(CHAVE_ABERTURA_PERGUNTA) } catch { /* sem persistência */ }
+      try {
+        window.sessionStorage.removeItem(CHAVE_ABERTURA_PERGUNTA)
+      } catch {
+        /* sem persistência */
+      }
       setAba("ind")
       setCriandoPergunta(true)
     }
     window.addEventListener(PEDIDO_PERGUNTAR, abrirPergunta)
     try {
       if (window.sessionStorage.getItem(CHAVE_ABERTURA_PERGUNTA) === "1") abrirPergunta()
-    } catch { /* CTA no cabeçalho continua disponível */ }
+    } catch {
+      /* CTA no cabeçalho continua disponível */
+    }
     return () => window.removeEventListener(PEDIDO_PERGUNTAR, abrirPergunta)
   }, [])
 

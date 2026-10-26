@@ -3,11 +3,7 @@
 import { useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
-import {
-  criarRascunhoCriacao,
-  DEFINICOES_CRIAR,
-  type TipoRascunho,
-} from "@/lib/rascunhos-criacao"
+import { criarRascunhoCriacao, DEFINICOES_CRIAR, type TipoRascunho } from "@/lib/rascunhos-criacao"
 
 export function FormularioDeCriacao({
   tipo,
@@ -102,13 +98,21 @@ export function FormularioDeCriacao({
           area
           nota="Informe ao menos 10 caracteres. Evite documentos pessoais, telefones e endereços privados."
         />
-        {erro !== "" ? <p role="alert" className="text-sm text-(--destructive)">{erro}</p> : null}
+        {erro !== "" ? (
+          <p role="alert" className="text-sm text-(--destructive)">
+            {erro}
+          </p>
+        ) : null}
         <p className="text-xs text-(--on-surface-variant)">
           Apenas rascunho local de {cidade}. Nada será enviado a outros membros.
         </p>
         <div className="flex justify-end gap-2">
-          <Botao type="button" tom="texto" onClick={aoCancelar}>Voltar</Botao>
-          <Botao type="submit" data-acao="salvar-rascunho-criacao">Salvar rascunho</Botao>
+          <Botao type="button" tom="texto" onClick={aoCancelar}>
+            Voltar
+          </Botao>
+          <Botao type="submit" data-acao="salvar-rascunho-criacao">
+            Salvar rascunho
+          </Botao>
         </div>
       </form>
     </div>
