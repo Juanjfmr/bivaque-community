@@ -633,6 +633,35 @@
   }
 }
 
+/* Carrossel responsivo da R72: o próximo cartão fica visível como convite ao gesto.
+   No desktop continua a grade de colunas, sem carrossel forçado. */
+@media (max-width: 719.98px) {
+  .bv-grade.bv-carrossel-mobile {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 2px;
+    gap: 12px;
+    padding: 2px 2px 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bv-grade.bv-carrossel-mobile::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bv-carrossel-mobile > [data-cartao] {
+    flex: 0 0 min(82%, 340px);
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
