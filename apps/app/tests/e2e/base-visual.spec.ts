@@ -1,9 +1,10 @@
-import { abrir, abrirGaleria, expect, test } from "./apoio"
+import { expect, test } from "@playwright/test"
 
 // Regressões V13–V15 da auditoria visual de 26/10/2026.
 // Testes executados pelos projetos 375, 768 e 1440 do app.
 test("V13: filtros continuam em uma faixa sem selecionar duas linhas", async ({ page }) => {
-  await abrir(page, "/app/busca")
+  await page.goto("/app/busca")
+  await expect(page.locator('[data-tela="busca"]')).toBeVisible()
   const faixa = page.locator('[data-tela="busca"] [data-segmento="sim"]')
   const chips = faixa.locator("[data-chip]")
   await expect(chips).toHaveCount(6)
@@ -37,7 +38,8 @@ test("V13: filtros continuam em uma faixa sem selecionar duas linhas", async ({ 
 })
 
 test("V14: perguntas mostram o título completo sem truncar no celular", async ({ page }) => {
-  await abrir(page, "/app/comunidade")
+  await page.goto("/app/comunidade")
+  await expect(page.locator('[data-tela="comunidade"]')).toBeVisible()
   const titulo = page.locator('[data-tela="comunidade"] [data-titulo-linha]').first()
   await expect(titulo).toBeVisible()
   await expect(titulo).not.toBeEmpty()
@@ -53,7 +55,12 @@ test("V14: perguntas mostram o título completo sem truncar no celular", async (
 })
 
 test("V15: o botão preenchido usa a Brasa oficial em claro e escuro", async ({ page }) => {
-  await abrirGaleria(page)
+  await page.addInitScript(() => {
+    ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ =
+      true
+  })
+  await page.goto("/app/galeria")
+  await expect(page.locator('[data-tela="galeria"]')).toBeVisible()
   const botao = page.locator('[data-galeria="botao"] [data-exemplo="botao-padrao"]')
   await expect(botao).toHaveAttribute("data-variant", "brasa")
   const cores = await botao.evaluate((elemento) => {
