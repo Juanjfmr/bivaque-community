@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { Selecao } from "@/components/bivaque/campos"
+import { Icone } from "@/components/bivaque/icone"
+import { Botao } from "@/components/bivaque/botao"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
@@ -36,6 +39,22 @@ function ehImovel(kind: unknown): boolean {
   return kind === "imovel" || kind === "property"
 }
 
+/** Não presumir condomínio zero quando o valor não consta do anúncio. */
+function totalMensal(anuncio: DadosDaCidade["anuncios"][number]): number | null {
+  if (typeof anuncio.price_cents !== "number") return null
+  const aluguel = anuncio.price_cents / 100
+  const descricao = anuncio.description ?? ""
+  const valor = /condomínio\s+de\s+R\$\s*([\d.,]+)/i.exec(descricao)?.[1]
+  if (!valor) return null
+  const condominio = Number(valor.replaceAll(".", "").replace(",", "."))
+  return Number.isFinite(condominio) ? aluguel + condominio : null
+}
+
+function quartos(anuncio: DadosDaCidade["anuncios"][number]): number | null {
+  const nome = /\b(\d+)\s+quartos?\b/i.exec(anuncio.title)?.[1]
+  return nome ? Number(nome) : null
+}
+
 export function ListaDeMercado({
   inicial,
   comAbas = true,
@@ -49,6 +68,12 @@ export function ListaDeMercado({
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [tipo, setTipo] = useState("todos")
+  const [minimoQuartos, setMinimoQuartos] = useState("0")
+  const [maximoMensal, setMaximoMensal] = useState("todos")
+  const [ordenacao, setOrdenacao] = useState("relevancia")
+  const [modoLista, setModoLista] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -78,6 +103,36 @@ export function ListaDeMercado({
           : !ehImovel(anuncio.kind),
       )
   }, [dados, inicial])
+
+  const imoveisFiltrados = useMemo(() => {
+    if (inicial !== "imoveis") return itens
+    const filtrados = itens.filter(({ anuncio }) => {
+      if (tipo !== "todos" && !anuncio.title.toLocaleLowerCase("pt-BR").includes(tipo)) return false
+      const quartosDoImovel = quartos(anuncio)
+      if (minimoQuartos !== "0" && (quartosDoImovel === null || quartosDoImovel < Number(minimoQuartos))) return false
+      if (maximoMensal !== "todos") {
+        const mensal = totalMensal(anuncio)
+        if (mensal === null || mensal > Number(maximoMensal)) return false
+      }
+      return true
+    })
+    return filtrados.sort((a, b) => {
+      if (ordenacao === "relevancia") return 0
+      const precoA = totalMensal(a.anuncio)
+      const precoB = totalMensal(b.anuncio)
+      if (precoA === null && precoB === null) return 0
+      if (precoA === null) return 1
+      if (precoB === null) return -1
+      return ordenacao === "menor" ? precoA - precoB : precoB - precoA
+    })
+  }, [inicial, itens, tipo, minimoQuartos, maximoMensal, ordenacao])
+
+  const limparFiltros = () => {
+    setTipo("todos")
+    setMinimoQuartos("0")
+    setMaximoMensal("todos")
+    setOrdenacao("relevancia")
+  }
 
   const negocios = useMemo(() => {
     if (dados === null) return []
@@ -113,6 +168,114 @@ export function ListaDeMercado({
           aoEscolher={(aba) => void navegacao.irPara(aba)}
           rotulo="Seções do Mercado"
         />
+      ) : null}
+
+      {inicial === "imoveis" && !carregando && !erro ? (
+        <div data-filtros-imoveis="sim" className="mt-2 grid gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <Botao
+              tom="contornado"
+              icone="tune"
+              aria-expanded={filtrosAbertos}
+              aria-controls="painel-filtros-imoveis"
+              data-acao="filtros-imoveis"
+              onClick={() => setFiltrosAbertos((aberto) => !aberto)}
+            >
+              Filtros
+            </Botao>
+            <span className="text-xs text-(--on-surface-variant)">
+              {imoveisFiltrados.length} {imoveisFiltrados.length === 1 ? "imóvel" : "imóveis"}
+            </span>
+          </div>
+          {filtrosAbertos ? (
+            <div
+              id="painel-filtros-imoveis"
+              className="grid grid-cols-2 gap-3 rounded-xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+            >
+              <Selecao
+                id="tipo-imovel"
+                rotulo="Tipo"
+                valor={tipo}
+                aoMudar={setTipo}
+                opcoes={[
+                  { valor: "todos", titulo: "Todos" },
+                  { valor: "apartamento", titulo: "Apartamento" },
+                  { valor: "casa", titulo: "Casa" },
+                ]}
+              />
+              <Selecao
+                id="quartos-imovel"
+                rotulo="Quartos"
+                valor={minimoQuartos}
+                aoMudar={setMinimoQuartos}
+                opcoes={[
+                  { valor: "0", titulo: "Qualquer" },
+                  { valor: "2", titulo: "2 ou mais" },
+                  { valor: "3", titulo: "3 ou mais" },
+                ]}
+              />
+              <div className="col-span-2">
+                <Selecao
+                  id="total-mensal-imovel"
+                  rotulo="Total por mês até (aluguel + condomínio informado)"
+                  valor={maximoMensal}
+                  aoMudar={setMaximoMensal}
+                  opcoes={[
+                    { valor: "todos", titulo: "Qualquer valor" },
+                    { valor: "3000", titulo: "R$ 3.000" },
+                    { valor: "4000", titulo: "R$ 4.000" },
+                    { valor: "5000", titulo: "R$ 5.000" },
+                  ]}
+                />
+              </div>
+              <Botao
+                tom="texto"
+                data-acao="limpar-filtros"
+                className="col-span-2 justify-self-start"
+                onClick={limparFiltros}
+              >
+                Limpar filtros
+              </Botao>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div className="min-w-43 flex-1 max-w-xs">
+              <Selecao
+                id="ordenar-imoveis"
+                rotulo="Ordenar por"
+                valor={ordenacao}
+                aoMudar={setOrdenacao}
+                opcoes={[
+                  { valor: "relevancia", titulo: "Mais relevantes" },
+                  { valor: "menor", titulo: "Menor total mensal" },
+                  { valor: "maior", titulo: "Maior total mensal" },
+                ]}
+              />
+            </div>
+            <div role="group" aria-label="Modo de visualização" className="flex gap-1">
+              <button
+                type="button"
+                data-acao="modo-grade"
+                aria-label="Ver em grade"
+                aria-pressed={!modoLista}
+                onClick={() => setModoLista(false)}
+                className="grid size-11 place-items-center rounded-xl bg-(--surface-lowest) ring-1 ring-(--outline-variant) aria-pressed:bg-(--secondary-container)"
+              >
+                <Icone nome="grid_view" className="size-5" />
+              </button>
+              <button
+                type="button"
+                data-acao="modo-lista"
+                aria-label="Ver em lista"
+                aria-pressed={modoLista}
+                onClick={() => setModoLista(true)}
+                className="grid size-11 place-items-center rounded-xl bg-(--surface-lowest) ring-1 ring-(--outline-variant) aria-pressed:bg-(--secondary-container)"
+              >
+                <Icone nome="view_list" className="size-5" />
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {erro ? (
@@ -154,19 +317,20 @@ export function ListaDeMercado({
             </Grade>
           </>
         )
-      ) : itens.length === 0 ? (
+      ) : (inicial === "imoveis" ? imoveisFiltrados.length === 0 : itens.length === 0) ? (
         <EstadoVazio
-          titulo="Nada anunciado nesta seção"
-          texto="Quando alguém publicar, o anúncio aparece aqui para toda a cidade."
+          titulo={inicial === "imoveis" && itens.length > 0 ? "Nenhum imóvel corresponde aos filtros" : "Nada anunciado nesta seção"}
+          texto={inicial === "imoveis" && itens.length > 0 ? "Amplie os critérios para ver outros imóveis desta cidade." : "Quando alguém publicar, o anúncio aparece aqui para toda a cidade."}
           icone="sell"
+          acao={inicial === "imoveis" && itens.length > 0 ? { rotulo: "Limpar filtros", aoAcionar: limparFiltros } : undefined}
         />
       ) : (
         <>
           <p className="text-sm text-(--on-surface-variant)">
-            {itens.length === 1 ? "1 anúncio" : `${itens.length} anúncios`} em {casca.cidade}
+            {inicial === "imoveis" ? imoveisFiltrados.length : itens.length} {inicial === "imoveis" ? "imóveis" : "anúncios"} em {casca.cidade}
           </p>
-          <Grade formato="cartoes">
-            {itens.map(({ anuncio, apresentacao }) => (
+          <Grade formato="cartoes" className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : undefined}>
+            {(inicial === "imoveis" ? imoveisFiltrados : itens).map(({ anuncio, apresentacao }) => (
               <CartaoDeFoto
                 key={anuncio.id}
                 anuncio={{
