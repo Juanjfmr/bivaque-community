@@ -110,3 +110,9 @@ test("P2: moderation excludes hidden entries from catalog and home",()=>{
   has(app, 'hiddenByDemo("grupo",g.id)');
   has(app, 'hiddenByDemo("pergunta",q.id)');
 });
+
+test("P2: rental detail doesn't duplicate its per-month suffix",()=>{
+  lacks(app, '>R$ 3.500/mês/mês<');
+  lacks(app, '>{it.price}{home?.type==="Aluguel"');
+  has(app, '>{it.price}</p>');
+});
