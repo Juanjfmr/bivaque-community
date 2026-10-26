@@ -67,3 +67,22 @@ test("mobile: cards ocupam uma coluna e foto abre o anúncio", async ({ page }) 
   await foto.tap()
   await expect(page).toHaveURL(/\/app\/anuncio\/[^/]+$/)
 })
+
+test("mobile: fotos de imóveis reais da fixture e título sem caixa de foco", async ({ page }) => {
+  await page.goto("/app/imoveis")
+
+  const titulo = page.locator('[data-tela="imoveis"] [data-titulo-da-tela]')
+  await expect(titulo).toBeVisible()
+  await titulo.focus()
+  const estilo = await titulo.evaluate((elemento) => getComputedStyle(elemento).outlineStyle)
+  expect(estilo).toBe("none")
+
+  const imagem = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"] img').first()
+  await expect(imagem).toBeVisible()
+  await expect.poll(async () =>
+    imagem.evaluate((elemento) => {
+      const foto = elemento as HTMLImageElement
+      return foto.complete && foto.naturalWidth > 0
+    }),
+  ).toBe(true)
+})
