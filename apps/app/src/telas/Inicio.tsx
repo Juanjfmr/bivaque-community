@@ -25,8 +25,8 @@ import { useCasca } from "@/src/contexto/casca"
  * V1: cabeça com a cidade, busca com exemplo que gira, atalhos, faixa de
  * contratação, serviços recomendados, oportunidades, grupos, próximo
  * encontro, perguntas da cidade, guia e o convite de negócio. Salvar e
- * confirmar são estado local (sem backend). Ficam para o refino: carrossel
- * horizontal, patrocinado na posição fixa, "Continue de onde parou", plano
+ * confirmar são estado local (sem backend). Ficam para o refino: patrocinado
+ * na posição fixa, "Continue de onde parou", plano
  * de chegada/saída e as duas colunas do desktop — a ordem segue a do celular.
  */
 
@@ -257,7 +257,7 @@ export function Inicio() {
                 icone="storefront"
               />
             ) : (
-              <Grade formato="cartoes">
+              <Grade formato="carrossel-mobile">
                 {negocios.map(({ negocio, apresentacao }) => (
                   <CartaoDeNegocio
                     key={negocio.id}
@@ -295,7 +295,7 @@ export function Inicio() {
                 }}
               />
             ) : (
-              <Grade formato="cartoes">
+              <Grade formato="carrossel-mobile">
                 {anuncios.map(({ anuncio, apresentacao }) => (
                   <CartaoDeFoto
                     key={anuncio.id}
