@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 // Estrutura preservada: grid responsivo -> Card -> CardContent -> imagem ->
 // badges -> descrição -> preço/favorito. Botão de carrinho não faz sentido
 // no Bivaque e foi substituído por abertura do anúncio.
-// Código original inalterado: ./upstream/studio-product-list.tsx
+// Referência de origem: Shadcn Studio public/r/product-list-01.json;\n// o original não é redistribuído por restrição da licença
 export type BivaqueListing = {
   id: string; image: string; title: string; location: string;
   price: string; kind: "Imóvel" | "Desapego"; meta: string
