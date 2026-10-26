@@ -159,7 +159,7 @@ export function MeusAnuncios() {
           ))}
           {erroLocal === "" ? null : <p role="alert" className="text-xs text-(--destructive)">{erroLocal}</p>}
         </section>
-      ) : null}
+      )}
 
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
