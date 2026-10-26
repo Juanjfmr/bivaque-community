@@ -32,7 +32,7 @@ test("Different cities do not borrow Brasília demo content", () => {
 test("Local drafts persist and remain scoped to their chosen city", () => {
   has(app, 'kind:composeType,city');
   has(app, 'p.city||INITIAL_CITY)===city');
-  has(app, 'Rascunhos visíveis apenas neste navegador');
+  has(app, 'Rascunhos locais, sem publicação real');
   has(app, 'localDrafts(localKinds)');
   has(app, 'localDrafts(["Pedido"])');
   has(app, 'localDrafts(["Encontro"])');
