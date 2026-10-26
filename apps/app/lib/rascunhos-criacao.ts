@@ -4,6 +4,9 @@ import { idLocal } from "@/lib/id"
  * Conteúdo de ensaio: não representa publicação, pedido ativo, evento confirmado,
  * estabelecimento verificado nem indicação enviada a outro membro.
  */
+export const PEDIDO_PERGUNTAR = "bivaque:abrir-formulario-pergunta"
+export const CHAVE_ABERTURA_PERGUNTA = "bivaque:perguntar-ao-navegar"
+
 export const TIPOS_RASCUNHO = [
   "create-request",
   "create-item",
