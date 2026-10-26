@@ -74,9 +74,9 @@ try {
   await p1.getByRole("button",{name:/Começar demonstração/}).click();
   await p1.locator("#demo-alias").fill("Pessoa de teste");
   await p1.getByRole("button",{name:/Enviar perfil fictício para análise/}).click();
-  await p1.getByRole("heading",{name:"Perfil em análise simulada"}).waitFor();
+  await p1.getByText("Perfil em análise simulada",{exact:true}).waitFor();
   await p1.getByRole("button",{name:/Simular aprovação/}).click();
-  await p1.getByRole("heading",{name:/Aprovação fictícia concluída/}).waitFor();
+  await p1.getByText("Aprovação fictícia concluída",{exact:true}).waitFor();
   await p1.screenshot({path:output+"/acesso-375-light.png",fullPage:true,animations:"disabled"});
 
   await p1.goto(url+"inicio/",{waitUntil:"domcontentloaded"});
