@@ -2,12 +2,174 @@
 
 **Veredito do Codex: CORREÇÕES. Não recomendo o aceite visual da onda 1 ainda.**
 
-Primeiro fechamento recomendado: ajustar a geometria da folha de cidade (V01),
-eliminar a busca duplicada (V02) e resolver a densidade do topo em 375 px (V03),
-preservando a navegação autorizada. As omissões das telas V1 ficam identificadas
-abaixo; este relatório não autoriza avançar ondas nem alterar o backend.
+**Auditoria atual, após APP-008: adoção shadcn PARCIAL; visual ainda CORREÇÕES.**
+Codex examinou as imagens, sem transferir o julgamento ao dono ou inferir
+fidelidade pelo gate. Primeira recomendação atual: corrigir a base compartilhada
+de componentes, incluindo o reuso shadcn, o indicador dos filtros e a variante
+das ações principais. V01–V03 tiveram os reparos delimitados no STATUS; os
+demais desvios abaixo continuam pendentes. Sem implementação nesta auditoria.
 
-## Base e alcance
+## Auditoria atual — fonte 4f0a59ac, 26/10/2026
+
+O dono pediu explicitamente julgamento visual pelo Codex e verificação da regra
+de usar shadcn em vez de reconstruir tudo. O exame teve duas partes independentes:
+imagens reais e rastreamento dos componentes consumidos pelo app.
+
+- **152 pares** da galeria `pares-2026-10-26T16-40-39-982Z`, HTML à esquerda:
+  38 cenas em 375/1440 e claro/escuro. Todos examinados em **19 pranchas** novas
+  `APP-AUDITORIA-VISUAL-4f0a59ac/prancha-*.jpg` em `.visual/coordenacao/`.
+  As pranchas derivam dos PNGs preservados, sem mudar os originais.
+- Revistas também as **8 imagens de 768 px** de APP-008, cidade/busca/conversa/
+  evento nos dois temas. Tablet complementa o exame; não tem 38 pares próprios.
+- Ampliações atuais: Busca 375 claro, Comunidade 375 escuro e Início 1440 claro.
+  A revisão APP-008 já contém outras ampliações e a conferência de 24 vistas.
+- **175 fontes** do app associadas a 4f0a59ac e aos PNGs em
+  `APP-008-fontes-integradas.json`; os manifestos originais permanecem intactos.
+- Nenhuma tela, dependência ou teste foi alterado nesta auditoria documental.
+  Gate e E2E citados no STATUS são provas anteriores da fonte 4f0a59ac;
+  não foram repetidos nem usados como aprovação visual.
+
+### A regra shadcn está sendo cumprida?
+
+**Parcialmente. Não aprovo a afirmação de que o app inteiro foi composto a
+partir dos componentes/blocos shadcn disponíveis.** Também seria incorreto
+dizer que tudo foi feito do zero: há reuso verdadeiro de shadcn e de Radix.
+
+O ADR aceito, seção 1, exige componentes shadcn com código no repositório e
+permite Radix/Tailwind próprios para o que a biblioteca não oferece, como a
+navegação do Bivaque, Criar e linhas de pergunta. Portanto, ter componentes
+de domínio próprios não é, por si só, infração. Importar Radix diretamente
+também não comprova que um componente visual shadcn foi reaproveitado.
+
+Há **12 arquivos em `components/ui` e 29 em `components/bivaque`**. Estas são
+contagens de arquivos, não percentuais de conformidade ou de produto pronto.
+O consumo observado foi:
+
+| Caso | Fonte e consumo | Parecer |
+|---|---|---|
+| Button | `components/bivaque/botao.tsx:5` usa `ui/button`; casca e telas usam Botao/BotaoDeIcone | Reuso real. A aparência da variante preenchida ainda diverge, ver V15. |
+| Input e Textarea | `components/bivaque/campos.tsx:5-13`; Campo usado em Entrar, Contato, Conversa e outras telas | Reuso real. |
+| ToggleGroup | `components/bivaque/chips-de-filtro.tsx:5`; usado em Busca, Comunidade e Mercado | Reuso real, mas customização do indicador introduz V13. O arquivo ui/toggle fornece variantes ao ToggleGroup. |
+| Badge e Skeleton | `etiqueta.tsx:3`, `esqueleto.tsx:1`, consumidos pelas telas | Reuso real. |
+| Select | `campos.tsx:6-12` compõe Selecao; único consumidor JSX encontrado em `src/galeria/TelaGaleria.tsx:163` | Base preparada e exibida na galeria; não contar como adoção nas telas V1 normais. |
+| Card, Avatar, Alert e Separator | Arquivos ui existem, mas a busca de imports não encontrou consumidores no app | Presença não comprova reuso. A ausência de uso de um arquivo dispensável não é defeito isolado. |
+| Sobreposição/cidade | `components/bivaque/sobreposicao.tsx:3` monta Dialog diretamente de radix-ui | Componente visual próprio, embora Dialog/Sheet existam no shadcn. |
+| Menu de linha e confirmação | `menu-de-linha.tsx:3`, `confirmacao.tsx:3` montam DropdownMenu/AlertDialog do Radix | Implementações próprias; consumidores encontrados só na galeria. Não provar entrega das ações V1 por esses exemplos. |
+| Paleta | `src/casca/Paleta.tsx:3,200-244`: Dialog Radix, input nativo, setas/Enter, seleção e lista manuais | Recria responsabilidades para as quais há Command/CommandDialog no shadcn. |
+| Busca do topo | `src/casca/BarraDoTopo.tsx:154` usa input nativo, embora ui/input já esteja instalado | Reuso inconsistente; APP-008 corrigiu estado/duplicação, mas manteve essa diferença. |
+| Cartões e avatar de domínio | `cartao-de-anuncio.tsx:43,122`, `cartao-de-publicacao.tsx:60`, `avatar.tsx:27` usam article/span e classes próprias | Composição própria confirmada. Reavaliar Card/Avatar para a base, preservando semântica e conteúdo do domínio; não substituir mecanicamente todo article/span. |
+
+Os caminhos abreviados da tabela ficam sob `apps/app/`. Seis famílias shadcn
+têm consumo confirmado nas telas normais por wrappers: Button, Input, Textarea,
+ToggleGroup, Badge e Skeleton. Select é o caso separado da galeria. Nenhum
+percentual foi calculado a partir disso.
+
+### S01 — P1 de aderência — componentes equivalentes montados diretamente sobre Radix
+
+Dialog, DropdownMenu e AlertDialog têm componentes shadcn oficiais. A base
+atual refaz sua composição visual nos arquivos acima, sem exceção equivalente
+documentada no ADR. Radix continua fornecendo comportamento de foco/teclado;
+este achado não afirma ausência dessas proteções.
+
+Correção recomendada: os wrappers de domínio compõem as bases shadcn, mantendo
+o histórico único, o tratamento de Voltar, tokens, textos e o desenho aprovado.
+Não substituir a navegação do Bivaque por um sidebar genérico.
+
+Referências oficiais verificadas:
+[Dialog](https://ui.shadcn.com/docs/components/radix/dialog),
+[Dropdown Menu](https://ui.shadcn.com/docs/components/radix/dropdown-menu) e
+[Alert Dialog](https://ui.shadcn.com/docs/components/radix/alert-dialog).
+
+### S02 — P1 de aderência — paleta manual apesar de existir Command
+
+O estado ativo, filtragem, lista e teclas da paleta são próprios. O shadcn tem
+[Command/CommandDialog](https://ui.shadcn.com/docs/components/radix/command),
+baseado em cmdk; ele não foi encontrado na base instalada. A existência de um
+Dialog acessível não converte a lista manual em um Command shadcn.
+
+Correção recomendada: reaproveitar Command e conservar os destinos e a ligação
+ao histórico atual. Qualquer instalação futura segue os pins/regras do plano;
+esta auditoria não instalou nada.
+
+### S03 — blocos oficiais de páginas inteiras: adoção não demonstrada
+
+shadcn distingue componentes de [Blocks](https://ui.shadcn.com/blocks), que são
+composições prontas de páginas/áreas. Não localizei componentes como LoginForm,
+SignupForm, AppSidebar/SidebarProvider ou evidência equivalente de adoção desses
+blocos. Entrar, Casca e NavegacaoPrincipal são composições locais. Nomes ausentes
+não provam a origem de todo o código: não foi feita comparação histórica com
+todos os blocos do catálogo, então não afirmo que zero linhas vieram deles.
+
+O ADR exige componentes shadcn; ele não nomeia um bloco completo obrigatório
+para cada tela. Se "usar blocos" significa páginas prontas do catálogo, isso
+**não está demonstrado**. Os dados mostram componentes base usados de forma
+parcial e grande parte da composição feita localmente.
+
+### Visual: reparos confirmados e pendências
+
+- Confirmados nos frames atuais: geometria compacta da cidade, campo único
+  de busca e nome da pessoa no topo da conversa. Isso fecha esses defeitos
+  delimitados; não torna as telas completas equivalentes ao HTML.
+- V04–V12 continuam visíveis: fotos disponíveis substituídas por placeholders;
+  Início sem coluna lateral e carrossel móvel; detalhes sem a composição e
+  ações persistentes; conversa sem origem e compositor compacto; filtros e
+  comandos ausentes nas listas; grupos, entrada e telas de suporte reduzidos.
+- Preservadas as diferenças autorizadas: Mercado na barra e Conversas/cidade
+  no topo. Datas de cenários diferentes não foram contadas como defeito.
+  Força/OM/selo público históricos não foram tratados como conteúdo a restaurar.
+
+### V13 — P1 — indicador dos filtros sugere duas seleções
+
+No par `busca-375-light-par.png` (também escuro), Tudo está na primeira linha
+e Indicações na segunda; o fundo selecionado cobre ambas. A referência tem
+chips em faixa horizontal. Fonte: `chips-de-filtro.tsx:43,75-98` posiciona
+o indicador por offsetLeft e usa height 100%, enquanto os itens usam flex-wrap.
+A altura usada é a do grupo inteiro, sem offsetTop/altura do chip escolhido.
+
+Correção mínima: respeitar a faixa horizontal do HTML e manter o indicador no
+chip selecionado; se houver outra composição autorizada, medir sua caixa real.
+Não é falha do Radix ToggleGroup: a camada visual acrescentada é que diverge.
+
+### V14 — P1 — perguntas perdem o conteúdo principal no celular
+
+No par `comunidade-375-dark-par.png`, a pergunta vira "Pediatra que atenda pelo…"
+e outras linhas ficam semelhantes, enquanto a referência mostra a pergunta
+legível em várias linhas, com avatar e agrupamento. Fonte: LinhaDePergunta
+delega a LinhaDeLista (`linha-de-pergunta.tsx:40-47`), cujo título tem truncate
+obrigatório (`lista.tsx:61-65`), disputando espaço com a etiqueta à direita.
+
+Correção mínima: permitir o título de pergunta em múltiplas linhas e distribuir
+os metadados conforme a referência, sem alterar globalmente todos os tipos de
+linha. Esta é uma omissão de hierarquia/conteúdo, não mera preferência estética.
+
+### V15 — P2 — ações principais perderam o destaque brasa
+
+Nos pares de Cidade, Evento e Entrar, o preenchimento brasa do HTML foi trocado
+por carvão no claro e quase branco no escuro. Fonte HTML: a regra de
+md-filled-button em `styles/base.css` usa --bv-brasa; no app,
+`components/bivaque/botao.tsx:24-32` mapeia preenchido para a variante default,
+e `components/ui/button.tsx:13` usa --primary. Os tokens --primary do app estão
+corretamente alinhados ao primário neutro do HTML; não é motivo para trocar
+globalmente --primary por brasa. Falta a variante visual específica da ação.
+
+Correção mínima: compor o Button shadcn com a variante brasa nos casos do
+protótipo, preservando os demais usos neutros. Usar shadcn não exige conservar
+uma aparência neutra diferente da especificação.
+
+### Recomendação e limites da auditoria atual
+
+**Recomendação: corrigir primeiro a base compartilhada e seu reuso shadcn**, com
+prova de consumidores reais. Depois tratar composição/fotos e as jornadas por
+lotes. O gate verde permanece prova técnica, não aceite do visual ou da regra
+de composição. Os achados ampliam APP-001; não criam uma fila paralela.
+
+Alcance: 38 cenas-base em dois temas, mais quatro cenas de tablet; não é prova
+de todos os 81 diálogos/editores, 289 ações ou estados de erro. Sem auditoria
+completa de leitor de tela, contraste numérico, zoom 200% ou teclado virtual.
+Esta rodada produziu observações visuais/código e documentação, não uma nova
+execução de gate, E2E ou captura de runtime.
+
+## Base e alcance do parecer inicial — histórico
 
 Atualização APP-008, após autorização "Pode consertar": corrigidas a geometria
 de V01, a duplicação de entrada de V02 e a densidade/nome contextual de V03.

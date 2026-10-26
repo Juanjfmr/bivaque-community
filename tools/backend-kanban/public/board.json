@@ -5324,7 +5324,7 @@
       "id": "APP-001",
       "title": "SPA nova: onda 1, base e navegação",
       "category": "frontend",
-      "description": "APP-008 corrige a casca: folha Cidade compacta, busca única funcional e topo contextual em375. Gate completo verde; regressão521,16skips e focal final12; novos152pares e8imagens768. V02 grade/recentes e V04–V12 continuam pendentes; aceite visual global não obtido.",
+      "description": "Auditoria visual Codex da fonte4f0a59ac: CORREÇÕES; adoção shadcn PARCIAL.152pares atuais e8vistas768 examinados.6famílias base com uso real; Select só galeria; sobreposição/paleta e outros padrões montados diretamente no Radix. NovosV13,V14,V15; demais omissõesV1 abertas.",
       "checklist": [
         "Esqueleto e gate com versões fixas",
         "Navegação testada antes das telas",
@@ -5342,7 +5342,8 @@
         "26/10 APP-007: três defeitos V1 corrigidos em WIP; Qwen aprovou instrumento focal; E2E completo 509 passed/16 skipped/0 failed; app84/84; scope150/150 e secrets separados verdes. Gate FAIL após três tentativas, privacidade188/189; focal6/6. Captura atual152pares em .visual/onda-1/pares-2026-10-26T11-41-20-974Z/, manifesto base651ebea6 sujo. Conferência de cobertura recusa gate vermelho. Não aprova onda1, ondas2–8 ou RLS.",
         "26/10: dono autorizou Então corrija. Auditor b0416a49 usa leituras aguardadas em lotes32, sem relaxar fontes/timeout; Qwen aprovou instrumento final. Gate completo VERDE: raiz 1726, app 84, mobile 76, web 19, privacidade 189, escopo 150 e secrets. Conferência1203entradas PASS. Fonte app9af6b5aa idêntica em174hashes aos E2E509passed16skipped e152pares anteriores; não se alegam novos E2E/capturas. APP-007 fechada tecnicamente, aceite visual pendente. Logs APP-SCAN-ASYNC-gate.log e APP-SCAN-cobertura.log.",
         "26/10 revisão visual documental:152pares/38cenas em375/1440 claro/escuro;19pranchas e12ampliações;174fontes+HTML+152PNGs com hashes intactos.12achados, parecerCORREÇÕES. Exceções ADR3.1 preservadas (Mercado e Conversas/cidade no topo). Fontes Noto confirmadas em inspeção pontual do navegador. Sem novo gate/E2E/captura ou comparação768. Relatório REVISAO-VISUAL-20261026.md; prioridade V01/V02/V03.",
-        "26/10 APP-008: quatro casos vermelhos na base; correção focal12/12 em375,768,1440. Regressão521passed,16skipped,zeroFAIL; após reforçar negativos por revisão Qwen, focalfinal12/12. GateR1 completo VERDE: raiz1726,app84,mobile76,web19,privacidade189,escopo150,secrets. Primeiro gate149/150 por dois falsos positivos documentais; só caminho/separadores corrigidos, sem alterar scanner. Captura152pares,175fontes e152PNGs com hashes íntegros,zeroerros;8vistas768 complementares. Codex conferiu24vistas/3pranchas e3pares ampliados. Qwen aprovou instrumentoR1 e captura768. Logs e relatórios APP-008 em .visual/coordenacao; detalhes/limites no STATUS. Parecer global permanece CORREÇÕES pelos demais achados."
+        "26/10 APP-008: quatro casos vermelhos na base; correção focal12/12 em375,768,1440. Regressão521passed,16skipped,zeroFAIL; após reforçar negativos por revisão Qwen, focalfinal12/12. GateR1 completo VERDE: raiz1726,app84,mobile76,web19,privacidade189,escopo150,secrets. Primeiro gate149/150 por dois falsos positivos documentais; só caminho/separadores corrigidos, sem alterar scanner. Captura152pares,175fontes e152PNGs com hashes íntegros,zeroerros;8vistas768 complementares. Codex conferiu24vistas/3pranchas e3pares ampliados. Qwen aprovou instrumentoR1 e captura768. Logs e relatórios APP-008 em .visual/coordenacao; detalhes/limites no STATUS. Parecer global permanece CORREÇÕES pelos demais achados.",
+        "26/10 auditoria solicitada pelo dono: Codex examinou152pares atuais em19pranchas,8vistas de768 e3ampliações; confrontou imports/consumidores com ADR e documentação oficialshadcn. Parecer visualCORREÇÕES e aderênciaPARCIAL: Button,Input,Textarea,ToggleGroup,Badge,Skeleton em telas; Select só galeria; Dialog/AlertDialog/DropdownMenu/Command com composição própria ou ausentes na baseui. V13 indicador de filtros cobre2linhas; V14 perguntas truncadas; V15 ação preenchida perdebrasa. V01–V03 delimitados confirmados; V04–V12 abertos. Não executou novo gate/E2E/captura nem auditou todos81overlays. Detalhes no REVISAO-VISUAL-20261026 e STATUS."
       ],
       "links": [
         "docs/agents/tasks/APP-001.task.yml",
@@ -5357,7 +5358,7 @@
         "docs/agents/prototipo-shadcn/REVISAO-VISUAL-20261026.md",
         "docs/agents/tasks/APP-008.task.yml"
       ],
-      "sourceRevision": "e0a5c19ca8e68fd69483f912875a056bd8aa8c81",
+      "sourceRevision": "4f0a59ac270e92b866634dda5235b981a1fe7a4c",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",
@@ -5365,8 +5366,8 @@
       "dependencies": [],
       "updatedAt": "2026-10-26",
       "blockers": [
-        "Aceite visual do dono da onda1 pendente. GeometriaV01, campo duplicadoV02 e densidade/contextoV03 corrigidos; grade/recentesV02 e omissõesV04–V12 permanecem explícitas na revisão visual.",
-        "Próxima recomendação: V04, consumir fotos locais já portadas. Não declarar ondas2–8 prontas nem iniciar prova vertical pelo gate verde."
+        "Aceite visual da onda1 pendente. Adoção shadcn parcial: corrigir S01/S02 e comprovar consumo real dos componentes equivalentes, preservando navegação/histórico aprovados.",
+        "Corrigir V13 filtros, V14 títulos de perguntas e V15 variante das ações; grade/recentes V02 e omissões V04–V12 permanecem. Primeiro fechamento recomendado: base compartilhada com reuso shadcn, filtros e botões."
       ],
       "completedChecklist": [true, true, false, true, false]
     },

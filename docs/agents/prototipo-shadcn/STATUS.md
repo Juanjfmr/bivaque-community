@@ -9,6 +9,42 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Nenhum merge, push ou deploy autorizado.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Auditoria visual Codex e adoção shadcn — 26/10/2026
+
+O dono pediu julgamento visual pelo Codex e conferência do uso de shadcn em
+vez de reconstrução manual. **Visual: CORREÇÕES. Adoção shadcn: PARCIAL.**
+Parecer atual na seção inicial de `REVISAO-VISUAL-20261026.md`, confrontado com
+a fonte **4f0a59ac**. Não foi transferido ao dono o exame das imagens.
+
+- Examinados novamente **152 pares atuais**, em 19 pranchas novas, e as oito
+  imagens de tablet de APP-008; ampliações de Busca 375 claro, Comunidade 375
+  escuro e Início 1440 claro. Pranchas/índice em
+  `.visual/coordenacao/APP-AUDITORIA-VISUAL-4f0a59ac/`.
+- A base tem 12 arquivos ui e 29 de domínio; isso não é percentual de aderência.
+  Uso real confirmado: Button, Input, Textarea, ToggleGroup, Badge, Skeleton.
+  Select está preparado, mas seu consumidor JSX encontrado é só a galeria.
+  Card, Avatar, Alert e Separator não têm imports consumidores encontrados.
+- **S01/S02:** sobreposição e paleta montam Radix diretamente; paleta também
+  implementa lista/teclas manualmente apesar de existir Command. Menu de linha
+  e confirmação são composições Radix próprias, usadas só na galeria. As
+  referências oficiais shadcn dos equivalentes foram conferidas. Radix fornece
+  comportamento acessível; não se afirmou que tudo foi feito do zero.
+- Blocos oficiais completos de páginas não tiveram adoção demonstrada. O ADR
+  exige componentes shadcn, mas não nomeia um bloco de página para cada rota;
+  navegação/Criar e necessidades de domínio próprias continuam autorizadas.
+- Novos achados **V13** (indicador de filtro atravessa duas linhas), **V14**
+  (pergunta cortada em uma linha) e **V15** (ações preenchidas perdem o brasa).
+  V04–V12 continuam visíveis. Reparos delimitados V01–V03 de APP-008 confirmados.
+- **Próxima recomendação atual:** corrigir componentes compartilhados e seu
+  reuso shadcn, incluindo filtros e variante visual dos botões; depois as
+  composições/fotos. Registro canônico continua APP-001, sem nova fila.
+
+Esta rodada só altera documentação/quadro. Gate/E2E da fonte 4f0a59ac não foram
+repetidos nem chamados de prova visual. Não houve nova captura de runtime,
+abertura de todos os 81 diálogos/editores, auditoria completa de acessibilidade
+ou novo julgamento de R3. Aceite global da onda 1 e avanço permanecem pendentes;
+monitor preservado pausado. Nenhum merge/push/deploy.
+
 ## APP-008 — correções da casca autorizadas, 26/10/2026
 
 O dono respondeu "Pode consertar" à revisão visual. Primeiro lote: V01, V02 e
