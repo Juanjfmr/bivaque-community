@@ -13,8 +13,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   guardarMensagemDePrevia,
   lerMensagensDePrevia,
-  origemDaConversa,
   type MensagemDePrevia,
+  origemDaConversa,
 } from "@/lib/contexto-conversa"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
