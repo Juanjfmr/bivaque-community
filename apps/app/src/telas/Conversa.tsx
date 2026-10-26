@@ -126,7 +126,10 @@ export function Conversa() {
   if (conversa === null) return <TelaIndisponivel />
 
   return (
-    <section data-tela="conversa" className="flex min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 flex-col gap-3 pb-3">
+    <section
+      data-tela="conversa"
+      className="flex min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 flex-col gap-3 pb-3"
+    >
       <div className="flex min-w-0 items-center gap-3 px-1 py-2">
         <Avatar size="lg" className="size-11 shrink-0">
           <AvatarFallback className="bg-(--secondary-container) font-semibold">
