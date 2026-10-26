@@ -174,6 +174,7 @@ export default function LibraryApp(){
        try{
          const data=JSON.parse(pending) as SearchAlert;
          if(data.kind===slug){
+           restoringSearch.current=false;
            setCity(data.city);setQuery(data.query);setCategory(data.category||"Todos");
            setCatalogFilters({...initialCatalogFilters,...(data.filters as CatalogFilters)});
            setTab("Indicações");return;
