@@ -42,7 +42,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Verify shared visual components
-        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts tests/e2e/mobile-first.spec.ts tests/e2e/r72-mobile-p0.spec.ts --trace=retain-on-failure
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts tests/e2e/mobile-first.spec.ts tests/e2e/r72-mobile-p0.spec.ts tests/e2e/r72-mobile-p1.spec.ts --trace=retain-on-failure
 
       - name: Capture app screens (not proof mode)
         run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/visual-capture.spec.ts
