@@ -92,7 +92,7 @@ export function ChipsDeFiltro({
         )}
         style={{
           width: `${indicador.largura}px`,
-          height: `${indicador.altura}px`, 
+          height: `${indicador.altura}px`,
           transform: `translateX(${indicador.esquerda}px)`,
         }}
       />
