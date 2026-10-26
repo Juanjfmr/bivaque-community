@@ -263,6 +263,7 @@ export function Inicio() {
                     key={negocio.id}
                     negocio={{
                       id: negocio.id,
+                      fonte: texto(apresentacao["imagem"]),
                       nome: texto(apresentacao["name"], negocio.display_name),
                       categoria: texto(apresentacao["cat"], negocio.category ?? ""),
                       bairro: primeiros(apresentacao["hoods"]),
@@ -300,6 +301,7 @@ export function Inicio() {
                     key={anuncio.id}
                     anuncio={{
                       id: anuncio.id,
+                      fonte: texto(apresentacao["imagem"]),
                       titulo: texto(apresentacao["title"], anuncio.title),
                       preco: precoDoAnuncio(anuncio.price_cents),
                       icone: iconeDeDado(apresentacao["icon"]),
