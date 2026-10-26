@@ -56,8 +56,7 @@ test("V14: perguntas mostram o título completo sem truncar no celular", async (
 
 test("V15: o botão preenchido usa a Brasa oficial em claro e escuro", async ({ page }) => {
   await page.addInitScript(() => {
-    ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ =
-      true
+    ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ = true
   })
   await page.goto("/app/galeria")
   await expect(page.locator('[data-tela="galeria"]')).toBeVisible()
