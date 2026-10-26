@@ -302,6 +302,8 @@ export function Inicio() {
                     anuncio={{
                       id: anuncio.id,
                       fonte: texto(apresentacao["imagem"]),
+                      rotulo: texto(apresentacao["flag"]) || undefined,
+                      porMes: texto(apresentacao["per"]) === "/mês",
                       titulo: texto(apresentacao["title"], anuncio.title),
                       preco: precoDoAnuncio(anuncio.price_cents),
                       icone: iconeDeDado(apresentacao["icon"]),
