@@ -688,6 +688,14 @@
   object-fit: cover;
 }
 
+/* Home desktop: conteúdo principal tem duas colunas de cards, ao lado de
+   contexto enxuto (grupos, encontro e perguntas) sem repetir widgets. */
+@media (min-width: 1024px) {
+  .bv-home-principal .bv-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
