@@ -1,0 +1,42 @@
+task_id: APP-009
+objective: Mostrar uma bancada visual de Mercado com blocos ecomcn e componentes shadcn na galeria existente.
+authority:
+  - Decisão do dono em 26/10/2026, Faça quero ver como vai ficar, após proposta de uma cena de grade e filtros.
+  - docs/decisions/ADR-20261024-front-react-spa.md
+  - docs/agents/prototipo-shadcn/inventario.md, seção 2.1
+baseline:
+  status: NOT-APPLICABLE
+  evidence: Fonte 7300b46b tem Mercado V1 sem painel de filtros e sem uso das fotos já disponíveis.
+allowed_paths:
+  - apps/app/src/galeria/mercado/
+  - apps/app/components/ui/sheet.tsx
+  - apps/app/components/ui/checkbox.tsx
+  - apps/app/src/roteador.tsx
+  - apps/app/src/casca/BarraDoTopo.tsx
+  - apps/app/tests/e2e/mercado-lab.spec.ts
+  - docs/agents/tasks/APP-009.task.yml
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/coordenacao/
+  - .visual/onda-1/mercado-lab-20261026/
+forbidden:
+  - Instalar pacotes, alterar rotas normais, histórico aprovado, backend, banco, credenciais ou arquivos de outras sessões.
+  - Declarar integração do Mercado, encerramento da onda 1 ou aceite visual do dono.
+acceptance:
+  - Bancada em galeria/mercado disponível no desenvolvimento ou modo de prova; indisponível em build normal sem modo de prova.
+  - Dados e fotos vêm da porta de demonstração já existente; busca e bairros filtram cartões reais no DOM.
+  - Blocos ecomcn têm atribuição MIT e adaptação explícita; não usar pacote cn nem dependências novas.
+  - Folha móvel permite aplicar ou descartar filtros e restaura foco; detalhe e salvar funcionam localmente.
+  - Instrumento recebe revisão de modelo diferente; provas em 375 768 1440 e capturas nos dois temas.
+  - Gate completo executado sem pular build; limites da bancada registrados e prévia entregue ao dono.
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e mercado-lab.spec.ts
+  - npx pnpm@11.18.0 gate
+risk: experimento de apresentação e estado local, sem persistência ou integração com o banco
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
