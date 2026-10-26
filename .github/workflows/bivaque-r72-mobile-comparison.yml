@@ -41,8 +41,15 @@ jobs:
       - name: Build Vite prototype
         run: pnpm --filter @bivaque/app build
 
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Use preinstalled Chrome
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || true)"
+          if [ -z "$CHROME" ]; then
+            pnpm exec playwright install chromium
+          else
+            echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$CHROME" >> "$GITHUB_ENV"
+            "$CHROME" --version
+          fi
 
       - name: Capture genuine frozen R72 side-by-side
         run: node scripts/app/capturar.mjs --mobile-r72
