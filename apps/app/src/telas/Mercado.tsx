@@ -252,7 +252,7 @@ export function ListaDeMercado({
                 ]}
               />
             </div>
-            <div role="group" aria-label="Modo de visualização" className="flex gap-1">
+            <fieldset aria-label="Modo de visualização" className="flex gap-1">
               <button
                 type="button"
                 data-acao="modo-grade"
@@ -261,7 +261,7 @@ export function ListaDeMercado({
                 onClick={() => setModoLista(false)}
                 className="grid size-11 place-items-center rounded-xl bg-(--surface-lowest) ring-1 ring-(--outline-variant) aria-pressed:bg-(--secondary-container)"
               >
-                <Icone nome="grid_view" className="size-5" />
+                <Icone nome="ballot" className="size-5" />
               </button>
               <button
                 type="button"
@@ -271,9 +271,9 @@ export function ListaDeMercado({
                 onClick={() => setModoLista(true)}
                 className="grid size-11 place-items-center rounded-xl bg-(--surface-lowest) ring-1 ring-(--outline-variant) aria-pressed:bg-(--secondary-container)"
               >
-                <Icone nome="view_list" className="size-5" />
+                <Icone nome="list" className="size-5" />
               </button>
-            </div>
+            </fieldset>
           </div>
         </div>
       ) : null}
@@ -322,14 +322,14 @@ export function ListaDeMercado({
           titulo={inicial === "imoveis" && itens.length > 0 ? "Nenhum imóvel corresponde aos filtros" : "Nada anunciado nesta seção"}
           texto={inicial === "imoveis" && itens.length > 0 ? "Amplie os critérios para ver outros imóveis desta cidade." : "Quando alguém publicar, o anúncio aparece aqui para toda a cidade."}
           icone="sell"
-          acao={inicial === "imoveis" && itens.length > 0 ? { rotulo: "Limpar filtros", aoAcionar: limparFiltros } : undefined}
+          {...(inicial === "imoveis" && itens.length > 0 ? { acao: { rotulo: "Limpar filtros", aoAcionar: limparFiltros } } : {})}
         />
       ) : (
         <>
           <p className="text-sm text-(--on-surface-variant)">
             {inicial === "imoveis" ? imoveisFiltrados.length : itens.length} {inicial === "imoveis" ? "imóveis" : "anúncios"} em {casca.cidade}
           </p>
-          <Grade formato="cartoes" className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : undefined}>
+          <Grade formato="cartoes" className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : ""}>
             {(inicial === "imoveis" ? imoveisFiltrados : itens).map(({ anuncio, apresentacao }) => (
               <CartaoDeFoto
                 key={anuncio.id}
