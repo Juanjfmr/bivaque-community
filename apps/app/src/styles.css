@@ -709,6 +709,14 @@
   }
 }
 
+/* Conversas detalhadas escondem a navegação inferior. Não reservar o espaço
+   dessa barra no scroll; o compositor permanece na borda útil do telefone. */
+@media (max-width: 719.98px) {
+  [data-casca="app"]:has([data-tela="conversa"]) #conteudo {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
