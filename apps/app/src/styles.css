@@ -696,6 +696,19 @@
   }
 }
 
+/* Na lista de imóveis o rótulo continua associado ao Select, mas no telefone
+   não ocupa uma linha inteira adicional acima da ordenação. */
+@media (max-width: 719.98px) {
+  .bv-ordenar-imoveis > label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
