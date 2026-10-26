@@ -139,7 +139,28 @@ try {
   await p1.getByRole("button",{name:"Fechar imagem"}).click();
   await p1.getByRole("button",{name:/Explorar região no OpenStreetMap/}).waitFor();
   await p1.screenshot({path:output+"/anuncio-375-light.png",fullPage:true,animations:"disabled"});
+  // Public R72 entry: landing, real links, help/legal and a local support ticket.
+  await p1.goto(url,{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Juntos somos mais fortes."}).waitFor();
+  await p1.getByRole("link",{name:"Ajuda"}).last().click();
+  await p1.getByRole("heading",{name:"Ajuda"}).waitFor();
+  await p1.getByRole("link",{name:/Fale com a gente/}).click();
+  await p1.locator("#ticket-text").fill("Solicitação fictícia de suporte para testar histórico.");
+  await p1.getByRole("button",{name:"Registrar chamado de teste"}).click();
+  await p1.getByRole("heading",{name:"Fale com a gente"}).waitFor();
+  await p1.getByRole("button",{name:/Ver meus chamados/}).click();
+  await p1.getByText("Solicitação fictícia de suporte para testar histórico.").waitFor();
+  await p1.reload();
+  await p1.getByText("Solicitação fictícia de suporte para testar histórico.").waitFor();
+  await p1.goto(url+"privacidade/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Política de privacidade"}).waitFor();
+  await p1.goto(url+"conduta/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Código de conduta"}).waitFor();
+  await p1.goto(url+"planos/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Planos do Bivaque"}).waitFor();
+  await p1.goto(url,{waitUntil:"domcontentloaded"});
+  await p1.screenshot({path:output+"/landing-375-light.png",fullPage:true,animations:"disabled"});
   assert.deepEqual(p1Errors,[],"P1 browser journey JS errors");
   await p1Context.close();
-  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore","group feed and comments","restricted request","photo zoom","area lookup"]},null,2)+"\n");
+  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore","group feed and comments","restricted request","photo zoom","area lookup","public landing","help and support","legal and plans"]},null,2)+"\n");
 } finally {await browser.close();}
