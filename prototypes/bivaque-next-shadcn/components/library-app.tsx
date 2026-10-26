@@ -167,7 +167,23 @@ export default function LibraryApp(){
   React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGroupRequests(v.groupRequests||[]);setGroupPosts(v.groupPosts||[]);setGroupLikes(v.groupLikes||[]);setGroupComments(v.groupComments||{});setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setTickets(v.tickets||[]);setSearchAlerts(v.searchAlerts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
   React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,tickets,searchAlerts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,tickets,searchAlerts,replies,chats,endorsed,chosenProposals,account,reports]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
-  React.useEffect(()=>{if(restoringSearch.current){restoringSearch.current=false;return;}if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
+  React.useEffect(()=>{
+     const pending=sessionStorage.getItem("bivaque-reopen-search-v1");
+     if(pending){
+       sessionStorage.removeItem("bivaque-reopen-search-v1");
+       try{
+         const data=JSON.parse(pending) as SearchAlert;
+         if(data.kind===slug){
+           setCity(data.city);setQuery(data.query);setCategory(data.category||"Todos");
+           setCatalogFilters({...initialCatalogFilters,...(data.filters as CatalogFilters)});
+           setTab("Indicações");return;
+         }
+       }catch{/* Ignore corrupt temporary navigation state. */}
+     }
+     if(restoringSearch.current){restoringSearch.current=false;return;}
+     if(slug!=="busca")setQuery("");
+     setCategory("Todos");setTab("Indicações");
+   },[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function openItemPage(v:Item){navigate((v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id)}
@@ -559,7 +575,7 @@ export default function LibraryApp(){
     }
     return <p className="text-sm text-muted-foreground">Página não encontrada na demonstração.</p>;
   }
-  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:slug==="comparar"?<HousingCompare saved={saved} onRemove={id=>toggle(id,saved,setSaved)} onNavigate={navigate}/>:slug==="alertas"?<SearchAlertsPage alerts={searchAlerts} onDelete={id=>setSearchAlerts(v=>v.filter(x=>x.id!==id))} onNavigate={navigate} onOpen={a=>{restoringSearch.current=true;setCity(a.city);setQuery(a.query);setCategory(a.category||"Todos");setCatalogFilters({...initialCatalogFilters,...(a.filters as CatalogFilters)});navigate(a.kind)}}/>:["contato","chamados"].includes(slug)?<SupportPage route={slug as "contato"|"chamados"} tickets={tickets} onTicket={t=>setTickets(v=>[t,...v])} onNav={navigate}/>:["ajuda","privacidade","conduta","planos"].includes(slug)?<R72Info kind={slug as "ajuda"|"privacidade"|"conduta"|"planos"}/>:slug==="busca"?searchPage():homePage();
+  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:slug==="comparar"?<HousingCompare saved={saved} onRemove={id=>toggle(id,saved,setSaved)} onNavigate={navigate}/>:slug==="alertas"?<SearchAlertsPage alerts={searchAlerts} onDelete={id=>setSearchAlerts(v=>v.filter(x=>x.id!==id))} onNavigate={navigate} onOpen={a=>{sessionStorage.setItem("bivaque-reopen-search-v1",JSON.stringify(a));restoringSearch.current=true;setCity(a.city);setQuery(a.query);setCategory(a.category||"Todos");setCatalogFilters({...initialCatalogFilters,...(a.filters as CatalogFilters)});navigate(a.kind)}}/>:["contato","chamados"].includes(slug)?<SupportPage route={slug as "contato"|"chamados"} tickets={tickets} onTicket={t=>setTickets(v=>[t,...v])} onNav={navigate}/>:["ajuda","privacidade","conduta","planos"].includes(slug)?<R72Info kind={slug as "ajuda"|"privacidade"|"conduta"|"planos"}/>:slug==="busca"?searchPage():homePage();
 
   const oms=["Todas",...new Set(HOUSING.filter(h=>h.city===city).map(h=>h.om))];
   const relevantHoods=[...new Set((slug==="imoveis"?HOUSING:CLASSIFIEDS).filter(x=>x.city===city).map(x=>x.hood))];
