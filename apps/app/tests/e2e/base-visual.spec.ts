@@ -77,6 +77,8 @@ test("shadcn Dialog: trocar cidade mantém overlay único e fecha com foco devol
   page,
 }) => {
   await page.goto("/app/inicio")
+  await expect(page.locator('[data-tela="inicio"] [data-cartao]').first()).toBeVisible()
+  await page.evaluate(async () => { await document.fonts.ready })
   const cidade = page.locator('[data-topo="barra"] [data-acao="cidade"]')
   await cidade.click()
   const dialogo = page.getByRole("dialog", { name: "Trocar de cidade", exact: true })
