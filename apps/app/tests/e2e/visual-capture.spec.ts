@@ -28,6 +28,22 @@ for (const tela of TELAS) {
         fullPage: true,
         animations: "disabled",
       })
+
+      // O app rola dentro de #conteudo, não do document: fullPage sozinho só
+      // mostra a primeira dobra. Fotografa também meio/fim dos telefones.
+      if ((page.viewportSize()?.width ?? 0) < 720) {
+        const conteudo = page.locator("#conteudo")
+        for (const posicao of ["meio", "fim"] as const) {
+          await conteudo.evaluate((elemento, ponto) => {
+            const limite = Math.max(0, elemento.scrollHeight - elemento.clientHeight)
+            elemento.scrollTop = ponto === "meio" ? Math.round(limite / 2) : limite
+          }, posicao)
+          await page.screenshot({
+            path: `artifacts/visual/${testInfo.project.name}-${tela.id}-${esquema}-${posicao}.png`,
+            animations: "disabled",
+          })
+        }
+      }
     })
   }
 }
