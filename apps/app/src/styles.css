@@ -583,6 +583,49 @@
   font-variation-settings: "FILL" 1;
 }
 
+/* ── mobile: espaço útil, toque e leitura sem afetar desktop ────────────── */
+@media (max-width: 719.98px) {
+  [data-cabeca="pagina"] {
+    padding-block: 12px 8px;
+  }
+
+  [data-tela="inicio"] [data-secao="sim"] {
+    margin-top: 20px;
+  }
+
+  [data-tela="inicio"] nav[aria-label="Áreas"] {
+    margin-top: 8px;
+  }
+
+  [data-tela="inicio"] [data-acao="contratar"] {
+    margin-top: 8px;
+  }
+
+  /* A imagem e a área textual são alvos independentes, ambos acionáveis.
+     Evita touch target curto para abrir detalhes de anúncios. */
+  [data-cartao="anuncio"] [data-acao="abrir-foto"],
+  [data-cartao="negocio"] [data-acao="abrir-foto"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-topo="barra"][data-rota="inicio"] [data-titulo="topo"] {
+    display: none;
+  }
+
+  [data-topo="barra"] [data-acao="cidade"] {
+    max-width: 88px;
+    padding-inline: 4px;
+  }
+
+  [data-nav="principal"] [data-aba],
+  [data-nav="principal"] [data-acao="criar"] {
+    font-size: 10.5px;
+    letter-spacing: 0;
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
@@ -591,19 +634,21 @@
   grid-template-columns: 1fr;
 }
 
-@media (min-width: 480px) {
+/* Uma foto por linha em qualquer telefone, inclusive entre 480 e 719 px.
+   Após a barra lateral aparecer (720px), duas colunas preservam cards legíveis. */
+@media (min-width: 720px) {
   .bv-grade {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1080px) {
   .bv-grade {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1440px) {
   .bv-grade {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
