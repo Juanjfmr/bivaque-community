@@ -160,7 +160,20 @@ try {
   await p1.getByRole("heading",{name:"Planos do Bivaque"}).waitFor();
   await p1.goto(url,{waitUntil:"domcontentloaded"});
   await p1.screenshot({path:output+"/landing-375-light.png",fullPage:true,animations:"disabled"});
+  await p1.goto(url+"anuncio/h1/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Salvar anúncio"}).click();
+  await p1.goto(url+"anuncio/h2/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Salvar anúncio"}).click();
+  await p1.goto(url+"comparar/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Comparar imóveis salvos"}).waitFor();
+  await p1.getByText("Total mensal").waitFor();
+  await p1.goto(url+"imoveis/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Salvar busca"}).click();
+  await p1.goto(url+"alertas/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Buscas salvas"}).waitFor();
+  await p1.getByRole("button",{name:"Excluir alerta"}).click();
+  await p1.getByText("Nenhuma busca salva").waitFor();
   assert.deepEqual(p1Errors,[],"P1 browser journey JS errors");
   await p1Context.close();
-  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore","group feed and comments","restricted request","photo zoom","area lookup","public landing","help and support","legal and plans"]},null,2)+"\n");
+  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore","group feed and comments","restricted request","photo zoom","area lookup","public landing","help and support","legal and plans","compare saved","search alerts"]},null,2)+"\n");
 } finally {await browser.close();}
