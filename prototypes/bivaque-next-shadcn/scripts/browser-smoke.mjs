@@ -64,5 +64,52 @@ try {
   assert.deepEqual(failures,[],"Browser flow JS failures");
   await page.screenshot({path:output+"/guia-manaus-empty-375.png",fullPage:true});
   await context.close();
-  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation"]},null,2)+"\n");
+  // P1 journeys: no credentials, documents or backend calls.
+  const p1Context=await browser.newContext({viewport:{width:375,height:850},colorScheme:"light"});
+  const p1=await p1Context.newPage();
+  const p1Errors=[];
+  p1.on("pageerror",error=>p1Errors.push(error.message));
+  await p1.goto(url+"acesso/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Entrada na comunidade"}).waitFor();
+  await p1.getByRole("button",{name:/Começar demonstração/}).click();
+  await p1.locator("#demo-alias").fill("Pessoa de teste");
+  await p1.getByRole("button",{name:/Enviar perfil fictício para análise/}).click();
+  await p1.getByRole("heading",{name:"Perfil em análise simulada"}).waitFor();
+  await p1.getByRole("button",{name:/Simular aprovação/}).click();
+  await p1.getByRole("heading",{name:/Aprovação fictícia concluída/}).waitFor();
+  await p1.screenshot({path:output+"/acesso-375-light.png",fullPage:true,animations:"disabled"});
+
+  await p1.goto(url+"inicio/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("navigation",{name:"Navegação principal mobile"}).getByRole("button",{name:"Abrir menu Criar"}).click();
+  await p1.getByRole("menuitem",{name:/Anunciar moradia/}).click();
+  await p1.locator("#post-title").fill("Moradia de teste P1");
+  await p1.locator("#post-desc").fill("Texto fictício para validar os controles de edição e pausa.");
+  await p1.getByRole("button",{name:"Salvar demonstração"}).click();
+  await p1.goto(url+"imoveis/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Editar"}).first().click();
+  await p1.locator("#post-title").fill("Moradia editada P1");
+  await p1.getByRole("button",{name:"Salvar alterações"}).click();
+  await p1.getByText("Moradia editada P1").waitFor();
+  await p1.getByRole("button",{name:"Pausar"}).first().click();
+  await p1.getByText("Pausado",{exact:true}).waitFor();
+  await p1.getByRole("button",{name:"Retomar"}).first().click();
+  await p1.getByText("Ativo no teste",{exact:true}).waitFor();
+
+  await p1.goto(url+"pergunta/q2/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Denunciar"}).click();
+  await p1.getByRole("button",{name:"Registrar denúncia de teste"}).click();
+  await p1.goto(url+"painel/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Fila de moderação"}).waitFor();
+  await p1.getByRole("button",{name:"Ocultar no laboratório"}).first().click();
+  await p1.screenshot({path:output+"/painel-375-light.png",fullPage:true,animations:"disabled"});
+  await p1.goto(url+"pergunta/q2/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("heading",{name:"Conteúdo ocultado na demonstração"}).waitFor();
+  await p1.getByRole("button",{name:"Revisar no painel"}).click();
+  await p1.getByRole("tab",{name:"Todas"}).click();
+  await p1.getByRole("button",{name:"Reabrir"}).click();
+  await p1.goto(url+"pergunta/q2/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Denunciar"}).waitFor();
+  assert.deepEqual(p1Errors,[],"P1 browser journey JS errors");
+  await p1Context.close();
+  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore"]},null,2)+"\n");
 } finally {await browser.close();}
