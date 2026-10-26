@@ -101,8 +101,8 @@ export function InteracoesDoGrupo({
         <details data-pedidos-entrada="sim" className="rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3">
           <summary className="min-h-10 cursor-pointer text-sm font-semibold">Pedidos de entrada ({pedidos.length})</summary>
           <ul className="grid gap-2">
-            {pedidos.map((pedido, indice) => (
-              <li key={`pedido-${indice}`} className="rounded-xl bg-(--surface-low) p-3 text-sm">
+            {pedidos.map((pedido) => (
+              <li key={`${pedido.nome}-${pedido.nota}`} className="rounded-xl bg-(--surface-low) p-3 text-sm">
                 <b>{pedido.nome}</b>
                 <p className="text-xs text-(--on-surface-variant)">{pedido.nota}</p>
               </li>
@@ -124,7 +124,7 @@ export function InteracoesDoGrupo({
             <div data-rascunhos-grupo="sim" className="grid gap-2">
               <small className="text-xs font-medium">Seus rascunhos — não publicados ({rascunhos.length})</small>
               {rascunhos.map((rascunho, indice) => (
-                <article key={`rascunho-${indice}-${rascunho}`} data-rascunho-grupo="sim" className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3">
+                <article key={rascunho} data-rascunho-grupo="sim" className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3">
                   <p className="whitespace-pre-wrap break-words text-sm">{rascunho}</p>
                   <Botao tom="texto" className="justify-self-end" data-acao="excluir-rascunho-grupo" onClick={() => {
                     const lista = excluirRascunhoDoGrupo(cidade, id, indice)
