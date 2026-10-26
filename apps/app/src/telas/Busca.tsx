@@ -8,6 +8,7 @@ import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
+import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
@@ -38,6 +39,26 @@ const FILTROS: readonly ItemDeFiltro[] = [
 ]
 
 const SUGESTOES = ["escola", "berço", "mudança", "mecânico"] as const
+
+// Categorias da grade "Explorar" do HTML R72. Só exibimos categorias que
+// possuem negócios na cidade consultada, usando a categoria real da fixture.
+const EXPLORAR = [
+  { id: "saude", rotulo: "Saúde", icone: "medical_services", termos: ["saúde"] },
+  { id: "educacao", rotulo: "Educação", icone: "school", termos: ["aulas", "educação"] },
+  { id: "reparos", rotulo: "Casa e reparos", icone: "build", termos: ["elétrica", "climatização", "refrigeração"] },
+  { id: "mudanca", rotulo: "Mudança e transporte", icone: "local_shipping", termos: ["mudança", "transporte"] },
+  { id: "pets", rotulo: "Pets", icone: "pets", termos: ["pets"] },
+  { id: "comida", rotulo: "Festas e comida", icone: "cake", termos: ["comida", "festas"] },
+  { id: "limpeza", rotulo: "Limpeza e jardim", icone: "home", termos: ["limpeza", "jardim"] },
+] as const
+
+function negocioDaCategoria(categoria: string | null, negocio: DadosDaCidade["negocios"][number]): boolean {
+  const grupo = EXPLORAR.find((item) => item.id === categoria)
+  if (!grupo) return false
+  const apresentacao = registro(negocio.apresentacao)
+  const nome = normalizar(texto(apresentacao["cat"], negocio.category ?? ""))
+  return grupo.termos.some((termo) => nome.includes(normalizar(termo)))
+}
 
 const PARADAS = new Set([
   "de",
@@ -92,6 +113,7 @@ export function Busca() {
   const [rodada, setRodada] = useState(0)
   const { consulta, definirConsulta: setConsulta } = casca
   const [escopo, setEscopo] = useState("all")
+  const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -111,9 +133,18 @@ export function Busca() {
     return () => controle.abort()
   }, [casca.cidade, rodada])
 
+  // Uma consulta digitada tem precedência sobre a categoria tocada na grade.
+  useEffect(() => {
+    setCategoriaAtiva(null)
+  }, [consulta])
+
   const achados = useMemo(() => {
     const vazio = { items: [], biz: [], asks: [], groups: [], events: [] }
-    if (dados === null || termos(consulta).length === 0) return vazio
+    if (dados === null) return vazio
+    if (termos(consulta).length === 0 && categoriaAtiva !== null) {
+      return { ...vazio, biz: dados.negocios.filter((negocio) => negocioDaCategoria(categoriaAtiva, negocio)) }
+    }
+    if (termos(consulta).length === 0) return vazio
     const items = dados.anuncios.filter((anuncio) => {
       const apresentacao = registro(anuncio.apresentacao)
       return (
@@ -150,7 +181,7 @@ export function Busca() {
       combina(consulta, [evento.title, evento.description ?? "", evento.venue ?? ""].join(" ")),
     )
     return { items, biz, asks, groups, events }
-  }, [dados, consulta])
+  }, [dados, consulta, categoriaAtiva])
 
   const total =
     (escopo === "all" || escopo === "items" ? achados.items.length : 0) +
@@ -162,6 +193,7 @@ export function Busca() {
   const mostrando = (tipo: string): boolean => escopo === "all" || escopo === tipo
   const teto = escopo === "all" ? 4 : Number.POSITIVE_INFINITY
   const carregando = dados === null && !erro
+  const explorando = termos(consulta).length === 0 && categoriaAtiva === null
 
   return (
     <section data-tela="busca" className="grid gap-2">
@@ -182,9 +214,59 @@ export function Busca() {
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
-      ) : termos(consulta).length === 0 ? (
-        <Secao titulo="Sugestões">
-          <div className="grid gap-2">
+      ) : explorando ? (
+        <>
+          <Secao titulo={`Explorar em ${casca.cidade}`} className="mt-4">
+            <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
+              {EXPLORAR.filter((item) =>
+                dados.negocios.some((negocio) => negocioDaCategoria(item.id, negocio)),
+              ).slice(0, 6).map((item) => {
+                const quantidade = dados.negocios.filter((negocio) => negocioDaCategoria(item.id, negocio)).length
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-explorar-categoria={item.id}
+                    onClick={() => {
+                      setCategoriaAtiva(item.id)
+                      setEscopo("biz")
+                    }}
+                    className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                  >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                      <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                    </span>
+                    <span className="grid min-w-0 gap-0.5">
+                      <b className="text-[13px] leading-4">{item.rotulo}</b>
+                      <small className="text-xs text-(--on-surface-variant)">{quantidade} {quantidade === 1 ? "negócio" : "negócios"}</small>
+                    </span>
+                  </button>
+                )
+              })}
+              {[
+                { id: "imoveis", rotulo: "Imóveis", icone: "apartment", quantidade: dados.anuncios.filter((a) => a.kind === "property").length },
+                { id: "desapegos", rotulo: "Desapegos", icone: "sell", quantidade: dados.anuncios.filter((a) => a.kind !== "property").length },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-explorar-categoria={item.id}
+                  onClick={() => void navegacao.irPara(item.id)}
+                  className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                    <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                  </span>
+                  <span className="grid min-w-0 gap-0.5">
+                    <b className="text-[13px] leading-4">{item.rotulo}</b>
+                    <small className="text-xs text-(--on-surface-variant)">{item.quantidade} disponíveis</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Secao>
+          <Secao titulo="Sugestões" className="mt-4">
+            <div className="grid gap-1">
             {SUGESTOES.map((sugestao) => (
               <LinhaDeLista
                 key={sugestao}
@@ -194,7 +276,8 @@ export function Busca() {
               />
             ))}
           </div>
-        </Secao>
+          </Secao>
+        </>
       ) : total === 0 ? (
         <EstadoVazio
           titulo={`Nada sobre “${consulta}”`}
