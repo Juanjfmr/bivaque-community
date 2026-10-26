@@ -38,6 +38,10 @@ test("Conversa: compositor mobile, resposta rápida e histórico de prévias por
   if (medidas) {
     expect(medidas.x).toBeGreaterThanOrEqual(-1)
     expect(medidas.x + medidas.width).toBeLessThanOrEqual(largura + 1)
+    if (largura < 720) {
+      const altura = page.viewportSize()?.height ?? 812
+      expect(altura - (medidas.y + medidas.height)).toBeLessThan(72)
+    }
   }
   await page.reload()
   await expect(page.locator('[data-mensagem-previa="sim"]')).toHaveCount(1)
