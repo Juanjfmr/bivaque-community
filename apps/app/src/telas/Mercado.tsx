@@ -229,7 +229,11 @@ export function ListaDeMercado({
     <section data-tela={inicial} className="grid gap-2">
       <CabecaDePagina
         titulo={titulo}
-        subtitulo={inicial === "imoveis" ? `Casas e apartamentos em ${casca.cidade}.` : `O que a comunidade de ${casca.cidade} está anunciando.`}
+        subtitulo={
+          inicial === "imoveis"
+            ? `Casas e apartamentos em ${casca.cidade}.`
+            : `O que a comunidade de ${casca.cidade} está anunciando.`
+        }
         acao={
           inicial === "imoveis" ? (
             <Botao data-acao="anunciar-imovel" icone="add" onClick={() => setCriandoImovel(true)}>

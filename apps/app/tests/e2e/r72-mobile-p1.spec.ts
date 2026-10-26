@@ -133,7 +133,9 @@ test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catál
   await page.reload()
   await expect(page.locator('[data-rascunhos-imoveis="sim"] [data-rascunho-imovel]')).toHaveCount(1)
   await page.goto("/app/meus-anuncios")
-  await expect(page.locator('[data-meus-rascunhos="sim"]')).toContainText("Apartamento reformado com três quartos")
+  await expect(page.locator('[data-meus-rascunhos="sim"]')).toContainText(
+    "Apartamento reformado com três quartos",
+  )
   await page.locator('[data-meus-rascunhos="sim"] button').click()
   await expect(page).toHaveURL(/\/app\/imoveis$/)
   await page.locator('[data-acao="excluir-rascunho"]').click()
