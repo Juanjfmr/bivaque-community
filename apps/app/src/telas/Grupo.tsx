@@ -117,6 +117,13 @@ export function Grupo() {
 
   return (
     <section data-tela="grupo" className="grid gap-2">
+      {texto(apresentacao["img"]) === "" ? null : (
+        <Capa
+          fonte={texto(apresentacao["img"])}
+          alt={`Capa do grupo ${grupo.name}`}
+          className="rounded-2xl"
+        />
+      )}
       <CabecaDePagina
         titulo={texto(apresentacao["t"], grupo.name)}
         subtitulo={`${membros > 0 ? `${membros} membros` : "Grupo novo"} · ${privacidade === "fechado" ? "Fechado" : "Aberto"}`}
