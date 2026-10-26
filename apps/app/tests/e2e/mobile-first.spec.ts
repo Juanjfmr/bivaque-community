@@ -36,6 +36,14 @@ test("mobile: topo e barra inferior cabem inteiros, com alvos de toque", async (
     }
   }
 
+  const cidade = topo.locator('[data-acao="cidade"]')
+  await cidade.tap()
+  const painel = page.getByRole("dialog", { name: "Trocar de cidade", exact: true })
+  await expect(painel).toBeVisible()
+  await painel.getByRole("button", { name: "Cancelar", exact: true }).tap()
+  await expect(painel).toHaveCount(0)
+  await expect(cidade).toBeFocused()
+
   await nav.locator('[data-aba="mercado"]').tap()
   await expect(page).toHaveURL(/\/app\/mercado$/)
 })
