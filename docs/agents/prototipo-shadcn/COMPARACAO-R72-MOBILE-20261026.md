@@ -5,7 +5,7 @@
 ## Prova nova, não somente auditoria histórica
 
 - [Execução Playwright com pares reais](https://github.com/Juanjfmr/bivaque-community/actions/runs/40392528423) — **PASS**.
-- [Baixar artefato com as 24 imagens pareadas e manifesto de origem](https://github.com/Juanjfmr/bivaque-community/actions/runs/40392528423/artifacts/12684582401).
+- Na [execução Playwright acima](https://github.com/Juanjfmr/bivaque-community/actions/runs/40392528423), abra o artefato `r72-vs-app-mobile` para baixar as 24 imagens e o manifesto de origem.
 - Gatilho: `node scripts/app/capturar.mjs --mobile-r72`.
 - **Fonte esquerda**: HTML R72 histórico reconstituído pela rotina `round13Baseline`, **SHA-256 validado**: `7e7657c3652ce6daff450d8dfe5d9ce8d8eda8d6189bcd3f2317a2f25fb61d2d`.
 - **Fonte direita**: `apps/app` do PR #116 sobre `codex/app`, sem modo de prova.
