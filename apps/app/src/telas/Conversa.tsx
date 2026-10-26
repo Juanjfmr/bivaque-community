@@ -4,7 +4,7 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
-import { Campo } from "@/components/bivaque/campos"
+import { Textarea } from "@/components/ui/textarea"
 import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
@@ -223,31 +223,36 @@ export function Conversa() {
           ))}
         </fieldset>
         <form
-          className="flex min-w-0 items-end gap-2"
-          onSubmit={(evento) => {
-            evento.preventDefault()
-            adicionarPrevia()
-          }}
+          className="grid min-w-0 gap-1.5"
+          onSubmit={(evento) => { evento.preventDefault(); adicionarPrevia() }}
         >
-          <div className="min-w-0 flex-1">
-            <Campo
-              id="mensagem-da-conversa"
-              rotulo="Mensagem da prévia"
-              valor={rascunho}
-              aoMudar={setRascunho}
-              area
-              nota="Apenas demonstração; nenhuma mensagem é entregue."
-            />
+          <div className="flex min-w-0 items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="mensagem-da-conversa" className="sr-only">Mensagem da prévia</label>
+              <Textarea
+                id="mensagem-da-conversa"
+                aria-label="Mensagem da prévia"
+                rows={2}
+                maxLength={2000}
+                value={rascunho}
+                onChange={(evento) => setRascunho(evento.target.value)}
+                placeholder="Escreva uma mensagem..."
+                className="min-h-12 max-h-32 resize-y rounded-xl"
+              />
+            </div>
+            <Botao
+              type="submit"
+              data-acao="adicionar-previa-conversa"
+              icone="send"
+              disabled={rascunho.trim() === "" || rascunho.length > 2000}
+              className="shrink-0 px-3"
+            >
+              Adicionar
+            </Botao>
           </div>
-          <Botao
-            type="submit"
-            data-acao="adicionar-previa-conversa"
-            icone="send"
-            disabled={rascunho.trim() === "" || rascunho.length > 2000}
-            className="mb-0 shrink-0 px-3"
-          >
-            Adicionar
-          </Botao>
+          <small className="text-[11px] leading-4 text-(--on-surface-variant)">
+            Apenas prévia nesta sessão; nenhuma mensagem é entregue.
+          </small>
         </form>
         {erroLocal === "" ? null : (
           <p role="alert" className="text-xs text-(--destructive)">
