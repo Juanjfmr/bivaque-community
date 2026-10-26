@@ -138,6 +138,7 @@ export function ListaDeMercado({
                   key={negocio.id}
                   negocio={{
                     id: negocio.id,
+                    fonte: texto(apresentacao["imagem"]),
                     nome: texto(apresentacao["name"], negocio.display_name),
                     categoria: texto(apresentacao["cat"], negocio.category ?? ""),
                     cidade: casca.cidade,
@@ -170,6 +171,7 @@ export function ListaDeMercado({
                 key={anuncio.id}
                 anuncio={{
                   id: anuncio.id,
+                  fonte: texto(apresentacao["imagem"]),
                   titulo: texto(apresentacao["title"], anuncio.title),
                   preco: typeof anuncio.price_cents === "number" ? anuncio.price_cents / 100 : null,
                   icone: iconeDeDado(apresentacao["icon"]),
