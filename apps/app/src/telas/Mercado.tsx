@@ -11,6 +11,7 @@ import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -52,6 +53,33 @@ function totalMensal(anuncio: DadosDaCidade["anuncios"][number]): number | null 
 function quartos(anuncio: DadosDaCidade["anuncios"][number]): number | null {
   const nome = /\b(\d+)\s+quartos?\b/i.exec(anuncio.title)?.[1]
   return nome ? Number(nome) : null
+}
+
+/** Resumo apenas de atributos explicitamente informados pelo anunciante. */
+function atributosDoImovel(anuncio: DadosDaCidade["anuncios"][number]): string[] {
+  const descricao = anuncio.description ?? ""
+  const itens: string[] = []
+  const quantidadeDeQuartos = quartos(anuncio)
+  if (quantidadeDeQuartos !== null) itens.push(`${quantidadeDeQuartos} quartos`)
+  const area = /(\d+(?:[.,]\d+)?)\s*m²/i.exec(descricao)?.[1]
+  if (area) itens.push(`${area} m²`)
+  const vaga = /(\d+)\s+vagas?\b/i.exec(descricao)?.[1]
+  if (vaga) itens.push(`${vaga} ${vaga === "1" ? "vaga" : "vagas"}`)
+  else if (/\buma vaga\b/i.test(descricao)) itens.push("1 vaga")
+  return itens
+}
+
+function complementoDoImovel(anuncio: DadosDaCidade["anuncios"][number]): string | undefined {
+  const descricao = anuncio.description ?? ""
+  const partes: string[] = []
+  const condominio = /condomínio\s+de\s+R\$\s*([\d.,]+)/i.exec(descricao)?.[1]
+  if (condominio) {
+    const valor = Number(condominio.replaceAll(".", "").replace(",", "."))
+    if (Number.isFinite(valor)) partes.push(`Condomínio ${moeda(valor)}`)
+  }
+  const disponibilidade = /disponível a partir de ([^.]+)/i.exec(descricao)?.[1]
+  if (disponibilidade) partes.push(`Disponível a partir de ${disponibilidade.trim()}`)
+  return partes.length === 0 ? undefined : partes.join(" · ")
 }
 
 export function ListaDeMercado({
@@ -360,6 +388,14 @@ export function ListaDeMercado({
                   icone: iconeDeDado(apresentacao["icon"]),
                   meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
                   salvo: salvos.has(anuncio.id) || apresentacao["saved"] === true,
+                  ...(inicial === "imoveis"
+                    ? {
+                        detalhes: atributosDoImovel(anuncio),
+                        ...(complementoDoImovel(anuncio) === undefined
+                          ? {}
+                          : { informacaoExtra: complementoDoImovel(anuncio) }),
+                      }
+                    : {}),
                 }}
                 aoSalvar={() => alternarSalvo(anuncio.id)}
                 aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
