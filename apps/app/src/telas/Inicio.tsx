@@ -239,6 +239,8 @@ export function Inicio() {
         </div>
       ) : (
         <>
+          <div className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start">
+            <div className="bv-home-principal min-w-0">
           <Secao
             titulo="Serviços recomendados"
             acoes={
@@ -320,6 +322,8 @@ export function Inicio() {
             )}
           </Secao>
 
+            </div>
+            <aside aria-label="Comunidade na cidade" className="min-w-0 lg:sticky lg:top-16">
           {grupos.length === 0 ? null : (
             <Secao titulo="Nos seus grupos">
               <div className="grid gap-2">
@@ -400,6 +404,8 @@ export function Inicio() {
             )}
           </Secao>
 
+            </aside>
+          </div>
           <Secao
             titulo={`Guia de ${casca.cidade}`}
             acoes={
