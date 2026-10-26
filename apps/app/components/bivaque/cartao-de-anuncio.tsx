@@ -29,7 +29,7 @@ export type AnuncioDoCartao = {
   readonly salvo?: boolean
   readonly bairro?: string | null
   readonly detalhes?: readonly string[]
-  readonly informacaoExtra?: string
+  readonly informacaoExtra?: string | undefined
 }
 
 export function CartaoDeFoto({
