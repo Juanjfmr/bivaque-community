@@ -72,3 +72,18 @@ test("V15: o botão preenchido usa a Brasa oficial em claro e escuro", async ({ 
   })
   expect(cores.aplicado).toBe(cores.esperado)
 })
+
+test("shadcn Dialog: trocar cidade mantém overlay único e fecha com foco devolvido", async ({
+  page,
+}) => {
+  await page.goto("/app/inicio")
+  const cidade = page.locator('[data-topo="barra"] [data-acao="cidade"]')
+  await cidade.click()
+  const dialogo = page.getByRole("dialog", { name: "Trocar de cidade", exact: true })
+  await expect(dialogo).toBeVisible()
+  await expect(dialogo).toHaveAttribute("data-slot", "dialog-content")
+  await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCount(1)
+  await dialogo.getByRole("button", { name: "Fechar", exact: true }).click()
+  await expect(dialogo).toHaveCount(0)
+  await expect(cidade).toBeFocused()
+})
