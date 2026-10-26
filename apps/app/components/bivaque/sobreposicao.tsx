@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog } from "radix-ui"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type ReactNode, useEffect, useRef } from "react"
 import { distanciaFechaFolha, paginaEncolhe } from "@/lib/movimento"
 import type { Sobreposicao as IdDeSobreposicao } from "@/lib/navegacao/entrada"
@@ -51,15 +51,15 @@ export function Sobreposicao({
   }, [formato, gaveta])
 
   return (
-    <Dialog.Root
+    <Dialog
       open
       onOpenChange={(aberto) => {
         if (!aberto) aoFechar()
       }}
     >
-      <Dialog.Portal>
-        <Dialog.Overlay data-scrim="sobreposicao" className="bv-scrim" />
-        <Dialog.Content
+      <DialogContent
+          unstyled
+          showCloseButton={false}
           data-sobreposicao={id}
           data-formato={formato}
           className={cn(
@@ -107,11 +107,11 @@ export function Sobreposicao({
 
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <Dialog.Title className="text-lg leading-6">{titulo}</Dialog.Title>
+              <DialogTitle className="text-lg leading-6">{titulo}</DialogTitle>
               {descricao === undefined ? null : (
-                <Dialog.Description className="mt-0.5 text-sm text-(--on-surface-variant)">
+                <DialogDescription className="mt-0.5 text-sm text-(--on-surface-variant)">
                   {descricao}
-                </Dialog.Description>
+                </DialogDescription>
               )}
             </div>
             <BotaoDeIcone
@@ -123,8 +123,7 @@ export function Sobreposicao({
           </div>
 
           <div className="mt-3">{children}</div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      </DialogContent>
+    </Dialog>
   )
 }
