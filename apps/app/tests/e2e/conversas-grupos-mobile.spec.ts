@@ -8,7 +8,7 @@ test("Conversas: origem do anúncio real pode ser aberta sem rota genérica", as
   await thread.getByRole("button", { name: "Ver origem: Berço com colchão" }).click()
   await expect(page).toHaveURL(/\/app\/anuncio\/i3$/)
   await page.goto("/app/conversas")
-  await page.locator('[data-thread="t1"] > button').click()
+  await page.locator('[data-thread="t1"] > button').first().click()
   await expect(page).toHaveURL(/\/app\/conversa\/t1$/)
   const contexto = page.locator('[data-tela="conversa"] [data-contexto-conversa="anuncio"]')
   await expect(contexto).toContainText("Berço com colchão")
