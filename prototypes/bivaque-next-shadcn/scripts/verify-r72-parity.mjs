@@ -46,7 +46,7 @@ test("Every existing demo detail family is prerendered", () => {
 test("Simulated data and darker photographs are explicit", () => {
   has(fixtures, "Fictional content");
   has(app, "localStorage.setItem(store");
-  has(app, "Nenhuma ação envia informações para terceiros");
+  has(app, "Algumas imagens são carregadas de serviços externos.");
   has(app, "dark:brightness-90");
 });
 
