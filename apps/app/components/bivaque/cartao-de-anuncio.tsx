@@ -162,7 +162,7 @@ export function CartaoDeNegocio({
         type="button"
         data-acao="abrir-negocio"
         onClick={aoAbrir}
-        className="grid w-full gap-1 p-3 text-left"
+        className="grid min-h-11 w-full gap-1 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
       >
         <h3 className="text-[17px] leading-6">{negocio.nome}</h3>
         <span className="text-[13px] text-(--on-surface-variant)">
