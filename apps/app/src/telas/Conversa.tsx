@@ -175,6 +175,7 @@ export function Conversa() {
             )
           })}
           {novas.map((item, indice) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: preview messages are append-only and can contain duplicate text
             <div key={`previa-${indice}-${item}`} data-mensagem-previa="sim" className="ml-auto grid max-w-[86%] gap-1">
               <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">{item}</p>
               <small className="text-right text-[11px] text-(--on-surface-variant)">Só na sua sessão · não enviada</small>
@@ -184,7 +185,7 @@ export function Conversa() {
       )}
 
       <div data-compositor-conversa="sim" className="sticky z-10 grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)] bottom-[calc(var(--altura-da-barra,64px)+env(safe-area-inset-bottom)+8px)] md:bottom-3">
-        <div aria-label="Respostas rápidas" className="flex gap-2 overflow-x-auto pb-0.5">
+        <fieldset aria-label="Respostas rápidas" className="flex gap-2 overflow-x-auto pb-0.5">
           {["Ainda está disponível?", "Podemos combinar a retirada?", "Obrigado, vou confirmar."].map((opcao) => (
             <button
               type="button"
@@ -196,7 +197,7 @@ export function Conversa() {
               {opcao}
             </button>
           ))}
-        </div>
+        </fieldset>
         <form
           className="flex min-w-0 items-end gap-2"
           onSubmit={(evento) => { evento.preventDefault(); adicionarPrevia() }}
