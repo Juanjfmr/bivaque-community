@@ -31,7 +31,7 @@ export function guardarRascunhoDoGrupo(cidade: string, id: string, texto: string
   const limpa = texto.trim()
   if (limpa.length < 10 || limpa.length > 2000) return null
   try {
-    const resultado = [limpa, ...lerRascunhosDoGrupo(cidade, id)].slice(0, 10)
+    const resultado = [limpa, ...lerRascunhosDoGrupo(cidade, id).filter((item) => item !== limpa)].slice(0, 10)
     sessionStorage.setItem(chave(cidade, id, "rascunhos"), JSON.stringify(resultado))
     return resultado
   } catch {
