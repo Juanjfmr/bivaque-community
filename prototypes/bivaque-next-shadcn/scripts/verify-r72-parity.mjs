@@ -49,3 +49,35 @@ test("Simulated data and darker photographs are explicit", () => {
   has(app, "Nenhuma ação envia informações para terceiros");
   has(app, "dark:brightness-90");
 });
+
+test("P1: fictional onboarding never solicits CPF, document, password or real email",()=>{
+  const access=read("components/demo-access.tsx");
+  has(access, "Simulação, não autenticação");
+  has(access, "não aceita documentos");
+  has(access, "Simular aprovação");
+  has(access, "Apelido fictício");
+  assert.ok(!/<Input[^>]*type="password"/.test(access));
+  has(app, 'slug==="acesso"?<DemoAccessPage');
+});
+test("P1: moderated items can be reported and locally hidden, with a review queue",()=>{
+  const mod=read("components/demo-moderation.tsx");
+  has(app, "submitReport");
+  has(app, "hiddenByDemo");
+  has(app, "onClick={()=>openReport");
+  has(mod, "Fila de moderação");
+  has(mod, "Ocultar no laboratório");
+  has(mod, "Reabrir");
+  has(app, 'slug==="painel"?<DemoModerationPage');
+});
+test("P1: owned demo publications can be edited, paused and deleted",()=>{
+  has(app, "function editPost(p:Post)");
+  has(app, "Rascunho atualizado neste navegador");
+  has(app, "Retomar");
+  has(app, "Pausar");
+  has(app, "Salvar alterações");
+  has(app, "localDrafts(options)");
+});
+test("P1: access and moderation pages exported as static routes",()=>{
+  const page=read("app/[section]/page.tsx");
+  for(const key of ['"acesso"','"painel"'])has(page,key);
+});
