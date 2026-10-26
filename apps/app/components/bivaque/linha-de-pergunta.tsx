@@ -1,15 +1,14 @@
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { iniciais } from "@/lib/texto"
+import { cn } from "@/lib/utils"
 import { Etiqueta } from "./etiqueta"
 import { Icone } from "./icone"
-import { LinhaDeLista } from "./lista"
 
 /**
- * Linha de pergunta e linha de encontro (inventário §7, `shell/primitives.js`:
- * `questionRow` e `eventRow`).
- *
- * As duas nascem de `.list-row`; o que muda é o que entra na coluna do meio e a
- * pílula do fim.
+ * Perguntas têm anatomia própria: avatar e autoria, enunciado inteiro,
+ * contexto e estado ao pé. A base de outros tipos de linha não é alterada.
+ * Usa o Avatar e Badge da base shadcn, conforme auditoria V14.
  */
-
 export type PerguntaDaLinha = {
   readonly id: string
   readonly pergunta: string
@@ -24,33 +23,60 @@ export type PerguntaDaLinha = {
 
 export function LinhaDePergunta({
   pergunta,
+  className,
   ...props
 }: { pergunta: PerguntaDaLinha } & React.ComponentProps<"button">) {
-  const estado =
-    pergunta.resolvida === true ? (
-      <Etiqueta tom="ok" icone="check_circle">
-        Resolvida
-      </Etiqueta>
-    ) : (
-      <Etiqueta tom="neutro">
-        {pergunta.respostas === 0 ? "Sem resposta" : `${pergunta.respostas} resposta(s)`}
-      </Etiqueta>
-    )
-
+  const autor = pergunta.propria === true ? "Você" : pergunta.autor
   return (
-    <LinhaDeLista
-      titulo={pergunta.pergunta}
-      tituloMultilinha
-      subtitulo={`${pergunta.propria === true ? "Você" : pergunta.autor} · ${pergunta.tópico} · ${pergunta.cidade}`}
-      fim={estado}
+    <button
+      type="button"
+      data-linha="pergunta"
+      className={cn(
+        "bv-press flex min-h-20 w-full items-start gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) px-3 py-3.5 text-left hover:bg-(--muted) focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring) sm:px-4",
+        className,
+      )}
       {...props}
     >
-      {pergunta.trecho === undefined ? null : (
-        <span className="mt-1 line-clamp-2 text-[13px] text-(--on-surface-variant)">
-          {pergunta.trecho}
+      <Avatar size="lg" className="mt-0.5 size-10 shrink-0">
+        <AvatarFallback className="bg-(--secondary-container) font-semibold text-(--on-secondary-container)">
+          {iniciais(autor)}
+        </AvatarFallback>
+      </Avatar>
+      <span className="grid min-w-0 grow gap-1.5">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <b className="text-[13px] font-semibold">{autor}</b>
+          <small className="text-[12px] text-(--on-surface-variant)">{pergunta.cidade}</small>
         </span>
-      )}
-    </LinhaDeLista>
+        <b
+          data-titulo-linha
+          className="whitespace-normal break-words text-[15px] leading-[1.45] font-semibold text-(--on-surface)"
+        >
+          {pergunta.pergunta}
+        </b>
+        {pergunta.trecho === undefined ? null : (
+          <small className="line-clamp-2 text-[13px] text-(--on-surface-variant)">
+            {pergunta.trecho}
+          </small>
+        )}
+        <span className="flex min-w-0 flex-wrap items-center gap-2">
+          <Etiqueta tom={pergunta.resolvida === true ? "ok" : "neutro"} icone={pergunta.resolvida === true ? "check_circle" : undefined}>
+            {pergunta.resolvida === true
+              ? "Resolvida"
+              : pergunta.respostas === 0
+                ? "Sem resposta"
+                : pergunta.respostas === 1
+                  ? "1 resposta"
+                  : `${pergunta.respostas} respostas`}
+          </Etiqueta>
+          {pergunta.tópico.trim() === "" ? null : (
+            <small className="min-w-0 truncate text-[12px] text-(--on-surface-variant)">
+              {pergunta.tópico}
+            </small>
+          )}
+        </span>
+      </span>
+      <Icone nome="chevron_right" className="mt-6 size-5 shrink-0 text-(--on-surface-variant)" />
+    </button>
   )
 }
 
