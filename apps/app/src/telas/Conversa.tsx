@@ -174,10 +174,9 @@ export function Conversa() {
               </p>
             )
           })}
-          {novas.map((item, indice) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: preview messages are append-only and can contain duplicate text
-            <div key={`previa-${indice}-${item}`} data-mensagem-previa="sim" className="ml-auto grid max-w-[86%] gap-1">
-              <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">{item}</p>
+          {novas.map((item) => (
+            <div key={item.id} data-mensagem-previa="sim" className="ml-auto grid max-w-[86%] gap-1">
+              <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">{item.conteudo}</p>
               <small className="text-right text-[11px] text-(--on-surface-variant)">Só na sua sessão · não enviada</small>
             </div>
           ))}
