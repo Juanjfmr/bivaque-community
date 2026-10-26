@@ -109,7 +109,37 @@ try {
   await p1.getByRole("button",{name:"Reabrir"}).click();
   await p1.goto(url+"pergunta/q2/",{waitUntil:"domcontentloaded"});
   await p1.getByRole("button",{name:"Denunciar"}).waitFor();
+
+  // P2: open and restricted groups, local posts, moderation by post and accurate area tools.
+  await p1.goto(url+"grupo/g1/",{waitUntil:"domcontentloaded"});
+  await p1.locator("#group-message").fill("Experiência de teste sobre moradia e mudança, apenas para a demonstração.");
+  await p1.getByRole("button",{name:"Publicar no grupo"}).click();
+  const localPost=p1.locator("article").filter({hasText:"Experiência de teste sobre moradia e mudança"}).first();
+  await localPost.waitFor();
+  await localPost.getByRole("button",{name:/curtidas fictícias/}).click();
+  await localPost.getByRole("textbox",{name:"Comentar publicação de Você"}).fill("Comentário de teste sem dados reais.");
+  await localPost.getByRole("button",{name:"Enviar comentário"}).click();
+  await localPost.getByText("Comentário de teste sem dados reais.").waitFor();
+  await p1.screenshot({path:output+"/grupo-375-light.png",fullPage:true,animations:"disabled"});
+  await localPost.getByRole("button",{name:"Denunciar"}).click();
+  await p1.getByRole("button",{name:"Registrar denúncia de teste"}).click();
+  await p1.goto(url+"painel/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Ocultar no laboratório"}).first().click();
+  await p1.goto(url+"grupo/g1/",{waitUntil:"domcontentloaded"});
+  assert.equal(await p1.getByText("Experiência de teste sobre moradia e mudança, apenas para a demonstração.").count(),0,"Reported group post must be hidden locally");
+  await p1.goto(url+"grupo/g3/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:"Solicitar acesso"}).click();
+  await p1.getByRole("button",{name:"Cancelar solicitação"}).waitFor();
+  await p1.reload();
+  await p1.getByRole("button",{name:"Cancelar solicitação"}).waitFor();
+  await p1.getByRole("button",{name:"Cancelar solicitação"}).click();
+  await p1.getByRole("button",{name:"Solicitar acesso"}).waitFor();
+  await p1.goto(url+"anuncio/h1/",{waitUntil:"domcontentloaded"});
+  await p1.getByRole("button",{name:/Ampliar foto ilustrativa/}).click();
+  await p1.getByRole("button",{name:"Fechar imagem"}).click();
+  await p1.getByRole("button",{name:/Explorar região no OpenStreetMap/}).waitFor();
+  await p1.screenshot({path:output+"/anuncio-375-light.png",fullPage:true,animations:"disabled"});
   assert.deepEqual(p1Errors,[],"P1 browser journey JS errors");
   await p1Context.close();
-  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore"]},null,2)+"\n");
+  process.stdout.write(JSON.stringify({status:"passed",screenshots:results,flow:["create","persist","search group","switch city","guide isolation","P1 onboarding","edit and pause","moderation and restore","group feed and comments","restricted request","photo zoom","area lookup"]},null,2)+"\n");
 } finally {await browser.close();}
