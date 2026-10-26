@@ -8,9 +8,10 @@ select plan(26);
 
 -- RECON-023 — acompanhamento do pedido (migration 20260911105119).
 --
--- Mesmo arranjo do service-requests.sql: prestador alcancavel pela comunidade A,
--- criado sob `postgres` porque provider_accounts nao tem insert para
--- `authenticated`. Cada via de permissao tem prova positiva E negativa.
+-- Mesmo arranjo do service-requests.sql: prestador alcancavel pela CIDADE
+-- (provider_reach localidade), criado sob `postgres` porque provider_accounts
+-- nao tem insert para `authenticated`. Cada via de permissao tem prova positiva
+-- E negativa.
 
 set local role postgres;
 insert into auth.users (id, email)
@@ -36,7 +37,8 @@ values (
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values (
   '30000000-0000-4000-8000-000000000026',
-  'community',
+  'locality',
+  '00000000-0000-4000-8000-000000000001',
   'free'
 );
 

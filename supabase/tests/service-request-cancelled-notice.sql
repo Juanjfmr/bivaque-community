@@ -8,7 +8,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(11);
 
 \ir fixtures/foundation.inc
 
@@ -18,13 +18,16 @@ reset role;
 insert into public.operators (auth_user_id)
   values ('10000000-0000-4000-8000-000000000003');
 
--- ORDEM: a comunidade primeiro (provider_accounts.community_id é FK para ela),
--- depois a conta de prestador, e só então o perfil (provider_profiles.owner_user_id
--- é FK para provider_accounts.auth_user_id). Inverter isso falha no FK.
-insert into public.communities (id, name, locality_id, created_by, owner_user_id)
-values ('71000000-0000-4000-8000-0000000000a1', 'Comunidade A', '00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001');
+-- A vila saiu (ADR-20261024 §4): a conta de prestador pertence à CIDADE, não a
+-- uma comunidade. ORDEM: a conta de prestador primeiro, e só então o perfil
+-- (provider_profiles.owner_user_id é FK para provider_accounts.auth_user_id).
+-- Inverter isso falha no FK.
+--
+-- A conta abaixo é fixture direta do superusuário, não o caminho de convite: o
+-- `invited_by` só preenche o NOT NULL e não é medido aqui (o convite de operador
+-- vive em provider-invitation.sql).
 insert into public.provider_accounts (auth_user_id, invited_by, locality_id)
-values ('10000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', '71000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000001');
+values ('10000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000001');
 insert into public.provider_profiles (id, owner_user_id, display_name, category)
 values ('30000000-0000-4000-8000-0000000000b1', '10000000-0000-4000-8000-000000000005', 'Prestador 005', 'assistencia_tecnica');
 
@@ -44,7 +47,44 @@ insert into public.service_requests
 values
   ('40000000-0000-4000-8000-0000000000d1', '10000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-0000000000b1', '10000000-0000-4000-8000-000000000005', 'assistencia_tecnica', 'pedido D ja cancelado', 'cancelled');
 
+-- A acao sob teste e `settle_account_possessions`, operacao do SERVIDOR: o
+-- EXECUTE e so de `service_role` (grant da migration), entao os papeis de
+-- aplicacao sao negados abaixo (fronteira medida antes da purga) e o efeito e
+-- medido pelo canal privilegiado. O parametro e a CONTA-ALVO (quem esta saindo),
+-- nao o ator autenticado: a autorizacao vem do canal, nao do UUID. As leituras
+-- seguintes sao observacao de estado, nao prova de RLS.
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok(
+  $$ select public.settle_account_possessions('10000000-0000-4000-8000-000000000001') $$,
+  '42501',
+  null,
+  'authenticated nao executa a purga (canal do servidor)'
+);
+
+select set_config('request.jwt.claim.sub', '', true);
+reset role;
+set local role anon;
+select throws_ok(
+  $$ select public.settle_account_possessions('10000000-0000-4000-8000-000000000001') $$,
+  '42501',
+  null,
+  'anon nao executa a purga (canal do servidor)'
+);
+
+reset role;
+select is(
+  (select count(*)::int from public.service_requests
+    where status in ('open', 'in_conversation')),
+  3,
+  'as tentativas negadas nao cancelaram pedido algum'
+);
+
+set local role service_role;
 select public.settle_account_possessions('10000000-0000-4000-8000-000000000001');
+reset role;
 
 -- 1. Pedido A cancelou e o aviso foi para o 005 (a outra ponta).
 select is(

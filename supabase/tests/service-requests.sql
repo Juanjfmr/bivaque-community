@@ -31,15 +31,18 @@ select results_eq(
 -- Cenário da integração (RECON-022) — negação de acesso fora do alcance.
 --
 -- Roda PRIMEIRO porque três das suas asserções contam a tabela inteira de
--- `service_requests` (1 linha) e uma exige a tabela vazia para o membro de
--- fora. O cenário do painel (RECON-024), mais abaixo, insere as suas próprias
--- linhas; se ele rodasse antes, essas contagens passariam a medir fixtures
--- alheias e a negação de leitura deixaria de provar o que prova.
+-- `service_requests` (1 linha): se o cenário do painel (RECON-024), mais abaixo,
+-- rodasse antes, essas contagens passariam a medir fixtures alheias.
+--
+-- A leitura negada a quem está fora do alcance é medida DEPOIS de um pedido real
+-- existir e de a parte autorizada lê-lo. Medida antes da criação, ela correria
+-- sobre tabela vazia e passaria mesmo com a RLS quebrada — não prova nada.
 -- ===========================================================================
 
--- Provedor da vila A (mesmo padrão de dm-context-allowed.sql): prestador
--- alcançável por community A, criado sob `postgres` porque provider_accounts
--- não tem insert para `authenticated`.
+-- Provedor da CIDADE (mesmo padrão de dm-context-allowed.sql): prestador
+-- alcançável pela localidade A — `provider_reach` só tem escopo de localidade —
+-- criado sob `postgres` porque provider_accounts não tem insert para
+-- `authenticated`.
 set local role postgres;
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000025', 'provider-request@example.invalid');
@@ -69,12 +72,21 @@ values (
   'free'
 );
 
--- ── negativo: quem está FORA do alcance não cria nem lê ─────────────────────
--- 002 é apenas `pending` na vila A (aprovado na vila B): can_see_provider é
--- falso, então o RPC recusa e a RLS de select não devolve nada.
+-- ── negativo: quem está FORA do alcance (outra cidade) não cria ─────────────
+-- 003 é membro de OUTRA cidade (localidade B, `foundation.inc`). O alcance do 025
+-- é a localidade A, então `can_see_provider` é falso e o RPC recusa (R1-220,
+-- `mudada` — a fronteira de alcance é a CIDADE, não mais a vila). A antiga
+-- negativa por vínculo `pending` na vila A foi extinta com a vila
+-- (ADR-20261024 §4): o negativo de outra cidade que entra no lugar é novo e
+-- independente, não a mesma montagem trocada. `foundation.inc` registra outcome
+-- de verificação só do 001; 003 é membro (não verificado) e `can_see_provider`
+-- decide por localidade.
+--
+-- A criação negada é medida agora, antes de existir pedido; a leitura negada é
+-- medida mais abaixo, sobre um pedido real que a parte autorizada já leu.
 
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
@@ -88,12 +100,7 @@ select throws_ok(
   $$,
   '42501',
   null,
-  'membro fora do alcance não cria pedido'
-);
-
-select is_empty(
-  $$ select 1 from public.service_requests $$,
-  'membro fora do alcance não lê pedido nenhum'
+  'membro de outra cidade não cria pedido'
 );
 
 -- ── positivo: o membro no alcance cria o pedido ─────────────────────────────
@@ -119,6 +126,32 @@ select results_eq(
   array[1::bigint],
   'o solicitante lê o próprio pedido'
 );
+
+-- O id do pedido REAL fica guardado: a leitura negada abaixo é medida sobre ele,
+-- e não sobre uma tabela vazia. O setting é do processo, não passa pela RLS.
+select set_config(
+  'app.red006_request_id',
+  (select id::text from public.service_requests where idempotency_key = 'k-1'),
+  true
+);
+
+-- ── negativo: quem está fora do alcance não lê o pedido que EXISTE ──────────
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is_empty(
+  $$ select 1 from public.service_requests
+      where id = current_setting('app.red006_request_id')::uuid $$,
+  'membro de outra cidade não lê o pedido que existe'
+);
+
+-- Restaura a identidade correta (001) para as asserções seguintes.
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- ADR-20260922-conversa-por-pedido: a conversa e do PROPRIO pedido (contexto
 -- service_request, context_id = id do pedido), nao mais a do par com o prestador.
@@ -233,9 +266,9 @@ select throws_ok(
 );
 
 -- ===========================================================================
--- Cenário do painel do negócio (RECON-024) — dois prestadores, um por
--- comunidade, e a conversa de contexto 'provider' para a fila por situação
--- da prancha 23.
+-- Cenário do painel do negócio (RECON-024) — dois prestadores, ambos com
+-- alcance de cidade (localidade A), e a conversa de contexto 'provider' para a
+-- fila por situação da prancha 23.
 --
 -- As fixtures voltam a rodar sob o superusuário: a sessão acima terminou no
 -- papel `authenticated` com o sujeito 025, e os INSERTs diretos em
@@ -281,12 +314,14 @@ insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values
   (
     '30000000-0000-4000-8000-000000000020',
-    'community',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
     'free'
   ),
   (
     '30000000-0000-4000-8000-000000000021',
-    'community',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
     'free'
   );
 

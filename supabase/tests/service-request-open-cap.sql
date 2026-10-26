@@ -56,12 +56,14 @@ insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values
   (
     '30000000-0000-4000-8000-000000000028',
-    'community',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
     'free'
   ),
   (
     '30000000-0000-4000-8000-000000000029',
-    'community',
+    'locality',
+    '00000000-0000-4000-8000-000000000001',
     'free'
   );
 
