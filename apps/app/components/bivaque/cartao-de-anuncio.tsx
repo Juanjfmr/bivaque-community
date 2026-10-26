@@ -45,12 +45,21 @@ export function CartaoDeFoto({
       className="bv-press group/card overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)"
     >
       <div className="relative">
-        <Capa
-          fonte={anuncio.fonte}
-          alt={anuncio.titulo}
-          rotulo={anuncio.rotulo}
-          icone={anuncio.icone}
-        />
+        <button
+          type="button"
+          data-acao="abrir-foto"
+          aria-label={`Ver anúncio: ${anuncio.titulo}`}
+          onClick={aoAbrir}
+          className="block w-full overflow-hidden rounded-t-2xl text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
+        >
+          <Capa
+            fonte={anuncio.fonte}
+            alt={anuncio.titulo}
+            rotulo={anuncio.rotulo}
+            icone={anuncio.icone}
+            className="rounded-none"
+          />
+        </button>
         <span className="absolute top-2 right-2">
           <BotaoDeIcone
             rotulo={anuncio.salvo === true ? "Remover dos salvos" : "Salvar anúncio"}
@@ -65,7 +74,7 @@ export function CartaoDeFoto({
         type="button"
         data-acao="abrir-anuncio"
         onClick={aoAbrir}
-        className="grid w-full gap-1 p-3 text-left"
+        className="grid min-h-11 w-full gap-1 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
       >
         <span className="flex items-baseline gap-2">
           {anuncio.preco === undefined || anuncio.preco === null ? null : (
@@ -124,7 +133,21 @@ export function CartaoDeNegocio({
       className="bv-press overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)"
     >
       <div className="relative">
-        <Capa fonte={negocio.fonte} alt={negocio.nome} rotulo={rotulo} icone="storefront" />
+        <button
+          type="button"
+          data-acao="abrir-foto"
+          aria-label={`Ver negócio: ${negocio.nome}`}
+          onClick={aoAbrir}
+          className="block w-full overflow-hidden rounded-t-2xl text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
+        >
+          <Capa
+            fonte={negocio.fonte}
+            alt={negocio.nome}
+            rotulo={rotulo}
+            icone="storefront"
+            className="rounded-none"
+          />
+        </button>
         <span className="absolute top-2 right-2">
           <BotaoDeIcone
             rotulo={negocio.salvo === true ? "Remover dos salvos" : "Salvar negócio"}
