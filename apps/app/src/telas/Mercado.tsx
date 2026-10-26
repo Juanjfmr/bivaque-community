@@ -229,7 +229,7 @@ export function ListaDeMercado({
     <section data-tela={inicial} className="grid gap-2">
       <CabecaDePagina
         titulo={titulo}
-        subtitulo={`O que a comunidade de ${casca.cidade} está anunciando.`}
+        subtitulo={inicial === "imoveis" ? `Casas e apartamentos em ${casca.cidade}.` : `O que a comunidade de ${casca.cidade} está anunciando.`}
         acao={
           inicial === "imoveis" ? (
             <Botao data-acao="anunciar-imovel" icone="add" onClick={() => setCriandoImovel(true)}>
@@ -370,6 +370,7 @@ export function ListaDeMercado({
             <div className="min-w-43 flex-1 max-w-xs">
               <Selecao
                 id="ordenar-imoveis"
+                className="bv-ordenar-imoveis"
                 rotulo="Ordenar por"
                 valor={ordenacao}
                 aoMudar={setOrdenacao}
@@ -464,10 +465,11 @@ export function ListaDeMercado({
         />
       ) : (
         <>
-          <p className="text-sm text-(--on-surface-variant)">
-            {inicial === "imoveis" ? imoveisFiltrados.length : itens.length}{" "}
-            {inicial === "imoveis" ? "imóveis" : "anúncios"} em {casca.cidade}
-          </p>
+          {inicial === "imoveis" ? null : (
+            <p className="text-sm text-(--on-surface-variant)">
+              {itens.length} anúncios em {casca.cidade}
+            </p>
+          )}
           <Grade
             formato="cartoes"
             className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : ""}
