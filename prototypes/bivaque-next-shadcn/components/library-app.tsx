@@ -9,7 +9,7 @@ import {
   Bookmark, Plus, ChevronRight, Check, Bell, Filter, Settings, Shield,
   MapPin, Heart, ArrowRight, ArrowLeft, Send, CircleHelp, Clock, ListChecks,
   LogOut, CircleCheck, Eye, ExternalLink, Star, SlidersHorizontal, Menu,
-  SunMoon, Sun, Moon, Monitor,
+  SunMoon, Sun, Moon, Monitor, Flag, Pencil, PauseCircle, PlayCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,12 +45,14 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, ComboboxEmpty } from "@/components/ui/combobox";
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
+import {DemoAccessPage, INITIAL_DEMO_ENROLLMENT, type DemoEnrollment} from "@/components/demo-access";
+import {DemoModerationPage, type DemoReport} from "@/components/demo-moderation";
 
 type Item = { city: string; id: string; title: string; description: string; meta: string; image?: string; price?: string; badge?: string; kind: string };
 type CatalogFilters = {min:string;max:string;hoods:string[];beds:number;parking:number;area:number;pets:boolean;furnished:boolean;availability:string;condition:string;pickup:string;om:string};
 const initialCatalogFilters:CatalogFilters={min:"",max:"",hoods:[],beds:0,parking:0,area:0,pets:false,furnished:false,availability:"",condition:"Todos",pickup:"Todos",om:"Todas"};
 type Chat = { id: string; name: string; context: string; messages: { self: boolean; body: string }[] };
-type Post = { id: string; title: string; detail: string; kind: string; city?: string };
+type Post = { id: string; title: string; detail: string; kind: string; city?: string; status?:"ativo"|"pausado" };
 const routes = [
   { label: "Início", slug: "inicio", icon: Home, group: "principal" },
   { label: "Comunidade", slug: "comunidade", icon: Users, group: "principal" },
@@ -71,6 +73,8 @@ const routes = [
   { label: "Busca", slug: "busca", icon: Search, group: "oculto" },
   { label: "Salvos", slug: "salvos", icon: Bookmark, group: "oculto" },
   { label: "Negócios", slug: "negocios", icon: BriefcaseBusiness, group: "oculto" },
+  { label: "Entrada de teste", slug: "acesso", icon: Shield, group: "oculto" },
+  { label: "Moderação demo", slug: "painel", icon: ClipboardList, group: "oculto" },
 ] as const;
 const money = (n: number) => n.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
 const INITIAL_CITY = "Brasília";
@@ -128,25 +132,51 @@ export default function LibraryApp(){
   const [composeOpen,setComposeOpen]=React.useState(false);
   const [composeType,setComposeType]=React.useState("Pergunta");
   const [title,setTitle]=React.useState("");const [description,setDescription]=React.useState("");
+  const [editingId,setEditingId]=React.useState<string|null>(null);
+  const [account,setAccount]=React.useState<DemoEnrollment>(INITIAL_DEMO_ENROLLMENT);
+  const [reports,setReports]=React.useState<DemoReport[]>([]);
+  const [reportTarget,setReportTarget]=React.useState<{section:string;id:string;title:string;route:string}|null>(null);
+  const [reportReason,setReportReason]=React.useState("Conteúdo inadequado");
   const [searchOpen,setSearchOpen]=React.useState(false);
   const [villaAccess,setVillaAccess]=React.useState(false);
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{})}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals}))},[loaded,city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals]);
+  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
   function navigate(to:string){router.push("/"+to);window.scrollTo({top:0,behavior:"smooth"})}
   function openItemPage(v:Item){navigate((v.kind==="servicos"?"negocio":"anuncio")+"/"+v.id)}
   function toggle(id:string,arr:string[],setter:React.Dispatch<React.SetStateAction<string[]>>){setter(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
-  function openCreate(v="Pergunta"){setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
+  function openCreate(v="Pergunta"){setEditingId(null);setComposeType(v);setTitle("");setDescription("");setComposeOpen(true)}
+  function editPost(p:Post){setEditingId(p.id);setComposeType(p.kind);setTitle(p.title);setDescription(p.detail);setComposeOpen(true);}
+  function openReport(section:string,id:string,title:string){
+    setReportReason("Conteúdo inadequado");
+    setReportTarget({section,id,title,route:section==="conversa"?"conversas":section+"/"+id});
+  }
+  function submitReport(e:React.FormEvent){
+    e.preventDefault();
+    if(!reportTarget)return;
+    setReports(old=>[{id:"report-"+Date.now(),target:reportTarget.section+"/"+reportTarget.id,title:reportTarget.title,city,reason:reportReason,status:"pendente",createdAt:"Agora",route:reportTarget.route},...old]);
+    setReportTarget(null);
+    toast.success("Denúncia registrada apenas no modo de teste");
+  }
+  function setReportStatus(id:string,status:DemoReport["status"]){setReports(old=>old.map(r=>r.id===id?{...r,status}:r));}
+  function hiddenByDemo(section:string,id:string){return reports.some(r=>r.target===section+"/"+id&&r.status==="removido");}
+  function hiddenNotice(){return <div className="rounded-xl border border-dashed p-6"><h2 className="font-serif text-xl">Conteúdo ocultado na demonstração</h2><p className="mt-2 text-sm text-muted-foreground">Esta decisão foi simulada no painel de moderação e não afeta nenhuma publicação real.</p><Button variant="outline" className="mt-4" onClick={()=>navigate("painel")}>Revisar no painel <ArrowRight className="size-4"/></Button></div>;}
 
   const createMenuActions=()=>[
     ["Pergunta","Pedir uma indicação",MessageCircle],["Desapego","Anunciar um item",ShoppingBag],["Imóvel","Anunciar moradia",Building2],["Negócio","Cadastrar serviço",BriefcaseBusiness],["Pedido","Pedir propostas",ClipboardList],["Grupo","Reunir a comunidade",Users],["Encontro","Organizar um encontro",CalendarDays],
   ].map(([kind,subtitle,Icon])=><DropdownMenuItem key={kind as string} className="min-h-[52px] cursor-pointer gap-3 rounded-lg px-3 py-2" onSelect={()=>openCreate(kind as string)}><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">{React.createElement(Icon as typeof Plus,{className:"size-[19px]"})}</span><span className="min-w-0"><strong className="block text-[13px] font-medium">{kind as string}</strong><span className="block text-[11px] text-muted-foreground">{subtitle as string}</span></span></DropdownMenuItem>);
-  function submitCreate(e:React.FormEvent){e.preventDefault();if(!title.trim()||!description.trim()){toast.error("Preencha título e descrição");return;}setPosts(a=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType,city},...a]);setComposeOpen(false);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.")}
+  function submitCreate(e:React.FormEvent){
+    e.preventDefault();
+    if(title.trim().length<3||description.trim().length<8){toast.error("Preencha título e descrição");return;}
+    if(editingId){setPosts(old=>old.map(p=>p.id===editingId?{...p,title:title.trim(),detail:description.trim(),kind:composeType}:p));toast.success("Rascunho atualizado neste navegador");}
+    else{setPosts(old=>[{id:"local-"+Date.now(),title:title.trim(),detail:description.trim(),kind:composeType,city,status:"ativo"},...old]);toast.success("Salvo nesta demonstração. Nenhum dado foi publicado.");}
+    setEditingId(null);setComposeOpen(false);
+  }
   function contact(name:string,context:string){const old=chats.find(c=>c.name===name&&c.context===context);if(old){setChatId(old.id)}else{const id="c"+Date.now();setChats(a=>[{id,name,context,messages:[{self:true,body:"Olá! Tenho interesse em "+context+"."}]},...a]);setChatId(id)}setDetailOpen(false);navigate("conversas")}
   function openFilters(){setCatalogDraft({...catalogFilters,hoods:[...catalogFilters.hoods]});if(typeof window!=="undefined"&&window.matchMedia("(max-width: 719px)").matches)setMobileFiltersOpen(true);else setFiltersOpen(true)}
   function applyFilters(){setCatalogFilters({...catalogDraft});setFiltersOpen(false);setMobileFiltersOpen(false)}
@@ -193,7 +223,7 @@ export default function LibraryApp(){
     ...EVENTS.filter(v=>v.city===city).map(v=>({id:v.id,title:v.title,meta:"Encontro · "+v.place,kind:"agenda",to:"evento/"+v.id})),
     ...REQUESTS.filter(v=>v.city===city).map(v=>({id:v.id,title:v.title,meta:"Pedido · "+v.category+" · "+v.hood,kind:"pedidos",to:"pedido/"+v.id})),
   ];
-  const visibleSearch=searchRecords.filter(v=>!query.trim()||(v.title+" "+v.meta).toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR")));
+  const visibleSearch=searchRecords.filter(v=>!hiddenByDemo(v.to.split("/")[0],v.id)&&(!query.trim()||(v.title+" "+v.meta).toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR"))));
   function searchPage(){return <div className="space-y-5">{header}<label className="block text-sm font-medium" htmlFor="global-search">Pesquisar em {city}</label><Input id="global-search" autoFocus placeholder="Imóveis, negócios, perguntas, grupos, encontros..." value={query} onChange={e=>setQuery(e.target.value)}/><p className="text-xs text-muted-foreground" aria-live="polite">{visibleSearch.length} resultados demonstrativos em {city}</p><div className="divide-y divide-border/75 border-y">{visibleSearch.length?visibleSearch.map(v=><button key={v.to} onClick={()=>navigate(v.to)} className="flex min-h-16 w-full items-center gap-3 py-4 text-left hover:bg-secondary/40"><span className="min-w-0 flex-1"><strong className="block text-sm">{v.title}</strong><span className="mt-1 block text-xs text-muted-foreground">{v.meta}</span></span><ChevronRight className="size-4 shrink-0"/></button>):<div className="py-10 text-center"><p className="font-serif text-xl">Nada encontrado nesta cidade</p><p className="mt-2 text-sm text-muted-foreground">Experimente outra busca ou localidade.</p></div>}</div></div>;}
 
   function card(v:Item){
@@ -210,11 +240,17 @@ export default function LibraryApp(){
     const entries=posts.filter(p=>kinds.includes(p.kind)&&(p.city||INITIAL_CITY)===city);
     if(!entries.length)return null;
     return <section aria-label="Suas publicações de demonstração" className="space-y-3 rounded-xl border border-dashed border-border p-4">
-      <div><h2 className="text-sm font-semibold">Criados por você nesta demonstração</h2><p className="text-xs text-muted-foreground">Rascunhos visíveis apenas neste navegador, sem publicação real.</p></div>
-      <div className="divide-y divide-border/75">{entries.map(p=><article key={p.id} className="flex items-start gap-3 py-3"><span className="min-w-0 flex-1"><strong className="block text-sm">{p.title}</strong><span className="mt-1 block text-xs text-muted-foreground">{p.kind} · {p.detail}</span></span><Button size="sm" variant="outline" onClick={()=>{setPosts(v=>v.filter(x=>x.id!==p.id));toast.info("Rascunho excluído desta demonstração")}}>Excluir</Button></article>)}</div>
+      <div><h2 className="text-sm font-semibold">Criados por você nesta demonstração</h2><p className="text-xs text-muted-foreground">Rascunhos locais, sem publicação real. Você pode editar, pausar ou excluir.</p></div>
+      <div className="divide-y divide-border/75">{entries.map(p=><article key={p.id} className="space-y-2 py-3">
+        <div className="flex items-center justify-between gap-2"><strong className="min-w-0 text-sm">{p.title}</strong><Badge variant={p.status==="pausado"?"outline":"secondary"}>{p.status==="pausado"?"Pausado":"Ativo no teste"}</Badge></div>
+        <p className="text-xs leading-relaxed text-muted-foreground">{p.kind} · {p.detail}</p>
+        <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={()=>editPost(p)}><Pencil className="size-3.5"/> Editar</Button>
+        <Button size="sm" variant="outline" onClick={()=>{setPosts(old=>old.map(x=>x.id===p.id?{...x,status:x.status==="pausado"?"ativo":"pausado"}:x));toast.info("Visibilidade demonstrativa atualizada");}}>{p.status==="pausado"?<PlayCircle className="size-3.5"/>:<PauseCircle className="size-3.5"/>}{p.status==="pausado"?"Retomar":"Pausar"}</Button>
+        <Button size="sm" variant="ghost" onClick={()=>{if(window.confirm("Excluir este rascunho de teste?")){setPosts(old=>old.filter(x=>x.id!==p.id));toast.info("Rascunho excluído do navegador");}}}>Excluir</Button></div>
+      </article>)}</div>
     </section>;
   }
-  function emptyForCity(kind:string){return <div className="rounded-xl border border-dashed p-6 sm:col-span-2"><h2 className="font-serif text-xl">Sem ${kind} de demonstração em {city}</h2><p className="mt-2 text-sm text-muted-foreground">Esta prévia não transfere anúncios e registros de Brasília para outras cidades. A cobertura nacional depende de dados reais.</p><Button variant="outline" className="mt-4" onClick={()=>navigate("inicio")}>Voltar ao início <ArrowRight/></Button></div>}
+  function emptyForCity(kind:string){return <div className="rounded-xl border border-dashed p-6 sm:col-span-2"><h2 className="font-serif text-xl">Sem {kind} de demonstração em {city}</h2><p className="mt-2 text-sm text-muted-foreground">Esta prévia não transfere anúncios e registros de Brasília para outras cidades. A cobertura nacional depende de dados reais.</p><Button variant="outline" className="mt-4" onClick={()=>navigate("inicio")}>Voltar ao início <ArrowRight/></Button></div>}
   const showItems=(items:Item[])=>items.length?<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(card)}</div>:<Alert><CircleHelp/><AlertTitle>Nenhum resultado</AlertTitle><AlertDescription>Altere os filtros ou selecione outra cidade.</AlertDescription></Alert>;
   const createButton=<Button className={createButtonClass} onClick={()=>openCreate(slug==="imoveis"?"Imóvel":slug==="desapegos"?"Desapego":slug==="servicos"?"Negócio":slug==="pedidos"?"Pedido":slug==="grupos"?"Grupo":slug==="agenda"?"Encontro":"Pergunta")}><Plus/>Criar</Button>;
   function notice(){return <Alert><Shield/><AlertTitle>Prévia demonstrativa</AlertTitle><AlertDescription>Todos os perfis, avaliações, imóveis, propostas, preços e eventos são fictícios. Nenhuma ação envia informações para terceiros.</AlertDescription></Alert>}
@@ -312,9 +348,9 @@ export default function LibraryApp(){
   }
   function community(){
     const existing=QUESTIONS.filter(q=>q.city===city).map(q=>({id:q.id,title:q.title,category:q.category,author:q.author,date:q.date,allReplies:[...q.answers.map(x=>({author:x.author,text:x.text,date:x.date})),...(replies[q.id]||[]).map(x=>({author:"Você",text:x,date:"Agora"}))]}));
-    const mine=posts.filter(p=>p.kind==="Pergunta"&&(p.city||INITIAL_CITY)===city).map(p=>({id:p.id,title:p.title,category:"Pergunta",author:"Você",date:"Agora",allReplies:(replies[p.id]||[]).map(x=>({author:"Você",text:x,date:"Agora"}))}));
+    const mine=posts.filter(p=>p.kind==="Pergunta"&&p.status!=="pausado"&&(p.city||INITIAL_CITY)===city).map(p=>({id:p.id,title:p.title,category:"Pergunta",author:"Você",date:"Agora",allReplies:(replies[p.id]||[]).map(x=>({author:"Você",text:x,date:"Agora"}))}));
     const all=[...mine,...existing].filter(q=>(category==="Todos"||category==="Para ajudar")&&!resolved.includes(q.id)&&q.author!=="Você"||category==="Resolvidas"&&resolved.includes(q.id)||category==="Minhas"&&q.author==="Você");
-    const orderedQuestions=[...all].sort((a,b)=>a.allReplies.length-b.allReplies.length);
+    const orderedQuestions=[...all.filter(q=>!hiddenByDemo("pergunta",q.id))].sort((a,b)=>a.allReplies.length-b.allReplies.length);
     const countSolved=existing.filter(q=>resolved.includes(q.id)).length;
     return <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/75 pb-5">
@@ -337,7 +373,7 @@ export default function LibraryApp(){
                     <h2 className="mt-2 text-[15px] font-semibold leading-snug tracking-[-.012em] sm:text-[17px]"><button className="text-left hover:underline" onClick={()=>{if(q.id.startsWith("local")){setReplyTo(q.id);return}navigate("pergunta/"+q.id)}}>{q.title}</button></h2>
                     <p className="mt-2 text-[11px] text-muted-foreground">{q.allReplies.length} respostas {resolved.includes(q.id)?"· Resolvida":""}</p>
                     <Accordion type="single" collapsible className="mt-2"><AccordionItem value="answers" className="border-0"><AccordionTrigger className="w-fit py-1.5 text-[12px] font-semibold hover:text-bivaque-city hover:no-underline">{q.allReplies.length?"Ler respostas":"Ainda sem respostas"}</AccordionTrigger><AccordionContent className="pt-2"><div className="space-y-4 border-l-2 border-border pl-4">{q.allReplies.length?q.allReplies.map((r,i)=><div key={i} className="space-y-1.5"><div className="flex items-center justify-between gap-2"><strong className="text-[12px]">{r.author}</strong><Button variant="ghost" size="sm" className="h-7 px-2 text-[10px]" onClick={()=>setOrigin({question:q.title,author:r.author,text:r.text})}><ExternalLink className="size-3"/> Origem</Button></div><p className="text-[12px] leading-relaxed text-muted-foreground">{r.text}</p></div>):<p className="text-[12px] text-muted-foreground">Você pode ser a primeira pessoa a ajudar.</p>}</div></AccordionContent></AccordionItem></Accordion>
-                    <div className="mt-2 flex flex-wrap items-center gap-3"><Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px] shadow-none" onClick={()=>{setReplyTo(q.id);setReplyDraft("")}}><MessageCircle className="size-3.5"/> Responder</Button><Button size="sm" variant="ghost" className="h-8 px-1 text-[11px] text-muted-foreground" onClick={()=>toggle(q.id,followed,setFollowed)}><Bell className="size-3.5"/>{followed.includes(q.id)?"Seguindo":"Acompanhar"}</Button>{q.author==="Você"&&<Button size="sm" variant="ghost" className="h-8 px-1 text-[11px]" onClick={()=>toggle(q.id,resolved,setResolved)}><Check className="size-3.5"/>{resolved.includes(q.id)?"Reabrir":"Resolvida"}</Button>}</div>
+                    <div className="mt-2 flex flex-wrap items-center gap-3"><Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px] shadow-none" onClick={()=>{setReplyTo(q.id);setReplyDraft("")}}><MessageCircle className="size-3.5"/> Responder</Button><Button size="sm" variant="ghost" className="h-8 px-1 text-[11px] text-muted-foreground" onClick={()=>toggle(q.id,followed,setFollowed)}><Bell className="size-3.5"/>{followed.includes(q.id)?"Seguindo":"Acompanhar"}</Button><Button size="sm" variant="ghost" className="h-8 px-1 text-[11px]" onClick={()=>openReport("pergunta",q.id,q.title)}><Flag className="size-3.5"/> Denunciar</Button>{q.author==="Você"&&<Button size="sm" variant="ghost" className="h-8 px-1 text-[11px]" onClick={()=>toggle(q.id,resolved,setResolved)}><Check className="size-3.5"/>{resolved.includes(q.id)?"Reabrir":"Resolvida"}</Button>}</div>
                   </div>
                 </div>
               </article>):<div className="py-14"><p className="font-serif text-xl">Sem perguntas nesta seleção</p><p className="mt-2 text-[12px] text-muted-foreground">Explore outra categoria ou pergunte à comunidade.</p></div>}
@@ -363,10 +399,19 @@ export default function LibraryApp(){
   function chatsPage(){const current=chats.find(x=>x.id===chatId);return <div className="space-y-5">{header}{notice()}<div className="grid gap-4 md:grid-cols-[270px_minmax(0,1fr)]"><Card><CardHeader><CardTitle>Conversas</CardTitle></CardHeader><CardContent className="space-y-2">{chats.map(c=><Button className="w-full justify-start" variant={c.id===chatId?"secondary":"ghost"} key={c.id} onClick={()=>setChatId(c.id)}>{c.name}</Button>)}</CardContent></Card><Card><CardHeader><CardTitle>{current?.name||"Selecione uma conversa"}</CardTitle><CardDescription>{current?.context||""}</CardDescription></CardHeader><CardContent><ScrollArea className="h-72"><div className="space-y-3">{current?.messages.map((m,i)=><Card className={m.self?"ml-8":"mr-8"} key={i}><CardContent className="pt-4 text-sm">{m.body}</CardContent></Card>)}</div></ScrollArea></CardContent><CardFooter><form onSubmit={send} className="flex w-full gap-2"><Input value={message} onChange={e=>setMessage(e.target.value)} placeholder="Mensagem local…"/><Button type="submit" disabled={!message.trim()}><Send/></Button></form></CardFooter></Card></div></div>}
   function talents(){return <div className="space-y-5">{header}{notice()}<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{!TALENTS.some(t=>t.city===city)&&emptyForCity("talentos")}{TALENTS.filter(t=>t.city===city).map(t=><Card key={t.id}><CardHeader><Avatar><AvatarFallback>{initials(t.name)}</AvatarFallback></Avatar><CardTitle>{t.name}</CardTitle><CardDescription>{t.area}</CardDescription></CardHeader><CardContent><p className="text-sm">{t.description}</p><div className="mt-3 flex flex-wrap gap-2">{t.skills.map(x=><Badge variant="outline" key={x}>{x}</Badge>)}</div></CardContent><CardFooter><Button variant="outline" onClick={()=>contact(t.name,t.area)}>Entrar em contato</Button></CardFooter></Card>)}</div></div>}
   function rides(){return <div className="space-y-5">{header}{notice()}<div className="grid gap-4 sm:grid-cols-2">{!RIDES.some(t=>t.city===city)&&emptyForCity("caronas")}{RIDES.filter(t=>t.city===city).map(t=><Card key={t.id}><CardHeader><CardTitle>{t.origin} → {t.destination}</CardTitle><CardDescription>{t.when}</CardDescription></CardHeader><CardContent><p>{t.notes}</p><Badge variant="secondary">{t.seats} vagas fictícias</Badge></CardContent><CardFooter><Button variant="outline" onClick={()=>contact(t.driver,t.origin+" – "+t.destination)}>Tenho interesse</Button></CardFooter></Card>)}</div></div>}
-  function you(){return <div className="space-y-5">{header}<Card><CardHeader><Avatar><AvatarFallback>CO</AvatarFallback></Avatar><CardTitle>Perfil de demonstração</CardTitle><CardDescription>Sem verificação militar ou autenticação real</CardDescription></CardHeader><CardContent><div className="flex gap-3"><Badge variant="outline">{saved.length} itens salvos</Badge><Badge variant="outline">{joined.length} grupos</Badge><Badge variant="outline">{going.length} eventos</Badge></div></CardContent></Card><Tabs defaultValue="Salvos"><TabsList><TabsTrigger value="Salvos">Salvos</TabsTrigger><TabsTrigger value="Publicações">Publicações</TabsTrigger><TabsTrigger value="Privacidade">Privacidade</TabsTrigger></TabsList><TabsContent value="Salvos">{showItems(allSaved)}</TabsContent><TabsContent value="Publicações"><div className="grid gap-3">{posts.length?posts.map(p=><Card key={p.id}><CardHeader><CardTitle>{p.title}</CardTitle><CardDescription>{p.kind}</CardDescription></CardHeader><CardContent>{p.detail}</CardContent><CardFooter><Button variant="destructive" onClick={()=>setPosts(a=>a.filter(x=>x.id!==p.id))}>Excluir</Button></CardFooter></Card>):<Alert><InfoIcon/><AlertTitle>Nenhuma publicação</AlertTitle><AlertDescription>Use o botão Criar para testar uma publicação.</AlertDescription></Alert>}</div></TabsContent><TabsContent value="Privacidade"><Card><CardHeader><CardTitle>Dados de demonstração</CardTitle><CardDescription>Seus testes são salvos somente neste navegador.</CardDescription></CardHeader><CardFooter><Button variant="outline" onClick={()=>{if(window.confirm("Restaurar dados locais desta prévia?")){localStorage.removeItem(store);window.location.reload()}}}>Restaurar demonstração</Button></CardFooter></Card></TabsContent></Tabs></div>}
+  function you(){return <div className="mx-auto max-w-4xl space-y-5">{header}<Card>
+    <CardHeader><Avatar><AvatarFallback>CO</AvatarFallback></Avatar><CardTitle>Perfil de demonstração</CardTitle><CardDescription>Sem verificação militar ou autenticação real</CardDescription></CardHeader>
+    <CardContent className="flex flex-wrap items-center gap-2"><Badge variant="outline">{saved.length} itens salvos</Badge><Badge variant="outline">{joined.length} grupos</Badge><Badge variant="outline">{going.length} eventos</Badge><Badge variant="secondary">{account.stage==="aprovado-demo"?"Aprovação fictícia":"Acesso não verificado"}</Badge></CardContent>
+    <CardFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate("acesso")}><Shield className="size-4"/> Simular entrada</Button><Button variant="outline" onClick={()=>navigate("painel")}><ClipboardList className="size-4"/> Painel de moderação demo</Button></CardFooter>
+  </Card><Tabs defaultValue="Salvos"><TabsList><TabsTrigger value="Salvos">Salvos</TabsTrigger><TabsTrigger value="Publicações">Publicações</TabsTrigger><TabsTrigger value="Privacidade">Privacidade</TabsTrigger></TabsList>
+    <TabsContent value="Salvos">{showItems(allSaved)}</TabsContent>
+    <TabsContent value="Publicações">{localDrafts(options)||<Alert><InfoIcon/><AlertTitle>Nenhum rascunho</AlertTitle><AlertDescription>Use Criar para testar uma publicação.</AlertDescription></Alert>}</TabsContent>
+    <TabsContent value="Privacidade"><Card><CardHeader><CardTitle>Dados de demonstração</CardTitle><CardDescription>Seus testes ficam somente neste navegador. Esta prévia não recebe credenciais ou documentos.</CardDescription></CardHeader><CardFooter><Button variant="outline" onClick={()=>{if(window.confirm("Apagar todos os dados locais desta prévia?")){localStorage.removeItem(store);window.location.reload();}}}>Restaurar demonstração</Button></CardFooter></Card></TabsContent>
+  </Tabs></div>;}
   function InfoIcon(){return <CircleHelp/>}
   function detailPage(){
-    const top=(text:string,destination:string)=><div className="flex items-center gap-2 border-b pb-3"><Button size="sm" variant="ghost" onClick={()=>navigate(destination)}><ArrowLeft className="size-4"/> Voltar</Button><span className="text-[11px] text-muted-foreground">Conteúdo demonstrativo · {city}</span></div>;
+    if(detailId&&hiddenByDemo(slug,detailId))return hiddenNotice();
+    const top=(text:string,destination:string)=><div className="flex flex-wrap items-center gap-2 border-b pb-3"><Button size="sm" variant="ghost" onClick={()=>navigate(destination)}><ArrowLeft className="size-4"/> Voltar</Button><span className="min-w-0 flex-1 text-[11px] text-muted-foreground">Conteúdo demonstrativo · {city}</span><Button size="sm" variant="outline" onClick={()=>openReport(slug,detailId||"",text+" de teste #"+detailId)}><Flag className="size-4"/>Denunciar</Button></div>;
     if(slug==="anuncio"){
       const it=allItems.find(v=>v.id===detailId),home=HOUSING.find(v=>v.id===detailId),classified=CLASSIFIEDS.find(v=>v.id===detailId);
       if(!it||it.city!==city)return <div className="py-12 text-center text-muted-foreground">Anúncio indisponível nesta cidade. <Button variant="outline" onClick={()=>navigate("imoveis")}>Ver anúncios</Button></div>;
@@ -415,7 +460,7 @@ export default function LibraryApp(){
     }
     return <p className="text-sm text-muted-foreground">Página não encontrada na demonstração.</p>;
   }
-  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="busca"?searchPage():homePage();
+  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:slug==="busca"?searchPage():homePage();
 
   const oms=["Todas",...new Set(HOUSING.map(h=>h.om))];
   const relevantHoods=[...new Set((slug==="imoveis"?HOUSING:CLASSIFIEDS).filter(x=>x.city===city).map(x=>x.hood))];
@@ -503,12 +548,19 @@ export default function LibraryApp(){
     <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}><SheetContent side="right" className="overflow-y-auto sm:max-w-md"><SheetHeader><SheetTitle>Filtros de {slug==="imoveis"?"imóveis":"desapegos"}</SheetTitle><SheetDescription>Refine os anúncios sem alterar os valores do servidor.</SheetDescription></SheetHeader><div className="space-y-5 px-4 py-5">{filterFields}</div><div className="flex gap-2 border-t p-4"><Button variant="outline" className="flex-1" onClick={()=>setFiltersOpen(false)}>Cancelar</Button><Button className="flex-1" onClick={applyFilters}>Aplicar filtros</Button></div></SheetContent></Sheet>
     <Drawer open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}><DrawerContent><DrawerHeader><DrawerTitle>Filtros de {slug==="imoveis"?"imóveis":"desapegos"}</DrawerTitle><DrawerDescription>Escolha os critérios e aplique os filtros.</DrawerDescription></DrawerHeader><div className="max-h-[60vh] space-y-4 overflow-y-auto px-4 pb-4">{filterFields}</div><DrawerFooter><Button onClick={applyFilters}>Aplicar filtros</Button><DrawerClose asChild><Button variant="outline">Cancelar</Button></DrawerClose></DrawerFooter></DrawerContent></Drawer>
 
-    <Dialog open={composeOpen} onOpenChange={setComposeOpen}><DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Criar no Bivaque</DialogTitle><DialogDescription>Esta publicação ficará somente neste navegador.</DialogDescription></DialogHeader>
+    <Dialog open={reportTarget!==null} onOpenChange={open=>{if(!open)setReportTarget(null)}}><DialogContent>
+      <DialogHeader><DialogTitle>Denunciar conteúdo de teste</DialogTitle><DialogDescription>O registro será enviado somente à fila fictícia deste navegador, sem identificação real.</DialogDescription></DialogHeader>
+      <form className="space-y-4" onSubmit={submitReport}><p className="text-sm font-medium">{reportTarget?.title}</p>
+        <div className="space-y-2"><Label htmlFor="report-reason">Motivo</Label><Select value={reportReason} onValueChange={setReportReason}><SelectTrigger id="report-reason" className="w-full"><SelectValue/></SelectTrigger><SelectContent>{["Conteúdo inadequado","Informação enganosa","Exposição de dados pessoais","Fraude ou golpe","Outro motivo"].map(reason=><SelectItem value={reason} key={reason}>{reason}</SelectItem>)}</SelectContent></Select></div>
+        <DialogFooter><Button type="button" variant="outline" onClick={()=>setReportTarget(null)}>Cancelar</Button><Button type="submit">Registrar denúncia de teste</Button></DialogFooter>
+      </form></DialogContent>
+    </Dialog>
+    <Dialog open={composeOpen} onOpenChange={setComposeOpen}><DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingId?"Editar rascunho":"Criar no Bivaque"}</DialogTitle><DialogDescription>Esta publicação ficará somente neste navegador.</DialogDescription></DialogHeader>
       <form className="space-y-5" onSubmit={submitCreate}><FieldGroup>
-        <Field><FieldLabel>Tipo de publicação</FieldLabel><Select value={composeType} onValueChange={setComposeType}><SelectTrigger className="w-full"><SelectValue/></SelectTrigger><SelectContent>{options.map(x=><SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></Field>
+        <Field><FieldLabel>Tipo de publicação</FieldLabel><Select value={composeType} disabled={editingId!==null} onValueChange={setComposeType}><SelectTrigger className="w-full"><SelectValue/></SelectTrigger><SelectContent>{options.map(x=><SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></Field>
         <Field><FieldLabel htmlFor="post-title">Título</FieldLabel><Input id="post-title" required minLength={3} maxLength={140} value={title} onChange={e=>setTitle(e.target.value)}/></Field>
         <Field><FieldLabel htmlFor="post-desc">Descrição</FieldLabel><Textarea id="post-desc" required minLength={8} rows={4} value={description} onChange={e=>setDescription(e.target.value)}/><FieldDescription>Adicione informações úteis, sem dados pessoais ou militares sigilosos.</FieldDescription></Field>
-      </FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={()=>setComposeOpen(false)}>Cancelar</Button><Button type="submit" className={createButtonClass}>Salvar demonstração</Button></DialogFooter></form>
+      </FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={()=>setComposeOpen(false)}>Cancelar</Button><Button type="submit" className={createButtonClass}>{editingId?"Salvar alterações":"Salvar demonstração"}</Button></DialogFooter></form>
     </DialogContent></Dialog>
     <Dialog open={replyTo!==null} onOpenChange={o=>{if(!o)setReplyTo(null)}}><DialogContent><DialogHeader><DialogTitle>Responder à comunidade</DialogTitle><DialogDescription>Compartilhe uma indicação. Sua resposta ficará apenas neste navegador.</DialogDescription></DialogHeader>
       <form className="space-y-4" onSubmit={submitReply}><Field><FieldLabel htmlFor="reply-text">Sua experiência</FieldLabel><Textarea id="reply-text" rows={5} value={replyDraft} required minLength={3} maxLength={2000} onChange={e=>setReplyDraft(e.target.value)} placeholder="Compartilhe o que realmente ajudou..."/><FieldDescription>Respostas não são verificações institucionais.</FieldDescription></Field><DialogFooter><Button type="button" variant="outline" onClick={()=>setReplyTo(null)}>Cancelar</Button><Button type="submit"><Send/>Responder</Button></DialogFooter></form>
