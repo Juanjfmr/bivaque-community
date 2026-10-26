@@ -130,5 +130,5 @@ test("R72 help, conduct, privacy, free plans and support have static routes",()=
   const appInfo=read("components/r72-info.tsx"),support=read("components/r72-support.tsx");
   has(appInfo,"Versão de teste");
   has(appInfo,"Sem cobrança");
-  has(support,"Somente");
+  has(support,"Ela permanece somente neste navegador.");
 });
