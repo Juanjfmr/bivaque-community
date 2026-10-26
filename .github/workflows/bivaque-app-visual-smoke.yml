@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   app-visual-smoke:
-    name: App V13-V15 / 375-768-1440
+    name: App mobile-first / 320-360-375-430-768-1440
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -42,7 +42,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Verify shared visual components
-        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts --trace=retain-on-failure
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts tests/e2e/mobile-first.spec.ts --trace=retain-on-failure
 
       - name: Capture app screens (not proof mode)
         run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/visual-capture.spec.ts
