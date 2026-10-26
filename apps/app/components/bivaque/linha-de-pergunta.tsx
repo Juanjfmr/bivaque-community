@@ -40,6 +40,7 @@ export function LinhaDePergunta({
   return (
     <LinhaDeLista
       titulo={pergunta.pergunta}
+      tituloMultilinha
       subtitulo={`${pergunta.propria === true ? "Você" : pergunta.autor} · ${pergunta.tópico} · ${pergunta.cidade}`}
       fim={estado}
       {...props}
