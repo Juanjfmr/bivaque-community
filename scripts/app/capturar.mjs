@@ -10,16 +10,21 @@ import { chromium } from "@playwright/test"
 import { CENARIOS } from "../../apps/app/lib/demo/cenarios.ts"
 import { ROTAS } from "../../apps/app/lib/navegacao/rotas.ts"
 import { createDeterministicContext, stabilize } from "../bivaque-html/capture-support.mjs"
+import { assertRound13Baseline, round13Baseline } from "../bivaque-html/round13-baseline.mjs"
 import { htmlDoPar, matrizDeCaptura, validarDestino } from "./contrato-captura.mjs"
 
 const raiz = resolve(import.meta.dirname, "../..")
 const amostra = process.argv.includes("--amostra")
+const mobileR72 = process.argv.includes("--mobile-r72")
 const appUrl = process.env.BIVAQUE_APP_URL ?? "http://127.0.0.1:3200"
-const pasta = `${amostra ? "amostra" : "pares"}-${new Date().toISOString().replace(/[:.]/g, "-")}`
+const pasta = `${mobileR72 ? "comparacao-r72-mobile" : amostra ? "amostra" : "pares"}-${new Date().toISOString().replace(/[:.]/g, "-")}`
 const saida = join(raiz, ".visual", "onda-1", pasta)
 mkdirSync(saida, { recursive: true })
 console.log(`Saída: ${saida}`)
-const html = readFileSync(join(raiz, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html"))
+const html = mobileR72
+  ? round13Baseline(raiz).bytes
+  : readFileSync(join(raiz, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html"))
+if (mobileR72) assertRound13Baseline(html)
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex")
 const shell = join(
   process.env.LOCALAPPDATA ?? "",
@@ -47,7 +52,9 @@ const manifesto = {
   revisao,
   sujo,
   amostra,
-  modo: "telas reais da V1; não é aprovação das jornadas completas",
+  modo: mobileR72
+    ? "HTML R72 hash congelado × app atual; captura real mobile; não aprova paridade por si só"
+    : "telas reais da V1; não é aprovação das jornadas completas",
   referenciaSha256: sha(html),
   appUrl,
   arquivosDoAppSha256: Object.fromEntries(
@@ -86,25 +93,48 @@ try {
   await new Promise((ok) => servidor.listen(0, "127.0.0.1", ok))
   const referenciaUrl = `http://127.0.0.1:${servidor.address().port}/referencia.html`
   browser = await chromium.launch(executablePath ? { executablePath } : {})
-  const rotas = amostra ? ROTAS.filter((rota) => rota.nome === "inicio") : ROTAS
+  const rotas = mobileR72
+    ? ROTAS.filter((rota) => ["inicio", "busca", "comunidade", "imoveis"].includes(rota.nome))
+    : amostra ? ROTAS.filter((rota) => rota.nome === "inicio") : ROTAS
   const nomes = [
     ...rotas.map((rota) => rota.nome),
-    ...(amostra ? [] : ["entrada-sem-estado"]),
-    "criar",
-    "cidade",
+    ...(amostra || mobileR72 ? [] : ["entrada-sem-estado"]),
+    ...(mobileR72 ? [] : ["criar", "cidade"]),
   ]
-  const matriz = matrizDeCaptura(nomes)
-  for (const largura of [375, 1440])
+  const matriz = mobileR72
+    ? nomes.flatMap((rota) =>
+        [320, 375, 430].flatMap((largura) =>
+          ["light", "dark"].map((tema) => ({
+            id: `${rota}-${largura}-${tema}`,
+            rota,
+            largura,
+            tema,
+            altura: largura === 320 ? 700 : largura === 375 ? 812 : 932,
+          })),
+        ),
+      )
+    : matrizDeCaptura(nomes)
+  for (const largura of mobileR72 ? [320, 375, 430] : [375, 1440])
     for (const tema of ["light", "dark"]) {
       const refContext = await createDeterministicContext(browser, { width: largura, theme: tema })
       const appContext = await createDeterministicContext(browser, { width: largura, theme: tema })
       const parContext = await browser.newContext({
-        viewport: { width: largura * 2 + 16, height: (largura === 375 ? 812 : 900) + 36 },
+        viewport: {
+          width: largura * 2 + 16,
+          height: (mobileR72 ? largura === 320 ? 700 : largura === 375 ? 812 : 932 : largura === 375 ? 812 : 900) + 36,
+        },
       })
       try {
         const referencia = await refContext.newPage()
         const app = await appContext.newPage()
         const par = await parContext.newPage()
+        if (mobileR72) {
+          const altura = largura === 320 ? 700 : largura === 375 ? 812 : 932
+          await Promise.all([
+            referencia.setViewportSize({ width: largura, height: altura }),
+            app.setViewportSize({ width: largura, height: altura }),
+          ])
+        }
         for (const [lado, pagina] of [
           ["html", referencia],
           ["app", app],
