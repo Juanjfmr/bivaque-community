@@ -44,10 +44,15 @@ jobs:
       - name: Verify shared visual components
         run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts --trace=retain-on-failure
 
-      - name: Save evidence on failure
-        if: failure()
+      - name: Capture app screens (not proof mode)
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/visual-capture.spec.ts
+
+      - name: Save test and screenshot evidence
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: app-visual-smoke
+          name: app-visual-evidence
           if-no-files-found: ignore
-          path: apps/app/test-results/
+          path: |
+            apps/app/test-results/
+            apps/app/artifacts/visual/
