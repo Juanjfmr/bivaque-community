@@ -22,7 +22,7 @@ const housing = HOUSING.slice(0, 4).map((item) => ({
   id: item.id,
   title: item.title,
   summary: item.hood + " · " + item.bedrooms + " quartos · " + item.area + " m² · " + item.priceLabel,
-  url: "/imoveis",
+  url: (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/imoveis/",
   image: item.image,
 }))
 
@@ -161,7 +161,7 @@ export default function LaboratorioBlocos() {
         <div className="mt-5 min-h-[440px] min-w-0 overflow-hidden rounded-xl border border-border bg-card">
           {current === "gallery" ? (
             <div className="[&_section]:py-8 [&_.container]:px-5 md:[&_.container]:px-10">
-              {mode === "original" ? <Gallery6 /> : <Gallery6 heading="Moradia para sua próxima etapa" demoUrl="/imoveis" items={housing} />}
+              {mode === "original" ? <Gallery6 /> : <Gallery6 heading="Moradia para sua próxima etapa" demoUrl={(process.env.NEXT_PUBLIC_BASE_PATH || "") + "/imoveis/"} items={housing} />}
             </div>
           ) : current === "services" ? (
             <div className="px-4 [&_section]:py-8 [&_.container]:mx-auto [&_.container]:max-w-6xl [&_.container]:px-2 md:px-8">
