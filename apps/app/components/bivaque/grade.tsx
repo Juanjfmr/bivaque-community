@@ -24,15 +24,13 @@ export function Grade({
   } as const
   if (formato === "carrossel-mobile") {
     return (
-      <div
+      <section
         data-grade={formato}
         className={cn(formatos[formato], className)}
-        tabIndex={0}
-        role="region"
         aria-label="Deslize para explorar cartões"
       >
         {children}
-      </div>
+      </section>
     )
   }
   return (
