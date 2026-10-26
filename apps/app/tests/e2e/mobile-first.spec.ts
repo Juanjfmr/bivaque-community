@@ -85,7 +85,10 @@ test("mobile: fotos de imóveis reais da fixture e título sem caixa de foco", a
   const estilo = await titulo.evaluate((elemento) => getComputedStyle(elemento).outlineStyle)
   expect(estilo).toBe("none")
 
-  const imagem = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"] img').first()
+  const primeiro = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]').first()
+  await expect(primeiro.getByText("Aluguel", { exact: true })).toBeVisible()
+  await expect(primeiro.getByText("/ mês", { exact: true })).toBeVisible()
+  const imagem = primeiro.locator("img")
   await expect(imagem).toBeVisible()
   await expect.poll(async () =>
     imagem.evaluate((elemento) => {
