@@ -32,6 +32,8 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
           NEXT_TELEMETRY_DISABLED: '1'
         run: npm run build
+      - name: Static R72 parity regressions
+        run: node --test scripts/verify-r72-parity.mjs
       - name: Check routes and brand assets
         run: |
           test -f out/index.html
@@ -52,5 +54,6 @@ jobs:
           grep -q 'Serviços recomendados' components/library-app.tsx
           grep -q 'Oportunidades perto de você' components/library-app.tsx
           grep -q 'Navegação principal mobile' components/library-app.tsx
-          grep -q 'grid-cols-4 items-center' components/library-app.tsx
+          grep -q 'grid-cols-5 items-center' components/library-app.tsx
           grep -q 'Total por mês' components/library-app.tsx
+          grep -q 'const searchRecords=' components/library-app.tsx
