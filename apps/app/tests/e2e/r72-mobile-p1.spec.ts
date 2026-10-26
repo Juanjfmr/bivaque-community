@@ -79,3 +79,20 @@ test("P1: home desktop separa o catálogo do contexto sem duplicar seções", as
     expect(Math.abs(b.y - a.y)).toBeLessThan(3)
   }
 })
+
+test("P1: anúncios de imóveis mostram somente os metadados declarados na fixture", async ({ page }) => {
+  await page.goto("/app/imoveis")
+  const tres = page.locator('[data-cartao="anuncio"]').filter({ hasText: "Apartamento 3 quartos" })
+  await expect(tres.locator('[data-atributos-imovel]')).toContainText("3 quartos")
+  await expect(tres.locator('[data-atributos-imovel]')).toContainText("98 m²")
+  await expect(tres.locator('[data-atributos-imovel]')).toContainText("2 vagas")
+  await expect(tres.locator('[data-extras-imovel]')).toContainText("Condomínio R$ 720")
+  await expect(tres.locator('[data-extras-imovel]')).toContainText("Disponível a partir de dezembro")
+
+  const dois = page.locator('[data-cartao="anuncio"]').filter({ hasText: "Apartamento 2 quartos" })
+  await expect(dois.locator('[data-atributos-imovel]')).toContainText("2 quartos")
+  await expect(dois.locator('[data-atributos-imovel]')).toContainText("70 m²")
+  await expect(dois.locator('[data-atributos-imovel]')).toContainText("1 vaga")
+  await expect(dois.locator('[data-extras-imovel]')).toContainText("Condomínio R$ 480")
+  await expect(dois.locator('[data-extras-imovel]')).not.toContainText("Disponível")
+})
