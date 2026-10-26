@@ -81,3 +81,32 @@ test("P1: access and moderation pages exported as static routes",()=>{
   const page=read("app/[section]/page.tsx");
   for(const key of ['"acesso"','"painel"'])has(page,key);
 });
+
+test("P2: restricted groups track pending requests without pretending to approve access",()=>{
+  has(app, 'groupRequests');
+  has(app, 'Cancelar solicitação');
+  has(app, 'A aprovação real dependeria da administração do grupo');
+  has(app, 'joinGroup(g.id,g.open)');
+});
+test("P2: group thread supports local posts, comments, likes and per-post moderation",()=>{
+  has(app, 'function groupFeed(');
+  has(app, 'submitGroupPost');
+  has(app, 'submitGroupReply');
+  has(app, 'setGroupComments(');
+  has(app, 'groupLikes');
+  has(app, 'openReport("publicacao",p.id');
+  has(app, 'hiddenByDemo("publicacao",p.id)');
+});
+test("P2: listing gallery and neighborhood never invent coordinates",()=>{
+  has(app, 'Ver foto ampliada');
+  has(app, '1 foto ilustrativa disponível');
+  has(app, 'window.open("https://www.openstreetmap.org/search?query="');
+  has(app, 'Sem coordenada homologada');
+  has(app, 'navigator.share');
+  has(app, 'HOUSING.filter(h=>h.city===city).map(h=>h.om)');
+});
+test("P2: moderation excludes hidden entries from catalog and home",()=>{
+  has(app, 'hiddenByDemo(x.kind==="servicos"?"negocio":"anuncio",x.id)');
+  has(app, 'hiddenByDemo("grupo",g.id)');
+  has(app, 'hiddenByDemo("pergunta",q.id)');
+});
