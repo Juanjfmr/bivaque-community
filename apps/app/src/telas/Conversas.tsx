@@ -101,7 +101,7 @@ export function Conversas() {
                   <span className="grid min-w-0 flex-1 gap-1">
                     <b className="truncate text-sm">{nome}</b>
                     <span className="truncate text-[13px] text-(--on-surface-variant)">
-                      {resumo === undefined ? (ultima || "Comece a conversa") : `Prévia não enviada: ${resumo}`}
+                      {resumo === undefined ? (ultima || "Comece a conversa") : `Prévia não enviada: ${resumo.conteudo}`}
                     </span>
                   </span>
                   <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
