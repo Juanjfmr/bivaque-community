@@ -1,4 +1,5 @@
 name: Bivaque Conversas Grupos Formatter Once
+# repeat after migrating preview messages to stable IDs
 # deterministic rerun after key and accessibility corrections
 on:
   pull_request:
