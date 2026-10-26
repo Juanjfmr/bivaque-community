@@ -13,6 +13,12 @@ import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
+import {
+  DEFINICOES_CRIAR,
+  excluirRascunhoCriacao,
+  lerRascunhosCriacao,
+  type RascunhoCriacao,
+} from "@/lib/rascunhos-criacao"
 import { useCasca } from "@/src/contexto/casca"
 import { registro, texto } from "@/src/telas/comum"
 
@@ -27,6 +33,10 @@ export function MeusAnuncios() {
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [rascunhos, setRascunhos] = useState<RascunhoImovel[]>([])
+  const [outros, setOutros] = useState<RascunhoCriacao[]>([])
+  const [expandido, setExpandido] = useState<string | null>(null)
+  const [confirmar, setConfirmar] = useState<string | null>(null)
+  const [erroLocal, setErroLocal] = useState("")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -48,6 +58,7 @@ export function MeusAnuncios() {
 
   useEffect(() => {
     setRascunhos(lerRascunhosImoveis(casca.cidade))
+    setOutros(lerRascunhosCriacao(casca.cidade))
   }, [casca.cidade])
 
   const meus = useMemo(() => {
@@ -63,7 +74,7 @@ export function MeusAnuncios() {
     <section data-tela="meus-anuncios" className="grid gap-2">
       <CabecaDePagina
         titulo="Meus anúncios"
-        subtitulo="Seus anúncios ativos e o estado de cada um."
+        subtitulo="Anúncios e rascunhos desta sessão, separados por estado."
       />
 
       {rascunhos.length === 0 ? null : (
@@ -88,6 +99,68 @@ export function MeusAnuncios() {
         </section>
       )}
 
+      {outros.length === 0 ? null : (
+        <section data-rascunhos-criacao="sim" className="mt-3 grid gap-2">
+          <b className="text-[15px]">Outros rascunhos — não publicados ({outros.length})</b>
+          <p className="text-xs text-(--on-surface-variant)">
+            Pedidos, encontros, negócios e desapegos ainda não são visíveis para outros membros.
+          </p>
+          {outros.map((item) => (
+            <article key={item.id} data-rascunho-criacao={item.tipo} className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <span className="grid min-w-0 grow gap-1">
+                  <small className="text-xs font-medium text-(--on-surface-variant)">{DEFINICOES_CRIAR[item.tipo].nome}</small>
+                  <b className="break-words text-sm">{item.titulo}</b>
+                  <small className="text-xs text-(--on-surface-variant)">{item.complemento}</small>
+                </span>
+                <Botao
+                  tom="texto"
+                  data-acao="detalhes-rascunho"
+                  aria-expanded={expandido === item.id}
+                  onClick={() => setExpandido((atual) => atual === item.id ? null : item.id)}
+                >
+                  {expandido === item.id ? "Fechar" : "Ver"}
+                </Botao>
+              </div>
+              {expandido === item.id ? (
+                <div data-detalhes-rascunho={item.id} className="grid gap-2 border-t border-(--outline-variant) pt-2">
+                  <p className="whitespace-pre-wrap break-words text-sm">{item.descricao}</p>
+                  {item.valor === null ? null : <p className="text-sm">Preço solicitado: {moeda(item.valor)}</p>}
+                  {item.horario === null ? null : <p className="text-sm">Data informada: {item.horario.replace("T", " ")}</p>}
+                  {confirmar === item.id ? (
+                    <div role="group" aria-label="Confirmar exclusão" className="flex flex-wrap items-center justify-end gap-2">
+                      <small className="text-xs">Excluir rascunho desta sessão?</small>
+                      <Botao tom="texto" onClick={() => setConfirmar(null)}>Cancelar</Botao>
+                      <Botao
+                        tom="contornado"
+                        data-acao="confirmar-exclusao-rascunho"
+                        onClick={() => {
+                          if (!excluirRascunhoCriacao(casca.cidade, item.id)) {
+                            setErroLocal("Não foi possível excluir este rascunho.")
+                            return
+                          }
+                          setOutros(lerRascunhosCriacao(casca.cidade))
+                          setExpandido(null)
+                          setConfirmar(null)
+                          setErroLocal("")
+                        }}
+                      >
+                        Confirmar exclusão
+                      </Botao>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end">
+                      <Botao tom="texto" data-acao="excluir-rascunho-criacao" onClick={() => setConfirmar(item.id)}>Excluir rascunho</Botao>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </article>
+          ))}
+          {erroLocal === "" ? null : <p role="alert" className="text-xs text-(--destructive)">{erroLocal}</p>}
+        </section>
+      ) : null}
+
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
@@ -95,7 +168,9 @@ export function MeusAnuncios() {
       ) : meus.length === 0 ? (
         <EstadoVazio
           titulo={
-            rascunhos.length > 0 ? "Nenhum anúncio publicado" : "Você ainda não anunciou nada"
+            rascunhos.length > 0 || outros.length > 0
+              ? "Nenhum anúncio publicado"
+              : "Você ainda não anunciou nada"
           }
           texto="Um anúncio bem explicado costuma vender rápido na cidade."
           icone="sell"
