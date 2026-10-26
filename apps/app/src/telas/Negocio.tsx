@@ -4,6 +4,7 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
+import { Capa } from "@/components/bivaque/capa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
