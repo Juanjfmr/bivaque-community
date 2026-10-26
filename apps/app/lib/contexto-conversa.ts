@@ -1,4 +1,5 @@
 import type { Conversa, DadosDaCidade } from "@/lib/dados/contrato"
+import { idLocal } from "@/lib/id"
 import { registro, texto } from "@/src/telas/comum"
 
 export type OrigemDaConversa = {
@@ -43,20 +44,30 @@ function chave(cidade: string, id: string): string {
   return `bivaque:mensagens-previa:${cidade.trim().toLowerCase()}:${id}`
 }
 
-export function lerMensagensDePrevia(cidade: string, id: string): string[] {
+export type MensagemDePrevia = { id: string; conteudo: string }
+
+export function lerMensagensDePrevia(cidade: string, id: string): MensagemDePrevia[] {
   try {
     const parsed: unknown = JSON.parse(sessionStorage.getItem(chave(cidade, id)) ?? "[]")
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string").slice(-30) : []
+    return Array.isArray(parsed)
+      ? parsed.flatMap((item, indice): MensagemDePrevia[] => {
+          if (typeof item === "string") return [{ id: `legado-${indice}`, conteudo: item }]
+          if (item && typeof item === "object" && typeof item.id === "string" && typeof item.conteudo === "string") {
+            return [{ id: item.id, conteudo: item.conteudo }]
+          }
+          return []
+        }).slice(-30)
+      : []
   } catch {
     return []
   }
 }
 
-export function guardarMensagemDePrevia(cidade: string, id: string, mensagem: string): string[] | null {
+export function guardarMensagemDePrevia(cidade: string, id: string, mensagem: string): MensagemDePrevia[] | null {
   const limpa = mensagem.trim()
   if (limpa.length === 0 || limpa.length > 2000) return null
   try {
-    const mensagens = [...lerMensagensDePrevia(cidade, id), limpa].slice(-30)
+    const mensagens = [...lerMensagensDePrevia(cidade, id), { id: idLocal("msg-previa-"), conteudo: limpa }].slice(-30)
     sessionStorage.setItem(chave(cidade, id), JSON.stringify(mensagens))
     return mensagens
   } catch {
