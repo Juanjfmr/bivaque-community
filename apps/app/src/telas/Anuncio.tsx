@@ -64,15 +64,19 @@ export function Anuncio() {
     setRascunhoContato(null)
     try {
       setRascunhoContato(window.sessionStorage.getItem(`bivaque:rascunho-contato:${id}`))
-    } catch { /* sem persistência */ }
+    } catch {
+      /* sem persistência */
+    }
   }, [id])
 
   const abrirContato = (tipo: "interesse" | "oferta") => {
     setTipoContato(tipo)
     setErroContato("")
-    setMensagem(tipo === "interesse"
-      ? "Olá! Tenho interesse neste anúncio. Podemos combinar os detalhes?"
-      : "Olá! Gostaria de apresentar uma proposta para este anúncio.")
+    setMensagem(
+      tipo === "interesse"
+        ? "Olá! Tenho interesse neste anúncio. Podemos combinar os detalhes?"
+        : "Olá! Gostaria de apresentar uma proposta para este anúncio.",
+    )
   }
 
   const guardarContato = () => {
@@ -81,11 +85,15 @@ export function Anuncio() {
       setErroContato("Digite uma mensagem entre 10 e 2000 caracteres.")
       return
     }
-    if (tipoContato === "oferta" && (!Number.isFinite(Number(valorOferta)) || Number(valorOferta) <= 0)) {
+    if (
+      tipoContato === "oferta" &&
+      (!Number.isFinite(Number(valorOferta)) || Number(valorOferta) <= 0)
+    ) {
       setErroContato("Informe um valor válido para a oferta.")
       return
     }
-    const rascunho = tipoContato === "oferta" ? `Oferta de R$ ${valorOferta}: ${conteudo}` : conteudo
+    const rascunho =
+      tipoContato === "oferta" ? `Oferta de R$ ${valorOferta}: ${conteudo}` : conteudo
     try {
       window.sessionStorage.setItem(`bivaque:rascunho-contato:${id}`, rascunho)
       setRascunhoContato(rascunho)
@@ -202,47 +210,114 @@ export function Anuncio() {
           <Botao icone="chat_bubble" disabled={!ativo} onClick={() => abrirContato("interesse")}>
             Tenho interesse
           </Botao>
-          <Botao tom="contornado" icone="sell" disabled={!ativo} onClick={() => abrirContato("oferta")}>
+          <Botao
+            tom="contornado"
+            icone="sell"
+            disabled={!ativo}
+            onClick={() => abrirContato("oferta")}
+          >
             Fazer uma oferta
           </Botao>
         </div>
         {conversaVinculada === undefined ? null : (
-          <Botao tom="texto" onClick={() => void navegacao.irPara("conversa", { parametros: { id: conversaVinculada.id } })}>
+          <Botao
+            tom="texto"
+            onClick={() =>
+              void navegacao.irPara("conversa", { parametros: { id: conversaVinculada.id } })
+            }
+          >
             Ver conversa demonstrativa sobre o anúncio
           </Botao>
         )}
         {rascunhoContato === null ? null : (
-          <div data-rascunho-contato="sim" className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)">
+          <div
+            data-rascunho-contato="sim"
+            className="grid gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)"
+          >
             <b className="text-sm">Mensagem preparada — não enviada</b>
             <p className="whitespace-pre-wrap break-words text-sm">{rascunhoContato}</p>
             <div className="flex justify-end gap-2">
-              <Botao tom="texto" onClick={() => { setMensagem(rascunhoContato); setTipoContato("interesse") }}>Editar</Botao>
-              <Botao tom="contornado" data-acao="excluir-contato" onClick={() => {
-                try { window.sessionStorage.removeItem(`bivaque:rascunho-contato:${id}`) } catch { /* sem persistência */ }
-                setRascunhoContato(null)
-              }}>Excluir</Botao>
+              <Botao
+                tom="texto"
+                onClick={() => {
+                  setMensagem(rascunhoContato)
+                  setTipoContato("interesse")
+                }}
+              >
+                Editar
+              </Botao>
+              <Botao
+                tom="contornado"
+                data-acao="excluir-contato"
+                onClick={() => {
+                  try {
+                    window.sessionStorage.removeItem(`bivaque:rascunho-contato:${id}`)
+                  } catch {
+                    /* sem persistência */
+                  }
+                  setRascunhoContato(null)
+                }}
+              >
+                Excluir
+              </Botao>
             </div>
           </div>
         )}
-        <Dialog open={tipoContato !== null} onOpenChange={(novo) => { if (!novo) setTipoContato(null) }}>
+        <Dialog
+          open={tipoContato !== null}
+          onOpenChange={(novo) => {
+            if (!novo) setTipoContato(null)
+          }}
+        >
           <DialogContent
             unstyled
             data-fluxo="rascunho-contato"
             className="fixed inset-x-0 bottom-0 z-50 mx-auto grid max-h-[90dvh] w-full max-w-xl gap-3 overflow-y-auto rounded-t-2xl border border-(--outline-variant) bg-(--surface-lowest) p-5 shadow-xl sm:inset-x-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 sm:rounded-2xl"
           >
-            <DialogTitle className="pr-12 text-xl">{tipoContato === "oferta" ? "Preparar oferta" : "Preparar mensagem"}</DialogTitle>
+            <DialogTitle className="pr-12 text-xl">
+              {tipoContato === "oferta" ? "Preparar oferta" : "Preparar mensagem"}
+            </DialogTitle>
             <DialogDescription>
               Para {vendedor}. Esta mensagem ficará somente no navegador e não será enviada.
             </DialogDescription>
-            <form className="grid gap-3" onSubmit={(evento) => { evento.preventDefault(); guardarContato() }}>
+            <form
+              className="grid gap-3"
+              onSubmit={(evento) => {
+                evento.preventDefault()
+                guardarContato()
+              }}
+            >
               {tipoContato === "oferta" ? (
-                <Campo id="valor-contato" rotulo="Valor proposto (R$)" valor={valorOferta} aoMudar={setValorOferta} type="number" min="1" step="0.01" required />
+                <Campo
+                  id="valor-contato"
+                  rotulo="Valor proposto (R$)"
+                  valor={valorOferta}
+                  aoMudar={setValorOferta}
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  required
+                />
               ) : null}
-              <Campo id="mensagem-contato" rotulo="Mensagem" valor={mensagem} aoMudar={setMensagem} area />
-              {erroContato === "" ? null : <p role="alert" className="text-sm text-(--destructive)">{erroContato}</p>}
+              <Campo
+                id="mensagem-contato"
+                rotulo="Mensagem"
+                valor={mensagem}
+                aoMudar={setMensagem}
+                area
+              />
+              {erroContato === "" ? null : (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  {erroContato}
+                </p>
+              )}
               <div className="flex justify-end gap-2">
-                <Botao type="button" tom="texto" onClick={() => setTipoContato(null)}>Cancelar</Botao>
-                <Botao type="submit" data-acao="guardar-contato">Guardar sem enviar</Botao>
+                <Botao type="button" tom="texto" onClick={() => setTipoContato(null)}>
+                  Cancelar
+                </Botao>
+                <Botao type="submit" data-acao="guardar-contato">
+                  Guardar sem enviar
+                </Botao>
               </div>
             </form>
           </DialogContent>
