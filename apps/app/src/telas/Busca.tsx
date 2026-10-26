@@ -45,14 +45,27 @@ const SUGESTOES = ["escola", "berço", "mudança", "mecânico"] as const
 const EXPLORAR = [
   { id: "saude", rotulo: "Saúde", icone: "medical_services", termos: ["saúde"] },
   { id: "educacao", rotulo: "Educação", icone: "school", termos: ["aulas", "educação"] },
-  { id: "reparos", rotulo: "Casa e reparos", icone: "build", termos: ["elétrica", "climatização", "refrigeração"] },
-  { id: "mudanca", rotulo: "Mudança e transporte", icone: "local_shipping", termos: ["mudança", "transporte"] },
+  {
+    id: "reparos",
+    rotulo: "Casa e reparos",
+    icone: "build",
+    termos: ["elétrica", "climatização", "refrigeração"],
+  },
+  {
+    id: "mudanca",
+    rotulo: "Mudança e transporte",
+    icone: "local_shipping",
+    termos: ["mudança", "transporte"],
+  },
   { id: "pets", rotulo: "Pets", icone: "pets", termos: ["pets"] },
   { id: "comida", rotulo: "Festas e comida", icone: "cake", termos: ["comida", "festas"] },
   { id: "limpeza", rotulo: "Limpeza e jardim", icone: "home", termos: ["limpeza", "jardim"] },
 ] as const
 
-function negocioDaCategoria(categoria: string | null, negocio: DadosDaCidade["negocios"][number]): boolean {
+function negocioDaCategoria(
+  categoria: string | null,
+  negocio: DadosDaCidade["negocios"][number],
+): boolean {
   const grupo = EXPLORAR.find((item) => item.id === categoria)
   if (!grupo) return false
   const apresentacao = registro(negocio.apresentacao)
@@ -142,7 +155,10 @@ export function Busca() {
     const vazio = { items: [], biz: [], asks: [], groups: [], events: [] }
     if (dados === null) return vazio
     if (termos(consulta).length === 0 && categoriaAtiva !== null) {
-      return { ...vazio, biz: dados.negocios.filter((negocio) => negocioDaCategoria(categoriaAtiva, negocio)) }
+      return {
+        ...vazio,
+        biz: dados.negocios.filter((negocio) => negocioDaCategoria(categoriaAtiva, negocio)),
+      }
     }
     if (termos(consulta).length === 0) return vazio
     const items = dados.anuncios.filter((anuncio) => {
@@ -222,32 +238,48 @@ export function Busca() {
             <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
               {EXPLORAR.filter((item) =>
                 negociosDaCidade.some((negocio) => negocioDaCategoria(item.id, negocio)),
-              ).slice(0, 6).map((item) => {
-                const quantidade = negociosDaCidade.filter((negocio) => negocioDaCategoria(item.id, negocio)).length
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    data-explorar-categoria={item.id}
-                    onClick={() => {
-                      setCategoriaAtiva(item.id)
-                      setEscopo("biz")
-                    }}
-                    className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
-                  >
-                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
-                      <Icone nome={iconeDeDado(item.icone)} className="size-6" />
-                    </span>
-                    <span className="grid min-w-0 gap-0.5">
-                      <b className="text-[13px] leading-4">{item.rotulo}</b>
-                      <small className="text-xs text-(--on-surface-variant)">{quantidade} {quantidade === 1 ? "negócio" : "negócios"}</small>
-                    </span>
-                  </button>
-                )
-              })}
+              )
+                .slice(0, 6)
+                .map((item) => {
+                  const quantidade = negociosDaCidade.filter((negocio) =>
+                    negocioDaCategoria(item.id, negocio),
+                  ).length
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-explorar-categoria={item.id}
+                      onClick={() => {
+                        setCategoriaAtiva(item.id)
+                        setEscopo("biz")
+                      }}
+                      className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                    >
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                        <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                      </span>
+                      <span className="grid min-w-0 gap-0.5">
+                        <b className="text-[13px] leading-4">{item.rotulo}</b>
+                        <small className="text-xs text-(--on-surface-variant)">
+                          {quantidade} {quantidade === 1 ? "negócio" : "negócios"}
+                        </small>
+                      </span>
+                    </button>
+                  )
+                })}
               {[
-                { id: "imoveis", rotulo: "Imóveis", icone: "apartment", quantidade: anunciosDaCidade.filter((a) => a.kind === "property").length },
-                { id: "desapegos", rotulo: "Desapegos", icone: "sell", quantidade: anunciosDaCidade.filter((a) => a.kind !== "property").length },
+                {
+                  id: "imoveis",
+                  rotulo: "Imóveis",
+                  icone: "apartment",
+                  quantidade: anunciosDaCidade.filter((a) => a.kind === "property").length,
+                },
+                {
+                  id: "desapegos",
+                  rotulo: "Desapegos",
+                  icone: "sell",
+                  quantidade: anunciosDaCidade.filter((a) => a.kind !== "property").length,
+                },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -261,7 +293,9 @@ export function Busca() {
                   </span>
                   <span className="grid min-w-0 gap-0.5">
                     <b className="text-[13px] leading-4">{item.rotulo}</b>
-                    <small className="text-xs text-(--on-surface-variant)">{item.quantidade} disponíveis</small>
+                    <small className="text-xs text-(--on-surface-variant)">
+                      {item.quantidade} disponíveis
+                    </small>
                   </span>
                 </button>
               ))}
@@ -269,15 +303,15 @@ export function Busca() {
           </Secao>
           <Secao titulo="Sugestões" className="mt-4">
             <div className="grid gap-1">
-            {SUGESTOES.map((sugestao) => (
-              <LinhaDeLista
-                key={sugestao}
-                icone="trending_up"
-                titulo={sugestao}
-                onClick={() => setConsulta(sugestao)}
-              />
-            ))}
-          </div>
+              {SUGESTOES.map((sugestao) => (
+                <LinhaDeLista
+                  key={sugestao}
+                  icone="trending_up"
+                  titulo={sugestao}
+                  onClick={() => setConsulta(sugestao)}
+                />
+              ))}
+            </div>
           </Secao>
         </>
       ) : total === 0 ? (

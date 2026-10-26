@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
-import { Campo } from "@/components/bivaque/campos"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { Campo } from "@/components/bivaque/campos"
 import { CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
@@ -17,9 +17,9 @@ import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import type { Pergunta } from "@/lib/dados/contrato"
-import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { useCasca } from "@/src/contexto/casca"
 import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
 
@@ -85,7 +85,9 @@ export function Comunidade() {
     if (dados === null) return
     const criada = criarPerguntaLocal(casca.cidade, dados.localidade.id, tituloNovo, topicoNovo)
     if (!criada) {
-      setErroAoCriar("Não foi possível guardar a pergunta nesta sessão. Confira o texto e tente novamente.")
+      setErroAoCriar(
+        "Não foi possível guardar a pergunta nesta sessão. Confira o texto e tente novamente.",
+      )
       return
     }
     setPerguntasLocais((atual) => [criada, ...atual])
@@ -151,7 +153,12 @@ export function Comunidade() {
 
       {aba === "ind" ? (
         <div className="flex justify-end">
-          <Botao data-acao="perguntar" icone="edit_square" tom="tonal" onClick={() => setCriandoPergunta(true)}>
+          <Botao
+            data-acao="perguntar"
+            icone="edit_square"
+            tom="tonal"
+            onClick={() => setCriandoPergunta(true)}
+          >
             Perguntar
           </Botao>
         </div>
@@ -166,7 +173,8 @@ export function Comunidade() {
         >
           <DialogTitle className="pr-12 text-xl">Pedir uma indicação</DialogTitle>
           <DialogDescription className="text-sm text-(--on-surface-variant)">
-            A pergunta ficará somente nesta sessão de demonstração. Não será publicada para outros usuários.
+            A pergunta ficará somente nesta sessão de demonstração. Não será publicada para outros
+            usuários.
           </DialogDescription>
           <form
             className="mt-4 grid gap-4"
@@ -196,10 +204,18 @@ export function Comunidade() {
               maxLength={60}
               placeholder="Saúde, escola, serviços..."
             />
-            {erroAoCriar === "" ? null : <p role="alert" className="text-sm text-(--destructive)">{erroAoCriar}</p>}
+            {erroAoCriar === "" ? null : (
+              <p role="alert" className="text-sm text-(--destructive)">
+                {erroAoCriar}
+              </p>
+            )}
             <div className="flex justify-end gap-2">
-              <Botao type="button" tom="texto" onClick={() => setCriandoPergunta(false)}>Cancelar</Botao>
-              <Botao type="submit" disabled={tituloNovo.trim().length < 12}>Adicionar pergunta</Botao>
+              <Botao type="button" tom="texto" onClick={() => setCriandoPergunta(false)}>
+                Cancelar
+              </Botao>
+              <Botao type="submit" disabled={tituloNovo.trim().length < 12}>
+                Adicionar pergunta
+              </Botao>
             </div>
           </form>
         </DialogContent>

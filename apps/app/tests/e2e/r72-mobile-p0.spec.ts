@@ -27,9 +27,11 @@ test("R72 P0: Busca explora categorias em duas colunas e encontra negócios", as
   const grade = page.locator('[data-explorar="categorias"]')
   await expect(grade).toBeVisible()
   await expect(grade.locator("[data-explorar-categoria]")).toHaveCount(8)
-  const primeiros = await grade.locator("[data-explorar-categoria]").evaluateAll((itens) =>
-    itens.slice(0, 2).map((el) => Math.round(el.getBoundingClientRect().top)),
-  )
+  const primeiros = await grade
+    .locator("[data-explorar-categoria]")
+    .evaluateAll((itens) =>
+      itens.slice(0, 2).map((el) => Math.round(el.getBoundingClientRect().top)),
+    )
   expect(new Set(primeiros).size).toBe(1)
   await grade.locator('[data-explorar-categoria="saude"]').click()
   await expect(page.locator('[data-tela="busca"] [data-cartao="negocio"]')).not.toHaveCount(0)

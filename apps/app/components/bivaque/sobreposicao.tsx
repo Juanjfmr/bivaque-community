@@ -1,7 +1,7 @@
 "use client"
 
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type ReactNode, useEffect, useRef } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { distanciaFechaFolha, paginaEncolhe } from "@/lib/movimento"
 import type { Sobreposicao as IdDeSobreposicao } from "@/lib/navegacao/entrada"
 import { cn } from "@/lib/utils"

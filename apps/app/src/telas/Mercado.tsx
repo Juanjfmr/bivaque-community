@@ -1,16 +1,15 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-
+import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Selecao } from "@/components/bivaque/campos"
-import { Icone } from "@/components/bivaque/icone"
-import { Botao } from "@/components/bivaque/botao"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
+import { Icone } from "@/components/bivaque/icone"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
@@ -109,7 +108,11 @@ export function ListaDeMercado({
     const filtrados = itens.filter(({ anuncio }) => {
       if (tipo !== "todos" && !anuncio.title.toLocaleLowerCase("pt-BR").includes(tipo)) return false
       const quartosDoImovel = quartos(anuncio)
-      if (minimoQuartos !== "0" && (quartosDoImovel === null || quartosDoImovel < Number(minimoQuartos))) return false
+      if (
+        minimoQuartos !== "0" &&
+        (quartosDoImovel === null || quartosDoImovel < Number(minimoQuartos))
+      )
+        return false
       if (maximoMensal !== "todos") {
         const mensal = totalMensal(anuncio)
         if (mensal === null || mensal > Number(maximoMensal)) return false
@@ -319,17 +322,31 @@ export function ListaDeMercado({
         )
       ) : (inicial === "imoveis" ? imoveisFiltrados.length === 0 : itens.length === 0) ? (
         <EstadoVazio
-          titulo={inicial === "imoveis" && itens.length > 0 ? "Nenhum imóvel corresponde aos filtros" : "Nada anunciado nesta seção"}
-          texto={inicial === "imoveis" && itens.length > 0 ? "Amplie os critérios para ver outros imóveis desta cidade." : "Quando alguém publicar, o anúncio aparece aqui para toda a cidade."}
+          titulo={
+            inicial === "imoveis" && itens.length > 0
+              ? "Nenhum imóvel corresponde aos filtros"
+              : "Nada anunciado nesta seção"
+          }
+          texto={
+            inicial === "imoveis" && itens.length > 0
+              ? "Amplie os critérios para ver outros imóveis desta cidade."
+              : "Quando alguém publicar, o anúncio aparece aqui para toda a cidade."
+          }
           icone="sell"
-          {...(inicial === "imoveis" && itens.length > 0 ? { acao: { rotulo: "Limpar filtros", aoAcionar: limparFiltros } } : {})}
+          {...(inicial === "imoveis" && itens.length > 0
+            ? { acao: { rotulo: "Limpar filtros", aoAcionar: limparFiltros } }
+            : {})}
         />
       ) : (
         <>
           <p className="text-sm text-(--on-surface-variant)">
-            {inicial === "imoveis" ? imoveisFiltrados.length : itens.length} {inicial === "imoveis" ? "imóveis" : "anúncios"} em {casca.cidade}
+            {inicial === "imoveis" ? imoveisFiltrados.length : itens.length}{" "}
+            {inicial === "imoveis" ? "imóveis" : "anúncios"} em {casca.cidade}
           </p>
-          <Grade formato="cartoes" className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : ""}>
+          <Grade
+            formato="cartoes"
+            className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : ""}
+          >
             {(inicial === "imoveis" ? imoveisFiltrados : itens).map(({ anuncio, apresentacao }) => (
               <CartaoDeFoto
                 key={anuncio.id}
