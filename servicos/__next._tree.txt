@@ -1,6 +1,6 @@
-:HL["/bivaque-community/_next/static/chunks/3eq2-vszpb5_a.css","style"]
+:HL["/bivaque-community/_next/static/chunks/1kv24hm-cbjsp.css","style"]
 :HL["/bivaque-community/_next/static/media/noto_sans-s.p.05o5-i1cea2yx.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/bivaque-community/_next/static/media/noto_serif-s.p.2v5sa_tq9g0ze.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 2:[["children",{"s":"__PAGE__","h":160}]]
-1:[["children",{"s":{"n":"section","t":"d","k":"servicos","s":["laboratorio-blocos"]},"h":65632,"c":"$Q2"}]]
-0:{"b":"uXigKgcGMY2bPgUnsuRYZ","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+1:[["children",{"s":{"n":"section","t":"d","k":"servicos","s":["home-blocos","laboratorio-blocos"]},"h":65632,"c":"$Q2"}]]
+0:{"b":"ZgoOZZImcMnZrGyrgz3YC","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
