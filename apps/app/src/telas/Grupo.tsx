@@ -4,6 +4,7 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { Capa } from "@/components/bivaque/capa"
 import {
   CartaoDePublicacao,
   type TipoDePublicacao,
