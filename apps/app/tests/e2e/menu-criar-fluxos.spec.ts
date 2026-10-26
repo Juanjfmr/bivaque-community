@@ -36,7 +36,7 @@ for (const caso of CASOS) {
     const item = page.locator(`[data-rascunho-criacao="${caso.id}"]`)
     await expect(item).toContainText(caso.titulo)
     await expect(item).toContainText(caso.extra)
-    await expect(page.getByText("Nenhum anúncio publicado")).toBeVisible()
+    await expect(page.locator('[data-rascunhos-criacao="sim"]')).toContainText("não publicados")
 
     await item.locator('[data-acao="detalhes-rascunho"]').click()
     await expect(item).toContainText("Atendimento a combinar")
