@@ -134,9 +134,8 @@ export function Busca() {
   }, [casca.cidade, rodada])
 
   // Uma consulta digitada tem precedência sobre a categoria tocada na grade.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: digitando outra consulta descarta a categoria ativa
   useEffect(() => {
-    setCategoriaAtiva(null)
+    if (consulta.trim() !== "") setCategoriaAtiva(null)
   }, [consulta])
 
   const achados = useMemo(() => {
