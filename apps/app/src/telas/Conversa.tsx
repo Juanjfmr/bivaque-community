@@ -224,11 +224,16 @@ export function Conversa() {
         </fieldset>
         <form
           className="grid min-w-0 gap-1.5"
-          onSubmit={(evento) => { evento.preventDefault(); adicionarPrevia() }}
+          onSubmit={(evento) => {
+            evento.preventDefault()
+            adicionarPrevia()
+          }}
         >
           <div className="flex min-w-0 items-end gap-2">
             <div className="min-w-0 flex-1">
-              <label htmlFor="mensagem-da-conversa" className="sr-only">Mensagem da prévia</label>
+              <label htmlFor="mensagem-da-conversa" className="sr-only">
+                Mensagem da prévia
+              </label>
               <Textarea
                 id="mensagem-da-conversa"
                 aria-label="Mensagem da prévia"
