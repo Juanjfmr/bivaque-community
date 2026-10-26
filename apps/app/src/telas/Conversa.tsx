@@ -126,7 +126,7 @@ export function Conversa() {
   if (conversa === null) return <TelaIndisponivel />
 
   return (
-    <section data-tela="conversa" className="grid min-w-0 gap-3 pb-3">
+    <section data-tela="conversa" className="flex min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 flex-col gap-3 pb-3">
       <div className="flex min-w-0 items-center gap-3 px-1 py-2">
         <Avatar size="lg" className="size-11 shrink-0">
           <AvatarFallback className="bg-(--secondary-container) font-semibold">
@@ -200,7 +200,7 @@ export function Conversa() {
 
       <div
         data-compositor-conversa="sim"
-        className="sticky z-10 grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)] bottom-[calc(var(--altura-da-barra,64px)+env(safe-area-inset-bottom)+8px)] md:bottom-3"
+        className="sticky bottom-2 z-10 mt-auto grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)] md:bottom-3"
       >
         <fieldset aria-label="Respostas rápidas" className="flex gap-2 overflow-x-auto pb-0.5">
           {[
