@@ -89,14 +89,20 @@ export function CartaoDeFoto({
         <h3 className="text-[17px] leading-6">{anuncio.titulo}</h3>
         <span className="text-[13px] text-(--on-surface-variant)">{anuncio.meta}</span>
         {anuncio.detalhes === undefined || anuncio.detalhes.length === 0 ? null : (
-          <span data-atributos-imovel="sim" className="flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-(--on-surface-variant)">
+          <span
+            data-atributos-imovel="sim"
+            className="flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-(--on-surface-variant)"
+          >
             {anuncio.detalhes.map((detalhe) => (
               <small key={detalhe}>{detalhe}</small>
             ))}
           </span>
         )}
         {anuncio.informacaoExtra === undefined ? null : (
-          <span data-extras-imovel="sim" className="text-[12px] leading-4 text-(--on-surface-variant)">
+          <span
+            data-extras-imovel="sim"
+            className="text-[12px] leading-4 text-(--on-surface-variant)"
+          >
             {anuncio.informacaoExtra}
           </span>
         )}
