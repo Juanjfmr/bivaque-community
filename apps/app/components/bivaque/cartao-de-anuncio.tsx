@@ -21,7 +21,7 @@ export type AnuncioDoCartao = {
   readonly id: string
   readonly titulo: string
   readonly fonte?: string | null
-  readonly rotulo?: string
+  readonly rotulo?: string | undefined
   readonly icone?: React.ComponentProps<typeof Icone>["nome"]
   readonly preco?: number | null
   readonly porMes?: boolean
