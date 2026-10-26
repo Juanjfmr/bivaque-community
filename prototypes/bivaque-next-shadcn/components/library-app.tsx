@@ -48,6 +48,7 @@ import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, B
 import {DemoAccessPage, INITIAL_DEMO_ENROLLMENT, type DemoEnrollment} from "@/components/demo-access";
 import {DemoModerationPage, type DemoReport} from "@/components/demo-moderation";
 import {R72Info} from "@/components/r72-info";
+import {SupportPage,type SupportTicket} from "@/components/r72-support";
 
 type Item = { city: string; id: string; title: string; description: string; meta: string; image?: string; price?: string; badge?: string; kind: string };
 type CatalogFilters = {min:string;max:string;hoods:string[];beds:number;parking:number;area:number;pets:boolean;furnished:boolean;availability:string;condition:string;pickup:string;om:string};
@@ -81,6 +82,8 @@ const routes = [
   { label: "Privacidade", slug: "privacidade", icon: Shield, group: "oculto" },
   { label: "Conduta", slug: "conduta", icon: Shield, group: "oculto" },
   { label: "Planos", slug: "planos", icon: Ticket, group: "oculto" },
+  { label: "Contato", slug: "contato", icon: MessageCircle, group: "oculto" },
+  { label: "Chamados", slug: "chamados", icon: ClipboardList, group: "oculto" },
 ] as const;
 const money = (n: number) => n.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
 const INITIAL_CITY = "Brasília";
@@ -126,6 +129,7 @@ export default function LibraryApp(){
   const [followed,setFollowed]=React.useState<string[]>([]);
   const [resolved,setResolved]=React.useState<string[]>(QUESTIONS.filter(q=>q.resolved).map(q=>q.id));
   const [posts,setPosts]=React.useState<Post[]>([]);
+  const [tickets,setTickets]=React.useState<SupportTicket[]>([]);
   const [replies,setReplies]=React.useState<Record<string,string[]>>({});
   const [chats,setChats]=React.useState<Chat[]>([{id:"demo1",name:"Famílias militares",context:"Demonstração",messages:[{self:false,body:"Bem-vindo à prévia do Bivaque. Esta conversa é fictícia."}]}]);
   const [chatId,setChatId]=React.useState("demo1");
@@ -155,8 +159,8 @@ export default function LibraryApp(){
   const [villa,setVilla]=React.useState("v1");
   const [tab,setTab]=React.useState("Indicações");
   const [loaded,setLoaded]=React.useState(false);
-  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGroupRequests(v.groupRequests||[]);setGroupPosts(v.groupPosts||[]);setGroupLikes(v.groupLikes||[]);setGroupComments(v.groupComments||{});setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
-  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,replies,chats,endorsed,chosenProposals,account,reports]);
+  React.useEffect(()=>{const v=readStore();if(v){setCity(v.city||INITIAL_CITY);setSaved(v.saved||[]);setJoined(v.joined||["g1"]);setGroupRequests(v.groupRequests||[]);setGroupPosts(v.groupPosts||[]);setGroupLikes(v.groupLikes||[]);setGroupComments(v.groupComments||{});setGoing(v.going||[]);setMoment(v.moment||"moro");setLastViewed(v.lastViewed||null);setCatalogFilters({...initialCatalogFilters,...v.catalogFilters});setSteps(v.steps||[]);setLikes(v.likes||[]);setFollowed(v.followed||[]);setResolved(v.resolved||[]);setPosts(v.posts||[]);setTickets(v.tickets||[]);setReplies(v.replies||{});setChats(v.chats||[]);setEndorsed(v.endorsed||[]);setChosenProposals(v.chosenProposals||{});if(v.account&&["visitante","cadastro","analise","aprovado-demo"].includes(v.account.stage))setAccount(v.account);if(Array.isArray(v.reports))setReports(v.reports)}setLoaded(true)},[]);
+  React.useEffect(()=>{if(loaded)localStorage.setItem(store,JSON.stringify({city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,tickets,replies,chats,endorsed,chosenProposals,account,reports}))},[loaded,city,saved,joined,groupRequests,groupPosts,groupLikes,groupComments,going,moment,lastViewed,catalogFilters,steps,likes,followed,resolved,posts,tickets,replies,chats,endorsed,chosenProposals,account,reports]);
   React.useEffect(()=>{if(detailOpen&&detail)setLastViewed(detail.id)},[detailOpen,detail]);
   React.useEffect(()=>{if(slug!=="busca")setQuery("");setCategory("Todos");setTab("Indicações")},[slug]);
   React.useEffect(()=>{const fn=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();setSearchOpen(true)}};document.addEventListener("keydown",fn);return()=>document.removeEventListener("keydown",fn)},[]);
@@ -476,7 +480,7 @@ export default function LibraryApp(){
   function you(){return <div className="mx-auto max-w-4xl space-y-5">{header}<Card>
     <CardHeader><Avatar><AvatarFallback>CO</AvatarFallback></Avatar><CardTitle>Perfil de demonstração</CardTitle><CardDescription>Sem verificação militar ou autenticação real</CardDescription></CardHeader>
     <CardContent className="flex flex-wrap items-center gap-2"><Badge variant="outline">{saved.length} itens salvos</Badge><Badge variant="outline">{joined.length} grupos</Badge><Badge variant="outline">{going.length} eventos</Badge><Badge variant="secondary">{account.stage==="aprovado-demo"?"Aprovação fictícia":"Acesso não verificado"}</Badge></CardContent>
-    <CardFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate("acesso")}><Shield className="size-4"/> Simular entrada</Button><Button variant="outline" onClick={()=>navigate("painel")}><ClipboardList className="size-4"/> Painel de moderação demo</Button><Button variant="outline" onClick={()=>navigate("ajuda")}>Ajuda</Button><Button variant="outline" onClick={()=>navigate("privacidade")}>Privacidade</Button><Button variant="outline" onClick={()=>navigate("planos")}>Planos</Button></CardFooter>
+    <CardFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate("acesso")}><Shield className="size-4"/> Simular entrada</Button><Button variant="outline" onClick={()=>navigate("painel")}><ClipboardList className="size-4"/> Painel de moderação demo</Button><Button variant="outline" onClick={()=>navigate("ajuda")}>Ajuda</Button><Button variant="outline" onClick={()=>navigate("privacidade")}>Privacidade</Button><Button variant="outline" onClick={()=>navigate("planos")}>Planos</Button><Button variant="outline" onClick={()=>navigate("chamados")}>Meus chamados</Button></CardFooter>
   </Card><Tabs defaultValue="Salvos"><TabsList><TabsTrigger value="Salvos">Salvos</TabsTrigger><TabsTrigger value="Publicações">Publicações</TabsTrigger><TabsTrigger value="Privacidade">Privacidade</TabsTrigger></TabsList>
     <TabsContent value="Salvos">{showItems(allSaved)}</TabsContent>
     <TabsContent value="Publicações">{localDrafts(options)||<Alert><InfoIcon/><AlertTitle>Nenhum rascunho</AlertTitle><AlertDescription>Use Criar para testar uma publicação.</AlertDescription></Alert>}</TabsContent>
@@ -549,7 +553,7 @@ export default function LibraryApp(){
     }
     return <p className="text-sm text-muted-foreground">Página não encontrada na demonstração.</p>;
   }
-  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:["ajuda","privacidade","conduta","planos"].includes(slug)?<R72Info kind={slug as "ajuda"|"privacidade"|"conduta"|"planos"}/>:slug==="busca"?searchPage():homePage();
+  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:["contato","chamados"].includes(slug)?<SupportPage route={slug as "contato"|"chamados"} tickets={tickets} onTicket={t=>setTickets(v=>[t,...v])} onNav={navigate}/>:["ajuda","privacidade","conduta","planos"].includes(slug)?<R72Info kind={slug as "ajuda"|"privacidade"|"conduta"|"planos"}/>:slug==="busca"?searchPage():homePage();
 
   const oms=["Todas",...new Set(HOUSING.filter(h=>h.city===city).map(h=>h.om))];
   const relevantHoods=[...new Set((slug==="imoveis"?HOUSING:CLASSIFIEDS).filter(x=>x.city===city).map(x=>x.hood))];
