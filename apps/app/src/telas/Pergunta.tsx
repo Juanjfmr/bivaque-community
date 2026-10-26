@@ -12,6 +12,7 @@ import { Secao } from "@/components/bivaque/secao"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import type { Resposta } from "@/lib/dados/contrato"
 import { idLocal } from "@/lib/id"
+import { lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
@@ -64,8 +65,12 @@ export function Pergunta() {
   const validacao = validarParametros("pergunta", { id })
   const pergunta = useMemo(() => {
     if (dados === null) return null
-    return dados.perguntas.find((item) => item.id === id) ?? null
-  }, [dados, id])
+    return (
+      dados.perguntas.find((item) => item.id === id) ??
+      lerPerguntasLocais(casca.cidade).find((item) => item.id === id) ??
+      null
+    )
+  }, [dados, id, casca.cidade])
 
   const apresentacao = registro(pergunta?.apresentacao)
   const respostas = useMemo(() => {
