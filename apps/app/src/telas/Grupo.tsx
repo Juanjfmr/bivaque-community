@@ -13,6 +13,7 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
+import { InteracoesDoGrupo } from "@/components/bivaque/interacoes-grupo"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -114,6 +115,12 @@ export function Grupo() {
   const membros = numero(apresentacao["members"])
   const privacidade = texto(apresentacao["privacy"], "aberto")
   const fixado = texto(apresentacao["pinned"])
+  const pedidos = Array.isArray(apresentacao["requests"])
+    ? apresentacao["requests"].map((valor) => {
+        const item = registro(valor)
+        return { nome: texto(item["name"], "Membro"), nota: texto(item["note"]) }
+      })
+    : []
 
   return (
     <section data-tela="grupo" className="grid gap-2">
@@ -130,6 +137,17 @@ export function Grupo() {
         acao={privacidade === "fechado" ? <Etiqueta tom="neutro">Fechado</Etiqueta> : undefined}
       />
 
+      <InteracoesDoGrupo
+        id={id}
+        cidade={casca.cidade}
+        fechado={privacidade === "fechado"}
+        membro={apresentacao["on"] === true}
+        pendente={apresentacao["pending"] === true}
+        admin={apresentacao["role"] === "admin"}
+        sobre={texto(apresentacao["about"], grupo.description ?? "")}
+        regras={texto(apresentacao["rules"], "Respeite todos os membros e mantenha as conversas pertinentes.")}
+        pedidos={pedidos}
+      >
       {fixado === "" ? null : (
         <p className="flex items-center gap-2 rounded-2xl bg-(--secondary-container) px-4 py-3 text-sm">
           <Icone nome="pin" className="size-5 shrink-0" />
@@ -180,6 +198,7 @@ export function Grupo() {
           })}
         </div>
       )}
+      </InteracoesDoGrupo>
     </section>
   )
 }
