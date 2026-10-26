@@ -139,6 +139,16 @@ export function Comunidade() {
       <CabecaDePagina
         titulo="Comunidade"
         subtitulo="O que a comunidade sabe fica disponível para quem chegar depois."
+        acao={aba === "ind" ? (
+          <Botao
+            data-acao="perguntar"
+            icone="edit_square"
+            tom="tonal"
+            onClick={() => setCriandoPergunta(true)}
+          >
+            Perguntar
+          </Botao>
+        ) : undefined}
       />
 
       <div className="flex items-center justify-between gap-2">
@@ -151,18 +161,6 @@ export function Comunidade() {
         />
       </div>
 
-      {aba === "ind" ? (
-        <div className="flex justify-end">
-          <Botao
-            data-acao="perguntar"
-            icone="edit_square"
-            tom="tonal"
-            onClick={() => setCriandoPergunta(true)}
-          >
-            Perguntar
-          </Botao>
-        </div>
-      ) : null}
 
       <Dialog open={criandoPergunta} onOpenChange={setCriandoPergunta}>
         <DialogContent
