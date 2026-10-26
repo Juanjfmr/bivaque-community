@@ -101,7 +101,9 @@ test("P1: anúncios de imóveis mostram somente os metadados declarados na fixtu
   await expect(dois.locator("[data-extras-imovel]")).not.toContainText("Disponível")
 })
 
-test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catálogo", async ({ page }) => {
+test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catálogo", async ({
+  page,
+}) => {
   await page.goto("/app/imoveis")
   const publicos = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')
   await expect(publicos).toHaveCount(2)
@@ -140,6 +142,9 @@ test("P1: Criar > Anunciar imóvel chega ao formulário, sem destino morto", asy
   await page.locator('[data-escolha="create-property"]').click()
   await expect(page).toHaveURL(/\/app\/imoveis$/)
   await expect(page.locator('[data-fluxo="rascunho-imovel"]')).toBeVisible()
-  await page.locator('[data-fluxo="rascunho-imovel"]').getByRole("button", { name: "Cancelar" }).click()
+  await page
+    .locator('[data-fluxo="rascunho-imovel"]')
+    .getByRole("button", { name: "Cancelar" })
+    .click()
   await expect(page.locator('[data-fluxo="rascunho-imovel"]')).toHaveCount(0)
 })

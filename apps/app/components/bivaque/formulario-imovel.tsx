@@ -4,10 +4,7 @@ import { useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo, Selecao } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import {
-  type RascunhoImovel,
-  salvarRascunhoImovel,
-} from "@/lib/rascunhos-imoveis"
+import { type RascunhoImovel, salvarRascunhoImovel } from "@/lib/rascunhos-imoveis"
 
 export function FormularioImovel({
   aberto,
@@ -48,7 +45,9 @@ export function FormularioImovel({
       descricao,
     })
     if (rascunho === null) {
-      setErro("Confira título, bairro, preço, metragem e quantidades. O armazenamento desta sessão precisa estar disponível.")
+      setErro(
+        "Confira título, bairro, preço, metragem e quantidades. O armazenamento desta sessão precisa estar disponível.",
+      )
       return
     }
     setErro("")
@@ -61,7 +60,12 @@ export function FormularioImovel({
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={(novo) => { if (!novo) aoFechar() }}>
+    <Dialog
+      open={aberto}
+      onOpenChange={(novo) => {
+        if (!novo) aoFechar()
+      }}
+    >
       <DialogContent
         unstyled
         data-fluxo="rascunho-imovel"
@@ -70,7 +74,8 @@ export function FormularioImovel({
       >
         <DialogTitle className="pr-12 text-xl">Anunciar imóvel</DialogTitle>
         <DialogDescription id="rascunho-imovel-descricao">
-          Crie um rascunho para revisar seu imóvel em {cidade}. Nesta demonstração, nada é publicado nem enviado a outros usuários.
+          Crie um rascunho para revisar seu imóvel em {cidade}. Nesta demonstração, nada é publicado
+          nem enviado a outros usuários.
         </DialogDescription>
         <form
           data-formulario="imovel"
@@ -96,14 +101,20 @@ export function FormularioImovel({
               rotulo="Tipo"
               valor={tipo}
               aoMudar={setTipo}
-              opcoes={[{ valor: "apartamento", titulo: "Apartamento" }, { valor: "casa", titulo: "Casa" }]}
+              opcoes={[
+                { valor: "apartamento", titulo: "Apartamento" },
+                { valor: "casa", titulo: "Casa" },
+              ]}
             />
             <Selecao
               id="imovel-finalidade"
               rotulo="Finalidade"
               valor={finalidade}
               aoMudar={setFinalidade}
-              opcoes={[{ valor: "aluguel", titulo: "Aluguel" }, { valor: "venda", titulo: "Venda" }]}
+              opcoes={[
+                { valor: "aluguel", titulo: "Aluguel" },
+                { valor: "venda", titulo: "Venda" },
+              ]}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -175,13 +186,22 @@ export function FormularioImovel({
             area
             nota="Evite número do apartamento, documentos e telefone. Esses dados não são necessários para este rascunho."
           />
-          {erro === "" ? null : <p role="alert" className="text-sm text-(--destructive)">{erro}</p>}
+          {erro === "" ? null : (
+            <p role="alert" className="text-sm text-(--destructive)">
+              {erro}
+            </p>
+          )}
           <p className="text-xs text-(--on-surface-variant)">
-            Rascunhos ficam apenas nesta aba do navegador. Fotos, contato e publicação real ainda não estão disponíveis.
+            Rascunhos ficam apenas nesta aba do navegador. Fotos, contato e publicação real ainda
+            não estão disponíveis.
           </p>
           <div className="flex justify-end gap-2">
-            <Botao type="button" tom="texto" onClick={aoFechar}>Cancelar</Botao>
-            <Botao type="submit" data-acao="salvar-rascunho-imovel">Salvar rascunho</Botao>
+            <Botao type="button" tom="texto" onClick={aoFechar}>
+              Cancelar
+            </Botao>
+            <Botao type="submit" data-acao="salvar-rascunho-imovel">
+              Salvar rascunho
+            </Botao>
           </div>
         </form>
       </DialogContent>

@@ -59,7 +59,10 @@ export function lerRascunhosImoveis(cidade: string): RascunhoImovel[] {
 }
 
 /** Retorna null se o armazenamento da sessão estiver indisponível; nunca declara publicação. */
-export function salvarRascunhoImovel(cidade: string, dados: DadosDoRascunho): RascunhoImovel | null {
+export function salvarRascunhoImovel(
+  cidade: string,
+  dados: DadosDoRascunho,
+): RascunhoImovel | null {
   if (
     cidade.trim() === "" ||
     dados.titulo.trim().length < 10 ||
@@ -72,7 +75,8 @@ export function salvarRascunhoImovel(cidade: string, dados: DadosDoRascunho): Ra
     dados.quartos < 0 ||
     !Number.isInteger(dados.vagas) ||
     dados.vagas < 0
-  ) return null
+  )
+    return null
   const novo: RascunhoImovel = {
     ...dados,
     id: idLocal("rascunho-imovel-"),
@@ -83,7 +87,10 @@ export function salvarRascunhoImovel(cidade: string, dados: DadosDoRascunho): Ra
     criadoEm: new Date().toISOString(),
   }
   try {
-    window.sessionStorage.setItem(chave(cidade), JSON.stringify([novo, ...lerRascunhosImoveis(cidade)].slice(0, 10)))
+    window.sessionStorage.setItem(
+      chave(cidade),
+      JSON.stringify([novo, ...lerRascunhosImoveis(cidade)].slice(0, 10)),
+    )
     return novo
   } catch {
     return null

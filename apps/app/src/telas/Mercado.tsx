@@ -4,17 +4,18 @@ import { useEffect, useMemo, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Selecao } from "@/components/bivaque/campos"
-import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
 import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import {
   CHAVE_ABERTURA_IMOVEL,
   excluirRascunhoImovel,
@@ -22,7 +23,6 @@ import {
   PEDIDO_CRIAR_IMOVEL,
   type RascunhoImovel,
 } from "@/lib/rascunhos-imoveis"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
 import { numero, registro, texto } from "@/src/telas/comum"
 
@@ -135,13 +135,19 @@ export function ListaDeMercado({
     if (inicial !== "imoveis") return
     setRascunhos(lerRascunhosImoveis(casca.cidade))
     const abrir = () => {
-      try { window.sessionStorage.removeItem(CHAVE_ABERTURA_IMOVEL) } catch { /* sem persistência */ }
+      try {
+        window.sessionStorage.removeItem(CHAVE_ABERTURA_IMOVEL)
+      } catch {
+        /* sem persistência */
+      }
       setCriandoImovel(true)
     }
     window.addEventListener(PEDIDO_CRIAR_IMOVEL, abrir)
     try {
       if (window.sessionStorage.getItem(CHAVE_ABERTURA_IMOVEL) === "1") abrir()
-    } catch { /* CTA do catálogo continua disponível sem storage */ }
+    } catch {
+      /* CTA do catálogo continua disponível sem storage */
+    }
     return () => window.removeEventListener(PEDIDO_CRIAR_IMOVEL, abrir)
   }, [inicial, casca.cidade])
 
@@ -224,11 +230,13 @@ export function ListaDeMercado({
       <CabecaDePagina
         titulo={titulo}
         subtitulo={`O que a comunidade de ${casca.cidade} está anunciando.`}
-        acao={inicial === "imoveis" ? (
-          <Botao data-acao="anunciar-imovel" icone="add" onClick={() => setCriandoImovel(true)}>
-            Anunciar imóvel
-          </Botao>
-        ) : undefined}
+        acao={
+          inicial === "imoveis" ? (
+            <Botao data-acao="anunciar-imovel" icone="add" onClick={() => setCriandoImovel(true)}>
+              Anunciar imóvel
+            </Botao>
+          ) : undefined
+        }
       />
 
       {inicial === "imoveis" ? (
@@ -245,7 +253,11 @@ export function ListaDeMercado({
       ) : null}
 
       {inicial === "imoveis" && rascunhos.length > 0 ? (
-        <section data-rascunhos-imoveis="sim" aria-label="Rascunhos de imóveis" className="grid gap-2 rounded-2xl bg-(--surface-container) p-3">
+        <section
+          data-rascunhos-imoveis="sim"
+          aria-label="Rascunhos de imóveis"
+          className="grid gap-2 rounded-2xl bg-(--surface-container) p-3"
+        >
           <b className="text-sm">Seus rascunhos ({rascunhos.length}) — não publicados</b>
           {rascunhos.map((rascunho) => (
             <article
@@ -256,15 +268,24 @@ export function ListaDeMercado({
               <span className="grid min-w-0 grow gap-0.5">
                 <b className="truncate text-sm">{rascunho.titulo}</b>
                 <small className="text-xs text-(--on-surface-variant)">
-                  {rascunho.bairro} · {rascunho.finalidade === "aluguel" ? "Aluguel" : "Venda"} · {moeda(rascunho.preco)}
+                  {rascunho.bairro} · {rascunho.finalidade === "aluguel" ? "Aluguel" : "Venda"} ·{" "}
+                  {moeda(rascunho.preco)}
                 </small>
               </span>
-              <Botao tom="texto" data-acao="excluir-rascunho" onClick={() => removerRascunho(rascunho.id)}>
+              <Botao
+                tom="texto"
+                data-acao="excluir-rascunho"
+                onClick={() => removerRascunho(rascunho.id)}
+              >
                 Excluir
               </Botao>
             </article>
           ))}
-          {erroRascunho === "" ? null : <p role="alert" className="text-xs text-(--destructive)">{erroRascunho}</p>}
+          {erroRascunho === "" ? null : (
+            <p role="alert" className="text-xs text-(--destructive)">
+              {erroRascunho}
+            </p>
+          )}
         </section>
       ) : null}
 

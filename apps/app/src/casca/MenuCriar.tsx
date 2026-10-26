@@ -126,7 +126,9 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
         if (escolha.id !== "create-property") return
         try {
           window.sessionStorage.setItem(CHAVE_ABERTURA_IMOVEL, "1")
-        } catch { /* a navegação funciona mesmo sem armazenamento */ }
+        } catch {
+          /* a navegação funciona mesmo sem armazenamento */
+        }
         void navegacao.irPara("imoveis").then(() => {
           window.dispatchEvent(new Event(PEDIDO_CRIAR_IMOVEL))
         })

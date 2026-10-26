@@ -1,19 +1,18 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-
-import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Botao } from "@/components/bivaque/botao"
+import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
-import { iconeDeDado } from "@/lib/icones"
 import { moeda } from "@/lib/formato"
-import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
+import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
 import { registro, texto } from "@/src/telas/comum"
 
@@ -71,14 +70,19 @@ export function MeusAnuncios() {
         <section data-meus-rascunhos="sim" className="mt-4 grid gap-2">
           <b className="text-[15px]">Rascunhos de imóveis — não publicados</b>
           {rascunhos.map((rascunho) => (
-            <div key={rascunho.id} className="flex min-w-0 items-center gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)">
+            <div
+              key={rascunho.id}
+              className="flex min-w-0 items-center gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)"
+            >
               <span className="grid min-w-0 grow gap-0.5">
                 <b className="truncate text-sm">{rascunho.titulo}</b>
                 <small className="text-xs text-(--on-surface-variant)">
                   {rascunho.bairro} · {moeda(rascunho.preco)}
                 </small>
               </span>
-              <Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>Ver</Botao>
+              <Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>
+                Ver
+              </Botao>
             </div>
           ))}
         </section>
@@ -90,7 +94,9 @@ export function MeusAnuncios() {
         <EsqueletoDeLista linhas={3} />
       ) : meus.length === 0 ? (
         <EstadoVazio
-          titulo={rascunhos.length > 0 ? "Nenhum anúncio publicado" : "Você ainda não anunciou nada"}
+          titulo={
+            rascunhos.length > 0 ? "Nenhum anúncio publicado" : "Você ainda não anunciou nada"
+          }
           texto="Um anúncio bem explicado costuma vender rápido na cidade."
           icone="sell"
           acao={{
