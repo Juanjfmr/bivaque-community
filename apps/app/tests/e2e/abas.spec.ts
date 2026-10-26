@@ -154,7 +154,9 @@ test.describe("aba ativa", () => {
       await esperarCaminho(page, porta.caminho)
       await expect(abaAtiva(page)).toHaveAttribute("data-aba", porta.primeiraOrigem)
 
-      await page.locator('[data-aba="mercado"]').click()
+      // Nas telas internas móveis a barra está oculta (§5.3 do protótipo).
+      // O controle de prova usa a navegação real sem reiniciar o documento/histórico.
+      await page.locator('[data-acao="abrir-mercado"][data-valor="prova"]').click()
       await esperarCaminho(page, "/app/mercado")
       await page.locator(porta.abrirPor).click()
       await esperarCaminho(page, porta.caminho)

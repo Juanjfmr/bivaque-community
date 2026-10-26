@@ -52,7 +52,10 @@ function lerEstadoDaRota(roteador: Roteador): EstadoDaRota {
     rota,
     // O caminho do match, e não o molde do catálogo: `/ajuda` sem tópico
     // continua `/ajuda`, em vez de virar `/ajuda/undefined`.
-    caminho: ultima?.routeId ?? rota.caminho,
+    caminho:
+      ultima?.routeId === "__root__"
+        ? ROTA_INDISPONIVEL.caminho
+        : (ultima?.routeId ?? rota.caminho),
     parametros,
     entrada: lerEntrada(roteador.state.location.state),
   }
@@ -134,6 +137,33 @@ export type OpcoesDeNavegacao = {
   readonly foco?: DescritorDeFoco
 }
 
+/**
+ * Liga a abertura de uma sobreposição ao estado da **entrada**, e não a um
+ * `useState` do componente: abrir empilha uma entrada no roteador (o Voltar do
+ * sistema fecha antes de trocar de rota) e o estado aberto sobrevive a uma
+ * recarga da entrada.
+ *
+ * É o que permite o menu de contexto da linha (§7, `Menu ⋮`) e a confirmação
+ * (§7, `confirm`) usarem o mecanismo único da onda 1b sem competir com ele.
+ */
+export function useSobreposicaoDaEntrada(id: Sobreposicao): {
+  readonly aberto: boolean
+  readonly aoMudarAberto: (aberto: boolean) => void
+} {
+  const entrada = useEntradaDaTela()
+  const navegacao = useNavegacao()
+  return {
+    aberto: entrada.sobreposicao === id,
+    aoMudarAberto(aberto: boolean) {
+      if (aberto) {
+        if (entrada.sobreposicao === null) void navegacao.abrir(id)
+        return
+      }
+      if (entrada.sobreposicao === id) navegacao.fecharSobreposicao()
+    },
+  }
+}
+
 export type Navegacao = {
   irPara(destino: string, opcoes?: OpcoesDeNavegacao): Promise<void>
   atualizar(mudanca: MudancaDaEntrada): Promise<void>
@@ -155,9 +185,13 @@ export function useNavegacao(): Navegacao {
       destino?: { readonly caminho: string; readonly parametros: Record<string, string> },
     ): Promise<void> => {
       const atual = lerEstadoDaRota(roteador)
-      // A rota de fallback não tem endereço próprio: reescrever a entrada atual
-      // nela trocaria o endereço inválido por outro.
-      if (destino === undefined && atual.rota.nome === "indisponivel") return Promise.resolve()
+      // A rota de fallback literal ("/indisponivel") não tem endereço próprio:
+      // reescrever a entrada atual nela trocaria o endereço inválido por outro.
+      // A checagem é pelo caminho, e não por `rota.nome`: a galeria de prova tem
+      // endereço próprio e cai em `ROTA_INDISPONIVEL` só por não estar no
+      // catálogo — e precisa da entrada materializada para devolver o foco.
+      if (destino === undefined && atual.caminho === ROTA_INDISPONIVEL.caminho)
+        return Promise.resolve()
       const caminho = destino?.caminho ?? atual.caminho
       const parametros = destino?.parametros ?? atual.parametros
       return roteador.navigate({
@@ -254,9 +288,9 @@ export function useNavegacao(): Navegacao {
     async (estado: unknown): Promise<void> => {
       if (temEntrada(estado)) return
       const atual = lerEstadoDaRota(roteador)
-      // A rota de fallback não tem endereço próprio para reescrever: ela fica com
-      // a identidade estável de "sem registro".
-      if (atual.rota.nome === "indisponivel") return
+      // A rota de fallback literal não tem endereço próprio para reescrever: ela
+      // fica com a identidade estável de "sem registro". Vê `gravar`.
+      if (atual.caminho === ROTA_INDISPONIVEL.caminho) return
       const entrada = entradaPadrao({ origem: atual.entrada.origem, pai: atual.entrada.pai })
       await gravar(() => entrada, true)
     },

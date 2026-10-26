@@ -55,15 +55,18 @@ test.describe("diálogo, folha e menu", () => {
   })
 
   test("Voltar do navegador fecha o menu Criar antes de trocar de rota", async ({ page }) => {
-    await entrarEmSalvos(page)
+    // Criar só é visível em raízes no celular; as duas entradas são reais.
+    await abrir(page, "/app/voce")
+    await page.locator('[data-aba="comunidade"]').click()
+    await esperarCaminho(page, "/app/comunidade")
     await page.locator('[data-acao="criar"]').click()
     await sobreposicaoAberta(page, MENU)
 
     await page.goBack()
     await expect(page.locator(MENU)).toHaveCount(0)
-    expect(new URL(page.url()).pathname).toBe("/app/salvos")
+    expect(new URL(page.url()).pathname).toBe("/app/comunidade")
     await page.goBack()
-    await esperarCaminho(page, "/app/comunidade")
+    await esperarCaminho(page, "/app/voce")
   })
 
   test("Escape fecha, devolve o foco e não deixa entrada fantasma", async ({ page }) => {

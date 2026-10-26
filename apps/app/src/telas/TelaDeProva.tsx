@@ -1,12 +1,14 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
+import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { subAbaDoMercado } from "@/lib/navegacao/abas"
 import { descritorDaAcao } from "@/lib/navegacao/entrada"
 import { useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA, criarCargaPendente } from "@/lib/navegacao/restauracao"
 import { SUBABAS_DO_MERCADO, validarParametros } from "@/lib/navegacao/rotas"
 import { usePortaDeCargas } from "@/src/contexto/cargas"
+import { useCasca } from "@/src/contexto/casca"
 import { FILTRO_SEGURAR_CARGA, modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 import { tituloDaTela } from "@/src/titulos"
@@ -25,16 +27,18 @@ const PERGUNTA_DIFICIL = "mudança de cidade/2026 ?!"
 /**
  * Tela vazia de prova.
  *
- * Onda 1b entrega navegação, não jornada: cada rota desenha o título real e, em
- * modo de prova, os controles que deixam a bateria medir a navegação (filtros,
- * rolagem, foco, sobreposição e carga pendente). Fora do modo de prova, a tela
- * fica vazia — nada de conteúdo fictício no uso normal.
+ * A onda 1b entrega navegação e a 1c, a casca: a tela desenha o título real da
+ * rota e, em **modo de prova**, os controles que deixam a bateria medir a
+ * navegação (filtros, rolagem, foco, sobreposição e carga pendente). Fora do
+ * modo de prova, a tela fica vazia: **nenhuma jornada das ondas 2 a 8 é
+ * implementada aqui**, e nada de conteúdo fictício aparece no uso normal.
  */
 export function TelaDeProva({ nome }: { nome: string }) {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const entrada = useEntradaDaTela()
   const navegacao = useNavegacao()
   const porta = usePortaDeCargas()
+  const casca = useCasca()
   const prova = modoDeProvaAtivo()
 
   // A decisão de segurar a lista vale para a montagem: marcar o controle não
@@ -69,13 +73,14 @@ export function TelaDeProva({ nome }: { nome: string }) {
   const subAba = subAbaDoMercado(nome)
 
   return (
-    <section data-tela={nome}>
-      <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1}>
-        {tituloDaTela(nome)}
-      </h1>
+    <section data-tela={nome} className="grid gap-2">
+      <CabecaDePagina
+        titulo={tituloDaTela(nome, casca.cidade)}
+        subtitulo={prova ? "Tela de prova: o conteúdo desta rota chega na onda dela." : undefined}
+      />
 
       {subAba === null ? null : (
-        <nav data-subabas="mercado" aria-label="Seções do Mercado">
+        <nav data-subabas="mercado" aria-label="Seções do Mercado" className="flex gap-2">
           {SUBABAS_DO_MERCADO.map((aba) => (
             <button
               key={aba}
@@ -83,6 +88,7 @@ export function TelaDeProva({ nome }: { nome: string }) {
               data-subaba={aba}
               aria-current={subAba === aba ? "page" : false}
               onClick={() => void navegacao.irPara(aba)}
+              className="min-h-11 rounded-xl px-3 text-sm font-medium aria-[current=page]:bg-(--secondary-container)"
             >
               {ROTULOS_DAS_SUBABAS[aba]}
             </button>
@@ -92,6 +98,14 @@ export function TelaDeProva({ nome }: { nome: string }) {
 
       {prova ? (
         <div data-prova="controles-da-tela">
+          <button
+            type="button"
+            data-acao="abrir-mercado"
+            data-valor="prova"
+            onClick={() => void navegacao.irPara("mercado")}
+          >
+            Ir para o Mercado
+          </button>
           <button
             type="button"
             data-acao="segurar-proxima-carga"

@@ -144,6 +144,11 @@ describe("estado por entrada", () => {
     expect(seletorDoDescritor(descritorDaAcao("abrir-item", "item-30"))).toBe(
       '[data-acao="abrir-item"][data-valor="item-30"]',
     )
+    // Acionador sem marca própria (o Criar, o chip de cidade): o seletor é só a
+    // ação. Exigir `[data-valor=""]` acharia zero elementos e o foco voltaria ao
+    // título em vez do acionador.
+    expect(seletorDoDescritor(descritorDaAcao("criar", ""))).toBe('[data-acao="criar"]')
+    expect(seletorDoDescritor(descritorDaAcao("cidade", ""))).toBe('[data-acao="cidade"]')
     expect(seletorDoDescritor({ tipo: "id", id: "titulo-da-tela" })).toBe("#titulo-da-tela")
 
     const elemento = (atributos: Record<string, string>, id = "") => ({

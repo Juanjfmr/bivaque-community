@@ -1,33 +1,27 @@
-import { Dialog } from "radix-ui"
-
-import type { Sobreposicao } from "@/lib/navegacao/entrada"
+import { ConteudoDoSelo } from "@/components/bivaque/selo-verificado"
+import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
-
-const ROTULO: Record<Sobreposicao, string> = {
-  dialogo: "Diálogo",
-  folha: "Folha",
-  "menu-criar": "Criar no Bivaque",
-}
-
-// Inventário §4: as escolhas do menu Criar. Onda 1c liga cada uma ao seu fluxo.
-const ESCOLHAS_DO_CRIAR: readonly string[] = [
-  "Pedir indicação",
-  "Contratar serviço",
-  "Anunciar desapego",
-  "Anunciar imóvel",
-  "Indicar um negócio",
-  "Criar encontro",
-  "Divulgar meu negócio",
-]
+import { MenuCriar } from "@/src/casca/MenuCriar"
+import { PainelDeCidade } from "@/src/casca/PainelDeCidade"
 
 /**
- * As sobreposições da casca, modais de verdade (Radix Dialog).
+ * Quem desenha a sobreposição aberta sobre a entrada.
  *
- * Cada uma é uma entrada própria no histórico: o Voltar do sistema fecha antes
- * de trocar de rota. O Radix cuida do que uma sobreposição modal exige — fundo
- * inerte, foco contido dentro dela e devolução do foco ao fechar — e o Escape e
- * o clique fora fecham pelo mesmo caminho. O conteúdo é provisório: a onda 1c
- * traz o conteúdo de cada diálogo.
+ * Cada id tem **um** dono, e o dono é que o abre pelo mecanismo único da 1b:
+ *
+ * | id | dono |
+ * |---|---|
+ * | `dialogo`, `folha` | esta casca, com a `Sobreposicao` do §7 |
+ * | `cidade` | esta casca, com o `PainelDeCidade` |
+ * | `selo` | esta casca, com a explicação do selo |
+ * | `menu-criar` | `MenuCriar`, que traz o próprio diálogo |
+ * | `menu-de-linha` | `MenuDaLinha`, na linha que o abriu |
+ * | `confirmacao` | `Confirmacao` |
+ *
+ * Por isso a casca não desenha nada para `menu-criar`, `menu-de-linha` e
+ * `confirmacao`: desenhar duas vezes o mesmo id abriria dois overlays para uma
+ * entrada só. O conteúdo do diálogo e da folha genéricos ainda é provisório —
+ * cada tela das ondas 2 a 8 traz o seu.
  */
 export function Sobreposicoes() {
   const entrada = useEntradaDaTela()
@@ -36,34 +30,48 @@ export function Sobreposicoes() {
 
   if (aberta === null) return null
 
+  const aoFechar = () => navegacao.fecharSobreposicao()
+
+  if (aberta === "menu-criar") return <MenuCriar aoFechar={aoFechar} />
+  if (aberta === "menu-de-linha" || aberta === "confirmacao" || aberta === "paleta") return null
+
+  if (aberta === "cidade") {
+    return (
+      <Sobreposicao
+        id="cidade"
+        titulo="Trocar de cidade"
+        descricao="Mude a cidade que você está vendo. Sua cidade continua a mesma."
+        aoFechar={aoFechar}
+      >
+        <PainelDeCidade aoFechar={aoFechar} />
+      </Sobreposicao>
+    )
+  }
+
+  if (aberta === "selo") {
+    return (
+      <Sobreposicao
+        id="selo"
+        titulo="O que o selo “verificado” significa"
+        formato="gaveta"
+        aoFechar={aoFechar}
+      >
+        <ConteudoDoSelo aoFechar={aoFechar} />
+      </Sobreposicao>
+    )
+  }
+
+  const rotulo = aberta === "folha" ? "Folha" : "Diálogo"
   return (
-    <Dialog.Root
-      open
-      onOpenChange={(aberto) => {
-        if (!aberto) navegacao.fecharSobreposicao()
-      }}
+    <Sobreposicao
+      id={aberta}
+      titulo={rotulo}
+      descricao="Área da sobreposição em prova. Cada tela traz o seu conteúdo."
+      aoFechar={aoFechar}
     >
-      <Dialog.Portal>
-        <Dialog.Overlay data-scrim="sobreposicao" />
-        <Dialog.Content data-sobreposicao={aberta}>
-          <Dialog.Title>{ROTULO[aberta]}</Dialog.Title>
-          <Dialog.Description>
-            Área da sobreposição em prova. A onda 1c traz o conteúdo.
-          </Dialog.Description>
-          <Dialog.Close data-acao="fechar-sobreposicao" data-valor="prova">
-            Fechar
-          </Dialog.Close>
-          {aberta === "menu-criar" ? (
-            <div role="menu" aria-label="Criar no Bivaque">
-              {ESCOLHAS_DO_CRIAR.map((escolha) => (
-                <button key={escolha} type="button" role="menuitem" disabled>
-                  {escolha}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      <p className="text-sm text-(--on-surface-variant)">
+        Esta caixa é a mesma para o diálogo, a folha e a gaveta do protótipo.
+      </p>
+    </Sobreposicao>
   )
 }

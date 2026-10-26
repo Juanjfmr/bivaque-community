@@ -11,14 +11,14 @@ import { test as base, expect, type Locator, type Page } from "@playwright/test"
  * histórico. O modo entra por um global da janela, não pelo histórico nem pela
  * URL, e não é ativado em uso normal.
  */
-export const test = base.extend<{ modoDeProva: void }>({
+export const test = base.extend<{ modoDeProva: undefined }>({
   modoDeProva: [
     async ({ page }, use) => {
       await page.addInitScript(() => {
         ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ =
           true
       })
-      await use()
+      await use(undefined)
     },
     { auto: true },
   ],
@@ -29,10 +29,50 @@ export { expect }
 export const SELETOR_CONTEUDO = "#conteudo"
 export const SELETOR_TITULO = "h1[data-titulo-da-tela]"
 
+/** A barra do topo e a navegação principal (onda 1c). */
+export const SELETOR_BARRA = '[data-topo="barra"]'
+export const SELETOR_NAVEGACAO = '[data-nav="principal"]'
+export const SELETOR_CHIP_CIDADE = '[data-acao="cidade"]'
+export const SELETOR_AVISOS = '[data-acao="avisos"]'
+export const SELETOR_CONVERSAS = '[data-acao="conversas-topo"]'
+export const SELETOR_CRIAR = '[data-acao="criar"]'
+export const SELETOR_MENU_CRIAR = '[data-sobreposicao="menu-criar"]'
+export const SELETOR_GALERIA = "[data-galeria]"
+
 /** Parâmetro com Unicode, espaço, barra e interrogação. */
 export const PERGUNTA_DIFICIL = "mudança de cidade/2026 ?!"
 export const SELETOR_ABRIR_PERGUNTA = '[data-acao="abrir-pergunta"][data-valor="pergunta-dificil"]'
 export const PREFIXO_DA_PERGUNTA = "/app/pergunta/"
+
+/** As sete escolhas do menu Criar, na ordem do inventário §4. */
+export const ESCOLHAS_DO_CRIAR: ReadonlyArray<readonly [id: string, rotulo: string]> = [
+  ["ask", "Pedir indicação"],
+  ["create-request", "Contratar serviço"],
+  ["create-item", "Anunciar desapego"],
+  ["create-property", "Anunciar imóvel"],
+  ["indicate", "Indicar um negócio"],
+  ["create-event", "Criar encontro"],
+  ["my-biz", "Divulgar meu negócio"],
+]
+
+/**
+ * A galeria de prova: só existe com o modo de prova ligado (o mesmo global da
+ * navegação). Em uso normal, o endereço mostra a página indisponível.
+ */
+export async function abrirGaleria(page: Page): Promise<void> {
+  await page.goto("/app/galeria")
+  await expect(page.locator('[data-tela="galeria"]')).toBeVisible()
+}
+
+/** Estado da casca dado pela prova (contadores e cidade): é entrada, não medida. */
+export async function definirCascaDaProva(
+  page: Page,
+  valores: { readonly avisos?: number; readonly conversas?: number; readonly cidade?: string },
+): Promise<void> {
+  await page.addInitScript((dados) => {
+    ;(window as unknown as { __BIVAQUE_CASCA__?: unknown }).__BIVAQUE_CASCA__ = dados
+  }, valores)
+}
 
 export async function abrir(page: Page, caminho: string): Promise<void> {
   await page.goto(caminho)

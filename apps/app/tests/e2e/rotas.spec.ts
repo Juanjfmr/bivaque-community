@@ -123,6 +123,7 @@ test.describe("rotas reais em /app", () => {
     await abrir(page, "/app/rota-que-nao-existe")
     await expect(page.locator('[data-tela="indisponivel"]')).toBeVisible()
     await expect(tituloDaTela(page)).toHaveText("Página indisponível")
+    await expect(page).toHaveURL(/\/app\/rota-que-nao-existe$/)
     await page.locator('[data-acao="ir-para-inicio"]').click()
     await esperarCaminho(page, "/app/inicio")
   })

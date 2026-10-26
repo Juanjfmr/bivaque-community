@@ -23,7 +23,15 @@ export type DescritorDeFoco =
   | { readonly tipo: "acao"; readonly acao: string; readonly valor: string }
 
 /** Sobreposição aberta sobre a entrada: um diálogo, uma folha ou o menu Criar. */
-export type Sobreposicao = "dialogo" | "folha" | "menu-criar"
+export type Sobreposicao =
+  | "dialogo"
+  | "folha"
+  | "menu-criar"
+  | "menu-de-linha"
+  | "cidade"
+  | "confirmacao"
+  | "selo"
+  | "paleta"
 
 export type EstadoDaEntrada = {
   readonly versao: 1
@@ -85,7 +93,16 @@ export function entradaPadrao(opcoes: OpcoesDaEntradaPadrao = {}): EstadoDaEntra
   }
 }
 
-export const SOBREPOSICOES: readonly Sobreposicao[] = ["dialogo", "folha", "menu-criar"]
+export const SOBREPOSICOES: readonly Sobreposicao[] = [
+  "dialogo",
+  "folha",
+  "menu-criar",
+  "menu-de-linha",
+  "cidade",
+  "confirmacao",
+  "selo",
+  "paleta",
+]
 
 const ABAS: readonly Aba[] = ["inicio", "comunidade", "mercado", "voce"]
 
@@ -130,7 +147,7 @@ function lerSobreposicao(valor: unknown): Sobreposicao | null {
 export function lerEntrada(estado: unknown): EstadoDaEntrada {
   const registro = comoRegistro(estado)
   const bruto = comoRegistro(registro?.[CHAVE_DA_ENTRADA])
-  if (!bruto || bruto["versao"] !== 1) return entradaPadrao({ chave: CHAVE_SEM_REGISTRO })
+  if (bruto?.["versao"] !== 1) return entradaPadrao({ chave: CHAVE_SEM_REGISTRO })
 
   const chave = bruto["chave"]
   const origem = bruto["origem"]
@@ -202,5 +219,10 @@ function escapar(valor: string): string {
 
 export function seletorDoDescritor(descritor: DescritorDeFoco): string {
   if (descritor.tipo === "id") return `#${descritor.id}`
-  return `[data-acao="${escapar(descritor.acao)}"][data-valor="${escapar(descritor.valor)}"]`
+  const acao = `[data-acao="${escapar(descritor.acao)}"]`
+  // Nem todo acionador carrega `data-valor` — o Criar, o chip de cidade e o
+  // exemplo da galeria não têm. Exigir `[data-valor=""]` não acharia nada e o
+  // foco cairia no título; o valor só entra no seletor quando existe.
+  if (descritor.valor === "") return acao
+  return `${acao}[data-valor="${escapar(descritor.valor)}"]`
 }

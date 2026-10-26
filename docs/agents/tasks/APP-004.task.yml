@@ -8,12 +8,16 @@ baseline:
   status: FAIL-EVIDENCED
   evidence: apps/app não tem lib/demo nem lib/dados na base APP-001 confrontada em 25/10/2026.
 allowed_paths:
+  - apps/app/public/demo/
+  - apps/app/lib/assets.ts
+  - apps/app/src/contexto/casca.tsx
+  - docs/agents/prototipo-shadcn/STATUS.md
   - apps/app/lib/demo/
   - apps/app/lib/dados/
   - apps/app/tests/
   - docs/agents/prototipo-shadcn/APP-004-cobertura.md
 forbidden:
-  - alterar telas, casca, navegação ou código fonte do protótipo
+  - alterar telas, layout da casca, navegação ou fonte do protótipo; integração permitida somente na leitura inicial de contadores e nome por interface
   - instalar pacotes, delegar ou criar subagentes
   - alterar supabase, criar conexão com banco ou importar cliente de serviço
   - copiar modelo legado da vila como produto ou expor filiação militar

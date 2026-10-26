@@ -21,7 +21,6 @@ const LISTA = '[data-lista="prova"]'
 const SEGURAR = '[data-acao="segurar-proxima-carga"][data-valor="prova"]'
 const LIBERAR = '[data-acao="liberar-lista"]'
 const SEM_ALVO = '[data-acao="abrir-sem-alvo"][data-valor="prova"]'
-const ABRIR_SALVOS = '[data-acao="abrir-salvos"][data-valor="prova"]'
 
 test.describe("rolagem e foco por entrada", () => {
   test("relê a rolagem ao recarregar a entrada, sem perder o foco", async ({ page }) => {
@@ -64,25 +63,30 @@ test.describe("rolagem e foco por entrada", () => {
     await page.locator(seletorDoItem("item-13")).click()
     await esperarCaminho(page, "/app/pergunta/item-13")
 
-    // No detalhe, a pessoa rola e sai por um controle: os dois ficam guardados.
-    await rolarAte(page, 300)
-    await page.locator(ABRIR_SALVOS).click()
-    await esperarCaminho(page, "/app/salvos")
+    // Usa um controle visível numa posição não zero. Um clique fora da viewport
+    // rola antes de sair: o esperado é a posição da saída, não a anterior ao clique.
+    const sair = page.locator(seletorDoItem("item-20"))
+    await sair.scrollIntoViewIfNeeded()
+    await aguardarQuadros(page)
+    const posicao = await rolagemReal(page)
+    expect(posicao).toBeGreaterThan(0)
+    await sair.click()
+    await esperarCaminho(page, "/app/pergunta/item-20")
 
     await voltarNoNavegador(page, "/app/pergunta/item-13")
-    await esperarRolagem(page, 300)
-    await expect(page.locator(ABRIR_SALVOS)).toBeFocused()
+    await esperarRolagem(page, posicao)
+    await expect(sair).toBeFocused()
 
     await voltarNoNavegador(page, "/app/inicio")
     expect(await rolagemReal(page)).toBeGreaterThanOrEqual(0)
 
     await page.goForward()
     await esperarCaminho(page, "/app/pergunta/item-13")
-    await esperarRolagem(page, 300)
-    await expect(page.locator(ABRIR_SALVOS)).toBeFocused()
+    await esperarRolagem(page, posicao)
+    await expect(sair).toBeFocused()
 
     await page.goForward()
-    await esperarCaminho(page, "/app/salvos")
+    await esperarCaminho(page, "/app/pergunta/item-20")
   })
 
   test("alvo ausente cai no título da tela depois da carga, sem perder a rolagem", async ({

@@ -1,0 +1,604 @@
+{
+  "PHOTO_BY_ITEM": {
+    "i1": "sofa",
+    "i2": "apartment",
+    "i3": "crib",
+    "i4": "fridge",
+    "i5": "interior",
+    "i6": "interior"
+  },
+  "PHOTO_BY_BIZ": {
+    "b1": "service",
+    "b2": "moving",
+    "b3": "kitchen",
+    "b4": "cake",
+    "b5": "classroom",
+    "b6": "service",
+    "b7": "workshop",
+    "b8": "pets",
+    "b9": "dentist"
+  },
+  "KNOWLEDGE_TEXT": {
+    "saude": "Nesta conversa de exemplo, os moradores recomendaram confirmar diretamente com a clínica a disponibilidade, o atendimento infantil e a cobertura do plano. Consulte a página do negócio e peça essas informações antes de agendar.",
+    "escola": "As famílias sugeriram visitar a escola, confirmar a série e o horário integral e testar o trajeto nos horários de entrada e saída. A disponibilidade de vagas precisa ser confirmada diretamente com a instituição.",
+    "casa": "A recomendação da comunidade é combinar por escrito o serviço, o valor e o horário antes da visita. O relato original e os negócios relacionados aparecem abaixo.",
+    "carro": "Moradores compartilharam experiências de atendimento. Antes de contratar, peça orçamento detalhado, confirme a garantia do serviço e combine a autorização de peças e mão de obra.",
+    "pets": "As famílias indicaram confirmar com a clínica os horários, o endereço e a disponibilidade antes de sair. A indicação da comunidade está vinculada à página do negócio.",
+    "mudanca": "Quem já se mudou recomendou comparar propostas com embalagem, montagem, prazo, seguro e documentação dos itens. Combine a coleta e a entrega por escrito."
+  },
+  "MEMORY_BIZ": {
+    "saude": "b9",
+    "escola": "b5",
+    "casa": "b6",
+    "carro": "b7",
+    "pets": "b8",
+    "mudanca": "b2"
+  },
+  "BAIRROS": {
+    "Manaus": [
+      ["Ponta Negra", "Zona Oeste", [-60.0962, -3.0509]],
+      ["Tarumã", "Zona Oeste", [-60.0513, -3.0247]],
+      ["Compensa", "Zona Oeste", [-60.056, -3.105]],
+      ["Planalto", "Zona Centro-Oeste", [-60.0572, -3.0653]],
+      ["Dom Pedro", "Zona Centro-Oeste", [-60.0431, -3.0877]],
+      ["Flores", "Zona Centro-Sul", [-60.0212, -3.0728]],
+      ["Parque 10", "Zona Centro-Sul", [-60.0213, -3.0794]],
+      ["Adrianópolis", "Zona Centro-Sul", [-60.009, -3.1017]],
+      ["Aleixo", "Zona Centro-Sul", [-59.9935, -3.093]],
+      ["Centro", "Zona Sul", [-60.0216, -3.1321]],
+      ["Cidade Nova", "Zona Norte", [-59.993, -3.04]]
+    ],
+    "Brasília": [
+      ["Asa Sul", "Plano Piloto", [-47.893, -15.817]],
+      ["Asa Norte", "Plano Piloto", [-47.883, -15.763]],
+      ["Noroeste", "Plano Piloto", [-47.912, -15.751]],
+      ["Sudoeste", "Sudoeste/Octogonal", [-47.927, -15.797]],
+      ["Cruzeiro", "Cruzeiro", [-47.933, -15.789]],
+      ["Lago Sul", "Lago Sul", [-47.86, -15.84]],
+      ["Lago Norte", "Lago Norte", [-47.85, -15.73]],
+      ["Guará", "Guará", [-47.98, -15.82]],
+      ["Águas Claras", "Águas Claras", [-48.03, -15.84]]
+    ],
+    "Natal": [
+      ["Ponta Negra", "Zona Sul", [-35.18, -5.88]],
+      ["Capim Macio", "Zona Sul", [-35.195, -5.86]],
+      ["Lagoa Nova", "Zona Sul", [-35.21, -5.83]],
+      ["Candelária", "Zona Sul", [-35.22, -5.84]],
+      ["Neópolis", "Zona Sul", [-35.21, -5.87]],
+      ["Tirol", "Zona Leste", [-35.2, -5.8]],
+      ["Petrópolis", "Zona Leste", [-35.198, -5.79]],
+      ["Lagoa Seca", "Zona Leste", [-35.21, -5.81]],
+      ["Alecrim", "Zona Leste", [-35.22, -5.8]],
+      ["Lagoa Azul", "Zona Norte", [-35.25, -5.72]],
+      ["Potengi", "Zona Norte", [-35.25, -5.75]]
+    ],
+    "Rio de Janeiro": [
+      ["Copacabana", "Zona Sul", [-43.187, -22.971]],
+      ["Botafogo", "Zona Sul", [-43.182, -22.951]],
+      ["Flamengo", "Zona Sul", [-43.176, -22.932]],
+      ["Urca", "Zona Sul", [-43.165, -22.95]],
+      ["Centro", "Centro", [-43.18, -22.905]],
+      ["Tijuca", "Zona Norte", [-43.233, -22.925]],
+      ["Méier", "Zona Norte", [-43.28, -22.9]],
+      ["Ilha do Governador", "Zona Norte", [-43.2, -22.8]],
+      ["Barra da Tijuca", "Zona Oeste", [-43.366, -23]],
+      ["Jacarepaguá", "Zona Oeste", [-43.35, -22.96]],
+      ["Campo Grande", "Zona Oeste", [-43.56, -22.9]],
+      ["Vila Militar", "Zona Oeste", [-43.4, -22.86]]
+    ]
+  },
+  "CEP_TESTE": {
+    "20510000": ["Rio de Janeiro", "Tijuca"],
+    "21615000": ["Rio de Janeiro", "Vila Militar"],
+    "22020000": ["Rio de Janeiro", "Copacabana"],
+    "22620000": ["Rio de Janeiro", "Barra da Tijuca"],
+    "59020000": ["Natal", "Tirol"],
+    "59075000": ["Natal", "Lagoa Nova"],
+    "59090000": ["Natal", "Ponta Negra"],
+    "69005000": ["Manaus", "Centro"],
+    "69037000": ["Manaus", "Ponta Negra"],
+    "69050000": ["Manaus", "Parque 10"],
+    "69057000": ["Manaus", "Adrianópolis"],
+    "70390000": ["Brasília", "Asa Sul"],
+    "70670000": ["Brasília", "Sudoeste"],
+    "70750000": ["Brasília", "Asa Norte"]
+  },
+  "OWNER_DEMO": {
+    "cities": {
+      "Rio de Janeiro": {
+        "fam": 630,
+        "arriving": 88,
+        "arrived30": 70,
+        "served": 0.84,
+        "ambassadors": 6
+      },
+      "Brasília": {
+        "fam": 410,
+        "arriving": 74,
+        "arrived30": 60,
+        "served": 0.78,
+        "ambassadors": 4
+      },
+      "Manaus": {
+        "fam": 140,
+        "arriving": 38,
+        "arrived30": 30,
+        "served": 0.66,
+        "ambassadors": 3
+      },
+      "Natal": {
+        "fam": 9,
+        "arriving": 12,
+        "arrived30": 4,
+        "served": 0.25,
+        "ambassadors": 0
+      }
+    },
+    "kpis": [
+      {
+        "id": "active",
+        "label": "Famílias ativas na semana",
+        "value": 1010,
+        "fmt": "n",
+        "delta": "▲ 8%",
+        "up": true,
+        "series": [700, 720, 760, 790, 830, 880, 910, 950, 980, 1010],
+        "scale": true
+      },
+      {
+        "id": "solved",
+        "label": "Perguntas resolvidas em 24 h",
+        "value": 82,
+        "fmt": "%",
+        "delta": "▲ 5 pts",
+        "up": true,
+        "series": [70, 72, 71, 75, 74, 78, 77, 80, 81, 82]
+      },
+      {
+        "id": "revenue",
+        "label": "Receita dos planos (mês)",
+        "fmt": "R$",
+        "delta": "▼ 2%",
+        "up": false,
+        "series": [2720, 2770, 2850, 2880, 2870, 2860, 2840, 2850, 2830, 2809],
+        "revenue": true
+      }
+    ],
+    "changes": [
+      {
+        "icon": "trending_up",
+        "tone": "red",
+        "city": "Manaus",
+        "title": "Denúncias de golpe em Manaus",
+        "text": "Subiram de 1 para 3 esta semana; todas citam Pix antecipado.",
+        "go": "report"
+      },
+      {
+        "icon": "group",
+        "tone": "amber",
+        "city": "Natal",
+        "title": "Natal sem embaixador",
+        "text": "12 famílias chegam em 60 dias; 4 perguntas paradas.",
+        "go": "stale"
+      },
+      {
+        "icon": "event_busy",
+        "tone": "amber",
+        "city": "Manaus",
+        "title": "2 planos vencem sem renovação",
+        "text": "Mudanças Rio Negro e Sorriso Kids, na quinta.",
+        "go": "page:negocios"
+      },
+      {
+        "icon": "trending_up",
+        "tone": "green",
+        "city": "Brasília",
+        "title": "Brasília passou de 400 famílias",
+        "text": "Grupo “Chegadas de dezembro” com 74 membros.",
+        "go": "page:cidades"
+      }
+    ],
+    "reports": [
+      {
+        "id": "or1",
+        "type": "item",
+        "target": "i1",
+        "reason": "fraud",
+        "details": "Pediu Pix antes de mostrar o sofá.",
+        "hoursAgo": 5
+      },
+      {
+        "id": "or2",
+        "type": "item",
+        "target": "i1",
+        "reason": "fraud",
+        "details": "Mesmo pedido de pagamento antecipado.",
+        "hoursAgo": 4
+      },
+      {
+        "id": "or3",
+        "type": "item",
+        "target": "i1",
+        "reason": "fraud",
+        "details": "",
+        "hoursAgo": 3
+      }
+    ],
+    "verifications": [
+      {
+        "id": "ov1",
+        "name": "Carla R.",
+        "city": "Manaus",
+        "when": "em novembro",
+        "invitedBy": "Paulo R.",
+        "hoursAgo": 2,
+        "checks": [
+          ["Nome confere com o documento", true],
+          ["Documento dentro da validade", true],
+          ["Cidade de destino confere com o pedido", false]
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "id": "oc1",
+        "biz": "b7",
+        "hoursAgo": 20
+      }
+    ],
+    "staleExtra": {
+      "Natal": 4,
+      "Brasília": 2,
+      "Rio de Janeiro": 1
+    },
+    "assignees": {
+      "report:item|i1": "Ana P."
+    },
+    "ambassadors": {
+      "Rio de Janeiro": ["Bruno M.", "Clara T.", "Diego F.", "Elisa R.", "Fábio L.", "Gabriela S."],
+      "Brasília": ["Helena V.", "Igor N.", "Júlia C.", "Kauã P."],
+      "Manaus": ["Ana P.", "Luana M.", "Paulo R."],
+      "Natal": []
+    },
+    "plans": {
+      "b2": {
+        "tier": "plan",
+        "renewDays": 4
+      },
+      "b9": {
+        "tier": "plan",
+        "renewDays": 4
+      },
+      "b4": {
+        "tier": "moment",
+        "renewDays": 30
+      },
+      "b1": {
+        "tier": "plan",
+        "renewDays": 12
+      }
+    },
+    "quotesByCity": {
+      "Rio de Janeiro": 90,
+      "Brasília": 70,
+      "Manaus": 40,
+      "Natal": 12
+    },
+    "otherPlans": {
+      "Rio de Janeiro": {
+        "count": 40,
+        "revenue": 1560
+      },
+      "Brasília": {
+        "count": 28,
+        "revenue": 1092
+      },
+      "Natal": {
+        "count": 0,
+        "revenue": 0
+      }
+    },
+    "moderators": [
+      {
+        "name": "Ana P.",
+        "role": "Moderação",
+        "city": "Manaus"
+      }
+    ]
+  },
+  "memory": [
+    {
+      "q": "Odontopediatra bom na Zona Centro-Oeste",
+      "k": ["dentista", "odonto", "odontopediatra", "infantil", "crianca", "filho", "filha"],
+      "st": "ok",
+      "cat": "saude"
+    },
+    {
+      "q": "Dentista que atende pelo plano da Força",
+      "k": ["dentista", "odonto", "plano", "forca", "dente"],
+      "st": "ans3",
+      "cat": "saude"
+    },
+    {
+      "q": "Pediatra que atende sábado de manhã",
+      "k": ["pediatra", "medico", "crianca", "infantil", "sabado", "filho"],
+      "st": "ok",
+      "cat": "saude"
+    },
+    {
+      "q": "Escola com ensino integral perto da Ponta Negra",
+      "k": ["escola", "colegio", "integral", "vaga", "ensino", "ano"],
+      "st": "ok",
+      "cat": "escola"
+    },
+    {
+      "q": "Mecânico honesto para carro automático",
+      "k": ["mecanico", "carro", "oficina", "revisao", "hilux"],
+      "st": "ok",
+      "cat": "carro"
+    },
+    {
+      "q": "Eletricista para instalar chuveiro e tomadas",
+      "k": ["eletricista", "chuveiro", "tomada", "eletrica", "luz"],
+      "st": "ok",
+      "cat": "casa"
+    },
+    {
+      "q": "Despachante para transferir o documento do carro",
+      "k": ["despachante", "cnh", "documento", "detran", "placa"],
+      "st": "ans2",
+      "cat": "carro"
+    },
+    {
+      "q": "Veterinário 24 horas na Zona Oeste",
+      "k": ["veterinario", "vet", "cachorro", "gato", "pet", "cao"],
+      "st": "ok",
+      "cat": "pets"
+    },
+    {
+      "q": "Diarista de confiança no Planalto",
+      "k": ["diarista", "faxina", "limpeza", "faxineira"],
+      "st": "ok",
+      "cat": "casa"
+    },
+    {
+      "q": "Transportadora boa para mudança Manaus–Brasília",
+      "k": ["mudanca", "transportadora", "frete", "brasilia", "caminhao"],
+      "st": "ok",
+      "cat": "mudanca"
+    },
+    {
+      "q": "Academia que abre cedo no Dom Pedro",
+      "k": ["academia", "treino", "musculacao", "cedo", "crossfit"],
+      "st": "ok",
+      "cat": "casa"
+    }
+  ],
+  "planos": {
+    "live": {
+      "chegando": [
+        {
+          "id": "c1",
+          "t": "Moradia",
+          "s": "12 imóveis para alugar, 4 de quem está saindo",
+          "done": false,
+          "go": ["filter", "imovel"]
+        },
+        {
+          "id": "c2",
+          "t": "Escola das crianças",
+          "s": "Marcos perguntou sobre o 3º ano e já tem resposta",
+          "done": false,
+          "go": ["q", "a2"]
+        },
+        {
+          "id": "c3",
+          "t": "Pediatra e plano de saúde",
+          "s": "3 indicações salvas",
+          "done": true
+        },
+        {
+          "id": "c4",
+          "t": "Mudança e transportadora",
+          "s": "Mudanças Rio Negro: 5 de 5 aprovadas",
+          "done": false,
+          "go": ["biz", "b2"]
+        },
+        {
+          "id": "c5",
+          "t": "Carro e documentos",
+          "s": "Despachante indicado por 2 famílias",
+          "done": true
+        },
+        {
+          "id": "c6",
+          "t": "Conhecer quem chega com você",
+          "s": "38 famílias da sua turma de chegada",
+          "done": false,
+          "go": ["turma"]
+        }
+      ],
+      "saindo": [
+        {
+          "id": "s1",
+          "t": "Anunciar o que não vai levar",
+          "s": "2 anúncios ativos, 7 interessados",
+          "done": true
+        },
+        {
+          "id": "s2",
+          "t": "Passar o apartamento para quem chega",
+          "s": "4 famílias procuram 3 quartos na Ponta Negra",
+          "done": false,
+          "go": ["publish", "imovel"]
+        },
+        {
+          "id": "s3",
+          "t": "Deixar suas indicações",
+          "s": "Suas 11 indicações continuam ajudando",
+          "done": true
+        },
+        {
+          "id": "s4",
+          "t": "Conhecer Brasília antes de ir",
+          "s": "41 famílias chegaram lá este mês",
+          "done": false,
+          "go": ["city", "Brasília"]
+        }
+      ]
+    },
+    "seed": {
+      "chegando": [
+        {
+          "id": "c1",
+          "t": "Moradia",
+          "s": "Imóveis aparecem aqui quando alguém anunciar",
+          "done": false,
+          "go": ["filter", "imovel"]
+        },
+        {
+          "id": "c2",
+          "t": "Escola das crianças",
+          "s": "Pergunte à cidade: um embaixador responde em até 24 h",
+          "done": false,
+          "go": ["ask"]
+        },
+        {
+          "id": "c3",
+          "t": "Pediatra e plano de saúde",
+          "s": "Salve as indicações que você receber",
+          "done": true
+        },
+        {
+          "id": "c4",
+          "t": "Mudança e transportadora",
+          "s": "Mudanças Rio Negro tem página no Bivaque",
+          "done": false,
+          "go": ["biz", "b2"]
+        },
+        {
+          "id": "c5",
+          "t": "Carro e documentos",
+          "s": "Pergunte por um despachante",
+          "done": true
+        },
+        {
+          "id": "c6",
+          "t": "Conhecer quem chega com você",
+          "s": "Convide quem chega com você",
+          "done": false,
+          "go": ["invite"]
+        }
+      ],
+      "saindo": [
+        {
+          "id": "s1",
+          "t": "Anunciar o que não vai levar",
+          "s": "Anuncie o que não vai levar",
+          "done": true
+        },
+        {
+          "id": "s2",
+          "t": "Passar o apartamento para quem chega",
+          "s": "Quem chegar vai procurar aqui",
+          "done": false,
+          "go": ["publish", "imovel"]
+        },
+        {
+          "id": "s3",
+          "t": "Deixar suas indicações",
+          "s": "Indique os negócios que você usou",
+          "done": true,
+          "go": ["indicate"]
+        },
+        {
+          "id": "s4",
+          "t": "Conhecer Brasília antes de ir",
+          "s": "Veja o guia de Brasília",
+          "done": false,
+          "go": ["city", "Brasília"]
+        }
+      ]
+    }
+  },
+  "sugestoes": {
+    "live": [
+      {
+        "id": "k1",
+        "t": "Chegadas de nov e dez em Manaus",
+        "s": "38 famílias, conversa ativa",
+        "img": "friends",
+        "modes": ["chegando"],
+        "on": false,
+        "about": "Quem chega a Manaus no fim do ano. Dúvidas de mudança, escola e moradia, e um encontro de boas-vindas em dezembro."
+      },
+      {
+        "id": "k2",
+        "t": "Vizinhos do Planalto e do Dom Pedro",
+        "s": "212 membros",
+        "img": "community",
+        "modes": ["moro", "chegando"],
+        "on": true,
+        "about": "Indicações, achados e avisos do bairro."
+      },
+      {
+        "id": "k3",
+        "t": "Famílias com crianças pequenas",
+        "s": "540 membros",
+        "img": "mesa",
+        "modes": ["chegando", "moro"],
+        "on": true,
+        "about": "Pediatras, escolas, festas e trocas de roupa infantil."
+      },
+      {
+        "id": "k4",
+        "t": "Pedal e corrida na orla",
+        "s": "96 membros",
+        "img": "sunset",
+        "modes": ["moro"],
+        "on": true,
+        "about": "Treinos em grupo aos fins de semana, com saída do calçadão da Ponta Negra."
+      },
+      {
+        "id": "k5",
+        "t": "Transferências de fim de ano",
+        "s": "Quem sai e quem chega, 74 membros",
+        "img": "arrival",
+        "modes": ["saindo", "chegando"],
+        "on": false,
+        "about": "Quem sai passa adiante móveis, imóveis e contatos para quem chega."
+      }
+    ],
+    "seed": [
+      {
+        "id": "k1",
+        "t": "Chegadas de nov e dez em Manaus",
+        "s": "Grupo novo",
+        "img": "friends",
+        "modes": ["chegando"],
+        "on": false,
+        "about": "Quem chega a Manaus no fim do ano. Dúvidas de mudança, escola e moradia, e um encontro de boas-vindas em dezembro."
+      },
+      {
+        "id": "k2",
+        "t": "Vizinhos do Planalto e do Dom Pedro",
+        "s": "Grupo novo",
+        "img": "community",
+        "modes": ["moro", "chegando"],
+        "on": true,
+        "about": "Indicações, achados e avisos do bairro."
+      },
+      {
+        "id": "k3",
+        "t": "Famílias com crianças pequenas",
+        "s": "Grupo novo",
+        "img": "mesa",
+        "modes": ["chegando", "moro"],
+        "on": false,
+        "about": "Pediatras, escolas, festas e trocas de roupa infantil."
+      }
+    ]
+  },
+  "origem": "Protótipo HTML — dados demonstrativos; bairros/CEP de exemplo, sem geocodificação real",
+  "data_base": "2026-10-25"
+}
