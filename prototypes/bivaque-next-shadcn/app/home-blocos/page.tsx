@@ -77,7 +77,7 @@ export default function HomeBlocos(){
  const chosenQuestion=overlay?.type==="question"?QUESTIONS.find(q=>q.id===overlay.id):null
  const onSearchSelect=(result:SearchResult)=>{setSearchOpen(false);const map={chat:"/comunidade",image:"/imoveis",document:"/desapegos",project:"/servicos"};navigate(map[result.kind])}
  useEffect(()=>{function key(e:KeyboardEvent){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();setSearchOpen(true)}if(e.key==="/"&&!(e.target instanceof HTMLInputElement)&&!(e.target instanceof HTMLTextAreaElement)){e.preventDefault();setSearchOpen(true)}}document.addEventListener("keydown",key);return()=>document.removeEventListener("keydown",key)},[])
- const logo=base+"/brand/bivaque-logo-horizontal-graphite.svg"
+ const logo=base+"/brand/bivaque-logo-horizontal.svg"
  return <div className={night?"dark min-h-screen bg-background text-foreground":"min-h-screen bg-background text-foreground"}>
   <aside className="fixed inset-y-0 left-0 z-30 hidden w-[66px] flex-col items-center bg-[#253033] py-5 text-[#F2F0EB] md:flex">
     <Link href="/inicio" className="flex size-10 items-center justify-center rounded-lg border border-white/20 text-xl font-bold" aria-label="Bivaque — Início">B</Link>
