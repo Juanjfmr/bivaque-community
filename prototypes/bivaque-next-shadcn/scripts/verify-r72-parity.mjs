@@ -116,3 +116,19 @@ test("P2: rental detail doesn't duplicate its per-month suffix",()=>{
   lacks(app, '>{it.price}{home?.type==="Aluguel"');
   has(app, '>{it.price}</p>');
 });
+
+test("R72 public entry is a distinct branded landing, not logged-in home",()=>{
+  const landing=read("components/public-landing.tsx");
+  const root=read("app/page.tsx");
+  has(root, "PublicLanding");
+  for(const section of ["Juntos somos mais fortes.","Marinha, Exército e Aeronáutica","Como funciona","Transferido? Chegue sabendo.","Perguntas frequentes"])has(landing,section);
+  for(const dest of ["/acesso/","/ajuda/","/privacidade/","/conduta/"])has(landing,dest);
+});
+test("R72 help, conduct, privacy, free plans and support have static routes",()=>{
+  const page=read("app/[section]/page.tsx");
+  for(const route of ["ajuda","privacidade","conduta","planos","contato","chamados"])has(page,'\"'+route+'\"');
+  const appInfo=read("components/r72-info.tsx"),support=read("components/r72-support.tsx");
+  has(appInfo,"Versão de teste");
+  has(appInfo,"Sem cobrança");
+  has(support,"Somente");
+});
