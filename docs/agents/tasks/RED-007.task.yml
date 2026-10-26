@@ -1,0 +1,48 @@
+task_id: RED-007
+objective: Adaptar duas suítes de conversa contextual e pergunta ao organizador ao esquema R3 aprovado, preservando revalidação de acesso e isolamento de contexto.
+authority:
+  - Autorização do dono em 25/10/2026 para lotes menores com até três rodadas próprias
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+  - docs/agents/redesenho/R2-comum.md
+  - docs/agents/redesenho/R2-decisoes.md E5 F5
+  - docs/agents/redesenho/R2-matriz-vila-fundacao.md R1-197 R1-229 R1-287 R1-316 R1-317
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: RED-006-C1-banco registra agregado FAIL com 154 arquivos e 2041 executadas; event-question-with-service-request aborta no provider_reach com quatro colunas e três valores e dm-context-denials aborta com fixture de visibilidade antiga. São arquivos distintos não reparados pela RED-006.
+allowed_paths:
+  - supabase/tests/event-question-with-service-request.sql
+  - supabase/tests/dm-context-denials.sql
+  - docs/agents/redesenho/STATUS.md
+  - docs/agents/redesenho/R3-RED-007.md
+forbidden:
+  - alterar migration, seed, tipos gerados, fixtures compartilhadas, matrizes, scripts, gate ou outros testes
+  - conceder grants ou trocar policies e expectativas para esconder defeito real de autorização
+  - reduzir plano ou excluir negativos não exclusivos da vila; superusuário na ação não prova RLS
+  - instalar pacotes, abrir subagentes, segundo plano, escrever PRONTO, commit, push, merge ou deploy
+  - db push, --linked, reset fora da fila, criar env.local, imprimir chaves ou alterar outro worktree
+acceptance:
+  - Ler somente trechos pertinentes das duas suítes, definições e autoridades, nunca migration ou matriz inteiras
+  - Corrigir fixtures obsoletas de alcance e grupo segundo cidade e estados open closed archived atuais, sem alterar produção
+  - Preservar pergunta ao organizador coexistindo com pedido de serviço, idempotência e recusa de outro contexto; não fabricar ator ou evento incompatível com a autoridade para obter positivo artificial
+  - Preservar negativos de anônimo, terceiro, bloqueio, contexto inválido e perda de acesso; revalidar que as duas pessoas ainda podem ler o objeto contextual no momento da ação conforme E5 F5 e R1-229
+  - Troca de fixture de grupo aberto para fechado exige critério de acesso citado e mapa explícito; não converter todos os negativos por conveniência nem usar grupo ou vínculo inexistente como prova de acesso negado
+  - Negativos de leitura devem ter alvo existente com positivo autorizado, e ações devem usar authenticated ou anon e identidade coerente; postgres só prepara fixtures e observa estado
+  - Registrar mapa antigo para atual e cada extinção exclusiva da vila com ID R1 e decisão; negativos novos são independentes, não equivalentes apenas por polaridade ou contagem
+  - Duas suítes concluem sem abortos ou planos interrompidos e com asserções verdes; planos-base 10 e 25, total 35, podem crescer por cobertura, nunca diminuir para esconder falha
+  - Se houver defeito real de permissão fora do escopo, manter teste vermelho e registrar dependência concreta; sem repetir tentativa idêntica nem afrouxar expectativa
+  - Rodar prova exata de banco e db lint pela fila e gate completo com públicas locais somente no processo; agregado vermelho e limites devem permanecer explícitos
+  - Executar no máximo três rodadas próprias; esgotamento gera HUMAN_DECISION real, sem criar outro lote para repetir o mesmo defeito
+  - Terminar escrevendo STATUS e R3-RED-007 com resultados por arquivo, planos, mapa, rodadas, logs, hash inalterado e limites sem autoaprovação de RLS ou banco
+proof:
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 gate
+  - Duas suítes com papéis e identidades reais e alvos de negativa existentes
+risk: privacidade e autorização de conversas contextuais e perguntas sobre eventos
+risk_level: R3
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
