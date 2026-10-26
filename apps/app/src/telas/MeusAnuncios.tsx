@@ -128,7 +128,7 @@ export function MeusAnuncios() {
                   {item.valor === null ? null : <p className="text-sm">Preço solicitado: {moeda(item.valor)}</p>}
                   {item.horario === null ? null : <p className="text-sm">Data informada: {item.horario.replace("T", " ")}</p>}
                   {confirmar === item.id ? (
-                    <div role="group" aria-label="Confirmar exclusão" className="flex flex-wrap items-center justify-end gap-2">
+                    <fieldset aria-label="Confirmar exclusão" className="flex flex-wrap items-center justify-end gap-2">
                       <small className="text-xs">Excluir rascunho desta sessão?</small>
                       <Botao tom="texto" onClick={() => setConfirmar(null)}>Cancelar</Botao>
                       <Botao
@@ -147,7 +147,7 @@ export function MeusAnuncios() {
                       >
                         Confirmar exclusão
                       </Botao>
-                    </div>
+                    </fieldset>
                   ) : (
                     <div className="flex justify-end">
                       <Botao tom="texto" data-acao="excluir-rascunho-criacao" onClick={() => setConfirmar(item.id)}>Excluir rascunho</Botao>
