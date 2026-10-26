@@ -1,0 +1,57 @@
+name: Bivaque R72 — QA visual isolado
+on:
+  push:
+    branches: [feat/port-r72-shadcn-p0-20261025]
+    paths:
+      - 'prototypes/bivaque-next-shadcn/**'
+      - '.github/workflows/bivaque-r72-browser-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-r72-browser-smoke
+  cancel-in-progress: true
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototypes/bivaque-next-shadcn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install project dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build isolated GitHub Pages-style export
+        env:
+          GITHUB_PAGES: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+      - name: Prepare headless Chromium
+        run: |
+          npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.57.0
+          npx playwright install --with-deps chromium
+      - name: Exercise local browser journeys and capture 375, 768 and 1440
+        run: |
+          set -euo pipefail
+          mkdir -p qa-server/bivaque-community
+          cp -a out/. qa-server/bivaque-community/
+          python3 -m http.server 4173 -d qa-server >/tmp/bivaque-smoke-server.log 2>&1 &
+          SERVER=$!
+          trap 'kill "$SERVER" || true' EXIT
+          for i in {1..20}; do
+            if curl --silent --fail http://127.0.0.1:4173/bivaque-community/inicio/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/browser-smoke.mjs
+      - name: Retain responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bivaque-r72-shadcn-browser-qa
+          path: prototypes/bivaque-next-shadcn/qa-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
