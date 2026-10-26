@@ -5,6 +5,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from "react"
 
 import { Icone } from "@/components/bivaque/icone"
 import type { NomeDeIcone } from "@/lib/icones"
+import { useNavegacao } from "@/lib/navegacao/react"
+import { CHAVE_ABERTURA_IMOVEL, PEDIDO_CRIAR_IMOVEL } from "@/lib/rascunhos-imoveis"
 import { cn } from "@/lib/utils"
 import { useStateComMidia } from "@/src/casca/midia"
 
@@ -64,6 +66,7 @@ const CONSULTA_DO_PAINEL = "(min-width: 1024px)"
 
 export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
   const painel = useStateComMidia(CONSULTA_DO_PAINEL)
+  const navegacao = useNavegacao()
   const lista = useRef<HTMLDivElement | null>(null)
   const popup = useRef<HTMLDivElement | null>(null)
 
@@ -119,6 +122,15 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       aria-label={escolha.rotulo}
       role={painel ? undefined : "menuitem"}
       data-escolha={escolha.id}
+      onClick={() => {
+        if (escolha.id !== "create-property") return
+        try {
+          window.sessionStorage.setItem(CHAVE_ABERTURA_IMOVEL, "1")
+        } catch { /* a navegação funciona mesmo sem armazenamento */ }
+        void navegacao.irPara("imoveis").then(() => {
+          window.dispatchEvent(new Event(PEDIDO_CRIAR_IMOVEL))
+        })
+      }}
       style={{ "--i": indice } as React.CSSProperties}
       className="bv-criar-escolha"
     >
