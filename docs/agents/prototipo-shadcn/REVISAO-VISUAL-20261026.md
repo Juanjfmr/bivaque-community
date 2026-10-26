@@ -9,6 +9,15 @@ abaixo; este relatório não autoriza avançar ondas nem alterar o backend.
 
 ## Base e alcance
 
+Atualização APP-008, após autorização "Pode consertar": corrigidas a geometria
+de V01, a duplicação de entrada de V02 e a densidade/nome contextual de V03.
+Provas e limites atuais no [STATUS](STATUS.md), seção APP-008: gate completo
+verde, regressão de 521 casos com 16 skips, 12 focais reforçados, 152 pares
+novos e oito imagens complementares em 768 px. Codex conferiu 24 vistas nos
+dois temas; instrumentos revisados pelo Qwen. O parecer original abaixo é
+histórico e a aprovação visual global continua pendente: grade/recentes de
+V02 e V04–V12 não foram resolvidos neste lote.
+
 - Fonte do app: **9af6b5aa**, auditor **b0416a49**, registro **812a4c8d**.
   Árvore limpa no início da revisão. Nenhuma implementação alterada neste parecer.
 - Referência: HTML compilado de `prototypes/bivaque-html`, confrontado com o
@@ -61,7 +70,7 @@ o card canônico continua sendo APP-001.
   no breakpoint desktop, mantendo a folha móvel. Conferir o destaque da ação
   Aplicar/Ver esta cidade, hoje diferente do exemplo de referência.
 - **Fonte:** [Sobreposicoes.tsx](../../../apps/app/src/casca/Sobreposicoes.tsx), linha 38,
-  e [sobreposicao.tsx](../../../apps/app/components/bivaque/sobreposicao.tsx), linha 28.
+  e `apps/app/components/bivaque/sobreposicao.tsx`, linha 28.
   O seletor de momento continua pendência da onda 8, conforme o mapa vigente.
 
 ### V02 — P1 — Busca apresenta dois campos simultâneos

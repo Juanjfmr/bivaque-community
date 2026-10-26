@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react"
+import { useParams } from "@tanstack/react-router"
+import { useEffect, useRef } from "react"
 
 import { BotaoDeIcone } from "@/components/bivaque/botao"
 import { Icone } from "@/components/bivaque/icone"
@@ -24,6 +25,7 @@ export function BarraDoTopo({
   readonly podeSubir: boolean
 }) {
   const rota = useRotaAtual()
+  const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const navegacao = useNavegacao()
   const casca = useCasca()
   const acoes = acoesDaBarraDoTopo(rota.nome)
@@ -52,7 +54,13 @@ export function BarraDoTopo({
             />
           )}
           <span data-titulo="topo">
-            {rota.nome === "guia" ? `Guia de ${casca.cidade}` : rota.titulo}
+            {rota.nome === "conversa" &&
+            casca.conversaNoTopo &&
+            casca.conversaNoTopo.id === parametros["id"]
+              ? casca.conversaNoTopo.nome
+              : rota.nome === "guia"
+                ? `Guia de ${casca.cidade}`
+                : rota.titulo}
           </span>
           <span className="grow" />
 
@@ -123,7 +131,7 @@ function Contador({ quantidade, nome }: { quantidade: number; nome: "avisos" | "
 /** A rota `busca` toma a barra: Voltar, campo e limpar (§5.2). */
 function BuscaEmTelaCheia() {
   const navegacao = useNavegacao()
-  const [busca, setBusca] = useState("")
+  const { consulta: busca, definirConsulta: setBusca } = useCasca()
   const campo = useRef<HTMLInputElement | null>(null)
 
   // O foco no campo ao abrir a busca é do protótipo (§5.2), feito no efeito e
@@ -155,15 +163,15 @@ function BuscaEmTelaCheia() {
           className="min-h-11 w-full min-w-0 rounded-xl border border-(--input) bg-transparent px-3 text-base outline-none focus-visible:border-(--ring)"
         />
       </span>
-      <Button
-        type="button"
-        variant="ghost"
+      <BotaoDeIcone
+        rotulo="Limpar busca"
+        nome="close"
         data-acao="limpar-busca"
-        onClick={() => setBusca("")}
-        className="min-h-11 shrink-0 rounded-xl px-3 text-sm"
-      >
-        Limpar busca
-      </Button>
+        onClick={() => {
+          setBusca("")
+          campo.current?.focus()
+        }}
+      />
     </>
   )
 }

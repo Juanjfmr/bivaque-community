@@ -9,6 +9,70 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Nenhum merge, push ou deploy autorizado.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## APP-008 — correções da casca autorizadas, 26/10/2026
+
+O dono respondeu "Pode consertar" à revisão visual. Primeiro lote: V01, V02 e
+V03, contrato APP-008 R2 validado, Codex como único escritor. Não amplia as
+ondas seguintes nem fecha as omissões V04–V12. Monitor continua pausado.
+
+Aplicados limite de 600 px à folha, Cancelar no painel de cidade, estado único
+para busca e resultados, limpeza com foco devolvido, topo compacto em 375 px e
+nome contextual da conversa. Mantidos cidade, Conversas, Voltar e Buscar.
+As quatro provas novas falharam na base; na correção passaram **12/12**, nas
+três larguras. Fechamento técnico deste lote concluído, sem aceite visual da
+onda 1 e sem declarar as telas V1 completas.
+
+- **Gate completo VERDE**, log `APP-008-gate-R1.log`: lint 18 s, tipos 31 s,
+  tipos E2E 13 s, Next 99 s, Vite 44 s, testes 111 s, segredos 40 s.
+  Raiz **1.726/1.726**, app **84/84**, mobile **76/76**, web **19/19**,
+  privacidade **189/189**, escopo **150/150**, secrets PASS. Nenhum build
+  pulado. Treze warnings e 51 infos de lint, fontes públicas e chunk grande
+  no Vite continuam avisos não bloqueantes; não foram suprimidos.
+- Primeira execução: builds e testes de código/privacidade verdes, escopo
+  **149/150** por dois falsos positivos do scanner em documentação anterior:
+  link longo do relatório e sequência de contagens do quadro. Corrigidos só
+  a apresentação do caminho e os separadores, preservando números/data;
+  nenhuma regra ou exclusão do scanner foi alterada. FAIL original preservado
+  em `APP-008-gate.log`; focal secrets e gate R1 verdes.
+- **Regressão completa 521 passed, 16 skipped, 0 failed** em 375/768/1440,
+  log `APP-008-e2e.log`. Os 12 casos da casca então foram reforçados, por
+  revisão independente, com foco após limpar, seletores precisos e histórico
+  entre t1/t2/ID inexistente. Nova prova focal final **12/12**, log
+  `APP-008-R1-focal.log`. Após a regressão, o produto recebeu apenas comentários;
+  não se somam os mesmos 12 casos duas vezes nem se alega nova regressão inteira.
+- Qwen revisou código/instrumento sem ler defesa do STATUS; o primeiro
+  veredito exigiu negativos melhores. R1 **APROVADO PARA MEDIÇÃO** em
+  `APP-008-R1-revisao.md`. C1 sobre grade/recentes não bloqueia a casca:
+  o parecer V02 pede a grade no fechamento da tela, que permanece pendente;
+  contrato e comentário agora explicitam esse limite. Não houve decisão nova
+  de produto nem autorização de onda seguinte. Contexto de busca existente
+  foi reutilizado; seu custo de render na demo continua limite conhecido.
+- **152 pares novos**, HTML esquerda/app direita, zero pageerrors:
+  `.visual/onda-1/pares-2026-10-26T16-40-39-982Z/index.html`. Manifesto original
+  base e0a5c19c, árvore suja, preservado; **175/175 fontes**, hash HTML e
+  **152/152 PNGs** reconferidos em `APP-008-integridade.json`.
+- CLI complementar genérica falhou ao procurar Chromium 1161 ausente;
+  classificado como configuração do instrumento, sem instalar navegador.
+  Capturador complementar com o **1248 já configurado no app** passou:
+  **8 imagens em 768 px**, quatro cenas e dois temas, zero pageerrors,
+  `APP-008-tablet.json`. Qwen **APROVADO PARA CAPTURA** em
+  `APP-008-tablet-revisao.md`; limite: sem aguardar decode de imagens, sem
+  score visual automático. Browser e servidor próprios fechados em finally;
+  nenhum chrome-devtools-mcp próprio pendente, serviços do Desktop preservados.
+- Conferência Codex em **24 vistas** (cidade/busca/conversa/evento, três
+  larguras e dois temas), três pranchas `APP-008-contato-*.png`, mais três
+  pares ampliados. Confirmados painel compacto, campo único e topo contextual
+  sem o recorte anterior. A folha compartilhada passa a limitar todas as
+  folhas a 600 px, inclusive entre 601 e 719 px; navegação continua em 720 px.
+- Registro canônico permanece APP-001, ligado ao contrato APP-008. **Pendente:**
+  grade/recentes de V02, demais omissões V04–V12 e aceite visual do dono.
+  Próximo fechamento recomendado: V04, consumir as fotos locais já portadas.
+  Sem merge/push/deploy, prova vertical ou novo julgamento da R3.
+
+Todos os artefatos APP-008 acima ficam em `.visual/coordenacao/`, salvo a
+galeria explicitamente indicada. Provas históricas anteriores permanecem por
+sua revisão; não aprovam a nova fonte por herança.
+
 ## Revisão visual solicitada pelo dono — 26/10/2026
 
 **Parecer Codex: CORREÇÕES; não recomendo aceite visual ainda.** Relatório único

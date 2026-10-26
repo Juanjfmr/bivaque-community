@@ -32,6 +32,9 @@ export function PainelDeCidade({ aoFechar }: { readonly aoFechar: () => void }) 
         nota="Escreva a cidade que você quer ver agora."
       />
       <div className="flex flex-wrap justify-end gap-2">
+        <Botao tom="texto" onClick={aoFechar}>
+          Cancelar
+        </Botao>
         {casca.vendoOutraCidade ? (
           <Botao
             tom="texto"

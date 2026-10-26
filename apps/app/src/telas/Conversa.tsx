@@ -58,6 +58,12 @@ export function Conversa() {
     () => (dados === null ? null : (dados.conversas.find((item) => item.id === id) ?? null)),
     [dados, id],
   )
+  const quem = conversa ? texto(registro(conversa.apresentacao)["who"], "Conversa") : ""
+  const mostrarConversaNoTopo = casca.mostrarConversaNoTopo
+  useEffect(() => {
+    mostrarConversaNoTopo(quem ? { id, nome: quem } : null)
+    return () => mostrarConversaNoTopo(null)
+  }, [id, quem, mostrarConversaNoTopo])
   const mensagens = useMemo(() => {
     if (dados === null) return []
     return dados.mensagens
@@ -85,9 +91,6 @@ export function Conversa() {
   }
 
   if (conversa === null) return <TelaIndisponivel />
-
-  const apresentacao = registro(conversa.apresentacao)
-  const quem = texto(apresentacao["who"], "Conversa")
 
   return (
     <section data-tela="conversa" className="grid gap-2">

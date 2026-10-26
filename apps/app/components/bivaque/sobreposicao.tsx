@@ -65,7 +65,7 @@ export function Sobreposicao({
           className={cn(
             "bv-painel fixed z-45 border border-(--outline-variant) bg-(--surface-lowest) shadow-[0_10px_32px_var(--shadow-strong)]",
             formato === "folha" &&
-              "inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-2xl p-4",
+              "inset-x-0 bottom-0 mx-auto max-h-[88dvh] max-w-150 overflow-y-auto rounded-t-2xl p-4",
             formato === "dialogo" &&
               "inset-x-4 top-[12%] mx-auto max-h-[76dvh] max-w-140 overflow-y-auto rounded-2xl p-4",
             gaveta && "inset-y-0 right-0 w-[min(400px,100vw)] overflow-y-auto rounded-l-2xl p-4",

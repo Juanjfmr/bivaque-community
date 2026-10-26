@@ -331,6 +331,24 @@
   flex: none;
 }
 
+/* Em 375 px o topo precisa caber com as ações; 720 px continua sendo a troca da navegação. */
+@media (max-width: 479.98px) {
+  [data-topo="barra"] [data-titulo="topo"] {
+    font-size: 16px;
+    line-height: 20px;
+    white-space: normal;
+  }
+
+  [data-topo="barra"] [data-acao="cidade"] {
+    max-width: 100px;
+    padding-inline: 6px;
+  }
+
+  [data-topo="barra"] [data-acao="cidade"] .size-5 {
+    display: none;
+  }
+}
+
 #conteudo {
   min-height: 0;
   overflow-y: auto;

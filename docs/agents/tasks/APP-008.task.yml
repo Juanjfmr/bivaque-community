@@ -1,0 +1,43 @@
+task_id: APP-008
+objective: A casca apresenta cidade compacta, uma busca funcional e título contextual legível nas três larguras.
+authority:
+  - Decisão direta do dono em 26/10/2026, Pode consertar
+  - docs/agents/prototipo-shadcn/REVISAO-VISUAL-20261026.md, V01 V02 V03
+  - docs/decisions/ADR-20261024-front-react-spa.md, seção 3.1
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Revisão visual em 152 pares da fonte 9af6b5aa, V01 V02 V03 com links para capturas e causas no código.
+allowed_paths:
+  - docs/agents/tasks/APP-008.task.yml
+  - apps/app/src/casca/
+  - apps/app/src/contexto/casca.tsx
+  - apps/app/src/telas/Busca.tsx
+  - apps/app/src/telas/Conversa.tsx
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/sobreposicao.tsx
+  - apps/app/tests/e2e/casca-visual.spec.ts
+  - docs/agents/prototipo-shadcn/
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/coordenacao/
+forbidden:
+  - Instalar dependências, mudar navegação aprovada, backend, banco, credenciais ou arquivos de outras sessões
+  - Implementar momento e chegada da onda 8 ou declarar V04 a V12 resolvidos
+acceptance:
+  - Folha de cidade preserva largura móvel e mede até 600 px centralizada a partir de 720 px, com cancelar e foco devolvido
+  - Uma única entrada de busca controla os resultados, sugestões e limpeza, sem estado paralelo
+  - Topo mostra Encontro sem recorte em 375 e nome real da conversa, preservando Voltar cidade Conversas e acesso à busca
+  - Provas usam DOM e interação no modo normal em 375 768 1440; instrumento recebe revisão de modelo diferente
+  - Gate completo verde e capturas em ambos os temas; demais achados permanecem pendentes
+  - V02 fecha a duplicação na casca; grade Explorar e recentes continuam pendências explícitas do fechamento da tela de busca
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e casca-visual.spec.ts
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate
+risk: apresentação da casca e estado compartilhado de busca
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

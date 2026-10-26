@@ -8,11 +8,9 @@ import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
-import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
-import { Input } from "@/components/ui/input"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
@@ -25,9 +23,9 @@ import { useCasca } from "@/src/contexto/casca"
  * demonstração.
  *
  * V1: campo, chips de escopo, contagem, resultados por tipo com teto no "Tudo"
- * e "Ver todos", vazio honesto e erro com tentar de novo. Ficam para o refino:
+ * e "Ver todos", sugestões, vazio honesto e erro com tentar de novo. Ficam para o refino:
  * sinônimos, trecho da resposta que bateu, palavras que completam o texto,
- * buscas recentes e os blocos "Explorar" e "Sugestões".
+ * buscas recentes e o bloco "Explorar".
  */
 
 const FILTROS: readonly ItemDeFiltro[] = [
@@ -92,7 +90,7 @@ export function Busca() {
   const [dados, setDados] = useState<DadosDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
-  const [consulta, setConsulta] = useState("")
+  const { consulta, definirConsulta: setConsulta } = casca
   const [escopo, setEscopo] = useState("all")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
@@ -171,21 +169,6 @@ export function Busca() {
         titulo={`Buscar em ${casca.cidade}`}
         subtitulo="Encontre oportunidades, negócios e respostas da comunidade."
       />
-
-      <div className="relative">
-        <Icone
-          nome="search"
-          className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-(--on-surface-variant)"
-        />
-        <Input
-          type="search"
-          aria-label="Buscar no Bivaque"
-          placeholder="Busque por serviço, item ou dúvida"
-          value={consulta}
-          onChange={(evento) => setConsulta(evento.target.value)}
-          className="min-h-12 rounded-xl bg-(--surface-lowest) pl-11"
-        />
-      </div>
 
       <ChipsDeFiltro
         itens={FILTROS}

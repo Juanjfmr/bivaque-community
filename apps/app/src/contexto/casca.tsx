@@ -34,6 +34,10 @@ export type EstadoDaCasca = {
 export const CIDADE_PADRAO = "Manaus"
 
 type PortaDaCasca = EstadoDaCasca & {
+  readonly consulta: string
+  definirConsulta(consulta: string): void
+  readonly conversaNoTopo: { readonly id: string; readonly nome: string } | null
+  mostrarConversaNoTopo(conversa: { readonly id: string; readonly nome: string } | null): void
   readonly vendoOutraCidade: boolean
   trocarCidade(cidade: string): void
   voltarParaCasa(): void
@@ -52,6 +56,8 @@ export function sementeDaProva(): SementeDeProva {
 }
 
 export function ProvedorDaCasca({ children }: { children: ReactNode }) {
+  const [consulta, definirConsulta] = useState("")
+  const [conversaNoTopo, mostrarConversaNoTopo] = useState<PortaDaCasca["conversaNoTopo"]>(null)
   const [estado, setEstado] = useState<EstadoDaCasca>(() => {
     const semente = sementeDaProva()
     const resumo = modoDeProvaAtivo() ? null : dadosDoApp.resumoDaCasca()
@@ -84,12 +90,16 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   const porta = useMemo<PortaDaCasca>(
     () => ({
       ...estado,
+      consulta,
+      definirConsulta,
+      conversaNoTopo,
+      mostrarConversaNoTopo,
       vendoOutraCidade: estado.cidade !== estado.cidadeDeCasa,
       trocarCidade,
       voltarParaCasa,
       definir,
     }),
-    [estado, trocarCidade, voltarParaCasa, definir],
+    [estado, consulta, conversaNoTopo, trocarCidade, voltarParaCasa, definir],
   )
 
   return <Contexto.Provider value={porta}>{children}</Contexto.Provider>
