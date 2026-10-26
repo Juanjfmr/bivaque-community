@@ -1,45 +1,51 @@
-// Smoke checks of the shadcn port contract; NOT a visual or interaction test.
-// The R72-approved HTML remains the authoritative baseline.
+// Static contract regression checks, not a browser-based visual parity certification.
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const read = (relative) => readFileSync(new URL("../" + relative, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const app = read("components/library-app.tsx");
-const detailRoutes = read("app/[section]/[id]/page.tsx");
+const routes = read("app/[section]/[id]/page.tsx");
 const fixtures = read("components/modules/fixtures.ts");
+const has = (source, text) => assert.ok(source.includes(text), "Missing: " + text);
+const lacks = (source, text) => assert.ok(!source.includes(text), "Unexpected: " + text);
 
-test("R72: Criar is centered inside a five-destination mobile bar", () => {
-  assert.match(app, /aria-label="Navegação principal mobile"/);
-  assert.match(app, /grid-cols-5 items-center/);
-  assert.match(app, /aria-label="Abrir menu Criar"/);
-  assert.doesNotMatch(app, /bottom-\\[calc\\(92px/);
+test("Mobile navigation keeps Criar centered within five targets", () => {
+  has(app, 'aria-label="Navegação principal mobile"');
+  has(app, "grid-cols-5 items-center");
+  has(app, 'aria-label="Abrir menu Criar"');
+  lacks(app, "bottom-[calc(92px");
 });
-test("R72: search includes all main content families, not only classifieds", () => {
-  assert.match(app, /const searchRecords=/);
-  for (const name of ["QUESTIONS", "GROUPS", "EVENTS", "REQUESTS", "allItems"]) {
-    assert.match(app.slice(app.indexOf("const searchRecords="), app.indexOf("const visibleSearch=")), new RegExp(name));
+test("Search indexes all relevant city-specific module data", () => {
+  const index = app.slice(app.indexOf("const searchRecords="), app.indexOf("const visibleSearch="));
+  for (const key of ["allItems", "QUESTIONS", "GROUPS", "EVENTS", "REQUESTS"]) has(index, key);
+  has(app, 'slug==="busca"?searchPage()');
+  has(app, 'const visibleSearch=searchRecords.filter');
+});
+test("Different cities do not borrow Brasília demo content", () => {
+  has(app, 'city==="Brasília"?<Accordion');
+  has(app, 'REQUESTS.filter(r=>r.city===city');
+  has(app, 'const localVillas=VILLAS.filter(v=>v.city===city)');
+  has(app, 'Nenhuma vila de demonstração em');
+  has(app, 'Ainda não há negócios de demonstração nesta cidade');
+});
+test("Local drafts persist and remain scoped to their chosen city", () => {
+  has(app, 'kind:composeType,city');
+  has(app, 'p.city||INITIAL_CITY)===city');
+  has(app, 'Rascunhos visíveis apenas neste navegador');
+  has(app, 'localDrafts(localKinds)');
+  has(app, 'localDrafts(["Pedido"])');
+  has(app, 'localDrafts(["Encontro"])');
+});
+test("Every existing demo detail family is prerendered", () => {
+  for (const category of ["anuncio", "negocio", "pergunta", "grupo", "evento", "pedido"]) {
+    has(routes, 'section:"' + category + '"');
   }
-  assert.match(app, /slug==="busca"\\?searchPage\\(\\)/);
+  has(routes, "dynamicParams = false");
 });
-test("National demo never presents Brasília-only guides, villas, or requests as local", () => {
-  assert.match(app, /city==="Brasília"\\?<Accordion/);
-  assert.match(app, /REQUESTS\\.filter\\(r=>r\\.city===city/);
-  assert.match(app, /const localVillas=VILLAS\\.filter\\(v=>v\\.city===city\\)/);
-  assert.match(app, /Nenhuma vila de demonstração em/);
-  assert.match(app, /Ainda não há negócios de demonstração nesta cidade/);
-});
-test("Static detail routes cover the existing demo families", () => {
-  for (const section of ["anuncio", "negocio", "pergunta", "grupo", "evento", "pedido"]) {
-    assert.ok(detailRoutes.includes('section:"' + section + '"'), section);
-  }
-  assert.match(detailRoutes, /dynamicParams = false/);
-});
-test("Demo content and local-only persistence are explicit", () => {
-  assert.match(fixtures, /Fictional content/);
-  assert.match(app, /localStorage\\.setItem\\(store/);
-  assert.match(app, /Nenhuma ação envia informações para terceiros/);
-});
-test("Dark-theme photos use R72 reduced brightness", () => {
-  assert.match(app, /dark:brightness-90/);
+test("Simulated data and darker photographs are explicit", () => {
+  has(fixtures, "Fictional content");
+  has(app, "localStorage.setItem(store");
+  has(app, "Nenhuma ação envia informações para terceiros");
+  has(app, "dark:brightness-90");
 });
