@@ -1,0 +1,57 @@
+name: Bivaque R72 Mobile Parity
+
+on:
+  pull_request:
+    paths:
+      - 'apps/app/**'
+      - 'scripts/app/capturar.mjs'
+      - '.github/workflows/bivaque-r72-mobile-comparison.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference-comparison:
+    name: HTML R72 vs React / 320-375-430 / light-dark
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout with R72 history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Vite prototype
+        run: pnpm --filter @bivaque/app build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Capture genuine frozen R72 side-by-side
+        run: node scripts/app/capturar.mjs --mobile-r72
+
+      - name: Upload comparison and signed manifest
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: r72-vs-app-mobile
+          if-no-files-found: ignore
+          retention-days: 14
+          path: .visual/onda-1/comparacao-r72-mobile-*/
