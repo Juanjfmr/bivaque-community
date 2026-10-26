@@ -20,6 +20,7 @@ import type { Pergunta } from "@/lib/dados/contrato"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
+import { CHAVE_ABERTURA_PERGUNTA, PEDIDO_PERGUNTAR } from "@/lib/rascunhos-criacao"
 import { useCasca } from "@/src/contexto/casca"
 import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
 
@@ -80,6 +81,19 @@ export function Comunidade() {
   useEffect(() => {
     setPerguntasLocais(lerPerguntasLocais(casca.cidade))
   }, [casca.cidade])
+
+  useEffect(() => {
+    const abrirPergunta = () => {
+      try { window.sessionStorage.removeItem(CHAVE_ABERTURA_PERGUNTA) } catch { /* sem persistência */ }
+      setAba("ind")
+      setCriandoPergunta(true)
+    }
+    window.addEventListener(PEDIDO_PERGUNTAR, abrirPergunta)
+    try {
+      if (window.sessionStorage.getItem(CHAVE_ABERTURA_PERGUNTA) === "1") abrirPergunta()
+    } catch { /* CTA no cabeçalho continua disponível */ }
+    return () => window.removeEventListener(PEDIDO_PERGUNTAR, abrirPergunta)
+  }, [])
 
   const publicarPergunta = () => {
     if (dados === null) return
