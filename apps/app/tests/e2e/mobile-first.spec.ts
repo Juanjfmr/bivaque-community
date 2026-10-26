@@ -9,7 +9,7 @@ test("mobile: topo e barra inferior cabem inteiros, com alvos de toque", async (
   await expect(topo).toBeVisible()
 
   // Mesmo a 320px, nenhum dos controles à direita pode ser cortado pelo topo.
-  const controles = topo.locator('button')
+  const controles = topo.locator("button")
   for (const botao of await controles.all()) {
     if (!(await botao.isVisible())) continue
     const caixa = await botao.boundingBox()
@@ -23,7 +23,7 @@ test("mobile: topo e barra inferior cabem inteiros, com alvos de toque", async (
 
   const nav = page.locator('[data-nav="principal"]')
   await expect(nav).toBeVisible()
-  const destinos = nav.locator('[data-aba]')
+  const destinos = nav.locator("[data-aba]")
   await expect(destinos).toHaveCount(4)
   for (const botao of await destinos.all()) {
     const caixa = await botao.boundingBox()
@@ -64,8 +64,12 @@ test("mobile: cards ocupam uma coluna e foto abre o anúncio", async ({ page }) 
     }),
   )
   if (colunas.length === 2) {
-    expect(Math.abs(colunas[0]!.x - colunas[1]!.x)).toBeLessThan(2)
-    expect(colunas[0]!.largura).toBeGreaterThan(largura * 0.8)
+    const primeiro = colunas[0]
+    const segundo = colunas[1]
+    if (primeiro && segundo) {
+      expect(Math.abs(primeiro.x - segundo.x)).toBeLessThan(2)
+      expect(primeiro.largura).toBeGreaterThan(largura * 0.8)
+    }
   }
 
   // Não pode ser necessário encontrar uma ação escondida sob a foto.
@@ -90,10 +94,12 @@ test("mobile: fotos de imóveis reais da fixture e título sem caixa de foco", a
   await expect(primeiro.getByText("/ mês", { exact: true })).toBeVisible()
   const imagem = primeiro.locator("img")
   await expect(imagem).toBeVisible()
-  await expect.poll(async () =>
-    imagem.evaluate((elemento) => {
-      const foto = elemento as HTMLImageElement
-      return foto.complete && foto.naturalWidth > 0
-    }),
-  ).toBe(true)
+  await expect
+    .poll(async () =>
+      imagem.evaluate((elemento) => {
+        const foto = elemento as HTMLImageElement
+        return foto.complete && foto.naturalWidth > 0
+      }),
+    )
+    .toBe(true)
 })
