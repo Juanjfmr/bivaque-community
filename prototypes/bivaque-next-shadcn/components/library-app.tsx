@@ -420,7 +420,45 @@ export default function LibraryApp(){
       </Tabs>
     </div>;
   }
-  function groupPage(){return <div className="grid gap-4 md:grid-cols-2">{!GROUPS.some(g=>g.city===city)&&emptyForCity("grupos")}{GROUPS.filter(g=>g.city===city).map(g=><Card key={g.id}><CardHeader><CardTitle><button className="text-left hover:underline" onClick={()=>navigate("grupo/"+g.id)}>{g.name}</button></CardTitle><CardDescription>{g.description}</CardDescription></CardHeader><CardContent className="space-y-3"><Badge variant="secondary">{g.members} integrantes</Badge><Accordion type="single" collapsible><AccordionItem value="posts"><AccordionTrigger>Publicações da comunidade</AccordionTrigger><AccordionContent>{joined.includes(g.id)?g.posts.map(p=><p className="py-2" key={p.id}>{p.author}: {p.text}</p>):"Participe de um grupo aberto para ver publicações."}</AccordionContent></AccordionItem></Accordion></CardContent><CardFooter><Button variant={joined.includes(g.id)?"outline":"default"} onClick={()=>{if(!g.open&&!joined.includes(g.id)){toast.info("Grupo restrito: aprovação necessária");return}toggle(g.id,joined,setJoined);toast.success("Participação demonstrativa atualizada")}}>{joined.includes(g.id)?"Sair do grupo":g.open?"Participar":"Solicitar acesso"}</Button></CardFooter></Card>)}</div>}
+  function groupPage(){
+    const available=GROUPS.filter(g=>g.city===city&&!hiddenByDemo("grupo",g.id));
+    return <div className="grid gap-4 md:grid-cols-2">{!available.length&&emptyForCity("grupos")}{available.map(g=><Card key={g.id}>
+      <CardHeader><CardTitle><button className="text-left hover:underline" onClick={()=>navigate("grupo/"+g.id)}>{g.name}</button></CardTitle><CardDescription>{g.description}</CardDescription></CardHeader>
+      <CardContent className="space-y-3"><div className="flex flex-wrap gap-2"><Badge variant="secondary">{g.members} integrantes de exemplo</Badge><Badge variant="outline">{g.open?"Aberto":"Aprovação necessária"}</Badge></div>
+        {joined.includes(g.id)?<p className="text-sm text-muted-foreground">{g.posts.length+groupPosts.filter(p=>p.groupId===g.id).length} publicações de demonstração disponíveis.</p>:<p className="text-sm text-muted-foreground">{groupRequests.includes(g.id)?"Solicitação pendente nesta prévia. Nenhuma aprovação real foi enviada.":"Participe do grupo para consultar as publicações."}</p>}
+      </CardContent>
+      <CardFooter className="flex flex-wrap gap-2"><Button size="sm" variant={joined.includes(g.id)||groupRequests.includes(g.id)?"outline":"default"} onClick={()=>joinGroup(g.id,g.open)}>{joined.includes(g.id)?"Sair do grupo":groupRequests.includes(g.id)?"Cancelar solicitação":g.open?"Participar":"Solicitar acesso"}</Button>
+        <Button size="sm" variant="ghost" onClick={()=>navigate("grupo/"+g.id)}>Ver grupo <ArrowRight className="size-4"/></Button>
+      </CardFooter>
+    </Card>)}</div>;
+  }
+  function groupFeed(g:(typeof GROUPS)[number]){
+    const local=groupPosts.filter(p=>p.groupId===g.id);
+    const records=[
+      ...local,
+      ...g.posts.map(p=>({...p,replies:[] as string[]})),
+    ].filter(p=>!hiddenByDemo("publicacao",p.id));
+    return <section className="space-y-4">
+      <div className="flex items-center justify-between gap-2"><h2 className="text-lg font-semibold">Publicações do grupo</h2><Badge variant="outline">{records.length} de exemplo</Badge></div>
+      <form onSubmit={e=>submitGroupPost(e,g.id)} className="space-y-3 rounded-xl border bg-card p-4">
+        <Label htmlFor="group-message">Compartilhe uma experiência com este grupo</Label>
+        <Textarea id="group-message" rows={3} maxLength={1500} minLength={8} required placeholder="Uma dúvida, uma dica ou uma informação útil..." value={groupText} onChange={e=>setGroupText(e.target.value)}/>
+        <div className="flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">Somente esta demonstração, sem publicação real.</span><Button type="submit" size="sm" disabled={groupText.trim().length<8}><Send className="size-4"/> Publicar no grupo</Button></div>
+      </form>
+      {records.length?records.map(p=><article key={p.id} className="space-y-3 rounded-xl border bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{p.author}</strong><span className="text-xs text-muted-foreground">{p.date}</span></div>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.text}</p>
+        <div className="flex flex-wrap gap-2"><Button variant="ghost" size="sm" onClick={()=>toggle(p.id,groupLikes,setGroupLikes)}><ThumbsUp className={groupLikes.includes(p.id)?"fill-current":""}/> {p.likes+(groupLikes.includes(p.id)?1:0)} curtidas fictícias</Button>
+          <Button variant="ghost" size="sm" onClick={()=>openReport("publicacao",p.id,p.text.slice(0,64),"grupo/"+g.id)}><Flag className="size-4"/>Denunciar</Button>
+          {p.id.startsWith("gp-local-")&&<Button variant="ghost" size="sm" onClick={()=>setGroupPosts(v=>v.filter(x=>x.id!==p.id))}>Excluir minha publicação</Button>}
+        </div>
+        <div className="space-y-2 border-t pt-3"><p className="text-xs font-semibold">Comentários ({groupComments[p.id]?.length||0})</p>
+          {(groupComments[p.id]||[]).map((text,i)=><p key={i} className="rounded-lg bg-secondary/60 p-2 text-xs"><strong>Você:</strong> {text}</p>)}
+          <form className="flex items-end gap-2" onSubmit={e=>submitGroupReply(e,p.id)}><Input aria-label={"Comentar publicação de "+p.author} placeholder="Escreva um comentário de teste" minLength={3} maxLength={500} value={groupReply[p.id]||""} onChange={e=>setGroupReply(v=>({...v,[p.id]:e.target.value}))}/><Button size="icon" type="submit" aria-label="Enviar comentário" disabled={(groupReply[p.id]||"").trim().length<3}><Send className="size-4"/></Button></form>
+        </div>
+      </article>):<p className="text-sm text-muted-foreground">Nenhuma publicação neste grupo. Seja a primeira pessoa a compartilhar uma experiência.</p>}
+    </section>;
+  }
   function movement(){return <div className="space-y-6">{header}{notice()}<Card><CardHeader><CardTitle>Plano de chegada a {city}</CardTitle><CardDescription>Organize sua transferência passo a passo.</CardDescription></CardHeader><CardContent className="space-y-4"><Progress value={steps.length/ARRIVAL_STEPS.length*100}/><p className="text-sm text-muted-foreground">{steps.length} de {ARRIVAL_STEPS.length} concluídas</p>{ARRIVAL_STEPS.map(s=><div className="flex items-start gap-3" key={s.id}><Checkbox id={s.id} checked={steps.includes(s.id)} onCheckedChange={()=>toggle(s.id,steps,setSteps)}/><div><Label htmlFor={s.id}>{s.title}</Label><p className="text-sm text-muted-foreground">{s.detail}</p></div></div>)}</CardContent></Card><div className="grid gap-4 md:grid-cols-3">{[{slug:"imoveis",name:"Pesquisar moradia",icon:Building2},{slug:"pedidos",name:"Orçamento de mudança",icon:ClipboardList},{slug:"grupos",name:"Pessoas da cidade",icon:Users}].map(v=><Card key={v.slug}><CardHeader><v.icon/><CardTitle>{v.name}</CardTitle></CardHeader><CardFooter><Button variant="outline" onClick={()=>navigate(v.slug)}>Abrir <ArrowRight/></Button></CardFooter></Card>)}</div></div>}
   function guide(){return <div className="space-y-5">{header}{notice()}{city==="Brasília"?<Accordion type="multiple" className="w-full">{BRASILIA_GUIDE.map((x,i)=><AccordionItem value={x.title} key={i}><AccordionTrigger>{x.title}</AccordionTrigger><AccordionContent><p>{x.body}</p><Button variant="outline" className="mt-3" onClick={()=>navigate(i===0?"imoveis":i===1?"comunidade":"servicos")}>Explorar módulo <ArrowRight/></Button></AccordionContent></AccordionItem>)}</Accordion>:<div className="rounded-xl border border-dashed border-border p-6"><h2 className="font-serif text-xl">Guia de {city} em preparação</h2><p className="mt-2 text-sm text-muted-foreground">Os conteúdos ilustrativos de Brasília não são apresentados como se fossem desta cidade. Explore os módulos disponíveis nesta prévia.</p><div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate("imoveis")}>Imóveis <ArrowRight/></Button><Button variant="outline" onClick={()=>navigate("comunidade")}>Indicações <ArrowRight/></Button></div></div>}</div>}
   function requests(){return <div className="space-y-5">{header}{notice()}{localDrafts(["Pedido"])}<Tabs defaultValue="Todos"><TabsList><TabsTrigger value="Todos">Todos</TabsTrigger><TabsTrigger value="Aberto">Abertos</TabsTrigger><TabsTrigger value="Em negociação">Em negociação</TabsTrigger></TabsList>{["Todos","Aberto","Em negociação"].map(t=><TabsContent key={t} value={t}><div className="grid gap-4">{!REQUESTS.some(r=>r.city===city)&&emptyForCity("pedidos")}{REQUESTS.filter(r=>r.city===city&&(t==="Todos"||t===r.status)).map(r=><Card key={r.id}><CardHeader><Badge className="w-fit" variant="secondary">{r.status}</Badge><CardTitle><button className="text-left hover:underline" onClick={()=>navigate("pedido/"+r.id)}>{r.title}</button></CardTitle><CardDescription>{r.hood} · {r.category}</CardDescription></CardHeader><CardContent><p className="text-sm">{r.detail}</p><Accordion type="single" collapsible><AccordionItem value="propostas"><AccordionTrigger>Comparar {r.proposals.length} propostas demonstrativas</AccordionTrigger><AccordionContent><Table><TableHeader><TableRow><TableHead>Prestador</TableHead><TableHead>Valor</TableHead><TableHead>Prazo</TableHead></TableRow></TableHeader><TableBody>{r.proposals.map(x=><TableRow key={x.provider}><TableCell>{x.provider}</TableCell><TableCell>{x.amount}</TableCell><TableCell>{x.timeline}</TableCell></TableRow>)}</TableBody></Table></AccordionContent></AccordionItem></Accordion></CardContent><CardFooter><Button variant="outline" onClick={()=>navigate("pedido/"+r.id)}>Comparar propostas <ArrowRight/></Button></CardFooter></Card>)}</div></TabsContent>)}</Tabs></div>}
@@ -477,9 +515,16 @@ export default function LibraryApp(){
       </div>;
     }
     if(slug==="grupo"){
-      const g=GROUPS.find(v=>v.id===detailId);if(!g||g.city!==city)return <p className="py-12 text-muted-foreground">Grupo indisponível nesta cidade.</p>;
-      return <div className="mx-auto max-w-3xl space-y-5">{top("Grupo","comunidade")}<div className="space-y-3 border-b pb-5"><Badge variant="outline">{g.open?"Grupo aberto":"Grupo restrito"}</Badge><h1 className="font-serif text-[28px] font-semibold">{g.name}</h1><p className="text-[13px] text-muted-foreground">{g.description}</p><span className="block text-xs text-muted-foreground">{g.members} integrantes de exemplo · {g.city}</span><Button variant={joined.includes(g.id)?"outline":"default"} onClick={()=>{if(!g.open&&!joined.includes(g.id))return toast.info("Grupo restrito: aprovação necessária");toggle(g.id,joined,setJoined)}}>{joined.includes(g.id)?"Sair do grupo":"Participar"}</Button></div>
-        <h2 className="text-lg font-semibold">Publicações</h2>{joined.includes(g.id)?g.posts.map(p=><article key={p.id} className="space-y-2 rounded-xl border bg-card p-4"><strong className="text-sm">{p.author}</strong><p className="text-[13px]">{p.text}</p><p className="text-[11px] text-muted-foreground">{p.date} · {p.likes} curtidas fictícias</p></article>):<p className="text-sm text-muted-foreground">Participe do grupo para acompanhar as publicações.</p>}</div>;
+      const g=GROUPS.find(v=>v.id===detailId);
+      if(!g||g.city!==city)return <p className="py-12 text-muted-foreground">Grupo indisponível nesta cidade.</p>;
+      const member=joined.includes(g.id),requested=groupRequests.includes(g.id);
+      return <div className="mx-auto max-w-3xl space-y-5">{top("Grupo","comunidade")}
+        <section className="space-y-3 border-b pb-5"><Badge variant="outline">{g.open?"Grupo aberto":"Grupo restrito"}</Badge>
+          <h1 className="font-serif text-[28px] font-semibold">{g.name}</h1><p className="text-[13px] text-muted-foreground">{g.description}</p><span className="block text-xs text-muted-foreground">{g.members} integrantes de exemplo · {g.city}</span>
+          <div className="flex flex-wrap gap-2"><Button variant={member||requested?"outline":"default"} onClick={()=>joinGroup(g.id,g.open)}>{member?"Sair do grupo":requested?"Cancelar solicitação":g.open?"Participar":"Solicitar acesso"}</Button><Button variant="outline" onClick={shareDemoLink}><Share2 className="size-4"/>Compartilhar grupo</Button></div>
+        </section>
+        {member?groupFeed(g):<Alert><Shield className="size-4"/><AlertTitle>{requested?"Solicitação demonstrativa pendente":"Publicações disponíveis apenas para membros"}</AlertTitle><AlertDescription>{requested?"A aprovação real dependeria da administração do grupo. Esta prévia não envia dados.":"Solicite participação para testar a experiência, sem acesso real a informações de terceiros."}</AlertDescription></Alert>}
+      </div>;
     }
     if(slug==="evento"){
       const e=EVENTS.find(v=>v.id===detailId);if(!e||e.city!==city)return <p className="py-12 text-muted-foreground">Encontro indisponível nesta cidade.</p>;
