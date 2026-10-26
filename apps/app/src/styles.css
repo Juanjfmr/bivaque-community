@@ -662,6 +662,32 @@
   }
 }
 
+/* Vista de lista dos imóveis: seleção funcional sem mudar a geometria do
+   catálogo nos outros módulos. Mantém alvos mínimos de 44 px. */
+.bv-grade.bv-lista-imoveis {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] {
+  display: grid;
+  grid-template-columns: minmax(120px, 36%) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] > div:first-child {
+  min-width: 0;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] [data-acao="abrir-foto"],
+.bv-lista-imoveis [data-cartao="anuncio"] [data-acao="abrir-foto"] > div {
+  height: 100%;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] img {
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
