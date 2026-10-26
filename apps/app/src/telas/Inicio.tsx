@@ -241,169 +241,169 @@ export function Inicio() {
         <>
           <div className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start">
             <div className="bv-home-principal min-w-0">
-          <Secao
-            titulo="Serviços recomendados"
-            acoes={
-              <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
-                Ver negócios
-              </Botao>
-            }
-          >
-            <p className="text-sm text-(--on-surface-variant)">
-              Indicados pela comunidade de {casca.cidade}
-            </p>
-            {negocios.length === 0 ? (
-              <EstadoVazio
-                titulo="Ainda sem negócios cadastrados"
-                texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-                icone="storefront"
-              />
-            ) : (
-              <Grade formato="carrossel-mobile">
-                {negocios.map(({ negocio, apresentacao }) => (
-                  <CartaoDeNegocio
-                    key={negocio.id}
-                    negocio={{
-                      id: negocio.id,
-                      fonte: texto(apresentacao["imagem"]),
-                      nome: texto(apresentacao["name"], negocio.display_name),
-                      categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                      bairro: primeiros(apresentacao["hoods"]),
-                      cidade: casca.cidade,
-                      indicacoes: numero(apresentacao["recN"]),
-                      patrocinado: apresentacao["spon"] === true,
-                      aguardando: apresentacao["claimed"] === false,
-                      salvo: salvos.has(negocio.id),
-                    }}
-                    aoSalvar={() => alternarSalvo(negocio.id)}
-                    aoAbrir={() =>
-                      void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
-                    }
+              <Secao
+                titulo="Serviços recomendados"
+                acoes={
+                  <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
+                    Ver negócios
+                  </Botao>
+                }
+              >
+                <p className="text-sm text-(--on-surface-variant)">
+                  Indicados pela comunidade de {casca.cidade}
+                </p>
+                {negocios.length === 0 ? (
+                  <EstadoVazio
+                    titulo="Ainda sem negócios cadastrados"
+                    texto="As indicações da comunidade ajudarão a formar o guia de serviços."
+                    icone="storefront"
                   />
-                ))}
-              </Grade>
-            )}
-          </Secao>
+                ) : (
+                  <Grade formato="carrossel-mobile">
+                    {negocios.map(({ negocio, apresentacao }) => (
+                      <CartaoDeNegocio
+                        key={negocio.id}
+                        negocio={{
+                          id: negocio.id,
+                          fonte: texto(apresentacao["imagem"]),
+                          nome: texto(apresentacao["name"], negocio.display_name),
+                          categoria: texto(apresentacao["cat"], negocio.category ?? ""),
+                          bairro: primeiros(apresentacao["hoods"]),
+                          cidade: casca.cidade,
+                          indicacoes: numero(apresentacao["recN"]),
+                          patrocinado: apresentacao["spon"] === true,
+                          aguardando: apresentacao["claimed"] === false,
+                          salvo: salvos.has(negocio.id),
+                        }}
+                        aoSalvar={() => alternarSalvo(negocio.id)}
+                        aoAbrir={() =>
+                          void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
+                        }
+                      />
+                    ))}
+                  </Grade>
+                )}
+              </Secao>
 
-          <Secao titulo="Oportunidades perto de você">
-            {anuncios.length === 0 ? (
-              <EstadoVazio
-                titulo="As primeiras oportunidades aparecem aqui"
-                texto="Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato."
-                icone="sell"
-                acao={{
-                  rotulo: "Anunciar desapego",
-                  aoAcionar: () => void navegacao.irPara("desapegos"),
-                }}
-              />
-            ) : (
-              <Grade formato="carrossel-mobile">
-                {anuncios.map(({ anuncio, apresentacao }) => (
-                  <CartaoDeFoto
-                    key={anuncio.id}
-                    anuncio={{
-                      id: anuncio.id,
-                      fonte: texto(apresentacao["imagem"]),
-                      rotulo: texto(apresentacao["flag"]) || undefined,
-                      porMes: texto(apresentacao["per"]) === "/mês",
-                      titulo: texto(apresentacao["title"], anuncio.title),
-                      preco: precoDoAnuncio(anuncio.price_cents),
-                      icone: iconeDeDado(apresentacao["icon"]),
-                      meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
-                      salvo: salvos.has(anuncio.id),
+              <Secao titulo="Oportunidades perto de você">
+                {anuncios.length === 0 ? (
+                  <EstadoVazio
+                    titulo="As primeiras oportunidades aparecem aqui"
+                    texto="Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato."
+                    icone="sell"
+                    acao={{
+                      rotulo: "Anunciar desapego",
+                      aoAcionar: () => void navegacao.irPara("desapegos"),
                     }}
-                    aoSalvar={() => alternarSalvo(anuncio.id)}
-                    aoAbrir={() =>
-                      void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
-                    }
                   />
-                ))}
-              </Grade>
-            )}
-          </Secao>
-
+                ) : (
+                  <Grade formato="carrossel-mobile">
+                    {anuncios.map(({ anuncio, apresentacao }) => (
+                      <CartaoDeFoto
+                        key={anuncio.id}
+                        anuncio={{
+                          id: anuncio.id,
+                          fonte: texto(apresentacao["imagem"]),
+                          rotulo: texto(apresentacao["flag"]) || undefined,
+                          porMes: texto(apresentacao["per"]) === "/mês",
+                          titulo: texto(apresentacao["title"], anuncio.title),
+                          preco: precoDoAnuncio(anuncio.price_cents),
+                          icone: iconeDeDado(apresentacao["icon"]),
+                          meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
+                          salvo: salvos.has(anuncio.id),
+                        }}
+                        aoSalvar={() => alternarSalvo(anuncio.id)}
+                        aoAbrir={() =>
+                          void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
+                        }
+                      />
+                    ))}
+                  </Grade>
+                )}
+              </Secao>
             </div>
             <aside aria-label="Comunidade na cidade" className="min-w-0 lg:sticky lg:top-16">
-          {grupos.length === 0 ? null : (
-            <Secao titulo="Nos seus grupos">
-              <div className="grid gap-2">
-                {grupos.map(({ grupo, apresentacao }) => (
+              {grupos.length === 0 ? null : (
+                <Secao titulo="Nos seus grupos">
+                  <div className="grid gap-2">
+                    {grupos.map(({ grupo, apresentacao }) => (
+                      <LinhaDeLista
+                        key={grupo.id}
+                        icone="group"
+                        titulo={texto(apresentacao["t"], grupo.name)}
+                        subtitulo={`${numero(apresentacao["members"])} membros`}
+                        onClick={() =>
+                          void navegacao.irPara("grupo", { parametros: { id: grupo.id } })
+                        }
+                      />
+                    ))}
+                  </div>
+                </Secao>
+              )}
+
+              {encontro === null ? null : (
+                <Secao
+                  titulo="Próximo encontro"
+                  acoes={
+                    <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
+                      Agenda
+                    </Botao>
+                  }
+                >
                   <LinhaDeLista
-                    key={grupo.id}
-                    icone="group"
-                    titulo={texto(apresentacao["t"], grupo.name)}
-                    subtitulo={`${numero(apresentacao["members"])} membros`}
-                    onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
-                  />
-                ))}
-              </div>
-            </Secao>
-          )}
-
-          {encontro === null ? null : (
-            <Secao
-              titulo="Próximo encontro"
-              acoes={
-                <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
-                  Agenda
-                </Botao>
-              }
-            >
-              <LinhaDeLista
-                icone="event"
-                titulo={texto(encontro.title)}
-                subtitulo={resumoDoEncontro(encontro.starts_at, texto(encontro.venue))}
-                fim={
-                  <span className="text-[13px] font-medium text-(--primary)">
-                    {presencas.has(encontro.id) ? "Confirmado" : "Vou"}
-                  </span>
-                }
-                onClick={() => alternarPresenca(encontro.id)}
-              />
-            </Secao>
-          )}
-
-          <Secao
-            titulo="A comunidade procura"
-            acoes={
-              <Botao tom="texto" onClick={() => void navegacao.irPara("comunidade")}>
-                Ver perguntas
-              </Botao>
-            }
-          >
-            {perguntas.length === 0 ? (
-              <EstadoVazio
-                titulo="Uma pergunta pode ajudar muita gente"
-                texto="Busque uma indicação ou compartilhe uma dúvida com sua cidade."
-                icone="forum"
-                acao={{
-                  rotulo: "Pedir indicação",
-                  aoAcionar: () => void navegacao.irPara("comunidade"),
-                }}
-              />
-            ) : (
-              <div className="grid gap-2">
-                {perguntas.map(({ pergunta, apresentacao }) => (
-                  <LinhaDePergunta
-                    key={pergunta.id}
-                    pergunta={{
-                      id: pergunta.id,
-                      pergunta: texto(apresentacao["q"], pergunta.title),
-                      autor: texto(apresentacao["who"], "Alguém da cidade"),
-                      tópico: texto(apresentacao["topic"], ""),
-                      cidade: casca.cidade,
-                      respostas: tamanho(apresentacao["answers"]),
-                      resolvida: pergunta.is_resolved === true,
-                    }}
-                    onClick={() =>
-                      void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
+                    icone="event"
+                    titulo={texto(encontro.title)}
+                    subtitulo={resumoDoEncontro(encontro.starts_at, texto(encontro.venue))}
+                    fim={
+                      <span className="text-[13px] font-medium text-(--primary)">
+                        {presencas.has(encontro.id) ? "Confirmado" : "Vou"}
+                      </span>
                     }
+                    onClick={() => alternarPresenca(encontro.id)}
                   />
-                ))}
-              </div>
-            )}
-          </Secao>
+                </Secao>
+              )}
 
+              <Secao
+                titulo="A comunidade procura"
+                acoes={
+                  <Botao tom="texto" onClick={() => void navegacao.irPara("comunidade")}>
+                    Ver perguntas
+                  </Botao>
+                }
+              >
+                {perguntas.length === 0 ? (
+                  <EstadoVazio
+                    titulo="Uma pergunta pode ajudar muita gente"
+                    texto="Busque uma indicação ou compartilhe uma dúvida com sua cidade."
+                    icone="forum"
+                    acao={{
+                      rotulo: "Pedir indicação",
+                      aoAcionar: () => void navegacao.irPara("comunidade"),
+                    }}
+                  />
+                ) : (
+                  <div className="grid gap-2">
+                    {perguntas.map(({ pergunta, apresentacao }) => (
+                      <LinhaDePergunta
+                        key={pergunta.id}
+                        pergunta={{
+                          id: pergunta.id,
+                          pergunta: texto(apresentacao["q"], pergunta.title),
+                          autor: texto(apresentacao["who"], "Alguém da cidade"),
+                          tópico: texto(apresentacao["topic"], ""),
+                          cidade: casca.cidade,
+                          respostas: tamanho(apresentacao["answers"]),
+                          resolvida: pergunta.is_resolved === true,
+                        }}
+                        onClick={() =>
+                          void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </Secao>
             </aside>
           </div>
           <Secao

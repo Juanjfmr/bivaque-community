@@ -59,7 +59,10 @@ export function LinhaDePergunta({
           </small>
         )}
         <span className="flex min-w-0 flex-wrap items-center gap-2">
-          <Etiqueta tom={pergunta.resolvida === true ? "ok" : "neutro"} {...(pergunta.resolvida === true ? { icone: "check_circle" as const } : {})}>
+          <Etiqueta
+            tom={pergunta.resolvida === true ? "ok" : "neutro"}
+            {...(pergunta.resolvida === true ? { icone: "check_circle" as const } : {})}
+          >
             {pergunta.resolvida === true
               ? "Resolvida"
               : pergunta.respostas === 0

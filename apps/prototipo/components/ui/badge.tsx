@@ -29,7 +29,8 @@ function Badge({
   variant = "default",
   asChild = false,
   ...props
-}: React.ComponentPropsWithoutRef<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+}: React.ComponentPropsWithoutRef<"span"> &
+  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
   const Comp = asChild ? Slot.Root : "span"
 
   return (

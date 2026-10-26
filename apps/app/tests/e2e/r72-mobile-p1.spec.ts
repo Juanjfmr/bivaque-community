@@ -36,7 +36,9 @@ test("P1: abrir anúncio conserva a foto da listagem nos detalhes", async ({ pag
   const capa = page.locator('[data-tela="anuncio"] [data-capa="foto"] img')
   await expect(capa).toBeVisible()
   await expect(capa).toHaveAttribute("src", src ?? "")
-  await expect.poll(() => capa.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  await expect
+    .poll(() => capa.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
 })
 
 test("P1: negócios e grupos apresentam capas quando a fixture tem imagens", async ({ page }) => {
@@ -44,7 +46,10 @@ test("P1: negócios e grupos apresentam capas quando a fixture tem imagens", asy
   const negocio = page.locator('[data-tela="inicio"] [data-cartao="negocio"] img').first()
   await expect(negocio).toBeVisible()
   const origem = await negocio.getAttribute("src")
-  await page.locator('[data-tela="inicio"] [data-cartao="negocio"] [data-acao="abrir-foto"]').first().click()
+  await page
+    .locator('[data-tela="inicio"] [data-cartao="negocio"] [data-acao="abrir-foto"]')
+    .first()
+    .click()
   await expect(page).toHaveURL(/\/app\/negocio\/[^/]+$/)
   const capaNegocio = page.locator('[data-tela="negocio"] [data-capa="foto"] img')
   await expect(capaNegocio).toBeVisible()
