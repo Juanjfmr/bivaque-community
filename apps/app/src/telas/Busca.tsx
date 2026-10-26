@@ -134,6 +134,7 @@ export function Busca() {
   }, [casca.cidade, rodada])
 
   // Uma consulta digitada tem precedência sobre a categoria tocada na grade.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: digitando outra consulta descarta a categoria ativa
   useEffect(() => {
     setCategoriaAtiva(null)
   }, [consulta])
@@ -193,6 +194,8 @@ export function Busca() {
   const mostrando = (tipo: string): boolean => escopo === "all" || escopo === tipo
   const teto = escopo === "all" ? 4 : Number.POSITIVE_INFINITY
   const carregando = dados === null && !erro
+  const negociosDaCidade = dados?.negocios ?? []
+  const anunciosDaCidade = dados?.anuncios ?? []
   const explorando = termos(consulta).length === 0 && categoriaAtiva === null
 
   return (
@@ -219,9 +222,9 @@ export function Busca() {
           <Secao titulo={`Explorar em ${casca.cidade}`} className="mt-4">
             <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
               {EXPLORAR.filter((item) =>
-                dados.negocios.some((negocio) => negocioDaCategoria(item.id, negocio)),
+                negociosDaCidade.some((negocio) => negocioDaCategoria(item.id, negocio)),
               ).slice(0, 6).map((item) => {
-                const quantidade = dados.negocios.filter((negocio) => negocioDaCategoria(item.id, negocio)).length
+                const quantidade = negociosDaCidade.filter((negocio) => negocioDaCategoria(item.id, negocio)).length
                 return (
                   <button
                     key={item.id}
@@ -244,8 +247,8 @@ export function Busca() {
                 )
               })}
               {[
-                { id: "imoveis", rotulo: "Imóveis", icone: "apartment", quantidade: dados.anuncios.filter((a) => a.kind === "property").length },
-                { id: "desapegos", rotulo: "Desapegos", icone: "sell", quantidade: dados.anuncios.filter((a) => a.kind !== "property").length },
+                { id: "imoveis", rotulo: "Imóveis", icone: "apartment", quantidade: anunciosDaCidade.filter((a) => a.kind === "property").length },
+                { id: "desapegos", rotulo: "Desapegos", icone: "sell", quantidade: anunciosDaCidade.filter((a) => a.kind !== "property").length },
               ].map((item) => (
                 <button
                   key={item.id}
