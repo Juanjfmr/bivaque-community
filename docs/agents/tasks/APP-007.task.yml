@@ -1,0 +1,49 @@
+task_id: APP-007
+objective: A V1 permite responder sem perder texto, fechar a paleta por Voltar e sair do carregamento de registros inexistentes, com provas no modo normal.
+authority:
+  - Decisão direta do dono em 26/10/2026, Segue você agora, após a revisão da V1
+  - docs/decisions/ADR-20261024-front-react-spa.md
+  - docs/agents/prototipo-shadcn/STATUS.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: APP-ONDAS-runtime-Codex.json reproduz os três defeitos; APP-REAL-C1-vermelho-mobile.log tem 2 falhas e APP-REAL-C1-vermelho-desktop.log tem 1 falha no navegador.
+allowed_paths:
+  - apps/app/src/telas/
+  - apps/app/src/casca/
+  - apps/app/lib/navegacao/entrada.ts
+  - apps/app/tests/e2e/jornadas-reais.spec.ts
+  - apps/app/tests/dados-demo.test.ts
+  - scripts/app/
+  - tests/scope/app-instrumentos.test.mjs
+  - docs/agents/prototipo-shadcn/
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/coordenacao/APP-REAL-C1-revisao.md
+forbidden:
+  - instalar ou atualizar dependências; API, banco, autenticação real ou credenciais
+  - reverter a V1 ou enfraquecer a bateria antiga para esconder regressão
+  - alegar ondas 2 a 8 completas, aceite visual ou segurança do banco por este reparo
+  - merge, push, deploy, force-push ou env.local
+acceptance:
+  - Resposta não vazia entra na lista da pergunta em memória, mantém entradas repetidas distintas e só então limpa o campo
+  - Paleta usa o histórico único; Voltar fecha antes de sair, escolha não deixa camada fantasma e diálogo mantém foco contido e devolvido
+  - Sete detalhes diferenciam carga pendente de registro não encontrado e oferecem retorno ao Início
+  - Casos reais usam Playwright sem o fixture que ativa TelaDeProva e correm em 375, 768 e 1440
+  - Comparação de imagens mantém igualdade byte a byte usando Buffer.equals, sem aumentar timeout nem remover casos
+  - Captura valida títulos normais contra referência e contrato explícito, identidade de conteúdo, ausência do andaime e carregamento terminado; evidência antiga não vira aceite
+  - Instrumentos recebem revisão focal de outro modelo; coluna provas compartilhada não é citada como prova individual de cada componente
+  - Gate completo e regressão completos lidos e classificados antes do commit local; restante funcional e visual explicitamente pendente
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - node --test tests/scope/app-instrumentos.test.mjs
+  - node scripts/app/capturar.mjs
+  - npx pnpm@11.18.0 gate
+risk: histórico, resposta local, indisponível e instrumento de runtime
+risk_level: R2
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

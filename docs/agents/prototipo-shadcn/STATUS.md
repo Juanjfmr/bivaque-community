@@ -1,4 +1,71 @@
-# Fluxo vigente — Codex assume o front, decisão do dono em 25/10/2026
+# Fluxo vigente — Codex retoma o front, decisão do dono em 26/10/2026
+
+O dono determinou "Segue você agora" após a revisão da entrega OpenCode/DeepSeek.
+Codex reassume como único escritor do app, preservando as telas V1 e o WIP anterior.
+Primeiro fechamento: corrigir resposta descartada, paleta fora do histórico e IDs
+inexistentes; testar o modo normal, obter revisão independente do instrumento,
+rodar o gate completo e renovar as evidências. As ondas 2–8 não estão concluídas:
+editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
+R3 continua isolada e sem aprovação global. Nenhum merge, push ou deploy autorizado.
+O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
+
+## APP-007 — reparos medidos; fechamento FAIL/HUMAN_DECISION, 26/10/2026
+
+- Codex preservou a fundação e as telas V1 do DeepSeek. Corrigiu resposta que
+  era descartada, paleta fora do histórico e carregamento infinito em sete
+  detalhes inexistentes. Respostas são locais à sessão da tela; sem backend novo.
+  A paleta usa o histórico único e diálogo Radix já instalado, com foco contido
+  e devolvido. Nenhum pacote instalado ou versão alterada.
+- Instrumento real novo importa Playwright diretamente, sem o fixture que liga
+  TelaDeProva: 29 casos aprovados e 4 skips de largura. A bateria inteira ficou
+  **509 passed, 16 skipped, 0 failed**, em 5,3 min, nos três viewports. Os 480
+  casos anteriores continuam medindo a fundação; não são prova das jornadas V1.
+  Log: `.visual/coordenacao/APP-CODEX-final-e2e.log`.
+- Baseline vermelho reproduziu três falhas de navegador (2 móveis + 1 desktop).
+  Qwen, modelo distinto e somente leitura, aprovou os instrumentos para medição
+  em `APP-REAL-C1-revisao.md`: não aprovou ondas 2–8 nem segurança. Limites:
+  contenção aferida em um Shift+Tab, corrida Back entre awaits não forçada,
+  espera explícita do esqueleto de lista e Pedido ainda incompleto.
+- **Gate completo executado três vezes e vermelho**. Primeira: dois imports de
+  captura excederam 30 s, 1.724/1.726 unitários. Focal dos mesmos arquivos:
+  26/26. Segunda e terceira: varredura de privacidade excedeu 5 s, 188/189;
+  focal do arquivo: 6/6 em 2,18 s. Reduzir workers para 2 e depois 1 não resolveu.
+  Não se alterou timeout ou asserção. Não foi provada a reprodução na base limpa;
+  a influência da árvore V1 na lentidão permanece por isolar.
+- Último gate: lint 21 s, tipos 32 s, tipos E2E 14 s, Next 104 s, Vite 54 s
+  aprovados; testes FAIL em 127 s. Unitários 1.726/1.726, app 84/84, mobile
+  76/76 e web 19/19 aprovados, privacidade 188/189. Escopo e segredos ficaram
+  sem execução dentro do gate porque ele para na primeira falha; rodados
+  separadamente depois da regressão: **150/150** e **secrets PASS**.
+  Logs: `APP-CODEX-final-gate.log`, `APP-REAL-C1-escopo.log` e
+  `APP-REAL-C1-segredos.log`, todos em `.visual/coordenacao/`.
+- Comparação de 24 imagens mantém igualdade byte a byte com Buffer.equals,
+  sem timeout ampliado. Captura renovada: **152/152 pares**, zero erros de
+  runtime no manifesto, em `.visual/onda-1/pares-2026-10-26T11-41-20-974Z/`.
+  HTML à esquerda/app à direita, 375/1440, claro/escuro. Varredura visual em
+  19 pranchas de contato e quatro pares ampliados; não é aceite pixel a pixel.
+  As capturas antigas de 01:27Z NÃO representam a entrega V1 nem as alterações
+  posteriores, corrigindo o relato histórico abaixo. Manifesto atual conserva
+  base 651ebea6, árvore suja e hashes do WIP, sem inventar revisão integrada.
+- Conferência dos 1.203 IDs e do resultado E2E avançou até a exigência de gate
+  verde e **falhou ali**, como deve. As 33 linhas numeradas de endereços do
+  capítulo 1 agora apontam equivalentes; isso não fecha jornadas consumidoras.
+  Log `.visual/coordenacao/APP-REAL-C1-cobertura.log`.
+- **Decisão:** sem commit funcional aprovado e sem aceite da onda 1. Código
+  preservado em WIP; registro documental separado. Orçamento APP-007 encerrado,
+  lista única em `docs/agents/tasks/APP-007-bloqueio.md`. Recomendação: isolar e
+  corrigir o custo da varredura sem excluir fontes ou relaxar a auditoria,
+  com revisão independente do instrumento antes de uma nova prova global.
+- Refino visual continua necessário: fotos ainda são placeholders; Início sem
+  coluna lateral desktop; ações extras no topo de telas internas; painel de
+  cidade e layouts V1 diferem da referência. Editor/fotos de anúncio, pedidos,
+  propostas, entrada completa e filas do dono seguem incompletos. As ondas 2–8
+  não estão aprovadas. Não iniciar prova vertical ou remover apps/prototipo.
+- R3 não foi reavaliada neste lote: RED-007 aguarda julgamento; permissões/RLS
+  globais e revisão final independente continuam pendentes. Disco: 26,1 GiB
+  livres. Nenhum env.local, reset, merge, push ou deploy; monitor permanece pausado.
+
+# Decisão anterior — Codex assume o front em 25/10/2026
 
 O dono autorizou: "Então pode fazer", aceitando a recomendação de o Codex assumir
 apps/app até as capturas da onda 1. Esta decisão substitui os papéis/cadência anteriores
@@ -521,3 +588,75 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - Não escrevi PRONTO e não commitei nada; a decisão e o commit são do julgador.
 - Nenhuma tela das ondas 2 a 8 foi implementada; a galeria continua prova, fora da
   navegação real e só com o modo de prova ligado.
+
+## Execução direta Codex — 25/10/2026, fechamento técnico em prova
+
+- Dono autorizou a troca de executor; cadeia Flash 1c encerrada sem apagar WIP.
+  A aprovação de 1a/1b permanece: 1b em abc67b54, sem novo julgamento desse marcador.
+- 1c: corrigidos instrumento móvel (barra interna oculta por autoridade), foco/rolagem
+  medidos por DOM real, recorte e acionamento do Criar minimizado. A primeira captura
+  completa revelou URL desconhecida virando /app/__root__; negativo reproduzido e
+  corrigido, com 3/3 nos viewports. Comparação também corrigiu a pilha móvel/painel
+  ancorado do Criar. Fontes locais, 100 ícones, mapa de 52 componentes/40 movimentos.
+- 1d: porta demo pública tipada, live/seed, relações, vazios por cidade, cancelamento,
+  cópias independentes e 24 imagens com bytes da referência. Oito casos próprios;
+  suíte app 84/84 verde. Removido texto de filiação/verificação do dono do negócio.
+  APP-004-cobertura.md explicita projeções e limites; não há backend novo.
+- 1e: captura 152 pares (38 cenas x375/1440 xclaro/escuro), manifesto, fontes/hash,
+  dois lados e índice. Rodada anterior completa é diagnóstica, será substituída após
+  as correções visuais. Conferência de 1.203 entradas de tabela, com jornadas futuras
+  pendentes e narrativa sujeita à revisão humana; seis testes do instrumento verdes.
+- Gate completo verde, sem env.local nem build pulado: lint6s, types13s, typesE2E5s,
+  Next57s, Vite8s, testes31s, secrets7s; escopo149/149. Uma tentativa anterior parou
+  em lint por formato de cobertura.json, corrigido; 13 warnings/51 infos não bloqueantes.
+  Log .visual/coordenacao/APP-CODEX-final-gate.log. Bateria E2E completa em andamento;
+  sem aprovação técnica/visual final antes da conclusão e revisão do instrumento.
+- Primeira revisão Qwen das correções de navegação: aprovada com limites, relatório
+  APP-CODEX-instrumento-revisao.md. Revisão final dos instrumentos ainda em andamento,
+  relatório esperado APP-CODEX-final-instrumentos-revisao.md. Triagem não aprova segurança.
+- Consolidação R3: RED-005 aprovada no escopo em 5f5de530 (90 asserções), RED-006/C1
+  em d721aeb0 (97), ambas com gate completo/db:lint no julgamento. Agregado continua
+  FAIL:154 arquivos/2041 executadas,47 arquivos vermelhos (29 abortos,18 de asserção).
+  RED-007 em ef2bd20c já tem marcador PRONTO de21:13:29, aguardando julgamento no
+  próximo ciclo próprio. Estado canônico dessa frente em docs/agents/redesenho/STATUS.md
+  do worktree R3. Permissões/RLS globais e revisão independente final pendentes.
+- Nenhum merge/push/deploy; apps/prototipo preservado até aceite visual. Disco30GiB.
+
+
+## Fechamento técnico da onda 1 — 26/10/2026 (OpenCode/DeepSeek)
+
+- O dono pediu a conclusão nesta sessão (26/10, 03:35Z); a escritora anterior (Codex) parou às 01:59Z. Marcador `APP-CODEX-ATIVO.txt` atualizado; nenhum código do app foi alterado nesta sessão — só leitura, registro e entrega.
+- **R1 do instrumento (a única bloqueante da revisão final) foi corrigida** pelo Codex em 01:51Z (`APP-CODEX-R1-instrumentos.patch`): minimização pela caixa real (`boundingBox().y >= altura do viewport`), larguras 56/58 px e rótulo nos dois estados, painel do Criar por `gridTemplateColumns` computado, docagem por `opacity`/`transform`/`border-bottom` do token; cabeçalho do `casca.spec.ts` alinhado ao contrato do `apoio.ts`. Nenhuma asserção removida ou relaxada.
+- **Revisão focal de confirmação: APROVADO** (Qwen, somente leitura, 01:55Z) — `APP-CODEX-R1-revisao.md`; contagem 38 cenas × 4 = 152 pares confirmada. R2–R6 seguem como limites declarados, não correções.
+- **Prova focal:** `playwright test casca acessibilidade --grep ...` → **13 passed, 8 skipped** (skips são condicionais de largura) — `APP-CODEX-R1-prova.log`.
+- **Gate completo VERDE** em 01:55Z, depois do patch: lint 6s, types 14s, types E2E 5s, Next 49s, Vite 9s, tests 30s, secrets 10s; escopo 149/149; sem build pulado e sem `env.local`. `APP-CODEX-final-gate.log` (838 linhas, termina em "GATE VERDE.").
+- **Bateria E2E completa VERDE** em 01:59Z: **480 passed, 12 skipped, 0 failed** (3,5 min), nos três viewports — `APP-CODEX-final-e2e.log`.
+- **Captura final:** 152/152 pares em `.visual/onda-1/pares-2026-10-26T01-27-40-474Z/` (38 cenas × {375,1440} × {claro,escuro}), com `manifesto.json` e `index.html`; `ultimo.json` aponta para ela. Nenhum arquivo de `apps/app/{src,components,lib,index.html}` mudou depois de 01:27Z — os pares correspondem à árvore atual.
+- **Pendente (dono, parada obrigatória do PLANO §5.1):** aceite visual dos pares. Depois: `apps/prototipo` sai e começam as ondas 2–8 + prova vertical.
+- Limite: esta sessão leu/escreveu pelo contêiner do Desktop Commander (Linux), sem o toolchain do host; gate/E2E canônicos são os logs acima, lidos nesta sessão, não reexecutados aqui. Commit/merge continuam com o coordenador.
+
+
+## Onda 2 em andamento — Início entregue (26/10/2026, OpenCode/DeepSeek)
+
+- Dono: "vamos seguir, quero terminar isso logo e depois refinamos" — revisão visual fina adiada; a frente segue para as telas do produto.
+- Primeira tela real: `apps/app/src/telas/Inicio.tsx` (protótipo `features/home/views.js` + `desktop.js`), ligada em `/app/inicio` e `/app` pelo despacho `TelaDaRota` do `roteador.tsx`.
+- **Modo de prova intacto**: em modo de prova a rota continua servindo `TelaDeProva` — a bateria da onda 1 não muda até a revisão do instrumento da onda 2.
+- Escopo da V1 e o que ficou para o refino estão no cabeçalho do arquivo (carrossel, patrocinado fixo, resume, plano, duas colunas do desktop). Salvar/confirmar são estado local, sem backend.
+- Limite: esta sessão não roda build/typecheck/testes (toolchain Windows; o `tsc` do repo é nativo). Prova pendente no host: `npx pnpm@11.18.0 --filter @bivaque/app test` e `npx pnpm@11.18.0 gate`.
+
+## Ondas 2 a 8 — entrega da OpenCode/DeepSeek (26/10/2026)
+
+- Dono: 'termine todas as ondas e depois reporte; nao pare antes'. Refino visual depois; sem merge/push.
+- **Todas as 33 rotas do catalogo tem tela real** (V1) em apps/app/src/telas/*, ligadas pelo dispatch
+  TelaDaRota; **em modo de prova a rota continua servindo TelaDeProva** — a bateria da onda 1 nao muda.
+- Inicio, Busca, Guia e a Paleta (onda 2); Comunidade, Pergunta, Minhas (3); Grupo, Publicacao, Agenda,
+  Encontro (4); Mercado I (5); Anuncio (6); Negocio, Pedidos, Conversas (7); Voce, Ocultados, Bloqueados,
+  Entrada, Privacidade, Conduta, Ajuda, Contato, Chamados, Apagar conta e Painel do dono (8).
+- Ajuda comum em src/telas/comum.ts (leitura do Json, normalizacao e contagens). CartaoDePublicacao
+  ganhou o tipo 'publicacao'.
+- **Provas desta sessao**: tsc 5.9 (conteiner) **0 erros** e biome check **0 erros** (so avisos antigos
+  de styles.css). Build/E2E/unitarios **nao** rodam neste conteiner (toolchain do host) — a prova
+  pendente e 'npx pnpm@11.18.0 --filter @bivaque/app test' e 'gate' no host.
+- Limites declarados por tela (estado local sem backend, editor/assistente de anuncio, pedidos com
+  backend, filas do dono, grupos de dados da paleta) estao no cabecalho de cada arquivo e em
+  .visual/coordenacao/APP-ONDAS-OPENCODE.md.

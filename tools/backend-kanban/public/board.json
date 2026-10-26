@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-10-25",
+  "updatedAt": "2026-10-26",
   "sourcePolicy": "Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos nao substituem entregas de outros agentes.",
   "cards": [
     {
@@ -5324,7 +5324,7 @@
       "id": "APP-001",
       "title": "SPA nova: onda 1, base e navegação",
       "category": "frontend",
-      "description": "Onda 1a a 1e do PLANO-ONDAS, conforme ADR de 24/10 aceito em 25/10. Codex coordena, DeepSeek implementa 1b em diante. Aceite visual do dono antes da prova vertical.",
+      "description": "Onda 1a a 1e do PLANO-ONDAS. Codex reassumiu em 26/10, preservou a V1 do DeepSeek e mediu os reparos APP-007. Fechamento bloqueado por timeout de privacidade; sem aceite visual ou ondas 2–8 aprovadas.",
       "checklist": [
         "Esqueleto e gate com versões fixas",
         "Navegação testada antes das telas",
@@ -5338,7 +5338,8 @@
         "25/10: bateria 1b escrita antes de implementação; instrumento e2e ainda FAIL na revisão do coordenador, sem liberação da 1c.",
         "25/10 julgamento Codex: gate completo verde; 38/38 unitários e 288/288 E2E em 375/768/1440. CORREÇÕES por /app responder 404 enquanto /app/ responde 200; carga ativa mutada no render e dívida do catálogo. Contrato APP-006 R2 validado; 1c não liberada. Logs em .visual/coordenacao/APP-002-julgamento-*.log; árvore da 1b ainda sem commit.",
         "25/10 julgamento APP-006 APROVADO localmente e navegação integrada em abc67b54: gate completo sem pular etapas, app 38/38, escopo 143/143, E2E 291/291 nos três viewports. /app sem barra, foco/carga e controles anteriores provados. 1c liberada por APP-003; comparação visual e aceite do dono aguardam 1e, sem avanço às ondas 2 a 8.",
-        "25/10 julgamento APP-003 CORREÇÕES: gate FAIL lint11erros; app77/77 unitários. Sem nova prova de build/E2E. Lista única APP-003-correcoes-1.md; retomada C1 usa apenas rodada restante3/3. Código 1c sem aprovação."
+        "25/10 julgamento APP-003 CORREÇÕES: gate FAIL lint11erros; app77/77 unitários. Sem nova prova de build/E2E. Lista única APP-003-correcoes-1.md; retomada C1 usa apenas rodada restante3/3. Código 1c sem aprovação.",
+        "26/10 APP-007: três defeitos V1 corrigidos em WIP; Qwen aprovou instrumento focal; E2E completo 509 passed/16 skipped/0 failed; app84/84; scope150/150 e secrets separados verdes. Gate FAIL após três tentativas, privacidade188/189; focal6/6. Captura atual152pares em .visual/onda-1/pares-2026-10-26T11-41-20-974Z/, manifesto base651ebea6 sujo. Conferência de cobertura recusa gate vermelho. Não aprova onda1, ondas2–8 ou RLS."
       ],
       "links": [
         "docs/agents/tasks/APP-001.task.yml",
@@ -5346,17 +5347,23 @@
         "docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/tasks/APP-006.task.yml",
         "docs/agents/tasks/APP-003.task.yml",
-        "docs/agents/tasks/APP-003-correcoes-1.md"
+        "docs/agents/tasks/APP-003-correcoes-1.md",
+        "docs/agents/tasks/APP-007.task.yml",
+        "docs/agents/tasks/APP-007-bloqueio.md",
+        "docs/agents/prototipo-shadcn/APP-005-cobertura.md"
       ],
-      "sourceRevision": "abc67b54",
+      "sourceRevision": "651ebea6",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "now",
+      "status": "blocked",
       "tests": [],
       "dependencies": [],
-      "updatedAt": "2026-10-25",
-      "blockers": [],
-      "completedChecklist": [true, true, false, false, false]
+      "updatedAt": "2026-10-26",
+      "blockers": [
+        "APP-007: três gates vermelhos por timeout; último em privacidade 188/189. Orçamento encerrado, lista única APP-007-bloqueio.md; sem commit funcional aprovado.",
+        "Fidelidade visual e aceite do dono pendentes; não avançar prova vertical nem remover apps/prototipo."
+      ],
+      "completedChecklist": [true, true, false, true, false]
     },
     {
       "id": "RED-003",
