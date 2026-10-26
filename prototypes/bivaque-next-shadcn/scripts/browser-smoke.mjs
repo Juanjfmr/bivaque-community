@@ -26,6 +26,13 @@ try {
       assert.equal(await nav.isVisible(),width<720,"Unexpected bottom nav at "+width);
       if(width<720)assert.equal(await nav.getByRole("button",{name:"Abrir menu Criar"}).isVisible(),true);
       await page.screenshot({path:output+"/inicio-"+width+"-"+theme+".png",fullPage:true,animations:"disabled"});
+      if(width===375||width===1440){
+        for(const module of ["imoveis","comunidade","servicos"]){
+          await page.goto(url+module+"/",{waitUntil:"domcontentloaded"});
+          await page.locator("h1").first().waitFor({timeout:15000});
+          await page.screenshot({path:output+"/"+module+"-"+width+"-"+theme+".png",fullPage:true,animations:"disabled"});
+        }
+      }
       results.push({width,theme,overflow:metrics.scroll-metrics.w,jsErrors:errors.length});
       await context.close();
     }
@@ -49,7 +56,7 @@ try {
   await page.locator("#global-search").fill("Famílias militares em Brasília");
   await page.getByRole("button",{name:/Famílias militares em Brasília/}).waitFor();
   // Switching city cannot preserve filter data nor expose the Brasília guide.
-  await page.getByRole("button",{name:"Selecionar cidade"}).click();
+  await page.locator('[data-slot="select-trigger"][aria-label="Selecionar cidade"]').click();
   await page.getByRole("option",{name:"Manaus"}).click();
   await page.goto(url+"guia/",{waitUntil:"domcontentloaded"});
   await page.getByRole("heading",{name:"Guia de Manaus em preparação"}).waitFor();
