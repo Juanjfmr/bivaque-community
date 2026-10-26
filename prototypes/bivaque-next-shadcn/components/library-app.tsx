@@ -47,6 +47,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxList, ComboboxItem, C
 import { HOUSING, CLASSIFIEDS, PROVIDERS, QUESTIONS, GROUPS, EVENTS, REQUESTS, BENEFITS, VILLAS, ARRIVAL_STEPS, BRASILIA_GUIDE, TALENTS, RIDES } from "@/components/modules/fixtures";
 import {DemoAccessPage, INITIAL_DEMO_ENROLLMENT, type DemoEnrollment} from "@/components/demo-access";
 import {DemoModerationPage, type DemoReport} from "@/components/demo-moderation";
+import {R72Info} from "@/components/r72-info";
 
 type Item = { city: string; id: string; title: string; description: string; meta: string; image?: string; price?: string; badge?: string; kind: string };
 type CatalogFilters = {min:string;max:string;hoods:string[];beds:number;parking:number;area:number;pets:boolean;furnished:boolean;availability:string;condition:string;pickup:string;om:string};
@@ -76,6 +77,10 @@ const routes = [
   { label: "Negócios", slug: "negocios", icon: BriefcaseBusiness, group: "oculto" },
   { label: "Entrada de teste", slug: "acesso", icon: Shield, group: "oculto" },
   { label: "Moderação demo", slug: "painel", icon: ClipboardList, group: "oculto" },
+  { label: "Ajuda", slug: "ajuda", icon: CircleHelp, group: "oculto" },
+  { label: "Privacidade", slug: "privacidade", icon: Shield, group: "oculto" },
+  { label: "Conduta", slug: "conduta", icon: Shield, group: "oculto" },
+  { label: "Planos", slug: "planos", icon: Ticket, group: "oculto" },
 ] as const;
 const money = (n: number) => n.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
 const INITIAL_CITY = "Brasília";
@@ -471,7 +476,7 @@ export default function LibraryApp(){
   function you(){return <div className="mx-auto max-w-4xl space-y-5">{header}<Card>
     <CardHeader><Avatar><AvatarFallback>CO</AvatarFallback></Avatar><CardTitle>Perfil de demonstração</CardTitle><CardDescription>Sem verificação militar ou autenticação real</CardDescription></CardHeader>
     <CardContent className="flex flex-wrap items-center gap-2"><Badge variant="outline">{saved.length} itens salvos</Badge><Badge variant="outline">{joined.length} grupos</Badge><Badge variant="outline">{going.length} eventos</Badge><Badge variant="secondary">{account.stage==="aprovado-demo"?"Aprovação fictícia":"Acesso não verificado"}</Badge></CardContent>
-    <CardFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate("acesso")}><Shield className="size-4"/> Simular entrada</Button><Button variant="outline" onClick={()=>navigate("painel")}><ClipboardList className="size-4"/> Painel de moderação demo</Button></CardFooter>
+    <CardFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>navigate("acesso")}><Shield className="size-4"/> Simular entrada</Button><Button variant="outline" onClick={()=>navigate("painel")}><ClipboardList className="size-4"/> Painel de moderação demo</Button><Button variant="outline" onClick={()=>navigate("ajuda")}>Ajuda</Button><Button variant="outline" onClick={()=>navigate("privacidade")}>Privacidade</Button><Button variant="outline" onClick={()=>navigate("planos")}>Planos</Button></CardFooter>
   </Card><Tabs defaultValue="Salvos"><TabsList><TabsTrigger value="Salvos">Salvos</TabsTrigger><TabsTrigger value="Publicações">Publicações</TabsTrigger><TabsTrigger value="Privacidade">Privacidade</TabsTrigger></TabsList>
     <TabsContent value="Salvos">{showItems(allSaved)}</TabsContent>
     <TabsContent value="Publicações">{localDrafts(options)||<Alert><InfoIcon/><AlertTitle>Nenhum rascunho</AlertTitle><AlertDescription>Use Criar para testar uma publicação.</AlertDescription></Alert>}</TabsContent>
@@ -544,7 +549,7 @@ export default function LibraryApp(){
     }
     return <p className="text-sm text-muted-foreground">Página não encontrada na demonstração.</p>;
   }
-  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:slug==="busca"?searchPage():homePage();
+  const pageContent=detailId?detailPage():slug==="inicio"?homePage():isMarketplace?marketplace():slug==="comunidade"?community():slug==="grupos"?<div className="space-y-5">{header}{notice()}{localDrafts(["Grupo"])}{groupPage()}</div>:slug==="movimentacao"?movement():slug==="guia"?guide():slug==="pedidos"?requests():slug==="agenda"?agenda():slug==="vilas"?villas():slug==="clube"?club():slug==="conversas"?chatsPage():slug==="talentos"?talents():slug==="caronas"?rides():slug==="voce"?you():slug==="acesso"?<DemoAccessPage account={account} onChange={setAccount} onNavigate={navigate}/>:slug==="painel"?<DemoModerationPage reports={reports} onStatus={setReportStatus} onNavigate={navigate}/>:["ajuda","privacidade","conduta","planos"].includes(slug)?<R72Info kind={slug as "ajuda"|"privacidade"|"conduta"|"planos"}/>:slug==="busca"?searchPage():homePage();
 
   const oms=["Todas",...new Set(HOUSING.filter(h=>h.city===city).map(h=>h.om))];
   const relevantHoods=[...new Set((slug==="imoveis"?HOUSING:CLASSIFIEDS).filter(x=>x.city===city).map(x=>x.hood))];
