@@ -4,37 +4,33 @@
  * Fonte de terceiro mantida sem modificacoes funcionais nesta integracao.
  * Responsabilidade de estilizacao/dados Bivaque: components/bivaque/cartao-vitrine.tsx.
  */
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 /* ------------------------------------------------------------------
  * Context for sharing state between compound components
  * ------------------------------------------------------------------ */
 
-type ProductCardVariant = "default" | "inner";
-type ProductCardSize = "sm" | "default" | "lg";
+type ProductCardVariant = "default" | "inner"
+type ProductCardSize = "sm" | "default" | "lg"
 
 interface ProductCardContextValue {
-  variant: ProductCardVariant;
-  size: ProductCardSize;
-  animated: boolean;
+  variant: ProductCardVariant
+  size: ProductCardSize
+  animated: boolean
 }
 
-const ProductCardContext = React.createContext<ProductCardContextValue | null>(
-  null,
-);
+const ProductCardContext = React.createContext<ProductCardContextValue | null>(null)
 
 function useProductCardContext() {
-  const context = React.useContext(ProductCardContext);
+  const context = React.useContext(ProductCardContext)
   if (!context) {
-    throw new Error(
-      "ProductCard compound components must be used within <ProductCard>",
-    );
+    throw new Error("ProductCard compound components must be used within <ProductCard>")
   }
-  return context;
+  return context
 }
 
 /* ------------------------------------------------------------------
@@ -51,19 +47,19 @@ const cardWidth: Record<ProductCardSize, string> = {
   sm: "max-w-[200px]",
   default: "max-w-[320px]",
   lg: "max-w-[460px]",
-};
+}
 
 const cardText: Record<ProductCardSize, string> = {
   sm: "text-xs",
   default: "text-sm",
   lg: "text-base",
-};
+}
 
 const imagePadding: Record<ProductCardSize, string> = {
   sm: "p-4",
   default: "p-8",
   lg: "p-12",
-};
+}
 
 // The inner variant parks the title/metric row over the bottom of the same
 // square, so the object-contain subject has to clear it — otherwise the text
@@ -73,25 +69,25 @@ const imagePaddingInner: Record<ProductCardSize, string> = {
   sm: "pb-14",
   default: "pb-20",
   lg: "pb-24",
-};
+}
 
 const contentPadding: Record<ProductCardSize, string> = {
   sm: "px-0.5 py-2",
   default: "px-1 py-3",
   lg: "px-2 py-4",
-};
+}
 
 const contentPaddingInner: Record<ProductCardSize, string> = {
   sm: "p-2",
   default: "p-3",
   lg: "p-4",
-};
+}
 
 const badgePosition: Record<ProductCardSize, string> = {
   sm: "top-1.5 right-1.5 px-1.5 py-0.5",
   default: "top-2 right-2 px-2 py-1",
   lg: "top-3 right-3 px-3 py-1.5",
-};
+}
 
 /* ------------------------------------------------------------------
  * ProductCard (root)
@@ -99,10 +95,10 @@ const badgePosition: Record<ProductCardSize, string> = {
 
 interface ProductCardProps extends React.ComponentProps<"div"> {
   /** `default` puts the content below the image, `inner` lays it over it. */
-  variant?: ProductCardVariant;
-  size?: ProductCardSize;
+  variant?: ProductCardVariant
+  size?: ProductCardSize
   /** Lift the image on hover and press. Defaults to true. */
-  animated?: boolean;
+  animated?: boolean
 }
 
 function ProductCard({
@@ -119,7 +115,7 @@ function ProductCard({
   // <a>/<button> on its title and stretch it (`after:absolute after:inset-0`)
   // rather than making this div interactive — that keeps the badge inside it
   // legal, which nesting a control inside role="button" would not.
-  const interactive = Boolean(props.onClick);
+  const interactive = Boolean(props.onClick)
 
   return (
     <ProductCardContext.Provider value={{ variant, size, animated }}>
@@ -143,7 +139,7 @@ function ProductCard({
         {children}
       </div>
     </ProductCardContext.Provider>
-  );
+  )
 }
 
 /* ------------------------------------------------------------------
@@ -151,11 +147,11 @@ function ProductCard({
  * ------------------------------------------------------------------ */
 
 interface ProductCardImageProps extends React.ComponentProps<"div"> {
-  src: string;
-  alt: string;
+  src: string
+  alt: string
   /** Classes for the `<img>` itself — the one element in the card a caller
    *  cannot reach with a className of its own. */
-  imageClassName?: string;
+  imageClassName?: string
 }
 
 function ProductCardImage({
@@ -166,24 +162,24 @@ function ProductCardImage({
   children,
   ...props
 }: ProductCardImageProps) {
-  const { variant, size, animated } = useProductCardContext();
-  const wellRef = React.useRef<HTMLDivElement>(null);
+  const { variant, size, animated } = useProductCardContext()
+  const wellRef = React.useRef<HTMLDivElement>(null)
   // Touch screens have no hover, and a tap's :active is too brief for the
   // lift to finish, so a tap pins the lift here and the next tap anywhere
   // else releases it — the hold a pointer gets from hovering. Desktop keeps
   // hover alone: a click there would otherwise leave the image raised.
-  const [pressed, setPressed] = React.useState(false);
+  const [pressed, setPressed] = React.useState(false)
   React.useEffect(() => {
-    if (!pressed) return;
+    if (!pressed) return
     const release = (event: PointerEvent) => {
-      if (!wellRef.current?.contains(event.target as Node)) setPressed(false);
-    };
-    document.addEventListener("pointerdown", release);
-    return () => document.removeEventListener("pointerdown", release);
-  }, [pressed]);
+      if (!wellRef.current?.contains(event.target as Node)) setPressed(false)
+    }
+    document.addEventListener("pointerdown", release)
+    return () => document.removeEventListener("pointerdown", release)
+  }, [pressed])
   const pressToHold = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (animated && event.pointerType === "touch") setPressed(true);
-  };
+    if (animated && event.pointerType === "touch") setPressed(true)
+  }
 
   return (
     <div
@@ -226,7 +222,7 @@ function ProductCardImage({
       />
       {children}
     </div>
-  );
+  )
 }
 
 /* ------------------------------------------------------------------
@@ -235,8 +231,8 @@ function ProductCardImage({
 
 interface ProductCardBadgeProps extends React.ComponentProps<"button"> {
   /** Swaps the badge to the filled treatment. */
-  isActive?: boolean;
-  icon?: React.ReactNode;
+  isActive?: boolean
+  icon?: React.ReactNode
 }
 
 function ProductCardBadge({
@@ -247,7 +243,7 @@ function ProductCardBadge({
   onClick,
   ...props
 }: ProductCardBadgeProps) {
-  const { size } = useProductCardContext();
+  const { size } = useProductCardContext()
 
   return (
     <button
@@ -256,8 +252,8 @@ function ProductCardBadge({
       onClick={(e) => {
         // The badge sits on a card that may itself be clickable; a wishlist
         // toggle must not also open the product.
-        e.stopPropagation();
-        onClick?.(e);
+        e.stopPropagation()
+        onClick?.(e)
       }}
       className={cn(
         "absolute flex items-center gap-1 font-medium",
@@ -279,21 +275,17 @@ function ProductCardBadge({
       {icon && <span aria-hidden="true">{icon}</span>}
       {children}
     </button>
-  );
+  )
 }
 
 /* ------------------------------------------------------------------
  * ProductCardContent (container for title, subtitle, metric)
  * ------------------------------------------------------------------ */
 
-type ProductCardContentProps = React.ComponentProps<"div">;
+type ProductCardContentProps = React.ComponentProps<"div">
 
-function ProductCardContent({
-  className,
-  children,
-  ...props
-}: ProductCardContentProps) {
-  const { variant, size } = useProductCardContext();
+function ProductCardContent({ className, children, ...props }: ProductCardContentProps) {
+  const { variant, size } = useProductCardContext()
 
   return (
     <div
@@ -301,39 +293,28 @@ function ProductCardContent({
       className={cn(
         "flex items-start justify-between gap-2",
         variant === "default" && contentPadding[size],
-        variant === "inner" && [
-          "absolute inset-x-0 bottom-0 items-end",
-          contentPaddingInner[size],
-        ],
+        variant === "inner" && ["absolute inset-x-0 bottom-0 items-end", contentPaddingInner[size]],
         className,
       )}
       {...props}
     >
       {children}
     </div>
-  );
+  )
 }
 
 /* ------------------------------------------------------------------
  * ProductCardHeader (wrapper for title + subtitle)
  * ------------------------------------------------------------------ */
 
-type ProductCardHeaderProps = React.ComponentProps<"div">;
+type ProductCardHeaderProps = React.ComponentProps<"div">
 
-function ProductCardHeader({
-  className,
-  children,
-  ...props
-}: ProductCardHeaderProps) {
+function ProductCardHeader({ className, children, ...props }: ProductCardHeaderProps) {
   return (
-    <div
-      data-slot="product-card-header"
-      className={cn("min-w-0 flex-1", className)}
-      {...props}
-    >
+    <div data-slot="product-card-header" className={cn("min-w-0 flex-1", className)} {...props}>
       {children}
     </div>
-  );
+  )
 }
 
 /* ------------------------------------------------------------------
@@ -344,13 +325,9 @@ function ProductCardHeader({
  * them still overrides just that line.
  */
 
-type ProductCardTitleProps = React.ComponentProps<"h3">;
+type ProductCardTitleProps = React.ComponentProps<"h3">
 
-function ProductCardTitle({
-  className,
-  children,
-  ...props
-}: ProductCardTitleProps) {
+function ProductCardTitle({ className, children, ...props }: ProductCardTitleProps) {
   return (
     <h3
       data-slot="product-card-title"
@@ -359,16 +336,12 @@ function ProductCardTitle({
     >
       {children}
     </h3>
-  );
+  )
 }
 
-type ProductCardSubtitleProps = React.ComponentProps<"p">;
+type ProductCardSubtitleProps = React.ComponentProps<"p">
 
-function ProductCardSubtitle({
-  className,
-  children,
-  ...props
-}: ProductCardSubtitleProps) {
+function ProductCardSubtitle({ className, children, ...props }: ProductCardSubtitleProps) {
   return (
     <p
       data-slot="product-card-subtitle"
@@ -377,16 +350,12 @@ function ProductCardSubtitle({
     >
       {children}
     </p>
-  );
+  )
 }
 
-type ProductCardMetricProps = React.ComponentProps<"span">;
+type ProductCardMetricProps = React.ComponentProps<"span">
 
-function ProductCardMetric({
-  className,
-  children,
-  ...props
-}: ProductCardMetricProps) {
+function ProductCardMetric({ className, children, ...props }: ProductCardMetricProps) {
   return (
     <span
       data-slot="product-card-metric"
@@ -395,7 +364,7 @@ function ProductCardMetric({
     >
       {children}
     </span>
-  );
+  )
 }
 
 /* ------------------------------------------------------------------
@@ -404,23 +373,23 @@ function ProductCardMetric({
 
 export {
   ProductCard,
-  ProductCardImage,
   ProductCardBadge,
-  ProductCardContent,
-  ProductCardHeader,
-  ProductCardTitle,
-  ProductCardSubtitle,
-  ProductCardMetric,
-  type ProductCardProps,
-  type ProductCardImageProps,
   type ProductCardBadgeProps,
+  ProductCardContent,
   type ProductCardContentProps,
+  ProductCardHeader,
   type ProductCardHeaderProps,
-  type ProductCardTitleProps,
-  type ProductCardSubtitleProps,
+  ProductCardImage,
+  type ProductCardImageProps,
+  ProductCardMetric,
   type ProductCardMetricProps,
+  type ProductCardProps,
   type ProductCardSize,
+  ProductCardSubtitle,
+  type ProductCardSubtitleProps,
+  ProductCardTitle,
+  type ProductCardTitleProps,
   type ProductCardVariant,
-};
+}
 
-export default ProductCard;
+export default ProductCard
