@@ -625,7 +625,7 @@ function IndicacoesScreen({
             <small>Busque uma resposta antes de perguntar.</small>
           </div>
         </div>
-        <label className="bvj-search">
+        <div className="bvj-search">
           <Search size={18} />
           <Input
             value={text}
@@ -633,7 +633,7 @@ function IndicacoesScreen({
             placeholder="Buscar indicações..."
             aria-label="Buscar indicações"
           />
-        </label>
+        </div>
         <div className="bvj-filters">
           {["Para ajudar", "Resolvidas", "Minhas", "Todas"].map((f) => (
             <button
@@ -677,7 +677,7 @@ function IndicacoesScreen({
 }
 function PerguntaScreen({ all }: { all: Pergunta[] }) {
   const params = useParams()
-  const id = typeof params.id === "string" ? params.id : "internet"
+  const id = typeof params["id"] === "string" ? params["id"] : "internet"
   const q = all.find((x) => x.id === id)
   const [message, setMessage] = useState("")
   const [answers, setAnswers] = useState<string[]>([])
@@ -761,8 +761,8 @@ function PerguntaScreen({ all }: { all: Pergunta[] }) {
                   entre bairros.
                 </p>
               </article>
-              {answers.map((a, i) => (
-                <article className="bvj-answer" key={i}>
+              {answers.map((a) => (
+                <article className="bvj-answer" key={a}>
                   <div className="bvj-byline">
                     <b>Você · agora</b>
                   </div>
@@ -841,7 +841,7 @@ function CriarScreen({ add }: { add: (q: Pergunta) => void }) {
           placeholder="Explique sua situação e o que procura."
         />
         <small>{desc.length}/2000</small>
-        <label>Assunto</label>
+        <p className="bvj-form-label">Assunto</p>
         <div className="bvj-filters bvj-wrap">
           {["Moradia", "Internet", "Transporte", "Saúde", "Esporte"].map((c) => (
             <button
@@ -881,14 +881,14 @@ function GruposScreen({ joined, join }: { joined: string[]; join: (id: string) =
       <Header title="Grupos" />
       <Tabs active="grupos" />
       <div className="bvj-body">
-        <label className="bvj-search">
+        <div className="bvj-search">
           <Search size={18} />
           <Input
             placeholder="Buscar grupos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </label>
+        </div>
         <div className="bvj-filters">
           {["Todos", "Meus grupos", "Recomendados"].map((f) => (
             <button
@@ -949,7 +949,7 @@ function GrupoScreen({
   rsvp: (id: string) => void
 }) {
   const params = useParams()
-  const id = typeof params.id === "string" ? params.id : "chegados"
+  const id = typeof params["id"] === "string" ? params["id"] : "chegados"
   const group = groups.find((g) => g.id === id)
   const [tab, setTab] = useState("Publicações")
   const [message, setMessage] = useState("")
@@ -1043,8 +1043,8 @@ function GrupoScreen({
                 </Button>
               </form>
             )}
-            {posts.map((p, i) => (
-              <Post key={i} name="Você" time="agora" kind="Publicação" body={p} />
+            {posts.map((p) => (
+              <Post key={p} name="Você" time="agora" kind="Publicação" body={p} />
             ))}
             <Post
               name="Marina Lopes"
