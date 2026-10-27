@@ -33,7 +33,7 @@ function Fotografia({
   titulo: string
   rotulo?: string | undefined
   icone: React.ComponentProps<typeof Icone>["nome"]
-  aoAbrir?: () => void
+  aoAbrir?: (() => void) | undefined
 }) {
   const url = assetUrl(fonte)
   return (
@@ -73,7 +73,7 @@ function Salvar({
 }: {
   salvo: boolean
   nome: string
-  aoSalvar?: () => void
+  aoSalvar?: (() => void) | undefined
 }) {
   return (
     <ProductCardBadge
@@ -93,8 +93,8 @@ export function CartaoVitrineAnuncio({
   aoAbrir,
 }: {
   anuncio: AnuncioDoCartao
-  aoSalvar?: () => void
-  aoAbrir?: () => void
+  aoSalvar?: (() => void) | undefined
+  aoAbrir?: (() => void) | undefined
 }) {
   return (
     <article data-cartao="anuncio" data-vitrine="21st" className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
@@ -150,8 +150,8 @@ export function CartaoVitrineNegocio({
   aoAbrir,
 }: {
   negocio: NegocioDoCartao
-  aoSalvar?: () => void
-  aoAbrir?: () => void
+  aoSalvar?: (() => void) | undefined
+  aoAbrir?: (() => void) | undefined
 }) {
   const rotulo = negocio.patrocinado
     ? "Patrocinado"
