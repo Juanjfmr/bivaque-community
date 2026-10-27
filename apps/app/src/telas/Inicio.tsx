@@ -214,7 +214,7 @@ export function Inicio() {
             className="bv-home-atalho bv-press"
           >
             <span className="bv-home-atalho-icone">
-              <Icone nome={atalho.icone} className="size-6" />
+              <Icone nome={atalho.icone} className="size-5" />
             </span>
             <span>{atalho.rotulo}</span>
           </button>
