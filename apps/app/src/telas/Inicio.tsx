@@ -177,41 +177,34 @@ export function Inicio() {
 
   return (
     <section data-tela="inicio" className="grid gap-2">
-      <div
-        data-home="abertura"
-        className="relative isolate overflow-hidden rounded-[28px] bg-(--primary) px-5 py-5 text-(--primary-foreground) sm:px-7 sm:py-7"
-      >
-        <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.16em] text-(--primary-foreground)/70">
-          Sua comunidade, sua cidade
-        </p>
-        <CabecaDePagina
-          className="relative z-10 !py-2"
-          titulo={`O que você precisa em ${casca.cidade}?`}
-          subtitulo="Serviços e oportunidades entre militares e famílias."
-        />
-        <div className="relative z-10 mt-1 flex items-center gap-2 text-xs text-(--primary-foreground)/75">
-          <Icone nome="verified_user" className="size-4 shrink-0" />
-          Descubra, pergunte e conecte-se a quem está por perto.
+      <div data-home="abertura" className="bv-home-intro">
+        <div data-home="apresentacao">
+          <p className="bv-home-kicker">
+            <span className="bv-home-kicker-ponto" aria-hidden="true" />
+            A vida acontece por aqui
+          </p>
+          <CabecaDePagina
+            className="bv-home-heading"
+            titulo={`Sua rede em ${casca.cidade}`}
+            subtitulo="Encontre indicações, moradia e serviços de quem compartilha a vida militar."
+          />
         </div>
+        <button
+          type="button"
+          data-acao="busca"
+          onClick={() => void navegacao.irPara("busca")}
+          aria-label="Buscar no Bivaque"
+          className="bv-home-busca"
+        >
+          <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
+          <span className="min-w-0 grow truncate text-sm text-(--on-surface-variant)">
+            Busque <b className="font-semibold text-(--on-surface)">“{sugestao}”</b>
+          </span>
+          <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
+        </button>
       </div>
 
-      <button
-        type="button"
-        data-acao="busca"
-        onClick={() => void navegacao.irPara("busca")}
-        aria-label="Buscar no Bivaque"
-        className="bv-press flex min-h-12 w-full items-center gap-3 rounded-xl bg-(--surface-lowest) px-3.5 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
-      >
-        <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
-        <span className="min-w-0 truncate text-sm text-(--on-surface-variant)">
-          Busque <b className="text-(--on-surface)">“{sugestao}”</b>
-        </span>
-      </button>
-
-      <nav
-        aria-label="Áreas"
-        className="mt-3 grid grid-cols-4 gap-1.5 rounded-2xl bg-(--surface-lowest) p-2 ring-1 ring-(--outline-variant)"
-      >
+      <nav aria-label="Áreas" className="bv-home-atalhos">
         {ATALHOS.map((atalho) => (
           <button
             key={atalho.rota}
@@ -219,31 +212,15 @@ export function Inicio() {
             data-acao="atalho"
             data-valor={atalho.rota}
             onClick={() => void navegacao.irPara(atalho.rota)}
-            className="bv-press flex min-h-16 flex-col items-center justify-start gap-1.5 rounded-xl px-1 pt-2 pb-1.5 text-[11.5px] leading-4 font-medium hover:bg-(--muted)"
+            className="bv-home-atalho bv-press"
           >
-            <span className="grid size-11 place-items-center rounded-xl bg-(--secondary-container) text-(--primary)">
+            <span className="bv-home-atalho-icone">
               <Icone nome={atalho.icone} className="size-6" />
             </span>
-            {atalho.rotulo}
+            <span>{atalho.rotulo}</span>
           </button>
         ))}
       </nav>
-
-      <button
-        type="button"
-        data-acao="contratar"
-        onClick={() => void navegacao.irPara("pedidos")}
-        className="bv-press mt-3 flex min-h-16 w-full items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 py-3 text-left ring-1 ring-(--outline-variant)"
-      >
-        <Icone nome="build" className="size-6 shrink-0 text-(--primary)" />
-        <span className="grid grow gap-0.5">
-          <b className="text-[15px]">Precisa contratar?</b>
-          <small className="text-(--on-surface-variant)">
-            Descreva o que precisa e receba propostas da comunidade.
-          </small>
-        </span>
-        <Icone nome="chevron_right" className="size-5 shrink-0 opacity-70" />
-      </button>
 
       {erro ? (
         <div className="mt-4">
@@ -303,6 +280,24 @@ export function Inicio() {
                   </Grade>
                 )}
               </Secao>
+
+              <button
+                type="button"
+                data-acao="contratar"
+                onClick={() => void navegacao.irPara("pedidos")}
+                className="bv-home-contratar bv-press"
+              >
+                <span className="bv-home-contratar-icone">
+                  <Icone nome="build" className="size-5" />
+                </span>
+                <span className="min-w-0 grow text-left">
+                  <b className="block text-sm">Precisa contratar um serviço?</b>
+                  <small className="block text-xs text-(--on-surface-variant)">
+                    Peça propostas à comunidade
+                  </small>
+                </span>
+                <Icone nome="chevron_right" className="size-5 shrink-0 text-(--brasa)" />
+              </button>
 
               <Secao titulo="Oportunidades perto de você">
                 {anuncios.length === 0 ? (
