@@ -99,6 +99,9 @@ jobs:
           echo "PR116=$(git rev-parse HEAD)" > "$SITE/versao.txt"
           echo "PUBLIC_URL=https://juanjfmr.github.io/bivaque-community/pr116/"
           test -s "$SITE/index.html"
+          # O endereço deve continuar apontando para os assets do próprio PR.
+          grep -q '/bivaque-community/pr116/assets/' "$SITE/index.html"
+          test -s "$SITE/inicio/index.html"
       - name: Publicar arquivos estáticos também na raiz da branch de testes
         shell: bash
         run: |
