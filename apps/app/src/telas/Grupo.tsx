@@ -79,9 +79,11 @@ export function Grupo() {
     if (dados === null) return []
     return dados.publicacoes
       .filter((item) => item.group_id === id)
-      .sort((a, b) => ordem === "discutidas"
-        ? (comentarios.get(b.id) ?? 0) - (comentarios.get(a.id) ?? 0)
-        : numero(registro(b.apresentacao)["at"]) - numero(registro(a.apresentacao)["at"]))
+      .sort((a, b) =>
+        ordem === "discutidas"
+          ? (comentarios.get(b.id) ?? 0) - (comentarios.get(a.id) ?? 0)
+          : numero(registro(b.apresentacao)["at"]) - numero(registro(a.apresentacao)["at"]),
+      )
   }, [dados, id, ordem, comentarios])
 
   const alternarUtil = (chave: string) => {
@@ -159,15 +161,32 @@ export function Grupo() {
           </p>
         )}
 
-        <div data-ordenacao-grupo="sim" role="group" aria-label="Ordenar publicações" className="flex gap-2 overflow-x-auto pb-1">
-          {([["recentes", "Recentes"], ["discutidas", "Mais discutidas"]] as const).map(([chave, rotulo]) => (
-            <button key={chave} type="button" aria-pressed={ordem === chave}
-              className={ordem === chave
-                ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
-                : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"}
-              onClick={() => setOrdem(chave)}>{rotulo}</button>
+        <fieldset
+          data-ordenacao-grupo="sim"
+          aria-label="Ordenar publicações"
+          className="flex min-w-0 gap-2 overflow-x-auto pb-1"
+        >
+          {(
+            [
+              ["recentes", "Recentes"],
+              ["discutidas", "Mais discutidas"],
+            ] as const
+          ).map(([chave, rotulo]) => (
+            <button
+              key={chave}
+              type="button"
+              aria-pressed={ordem === chave}
+              className={
+                ordem === chave
+                  ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
+                  : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
+              }
+              onClick={() => setOrdem(chave)}
+            >
+              {rotulo}
+            </button>
           ))}
-        </div>
+        </fieldset>
         {publicacoes.length === 0 ? (
           <EstadoVazio
             titulo="Ainda sem publicações"

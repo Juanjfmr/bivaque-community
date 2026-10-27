@@ -55,6 +55,13 @@ retry 3. Não muda backend, banco, dependências ou aceite visual da onda 1.
   `APP-010-triagem-R1.md` e `APP-010-fontes.json` (19 fontes).
   Não declara backend, permissões/RLS, CI remota ou aprovação visual global.
 
+- Durante o push, a branch recebeu d00ae57f, c44dafef e 2f436883 de outra sessão
+  (aviso de conversa, filtros e ordenação de grupo). Rebase preservou os três.
+  A integração mostrou cinco erros novos de lint: três de formato e dois grupos
+  de botões sem elemento semântico. Formatação e fieldsets corrigidos sem mudar
+  os comportamentos recebidos. Provas R1 acima pertencem à base ceb0858e com
+  APP-010; validação da revisão combinada em andamento, sem extrapolar o PASS.
+
 ## Auditoria visual Codex e adoção shadcn — 26/10/2026
 
 O dono pediu julgamento visual pelo Codex e conferência do uso de shadcn em

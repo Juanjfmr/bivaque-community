@@ -163,7 +163,10 @@ export function Conversa() {
         />
       )}
 
-      <aside data-seguranca-conversa="sim" className="rounded-xl bg-(--secondary-container) px-3 py-2 text-xs leading-5">
+      <aside
+        data-seguranca-conversa="sim"
+        className="rounded-xl bg-(--secondary-container) px-3 py-2 text-xs leading-5"
+      >
         <button
           type="button"
           aria-expanded={mostrarSeguranca}
@@ -173,12 +176,15 @@ export function Conversa() {
         >
           <Icone nome="verified_user" className="size-5 shrink-0" />
           <span className="min-w-0 flex-1">Segurança na negociação</span>
-          <Icone nome="chevron_right" className={mostrarSeguranca ? "size-4 rotate-90" : "size-4"} />
+          <Icone
+            nome="chevron_right"
+            className={mostrarSeguranca ? "size-4 rotate-90" : "size-4"}
+          />
         </button>
         {mostrarSeguranca ? (
           <p id="orientacoes-conversa" className="pb-1 text-(--on-surface-variant)">
-            Nunca pague adiantado nem compartilhe documentos ou dados bancários.
-            Combine a entrega em local público. Esta conversa é uma prévia sem envio real.
+            Nunca pague adiantado nem compartilhe documentos ou dados bancários. Combine a entrega
+            em local público. Esta conversa é uma prévia sem envio real.
           </p>
         ) : null}
       </aside>

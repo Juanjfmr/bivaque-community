@@ -56,7 +56,11 @@ export function Conversas() {
     }))
   }, [dados])
 
-  const filtradas = conversas.filter(({ origem }) => filtro === "todas" || (filtro === "anuncios" ? origem?.tipo === "anuncio" : origem?.tipo === "negocio"))
+  const filtradas = conversas.filter(
+    ({ origem }) =>
+      filtro === "todas" ||
+      (filtro === "anuncios" ? origem?.tipo === "anuncio" : origem?.tipo === "negocio"),
+  )
   const carregando = dados === null && !erro
 
   return (
@@ -66,15 +70,33 @@ export function Conversas() {
         subtitulo="Contatos sobre anúncios e serviços da cidade."
       />
 
-      <div data-filtros-conversas="sim" role="group" aria-label="Filtrar conversas" className="flex min-w-0 gap-2 overflow-x-auto pb-1">
-        {([["todas", "Todas"], ["anuncios", "Anúncios"], ["servicos", "Serviços"]] as const).map(([chave, rotulo]) => (
-          <button key={chave} type="button" aria-pressed={filtro === chave}
-            className={filtro === chave
-              ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
-              : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"}
-            onClick={() => setFiltro(chave)}>{rotulo}</button>
+      <fieldset
+        data-filtros-conversas="sim"
+        aria-label="Filtrar conversas"
+        className="flex min-w-0 gap-2 overflow-x-auto pb-1"
+      >
+        {(
+          [
+            ["todas", "Todas"],
+            ["anuncios", "Anúncios"],
+            ["servicos", "Serviços"],
+          ] as const
+        ).map(([chave, rotulo]) => (
+          <button
+            key={chave}
+            type="button"
+            aria-pressed={filtro === chave}
+            className={
+              filtro === chave
+                ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
+                : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
+            }
+            onClick={() => setFiltro(chave)}
+          >
+            {rotulo}
+          </button>
         ))}
-      </div>
+      </fieldset>
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
