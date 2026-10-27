@@ -181,14 +181,6 @@ export function Inicio() {
         data-home="abertura"
         className="relative isolate overflow-hidden rounded-[28px] bg-(--primary) px-5 py-5 text-(--primary-foreground) sm:px-7 sm:py-7"
       >
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-10 -top-16 size-52 rounded-full border border-white/10"
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-8 size-56 rounded-full border border-white/10"
-        />
         <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.16em] text-(--primary-foreground)/70">
           Sua comunidade, sua cidade
         </p>
