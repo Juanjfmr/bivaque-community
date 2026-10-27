@@ -180,8 +180,7 @@ export function Inicio() {
       <div data-home="abertura" className="bv-home-intro">
         <div data-home="apresentacao">
           <p className="bv-home-kicker">
-            <span className="bv-home-kicker-ponto" aria-hidden="true" />
-            A vida acontece por aqui
+            <span className="bv-home-kicker-ponto" aria-hidden="true" />A vida acontece por aqui
           </p>
           <CabecaDePagina
             className="bv-home-heading"
