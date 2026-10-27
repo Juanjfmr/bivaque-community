@@ -177,9 +177,18 @@ export function Inicio() {
 
   return (
     <section data-tela="inicio" className="grid gap-2">
-      <div data-home="abertura" className="relative isolate overflow-hidden rounded-[28px] bg-(--primary) px-5 py-5 text-(--primary-foreground) sm:px-7 sm:py-7">
-        <span aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 size-52 rounded-full border border-white/10" />
-        <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-8 size-56 rounded-full border border-white/10" />
+      <div
+        data-home="abertura"
+        className="relative isolate overflow-hidden rounded-[28px] bg-(--primary) px-5 py-5 text-(--primary-foreground) sm:px-7 sm:py-7"
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-10 -top-16 size-52 rounded-full border border-white/10"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-8 size-56 rounded-full border border-white/10"
+        />
         <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.16em] text-(--primary-foreground)/70">
           Sua comunidade, sua cidade
         </p>
@@ -207,7 +216,10 @@ export function Inicio() {
         </span>
       </button>
 
-      <nav aria-label="Áreas" className="mt-3 grid grid-cols-4 gap-1.5 rounded-2xl bg-(--surface-lowest) p-2 ring-1 ring-(--outline-variant)">
+      <nav
+        aria-label="Áreas"
+        className="mt-3 grid grid-cols-4 gap-1.5 rounded-2xl bg-(--surface-lowest) p-2 ring-1 ring-(--outline-variant)"
+      >
         {ATALHOS.map((atalho) => (
           <button
             key={atalho.rota}
@@ -251,7 +263,10 @@ export function Inicio() {
         </div>
       ) : (
         <>
-          <div data-home="conteudo" className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start">
+          <div
+            data-home="conteudo"
+            className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start"
+          >
             <div className="bv-home-principal min-w-0">
               <Secao
                 titulo="Serviços recomendados"
