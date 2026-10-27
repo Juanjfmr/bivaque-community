@@ -1,283 +1,386 @@
-"use client"
-
 import { useParams } from "@tanstack/react-router"
 import { useState } from "react"
-
-import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
-import { Icone } from "@/components/bivaque/icone"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { useCasca } from "@/src/contexto/casca"
+import { ESTADOS_DA_ENTRADA, type EstadoDaEntrada } from "@/lib/navegacao/rotas"
 
-/**
- * A Entrada da onda 8 (ADR-20261022-entrada-do-prototipo; protótipo:
- * features/entry/*), em versão de demonstração.
- *
- * V1: os doze estados do catálogo, cada um com o texto e o caminho de avanço.
- * O que é de backend — Google, consulta do CPF, envio de documento, convite e
- * exclusão de conta — fica declarado como tal; nada aqui autentica de verdade.
- */
-
-const ORDEM = [
-  "conta",
-  "aceite",
-  "cpf",
-  "resultado",
-  "cidade",
-  "boas-vindas",
-  "retomar",
-  "analise",
-  "login",
-  "senha",
-  "convite",
-  "apagada",
-] as const
-
-type Estado = (typeof ORDEM)[number]
-
-function ehEstado(valor: string): valor is Estado {
-  return (ORDEM as readonly string[]).includes(valor)
-}
-
+// Composição adaptada de Login Form Card, Felipe Menezes, licença MIT:
+// https://21st.dev/@felipemenezes098/components/card-06
 export function Entrar() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const bruto = parametros["estado"] ?? "conta"
-  const estado: Estado = ehEstado(bruto) ? bruto : "conta"
-  const casca = useCasca()
+  const estado: EstadoDaEntrada = ESTADOS_DA_ENTRADA.find((item) => item === bruto) ?? "conta"
   const navegacao = useNavegacao()
   const [nome, setNome] = useState("")
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [cpf, setCpf] = useState("")
   const [codigo, setCodigo] = useState("")
-  const [momento, setMomento] = useState<"chegando" | "morando" | "saindo">("chegando")
+  const [cidade, setCidade] = useState("")
+  const [destino, setDestino] = useState("")
+  const [data, setData] = useState("")
+  const [momento, setMomento] = useState<"chegando" | "morando" | "saindo">("morando")
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [enviado, setEnviado] = useState(false)
+  const [avisar, setAvisar] = useState(false)
+  const [aceitou, setAceitou] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
-
-  const irPara = (destino: Estado) =>
+  const irPara = (destino: EstadoDaEntrada) =>
     void navegacao.irPara("entrar", { parametros: { estado: destino } })
-
-  return (
-    <section data-tela="entrar" className="mx-auto grid w-full max-w-md gap-4 px-4 py-6">
-      {estado === "conta" ? (
-        <>
-          <Titulo
-            titulo="Criar sua conta"
-            texto="Seu nome, e-mail e senha. O CPF vem no passo seguinte."
-          />
-          <Campo id="entrar-nome" rotulo="Nome completo" valor={nome} aoMudar={setNome} />
-          <Campo id="entrar-email" rotulo="E-mail" valor={email} aoMudar={setEmail} type="email" />
-          <Campo
-            id="entrar-senha"
-            rotulo="Senha"
-            valor={senha}
-            aoMudar={setSenha}
-            type="password"
-            nota="Ao menos 8 caracteres, com letras e números."
-          />
-          <p className="text-[13px] text-(--on-surface-variant)">
-            Li e aceito a{" "}
-            <button
-              type="button"
-              className="underline"
-              onClick={() => void navegacao.irPara("privacidade")}
-            >
-              Política de privacidade
-            </button>{" "}
-            e o{" "}
-            <button
-              type="button"
-              className="underline"
-              onClick={() => void navegacao.irPara("conduta")}
-            >
-              Código de conduta
-            </button>
-            .
-          </p>
-          <Botao onClick={() => irPara("aceite")}>Continuar</Botao>
-          <Botao tom="texto" onClick={() => irPara("login")}>
-            Já tenho conta
-          </Botao>
-        </>
-      ) : null}
-
-      {estado === "aceite" ? (
-        <>
-          <Titulo
-            titulo="Aceite do Google"
-            texto="Sua conta entra pelo Google; falta só aceitar o combinado da comunidade."
-          />
-          <p className="text-[13px] text-(--on-surface-variant)">
-            O aceite fica registrado com data e versão — exigência do Google para apps com conta
-            própria.
-          </p>
-          <Botao onClick={() => irPara("cpf")}>Li e aceito</Botao>
-        </>
-      ) : null}
-
-      {estado === "cpf" ? (
-        <>
-          <Titulo
-            titulo="Confirme seu vínculo"
-            texto="O CPF é conferido na fonte oficial para confirmar o vínculo militar."
-          />
-          <Campo id="entrar-cpf" rotulo="CPF" valor={cpf} aoMudar={setCpf} inputMode="numeric" />
-          <p className="text-[13px] text-(--on-surface-variant)">
-            O número só é conferido e não fica salvo no Bivaque.
-          </p>
-          <Botao onClick={() => irPara("resultado")}>Conferir</Botao>
-        </>
-      ) : null}
-
-      {estado === "resultado" ? (
-        <>
-          <Titulo titulo="Vínculo confirmado" texto="Tudo certo com a fonte oficial." />
-          <Botao onClick={() => irPara("cidade")}>Continuar</Botao>
-        </>
-      ) : null}
-
-      {estado === "analise" ? (
-        <>
-          <Titulo
-            titulo="Vínculo em análise"
-            texto="Recebemos o seu documento. A equipe responde em até 2 dias úteis e, enquanto isso, o conteúdo fica fechado."
-          />
-          <Botao tom="contornado" onClick={() => void navegacao.irPara("contato")}>
-            Falar com a gente
-          </Botao>
-        </>
-      ) : null}
-
-      {estado === "cidade" ? (
-        <>
-          <Titulo
-            titulo="Sua cidade e seu momento"
-            texto={`O conteúdo do Bivaque é da cidade escolhida. A cidade atual é ${casca.cidade}.`}
-          />
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["chegando", "Estou chegando"],
-                ["morando", "Moro aqui"],
-                ["saindo", "Estou saindo"],
-              ] as const
-            ).map(([valor, rotulo]) => (
-              <Botao
-                key={valor}
-                tom={momento === valor ? "tonal" : "contornado"}
-                aria-pressed={momento === valor}
-                onClick={() => setMomento(valor)}
-              >
-                {rotulo}
-              </Botao>
-            ))}
-          </div>
-          <Botao onClick={() => irPara("boas-vindas")}>Continuar</Botao>
-        </>
-      ) : null}
-
-      {estado === "boas-vindas" ? (
-        <>
-          <Titulo
-            titulo="Bem-vindo ao Bivaque"
-            texto="O que a comunidade sabe fica disponível para quem chegar depois. Comece pelo Início."
-          />
-          <Botao onClick={() => void navegacao.irPara("inicio")}>Entrar no Bivaque</Botao>
-        </>
-      ) : null}
-
-      {estado === "retomar" ? (
-        <>
-          <Titulo
-            titulo="Continue de onde parou"
-            texto="Você começou a entrada e ainda não terminou."
-          />
-          <Botao onClick={() => irPara("conta")}>Retomar</Botao>
-        </>
-      ) : null}
-
-      {estado === "login" ? (
-        <>
-          <Titulo titulo="Entrar" texto="Use o e-mail e a senha da sua conta." />
-          <Campo
-            id="entrar-login-email"
-            rotulo="E-mail"
-            valor={email}
-            aoMudar={setEmail}
-            type="email"
-          />
-          <Campo
-            id="entrar-login-senha"
-            rotulo="Senha"
-            valor={senha}
-            aoMudar={setSenha}
-            type="password"
-          />
-          <Botao onClick={() => void navegacao.irPara("inicio")}>Entrar</Botao>
-          <Botao tom="texto" onClick={() => irPara("senha")}>
-            Esqueci minha senha
-          </Botao>
-        </>
-      ) : null}
-
-      {estado === "senha" ? (
-        <>
-          <Titulo
-            titulo="Esqueci minha senha"
-            texto="Informe o e-mail da conta; enviamos o caminho de volta."
-          />
-          <Campo
-            id="entrar-senha-email"
-            rotulo="E-mail"
-            valor={email}
-            aoMudar={setEmail}
-            type="email"
-          />
-          <p className="text-[13px] text-(--on-surface-variant)">
-            Demonstração: nenhum e-mail é enviado.
-          </p>
-          <Botao onClick={() => irPara("login")}>Voltar para Entrar</Botao>
-        </>
-      ) : null}
-
-      {estado === "convite" ? (
-        <>
-          <Titulo
-            titulo="Convite de família"
-            texto="Quem foi convidado entra pelo código de 7 dias, sem CPF."
-          />
-          <Campo
-            id="entrar-convite"
-            rotulo="Código do convite"
-            valor={codigo}
-            aoMudar={setCodigo}
-          />
-          <Botao onClick={() => irPara("conta")}>Aceitar convite</Botao>
-        </>
-      ) : null}
-
-      {estado === "apagada" ? (
-        <>
-          <Titulo
-            titulo="Conta apagada"
-            texto="Seus dados saíram do Bivaque. Sentiremos sua falta."
-          />
-          <Botao onClick={() => void navegacao.irPara("inicio")}>Voltar ao início</Botao>
-        </>
-      ) : null}
-    </section>
+  const irInicio = () => void navegacao.irPara("inicio")
+  const link = (destino: EstadoDaEntrada, texto: string) => (
+    <button type="button" className="entrada-link" onClick={() => irPara(destino)}>
+      {texto}
+    </button>
   )
-}
-
-function Titulo({ titulo, texto }: { titulo: string; texto: string }) {
-  return (
-    <div className="grid gap-1">
-      <Icone nome="lock" className="size-6 text-(--primary)" />
-      <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[24px] leading-8">
-        {titulo}
-      </h1>
-      <p className="text-sm text-(--on-surface-variant)">{texto}</p>
+  const acao = (texto: string, executar: () => void, secundaria = false, desabilitada = false) => (
+    <Button
+      type="button"
+      variant={secundaria ? "outline" : "default"}
+      className="entrada-botao"
+      onClick={executar}
+      disabled={desabilitada}
+    >
+      {texto}
+    </Button>
+  )
+  const campoSenha = (id: string) => (
+    <div className="entrada-senha">
+      <Campo
+        id={id}
+        rotulo="Senha"
+        valor={senha}
+        aoMudar={setSenha}
+        type={mostrarSenha ? "text" : "password"}
+        autoComplete={estado === "login" ? "current-password" : "new-password"}
+      />
+      <button
+        type="button"
+        className="entrada-mostrar"
+        onClick={() => setMostrarSenha(!mostrarSenha)}
+      >
+        {mostrarSenha ? "Ocultar" : "Mostrar"}
+      </button>
     </div>
+  )
+  const aceite = () => (
+    <div className="entrada-aceite">
+      <input
+        id="aceite-entrada"
+        type="checkbox"
+        checked={aceitou}
+        onChange={(e) => setAceitou(e.target.checked)}
+      />{" "}
+      <span>
+        <label htmlFor="aceite-entrada">Li e concordo com a</label>{" "}
+        <button
+          type="button"
+          className="entrada-link"
+          onClick={() => void navegacao.irPara("privacidade")}
+        >
+          Política de privacidade
+        </button>{" "}
+        e o{" "}
+        <button
+          type="button"
+          className="entrada-link"
+          onClick={() => void navegacao.irPara("conduta")}
+        >
+          Código de conduta
+        </button>
+        .
+      </span>
+    </div>
+  )
+  const google = () => acao("Continuar com Google", () => irPara("aceite"), true)
+  const titulo: Record<EstadoDaEntrada, string> = {
+    conta: "Vamos começar.",
+    login: "Que bom ter você de volta.",
+    aceite: "Só falta aceitar o combinado.",
+    cpf: "Confirme seu vínculo.",
+    resultado: "Vínculo confirmado.",
+    analise: "Vínculo em análise.",
+    documento: "Envie sua identidade.",
+    "consulta-indisponivel": "Não foi possível concluir a consulta.",
+    "convite-indisponivel": "Convite indisponível.",
+    cidade: "Sua cidade e seu momento.",
+    "boas-vindas": "Bem-vindo ao Bivaque.",
+    retomar: "Continue de onde parou.",
+    senha: "Esqueci minha senha.",
+    convite: "Convite de família.",
+    apagada: "Conta apagada.",
+  }
+
+  return (
+    <section data-tela="entrar" className="entrada-pagina">
+      <Card className="entrada-cartao">
+        <CardHeader className="entrada-cabecalho">
+          <picture>
+            <source
+              media="(prefers-color-scheme: dark)"
+              srcSet={`${import.meta.env.BASE_URL}brand/bivaque-logo-horizontal-white.svg`}
+            />
+            <img
+              className="entrada-marca"
+              src={`${import.meta.env.BASE_URL}brand/bivaque-logo-horizontal.svg`}
+              alt="Bivaque"
+            />
+          </picture>
+          <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1}>
+            {titulo[estado]}
+          </h1>
+          <CardDescription>
+            Jornada demonstrativa: nenhuma informação é enviada ou verificada.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="entrada-conteudo">
+          {estado === "conta" && (
+            <>
+              <p>Crie sua conta para fazer parte da comunidade.</p>
+              <Campo
+                id="entrar-nome"
+                rotulo="Nome completo"
+                valor={nome}
+                aoMudar={setNome}
+                autoComplete="name"
+              />
+              <Campo
+                id="entrar-email"
+                rotulo="E-mail"
+                valor={email}
+                aoMudar={setEmail}
+                type="email"
+                autoComplete="email"
+              />
+              {campoSenha("entrar-senha")}
+              <p className="entrada-nota">Ao menos 8 caracteres, com letras e números.</p>
+              {aceite()}
+              {acao("Criar conta", () => irPara("cpf"), false, !aceitou)}
+              <div className="entrada-divisor">ou</div>
+              {google()}
+              <p className="entrada-rodape">Já tem conta? {link("login", "Entrar")}</p>
+            </>
+          )}
+          {estado === "login" && (
+            <>
+              <p>Entre com o e-mail e a senha da sua conta.</p>
+              <Campo
+                id="login-email"
+                rotulo="E-mail"
+                valor={email}
+                aoMudar={setEmail}
+                type="email"
+                autoComplete="email"
+              />
+              {campoSenha("login-senha")}
+              <div className="entrada-direita">{link("senha", "Esqueci minha senha")}</div>
+              {acao("Entrar", irInicio)}
+              <div className="entrada-divisor">ou</div>
+              {google()}
+              <p className="entrada-rodape">Ainda não tem conta? {link("conta", "Criar conta")}</p>
+            </>
+          )}
+          {estado === "aceite" && (
+            <>
+              <p>Leia e aceite para continuar com sua conta Google.</p>
+              {aceite()}
+              {acao("Aceitar e continuar", () => irPara("cpf"), false, !aceitou)}
+            </>
+          )}
+          {estado === "cpf" && (
+            <>
+              <p>Vamos conferir seu CPF para confirmar seu vínculo.</p>
+              <Campo
+                id="entrar-cpf"
+                rotulo="CPF"
+                valor={cpf}
+                aoMudar={setCpf}
+                inputMode="numeric"
+                autoComplete="off"
+              />
+              <details>
+                <summary>Por que pedimos seu CPF?</summary>
+                <p>Para conferir o vínculo com a comunidade.</p>
+              </details>
+              {acao("Continuar", () => irPara("resultado"))}
+              {acao("Simular consulta indisponível", () => irPara("consulta-indisponivel"), true)}
+              <p className="entrada-rodape">É familiar? {link("convite", "Usar convite")}</p>
+            </>
+          )}
+          {estado === "resultado" && (
+            <>
+              <p>Tudo certo na demonstração. Agora escolha sua cidade.</p>
+              {acao("Continuar", () => irPara("cidade"))}
+            </>
+          )}
+          {estado === "consulta-indisponivel" && (
+            <>
+              <p>Tente novamente ou envie sua identidade para análise.</p>
+              {acao("Tentar novamente", () => irPara("cpf"))}
+              {acao("Enviar identidade", () => irPara("documento"), true)}
+            </>
+          )}
+          {estado === "documento" && (
+            <>
+              <p>
+                Se a consulta por CPF não for concluída, você pode enviar sua identidade militar
+                digital.
+              </p>
+              <label className="entrada-arquivo" htmlFor="documento">
+                Selecionar arquivo
+                <input
+                  id="documento"
+                  type="file"
+                  onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <p className="entrada-nota">
+                Envie um único arquivo completo.{arquivo ? ` Selecionado: ${arquivo.name}` : ""}
+              </p>
+              {acao("Enviar arquivo", () => irPara("analise"), false, !arquivo)}
+              {link("cpf", "Voltar")}
+            </>
+          )}
+          {estado === "analise" && (
+            <>
+              <p>Na demonstração, acompanhe as etapas da análise por aqui.</p>
+              <ol className="entrada-etapas">
+                <li>Documento enviado</li>
+                <li>Em análise</li>
+                <li>Resultado</li>
+              </ol>
+              <label className="entrada-aceite">
+                <input
+                  type="checkbox"
+                  checked={avisar}
+                  onChange={(e) => setAvisar(e.target.checked)}
+                />{" "}
+                Avise-me quando houver uma atualização.
+              </label>
+              {acao("Substituir documento", () => irPara("documento"), true)}
+            </>
+          )}
+          {estado === "cidade" && (
+            <>
+              <Campo
+                id="cidade"
+                rotulo="Cidade"
+                valor={cidade}
+                aoMudar={setCidade}
+                placeholder="Busque sua cidade"
+              />
+              <fieldset className="entrada-momento">
+                <legend>Seu momento</legend>
+                {(
+                  [
+                    ["chegando", "Chegando"],
+                    ["morando", "Moro aqui"],
+                    ["saindo", "Saindo"],
+                  ] as const
+                ).map(([valor, texto]) => (
+                  <label key={valor}>
+                    <input
+                      type="radio"
+                      name="momento"
+                      value={valor}
+                      checked={momento === valor}
+                      onChange={() => setMomento(valor)}
+                    />
+                    {texto}
+                  </label>
+                ))}
+              </fieldset>
+              <Campo
+                id="como-chamar"
+                rotulo="Como quer ser chamado"
+                valor={nome}
+                aoMudar={setNome}
+              />
+              {momento !== "morando" && (
+                <Campo
+                  id="data"
+                  rotulo={momento === "chegando" ? "Data de chegada" : "Data de saída"}
+                  valor={data}
+                  aoMudar={setData}
+                  type="date"
+                />
+              )}
+              {momento === "saindo" && (
+                <Campo
+                  id="destino"
+                  rotulo="Cidade de destino"
+                  valor={destino}
+                  aoMudar={setDestino}
+                />
+              )}
+              {acao("Continuar", () => irPara("boas-vindas"))}
+            </>
+          )}
+          {estado === "boas-vindas" && (
+            <>
+              <p>Encontre informações e pessoas para acompanhar sua jornada.</p>
+              {acao("Ir para o início", irInicio)}
+            </>
+          )}
+          {estado === "retomar" && (
+            <>
+              <p>Você começou seu cadastro e pode continuar.</p>
+              {acao("Continuar cadastro", () => irPara("cpf"))}
+              {acao("Usar outra conta", () => irPara("conta"), true)}
+            </>
+          )}
+          {estado === "senha" && (
+            <>
+              <p>Informe o e-mail da sua conta para receber as instruções.</p>
+              <Campo
+                id="recuperar-email"
+                rotulo="E-mail"
+                valor={email}
+                aoMudar={setEmail}
+                type="email"
+              />
+              {acao("Enviar instruções", () => setEnviado(true))}
+              {enviado && <p role="status">Demonstração: nenhum e-mail foi enviado.</p>}
+              {link("login", "Voltar para entrar")}
+            </>
+          )}
+          {estado === "convite" && (
+            <>
+              <p>Use o código recebido para aceitar seu convite.</p>
+              <Campo
+                id="convite-codigo"
+                rotulo="Código do convite"
+                valor={codigo}
+                aoMudar={setCodigo}
+              />
+              <Campo id="convite-nome" rotulo="Nome completo" valor={nome} aoMudar={setNome} />
+              <Campo id="convite-email" rotulo="E-mail do convite" valor={email} readOnly />
+              {campoSenha("convite-senha")}
+              {aceite()}
+              {acao("Aceitar convite", () => irPara("cidade"), false, !aceitou)}
+              {acao("Simular convite indisponível", () => irPara("convite-indisponivel"), true)}
+            </>
+          )}
+          {estado === "convite-indisponivel" && (
+            <>
+              <p>O código não é válido ou não está mais disponível.</p>
+              {acao("Tentar outro código", () => irPara("convite"))}
+              {acao("Voltar para entrar", () => irPara("login"), true)}
+            </>
+          )}
+          {estado === "apagada" && (
+            <>
+              <p>Esta é uma demonstração da tela de conta apagada.</p>
+              {acao("Voltar ao início", irInicio)}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   )
 }

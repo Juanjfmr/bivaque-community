@@ -9,6 +9,22 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Entrada 21st — demonstração solicitada pelo dono, 27/10/2026
+
+A jornada de login, cadastro e onboarding recebeu a composição do Login Form Card
+do 21st (Felipe Menezes, MIT) sobre os componentes shadcn existentes e a marca
+oficial. Inclui consulta simulada, documento, análise, convite, recuperação e
+cidade com campos condicionais. O app identifica a experiência como demonstração:
+nenhum dado é enviado, verificado ou persistido; backend, sessões e permissões reais
+continuam pendentes. A imagem gerada não é evidência de runtime.
+
+Provas: gate completo verde com builds web e app; 12/12 E2E focais em
+375/768/1440. Primeiro gate falhou por formatação do teste, corrigida. Qwen
+aprovou o instrumento após reforço do caminho feliz e condicionais de cidade;
+revisão estática, sem executar testes. Inspeção visual local de login e cadastro
+em tema escuro; sem auditoria visual independente completa ou aceite global da
+onda 1. Sem merge, deploy ou push.
+
 ## APP-010 — Correções da revisão do PR 116, 26/10/2026
 
 O dono pediu "Corrija" após a revisão de ceb0858e. Trabalho isolado na branch

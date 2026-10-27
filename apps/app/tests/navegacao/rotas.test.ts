@@ -152,7 +152,7 @@ describe("catálogo de rotas", () => {
     expect(validarParametros("conversa", { id: "  " }).ok).toBe(false)
     expect(validarParametros("entrar", { estado: "conta" })).toEqual({ ok: true })
     expect(validarParametros("entrar", { estado: "nao-existe" }).ok).toBe(false)
-    expect(ESTADOS_DA_ENTRADA).toHaveLength(12)
+    expect(ESTADOS_DA_ENTRADA).toHaveLength(15)
     expect(validarParametros("ajuda", { topico: "apagar-conta" })).toEqual({ ok: true })
     expect(validarParametros("inicio", {}).ok).toBe(true)
     expect(validarParametros("rota-que-nao-existe", {}).ok).toBe(false)
