@@ -44,6 +44,7 @@ export function Conversa() {
   const [rascunho, setRascunho] = useState("")
   const [novas, setNovas] = useState<readonly MensagemDePrevia[]>([])
   const [erroLocal, setErroLocal] = useState("")
+  const [mostrarSeguranca, setMostrarSeguranca] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -128,7 +129,7 @@ export function Conversa() {
   return (
     <section
       data-tela="conversa"
-      className="flex min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 flex-col gap-3 pb-3"
+      className="flex min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 flex-col gap-2 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-3"
     >
       <div className="flex min-w-0 items-center gap-3 px-1 py-2">
         <Avatar size="lg" className="size-11 shrink-0">
@@ -156,10 +157,25 @@ export function Conversa() {
         />
       )}
 
-      <p className="flex items-start gap-2 rounded-xl bg-(--secondary-container) px-3 py-2 text-[12px] leading-5">
-        <Icone nome="verified_user" className="mt-0.5 size-5 shrink-0" />
-        Nunca pague adiantado nem envie documentos pelo chat. Combine a entrega em local público.
-      </p>
+      <aside data-seguranca-conversa="sim" className="rounded-xl bg-(--secondary-container) px-3 py-2 text-xs leading-5">
+        <button
+          type="button"
+          aria-expanded={mostrarSeguranca}
+          aria-controls="orientacoes-conversa"
+          className="flex min-h-10 w-full items-center gap-2 text-left font-medium"
+          onClick={() => setMostrarSeguranca((atual) => !atual)}
+        >
+          <Icone nome="verified_user" className="size-5 shrink-0" />
+          <span className="min-w-0 flex-1">Segurança na negociação</span>
+          <Icone nome="chevron_right" className={mostrarSeguranca ? "size-4 rotate-90" : "size-4"} />
+        </button>
+        {mostrarSeguranca ? (
+          <p id="orientacoes-conversa" className="pb-1 text-(--on-surface-variant)">
+            Nunca pague adiantado nem compartilhe documentos ou dados bancários.
+            Combine a entrega em local público. Esta conversa é uma prévia sem envio real.
+          </p>
+        ) : null}
+      </aside>
 
       {mensagens.length === 0 && novas.length === 0 ? (
         <EstadoVazio
@@ -203,7 +219,7 @@ export function Conversa() {
 
       <div
         data-compositor-conversa="sim"
-        className="sticky bottom-2 z-10 mt-auto grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)] md:bottom-3"
+        className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-10 mt-auto grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-2.5 shadow-[0_-4px_16px_var(--shadow-soft)] sm:p-3"
       >
         <fieldset aria-label="Respostas rápidas" className="flex gap-2 overflow-x-auto pb-0.5">
           {[
