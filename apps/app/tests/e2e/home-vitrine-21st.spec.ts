@@ -69,21 +69,49 @@ test("Home: vitrine e ações mantêm alvos e não vazam da largura do telefone"
   }
 })
 
-test("Home: quatro atalhos em faixa compacta e rolável no telefone", async ({ page }) => {
+test("Home: quatro atalhos visíveis na mesma linha, sem rolagem em 320 a 430px", async ({ page }) => {
   const largura = page.viewportSize()?.width ?? 375
-  test.skip(largura >= 720, "Faixa compacta avaliada em viewport mobile")
+  test.skip(largura >= 720, "Grade compacta avaliada em viewport mobile")
 
   await page.goto("/app/inicio")
-  const faixa = page.locator('[data-tela="inicio"] nav[aria-label="Áreas"]')
+  const cabecalho = page.locator('header[data-home="abertura"]')
+  const faixa = cabecalho.locator('nav[aria-label="Áreas"]')
   const botoes = faixa.locator('[data-acao="atalho"]')
   await expect(botoes).toHaveCount(4)
 
-  const alturaDaFaixa = await faixa.evaluate((el) => el.getBoundingClientRect().height)
-  expect(alturaDaFaixa).toBeLessThanOrEqual(54)
-
-  for (const botao of await botoes.all()) {
-    const caixa = await botao.boundingBox()
-    expect(caixa?.height ?? 0).toBeGreaterThanOrEqual(44)
+  const estado = await faixa.evaluate((el) => {
+    const area = el.getBoundingClientRect()
+    const botoes = Array.from(el.querySelectorAll<HTMLButtonElement>('[data-acao="atalho"]'))
+    return {
+      largura: el.clientWidth,
+      conteudo: el.scrollWidth,
+      altura: area.height,
+      esquerda: area.left,
+      direita: area.right,
+      botoes: botoes.map((botao) => {
+        const alvo = botao.getBoundingClientRect()
+        const rotulo = botao.lastElementChild?.getBoundingClientRect()
+        return {
+          esquerda: alvo.left,
+          direita: alvo.right,
+          topo: alvo.top,
+          altura: alvo.height,
+          rotuloDireita: rotulo?.right ?? 0,
+          rotuloEsquerda: rotulo?.left ?? 0,
+        }
+      }),
+    }
+  })
+  expect(estado.conteudo).toBeLessThanOrEqual(estado.largura + 1)
+  expect(estado.altura).toBeLessThanOrEqual(68)
+  expect(estado.botoes).toHaveLength(4)
+  for (const botao of estado.botoes) {
+    expect(botao.altura).toBeGreaterThanOrEqual(44)
+    expect(botao.topo).toBeCloseTo(estado.botoes[0]?.topo ?? 0, 0)
+    expect(botao.esquerda).toBeGreaterThanOrEqual(estado.esquerda - 1)
+    expect(botao.direita).toBeLessThanOrEqual(estado.direita + 1)
+    expect(botao.rotuloEsquerda).toBeGreaterThanOrEqual(botao.esquerda - 1)
+    expect(botao.rotuloDireita).toBeLessThanOrEqual(botao.direita + 1)
   }
 
   await faixa.locator('[data-valor="comunidade"]').click()
