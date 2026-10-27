@@ -47,7 +47,7 @@ retry 3. Não muda backend, banco, dependências ou aceite visual da onda 1.
 - Codex examinou as 21 capturas dos seis diálogos e do limite de imóveis em
   três pranchas (tema claro), sem novo transbordamento horizontal observado.
   Formulário de imóvel permanece rolável no celular. Capturas e pranchas:
-  `.visual/coordenacao/pr116-results/` e `APP-010-visual/`.
+  `.visual/coordenacao/APP-010-e2e-R1-results/` e `APP-010-visual/`.
   Sem nova comparação completa com HTML nem auditoria do tema escuro.
 - Fechamento técnico APP-010; APP-001 e aceite visual global continuam abertos.
   Evidências:
@@ -60,7 +60,29 @@ retry 3. Não muda backend, banco, dependências ou aceite visual da onda 1.
   A integração mostrou cinco erros novos de lint: três de formato e dois grupos
   de botões sem elemento semântico. Formatação e fieldsets corrigidos sem mudar
   os comportamentos recebidos. Provas R1 acima pertencem à base ceb0858e com
-  APP-010; validação da revisão combinada em andamento, sem extrapolar o PASS.
+  APP-010. Correções enviadas sem force-push em d5b787e7 e 7920f5b1.
+- **Revisão combinada 7920f5b1: gate completo VERDE e 123/123 E2E**, zero falhas
+  ou skips, 2,6 min em 375/768/1440. Não somar os 123 anteriores. Gate:
+  lint 8 s, tipos 24 s, tipos E2E 8 s, Next 72 s, Vite 14 s, testes 38 s,
+  segredos 9 s; mesmas contagens 1726/92/76/19/189/150. Instrumentos inalterados
+  desde a aprovação Qwen R1. 21 fontes verificadas por hash antes/depois.
+  Codex reconferiu as 21 capturas em três pranchas claras, incluindo o grupo
+  com a ordenação recebida. Nenhum transbordamento novo observado nesse recorte.
+- Provas finais: `APP-010-gate-integracao.log`, `APP-010-e2e-integracao.log`,
+  `APP-010-fontes-integracao.json`, `pr116-results/` e
+  `APP-010-visual-integracao/`, todos sob `.visual/coordenacao/`.
+  Registro final teve normalização de LF no board; lint e escopo 150/150
+  reconferidos, sem alterar fontes ou relaxar o gate.
+- CI remota observada em 7920f5b1: mobile-first e comparação R72 PASS; CI geral
+  ainda em execução. Revisor automático falhou sem concluir parecer
+  (`is_error:true`, 945 ms e uso de modelo vazio no run 40433149680);
+  causa raiz não exposta no trecho disponível. Exige diagnóstico do artefato
+  de execução da Action, não uma aprovação presumida.
+- Vercel, leitura dos logs/status sem mudar projeto ou disparar deploy: web e
+  laboratório limitados por quota (24 h); o preview Next legado falhou porque
+  Root Directory aponta a `prototypes/bivaque-next-shadcn`, ausente nesta branch
+  (deployment dpl_JE3F8ajCuq9cGzRk4xyRsuhyuJDw). Destino desse preview depende
+  do dono. PR permanece draft e a aprovação visual global continua pendente.
 
 ## Auditoria visual Codex e adoção shadcn — 26/10/2026
 
