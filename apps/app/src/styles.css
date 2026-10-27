@@ -718,6 +718,14 @@
 }
 
 /* ── Home: editorial e vitrine 21st.dev (Product Card / Delta Components) ── */
+[data-home="abertura"] {
+  background-image: radial-gradient(
+    circle at 95% 0%,
+    color-mix(in srgb, var(--primary-foreground) 13%, transparent),
+    transparent 57%
+  );
+}
+
 [data-home="abertura"] h1 {
   max-width: 19ch;
   color: var(--primary-foreground);
