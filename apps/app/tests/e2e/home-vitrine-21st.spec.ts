@@ -68,3 +68,24 @@ test("Home: vitrine e ações mantêm alvos e não vazam da largura do telefone"
     expect(medidas.conteudo).toBeLessThanOrEqual(medidas.largura + 1)
   }
 })
+
+test("Home: quatro atalhos em faixa compacta e rolável no telefone", async ({ page }) => {
+  const largura = page.viewportSize()?.width ?? 375
+  test.skip(largura >= 720, "Faixa compacta avaliada em viewport mobile")
+
+  await page.goto("/app/inicio")
+  const faixa = page.locator('[data-tela="inicio"] nav[aria-label="Áreas"]')
+  const botoes = faixa.locator('[data-acao="atalho"]')
+  await expect(botoes).toHaveCount(4)
+
+  const alturaDaFaixa = await faixa.evaluate((el) => el.getBoundingClientRect().height)
+  expect(alturaDaFaixa).toBeLessThanOrEqual(54)
+
+  for (const botao of await botoes.all()) {
+    const caixa = await botao.boundingBox()
+    expect(caixa?.height ?? 0).toBeGreaterThanOrEqual(44)
+  }
+
+  await faixa.locator('[data-valor="comunidade"]').click()
+  await expect(page).toHaveURL(/\/app\/comunidade$/)
+})
