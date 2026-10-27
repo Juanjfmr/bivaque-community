@@ -177,7 +177,7 @@ export function Inicio() {
 
   return (
     <section data-tela="inicio" className="grid gap-2">
-      <div data-home="abertura" className="bv-home-intro">
+      <header data-home="abertura" className="bv-home-intro">
         <div data-home="apresentacao">
           <p className="bv-home-kicker">
             <span className="bv-home-kicker-ponto" aria-hidden="true" />A vida acontece por aqui
@@ -220,7 +220,7 @@ export function Inicio() {
             ))}
           </nav>
         </div>
-      </div>
+      </header>
 
       {erro ? (
         <div className="mt-4">
