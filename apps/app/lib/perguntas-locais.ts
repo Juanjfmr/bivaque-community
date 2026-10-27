@@ -32,7 +32,7 @@ export function criarPerguntaLocal(
   localidadeId: string,
   titulo: string,
   topico: string,
-): Pergunta | null {
+): Pergunta | "limite" | null {
   const pergunta = titulo.trim()
   if (pergunta.length < 12 || pergunta.length > 300) return null
   const criada: Pergunta = {
@@ -51,7 +51,8 @@ export function criarPerguntaLocal(
   }
   try {
     const anteriores = lerPerguntasLocais(cidade)
-    sessionStorage.setItem(chave(cidade), JSON.stringify([criada, ...anteriores].slice(0, 30)))
+    if (anteriores.length >= 30) return "limite"
+    sessionStorage.setItem(chave(cidade), JSON.stringify([criada, ...anteriores]))
     return criada
   } catch {
     // Sem armazenamento disponível, não alegar que a pergunta foi publicada.

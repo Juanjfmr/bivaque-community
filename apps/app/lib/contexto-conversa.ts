@@ -52,20 +52,18 @@ export function lerMensagensDePrevia(cidade: string, id: string): MensagemDePrev
   try {
     const parsed: unknown = JSON.parse(sessionStorage.getItem(chave(cidade, id)) ?? "[]")
     return Array.isArray(parsed)
-      ? parsed
-          .flatMap((item, indice): MensagemDePrevia[] => {
-            if (typeof item === "string") return [{ id: `legado-${indice}`, conteudo: item }]
-            if (
-              item &&
-              typeof item === "object" &&
-              typeof item.id === "string" &&
-              typeof item.conteudo === "string"
-            ) {
-              return [{ id: item.id, conteudo: item.conteudo }]
-            }
-            return []
-          })
-          .slice(-30)
+      ? parsed.flatMap((item, indice): MensagemDePrevia[] => {
+          if (typeof item === "string") return [{ id: `legado-${indice}`, conteudo: item }]
+          if (
+            item &&
+            typeof item === "object" &&
+            typeof item.id === "string" &&
+            typeof item.conteudo === "string"
+          ) {
+            return [{ id: item.id, conteudo: item.conteudo }]
+          }
+          return []
+        })
       : []
   } catch {
     return []
@@ -76,14 +74,13 @@ export function guardarMensagemDePrevia(
   cidade: string,
   id: string,
   mensagem: string,
-): MensagemDePrevia[] | null {
+): MensagemDePrevia[] | "limite" | null {
   const limpa = mensagem.trim()
   if (limpa.length === 0 || limpa.length > 2000) return null
   try {
-    const mensagens = [
-      ...lerMensagensDePrevia(cidade, id),
-      { id: idLocal("msg-previa-"), conteudo: limpa },
-    ].slice(-30)
+    const anteriores = lerMensagensDePrevia(cidade, id)
+    if (anteriores.length >= 30) return "limite"
+    const mensagens = [...anteriores, { id: idLocal("msg-previa-"), conteudo: limpa }]
     sessionStorage.setItem(chave(cidade, id), JSON.stringify(mensagens))
     return mensagens
   } catch {

@@ -44,6 +44,12 @@ export function FormularioImovel({
       vagas: quantidadeDeVagas,
       descricao,
     })
+    if (rascunho === "limite") {
+      setErro(
+        "Limite de 10 rascunhos de imóveis atingido. Exclua um rascunho antes de salvar outro. Os anteriores foram preservados.",
+      )
+      return
+    }
     if (rascunho === null) {
       setErro(
         "Confira título, bairro, preço, metragem e quantidades. O armazenamento desta sessão precisa estar disponível.",

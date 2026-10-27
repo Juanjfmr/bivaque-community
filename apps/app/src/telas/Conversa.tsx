@@ -4,12 +4,12 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
-import { Textarea } from "@/components/ui/textarea"
 import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Textarea } from "@/components/ui/textarea"
 import {
   guardarMensagemDePrevia,
   lerMensagensDePrevia,
@@ -89,6 +89,12 @@ export function Conversa() {
 
   const adicionarPrevia = () => {
     const enviadas = guardarMensagemDePrevia(casca.cidade, id, rascunho)
+    if (enviadas === "limite") {
+      setErroLocal(
+        "Limite de 30 mensagens de prévia nesta conversa atingido. As anteriores foram preservadas e seu texto continua no campo.",
+      )
+      return
+    }
     if (enviadas === null) {
       setErroLocal("Não foi possível guardar a mensagem nesta sessão. Nada foi enviado.")
       return

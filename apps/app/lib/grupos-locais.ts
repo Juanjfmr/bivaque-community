@@ -25,20 +25,23 @@ export function lerRascunhosDoGrupo(cidade: string, id: string): string[] {
       sessionStorage.getItem(chave(cidade, id, "rascunhos")) ?? "[]",
     )
     return Array.isArray(valor)
-      ? valor.filter((item): item is string => typeof item === "string").slice(0, 10)
+      ? valor.filter((item): item is string => typeof item === "string")
       : []
   } catch {
     return []
   }
 }
-export function guardarRascunhoDoGrupo(cidade: string, id: string, texto: string): string[] | null {
+export function guardarRascunhoDoGrupo(
+  cidade: string,
+  id: string,
+  texto: string,
+): string[] | "limite" | null {
   const limpa = texto.trim()
   if (limpa.length < 10 || limpa.length > 2000) return null
   try {
-    const resultado = [
-      limpa,
-      ...lerRascunhosDoGrupo(cidade, id).filter((item) => item !== limpa),
-    ].slice(0, 10)
+    const anteriores = lerRascunhosDoGrupo(cidade, id)
+    if (anteriores.length >= 10 && !anteriores.includes(limpa)) return "limite"
+    const resultado = [limpa, ...anteriores.filter((item) => item !== limpa)]
     sessionStorage.setItem(chave(cidade, id, "rascunhos"), JSON.stringify(resultado))
     return resultado
   } catch {

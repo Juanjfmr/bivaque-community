@@ -18,9 +18,6 @@ export type RascunhoImovel = {
 
 export type DadosDoRascunho = Omit<RascunhoImovel, "id" | "cidade" | "criadoEm">
 
-export const PEDIDO_CRIAR_IMOVEL = "bivaque:abrir-rascunho-imovel"
-export const CHAVE_ABERTURA_IMOVEL = "bivaque:abrir-imovel-ao-navegar"
-
 function chave(cidade: string): string {
   return `bivaque:rascunhos-imoveis:${cidade.trim().toLocaleLowerCase("pt-BR")}`
 }
@@ -62,7 +59,7 @@ export function lerRascunhosImoveis(cidade: string): RascunhoImovel[] {
 export function salvarRascunhoImovel(
   cidade: string,
   dados: DadosDoRascunho,
-): RascunhoImovel | null {
+): RascunhoImovel | "limite" | null {
   if (
     cidade.trim() === "" ||
     dados.titulo.trim().length < 10 ||
@@ -87,10 +84,9 @@ export function salvarRascunhoImovel(
     criadoEm: new Date().toISOString(),
   }
   try {
-    window.sessionStorage.setItem(
-      chave(cidade),
-      JSON.stringify([novo, ...lerRascunhosImoveis(cidade)].slice(0, 10)),
-    )
+    const anteriores = lerRascunhosImoveis(cidade)
+    if (anteriores.length >= 10) return "limite"
+    window.sessionStorage.setItem(chave(cidade), JSON.stringify([novo, ...anteriores]))
     return novo
   } catch {
     return null

@@ -14,6 +14,7 @@ import {
   lerEstadoLocal,
   lerRascunhosDoGrupo,
 } from "@/lib/grupos-locais"
+import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 
 export function InteracoesDoGrupo({
   id,
@@ -40,8 +41,9 @@ export function InteracoesDoGrupo({
 }) {
   const [estadoLocal, setEstadoLocal] = useState<EstadoDoGrupo | null>(null)
   const [rascunhos, setRascunhos] = useState<string[]>([])
-  const [escrevendo, setEscrevendo] = useState(false)
-  const [saindo, setSaindo] = useState(false)
+  const { aberto: escrevendo, aoMudarAberto: setEscrevendo } =
+    useSobreposicaoDaEntrada("grupo-escrever")
+  const { aberto: saindo, aoMudarAberto: setSaindo } = useSobreposicaoDaEntrada("grupo-sair")
   const [texto, setTexto] = useState("")
   const [erro, setErro] = useState("")
   useEffect(() => {
@@ -65,6 +67,12 @@ export function InteracoesDoGrupo({
 
   const salvar = () => {
     const lista = guardarRascunhoDoGrupo(cidade, id, texto)
+    if (lista === "limite") {
+      setErro(
+        "Limite de 10 rascunhos neste grupo atingido. Exclua um antes de salvar outro. Seu texto continua no formulário.",
+      )
+      return
+    }
     if (!lista) {
       setErro("Informe 10 a 2000 caracteres e verifique o armazenamento da sessão.")
       return
@@ -117,7 +125,7 @@ export function InteracoesDoGrupo({
             </Botao>
           </div>
         )}
-        {erro === "" ? null : (
+        {erro === "" || escrevendo || saindo ? null : (
           <p role="alert" className="text-xs text-(--destructive)">
             {erro}
           </p>
@@ -269,6 +277,11 @@ export function InteracoesDoGrupo({
             <small className="text-xs text-(--on-surface-variant)">
               10 a 2000 caracteres, sem dados pessoais sensíveis.
             </small>
+            {erro === "" ? null : (
+              <p role="alert" className="text-xs text-(--destructive)">
+                {erro}
+              </p>
+            )}
             <div className="flex justify-end gap-2">
               <Botao type="button" tom="texto" onClick={() => setEscrevendo(false)}>
                 Cancelar

@@ -4,9 +4,6 @@ import { idLocal } from "@/lib/id"
  * Conteúdo de ensaio: não representa publicação, pedido ativo, evento confirmado,
  * estabelecimento verificado nem indicação enviada a outro membro.
  */
-export const PEDIDO_PERGUNTAR = "bivaque:abrir-formulario-pergunta"
-export const CHAVE_ABERTURA_PERGUNTA = "bivaque:perguntar-ao-navegar"
-
 export const TIPOS_RASCUNHO = [
   "create-request",
   "create-item",
@@ -132,7 +129,7 @@ export function criarRascunhoCriacao(
   cidade: string,
   tipo: TipoRascunho,
   formulario: Formulario,
-): RascunhoCriacao | null {
+): RascunhoCriacao | "limite" | null {
   if (!TIPOS_RASCUNHO.includes(tipo)) return null
   const titulo = formulario.titulo.trim()
   const complemento = formulario.complemento.trim()
@@ -162,10 +159,9 @@ export function criarRascunhoCriacao(
     criadoEm: new Date().toISOString(),
   }
   try {
-    window.sessionStorage.setItem(
-      chave(cidade),
-      JSON.stringify([item, ...lerRascunhosCriacao(cidade)].slice(0, 30)),
-    )
+    const anteriores = lerRascunhosCriacao(cidade)
+    if (anteriores.length >= 30) return "limite"
+    window.sessionStorage.setItem(chave(cidade), JSON.stringify([item, ...anteriores]))
     return item
   } catch {
     return null

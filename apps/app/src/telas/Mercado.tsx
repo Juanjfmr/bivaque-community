@@ -14,13 +14,11 @@ import { Icone } from "@/components/bivaque/icone"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import {
-  CHAVE_ABERTURA_IMOVEL,
   excluirRascunhoImovel,
   lerRascunhosImoveis,
-  PEDIDO_CRIAR_IMOVEL,
   type RascunhoImovel,
 } from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
@@ -109,7 +107,8 @@ export function ListaDeMercado({
   const [maximoMensal, setMaximoMensal] = useState("todos")
   const [ordenacao, setOrdenacao] = useState("relevancia")
   const [modoLista, setModoLista] = useState(false)
-  const [criandoImovel, setCriandoImovel] = useState(false)
+  const { aberto: criandoImovel, aoMudarAberto: setCriandoImovel } =
+    useSobreposicaoDaEntrada("rascunho-imovel")
   const [rascunhos, setRascunhos] = useState<RascunhoImovel[]>([])
   const [erroRascunho, setErroRascunho] = useState("")
 
@@ -134,21 +133,6 @@ export function ListaDeMercado({
   useEffect(() => {
     if (inicial !== "imoveis") return
     setRascunhos(lerRascunhosImoveis(casca.cidade))
-    const abrir = () => {
-      try {
-        window.sessionStorage.removeItem(CHAVE_ABERTURA_IMOVEL)
-      } catch {
-        /* sem persistência */
-      }
-      setCriandoImovel(true)
-    }
-    window.addEventListener(PEDIDO_CRIAR_IMOVEL, abrir)
-    try {
-      if (window.sessionStorage.getItem(CHAVE_ABERTURA_IMOVEL) === "1") abrir()
-    } catch {
-      /* CTA do catálogo continua disponível sem storage */
-    }
-    return () => window.removeEventListener(PEDIDO_CRIAR_IMOVEL, abrir)
   }, [inicial, casca.cidade])
 
   const removerRascunho = (id: string) => {

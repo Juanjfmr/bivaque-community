@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { iniciais } from "@/lib/texto"
@@ -36,7 +36,14 @@ export function Anuncio() {
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [salvo, setSalvo] = useState(false)
-  const [tipoContato, setTipoContato] = useState<"interesse" | "oferta" | null>(null)
+  const interesse = useSobreposicaoDaEntrada("contato-interesse")
+  const oferta = useSobreposicaoDaEntrada("contato-oferta")
+  const tipoContato = interesse.aberto ? "interesse" : oferta.aberto ? "oferta" : null
+  const setTipoContato = (tipo: "interesse" | "oferta" | null) => {
+    if (tipo === "interesse") interesse.aoMudarAberto(true)
+    else if (tipo === "oferta") oferta.aoMudarAberto(true)
+    else if (tipoContato !== null) navegacao.fecharSobreposicao()
+  }
   const [mensagem, setMensagem] = useState("")
   const [valorOferta, setValorOferta] = useState("")
   const [rascunhoContato, setRascunhoContato] = useState<string | null>(null)
@@ -207,10 +214,16 @@ export function Anuncio() {
           </span>
         </div>
         <div data-acoes-anuncio="sim" className="bv-anuncio-acoes flex flex-wrap gap-2">
-          <Botao icone="chat_bubble" disabled={!ativo} onClick={() => abrirContato("interesse")}>
+          <Botao
+            data-acao="contato-interesse"
+            icone="chat_bubble"
+            disabled={!ativo}
+            onClick={() => abrirContato("interesse")}
+          >
             Tenho interesse
           </Botao>
           <Botao
+            data-acao="contato-oferta"
             tom="contornado"
             icone="sell"
             disabled={!ativo}

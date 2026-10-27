@@ -41,6 +41,12 @@ export function FormularioDeCriacao({
             valor: valor.trim() === "" ? null : Number(valor),
             horario: horario.trim() === "" ? null : horario,
           })
+          if (item === "limite") {
+            setErro(
+              "Limite de 30 rascunhos atingido. Exclua um rascunho antes de salvar outro. Os anteriores foram preservados.",
+            )
+            return
+          }
           if (item === null) {
             setErro("Verifique os dados e se o armazenamento da sessão está disponível.")
             return

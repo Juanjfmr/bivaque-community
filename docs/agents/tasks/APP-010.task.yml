@@ -1,0 +1,40 @@
+task_id: APP-010
+objective: Corrigir no PR 116 o descarte silencioso de conteúdo local, o histórico dos diálogos novos e o lint de Conversa, mantendo o fluxo demonstrativo.
+authority:
+  - Solicitação do dono Corrija após a revisão do PR 116 em 26/10/2026
+  - docs/decisions/ADR-20261024-front-react-spa.md
+  - docs/agents/prototipo-shadcn/STATUS.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: ceb0858e apresenta cinco testes de limite vermelhos; Voltar deixa imóveis e anúncios em vez de fechar o diálogo; CI 40419913314 falha na organização dos imports.
+allowed_paths:
+  - apps/app/
+  - .github/workflows/bivaque-app-visual-smoke.yml
+  - docs/agents/tasks/APP-010.task.yml
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/coordenacao/
+forbidden:
+  - Instalar ou atualizar dependências
+  - Alterar backend, banco, credenciais, env local, outras worktrees ou regras de produto
+  - Merge, deploy, push para main, force push
+  - Apagar conteúdo anterior automaticamente para aceitar outro item
+acceptance:
+  - Ao atingir o limite cada armazenamento recusa a nova escrita, preserva o conteúdo anterior e informa o limite sem limpar o campo.
+  - Imóveis, perguntas, interesse, oferta e escrever ou sair do grupo usam o histórico existente, com Voltar, Avançar, Escape e foco.
+  - As leituras não truncam conteúdo legado; validade e tratamento de armazenamento indisponível são preservados.
+  - A revisão de instrumentos é feita por outro modelo antes da medição final.
+  - Gate completo sem build pulado e provas de jornada em 375, 768 e 1440; não aprova visualmente a onda 1.
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/APP-010.task.yml
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e pr116-historico.spec.ts --project mobile-375 --project tablet-768 --project desktop-1440
+  - npx pnpm@11.18.0 gate
+risk: navegação e preservação de conteúdo local demonstrativo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

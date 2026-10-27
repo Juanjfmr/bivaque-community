@@ -8,13 +8,7 @@ import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
 import { Icone } from "@/components/bivaque/icone"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao } from "@/lib/navegacao/react"
-import {
-  CHAVE_ABERTURA_PERGUNTA,
-  PEDIDO_PERGUNTAR,
-  TIPOS_RASCUNHO,
-  type TipoRascunho,
-} from "@/lib/rascunhos-criacao"
-import { CHAVE_ABERTURA_IMOVEL, PEDIDO_CRIAR_IMOVEL } from "@/lib/rascunhos-imoveis"
+import { TIPOS_RASCUNHO, type TipoRascunho } from "@/lib/rascunhos-criacao"
 import { cn } from "@/lib/utils"
 import { useStateComMidia } from "@/src/casca/midia"
 import { useCasca } from "@/src/contexto/casca"
@@ -139,14 +133,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       data-escolha={escolha.id}
       onClick={() => {
         if (escolha.id === "ask") {
-          try {
-            window.sessionStorage.setItem(CHAVE_ABERTURA_PERGUNTA, "1")
-          } catch {
-            /* sem storage */
-          }
-          void navegacao.irPara("comunidade").then(() => {
-            window.dispatchEvent(new Event(PEDIDO_PERGUNTAR))
-          })
+          void navegacao.irPara("comunidade").then(() => navegacao.abrir("perguntar"))
           return
         }
         if (TIPOS_RASCUNHO.some((item) => item === escolha.id)) {
@@ -155,14 +142,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id !== "create-property") return
-        try {
-          window.sessionStorage.setItem(CHAVE_ABERTURA_IMOVEL, "1")
-        } catch {
-          /* a navegação funciona mesmo sem armazenamento */
-        }
-        void navegacao.irPara("imoveis").then(() => {
-          window.dispatchEvent(new Event(PEDIDO_CRIAR_IMOVEL))
-        })
+        void navegacao.irPara("imoveis").then(() => navegacao.abrir("rascunho-imovel"))
       }}
       style={{ "--i": indice } as React.CSSProperties}
       className="bv-criar-escolha"

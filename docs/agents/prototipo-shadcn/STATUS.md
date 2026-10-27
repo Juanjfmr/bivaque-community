@@ -6,8 +6,54 @@ Primeiro fechamento: corrigir resposta descartada, paleta fora do histórico e I
 inexistentes; testar o modo normal, obter revisão independente do instrumento,
 rodar o gate completo e renovar as evidências. As ondas 2–8 não estão concluídas:
 editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
-R3 continua isolada e sem aprovação global. Nenhum merge, push ou deploy autorizado.
+R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
+
+## APP-010 — Correções da revisão do PR 116, 26/10/2026
+
+O dono pediu "Corrija" após a revisão de ceb0858e. Trabalho isolado na branch
+`codex/ui-foundation-21st-20261026`, base do próprio PR 116, sem incorporar a
+bancada experimental posterior de `codex/app`. Contrato APP-010 validado R2,
+retry 3. Não muda backend, banco, dependências ou aceite visual da onda 1.
+
+- Cinco armazenamentos locais recusam o excedente antes da escrita, retornam
+  limite explícito e preservam o conteúdo anterior e o campo atual. Leituras
+  de grupo e conversa preservam também o legado acima do limite.
+- Imóvel, pergunta, interesse, oferta, escrever e sair do grupo usam a entrada
+  do histórico existente. Criar navega e abre pela mesma API; removidos eventos
+  e marcas de sessão que abriam duas entradas. Aviso do grupo fica dentro do
+  diálogo. Imports de Conversa organizados; regressão incluída no workflow.
+- Baseline: cinco negativos de limite vermelhos. Navegador confirmou quatro
+  regressões de histórico; um seletor inicial de Perguntar foi corrigido no
+  instrumento. Complemento reproduziu três falhas reais (duas entradas pelo
+  Criar e alerta fora do diálogo); as três passaram após correção.
+- **Gate R1 completo VERDE**, sem build pulado: lint 24 s, tipos 61 s, tipos
+  E2E 37 s, Next 215 s, Vite 32 s, testes 71 s, segredos 16 s. Raiz 1726,
+  app 92 (oito novos), mobile 76, web 19, privacidade 189, escopo 150; segredos
+  PASS. Permanecem 18 warnings e 51 infos, mesmas contagens da CI de ceb0858e.
+- Gate R0 falhou por ambiente: Turbopack recusou dependências compartilhadas
+  fora da raiz do worktree. R1 configura a raiz comum somente no processo.
+  Variáveis públicas sintéticas também só no processo; nenhum env local criado,
+  pacote instalado ou etapa omitida. Log R0 preservado, não contado como PASS.
+- Qwen independente: R0 pediu revisão do escopo do workflow, negativo para
+  leitura de legado e sincronização pós-Escape. Contrato final inclui o workflow;
+  negativo legado passou e Escape aguarda painel oculto/foco. R1 **APROVADO PARA
+  MEDIÇÃO**, somente revisão estática. Alertas de limite têm prova de UI em
+  imóvel/grupo; nos outros três armazenamentos a prova é unitária.
+- **Medição final: 123/123 E2E, zero falhas ou skips, 3,2 min**, contra o build
+  Vite do gate, em 375/768/1440, porta isolada 3270. Inclui 27 casos novos e
+  regressão de Criar, contato, conversa/grupo, R72 P0/P1 e sobreposições antigas.
+  Oito unitários novos verdes. Não somar rodadas exploratórias à medição final.
+- Codex examinou as 21 capturas dos seis diálogos e do limite de imóveis em
+  três pranchas (tema claro), sem novo transbordamento horizontal observado.
+  Formulário de imóvel permanece rolável no celular. Capturas e pranchas:
+  `.visual/coordenacao/pr116-results/` e `APP-010-visual/`.
+  Sem nova comparação completa com HTML nem auditoria do tema escuro.
+- Fechamento técnico APP-010; APP-001 e aceite visual global continuam abertos.
+  Evidências:
+  `.visual/coordenacao/APP-010-gate-r1.log`, `APP-010-e2e-final.log`,
+  `APP-010-triagem-R1.md` e `APP-010-fontes.json` (19 fontes).
+  Não declara backend, permissões/RLS, CI remota ou aprovação visual global.
 
 ## Auditoria visual Codex e adoção shadcn — 26/10/2026
 

@@ -17,10 +17,9 @@ import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import type { Pergunta } from "@/lib/dados/contrato"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
-import { CHAVE_ABERTURA_PERGUNTA, PEDIDO_PERGUNTAR } from "@/lib/rascunhos-criacao"
 import { useCasca } from "@/src/contexto/casca"
 import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
 
@@ -54,7 +53,8 @@ export function Comunidade() {
   const [rodada, setRodada] = useState(0)
   const [aba, setAba] = useState("ind")
   const [filtro, setFiltro] = useState("help")
-  const [criandoPergunta, setCriandoPergunta] = useState(false)
+  const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
+    useSobreposicaoDaEntrada("perguntar")
   const [tituloNovo, setTituloNovo] = useState("")
   const [topicoNovo, setTopicoNovo] = useState("")
   const [erroAoCriar, setErroAoCriar] = useState("")
@@ -82,28 +82,15 @@ export function Comunidade() {
     setPerguntasLocais(lerPerguntasLocais(casca.cidade))
   }, [casca.cidade])
 
-  useEffect(() => {
-    const abrirPergunta = () => {
-      try {
-        window.sessionStorage.removeItem(CHAVE_ABERTURA_PERGUNTA)
-      } catch {
-        /* sem persistência */
-      }
-      setAba("ind")
-      setCriandoPergunta(true)
-    }
-    window.addEventListener(PEDIDO_PERGUNTAR, abrirPergunta)
-    try {
-      if (window.sessionStorage.getItem(CHAVE_ABERTURA_PERGUNTA) === "1") abrirPergunta()
-    } catch {
-      /* CTA no cabeçalho continua disponível */
-    }
-    return () => window.removeEventListener(PEDIDO_PERGUNTAR, abrirPergunta)
-  }, [])
-
   const publicarPergunta = () => {
     if (dados === null) return
     const criada = criarPerguntaLocal(casca.cidade, dados.localidade.id, tituloNovo, topicoNovo)
+    if (criada === "limite") {
+      setErroAoCriar(
+        "Limite de 30 perguntas nesta sessão atingido. As anteriores foram preservadas e seu texto continua no formulário.",
+      )
+      return
+    }
     if (!criada) {
       setErroAoCriar(
         "Não foi possível guardar a pergunta nesta sessão. Confira o texto e tente novamente.",
@@ -116,8 +103,7 @@ export function Comunidade() {
     setErroAoCriar("")
     setAba("ind")
     setFiltro("mine")
-    setCriandoPergunta(false)
-    void navegacao.irPara("pergunta", { parametros: { id: criada.id } })
+    void navegacao.irPara("pergunta", { parametros: { id: criada.id }, replace: true })
   }
 
   const respostas = useMemo(() => contagemDeRespostas(dados), [dados])
