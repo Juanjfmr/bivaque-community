@@ -1,0 +1,44 @@
+name: PR116 source formatter export
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pr116-format-export.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format only PR116 changed source, no push
+        run: pnpm exec biome check --write apps/app/components/ui/product-card.tsx apps/app/components/bivaque/cartao-vitrine.tsx apps/app/src/telas/Inicio.tsx apps/app/src/styles.css apps/app/tests/e2e/home-vitrine-21st.spec.ts
+      - name: Return formatted source in log, read-only
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const paths = [
+            'apps/app/components/ui/product-card.tsx',
+            'apps/app/components/bivaque/cartao-vitrine.tsx',
+            'apps/app/src/telas/Inicio.tsx',
+            'apps/app/src/styles.css',
+            'apps/app/tests/e2e/home-vitrine-21st.spec.ts',
+          ]
+          paths.forEach((path, fileIndex) => {
+            const lines = fs.readFileSync(path, 'utf8').split('\n')
+            lines.forEach((line, lineIndex) => {
+              process.stdout.write('BVFMT|' + fileIndex + '|' + lineIndex + '|' + JSON.stringify(line) + '\n')
+            })
+          })
+          NODE
