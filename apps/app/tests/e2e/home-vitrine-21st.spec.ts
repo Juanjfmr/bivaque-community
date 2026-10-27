@@ -89,3 +89,26 @@ test("Home: quatro atalhos em faixa compacta e rolável no telefone", async ({ p
   await faixa.locator('[data-valor="comunidade"]').click()
   await expect(page).toHaveURL(/\/app\/comunidade$/)
 })
+
+test("Home: título, busca e atalhos formam um cabeçalho único e compacto", async ({ page }) => {
+  const largura = page.viewportSize()?.width ?? 375
+  await page.goto("/app/inicio")
+
+  const cabecalho = page.locator('header[data-home="abertura"]')
+  await expect(cabecalho).toBeVisible()
+  await expect(cabecalho.locator('[data-home="apresentacao"]')).toBeVisible()
+  await expect(cabecalho.locator('[data-home="ferramentas"]')).toBeVisible()
+  await expect(cabecalho.locator('[data-acao="busca"]')).toBeVisible()
+  await expect(cabecalho.locator('nav[aria-label="Áreas"] [data-acao="atalho"]')).toHaveCount(4)
+
+  const medidas = await cabecalho.evaluate((el) => ({
+    altura: el.getBoundingClientRect().height,
+    largura: el.clientWidth,
+    conteudo: el.scrollWidth,
+  }))
+  expect(medidas.conteudo).toBeLessThanOrEqual(medidas.largura + 1)
+  if (largura < 720) expect(medidas.altura).toBeLessThanOrEqual(270)
+
+  await cabecalho.locator('[data-acao="busca"]').click()
+  await expect(page).toHaveURL(/\/app\/busca$/)
+})
