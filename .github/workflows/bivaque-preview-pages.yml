@@ -41,6 +41,64 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: '/bivaque-community'
           NEXT_TELEMETRY_DISABLED: '1'
         run: npm run build
+      # Mantém a landing e o laboratório existentes e publica o PR #116 em
+      # /bivaque-community/pr116/ (subpasta isolada, sem mudar produção).
+      - name: Obter fonte do PR #116
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-foundation-21st-20261026
+          path: pr116-source
+          persist-credentials: false
+      - name: Preparar pnpm do app
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+          run_install: false
+      - name: Instalar dependências do PR #116
+        working-directory: pr116-source
+        run: pnpm install --frozen-lockfile
+      - name: Compilar app React do PR #116 para Pages
+        shell: bash
+        working-directory: pr116-source
+        run: |
+          set -euo pipefail
+          # As substituições existem APENAS neste checkout temporário de build.
+          # O código do PR #116, o R72 e a branch principal não são modificados.
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          function trocarArquivo(nome, antigo, novo, quantidade = 1) {
+            const atual = fs.readFileSync(nome, 'utf8')
+            const encontradas = atual.split(antigo).length - 1
+            if (encontradas !== quantidade) {
+              throw new Error(nome + ': esperado ' + quantidade + ' ocorrências, encontrado ' + encontradas)
+            }
+            fs.writeFileSync(nome, atual.replaceAll(antigo, novo))
+          }
+          trocarArquivo('apps/app/vite.config.ts', 'base: "/app/"', 'base: "/bivaque-community/pr116/"')
+          trocarArquivo('apps/app/src/roteador.tsx', 'basepath: "/app"', 'basepath: "/bivaque-community/pr116"')
+          trocarArquivo('apps/app/lib/navegacao/rotas.ts', 'export const BASE_PUBLICA = "/app"', 'export const BASE_PUBLICA = "/bivaque-community/pr116"')
+          const imagens = 'apps/app/lib/demo/imagens.ts'
+          const s = fs.readFileSync(imagens, 'utf8')
+          if (s.split('"/app/demo/').length < 10) throw new Error('URLs de imagem não encontradas')
+          fs.writeFileSync(imagens, s.replaceAll('"/app/demo/', '"/bivaque-community/pr116/demo/'))
+          const css = 'apps/app/src/styles.css'
+          const estilo = fs.readFileSync(css, 'utf8')
+          if (estilo.split('url("/app/fonts/').length !== 4) throw new Error('URLs das três fontes não encontradas')
+          fs.writeFileSync(css, estilo.replaceAll('url("/app/fonts/', 'url("/bivaque-community/pr116/fonts/'))
+          NODE
+          pnpm --filter @bivaque/app build
+          test -s apps/app/dist/index.html
+          SITE="$GITHUB_WORKSPACE/prototypes/bivaque-next-shadcn/out/pr116"
+          mkdir -p "$SITE"
+          cp -a apps/app/dist/. "$SITE/"
+          # Primeiro acesso direto e reload das rotas estáticas mais usadas.
+          for rota in inicio busca comunidade mercado imoveis desapegos negocios conversas voce guia agenda salvos meus-anuncios; do
+            mkdir -p "$SITE/$rota"
+            cp apps/app/dist/index.html "$SITE/$rota/index.html"
+          done
+          echo "PR116=$(git rev-parse HEAD)" > "$SITE/versao.txt"
+          echo "PUBLIC_URL=https://juanjfmr.github.io/bivaque-community/pr116/"
+          test -s "$SITE/index.html"
       - name: Publicar arquivos estáticos também na raiz da branch de testes
         shell: bash
         run: |
