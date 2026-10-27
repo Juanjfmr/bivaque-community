@@ -4,7 +4,32 @@ import { useEffect, useMemo, useState } from "react"
 import type { FormEvent, ReactNode } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Bell, Bookmark, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, Heart, Home, MapPin, MessageCircle, MoreHorizontal, PenLine, Plus, Search, Send, Share2, ShoppingBag, ThumbsUp, UserRound, UsersRound, Pin, Pencil } from "lucide-react"
+import {
+  ArrowLeft,
+  Bell,
+  Bookmark,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Heart,
+  Home,
+  MapPin,
+  MessageCircle,
+  MoreHorizontal,
+  PenLine,
+  Plus,
+  Search,
+  Send,
+  Share2,
+  ShoppingBag,
+  ThumbsUp,
+  UserRound,
+  UsersRound,
+  Pin,
+  Pencil,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,52 +42,1156 @@ import "./jornada-comunidade.css"
 // padrão Post Card (21st.dev/@shadcnui-blocks/components/card-06).
 // Dados de demonstração locais: não publica conteúdo nem presença no backend.
 export type Tela = "inicio" | "indicacoes" | "pergunta" | "criar" | "grupos" | "grupo" | "eventos"
-type Pergunta = { id:string; title:string; desc:string; author:string; category:string; replies:number; when:string; solved?:boolean; mine?:boolean }
-type Grupo = { id:string; title:string; image:string; members:number; about:string; joined?:boolean; closed?:boolean }
-type Evento = {id:string; day:string; month:string; title:string; place:string; time:string; count:number; about:string}
-const root="https://raw.githubusercontent.com/Juanjfmr/bivaque-community/codex/app/apps/app/public/demo/"
-const hero="https://raw.githubusercontent.com/Juanjfmr/bivaque-community/codex/app/apps/web/public/landing/hero-bivaque-community.webp"
-const questions:Pergunta[]=[
- {id:"internet",title:"Internet confiável em Manaus?",desc:"Vou me mudar no próximo mês e preciso de uma internet estável para trabalhar remotamente. Alguém indica?",author:"Carlos M.",category:"Internet",replies:2,when:"há 2h"},
- {id:"bairros",title:"Melhores bairros para se hospedar?",desc:"Quais bairros vocês recomendam para ficar alguns meses em Manaus?",author:"Marina Lopes",category:"Moradia",replies:8,when:"há 1d",solved:true},
- {id:"aeroporto",title:"Transporte do aeroporto até o centro",desc:"Qual a melhor opção de transporte do aeroporto para o centro?",author:"Rafael Costa",category:"Transporte",replies:3,when:"há 3d"},
- {id:"academias",title:"Academias com desconto para militares?",desc:"Alguém conhece academias na cidade que oferecem desconto para militares da ativa?",author:"Carlos M.",category:"Esporte",replies:5,when:"há 3h"},
- {id:"pediatra",title:"Indicação de pediatra em Manaus",desc:"Preciso de um pediatra de confiança para minha filha. Alguém pode indicar?",author:"Marina Lopes",category:"Saúde",replies:8,when:"há 5h"},
+type Pergunta = {
+  id: string
+  title: string
+  desc: string
+  author: string
+  category: string
+  replies: number
+  when: string
+  solved?: boolean
+  mine?: boolean
+}
+type Grupo = {
+  id: string
+  title: string
+  image: string
+  members: number
+  about: string
+  joined?: boolean
+  closed?: boolean
+}
+type Evento = {
+  id: string
+  day: string
+  month: string
+  title: string
+  place: string
+  time: string
+  count: number
+  about: string
+}
+const root =
+  "https://raw.githubusercontent.com/Juanjfmr/bivaque-community/codex/app/apps/app/public/demo/"
+const hero =
+  "https://raw.githubusercontent.com/Juanjfmr/bivaque-community/codex/app/apps/web/public/landing/hero-bivaque-community.webp"
+const questions: Pergunta[] = [
+  {
+    id: "internet",
+    title: "Internet confiável em Manaus?",
+    desc: "Vou me mudar no próximo mês e preciso de uma internet estável para trabalhar remotamente. Alguém indica?",
+    author: "Carlos M.",
+    category: "Internet",
+    replies: 2,
+    when: "há 2h",
+  },
+  {
+    id: "bairros",
+    title: "Melhores bairros para se hospedar?",
+    desc: "Quais bairros vocês recomendam para ficar alguns meses em Manaus?",
+    author: "Marina Lopes",
+    category: "Moradia",
+    replies: 8,
+    when: "há 1d",
+    solved: true,
+  },
+  {
+    id: "aeroporto",
+    title: "Transporte do aeroporto até o centro",
+    desc: "Qual a melhor opção de transporte do aeroporto para o centro?",
+    author: "Rafael Costa",
+    category: "Transporte",
+    replies: 3,
+    when: "há 3d",
+  },
+  {
+    id: "academias",
+    title: "Academias com desconto para militares?",
+    desc: "Alguém conhece academias na cidade que oferecem desconto para militares da ativa?",
+    author: "Carlos M.",
+    category: "Esporte",
+    replies: 5,
+    when: "há 3h",
+  },
+  {
+    id: "pediatra",
+    title: "Indicação de pediatra em Manaus",
+    desc: "Preciso de um pediatra de confiança para minha filha. Alguém pode indicar?",
+    author: "Marina Lopes",
+    category: "Saúde",
+    replies: 8,
+    when: "há 5h",
+  },
 ]
-const groups:Grupo[]=[
- {id:"chegados",title:"Recém-chegados Manaus",image:root+"arrival.webp",members:428,about:"Quem chega a Manaus. Moradia, escolas, burocracias e dicas práticas para o dia a dia.",joined:true},
- {id:"esporte",title:"Treino e Esporte Manaus",image:root+"friends.webp",members:312,about:"Treinos, corrida, ciclismo e encontros esportivos.",joined:true},
- {id:"moradia",title:"Moradia e Imóveis",image:root+"apartment.jpg",members:276,about:"Experiências e recomendações sobre morar na cidade."},
- {id:"gastronomia",title:"Gastronomia em Manaus",image:root+"kitchen.jpg",members:189,about:"Dicas de restaurantes e comidas regionais."},
- {id:"familias",title:"Famílias com crianças pequenas",image:root+"community.webp",members:540,about:"Escola, rotina com filhos e encontros entre famílias.",closed:true},
+const groups: Grupo[] = [
+  {
+    id: "chegados",
+    title: "Recém-chegados Manaus",
+    image: root + "arrival.webp",
+    members: 428,
+    about: "Quem chega a Manaus. Moradia, escolas, burocracias e dicas práticas para o dia a dia.",
+    joined: true,
+  },
+  {
+    id: "esporte",
+    title: "Treino e Esporte Manaus",
+    image: root + "friends.webp",
+    members: 312,
+    about: "Treinos, corrida, ciclismo e encontros esportivos.",
+    joined: true,
+  },
+  {
+    id: "moradia",
+    title: "Moradia e Imóveis",
+    image: root + "apartment.jpg",
+    members: 276,
+    about: "Experiências e recomendações sobre morar na cidade.",
+  },
+  {
+    id: "gastronomia",
+    title: "Gastronomia em Manaus",
+    image: root + "kitchen.jpg",
+    members: 189,
+    about: "Dicas de restaurantes e comidas regionais.",
+  },
+  {
+    id: "familias",
+    title: "Famílias com crianças pequenas",
+    image: root + "community.webp",
+    members: 540,
+    about: "Escola, rotina com filhos e encontros entre famílias.",
+    closed: true,
+  },
 ]
-const events:Evento[]=[
- {id:"recepcao",day:"15",month:"NOV",title:"Encontro de recém-chegados",place:"Manaus Plaza",time:"Dom, 15 nov · 18h",count:32,about:"Um encontro para conhecer quem está chegando à cidade e trocar experiências."},
- {id:"trilha",day:"22",month:"NOV",title:"Trilha no Parque do Mindu",place:"Parque Municipal do Mindu",time:"Dom, 22 nov · 7h30",count:18,about:"Caminhada coletiva e encontro ao ar livre."},
- {id:"familias",day:"28",month:"NOV",title:"Encontro de famílias",place:"Ponta Negra",time:"Sáb, 28 nov · 16h",count:42,about:"Tarde para as famílias se conhecerem e compartilharem atividades."},
+const events: Evento[] = [
+  {
+    id: "recepcao",
+    day: "15",
+    month: "NOV",
+    title: "Encontro de recém-chegados",
+    place: "Manaus Plaza",
+    time: "Dom, 15 nov · 18h",
+    count: 32,
+    about: "Um encontro para conhecer quem está chegando à cidade e trocar experiências.",
+  },
+  {
+    id: "trilha",
+    day: "22",
+    month: "NOV",
+    title: "Trilha no Parque do Mindu",
+    place: "Parque Municipal do Mindu",
+    time: "Dom, 22 nov · 7h30",
+    count: 18,
+    about: "Caminhada coletiva e encontro ao ar livre.",
+  },
+  {
+    id: "familias",
+    day: "28",
+    month: "NOV",
+    title: "Encontro de famílias",
+    place: "Ponta Negra",
+    time: "Sáb, 28 nov · 16h",
+    count: 42,
+    about: "Tarde para as famílias se conhecerem e compartilharem atividades.",
+  },
 ]
-function storeRead<T>(key:string,alt:T):T{try{const x=localStorage.getItem(key);return x?JSON.parse(x) as T:alt}catch{return alt}}
-function storeSave<T>(key:string,value:T){try{localStorage.setItem(key,JSON.stringify(value))}catch{/* sem armazenamento disponível */}}
-function Avatar({i=0,size=28}:{i?:number,size?:number}){const photos=[root+"friends.webp",root+"community.webp",root+"arrival.webp"];return <span className="bvj-avatar" style={{height:size,width:size}}><img alt="" src={photos[i%3]}/></span>}
-function People(){return <span className="bvj-avatars">{[0,1,2].map(i=><Avatar i={i} key={i} size={24}/>)}</span>}
-function Pill({children,kind="brasa"}:{children:ReactNode,kind?:"brasa"|"verde"|"azul"}){return <Badge variant="secondary" className={"bvj-selo bvj-selo-"+kind}>{children}</Badge>}
-function Section({title,to,children}:{title:string,to?:string,children:ReactNode}){return <section className="bvj-section"><div className="bvj-section-title"><h2>{title}</h2>{to&&<Link href={to}>Ver todos</Link>}</div>{children}</section>}
-function Nav(){return <nav className="bvj-bottom" aria-label="Navegação principal">{[
- {name:"Início",to:"/inicio",Icon:Home},{name:"Comunidade",to:"/comunidade",Icon:UsersRound},
- {name:"Criar",to:"/comunidade/criar",Icon:Plus},{name:"Mercado",to:"/mercado",Icon:ShoppingBag},
- {name:"Você",to:"/voce",Icon:UserRound},
-].map(n=><Link key={n.name} href={n.to} className={"bvj-bottom-item"+(n.name==="Comunidade"?" is-on":"")+(n.name==="Criar"?" is-create":"")}><span className="bvj-bottom-icon"><n.Icon size={25}/></span>{n.name}</Link>)}</nav>}
-function Header({title,back="/comunidade"}:{title:string,back?:string}){return <header className="bvj-topbar"><Link className="bvj-back" href={back} aria-label="Voltar"><ArrowLeft size={22}/></Link><div className="bvj-topbar-title"><b>{title}</b><span>Manaus · AM</span></div><Link href="/comunidade/indicacoes" aria-label="Buscar"><Search size={20}/></Link></header>}
-function Tabs({active}:{active:"indicacoes"|"grupos"|"eventos"}){const list=[{id:"indicacoes",name:"Indicações",path:"/comunidade/indicacoes",Icon:MessageCircle},{id:"grupos",name:"Grupos",path:"/comunidade/grupos",Icon:UsersRound},{id:"eventos",name:"Eventos",path:"/comunidade/eventos",Icon:CalendarDays}];return <nav className="bvj-tabs" aria-label="Áreas da Comunidade">{list.map(t=><Link key={t.id} href={t.path} className={active===t.id?"active":""}><t.Icon size={16}/>{t.name}</Link>)}</nav>}
-function Question({item,small=false,saved=false,onSave}:{item:Pergunta,small?:boolean,saved?:boolean,onSave:()=>void}){return <Card className={"bvj-question-card"+(small?" bvj-question-mini":"")}><CardContent className="bvj-question-inner"><div className="bvj-question-top"><Pill kind={item.solved?"verde":"brasa"}>{item.solved?<><Check size={13}/> Resolvida</>:"Dúvida"}</Pill><span>{item.replies} respostas</span></div><Link href={"/comunidade/pergunta/"+item.id}><h3>{item.title}</h3><p>{item.desc}</p></Link><div className="bvj-question-bottom"><People/><small>{item.when}</small><button type="button" aria-pressed={saved} aria-label={saved?"Remover dos salvos":"Salvar"} onClick={onSave}><Bookmark size={18} fill={saved?"currentColor":"none"}/></button></div></CardContent></Card>}
-function GroupCard({item,joined,onJoin}:{item:Grupo,joined:boolean,onJoin:(id:string)=>void}){return <article className="bvj-group-card" style={{backgroundImage:"linear-gradient(180deg,transparent 2%,rgba(10,28,27,.95)),url("+item.image+")"}}><UsersRound size={20}/><Link className="bvj-group-cover-link" aria-label={"Abrir "+item.title} href={"/comunidade/grupos/"+item.id}/><div className="bvj-group-card-bottom"><h3>{item.title}</h3><p>{item.members} membros</p><div><People/><button type="button" onClick={()=>onJoin(item.id)}>{joined?"Membro":item.closed?"Pedir":"Entrar"}</button></div></div></article>}
-function EventCard({item,going,onToggle}:{item:Evento,going:boolean,onToggle:(id:string)=>void}){return <Card className="bvj-event-card"><CardContent className="bvj-event-inside"><div className="bvj-event-date"><b>{item.day}</b><small>{item.month}</small></div><div className="bvj-event-data"><b>{item.title}</b><small><MapPin size={13}/>{item.place}</small><small><Clock3 size={13}/>{item.time}</small><small><People/>{item.count+(going?1:0)} confirmados</small></div><button className="bvj-event-next" type="button" onClick={()=>onToggle(item.id)} aria-label={going?"Cancelar presença":"Confirmar presença"}>{going?<CheckCircle2 size={21}/>:<ChevronRight size={22}/>}</button></CardContent></Card>}
-function Post({name,time,body,kind}:{name:string,time:string,body:string,kind:string}){return <Card className="bvj-post"><CardHeader className="bvj-post-header"><Avatar size={40}/><div><b>{name}</b><small>{time} · Manaus</small></div><Pill>{kind}</Pill><MoreHorizontal size={19}/></CardHeader><CardContent className="bvj-post-content"><p>{body}</p></CardContent><CardFooter className="bvj-post-footer"><span><Heart size={17}/> Útil</span><span><MessageCircle size={17}/> Comentar</span><span><Bookmark size={17}/> Salvar</span></CardFooter></Card>}
-function HomeScreen({all,joined,going,saved,join,rsvp,save}:{all:Pergunta[],joined:string[],going:string[],saved:string[],join:(id:string)=>void,rsvp:(id:string)=>void,save:(id:string)=>void}){return <><div className="bvj-hero" style={{backgroundImage:"linear-gradient(90deg,rgba(16,34,36,.95),rgba(16,34,36,.36)),url("+hero+")"}}><div className="bvj-hero-top"><div className="bvj-brand"><Marca className="size-8"/><strong>BIVAQUE</strong></div><div className="bvj-hero-tools"><Link href="/comunidade/indicacoes" aria-label="Buscar"><Search size={21}/></Link><Bell size={21}/></div></div><div><h1>Comunidade</h1><p>Converse, tire dúvidas e compartilhe experiências com a comunidade militar em Manaus.</p></div><div className="bvj-hero-bottom"><span><MapPin size={16}/>Manaus · AM</span><span><People/>1,2 mil membros</span></div></div><div className="bvj-home"><Tabs active="indicacoes"/><Link className="bvj-ask" href="/comunidade/criar"><span><Pencil size={21}/></span><div><b>Qual é sua dúvida ou indicação?</b><small>Pergunte, compartilhe uma experiência ou ajude alguém.</small></div><ChevronRight size={18}/></Link><Section title="Indicações em destaque" to="/comunidade/indicacoes"><div className="bvj-carousel">{all.slice(0,3).map(q=><Question key={q.id} item={q} small saved={saved.includes(q.id)} onSave={()=>save(q.id)}/>)}</div></Section><Section title="Grupos ativos na cidade" to="/comunidade/grupos"><div className="bvj-carousel">{groups.slice(0,4).map(g=><GroupCard key={g.id} item={g} joined={joined.includes(g.id)} onJoin={join}/>)}</div></Section><Section title="Próximos eventos" to="/comunidade/eventos"><div className="bvj-events-home">{events.slice(0,2).map(e=><EventCard key={e.id} item={e} going={going.includes(e.id)} onToggle={rsvp}/>)}</div></Section><Section title="Últimas atividades" to="/comunidade/indicacoes"><Post name="Carlos M." time="há 3h" kind="Pergunta" body="Onde encontrar academia com desconto para militares em Manaus?"/><Post name="Marina Lopes" time="há 5h" kind="Resposta" body="Indicação de pediatra em Manaus — alguém pode indicar?"/></Section></div></>}
-function IndicacoesScreen({all,saved,save}:{all:Pergunta[],saved:string[],save:(id:string)=>void}){const [text,setText]=useState("");const [filter,setFilter]=useState("Para ajudar");const [cat,setCat]=useState("Todos");const filtered=all.filter(q=>filter==="Resolvidas"?q.solved:filter==="Minhas"?q.mine:filter==="Para ajudar"?!q.solved:true).filter(q=>cat==="Todos"||q.category===cat).filter(q=>(q.title+" "+q.desc).toLowerCase().includes(text.toLowerCase()));return <><Header title="Indicações"/><Tabs active="indicacoes"/><div className="bvj-body"><div className="bvj-note"><CheckCircle2/><div><b>{all.filter(q=>q.solved).length} indicações resolvidas</b><small>Busque uma resposta antes de perguntar.</small></div></div><label className="bvj-search"><Search size={18}/><Input value={text} onChange={e=>setText(e.target.value)} placeholder="Buscar indicações..." aria-label="Buscar indicações"/></label><div className="bvj-filters">{["Para ajudar","Resolvidas","Minhas","Todas"].map(f=><button type="button" className={filter===f?"selected":""} key={f} onClick={()=>setFilter(f)}>{f}</button>)}</div><div className="bvj-filters bvj-categories">{["Todos","Internet","Moradia","Transporte","Saúde","Esporte"].map(c=><button type="button" className={cat===c?"selected":""} key={c} onClick={()=>setCat(c)}>{c}</button>)}</div><div className="bvj-list">{filtered.map(q=><Question key={q.id} item={q} saved={saved.includes(q.id)} onSave={()=>save(q.id)}/>)}</div>{!filtered.length&&<p className="bvj-empty">Nenhuma indicação encontrada com estes filtros.</p>}<Button className="bvj-primary bvj-full" asChild><Link href="/comunidade/criar"><PenLine size={16}/> Fazer uma indicação</Link></Button></div></>}
-function PerguntaScreen({all}:{all:Pergunta[]}){const params=useParams();const id=typeof params.id==="string"?params.id:"internet";const q=all.find(x=>x.id===id);const [message,setMessage]=useState("");const [answers,setAnswers]=useState<string[]>([]);const [liked,setLiked]=useState(false);const [following,setFollowing]=useState(false);useEffect(()=>setAnswers(storeRead<string[]>("bvj:answers:"+id,[])),[id]);function send(e:FormEvent){e.preventDefault();if(!message.trim())return;const next=[...answers,message.trim()];setAnswers(next);storeSave("bvj:answers:"+id,next);setMessage("")}return <><Header title="Detalhe da pergunta" back="/comunidade/indicacoes"/><div className="bvj-body">{q?<><Card className="bvj-detail-card"><CardContent className="bvj-detail-inside"><Pill kind={q.solved?"verde":"brasa"}>{q.solved?"Resolvida":"Dúvida"}</Pill><h1>{q.title}</h1><div className="bvj-byline"><Avatar size={39}/><div><b>{q.author}</b><small>{q.when} · Manaus</small></div><Button variant="outline" size="sm" onClick={()=>setFollowing(!following)}>{following?"Seguindo":"Seguir"}</Button></div><p>{q.desc}</p><div className="bvj-detail-actions"><span><MessageCircle size={16}/>{q.replies+answers.length} respostas</span><button type="button" onClick={()=>{if(typeof navigator!=="undefined"&&navigator.share)void navigator.share({title:q.title,url:location.href})}}><Share2 size={16}/> Compartilhar</button></div></CardContent></Card><Section title={"Respostas ("+(q.replies+answers.length)+")"}><article className="bvj-answer"><div className="bvj-byline"><Avatar i={1} size={36}/><div><b>Marina Lopes</b><small>há 4h · Membro da comunidade</small></div>{q.id==="internet"&&<Pill kind="verde">Ajudou</Pill>}</div><p>Uso a Vivo Fibra há um ano e tenho tido boa experiência. Vale conferir a cobertura no seu bairro.</p><button className="bvj-small-action" type="button" onClick={()=>setLiked(!liked)}><ThumbsUp size={16}/> Útil · {liked?5:4}</button></article><article className="bvj-answer"><div className="bvj-byline"><Avatar i={2} size={36}/><div><b>Rafael Costa</b><small>há 2h · Membro da comunidade</small></div></div><p>Recomendo verificar opções na região antes de contratar. A qualidade pode variar entre bairros.</p></article>{answers.map((a,i)=><article className="bvj-answer" key={i}><div className="bvj-byline"><b>Você · agora</b></div><p>{a}</p></article>)}</Section><form className="bvj-reply" onSubmit={send}><label htmlFor="reply">Compartilhe uma indicação</label><Textarea id="reply" rows={3} maxLength={2000} placeholder="Escreva sua resposta..." value={message} onChange={e=>setMessage(e.target.value)}/><Button className="bvj-primary" type="submit" disabled={!message.trim()}><Send size={16}/> Enviar resposta</Button></form></>:<p className="bvj-empty">Pergunta não encontrada. <Link href="/comunidade/indicacoes">Voltar às indicações</Link></p>}</div></>}
-function CriarScreen({add}:{add:(q:Pergunta)=>void}){const [title,setTitle]=useState("");const [desc,setDesc]=useState("");const [cat,setCat]=useState("Moradia");return <><Header title="Criar pergunta"/><form className="bvj-body bvj-form" onSubmit={e=>{e.preventDefault();if(title.trim().length<8)return;add({id:"minha-"+Date.now(),title:title.trim(),desc:desc.trim(),category:cat,author:"Você",replies:0,when:"agora",mine:true})}}><h1>Qual é sua dúvida?</h1><p>Peça ajuda a quem conhece Manaus. A resposta poderá ajudar outras famílias.</p><label htmlFor="q-title">Título da pergunta</label><Input id="q-title" required minLength={8} maxLength={160} value={title} onChange={e=>setTitle(e.target.value)} placeholder="Ex.: Internet confiável em Manaus?"/><small>{title.length}/160</small><label htmlFor="q-desc">Conte mais sobre o que precisa</label><Textarea id="q-desc" rows={5} maxLength={2000} value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Explique sua situação e o que procura."/><small>{desc.length}/2000</small><label>Assunto</label><div className="bvj-filters bvj-wrap">{["Moradia","Internet","Transporte","Saúde","Esporte"].map(c=><button type="button" key={c} className={cat===c?"selected":""} onClick={()=>setCat(c)}>{c}</button>)}</div><div className="bvj-form-hint"><MapPin size={17}/> Sua pergunta ficará na comunidade de Manaus.</div><Button type="submit" className="bvj-primary bvj-full" disabled={title.trim().length<8}><Send size={17}/> Publicar pergunta</Button></form></>}
-function GruposScreen({joined,join}:{joined:string[],join:(id:string)=>void}){const [search,setSearch]=useState("");const [filter,setFilter]=useState("Todos");const filtered=groups.filter(g=>filter==="Meus grupos"?joined.includes(g.id):filter==="Recomendados"?!joined.includes(g.id):true).filter(g=>(g.title+" "+g.about).toLowerCase().includes(search.toLowerCase()));return <><Header title="Grupos"/><Tabs active="grupos"/><div className="bvj-body"><label className="bvj-search"><Search size={18}/><Input placeholder="Buscar grupos..." value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="bvj-filters">{["Todos","Meus grupos","Recomendados"].map(f=><button type="button" key={f} className={f===filter?"selected":""} onClick={()=>setFilter(f)}>{f}</button>)}</div><div className="bvj-note"><UsersRound/><div><b>Grupos para o seu momento</b><small>Descubra pessoas com interesses e rotinas parecidas.</small></div></div><div className="bvj-group-list">{filtered.map(g=><Card className="bvj-group-row" key={g.id}><CardContent><img src={g.image} alt=""/><div><Link href={"/comunidade/grupos/"+g.id}><b>{g.title}</b></Link><small>{g.members} membros · {g.closed?"Fechado":"Aberto"}</small><p>{g.about}</p></div><Button variant="outline" size="sm" onClick={()=>join(g.id)}>{joined.includes(g.id)?"Membro":g.closed?"Pedir":"Entrar"}</Button></CardContent></Card>)}</div>{!filtered.length&&<p className="bvj-empty">Nenhum grupo encontrado.</p>}<p className="bvj-footnote">No protótipo, a participação é demonstrativa e fica salva neste navegador.</p></div></>}
-function GrupoScreen({joined,join,going,rsvp}:{joined:string[],join:(id:string)=>void,going:string[],rsvp:(id:string)=>void}){const params=useParams();const id=typeof params.id==="string"?params.id:"chegados";const group=groups.find(g=>g.id===id);const [tab,setTab]=useState("Publicações");const [message,setMessage]=useState("");const [posts,setPosts]=useState<string[]>([]);useEffect(()=>setPosts(storeRead<string[]>("bvj:group-posts:"+id,[])),[id]);if(!group)return <><Header title="Grupo"/><p className="bvj-body">Grupo não encontrado.</p></>;const isMember=joined.includes(id);function publish(e:FormEvent){e.preventDefault();if(!isMember||!message.trim())return;const next=[message.trim(),...posts];setPosts(next);storeSave("bvj:group-posts:"+id,next);setMessage("")}return <><div className="bvj-group-hero" style={{backgroundImage:"linear-gradient(180deg,rgba(15,31,31,.12),rgba(12,28,29,.91)),url("+group.image+")"}}><Link href="/comunidade/grupos" aria-label="Voltar"><ArrowLeft size={23}/></Link><div><h1>{group.title}</h1><p>{group.closed?"Fechado":"Aberto"} · {group.members} membros · Manaus</p><People/></div></div><div className="bvj-body"><p className="bvj-about">{group.about}</p><div className="bvj-group-actions"><Button className={isMember?"bvj-neutral":"bvj-primary"} onClick={()=>join(id)}>{isMember?"Participando":group.closed?"Pedir para entrar":"Entrar no grupo"}</Button><Button variant="outline" onClick={()=>{if(typeof navigator!=="undefined"&&navigator.share)void navigator.share({title:group.title,url:location.href})}}><Share2 size={17}/> Convidar</Button></div><div className="bvj-detail-tabs">{["Publicações","Sobre","Eventos","Membros"].map(t=><button type="button" key={t} className={tab===t?"active":""} onClick={()=>setTab(t)}>{t}</button>)}</div>{tab==="Publicações"&&<><div className="bvj-pin"><Pin size={18}/><div><b>Aviso fixado</b><p>Boas-vindas! Consulte as regras e apresente-se para as pessoas da cidade.</p></div></div>{isMember&&<form className="bvj-inline-compose" onSubmit={publish}><Input value={message} maxLength={2000} onChange={e=>setMessage(e.target.value)} placeholder="Escreva para o grupo..."/><Button type="submit" disabled={!message.trim()}><Send size={17}/></Button></form>}{posts.map((p,i)=><Post key={i} name="Você" time="agora" kind="Publicação" body={p}/>)}<Post name="Marina Lopes" time="há 1d" kind="Pergunta" body="Aluguel próximo ao COMAR VII: quais bairros são mais práticos para famílias?"/><Post name="Rafael Costa" time="há 2d" kind="Dica" body="Compartilhando sugestões de escolas na região da Ponta Negra para quem está chegando."/></>}{tab==="Sobre"&&<Card className="bvj-simple"><CardContent><h2>Sobre o grupo</h2><p>{group.about}</p><h3>Regras</h3><p>Seja respeitoso. Não compartilhe endereço completo ou informações pessoais de terceiros.</p></CardContent></Card>}{tab==="Eventos"&&events.slice(0,2).map(e=><EventCard key={e.id} item={e} going={going.includes(e.id)} onToggle={rsvp}/>)}{tab==="Membros"&&<Card className="bvj-simple"><CardContent><h2>{group.members} membros</h2>{["Carlos M.","Marina Lopes","Rafael Costa"].map((n,i)=><div className="bvj-person" key={n}><Avatar i={i} size={36}/>{n}</div>)}</CardContent></Card>}</div></>}
-function EventosScreen({going,rsvp}:{going:string[],rsvp:(id:string)=>void}){const [filter,setFilter]=useState("Próximos");const filtered=events.filter(e=>filter==="Próximos"||going.includes(e.id));return <><Header title="Eventos"/><Tabs active="eventos"/><div className="bvj-body"><div className="bvj-note"><CalendarDays/><div><b>Encontros da comunidade</b><small>Participe de atividades e conheça pessoas em Manaus.</small></div></div><div className="bvj-filters">{["Próximos","Confirmados"].map(f=><button type="button" key={f} className={f===filter?"selected":""} onClick={()=>setFilter(f)}>{f}</button>)}</div><Section title={filter==="Próximos"?"Próximos eventos":"Minhas presenças"}>{filtered.map(e=><div className="bvj-event-block" key={e.id}><EventCard item={e} going={going.includes(e.id)} onToggle={rsvp}/><p>{e.about}</p><Button className={going.includes(e.id)?"":"bvj-primary"} variant={going.includes(e.id)?"outline":"default"} onClick={()=>rsvp(e.id)}>{going.includes(e.id)?"Cancelar presença":"Confirmar presença"}</Button></div>)}</Section>{!filtered.length&&<p className="bvj-empty">Você ainda não confirmou presença em eventos.</p>}</div></>}
-export function JornadaComunidade({tela}:{tela:Tela}){const router=useRouter();const [mine,setMine]=useState<Pergunta[]>([]);const [joined,setJoined]=useState<string[]>(["chegados","esporte"]);const [going,setGoing]=useState<string[]>([]);const [saved,setSaved]=useState<string[]>([]);useEffect(()=>{setMine(storeRead("bvj:questions",[]));setJoined(storeRead("bvj:joined",["chegados","esporte"]));setGoing(storeRead("bvj:going",[]));setSaved(storeRead("bvj:saved",[]))},[]);const all=useMemo(()=>[...mine,...questions],[mine]);function toggle(value:string,array:string[],set:(x:string[])=>void,key:string){const next=array.includes(value)?array.filter(x=>x!==value):[...array,value];set(next);storeSave(key,next)}const join=(id:string)=>toggle(id,joined,setJoined,"bvj:joined");const rsvp=(id:string)=>toggle(id,going,setGoing,"bvj:going");const save=(id:string)=>toggle(id,saved,setSaved,"bvj:saved");function add(q:Pergunta){const next=[q,...mine];setMine(next);storeSave("bvj:questions",next);router.push("/comunidade/pergunta/"+q.id)}return <div className="bvj" data-screen={tela}>{tela==="inicio"&&<HomeScreen all={all} joined={joined} going={going} saved={saved} join={join} rsvp={rsvp} save={save}/>} {tela==="indicacoes"&&<IndicacoesScreen all={all} saved={saved} save={save}/>} {tela==="pergunta"&&<PerguntaScreen all={all}/>} {tela==="criar"&&<CriarScreen add={add}/>} {tela==="grupos"&&<GruposScreen joined={joined} join={join}/>} {tela==="grupo"&&<GrupoScreen joined={joined} join={join} going={going} rsvp={rsvp}/>} {tela==="eventos"&&<EventosScreen going={going} rsvp={rsvp}/>}<Nav/></div>}
+function storeRead<T>(key: string, alt: T): T {
+  try {
+    const x = localStorage.getItem(key)
+    return x ? (JSON.parse(x) as T) : alt
+  } catch {
+    return alt
+  }
+}
+function storeSave<T>(key: string, value: T) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    /* sem armazenamento disponível */
+  }
+}
+function Avatar({ i = 0, size = 28 }: { i?: number; size?: number }) {
+  const photos = [root + "friends.webp", root + "community.webp", root + "arrival.webp"]
+  return (
+    <span className="bvj-avatar" style={{ height: size, width: size }}>
+      <img alt="" src={photos[i % 3]} />
+    </span>
+  )
+}
+function People() {
+  return (
+    <span className="bvj-avatars">
+      {[0, 1, 2].map((i) => (
+        <Avatar i={i} key={i} size={24} />
+      ))}
+    </span>
+  )
+}
+function Pill({
+  children,
+  kind = "brasa",
+}: {
+  children: ReactNode
+  kind?: "brasa" | "verde" | "azul"
+}) {
+  return (
+    <Badge variant="secondary" className={"bvj-selo bvj-selo-" + kind}>
+      {children}
+    </Badge>
+  )
+}
+function Section({ title, to, children }: { title: string; to?: string; children: ReactNode }) {
+  return (
+    <section className="bvj-section">
+      <div className="bvj-section-title">
+        <h2>{title}</h2>
+        {to && <Link href={to}>Ver todos</Link>}
+      </div>
+      {children}
+    </section>
+  )
+}
+function Nav() {
+  return (
+    <nav className="bvj-bottom" aria-label="Navegação principal">
+      {[
+        { name: "Início", to: "/inicio", Icon: Home },
+        { name: "Comunidade", to: "/comunidade", Icon: UsersRound },
+        { name: "Criar", to: "/comunidade/criar", Icon: Plus },
+        { name: "Mercado", to: "/mercado", Icon: ShoppingBag },
+        { name: "Você", to: "/voce", Icon: UserRound },
+      ].map((n) => (
+        <Link
+          key={n.name}
+          href={n.to}
+          className={
+            "bvj-bottom-item" +
+            (n.name === "Comunidade" ? " is-on" : "") +
+            (n.name === "Criar" ? " is-create" : "")
+          }
+        >
+          <span className="bvj-bottom-icon">
+            <n.Icon size={25} />
+          </span>
+          {n.name}
+        </Link>
+      ))}
+    </nav>
+  )
+}
+function Header({ title, back = "/comunidade" }: { title: string; back?: string }) {
+  return (
+    <header className="bvj-topbar">
+      <Link className="bvj-back" href={back} aria-label="Voltar">
+        <ArrowLeft size={22} />
+      </Link>
+      <div className="bvj-topbar-title">
+        <b>{title}</b>
+        <span>Manaus · AM</span>
+      </div>
+      <Link href="/comunidade/indicacoes" aria-label="Buscar">
+        <Search size={20} />
+      </Link>
+    </header>
+  )
+}
+function Tabs({ active }: { active: "indicacoes" | "grupos" | "eventos" }) {
+  const list = [
+    { id: "indicacoes", name: "Indicações", path: "/comunidade/indicacoes", Icon: MessageCircle },
+    { id: "grupos", name: "Grupos", path: "/comunidade/grupos", Icon: UsersRound },
+    { id: "eventos", name: "Eventos", path: "/comunidade/eventos", Icon: CalendarDays },
+  ]
+  return (
+    <nav className="bvj-tabs" aria-label="Áreas da Comunidade">
+      {list.map((t) => (
+        <Link key={t.id} href={t.path} className={active === t.id ? "active" : ""}>
+          <t.Icon size={16} />
+          {t.name}
+        </Link>
+      ))}
+    </nav>
+  )
+}
+function Question({
+  item,
+  small = false,
+  saved = false,
+  onSave,
+}: {
+  item: Pergunta
+  small?: boolean
+  saved?: boolean
+  onSave: () => void
+}) {
+  return (
+    <Card className={"bvj-question-card" + (small ? " bvj-question-mini" : "")}>
+      <CardContent className="bvj-question-inner">
+        <div className="bvj-question-top">
+          <Pill kind={item.solved ? "verde" : "brasa"}>
+            {item.solved ? (
+              <>
+                <Check size={13} /> Resolvida
+              </>
+            ) : (
+              "Dúvida"
+            )}
+          </Pill>
+          <span>{item.replies} respostas</span>
+        </div>
+        <Link href={"/comunidade/pergunta/" + item.id}>
+          <h3>{item.title}</h3>
+          <p>{item.desc}</p>
+        </Link>
+        <div className="bvj-question-bottom">
+          <People />
+          <small>{item.when}</small>
+          <button
+            type="button"
+            aria-pressed={saved}
+            aria-label={saved ? "Remover dos salvos" : "Salvar"}
+            onClick={onSave}
+          >
+            <Bookmark size={18} fill={saved ? "currentColor" : "none"} />
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+function GroupCard({
+  item,
+  joined,
+  onJoin,
+}: {
+  item: Grupo
+  joined: boolean
+  onJoin: (id: string) => void
+}) {
+  return (
+    <article
+      className="bvj-group-card"
+      style={{
+        backgroundImage:
+          "linear-gradient(180deg,transparent 2%,rgba(10,28,27,.95)),url(" + item.image + ")",
+      }}
+    >
+      <UsersRound size={20} />
+      <Link
+        className="bvj-group-cover-link"
+        aria-label={"Abrir " + item.title}
+        href={"/comunidade/grupos/" + item.id}
+      />
+      <div className="bvj-group-card-bottom">
+        <h3>{item.title}</h3>
+        <p>{item.members} membros</p>
+        <div>
+          <People />
+          <button type="button" onClick={() => onJoin(item.id)}>
+            {joined ? "Membro" : item.closed ? "Pedir" : "Entrar"}
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+function EventCard({
+  item,
+  going,
+  onToggle,
+}: {
+  item: Evento
+  going: boolean
+  onToggle: (id: string) => void
+}) {
+  return (
+    <Card className="bvj-event-card">
+      <CardContent className="bvj-event-inside">
+        <div className="bvj-event-date">
+          <b>{item.day}</b>
+          <small>{item.month}</small>
+        </div>
+        <div className="bvj-event-data">
+          <b>{item.title}</b>
+          <small>
+            <MapPin size={13} />
+            {item.place}
+          </small>
+          <small>
+            <Clock3 size={13} />
+            {item.time}
+          </small>
+          <small>
+            <People />
+            {item.count + (going ? 1 : 0)} confirmados
+          </small>
+        </div>
+        <button
+          className="bvj-event-next"
+          type="button"
+          onClick={() => onToggle(item.id)}
+          aria-label={going ? "Cancelar presença" : "Confirmar presença"}
+        >
+          {going ? <CheckCircle2 size={21} /> : <ChevronRight size={22} />}
+        </button>
+      </CardContent>
+    </Card>
+  )
+}
+function Post({
+  name,
+  time,
+  body,
+  kind,
+}: {
+  name: string
+  time: string
+  body: string
+  kind: string
+}) {
+  return (
+    <Card className="bvj-post">
+      <CardHeader className="bvj-post-header">
+        <Avatar size={40} />
+        <div>
+          <b>{name}</b>
+          <small>{time} · Manaus</small>
+        </div>
+        <Pill>{kind}</Pill>
+        <MoreHorizontal size={19} />
+      </CardHeader>
+      <CardContent className="bvj-post-content">
+        <p>{body}</p>
+      </CardContent>
+      <CardFooter className="bvj-post-footer">
+        <span>
+          <Heart size={17} /> Útil
+        </span>
+        <span>
+          <MessageCircle size={17} /> Comentar
+        </span>
+        <span>
+          <Bookmark size={17} /> Salvar
+        </span>
+      </CardFooter>
+    </Card>
+  )
+}
+function HomeScreen({
+  all,
+  joined,
+  going,
+  saved,
+  join,
+  rsvp,
+  save,
+}: {
+  all: Pergunta[]
+  joined: string[]
+  going: string[]
+  saved: string[]
+  join: (id: string) => void
+  rsvp: (id: string) => void
+  save: (id: string) => void
+}) {
+  return (
+    <>
+      <div
+        className="bvj-hero"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg,rgba(16,34,36,.95),rgba(16,34,36,.36)),url(" + hero + ")",
+        }}
+      >
+        <div className="bvj-hero-top">
+          <div className="bvj-brand">
+            <Marca className="size-8" />
+            <strong>BIVAQUE</strong>
+          </div>
+          <div className="bvj-hero-tools">
+            <Link href="/comunidade/indicacoes" aria-label="Buscar">
+              <Search size={21} />
+            </Link>
+            <Bell size={21} />
+          </div>
+        </div>
+        <div>
+          <h1>Comunidade</h1>
+          <p>
+            Converse, tire dúvidas e compartilhe experiências com a comunidade militar em Manaus.
+          </p>
+        </div>
+        <div className="bvj-hero-bottom">
+          <span>
+            <MapPin size={16} />
+            Manaus · AM
+          </span>
+          <span>
+            <People />
+            1,2 mil membros
+          </span>
+        </div>
+      </div>
+      <div className="bvj-home">
+        <Tabs active="indicacoes" />
+        <Link className="bvj-ask" href="/comunidade/criar">
+          <span>
+            <Pencil size={21} />
+          </span>
+          <div>
+            <b>Qual é sua dúvida ou indicação?</b>
+            <small>Pergunte, compartilhe uma experiência ou ajude alguém.</small>
+          </div>
+          <ChevronRight size={18} />
+        </Link>
+        <Section title="Indicações em destaque" to="/comunidade/indicacoes">
+          <div className="bvj-carousel">
+            {all.slice(0, 3).map((q) => (
+              <Question
+                key={q.id}
+                item={q}
+                small
+                saved={saved.includes(q.id)}
+                onSave={() => save(q.id)}
+              />
+            ))}
+          </div>
+        </Section>
+        <Section title="Grupos ativos na cidade" to="/comunidade/grupos">
+          <div className="bvj-carousel">
+            {groups.slice(0, 4).map((g) => (
+              <GroupCard key={g.id} item={g} joined={joined.includes(g.id)} onJoin={join} />
+            ))}
+          </div>
+        </Section>
+        <Section title="Próximos eventos" to="/comunidade/eventos">
+          <div className="bvj-events-home">
+            {events.slice(0, 2).map((e) => (
+              <EventCard key={e.id} item={e} going={going.includes(e.id)} onToggle={rsvp} />
+            ))}
+          </div>
+        </Section>
+        <Section title="Últimas atividades" to="/comunidade/indicacoes">
+          <Post
+            name="Carlos M."
+            time="há 3h"
+            kind="Pergunta"
+            body="Onde encontrar academia com desconto para militares em Manaus?"
+          />
+          <Post
+            name="Marina Lopes"
+            time="há 5h"
+            kind="Resposta"
+            body="Indicação de pediatra em Manaus — alguém pode indicar?"
+          />
+        </Section>
+      </div>
+    </>
+  )
+}
+function IndicacoesScreen({
+  all,
+  saved,
+  save,
+}: {
+  all: Pergunta[]
+  saved: string[]
+  save: (id: string) => void
+}) {
+  const [text, setText] = useState("")
+  const [filter, setFilter] = useState("Para ajudar")
+  const [cat, setCat] = useState("Todos")
+  const filtered = all
+    .filter((q) =>
+      filter === "Resolvidas"
+        ? q.solved
+        : filter === "Minhas"
+          ? q.mine
+          : filter === "Para ajudar"
+            ? !q.solved
+            : true,
+    )
+    .filter((q) => cat === "Todos" || q.category === cat)
+    .filter((q) => (q.title + " " + q.desc).toLowerCase().includes(text.toLowerCase()))
+  return (
+    <>
+      <Header title="Indicações" />
+      <Tabs active="indicacoes" />
+      <div className="bvj-body">
+        <div className="bvj-note">
+          <CheckCircle2 />
+          <div>
+            <b>{all.filter((q) => q.solved).length} indicações resolvidas</b>
+            <small>Busque uma resposta antes de perguntar.</small>
+          </div>
+        </div>
+        <label className="bvj-search">
+          <Search size={18} />
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Buscar indicações..."
+            aria-label="Buscar indicações"
+          />
+        </label>
+        <div className="bvj-filters">
+          {["Para ajudar", "Resolvidas", "Minhas", "Todas"].map((f) => (
+            <button
+              type="button"
+              className={filter === f ? "selected" : ""}
+              key={f}
+              onClick={() => setFilter(f)}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="bvj-filters bvj-categories">
+          {["Todos", "Internet", "Moradia", "Transporte", "Saúde", "Esporte"].map((c) => (
+            <button
+              type="button"
+              className={cat === c ? "selected" : ""}
+              key={c}
+              onClick={() => setCat(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <div className="bvj-list">
+          {filtered.map((q) => (
+            <Question key={q.id} item={q} saved={saved.includes(q.id)} onSave={() => save(q.id)} />
+          ))}
+        </div>
+        {!filtered.length && (
+          <p className="bvj-empty">Nenhuma indicação encontrada com estes filtros.</p>
+        )}
+        <Button className="bvj-primary bvj-full" asChild>
+          <Link href="/comunidade/criar">
+            <PenLine size={16} /> Fazer uma indicação
+          </Link>
+        </Button>
+      </div>
+    </>
+  )
+}
+function PerguntaScreen({ all }: { all: Pergunta[] }) {
+  const params = useParams()
+  const id = typeof params.id === "string" ? params.id : "internet"
+  const q = all.find((x) => x.id === id)
+  const [message, setMessage] = useState("")
+  const [answers, setAnswers] = useState<string[]>([])
+  const [liked, setLiked] = useState(false)
+  const [following, setFollowing] = useState(false)
+  useEffect(() => setAnswers(storeRead<string[]>("bvj:answers:" + id, [])), [id])
+  function send(e: FormEvent) {
+    e.preventDefault()
+    if (!message.trim()) return
+    const next = [...answers, message.trim()]
+    setAnswers(next)
+    storeSave("bvj:answers:" + id, next)
+    setMessage("")
+  }
+  return (
+    <>
+      <Header title="Detalhe da pergunta" back="/comunidade/indicacoes" />
+      <div className="bvj-body">
+        {q ? (
+          <>
+            <Card className="bvj-detail-card">
+              <CardContent className="bvj-detail-inside">
+                <Pill kind={q.solved ? "verde" : "brasa"}>{q.solved ? "Resolvida" : "Dúvida"}</Pill>
+                <h1>{q.title}</h1>
+                <div className="bvj-byline">
+                  <Avatar size={39} />
+                  <div>
+                    <b>{q.author}</b>
+                    <small>{q.when} · Manaus</small>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setFollowing(!following)}>
+                    {following ? "Seguindo" : "Seguir"}
+                  </Button>
+                </div>
+                <p>{q.desc}</p>
+                <div className="bvj-detail-actions">
+                  <span>
+                    <MessageCircle size={16} />
+                    {q.replies + answers.length} respostas
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof navigator !== "undefined" && navigator.share)
+                        void navigator.share({ title: q.title, url: location.href })
+                    }}
+                  >
+                    <Share2 size={16} /> Compartilhar
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+            <Section title={"Respostas (" + (q.replies + answers.length) + ")"}>
+              <article className="bvj-answer">
+                <div className="bvj-byline">
+                  <Avatar i={1} size={36} />
+                  <div>
+                    <b>Marina Lopes</b>
+                    <small>há 4h · Membro da comunidade</small>
+                  </div>
+                  {q.id === "internet" && <Pill kind="verde">Ajudou</Pill>}
+                </div>
+                <p>
+                  Uso a Vivo Fibra há um ano e tenho tido boa experiência. Vale conferir a cobertura
+                  no seu bairro.
+                </p>
+                <button className="bvj-small-action" type="button" onClick={() => setLiked(!liked)}>
+                  <ThumbsUp size={16} /> Útil · {liked ? 5 : 4}
+                </button>
+              </article>
+              <article className="bvj-answer">
+                <div className="bvj-byline">
+                  <Avatar i={2} size={36} />
+                  <div>
+                    <b>Rafael Costa</b>
+                    <small>há 2h · Membro da comunidade</small>
+                  </div>
+                </div>
+                <p>
+                  Recomendo verificar opções na região antes de contratar. A qualidade pode variar
+                  entre bairros.
+                </p>
+              </article>
+              {answers.map((a, i) => (
+                <article className="bvj-answer" key={i}>
+                  <div className="bvj-byline">
+                    <b>Você · agora</b>
+                  </div>
+                  <p>{a}</p>
+                </article>
+              ))}
+            </Section>
+            <form className="bvj-reply" onSubmit={send}>
+              <label htmlFor="reply">Compartilhe uma indicação</label>
+              <Textarea
+                id="reply"
+                rows={3}
+                maxLength={2000}
+                placeholder="Escreva sua resposta..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <Button className="bvj-primary" type="submit" disabled={!message.trim()}>
+                <Send size={16} /> Enviar resposta
+              </Button>
+            </form>
+          </>
+        ) : (
+          <p className="bvj-empty">
+            Pergunta não encontrada. <Link href="/comunidade/indicacoes">Voltar às indicações</Link>
+          </p>
+        )}
+      </div>
+    </>
+  )
+}
+function CriarScreen({ add }: { add: (q: Pergunta) => void }) {
+  const [title, setTitle] = useState("")
+  const [desc, setDesc] = useState("")
+  const [cat, setCat] = useState("Moradia")
+  return (
+    <>
+      <Header title="Criar pergunta" />
+      <form
+        className="bvj-body bvj-form"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (title.trim().length < 8) return
+          add({
+            id: "minha-" + Date.now(),
+            title: title.trim(),
+            desc: desc.trim(),
+            category: cat,
+            author: "Você",
+            replies: 0,
+            when: "agora",
+            mine: true,
+          })
+        }}
+      >
+        <h1>Qual é sua dúvida?</h1>
+        <p>Peça ajuda a quem conhece Manaus. A resposta poderá ajudar outras famílias.</p>
+        <label htmlFor="q-title">Título da pergunta</label>
+        <Input
+          id="q-title"
+          required
+          minLength={8}
+          maxLength={160}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Ex.: Internet confiável em Manaus?"
+        />
+        <small>{title.length}/160</small>
+        <label htmlFor="q-desc">Conte mais sobre o que precisa</label>
+        <Textarea
+          id="q-desc"
+          rows={5}
+          maxLength={2000}
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          placeholder="Explique sua situação e o que procura."
+        />
+        <small>{desc.length}/2000</small>
+        <label>Assunto</label>
+        <div className="bvj-filters bvj-wrap">
+          {["Moradia", "Internet", "Transporte", "Saúde", "Esporte"].map((c) => (
+            <button
+              type="button"
+              key={c}
+              className={cat === c ? "selected" : ""}
+              onClick={() => setCat(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <div className="bvj-form-hint">
+          <MapPin size={17} /> Sua pergunta ficará na comunidade de Manaus.
+        </div>
+        <Button type="submit" className="bvj-primary bvj-full" disabled={title.trim().length < 8}>
+          <Send size={17} /> Publicar pergunta
+        </Button>
+      </form>
+    </>
+  )
+}
+function GruposScreen({ joined, join }: { joined: string[]; join: (id: string) => void }) {
+  const [search, setSearch] = useState("")
+  const [filter, setFilter] = useState("Todos")
+  const filtered = groups
+    .filter((g) =>
+      filter === "Meus grupos"
+        ? joined.includes(g.id)
+        : filter === "Recomendados"
+          ? !joined.includes(g.id)
+          : true,
+    )
+    .filter((g) => (g.title + " " + g.about).toLowerCase().includes(search.toLowerCase()))
+  return (
+    <>
+      <Header title="Grupos" />
+      <Tabs active="grupos" />
+      <div className="bvj-body">
+        <label className="bvj-search">
+          <Search size={18} />
+          <Input
+            placeholder="Buscar grupos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+        <div className="bvj-filters">
+          {["Todos", "Meus grupos", "Recomendados"].map((f) => (
+            <button
+              type="button"
+              key={f}
+              className={f === filter ? "selected" : ""}
+              onClick={() => setFilter(f)}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="bvj-note">
+          <UsersRound />
+          <div>
+            <b>Grupos para o seu momento</b>
+            <small>Descubra pessoas com interesses e rotinas parecidas.</small>
+          </div>
+        </div>
+        <div className="bvj-group-list">
+          {filtered.map((g) => (
+            <Card className="bvj-group-row" key={g.id}>
+              <CardContent>
+                <img src={g.image} alt="" />
+                <div>
+                  <Link href={"/comunidade/grupos/" + g.id}>
+                    <b>{g.title}</b>
+                  </Link>
+                  <small>
+                    {g.members} membros · {g.closed ? "Fechado" : "Aberto"}
+                  </small>
+                  <p>{g.about}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => join(g.id)}>
+                  {joined.includes(g.id) ? "Membro" : g.closed ? "Pedir" : "Entrar"}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {!filtered.length && <p className="bvj-empty">Nenhum grupo encontrado.</p>}
+        <p className="bvj-footnote">
+          No protótipo, a participação é demonstrativa e fica salva neste navegador.
+        </p>
+      </div>
+    </>
+  )
+}
+function GrupoScreen({
+  joined,
+  join,
+  going,
+  rsvp,
+}: {
+  joined: string[]
+  join: (id: string) => void
+  going: string[]
+  rsvp: (id: string) => void
+}) {
+  const params = useParams()
+  const id = typeof params.id === "string" ? params.id : "chegados"
+  const group = groups.find((g) => g.id === id)
+  const [tab, setTab] = useState("Publicações")
+  const [message, setMessage] = useState("")
+  const [posts, setPosts] = useState<string[]>([])
+  useEffect(() => setPosts(storeRead<string[]>("bvj:group-posts:" + id, [])), [id])
+  if (!group)
+    return (
+      <>
+        <Header title="Grupo" />
+        <p className="bvj-body">Grupo não encontrado.</p>
+      </>
+    )
+  const isMember = joined.includes(id)
+  function publish(e: FormEvent) {
+    e.preventDefault()
+    if (!isMember || !message.trim()) return
+    const next = [message.trim(), ...posts]
+    setPosts(next)
+    storeSave("bvj:group-posts:" + id, next)
+    setMessage("")
+  }
+  return (
+    <>
+      <div
+        className="bvj-group-hero"
+        style={{
+          backgroundImage:
+            "linear-gradient(180deg,rgba(15,31,31,.12),rgba(12,28,29,.91)),url(" +
+            group.image +
+            ")",
+        }}
+      >
+        <Link href="/comunidade/grupos" aria-label="Voltar">
+          <ArrowLeft size={23} />
+        </Link>
+        <div>
+          <h1>{group.title}</h1>
+          <p>
+            {group.closed ? "Fechado" : "Aberto"} · {group.members} membros · Manaus
+          </p>
+          <People />
+        </div>
+      </div>
+      <div className="bvj-body">
+        <p className="bvj-about">{group.about}</p>
+        <div className="bvj-group-actions">
+          <Button className={isMember ? "bvj-neutral" : "bvj-primary"} onClick={() => join(id)}>
+            {isMember ? "Participando" : group.closed ? "Pedir para entrar" : "Entrar no grupo"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (typeof navigator !== "undefined" && navigator.share)
+                void navigator.share({ title: group.title, url: location.href })
+            }}
+          >
+            <Share2 size={17} /> Convidar
+          </Button>
+        </div>
+        <div className="bvj-detail-tabs">
+          {["Publicações", "Sobre", "Eventos", "Membros"].map((t) => (
+            <button
+              type="button"
+              key={t}
+              className={tab === t ? "active" : ""}
+              onClick={() => setTab(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        {tab === "Publicações" && (
+          <>
+            <div className="bvj-pin">
+              <Pin size={18} />
+              <div>
+                <b>Aviso fixado</b>
+                <p>Boas-vindas! Consulte as regras e apresente-se para as pessoas da cidade.</p>
+              </div>
+            </div>
+            {isMember && (
+              <form className="bvj-inline-compose" onSubmit={publish}>
+                <Input
+                  value={message}
+                  maxLength={2000}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Escreva para o grupo..."
+                />
+                <Button type="submit" disabled={!message.trim()}>
+                  <Send size={17} />
+                </Button>
+              </form>
+            )}
+            {posts.map((p, i) => (
+              <Post key={i} name="Você" time="agora" kind="Publicação" body={p} />
+            ))}
+            <Post
+              name="Marina Lopes"
+              time="há 1d"
+              kind="Pergunta"
+              body="Aluguel próximo ao COMAR VII: quais bairros são mais práticos para famílias?"
+            />
+            <Post
+              name="Rafael Costa"
+              time="há 2d"
+              kind="Dica"
+              body="Compartilhando sugestões de escolas na região da Ponta Negra para quem está chegando."
+            />
+          </>
+        )}
+        {tab === "Sobre" && (
+          <Card className="bvj-simple">
+            <CardContent>
+              <h2>Sobre o grupo</h2>
+              <p>{group.about}</p>
+              <h3>Regras</h3>
+              <p>
+                Seja respeitoso. Não compartilhe endereço completo ou informações pessoais de
+                terceiros.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        {tab === "Eventos" &&
+          events
+            .slice(0, 2)
+            .map((e) => (
+              <EventCard key={e.id} item={e} going={going.includes(e.id)} onToggle={rsvp} />
+            ))}
+        {tab === "Membros" && (
+          <Card className="bvj-simple">
+            <CardContent>
+              <h2>{group.members} membros</h2>
+              {["Carlos M.", "Marina Lopes", "Rafael Costa"].map((n, i) => (
+                <div className="bvj-person" key={n}>
+                  <Avatar i={i} size={36} />
+                  {n}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </>
+  )
+}
+function EventosScreen({ going, rsvp }: { going: string[]; rsvp: (id: string) => void }) {
+  const [filter, setFilter] = useState("Próximos")
+  const filtered = events.filter((e) => filter === "Próximos" || going.includes(e.id))
+  return (
+    <>
+      <Header title="Eventos" />
+      <Tabs active="eventos" />
+      <div className="bvj-body">
+        <div className="bvj-note">
+          <CalendarDays />
+          <div>
+            <b>Encontros da comunidade</b>
+            <small>Participe de atividades e conheça pessoas em Manaus.</small>
+          </div>
+        </div>
+        <div className="bvj-filters">
+          {["Próximos", "Confirmados"].map((f) => (
+            <button
+              type="button"
+              key={f}
+              className={f === filter ? "selected" : ""}
+              onClick={() => setFilter(f)}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <Section title={filter === "Próximos" ? "Próximos eventos" : "Minhas presenças"}>
+          {filtered.map((e) => (
+            <div className="bvj-event-block" key={e.id}>
+              <EventCard item={e} going={going.includes(e.id)} onToggle={rsvp} />
+              <p>{e.about}</p>
+              <Button
+                className={going.includes(e.id) ? "" : "bvj-primary"}
+                variant={going.includes(e.id) ? "outline" : "default"}
+                onClick={() => rsvp(e.id)}
+              >
+                {going.includes(e.id) ? "Cancelar presença" : "Confirmar presença"}
+              </Button>
+            </div>
+          ))}
+        </Section>
+        {!filtered.length && (
+          <p className="bvj-empty">Você ainda não confirmou presença em eventos.</p>
+        )}
+      </div>
+    </>
+  )
+}
+export function JornadaComunidade({ tela }: { tela: Tela }) {
+  const router = useRouter()
+  const [mine, setMine] = useState<Pergunta[]>([])
+  const [joined, setJoined] = useState<string[]>(["chegados", "esporte"])
+  const [going, setGoing] = useState<string[]>([])
+  const [saved, setSaved] = useState<string[]>([])
+  useEffect(() => {
+    setMine(storeRead("bvj:questions", []))
+    setJoined(storeRead("bvj:joined", ["chegados", "esporte"]))
+    setGoing(storeRead("bvj:going", []))
+    setSaved(storeRead("bvj:saved", []))
+  }, [])
+  const all = useMemo(() => [...mine, ...questions], [mine])
+  function toggle(value: string, array: string[], set: (x: string[]) => void, key: string) {
+    const next = array.includes(value) ? array.filter((x) => x !== value) : [...array, value]
+    set(next)
+    storeSave(key, next)
+  }
+  const join = (id: string) => toggle(id, joined, setJoined, "bvj:joined")
+  const rsvp = (id: string) => toggle(id, going, setGoing, "bvj:going")
+  const save = (id: string) => toggle(id, saved, setSaved, "bvj:saved")
+  function add(q: Pergunta) {
+    const next = [q, ...mine]
+    setMine(next)
+    storeSave("bvj:questions", next)
+    router.push("/comunidade/pergunta/" + q.id)
+  }
+  return (
+    <div className="bvj" data-screen={tela}>
+      {tela === "inicio" && (
+        <HomeScreen
+          all={all}
+          joined={joined}
+          going={going}
+          saved={saved}
+          join={join}
+          rsvp={rsvp}
+          save={save}
+        />
+      )}{" "}
+      {tela === "indicacoes" && <IndicacoesScreen all={all} saved={saved} save={save} />}{" "}
+      {tela === "pergunta" && <PerguntaScreen all={all} />}{" "}
+      {tela === "criar" && <CriarScreen add={add} />}{" "}
+      {tela === "grupos" && <GruposScreen joined={joined} join={join} />}{" "}
+      {tela === "grupo" && <GrupoScreen joined={joined} join={join} going={going} rsvp={rsvp} />}{" "}
+      {tela === "eventos" && <EventosScreen going={going} rsvp={rsvp} />}
+      <Nav />
+    </div>
+  )
+}
