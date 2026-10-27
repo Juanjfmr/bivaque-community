@@ -717,29 +717,192 @@
   }
 }
 
-/* ── Home: editorial e vitrine 21st.dev (Product Card / Delta Components) ── */
-[data-home="abertura"] {
-  background-image: radial-gradient(
-    circle at 95% 0%,
-    color-mix(in srgb, var(--primary-foreground) 13%, transparent),
-    transparent 57%
-  );
+/* ── Home: descoberta útil antes da decoração ──────────────────────────── */
+.bv-home-intro {
+  display: grid;
+  gap: 14px;
+  padding: 17px 0 3px;
+}
+
+.bv-home-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.bv-home-kicker-ponto {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--brasa);
+}
+
+[data-home="abertura"] [data-cabeca="pagina"] {
+  padding: 6px 0 0;
 }
 
 [data-home="abertura"] h1 {
-  max-width: 19ch;
-  color: var(--primary-foreground);
-  font-size: clamp(25px, 5vw, 38px);
+  max-width: 26ch;
+  color: var(--on-surface);
+  font-size: clamp(27px, 5.2vw, 35px);
   line-height: 1.13;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.035em;
 }
 
 [data-home="abertura"] [data-cabeca="pagina"] p {
-  max-width: 38ch;
-  color: color-mix(in srgb, var(--primary-foreground) 78%, transparent);
-  line-height: 1.5;
+  max-width: 52ch;
+  margin-top: 6px;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
+.bv-home-busca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 15px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 15px;
+  background: var(--surface-lowest);
+  box-shadow: 0 4px 15px -12px var(--shadow-strong);
+  text-align: left;
+}
+
+.bv-home-busca:focus-visible,
+.bv-home-atalho:focus-visible,
+.bv-home-contratar:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.bv-home-atalhos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px 0 0;
+}
+
+.bv-home-atalho {
+  display: flex;
+  min-height: 83px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 1px;
+  border-radius: 13px;
+  color: var(--on-surface);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.bv-home-atalho-icone {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--surface-container);
+  color: var(--on-surface);
+  transition: background 160ms ease;
+}
+
+.bv-home-atalho:active .bv-home-atalho-icone {
+  background: var(--secondary-container);
+}
+
+.bv-home-contratar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 15px;
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.bv-home-contratar-icone {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-lowest);
+  color: var(--brasa);
+}
+
+[data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+  margin-top: 15px;
+}
+
+[data-tela="inicio"] .bv-titulo-de-secao h2 {
+  font-size: 19px;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
+[data-tela="inicio"] .bv-titulo-de-secao button {
+  font-size: 12px;
+}
+
+@media (max-width: 719.98px) {
+  [data-tela="inicio"] [data-secao="sim"] {
+    margin-top: 19px;
+  }
+
+  [data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+    margin-top: 15px;
+  }
+
+  [data-nav="principal"] [data-acao="criar"] [data-criar="botao"] {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    margin-top: -32px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px var(--shadow-strong);
+  }
+
+  [data-nav="principal"] [data-aba] {
+    gap: 2px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-home="abertura"] h1 {
+    font-size: 25px;
+  }
+
+  .bv-home-atalho {
+    font-size: 10.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bv-home-atalho-icone {
+    transition: none;
+  }
+}
+
+/* Cards reais do 21st.dev, com tokens e jornadas do Bivaque. */
 .bv-vitrine {
   box-shadow: 0 10px 28px -20px var(--shadow-strong);
   transition:
