@@ -903,6 +903,28 @@
 }
 
 /* Cards reais do 21st.dev, com tokens e jornadas do Bivaque. */
+/* Vitrine como feed de descoberta, não cards gigantes isolados. */
+.bv-vitrine [data-tom="neutro"] {
+  max-width: 100%;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-lowest) 93%, transparent);
+  color: var(--on-surface);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+@media (max-width: 719.98px) {
+  .bv-home-principal [data-grade="carrossel-mobile"] > [data-vitrine="21st"] {
+    flex-basis: min(75%, 284px);
+  }
+
+  .bv-vitrine [data-slot="product-card-content"] {
+    padding: 12px;
+  }
+}
+
 .bv-vitrine {
   box-shadow: 0 10px 28px -20px var(--shadow-strong);
   transition:
