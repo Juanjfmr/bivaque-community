@@ -185,41 +185,42 @@ export function Inicio() {
           <CabecaDePagina
             className="bv-home-heading"
             titulo={`Sua rede em ${casca.cidade}`}
-            subtitulo="Encontre indicações, moradia e serviços de quem compartilha a vida militar."
+            subtitulo="Moradia, serviços e boas indicações da comunidade militar."
           />
         </div>
-        <button
-          type="button"
-          data-acao="busca"
-          onClick={() => void navegacao.irPara("busca")}
-          aria-label="Buscar no Bivaque"
-          className="bv-home-busca"
-        >
-          <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
-          <span className="min-w-0 grow truncate text-sm text-(--on-surface-variant)">
-            Busque <b className="font-semibold text-(--on-surface)">“{sugestao}”</b>
-          </span>
-          <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
-        </button>
-      </div>
-
-      <nav aria-label="Áreas" className="bv-home-atalhos">
-        {ATALHOS.map((atalho) => (
+        <div data-home="ferramentas" className="bv-home-ferramentas">
           <button
-            key={atalho.rota}
             type="button"
-            data-acao="atalho"
-            data-valor={atalho.rota}
-            onClick={() => void navegacao.irPara(atalho.rota)}
-            className="bv-home-atalho bv-press"
+            data-acao="busca"
+            onClick={() => void navegacao.irPara("busca")}
+            aria-label="Buscar no Bivaque"
+            className="bv-home-busca"
           >
-            <span className="bv-home-atalho-icone">
-              <Icone nome={atalho.icone} className="size-5" />
+            <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
+            <span className="min-w-0 grow truncate text-sm text-(--on-surface-variant)">
+              Busque <b className="font-semibold text-(--on-surface)">“{sugestao}”</b>
             </span>
-            <span>{atalho.rotulo}</span>
+            <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
           </button>
-        ))}
-      </nav>
+          <nav aria-label="Áreas" className="bv-home-atalhos">
+            {ATALHOS.map((atalho) => (
+              <button
+                key={atalho.rota}
+                type="button"
+                data-acao="atalho"
+                data-valor={atalho.rota}
+                onClick={() => void navegacao.irPara(atalho.rota)}
+                className="bv-home-atalho bv-press"
+              >
+                <span className="bv-home-atalho-icone">
+                  <Icone nome={atalho.icone} className="size-5" />
+                </span>
+                <span>{atalho.rotulo}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
 
       {erro ? (
         <div className="mt-4">
