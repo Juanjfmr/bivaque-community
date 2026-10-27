@@ -3,4 +3,4 @@
 :HL["/bivaque-community/_next/static/media/noto_serif-s.p.2v5sa_tq9g0ze.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":{"n":"section","t":"d","k":"salvos","s":["home-blocos","laboratorio-blocos"]},"h":65632,"c":"$Q2"}]]
-0:{"b":"7rr6Lz_xqJFAoo0seWenQ","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
+0:{"b":"d1wLy_uX0HdJjWw6d2j-T","t":{"t":{"s":"","h":131152,"c":"$Q1"}}}
