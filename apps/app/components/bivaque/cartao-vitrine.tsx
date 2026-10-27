@@ -97,7 +97,7 @@ export function CartaoVitrineAnuncio({
   aoAbrir?: () => void
 }) {
   return (
-    <article data-cartao="anuncio" data-vitrine="21st" className="bv-vitrine overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
+    <article data-cartao="anuncio" data-vitrine="21st" className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
       <ProductCard animated={false} className="!max-w-none !rounded-2xl">
         <Fotografia
           fonte={anuncio.fonte}
@@ -165,7 +165,7 @@ export function CartaoVitrineNegocio({
       : "Novo na cidade"
 
   return (
-    <article data-cartao="negocio" data-vitrine="21st" className="bv-vitrine overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
+    <article data-cartao="negocio" data-vitrine="21st" className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
       <ProductCard animated={false} className="!max-w-none !rounded-2xl">
         <Fotografia
           fonte={negocio.fonte}
