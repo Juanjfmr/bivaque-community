@@ -720,8 +720,17 @@
 /* ── Home: descoberta útil antes da decoração ──────────────────────────── */
 .bv-home-intro {
   display: grid;
-  gap: 14px;
-  padding: 17px 0 3px;
+  min-width: 0;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 16px 14px 12px;
+  border-radius: 20px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--brasa) 5%, var(--surface-low)),
+    var(--surface-low) 48%
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-variant) 52%, transparent);
 }
 
 .bv-home-kicker {
@@ -729,9 +738,9 @@
   align-items: center;
   gap: 8px;
   color: var(--on-surface-variant);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.105em;
   text-transform: uppercase;
 }
 
@@ -745,44 +754,51 @@
 }
 
 [data-home="abertura"] [data-cabeca="pagina"] {
-  padding: 6px 0 0;
+  padding: 5px 0 0;
 }
 
 [data-home="abertura"] h1 {
   max-width: 26ch;
   color: var(--on-surface);
-  font-size: clamp(27px, 5.2vw, 35px);
-  line-height: 1.13;
-  letter-spacing: -0.035em;
+  font-size: clamp(26px, 5.2vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
 }
 
 [data-home="abertura"] [data-cabeca="pagina"] p {
   max-width: 52ch;
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--on-surface-variant);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.bv-home-ferramentas {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
 }
 
 .bv-home-busca {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 52px;
-  padding: 0 15px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 13px;
   border: 1px solid var(--outline-variant);
-  border-radius: 15px;
+  border-radius: 12px;
   background: var(--surface-lowest);
-  box-shadow: 0 4px 15px -12px var(--shadow-strong);
   text-align: left;
+  touch-action: manipulation;
 }
 
 .bv-home-busca:focus-visible,
 .bv-home-atalho:focus-visible,
 .bv-home-contratar:focus-visible {
   outline: 2px solid var(--ring);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .bv-home-atalhos {
@@ -790,9 +806,8 @@
   align-items: center;
   min-width: 0;
   width: 100%;
-  min-height: 46px;
-  gap: 7px;
-  padding: 1px 0 3px;
+  min-height: 44px;
+  gap: 5px;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -812,10 +827,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 11px;
-  border: 1px solid var(--outline-variant);
-  border-radius: 12px;
-  background: var(--surface-lowest);
+  padding: 0 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-lowest) 82%, transparent);
   color: var(--on-surface);
   font-size: 12px;
   font-weight: 600;
@@ -836,6 +850,12 @@
 
 .bv-home-atalho:active {
   background: var(--secondary-container);
+}
+
+@media (min-width: 720px) {
+  .bv-home-intro {
+    padding: 20px 22px 16px;
+  }
 }
 
 .bv-home-contratar {
