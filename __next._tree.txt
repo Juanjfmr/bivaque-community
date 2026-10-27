@@ -2,4 +2,4 @@
 :HL["/bivaque-community/_next/static/media/noto_sans-s.p.05o5-i1cea2yx.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/bivaque-community/_next/static/media/noto_serif-s.p.2v5sa_tq9g0ze.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 1:[["children",{"s":"__PAGE__","h":160}]]
-0:{"b":"d1wLy_uX0HdJjWw6d2j-T","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"sRrEY197WQpB4TpH9a5mi","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
