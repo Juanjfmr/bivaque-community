@@ -4,6 +4,7 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { Capa } from "@/components/bivaque/capa"
 import {
   CartaoDePublicacao,
   type TipoDePublicacao,
@@ -12,6 +13,7 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
+import { InteracoesDoGrupo } from "@/components/bivaque/interacoes-grupo"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -46,6 +48,7 @@ export function Grupo() {
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [uteis, setUteis] = useState<ReadonlySet<string>>(() => new Set())
+  const [ordem, setOrdem] = useState<"recentes" | "discutidas">("recentes")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -76,10 +79,12 @@ export function Grupo() {
     if (dados === null) return []
     return dados.publicacoes
       .filter((item) => item.group_id === id)
-      .sort(
-        (a, b) => numero(registro(b.apresentacao)["at"]) - numero(registro(a.apresentacao)["at"]),
+      .sort((a, b) =>
+        ordem === "discutidas"
+          ? (comentarios.get(b.id) ?? 0) - (comentarios.get(a.id) ?? 0)
+          : numero(registro(b.apresentacao)["at"]) - numero(registro(a.apresentacao)["at"]),
       )
-  }, [dados, id])
+  }, [dados, id, ordem, comentarios])
 
   const alternarUtil = (chave: string) => {
     setUteis((atual) => {
@@ -113,65 +118,119 @@ export function Grupo() {
   const membros = numero(apresentacao["members"])
   const privacidade = texto(apresentacao["privacy"], "aberto")
   const fixado = texto(apresentacao["pinned"])
+  const pedidos = Array.isArray(apresentacao["requests"])
+    ? apresentacao["requests"].map((valor) => {
+        const item = registro(valor)
+        return { nome: texto(item["name"], "Membro"), nota: texto(item["note"]) }
+      })
+    : []
 
   return (
     <section data-tela="grupo" className="grid gap-2">
+      {texto(apresentacao["img"]) === "" ? null : (
+        <Capa
+          fonte={texto(apresentacao["img"])}
+          alt={`Capa do grupo ${grupo.name}`}
+          className="rounded-2xl"
+        />
+      )}
       <CabecaDePagina
         titulo={texto(apresentacao["t"], grupo.name)}
         subtitulo={`${membros > 0 ? `${membros} membros` : "Grupo novo"} · ${privacidade === "fechado" ? "Fechado" : "Aberto"}`}
         acao={privacidade === "fechado" ? <Etiqueta tom="neutro">Fechado</Etiqueta> : undefined}
       />
 
-      {fixado === "" ? null : (
-        <p className="flex items-center gap-2 rounded-2xl bg-(--secondary-container) px-4 py-3 text-sm">
-          <Icone nome="pin" className="size-5 shrink-0" />
-          {fixado}
-        </p>
-      )}
+      <InteracoesDoGrupo
+        id={id}
+        cidade={casca.cidade}
+        fechado={privacidade === "fechado"}
+        membro={apresentacao["on"] === true}
+        pendente={apresentacao["pending"] === true}
+        admin={apresentacao["role"] === "admin"}
+        sobre={texto(apresentacao["about"], grupo.description ?? "")}
+        regras={texto(
+          apresentacao["rules"],
+          "Respeite todos os membros e mantenha as conversas pertinentes.",
+        )}
+        pedidos={pedidos}
+      >
+        {fixado === "" ? null : (
+          <p className="flex items-center gap-2 rounded-2xl bg-(--secondary-container) px-4 py-3 text-sm">
+            <Icone nome="pin" className="size-5 shrink-0" />
+            {fixado}
+          </p>
+        )}
 
-      {publicacoes.length === 0 ? (
-        <EstadoVazio
-          titulo="Ainda sem publicações"
-          texto="Quando alguém escrever no grupo, o que importa aparece aqui."
-          icone="forum"
-        />
-      ) : (
-        <div className="grid gap-3">
-          {publicacoes.map((item) => {
-            const dadosDaPublicacao = registro(item.apresentacao)
-            const encontro = registro(dadosDaPublicacao["event"])
-            return (
-              <CartaoDePublicacao
-                key={item.id}
-                publicacao={{
-                  id: item.id,
-                  tipo: tipoDe(dadosDaPublicacao["tipo"]),
-                  autor: texto(dadosDaPublicacao["author"], "Membro do grupo"),
-                  quando: quandoDe(dadosDaPublicacao["at"]),
-                  texto: texto(dadosDaPublicacao["text"], item.content),
-                  resolvida: dadosDaPublicacao["resolved"] === true,
-                  comentarios: comentarios.get(item.id) ?? 0,
-                  uteis: numero(dadosDaPublicacao["useful"]),
-                  util: dadosDaPublicacao["liked"] === true || uteis.has(item.id),
-                  ...(Object.keys(encontro).length === 0
-                    ? {}
-                    : {
-                        encontro: {
-                          data: `${texto(encontro["date"])} ${texto(encontro["time"])}`.trim(),
-                          local: texto(encontro["place"]),
-                          confirmado: encontro["on"] === true,
-                        },
-                      }),
-                }}
-                aoMarcarUtil={() => alternarUtil(item.id)}
-                aoComentar={() =>
-                  void navegacao.irPara("publicacao", { parametros: { id: item.id } })
-                }
-              />
-            )
-          })}
-        </div>
-      )}
+        <fieldset
+          data-ordenacao-grupo="sim"
+          aria-label="Ordenar publicações"
+          className="flex min-w-0 gap-2 overflow-x-auto pb-1"
+        >
+          {(
+            [
+              ["recentes", "Recentes"],
+              ["discutidas", "Mais discutidas"],
+            ] as const
+          ).map(([chave, rotulo]) => (
+            <button
+              key={chave}
+              type="button"
+              aria-pressed={ordem === chave}
+              className={
+                ordem === chave
+                  ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
+                  : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
+              }
+              onClick={() => setOrdem(chave)}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </fieldset>
+        {publicacoes.length === 0 ? (
+          <EstadoVazio
+            titulo="Ainda sem publicações"
+            texto="Quando alguém escrever no grupo, o que importa aparece aqui."
+            icone="forum"
+          />
+        ) : (
+          <div className="grid gap-3">
+            {publicacoes.map((item) => {
+              const dadosDaPublicacao = registro(item.apresentacao)
+              const encontro = registro(dadosDaPublicacao["event"])
+              return (
+                <CartaoDePublicacao
+                  key={item.id}
+                  publicacao={{
+                    id: item.id,
+                    tipo: tipoDe(dadosDaPublicacao["tipo"]),
+                    autor: texto(dadosDaPublicacao["author"], "Membro do grupo"),
+                    quando: quandoDe(dadosDaPublicacao["at"]),
+                    texto: texto(dadosDaPublicacao["text"], item.content),
+                    resolvida: dadosDaPublicacao["resolved"] === true,
+                    comentarios: comentarios.get(item.id) ?? 0,
+                    uteis: numero(dadosDaPublicacao["useful"]),
+                    util: dadosDaPublicacao["liked"] === true || uteis.has(item.id),
+                    ...(Object.keys(encontro).length === 0
+                      ? {}
+                      : {
+                          encontro: {
+                            data: `${texto(encontro["date"])} ${texto(encontro["time"])}`.trim(),
+                            local: texto(encontro["place"]),
+                            confirmado: encontro["on"] === true,
+                          },
+                        }),
+                  }}
+                  aoMarcarUtil={() => alternarUtil(item.id)}
+                  aoComentar={() =>
+                    void navegacao.irPara("publicacao", { parametros: { id: item.id } })
+                  }
+                />
+              )
+            })}
+          </div>
+        )}
+      </InteracoesDoGrupo>
     </section>
   )
 }

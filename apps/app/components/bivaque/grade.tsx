@@ -13,14 +13,26 @@ export function Grade({
   className,
 }: {
   children: ReactNode
-  formato?: "cartoes" | "lista" | "pilha"
+  formato?: "cartoes" | "lista" | "pilha" | "carrossel-mobile"
   className?: string
 }) {
   const formatos = {
     cartoes: "bv-grade",
+    "carrossel-mobile": "bv-grade bv-carrossel-mobile",
     lista: "grid gap-2",
     pilha: "grid gap-3",
   } as const
+  if (formato === "carrossel-mobile") {
+    return (
+      <section
+        data-grade={formato}
+        className={cn(formatos[formato], className)}
+        aria-label="Deslize para explorar cartões"
+      >
+        {children}
+      </section>
+    )
+  }
   return (
     <div data-grade={formato} className={cn(formatos[formato], className)}>
       {children}

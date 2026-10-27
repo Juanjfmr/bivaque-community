@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
+import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque/cartao-vitrine"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
@@ -25,8 +25,8 @@ import { useCasca } from "@/src/contexto/casca"
  * V1: cabeça com a cidade, busca com exemplo que gira, atalhos, faixa de
  * contratação, serviços recomendados, oportunidades, grupos, próximo
  * encontro, perguntas da cidade, guia e o convite de negócio. Salvar e
- * confirmar são estado local (sem backend). Ficam para o refino: carrossel
- * horizontal, patrocinado na posição fixa, "Continue de onde parou", plano
+ * confirmar são estado local (sem backend). Ficam para o refino: patrocinado
+ * na posição fixa, "Continue de onde parou", plano
  * de chegada/saída e as duas colunas do desktop — a ordem segue a do celular.
  */
 
@@ -177,57 +177,50 @@ export function Inicio() {
 
   return (
     <section data-tela="inicio" className="grid gap-2">
-      <CabecaDePagina
-        titulo={`O que você precisa em ${casca.cidade}?`}
-        subtitulo="Serviços e oportunidades entre militares e famílias."
-      />
-
-      <button
-        type="button"
-        data-acao="busca"
-        onClick={() => void navegacao.irPara("busca")}
-        aria-label="Buscar no Bivaque"
-        className="bv-press flex min-h-12 w-full items-center gap-3 rounded-xl bg-(--surface-lowest) px-3.5 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
-      >
-        <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
-        <span className="min-w-0 truncate text-sm text-(--on-surface-variant)">
-          Busque <b className="text-(--on-surface)">“{sugestao}”</b>
-        </span>
-      </button>
-
-      <nav aria-label="Áreas" className="mt-3 grid grid-cols-4 gap-1.5">
-        {ATALHOS.map((atalho) => (
+      <header data-home="abertura" className="bv-home-intro">
+        <div data-home="apresentacao">
+          <p className="bv-home-kicker">
+            <span className="bv-home-kicker-ponto" aria-hidden="true" />A vida acontece por aqui
+          </p>
+          <CabecaDePagina
+            className="bv-home-heading"
+            titulo={`Sua rede em ${casca.cidade}`}
+            subtitulo="Moradia, serviços e boas indicações da comunidade militar."
+          />
+        </div>
+        <div data-home="ferramentas" className="bv-home-ferramentas">
           <button
-            key={atalho.rota}
             type="button"
-            data-acao="atalho"
-            data-valor={atalho.rota}
-            onClick={() => void navegacao.irPara(atalho.rota)}
-            className="bv-press flex min-h-16 flex-col items-center justify-start gap-1.5 rounded-xl px-1 pt-2 pb-1.5 text-[11.5px] leading-4 font-medium hover:bg-(--muted)"
+            data-acao="busca"
+            onClick={() => void navegacao.irPara("busca")}
+            aria-label="Buscar no Bivaque"
+            className="bv-home-busca"
           >
-            <span className="grid size-11 place-items-center rounded-xl bg-(--secondary-container) text-(--primary)">
-              <Icone nome={atalho.icone} className="size-6" />
+            <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
+            <span className="min-w-0 grow truncate text-sm text-(--on-surface-variant)">
+              Busque <b className="font-semibold text-(--on-surface)">“{sugestao}”</b>
             </span>
-            {atalho.rotulo}
+            <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
           </button>
-        ))}
-      </nav>
-
-      <button
-        type="button"
-        data-acao="contratar"
-        onClick={() => void navegacao.irPara("pedidos")}
-        className="bv-press mt-3 flex min-h-16 w-full items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 text-left"
-      >
-        <Icone nome="build" className="size-6 shrink-0 text-(--primary)" />
-        <span className="grid grow gap-0.5">
-          <b className="text-[15px]">Precisa contratar?</b>
-          <small className="text-(--on-surface-variant)">
-            Descreva o que precisa e receba propostas da comunidade.
-          </small>
-        </span>
-        <Icone nome="chevron_right" className="size-5 shrink-0 opacity-70" />
-      </button>
+          <nav aria-label="Áreas" className="bv-home-atalhos">
+            {ATALHOS.map((atalho) => (
+              <button
+                key={atalho.rota}
+                type="button"
+                data-acao="atalho"
+                data-valor={atalho.rota}
+                onClick={() => void navegacao.irPara(atalho.rota)}
+                className="bv-home-atalho bv-press"
+              >
+                <span className="bv-home-atalho-icone">
+                  <Icone nome={atalho.icone} className="size-5" />
+                </span>
+                <span>{atalho.rotulo}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
 
       {erro ? (
         <div className="mt-4">
@@ -239,163 +232,194 @@ export function Inicio() {
         </div>
       ) : (
         <>
-          <Secao
-            titulo="Serviços recomendados"
-            acoes={
-              <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
-                Ver negócios
-              </Botao>
-            }
+          <div
+            data-home="conteudo"
+            className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start"
           >
-            <p className="text-sm text-(--on-surface-variant)">
-              Indicados pela comunidade de {casca.cidade}
-            </p>
-            {negocios.length === 0 ? (
-              <EstadoVazio
-                titulo="Ainda sem negócios cadastrados"
-                texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-                icone="storefront"
-              />
-            ) : (
-              <Grade formato="cartoes">
-                {negocios.map(({ negocio, apresentacao }) => (
-                  <CartaoDeNegocio
-                    key={negocio.id}
-                    negocio={{
-                      id: negocio.id,
-                      nome: texto(apresentacao["name"], negocio.display_name),
-                      categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                      bairro: primeiros(apresentacao["hoods"]),
-                      cidade: casca.cidade,
-                      indicacoes: numero(apresentacao["recN"]),
-                      patrocinado: apresentacao["spon"] === true,
-                      aguardando: apresentacao["claimed"] === false,
-                      salvo: salvos.has(negocio.id),
-                    }}
-                    aoSalvar={() => alternarSalvo(negocio.id)}
-                    aoAbrir={() =>
-                      void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
-                    }
-                  />
-                ))}
-              </Grade>
-            )}
-          </Secao>
-
-          <Secao titulo="Oportunidades perto de você">
-            {anuncios.length === 0 ? (
-              <EstadoVazio
-                titulo="As primeiras oportunidades aparecem aqui"
-                texto="Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato."
-                icone="sell"
-                acao={{
-                  rotulo: "Anunciar desapego",
-                  aoAcionar: () => void navegacao.irPara("desapegos"),
-                }}
-              />
-            ) : (
-              <Grade formato="cartoes">
-                {anuncios.map(({ anuncio, apresentacao }) => (
-                  <CartaoDeFoto
-                    key={anuncio.id}
-                    anuncio={{
-                      id: anuncio.id,
-                      titulo: texto(apresentacao["title"], anuncio.title),
-                      preco: precoDoAnuncio(anuncio.price_cents),
-                      icone: iconeDeDado(apresentacao["icon"]),
-                      meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
-                      salvo: salvos.has(anuncio.id),
-                    }}
-                    aoSalvar={() => alternarSalvo(anuncio.id)}
-                    aoAbrir={() =>
-                      void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
-                    }
-                  />
-                ))}
-              </Grade>
-            )}
-          </Secao>
-
-          {grupos.length === 0 ? null : (
-            <Secao titulo="Nos seus grupos">
-              <div className="grid gap-2">
-                {grupos.map(({ grupo, apresentacao }) => (
-                  <LinhaDeLista
-                    key={grupo.id}
-                    icone="group"
-                    titulo={texto(apresentacao["t"], grupo.name)}
-                    subtitulo={`${numero(apresentacao["members"])} membros`}
-                    onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
-                  />
-                ))}
-              </div>
-            </Secao>
-          )}
-
-          {encontro === null ? null : (
-            <Secao
-              titulo="Próximo encontro"
-              acoes={
-                <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
-                  Agenda
-                </Botao>
-              }
-            >
-              <LinhaDeLista
-                icone="event"
-                titulo={texto(encontro.title)}
-                subtitulo={resumoDoEncontro(encontro.starts_at, texto(encontro.venue))}
-                fim={
-                  <span className="text-[13px] font-medium text-(--primary)">
-                    {presencas.has(encontro.id) ? "Confirmado" : "Vou"}
-                  </span>
+            <div className="bv-home-principal min-w-0">
+              <Secao
+                titulo="Serviços recomendados"
+                acoes={
+                  <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
+                    Ver negócios
+                  </Botao>
                 }
-                onClick={() => alternarPresenca(encontro.id)}
-              />
-            </Secao>
-          )}
-
-          <Secao
-            titulo="A comunidade procura"
-            acoes={
-              <Botao tom="texto" onClick={() => void navegacao.irPara("comunidade")}>
-                Ver perguntas
-              </Botao>
-            }
-          >
-            {perguntas.length === 0 ? (
-              <EstadoVazio
-                titulo="Uma pergunta pode ajudar muita gente"
-                texto="Busque uma indicação ou compartilhe uma dúvida com sua cidade."
-                icone="forum"
-                acao={{
-                  rotulo: "Pedir indicação",
-                  aoAcionar: () => void navegacao.irPara("comunidade"),
-                }}
-              />
-            ) : (
-              <div className="grid gap-2">
-                {perguntas.map(({ pergunta, apresentacao }) => (
-                  <LinhaDePergunta
-                    key={pergunta.id}
-                    pergunta={{
-                      id: pergunta.id,
-                      pergunta: texto(apresentacao["q"], pergunta.title),
-                      autor: texto(apresentacao["who"], "Alguém da cidade"),
-                      tópico: texto(apresentacao["topic"], ""),
-                      cidade: casca.cidade,
-                      respostas: tamanho(apresentacao["answers"]),
-                      resolvida: pergunta.is_resolved === true,
-                    }}
-                    onClick={() =>
-                      void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
-                    }
+              >
+                <p className="text-sm text-(--on-surface-variant)">
+                  Indicados pela comunidade de {casca.cidade}
+                </p>
+                {negocios.length === 0 ? (
+                  <EstadoVazio
+                    titulo="Ainda sem negócios cadastrados"
+                    texto="As indicações da comunidade ajudarão a formar o guia de serviços."
+                    icone="storefront"
                   />
-                ))}
-              </div>
-            )}
-          </Secao>
+                ) : (
+                  <Grade formato="carrossel-mobile">
+                    {negocios.map(({ negocio, apresentacao }) => (
+                      <CartaoVitrineNegocio
+                        key={negocio.id}
+                        negocio={{
+                          id: negocio.id,
+                          fonte: texto(apresentacao["imagem"]),
+                          nome: texto(apresentacao["name"], negocio.display_name),
+                          categoria: texto(apresentacao["cat"], negocio.category ?? ""),
+                          bairro: primeiros(apresentacao["hoods"]),
+                          cidade: casca.cidade,
+                          indicacoes: numero(apresentacao["recN"]),
+                          patrocinado: apresentacao["spon"] === true,
+                          aguardando: apresentacao["claimed"] === false,
+                          salvo: salvos.has(negocio.id),
+                        }}
+                        aoSalvar={() => alternarSalvo(negocio.id)}
+                        aoAbrir={() =>
+                          void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
+                        }
+                      />
+                    ))}
+                  </Grade>
+                )}
+              </Secao>
 
+              <button
+                type="button"
+                data-acao="contratar"
+                onClick={() => void navegacao.irPara("pedidos")}
+                className="bv-home-contratar bv-press"
+              >
+                <span className="bv-home-contratar-icone">
+                  <Icone nome="build" className="size-5" />
+                </span>
+                <span className="min-w-0 grow text-left">
+                  <b className="block text-sm">Precisa contratar um serviço?</b>
+                  <small className="block text-xs text-(--on-surface-variant)">
+                    Peça propostas à comunidade
+                  </small>
+                </span>
+                <Icone nome="chevron_right" className="size-5 shrink-0 text-(--brasa)" />
+              </button>
+
+              <Secao titulo="Oportunidades perto de você">
+                {anuncios.length === 0 ? (
+                  <EstadoVazio
+                    titulo="As primeiras oportunidades aparecem aqui"
+                    texto="Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato."
+                    icone="sell"
+                    acao={{
+                      rotulo: "Anunciar desapego",
+                      aoAcionar: () => void navegacao.irPara("desapegos"),
+                    }}
+                  />
+                ) : (
+                  <Grade formato="carrossel-mobile">
+                    {anuncios.map(({ anuncio, apresentacao }) => (
+                      <CartaoVitrineAnuncio
+                        key={anuncio.id}
+                        anuncio={{
+                          id: anuncio.id,
+                          fonte: texto(apresentacao["imagem"]),
+                          rotulo: texto(apresentacao["flag"]) || undefined,
+                          porMes: texto(apresentacao["per"]) === "/mês",
+                          titulo: texto(apresentacao["title"], anuncio.title),
+                          preco: precoDoAnuncio(anuncio.price_cents),
+                          icone: iconeDeDado(apresentacao["icon"]),
+                          meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
+                          salvo: salvos.has(anuncio.id),
+                        }}
+                        aoSalvar={() => alternarSalvo(anuncio.id)}
+                        aoAbrir={() =>
+                          void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
+                        }
+                      />
+                    ))}
+                  </Grade>
+                )}
+              </Secao>
+            </div>
+            <aside aria-label="Comunidade na cidade" className="min-w-0 lg:sticky lg:top-16">
+              {grupos.length === 0 ? null : (
+                <Secao titulo="Nos seus grupos">
+                  <div className="grid gap-2">
+                    {grupos.map(({ grupo, apresentacao }) => (
+                      <LinhaDeLista
+                        key={grupo.id}
+                        icone="group"
+                        titulo={texto(apresentacao["t"], grupo.name)}
+                        subtitulo={`${numero(apresentacao["members"])} membros`}
+                        onClick={() =>
+                          void navegacao.irPara("grupo", { parametros: { id: grupo.id } })
+                        }
+                      />
+                    ))}
+                  </div>
+                </Secao>
+              )}
+
+              {encontro === null ? null : (
+                <Secao
+                  titulo="Próximo encontro"
+                  acoes={
+                    <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
+                      Agenda
+                    </Botao>
+                  }
+                >
+                  <LinhaDeLista
+                    icone="event"
+                    titulo={texto(encontro.title)}
+                    subtitulo={resumoDoEncontro(encontro.starts_at, texto(encontro.venue))}
+                    fim={
+                      <span className="text-[13px] font-medium text-(--primary)">
+                        {presencas.has(encontro.id) ? "Confirmado" : "Vou"}
+                      </span>
+                    }
+                    onClick={() => alternarPresenca(encontro.id)}
+                  />
+                </Secao>
+              )}
+
+              <Secao
+                titulo="A comunidade procura"
+                acoes={
+                  <Botao tom="texto" onClick={() => void navegacao.irPara("comunidade")}>
+                    Ver perguntas
+                  </Botao>
+                }
+              >
+                {perguntas.length === 0 ? (
+                  <EstadoVazio
+                    titulo="Uma pergunta pode ajudar muita gente"
+                    texto="Busque uma indicação ou compartilhe uma dúvida com sua cidade."
+                    icone="forum"
+                    acao={{
+                      rotulo: "Pedir indicação",
+                      aoAcionar: () => void navegacao.irPara("comunidade"),
+                    }}
+                  />
+                ) : (
+                  <div className="grid gap-2">
+                    {perguntas.map(({ pergunta, apresentacao }) => (
+                      <LinhaDePergunta
+                        key={pergunta.id}
+                        pergunta={{
+                          id: pergunta.id,
+                          pergunta: texto(apresentacao["q"], pergunta.title),
+                          autor: texto(apresentacao["who"], "Alguém da cidade"),
+                          tópico: texto(apresentacao["topic"], ""),
+                          cidade: casca.cidade,
+                          respostas: tamanho(apresentacao["answers"]),
+                          resolvida: pergunta.is_resolved === true,
+                        }}
+                        onClick={() =>
+                          void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </Secao>
+            </aside>
+          </div>
           <Secao
             titulo={`Guia de ${casca.cidade}`}
             acoes={

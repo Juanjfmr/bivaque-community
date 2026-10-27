@@ -1,12 +1,17 @@
 "use client"
 
 import { Dialog } from "radix-ui"
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { Botao } from "@/components/bivaque/botao"
+import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
 
 import { Icone } from "@/components/bivaque/icone"
 import type { NomeDeIcone } from "@/lib/icones"
+import { useNavegacao } from "@/lib/navegacao/react"
+import { TIPOS_RASCUNHO, type TipoRascunho } from "@/lib/rascunhos-criacao"
 import { cn } from "@/lib/utils"
 import { useStateComMidia } from "@/src/casca/midia"
+import { useCasca } from "@/src/contexto/casca"
 
 /**
  * O menu Criar (inventário §5.4).
@@ -64,6 +69,10 @@ const CONSULTA_DO_PAINEL = "(min-width: 1024px)"
 
 export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
   const painel = useStateComMidia(CONSULTA_DO_PAINEL)
+  const navegacao = useNavegacao()
+  const casca = useCasca()
+  const [tipo, setTipo] = useState<TipoRascunho | null>(null)
+  const [concluido, setConcluido] = useState(false)
   const lista = useRef<HTMLDivElement | null>(null)
   const popup = useRef<HTMLDivElement | null>(null)
 
@@ -71,7 +80,10 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
     const menu = popup.current
     const ancora = document.querySelector('[data-criar="botao"]')?.getBoundingClientRect()
     if (!menu || !ancora) return
-    const largura = Math.min(painel ? 620 : 262, window.innerWidth - 24)
+    const largura = Math.min(
+      painel || tipo !== null || concluido ? 620 : 262,
+      window.innerWidth - 24,
+    )
     const central = window.innerWidth < 720
     const esquerda = painel
       ? ancora.left
@@ -91,7 +103,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
     menu.style.top = `${y}px`
     menu.style.setProperty("--fab-x", `${ancora.x + ancora.width / 2 - 29 - x}px`)
     menu.style.setProperty("--fab-y", `${ancora.y - y}px`)
-  }, [painel])
+  }, [painel, tipo, concluido])
 
   useLayoutEffect(() => {
     posicionar()
@@ -119,6 +131,19 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       aria-label={escolha.rotulo}
       role={painel ? undefined : "menuitem"}
       data-escolha={escolha.id}
+      onClick={() => {
+        if (escolha.id === "ask") {
+          void navegacao.irPara("comunidade").then(() => navegacao.abrir("perguntar"))
+          return
+        }
+        if (TIPOS_RASCUNHO.some((item) => item === escolha.id)) {
+          setConcluido(false)
+          setTipo(escolha.id as TipoRascunho)
+          return
+        }
+        if (escolha.id !== "create-property") return
+        void navegacao.irPara("imoveis").then(() => navegacao.abrir("rascunho-imovel"))
+      }}
       style={{ "--i": indice } as React.CSSProperties}
       className="bv-criar-escolha"
     >
@@ -215,7 +240,38 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
             </button>
           ) : null}
 
-          {painel ? (
+          {tipo !== null ? (
+            <div
+              data-criar-etapa="formulario"
+              className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2"
+            >
+              <FormularioDeCriacao
+                key={tipo}
+                tipo={tipo}
+                cidade={casca.cidade}
+                aoCancelar={() => setTipo(null)}
+                aoConcluir={() => {
+                  setTipo(null)
+                  setConcluido(true)
+                }}
+              />
+            </div>
+          ) : concluido ? (
+            <div data-criar-etapa="concluido" className="grid gap-4 p-3">
+              <b className="text-lg">Rascunho salvo nesta sessão</b>
+              <p className="text-sm text-(--on-surface-variant)">
+                Este conteúdo não foi publicado. Você pode consultá-lo e excluí-lo em Meus anúncios.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>
+                  Ver meus rascunhos
+                </Botao>
+                <Botao tom="contornado" onClick={() => setConcluido(false)}>
+                  Criar outro
+                </Botao>
+              </div>
+            </div>
+          ) : painel ? (
             <div
               ref={lista}
               role="dialog"

@@ -47,8 +47,40 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "mobile-320",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 320, height: 700 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: "mobile-360",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 360, height: 740 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
       name: "mobile-375",
-      use: { browserName: "chromium", viewport: { width: 375, height: 812 } },
+      use: {
+        browserName: "chromium",
+        viewport: { width: 375, height: 812 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: "mobile-430",
+      use: {
+        browserName: "chromium",
+        viewport: { width: 430, height: 932 },
+        isMobile: true,
+        hasTouch: true,
+      },
     },
     {
       name: "tablet-768",

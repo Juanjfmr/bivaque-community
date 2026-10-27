@@ -583,6 +583,402 @@
   font-variation-settings: "FILL" 1;
 }
 
+/* O foco programático do h1 anuncia a nova rota ao leitor de tela.
+   O h1 não é uma ação focável por Tab: evite o retângulo de foco herdado
+   que aparece em todo print, sem afetar :focus-visible de botões/campos. */
+[data-titulo-da-tela]:focus {
+  outline: none;
+}
+
+/* ── mobile: espaço útil, toque e leitura sem afetar desktop ────────────── */
+@media (max-width: 719.98px) {
+  [data-cabeca="pagina"] {
+    padding-block: 12px 8px;
+  }
+
+  [data-tela="inicio"] [data-secao="sim"] {
+    margin-top: 20px;
+  }
+
+  [data-tela="inicio"] nav[aria-label="Áreas"] {
+    margin-top: 8px;
+  }
+
+  [data-tela="inicio"] [data-acao="contratar"] {
+    margin-top: 8px;
+  }
+
+  /* A imagem e a área textual são alvos independentes, ambos acionáveis.
+     Evita touch target curto para abrir detalhes de anúncios. */
+  [data-cartao="anuncio"] [data-acao="abrir-foto"],
+  [data-cartao="negocio"] [data-acao="abrir-foto"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-topo="barra"][data-rota="inicio"] [data-titulo="topo"] {
+    display: none;
+  }
+
+  [data-topo="barra"] [data-acao="cidade"] {
+    max-width: 88px;
+    padding-inline: 4px;
+  }
+
+  [data-nav="principal"] [data-aba],
+  [data-nav="principal"] [data-acao="criar"] {
+    font-size: 10.5px;
+    letter-spacing: 0;
+  }
+}
+
+/* Carrossel responsivo da R72: o próximo cartão fica visível como convite ao gesto.
+   No desktop continua a grade de colunas, sem carrossel forçado. */
+@media (max-width: 719.98px) {
+  .bv-grade.bv-carrossel-mobile {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 2px;
+    gap: 12px;
+    padding: 2px 2px 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bv-grade.bv-carrossel-mobile::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bv-carrossel-mobile > [data-cartao] {
+    flex: 0 0 min(82%, 340px);
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
+/* Vista de lista dos imóveis: seleção funcional sem mudar a geometria do
+   catálogo nos outros módulos. Mantém alvos mínimos de 44 px. */
+.bv-grade.bv-lista-imoveis {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] {
+  display: grid;
+  grid-template-columns: minmax(120px, 36%) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] > div:first-child {
+  min-width: 0;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] [data-acao="abrir-foto"],
+.bv-lista-imoveis [data-cartao="anuncio"] [data-acao="abrir-foto"] > div {
+  height: 100%;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] img {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Home desktop: conteúdo principal tem duas colunas de cards, ao lado de
+   contexto enxuto (grupos, encontro e perguntas) sem repetir widgets. */
+@media (min-width: 1024px) {
+  .bv-home-principal .bv-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Na lista de imóveis o rótulo continua associado ao Select, mas no telefone
+   não ocupa uma linha inteira adicional acima da ordenação. */
+@media (max-width: 719.98px) {
+  .bv-ordenar-imoveis > label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+}
+
+/* Conversas detalhadas escondem a navegação inferior. Não reservar o espaço
+   dessa barra no scroll; o compositor permanece na borda útil do telefone. */
+@media (max-width: 719.98px) {
+  [data-casca="app"]:has([data-tela="conversa"]) #conteudo {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Home: descoberta útil antes da decoração ──────────────────────────── */
+.bv-home-intro {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 16px 14px 12px;
+  border-radius: 20px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--brasa) 5%, var(--surface-low)),
+    var(--surface-low) 48%
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-variant) 52%, transparent);
+}
+
+.bv-home-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.105em;
+  text-transform: uppercase;
+}
+
+.bv-home-kicker-ponto {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--brasa);
+}
+
+[data-home="abertura"] [data-cabeca="pagina"] {
+  padding: 5px 0 0;
+}
+
+[data-home="abertura"] h1 {
+  max-width: 26ch;
+  color: var(--on-surface);
+  font-size: clamp(26px, 5.2vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+[data-home="abertura"] [data-cabeca="pagina"] p {
+  max-width: 52ch;
+  margin-top: 4px;
+  color: var(--on-surface-variant);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.bv-home-ferramentas {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.bv-home-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  background: var(--surface-lowest);
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.bv-home-busca:focus-visible,
+.bv-home-atalho:focus-visible,
+.bv-home-contratar:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.bv-home-atalhos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
+}
+
+.bv-home-atalho {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 1px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-lowest) 82%, transparent);
+  color: var(--on-surface);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.bv-home-atalho-icone {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  place-items: center;
+  color: var(--on-surface-variant);
+}
+
+.bv-home-atalho:active {
+  background: var(--secondary-container);
+}
+
+@media (min-width: 720px) {
+  .bv-home-intro {
+    padding: 20px 22px 16px;
+  }
+}
+
+.bv-home-contratar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 15px;
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.bv-home-contratar-icone {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-lowest);
+  color: var(--brasa);
+}
+
+[data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+  margin-top: 15px;
+}
+
+[data-tela="inicio"] .bv-titulo-de-secao h2 {
+  font-size: 19px;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
+[data-tela="inicio"] .bv-titulo-de-secao button {
+  font-size: 12px;
+}
+
+@media (max-width: 719.98px) {
+  [data-tela="inicio"] [data-secao="sim"] {
+    margin-top: 19px;
+  }
+
+  [data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+    margin-top: 15px;
+  }
+
+  [data-nav="principal"] [data-acao="criar"] [data-criar="botao"] {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    margin-top: -32px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px var(--shadow-strong);
+  }
+
+  [data-nav="principal"] [data-aba] {
+    gap: 2px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-home="abertura"] h1 {
+    font-size: 25px;
+  }
+}
+
+/* Cards reais do 21st.dev, com tokens e jornadas do Bivaque. */
+/* Vitrine como feed de descoberta, não cards gigantes isolados. */
+.bv-vitrine [data-tom="neutro"] {
+  max-width: 100%;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-lowest) 93%, transparent);
+  color: var(--on-surface);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+@media (max-width: 719.98px) {
+  .bv-home-principal [data-grade="carrossel-mobile"] > [data-vitrine="21st"] {
+    flex-basis: min(75%, 284px);
+  }
+
+  .bv-vitrine [data-slot="product-card-content"] {
+    padding: 12px;
+  }
+}
+
+.bv-vitrine {
+  box-shadow: 0 10px 28px -20px var(--shadow-strong);
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.bv-vitrine [data-slot="product-card-title"] {
+  min-height: 2.5rem;
+}
+
+.bv-vitrine [data-capa="foto"] {
+  border-radius: 0;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .bv-vitrine:hover {
+    box-shadow: 0 18px 36px -20px var(--shadow-strong);
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-home="abertura"] h1 {
+    font-size: 24px;
+  }
+  .bv-vitrine [data-slot="product-card-content"] {
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bv-vitrine {
+    transition: none;
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
@@ -591,19 +987,21 @@
   grid-template-columns: 1fr;
 }
 
-@media (min-width: 480px) {
+/* Uma foto por linha em qualquer telefone, inclusive entre 480 e 719 px.
+   Após a barra lateral aparecer (720px), duas colunas preservam cards legíveis. */
+@media (min-width: 720px) {
   .bv-grade {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1080px) {
   .bv-grade {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1440px) {
   .bv-grade {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

@@ -31,6 +31,7 @@ export function LinhaDeLista({
   titulo,
   subtitulo,
   fim,
+  tituloMultilinha = false,
   className,
   children,
   ...props
@@ -40,6 +41,8 @@ export function LinhaDeLista({
   subtitulo?: ReactNode
   /** O que vai à direita: etiqueta, contagem, ou o chevron do padrão. */
   fim?: ReactNode
+  /** Preserva títulos de perguntas longas, sem alterar outras linhas. */
+  tituloMultilinha?: boolean
 }) {
   return (
     <button
@@ -58,7 +61,15 @@ export function LinhaDeLista({
         </span>
       )}
       <span className="grid min-w-0 grow gap-0.5">
-        <b className="truncate text-[15px] font-semibold">{titulo}</b>
+        <b
+          data-titulo-linha
+          className={cn(
+            "text-[15px] font-semibold",
+            tituloMultilinha ? "whitespace-normal break-words" : "truncate",
+          )}
+        >
+          {titulo}
+        </b>
         {subtitulo === undefined ? null : (
           <small className="truncate text-[13px] text-(--on-surface-variant)">{subtitulo}</small>
         )}

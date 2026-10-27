@@ -3,12 +3,16 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
-import { LinhaDeLista } from "@/components/bivaque/lista"
+import { Icone } from "@/components/bivaque/icone"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { lerMensagensDePrevia, origemDaConversa } from "@/lib/contexto-conversa"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { iniciais } from "@/lib/texto"
 import { useCasca } from "@/src/contexto/casca"
 import { registro, texto } from "@/src/telas/comum"
 
@@ -22,6 +26,7 @@ export function Conversas() {
   const [dados, setDados] = useState<DadosDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [filtro, setFiltro] = useState<"todas" | "anuncios" | "servicos">("todas")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -47,9 +52,15 @@ export function Conversas() {
       conversa,
       apresentacao: registro(conversa.apresentacao),
       ultima: ultimaMensagem(dados, conversa.id),
+      origem: origemDaConversa(conversa, dados),
     }))
   }, [dados])
 
+  const filtradas = conversas.filter(
+    ({ origem }) =>
+      filtro === "todas" ||
+      (filtro === "anuncios" ? origem?.tipo === "anuncio" : origem?.tipo === "negocio"),
+  )
   const carregando = dados === null && !erro
 
   return (
@@ -59,13 +70,40 @@ export function Conversas() {
         subtitulo="Contatos sobre anúncios e serviços da cidade."
       />
 
+      <fieldset
+        data-filtros-conversas="sim"
+        aria-label="Filtrar conversas"
+        className="flex min-w-0 gap-2 overflow-x-auto pb-1"
+      >
+        {(
+          [
+            ["todas", "Todas"],
+            ["anuncios", "Anúncios"],
+            ["servicos", "Serviços"],
+          ] as const
+        ).map(([chave, rotulo]) => (
+          <button
+            key={chave}
+            type="button"
+            aria-pressed={filtro === chave}
+            className={
+              filtro === chave
+                ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
+                : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
+            }
+            onClick={() => setFiltro(chave)}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </fieldset>
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
-      ) : conversas.length === 0 ? (
+      ) : filtradas.length === 0 ? (
         <EstadoVazio
-          titulo="Nenhuma conversa ainda"
+          titulo={filtro === "todas" ? "Nenhuma conversa ainda" : "Nenhuma conversa neste filtro"}
           texto="Abra um anúncio ou negócio e toque em “Tenho interesse” ou “Pedir orçamento”."
           icone="chat_bubble"
           acao={{
@@ -75,15 +113,59 @@ export function Conversas() {
         />
       ) : (
         <div className="grid gap-2">
-          {conversas.map(({ conversa, apresentacao, ultima }) => (
-            <LinhaDeLista
-              key={conversa.id}
-              icone="chat_bubble"
-              titulo={texto(apresentacao["who"], "Conversa")}
-              subtitulo={ultima === "" ? "Comece a conversa" : ultima}
-              onClick={() => void navegacao.irPara("conversa", { parametros: { id: conversa.id } })}
-            />
-          ))}
+          {filtradas.map(({ conversa, apresentacao, ultima, origem }) => {
+            const nome = texto(apresentacao["who"], "Conversa")
+            const mensagensLocais = lerMensagensDePrevia(casca.cidade, conversa.id)
+            const resumo = mensagensLocais[mensagensLocais.length - 1]
+            return (
+              <article
+                key={conversa.id}
+                data-thread={conversa.id}
+                className="grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-2.5 sm:p-3"
+              >
+                <button
+                  type="button"
+                  className="bv-press flex min-h-14 w-full min-w-0 items-center gap-3 text-left"
+                  onClick={() =>
+                    void navegacao.irPara("conversa", { parametros: { id: conversa.id } })
+                  }
+                >
+                  <Avatar size="lg">
+                    <AvatarFallback className="bg-(--secondary-container) font-semibold">
+                      {iniciais(nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="grid min-w-0 flex-1 gap-1">
+                    <b className="truncate text-sm">{nome}</b>
+                    <span className="truncate text-[13px] text-(--on-surface-variant)">
+                      {resumo === undefined
+                        ? ultima || "Comece a conversa"
+                        : `Prévia não enviada: ${resumo.conteudo}`}
+                    </span>
+                  </span>
+                  <Icone
+                    nome="chevron_right"
+                    className="size-5 shrink-0 text-(--on-surface-variant)"
+                  />
+                </button>
+                {origem === null ? null : (
+                  <ContextoDaConversa
+                    origem={origem}
+                    compacto
+                    {...(origem.id === null
+                      ? {}
+                      : {
+                          aoAbrir: () =>
+                            void navegacao.irPara(
+                              origem.tipo === "anuncio" ? "anuncio" : "negocio",
+                              { parametros: { id: origem.id ?? "" } },
+                            ),
+                        })}
+                  />
+                )}
+              </article>
+            )
+          })}
         </div>
       )}
     </section>

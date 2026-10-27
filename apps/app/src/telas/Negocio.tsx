@@ -4,6 +4,7 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
+import { Capa } from "@/components/bivaque/capa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
@@ -84,6 +85,13 @@ export function Negocio() {
 
   return (
     <section data-tela="negocio" className="grid gap-2">
+      {texto(apresentacao["imagem"]) === "" ? null : (
+        <Capa
+          fonte={texto(apresentacao["imagem"])}
+          alt={texto(apresentacao["name"], negocio.display_name)}
+          className="rounded-2xl"
+        />
+      )}
       <div className="grid gap-2 px-1">
         <Etiqueta tom="neutro">
           {apresentacao["spon"] === true

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { Campo } from "@/components/bivaque/campos"
 import { CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
@@ -13,9 +14,12 @@ import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import type { Pergunta } from "@/lib/dados/contrato"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { useCasca } from "@/src/contexto/casca"
 import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
 
@@ -49,6 +53,12 @@ export function Comunidade() {
   const [rodada, setRodada] = useState(0)
   const [aba, setAba] = useState("ind")
   const [filtro, setFiltro] = useState("help")
+  const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
+    useSobreposicaoDaEntrada("perguntar")
+  const [tituloNovo, setTituloNovo] = useState("")
+  const [topicoNovo, setTopicoNovo] = useState("")
+  const [erroAoCriar, setErroAoCriar] = useState("")
+  const [perguntasLocais, setPerguntasLocais] = useState<Pergunta[]>([])
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -68,11 +78,39 @@ export function Comunidade() {
     return () => controle.abort()
   }, [casca.cidade, rodada])
 
+  useEffect(() => {
+    setPerguntasLocais(lerPerguntasLocais(casca.cidade))
+  }, [casca.cidade])
+
+  const publicarPergunta = () => {
+    if (dados === null) return
+    const criada = criarPerguntaLocal(casca.cidade, dados.localidade.id, tituloNovo, topicoNovo)
+    if (criada === "limite") {
+      setErroAoCriar(
+        "Limite de 30 perguntas nesta sessão atingido. As anteriores foram preservadas e seu texto continua no formulário.",
+      )
+      return
+    }
+    if (!criada) {
+      setErroAoCriar(
+        "Não foi possível guardar a pergunta nesta sessão. Confira o texto e tente novamente.",
+      )
+      return
+    }
+    setPerguntasLocais((atual) => [criada, ...atual])
+    setTituloNovo("")
+    setTopicoNovo("")
+    setErroAoCriar("")
+    setAba("ind")
+    setFiltro("mine")
+    void navegacao.irPara("pergunta", { parametros: { id: criada.id }, replace: true })
+  }
+
   const respostas = useMemo(() => contagemDeRespostas(dados), [dados])
 
   const perguntas = useMemo(() => {
     if (dados === null) return []
-    return dados.perguntas
+    return [...perguntasLocais, ...dados.perguntas]
       .map((pergunta) => ({ pergunta, apresentacao: registro(pergunta.apresentacao) }))
       .filter(({ pergunta, apresentacao }) => {
         const minha = apresentacao["mine"] === true
@@ -81,7 +119,7 @@ export function Comunidade() {
         return pergunta.is_resolved !== true && !minha
       })
       .sort((a, b) => (respostas.get(a.pergunta.id) ?? 0) - (respostas.get(b.pergunta.id) ?? 0))
-  }, [dados, filtro, respostas])
+  }, [dados, filtro, respostas, perguntasLocais])
 
   const resolvidas = useMemo(() => {
     if (dados === null) return 0
@@ -107,9 +145,86 @@ export function Comunidade() {
       <CabecaDePagina
         titulo="Comunidade"
         subtitulo="O que a comunidade sabe fica disponível para quem chegar depois."
+        acao={
+          aba === "ind" ? (
+            <Botao
+              data-acao="perguntar"
+              icone="edit_square"
+              tom="tonal"
+              onClick={() => setCriandoPergunta(true)}
+            >
+              Perguntar
+            </Botao>
+          ) : undefined
+        }
       />
 
-      <ChipsDeFiltro itens={ABAS} valor={aba} aoEscolher={setAba} rotulo="Seções da Comunidade" />
+      <div className="flex items-center justify-between gap-2">
+        <ChipsDeFiltro
+          itens={ABAS}
+          valor={aba}
+          aoEscolher={setAba}
+          rotulo="Seções da Comunidade"
+          className="min-w-0 flex-1"
+        />
+      </div>
+
+      <Dialog open={criandoPergunta} onOpenChange={setCriandoPergunta}>
+        <DialogContent
+          showCloseButton
+          unstyled
+          data-fluxo="perguntar"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[90dvh] max-w-xl overflow-y-auto rounded-t-2xl border border-(--outline-variant) bg-(--surface-lowest) p-5 shadow-xl sm:inset-x-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 sm:rounded-2xl"
+        >
+          <DialogTitle className="pr-12 text-xl">Pedir uma indicação</DialogTitle>
+          <DialogDescription className="text-sm text-(--on-surface-variant)">
+            A pergunta ficará somente nesta sessão de demonstração. Não será publicada para outros
+            usuários.
+          </DialogDescription>
+          <form
+            className="mt-4 grid gap-4"
+            onSubmit={(evento) => {
+              evento.preventDefault()
+              publicarPergunta()
+            }}
+          >
+            <Campo
+              id="nova-pergunta"
+              rotulo="O que você precisa saber?"
+              valor={tituloNovo}
+              aoMudar={(valor) => {
+                setTituloNovo(valor)
+                setErroAoCriar("")
+              }}
+              minLength={12}
+              maxLength={300}
+              required
+              placeholder="Ex.: alguém indica um pediatra no bairro?"
+            />
+            <Campo
+              id="topico-pergunta"
+              rotulo="Assunto (opcional)"
+              valor={topicoNovo}
+              aoMudar={setTopicoNovo}
+              maxLength={60}
+              placeholder="Saúde, escola, serviços..."
+            />
+            {erroAoCriar === "" ? null : (
+              <p role="alert" className="text-sm text-(--destructive)">
+                {erroAoCriar}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Botao type="button" tom="texto" onClick={() => setCriandoPergunta(false)}>
+                Cancelar
+              </Botao>
+              <Botao type="submit" disabled={tituloNovo.trim().length < 12}>
+                Adicionar pergunta
+              </Botao>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
@@ -150,7 +265,7 @@ export function Comunidade() {
               icone="forum"
               acao={{
                 rotulo: "Pedir indicação",
-                aoAcionar: () => void navegacao.irPara("comunidade"),
+                aoAcionar: () => setCriandoPergunta(true),
               }}
             />
           ) : (
@@ -216,6 +331,7 @@ export function Comunidade() {
                 key={negocio.id}
                 negocio={{
                   id: negocio.id,
+                  fonte: texto(apresentacao["imagem"]),
                   nome: texto(apresentacao["name"], negocio.display_name),
                   categoria: texto(apresentacao["cat"], negocio.category ?? ""),
                   cidade: casca.cidade,

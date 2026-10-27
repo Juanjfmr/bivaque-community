@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url"
 import { defineConfig } from "vitest/config"
 
 // Configuração própria do app (onda 1b).
@@ -7,6 +8,7 @@ import { defineConfig } from "vitest/config"
 // unitária não dependa de jsdom nem de tempo de parede. O que só se prova no
 // navegador vive no e2e, em `apps/app/tests/e2e`.
 export default defineConfig({
+  resolve: { alias: { "@": fileURLToPath(new URL("../", import.meta.url)) } },
   test: {
     include: ["tests/**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/dist/**"],
