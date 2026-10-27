@@ -105,7 +105,7 @@ jobs:
           # Cabeçalho único: apresentação, busca e atalhos no mesmo módulo.
           grep -ql 'bv-home-ferramentas' "$SITE"/assets/*.css
           grep -ql 'bv-home-atalho' "$SITE"/assets/*.css
-          echo "Preview: cabeçalho, busca e atalhos integrados no PR116."
+          echo "Preview: quatro atalhos visíveis em grade fixa, sem rolagem (PR116)."
 
       - name: Publicar arquivos estáticos também na raiz da branch de testes
         shell: bash
