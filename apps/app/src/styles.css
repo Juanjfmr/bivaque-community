@@ -786,40 +786,55 @@
 }
 
 .bv-home-atalhos {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  padding: 4px 0 0;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  min-height: 46px;
+  gap: 7px;
+  padding: 1px 0 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bv-home-atalhos::-webkit-scrollbar {
+  display: none;
 }
 
 .bv-home-atalho {
-  display: flex;
-  min-height: 83px;
-  flex-direction: column;
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 6px 1px;
-  border-radius: 13px;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  background: var(--surface-lowest);
   color: var(--on-surface);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  touch-action: manipulation;
 }
 
 .bv-home-atalho-icone {
   display: grid;
-  width: 46px;
-  height: 46px;
+  width: 20px;
+  height: 20px;
+  flex: none;
   place-items: center;
-  border-radius: 15px;
-  background: var(--surface-container);
-  color: var(--on-surface);
-  transition: background 160ms ease;
+  color: var(--on-surface-variant);
 }
 
-.bv-home-atalho:active .bv-home-atalho-icone {
+.bv-home-atalho:active {
   background: var(--secondary-container);
 }
 
@@ -891,15 +906,6 @@
     font-size: 25px;
   }
 
-  .bv-home-atalho {
-    font-size: 10.5px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bv-home-atalho-icone {
-    transition: none;
-  }
 }
 
 /* Cards reais do 21st.dev, com tokens e jornadas do Bivaque. */
