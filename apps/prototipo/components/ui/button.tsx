@@ -50,7 +50,7 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp: React.ElementType = asChild ? Slot.Root : "button"
 
   return (
     <Comp
