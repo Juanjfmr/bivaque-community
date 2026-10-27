@@ -21,12 +21,16 @@ test("Home: vitrine 21st mostra negócios e anúncios com fotos e texto reais", 
 
   const img = negocio.locator('[data-capa="foto"] img')
   await expect(img).toBeVisible()
-  await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  await expect
+    .poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
 })
 
 test("Home: salvar na vitrine é independente de navegar para o detalhe", async ({ page }) => {
   await page.goto("/app/inicio")
-  const negocio = page.locator('[data-tela="inicio"] [data-cartao="negocio"][data-vitrine="21st"]').first()
+  const negocio = page
+    .locator('[data-tela="inicio"] [data-cartao="negocio"][data-vitrine="21st"]')
+    .first()
   await expect(negocio).toBeVisible()
   const favorito = negocio.locator('[data-slot="product-card-badge"]')
   await expect(favorito).toHaveAttribute("aria-pressed", "false")
@@ -51,12 +55,14 @@ test("Home: vitrine e ações mantêm alvos e não vazam da largura do telefone"
     expect(area.width).toBeGreaterThanOrEqual(44)
   }
   if (largura < 720) {
-    const medidas = await page.locator('[data-tela="inicio"] [data-home="abertura"]').evaluate((el) => ({
-      x: el.getBoundingClientRect().x,
-      direita: el.getBoundingClientRect().right,
-      largura: el.clientWidth,
-      conteudo: el.scrollWidth,
-    }))
+    const medidas = await page
+      .locator('[data-tela="inicio"] [data-home="abertura"]')
+      .evaluate((el) => ({
+        x: el.getBoundingClientRect().x,
+        direita: el.getBoundingClientRect().right,
+        largura: el.clientWidth,
+        conteudo: el.scrollWidth,
+      }))
     expect(medidas.x).toBeGreaterThanOrEqual(-1)
     expect(medidas.direita).toBeLessThanOrEqual(largura + 1)
     expect(medidas.conteudo).toBeLessThanOrEqual(medidas.largura + 1)
