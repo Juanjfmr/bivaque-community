@@ -717,7 +717,6 @@
   }
 }
 
-
 /* ── Home: editorial e vitrine 21st.dev (Product Card / Delta Components) ── */
 [data-home="abertura"] h1 {
   max-width: 19ch;
@@ -735,7 +734,9 @@
 
 .bv-vitrine {
   box-shadow: 0 10px 28px -20px var(--shadow-strong);
-  transition: box-shadow 180ms ease, transform 180ms ease;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .bv-vitrine [data-slot="product-card-title"] {
