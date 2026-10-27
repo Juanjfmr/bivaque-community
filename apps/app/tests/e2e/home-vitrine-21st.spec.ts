@@ -69,7 +69,9 @@ test("Home: vitrine e ações mantêm alvos e não vazam da largura do telefone"
   }
 })
 
-test("Home: quatro atalhos visíveis na mesma linha, sem rolagem em 320 a 430px", async ({ page }) => {
+test("Home: quatro atalhos visíveis na mesma linha, sem rolagem em 320 a 430px", async ({
+  page,
+}) => {
   const largura = page.viewportSize()?.width ?? 375
   test.skip(largura >= 720, "Grade compacta avaliada em viewport mobile")
 
