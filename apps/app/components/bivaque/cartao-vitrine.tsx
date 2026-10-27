@@ -1,9 +1,9 @@
 "use client"
 
 import { Capa } from "@/components/bivaque/capa"
+import type { AnuncioDoCartao, NegocioDoCartao } from "@/components/bivaque/cartao-de-anuncio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
-import type { AnuncioDoCartao, NegocioDoCartao } from "@/components/bivaque/cartao-de-anuncio"
 import {
   ProductCard,
   ProductCardBadge,
@@ -97,7 +97,11 @@ export function CartaoVitrineAnuncio({
   aoAbrir?: (() => void) | undefined
 }) {
   return (
-    <article data-cartao="anuncio" data-vitrine="21st" className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
+    <article
+      data-cartao="anuncio"
+      data-vitrine="21st"
+      className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)"
+    >
       <ProductCard animated={false} className="!max-w-none !rounded-2xl">
         <Fotografia
           fonte={anuncio.fonte}
@@ -132,8 +136,13 @@ export function CartaoVitrineAnuncio({
                 {anuncio.meta}
               </ProductCardSubtitle>
               {anuncio.detalhes?.length ? (
-                <span data-atributos-imovel="sim" className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-(--on-surface-variant)">
-                  {anuncio.detalhes.map((detalhe) => <small key={detalhe}>{detalhe}</small>)}
+                <span
+                  data-atributos-imovel="sim"
+                  className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-(--on-surface-variant)"
+                >
+                  {anuncio.detalhes.map((detalhe) => (
+                    <small key={detalhe}>{detalhe}</small>
+                  ))}
                 </span>
               ) : null}
             </ProductCardHeader>
@@ -165,7 +174,11 @@ export function CartaoVitrineNegocio({
       : "Novo na cidade"
 
   return (
-    <article data-cartao="negocio" data-vitrine="21st" className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)">
+    <article
+      data-cartao="negocio"
+      data-vitrine="21st"
+      className="bv-vitrine relative overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)"
+    >
       <ProductCard animated={false} className="!max-w-none !rounded-2xl">
         <Fotografia
           fonte={negocio.fonte}
@@ -190,7 +203,12 @@ export function CartaoVitrineNegocio({
                 {negocio.categoria} · {negocio.bairro ?? negocio.cidade}
               </ProductCardSubtitle>
               <span className="flex items-center gap-1.5 text-xs font-medium text-(--primary)">
-                <Icone nome={negocio.aguardando ? "hourglass_top" : (negocio.indicacoes ? "thumb_up" : "sell")} className="size-4" />
+                <Icone
+                  nome={
+                    negocio.aguardando ? "hourglass_top" : negocio.indicacoes ? "thumb_up" : "sell"
+                  }
+                  className="size-4"
+                />
                 {linha}
               </span>
             </ProductCardHeader>
