@@ -26,6 +26,7 @@ export function Conversas() {
   const [dados, setDados] = useState<DadosDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [filtro, setFiltro] = useState<"todas" | "anuncios" | "servicos">("todas")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -55,6 +56,7 @@ export function Conversas() {
     }))
   }, [dados])
 
+  const filtradas = conversas.filter(({ origem }) => filtro === "todas" || (filtro === "anuncios" ? origem?.tipo === "anuncio" : origem?.tipo === "negocio"))
   const carregando = dados === null && !erro
 
   return (
@@ -64,13 +66,22 @@ export function Conversas() {
         subtitulo="Contatos sobre anúncios e serviços da cidade."
       />
 
+      <div data-filtros-conversas="sim" role="group" aria-label="Filtrar conversas" className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+        {([["todas", "Todas"], ["anuncios", "Anúncios"], ["servicos", "Serviços"]] as const).map(([chave, rotulo]) => (
+          <button key={chave} type="button" aria-pressed={filtro === chave}
+            className={filtro === chave
+              ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
+              : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"}
+            onClick={() => setFiltro(chave)}>{rotulo}</button>
+        ))}
+      </div>
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
-      ) : conversas.length === 0 ? (
+      ) : filtradas.length === 0 ? (
         <EstadoVazio
-          titulo="Nenhuma conversa ainda"
+          titulo={filtro === "todas" ? "Nenhuma conversa ainda" : "Nenhuma conversa neste filtro"}
           texto="Abra um anúncio ou negócio e toque em “Tenho interesse” ou “Pedir orçamento”."
           icone="chat_bubble"
           acao={{
@@ -80,7 +91,7 @@ export function Conversas() {
         />
       ) : (
         <div className="grid gap-2">
-          {conversas.map(({ conversa, apresentacao, ultima, origem }) => {
+          {filtradas.map(({ conversa, apresentacao, ultima, origem }) => {
             const nome = texto(apresentacao["who"], "Conversa")
             const mensagensLocais = lerMensagensDePrevia(casca.cidade, conversa.id)
             const resumo = mensagensLocais[mensagensLocais.length - 1]
@@ -88,7 +99,7 @@ export function Conversas() {
               <article
                 key={conversa.id}
                 data-thread={conversa.id}
-                className="grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+                className="grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-2.5 sm:p-3"
               >
                 <button
                   type="button"
