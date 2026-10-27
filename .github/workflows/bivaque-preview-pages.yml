@@ -102,9 +102,10 @@ jobs:
           # O endereço deve continuar apontando para os assets do próprio PR.
           grep -q '/bivaque-community/pr116/assets/' "$SITE/index.html"
           test -s "$SITE/inicio/index.html"
-          # Garante que o novo CSS de atalhos compactos foi exportado ao Pages.
+          # Cabeçalho único: apresentação, busca e atalhos no mesmo módulo.
+          grep -ql 'bv-home-ferramentas' "$SITE"/assets/*.css
           grep -ql 'bv-home-atalho' "$SITE"/assets/*.css
-          echo "Preview: atalhos da Home compactados (44px) para toque mobile."
+          echo "Preview: cabeçalho, busca e atalhos integrados no PR116."
 
       - name: Publicar arquivos estáticos também na raiz da branch de testes
         shell: bash
