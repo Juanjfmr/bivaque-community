@@ -1,9 +1,5 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import type { FormEvent, ReactNode } from "react"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Bell,
@@ -18,7 +14,9 @@ import {
   MapPin,
   MessageCircle,
   MoreHorizontal,
+  Pencil,
   PenLine,
+  Pin,
   Plus,
   Search,
   Send,
@@ -27,14 +25,16 @@ import {
   ThumbsUp,
   UserRound,
   UsersRound,
-  Pin,
-  Pencil,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import type { FormEvent, ReactNode } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Marca } from "./marca"
 import "./jornada-comunidade.css"
 
