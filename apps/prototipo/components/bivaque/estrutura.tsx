@@ -1,11 +1,20 @@
+"use client"
+
+import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
 import { BarraDeNavegacao } from "./barra-de-navegacao"
 import { BarraDoTopo } from "./barra-do-topo"
 
-// A casca do app: a barra de cima, o conteúdo e a navegação. Do tablet para
-// cima, a coluna de navegação ocupa 96 px à esquerda e o conteúdo começa depois
-// dela (o `--rail` do protótipo).
+// O redesign é isolado na jornada Comunidade: não muda o shell de outras telas.
 export function Estrutura({ children }: { children: ReactNode }) {
+  const caminho = usePathname()
+  if (caminho.startsWith("/comunidade")) {
+    return (
+      <div className="min-h-dvh">
+        <main id="conteudo">{children}</main>
+      </div>
+    )
+  }
   return (
     <div className="min-h-dvh md:pl-24">
       <BarraDoTopo />
