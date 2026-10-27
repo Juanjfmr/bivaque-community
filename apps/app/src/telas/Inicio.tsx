@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
+import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque/cartao-vitrine"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
@@ -177,10 +177,22 @@ export function Inicio() {
 
   return (
     <section data-tela="inicio" className="grid gap-2">
-      <CabecaDePagina
-        titulo={`O que você precisa em ${casca.cidade}?`}
-        subtitulo="Serviços e oportunidades entre militares e famílias."
-      />
+      <div data-home="abertura" className="relative isolate overflow-hidden rounded-[28px] bg-(--primary) px-5 py-5 text-(--primary-foreground) sm:px-7 sm:py-7">
+        <span aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 size-52 rounded-full border border-white/10" />
+        <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-8 size-56 rounded-full border border-white/10" />
+        <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.16em] text-(--primary-foreground)/70">
+          Sua comunidade, sua cidade
+        </p>
+        <CabecaDePagina
+          className="relative z-10 !py-2"
+          titulo={`O que você precisa em ${casca.cidade}?`}
+          subtitulo="Serviços e oportunidades entre militares e famílias."
+        />
+        <div className="relative z-10 mt-1 flex items-center gap-2 text-xs text-(--primary-foreground)/75">
+          <Icone nome="verified_user" className="size-4 shrink-0" />
+          Descubra, pergunte e conecte-se a quem está por perto.
+        </div>
+      </div>
 
       <button
         type="button"
@@ -195,7 +207,7 @@ export function Inicio() {
         </span>
       </button>
 
-      <nav aria-label="Áreas" className="mt-3 grid grid-cols-4 gap-1.5">
+      <nav aria-label="Áreas" className="mt-3 grid grid-cols-4 gap-1.5 rounded-2xl bg-(--surface-lowest) p-2 ring-1 ring-(--outline-variant)">
         {ATALHOS.map((atalho) => (
           <button
             key={atalho.rota}
@@ -217,7 +229,7 @@ export function Inicio() {
         type="button"
         data-acao="contratar"
         onClick={() => void navegacao.irPara("pedidos")}
-        className="bv-press mt-3 flex min-h-16 w-full items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 text-left"
+        className="bv-press mt-3 flex min-h-16 w-full items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 py-3 text-left ring-1 ring-(--outline-variant)"
       >
         <Icone nome="build" className="size-6 shrink-0 text-(--primary)" />
         <span className="grid grow gap-0.5">
@@ -239,7 +251,7 @@ export function Inicio() {
         </div>
       ) : (
         <>
-          <div className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start">
+          <div data-home="conteudo" className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start">
             <div className="bv-home-principal min-w-0">
               <Secao
                 titulo="Serviços recomendados"
@@ -261,7 +273,7 @@ export function Inicio() {
                 ) : (
                   <Grade formato="carrossel-mobile">
                     {negocios.map(({ negocio, apresentacao }) => (
-                      <CartaoDeNegocio
+                      <CartaoVitrineNegocio
                         key={negocio.id}
                         negocio={{
                           id: negocio.id,
@@ -299,7 +311,7 @@ export function Inicio() {
                 ) : (
                   <Grade formato="carrossel-mobile">
                     {anuncios.map(({ anuncio, apresentacao }) => (
-                      <CartaoDeFoto
+                      <CartaoVitrineAnuncio
                         key={anuncio.id}
                         anuncio={{
                           id: anuncio.id,
