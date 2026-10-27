@@ -24,7 +24,7 @@ test("cadastro exige aceite e permite simular análise de documento", async ({ p
   await expect(page.getByRole("heading", { name: "Vínculo em análise." })).toBeVisible()
 })
 
-test("cadastro percorre vínculo confirmado, cidade e boas-vindas", async ({ page }) => {
+test("cadastro percorre vínculo, cidade, grupos e boas-vindas", async ({ page }) => {
   await page.goto("/app/entrar/conta")
   await page.getByRole("checkbox", { name: /Li e concordo/ }).check()
   await page.getByRole("button", { name: "Criar conta" }).click()
@@ -33,9 +33,29 @@ test("cadastro percorre vínculo confirmado, cidade e boas-vindas", async ({ pag
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Sua cidade e seu momento." })).toBeVisible()
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Encontre seus grupos." })).toBeVisible()
+  const familia = page.getByRole("checkbox", { name: /Famílias com crianças pequenas/ })
+  await familia.check()
+  await expect(familia).toBeChecked()
+  await expect(
+    page.getByText("Demonstração: selecionar grupos não cria participação."),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
   await page.getByRole("button", { name: "Ir para o início" }).click()
   await expect(page).toHaveURL(/\/app\/(inicio)?$/)
+})
+
+test("sugestões podem ser puladas e não mostram grupos de outra cidade", async ({ page }) => {
+  await page.goto("/app/entrar/cidade")
+  await page.getByLabel("Cidade", { exact: true }).fill("Recife")
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(
+    page.getByText("Não há sugestões de demonstração para esta cidade. Você pode continuar."),
+  ).toBeVisible()
+  await expect(page.getByText("Famílias com crianças pequenas")).toHaveCount(0)
+  await page.getByRole("button", { name: "Escolher depois" }).click()
+  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
 })
 
 test("cidade mostra campos adequados ao momento e mantém o layout", async ({ page }) => {

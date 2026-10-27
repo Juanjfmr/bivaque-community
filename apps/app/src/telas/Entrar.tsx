@@ -1,8 +1,10 @@
 import { useParams } from "@tanstack/react-router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
+import { dadosDoApp } from "@/lib/dados"
+import type { Grupo } from "@/lib/dados/contrato"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { ESTADOS_DA_ENTRADA, type EstadoDaEntrada } from "@/lib/navegacao/rotas"
@@ -20,7 +22,7 @@ export function Entrar() {
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [cpf, setCpf] = useState("")
   const [codigo, setCodigo] = useState("")
-  const [cidade, setCidade] = useState("")
+  const [cidade, setCidade] = useState(() => dadosDoApp.resumoDaCasca().cidade)
   const [destino, setDestino] = useState("")
   const [data, setData] = useState("")
   const [momento, setMomento] = useState<"chegando" | "morando" | "saindo">("morando")
@@ -28,6 +30,38 @@ export function Entrar() {
   const [enviado, setEnviado] = useState(false)
   const [avisar, setAvisar] = useState(false)
   const [aceitou, setAceitou] = useState(false)
+  const [grupos, setGrupos] = useState<Grupo[] | null>(null)
+  const [selecionados, setSelecionados] = useState<string[]>([])
+
+  useEffect(() => {
+    if (estado !== "sugestoes-grupos") return
+    let ativo = true
+    setGrupos(null)
+    void dadosDoApp.lerCidade(cidade.trim()).then(
+      (dados) => {
+        if (!ativo) return
+        setGrupos(
+          dados.grupos
+            .filter((grupo) => {
+              const info = grupo.apresentacao
+              return (
+                info !== null &&
+                typeof info === "object" &&
+                !Array.isArray(info) &&
+                info["privacy"] === "aberto"
+              )
+            })
+            .slice(0, 4),
+        )
+      },
+      () => {
+        if (ativo) setGrupos([])
+      },
+    )
+    return () => {
+      ativo = false
+    }
+  }, [estado, cidade])
 
   useRolagemEFoco(CARGA_CONCLUIDA)
   const irPara = (destino: EstadoDaEntrada) =>
@@ -109,6 +143,7 @@ export function Entrar() {
     "consulta-indisponivel": "Não foi possível concluir a consulta.",
     "convite-indisponivel": "Convite indisponível.",
     cidade: "Sua cidade e seu momento.",
+    "sugestoes-grupos": "Encontre seus grupos.",
     "boas-vindas": "Bem-vindo ao Bivaque.",
     retomar: "Continue de onde parou.",
     senha: "Esqueci minha senha.",
@@ -318,7 +353,44 @@ export function Entrar() {
                   aoMudar={setDestino}
                 />
               )}
+              {acao("Continuar", () => irPara("sugestoes-grupos"))}
+            </>
+          )}
+          {estado === "sugestoes-grupos" && (
+            <>
+              <p>Conheça alguns grupos de {cidade || "sua cidade"}. Escolher é opcional.</p>
+              <p className="entrada-nota">Demonstração: selecionar grupos não cria participação.</p>
+              {grupos === null ? (
+                <p role="status">Buscando sugestões...</p>
+              ) : grupos.length === 0 ? (
+                <p>Não há sugestões de demonstração para esta cidade. Você pode continuar.</p>
+              ) : (
+                <fieldset className="entrada-grupos">
+                  <legend>Grupos sugeridos</legend>
+                  {grupos.map((grupo) => (
+                    <label key={grupo.id} className="entrada-grupo">
+                      <input
+                        type="checkbox"
+                        checked={selecionados.includes(grupo.id)}
+                        onChange={(e) => {
+                          const marcado = e.target.checked
+                          setSelecionados((anteriores) =>
+                            marcado
+                              ? [...anteriores, grupo.id]
+                              : anteriores.filter((id) => id !== grupo.id),
+                          )
+                        }}
+                      />
+                      <span>
+                        <strong>{grupo.name}</strong>
+                        {grupo.description && <small>{grupo.description}</small>}
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
               {acao("Continuar", () => irPara("boas-vindas"))}
+              {acao("Escolher depois", () => irPara("boas-vindas"), true)}
             </>
           )}
           {estado === "boas-vindas" && (

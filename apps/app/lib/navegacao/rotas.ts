@@ -79,6 +79,7 @@ export const ESTADOS_DA_ENTRADA = [
   "consulta-indisponivel",
   "convite-indisponivel",
   "cidade",
+  "sugestoes-grupos",
   "boas-vindas",
   "login",
   "senha",

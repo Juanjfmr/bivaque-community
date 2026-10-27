@@ -1400,6 +1400,41 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .entrada-momento input {
   accent-color: var(--primary);
 }
+.entrada-grupos {
+  display: grid;
+  gap: 8px;
+  border: 0;
+}
+.entrada-grupos legend {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.entrada-grupo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.entrada-grupo:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--muted);
+}
+.entrada-grupo input {
+  margin-top: 4px;
+  accent-color: var(--primary);
+}
+.entrada-grupo span {
+  display: grid;
+  gap: 4px;
+}
+.entrada-grupo small {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
 @media (max-width: 480px) {
   .entrada-cartao {
     padding: 24px 20px;

@@ -9,6 +9,16 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Sugestões de grupos na entrada — 27/10/2026
+
+A cidade leva às sugestões opcionais de grupos abertos da localidade demonstrativa.
+A pessoa pode marcar itens ou escolher depois; nenhuma associação é criada.
+Localidades sem exemplos exibem estado vazio e não mostram grupos de outra cidade.
+Provas: gate completo verde; 15/15 E2E em 375/768/1440 e instrumento aprovado
+em revisão estática independente. O pedido de avaliar apresentação de
+negócios foi respondido como recomendação e não implementado nesta etapa.
+Backend, participação e aceite visual independente permanecem pendentes.
+
 ## Entrada 21st — demonstração solicitada pelo dono, 27/10/2026
 
 A jornada de login, cadastro e onboarding recebeu a composição do Login Form Card
