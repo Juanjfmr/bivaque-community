@@ -83,10 +83,28 @@ test("divulgar negócio permite voltar e salvar um rascunho local", async ({ pag
   await expect(page.getByRole("status")).toHaveCount(0)
   await expect(page.getByLabel("Nome do negócio")).toBeFocused()
   await page.getByLabel("Nome do negócio").fill("Oficina de exemplo")
-  await page.getByLabel("Área de atuação").fill("Manutenção")
+  await page.getByLabel("Tipo de serviço").selectOption({ label: "Casa e reparos" })
+  await page.getByLabel("Elétrica", { exact: true }).check()
+  await page.getByLabel("Horário ou agendamento").fill("Segunda a sexta")
+  await page.getByLabel("Bairros em que atende").fill("Centro")
+  await page.getByLabel("Fotos do negócio (até 6)").setInputFiles({
+    name: "foto.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAIAAADZSiLoAAAAEklEQVR4nGNkaGCAACYojcwCAA54AIZp6Rr0AAAAAElFTkSuQmCC",
+      "base64",
+    ),
+  })
+  await expect(page.getByAltText("Foto 1, capa")).toBeVisible()
   await page.getByLabel("Serviços oferecidos").fill("Serviços de manutenção residencial.")
   await page.getByRole("button", { name: "Salvar rascunho" }).click()
   await expect(page.getByRole("status")).toContainText("não foi publicado")
+  const rascunho = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("bivaque:onboarding-negocio") ?? "{}"),
+  )
+  expect(rascunho.categoria).toBe("Casa e reparos")
+  expect(rascunho.especialidades).toContain("Elétrica")
+  expect(rascunho.fotos).toHaveLength(1)
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
 })

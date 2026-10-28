@@ -9,6 +9,10 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Ampliação da prévia de negócios — 28/10/2026
+
+Formulário da jornada usa grupos e especialidades do protótipo, horário, bairros, serviços, apresentação, benefício, contatos e até seis fotos com capa. Rascunho é apenas da sessão e não publica. Prova focal: 18/18 E2E em 375/768/1440; build e typecheck do app passaram. Gate: lint, typechecks, build do app, testes e secrets passaram na execução sem configuração web, mas web foi pulado; na tentativa com variáveis públicas no processo o build web falhou porque apps/web/node_modules é uma junction para fora do worktree (Turbopack rejeita). Gate completo pendente; prévia não é aprovação de produção.
+
 ## Negócios no onboarding — 28/10/2026
 
 Após os grupos, a pessoa pode divulgar seu negócio, indicar interesse em criar

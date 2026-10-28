@@ -1,7 +1,7 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
-import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
+import { FormularioNegocio } from "@/components/bivaque/formulario-negocio"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { dadosDoApp } from "@/lib/dados"
@@ -417,8 +417,7 @@ export function Entrar() {
                 {acao("Continuar", () => irPara("boas-vindas"))}
               </>
             ) : (
-              <FormularioDeCriacao
-                tipo="my-biz"
+              <FormularioNegocio
                 cidade={cidade}
                 aoCancelar={() => irPara("negocio")}
                 aoConcluir={() => setNegocioSalvo(true)}
