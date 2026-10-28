@@ -68,25 +68,21 @@ test("sugestões podem ser puladas e não mostram grupos de outra cidade", async
   await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
 })
 
-test("divulgar negócio permite voltar e salvar um rascunho local", async ({ page }) => {
+test("negócio pode ser criado por etapas sem obrigar detalhes", async ({ page }) => {
   await page.goto("/app/entrar/negocio")
   await page.getByRole("button", { name: "Divulgar agora" }).click()
-  await expect(page.getByRole("heading", { name: "Apresente seu negócio." })).toBeVisible()
-  await expect(page.getByLabel("Nome do negócio")).toBeVisible()
-  await expect(page.getByLabel("Serviços oferecidos")).toBeVisible()
-  await page.getByRole("button", { name: "Voltar" }).click()
-  await expect(
-    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
-  ).toBeVisible()
-  await page.getByRole("button", { name: "Divulgar agora" }).click()
-  await page.getByRole("button", { name: "Salvar rascunho" }).click()
-  await expect(page.getByRole("status")).toHaveCount(0)
-  await expect(page.getByLabel("Nome do negócio")).toBeFocused()
   await page.getByLabel("Nome do negócio").fill("Oficina de exemplo")
-  await page.getByLabel("Tipo de serviço").selectOption({ label: "Casa e reparos" })
+  await page
+    .getByLabel("Tipo de serviço", { exact: true })
+    .selectOption({ label: "Casa e reparos" })
   await page.getByLabel("Elétrica", { exact: true }).check()
-  await page.getByLabel("Horário ou agendamento").fill("Segunda a sexta")
-  await page.getByLabel("Bairros em que atende").fill("Centro")
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await expect(page.getByRole("button", { name: "Salvar rascunho" })).toHaveCount(0)
+  expect(await page.evaluate(() => sessionStorage.getItem("bivaque:onboarding-negocio"))).toBeNull()
+  await page.getByLabel("Em toda a cidade").check()
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByLabel("Atendo com horário combinado").check()
+  await page.getByRole("button", { name: "Continuar" }).click()
   await page.getByLabel("Fotos do negócio (até 6)").setInputFiles({
     name: "foto.png",
     mimeType: "image/png",
@@ -96,17 +92,67 @@ test("divulgar negócio permite voltar e salvar um rascunho local", async ({ pag
     ),
   })
   await expect(page.getByAltText("Foto 1, capa")).toBeVisible()
-  await page.getByLabel("Serviços oferecidos").fill("Serviços de manutenção residencial.")
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await expect(page.getByText("Oficina de exemplo")).toBeVisible()
+  await expect(page.getByText("Elétrica", { exact: true })).toBeVisible()
+  await expect(page.getByText("Atendimento com horário combinado")).toBeVisible()
+  await expect(page.getByAltText("Prévia da foto 1, capa")).toBeVisible()
+  expect(await page.evaluate(() => sessionStorage.getItem("bivaque:onboarding-negocio"))).toBeNull()
   await page.getByRole("button", { name: "Salvar rascunho" }).click()
   await expect(page.getByRole("status")).toContainText("não foi publicado")
-  const rascunho = await page.evaluate(() =>
+  const draft = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("bivaque:onboarding-negocio") ?? "{}"),
   )
-  expect(rascunho.categoria).toBe("Casa e reparos")
-  expect(rascunho.especialidades).toContain("Elétrica")
-  expect(rascunho.fotos).toHaveLength(1)
-  await page.getByRole("button", { name: "Continuar", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  expect(draft.especialidades).toContain("Elétrica")
+  expect(draft.fotos).toHaveLength(1)
+  expect(draft.atendimento).toBe("combinado")
+})
+
+test("negócio permite informar horário fixo e voltar sem perder dados", async ({ page }) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await page.getByLabel("Nome do negócio").fill("Ateliê de teste")
+  await page.getByLabel("Tipo de serviço", { exact: true }).selectOption({ label: "Outros" })
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByRole("button", { name: "Voltar" }).click()
+  await expect(page.getByLabel("Nome do negócio")).toHaveValue("Ateliê de teste")
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByLabel("Tenho horário fixo").check()
+  await page.getByLabel("Segunda-feira").check()
+  await page.getByLabel("Abre às").fill("08:00")
+  await page.getByLabel("Fecha às").fill("18:00")
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await expect(page.getByText(/Segunda-feira.*08:00.*18:00/)).toBeVisible()
+})
+
+test("negócio orienta dados incompletos e fotos inválidas", async ({ page }) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await page.getByLabel("Nome do negócio").fill("Loja exemplo")
+  await page.getByLabel("Tipo de serviço", { exact: true }).selectOption({ label: "Outros" })
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByLabel("Em bairros específicos").check()
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await expect(page.getByRole("alert")).toContainText("Adicione ao menos um bairro")
+  await page.getByLabel("Adicionar bairro").fill("Centro")
+  await page.getByRole("button", { name: "Adicionar bairro" }).click()
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page.getByLabel("Tenho horário fixo").check()
+  await page.getByLabel("Segunda-feira").check()
+  await page.getByLabel("Abre às").fill("18:00")
+  await page.getByLabel("Fecha às").fill("08:00")
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await expect(page.getByRole("alert")).toContainText("posterior à abertura")
+  await page.getByLabel("Fecha às").fill("19:00")
+  await page.getByRole("button", { name: "Continuar" }).click()
+  await page
+    .getByLabel("Fotos do negócio (até 6)")
+    .setInputFiles({
+      name: "invalido.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("não é imagem"),
+    })
+  await expect(page.getByRole("alert")).toContainText("JPG, PNG, WebP ou AVIF")
 })
 
 test("cidade mostra campos adequados ao momento e mantém o layout", async ({ page }) => {

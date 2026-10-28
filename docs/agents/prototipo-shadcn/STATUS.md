@@ -9,6 +9,10 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Onboarding de negócios simplificado — 28/10/2026
+
+Experiência dividida em cinco etapas: identificação e especialidades, área, atendimento, fotos/contatos opcionais e revisão antes de salvar. Lista de bairros é uma amostra de demonstração, aceita outros nomes. Rascunho e fotos permanecem apenas nesta sessão. Prova focal: 24/24 E2E em 375/768/1440; sem backend. Gate com variáveis públicas falhou no build web por junction de node_modules para fora do worktree, erro Turbopack já conhecido; gate sem build web passou os demais estágios, sem autorizar declarar gate completo verde.
+
 ## Ampliação da prévia de negócios — 28/10/2026
 
 Formulário da jornada usa grupos e especialidades do protótipo, horário, bairros, serviços, apresentação, benefício, contatos e até seis fotos com capa. Rascunho é apenas da sessão e não publica. Prova focal: 18/18 E2E em 375/768/1440; build e typecheck do app passaram. Gate: lint, typechecks, build do app, testes e secrets passaram na execução sem configuração web, mas web foi pulado; na tentativa com variáveis públicas no processo o build web falhou porque apps/web/node_modules é uma junction para fora do worktree (Turbopack rejeita). Gate completo pendente; prévia não é aprovação de produção.
