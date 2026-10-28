@@ -9,6 +9,17 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## Negócios no onboarding — 28/10/2026
+
+Após os grupos, a pessoa pode divulgar seu negócio, indicar interesse em criar
+ou decidir depois. Divulgar agora reutiliza FormularioDeCriacao e salva apenas
+um rascunho da sessão; não publica nem conecta ao backend. A seleção de interesse
+não persiste. Gate completo verde e prova focal de 18/18 E2E em 375/768/1440.
+A primeira tentativa
+falhou nos três viewports porque o teste omitira o campo obrigatório Área de
+atuação; a prova corrigida passou. Aceite visual independente e integração real
+continuam pendentes.
+
 ## Sugestões de grupos na entrada — 27/10/2026
 
 A cidade leva às sugestões opcionais de grupos abertos da localidade demonstrativa.

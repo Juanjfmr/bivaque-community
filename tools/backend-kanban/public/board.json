@@ -5333,6 +5333,7 @@
         "Instrumentos revisados e capturas aprovadas"
       ],
       "proof": [
+        "28/10: onboarding demonstrativo inclui etapa opcional de negocios; divulgar reutiliza formulario e salva rascunho apenas na sessao, interesse e decidir depois nao publicam. Gate completo verde; 18/18 E2E em 375/768/1440. Backend e aceite visual independente pendentes.",
         "27/10: sugestoes de grupos abertas da cidade no onboarding demonstrativo, selecao opcional e estado vazio; nenhum vinculo criado. Gate completo verde; 15/15 E2E em 375/768/1440, instrumento aprovado em revisao estatica. Integracao real e auditoria visual independente pendentes.",
         "27/10: jornada de entrada demonstrativa com composicao 21st e marca oficial; login, cadastro, CPF, documento, analise, convite e cidade sem backend. E2E focal 12/12 em 375/768/1440; gate completo verde apos o reforco; instrumento aprovado em revisao estatica independente. Aceite visual e integracao real continuam pendentes. Detalhes em STATUS.",
         "25/10: contrato APP-001 válido R1; baseline focal 0/2 e depois 6/6 no escopo, sem alegar gate completo",

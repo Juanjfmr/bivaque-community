@@ -41,6 +41,10 @@ test("cadastro percorre vínculo, cidade, grupos e boas-vindas", async ({ page }
     page.getByText("Demonstração: selecionar grupos não cria participação."),
   ).toBeVisible()
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Decidir depois" }).click()
   await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
   await page.getByRole("button", { name: "Ir para o início" }).click()
   await expect(page).toHaveURL(/\/app\/(inicio)?$/)
@@ -55,6 +59,35 @@ test("sugestões podem ser puladas e não mostram grupos de outra cidade", async
   ).toBeVisible()
   await expect(page.getByText("Famílias com crianças pequenas")).toHaveCount(0)
   await page.getByRole("button", { name: "Escolher depois" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Tenho interesse em criar" }).click()
+  await expect(page.getByRole("heading", { name: "Ideias para seu negócio." })).toBeVisible()
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+})
+
+test("divulgar negócio permite voltar e salvar um rascunho local", async ({ page }) => {
+  await page.goto("/app/entrar/negocio")
+  await page.getByRole("button", { name: "Divulgar agora" }).click()
+  await expect(page.getByRole("heading", { name: "Apresente seu negócio." })).toBeVisible()
+  await expect(page.getByLabel("Nome do negócio")).toBeVisible()
+  await expect(page.getByLabel("Serviços oferecidos")).toBeVisible()
+  await page.getByRole("button", { name: "Voltar" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Divulgar agora" }).click()
+  await page.getByRole("button", { name: "Salvar rascunho" }).click()
+  await expect(page.getByRole("status")).toHaveCount(0)
+  await expect(page.getByLabel("Nome do negócio")).toBeFocused()
+  await page.getByLabel("Nome do negócio").fill("Oficina de exemplo")
+  await page.getByLabel("Área de atuação").fill("Manutenção")
+  await page.getByLabel("Serviços oferecidos").fill("Serviços de manutenção residencial.")
+  await page.getByRole("button", { name: "Salvar rascunho" }).click()
+  await expect(page.getByRole("status")).toContainText("não foi publicado")
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
 })
 

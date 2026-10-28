@@ -1,6 +1,7 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
+import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { dadosDoApp } from "@/lib/dados"
@@ -32,6 +33,7 @@ export function Entrar() {
   const [aceitou, setAceitou] = useState(false)
   const [grupos, setGrupos] = useState<Grupo[] | null>(null)
   const [selecionados, setSelecionados] = useState<string[]>([])
+  const [negocioSalvo, setNegocioSalvo] = useState(false)
 
   useEffect(() => {
     if (estado !== "sugestoes-grupos") return
@@ -144,6 +146,9 @@ export function Entrar() {
     "convite-indisponivel": "Convite indisponível.",
     cidade: "Sua cidade e seu momento.",
     "sugestoes-grupos": "Encontre seus grupos.",
+    negocio: "Você tem um negócio ou oferece algum serviço?",
+    "negocio-formulario": "Apresente seu negócio.",
+    "negocio-interesse": "Ideias para seu negócio.",
     "boas-vindas": "Bem-vindo ao Bivaque.",
     retomar: "Continue de onde parou.",
     senha: "Esqueci minha senha.",
@@ -389,8 +394,44 @@ export function Entrar() {
                   ))}
                 </fieldset>
               )}
+              {acao("Continuar", () => irPara("negocio"))}
+              {acao("Escolher depois", () => irPara("negocio"), true)}
+            </>
+          )}
+          {estado === "negocio" && (
+            <>
+              <p>No Mercado, você pode apresentar seu negócio ou serviço à comunidade.</p>
+              <p className="entrada-nota">Esta etapa é opcional. Você pode voltar a ela depois.</p>
+              {acao("Divulgar agora", () => {
+                setNegocioSalvo(false)
+                irPara("negocio-formulario")
+              })}
+              {acao("Tenho interesse em criar", () => irPara("negocio-interesse"), true)}
+              {acao("Decidir depois", () => irPara("boas-vindas"), true)}
+            </>
+          )}
+          {estado === "negocio-formulario" &&
+            (negocioSalvo ? (
+              <>
+                <p role="status">Rascunho salvo nesta sessão. Seu negócio não foi publicado.</p>
+                {acao("Continuar", () => irPara("boas-vindas"))}
+              </>
+            ) : (
+              <FormularioDeCriacao
+                tipo="my-biz"
+                cidade={cidade}
+                aoCancelar={() => irPara("negocio")}
+                aoConcluir={() => setNegocioSalvo(true)}
+              />
+            ))}
+          {estado === "negocio-interesse" && (
+            <>
+              <p>
+                Quando quiser, explore os negócios locais no Mercado e conheça o que a comunidade
+                procura.
+              </p>
               {acao("Continuar", () => irPara("boas-vindas"))}
-              {acao("Escolher depois", () => irPara("boas-vindas"), true)}
+              {acao("Voltar", () => irPara("negocio"), true)}
             </>
           )}
           {estado === "boas-vindas" && (
