@@ -33,7 +33,7 @@ export const CENARIOS: Record<"live" | "seed", DadosDaCidade> = {
           t: "Chegadas 2027 em Manaus",
           tpl: "turma",
           cycle: 2027,
-          img: "friends",
+          img: "chegada",
           about:
             "Quem chega a Manaus entre novembro de 2026 e outubro de 2027. Mudança, escola, moradia e o primeiro encontro.",
           rules:
@@ -1549,7 +1549,7 @@ export const CENARIOS: Record<"live" | "seed", DadosDaCidade> = {
           t: "Chegadas 2027 em Manaus",
           tpl: "turma",
           cycle: 2027,
-          img: "friends",
+          img: "chegada",
           about:
             "Quem chega a Manaus entre novembro de 2026 e outubro de 2027. Mudança, escola, moradia e o primeiro encontro.",
           rules:
