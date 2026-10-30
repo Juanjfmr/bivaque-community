@@ -2189,6 +2189,13 @@ body[data-profundidade="sim"] [data-casca="app"] {
   gap: 8px;
   width: min(100%, 420px);
 }
+/* Abaixo de 768 px a barra interna encolhe para 60% da coluna e fica centrada:
+   à largura cheia ela se confundia com a barra geral da etapa, logo acima. */
+@media (max-width: 767.98px) {
+  .entrada-etapa-progresso-barra {
+    width: 60%;
+  }
+}
 .entrada-etapa-progresso-barra > span {
   flex: 1;
   height: 6px;
