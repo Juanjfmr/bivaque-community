@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { dadosDoApp } from "@/lib/dados"
 import type { Grupo } from "@/lib/dados/contrato"
+import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { ESTADOS_DA_ENTRADA, type EstadoDaEntrada } from "@/lib/navegacao/rotas"
@@ -670,6 +671,72 @@ export function Entrar() {
     )
   }
 
+  if (estado === "boas-vindas") {
+    const ondeEstou = cidade.trim() || dadosDoApp.resumoDaCasca().cidade
+    const destinoDaSaida = destino.trim()
+    // A turma de chegada só existe em Manaus: nas outras cidades o cartão some.
+    const comTurma = momento === "chegando" && ondeEstou === "Manaus"
+    const apoio =
+      momento === "chegando"
+        ? `Seu plano de chegada a ${ondeEstou} já está pronto.`
+        : momento === "saindo"
+          ? destinoDaSaida === ""
+            ? "Seu plano de saída já está pronto."
+            : `Seu plano de saída para ${destinoDaSaida} já está pronto.`
+          : `O que a comunidade de ${ondeEstou} indica já está à sua espera.`
+    const atalho = (icone: NomeDeIcone, titulo: string, nota: string, abrir: () => void) => (
+      <button type="button" className="entrada-etapa-atalho" onClick={abrir}>
+        <Icone nome={icone} className="entrada-etapa-atalho-icone" />
+        <span className="entrada-etapa-atalho-texto">
+          <strong>{titulo}</strong>
+          <small>{nota}</small>
+        </span>
+        <Icone nome="chevron_right" className="entrada-etapa-atalho-seta" />
+      </button>
+    )
+
+    return (
+      <EntradaEtapa
+        titulo="Você chegou ao Bivaque."
+        apoio={apoio}
+        icone={
+          <span className="entrada-etapa-boas-vindas-foto">
+            <img src={`${import.meta.env.BASE_URL}demo/landing-hero.webp`} alt="" />
+            <span className="entrada-etapa-boas-vindas-check">
+              <Icone nome="check" />
+            </span>
+          </span>
+        }
+      >
+        {momento === "morando"
+          ? atalho("place", `Conhecer ${ondeEstou}`, "O que a comunidade indica, por assunto.", () =>
+              void navegacao.irPara("guia"),
+            )
+          : atalho(
+              "map",
+              momento === "saindo" ? "Ver o plano de saída" : "Ver o plano de chegada",
+              "Moradia, escola, saúde e mudança, na ordem.",
+              () => void navegacao.irPara("inicio"),
+            )}
+        {comTurma
+          ? atalho(
+              "group",
+              "Conhecer quem chega com você",
+              `Chegadas 2027 em ${ondeEstou}`,
+              () => void navegacao.irPara("grupo", { parametros: { id: "turma-manaus-2027" } }),
+            )
+          : null}
+        <Button
+          type="button"
+          className="entrada-etapa-acao"
+          onClick={() => void navegacao.irPara("comunidade")}
+        >
+          Entrar na comunidade
+        </Button>
+      </EntradaEtapa>
+    )
+  }
+
   return (
     <section data-tela="entrar" className="entrada-pagina">
       <Card className="entrada-cartao">
@@ -693,12 +760,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "boas-vindas" && (
-            <>
-              <p>Encontre informações e pessoas para acompanhar sua jornada.</p>
-              {acao("Ir para o início", irInicio)}
-            </>
-          )}
           {estado === "retomar" && (
             <>
               <p>Você começou seu cadastro e pode continuar.</p>

@@ -30,21 +30,23 @@ export function EntradaEtapa({
   aoSair,
   children,
 }: {
-  /** Passo atual, de 1 a 5. Os anteriores aparecem concluídos. */
-  passo: number
+  /** Passo atual, de 1 a 5. Os anteriores aparecem concluídos. Sem ele não há
+   *  indicador nem "Sair": é o caso das boas-vindas, que já é o fim da entrada. */
+  passo?: number
   titulo: string
   /** Frase de apoio; telas que só têm título passam nada. */
   apoio?: string
   /** Segunda linha do apoio, quando a tela precisa de duas frases. */
   apoioExtra?: string | null
   icone?: ReactNode
-  aoSair: () => void
+  aoSair?: () => void
   children: ReactNode
 }) {
   const base = import.meta.env.BASE_URL
-  const atual = PASSOS[passo - 1] ?? PASSOS[0]
+  const indiceAtual = passo ?? 1
+  const atual = passo === undefined ? null : (PASSOS[passo - 1] ?? PASSOS[0])
   const estadoDo = (indice: number) =>
-    indice < passo - 1 ? "concluido" : indice === passo - 1 ? "atual" : "futuro"
+    indice < indiceAtual - 1 ? "concluido" : indice === indiceAtual - 1 ? "atual" : "futuro"
 
   return (
     <section data-tela="entrar" data-composicao="etapa" className="entrada-etapa">
@@ -56,43 +58,47 @@ export function EntradaEtapa({
           />
           <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
         </picture>
-        <button type="button" className="entrada-etapa-sair" onClick={aoSair}>
-          Sair
-        </button>
+        {aoSair === undefined ? null : (
+          <button type="button" className="entrada-etapa-sair" onClick={aoSair}>
+            Sair
+          </button>
+        )}
       </header>
 
       {/* O indicador inteiro é uma imagem para o leitor de tela: os círculos e a
           linha decoram e o nome do passo vai no rótulo. */}
-      <div
-        className="entrada-etapa-passos"
-        role="img"
-        aria-label={`Etapa ${passo} de 5: ${atual.nome}`}
-      >
-        <div className="entrada-etapa-trilha">
-          {PASSOS.map((item, indice) => (
-            <div key={item.nome} className="entrada-etapa-passo" data-estado={estadoDo(indice)}>
-              <span className="entrada-etapa-circulo">
-                {indice < passo - 1 ? <Icone nome="check" /> : indice + 1}
-              </span>
-              <span className="entrada-etapa-linha" />
-              <span className="entrada-etapa-rotulo">
-                {item.nome}
-                {item.opcional ? <span className="entrada-etapa-opcional">opcional</span> : null}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="entrada-etapa-resumo">
-          <span className="entrada-etapa-legenda">
-            {`Etapa ${passo} de 5 · ${atual.nome}${atual.opcional ? " (opcional)" : ""}`}
-          </span>
-          <span className="entrada-etapa-segmentos">
+      {atual === null ? null : (
+        <div
+          className="entrada-etapa-passos"
+          role="img"
+          aria-label={`Etapa ${passo} de 5: ${atual.nome}`}
+        >
+          <div className="entrada-etapa-trilha">
             {PASSOS.map((item, indice) => (
-              <span key={item.nome} data-estado={estadoDo(indice)} />
+              <div key={item.nome} className="entrada-etapa-passo" data-estado={estadoDo(indice)}>
+                <span className="entrada-etapa-circulo">
+                  {indice < indiceAtual - 1 ? <Icone nome="check" /> : indice + 1}
+                </span>
+                <span className="entrada-etapa-linha" />
+                <span className="entrada-etapa-rotulo">
+                  {item.nome}
+                  {item.opcional ? <span className="entrada-etapa-opcional">opcional</span> : null}
+                </span>
+              </div>
             ))}
-          </span>
+          </div>
+          <div className="entrada-etapa-resumo">
+            <span className="entrada-etapa-legenda">
+              {`Etapa ${passo} de 5 · ${atual.nome}${atual.opcional ? " (opcional)" : ""}`}
+            </span>
+            <span className="entrada-etapa-segmentos">
+              {PASSOS.map((item, indice) => (
+                <span key={item.nome} data-estado={estadoDo(indice)} />
+              ))}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="entrada-etapa-conteudo">
         {icone}

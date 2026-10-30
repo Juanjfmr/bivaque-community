@@ -2650,6 +2650,82 @@ body[data-profundidade="sim"] [data-casca="app"] {
   font-size: 36px;
 }
 
+/* Boas-vindas: a única tela da composição B com fotografia — foto larga no topo
+   da coluna, check pequeno sobre a borda inferior, título e apoio centralizados e
+   atalhos de linha inteira com ícone e seta. */
+.entrada-etapa-boas-vindas-foto {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.entrada-etapa-boas-vindas-foto img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 7 / 4;
+  border-radius: 16px;
+  object-fit: cover;
+}
+.entrada-etapa-boas-vindas-check {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transform: translateX(-50%);
+}
+.entrada-etapa-boas-vindas-check .bv-icone {
+  font-size: 22px;
+}
+.entrada-etapa-atalho {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: start;
+  cursor: pointer;
+}
+.entrada-etapa-atalho:hover {
+  background: var(--muted);
+}
+.entrada-etapa-atalho:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-etapa-atalho-icone,
+.entrada-etapa-atalho-seta {
+  color: var(--foreground);
+  font-size: 24px;
+}
+.entrada-etapa-atalho-seta {
+  color: var(--muted-foreground);
+}
+.entrada-etapa-atalho-texto {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.entrada-etapa-atalho-texto strong {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.entrada-etapa-atalho-texto small {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 @media (min-width: 768px) {
   .entrada-etapa-passos {
     margin-top: 48px;
