@@ -9,6 +9,37 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## ENT-001 — telas de acesso da F01 — 30/10/2026
+
+Login, criar conta e recuperar senha saíram do cartão único para a composição A: painel da foto
+recuado à esquerda, com a frase da marca na base, e coluna de 400 px com logo, título, apoio e
+formulário; no celular, logo no topo, faixa de foto de cerca de 30% da janela e formulário em uma
+coluna. "Continuar com Google" passou para antes do formulário, com o divisor "ou continue com
+e-mail"; "Esqueci minha senha" fica na linha do rótulo da senha; a recuperação mantém o e-mail e
+mostra o aviso neutro de instruções (role=status) com o botão principal em "Voltar para entrar";
+criar conta ganhou a etiqueta do público e os três itens de valor no painel e a linha de tempo no
+formulário. As demais telas da entrada continuam no cartão, com o aviso de jornada demonstrativa.
+Código: `apps/app/components/bivaque/entrada-acesso.tsx` e `icone-google.tsx`, o desvio em
+`apps/app/src/telas/Entrar.tsx` e o bloco `.entrada-acesso-*` de `apps/app/src/styles.css`.
+
+Provas executadas nesta sessão, sobre este build:
+
+- `--filter @bivaque/app typecheck`: passou, sem diagnóstico.
+- `--filter @bivaque/app build`: passou.
+- `test:e2e -- tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts`: 87 passaram,
+  3 puladas, 0 falharam. São 7 testes novos (39 passadas + as 3 capturas puladas em 320/360/430)
+  e os 48 do spec `entrada-21st` (8 × 6 projetos).
+- `pnpm lint`: vermelho por 8 erros preexistentes, todos em arquivos que este lote não toca
+  (`scripts/load/concurrency.mjs`, `scripts/load/observe.mjs`,
+  `apps/web/app/(admin)/arrivals/page.tsx`,
+  `apps/web/app/(shell)/communities/communities-screen.tsx`,
+  `apps/app/tests/dados-demo.test.ts`). Os arquivos deste lote não têm erro.
+
+Capturas de página inteira das quatro situações em 375, 768 e 1440 px, geradas pelo próprio spec,
+em `.visual/ENT-001/`. Elas são material de revisão: **não há aceite visual declarado aqui**.
+Fora do aceite: em 320, 360 e 375 px os três rótulos de valor quebram em duas linhas — três
+rótulos com ícone não cabem nessa largura sem criar a rolagem horizontal que o contrato proíbe.
+
 ## Onboarding de negócios simplificado — 28/10/2026
 
 Experiência dividida em cinco etapas: identificação e especialidades, área, atendimento, fotos/contatos opcionais e revisão antes de salvar. Lista de bairros é uma amostra de demonstração, aceita outros nomes. Rascunho e fotos permanecem apenas nesta sessão. Prova focal: 24/24 E2E em 375/768/1440; sem backend. Gate com variáveis públicas falhou no build web por junction de node_modules para fora do worktree, erro Turbopack já conhecido; gate sem build web passou os demais estágios, sem autorizar declarar gate completo verde.
