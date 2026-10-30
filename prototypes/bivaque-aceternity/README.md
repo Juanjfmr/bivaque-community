@@ -1,36 +1,30 @@
-# Bivaque · Protótipo Aceternity UI
+# Bivaque × Aceternity UI — Teste de estresse V2
 
-Experimento isolado de interface mobile-first do Bivaque, consultando a coleção pública **Aceternity UI de Manu Arora no 21st.dev**.
+Protótipo independente e navegável do Bivaque feito para testar **amplitude visual e interações da biblioteca Aceternity UI** no produto real e em um laboratório.
 
-## Executar
+## Onde testar
 
-\`\`\`bash
-cd prototypes/bivaque-aceternity
-npm install
-npm run dev
-\`\`\`
+Execute \`npm install && npm run dev\` nesta pasta. O projeto usa Vite + React 19, Tailwind e Framer Motion. O build roda com \`npm run build\`.
 
-Abra o endereço informado pelo Vite. Para compilar: \`npm run build\`.
+## Telas
 
-## Componentes reais da coleção
+- **Início:** hero editorial, busca animada, atalhos em bento, indicações rolantes e oportunidades.
+- **Comunidade:** feed demonstrativo, publicação em modal, grupos interativos, eventos e perguntas.
+- **Mercado:** filtros, favoritos, cartões, grade expansível, 3D Card e hover direcional.
+- **Chegada:** conexões ilustrativas no World Map, etapas em Tracing Beam e Timeline.
+- **Você:** favoritos e grupos armazenados somente na sessão.
+- **Laboratório:** efeitos intensos sob demanda, inventário de componentes, modo reduzido e amostra 320/375/430px.
 
-| Arquivo de origem 21st.dev | Onde é utilizado |
-|---|---|
-| Floating Dock | Navegação flutuante responsiva |
-| Bento Grid | Acessos rápidos da página inicial |
-| Glowing Effect | Contornos interativos de cartões |
-| Background Gradient | Card editorial de comunidade |
-| Placeholders And Vanish Input | Busca animada |
-| Animated Modal | Publicação demonstrativa |
+## Proveniência
 
-Todos os seis componentes em \`src/components/ui\` foram recuperados do catálogo 21st.dev. A aparência cromática de Background Gradient e Glowing Effect foi adaptada para cores oficiais da marca. Bento Grid foi adaptado apenas para retirar dependência de um Button externo; campos e botões de conteúdo usam HTML nativo. **Nenhuma outra biblioteca de componentes de interface** foi usada. Motion, Tailwind e bibliotecas auxiliares são dependências técnicas dos componentes Aceternity.
+**29 componentes originais Aceternity UI** obtidos diretamente de \`21st.dev/@manuarora700/library/aceternity-ui\` e instalados no diretório \`src/components/ui\`. Alguns foram adaptados para Vite (troca de \`next/image\` por \`img\`, \`next/link\` por \`a\`, uso de tokens Bivaque e pequenas correções TypeScript). Estes ajustes não introduzem outra biblioteca de componentes. Elementos básicos (formulários, contêineres, botões nativos e acessibilidade) são HTML/React.
 
-## Identidade e escopo
+A fonte da identidade é \`docs/brand/GUIDELINES.md\`, os tokens de \`docs/brand/reference/brand-tokens.json\`, e a assinatura original do Bivaque é preservada sem redesenho. O piloto continua **light-only**.
 
-Tokens oficiais do repositório: Grafite \`#253033\`, Papel \`#F2F0EB\`, Brasa \`#B84A3A\`. Logotipo SVG original em \`public/logo.svg\`. Tipografia Noto Serif/Noto Sans.
+As imagens de imóveis e produtos e todo o catálogo são **ilustrativos e fictícios**; não demonstram disponibilidade real. Favoritos usam sessionStorage, demais interações são locais. Não há backend, autenticação nem acesso a dados de membros.
 
-Áreas demonstradas: Início, Comunidade (Publicações, Grupos, Eventos, Perguntas), Mercado (Desapegos, Imóveis, Negócios), Você. Pesquisa, navegação, salvos, participação e publicação fictícia são simuladas no estado da página, sem autenticação, persistência, backend ou divulgação pública de dados.
+A V1 segue isolada na branch \`feat/prototype-aceternity-only-20261030\`. Esta V2 reside em \`feat/bivaque-aceternity-stress-20261030\`; a branch \`main\` não foi modificada.
 
-Os textos, itens e pessoas são demonstrativos. As fotos são referenciadas da pasta pública do próprio projeto Bivaque. A branch é independente; main e produção não foram alteradas.
+### Medição sugerida
 
-Fonte: https://21st.dev/@manuarora700/library/aceternity-ui
+Compare 320, 375, 430, 768 e 1440 px. Avalie navegação e alvos de toque, redução de movimento, contraste, carregamento sob demanda do Lab e impacto no peso JS. O laboratório foi isolado por \`React.lazy\` para não carregar seus componentes de efeito na experiência principal.

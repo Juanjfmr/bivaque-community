@@ -1,7 +1,7 @@
 {
-  "name": "bivaque-aceternity-prototype",
+  "name": "bivaque-aceternity-stress",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -12,6 +12,7 @@
     "@radix-ui/react-icons": "^1.3.2",
     "@tabler/icons-react": "^3.31.0",
     "clsx": "^2.1.1",
+    "dotted-map": "^2.2.3",
     "framer-motion": "^12.0.0",
     "motion": "^12.0.0",
     "react": "^19.0.0",
