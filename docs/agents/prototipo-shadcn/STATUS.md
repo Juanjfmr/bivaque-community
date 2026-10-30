@@ -37,8 +37,18 @@ Provas executadas nesta sessão, sobre este build:
 
 Capturas de página inteira das quatro situações em 375, 768 e 1440 px, geradas pelo próprio spec,
 em `.visual/ENT-001/`. Elas são material de revisão: **não há aceite visual declarado aqui**.
-Fora do aceite: em 320, 360 e 375 px os três rótulos de valor quebram em duas linhas — três
-rótulos com ícone não cabem nessa largura sem criar a rolagem horizontal que o contrato proíbe.
+
+**Reparo 1** (quatro ajustes da revisão independente): respiro de 20 px entre a base da frase da
+marca e o primeiro item de valor no painel a partir de 768 px; abaixo de 768 px os três itens viram
+grade de três colunas iguais com o ícone acima do rótulo, na mesma linha; título do formulário em
+`clamp(32px, 2.8vw, 40px)` a partir de 1024 px (40 px em 1440); e região `role="status"` sempre
+presente na recuperação de senha — vazia e fora do fluxo antes do envio, com o aviso do envelope
+dentro dela depois. Provas sobre este build: `--filter @bivaque/app typecheck` sem diagnóstico;
+`build` passou; `test:e2e` dos dois specs da entrada nas seis telas, 100 passaram, 14 puladas, 0
+falharam (as puladas são as capturas e as medidas que valem só em um dos tamanhos); `lint` com 0
+erro, 18 avisos e 51 informativos preexistentes. Capturas renovadas pelo spec em `.visual/ENT-001/`.
+Em 320–375 px o rótulo curto "Serviços indicados" quebra em duas linhas dentro da própria coluna:
+os três itens continuam na mesma linha e não há rolagem horizontal.
 
 ## Onboarding de negócios simplificado — 28/10/2026
 
