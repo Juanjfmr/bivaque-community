@@ -6,7 +6,6 @@ import { EntradaEtapa } from "@/components/bivaque/entrada-etapa"
 import { FormularioNegocio } from "@/components/bivaque/formulario-negocio"
 import { Icone } from "@/components/bivaque/icone"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { dadosDoApp } from "@/lib/dados"
 import type { Grupo } from "@/lib/dados/contrato"
 import type { NomeDeIcone } from "@/lib/icones"
@@ -130,37 +129,18 @@ export function Entrar() {
     setArquivo(escolhido)
     setErroArquivo("")
   }
-  const acao = (texto: string, executar: () => void, secundaria = false, desabilitada = false) => (
-    <Button
-      type="button"
-      variant={secundaria ? "outline" : "default"}
-      className="entrada-botao"
-      onClick={executar}
-      disabled={desabilitada}
-    >
-      {texto}
-    </Button>
-  )
-  const titulo: Record<EstadoDaEntrada, string> = {
-    conta: "Vamos começar.",
-    login: "Que bom ter você de volta.",
+  const tituloDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
     aceite: "Só falta aceitar o combinado.",
     cpf: "Confirme seu vínculo.",
     resultado: "Vínculo confirmado.",
     analise: "Vínculo em análise.",
     documento: "Envie sua identidade.",
     "consulta-indisponivel": "Não foi possível concluir a consulta.",
-    "convite-indisponivel": "Convite indisponível.",
     cidade: "Sua cidade e seu momento.",
     "sugestoes-grupos": "Encontre seus grupos.",
     negocio: "Você tem um negócio ou oferece algum serviço?",
     "negocio-formulario": "Apresente seu negócio.",
     "negocio-interesse": "Ideias para seu negócio.",
-    "boas-vindas": "Bem-vindo ao Bivaque.",
-    retomar: "Continue de onde parou.",
-    senha: "Esqueci minha senha.",
-    convite: "Convite de família.",
-    apagada: "Conta apagada.",
   }
 
   // Login, criar conta e recuperar senha usam a composição A; as telas do
@@ -207,7 +187,7 @@ export function Entrar() {
     return (
       <EntradaEtapa
         passo={5}
-        titulo={titulo[estado]}
+        titulo={tituloDaEtapa[estado] ?? ""}
         apoio={apoioDaEtapa[estado] ?? ""}
         apoioExtra={apoioExtraDaEtapa[estado] ?? null}
         aoSair={() => irPara("login")}
@@ -303,7 +283,7 @@ export function Entrar() {
         passo={
           estado === "aceite" ? 1 : estado === "cidade" ? 3 : estado === "sugestoes-grupos" ? 4 : 2
         }
-        titulo={titulo[estado]}
+        titulo={tituloDaEtapa[estado] ?? ""}
         apoio={apoioDaEtapa[estado] ?? ""}
         apoioExtra={apoioExtraDaEtapa[estado] ?? null}
         icone={iconeDaEtapa()}
@@ -708,37 +688,5 @@ export function Entrar() {
     )
   }
 
-  return (
-    <section data-tela="entrar" className="entrada-pagina">
-      <Card className="entrada-cartao">
-        <CardHeader className="entrada-cabecalho">
-          <picture>
-            <source
-              media="(prefers-color-scheme: dark)"
-              srcSet={`${import.meta.env.BASE_URL}brand/bivaque-logo-horizontal-white.svg`}
-            />
-            <img
-              className="entrada-marca"
-              src={`${import.meta.env.BASE_URL}brand/bivaque-logo-horizontal.svg`}
-              alt="Bivaque"
-            />
-          </picture>
-          <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1}>
-            {titulo[estado]}
-          </h1>
-          <CardDescription>
-            Jornada demonstrativa: nenhuma informação é enviada ou verificada.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="entrada-conteudo">
-          {estado === "apagada" && (
-            <>
-              <p>Esta é uma demonstração da tela de conta apagada.</p>
-              {acao("Voltar ao início", irInicio)}
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </section>
-  )
+  return null
 }

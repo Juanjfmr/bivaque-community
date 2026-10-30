@@ -472,6 +472,12 @@ export function EntradaAcesso({
             </Button>
           </>
         ) : null}
+
+        {estado === "apagada" ? (
+          <Button type="button" className="entrada-acesso-botao" onClick={aoEntrar}>
+            Voltar ao início
+          </Button>
+        ) : null}
       </div>
     </section>
   )
