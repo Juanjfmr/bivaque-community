@@ -158,27 +158,50 @@ export function Entrar() {
     apagada: "Conta apagada.",
   }
 
-  // Login, criar conta e recuperar senha usam a composição A; aceite e vínculo
-  // confirmado usam a composição B; as demais telas continuam no cartão.
+  // Login, criar conta e recuperar senha usam a composição A; as telas do
+  // vínculo — aceite, CPF, consulta indisponível, documento e análise — usam a B,
+  // no passo 2 (contrato ENT-003).
   const apoioDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
     aceite: "Leia e aceite para continuar com sua conta Google.",
     cpf: "Vamos conferir seu CPF para confirmar seu vínculo.",
     resultado: "Tudo certo. Agora escolha sua cidade.",
+    "consulta-indisponivel": "A fonte oficial está fora do ar agora. Não é nada com seus dados.",
   }
 
-  if (estado === "aceite" || estado === "cpf" || estado === "resultado") {
+  /** A consulta indisponível explica a causa e o próximo passo em duas frases. */
+  const apoioExtraDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
+    "consulta-indisponivel": "Tente novamente em alguns minutos ou envie sua identidade para análise.",
+  }
+
+  const iconeDaEtapa = () => {
+    if (estado === "resultado") {
+      return (
+        <span className="entrada-etapa-confirmacao">
+          <Icone nome="check" />
+        </span>
+      )
+    }
+    // cloud_off não está no subconjunto hospedado dos Material Symbols: a lupa
+    // cortada diz a mesma coisa (a consulta não está disponível agora).
+    if (estado === "consulta-indisponivel") {
+      return <Icone nome="search_off" className="entrada-etapa-icone" />
+    }
+    return null
+  }
+
+  if (
+    estado === "aceite" ||
+    estado === "cpf" ||
+    estado === "resultado" ||
+    estado === "consulta-indisponivel"
+  ) {
     return (
       <EntradaEtapa
         passo={estado === "aceite" ? 1 : 2}
         titulo={titulo[estado]}
         apoio={apoioDaEtapa[estado] ?? ""}
-        icone={
-          estado === "resultado" ? (
-            <span className="entrada-etapa-confirmacao">
-              <Icone nome="check" />
-            </span>
-          ) : null
-        }
+        apoioExtra={apoioExtraDaEtapa[estado] ?? null}
+        icone={iconeDaEtapa()}
         aoSair={() => irPara("login")}
       >
         {estado === "aceite" ? (
@@ -272,6 +295,21 @@ export function Entrar() {
             Continuar
           </Button>
         ) : null}
+        {estado === "consulta-indisponivel" ? (
+          <>
+            <Button type="button" className="entrada-etapa-acao" onClick={() => irPara("cpf")}>
+              Tentar novamente
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("documento")}
+            >
+              Enviar identidade
+            </Button>
+          </>
+        ) : null}
       </EntradaEtapa>
     )
   }
@@ -321,13 +359,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "consulta-indisponivel" && (
-            <>
-              <p>Tente novamente ou envie sua identidade para análise.</p>
-              {acao("Tentar novamente", () => irPara("cpf"))}
-              {acao("Enviar identidade", () => irPara("documento"), true)}
-            </>
-          )}
           {estado === "documento" && (
             <>
               <p>

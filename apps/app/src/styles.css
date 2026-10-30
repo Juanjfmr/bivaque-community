@@ -2070,6 +2070,12 @@ body[data-profundidade="sim"] [data-casca="app"] {
   background: var(--primary);
   color: var(--primary-foreground);
 }
+/* Ícone do resultado que abre a tela (consulta indisponível, sem círculo). */
+.entrada-etapa-icone {
+  margin-bottom: 8px;
+  color: var(--muted-foreground);
+  font-size: 64px;
+}
 /* O check dentro do círculo de 72 px fica com 36 px: metade do círculo. */
 .entrada-etapa-confirmacao .bv-icone {
   font-size: 36px;

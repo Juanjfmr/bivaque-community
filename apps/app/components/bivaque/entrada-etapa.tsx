@@ -25,6 +25,7 @@ export function EntradaEtapa({
   passo,
   titulo,
   apoio,
+  apoioExtra = null,
   icone = null,
   aoSair,
   children,
@@ -33,6 +34,8 @@ export function EntradaEtapa({
   passo: number
   titulo: string
   apoio: string
+  /** Segunda linha do apoio, quando a tela precisa de duas frases. */
+  apoioExtra?: string | null
   icone?: ReactNode
   aoSair: () => void
   children: ReactNode
@@ -96,6 +99,7 @@ export function EntradaEtapa({
           {titulo}
         </h1>
         <p className="entrada-etapa-apoio">{apoio}</p>
+        {apoioExtra ? <p className="entrada-etapa-apoio">{apoioExtra}</p> : null}
         <div className="entrada-etapa-corpo">{children}</div>
       </div>
     </section>
