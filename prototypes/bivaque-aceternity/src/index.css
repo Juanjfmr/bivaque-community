@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Serif:wght@500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{font-family:"Noto Sans",system-ui,sans-serif;color:#253033;background:#F2F0EB;font-synthesis:none}
+body{margin:0;min-width:320px}button{cursor:pointer}button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #E07A5A;outline-offset:2px}img{display:block}
+.top-line{height:5px;background:linear-gradient(90deg,#253033 0%,#253033 65%,#B84A3A 65%,#B84A3A 100%)}
+.font-serif{font-family:"Noto Serif",Georgia,serif}
+.tag{border:1px solid #B84A3A55;color:#B84A3A;font-size:9px;letter-spacing:.10em;font-weight:800;padding:6px 10px;border-radius:6px}
+.eyebrow{font-size:10px;letter-spacing:.12em;color:#B84A3A;font-weight:800;text-transform:uppercase}
+.heading{font-family:"Noto Serif",Georgia,serif;letter-spacing:-.04em;font-size:clamp(35px,6vw,51px);font-weight:600;margin:4px 0}
+.section-intro{margin-bottom:24px}.section-intro>p{font-size:14px;color:#66726d;line-height:1.7}
+.hero{background:#253033;min-height:330px}.guide-card{background:linear-gradient(95deg,#253033 10%,#32484a 90%)}
+.avatar{background:#B84A3A;color:#fff;border:3px solid #fff;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}.avatar-large{width:62px;height:62px;font-size:16px}
+.mini-art{background:radial-gradient(circle at 22% 23%,#d7c0a7,transparent 45%),linear-gradient(135deg,#d6dbd3,#8ba09f);color:#253033}
+.tab-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:22px;padding:5px;background:#e6e5df;border-radius:16px;scrollbar-width:none}.tab-row button{border-radius:12px;padding:12px 14px;font-size:12px;font-weight:700;color:#596560;white-space:nowrap;flex:1}.tab-row button.active{background:#fff;box-shadow:0 1px 7px #25303310;color:#B84A3A}
+.content-card,.note-card{background:#fff;border:1px solid #25303315;border-radius:22px;padding:23px}
+.note-card{background:#e7e9e2}.note-card p{margin:10px 0 16px;font-size:13px;color:#64706a;line-height:1.7}
+.solid-btn{display:inline-flex;justify-content:center;align-items:center;background:#B84A3A;color:white;padding:12px 18px;border-radius:13px;font-size:13px;font-weight:800}
+@media(max-width:380px){.tab-row button{padding:10px 9px}.hero h1{font-size:30px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
