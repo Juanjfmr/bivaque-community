@@ -19,10 +19,11 @@ import { DirectionAwareHover } from "./components/ui/direction-aware-hover";
 import { LayoutGrid } from "./components/ui/layout-grid";
 import { Timeline } from "./components/ui/timeline";
 import { TracingBeam } from "./components/ui/tracing-beam";
-import { WorldMap } from "./components/ui/world-map";
+
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalTrigger } from "./components/ui/animated-modal";
 import { FloatingDock } from "./components/ui/floating-dock";
 const Lab = lazy(() => import("./Lab"));
+const WorldMapLazy = lazy(() => import("./WorldMapLazy"));
 
 type Page = "inicio"|"comunidade"|"mercado"|"chegada"|"voce"|"lab";
 type Listing = { id:string; kind:"Imóveis"|"Desapegos"|"Negócios"; name:string; location:string; info:string; price:string; image:string; accent?:string };
@@ -204,7 +205,7 @@ export default function App(){
   </div>}
   {page==="chegada"&&<div className="page-stack">
    <div className="arrival-hero"><div className="arrival-hero-copy"><Eyebrow light>MOVIMENTAÇÃO · GUIA DA CIDADE</Eyebrow><h1 className="page-title text-white">Mudar de cidade.<br/><span className="text-[#E7A28B]">Continuar em casa.</span></h1><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">Planeje sua chegada com orientações de quem já conhece o lugar.</p><button onClick={()=>go("mercado")} className="mt-6 rounded-full bg-[#E07A5A] px-5 py-3 text-sm font-bold text-[#253033]">Buscar moradia <Icon name="arrow" size={16}/></button></div><img alt="" src={IMG.sunset}/></div>
-   <section><Head eyebrow="REDE EM MOVIMENTO" title="Conexões que atravessam cidades" description="Representação visual ilustrativa de trajetórias, não é um mapa de unidades militares."/><div className="world-map"><WorldMap lineColor="#B84A3A" dots={[{start:{lat:-3.119,lng:-60.0217},end:{lat:-15.794,lng:-47.882}},{start:{lat:-15.794,lng:-47.882},end:{lat:-22.9068,lng:-43.1729}},{start:{lat:-23.5505,lng:-46.6333},end:{lat:-3.119,lng:-60.0217}},{start:{lat:-22.9068,lng:-43.1729},end:{lat:-23.5505,lng:-46.6333}}]}/></div></section>
+   <section><Head eyebrow="REDE EM MOVIMENTO" title="Conexões que atravessam cidades" description="Representação visual ilustrativa de trajetórias, não é um mapa de unidades militares."/><div className="world-map"><Suspense fallback={<div className="empty">Preparando visualização de conexões…</div>}><WorldMapLazy lineColor="#B84A3A" dots={[{start:{lat:-3.119,lng:-60.0217},end:{lat:-15.794,lng:-47.882}},{start:{lat:-15.794,lng:-47.882},end:{lat:-22.9068,lng:-43.1729}},{start:{lat:-23.5505,lng:-46.6333},end:{lat:-3.119,lng:-60.0217}},{start:{lat:-22.9068,lng:-43.1729},end:{lat:-23.5505,lng:-46.6333}}]}/></Suspense></div></section>
    <section><Head eyebrow="SEU ROTEIRO" title="Da chegada ao pertencimento" description="Experimente a Timeline e a Tracing Beam durante a rolagem."/><TracingBeam className="!px-0"><div className="arrival-steps"><div className="step-visual"><div className="step-counter">01</div><h3>Planejar antes de ir</h3><p>Procure opções de moradia, compare regiões, organize os serviços essenciais e converse com quem conhece a cidade.</p><button onClick={()=>{setMarketSub("Imóveis");go("mercado")}} className="text-link mt-4">Ver imóveis <Icon name="arrow" size={16}/></button></div><div className="step-visual"><div className="step-counter">02</div><h3>Conhecer o local</h3><p>Encontre escolas, serviços, rotinas e informações úteis compartilhadas pela comunidade.</p><button onClick={()=>{setSub("Perguntas");go("comunidade")}} className="text-link mt-4">Fazer perguntas <Icon name="arrow" size={16}/></button></div><div className="step-visual"><div className="step-counter">03</div><h3>Construir vínculos</h3><p>Participe de grupos e encontros para criar novas conexões na cidade.</p><button onClick={()=>{setSub("Grupos");go("comunidade")}} className="text-link mt-4">Ver grupos <Icon name="arrow" size={16}/></button></div></div></TracingBeam></section>
    <section className="timeline-container"><Timeline data={timeline}/></section>
   </div>}
