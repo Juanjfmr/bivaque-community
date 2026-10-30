@@ -2,7 +2,9 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
 import { EntradaAcesso } from "@/components/bivaque/entrada-acesso"
+import { EntradaEtapa } from "@/components/bivaque/entrada-etapa"
 import { FormularioNegocio } from "@/components/bivaque/formulario-negocio"
+import { Icone } from "@/components/bivaque/icone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { dadosDoApp } from "@/lib/dados"
@@ -156,8 +158,75 @@ export function Entrar() {
     apagada: "Conta apagada.",
   }
 
-  // Login, criar conta e recuperar senha usam a composição A; as demais telas da
-  // entrada continuam no cartão.
+  // Login, criar conta e recuperar senha usam a composição A; aceite e vínculo
+  // confirmado usam a composição B; as demais telas continuam no cartão.
+  const apoioDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
+    aceite: "Leia e aceite para continuar com sua conta Google.",
+    resultado: "Tudo certo. Agora escolha sua cidade.",
+  }
+
+  if (estado === "aceite" || estado === "resultado") {
+    return (
+      <EntradaEtapa
+        passo={estado === "aceite" ? 1 : 2}
+        titulo={titulo[estado]}
+        apoio={apoioDaEtapa[estado] ?? ""}
+        icone={
+          estado === "resultado" ? (
+            <span className="entrada-etapa-confirmacao">
+              <Icone nome="check" className="size-9" />
+            </span>
+          ) : null
+        }
+        aoSair={() => irPara("login")}
+      >
+        {estado === "aceite" ? (
+          <>
+            <div className="entrada-etapa-aceite">
+              <input
+                id="aceite-entrada"
+                type="checkbox"
+                checked={aceitou}
+                onChange={(evento) => setAceitou(evento.target.checked)}
+              />
+              <span>
+                <label htmlFor="aceite-entrada">Li e concordo com a</label>{" "}
+                <button
+                  type="button"
+                  className="entrada-etapa-link"
+                  onClick={() => void navegacao.irPara("privacidade")}
+                >
+                  Política de privacidade
+                </button>{" "}
+                e o{" "}
+                <button
+                  type="button"
+                  className="entrada-etapa-link"
+                  onClick={() => void navegacao.irPara("conduta")}
+                >
+                  Código de conduta
+                </button>
+                .
+              </span>
+            </div>
+            <Button
+              type="button"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("cpf")}
+              disabled={!aceitou}
+            >
+              Aceitar e continuar
+            </Button>
+          </>
+        ) : (
+          <Button type="button" className="entrada-etapa-acao" onClick={() => irPara("cidade")}>
+            Continuar
+          </Button>
+        )}
+      </EntradaEtapa>
+    )
+  }
+
   if (estado === "login" || estado === "conta" || estado === "senha") {
     return (
       <EntradaAcesso
@@ -203,13 +272,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "aceite" && (
-            <>
-              <p>Leia e aceite para continuar com sua conta Google.</p>
-              {aceite()}
-              {acao("Aceitar e continuar", () => irPara("cpf"), false, !aceitou)}
-            </>
-          )}
           {estado === "cpf" && (
             <>
               <p>Vamos conferir seu CPF para confirmar seu vínculo.</p>
@@ -228,12 +290,6 @@ export function Entrar() {
               {acao("Continuar", () => irPara("resultado"))}
               {acao("Simular consulta indisponível", () => irPara("consulta-indisponivel"), true)}
               <p className="entrada-rodape">É familiar? {link("convite", "Usar convite")}</p>
-            </>
-          )}
-          {estado === "resultado" && (
-            <>
-              <p>Tudo certo na demonstração. Agora escolha sua cidade.</p>
-              {acao("Continuar", () => irPara("cidade"))}
             </>
           )}
           {estado === "consulta-indisponivel" && (
