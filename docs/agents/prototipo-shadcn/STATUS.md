@@ -9,6 +9,56 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## ENT-005 — negócio opcional da F01 — 30/10/2026
+
+- **O que mudou.** As três telas do lote saíram do cartão para a composição B (`EntradaEtapa`,
+  passo 5 — Negócio, com Conta, Vínculo, Cidade e Grupos concluídos): `/app/entrar/negocio`,
+  `/app/entrar/negocio-formulario` e `/app/entrar/negocio-interesse`, em
+  `apps/app/src/telas/Entrar.tsx`. A escolha empilha na largura da coluna "Divulgar agora"
+  (principal Grafite), "Tenho interesse em criar" (contorno) e "Decidir depois" (texto), com os
+  destinos de hoje; o interesse empilha "Continuar" (principal) e "Voltar" (contorno). Título e
+  apoio centralizados, campos à esquerda na coluna.
+- **Formulário em cinco etapas** (`apps/app/components/bivaque/formulario-negocio.tsx`). "Passo X
+  de 5" em `var(--muted-foreground)` e barra de cinco segmentos (feitos e atual em Grafite, futuros
+  em `var(--border)`), sempre abaixo do título; o texto "Nenhuma informação será publicada nesta
+  demonstração" e a nota "Rascunho local de {cidade}…" saíram. Cada etapa tem subtítulo em Noto
+  Serif semibold ("O que você oferece?", "Onde você atende?", "Como funciona seu atendimento?",
+  "Como podem conhecer seu trabalho?", "Confira sua página"), alinhado à esquerda. Área e
+  atendimento são cartões de linha inteira (borda Grafite de 2 px no selecionado, rádio desenhado),
+  com os campos condicionais logo abaixo do cartão escolhido; especialidades e dias são chips
+  (Grafite com texto claro e quadrado de check); "Abre às" e "Fecha às" lado a lado; fotos em
+  miniaturas quadradas, a primeira com o selo "Capa" e um quadro tracejado "+" para acrescentar,
+  mantendo "Tornar capa" e "Remover"; a revisão é um cartão com a foto de capa no topo e uma linha
+  por bloco (ícone, valor e "Editar" que volta à etapa correspondente). "Voltar" e "Continuar"
+  ficam lado a lado, metade da coluna cada; na revisão o principal é "Salvar rascunho". O status
+  depois de salvar continua o de hoje ("Rascunho salvo nesta sessão. Seu negócio não foi
+  publicado.") com o botão "Continuar". O foco vai ao título ao abrir a tela e ao subtítulo ao
+  trocar de etapa.
+- **O que não mudou.** Campos, validações, limites (até 6 fotos JPG/PNG/WebP/AVIF de até 12 MB,
+  contatos e horário), mensagens de erro e o rascunho só na sessão (`sessionStorage`), sem
+  publicação. `cenarios.ts` mudou apenas o `img` do grupo `turma-manaus-2027` (`friends` →
+  `chegada`, as duas ocorrências), como pede a direção de fotografia.
+- **Compatibilidade.** `entrada-21st.spec.ts` não precisou de ajuste: nenhum caso dele dependia dos
+  textos substituídos. Em `entrada-acesso.spec.ts` o exemplo de tela em cartão passou de
+  `/app/entrar/negocio` para `/app/entrar/boas-vindas`, e as três telas do lote entraram na lista
+  de migradas.
+- **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
+  0 erros. `--filter @bivaque/app build`: concluído (`built in 498ms`, só o aviso antigo de chunk
+  acima de 500 kB). `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`,
+  `entrada-acesso`, `entrada-21st`): **300 passed, 30 skipped, 0 failed** em 3,9 min nos seis
+  viewports; o `entrada-etapa` cobre os catorze casos novos × 6 projetos, com as capturas puladas
+  em 320/360/430. `test:scope`: **150 pass, 0 fail**. `lint`: **0 erros** em 1367 arquivos (18
+  avisos e 51 informativos antigos, nenhum deste lote).
+- **Capturas para o revisor:**
+  `.visual/ENT-005/{negocio,negocio-etapa-1..5,negocio-interesse}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec. **Não há aceite visual declarado aqui**; a
+  comparação com as referências aprovadas é do revisor.
+- **Fica fora do aceite.** Os bairros acrescentados aparecem como chips Grafite com "×" (como na
+  referência), mas o campo "Adicionar bairro" mantém o botão de texto do fluxo de hoje, porque o
+  contrato manda preservar o campo e a validação; os dias de atendimento mostram os sete chips com
+  quadrado de check, não as pílulas com "×" da imagem 12c; e a barra de progresso ocupa a coluna
+  inteira no celular, enquanto a referência móvel a desenha com cerca de metade da largura.
+
 ## ENT-004 — cidade e grupos da F01 — 30/10/2026
 
 Cidade passou ao passo 3 da composição B: título, campo "Cidade" com ícone de lugar e o valor da
