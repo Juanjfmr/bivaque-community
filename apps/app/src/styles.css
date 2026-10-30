@@ -1746,6 +1746,9 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
   .entrada-acesso-valor {
     gap: 14px;
+    /* A faixa da frase ocupa o que sobra do painel; sem este respiro o texto
+       encosta no primeiro item. */
+    margin-top: 20px;
     padding: 0;
     color: rgb(255 255 255);
   }

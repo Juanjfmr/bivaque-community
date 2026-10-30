@@ -202,6 +202,20 @@ test("o tema escuro usa os tokens, troca a marca e mantém a foto e a frase", as
     .toBe(true)
 })
 
+test("o painel de criar conta respira entre a frase da marca e os itens", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    !["tablet-768", "desktop-1440"].includes(testInfo.project.name),
+    "no celular os itens ficam abaixo da faixa, não do painel",
+  )
+  await page.goto("/app/entrar/conta")
+  const frase = await page.locator(".entrada-acesso-frase").boundingBox()
+  const item = await page.locator(".entrada-acesso-itens li").first().boundingBox()
+  if (!frase || !item) throw new Error("frase ou item de valor ausente no painel")
+  expect(item.y - (frase.y + frase.height)).toBeGreaterThanOrEqual(16)
+})
+
 test("capturas de página inteira das quatro situações de acesso", async ({ page }, testInfo) => {
   test.skip(
     !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
