@@ -177,6 +177,31 @@ test("nenhuma das três telas de acesso rola na horizontal", async ({ page }) =>
     .toBe(true)
 })
 
+test("o tema escuro usa os tokens, troca a marca e mantém a foto e a frase", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" })
+  await page.goto("/app/entrar/login")
+  await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
+    "rgb(23, 30, 32)",
+  )
+  expect(
+    await page
+      .locator(".entrada-acesso-formulario input#login-email")
+      .evaluate((campo) => getComputedStyle(campo).backgroundColor),
+  ).toBe("rgb(32, 41, 43)")
+  expect(
+    await page
+      .getByRole("img", { name: "Bivaque" })
+      .evaluate((marca) => (marca as HTMLImageElement).currentSrc),
+  ).toMatch(/bivaque-logo-horizontal-white\.svg$/)
+  expect(
+    await page.locator(".entrada-acesso-frase").evaluate((frase) => getComputedStyle(frase).color),
+  ).toBe("rgb(255, 255, 255)")
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true)
+})
+
 test("capturas de página inteira das quatro situações de acesso", async ({ page }, testInfo) => {
   test.skip(
     !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),

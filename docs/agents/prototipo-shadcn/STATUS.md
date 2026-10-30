@@ -26,14 +26,14 @@ Provas executadas nesta sessão, sobre este build:
 
 - `--filter @bivaque/app typecheck`: passou, sem diagnóstico.
 - `--filter @bivaque/app build`: passou.
-- `test:e2e -- tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts`: 87 passaram,
-  3 puladas, 0 falharam. São 7 testes novos (39 passadas + as 3 capturas puladas em 320/360/430)
-  e os 48 do spec `entrada-21st` (8 × 6 projetos).
-- `pnpm lint`: vermelho por 8 erros preexistentes, todos em arquivos que este lote não toca
-  (`scripts/load/concurrency.mjs`, `scripts/load/observe.mjs`,
-  `apps/web/app/(admin)/arrivals/page.tsx`,
-  `apps/web/app/(shell)/communities/communities-screen.tsx`,
-  `apps/app/tests/dados-demo.test.ts`). Os arquivos deste lote não têm erro.
+- `test:e2e -- tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts`: 93 passaram,
+  3 puladas, 0 falharam. São 8 testes novos (45 passadas + as 3 capturas puladas em 320/360/430)
+  e os 48 do spec `entrada-21st` (8 × 6 projetos). Entre os novos está o tema escuro, que confere
+  os tokens, a marca branca e a frase da foto.
+- `pnpm lint`: vermelho por 8 erros preexistentes de a11y (`noNoninteractiveTabindex` em `div`
+  com `tabindex`), todos em `docs/design/fluxos-2026-10-30/index.html`, o índice das pranchas que já
+  estava no commit `1dcaee51`. Este lote não toca esse arquivo e os arquivos dele não têm erro
+  (só avisos que o arquivo já trazia).
 
 Capturas de página inteira das quatro situações em 375, 768 e 1440 px, geradas pelo próprio spec,
 em `.visual/ENT-001/`. Elas são material de revisão: **não há aceite visual declarado aqui**.
