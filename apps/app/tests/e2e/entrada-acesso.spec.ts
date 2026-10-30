@@ -155,15 +155,15 @@ test("recuperar senha confirma o envio sem dizer se a conta existe", async ({ pa
   await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
 })
 
-test("o aviso de jornada demonstrativa sai das três telas de acesso e fica nas etapas", async ({
+test("o aviso de jornada demonstrativa sai do acesso e das etapas, e fica no cartão", async ({
   page,
 }) => {
   const aviso = "Jornada demonstrativa: nenhuma informação é enviada ou verificada."
-  for (const tela of ["login", "conta", "senha"]) {
+  for (const tela of ["login", "conta", "senha", "aceite", "cpf", "resultado"]) {
     await page.goto(`/app/entrar/${tela}`)
-    await expect(page.getByText(aviso)).toHaveCount(0)
+    await expect(page.getByText(aviso), tela).toHaveCount(0)
   }
-  await page.goto("/app/entrar/aceite")
+  await page.goto("/app/entrar/cidade")
   await expect(page.getByText(aviso)).toBeVisible()
 })
 
