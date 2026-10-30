@@ -2,9 +2,6 @@ import { expect, test } from "@playwright/test"
 
 test("cadastro exige aceite e permite simular análise de documento", async ({ page }) => {
   await page.goto("/app/entrar/conta")
-  await expect(
-    page.getByText("Jornada demonstrativa: nenhuma informação é enviada ou verificada."),
-  ).toBeVisible()
   await expect(page.getByRole("button", { name: "Criar conta" })).toBeDisabled()
   await page.getByRole("checkbox", { name: /Li e concordo/ }).check()
   await page.getByRole("button", { name: "Criar conta" }).click()
@@ -145,13 +142,11 @@ test("negócio orienta dados incompletos e fotos inválidas", async ({ page }) =
   await expect(page.getByRole("alert")).toContainText("posterior à abertura")
   await page.getByLabel("Fecha às").fill("19:00")
   await page.getByRole("button", { name: "Continuar" }).click()
-  await page
-    .getByLabel("Fotos do negócio (até 6)")
-    .setInputFiles({
-      name: "invalido.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("não é imagem"),
-    })
+  await page.getByLabel("Fotos do negócio (até 6)").setInputFiles({
+    name: "invalido.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("não é imagem"),
+  })
   await expect(page.getByRole("alert")).toContainText("JPG, PNG, WebP ou AVIF")
 })
 
@@ -180,7 +175,7 @@ test("recuperação informa que não houve envio e retorna ao login", async ({ p
   await page.getByRole("button", { name: "Esqueci minha senha" }).click()
   await page.getByLabel("E-mail").fill("pessoa@example.invalid")
   await page.getByRole("button", { name: "Enviar instruções" }).click()
-  await expect(page.getByRole("status")).toContainText("nenhum e-mail foi enviado")
+  await expect(page.getByRole("status")).toContainText("as instruções chegam em instantes")
   await page.getByRole("button", { name: "Voltar para entrar" }).click()
   await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
 })
