@@ -9,6 +9,42 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## ENT-004 — cidade e grupos da F01 — 30/10/2026
+
+Cidade passou ao passo 3 da composição B: título, campo "Cidade" com ícone de lugar e o valor da
+demonstração, "Seu momento" em três cartões de rádio desenhados na mesma linha (empilhados abaixo de
+344 px), "Como quer ser chamado" e os campos condicionais de sempre — data de chegada, ou data de
+saída e cidade de destino. Grupos passou ao passo 4: os quatro grupos abertos da cidade em cartões
+selecionáveis com a foto de `apresentacao.img` (resolvida pelo mapa `demo/` já existente), nome,
+descrição e caixa desenhada; grade 2 × 2 a partir de 768 px e uma coluna com a foto à esquerda no
+celular; estados de carregando e vazio estilizados. Saíram o aviso "Demonstração: selecionar grupos
+não cria participação." e o parágrafo "Jornada demonstrativa" das duas telas. Correção do ENT-003: a
+validação do tipo do documento usa `Object.hasOwn`, e um arquivo de tipo `toString` passa a ser
+recusado. Código: o desvio em `apps/app/src/telas/Entrar.tsx`, o bloco `.entrada-etapa-*` de
+`apps/app/src/styles.css` e o `apoio` opcional em `entrada-etapa.tsx`.
+
+Provas executadas nesta sessão, sobre este build:
+
+- `--filter @bivaque/app typecheck`: passou, sem diagnóstico.
+- `--filter @bivaque/app build`: passou (só o aviso de chunk acima de 500 kB, anterior).
+- `test:e2e -- entrada-etapa.spec.ts`: **119 passaram, 13 puladas, 0 falharam** (13 casos novos × 6
+  projetos, com as capturas puladas em 320/360/430).
+- `test:e2e -- entrada-acesso.spec.ts entrada-21st.spec.ts`: **94 passaram, 14 puladas, 6 falharam**.
+  As seis falhas são o mesmo caso de `entrada-acesso.spec.ts` ("o aviso de jornada demonstrativa sai
+  do acesso e das etapas, e fica no cartão"), que usa `/app/entrar/cidade` como exemplo de tela em
+  cartão. A cidade agora é etapa e o contrato manda remover o aviso dela, então o caso ficou
+  desatualizado. O arquivo não está nos `allowed_paths` do ENT-004 e não foi alterado.
+- `pnpm lint`: 0 erro, 18 avisos e 51 informativos — as mesmas contagens de antes deste lote.
+
+Capturas de página inteira de cidade (moro, chegando, saindo) e grupos com um selecionado em 375, 768
+e 1440 px, geradas pelo próprio spec, em `.visual/ENT-004/`. São material de revisão: **não há aceite
+visual declarado aqui**.
+
+Fica fora do aceite: o caso de `entrada-acesso.spec.ts` acima continua vermelho até alguém trocar a
+tela de exemplo por outra que ainda use o cartão (`/app/entrar/negocio`) ou inverter a asserção para
+a cidade; o ícone de calendário é o nativo do `input[type="date"]`, não um desenho próprio; e o estado
+de carregando não tem prova de navegador, porque a demonstração local resolve na hora.
+
 ## ENT-001 — telas de acesso da F01 — 30/10/2026
 
 Login, criar conta e recuperar senha saíram do cartão único para a composição A: painel da foto
