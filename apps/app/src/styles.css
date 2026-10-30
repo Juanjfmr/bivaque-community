@@ -1445,17 +1445,17 @@ body[data-profundidade="sim"] [data-casca="app"] {
    Anatomia do Split Sign In Form (21st.dev), com os componentes do app.
    Celular primeiro: faixa de foto, valor e formulário em uma coluna. */
 
-/* A composição toma a altura toda, sem o recuo da casca. A casca da entrada não
-   tem navegação; sem isso, a coluna reservada a ela em ≥720 px sobra à esquerda,
-   e o corpo fica na faixa `auto` da grade, com a altura do conteúdo. */
-[data-casca="entrada"]:has(.entrada-acesso) [data-casca="corpo"] {
+/* As composições A e B tomam a altura toda, sem o recuo da casca. A casca da
+   entrada não tem navegação; sem isso, a coluna reservada a ela em ≥720 px sobra
+   à esquerda, e o corpo fica na faixa `auto` da grade, com a altura do conteúdo. */
+[data-casca="entrada"]:has(.entrada-acesso, .entrada-etapa) [data-casca="corpo"] {
   grid-row: 1 / -1;
 }
-[data-casca="entrada"] #conteudo:has(.entrada-acesso) {
+[data-casca="entrada"] #conteudo:has(.entrada-acesso, .entrada-etapa) {
   grid-column: 1 / -1;
   padding: 0;
 }
-[data-casca="entrada"] #conteudo > [data-animacao="pagina"]:has(.entrada-acesso) {
+[data-casca="entrada"] #conteudo > [data-animacao="pagina"]:has(.entrada-acesso, .entrada-etapa) {
   display: grid;
   min-height: 100%;
 }
@@ -1805,5 +1805,254 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
   .entrada-acesso-formulario h1 {
     font-size: clamp(32px, 2.8vw, 40px);
+  }
+}
+
+/* Entrada: composição B (etapa) — barra fina com o logo e "Sair", indicador de
+   cinco passos e coluna central de 560 px. No celular o indicador vira a
+   legenda "Etapa N de 5" e uma barra de cinco segmentos. */
+
+.entrada-etapa {
+  --entrada-etapa-circulo: 34px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--background);
+}
+.entrada-etapa-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.entrada-etapa-barra img {
+  display: block;
+  width: auto;
+  height: 28px;
+}
+.entrada-etapa-sair {
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-size: 15px;
+  cursor: pointer;
+}
+.entrada-etapa-sair:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Indicador: trilho no desktop, legenda e segmentos no celular. */
+.entrada-etapa-passos {
+  width: min(100% - 40px, 656px);
+  margin: 24px auto 0;
+}
+.entrada-etapa-trilha {
+  display: none;
+}
+.entrada-etapa-legenda {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.entrada-etapa-segmentos {
+  display: flex;
+  gap: 8px;
+}
+.entrada-etapa-segmentos > span {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.entrada-etapa-segmentos > span[data-estado="concluido"],
+.entrada-etapa-segmentos > span[data-estado="atual"] {
+  background: var(--foreground);
+}
+
+/* O passo é a coluna do círculo com a linha ao lado e o nome embaixo do
+   círculo: por isso o grid de duas colunas com o rótulo na primeira. */
+.entrada-etapa-passo {
+  display: grid;
+  flex: 1;
+  grid-template-columns: var(--entrada-etapa-circulo) minmax(0, 1fr);
+  grid-template-rows: var(--entrada-etapa-circulo) auto;
+  align-items: center;
+  row-gap: 8px;
+}
+.entrada-etapa-passo:last-child {
+  flex: none;
+  grid-template-columns: var(--entrada-etapa-circulo);
+}
+.entrada-etapa-circulo {
+  display: grid;
+  place-items: center;
+  width: var(--entrada-etapa-circulo);
+  height: var(--entrada-etapa-circulo);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-circulo,
+.entrada-etapa-passo[data-estado="atual"] .entrada-etapa-circulo {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.entrada-etapa-linha {
+  height: 1px;
+  background: var(--border);
+}
+.entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-linha {
+  background: var(--foreground);
+}
+.entrada-etapa-rotulo {
+  justify-self: center;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+.entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-rotulo,
+.entrada-etapa-passo[data-estado="atual"] .entrada-etapa-rotulo {
+  color: var(--foreground);
+}
+.entrada-etapa-opcional {
+  display: block;
+  font-size: 12px;
+}
+
+.entrada-etapa-conteudo {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 32px 20px 40px;
+}
+.entrada-etapa-titulo {
+  font-family: var(--font-brand);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.6px;
+  text-align: center;
+  text-wrap: balance;
+}
+.entrada-etapa-apoio {
+  color: var(--muted-foreground);
+  font-size: 17px;
+  line-height: 1.45;
+  text-align: center;
+}
+.entrada-etapa-corpo {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+}
+.entrada-etapa-acao {
+  width: 100%;
+  height: 48px;
+  font-size: 15px;
+}
+.entrada-etapa-aceite {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.entrada-etapa-aceite input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--primary);
+}
+.entrada-etapa-aviso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.entrada-etapa-detalhe summary {
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.entrada-etapa-detalhe p {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.entrada-etapa-rodape {
+  color: var(--muted-foreground);
+  font-size: 15px;
+  text-align: center;
+}
+.entrada-etapa-link {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entrada-etapa-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+/* Andaime da demonstração: link de texto no fim da coluna, sem competir com a ação. */
+.entrada-etapa-simulacao {
+  justify-self: center;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entrada-etapa-simulacao:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.entrada-etapa-confirmacao {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+@media (min-width: 768px) {
+  .entrada-etapa-passos {
+    margin-top: 48px;
+  }
+  .entrada-etapa-trilha {
+    display: flex;
+    align-items: flex-start;
+  }
+  .entrada-etapa-resumo {
+    display: none;
+  }
+  .entrada-etapa-conteudo {
+    width: 560px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 64px 0 48px;
+  }
+  .entrada-etapa-titulo {
+    font-size: 40px;
   }
 }
