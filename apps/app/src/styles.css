@@ -1897,6 +1897,9 @@ body[data-profundidade="sim"] [data-casca="app"] {
   color: var(--muted-foreground);
   font-size: 13px;
 }
+.entrada-etapa-circulo .bv-icone {
+  font-size: 16px;
+}
 .entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-circulo,
 .entrada-etapa-passo[data-estado="atual"] .entrada-etapa-circulo {
   border-color: var(--primary);
@@ -1906,6 +1909,10 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .entrada-etapa-linha {
   height: 1px;
   background: var(--border);
+}
+/* O conector liga um círculo ao próximo: o passo 5 não tem linha depois dele. */
+.entrada-etapa-passo:last-child .entrada-etapa-linha {
+  display: none;
 }
 .entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-linha {
   background: var(--foreground);
@@ -2062,6 +2069,10 @@ body[data-profundidade="sim"] [data-casca="app"] {
   border-radius: 50%;
   background: var(--primary);
   color: var(--primary-foreground);
+}
+/* O check dentro do círculo de 72 px fica com 36 px: metade do círculo. */
+.entrada-etapa-confirmacao .bv-icone {
+  font-size: 36px;
 }
 
 @media (min-width: 768px) {

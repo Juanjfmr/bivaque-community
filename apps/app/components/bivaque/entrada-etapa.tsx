@@ -68,7 +68,7 @@ export function EntradaEtapa({
           {PASSOS.map((item, indice) => (
             <div key={item.nome} className="entrada-etapa-passo" data-estado={estadoDo(indice)}>
               <span className="entrada-etapa-circulo">
-                {indice < passo - 1 ? <Icone nome="check" className="size-4" /> : indice + 1}
+                {indice < passo - 1 ? <Icone nome="check" /> : indice + 1}
               </span>
               <span className="entrada-etapa-linha" />
               <span className="entrada-etapa-rotulo">

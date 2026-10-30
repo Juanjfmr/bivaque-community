@@ -175,7 +175,7 @@ export function Entrar() {
         icone={
           estado === "resultado" ? (
             <span className="entrada-etapa-confirmacao">
-              <Icone nome="check" className="size-9" />
+              <Icone nome="check" />
             </span>
           ) : null
         }
