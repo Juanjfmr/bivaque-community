@@ -30,6 +30,7 @@ const PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS = join(
   ".visual",
   "ENT-004",
 )
+const PASTA_DAS_CAPTURAS_DO_NEGOCIO = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-005")
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 const AVISO_DEMONSTRATIVO = "Jornada demonstrativa"
 
@@ -679,4 +680,527 @@ test("capturas de página inteira de cidade e grupos", async ({ page }, testInfo
   await page.getByRole("checkbox", { name: /Chegadas 2027 em Manaus/ }).check()
   await expect(page.locator(".entrada-etapa-grupo").first()).toBeVisible()
   await capturar(page, "grupos", testInfo, PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS)
+})
+
+// ENT-005 — negócio opcional (F01, lote 5): escolha, formulário em cinco etapas
+// e interesse na composição de etapa.
+
+/** PNG 3 × 3: serve para a miniatura e nunca vai para lugar nenhum. */
+const FOTO_DE_EXEMPLO = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAIAAADZSiLoAAAAEklEQVR4nGNkaGCAACYojcwCAA54AIZp6Rr0AAAAAElFTkSuQmCC",
+  "base64",
+)
+
+/** Preenche o primeiro passo com os dados da referência aprovada. */
+async function preencherOferece(page: Page) {
+  await page.getByLabel("Nome do negócio").fill("Bolos da Cláudia")
+  await page
+    .getByLabel("Tipo de serviço", { exact: true })
+    .selectOption({ label: "Festas e comida" })
+  await page.getByLabel("Bolos e doces", { exact: true }).check()
+  await page.getByLabel("Salgados", { exact: true }).check()
+}
+
+/** "Continuar" do formulário; "Salvar rascunho" só existe na revisão. */
+async function avancar(page: Page) {
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+}
+
+/** Caminho mínimo até a revisão: cidade inteira, horário combinado, uma foto. */
+async function chegarARevisao(page: Page) {
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Atendo com horário combinado", { exact: true }).check()
+  await avancar(page)
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "bolo.png",
+    mimeType: "image/png",
+    buffer: FOTO_DE_EXEMPLO,
+  })
+  await expect(page.getByAltText("Foto 1, capa")).toBeVisible()
+  await avancar(page)
+  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeVisible()
+}
+
+test("a escolha do negócio fica no passo 5, com as três ações empilhadas", async ({ page }) => {
+  await page.goto("/app/entrar/negocio")
+  const titulo = page.getByRole("heading", {
+    name: "Você tem um negócio ou oferece algum serviço?",
+  })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(
+    page.getByText("No Mercado, você pode apresentar seu negócio ou serviço à comunidade."),
+  ).toBeVisible()
+  await expect(
+    page.getByText("Esta etapa é opcional. Você pode voltar a ela depois."),
+  ).toBeVisible()
+  await expect(page.getByRole("img", { name: "Etapa 5 de 5: Negócio" })).toBeVisible()
+  await expect(page.locator('.entrada-etapa-passo[data-estado="concluido"]')).toHaveCount(4)
+  await expect(page.locator('.entrada-etapa-passo[data-estado="atual"]')).toHaveCount(1)
+
+  // Três ações empilhadas na largura da coluna, nesta ordem.
+  const acoes = page.locator(".entrada-etapa-corpo > button")
+  await expect(acoes).toHaveCount(3)
+  await expect(acoes.nth(0)).toHaveText("Divulgar agora")
+  await expect(acoes.nth(1)).toHaveText("Tenho interesse em criar")
+  await expect(acoes.nth(2)).toHaveText("Decidir depois")
+  const coluna = await page.locator(".entrada-etapa-corpo").boundingBox()
+  if (!coluna) throw new Error("coluna do conteúdo ausente")
+  const caixas = await acoes.evaluateAll((botoes) =>
+    botoes.map((botao) => {
+      const caixa = botao.getBoundingClientRect()
+      return { topo: Math.round(caixa.top), largura: Math.round(caixa.width) }
+    }),
+  )
+  for (const caixa of caixas) {
+    expect(Math.abs(caixa.largura - Math.round(coluna.width))).toBeLessThanOrEqual(1)
+  }
+  expect(caixas[0]?.topo).toBeLessThan(caixas[1]?.topo ?? 0)
+  expect(caixas[1]?.topo).toBeLessThan(caixas[2]?.topo ?? 0)
+
+  // Principal em Grafite; "Decidir depois" é só texto.
+  expect(await acoes.nth(0).evaluate((botao) => getComputedStyle(botao).backgroundColor)).toBe(
+    "rgb(37, 48, 51)",
+  )
+  expect(await acoes.nth(2).evaluate((botao) => getComputedStyle(botao).backgroundColor)).toBe(
+    "rgba(0, 0, 0, 0)",
+  )
+
+  await acoes.nth(0).click()
+  await expect(page.getByRole("heading", { name: "Apresente seu negócio." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/negocio-formulario$/)
+
+  await page.goto("/app/entrar/negocio")
+  await page.getByRole("button", { name: "Tenho interesse em criar" }).click()
+  await expect(page.getByRole("heading", { name: "Ideias para seu negócio." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/negocio-interesse$/)
+
+  await page.goto("/app/entrar/negocio")
+  await page.getByRole("button", { name: "Decidir depois" }).click()
+  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/boas-vindas$/)
+})
+
+test("o formulário mostra Passo X de 5, a barra de cinco segmentos e os subtítulos", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  const titulo = page.getByRole("heading", { name: "Apresente seu negócio." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByRole("img", { name: "Etapa 5 de 5: Negócio" })).toBeVisible()
+  await expect(page.getByText("Nenhuma informação será publicada nesta demonstração")).toHaveCount(
+    0,
+  )
+  await expect(page.getByText(/Rascunho local de/)).toHaveCount(0)
+
+  const feito = page.locator('.entrada-etapa-progresso-barra > span[data-estado="feito"]')
+  const futuro = page.locator('.entrada-etapa-progresso-barra > span[data-estado="futuro"]')
+  const subtitulo = page.locator(".entrada-etapa-subtitulo")
+  const subtitulos = [
+    "O que você oferece?",
+    "Onde você atende?",
+    "Como funciona seu atendimento?",
+    "Como podem conhecer seu trabalho?",
+    "Confira sua página",
+  ] as const
+
+  for (let passo = 1; passo <= 5; passo += 1) {
+    await expect(page.getByText(`Passo ${passo} de 5`, { exact: true })).toBeVisible()
+    await expect(page.locator(".entrada-etapa-progresso-barra > span")).toHaveCount(5)
+    await expect(feito).toHaveCount(passo)
+    await expect(futuro).toHaveCount(5 - passo)
+    await expect(subtitulo).toHaveText(subtitulos[passo - 1] ?? "")
+
+    if (passo === 1) {
+      // Noto Serif semibold, alinhado à esquerda da coluna.
+      const estilo = await subtitulo.evaluate((elemento) => {
+        const estilo = getComputedStyle(elemento)
+        return {
+          familia: estilo.fontFamily,
+          peso: estilo.fontWeight,
+          alinhamento: estilo.textAlign,
+        }
+      })
+      expect(estilo.familia).toMatch(/Noto Serif/i)
+      expect(estilo.peso).toBe("600")
+      expect(estilo.alinhamento).toBe("start")
+      const texto = await subtitulo.boundingBox()
+      const formulario = await page.locator(".entrada-etapa-formulario").boundingBox()
+      expect(Math.abs((texto?.x ?? 0) - (formulario?.x ?? 0))).toBeLessThanOrEqual(1)
+
+      await preencherOferece(page)
+      await avancar(page)
+      // O foco acompanha a troca de etapa.
+      await expect(subtitulo).toBeFocused()
+    } else if (passo === 2) {
+      await page.getByLabel("Em toda a cidade", { exact: true }).check()
+      await avancar(page)
+    } else if (passo === 3) {
+      await page.getByLabel("Atendo com horário combinado", { exact: true }).check()
+      await avancar(page)
+    } else if (passo === 4) {
+      await avancar(page)
+    }
+  }
+
+  // Na revisão o principal é "Salvar rascunho".
+  await expect(page.getByRole("button", { name: "Salvar rascunho" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Continuar", exact: true })).toHaveCount(0)
+})
+
+test("os rádios de área são cartões de linha inteira e o condicional abre logo abaixo", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+
+  const cartoes = page.locator(".entrada-etapa-cartao")
+  await expect(cartoes).toHaveCount(4)
+  await expect(page.getByLabel("Informar depois", { exact: true })).toBeChecked()
+  const livre = await bordaDoCartao(cartoes.nth(0))
+  const marcado = await bordaDoCartao(cartoes.nth(3))
+  expect(marcado.largura).toBe("2px")
+  expect(livre.largura).toBe("1px")
+  expect(marcado.cor).not.toBe(livre.cor)
+
+  await page.getByLabel("Em bairros específicos", { exact: true }).check()
+  await expect(page.getByLabel("Adicionar bairro")).toBeVisible()
+  const campos = await page.locator(".entrada-etapa-cartao-campos").boundingBox()
+  const selecionado = await cartoes.nth(1).boundingBox()
+  const seguinte = await cartoes.nth(2).boundingBox()
+  expect(campos?.y ?? 0).toBeGreaterThan((selecionado?.y ?? 0) + (selecionado?.height ?? 0) - 1)
+  expect(campos?.y ?? 0).toBeLessThan(seguinte?.y ?? 0)
+
+  // Sem bairro não avança; com um bairro, sim.
+  await avancar(page)
+  await expect(page.getByRole("alert")).toContainText("Adicione ao menos um bairro")
+  await page.getByLabel("Adicionar bairro").fill("Ponta Negra")
+  await page.getByRole("button", { name: "Adicionar bairro" }).click()
+  await expect(page.getByRole("button", { name: "Remover Ponta Negra" })).toBeVisible()
+  await avancar(page)
+  await expect(page.getByText("Passo 3 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByLabel("Informar depois", { exact: true })).toBeChecked()
+})
+
+test("especialidades e dias são chips com a seleção em Grafite e check", async ({ page }) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await page.getByLabel("Nome do negócio").fill("Bolos da Cláudia")
+  await page
+    .getByLabel("Tipo de serviço", { exact: true })
+    .selectOption({ label: "Festas e comida" })
+
+  const chip = page.locator(".entrada-etapa-chip").first()
+  await expect(chip).toHaveText("Bolos e doces")
+  await expect(chip).toHaveCSS("background-color", "rgb(255, 255, 255)")
+  await page.getByLabel("Bolos e doces", { exact: true }).check()
+  await expect(chip).toHaveCSS("background-color", "rgb(37, 48, 51)")
+  await expect(chip).toHaveCSS("color", "rgb(242, 240, 235)")
+  expect(
+    await chip
+      .locator(".entrada-etapa-chip-caixa")
+      .evaluate((caixa) => getComputedStyle(caixa, "::after").borderRightColor),
+  ).toBe("rgb(242, 240, 235)")
+
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Tenho horário fixo", { exact: true }).check()
+  const dias = page.locator(".entrada-etapa-cartao-campos .entrada-etapa-chip")
+  await expect(dias).toHaveCount(7)
+  await page.getByLabel("Segunda-feira", { exact: true }).check()
+  await expect(dias.nth(0)).toHaveCSS("background-color", "rgb(37, 48, 51)")
+  await page.getByLabel("Segunda-feira", { exact: true }).uncheck()
+  await expect(dias.nth(0)).toHaveCSS("background-color", "rgb(255, 255, 255)")
+})
+
+test("os campos de horário ficam lado a lado", async ({ page }) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Tenho horário fixo", { exact: true }).check()
+
+  const abre = await page.getByLabel("Abre às").boundingBox()
+  const fecha = await page.getByLabel("Fecha às").boundingBox()
+  expect(Math.abs((abre?.y ?? 0) - (fecha?.y ?? 0))).toBeLessThanOrEqual(1)
+  expect(Math.abs((abre?.width ?? 0) - (fecha?.width ?? 0))).toBeLessThanOrEqual(1)
+  expect(abre?.width ?? 0).toBeGreaterThan(100)
+})
+
+test("fotos em miniatura, com a primeira marcada Capa e um quadro para adicionar", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Atendo com horário combinado", { exact: true }).check()
+  await avancar(page)
+
+  const entrada = page.locator('input[type="file"]')
+  await entrada.setInputFiles({
+    name: "bolo.png",
+    mimeType: "image/png",
+    buffer: FOTO_DE_EXEMPLO,
+  })
+  await expect(page.getByAltText("Foto 1, capa")).toBeVisible()
+  await expect(page.locator(".entrada-etapa-foto-capa")).toHaveCount(1)
+  await expect(page.locator(".entrada-etapa-foto-capa")).toHaveText("Capa")
+  await expect(page.getByRole("button", { name: "Adicionar foto" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Tornar capa a foto 1" })).toHaveCount(0)
+
+  await entrada.setInputFiles({
+    name: "bolo-2.png",
+    mimeType: "image/png",
+    buffer: FOTO_DE_EXEMPLO,
+  })
+  await expect(page.locator(".entrada-etapa-foto")).toHaveCount(2)
+  await page.getByRole("button", { name: "Tornar capa a foto 2" }).click()
+  await expect(page.locator(".entrada-etapa-foto").first().locator("img")).toHaveAttribute(
+    "alt",
+    "Foto 1, capa",
+  )
+  await page.getByRole("button", { name: "Remover foto 2" }).click()
+  await expect(page.locator(".entrada-etapa-foto")).toHaveCount(1)
+})
+
+test("a revisão traz a capa no topo e uma linha por bloco com Editar para a etapa certa", async ({
+  page,
+}) => {
+  await chegarARevisao(page)
+
+  const capa = page.getByAltText("Prévia da foto 1, capa")
+  await expect(capa).toBeVisible()
+  const linhas = page.locator(".entrada-etapa-revisao-linhas li")
+  await expect(linhas).toHaveCount(6)
+  await expect(linhas.nth(0)).toContainText("Bolos da Cláudia")
+  await expect(linhas.nth(1)).toContainText("Festas e comida")
+  await expect(linhas.nth(2)).toContainText("Bolos e doces, Salgados")
+  await expect(linhas.nth(3)).toContainText("Atende em toda a cidade de Manaus")
+  await expect(linhas.nth(4)).toContainText("Atendimento com horário combinado")
+  await expect(linhas.nth(5)).toContainText("1 foto(s) adicionada(s)")
+  for (let indice = 0; indice < 6; indice += 1) {
+    await expect(linhas.nth(indice).locator("button")).toHaveText("Editar")
+    await expect(linhas.nth(indice).locator(".bv-icone")).toHaveCount(1)
+  }
+
+  const caixaDaCapa = await capa.boundingBox()
+  const caixaDasLinhas = await page.locator(".entrada-etapa-revisao-linhas").boundingBox()
+  expect((caixaDaCapa?.y ?? 0) + (caixaDaCapa?.height ?? 0)).toBeLessThanOrEqual(
+    caixaDasLinhas?.y ?? 0,
+  )
+
+  // Fotografia volta à etapa 4; nome volta à etapa 1.
+  await linhas.nth(5).getByRole("button", { name: "Editar" }).click()
+  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeVisible()
+  await expect(page.locator(".entrada-etapa-subtitulo")).toHaveText(
+    "Como podem conhecer seu trabalho?",
+  )
+  await avancar(page)
+  await page
+    .locator(".entrada-etapa-revisao-linhas li")
+    .nth(0)
+    .getByRole("button", { name: "Editar" })
+    .click()
+  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeVisible()
+  await expect(page.locator(".entrada-etapa-subtitulo")).toHaveText("O que você oferece?")
+})
+
+test("Salvar rascunho mostra o status sem publicar e leva às boas-vindas", async ({ page }) => {
+  await chegarARevisao(page)
+  await page.getByRole("button", { name: "Salvar rascunho" }).click()
+  await expect(page.getByRole("status")).toContainText(
+    "Rascunho salvo nesta sessão. Seu negócio não foi publicado.",
+  )
+  const rascunho = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("bivaque:onboarding-negocio") ?? "{}"),
+  )
+  expect(rascunho.nome).toBe("Bolos da Cláudia")
+  expect(rascunho.fotos).toHaveLength(1)
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/boas-vindas$/)
+})
+
+test("o interesse empilha Continuar e Voltar, com os destinos de hoje", async ({ page }) => {
+  await page.goto("/app/entrar/negocio-interesse")
+  const titulo = page.getByRole("heading", { name: "Ideias para seu negócio." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(
+    page.getByText(
+      "Quando quiser, explore os negócios locais no Mercado e conheça o que a comunidade procura.",
+    ),
+  ).toBeVisible()
+  await expect(page.getByRole("img", { name: "Etapa 5 de 5: Negócio" })).toBeVisible()
+
+  const continuar = await page.getByRole("button", { name: "Continuar", exact: true }).boundingBox()
+  const voltar = await page.getByRole("button", { name: "Voltar", exact: true }).boundingBox()
+  expect(continuar?.y ?? 0).toBeLessThan(voltar?.y ?? 0)
+  expect(Math.abs((continuar?.width ?? 0) - (voltar?.width ?? 0))).toBeLessThanOrEqual(1)
+
+  await page.getByRole("button", { name: "Voltar", exact: true }).click()
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+
+  await page.goto("/app/entrar/negocio-interesse")
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+})
+
+test("a capa da turma de chegada usa a foto de chegada", async ({ page }) => {
+  await page.goto("/app/entrar/sugestoes-grupos")
+  const capa = page.locator(".entrada-etapa-grupo").first().locator("img")
+  await expect(capa).toHaveAttribute("src", /chegada\.webp$/)
+})
+
+test("as validações de hoje continuam: nome curto, horário e contatos", async ({ page }) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await avancar(page)
+  await expect(page.getByRole("alert")).toContainText("Informe o nome e escolha o tipo de serviço.")
+
+  await page.getByLabel("Nome do negócio").fill("Bo")
+  await page.getByLabel("Tipo de serviço", { exact: true }).selectOption({ label: "Outros" })
+  await avancar(page)
+  await expect(page.getByRole("alert")).toContainText("Informe o nome e escolha o tipo de serviço.")
+
+  await page.getByLabel("Nome do negócio").fill("Loja exemplo")
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Tenho horário fixo", { exact: true }).check()
+  await avancar(page)
+  await expect(page.getByRole("alert")).toContainText("posterior à abertura")
+
+  await page.getByLabel("Segunda-feira", { exact: true }).check()
+  await page.getByLabel("Abre às").fill("18:00")
+  await page.getByLabel("Fecha às").fill("08:00")
+  await avancar(page)
+  await expect(page.getByRole("alert")).toContainText("posterior à abertura")
+
+  await page.getByLabel("Fecha às").fill("19:00")
+  await avancar(page)
+  await page.getByLabel("WhatsApp (opcional)").fill("123")
+  await avancar(page)
+  await expect(page.getByRole("alert")).toContainText("Confira WhatsApp, Instagram e site.")
+  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeVisible()
+})
+
+test("as telas do negócio não rolam na horizontal", async ({ page }) => {
+  const semRolagem = () =>
+    expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true)
+
+  for (const tela of ["negocio", "negocio-formulario", "negocio-interesse"]) {
+    await page.goto(`/app/entrar/${tela}`)
+    await semRolagem()
+  }
+
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await semRolagem()
+  await avancar(page)
+  await page.getByLabel("Em bairros específicos", { exact: true }).check()
+  await semRolagem()
+  await page.getByLabel("Adicionar bairro").fill("Ponta Negra")
+  await page.getByRole("button", { name: "Adicionar bairro" }).click()
+  await avancar(page)
+  await page.getByLabel("Tenho horário fixo", { exact: true }).check()
+  await semRolagem()
+})
+
+test("o negócio segue os tokens no tema escuro", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" })
+  await page.goto("/app/entrar/negocio-formulario")
+  await expect(page.getByRole("heading", { name: "Apresente seu negócio." })).toBeVisible()
+  expect(
+    await page
+      .locator(".entrada-etapa-acoes .entrada-etapa-acao")
+      .last()
+      .evaluate((botao) => getComputedStyle(botao).backgroundColor),
+  ).toBe("rgb(236, 234, 228)")
+  expect(
+    await page
+      .locator(".entrada-etapa-subtitulo")
+      .evaluate((subtitulo) => getComputedStyle(subtitulo).color),
+  ).toBe("rgb(236, 234, 228)")
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true)
+})
+
+test("capturas de página inteira da escolha, das cinco etapas e do interesse", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  await page.goto("/app/entrar/negocio")
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+  await capturar(page, "negocio", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeVisible()
+  await capturar(page, "negocio-etapa-1", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+
+  await avancar(page)
+  await page.getByLabel("Em bairros específicos", { exact: true }).check()
+  for (const bairro of ["Ponta Negra", "Adriánopolis"]) {
+    await page.getByLabel("Adicionar bairro").fill(bairro)
+    await page.getByRole("button", { name: "Adicionar bairro" }).click()
+  }
+  await expect(page.getByText("Passo 2 de 5", { exact: true })).toBeVisible()
+  await capturar(page, "negocio-etapa-2", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+
+  await avancar(page)
+  await page.getByLabel("Tenho horário fixo", { exact: true }).check()
+  for (const dia of [
+    "Segunda-feira",
+    "Terça-feira",
+    "Quarta-feira",
+    "Quinta-feira",
+    "Sexta-feira",
+  ]) {
+    await page.getByLabel(dia, { exact: true }).check()
+  }
+  await page.getByLabel("Abre às").fill("08:00")
+  await page.getByLabel("Fecha às").fill("18:00")
+  await expect(page.getByText("Passo 3 de 5", { exact: true })).toBeVisible()
+  await capturar(page, "negocio-etapa-3", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+
+  await avancar(page)
+  await page
+    .getByLabel("Apresentação (opcional)")
+    .fill("Bolos caseiros feitos por encomenda para momentos especiais.")
+  await page.locator('input[type="file"]').setInputFiles([
+    { name: "bolo-1.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+    { name: "bolo-2.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+    { name: "bolo-3.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+  ])
+  await expect(page.getByAltText("Foto 3")).toBeVisible()
+  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeVisible()
+  await capturar(page, "negocio-etapa-4", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+
+  await avancar(page)
+  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeVisible()
+  await capturar(page, "negocio-etapa-5", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+
+  await page.goto("/app/entrar/negocio-interesse")
+  await expect(page.getByRole("heading", { name: "Ideias para seu negócio." })).toBeVisible()
+  await capturar(page, "negocio-interesse", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
 })

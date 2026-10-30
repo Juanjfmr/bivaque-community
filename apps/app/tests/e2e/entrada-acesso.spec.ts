@@ -171,13 +171,16 @@ test("o aviso de jornada demonstrativa sai do acesso e das etapas, e fica no car
     "analise",
     "cidade",
     "sugestoes-grupos",
+    "negocio",
+    "negocio-formulario",
+    "negocio-interesse",
   ]
   for (const tela of migradas) {
     await page.goto(`/app/entrar/${tela}`)
     await expect(page.getByText(aviso), tela).toHaveCount(0)
   }
-  // "negocio" ainda está no cartão até o lote que a migrar.
-  await page.goto("/app/entrar/negocio")
+  // "boas-vindas" ainda está no cartão até o lote que a migrar.
+  await page.goto("/app/entrar/boas-vindas")
   await expect(page.getByText(aviso)).toBeVisible()
 })
 
