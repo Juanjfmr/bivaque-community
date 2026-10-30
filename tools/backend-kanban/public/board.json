@@ -5425,8 +5425,9 @@
         "Boas-vindas por momento, retomar, convite e conta apagada",
         "Aceite visual do dono sobre a jornada inteira"
       ],
-      "completedChecklist": [true, false, false, false, false, false, false],
+      "completedChecklist": [true, true, false, false, false, false, false],
       "proof": [
+        "30/10: ENT-002 (aceite, vínculo por CPF e vínculo confirmado) entregue pelo OpenCode; auditoria do coordenador: tratamento do CPF inalterado, teste novo prova que o valor não vai a localStorage, sessionStorage nem URL. Verificação independente na revisão 656acb6e: typecheck e build verdes, 145 E2E passaram e 17 pulados por desenho (etapa + acesso + 21st em 6 larguras), lint sem erros. Pendências visuais menores (traço no passo 5 do indicador, check pequeno no vínculo confirmado) seguem no ENT-003.",
         "30/10: ENT-001 entregue pelo OpenCode e reparo 1; verificação independente na revisão 88010f0a: typecheck e build verdes, 100 E2E passaram e 14 pulados por desenho (entrada-acesso + entrada-21st em 6 larguras), lint sem erros. Revisão visual contra F01-01, F01-02, F01-15 e F01-15b aprovada pelo coordenador; aceite do dono pendente."
       ],
       "links": [
@@ -5436,7 +5437,7 @@
         "docs/design/fluxos-2026-10-30/F01-COBERTURA.md",
         "docs/agents/prototipo-shadcn/STATUS.md"
       ],
-      "sourceRevision": "88010f0ab78a0f0677627636f952ded096e6bbb6",
+      "sourceRevision": "656acb6e",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",
