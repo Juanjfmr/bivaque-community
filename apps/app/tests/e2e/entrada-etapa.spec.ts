@@ -31,6 +31,7 @@ const PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS = join(
   "ENT-004",
 )
 const PASTA_DAS_CAPTURAS_DO_NEGOCIO = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-005")
+const PASTA_DAS_CAPTURAS_DA_ENTRADA = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-006")
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 const AVISO_DEMONSTRATIVO = "Jornada demonstrativa"
 
@@ -781,7 +782,7 @@ test("a escolha do negócio fica no passo 5, com as três ações empilhadas", a
 
   await page.goto("/app/entrar/negocio")
   await page.getByRole("button", { name: "Decidir depois" }).click()
-  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
   await expect(page).toHaveURL(/\/app\/entrar\/boas-vindas$/)
 })
 
@@ -1026,7 +1027,7 @@ test("Salvar rascunho mostra o status sem publicar e leva às boas-vindas", asyn
   expect(rascunho.nome).toBe("Bolos da Cláudia")
   expect(rascunho.fotos).toHaveLength(1)
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
   await expect(page).toHaveURL(/\/app\/entrar\/boas-vindas$/)
 })
 
@@ -1054,7 +1055,7 @@ test("o interesse empilha Continuar e Voltar, com os destinos de hoje", async ({
 
   await page.goto("/app/entrar/negocio-interesse")
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
 })
 
 test("a capa da turma de chegada usa a foto de chegada", async ({ page }) => {
@@ -1203,4 +1204,170 @@ test("capturas de página inteira da escolha, das cinco etapas e do interesse", 
   await page.goto("/app/entrar/negocio-interesse")
   await expect(page.getByRole("heading", { name: "Ideias para seu negócio." })).toBeVisible()
   await capturar(page, "negocio-interesse", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
+})
+
+// ENT-006 — boas-vindas por momento (F01, lote 6). O momento escolhido na tela da
+// cidade decide o apoio, os atalhos e o destino de cada um.
+
+/** Caminho real até as boas-vindas: cidade → grupos → negócio → decidir depois. */
+async function chegarAsBoasVindas(
+  page: Page,
+  momento: "Chegando" | "Moro aqui" | "Saindo",
+  destino = "",
+) {
+  await page.goto("/app/entrar/cidade")
+  await page.getByLabel(momento, { exact: true }).check()
+  if (destino !== "") await page.getByLabel("Cidade de destino").fill(destino)
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await page.getByRole("button", { name: "Escolher depois" }).click()
+  await page.getByRole("button", { name: "Decidir depois" }).click()
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
+}
+
+test("boas-vindas de quem chega trazem o plano, a turma e o destino de cada atalho", async ({
+  page,
+}) => {
+  await chegarAsBoasVindas(page, "Chegando")
+  const titulo = page.getByRole("heading", { name: "Você chegou ao Bivaque." })
+  await expect(titulo).toBeFocused()
+  await expect(page.getByText("Seu plano de chegada a Manaus já está pronto.")).toBeVisible()
+
+  const atalhos = page.locator(".entrada-etapa-atalho")
+  await expect(atalhos).toHaveCount(2)
+  await expect(atalhos.nth(0)).toContainText("Ver o plano de chegada")
+  await expect(atalhos.nth(0)).toContainText("Moradia, escola, saúde e mudança, na ordem.")
+  await expect(atalhos.nth(1)).toContainText("Conhecer quem chega com você")
+  await expect(atalhos.nth(1)).toContainText("Chegadas 2027 em Manaus")
+
+  // Cada atalho tem ícone e seta; a seta é só decoração.
+  await expect(atalhos.nth(0).locator("[data-icone='map']")).toBeVisible()
+  await expect(atalhos.nth(1).locator("[data-icone='group']")).toBeVisible()
+  await expect(atalhos.locator("[data-icone='chevron_right']")).toHaveCount(2)
+
+  await atalhos.nth(1).click()
+  await expect(page).toHaveURL(/\/app\/grupo\/turma-manaus-2027$/)
+
+  await chegarAsBoasVindas(page, "Chegando")
+  await page.getByRole("button", { name: /Ver o plano de chegada/ }).click()
+  await expect(page).toHaveURL(/\/app\/inicio$/)
+
+  await chegarAsBoasVindas(page, "Chegando")
+  await page.getByRole("button", { name: "Entrar na comunidade" }).click()
+  await expect(page).toHaveURL(/\/app\/comunidade$/)
+})
+
+test("boas-vindas de quem mora levam ao guia e não têm atalho de turma", async ({ page }) => {
+  await chegarAsBoasVindas(page, "Moro aqui")
+  await expect(
+    page.getByText("O que a comunidade de Manaus indica já está à sua espera."),
+  ).toBeVisible()
+
+  const atalho = page.locator(".entrada-etapa-atalho")
+  await expect(atalho).toHaveCount(1)
+  await expect(atalho).toContainText("Conhecer Manaus")
+  await expect(atalho).toContainText("O que a comunidade indica, por assunto.")
+  await expect(page.getByText("Chegadas 2027 em Manaus")).toHaveCount(0)
+
+  await atalho.click()
+  await expect(page).toHaveURL(/\/app\/guia$/)
+})
+
+test("boas-vindas de quem sai mudam com o destino e só têm o plano de saída", async ({ page }) => {
+  await chegarAsBoasVindas(page, "Saindo", "Brasília")
+  await expect(page.getByText("Seu plano de saída para Brasília já está pronto.")).toBeVisible()
+  const atalhos = page.locator(".entrada-etapa-atalho")
+  await expect(atalhos).toHaveCount(1)
+  await expect(atalhos.first()).toContainText("Ver o plano de saída")
+  await expect(atalhos.first()).toContainText("Moradia, escola, saúde e mudança, na ordem.")
+
+  await atalhos.first().click()
+  await expect(page).toHaveURL(/\/app\/inicio$/)
+
+  // Sem destino, a frase continua verdadeira.
+  await chegarAsBoasVindas(page, "Saindo")
+  await expect(page.getByText("Seu plano de saída já está pronto.")).toBeVisible()
+  await expect(page.locator(".entrada-etapa-atalho")).toHaveCount(1)
+})
+
+test("as boas-vindas não têm indicador de passos nem Sair, e a foto leva o check na borda", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/boas-vindas")
+  const titulo = page.getByRole("heading", { name: "Você chegou ao Bivaque." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.locator(".entrada-etapa-passos")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Sair" })).toHaveCount(0)
+  await expect(page.getByRole("img", { name: "Bivaque" })).toBeVisible()
+
+  // Título em Noto Serif, centralizado.
+  const estilo = await titulo.evaluate((elemento) => {
+    const estilo = getComputedStyle(elemento)
+    return { familia: estilo.fontFamily, alinhamento: estilo.textAlign }
+  })
+  expect(estilo.familia).toMatch(/Noto Serif/i)
+  expect(estilo.alinhamento).toBe("center")
+
+  // Foto larga, decorativa (alt vazio), com cantos de 16 px.
+  const foto = page.locator(".entrada-etapa-boas-vindas-foto img")
+  await expect(foto).toHaveAttribute("alt", "")
+  expect(await foto.getAttribute("src")).toMatch(/demo\/landing-hero\.webp$/)
+  expect(await foto.evaluate((elemento) => getComputedStyle(elemento).borderTopLeftRadius)).toBe(
+    "16px",
+  )
+  const coluna = await page.locator(".entrada-etapa-corpo").boundingBox()
+  const caixaDaFoto = await foto.boundingBox()
+  expect(Math.abs((caixaDaFoto?.width ?? 0) - (coluna?.width ?? 0))).toBeLessThanOrEqual(1)
+
+  // O check cobre a borda inferior da foto: parte dentro, parte fora.
+  const check = await page.locator(".entrada-etapa-boas-vindas-check").boundingBox()
+  if (!caixaDaFoto || !check) throw new Error("foto ou check ausente nas boas-vindas")
+  expect(check.y).toBeGreaterThan(caixaDaFoto.y)
+  expect(check.y + check.height).toBeGreaterThan(caixaDaFoto.y + caixaDaFoto.height)
+  await expect(page.locator(".entrada-etapa-boas-vindas-check [data-icone='check']")).toBeVisible()
+})
+
+test("a barra interna do negócio fica com 60% da coluna e centralizada em 375 px", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-375", "medida do celular em 375 px")
+  await page.goto("/app/entrar/negocio-formulario")
+  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeVisible()
+
+  const barra = await page.locator(".entrada-etapa-progresso-barra").boundingBox()
+  const coluna = await page.locator(".entrada-etapa-formulario").boundingBox()
+  const geral = await page.locator(".entrada-etapa-segmentos").boundingBox()
+  if (!barra || !coluna || !geral) throw new Error("barra, coluna ou barra geral ausente")
+
+  // No máximo 60% da coluna e distinta da barra geral da etapa.
+  expect(barra.width).toBeLessThanOrEqual(coluna.width * 0.6 + 0.5)
+  expect(barra.width).toBeLessThan(geral.width)
+  const esquerda = barra.x - coluna.x
+  const direita = coluna.x + coluna.width - (barra.x + barra.width)
+  expect(Math.abs(esquerda - direita)).toBeLessThanOrEqual(1)
+})
+
+test("as boas-vindas não rolam na horizontal nos três momentos", async ({ page }) => {
+  for (const momento of ["Moro aqui", "Chegando", "Saindo"] as const) {
+    await chegarAsBoasVindas(page, momento)
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true)
+  }
+})
+
+test("capturas de página inteira das boas-vindas nos três momentos", async ({ page }, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  await chegarAsBoasVindas(page, "Chegando")
+  await capturar(page, "boas-vindas-chegando", testInfo, PASTA_DAS_CAPTURAS_DA_ENTRADA)
+
+  await chegarAsBoasVindas(page, "Moro aqui")
+  await capturar(page, "boas-vindas-moro", testInfo, PASTA_DAS_CAPTURAS_DA_ENTRADA)
+
+  await chegarAsBoasVindas(page, "Saindo", "Brasília")
+  await capturar(page, "boas-vindas-saindo", testInfo, PASTA_DAS_CAPTURAS_DA_ENTRADA)
 })

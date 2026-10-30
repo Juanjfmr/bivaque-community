@@ -18,12 +18,13 @@ function raizDoRepositorio(inicio: string): string {
 }
 
 const PASTA_DAS_CAPTURAS = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-001")
+const PASTA_DAS_CAPTURAS_DO_LOTE = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-006")
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 
 /** A captura é da página inteira: o app rola dentro de #conteudo, então a
  *  rolagem interna é desfeita só para o retrato, sem tocar no layout — a altura
  *  do conteúdo vira explícita para as cadeias de 100% continuarem valendo. */
-async function capturar(page: Page, nome: string, testInfo: TestInfo) {
+async function capturar(page: Page, nome: string, testInfo: TestInfo, pasta = PASTA_DAS_CAPTURAS) {
   const altura = await page.evaluate(() => {
     const conteudo = document.getElementById("conteudo")
     return conteudo ? Math.max(conteudo.clientHeight, conteudo.scrollHeight) : 900
@@ -34,9 +35,9 @@ async function capturar(page: Page, nome: string, testInfo: TestInfo) {
       '[data-casca="entrada"]{height:auto!important}' +
       `#conteudo{height:${altura}px!important;overflow:visible!important}`,
   })
-  mkdirSync(PASTA_DAS_CAPTURAS, { recursive: true })
+  mkdirSync(pasta, { recursive: true })
   await page.screenshot({
-    path: join(PASTA_DAS_CAPTURAS, `${nome}-${testInfo.project.name}.png`),
+    path: join(pasta, `${nome}-${testInfo.project.name}.png`),
     fullPage: true,
   })
 }
@@ -155,33 +156,33 @@ test("recuperar senha confirma o envio sem dizer se a conta existe", async ({ pa
   await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
 })
 
-test("o aviso de jornada demonstrativa sai do acesso e das etapas, e fica no cartão", async ({
-  page,
-}) => {
-  const aviso = "Jornada demonstrativa: nenhuma informação é enviada ou verificada."
-  const migradas = [
-    "login",
+test("nenhuma rota de /app/entrar/* mostra o aviso de jornada demonstrativa", async ({ page }) => {
+  const aviso = "Jornada demonstrativa"
+  for (const tela of [
     "conta",
-    "senha",
+    "retomar",
     "aceite",
     "cpf",
     "resultado",
-    "consulta-indisponivel",
-    "documento",
     "analise",
+    "documento",
+    "consulta-indisponivel",
+    "convite-indisponivel",
     "cidade",
     "sugestoes-grupos",
     "negocio",
     "negocio-formulario",
     "negocio-interesse",
-  ]
-  for (const tela of migradas) {
+    "boas-vindas",
+    "login",
+    "senha",
+    "convite",
+    "apagada",
+  ]) {
     await page.goto(`/app/entrar/${tela}`)
     await expect(page.getByText(aviso), tela).toHaveCount(0)
+    await expect(page.locator(".entrada-cartao"), tela).toHaveCount(0)
   }
-  // "boas-vindas" ainda está no cartão até o lote que a migrar.
-  await page.goto("/app/entrar/boas-vindas")
-  await expect(page.getByText(aviso)).toBeVisible()
 })
 
 test("nenhuma das três telas de acesso rola na horizontal", async ({ page }) => {
@@ -285,4 +286,160 @@ test("capturas de página inteira das quatro situações de acesso", async ({ pa
   await page.getByRole("button", { name: "Enviar instruções" }).click()
   await expect(page.getByRole("status")).toBeVisible()
   await capturar(page, "senha-enviada", testInfo)
+})
+
+// ENT-006 — retomar, convite, convite indisponível e conta apagada (F01, lote 6).
+
+test("retomar mostra a conta em andamento, com o nome da demonstração quando não há dados", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/retomar")
+  const titulo = page.getByRole("heading", { name: "Continue de onde parou." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByText("Você começou seu cadastro e pode continuar.")).toBeVisible()
+  await expect(page.getByRole("img", { name: "Bivaque" })).toBeVisible()
+  expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(/chegada\.webp$/)
+
+  // Sem dados na entrada, o cartão traz a pessoa da demonstração, lida de lib/dados,
+  // e nenhum e-mail.
+  const conta = page.locator(".entrada-acesso-conta")
+  await expect(conta).toBeVisible()
+  await expect(conta).toContainText("Rafael Souza")
+  await expect(conta.locator(".entrada-acesso-avatar")).toHaveText("RS")
+  await expect(conta).not.toContainText("@")
+
+  await page.getByRole("button", { name: "Continuar cadastro" }).click()
+  await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/cpf$/)
+
+  await page.goto("/app/entrar/retomar")
+  await page.getByRole("button", { name: "Usar outra conta" }).click()
+  await expect(page.getByRole("heading", { name: "Vamos começar." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/conta$/)
+})
+
+test("convite pede o código em maiúsculas, o e-mail somente leitura e o aceite obrigatório", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/convite")
+  const titulo = page.getByRole("heading", { name: "Convite de família." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByText("Use o código recebido para aceitar seu convite.")).toBeVisible()
+  expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(
+    /landing-hero-retrato\.webp$/,
+  )
+  // Sem Google nem divisor nesta tela.
+  await expect(page.getByRole("button", { name: "Continuar com Google" })).toHaveCount(0)
+
+  // Código único, em maiúsculas, monoespaçado e com espaçamento entre letras.
+  const codigo = page.getByLabel("Código do convite")
+  await expect(codigo).toHaveCount(1)
+  await codigo.fill("k7p2-9qxa")
+  await expect(codigo).toHaveValue("K7P2-9QXA")
+  const estiloDoCodigo = await codigo.evaluate((campo) => {
+    const estilo = getComputedStyle(campo)
+    return {
+      fonte: estilo.fontFamily,
+      espaco: estilo.letterSpacing,
+      transformacao: estilo.textTransform,
+    }
+  })
+  expect(estiloDoCodigo.fonte).toMatch(/mono/i)
+  expect(Number.parseFloat(estiloDoCodigo.espaco)).toBeGreaterThan(0)
+  expect(estiloDoCodigo.transformacao).toBe("uppercase")
+
+  await expect(page.getByLabel("Nome completo")).toBeVisible()
+  const emailDoConvite = page.getByLabel("E-mail do convite")
+  await expect(emailDoConvite).toHaveAttribute("readonly", "")
+  expect(await emailDoConvite.evaluate((campo) => getComputedStyle(campo).backgroundColor)).toBe(
+    "rgb(238, 235, 229)",
+  )
+  await expect(page.locator(".entrada-acesso-somente-leitura [data-icone='lock']")).toBeVisible()
+
+  const senha = page.getByLabel("Senha")
+  await expect(senha).toHaveAttribute("type", "password")
+  await page.getByRole("button", { name: "Mostrar" }).click()
+  await expect(senha).toHaveAttribute("type", "text")
+
+  const aceitar = page.getByRole("button", { name: "Aceitar convite" })
+  await expect(aceitar).toBeDisabled()
+  await page.getByRole("checkbox", { name: /Li e concordo/ }).check()
+  await expect(aceitar).toBeEnabled()
+  await aceitar.click()
+  await expect(page.getByRole("heading", { name: "Sua cidade e seu momento." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/cidade$/)
+})
+
+test("o convite indisponível e a conta apagada explicam e levam adiante", async ({ page }) => {
+  await page.goto("/app/entrar/convite")
+  await page.getByRole("button", { name: "Simular convite indisponível" }).click()
+
+  const indisponivel = page.getByRole("heading", { name: "Convite indisponível." })
+  await expect(indisponivel).toBeVisible()
+  await expect(indisponivel).toBeFocused()
+  await expect(page.getByText("O código não é válido ou não está mais disponível.")).toBeVisible()
+  await expect(page.locator(".entrada-acesso-marco [data-icone='error']")).toBeVisible()
+  expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(
+    /landing-hero-retrato\.webp$/,
+  )
+
+  await page.getByRole("button", { name: "Voltar para entrar" }).click()
+  await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+
+  await page.goto("/app/entrar/convite-indisponivel")
+  await page.getByRole("button", { name: "Tentar outro código" }).click()
+  await expect(page.getByRole("heading", { name: "Convite de família." })).toBeVisible()
+
+  await page.goto("/app/entrar/apagada")
+  const apagada = page.getByRole("heading", { name: "Conta apagada." })
+  await expect(apagada).toBeVisible()
+  await expect(apagada).toBeFocused()
+  await expect(page.getByText("Sua conta e seus dados foram apagados.")).toBeVisible()
+  await expect(page.locator(".entrada-acesso-marco [data-icone='check']")).toBeVisible()
+  expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(
+    /landing-hero\.webp$/,
+  )
+
+  await page.getByRole("button", { name: "Voltar ao início" }).click()
+  await expect(page).toHaveURL(/\/app\/inicio$/)
+})
+
+test("retomar, convite, convite indisponível e conta apagada não rolam na horizontal", async ({
+  page,
+}) => {
+  for (const tela of ["retomar", "convite", "convite-indisponivel", "apagada"]) {
+    await page.goto(`/app/entrar/${tela}`)
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true)
+  }
+})
+
+test("capturas de página inteira do retomar, convite, convite indisponível e conta apagada", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  await page.goto("/app/entrar/retomar")
+  await expect(page.getByRole("heading", { name: "Continue de onde parou." })).toBeVisible()
+  await capturar(page, "retomar", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
+
+  await page.goto("/app/entrar/convite")
+  await page.getByLabel("Código do convite").fill("K7P2-9QXA")
+  await page.getByLabel("Nome completo").fill("Ana Souza")
+  await expect(page.getByRole("heading", { name: "Convite de família." })).toBeVisible()
+  await capturar(page, "convite", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
+
+  await page.goto("/app/entrar/convite-indisponivel")
+  await expect(page.getByRole("heading", { name: "Convite indisponível." })).toBeVisible()
+  await capturar(page, "convite-indisponivel", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
+
+  await page.goto("/app/entrar/apagada")
+  await expect(page.getByRole("heading", { name: "Conta apagada." })).toBeVisible()
+  await capturar(page, "apagada", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
 })

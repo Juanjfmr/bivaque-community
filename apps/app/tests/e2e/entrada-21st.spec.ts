@@ -39,9 +39,9 @@ test("cadastro percorre vínculo, cidade, grupos e boas-vindas", async ({ page }
     page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
   ).toBeVisible()
   await page.getByRole("button", { name: "Decidir depois" }).click()
-  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
-  await page.getByRole("button", { name: "Ir para o início" }).click()
-  await expect(page).toHaveURL(/\/app\/(inicio)?$/)
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
+  await page.getByRole("button", { name: "Entrar na comunidade" }).click()
+  await expect(page).toHaveURL(/\/app\/comunidade$/)
 })
 
 test("sugestões podem ser puladas e não mostram grupos de outra cidade", async ({ page }) => {
@@ -59,7 +59,7 @@ test("sugestões podem ser puladas e não mostram grupos de outra cidade", async
   await page.getByRole("button", { name: "Tenho interesse em criar" }).click()
   await expect(page.getByRole("heading", { name: "Ideias para seu negócio." })).toBeVisible()
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "Bem-vindo ao Bivaque." })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
 })
 
 test("negócio pode ser criado por etapas sem obrigar detalhes", async ({ page }) => {
