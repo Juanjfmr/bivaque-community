@@ -1,62 +1,30 @@
-# Bivaque Community
+# Bivaque × Aceternity UI — Teste de estresse V2
 
-Comunidade local de acesso controlado para militares federais, veteranos e pensionistas
-militares, em piloto na cidade de Manaus. Next.js renderizado no servidor, sobre Supabase.
+Protótipo independente e navegável do Bivaque feito para testar **amplitude visual e interações da biblioteca Aceternity UI** no produto real e em um laboratório.
 
-Repositório privado. Não é pacote publicado — não existe `npm install bivaque-community`.
+## Onde testar
 
-**Estado: pré-lançamento.** O produto não está no ar. Ver
-[`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) para o que existe hoje, com evidência
-arquivo:linha.
+Execute \`npm install && npm run dev\` nesta pasta. O projeto usa Vite + React 19, Tailwind e Framer Motion. O build roda com \`npm run build\`.
 
-## Onde está a documentação
+## Telas
 
-**Reconstrução pelo Figma atual:** [referência, checkpoints e evidências](docs/agents/FIGMA-RASTREABILIDADE.md).
-O registro distingue trabalho preservado, provas concluídas e fluxos ainda pendentes.
+- **Início:** hero editorial, busca animada, atalhos em bento, indicações rolantes e oportunidades.
+- **Comunidade:** feed demonstrativo, publicação em modal, grupos interativos, eventos e perguntas.
+- **Mercado:** filtros, favoritos, cartões, grade expansível, 3D Card e hover direcional.
+- **Chegada:** conexões ilustrativas no World Map, etapas em Tracing Beam e Timeline.
+- **Você:** favoritos e grupos armazenados somente na sessão.
+- **Laboratório:** efeitos intensos sob demanda, inventário de componentes, modo reduzido e amostra 320/375/430px.
 
-Este README é um roteador. Nada de produto vive aqui, para não virar mais uma cópia que
-envelhece.
+## Proveniência
 
-| Pergunta | Documento |
-|---|---|
-| o que o produto **deve** ser — visão, papéis, decisões, monetização, sequenciamento | [`docs/BIVAQUE.md`](docs/BIVAQUE.md) |
-| o que o código **faz** hoje, e a distância até o alvo | [`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) |
-| comandos, armadilhas de ambiente, contratos de teste | [`AGENTS.md`](AGENTS.md) |
-| decisões de risco alto, como ADR, e a régua que classifica risco | [`docs/decisions/`](docs/decisions/) |
-| ondas de trabalho e como executá-las | [`docs/superpowers/plans/README.md`](docs/superpowers/plans/README.md) |
-| design system, linguagem visual e rubrica de auditoria | [`docs/agents/DESIGN_SYSTEM.md`](docs/agents/DESIGN_SYSTEM.md) |
-| o banco: ambientes, migrations, RLS | [`supabase/README.md`](supabase/README.md) |
-| textos que o membro aceita | [`docs/legal/`](docs/legal/) |
-| auditoria de coerência produto × backend, com 151 achados | [`docs/red-team/`](docs/red-team/) |
-| como relatar vulnerabilidade | [`SECURITY.md`](SECURITY.md) |
+**29 componentes originais Aceternity UI** obtidos diretamente de \`21st.dev/@manuarora700/library/aceternity-ui\` e instalados no diretório \`src/components/ui\`. Alguns foram adaptados para Vite (troca de \`next/image\` por \`img\`, \`next/link\` por \`a\`, uso de tokens Bivaque e pequenas correções TypeScript). Estes ajustes não introduzem outra biblioteca de componentes. Elementos básicos (formulários, contêineres, botões nativos e acessibilidade) são HTML/React.
 
-**`docs/BIVAQUE.md` e `docs/PRODUCT_STATUS.md` nunca se inferem um do outro.** O primeiro
-descreve decisões, muitas ainda não construídas; o segundo descreve realidade. Ler decisão
-como feature entregue é o erro que produziu o mapa que esses dois substituíram.
+A fonte da identidade é \`docs/brand/GUIDELINES.md\`, os tokens de \`docs/brand/reference/brand-tokens.json\`, e a assinatura original do Bivaque é preservada sem redesenho. O piloto continua **light-only**.
 
-## Rodar
+As imagens de imóveis e produtos e todo o catálogo são **ilustrativos e fictícios**; não demonstram disponibilidade real. Favoritos usam sessionStorage, demais interações são locais. Não há backend, autenticação nem acesso a dados de membros.
 
-Node 22 ou superior. **`pnpm` e `corepack` não estão no PATH** — sempre via `npx`.
+A V1 segue isolada na branch \`feat/prototype-aceternity-only-20261030\`. Esta V2 reside em \`feat/bivaque-aceternity-stress-20261030\`; a branch \`main\` não foi modificada.
 
-```sh
-npx pnpm@11.18.0 install
-npx pnpm@11.18.0 gate          # porta única: lint, typecheck, testes e varredura de segredo
-npx pnpm@11.18.0 gate --fast   # só lint e typecheck, para o loop de edição
-```
+### Medição sugerida
 
-O `gate` é o que autoriza dizer que algo está pronto. Nenhum comando isolado substitui ele.
-
-Para o banco é preciso Docker e a stack local de pé:
-
-```sh
-npx pnpm@11.18.0 exec supabase start
-```
-
-O conjunto completo de comandos, incluindo os do banco e os do loop visual, está no
-[`AGENTS.md`](AGENTS.md). Ele também lista as armadilhas de ambiente que fazem teste falhar
-sem relação com a mudança em curso — leia antes de investigar suíte vermelha.
-
-## Licença
-
-Nenhuma licença declarada. O repositório é privado e o `package.json` marca `private: true`.
-Enquanto não houver decisão, trate como todos os direitos reservados.
+Compare 320, 375, 430, 768 e 1440 px. Avalie navegação e alvos de toque, redução de movimento, contraste, carregamento sob demanda do Lab e impacto no peso JS. O laboratório foi isolado por \`React.lazy\` para não carregar seus componentes de efeito na experiência principal.

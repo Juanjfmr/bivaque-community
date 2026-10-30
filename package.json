@@ -1,44 +1,33 @@
 {
-  "name": "bivaque-community",
-  "version": "0.0.0",
+  "name": "bivaque-aceternity-stress",
   "private": true,
-  "packageManager": "pnpm@11.18.0",
-  "engines": {
-    "node": ">=22.0.0"
-  },
+  "version": "0.2.0",
+  "type": "module",
   "scripts": {
-    "build": "pnpm --filter web build",
-    "db:lint": "supabase db lint --local --level error",
-    "db:reset": "supabase db reset --local",
-    "gate": "node scripts/gate.mjs",
-    "generate:types": "supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts && node scripts/normalize-generated-types.mjs",
-    "lint": "biome check .",
-    "test:db": "supabase test db",
-    "test:e2e": "playwright test --grep-invert @stateful",
-    "test:e2e:stateful": "playwright test --grep @stateful --workers=1",
-    "test:e2e:all": "pnpm test:e2e && pnpm test:e2e:stateful",
-    "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm test:unit && pnpm test:workspaces && pnpm test:privacy && pnpm test:scope",
-    "test:unit": "vitest run tests/unit",
-    "test:workspaces": "pnpm -r --if-present test",
-    "test:privacy": "vitest run tests/privacy",
-    "test:scope": "node --test tests/scope/*.test.mjs",
-    "test:secrets": "node tests/secrets-scan.mjs",
-    "visual:capture": "node scripts/visual/capture.mjs",
-    "visual:loop": "node scripts/visual/loop.mjs",
-    "flows:frames": "node scripts/visual/flows/detect-frames.mjs",
-    "board:render": "node scripts/visual/render-board.mjs",
-    "flows:gallery": "node scripts/visual/flows-gallery.mjs && node scripts/visual/flows-verify.mjs",
-    "flows:check": "node scripts/visual/flows-gallery.mjs --check && node scripts/visual/flows-verify.mjs --check"
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-icons": "^1.3.2",
+    "@tabler/icons-react": "^3.31.0",
+    "clsx": "^2.1.1",
+    "dotted-map": "^2.2.3",
+    "framer-motion": "^12.0.0",
+    "motion": "^12.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
-    "@bivaque/contracts": "workspace:*",
-    "@bivaque/domain": "workspace:*",
-    "@playwright/test": "1.51.1",
-    "@types/node": "^26.1.2",
-    "supabase": "2.107.0",
-    "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.7.3",
+    "vite": "^6.0.5"
   }
 }
