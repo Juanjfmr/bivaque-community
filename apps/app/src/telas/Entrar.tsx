@@ -12,6 +12,7 @@ import type { Grupo } from "@/lib/dados/contrato"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { ESTADOS_DA_ENTRADA, type EstadoDaEntrada } from "@/lib/navegacao/rotas"
+import { registro, texto } from "@/src/telas/comum"
 
 // Composição adaptada de Login Form Card, Felipe Menezes, licença MIT:
 // https://21st.dev/@felipemenezes098/components/card-06
@@ -208,6 +209,7 @@ export function Entrar() {
     documento:
       "Se a consulta por CPF não for concluída, você pode enviar sua identidade militar digital.",
     analise: "Acompanhe as etapas da análise por aqui.",
+    "sugestoes-grupos": `Conheça alguns grupos de ${cidade || "sua cidade"}. Escolher é opcional.`,
   }
 
   /** A consulta indisponível explica a causa e o próximo passo em duas frases. */
@@ -239,11 +241,14 @@ export function Entrar() {
     estado === "consulta-indisponivel" ||
     estado === "documento" ||
     estado === "analise" ||
-    estado === "cidade"
+    estado === "cidade" ||
+    estado === "sugestoes-grupos"
   ) {
     return (
       <EntradaEtapa
-        passo={estado === "aceite" ? 1 : estado === "cidade" ? 3 : 2}
+        passo={
+          estado === "aceite" ? 1 : estado === "cidade" ? 3 : estado === "sugestoes-grupos" ? 4 : 2
+        }
         titulo={titulo[estado]}
         apoio={apoioDaEtapa[estado] ?? ""}
         apoioExtra={apoioExtraDaEtapa[estado] ?? null}
@@ -491,6 +496,65 @@ export function Entrar() {
             </Button>
           </>
         ) : null}
+        {estado === "sugestoes-grupos" ? (
+          <>
+            {grupos === null ? (
+              <p className="entrada-etapa-vazio" role="status">
+                Buscando sugestões…
+              </p>
+            ) : grupos.length === 0 ? (
+              <p className="entrada-etapa-vazio">
+                Ainda não há grupos sugeridos para esta cidade. Você pode continuar.
+              </p>
+            ) : (
+              <fieldset className="entrada-etapa-grupos">
+                <legend className="sr-only">Grupos sugeridos</legend>
+                {grupos.map((grupo) => {
+                  const foto = dadosDoApp.imagem(texto(registro(grupo.apresentacao)["img"]))
+                  return (
+                    <label key={grupo.id} className="entrada-etapa-grupo">
+                      {foto === "" ? null : (
+                        <img
+                          className="entrada-etapa-grupo-foto"
+                          src={foto}
+                          alt=""
+                          loading="lazy"
+                        />
+                      )}
+                      <span className="entrada-etapa-grupo-texto">
+                        <input
+                          type="checkbox"
+                          checked={selecionados.includes(grupo.id)}
+                          onChange={(evento) => {
+                            const marcado = evento.target.checked
+                            setSelecionados((anteriores) =>
+                              marcado
+                                ? [...anteriores, grupo.id]
+                                : anteriores.filter((id) => id !== grupo.id),
+                            )
+                          }}
+                        />
+                        <strong>{grupo.name}</strong>
+                        {grupo.description ? <small>{grupo.description}</small> : null}
+                      </span>
+                    </label>
+                  )
+                })}
+              </fieldset>
+            )}
+            <Button type="button" className="entrada-etapa-acao" onClick={() => irPara("negocio")}>
+              Continuar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("negocio")}
+            >
+              Escolher depois
+            </Button>
+          </>
+        ) : null}
       </EntradaEtapa>
     )
   }
@@ -540,43 +604,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "sugestoes-grupos" && (
-            <>
-              <p>Conheça alguns grupos de {cidade || "sua cidade"}. Escolher é opcional.</p>
-              <p className="entrada-nota">Demonstração: selecionar grupos não cria participação.</p>
-              {grupos === null ? (
-                <p role="status">Buscando sugestões...</p>
-              ) : grupos.length === 0 ? (
-                <p>Não há sugestões de demonstração para esta cidade. Você pode continuar.</p>
-              ) : (
-                <fieldset className="entrada-grupos">
-                  <legend>Grupos sugeridos</legend>
-                  {grupos.map((grupo) => (
-                    <label key={grupo.id} className="entrada-grupo">
-                      <input
-                        type="checkbox"
-                        checked={selecionados.includes(grupo.id)}
-                        onChange={(e) => {
-                          const marcado = e.target.checked
-                          setSelecionados((anteriores) =>
-                            marcado
-                              ? [...anteriores, grupo.id]
-                              : anteriores.filter((id) => id !== grupo.id),
-                          )
-                        }}
-                      />
-                      <span>
-                        <strong>{grupo.name}</strong>
-                        {grupo.description && <small>{grupo.description}</small>}
-                      </span>
-                    </label>
-                  ))}
-                </fieldset>
-              )}
-              {acao("Continuar", () => irPara("negocio"))}
-              {acao("Escolher depois", () => irPara("negocio"), true)}
-            </>
-          )}
           {estado === "negocio" && (
             <>
               <p>No Mercado, você pode apresentar seu negócio ou serviço à comunidade.</p>
