@@ -27,7 +27,7 @@ const LIMITE_DO_DOCUMENTO = 10 * 1024 * 1024
 
 function documentoAceito(escolhido: File): boolean {
   return (
-    escolhido.type in TIPOS_DE_DOCUMENTO &&
+    Object.hasOwn(TIPOS_DE_DOCUMENTO, escolhido.type) &&
     escolhido.size > 0 &&
     escolhido.size <= LIMITE_DO_DOCUMENTO
   )
