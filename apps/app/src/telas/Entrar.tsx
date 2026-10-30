@@ -1,7 +1,7 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
-import { EntradaAcesso } from "@/components/bivaque/entrada-acesso"
+import { EntradaAcesso, type EstadoDeAcesso } from "@/components/bivaque/entrada-acesso"
 import { EntradaEtapa } from "@/components/bivaque/entrada-etapa"
 import { FormularioNegocio } from "@/components/bivaque/formulario-negocio"
 import { Icone } from "@/components/bivaque/icone"
@@ -33,6 +33,19 @@ const MOMENTOS = [
   ["saindo", "Saindo"],
 ] as const
 
+const ESTADOS_DE_ACESSO: readonly EstadoDaEntrada[] = [
+  "login",
+  "conta",
+  "senha",
+  "retomar",
+  "convite",
+  "convite-indisponivel",
+  "apagada",
+]
+
+const ehDeAcesso = (valor: EstadoDaEntrada): valor is EstadoDeAcesso =>
+  ESTADOS_DE_ACESSO.includes(valor)
+
 function documentoAceito(escolhido: File): boolean {
   return (
     Object.hasOwn(TIPOS_DE_DOCUMENTO, escolhido.type) &&
@@ -58,7 +71,6 @@ export function Entrar() {
   const [nome, setNome] = useState("")
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
-  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [cpf, setCpf] = useState("")
   const [codigo, setCodigo] = useState("")
   const [cidade, setCidade] = useState(() => dadosDoApp.resumoDaCasca().cidade)
@@ -128,54 +140,6 @@ export function Entrar() {
     >
       {texto}
     </Button>
-  )
-  const campoSenha = (id: string) => (
-    <div className="entrada-senha">
-      <Campo
-        id={id}
-        rotulo="Senha"
-        valor={senha}
-        aoMudar={setSenha}
-        type={mostrarSenha ? "text" : "password"}
-        autoComplete={estado === "login" ? "current-password" : "new-password"}
-      />
-      <button
-        type="button"
-        className="entrada-mostrar"
-        onClick={() => setMostrarSenha(!mostrarSenha)}
-      >
-        {mostrarSenha ? "Ocultar" : "Mostrar"}
-      </button>
-    </div>
-  )
-  const aceite = () => (
-    <div className="entrada-aceite">
-      <input
-        id="aceite-entrada"
-        type="checkbox"
-        checked={aceitou}
-        onChange={(e) => setAceitou(e.target.checked)}
-      />{" "}
-      <span>
-        <label htmlFor="aceite-entrada">Li e concordo com a</label>{" "}
-        <button
-          type="button"
-          className="entrada-link"
-          onClick={() => void navegacao.irPara("privacidade")}
-        >
-          Política de privacidade
-        </button>{" "}
-        e o{" "}
-        <button
-          type="button"
-          className="entrada-link"
-          onClick={() => void navegacao.irPara("conduta")}
-        >
-          Código de conduta
-        </button>
-        .
-      </span>
-    </div>
   )
   const titulo: Record<EstadoDaEntrada, string> = {
     conta: "Vamos começar.",
@@ -649,7 +613,9 @@ export function Entrar() {
     )
   }
 
-  if (estado === "login" || estado === "conta" || estado === "senha") {
+  // A composição A cobre login, criar conta, recuperar senha, retomar, convite,
+  // convite indisponível e conta apagada; a B cobre as etapas do vínculo.
+  if (ehDeAcesso(estado)) {
     return (
       <EntradaAcesso
         estado={estado}
@@ -659,6 +625,8 @@ export function Entrar() {
         aoMudarEmail={setEmail}
         senha={senha}
         aoMudarSenha={setSenha}
+        codigo={codigo}
+        aoMudarCodigo={setCodigo}
         aceitou={aceitou}
         aoAceitar={setAceitou}
         instrucoesEnviadas={enviado}
@@ -709,8 +677,11 @@ export function Entrar() {
         }
       >
         {momento === "morando"
-          ? atalho("place", `Conhecer ${ondeEstou}`, "O que a comunidade indica, por assunto.", () =>
-              void navegacao.irPara("guia"),
+          ? atalho(
+              "place",
+              `Conhecer ${ondeEstou}`,
+              "O que a comunidade indica, por assunto.",
+              () => void navegacao.irPara("guia"),
             )
           : atalho(
               "map",
@@ -760,37 +731,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "retomar" && (
-            <>
-              <p>Você começou seu cadastro e pode continuar.</p>
-              {acao("Continuar cadastro", () => irPara("cpf"))}
-              {acao("Usar outra conta", () => irPara("conta"), true)}
-            </>
-          )}
-          {estado === "convite" && (
-            <>
-              <p>Use o código recebido para aceitar seu convite.</p>
-              <Campo
-                id="convite-codigo"
-                rotulo="Código do convite"
-                valor={codigo}
-                aoMudar={setCodigo}
-              />
-              <Campo id="convite-nome" rotulo="Nome completo" valor={nome} aoMudar={setNome} />
-              <Campo id="convite-email" rotulo="E-mail do convite" valor={email} readOnly />
-              {campoSenha("convite-senha")}
-              {aceite()}
-              {acao("Aceitar convite", () => irPara("cidade"), false, !aceitou)}
-              {acao("Simular convite indisponível", () => irPara("convite-indisponivel"), true)}
-            </>
-          )}
-          {estado === "convite-indisponivel" && (
-            <>
-              <p>O código não é válido ou não está mais disponível.</p>
-              {acao("Tentar outro código", () => irPara("convite"))}
-              {acao("Voltar para entrar", () => irPara("login"), true)}
-            </>
-          )}
           {estado === "apagada" && (
             <>
               <p>Esta é uma demonstração da tela de conta apagada.</p>

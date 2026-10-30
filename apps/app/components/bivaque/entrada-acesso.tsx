@@ -5,38 +5,61 @@ import { Icone } from "@/components/bivaque/icone"
 import { IconeGoogle } from "@/components/bivaque/icone-google"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { dadosDoApp } from "@/lib/dados"
 import type { EstadoDaEntrada } from "@/lib/navegacao/rotas"
 
 /**
- * Composição A do acesso (login, criar conta, recuperar senha): o painel da foto
- * à esquerda e a coluna do formulário à direita; no celular a foto vira faixa e
- * o formulário vem abaixo.
+ * Composição A do acesso (login, criar conta, recuperar senha, retomar, convite,
+ * convite indisponível e conta apagada): o painel da foto à esquerda e a coluna
+ * do formulário à direita; no celular a foto vira faixa e o formulário vem
+ * abaixo.
  *
  * Anatomia adaptada do Split Sign In Form
  * (https://21st.dev/@diarmuradi/components/sign-in-3), reproduzida com os
  * componentes do app e sem copiar o código do bloco.
- *
- * Os outros estados da entrada continuam no cartão de `telas/Entrar.tsx`.
  */
 
-export type EstadoDeAcesso = Extract<EstadoDaEntrada, "login" | "conta" | "senha">
+export type EstadoDeAcesso = Extract<
+  EstadoDaEntrada,
+  "login" | "conta" | "senha" | "retomar" | "convite" | "convite-indisponivel" | "apagada"
+>
 
 const TITULOS: Readonly<Record<EstadoDeAcesso, string>> = {
   conta: "Vamos começar.",
   login: "Que bom ter você de volta.",
   senha: "Esqueci minha senha.",
+  retomar: "Continue de onde parou.",
+  convite: "Convite de família.",
+  "convite-indisponivel": "Convite indisponível.",
+  apagada: "Conta apagada.",
 }
 
 const APOIOS: Readonly<Record<EstadoDeAcesso, string>> = {
   conta: "Crie sua conta para fazer parte da comunidade.",
   login: "Entre com o e-mail e a senha da sua conta.",
   senha: "Informe o e-mail da sua conta para receber as instruções.",
+  retomar: "Você começou seu cadastro e pode continuar.",
+  convite: "Use o código recebido para aceitar seu convite.",
+  "convite-indisponivel": "O código não é válido ou não está mais disponível.",
+  apagada: "Sua conta e seus dados foram apagados.",
 }
 
 const FOTOS: Readonly<Record<EstadoDeAcesso, string>> = {
   conta: "demo/chegada.webp",
   login: "demo/landing-hero.webp",
   senha: "demo/mesa.webp",
+  retomar: "demo/chegada.webp",
+  convite: "demo/landing-hero-retrato.webp",
+  "convite-indisponivel": "demo/landing-hero-retrato.webp",
+  apagada: "demo/landing-hero.webp",
+}
+
+/** Iniciais do avatar: a primeira letra do primeiro e do último nome. */
+function iniciaisDe(nome: string): string {
+  const palavras = nome.trim().split(/\s+/).filter(Boolean)
+  const primeira = palavras[0]?.[0] ?? ""
+  const ultima = palavras.length > 1 ? (palavras.at(-1)?.[0] ?? "") : ""
+  return `${primeira}${ultima}`.toLocaleUpperCase("pt-BR")
 }
 
 // "curto" é o rótulo do celular e "longo" o do desktop; quando são iguais, o
@@ -59,6 +82,8 @@ export function EntradaAcesso({
   aoMudarEmail,
   senha,
   aoMudarSenha,
+  codigo,
+  aoMudarCodigo,
   aceitou,
   aoAceitar,
   instrucoesEnviadas,
@@ -75,6 +100,8 @@ export function EntradaAcesso({
   aoMudarEmail: (valor: string) => void
   senha: string
   aoMudarSenha: (valor: string) => void
+  codigo: string
+  aoMudarCodigo: (valor: string) => void
   aceitou: boolean
   aoAceitar: (valor: boolean) => void
   instrucoesEnviadas: boolean
@@ -86,6 +113,11 @@ export function EntradaAcesso({
 }) {
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const base = import.meta.env.BASE_URL
+  // Retomar: a conta em andamento vem do estado da entrada; sem ela, o nome da
+  // pessoa da demonstração (de lib/dados) e nenhum e-mail.
+  const nomeDigitado = nome.trim()
+  const nomeDaConta = nomeDigitado === "" ? dadosDoApp.resumoDaCasca().nomeDaPessoa : nomeDigitado
+  const emailDaConta = nomeDigitado === "" ? "" : email.trim()
 
   // O "Esqueci minha senha" fica na linha do rótulo e, por isso, antes do campo
   // na ordem do DOM e do Tab.
@@ -199,6 +231,12 @@ export function EntradaAcesso({
           </button>
         ) : null}
 
+        {estado === "convite-indisponivel" || estado === "apagada" ? (
+          <span className="entrada-acesso-marco">
+            <Icone nome={estado === "apagada" ? "check" : "error"} />
+          </span>
+        ) : null}
+
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1}>
           {TITULOS[estado]}
         </h1>
@@ -211,7 +249,7 @@ export function EntradaAcesso({
           </p>
         ) : null}
 
-        {estado === "senha" ? null : googleEDivisor}
+        {estado === "conta" || estado === "login" ? googleEDivisor : null}
 
         {estado === "conta" ? (
           <>
@@ -327,6 +365,110 @@ export function EntradaAcesso({
               onClick={instrucoesEnviadas ? () => aoIrPara("login") : aoEnviarInstrucoes}
             >
               {instrucoesEnviadas ? "Voltar para entrar" : "Enviar instruções"}
+            </Button>
+          </>
+        ) : null}
+
+        {estado === "retomar" ? (
+          <>
+            <div className="entrada-acesso-conta">
+              <span className="entrada-acesso-avatar">{iniciaisDe(nomeDaConta)}</span>
+              <span className="entrada-acesso-conta-texto">
+                <strong>{nomeDaConta}</strong>
+                {emailDaConta === "" ? null : <span>{emailDaConta}</span>}
+              </span>
+            </div>
+            <Button type="button" className="entrada-acesso-botao" onClick={() => aoIrPara("cpf")}>
+              Continuar cadastro
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-acesso-botao"
+              onClick={() => aoIrPara("conta")}
+            >
+              Usar outra conta
+            </Button>
+          </>
+        ) : null}
+
+        {estado === "convite" ? (
+          <>
+            <Campo
+              id="convite-codigo"
+              rotulo="Código do convite"
+              valor={codigo}
+              aoMudar={(valor) => aoMudarCodigo(valor.toUpperCase())}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              className="entrada-acesso-codigo"
+            />
+            <Campo
+              id="convite-nome"
+              rotulo="Nome completo"
+              valor={nome}
+              aoMudar={aoMudarNome}
+              autoComplete="name"
+            />
+            <div className="entrada-acesso-somente-leitura">
+              <Campo id="convite-email" rotulo="E-mail do convite" valor={email} readOnly />
+              <Icone nome="lock" className="entrada-acesso-cadeado" />
+            </div>
+            {campoDeSenha("convite-senha", false)}
+            <div className="entrada-acesso-aceite entrada-acesso-aceite-desenhado">
+              <input
+                id="aceite-entrada"
+                type="checkbox"
+                checked={aceitou}
+                onChange={(evento) => aoAceitar(evento.target.checked)}
+              />
+              <span>
+                <label htmlFor="aceite-entrada">Li e concordo com a</label>{" "}
+                <button type="button" className="entrada-acesso-link" onClick={aoAbrirPrivacidade}>
+                  Política de privacidade
+                </button>{" "}
+                e o{" "}
+                <button type="button" className="entrada-acesso-link" onClick={aoAbrirConduta}>
+                  Código de conduta
+                </button>
+                .
+              </span>
+            </div>
+            <Button
+              type="button"
+              className="entrada-acesso-botao"
+              onClick={() => aoIrPara("cidade")}
+              disabled={!aceitou}
+            >
+              Aceitar convite
+            </Button>
+            <button
+              type="button"
+              className="entrada-acesso-simulacao"
+              onClick={() => aoIrPara("convite-indisponivel")}
+            >
+              Simular convite indisponível
+            </button>
+          </>
+        ) : null}
+
+        {estado === "convite-indisponivel" ? (
+          <>
+            <Button
+              type="button"
+              className="entrada-acesso-botao"
+              onClick={() => aoIrPara("convite")}
+            >
+              Tentar outro código
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-acesso-botao"
+              onClick={() => aoIrPara("login")}
+            >
+              Voltar para entrar
             </Button>
           </>
         ) : null}
