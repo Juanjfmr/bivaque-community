@@ -534,46 +534,107 @@ export function FormularioNegocio({
       )}
 
       {etapa === 4 && (
-        <div className="grid gap-2 rounded-xl border p-4">
-          <strong>{nome}</strong>
-          <p>{categoria}</p>
-          <p>
-            {especialidades.length ? especialidades.join(", ") : "Todas as especialidades do grupo"}
-          </p>
-          <p>
-            {onde === "cidade"
-              ? `Atende em toda a cidade de ${cidade}`
-              : onde === "online"
-                ? "Atende on-line"
-                : onde === "bairros"
-                  ? `Bairros: ${bairros.join(", ")}`
-                  : "Área de atendimento a informar"}
-          </p>
-          <p>
-            {atendimento === "fixo"
-              ? `${dias.join(", ")} · ${abre} às ${fecha}`
-              : atendimento === "combinado"
-                ? "Atendimento com horário combinado"
-                : "Horário a informar"}
-          </p>
-          {apresentacao && <p>Apresentação: {apresentacao}</p>}
-          {beneficio && <p>Benefício: {beneficio}</p>}
-          {whatsapp && <p>WhatsApp: {whatsapp}</p>}
-          {instagram && <p>Instagram: {instagram}</p>}
-          {site && <p>Site: {site}</p>}
-          <p>{fotos.length ? `${fotos.length} foto(s) adicionada(s)` : "Sem fotos"}</p>
-          {fotos.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {fotos.map((foto, indice) => (
-                <img
-                  key={foto.id}
-                  src={foto.imagem}
-                  alt={`Prévia da foto ${indice + 1}${indice === 0 ? ", capa" : ""}`}
-                  className="h-20 w-20 rounded-xl object-cover"
-                />
-              ))}
-            </div>
+        <div className="entrada-etapa-revisao">
+          {fotos[0] && (
+            <img
+              src={fotos[0].imagem}
+              alt="Prévia da foto 1, capa"
+              className="entrada-etapa-revisao-capa"
+            />
           )}
+          <ul className="entrada-etapa-revisao-linhas">
+            <li>
+              <Icone nome="storefront" />
+              <span>{nome}</span>
+              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(0)}>
+                Editar
+              </button>
+            </li>
+            <li>
+              <Icone nome="sell" />
+              <span>{categoria}</span>
+              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(0)}>
+                Editar
+              </button>
+            </li>
+            <li>
+              <Icone nome="checklist" />
+              <span>
+                {especialidades.length
+                  ? especialidades.join(", ")
+                  : "Todas as especialidades do grupo"}
+              </span>
+              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(0)}>
+                Editar
+              </button>
+            </li>
+            <li>
+              <Icone nome="place" />
+              <span>
+                {onde === "cidade"
+                  ? `Atende em toda a cidade de ${cidade}`
+                  : onde === "online"
+                    ? "Atende on-line"
+                    : onde === "bairros"
+                      ? `Bairros: ${bairros.join(", ")}`
+                      : "Área de atendimento a informar"}
+              </span>
+              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(1)}>
+                Editar
+              </button>
+            </li>
+            <li>
+              <Icone nome="schedule" />
+              <span>
+                {atendimento === "fixo"
+                  ? `${dias.join(", ")} · ${abre} às ${fecha}`
+                  : atendimento === "combinado"
+                    ? "Atendimento com horário combinado"
+                    : "Horário a informar"}
+              </span>
+              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(2)}>
+                Editar
+              </button>
+            </li>
+            {apresentacao && (
+              <li>
+                <Icone nome="edit_square" />
+                <span>{`Apresentação: ${apresentacao}`}</span>
+                <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
+                  Editar
+                </button>
+              </li>
+            )}
+            {beneficio && (
+              <li>
+                <Icone nome="volunteer_activism" />
+                <span>{`Benefício: ${beneficio}`}</span>
+                <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
+                  Editar
+                </button>
+              </li>
+            )}
+            {(whatsapp || instagram || site) && (
+              <li>
+                <Icone nome="link" />
+                <span>
+                  {[`WhatsApp: ${whatsapp}`, `Instagram: ${instagram}`, `Site: ${site}`]
+                    .filter((contato) => !contato.endsWith(": "))
+                    .join(" · ")}
+                </span>
+                <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
+                  Editar
+                </button>
+              </li>
+            )}
+            <li>
+              <Icone nome="image" />
+              <span>{fotos.length ? `${fotos.length} foto(s) adicionada(s)` : "Sem fotos"}</span>
+              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
+                Editar
+              </button>
+            </li>
+          </ul>
         </div>
       )}
 
