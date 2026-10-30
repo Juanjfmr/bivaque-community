@@ -159,11 +159,25 @@ test("o aviso de jornada demonstrativa sai do acesso e das etapas, e fica no car
   page,
 }) => {
   const aviso = "Jornada demonstrativa: nenhuma informação é enviada ou verificada."
-  for (const tela of ["login", "conta", "senha", "aceite", "cpf", "resultado"]) {
+  const migradas = [
+    "login",
+    "conta",
+    "senha",
+    "aceite",
+    "cpf",
+    "resultado",
+    "consulta-indisponivel",
+    "documento",
+    "analise",
+    "cidade",
+    "sugestoes-grupos",
+  ]
+  for (const tela of migradas) {
     await page.goto(`/app/entrar/${tela}`)
     await expect(page.getByText(aviso), tela).toHaveCount(0)
   }
-  await page.goto("/app/entrar/cidade")
+  // "negocio" ainda está no cartão até o lote que a migrar.
+  await page.goto("/app/entrar/negocio")
   await expect(page.getByText(aviso)).toBeVisible()
 })
 
