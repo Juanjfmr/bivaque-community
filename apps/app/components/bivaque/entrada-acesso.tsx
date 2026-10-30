@@ -308,15 +308,19 @@ export function EntradaAcesso({
               type="email"
               autoComplete="email"
             />
-            {instrucoesEnviadas ? (
-              <p role="status" className="entrada-acesso-status">
-                <IconeEnvelope />
-                <span>
-                  Se houver uma conta com este e-mail, as instruções chegam em instantes. Confira
-                  também o spam.
-                </span>
-              </p>
-            ) : null}
+            {/* A região existe antes do envio para o leitor de tela anunciar o
+                que entrar nela; vazia, sai do fluxo e não abre vão no formulário. */}
+            <div role="status" className="entrada-acesso-status-regiao">
+              {instrucoesEnviadas ? (
+                <p className="entrada-acesso-status">
+                  <IconeEnvelope />
+                  <span>
+                    Se houver uma conta com este e-mail, as instruções chegam em instantes. Confira
+                    também o spam.
+                  </span>
+                </p>
+              ) : null}
+            </div>
             <Button
               type="button"
               className="entrada-acesso-botao"

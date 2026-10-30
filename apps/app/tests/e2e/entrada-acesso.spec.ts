@@ -140,10 +140,14 @@ test("recuperar senha confirma o envio sem dizer se a conta existe", async ({ pa
   await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
 
   await page.getByRole("button", { name: "Esqueci minha senha" }).click()
+  // A região do anúncio existe (vazia) antes do envio; o texto entra dentro dela.
+  const regiaoDeStatus = page.getByRole("status")
+  await expect(regiaoDeStatus).toHaveCount(1)
+  await expect(regiaoDeStatus).toBeEmpty()
   await page.getByLabel("E-mail").fill("pessoa@example.invalid")
   await page.getByRole("button", { name: "Enviar instruções" }).click()
 
-  await expect(page.getByRole("status")).toContainText(
+  await expect(regiaoDeStatus).toContainText(
     "Se houver uma conta com este e-mail, as instruções chegam em instantes. Confira também o spam.",
   )
   await expect(page.getByLabel("E-mail")).toHaveValue("pessoa@example.invalid")

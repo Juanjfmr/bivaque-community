@@ -1691,6 +1691,11 @@ body[data-profundidade="sim"] [data-casca="app"] {
   font-size: 14px;
   text-align: center;
 }
+/* Antes do envio a região está vazia: fica fora do fluxo para o vão de 16 px do
+   formulário não aparecer, mas continua no DOM para o anúncio. */
+.entrada-acesso-status-regiao:empty {
+  position: absolute;
+}
 .entrada-acesso-status {
   display: flex;
   align-items: flex-start;
