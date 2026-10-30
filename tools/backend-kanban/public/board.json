@@ -5425,8 +5425,9 @@
         "Boas-vindas por momento, retomar, convite e conta apagada",
         "Aceite visual do dono sobre a jornada inteira"
       ],
-      "completedChecklist": [true, true, true, true, true, false, false],
+      "completedChecklist": [true, true, true, true, true, true, false],
       "proof": [
+        "30/10: ENT-006 (boas-vindas por momento, retomar, convite, convite indisponível, conta apagada; cartão antigo removido) entregue pelo OpenCode. Verificação independente na revisão a1872617: typecheck e build verdes, 373 E2E passaram e 41 pulados por desenho, test:scope 150/150, lint sem erros. Toda /app/entrar/* está no visual aprovado; falta o aceite visual do dono.",
         "30/10: ENT-005 (negócio opcional: escolha, cinco etapas, revisão com Editar e interesse; capa da turma trocada para chegada) entregue pelo OpenCode. Verificação independente na revisão e6382fa7: typecheck e build verdes, 300 E2E passaram e 30 pulados por desenho, test:scope 150/150, lint sem erros. Barra interna do negócio no celular segue no ENT-006.",
         "30/10: ENT-004 (cidade e momento, sugestões de grupos) entregue pelo OpenCode; teste desatualizado pelo próprio contrato corrigido pelo revisor (970ba8f3). Verificação independente na revisão 5580b5cc: typecheck e build verdes, 219 E2E passaram e 27 pulados por desenho, lint sem erros. Capa da turma (friends) troca no ENT-005.",
         "30/10: ENT-003 (consulta indisponível, envio de identidade e análise) entregue pelo OpenCode; auditoria: o arquivo fica só em memória, sem leitura de conteúdo, envio ou armazenamento, e a tela mostra só tipo e tamanho (teste com 12345678909.pdf ausente do DOM). Verificação independente na revisão 6504f40d: typecheck e build verdes, 180 E2E passaram e 24 pulados por desenho, lint sem erros. Correção pendente para o ENT-004: Object.hasOwn na validação do tipo.",
@@ -5440,7 +5441,7 @@
         "docs/design/fluxos-2026-10-30/F01-COBERTURA.md",
         "docs/agents/prototipo-shadcn/STATUS.md"
       ],
-      "sourceRevision": "e6382fa7",
+      "sourceRevision": "a1872617",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",
@@ -5450,7 +5451,9 @@
       ],
       "dependencies": ["APP-001"],
       "updatedAt": "2026-10-30",
-      "blockers": []
+      "blockers": [
+        "Aceite visual do dono sobre a jornada inteira implementada (capturas em .visual/ENT-001 a ENT-006)."
+      ]
     }
   ]
 }
