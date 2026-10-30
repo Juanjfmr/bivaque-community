@@ -6,7 +6,7 @@ type SpotlightProps = {
   fill?: string;
 };
 
-export const Spotlight = ({ className, }: SpotlightProps) => {
+export const Spotlight = ({ className, fill }: SpotlightProps) => {
   return (
     <svg
       className={cn(
