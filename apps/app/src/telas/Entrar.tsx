@@ -1,6 +1,7 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
+import { EntradaAcesso } from "@/components/bivaque/entrada-acesso"
 import { FormularioNegocio } from "@/components/bivaque/formulario-negocio"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
@@ -133,7 +134,6 @@ export function Entrar() {
       </span>
     </div>
   )
-  const google = () => acao("Continuar com Google", () => irPara("aceite"), true)
   const titulo: Record<EstadoDaEntrada, string> = {
     conta: "Vamos começar.",
     login: "Que bom ter você de volta.",
@@ -154,6 +154,30 @@ export function Entrar() {
     senha: "Esqueci minha senha.",
     convite: "Convite de família.",
     apagada: "Conta apagada.",
+  }
+
+  // Login, criar conta e recuperar senha usam a composição A; as demais telas da
+  // entrada continuam no cartão.
+  if (estado === "login" || estado === "conta" || estado === "senha") {
+    return (
+      <EntradaAcesso
+        estado={estado}
+        nome={nome}
+        aoMudarNome={setNome}
+        email={email}
+        aoMudarEmail={setEmail}
+        senha={senha}
+        aoMudarSenha={setSenha}
+        aceitou={aceitou}
+        aoAceitar={setAceitou}
+        instrucoesEnviadas={enviado}
+        aoEnviarInstrucoes={() => setEnviado(true)}
+        aoIrPara={irPara}
+        aoEntrar={irInicio}
+        aoAbrirPrivacidade={() => void navegacao.irPara("privacidade")}
+        aoAbrirConduta={() => void navegacao.irPara("conduta")}
+      />
+    )
   }
 
   return (
@@ -179,52 +203,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "conta" && (
-            <>
-              <p>Crie sua conta para fazer parte da comunidade.</p>
-              <Campo
-                id="entrar-nome"
-                rotulo="Nome completo"
-                valor={nome}
-                aoMudar={setNome}
-                autoComplete="name"
-              />
-              <Campo
-                id="entrar-email"
-                rotulo="E-mail"
-                valor={email}
-                aoMudar={setEmail}
-                type="email"
-                autoComplete="email"
-              />
-              {campoSenha("entrar-senha")}
-              <p className="entrada-nota">Ao menos 8 caracteres, com letras e números.</p>
-              {aceite()}
-              {acao("Criar conta", () => irPara("cpf"), false, !aceitou)}
-              <div className="entrada-divisor">ou</div>
-              {google()}
-              <p className="entrada-rodape">Já tem conta? {link("login", "Entrar")}</p>
-            </>
-          )}
-          {estado === "login" && (
-            <>
-              <p>Entre com o e-mail e a senha da sua conta.</p>
-              <Campo
-                id="login-email"
-                rotulo="E-mail"
-                valor={email}
-                aoMudar={setEmail}
-                type="email"
-                autoComplete="email"
-              />
-              {campoSenha("login-senha")}
-              <div className="entrada-direita">{link("senha", "Esqueci minha senha")}</div>
-              {acao("Entrar", irInicio)}
-              <div className="entrada-divisor">ou</div>
-              {google()}
-              <p className="entrada-rodape">Ainda não tem conta? {link("conta", "Criar conta")}</p>
-            </>
-          )}
           {estado === "aceite" && (
             <>
               <p>Leia e aceite para continuar com sua conta Google.</p>
@@ -444,21 +422,6 @@ export function Entrar() {
               <p>Você começou seu cadastro e pode continuar.</p>
               {acao("Continuar cadastro", () => irPara("cpf"))}
               {acao("Usar outra conta", () => irPara("conta"), true)}
-            </>
-          )}
-          {estado === "senha" && (
-            <>
-              <p>Informe o e-mail da sua conta para receber as instruções.</p>
-              <Campo
-                id="recuperar-email"
-                rotulo="E-mail"
-                valor={email}
-                aoMudar={setEmail}
-                type="email"
-              />
-              {acao("Enviar instruções", () => setEnviado(true))}
-              {enviado && <p role="status">Demonstração: nenhum e-mail foi enviado.</p>}
-              {link("login", "Voltar para entrar")}
             </>
           )}
           {estado === "convite" && (
