@@ -2165,6 +2165,321 @@ body[data-profundidade="sim"] [data-casca="app"] {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
+/* Formulário de negócio (ENT-005): progresso interno, subtítulo, chips,
+   cartões de rádio, horários, fotos com capa e revisão. Anatomia do Onboarding
+   Wizard Form (https://21st.dev/@cnippet-dev/components/v-form-8), reproduzida
+   com os componentes do app — sem copiar o código do bloco. */
+.entrada-etapa-formulario {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.entrada-etapa-progresso {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.entrada-etapa-progresso-texto {
+  color: var(--muted-foreground);
+  font-size: 15px;
+  text-align: center;
+}
+.entrada-etapa-progresso-barra {
+  display: flex;
+  gap: 8px;
+  width: min(100%, 420px);
+}
+.entrada-etapa-progresso-barra > span {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.entrada-etapa-progresso-barra > span[data-estado="feito"] {
+  background: var(--foreground);
+}
+.entrada-etapa-subtitulo {
+  font-family: var(--font-brand);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.entrada-etapa-subtitulo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.entrada-etapa-nota {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.entrada-etapa-selecao {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 16px;
+}
+.entrada-etapa-selecao:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Chips de seleção: o quadrado desenhado repete a linguagem da caixa do aceite. */
+.entrada-etapa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.entrada-etapa-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.entrada-etapa-chip:has(input:checked),
+.entrada-etapa-chip-cheio {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.entrada-etapa-chip input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.entrada-etapa-chip:has(input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-etapa-chip-caixa {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--outline);
+  border-radius: 4px;
+  background: var(--card);
+}
+.entrada-etapa-chip:has(input:checked) .entrada-etapa-chip-caixa {
+  border-color: var(--primary-foreground);
+  background: transparent;
+}
+.entrada-etapa-chip:has(input:checked) .entrada-etapa-chip-caixa::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 5px;
+  width: 5px;
+  height: 10px;
+  border-right: 2px solid var(--primary-foreground);
+  border-bottom: 2px solid var(--primary-foreground);
+  transform: rotate(45deg);
+}
+.entrada-etapa-chip .bv-icone {
+  font-size: 18px;
+}
+/* Cartões de rádio de linha inteira; o condicional entra logo abaixo do
+   selecionado, dentro da mesma pilha. */
+.entrada-etapa-cartoes {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 0;
+}
+.entrada-etapa-cartao {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  font-size: 16px;
+  cursor: pointer;
+}
+/* O selecionado troca 1 px de borda por 1 px de respiro: o conteúdo não anda. */
+.entrada-etapa-cartao:has(input:checked) {
+  padding: 9px 13px;
+  border: 2px solid var(--foreground);
+}
+.entrada-etapa-cartao:has(input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-etapa-cartao input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.entrada-etapa-cartao .entrada-etapa-radio {
+  width: 20px;
+  height: 20px;
+}
+.entrada-etapa-cartao:has(input:checked) .entrada-etapa-radio {
+  border-color: var(--foreground);
+}
+.entrada-etapa-cartoes .entrada-etapa-cartao:has(input:checked) .entrada-etapa-radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--foreground);
+}
+.entrada-etapa-cartao-campos {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.entrada-etapa-adicionar {
+  justify-self: start;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+.entrada-etapa-horarios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+/* Fotos: miniaturas quadradas, a primeira com o selo "Capa", e o quadro
+   tracejado para acrescentar. */
+.entrada-etapa-fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+.entrada-etapa-foto {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.entrada-etapa-foto-quadro {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.entrada-etapa-foto-imagem {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.entrada-etapa-foto-capa {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 12px;
+}
+.entrada-etapa-foto-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.entrada-etapa-foto-acoes .entrada-etapa-link {
+  font-size: 12px;
+}
+.entrada-etapa-foto-adicionar {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px dashed var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.entrada-etapa-foto-adicionar .bv-icone {
+  font-size: 28px;
+}
+.entrada-etapa-foto-adicionar:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Revisão: foto de capa no topo do cartão e uma linha por bloco, com ícone,
+   valor e "Editar" que volta à etapa correspondente. */
+.entrada-etapa-revisao {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.entrada-etapa-revisao-capa {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+.entrada-etapa-revisao-linhas {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrada-etapa-revisao-linhas li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.entrada-etapa-revisao-linhas li:first-child {
+  border-top: 0;
+}
+.entrada-etapa-revisao-linhas .bv-icone {
+  font-size: 22px;
+}
+/* As ações do formulário ficam lado a lado, metade da coluna cada. */
+.entrada-etapa-acoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+.entrada-etapa-erro {
+  color: var(--destructive);
+  font-size: 14px;
+  line-height: 1.4;
+}
+@media (max-width: 344px) {
+  .entrada-etapa-acoes .entrada-etapa-acao {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+}
 /* Envio de identidade: área tracejada de arquivo único, com o cartão de tipo e
    tamanho. Anatomia do File Dropzone
    (https://21st.dev/@joyco/components/file-dropzone), reproduzida com os
