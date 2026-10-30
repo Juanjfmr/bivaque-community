@@ -216,6 +216,24 @@ test("o painel de criar conta respira entre a frase da marca e os itens", async 
   expect(item.y - (frase.y + frase.height)).toBeGreaterThanOrEqual(16)
 })
 
+test("no celular os três itens de valor ficam numa linha só, sem rolagem", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    ["tablet-768", "desktop-1440"].includes(testInfo.project.name),
+    "no painel os itens viram lista vertical",
+  )
+  await page.goto("/app/entrar/conta")
+  const topos = await page
+    .locator(".entrada-acesso-itens li")
+    .evaluateAll((itens) => itens.map((item) => item.getBoundingClientRect().top))
+  expect(topos).toHaveLength(3)
+  expect(Math.max(...topos) - Math.min(...topos)).toBeLessThanOrEqual(2)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  )
+})
+
 test("capturas de página inteira das quatro situações de acesso", async ({ page }, testInfo) => {
   test.skip(
     !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
