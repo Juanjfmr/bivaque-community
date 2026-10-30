@@ -234,6 +234,15 @@ test("no celular os três itens de valor ficam numa linha só, sem rolagem", asy
   )
 })
 
+test("o título da coluna do formulário cresce no desktop", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "medida do título em 1440 px")
+  await page.goto("/app/entrar/login")
+  const tamanho = await page
+    .locator(".entrada-acesso-formulario h1")
+    .evaluate((titulo) => Number.parseFloat(getComputedStyle(titulo).fontSize))
+  expect(tamanho).toBeGreaterThanOrEqual(38)
+})
+
 test("capturas de página inteira das quatro situações de acesso", async ({ page }, testInfo) => {
   test.skip(
     !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
