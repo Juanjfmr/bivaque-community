@@ -1360,22 +1360,6 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .entrada-conteudo > .entrada-nota {
   font-size: 13px;
 }
-.entrada-arquivo {
-  display: grid;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-}
-.entrada-arquivo input {
-  width: 100%;
-  font-weight: 400;
-}
-.entrada-etapas {
-  display: grid;
-  gap: 12px;
-  padding-left: 24px;
-  list-style: decimal;
-}
 .entrada-momento {
   display: flex;
   flex-wrap: wrap;
@@ -2112,6 +2096,70 @@ body[data-profundidade="sim"] [data-casca="app"] {
   font-size: 14px;
   line-height: 1.4;
 }
+/* Análise: linha do tempo vertical de três marcos, com o atual marcado por
+   aria-current="step". Anatomia do Process Timeline
+   (https://21st.dev/@shadcnui-blocks/components/timeline-05), reproduzida com os
+   componentes do app — sem copiar o código do bloco. */
+.entrada-linha {
+  display: grid;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrada-linha li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+/* O traço do meio liga o fim de um círculo ao início do próximo marco. */
+.entrada-linha li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 42px;
+  bottom: -24px;
+  left: 16px;
+  width: 1px;
+  background: var(--border);
+}
+.entrada-linha-marco {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--primary);
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 13px;
+}
+.entrada-linha-marco .bv-icone {
+  font-size: 16px;
+}
+.entrada-linha li[data-estado="futuro"] .entrada-linha-marco {
+  border-color: var(--muted-foreground);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.entrada-linha-texto {
+  padding-top: 5px;
+}
+.entrada-linha-titulo {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.entrada-linha li[data-estado="futuro"] .entrada-linha-titulo {
+  color: var(--muted-foreground);
+}
+.entrada-linha-prazo {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 /* Andaime da demonstração: link de texto no fim da coluna, sem competir com a ação. */
 .entrada-etapa-simulacao {
   justify-self: center;

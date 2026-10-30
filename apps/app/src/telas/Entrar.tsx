@@ -201,6 +201,7 @@ export function Entrar() {
     "consulta-indisponivel": "A fonte oficial está fora do ar agora. Não é nada com seus dados.",
     documento:
       "Se a consulta por CPF não for concluída, você pode enviar sua identidade militar digital.",
+    analise: "Acompanhe as etapas da análise por aqui.",
   }
 
   /** A consulta indisponível explica a causa e o próximo passo em duas frases. */
@@ -229,7 +230,8 @@ export function Entrar() {
     estado === "cpf" ||
     estado === "resultado" ||
     estado === "consulta-indisponivel" ||
-    estado === "documento"
+    estado === "documento" ||
+    estado === "analise"
   ) {
     return (
       <EntradaEtapa
@@ -387,6 +389,50 @@ export function Entrar() {
             </p>
           </>
         ) : null}
+        {estado === "analise" ? (
+          <>
+            <ol className="entrada-linha">
+              <li data-estado="concluido">
+                <span className="entrada-linha-marco">
+                  <Icone nome="check" />
+                </span>
+                <div className="entrada-linha-texto">
+                  <p className="entrada-linha-titulo">Documento enviado</p>
+                </div>
+              </li>
+              <li data-estado="atual" aria-current="step">
+                <span className="entrada-linha-marco">2</span>
+                <div className="entrada-linha-texto">
+                  <p className="entrada-linha-titulo">Em análise</p>
+                  <p className="entrada-linha-prazo">Até 2 dias úteis, normalmente no mesmo dia</p>
+                </div>
+              </li>
+              <li data-estado="futuro">
+                <span className="entrada-linha-marco">3</span>
+                <div className="entrada-linha-texto">
+                  <p className="entrada-linha-titulo">Resultado</p>
+                  <p className="entrada-linha-prazo">Você recebe um aviso assim que liberar</p>
+                </div>
+              </li>
+            </ol>
+            <label className="entrada-etapa-aceite">
+              <input
+                type="checkbox"
+                checked={avisar}
+                onChange={(evento) => setAvisar(evento.target.checked)}
+              />
+              <span>Avise-me quando houver uma atualização.</span>
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("documento")}
+            >
+              Substituir documento
+            </Button>
+          </>
+        ) : null}
       </EntradaEtapa>
     )
   }
@@ -436,25 +482,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "analise" && (
-            <>
-              <p>Na demonstração, acompanhe as etapas da análise por aqui.</p>
-              <ol className="entrada-etapas">
-                <li>Documento enviado</li>
-                <li>Em análise</li>
-                <li>Resultado</li>
-              </ol>
-              <label className="entrada-aceite">
-                <input
-                  type="checkbox"
-                  checked={avisar}
-                  onChange={(e) => setAvisar(e.target.checked)}
-                />{" "}
-                Avise-me quando houver uma atualização.
-              </label>
-              {acao("Substituir documento", () => irPara("documento"), true)}
-            </>
-          )}
           {estado === "cidade" && (
             <>
               <Campo
