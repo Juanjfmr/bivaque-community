@@ -25,6 +25,12 @@ const TIPOS_DE_DOCUMENTO: Record<string, string> = {
 }
 const LIMITE_DO_DOCUMENTO = 10 * 1024 * 1024
 
+const MOMENTOS = [
+  ["chegando", "Chegando"],
+  ["morando", "Moro aqui"],
+  ["saindo", "Saindo"],
+] as const
+
 function documentoAceito(escolhido: File): boolean {
   return (
     Object.hasOwn(TIPOS_DE_DOCUMENTO, escolhido.type) &&
@@ -232,11 +238,12 @@ export function Entrar() {
     estado === "resultado" ||
     estado === "consulta-indisponivel" ||
     estado === "documento" ||
-    estado === "analise"
+    estado === "analise" ||
+    estado === "cidade"
   ) {
     return (
       <EntradaEtapa
-        passo={estado === "aceite" ? 1 : 2}
+        passo={estado === "aceite" ? 1 : estado === "cidade" ? 3 : 2}
         titulo={titulo[estado]}
         apoio={apoioDaEtapa[estado] ?? ""}
         apoioExtra={apoioExtraDaEtapa[estado] ?? null}
@@ -434,6 +441,56 @@ export function Entrar() {
             </Button>
           </>
         ) : null}
+        {estado === "cidade" ? (
+          <>
+            <div className="entrada-etapa-campo">
+              <Campo
+                id="cidade"
+                rotulo="Cidade"
+                valor={cidade}
+                aoMudar={setCidade}
+                placeholder="Busque sua cidade"
+              />
+              <Icone nome="place" className="entrada-etapa-campo-icone" />
+            </div>
+            <fieldset className="entrada-etapa-momento">
+              <legend>Seu momento</legend>
+              {MOMENTOS.map(([valor, rotulo]) => (
+                <label key={valor}>
+                  <input
+                    type="radio"
+                    name="momento"
+                    value={valor}
+                    checked={momento === valor}
+                    onChange={() => setMomento(valor)}
+                  />
+                  <span className="entrada-etapa-radio" aria-hidden="true" />
+                  <span>{rotulo}</span>
+                </label>
+              ))}
+            </fieldset>
+            <Campo id="como-chamar" rotulo="Como quer ser chamado" valor={nome} aoMudar={setNome} />
+            {momento === "morando" ? null : (
+              <Campo
+                id="data"
+                rotulo={momento === "chegando" ? "Data de chegada" : "Data de saída"}
+                valor={data}
+                aoMudar={setData}
+                type="date"
+              />
+            )}
+            {momento === "saindo" ? (
+              <Campo id="destino" rotulo="Cidade de destino" valor={destino} aoMudar={setDestino} />
+            ) : null}
+            <Button
+              type="button"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("sugestoes-grupos")}
+            >
+              Continuar
+            </Button>
+          </>
+        ) : null}
       </EntradaEtapa>
     )
   }
@@ -483,62 +540,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "cidade" && (
-            <>
-              <Campo
-                id="cidade"
-                rotulo="Cidade"
-                valor={cidade}
-                aoMudar={setCidade}
-                placeholder="Busque sua cidade"
-              />
-              <fieldset className="entrada-momento">
-                <legend>Seu momento</legend>
-                {(
-                  [
-                    ["chegando", "Chegando"],
-                    ["morando", "Moro aqui"],
-                    ["saindo", "Saindo"],
-                  ] as const
-                ).map(([valor, texto]) => (
-                  <label key={valor}>
-                    <input
-                      type="radio"
-                      name="momento"
-                      value={valor}
-                      checked={momento === valor}
-                      onChange={() => setMomento(valor)}
-                    />
-                    {texto}
-                  </label>
-                ))}
-              </fieldset>
-              <Campo
-                id="como-chamar"
-                rotulo="Como quer ser chamado"
-                valor={nome}
-                aoMudar={setNome}
-              />
-              {momento !== "morando" && (
-                <Campo
-                  id="data"
-                  rotulo={momento === "chegando" ? "Data de chegada" : "Data de saída"}
-                  valor={data}
-                  aoMudar={setData}
-                  type="date"
-                />
-              )}
-              {momento === "saindo" && (
-                <Campo
-                  id="destino"
-                  rotulo="Cidade de destino"
-                  valor={destino}
-                  aoMudar={setDestino}
-                />
-              )}
-              {acao("Continuar", () => irPara("sugestoes-grupos"))}
-            </>
-          )}
           {estado === "sugestoes-grupos" && (
             <>
               <p>Conheça alguns grupos de {cidade || "sua cidade"}. Escolher é opcional.</p>

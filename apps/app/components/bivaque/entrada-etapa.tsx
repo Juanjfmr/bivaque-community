@@ -24,7 +24,7 @@ const PASSOS = [
 export function EntradaEtapa({
   passo,
   titulo,
-  apoio,
+  apoio = "",
   apoioExtra = null,
   icone = null,
   aoSair,
@@ -33,7 +33,8 @@ export function EntradaEtapa({
   /** Passo atual, de 1 a 5. Os anteriores aparecem concluídos. */
   passo: number
   titulo: string
-  apoio: string
+  /** Frase de apoio; telas que só têm título passam nada. */
+  apoio?: string
   /** Segunda linha do apoio, quando a tela precisa de duas frases. */
   apoioExtra?: string | null
   icone?: ReactNode
@@ -98,7 +99,7 @@ export function EntradaEtapa({
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="entrada-etapa-titulo">
           {titulo}
         </h1>
-        <p className="entrada-etapa-apoio">{apoio}</p>
+        {apoio === "" ? null : <p className="entrada-etapa-apoio">{apoio}</p>}
         {apoioExtra ? <p className="entrada-etapa-apoio">{apoioExtra}</p> : null}
         <div className="entrada-etapa-corpo">{children}</div>
       </div>
