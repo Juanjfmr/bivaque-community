@@ -1623,14 +1623,14 @@ body[data-profundidade="sim"] [data-casca="app"] {
   display: grid;
   align-self: flex-start;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border: 1px solid var(--border);
   border-radius: 50%;
   color: var(--foreground);
 }
 .entrada-acesso-marco .bv-icone {
-  font-size: 28px;
+  font-size: 32px;
 }
 .entrada-acesso-simulacao {
   align-self: center;
