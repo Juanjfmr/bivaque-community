@@ -2047,6 +2047,71 @@ body[data-profundidade="sim"] [data-casca="app"] {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
+/* Envio de identidade: área tracejada de arquivo único, com o cartão de tipo e
+   tamanho. Anatomia do File Dropzone
+   (https://21st.dev/@joyco/components/file-dropzone), reproduzida com os
+   componentes do app — sem copiar o código do bloco. */
+.entrada-envio {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 1px dashed var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: center;
+}
+.entrada-envio-marco {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+}
+.entrada-envio-marco .bv-icone {
+  font-size: 26px;
+}
+.entrada-envio-cartao {
+  font-size: 15px;
+  font-weight: 500;
+}
+/* O rótulo é o botão visível; o input fica sobre ele, invisível, para o clique e
+   o foco por teclado caírem no mesmo lugar. */
+.entrada-envio-botao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 15px;
+  cursor: pointer;
+}
+.entrada-envio-botao:has(.entrada-envio-campo:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-envio-campo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.entrada-envio-nota {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.entrada-envio-erro {
+  color: var(--destructive);
+  font-size: 14px;
+  line-height: 1.4;
+}
 /* Andaime da demonstração: link de texto no fim da coluna, sem competir com a ação. */
 .entrada-etapa-simulacao {
   justify-self: center;

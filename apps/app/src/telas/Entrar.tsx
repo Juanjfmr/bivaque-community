@@ -15,6 +15,33 @@ import { ESTADOS_DA_ENTRADA, type EstadoDaEntrada } from "@/lib/navegacao/rotas"
 
 // Composição adaptada de Login Form Card, Felipe Menezes, licença MIT:
 // https://21st.dev/@felipemenezes098/components/card-06
+
+// Envio de identidade (protótipo `features/entry/account.js`): do documento
+// ficam só o tipo e o tamanho — o nome pode trazer o CPF e nunca vai para a tela.
+const TIPOS_DE_DOCUMENTO: Record<string, string> = {
+  "application/pdf": "PDF",
+  "image/jpeg": "JPG",
+  "image/png": "PNG",
+}
+const LIMITE_DO_DOCUMENTO = 10 * 1024 * 1024
+
+function documentoAceito(escolhido: File): boolean {
+  return (
+    escolhido.type in TIPOS_DE_DOCUMENTO &&
+    escolhido.size > 0 &&
+    escolhido.size <= LIMITE_DO_DOCUMENTO
+  )
+}
+
+function rotuloDoArquivo(escolhido: File): string {
+  const kb = escolhido.size / 1024
+  const tamanho =
+    kb < 1024
+      ? `${Math.max(1, Math.round(kb))} KB`
+      : `${(kb / 1024).toFixed(1).replace(".", ",")} MB`
+  return `${TIPOS_DE_DOCUMENTO[escolhido.type] ?? "Documento"} · ${tamanho}`
+}
+
 export function Entrar() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const bruto = parametros["estado"] ?? "conta"
@@ -31,6 +58,7 @@ export function Entrar() {
   const [data, setData] = useState("")
   const [momento, setMomento] = useState<"chegando" | "morando" | "saindo">("morando")
   const [arquivo, setArquivo] = useState<File | null>(null)
+  const [erroArquivo, setErroArquivo] = useState("")
   const [enviado, setEnviado] = useState(false)
   const [avisar, setAvisar] = useState(false)
   const [aceitou, setAceitou] = useState(false)
@@ -72,11 +100,16 @@ export function Entrar() {
   const irPara = (destino: EstadoDaEntrada) =>
     void navegacao.irPara("entrar", { parametros: { estado: destino } })
   const irInicio = () => void navegacao.irPara("inicio")
-  const link = (destino: EstadoDaEntrada, texto: string) => (
-    <button type="button" className="entrada-link" onClick={() => irPara(destino)}>
-      {texto}
-    </button>
-  )
+  const escolherDocumento = (escolhido: File | null) => {
+    if (escolhido === null) return
+    if (!documentoAceito(escolhido)) {
+      setArquivo(null)
+      setErroArquivo("Escolha um PDF, JPG ou PNG de até 10 MB.")
+      return
+    }
+    setArquivo(escolhido)
+    setErroArquivo("")
+  }
   const acao = (texto: string, executar: () => void, secundaria = false, desabilitada = false) => (
     <Button
       type="button"
@@ -166,6 +199,8 @@ export function Entrar() {
     cpf: "Vamos conferir seu CPF para confirmar seu vínculo.",
     resultado: "Tudo certo. Agora escolha sua cidade.",
     "consulta-indisponivel": "A fonte oficial está fora do ar agora. Não é nada com seus dados.",
+    documento:
+      "Se a consulta por CPF não for concluída, você pode enviar sua identidade militar digital.",
   }
 
   /** A consulta indisponível explica a causa e o próximo passo em duas frases. */
@@ -193,7 +228,8 @@ export function Entrar() {
     estado === "aceite" ||
     estado === "cpf" ||
     estado === "resultado" ||
-    estado === "consulta-indisponivel"
+    estado === "consulta-indisponivel" ||
+    estado === "documento"
   ) {
     return (
       <EntradaEtapa
@@ -310,6 +346,47 @@ export function Entrar() {
             </Button>
           </>
         ) : null}
+        {estado === "documento" ? (
+          <>
+            <div className="entrada-envio">
+              <span className="entrada-envio-marco">
+                <Icone nome="ballot" />
+              </span>
+              {arquivo ? <p className="entrada-envio-cartao">{rotuloDoArquivo(arquivo)}</p> : null}
+              <label className="entrada-envio-botao">
+                {arquivo ? "Trocar arquivo" : "Selecionar arquivo"}
+                <input
+                  className="entrada-envio-campo"
+                  id="documento"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  onChange={(evento) => escolherDocumento(evento.target.files?.[0] ?? null)}
+                />
+              </label>
+            </div>
+            <p className="entrada-envio-nota">
+              Envie um único arquivo completo. PDF, JPG ou PNG, até 10 MB.
+            </p>
+            {erroArquivo ? (
+              <p className="entrada-envio-erro" role="alert">
+                {erroArquivo}
+              </p>
+            ) : null}
+            <Button
+              type="button"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("analise")}
+              disabled={!arquivo}
+            >
+              Enviar arquivo
+            </Button>
+            <p className="entrada-etapa-rodape">
+              <button type="button" className="entrada-etapa-link" onClick={() => irPara("cpf")}>
+                Voltar
+              </button>
+            </p>
+          </>
+        ) : null}
       </EntradaEtapa>
     )
   }
@@ -359,27 +436,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "documento" && (
-            <>
-              <p>
-                Se a consulta por CPF não for concluída, você pode enviar sua identidade militar
-                digital.
-              </p>
-              <label className="entrada-arquivo" htmlFor="documento">
-                Selecionar arquivo
-                <input
-                  id="documento"
-                  type="file"
-                  onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-                />
-              </label>
-              <p className="entrada-nota">
-                Envie um único arquivo completo.{arquivo ? ` Selecionado: ${arquivo.name}` : ""}
-              </p>
-              {acao("Enviar arquivo", () => irPara("analise"), false, !arquivo)}
-              {link("cpf", "Voltar")}
-            </>
-          )}
           {estado === "analise" && (
             <>
               <p>Na demonstração, acompanhe as etapas da análise por aqui.</p>
