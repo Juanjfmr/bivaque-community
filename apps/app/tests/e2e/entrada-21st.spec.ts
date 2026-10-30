@@ -34,9 +34,6 @@ test("cadastro percorre vínculo, cidade, grupos e boas-vindas", async ({ page }
   const familia = page.getByRole("checkbox", { name: /Famílias com crianças pequenas/ })
   await familia.check()
   await expect(familia).toBeChecked()
-  await expect(
-    page.getByText("Demonstração: selecionar grupos não cria participação."),
-  ).toBeVisible()
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
   await expect(
     page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
@@ -52,7 +49,7 @@ test("sugestões podem ser puladas e não mostram grupos de outra cidade", async
   await page.getByLabel("Cidade", { exact: true }).fill("Recife")
   await page.getByRole("button", { name: "Continuar", exact: true }).click()
   await expect(
-    page.getByText("Não há sugestões de demonstração para esta cidade. Você pode continuar."),
+    page.getByText("Ainda não há grupos sugeridos para esta cidade. Você pode continuar."),
   ).toBeVisible()
   await expect(page.getByText("Famílias com crianças pequenas")).toHaveCount(0)
   await page.getByRole("button", { name: "Escolher depois" }).click()

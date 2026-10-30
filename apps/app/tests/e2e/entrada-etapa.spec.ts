@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from "node:fs"
 import { dirname, join } from "node:path"
-import { expect, type Page, type TestInfo, test } from "@playwright/test"
+import { expect, type Locator, type Page, type TestInfo, test } from "@playwright/test"
 
 // Prova da composição B da entrada: as telas do lote ENT-002 (aceite, vínculo e
 // vínculo confirmado) e as do lote ENT-003 (consulta indisponível, documento e
@@ -25,6 +25,11 @@ function raizDoRepositorio(inicio: string): string {
 
 const PASTA_DAS_CAPTURAS = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-002")
 const PASTA_DAS_CAPTURAS_DO_LOTE = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-003")
+const PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS = join(
+  raizDoRepositorio(process.cwd()),
+  ".visual",
+  "ENT-004",
+)
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 const AVISO_DEMONSTRATIVO = "Jornada demonstrativa"
 
@@ -457,4 +462,221 @@ test("capturas de página inteira de consulta, documento e análise", async ({ p
   })
   await expect(page.getByText("Trocar arquivo")).toBeVisible()
   await capturar(page, "documento-escolhido", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
+})
+
+// ENT-004 — cidade e momento, sugestões de grupos (F01, lote 4).
+
+/** Largura de borda e cor do cartão: a seleção é borda Grafite de 2 px. */
+async function bordaDoCartao(cartao: Locator) {
+  return cartao.evaluate((elemento) => {
+    const estilo = getComputedStyle(elemento)
+    return { largura: estilo.borderTopWidth, cor: estilo.borderTopColor }
+  })
+}
+
+test("cidade fica no passo 3, com ícone no campo e os três momentos na mesma linha", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/cidade")
+  const titulo = page.getByRole("heading", { name: "Sua cidade e seu momento." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByRole("img", { name: "Etapa 3 de 5: Cidade" })).toBeVisible()
+  await expect(page.locator(".entrada-etapa-legenda")).toHaveText("Etapa 3 de 5 · Cidade")
+  await expect(page.locator('.entrada-etapa-passo[data-estado="concluido"]')).toHaveCount(2)
+  await expect(page.locator('.entrada-etapa-passo[data-estado="atual"]')).toHaveCount(1)
+  await expect(page.locator('.entrada-etapa-passo[data-estado="futuro"]')).toHaveCount(2)
+
+  // A cidade da demonstração vem preenchida, com o ícone de lugar no campo.
+  const cidade = page.getByLabel("Cidade", { exact: true })
+  await expect(cidade).toHaveValue("Manaus")
+  await expect(page.locator(".entrada-etapa-campo [data-icone='place']")).toBeVisible()
+  await expect(page.getByText("Jornada demonstrativa")).toHaveCount(0)
+
+  // Os três cartões, de largura igual e na mesma linha acima de 344 px.
+  const cartoes = page.locator(".entrada-etapa-momento label")
+  await expect(cartoes).toHaveCount(3)
+  const caixas = await cartoes.evaluateAll((elementos) =>
+    elementos.map((elemento) => {
+      const caixa = elemento.getBoundingClientRect()
+      return { topo: Math.round(caixa.top), largura: Math.round(caixa.width) }
+    }),
+  )
+  expect(new Set(caixas.map((caixa) => caixa.largura)).size).toBe(1)
+  const empilhado = (page.viewportSize()?.width ?? 0) <= 344
+  if (empilhado) {
+    expect(caixas[0]?.topo).toBeLessThan(caixas[1]?.topo ?? 0)
+    expect(caixas[1]?.topo).toBeLessThan(caixas[2]?.topo ?? 0)
+  } else {
+    expect(new Set(caixas.map((caixa) => caixa.topo)).size).toBe(1)
+  }
+
+  // Rádio desenhado: o nativo fica invisível e o desenho é do span em Grafite.
+  await expect(page.locator(".entrada-etapa-radio")).toHaveCount(3)
+  await expect(page.getByLabel("Moro aqui", { exact: true })).toBeChecked()
+  const selecionado = await bordaDoCartao(cartoes.nth(1))
+  const naoSelecionado = await bordaDoCartao(cartoes.nth(0))
+  expect(selecionado.largura).toBe("2px")
+  expect(naoSelecionado.largura).toBe("1px")
+  expect(selecionado.cor).not.toBe(naoSelecionado.cor)
+  const pontoDoRadio = await page
+    .locator(".entrada-etapa-momento label")
+    .nth(1)
+    .locator(".entrada-etapa-radio")
+    .evaluate((elemento) => getComputedStyle(elemento, "::after").backgroundColor)
+  expect(pontoDoRadio).not.toBe("rgba(0, 0, 0, 0)")
+
+  // Sem data nem destino em "Moro aqui"; "Como quer ser chamado" fica sempre.
+  await expect(page.getByLabel("Como quer ser chamado")).toBeVisible()
+  await expect(page.getByLabel("Data de chegada")).toHaveCount(0)
+  await expect(page.getByLabel("Data de saída")).toHaveCount(0)
+  await expect(page.getByLabel("Cidade de destino")).toHaveCount(0)
+
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Encontre seus grupos." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/sugestoes-grupos$/)
+})
+
+test("cidade mostra a data de chegada ou a data e o destino da saída", async ({ page }) => {
+  await page.goto("/app/entrar/cidade")
+  const data = page.getByLabel("Data de chegada")
+  const destino = page.getByLabel("Cidade de destino")
+
+  await page.getByLabel("Chegando", { exact: true }).check()
+  await expect(data).toBeVisible()
+  await expect(data).toHaveAttribute("type", "date")
+  await expect(destino).toHaveCount(0)
+
+  await page.getByLabel("Saindo", { exact: true }).check()
+  await expect(page.getByLabel("Data de chegada")).toHaveCount(0)
+  await expect(page.getByLabel("Data de saída")).toBeVisible()
+  await expect(page.getByLabel("Data de saída")).toHaveAttribute("type", "date")
+  await expect(destino).toBeVisible()
+
+  await page.getByLabel("Moro aqui", { exact: true }).check()
+  await expect(page.getByLabel("Data de saída")).toHaveCount(0)
+  await expect(destino).toHaveCount(0)
+})
+
+test("grupos sugeridos trazem foto, nome, descrição e a caixa desenhada", async ({ page }) => {
+  await page.goto("/app/entrar/sugestoes-grupos")
+  const titulo = page.getByRole("heading", { name: "Encontre seus grupos." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(
+    page.getByText("Conheça alguns grupos de Manaus. Escolher é opcional."),
+  ).toBeVisible()
+  await expect(page.getByRole("img", { name: "Etapa 4 de 5: Grupos" })).toBeVisible()
+  await expect(page.locator(".entrada-etapa-legenda")).toHaveText("Etapa 4 de 5 · Grupos")
+  await expect(
+    page.getByText("Demonstração: selecionar grupos não cria participação."),
+  ).toHaveCount(0)
+  await expect(page.getByText("Jornada demonstrativa")).toHaveCount(0)
+
+  // Só os grupos abertos da cidade: os quatro primeiros, nenhum fechado.
+  const cartoes = page.locator(".entrada-etapa-grupo")
+  await expect(cartoes).toHaveCount(4)
+  for (const nome of ["Chegadas 2027 em Manaus", "Famílias com crianças pequenas"]) {
+    await expect(page.getByRole("checkbox", { name: new RegExp(nome) })).toBeVisible()
+  }
+  for (const fechado of ["Futebol de sábado", "Pais do Colégio Militar de Manaus"]) {
+    await expect(page.getByText(fechado)).toHaveCount(0)
+  }
+
+  // Foto de capa de cada cartão, vinda da pasta de demonstração.
+  const fotos = cartoes.locator("img")
+  await expect(fotos).toHaveCount(4)
+  for (const fonte of await fotos.evaluateAll((imagens) =>
+    imagens.map((imagem) => imagem.getAttribute("src") ?? ""),
+  )) {
+    expect(fonte).toContain("/demo/")
+  }
+  await expect(cartoes.first().locator("strong")).toHaveText("Chegadas 2027 em Manaus")
+  await expect(cartoes.first().locator("small")).toContainText("Quem chega a Manaus")
+
+  // O cartão inteiro é o rótulo da caixa: marcar acende a caixa e a borda.
+  const familia = page.getByRole("checkbox", { name: /Famílias com crianças pequenas/ })
+  await expect(familia).not.toBeChecked()
+  await familia.check()
+  await expect(familia).toBeChecked()
+  const marcado = await bordaDoCartao(cartoes.nth(1))
+  const livre = await bordaDoCartao(cartoes.nth(0))
+  expect(marcado.largura).toBe("2px")
+  expect(livre.largura).toBe("1px")
+
+  await page.getByRole("button", { name: "Escolher depois" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/negocio$/)
+})
+
+test("cidade sem grupos mostra o vazio e deixa continuar", async ({ page }) => {
+  await page.goto("/app/entrar/cidade")
+  await page.getByLabel("Cidade", { exact: true }).fill("Recife")
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(
+    page.getByText("Ainda não há grupos sugeridos para esta cidade. Você pode continuar."),
+  ).toBeVisible()
+  await expect(page.locator(".entrada-etapa-grupo")).toHaveCount(0)
+  await expect(page.getByText("Famílias com crianças pequenas")).toHaveCount(0)
+
+  await page.getByRole("button", { name: "Continuar", exact: true }).click()
+  await expect(
+    page.getByRole("heading", { name: "Você tem um negócio ou oferece algum serviço?" }),
+  ).toBeVisible()
+})
+
+test("documento com tipo herdado do objeto é recusado", async ({ page }) => {
+  await page.goto("/app/entrar/documento")
+  await page.locator(ESCOLHER_ARQUIVO).setInputFiles({
+    name: "identidade.pdf",
+    mimeType: "toString",
+    buffer: DOCUMENTO_DE_EXEMPLO,
+  })
+  await expect(page.getByRole("alert")).toHaveText(ERRO_DE_ARQUIVO)
+  await expect(page.getByRole("button", { name: "Enviar arquivo" })).toBeDisabled()
+  await expect(page.getByText(/^Documento · /)).toHaveCount(0)
+})
+
+test("cidade e grupos não rolam na horizontal", async ({ page }) => {
+  for (const cidade of ["moro", "chegando", "saindo"]) {
+    await page.goto("/app/entrar/cidade")
+    if (cidade !== "moro") {
+      await page.getByLabel(cidade === "chegando" ? "Chegando" : "Saindo").check()
+    }
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+      .toBe(true)
+  }
+  await page.goto("/app/entrar/sugestoes-grupos")
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true)
+})
+
+test("capturas de página inteira de cidade e grupos", async ({ page }, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  const cidade = (momento: string) => page.getByLabel(momento, { exact: true })
+
+  await page.goto("/app/entrar/cidade")
+  await cidade("Moro aqui").check()
+  await capturar(page, "cidade-moro", testInfo, PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS)
+
+  await cidade("Chegando").check()
+  await expect(page.getByLabel("Data de chegada")).toBeVisible()
+  await capturar(page, "cidade-chegando", testInfo, PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS)
+
+  await cidade("Saindo").check()
+  await expect(page.getByLabel("Cidade de destino")).toBeVisible()
+  await capturar(page, "cidade-saindo", testInfo, PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS)
+
+  await page.goto("/app/entrar/sugestoes-grupos")
+  await page.getByRole("checkbox", { name: /Chegadas 2027 em Manaus/ }).check()
+  await expect(page.locator(".entrada-etapa-grupo").first()).toBeVisible()
+  await capturar(page, "grupos", testInfo, PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS)
 })
