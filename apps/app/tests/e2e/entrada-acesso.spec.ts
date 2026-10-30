@@ -406,6 +406,33 @@ test("o convite indisponível e a conta apagada explicam e levam adiante", async
   await expect(page).toHaveURL(/\/app\/inicio$/)
 })
 
+test("o convite e a conta apagada seguem os tokens no tema escuro", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" })
+  await page.goto("/app/entrar/convite")
+  await expect(page.getByRole("heading", { name: "Convite de família." })).toBeVisible()
+  expect(
+    await page
+      .locator("#convite-codigo")
+      .evaluate((campo) => getComputedStyle(campo).backgroundColor),
+  ).toBe("rgb(32, 41, 43)")
+  expect(
+    await page
+      .locator(".entrada-acesso-somente-leitura input")
+      .evaluate((campo) => getComputedStyle(campo).backgroundColor),
+  ).toBe("rgb(35, 45, 47)")
+  expect(
+    await page
+      .getByRole("img", { name: "Bivaque" })
+      .evaluate((marca) => (marca as HTMLImageElement).currentSrc),
+  ).toMatch(/bivaque-logo-horizontal-white\.svg$/)
+
+  await page.goto("/app/entrar/apagada")
+  await expect(page.getByRole("heading", { name: "Conta apagada." })).toBeVisible()
+  expect(
+    await page.locator(".entrada-acesso-marco").evaluate((marco) => getComputedStyle(marco).color),
+  ).toBe("rgb(236, 234, 228)")
+})
+
 test("retomar, convite, convite indisponível e conta apagada não rolam na horizontal", async ({
   page,
 }) => {

@@ -1191,7 +1191,7 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
   0 erros. `--filter @bivaque/app build`: build concluído (`built in 612ms`).
   `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`, `entrada-acesso`,
-  `entrada-21st`): **361 passed, 41 skipped, 0 failed** em 4,7 min nos seis viewports (320, 360, 375,
+  `entrada-21st`): **373 passed, 41 skipped, 0 failed** em 4,6 min nos seis viewports (320, 360, 375,
   430, 768 e 1440 px). `test:scope`: **150 passed, 0 failed** em 2,9 s. `lint` na raiz: **0 erros**
   em 1367 arquivos (18 avisos e 51 infos antigos, nenhum deste lote).
 - **O que ficou fora ou difere da referência.** (1) A foto e os atalhos das boas-vindas usam a coluna

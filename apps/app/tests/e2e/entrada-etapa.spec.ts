@@ -1356,6 +1356,29 @@ test("as boas-vindas não rolam na horizontal nos três momentos", async ({ page
   }
 })
 
+test("as boas-vindas seguem os tokens no tema escuro", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" })
+  await page.goto("/app/entrar/boas-vindas")
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
+    "rgb(23, 30, 32)",
+  )
+  expect(
+    await page
+      .locator(".entrada-etapa-atalho")
+      .first()
+      .evaluate((atalho) => getComputedStyle(atalho).backgroundColor),
+  ).toBe("rgb(32, 41, 43)")
+  expect(
+    await page
+      .getByRole("img", { name: "Bivaque" })
+      .evaluate((marca) => (marca as HTMLImageElement).currentSrc),
+  ).toMatch(/bivaque-logo-horizontal-white\.svg$/)
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true)
+})
+
 test("capturas de página inteira das boas-vindas nos três momentos", async ({ page }, testInfo) => {
   test.skip(
     !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
