@@ -52,7 +52,9 @@ exceto miniaturas nos grupos e a imagem das boas-vindas.
   "Continuar" (principal) lado a lado, cada um com metade da coluna.
 - **Progresso do negócio.** O indicador geral fica em "Negócio". Abaixo do título "Apresente seu
   negócio.", centralizado: "Passo X de 5" em Névoa e uma barra de cinco segmentos (concluídos e
-  atual em Grafite, futuros em `#E4E1D9`). Igual nas cinco etapas.
+  atual em Grafite, futuros em `#E4E1D9`). Igual nas cinco etapas. O subtítulo de cada etapa ("O
+  que você oferece?", "Onde você atende?", "Como funciona seu atendimento?", "Como podem conhecer
+  seu trabalho?", "Confira sua página") usa Noto Serif semibold, alinhado à esquerda da coluna.
 - **Indicador geral.** Concluído: círculo Grafite com check. Atual: círculo Grafite com número.
   Futuro: círculo vazado com contorno e número em Névoa. Nunca preenchido em cinza.
 - **Fotografia.** Luz de dia, quente, pessoas comuns em casa, vizinhança e convivência. Sem cena
@@ -106,6 +108,28 @@ antes de instalar. Base UI (`@base-ui/react`) não é o Radix do app; substituir
   título e, quando houver, descrição curta; selecionado com borda Grafite 2 px.
 - Chips de especialidade: contorno; selecionado em Grafite com texto Papel.
 - Aviso de status: faixa suave com ícone; sucesso em Névoa clara, nunca em Brasa.
+
+## Celular (390 px)
+
+Mesmo conteúdo, ordem, textos, componentes e regras da versão desktop aprovada; muda só a
+composição. Margem lateral de 20 px, uma coluna, campos e botões na largura total.
+
+- **A · Acesso no celular.** Barra superior com o logo (28 px) à esquerda. Abaixo, a fotografia
+  numa faixa recuada 16 px, cantos de 20 px, altura de cerca de um terço da tela, com a frase em
+  Noto Serif branca na base. Em "Criar conta", a etiqueta do público fica no topo da faixa e os três
+  itens de valor viram uma linha de três rótulos curtos com ícone logo abaixo da foto ("Guia da
+  cidade" · "Comunidades" · "Serviços indicados"), seguida de "Só entra quem tem o vínculo
+  confirmado." em texto pequeno. Depois, título, apoio e formulário alinhados à esquerda.
+- **B · Etapa no celular.** Barra superior com logo (28 px) e "Sair". O indicador de cinco passos
+  vira uma barra de cinco segmentos com a legenda "Etapa N de 5 · Nome" acima (concluídos e atual em
+  Grafite, futuros em `#E4E1D9`; "Etapa 5 de 5 · Negócio (opcional)"). "Passo X de 5" fica reservado
+  ao progresso interno do formulário de negócio, para nunca haver duas contagens iguais na tela. Título e apoio
+  centralizados; conteúdo alinhado à esquerda. Opções em linha de três (momento) continuam em linha
+  se couberem; cartões de grupos viram uma coluna com miniatura à esquerda.
+- **Ações.** Na largura total, principal em cima. No formulário de negócio, "Voltar" e "Continuar"
+  lado a lado, metade cada.
+- **Telas longas.** A imagem mostra a página inteira, do topo às ações, como uma captura de página
+  completa; nunca corta campos nem as ações.
 
 ## Formato do arquivo
 
