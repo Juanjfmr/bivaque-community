@@ -206,7 +206,8 @@ export function Entrar() {
 
   /** A consulta indisponível explica a causa e o próximo passo em duas frases. */
   const apoioExtraDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
-    "consulta-indisponivel": "Tente novamente em alguns minutos ou envie sua identidade para análise.",
+    "consulta-indisponivel":
+      "Tente novamente em alguns minutos ou envie sua identidade para análise.",
   }
 
   const iconeDaEtapa = () => {
@@ -352,7 +353,7 @@ export function Entrar() {
           <>
             <div className="entrada-envio">
               <span className="entrada-envio-marco">
-                <Icone nome="ballot" />
+                <Icone nome="badge" />
               </span>
               {arquivo ? <p className="entrada-envio-cartao">{rotuloDoArquivo(arquivo)}</p> : null}
               <label className="entrada-envio-botao">

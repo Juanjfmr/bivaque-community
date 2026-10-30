@@ -2118,7 +2118,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .entrada-linha li:not(:last-child)::before {
   content: "";
   position: absolute;
-  top: 42px;
+  top: 34px;
   bottom: -24px;
   left: 16px;
   width: 1px;

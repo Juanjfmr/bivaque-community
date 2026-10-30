@@ -2,13 +2,15 @@ import { existsSync, mkdirSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { expect, type Page, type TestInfo, test } from "@playwright/test"
 
-// Prova da composição B da entrada (ENT-002), nas três telas do lote: aceite,
-// vínculo e vínculo confirmado. Textos, passo atual, indicador acessível,
-// destinos, o "porquê" aberto, a simulação que continua funcionando, foco no
+// Prova da composição B da entrada: as telas do lote ENT-002 (aceite, vínculo e
+// vínculo confirmado) e as do lote ENT-003 (consulta indisponível, documento e
+// análise). Textos, passo atual, indicador acessível, destinos, o "porquê" aberto,
+// a simulação que continua funcionando, o arquivo que nunca expõe o nome, foco no
 // título, ausência de rolagem horizontal e o CPF que não sai do componente.
 //
 // As capturas de página inteira em 375, 768 e 1440 px ficam em
-// .visual/ENT-002/ para o revisor comparar com as referências aprovadas.
+// .visual/ENT-002/ e .visual/ENT-003/ para o revisor comparar com as referências
+// aprovadas.
 //
 // O cwd é apps/app; a raiz do repositório é encontrada subindo até o arquivo do
 // workspace. `import.meta` não existe aqui (o spec é transpilado).
@@ -22,12 +24,13 @@ function raizDoRepositorio(inicio: string): string {
 }
 
 const PASTA_DAS_CAPTURAS = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-002")
+const PASTA_DAS_CAPTURAS_DO_LOTE = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-003")
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 const AVISO_DEMONSTRATIVO = "Jornada demonstrativa"
 
 /** A captura é da página inteira: o app rola dentro de #conteudo, então a
  *  rolagem interna é desfeita só para o retrato, sem tocar no layout. */
-async function capturar(page: Page, nome: string, testInfo: TestInfo) {
+async function capturar(page: Page, nome: string, testInfo: TestInfo, pasta = PASTA_DAS_CAPTURAS) {
   const altura = await page.evaluate(() => {
     const conteudo = document.getElementById("conteudo")
     return conteudo ? Math.max(conteudo.clientHeight, conteudo.scrollHeight) : 900
@@ -38,15 +41,23 @@ async function capturar(page: Page, nome: string, testInfo: TestInfo) {
       '[data-casca="entrada"]{height:auto!important}' +
       `#conteudo{height:${altura}px!important;overflow:visible!important}`,
   })
-  mkdirSync(PASTA_DAS_CAPTURAS, { recursive: true })
+  mkdirSync(pasta, { recursive: true })
   await page.screenshot({
-    path: join(PASTA_DAS_CAPTURAS, `${nome}-${testInfo.project.name}.png`),
+    path: join(pasta, `${nome}-${testInfo.project.name}.png`),
     fullPage: true,
   })
 }
 
 const ehCelular = (testInfo: TestInfo) =>
   !["tablet-768", "desktop-1440"].includes(testInfo.project.name)
+
+// O nome do documento pode trazer o CPF: é por isso que a tela mostra só o tipo e
+// o tamanho, e o teste procura o nome no texto e em todos os atributos do DOM.
+const NOME_COM_CPF = "12345678909.pdf"
+const DOCUMENTO_DE_EXEMPLO = Buffer.from("%PDF-1.4\n% exemplo sem conteudo\n")
+
+const ESCOLHER_ARQUIVO = 'input[type="file"]'
+const ERRO_DE_ARQUIVO = "Escolha um PDF, JPG ou PNG de até 10 MB."
 
 test("aceite fica no passo 1 e o botão só destrava com o aceite", async ({ page }, testInfo) => {
   await page.goto("/app/entrar/aceite")
@@ -146,10 +157,18 @@ test("vínculo confirmado traz o ícone, o título do passo 2 e o destino da cid
   await expect(page).toHaveURL(/\/app\/entrar\/cidade$/)
 })
 
-test("as três etapas não têm o aviso de jornada demonstrativa", async ({ page }) => {
-  for (const tela of ["aceite", "cpf", "resultado"]) {
+test("as etapas não têm o aviso de jornada demonstrativa", async ({ page }) => {
+  for (const tela of [
+    "aceite",
+    "cpf",
+    "resultado",
+    "consulta-indisponivel",
+    "documento",
+    "analise",
+  ]) {
     await page.goto(`/app/entrar/${tela}`)
     await expect(page.getByText(AVISO_DEMONSTRATIVO), tela).toHaveCount(0)
+    await expect(page.getByText("Na demonstração"), tela).toHaveCount(0)
   }
 })
 
@@ -176,8 +195,15 @@ test("a ordem do Tab começa em Sair e segue para o conteúdo", async ({ page })
   expect(ordem).toEqual(["Sair", "entrar-cpf", "Por que pedimos seu CPF?", "Continuar"])
 })
 
-test("as três etapas não rolam na horizontal", async ({ page }) => {
-  for (const tela of ["aceite", "cpf", "resultado"]) {
+test("as etapas não rolam na horizontal", async ({ page }) => {
+  for (const tela of [
+    "aceite",
+    "cpf",
+    "resultado",
+    "consulta-indisponivel",
+    "documento",
+    "analise",
+  ]) {
     await page.goto(`/app/entrar/${tela}`)
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -228,4 +254,207 @@ test("capturas de página inteira de aceite, vínculo e vínculo confirmado", as
     await expect(page.getByRole("heading", { name: titulo })).toBeVisible()
     await capturar(page, tela, testInfo)
   }
+})
+
+// ENT-003 — consulta indisponível, documento e análise (F01, lote 3).
+
+test("no indicador, o passo 5 não tem traço entre o círculo e o rótulo", async ({
+  page,
+}, testInfo) => {
+  test.skip(ehCelular(testInfo), "no celular o indicador é a legenda com a barra de segmentos")
+  await page.goto("/app/entrar/cpf")
+  const ultimo = page.locator(".entrada-etapa-passo:last-child")
+  await expect(ultimo.locator(".entrada-etapa-rotulo")).toHaveText(/Negócio\s*opcional/)
+
+  // O conector entre círculos não pode sobrar no último passo: ele fica sem
+  // caixa (display:none), e só o círculo e o rótulo desenham ali.
+  const filhos = await ultimo.locator("xpath=./*").evaluateAll((elementos) =>
+    elementos.map((elemento) => {
+      const caixa = elemento.getBoundingClientRect()
+      return { classe: elemento.getAttribute("class") ?? "", altura: caixa.height, topo: caixa.top }
+    }),
+  )
+  const visiveis = filhos.filter((filho) => filho.altura > 0)
+  expect(visiveis.map((filho) => filho.classe)).toEqual([
+    "entrada-etapa-circulo",
+    "entrada-etapa-rotulo",
+  ])
+  expect(visiveis[0]?.topo).toBeLessThan(visiveis[1]?.topo ?? 0)
+})
+
+test("o check do vínculo confirmado tem pelo menos 36 px no círculo de 72 px", async ({ page }) => {
+  await page.goto("/app/entrar/resultado")
+  const circulo = page.locator(".entrada-etapa-confirmacao")
+  await expect(circulo).toBeVisible()
+  expect((await circulo.boundingBox())?.width).toBe(72)
+  const check = await circulo.locator('[data-icone="check"]').boundingBox()
+  if (!check) throw new Error("check ausente dentro do círculo de confirmação")
+  expect(check.width).toBeGreaterThanOrEqual(36)
+  expect(check.height).toBeGreaterThanOrEqual(36)
+})
+
+test("consulta indisponível explica a causa e leva ao vínculo ou ao documento", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/consulta-indisponivel")
+  const titulo = page.getByRole("heading", { name: "Não foi possível concluir a consulta." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByRole("img", { name: "Etapa 2 de 5: Vínculo" })).toBeVisible()
+  await expect(page.locator('[data-icone="search_off"]')).toBeVisible()
+  await expect(
+    page.getByText("A fonte oficial está fora do ar agora. Não é nada com seus dados."),
+  ).toBeVisible()
+  await expect(
+    page.getByText("Tente novamente em alguns minutos ou envie sua identidade para análise."),
+  ).toBeVisible()
+
+  await page.getByRole("button", { name: "Enviar identidade" }).click()
+  await expect(page.getByRole("heading", { name: "Envie sua identidade." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/documento$/)
+
+  await page.goto("/app/entrar/consulta-indisponivel")
+  await page.getByRole("button", { name: "Tentar novamente" }).click()
+  await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/cpf$/)
+})
+
+test("documento mostra só o tipo e o tamanho, nunca o nome do arquivo", async ({ page }) => {
+  await page.goto("/app/entrar/documento")
+  const titulo = page.getByRole("heading", { name: "Envie sua identidade." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByRole("img", { name: "Etapa 2 de 5: Vínculo" })).toBeVisible()
+  await expect(
+    page.getByText(
+      "Se a consulta por CPF não for concluída, você pode enviar sua identidade militar digital.",
+    ),
+  ).toBeVisible()
+  await expect(
+    page.getByText("Envie um único arquivo completo. PDF, JPG ou PNG, até 10 MB."),
+  ).toBeVisible()
+  await expect(page.getByText("Selecionar arquivo")).toBeVisible()
+  await expect(page.locator(ESCOLHER_ARQUIVO)).toHaveAttribute(
+    "accept",
+    ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+  )
+
+  const envio = page.getByRole("button", { name: "Enviar arquivo" })
+  await expect(envio).toBeDisabled()
+
+  await page.locator(ESCOLHER_ARQUIVO).setInputFiles({
+    name: NOME_COM_CPF,
+    mimeType: "application/pdf",
+    buffer: DOCUMENTO_DE_EXEMPLO,
+  })
+  await expect(page.getByText(/^PDF · \d+ KB$/)).toBeVisible()
+  await expect(page.getByText("Trocar arquivo")).toBeVisible()
+  await expect(envio).toBeEnabled()
+
+  // O nome pode trazer o CPF: não pode aparecer no texto nem em atributo nenhum.
+  const comNome = await page.evaluate(() => {
+    const valores: string[] = []
+    for (const elemento of document.querySelectorAll("*")) {
+      for (const atributo of elemento.attributes) valores.push(atributo.value)
+    }
+    return `${document.body.innerText} ${valores.join(" ")}`
+  })
+  expect(comNome).not.toContain(NOME_COM_CPF)
+  expect(comNome).not.toContain("12345678909")
+
+  await envio.click()
+  await expect(page.getByRole("heading", { name: "Vínculo em análise." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/analise$/)
+
+  await page.goto("/app/entrar/documento")
+  await page.getByRole("button", { name: "Voltar" }).click()
+  await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/cpf$/)
+})
+
+test("documento recusa tipo ou tamanho inválido e mantém o envio travado", async ({ page }) => {
+  await page.goto("/app/entrar/documento")
+  const envio = page.getByRole("button", { name: "Enviar arquivo" })
+  const erro = page.getByRole("alert")
+
+  await page.locator(ESCOLHER_ARQUIVO).setInputFiles({
+    name: "identidade.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("não é documento"),
+  })
+  await expect(erro).toHaveText(ERRO_DE_ARQUIVO)
+  await expect(envio).toBeDisabled()
+
+  // PDF acima de 10 MB: o tipo serve, o tamanho não.
+  await page.locator(ESCOLHER_ARQUIVO).setInputFiles({
+    name: "identidade.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
+  })
+  await expect(erro).toHaveText(ERRO_DE_ARQUIVO)
+  await expect(envio).toBeDisabled()
+  await expect(page.getByText(/^PDF · /)).toHaveCount(0)
+
+  // Um arquivo válido limpa o erro e libera o envio.
+  await page.locator(ESCOLHER_ARQUIVO).setInputFiles({
+    name: "identidade.pdf",
+    mimeType: "application/pdf",
+    buffer: DOCUMENTO_DE_EXEMPLO,
+  })
+  await expect(erro).toHaveCount(0)
+  await expect(envio).toBeEnabled()
+})
+
+test("análise traz a linha do tempo com o marco atual acessível", async ({ page }) => {
+  await page.goto("/app/entrar/analise")
+  const titulo = page.getByRole("heading", { name: "Vínculo em análise." })
+  await expect(titulo).toBeVisible()
+  await expect(titulo).toBeFocused()
+  await expect(page.getByRole("img", { name: "Etapa 2 de 5: Vínculo" })).toBeVisible()
+  await expect(page.getByText("Acompanhe as etapas da análise por aqui.")).toBeVisible()
+
+  const marcos = page.locator("ol.entrada-linha > li")
+  await expect(marcos).toHaveCount(3)
+  await expect(marcos.nth(0)).toHaveText(/Documento enviado/)
+  await expect(marcos.nth(1)).toHaveText(/Em análise\s*Até 2 dias úteis, normalmente no mesmo dia/)
+  await expect(marcos.nth(2)).toHaveText(/Resultado\s*Você recebe um aviso assim que liberar/)
+
+  const atual = page.locator('ol.entrada-linha > li[aria-current="step"]')
+  await expect(atual).toHaveCount(1)
+  await expect(atual).toHaveText(/Em análise/)
+
+  const aviso = page.getByRole("checkbox", { name: "Avise-me quando houver uma atualização." })
+  await expect(aviso).not.toBeChecked()
+  await aviso.check()
+  await expect(aviso).toBeChecked()
+
+  await page.getByRole("button", { name: "Substituir documento" }).click()
+  await expect(page.getByRole("heading", { name: "Envie sua identidade." })).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/entrar\/documento$/)
+})
+
+test("capturas de página inteira de consulta, documento e análise", async ({ page }, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  for (const [tela, titulo] of [
+    ["consulta-indisponivel", "Não foi possível concluir a consulta."],
+    ["documento", "Envie sua identidade."],
+    ["analise", "Vínculo em análise."],
+  ] as const) {
+    await page.goto(`/app/entrar/${tela}`)
+    await expect(page.getByRole("heading", { name: titulo })).toBeVisible()
+    await capturar(page, tela, testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
+  }
+
+  await page.goto("/app/entrar/documento")
+  await page.locator(ESCOLHER_ARQUIVO).setInputFiles({
+    name: NOME_COM_CPF,
+    mimeType: "application/pdf",
+    buffer: DOCUMENTO_DE_EXEMPLO,
+  })
+  await expect(page.getByText("Trocar arquivo")).toBeVisible()
+  await capturar(page, "documento-escolhido", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
 })
