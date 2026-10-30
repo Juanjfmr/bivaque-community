@@ -203,6 +203,9 @@ export function Entrar() {
   // no passo 2 (contrato ENT-003).
   const apoioDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
     aceite: "Leia e aceite para continuar com sua conta Google.",
+    negocio: "No Mercado, você pode apresentar seu negócio ou serviço à comunidade.",
+    "negocio-interesse":
+      "Quando quiser, explore os negócios locais no Mercado e conheça o que a comunidade procura.",
     cpf: "Vamos conferir seu CPF para confirmar seu vínculo.",
     resultado: "Tudo certo. Agora escolha sua cidade.",
     "consulta-indisponivel": "A fonte oficial está fora do ar agora. Não é nada com seus dados.",
@@ -216,6 +219,7 @@ export function Entrar() {
   const apoioExtraDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
     "consulta-indisponivel":
       "Tente novamente em alguns minutos ou envie sua identidade para análise.",
+    negocio: "Esta etapa é opcional. Você pode voltar a ela depois.",
   }
 
   const iconeDaEtapa = () => {
@@ -232,6 +236,91 @@ export function Entrar() {
       return <Icone nome="search_off" className="entrada-etapa-icone" />
     }
     return null
+  }
+
+  if (estado === "negocio" || estado === "negocio-formulario" || estado === "negocio-interesse") {
+    return (
+      <EntradaEtapa
+        passo={5}
+        titulo={titulo[estado]}
+        apoio={apoioDaEtapa[estado] ?? ""}
+        apoioExtra={apoioExtraDaEtapa[estado] ?? null}
+        aoSair={() => irPara("login")}
+      >
+        {estado === "negocio" ? (
+          <>
+            <Button
+              type="button"
+              className="entrada-etapa-acao"
+              onClick={() => {
+                setNegocioSalvo(false)
+                irPara("negocio-formulario")
+              }}
+            >
+              Divulgar agora
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("negocio-interesse")}
+            >
+              Tenho interesse em criar
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("boas-vindas")}
+            >
+              Decidir depois
+            </Button>
+          </>
+        ) : null}
+        {estado === "negocio-formulario" ? (
+          negocioSalvo ? (
+            <>
+              <p role="status" className="entrada-etapa-aviso">
+                <Icone nome="check_circle" />
+                Rascunho salvo nesta sessão. Seu negócio não foi publicado.
+              </p>
+              <Button
+                type="button"
+                className="entrada-etapa-acao"
+                onClick={() => irPara("boas-vindas")}
+              >
+                Continuar
+              </Button>
+            </>
+          ) : (
+            <FormularioNegocio
+              cidade={cidade}
+              aoCancelar={() => irPara("negocio")}
+              aoConcluir={() => setNegocioSalvo(true)}
+            />
+          )
+        ) : null}
+        {estado === "negocio-interesse" ? (
+          <>
+            <Button
+              type="button"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("boas-vindas")}
+            >
+              Continuar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("negocio")}
+            >
+              Voltar
+            </Button>
+          </>
+        ) : null}
+      </EntradaEtapa>
+    )
   }
 
   if (
@@ -604,41 +693,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "negocio" && (
-            <>
-              <p>No Mercado, você pode apresentar seu negócio ou serviço à comunidade.</p>
-              <p className="entrada-nota">Esta etapa é opcional. Você pode voltar a ela depois.</p>
-              {acao("Divulgar agora", () => {
-                setNegocioSalvo(false)
-                irPara("negocio-formulario")
-              })}
-              {acao("Tenho interesse em criar", () => irPara("negocio-interesse"), true)}
-              {acao("Decidir depois", () => irPara("boas-vindas"), true)}
-            </>
-          )}
-          {estado === "negocio-formulario" &&
-            (negocioSalvo ? (
-              <>
-                <p role="status">Rascunho salvo nesta sessão. Seu negócio não foi publicado.</p>
-                {acao("Continuar", () => irPara("boas-vindas"))}
-              </>
-            ) : (
-              <FormularioNegocio
-                cidade={cidade}
-                aoCancelar={() => irPara("negocio")}
-                aoConcluir={() => setNegocioSalvo(true)}
-              />
-            ))}
-          {estado === "negocio-interesse" && (
-            <>
-              <p>
-                Quando quiser, explore os negócios locais no Mercado e conheça o que a comunidade
-                procura.
-              </p>
-              {acao("Continuar", () => irPara("boas-vindas"))}
-              {acao("Voltar", () => irPara("negocio"), true)}
-            </>
-          )}
           {estado === "boas-vindas" && (
             <>
               <p>Encontre informações e pessoas para acompanhar sua jornada.</p>
