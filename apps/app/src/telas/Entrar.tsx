@@ -162,10 +162,11 @@ export function Entrar() {
   // confirmado usam a composição B; as demais telas continuam no cartão.
   const apoioDaEtapa: Partial<Record<EstadoDaEntrada, string>> = {
     aceite: "Leia e aceite para continuar com sua conta Google.",
+    cpf: "Vamos conferir seu CPF para confirmar seu vínculo.",
     resultado: "Tudo certo. Agora escolha sua cidade.",
   }
 
-  if (estado === "aceite" || estado === "resultado") {
+  if (estado === "aceite" || estado === "cpf" || estado === "resultado") {
     return (
       <EntradaEtapa
         passo={estado === "aceite" ? 1 : 2}
@@ -218,11 +219,59 @@ export function Entrar() {
               Aceitar e continuar
             </Button>
           </>
-        ) : (
+        ) : null}
+        {estado === "cpf" ? (
+          <>
+            <Campo
+              id="entrar-cpf"
+              rotulo="CPF"
+              valor={cpf}
+              aoMudar={setCpf}
+              inputMode="numeric"
+              autoComplete="off"
+            />
+            <p className="entrada-etapa-aviso">
+              <Icone nome="lock" className="size-5" />
+              Seu CPF é usado só nesta consulta e não fica guardado.
+            </p>
+            <details className="entrada-etapa-detalhe" open>
+              <summary>Por que pedimos seu CPF?</summary>
+              <p>
+                Conferimos na fonte oficial se você é militar federal da ativa, veterano ou
+                pensionista. Leva poucos segundos. Familiares entram pelo convite, sem CPF.
+              </p>
+            </details>
+            <Button
+              type="button"
+              className="entrada-etapa-acao"
+              onClick={() => irPara("resultado")}
+            >
+              Continuar
+            </Button>
+            <p className="entrada-etapa-rodape">
+              É familiar?{" "}
+              <button
+                type="button"
+                className="entrada-etapa-link"
+                onClick={() => irPara("convite")}
+              >
+                Usar convite
+              </button>
+            </p>
+            <button
+              type="button"
+              className="entrada-etapa-simulacao"
+              onClick={() => irPara("consulta-indisponivel")}
+            >
+              Simular consulta indisponível
+            </button>
+          </>
+        ) : null}
+        {estado === "resultado" ? (
           <Button type="button" className="entrada-etapa-acao" onClick={() => irPara("cidade")}>
             Continuar
           </Button>
-        )}
+        ) : null}
       </EntradaEtapa>
     )
   }
@@ -272,26 +321,6 @@ export function Entrar() {
           </CardDescription>
         </CardHeader>
         <CardContent className="entrada-conteudo">
-          {estado === "cpf" && (
-            <>
-              <p>Vamos conferir seu CPF para confirmar seu vínculo.</p>
-              <Campo
-                id="entrar-cpf"
-                rotulo="CPF"
-                valor={cpf}
-                aoMudar={setCpf}
-                inputMode="numeric"
-                autoComplete="off"
-              />
-              <details>
-                <summary>Por que pedimos seu CPF?</summary>
-                <p>Para conferir o vínculo com a comunidade.</p>
-              </details>
-              {acao("Continuar", () => irPara("resultado"))}
-              {acao("Simular consulta indisponível", () => irPara("consulta-indisponivel"), true)}
-              <p className="entrada-rodape">É familiar? {link("convite", "Usar convite")}</p>
-            </>
-          )}
           {estado === "consulta-indisponivel" && (
             <>
               <p>Tente novamente ou envie sua identidade para análise.</p>

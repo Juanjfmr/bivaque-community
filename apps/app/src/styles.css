@@ -1955,6 +1955,10 @@ body[data-profundidade="sim"] [data-casca="app"] {
   width: 100%;
   margin-top: 16px;
 }
+.entrada-etapa-corpo input:not([type="checkbox"]) {
+  min-height: 48px;
+  background: var(--card);
+}
 .entrada-etapa-acao {
   width: 100%;
   height: 48px;
