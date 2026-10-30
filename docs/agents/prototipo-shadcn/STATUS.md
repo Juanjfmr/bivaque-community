@@ -1033,3 +1033,45 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
   julgamento; a comparação com as referências aprovadas é do revisor.
 
+## ENT-003 — consulta, documento e análise da F01 — 30/10/2026
+
+- **O que mudou.** As três telas do lote saíram do cartão e passaram para a composição B
+  (`EntradaEtapa`, passo 2 · Vínculo), em `apps/app/src/telas/Entrar.tsx`:
+  `/app/entrar/consulta-indisponivel` (ícone, duas linhas de apoio e as ações "Tentar novamente" e
+  "Enviar identidade"), `/app/entrar/documento` e `/app/entrar/analise`. O parágrafo "Jornada
+  demonstrativa" e qualquer "Na demonstração" saíram dessas telas.
+- **Consulta indisponível.** `cloud_off` não está no subconjunto hospedado dos Material Symbols, e
+  `lib/icones.ts` está fora dos caminhos permitidos do contrato: o ícone é `search_off` (a consulta
+  cortada), o equivalente já hospedado. Apoio em duas frases: a causa ("A fonte oficial está fora do
+  ar agora. Não é nada com seus dados.") e o próximo passo.
+- **Documento.** Área tracejada de arquivo único com ícone `badge`, botão "Selecionar arquivo" (o
+  `input type=file` fica sobre o rótulo, invisível, com foco visível no rótulo por `:has`), `accept`
+  de PDF/JPG/PNG e nota "Envie um único arquivo completo. PDF, JPG ou PNG, até 10 MB.". Arquivo de
+  tipo ou tamanho inválido (acima de 10 MB) mostra `role="alert"` "Escolha um PDF, JPG ou PNG de até
+  10 MB." e mantém "Enviar arquivo" desabilitado; com arquivo válido a área mostra só o cartão de tipo
+  e tamanho ("PDF · 1 KB") e "Trocar arquivo". **O nome do arquivo não aparece na tela em lugar
+  nenhum** — nem no texto, nem em atributo (provado com `12345678909.pdf`). O arquivo continua só como
+  `File` no estado: sem `FileReader`, sem `URL.createObjectURL`, sem envio, sem storage, sem log.
+- **Análise.** Linha do tempo vertical com três marcos: "Documento enviado" (check em círculo
+  Grafite), "Em análise" (círculo Grafite com o número 2, prazo "Até 2 dias úteis, normalmente no
+  mesmo dia") e "Resultado" (círculo vazado em `var(--muted-foreground)`, "Você recebe um aviso assim
+  que liberar"). É um `ol` com `aria-current="step"` no marco atual; abaixo, a caixa desenhada
+  "Avise-me quando houver uma atualização." (estado local) e o secundário "Substituir documento".
+- **Correções do ENT-002.** O conector do indicador só existe entre círculos: o passo 5 não desenha
+  linha nenhuma entre o círculo e o rótulo "Negócio". O check do vínculo confirmado passou a 36 px de
+  glifo dentro do círculo de 72 px (antes eram 24 px de glifo numa caixa de 36 px).
+- **Compatibilidade.** `entrada-21st.spec.ts` não precisou de ajuste: nenhum teste dele dependia do
+  nome do arquivo, do aviso de demonstração ou dos textos substituídos. O CSS morto de
+  `.entrada-arquivo` e `.entrada-etapas` saiu junto.
+- **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
+  0 erros. `--filter @bivaque/app build`: build concluído (`built in 386ms`).
+  `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`, `entrada-acesso`,
+  `entrada-21st`): **180 passed, 24 skipped, 0 failed** em 2,2 min nos seis viewports. `lint` na
+  raiz: **0 erros** em 1367 arquivos (18 avisos e 51 infos antigos, nenhum deste lote — os dois erros
+  de formatação que o lote introduziu foram corrigidos antes desta prova).
+- **Capturas para o revisor:**
+  `.visual/ENT-003/{consulta-indisponivel,documento,documento-escolhido,analise}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec.
+- **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
+  julgamento; a comparação com as referências aprovadas é do revisor.
+
