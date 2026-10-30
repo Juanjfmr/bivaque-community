@@ -1161,3 +1161,51 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
   julgamento; a comparação com as referências aprovadas é do revisor.
 
+## ENT-006 — boas-vindas, retomar, convite e conta apagada da F01 — 30/10/2026
+
+- **O que mudou.** As últimas telas da entrada saíram do cartão antigo. `/app/entrar/boas-vindas` usa
+  a composição B (`EntradaEtapa`, agora com passo e "Sair" opcionais) sem indicador de passos: foto
+  `demo/landing-hero.webp` de 16 px de canto no topo da coluna, check pequeno em círculo Grafite
+  sobre a borda inferior, título "Você chegou ao Bivaque." em Noto Serif centralizado, apoio que muda
+  pelo momento escolhido na cidade e atalhos de linha inteira com ícone e seta — "Ver o plano de
+  chegada"/"Ver o plano de saída" (→ início), "Conhecer quem chega com você · Chegadas 2027 em
+  Manaus" (→ `/app/grupo/turma-manaus-2027`, só em Manaus e só em "chegando") e "Conhecer {cidade}"
+  (→ guia) em "moro aqui". O principal é "Entrar na comunidade" (→ `/app/comunidade`).
+- **Retomar, convite, convite indisponível e conta apagada** entraram na composição A
+  (`entrada-acesso.tsx`), com o painel da foto e o formulário ao lado: retomar com avatar de
+  iniciais, nome e e-mail da conta em andamento (sem dados, o nome da pessoa da demonstração lido de
+  `lib/dados`, sem e-mail); convite com campo único de código em maiúsculas, monoespaçado e com
+  espaçamento entre letras, "Nome completo", "E-mail do convite" somente leitura com fundo
+  `surface-container` e cadeado, senha com "Mostrar", aceite desenhado e "Aceitar convite" travado
+  até o aceite (→ cidade), mais "Simular convite indisponível" como texto discreto; convite
+  indisponível e conta apagada com ícone de traço em círculo, alinhados à esquerda. Login, criar
+  conta e recuperar senha não mudaram de campo, validação ou destino.
+- **Correção do ENT-005.** Abaixo de 768 px a barra interna "Passo X de 5" do negócio fica com 60% da
+  largura da coluna e centralizada, distinta da barra geral da etapa.
+- **Cartão antigo removido.** Nenhuma rota de `/app/entrar/*` usa mais o cartão nem mostra o
+  parágrafo "Jornada demonstrativa". Saíram `telas/Entrar.tsx` (cartão, `acao`, `campoSenha`,
+  `aceite`) e o CSS sem uso (`.entrada-pagina`, `.entrada-cartao`, `.entrada-cabecalho`,
+  `.entrada-conteudo`, `.entrada-marca`, `.entrada-botao`, `.entrada-link`, `.entrada-senha`,
+  `.entrada-mostrar`, `.entrada-aceite`, `.entrada-rodape`, `.entrada-direita`,
+  `.entrada-divisor`, `.entrada-nota`) — 112 linhas de CSS.
+- **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
+  0 erros. `--filter @bivaque/app build`: build concluído (`built in 612ms`).
+  `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`, `entrada-acesso`,
+  `entrada-21st`): **361 passed, 41 skipped, 0 failed** em 4,7 min nos seis viewports (320, 360, 375,
+  430, 768 e 1440 px). `test:scope`: **150 passed, 0 failed** em 2,9 s. `lint` na raiz: **0 erros**
+  em 1367 arquivos (18 avisos e 51 infos antigos, nenhum deste lote).
+- **O que ficou fora ou difere da referência.** (1) A foto e os atalhos das boas-vindas usam a coluna
+  de 560 px da composição B; a imagem aprovada mede cerca de 720 px. (2) "Sair" não aparece nas
+  boas-vindas, como o contrato pede — a imagem de referência ainda o mostra. (3) O caso "retomar com
+  dados" não é alcançável pela interface: nenhuma tela liga para `/app/entrar/retomar`, e o estado do
+  componente não sobrevive a um carregamento por URL; o código usa o estado da entrada e o teste cobre
+  o caso vazio (nome da demonstração, sem e-mail). (4) O "E-mail do convite" aparece vazio nesta
+  demonstração porque não há convite de origem no estado; não foi inventado texto nem valor. (5) Os
+  estilos novos da composição A usam o prefixo `.entrada-acesso`, que é o prefixo daquela composição,
+  e não `.entrada-etapa`. (6) O ícone de resultado é `error` (convite indisponível) e `check` (conta
+  apagada) do subconjunto hospedado de Material Symbols.
+- **Capturas para o revisor:**
+  `.visual/ENT-006/{boas-vindas-chegando,boas-vindas-moro,boas-vindas-saindo,retomar,convite,convite-indisponivel,apagada}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec.
+- **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
+  julgamento; a comparação com as referências aprovadas é do revisor.
