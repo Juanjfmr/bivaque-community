@@ -1003,3 +1003,33 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - Limites declarados por tela (estado local sem backend, editor/assistente de anuncio, pedidos com
   backend, filas do dono, grupos de dados da paleta) estao no cabecalho de cada arquivo e em
   .visual/coordenacao/APP-ONDAS-OPENCODE.md.
+
+## ENT-002 — composição de etapa da F01 — 30/10/2026
+
+- **O que mudou.** `apps/app/components/bivaque/entrada-etapa.tsx` (novo) traz a composição B de
+  `docs/design/fluxos-2026-10-30/F01-DIRECAO.md`: barra fina com o logo de 28 px (com a troca para a
+  versão branca no tema escuro) e "Sair" à direita, indicador de cinco passos nomeados e coluna de
+  560 px. No celular o indicador vira a legenda "Etapa N de 5 · Nome" e uma barra de cinco segmentos.
+  Anatomia do indicador inspirada no Basic Stepper (21st.dev), reproduzida com os componentes do app.
+- **Telas.** `/app/entrar/aceite` (passo 1, "Só falta aceitar o combinado.", caixa desenhada em
+  Grafite, botão travado até o aceite), `/app/entrar/cpf` (passo 2, faixa com cadeado "Seu CPF é usado
+  só nesta consulta e não fica guardado", "Por que pedimos seu CPF?" já aberto, rodapé "É familiar?
+  Usar convite" e a simulação como texto discreto no fim da coluna) e `/app/entrar/resultado` (passo 2
+  com Conta concluída, ícone de confirmação de 72 px). Os textos de apoio, os destinos e os campos são
+  os de hoje; o parágrafo "Jornada demonstrativa" saiu dessas três telas e continua nas que ainda
+  estão no cartão.
+- **O CPF não mudou de tratamento.** Continua só no estado do componente `Entrar`, sem
+  localStorage/sessionStorage, sem log, sem envio e sem aparecer na URL; o lote mudou apenas a
+  apresentação. Isso é provado por teste que digita, navega até o vínculo confirmado e varre os dois
+  armazenamentos e a URL.
+- **Provas (números desta sessão, CI=true).** `--filter @bivaque/app typecheck`: 0 erros.
+  `--filter @bivaque/app build`: build concluído. `--filter @bivaque/app test:e2e` nos três specs da
+  entrada (`entrada-etapa`, `entrada-acesso`, `entrada-21st`): **145 passed, 17 skipped, 0 failed**
+  em 1,8 min nos seis viewports; o `entrada-etapa` sozinho dá 45 passed e 3 skipped (captura só em
+  375/768/1440). `lint`: **1 erro**, em `tools/backend-kanban/public/board.json`, que já falhava antes
+  deste lote e está fora dos caminhos permitidos do contrato — todo o resto são avisos antigos.
+- **Capturas para o revisor:** `.visual/ENT-002/{aceite,cpf,resultado}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec.
+- **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
+  julgamento; a comparação com as referências aprovadas é do revisor.
+
