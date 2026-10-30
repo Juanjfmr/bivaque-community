@@ -5427,6 +5427,7 @@
       ],
       "completedChecklist": [true, true, true, true, true, true, false],
       "proof": [
+        "30/10: gate da raiz na revisão cee11eb8: lint, typecheck, typecheck:e2e, build:app, test (1726 domínio, 92 app, 76 mobile, 19 web, 189 privacidade, 150 escopo) e secrets verdes; build do apps/web PULADO por falta do arquivo de ambiente local do web — gate não é completo. Esta frente não tocou apps/web.",
         "30/10: ENT-006 (boas-vindas por momento, retomar, convite, convite indisponível, conta apagada; cartão antigo removido) entregue pelo OpenCode. Verificação independente na revisão a1872617: typecheck e build verdes, 373 E2E passaram e 41 pulados por desenho, test:scope 150/150, lint sem erros. Toda /app/entrar/* está no visual aprovado; falta o aceite visual do dono.",
         "30/10: ENT-005 (negócio opcional: escolha, cinco etapas, revisão com Editar e interesse; capa da turma trocada para chegada) entregue pelo OpenCode. Verificação independente na revisão e6382fa7: typecheck e build verdes, 300 E2E passaram e 30 pulados por desenho, test:scope 150/150, lint sem erros. Barra interna do negócio no celular segue no ENT-006.",
         "30/10: ENT-004 (cidade e momento, sugestões de grupos) entregue pelo OpenCode; teste desatualizado pelo próprio contrato corrigido pelo revisor (970ba8f3). Verificação independente na revisão 5580b5cc: typecheck e build verdes, 219 E2E passaram e 27 pulados por desenho, lint sem erros. Capa da turma (friends) troca no ENT-005.",
