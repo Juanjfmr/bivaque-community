@@ -1,8 +1,8 @@
-project_id = "bivaque-community"
+project_id = "repair-replay-20261022"
 
 [api]
 enabled = true
-port = 55321
+port = 56321
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
@@ -11,14 +11,14 @@ max_rows = 1000
 enabled = false
 
 [db]
-port = 55322
-shadow_port = 55320
+port = 56322
+shadow_port = 56320
 health_timeout = "2m"
 major_version = 17
 
 [db.pooler]
 enabled = false
-port = 55329
+port = 56329
 pool_mode = "transaction"
 default_pool_size = 20
 max_client_conn = 100
@@ -36,12 +36,12 @@ enabled = false
 
 [studio]
 enabled = true
-port = 55323
+port = 56323
 api_url = "http://127.0.0.1"
 
 [inbucket]
 enabled = true
-port = 55324
+port = 56324
 
 [storage]
 enabled = true

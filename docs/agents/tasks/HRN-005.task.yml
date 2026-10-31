@@ -1,0 +1,58 @@
+task_id: HRN-005
+objective: >
+  O banco vazio inicializa sem depender de personas de desenvolvimento,
+  preservando o schema e as permissoes de suspensao aprovados.
+authority:
+  - Autorizacao explicita de Juan em 2026-10-22 para a excecao pontual
+  - docs/decisions/ADR-20261022-replay-fixture-migration.md
+  - docs/decisions/ADR-20260816-transferencia-e-pertencimento.md
+  - docs/decisions/ADR-20260901-account-suspension.md
+  - tools/backend-kanban/public/board.json MVP-05-TEST-BASELINE
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    CI 39815096581 do commit 2d24c85c e startup local isolado falham
+    SQLSTATE 23503 em 20260901124400_member_suspended_seed.sql.
+allowed_paths:
+  - supabase/migrations/20260901124400_member_suspended_seed.sql
+  - supabase/migrations/20261022185420_restore_posts_write_scope.sql
+  - supabase/tests/posts-write-scope-regression.sql
+  - supabase/tests/foundation-schema.test.sql
+  - supabase/tests/rls-or-column-regression.test.sql
+  - supabase/tests/no-demo-migration-users.sql
+  - tests/scope/migration-seed-boundary.test.mjs
+  - tests/e2e/denied-publish.spec.ts
+  - tests/unit/playwright-start.test.ts
+  - docs/decisions/ADR-20261022-replay-fixture-migration.md
+  - docs/agents/tasks/HRN-005.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - alterar outras migrations aplicadas, schema ou tipos gerados
+  - ampliar permissoes ou mudar RLS fora do reparo aditivo de autoria e somente leitura
+  - apagar contas existentes ou reparar ledger
+  - resetar banco compartilhado ou remoto
+  - incorporar outros diffs locais fora do lote
+acceptance:
+  - Arquivo e timestamp permanecem sem INSERT de contas ficticias
+  - Migration de schema de suspensao permanece byte-identica
+  - Startup e reset isolados sem seed funcionam e pgTAP passa
+  - Reset com seed e E2E comprovam os fluxos e negacoes existentes
+  - Reparo aditivo restaura autoria e somente leitura conforme ADRs ja aprovados
+  - CI executa contra o commit entregue e falhas remanescentes sao classificadas
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-005.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 exec supabase start
+  - npx pnpm@11.18.0 exec supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 exec supabase db reset --local
+  - npx pnpm@11.18.0 test:e2e
+risk: Excecao autorizada a migration aplicada de personas ficticias
+risk_level: R3
+adr: docs/decisions/ADR-20261022-replay-fixture-migration.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
