@@ -1,0 +1,85 @@
+# Contrato de execução — revisão de 15/09/2026 da landing pública.
+# Medição que originou este contrato: docs/design/landing-redesign-2026-09-15/VERIFICACAO.md
+# Valide com: node scripts/agents/task-contract.mjs
+
+task_id: LAND-002
+
+objective: >
+  A landing pública passa a ter movimento com função ao longo da página inteira, um desenho de
+  rede que informa em vez de decorar, e uma primeira tela que diz o que a pessoa recebe. Hoje a
+  página tem 8.259 px de altura, o movimento inteiro cabe no hero, o mapa declara marcadores que
+  não existem no desenho e a camada de manchete vende atmosfera em vez do produto.
+
+authority:
+  - Retorno direto do responsável em 15/09/2026 — movimento ausente, desenho de rede sem referente e manchetes abstratas
+  - docs/design/landing-redesign-2026-09-15/BRIEF.md
+  - docs/design/landing-redesign-2026-09-15/VERIFICACAO.md
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md seção 0
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medições de 15/09/2026. Movimento, apps/web/app/landing/landing.tsx:244-246 usa useScroll só
+    no hero (foto desloca 45 px, fio desenha de 0,42 a 1), a troca da demonstração leva 250 ms e
+    o único outro movimento é um keyframe em loop na faixa de jornada — nenhuma seção depois do
+    hero tem movimento. Referente do mapa, .visual/_probe/map-zoom.png mostra três cidades em
+    elipse fechada e uma legenda de três marcadores dos quais dois não aparecem no desenho. Dobra,
+    .visual/landing-redesign-2026-09-15/shots/root--visitor--desktop-1440--full.png com 8.259 px
+    e a oferta abaixo da primeira tela; a prova interativa registra CTA acima da dobra apenas em
+    375 px.
+
+allowed_paths:
+  - apps/web/app/landing/
+  - apps/web/app/page.tsx
+  - apps/web/public/landing/
+  - apps/web/package.json
+  - pnpm-lock.yaml
+  - .visual/
+  - docs/agents/tasks/LAND-002.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - alterar autenticação, banco ou conteúdo privado
+  - descartar alterações de outras sessões
+  - publicar ou implantar o produto
+  - trocar a biblioteca de movimento ou acrescentar uma segunda
+  - tocar componentes compartilhados, tokens, auditoria, testes ou scripts
+  - reescrever o texto das perguntas reais — elas são a autoridade de domínio da página
+  - usar número, contador, depoimento, brasão ou vínculo oficial inventado
+
+acceptance:
+  - Cada uma das seções 001, 002, 003, demonstração e acolher tem movimento próprio ligado ao scroll, amostrável por um atributo estável
+  - O fio atravessa no mínimo três seções e chega ao bloco de fechamento, em vez de terminar dentro do hero
+  - Os arcos do mapa ligam pares de cidades nomeadas e se desenham na entrada da seção
+  - Toda linha de índice, de cidade, de serviço e de pergunta responde ao hover com mudança de posição ou de opacidade, não apenas de cor
+  - Com prefers-reduced-motion em reduce nada se desloca, o conteúdo continua completo e a prova interativa existente segue verde
+  - A medição de movimento é registrada por seção com os números medidos, não apenas com o resultado, e falha quando a variação é zero
+  - Todo marcador declarado na legenda existe no desenho e se distingue por forma ou preenchimento
+  - O rótulo da próxima cidade aponta para uma cidade nomeada, nunca para um marcador vazio
+  - Nenhuma rota forma circuito fechado, e cada rota tem origem e destino legíveis
+  - Se as cidades seguem nomeadas, a posição relativa respeita a geografia do Brasil, e um desenho não geográfico deixa de sugerir geografia
+  - A primeira tela nomeia o que a pessoa recebe, com ao menos três perguntas reais visíveis acima da dobra em 1440x900 e em 1920x1080 com 800 px úteis
+  - O botão principal de entrada fica acima da dobra nas duas resoluções citadas
+  - Cada manchete de seção nomeia ao menos um objeto concreto do domínio, entre remoção, guarnição, cidade, guia, comunidade, escola, bagagem e serviço, e não usa duas frases aforísticas separadas por ponto
+  - Nenhum texto convida a participar por moldura de obrigação ou de dívida
+  - As perguntas reais permanecem íntegras nas três fases, antes de viajar, na chegada e depois de chegar
+  - A transição de board correspondente é registrada com a evidência desta entrega
+
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE e BIVAQUE_VISUAL_RUN, sem achado alto
+  - node .visual/verify-landing-interaction.cjs contra build de produção, mantendo as verificações atuais verdes e acrescentando a medição de movimento e de dobra
+  - registro da dobra em 1440x900 e em 1920x1080 com 800 px úteis, no mesmo artefato
+
+risk: apresentação, movimento e copy
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

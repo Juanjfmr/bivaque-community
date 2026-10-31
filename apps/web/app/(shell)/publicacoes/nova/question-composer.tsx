@@ -8,6 +8,7 @@
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Input, Spinner, TextArea } from "@heroui/react"
 import { LinkIcon } from "lucide-react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
@@ -42,6 +43,7 @@ import {
   useCurrentUser,
 } from "../../../components/bivaque/feed-post-shared"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { PageHeader } from "../../../components/bivaque/page-header"
 import { showToast } from "../../../components/bivaque/toast"
 
 const QUESTION_MAX = 120
@@ -206,188 +208,220 @@ export function QuestionComposer() {
     setDiscardOpen(false)
   }, [])
 
+  const semVilaNemGrupo =
+    !audience.loading &&
+    !audience.error &&
+    audience.communities.length === 0 &&
+    audience.groups.length === 0
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Voltar"
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-[var(--semantic-selected)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            className="h-5 w-5"
+    <div className="flex w-full flex-col">
+      <PageHeader
+        width="wide"
+        title="Nova pergunta"
+        description="Escolha quem vai ler, escreva a pergunta e confira como ela aparece."
+        leading={
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Voltar"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-[var(--semantic-selected)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
           >
-            <path d="m12 19-7-7 7-7" />
-            <path d="M19 12H5" />
-          </svg>
-        </button>
-        <h1 className="text-2xl font-semibold tracking-tight">Nova pergunta</h1>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <MemberAvatar name={currentUser.user?.displayName ?? "?"} className="h-8 w-8 text-xs" />
-        <span className="text-sm font-medium">{currentUser.user?.displayName ?? "Você"}</span>
-      </div>
-
-      {offline && (
-        <div
-          role="status"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--semantic-warning)] bg-[var(--semantic-warning-soft)] px-4 py-3"
-        >
-          <LinkIcon
-            className="h-5 w-5 shrink-0 text-[var(--semantic-warning)]"
-            aria-hidden="true"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Sem conexão</p>
-            <p className="text-xs text-muted">Tente publicar quando a conexão voltar.</p>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            isDisabled
-            className="min-h-11"
-            aria-label="Tentar novamente (aguardando conexão)"
-          >
-            Tentar novamente
-          </Button>
-        </div>
-      )}
-
-      <DraftNotices
-        draftRestored={draftRestored}
-        storageUnavailable={storageUnavailable}
-        onRequestDiscard={() => setDiscardOpen(true)}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.75}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="h-5 w-5"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+          </button>
+        }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex flex-col gap-5">
-          <div>
-            <AudiencePicker
-              value={selected.key}
-              onChange={setAudienceKey}
-              destinations={destinations}
-              loading={audience.loading}
-              error={audience.error}
-              onRetry={audience.retry}
-            />
-            <p aria-live="polite" className="mt-2 text-xs text-muted" data-testid="audience-notice">
-              {audience.loading
-                ? "Carregando suas comunidades e grupos."
-                : audienceNoticeText(selectedKind.kind, locality.cityName)}
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="nova-pergunta" className="mb-1 block text-sm font-medium">
-              Qual é a sua pergunta? <span aria-hidden="true">*</span>
-              <span className="sr-only"> (obrigatório)</span>
-            </label>
-            <Input
-              id="nova-pergunta"
-              required
-              aria-required="true"
-              maxLength={QUESTION_MAX}
-              placeholder="Ex.: Indicação de escola na Asa Norte?"
-              value={question}
-              onChange={(e) => {
-                setQuestion((e.target as HTMLInputElement).value)
-                setError("")
-                setPiiWarning(false)
-              }}
-            />
-            <p className="mt-1 text-right text-xs text-muted" aria-live="polite">
-              {question.length}/{QUESTION_MAX}
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="nova-duvida" className="mb-1 block text-sm font-medium">
-              Conte mais sobre sua dúvida (opcional)
-            </label>
-            <TextArea
-              id="nova-duvida"
-              maxLength={BODY_MAX}
-              rows={4}
-              value={details}
-              onChange={(e) => setDetails((e.target as HTMLTextAreaElement).value)}
-            />
-            <p className="mt-1 text-right text-xs text-muted" aria-live="polite">
-              {details.length}/{BODY_MAX}
-            </p>
-          </div>
-
-          <div>
-            <p className="mb-1 text-sm font-medium">Adicionar foto (opcional)</p>
-            <PhotoField value={photoPath} onChange={setPhotoPath} onError={setPhotoError} />
-            {photoError ? (
-              <p aria-live="polite" className="mt-1 text-xs text-[var(--semantic-danger)]">
-                {photoError}
-              </p>
-            ) : null}
-          </div>
-
-          {error ? (
-            <div data-testid="publish-error">
-              <FeedbackAlert variant="danger" description={error} />
-            </div>
-          ) : null}
-          {piiWarning ? (
-            <PostPiiWarning onConfirm={handlePublish} onCancel={() => setPiiWarning(false)} />
-          ) : null}
-
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <Button variant="secondary" onPress={handleSaveDraft} isDisabled={submitting}>
-              Salvar rascunho
-            </Button>
-            <Button
-              onPress={handlePublish}
-              isDisabled={submitting || offline || !question.trim()}
-              variant="primary"
-              aria-busy={submitting}
-              data-testid="publish-submit"
-            >
-              {submitting ? (
-                <>
-                  <Spinner size="sm" aria-label="Publicando" />
-                  Publicando…
-                </>
-              ) : (
-                "Publicar"
-              )}
-            </Button>
-          </div>
-          <p
-            aria-live="polite"
-            className="text-right text-xs text-[var(--semantic-action-primary)]"
-          >
-            {placeName
-              ? `Visível para membros do Bivaque em ${placeName}.`
-              : "Escolha quem pode ver."}
-          </p>
-          {draftSavedFeedback && (
-            <p aria-live="polite" className="text-right text-xs text-muted">
-              Rascunho salvo neste navegador.
-            </p>
-          )}
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
+        <div className="flex items-center gap-2">
+          <MemberAvatar name={currentUser.user?.displayName ?? "?"} className="h-8 w-8 text-xs" />
+          <span className="text-sm font-medium">{currentUser.user?.displayName ?? "Você"}</span>
         </div>
 
-        <PostPreview
-          destination={selected}
-          destinationLoading={audience.loading}
-          authorName={currentUser.user?.displayName ?? null}
-          authorLoading={currentUser.loading}
-          content={composed}
-          placeName={placeName}
+        {offline && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--semantic-warning)] bg-[var(--semantic-warning-soft)] px-4 py-3"
+          >
+            <LinkIcon
+              className="h-5 w-5 shrink-0 text-[var(--semantic-warning)]"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Sem conexão</p>
+              <p className="text-xs text-muted">Tente publicar quando a conexão voltar.</p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              isDisabled
+              className="min-h-11"
+              aria-label="Tentar novamente (aguardando conexão)"
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        )}
+
+        <DraftNotices
+          draftRestored={draftRestored}
+          storageUnavailable={storageUnavailable}
+          onRequestDiscard={() => setDiscardOpen(true)}
         />
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="flex flex-col gap-5">
+            <div>
+              <AudiencePicker
+                value={selected.key}
+                onChange={setAudienceKey}
+                destinations={destinations}
+                loading={audience.loading}
+                error={audience.error}
+                onRetry={audience.retry}
+              />
+              <p
+                aria-live="polite"
+                className="mt-2 text-xs text-muted"
+                data-testid="audience-notice"
+              >
+                {audience.loading
+                  ? "Carregando suas comunidades e grupos."
+                  : audienceNoticeText(selectedKind.kind, locality.cityName)}
+              </p>
+            </div>
+
+            {semVilaNemGrupo ? (
+              <div className="rounded-xl border border-border bg-[var(--semantic-surface-sunken)] px-4 py-3">
+                <p className="text-sm font-medium">Você ainda não tem vila nem grupo aprovado</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Dá para publicar para toda a cidade agora. Para falar só com os aprovados de uma
+                  vila, entre em uma primeiro.
+                </p>
+                <Link
+                  href="/communities"
+                  className="mt-2 inline-block text-xs font-medium text-[var(--semantic-action-primary)] underline underline-offset-2"
+                >
+                  Encontrar comunidades
+                </Link>
+              </div>
+            ) : null}
+
+            <div>
+              <label htmlFor="nova-pergunta" className="mb-1 block text-sm font-medium">
+                Qual é a sua pergunta? <span aria-hidden="true">*</span>
+                <span className="sr-only"> (obrigatório)</span>
+              </label>
+              <Input
+                id="nova-pergunta"
+                required
+                aria-required="true"
+                maxLength={QUESTION_MAX}
+                placeholder="Ex.: Indicação de escola na Asa Norte?"
+                value={question}
+                onChange={(e) => {
+                  setQuestion((e.target as HTMLInputElement).value)
+                  setError("")
+                  setPiiWarning(false)
+                }}
+              />
+              <p className="mt-1 text-right text-xs text-muted" aria-live="polite">
+                {question.length}/{QUESTION_MAX}
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="nova-duvida" className="mb-1 block text-sm font-medium">
+                Conte mais sobre sua dúvida (opcional)
+              </label>
+              <TextArea
+                id="nova-duvida"
+                maxLength={BODY_MAX}
+                rows={4}
+                value={details}
+                onChange={(e) => setDetails((e.target as HTMLTextAreaElement).value)}
+              />
+              <p className="mt-1 text-right text-xs text-muted" aria-live="polite">
+                {details.length}/{BODY_MAX}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-1 text-sm font-medium">Adicionar foto (opcional)</p>
+              <PhotoField value={photoPath} onChange={setPhotoPath} onError={setPhotoError} />
+              {photoError ? (
+                <p aria-live="polite" className="mt-1 text-xs text-[var(--semantic-danger)]">
+                  {photoError}
+                </p>
+              ) : null}
+            </div>
+
+            {error ? (
+              <div data-testid="publish-error">
+                <FeedbackAlert variant="danger" description={error} />
+              </div>
+            ) : null}
+            {piiWarning ? (
+              <PostPiiWarning onConfirm={handlePublish} onCancel={() => setPiiWarning(false)} />
+            ) : null}
+
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Button variant="secondary" onPress={handleSaveDraft} isDisabled={submitting}>
+                Salvar rascunho
+              </Button>
+              <Button
+                onPress={handlePublish}
+                isDisabled={submitting || offline || !question.trim()}
+                variant="primary"
+                aria-busy={submitting}
+                data-testid="publish-submit"
+              >
+                {submitting ? (
+                  <>
+                    <Spinner size="sm" aria-label="Publicando" />
+                    Publicando…
+                  </>
+                ) : (
+                  "Publicar"
+                )}
+              </Button>
+            </div>
+            <p
+              aria-live="polite"
+              className="text-right text-xs text-[var(--semantic-action-primary)]"
+            >
+              {placeName
+                ? `Visível para membros do Bivaque em ${placeName}.`
+                : "Escolha quem pode ver."}
+            </p>
+            {draftSavedFeedback && (
+              <p aria-live="polite" className="text-right text-xs text-muted">
+                Rascunho salvo neste navegador.
+              </p>
+            )}
+          </div>
+
+          <PostPreview
+            destination={selected}
+            destinationLoading={audience.loading}
+            authorName={currentUser.user?.displayName ?? null}
+            authorLoading={currentUser.loading}
+            content={composed}
+            placeName={placeName}
+          />
+        </div>
       </div>
 
       <DraftDiscardDialog

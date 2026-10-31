@@ -1,48 +1,92 @@
 "use client"
 
 import { scrubReportReason } from "@bivaque/domain"
-import { Button, TextArea } from "@heroui/react"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
-import { MemberAvatar } from "./avatar"
+import { canSubmitReply } from "../../(shell)/messages/conversas-loaders"
+import styles from "./chat-thread.module.css"
 import { FeedbackAlert } from "./feedback-alert"
 import { formatRelativeTime, sendFailureLabel, type ThreadMessage } from "./message-delivery"
 import { MessageAreaSkeleton } from "./skeleton"
 
-const CONTEXT_LABELS: Record<string, string> = {
-  shared_group: "Grupo em comum",
-  shared_event: "Evento em comum",
-  recommendation_thread: "Recomendação",
-  accepted_family: "Família",
+// FIGMA-001 — fio de mensagens e campo de resposta na geometria das pranchas
+// 221:43432 e 221:43842. O mecanismo de entrega é o existente (RECON-015):
+// linha otimista "sending", promoção para a linha devolvida pelo insert em
+// "sent", e em falha a mensagem PERMANECE na tela como "não enviada" com nova
+// tentativa — o rascunho nunca se perde no retry. O guarda canSubmitReply
+// impede submit duplicado enquanto há entrega pendente.
+
+interface ReportReasonFieldProps {
+  id: string
+  describedBy: string
+  errorId: string
+  errored: boolean
+  value: string
+  onChange: (value: string) => void
+  autoFocus?: boolean
+}
+
+// O foco do campo de denúncia entra por efeito, não pelo atributo DOM
+// `autoFocus` (proibido pelo lint de a11y da casa): a prop declara a intenção
+// e o efeito aplica uma única vez ao montar o disclosure.
+function ReportReasonField({
+  id,
+  describedBy,
+  errorId,
+  errored,
+  value,
+  onChange,
+  autoFocus = false,
+}: ReportReasonFieldProps) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (autoFocus) ref.current?.focus()
+  }, [autoFocus])
+  return (
+    <textarea
+      ref={ref}
+      id={id}
+      className={styles["reportTextArea"]}
+      placeholder="Motivo da denúncia (mín. 10 caracteres)"
+      aria-describedby={describedBy}
+      aria-errormessage={errored ? errorId : undefined}
+      aria-invalid={errored}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  )
 }
 
 interface ChatThreadProps {
   supabase: SupabaseClient<Database>
   conversationId: string
   userId: string
+  /** Volta para a caixa do shell atual: /messages (membro) ou /prestador/conversas (dono da ficha). */
+  backHref?: string
   otherDisplayName: string
-  contextType: string
+  contextLabel: string
+  contextTitle: string | null
+  originHref: string | null
   isBlockedByOther: boolean
   isBlocked: boolean
-  onBlock: (otherId: string) => void
-  onUnblock: (otherId: string) => void
-  onBack: () => void
-  isMobile: boolean
+  onBlock: () => void
+  onUnblock: () => void
 }
 
 export function ChatThread({
   supabase,
   conversationId,
   userId,
+  backHref = "/messages",
   otherDisplayName,
-  contextType,
+  contextLabel,
+  contextTitle,
+  originHref,
   isBlockedByOther,
   isBlocked,
   onBlock,
   onUnblock,
-  onBack,
-  isMobile,
 }: ChatThreadProps) {
   const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [loadingMessages, setLoadingMessages] = useState(true)
@@ -55,8 +99,8 @@ export function ChatThread({
   const bottomRef = useRef<HTMLDivElement>(null)
   const reportTriggerRefs = useRef(new Map<string, HTMLButtonElement>())
 
-  // otherDisplayName vem da consulta de profiles na pagina consumidora.
-  // Sem nome resolvido, o rotulo honesto e "Participante" — nunca nome chumbado.
+  // otherDisplayName vem da consulta autorizada (RPC conversation_counterpart_name
+  // ou profiles). Sem nome resolvido, o rótulo honesto é "Participante".
   const resolvedOtherName = otherDisplayName?.trim() || "Participante"
 
   const closeReport = useCallback(() => {
@@ -81,12 +125,16 @@ export function ChatThread({
       .order("created_at", { ascending: true })
 
     if (error) {
-      setMsgError(error.message)
+      // Erro cru do PostgREST nunca vai para a tela: mensagem segura com
+      // nova tentativa (revisão independente GLM, 05/10/2026).
+      setMsgError(
+        "Não foi possível carregar as mensagens agora. Verifique sua conexão e tente novamente.",
+      )
       setLoadingMessages(false)
       return
     }
 
-    // Linha que veio do servidor ja esta confirmada por definicao.
+    // Linha que veio do servidor já está confirmada por definição.
     setMessages((data ?? []).map((m) => ({ ...m, status: "sent", failure: null })))
     setLoadingMessages(false)
   }, [supabase, conversationId])
@@ -101,9 +149,6 @@ export function ChatThread({
     }
   }, [loadingMessages, messages.length, scrollToBottom])
 
-  // Insere no servidor e so entao promove a mensagem a "sent", trocando a
-  // linha otimista pela linha real devolvida pelo insert. Em falha a mensagem
-  // fica na tela marcada como nao enviada e conserva o conteudo para tentativa.
   const deliverMessage = useCallback(
     async (messageId: string, content: string) => {
       const { data, error } = await supabase
@@ -132,7 +177,7 @@ export function ChatThread({
 
   const handleSend = useCallback(() => {
     const content = newMessage.trim()
-    if (!content || isBlockedByOther || isBlocked) return
+    if (!canSubmitReply(content, messages) || isBlockedByOther || isBlocked) return
 
     const optimistic: ThreadMessage = {
       id: `opt-${crypto.randomUUID()}`,
@@ -150,6 +195,7 @@ export function ChatThread({
     void deliverMessage(optimistic.id, content)
   }, [
     newMessage,
+    messages,
     isBlockedByOther,
     isBlocked,
     conversationId,
@@ -185,17 +231,9 @@ export function ChatThread({
       if (!reportReason.trim() || reportReason.trim().length < 10) return
       setReportError(null)
 
-      // H-Task 1 (F162): a denuncia de mensagem passa a viver em `reports`,
-      // que e a tabela que o painel do operador le. `dm_reports` era uma fila
-      // separada, sem `status`, que nenhum painel consultava — assedio em canal
-      // privado gerava registro e nada acontecia. `report_target_type` ja tinha
-      // 'message' desde 20260802001600; nunca foi usado. A tabela antiga foi
-      // removida por 20260825175718 (copias migraram para `reports`).
-      //
-      // Ganha de graca o que a tabela nova tem e a antiga nao tinha: status,
-      // bloqueio de auto-denuncia (20260821000032), bloqueio de duplicata pelo
-      // indice parcial, redacao de documento no motivo (20260821000030) e um
-      // painel que le.
+      // A denúncia de mensagem vive em `reports` (H-Task 1 / F162): é a tabela
+      // que o painel do operador lê, com status, bloqueio de auto-denúncia e
+      // de duplicata e redação de documento no motivo.
       const { error } = await supabase.from("reports").insert({
         target_type: "message",
         target_id: messageId,
@@ -204,12 +242,14 @@ export function ChatThread({
       })
 
       if (error) {
+        // Reparos finais FIGMA-001 (06/10/2026): avisos em pt-BR acentuado — o
+        // e2e reports-member-flow.spec.ts foi reconciliado no mesmo ato.
         if (error.code === "23505") {
-          setReportError("Voce ja denunciou esta mensagem.")
+          setReportError("Você já denunciou esta mensagem.")
         } else if (error.message.includes("own content")) {
-          setReportError("Voce nao pode denunciar a propria mensagem.")
+          setReportError("Você não pode denunciar a própria mensagem.")
         } else {
-          setReportError("Nao foi possivel enviar a denuncia agora. Tente novamente em instantes.")
+          setReportError("Não foi possível enviar a denúncia agora. Tente novamente em instantes.")
         }
         return
       }
@@ -220,280 +260,254 @@ export function ChatThread({
     [closeReport, reportReason, supabase, userId],
   )
 
-  const contextLabel = CONTEXT_LABELS[contextType] ?? contextType
+  const sendEnabled = canSubmitReply(newMessage, messages) && !isBlockedByOther && !isBlocked
 
   return (
-    <div className="flex flex-1 flex-col min-h-0">
-      {/* Header */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2.5">
-        {isMobile && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="motion-press mr-1 flex h-11 w-11 items-center justify-center rounded-md text-muted hover:bg-[var(--semantic-selected)]"
-            aria-label="Voltar para conversas"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <title>Voltar</title>
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-sm font-medium">{resolvedOtherName}</p>
-          <p className="truncate text-xs text-muted">{contextLabel}</p>
-        </div>
-        {isBlockedByOther ? (
-          <span className="text-xs text-[var(--semantic-danger)]">Você foi bloqueado</span>
-        ) : isBlocked ? (
-          <Button size="sm" variant="ghost" onPress={() => onUnblock(conversationId)}>
-            Desbloquear
-          </Button>
-        ) : (
-          <Button size="sm" variant="ghost" onPress={() => onBlock(conversationId)}>
-            Bloquear
-          </Button>
-        )}
-      </div>
+    <>
+      <div className={styles["threadView"]}>
+        <a href={backHref} className={styles["backButton"]}>
+          ← Conversas
+        </a>
 
-      {/* Messages area — composicao da prancha 15: autor, hora e corpo por linha */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-        {loadingMessages && <MessageAreaSkeleton />}
+        <h1 className={styles["heading"]}>{resolvedOtherName}</h1>
+        <p className={styles["contextLabel"]}>{contextLabel}</p>
 
-        {msgError && (
-          <div className="py-8">
-            <FeedbackAlert
-              variant="danger"
-              title="Erro ao carregar mensagens"
-              description={msgError}
-              actions={
-                <Button size="sm" variant="tertiary" onPress={() => loadMessages()}>
-                  Tentar novamente
-                </Button>
-              }
-            />
+        {(contextTitle !== null || originHref !== null || !isBlockedByOther) && (
+          <div className={styles["contextCard"]}>
+            {contextTitle !== null && <p className={styles["contextTitle"]}>{contextTitle}</p>}
+            <div className={styles["contextActions"]}>
+              {originHref !== null && (
+                <a href={originHref} className={styles["contextButton"]}>
+                  Ver origem
+                </a>
+              )}
+              {isBlockedByOther ? (
+                <span className={styles["blockedNote"]}>Você foi bloqueado nesta conversa.</span>
+              ) : isBlocked ? (
+                <button type="button" className={styles["contextButton"]} onClick={onUnblock}>
+                  Desbloquear
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={`${styles["contextButton"]} ${styles["contextButtonDanger"]}`}
+                  onClick={onBlock}
+                >
+                  Bloquear
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {!loadingMessages && !msgError && messages.length === 0 && (
-          <p className="py-12 text-center text-sm text-muted">
-            Nenhuma mensagem ainda. Envie a primeira!
-          </p>
-        )}
+        <div className={styles["messages"]}>
+          {loadingMessages && <MessageAreaSkeleton />}
 
-        {!loadingMessages &&
-          messages.map((msg) => {
-            const isOwn = msg.sender_id === userId
-            const authorName = isOwn ? "Você" : resolvedOtherName
-            return (
-              <div key={msg.id} className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : ""}`}>
-                <MemberAvatar name={authorName} size="sm" className="mt-5 shrink-0" />
-                <div
-                  className={`flex min-w-0 max-w-[80%] flex-col ${isOwn ? "items-end" : "items-start"}`}
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-medium">{authorName}</span>
-                    <span className="text-xs text-muted">{formatRelativeTime(msg.created_at)}</span>
-                  </div>
-
-                  <div
-                    className={`mt-1 rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                      msg.status === "failed"
-                        ? "border border-[var(--semantic-danger)] bg-[var(--semantic-surface-sunken)]"
-                        : isOwn
-                          ? `rounded-br-md bg-[var(--semantic-action-primary)] text-[var(--semantic-action-on-strong)] ${
-                              msg.status === "sending" ? "opacity-75" : ""
-                            }`
-                          : "rounded-bl-md bg-[var(--semantic-selected)]"
-                    }`}
+          {msgError && (
+            <div className={styles["stateBlock"]}>
+              <FeedbackAlert
+                variant="danger"
+                title="Erro ao carregar mensagens"
+                description={msgError}
+                actions={
+                  <button
+                    type="button"
+                    className={styles["retryButton"]}
+                    onClick={() => loadMessages()}
                   >
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  </div>
+                    Tentar novamente
+                  </button>
+                }
+              />
+            </div>
+          )}
 
-                  {/* Estado de entrega: enviando / enviado / falhou — nunca tique de leitura inventado */}
+          {!loadingMessages && !msgError && messages.length === 0 && (
+            <p className={styles["contextLabel"]}>Nenhuma mensagem ainda. Envie a primeira!</p>
+          )}
+
+          {!loadingMessages &&
+            messages.map((msg) => {
+              const isOwn = msg.sender_id === userId
+              const authorName = isOwn ? "Você" : resolvedOtherName
+              const statusLabel =
+                msg.status === "sending"
+                  ? "enviando…"
+                  : msg.status === "failed"
+                    ? "não enviada"
+                    : "enviado"
+              return (
+                <div
+                  key={msg.id}
+                  className={`${styles["messageCard"]} ${isOwn ? styles["messageCardOwn"] : ""} ${
+                    msg.status === "failed" ? styles["messageCardFailed"] : ""
+                  }`}
+                >
+                  <p className={styles["messageHeader"]}>
+                    <span>{isOwn ? `Você · ${statusLabel}` : authorName}</span>
+                    <span className={styles["messageTime"]}>
+                      {formatRelativeTime(msg.created_at)}
+                    </span>
+                  </p>
+                  <p className={styles["messageBody"]}>{msg.content}</p>
+
                   {isOwn && (
-                    <div className="mt-0.5 flex min-h-6 flex-wrap items-center gap-2" role="status">
+                    <div className={styles["deliveryRow"]} role="status">
                       {msg.status === "sending" && (
-                        <span className="text-xs text-[var(--semantic-text-secondary)]">
-                          Enviando…
-                        </span>
+                        <span className={styles["deliveryLabel"]}>Enviando…</span>
                       )}
                       {msg.status === "sent" && (
-                        <span className="text-xs text-[var(--semantic-text-secondary)]">
-                          Enviado
-                        </span>
+                        <span className={styles["deliveryLabel"]}>Enviado</span>
                       )}
                       {msg.status === "failed" && (
                         <>
-                          <span className="text-xs font-medium text-[var(--semantic-danger)]">
-                            Não enviado
+                          <span
+                            className={`${styles["deliveryLabel"]} ${styles["deliveryLabelFailed"]}`}
+                          >
+                            Não enviado{msg.failure ? `: ${msg.failure}` : ""}
                           </span>
-                          <Button
-                            size="sm"
-                            variant="tertiary"
-                            className="min-h-11"
-                            onPress={() => handleRetry(msg.id)}
+                          <button
+                            type="button"
+                            className={styles["retryButton"]}
+                            onClick={() => handleRetry(msg.id)}
                           >
                             Tentar novamente
-                          </Button>
-                          {msg.failure && (
-                            <span className="text-xs text-[var(--semantic-danger)]">
-                              {msg.failure}
-                            </span>
-                          )}
+                          </button>
                         </>
                       )}
                     </div>
                   )}
 
                   {!isOwn && msg.status === "sent" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (reportingMessageId === msg.id) {
-                          closeReport()
-                        } else {
-                          setReportingMessageId(msg.id)
-                          setReportReason("")
-                          setReportError(null)
-                        }
-                      }}
-                      ref={(node) => {
-                        if (node) reportTriggerRefs.current.set(msg.id, node)
-                        else reportTriggerRefs.current.delete(msg.id)
-                      }}
-                      className="motion-press min-h-11 min-w-11 px-2 text-sm text-muted transition-colors hover:text-[var(--semantic-danger)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
-                      aria-expanded={reportingMessageId === msg.id}
-                      aria-controls={`message-report-${msg.id}`}
-                    >
-                      {/* Nome acessível ESTÁVEL, estado em aria-expanded: é o padrão
-                          de disclosure. Alternar o texto para "Fechar denúncia" fazia o
-                          mesmo seletor re-resolver para o botão de OUTRA mensagem depois
-                          do clique. Dar aria-label fixo com texto variável resolveria o
-                          seletor e criaria violação de Label in Name (WCAG 2.5.3). */}
-                      Denunciar
-                    </button>
-                  )}
-
-                  {reportingMessageId === msg.id && (
-                    <div
-                      id={`message-report-${msg.id}`}
-                      className="mt-1 w-full max-w-full space-y-1.5 border-t border-border pt-2"
-                    >
-                      <label
-                        className="block text-sm font-medium"
-                        htmlFor={`report-reason-${msg.id}`}
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (reportingMessageId === msg.id) {
+                            closeReport()
+                          } else {
+                            setReportingMessageId(msg.id)
+                            setReportReason("")
+                            setReportError(null)
+                          }
+                        }}
+                        ref={(node) => {
+                          if (node) reportTriggerRefs.current.set(msg.id, node)
+                          else reportTriggerRefs.current.delete(msg.id)
+                        }}
+                        className={`${styles["reportTrigger"]} min-h-11 min-w-11`}
+                        aria-expanded={reportingMessageId === msg.id}
+                        aria-controls={`message-report-${msg.id}`}
                       >
-                        Motivo da denúncia
-                      </label>
-                      <TextArea
-                        id={`report-reason-${msg.id}`}
-                        placeholder="Motivo da denúncia (mín. 10 caracteres)"
-                        aria-describedby={`report-privacy-${msg.id}${reportError ? ` report-error-${msg.id}` : ""}`}
-                        aria-errormessage={reportError ? `report-error-${msg.id}` : undefined}
-                        aria-invalid={Boolean(reportError)}
-                        autoFocus
-                        value={reportReason}
-                        onChange={(e) => setReportReason((e.target as HTMLTextAreaElement).value)}
-                        className="text-sm"
-                      />
-                      <p id={`report-privacy-${msg.id}`} className="text-xs text-muted" role="note">
-                        Não inclua CPF, telefone ou endereço. O motivo é redigido antes da análise.
-                      </p>
-                      {reportError && (
-                        <div id={`report-error-${msg.id}`}>
-                          <FeedbackAlert variant="danger" description={reportError} />
+                        {/* Nome acessível ESTÁVEL, estado em aria-expanded
+                            (padrão de disclosure; WCAG 2.5.3). */}
+                        Denunciar
+                      </button>
+
+                      {reportingMessageId === msg.id && (
+                        <div id={`message-report-${msg.id}`} className={styles["reportBox"]}>
+                          <label
+                            className={styles["reportLabel"]}
+                            htmlFor={`report-reason-${msg.id}`}
+                          >
+                            Motivo da denúncia
+                          </label>
+                          <ReportReasonField
+                            autoFocus
+                            id={`report-reason-${msg.id}`}
+                            describedBy={`report-privacy-${msg.id}${reportError ? ` report-error-${msg.id}` : ""}`}
+                            errorId={`report-error-${msg.id}`}
+                            errored={Boolean(reportError)}
+                            value={reportReason}
+                            onChange={setReportReason}
+                          />
+                          <p
+                            id={`report-privacy-${msg.id}`}
+                            className={styles["reportNote"]}
+                            role="note"
+                          >
+                            Não inclua CPF, telefone ou endereço. O motivo é redigido antes da
+                            análise.
+                          </p>
+                          {reportError && (
+                            <div id={`report-error-${msg.id}`}>
+                              <FeedbackAlert variant="danger" description={reportError} />
+                            </div>
+                          )}
+                          <div className={styles["reportActions"]}>
+                            <button
+                              type="button"
+                              className={styles["sendButton"]}
+                              onClick={() => handleReport(msg.id)}
+                              disabled={reportReason.trim().length < 10}
+                            >
+                              Enviar
+                            </button>
+                            <button
+                              type="button"
+                              className={styles["cancelButton"]}
+                              onClick={() => closeReport()}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
                         </div>
                       )}
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onPress={() => handleReport(msg.id)}
-                          isDisabled={reportReason.trim().length < 10}
-                        >
-                          Enviar
-                        </Button>
-                        <Button size="sm" variant="ghost" onPress={() => closeReport()}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
 
-        <div ref={bottomRef} />
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      {/* Input area */}
-      <div className="shrink-0 border-t border-border px-3 py-2.5">
+      {/* Composer (221:43842) */}
+      <div className={styles["composer"]}>
         {isBlockedByOther ? (
-          <p className="py-2 text-center text-xs text-muted">
+          <p className={styles["blockedNote"]}>
             Você não pode enviar mensagens porque foi bloqueado.
           </p>
         ) : isBlocked ? (
-          <p className="py-2 text-center text-xs text-muted">Desbloqueie para enviar mensagens.</p>
+          <p className={styles["blockedNote"]}>Desbloqueie para enviar mensagens.</p>
         ) : (
-          <div className="flex items-end gap-2">
-            <TextArea
-              placeholder="Digite sua mensagem..."
-              aria-label="Digite sua mensagem"
+          <>
+            <textarea
+              className={styles["composerField"]}
+              placeholder="Escreva sua resposta…"
+              aria-label="Escreva sua resposta"
               value={newMessage}
-              onChange={(e) => setNewMessage((e.target as HTMLTextAreaElement).value)}
+              onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1"
               maxLength={2000}
               rows={2}
             />
-            <div className="flex flex-col items-end gap-1 self-end pb-1">
-              {newMessage.length > 1800 && (
-                <span
-                  className={`text-xs ${newMessage.length >= 2000 ? "text-[var(--semantic-danger)]" : "text-muted"}`}
-                >
-                  {2000 - newMessage.length} caracteres restantes
-                </span>
-              )}
-              <Button
-                size="sm"
-                variant="primary"
-                onPress={handleSend}
-                isDisabled={!newMessage.trim()}
+            <div className={styles["composerActions"]}>
+              <button
+                type="button"
+                className={styles["sendButton"]}
+                onClick={handleSend}
+                disabled={!sendEnabled}
+                data-testid="conversa-enviar"
               >
                 Enviar
-              </Button>
+              </button>
+              <button
+                type="button"
+                className={styles["cancelButton"]}
+                onClick={() => setNewMessage("")}
+                disabled={newMessage.length === 0}
+              >
+                Cancelar
+              </button>
             </div>
-          </div>
+            <p className={styles["composerNote"]}>
+              Somente os participantes desta conversa veem as mensagens.
+            </p>
+          </>
         )}
-        <p className="mt-1 text-xs text-muted">
-          Somente os participantes desta conversa veem as mensagens.
-        </p>
       </div>
-    </div>
+    </>
   )
 }
-
-/** Format a brief last-message preview from a ConversationRow + optional lastMessage. */
-export function formatLastMessagePreview(
-  lastMsg: { content: string; sender_id: string } | null,
-  userId: string,
-): string {
-  if (!lastMsg) return ""
-  const prefix = lastMsg.sender_id === userId ? "Você: " : ""
-  const truncated =
-    lastMsg.content.length > 60 ? `${lastMsg.content.slice(0, 60)}…` : lastMsg.content
-  return `${prefix}${truncated}`
-}
-
-export { CONTEXT_LABELS }

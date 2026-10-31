@@ -1,5 +1,9 @@
 # AGENTS.md — Bivaque Community
 
+## Processo web simplificado — instrução posterior de 08/09/2026
+
+Para reconstruir as pranchas web, aplicar a [seção 0 do processo](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md#0-execução-enxuta-das-pranchas-web--08092026). Ela substitui as exigências genéricas abaixo de releitura integral, plano por tarefa, fila serial de ondas e gate completo por pequeno ajuste. Ler contexto uma vez e consultar somente o necessário ao lote; um contrato por lote delegado, um executor por checkout, validação direcionada durante edição, revisão e prova independente por lote. Segurança e gates de publicação permanecem. Não recomeçar W00; reconciliar as telas já escritas. Bloqueio de um fluxo não impede outro independente. Não descartar alterações de outras sessões.
+
 ## Reconstrução funcional web — revisão de 08/09/2026
 
 Leia `docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md` para a entrega atual, somente web: catálogo de rotas, funcionamento, sequência W00–W09 e gates. Substitui o plano anterior de apresentação sem persistência. UI isolada não conclui fluxo; backend, operação e retorno necessários entram na entrega. Mobile não bloqueia conclusão web. Preservar decisões técnicas R3 e registrar bloqueios reais; não reabrir escolhas de produto já autorizadas.

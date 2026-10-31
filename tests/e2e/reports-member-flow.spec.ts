@@ -384,7 +384,10 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     await page.locator('[id^="message-report-"]').getByRole("button", { name: "Enviar" }).click()
     await expect(field).toHaveAttribute("aria-invalid", "true")
     await expect(field).toHaveAttribute("aria-errormessage", /report-error-/)
-    await expect(field).toHaveAccessibleDescription(/Nao foi possivel enviar a denuncia agora/)
+    // Reparos finais FIGMA-001 (06/10/2026): o aviso passou a pt-BR acentuado;
+    // a asserção acompanha a string real sem perder a cobertura de privacidade
+    // (a linha seguinte continua provando que o diagnóstico interno não vaza).
+    await expect(field).toHaveAccessibleDescription(/Não foi possível enviar a denúncia agora/)
     await expect(page.getByText("database diagnostic that must stay private")).toHaveCount(0)
 
     // Fecha pelo MESMO botao que abriu — que e o ponto do padrao de

@@ -1,5 +1,7 @@
 # Task contract — formato e semântica
 
+> **Pranchas web, 08/09/2026:** usar um contrato válido por lote de telas relacionadas conforme a seção 0 do [processo](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md). Ampliar o contrato existente para reparos necessários e seguros, em vez de gerar YAML por componente. Contrato e card bastam quando já descrevem a execução; não é necessário um plano separado. Preservar todos os campos e a validação abaixo.
+
 A unidade de execução do harness. Vive em `docs/agents/tasks/<ID>.task.yml`,
 copiado de [`tasks/TEMPLATE.task.yml`](tasks/TEMPLATE.task.yml) e validado por comando:
 

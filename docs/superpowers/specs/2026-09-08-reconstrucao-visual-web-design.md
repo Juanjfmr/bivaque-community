@@ -1,5 +1,7 @@
 # Especificação funcional e execução — reconstrução completa do Bivaque web
 
+> **Cadência revista após análise da execução — 08/09/2026:** seguir a seção 0 do [processo](../../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md). O catálogo de rotas e funcionamento permanece; lotes pequenos, dependências reais e provas por lote substituem burocracia por tela. Pendências técnicas e externas bloqueiam seus requisitos e a conclusão total, não a implementação independente.
+
 > Revisão: 08/09/2026. Escopo solicitado pelo responsável: **web com todas as rotas desta especificação ativas e funcionando**. Esta revisão substitui integralmente o plano anterior de apresentação sem persistência. É especificação de trabalho autorizado, não declaração de funcionalidades entregues nem aprovação de contratos técnicos R3 ainda pendentes.
 
 ## 1. Resultado exigido e autoridade
@@ -302,22 +304,39 @@ Se um pré-requisito externo impedir um fluxo, registrar critério exato, respon
 
 ## 7. Sequência de implementação
 
-Executar uma etapa funcional por vez. Dentro dela, dividir em contratos pequenos que incluam implementação e teste. Documentação/levantamento de bloqueios pode avançar sem dados reais; não executar capturas e resets concorrentes no banco compartilhado. A auditoria de cada etapa bloqueia a próxima etapa dependente.
+Executar um lote funcional pequeno por vez em cada checkout, incluindo implementação e teste. Os IDs W00–W09 agrupam requisitos; não impõem conclusão integral da linha anterior. A tabela abaixo mantém os critérios de saída, mas sua coluna de ordem histórica é substituída pelas dependências efetivas a seguir. Não executar capturas e resets concorrentes no banco compartilhado.
 
-| Etapa | Ordem interna e dependências | Gate específico de saída |
+**Ordem prática atual:** revisar e integrar o trabalho já escrito em Início, Explorar, Comunidades e Notificações; depois puxar o próximo lote disponível no quadro. Não recriar fundação, inventário ou demo. Para selecionar trabalho:
+
+| Área | Pré-requisito efetivo para implementar/testar | Não precisa esperar |
 |---|---|---|
-| W00 — Baseline, contratos e fundação | Inventariar árvore/SHA/rotas → reconciliar trabalhos existentes e cards → validar tokens/HeroUI/wrappers → shells/contexto/erros → registro de rotas/testes. Levantar decisões R3 e ambientes desde já. | Rotas existentes sem regressão; navegação nova com destinos reais disponíveis; inventário de endpoints/permissões; contratos técnicos pendentes nomeados. Demo de componentes não conta como Início/Explorar prontos. |
-| W01 — Acesso completo + operação de admissão | W00 → senha/cadastro/aceite → confirmação/callback/recuperação → CPF → arquivo único/processamento/retentativa → fila e decisão → contexto mínimo/convite familiar → chegada. | Jornadas de R01–R14, R16–R17, C07 e O01–O02; personalização R15 fecha em W02 com persistência e contas reais de teste. Nenhum membro entra por bypass. Dependências externas resolvidas ou etapa explicitamente bloqueada. |
-| W02 — Perfil/contexto e descoberta base | W01 → perfil/edit/visibilidade/interesses → troca de cidade/contexto → Explorar e busca base → configurações/saída básicas. | Preencher/ocultar/remover Força/OM provado com duas contas; cidade de busca não altera autorização; shell fica coerente nos três viewports. |
-| W03 — Ciclo social + confiança + retorno | W02 → descoberta/apresentação → pedido/gestão → participação/grupos → criar/detalhar/responder/editar/resolver → Início → notificações/salvos → denúncia/moderação/bloqueio. | Jornada multiusuário da §4.3, fila de moderação funcionando e negativas de cidade/comunidade/grupo. Início deixa de ser estrutura inicial. |
-| W04 — Eventos completos | W03 → criação/edição autorizada → lista/detalhe → RSVP → pergunta/resposta contextual → cancelamentos/encerramento/retorno. | Nenhum evento sem organizador capaz de responder; presença não condiciona informação; cancelamentos atualizam consumidores. |
-| W05 — Guia + curadoria | W03/W04 → categorias/busca → artigo → salvar/corrigir → fila/decisão/publicação. | Artigo consultável, sugestão processada e retorno; não depender de camada sofisticada de IA para busca/leitura. |
-| W06 — Serviços + prestador | W05 → convite/conta prestador → ficha/catálogo/atendimento → busca/detalhe → pedido → caixa do prestador/resposta/encerramento. | Solicitante e prestador fecham a mesma solicitação; isolamento entre negócios e regiões. |
-| W07 — Mercado e Moradia | W06 → contrato de anúncio/mídia → criar/detalhe/busca → interesse/conversa → editar/pausar/encerrar → campos imobiliários/filtros → alertas/jobs. | Anúncios publicados por UI, encontrados, contatados e retirados; alertas entregam e param de entregar conforme estado. |
-| W08 — Conta e retorno completo | W07 → preferências por produtor/canal → família → bloqueios/denúncias agregadas → suporte → exclusão/retomada de conta → salvos/notificações/conversas em todos os tipos. | Nenhum item de configuração sem efeito; exclusão/processamento segundo contrato; todos os destinos de retorno e deep links válidos. |
-| W09 — Conclusão web | W08 → rastrear todas as rotas/CTAs → E2E multiusuário completo → auditoria visual por rota → CI da revisão → prova em homologação → publicação autorizada e smoke da revisão implantada. | Todos os gates da §8 e relatório §10 completos. Zero placeholder/CTA fictício/integração pendente obrigatória. |
+| W00 — fundação | Reconciliar base, mudanças em andamento e componentes usados | Inventário exaustivo ou novo plano de todo o produto |
+| W01 — acesso/admissão | Auth e contratos de cada transição; integração externa para provar a respectiva transição | Conclusão visual do restante do produto |
+| W02 — perfil/contexto | Sessão e APIs autorizadas; contrato técnico para novos dados pessoais | Reconhecimento por IA; perfil simples não aguarda afiliação |
+| W03 — social/retorno | Sessão de teste autorizada, consultas e permissões sociais; produtores de cada notificação | W01 completo ou todos os campos de W02 |
+| W04 — eventos | Domínio de eventos, ator autorizado e conversa contextual para perguntas | Todo o ciclo social redesenhado |
+| W05 — Guia | Consulta de conteúdo autorizado, curadoria e sugestão para fechar o ciclo | W04/eventos ou IA de busca |
+| W06 — serviços | Ficha, prestador, pedidos e conversa autorizada | W05/Guia |
+| W07 — Mercado/Moradia | Anúncios, mídia, permissões e contato; jobs para alertas | W06 inteiro; reutilizar conversa existente se adequada |
+| W08 — conta/retorno | APIs de preferências/conta; cada produtor para seu retorno | W07 para preferências já implementáveis |
+| W09 — publicação | Todos os requisitos obrigatórios e G6 comprovados no candidato integrado | Nada obrigatório pode ser omitido |
 
-Não implementar uma homepage inteira antes de seus produtores de conteúdo. Não adiar operação que decide acesso até depois de Mercado. Não adiar recuperação de senha, notificações essenciais ou erro de envio para o “polimento”. Cada ajuste de qualidade entra no mesmo ciclo da tela.
+Critérios de saída por área (não são pré-requisitos para iniciar áreas independentes):
+
+| Área | Gate de saída |
+|---|---|
+| W00 — Baseline, contratos e fundação | Rotas existentes sem regressão; navegação nova com destinos reais disponíveis; inventário de endpoints/permissões; contratos técnicos pendentes nomeados. Demo de componentes não conta como Início/Explorar prontos. |
+| W01 — Acesso completo + operação de admissão | Jornadas de R01–R14, R16–R17, C07 e O01–O02; personalização R15 fecha em W02 com persistência e contas reais de teste. Nenhum membro entra por bypass. Dependências externas resolvidas ou etapa explicitamente bloqueada. |
+| W02 — Perfil/contexto e descoberta base | Preencher/ocultar/remover Força/OM provado com duas contas; cidade de busca não altera autorização; shell fica coerente nos três viewports. |
+| W03 — Ciclo social + confiança + retorno | Jornada multiusuário da §4.3, fila de moderação funcionando e negativas de cidade/comunidade/grupo. Início deixa de ser estrutura inicial. |
+| W04 — Eventos completos | Nenhum evento sem organizador capaz de responder; presença não condiciona informação; cancelamentos atualizam consumidores. |
+| W05 — Guia + curadoria | Artigo consultável, sugestão processada e retorno; não depender de camada sofisticada de IA para busca/leitura. |
+| W06 — Serviços + prestador | Solicitante e prestador fecham a mesma solicitação; isolamento entre negócios e regiões. |
+| W07 — Mercado e Moradia | Anúncios publicados por UI, encontrados, contatados e retirados; alertas entregam e param de entregar conforme estado. |
+| W08 — Conta e retorno completo | Nenhum item de configuração sem efeito; exclusão/processamento segundo contrato; todos os destinos de retorno e deep links válidos. |
+| W09 — Conclusão web | Todos os gates da §8 e relatório §10 completos. Zero placeholder/CTA fictício/integração pendente obrigatória. |
+
+Implementar Início com produtores existentes e autorizados; completar os restantes em lotes vinculados, sem contagem inventada ou CTA fictício. Operação acompanha o fluxo que precisa dela. Recuperação, notificações essenciais e erro de envio fazem parte do respectivo lote. Falta de produtor mantém seu requisito aberto, sem impedir outras telas.
 
 ### Reaproveitamento do quadro atual
 
@@ -334,7 +353,7 @@ Não implementar uma homepage inteira antes de seus produtores de conteúdo. Nã
 
 ### G0 — Contrato pronto para executar
 
-Antes de editar código: rota/estado e PNG identificados, baseline/SHA registrados, consultas/mutações/ator/escopo conhecidos, caminhos de escrita limitados, dependências resolvidas, critérios positivos/negativos e comandos de prova. Validar o [contrato de tarefa](../../agents/TASK_CONTRACT.md). R3 sem contrato/ADR técnico adequado não é convertido em UI “final”.
+Antes de editar código: rota/estado e PNG identificados, baseline/SHA registrados, consultas/mutações/ator/escopo conhecidos, caminhos de escrita limitados, dependências do lote resolvidas, critérios positivos/negativos e comandos de prova. Reutilizar e validar um [contrato de tarefa](../../agents/TASK_CONTRACT.md) por lote delegado; não criar outro plano se o contrato/card já contém essas informações. Ler contexto uma vez e consultar apenas alterações relevantes nas próximas rodadas. R3 sem contrato/ADR técnico adequado não é convertido em UI “final”.
 
 ### G1 — Rota funcional
 
@@ -356,7 +375,7 @@ Exercitar entrada → ação → persistência → outro ator/job quando existir
 
 Capturas em **375, 768 e 1440** para todas as rotas tocadas, com o estado correto e conta/papel correspondente. Comparar com prancha web e notas; tela web estreita não é implementação mobile. Sem overflow horizontal indevido, corte de ação, sobreposição de cabeçalho/rodapé, texto ilegível ou controles pequenos. Fluxos por teclado, foco de modal/retorno, rótulos/erros associados, leitores de tela e movimento reduzido conferidos.
 
-Usar `scripts/visual/loop.mjs` e julgamento visual explícito. A lista de rotas do capturador precisa ser ampliada para os novos paths e fixtures; rodar um script que desconhece a rota não a audita. Capturar variantes relevantes (ex.: membro/pendente/visitante de comunidade e análise/erro de identidade). Diferenças intencionais têm justificativa; findings pertinentes de qualquer severidade precisam ser resolvidos antes do fechamento da tela.
+Usar captura direcionada de `scripts/visual/capture.mjs` durante edição e julgamento visual explícito, conforme processo §0. O loop completo permanece disponível para consolidação. A lista do capturador precisa incluir novos paths e fixtures; script que desconhece a rota não a audita. Capturar variantes relevantes e confirmar o papel correto. Defeitos de acessibilidade, uso e divergências visuais materiais bloqueiam integração. Ajustes cosméticos menores ficam explicitamente no mesmo card para acabamento; não bloqueiam outra tela independente nem desaparecem dos critérios finais.
 
 ### G4 — Qualidade e regressão
 
@@ -370,11 +389,11 @@ npx pnpm@11.18.0 build
 
 Quando houver banco: stack local isolada, migration incremental, tipos gerados do schema public, pgTAP positivo/negativo e lint de schema. Aplicar os comandos e a ordem do AGENTS vigente: banco sem seed para pgTAP; seed para E2E. Não iniciar captura/dev que insira perfil entre reset e pgTAP. Nunca reset remoto/`--linked`.
 
-E2E da rota/fluxo na iteração; suíte aplicável completa para fechar a etapa. CI da revisão candidata precisa passar antes do gate final de release. Falha anterior deve ser comprovada na base e resolvida ou manter a entrega bloqueada; não tratar falha conhecida como aprovação. Não diminuir teste para verde. Se um contrato antigo foi substituído por decisão explícita, mudar expectativa **e** cobertura do novo comportamento na mesma entrega.
+E2E da rota/fluxo afetado na iteração. Os comandos acima são uma referência de fechamento, não uma sequência a repetir a cada edição: gate completo e build no lote estável; regressão completa na integração/publicação, sem duplicar gate/build dentro do loop visual. CI da revisão candidata precisa passar antes de release. Falha anterior comprovada mantém seu requisito e a certificação global pendentes, sem paralisar lote independente. Não diminuir teste para verde. Se contrato antigo foi substituído por decisão explícita, mudar expectativa **e** cobertura do novo comportamento na mesma entrega.
 
 ### G5 — Revisão e prova externa
 
-Implementador, revisor e verificador de runtime são papéis distintos. Usar sessões independentes conforme arquitetura do repositório; o revisor forma primeiro parecer com contrato/referência/diff, sem a defesa do implementador. O verificador não corrige enquanto julga. Um coordenador que implementou acabamento não revisa independentemente esse mesmo acabamento.
+Implementador, revisor e verificador de runtime são papéis distintos, acionados por lote estável de telas relacionadas. Não criar a cadeia de três sessões por componente ou pequeno reparo. Usar sessões independentes conforme arquitetura do repositório; o revisor forma primeiro parecer com contrato/referência/diff, sem a defesa do implementador. O verificador não corrige enquanto julga. Um coordenador que implementou acabamento não revisa independentemente esse mesmo acabamento.
 
 Evidência contém SHA/ambiente/contas fictícias/passos/resultado e limitações. CI verde não substitui fidelidade visual; screenshot não comprova autorização; revisão automática que falhou não aprova. Se não houver sessão independente, o estado é “implementado; revisão pendente”, não concluído. A documentação não instala automaticamente esse mecanismo.
 
@@ -404,7 +423,7 @@ Entrega: implementação e testes juntos, capturas e provas, revisão do diff,
         resumo de continuidade e card reconciliado. Não declarar UI isolada como fluxo pronto.
 ```
 
-Tamanho: um comportamento observável, não um arquivo nem toda uma prancha de dois desktops. Ex.: “membro envia pedido e prestador vê em Novos” inclui as duas pontas mínimas, persistência e teste. Dividir schema/API/UI em tarefas é possível, mas o card do fluxo só fecha depois de todas as dependências verificadas.
+Tamanho: um fluxo pequeno ou 1–3 telas relacionadas, incluindo comportamento observável e falhas. Ex.: “membro envia pedido e prestador vê em Novos” inclui as duas pontas mínimas, persistência e teste. Pode abranger dois painéis da mesma prancha. Reparos de componentes necessários entram no lote; não gerar tarefa por arquivo. O card do fluxo só fecha depois de todas as dependências verificadas.
 
 `retry_budget` 3 por contrato, conforme validador; esgotamento gera FAIL/BLOCKED/HUMAN_DECISION com evidência, nunca PASS. Não fixar comandos `--auto`, credenciais ou provedor que não foram verificados no ambiente. Usar o modelo escolhido sem relaxar restrições. Commit convencional contém implementação, testes e transição material do quadro; não misturar trabalho de outra sessão.
 

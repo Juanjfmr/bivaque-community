@@ -218,34 +218,33 @@ test.describe("groups journey", () => {
     await page.goto("/groups")
 
     // Then exactly one primary navigation is on screen: the BottomNav below
-    // md (4 tabs — the ADR-20260816-shells-e-navegacao containers), the
-    // sidebar from md up (rail or expanded, links).
+    // md (3 tabs — os containers desta versão, reconciliados pelo FIGMA-001
+    // em tests/scope/navigation.test.mjs), the sidebar from md up (links).
     const width = page.viewportSize()?.width ?? 0
 
     if (width < 768) {
-      // Mobile: BottomNav with 4 tabs in NAV_ITEMS order
+      // Mobile: BottomNav with 3 tabs in NAV_ITEMS order
       const nav = page.locator(BOTTOM_NAV)
       await expect(nav).toBeVisible()
       const tabs = nav.getByRole("tab")
-      await expect(tabs).toHaveCount(4)
-      // Containers de PROCESSO-DE-CONSTRUCAO §7, travados em
-      // tests/scope/navigation.test.mjs:42. Substituíram os quatro do
-      // ADR-20260816 em 2026-09-08.
+      await expect(tabs).toHaveCount(3)
+      // Containers desta versão (decisão do dono em 05/10/2026): Comunidades
+      // e Grupos saíram da navegação; Conversas vive no shell superior.
       await expect(tabs.nth(0)).toContainText("Início")
       await expect(tabs.nth(1)).toContainText("Explorar")
-      await expect(tabs.nth(2)).toContainText("Comunidades")
-      await expect(tabs.nth(3)).toContainText("Perfil")
+      await expect(tabs.nth(2)).toContainText("Perfil")
     } else {
-      // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible.
-      // A sidebar ganhou seções além da primária (secundária, comunidades,
-      // rodapé), então a contagem total de links não é mais 4: ancoramos nos
-      // quatro containers por href, na ordem de NAV_ITEMS.
+      // Tablet / desktop: BottomNav hidden, sidebar links visible. A sidebar
+      // do Figma tem seções (principal, perto de você, pessoal, rodapé), então
+      // ancora-se nos containers por href, na ordem de NAV_ITEMS, mais a
+      // entrada de Conversas do lote FIGMA-001.
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
-      for (const href of ["/inicio", "/explorar", "/communities", "/profile"]) {
+      for (const href of ["/inicio", "/explorar", "/profile", "/messages"]) {
         await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
       }
+      await expect(sidebar).not.toContainText("Comunidades")
     }
   })
 })
@@ -399,9 +398,12 @@ test.describe("contextual DM and report journey", () => {
     // When the user navigates to the messages page
     await page.goto("/messages")
 
-    // Then the messages page renders its heading and primary action
-    await expect(page.getByRole("heading", { name: "Mensagens" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Nova conversa" })).toBeVisible()
+    // Then the messages page renders its heading and the honest contextual
+    // entry (FIGMA-001: o picker "Nova conversa" era caminho morto — insert em
+    // dm_conversations sem grant desde 20260825212538 — e saiu; conversas
+    // nascem de contexto real: prestador, evento, vínculo).
+    await expect(page.getByRole("heading", { name: "Conversas" })).toBeVisible()
+    await expect(page.getByText("Conversas nascem de um contexto")).toBeVisible()
   })
 })
 

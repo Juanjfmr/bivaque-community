@@ -1,5 +1,7 @@
 # Bivaque — instruções para consumir e manter o guia visual
 
+> **Execução web, 08/09/2026:** a seção 0 de PROCESSO-DE-CONSTRUCAO.md substitui a leitura integral repetida e a cadência abaixo. Após orientação inicial, consultar apenas card/contrato, requisitos e pranchas do lote com suas reviewNotes. Não gerar outra prancha, plano ou relatório para poder começar uma tela já especificada. Manter todas as correções de produto e provas de funcionamento.
+
 A ampliação de 07/09/2026 foi solicitada pelo responsável pelo produto. Ela complementa a direção de 06/09; não muda a navegação nem reabre a autorização da reconstrução.
 
 ## Leitura e execução

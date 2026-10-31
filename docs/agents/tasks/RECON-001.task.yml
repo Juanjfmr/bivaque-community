@@ -41,11 +41,13 @@ baseline:
 
 allowed_paths:
   - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/(shell)/layout.tsx
+  - apps/web/lib/member-context.tsx
   - docs/agents/tasks/RECON-001.task.yml
 
 forbidden:
   - tocar NAV_ITEMS ou bottom-nav.tsx (navegação primária e mobile não mudam aqui)
-  - tocar (shell)/layout.tsx, member-context.tsx, locality-context.tsx, proxy.ts, qualquer rota, qualquer arquivo .sql
+  - tocar locality-context.tsx, proxy.ts, qualquer rota, qualquer arquivo .sql
   - chumbar nome, contagem, lista de comunidades ou cidade — tudo vem de useMemberContext() e useLocalityContext()
   - importar HeroUI direto onde há wrapper Bivaque; o avatar do membro usa MemberAvatar
   - valor de cor cru em JSX, style inline ou classe utilitária de paleta (bg-slate-*, text-green-* etc.)

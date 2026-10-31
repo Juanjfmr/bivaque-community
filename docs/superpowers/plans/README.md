@@ -1,5 +1,7 @@
 # Execução das ondas — orientação para quem vai implementar
 
+> **Reconstrução web — 08/09/2026:** a seção 0 do [processo atual](../../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md) substitui a fila serial e o gate entre cada todo descritos neste histórico. Usar lotes por dependência real; consultar este arquivo apenas quando executar um plano histórico. O catálogo funcional web continua sendo a especificação atual. Não criar outro plano se o contrato/card já permite implementar e verificar o lote.
+
 > Escrito em 2026-08-11 para execução no OpenCode. Se você é um agente e acabou de abrir este
 > diretório, leia esta página inteira antes de abrir qualquer plano.
 

@@ -106,6 +106,16 @@
   --primitive-vendor-radius-xl: 1rem;
   --primitive-vendor-radius-2xl: 1.25rem;
   --primitive-vendor-radius-3xl: 1.5rem;
+  --primitive-shell-ink-900: #16262C;
+  --primitive-shell-ink-600: #5B6B73;
+  --primitive-shell-line-300: #D6DDDE;
+  --primitive-shell-line-500: #758991;
+  --primitive-shell-petrol-700: #164E63;
+  --primitive-shell-petrol-800: #123F50;
+  --primitive-shell-petrol-100: #DCEFF1;
+  --primitive-shell-paper-50: #F6F5F1;
+  --primitive-shell-paper-100: #EEF0EF;
+  --primitive-shell-radius-12: 0.75rem;
 
   /* Semantic tokens: stable product meaning. */
   --semantic-typography-display-size: var(--primitive-type-display-size);
@@ -239,6 +249,18 @@
   --semantic-motion-ease-in: var(--primitive-ease-in);
   --semantic-motion-ease-spring: var(--primitive-ease-out);
   --semantic-action-primary-disabled-foreground: var(--primitive-ink-700);
+  --semantic-shell-canvas: var(--primitive-shell-paper-50);
+  --semantic-shell-surface: var(--primitive-paper-0);
+  --semantic-shell-field: var(--primitive-shell-paper-100);
+  --semantic-shell-border-subtle: var(--primitive-shell-line-300);
+  --semantic-shell-border-control: var(--primitive-shell-line-500);
+  --semantic-shell-text-primary: var(--primitive-shell-ink-900);
+  --semantic-shell-text-secondary: var(--primitive-shell-ink-600);
+  --semantic-shell-action: var(--primitive-shell-petrol-700);
+  --semantic-shell-action-hover: var(--primitive-shell-petrol-800);
+  --semantic-shell-action-on: var(--primitive-paper-0);
+  --semantic-shell-brand-subtle: var(--primitive-shell-petrol-100);
+  --semantic-shell-radius: var(--primitive-shell-radius-12);
 
   /* Component tokens: wrappers bind contracts to semantic roles. */
   --component-button-primary-bg: var(--component-button-primary-bg-default);

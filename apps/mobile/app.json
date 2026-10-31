@@ -15,8 +15,7 @@
       "package": "com.bivaque.community.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFC"
-      },
-      "usesCleartextTraffic": true
+      }
     },
     "plugins": [
       "expo-router",

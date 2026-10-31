@@ -119,15 +119,20 @@ test.describe("DS-011 mobile — BottomNav activates 'Perfil' for /messages and 
   })
 })
 
-test.describe("DS-011 desktop — sidebar still activates 'Perfil' for /messages (no regression)", () => {
+test.describe("DS-011 desktop — sidebar activates the real container of /messages", () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
-  test("/messages activates 'Perfil' in the sidebar", async ({ page }) => {
+  // FIGMA-001: Conversas passou a ser item da sidebar (e do shell superior),
+  // então /messages ativa a própria entrada de Conversas — não mais o fallback
+  // de Perfil, que era o contrato quando a caixa vivia só sob o container do
+  // membro. O invariante preservado é o mesmo: exatamente um item atual, e o
+  // item atual é o destino real, não um container emprestado.
+  test("/messages activates 'Conversas' in the sidebar", async ({ page }) => {
     await signInAndVisit(page, "/messages")
     const sidebarNav = page.locator(SIDEBAR_NAV)
     await expect(sidebarNav).toBeVisible({ timeout: 15000 })
 
-    const perfil = sidebarNav.getByRole("link", { name: /Perfil/ })
-    await expect(perfil).toHaveAttribute("aria-current", "page")
+    const conversas = sidebarNav.getByRole("link", { name: /Conversas/ })
+    await expect(conversas).toHaveAttribute("aria-current", "page")
   })
 })

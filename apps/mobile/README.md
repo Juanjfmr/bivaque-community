@@ -39,7 +39,7 @@ A fundação **só** sabe ler tokens (`@bivaque/tokens`) e desenhar placeholders
 |---|---|---|
 | Expo SDK | `~54.0.0` | Compatível com React 19.1.0 e React Native 0.81 (matriz oficial do Expo). |
 | React | `19.1.0` | Alinhado com a matriz do SDK 54; `apps/web` está em React 19.2.x. |
-| React Native | `0.81.0` | Versão que o SDK 54 empacota. |
+| React Native | `0.81.5` | Patch compatível com o SDK 54, exigido pelo verificador do Expo. |
 | expo-router | `~6.0.0` | Padrão atual do Expo (post-SDK 49) para file-based routing. |
 | TypeScript | `^7.0.2` | Mesmo do workspace raiz (`package.json`). |
 
@@ -104,6 +104,7 @@ não tem o defeito do `.bat`.
 build**, lendo do ambiente do processo do Metro:
 
 ```sh
+BIVAQUE_MOBILE_ENV=development \
 EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:55321 \
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon do supabase status -o env> \
 npx expo start

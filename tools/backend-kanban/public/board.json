@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-15",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -522,36 +522,121 @@
       "priority": "P1",
       "category": "frontend",
       "status": "done",
-      "description": "Construir a superficie publica de aquisicao com desejo de pertencimento, verdade de produto, direcao visual autoral e motion acessivel, sem ampliar promessas alem do runtime/canon.",
+      "description": "Superficie publica de aquisicao na raiz. A direcao de 14/09 substituiu a versao de 22/08: hero editorial claro, demonstracao com componentes reais do produto (PostPreview e MemberAvatar), Motion com reduced-motion e fotografia local. O contrato permanece: desejo de pertencimento, verdade de produto e nenhuma promessa alem do runtime.",
       "checklist": [
         "Posicionar o Bivaque como comunidade nacional de pertencimento e conhecimento duravel",
         "Construir hero autoral que demonstre conversa dispersa virando referencia recuperavel",
         "Usar presenca humana apenas anonima e sem sinais militares identificaveis",
-        "Implementar narrativa responsiva e GSAP com fallback reduced-motion",
+        "Implementar narrativa responsiva com Motion (LazyMotion) e fallback reduced-motion",
         "Preservar redirect autenticado e manter a raiz publica para aquisicao",
         "Passar gate, build e auditoria visual em 375/768/1440"
       ],
       "proof": [
-        "apps/web/app/page.tsx era uma superficie provisoria sem aquisicao antes do worktree atual",
-        "Direcao explicita do dono em 2026-08-22: landing impressionante que gere desejo de ingressar",
-        "apps/web/app/landing/landing.tsx e landing.module.css entregam hero fotografico, narrativa editorial, demonstracao de produto e GSAP com reduced-motion",
-        "apps/web/public/landing/hero-bivaque-arrival.webp usa presenca majoritariamente militar por postura e contexto, sem rostos, uniformes, patentes ou insignias identificaveis",
-        "Gate completo verde em 2026-08-22: 355 unitarios, 189 privacidade, 53 escopo e secrets scan",
-        "Build Next 16 de producao compilado com sucesso em 2026-08-22",
-        ".visual/landing-copy-v4-2026-08-22/report.md: copy refinada da raiz publica anonima com 0 findings e 0 high em 375/768/1440",
-        ".visual/landing-copy-v5-mobile.png: fold final em 375px sem orfao tipografico e com CTAs acima da dobra",
-        ".visual/2026-08-23T00-29-41-828Z: loop global passou lint, typecheck, test, build e capture; 3 highs remanescentes pertencem ao touch target preexistente de /communities"
+        "Baseline de contexto em .visual/landing-before-2026-09-14: captura INVALID (timeout a 375, erro de script a 768/1440), usada apenas como referencia do estado anterior",
+        "Direcao de 14/09 e cinco conceitos comparados em apps/web/app/landing/DIRECAO.md; substitui a implementacao GSAP de 22/08",
+        "Gate completo verde em 2026-09-15 na revisao b9faf50 (arvore suja): lint, typecheck, next build, 564 unitarios, 189 privacidade, 107 escopo e secrets",
+        ".visual/landing-v4-2026-09-15/report.md: 5 achados e 0 alto, todos nav-active em navs de ancora e de rodape (lacuna de escopo da regra; card AUDIT-NAV-ATIVO-ANCORA)",
+        ".visual/landing-v4-2026-09-15/interaction-check.json: 46/46 em teclado, destinos, tres exemplos, reduced-motion e overflow em 375/768/1440",
+        ".visual/landing-v3-2026-09-14/prod-tab-check.txt: em build de producao o primeiro Tab foca o atalho e Enter leva a #conteudo",
+        "Review adversarial independente em .visual/landing-v4-2026-09-15/reviewer-report.md: criterios 1, 2, 3 e 4 satisfeitos; H-2, L-1 e L-2 resolvidos no delta",
+        "apps/web/public/landing/chegada-editorial.webp e mesa-editorial.webp gerados localmente, 1536x1024, 238820 e 152748 bytes, priority apenas na chegada",
+        "og:image absoluto ainda depende de metadataBase e do dominio canonico (card WEB-OG-METADATABASE); o aviso do Next aparece no gate",
+        "Achados abertos registrados em card proprio: WEB-OG-METADATABASE, AUDIT-NAV-ATIVO-ANCORA e FRONTEND-POSTPREVIEW-DEMO"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 build", "node scripts/visual/loop.mjs"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/capture.mjs",
+        "node .visual/verify-landing-interaction.cjs"
+      ],
       "links": [
         "Produto | ../../docs/BIVAQUE.md",
         "Design spec | ../../docs/agents/DESIGN_SPEC.md",
-        "Auditoria visual | ../../docs/superpowers/plans/2026-08-05-auditoria-telas.md"
+        "Auditoria visual | ../../docs/superpowers/plans/2026-08-05-auditoria-telas.md",
+        "Direcao da landing | ../../apps/web/app/landing/DIRECAO.md"
       ],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "015e4ba",
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "b9faf50",
       "dependencies": [],
-      "completedAt": "2026-08-22"
+      "completedAt": "2026-09-15"
+    },
+    {
+      "id": "WEB-OG-METADATABASE",
+      "title": "OG da raiz resolve para localhost sem metadataBase",
+      "phase": "Frontend",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "blocked",
+      "description": "O LAND-001 adicionou openGraph.images em apps/web/app/page.tsx. Sem metadataBase e sem variavel de URL publica, o build emite og:image absoluto em http://localhost:3000 e o gate avisa metadataBase ausente. Corrigir exige decidir o dominio canonico de producao; inventar dominio nao e autorizado.",
+      "checklist": [
+        "Decidir o dominio canonico de producao (ou a URL de deploy que passa a valer como canonica)",
+        "Declarar a fonte unica de URL publica e usa-la no metadataBase da raiz",
+        "Provar no artefato de build que og:image e canonical saem absolutos e corretos",
+        "Registrar a prova e remover o aviso do Next no gate"
+      ],
+      "proof": [
+        "apps/web/app/page.tsx:17-24 adiciona openGraph.images (introduzido pelo diff do LAND-001)",
+        "Artefato de build emite meta og:image absoluto apontando para http://localhost:3000/landing/chegada-editorial.webp",
+        "Gate de 2026-09-15 avisa metadataBase ausente e usa http://localhost:3000",
+        "canonical ja saia relativo no HEAD: pre-existente, nao introduzido pelo diff"
+      ],
+      "blockers": [
+        "Dominio canonico de producao nao decidido; apps/web/.env.example nao possui variavel de URL publica"
+      ],
+      "links": [
+        "Landing | ../../apps/web/app/page.tsx",
+        "Direcao | ../../apps/web/app/landing/DIRECAO.md"
+      ],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "b9faf50",
+      "dependencies": []
+    },
+    {
+      "id": "AUDIT-NAV-ATIVO-ANCORA",
+      "title": "Auditoria: nav-active exige item atual em nav de ancora e de links legais",
+      "phase": "Verificacao",
+      "priority": "P1",
+      "category": "testing",
+      "status": "repo",
+      "description": "A regra nav-active (scripts/visual/capture.mjs) exige exatamente um item com aria-current, data-active ou aba selecionada em toda nav visivel com ancora. A raiz publica tem nav de ancoras da mesma pagina e nav de links legais: nenhuma tem item atual por construcao, e a captura de / reporta os mesmos 5 achados medios em v1, v2, v3 e v4. A versao anterior so passava marcando aria-current falso no primeiro item, removido corretamente. A tela nao fecha auditoria limpa enquanto a regra nao for escopada ou houver excecao adjudicada.",
+      "checklist": [
+        "Decidir o escopo: exigir item atual apenas quando alguma ancora resolve para o pathname atual (ou a nav e tablist)",
+        "Implementar em scripts/visual/capture.mjs com prova, em tela de shell ou breadcrumb, de que achado real de rota nao e silenciado",
+        "Rodar a captura em / e nas telas de shell para comparar achados antes e depois",
+        "Registrar a decisao no relatorio de auditoria e reconciliar este card"
+      ],
+      "proof": [
+        ".visual/landing-v4-2026-09-15/report.md: 5 achados e 0 alto, todos nav-active em /",
+        "scripts/visual/capture.mjs:548-568 implementa a regra",
+        "docs/superpowers/plans/2026-08-05-auditoria-telas.md:479-482 e 535-539 definem a intencao (sidebar e bottom-nav do shell; investigar antes de mexer no auditor)"
+      ],
+      "links": ["Auditoria | ../../docs/superpowers/plans/2026-08-05-auditoria-telas.md"],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "b9faf50",
+      "dependencies": []
+    },
+    {
+      "id": "FRONTEND-POSTPREVIEW-DEMO",
+      "title": "Demonstracao da landing usa PostPreview sem modo de demonstracao",
+      "phase": "Frontend",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "A landing reusa PostPreview como conversa ilustrativa, mas o componente mantem o aria-label de compositor como nome acessivel da regiao e uma live region propria. O CSS da landing esconde apenas o texto visivel e depende do DOM interno do componente (p:first-child, div:first-of-type), sem variante de demonstracao. Resolver pede mudanca no componente, fora dos caminhos do LAND-001.",
+      "checklist": [
+        "Definir variante de demonstracao no PostPreview: rotulo acessivel proprio e sem live region interna",
+        "Trocar os overrides de CSS da landing por contrato explicito do componente",
+        "Provar com leitor de tela (ou registrar o limite) e recapturar / em 375/768/1440"
+      ],
+      "proof": [
+        "apps/web/app/landing/landing.module.css:483-494 e 1091-1099 trazem os overrides que entram no componente",
+        "apps/web/app/components/bivaque/feed-post-preview.tsx:32-36 e 87-91 definem o aria-label e a live region internos",
+        "Review adversarial do LAND-001, achados M-1 e N-1, em .visual/landing-v4-2026-09-15/reviewer-report.md"
+      ],
+      "links": ["Componente | ../../apps/web/app/components/bivaque/feed-post-preview.tsx"],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "b9faf50",
+      "dependencies": []
     },
     {
       "id": "FRONTEND-LOGIN-AAA",

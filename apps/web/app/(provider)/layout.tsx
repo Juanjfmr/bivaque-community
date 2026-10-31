@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr"
-import type { Route } from "next"
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
+import { ToastProvider } from "../components/bivaque/toast"
+import { ProviderNavigation } from "./provider-navigation"
 
 export default async function ProviderLayout({ children }: Readonly<{ children: ReactNode }>) {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -55,32 +55,17 @@ export default async function ProviderLayout({ children }: Readonly<{ children: 
 
   return (
     <div className="flex min-h-screen flex-col">
-      <nav aria-label="Painel do prestador" className="border-b border-border bg-surface px-6 py-3">
-        <ul className="flex flex-wrap gap-4 text-sm">
-          <li>
-            <Link href="/prestador" className="inline-flex min-h-11 items-center rounded-md px-3">
-              Painel
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={"/prestador/ficha" as Route}
-              className="inline-flex min-h-11 items-center rounded-md px-3"
-            >
-              Minha ficha
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={"/prestador/catalogo" as Route}
-              className="inline-flex min-h-11 items-center rounded-md px-3"
-            >
-              Catálogo e portfólio
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      {children}
+      {/* FIGMA-001 (reparos finais 06/10/2026): a nav vira componente cliente —
+          exatamente um aria-current por pathname (o thread /prestador/conversas/<id>
+          ativa Conversas) e estados active/focus/hover visíveis a 120ms com
+          reduced motion. A caixa real do prestador continua no próprio shell
+          (delta provider 06/10/2026): /messages é rota do membro e o proxy
+          devolve o prestador para o painel. */}
+      <ProviderNavigation />
+      {/* O detalhe de conversa compartilhado chama showToast (bloquear/
+          desbloquear, falhas de envio); sem a região montada os toasts caem
+          em silêncio — a mesma armadilha documentada no shell do membro. */}
+      <ToastProvider>{children}</ToastProvider>
     </div>
   )
 }

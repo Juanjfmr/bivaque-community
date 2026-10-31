@@ -1,5 +1,7 @@
 # Arquitetura de execução por agentes — v1
 
+> **Cadência web atualizada em 08/09/2026:** aplicar a seção 0 do [processo](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md). Um contrato/lote pode incluir 1–3 telas relacionadas e seus reparos. Implementador, revisor e verificador continuam distintos; a revisão e prova ocorrem por lote estável, não por componente. Não repetir exploração, planejamento e documentos de fechamento já cobertos pelo contrato/card. Paralelismo exige isolamento real de arquivos e exclusão de operações sobre banco compartilhado.
+
 > Status: vigente desde 2026-08-22. Substitui a configuração de agentes anterior
 > (`code-reviewer`, `explore-haiku`, `test-writer`, `test-runner`).
 > A auditoria que motivou esta versão está em
