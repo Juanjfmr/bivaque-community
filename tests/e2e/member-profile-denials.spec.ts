@@ -12,7 +12,7 @@ test.describe("other-member profile denials", () => {
 
     // When the viewer tries to open the profile of a member in locality 2
     // (member-three in foundation.inc)
-    await page.goto("/profile/10000000-0000-4000-4000-8000-000000000003")
+    await page.goto("/profile/10000000-0000-4000-8000-000000000003")
 
     // Then the page is the not-found UI (no protected content, no posts
     // headings, no display name of the target). We assert the UI, not
