@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(4);
+select plan(6);
 
 \ir fixtures/foundation.inc
 
@@ -38,6 +38,35 @@ select throws_ok(
 );
 
 reset role;
+
+-- Negative: a member cannot pass the organizer's id as the caller. Before
+-- 20261024090000 the function trusted this parameter, so any authenticated
+-- account completed someone else's event.
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.complete_event(
+      '80000000-0000-4000-8000-000000000002',
+      '10000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  'P0001',
+  'only the event organizer can complete the event',
+  'member cannot complete an event by passing the organizer id'
+);
+
+reset role;
+
+select is(
+  (select status::text from public.events
+   where id = '80000000-0000-4000-8000-000000000002'),
+  'upcoming',
+  'event stays open after the spoofed call'
+);
 
 -- Positive: organizer completes their own event.
 
