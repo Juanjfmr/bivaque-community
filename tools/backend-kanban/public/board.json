@@ -1283,19 +1283,25 @@
       "phase": "Segurança",
       "priority": "P0",
       "category": "governance",
-      "status": "repo",
-      "description": "A documentação registra recomendação de rotação porque credenciais de dev podem ter aparecido em transcript externo. Não registrar valores no card.",
+      "status": "done",
+      "description": "DECIDIDO (dono, 31/10/2026): aceitar o risco e não rotacionar as chaves do Portal e do Resend agora. O risco foi apresentado antes da decisão: a chave possivelmente exposta continua válida. Reabrir se houver sinal de uso indevido, troca de ambiente ou abertura pública.\n\nA documentação registra recomendação de rotação porque credenciais de dev podem ter aparecido em transcript externo. Não registrar valores no card.",
       "checklist": [
-        "Decisão do dono sobre janela",
-        "Rotacionar no provedor",
-        "Atualizar ambiente local/CI com segurança",
-        "Confirmar que scanner e logs não expõem valores"
+        "Decisão do dono sobre a janela: aceitar o risco sem rotação (31/10/2026)",
+        "Rotacionar no provedor: não executado por decisão do dono",
+        "Atualizar ambiente local/CI: não aplicável sem rotação",
+        "Confirmar que scanner e logs não expõem valores: secrets-scan verde nas revisões de 31/10"
       ],
-      "proof": ["PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"],
+      "proof": [
+        "31/10/2026: decisão do dono registrada nesta sessão, depois de três opções (trocar as duas, trocar só o Resend, aceitar o risco); escolhida a terceira.",
+        "31/10/2026: secrets-scan sem achados na revisão 5b4cc105 antes do envio da branch feat/f01-entrada-visual.",
+        "PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"
+      ],
       "links": ["Status: segurança | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "bcb00349",
+      "dependencies": [],
+      "completedAt": "2026-10-31",
+      "completedChecklist": [true, false, false, true]
     },
     {
       "id": "DRIFT-STATUS-RECONCILIATION",

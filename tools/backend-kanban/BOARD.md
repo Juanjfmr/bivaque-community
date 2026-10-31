@@ -6,7 +6,7 @@
 
 > O ADR-20261024-front-react-spa governa o app: React de página única no apps/app (shadcn/ui), o Next como servidor e landing, o app de loja em Capacitor depois da web. O protótipo HTML é a especificação até cada onda ser aprovada pelo dono no app novo; as referências por fluxo estão em docs/design/fluxos-2026-10-30. Figma de setembro/outubro, pranchas e W00 são histórico preservado como frozen; não reiniciar. Contagens abaixo incluem infraestrutura, Mobile e histórico; cards done antigos não são percentual de fidelidade atual. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos não substituem entregas de outros agentes.
 
-**Mapa:** 133 frentes · 8 agora · 7 bloqueadas · 67 concluídas · 0 drifts
+**Mapa:** 133 frentes · 8 agora · 7 bloqueadas · 68 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -39,7 +39,6 @@ Nenhum card.
 
 ## Triagem prioritária
 
-- **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
 - **AUDIT-NAV-ATIVO-ANCORA** · P1 · Auditoria: nav-active exige item atual em nav de ancora e de links legais
 - **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
