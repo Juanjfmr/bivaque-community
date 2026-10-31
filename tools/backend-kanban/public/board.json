@@ -9,8 +9,8 @@
       "phase": "Reconstrução",
       "priority": "P0",
       "category": "frontend",
-      "status": "next",
-      "description": "Auditoria read-only de https://www.bivaque.app/inicio em 19–20/09/2026, aprofundada com referências diretas do Mobbin. Além do diálogo cortado em viewport móvel curta, a correção agora separa Fazer uma pergunta de Pedir uma indicação. O padrão Nextdoor observado usa Responder e ancora a recomendação em lugar/serviço; polegar é feedback posterior, não o comando Indicar. O pedido consulta o Guia antes da comunidade. Quando não há referência, a resposta deve poder aparecer imediatamente enquanto somente a candidata aguarda curadoria humana. As pranchas 01, 44, 45, 74 e 80 foram substituídas e o contrato DS-006 delega a reconciliação visual compatível com os contratos atuais, sem fingir vínculo persistido que o servidor ainda não prove.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nAuditoria read-only de https://www.bivaque.app/inicio em 19–20/09/2026, aprofundada com referências diretas do Mobbin. Além do diálogo cortado em viewport móvel curta, a correção agora separa Fazer uma pergunta de Pedir uma indicação. O padrão Nextdoor observado usa Responder e ancora a recomendação em lugar/serviço; polegar é feedback posterior, não o comando Indicar. O pedido consulta o Guia antes da comunidade. Quando não há referência, a resposta deve poder aparecer imediatamente enquanto somente a candidata aguarda curadoria humana. As pranchas 01, 44, 45, 74 e 80 foram substituídas e o contrato DS-006 delega a reconciliação visual compatível com os contratos atuais, sem fingir vínculo persistido que o servidor ainda não prove.",
       "checklist": [
         "Compositor funciona em 375x568, 375x667 e 375x812, com corpo rolável, ações alcançáveis, safe area e teclado virtual",
         "Foco fica dentro do diálogo, nunca encoberto, e retorna ao acionador ao fechar; nome acessível usa Fechar em português",
@@ -106,12 +106,13 @@
         "Teste de estado sem comunidade com grupo/cidade disponíveis e estados distintos das abas"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/AUDIT-PRODUCAO-2026-09-19-INICIO.md",
         "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-21",
-      "sourceRevision": "82fb64a",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a",
       "blockers": [],
       "completedChecklist": [
         false,
@@ -137,8 +138,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "A analise de chegabilidade (scripts/visual/flows/reachability.mjs, novo) cruza o grafo de navegacao estatica do app com o mapa de jornadas e encontrou duas telas sem saida propria: elas so permitem sair pela navegacao da casca; nenhum link delas leva adiante. /arrivals deixa o operador num beco. /profile/[userId] mostra outro membro e nao oferece caminho para o conteudo dele. Diferente de NOTIF-DEEPLINKS e SHELL-SETTINGS-LABEL, que sao links errados, aqui o link simplesmente nao existe. O backend do perfil alheio esta pronto (DONE-PROFILE-RPCS); a lacuna e de UI.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nA analise de chegabilidade (scripts/visual/flows/reachability.mjs, novo) cruza o grafo de navegacao estatica do app com o mapa de jornadas e encontrou duas telas sem saida propria: elas so permitem sair pela navegacao da casca; nenhum link delas leva adiante. /arrivals deixa o operador num beco. /profile/[userId] mostra outro membro e nao oferece caminho para o conteudo dele. Diferente de NOTIF-DEEPLINKS e SHELL-SETTINGS-LABEL, que sao links errados, aqui o link simplesmente nao existe. O backend do perfil alheio esta pronto (DONE-PROFILE-RPCS); a lacuna e de UI.",
       "checklist": [
         "/profile/[userId]: oferecer caminho para o conteudo do membro que o leitor pode ver, contra o que C03 permite",
         "/arrivals: oferecer o caminho operacional de saida, contra O05",
@@ -153,12 +154,13 @@
       ],
       "tests": ["node scripts/visual/flows/reachability.mjs"],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 O05 e secao 4.9 C03",
         "scripts/visual/flows/reachability.mjs"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "31748ab"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "DOC-20260912-FLUXOS-PRANCHAS",
@@ -2268,8 +2270,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "apps/web/app/components/bivaque/app-shell.tsx:136 renderiza <button type='button' aria-label='Notificações'> sem onClick nem onPress. É um controle morto. Abaixo de md a sidebar não aparece, então esse sino é a única afordância de notificação visível no mobile web — e não leva a lugar nenhum. O gate G1 da especificação exige que todo botão tenha efeito, destino ou desabilitação justificada. Correção provável: virar link para /notifications, com o mesmo badge de não-lidas que a sidebar já usa via useMemberContext().",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\napps/web/app/components/bivaque/app-shell.tsx:136 renderiza <button type='button' aria-label='Notificações'> sem onClick nem onPress. É um controle morto. Abaixo de md a sidebar não aparece, então esse sino é a única afordância de notificação visível no mobile web — e não leva a lugar nenhum. O gate G1 da especificação exige que todo botão tenha efeito, destino ou desabilitação justificada. Correção provável: virar link para /notifications, com o mesmo badge de não-lidas que a sidebar já usa via useMemberContext().",
       "checklist": [
         "O sino navega para /notifications ou é removido em favor do item da sidebar",
         "Se mantido, exibe badge de não-lidas coerente com o da sidebar",
@@ -2277,10 +2279,13 @@
       ],
       "proof": ["npx pnpm@11.18.0 gate", "node scripts/visual/loop.mjs"],
       "tests": [],
-      "links": ["docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "SHELL-SETTINGS-LABEL",
@@ -2288,18 +2293,21 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "O rodapé da sidebar (apps/web/app/components/bivaque/app-shell.tsx) rotula 'Configurações' um link para /profile, porque não existe rota de configurações. Hoje as preferências vivem como aba dentro de /profile (profile/page.tsx:248). A prancha 52-web-configuracoes define a tela própria e pertence à etapa W08. Até lá o rótulo promete um destino que não existe como tal.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nO rodapé da sidebar (apps/web/app/components/bivaque/app-shell.tsx) rotula 'Configurações' um link para /profile, porque não existe rota de configurações. Hoje as preferências vivem como aba dentro de /profile (profile/page.tsx:248). A prancha 52-web-configuracoes define a tela própria e pertence à etapa W08. Até lá o rótulo promete um destino que não existe como tal.",
       "checklist": [
         "Rota de configurações criada conforme a prancha 52, ou o rótulo passa a corresponder ao destino real",
         "Preferências, conta e privacidade acessíveis pelo destino rotulado"
       ],
       "proof": ["npx pnpm@11.18.0 gate", "node scripts/visual/loop.mjs"],
       "tests": [],
-      "links": ["docs/design/visual-guide-2026-09-06/52-web-configuracoes.png"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/design/visual-guide-2026-09-06/52-web-configuracoes.png"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "OUTBOX-INVITE-RECIPIENTS",
@@ -2514,8 +2522,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "governance",
-      "status": "next",
-      "description": "O AGENTS.md da raiz afirma que todo primitivo em apps/web/app/components/bivaque/ é um wrapper fino e token-aware sobre um sub-componente HeroUI v3, e documenta uma tabela de 6. O diretório tem 22 arquivos, e 6 deles não importam HeroUI: empty-state.tsx, feed-right-rail.tsx, illustrations.tsx, page-header.tsx, service-worker-registration.tsx, supabase-auth-provider.tsx. Vários outros não são primitivos, e sim superfícies compostas (app-shell, city-reference, feed-post, chat-thread, recommendation-requests). A afirmação é falsa como escrita e a tabela cobre menos de um terço do diretório — induz a erro quem procura o wrapper existente antes de criar um novo. Levantado na validação de tokens/HeroUI/wrappers da etapa W00.",
+      "status": "frozen",
+      "description": "SUPERADO (31/10/2026): o AGENTS.md não descreve mais os wrappers HeroUI do apps/web; o app novo usa shadcn/ui (ADR-20261024-front-react-spa). Registro preservado abaixo.\n\nO AGENTS.md da raiz afirma que todo primitivo em apps/web/app/components/bivaque/ é um wrapper fino e token-aware sobre um sub-componente HeroUI v3, e documenta uma tabela de 6. O diretório tem 22 arquivos, e 6 deles não importam HeroUI: empty-state.tsx, feed-right-rail.tsx, illustrations.tsx, page-header.tsx, service-worker-registration.tsx, supabase-auth-provider.tsx. Vários outros não são primitivos, e sim superfícies compostas (app-shell, city-reference, feed-post, chat-thread, recommendation-requests). A afirmação é falsa como escrita e a tabela cobre menos de um terço do diretório — induz a erro quem procura o wrapper existente antes de criar um novo. Levantado na validação de tokens/HeroUI/wrappers da etapa W00.",
       "checklist": [
         "Tabela do AGENTS.md reflete o que existe no diretório",
         "Distinção explícita entre primitivo com wrapper de HeroUI e superfície composta",
@@ -2523,10 +2531,13 @@
       ],
       "proof": ["npx pnpm@11.18.0 test:scope"],
       "tests": [],
-      "links": ["docs/agents/W00-FECHAMENTO-2026-09-08.md"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/agents/W00-FECHAMENTO-2026-09-08.md"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "44c1d4b"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "W01-ADMISSAO-MANUAL",
@@ -2607,8 +2618,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "Descoberto ao realinhar os testes E2E em 08/09/2026. A navegação nova criou o container 'Explorar' (bottom-nav.tsx, role=tab). A tela /recommendations já tinha uma aba 'Explorar' (role=tab) no seu próprio conjunto. Nessa rota, dois elementos com role=tab e o mesmo nome acessível coexistem significando coisas diferentes: um é destino de primeiro nível, o outro é um recorte do conteúdo. O sintoma imediato foi o Playwright entrando em strict mode; a consequência real é de acessibilidade — quem navega por leitor de tela ouve 'Explorar' duas vezes sem distinção. Os testes foram escopados ao <main> para desambiguar, o que resolve o teste, não a colisão.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo. A navegação nova não tem Explorar.\n\nDescoberto ao realinhar os testes E2E em 08/09/2026. A navegação nova criou o container 'Explorar' (bottom-nav.tsx, role=tab). A tela /recommendations já tinha uma aba 'Explorar' (role=tab) no seu próprio conjunto. Nessa rota, dois elementos com role=tab e o mesmo nome acessível coexistem significando coisas diferentes: um é destino de primeiro nível, o outro é um recorte do conteúdo. O sintoma imediato foi o Playwright entrando em strict mode; a consequência real é de acessibilidade — quem navega por leitor de tela ouve 'Explorar' duas vezes sem distinção. Os testes foram escopados ao <main> para desambiguar, o que resolve o teste, não a colisão.",
       "checklist": [
         "Decidir qual dos dois muda de rótulo, ou como distingui-los no nome acessível",
         "Nenhuma rota expõe dois role=tab com o mesmo nome acessível significando coisas diferentes",
@@ -2616,10 +2627,13 @@
       ],
       "proof": ["npx pnpm@11.18.0 test:e2e", "node scripts/visual/loop.mjs"],
       "tests": ["tests/e2e/manaus-pilot-full-journey.spec.ts"],
-      "links": ["docs/agents/DESIGN_SYSTEM.md"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/agents/DESIGN_SYSTEM.md"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "30ab4eb"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "RECON-W00-TELAS",
@@ -4270,20 +4284,21 @@
     {
       "phase": "Reconstrução",
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "apps/web/app/(shell)/events/page.tsx",
         "apps/web/app/(shell)/events/novo/page.tsx"
       ],
       "dependencies": [],
       "proof": [],
       "tests": ["tests/e2e/link-crawl.spec.ts"],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "8632239",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a",
       "id": "EVENTOS-CRIACAO-DUPLICADA",
       "title": "Criar evento existe duas vezes e a rota dedicada nao tem porta",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /events cria evento por um formulario embutido (setView('create'), events/page.tsx) e /events/novo (RECON-029, prancha 70) cria pela rota dedicada com EventForm, a mesma de /events/[id]/editar. Nenhum link leva a /events/novo. A funcao nao esta bloqueada, mas ha dois caminhos de criacao que podem divergir. Consolidar num so: os botoes 'Criar evento' levam a /events/novo e o formulario embutido sai.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nAchado do rastreador de 22/09/2026 (HRN-005). /events cria evento por um formulario embutido (setView('create'), events/page.tsx) e /events/novo (RECON-029, prancha 70) cria pela rota dedicada com EventForm, a mesma de /events/[id]/editar. Nenhum link leva a /events/novo. A funcao nao esta bloqueada, mas ha dois caminhos de criacao que podem divergir. Consolidar num so: os botoes 'Criar evento' levam a /events/novo e o formulario embutido sai.",
       "checklist": [
         "Conferir que /events/novo cobre tudo o que o formulario embutido faz (alcance, grupo, comunidade)",
         "Trocar os botoes 'Criar evento' de /events por link para /events/novo",
@@ -4323,18 +4338,21 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/(preauth)/consent/page.tsx"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "apps/web/app/(preauth)/consent/page.tsx"
+      ],
       "dependencies": [],
       "proof": [],
       "tests": ["tests/e2e/link-crawl.spec.ts", "tests/e2e/manaus-pilot-denials.spec.ts"],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "8632239",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a",
       "id": "ROTA-CONSENT-LEGADA",
       "title": "/consent continua servida depois que o portao saiu do produto",
       "priority": "P3",
       "category": "frontend",
-      "status": "next",
-      "description": "Achado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
+      "status": "frozen",
+      "description": "NÃO EXECUTAR (31/10/2026): /consent voltou a ser exigida pela etapa de aceite de quem entra pelo Google (PR #104, ADR-20261022-entrada-do-prototipo); o AGENTS.md proíbe removê-la por este card. Registro preservado abaixo.\n\nAchado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
       "checklist": [
         "Conferir quem ainda depende de /consent (proxy.ts, active-nav.ts, specs de negacao)",
         "Remover ou redirecionar, ajustando os specs",
