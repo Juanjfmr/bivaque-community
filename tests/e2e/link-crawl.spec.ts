@@ -105,6 +105,12 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
   },
   {
+    route: "/groups",
+    porta:
+      "CONDICIONAL: 'Veja os grupos' no compositor e 'Criar o primeiro grupo' em Interesses, que só aparecem para quem não tem grupo; o painel 'Grupos ativos' saiu com o feed da Início (lote 5 N2)",
+    dependeDeDados: true,
+  },
+  {
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
