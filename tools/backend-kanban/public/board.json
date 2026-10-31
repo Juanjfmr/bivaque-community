@@ -3180,6 +3180,29 @@
       "sourceRevision": "615d7e6"
     },
     {
+      "id": "PURGA-POSSE-MEMBERSHIP",
+      "title": "Herdeiro de grupo/comunidade da purga ganha a membership de dono, não só a coluna",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "description": "settle_account_possessions (RECON-052-FOLLOWUP) trocava só owner_user_id em groups/communities. private.is_group_owner (delete_group, transfer_group_ownership) e as telas de grupo e de comunidade leem a membership role='owner' AND status='approved', então o herdeiro ficava sem poder de dono; quando a posse ia para a operação, a operação nem membro era. transfer_*_ownership sempre moveu os dois fatos juntos; a purga não.",
+      "checklist": [
+        "Migration nova (sem editar aplicada) promove o herdeiro a owner/approved e rebaixa o dono antigo a member, em comunidades e grupos",
+        "Operação herdeira de grupo de comunidade entra como membro aprovado da comunidade (enforce_group_community_membership) e nunca herda de si mesma",
+        "Reparo idempotente do estado já quebrado por purgas anteriores",
+        "pgTAP positivo e negativo, incluindo as RPCs delete_group e transfer_group_ownership"
+      ],
+      "proof": [
+        "27/09/2026: migration 20260927013544_settle_possessions_owner_membership.sql; supabase/tests/settle-possessions-owner-membership.sql com 17 asserts. Contra a função anterior, 11 de 17 falham; com a nova, db:reset --no-seed + test:db = 134 arquivos / 1824 asserts PASS"
+      ],
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true],
+      "updatedAt": "2026-09-27",
+      "sourceRevision": "1134c7ce",
+      "completedAt": "2026-09-27"
+    },
+    {
       "id": "NOTIF-PEDIDO-CANCELADO",
       "title": "Aviso neutro ao outro lado do pedido cancelado pela purga",
       "phase": "Reconstrução",
