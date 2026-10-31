@@ -35,7 +35,7 @@ The private parent `Juanjfmr/Bivaque` is reference, not law (see BIVAQUE §1.5).
 
 Read [tools/backend-kanban/BOARD.md](tools/backend-kanban/BOARD.md) before planning/changing the repository; then consult `node tools/backend-kanban/src/board.mjs --card <ID>` or `--search <terms>`. Autonomous card work uses `node tools/backend-kanban/src/board.mjs --next`: implement, validate, update and commit one returned card. Priority never overrides current product authority or observed runtime.
 
-Documentation/board reconciliation baseline: main `37702a86` (PRs #99–#105 merged). The `apps/app` line (PR #116 and branches built on it) contains that revision plus the SPA work, which is not on main yet. Done statuses describe the integrated main revision, not a local runtime PASS. Reconcile later main changes before implementation; preserve local historical proof by its original revision.
+Documentation/board reconciliation baseline: main `c4945a46` (PRs #99–#105 and #112 merged). The `apps/app` line (PR #116 and branches built on it) contains that revision plus the SPA work, which is not on main yet. Done statuses describe the integrated main revision, not a local runtime PASS. Reconcile later main changes before implementation; preserve local historical proof by its original revision.
 
 - Keep material transitions with the work: proof, blocker, drift, priority/status or completion; merely starting work is not a board transition. Routine read-only answers need no update.
 - Edit canonical `tools/backend-kanban/public/board.json`, never BOARD.md by hand. Regenerate with `node tools/backend-kanban/src/board.mjs --write-summary`; CI rejects invalid data or a stale summary. Do not create a second task system or mark done without applicable acceptance and evidence.
