@@ -25,6 +25,12 @@ export const REPORT_TARGET_POST_ID = "80000000-0000-4000-8000-000000000f01"
 // nao garante nao-lidas que sobrevivam a execucoes.
 export const MANAUS_LOCALITY_ID = "00000000-0000-4000-8000-000000000001"
 
+// Desde 20261024100000_publicacao_so_em_grupo a publicacao so existe dentro de
+// grupo. "Pais e Filhos" e publico, e o seed poe nele membro-1 e membro-9: o
+// membro i entra no grupo 1 + ((i + g) % 8) para g = 0, e (1 + 0) % 8 = (9 + 0) % 8 = 1.
+export const GRUPO_PAIS_E_FILHOS_ID = "60000000-0000-4000-8000-000000000002"
+export const MEMBRO_9_EMAIL = "membro-9@bivaque.example.invalid"
+
 // ficha publica do prestador-seed — contexto provider do open_conversation
 export const PROVIDER_PROFILE_ID = "30000000-0000-4000-8000-000000000010"
 export const PROVIDER_USER_ID = "20000000-0000-4000-8000-00000000000a"
