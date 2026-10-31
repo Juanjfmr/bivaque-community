@@ -40,10 +40,13 @@ values (
   'assistencia_tecnica'
 );
 
+-- A vila saiu; o alcance do prestador e a CIDADE (R1-209, provider_reach_scope
+-- de community/locality para so locality). scope_id e a localidade autorizada.
 insert into public.provider_reach (provider_id, scope_type, scope_id, source)
 values (
   '30000000-0000-4000-8000-000000000028',
-  'community',
+  'locality',
+  '00000000-0000-4000-8000-000000000001',
   'free'
 );
 

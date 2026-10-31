@@ -9,23 +9,103 @@ Nenhuma permissão, migration ou integração foi aprovada por essa autorizaçã
 - RED-006 e C1 **APROVADAS localmente pelo Codex em 25/10**, somente no escopo
   das seis suítes: 97/97 asserções, db:lint e gate completo verdes com build.
   Orçamento usado 3/3; nenhum reparo adicional foi aberto para esta etapa.
-- Banco agregado continua FAIL: 154 arquivos/2041 executadas, 47 vermelhos
-  (29 abortos + 18 falhas de asserção). Sem aprovação global de permissões/RLS.
-- Próxima cadeia RED-007: duas suítes de conversa contextual/pergunta ao organizador,
-  ../tasks/RED-007.task.yml validado R3, até três rodadas próprias.
-- Próximo marcador R3: .visual/coordenacao/RED-007-PRONTO.txt.
+- RED-007 **EXECUTADA pelo executor em 25/10, ainda SEM aprovação**: as duas
+  suítes de conversa contextual/pergunta ao organizador, 40/40 asserções
+  (10 + 30), db:lint e gate completo verdes com build; rodadas próprias 3/3.
+  Julgamento é do Codex; nenhuma permissão/RLS aprovada. Ver a seção **RED-007**.
+- Banco agregado continua FAIL: 154 arquivos/2081 executadas, 45 vermelhos
+  (27 abortos + 18 falhas de asserção). Sem aprovação global de permissões/RLS.
+- Próxima cadeia RED-007-C1: só se o Codex abrir lista de correções; mesma etapa e
+  orçamento, nunca um lote novo. Sem correção aberta, o julgamento encerra a etapa.
+- Próximo marcador R3: .visual/coordenacao/RED-007-PRONTO.txt. O `finally` da cadeia
+  publica o marcador; executor e triagem **não** escrevem PRONTO.
 - APP-003-C1 segue isolada; quadro e STATUS do app permanecem intocados.
 - Revisão independente final de segurança, cobertura/golden/tipos seguem pendentes.
 
 ## Próximos lotes autorizados
 
 1. Demais fixtures remanescentes, em lotes pequenos definidos após o julgamento atual
-   (a classe A caiu de 41 (RED-004) para 35 (RED-005) e para 29 abortos agora, exatamente
-   as seis suítes já entregues). `event-question-with-service-request.sql` carrega a mesma
-   montagem obsoleta e entra no próximo lote (ver RED-006 §5).
+   (a classe A caiu de 41 (RED-004) para 35 (RED-005), 29 (RED-006) e para **27
+   abortos agora**, exatamente as oito suítes já entregues; `event-question-with-service-request.sql`,
+   citado aqui como pendente, saiu neste lote).
 2. Permissões/transições, cobertura por célula, golden e tipos públicos, também subdivididos
    se necessário. A matriz aprovada continua sendo a autoridade.
 3. Prova final pela fila, gate completo e revisão independente de segurança.
+
+## RED-007 — o que foi feito (executor, 25/10/2026; SEM aprovação)
+
+Escopo: as duas suítes de conversa contextual/pergunta ao organizador ainda abortando
+(`RED-006 §5`). Contrato `../tasks/RED-007.task.yml` (R3). Executado inteiro em **3 rodadas
+próprias** (2 de reconhecimento dirigido só com os dois arquivos + 1 prova integral do contrato);
+sem `BLOCKED`/`HUMAN_DECISION`. Migration, seed, tipos, fixtures compartilhadas, matrizes, scripts e
+gate **intactos**; nenhum grant ou policy alterado.
+
+### Arquivos e números por arquivo
+
+| Arquivo | Plano antigo → novo | Aborto (linha) | Rodada de reconhecimento 2 | Prova integral |
+|---|---|---|---|---|
+| `supabase/tests/event-question-with-service-request.sql` | 10 → 10 | l.48 (`provider_reach` `community`, 4 colunas/3 valores) | **ok** 10/10 | **ok** |
+| `supabase/tests/dm-context-denials.sql` | 25 → **30** | l.50 (`group_visibility: "public"`) | **ok** 30/30 | **ok** |
+
+Total do lote: **40 asserções** (10+30), todas verdes. Nenhum `select plan()` reduzido;
+`dm-context-denials` **cresceu** 25→30 por cobertura. Mapa completo antigo→atual, papéis de
+medição, classificação do agregado, limites e dúvidas em `R3-RED-007.md`.
+
+### O que mudou (mecânica e cobertura)
+
+- `event-question-with-service-request.sql`: `provider_reach` vira `('locality','00000000-…-0001',
+  'free')` — 4 colunas/4 valores (`R1-209`, `mudada`). Positivo (pergunta convive com pedido),
+  idempotência e recusa de outro contexto **preservados**; nenhum ator/evento fabricado.
+- `dm-context-denials.sql`: grupo 400…099 `'public'` → `'open'` (enum recriado, `R1-203`). Negativa
+  `provider` retargetada de 010 (a montagem antiga supunha "outra vila") para **003 de outra cidade**
+  — a vila foi extinta com `R1-220`/ADR-20261024 §4, e o caso de outra cidade é **novo e
+  independente**; entrou o **positivo autorizado** do mesmo alvo (001, mesma cidade). Entraram ainda
+  a negativa de **anônimo** (grant do RPC) e a de **perda de acesso** (`R1-229`, `mudada`; `F5`;
+  `E5`): grupo Fechado, positivo com os dois membros, `leave_group` real, reabertura recusada.
+  Terceiro, bloqueio, contexto inválido, duplicação, ordem e nome nulo **preservados**.
+
+### Provas (saída real, pela fila)
+
+- `node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco`
+  → as duas `ok`; suíte **154 arquivos, 2081 asserções, Result: FAIL**, **45 vermelhos**
+  (27 abortos `Wstat≠0` + 18 falhas de asserção). Log `RED-007-banco-1.log`.
+- `node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 db:lint` → **"No schema errors
+  found", exit 0**. Log `RED-007-db-lint.log`.
+- `npx pnpm@11.18.0 gate`, com as duas públicas derivadas de `supabase status -o env` no mesmo
+  processo (nenhuma chave impressa, nenhum `env.local`) → **GATE VERDE, exit 0**: lint 8s /
+  typecheck 19s / typecheck:e2e 7s / **build 67s (não pulado)** / test 31s / secrets 7s;
+  escopo 141/141. Log `RED-007-gate.log`.
+- Migration intacta: SHA256 `56CAD1E65F941627836951DF1C93EDB61CC403BBB285BFB21787332D4F7D1FA3`.
+
+### Agregado (rodada 3, FAIL)
+
+154 arquivos, **2081 asserções executadas**, **45 vermelhos = 27 abortos + 18 falhas de asserção**
+(era 2041 / 47 = 29 + 18 na C1 da RED-006). Executadas subiram **+40** (o plano inteiro do lote, que
+antes abortava e contribuía zero); abortos caíram **29 → 27**, exatamente as duas suítes; as 18
+falhas de asserção seguem iguais. **2081 não são 2081 aprovadas.**
+
+### Limites e dúvidas (RED-007)
+
+1. **Sem aprovação.** Julgamento de permissão/RLS é do Codex; revisão final de segurança é
+   independente; o banco completo segue sem PASS. Nenhum marcador PRONTO escrito pelo executor.
+2. **Negativas de insert direto são de grant, não de contexto.** As assertivas 2/4/5/16-18 de
+   `dm-context-denials` recebem 42501 por o INSERT da tabela ter sido revogado (`20260825212538`),
+   não por `can_dm_between`/ordem. As descrições originais ficaram no TAP; o bloqueio/contexto real
+   é medido pelas assertivas de mensagem (19, 20, 25, 26) e por `open_conversation` (21, 28-30).
+3. **Alvo do negativo `provider`.** Trocado para 003 (outra cidade) com positivo de 001; se o Codex
+   preferir outra montagem, é decisão da revisão.
+4. **`database.generated.ts`** continua não regenerado (precisa do banco) — pendência herdada.
+
+## Confirmação alvo/ambiente da RED-007 (executor, 25/10/2026)
+
+Worktree `C:\Users\juana\.codex\worktrees\redesenho-r3\bivaque-community`, branch
+`codex/redesenho-r3`, base **`ef2bd20c`** (lida em `RED-007-base.txt`). Alvo local: contêiner
+`supabase_db_bivaque-community` (healthy) e demais serviços do projeto `bivaque-community`; nenhum
+outro projeto com esse nome. Porta 3000 **livre** antes e depois das provas; trava da fila
+(`%TEMP%\bivaque-prova-fila.lock`) **ausente**; `apps/web/.env.local` e `dev-server.pid` **ausentes**
+— a armadilha do "perfil fantasma" fica fora. Reset, pgTAP e `db:lint` **só** pela fila do
+contrato. As duas variáveis públicas do gate foram derivadas de `supabase status -o env` **no mesmo
+processo**, sem imprimir chave e sem criar `env.local`. Logs UTF-8 em `.visual/coordenacao/`.
 
 ## Confirmação alvo/ambiente, escrita ANTES da prova de banco desta frente
 

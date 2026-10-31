@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(30);
 
 \ir fixtures/foundation.inc
 \ir fixtures/trust.inc
@@ -9,7 +9,7 @@ select plan(25);
 \ir fixtures/dm.inc
 \ir fixtures/communities.inc
 
--- Onda G Task 6: prestador da vila A e um grupo que o par NÃO compartilha.
+-- Onda G Task 6: prestador da CIDADE A e um grupo da cidade que o par NÃO compartilha.
 set local role postgres;
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000025', 'provider-dm-denials@example.invalid');
@@ -37,13 +37,17 @@ values (
   '00000000-0000-4000-8000-000000000001',
   'free'
 );
+-- Grupo Aberto da propria cidade: a cidade LE o Aberto (R2-matriz-grupos, R1-103),
+-- mas ler nao cria contexto de conversa — so a participacao aprovada cria
+-- (shared_group exige os dois vinculados; R1-229 revalida no corpo). O nome antigo
+-- 'public' vira 'open' no enum recriado (R1-203: Aberto/Fechado).
 insert into public.groups (
   id, name, visibility, locality_id, created_by, owner_user_id
 )
 values (
   '40000000-0000-4000-8000-000000000099',
   'Grupo Alheio ao Par DM',
-  'public',
+  'open',
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000010',
   '10000000-0000-4000-8000-000000000010'
@@ -56,6 +60,28 @@ values (
   '00000000-0000-4000-8000-000000000001'
 )
 on conflict do nothing;
+
+-- ── anônimo: sem sessão, o RPC de conversa não está disponível ───────────────
+-- O alvo existe (o grupo 400…001 de dm.inc, compartilhado por 008/009) e o par
+-- é legítimo; a negativa mede o grant do RPC — EXECUTE só de authenticated —
+-- e não um objeto inexistente nem uma tabela vazia.
+
+set local role anon;
+
+select throws_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000009',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  42501,
+  null,
+  'anon cannot open a contextual conversation — EXECUTE is granted only to authenticated'
+);
+
+reset role;
 
 -- ── no shared context: cannot create conversation ────────────────────────────
 -- 009 and 010 share no group, event, recommendation, or family link.
@@ -518,11 +544,35 @@ select throws_ok(
   'declared context that the pair does not share is denied even with other relations'
 );
 
--- Contexto `provider`: membro de outra vila (sem alcance) não inicia.
+-- Contexto `provider`, alvo existente: membro da MESMA cidade vê a ficha e abre
+-- (positivo autorizado do mesmo alvo que a negativa seguinte mede — a negativa
+-- não é vazia).
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000010',
+  '10000000-0000-4000-8000-000000000001',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000025',
+      'provider',
+      '30000000-0000-4000-8000-000000000025'
+    )
+  $$,
+  'member of the same city sees the showcase and opens a provider conversation'
+);
+
+-- A vila saiu; o alcance do prestador agora é a CIDADE (R1-209/R1-220). Membro de
+-- OUTRA CIDADE (003, localidade 002) não vê a ficha e não inicia — negativo novo
+-- e independente no lugar da antiga montagem de vila, sem usar ator fabricado.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000003',
   true
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -537,7 +587,7 @@ select throws_ok(
   $$,
   '42501',
   null,
-  'member who cannot see the showcase cannot open a provider conversation'
+  'member of another city who cannot see the showcase cannot open a provider conversation'
 );
 
 -- O prestador nunca inicia: só responde.
@@ -636,6 +686,95 @@ select is(
   ),
   null,
   'non-participant gets null counterpart name, never a real one'
+);
+
+-- ── perda de acesso: o contexto é revalidado AGORA (R1-229 / F5 / E5) ────────
+-- Par sem vínculo anterior (009 e 010) num grupo FECHADO novo. Critério de
+-- acesso citado: em grupo Fechado só membro aprovado lê o conteúdo (R2-matriz-
+-- grupos, R1-103/R1-203); a cidade não lê. Positivo enquanto os dois são
+-- membros; depois 010 sai pelo RPC real e a reabertura é recusada — vínculo
+-- histórico não basta (R1-229, mudada).
+
+reset role;
+insert into public.groups (
+  id, name, visibility, locality_id, created_by, owner_user_id
+)
+values (
+  '40000000-0000-4000-8000-000000000098',
+  'Grupo Fechado Perda de Acesso',
+  'closed',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000009',
+  '10000000-0000-4000-8000-000000000009'
+);
+insert into public.group_memberships (group_id, user_id, role, status)
+values
+  (
+    '40000000-0000-4000-8000-000000000098',
+    '10000000-0000-4000-8000-000000000009',
+    'owner',
+    'approved'
+  ),
+  (
+    '40000000-0000-4000-8000-000000000098',
+    '10000000-0000-4000-8000-000000000010',
+    'member',
+    'approved'
+  );
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000010',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000098'
+    )
+  $$,
+  'pair sharing a closed group opens the conversation while both are members'
+);
+
+-- 010 sai do grupo pelo RPC real — ação da própria pessoa, não superusuário.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000010',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$ select public.leave_group('40000000-0000-4000-8000-000000000098') $$,
+  'member leaves the closed group through the authorized RPC'
+);
+
+-- Depois da perda, reabrir o mesmo contexto é recusado: sem vínculo agora.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000010',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000098'
+    )
+  $$,
+  '42501',
+  null,
+  'loss of access is revalidated now — reopening the same context is denied'
 );
 
 select * from finish();
