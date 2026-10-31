@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-10-26",
-  "sourcePolicy": "Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos nao substituem entregas de outros agentes.",
+  "updatedAt": "2026-10-31",
+  "sourcePolicy": "O ADR-20261024-front-react-spa governa o app: React de página única no apps/app (shadcn/ui), o Next como servidor e landing, o app de loja em Capacitor depois da web. O protótipo HTML é a especificação até cada onda ser aprovada pelo dono no app novo; as referências por fluxo estão em docs/design/fluxos-2026-10-30. Figma de setembro/outubro, pranchas e W00 são histórico preservado como frozen; não reiniciar. Contagens abaixo incluem infraestrutura, Mobile e histórico; cards done antigos não são percentual de fidelidade atual. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos não substituem entregas de outros agentes.",
   "cards": [
     {
       "id": "PROD-INICIO-UX-20260919",
@@ -920,8 +920,8 @@
       "phase": "Foundation",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
-      "description": "Infraestrutura reutilizavel de tokens/HeroUI/wrappers e acessibilidade. Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam aparencia/experiencia; direcao historica conflitante nao e criterio de fechamento nem exige reiniciar sistema. Integrar reparos necessarios aos lotes atuais, sem segundo escritor ou critica obrigatoria duplicada. Historico tecnico preservado em proof/checklist/history; componentes existentes nao provam fidelidade de todas as telas.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo. Tokens e componentes do app novo: APP-001.\n\nInfraestrutura reutilizavel de tokens/HeroUI/wrappers e acessibilidade. Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam aparencia/experiencia; direcao historica conflitante nao e criterio de fechamento nem exige reiniciar sistema. Integrar reparos necessarios aos lotes atuais, sem segundo escritor ou critica obrigatoria duplicada. Historico tecnico preservado em proof/checklist/history; componentes existentes nao provam fidelidade de todas as telas.",
       "checklist": [
         "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos",
         "Registrar a direção Casa comum, alternativas e autorização R2 na ADR",
@@ -952,13 +952,14 @@
         "node scripts/visual/loop.mjs"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "Sistema canônico | ../../docs/agents/DESIGN_SYSTEM.md",
         "ADR | ../../docs/decisions/ADR-20260901-design-system.md",
         "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md",
         "Processo atual autorizado | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-10-07",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "dependencies": [],
       "history": [
         {
@@ -1683,8 +1684,8 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "now",
-      "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (§6, aceito em 25/10/2026): o app de loja passa a ser Capacitor sobre o build do apps/app, depois da web; o apps/mobile (React Native/Expo) não é estendido. A sessão do app de loja (token em armazenamento seguro, renovação ao reabrir, cache limpo ao sair, Google pelo navegador do sistema com PKCE) volta como card próprio na etapa do app de loja. Registro preservado abaixo.\n\nApós a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
       "checklist": [
         "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
         "docs/agents/tasks/MOB-001.task.yml valida R3 com task-contract.mjs: ok … R3, retry 3, BLOQUEADO",
@@ -1710,12 +1711,13 @@
         "Pendente: security-auditor PASS sobre o boundary e runtime no emulador"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "ADR | docs/decisions/ADR-20260901-mobile-session.md",
         "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md",
         "ADR da entrada | docs/decisions/ADR-20260907-login-com-senha.md"
       ],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "690327e",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "blockers": [
         "Runtime Android depende do passo de build/install no emulador (o toolchain existe desde 16/09; não há prebuild versionado). iOS segue em BLOCK-MOBILE-RUNTIME"
       ],
@@ -1803,8 +1805,8 @@
       "phase": "Mobile",
       "priority": "P1",
       "category": "frontend",
-      "status": "blocked",
-      "description": "S3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (§6, aceito em 25/10/2026): o app de loja passa a ser Capacitor sobre o build do apps/app, depois da web; o apps/mobile (React Native/Expo) não é estendido. A sessão do app de loja (token em armazenamento seguro, renovação ao reabrir, cache limpo ao sair, Google pelo navegador do sistema com PKCE) volta como card próprio na etapa do app de loja. Registro preservado abaixo.\n\nS3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
       "checklist": [
         "Mobile composer: app/(tabs)/community.tsx -> botao Publicar abre sheet com tabs Texto/Foto/Link/Enquete",
         "Mobile composer: seletor de audiencia le communities approved do proprio membro (apenas a dele, sem cross-community)",
@@ -1824,13 +1826,14 @@
         "E2E no Expo: Maestro ou Detox contra o emulador arm64-v8a (commit d970fb8 provou que adb fala com o emulador)"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "S3 parcial | commit 69a9251",
         "S2 (sessao) | commit b7ca57f",
         "W1 (golden slice web, espelho) | commit efab5a9",
         "BLOCK-MOBILE-RUNTIME Android runtime provado | commit d970fb8"
       ],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "6cbfebf",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "blockers": [
         "MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo."
       ],
@@ -1884,8 +1887,8 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "now",
-      "description": "S5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (§6, aceito em 25/10/2026): o app de loja passa a ser Capacitor sobre o build do apps/app, depois da web; o apps/mobile (React Native/Expo) não é estendido. A sessão do app de loja (token em armazenamento seguro, renovação ao reabrir, cache limpo ao sair, Google pelo navegador do sistema com PKCE) volta como card próprio na etapa do app de loja. Registro preservado abaixo.\n\nS5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
       "checklist": [
         "Reiniciar emulador arm64-v8a (bivaque_ci_arm64); esperar sys.boot_completed=1",
         "npx expo run:android --variant debug no emulador; instalar apps/mobile",
@@ -1908,13 +1911,14 @@
         "E2E runtime: npx expo run:android + abrir manualmente (ou Maestro/Detox)"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "S5 UI | commit 08621b8",
         "S4 logica pura | commit 6cbfebf",
         "S3 feed | commit 69a9251",
         "BLOCK-MOBILE-RUNTIME Android | commit d970fb8"
       ],
-      "updatedAt": "2026-09-02",
-      "sourceRevision": "e1bb839",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "blockers": [],
       "dependencies": ["S5-MOBILE-UI"]
     },
@@ -2005,8 +2009,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
-      "description": "PENDENTE DE RECONCILIACAO ATUAL. Referencias Entrar Web47:1448/Mobile51:2710, cadastro/elegibilidade/retomada em docs/agents/FIGMA-ATUAL-COBERTURA.md. Preservar decisoes aprovadas de autenticacao, consentimento e seguranca. A prova de setembro abaixo e historica e nao aprova automaticamente o Figma atual. Antes do despacho, vincular contrato, referencias atuais e provas de ciclo; mesmo card, sem outra fila.\n\nReferência: docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png (dois desktops: Entrar e Criar conta). Plataforma: web. Rotas: /login e /signup, mesmo componente BivaqueSignIn. Alinha composição e copy à prancha (foto à esquerda com wordmark BIVAQUE, títulos da referência, divisor ou, Google outline, links de rodapé) preservando o mecanismo de ADR-20260907-login-com-senha: e-mail+senha, Google, recuperação e aceite no cadastro. A prancha mostra fluxo por código sem senha; a decisão do responsável é posterior e prevalece, e a guia proíbe prometer código sem integração. Mobile (prancha 30) é tarefa separada.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo. A entrada está no APP-F01-ENTRADA-VISUAL.\n\nPENDENTE DE RECONCILIACAO ATUAL. Referencias Entrar Web47:1448/Mobile51:2710, cadastro/elegibilidade/retomada em docs/agents/FIGMA-ATUAL-COBERTURA.md. Preservar decisoes aprovadas de autenticacao, consentimento e seguranca. A prova de setembro abaixo e historica e nao aprova automaticamente o Figma atual. Antes do despacho, vincular contrato, referencias atuais e provas de ciclo; mesmo card, sem outra fila.\n\nReferência: docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png (dois desktops: Entrar e Criar conta). Plataforma: web. Rotas: /login e /signup, mesmo componente BivaqueSignIn. Alinha composição e copy à prancha (foto à esquerda com wordmark BIVAQUE, títulos da referência, divisor ou, Google outline, links de rodapé) preservando o mecanismo de ADR-20260907-login-com-senha: e-mail+senha, Google, recuperação e aceite no cadastro. A prancha mostra fluxo por código sem senha; a decisão do responsável é posterior e prevalece, e a guia proíbe prometer código sem integração. Mobile (prancha 30) é tarefa separada.",
       "checklist": [
         "Aparência: foto esquerda + formulário direita em 768/1440, wordmark BIVAQUE branco sobre a foto, títulos Que bom ter você de volta. e Vamos começar., divisor ou, botão verde, Google contornado, links de rodapé por modo",
         "Aparência: capturas 375/768/1440 de /login e /signup sem findings no loop visual",
@@ -2032,6 +2036,7 @@
         "npx playwright test tests/e2e/manaus-pilot-full-journey.spec.ts tests/e2e/onboarding-holder-family.spec.ts tests/e2e/onboarding-denials.spec.ts --grep \"login|password|email and password|reference heading|Google|touch target|horizontal overflow on login|shell chrome on /login\""
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "Prancha | ../../docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png",
         "Notas da guia | ../../docs/design/visual-guide-2026-09-06/AGENTS.md",
         "Mecanismo | ../../docs/decisions/ADR-20260907-login-com-senha.md",
@@ -2039,8 +2044,8 @@
         "Tela | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
       ],
       "dependencies": [],
-      "updatedAt": "2026-10-07",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "history": [
         {
           "recordedAt": "2026-10-06",
@@ -3165,8 +3170,8 @@
       "title": "Figma atual: reconstruir e comprovar todos os ciclos web",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "Unico card de coordenacao da reconstrucao web pelo Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores. Mapa atual: docs/agents/FIGMA-ATUAL-COBERTURA.md; protocolo: docs/agents/OPENCODE-FIGMA-CONTINUO.md. Shell/Conversas tem ciclo independente comprovado com confiabilidade pendente. Imoveis implementado em reparos; PASS tecnico GLM anterior nao fecha delta novo, runtime independente e fidelidade ainda pendentes. Home/Busca/Desapegos/Negocios/Encontros/Memoria/Guias/Beneficios/Perfil/Configuracoes/Entrada/retornos exigem contratos ligados a nodes, estados, interacoes e capacidades reais. A antiga contagem de17lotes e os registros historicos foram preservados em history/notes, mas nao medem cobertura nem autorizam restaurar nav antigo. Um escritor por checkout; revisao e runtime por lote, sem fila paralela.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo.\n\nUnico card de coordenacao da reconstrucao web pelo Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores. Mapa atual: docs/agents/FIGMA-ATUAL-COBERTURA.md; protocolo: docs/agents/OPENCODE-FIGMA-CONTINUO.md. Shell/Conversas tem ciclo independente comprovado com confiabilidade pendente. Imoveis implementado em reparos; PASS tecnico GLM anterior nao fecha delta novo, runtime independente e fidelidade ainda pendentes. Home/Busca/Desapegos/Negocios/Encontros/Memoria/Guias/Beneficios/Perfil/Configuracoes/Entrada/retornos exigem contratos ligados a nodes, estados, interacoes e capacidades reais. A antiga contagem de17lotes e os registros historicos foram preservados em history/notes, mas nao medem cobertura nem autorizam restaurar nav antigo. Um escritor por checkout; revisao e runtime por lote, sem fila paralela.",
       "checklist": [
         "AUTORIDADE: Figma atual + decisoes posteriores; sem Comunidades no nav, Conversas topo, max12fotos; Mobile referencia nao bloqueia entrega web",
         "PROVADO PARCIALMENTE: FIGMA001 Shell/Conversas GLM/Flash ciclo funcional; confiabilidade HTTP500/flake ficha e teste negativo reports preexistente continuam abertos",
@@ -3227,6 +3232,7 @@
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
@@ -3241,8 +3247,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-10-07",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "notes": [
         "06/10/2026 15:14Z FIGMA-002: primeira revisão independente GLM Nvidia concluída em cerca de 79 minutos, PASS-COM-RESSALVA. Codex NÃO aprovou fechamento: guard BEFORE UPDATE e insert policy permitem imóvel ativo sem ficha; achado de integridade confirmado no código. Retomado único implementador OpenAI na mesma sessão após todos os papéis inativos: migration append-only e teste INSERT negativo/draft positivo/publicação legítima, Salvar rascunho explícito com reload, filtros reais e composição conforme pranchas. Salvar/Reportar exigem reconciliação técnica, sem controles fictícios. GLM não aceita PNG neste run: fidelidade continua aberta; Codex observou Filtros ausente e composição divergente. Achado quadroausente leu worktree antigo; origin já registra provas. Log gate-origin-fix atual contém615unit, não gate-final anterior. Nova estabilidade exige hashes e provas finais; mesma sessão GLM reavalia delta, Flash002 ainda não iniciado. Luna mapeou capacidades Home: Desapegos sem ciclo web completo, Memória e Andamento sem equivalência nos mecanismos atuais, busca prestador não é busca global, Guia não é Memória e notificações não são Andamento. Mapa atualizado, sem fila paralela ou done.",
         "06/10/2026 15:28Z FIGMA-002 delta tentativa1: Codex confrontou migration append-only20261006151524 guard INSERT draft, logs db-insert-556-557-pass (10 asserts positivos/negativos em cada isolado) e db-lint556/557 sem schema errors. DELTA.md registra regressão55 assertions de imóveis; preservado baseline negativo anterior ao reparo. Gate novo glm-delta-attempt1/gate.log VERDE, 622unit / 189privacy / 107scope. Ferramenta do executor confirma sourceHash c29b10ae0809b323835244500e58858b0ac4a6c164451ab29dec837aa46c157f, build pUGy9p7UXJ_gSNDrTtzJW, API55621 e fontes inalteradas após gate. E2E atualizado em segundo plano sh_111d4de080014SNX360Ghg3vZV com notificação automática; sessão inativa não é travamento, não retomar/duplicar. Rascunho/filtros/anunciante/compartilhar escritos, runtime/capturas/fidelidade ainda pendentes. CANDIDATO_ESTAVEL.md explicitamente REABERTO: não usar candidato anterior. Salvar/Reportar lacunas técnicas explícitas no contrato; Luna recebeu diagnóstico somente leitura das autorizações, caminhos e requisitos de persistência/moderação, sem segundo escritor ou revisão duplicada.",
@@ -3385,8 +3391,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "RECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. RESOLVIDO em 16/09 (lote AA): a migration foi aplicada no banco local, a suite canonica passou (119 arquivos/1568 asserts) e o fio de pergunta foi capturado em 375/768/1440 com 0 achados. A revisao independente rodou em sessao separada com veredito PASS (16/09) e deixou nomeado o que NAO cobriu: nao ha E2E do ciclo pergunta->resposta->presenca->cancelamento e a fidelidade a prancha 67 nao foi avaliada (report marca fidelity not-assessed).",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo.\n\nRECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. RESOLVIDO em 16/09 (lote AA): a migration foi aplicada no banco local, a suite canonica passou (119 arquivos/1568 asserts) e o fio de pergunta foi capturado em 375/768/1440 com 0 achados. A revisao independente rodou em sessao separada com veredito PASS (16/09) e deixou nomeado o que NAO cobriu: nao ha E2E do ciclo pergunta->resposta->presenca->cancelamento e a fidelidade a prancha 67 nao foi avaliada (report marca fidelity not-assessed).",
       "checklist": [
         "Migration com o valor event_question e a RPC open_event_question (destinatario derivado do evento) ✅ 16/09 (lote AA): migrations 20260911051215_event_question_context e 20260911051230_event_question_thread aplicadas no reset limpo; dm_context_type.event_question e public.open_event_question conferidos no catalogo do banco",
         "Notificacao dos dois lados honrando notification_preferences.messages ✅ 16/09 (lote AA): event-questions.sql verde na suite canonica (notification_preferences.messages honrado)",
@@ -3410,13 +3416,14 @@
         "tests/unit/events/event-form.test.ts"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "Contrato | docs/agents/tasks/RECON-029.task.yml",
         "Leitura da prancha 67 | docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "ADR | docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "Spec 4.4 R33-R35 | docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
       ],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "d201242",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "dependencies": []
     },
     {
@@ -3510,8 +3517,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "O lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. PROVADO em 16/09 (lote AA): a migration foi aplicada em reset limpo, supabase/tests/community-images.sql esta verde na suite canonica (119 arquivos/1568 asserts), a fixture de midia gravou 4 ponteiros e /communities/...0001 e /admin/media foram capturadas em 375/768/1440 com 0 achados. Nao provado: a interacao de upload no navegador.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo.\n\nO lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. PROVADO em 16/09 (lote AA): a migration foi aplicada em reset limpo, supabase/tests/community-images.sql esta verde na suite canonica (119 arquivos/1568 asserts), a fixture de midia gravou 4 ponteiros e /communities/...0001 e /admin/media foram capturadas em 375/768/1440 com 0 achados. Nao provado: a interacao de upload no navegador.",
       "checklist": [
         "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito ✅ 16/09 (lote AA): migration 20260911093140_community_images aplicada em reset limpo",
         "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável ✅ 16/09 (lote AA): community-images.sql dentro dos 119 arquivos/1568 asserts PASS",
@@ -3540,6 +3547,7 @@
         "node scripts/visual/media-fixture.mjs (o caminho da imagem de comunidade é <id>/<kind>, o mesmo que communityImagePath assina)"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/tasks/RECON-034.task.yml",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "docs/decisions/ADR-20260909-midia-de-membro.md",
@@ -3548,8 +3556,8 @@
       ],
       "dependencies": [],
       "blockers": [],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "d201242"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20"
     },
     {
       "id": "RECON-038",
