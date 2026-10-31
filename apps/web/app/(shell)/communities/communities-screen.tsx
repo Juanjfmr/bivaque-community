@@ -17,10 +17,12 @@ import { cancelCommunityRequestAction } from "./[id]/actions"
 import { requestCommunityMembershipAction } from "./actions"
 import {
   type CommunityCard,
+  type CommunityGroupCard,
   filterCommunities,
   formatRequestedOn,
   type MyMembership,
   partitionCommunities,
+  partitionGroupCards,
 } from "./communities-data"
 
 const DISCOVER_PREVIEW_COUNT = 5
@@ -33,6 +35,10 @@ type CommunitiesScreenProps = {
   /** Comunidades citadas pelas minhas participações, mesmo fora da cidade. */
   knownCommunities: CommunityCard[]
   viewingCityLabel: string | null
+  /** Meus grupos + grupos da cidade em exibição (FE-GRUPOS-ALCANCAVEIS). */
+  groups: CommunityGroupCard[]
+  /** Cidade em exibição — a partição dos grupos compara por ela, não confia na consulta. */
+  viewingLocalityId: string | null
 }
 
 function CommunityGlyph({ className = "" }: { className?: string }) {
@@ -101,6 +107,38 @@ function PendingChip() {
   )
 }
 
+// FE-GRUPOS-ALCANCAVEIS — o cartão de grupo deste destino. Sem miniatura: não
+// existe imagem de grupo no schema, e chumbar uma foto seria inventar conteúdo.
+// `memberCount` nulo significa "a leitura não liberou a contagem" — a linha
+// some, em vez de afirmar zero.
+function GroupCardItem({ group, cityLabel }: { group: CommunityGroupCard; cityLabel: boolean }) {
+  return (
+    <Card className="flex flex-col gap-2 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-base font-semibold tracking-tight">{group.name}</h3>
+        <Chip size="sm" variant="soft">
+          {group.visibility === "public" ? "Público" : "Privado"}
+        </Chip>
+      </div>
+      {cityLabel && group.cityLabel && <p className="text-sm text-muted">{group.cityLabel}</p>}
+      {group.description && (
+        <p className="text-sm leading-relaxed text-muted">{group.description}</p>
+      )}
+      {group.memberCount !== null && (
+        <p className="text-sm text-muted">
+          {group.memberCount} {group.memberCount === 1 ? "membro" : "membros"}
+        </p>
+      )}
+      <Link
+        href={`/groups/${group.id}`}
+        className="mt-1 inline-flex min-h-11 w-fit items-center justify-center rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+      >
+        Ver grupo
+      </Link>
+    </Card>
+  )
+}
+
 function CommunityThumbnail({
   url,
   kind,
@@ -151,6 +189,8 @@ export function CommunitiesScreen({
   memberships,
   knownCommunities,
   viewingCityLabel,
+  groups,
+  viewingLocalityId,
 }: CommunitiesScreenProps) {
   const [tab, setTab] = useState("minhas")
   const [query, setQuery] = useState("")
@@ -195,6 +235,13 @@ export function CommunitiesScreen({
   )
 
   const discoverFiltered = useMemo(() => filterCommunities(discover, query), [discover, query])
+
+  // FE-GRUPOS-ALCANCAVEIS: os grupos não decidem sozinhos onde aparecem — a
+  // partição pura decide, com a cidade em exibição como argumento.
+  const groupsByScope = useMemo(
+    () => partitionGroupCards(groups, viewingLocalityId),
+    [groups, viewingLocalityId],
+  )
   const discoverVisible = expanded
     ? discoverFiltered
     : discoverFiltered.slice(0, DISCOVER_PREVIEW_COUNT)
@@ -243,49 +290,76 @@ export function CommunitiesScreen({
         {tab === "minhas" && (
           <TabPanel id="minhas" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-              <section aria-label="Minhas comunidades" className="flex flex-col gap-4">
-                {mine.length === 0 ? (
-                  <EmptyState
-                    title="Você ainda não participa de nenhuma comunidade"
-                    description="Descubra as comunidades da sua cidade e peça participação — ela depende de aprovação."
-                    action={
-                      <Button size="sm" variant="primary" onPress={() => setTab("descobrir")}>
-                        Descobrir comunidades
-                      </Button>
-                    }
-                  />
-                ) : (
-                  mine.map((community) => (
-                    <Card key={community.id} className="p-4">
-                      <div className="flex items-start gap-4">
-                        <CommunityThumbnail url={community.thumbnailUrl} kind="thumbnail" />
-                        <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
-                          <h2 className="text-base font-semibold tracking-tight">
-                            {community.name}
-                          </h2>
-                          {community.cityLabel && (
-                            <p className="text-sm text-muted">{community.cityLabel}</p>
-                          )}
-                          {community.description && (
-                            <p className="text-sm leading-relaxed text-muted">
-                              {community.description}
-                            </p>
-                          )}
-                          <Link
-                            href={`/communities/${community.id}`}
-                            className="mt-1 inline-flex min-h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
-                          >
-                            Ver comunidade
-                          </Link>
+              <div className="flex flex-col gap-6">
+                <section aria-label="Minhas comunidades" className="flex flex-col gap-4">
+                  {mine.length === 0 ? (
+                    <EmptyState
+                      title="Você ainda não participa de nenhuma comunidade"
+                      description="Descubra as comunidades da sua cidade e peça participação — ela depende de aprovação."
+                      action={
+                        <Button size="sm" variant="primary" onPress={() => setTab("descobrir")}>
+                          Descobrir comunidades
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    mine.map((community) => (
+                      <Card key={community.id} className="p-4">
+                        <div className="flex items-start gap-4">
+                          <CommunityThumbnail url={community.thumbnailUrl} kind="thumbnail" />
+                          <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
+                            <h2 className="text-base font-semibold tracking-tight">
+                              {community.name}
+                            </h2>
+                            {community.cityLabel && (
+                              <p className="text-sm text-muted">{community.cityLabel}</p>
+                            )}
+                            {community.description && (
+                              <p className="text-sm leading-relaxed text-muted">
+                                {community.description}
+                              </p>
+                            )}
+                            <Link
+                              href={`/communities/${community.id}`}
+                              className="mt-1 inline-flex min-h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+                            >
+                              Ver comunidade
+                            </Link>
+                          </div>
+                          <div className="shrink-0">
+                            <CommunityCardMenu communityId={community.id} />
+                          </div>
                         </div>
-                        <div className="shrink-0">
-                          <CommunityCardMenu communityId={community.id} />
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                )}
-              </section>
+                      </Card>
+                    ))
+                  )}
+                </section>
+
+                <section aria-label="Seus grupos" className="flex flex-col gap-4">
+                  <h2 className="text-base font-semibold tracking-tight">Seus grupos</h2>
+                  {groupsByScope.mine.length === 0 ? (
+                    <EmptyState
+                      title="Você ainda não participa de nenhum grupo"
+                      description="Os grupos da sua cidade ficam em Descobrir — entrar em um grupo público é imediato."
+                      action={
+                        <Button size="sm" variant="primary" onPress={() => setTab("descobrir")}>
+                          Descobrir grupos
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {groupsByScope.mine.map((group) => (
+                        <GroupCardItem
+                          key={group.id}
+                          group={group}
+                          cityLabel={group.cityLabel !== viewingCityLabel}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </div>
 
               {pending.length > 0 && (
                 <aside aria-label="Seus pedidos" className="lg:sticky lg:top-20 lg:self-start">
@@ -348,122 +422,145 @@ export function CommunitiesScreen({
         {tab === "descobrir" && (
           <TabPanel id="descobrir" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-              <section aria-label="Descobrir comunidades" className="flex flex-col gap-3">
-                <SearchField
-                  aria-label="Buscar comunidades"
-                  value={query}
-                  onChange={(value) => {
-                    setQuery(value)
-                    setExpanded(false)
-                  }}
-                  onClear={() => setQuery("")}
-                >
-                  <SearchField.Group>
-                    <SearchField.SearchIcon />
-                    <SearchField.Input
-                      placeholder="Buscar comunidades"
-                      className="transition-colors"
+              <div className="flex flex-col gap-6">
+                <section aria-label="Descobrir comunidades" className="flex flex-col gap-3">
+                  <SearchField
+                    aria-label="Buscar comunidades"
+                    value={query}
+                    onChange={(value) => {
+                      setQuery(value)
+                      setExpanded(false)
+                    }}
+                    onClear={() => setQuery("")}
+                  >
+                    <SearchField.Group>
+                      <SearchField.SearchIcon />
+                      <SearchField.Input
+                        placeholder="Buscar comunidades"
+                        className="transition-colors"
+                      />
+                      {query ? <SearchField.ClearButton /> : null}
+                    </SearchField.Group>
+                  </SearchField>
+
+                  {viewingCityLabel && (
+                    <p className="flex items-center gap-1.5 text-sm text-muted">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0"
+                      >
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      {viewingCityLabel}
+                    </p>
+                  )}
+
+                  {discover.length === 0 ? (
+                    <EmptyState
+                      title={
+                        viewingCityLabel
+                          ? `Nenhuma comunidade para descobrir em ${viewingCityLabel} agora`
+                          : "Nenhuma comunidade para descobrir na cidade selecionada agora"
+                      }
+                      description="Quando uma comunidade da sua cidade aceitar novos vizinhos, ela aparece aqui."
                     />
-                    {query ? <SearchField.ClearButton /> : null}
-                  </SearchField.Group>
-                </SearchField>
-
-                {viewingCityLabel && (
-                  <p className="flex items-center gap-1.5 text-sm text-muted">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0"
-                    >
-                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    {viewingCityLabel}
-                  </p>
-                )}
-
-                {discover.length === 0 ? (
-                  <EmptyState
-                    title={
-                      viewingCityLabel
-                        ? `Nenhuma comunidade para descobrir em ${viewingCityLabel} agora`
-                        : "Nenhuma comunidade para descobrir na cidade selecionada agora"
-                    }
-                    description="Quando uma comunidade da sua cidade aceitar novos vizinhos, ela aparece aqui."
-                  />
-                ) : discoverFiltered.length === 0 ? (
-                  <EmptyState
-                    title="Nenhuma comunidade encontrada com esse termo"
-                    description="Tente outro nome ou limpe a busca."
-                    action={
-                      <Button size="sm" variant="tertiary" onPress={() => setQuery("")}>
-                        Limpar busca
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <>
-                    <ul className="flex flex-col gap-2">
-                      {discoverVisible.map((community) => {
-                        const isSelected = selected?.id === community.id
-                        return (
-                          <li key={community.id}>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedId(community.id)}
-                              aria-pressed={isSelected}
-                              className={`flex min-h-11 w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)] ${
-                                isSelected
-                                  ? "border-[var(--semantic-action-primary)] bg-[var(--semantic-surface-sunken)]"
-                                  : "border-border bg-[var(--semantic-surface)] hover:bg-[var(--semantic-surface-sunken)]"
-                              }`}
-                            >
-                              <CommunityThumbnail
-                                url={community.thumbnailUrl}
-                                kind="thumbnail"
-                                variant="compact"
-                              />
-                              <span className="flex min-w-0 flex-col">
-                                <span
-                                  className={`truncate text-sm font-medium ${
-                                    isSelected ? "text-[var(--semantic-action-primary)]" : ""
-                                  }`}
-                                >
-                                  {community.name}
+                  ) : discoverFiltered.length === 0 ? (
+                    <EmptyState
+                      title="Nenhuma comunidade encontrada com esse termo"
+                      description="Tente outro nome ou limpe a busca."
+                      action={
+                        <Button size="sm" variant="tertiary" onPress={() => setQuery("")}>
+                          Limpar busca
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <>
+                      <ul className="flex flex-col gap-2">
+                        {discoverVisible.map((community) => {
+                          const isSelected = selected?.id === community.id
+                          return (
+                            <li key={community.id}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedId(community.id)}
+                                aria-pressed={isSelected}
+                                className={`flex min-h-11 w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)] ${
+                                  isSelected
+                                    ? "border-[var(--semantic-action-primary)] bg-[var(--semantic-surface-sunken)]"
+                                    : "border-border bg-[var(--semantic-surface)] hover:bg-[var(--semantic-surface-sunken)]"
+                                }`}
+                              >
+                                <CommunityThumbnail
+                                  url={community.thumbnailUrl}
+                                  kind="thumbnail"
+                                  variant="compact"
+                                />
+                                <span className="flex min-w-0 flex-col">
+                                  <span
+                                    className={`truncate text-sm font-medium ${
+                                      isSelected ? "text-[var(--semantic-action-primary)]" : ""
+                                    }`}
+                                  >
+                                    {community.name}
+                                  </span>
+                                  {community.cityLabel && (
+                                    <span className="truncate text-xs text-muted">
+                                      {community.cityLabel}
+                                    </span>
+                                  )}
                                 </span>
-                                {community.cityLabel && (
-                                  <span className="truncate text-xs text-muted">
-                                    {community.cityLabel}
+                                {membershipByCommunity.get(community.id)?.status === "pending" && (
+                                  <span className="ml-auto shrink-0">
+                                    <PendingChip />
                                   </span>
                                 )}
-                              </span>
-                              {membershipByCommunity.get(community.id)?.status === "pending" && (
-                                <span className="ml-auto shrink-0">
-                                  <PendingChip />
-                                </span>
-                              )}
-                            </button>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                    {!expanded && discoverFiltered.length > DISCOVER_PREVIEW_COUNT && (
-                      <Button
-                        variant="tertiary"
-                        className="w-full"
-                        onPress={() => setExpanded(true)}
-                      >
-                        Ver mais comunidades
-                      </Button>
-                    )}
-                  </>
-                )}
-              </section>
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                      {!expanded && discoverFiltered.length > DISCOVER_PREVIEW_COUNT && (
+                        <Button
+                          variant="tertiary"
+                          className="w-full"
+                          onPress={() => setExpanded(true)}
+                        >
+                          Ver mais comunidades
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </section>
+
+                <section aria-label="Grupos da cidade" className="flex flex-col gap-4">
+                  <h2 className="text-base font-semibold tracking-tight">Grupos da cidade</h2>
+                  <p className="text-sm leading-relaxed text-muted">
+                    {viewingCityLabel
+                      ? `Grupos de ${viewingCityLabel} que não pertencem a uma comunidade.`
+                      : "Grupos da cidade que não pertencem a uma comunidade."}
+                  </p>
+                  {groupsByScope.city.length === 0 ? (
+                    <EmptyState
+                      title="Nenhum grupo aberto na cidade ainda"
+                      description="Quando alguém criar um grupo na cidade, ele aparece aqui — e você pode entrar."
+                    />
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {groupsByScope.city.map((group) => (
+                        <GroupCardItem key={group.id} group={group} cityLabel={false} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </div>
 
               {selected && (
                 <section aria-label={`Apresentação de ${selected.name}`}>

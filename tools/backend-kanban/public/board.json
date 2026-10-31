@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-12",
+  "updatedAt": "2026-09-19",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -3044,6 +3044,89 @@
       "updatedAt": "2026-09-18",
       "sourceRevision": "fe5887e",
       "completedAt": "2026-09-18"
+    },
+    {
+      "id": "FE-GRUPOS-ALCANCAVEIS",
+      "title": "Web: grupo da cidade sem superficie — /groups inalcancavel e localidade errada",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "Reportado pelo dono em 19/09/2026 contra producao (main 90e4c94): existe um grupo (\"Corrida\") no login dele e ele nao aparece em lugar nenhum. Causa medida: (1) o unico fluxo de criacao do app (apps/web/app/(shell)/groups/page.tsx -> rpc create_group) cria grupo de CIDADE, com community_id NULL; a aba \"Grupos\" de /communities/[id] filtra community_id = <comunidade>, entao nunca mostra esses grupos; a RPC create_group_in_community existe no banco (20260805215419:233) e NENHUM codigo a chama; (2) /groups e a unica tela que lista grupo de cidade e nao tem entrada nenhuma na navegacao — so links condicionais (onboarding/welcome uma vez; profile/interests so quando a cidade nao tem grupo publico; recommendations no estado vazio ou no \"Ver todos\" de \"grupos para descobrir\", que exclui os grupos em que a pessoa JA esta); (3) defeito provado no runtime: /groups resolve \"minha cidade\" com locality_memberships.select(locality_id).eq(user_id).limit(1) SEM kind='current' — para a conta com transferencia declarada do seed essa consulta devolve a linha 'leaving' (Manaus) enquanto (shell)/layout.tsx renderiza a 'current' (Rio), entao o membro transferido ve os grupos da origem e os do destino somem; (4) a tela chama a cidade de \"sua comunidade\" (copy). O red-team ja registrou a confusao Grupo x Comunidade em docs/red-team/lote-2-grupos.md F66 (P1, balde B). Decisao do dono em 19/09/2026: os grupos aparecem DENTRO do destino Comunidades, sem criar quinta aba — o mapa de navegacao ja declara /groups no container \"comunidades\" (apps/web/app/components/shell/active-nav.ts:73).",
+      "checklist": [
+        "Corrigir a resolucao de localidade em /groups: usar a localidade corrente (kind='current'), a mesma fonte do shell, em vez de .limit(1) sem filtro",
+        "Dar entrada estavel aos grupos dentro do destino Comunidades (meus grupos + grupos da cidade), sem criar quinta aba e sem duplicar o diretorio de comunidades",
+        "Corrigir a copy que chama a localidade de \"comunidade\"",
+        "Provar em navegador: o grupo de cidade aparece pelo caminho de navegacao (nao por URL digitada) e o membro transferido ve os grupos da cidade corrente",
+        "Teste de regressao para o membro com vinculo 'leaving' + 'current' (o caso que hoje escolhe a cidade errada)"
+      ],
+      "proof": [
+        "Investigacao de 19/09/2026 contra main 90e4c94: consulta real replicada com o JWT do membro no Supabase local — conta membro-transferencia devolve locality_memberships 'leaving' Manaus na consulta da pagina e 'current' Rio no shell; a lista da pagina mostra os 8 grupos de Manaus",
+        "apps/web/app/(shell)/groups/page.tsx:137-155 (resolucao da localidade) e :151-156 (filtro por locality_id)",
+        "apps/web/app/(shell)/communities/[id]/community-detail-loaders.ts:174-180 (filtro community_id)",
+        "grep create_group_in_community em apps/web: nenhuma chamada; so migration 20260805215419 e pgTAP",
+        "apps/web/app/components/shell/active-nav.ts:73 — /groups declarado no container comunidades",
+        "docs/red-team/lote-2-grupos.md F66 — Grupo x Comunidade sem hierarquia declarada, surface de create_group_in_community inexistente"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-19",
+      "sourceRevision": "90e4c94"
+    },
+    {
+      "id": "R3-LEITURA-NACIONAL-CIDADE",
+      "title": "Leitura nacional do nivel municipal (eventos e guia) para membro verificado",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Reportado pelo dono em 19/09/2026: um militar que sai do Rio de ferias para Brasilia deveria conseguir consultar a outra cidade (\"ver entre outras coisas os eventos da cidade\"). Hoje nao consegue: events e arrival_guide_entries sao liberados por vinculo (private.is_locality_member) e a promessa de trocar de cidade existe so na copy. Decisao registrada em docs/decisions/ADR-20260919-leitura-nacional-da-cidade.md (R3, aprovado pelo dono em 19/09/2026, critic_verdict pendente de revisor independente): D1 — eventos de cidade (community_id is null and group_id is null) e entradas do Guia de chegada passam a ser legiveis por qualquer membro VERIFICADO, em qualquer cidade, via private.is_verified_holder(auth.uid()); ler nao e participar (nenhum vinculo criado, nenhuma vila concedida, nada publicavel). D2 — ficam fechados de proposito: posts/feed municipal (D48: nivel municipal e referencia, nao sala), event_rsvps (presenca e dado da pessoa; private.can_access_event fica intocado e continua gateando os RSVPs), comunidades, grupos e a vitrine de prestadores (o alcance e declarado pelo proprio prestador em provider_reach — abrir nacionalmente contradiz o consentimento dele). As policies novas sao ADITIVAS: nenhuma policy existente e editada.",
+      "checklist": [
+        "ADR da leitura nacional registrando a decisao do dono ✅ 19/09/2026 (docs/decisions/ADR-20260919-leitura-nacional-da-cidade.md)",
+        "Migration com as duas policies aditivas (events de cidade e arrival_guide_entries) na mesma migration, com o motivo escrito",
+        "pgTAP positivo: verificado de outra cidade le evento de cidade e entrada de guia da cidade escolhida",
+        "pgTAP negativo: anon nao le; nao-verificado nao le; RSVP de evento de outra cidade continua negado; post municipal de outra cidade continua negado; evento de comunidade/grupo continua fora do alcance",
+        "Atualizar as guardas de contagem exata de policies (supabase/tests/rls-or-column-regression.test.sql:323 e :697) com o motivo no mesmo commit",
+        "db:reset --no-seed + test:db + db:lint verdes; advisors sem achado novo",
+        "Prova de runtime: /events?locality=<outra cidade> e /guide?locality=<outra cidade> renderizam conteudo real para membro verificado, e a contagem de presenca nao vira \"0 pessoas vao\" quando o RSVP esta negado"
+      ],
+      "proof": [
+        "Investigacao de 19/09/2026 contra main 90e4c94: supabase/migrations/20260820060533_fix_events_insert_returning_rls.sql:39 (policy de select por vinculo) e 20260815181708_arrival_guide.sql:36 (guia por vinculo)",
+        "private.is_verified_holder existe e nao depende de localidade: supabase/migrations/20260802000700_authorization_helpers.sql:68-87",
+        "private.can_access_event gateia event_rsvps: supabase/migrations/20260805214709_community_scope.sql:392-407 — intocado de proposito",
+        "provider_reach e alcance declarado do prestador: supabase/migrations/20260825185327_provider_showcase.sql:76-120",
+        "events.venue tem CHECK que rejeita endereco residencial e militar: supabase/tests/events-private-venue-denials.sql:20-60",
+        "Estado atual que o dono reportou: apps/web/app/(shell)/localidade/page.tsx nao busca nem escolhe cidade; nenhum codigo chama declare_locality_transfer (grep em apps/web)"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-19",
+      "sourceRevision": "90e4c94"
+    },
+    {
+      "id": "FE-SELETOR-LOCALIDADE",
+      "title": "Web: seletor de localidade real — busca de cidade, visita e declarar transferencia",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "Reportado pelo dono em 19/09/2026: \"nao ha seletor de localidade\" e \"nao consigo mudar meu local de residencia no app\". Medido em producao (main 90e4c94): a pill da cidade no cabecalho e um <div data-testid=\"shell-locality-pill\"> sem link (components/bivaque/app-shell.tsx); tres telas mandam \"Trocar de cidade\" para /localidade (communities/[id] estado de fora, explorar/busca vazio, explorar/servicos vazio) e a copy da busca promete \"a busca refaz as tres consultas\" na outra cidade; o rail do Inicio (>=1024px) tem \"De mudanca? -> Explorar destino\"; e /localidade NAO troca nada — sem transferencia declarada ela renderiza a referencia da cidade em que a pessoa ja esta, e com transferencia mostra as duas cidades em abas de leitura. Nenhum codigo chama declare_locality_transfer (grant para authenticated desde 20260819021416:149) nem reverse_locality_transfer (service_role, 20260820000000:151), e profiles nao tem mais campo de localidade (20260817031237) — a unica escrita de vinculo e o onboarding, uma vez. Decisao do dono em 19/09/2026 e ADR-20260919: o seletor tem busca de cidade (UF -> municipio pelo catalogo que o onboarding ja usa em /api/localities), estado de VISITA (ler a cidade escolhida, com aviso de que ali nao se participa) e DECLARAR TRANSFERENCIA (mudar a residencia, com a data declarada pela pessoa); o destino vira corrente na hora e a origem vira vinculo de saida, legivel e publicavel ate o prazo. Troca simples (perder a origem) continua recusada pelo ADR-20260816.",
+      "checklist": [
+        "Pill da cidade no cabecalho vira a entrada de /localidade (hoje e um div sem link), mantendo a fonte unica do nome da cidade (useLocalityContext)",
+        "Busca de cidade no seletor, reutilizando /api/localities e /api/localities/[uf] do onboarding, com estados de carregando, vazio e erro proprios",
+        "Estado de visita: ler a cidade escolhida (eventos e guia) com aviso explicito de que a leitura nao concede participacao, e sem oferecer publicar/entrar em nada",
+        "Declarar transferencia: confirmacao com a data de termino do vinculo de origem, chamando declare_locality_transfer, com o significado do estado dito ANTES (origem segue ativa ate o prazo, depois somente-leitura; nenhuma vila do destino vem junto)",
+        "Nenhuma promessa de troca continua orfa: os tres links \"Trocar de cidade\" e o cartao \"De mudanca?\" levam a um seletor que faz o que a copy diz",
+        "Prova de navegador: buscar cidade, visitar (conteudo real da outra cidade) e declarar transferencia (a cidade corrente muda no shell depois da recarga)",
+        "Teste negativo: visitar outra cidade nao cria vinculo, nao libera vila e nao deixa publicar la"
+      ],
+      "proof": [
+        "Investigacao de 19/09/2026 contra main 90e4c94: apps/web/app/components/bivaque/app-shell.tsx (pill sem link), (shell)/localidade/page.tsx (tela de leitura, sem busca), (shell)/explorar/busca/page.tsx:246-256 e :320-334, (shell)/explorar/servicos/page.tsx:456-465, (shell)/communities/[id]/community-detail-screen.tsx:551-560, (shell)/inicio/right-rail.tsx:85-105",
+        "declare_locality_transfer concede a authenticated: supabase/migrations/20260819021416_locality_transfer.sql:146-149; corpo em :91-140 (destino vira current, origem vira leaving com leaving_at)",
+        "reverse_locality_transfer e service_role: supabase/migrations/20260820000000_locality_degradation.sql:148-151 — cancelar exige server action com o caller resolvido no servidor, fica fora deste lote",
+        "ADR-20260919-leitura-nacional-da-cidade.md (D3 e D4) e ADR-20260816-transferencia-e-pertencimento.md (alternativa A escolhida; D recusada)"
+      ],
+      "dependencies": ["R3-LEITURA-NACIONAL-CIDADE"],
+      "updatedAt": "2026-09-19",
+      "sourceRevision": "90e4c94"
     }
   ]
 }
