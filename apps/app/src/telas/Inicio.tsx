@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
+import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque/cartao-vitrine"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
@@ -177,57 +177,50 @@ export function Inicio() {
 
   return (
     <section data-tela="inicio" className="grid gap-2">
-      <CabecaDePagina
-        titulo={`O que você precisa em ${casca.cidade}?`}
-        subtitulo="Serviços e oportunidades entre militares e famílias."
-      />
-
-      <button
-        type="button"
-        data-acao="busca"
-        onClick={() => void navegacao.irPara("busca")}
-        aria-label="Buscar no Bivaque"
-        className="bv-press flex min-h-12 w-full items-center gap-3 rounded-xl bg-(--surface-lowest) px-3.5 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
-      >
-        <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
-        <span className="min-w-0 truncate text-sm text-(--on-surface-variant)">
-          Busque <b className="text-(--on-surface)">“{sugestao}”</b>
-        </span>
-      </button>
-
-      <nav aria-label="Áreas" className="mt-3 grid grid-cols-4 gap-1.5">
-        {ATALHOS.map((atalho) => (
+      <header data-home="abertura" className="bv-home-intro">
+        <div data-home="apresentacao">
+          <p className="bv-home-kicker">
+            <span className="bv-home-kicker-ponto" aria-hidden="true" />A vida acontece por aqui
+          </p>
+          <CabecaDePagina
+            className="bv-home-heading"
+            titulo={`Sua rede em ${casca.cidade}`}
+            subtitulo="Moradia, serviços e boas indicações da comunidade militar."
+          />
+        </div>
+        <div data-home="ferramentas" className="bv-home-ferramentas">
           <button
-            key={atalho.rota}
             type="button"
-            data-acao="atalho"
-            data-valor={atalho.rota}
-            onClick={() => void navegacao.irPara(atalho.rota)}
-            className="bv-press flex min-h-16 flex-col items-center justify-start gap-1.5 rounded-xl px-1 pt-2 pb-1.5 text-[11.5px] leading-4 font-medium hover:bg-(--muted)"
+            data-acao="busca"
+            onClick={() => void navegacao.irPara("busca")}
+            aria-label="Buscar no Bivaque"
+            className="bv-home-busca"
           >
-            <span className="grid size-11 place-items-center rounded-xl bg-(--secondary-container) text-(--primary)">
-              <Icone nome={atalho.icone} className="size-6" />
+            <Icone nome="search" className="size-5 shrink-0 text-(--on-surface-variant)" />
+            <span className="min-w-0 grow truncate text-sm text-(--on-surface-variant)">
+              Busque <b className="font-semibold text-(--on-surface)">“{sugestao}”</b>
             </span>
-            {atalho.rotulo}
+            <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface-variant)" />
           </button>
-        ))}
-      </nav>
-
-      <button
-        type="button"
-        data-acao="contratar"
-        onClick={() => void navegacao.irPara("pedidos")}
-        className="bv-press mt-3 flex min-h-16 w-full items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 text-left"
-      >
-        <Icone nome="build" className="size-6 shrink-0 text-(--primary)" />
-        <span className="grid grow gap-0.5">
-          <b className="text-[15px]">Precisa contratar?</b>
-          <small className="text-(--on-surface-variant)">
-            Descreva o que precisa e receba propostas da comunidade.
-          </small>
-        </span>
-        <Icone nome="chevron_right" className="size-5 shrink-0 opacity-70" />
-      </button>
+          <nav aria-label="Áreas" className="bv-home-atalhos">
+            {ATALHOS.map((atalho) => (
+              <button
+                key={atalho.rota}
+                type="button"
+                data-acao="atalho"
+                data-valor={atalho.rota}
+                onClick={() => void navegacao.irPara(atalho.rota)}
+                className="bv-home-atalho bv-press"
+              >
+                <span className="bv-home-atalho-icone">
+                  <Icone nome={atalho.icone} className="size-5" />
+                </span>
+                <span>{atalho.rotulo}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
 
       {erro ? (
         <div className="mt-4">
@@ -239,7 +232,10 @@ export function Inicio() {
         </div>
       ) : (
         <>
-          <div className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start">
+          <div
+            data-home="conteudo"
+            className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start"
+          >
             <div className="bv-home-principal min-w-0">
               <Secao
                 titulo="Serviços recomendados"
@@ -261,7 +257,7 @@ export function Inicio() {
                 ) : (
                   <Grade formato="carrossel-mobile">
                     {negocios.map(({ negocio, apresentacao }) => (
-                      <CartaoDeNegocio
+                      <CartaoVitrineNegocio
                         key={negocio.id}
                         negocio={{
                           id: negocio.id,
@@ -285,6 +281,24 @@ export function Inicio() {
                 )}
               </Secao>
 
+              <button
+                type="button"
+                data-acao="contratar"
+                onClick={() => void navegacao.irPara("pedidos")}
+                className="bv-home-contratar bv-press"
+              >
+                <span className="bv-home-contratar-icone">
+                  <Icone nome="build" className="size-5" />
+                </span>
+                <span className="min-w-0 grow text-left">
+                  <b className="block text-sm">Precisa contratar um serviço?</b>
+                  <small className="block text-xs text-(--on-surface-variant)">
+                    Peça propostas à comunidade
+                  </small>
+                </span>
+                <Icone nome="chevron_right" className="size-5 shrink-0 text-(--brasa)" />
+              </button>
+
               <Secao titulo="Oportunidades perto de você">
                 {anuncios.length === 0 ? (
                   <EstadoVazio
@@ -299,7 +313,7 @@ export function Inicio() {
                 ) : (
                   <Grade formato="carrossel-mobile">
                     {anuncios.map(({ anuncio, apresentacao }) => (
-                      <CartaoDeFoto
+                      <CartaoVitrineAnuncio
                         key={anuncio.id}
                         anuncio={{
                           id: anuncio.id,
