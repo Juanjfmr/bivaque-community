@@ -5359,6 +5359,7 @@
         "Instrumentos revisados e capturas aprovadas"
       ],
       "proof": [
+        "31/10: e2e completo do apps/app na F01 juntada ao #116 (revisão 6a5feb29): 1756 passaram, 23 falharam e 75 pulados. As 23 são PREEXISTENTES no #116: a mesma lista falha em e041fade sozinho. 15 delas já falhavam antes da F01 sair do #116 (topo da conversa sem \"Paulo R.\" nos seis tamanhos; Encontro cortado em 320; rolagem e foco por entrada, com clique interceptado pelo Criar ou pelos controles de prova; grade da galeria com 2 colunas em 768). 8 vêm do #116 (8a554d8a): o Criar compacto foi a 50 px no celular e casca.spec:178 e acessibilidade.spec:56 esperam 56 px. Próximo passo: decidir 50 ou 56 px e alinhar CSS ou teste; corrigir a conversa de demonstração e os cliques interceptados. Nenhuma é da entrada.",
         "28/10: onboarding demonstrativo inclui etapa opcional de negocios; divulgar reutiliza formulario e salva rascunho apenas na sessao, interesse e decidir depois nao publicam. Gate completo verde; 18/18 E2E em 375/768/1440. Backend e aceite visual independente pendentes.",
         "27/10: sugestoes de grupos abertas da cidade no onboarding demonstrativo, selecao opcional e estado vazio; nenhum vinculo criado. Gate completo verde; 15/15 E2E em 375/768/1440, instrumento aprovado em revisao estatica. Integracao real e auditoria visual independente pendentes.",
         "27/10: jornada de entrada demonstrativa com composicao 21st e marca oficial; login, cadastro, CPF, documento, analise, convite e cidade sem backend. E2E focal 12/12 em 375/768/1440; gate completo verde apos o reforco; instrumento aprovado em revisao estatica independente. Aceite visual e integracao real continuam pendentes. Detalhes em STATUS.",
@@ -5390,13 +5391,13 @@
         "docs/agents/tasks/APP-008.task.yml",
         "docs/agents/tasks/APP-010.task.yml"
       ],
-      "sourceRevision": "7920f5b139164298d57abfbbdef8a63f22c894bc",
+      "sourceRevision": "6a5feb29",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",
       "tests": [],
       "dependencies": [],
-      "updatedAt": "2026-10-26",
+      "updatedAt": "2026-10-31",
       "blockers": [
         "Aceite visual da onda1 pendente. Adoção shadcn parcial: corrigir S01/S02 e comprovar consumo real dos componentes equivalentes, preservando navegação/histórico aprovados.",
         "Corrigir V13 filtros, V14 títulos de perguntas e V15 variante das ações; grade/recentes V02 e omissões V04–V12 permanecem. Primeiro fechamento recomendado: base compartilhada com reuso shadcn, filtros e botões.",
