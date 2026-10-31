@@ -1,0 +1,21 @@
+-- P0 Task 5 follow-up: /api/localities (apps/web/app/api/localities/route.ts)
+-- uses createServerClient(), which authenticates as service_role. The
+-- foundation migration (20260802000300) revoked all on public.localities and
+-- granted SELECT only to authenticated, never to service_role. The route
+-- handler therefore returns 500 ("permission denied for table localities")
+-- on every request — blocking /onboarding/locality for the canonical
+-- eligible-without-membership case (and for everyone else, since the route
+-- is the only path that reads the catalog).
+--
+-- Fix: grant SELECT on public.localities to service_role. service_role
+-- bypasses RLS by Postgres convention, so this opens the read to the
+-- service-role client (the route handler) without widening RLS for
+-- authenticated. The existing localities_select_same_membership policy on
+-- authenticated stays untouched, so member content scoping (posts, events,
+-- guide) is unaffected.
+--
+-- The catalog is IBGE reference data (state_code, ibge_code, city_name) —
+-- no PII, no sensitive content. Opening service_role read on it does not
+-- change the privacy boundary.
+
+grant select on table public.localities to service_role;

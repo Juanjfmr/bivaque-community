@@ -6,16 +6,17 @@ import {
   type ProviderCategory,
 } from "@bivaque/domain"
 import { Button, Input, TextArea } from "@heroui/react"
-import { ArrowLeft, Building2, ExternalLink, Eye, MapPin, Package } from "lucide-react"
+import { ArrowLeft, Building2, Eye, MapPin, Package, Pencil } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { type FormEvent, useState } from "react"
+import { type FormEvent, type ReactNode, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { validateBio, validateCategory, validateDisplayName } from "../../../lib/providers/showcase"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { Card } from "../../components/bivaque/card"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { ButtonLink, Button as UiButton } from "../../components/ui/button"
+import { Eyebrow, Panel } from "../../components/ui/panel"
 
 export type BusinessProfile = {
   id: string
@@ -24,9 +25,16 @@ export type BusinessProfile = {
   bio: string | null
 }
 
-export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
+export function BusinessForm({
+  profile,
+  children,
+}: {
+  profile: BusinessProfile | null
+  children?: ReactNode
+}) {
   const router = useRouter()
   const { current } = useLocalityContext()
+  const [editing, setEditing] = useState(!profile)
   const [name, setName] = useState(profile?.display_name ?? "")
   const [category, setCategory] = useState(profile?.category ?? "")
   const [bio, setBio] = useState(profile?.bio ?? "")
@@ -63,7 +71,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
         p_provider_id: profile.id,
         p_display_name: values.display_name,
         p_category: values.category,
-        p_bio: values.bio,
+        ...(values.bio ? { p_bio: values.bio } : {}),
       })
       if (updateError) {
         setError(
@@ -73,6 +81,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
         return
       }
       setSaved(true)
+      setEditing(false)
       setSaving(false)
       router.refresh()
       return
@@ -83,7 +92,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
       {
         p_display_name: values.display_name,
         p_category: values.category,
-        p_bio: values.bio,
+        ...(values.bio ? { p_bio: values.bio } : {}),
       },
     )
     if (createError || !providerId) {
@@ -95,172 +104,226 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
     }
 
     setSaved(true)
+    setEditing(false)
     setSaving(false)
     router.replace("/negocio" as Route)
     router.refresh()
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-4 pb-10 sm:pt-6">
-      <Link
-        href="/profile"
-        className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ui-brand transition-colors hover:underline"
-      >
-        <ArrowLeft size={16} aria-hidden="true" />
-        Perfil
-      </Link>
+    <div className="mx-auto w-full max-w-[72rem] flex-1 px-4 pt-4 pb-8 sm:pt-6 sm:pb-10 lg:px-8">
+      <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="min-w-0">
+          <Link
+            href="/profile"
+            className="mb-3 inline-flex min-h-11 items-center gap-2 rounded-ui px-2 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            Perfil
+          </Link>
+          <Eyebrow>Seu espaço em Serviços</Eyebrow>
+          <h1 className="mt-1 text-2xl leading-tight font-semibold tracking-tight text-ui-ink sm:text-[28px]">
+            {profile ? "Seu negócio" : "Crie a página do seu negócio"}
+          </h1>
+          <p className="mt-1 max-w-prose text-sm leading-relaxed text-ui-ink-2 sm:text-base">
+            {profile
+              ? "Mantenha sua apresentação, seus serviços e suas fotos atualizados."
+              : `Apresente seu trabalho e ajude quem procura serviços em ${current.cityName}.`}
+          </p>
+        </div>
+        {profile ? (
+          <ButtonLink
+            href={`/prestadores/${profile.id}`}
+            variant="secondary"
+            className="w-full sm:w-auto"
+          >
+            <Eye size={17} aria-hidden="true" />
+            Ver página pública
+          </ButtonLink>
+        ) : null}
+      </div>
 
-      <header>
-        <h1 className="text-xl leading-tight font-semibold tracking-tight text-ui-ink sm:text-2xl">
-          {profile ? "Seu negócio" : "Crie a página do seu negócio"}
-        </h1>
-        <p className="mt-1 max-w-prose text-sm leading-relaxed text-ui-ink-2 sm:text-base">
-          Apresente seu trabalho para quem vive em {current.cityName}. Sua página reúne seus
-          serviços e fotos em um só lugar.
-        </p>
-      </header>
-
-      <div className="space-y-4">
-        <Card className="rounded-ui-lg p-4 shadow-ui ring-1 ring-ui-line sm:p-5">
-          <div className="border-b border-ui-line pb-4">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-ui bg-ui-brand-soft text-ui-brand">
-                <Building2 size={19} aria-hidden="true" />
+      {profile && !editing ? (
+        <div className="space-y-5">
+          {saved ? <FeedbackAlert variant="success" description="Sua página foi salva." /> : null}
+          <Panel bodyClassName="p-5 sm:p-8">
+            <div className="flex flex-wrap items-start gap-4 sm:gap-6">
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-ui-lg bg-ui-brand-soft text-ui-brand sm:h-20 sm:w-20">
+                <Building2 size={32} aria-hidden="true" />
               </span>
-              <div>
-                <h2 className="text-base font-semibold text-ui-ink">Informações do negócio</h2>
-                <p className="mt-1 text-sm leading-relaxed text-ui-ink-2">
-                  Você pode atualizar esses dados quando quiser.
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-ui-brand">
+                  {PROVIDER_CATEGORY_LABELS[profile.category]}
                 </p>
+                <h2 className="mt-1 break-words text-2xl font-semibold tracking-tight text-ui-ink sm:text-3xl">
+                  {profile.display_name}
+                </h2>
+                {profile.bio ? (
+                  <p className="mt-4 max-w-prose whitespace-pre-line [overflow-wrap:anywhere] text-base leading-relaxed text-ui-ink-2">
+                    {profile.bio}
+                  </p>
+                ) : (
+                  <p className="mt-4 text-sm text-ui-ink-2">
+                    Conte o que você oferece para ajudar as pessoas a escolher seu negócio.
+                  </p>
+                )}
               </div>
+              <UiButton
+                variant="secondary"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setSaved(false)
+                  setEditing(true)
+                }}
+              >
+                <Pencil size={16} aria-hidden="true" />
+                Editar informações
+              </UiButton>
             </div>
-          </div>
+          </Panel>
+          {children}
+        </div>
+      ) : (
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)] lg:gap-6">
+          <Panel
+            title={profile ? "Editar informações" : "Comece pela apresentação"}
+            titleId="business-form-title"
+            action={
+              profile ? (
+                <Link
+                  href={"/negocio/catalogo" as Route}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-ui px-2 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
+                >
+                  <Package size={16} aria-hidden="true" />
+                  <span className="hidden sm:inline">Catálogo e fotos</span>
+                  <span className="sm:hidden">Catálogo</span>
+                </Link>
+              ) : null
+            }
+            bodyClassName="space-y-5 p-4 sm:p-5"
+          >
+            <p className="text-sm leading-relaxed text-ui-ink-2">
+              {profile
+                ? "Você pode atualizar essas informações quando quiser."
+                : "Conte às pessoas da sua cidade o que você faz e como pode ajudar."}
+            </p>
 
-          {error ? (
-            <div className="mt-4">
-              <FeedbackAlert variant="danger" description={error} />
-            </div>
-          ) : null}
-          {saved ? (
-            <div className="mt-4">
-              <FeedbackAlert variant="success" description="Sua página foi salva." />
-            </div>
-          ) : null}
+            {error ? <FeedbackAlert variant="danger" description={error} /> : null}
+            {saved ? <FeedbackAlert variant="success" description="Sua página foi salva." /> : null}
 
-          <form onSubmit={(event) => void save(event)} className="mt-5 space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
+            <form onSubmit={(event) => void save(event)} className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label htmlFor="business-name" className="block text-sm font-medium text-ui-ink">
+                    Nome do negócio
+                  </label>
+                  <Input
+                    id="business-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    minLength={2}
+                    maxLength={80}
+                    required
+                    aria-label="Nome do negócio"
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="business-category"
+                    className="block text-sm font-medium text-ui-ink"
+                  >
+                    Categoria
+                  </label>
+                  <select
+                    id="business-category"
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value)}
+                    required
+                    className="min-h-11 w-full rounded-ui border border-ui-line bg-ui-surface px-3 text-sm text-ui-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-brand"
+                  >
+                    <option value="" disabled>
+                      Escolha uma categoria
+                    </option>
+                    {PROVIDER_CATEGORIES.map((item) => (
+                      <option key={item} value={item}>
+                        {PROVIDER_CATEGORY_LABELS[item]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
-                <label htmlFor="business-name" className="block text-sm font-medium text-ui-ink">
-                  Nome do negócio
+                <label htmlFor="business-bio" className="block text-sm font-medium text-ui-ink">
+                  O que você oferece <span className="font-normal text-ui-ink-2">(opcional)</span>
                 </label>
-                <Input
-                  id="business-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  minLength={2}
-                  maxLength={80}
-                  required
-                  aria-label="Nome do negócio"
+                <TextArea
+                  id="business-bio"
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value)}
+                  maxLength={800}
+                  rows={4}
+                  placeholder="Conte como você pode ajudar quem mora na cidade"
                   className="w-full"
                 />
+                <p className="text-right text-sm text-ui-ink-2">{bio.length}/800</p>
               </div>
 
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="business-category"
-                  className="block text-sm font-medium text-ui-ink"
+              <div className="flex flex-col gap-3 border-t border-ui-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-sm text-ui-ink-2">
+                  <MapPin size={17} aria-hidden="true" className="shrink-0 text-ui-brand" />
+                  <span>
+                    {profile
+                      ? "Página gratuita do seu negócio"
+                      : `Alcance gratuito em ${current.cityName}`}
+                  </span>
+                </div>
+                {profile ? (
+                  <UiButton
+                    variant="ghost"
+                    disabled={saving}
+                    onClick={() => {
+                      setName(profile.display_name)
+                      setCategory(profile.category)
+                      setBio(profile.bio ?? "")
+                      setError("")
+                      setEditing(false)
+                    }}
+                  >
+                    Cancelar
+                  </UiButton>
+                ) : null}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  isDisabled={saving}
+                  className="min-h-11 w-full sm:w-auto sm:min-w-48"
                 >
-                  Categoria
-                </label>
-                <select
-                  id="business-category"
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  required
-                  className="min-h-11 w-full rounded-ui border border-ui-line bg-ui-surface px-3 text-sm text-ui-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-brand"
-                >
-                  <option value="" disabled>
-                    Escolha uma categoria
-                  </option>
-                  {PROVIDER_CATEGORIES.map((item) => (
-                    <option key={item} value={item}>
-                      {PROVIDER_CATEGORY_LABELS[item]}
-                    </option>
-                  ))}
-                </select>
+                  {saving ? "Salvando…" : profile ? "Salvar alterações" : "Criar minha página"}
+                </Button>
               </div>
-            </div>
+            </form>
+          </Panel>
 
-            <div className="space-y-1.5">
-              <label htmlFor="business-bio" className="block text-sm font-medium text-ui-ink">
-                O que você oferece <span className="font-normal text-ui-ink-2">(opcional)</span>
-              </label>
-              <TextArea
-                id="business-bio"
-                value={bio}
-                onChange={(event) => setBio(event.target.value)}
-                maxLength={800}
-                rows={4}
-                placeholder="Conte como você pode ajudar quem mora na cidade"
-                className="w-full"
-              />
-              <p className="text-right text-sm text-ui-ink-2">{bio.length}/800</p>
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-ui-line pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2 text-sm text-ui-ink-2">
-                <MapPin size={17} aria-hidden="true" className="shrink-0 text-ui-brand" />
-                <span>Alcance gratuito em {current.cityName}</span>
-              </div>
-              <Button
-                type="submit"
-                variant="primary"
-                isDisabled={saving}
-                className="min-h-11 w-full sm:w-auto sm:min-w-48"
-              >
-                {saving ? "Salvando…" : profile ? "Salvar alterações" : "Criar minha página"}
-              </Button>
-            </div>
-          </form>
-
-          {profile ? (
-            <div className="mt-4 flex flex-col gap-1 border-t border-ui-line pt-3 sm:flex-row sm:gap-5">
-              <Link
-                href={"/negocio/catalogo" as Route}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ui-brand transition-colors hover:underline"
-              >
-                <Package size={16} aria-hidden="true" />
-                Gerenciar catálogo e fotos
-              </Link>
-              <Link
-                href={`/prestadores/${profile.id}` as Route}
-                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ui-brand transition-colors hover:underline"
-              >
-                <Eye size={16} aria-hidden="true" />
-                Ver página pública <ExternalLink size={14} aria-hidden="true" />
-              </Link>
-            </div>
-          ) : null}
-        </Card>
-
-        <aside className="space-y-4">
-          <Card className="overflow-hidden rounded-ui-lg p-0 shadow-ui ring-1 ring-ui-line">
-            <div className="flex items-center justify-between gap-3 border-b border-ui-line bg-ui-brand-soft px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-ui-ink">
-                <Eye size={17} aria-hidden="true" />
-                Prévia da página
-              </div>
-              <span className="rounded-full bg-ui-surface px-2.5 py-1 text-xs font-medium text-ui-ink-2">
-                Só membros da cidade
-              </span>
-            </div>
-            <div className="p-4 sm:p-5">
+          <aside className="space-y-5">
+            <Panel
+              title="Prévia da página"
+              titleId="business-preview-title"
+              action={
+                <span className="rounded-full bg-ui-brand-soft px-2.5 py-1 text-xs font-semibold text-ui-brand">
+                  Visão dos membros
+                </span>
+              }
+              bodyClassName="p-4 sm:p-5"
+            >
               <div className="flex items-start gap-3">
-                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--semantic-surface-sunken)] text-[var(--semantic-action-primary)]">
+                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-ui-brand-soft text-ui-brand">
                   <Building2 size={22} aria-hidden="true" />
                 </span>
                 <div className="min-w-0 pt-0.5">
-                  <p className="break-words font-semibold">
+                  <p className="break-words font-semibold text-ui-ink">
                     {name.trim() || "Nome do seu negócio"}
                   </p>
                   <p className="mt-0.5 text-sm text-ui-ink-2">
@@ -274,24 +337,31 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
                 {bio.trim() || "Sua apresentação aparece aqui para quem encontrar sua página."}
               </p>
               <div className="mt-4 flex items-center gap-2 border-t border-ui-line pt-3 text-sm text-ui-ink-2">
-                <MapPin size={16} aria-hidden="true" />
-                {current.cityName}, {current.stateCode}
+                <MapPin size={16} aria-hidden="true" className="text-ui-brand" />
+                {profile ? "Página do negócio" : `${current.cityName}, ${current.stateCode}`}
               </div>
-            </div>
-          </Card>
+            </Panel>
 
-          <Card className="flex items-start gap-3 rounded-ui-lg bg-ui-brand-soft p-4 shadow-ui ring-1 ring-ui-line">
-            <MapPin size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-ui-brand" />
-            <div>
-              <h2 className="text-sm font-semibold text-ui-ink">Onde sua página aparece</h2>
-              <p className="mt-1 text-sm leading-relaxed text-ui-ink-2">
-                Membros de {current.cityName}, {current.stateCode} podem encontrar sua página em
-                Serviços. Criar e manter sua página é gratuito.
-              </p>
-            </div>
-          </Card>
-        </aside>
-      </div>
+            <Panel
+              title="Onde sua página aparece"
+              titleId="business-reach-title"
+              bodyClassName="p-4"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ui-brand-soft text-ui-brand">
+                  <MapPin size={17} aria-hidden="true" />
+                </span>
+                <p className="text-sm leading-relaxed text-ui-ink-2">
+                  {profile
+                    ? "Sua página aparece em Serviços enquanto você participa da cidade em que criou o negócio."
+                    : `Membros de ${current.cityName}, ${current.stateCode} podem encontrar sua página em Serviços.`}{" "}
+                  Criar e manter sua página é gratuito.
+                </p>
+              </div>
+            </Panel>
+          </aside>
+        </div>
+      )}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import {
 import { Button, Checkbox, Input, TextArea } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { civilBusinessContact } from "../../../../lib/providers/business-data"
 import { saveProfileAction } from "../actions"
 
 // Onda G Task 4 — edição da ficha. Formulário server-action simples; a RLS
@@ -44,11 +45,18 @@ export default async function PrestadorFichaPage() {
 
   const { data: profile } = await authClient
     .from("provider_profiles")
-    .select("display_name, category, bio, contact_phone, contact_is_public")
+    .select("id, display_name, category, bio")
     .eq("owner_user_id", user.id)
     .maybeSingle()
 
-  const current = (profile ?? null) as ProfileRow | null
+  const contact = profile ? await civilBusinessContact(authClient, profile.id) : null
+  const current = profile
+    ? ({
+        ...profile,
+        contact_phone: contact?.contact_phone ?? null,
+        contact_is_public: contact?.contact_is_public ?? false,
+      } as ProfileRow)
+    : null
 
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-10">

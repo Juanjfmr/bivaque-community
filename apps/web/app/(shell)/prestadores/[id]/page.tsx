@@ -1,11 +1,15 @@
 import { PROVIDER_CATEGORY_LABELS, type ProviderCategory } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
-import { ArrowLeft, ImageOff, MapPin, Wrench } from "lucide-react"
+import { ArrowLeft, Building2, MapPin } from "lucide-react"
 import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { log } from "../../../../lib/logger"
+import { businessContent, publicBusinessDetails } from "../../../../lib/providers/business-data"
+import { ButtonLink } from "../../../components/ui/button"
+import { Eyebrow, Panel } from "../../../components/ui/panel"
+import { BusinessContent } from "../../negocio/business-content"
 import { ProviderActions } from "./provider-actions"
 
 // RECON-022 — a ficha vista pelo membro, fiel à prancha 62.
@@ -25,12 +29,6 @@ type ProviderProfileRow = {
   display_name: string
   category: ProviderCategory
   bio: string | null
-}
-
-type CatalogItemRow = {
-  id: string
-  title: string
-  description: string | null
 }
 
 type ReachRow = {
@@ -128,38 +126,9 @@ export default async function ProviderShowcasePage({
     notFound()
   }
 
-  const catalogQuery = await authClient
-    .from("provider_catalog_items")
-    .select("id, title, description")
-    .eq("provider_id", providerId)
-    .order("position")
-
-  if (catalogQuery.error) {
-    throw new Error(`Falha ao carregar os serviços: ${catalogQuery.error.message}`)
-  }
-  const catalog = (catalogQuery.data as CatalogItemRow[] | null) ?? []
-
-  const photoQuery = await authClient
-    .from("provider_portfolio_photos")
-    .select("photo_path, caption")
-    .eq("provider_id", providerId)
-    .order("position")
-    .limit(1)
-
-  if (photoQuery.error) {
-    throw new Error(`Falha ao carregar a foto: ${photoQuery.error.message}`)
-  }
-
-  const firstPhoto = (
-    photoQuery.data as { photo_path: string; caption: string | null }[] | null
-  )?.[0]
-  let photoUrl: string | null = null
-  if (firstPhoto) {
-    const signed = await authClient.storage
-      .from("provider-photos")
-      .createSignedUrl(firstPhoto.photo_path, 3600)
-    photoUrl = signed.data?.signedUrl ?? null
-  }
+  const details = await publicBusinessDetails(authClient, providerId)
+  if (!details) notFound()
+  const content = await businessContent(authClient, providerId)
 
   const reachQuery = await authClient
     .from("provider_reach")
@@ -174,84 +143,90 @@ export default async function ProviderShowcasePage({
     location = await resolveLocation(authClient, (reachQuery.data as ReachRow[] | null) ?? [])
   }
 
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  const isOwner = user?.id === profile.owner_user_id
+
   const occupation = PROVIDER_CATEGORY_LABELS[profile.category] ?? profile.category
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pt-6 pb-8">
+    <div className="mx-auto w-full max-w-[72rem] px-4 pt-4 pb-8 sm:pt-6 lg:px-8">
       <Link
-        href={"/explorar" as Route}
-        className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
+        href={"/explorar/servicos" as Route}
+        className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-ui px-2 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
       >
-        <ArrowLeft size={18} aria-hidden="true" />
-        Voltar à exploração
+        <ArrowLeft size={17} aria-hidden="true" />
+        Serviços
       </Link>
-
-      <div className="mt-4 grid gap-6 md:grid-cols-[minmax(0,22rem)_1fr] md:items-start">
-        <div className="flex flex-col gap-4">
-          <div className="overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface-sunken)]">
-            {photoUrl ? (
-              // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h; o otimizador de imagem colocaria link volátil em cache permanente.
-              <img
-                src={photoUrl}
-                alt={firstPhoto?.caption ?? `Foto do trabalho de ${profile.display_name}`}
-                className="aspect-[4/5] w-full object-cover"
-              />
-            ) : (
-              <div
-                role="img"
-                aria-label="Este prestador ainda não publicou foto"
-                className="flex aspect-[4/5] w-full items-center justify-center text-muted"
-              >
-                <ImageOff size={40} aria-hidden="true" />
-              </div>
-            )}
-          </div>
-          <ProviderActions providerId={profile.id} providerUserId={profile.owner_user_id} />
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">{profile.display_name}</h1>
-            <p className="text-sm text-muted">{occupation}</p>
+      <Panel bodyClassName="p-5 sm:p-8">
+        <header className="flex items-start gap-4 sm:gap-5">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-ui-lg bg-ui-brand-soft text-ui-brand sm:h-20 sm:w-20">
+            <Building2 size={28} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <Eyebrow>{occupation}</Eyebrow>
+            <h1 className="mt-1 break-words text-2xl font-semibold tracking-tight text-ui-ink sm:text-4xl">
+              {profile.display_name}
+            </h1>
             {location ? (
-              <p className="flex items-center gap-1.5 text-sm text-muted">
+              <p className="mt-3 flex items-center gap-1.5 text-sm text-ui-ink-2">
                 <MapPin size={16} aria-hidden="true" />
                 {location}
               </p>
             ) : null}
-          </header>
-
-          {/* Só a medida de leitura do token: com max-w-prose junto, a
-              utilidade vencia a classe do design system e a linha passava do
-              limite (medido: 88 caracteres por linha, máximo 72). */}
+          </div>
+        </header>
+      </Panel>
+      <div className="mt-5 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-5">
           {profile.bio ? (
-            <p className="measure-reading text-sm leading-relaxed text-muted">{profile.bio}</p>
+            <Panel
+              title="Sobre o negócio"
+              titleId="business-about-title"
+              bodyClassName="p-5 sm:p-6"
+            >
+              <p className="max-w-prose whitespace-pre-line [overflow-wrap:anywhere] text-base leading-relaxed text-ui-ink-2">
+                {profile.bio}
+              </p>
+            </Panel>
           ) : null}
-
-          <section aria-labelledby="servicos-titulo" className="flex flex-col gap-3">
-            <h2 id="servicos-titulo" className="text-base font-semibold tracking-tight">
-              Serviços
-            </h2>
-            <hr className="border-border" />
-            {catalog.length === 0 ? (
-              <p className="text-sm text-muted">Este prestador ainda não cadastrou serviços.</p>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {catalog.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
-                    >
-                      <Wrench size={16} />
-                    </span>
-                    <span className="text-sm font-medium">{item.title}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <BusinessContent content={content} details={details} name={profile.display_name} />
         </div>
+        <aside className="order-first lg:sticky lg:top-6 lg:order-none">
+          {isOwner ? (
+            <Panel
+              title="Esta é sua página"
+              titleId="business-owner-title"
+              bodyClassName="space-y-4 p-5"
+            >
+              <p className="text-sm leading-relaxed text-ui-ink-2">
+                É assim que outros membros encontram seu negócio.
+              </p>
+              <ButtonLink href="/negocio" variant="primary" className="w-full">
+                Gerenciar meu negócio
+              </ButtonLink>
+            </Panel>
+          ) : (
+            <Panel
+              title="Como podemos ajudar?"
+              titleId="business-contact-title"
+              bodyClassName="space-y-4 p-5"
+            >
+              <p className="text-sm leading-relaxed text-ui-ink-2">
+                Conte o que você precisa e combine os detalhes diretamente com o negócio.
+              </p>
+              <ProviderActions
+                providerId={profile.id}
+                providerUserId={profile.owner_user_id}
+                contact={details}
+              />
+              <p className="text-xs leading-relaxed text-ui-ink-2">
+                O pedido é enviado somente a este negócio.
+              </p>
+            </Panel>
+          )}
+        </aside>
       </div>
     </div>
   )

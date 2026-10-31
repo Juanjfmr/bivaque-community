@@ -77,7 +77,7 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
             .getByRole("button", { name: "Ver ficha" })
             .click()
           await expect(member.getByRole("heading", { level: 1, name: PROVIDER_NAME })).toBeVisible()
-          await expect(member.getByRole("button", { name: "Pedir serviço" })).toBeVisible()
+          await expect(member.getByRole("button", { name: "Pedir orçamento" })).toBeVisible()
         },
         { persona: "membra" },
       )
@@ -86,7 +86,7 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         "62-web-prestador-pedido#1",
         member,
         async () => {
-          await member.getByRole("button", { name: "Pedir serviço" }).click()
+          await member.getByRole("button", { name: "Pedir orçamento" }).click()
           await expect(
             member.getByRole("heading", { level: 1, name: "Do que você precisa?" }),
           ).toBeVisible()

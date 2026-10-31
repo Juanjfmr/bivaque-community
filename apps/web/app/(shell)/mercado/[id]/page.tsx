@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { categoryLabel, conditionLabel, formatCentsBRL } from "../../../../lib/listings/catalog"
 import { listingsClient } from "../../../../lib/listings/client"
+import { visibleBusinessNames } from "../../../../lib/providers/business-data"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
 import { AccessUnavailableState, EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
@@ -17,6 +18,7 @@ import { type ListingPhotoRow, type ListingRow, SaveButton } from "../mercado-sh
 
 interface Advertiser {
   displayName: string
+  businessId?: string
 }
 
 interface DetailState {
@@ -57,7 +59,7 @@ export default function ListingDetailPage() {
     const { data, error } = await supabase
       .from("listings")
       .select(
-        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,address,status,locality_id,community_id,created_at",
+        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,address,status,locality_id,community_id,created_at,provider_id",
       )
       .eq("id", listingId)
       .maybeSingle()
@@ -98,12 +100,24 @@ export default function ListingDetailPage() {
     }
 
     let advertiser: Advertiser = { displayName: "Anunciante" }
+    if (listing.provider_id) {
+      try {
+        const names = await visibleBusinessNames(supabase, [listing.provider_id])
+        const name = names.get(listing.provider_id)
+        advertiser = name
+          ? { displayName: name, businessId: listing.provider_id }
+          : { displayName: "Produto de negócio" }
+      } catch {
+        setState((previous) => ({ ...previous, status: "error" }))
+        return
+      }
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
       .eq("user_id", listing.owner_user_id)
       .maybeSingle()
-    if (profile !== null) {
+    if (profile !== null && !listing.provider_id) {
       advertiser = { displayName: (profile as { display_name: string }).display_name }
     }
 
@@ -306,6 +320,14 @@ export default function ListingDetailPage() {
             <MemberAvatar name={state.advertiser.displayName} size="md" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{state.advertiser.displayName}</p>
+              {state.advertiser.businessId ? (
+                <Link
+                  href={`/prestadores/${state.advertiser.businessId}` as Route}
+                  className="inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand transition-colors hover:underline"
+                >
+                  Ver página do negócio
+                </Link>
+              ) : null}
               <p className="text-xs text-muted">
                 {state.communityName === null
                   ? "Membro da cidade"

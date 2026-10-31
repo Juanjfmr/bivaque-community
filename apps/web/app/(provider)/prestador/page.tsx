@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr"
 import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
+import { civilBusinessContact } from "../../../lib/providers/business-data"
 import { computeFichaCompleteness } from "../../../lib/service-requests/completeness"
 import {
   formatReceived,
@@ -76,12 +77,15 @@ export default async function PrestadorHomePage({
 
   const { data: profileRow, error: profileError } = await authClient
     .from("provider_profiles")
-    .select("id, display_name, category, bio, contact_phone")
+    .select("id, display_name, category, bio")
     .eq("owner_user_id", user.id)
     .maybeSingle()
   if (profileError) throw new Error(`Falha ao carregar a ficha: ${profileError.message}`)
 
-  const profile = (profileRow ?? null) as {
+  const contact = profileRow ? await civilBusinessContact(authClient, profileRow.id) : null
+  const profile = (
+    profileRow ? { ...profileRow, contact_phone: contact?.contact_phone ?? null } : null
+  ) as {
     id: string
     display_name: string
     category: ProviderCategory

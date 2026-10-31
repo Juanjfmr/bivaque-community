@@ -24,6 +24,8 @@ export interface ListingRow {
   locality_id: string | null
   community_id: string | null
   created_at: string
+  provider_id?: string | null
+  business_name?: string | null
 }
 
 export interface ListingPhotoRow {
@@ -139,6 +141,9 @@ export function ListingCard({
           <p className="text-base font-semibold text-[var(--semantic-action-primary)]">
             {formatCentsBRL(listing.price_cents)}
           </p>
+          {listing.provider_id ? (
+            <p className="text-xs text-ui-ink-2">{listing.business_name ?? "Produto de negócio"}</p>
+          ) : null}
           <div className="mt-auto flex items-center justify-between gap-2 pt-2 text-xs text-muted">
             <span className="flex min-w-0 items-center gap-1">
               <MapPin size={14} aria-hidden="true" />

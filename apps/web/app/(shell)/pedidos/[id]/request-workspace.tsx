@@ -298,11 +298,11 @@ export function RequestWorkspace({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-8">
       <Link
-        href={"/pedidos" as Route}
+        href={(isRequester ? "/pedidos" : "/negocio/pedidos") as Route}
         className="motion-press inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
       >
         <ArrowLeft size={18} aria-hidden="true" />
-        Voltar aos meus pedidos
+        {isRequester ? "Voltar aos meus pedidos" : "Voltar aos pedidos recebidos"}
       </Link>
 
       <nav aria-label="Trilha do pedido" className="mt-3">

@@ -87,10 +87,7 @@ orçamentos, moradia, benefícios e encontros):
   quem é da comunidade, com filtros próprios. O Explorar ganha as entradas "Chegando na cidade" e
   "Saindo da cidade", que cruzam Moradia, desapegos, indicações e negócios em torno da
   transferência, sem fundir as abas.
-- **D13 — Desconto para a comunidade é parte grátis da página.** O negócio pode oferecer um
-  desconto a quem é da comunidade; ele vale para **todos os membros** e nunca fica restrito a quem
-  paga algo ao Bivaque. Benefícios pagos são outro produto:
-  [ADR-20260926-bivaque-mais](ADR-20260926-bivaque-mais.md).
+- **D13 — Descontos pertencem à vertical Benefícios.** Correção explícita do dono em 27/09/2026: "Esse desconto se refere a vertical benefícios, não as páginas de negócio". Não incluir seção ou cadastro de desconto na página do negócio. A redação anterior que vinculava o desconto à página estava incorreta; o detalhe da vertical Benefícios deve ser tratado em seu próprio contrato.
 
 ### Contrato de autorização da primeira fatia
 

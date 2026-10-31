@@ -22,6 +22,7 @@ allowed_paths:
   - supabase/tests/provider-member-business.sql
   - supabase/database.generated.ts
   - supabase/seed.sql
+  - apps/web/app/(shell)/prestadores/[id]/
   - apps/web/app/(shell)/negocio/
   - apps/web/app/(provider)/prestador/actions.ts
   - apps/web/app/(provider)/prestador/catalogo/page.tsx
@@ -35,9 +36,11 @@ allowed_paths:
   - scripts/visual/capture.mjs
   - tests/unit/providers/
   - tests/e2e/provider-member-business.spec.ts
+  - tests/e2e/journey-pedir-servico.spec.ts
   - tests/unit/ui/shell-active-nav.test.ts
   - tests/unit/ui/shell-create-action.test.ts
   - docs/agents/tasks/BIZ-001.task.yml
+  - docs/design/business-pages-2026-09-26.md
   - docs/PRODUCT_STATUS.md
   - docs/decisions/ADR-20260925-pagina-do-negocio.md
   - tools/backend-kanban/BOARD.md
@@ -53,6 +56,8 @@ forbidden:
   - editar migration aplicada
 
 acceptance:
+  - gestão do membro separa apresentação de edição, com cancelar sem persistir e atalhos funcionais ao catálogo e à ficha
+  - ficha usa o sistema visual do Início vigente, exibe descrições de serviços e orçamento direto; dono retorna à gestão sem iniciar conversa consigo
   - RPC autenticada cria atomicamente uma página e um único alcance free/locality para a membership current/active derivada da sessão
   - usuário sem membership atual ativa, não autenticado ou com conta civil não pode usar a RPC de página de membro
   - membro permanece account kind member e não ganha linha provider_accounts

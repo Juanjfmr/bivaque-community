@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr"
 import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
+import { civilBusinessContact } from "../../../../lib/providers/business-data"
 import { saveAccountAction } from "../actions"
 
 export default async function PrestadorContaPage() {
@@ -29,10 +30,19 @@ export default async function PrestadorContaPage() {
 
   const { data: profileRow } = await authClient
     .from("provider_profiles")
-    .select("id, contact_phone, contact_is_public")
+    .select("id")
     .eq("owner_user_id", user.id)
     .maybeSingle()
-  const profile = (profileRow ?? null) as {
+  const contact = profileRow ? await civilBusinessContact(authClient, profileRow.id) : null
+  const profile = (
+    profileRow
+      ? {
+          ...profileRow,
+          contact_phone: contact?.contact_phone ?? null,
+          contact_is_public: contact?.contact_is_public ?? false,
+        }
+      : null
+  ) as {
     id: string
     contact_phone: string | null
     contact_is_public: boolean

@@ -400,13 +400,11 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
   const { client, userId } = await requireAuthClient()
   const profileId = await requireOwnProfileId(client, userId)
 
-  const { error } = await client
-    .from("provider_profiles")
-    .update({
-      contact_phone: contactPhone,
-      contact_is_public: contactIsPublic && contactPhone !== null,
-    })
-    .eq("id", profileId)
+  const { error } = await client.rpc("save_business_page_contact", {
+    p_provider_id: profileId,
+    p_contact_phone: contactPhone ?? "",
+    p_contact_is_public: contactIsPublic && contactPhone !== null,
+  })
   if (error) throw new Error(`Falha ao salvar a conta: ${error.message}`)
 
   revalidatePath("/prestador")

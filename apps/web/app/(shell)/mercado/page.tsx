@@ -32,6 +32,7 @@ import {
 import { listingsClient } from "../../../lib/listings/client"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
+import { visibleBusinessNames } from "../../../lib/providers/business-data"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { Skeleton } from "../../components/bivaque/skeleton"
@@ -140,7 +141,7 @@ function MercadoContent() {
       let query = supabase
         .from("listings")
         .select(
-          "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at",
+          "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at,provider_id",
           { count: "exact" },
         )
         .eq("status", "active")
@@ -171,7 +172,20 @@ function MercadoContent() {
         return
       }
 
-      const rows = (data ?? []) as ListingRow[]
+      let rows = (data ?? []) as ListingRow[]
+      try {
+        const names = await visibleBusinessNames(
+          supabase,
+          rows.flatMap((row) => (row.provider_id ? [row.provider_id] : [])),
+        )
+        rows = rows.map((row) => ({
+          ...row,
+          business_name: names.get(row.provider_id ?? "") ?? null,
+        }))
+      } catch {
+        setState((previous) => ({ ...previous, status: "error" }))
+        return
+      }
       const ids = rows.map((row) => row.id)
       const photos: Record<string, string | null> = {}
       const saved = new Set<string>()

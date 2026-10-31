@@ -5,7 +5,7 @@ import { ArrowLeft, Camera, X } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../lib/listings/address"
 import {
   buildListingPhotoPath,
@@ -72,6 +72,41 @@ export default function NovoAnuncioPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const [business, setBusiness] = useState<{ id: string; name: string } | null>(null)
+  const [asBusiness, setAsBusiness] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    async function loadBusiness() {
+      const client = listingsClient()
+      const {
+        data: { user },
+      } = await client.auth.getUser()
+      if (!user) return
+      const { data: profile, error } = await client
+        .from("provider_profiles")
+        .select("id,display_name")
+        .eq("owner_user_id", user.id)
+        .maybeSingle()
+      if (error || !profile) return
+      const [{ data: details }, { data: reach }] = await Promise.all([
+        client.rpc("get_own_business_page_details", { p_provider_id: profile.id }),
+        client
+          .from("provider_reach")
+          .select("scope_id")
+          .eq("provider_id", profile.id)
+          .eq("scope_type", "locality")
+          .eq("scope_id", current.id)
+          .eq("active", true),
+      ])
+      if (!cancelled && details && reach?.length)
+        setBusiness({ id: profile.id, name: profile.display_name })
+    }
+    setBusiness(null)
+    void loadBusiness()
+    return () => {
+      cancelled = true
+    }
+  }, [current.id])
 
   const audienceOptions = useMemo(
     () => [
@@ -119,6 +154,10 @@ export default function NovoAnuncioPage() {
 
   async function submit(publish: boolean) {
     setSubmitError(null)
+    if (asBusiness && (!business || selectedCommunity !== null)) {
+      setSubmitError("Para publicar pelo negócio, escolha toda a cidade onde sua página atende.")
+      return
+    }
     const validation = validateNewListing({
       title,
       category,
@@ -154,6 +193,7 @@ export default function NovoAnuncioPage() {
       .from("listings")
       .insert({
         owner_user_id: user.id,
+        provider_id: asBusiness ? (business?.id ?? null) : null,
         kind: "item",
         status: publish ? "active" : "draft",
         locality_id: value.localityId,
@@ -242,6 +282,35 @@ export default function NovoAnuncioPage() {
       </p>
 
       {submitError ? <FeedbackAlert variant="danger" description={submitError} /> : null}
+      {business ? (
+        <fieldset className="rounded-ui-lg border border-ui-line bg-ui-surface p-4">
+          <legend className="px-1 text-sm font-semibold text-ui-ink">Quem está anunciando?</legend>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="radio"
+              name="listing-owner-kind"
+              checked={!asBusiness}
+              onChange={() => setAsBusiness(false)}
+              className="accent-ui-brand"
+            />
+            Meu anúncio pessoal
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input
+              type="radio"
+              name="listing-owner-kind"
+              checked={asBusiness}
+              onChange={() => setAsBusiness(true)}
+              className="accent-ui-brand"
+            />
+            Produto do negócio — {business.name}
+          </label>
+          <p className="mt-2 text-xs text-ui-ink-2">
+            Só os produtos escolhidos aparecem na página do negócio. Seus desapegos continuam
+            pessoais.
+          </p>
+        </fieldset>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">

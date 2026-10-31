@@ -30,8 +30,7 @@ Decisões do dono em 26/09/2026:
 - **D2 — Só benefícios externos.** Nada dentro do app fica bloqueado ou melhor para quem paga:
   comunidades, indicações, Mercado, Moradia, Encontros, mensagens, selo, ordem e alcance são
   iguais para todos. É isso que mantém "acesso nunca é cobrado" verdadeiro.
-- **D3 — Desconto de negócio local não é Bivaque+.** O desconto para a comunidade oferecido na
-  página do negócio vale para todos os membros (ADR-20260925-pagina-do-negocio, D13).
+- **D3 — Descontos pertencem à vertical Benefícios.** Correção explícita do dono em 27/09/2026: descontos não são uma seção das páginas de negócio. A referência anterior ao cadastro de desconto na página foi retirada. Esta correção não define novos parceiros, preços ou requisitos de acesso.
 
 **Continua proibido:** crédito consignado militar, inclusive como "benefício" de parceiro;
 intermediar pagamento de serviço de terceiros; usar dado de verificação (vínculo, situação) para

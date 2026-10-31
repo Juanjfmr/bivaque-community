@@ -1,0 +1,63 @@
+task_id: BIZ-002
+objective: >
+  Fechar a página aprovada em D2 com bairro, área atendida, horário, contato escolhido e
+  privado por padrão, galeria, catálogo, anúncios explicitamente vinculados,
+  incluindo o ciclo de pedido direto recebido e respondido pelo membro dono.
+authority:
+  - docs/decisions/ADR-20260925-pagina-do-negocio.md D2 D7 D8 D11 D13
+  - docs/design/business-page-complete-2026-09-26.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    0b853f23 e diff visual de 26/09 têm só nome/categoria/bio; a ficha lê apenas uma foto,
+    ignora preços e descrições completas e não junta anúncios. Browser anterior para no formulário
+    do orçamento. Dono rejeitou a entrega como inferior a um terço do ADR.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/business-page-details.sql
+  - supabase/tests/provider-member-business.sql
+  - supabase/database.generated.ts
+  - apps/web/lib/providers/
+  - apps/web/app/(provider)/prestador/
+  - apps/web/app/(shell)/negocio/
+  - apps/web/app/(shell)/prestadores/
+  - apps/web/app/(shell)/mercado/
+  - apps/web/app/(shell)/pedidos/
+  - apps/web/lib/listings/
+  - tests/unit/providers/
+  - tests/e2e/provider-member-business.spec.ts
+  - docs/design/business-page-complete-2026-09-26.md
+  - docs/design/business-pages-2026-09-26.md
+  - docs/agents/tasks/BIZ-002.task.yml
+  - docs/PRODUCT_STATUS.md
+  - docs/decisions/ADR-20260925-pagina-do-negocio.md
+  - docs/decisions/ADR-20260926-bivaque-mais.md
+  - docs/decisions/POSTMORTEM-20260926-contato-prestador.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - migration aplicada ou banco compartilhado
+  - ampliar identidade, alcance, revogação civil ou expor telefone privado por SELECT de tabela
+  - vincular automaticamente desapegos ou aceitar dono/cidade do cliente nas RPCs
+  - checkout, pagamento intermediado, cobrança, reputação inventada e estatísticas sem mecanismo
+acceptance:
+  - detalhes persistem e são editáveis somente pelo dono elegível
+  - contato oculto não sai em leitura pública e exibição requer opção explícita; fora do alcance não lê
+  - anúncios vinculados exigem mesmo dono, cidade e kind item; página mostra só ativos legíveis
+  - galeria mostra fotos reais ordenadas e catálogo mostra preço ou sob orçamento
+  - página e formulário não apresentam desconto; D13 pertence à vertical Benefícios
+  - membro envia pedido direto, dono recebe e responde, solicitante acompanha e ambos podem encerrar
+  - erro mantém edição, cancelamento descarta e estados sem conteúdo são honestos
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/BIZ-002.task.yml
+  - pgTAP business-page-details.sql e regressão provider-member-business/provider-revocation/service-request
+  - build/typecheck/lint direcionados e browser em375/768/1440
+  - capturas autenticadas e revisão independente de código/segurança/runtime
+risk: contato privado, ownership e vínculo de marketplace com autorização por cidade
+risk_level: R3
+adr: docs/decisions/ADR-20260925-pagina-do-negocio.md
+reviewer_must_differ_from_executor: true
+retry_budget: 4
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
