@@ -52,7 +52,9 @@ test.describe("BottomNav visibility across viewports", () => {
     const sidebar = page.locator(SIDEBAR)
     await expect(sidebar).toBeVisible()
     expect((await sidebar.boundingBox())?.width).toBe(64)
-    await expect(page.getByRole("link", { name: "Comunidades" })).toBeAttached()
+    // A Início também tem um link "Comunidades" no conteúdo: o que se prova
+    // aqui é o rótulo da barra lateral, presente mesmo sem ser desenhado.
+    await expect(sidebar.getByRole("link", { name: "Comunidades" })).toBeAttached()
   })
 
   test("expands the sidebar at 1440px", async ({ page, context }) => {
@@ -66,7 +68,9 @@ test.describe("BottomNav visibility across viewports", () => {
     // Then the BottomNav is hidden and the sidebar is expanded with labels
     await expect(page.locator(BOTTOM_NAV)).toBeHidden()
     expect((await page.locator(SIDEBAR).boundingBox())?.width).toBe(256)
-    await expect(page.getByRole("link", { name: "Comunidades" })).toBeVisible()
+    // A Início também tem um link "Comunidades" no conteúdo: o que se prova
+    // aqui é o rótulo visível da barra lateral expandida.
+    await expect(page.locator(SIDEBAR).getByRole("link", { name: "Comunidades" })).toBeVisible()
   })
 })
 
