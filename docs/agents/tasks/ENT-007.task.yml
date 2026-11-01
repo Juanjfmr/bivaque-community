@@ -15,6 +15,12 @@
 # Ratificação: estas mudanças de critério (origem nos blocos, medidas, grupos só no celular, faixa
 # com margens, foto retrato no desktop) só valem com o aceite visual do dono na rodada 2 da página
 # Aceite da Entrada; sem esse aceite o ENT-007 não fecha.
+# Rodada 2 (01/11/2026): 18 telas aprovadas, 3 com ajuste (10 grupos, 12c e 12d negócio: verifique
+# os blocos/componentes do 21st), 9 sem marcação (12e, 13b, 13c, 14, 15, 15b, 16, 17, 18). Por isso
+# grupos e formulário do negócio passam ao código real dos blocos mapeados na direção (Card Style
+# Checkbox, Onboarding Wizard Form, Radio Group). O formulário é um componente só: a troca alcança
+# também 12a e 12b, que voltam ao aceite na rodada 3. Estas mudanças também dependem do aceite do
+# dono na rodada 3.
 task_id: ENT-007
 
 objective: >
@@ -31,6 +37,8 @@ authority:
   - docs/design/fluxos-2026-10-30/individuais/F01/ (referências desktop) e individuais/F01/celular/ (referências celular)
   - .visual/ENT-007/comparacao/ (lado a lado referência × app de 31/10, e as imagens separadas ref-* e app-*)
   - .visual/ENT-007/blocos-21st/ (código dos blocos sign-in-3 e onboarding-welcome-screen do 21st.dev, como o plugin devolveu, com demos e relatório)
+  - "Revisão do dono na rodada 2 (01/11/2026): 10 grupos \"Verifique os blocos 21 St dev\"; 12c \"Verifique os componentes\"; 12d \"Mesma coisa\"."
+  - .visual/ENT-007/blocos-21st-r3/ (código dos blocos v-checkbox-4, v-form-8, radio-group de originui e c-stepper-1, como o plugin devolveu, com demos e relatório)
   - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md (título de display com 24 px no celular; cantos de 12 px)
   - docs/decisions/ADR-20261024-front-react-spa.md (shadcn/ui no apps/app)
   - docs/design/fluxos-2026-10-30/F01-DIRECAO.md
@@ -52,6 +60,8 @@ allowed_paths:
   - apps/app/components/bivaque/entrada-acesso.tsx
   - apps/app/components/bivaque/entrada-etapa.tsx
   - apps/app/components/bivaque/formulario-negocio.tsx
+  - apps/app/components/ui/checkbox.tsx
+  - apps/app/components/ui/radio-group.tsx
   - apps/app/src/styles.css
   - apps/app/tests/e2e/entrada-etapa.spec.ts
   - apps/app/tests/e2e/entrada-acesso.spec.ts
@@ -64,7 +74,8 @@ forbidden:
   - manter dos blocos next/link, next/image, Base UI, framer-motion ou o FancyButton; trocá-los pelos componentes e pela camada de navegação do app
   - instalar, remover ou atualizar dependências; rodar o CLI do shadcn ou do 21st
   - mudar textos, campos, validações, destinos, rotas ou dados de demonstração
-  - mexer nas telas aprovadas (03 a 09c, 11, 12a, 12b, 12f) além do que a regra comum de tamanho no celular abaixo exigir
+  - mexer nas telas aprovadas (03 a 09c, 11, 12f) além do que a regra comum de tamanho no celular abaixo exigir; 12a e 12b só mudam pela troca dos componentes do formulário do negócio pelos blocos
+  - usar pacote fora do radix-ui já instalado para Checkbox e Radio Group dos blocos (sem @radix-ui/react-*, lucide-react ou react-hook-form)
   - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo; cor fixa fora dos tokens
   - editar migrations, Supabase, apps/web ou apps/mobile
   - delegar a subagentes
@@ -75,7 +86,8 @@ acceptance:
   - "Composição de acesso no celular (< 768 px): a foto é uma faixa na largura da coluna, com as margens de 16 px e os cantos da referência de celular, em proporção 16:10 e o mesmo enquadramento do desktop (sem zoom extra); título com 1.5rem (24 px) em uma linha quando o texto couber em 375 px; apoio com 0.9375rem (15 px); campos e botões com 44 px de altura; rótulos com 0.875rem (14 px)."
   - "Regra comum de tamanho no celular (< 768 px) para todas as telas de /app/entrar/*: título de display 1.5rem (24 px); subtítulo de seção 1.125rem (18 px); texto de apoio 0.9375rem (15 px); rótulos 0.875rem; textos de ajuda 0.8125rem (13 px); campos 44 px de altura. As telas aprovadas só mudam se hoje estiverem acima desses valores."
   - "Boas-vindas (13, 13b, 13c) a partir do código do Onboarding / Welcome Screen: a entrada escalonada do bloco vira transição de CSS (opacidade e deslocamento curtos), desligada com prefers-reduced-motion; desktop com a coluna de até 47.5rem (760 px), foto na largura da coluna com proporção 21:9 e o grupo inteiro (sem corte de rosto), título 3rem (48 px), apoio 1.125rem, cartões de atalho com ícone de 24 px e altura entre 80 e 100 px (a referência F01-13, desenhada em 1536 px, mede 94 a 97 px em 1440); celular com foto 16:10, título 24 px e os mesmos cartões entre 56 e 80 px (a referência de celular mede cerca de 60 px em 375), sem cortar o texto de duas linhas."
-  - "Grupos (10), no celular (< 768 px), onde a referência põe a foto ao lado do texto: a miniatura de cada cartão ocupa 40% da largura do cartão, proporção 4:3, object-fit cover centralizado; título do grupo 0.9375rem e descrição 0.8125rem no celular."
+  - "Grupos (10) a partir do código do Card Style Checkbox (21st.dev, cnippet-dev/v-checkbox-4): o rótulo inteiro é o cartão, com borda de 1 px, cantos de 8 px, respiro de 12 px, caixa de 16 px (Checkbox do radix-ui), título em 0.875rem e descrição em 0.75rem; marcado troca a cor da borda e o fundo, sem mudar a espessura. A miniatura do grupo fica à direita no celular (< 768 px, 72 × 72 px) e no topo a partir de 768 px (16:9), na grade 2 × 2."
+  - "Formulário do negócio (12a a 12e) a partir do código do Onboarding Wizard Form (21st.dev, cnippet-dev/v-form-8): indicador de cinco passos numerados (círculos de 24 px, check quando feito, linha entre eles; abaixo de 768 px só o passo atual mostra o rótulo), com o texto \"Passo X de 5\" para leitor de tela; cartões de rádio do Radio Group (21st.dev, originui) com título e descrição curta; especialidades e dias como caixas do Card Style Checkbox; revisão como a confirmação do bloco, em linhas divididas com rótulo, valor e Editar. Campos com cantos de 8 px e 40 px de altura no desktop; no celular valem os 44 px da regra comum. O subtítulo de cada passo (só usado neste formulário) mede 18 px também no desktop, no lugar dos 22 px, para a hierarquia do bloco."
   - "Negócio passos 4 e 5 (12d, 12e) no celular: miniaturas de foto em grade de 4 colunas (cerca de 72 px), selo Capa menor, \"Voltar\" e \"Continuar\" com 44 px; textos pela regra comum. No passo 5 (revisão) a foto de capa tem proporção 16:9 e as linhas de cada bloco seguem a regra comum."
   - "Foco no título ao abrir; foco visível; sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; tema escuro pelos tokens; os testes de privacidade que já existem em entrada-etapa.spec.ts continuam passando sem alteração."
 
@@ -85,8 +97,8 @@ proof:
   - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
   - npx pnpm@11.18.0 test:scope
   - npx pnpm@11.18.0 lint
-  - "Testes: no desktop as duas colunas da composição de acesso têm a mesma largura (diferença ≤ 2 px) e o conteúdo tem no máximo 480 px; no celular o título de display mede 24 px em todas as telas de /app/entrar/*; a foto da composição de acesso no celular tem proporção 16:10 (± 2%); nos grupos a miniatura mede 40% do cartão (± 2%); no negócio em 375 px as miniaturas ficam em 4 colunas"
-  - "Capturas de página inteira das telas 01, 02, 10, 12d, 12e, 13, 13b, 13c, 14, 15, 15b, 16, 17 e 18 em 375, 768 e 1440 px em .visual/ENT-007/"
+  - "Testes: no desktop as duas colunas da composição de acesso têm a mesma largura (diferença ≤ 2 px) e o conteúdo tem no máximo 480 px; no celular o título de display mede 24 px em todas as telas de /app/entrar/*; a foto da composição de acesso no celular tem proporção 16:10 (± 2%); nos grupos a caixa mede 16 px, a miniatura mede 72 px ao lado no celular e fica no topo em 16:9 a partir de 768 px; o indicador do negócio tem cinco passos com um atual; no negócio em 375 px as miniaturas ficam em 4 colunas"
+  - "Capturas de página inteira das telas 01, 02, 10, 12a, 12b, 12c, 12d, 12e, 13, 13b, 13c, 14, 15, 15b, 16, 17 e 18 em 375, 768 e 1440 px em .visual/ENT-007/"
 
 risk: entrada e acessibilidade
 risk_level: R2

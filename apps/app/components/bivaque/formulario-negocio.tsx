@@ -4,15 +4,24 @@ import { Fragment, useRef, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
 import { Icone } from "@/components/bivaque/icone"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import dadosBairros from "@/lib/demo/auxiliares.json"
 import { SERVICE_GROUPS } from "@/lib/servicos-negocio"
 
 type Foto = { id: string; nome: string; imagem: string }
 
-// Composição de etapa do formulário de negócio (ENT-005). A anatomia dos cinco
-// passos segue o Onboarding Wizard Form
-// (https://21st.dev/@cnippet-dev/components/v-form-8), reproduzida com os
-// componentes do app — sem copiar o código do bloco.
+// Formulário de negócio em cinco passos (ENT-005, refeito no ENT-007) sobre o
+// bloco Onboarding Wizard Form, de cnippet-dev no 21st.dev
+// (https://21st.dev/@cnippet-dev/components/v-form-8): o indicador de passos
+// numerados com linha entre eles, os cartões de rádio com título e descrição,
+// as ações Voltar/Continuar lado a lado e a confirmação em linhas divididas.
+// Os rádios são o Radio Group de originui
+// (https://21st.dev/@originui/components/radio-group) e as caixas, o Card Style
+// Checkbox de cnippet-dev (https://21st.dev/@cnippet-dev/components/v-checkbox-4).
+// Trocas: o estado em React no lugar de FormData/react-hook-form, o ícone do app
+// no lugar do lucide-react, e os cinco passos e textos do Bivaque no lugar do
+// exemplo de conta e plano.
 
 const SUBTITULOS = [
   "O que você oferece?",
@@ -21,6 +30,29 @@ const SUBTITULOS = [
   "Como podem conhecer seu trabalho?",
   "Confira sua página",
 ] as const
+
+const PASSOS = ["Serviço", "Área", "Horário", "Contato", "Revisão"] as const
+
+const AREAS = [
+  ["cidade", "Em toda a cidade", "Você vai a qualquer bairro."],
+  ["bairros", "Em bairros específicos", "Escolha os bairros onde atende."],
+  ["online", "On-line", "Atendimento a distância."],
+  ["depois", "Informar depois", "Você completa quando quiser."],
+] as const
+
+const FORMAS = [
+  ["fixo", "Tenho horário fixo", "Dias e horário de abertura definidos."],
+  ["combinado", "Atendo com horário combinado", "Você combina o horário com cada cliente."],
+  ["depois", "Informar depois", "Você completa quando quiser."],
+] as const
+
+/** Cartão de linha inteira do bloco: o rótulo envolve o rádio, título e descrição. */
+const CARTAO =
+  "entrada-etapa-cartao flex cursor-pointer items-start gap-3 rounded-lg border border-(--border) bg-(--card) p-3 transition-colors hover:bg-(--accent)/50 has-[[data-state=checked]]:border-(--primary)/40 has-[[data-state=checked]]:bg-(--accent)/50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--ring)"
+
+/** Caixa compacta do Card Style Checkbox, para especialidades e dias. */
+const CAIXA =
+  "entrada-etapa-chip flex cursor-pointer items-center gap-2 rounded-lg border border-(--border) bg-(--card) px-3 py-2 text-sm transition-colors hover:bg-(--accent)/50 has-[[data-state=checked]]:border-(--primary)/48 has-[[data-state=checked]]:bg-(--accent)/50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--ring)"
 
 const DIAS = [
   "Segunda-feira",
@@ -171,15 +203,45 @@ export function FormularioNegocio({
         }
       }}
     >
-      {/* Progresso interno: os cinco segmentos não anunciam nada por conta
-          própria — quem lê a etapa é o texto ao lado. */}
+      {/* Indicador do bloco: círculo numerado (check quando feito), rótulo e a
+          linha até o próximo. Quem anuncia o passo é o texto oculto. */}
       <div className="entrada-etapa-progresso">
-        <p className="entrada-etapa-progresso-texto">{`Passo ${etapa + 1} de 5`}</p>
-        <div className="entrada-etapa-progresso-barra" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((indice) => (
-            <span key={indice} data-estado={indice <= etapa ? "feito" : "futuro"} />
+        <p className="sr-only" aria-live="polite">{`Passo ${etapa + 1} de 5`}</p>
+        <ol className="flex items-center gap-2" aria-hidden="true">
+          {PASSOS.map((rotulo, indice) => (
+            <li
+              key={rotulo}
+              data-estado={indice < etapa ? "feito" : indice === etapa ? "atual" : "futuro"}
+              className="flex items-center gap-2 last:flex-none [&:not(:last-child)]:flex-1"
+            >
+              <span className="flex items-center gap-1.5">
+                <span
+                  className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                    indice < etapa
+                      ? "bg-(--primary) text-(--primary-foreground)"
+                      : indice === etapa
+                        ? "border-2 border-(--primary) text-(--primary)"
+                        : "border border-(--border) text-(--muted-foreground)"
+                  }`}
+                >
+                  {indice < etapa ? <Icone nome="check" className="checkbox-marca" /> : indice + 1}
+                </span>
+                <span
+                  className={`entrada-etapa-progresso-rotulo text-xs font-medium ${
+                    indice === etapa ? "text-(--foreground)" : "text-(--muted-foreground)"
+                  }`}
+                >
+                  {rotulo}
+                </span>
+              </span>
+              {indice < PASSOS.length - 1 && (
+                <span
+                  className={`h-px min-w-3 flex-1 ${indice < etapa ? "bg-(--primary)" : "bg-(--border)"}`}
+                />
+              )}
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
 
       <h2 ref={subtitulo} tabIndex={-1} className="entrada-etapa-subtitulo">
@@ -238,20 +300,19 @@ export function FormularioNegocio({
               <legend className="text-sm font-medium">Especialidades (opcional)</legend>
               <p className="entrada-etapa-nota">Sem selecionar, você atende todo o grupo.</p>
               <div className="entrada-etapa-chips">
-                {opcoes.map((opcao) => (
-                  <label key={opcao} className="entrada-etapa-chip">
-                    <input
-                      type="checkbox"
+                {opcoes.map((opcao, indice) => (
+                  <label key={opcao} htmlFor={`negocio-especialidade-${indice}`} className={CAIXA}>
+                    <Checkbox
+                      id={`negocio-especialidade-${indice}`}
                       checked={especialidades.includes(opcao)}
-                      onChange={(e) =>
+                      onCheckedChange={(marcado) =>
                         setEspecialidades((anteriores) =>
-                          e.target.checked
+                          marcado === true
                             ? [...anteriores, opcao]
                             : anteriores.filter((item) => item !== opcao),
                         )
                       }
                     />
-                    <span className="entrada-etapa-chip-caixa" aria-hidden="true" />
                     {opcao}
                   </label>
                 ))}
@@ -262,27 +323,33 @@ export function FormularioNegocio({
       )}
 
       {etapa === 1 && (
-        <fieldset className="entrada-etapa-cartoes">
-          <legend className="sr-only">Área de atendimento</legend>
-          {(
-            [
-              ["cidade", "Em toda a cidade"],
-              ["bairros", "Em bairros específicos"],
-              ["online", "On-line"],
-              ["depois", "Informar depois"],
-            ] as const
-          ).map(([valor, titulo]) => (
+        <RadioGroup
+          className="entrada-etapa-cartoes"
+          aria-label="Área de atendimento"
+          value={onde}
+          onValueChange={setOnde}
+        >
+          {AREAS.map(([valor, titulo, descricao]) => (
             <Fragment key={valor}>
-              <label className="entrada-etapa-cartao">
-                <input
-                  type="radio"
-                  name="onde"
+              <label htmlFor={`negocio-area-${valor}`} className={CARTAO}>
+                <RadioGroupItem
+                  id={`negocio-area-${valor}`}
                   value={valor}
-                  checked={onde === valor}
-                  onChange={() => setOnde(valor)}
+                  aria-labelledby={`negocio-area-${valor}-titulo`}
+                  aria-describedby={`negocio-area-${valor}-descricao`}
+                  className="mt-0.5"
                 />
-                <span className="entrada-etapa-radio" aria-hidden="true" />
-                {titulo}
+                <span className="flex flex-col gap-0.5">
+                  <span id={`negocio-area-${valor}-titulo`} className="text-sm font-medium">
+                    {titulo}
+                  </span>
+                  <span
+                    id={`negocio-area-${valor}-descricao`}
+                    className="text-xs text-(--muted-foreground)"
+                  >
+                    {descricao}
+                  </span>
+                </span>
               </label>
               {valor === "bairros" && onde === "bairros" && (
                 <div className="entrada-etapa-cartao-campos">
@@ -342,51 +409,56 @@ export function FormularioNegocio({
               )}
             </Fragment>
           ))}
-        </fieldset>
+        </RadioGroup>
       )}
 
       {etapa === 2 && (
-        <fieldset className="entrada-etapa-cartoes">
-          <legend className="sr-only">Forma de atendimento</legend>
-          {(
-            [
-              ["fixo", "Tenho horário fixo"],
-              ["combinado", "Atendo com horário combinado"],
-              ["depois", "Informar depois"],
-            ] as const
-          ).map(([valor, titulo]) => (
+        <RadioGroup
+          className="entrada-etapa-cartoes"
+          aria-label="Forma de atendimento"
+          value={atendimento}
+          onValueChange={setAtendimento}
+        >
+          {FORMAS.map(([valor, titulo, descricao]) => (
             <Fragment key={valor}>
-              <label className="entrada-etapa-cartao">
-                <input
-                  type="radio"
-                  name="atendimento"
+              <label htmlFor={`negocio-forma-${valor}`} className={CARTAO}>
+                <RadioGroupItem
+                  id={`negocio-forma-${valor}`}
                   value={valor}
-                  checked={atendimento === valor}
-                  onChange={() => setAtendimento(valor)}
+                  aria-labelledby={`negocio-forma-${valor}-titulo`}
+                  aria-describedby={`negocio-forma-${valor}-descricao`}
+                  className="mt-0.5"
                 />
-                <span className="entrada-etapa-radio" aria-hidden="true" />
-                {titulo}
+                <span className="flex flex-col gap-0.5">
+                  <span id={`negocio-forma-${valor}-titulo`} className="text-sm font-medium">
+                    {titulo}
+                  </span>
+                  <span
+                    id={`negocio-forma-${valor}-descricao`}
+                    className="text-xs text-(--muted-foreground)"
+                  >
+                    {descricao}
+                  </span>
+                </span>
               </label>
               {valor === "fixo" && atendimento === "fixo" && (
                 <div className="entrada-etapa-cartao-campos">
                   <fieldset className="grid gap-2">
-                    <legend className="text-sm font-medium">Dias de atendimento</legend>
-                    <div className="entrada-etapa-chips">
-                      {DIAS.map((dia) => (
-                        <label key={dia} className="entrada-etapa-chip">
-                          <input
-                            type="checkbox"
+                    <legend className="mb-2 text-sm font-medium">Dias de atendimento</legend>
+                    <div className="entrada-etapa-dias">
+                      {DIAS.map((dia, indice) => (
+                        <label key={dia} htmlFor={`negocio-dia-${indice}`} className={CAIXA}>
+                          <Checkbox
+                            id={`negocio-dia-${indice}`}
                             checked={dias.includes(dia)}
-                            onChange={(e) => {
-                              const marcado = e.target.checked
+                            onCheckedChange={(marcado) =>
                               setDias((anteriores) =>
-                                marcado
+                                marcado === true
                                   ? [...anteriores, dia]
                                   : anteriores.filter((d) => d !== dia),
                               )
-                            }}
+                            }
                           />
-                          <span className="entrada-etapa-chip-caixa" aria-hidden="true" />
                           {dia}
                         </label>
                       ))}
@@ -412,7 +484,7 @@ export function FormularioNegocio({
               )}
             </Fragment>
           ))}
-        </fieldset>
+        </RadioGroup>
       )}
 
       {etapa === 3 && (
@@ -542,98 +614,69 @@ export function FormularioNegocio({
               className="entrada-etapa-revisao-capa"
             />
           )}
-          <ul className="entrada-etapa-revisao-linhas">
-            <li>
-              <Icone nome="storefront" />
-              <span>{nome}</span>
-              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(0)}>
-                Editar
-              </button>
-            </li>
-            <li>
-              <Icone nome="sell" />
-              <span>{categoria}</span>
-              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(0)}>
-                Editar
-              </button>
-            </li>
-            <li>
-              <Icone nome="checklist" />
-              <span>
-                {especialidades.length
-                  ? especialidades.join(", ")
-                  : "Todas as especialidades do grupo"}
-              </span>
-              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(0)}>
-                Editar
-              </button>
-            </li>
-            <li>
-              <Icone nome="place" />
-              <span>
-                {onde === "cidade"
-                  ? `Atende em toda a cidade de ${cidade}`
-                  : onde === "online"
-                    ? "Atende on-line"
-                    : onde === "bairros"
-                      ? `Bairros: ${bairros.join(", ")}`
-                      : "Área de atendimento a informar"}
-              </span>
-              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(1)}>
-                Editar
-              </button>
-            </li>
-            <li>
-              <Icone nome="schedule" />
-              <span>
-                {atendimento === "fixo"
-                  ? `${dias.join(", ")} · ${abre} às ${fecha}`
-                  : atendimento === "combinado"
-                    ? "Atendimento com horário combinado"
-                    : "Horário a informar"}
-              </span>
-              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(2)}>
-                Editar
-              </button>
-            </li>
-            {apresentacao && (
-              <li>
-                <Icone nome="edit_square" />
-                <span>{`Apresentação: ${apresentacao}`}</span>
-                <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
-                  Editar
-                </button>
-              </li>
-            )}
-            {beneficio && (
-              <li>
-                <Icone nome="volunteer_activism" />
-                <span>{`Benefício: ${beneficio}`}</span>
-                <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
-                  Editar
-                </button>
-              </li>
-            )}
-            {(whatsapp || instagram || site) && (
-              <li>
-                <Icone nome="link" />
-                <span>
-                  {[`WhatsApp: ${whatsapp}`, `Instagram: ${instagram}`, `Site: ${site}`]
-                    .filter((contato) => !contato.endsWith(": "))
-                    .join(" · ")}
+          <ul className="entrada-etapa-revisao-linhas divide-y divide-(--border)">
+            {(
+              [
+                ["Nome", nome, 0],
+                ["Tipo de serviço", categoria, 0],
+                [
+                  "Especialidades",
+                  especialidades.length
+                    ? especialidades.join(", ")
+                    : "Todas as especialidades do grupo",
+                  0,
+                ],
+                [
+                  "Área",
+                  onde === "cidade"
+                    ? `Atende em toda a cidade de ${cidade}`
+                    : onde === "online"
+                      ? "Atende on-line"
+                      : onde === "bairros"
+                        ? `Bairros: ${bairros.join(", ")}`
+                        : "Área de atendimento a informar",
+                  1,
+                ],
+                [
+                  "Horário",
+                  atendimento === "fixo"
+                    ? `${dias.join(", ")} · ${abre} às ${fecha}`
+                    : atendimento === "combinado"
+                      ? "Atendimento com horário combinado"
+                      : "Horário a informar",
+                  2,
+                ],
+                ...(apresentacao ? [["Apresentação", apresentacao, 3] as const] : []),
+                ...(beneficio ? [["Benefício", beneficio, 3] as const] : []),
+                ...(whatsapp || instagram || site
+                  ? [
+                      [
+                        "Contatos",
+                        [`WhatsApp: ${whatsapp}`, `Instagram: ${instagram}`, `Site: ${site}`]
+                          .filter((contato) => !contato.endsWith(": "))
+                          .join(" · "),
+                        3,
+                      ] as const,
+                    ]
+                  : []),
+                ["Fotos", fotos.length ? `${fotos.length} foto(s) adicionada(s)` : "Sem fotos", 3],
+              ] as const
+            ).map(([rotulo, valor, destino]) => (
+              <li key={rotulo}>
+                <span className="entrada-etapa-revisao-rotulo text-(--muted-foreground)">
+                  {rotulo}
                 </span>
-                <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
+                <span className="font-medium">{valor}</span>
+                <button
+                  type="button"
+                  className="entrada-etapa-link"
+                  aria-label={`Editar ${rotulo.toLocaleLowerCase("pt-BR")}`}
+                  onClick={() => trocarEtapa(destino)}
+                >
                   Editar
                 </button>
               </li>
-            )}
-            <li>
-              <Icone nome="image" />
-              <span>{fotos.length ? `${fotos.length} foto(s) adicionada(s)` : "Sem fotos"}</span>
-              <button type="button" className="entrada-etapa-link" onClick={() => trocarEtapa(3)}>
-                Editar
-              </button>
-            </li>
+            ))}
           </ul>
         </div>
       )}

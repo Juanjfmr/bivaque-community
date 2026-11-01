@@ -1,6 +1,8 @@
-// Bloco do 21st.dev adaptado neste arquivo: Onboarding / Welcome Screen, de
+// Blocos do 21st.dev adaptados neste arquivo: Onboarding / Welcome Screen, de
 // ravikatiyar162 (https://21st.dev/@ravikatiyar162/components/onboarding-welcome-screen),
-// nas boas-vindas; o detalhe está junto do ramo "boas-vindas", mais abaixo.
+// nas boas-vindas; e Card Style Checkbox, de cnippet-dev
+// (https://21st.dev/@cnippet-dev/components/v-checkbox-4), nos cartões das
+// sugestões de grupos. O detalhe de cada um está junto do ramo correspondente.
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"
@@ -9,6 +11,7 @@ import { EntradaEtapa } from "@/components/bivaque/entrada-etapa"
 import { FormularioNegocio } from "@/components/bivaque/formulario-negocio"
 import { Icone } from "@/components/bivaque/icone"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { dadosDoApp } from "@/lib/dados"
 import type { Grupo } from "@/lib/dados/contrato"
 import type { NomeDeIcone } from "@/lib/icones"
@@ -546,10 +549,18 @@ export function Entrar() {
             ) : (
               <fieldset className="entrada-etapa-grupos">
                 <legend className="sr-only">Grupos sugeridos</legend>
+                {/* Cartão do bloco Card Style Checkbox, de cnippet-dev no 21st.dev
+                    (https://21st.dev/@cnippet-dev/components/v-checkbox-4): o
+                    rótulo inteiro é o cartão, com a caixa, o título e a descrição;
+                    a miniatura do grupo entra ao lado (celular) ou no topo. */}
                 {grupos.map((grupo) => {
                   const foto = dadosDoApp.imagem(texto(registro(grupo.apresentacao)["img"]))
                   return (
-                    <label key={grupo.id} className="entrada-etapa-grupo">
+                    <label
+                      key={grupo.id}
+                      htmlFor={`grupo-sugerido-${grupo.id}`}
+                      className="entrada-etapa-grupo cursor-pointer rounded-lg border border-(--border) bg-(--card) p-3 transition-colors hover:bg-(--accent)/50 has-[[data-state=checked]]:border-(--primary)/48 has-[[data-state=checked]]:bg-(--accent)/50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--ring)"
+                    >
                       {foto === "" ? null : (
                         <img
                           className="entrada-etapa-grupo-foto"
@@ -558,21 +569,27 @@ export function Entrar() {
                           loading="lazy"
                         />
                       )}
-                      <span className="entrada-etapa-grupo-texto">
-                        <input
-                          type="checkbox"
+                      <span className="flex min-w-0 flex-1 items-start gap-2">
+                        <Checkbox
+                          id={`grupo-sugerido-${grupo.id}`}
+                          className="mt-0.5"
                           checked={selecionados.includes(grupo.id)}
-                          onChange={(evento) => {
-                            const marcado = evento.target.checked
+                          onCheckedChange={(marcado) =>
                             setSelecionados((anteriores) =>
-                              marcado
+                              marcado === true
                                 ? [...anteriores, grupo.id]
                                 : anteriores.filter((id) => id !== grupo.id),
                             )
-                          }}
+                          }
                         />
-                        <strong>{grupo.name}</strong>
-                        {grupo.description ? <small>{grupo.description}</small> : null}
+                        <span className="flex min-w-0 flex-col gap-1">
+                          <strong className="text-sm leading-snug font-medium">{grupo.name}</strong>
+                          {grupo.description ? (
+                            <small className="text-xs leading-normal text-(--muted-foreground)">
+                              {grupo.description}
+                            </small>
+                          ) : null}
+                        </span>
                       </span>
                     </label>
                   )

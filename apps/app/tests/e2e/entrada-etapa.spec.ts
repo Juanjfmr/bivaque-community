@@ -607,15 +607,19 @@ test("grupos sugeridos trazem foto, nome, descrição e a caixa desenhada", asyn
   await expect(cartoes.first().locator("strong")).toHaveText("Chegadas 2027 em Manaus")
   await expect(cartoes.first().locator("small")).toContainText("Quem chega a Manaus")
 
-  // O cartão inteiro é o rótulo da caixa: marcar acende a caixa e a borda.
+  // Card Style Checkbox: o cartão inteiro é o rótulo da caixa; marcar troca a
+  // cor da borda (1 px nos dois estados) e o fundo.
   const familia = page.getByRole("checkbox", { name: /Famílias com crianças pequenas/ })
   await expect(familia).not.toBeChecked()
-  await familia.check()
+  await cartoes.nth(1).locator("strong").click()
   await expect(familia).toBeChecked()
   const marcado = await bordaDoCartao(cartoes.nth(1))
   const livre = await bordaDoCartao(cartoes.nth(0))
-  expect(marcado.largura).toBe("2px")
+  expect(marcado.largura).toBe("1px")
   expect(livre.largura).toBe("1px")
+  expect(marcado.cor).not.toBe(livre.cor)
+  const fundo = (cartao: Locator) => cartao.evaluate((e) => getComputedStyle(e).backgroundColor)
+  expect(await fundo(cartoes.nth(1))).not.toBe(await fundo(cartoes.nth(0)))
 
   await page.getByRole("button", { name: "Escolher depois" }).click()
   await expect(
@@ -734,7 +738,7 @@ async function chegarARevisao(page: Page) {
   })
   await expect(page.getByAltText("Foto 1, capa")).toBeVisible()
   await avancar(page)
-  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeAttached()
 }
 
 test("a escolha do negócio fica no passo 5, com as três ações empilhadas", async ({ page }) => {
@@ -810,8 +814,11 @@ test("o formulário mostra Passo X de 5, a barra de cinco segmentos e os subtít
   )
   await expect(page.getByText(/Rascunho local de/)).toHaveCount(0)
 
-  const feito = page.locator('.entrada-etapa-progresso-barra > span[data-estado="feito"]')
-  const futuro = page.locator('.entrada-etapa-progresso-barra > span[data-estado="futuro"]')
+  const passos = page.locator(".entrada-etapa-progresso li")
+  const feito = page.locator('.entrada-etapa-progresso li[data-estado="feito"]')
+  const atual = page.locator('.entrada-etapa-progresso li[data-estado="atual"]')
+  const futuro = page.locator('.entrada-etapa-progresso li[data-estado="futuro"]')
+  const rotulos = ["Serviço", "Área", "Horário", "Contato", "Revisão"] as const
   const subtitulo = page.locator(".entrada-etapa-subtitulo")
   const subtitulos = [
     "O que você oferece?",
@@ -822,10 +829,15 @@ test("o formulário mostra Passo X de 5, a barra de cinco segmentos e os subtít
   ] as const
 
   for (let passo = 1; passo <= 5; passo += 1) {
-    await expect(page.getByText(`Passo ${passo} de 5`, { exact: true })).toBeVisible()
-    await expect(page.locator(".entrada-etapa-progresso-barra > span")).toHaveCount(5)
-    await expect(feito).toHaveCount(passo)
+    await expect(page.getByText(`Passo ${passo} de 5`, { exact: true })).toBeAttached()
+    await expect(passos).toHaveCount(5)
+    await expect(feito).toHaveCount(passo - 1)
+    await expect(atual).toHaveCount(1)
     await expect(futuro).toHaveCount(5 - passo)
+    await expect(atual.locator(".entrada-etapa-progresso-rotulo")).toBeVisible()
+    await expect(atual.locator(".entrada-etapa-progresso-rotulo")).toHaveText(
+      rotulos[passo - 1] ?? "",
+    )
     await expect(subtitulo).toHaveText(subtitulos[passo - 1] ?? "")
 
     if (passo === 1) {
@@ -877,9 +889,11 @@ test("os rádios de área são cartões de linha inteira e o condicional abre lo
   await expect(page.getByLabel("Informar depois", { exact: true })).toBeChecked()
   const livre = await bordaDoCartao(cartoes.nth(0))
   const marcado = await bordaDoCartao(cartoes.nth(3))
-  expect(marcado.largura).toBe("2px")
+  expect(marcado.largura).toBe("1px")
   expect(livre.largura).toBe("1px")
   expect(marcado.cor).not.toBe(livre.cor)
+  // Cada cartão traz título e descrição, como no bloco.
+  await expect(cartoes.nth(0)).toContainText("Você vai a qualquer bairro.")
 
   await page.getByLabel("Em bairros específicos", { exact: true }).check()
   await expect(page.getByLabel("Adicionar bairro")).toBeVisible()
@@ -896,11 +910,57 @@ test("os rádios de área são cartões de linha inteira e o condicional abre lo
   await page.getByRole("button", { name: "Adicionar bairro" }).click()
   await expect(page.getByRole("button", { name: "Remover Ponta Negra" })).toBeVisible()
   await avancar(page)
-  await expect(page.getByText("Passo 3 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 3 de 5", { exact: true })).toBeAttached()
   await expect(page.getByLabel("Informar depois", { exact: true })).toBeChecked()
 })
 
-test("especialidades e dias são chips com a seleção em Grafite e check", async ({ page }) => {
+test("rádios e caixas do negócio têm nome curto, descrição e teclado; o leitor ouve o passo", async ({
+  page,
+}) => {
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+
+  // Só o texto do passo chega à árvore acessível; o desenho do indicador, não.
+  await expect(page.locator(".entrada-etapa-progresso")).toMatchAriaSnapshot(
+    "- paragraph: Passo 2 de 5",
+  )
+
+  // O título dá o nome e a descrição fica como descrição, sem somar ao nome.
+  const cidade = page.getByRole("radio", { name: "Em toda a cidade", exact: true })
+  await expect(cidade).toHaveAccessibleDescription("Você vai a qualquer bairro.")
+  const depois = page.getByRole("radio", { name: "Informar depois", exact: true })
+  await expect(depois).toBeChecked()
+
+  // Setas do Radio Group: do último para o anterior.
+  await depois.focus()
+  await page.keyboard.press("ArrowUp")
+  await expect(page.getByRole("radio", { name: "On-line", exact: true })).toBeChecked()
+  await expect(page.getByRole("radio", { name: "On-line", exact: true })).toBeFocused()
+
+  // A caixa marcada mantém o nome exato: a marca não vaza para o rótulo.
+  await page.getByRole("radio", { name: "Em toda a cidade", exact: true }).check()
+  await avancar(page)
+  await page.getByRole("radio", { name: "Tenho horário fixo", exact: true }).check()
+  const segunda = page.getByRole("checkbox", { name: "Segunda-feira", exact: true })
+  await segunda.focus()
+  await page.keyboard.press("Space")
+  await expect(segunda).toBeChecked()
+  await expect(page.getByRole("checkbox", { name: "Segunda-feira", exact: true })).toHaveCount(1)
+})
+
+test("entre 640 e 767 px o indicador do negócio ainda mostra só o rótulo atual", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-375", "uma largura intermediária basta")
+  await page.setViewportSize({ width: 700, height: 900 })
+  await page.goto("/app/entrar/negocio-formulario")
+  const rotulos = page.locator(".entrada-etapa-progresso-rotulo")
+  await expect(rotulos.nth(0)).toBeVisible()
+  for (let indice = 1; indice < 5; indice += 1) await expect(rotulos.nth(indice)).toBeHidden()
+})
+
+test("especialidades e dias são caixas do Card Style Checkbox", async ({ page }) => {
   await page.goto("/app/entrar/negocio-formulario")
   await page.getByLabel("Nome do negócio").fill("Bolos da Cláudia")
   await page
@@ -908,16 +968,13 @@ test("especialidades e dias são chips com a seleção em Grafite e check", asyn
     .selectOption({ label: "Festas e comida" })
 
   const chip = page.locator(".entrada-etapa-chip").first()
+  const caixa = chip.getByRole("checkbox")
   await expect(chip).toHaveText("Bolos e doces")
-  await expect(chip).toHaveCSS("background-color", "rgb(255, 255, 255)")
+  await expect(caixa).toHaveAttribute("data-state", "unchecked")
+  const bordaLivre = await bordaDoCartao(chip)
   await page.getByLabel("Bolos e doces", { exact: true }).check()
-  await expect(chip).toHaveCSS("background-color", "rgb(37, 48, 51)")
-  await expect(chip).toHaveCSS("color", "rgb(242, 240, 235)")
-  expect(
-    await chip
-      .locator(".entrada-etapa-chip-caixa")
-      .evaluate((caixa) => getComputedStyle(caixa, "::after").borderRightColor),
-  ).toBe("rgb(242, 240, 235)")
+  await expect(caixa).toHaveAttribute("data-state", "checked")
+  expect((await bordaDoCartao(chip)).cor).not.toBe(bordaLivre.cor)
 
   await avancar(page)
   await page.getByLabel("Em toda a cidade", { exact: true }).check()
@@ -926,9 +983,9 @@ test("especialidades e dias são chips com a seleção em Grafite e check", asyn
   const dias = page.locator(".entrada-etapa-cartao-campos .entrada-etapa-chip")
   await expect(dias).toHaveCount(7)
   await page.getByLabel("Segunda-feira", { exact: true }).check()
-  await expect(dias.nth(0)).toHaveCSS("background-color", "rgb(37, 48, 51)")
+  await expect(dias.nth(0).getByRole("checkbox")).toHaveAttribute("data-state", "checked")
   await page.getByLabel("Segunda-feira", { exact: true }).uncheck()
-  await expect(dias.nth(0)).toHaveCSS("background-color", "rgb(255, 255, 255)")
+  await expect(dias.nth(0).getByRole("checkbox")).toHaveAttribute("data-state", "unchecked")
 })
 
 test("os campos de horário ficam lado a lado", async ({ page }) => {
@@ -1001,7 +1058,7 @@ test("a revisão traz a capa no topo e uma linha por bloco com Editar para a eta
   await expect(linhas.nth(5)).toContainText("1 foto(s) adicionada(s)")
   for (let indice = 0; indice < 6; indice += 1) {
     await expect(linhas.nth(indice).locator("button")).toHaveText("Editar")
-    await expect(linhas.nth(indice).locator(".bv-icone")).toHaveCount(1)
+    await expect(linhas.nth(indice).locator(".entrada-etapa-revisao-rotulo")).toHaveCount(1)
   }
 
   const caixaDaCapa = await capa.boundingBox()
@@ -1012,7 +1069,7 @@ test("a revisão traz a capa no topo e uma linha por bloco com Editar para a eta
 
   // Fotografia volta à etapa 4; nome volta à etapa 1.
   await linhas.nth(5).getByRole("button", { name: "Editar" }).click()
-  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeAttached()
   await expect(page.locator(".entrada-etapa-subtitulo")).toHaveText(
     "Como podem conhecer seu trabalho?",
   )
@@ -1022,7 +1079,7 @@ test("a revisão traz a capa no topo e uma linha por bloco com Editar para a eta
     .nth(0)
     .getByRole("button", { name: "Editar" })
     .click()
-  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeAttached()
   await expect(page.locator(".entrada-etapa-subtitulo")).toHaveText("O que você oferece?")
 })
 
@@ -1104,7 +1161,7 @@ test("as validações de hoje continuam: nome curto, horário e contatos", async
   await page.getByLabel("WhatsApp (opcional)").fill("123")
   await avancar(page)
   await expect(page.getByRole("alert")).toContainText("Confira WhatsApp, Instagram e site.")
-  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeAttached()
 })
 
 test("as telas do negócio não rolam na horizontal", async ({ page }) => {
@@ -1167,7 +1224,7 @@ test("capturas de página inteira da escolha, das cinco etapas e do interesse", 
 
   await page.goto("/app/entrar/negocio-formulario")
   await preencherOferece(page)
-  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeAttached()
   await capturar(page, "negocio-etapa-1", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
 
   await avancar(page)
@@ -1176,7 +1233,7 @@ test("capturas de página inteira da escolha, das cinco etapas e do interesse", 
     await page.getByLabel("Adicionar bairro").fill(bairro)
     await page.getByRole("button", { name: "Adicionar bairro" }).click()
   }
-  await expect(page.getByText("Passo 2 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 2 de 5", { exact: true })).toBeAttached()
   await capturar(page, "negocio-etapa-2", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
 
   await avancar(page)
@@ -1192,7 +1249,7 @@ test("capturas de página inteira da escolha, das cinco etapas e do interesse", 
   }
   await page.getByLabel("Abre às").fill("08:00")
   await page.getByLabel("Fecha às").fill("18:00")
-  await expect(page.getByText("Passo 3 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 3 de 5", { exact: true })).toBeAttached()
   await capturar(page, "negocio-etapa-3", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
 
   await avancar(page)
@@ -1205,11 +1262,11 @@ test("capturas de página inteira da escolha, das cinco etapas e do interesse", 
     { name: "bolo-3.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
   ])
   await expect(page.getByAltText("Foto 3")).toBeVisible()
-  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 4 de 5", { exact: true })).toBeAttached()
   await capturar(page, "negocio-etapa-4", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
 
   await avancar(page)
-  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeAttached()
   await capturar(page, "negocio-etapa-5", testInfo, PASTA_DAS_CAPTURAS_DO_NEGOCIO)
 
   await page.goto("/app/entrar/negocio-interesse")
@@ -1338,24 +1395,25 @@ test("as boas-vindas não têm indicador de passos nem Sair, e a foto leva o che
   await expect(page.locator(".entrada-etapa-boas-vindas-check [data-icone='check']")).toBeVisible()
 })
 
-test("a barra interna do negócio fica com 60% da coluna e centralizada em 375 px", async ({
+test("o indicador do negócio cabe na coluna em 375 px e mostra só o rótulo atual", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile-375", "medida do celular em 375 px")
   await page.goto("/app/entrar/negocio-formulario")
-  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 1 de 5", { exact: true })).toBeAttached()
 
-  const barra = await page.locator(".entrada-etapa-progresso-barra").boundingBox()
+  const indicador = await page.locator(".entrada-etapa-progresso ol").boundingBox()
   const coluna = await page.locator(".entrada-etapa-formulario").boundingBox()
-  const geral = await page.locator(".entrada-etapa-segmentos").boundingBox()
-  if (!barra || !coluna || !geral) throw new Error("barra, coluna ou barra geral ausente")
+  if (!indicador || !coluna) throw new Error("indicador ou coluna ausente")
+  expect(indicador.x).toBeGreaterThanOrEqual(coluna.x - 0.5)
+  expect(indicador.x + indicador.width).toBeLessThanOrEqual(coluna.x + coluna.width + 0.5)
 
-  // No máximo 60% da coluna e distinta da barra geral da etapa.
-  expect(barra.width).toBeLessThanOrEqual(coluna.width * 0.6 + 0.5)
-  expect(barra.width).toBeLessThan(geral.width)
-  const esquerda = barra.x - coluna.x
-  const direita = coluna.x + coluna.width - (barra.x + barra.width)
-  expect(Math.abs(esquerda - direita)).toBeLessThanOrEqual(1)
+  const rotulos = page.locator(".entrada-etapa-progresso-rotulo")
+  await expect(rotulos).toHaveCount(5)
+  await expect(rotulos.nth(0)).toBeVisible()
+  for (let indice = 1; indice < 5; indice += 1) await expect(rotulos.nth(indice)).toBeHidden()
+  const circulo = await page.locator(".entrada-etapa-progresso li span span").first().boundingBox()
+  expect(Math.round(circulo?.width ?? 0)).toBe(24)
 })
 
 test("as boas-vindas não rolam na horizontal nos três momentos", async ({ page }) => {
@@ -1407,7 +1465,7 @@ test("capturas de página inteira das boas-vindas nos três momentos", async ({ 
 })
 
 // ENT-007 — o aceite visual do dono: a regra comum de tamanho no celular, a
-// miniatura dos grupos em 40% do cartão, as fotos do negócio em quatro colunas e
+// miniatura quadrada dos grupos ao lado do texto no celular, as fotos do negócio em quatro colunas e
 // as boas-vindas na coluna de 760 px.
 
 test("no celular o título de display mede 24 px em todas as telas de /app/entrar/*", async ({
@@ -1433,16 +1491,30 @@ test("no celular o título de display mede 24 px em todas as telas de /app/entra
   }
 })
 
-test("a miniatura de cada grupo ocupa 40% do cartão, em 4:3", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "mobile-375", "medida do celular em 375 px")
+test("a miniatura do grupo fica ao lado no celular e no topo a partir de 768 px", async ({
+  page,
+}, testInfo) => {
   await page.goto("/app/entrar/sugestoes-grupos")
   await expect(page.getByRole("heading", { name: "Encontre seus grupos." })).toBeVisible()
 
   const cartao = await page.locator(".entrada-etapa-grupo").first().boundingBox()
   const foto = await page.locator(".entrada-etapa-grupo-foto").first().boundingBox()
-  if (!cartao || !foto) throw new Error("cartão ou foto do grupo ausente")
-  expect(Math.abs(foto.width / cartao.width / 0.4 - 1) * 100).toBeLessThanOrEqual(2)
-  expect(Math.abs(foto.width / foto.height / (4 / 3) - 1) * 100).toBeLessThanOrEqual(2)
+  const caixa = await page
+    .locator(".entrada-etapa-grupo")
+    .first()
+    .getByRole("checkbox")
+    .boundingBox()
+  if (!cartao || !foto || !caixa) throw new Error("cartão, foto ou caixa do grupo ausente")
+  // A caixa do bloco mede 16 px.
+  expect(Math.round(caixa.width)).toBe(16)
+  if (ehCelular(testInfo)) {
+    expect(Math.round(foto.width)).toBe(72)
+    expect(Math.round(foto.height)).toBe(72)
+    expect(foto.x).toBeGreaterThan(caixa.x)
+  } else {
+    expect(Math.abs(foto.width / foto.height / (16 / 9) - 1)).toBeLessThanOrEqual(0.02)
+    expect(foto.y + foto.height).toBeLessThanOrEqual(caixa.y)
+  }
 })
 
 test("no celular as fotos do negócio ficam em quatro colunas", async ({ page }, testInfo) => {
@@ -1533,7 +1605,7 @@ test("capturas do aceite visual das etapas em 375, 768 e 1440 px", async ({ page
   await capturar(page, "12d-negocio-fotos", testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
 
   await avancar(page)
-  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeVisible()
+  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeAttached()
   await capturar(page, "12e-negocio-revisao", testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
 
   for (const [nome, momento] of [
