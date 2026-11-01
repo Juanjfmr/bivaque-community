@@ -37,7 +37,6 @@ describe("F01 — ordem das etapas", () => {
       "interesses",
       "combinado",
       "avisos",
-      "boas-vindas",
       "inicio",
     ])
   })
@@ -47,8 +46,10 @@ describe("F01 — ordem das etapas", () => {
     expect(p.etapa).toBe("aceite")
   })
 
-  it("não tem etapa de Negócio no onboarding", () => {
-    expect(caminho({ ...progressoInicial(), via: "email" })).not.toContain("negocio")
+  it("não tem etapa de Negócio nem tela de boas-vindas (fica no Início)", () => {
+    const lista: readonly string[] = caminho({ ...progressoInicial(), via: "email" })
+    expect(lista).not.toContain("negocio")
+    expect(lista).not.toContain("boas-vindas")
   })
 
   it("convite de familiar pula o CPF e a verificação", () => {

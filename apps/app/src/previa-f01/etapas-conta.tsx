@@ -1,9 +1,9 @@
-import { useEffect, useId, useState } from "react"
+import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { IconeGoogle } from "@/components/bivaque/icone-google"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import type { NomeDeIcone } from "@/lib/icones"
 import {
   cpfValido,
   type Momento,
@@ -12,7 +12,7 @@ import {
   type Progresso,
   type Via,
 } from "./fluxo"
-import { Moldura } from "./moldura"
+import { Campo, Moldura } from "./moldura"
 import { CIDADES, type EventoDoFunil } from "./servidor-simulado"
 
 export type PropsDaEtapa = {
@@ -29,20 +29,6 @@ const NOME_DA_CONTA: Record<Exclude<Via, "email">, { nome: string; sobrenome: st
   apple: { nome: "Ana", sobrenome: "Souza" },
 }
 
-/** Mensagem de erro de campo, ligada ao campo por `aria-describedby`. */
-function ErroDoCampo({ id, texto }: { id: string; texto: string | null }) {
-  return (
-    <p id={id} className="f01-erro" aria-live="polite">
-      {texto ? (
-        <>
-          <Icone nome="error" className="f01-erro-icone" />
-          {texto}
-        </>
-      ) : null}
-    </p>
-  )
-}
-
 // ── Porta: uma entrada só ───────────────────────────────────────────────────
 function IconeApple() {
   return (
@@ -57,7 +43,6 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
   const [convite, setConvite] = useState(false)
   const [codigo, setCodigo] = useState("")
   const [erroDoConvite, setErroDoConvite] = useState<string | null>(null)
-  const idErro = useId()
 
   // Google e Apple: na prévia, a conta "volta" em menos de um segundo.
   const entrarCom = (via: Exclude<Via, "email">) => {
@@ -68,7 +53,7 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
   const usarConvite = () => {
     const limpo = codigo.trim().toUpperCase()
     if (!/^[A-Z0-9]{4}-?[A-Z0-9]{4}$/.test(limpo)) {
-      setErroDoConvite("Confira o código: são 8 letras e números, como BVQ7-K2MA.")
+      setErroDoConvite("São 8 letras e números, como BVQ7-K2MA.")
       erro("codigo-invalido")
       return
     }
@@ -78,6 +63,7 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
   return (
     <div className="f01-porta">
       <picture className="f01-porta-foto">
+        <source media="(min-width: 900px)" srcSet={`${base}demo/landing-hero.webp`} />
         <img src={`${base}demo/landing-hero-retrato.webp`} alt="" />
       </picture>
       <div className="f01-porta-conteudo">
@@ -95,8 +81,8 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
         <h1 className="f01-porta-titulo" tabIndex={-1}>
           Gente do seu meio, na sua cidade.
         </h1>
-        <p className="f01-texto">
-          Para militares das Forças federais, veteranos, pensionistas e famílias. Todo membro é
+        <p className="f01-porta-apoio">
+          Militares das Forças federais, veteranos, pensionistas e famílias. Todo membro é
           verificado.
         </p>
         <div className="f01-porta-botoes">
@@ -128,7 +114,6 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
             disabled={conectando !== null}
             onClick={() => concluir({ via: "email" })}
           >
-            <Icone nome="send" />
             Continuar com e-mail
           </Button>
         </div>
@@ -141,40 +126,27 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
               usarConvite()
             }}
           >
-            <label htmlFor="f01-convite" className="f01-rotulo">
-              Código do convite
-            </label>
-            <div className="f01-convite-linha">
-              <Input
-                id="f01-convite"
-                className="f01-campo"
-                autoComplete="off"
-                autoCapitalize="characters"
-                placeholder="BVQ7-K2MA"
-                value={codigo}
-                aria-invalid={erroDoConvite ? "true" : undefined}
-                aria-describedby={idErro}
-                onChange={(evento) => {
-                  setCodigo(evento.target.value)
-                  setErroDoConvite(null)
-                }}
-                autoFocus
-              />
-              <Button type="submit" variant="secondary" className="f01-botao">
-                Usar
-              </Button>
-            </div>
-            <ErroDoCampo id={idErro} texto={erroDoConvite} />
+            <Campo
+              rotulo="Código do convite"
+              autoComplete="off"
+              autoCapitalize="characters"
+              value={codigo}
+              erro={erroDoConvite}
+              onChange={(evento) => {
+                setCodigo(evento.target.value)
+                setErroDoConvite(null)
+              }}
+              acessorio={
+                <Button type="submit" size="sm" className="f01-convite-usar">
+                  Usar
+                </Button>
+              }
+            />
           </form>
         ) : (
-          <Button
-            type="button"
-            variant="link"
-            className="f01-link"
-            onClick={() => setConvite(true)}
-          >
-            Tem um código de convite?
-          </Button>
+          <button type="button" className="f01-link" onClick={() => setConvite(true)}>
+            Tenho um código de convite
+          </button>
         )}
         <p className="f01-porta-rodape">
           Entrar ou criar conta é o mesmo caminho. <a href={`${base}ajuda`}>Ajuda</a>
@@ -189,11 +161,10 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
   const [email, setEmail] = useState(progresso.convite ? EMAIL_DO_CONVITE : "")
   const [problema, setProblema] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
-  const idErro = useId()
 
   const enviar = () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
-      setProblema("Confira o e-mail: falta algo, como o @ ou o domínio.")
+      setProblema("Falta algo no e-mail, como o @ ou o domínio.")
       erro("email-invalido")
       return
     }
@@ -203,43 +174,33 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
 
   return (
     <Moldura
-      titulo={progresso.convite ? "Seu convite está pronto" : "Qual é o seu e-mail?"}
-      texto={
-        progresso.convite
-          ? "Convite de Marcos S. para a família. Vamos mandar um código para este e-mail."
-          : "Vamos mandar um código de 6 números. Serve para entrar ou para criar sua conta."
-      }
+      titulo={progresso.convite ? "Convite de Marcos S." : "Qual é o seu e-mail?"}
+      apoio={progresso.convite ? "Para a família. O código vai para o e-mail do convite." : null}
       aoEnviar={enviar}
       acao={{ rotulo: enviando ? "Enviando…" : "Enviar código", carregando: enviando }}
     >
-      <label htmlFor="f01-email" className="f01-rotulo">
-        E-mail
-      </label>
-      <div className="f01-campo-com-icone">
-        <Input
-          id="f01-email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          className="f01-campo"
-          value={email}
-          readOnly={progresso.convite}
-          aria-invalid={problema ? "true" : undefined}
-          aria-describedby={idErro}
-          onChange={(evento) => {
-            setEmail(evento.target.value)
-            setProblema(null)
-          }}
-        />
-        {progresso.convite ? <Icone nome="lock" className="f01-campo-icone" /> : null}
-      </div>
-      <ErroDoCampo id={idErro} texto={problema} />
+      <Campo
+        rotulo="E-mail"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        value={email}
+        readOnly={progresso.convite}
+        erro={problema}
+        ajuda="Mandamos um código de 6 números. Vale para entrar ou criar conta."
+        acessorio={progresso.convite ? <Icone nome="lock" /> : null}
+        onChange={(evento) => {
+          setEmail(evento.target.value)
+          setProblema(null)
+        }}
+      />
     </Moldura>
   )
 }
 
 // ── Código ──────────────────────────────────────────────────────────────────
 const ESPERA_DO_REENVIO = 60
+const CASAS = [0, 1, 2, 3, 4, 5] as const
 
 export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
   const [codigo, setCodigo] = useState("")
@@ -247,7 +208,6 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
   const [restante, setRestante] = useState(ESPERA_DO_REENVIO)
   const [aviso, setAviso] = useState<string | null>(null)
   const [conferindo, setConferindo] = useState(false)
-  const idErro = useId()
 
   useEffect(() => {
     if (restante <= 0) return
@@ -265,7 +225,7 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
     window.setTimeout(() => {
       setConferindo(false)
       if (valor === "000000") {
-        setProblema("Código inválido ou vencido. Confira ou peça outro.")
+        setProblema("Código errado ou vencido. Confira ou peça outro.")
         setCodigo("")
         erro("codigo-invalido")
         return
@@ -274,110 +234,129 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
     }, 600)
   }
 
-  const minutos = `${Math.floor(restante / 60)}:${String(restante % 60).padStart(2, "0")}`
-
   return (
     <Moldura
       titulo="Digite o código"
-      texto={
+      apoio={
         <>
-          Mandamos 6 números para <strong>{progresso.emailMascarado ?? "o seu e-mail"}</strong>.
-          Pode demorar um minuto; confira também o spam.
+          Enviado para <strong>{progresso.emailMascarado ?? "o seu e-mail"}</strong>.{" "}
+          <button type="button" className="f01-link-texto" onClick={voltar}>
+            Trocar
+          </button>
         </>
       }
       aoEnviar={() => conferir(codigo)}
       acao={{ rotulo: conferindo ? "Conferindo…" : "Continuar", carregando: conferindo }}
-      secundaria={{ rotulo: "Usar outro e-mail", aoTocar: voltar }}
     >
-      <label htmlFor="f01-codigo" className="f01-rotulo">
-        Código
-      </label>
-      <Input
-        id="f01-codigo"
-        className="f01-campo f01-campo-codigo"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        pattern="[0-9]*"
-        maxLength={6}
-        value={codigo}
-        aria-invalid={problema ? "true" : undefined}
-        aria-describedby={idErro}
-        onChange={(evento) => {
-          const so = evento.target.value.replace(/\D/g, "").slice(0, 6)
-          setCodigo(so)
-          setProblema(null)
-          if (so.length === 6) conferir(so)
-        }}
-      />
-      <ErroDoCampo id={idErro} texto={problema} />
-      <div className="f01-reenvio">
+      <div className="f01-casas" data-erro={problema ? "sim" : "nao"}>
+        {CASAS.map((indice) => (
+          <span
+            key={indice}
+            className="f01-casa"
+            data-atual={indice === codigo.length ? "sim" : "nao"}
+            aria-hidden="true"
+          >
+            {codigo[indice] ?? ""}
+          </span>
+        ))}
+        <input
+          className="f01-casas-entrada"
+          aria-label="Código de 6 números"
+          aria-invalid={problema ? "true" : undefined}
+          aria-describedby="f01-codigo-erro"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]*"
+          maxLength={6}
+          value={codigo}
+          onChange={(evento) => {
+            const so = evento.target.value.replace(/\D/g, "").slice(0, 6)
+            setCodigo(so)
+            setProblema(null)
+            if (so.length === 6) conferir(so)
+          }}
+        />
+      </div>
+      <p id="f01-codigo-erro" className="f01-erro" aria-live="polite">
+        {problema ? (
+          <>
+            <Icone nome="error" />
+            {problema}
+          </>
+        ) : null}
+      </p>
+      <p className="f01-ajuda" aria-live="polite">
+        {aviso ? `${aviso} ` : ""}
         {restante > 0 ? (
-          <span>Reenviar em {minutos}</span>
+          `Reenviar em ${restante} s. Confira também o spam.`
         ) : (
-          <Button
+          <button
             type="button"
-            variant="link"
-            className="f01-link"
+            className="f01-link-texto"
             onClick={() => {
               setRestante(ESPERA_DO_REENVIO)
-              setAviso("Mandamos um código novo. O anterior deixou de valer.")
+              setAviso("Código novo enviado.")
             }}
           >
             Reenviar código
-          </Button>
+          </button>
         )}
-        <span className="sr-only" aria-live="polite">
-          {aviso}
-        </span>
-        {aviso ? <p className="f01-nota">{aviso}</p> : null}
-      </div>
+      </p>
     </Moldura>
   )
 }
 
 // ── Aceite: antes do CPF ────────────────────────────────────────────────────
-const PROMESSAS: readonly { icone: "lock" | "visibility_off" | "delete"; texto: string }[] = [
+const PROMESSAS: readonly { icone: NomeDeIcone; titulo: string; texto: string }[] = [
   {
     icone: "lock",
-    texto: "Seu CPF é consultado uma vez no Portal da Transparência e não fica guardado.",
+    titulo: "Seu CPF não fica guardado",
+    texto: "Consultamos uma vez no Portal da Transparência e descartamos.",
   },
   {
     icone: "visibility_off",
-    texto: "Ninguém vê sua Força, unidade ou posto. Você decide o que mostra.",
+    titulo: "Força, unidade e posto não aparecem",
+    texto: "Os outros membros veem só o que você escolher mostrar.",
   },
-  { icone: "delete", texto: "Você pode apagar sua conta e seus dados quando quiser." },
+  {
+    icone: "delete",
+    titulo: "Você sai quando quiser",
+    texto: "Apagar a conta apaga seus dados.",
+  },
 ]
 
 export function Aceite({ concluir }: PropsDaEtapa) {
   return (
     <Moldura
       titulo="Antes de começar"
-      texto="O Bivaque só funciona com confiança. Isto é o que prometemos sobre os seus dados:"
       aoEnviar={() => concluir()}
       acao={{ rotulo: "Aceito e continuo" }}
     >
       <ul className="f01-promessas">
         {PROMESSAS.map((promessa) => (
-          <li key={promessa.icone}>
-            <Icone nome={promessa.icone} className="f01-promessa-icone" />
-            <span>{promessa.texto}</span>
+          <li key={promessa.titulo}>
+            <Icone nome={promessa.icone} />
+            <span>
+              <strong>{promessa.titulo}</strong>
+              {promessa.texto}
+            </span>
           </li>
         ))}
       </ul>
-      <p className="f01-nota">
+      <p className="f01-ajuda f01-legal">
         Ao continuar, você aceita a{" "}
         <a href={`${base}privacidade`} target="_blank" rel="noopener noreferrer">
           Política de Privacidade
         </a>
         , os{" "}
         <a href={`${base}ajuda`} target="_blank" rel="noopener noreferrer">
-          Termos de Uso
+          Termos
         </a>{" "}
         e o{" "}
         <a href={`${base}conduta`} target="_blank" rel="noopener noreferrer">
           Código de Conduta
-        </a>
-        . Versão de 01/11/2026; o aceite fica registrado com data e hora.
+        </a>{" "}
+        de 01/11/2026.
       </p>
     </Moldura>
   )
@@ -388,11 +367,10 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
   const [cpf, setCpf] = useState("")
   const [problema, setProblema] = useState<string | null>(null)
   const [porque, setPorque] = useState(false)
-  const idErro = useId()
 
   const enviar = () => {
     if (!cpfValido(cpf)) {
-      setProblema("Confira o CPF: os números não batem.")
+      setProblema("Esse CPF não existe. Confira os números.")
       erro("cpf-invalido")
       return
     }
@@ -403,48 +381,41 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
 
   return (
     <Moldura
-      titulo="Confirme seu vínculo"
-      texto="Com o CPF, confirmamos no Portal da Transparência que você é militar, veterano ou pensionista. A consulta leva menos de um minuto, e você segue preenchendo enquanto isso."
+      titulo="Qual é o seu CPF?"
+      apoio="É com ele que confirmamos que você é do meio."
       aoEnviar={enviar}
       acao={{ rotulo: "Confirmar vínculo" }}
     >
-      <label htmlFor="f01-cpf" className="f01-rotulo">
-        CPF
-      </label>
-      <Input
-        id="f01-cpf"
-        className="f01-campo"
+      <Campo
+        rotulo="CPF"
         inputMode="numeric"
         autoComplete="off"
-        placeholder="000.000.000-00"
         value={cpf}
-        aria-invalid={problema ? "true" : undefined}
-        aria-describedby={idErro}
+        erro={problema}
+        ajuda="A consulta leva menos de um minuto, e você segue enquanto isso."
         onChange={(evento) => {
           setCpf(mascararCpf(evento.target.value))
           setProblema(null)
         }}
       />
-      <ErroDoCampo id={idErro} texto={problema} />
-      <Button
-        type="button"
-        variant="link"
-        className="f01-link"
-        aria-expanded={porque}
-        aria-controls="f01-porque-cpf"
-        onClick={() => setPorque((aberto) => !aberto)}
-      >
-        Por que o CPF?
-      </Button>
-      <div id="f01-porque-cpf" hidden={!porque} className="f01-explicacao">
-        É o jeito mais rápido de saber que só entra quem é do meio. O Portal diz se há vínculo e a
-        categoria; patente, unidade e salário não chegam até nós. Se a consulta não der certo, você
-        pode enviar um documento.
+      <div className="f01-detalhe">
+        <button
+          type="button"
+          className="f01-detalhe-botao"
+          aria-expanded={porque}
+          aria-controls="f01-porque-cpf"
+          onClick={() => setPorque((aberto) => !aberto)}
+        >
+          Por que o CPF?
+          <Icone nome="expand_more" />
+        </button>
+        <div id="f01-porque-cpf" hidden={!porque} className="f01-detalhe-texto">
+          O Portal da Transparência diz só se há vínculo e a categoria (ativo, veterano ou
+          pensionista). Posto, unidade e salário não chegam até nós. Se a consulta não der certo,
+          você envia um documento.
+        </div>
       </div>
-      <p className="f01-nota">
-        É cônjuge ou dependente? Peça o convite a quem é militar e use "Tem um código de convite?"
-        na primeira tela.
-      </p>
+      <p className="f01-ajuda">Cônjuge ou dependente entra pelo convite de quem é militar.</p>
     </Moldura>
   )
 }
@@ -454,7 +425,6 @@ export function Nome({ progresso, concluir }: PropsDaEtapa) {
   const [nome, setNome] = useState(progresso.nome?.nome ?? "")
   const [sobrenome, setSobrenome] = useState(progresso.nome?.sobrenome ?? "")
   const [problema, setProblema] = useState<string | null>(null)
-  const idErro = useId()
   const veioDaConta = progresso.via === "google" || progresso.via === "apple"
 
   const enviar = () => {
@@ -468,105 +438,99 @@ export function Nome({ progresso, concluir }: PropsDaEtapa) {
   return (
     <Moldura
       titulo="Como você se chama?"
-      texto={
-        veioDaConta
-          ? `Veio da sua conta ${progresso.via === "google" ? "Google" : "Apple"}. Confira: é assim que os outros membros vão te ver.`
-          : "É assim que os outros membros vão te ver."
-      }
+      apoio="É assim que os outros membros vão ver você."
       aoEnviar={enviar}
       acao={{ rotulo: "Continuar" }}
     >
       <div className="f01-dupla">
-        <div>
-          <label htmlFor="f01-nome" className="f01-rotulo">
-            Nome
-          </label>
-          <Input
-            id="f01-nome"
-            className="f01-campo"
-            autoComplete="given-name"
-            value={nome}
-            aria-invalid={problema ? "true" : undefined}
-            aria-describedby={idErro}
-            onChange={(evento) => {
-              setNome(evento.target.value)
-              setProblema(null)
-            }}
-          />
-        </div>
-        <div>
-          <label htmlFor="f01-sobrenome" className="f01-rotulo">
-            Sobrenome
-          </label>
-          <Input
-            id="f01-sobrenome"
-            className="f01-campo"
-            autoComplete="family-name"
-            value={sobrenome}
-            onChange={(evento) => setSobrenome(evento.target.value)}
-          />
-        </div>
+        <Campo
+          rotulo="Nome"
+          autoComplete="given-name"
+          value={nome}
+          erro={problema}
+          onChange={(evento) => {
+            setNome(evento.target.value)
+            setProblema(null)
+          }}
+        />
+        <Campo
+          rotulo="Sobrenome"
+          autoComplete="family-name"
+          value={sobrenome}
+          onChange={(evento) => setSobrenome(evento.target.value)}
+        />
       </div>
-      <ErroDoCampo id={idErro} texto={problema} />
+      {veioDaConta ? (
+        <p className="f01-ajuda">
+          Veio da sua conta {progresso.via === "google" ? "Google" : "Apple"}. Pode corrigir.
+        </p>
+      ) : null}
     </Moldura>
   )
 }
 
 // ── Cidade e momento ────────────────────────────────────────────────────────
-const MOMENTOS: readonly { id: Momento; titulo: string; descricao: string }[] = [
-  { id: "chegando", titulo: "Chegando", descricao: "Fui transferido e estou indo para lá." },
-  { id: "morando", titulo: "Moro aqui", descricao: "Já estou na cidade." },
-  { id: "saindo", titulo: "Saindo", descricao: "Vou ser transferido em breve." },
+const MOMENTOS: readonly { id: Momento; titulo: string; icone: NomeDeIcone }[] = [
+  { id: "chegando", titulo: "Chegando", icone: "flight_land" },
+  { id: "morando", titulo: "Moro aqui", icone: "home" },
+  { id: "saindo", titulo: "Saindo", icone: "local_shipping" },
 ]
+
+type ProblemaDaCidade = { campo: "cidade" | "momento"; texto: string } | null
 
 export function CidadeEMomento({ progresso, concluir }: PropsDaEtapa) {
   const [cidade, setCidade] = useState(progresso.cidade ?? "")
   const [momento, setMomento] = useState<Momento | "">(progresso.momento ?? "")
   const [quando, setQuando] = useState("")
-  const [problema, setProblema] = useState<string | null>(null)
-  const idErro = useId()
+  const [problema, setProblema] = useState<ProblemaDaCidade>(null)
 
   const enviar = () => {
     if (cidade === "") {
-      setProblema("Escolha a cidade.")
+      setProblema({ campo: "cidade", texto: "Escolha a cidade." })
       return
     }
     if (momento === "") {
-      setProblema("Escolha o seu momento.")
+      setProblema({ campo: "momento", texto: "Escolha um momento." })
       return
     }
     concluir({ cidade, momento })
   }
 
+  const erroNaCidade = problema?.campo === "cidade"
+
   return (
-    <Moldura
-      titulo="Onde você está?"
-      texto="A cidade organiza o que você vê. O momento ajuda a sugerir grupos e encontros certos."
-      aoEnviar={enviar}
-      acao={{ rotulo: "Continuar" }}
-    >
-      <label htmlFor="f01-cidade" className="f01-rotulo">
-        Cidade
-      </label>
-      <select
-        id="f01-cidade"
-        className="f01-campo f01-select"
-        value={cidade}
-        aria-describedby={idErro}
-        onChange={(evento) => {
-          setCidade(evento.target.value)
-          setProblema(null)
-        }}
-      >
-        <option value="">Escolha a cidade</option>
-        {CIDADES.map((item) => (
-          <option key={item.nome} value={item.nome}>
-            {item.nome} – {item.uf}
-          </option>
-        ))}
-      </select>
-      <fieldset className="f01-grupo-de-campos">
-        <legend className="f01-rotulo">Seu momento</legend>
+    <Moldura titulo="Onde você está?" aoEnviar={enviar} acao={{ rotulo: "Continuar" }}>
+      <div className="f01-campo-bloco">
+        <div className="f01-campo f01-campo-select" data-erro={erroNaCidade ? "sim" : "nao"}>
+          <select
+            id="f01-cidade"
+            value={cidade}
+            data-vazio={cidade === "" ? "sim" : "nao"}
+            aria-invalid={erroNaCidade ? "true" : undefined}
+            aria-describedby="f01-cidade-erro"
+            onChange={(evento) => {
+              setCidade(evento.target.value)
+              setProblema(null)
+            }}
+          >
+            <option value="" disabled hidden />
+            {CIDADES.map((item) => (
+              <option key={item.nome} value={item.nome}>
+                {item.nome}, {item.uf}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="f01-cidade">Cidade</label>
+          <span className="f01-campo-acessorio">
+            <Icone nome="expand_more" />
+          </span>
+        </div>
+        <p id="f01-cidade-erro" className="f01-erro" aria-live="polite">
+          {erroNaCidade ? problema.texto : null}
+        </p>
+      </div>
+      <fieldset className="f01-momento">
+        <legend>Seu momento na cidade</legend>
         <RadioGroup
           value={momento}
           onValueChange={(valor) => {
@@ -574,39 +538,28 @@ export function CidadeEMomento({ progresso, concluir }: PropsDaEtapa) {
             setProblema(null)
           }}
           className="f01-momentos"
+          aria-describedby="f01-momento-erro"
         >
           {MOMENTOS.map((item) => (
-            <label key={item.id} htmlFor={`f01-momento-${item.id}`} className="f01-cartao-opcao">
-              <RadioGroupItem
-                id={`f01-momento-${item.id}`}
-                value={item.id}
-                aria-labelledby={`f01-momento-${item.id}-titulo`}
-                aria-describedby={`f01-momento-${item.id}-descricao`}
-              />
-              <span>
-                <strong id={`f01-momento-${item.id}-titulo`}>{item.titulo}</strong>
-                <small id={`f01-momento-${item.id}-descricao`}>{item.descricao}</small>
-              </span>
+            <label key={item.id} htmlFor={`f01-momento-${item.id}`} className="f01-momento-opcao">
+              <RadioGroupItem id={`f01-momento-${item.id}`} value={item.id} className="sr-only" />
+              <Icone nome={item.icone} />
+              {item.titulo}
             </label>
           ))}
         </RadioGroup>
+        <p id="f01-momento-erro" className="f01-erro" aria-live="polite">
+          {problema?.campo === "momento" ? problema.texto : null}
+        </p>
       </fieldset>
       {momento === "chegando" || momento === "saindo" ? (
-        <div>
-          <label htmlFor="f01-quando" className="f01-rotulo">
-            {momento === "chegando" ? "Quando você chega?" : "Quando você sai?"}{" "}
-            <span className="f01-opcional">opcional</span>
-          </label>
-          <Input
-            id="f01-quando"
-            type="month"
-            className="f01-campo"
-            value={quando}
-            onChange={(evento) => setQuando(evento.target.value)}
-          />
-        </div>
+        <Campo
+          rotulo={momento === "chegando" ? "Mês da chegada (opcional)" : "Mês da saída (opcional)"}
+          type="month"
+          value={quando}
+          onChange={(evento) => setQuando(evento.target.value)}
+        />
       ) : null}
-      <ErroDoCampo id={idErro} texto={problema} />
     </Moldura>
   )
 }

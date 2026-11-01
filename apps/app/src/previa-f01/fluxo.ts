@@ -8,10 +8,11 @@
  *
  * Decisões do dono em 01/11/2026: Negócio fora do onboarding (flag nos
  * primeiros passos); entrada por código, sem senha; Apple na prévia; aceite
- * antes do CPF e "o combinado" depois da prévia da cidade; CPF antes do nome.
+ * antes do CPF e "o combinado" depois da prévia da cidade; CPF antes do nome;
+ * boas-vindas no topo do Início, sem tela própria.
  */
 
-export const VERSAO_DO_FLUXO = 1
+export const VERSAO_DO_FLUXO = 2
 
 export type IdDaEtapa =
   | "porta"
@@ -27,7 +28,6 @@ export type IdDaEtapa =
   | "interesses"
   | "combinado"
   | "avisos"
-  | "boas-vindas"
   | "inicio"
 
 export type Via = "apple" | "google" | "email"
@@ -101,7 +101,6 @@ export const FLUXO_F01: readonly DefinicaoDaEtapa[] = [
   { id: "interesses", noProgresso: true, permiteVoltar: true },
   { id: "combinado", noProgresso: true, permiteVoltar: true },
   { id: "avisos", noProgresso: true, permiteVoltar: true },
-  { id: "boas-vindas", noProgresso: false, permiteVoltar: false },
   { id: "inicio", noProgresso: false, permiteVoltar: false },
 ]
 

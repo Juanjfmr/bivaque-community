@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/sheet"
 import {
   Avisos,
-  BoasVindas,
   Combinado,
   Documento,
   InicioComPrimeirosPassos,
@@ -69,7 +68,6 @@ const TELAS: Record<Exclude<IdDaEtapa, "inicio">, TelaDaEtapa> = {
   interesses: InteressesEGrupos,
   combinado: Combinado,
   avisos: Avisos,
-  "boas-vindas": BoasVindas,
 }
 
 /**
@@ -133,6 +131,7 @@ export function PreviaF01() {
 
   const contexto = {
     etapa: progresso.etapa,
+    concluidas: progresso.concluidas,
     fracao: fracaoDoProgresso(progresso),
     aoVoltar: etapaAnterior(progresso) === null ? null : voltar,
     verificacao: progresso.verificacao,
