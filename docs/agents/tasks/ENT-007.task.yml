@@ -1,0 +1,89 @@
+# ENT-007 — F01, rodada de ajustes do aceite visual do dono (31/10/2026)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor e verificação de runtime: Claude Code.
+# Sem backend. O dono revisou as 28 telas em 31/10/2026: 13 aprovadas, 14 com ajuste, 1 pendente.
+# Os ajustes são dois: a foto (corte e enquadramento) e o tamanho (grande demais no celular,
+# pequeno demais no desktop). A composição de acesso passa a partir do bloco login-02 do
+# shadcn/ui (MIT), porque os blocos do 21st.dev mapeados não têm licença.
+task_id: ENT-007
+
+objective: >
+  No app (apps/app), as telas da entrada com ajuste pedido pelo dono ficam iguais às referências
+  aprovadas em proporção, enquadramento da foto e tamanho de texto e controles, no celular e no
+  desktop. A composição de acesso (login, criar conta, recuperar senha e envio, retomar, convite,
+  convite indisponível e conta apagada) é refeita sobre a estrutura do bloco login-02 do shadcn/ui
+  (licença MIT), com a foto à esquerda. Mesmos textos, campos, validações e destinos de hoje.
+
+authority:
+  - "Revisão do dono em 31/10/2026 (página Aceite da Entrada), notas por tela: 01 login: foto cortada, melhorar o preenchimento da tela à direita; 02 criar conta: problema na foto à esquerda; 10 grupos: melhorar o enquadramento; 12d e 12e negócio: tamanho das coisas muito grande, texto muito grande; 13, 13b e 13c boas-vindas: ajustar a foto e o tamanho dos textos; 14 retomar, 15 senha, 15b senha enviada, 16 convite, 17 convite indisponível e 18 conta apagada: o mesmo (foto e texto). Aprovadas sem mudança: 03 a 09c, 11, 12a, 12b e 12f. 12c ficou sem revisão."
+  - docs/design/fluxos-2026-10-30/individuais/F01/ (referências desktop) e individuais/F01/celular/ (referências celular)
+  - .visual/ENT-007/comparacao/ (lado a lado referência × app de 31/10, e as imagens separadas ref-* e app-*)
+  - .visual/ENT-007/shadcn-login-02.json (código do bloco login-02 do registro público do shadcn/ui, MIT)
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md (título de display com 24 px no celular; cantos de 12 px)
+  - docs/decisions/ADR-20261024-front-react-spa.md (shadcn/ui no apps/app)
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md
+  - docs/agents/tasks/ENT-001.task.yml a ENT-006.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 31/10/2026 na revisão 094ba62d (.visual/ENT-007/comparacao/). Desktop: no login e
+    no criar conta a foto ocupa cerca de 46% da largura e vem ampliada, cortando metade da cena (a
+    segunda pessoa no criar conta, o aperto de mão no login); o formulário tem cerca de 280 px de
+    largura e deixa a metade direita quase vazia; nas boas-vindas a coluna, a foto e o título
+    ficam menores que na referência. Celular (375 px): títulos de cerca de 30 px que quebram em
+    duas linhas; no negócio, campos, rótulos e miniaturas de foto grandes (miniaturas em duas
+    colunas de cerca de 160 px); nos grupos a miniatura é estreita e a foto vem recortada.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/components/bivaque/entrada-acesso.tsx
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/components/bivaque/formulario-negocio.tsx
+  - apps/app/src/styles.css
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - apps/app/tests/e2e/entrada-acesso.spec.ts
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-007/
+
+forbidden:
+  - copiar código de blocos do 21st.dev (os blocos mapeados não têm licença)
+  - usar o bloco login-02 sem o aviso de licença MIT do shadcn/ui no topo do arquivo que o adapta
+  - instalar, remover ou atualizar dependências; rodar o CLI do shadcn
+  - mudar textos, campos, validações, destinos, rotas ou dados de demonstração
+  - mexer nas telas aprovadas (03 a 09c, 11, 12a, 12b, 12f) além do que a regra comum de tamanho no celular abaixo exigir
+  - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo; cor fixa fora dos tokens
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Composição de acesso no desktop (≥ 1024 px), a partir do login-02: grade de duas colunas iguais (1fr 1fr) na altura da janela; à esquerda o painel da foto com a margem e os cantos de hoje, a imagem cobrindo o painel; à direita o conteúdo centralizado na vertical e na horizontal, com largura máxima de 30rem (480 px). Logo com 40 px de altura no topo do conteúdo; título em Noto Serif com 2.75rem (44 px); apoio com 1.0625rem (17 px); botão do Google, campos e botão principal com 48 px de altura."
+  - "Enquadramento da foto: em cada tela da composição de acesso a pessoa ou o grupo principal da referência aparece inteiro, sem corte de rosto: no login a mesa com o aperto de mão inteiro; no criar conta as duas mulheres do portão. Ajuste object-position por imagem (variável CSS por tela), sem trocar as imagens."
+  - "Composição de acesso no celular (< 768 px): a foto é uma faixa de largura total com proporção 16:10 e o mesmo enquadramento do desktop (sem zoom extra); título com 1.5rem (24 px) em uma linha quando o texto couber em 375 px; apoio com 0.9375rem (15 px); campos e botões com 44 px de altura; rótulos com 0.875rem (14 px)."
+  - "Regra comum de tamanho no celular (< 768 px) para todas as telas de /app/entrar/*: título de display 1.5rem (24 px); subtítulo de seção 1.125rem (18 px); texto de apoio 0.9375rem (15 px); rótulos 0.875rem; textos de ajuda 0.8125rem (13 px); campos 44 px de altura. As telas aprovadas só mudam se hoje estiverem acima desses valores."
+  - "Boas-vindas (13, 13b, 13c): desktop com a coluna de até 40rem (640 px), foto na largura da coluna com proporção 21:9 e o grupo inteiro (sem corte de rosto), título 2.5rem (40 px), apoio 1.125rem, cartões de atalho com ícone de 24 px e 64 px de altura; celular com foto 16:10, título 24 px e os mesmos cartões com 56 px de altura."
+  - "Grupos (10): a miniatura de cada cartão ocupa 40% da largura do cartão, proporção 4:3, object-fit cover centralizado; título do grupo 0.9375rem e descrição 0.8125rem no celular."
+  - "Negócio passos 4 e 5 (12d, 12e) no celular: miniaturas de foto em grade de 4 colunas (cerca de 72 px), selo Capa menor, \"Voltar\" e \"Continuar\" com 44 px; textos pela regra comum. No passo 5 (revisão) a foto de capa tem proporção 16:9 e as linhas de cada bloco seguem a regra comum."
+  - "Foco no título ao abrir; foco visível; sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; tema escuro pelos tokens; os testes de privacidade que já existem em entrada-etapa.spec.ts continuam passando sem alteração."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 lint
+  - "Testes: no desktop as duas colunas da composição de acesso têm a mesma largura (diferença ≤ 2 px) e o conteúdo tem no máximo 480 px; no celular o título de display mede 24 px em todas as telas de /app/entrar/*; a foto da composição de acesso no celular tem proporção 16:10 (± 2%); nos grupos a miniatura mede 40% do cartão (± 2%); no negócio em 375 px as miniaturas ficam em 4 colunas"
+  - "Capturas de página inteira das telas 01, 02, 10, 12d, 12e, 13, 13b, 13c, 14, 15, 15b, 16, 17 e 18 em 375, 768 e 1440 px em .visual/ENT-007/"
+
+risk: entrada e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
