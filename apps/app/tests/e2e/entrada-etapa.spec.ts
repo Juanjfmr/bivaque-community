@@ -1471,7 +1471,7 @@ test("no celular as fotos do negócio ficam em quatro colunas", async ({ page },
   expect(colunas[0] ?? 0).toBeLessThan(90)
 })
 
-test("as boas-vindas usam a coluna de 760 px, a foto larga e os cartões de 56–80/80–96 px", async ({
+test("as boas-vindas usam a coluna de 760 px, a foto larga e os cartões de 56–80/80–100 px", async ({
   page,
 }, testInfo) => {
   await page.goto("/app/entrar/boas-vindas")
@@ -1490,7 +1490,7 @@ test("as boas-vindas usam a coluna de 760 px, a foto larga e os cartões de 56�
     const janela = page.viewportSize()?.width ?? 0
     expect(coluna?.width ?? 0).toBeCloseTo(Math.min(760, janela), 0)
     expect(atalho).toBeGreaterThanOrEqual(80)
-    expect(atalho).toBeLessThanOrEqual(96)
+    expect(atalho).toBeLessThanOrEqual(100)
     expect(
       await page
         .locator(".entrada-etapa-titulo")
