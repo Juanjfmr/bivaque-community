@@ -1,0 +1,131 @@
+task_id: PORT-002
+objective: >
+  Base do lote 4 (entrada): o Next ganha os adaptadores Material Web usados nas telas de entrada do
+  protótipo (campo de texto, campo de senha com mostrar/esconder, checkbox, seleção, botões outlined,
+  text e icon, diálogo de confirmação), o layout visual da entrada com os tokens da marca nos dois temas
+  e o cabeçalho com o símbolo e o indicador de passo, e o proxy passa a deixar públicas as rotas que o
+  ADR da entrada exige (conta apagada e convite; a Ajuda pública fica com a frente D). Nenhuma tela de entrada muda de comportamento
+  nesta tarefa; elas serão portadas pelas frentes A a D sobre esta base.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    codex/entrada-adr 2afe0f9c: apps/web/app/components/material/ tem só filled-button, material-icon e
+    register (só o filled-button); os tokens da marca estão escopados na landing (.ld em
+    apps/web/app/brand-tokens.css); proxy.ts PUBLIC_PATHS não tem /ajuda, /conta-apagada nem /convite.
+allowed_paths:
+  - apps/web/app/components/material/
+  - apps/web/app/components/entry/
+  - apps/web/app/brand-tokens.css
+  - apps/web/app/fonts/
+  - apps/web/app/landing/
+  - apps/web/types/material-web.d.ts
+  - apps/web/proxy.ts
+  - tests/unit/
+  - tests/scope/
+  - tests/e2e/entry-kit.spec.ts
+  - docs/agents/tasks/PORT-002.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local
+  - instalar pacotes (o @material/web@2.5.0 já está no package.json)
+  - mudar o comportamento das telas de entrada atuais ou a landing (a landing só pode trocar o import dos tokens, sem mudar o visual)
+  - mudar o tema HeroUI das telas ainda não portadas
+  - editar prototypes/bivaque-html
+acceptance:
+  - Adaptadores cliente para md-outlined-text-field, md-checkbox, md-outlined-select com md-select-option, md-outlined-button, md-text-button, md-icon-button e md-dialog, cada um importando só o seu módulo, com tipos em material-web.d.ts e sem erro de hidratação
+  - Campo de senha com botão mostrar/esconder (rótulo acessível que muda), supporting-text e estado de erro, como entryPasswordField do protótipo
+  - Os tokens da marca deixam de ser exclusivos da landing - uma classe de escopo reutilizável (por exemplo .bv-skin) aplicada pela landing e pelo layout da entrada, sem mudar o visual da landing (comparação de captura da landing igual)
+  - Componentes da entrada em apps/web/app/components/entry/ - casca da tela (topo com símbolo oficial e voltar), indicador de passo (Passo N de 3) e área de erro com role=alert
+  - proxy.ts deixa públicas /conta-apagada e /convite (a Ajuda pública fica com a frente D), e há teste de escopo para isso
+  - Uma página de prova interna não é criada; o spec tests/e2e/entry-kit.spec.ts monta os adaptadores numa rota existente sem mudar o comportamento dela, ou os testes unitários cobrem os adaptadores
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk: base visual da entrada; mexe no proxy de rotas públicas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+# ── Evidência de execução — 22/10/2026, branch codex/entrada-base ──
+# Revisão de código confrontada: a3e71ba3 (adaptadores em 1ac92ca3, casca e
+# tokens em b8214a83, provas em c8268b55, repasse de target em a3e71ba3).
+#
+# npx pnpm@11.18.0 gate — VERDE: lint 6s, typecheck 9s, test 21s, secrets 8s.
+#   O gate PULOU o estágio build porque apps/web/.env.local não existe, e o
+#   contrato proíbe criá-lo. O build foi provado em comando próprio, sem ele.
+# npx pnpm@11.18.0 test — unit 1491/1491; workspaces 76/76 no mobile e 19/19 no
+#   web; privacy 189/189; scope 129/129, incluindo
+#   tests/scope/entrada-public-paths.test.mjs e tests/scope/entrada-skin.test.mjs.
+# npx pnpm@11.18.0 --filter web build — VERDE, com NEXT_PUBLIC_SUPABASE_URL e
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY exportados a partir de supabase status -o env.
+#   apps/web/.env.local continuou inexistente antes e depois do build.
+# bash run-e2e-entrada-base.sh tests/e2e/landing-v8.spec.ts tests/e2e/smoke.spec.ts --workers=1
+#   — 31 passaram, 17 pulados (a spec da landing só roda em 375 e 1440), 0
+#   falharam. Porta 3000 livre antes da execução.
+# node scripts/port/compare-landing.mjs — VERDE: 24 PNGs e report.json em
+#   .visual/port-001. Página inteira 1440 em 4884 px nos dois temas, igual ao
+#   protótipo; 375 em 5938 contra 6002 (os 64 px da linha da Ajuda que já tinha
+#   saído no PORT-001); dobras iguais; pageErrors vazio. O script recebeu
+#   PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH apontando para o Chromium 1248 instalado.
+# Conferido à mão: um registro por componente em
+#   apps/web/app/components/material/register.ts, tags novas declaradas em
+#   apps/web/types/material-web.d.ts sem any, /ajuda fora de PUBLIC_PATHS e
+#   nenhuma tela ou página de entrada alterada nesta tarefa.
+#
+# ── Correção da revisão independente — 22/10/2026, branch codex/entrada-base ──
+# Revisão confrontada: 13c34b7e. Commits: fca9a9ff (valor controlado e nome do
+# checkbox), 93e01d8e (diálogo fechado e símbolo da entrada), 083e5183 (provas
+# de servidor e shims de transform).
+#
+# Achado 1 — apps/web/app/components/material/controlled-value.ts (decisão pura
+#   valueToRestore) usada por outlined-text-field.tsx, checkbox.tsx e
+#   outlined-select.tsx: o valor é sincronizado a cada render e num
+#   queueMicrotask depois de input/change, devolvendo a prop quando o pai recusa
+#   a mudança. Provas: casos puros (recusa, aceite, valor igual, troca por
+#   outro) e varredura do uso em tests/unit/ui/entry-material-adapters.test.ts.
+# Achado 2 — checkbox.tsx passa aria-label ao md-checkbox (texto do rótulo quando
+#   é string; prop opcional ariaLabel para rótulo com links), com
+#   aria-describedby no mesmo host ARIA; tipos em
+#   apps/web/types/material-web.d.ts. Provas de markup: aria-label do rótulo
+#   simples e ariaLabel + aria-describedby do aceite composto.
+# Achado 3 — confirm-dialog.tsx monta o conteúdo só depois de registerDialog();
+#   show() espera o mesmo registro. Prova: renderToStaticMarkup com open=false
+#   não contém título, texto, Cancelar nem Confirmar.
+# Achado 4 — entry-shell.tsx envolve o BrandMark em .en-mark; entry.css dá 32 px
+#   e fill: var(--bv-symbol-body / --bv-symbol-threshold) nos dois temas. Prova
+#   de markup: a classe en-mark no HTML do servidor; varredura das regras de CSS.
+# Achado 5 — provas reais com react-dom/server e função pura.
+#   tests/e2e/entry-kit.spec.ts NÃO foi criado: nenhuma rota existente monta
+#   estes adaptadores (as telas de entrada são das frentes A a D), e montá-los
+#   mudaria o comportamento de uma rota. Para o vitest transformar os .tsx, o
+#   vitest.config.mjs da raiz liga oxc.jsx.runtime automatic (o coordenador
+#   trocou por isso os tsconfig.json aninhados que a primeira versão criou);
+#   apps/web/tsconfig.json continua com preserve para o Next.
+# Achado 6 — entry.css repõe padding-block e padding-inline do md-filled-button
+#   em .bv-skin (o Confirmar do diálogo ficava com padding 0); a landing não
+#   importa esta folha. Prova: varredura das duas declarações.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE (exit 0).
+# npx pnpm@11.18.0 exec vitest run tests/unit/ui — VERDE: 34 arquivos,
+#   315/315 testes; entry-material-adapters com 27 testes, incluindo os de SSR.
+# npx pnpm@11.18.0 exec vitest run tests/unit/ui tests/scope/entrada-public-paths
+#   .test.mjs tests/scope/entrada-skin.test.mjs — a parte de tests/unit/ui fecha
+#   verde; os dois arquivos de tests/scope usam node:test e o vitest os reporta
+#   como No test suite found (sem suíte). Isso é anterior a esta correção: a
+#   versão do HEAD, extraída com git show, falha do mesmo jeito. As asserções
+#   rodam e passam; o runner correto é node --test:
+#   npx pnpm@11.18.0 exec node --test tests/scope/entrada-public-paths.test.mjs
+#   tests/scope/entrada-skin.test.mjs — VERDE: 9/9.
+# npx pnpm@11.18.0 exec biome check <13 arquivos alterados> — 0 erros e 2 avisos
+#   pré-existentes em tests/unit/ui/entry-components.test.ts
+#   (noTemplateCurlyInString nas linhas 17 e 22, fora do diff).
+# Não rodei gate, build, Playwright nem servidor, como o contrato pede. Não
+# instalei pacote, não fiz push nem merge.

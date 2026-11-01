@@ -1,44 +1,79 @@
 "use client"
 
 import { isValidCpf } from "@bivaque/domain"
-import { Button, Form, Input, Radio, RadioGroup, Spinner } from "@heroui/react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
+import { formatCpfInput } from "../../../lib/onboarding/elegibility"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
 import { verificationErrorMessage } from "../../../lib/portal/verification-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL } from "../../../lib/support"
-import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
-import { showToast } from "../../components/bivaque/toast"
-import { AdmissionShell } from "./components/admission-shell"
-import styles from "./onboarding.module.css"
+import { EntryError } from "../../components/entry/entry-error"
+import { EntryShell } from "../../components/entry/entry-shell"
+import { EntrySteps } from "../../components/entry/entry-steps"
+import { MaterialFilledButton } from "../../components/material/filled-button"
+import { MaterialIcon } from "../../components/material/material-icon"
+import { MaterialOutlinedButton } from "../../components/material/outlined-button"
+import { MaterialOutlinedTextField } from "../../components/material/outlined-text-field"
+import { EntryHeading } from "./components/entry-heading"
+import { EntrySignOut } from "./components/entry-signout"
+import "./components/entry-elegibilidade.css"
 
-type OnboardingStep = "verify" | "family" | "done" | "loading"
+// PORT-004 (lote 4, frente B) — a elegibilidade como no protótipo
+// (`renderEntryCpf` e `renderEntryResult` em
+// prototypes/bivaque-html/src/features/entry/account.js).
+//
+// O que mudou em relação à tela anterior: a pergunta "Como você deseja
+// verificar seu acesso?" com as quatro opções saiu — o CPF é digitado direto,
+// com o bloco "Por que o CPF" e o link do convite de familiar no lugar do
+// ramo "Recebi um convite familiar". A categoria (ativa, veterano, pensionista)
+// continua vindo da fonte oficial; o corpo enviado a `/api/onboarding` é o
+// mesmo (`{ action: "verify-cpf", cpf }`), sem tipo de vínculo — a rota nunca
+// recebeu esse campo, e isso está registrado no relatório da frente.
+//
+// O resultado deixou de ser uma mensagem na mesma tela do formulário: são as
+// três telas do protótipo, no mesmo endereço `/onboarding`, como os passos de
+// `entryNext()`. Quem foi confirmado segue para a cidade, quem está em análise
+// vai para `/onboarding/status`, e quem não foi localizado ou não pôde ser
+// consultado fica aqui, com o caminho do documento.
+//
+// O CPF não é guardado em lugar nenhum: o campo é limpo antes de sair do passo
+// (`purgeCpfResidue` continua rodando na entrada) e a consulta sai do ambiente
+// do navegador assim que a resposta chega.
 
-type RoleId = "military" | "veteran" | "pensioner" | "family"
+type Step = "loading" | "cpf" | "notfound" | "unavailable"
 
-const ROLE_OPTIONS: ReadonlyArray<{ id: RoleId; label: string }> = [
-  { id: "military", label: "Sou militar das Forças Armadas" },
-  { id: "veteran", label: "Sou veterano" },
-  { id: "pensioner", label: "Sou pensionista" },
-  { id: "family", label: "Recebi um convite familiar" },
-]
+const CPF_INVALID = "CPF inválido. Confira os 11 dígitos."
 
-function formatCpf(digits: string): string {
-  if (digits.length <= 3) return digits
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
-  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`
+function apiErrorMessage(code: string): string {
+  switch (code) {
+    case "cpf is invalid":
+      return CPF_INVALID
+    case "cpf is required":
+      return "Digite seu CPF para continuar."
+    case "consent is required":
+      return "O aceite da entrada não está registrado. Volte ao cadastro para aceitar de novo."
+    case "unauthorized":
+      return "Sua sessão expirou. Entre novamente para continuar."
+    default:
+      return "Não foi possível conferir agora. Tente de novo."
+  }
 }
+
+// O título de cada passo recebe o foco ao abrir (EntryHeading), como
+// `entryFocusTitle` no protótipo: o leitor de tela anuncia o passo novo em vez
+// de deixar a pessoa procurando onde a tela mudou.
 
 export default function OnboardingPage() {
   return (
     <Suspense
       fallback={
-        <div className="grid flex-1 place-items-center px-6 py-12">
-          <p className="text-sm text-muted">Carregando...</p>
-        </div>
+        <EntryShell>
+          <div className="en-form">
+            <p className="en-lead">Carregando…</p>
+          </div>
+        </EntryShell>
       }
     >
       <OnboardingFlow />
@@ -49,47 +84,45 @@ export default function OnboardingPage() {
 function OnboardingFlow() {
   const router = useRouter()
   const searchParams = useSearchParams()
-
-  const [step, setStep] = useState<OnboardingStep>("loading")
-  const [role, setRole] = useState<RoleId>("military")
-  const [cpf, setCpf] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  // ADR-20260922-identidade-quando-portal-falha: com o Portal indisponível, a identidade
-  // é oferecida na hora, abaixo da mensagem de instabilidade.
-  const [offerIdentity, setOfferIdentity] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [familyToken, setFamilyToken] = useState("")
-  const [familyName, setFamilyName] = useState("")
-  const [result, setResult] = useState<string | null>(null)
-
   const inviteToken = searchParams.get("invite")
+
+  const [step, setStep] = useState<Step>("loading")
+  const [cpf, setCpf] = useState("")
+  const [fieldError, setFieldError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState("")
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     purgeCpfResidue(sessionStorage)
+
+    // O convite de familiar é uma tela própria (`/convite`, frente D). O link
+    // antigo (`/onboarding?invite=<token>`) continua chegando de convites
+    // criados antes deste deploy; ele não é aceito aqui, e o token não segue na
+    // URL: a tela do convite recebe `legado=1` e pede um link novo. Guardar o
+    // token no endereço só o exporia sem que a tela consiga validá-lo.
+    if (inviteToken) {
+      router.replace("/convite?legado=1")
+      return
+    }
 
     const boot = async () => {
       const {
         data: { session },
       } = await createBrowserClient().auth.getSession()
 
-      if (inviteToken) {
-        setFamilyToken(inviteToken)
-        setStep("family")
-        return
-      }
-
       if (!session) {
-        setStep("verify")
+        router.replace("/login?return=/onboarding")
         return
       }
-
-      setStep("verify")
 
       try {
         const res = await fetch("/api/onboarding/status", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
-        if (!res.ok) return
+        if (!res.ok) {
+          setStep("cpf")
+          return
+        }
 
         const data = (await res.json()) as {
           status: "pending" | "verified" | "rejected" | "temporary_error" | null
@@ -108,28 +141,43 @@ function OnboardingFlow() {
           router.replace("/onboarding/status")
           return
         }
-      } catch {}
+        // `rejected` e `temporary_error` são resultado, não formulário:
+        // `entryNext()` do protótipo leva os dois de volta ao resultado. Quem
+        // volta depois vê a mesma resposta, com o caminho do documento (e, no
+        // erro temporário, "Tentar de novo").
+        if (data.status === "rejected") {
+          setStep("notfound")
+          return
+        }
+        if (data.status === "temporary_error") {
+          setStep("unavailable")
+          return
+        }
+        setStep("cpf")
+      } catch {
+        setStep("cpf")
+      }
     }
 
-    boot()
+    void boot()
   }, [inviteToken, router])
 
-  const handleVerifyCpf = async () => {
-    setError(null)
-    setOfferIdentity(false)
+  const restart = () => {
+    setCpf("")
+    setErrorCode("")
+    setFieldError(null)
+    setStep("cpf")
+  }
 
-    if (role === "family") {
-      setStep("family")
-      if (familyToken.length === 0) {
-        setError("Abra o link do convite que você recebeu para concluir por aqui.")
-      }
-      return
-    }
+  const verify = async () => {
+    if (loading) return
+    setFieldError(null)
 
     if (!isValidCpf(cpf)) {
-      setError("CPF inválido. Confira os 11 dígitos.")
+      setFieldError(CPF_INVALID)
       return
     }
+
     setLoading(true)
 
     const {
@@ -137,11 +185,8 @@ function OnboardingFlow() {
     } = await createBrowserClient().auth.getSession()
 
     if (!session) {
-      showToast({
-        title: "Sua sessão expirou",
-        description: "Vamos levar você de volta ao login.",
-        variant: "warning",
-      })
+      setLoading(false)
+      setFieldError("Sua sessão expirou. Entre novamente para continuar.")
       router.push("/login?return=/onboarding")
       return
     }
@@ -159,98 +204,48 @@ function OnboardingFlow() {
       const data = (await response.json()) as Record<string, unknown>
 
       if (typeof data["error"] === "string") {
-        setError(data["error"] as string)
+        setFieldError(apiErrorMessage(data["error"]))
         return
       }
 
       if (data["localityMember"]) {
-        setResult("Verificação concluída. Sua entrada está pronta.")
-        setStep("done")
         router.push("/onboarding/welcome")
-      } else {
-        const outcome = data["outcome"] as Record<string, unknown>
-        // O nome que o Portal sugeriu atravessa a fronteira em memória (D11) e é
-        // guardado em sessionStorage descartável para o passo pós-elegibilidade.
-        // Nunca é persistido no banco.
-        if (outcome["status"] === "verified") {
-          const suggested =
-            typeof outcome["suggestedName"] === "string" ? outcome["suggestedName"] : ""
-          if (suggested.length > 0) {
-            window.sessionStorage.setItem("onboarding:suggestedName", suggested)
-          }
-          router.push("/onboarding/locality")
-        } else if (outcome["status"] === "rejected") {
-          router.push("/onboarding/documento")
-        } else if (outcome["status"] === "pending") {
-          router.push("/onboarding/status")
-        } else if (outcome["status"] === "temporary_error") {
-          const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
-          setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
-          setOfferIdentity(true)
-        }
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro na verificação")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAcceptFamilyInvite = async () => {
-    setError(null)
-    if (familyName.trim().length < 2) {
-      setError("Informe seu nome para aceitar o convite.")
-      return
-    }
-    if (familyToken.length === 0) {
-      setError("Abra o link do convite que você recebeu para concluir por aqui.")
-      return
-    }
-    setLoading(true)
-
-    const {
-      data: { session },
-    } = await createBrowserClient().auth.getSession()
-
-    if (!session) {
-      showToast({
-        title: "Sua sessão expirou",
-        description: "Vamos levar você de volta ao login.",
-        variant: "warning",
-      })
-      sessionStorage.setItem("onboarding:familyToken", familyToken)
-      router.push("/login?return=/onboarding")
-      return
-    }
-
-    try {
-      const response = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          action: "accept-family-invite",
-          token: familyToken,
-          display_name: familyName.trim(),
-        }),
-      })
-
-      const data = (await response.json()) as Record<string, unknown>
-
-      if (typeof data["error"] === "string") {
-        setError(data["error"] as string)
         return
       }
 
-      if (data["localityMember"]) {
-        setResult("Convite aceito. Sua conta está pronta.")
-        setStep("done")
-        router.push("/community")
+      const outcome = data["outcome"] as Record<string, unknown>
+      const status = outcome["status"]
+
+      if (status === "verified") {
+        // O nome sugerido pelo Portal atravessa a fronteira em memória (D11) e
+        // fica em sessionStorage descartável para o passo seguinte. Nunca é
+        // persistido no banco.
+        const suggested =
+          typeof outcome["suggestedName"] === "string" ? outcome["suggestedName"] : ""
+        if (suggested.length > 0) {
+          window.sessionStorage.setItem("onboarding:suggestedName", suggested)
+        }
+        router.push("/onboarding/locality")
+        return
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao aceitar convite")
+
+      if (status === "pending") {
+        router.push("/onboarding/status")
+        return
+      }
+
+      // O CPF sai da memória da tela antes de qualquer coisa ser mostrada.
+      setCpf("")
+
+      if (status === "rejected") {
+        setStep("notfound")
+        return
+      }
+
+      setErrorCode(typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : "")
+      setStep("unavailable")
+    } catch {
+      setFieldError("Não foi possível conferir agora. Verifique sua conexão e tente de novo.")
     } finally {
       setLoading(false)
     }
@@ -258,162 +253,141 @@ function OnboardingFlow() {
 
   if (step === "loading") {
     return (
-      <AdmissionShell
-        stage="access"
-        titleId="onboarding-loading-heading"
-        title="Preparando o próximo passo."
-      >
-        <div className={styles["loadingState"]}>
-          <Spinner size="lg" color="accent" />
-          <p>Verificando sua entrada…</p>
+      <EntryShell action={<EntrySignOut />}>
+        <div className="en-form">
+          <EntrySteps label="Elegibilidade" step={2} />
+          <p className="en-lead">Preparando o próximo passo…</p>
         </div>
-      </AdmissionShell>
+      </EntryShell>
     )
   }
 
-  const isFamily = step === "family"
-  const canSubmit = cpf.replace(/\D/g, "").length > 0
+  if (step === "notfound") {
+    return (
+      <EntryShell action={<EntrySignOut />}>
+        <div className="en-form">
+          <EntrySteps label="Elegibilidade" step={2} />
+          <EntryHeading key="notfound">Não localizamos o vínculo.</EntryHeading>
+          <p className="en-lead">
+            A fonte oficial não confirmou o vínculo deste CPF. Isso acontece com quem passou para a
+            reserva há pouco ou com pensionistas recentes.
+          </p>
+          <Link className="en-file" href="/onboarding/documento">
+            <MaterialIcon name="upload" />
+            <span>
+              <b>Enviar um documento</b>
+              PDF, JPG ou PNG, até 10 MB. A equipe responde em até 2 dias úteis.
+            </span>
+          </Link>
+          <MaterialOutlinedButton id="onboarding-cpf-retry" onClick={restart}>
+            Conferir o CPF de novo
+          </MaterialOutlinedButton>
+        </div>
+      </EntryShell>
+    )
+  }
+
+  if (step === "unavailable") {
+    // A fonte oficial fora do ar é um resultado distinto da rejeição. A cópia
+    // do protótipo serve à indisponibilidade; quando o motivo é limite de
+    // consultas ou demora, `verificationErrorMessage` diz a verdade sem expor
+    // código nenhum (o contrato do módulo é não transformar falha de
+    // infraestrutura em rejeição aparente).
+    const lead =
+      errorCode === "RATE_LIMITED" || errorCode === "TIMEOUT" || errorCode === "HTTP_ERROR"
+        ? verificationErrorMessage(errorCode, SUPPORT_EMAIL)
+        : "A fonte oficial está fora do ar. Tente de novo em alguns minutos."
+
+    return (
+      <EntryShell action={<EntrySignOut />}>
+        <div className="en-form">
+          <EntrySteps label="Elegibilidade" step={2} />
+          <EntryHeading key="unavailable">Não conseguimos consultar agora.</EntryHeading>
+          <p className="en-lead">{lead}</p>
+          <MaterialFilledButton id="onboarding-retry" onClick={restart}>
+            Tentar de novo
+          </MaterialFilledButton>
+          <p className="en-sub">Se continuar, fale com a gente: {SUPPORT_EMAIL}.</p>
+          {/* ADR-20260922-identidade-quando-portal-falha: com o Portal fora, a
+              identidade é oferecida na hora, sem consumir nova tentativa. */}
+          <Link className="en-file" href="/onboarding/documento">
+            <MaterialIcon name="upload" />
+            <span>
+              <b>Enviar um documento</b>
+              PDF, JPG ou PNG, até 10 MB. A equipe responde em até 2 dias úteis.
+            </span>
+          </Link>
+        </div>
+      </EntryShell>
+    )
+  }
+
+  const canSubmit = cpf.replace(/\D/g, "").length === 11
 
   return (
-    <AdmissionShell
-      stage="access"
-      titleId="onboarding-heading"
-      title={isFamily ? "Aceite seu convite." : "Verificar meu acesso"}
-      description={
-        isFamily
-          ? "Seu convite cria uma conta independente, ligada ao membro que convidou você."
-          : "Vamos conferir seu acesso à comunidade."
-      }
-    >
-      <div className={styles["stack"]}>
-        {step === "verify" && loading && (
-          <div className={styles["loadingState"]}>
-            <Spinner size="lg" color="accent" />
-            <p>Conferindo seus dados…</p>
-          </div>
-        )}
+    <EntryShell action={<EntrySignOut />}>
+      <div className="en-form">
+        <EntrySteps label="Elegibilidade" step={2} />
+        <EntryHeading key="cpf">Confirme seu vínculo.</EntryHeading>
+        <p className="en-lead">
+          Para militares federais ativos, veteranos e pensionistas militares.
+        </p>
 
-        {step === "done" && result && <FeedbackAlert variant="success" description={result} />}
-
-        {step === "verify" && !loading && (
-          <Form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleVerifyCpf()
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void verify()
+          }}
+          onKeyDown={(event) => {
+            // O campo do Material vive num shadow root: o Enter não chega ao
+            // formulário sozinho. O protótipo faz o mesmo enlace à mão.
+            if (event.key !== "Enter" || event.nativeEvent.isComposing) return
+            event.preventDefault()
+            void verify()
+          }}
+        >
+          <MaterialOutlinedTextField
+            autocomplete="off"
+            error={fieldError !== null}
+            id="onboarding-cpf"
+            inputmode="numeric"
+            label="CPF"
+            maxlength={14}
+            onChange={(value) => {
+              setFieldError(null)
+              setCpf(value.replace(/\D/g, "").slice(0, 11))
             }}
-            className={styles["form"] ?? ""}
+            placeholder="000.000.000-00"
+            required
+            value={formatCpfInput(cpf)}
+          />
+          <EntryError id="onboarding-error">{fieldError}</EntryError>
+          <MaterialFilledButton
+            disabled={loading || !canSubmit}
+            id="onboarding-cpf-submit"
+            type="submit"
           >
-            <div className={styles["verifyBlock"]}>
-              <p className={styles["verifyLegend"]}>Como você deseja verificar seu acesso?</p>
-              <RadioGroup
-                aria-label="Como você deseja verificar seu acesso?"
-                className={styles["radioList"] ?? ""}
-                value={role}
-                onChange={(value) => setRole(value as RoleId)}
-              >
-                {ROLE_OPTIONS.map((option) => (
-                  <Radio
-                    key={option.id}
-                    value={option.id}
-                    aria-label={option.label}
-                    className={styles["radioRow"] ?? ""}
-                  >
-                    <Radio.Content>
-                      <Radio.Control>
-                        <Radio.Indicator />
-                      </Radio.Control>
-                      <span>{option.label}</span>
-                    </Radio.Content>
-                  </Radio>
-                ))}
-              </RadioGroup>
-            </div>
+            {loading ? "Conferindo…" : "Conferir e continuar"}
+          </MaterialFilledButton>
+        </form>
 
-            <div className={styles["cpfField"]}>
-              <label className={styles["fieldLabel"]} htmlFor="onboarding-cpf">
-                Digite seu CPF
-              </label>
-              <Input
-                id="onboarding-cpf"
-                className={styles["control"] ?? ""}
-                aria-label="CPF"
-                placeholder="000.000.000-00"
-                inputMode="numeric"
-                autoComplete="off"
-                value={formatCpf(cpf)}
-                onChange={(e) => {
-                  const digits = (e.target as HTMLInputElement).value
-                    .replace(/\D/g, "")
-                    .slice(0, 11)
-                  setCpf(digits)
-                }}
-                required
-                maxLength={14}
-              />
-              <p className={styles["cpfSupport"]}>
-                A verificação por CPF é praticamente instantânea.
-              </p>
-            </div>
+        <div className="en-why">
+          <MaterialIcon name="verified_user" />
+          <span>
+            <b>Por que o CPF</b>
+            Com ele confirmamos o vínculo na fonte oficial, sem pedir posto nem organização. O
+            número não fica salvo.
+          </span>
+        </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              className={`${styles["primaryButton"]} ${styles["submitButton"]}`}
-              isDisabled={!canSubmit}
-            >
-              Verificar acesso
-            </Button>
-          </Form>
-        )}
-
-        {step === "family" && (
-          <>
-            <div className={styles["fieldGroup"]}>
-              <p className={styles["fieldLabel"]}>Como você quer ser chamado</p>
-              <Input
-                className={styles["control"] ?? ""}
-                aria-label="Seu nome"
-                placeholder="Seu nome"
-                value={familyName}
-                onChange={(e) => setFamilyName((e.target as HTMLInputElement).value)}
-                required
-                maxLength={80}
-              />
-            </div>
-
-            <Button
-              variant="primary"
-              className={styles["primaryButton"] ?? ""}
-              onPress={handleAcceptFamilyInvite}
-              isDisabled={loading}
-            >
-              {loading ? "Processando..." : "Aceitar convite"}
-            </Button>
-          </>
-        )}
-
-        {error && <FeedbackAlert variant="danger" description={error} />}
-
-        {offerIdentity && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted">
-              Você não precisa esperar: envie sua identidade militar digital e a equipe analisa. A
-              análise por identidade leva mais tempo que a conferência por CPF.
-            </p>
-            <Link href="/onboarding/documento" className={styles["primaryLink"] ?? ""}>
-              Enviar identidade agora
-            </Link>
-          </div>
-        )}
-
-        {step !== "done" && !(step === "verify" && loading) && (
-          <p className={styles["documentFooterNote"]}>
-            {isFamily
-              ? "O convite é conferido pelo e-mail ao qual foi enviado."
-              : "Se não conseguirmos confirmar, você poderá enviar sua identidade."}
-          </p>
-        )}
+        <Link className="en-link" href="/convite">
+          <MaterialIcon name="group" />
+          <span>
+            <b>É cônjuge ou dependente?</b>
+            Você entra pelo convite de quem é militar, sem CPF.
+          </span>
+        </Link>
       </div>
-    </AdmissionShell>
+    </EntryShell>
   )
 }

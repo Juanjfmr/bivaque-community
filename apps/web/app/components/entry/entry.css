@@ -1,0 +1,246 @@
+/* PORT-002 (lote 4 da entrada) — a pele e o esqueleto da entrada do protótipo.
+   As medidas, os espaços e os tamanhos vêm de
+   prototypes/bivaque-html/src/styles/entry.css (.en, .en-top, .en-step,
+   .en-steps, .en-form, .en-err…). As cores vêm de ../brand-tokens.css, que
+   agora escopa os tokens em `.bv-skin` e não mais só na landing.
+
+   O escopo `.bv-entry` faz o que `.ld` faz na landing: nenhuma regra daqui
+   toca uma tela ainda não portada. As regras de componente do Material que
+   precisam valer para qualquer tela portada ficam em `.bv-skin` — hoje só a
+   entrada importa esta folha.
+
+   O que muda em relação ao protótipo, e por quê:
+   - o protótipo esconde a barra do app com `body.entry-mode`; no Next a entrada
+     é uma tela própria, então a casca ocupa a janela com `min-height: 100vh`;
+   - os resets globais do protótipo viram regras escopadas, como na landing. */
+
+.bv-entry {
+  position: relative;
+  min-height: 100vh;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-ref-typeface-plain);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bv-entry *,
+.bv-entry *::before,
+.bv-entry *::after {
+  box-sizing: border-box;
+}
+
+.bv-entry :focus-visible {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 3px;
+}
+
+/* O `md-icon` é texto de fonte, como na landing. A regra fica em `.bv-skin`
+   porque o ícone é da camada visual, não da entrada: qualquer tela portada que
+   importe esta folha recebe o mesmo glifo. */
+.bv-skin md-icon {
+  flex: none;
+  font-family: var(--md-ref-typeface-symbols);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: normal;
+  white-space: nowrap;
+  font-feature-settings: "liga";
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 450,
+    "GRAD" 0,
+    "opsz" 24;
+  user-select: none;
+}
+
+/* O preflight do Tailwind (`* { padding: 0 }`) vence o `:host` do Material na
+   cascata da árvore externa — a lição do PORT-001. Na landing o botão preenchido
+   repõe o padding em landing.css; a entrada usa os três (o "Confirmar" do
+   diálogo é preenchido e ficava com `padding: 0px`), então a reposição dos três
+   fica aqui, com as mesmas medidas do _shared.scss do @material/web. */
+.bv-skin md-filled-button {
+  padding-block: calc(
+    (
+      var(--md-filled-button-container-height) -
+      var(--md-filled-button-label-text-line-height, 20px)
+    ) /
+    2
+  );
+  padding-inline: var(--md-filled-button-leading-space, 24px)
+    var(--md-filled-button-trailing-space, 24px);
+}
+
+.bv-skin md-outlined-button {
+  padding-block: calc(
+    (
+      var(--md-outlined-button-container-height) -
+      var(--md-outlined-button-label-text-line-height, 20px)
+    ) /
+    2
+  );
+  padding-inline: var(--md-outlined-button-leading-space, 24px)
+    var(--md-outlined-button-trailing-space, 24px);
+}
+
+.bv-skin md-text-button {
+  padding-block: calc(
+    (var(--md-text-button-container-height) - var(--md-text-button-label-text-line-height, 20px)) /
+    2
+  );
+  padding-inline: var(--md-text-button-leading-space, 12px)
+    var(--md-text-button-trailing-space, 12px);
+}
+
+/* A ação destrutiva do diálogo de confirmação usa a cor de erro do tema. */
+.bv-skin md-filled-button.danger-fill {
+  --md-filled-button-container-color: var(--md-sys-color-error);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-error);
+  --md-filled-button-hover-label-text-color: var(--md-sys-color-on-error);
+  --md-filled-button-focus-label-text-color: var(--md-sys-color-on-error);
+  --md-filled-button-pressed-label-text-color: var(--md-sys-color-on-error);
+  --md-filled-button-hover-state-layer-color: var(--md-sys-color-on-error);
+  --md-filled-button-focus-state-layer-color: var(--md-sys-color-on-error);
+  --md-filled-button-pressed-state-layer-color: var(--md-sys-color-on-error);
+}
+
+.bv-entry .en {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px 20px 32px;
+}
+
+.bv-entry .en-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+}
+
+/* O símbolo do topo. Na landing o tamanho e as cores vêm de `.ld-home
+   .brand-mark` e de `.ld .brand-mark …`; nada disso alcança a entrada, que
+   herdava o tamanho do viewBox (mais de 56 px no cabeçalho) e o preenchimento
+   preto padrão dos dois caminhos, inclusive no tema escuro. As medidas são as do
+   protótipo (`.brand-mark{width:32px;height:32px;flex:none}` em base.css) e as
+   cores são os tokens do tema, como em `base.css` — o par claro/escuro já está
+   em brand-tokens.css sob `.bv-skin`. */
+.bv-entry .en-mark {
+  display: inline-flex;
+  flex: none;
+}
+
+.bv-entry .en-mark .brand-mark {
+  width: 32px;
+  height: 32px;
+}
+
+.bv-entry .en-mark .bv-symbol-body {
+  fill: var(--bv-symbol-body);
+}
+
+.bv-entry .en-mark .bv-symbol-threshold {
+  fill: var(--bv-symbol-threshold);
+}
+
+.bv-entry .en-top md-text-button,
+.bv-entry .en-top-action {
+  margin-left: auto;
+}
+
+.bv-entry .en-brand {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.bv-entry .en-lead {
+  margin: 0 0 16px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+@media (min-width: 900px) {
+  .bv-entry .en {
+    padding: 24px 48px 48px;
+  }
+
+  .bv-entry .en-lead {
+    font-size: 18px;
+    line-height: 28px;
+  }
+}
+
+.bv-entry .en-form {
+  max-width: 480px;
+}
+
+.bv-entry .en-step {
+  margin: 4px 0 2px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .en-steps {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 16px;
+}
+
+.bv-entry .en-steps i {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.bv-entry .en-steps i.on {
+  background: var(--md-sys-color-primary);
+}
+
+.bv-entry .en-h1 {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.bv-entry .en-form md-outlined-text-field {
+  width: 100%;
+  margin: 0 0 12px;
+}
+
+.bv-entry .en-form > md-filled-button,
+.bv-entry .en-form > md-outlined-button {
+  width: 100%;
+  height: 52px;
+  margin: 6px 0;
+}
+
+.bv-entry .en-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 20px;
+  margin: 4px 0 8px;
+}
+
+.bv-entry .en-err {
+  min-height: 20px;
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--md-sys-color-error);
+}
+
+.bv-entry .en-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 12px 0 0;
+}

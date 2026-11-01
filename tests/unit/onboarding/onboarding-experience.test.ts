@@ -28,24 +28,40 @@ describe("onboarding experience", () => {
     expect(admissionSource).not.toContain("outras localidades abrirem")
   })
 
-  it("separates the board-38 access step from the board-39 locality step", () => {
-    expect(read("page.tsx")).toContain("Verificar meu acesso")
-    expect(read("locality/page.tsx")).toContain("Qual cidade você quer explorar?")
+  it("separates the board-38 access step from the board-39 city step", () => {
+    // PORT-004 (frente B): a prancha 38 virou a elegibilidade do protótipo
+    // ("Confirme seu vínculo."), com o CPF direto e sem a pergunta do tipo de
+    // vínculo. A prancha 39 virou a tela de cidade e momento (PORT-005), coberta
+    // logo abaixo.
+    expect(read("page.tsx")).toContain("Confirme seu vínculo.")
+    expect(read("page.tsx")).not.toContain("Como você deseja verificar seu acesso?")
     expect(read("welcome/page.tsx")).toContain("Você chegou ao Bivaque.")
   })
 
-  // A versão de 08/09/2026 (especificação §4.1 R14–R16 e prancha 39) substitui
-  // o passo único "Localidade" por um contexto de dois passos visíveis — Cidade
-  // e Perfil — antes de "Concluir". A expectativa antiga deste arquivo
-  // ("Escolha sua localidade.") codificava o desenho superado; a cobertura do
-  // novo contrato é maior, não menor: o esqueleto de três passos, o H1 da
-  // cidade e a existência do passo de personalização passam a ser exigidos.
-  it("apresenta o contexto Cidade → Perfil → Concluir da prancha 39", () => {
-    expect(read("components/context-steps.tsx")).toContain('{ id: "cidade", label: "Cidade" }')
-    expect(read("components/context-steps.tsx")).toContain('{ id: "perfil", label: "Perfil" }')
-    expect(read("components/context-steps.tsx")).toContain('{ id: "concluir", label: "Concluir" }')
-    expect(read("locality/page.tsx")).toContain("Qual cidade você quer explorar?")
-    expect(read("perfil/page.tsx")).toContain("Deixe com a sua cara.")
+  // PORT-005 (ADR-20261022-entrada-do-prototipo, item 3): a entrada segue o
+  // protótipo. Cidade e momento são UMA tela — cidade, momento, a data que o
+  // momento pede, destino (só em "Saindo") e "como quer ser chamado" —, e o
+  // passo de personalização deixou de fazer parte da entrada: ele desvia para
+  // cá, e foto/Força/interesses ficam para o perfil.
+  it("apresenta a tela de cidade e momento do protótipo", () => {
+    const city = read("locality/page.tsx")
+
+    expect(city).toContain("Onde e em que momento?")
+    expect(city).toContain("Concluir minha entrada")
+  })
+
+  it("mantém a tela de cidade fora do esqueleto antigo de três passos", () => {
+    const city = read("locality/page.tsx")
+
+    expect(city).toContain("EntrySteps")
+    expect(city).not.toContain("ContextSteps")
+  })
+
+  it("o passo de perfil deixou de fazer parte da entrada e desvia para a cidade", () => {
+    const profile = read("perfil/page.tsx")
+
+    expect(profile).toContain('redirect("/onboarding/locality")')
+    expect(profile).not.toContain("Deixe com a sua cara.")
   })
 
   it("gives the document exception control an explicit accessible name", () => {

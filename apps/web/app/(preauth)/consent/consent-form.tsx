@@ -1,13 +1,32 @@
 "use client"
 
-import { Button, Checkbox } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
-import styles from "../onboarding/onboarding.module.css"
+import { EntryError } from "../../components/entry/entry-error"
+import { EntryShell } from "../../components/entry/entry-shell"
+import { EntrySteps } from "../../components/entry/entry-steps"
+import { MaterialFilledButton } from "../../components/material/filled-button"
+import { MaterialTextButton } from "../../components/material/text-button"
+import { EntryConsent } from "../login/components/entry-consent"
 import { recordConsentAction } from "./actions"
+import "../login/components/entry-auth.css"
 
-export function ConsentForm({ consentVersion }: { consentVersion: number }) {
+// O passo "Aceite" do protótipo (`renderEntryGoogleConsent` em login.js), que o
+// hotfix do PR #104 tornou obrigatório para quem entra pelo Google: o Google não
+// passa pelo formulário de cadastro, onde fica a linha do aceite, e sem aceite
+// gravado a entrada recusa a conferência do CPF. O desvio que traz a pessoa até
+// aqui é do callback (`app/auth/callback/redirect-plan.ts`).
+//
+// O registro continua no servidor, como antes: `recordConsentAction` resolve o
+// autor pelo token da sessão e grava as versões do contrato compartilhado. O
+// cookie só é atalho de navegação — a autoridade é a linha no banco.
+type ConsentFormProperties = Readonly<{
+  consentVersion: number
+  email: string | null
+  signedIn: boolean
+}>
+
+export function ConsentForm({ consentVersion, email, signedIn }: ConsentFormProperties) {
   const router = useRouter()
   const [accepted, setAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -15,7 +34,10 @@ export function ConsentForm({ consentVersion }: { consentVersion: number }) {
 
   const handleAccept = async () => {
     if (!accepted) {
-      setError("Leia os documentos e marque o aceite para continuar.")
+      // A frase do protótipo, e o foco na caixa: a recusa precisa apontar para
+      // o que falta, não para o botão que a pessoa acabou de apertar.
+      setError("Para continuar, aceite a Política de privacidade e o Código de conduta.")
+      document.getElementById("en-consent")?.focus()
       return
     }
 
@@ -35,47 +57,35 @@ export function ConsentForm({ consentVersion }: { consentVersion: number }) {
   }
 
   return (
-    <div className={styles["stack"]}>
-      {error && <FeedbackAlert variant="danger" description={error} />}
+    <EntryShell backHref="/signup">
+      <div className="en-form">
+        <EntrySteps label="Conta" step={1} />
+        <h1 className="en-h1">Antes de entrar, as regras.</h1>
 
-      {/* Rótulo em texto puro: os documentos têm links próprios de 44px acima
-          (page.tsx). Link dentro do rótulo de um checkbox é interativo aninhado
-          — anti-padrão de a11y e o que disparava os findings a.font-medium. */}
-      <Checkbox
-        isSelected={accepted}
-        onChange={setAccepted}
-        isDisabled={loading}
-        aria-label="Li e concordo com a Política de privacidade e o Código de conduta do Alpha fechado"
-        className="[&_input]:min-h-11 [&_input]:min-w-11 [&_input]:transition-opacity [&_input]:duration-[var(--semantic-motion-duration-fast)]"
-      >
-        <Checkbox.Content>
-          <Checkbox.Control>
-            <Checkbox.Indicator />
-          </Checkbox.Control>
-          <span className="text-sm text-muted">
-            Li e concordo com a Política de privacidade e o Código de conduta do Alpha fechado. Os
-            documentos completos estão nos links acima.
-          </span>
-        </Checkbox.Content>
-      </Checkbox>
+        {signedIn ? (
+          <p className="en-lead">{`Você entrou com o Google como ${email ?? "sua conta"}.`}</p>
+        ) : (
+          <p className="en-lead">Entre na sua conta para registrar o aceite.</p>
+        )}
 
-      <Button
-        variant="primary"
-        className={styles["primaryButton"] ?? ""}
-        onPress={handleAccept}
-        isDisabled={!accepted || loading}
-      >
-        {loading ? "Registrando..." : "Concordar e continuar"}
-      </Button>
-
-      {/* styles.note é grid "20px 1fr" (ícone + texto). Sem ícone aqui, o texto
-          cairia na coluna de 20px — uma palavra por linha. col-span-full põe o
-          texto nas duas colunas. */}
-      <p className={styles["note"]}>
-        <span className="col-span-full">
-          Seu aceite fica registrado com as versões dos documentos apresentados.
-        </span>
-      </p>
-    </div>
+        {signedIn ? (
+          <>
+            <EntryConsent checked={accepted} onChange={setAccepted} />
+            <EntryError id="en-err">{error}</EntryError>
+            <MaterialFilledButton
+              disabled={loading ? true : undefined}
+              onClick={handleAccept}
+              type="button"
+            >
+              {loading ? "Registrando..." : "Concordar e continuar"}
+            </MaterialFilledButton>
+          </>
+        ) : (
+          <MaterialTextButton href="/login" type="button">
+            Entrar
+          </MaterialTextButton>
+        )}
+      </div>
+    </EntryShell>
   )
 }

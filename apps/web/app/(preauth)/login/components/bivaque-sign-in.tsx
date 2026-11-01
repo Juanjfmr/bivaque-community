@@ -1,89 +1,96 @@
 "use client"
 
 import { CONSENT_VERSION } from "@bivaque/domain"
-import { Button } from "@heroui/react"
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useRef, useState } from "react"
+import { submitEntryFormOnEnter } from "../../../../lib/auth/entry-enter"
+import {
+  type EntryFieldTarget,
+  type EntryFormProblem,
+  entryFieldId,
+  loginProblem,
+  normalizeEntryEmail,
+  normalizeEntryName,
+  signupProblem,
+} from "../../../../lib/auth/entry-form"
 import {
   classifySignIn,
   classifySignUp,
   type PasswordAuthView,
-  passwordProblem,
+  SENHA_REGRA,
 } from "../../../../lib/auth/password-auth"
 import { sanitizeNext } from "../../../../lib/security/sanitize-next"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { writePendingConfirmation } from "../../../components/auth/resend-clock"
-import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { EntryError } from "../../../components/entry/entry-error"
+import { EntryShell } from "../../../components/entry/entry-shell"
+import { EntrySteps } from "../../../components/entry/entry-steps"
+import { MaterialFilledButton } from "../../../components/material/filled-button"
+import { MaterialOutlinedButton } from "../../../components/material/outlined-button"
+import { MaterialOutlinedTextField } from "../../../components/material/outlined-text-field"
+import { MaterialPasswordField } from "../../../components/material/password-field"
+import { MaterialTextButton } from "../../../components/material/text-button"
 import { recordConsentAction } from "../../consent/actions"
-import styles from "./bivaque-sign-in.module.css"
+import { EntryConsent } from "./entry-consent"
+import "./entry-auth.css"
 
 interface BivaqueSignInProps {
   onGoogleSignIn?: () => Promise<void> | void
   mode?: "login" | "signup"
 }
 
-// Composição da prancha 36-web-auth-entrada (guia visual de 06/09/2026): dois
-// destinos distintos, cada um com seu título, e a navegação recíproca nos links
-// de rodapé — não abas de um formulário só. O mecanismo é o de ADR-20260907-
-// login-com-senha (instrução posterior à prancha, que precisa ser regerada):
-// e-mail e senha, Google como alternativa, recuperação por link de e-mail. A
-// copy da prancha que descrevia "Receber código" não entra: o provedor não
-// envia código, e a guia proíbe prometer integração inexistente.
+// Entrar e criar conta como no protótipo
+// (prototypes/bivaque-html/src/features/entry/: `renderEntrySignup` em
+// account.js e `renderEntryLogin` em login.js), na pele da casca da PORT-002.
+//
+// O que veio da especificação, palavra por palavra: o Google no topo com o "ou
+// com e-mail" embaixo, "Passo 1 de 3 · Conta" no cadastro, a regra da senha como
+// texto de apoio do campo, o aceite com os dois documentos como links e a frase
+// do Google ("o aceite vem no passo seguinte"), o pé com a navegação recíproca,
+// as mensagens de erro na linha fixa do `.en-err` e o campo que recebe o foco
+// quando a validação recusa o passo.
+//
+// O que NÃO veio, e por quê:
+//   - o "Modo teste: use … e qualquer senha" do rodapé do entrar: no Next o
+//     provedor é real, e sugerir um endereço de teste numa tela pública é o
+//     oposto de anti-enumeração (ADR-20260907-login-com-senha);
+//   - o botão desligado até o aceite: a especificação deixa o botão ativo e
+//     explica no envio; o portão de verdade é o servidor, que só grava o aceite
+//     depois de a conta existir (ADR-20260907-consentimento-no-cadastro);
+//   - o `<form>` do protótipo não submete com o Material: o `<button>` do
+//     `md-filled-button` vive no shadow root e não tem form owner. O envio é o
+//     `onSubmit` + o Enter tratado no `onKeyDown`, e o botão é `type="submit"`
+//     porque o componente é form-associated — o clique pede o submit do form.
 const entryCopy = {
   login: {
     title: "Que bom ter você de volta.",
     submit: "Entrar",
     loading: "Entrando...",
     google: "Continuar com Google",
+    googleLoading: "Abrindo Google...",
     alternateLabel: "Criar conta",
     alternateHref: "/signup",
+    footLead: "",
+    // `entryTop('')`: o topo da tela de entrar sai da entrada e volta à
+    // apresentação pública, como no protótipo.
+    topLabel: "Sair",
+    topHref: "/",
   },
   signup: {
     title: "Vamos começar.",
     submit: "Criar conta",
     loading: "Criando conta...",
     google: "Continuar com Google",
-    alternateLabel: "Já tenho conta",
+    googleLoading: "Abrindo Google...",
+    alternateLabel: "Entrar",
     alternateHref: "/login",
+    footLead: "Já tem conta?",
+    // `entryTop('','entrar')`: o cadastro leva ao entrar pelo topo.
+    topLabel: "Entrar",
+    topHref: "/login",
   },
 } as const
-
-function GoogleIcon() {
-  return (
-    <svg className={styles["googleIcon"]} viewBox="0 0 48 48" aria-hidden="true">
-      <path
-        fill="#FFC107"
-        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s12-5.373 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z"
-      />
-      <path
-        fill="#FF3D00"
-        d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
-      />
-      <path
-        fill="#4CAF50"
-        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
-      />
-      <path
-        fill="#1976D2"
-        d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.022 35.026 44 30.038 44 24c0-2.641-.21-5.236-.611-7.743z"
-      />
-    </svg>
-  )
-}
-
-// A prancha mostra a marca como wordmark tipográfico sobre a foto, sem ícone.
-// No topo mobile, onde a foto não aparece, o mesmo wordmark assume o papel de
-// link para o início.
-function Wordmark({ onPhoto = false }: { onPhoto?: boolean }) {
-  return (
-    <span className={styles["wordmark"]} data-photo={onPhoto ? "true" : undefined}>
-      BIVAQUE
-    </span>
-  )
-}
 
 export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInProps) {
   const router = useRouter()
@@ -91,17 +98,15 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [accepted, setAccepted] = useState(false)
   const [result, setResult] = useState<PasswordAuthView | null>(null)
+  const [problem, setProblem] = useState<EntryFormProblem | null>(null)
   const [loading, setLoading] = useState<"form" | "google" | null>(null)
   // Dois cliques dentro do mesmo tick lêem o mesmo `loading` (estado do React
   // atualiza depois); o ref muda na hora e é o que segura a segunda request.
   const submittingRef = useRef(false)
 
   const copy = entryCopy[mode]
-  const titleId = mode === "signup" ? "signup-title" : "login-title"
-  const prefix = mode === "signup" ? "bivaque-signup" : "bivaque-signin"
 
   // Destino pós-entrada: o proxy anota ?redirect= quando devolve alguém para cá.
   // Aceita só rota interna — sanitize-next rejeita absoluta, //host e
@@ -115,6 +120,20 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     return clean === "/" ? null : clean
   }
 
+  // O protótipo põe o foco no campo que recusou o passo
+  // (`entryError(texto, idDoCampo)`), para quem usa leitor de tela ou teclado
+  // não ter de procurar onde está o problema.
+  const showProblem = (found: EntryFormProblem) => {
+    setProblem(found)
+    setResult(null)
+    const field = document.getElementById(entryFieldId(found.target, mode))
+    field?.focus({ preventScroll: false })
+  }
+
+  const clearProblem = (target: EntryFieldTarget) => {
+    setProblem((current) => (current?.target === target ? null : current))
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     // Envio em andamento não duplica: teclar Enter com o request voando já
@@ -122,17 +141,21 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     if (submittingRef.current) return
     submittingRef.current = true
     setResult(null)
+    setProblem(null)
 
-    // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
-    // recusar uma senha curta é uma ida e volta que a pessoa não precisa
-    // esperar. No login não se valida formato — a senha antiga pode ter
-    // qualquer forma, e recusá-la aqui contaria que ela não é a atual.
-    if (mode === "signup") {
-      const problem = passwordProblem(password)
-      if (problem) {
-        setResult({ outcome: "weak-password", message: problem, diagnostic: "local" })
-        return
-      }
+    // No cadastro a senha e o aceite são conferidos antes de sair daqui: mandar
+    // o servidor recusar uma senha curta é uma ida e volta que a pessoa não
+    // precisa esperar, e o aceite é condição de a conta existir. No entrar não
+    // se valida formato de senha — a senha antiga pode ter qualquer forma, e
+    // recusá-la aqui contaria que ela não é a atual.
+    const found =
+      mode === "signup"
+        ? signupProblem({ accepted, email, name, password })
+        : loginProblem({ email, password })
+    if (found) {
+      submittingRef.current = false
+      showProblem(found)
+      return
     }
 
     setLoading("form")
@@ -141,10 +164,10 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: normalizeEntryEmail(email),
           password,
           options: {
-            data: { display_name: name.trim() },
+            data: { display_name: normalizeEntryName(name) },
             // Quando o provedor exige confirmação, o link nasce daqui e volta
             // pelo callback com o marcador do aceite. O endereço viaja dentro
             // do link assinado pelo servidor, nunca em query da nossa tela.
@@ -159,7 +182,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             // agora — ele é registrado pelo callback, no link acima. A flag
             // local só ecoa o endereço para a tela de confirmação; não é
             // prova nem promessa de envio: quem manda o e-mail é o servidor.
-            writePendingConfirmation({ email: email.trim(), lastResendAt: null })
+            writePendingConfirmation({ email: normalizeEntryEmail(email), lastResendAt: null })
             router.push("/auth/confirmar-email")
             return
           }
@@ -190,7 +213,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         setResult(view)
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: normalizeEntryEmail(email),
           password,
         })
         const view = classifySignIn(error)
@@ -203,6 +226,9 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
           router.push("/onboarding")
           return
         }
+        // `fail()` na especificação apaga a senha digitada: credencial recusada
+        // não fica no campo para quem chegar depois na mesma tela.
+        setPassword("")
         setResult(view)
       }
     } catch (thrown) {
@@ -216,6 +242,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   const handleGoogle = async () => {
     if (loading !== null) return
     setResult(null)
+    setProblem(null)
     setLoading("google")
 
     try {
@@ -237,186 +264,141 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   }
 
   return (
-    <main className={styles["root"]}>
-      <section className={styles["formPanel"]} aria-labelledby={titleId}>
-        <header className={styles["topbar"]}>
-          <Link href="/" className={styles["brandLink"]} aria-label="Bivaque, voltar ao início">
-            <Wordmark />
-          </Link>
-          <Link href="/" className={styles["backLink"]}>
-            <ArrowLeft aria-hidden="true" />
-            <span>Voltar</span>
-          </Link>
-        </header>
+    <EntryShell
+      action={
+        <MaterialTextButton href={copy.topHref} type="button">
+          {copy.topLabel}
+        </MaterialTextButton>
+      }
+    >
+      {/* `noValidate` de propósito: os campos levam `required` (o leitor de tela
+          anuncia o campo obrigatório e o gerenciador de senhas o reconhece), mas
+          quem valida e explica é esta tela, na ordem da especificação. Sem
+          `noValidate` o navegador abre o balão nativo dele e a mensagem da
+          especificação nunca aparece. */}
+      <form
+        className="en-form"
+        noValidate
+        onKeyDown={submitEntryFormOnEnter}
+        onSubmit={handleSubmit}
+      >
+        {mode === "signup" && <EntrySteps label="Conta" step={1} />}
+        <h1 className="en-h1">{copy.title}</h1>
 
-        <div className={styles["mobileImage"]} aria-hidden="true">
-          <Image src="/landing/hero-bivaque-arrival.webp" alt="" fill unoptimized sizes="100vw" />
-        </div>
+        <MaterialOutlinedButton
+          disabled={loading !== null ? true : undefined}
+          onClick={handleGoogle}
+          type="button"
+        >
+          {loading === "google" ? copy.googleLoading : copy.google}
+        </MaterialOutlinedButton>
+        <p className="en-or">ou com e-mail</p>
 
-        <div className={styles["formContent"]}>
-          <div className={styles["heading"]}>
-            <h1 id={titleId}>{copy.title}</h1>
-          </div>
+        {mode === "signup" && (
+          <MaterialOutlinedTextField
+            autocomplete="name"
+            error={problem?.target === "name" ? true : undefined}
+            id="en-name"
+            label="Nome"
+            maxlength={80}
+            minlength={2}
+            onChange={(value) => {
+              setName(value)
+              clearProblem("name")
+            }}
+            required
+            value={name}
+          />
+        )}
 
-          <form className={styles["form"]} onSubmit={handleSubmit}>
-            {mode === "signup" && (
-              // A nota da prancha 36 é explícita: nome de apresentação, não
-              // nome civil completo. O rótulo simples diz isso sem prometer o
-              // que o campo não exige.
-              <label className={styles["field"]} htmlFor={`${prefix}-name`}>
-                <span>Nome</span>
-                <span className={styles["inputShell"]}>
-                  <User aria-hidden="true" />
-                  <input
-                    id={`${prefix}-name`}
-                    type="text"
-                    autoComplete="name"
-                    placeholder="Como você quer ser chamado"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    required
-                  />
-                </span>
-              </label>
-            )}
-
-            <label className={styles["field"]} htmlFor={`${prefix}-email`}>
-              <span>E-mail</span>
-              <span className={styles["inputShell"]}>
-                <Mail aria-hidden="true" />
-                <input
-                  id={`${prefix}-email`}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="nome@exemplo.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </span>
-            </label>
-
-            <label className={styles["field"]} htmlFor={`${prefix}-password`}>
-              <span>Senha</span>
-              <span className={styles["inputShell"]}>
-                <Lock aria-hidden="true" />
-                <input
-                  id={`${prefix}-password`}
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                  placeholder={mode === "signup" ? "Ao menos 8 caracteres" : "Sua senha"}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-                {/* Ver a senha digitada é acessibilidade antes de ser conveniência:
-                    quem tem dificuldade motora ou visual erra mais em campo mascarado. */}
-                <button
-                  type="button"
-                  className={styles["revealButton"]}
-                  onClick={() => setShowPassword((shown) => !shown)}
-                  aria-pressed={showPassword}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                >
-                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-                </button>
-              </span>
-            </label>
-
-            {mode === "signup" && (
-              // O texto vem da versão aprovada (ADR-20260907-consentimento-no-
-              // cadastro), não da prancha: "Termos de uso" e "Código de
-              // convivência" não têm rota nem texto aprovado, e a guia proíbe
-              // tirar copy legal de imagem.
-              <label className={styles["consentRow"]} htmlFor={`${prefix}-consent`}>
-                <input
-                  id={`${prefix}-consent`}
-                  type="checkbox"
-                  checked={accepted}
-                  onChange={(event) => setAccepted(event.target.checked)}
-                  required
-                />
-                <span>
-                  Li e aceito a{" "}
-                  <Link href={{ pathname: "/privacidade" }} target="_blank" rel="noreferrer">
-                    Política de privacidade
-                  </Link>{" "}
-                  e o{" "}
-                  <Link href={{ pathname: "/codigo-de-conduta" }} target="_blank" rel="noreferrer">
-                    Código de conduta
-                  </Link>
-                  .
-                </span>
-              </label>
-            )}
-
-            <Button
-              type="submit"
-              variant="primary"
-              className={styles["primaryButton"] ?? ""}
-              isDisabled={loading !== null || (mode === "signup" && !accepted)}
-            >
-              {loading === "form" ? copy.loading : copy.submit}
-            </Button>
-          </form>
-
-          <div className={styles["divider"]}>
-            <span>ou</span>
-          </div>
-
-          <Button
-            onPress={handleGoogle}
-            variant="outline"
-            className={styles["googleButton"] ?? ""}
-            isDisabled={loading !== null}
-          >
-            <GoogleIcon />
-            {loading === "google" ? "Abrindo Google..." : copy.google}
-          </Button>
-
-          {result && result.outcome !== "ok" && (
-            <FeedbackAlert
-              variant={result.outcome === "offline" ? "warning" : "danger"}
-              description={
-                result.suggestSignIn ? (
-                  <>
-                    {result.message} <Link href={{ pathname: "/login" }}>Entrar</Link>
-                  </>
-                ) : (
-                  result.message
-                )
-              }
-            />
-          )}
-
-          <p className={styles["entryLinks"]} data-mode={mode}>
-            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateLabel}</Link>
-            {mode === "login" && (
-              <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
-            )}
-          </p>
-        </div>
-      </section>
-
-      {/* Sem aria-hidden: no desktop este é o único link de marca (a topbar é
-          ocultada em CSS), e esconder um elemento focável da tecnologia
-          assistiva é o erro que a regra de acessibilidade proíbe. */}
-      <section className={styles["visualPanel"]}>
-        <Image
-          src="/landing/hero-bivaque-arrival.webp"
-          alt=""
-          fill
-          priority
-          unoptimized
-          sizes="50vw"
+        <MaterialOutlinedTextField
+          autocomplete="email"
+          error={problem?.target === "email" ? true : undefined}
+          id="en-email"
+          inputmode="email"
+          label="E-mail"
+          onChange={(value) => {
+            setEmail(value)
+            clearProblem("email")
+          }}
+          required
+          type="email"
+          value={email}
         />
-        <div className={styles["visualShade"]} aria-hidden="true" />
-        <Link href="/" className={styles["photoBrand"]} aria-label="Bivaque, voltar ao início">
-          <Wordmark onPhoto />
-        </Link>
-      </section>
-    </main>
+
+        <MaterialPasswordField
+          autocomplete={mode === "signup" ? "new-password" : "current-password"}
+          error={problem?.target === "password" ? true : undefined}
+          id={mode === "signup" ? "en-pass" : "en-pass-login"}
+          label="Senha"
+          onChange={(value) => {
+            setPassword(value)
+            clearProblem("password")
+          }}
+          required
+          supportingText={mode === "signup" ? SENHA_REGRA : undefined}
+          value={password}
+        />
+
+        {mode === "signup" && (
+          <EntryConsent
+            checked={accepted}
+            // O cadastro leva a nota do Google ("o aceite vem no passo
+            // seguinte"). O valor `google` é o do passo Aceite, onde a frase não
+            // existe — trocá-lo apagava a nota do protótipo no cadastro.
+            note="signup"
+            onChange={(checked) => {
+              setAccepted(checked)
+              clearProblem("consent")
+            }}
+          />
+        )}
+
+        <EntryError id="en-err">
+          {problem ? (
+            problem.message
+          ) : result && result.outcome !== "ok" ? (
+            <>
+              {result.message}
+              {result.suggestSignIn ? (
+                <>
+                  {" Use "}
+                  <Link href={{ pathname: "/login" }}>Entrar</Link>
+                  {" ou "}
+                  <Link href={{ pathname: "/recuperar-senha" }}>recupere a senha</Link>.
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </EntryError>
+
+        <MaterialFilledButton disabled={loading === "form" ? true : undefined} type="submit">
+          {loading === "form" ? copy.loading : copy.submit}
+        </MaterialFilledButton>
+
+        <p className="en-foot">
+          {mode === "login" ? (
+            <>
+              {/* `renderEntryLogin`: os dois caminhos de texto, recuperar e criar,
+                  na ordem da especificação. */}
+              <MaterialTextButton href="/recuperar-senha" type="button">
+                Esqueci minha senha
+              </MaterialTextButton>
+              <MaterialTextButton href={copy.alternateHref} type="button">
+                {copy.alternateLabel}
+              </MaterialTextButton>
+            </>
+          ) : (
+            <>
+              {copy.footLead}{" "}
+              <MaterialTextButton href={copy.alternateHref} type="button">
+                {copy.alternateLabel}
+              </MaterialTextButton>
+            </>
+          )}
+        </p>
+      </form>
+    </EntryShell>
   )
 }
 

@@ -1,0 +1,207 @@
+/* PORT-006 (lote 4 da entrada) — a Ajuda pública, na pele da entrada.
+   As medidas vêm de .legal-doc, .help-q, .help-card e .ticket em
+   prototypes/bivaque-html/src/styles/entry.css. Cores só por token: a tela
+   segue os dois temas sem regra própria. */
+
+.bv-entry .legal-doc {
+  max-width: 640px;
+}
+
+.bv-entry .legal-h {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 650;
+  margin: 20px 0 4px;
+}
+
+.bv-entry .legal-p {
+  margin: 0 0 8px;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .legal-p.muted {
+  margin-top: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.bv-entry .help-section {
+  margin-top: 20px;
+}
+
+.bv-entry .help-list {
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  overflow: hidden;
+}
+
+.bv-entry .help-q {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.bv-entry .help-q:last-child {
+  border-bottom: 0;
+}
+
+.bv-entry .help-q summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.bv-entry .help-q summary::-webkit-details-marker {
+  display: none;
+}
+
+.bv-entry .help-q summary b {
+  flex: 1;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 22px;
+  text-align: left;
+}
+
+.bv-entry .help-q summary md-icon {
+  color: var(--md-sys-color-on-surface-variant);
+  transition: transform 0.2s;
+}
+
+.bv-entry .help-q[open] summary md-icon {
+  transform: rotate(180deg);
+}
+
+.bv-entry .help-q p {
+  margin: 0;
+  padding: 0 16px 16px;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .help-card {
+  margin: 24px 0 8px;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.bv-entry .help-card b {
+  font-size: 16px;
+}
+
+.bv-entry .help-card p {
+  margin: 6px 0 12px;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .help-card md-filled-button {
+  width: 100%;
+  height: 52px;
+}
+
+.bv-entry .help-card .help-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.bv-entry .help-links {
+  list-style: none;
+  margin: 8px 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bv-entry .help-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--md-sys-color-primary);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.bv-entry .help-links a:hover {
+  background: var(--md-sys-color-surface-container);
+}
+
+.bv-entry .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bv-entry .ticket {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.bv-entry .ticket-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bv-entry .ticket-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .ticket-state[data-status="ok"] {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bv-entry .ticket-state md-icon {
+  font-size: 16px;
+}
+
+.bv-entry .ticket p {
+  margin: 4px 0 0;
+}
+
+.bv-entry .ticket-text {
+  font-size: 15px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bv-entry .ticket-reply {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.bv-entry .ticket-reply b {
+  display: block;
+  font-size: 13px;
+}
