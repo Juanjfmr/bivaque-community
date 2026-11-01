@@ -73,8 +73,10 @@ function luminance({ r, g, b }: { r: number; g: number; b: number }) {
 }
 
 function contrast(a: string, b: string) {
-  const [light, dark] = [luminance(parseColor(a)), luminance(parseColor(b))].sort((x, y) => y - x)
-  return Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100
+  const [lighter = 0, darker = 0] = [luminance(parseColor(a)), luminance(parseColor(b))].sort(
+    (x, y) => y - x,
+  )
+  return Math.round(((lighter + 0.05) / (darker + 0.05)) * 100) / 100
 }
 
 // Os valores de token são hex; a sonda precisa ficar DENTRO de `.ld`, porque é
