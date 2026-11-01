@@ -19,6 +19,7 @@ function raizDoRepositorio(inicio: string): string {
 
 const PASTA_DAS_CAPTURAS = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-001")
 const PASTA_DAS_CAPTURAS_DO_LOTE = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-006")
+const PASTA_DAS_CAPTURAS_DO_ACEITE = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-007")
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 
 /** A captura é da página inteira: o app rola dentro de #conteudo, então a
@@ -469,4 +470,96 @@ test("capturas de página inteira do retomar, convite, convite indisponível e c
   await page.goto("/app/entrar/apagada")
   await expect(page.getByRole("heading", { name: "Conta apagada." })).toBeVisible()
   await capturar(page, "apagada", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
+})
+
+// ENT-007 — o aceite visual do dono: a composição segue o login-02 do shadcn/ui,
+// com duas colunas iguais no desktop e faixa 16:10 no celular.
+
+test("no desktop a composição de acesso tem duas colunas iguais e conteúdo de até 480 px", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "medida do desktop em 1440 px")
+  await page.goto("/app/entrar/login")
+
+  const colunas = await page.locator(".entrada-acesso").evaluate((tela) =>
+    getComputedStyle(tela)
+      .gridTemplateColumns.split(" ")
+      .map((largura) => Number.parseFloat(largura)),
+  )
+  expect(colunas).toHaveLength(2)
+  expect(Math.abs((colunas[0] ?? 0) - (colunas[1] ?? 0))).toBeLessThanOrEqual(2)
+
+  const formulario = await page.locator(".entrada-acesso-formulario").boundingBox()
+  expect(formulario?.width ?? 0).toBeGreaterThan(400)
+  expect(formulario?.width ?? 0).toBeLessThanOrEqual(480)
+
+  const tamanho = (seletor: string) =>
+    page
+      .locator(seletor)
+      .first()
+      .evaluate((elemento) => Number.parseFloat(getComputedStyle(elemento).fontSize))
+  expect(await tamanho(".entrada-acesso-formulario h1")).toBeCloseTo(44, 1)
+  expect(await tamanho(".entrada-acesso-apoio")).toBeCloseTo(17, 1)
+
+  const altura = async (seletor: string) =>
+    (await page.locator(seletor).first().boundingBox())?.height
+  expect(await altura(".entrada-acesso-google")).toBeCloseTo(48, 0)
+  expect(await altura("#login-email")).toBeCloseTo(48, 0)
+  expect(await altura(".entrada-acesso-marca img")).toBeCloseTo(40, 0)
+})
+
+test("no celular o título mede 24 px e a foto da composição é 16:10", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    ["tablet-768", "desktop-1440"].includes(testInfo.project.name),
+    "regra de tamanho do celular",
+  )
+  for (const tela of [
+    "login",
+    "conta",
+    "senha",
+    "retomar",
+    "convite",
+    "convite-indisponivel",
+    "apagada",
+  ]) {
+    await page.goto(`/app/entrar/${tela}`)
+    await expect(page.locator("#titulo-da-tela"), tela).toHaveCSS("font-size", "24px")
+    const foto = await page.locator(".entrada-acesso-foto").boundingBox()
+    if (!foto) throw new Error(`foto ausente em ${tela}`)
+    expect(Math.abs(foto.width / foto.height / 1.6 - 1), tela).toBeLessThanOrEqual(0.02)
+  }
+  await page.goto("/app/entrar/login")
+  expect((await page.locator("#login-email").boundingBox())?.height).toBeCloseTo(44, 0)
+  expect((await page.locator(".entrada-acesso-google").boundingBox())?.height).toBeCloseTo(44, 0)
+})
+
+test("capturas do aceite visual do acesso em 375, 768 e 1440 px", async ({ page }, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  for (const [nome, rota] of [
+    ["01-login", "login"],
+    ["02-conta", "conta"],
+    ["14-retomar", "retomar"],
+    ["15-senha", "senha"],
+    ["16-convite", "convite"],
+    ["17-convite-indisponivel", "convite-indisponivel"],
+    ["18-apagada", "apagada"],
+  ] as const) {
+    await page.goto(`/app/entrar/${rota}`)
+    await expect(page.locator("#titulo-da-tela")).toBeVisible()
+    if (rota === "senha") await page.getByLabel("E-mail").fill("pessoa@example.invalid")
+    if (rota === "convite") await page.getByLabel("Código do convite").fill("K7P2-9QXA")
+    await capturar(page, nome, testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
+  }
+
+  await page.goto("/app/entrar/senha")
+  await page.getByLabel("E-mail").fill("pessoa@example.invalid")
+  await page.getByRole("button", { name: "Enviar instruções" }).click()
+  await expect(page.getByRole("status")).toBeVisible()
+  await capturar(page, "15b-senha-enviada", testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
 })

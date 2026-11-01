@@ -32,6 +32,7 @@ const PASTA_DAS_CAPTURAS_DE_CIDADE_E_GRUPOS = join(
 )
 const PASTA_DAS_CAPTURAS_DO_NEGOCIO = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-005")
 const PASTA_DAS_CAPTURAS_DA_ENTRADA = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-006")
+const PASTA_DAS_CAPTURAS_DO_ACEITE = join(raizDoRepositorio(process.cwd()), ".visual", "ENT-007")
 const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
 const AVISO_DEMONSTRATIVO = "Jornada demonstrativa"
 
@@ -1393,4 +1394,140 @@ test("capturas de página inteira das boas-vindas nos três momentos", async ({ 
 
   await chegarAsBoasVindas(page, "Saindo", "Brasília")
   await capturar(page, "boas-vindas-saindo", testInfo, PASTA_DAS_CAPTURAS_DA_ENTRADA)
+})
+
+// ENT-007 — o aceite visual do dono: a regra comum de tamanho no celular, a
+// miniatura dos grupos em 40% do cartão, as fotos do negócio em quatro colunas e
+// as boas-vindas na coluna de 640 px.
+
+test("no celular o título de display mede 24 px em todas as telas de /app/entrar/*", async ({
+  page,
+}, testInfo) => {
+  test.skip(!ehCelular(testInfo), "regra de tamanho do celular")
+  for (const tela of [
+    "aceite",
+    "cpf",
+    "resultado",
+    "consulta-indisponivel",
+    "documento",
+    "analise",
+    "cidade",
+    "sugestoes-grupos",
+    "negocio",
+    "negocio-formulario",
+    "negocio-interesse",
+    "boas-vindas",
+  ]) {
+    await page.goto(`/app/entrar/${tela}`)
+    await expect(page.locator("#titulo-da-tela"), tela).toHaveCSS("font-size", "24px")
+  }
+})
+
+test("a miniatura de cada grupo ocupa 40% do cartão, em 4:3", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-375", "medida do celular em 375 px")
+  await page.goto("/app/entrar/sugestoes-grupos")
+  await expect(page.getByRole("heading", { name: "Encontre seus grupos." })).toBeVisible()
+
+  const cartao = await page.locator(".entrada-etapa-grupo").first().boundingBox()
+  const foto = await page.locator(".entrada-etapa-grupo-foto").first().boundingBox()
+  if (!cartao || !foto) throw new Error("cartão ou foto do grupo ausente")
+  expect(Math.abs(foto.width / cartao.width / 0.4 - 1) * 100).toBeLessThanOrEqual(2)
+  expect(Math.abs(foto.width / foto.height / (4 / 3) - 1) * 100).toBeLessThanOrEqual(2)
+})
+
+test("no celular as fotos do negócio ficam em quatro colunas", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-375", "medida do celular em 375 px")
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Atendo com horário combinado", { exact: true }).check()
+  await avancar(page)
+  await page.locator('input[type="file"]').setInputFiles([
+    { name: "bolo.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+    { name: "bolo-2.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+  ])
+  await expect(page.getByAltText("Foto 1, capa")).toBeVisible()
+
+  const colunas = await page.locator(".entrada-etapa-fotos").evaluate((lista) =>
+    getComputedStyle(lista)
+      .gridTemplateColumns.split(" ")
+      .map((largura) => Number.parseFloat(largura)),
+  )
+  expect(colunas).toHaveLength(4)
+  expect(Math.abs((colunas[0] ?? 0) - (colunas[3] ?? 0))).toBeLessThanOrEqual(1)
+  expect(colunas[0] ?? 0).toBeGreaterThan(60)
+  expect(colunas[0] ?? 0).toBeLessThan(90)
+})
+
+test("as boas-vindas usam a coluna de 640 px, a foto larga e os cartões de 56/64 px", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/app/entrar/boas-vindas")
+  const foto = await page.locator(".entrada-etapa-boas-vindas-foto img").boundingBox()
+  if (!foto) throw new Error("foto das boas-vindas ausente")
+  const atalho = (await page.locator(".entrada-etapa-atalho").first().boundingBox())?.height ?? 0
+
+  if (ehCelular(testInfo)) {
+    expect(Math.abs(foto.width / foto.height / 1.6 - 1)).toBeLessThanOrEqual(0.02)
+    expect(atalho).toBeGreaterThanOrEqual(56)
+  } else {
+    expect(Math.abs(foto.width / foto.height / (21 / 9) - 1)).toBeLessThanOrEqual(0.02)
+    const coluna = await page.locator(".entrada-etapa-conteudo").boundingBox()
+    expect(coluna?.width ?? 0).toBeCloseTo(640, 0)
+    expect(atalho).toBeGreaterThanOrEqual(64)
+    expect(
+      await page
+        .locator(".entrada-etapa-titulo")
+        .evaluate((titulo) => Number.parseFloat(getComputedStyle(titulo).fontSize)),
+    ).toBeCloseTo(40, 0)
+  }
+})
+
+test("no celular a capa da revisão tem proporção 16:9", async ({ page }, testInfo) => {
+  test.skip(!ehCelular(testInfo), "medida do celular")
+  await chegarARevisao(page)
+  const capa = await page.getByAltText("Prévia da foto 1, capa").boundingBox()
+  if (!capa) throw new Error("capa da revisão ausente")
+  expect(Math.abs(capa.width / capa.height / (16 / 9) - 1)).toBeLessThanOrEqual(0.02)
+})
+
+test("capturas do aceite visual das etapas em 375, 768 e 1440 px", async ({ page }, testInfo) => {
+  test.skip(
+    !PROJETOS_COM_CAPTURA.includes(testInfo.project.name),
+    "captura só em 375, 768 e 1440 px",
+  )
+
+  await page.goto("/app/entrar/sugestoes-grupos")
+  await expect(page.getByRole("heading", { name: "Encontre seus grupos." })).toBeVisible()
+  await capturar(page, "10-grupos", testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
+
+  await page.goto("/app/entrar/negocio-formulario")
+  await preencherOferece(page)
+  await avancar(page)
+  await page.getByLabel("Em toda a cidade", { exact: true }).check()
+  await avancar(page)
+  await page.getByLabel("Atendo com horário combinado", { exact: true }).check()
+  await avancar(page)
+  await page.locator('input[type="file"]').setInputFiles([
+    { name: "bolo.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+    { name: "bolo-2.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+    { name: "bolo-3.png", mimeType: "image/png", buffer: FOTO_DE_EXEMPLO },
+  ])
+  await expect(page.getByAltText("Foto 3")).toBeVisible()
+  await capturar(page, "12d-negocio-fotos", testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
+
+  await avancar(page)
+  await expect(page.getByText("Passo 5 de 5", { exact: true })).toBeVisible()
+  await capturar(page, "12e-negocio-revisao", testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
+
+  for (const [nome, momento] of [
+    ["13-boas-vindas", "Moro aqui"],
+    ["13b-boas-vindas-chegando", "Chegando"],
+    ["13c-boas-vindas-saindo", "Saindo"],
+  ] as const) {
+    await chegarAsBoasVindas(page, momento)
+    await capturar(page, nome, testInfo, PASTA_DAS_CAPTURAS_DO_ACEITE)
+  }
 })

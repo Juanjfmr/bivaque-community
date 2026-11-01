@@ -14,9 +14,11 @@ import type { EstadoDaEntrada } from "@/lib/navegacao/rotas"
  * do formulário à direita; no celular a foto vira faixa e o formulário vem
  * abaixo.
  *
- * Anatomia adaptada do Split Sign In Form
- * (https://21st.dev/@diarmuradi/components/sign-in-3), reproduzida com os
- * componentes do app e sem copiar o código do bloco.
+ * Anatomia adaptada do bloco login-02 do shadcn/ui
+ * (https://ui.shadcn.com/blocks/login-02), refeita com os componentes do app.
+ *
+ * Copyright (c) shadcn. Licenciado sob a MIT License:
+ * https://github.com/shadcn-ui/ui/blob/main/LICENSE.md
  */
 
 export type EstadoDeAcesso = Extract<
@@ -172,7 +174,12 @@ export function EntradaAcesso({
   )
 
   return (
-    <section data-tela="entrar" data-composicao="acesso" className="entrada-acesso">
+    <section
+      data-tela="entrar"
+      data-composicao="acesso"
+      data-estado={estado}
+      className="entrada-acesso"
+    >
       <div className="entrada-acesso-marca">
         <picture>
           <source

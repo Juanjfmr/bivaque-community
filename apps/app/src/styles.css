@@ -1517,8 +1517,9 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 
 /* Entrada: composição A (acesso) — painel da foto e coluna do formulário.
-   Anatomia do Split Sign In Form (21st.dev), com os componentes do app.
-   Celular primeiro: faixa de foto, valor e formulário em uma coluna. */
+   Anatomia do bloco login-02 do shadcn/ui (MIT), com os componentes do app:
+   duas colunas iguais, foto cobrindo o painel e conteúdo centralizado.
+   Celular primeiro: faixa de foto 16:10, valor e formulário em uma coluna. */
 
 /* As composições A e B tomam a altura toda, sem o recuo da casca. A casca da
    entrada não tem navegação; sem isso, a coluna reservada a ela em ≥720 px sobra
@@ -1539,6 +1540,21 @@ body[data-profundidade="sim"] [data-casca="app"] {
   flex-direction: column;
   min-height: 100%;
   background: var(--background);
+  /* Enquadramento por tela: cada estado aponta o trecho da foto que precisa
+     aparecer inteiro (o aperto de mão, as duas mulheres do portão). */
+  --entrada-foto-posicao: 50% 50%;
+}
+.entrada-acesso[data-estado="login"],
+.entrada-acesso[data-estado="apagada"] {
+  --entrada-foto-posicao: 64% 50%;
+}
+.entrada-acesso[data-estado="conta"],
+.entrada-acesso[data-estado="retomar"] {
+  --entrada-foto-posicao: 100% 50%;
+}
+.entrada-acesso[data-estado="convite"],
+.entrada-acesso[data-estado="convite-indisponivel"] {
+  --entrada-foto-posicao: 50% 40%;
 }
 .entrada-acesso-marca {
   padding: 20px 20px 12px;
@@ -1549,7 +1565,6 @@ body[data-profundidade="sim"] [data-casca="app"] {
   width: auto;
 }
 .entrada-acesso-painel {
-  --entrada-acesso-faixa: max(200px, 30vh);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1557,16 +1572,18 @@ body[data-profundidade="sim"] [data-casca="app"] {
   border-radius: 20px;
   overflow: hidden;
 }
+/* A faixa de 16:10 é quem dá altura à foto: a imagem e o véu têm a mesma caixa. */
 .entrada-acesso-foto,
 .entrada-acesso-veu {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: var(--entrada-acesso-faixa);
+  aspect-ratio: 16 / 10;
 }
 .entrada-acesso-foto {
   object-fit: cover;
+  object-position: var(--entrada-foto-posicao);
 }
 .entrada-acesso-veu {
   --entrada-acesso-veu-baixo: linear-gradient(
@@ -1587,14 +1604,14 @@ body[data-profundidade="sim"] [data-casca="app"] {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  height: var(--entrada-acesso-faixa);
-  padding: 20px 20px 24px;
+  gap: 8px;
+  aspect-ratio: 16 / 10;
+  padding: 16px 20px 20px;
 }
 .entrada-acesso-etiqueta {
   color: rgb(255 255 255);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.35;
 }
 .entrada-acesso-frase {
   margin-top: auto;
@@ -1657,11 +1674,11 @@ body[data-profundidade="sim"] [data-casca="app"] {
   padding: 24px 20px 40px;
 }
 .entrada-acesso-formulario h1 {
-  font-size: clamp(26px, 2.4vw, 30px);
+  font-size: 1.5rem;
 }
 .entrada-acesso-apoio {
   color: var(--muted-foreground);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .entrada-acesso-voltar,
 .entrada-acesso-link {
@@ -1686,7 +1703,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-acesso-botao {
   width: 100%;
-  height: 48px;
+  height: 44px;
   font-size: 15px;
 }
 .entrada-acesso-google {
@@ -1713,7 +1730,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
   background: var(--border);
 }
 .entrada-acesso-formulario input:not([type="checkbox"]) {
-  min-height: 48px;
+  min-height: 44px;
   background: var(--card);
 }
 .entrada-acesso-senha {
@@ -1907,11 +1924,66 @@ body[data-profundidade="sim"] [data-casca="app"] {
   outline-offset: 3px;
 }
 
-/* Do tablet para cima, a foto volta a ser painel à esquerda do formulário. */
+/* Do tablet para cima o conteúdo ganha a coluna de 30rem centralizada; a foto
+   só vira painel lateral no desktop, onde a coluna dela não fica estreita demais
+   a ponto de cortar a cena. */
 @media (min-width: 768px) {
+  .entrada-acesso-marca {
+    width: min(100% - 64px, 30rem);
+    margin: 0 auto;
+    padding: 32px 0 12px;
+  }
+  .entrada-acesso-marca img {
+    height: 40px;
+  }
+  .entrada-acesso-painel {
+    margin: 0 32px;
+  }
+  .entrada-acesso-formulario {
+    width: min(100% - 64px, 30rem);
+    align-self: center;
+    margin: 0 auto;
+  }
+  .entrada-acesso-formulario h1 {
+    font-size: 2rem;
+  }
+  .entrada-acesso-apoio {
+    font-size: 1rem;
+  }
+  .entrada-acesso-botao {
+    height: 48px;
+  }
+  .entrada-acesso-formulario input:not([type="checkbox"]) {
+    min-height: 48px;
+  }
+  /* No tablet a lista de valor fica abaixo da faixa, sobre a superfície: lista
+     vertical, rótulos longos e as cores do tema. */
+  .entrada-acesso-itens {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 10px;
+    font-size: 15px;
+    text-align: start;
+  }
+  .entrada-acesso-itens li {
+    flex-direction: row;
+    gap: 5px;
+  }
+  .entrada-acesso-curto {
+    display: none;
+  }
+  .entrada-acesso-longo {
+    display: inline;
+  }
+}
+
+/* Desktop: duas colunas iguais, a foto cobrindo o painel à esquerda e o
+   conteúdo de no máximo 30rem centralizado à direita, com o logo no topo. */
+@media (min-width: 1024px) {
   .entrada-acesso {
     display: grid;
-    grid-template-columns: 40% minmax(0, 1fr);
+    grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr auto 1fr;
     column-gap: 8px;
   }
@@ -1919,27 +1991,31 @@ body[data-profundidade="sim"] [data-casca="app"] {
     grid-area: 1 / 2 / 2 / 3;
     align-self: end;
     justify-self: center;
-    width: 400px;
-    max-width: calc(100% - 32px);
+    width: min(100% - 48px, 30rem);
+    margin: 0;
     padding: 0 0 28px;
   }
-  .entrada-acesso-marca img {
-    height: 40px;
-  }
   .entrada-acesso-painel {
-    --entrada-acesso-faixa: 100%;
     grid-area: 1 / 1 / 4 / 2;
     margin: 16px;
     padding: 32px;
     border-radius: 24px;
   }
+  /* No painel a foto cobre a altura inteira da coluna. */
+  .entrada-acesso-foto,
+  .entrada-acesso-veu {
+    height: 100%;
+    aspect-ratio: auto;
+  }
   .entrada-acesso-faixa {
     height: auto;
     flex: 1;
+    aspect-ratio: auto;
+    gap: 12px;
     padding: 0;
   }
   .entrada-acesso-frase {
-    font-size: clamp(22px, 3.6vw, 28px);
+    font-size: clamp(34px, 4.4vw, 48px);
   }
   .entrada-acesso-valor {
     gap: 14px;
@@ -1950,28 +2026,14 @@ body[data-profundidade="sim"] [data-casca="app"] {
     color: rgb(255 255 255);
   }
   .entrada-acesso-itens {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
     gap: 14px;
     font-size: 17px;
-    text-align: start;
-  }
-  .entrada-acesso-itens li {
-    flex-direction: row;
-    gap: 5px;
   }
   .entrada-acesso-icone {
     width: 32px;
     height: 32px;
     border-color: rgb(255 255 255 / 0.65);
     color: rgb(255 255 255);
-  }
-  .entrada-acesso-curto {
-    display: none;
-  }
-  .entrada-acesso-longo {
-    display: inline;
   }
   .entrada-acesso-vinculo {
     color: rgb(255 255 255 / 0.86);
@@ -1980,21 +2042,15 @@ body[data-profundidade="sim"] [data-casca="app"] {
   .entrada-acesso-formulario {
     grid-area: 2 / 2 / 3 / 3;
     justify-self: center;
-    width: 400px;
-    max-width: calc(100% - 32px);
+    width: min(100% - 48px, 30rem);
+    margin: 0;
     padding: 0;
   }
-}
-
-@media (min-width: 1024px) {
-  .entrada-acesso {
-    grid-template-columns: 48% minmax(0, 1fr);
-  }
-  .entrada-acesso-frase {
-    font-size: clamp(34px, 4.4vw, 48px);
-  }
   .entrada-acesso-formulario h1 {
-    font-size: clamp(32px, 2.8vw, 40px);
+    font-size: 2.75rem;
+  }
+  .entrada-acesso-apoio {
+    font-size: 1.0625rem;
   }
 }
 
@@ -2133,7 +2189,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-etapa-titulo {
   font-family: var(--font-brand);
-  font-size: 30px;
+  font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.6px;
@@ -2142,7 +2198,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-etapa-apoio {
   color: var(--muted-foreground);
-  font-size: 17px;
+  font-size: 0.9375rem;
   line-height: 1.45;
   text-align: center;
 }
@@ -2153,12 +2209,12 @@ body[data-profundidade="sim"] [data-casca="app"] {
   margin-top: 16px;
 }
 .entrada-etapa-corpo input:not([type="checkbox"]) {
-  min-height: 48px;
+  min-height: 44px;
   background: var(--card);
 }
 .entrada-etapa-acao {
   width: 100%;
-  height: 48px;
+  height: 44px;
   font-size: 15px;
 }
 .entrada-etapa-aceite {
@@ -2237,7 +2293,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  min-height: 48px;
+  min-height: 44px;
   padding: 6px;
   border: 1px solid var(--outline);
   border-radius: 12px;
@@ -2304,7 +2360,9 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-etapa-grupo {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
+  /* 40% da largura do cartão: a coluna mede 40% do conteúdo mais 0,4 × o
+     respiro lateral de 16 px, que fica fora da caixa de conteúdo. */
+  grid-template-columns: calc(40% + 6.4px) minmax(0, 1fr);
   align-items: start;
   gap: 12px;
   padding: 8px;
@@ -2326,6 +2384,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
   aspect-ratio: 4 / 3;
   border-radius: 8px;
   object-fit: cover;
+  object-position: center;
 }
 .entrada-etapa-grupo-texto {
   display: grid;
@@ -2472,7 +2531,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-etapa-subtitulo {
   font-family: var(--font-brand);
-  font-size: 22px;
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.25;
 }
@@ -2482,11 +2541,16 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-etapa-nota {
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 0.8125rem;
   line-height: 1.4;
 }
+/* As notas dos campos (Campo usa text-xs) acompanham a regra de 13 px da entrada. */
+.entrada-acesso p.text-xs,
+.entrada-etapa p.text-xs {
+  font-size: 0.8125rem;
+}
 .entrada-etapa-selecao {
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--outline);
   border-radius: 12px;
@@ -2637,12 +2701,12 @@ body[data-profundidade="sim"] [data-casca="app"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
-/* Fotos: miniaturas quadradas, a primeira com o selo "Capa", e o quadro
-   tracejado para acrescentar. */
+/* Fotos: quatro colunas no celular (cerca de 72 px cada), a primeira com o selo
+   "Capa", e o quadro tracejado para acrescentar. */
 .entrada-etapa-fotos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
   min-width: 0;
 }
 .entrada-etapa-foto {
@@ -2665,13 +2729,13 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 .entrada-etapa-foto-capa {
   position: absolute;
-  bottom: 6px;
-  left: 6px;
-  padding: 2px 8px;
+  bottom: 4px;
+  left: 4px;
+  padding: 1px 6px;
   border-radius: 6px;
   background: var(--primary);
   color: var(--primary-foreground);
-  font-size: 12px;
+  font-size: 10px;
 }
 .entrada-etapa-foto-acoes {
   display: flex;
@@ -2679,7 +2743,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
   gap: 6px;
 }
 .entrada-etapa-foto-acoes .entrada-etapa-link {
-  font-size: 12px;
+  font-size: 11px;
 }
 .entrada-etapa-foto-adicionar {
   display: grid;
@@ -2709,7 +2773,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .entrada-etapa-revisao-capa {
   display: block;
   width: 100%;
-  height: 200px;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
 }
 .entrada-etapa-revisao-linhas {
@@ -2725,7 +2789,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
   gap: 12px;
   padding: 14px 16px;
   border-top: 1px solid var(--border);
-  font-size: 16px;
+  font-size: 0.9375rem;
   line-height: 1.4;
 }
 .entrada-etapa-revisao-linhas li:first-child {
@@ -2927,7 +2991,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .entrada-etapa-boas-vindas-foto img {
   display: block;
   width: 100%;
-  aspect-ratio: 7 / 4;
+  aspect-ratio: 16 / 10;
   border-radius: 16px;
   object-fit: cover;
 }
@@ -2953,7 +3017,8 @@ body[data-profundidade="sim"] [data-casca="app"] {
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 14px 16px;
+  min-height: 56px;
+  padding: 8px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
@@ -2981,13 +3046,13 @@ body[data-profundidade="sim"] [data-casca="app"] {
   min-width: 0;
 }
 .entrada-etapa-atalho-texto strong {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.3;
 }
 .entrada-etapa-atalho-texto small {
   color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.35;
 }
 
@@ -3010,6 +3075,66 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
   .entrada-etapa-titulo {
     font-size: 40px;
+  }
+  .entrada-etapa-apoio {
+    font-size: 17px;
+  }
+  .entrada-etapa-subtitulo {
+    font-size: 22px;
+  }
+  .entrada-etapa-nota,
+  .entrada-acesso p.text-xs,
+  .entrada-etapa p.text-xs {
+    font-size: 14px;
+  }
+  .entrada-etapa-corpo input:not([type="checkbox"]) {
+    min-height: 48px;
+  }
+  .entrada-etapa-acao {
+    height: 48px;
+  }
+  .entrada-etapa-selecao {
+    min-height: 48px;
+  }
+  .entrada-etapa-fotos {
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 12px;
+  }
+  .entrada-etapa-foto-capa {
+    bottom: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .entrada-etapa-foto-acoes .entrada-etapa-link {
+    font-size: 12px;
+  }
+  .entrada-etapa-revisao-capa {
+    height: 200px;
+    aspect-ratio: auto;
+  }
+  .entrada-etapa-revisao-linhas li {
+    font-size: 16px;
+  }
+  /* As boas-vindas pedem a coluna mais larga e a foto panorâmica. */
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) {
+    width: 640px;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) .entrada-etapa-apoio {
+    font-size: 1.125rem;
+  }
+  .entrada-etapa-boas-vindas-foto img {
+    aspect-ratio: 21 / 9;
+  }
+  .entrada-etapa-atalho {
+    min-height: 64px;
+    padding: 14px 16px;
+  }
+  .entrada-etapa-atalho-texto strong {
+    font-size: 16px;
+  }
+  .entrada-etapa-atalho-texto small {
+    font-size: 14px;
   }
   /* Os cartões de grupo pedem a grade 2 × 2 da referência. */
   .entrada-etapa-grupos {
