@@ -112,16 +112,21 @@ export function ouvirFunil(ouvir: () => void): () => void {
   return () => ouvintes.delete(ouvir)
 }
 
-// ── A cidade, em números agregados ──────────────────────────────────────────
+// ── A cidade ────────────────────────────────────────────────────────────────
+// `membros` só decide se a cidade já tem gente o bastante para mostrar
+// conteúdo (`MINIMO_PARA_EXIBIR`); o número não vai para a tela.
+export type PerguntaDaCidade = {
+  texto: string
+  respostas: number
+  /** Momento de quem costuma perguntar; ausente = qualquer. */
+  momento?: "chegando" | "morando" | "saindo"
+}
+
 export type Cidade = {
   nome: string
   uf: string
   membros: number
-  grupos: number
-  encontrosNoMes: number
-  desapegos: number
-  perguntasRespondidas: number
-  destaque: { pergunta: string; respostas: number } | null
+  perguntas: readonly PerguntaDaCidade[]
   encontro: { titulo: string; quando: string } | null
 }
 
@@ -130,47 +135,86 @@ export const CIDADES: readonly Cidade[] = [
     nome: "Manaus",
     uf: "AM",
     membros: 1340,
-    grupos: 18,
-    encontrosNoMes: 4,
-    desapegos: 37,
-    perguntasRespondidas: 212,
-    destaque: { pergunta: "Pediatra que atende pelo FUSEx na Zona Centro-Sul?", respostas: 14 },
-    encontro: { titulo: "Café de boas-vindas aos que chegaram", quando: "sáb., 8 nov · 9h" },
+    perguntas: [
+      {
+        texto: "Pediatra que atende pelo FUSEx na Zona Centro-Sul?",
+        respostas: 14,
+        momento: "chegando",
+      },
+      {
+        texto: "Bairro tranquilo, com escola perto, para quem tem filho pequeno?",
+        respostas: 9,
+        momento: "chegando",
+      },
+      {
+        texto: "Vale trazer o carro de Brasília ou vender e comprar aqui?",
+        respostas: 11,
+        momento: "chegando",
+      },
+      {
+        texto: "Alguém indica eletricista de confiança no Dom Pedro?",
+        respostas: 7,
+        momento: "morando",
+      },
+      {
+        texto: "Onde fazer churrasco com a família no fim de semana?",
+        respostas: 12,
+        momento: "morando",
+      },
+      {
+        texto: "Transportadora confiável para mudança para o Sul?",
+        respostas: 6,
+        momento: "saindo",
+      },
+    ],
+    encontro: { titulo: "Café de boas-vindas para quem chegou", quando: "sáb., 8 de nov., 9h" },
   },
   {
     nome: "Brasília",
     uf: "DF",
     membros: 4210,
-    grupos: 41,
-    encontrosNoMes: 9,
-    desapegos: 168,
-    perguntasRespondidas: 930,
-    destaque: { pergunta: "Escola com vaga no meio do ano na Asa Sul?", respostas: 22 },
-    encontro: { titulo: "Feira de troca de uniformes escolares", quando: "dom., 9 nov · 10h" },
+    perguntas: [
+      { texto: "Escola com vaga no meio do ano na Asa Sul?", respostas: 22, momento: "chegando" },
+      {
+        texto: "Apartamento funcional ou aluguel: o que compensa?",
+        respostas: 31,
+        momento: "chegando",
+      },
+      { texto: "Feira boa de domingo no Sudoeste?", respostas: 8, momento: "morando" },
+    ],
+    encontro: { titulo: "Feira de troca de uniformes escolares", quando: "dom., 9 de nov., 10h" },
   },
   {
     nome: "Santa Maria",
     uf: "RS",
     membros: 286,
-    grupos: 7,
-    encontrosNoMes: 2,
-    desapegos: 19,
-    perguntasRespondidas: 64,
-    destaque: { pergunta: "Mudança de Manaus para cá: transportadora confiável?", respostas: 6 },
+    perguntas: [
+      {
+        texto: "Vindo de Manaus: que roupa de frio comprar aqui e não lá?",
+        respostas: 6,
+        momento: "chegando",
+      },
+    ],
     encontro: null,
   },
   {
     nome: "São Gabriel da Cachoeira",
     uf: "AM",
     membros: 7,
-    grupos: 1,
-    encontrosNoMes: 0,
-    desapegos: 2,
-    perguntasRespondidas: 3,
-    destaque: null,
+    perguntas: [],
     encontro: null,
   },
 ]
+
+/** As perguntas que importam para o momento da pessoa, até três. */
+export function perguntasDoMomento(
+  cidade: Cidade,
+  momento: Progresso["momento"],
+): readonly PerguntaDaCidade[] {
+  const doMomento = cidade.perguntas.filter((p) => p.momento === momento)
+  const outras = cidade.perguntas.filter((p) => p.momento !== momento)
+  return [...doMomento, ...outras].slice(0, 3)
+}
 
 export function cidadePorNome(nome: string | null): Cidade | null {
   return CIDADES.find((cidade) => cidade.nome === nome) ?? null
@@ -258,13 +302,19 @@ export const GRUPOS: readonly GrupoSugerido[] = [
   },
 ]
 
+const MOTIVO_DO_MOMENTO: Record<"chegando" | "morando" | "saindo", string> = {
+  chegando: "Para quem está chegando",
+  morando: "Para quem mora aqui",
+  saindo: "Para quem está de mudança",
+}
+
 /** Sugestões com o motivo de cada uma, na ordem: momento, interesses, populares. */
 export function sugerirGrupos(
   interesses: readonly string[],
   momento: Progresso["momento"],
 ): readonly { grupo: GrupoSugerido; motivo: string }[] {
   const porMomento = GRUPOS.filter((g) => g.momento !== undefined && g.momento === momento).map(
-    (grupo) => ({ grupo, motivo: "Para quem está no seu momento" }),
+    (grupo) => ({ grupo, motivo: MOTIVO_DO_MOMENTO[grupo.momento ?? "morando"] }),
   )
   const porInteresse = GRUPOS.filter(
     (g) => g.momento === undefined && g.interesses.some((i) => interesses.includes(i)),

@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { NomeDeIcone } from "@/lib/icones"
 import type { PropsDaEtapa } from "./etapas-conta"
-import { contagemPublica, type Flags, type Momento } from "./fluxo"
+import { contagemPublica, type Flags, MINIMO_PARA_EXIBIR, type Momento } from "./fluxo"
 import { Moldura } from "./moldura"
-import { cidadePorNome, INTERESSES, sugerirGrupos } from "./servidor-simulado"
+import { cidadePorNome, INTERESSES, perguntasDoMomento, sugerirGrupos } from "./servidor-simulado"
 
 const base = import.meta.env.BASE_URL
 
@@ -56,7 +56,7 @@ export function Verificacao({ progresso, concluir }: PropsDaEtapa) {
         <span className="f01-espera-anel" aria-hidden="true" />
         <ol className="f01-linha-do-tempo">
           <li data-estado="feito">CPF recebido</li>
-          <li data-estado="atual">Consultando o Portal da Transparência</li>
+          <li data-estado="atual">Conferindo no Portal da Transparência</li>
           <li data-estado="futuro">Vínculo confirmado</li>
         </ol>
       </div>
@@ -149,29 +149,37 @@ export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
 }
 
 // ── Prévia da cidade: o momento de valor ────────────────────────────────────
+// Fala com o momento da pessoa e mostra o que ela vai encontrar, não métricas.
+// Abaixo do mínimo de membros (`MINIMO_PARA_EXIBIR`), a cidade ainda não tem o
+// que mostrar e a tela convida a começar.
+const PREVIA_DO_MOMENTO: Record<Momento, { titulo: (cidade: string) => string; secao: string }> = {
+  chegando: {
+    titulo: (cidade) => `Em ${cidade}, você já chega com ajuda.`,
+    secao: "Quem chegou antes perguntou",
+  },
+  morando: {
+    titulo: (cidade) => `Em ${cidade}, sempre tem alguém precisando do que você sabe.`,
+    secao: "Perguntas da semana",
+  },
+  saindo: {
+    titulo: (cidade) => `Sair de ${cidade} fica mais fácil com quem já passou por isso.`,
+    secao: "Quem está de mudança perguntou",
+  },
+}
+
 export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
   const cidade = cidadePorNome(progresso.cidade)
   const nome = cidade?.nome ?? "sua cidade"
-  const membros = cidade ? contagemPublica(cidade.membros) : null
-  const fatos = cidade
-    ? [
-        { valor: contagemPublica(cidade.perguntasRespondidas), rotulo: "perguntas respondidas" },
-        { valor: contagemPublica(cidade.desapegos), rotulo: "desapegos à venda" },
-        { valor: contagemPublica(cidade.grupos), rotulo: "grupos" },
-      ].filter((fato): fato is { valor: string; rotulo: string } => fato.valor !== null)
-    : []
+  const momento = progresso.momento ?? "morando"
+  const comGente = cidade !== null && cidade.membros >= MINIMO_PARA_EXIBIR
+  const perguntas = cidade && comGente ? perguntasDoMomento(cidade, momento) : []
+  const textos = PREVIA_DO_MOMENTO[momento]
 
   return (
     <Moldura
-      titulo={
-        membros
-          ? `${maiuscula(membros)} pessoas do meio já estão em ${nome}.`
-          : `Você está entre os primeiros de ${nome}.`
-      }
+      titulo={comGente ? textos.titulo(nome) : `Você está entre os primeiros em ${nome}.`}
       apoio={
-        membros
-          ? null
-          : "A cidade começa com quem chega primeiro. Suas perguntas e grupos abrem caminho para os próximos."
+        comGente ? null : "Faça a primeira pergunta. Quem chegar depois já encontra a resposta."
       }
       aoEnviar={() => concluir()}
       acao={{ rotulo: "Continuar" }}
@@ -179,46 +187,40 @@ export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
       <p className="f01-selo">
         <Icone nome="verified_user" preenchido /> Vínculo confirmado
       </p>
-      {fatos.length > 0 ? (
-        <dl className="f01-fatos">
-          {fatos.map((fato) => (
-            <div key={fato.rotulo}>
-              <dt>{fato.rotulo}</dt>
-              <dd>{`${fato.valor.replace(/^mais de /, "")}+`}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-      {cidade?.destaque || cidade?.encontro ? (
-        <section aria-labelledby="f01-agora">
-          <h2 id="f01-agora" className="f01-secao">
-            Agora em {nome}
+      {perguntas.length > 0 ? (
+        <section aria-labelledby="f01-perguntas">
+          <h2 id="f01-perguntas" className="f01-secao">
+            {textos.secao}
           </h2>
           <ul className="f01-linhas">
-            {cidade.destaque ? (
-              <li>
+            {perguntas.map((pergunta) => (
+              <li key={pergunta.texto}>
                 <Icone nome="forum" />
                 <span>
-                  <strong>{cidade.destaque.pergunta}</strong>
-                  {cidade.destaque.respostas} respostas de membros
+                  <strong>{pergunta.texto}</strong>
+                  {pergunta.respostas} respostas
                 </span>
               </li>
-            ) : null}
-            {cidade.encontro ? (
-              <li>
-                <Icone nome="event" />
-                <span>
-                  <strong>{cidade.encontro.titulo}</strong>
-                  {cidade.encontro.quando}
-                </span>
-              </li>
-            ) : null}
+            ))}
           </ul>
         </section>
       ) : null}
-      <p className="f01-ajuda">
-        Contagens arredondadas e só a partir de 10, para ninguém ser identificado por elas.
-      </p>
+      {comGente && cidade?.encontro ? (
+        <section aria-labelledby="f01-encontro">
+          <h2 id="f01-encontro" className="f01-secao">
+            Para conhecer gente
+          </h2>
+          <ul className="f01-linhas">
+            <li>
+              <Icone nome="event" />
+              <span>
+                <strong>{cidade.encontro.titulo}</strong>
+                {cidade.encontro.quando}
+              </span>
+            </li>
+          </ul>
+        </section>
+      ) : null}
     </Moldura>
   )
 }
@@ -232,6 +234,11 @@ const iniciais = (nome: string): string =>
     .map((parte) => parte.charAt(0))
     .join("")
     .toUpperCase()
+
+const membrosDoGrupo = (total: number): string => {
+  const faixa = contagemPublica(total)
+  return faixa ? `${maiuscula(faixa)} membros` : "Grupo novo"
+}
 
 export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
   const [interesses, setInteresses] = useState<readonly string[]>(progresso.interesses)
@@ -249,7 +256,7 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
   return (
     <Moldura
       titulo="O que interessa a você?"
-      apoio="Os grupos abaixo mudam conforme o que você marca."
+      apoio="Marque o que importa para você agora."
       aoEnviar={() => concluir({ interesses, grupos })}
       acao={{ rotulo }}
     >
@@ -282,7 +289,7 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
               </span>
               <span className="f01-grupo-texto">
                 <strong>{grupo.nome}</strong>
-                <span>{maiuscula(contagemPublica(grupo.membros) ?? "grupo novo")} membros</span>
+                <span>{membrosDoGrupo(grupo.membros)}</span>
                 <span className="f01-grupo-motivo">{motivo}</span>
               </span>
               <Button
@@ -491,6 +498,7 @@ export function InicioComPrimeirosPassos({
   ]
   const concluidos = passos.filter((passo) => passo.feito).length
   const cidade = cidadePorNome(progresso.cidade)
+  const primeiraPergunta = cidade ? perguntasDoMomento(cidade, momento)[0] : undefined
 
   return (
     <main className="f01-inicio">
@@ -543,13 +551,13 @@ export function InicioComPrimeirosPassos({
           ))}
         </ul>
       </section>
-      {cidade?.destaque || cidade?.encontro ? (
+      {cidade?.encontro || primeiraPergunta ? (
         <section aria-labelledby="f01-acontecendo">
           <h2 id="f01-acontecendo" className="f01-secao">
-            Acontecendo em {cidade.nome}
+            Acontecendo em {cidade?.nome}
           </h2>
           <ul className="f01-linhas">
-            {cidade.encontro ? (
+            {cidade?.encontro ? (
               <li>
                 <Icone nome="event" />
                 <span>
@@ -558,12 +566,12 @@ export function InicioComPrimeirosPassos({
                 </span>
               </li>
             ) : null}
-            {cidade.destaque ? (
+            {primeiraPergunta ? (
               <li>
                 <Icone nome="forum" />
                 <span>
-                  <strong>{cidade.destaque.pergunta}</strong>
-                  {cidade.destaque.respostas} respostas de membros
+                  <strong>{primeiraPergunta.texto}</strong>
+                  {primeiraPergunta.respostas} respostas
                 </span>
               </li>
             ) : null}

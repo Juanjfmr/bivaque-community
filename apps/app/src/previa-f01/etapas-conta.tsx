@@ -79,10 +79,10 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
           />
         </picture>
         <h1 className="f01-porta-titulo" tabIndex={-1}>
-          Gente do seu meio, na sua cidade.
+          A comunidade militar da sua cidade.
         </h1>
         <p className="f01-porta-apoio">
-          Militares das Forças federais, veteranos, pensionistas e famílias. Todo membro é
+          Para militares das Forças federais, veteranos, pensionistas e famílias. Todo membro é
           verificado.
         </p>
         <div className="f01-porta-botoes">
@@ -149,7 +149,7 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
           </button>
         )}
         <p className="f01-porta-rodape">
-          Entrar ou criar conta é o mesmo caminho. <a href={`${base}ajuda`}>Ajuda</a>
+          Já tem conta? Use o mesmo botão de antes. <a href={`${base}ajuda`}>Ajuda</a>
         </p>
       </div>
     </div>
@@ -187,7 +187,7 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
         value={email}
         readOnly={progresso.convite}
         erro={problema}
-        ajuda="Mandamos um código de 6 números. Vale para entrar ou criar conta."
+        ajuda="Vamos mandar um código de 6 números para você entrar."
         acessorio={progresso.convite ? <Icone nome="lock" /> : null}
         onChange={(evento) => {
           setEmail(evento.target.value)
@@ -311,7 +311,7 @@ const PROMESSAS: readonly { icone: NomeDeIcone; titulo: string; texto: string }[
   {
     icone: "lock",
     titulo: "Seu CPF não fica guardado",
-    texto: "Consultamos uma vez no Portal da Transparência e descartamos.",
+    texto: "Usamos uma vez para confirmar seu vínculo e não guardamos.",
   },
   {
     icone: "visibility_off",
@@ -382,7 +382,7 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
   return (
     <Moldura
       titulo="Qual é o seu CPF?"
-      apoio="É com ele que confirmamos que você é do meio."
+      apoio="Ele confirma que você é militar, veterano ou pensionista."
       aoEnviar={enviar}
       acao={{ rotulo: "Confirmar vínculo" }}
     >
@@ -392,7 +392,7 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
         autoComplete="off"
         value={cpf}
         erro={problema}
-        ajuda="A consulta leva menos de um minuto, e você segue enquanto isso."
+        ajuda="Leva menos de um minuto. Você continua preenchendo enquanto isso."
         onChange={(evento) => {
           setCpf(mascararCpf(evento.target.value))
           setProblema(null)
@@ -411,8 +411,8 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
         </button>
         <div id="f01-porque-cpf" hidden={!porque} className="f01-detalhe-texto">
           O Portal da Transparência diz só se há vínculo e a categoria (ativo, veterano ou
-          pensionista). Posto, unidade e salário não chegam até nós. Se a consulta não der certo,
-          você envia um documento.
+          pensionista). Posto, unidade e salário não chegam até nós. Se não der certo pelo CPF, você
+          envia um documento.
         </div>
       </div>
       <p className="f01-ajuda">Cônjuge ou dependente entra pelo convite de quem é militar.</p>

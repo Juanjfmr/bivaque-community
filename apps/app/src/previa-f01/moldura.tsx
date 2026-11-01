@@ -118,7 +118,7 @@ function BotaoDeAcao({ acao, principal = false }: { acao: Acao; principal?: bool
 const ESTADO_DO_VINCULO: Partial<
   Record<Verificacao, { texto: string; icone: "hourglass_top" | "verified_user" | "info" }>
 > = {
-  consultando: { texto: "Consultando vínculo", icone: "hourglass_top" },
+  consultando: { texto: "Confirmando vínculo", icone: "hourglass_top" },
   confirmada: { texto: "Vínculo confirmado", icone: "verified_user" },
   "nao-encontrada": { texto: "Falta um documento", icone: "info" },
   "portal-fora": { texto: "Falta um documento", icone: "info" },
