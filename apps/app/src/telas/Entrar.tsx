@@ -619,6 +619,10 @@ export function Entrar() {
     )
   }
 
+  // Boas-vindas: parte do bloco Onboarding / Welcome Screen, de ravikatiyar162 no
+  // 21st.dev (https://21st.dev/@ravikatiyar162/components/onboarding-welcome-screen):
+  // foto no topo, título e apoio centralizados e ações empilhadas, que entram em
+  // sequência. A entrada em sequência do bloco (framer-motion) é CSS em styles.css.
   if (estado === "boas-vindas") {
     const ondeEstou = cidade.trim() || dadosDoApp.resumoDaCasca().cidade
     const destinoDaSaida = destino.trim()

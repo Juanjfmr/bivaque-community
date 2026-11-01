@@ -1210,7 +1210,9 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
   julgamento; a comparação com as referências aprovadas é do revisor.
 
-## ENT-007 — aceite visual da F01 sobre o login-02 do shadcn — 31/10/2026
+## ENT-007 — aceite visual da F01 sobre os blocos do 21st.dev — 31/10/2026
+
+- **Origem trocada por decisão do dono (31/10/2026).** A primeira versão desta rodada partiu do login-02 do shadcn/ui; a composição de acesso passou a partir do Split Sign In Form (21st.dev, diarmuradi/sign-in-3) e as boas-vindas do Onboarding / Welcome Screen (21st.dev, ravikatiyar162), com o código obtido pelo plugin do 21st e o crédito no topo de `entrada-acesso.tsx` e acima das boas-vindas em `Entrar.tsx`. Do sign-in-3 vieram o painel de cantos de 2rem e o respiro de 3rem; do Welcome Screen, a entrada em sequência, feita em CSS e desligada com `prefers-reduced-motion`. Também mudaram, contra a referência: logo de 48 px no desktop, coluna das boas-vindas de 760 px e título de 48 px. Os parágrafos abaixo descrevem a primeira versão; as medidas valem, salvo as três citadas.
 
 - **Composição de acesso refeita sobre o bloco login-02 do shadcn/ui (MIT).** O aviso de licença
   está no topo de `components/bivaque/entrada-acesso.tsx`; nenhum arquivo do bloco foi copiado. A

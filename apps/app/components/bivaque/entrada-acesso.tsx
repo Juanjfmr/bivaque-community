@@ -14,11 +14,12 @@ import type { EstadoDaEntrada } from "@/lib/navegacao/rotas"
  * do formulário à direita; no celular a foto vira faixa e o formulário vem
  * abaixo.
  *
- * Anatomia adaptada do bloco login-02 do shadcn/ui
- * (https://ui.shadcn.com/blocks/login-02), refeita com os componentes do app.
- *
- * Copyright (c) shadcn. Licenciado sob a MIT License:
- * https://github.com/shadcn-ui/ui/blob/main/LICENSE.md
+ * Parte do bloco Split Sign In Form, de diarmuradi no 21st.dev
+ * (https://21st.dev/@diarmuradi/components/sign-in-3): grade de duas colunas
+ * iguais, painel de cantos grandes com o texto encostado embaixo e o conteúdo
+ * centralizado na outra coluna. Os lados ficam invertidos (foto à esquerda), o
+ * depoimento do bloco dá lugar à frase e aos itens do Bivaque, e next/link, Base
+ * UI e o FancyButton são trocados pelos componentes do app.
  */
 
 export type EstadoDeAcesso = Extract<

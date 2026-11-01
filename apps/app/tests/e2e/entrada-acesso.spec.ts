@@ -472,8 +472,8 @@ test("capturas de página inteira do retomar, convite, convite indisponível e c
   await capturar(page, "apagada", testInfo, PASTA_DAS_CAPTURAS_DO_LOTE)
 })
 
-// ENT-007 — o aceite visual do dono: a composição segue o login-02 do shadcn/ui,
-// com duas colunas iguais no desktop e faixa 16:10 no celular.
+// ENT-007 — o aceite visual do dono: a composição parte do Split Sign In Form
+// (21st.dev), com duas colunas iguais no desktop e faixa 16:10 no celular.
 
 test("no desktop a composição de acesso tem duas colunas iguais e conteúdo de até 480 px", async ({
   page,
@@ -505,7 +505,7 @@ test("no desktop a composição de acesso tem duas colunas iguais e conteúdo de
     (await page.locator(seletor).first().boundingBox())?.height
   expect(await altura(".entrada-acesso-google")).toBeCloseTo(48, 0)
   expect(await altura("#login-email")).toBeCloseTo(48, 0)
-  expect(await altura(".entrada-acesso-marca img")).toBeCloseTo(40, 0)
+  expect(await altura(".entrada-acesso-marca img")).toBeCloseTo(48, 0)
 })
 
 test("no celular o título mede 24 px e a foto da composição é 16:10", async ({
