@@ -1209,3 +1209,52 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
   de página inteira, feitas pelo próprio spec.
 - **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
   julgamento; a comparação com as referências aprovadas é do revisor.
+
+## ENT-007 — aceite visual da F01 sobre o login-02 do shadcn — 31/10/2026
+
+- **Composição de acesso refeita sobre o bloco login-02 do shadcn/ui (MIT).** O aviso de licença
+  está no topo de `components/bivaque/entrada-acesso.tsx`; nenhum arquivo do bloco foi copiado. A
+  estrutura passou a ser a do bloco: no desktop (≥1024 px) a grade é `1fr 1fr`, o painel da foto
+  cobre a coluna da esquerda com a margem e os cantos de antes, e o conteúdo fica centralizado na
+  direita, com no máximo 30rem (480 px), logo de 40 px no topo, título de 44 px, apoio de 17 px e
+  controles de 48 px. No celular (<768 px) a foto é uma faixa de 16:10 com o mesmo enquadramento,
+  o título mede 24 px e campos e botões, 44 px.
+- **Enquadramento por tela, sem trocar as imagens.** A variável `--entrada-foto-posicao` é definida
+  por estado em `styles.css` (`data-estado` no `<section>`): login e conta apagada mostram a mesa
+  com o aperto de mão inteiro; criar conta e retomar encostam a foto à direita para as duas mulheres
+  do portão aparecerem inteiras; senha fica no centro; convite e convite indisponível sobem para
+  40% da altura, onde está o grupo.
+- **Tablet (768–1023 px).** A composição lateral só entra no desktop: em 768 px a coluna do painel
+  ficaria com 344 px de largura e cortaria a cena. Nessa faixa a página mantém a faixa no topo, a
+  coluna de 30rem centralizada e a lista de valor vertical com os rótulos longos, agora sobre a
+  superfície e não sobre a foto.
+- **Regra comum de tamanho no celular** em todas as telas de `/app/entrar/*`: título de display 24 px,
+  subtítulo de seção 18 px, apoio 15 px, rótulos 14 px, ajudas 13 px e campos de 44 px. As telas
+  aprovadas só mudaram nessa regra.
+- **Boas-vindas (13, 13b, 13c):** coluna de 640 px no desktop, foto 21:9 (16:10 no celular), título de
+  40 px, apoio de 18 px e cartões de atalho com 56 px no celular e 64 px no desktop.
+- **Grupos (10):** a miniatura passou a ocupar 40% da largura do cartão em 4:3 (`calc(40% + 6.4px)`,
+  que desconta o respiro lateral do cartão), com `object-fit: cover` centralizado.
+- **Negócio (12d, 12e):** fotos em quatro colunas no celular (cerca de 72 px), selo "Capa" e ações
+  menores, e a capa da revisão em 16:9.
+- **Provas (números desta sessão, na árvore entregue).** `--filter @bivaque/app typecheck`: 0 erros.
+  `--filter @bivaque/app build`: build concluído (`built in 531ms`). `--filter @bivaque/app test:e2e`
+  nos três specs da entrada (`entrada-etapa`, `entrada-acesso`, `entrada-21st`): **400 passed,
+  68 skipped, 0 failed** em 3,6 min nos seis viewports. `test:scope`: **150 passed, 0 failed**.
+  `lint` na raiz: **0 erros** em 1370 arquivos (21 avisos e 51 infos antigos, nenhum deste lote).
+- **Provas novas de medida.** Duas colunas do desktop com diferença ≤ 2 px e conteúdo ≤ 480 px;
+  título de display de 24 px em todas as telas de `/app/entrar/*` no celular; foto da composição de
+  acesso em 16:10 (± 2%); miniatura dos grupos em 40% do cartão (± 2%) e em 4:3; fotos do negócio em
+  quatro colunas; capa da revisão em 16:9; boas-vindas com a coluna de 640 px, foto 21:9/16:10 e
+  cartões de 56/64 px.
+- **Capturas para o revisor:** `.visual/ENT-007/{01-login,02-conta,10-grupos,12d-negocio-fotos,
+  12e-negocio-revisao,13-boas-vindas,13b-boas-vindas-chegando,13c-boas-vindas-saindo,14-retomar,
+  15-senha,15b-senha-enviada,16-convite,17-convite-indisponivel,18-apagada}-{mobile-375,tablet-768,
+  desktop-1440}.png`, de página inteira, feitas pelo próprio spec.
+- **O que ficou fora ou difere da referência.** (1) A 12c continua sem revisão do dono e não foi
+  tocada. (2) O título do desktop quebra em duas linhas nas telas de título longo: com 44 px e o
+  conteúdo de 480 px é o que cabe. (3) As imagens de referência mostram o tablet sem painel lateral;
+  foi a escolha tomada aqui, registrada acima. (4) A capa da revisão no desktop mantém os 200 px de
+  altura de antes: o contrato fixa 16:9 só para o celular.
+- **Não declarado:** aceite visual do dono e revisão independente. Este registro é da execução, não
+  do julgamento; a comparação com as referências aprovadas é do revisor.
