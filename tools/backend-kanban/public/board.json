@@ -5488,6 +5488,27 @@
       "blockers": [
         "Aceite visual do dono sobre a jornada inteira implementada (capturas em .visual/ENT-001 a ENT-006)."
       ]
+    },
+    {
+      "id": "LANDING-CTA-ANTES-DO-REGISTRO",
+      "title": "Landing: Criar conta não faz nada se tocado antes do JavaScript registrar o botão",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Os CTAs Criar conta da landing pública (apps/web/app/landing/landing.tsx, função Cta) são md-filled-button com href. O elemento só navega depois de registrado no cliente; antes disso o toque não leva a lugar nenhum. No CI, o e2e landing-v8 em 375 px clicou antes do registro e ficou em / duas vezes (31/10/2026); o teste passou a esperar o registro (59a33028), mas uma pessoa num celular lento ainda pode tocar cedo demais. A landing continua no Next pelo ADR-20261024-front-react-spa §4.",
+      "checklist": [
+        "O CTA navega para /signup mesmo antes do JavaScript (por exemplo, um <a href> real dentro ou no lugar do botão)",
+        "e2e que clica antes do registro do elemento e chega a /signup",
+        "Mesma correção nos outros md-filled-button com href da landing (chamada final, barra fixa, folha do menu)"
+      ],
+      "completedChecklist": [false, false, false],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/landing-v8.spec.ts"],
+      "links": ["apps/web/app/landing/landing.tsx", "tests/e2e/landing-v8.spec.ts"],
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "59a33028"
     }
   ]
 }
