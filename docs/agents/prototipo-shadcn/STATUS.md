@@ -255,6 +255,54 @@ retry 3. Não muda backend, banco, dependências ou aceite visual da onda 1.
   Root Directory aponta a `prototypes/bivaque-next-shadcn`, ausente nesta branch
   (deployment dpl_JE3F8ajCuq9cGzRk4xyRsuhyuJDw). Destino desse preview depende
   do dono. PR permanece draft e a aprovação visual global continua pendente.
+## APP-009 — bancada visual de Mercado para avaliação, 26/10/2026
+
+O dono autorizou "Faça, quero ver como vai ficar" após escolher uma bancada
+na galeria React. Entregue a prévia `/app/galeria/mercado`, disponível no dev
+ou modo de prova; o build normal mostra a página indisponível. O Mercado V1
+continua sendo a tela normal. Nenhuma dependência instalada, backend ou R3
+alterados. Não aprova a onda 1 nem as ondas seguintes. Monitor segue pausado.
+
+- Reuso: ProductGrid, FilterPanel e FilterSheet adaptados de ecomcn (MIT),
+  com atribuição e licença em `src/galeria/mercado/ecomcn/`. Card, Badge,
+  Button, Input e ToggleGroup existentes; Sheet e Checkbox do registro oficial
+  shadcn radix-nova com helper local e Material Symbols. Nenhum pacote cn.
+  Removidos controles e helpers de histórico sem consumidor nesta cena.
+- Mesmos seis anúncios e fotos da porta de demonstração, quatro desapegos e
+  dois imóveis. Busca, bairro, vazio, salvar local, detalhe e folha provisória
+  funcionam. Fechar sem aplicar descarta filtros; aplicar/fechar devolve foco.
+- **Gate completo VERDE**, sem builds pulados: lint 32 s, tipos 43 s, tipos
+  E2E 18 s, Next 155 s, Vite 30 s, testes 71 s, segredos 26 s. Raiz 1726,
+  app 84, mobile 76, web 19, privacidade 189, escopo 150, secrets PASS.
+  Treze warnings e 51 infos de lint, avisos de fontes públicas, chunk Vite,
+  CJS mobile e depreciação do Node permanecem não bloqueantes, sem supressão.
+- **27 E2E verdes** na rodada final, zero falhas: 15 da bancada e 12 de
+  regressão da casca, em 375, 768 e 1440. Não somar os 27 da R0 aos finais.
+  Inclui o negativo do build normal sem modo de prova e fotos carregadas
+  de verdade, além de busca, vazio, bairros, descarte/aplicação, salvar e foco.
+- Qwen independente: R0 pediu caminho da casca explícito no contrato e
+  negativo sem modo de prova; ambos resolvidos. R1 **APROVADO PARA MEDIÇÃO**.
+  Pareceres e logs `APP-MERCADO-LAB-*` em `.visual/coordenacao/`.
+- Codex examinou capturas e corrigiu rótulo da casca para o caminho com base
+  normalizada, removeu o andaime de carga da cena e ajustou tipografia/motion.
+  Rodada final gera seis vistas nos dois temas e quatro folhas de filtros;
+  comparações HTML à esquerda e bancada à direita em 375 e 1440 usam imagens
+  HTML preservadas da captura anterior, sem alegar nova execução do HTML.
+  Galeria: `.visual/onda-1/mercado-lab-20261026/index.html`. Capturas R0
+  preservadas; 187 arquivos do app associados à fonte final por hashes.
+- Falhas classificadas: R0 do gate parou em formatação nova, corrigida;
+  R1 parou em timeout de 5 s de teste antigo de login, com teste e apps/web
+  intactos. Focal passou 7 casos em 606 ms e o gate final passou sem mudar
+  regra ou timeout. Dois lançamentos anteriores abortaram no wrapper
+  PowerShell ao receber stderr informativo, antes da prova; derivação das
+  públicas e execução via Python corrigiram apenas o lançamento, sem env local.
+
+Limites: preço/ordenação, erro de carga e skeleton não têm prova automática
+específica. Salvos são locais à prévia; não há publicação nem persistência.
+O histórico dos overlays da bancada não foi integrado ao contrato de navegação
+do produto; isso será necessário se a composição for escolhida para o Mercado.
+Aceite visual do dono e escolha desta composição permanecem pendentes. Sem push,
+merge ou deploy nesta entrega. Recomendação: avaliar esta cena antes de ampliar.
 
 ## Auditoria visual Codex e adoção shadcn — 26/10/2026
 

@@ -1,4 +1,4 @@
-import { useParams } from "@tanstack/react-router"
+import { useLocation, useParams } from "@tanstack/react-router"
 import { useEffect, useRef } from "react"
 
 import { BotaoDeIcone } from "@/components/bivaque/botao"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { acoesDaBarraDoTopo } from "@/lib/casca"
 import { useNavegacao, useRotaAtual } from "@/lib/navegacao/react"
 import { useCasca } from "@/src/contexto/casca"
+import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 
 /**
  * A barra do topo (inventário §5.2, com a barra nova do ADR §3.1).
@@ -25,6 +26,10 @@ export function BarraDoTopo({
   readonly podeSubir: boolean
 }) {
   const rota = useRotaAtual()
+  const caminho = useLocation({ select: (localizacao) => localizacao.pathname })
+  const bancada =
+    (import.meta.env.DEV || modoDeProvaAtivo()) &&
+    (caminho === "/galeria/mercado" || caminho === "/app/galeria/mercado")
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const navegacao = useNavegacao()
   const casca = useCasca()
@@ -55,13 +60,15 @@ export function BarraDoTopo({
             />
           )}
           <span data-titulo="topo">
-            {rota.nome === "conversa" &&
-            casca.conversaNoTopo &&
-            casca.conversaNoTopo.id === parametros["id"]
-              ? casca.conversaNoTopo.nome
-              : rota.nome === "guia"
-                ? `Guia de ${casca.cidade}`
-                : rota.titulo}
+            {bancada
+              ? "Mercado · prévia"
+              : rota.nome === "conversa" &&
+                  casca.conversaNoTopo &&
+                  casca.conversaNoTopo.id === parametros["id"]
+                ? casca.conversaNoTopo.nome
+                : rota.nome === "guia"
+                  ? `Guia de ${casca.cidade}`
+                  : rota.titulo}
           </span>
           <span className="grow" />
 

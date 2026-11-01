@@ -3,6 +3,7 @@ import type { ComponentType } from "react"
 
 import { ROTAS } from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
+import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
 import { TelaGaleria } from "@/src/galeria/TelaGaleria"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { Agenda } from "@/src/telas/Agenda"
@@ -137,7 +138,14 @@ const galeria = createRoute({
   component: () => (modoDeProvaAtivo() ? <TelaGaleria /> : <TelaIndisponivel />),
 })
 
-const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria])
+const mercadoLab = createRoute({
+  getParentRoute: () => raiz,
+  path: "/galeria/mercado",
+  component: () =>
+    import.meta.env.DEV || modoDeProvaAtivo() ? <MercadoLab /> : <TelaIndisponivel />,
+})
+
+const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria, mercadoLab])
 
 export const roteador = createRouter({
   basepath: "/app",
