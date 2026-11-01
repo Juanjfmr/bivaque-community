@@ -1,0 +1,83 @@
+# ENT-006 — F01, lote 6: boas-vindas por momento, retomar, convite e conta apagada (+ correção do ENT-005)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor e verificação de runtime: Claude Code.
+# Sem backend. Último lote da F01: depois dele nenhuma tela da entrada fica no cartão antigo.
+task_id: ENT-006
+
+objective: >
+  No app (apps/app), as últimas telas da entrada seguem as referências aprovadas em 30/10/2026:
+  boas-vindas que mudam pelo momento escolhido na cidade (chegando, moro aqui, saindo), com foto,
+  atalhos e "Entrar na comunidade"; e retomar, convite de família, convite indisponível e conta
+  apagada na composição de acesso (EntradaAcesso), com a foto no painel e o formulário ao lado.
+  Mesmos campos, validações e destinos de hoje, exceto os destinos novos dos atalhos das
+  boas-vindas, que usam rotas que já existem. Corrige a barra de progresso interna do negócio no
+  celular. Ao final, o cartão antigo da entrada deixa de ser usado.
+
+authority:
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md (Duas composições, Valor e atrito: boas-vindas pelo momento, Celular)
+  - docs/design/fluxos-2026-10-30/individuais/F01/F01-13-boas-vindas.png, F01-13b-boas-vindas-moro.png, F01-13c-boas-vindas-saindo.png, F01-14-retomar.png, F01-16-convite.png, F01-17-convite-indisponivel.png, F01-18-apagada.png e as mesmas em celular/
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (o momento alimenta Início e boas-vindas; convite por código com e-mail somente leitura; tela "Você já começou"; tela "Conta apagada")
+  - prototypes/bivaque-html/src/features/entry/arrive.js (renderEntryWelcome: textos e atalhos por momento)
+  - docs/agents/tasks/ENT-001.task.yml a ENT-005.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 30/10/2026 em docs/design/fluxos-2026-10-30/individuais/F01/previa-atual/
+    13-boas-vindas, 14-retomar, 16-convite, 17-convite-indisponivel e 18-apagada (desktop): cartão
+    único com aviso de demonstração, boas-vindas iguais para todos os momentos, código de convite
+    em campo comum. Revisão do ENT-005 (.visual/ENT-005/negocio-etapa-5-mobile-375.png): no celular
+    a barra interna "Passo X de 5" tem a mesma largura da barra geral e as duas se confundem.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/components/bivaque/entrada-acesso.tsx
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/components/bivaque/formulario-negocio.tsx
+  - apps/app/src/styles.css
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - apps/app/tests/e2e/entrada-acesso.spec.ts
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-006/
+
+forbidden:
+  - criar rota nova, grupo, plano ou dado de demonstração; os atalhos usam rotas existentes de lib/navegacao/rotas.ts
+  - mudar validações do convite, a regra do e-mail somente leitura ou o aceite obrigatório
+  - instalar, remover ou atualizar dependências (o campo de código não usa biblioteca de OTP)
+  - copiar código de blocos do 21st.dev
+  - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo
+  - criar texto, campo ou destino que não esteja nesta lista de aceite
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Boas-vindas (/app/entrar/boas-vindas): sem indicador de passos; barra superior da composição de etapa sem o botão Sair; coluna central com foto larga no topo (demo/landing-hero.webp, cantos de 16 px, alt vazio), ícone de check em círculo Grafite pequeno sobre a borda inferior da foto, título \"Você chegou ao Bivaque.\" em Noto Serif centralizado e, conforme o momento escolhido na tela da cidade: chegando — apoio \"Seu plano de chegada a {cidade} já está pronto.\" e dois cartões de atalho de linha inteira com ícone e seta: \"Ver o plano de chegada\" / \"Moradia, escola, saúde e mudança, na ordem.\" (vai ao início) e \"Conhecer quem chega com você\" / \"Chegadas 2027 em {cidade}\" (vai ao grupo turma-manaus-2027 quando a cidade é Manaus; sem esse cartão em outras cidades); moro aqui (padrão) — apoio \"O que a comunidade de {cidade} indica já está à sua espera.\" e um cartão \"Conhecer {cidade}\" / \"O que a comunidade indica, por assunto.\" (vai ao guia); saindo — apoio \"Seu plano de saída para {destino} já está pronto.\" (sem destino, \"Seu plano de saída já está pronto.\") e o cartão \"Ver o plano de saída\" / \"Moradia, escola, saúde e mudança, na ordem.\" (vai ao início). Botão principal \"Entrar na comunidade\" (vai à comunidade)."
+  - "Retomar (/app/entrar/retomar): composição de acesso com demo/chegada.webp. Título \"Continue de onde parou.\"; apoio \"Você começou seu cadastro e pode continuar.\"; cartão com avatar de iniciais, nome e e-mail da conta em andamento (do estado da entrada; quando vazio, o nome da pessoa da demonstração lido de lib/dados, sem e-mail); \"Continuar cadastro\" (principal) e \"Usar outra conta\" (contorno), destinos de hoje."
+  - "Convite (/app/entrar/convite): composição de acesso com demo/landing-hero-retrato.webp. Título \"Convite de família.\"; apoio \"Use o código recebido para aceitar seu convite.\"; campo \"Código do convite\" único, em maiúsculas, com fonte monoespaçada e espaçamento entre letras (sem biblioteca); \"Nome completo\"; \"E-mail do convite\" somente leitura com fundo levemente acinzentado e ícone de cadeado; senha com Mostrar; aceite desenhado; \"Aceitar convite\" desabilitado até o aceite e então vai à cidade como hoje; \"Simular convite indisponível\" como link de texto discreto no fim."
+  - "Convite indisponível (/app/entrar/convite-indisponivel): composição de acesso com demo/landing-hero-retrato.webp, conteúdo alinhado à esquerda: ícone de atenção de traço, título \"Convite indisponível.\", apoio \"O código não é válido ou não está mais disponível.\", \"Tentar outro código\" (principal) e \"Voltar para entrar\" (contorno)."
+  - "Conta apagada (/app/entrar/apagada): composição de acesso com demo/landing-hero.webp, alinhado à esquerda: ícone de check de traço, título \"Conta apagada.\", apoio \"Sua conta e seus dados foram apagados.\", \"Voltar ao início\" (principal)."
+  - "Correção do ENT-005: abaixo de 768 px a barra interna \"Passo X de 5\" do negócio tem no máximo 60% da largura da coluna e fica centralizada, distinta da barra geral da etapa."
+  - "Nenhuma tela de /app/entrar/* usa mais o cartão antigo nem mostra o parágrafo \"Jornada demonstrativa\"; o código e o CSS do cartão antigo que ficarem sem uso são removidos."
+  - "Foco no título ao abrir; foco visível; sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; tema escuro pelos tokens."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 lint
+  - "Testes: os três momentos levam às boas-vindas certas (textos e atalhos, com destino de cada atalho), saindo sem destino, retomar com e sem dados, convite com e-mail somente leitura e aceite obrigatório, simulação de convite indisponível, conta apagada, barra interna do negócio ≤ 60% em 375 px, e nenhuma rota de /app/entrar/* com o aviso de demonstração"
+  - "Capturas de página inteira das boas-vindas nos três momentos, retomar, convite, convite indisponível e conta apagada em 375, 768 e 1440 px em .visual/ENT-006/"
+
+risk: entrada, convite e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

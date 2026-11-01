@@ -15,9 +15,11 @@ import {
   seedAs,
 } from "./helpers/recon032"
 import {
+  GRUPO_PAIS_E_FILHOS_ID,
   MANAUS_LOCALITY_ID,
   MEMBRO_1_EMAIL,
   MEMBRO_1_USER_ID,
+  MEMBRO_9_EMAIL,
   PROVIDER_PROFILE_ID,
   PROVIDER_USER_ID,
   VISUAL_EMAIL,
@@ -169,21 +171,22 @@ test.describe("conversa por URL estavel", () => {
 test.describe("leitura de notificacoes persiste (prancha 54)", () => {
   test("marcar como lida persiste apos reload e o contador acompanha", async ({ browser }) => {
     // A nao-lida nasce do fluxo real e nao de sobra de rodada anterior: o
-    // membro-1 publica e outro membro comenta; o trigger notify_comment
-    // escreve a notificacao para o autor do post.
+    // membro-1 publica num grupo e outro membro do grupo comenta; o trigger
+    // notify_comment escreve a notificacao para o autor do post.
     const membro = await mintSession(MEMBRO_1_EMAIL)
     const stamp = Date.now().toString(36)
     const post = await restInsert<{ id: string }>("posts", membro.accessToken, {
       locality_id: MANAUS_LOCALITY_ID,
       user_id: MEMBRO_1_USER_ID,
+      group_id: GRUPO_PAIS_E_FILHOS_ID,
       post_type: "text",
       content: `Publicação do ciclo RECON-032 ${stamp}`,
     })
     if (!post) {
       throw new Error("não foi possível criar a publicação da fixture de leitura")
     }
-    const visual = await mintSession(VISUAL_EMAIL)
-    await restInsert("comments", visual.accessToken, {
+    const colega = await mintSession(MEMBRO_9_EMAIL)
+    await restInsert("comments", colega.accessToken, {
       post_id: post.id,
       content: `Comentário do ciclo RECON-032 ${stamp}`,
     })

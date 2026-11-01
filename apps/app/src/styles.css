@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Blocos do 21st.dev adaptados neste arquivo (o crédito completo está junto de
+   cada componente): Split Sign In Form, de diarmuradi
+   (https://21st.dev/@diarmuradi/components/sign-in-3), na composição de acesso
+   da entrada; Onboarding / Welcome Screen, de ravikatiyar162
+   (https://21st.dev/@ravikatiyar162/components/onboarding-welcome-screen), nas
+   boas-vindas. */
+
 /* A pele do Bivaque no app novo (onda 1c).
 
    Os valores são os do `apps/prototipo/app/globals.css` — a tradução aprovada
@@ -583,6 +590,408 @@
   font-variation-settings: "FILL" 1;
 }
 
+/* O check do passo feito cabe no círculo de 24 px do indicador do negócio. */
+.checkbox-marca {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* O foco programático do h1 anuncia a nova rota ao leitor de tela.
+   O h1 não é uma ação focável por Tab: evite o retângulo de foco herdado
+   que aparece em todo print, sem afetar :focus-visible de botões/campos. */
+[data-titulo-da-tela]:focus {
+  outline: none;
+}
+
+/* ── mobile: espaço útil, toque e leitura sem afetar desktop ────────────── */
+@media (max-width: 719.98px) {
+  [data-cabeca="pagina"] {
+    padding-block: 12px 8px;
+  }
+
+  [data-tela="inicio"] [data-secao="sim"] {
+    margin-top: 20px;
+  }
+
+  [data-tela="inicio"] nav[aria-label="Áreas"] {
+    margin-top: 8px;
+  }
+
+  [data-tela="inicio"] [data-acao="contratar"] {
+    margin-top: 8px;
+  }
+
+  /* A imagem e a área textual são alvos independentes, ambos acionáveis.
+     Evita touch target curto para abrir detalhes de anúncios. */
+  [data-cartao="anuncio"] [data-acao="abrir-foto"],
+  [data-cartao="negocio"] [data-acao="abrir-foto"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-topo="barra"][data-rota="inicio"] [data-titulo="topo"] {
+    display: none;
+  }
+
+  [data-topo="barra"] [data-acao="cidade"] {
+    max-width: 88px;
+    padding-inline: 4px;
+  }
+
+  [data-nav="principal"] [data-aba],
+  [data-nav="principal"] [data-acao="criar"] {
+    font-size: 10.5px;
+    letter-spacing: 0;
+  }
+}
+
+/* Carrossel responsivo da R72: o próximo cartão fica visível como convite ao gesto.
+   No desktop continua a grade de colunas, sem carrossel forçado. */
+@media (max-width: 719.98px) {
+  .bv-grade.bv-carrossel-mobile {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 2px;
+    gap: 12px;
+    padding: 2px 2px 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bv-grade.bv-carrossel-mobile::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bv-carrossel-mobile > [data-cartao] {
+    flex: 0 0 min(82%, 340px);
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
+/* Vista de lista dos imóveis: seleção funcional sem mudar a geometria do
+   catálogo nos outros módulos. Mantém alvos mínimos de 44 px. */
+.bv-grade.bv-lista-imoveis {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] {
+  display: grid;
+  grid-template-columns: minmax(120px, 36%) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] > div:first-child {
+  min-width: 0;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] [data-acao="abrir-foto"],
+.bv-lista-imoveis [data-cartao="anuncio"] [data-acao="abrir-foto"] > div {
+  height: 100%;
+}
+
+.bv-lista-imoveis [data-cartao="anuncio"] img {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Home desktop: conteúdo principal tem duas colunas de cards, ao lado de
+   contexto enxuto (grupos, encontro e perguntas) sem repetir widgets. */
+@media (min-width: 1024px) {
+  .bv-home-principal .bv-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Na lista de imóveis o rótulo continua associado ao Select, mas no telefone
+   não ocupa uma linha inteira adicional acima da ordenação. */
+@media (max-width: 719.98px) {
+  .bv-ordenar-imoveis > label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+}
+
+/* Conversas detalhadas escondem a navegação inferior. Não reservar o espaço
+   dessa barra no scroll; o compositor permanece na borda útil do telefone. */
+@media (max-width: 719.98px) {
+  [data-casca="app"]:has([data-tela="conversa"]) #conteudo {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Home: descoberta útil antes da decoração ──────────────────────────── */
+.bv-home-intro {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 16px 14px 12px;
+  border-radius: 20px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--brasa) 5%, var(--surface-low)),
+    var(--surface-low) 48%
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-variant) 52%, transparent);
+}
+
+.bv-home-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.105em;
+  text-transform: uppercase;
+}
+
+.bv-home-kicker-ponto {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--brasa);
+}
+
+[data-home="abertura"] [data-cabeca="pagina"] {
+  padding: 5px 0 0;
+}
+
+[data-home="abertura"] h1 {
+  max-width: 26ch;
+  color: var(--on-surface);
+  font-size: clamp(26px, 5.2vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+[data-home="abertura"] [data-cabeca="pagina"] p {
+  max-width: 52ch;
+  margin-top: 4px;
+  color: var(--on-surface-variant);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.bv-home-ferramentas {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.bv-home-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  background: var(--surface-lowest);
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.bv-home-busca:focus-visible,
+.bv-home-atalho:focus-visible,
+.bv-home-contratar:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.bv-home-atalhos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
+}
+
+.bv-home-atalho {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 1px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-lowest) 82%, transparent);
+  color: var(--on-surface);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.bv-home-atalho-icone {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  place-items: center;
+  color: var(--on-surface-variant);
+}
+
+.bv-home-atalho:active {
+  background: var(--secondary-container);
+}
+
+@media (min-width: 720px) {
+  .bv-home-intro {
+    padding: 20px 22px 16px;
+  }
+}
+
+.bv-home-contratar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 15px;
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.bv-home-contratar-icone {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-lowest);
+  color: var(--brasa);
+}
+
+[data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+  margin-top: 15px;
+}
+
+[data-tela="inicio"] .bv-titulo-de-secao h2 {
+  font-size: 19px;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
+[data-tela="inicio"] .bv-titulo-de-secao button {
+  font-size: 12px;
+}
+
+@media (max-width: 719.98px) {
+  [data-tela="inicio"] [data-secao="sim"] {
+    margin-top: 19px;
+  }
+
+  [data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+    margin-top: 15px;
+  }
+
+  [data-nav="principal"] [data-acao="criar"] [data-criar="botao"] {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    margin-top: -32px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px var(--shadow-strong);
+  }
+
+  [data-nav="principal"] [data-aba] {
+    gap: 2px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-home="abertura"] h1 {
+    font-size: 25px;
+  }
+}
+
+/* Cards reais do 21st.dev, com tokens e jornadas do Bivaque. */
+/* Vitrine como feed de descoberta, não cards gigantes isolados. */
+.bv-vitrine [data-tom="neutro"] {
+  max-width: 100%;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-lowest) 93%, transparent);
+  color: var(--on-surface);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+@media (max-width: 719.98px) {
+  .bv-home-principal [data-grade="carrossel-mobile"] > [data-vitrine="21st"] {
+    flex-basis: min(75%, 284px);
+  }
+
+  .bv-vitrine [data-slot="product-card-content"] {
+    padding: 12px;
+  }
+}
+
+.bv-vitrine {
+  box-shadow: 0 10px 28px -20px var(--shadow-strong);
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.bv-vitrine [data-slot="product-card-title"] {
+  min-height: 2.5rem;
+}
+
+.bv-vitrine [data-capa="foto"] {
+  border-radius: 0;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .bv-vitrine:hover {
+    box-shadow: 0 18px 36px -20px var(--shadow-strong);
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 359.98px) {
+  [data-home="abertura"] h1 {
+    font-size: 24px;
+  }
+  .bv-vitrine [data-slot="product-card-content"] {
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bv-vitrine {
+    transition: none;
+  }
+}
+
 /* ── blocos reaproveitados ───────────────────────────────────────────────── */
 
 .bv-grade {
@@ -591,19 +1000,21 @@
   grid-template-columns: 1fr;
 }
 
-@media (min-width: 480px) {
+/* Uma foto por linha em qualquer telefone, inclusive entre 480 e 719 px.
+   Após a barra lateral aparecer (720px), duas colunas preservam cards legíveis. */
+@media (min-width: 720px) {
   .bv-grade {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1080px) {
   .bv-grade {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1440px) {
   .bv-grade {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -1116,4 +1527,1563 @@ body[data-profundidade="sim"] [data-casca="app"] {
   font-size: 10px;
   overflow-wrap: anywhere;
   text-align: center;
+}
+
+/* Entrada: composição A (acesso) — painel da foto e coluna do formulário.
+   Parte do bloco Split Sign In Form (21st.dev, diarmuradi/sign-in-3): duas
+   colunas iguais, painel de cantos grandes com a foto e conteúdo centralizado.
+   Celular primeiro: faixa de foto 16:10, valor e formulário em uma coluna. */
+
+/* As composições A e B tomam a altura toda, sem o recuo da casca. A casca da
+   entrada não tem navegação; sem isso, a coluna reservada a ela em ≥720 px sobra
+   à esquerda, e o corpo fica na faixa `auto` da grade, com a altura do conteúdo. */
+[data-casca="entrada"]:has(.entrada-acesso, .entrada-etapa) [data-casca="corpo"] {
+  grid-row: 1 / -1;
+}
+[data-casca="entrada"] #conteudo:has(.entrada-acesso, .entrada-etapa) {
+  grid-column: 1 / -1;
+  padding: 0;
+}
+[data-casca="entrada"] #conteudo > [data-animacao="pagina"]:has(.entrada-acesso, .entrada-etapa) {
+  display: grid;
+  min-height: 100%;
+}
+.entrada-acesso {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--background);
+  /* Enquadramento por tela: cada estado aponta o trecho da foto que precisa
+     aparecer inteiro (o aperto de mão, as duas mulheres do portão). */
+  --entrada-foto-posicao: 50% 50%;
+}
+.entrada-acesso[data-estado="login"] {
+  --entrada-foto-posicao: 64% 50%;
+}
+.entrada-acesso[data-estado="conta"],
+.entrada-acesso[data-estado="retomar"] {
+  --entrada-foto-posicao: 100% 50%;
+}
+.entrada-acesso[data-estado="convite"],
+.entrada-acesso[data-estado="convite-indisponivel"] {
+  --entrada-foto-posicao: 50% 40%;
+}
+.entrada-acesso-marca {
+  padding: 20px 20px 12px;
+}
+.entrada-acesso-marca img {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+.entrada-acesso-painel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0 16px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+/* A faixa de 16:10 é quem dá altura à foto: a imagem e o véu têm a mesma caixa. */
+.entrada-acesso-foto,
+.entrada-acesso-veu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+.entrada-acesso-foto {
+  object-fit: cover;
+  object-position: var(--entrada-foto-posicao);
+}
+.entrada-acesso-veu {
+  --entrada-acesso-veu-baixo: linear-gradient(
+    to top,
+    rgb(0 0 0 / 0.72),
+    rgb(0 0 0 / 0.3) 45%,
+    rgb(0 0 0 / 0) 78%
+  );
+  background-image: var(--entrada-acesso-veu-baixo);
+}
+/* "Criar conta" tem a etiqueta do público no alto: o véu também escurece o topo. */
+.entrada-acesso-veu[data-topo="sim"] {
+  background-image:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0) 28%),
+    var(--entrada-acesso-veu-baixo);
+}
+.entrada-acesso-faixa {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  aspect-ratio: 16 / 10;
+  padding: 16px 20px 20px;
+}
+.entrada-acesso-etiqueta {
+  color: rgb(255 255 255);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.entrada-acesso-frase {
+  margin-top: auto;
+  color: rgb(255 255 255);
+  font-family: var(--font-brand);
+  font-size: clamp(28px, 7.5vw, 34px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.35);
+}
+.entrada-acesso-valor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px 4px;
+}
+.entrada-acesso-itens {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+}
+.entrada-acesso-itens li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.entrada-acesso-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--foreground);
+}
+.entrada-acesso-curto {
+  display: inline;
+}
+.entrada-acesso-longo {
+  display: none;
+}
+.entrada-acesso-vinculo {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.entrada-acesso-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 20px 40px;
+}
+.entrada-acesso-formulario h1 {
+  font-size: 1.5rem;
+}
+.entrada-acesso-apoio {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+}
+.entrada-acesso-voltar,
+.entrada-acesso-link {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entrada-acesso-voltar {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  font-size: 14px;
+}
+.entrada-acesso-tempo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.entrada-acesso-botao {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+}
+.entrada-acesso-google {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  gap: 8px;
+}
+.entrada-acesso-google:hover {
+  background: var(--muted);
+}
+.entrada-acesso-divisor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.entrada-acesso-divisor::before,
+.entrada-acesso-divisor::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+.entrada-acesso-formulario input:not([type="checkbox"]) {
+  min-height: 44px;
+  background: var(--card);
+}
+.entrada-acesso-senha {
+  display: grid;
+  gap: 6px;
+}
+.entrada-acesso-rotulo-linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.entrada-acesso-senha-campo {
+  position: relative;
+}
+.entrada-acesso-senha-campo input {
+  padding-right: 84px;
+}
+.entrada-acesso-mostrar {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.entrada-acesso-nota {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.entrada-acesso-aceite {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.entrada-acesso-aceite input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+.entrada-acesso-rodape {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  text-align: center;
+}
+/* Antes do envio a região está vazia: fica fora do fluxo para o vão de 16 px do
+   formulário não aparecer, mas continua no DOM para o anúncio. */
+.entrada-acesso-status-regiao:empty {
+  position: absolute;
+}
+.entrada-acesso-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-container);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.entrada-acesso-envelope {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+/* Retomar, convite, convite indisponível e conta apagada na composição A.
+   Cartão da conta em andamento, código em maiúsculas monoespaçadas, e-mail
+   somente leitura com cadeado, caixa de aceite desenhada, ícone de resultado e o
+   andaime da simulação como texto discreto. */
+.entrada-acesso-conta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.entrada-acesso-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-container);
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+.entrada-acesso-conta-texto {
+  display: grid;
+  min-width: 0;
+}
+.entrada-acesso-conta-texto strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.entrada-acesso-conta-texto span {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.entrada-acesso-codigo input {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+}
+.entrada-acesso-somente-leitura {
+  position: relative;
+}
+.entrada-acesso-formulario .entrada-acesso-somente-leitura input {
+  padding-right: 44px;
+  background: var(--surface-container);
+}
+.entrada-acesso-cadeado {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  color: var(--muted-foreground);
+  font-size: 20px;
+  pointer-events: none;
+}
+/* Caixa desenhada (não nativa): a seleção é Grafite com o check claro. */
+.entrada-acesso-aceite-desenhado input {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  border: 1.5px solid var(--outline);
+  border-radius: 5px;
+  background: var(--card);
+  appearance: none;
+  cursor: pointer;
+}
+.entrada-acesso-aceite-desenhado input:checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.entrada-acesso-aceite-desenhado input:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 6px;
+  height: 10px;
+  border-right: 2px solid var(--primary-foreground);
+  border-bottom: 2px solid var(--primary-foreground);
+  transform: rotate(45deg);
+}
+.entrada-acesso-aceite-desenhado input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-acesso-marco {
+  display: grid;
+  align-self: flex-start;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--foreground);
+}
+.entrada-acesso-marco .bv-icone {
+  font-size: 32px;
+}
+.entrada-acesso-simulacao {
+  align-self: center;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entrada-acesso-simulacao:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Do tablet para cima o conteúdo ganha a coluna de 30rem centralizada; a foto
+   só vira painel lateral no desktop, onde a coluna dela não fica estreita demais
+   a ponto de cortar a cena. */
+@media (min-width: 768px) {
+  .entrada-acesso-marca {
+    width: min(100% - 64px, 30rem);
+    margin: 0 auto;
+    padding: 32px 0 12px;
+  }
+  .entrada-acesso-marca img {
+    height: 40px;
+  }
+  .entrada-acesso-painel {
+    margin: 0 32px;
+  }
+  .entrada-acesso-formulario {
+    width: min(100% - 64px, 30rem);
+    align-self: center;
+    margin: 0 auto;
+  }
+  .entrada-acesso-formulario h1 {
+    font-size: 2rem;
+  }
+  .entrada-acesso-apoio {
+    font-size: 1rem;
+  }
+  .entrada-acesso-botao {
+    height: 48px;
+  }
+  .entrada-acesso-formulario input:not([type="checkbox"]) {
+    min-height: 48px;
+  }
+  /* No tablet a lista de valor fica abaixo da faixa, sobre a superfície: lista
+     vertical, rótulos longos e as cores do tema. */
+  .entrada-acesso-itens {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 10px;
+    font-size: 15px;
+    text-align: start;
+  }
+  .entrada-acesso-itens li {
+    flex-direction: row;
+    gap: 5px;
+  }
+  .entrada-acesso-curto {
+    display: none;
+  }
+  .entrada-acesso-longo {
+    display: inline;
+  }
+}
+
+/* Desktop: duas colunas iguais, a foto cobrindo o painel à esquerda e o
+   conteúdo de no máximo 30rem centralizado à direita, com o logo no topo. */
+@media (min-width: 1024px) {
+  .entrada-acesso {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr auto 1fr;
+    column-gap: 8px;
+  }
+  .entrada-acesso-marca {
+    grid-area: 1 / 2 / 2 / 3;
+    align-self: end;
+    justify-self: center;
+    width: min(100% - 48px, 30rem);
+    margin: 0;
+    padding: 0 0 28px;
+  }
+  /* Painel do bloco: cantos de 2rem e respiro de 3rem para o texto de baixo. */
+  .entrada-acesso-painel {
+    grid-area: 1 / 1 / 4 / 2;
+    margin: 16px;
+    padding: 3rem;
+    border-radius: 2rem;
+  }
+  .entrada-acesso-marca img {
+    height: 48px;
+  }
+  /* No painel vale a foto em retrato: a cena fica no alto e o texto, embaixo. */
+  .entrada-acesso[data-estado="login"] {
+    --entrada-foto-posicao: 50% 18%;
+  }
+  .entrada-acesso[data-estado="convite"],
+  .entrada-acesso[data-estado="convite-indisponivel"] {
+    --entrada-foto-posicao: 50% 20%;
+  }
+  .entrada-acesso[data-estado="apagada"] {
+    --entrada-foto-posicao: 50% 30%;
+  }
+  /* No painel a foto cobre a altura inteira da coluna. */
+  .entrada-acesso-foto,
+  .entrada-acesso-veu {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+  .entrada-acesso-faixa {
+    height: auto;
+    flex: 1;
+    aspect-ratio: auto;
+    gap: 12px;
+    padding: 0;
+  }
+  .entrada-acesso-frase {
+    font-size: clamp(34px, 4.4vw, 48px);
+  }
+  .entrada-acesso-valor {
+    gap: 14px;
+    /* A faixa da frase ocupa o que sobra do painel; sem este respiro o texto
+       encosta no primeiro item. */
+    margin-top: 20px;
+    padding: 0;
+    color: rgb(255 255 255);
+  }
+  .entrada-acesso-itens {
+    gap: 14px;
+    font-size: 17px;
+  }
+  .entrada-acesso-icone {
+    width: 32px;
+    height: 32px;
+    border-color: rgb(255 255 255 / 0.65);
+    color: rgb(255 255 255);
+  }
+  .entrada-acesso-vinculo {
+    color: rgb(255 255 255 / 0.86);
+    font-size: 13px;
+  }
+  .entrada-acesso-formulario {
+    grid-area: 2 / 2 / 3 / 3;
+    justify-self: center;
+    width: min(100% - 48px, 30rem);
+    margin: 0;
+    padding: 0;
+  }
+  .entrada-acesso-formulario h1 {
+    font-size: 2.75rem;
+  }
+  .entrada-acesso-apoio {
+    font-size: 1.0625rem;
+  }
+}
+
+/* Entrada: composição B (etapa) — barra fina com o logo e "Sair", indicador de
+   cinco passos e coluna central de 560 px. No celular o indicador vira a
+   legenda "Etapa N de 5" e uma barra de cinco segmentos. */
+
+.entrada-etapa {
+  --entrada-etapa-circulo: 34px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--background);
+}
+.entrada-etapa-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.entrada-etapa-barra img {
+  display: block;
+  width: auto;
+  height: 28px;
+}
+.entrada-etapa-sair {
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-size: 15px;
+  cursor: pointer;
+}
+.entrada-etapa-sair:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Indicador: trilho no desktop, legenda e segmentos no celular. */
+.entrada-etapa-passos {
+  width: min(100% - 40px, 656px);
+  margin: 24px auto 0;
+}
+.entrada-etapa-trilha {
+  display: none;
+}
+.entrada-etapa-legenda {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.entrada-etapa-segmentos {
+  display: flex;
+  gap: 8px;
+}
+.entrada-etapa-segmentos > span {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.entrada-etapa-segmentos > span[data-estado="concluido"],
+.entrada-etapa-segmentos > span[data-estado="atual"] {
+  background: var(--foreground);
+}
+
+/* O passo é a coluna do círculo com a linha ao lado e o nome embaixo do
+   círculo: por isso o grid de duas colunas com o rótulo na primeira. */
+.entrada-etapa-passo {
+  display: grid;
+  flex: 1;
+  grid-template-columns: var(--entrada-etapa-circulo) minmax(0, 1fr);
+  grid-template-rows: var(--entrada-etapa-circulo) auto;
+  align-items: center;
+  row-gap: 8px;
+}
+.entrada-etapa-passo:last-child {
+  flex: none;
+  grid-template-columns: var(--entrada-etapa-circulo);
+}
+.entrada-etapa-circulo {
+  display: grid;
+  place-items: center;
+  width: var(--entrada-etapa-circulo);
+  height: var(--entrada-etapa-circulo);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.entrada-etapa-circulo .bv-icone {
+  font-size: 16px;
+}
+.entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-circulo,
+.entrada-etapa-passo[data-estado="atual"] .entrada-etapa-circulo {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.entrada-etapa-linha {
+  height: 1px;
+  background: var(--border);
+}
+/* O conector liga um círculo ao próximo: o passo 5 não tem linha depois dele. */
+.entrada-etapa-passo:last-child .entrada-etapa-linha {
+  display: none;
+}
+.entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-linha {
+  background: var(--foreground);
+}
+.entrada-etapa-rotulo {
+  justify-self: center;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+.entrada-etapa-passo[data-estado="concluido"] .entrada-etapa-rotulo,
+.entrada-etapa-passo[data-estado="atual"] .entrada-etapa-rotulo {
+  color: var(--foreground);
+}
+.entrada-etapa-opcional {
+  display: block;
+  font-size: 12px;
+}
+
+.entrada-etapa-conteudo {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 32px 20px 40px;
+}
+.entrada-etapa-titulo {
+  font-family: var(--font-brand);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.6px;
+  text-align: center;
+  text-wrap: balance;
+}
+.entrada-etapa-apoio {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  text-align: center;
+}
+.entrada-etapa-corpo {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+}
+.entrada-etapa-corpo input:not([type="checkbox"], [type="radio"]) {
+  min-height: 44px;
+  background: var(--card);
+}
+.entrada-etapa-acao {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+}
+.entrada-etapa-aceite {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+/* Caixa desenhada (não nativa): a seleção é Grafite com o check branco. */
+.entrada-etapa-aceite input {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  border: 1.5px solid var(--outline);
+  border-radius: 5px;
+  background: var(--card);
+  appearance: none;
+  cursor: pointer;
+}
+.entrada-etapa-aceite input:checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.entrada-etapa-aceite input:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 6px;
+  height: 10px;
+  border-right: 2px solid var(--primary-foreground);
+  border-bottom: 2px solid var(--primary-foreground);
+  transform: rotate(45deg);
+}
+.entrada-etapa-aceite input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Cidade: campo com o ícone de lugar e o momento em três cartões de rádio na
+   mesma linha. Anatomia do Radio Group
+   (https://21st.dev/@originui/components/radio-group), reproduzida com os
+   componentes do app — sem copiar o código do bloco. */
+.entrada-etapa-campo {
+  position: relative;
+  display: grid;
+}
+.entrada-etapa-campo input {
+  padding-left: 44px;
+}
+.entrada-etapa-campo-icone {
+  position: absolute;
+  bottom: 13px;
+  left: 14px;
+  color: var(--muted-foreground);
+  font-size: 22px;
+  pointer-events: none;
+}
+.entrada-etapa-momento {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  border: 0;
+}
+.entrada-etapa-momento legend {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.entrada-etapa-momento label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+/* O selecionado troca 1 px de borda por 1 px de respiro: o conteúdo não anda. */
+.entrada-etapa-momento label:has(input:checked) {
+  padding: 5px;
+  border: 2px solid var(--foreground);
+}
+.entrada-etapa-momento label:has(input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* O rádio nativo cobre o cartão inteiro, invisível: o clique em qualquer ponto e
+   o foco por teclado caem nele, e o desenho é o span ao lado. */
+.entrada-etapa-momento input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.entrada-etapa-radio {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--outline);
+  border-radius: 50%;
+  background: var(--card);
+}
+.entrada-etapa-momento label:has(input:checked) .entrada-etapa-radio {
+  border-color: var(--foreground);
+}
+.entrada-etapa-momento label:has(input:checked) .entrada-etapa-radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--foreground);
+}
+/* Em 320 px os três cartões não cabem legíveis: empilham, sem rolagem lateral. */
+@media (max-width: 344px) {
+  .entrada-etapa-momento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Grupos: cartões selecionáveis com a foto de capa e a caixa desenhada. Anatomia
+   do Card Style Checkbox (https://21st.dev/@cnippet-dev/components/v-checkbox-4):
+   foto no topo em grade 2 × 2 a partir de 768 px; no celular, uma coluna com a
+   foto à esquerda. Sem código do bloco. */
+.entrada-etapa-grupos {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 0;
+}
+/* Cartão do Card Style Checkbox (cnippet-dev, 21st.dev): borda, respiro,
+   fundo e estado marcado vêm das classes do bloco no JSX. Aqui só a miniatura:
+   à direita no celular, no topo a partir de 768 px. */
+.entrada-etapa-grupo {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.entrada-etapa-grupo-foto {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 6px;
+  object-fit: cover;
+  object-position: center;
+}
+.entrada-etapa-vazio {
+  padding: 20px 16px;
+  border: 1px dashed var(--outline);
+  border-radius: 12px;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+.entrada-etapa-aviso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.entrada-etapa-detalhe summary {
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.entrada-etapa-detalhe p {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.entrada-etapa-rodape {
+  color: var(--muted-foreground);
+  font-size: 15px;
+  text-align: center;
+}
+.entrada-etapa-link {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entrada-etapa-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+/* Formulário de negócio sobre o Onboarding Wizard Form (cnippet-dev,
+   https://21st.dev/@cnippet-dev/components/v-form-8): cartões, caixas e
+   indicador levam as classes do bloco no JSX; aqui ficam a grade, os campos
+   na medida do bloco, as fotos e as linhas da revisão. */
+.entrada-etapa-formulario {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.entrada-etapa-progresso {
+  min-width: 0;
+}
+/* No celular (< 768 px) só o passo atual mostra o rótulo: os cinco não cabem
+   em 343 px. */
+@media (max-width: 767.98px) {
+  .entrada-etapa-progresso li:not([data-estado="atual"]) .entrada-etapa-progresso-rotulo {
+    display: none;
+  }
+}
+.entrada-etapa-subtitulo {
+  font-family: var(--font-brand);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.entrada-etapa-subtitulo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.entrada-etapa-nota {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+/* As notas dos campos das etapas (Campo usa text-xs) seguem a regra de 13 px. */
+.entrada-etapa p.text-xs {
+  font-size: 0.8125rem;
+}
+.entrada-etapa-selecao {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 16px;
+}
+.entrada-etapa-selecao:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Caixas do Card Style Checkbox em linha; os bairros escolhidos viram selos
+   removíveis com o mesmo contorno. */
+.entrada-etapa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.entrada-etapa-chip-cheio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--primary) 48%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
+  font-size: 14px;
+  cursor: pointer;
+}
+.entrada-etapa-chip-cheio .bv-icone {
+  font-size: 16px;
+}
+.entrada-etapa-chip-cheio:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Dias: duas colunas no celular; no desktop caixas em linha, sem quebrar o nome. */
+.entrada-etapa-dias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 640px) {
+  .entrada-etapa-dias {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .entrada-etapa-dias > label {
+    white-space: nowrap;
+  }
+}
+/* Cantos do bloco nos campos; a altura fica nos 44 px da regra do celular e
+   desce aos 40 px do bloco no desktop. */
+.entrada-etapa-formulario input:not([type="file"], [type="checkbox"], [type="radio"]),
+.entrada-etapa-formulario .entrada-etapa-selecao {
+  border-radius: 8px;
+}
+.entrada-etapa-formulario textarea {
+  min-height: 80px;
+  border-radius: 8px;
+}
+/* Cartões de rádio: a pilha do Radio Group; o condicional entra logo abaixo do
+   selecionado. */
+.entrada-etapa-cartoes {
+  gap: 8px;
+  min-width: 0;
+}
+.entrada-etapa-cartao-campos {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 4px 0 8px;
+}
+.entrada-etapa-adicionar {
+  justify-self: start;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+.entrada-etapa-horarios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+/* Fotos: quatro colunas no celular (cerca de 72 px cada), a primeira com o selo
+   "Capa", e o quadro tracejado para acrescentar. */
+.entrada-etapa-fotos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+.entrada-etapa-foto {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.entrada-etapa-foto-quadro {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.entrada-etapa-foto-imagem {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.entrada-etapa-foto-capa {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 10px;
+}
+.entrada-etapa-foto-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.entrada-etapa-foto-acoes .entrada-etapa-link {
+  font-size: 11px;
+}
+.entrada-etapa-foto-adicionar {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px dashed var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.entrada-etapa-foto-adicionar .bv-icone {
+  font-size: 28px;
+}
+.entrada-etapa-foto-adicionar:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Revisão: a confirmação do bloco, linhas divididas dentro da borda, com a
+   capa no topo. Rótulo à esquerda, valor e "Editar"; no celular o rótulo sobe. */
+.entrada-etapa-revisao {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+}
+.entrada-etapa-revisao-capa {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.entrada-etapa-revisao-linhas {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrada-etapa-revisao-linhas li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.entrada-etapa-revisao-rotulo {
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+@media (min-width: 640px) {
+  .entrada-etapa-revisao-linhas li {
+    grid-template-columns: 128px minmax(0, 1fr) auto;
+  }
+  .entrada-etapa-revisao-rotulo {
+    grid-column: auto;
+    font-size: 14px;
+  }
+}
+/* As ações do formulário ficam lado a lado, metade da coluna cada. */
+.entrada-etapa-acoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+.entrada-etapa-erro {
+  color: var(--destructive);
+  font-size: 14px;
+  line-height: 1.4;
+}
+@media (max-width: 344px) {
+  .entrada-etapa-acoes .entrada-etapa-acao {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+}
+/* Envio de identidade: área tracejada de arquivo único, com o cartão de tipo e
+   tamanho. Anatomia do File Dropzone
+   (https://21st.dev/@joyco/components/file-dropzone), reproduzida com os
+   componentes do app — sem copiar o código do bloco. */
+.entrada-envio {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 1px dashed var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: center;
+}
+.entrada-envio-marco {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+}
+.entrada-envio-marco .bv-icone {
+  font-size: 26px;
+}
+.entrada-envio-cartao {
+  font-size: 15px;
+  font-weight: 500;
+}
+/* O rótulo é o botão visível; o input fica sobre ele, invisível, para o clique e
+   o foco por teclado caírem no mesmo lugar. */
+.entrada-envio-botao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 15px;
+  cursor: pointer;
+}
+.entrada-envio-botao:has(.entrada-envio-campo:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-envio-campo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.entrada-envio-nota {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.entrada-envio-erro {
+  color: var(--destructive);
+  font-size: 14px;
+  line-height: 1.4;
+}
+/* Análise: linha do tempo vertical de três marcos, com o atual marcado por
+   aria-current="step". Anatomia do Process Timeline
+   (https://21st.dev/@shadcnui-blocks/components/timeline-05), reproduzida com os
+   componentes do app — sem copiar o código do bloco. */
+.entrada-linha {
+  display: grid;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrada-linha li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+/* O traço do meio liga o fim de um círculo ao início do próximo marco. */
+.entrada-linha li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 34px;
+  bottom: -24px;
+  left: 16px;
+  width: 1px;
+  background: var(--border);
+}
+.entrada-linha-marco {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--primary);
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 13px;
+}
+.entrada-linha-marco .bv-icone {
+  font-size: 16px;
+}
+.entrada-linha li[data-estado="futuro"] .entrada-linha-marco {
+  border-color: var(--muted-foreground);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.entrada-linha-texto {
+  padding-top: 5px;
+}
+.entrada-linha-titulo {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.entrada-linha li[data-estado="futuro"] .entrada-linha-titulo {
+  color: var(--muted-foreground);
+}
+.entrada-linha-prazo {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Andaime da demonstração: link de texto no fim da coluna, sem competir com a ação. */
+.entrada-etapa-simulacao {
+  justify-self: center;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entrada-etapa-simulacao:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.entrada-etapa-confirmacao {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+/* Ícone do resultado que abre a tela (consulta indisponível, sem círculo). */
+.entrada-etapa-icone {
+  margin-bottom: 8px;
+  color: var(--muted-foreground);
+  font-size: 64px;
+}
+/* O check dentro do círculo de 72 px fica com 36 px: metade do círculo. */
+.entrada-etapa-confirmacao .bv-icone {
+  font-size: 36px;
+}
+
+/* Boas-vindas: a única tela da composição B com fotografia — foto larga no topo
+   da coluna, check pequeno sobre a borda inferior, título e apoio centralizados e
+   atalhos de linha inteira com ícone e seta. */
+.entrada-etapa-boas-vindas-foto {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.entrada-etapa-boas-vindas-foto img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 16px;
+  object-fit: cover;
+}
+/* Cada momento tem a sua foto; o foco guarda os rostos no recorte 21:9. */
+.entrada-etapa-boas-vindas-foto[data-momento="morando"] img {
+  object-position: 50% 30%;
+}
+.entrada-etapa-boas-vindas-foto[data-momento="saindo"] img {
+  object-position: 50% 15%;
+}
+.entrada-etapa-boas-vindas-check {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transform: translateX(-50%);
+}
+.entrada-etapa-boas-vindas-check .bv-icone {
+  font-size: 22px;
+}
+/* A entrada em sequência do Welcome Screen (21st.dev): foto, título, apoio e cada
+   ação sobem e aparecem um depois do outro. Sem movimento para quem pede menos. */
+@keyframes entrada-boas-vindas-surgir {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) > *,
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) .entrada-etapa-corpo > * {
+    animation: entrada-boas-vindas-surgir 360ms ease-out both;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) > :nth-child(2) {
+    animation-delay: 80ms;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) > :nth-child(3) {
+    animation-delay: 140ms;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto)
+    .entrada-etapa-corpo
+    > :nth-child(1) {
+    animation-delay: 200ms;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto)
+    .entrada-etapa-corpo
+    > :nth-child(2) {
+    animation-delay: 260ms;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto)
+    .entrada-etapa-corpo
+    > :nth-child(3) {
+    animation-delay: 320ms;
+  }
+}
+.entrada-etapa-atalho {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: start;
+  cursor: pointer;
+}
+.entrada-etapa-atalho:hover {
+  background: var(--muted);
+}
+.entrada-etapa-atalho:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.entrada-etapa-atalho-icone,
+.entrada-etapa-atalho-seta {
+  color: var(--foreground);
+  font-size: 24px;
+}
+.entrada-etapa-atalho-seta {
+  color: var(--muted-foreground);
+}
+.entrada-etapa-atalho-texto {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.entrada-etapa-atalho-texto strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.entrada-etapa-atalho-texto small {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+@media (min-width: 768px) {
+  .entrada-etapa-passos {
+    margin-top: 48px;
+  }
+  .entrada-etapa-trilha {
+    display: flex;
+    align-items: flex-start;
+  }
+  .entrada-etapa-resumo {
+    display: none;
+  }
+  .entrada-etapa-conteudo {
+    width: 560px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 96px 0 48px;
+  }
+  .entrada-etapa-titulo {
+    font-size: 40px;
+  }
+  .entrada-etapa-apoio {
+    font-size: 17px;
+  }
+  .entrada-etapa-subtitulo {
+    font-size: 18px;
+  }
+  .entrada-etapa-nota,
+  .entrada-etapa p.text-xs {
+    font-size: 14px;
+  }
+  .entrada-etapa-corpo input:not([type="checkbox"], [type="radio"]) {
+    min-height: 48px;
+  }
+  .entrada-etapa-acao {
+    height: 48px;
+  }
+  .entrada-etapa-selecao {
+    min-height: 48px;
+  }
+  /* No negócio os campos seguem a medida do bloco também no desktop. */
+  .entrada-etapa-formulario input:not([type="file"], [type="checkbox"], [type="radio"]),
+  .entrada-etapa-formulario .entrada-etapa-selecao {
+    min-height: 40px;
+    font-size: 15px;
+  }
+  .entrada-etapa-fotos {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 12px;
+  }
+  .entrada-etapa-foto-capa {
+    bottom: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .entrada-etapa-foto-acoes .entrada-etapa-link {
+    font-size: 12px;
+  }
+  .entrada-etapa-revisao-capa {
+    height: 200px;
+    aspect-ratio: auto;
+  }
+  /* As boas-vindas pedem a coluna mais larga e a foto panorâmica. */
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) {
+    width: 760px;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) .entrada-etapa-titulo {
+    font-size: 3rem;
+  }
+  .entrada-etapa-conteudo:has(.entrada-etapa-boas-vindas-foto) .entrada-etapa-apoio {
+    font-size: 1.125rem;
+  }
+  .entrada-etapa-boas-vindas-foto img {
+    aspect-ratio: 21 / 9;
+  }
+  /* A referência desenha os atalhos com cerca de 90 px em 1440. */
+  .entrada-etapa-atalho {
+    min-height: 80px;
+    padding: 18px 20px;
+  }
+  .entrada-etapa-atalho-texto strong {
+    font-size: 16px;
+  }
+  .entrada-etapa-atalho-texto small {
+    font-size: 14px;
+  }
+  /* Os cartões de grupo pedem a grade 2 × 2 da referência. */
+  .entrada-etapa-grupos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .entrada-etapa-grupo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .entrada-etapa-grupo-foto {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* A coluna larga dos grupos só cabe a partir de 900 px; no tablet ela mantém a
+   coluna de 560 px e a grade 2 × 2 encolhe junto. */
+@media (min-width: 900px) {
+  .entrada-etapa-conteudo:has(.entrada-etapa-grupos) {
+    width: 816px;
+  }
 }

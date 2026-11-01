@@ -61,6 +61,8 @@ export function Sobreposicoes() {
     )
   }
 
+  // Os diálogos de jornada são renderizados pela própria tela.
+  if (aberta !== "dialogo" && aberta !== "folha") return null
   const rotulo = aberta === "folha" ? "Folha" : "Diálogo"
   return (
     <Sobreposicao

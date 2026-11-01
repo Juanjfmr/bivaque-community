@@ -1,26 +1,38 @@
-// Fonte shadcn/ui radix-nova; helper local e Material Symbols.
 "use client"
 
 import { Checkbox as CheckboxPrimitive } from "radix-ui"
 import type * as React from "react"
-import { Icone } from "@/components/bivaque/icone"
 import { cn } from "@/lib/utils"
 
+// Caixa do bloco Card Style Checkbox, de cnippet-dev no 21st.dev
+// (https://21st.dev/@cnippet-dev/components/v-checkbox-4), arquivo auxiliar
+// `v-checkbox-4-utils/checkbox`. Trocas: o pacote `radix-ui` do app no lugar de
+// `@radix-ui/react-checkbox`, o traço do `Check` do lucide-react em SVG próprio
+// (sem texto que vaze para o rótulo) e `ref` como propriedade (React 19) no
+// lugar de `forwardRef`.
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input transition-colors outline-none group-has-disabled/field:opacity-50 group-has-[:focus-visible]/field-label:ring-0 group-has-[:focus-visible]/field-label:not-data-checked:border-input after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground group-has-[:focus-visible]/field-label:data-checked:border-primary dark:data-checked:bg-primary",
+        "peer size-4 shrink-0 rounded-sm border border-(--primary) ring-offset-(--background) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--ring) focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-(--primary) data-[state=checked]:text-(--primary-foreground)",
         className,
       )}
       {...props}
     >
-      <CheckboxPrimitive.Indicator
-        data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
-      >
-        <Icone nome="check" className="text-[16px]!" />
+      <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
+        <svg
+          viewBox="0 0 24 24"
+          className="size-3.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

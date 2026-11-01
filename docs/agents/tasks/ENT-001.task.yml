@@ -1,0 +1,81 @@
+# ENT-001 — F01, lote 1: telas de acesso (login, criar conta, recuperar senha)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor e verificação de runtime: Claude Code,
+# independentes do executor. Sem backend: a jornada é demonstrativa, como hoje.
+task_id: ENT-001
+
+objective: >
+  No app (apps/app), as rotas /app/entrar/login, /app/entrar/conta e /app/entrar/senha passam a
+  seguir a composição A aprovada pelo dono em 30/10/2026: foto editorial com a frase da marca num
+  painel arredondado ao lado do formulário (acima dele no celular), "Continuar com Google" antes do
+  formulário de e-mail, "Esqueci minha senha" na linha do rótulo da senha, a proposta de valor no
+  painel de criar conta e o estado de instruções enviadas na recuperação. Mesmos campos, ações e
+  destinos de hoje; nenhuma informação sai do navegador.
+
+authority:
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md (direção comum, regras de consistência, blocos 21st e seção Celular)
+  - docs/design/fluxos-2026-10-30/individuais/F01/F01-01-login.png, F01-02-conta.png, F01-15-senha.png, F01-15b-senha-enviada.png (desktop aprovado pelo dono em 30/10/2026)
+  - docs/design/fluxos-2026-10-30/individuais/F01/celular/ com os mesmos nomes (celular)
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md
+  - docs/decisions/ADR-20261024-front-react-spa.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Captura de 30/10/2026 da prévia publicada (66f8c13e) em
+    docs/design/fluxos-2026-10-30/individuais/F01/previa-atual/01-login-desktop.png,
+    02-conta-desktop.png e 15-senha-desktop.png: cartão branco único centralizado, sem foto, Google
+    abaixo do formulário, aviso "Jornada demonstrativa" no topo e "Esqueci minha senha" isolado
+    abaixo do campo. Não corresponde às referências aprovadas.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/entrada-acesso.tsx
+  - apps/app/components/bivaque/icone-google.tsx
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - apps/app/tests/e2e/entrada-acesso.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-001/
+
+forbidden:
+  - instalar, remover ou atualizar dependências (package.json e pnpm-lock.yaml ficam intactos)
+  - copiar código-fonte de blocos do 21st.dev; a anatomia do Split Sign In Form é referência de layout, reproduzida com os componentes que já existem em apps/app/components
+  - usar Base UI, Material Web ou HeroUI
+  - mudar as outras telas da entrada (aceite, vínculo, cidade, grupos, negócio, boas-vindas, retomar, convite, conta apagada); elas são de lotes seguintes
+  - usar a cor Brasa em botão, link, foco ou erro; a Brasa só aparece no logo oficial
+  - criar texto, campo, etapa ou destino que não esteja nesta lista de aceite
+  - enviar dados para qualquer serviço ou guardar senha
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Composição A em ≥1024 px: a página ocupa a altura toda sem cartão flutuante. À esquerda (cerca de 48% da largura), a foto num painel recuado 16 px das bordas com cantos de 24 px, object-fit cover; na base da foto um degradê escuro e a frase \"Muda a cidade. Fica a sua rede.\" em Noto Serif (var(--font-brand)) branca, 40–48 px, duas linhas. À direita, sobre var(--background), uma coluna de 400 px centrada vertical e horizontalmente, com o logo oficial (brand/bivaque-logo-horizontal.svg, 40 px de altura, troca para a versão branca no tema escuro como hoje), título, apoio e formulário."
+  - "Composição A entre 768 e 1023 px: mesma composição, painel com cerca de 40% da largura. Abaixo de 768 px: logo no topo (28 px) com margem lateral de 20 px; a foto vira uma faixa recuada 16 px, cantos de 20 px, altura de cerca de 30% da janela (mínimo 200 px), frase na base; o formulário vem abaixo na largura total menos 20 px de cada lado. Nunca há rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px."
+  - "Fotos: login usa demo/landing-hero.webp, criar conta usa demo/chegada.webp, recuperar senha (as duas situações) usa demo/mesa.webp, todas via import.meta.env.BASE_URL, com alt vazio (decorativas) e a frase como texto real."
+  - "Login (/app/entrar/login): título \"Que bom ter você de volta.\"; apoio \"Entre com o e-mail e a senha da sua conta.\"; botão de contorno \"Continuar com Google\" com o G oficial em cores à esquerda do texto; divisor \"ou continue com e-mail\" em minúsculas; campo E-mail; linha com o rótulo Senha à esquerda e o link \"Esqueci minha senha\" à direita (leva a /app/entrar/senha); campo Senha com Mostrar/Ocultar; botão principal \"Entrar\" (vai ao início, como hoje); rodapé \"Ainda não tem conta? Criar conta\" (leva a /app/entrar/conta). Na ordem do DOM e do Tab: Google, e-mail, link de senha, senha, Mostrar, Entrar, Criar conta."
+  - "Criar conta (/app/entrar/conta): no painel da foto, no topo, a etiqueta \"Militares federais, veteranos, pensionistas e famílias\" (texto branco 13–14 px sobre véu escuro); na base, a frase e, abaixo dela, três itens com ícone de traço branco (Material Symbols já hospedados no app: map, groups, verified ou equivalentes existentes): \"Guia da cidade\", \"Comunidades da sua cidade\", \"Serviços indicados por quem já mora lá\", e por fim \"Só entra quem tem o vínculo confirmado.\" em texto menor. No celular os três itens viram uma linha de três rótulos curtos (\"Guia da cidade\", \"Comunidades\", \"Serviços indicados\") logo abaixo da faixa, em Grafite, seguidos da frase do vínculo. No formulário: título \"Vamos começar.\"; apoio \"Crie sua conta para fazer parte da comunidade.\"; linha com ícone de relógio \"Leva cerca de 2 minutos.\"; Continuar com Google; divisor; Nome completo; E-mail; Senha com Mostrar e a nota \"Ao menos 8 caracteres, com letras e números.\"; caixa \"Li e concordo com a Política de privacidade e o Código de conduta.\" (os dois nomes continuam links para as rotas de hoje); botão \"Criar conta\" desabilitado até o aceite e então leva à etapa de vínculo, exatamente como hoje (não mudar o destino); rodapé \"Já tem conta? Entrar\"."
+  - "Recuperar senha (/app/entrar/senha): acima do título, link com seta \"Voltar para entrar\" (leva a /app/entrar/login); título \"Esqueci minha senha.\"; apoio \"Informe o e-mail da sua conta para receber as instruções.\"; campo E-mail; botão principal \"Enviar instruções\". Depois do clique, na mesma rota: o campo mantém o e-mail digitado, aparece uma faixa de status (role=status) com ícone de envelope e o texto \"Se houver uma conta com este e-mail, as instruções chegam em instantes. Confira também o spam.\" em fundo neutro claro (nunca Brasa), e o botão principal vira \"Voltar para entrar\"."
+  - "Nas três telas some o parágrafo \"Jornada demonstrativa: nenhuma informação é enviada ou verificada.\"; as demais telas da entrada continuam com o cartão de hoje, inclusive esse parágrafo."
+  - "Botão principal Grafite (bg-primary, texto primary-foreground), 48 px de altura, largura da coluna; desabilitado com opacidade reduzida. Botão do Google com contorno 1 px var(--border) e fundo branco quente no claro. Campos de 48 px com cantos de 12 px. Caixa de aceite desenhada em Grafite (não a azul nativa). Foco visível com anel var(--ring) em todos os controles."
+  - "Tema escuro continua funcionando (o app segue o sistema): fundo, texto e campos usam os tokens; a foto e a frase não mudam."
+  - "O testo E2E existente entrada-21st.spec.ts continua verde, ajustado só onde dependia do parágrafo de demonstração removido das três telas."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 lint
+  - "Capturas de página inteira de login, criar conta, senha e senha enviada em 375, 768 e 1440 px salvas em .visual/ENT-001/ pelo próprio spec entrada-acesso.spec.ts, comparadas pelo revisor com as referências aprovadas"
+
+risk: entrada e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

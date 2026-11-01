@@ -15,6 +15,7 @@ import { idLocal } from "@/lib/id"
 import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
+import { lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { iniciais } from "@/lib/texto"
 import { useCasca } from "@/src/contexto/casca"
 import { registro, texto } from "@/src/telas/comum"
@@ -64,8 +65,12 @@ export function Pergunta() {
   const validacao = validarParametros("pergunta", { id })
   const pergunta = useMemo(() => {
     if (dados === null) return null
-    return dados.perguntas.find((item) => item.id === id) ?? null
-  }, [dados, id])
+    return (
+      dados.perguntas.find((item) => item.id === id) ??
+      lerPerguntasLocais(casca.cidade).find((item) => item.id === id) ??
+      null
+    )
+  }, [dados, id, casca.cidade])
 
   const apresentacao = registro(pergunta?.apresentacao)
   const respostas = useMemo(() => {

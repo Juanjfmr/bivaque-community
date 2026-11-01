@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-10-26",
-  "sourcePolicy": "Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos nao substituem entregas de outros agentes.",
+  "updatedAt": "2026-10-31",
+  "sourcePolicy": "O ADR-20261024-front-react-spa governa o app: React de página única no apps/app (shadcn/ui), o Next como servidor e landing, o app de loja em Capacitor depois da web. O protótipo HTML é a especificação até cada onda ser aprovada pelo dono no app novo; as referências por fluxo estão em docs/design/fluxos-2026-10-30. Figma de setembro/outubro, pranchas e W00 são histórico preservado como frozen; não reiniciar. Contagens abaixo incluem infraestrutura, Mobile e histórico; cards done antigos não são percentual de fidelidade atual. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos não substituem entregas de outros agentes.",
   "cards": [
     {
       "id": "PROD-INICIO-UX-20260919",
@@ -9,8 +9,8 @@
       "phase": "Reconstrução",
       "priority": "P0",
       "category": "frontend",
-      "status": "next",
-      "description": "Auditoria read-only de https://www.bivaque.app/inicio em 19–20/09/2026, aprofundada com referências diretas do Mobbin. Além do diálogo cortado em viewport móvel curta, a correção agora separa Fazer uma pergunta de Pedir uma indicação. O padrão Nextdoor observado usa Responder e ancora a recomendação em lugar/serviço; polegar é feedback posterior, não o comando Indicar. O pedido consulta o Guia antes da comunidade. Quando não há referência, a resposta deve poder aparecer imediatamente enquanto somente a candidata aguarda curadoria humana. As pranchas 01, 44, 45, 74 e 80 foram substituídas e o contrato DS-006 delega a reconciliação visual compatível com os contratos atuais, sem fingir vínculo persistido que o servidor ainda não prove.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nAuditoria read-only de https://www.bivaque.app/inicio em 19–20/09/2026, aprofundada com referências diretas do Mobbin. Além do diálogo cortado em viewport móvel curta, a correção agora separa Fazer uma pergunta de Pedir uma indicação. O padrão Nextdoor observado usa Responder e ancora a recomendação em lugar/serviço; polegar é feedback posterior, não o comando Indicar. O pedido consulta o Guia antes da comunidade. Quando não há referência, a resposta deve poder aparecer imediatamente enquanto somente a candidata aguarda curadoria humana. As pranchas 01, 44, 45, 74 e 80 foram substituídas e o contrato DS-006 delega a reconciliação visual compatível com os contratos atuais, sem fingir vínculo persistido que o servidor ainda não prove.",
       "checklist": [
         "Compositor funciona em 375x568, 375x667 e 375x812, com corpo rolável, ações alcançáveis, safe area e teclado virtual",
         "Foco fica dentro do diálogo, nunca encoberto, e retorna ao acionador ao fechar; nome acessível usa Fechar em português",
@@ -106,12 +106,13 @@
         "Teste de estado sem comunidade com grupo/cidade disponíveis e estados distintos das abas"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/AUDIT-PRODUCAO-2026-09-19-INICIO.md",
         "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-21",
-      "sourceRevision": "82fb64a",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a",
       "blockers": [],
       "completedChecklist": [
         false,
@@ -137,8 +138,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "A analise de chegabilidade (scripts/visual/flows/reachability.mjs, novo) cruza o grafo de navegacao estatica do app com o mapa de jornadas e encontrou duas telas sem saida propria: elas so permitem sair pela navegacao da casca; nenhum link delas leva adiante. /arrivals deixa o operador num beco. /profile/[userId] mostra outro membro e nao oferece caminho para o conteudo dele. Diferente de NOTIF-DEEPLINKS e SHELL-SETTINGS-LABEL, que sao links errados, aqui o link simplesmente nao existe. O backend do perfil alheio esta pronto (DONE-PROFILE-RPCS); a lacuna e de UI.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nA analise de chegabilidade (scripts/visual/flows/reachability.mjs, novo) cruza o grafo de navegacao estatica do app com o mapa de jornadas e encontrou duas telas sem saida propria: elas so permitem sair pela navegacao da casca; nenhum link delas leva adiante. /arrivals deixa o operador num beco. /profile/[userId] mostra outro membro e nao oferece caminho para o conteudo dele. Diferente de NOTIF-DEEPLINKS e SHELL-SETTINGS-LABEL, que sao links errados, aqui o link simplesmente nao existe. O backend do perfil alheio esta pronto (DONE-PROFILE-RPCS); a lacuna e de UI.",
       "checklist": [
         "/profile/[userId]: oferecer caminho para o conteudo do membro que o leitor pode ver, contra o que C03 permite",
         "/arrivals: oferecer o caminho operacional de saida, contra O05",
@@ -153,12 +154,13 @@
       ],
       "tests": ["node scripts/visual/flows/reachability.mjs"],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 O05 e secao 4.9 C03",
         "scripts/visual/flows/reachability.mjs"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "31748ab"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "DOC-20260912-FLUXOS-PRANCHAS",
@@ -920,8 +922,8 @@
       "phase": "Foundation",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
-      "description": "Infraestrutura reutilizavel de tokens/HeroUI/wrappers e acessibilidade. Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam aparencia/experiencia; direcao historica conflitante nao e criterio de fechamento nem exige reiniciar sistema. Integrar reparos necessarios aos lotes atuais, sem segundo escritor ou critica obrigatoria duplicada. Historico tecnico preservado em proof/checklist/history; componentes existentes nao provam fidelidade de todas as telas.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo. Tokens e componentes do app novo: APP-001.\n\nInfraestrutura reutilizavel de tokens/HeroUI/wrappers e acessibilidade. Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam aparencia/experiencia; direcao historica conflitante nao e criterio de fechamento nem exige reiniciar sistema. Integrar reparos necessarios aos lotes atuais, sem segundo escritor ou critica obrigatoria duplicada. Historico tecnico preservado em proof/checklist/history; componentes existentes nao provam fidelidade de todas as telas.",
       "checklist": [
         "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos",
         "Registrar a direção Casa comum, alternativas e autorização R2 na ADR",
@@ -952,13 +954,14 @@
         "node scripts/visual/loop.mjs"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "Sistema canônico | ../../docs/agents/DESIGN_SYSTEM.md",
         "ADR | ../../docs/decisions/ADR-20260901-design-system.md",
         "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md",
         "Processo atual autorizado | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-10-07",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "dependencies": [],
       "history": [
         {
@@ -1280,19 +1283,25 @@
       "phase": "Segurança",
       "priority": "P0",
       "category": "governance",
-      "status": "repo",
-      "description": "A documentação registra recomendação de rotação porque credenciais de dev podem ter aparecido em transcript externo. Não registrar valores no card.",
+      "status": "done",
+      "description": "DECIDIDO (dono, 31/10/2026): aceitar o risco e não rotacionar as chaves do Portal e do Resend agora. O risco foi apresentado antes da decisão: a chave possivelmente exposta continua válida. Reabrir se houver sinal de uso indevido, troca de ambiente ou abertura pública.\n\nA documentação registra recomendação de rotação porque credenciais de dev podem ter aparecido em transcript externo. Não registrar valores no card.",
       "checklist": [
-        "Decisão do dono sobre janela",
-        "Rotacionar no provedor",
-        "Atualizar ambiente local/CI com segurança",
-        "Confirmar que scanner e logs não expõem valores"
+        "Decisão do dono sobre a janela: aceitar o risco sem rotação (31/10/2026)",
+        "Rotacionar no provedor: não executado por decisão do dono",
+        "Atualizar ambiente local/CI: não aplicável sem rotação",
+        "Confirmar que scanner e logs não expõem valores: secrets-scan verde nas revisões de 31/10"
       ],
-      "proof": ["PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"],
+      "proof": [
+        "31/10/2026: decisão do dono registrada nesta sessão, depois de três opções (trocar as duas, trocar só o Resend, aceitar o risco); escolhida a terceira.",
+        "31/10/2026: secrets-scan sem achados na revisão 5b4cc105 antes do envio da branch feat/f01-entrada-visual.",
+        "PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"
+      ],
       "links": ["Status: segurança | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "bcb00349",
+      "dependencies": [],
+      "completedAt": "2026-10-31",
+      "completedChecklist": [true, false, false, true]
     },
     {
       "id": "DRIFT-STATUS-RECONCILIATION",
@@ -1683,8 +1692,8 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "now",
-      "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (§6, aceito em 25/10/2026): o app de loja passa a ser Capacitor sobre o build do apps/app, depois da web; o apps/mobile (React Native/Expo) não é estendido. A sessão do app de loja (token em armazenamento seguro, renovação ao reabrir, cache limpo ao sair, Google pelo navegador do sistema com PKCE) volta como card próprio na etapa do app de loja. Registro preservado abaixo.\n\nApós a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
       "checklist": [
         "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
         "docs/agents/tasks/MOB-001.task.yml valida R3 com task-contract.mjs: ok … R3, retry 3, BLOQUEADO",
@@ -1710,12 +1719,13 @@
         "Pendente: security-auditor PASS sobre o boundary e runtime no emulador"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "ADR | docs/decisions/ADR-20260901-mobile-session.md",
         "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md",
         "ADR da entrada | docs/decisions/ADR-20260907-login-com-senha.md"
       ],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "690327e",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "blockers": [
         "Runtime Android depende do passo de build/install no emulador (o toolchain existe desde 16/09; não há prebuild versionado). iOS segue em BLOCK-MOBILE-RUNTIME"
       ],
@@ -1803,8 +1813,8 @@
       "phase": "Mobile",
       "priority": "P1",
       "category": "frontend",
-      "status": "blocked",
-      "description": "S3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (§6, aceito em 25/10/2026): o app de loja passa a ser Capacitor sobre o build do apps/app, depois da web; o apps/mobile (React Native/Expo) não é estendido. A sessão do app de loja (token em armazenamento seguro, renovação ao reabrir, cache limpo ao sair, Google pelo navegador do sistema com PKCE) volta como card próprio na etapa do app de loja. Registro preservado abaixo.\n\nS3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
       "checklist": [
         "Mobile composer: app/(tabs)/community.tsx -> botao Publicar abre sheet com tabs Texto/Foto/Link/Enquete",
         "Mobile composer: seletor de audiencia le communities approved do proprio membro (apenas a dele, sem cross-community)",
@@ -1824,13 +1834,14 @@
         "E2E no Expo: Maestro ou Detox contra o emulador arm64-v8a (commit d970fb8 provou que adb fala com o emulador)"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "S3 parcial | commit 69a9251",
         "S2 (sessao) | commit b7ca57f",
         "W1 (golden slice web, espelho) | commit efab5a9",
         "BLOCK-MOBILE-RUNTIME Android runtime provado | commit d970fb8"
       ],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "6cbfebf",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "blockers": [
         "MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo."
       ],
@@ -1884,8 +1895,8 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "now",
-      "description": "S5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (§6, aceito em 25/10/2026): o app de loja passa a ser Capacitor sobre o build do apps/app, depois da web; o apps/mobile (React Native/Expo) não é estendido. A sessão do app de loja (token em armazenamento seguro, renovação ao reabrir, cache limpo ao sair, Google pelo navegador do sistema com PKCE) volta como card próprio na etapa do app de loja. Registro preservado abaixo.\n\nS5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
       "checklist": [
         "Reiniciar emulador arm64-v8a (bivaque_ci_arm64); esperar sys.boot_completed=1",
         "npx expo run:android --variant debug no emulador; instalar apps/mobile",
@@ -1908,13 +1919,14 @@
         "E2E runtime: npx expo run:android + abrir manualmente (ou Maestro/Detox)"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "S5 UI | commit 08621b8",
         "S4 logica pura | commit 6cbfebf",
         "S3 feed | commit 69a9251",
         "BLOCK-MOBILE-RUNTIME Android | commit d970fb8"
       ],
-      "updatedAt": "2026-09-02",
-      "sourceRevision": "e1bb839",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "blockers": [],
       "dependencies": ["S5-MOBILE-UI"]
     },
@@ -2005,8 +2017,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
-      "description": "PENDENTE DE RECONCILIACAO ATUAL. Referencias Entrar Web47:1448/Mobile51:2710, cadastro/elegibilidade/retomada em docs/agents/FIGMA-ATUAL-COBERTURA.md. Preservar decisoes aprovadas de autenticacao, consentimento e seguranca. A prova de setembro abaixo e historica e nao aprova automaticamente o Figma atual. Antes do despacho, vincular contrato, referencias atuais e provas de ciclo; mesmo card, sem outra fila.\n\nReferência: docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png (dois desktops: Entrar e Criar conta). Plataforma: web. Rotas: /login e /signup, mesmo componente BivaqueSignIn. Alinha composição e copy à prancha (foto à esquerda com wordmark BIVAQUE, títulos da referência, divisor ou, Google outline, links de rodapé) preservando o mecanismo de ADR-20260907-login-com-senha: e-mail+senha, Google, recuperação e aceite no cadastro. A prancha mostra fluxo por código sem senha; a decisão do responsável é posterior e prevalece, e a guia proíbe prometer código sem integração. Mobile (prancha 30) é tarefa separada.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo. A entrada está no APP-F01-ENTRADA-VISUAL.\n\nPENDENTE DE RECONCILIACAO ATUAL. Referencias Entrar Web47:1448/Mobile51:2710, cadastro/elegibilidade/retomada em docs/agents/FIGMA-ATUAL-COBERTURA.md. Preservar decisoes aprovadas de autenticacao, consentimento e seguranca. A prova de setembro abaixo e historica e nao aprova automaticamente o Figma atual. Antes do despacho, vincular contrato, referencias atuais e provas de ciclo; mesmo card, sem outra fila.\n\nReferência: docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png (dois desktops: Entrar e Criar conta). Plataforma: web. Rotas: /login e /signup, mesmo componente BivaqueSignIn. Alinha composição e copy à prancha (foto à esquerda com wordmark BIVAQUE, títulos da referência, divisor ou, Google outline, links de rodapé) preservando o mecanismo de ADR-20260907-login-com-senha: e-mail+senha, Google, recuperação e aceite no cadastro. A prancha mostra fluxo por código sem senha; a decisão do responsável é posterior e prevalece, e a guia proíbe prometer código sem integração. Mobile (prancha 30) é tarefa separada.",
       "checklist": [
         "Aparência: foto esquerda + formulário direita em 768/1440, wordmark BIVAQUE branco sobre a foto, títulos Que bom ter você de volta. e Vamos começar., divisor ou, botão verde, Google contornado, links de rodapé por modo",
         "Aparência: capturas 375/768/1440 de /login e /signup sem findings no loop visual",
@@ -2032,6 +2044,7 @@
         "npx playwright test tests/e2e/manaus-pilot-full-journey.spec.ts tests/e2e/onboarding-holder-family.spec.ts tests/e2e/onboarding-denials.spec.ts --grep \"login|password|email and password|reference heading|Google|touch target|horizontal overflow on login|shell chrome on /login\""
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "Prancha | ../../docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png",
         "Notas da guia | ../../docs/design/visual-guide-2026-09-06/AGENTS.md",
         "Mecanismo | ../../docs/decisions/ADR-20260907-login-com-senha.md",
@@ -2039,8 +2052,8 @@
         "Tela | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
       ],
       "dependencies": [],
-      "updatedAt": "2026-10-07",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "history": [
         {
           "recordedAt": "2026-10-06",
@@ -2263,8 +2276,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "apps/web/app/components/bivaque/app-shell.tsx:136 renderiza <button type='button' aria-label='Notificações'> sem onClick nem onPress. É um controle morto. Abaixo de md a sidebar não aparece, então esse sino é a única afordância de notificação visível no mobile web — e não leva a lugar nenhum. O gate G1 da especificação exige que todo botão tenha efeito, destino ou desabilitação justificada. Correção provável: virar link para /notifications, com o mesmo badge de não-lidas que a sidebar já usa via useMemberContext().",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\napps/web/app/components/bivaque/app-shell.tsx:136 renderiza <button type='button' aria-label='Notificações'> sem onClick nem onPress. É um controle morto. Abaixo de md a sidebar não aparece, então esse sino é a única afordância de notificação visível no mobile web — e não leva a lugar nenhum. O gate G1 da especificação exige que todo botão tenha efeito, destino ou desabilitação justificada. Correção provável: virar link para /notifications, com o mesmo badge de não-lidas que a sidebar já usa via useMemberContext().",
       "checklist": [
         "O sino navega para /notifications ou é removido em favor do item da sidebar",
         "Se mantido, exibe badge de não-lidas coerente com o da sidebar",
@@ -2272,10 +2285,13 @@
       ],
       "proof": ["npx pnpm@11.18.0 gate", "node scripts/visual/loop.mjs"],
       "tests": [],
-      "links": ["docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "SHELL-SETTINGS-LABEL",
@@ -2283,18 +2299,21 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "O rodapé da sidebar (apps/web/app/components/bivaque/app-shell.tsx) rotula 'Configurações' um link para /profile, porque não existe rota de configurações. Hoje as preferências vivem como aba dentro de /profile (profile/page.tsx:248). A prancha 52-web-configuracoes define a tela própria e pertence à etapa W08. Até lá o rótulo promete um destino que não existe como tal.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nO rodapé da sidebar (apps/web/app/components/bivaque/app-shell.tsx) rotula 'Configurações' um link para /profile, porque não existe rota de configurações. Hoje as preferências vivem como aba dentro de /profile (profile/page.tsx:248). A prancha 52-web-configuracoes define a tela própria e pertence à etapa W08. Até lá o rótulo promete um destino que não existe como tal.",
       "checklist": [
         "Rota de configurações criada conforme a prancha 52, ou o rótulo passa a corresponder ao destino real",
         "Preferências, conta e privacidade acessíveis pelo destino rotulado"
       ],
       "proof": ["npx pnpm@11.18.0 gate", "node scripts/visual/loop.mjs"],
       "tests": [],
-      "links": ["docs/design/visual-guide-2026-09-06/52-web-configuracoes.png"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/design/visual-guide-2026-09-06/52-web-configuracoes.png"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "OUTBOX-INVITE-RECIPIENTS",
@@ -2509,8 +2528,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "governance",
-      "status": "next",
-      "description": "O AGENTS.md da raiz afirma que todo primitivo em apps/web/app/components/bivaque/ é um wrapper fino e token-aware sobre um sub-componente HeroUI v3, e documenta uma tabela de 6. O diretório tem 22 arquivos, e 6 deles não importam HeroUI: empty-state.tsx, feed-right-rail.tsx, illustrations.tsx, page-header.tsx, service-worker-registration.tsx, supabase-auth-provider.tsx. Vários outros não são primitivos, e sim superfícies compostas (app-shell, city-reference, feed-post, chat-thread, recommendation-requests). A afirmação é falsa como escrita e a tabela cobre menos de um terço do diretório — induz a erro quem procura o wrapper existente antes de criar um novo. Levantado na validação de tokens/HeroUI/wrappers da etapa W00.",
+      "status": "frozen",
+      "description": "SUPERADO (31/10/2026): o AGENTS.md não descreve mais os wrappers HeroUI do apps/web; o app novo usa shadcn/ui (ADR-20261024-front-react-spa). Registro preservado abaixo.\n\nO AGENTS.md da raiz afirma que todo primitivo em apps/web/app/components/bivaque/ é um wrapper fino e token-aware sobre um sub-componente HeroUI v3, e documenta uma tabela de 6. O diretório tem 22 arquivos, e 6 deles não importam HeroUI: empty-state.tsx, feed-right-rail.tsx, illustrations.tsx, page-header.tsx, service-worker-registration.tsx, supabase-auth-provider.tsx. Vários outros não são primitivos, e sim superfícies compostas (app-shell, city-reference, feed-post, chat-thread, recommendation-requests). A afirmação é falsa como escrita e a tabela cobre menos de um terço do diretório — induz a erro quem procura o wrapper existente antes de criar um novo. Levantado na validação de tokens/HeroUI/wrappers da etapa W00.",
       "checklist": [
         "Tabela do AGENTS.md reflete o que existe no diretório",
         "Distinção explícita entre primitivo com wrapper de HeroUI e superfície composta",
@@ -2518,10 +2537,13 @@
       ],
       "proof": ["npx pnpm@11.18.0 test:scope"],
       "tests": [],
-      "links": ["docs/agents/W00-FECHAMENTO-2026-09-08.md"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/agents/W00-FECHAMENTO-2026-09-08.md"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "44c1d4b"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "W01-ADMISSAO-MANUAL",
@@ -2602,8 +2624,8 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "Descoberto ao realinhar os testes E2E em 08/09/2026. A navegação nova criou o container 'Explorar' (bottom-nav.tsx, role=tab). A tela /recommendations já tinha uma aba 'Explorar' (role=tab) no seu próprio conjunto. Nessa rota, dois elementos com role=tab e o mesmo nome acessível coexistem significando coisas diferentes: um é destino de primeiro nível, o outro é um recorte do conteúdo. O sintoma imediato foi o Playwright entrando em strict mode; a consequência real é de acessibilidade — quem navega por leitor de tela ouve 'Explorar' duas vezes sem distinção. Os testes foram escopados ao <main> para desambiguar, o que resolve o teste, não a colisão.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo. A navegação nova não tem Explorar.\n\nDescoberto ao realinhar os testes E2E em 08/09/2026. A navegação nova criou o container 'Explorar' (bottom-nav.tsx, role=tab). A tela /recommendations já tinha uma aba 'Explorar' (role=tab) no seu próprio conjunto. Nessa rota, dois elementos com role=tab e o mesmo nome acessível coexistem significando coisas diferentes: um é destino de primeiro nível, o outro é um recorte do conteúdo. O sintoma imediato foi o Playwright entrando em strict mode; a consequência real é de acessibilidade — quem navega por leitor de tela ouve 'Explorar' duas vezes sem distinção. Os testes foram escopados ao <main> para desambiguar, o que resolve o teste, não a colisão.",
       "checklist": [
         "Decidir qual dos dois muda de rótulo, ou como distingui-los no nome acessível",
         "Nenhuma rota expõe dois role=tab com o mesmo nome acessível significando coisas diferentes",
@@ -2611,10 +2633,13 @@
       ],
       "proof": ["npx pnpm@11.18.0 test:e2e", "node scripts/visual/loop.mjs"],
       "tests": ["tests/e2e/manaus-pilot-full-journey.spec.ts"],
-      "links": ["docs/agents/DESIGN_SYSTEM.md"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "docs/agents/DESIGN_SYSTEM.md"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "30ab4eb"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a"
     },
     {
       "id": "RECON-W00-TELAS",
@@ -3165,8 +3190,8 @@
       "title": "Figma atual: reconstruir e comprovar todos os ciclos web",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "Unico card de coordenacao da reconstrucao web pelo Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores. Mapa atual: docs/agents/FIGMA-ATUAL-COBERTURA.md; protocolo: docs/agents/OPENCODE-FIGMA-CONTINUO.md. Shell/Conversas tem ciclo independente comprovado com confiabilidade pendente. Imoveis implementado em reparos; PASS tecnico GLM anterior nao fecha delta novo, runtime independente e fidelidade ainda pendentes. Home/Busca/Desapegos/Negocios/Encontros/Memoria/Guias/Beneficios/Perfil/Configuracoes/Entrada/retornos exigem contratos ligados a nodes, estados, interacoes e capacidades reais. A antiga contagem de17lotes e os registros historicos foram preservados em history/notes, mas nao medem cobertura nem autorizam restaurar nav antigo. Um escritor por checkout; revisao e runtime por lote, sem fila paralela.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo.\n\nUnico card de coordenacao da reconstrucao web pelo Figma niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores. Mapa atual: docs/agents/FIGMA-ATUAL-COBERTURA.md; protocolo: docs/agents/OPENCODE-FIGMA-CONTINUO.md. Shell/Conversas tem ciclo independente comprovado com confiabilidade pendente. Imoveis implementado em reparos; PASS tecnico GLM anterior nao fecha delta novo, runtime independente e fidelidade ainda pendentes. Home/Busca/Desapegos/Negocios/Encontros/Memoria/Guias/Beneficios/Perfil/Configuracoes/Entrada/retornos exigem contratos ligados a nodes, estados, interacoes e capacidades reais. A antiga contagem de17lotes e os registros historicos foram preservados em history/notes, mas nao medem cobertura nem autorizam restaurar nav antigo. Um escritor por checkout; revisao e runtime por lote, sem fila paralela.",
       "checklist": [
         "AUTORIDADE: Figma atual + decisoes posteriores; sem Comunidades no nav, Conversas topo, max12fotos; Mobile referencia nao bloqueia entrega web",
         "PROVADO PARCIALMENTE: FIGMA001 Shell/Conversas GLM/Flash ciclo funcional; confiabilidade HTTP500/flake ficha e teste negativo reports preexistente continuam abertos",
@@ -3227,6 +3252,7 @@
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
@@ -3241,8 +3267,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-10-07",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "notes": [
         "06/10/2026 15:14Z FIGMA-002: primeira revisão independente GLM Nvidia concluída em cerca de 79 minutos, PASS-COM-RESSALVA. Codex NÃO aprovou fechamento: guard BEFORE UPDATE e insert policy permitem imóvel ativo sem ficha; achado de integridade confirmado no código. Retomado único implementador OpenAI na mesma sessão após todos os papéis inativos: migration append-only e teste INSERT negativo/draft positivo/publicação legítima, Salvar rascunho explícito com reload, filtros reais e composição conforme pranchas. Salvar/Reportar exigem reconciliação técnica, sem controles fictícios. GLM não aceita PNG neste run: fidelidade continua aberta; Codex observou Filtros ausente e composição divergente. Achado quadroausente leu worktree antigo; origin já registra provas. Log gate-origin-fix atual contém615unit, não gate-final anterior. Nova estabilidade exige hashes e provas finais; mesma sessão GLM reavalia delta, Flash002 ainda não iniciado. Luna mapeou capacidades Home: Desapegos sem ciclo web completo, Memória e Andamento sem equivalência nos mecanismos atuais, busca prestador não é busca global, Guia não é Memória e notificações não são Andamento. Mapa atualizado, sem fila paralela ou done.",
         "06/10/2026 15:28Z FIGMA-002 delta tentativa1: Codex confrontou migration append-only20261006151524 guard INSERT draft, logs db-insert-556-557-pass (10 asserts positivos/negativos em cada isolado) e db-lint556/557 sem schema errors. DELTA.md registra regressão55 assertions de imóveis; preservado baseline negativo anterior ao reparo. Gate novo glm-delta-attempt1/gate.log VERDE, 622unit / 189privacy / 107scope. Ferramenta do executor confirma sourceHash c29b10ae0809b323835244500e58858b0ac4a6c164451ab29dec837aa46c157f, build pUGy9p7UXJ_gSNDrTtzJW, API55621 e fontes inalteradas após gate. E2E atualizado em segundo plano sh_111d4de080014SNX360Ghg3vZV com notificação automática; sessão inativa não é travamento, não retomar/duplicar. Rascunho/filtros/anunciante/compartilhar escritos, runtime/capturas/fidelidade ainda pendentes. CANDIDATO_ESTAVEL.md explicitamente REABERTO: não usar candidato anterior. Salvar/Reportar lacunas técnicas explícitas no contrato; Luna recebeu diagnóstico somente leitura das autorizações, caminhos e requisitos de persistência/moderação, sem segundo escritor ou revisão duplicada.",
@@ -3385,8 +3411,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "RECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. RESOLVIDO em 16/09 (lote AA): a migration foi aplicada no banco local, a suite canonica passou (119 arquivos/1568 asserts) e o fio de pergunta foi capturado em 375/768/1440 com 0 achados. A revisao independente rodou em sessao separada com veredito PASS (16/09) e deixou nomeado o que NAO cobriu: nao ha E2E do ciclo pergunta->resposta->presenca->cancelamento e a fidelidade a prancha 67 nao foi avaliada (report marca fidelity not-assessed).",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo.\n\nRECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. RESOLVIDO em 16/09 (lote AA): a migration foi aplicada no banco local, a suite canonica passou (119 arquivos/1568 asserts) e o fio de pergunta foi capturado em 375/768/1440 com 0 achados. A revisao independente rodou em sessao separada com veredito PASS (16/09) e deixou nomeado o que NAO cobriu: nao ha E2E do ciclo pergunta->resposta->presenca->cancelamento e a fidelidade a prancha 67 nao foi avaliada (report marca fidelity not-assessed).",
       "checklist": [
         "Migration com o valor event_question e a RPC open_event_question (destinatario derivado do evento) ✅ 16/09 (lote AA): migrations 20260911051215_event_question_context e 20260911051230_event_question_thread aplicadas no reset limpo; dm_context_type.event_question e public.open_event_question conferidos no catalogo do banco",
         "Notificacao dos dois lados honrando notification_preferences.messages ✅ 16/09 (lote AA): event-questions.sql verde na suite canonica (notification_preferences.messages honrado)",
@@ -3410,13 +3436,14 @@
         "tests/unit/events/event-form.test.ts"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "Contrato | docs/agents/tasks/RECON-029.task.yml",
         "Leitura da prancha 67 | docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "ADR | docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "Spec 4.4 R33-R35 | docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
       ],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "d201242",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20",
       "dependencies": []
     },
     {
@@ -3510,8 +3537,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "O lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. PROVADO em 16/09 (lote AA): a migration foi aplicada em reset limpo, supabase/tests/community-images.sql esta verde na suite canonica (119 arquivos/1568 asserts), a fixture de midia gravou 4 ponteiros e /communities/...0001 e /admin/media foram capturadas em 375/768/1440 com 0 achados. Nao provado: a interacao de upload no navegador.",
+      "status": "frozen",
+      "description": "SUPERADO PELO ADR-20261024-front-react-spa (aceito em 25/10/2026): as telas são refeitas no apps/app (React SPA com shadcn/ui), jornada por jornada, a partir do protótipo e das referências de docs/design/fluxos-2026-10-30; a tela antiga do apps/web só sai depois da nova (ADR §8). Não reconstruir esta tela no apps/web. Registro preservado abaixo.\n\nO lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. PROVADO em 16/09 (lote AA): a migration foi aplicada em reset limpo, supabase/tests/community-images.sql esta verde na suite canonica (119 arquivos/1568 asserts), a fixture de midia gravou 4 ponteiros e /communities/...0001 e /admin/media foram capturadas em 375/768/1440 com 0 achados. Nao provado: a interacao de upload no navegador.",
       "checklist": [
         "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito ✅ 16/09 (lote AA): migration 20260911093140_community_images aplicada em reset limpo",
         "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável ✅ 16/09 (lote AA): community-images.sql dentro dos 119 arquivos/1568 asserts PASS",
@@ -3540,6 +3567,7 @@
         "node scripts/visual/media-fixture.mjs (o caminho da imagem de comunidade é <id>/<kind>, o mesmo que communityImagePath assina)"
       ],
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/agents/tasks/RECON-034.task.yml",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "docs/decisions/ADR-20260909-midia-de-membro.md",
@@ -3548,8 +3576,8 @@
       ],
       "dependencies": [],
       "blockers": [],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "d201242"
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "b8e84b20"
     },
     {
       "id": "RECON-038",
@@ -4262,20 +4290,21 @@
     {
       "phase": "Reconstrução",
       "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "apps/web/app/(shell)/events/page.tsx",
         "apps/web/app/(shell)/events/novo/page.tsx"
       ],
       "dependencies": [],
       "proof": [],
       "tests": ["tests/e2e/link-crawl.spec.ts"],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "8632239",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a",
       "id": "EVENTOS-CRIACAO-DUPLICADA",
       "title": "Criar evento existe duas vezes e a rota dedicada nao tem porta",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /events cria evento por um formulario embutido (setView('create'), events/page.tsx) e /events/novo (RECON-029, prancha 70) cria pela rota dedicada com EventForm, a mesma de /events/[id]/editar. Nenhum link leva a /events/novo. A funcao nao esta bloqueada, mas ha dois caminhos de criacao que podem divergir. Consolidar num so: os botoes 'Criar evento' levam a /events/novo e o formulario embutido sai.",
+      "status": "frozen",
+      "description": "NÃO CORRIGIR (dono, 31/10/2026): o defeito é de uma tela antiga do apps/web, que sai quando a jornada equivalente do apps/app for aprovada (ADR-20261024-front-react-spa §8). A jornada nova nasce sem ele; confira só se o mesmo comportamento reaparecer no apps/app. Registro preservado abaixo.\n\nAchado do rastreador de 22/09/2026 (HRN-005). /events cria evento por um formulario embutido (setView('create'), events/page.tsx) e /events/novo (RECON-029, prancha 70) cria pela rota dedicada com EventForm, a mesma de /events/[id]/editar. Nenhum link leva a /events/novo. A funcao nao esta bloqueada, mas ha dois caminhos de criacao que podem divergir. Consolidar num so: os botoes 'Criar evento' levam a /events/novo e o formulario embutido sai.",
       "checklist": [
         "Conferir que /events/novo cobre tudo o que o formulario embutido faz (alcance, grupo, comunidade)",
         "Trocar os botoes 'Criar evento' de /events por link para /events/novo",
@@ -4315,18 +4344,21 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/(preauth)/consent/page.tsx"],
+      "links": [
+        "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
+        "apps/web/app/(preauth)/consent/page.tsx"
+      ],
       "dependencies": [],
       "proof": [],
       "tests": ["tests/e2e/link-crawl.spec.ts", "tests/e2e/manaus-pilot-denials.spec.ts"],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "8632239",
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "064f677a",
       "id": "ROTA-CONSENT-LEGADA",
       "title": "/consent continua servida depois que o portao saiu do produto",
       "priority": "P3",
       "category": "frontend",
-      "status": "next",
-      "description": "Achado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
+      "status": "frozen",
+      "description": "NÃO EXECUTAR (31/10/2026): /consent voltou a ser exigida pela etapa de aceite de quem entra pelo Google (PR #104, ADR-20261022-entrada-do-prototipo); o AGENTS.md proíbe removê-la por este card. Registro preservado abaixo.\n\nAchado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
       "checklist": [
         "Conferir quem ainda depende de /consent (proxy.ts, active-nav.ts, specs de negacao)",
         "Remover ou redirecionar, ajustando os specs",
@@ -5333,6 +5365,10 @@
         "Instrumentos revisados e capturas aprovadas"
       ],
       "proof": [
+        "31/10: e2e completo do apps/app na F01 juntada ao #116 (revisão 6a5feb29): 1756 passaram, 23 falharam e 75 pulados. As 23 são PREEXISTENTES no #116: a mesma lista falha em e041fade sozinho. 15 delas já falhavam antes da F01 sair do #116 (topo da conversa sem \"Paulo R.\" nos seis tamanhos; Encontro cortado em 320; rolagem e foco por entrada, com clique interceptado pelo Criar ou pelos controles de prova; grade da galeria com 2 colunas em 768). 8 vêm do #116 (8a554d8a): o Criar compacto foi a 50 px no celular e casca.spec:178 e acessibilidade.spec:56 esperam 56 px. Próximo passo: decidir 50 ou 56 px e alinhar CSS ou teste; corrigir a conversa de demonstração e os cliques interceptados. Nenhuma é da entrada.",
+        "28/10: onboarding demonstrativo inclui etapa opcional de negocios; divulgar reutiliza formulario e salva rascunho apenas na sessao, interesse e decidir depois nao publicam. Gate completo verde; 18/18 E2E em 375/768/1440. Backend e aceite visual independente pendentes.",
+        "27/10: sugestoes de grupos abertas da cidade no onboarding demonstrativo, selecao opcional e estado vazio; nenhum vinculo criado. Gate completo verde; 15/15 E2E em 375/768/1440, instrumento aprovado em revisao estatica. Integracao real e auditoria visual independente pendentes.",
+        "27/10: jornada de entrada demonstrativa com composicao 21st e marca oficial; login, cadastro, CPF, documento, analise, convite e cidade sem backend. E2E focal 12/12 em 375/768/1440; gate completo verde apos o reforco; instrumento aprovado em revisao estatica independente. Aceite visual e integracao real continuam pendentes. Detalhes em STATUS.",
         "25/10: contrato APP-001 válido R1; baseline focal 0/2 e depois 6/6 no escopo, sem alegar gate completo",
         "25/10: gate completo APP-001 verde sem pular build; 143/143 escopo, 1726 unitários, 76 mobile, 19 web e 189 privacidade; runtime independente 3/3 viewports, reload sem erros. Onda 1 ainda em andamento.",
         "25/10: bateria 1b escrita antes de implementação; instrumento e2e ainda FAIL na revisão do coordenador, sem liberação da 1c.",
@@ -5344,6 +5380,8 @@
         "26/10 revisão visual documental:152pares/38cenas em375/1440 claro/escuro;19pranchas e12ampliações;174fontes+HTML+152PNGs com hashes intactos.12achados, parecerCORREÇÕES. Exceções ADR3.1 preservadas (Mercado e Conversas/cidade no topo). Fontes Noto confirmadas em inspeção pontual do navegador. Sem novo gate/E2E/captura ou comparação768. Relatório REVISAO-VISUAL-20261026.md; prioridade V01/V02/V03.",
         "26/10 APP-008: quatro casos vermelhos na base; correção focal12/12 em375,768,1440. Regressão521passed,16skipped,zeroFAIL; após reforçar negativos por revisão Qwen, focalfinal12/12. GateR1 completo VERDE: raiz1726,app84,mobile76,web19,privacidade189,escopo150,secrets. Primeiro gate149/150 por dois falsos positivos documentais; só caminho/separadores corrigidos, sem alterar scanner. Captura152pares,175fontes e152PNGs com hashes íntegros,zeroerros;8vistas768 complementares. Codex conferiu24vistas/3pranchas e3pares ampliados. Qwen aprovou instrumentoR1 e captura768. Logs e relatórios APP-008 em .visual/coordenacao; detalhes/limites no STATUS. Parecer global permanece CORREÇÕES pelos demais achados.",
         "26/10 auditoria solicitada pelo dono: Codex examinou152pares atuais em19pranchas,8vistas de768 e3ampliações; confrontou imports/consumidores com ADR e documentação oficialshadcn. Parecer visualCORREÇÕES e aderênciaPARCIAL: Button,Input,Textarea,ToggleGroup,Badge,Skeleton em telas; Select só galeria; Dialog/AlertDialog/DropdownMenu/Command com composição própria ou ausentes na baseui. V13 indicador de filtros cobre2linhas; V14 perguntas truncadas; V15 ação preenchida perdebrasa. V01–V03 delimitados confirmados; V04–V12 abertos. Não executou novo gate/E2E/captura nem auditou todos81overlays. Detalhes no REVISAO-VISUAL-20261026 e STATUS.",
+        "26/10 APP-010, revisão do PR116 ceb0858e: cinco limites locais recusam excedente sem apagar conteúdo, legado preservado, seis diálogos usam histórico e Criar sem dupla entrada. Gate R1 completo VERDE: raiz1726,app92,mobile76,web19,privacidade189,escopo150,secrets. Qwen aprovou instrumento R1; 123/123 E2E finais em375/768/1440, zero falhas/skips,27 novos. Codex conferiu21capturas em3pranchas claras. Gate R0 FAIL de ambiente (symlink/Turbopack), corrigido só no processo. Alertas de três limites sem prova de UI; não aprova backend, RLS ou visual global. Detalhes e logs APP-010 no STATUS e .visual/coordenacao.",
+        "26/10 integração PR116 7920f5b1: preservados três commits remotos, formatados Conversa/Conversas/Grupo e grupos nativos fieldset. Gate completo novamente VERDE, mesmas contagens1726/92/76/19/189/150,secrets; E2E final123/123 em375/768/1440,zero falhas/skips,2,6min.21fontes porhash e21capturas claras reconferidas. Não somar rodadas. CI mobile/R72 PASS; CI geral em andamento; revisor automático sem parecer e previews externos bloqueados, discriminados no STATUS.",
         "26/10 APP-009: bancada de Mercado autorizada pelo dono, fora do fluxo normal. Blocos ecomcn MIT e shadcn com dados e fotos existentes, sem pacote novo. Qwen R1 APROVADO PARA MEDICAO; gate completo verde sem pular builds, raiz1726 app84 mobile76 web19 privacidade189 escopo150 secrets. Rodada final27E2E verdes,15bancada e12casca. Seis vistas e quatro folhas nos dois temas; quatro pares com HTML preservado.187fontes com hashes. Fonte base7300b46b em WIP; limites e falhas classificados no STATUS. Aceite visual e integracao pendentes; nao fecha onda1, RLS ou ondas2a8."
       ],
       "links": [
@@ -5357,18 +5395,20 @@
         "docs/agents/tasks/APP-007-bloqueio.md",
         "docs/agents/prototipo-shadcn/APP-005-cobertura.md",
         "docs/agents/prototipo-shadcn/REVISAO-VISUAL-20261026.md",
-        "docs/agents/tasks/APP-008.task.yml"
+        "docs/agents/tasks/APP-008.task.yml",
+        "docs/agents/tasks/APP-010.task.yml"
       ],
-      "sourceRevision": "7300b46ba00635f249a5192c656326a250684ccd",
+      "sourceRevision": "6a5feb29",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
       "status": "now",
       "tests": [],
       "dependencies": [],
-      "updatedAt": "2026-10-26",
+      "updatedAt": "2026-10-31",
       "blockers": [
         "Aceite visual da onda1 pendente. Adoção shadcn parcial: corrigir S01/S02 e comprovar consumo real dos componentes equivalentes, preservando navegação/histórico aprovados.",
-        "Corrigir V13 filtros, V14 títulos de perguntas e V15 variante das ações; grade/recentes V02 e omissões V04–V12 permanecem. Primeiro fechamento recomendado: base compartilhada com reuso shadcn, filtros e botões."
+        "Corrigir V13 filtros, V14 títulos de perguntas e V15 variante das ações; grade/recentes V02 e omissões V04–V12 permanecem. Primeiro fechamento recomendado: base compartilhada com reuso shadcn, filtros e botões.",
+        "PR116: normalizar executor da revisão automática sem parecer e definir pelo dono o destino do preview Vercel legado com Root Directory ausente; dois outros projetos estão sob quota. Não é falha dos builds locais nem aceite visual global. Evidências e próximos passos no STATUS APP-010."
       ],
       "completedChecklist": [true, true, false, true, false]
     },
@@ -5404,6 +5444,75 @@
         "Revisão final independente de segurança pendente"
       ],
       "completedChecklist": [false, false, false, false]
+    },
+    {
+      "id": "APP-F01-ENTRADA-VISUAL",
+      "title": "F01: entrada e onboarding no visual aprovado (apps/app)",
+      "category": "frontend",
+      "description": "Reconstruir a jornada de entrada do apps/app conforme as 28 telas aprovadas pelo dono em 30/10/2026 (desktop e celular) em docs/design/fluxos-2026-10-30, com blocos do 21st.dev e brandbook. ENT-001 a ENT-006 implementados por contrato no OpenCode (deepseek-v4.1-flash); ENT-007 (ajustes do aceite) implementado pelo Claude Code com revisão independente do Codex, por decisão do dono. Sem backend.",
+      "checklist": [
+        "ENT-001: composição de acesso (login, criar conta, recuperar senha)",
+        "ENT-002: composição de etapa (aceite, vínculo, vínculo confirmado)",
+        "Consulta indisponível, documento e análise",
+        "Cidade e momento, grupos",
+        "Negócio opcional (escolha, cinco etapas, interesse)",
+        "Boas-vindas por momento, retomar, convite e conta apagada",
+        "Aceite visual do dono sobre a jornada inteira"
+      ],
+      "completedChecklist": [true, true, true, true, true, true, true],
+      "proof": [
+        "01/11: aceite visual do dono concluído em quatro rodadas na página Aceite da Entrada (https://claude.ai/artifact/Taqq3VFZwWyXsSRvtB75BK): 28 de 28 telas aprovadas, claro e escuro, celular e desktop. ENT-007 trouxe acesso e boas-vindas sobre os blocos sign-in-3 e Onboarding Welcome Screen, grupos sobre o Card Style Checkbox, o formulário do negócio sobre o Onboarding Wizard Form e o Radio Group (código real dos blocos do 21st, com crédito) e fotos próprias para 13b, 13c, 16, 17 e 18. Provas do contrato na revisão b3c2cc32: typecheck, lint, test:scope 150/150 e e2e de entrada 418 passaram, 0 falharam; revisão do Codex aprovada (.visual/ENT-007/revisao-codex-7.md). Gate completo da raiz não foi rodado nesta rodada; CI do PR #118 roda o app e o web.",
+        "30/10: gate da raiz na revisão cee11eb8: lint, typecheck, typecheck:e2e, build:app, test (1726 domínio, 92 app, 76 mobile, 19 web, 189 privacidade, 150 escopo) e secrets verdes; build do apps/web PULADO por falta do arquivo de ambiente local do web — gate não é completo. Esta frente não tocou apps/web.",
+        "30/10: ENT-006 (boas-vindas por momento, retomar, convite, convite indisponível, conta apagada; cartão antigo removido) entregue pelo OpenCode. Verificação independente na revisão a1872617: typecheck e build verdes, 373 E2E passaram e 41 pulados por desenho, test:scope 150/150, lint sem erros. Toda /app/entrar/* está no visual aprovado; falta o aceite visual do dono.",
+        "30/10: ENT-005 (negócio opcional: escolha, cinco etapas, revisão com Editar e interesse; capa da turma trocada para chegada) entregue pelo OpenCode. Verificação independente na revisão e6382fa7: typecheck e build verdes, 300 E2E passaram e 30 pulados por desenho, test:scope 150/150, lint sem erros. Barra interna do negócio no celular segue no ENT-006.",
+        "30/10: ENT-004 (cidade e momento, sugestões de grupos) entregue pelo OpenCode; teste desatualizado pelo próprio contrato corrigido pelo revisor (970ba8f3). Verificação independente na revisão 5580b5cc: typecheck e build verdes, 219 E2E passaram e 27 pulados por desenho, lint sem erros. Capa da turma (friends) troca no ENT-005.",
+        "30/10: ENT-003 (consulta indisponível, envio de identidade e análise) entregue pelo OpenCode; auditoria: o arquivo fica só em memória, sem leitura de conteúdo, envio ou armazenamento, e a tela mostra só tipo e tamanho (teste com 12345678909.pdf ausente do DOM). Verificação independente na revisão 6504f40d: typecheck e build verdes, 180 E2E passaram e 24 pulados por desenho, lint sem erros. Correção pendente para o ENT-004: Object.hasOwn na validação do tipo.",
+        "30/10: ENT-002 (aceite, vínculo por CPF e vínculo confirmado) entregue pelo OpenCode; auditoria do coordenador: tratamento do CPF inalterado, teste novo prova que o valor não vai a localStorage, sessionStorage nem URL. Verificação independente na revisão 656acb6e: typecheck e build verdes, 145 E2E passaram e 17 pulados por desenho (etapa + acesso + 21st em 6 larguras), lint sem erros. Pendências visuais menores (traço no passo 5 do indicador, check pequeno no vínculo confirmado) seguem no ENT-003.",
+        "30/10: ENT-001 entregue pelo OpenCode e reparo 1; verificação independente na revisão 88010f0a: typecheck e build verdes, 100 E2E passaram e 14 pulados por desenho (entrada-acesso + entrada-21st em 6 larguras), lint sem erros. Revisão visual contra F01-01, F01-02, F01-15 e F01-15b aprovada pelo coordenador; aceite do dono pendente."
+      ],
+      "links": [
+        "docs/agents/tasks/ENT-001.task.yml",
+        "docs/agents/tasks/ENT-002.task.yml",
+        "docs/design/fluxos-2026-10-30/F01-DIRECAO.md",
+        "docs/design/fluxos-2026-10-30/F01-COBERTURA.md",
+        "docs/agents/prototipo-shadcn/STATUS.md",
+        "docs/agents/tasks/ENT-007.task.yml"
+      ],
+      "sourceRevision": "b3c2cc32",
+      "phase": "SPA e redesenho — outubro",
+      "priority": "P1",
+      "status": "now",
+      "tests": [
+        "apps/app/tests/e2e/entrada-acesso.spec.ts",
+        "apps/app/tests/e2e/entrada-21st.spec.ts",
+        "apps/app/tests/e2e/entrada-etapa.spec.ts"
+      ],
+      "dependencies": ["APP-001"],
+      "updatedAt": "2026-11-01",
+      "blockers": [
+        "Integração: o PR #118 (feat/f01-entrada-visual) aponta para a branch do PR #116 (codex/ui-foundation-21st-20261026); a entrega só vale no main depois de decidir e fazer a ordem de integração #116 → #118 → main."
+      ]
+    },
+    {
+      "id": "LANDING-CTA-ANTES-DO-REGISTRO",
+      "title": "Landing: Criar conta não faz nada se tocado antes do JavaScript registrar o botão",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Os CTAs Criar conta da landing pública (apps/web/app/landing/landing.tsx, função Cta) são md-filled-button com href. O elemento só navega depois de registrado no cliente; antes disso o toque não leva a lugar nenhum. No CI, o e2e landing-v8 em 375 px clicou antes do registro e ficou em / duas vezes (31/10/2026); o teste passou a esperar o registro (59a33028), mas uma pessoa num celular lento ainda pode tocar cedo demais. A landing continua no Next pelo ADR-20261024-front-react-spa §4.",
+      "checklist": [
+        "O CTA navega para /signup mesmo antes do JavaScript (por exemplo, um <a href> real dentro ou no lugar do botão)",
+        "e2e que clica antes do registro do elemento e chega a /signup",
+        "Mesma correção nos outros md-filled-button com href da landing (chamada final, barra fixa, folha do menu)"
+      ],
+      "completedChecklist": [false, false, false],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/landing-v8.spec.ts"],
+      "links": ["apps/web/app/landing/landing.tsx", "tests/e2e/landing-v8.spec.ts"],
+      "updatedAt": "2026-10-31",
+      "sourceRevision": "59a33028"
     }
   ]
 }

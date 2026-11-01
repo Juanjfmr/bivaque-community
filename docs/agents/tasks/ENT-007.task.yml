@@ -1,0 +1,123 @@
+# ENT-007 — F01, rodada de ajustes do aceite visual do dono (31/10/2026)
+#
+# Executor: Claude Code (decisão do dono, 31/10/2026). Revisor independente: Codex. Verificação de
+# runtime: Claude Code, com as provas abaixo rodadas na revisão entregue.
+# Sem backend. O dono revisou as 28 telas em 31/10/2026: 13 aprovadas, 14 com ajuste, 1 pendente.
+# Os ajustes são dois: a foto (corte e enquadramento) e o tamanho (grande demais no celular,
+# pequeno demais no desktop). Por decisão do dono (31/10/2026), a composição de acesso e as
+# boas-vindas passam a partir do código real dos blocos do 21st.dev mapeados na direção da F01,
+# obtido pelo plugin do 21st; os blocos não declaram licença e o dono assumiu esse risco.
+# Alterações deste contrato depois do primeiro despacho (31/10/2026), pelo coordenador, que também
+# é o executor por decisão do dono: a origem passou do login-02 aos blocos do 21st (decisão do
+# dono); logo, coluna e título das boas-vindas e a altura dos atalhos foram medidos nas referências
+# aprovadas; grupos (40% só no celular) e a faixa do celular (com margens) foram corrigidos porque
+# contradiziam a referência. Cada mudança está no commit que a fez e foi revista pelo Codex.
+# Ratificação: estas mudanças de critério (origem nos blocos, medidas, grupos só no celular, faixa
+# com margens, foto retrato no desktop) só valem com o aceite visual do dono na rodada 2 da página
+# Aceite da Entrada; sem esse aceite o ENT-007 não fecha.
+# Rodada 2 (01/11/2026): 18 telas aprovadas, 3 com ajuste (10 grupos, 12c e 12d negócio: verifique
+# os blocos/componentes do 21st), 9 sem marcação (12e, 13b, 13c, 14, 15, 15b, 16, 17, 18). Por isso
+# grupos e formulário do negócio passam ao código real dos blocos mapeados na direção (Card Style
+# Checkbox, Onboarding Wizard Form, Radio Group). O formulário é um componente só: a troca alcança
+# também 12a e 12b, que voltam ao aceite na rodada 3. Estas mudanças também dependem do aceite do
+# dono na rodada 3.
+# Rodada 3 (01/11/2026): 23 telas aprovadas, inclusive 10 e 12a a 12e (o que ratifica os critérios
+# de grupos e do formulário); 5 com ajuste só de foto (13b, 13c, 16, 17, 18). O dono sugeriu gerar
+# outra imagem; por isso as fotos dessas telas passam a ser geradas para os recortes de cada uma.
+task_id: ENT-007
+
+objective: >
+  No app (apps/app), as telas da entrada com ajuste pedido pelo dono ficam iguais às referências
+  aprovadas em proporção, enquadramento da foto e tamanho de texto e controles, no celular e no
+  desktop. A composição de acesso (login, criar conta, recuperar senha e envio, retomar, convite,
+  convite indisponível e conta apagada) é refeita a partir do código do bloco Split Sign In Form
+  (21st.dev, diarmuradi/sign-in-3), com a foto à esquerda; as boas-vindas a partir do bloco
+  Onboarding / Welcome Screen (21st.dev, ravikatiyar162). Mesmos textos, campos, validações e
+  destinos de hoje.
+
+authority:
+  - "Revisão do dono em 31/10/2026 (página Aceite da Entrada), notas por tela: 01 login: foto cortada, melhorar o preenchimento da tela à direita; 02 criar conta: problema na foto à esquerda; 10 grupos: melhorar o enquadramento; 12d e 12e negócio: tamanho das coisas muito grande, texto muito grande; 13, 13b e 13c boas-vindas: ajustar a foto e o tamanho dos textos; 14 retomar, 15 senha, 15b senha enviada, 16 convite, 17 convite indisponível e 18 conta apagada: o mesmo (foto e texto). Aprovadas sem mudança: 03 a 09c, 11, 12a, 12b e 12f. 12c ficou sem revisão."
+  - docs/design/fluxos-2026-10-30/individuais/F01/ (referências desktop) e individuais/F01/celular/ (referências celular)
+  - .visual/ENT-007/comparacao/ (lado a lado referência × app de 31/10, e as imagens separadas ref-* e app-*)
+  - .visual/ENT-007/blocos-21st/ (código dos blocos sign-in-3 e onboarding-welcome-screen do 21st.dev, como o plugin devolveu, com demos e relatório)
+  - "Revisão do dono na rodada 2 (01/11/2026): 10 grupos \"Verifique os blocos 21 St dev\"; 12c \"Verifique os componentes\"; 12d \"Mesma coisa\"."
+  - "Revisão do dono na rodada 3 (01/11/2026): 13b \"A foto ainda está mal enquadrada. Talvez seja necessário gerar outra imagem\"; 16 \"Foto mal enquadrada\"; 13c, 17 e 18 marcadas para ajuste sem nota."
+  - .visual/ENT-007/blocos-21st-r3/ (código dos blocos v-checkbox-4, v-form-8, radio-group de originui e c-stepper-1, como o plugin devolveu, com demos e relatório)
+  - docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md (título de display com 24 px no celular; cantos de 12 px)
+  - docs/decisions/ADR-20261024-front-react-spa.md (shadcn/ui no apps/app)
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md
+  - docs/agents/tasks/ENT-001.task.yml a ENT-006.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 31/10/2026 na revisão 094ba62d (.visual/ENT-007/comparacao/). Desktop: no login e
+    no criar conta a foto ocupa cerca de 46% da largura e vem ampliada, cortando metade da cena (a
+    segunda pessoa no criar conta, o aperto de mão no login); o formulário tem cerca de 280 px de
+    largura e deixa a metade direita quase vazia; nas boas-vindas a coluna, a foto e o título
+    ficam menores que na referência. Celular (375 px): títulos de cerca de 30 px que quebram em
+    duas linhas; no negócio, campos, rótulos e miniaturas de foto grandes (miniaturas em duas
+    colunas de cerca de 160 px); nos grupos a miniatura é estreita e a foto vem recortada.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/components/bivaque/entrada-acesso.tsx
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/components/bivaque/formulario-negocio.tsx
+  - apps/app/components/ui/checkbox.tsx
+  - apps/app/components/ui/radio-group.tsx
+  - apps/app/public/demo/moro-aqui.webp
+  - apps/app/public/demo/saindo.webp
+  - apps/app/public/demo/convite-retrato.webp
+  - apps/app/public/demo/convite-paisagem.webp
+  - apps/app/public/demo/apagada-retrato.webp
+  - apps/app/public/demo/apagada-paisagem.webp
+  - apps/app/src/styles.css
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - apps/app/tests/e2e/entrada-acesso.spec.ts
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-007/
+
+forbidden:
+  - adaptar um bloco sem o crédito no topo do arquivo (nome do bloco, autor e link do 21st.dev)
+  - manter dos blocos next/link, next/image, Base UI, framer-motion ou o FancyButton; trocá-los pelos componentes e pela camada de navegação do app
+  - instalar, remover ou atualizar dependências; rodar o CLI do shadcn ou do 21st
+  - mudar textos, campos, validações, destinos, rotas ou dados de demonstração
+  - mexer nas telas aprovadas (03 a 09c, 11, 12f) além do que a regra comum de tamanho no celular abaixo exigir; 12a e 12b só mudam pela troca dos componentes do formulário do negócio pelos blocos
+  - usar pacote fora do radix-ui já instalado para Checkbox e Radio Group dos blocos (sem @radix-ui/react-*, lucide-react ou react-hook-form)
+  - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo; cor fixa fora dos tokens
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Composição de acesso no desktop (≥ 1024 px), a partir do código do sign-in-3 (grade de duas colunas e painel lateral de cantos grandes, com os lados invertidos): grade de duas colunas iguais (1fr 1fr) na altura da janela; à esquerda o painel, com a foto cobrindo-o e a frase e os itens de hoje por cima, no lugar do depoimento do bloco; à direita o conteúdo centralizado na vertical e na horizontal, com largura máxima de 30rem (480 px). Logo com 48 px de altura no topo do conteúdo; título em Noto Serif com 2.75rem (44 px); apoio com 1.0625rem (17 px); botão do Google, campos e botão principal com 48 px de altura."
+  - "Enquadramento da foto: em cada tela da composição de acesso a pessoa ou o grupo principal da referência aparece inteiro, sem corte de rosto: no login a mesa com o aperto de mão inteiro; no criar conta as duas mulheres do portão. Ajuste object-position por imagem (variável CSS por tela); nas telas 13b, 13c, 16, 17 e 18 (rodada 3) a foto é nova, gerada para os recortes da tela (paisagem 16:9 ou 16:10 e retrato 2:3), sem farda, insígnia, texto ou logotipo, no estilo das fotos de demonstração: boas-vindas de quem mora (vizinhos) e de quem sai (mudança); convite com a família reunida em casa; conta apagada com uma varanda ao entardecer, sem pessoas. A 13 (aprovada) mantém a foto atual; no desktop, onde a versão larga cortaria a cena no painel alto, vale a versão retrato (login: demo/landing-hero-retrato.webp, a mesma foto; convite e conta apagada: convite-retrato.webp e apagada-retrato.webp, tomadas próprias da mesma cena da versão em paisagem)."
+  - "Composição de acesso no celular (< 768 px): a foto é uma faixa na largura da coluna, com as margens de 16 px e os cantos da referência de celular, em proporção 16:10 e o mesmo enquadramento do desktop (sem zoom extra); título com 1.5rem (24 px) em uma linha quando o texto couber em 375 px; apoio com 0.9375rem (15 px); campos e botões com 44 px de altura; rótulos com 0.875rem (14 px)."
+  - "Regra comum de tamanho no celular (< 768 px) para todas as telas de /app/entrar/*: título de display 1.5rem (24 px); subtítulo de seção 1.125rem (18 px); texto de apoio 0.9375rem (15 px); rótulos 0.875rem; textos de ajuda 0.8125rem (13 px); campos 44 px de altura. As telas aprovadas só mudam se hoje estiverem acima desses valores."
+  - "Boas-vindas (13, 13b, 13c) a partir do código do Onboarding / Welcome Screen: a entrada escalonada do bloco vira transição de CSS (opacidade e deslocamento curtos), desligada com prefers-reduced-motion; desktop com a coluna de até 47.5rem (760 px), foto na largura da coluna com proporção 21:9 e o grupo inteiro (sem corte de rosto), título 3rem (48 px), apoio 1.125rem, cartões de atalho com ícone de 24 px e altura entre 80 e 100 px (a referência F01-13, desenhada em 1536 px, mede 94 a 97 px em 1440); celular com foto 16:10, título 24 px e os mesmos cartões entre 56 e 80 px (a referência de celular mede cerca de 60 px em 375), sem cortar o texto de duas linhas."
+  - "Grupos (10) a partir do código do Card Style Checkbox (21st.dev, cnippet-dev/v-checkbox-4): o rótulo inteiro é o cartão, com borda de 1 px, cantos de 8 px, respiro de 12 px, caixa de 16 px (Checkbox do radix-ui), título em 0.875rem e descrição em 0.75rem; marcado troca a cor da borda e o fundo, sem mudar a espessura. A miniatura do grupo fica à direita no celular (< 768 px, 72 × 72 px) e no topo a partir de 768 px (16:9), na grade 2 × 2."
+  - "Formulário do negócio (12a a 12e) a partir do código do Onboarding Wizard Form (21st.dev, cnippet-dev/v-form-8): indicador de cinco passos numerados (círculos de 24 px, check quando feito, linha entre eles; abaixo de 768 px só o passo atual mostra o rótulo), com o texto \"Passo X de 5\" para leitor de tela; cartões de rádio do Radio Group (21st.dev, originui) com título e descrição curta; especialidades e dias como caixas do Card Style Checkbox; revisão como a confirmação do bloco, em linhas divididas com rótulo, valor e Editar. Campos com cantos de 8 px e 40 px de altura no desktop; no celular valem os 44 px da regra comum. O subtítulo de cada passo (só usado neste formulário) mede 18 px também no desktop, no lugar dos 22 px, para a hierarquia do bloco."
+  - "Negócio passos 4 e 5 (12d, 12e) no celular: miniaturas de foto em grade de 4 colunas (cerca de 72 px), selo Capa menor, \"Voltar\" e \"Continuar\" com 44 px; textos pela regra comum. No passo 5 (revisão) a foto de capa tem proporção 16:9 e as linhas de cada bloco seguem a regra comum."
+  - "Foco no título ao abrir; foco visível; sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; tema escuro pelos tokens; os testes de privacidade que já existem em entrada-etapa.spec.ts continuam passando sem alteração."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 lint
+  - "Testes: no desktop as duas colunas da composição de acesso têm a mesma largura (diferença ≤ 2 px) e o conteúdo tem no máximo 480 px; no celular o título de display mede 24 px em todas as telas de /app/entrar/*; a foto da composição de acesso no celular tem proporção 16:10 (± 2%); nos grupos a caixa mede 16 px, a miniatura mede 72 px ao lado no celular e fica no topo em 16:9 a partir de 768 px; o indicador do negócio tem cinco passos com um atual; no negócio em 375 px as miniaturas ficam em 4 colunas"
+  - "Capturas de página inteira das telas 01, 02, 10, 12a, 12b, 12c, 12d, 12e, 13, 13b, 13c, 14, 15, 15b, 16, 17 e 18 em 375, 768 e 1440 px em .visual/ENT-007/"
+
+risk: entrada e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261020-identidade-visual-e-tema-escuro.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

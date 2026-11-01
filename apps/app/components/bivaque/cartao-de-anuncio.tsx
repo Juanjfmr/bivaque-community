@@ -21,13 +21,15 @@ export type AnuncioDoCartao = {
   readonly id: string
   readonly titulo: string
   readonly fonte?: string | null
-  readonly rotulo?: string
+  readonly rotulo?: string | undefined
   readonly icone?: React.ComponentProps<typeof Icone>["nome"]
   readonly preco?: number | null
   readonly porMes?: boolean
   readonly meta: string
   readonly salvo?: boolean
   readonly bairro?: string | null
+  readonly detalhes?: readonly string[]
+  readonly informacaoExtra?: string | undefined
 }
 
 export function CartaoDeFoto({
@@ -45,12 +47,21 @@ export function CartaoDeFoto({
       className="bv-press group/card overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)"
     >
       <div className="relative">
-        <Capa
-          fonte={anuncio.fonte}
-          alt={anuncio.titulo}
-          rotulo={anuncio.rotulo}
-          icone={anuncio.icone}
-        />
+        <button
+          type="button"
+          data-acao="abrir-foto"
+          aria-label={`Ver anúncio: ${anuncio.titulo}`}
+          onClick={aoAbrir}
+          className="block w-full overflow-hidden rounded-t-2xl text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
+        >
+          <Capa
+            fonte={anuncio.fonte}
+            alt={anuncio.titulo}
+            rotulo={anuncio.rotulo}
+            icone={anuncio.icone}
+            className="rounded-none"
+          />
+        </button>
         <span className="absolute top-2 right-2">
           <BotaoDeIcone
             rotulo={anuncio.salvo === true ? "Remover dos salvos" : "Salvar anúncio"}
@@ -65,7 +76,7 @@ export function CartaoDeFoto({
         type="button"
         data-acao="abrir-anuncio"
         onClick={aoAbrir}
-        className="grid w-full gap-1 p-3 text-left"
+        className="grid min-h-11 w-full gap-1 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
       >
         <span className="flex items-baseline gap-2">
           {anuncio.preco === undefined || anuncio.preco === null ? null : (
@@ -77,6 +88,24 @@ export function CartaoDeFoto({
         </span>
         <h3 className="text-[17px] leading-6">{anuncio.titulo}</h3>
         <span className="text-[13px] text-(--on-surface-variant)">{anuncio.meta}</span>
+        {anuncio.detalhes === undefined || anuncio.detalhes.length === 0 ? null : (
+          <span
+            data-atributos-imovel="sim"
+            className="flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-(--on-surface-variant)"
+          >
+            {anuncio.detalhes.map((detalhe) => (
+              <small key={detalhe}>{detalhe}</small>
+            ))}
+          </span>
+        )}
+        {anuncio.informacaoExtra === undefined ? null : (
+          <span
+            data-extras-imovel="sim"
+            className="text-[12px] leading-4 text-(--on-surface-variant)"
+          >
+            {anuncio.informacaoExtra}
+          </span>
+        )}
       </button>
     </article>
   )
@@ -124,7 +153,21 @@ export function CartaoDeNegocio({
       className="bv-press overflow-hidden rounded-2xl bg-(--surface-lowest) ring-1 ring-(--outline-variant)"
     >
       <div className="relative">
-        <Capa fonte={negocio.fonte} alt={negocio.nome} rotulo={rotulo} icone="storefront" />
+        <button
+          type="button"
+          data-acao="abrir-foto"
+          aria-label={`Ver negócio: ${negocio.nome}`}
+          onClick={aoAbrir}
+          className="block w-full overflow-hidden rounded-t-2xl text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
+        >
+          <Capa
+            fonte={negocio.fonte}
+            alt={negocio.nome}
+            rotulo={rotulo}
+            icone="storefront"
+            className="rounded-none"
+          />
+        </button>
         <span className="absolute top-2 right-2">
           <BotaoDeIcone
             rotulo={negocio.salvo === true ? "Remover dos salvos" : "Salvar negócio"}
@@ -139,7 +182,7 @@ export function CartaoDeNegocio({
         type="button"
         data-acao="abrir-negocio"
         onClick={aoAbrir}
-        className="grid w-full gap-1 p-3 text-left"
+        className="grid min-h-11 w-full gap-1 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
       >
         <h3 className="text-[17px] leading-6">{negocio.nome}</h3>
         <span className="text-[13px] text-(--on-surface-variant)">

@@ -32,7 +32,7 @@ export function ChipsDeFiltro({
   className?: string
 }) {
   const caixa = useRef<HTMLDivElement | null>(null)
-  const [indicador, setIndicador] = useState({ esquerda: 0, largura: 0, pronto: false })
+  const [indicador, setIndicador] = useState({ esquerda: 0, largura: 0, altura: 0, pronto: false })
 
   const posicionar = useCallback(() => {
     const elemento = caixa.current
@@ -40,10 +40,16 @@ export function ChipsDeFiltro({
     const chip = elemento.querySelector<HTMLElement>(`[data-chip="${valor}"]`)
     if (!chip) return
     setIndicador((anterior) => {
-      const proximo = { esquerda: chip.offsetLeft, largura: chip.offsetWidth, pronto: true }
+      const proximo = {
+        esquerda: chip.offsetLeft,
+        largura: chip.offsetWidth,
+        altura: chip.offsetHeight,
+        pronto: true,
+      }
       if (
         anterior.esquerda === proximo.esquerda &&
         anterior.largura === proximo.largura &&
+        anterior.altura === proximo.altura &&
         anterior.pronto
       ) {
         return anterior
@@ -56,7 +62,7 @@ export function ChipsDeFiltro({
     // A lista mudou de tamanho: mede o chip de novo. Sem itens, o indicador
     // some — é esta leitura de `itens.length` que reage à nova lista.
     if (itens.length === 0) {
-      setIndicador({ esquerda: 0, largura: 0, pronto: false })
+      setIndicador({ esquerda: 0, largura: 0, altura: 0, pronto: false })
       return
     }
     posicionar()
@@ -72,7 +78,11 @@ export function ChipsDeFiltro({
   }, [posicionar])
 
   return (
-    <div ref={caixa} data-segmento="sim" className={cn("relative flex-wrap", className)}>
+    <div
+      ref={caixa}
+      data-segmento="sim"
+      className={cn("relative min-w-0 max-w-full overflow-x-auto overscroll-x-contain", className)}
+    >
       <span
         aria-hidden="true"
         data-indicador="segmento"
@@ -82,7 +92,7 @@ export function ChipsDeFiltro({
         )}
         style={{
           width: `${indicador.largura}px`,
-          height: "100%",
+          height: `${indicador.altura}px`,
           transform: `translateX(${indicador.esquerda}px)`,
         }}
       />
@@ -95,7 +105,7 @@ export function ChipsDeFiltro({
         variant="outline"
         spacing={2}
         aria-label={rotulo}
-        className="relative z-1 flex-wrap"
+        className="relative z-1 w-max min-w-full flex-nowrap"
       >
         {itens.map((item) => (
           <ToggleGroupItem
@@ -104,7 +114,7 @@ export function ChipsDeFiltro({
             data-chip={item.id}
             data-estado={valor === item.id ? "on" : "off"}
             aria-label={`Filtrar por ${item.rotulo}`}
-            className="min-h-11 rounded-xl border-transparent px-4 text-(--foreground) data-[state=on]:bg-transparent data-[state=on]:text-(--on-secondary-container)"
+            className="min-h-11 shrink-0 whitespace-nowrap rounded-xl border-transparent px-4 text-(--foreground) data-[state=on]:bg-transparent data-[state=on]:text-(--on-secondary-container)"
           >
             {item.rotulo}
           </ToggleGroupItem>

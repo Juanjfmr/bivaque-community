@@ -32,6 +32,10 @@ function onlyCaptureProjects(testInfo: TestInfo) {
 async function openLanding(page: Page) {
   await page.goto("/")
   await expect(page.locator("#landing")).toBeVisible()
+  // Os botões são md-filled-button: só navegam depois que o elemento é
+  // registrado no cliente. Clicar antes disso não faz nada, e no celular do CI
+  // o clique chegava antes do registro.
+  await page.waitForFunction(() => customElements.get("md-filled-button") !== undefined)
 }
 
 const flat = (text: string | null | undefined) =>
