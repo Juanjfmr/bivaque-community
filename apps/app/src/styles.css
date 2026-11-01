@@ -2560,8 +2560,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
   font-size: 0.8125rem;
   line-height: 1.4;
 }
-/* As notas dos campos (Campo usa text-xs) acompanham a regra de 13 px da entrada. */
-.entrada-acesso p.text-xs,
+/* As notas dos campos das etapas (Campo usa text-xs) seguem a regra de 13 px. */
 .entrada-etapa p.text-xs {
   font-size: 0.8125rem;
 }
@@ -3134,7 +3133,6 @@ body[data-profundidade="sim"] [data-casca="app"] {
     font-size: 22px;
   }
   .entrada-etapa-nota,
-  .entrada-acesso p.text-xs,
   .entrada-etapa p.text-xs {
     font-size: 14px;
   }
@@ -3180,9 +3178,10 @@ body[data-profundidade="sim"] [data-casca="app"] {
   .entrada-etapa-boas-vindas-foto img {
     aspect-ratio: 21 / 9;
   }
+  /* A referência desenha os atalhos com cerca de 90 px em 1440. */
   .entrada-etapa-atalho {
-    min-height: 64px;
-    padding: 14px 16px;
+    min-height: 80px;
+    padding: 18px 20px;
   }
   .entrada-etapa-atalho-texto strong {
     font-size: 16px;
