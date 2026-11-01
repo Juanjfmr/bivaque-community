@@ -337,9 +337,13 @@ test("convite pede o código em maiúsculas, o e-mail somente leitura e o aceite
   await expect(titulo).toBeVisible()
   await expect(titulo).toBeFocused()
   await expect(page.getByText("Use o código recebido para aceitar seu convite.")).toBeVisible()
+  // Foto própria do convite (rodada 3): paisagem na faixa, retrato no painel do desktop.
   expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(
-    /landing-hero-retrato\.webp$/,
+    /convite-paisagem\.webp$/,
   )
+  expect(
+    await page.locator("picture:has(.entrada-acesso-foto) source").getAttribute("srcset"),
+  ).toMatch(/convite-retrato\.webp$/)
   // Sem Google nem divisor nesta tela.
   await expect(page.getByRole("button", { name: "Continuar com Google" })).toHaveCount(0)
 
@@ -392,7 +396,7 @@ test("o convite indisponível e a conta apagada explicam e levam adiante", async
   await expect(page.getByText("O código não é válido ou não está mais disponível.")).toBeVisible()
   await expect(page.locator(".entrada-acesso-marco [data-icone='error']")).toBeVisible()
   expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(
-    /landing-hero-retrato\.webp$/,
+    /convite-paisagem\.webp$/,
   )
 
   await page.getByRole("button", { name: "Voltar para entrar" }).click()
@@ -409,8 +413,11 @@ test("o convite indisponível e a conta apagada explicam e levam adiante", async
   await expect(page.getByText("Sua conta e seus dados foram apagados.")).toBeVisible()
   await expect(page.locator(".entrada-acesso-marco [data-icone='check']")).toBeVisible()
   expect(await page.locator(".entrada-acesso-foto").getAttribute("src")).toMatch(
-    /landing-hero\.webp$/,
+    /apagada-paisagem\.webp$/,
   )
+  expect(
+    await page.locator("picture:has(.entrada-acesso-foto) source").getAttribute("srcset"),
+  ).toMatch(/apagada-retrato\.webp$/)
 
   await page.getByRole("button", { name: "Voltar ao início" }).click()
   await expect(page).toHaveURL(/\/app\/inicio$/)

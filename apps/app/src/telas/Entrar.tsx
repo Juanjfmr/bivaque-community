@@ -644,6 +644,12 @@ export function Entrar() {
   // foto no topo, título e apoio centralizados e ações empilhadas, que entram em
   // sequência. A entrada em sequência do bloco (framer-motion) é CSS em styles.css.
   if (estado === "boas-vindas") {
+    // Uma foto por momento (rodada 3 do aceite): quem chega, quem mora e quem sai.
+    const FOTOS_DAS_BOAS_VINDAS = {
+      chegando: "demo/landing-hero.webp",
+      morando: "demo/moro-aqui.webp",
+      saindo: "demo/saindo.webp",
+    } as const
     const ondeEstou = cidade.trim() || dadosDoApp.resumoDaCasca().cidade
     const destinoDaSaida = destino.trim()
     // A turma de chegada só existe em Manaus: nas outras cidades o cartão some.
@@ -672,8 +678,8 @@ export function Entrar() {
         titulo="Você chegou ao Bivaque."
         apoio={apoio}
         icone={
-          <span className="entrada-etapa-boas-vindas-foto">
-            <img src={`${import.meta.env.BASE_URL}demo/landing-hero.webp`} alt="" />
+          <span className="entrada-etapa-boas-vindas-foto" data-momento={momento}>
+            <img src={`${import.meta.env.BASE_URL}${FOTOS_DAS_BOAS_VINDAS[momento]}`} alt="" />
             <span className="entrada-etapa-boas-vindas-check">
               <Icone nome="check" />
             </span>

@@ -920,6 +920,10 @@ test("rádios e caixas do negócio têm nome curto, descrição e teclado; o lei
   await page.goto("/app/entrar/negocio-formulario")
   await preencherOferece(page)
   await avancar(page)
+  // A troca de passo leva o foco ao subtítulo no quadro seguinte; teclar antes
+  // disso perde a tecla para o foco que chega depois.
+  const subtitulo = page.locator(".entrada-etapa-subtitulo")
+  await expect(subtitulo).toBeFocused()
 
   // Só o texto do passo chega à árvore acessível; o desenho do indicador, não.
   await expect(page.locator(".entrada-etapa-progresso")).toMatchAriaSnapshot(
@@ -933,18 +937,18 @@ test("rádios e caixas do negócio têm nome curto, descrição e teclado; o lei
   await expect(depois).toBeChecked()
 
   // Setas do Radio Group: do último para o anterior.
-  await depois.focus()
-  await page.keyboard.press("ArrowUp")
+  await depois.press("ArrowUp")
   await expect(page.getByRole("radio", { name: "On-line", exact: true })).toBeChecked()
   await expect(page.getByRole("radio", { name: "On-line", exact: true })).toBeFocused()
 
   // A caixa marcada mantém o nome exato: a marca não vaza para o rótulo.
   await page.getByRole("radio", { name: "Em toda a cidade", exact: true }).check()
   await avancar(page)
+  await expect(subtitulo).toHaveText("Como funciona seu atendimento?")
+  await expect(subtitulo).toBeFocused()
   await page.getByRole("radio", { name: "Tenho horário fixo", exact: true }).check()
   const segunda = page.getByRole("checkbox", { name: "Segunda-feira", exact: true })
-  await segunda.focus()
-  await page.keyboard.press("Space")
+  await segunda.press("Space")
   await expect(segunda).toBeChecked()
   await expect(page.getByRole("checkbox", { name: "Segunda-feira", exact: true })).toHaveCount(1)
 })
@@ -1292,6 +1296,24 @@ async function chegarAsBoasVindas(
   await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
 }
 
+test("cada momento das boas-vindas tem a sua foto, carregada", async ({ page }) => {
+  const fotos = [
+    ["Chegando", /demo\/landing-hero\.webp$/],
+    ["Moro aqui", /demo\/moro-aqui\.webp$/],
+    ["Saindo", /demo\/saindo\.webp$/],
+  ] as const
+  for (const [momento, arquivo] of fotos) {
+    await chegarAsBoasVindas(page, momento)
+    const foto = page.locator(".entrada-etapa-boas-vindas-foto img")
+    await expect(foto, momento).toHaveAttribute("src", arquivo)
+    await expect
+      .poll(() => foto.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth), {
+        message: momento,
+      })
+      .toBeGreaterThan(0)
+  }
+})
+
 test("boas-vindas de quem chega trazem o plano, a turma e o destino de cada atalho", async ({
   page,
 }) => {
@@ -1379,7 +1401,8 @@ test("as boas-vindas não têm indicador de passos nem Sair, e a foto leva o che
   // Foto larga, decorativa (alt vazio), com cantos de 16 px.
   const foto = page.locator(".entrada-etapa-boas-vindas-foto img")
   await expect(foto).toHaveAttribute("alt", "")
-  expect(await foto.getAttribute("src")).toMatch(/demo\/landing-hero\.webp$/)
+  // Cada momento tem a sua foto (rodada 3); aqui o padrão, quem mora na cidade.
+  expect(await foto.getAttribute("src")).toMatch(/demo\/moro-aqui\.webp$/)
   expect(await foto.evaluate((elemento) => getComputedStyle(elemento).borderTopLeftRadius)).toBe(
     "16px",
   )
@@ -1547,6 +1570,18 @@ test("as boas-vindas usam a coluna de 760 px, a foto larga e os cartões de 56�
   page,
 }, testInfo) => {
   await page.goto("/app/entrar/boas-vindas")
+  await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
+  // Mede com as fontes do app e depois da entrada animada: com a fonte reserva
+  // o texto do atalho quebra em mais linhas e a altura sai maior.
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Number.POSITIVE_INFINITY)
+        .map((a) => a.finished.catch(() => undefined)),
+    )
+  })
   const foto = await page.locator(".entrada-etapa-boas-vindas-foto img").boundingBox()
   if (!foto) throw new Error("foto das boas-vindas ausente")
   const atalho = (await page.locator(".entrada-etapa-atalho").first().boundingBox())?.height ?? 0

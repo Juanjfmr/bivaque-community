@@ -52,15 +52,18 @@ const FOTOS: Readonly<Record<EstadoDeAcesso, string>> = {
   login: "demo/landing-hero.webp",
   senha: "demo/mesa.webp",
   retomar: "demo/chegada.webp",
-  convite: "demo/landing-hero-retrato.webp",
-  "convite-indisponivel": "demo/landing-hero-retrato.webp",
-  apagada: "demo/landing-hero.webp",
+  convite: "demo/convite-paisagem.webp",
+  "convite-indisponivel": "demo/convite-paisagem.webp",
+  apagada: "demo/apagada-paisagem.webp",
 }
 
-// A mesma foto em retrato, para o painel alto do desktop.
+// A mesma cena em retrato, para o painel alto do desktop. Convite e conta
+// apagada têm fotos próprias desde a rodada 3 do aceite.
 const FOTOS_RETRATO: Readonly<Partial<Record<EstadoDeAcesso, string>>> = {
   login: "demo/landing-hero-retrato.webp",
-  apagada: "demo/landing-hero-retrato.webp",
+  convite: "demo/convite-retrato.webp",
+  "convite-indisponivel": "demo/convite-retrato.webp",
+  apagada: "demo/apagada-retrato.webp",
 }
 
 /** Iniciais do avatar: a primeira letra do primeiro e do último nome. */

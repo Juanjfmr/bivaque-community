@@ -1557,8 +1557,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
      aparecer inteiro (o aperto de mão, as duas mulheres do portão). */
   --entrada-foto-posicao: 50% 50%;
 }
-.entrada-acesso[data-estado="login"],
-.entrada-acesso[data-estado="apagada"] {
+.entrada-acesso[data-estado="login"] {
   --entrada-foto-posicao: 64% 50%;
 }
 .entrada-acesso[data-estado="conta"],
@@ -2018,10 +2017,16 @@ body[data-profundidade="sim"] [data-casca="app"] {
   .entrada-acesso-marca img {
     height: 48px;
   }
-  /* Login e conta apagada usam a foto em retrato no painel: a cena fica no alto. */
-  .entrada-acesso[data-estado="login"],
-  .entrada-acesso[data-estado="apagada"] {
+  /* No painel vale a foto em retrato: a cena fica no alto e o texto, embaixo. */
+  .entrada-acesso[data-estado="login"] {
     --entrada-foto-posicao: 50% 18%;
+  }
+  .entrada-acesso[data-estado="convite"],
+  .entrada-acesso[data-estado="convite-indisponivel"] {
+    --entrada-foto-posicao: 50% 20%;
+  }
+  .entrada-acesso[data-estado="apagada"] {
+    --entrada-foto-posicao: 50% 30%;
   }
   /* No painel a foto cobre a altura inteira da coluna. */
   .entrada-acesso-foto,
@@ -2869,6 +2874,13 @@ body[data-profundidade="sim"] [data-casca="app"] {
   aspect-ratio: 16 / 10;
   border-radius: 16px;
   object-fit: cover;
+}
+/* Cada momento tem a sua foto; o foco guarda os rostos no recorte 21:9. */
+.entrada-etapa-boas-vindas-foto[data-momento="morando"] img {
+  object-position: 50% 30%;
+}
+.entrada-etapa-boas-vindas-foto[data-momento="saindo"] img {
+  object-position: 50% 15%;
 }
 .entrada-etapa-boas-vindas-check {
   position: absolute;
