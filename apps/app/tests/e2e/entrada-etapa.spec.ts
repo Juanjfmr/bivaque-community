@@ -39,6 +39,16 @@ const AVISO_DEMONSTRATIVO = "Jornada demonstrativa"
 /** A captura é da página inteira: o app rola dentro de #conteudo, então a
  *  rolagem interna é desfeita só para o retrato, sem tocar no layout. */
 async function capturar(page: Page, nome: string, testInfo: TestInfo, pasta = PASTA_DAS_CAPTURAS) {
+  // As boas-vindas entram em sequência: o retrato espera o fim de toda animação,
+  // ou sai com a foto esmaecida e sem o título.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Number.POSITIVE_INFINITY)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  )
   const altura = await page.evaluate(() => {
     const conteudo = document.getElementById("conteudo")
     return conteudo ? Math.max(conteudo.clientHeight, conteudo.scrollHeight) : 900
@@ -1398,7 +1408,7 @@ test("capturas de página inteira das boas-vindas nos três momentos", async ({ 
 
 // ENT-007 — o aceite visual do dono: a regra comum de tamanho no celular, a
 // miniatura dos grupos em 40% do cartão, as fotos do negócio em quatro colunas e
-// as boas-vindas na coluna de 640 px.
+// as boas-vindas na coluna de 760 px.
 
 test("no celular o título de display mede 24 px em todas as telas de /app/entrar/*", async ({
   page,

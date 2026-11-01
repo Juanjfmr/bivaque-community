@@ -1,3 +1,6 @@
+// Bloco do 21st.dev adaptado neste arquivo: Onboarding / Welcome Screen, de
+// ravikatiyar162 (https://21st.dev/@ravikatiyar162/components/onboarding-welcome-screen),
+// nas boas-vindas; o detalhe está junto do ramo "boas-vindas", mais abaixo.
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Campo } from "@/components/bivaque/campos"

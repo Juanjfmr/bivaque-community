@@ -57,6 +57,12 @@ const FOTOS: Readonly<Record<EstadoDeAcesso, string>> = {
   apagada: "demo/landing-hero.webp",
 }
 
+// A mesma foto em retrato, para o painel alto do desktop.
+const FOTOS_RETRATO: Readonly<Partial<Record<EstadoDeAcesso, string>>> = {
+  login: "demo/landing-hero-retrato.webp",
+  apagada: "demo/landing-hero-retrato.webp",
+}
+
 /** Iniciais do avatar: a primeira letra do primeiro e do último nome. */
 function iniciaisDe(nome: string): string {
   const palavras = nome.trim().split(/\s+/).filter(Boolean)
@@ -192,8 +198,15 @@ export function EntradaAcesso({
       </div>
 
       <div className="entrada-acesso-painel">
-        {/* Foto decorativa: a frase da marca é texto real, não imagem. */}
-        <img className="entrada-acesso-foto" src={`${base}${FOTOS[estado]}`} alt="" />
+        {/* Foto decorativa: a frase da marca é texto real, não imagem. No desktop
+            o painel é alto: onde há versão retrato da mesma foto, ela mostra a cena
+            inteira, que a versão larga cortaria dos lados. */}
+        <picture>
+          {FOTOS_RETRATO[estado] === undefined ? null : (
+            <source media="(min-width: 1024px)" srcSet={`${base}${FOTOS_RETRATO[estado]}`} />
+          )}
+          <img className="entrada-acesso-foto" src={`${base}${FOTOS[estado]}`} alt="" />
+        </picture>
         <span className="entrada-acesso-veu" data-topo={estado === "conta" ? "sim" : "nao"} />
         <div className="entrada-acesso-faixa">
           {estado === "conta" ? (

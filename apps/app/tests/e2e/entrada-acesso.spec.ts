@@ -26,6 +26,15 @@ const PROJETOS_COM_CAPTURA = ["mobile-375", "tablet-768", "desktop-1440"]
  *  rolagem interna é desfeita só para o retrato, sem tocar no layout — a altura
  *  do conteúdo vira explícita para as cadeias de 100% continuarem valendo. */
 async function capturar(page: Page, nome: string, testInfo: TestInfo, pasta = PASTA_DAS_CAPTURAS) {
+  // A transição de página não pode sair no retrato: espera toda animação acabar.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Number.POSITIVE_INFINITY)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  )
   const altura = await page.evaluate(() => {
     const conteudo = document.getElementById("conteudo")
     return conteudo ? Math.max(conteudo.clientHeight, conteudo.scrollHeight) : 900

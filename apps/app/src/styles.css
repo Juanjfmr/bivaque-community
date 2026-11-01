@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Blocos do 21st.dev adaptados neste arquivo (o crédito completo está junto de
+   cada componente): Split Sign In Form, de diarmuradi
+   (https://21st.dev/@diarmuradi/components/sign-in-3), na composição de acesso
+   da entrada; Onboarding / Welcome Screen, de ravikatiyar162
+   (https://21st.dev/@ravikatiyar162/components/onboarding-welcome-screen), nas
+   boas-vindas. */
+
 /* A pele do Bivaque no app novo (onda 1c).
 
    Os valores são os do `apps/prototipo/app/globals.css` — a tradução aprovada
@@ -2004,6 +2011,11 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
   .entrada-acesso-marca img {
     height: 48px;
+  }
+  /* Login e conta apagada usam a foto em retrato no painel: a cena fica no alto. */
+  .entrada-acesso[data-estado="login"],
+  .entrada-acesso[data-estado="apagada"] {
+    --entrada-foto-posicao: 50% 18%;
   }
   /* No painel a foto cobre a altura inteira da coluna. */
   .entrada-acesso-foto,
