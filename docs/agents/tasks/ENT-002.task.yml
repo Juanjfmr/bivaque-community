@@ -1,0 +1,82 @@
+# ENT-002 — F01, lote 2: composição de etapa (aceite, CPF e vínculo confirmado)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor, auditoria de segurança e verificação de
+# runtime: Claude Code, independentes do executor. Sem backend: jornada demonstrativa, como hoje.
+task_id: ENT-002
+
+objective: >
+  No app (apps/app), as rotas /app/entrar/aceite, /app/entrar/cpf e /app/entrar/resultado passam a
+  seguir a composição B aprovada pelo dono em 30/10/2026: barra superior com o logo e "Sair", indicador
+  de cinco passos nomeados (Conta, Vínculo, Cidade, Grupos, Negócio opcional), título e apoio
+  centralizados numa coluna de 560 px e ações na largura da coluna. A tela do CPF ganha o aviso de que
+  o CPF é usado só na consulta e não fica guardado e o "Por que pedimos seu CPF?" já aberto. Mesmos
+  campos, ações e destinos de hoje; o tratamento do CPF (estado local, sem persistência, sem envio)
+  não muda.
+
+authority:
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md (Duas composições, Regras de consistência, Valor e atrito, Celular)
+  - docs/design/fluxos-2026-10-30/individuais/F01/F01-03-aceite.png, F01-04-cpf.png, F01-05-vinculo-confirmado.png (desktop aprovado pelo dono em 30/10/2026)
+  - docs/design/fluxos-2026-10-30/individuais/F01/celular/ com os mesmos nomes (celular)
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (CPF sem pergunta prévia de vínculo, "Por que o CPF")
+  - docs/decisions/ADR-20261024-front-react-spa.md
+  - docs/agents/tasks/ENT-001.task.yml (composição A já entregue; mesmo padrão de componente e testes)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 30/10/2026 da prévia (66f8c13e) em
+    docs/design/fluxos-2026-10-30/individuais/F01/previa-atual/03-aceite-desktop.png,
+    04-cpf-desktop.png e 05-resultado-desktop.png: cartão único centralizado com o aviso
+    "Jornada demonstrativa", sem barra, sem indicador de passos, "Por que pedimos" fechado e sem o
+    aviso sobre o CPF não ser guardado.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-002/
+
+forbidden:
+  - mudar como o CPF é tratado: continua só no estado do componente, sem localStorage, sem log, sem envio e sem aparecer na URL
+  - instalar, remover ou atualizar dependências
+  - copiar código-fonte de blocos do 21st.dev (o Basic Stepper é referência de anatomia, reproduzida com os componentes do app)
+  - usar Base UI, Material Web ou HeroUI
+  - mudar as telas de acesso (ENT-001) ou as demais telas da entrada (consulta indisponível, documento, análise, cidade, grupos, negócio, boas-vindas, retomar, convite, conta apagada)
+  - usar a cor Brasa fora do logo
+  - criar texto, campo, etapa ou destino que não esteja nesta lista de aceite
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Componente apps/app/components/bivaque/entrada-etapa.tsx com a casca da composição B: barra superior fina (logo horizontal oficial de 28 px à esquerda, com a troca para a versão branca no tema escuro como em entrada-acesso.tsx, e o botão de texto \"Sair\" à direita, que leva a /app/entrar/login), o indicador de passos e um slot para o conteúdo. Recebe o passo atual (1 a 5)."
+  - "Indicador em ≥768 px: cinco círculos ligados por linha, com o nome embaixo: Conta, Vínculo, Cidade, Grupos e Negócio (com \"opcional\" pequeno embaixo). Concluído: círculo Grafite com check branco; atual: círculo Grafite com o número; futuro: círculo vazado com contorno e número em var(--muted-foreground), nunca preenchido de cinza. A linha entre passos concluídos é Grafite; as demais em var(--border). Abaixo de 768 px: a legenda \"Etapa N de 5 · Nome\" (no 5, \"Etapa 5 de 5 · Negócio (opcional)\") e uma barra de cinco segmentos (concluídos e atual em Grafite, futuros em var(--border)). O indicador tem texto acessível equivalente (ex.: aria-label \"Etapa 2 de 5: Vínculo\") e os círculos são decorativos."
+  - "Coluna central de 560 px no desktop (largura total menos 20 px de cada lado no celular). Título em Noto Serif (var(--font-brand)) centralizado, cerca de 40 px no desktop e 30 px no celular; apoio centralizado; campos e textos longos alinhados à esquerda; ações na largura da coluna, a principal em cima (Grafite, 48 px) e a secundária embaixo (contorno). Sem o parágrafo \"Jornada demonstrativa\" nessas três telas."
+  - "Aceite (/app/entrar/aceite): passo 1 (Conta). Título \"Só falta aceitar o combinado.\"; apoio \"Leia e aceite para continuar com sua conta Google.\"; caixa \"Li e concordo com a Política de privacidade e o Código de conduta.\" (links para as rotas de hoje), desenhada em Grafite; botão \"Aceitar e continuar\" desabilitado até o aceite, e então vai à etapa do vínculo como hoje."
+  - "Vínculo (/app/entrar/cpf): passo 2 (Vínculo). Título \"Confirme seu vínculo.\"; apoio \"Vamos conferir seu CPF para confirmar seu vínculo.\"; campo \"CPF\" como hoje (numérico, sem autocomplete); logo abaixo, faixa neutra clara com ícone de cadeado e o texto \"Seu CPF é usado só nesta consulta e não fica guardado.\"; bloco recolhível já aberto por padrão (details open) \"Por que pedimos seu CPF?\" com o texto \"Conferimos na fonte oficial se você é militar federal da ativa, veterano ou pensionista. Leva poucos segundos. Familiares entram pelo convite, sem CPF.\"; botão principal \"Continuar\" (vai ao resultado como hoje); rodapé centralizado \"É familiar? Usar convite\". O controle de demonstração \"Simular consulta indisponível\" continua existindo e funcionando, mas como link de texto discreto e pequeno no fim da coluna, abaixo do rodapé."
+  - "Vínculo confirmado (/app/entrar/resultado): passo 2 com Conta concluída. Ícone grande de confirmação (círculo Grafite de 72 px com check branco) acima do título \"Vínculo confirmado.\"; apoio \"Tudo certo. Agora escolha sua cidade.\"; botão principal \"Continuar\" (vai à cidade como hoje)."
+  - "Foco: ao abrir cada tela, o foco vai para o título como hoje (useRolagemEFoco). Ordem do Tab natural: Sair, conteúdo, ações. Foco visível com anel var(--ring)."
+  - "Sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px. Tema escuro funcionando pelos tokens."
+  - "Os testes existentes (entrada-21st.spec.ts e entrada-acesso.spec.ts) continuam verdes, ajustados só onde dependiam do parágrafo de demonstração ou do botão de simulação (que agora é link)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 lint
+  - "Teste no spec entrada-etapa que digita um CPF, navega até o resultado e confirma que o valor digitado não aparece em localStorage, sessionStorage nem na URL"
+  - "Capturas de página inteira de aceite, vínculo e vínculo confirmado em 375, 768 e 1440 px salvas em .visual/ENT-002/ pelo spec, comparadas pelo revisor com as referências aprovadas"
+
+risk: entrada, vínculo por CPF e acessibilidade
+risk_level: R3
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

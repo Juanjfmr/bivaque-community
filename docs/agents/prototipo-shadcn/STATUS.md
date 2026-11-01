@@ -9,6 +9,178 @@ editor, fotos, pedidos/propostas e demais lacunas permanecem explícitos.
 R3 continua isolada e sem aprovação global. Merge, deploy e push para main continuam reservados ao dono.
 O monitor foi encontrado pausado na revisão; essa retomada não o religa implicitamente.
 
+## ENT-005 — negócio opcional da F01 — 30/10/2026
+
+- **O que mudou.** As três telas do lote saíram do cartão para a composição B (`EntradaEtapa`,
+  passo 5 — Negócio, com Conta, Vínculo, Cidade e Grupos concluídos): `/app/entrar/negocio`,
+  `/app/entrar/negocio-formulario` e `/app/entrar/negocio-interesse`, em
+  `apps/app/src/telas/Entrar.tsx`. A escolha empilha na largura da coluna "Divulgar agora"
+  (principal Grafite), "Tenho interesse em criar" (contorno) e "Decidir depois" (texto), com os
+  destinos de hoje; o interesse empilha "Continuar" (principal) e "Voltar" (contorno). Título e
+  apoio centralizados, campos à esquerda na coluna.
+- **Formulário em cinco etapas** (`apps/app/components/bivaque/formulario-negocio.tsx`). "Passo X
+  de 5" em `var(--muted-foreground)` e barra de cinco segmentos (feitos e atual em Grafite, futuros
+  em `var(--border)`), sempre abaixo do título; o texto "Nenhuma informação será publicada nesta
+  demonstração" e a nota "Rascunho local de {cidade}…" saíram. Cada etapa tem subtítulo em Noto
+  Serif semibold ("O que você oferece?", "Onde você atende?", "Como funciona seu atendimento?",
+  "Como podem conhecer seu trabalho?", "Confira sua página"), alinhado à esquerda. Área e
+  atendimento são cartões de linha inteira (borda Grafite de 2 px no selecionado, rádio desenhado),
+  com os campos condicionais logo abaixo do cartão escolhido; especialidades e dias são chips
+  (Grafite com texto claro e quadrado de check); "Abre às" e "Fecha às" lado a lado; fotos em
+  miniaturas quadradas, a primeira com o selo "Capa" e um quadro tracejado "+" para acrescentar,
+  mantendo "Tornar capa" e "Remover"; a revisão é um cartão com a foto de capa no topo e uma linha
+  por bloco (ícone, valor e "Editar" que volta à etapa correspondente). "Voltar" e "Continuar"
+  ficam lado a lado, metade da coluna cada; na revisão o principal é "Salvar rascunho". O status
+  depois de salvar continua o de hoje ("Rascunho salvo nesta sessão. Seu negócio não foi
+  publicado.") com o botão "Continuar". O foco vai ao título ao abrir a tela e ao subtítulo ao
+  trocar de etapa.
+- **O que não mudou.** Campos, validações, limites (até 6 fotos JPG/PNG/WebP/AVIF de até 12 MB,
+  contatos e horário), mensagens de erro e o rascunho só na sessão (`sessionStorage`), sem
+  publicação. `cenarios.ts` mudou apenas o `img` do grupo `turma-manaus-2027` (`friends` →
+  `chegada`, as duas ocorrências), como pede a direção de fotografia.
+- **Compatibilidade.** `entrada-21st.spec.ts` não precisou de ajuste: nenhum caso dele dependia dos
+  textos substituídos. Em `entrada-acesso.spec.ts` o exemplo de tela em cartão passou de
+  `/app/entrar/negocio` para `/app/entrar/boas-vindas`, e as três telas do lote entraram na lista
+  de migradas.
+- **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
+  0 erros. `--filter @bivaque/app build`: concluído (`built in 498ms`, só o aviso antigo de chunk
+  acima de 500 kB). `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`,
+  `entrada-acesso`, `entrada-21st`): **300 passed, 30 skipped, 0 failed** em 3,9 min nos seis
+  viewports; o `entrada-etapa` cobre os catorze casos novos × 6 projetos, com as capturas puladas
+  em 320/360/430. `test:scope`: **150 pass, 0 fail**. `lint`: **0 erros** em 1367 arquivos (18
+  avisos e 51 informativos antigos, nenhum deste lote).
+- **Capturas para o revisor:**
+  `.visual/ENT-005/{negocio,negocio-etapa-1..5,negocio-interesse}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec. **Não há aceite visual declarado aqui**; a
+  comparação com as referências aprovadas é do revisor.
+- **Fica fora do aceite.** Os bairros acrescentados aparecem como chips Grafite com "×" (como na
+  referência), mas o campo "Adicionar bairro" mantém o botão de texto do fluxo de hoje, porque o
+  contrato manda preservar o campo e a validação; os dias de atendimento mostram os sete chips com
+  quadrado de check, não as pílulas com "×" da imagem 12c; e a barra de progresso ocupa a coluna
+  inteira no celular, enquanto a referência móvel a desenha com cerca de metade da largura.
+
+## ENT-004 — cidade e grupos da F01 — 30/10/2026
+
+Cidade passou ao passo 3 da composição B: título, campo "Cidade" com ícone de lugar e o valor da
+demonstração, "Seu momento" em três cartões de rádio desenhados na mesma linha (empilhados abaixo de
+344 px), "Como quer ser chamado" e os campos condicionais de sempre — data de chegada, ou data de
+saída e cidade de destino. Grupos passou ao passo 4: os quatro grupos abertos da cidade em cartões
+selecionáveis com a foto de `apresentacao.img` (resolvida pelo mapa `demo/` já existente), nome,
+descrição e caixa desenhada; grade 2 × 2 a partir de 768 px e uma coluna com a foto à esquerda no
+celular; estados de carregando e vazio estilizados. Saíram o aviso "Demonstração: selecionar grupos
+não cria participação." e o parágrafo "Jornada demonstrativa" das duas telas. Correção do ENT-003: a
+validação do tipo do documento usa `Object.hasOwn`, e um arquivo de tipo `toString` passa a ser
+recusado. Código: o desvio em `apps/app/src/telas/Entrar.tsx`, o bloco `.entrada-etapa-*` de
+`apps/app/src/styles.css` e o `apoio` opcional em `entrada-etapa.tsx`.
+
+Provas executadas nesta sessão, sobre este build:
+
+- `--filter @bivaque/app typecheck`: passou, sem diagnóstico.
+- `--filter @bivaque/app build`: passou (só o aviso de chunk acima de 500 kB, anterior).
+- `test:e2e -- entrada-etapa.spec.ts`: **119 passaram, 13 puladas, 0 falharam** (13 casos novos × 6
+  projetos, com as capturas puladas em 320/360/430).
+- `test:e2e -- entrada-acesso.spec.ts entrada-21st.spec.ts`: **94 passaram, 14 puladas, 6 falharam**.
+  As seis falhas são o mesmo caso de `entrada-acesso.spec.ts` ("o aviso de jornada demonstrativa sai
+  do acesso e das etapas, e fica no cartão"), que usa `/app/entrar/cidade` como exemplo de tela em
+  cartão. A cidade agora é etapa e o contrato manda remover o aviso dela, então o caso ficou
+  desatualizado. O arquivo não está nos `allowed_paths` do ENT-004 e não foi alterado.
+- `pnpm lint`: 0 erro, 18 avisos e 51 informativos — as mesmas contagens de antes deste lote.
+
+Capturas de página inteira de cidade (moro, chegando, saindo) e grupos com um selecionado em 375, 768
+e 1440 px, geradas pelo próprio spec, em `.visual/ENT-004/`. São material de revisão: **não há aceite
+visual declarado aqui**.
+
+Fica fora do aceite: o caso de `entrada-acesso.spec.ts` acima continua vermelho até alguém trocar a
+tela de exemplo por outra que ainda use o cartão (`/app/entrar/negocio`) ou inverter a asserção para
+a cidade; o ícone de calendário é o nativo do `input[type="date"]`, não um desenho próprio; e o estado
+de carregando não tem prova de navegador, porque a demonstração local resolve na hora.
+
+## ENT-001 — telas de acesso da F01 — 30/10/2026
+
+Login, criar conta e recuperar senha saíram do cartão único para a composição A: painel da foto
+recuado à esquerda, com a frase da marca na base, e coluna de 400 px com logo, título, apoio e
+formulário; no celular, logo no topo, faixa de foto de cerca de 30% da janela e formulário em uma
+coluna. "Continuar com Google" passou para antes do formulário, com o divisor "ou continue com
+e-mail"; "Esqueci minha senha" fica na linha do rótulo da senha; a recuperação mantém o e-mail e
+mostra o aviso neutro de instruções (role=status) com o botão principal em "Voltar para entrar";
+criar conta ganhou a etiqueta do público e os três itens de valor no painel e a linha de tempo no
+formulário. As demais telas da entrada continuam no cartão, com o aviso de jornada demonstrativa.
+Código: `apps/app/components/bivaque/entrada-acesso.tsx` e `icone-google.tsx`, o desvio em
+`apps/app/src/telas/Entrar.tsx` e o bloco `.entrada-acesso-*` de `apps/app/src/styles.css`.
+
+Provas executadas nesta sessão, sobre este build:
+
+- `--filter @bivaque/app typecheck`: passou, sem diagnóstico.
+- `--filter @bivaque/app build`: passou.
+- `test:e2e -- tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts`: 93 passaram,
+  3 puladas, 0 falharam. São 8 testes novos (45 passadas + as 3 capturas puladas em 320/360/430)
+  e os 48 do spec `entrada-21st` (8 × 6 projetos). Entre os novos está o tema escuro, que confere
+  os tokens, a marca branca e a frase da foto.
+- `pnpm lint`: vermelho por 8 erros preexistentes de a11y (`noNoninteractiveTabindex` em `div`
+  com `tabindex`), todos em `docs/design/fluxos-2026-10-30/index.html`, o índice das pranchas que já
+  estava no commit `1dcaee51`. Este lote não toca esse arquivo e os arquivos dele não têm erro
+  (só avisos que o arquivo já trazia).
+
+Capturas de página inteira das quatro situações em 375, 768 e 1440 px, geradas pelo próprio spec,
+em `.visual/ENT-001/`. Elas são material de revisão: **não há aceite visual declarado aqui**.
+
+**Reparo 1** (quatro ajustes da revisão independente): respiro de 20 px entre a base da frase da
+marca e o primeiro item de valor no painel a partir de 768 px; abaixo de 768 px os três itens viram
+grade de três colunas iguais com o ícone acima do rótulo, na mesma linha; título do formulário em
+`clamp(32px, 2.8vw, 40px)` a partir de 1024 px (40 px em 1440); e região `role="status"` sempre
+presente na recuperação de senha — vazia e fora do fluxo antes do envio, com o aviso do envelope
+dentro dela depois. Provas sobre este build: `--filter @bivaque/app typecheck` sem diagnóstico;
+`build` passou; `test:e2e` dos dois specs da entrada nas seis telas, 100 passaram, 14 puladas, 0
+falharam (as puladas são as capturas e as medidas que valem só em um dos tamanhos); `lint` com 0
+erro, 18 avisos e 51 informativos preexistentes. Capturas renovadas pelo spec em `.visual/ENT-001/`.
+Em 320–375 px o rótulo curto "Serviços indicados" quebra em duas linhas dentro da própria coluna:
+os três itens continuam na mesma linha e não há rolagem horizontal.
+
+## Onboarding de negócios simplificado — 28/10/2026
+
+Experiência dividida em cinco etapas: identificação e especialidades, área, atendimento, fotos/contatos opcionais e revisão antes de salvar. Lista de bairros é uma amostra de demonstração, aceita outros nomes. Rascunho e fotos permanecem apenas nesta sessão. Prova focal: 24/24 E2E em 375/768/1440; sem backend. Gate com variáveis públicas falhou no build web por junction de node_modules para fora do worktree, erro Turbopack já conhecido; gate sem build web passou os demais estágios, sem autorizar declarar gate completo verde.
+
+## Ampliação da prévia de negócios — 28/10/2026
+
+Formulário da jornada usa grupos e especialidades do protótipo, horário, bairros, serviços, apresentação, benefício, contatos e até seis fotos com capa. Rascunho é apenas da sessão e não publica. Prova focal: 18/18 E2E em 375/768/1440; build e typecheck do app passaram. Gate: lint, typechecks, build do app, testes e secrets passaram na execução sem configuração web, mas web foi pulado; na tentativa com variáveis públicas no processo o build web falhou porque apps/web/node_modules é uma junction para fora do worktree (Turbopack rejeita). Gate completo pendente; prévia não é aprovação de produção.
+
+## Negócios no onboarding — 28/10/2026
+
+Após os grupos, a pessoa pode divulgar seu negócio, indicar interesse em criar
+ou decidir depois. Divulgar agora reutiliza FormularioDeCriacao e salva apenas
+um rascunho da sessão; não publica nem conecta ao backend. A seleção de interesse
+não persiste. Gate completo verde e prova focal de 18/18 E2E em 375/768/1440.
+A primeira tentativa
+falhou nos três viewports porque o teste omitira o campo obrigatório Área de
+atuação; a prova corrigida passou. Aceite visual independente e integração real
+continuam pendentes.
+
+## Sugestões de grupos na entrada — 27/10/2026
+
+A cidade leva às sugestões opcionais de grupos abertos da localidade demonstrativa.
+A pessoa pode marcar itens ou escolher depois; nenhuma associação é criada.
+Localidades sem exemplos exibem estado vazio e não mostram grupos de outra cidade.
+Provas: gate completo verde; 15/15 E2E em 375/768/1440 e instrumento aprovado
+em revisão estática independente. O pedido de avaliar apresentação de
+negócios foi respondido como recomendação e não implementado nesta etapa.
+Backend, participação e aceite visual independente permanecem pendentes.
+
+## Entrada 21st — demonstração solicitada pelo dono, 27/10/2026
+
+A jornada de login, cadastro e onboarding recebeu a composição do Login Form Card
+do 21st (Felipe Menezes, MIT) sobre os componentes shadcn existentes e a marca
+oficial. Inclui consulta simulada, documento, análise, convite, recuperação e
+cidade com campos condicionais. O app identifica a experiência como demonstração:
+nenhum dado é enviado, verificado ou persistido; backend, sessões e permissões reais
+continuam pendentes. A imagem gerada não é evidência de runtime.
+
+Provas: gate completo verde com builds web e app; 12/12 E2E focais em
+375/768/1440. Primeiro gate falhou por formatação do teste, corrigida. Qwen
+aprovou o instrumento após reforço do caminho feliz e condicionais de cidade;
+revisão estática, sem executar testes. Inspeção visual local de login e cadastro
+em tema escuro; sem auditoria visual independente completa ou aceite global da
+onda 1. Sem merge, deploy ou push.
+
 ## APP-010 — Correções da revisão do PR 116, 26/10/2026
 
 O dono pediu "Corrija" após a revisão de ceb0858e. Trabalho isolado na branch
@@ -917,3 +1089,174 @@ visível nas telas de dentro no celular e a §5.3 não vale para esta onda.
 - Limites declarados por tela (estado local sem backend, editor/assistente de anuncio, pedidos com
   backend, filas do dono, grupos de dados da paleta) estao no cabecalho de cada arquivo e em
   .visual/coordenacao/APP-ONDAS-OPENCODE.md.
+
+## ENT-002 — composição de etapa da F01 — 30/10/2026
+
+- **O que mudou.** `apps/app/components/bivaque/entrada-etapa.tsx` (novo) traz a composição B de
+  `docs/design/fluxos-2026-10-30/F01-DIRECAO.md`: barra fina com o logo de 28 px (com a troca para a
+  versão branca no tema escuro) e "Sair" à direita, indicador de cinco passos nomeados e coluna de
+  560 px. No celular o indicador vira a legenda "Etapa N de 5 · Nome" e uma barra de cinco segmentos.
+  Anatomia do indicador inspirada no Basic Stepper (21st.dev), reproduzida com os componentes do app.
+- **Telas.** `/app/entrar/aceite` (passo 1, "Só falta aceitar o combinado.", caixa desenhada em
+  Grafite, botão travado até o aceite), `/app/entrar/cpf` (passo 2, faixa com cadeado "Seu CPF é usado
+  só nesta consulta e não fica guardado", "Por que pedimos seu CPF?" já aberto, rodapé "É familiar?
+  Usar convite" e a simulação como texto discreto no fim da coluna) e `/app/entrar/resultado` (passo 2
+  com Conta concluída, ícone de confirmação de 72 px). Os textos de apoio, os destinos e os campos são
+  os de hoje; o parágrafo "Jornada demonstrativa" saiu dessas três telas e continua nas que ainda
+  estão no cartão.
+- **O CPF não mudou de tratamento.** Continua só no estado do componente `Entrar`, sem
+  localStorage/sessionStorage, sem log, sem envio e sem aparecer na URL; o lote mudou apenas a
+  apresentação. Isso é provado por teste que digita, navega até o vínculo confirmado e varre os dois
+  armazenamentos e a URL.
+- **Provas (números desta sessão, CI=true).** `--filter @bivaque/app typecheck`: 0 erros.
+  `--filter @bivaque/app build`: build concluído. `--filter @bivaque/app test:e2e` nos três specs da
+  entrada (`entrada-etapa`, `entrada-acesso`, `entrada-21st`): **145 passed, 17 skipped, 0 failed**
+  em 1,8 min nos seis viewports; o `entrada-etapa` sozinho dá 45 passed e 3 skipped (captura só em
+  375/768/1440). `lint`: **1 erro**, em `tools/backend-kanban/public/board.json`, que já falhava antes
+  deste lote e está fora dos caminhos permitidos do contrato — todo o resto são avisos antigos.
+- **Capturas para o revisor:** `.visual/ENT-002/{aceite,cpf,resultado}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec.
+- **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
+  julgamento; a comparação com as referências aprovadas é do revisor.
+
+## ENT-003 — consulta, documento e análise da F01 — 30/10/2026
+
+- **O que mudou.** As três telas do lote saíram do cartão e passaram para a composição B
+  (`EntradaEtapa`, passo 2 · Vínculo), em `apps/app/src/telas/Entrar.tsx`:
+  `/app/entrar/consulta-indisponivel` (ícone, duas linhas de apoio e as ações "Tentar novamente" e
+  "Enviar identidade"), `/app/entrar/documento` e `/app/entrar/analise`. O parágrafo "Jornada
+  demonstrativa" e qualquer "Na demonstração" saíram dessas telas.
+- **Consulta indisponível.** `cloud_off` não está no subconjunto hospedado dos Material Symbols, e
+  `lib/icones.ts` está fora dos caminhos permitidos do contrato: o ícone é `search_off` (a consulta
+  cortada), o equivalente já hospedado. Apoio em duas frases: a causa ("A fonte oficial está fora do
+  ar agora. Não é nada com seus dados.") e o próximo passo.
+- **Documento.** Área tracejada de arquivo único com ícone `badge`, botão "Selecionar arquivo" (o
+  `input type=file` fica sobre o rótulo, invisível, com foco visível no rótulo por `:has`), `accept`
+  de PDF/JPG/PNG e nota "Envie um único arquivo completo. PDF, JPG ou PNG, até 10 MB.". Arquivo de
+  tipo ou tamanho inválido (acima de 10 MB) mostra `role="alert"` "Escolha um PDF, JPG ou PNG de até
+  10 MB." e mantém "Enviar arquivo" desabilitado; com arquivo válido a área mostra só o cartão de tipo
+  e tamanho ("PDF · 1 KB") e "Trocar arquivo". **O nome do arquivo não aparece na tela em lugar
+  nenhum** — nem no texto, nem em atributo (provado com `12345678909.pdf`). O arquivo continua só como
+  `File` no estado: sem `FileReader`, sem `URL.createObjectURL`, sem envio, sem storage, sem log.
+- **Análise.** Linha do tempo vertical com três marcos: "Documento enviado" (check em círculo
+  Grafite), "Em análise" (círculo Grafite com o número 2, prazo "Até 2 dias úteis, normalmente no
+  mesmo dia") e "Resultado" (círculo vazado em `var(--muted-foreground)`, "Você recebe um aviso assim
+  que liberar"). É um `ol` com `aria-current="step"` no marco atual; abaixo, a caixa desenhada
+  "Avise-me quando houver uma atualização." (estado local) e o secundário "Substituir documento".
+- **Correções do ENT-002.** O conector do indicador só existe entre círculos: o passo 5 não desenha
+  linha nenhuma entre o círculo e o rótulo "Negócio". O check do vínculo confirmado passou a 36 px de
+  glifo dentro do círculo de 72 px (antes eram 24 px de glifo numa caixa de 36 px).
+- **Compatibilidade.** `entrada-21st.spec.ts` não precisou de ajuste: nenhum teste dele dependia do
+  nome do arquivo, do aviso de demonstração ou dos textos substituídos. O CSS morto de
+  `.entrada-arquivo` e `.entrada-etapas` saiu junto.
+- **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
+  0 erros. `--filter @bivaque/app build`: build concluído (`built in 386ms`).
+  `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`, `entrada-acesso`,
+  `entrada-21st`): **180 passed, 24 skipped, 0 failed** em 2,2 min nos seis viewports. `lint` na
+  raiz: **0 erros** em 1367 arquivos (18 avisos e 51 infos antigos, nenhum deste lote — os dois erros
+  de formatação que o lote introduziu foram corrigidos antes desta prova).
+- **Capturas para o revisor:**
+  `.visual/ENT-003/{consulta-indisponivel,documento,documento-escolhido,analise}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec.
+- **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
+  julgamento; a comparação com as referências aprovadas é do revisor.
+
+## ENT-006 — boas-vindas, retomar, convite e conta apagada da F01 — 30/10/2026
+
+- **O que mudou.** As últimas telas da entrada saíram do cartão antigo. `/app/entrar/boas-vindas` usa
+  a composição B (`EntradaEtapa`, agora com passo e "Sair" opcionais) sem indicador de passos: foto
+  `demo/landing-hero.webp` de 16 px de canto no topo da coluna, check pequeno em círculo Grafite
+  sobre a borda inferior, título "Você chegou ao Bivaque." em Noto Serif centralizado, apoio que muda
+  pelo momento escolhido na cidade e atalhos de linha inteira com ícone e seta — "Ver o plano de
+  chegada"/"Ver o plano de saída" (→ início), "Conhecer quem chega com você · Chegadas 2027 em
+  Manaus" (→ `/app/grupo/turma-manaus-2027`, só em Manaus e só em "chegando") e "Conhecer {cidade}"
+  (→ guia) em "moro aqui". O principal é "Entrar na comunidade" (→ `/app/comunidade`).
+- **Retomar, convite, convite indisponível e conta apagada** entraram na composição A
+  (`entrada-acesso.tsx`), com o painel da foto e o formulário ao lado: retomar com avatar de
+  iniciais, nome e e-mail da conta em andamento (sem dados, o nome da pessoa da demonstração lido de
+  `lib/dados`, sem e-mail); convite com campo único de código em maiúsculas, monoespaçado e com
+  espaçamento entre letras, "Nome completo", "E-mail do convite" somente leitura com fundo
+  `surface-container` e cadeado, senha com "Mostrar", aceite desenhado e "Aceitar convite" travado
+  até o aceite (→ cidade), mais "Simular convite indisponível" como texto discreto; convite
+  indisponível e conta apagada com ícone de traço em círculo, alinhados à esquerda. Login, criar
+  conta e recuperar senha não mudaram de campo, validação ou destino.
+- **Correção do ENT-005.** Abaixo de 768 px a barra interna "Passo X de 5" do negócio fica com 60% da
+  largura da coluna e centralizada, distinta da barra geral da etapa.
+- **Cartão antigo removido.** Nenhuma rota de `/app/entrar/*` usa mais o cartão nem mostra o
+  parágrafo "Jornada demonstrativa". Saíram `telas/Entrar.tsx` (cartão, `acao`, `campoSenha`,
+  `aceite`) e o CSS sem uso (`.entrada-pagina`, `.entrada-cartao`, `.entrada-cabecalho`,
+  `.entrada-conteudo`, `.entrada-marca`, `.entrada-botao`, `.entrada-link`, `.entrada-senha`,
+  `.entrada-mostrar`, `.entrada-aceite`, `.entrada-rodape`, `.entrada-direita`,
+  `.entrada-divisor`, `.entrada-nota`) — 112 linhas de CSS.
+- **Provas (números desta sessão, CI=true, na árvore entregue).** `--filter @bivaque/app typecheck`:
+  0 erros. `--filter @bivaque/app build`: build concluído (`built in 612ms`).
+  `--filter @bivaque/app test:e2e` nos três specs da entrada (`entrada-etapa`, `entrada-acesso`,
+  `entrada-21st`): **373 passed, 41 skipped, 0 failed** em 4,6 min nos seis viewports (320, 360, 375,
+  430, 768 e 1440 px). `test:scope`: **150 passed, 0 failed** em 2,9 s. `lint` na raiz: **0 erros**
+  em 1367 arquivos (18 avisos e 51 infos antigos, nenhum deste lote).
+- **O que ficou fora ou difere da referência.** (1) A foto e os atalhos das boas-vindas usam a coluna
+  de 560 px da composição B; a imagem aprovada mede cerca de 720 px. (2) "Sair" não aparece nas
+  boas-vindas, como o contrato pede — a imagem de referência ainda o mostra. (3) O caso "retomar com
+  dados" não é alcançável pela interface: nenhuma tela liga para `/app/entrar/retomar`, e o estado do
+  componente não sobrevive a um carregamento por URL; o código usa o estado da entrada e o teste cobre
+  o caso vazio (nome da demonstração, sem e-mail). (4) O "E-mail do convite" aparece vazio nesta
+  demonstração porque não há convite de origem no estado; não foi inventado texto nem valor. (5) Os
+  estilos novos da composição A usam o prefixo `.entrada-acesso`, que é o prefixo daquela composição,
+  e não `.entrada-etapa`. (6) O ícone de resultado é `error` (convite indisponível) e `check` (conta
+  apagada) do subconjunto hospedado de Material Symbols.
+- **Capturas para o revisor:**
+  `.visual/ENT-006/{boas-vindas-chegando,boas-vindas-moro,boas-vindas-saindo,retomar,convite,convite-indisponivel,apagada}-{mobile-375,tablet-768,desktop-1440}.png`,
+  de página inteira, feitas pelo próprio spec.
+- **Não declarado:** aceite visual e revisão independente. Este registro é da execução, não do
+  julgamento; a comparação com as referências aprovadas é do revisor.
+
+## ENT-007 — aceite visual da F01 sobre os blocos do 21st.dev — 31/10/2026
+
+- **Origem trocada por decisão do dono (31/10/2026).** A primeira versão desta rodada partiu do login-02 do shadcn/ui; a composição de acesso passou a partir do Split Sign In Form (21st.dev, diarmuradi/sign-in-3) e as boas-vindas do Onboarding / Welcome Screen (21st.dev, ravikatiyar162), com o código obtido pelo plugin do 21st e o crédito no topo de `entrada-acesso.tsx` e acima das boas-vindas em `Entrar.tsx`. Do sign-in-3 vieram o painel de cantos de 2rem e o respiro de 3rem; do Welcome Screen, a entrada em sequência, feita em CSS e desligada com `prefers-reduced-motion`. Também mudaram, contra a referência: logo de 48 px no desktop, coluna das boas-vindas de 760 px e título de 48 px. Os parágrafos abaixo descrevem a primeira versão; as medidas valem, salvo as três citadas.
+
+- **Composição de acesso refeita sobre o bloco login-02 do shadcn/ui (MIT).** O aviso de licença
+  está no topo de `components/bivaque/entrada-acesso.tsx`; nenhum arquivo do bloco foi copiado. A
+  estrutura passou a ser a do bloco: no desktop (≥1024 px) a grade é `1fr 1fr`, o painel da foto
+  cobre a coluna da esquerda com a margem e os cantos de antes, e o conteúdo fica centralizado na
+  direita, com no máximo 30rem (480 px), logo de 40 px no topo, título de 44 px, apoio de 17 px e
+  controles de 48 px. No celular (<768 px) a foto é uma faixa de 16:10 com o mesmo enquadramento,
+  o título mede 24 px e campos e botões, 44 px.
+- **Enquadramento por tela, sem trocar as imagens.** A variável `--entrada-foto-posicao` é definida
+  por estado em `styles.css` (`data-estado` no `<section>`): login e conta apagada mostram a mesa
+  com o aperto de mão inteiro; criar conta e retomar encostam a foto à direita para as duas mulheres
+  do portão aparecerem inteiras; senha fica no centro; convite e convite indisponível sobem para
+  40% da altura, onde está o grupo.
+- **Tablet (768–1023 px).** A composição lateral só entra no desktop: em 768 px a coluna do painel
+  ficaria com 344 px de largura e cortaria a cena. Nessa faixa a página mantém a faixa no topo, a
+  coluna de 30rem centralizada e a lista de valor vertical com os rótulos longos, agora sobre a
+  superfície e não sobre a foto.
+- **Regra comum de tamanho no celular** em todas as telas de `/app/entrar/*`: título de display 24 px,
+  subtítulo de seção 18 px, apoio 15 px, rótulos 14 px, ajudas 13 px e campos de 44 px. As telas
+  aprovadas só mudaram nessa regra.
+- **Boas-vindas (13, 13b, 13c):** coluna de 640 px no desktop, foto 21:9 (16:10 no celular), título de
+  40 px, apoio de 18 px e cartões de atalho com 56 px no celular e 64 px no desktop.
+- **Grupos (10):** a miniatura passou a ocupar 40% da largura do cartão em 4:3 (`calc(40% + 6.4px)`,
+  que desconta o respiro lateral do cartão), com `object-fit: cover` centralizado.
+- **Negócio (12d, 12e):** fotos em quatro colunas no celular (cerca de 72 px), selo "Capa" e ações
+  menores, e a capa da revisão em 16:9.
+- **Provas (números desta sessão, na árvore entregue).** `--filter @bivaque/app typecheck`: 0 erros.
+  `--filter @bivaque/app build`: build concluído (`built in 531ms`). `--filter @bivaque/app test:e2e`
+  nos três specs da entrada (`entrada-etapa`, `entrada-acesso`, `entrada-21st`): **400 passed,
+  68 skipped, 0 failed** em 3,6 min nos seis viewports. `test:scope`: **150 passed, 0 failed**.
+  `lint` na raiz: **0 erros** em 1370 arquivos (21 avisos e 51 infos antigos, nenhum deste lote).
+- **Provas novas de medida.** Duas colunas do desktop com diferença ≤ 2 px e conteúdo ≤ 480 px;
+  título de display de 24 px em todas as telas de `/app/entrar/*` no celular; foto da composição de
+  acesso em 16:10 (± 2%); miniatura dos grupos em 40% do cartão (± 2%) e em 4:3; fotos do negócio em
+  quatro colunas; capa da revisão em 16:9; boas-vindas com a coluna de 640 px, foto 21:9/16:10 e
+  cartões de 56/64 px.
+- **Capturas para o revisor:** `.visual/ENT-007/{01-login,02-conta,10-grupos,12d-negocio-fotos,
+  12e-negocio-revisao,13-boas-vindas,13b-boas-vindas-chegando,13c-boas-vindas-saindo,14-retomar,
+  15-senha,15b-senha-enviada,16-convite,17-convite-indisponivel,18-apagada}-{mobile-375,tablet-768,
+  desktop-1440}.png`, de página inteira, feitas pelo próprio spec.
+- **O que ficou fora ou difere da referência.** (1) A 12c continua sem revisão do dono e não foi
+  tocada. (2) O título do desktop quebra em duas linhas nas telas de título longo: com 44 px e o
+  conteúdo de 480 px é o que cabe. (3) As imagens de referência mostram o tablet sem painel lateral;
+  foi a escolha tomada aqui, registrada acima. (4) A capa da revisão no desktop mantém os 200 px de
+  altura de antes: o contrato fixa 16:9 só para o celular.
+- **Não declarado:** aceite visual do dono e revisão independente. Este registro é da execução, não
+  do julgamento; a comparação com as referências aprovadas é do revisor.
