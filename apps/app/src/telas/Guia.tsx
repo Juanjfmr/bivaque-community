@@ -30,7 +30,11 @@ function lerMarcadas(cidade: string): string[] {
     const item = window.localStorage.getItem("bivaque-guia-chegada-" + cidade)
     if (!item) return []
     const valor: unknown = JSON.parse(item)
-    return Array.isArray(valor) ? valor.filter(v => typeof v === "string" && TAREFAS.includes(v as typeof TAREFAS[number])) : []
+    return Array.isArray(valor)
+      ? valor.filter(
+          (v) => typeof v === "string" && TAREFAS.includes(v as (typeof TAREFAS)[number]),
+        )
+      : []
   } catch {
     return []
   }
@@ -70,10 +74,14 @@ export function Guia() {
         <>
           <Secao
             titulo="Escolha uma região para morar"
-            acoes={<Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>Ver imóveis</Botao>}
+            acoes={
+              <Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>
+                Ver imóveis
+              </Botao>
+            }
           >
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-              {BAIRROS_MANAUS.map(bairro => (
+              {BAIRROS_MANAUS.map((bairro) => (
                 <article
                   key={bairro.nome}
                   className="min-w-0 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
@@ -84,27 +92,40 @@ export function Guia() {
               ))}
             </div>
             <p className="text-xs text-(--on-surface-variant)">
-              Valores de aluguel devem vir dos anúncios ativos; não há média de bairro homologada nesta versão.
+              Valores de aluguel devem vir dos anúncios ativos; não há média de bairro homologada
+              nesta versão.
             </p>
           </Secao>
 
           <Secao titulo="Organizações militares da cidade">
             <p className="text-sm text-(--on-surface-variant)">
-              Recorte documental do catálogo nacional em auditoria. Endereço textual não significa acesso ou coordenada homologados.
+              Recorte documental do catálogo nacional em auditoria. Endereço textual não significa
+              acesso ou coordenada homologados.
             </p>
-            <ChipsDeFiltro itens={FILTROS} valor={forca} aoEscolher={setForca} rotulo="Filtrar organizações militares por Força" />
+            <ChipsDeFiltro
+              itens={FILTROS}
+              valor={forca}
+              aoEscolher={setForca}
+              rotulo="Filtrar organizações militares por Força"
+            />
             <div className="grid gap-2 md:grid-cols-2">
-              {OMS_MANAUS.filter(om => forca === "todas" || om.forca === forca).map(om => (
+              {OMS_MANAUS.filter((om) => forca === "todas" || om.forca === forca).map((om) => (
                 <article
                   key={om.id}
                   className="grid gap-2 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-semibold leading-5">{om.sigla}</h3>
-                    <span className="shrink-0 rounded-lg bg-(--secondary-container) px-2 py-1 text-xs text-(--on-secondary-container)">{om.forca}</span>
+                    <span className="shrink-0 rounded-lg bg-(--secondary-container) px-2 py-1 text-xs text-(--on-secondary-container)">
+                      {om.forca}
+                    </span>
                   </div>
                   <p className="text-sm">{om.nome}</p>
-                  {om.bairro ? <p className="text-sm text-(--on-surface-variant)">Região documental: {om.bairro}</p> : null}
+                  {om.bairro ? (
+                    <p className="text-sm text-(--on-surface-variant)">
+                      Região documental: {om.bairro}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-(--on-surface-variant)">{om.status}</p>
                   <a
                     href={om.fonte}
@@ -122,9 +143,12 @@ export function Guia() {
       ) : (
         <Secao titulo="Informações da cidade">
           <p className="text-sm text-(--on-surface-variant)">
-            O conteúdo documental desta cidade ainda não foi verificado. Consulte a moradia e as indicações disponíveis.
+            O conteúdo documental desta cidade ainda não foi verificado. Consulte a moradia e as
+            indicações disponíveis.
           </p>
-          <Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>Ver imóveis</Botao>
+          <Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>
+            Ver imóveis
+          </Botao>
         </Secao>
       )}
 
@@ -133,16 +157,21 @@ export function Guia() {
           <div className="rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)">
             <h3 className="font-semibold">Educação e saúde</h3>
             <p className="mt-1 text-sm text-(--on-surface-variant)">
-              Consulte a comunidade sobre escolas, pediatras e atendimento. Confirme vagas e cobertura diretamente com cada instituição.
+              Consulte a comunidade sobre escolas, pediatras e atendimento. Confirme vagas e
+              cobertura diretamente com cada instituição.
             </p>
-            <Botao tom="texto" onClick={() => void navegacao.irPara("comunidade")}>Pedir indicação</Botao>
+            <Botao tom="texto" onClick={() => void navegacao.irPara("comunidade")}>
+              Pedir indicação
+            </Botao>
           </div>
           <div className="rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)">
             <h3 className="font-semibold">Profissionais da cidade</h3>
             <p className="mt-1 text-sm text-(--on-surface-variant)">
               Compare prestadores indicados, leia relatos e peça propostas pelo Bivaque.
             </p>
-            <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>Encontrar serviços</Botao>
+            <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
+              Encontrar serviços
+            </Botao>
           </div>
         </div>
       </Secao>
@@ -152,8 +181,11 @@ export function Guia() {
           {marcadas.size} de {TAREFAS.length} etapas marcadas neste navegador.
         </p>
         <div className="grid gap-1 rounded-2xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)">
-          {TAREFAS.map(tarefa => (
-            <label key={tarefa} className="flex min-h-12 items-center gap-3 border-b border-(--outline-variant) py-2 last:border-b-0">
+          {TAREFAS.map((tarefa) => (
+            <label
+              key={tarefa}
+              className="flex min-h-12 items-center gap-3 border-b border-(--outline-variant) py-2 last:border-b-0"
+            >
               <input
                 type="checkbox"
                 checked={marcadas.has(tarefa)}
