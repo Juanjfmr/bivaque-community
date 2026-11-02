@@ -6043,12 +6043,16 @@
       ],
       "blockers": [],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "ccd458c7",
+      "sourceRevision": "1d395dcc",
       "links": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
       ],
-      "proof": ["02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."]
+      "proof": [
+        "02/11: causa achada em parte — specs que gravam na conta semeada rodavam em paralelo nos três tamanhos. recon-032 (bloquear), provider-vitrine (catálogo), recon-018 (cadastro, limite do Auth) e synthetic-people foram para o lote serial @stateful; group-base centraliza o botão antes do clique (cabeçalho fixo). Com isso o CI do #121 e do #122 fechou verde. Ficou retries: 1 só no CI da suíte da web antiga, como paliativo visível (flaky no relatório); a perda de conexão com o Supabase local sob carga segue sem causa.",
+        "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."
+      ],
+      "completedChecklist": [true, true, false, false]
     },
     {
       "id": "APP-E2E-PREEXISTENTES",
