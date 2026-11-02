@@ -27,7 +27,7 @@ Todos os itens, sem exceção:
 
 1. **Inteira.** Entrada, ação, gravação, retorno visível, acompanhamento e o caminho de falha
    principal funcionam no app integrado, com dados reais do banco local.
-2. **No nível da régua.** Revisão às cegas (Astra) contra as telas do Nextdoor no Mobbin, citadas no
+2. **No nível da régua.** Revisão às cegas (por outro modelo) contra as telas do Nextdoor no Mobbin, citadas no
    cartão, sem "abaixo da régua" em interface e clareza. Cada tela parte de referências reais.
 3. **Provada.** E2E em 375, 768 e 1440 px, claro e escuro; teste de banco com caso positivo e
    negativo em toda permissão; capturas em `.visual/`; gate completo verde na revisão integrada.
@@ -82,7 +82,7 @@ Todos os itens, sem exceção:
 | Fase | O quê | Fecha com |
 |---|---|---|
 | 0 | Instruções sem ruído; deploy separado do merge; linha do `apps/app` integrada na main | main com o app, CI verde, nada publicado |
-| 1 | Identidade final: paleta, casca em todas as telas, rodada de maturidade (topo de grupo, menu "⋯", rostos, arte no escuro, computador) | revisão do Astra "no nível" na casca e nas telas-modelo |
+| 1 | Identidade final: paleta, casca em todas as telas, rodada de maturidade (topo de grupo, menu "⋯", rostos, arte no escuro, computador) | revisão às cegas "no nível" na casca e nas telas-modelo |
 | 2 | F01 ligado ao banco (ADR de entrada aceito por delegação) | F01 pronto pelos seis critérios |
 | 3 | F04 ligado, com o redesenho da Comunidade (RED-003) provado | F04 pronto |
 | 4 | F02, F03, F09 e F10; operação (OP) | cada uma pronta |
