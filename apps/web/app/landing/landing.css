@@ -1188,3 +1188,49 @@ body.ld-locked {
     transition-delay: 0s;
   }
 }
+
+/* Paleta fria (ADR-20261102-paleta-fria), só na landing: as telas antigas do apps/web
+   continuam com a pele R70 até saírem na troca. */
+.bv-skin.ld {
+  --md-sys-color-primary: rgb(28 38 43);
+  --md-sys-color-on-primary: rgb(243 245 246);
+  --md-sys-color-primary-container: rgb(221 229 233);
+  --md-sys-color-on-primary-container: rgb(28 38 43);
+  --md-sys-color-secondary-container: rgb(225 233 236);
+  --md-sys-color-on-secondary-container: rgb(28 38 43);
+  --md-sys-color-surface: rgb(243 245 246);
+  --md-sys-color-surface-container-lowest: rgb(255 255 255);
+  --md-sys-color-surface-container-low: rgb(238 241 243);
+  --md-sys-color-surface-container: rgb(234 238 240);
+  --md-sys-color-surface-container-high: rgb(228 233 236);
+  --md-sys-color-surface-container-highest: rgb(221 227 230);
+  --md-sys-color-on-surface: rgb(28 38 43);
+  --md-sys-color-on-surface-variant: rgb(82 94 100);
+  --md-sys-color-outline: rgb(116 128 134);
+  --md-sys-color-outline-variant: rgb(222 227 230);
+  --md-sys-color-inverse-surface: rgb(28 38 43);
+  --md-sys-color-inverse-on-surface: rgb(243 245 246);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bv-skin.ld {
+    --md-sys-color-primary: rgb(232 236 238);
+    --md-sys-color-on-primary: rgb(16 20 23);
+    --md-sys-color-primary-container: rgb(38 52 59);
+    --md-sys-color-on-primary-container: rgb(232 236 238);
+    --md-sys-color-secondary-container: rgb(36 50 57);
+    --md-sys-color-on-secondary-container: rgb(232 236 238);
+    --md-sys-color-surface: rgb(16 20 23);
+    --md-sys-color-surface-container-lowest: rgb(26 32 36);
+    --md-sys-color-surface-container-low: rgb(21 26 30);
+    --md-sys-color-surface-container: rgb(32 39 44);
+    --md-sys-color-surface-container-high: rgb(38 46 51);
+    --md-sys-color-surface-container-highest: rgb(46 55 60);
+    --md-sys-color-on-surface: rgb(232 236 238);
+    --md-sys-color-on-surface-variant: rgb(156 170 178);
+    --md-sys-color-outline: rgb(122 138 146);
+    --md-sys-color-outline-variant: rgb(48 58 62);
+    --md-sys-color-inverse-surface: rgb(232 236 238);
+    --md-sys-color-inverse-on-surface: rgb(28 38 43);
+  }
+}
