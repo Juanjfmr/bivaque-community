@@ -5458,10 +5458,7 @@
       "proof": [
         "02/11: extraído do APP-001 ao fechá-lo; evidências no STATUS APP-010 (docs/historico/agents/prototipo-shadcn/STATUS.md)."
       ],
-      "links": [
-        "docs/historico/agents/prototipo-shadcn/STATUS.md",
-        "docs/LANCAMENTO.md"
-      ],
+      "links": ["docs/historico/agents/prototipo-shadcn/STATUS.md", "docs/LANCAMENTO.md"],
       "sourceRevision": "3f0a9965",
       "phase": "Lançamento",
       "priority": "P2",
