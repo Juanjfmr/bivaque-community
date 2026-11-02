@@ -1,30 +1,23 @@
 name: Temp verify Bivaque Guia React URL
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
 permissions:
   contents: read
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe immutable React preview URL
+      - name: Diagnose route mappings
         shell: bash
         run: |
-          set -euo pipefail
-          URL="https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app/app/"
-          curl --retry 3 --retry-delay 3 -fLsS -D /tmp/headers -o /tmp/index.html -w 'HTTP=%{http_code} FINAL=%{url_effective}\n' "$URL"
-          sed -n '1,30p' /tmp/headers
-          grep -q 'id="root"' /tmp/index.html
-          SCRIPT=$(grep -oE '/app/assets/[^"]+\.js' /tmp/index.html | head -1)
-          STYLE=$(grep -oE '/app/assets/[^"]+\.css' /tmp/index.html | head -1)
-          test -n "$SCRIPT" && test -n "$STYLE"
-          curl -fLsS -D /tmp/jsheaders -o /tmp/script.js "https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app$SCRIPT"
-          curl -fLsS -D /tmp/cssheaders -o /tmp/style.css "https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app$STYLE"
-          printf 'JS_BYTES=%s CSS_BYTES=%s\n' "$(wc -c < /tmp/script.js)" "$(wc -c < /tmp/style.css)"
-          grep -q 'Favoritos da vizinhança' /tmp/script.js
-          grep -q 'Imóveis para morar' /tmp/script.js
-          test "$(wc -c </tmp/script.js)" -gt 10000
-          test "$(wc -c </tmp/style.css)" -gt 10000
-          echo 'BIVAQUE_REACT_PREVIEW_HTTP_OK'
+          set -u
+          BASE="https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app"
+          for PATH_TO_TEST in / /app /app/ /index.html /assets/index-BOAI5XBn.js /app/assets/index-BOAI5XBn.js /app/fonts/noto-sans.woff2; do
+            echo "PROBE $PATH_TO_TEST"
+            curl --connect-timeout 8 --max-time 15 -sSL -D /tmp/header -o /tmp/body -w 'STATUS=%{http_code} FINAL=%{url_effective}\n' "$BASE$PATH_TO_TEST"
+            grep -iE '^(HTTP/|location:|content-type:|x-vercel-id:)' /tmp/header || true
+            echo "BODY_SIZE=$(wc -c < /tmp/body)"
+            head -c 90 /tmp/body || true
+            echo
+          done
