@@ -13,13 +13,25 @@ test("production migrations run from CI only, after the gate", () => {
   assert.equal(existsSync(workflowPath), true)
   const workflow = readFileSync(workflowPath, "utf8")
 
-  // Then it targets main, has a separate production job that depends on gate,
-  // and pushes through the Supabase CLI using repository secrets.
-  assert.match(workflow, /on:\s*\n\s*push:\s*\n\s*branches:\s*\n\s*- main/)
+  // Then it targets the producao branch only (a merge on main integrates, it does not publish),
+  // has a separate production job that depends on gate, and pushes through the Supabase CLI.
+  assert.match(workflow, /push:\s*\n\s*branches:\s*\n\s*- producao\s*\n/)
+  assert.doesNotMatch(workflow, /branches:\s*\n\s*- main/)
   assert.match(workflow, /migrate:\s*[\s\S]*needs:\s*gate/)
   assert.match(workflow, /environment:\s*production/)
   assert.match(workflow, /SUPABASE_ACCESS_TOKEN:\s*\${{ secrets\.SUPABASE_ACCESS_TOKEN }}/)
   assert.match(workflow, /pnpm exec supabase db push/)
+})
+
+test("a merge on main never deploys the site", () => {
+  // Given the Vercel configuration at the repository root and at the project's Root Directory
+  // (apps/web), which is where Vercel reads it from
+  for (const file of ["vercel.json", join("apps", "web", "vercel.json")]) {
+    const vercel = JSON.parse(readFileSync(join(root, file), "utf8"))
+
+    // Then pushes to main do not create deployments; production follows the producao branch
+    assert.equal(vercel.git?.deploymentEnabled?.main, false, file)
+  }
 })
 
 test("no local command surface pushes or links to production", () => {
