@@ -5593,33 +5593,37 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "sourceRevision": "1d395dcc",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: PR #120 (deploy separado; nenhuma publicação nos merges seguintes, conferido na API de deployments), PR #121 (apps/app e instruções na main, CI verde em 10508814) e PR #122 (fase 1). Revisão das instruções às cegas em duas passadas, 11 achados corrigidos. PRs superados #76, #81–#83, #85, #87–#89, #95–#97, #113, #117 listados ao dono: o fechamento foi barrado pela permissão local.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-F0-FUNDACAO",
       "title": "Fase 0: instruções sem ruído, deploy separado do merge e a linha do apps/app na main",
       "priority": "P0",
       "category": "governance",
-      "status": "now",
+      "status": "done",
       "description": "Mandato de 02/11: instruções reescritas (AGENTS.md, CLAUDE.md, escopos), histórico em docs/historico, R3 por delegação com RATIFICACAO.md, deploy só pela branch producao (PR #120) e integração da linha do apps/app na main com CI verde. Nada é publicado.",
       "checklist": [
         "Instruções e documentos vivos sem ruído; histórico separado",
         "Merge na main não publica (vercel.json e workflow de migrations)",
         "Linha do apps/app integrada na main com CI verde",
-        "PRs e branches superados fechados com motivo"
+        "PRs superados listados ao dono (fechar PR é ato dele nesta máquina)"
       ],
-      "dependencies": []
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-02"
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "532dd246",
+      "sourceRevision": "1d395dcc",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: PR #122 integrado (1d395dcc), CI verde; marco 1 apresentado ao dono com as capturas. A troca das peças nas telas antigas e o resto da casca seguem nas jornadas (LAN-F01 a LAN-F10); APP-001 segue aberto pela casca e pelo movimento.",
         "02/11: revisão às cegas (subagente Claude) — Grupos e Entrada em parte, app real abaixo da régua; corrigidos ação sólida no escuro e concordância; serifa nos títulos já corrigida. Restante (abas em dois níveis, subtítulos explicativos, capa do grupo) fica nas jornadas.",
         "02/11: paleta escolhida às cegas entre três candidatas; app 127/127, tema.spec 30/30, percursos F01, Grupos e menu sem erro; 15 falhas E2E pré-existentes registradas em APP-E2E-PREEXISTENTES.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
@@ -5628,7 +5632,7 @@
       "title": "Fase 1: identidade final — paleta, casca em todas as telas e rodada de maturidade",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Paleta fria (ADR-20261102-paleta-fria) nos tokens do apps/app e na landing; Brasa só no criar; ilustrações transparentes; títulos em Noto Sans; menu ⋯ com denúncia; topo e recepção do grupo; parte atual do F01; título de seção; Comunidade sem Negócios. A troca das peças nas telas antigas acontece jornada a jornada (fases 2 a 5), não aqui. Rostos de pessoas: a prévia segue com iniciais; foto vem do membro no produto.",
       "checklist": [
         "ADR de identidade com a paleta revisada",
@@ -5636,8 +5640,9 @@
         "Achados do veredito de maturidade resolvidos nas telas-modelo (F01 e Grupos)",
         "Revisão às cegas por outro modelo; marco 1 apresentado ao dono"
       ],
-      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR", "APP-E2E-PREEXISTENTES"],
-      "completedChecklist": [true, true, true, false]
+      "dependencies": ["LAN-F0-FUNDACAO"],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-02"
     },
     {
       "phase": "Lançamento",
@@ -5663,7 +5668,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5689,7 +5694,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5715,7 +5720,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5746,7 +5751,8 @@
         "RED-003",
         "INDICACOES-MEMORIA",
         "INDICACOES-AVISO",
-        "RECON-050"
+        "RECON-050",
+        "APP-001"
       ]
     },
     {
@@ -5773,7 +5779,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5799,7 +5805,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5825,7 +5831,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5851,7 +5857,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "RECON-030-GUIA-FOTOS"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "RECON-030-GUIA-FOTOS", "APP-001"]
     },
     {
       "phase": "Lançamento",
@@ -5877,7 +5883,12 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "OUTBOX-INVITE-RECIPIENTS", "NOTIF-DEEPLINKS"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "OUTBOX-INVITE-RECIPIENTS",
+        "NOTIF-DEEPLINKS",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -5903,7 +5914,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "MVP-RETENTION-PURGE"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "MVP-RETENTION-PURGE", "APP-001"]
     },
     {
       "phase": "Lançamento",
