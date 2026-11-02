@@ -4,6 +4,7 @@
  * banco. O CPF não passa por este módulo: a tela só entrega "consultar" e
  * recebe o resultado, como o servidor real fará.
  */
+import type { NomeDoSelo } from "@/src/pecas/pecas"
 import {
   type IdDaEtapa,
   type Progresso,
@@ -240,7 +241,8 @@ export type GrupoSugerido = {
   id: string
   nome: string
   membros: number
-  foto: string
+  /** Selo da família de ilustrações; o grupo ainda não tem capa enviada. */
+  selo: NomeDoSelo
   /** Interesses que puxam o grupo; vazio = vale para todos. */
   interesses: readonly string[]
   /** Momento que puxa o grupo; ausente = qualquer. */
@@ -252,7 +254,7 @@ export const GRUPOS: readonly GrupoSugerido[] = [
     id: "chegadas",
     nome: "Chegadas 2026",
     membros: 184,
-    foto: "demo/chegada.webp",
+    selo: "chegadas",
     interesses: [],
     momento: "chegando",
   },
@@ -260,36 +262,36 @@ export const GRUPOS: readonly GrupoSugerido[] = [
     id: "escolas",
     nome: "Escolas e creches",
     membros: 412,
-    foto: "demo/classroom.jpg",
+    selo: "escolas",
     interesses: ["Escola e creche", "Filhos pequenos"],
   },
   {
     id: "saude",
     nome: "Saúde e FUSEx",
     membros: 530,
-    foto: "demo/dentist.jpg",
+    selo: "saude",
     interesses: ["Saúde"],
   },
   {
     id: "mudancas",
     nome: "Mudança e transporte",
     membros: 266,
-    foto: "demo/moving.jpg",
+    selo: "mudancas",
     interesses: ["Mudança"],
   },
-  { id: "pets", nome: "Pets da Vila", membros: 97, foto: "demo/pets.jpg", interesses: ["Pets"] },
+  { id: "pets", nome: "Pets da Vila", membros: 97, selo: "pets", interesses: ["Pets"] },
   {
     id: "conjuges",
     nome: "Cônjuges em movimento",
     membros: 301,
-    foto: "demo/friends.webp",
+    selo: "conjuges",
     interesses: ["Cônjuges", "Trabalho e renda"],
   },
   {
     id: "saindo",
     nome: "Saindo em 2027",
     membros: 58,
-    foto: "demo/saindo.webp",
+    selo: "saindo",
     interesses: [],
     momento: "saindo",
   },
@@ -297,7 +299,7 @@ export const GRUPOS: readonly GrupoSugerido[] = [
     id: "corrida",
     nome: "Corrida de sábado",
     membros: 73,
-    foto: "demo/sunset.webp",
+    selo: "corrida",
     interesses: ["Esporte", "Passeios"],
   },
 ]

@@ -1,8 +1,20 @@
-import { type ReactNode, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
-import { Button } from "@/components/ui/button"
-import { EU, type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
-import type { Acao, Estado } from "./estado"
+import {
+  Avatar,
+  Botao,
+  BotaoDeIcone,
+  CampoDeBusca,
+  Cartao,
+  Estado,
+  Folha,
+  Linha,
+  Nota,
+  Selo,
+  Topo,
+} from "@/src/pecas/pecas"
+import { type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
+import type { Acao, Estado as EstadoDaPrevia } from "./estado"
 
 const base = import.meta.env.BASE_URL
 
@@ -15,77 +27,16 @@ export type Navegar = (
 ) => void
 
 export type PropsDaTela = {
-  estado: Estado
+  estado: EstadoDaPrevia
   despachar: (acao: Acao) => void
   navegar: Navegar
   voltar: () => void
-}
-
-// ── peças comuns ────────────────────────────────────────────────────────────
-export function Avatar({ nome }: { nome: string }) {
-  const iniciais = nome
-    .split(" ")
-    .map((parte) => parte.charAt(0))
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
-  return (
-    <span className="pg-avatar" aria-hidden="true">
-      {iniciais}
-    </span>
-  )
-}
-
-function MarcaDoGrupo({ grupo, tamanho = "p" }: { grupo: Grupo; tamanho?: "p" | "g" }) {
-  if (grupo.capa) {
-    return <img className="pg-marca" data-tamanho={tamanho} src={`${base}${grupo.capa}`} alt="" />
-  }
-  const letras = grupo.nome
-    .split(" ")
-    .filter((parte) => parte.length > 2)
-    .slice(0, 2)
-    .map((parte) => parte.charAt(0))
-    .join("")
-    .toUpperCase()
-  return (
-    <span className="pg-marca pg-marca-letras" data-tamanho={tamanho} aria-hidden="true">
-      {letras}
-    </span>
-  )
-}
-
-/** Barra do topo de cada tela, com voltar e título. */
-export function Topo({
-  titulo,
-  aoVoltar,
-  acao,
-}: {
-  titulo: string
-  aoVoltar?: () => void
-  acao?: ReactNode
-}) {
-  return (
-    <header className="pg-topo">
-      {aoVoltar ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          className="pg-topo-voltar"
-          aria-label="Voltar"
-          onClick={aoVoltar}
-        >
-          <Icone nome="arrow_back" />
-        </Button>
-      ) : null}
-      <p className="pg-topo-titulo">{titulo}</p>
-      {acao ?? null}
-    </header>
-  )
+  /** Confirmação curta no rodapé, com Desfazer quando dá para desfazer. */
+  avisar: (texto: string, desfazer?: () => void) => void
 }
 
 /** Foca o título ao abrir a tela, para o leitor de tela anunciar onde está. */
-function useFocoNoTitulo() {
+export function useFocoNoTitulo() {
   const ref = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     ref.current?.focus()
@@ -112,83 +63,72 @@ export function Lista({ estado, despachar, navegar }: PropsDaTela) {
 
   return (
     <main className="pg-tela pg-lista">
-      <h1 ref={titulo} tabIndex={-1} className="pg-titulo">
+      <h1 ref={titulo} tabIndex={-1} className="pc-titulo">
         Grupos
       </h1>
-      <label className="pg-busca">
-        <Icone nome="search" />
-        <span className="sr-only">Buscar grupos</span>
-        <input
-          type="search"
-          placeholder="Buscar grupos em Manaus"
-          value={busca}
-          onChange={(evento) => setBusca(evento.target.value)}
-        />
-      </label>
+      <CampoDeBusca
+        rotulo="Buscar grupos"
+        placeholder="Buscar grupos em Manaus"
+        value={busca}
+        onChange={(evento) => setBusca(evento.target.value)}
+      />
       {meus.length > 0 ? (
-        <section aria-labelledby="pg-meus">
-          <h2 id="pg-meus" className="pg-secao">
+        <section aria-labelledby="pg-meus" className="pg-bloco">
+          <h2 id="pg-meus" className="pc-subtitulo">
             Seus grupos
           </h2>
-          <ul className="pg-linhas">
+          <ul className="pc-lista">
             {meus.map((grupo) => (
               <li key={grupo.id}>
-                <button
-                  type="button"
-                  className="pg-linha-grupo"
-                  onClick={() => navegar({ nome: "grupo", id: grupo.id })}
-                >
-                  <MarcaDoGrupo grupo={grupo} />
-                  <span className="pg-linha-texto">
-                    <strong>{grupo.nome}</strong>
-                    {grupo.novas > 0 ? (
+                <Linha
+                  marca={<Selo nome={grupo.selo} />}
+                  titulo={grupo.nome}
+                  apoio={
+                    grupo.novas > 0 ? (
                       <span className="pg-novas">{grupo.novas} novas publicações</span>
                     ) : (
-                      <span>{membros(grupo.membros)}</span>
-                    )}
-                  </span>
-                  <Icone nome="chevron_right" />
-                </button>
+                      membros(grupo.membros)
+                    )
+                  }
+                  onClick={() => navegar({ nome: "grupo", id: grupo.id })}
+                />
               </li>
             ))}
           </ul>
         </section>
       ) : null}
-      <section aria-labelledby="pg-outros">
-        <h2 id="pg-outros" className="pg-secao">
+      <section aria-labelledby="pg-outros" className="pg-bloco">
+        <h2 id="pg-outros" className="pc-subtitulo">
           Para você em Manaus
         </h2>
         {outros.length === 0 ? (
-          <p className="pg-vazio">
+          <p className="pc-apoio">
             Nenhum grupo com "{busca}". Tente outra palavra ou crie um grupo novo.
           </p>
         ) : null}
-        <ul className="pg-linhas">
+        <ul className="pc-lista">
           {outros.map((grupo) => {
             const pediu = estado.pedidos.includes(grupo.id)
             const fechado = grupo.privacidade === "fechado"
             return (
-              <li key={grupo.id} className="pg-linha-grupo">
+              <li key={grupo.id} className="pg-sugestao">
                 <button
                   type="button"
-                  className="pg-linha-abrir"
+                  className="pg-sugestao-abrir"
                   onClick={() => navegar({ nome: "grupo", id: grupo.id })}
                 >
-                  <MarcaDoGrupo grupo={grupo} />
-                  <span className="pg-linha-texto">
-                    <strong>{grupo.nome}</strong>
-                    <span>
+                  <Selo nome={grupo.selo} />
+                  <span className="pc-linha-texto">
+                    <span className="pc-linha-titulo">{grupo.nome}</span>
+                    <span className="pc-apoio">
                       {membros(grupo.membros)}
                       {fechado ? ", fechado" : ""}
                     </span>
-                    <span className="pg-motivo">{grupo.motivo}</span>
+                    <span className="pc-miudo">{grupo.motivo}</span>
                   </span>
                 </button>
-                <Button
-                  type="button"
-                  size="lg"
-                  variant={pediu ? "secondary" : "outline"}
-                  className="pg-pilula"
+                <Botao
+                  compacto
                   disabled={pediu}
                   aria-label={`${fechado ? "Pedir para entrar em" : "Entrar em"} ${grupo.nome}`}
                   onClick={() => {
@@ -201,7 +141,7 @@ export function Lista({ estado, despachar, navegar }: PropsDaTela) {
                   }}
                 >
                   {pediu ? "Pedido enviado" : fechado ? "Pedir" : "Entrar"}
-                </Button>
+                </Botao>
               </li>
             )
           })}
@@ -228,6 +168,20 @@ export function Fotos({ fotos, rotulo }: { fotos: readonly string[]; rotulo: str
   )
 }
 
+/** Quem escreveu, quando e o tipo, no alto de publicação e de detalhe. */
+export function Autoria({ publicacao }: { publicacao: Publicacao }) {
+  return (
+    <header className="pg-autor">
+      <Avatar nome={publicacao.autor} />
+      <span className="pc-linha-texto">
+        <span className="pc-linha-titulo">{publicacao.autor}</span>
+        <span className="pc-miudo">{publicacao.quando}</span>
+      </span>
+      <span className="pc-miudo pg-tipo">{ROTULO_DO_TIPO[publicacao.tipo]}</span>
+    </header>
+  )
+}
+
 // ── Uma publicação no grupo ─────────────────────────────────────────────────
 function ItemDaPublicacao({
   publicacao,
@@ -241,44 +195,51 @@ function ItemDaPublicacao({
   const total = publicacao.comentarios.length
   const abrir = () => navegar({ nome: "publicacao", id: publicacao.id })
   return (
-    <article className="pg-publicacao" aria-labelledby={`pg-pub-${publicacao.id}`}>
-      <header className="pg-autor">
-        <Avatar nome={publicacao.autor} />
-        <span>
-          <strong>{publicacao.autor}</strong>
-          {publicacao.quando}
-        </span>
-        <span className="pg-tipo" data-tipo={publicacao.tipo}>
-          {ROTULO_DO_TIPO[publicacao.tipo]}
-        </span>
-      </header>
+    <Cartao className="pg-publicacao" aria-labelledby={`pg-pub-${publicacao.id}`}>
+      <Autoria publicacao={publicacao} />
       <button type="button" className="pg-publicacao-corpo" onClick={abrir}>
         <span id={`pg-pub-${publicacao.id}`} className="pg-publicacao-texto">
           {publicacao.texto}
         </span>
       </button>
       <Fotos fotos={publicacao.fotos} rotulo={`Publicação de ${publicacao.autor}`} />
-      {publicacao.resolvida ? (
-        <p className="pg-resolvida">
-          <Icone nome="check_circle" preenchido /> Resolvida
-        </p>
-      ) : null}
+      {publicacao.resolvida ? <Estado>Resolvida</Estado> : null}
       <footer className="pg-acoes">
-        <button
-          type="button"
+        <Botao
+          tom="texto"
+          compacto
+          icone="thumb_up"
           className="pg-acao"
           aria-pressed={publicacao.marcouUtil}
           onClick={() => despachar({ tipo: "util", publicacao: publicacao.id })}
         >
-          <Icone nome="thumb_up" preenchido={publicacao.marcouUtil} />
           Útil{publicacao.uteis > 0 ? ` ${publicacao.uteis}` : ""}
-        </button>
-        <button type="button" className="pg-acao" onClick={abrir}>
-          <Icone nome="chat_bubble" />
+        </Botao>
+        <Botao tom="texto" compacto icone="chat_bubble" className="pg-acao" onClick={abrir}>
           {total === 0 ? "Comentar" : `${total} ${total === 1 ? "comentário" : "comentários"}`}
-        </button>
+        </Botao>
       </footer>
-    </article>
+    </Cartao>
+  )
+}
+
+// ── Sobre o grupo: folha no celular, coluna no computador ───────────────────
+function Sobre({ grupo, comTitulo }: { grupo: Grupo; comTitulo: boolean }) {
+  return (
+    <div className="pg-sobre">
+      {comTitulo ? <h2 className="pc-subtitulo">Sobre o grupo</h2> : null}
+      <p className="pc-corpo">{grupo.descricao}</p>
+      {grupo.regras.length > 0 ? (
+        <>
+          <h3 className="pg-sobre-regras-titulo">Regras</h3>
+          <ul className="pg-regras">
+            {grupo.regras.map((regra) => (
+              <li key={regra}>{regra}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </div>
   )
 }
 
@@ -288,10 +249,11 @@ export function GrupoTela({
   despachar,
   navegar,
   voltar,
+  avisar,
   id,
 }: PropsDaTela & { id: string }) {
   const [filtro, setFiltro] = useState<"recentes" | "sem-resposta">("recentes")
-  const [copiado, setCopiado] = useState(false)
+  const [sobreAberto, setSobreAberto] = useState(false)
   const titulo = useFocoNoTitulo()
   const grupo = estado.grupos.find((g) => g.id === id)
   if (grupo === undefined) return null
@@ -302,49 +264,45 @@ export function GrupoTela({
   const pediu = estado.pedidos.includes(id)
   const novo = estado.boasVindas.includes(id)
 
-  const sobre = (
-    <section className="pg-sobre" aria-labelledby="pg-sobre-titulo">
-      <h2 id="pg-sobre-titulo" className="pg-secao">
-        Sobre o grupo
-      </h2>
-      <p>{grupo.descricao}</p>
-      {grupo.regras.length > 0 ? (
-        <ul className="pg-regras">
-          {grupo.regras.map((regra) => (
-            <li key={regra}>{regra}</li>
-          ))}
-        </ul>
-      ) : null}
-    </section>
-  )
-
   return (
     <div className="pg-grupo">
-      <Topo titulo="Grupo" aoVoltar={voltar} />
+      <Topo aoVoltar={voltar} />
       <div className="pg-grupo-colunas">
-        <main className="pg-tela">
-          <div className="pg-capa">
-            {grupo.capa ? (
-              <img src={`${base}${grupo.capa}`} alt="" />
-            ) : (
-              <MarcaDoGrupo grupo={grupo} tamanho="g" />
-            )}
+        <main className="pg-tela pg-grupo-principal">
+          {grupo.capa ? <img className="pg-capa" src={`${base}${grupo.capa}`} alt="" /> : null}
+          <div className="pg-cabeca">
+            <Selo nome={grupo.selo} tamanho={64} />
+            <div className="pg-cabeca-texto">
+              <h1 ref={titulo} tabIndex={-1} className="pc-titulo">
+                {grupo.nome}
+              </h1>
+              <p className="pc-apoio pg-grupo-meta">
+                {membros(grupo.membros)}
+                <span className="pg-privacidade">
+                  <Icone nome={grupo.privacidade === "fechado" ? "lock" : "public"} />
+                  {grupo.privacidade === "fechado" ? "Fechado" : "Aberto"}
+                </span>
+              </p>
+            </div>
           </div>
-          <h1 ref={titulo} tabIndex={-1} className="pg-titulo">
-            {grupo.nome}
-          </h1>
-          <p className="pg-grupo-meta">
-            {membros(grupo.membros)}
-            <span className="pg-chip-estado">
-              <Icone nome={grupo.privacidade === "fechado" ? "lock" : "public"} />
-              {grupo.privacidade === "fechado" ? "Fechado" : "Aberto"}
-            </span>
-          </p>
+          {fechadoParaMim ? null : (
+            <Botao
+              tom="texto"
+              compacto
+              icone="info"
+              className="pg-movel-sobre"
+              aria-haspopup="dialog"
+              onClick={() => setSobreAberto(true)}
+            >
+              Sobre o grupo e regras
+            </Botao>
+          )}
 
           {grupo.participa ? null : (
-            <Button
-              type="button"
-              className="pg-botao"
+            <Botao
+              tom="principal"
+              cheio
+              className="pg-entrar"
               disabled={pediu}
               onClick={() =>
                 despachar(
@@ -353,91 +311,61 @@ export function GrupoTela({
               }
             >
               {pediu ? "Pedido enviado" : fechadoParaMim ? "Pedir para entrar" : "Entrar no grupo"}
-            </Button>
+            </Botao>
           )}
 
           {novo ? (
-            <section className="pg-boas-vindas" aria-labelledby="pg-bv-titulo">
+            <Cartao className="pg-boas-vindas" aria-labelledby="pg-bv-titulo">
               <div className="pg-boas-vindas-cabeca">
-                <h2 id="pg-bv-titulo">Você entrou. Comece por aqui:</h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Fechar boas-vindas"
+                <h2 id="pg-bv-titulo" className="pc-subtitulo">
+                  Você entrou. Comece por aqui
+                </h2>
+                <BotaoDeIcone
+                  rotulo="Fechar boas-vindas"
+                  nome="close"
                   onClick={() => despachar({ tipo: "fechar-boas-vindas", grupo: id })}
-                >
-                  <Icone nome="close" />
-                </Button>
+                />
               </div>
-              <ul className="pg-linhas">
-                <li>
-                  <button
-                    type="button"
-                    className="pg-linha-acao"
-                    onClick={() =>
-                      navegar({
-                        nome: "escrever",
-                        grupo: id,
-                        texto:
-                          "Oi, pessoal! Sou a Ana, cheguei agora em Manaus com dois filhos pequenos.",
-                      })
-                    }
-                  >
-                    <Icone nome="chat_bubble" />
-                    <span>
-                      <strong>Diga olá</strong>
-                      Conte quem você é e o que procura aqui.
-                    </span>
-                    <Icone nome="chevron_right" />
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="pg-linha-acao"
-                    onClick={() => {
-                      void navigator.clipboard?.writeText(window.location.href)
-                      setCopiado(true)
-                    }}
-                  >
-                    <Icone nome="person_add" />
-                    <span>
-                      <strong>Convidar alguém</strong>
-                      {copiado
-                        ? "Link copiado. É só colar na conversa."
-                        : "Copia o link do grupo para mandar a quem você conhece."}
-                    </span>
-                    <Icone nome={copiado ? "check" : "content_copy"} />
-                  </button>
-                </li>
-              </ul>
-            </section>
+              <div className="pg-boas-vindas-acoes">
+                <Botao
+                  compacto
+                  icone="chat_bubble"
+                  onClick={() =>
+                    navegar({
+                      nome: "escrever",
+                      grupo: id,
+                      texto:
+                        "Oi, pessoal! Sou a Ana, cheguei agora em Manaus com dois filhos pequenos.",
+                    })
+                  }
+                >
+                  Diga olá
+                </Botao>
+                <Botao
+                  compacto
+                  icone="person_add"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(window.location.href)
+                    avisar("Link do grupo copiado. É só colar na conversa.")
+                  }}
+                >
+                  Convidar alguém
+                </Botao>
+              </div>
+            </Cartao>
           ) : null}
 
           {fechadoParaMim ? (
             <>
-              {sobre}
-              <p className="pg-vazio">
+              <Sobre grupo={grupo} comTitulo />
+              <p className="pc-apoio">
                 As publicações aparecem quando a moderação aceitar seu pedido.
               </p>
             </>
           ) : (
             <>
-              <details className="pg-movel-sobre">
-                <summary>
-                  Sobre o grupo e regras
-                  <Icone nome="expand_more" />
-                </summary>
-                {sobre}
-              </details>
-              {grupo.fixado ? (
-                <p className="pg-fixado">
-                  <Icone nome="info" />
-                  {grupo.fixado}
-                </p>
-              ) : null}
-              <div className="pg-filtros" role="tablist" aria-label="Publicações">
+              {grupo.fixado ? <Nota icone="info">{grupo.fixado}</Nota> : null}
+              <div className="pc-chips" role="tablist" aria-label="Publicações">
                 {(
                   [
                     ["recentes", "Recentes"],
@@ -449,21 +377,15 @@ export function GrupoTela({
                     type="button"
                     role="tab"
                     aria-selected={filtro === valor}
-                    className="pg-filtro"
+                    className="pc-chip"
                     onClick={() => setFiltro(valor)}
                   >
                     {rotulo}
                   </button>
                 ))}
               </div>
-              {publicacoes[0]?.autor === EU.curto && publicacoes[0]?.quando === "agora" ? (
-                <p className="pg-confirmacao" role="status">
-                  <Icone nome="check_circle" preenchido /> Publicado. Os membros do grupo já podem
-                  ver.
-                </p>
-              ) : null}
               {publicacoes.length === 0 ? (
-                <p className="pg-vazio">Toda pergunta daqui já tem resposta.</p>
+                <p className="pc-apoio">Toda pergunta daqui já tem resposta.</p>
               ) : (
                 <div className="pg-feed">
                   {publicacoes.map((publicacao) => (
@@ -479,18 +401,23 @@ export function GrupoTela({
             </>
           )}
         </main>
-        <aside className="pg-lateral">{sobre}</aside>
+        <aside className="pg-lateral" aria-label="Sobre o grupo">
+          <Sobre grupo={grupo} comTitulo />
+        </aside>
       </div>
       {grupo.participa ? (
-        <Button
-          type="button"
-          className="pg-escrever"
+        <Botao
+          tom="principal"
+          icone="edit_square"
+          className="pc-flutuante pg-escrever"
           onClick={() => navegar({ nome: "escrever", grupo: id })}
         >
-          <Icone nome="edit_square" />
           Escrever
-        </Button>
+        </Botao>
       ) : null}
+      <Folha aberta={sobreAberto} aoFechar={() => setSobreAberto(false)} titulo="Sobre o grupo">
+        <Sobre grupo={grupo} comTitulo={false} />
+      </Folha>
     </div>
   )
 }

@@ -1,15 +1,14 @@
-import {
-  type ComponentProps,
-  createContext,
-  type FormEvent,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useId,
-  useRef,
-} from "react"
+import { createContext, type FormEvent, type ReactNode, useContext, useEffect, useRef } from "react"
 import { Icone } from "@/components/bivaque/icone"
-import { Button } from "@/components/ui/button"
+import {
+  BarraDeAcao,
+  Botao,
+  BotaoDeIcone,
+  caminhoDaIlustracao,
+  Ilustracao,
+  type NomeDaIlustracao,
+  Progresso,
+} from "@/src/pecas/pecas"
 import type { IdDaEtapa, Verificacao } from "./fluxo"
 
 /** O que a moldura precisa saber do fluxo, sem conhecer as etapas. */
@@ -41,11 +40,13 @@ export type Acao = {
 /**
  * Uma etapa: título, uma linha de apoio (quando precisa), conteúdo e a barra de
  * ação. No celular a barra fica fixa no rodapé, sempre no mesmo lugar. No
- * computador a etapa ganha o painel das fases ao lado.
+ * computador a etapa ganha o painel das fases ao lado, com a ilustração da fase;
+ * no celular, a etapa que tem ilustração mostra a cena em cima do título.
  */
 export function Moldura({
   titulo,
   apoio,
+  ilustracao,
   children,
   acao,
   secundaria,
@@ -53,6 +54,7 @@ export function Moldura({
 }: {
   titulo: ReactNode
   apoio?: ReactNode
+  ilustracao?: NomeDaIlustracao
   children?: ReactNode
   acao?: Acao | undefined
   secundaria?: Acao | undefined
@@ -78,19 +80,20 @@ export function Moldura({
       <form className="f01-etapa" onSubmit={enviar} noValidate>
         <Cabecalho />
         <div className="f01-corpo">
-          <h1 ref={tituloRef} tabIndex={-1} className="f01-titulo">
+          {ilustracao ? (
+            <Ilustracao nome={ilustracao} proporcao="2 / 1" className="f01-cena" prioridade />
+          ) : null}
+          <h1 ref={tituloRef} tabIndex={-1} className="pc-titulo">
             {titulo}
           </h1>
           {apoio ? <p className="f01-apoio">{apoio}</p> : null}
           <div className="f01-conteudo">{children}</div>
         </div>
         {acao || secundaria ? (
-          <div className="f01-barra">
-            <div className="f01-barra-dentro">
-              {acao ? <BotaoDeAcao acao={acao} principal /> : null}
-              {secundaria ? <BotaoDeAcao acao={secundaria} /> : null}
-            </div>
-          </div>
+          <BarraDeAcao>
+            {acao ? <BotaoDeAcao acao={acao} principal /> : null}
+            {secundaria ? <BotaoDeAcao acao={secundaria} /> : null}
+          </BarraDeAcao>
         ) : null}
       </form>
       <PainelDasFases />
@@ -101,17 +104,16 @@ export function Moldura({
 function BotaoDeAcao({ acao, principal = false }: { acao: Acao; principal?: boolean }) {
   const tipo = principal && acao.aoTocar === undefined ? "submit" : "button"
   return (
-    <Button
+    <Botao
       type={tipo}
-      variant={principal ? "default" : "ghost"}
-      className="f01-botao"
+      tom={principal ? "principal" : "texto"}
+      cheio
       data-principal={principal ? "sim" : "nao"}
-      aria-busy={acao.carregando ? "true" : undefined}
+      carregando={acao.carregando ?? false}
       onClick={acao.aoTocar}
     >
-      {acao.carregando ? <span className="f01-girando" aria-hidden="true" /> : null}
       {acao.rotulo}
-    </Button>
+    </Botao>
   )
 }
 
@@ -131,27 +133,11 @@ function Cabecalho() {
   return (
     <header className="f01-cabecalho">
       {aoVoltar ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          className="f01-voltar"
-          aria-label="Voltar"
-          onClick={aoVoltar}
-        >
-          <Icone nome="arrow_back" />
-        </Button>
+        <BotaoDeIcone rotulo="Voltar" nome="arrow_back" className="f01-voltar" onClick={aoVoltar} />
       ) : null}
       {fracao === null ? null : (
-        <div
-          className="f01-progresso"
-          role="progressbar"
-          aria-label="Progresso do cadastro"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(fracao * 100)}
-        >
-          <span style={{ transform: `scaleX(${fracao})` }} />
+        <div className="f01-progresso">
+          <Progresso fracao={fracao} rotulo="Progresso do cadastro" />
         </div>
       )}
       <span className="f01-vinculo" aria-live="polite" data-estado={verificacao}>
@@ -167,18 +153,14 @@ function Cabecalho() {
 }
 
 // ── Painel das fases (computador) ───────────────────────────────────────────
-const FASES: readonly { titulo: string; etapas: readonly IdDaEtapa[]; foto: string }[] = [
-  {
-    titulo: "Sua conta",
-    etapas: ["email", "codigo", "aceite"],
-    foto: "demo/convite-paisagem.webp",
-  },
-  { titulo: "Seu vínculo", etapas: ["cpf", "verificacao", "documento"], foto: "demo/mesa.webp" },
-  { titulo: "Você e sua cidade", etapas: ["nome", "cidade"], foto: "demo/moro-aqui.webp" },
+const FASES: readonly { titulo: string; etapas: readonly IdDaEtapa[]; cena: NomeDaIlustracao }[] = [
+  { titulo: "Sua conta", etapas: ["email", "codigo", "aceite"], cena: "conta" },
+  { titulo: "Seu vínculo", etapas: ["cpf", "verificacao", "documento"], cena: "vinculo" },
+  { titulo: "Você e sua cidade", etapas: ["nome", "cidade"], cena: "cidade" },
   {
     titulo: "Sua comunidade",
     etapas: ["previa-cidade", "interesses", "combinado", "avisos"],
-    foto: "demo/landing-encontro.webp",
+    cena: "encontro",
   },
 ]
 
@@ -196,81 +178,33 @@ function PainelDasFases() {
     const feita = fase.etapas.some((id) => concluidas.includes(id)) && indice < atual
     return vinculoPronto || feita ? "feito" : "futuro"
   }
-  const foto = FASES[atual]?.foto ?? FASES[0]?.foto
+  const cena = FASES[atual]?.cena ?? "conta"
   return (
     <aside className="f01-lado" aria-label="Fases do cadastro">
-      <img className="f01-lado-foto" src={`${base}${foto}`} alt="" />
-      <div className="f01-lado-texto">
-        <img
-          className="f01-lado-logo"
-          src={`${base}brand/bivaque-logo-horizontal-white.svg`}
-          alt="Bivaque"
+      <picture className="f01-lado-logo">
+        <source
+          srcSet={`${base}brand/bivaque-logo-horizontal-white.svg`}
+          media="(prefers-color-scheme: dark)"
         />
-        <ol className="f01-fases">
-          {FASES.map((fase, indice) => (
-            <li
-              key={fase.titulo}
-              data-estado={estado(indice)}
-              aria-current={indice === atual ? "step" : undefined}
-            >
-              <span className="f01-fase-marca" aria-hidden="true">
-                {estado(indice) === "feito" ? <Icone nome="check" /> : indice + 1}
-              </span>
-              {fase.titulo}
-            </li>
-          ))}
-        </ol>
-      </div>
+        <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
+      </picture>
+      <span className="pc-ilustracao f01-lado-cena">
+        <img key={cena} src={caminhoDaIlustracao(cena)} alt="" width={1200} height={800} />
+      </span>
+      <ol className="f01-fases">
+        {FASES.map((fase, indice) => (
+          <li
+            key={fase.titulo}
+            data-estado={estado(indice)}
+            aria-current={indice === atual ? "step" : undefined}
+          >
+            <span className="f01-fase-marca" aria-hidden="true">
+              {estado(indice) === "feito" ? <Icone nome="check" /> : indice + 1}
+            </span>
+            {fase.titulo}
+          </li>
+        ))}
+      </ol>
     </aside>
-  )
-}
-
-// ── Campo com o rótulo dentro ───────────────────────────────────────────────
-/**
- * Campo com rótulo que sobe quando há texto ou foco: sem rótulo em negrito
- * solto em cima do campo, e o nome do campo nunca some (não é placeholder).
- */
-export function Campo({
-  rotulo,
-  ajuda,
-  erro,
-  acessorio,
-  ...entrada
-}: {
-  rotulo: string
-  ajuda?: ReactNode
-  erro?: string | null
-  acessorio?: ReactNode
-} & Omit<ComponentProps<"input">, "placeholder">) {
-  const id = useId()
-  const idAjuda = `${id}-ajuda`
-  const idErro = `${id}-erro`
-  return (
-    <div className="f01-campo-bloco">
-      <div className="f01-campo" data-erro={erro ? "sim" : "nao"}>
-        <input
-          id={id}
-          placeholder=" "
-          aria-invalid={erro ? "true" : undefined}
-          aria-describedby={`${idErro} ${ajuda ? idAjuda : ""}`.trim()}
-          {...entrada}
-        />
-        <label htmlFor={id}>{rotulo}</label>
-        {acessorio ? <span className="f01-campo-acessorio">{acessorio}</span> : null}
-      </div>
-      <p id={idErro} className="f01-erro" aria-live="polite">
-        {erro ? (
-          <>
-            <Icone nome="error" />
-            {erro}
-          </>
-        ) : null}
-      </p>
-      {ajuda && !erro ? (
-        <p id={idAjuda} className="f01-ajuda">
-          {ajuda}
-        </p>
-      ) : null}
-    </div>
   )
 }

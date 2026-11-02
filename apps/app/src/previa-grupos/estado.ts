@@ -34,13 +34,23 @@ export type Acao =
   | { tipo: "fechar-boas-vindas"; grupo: string }
   | { tipo: "util"; publicacao: string }
   | { tipo: "util-comentario"; publicacao: string; comentario: string }
-  | { tipo: "salvar"; publicacao: string }
+  /** Sem `valor`, alterna; com `valor`, fixa (o Desfazer usa o valor de antes). */
+  | { tipo: "salvar"; publicacao: string; valor?: boolean }
   | { tipo: "comentar"; publicacao: string; texto: string; respondeA: Comentario | null }
   | { tipo: "resolveu"; publicacao: string; comentario: string }
-  | { tipo: "publicar"; grupo: string; tipoDaPublicacao: Tipo; texto: string; fotos: string[] }
+  | {
+      tipo: "publicar"
+      grupo: string
+      tipoDaPublicacao: Tipo
+      texto: string
+      fotos: string[]
+      /** Id gerado na tela, para o Desfazer achar a publicação. */
+      id?: string
+    }
+  | { tipo: "apagar"; publicacao: string }
 
 let sequencia = 0
-const novoId = (prefixo: string): string => `${prefixo}-${Date.now()}-${++sequencia}`
+export const novoId = (prefixo: string): string => `${prefixo}-${Date.now()}-${++sequencia}`
 
 const alternarUtil = <T extends { uteis: number; marcouUtil: boolean }>(item: T): T => ({
   ...item,
@@ -98,7 +108,7 @@ export function reduzir(estado: Estado, acao: Acao): Estado {
         ),
       }))
     case "salvar":
-      return naPublicacao(estado, acao.publicacao, (p) => ({ ...p, salva: !p.salva }))
+      return naPublicacao(estado, acao.publicacao, (p) => ({ ...p, salva: acao.valor ?? !p.salva }))
     case "comentar": {
       // Resposta de resposta fica no mesmo nível, sob o comentário de cima.
       const pai = acao.respondeA === null ? null : (acao.respondeA.respondeA ?? acao.respondeA.id)
@@ -125,7 +135,7 @@ export function reduzir(estado: Estado, acao: Acao): Estado {
       )
     case "publicar": {
       const nova: Publicacao = {
-        id: novoId("p"),
+        id: acao.id ?? novoId("p"),
         grupo: acao.grupo,
         autor: EU.curto,
         quando: "agora",
@@ -144,5 +154,13 @@ export function reduzir(estado: Estado, acao: Acao): Estado {
         boasVindas: estado.boasVindas.filter((id) => id !== acao.grupo),
       }
     }
+    case "apagar":
+      // Só quem publicou apaga (o Desfazer logo depois de publicar).
+      return {
+        ...estado,
+        publicacoes: estado.publicacoes.filter(
+          (p) => p.id !== acao.publicacao || p.autor !== EU.curto,
+        ),
+      }
   }
 }

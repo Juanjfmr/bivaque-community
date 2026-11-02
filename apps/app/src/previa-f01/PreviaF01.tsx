@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
-import { Icone } from "@/components/bivaque/icone"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -8,6 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { Botao } from "@/src/pecas/pecas"
 import {
   Avisos,
   Combinado,
@@ -149,19 +149,19 @@ export function PreviaF01() {
 
   return (
     <MolduraContexto.Provider value={contexto}>
-      <div className="f01" data-etapa={progresso.etapa}>
-        <div key={progresso.etapa} className="f01-transicao">
+      <div className="pc f01" data-etapa={progresso.etapa}>
+        <div key={progresso.etapa} className="pc-entra">
           {conteudo}
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
+        <Botao
+          compacto
+          tom="contorno"
+          icone="tune"
           className="f01-gatilho-do-painel"
           onClick={() => setPainel(true)}
         >
-          <Icone nome="tune" /> Prévia
-        </Button>
+          Prévia
+        </Botao>
         <PainelDaPrevia
           aberto={painel}
           aoMudar={setPainel}

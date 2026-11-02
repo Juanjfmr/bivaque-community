@@ -1,8 +1,18 @@
 import { useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { NomeDeIcone } from "@/lib/icones"
+import {
+  Botao,
+  CampoDeArquivo,
+  Chip,
+  Estado,
+  Ilustracao,
+  type NomeDaIlustracao,
+  Nota,
+  Progresso,
+  Selo,
+} from "@/src/pecas/pecas"
 import type { PropsDaEtapa } from "./etapas-conta"
 import { contagemPublica, type Flags, MINIMO_PARA_EXIBIR, type Momento } from "./fluxo"
 import { Moldura } from "./moldura"
@@ -11,6 +21,19 @@ import { cidadePorNome, INTERESSES, perguntasDoMomento, sugerirGrupos } from "./
 const base = import.meta.env.BASE_URL
 
 const maiuscula = (texto: string): string => texto.charAt(0).toUpperCase() + texto.slice(1)
+
+/** Item de lista com ícone: título forte e uma linha de apoio. */
+function Item({ icone, titulo, texto }: { icone: NomeDeIcone; titulo: string; texto: string }) {
+  return (
+    <li>
+      <Icone nome={icone} />
+      <span>
+        <strong>{titulo}</strong>
+        {texto}
+      </span>
+    </li>
+  )
+}
 
 // ── Espera e resultado da verificação ───────────────────────────────────────
 export function Verificacao({ progresso, concluir }: PropsDaEtapa) {
@@ -26,6 +49,7 @@ export function Verificacao({ progresso, concluir }: PropsDaEtapa) {
             ? "Não é com você. Envie um documento agora ou espere: tentamos de novo e avisamos."
             : "Acontece com quem entrou há pouco, pensionistas recentes e alguns veteranos."
         }
+        ilustracao="vinculo"
         aoEnviar={() => concluir()}
         acao={{ rotulo: "Enviar documento" }}
         secundaria={
@@ -35,12 +59,11 @@ export function Verificacao({ progresso, concluir }: PropsDaEtapa) {
         }
       >
         {esperando ? (
-          <p className="f01-confirmacao" role="status">
-            <Icone nome="check_circle" preenchido />
+          <Nota icone="check_circle" role="status">
             Tentamos de novo a cada 15 minutos e avisamos por e-mail. Pode fechar o app.
-          </p>
+          </Nota>
         ) : null}
-        <ul className="f01-lista">
+        <ul className="f01-marcadores">
           <li>Vale identidade militar, contracheque ou documento de pensão.</li>
           <li>Uma pessoa da equipe confere em até 2 dias úteis.</li>
         </ul>
@@ -51,12 +74,15 @@ export function Verificacao({ progresso, concluir }: PropsDaEtapa) {
     <Moldura
       titulo="Confirmando seu vínculo"
       apoio="Leva menos de um minuto. Pode fechar o app: avisamos por e-mail."
+      ilustracao="vinculo"
     >
       <div className="f01-espera" role="status" aria-live="polite">
-        <span className="f01-espera-anel" aria-hidden="true" />
         <ol className="f01-linha-do-tempo">
           <li data-estado="feito">CPF recebido</li>
-          <li data-estado="atual">Conferindo no Portal da Transparência</li>
+          <li data-estado="atual">
+            <span className="pc-girando" aria-hidden="true" />
+            Conferindo no Portal da Transparência
+          </li>
           <li data-estado="futuro">Vínculo confirmado</li>
         </ol>
       </div>
@@ -78,8 +104,9 @@ export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
       <Moldura
         titulo="Documento em análise"
         apoio="Quando a equipe terminar, você continua daqui, de onde parou."
+        ilustracao="vinculo"
       >
-        <ol className="f01-linha-do-tempo f01-linha-do-tempo-solta">
+        <ol className="f01-linha-do-tempo">
           <li data-estado="feito">Documento enviado</li>
           <li data-estado="atual">Em análise, até 2 dias úteis</li>
           <li data-estado="futuro">Você entra na comunidade</li>
@@ -124,26 +151,16 @@ export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
       acao={{ rotulo: "Enviar para análise" }}
       secundaria={{ rotulo: "Voltar", aoTocar: voltar }}
     >
-      <label htmlFor="f01-arquivo" className="f01-arquivo" data-escolhido={arquivo ? "sim" : "nao"}>
-        <Icone nome={arquivo ? "check_circle" : "upload"} preenchido={arquivo !== null} />
-        <span>
-          <strong>{arquivo ? "Arquivo pronto" : "Escolher arquivo"}</strong>
-          {arquivo
-            ? `${arquivo.type === "application/pdf" ? "PDF" : "Imagem"}, ${tamanho}`
-            : "PDF, JPG ou PNG, até 10 MB"}
-        </span>
-      </label>
-      <input
-        id="f01-arquivo"
-        type="file"
-        accept="application/pdf,image/jpeg,image/png"
-        className="sr-only"
-        aria-describedby="f01-arquivo-erro"
-        onChange={(evento) => escolher(evento.target.files?.[0])}
+      <CampoDeArquivo
+        rotulo="Escolher arquivo"
+        dica="PDF, JPG ou PNG, até 10 MB"
+        escolhido={
+          arquivo ? `${arquivo.type === "application/pdf" ? "PDF" : "Imagem"}, ${tamanho}` : null
+        }
+        aceitar="application/pdf,image/jpeg,image/png"
+        erro={problema}
+        aoEscolher={escolher}
       />
-      <p id="f01-arquivo-erro" className="f01-erro" aria-live="polite">
-        {problema}
-      </p>
     </Moldura>
   )
 }
@@ -181,43 +198,37 @@ export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
       apoio={
         comGente ? null : "Faça a primeira pergunta. Quem chegar depois já encontra a resposta."
       }
+      ilustracao="encontro"
       aoEnviar={() => concluir()}
       acao={{ rotulo: "Continuar" }}
     >
       <p className="f01-selo">
-        <Icone nome="verified_user" preenchido /> Vínculo confirmado
+        <Estado icone="verified_user">Vínculo confirmado</Estado>
       </p>
       {perguntas.length > 0 ? (
-        <section aria-labelledby="f01-perguntas">
-          <h2 id="f01-perguntas" className="f01-secao">
+        <section aria-labelledby="f01-perguntas" className="f01-bloco">
+          <h2 id="f01-perguntas" className="pc-subtitulo">
             {textos.secao}
           </h2>
-          <ul className="f01-linhas">
+          <ul className="f01-itens f01-itens-lista">
             {perguntas.map((pergunta) => (
-              <li key={pergunta.texto}>
-                <Icone nome="forum" />
-                <span>
-                  <strong>{pergunta.texto}</strong>
-                  {pergunta.respostas} respostas
-                </span>
-              </li>
+              <Item
+                key={pergunta.texto}
+                icone="forum"
+                titulo={pergunta.texto}
+                texto={`${pergunta.respostas} respostas`}
+              />
             ))}
           </ul>
         </section>
       ) : null}
       {comGente && cidade?.encontro ? (
-        <section aria-labelledby="f01-encontro">
-          <h2 id="f01-encontro" className="f01-secao">
+        <section aria-labelledby="f01-encontro" className="f01-bloco">
+          <h2 id="f01-encontro" className="pc-subtitulo">
             Para conhecer gente
           </h2>
-          <ul className="f01-linhas">
-            <li>
-              <Icone nome="event" />
-              <span>
-                <strong>{cidade.encontro.titulo}</strong>
-                {cidade.encontro.quando}
-              </span>
-            </li>
+          <ul className="f01-itens f01-itens-lista">
+            <Item icone="event" titulo={cidade.encontro.titulo} texto={cidade.encontro.quando} />
           </ul>
         </section>
       ) : null}
@@ -226,15 +237,6 @@ export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
 }
 
 // ── Interesses e grupos, na mesma tela ──────────────────────────────────────
-const iniciais = (nome: string): string =>
-  nome
-    .split(" ")
-    .filter((parte) => parte.length > 2)
-    .slice(0, 2)
-    .map((parte) => parte.charAt(0))
-    .join("")
-    .toUpperCase()
-
 const membrosDoGrupo = (total: number): string => {
   const faixa = contagemPublica(total)
   return faixa ? `${maiuscula(faixa)} membros` : "Grupo novo"
@@ -260,75 +262,72 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
       aoEnviar={() => concluir({ interesses, grupos })}
       acao={{ rotulo }}
     >
-      <ul className="f01-chips" aria-label="Assuntos">
-        {INTERESSES.map((interesse) => {
-          const marcado = interesses.includes(interesse)
-          return (
-            <li key={interesse}>
-              <button
-                type="button"
-                className="f01-chip"
-                aria-pressed={marcado}
-                onClick={() => setInteresses((atual) => alternar(atual, interesse))}
-              >
-                {marcado ? <Icone nome="check" /> : null}
-                {interesse}
-              </button>
-            </li>
-          )
-        })}
+      <ul className="pc-chips" aria-label="Assuntos">
+        {INTERESSES.map((interesse) => (
+          <li key={interesse}>
+            <Chip
+              selecionado={interesses.includes(interesse)}
+              onClick={() => setInteresses((atual) => alternar(atual, interesse))}
+            >
+              {interesse}
+            </Chip>
+          </li>
+        ))}
       </ul>
-      <h2 className="f01-secao">Grupos para você</h2>
-      <ul className="f01-grupos" aria-live="polite">
-        {sugestoes.map(({ grupo, motivo }, posicao) => {
-          const entrou = grupos.includes(grupo.id)
-          return (
-            <li key={grupo.id} className="f01-grupo">
-              <span className="f01-grupo-marca" data-cor={posicao % 4} aria-hidden="true">
-                {iniciais(grupo.nome)}
-              </span>
-              <span className="f01-grupo-texto">
-                <strong>{grupo.nome}</strong>
-                <span>{membrosDoGrupo(grupo.membros)}</span>
-                <span className="f01-grupo-motivo">{motivo}</span>
-              </span>
-              <Button
-                type="button"
-                size="lg"
-                variant={entrou ? "secondary" : "outline"}
-                className="f01-grupo-botao"
-                aria-pressed={entrou}
-                aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
-                onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
-              >
-                {entrou ? <Icone nome="check" /> : null}
-                {entrou ? "Entrou" : "Entrar"}
-              </Button>
-            </li>
-          )
-        })}
-      </ul>
+      <section aria-labelledby="f01-grupos-titulo" className="f01-bloco">
+        <h2 id="f01-grupos-titulo" className="pc-subtitulo">
+          Grupos para você
+        </h2>
+        <ul className="pc-lista f01-grupos" aria-live="polite">
+          {sugestoes.map(({ grupo, motivo }) => {
+            const entrou = grupos.includes(grupo.id)
+            return (
+              <li key={grupo.id} className="f01-grupo">
+                <Selo nome={grupo.selo} />
+                <span className="pc-linha-texto">
+                  <span className="pc-linha-titulo">{grupo.nome}</span>
+                  <span className="pc-apoio">{membrosDoGrupo(grupo.membros)}</span>
+                  <span className="pc-miudo">{motivo}</span>
+                </span>
+                <Botao
+                  compacto
+                  aria-pressed={entrou}
+                  aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
+                  onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
+                >
+                  {entrou ? <Icone nome="check" /> : null}
+                  {entrou ? "Entrou" : "Entrar"}
+                </Botao>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
     </Moldura>
   )
 }
 
 // ── O combinado: regras de convivência ──────────────────────────────────────
 // Do Código de Conduta (`src/telas/Conduta.tsx`), em quatro frases.
-const REGRAS: readonly { titulo: string; texto: string }[] = [
+const REGRAS: readonly { icone: NomeDeIcone; titulo: string; texto: string }[] = [
   {
+    icone: "volunteer_activism",
     titulo: "Ajude como gostaria de ser ajudado",
     texto: "Responda com o que você sabe de verdade. Indique quem você já usou.",
   },
   {
+    icone: "forum",
     titulo: "Discorde sem ofender",
     texto: "Educação sempre. Ofender, ameaçar ou perseguir tira a pessoa da comunidade.",
   },
   {
+    icone: "shield_person",
     titulo: "Proteja quem está aqui",
     texto:
       "Nada de endereço, telefone, documento ou foto de outra pessoa sem permissão. Crianças também.",
   },
   {
+    icone: "groups",
     titulo: "Todos são bem-vindos",
     texto: "Preconceito de origem, cor, religião, gênero, orientação ou família não tem vez.",
   },
@@ -337,15 +336,12 @@ const REGRAS: readonly { titulo: string; texto: string }[] = [
 export function Combinado({ concluir }: PropsDaEtapa) {
   return (
     <Moldura titulo="O combinado" aoEnviar={() => concluir()} acao={{ rotulo: "Entendi" }}>
-      <ul className="f01-regras">
+      <ul className="f01-itens">
         {REGRAS.map((regra) => (
-          <li key={regra.titulo}>
-            <strong>{regra.titulo}</strong>
-            {regra.texto}
-          </li>
+          <Item key={regra.titulo} icone={regra.icone} titulo={regra.titulo} texto={regra.texto} />
         ))}
       </ul>
-      <p className="f01-ajuda">
+      <p className="pc-apoio">
         Viu algo fora do combinado? Use Denunciar no menu do conteúdo.{" "}
         <a href={`${base}conduta`} target="_blank" rel="noopener noreferrer">
           Código de Conduta
@@ -431,10 +427,10 @@ export function Avisos({ concluir }: PropsDaEtapa) {
 }
 
 // ── Início: boas-vindas e primeiros passos ──────────────────────────────────
-const FOTO_DO_MOMENTO: Record<Momento, string> = {
-  chegando: "demo/chegada.webp",
-  morando: "demo/moro-aqui.webp",
-  saindo: "demo/saindo.webp",
+const CENA_DO_MOMENTO: Record<Momento, NomeDaIlustracao> = {
+  chegando: "chegando",
+  morando: "morando",
+  saindo: "saindo",
 }
 
 const FRASE_DO_MOMENTO: Record<Momento, string> = {
@@ -502,49 +498,55 @@ export function InicioComPrimeirosPassos({
 
   return (
     <main className="f01-inicio">
-      <header className="f01-boas-vindas" data-momento={momento}>
-        <img src={`${base}${FOTO_DO_MOMENTO[momento]}`} alt="" />
+      <header className="f01-boas-vindas">
+        <Ilustracao
+          nome={CENA_DO_MOMENTO[momento]}
+          proporcao="2 / 1"
+          className="f01-boas-vindas-cena"
+          prioridade
+        />
         <div className="f01-boas-vindas-texto">
-          <p className="f01-boas-vindas-cidade">
+          <p className="pc-miudo f01-boas-vindas-cidade">
             <Icone nome="location_on" /> {cidade?.nome ?? "Sua cidade"}
           </p>
-          <h1 className="f01-boas-vindas-titulo" tabIndex={-1}>
+          <h1 className="pc-destaque" tabIndex={-1}>
             Boas-vindas, {progresso.nome?.nome ?? ""}.
           </h1>
-          <p>{FRASE_DO_MOMENTO[momento]}</p>
+          <p className="f01-apoio">{FRASE_DO_MOMENTO[momento]}</p>
         </div>
       </header>
-      <section className="f01-passos" aria-labelledby="f01-passos-titulo">
+      <section className="pc-cartao f01-passos" aria-labelledby="f01-passos-titulo">
         <div className="f01-passos-cabeca">
-          <h2 id="f01-passos-titulo">Primeiros passos</h2>
-          <span>
+          <h2 id="f01-passos-titulo" className="pc-subtitulo">
+            Primeiros passos
+          </h2>
+          <span className="pc-apoio">
             {concluidos} de {passos.length}
           </span>
         </div>
-        <div
-          className="f01-progresso"
-          role="progressbar"
-          aria-label="Primeiros passos concluídos"
-          aria-valuemin={0}
-          aria-valuemax={passos.length}
-          aria-valuenow={concluidos}
-        >
-          <span style={{ transform: `scaleX(${concluidos / passos.length})` }} />
-        </div>
-        <ul className="f01-passos-lista">
+        <Progresso
+          fracao={concluidos / passos.length}
+          rotulo="Primeiros passos concluídos"
+          maximo={passos.length}
+          valor={concluidos}
+        />
+        <ul className="pc-lista f01-passos-lista">
           {passos.map((passo) => (
             <li key={passo.id} data-feito={passo.feito ? "sim" : "nao"}>
               <button
                 type="button"
+                className="pc-linha"
                 disabled={passo.feito}
                 onClick={() => setFeitos((atual) => new Set(atual).add(passo.id))}
               >
                 <Icone nome={passo.feito ? "check_circle" : passo.icone} preenchido={passo.feito} />
-                <span className="f01-passo-titulo">{passo.titulo}</span>
+                <span className="pc-linha-titulo">{passo.titulo}</span>
                 {passo.feito ? (
                   <span className="sr-only">, feito</span>
                 ) : (
-                  <Icone nome="chevron_right" />
+                  <span className="pc-linha-acessorio">
+                    <Icone nome="chevron_right" />
+                  </span>
                 )}
               </button>
             </li>
@@ -552,35 +554,27 @@ export function InicioComPrimeirosPassos({
         </ul>
       </section>
       {cidade?.encontro || primeiraPergunta ? (
-        <section aria-labelledby="f01-acontecendo">
-          <h2 id="f01-acontecendo" className="f01-secao">
+        <section aria-labelledby="f01-acontecendo" className="f01-bloco">
+          <h2 id="f01-acontecendo" className="pc-subtitulo">
             Acontecendo em {cidade?.nome}
           </h2>
-          <ul className="f01-linhas">
+          <ul className="f01-itens f01-itens-lista">
             {cidade?.encontro ? (
-              <li>
-                <Icone nome="event" />
-                <span>
-                  <strong>{cidade.encontro.titulo}</strong>
-                  {cidade.encontro.quando}
-                </span>
-              </li>
+              <Item icone="event" titulo={cidade.encontro.titulo} texto={cidade.encontro.quando} />
             ) : null}
             {primeiraPergunta ? (
-              <li>
-                <Icone nome="forum" />
-                <span>
-                  <strong>{primeiraPergunta.texto}</strong>
-                  {primeiraPergunta.respostas} respostas
-                </span>
-              </li>
+              <Item
+                icone="forum"
+                titulo={primeiraPergunta.texto}
+                texto={`${primeiraPergunta.respostas} respostas`}
+              />
             ) : null}
           </ul>
         </section>
       ) : null}
-      <Button type="button" variant="ghost" className="f01-recomecar" onClick={aoRecomecar}>
-        <Icone nome="refresh" /> Recomeçar a prévia
-      </Button>
+      <Botao tom="texto" icone="refresh" className="f01-recomecar" onClick={aoRecomecar}>
+        Recomeçar a prévia
+      </Botao>
     </main>
   )
 }

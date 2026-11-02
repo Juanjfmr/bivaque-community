@@ -4,6 +4,8 @@
  * até 4 fotos na publicação; resposta a comentário em um nível.
  */
 
+import type { NomeDoSelo } from "@/src/pecas/pecas"
+
 export const EU = { id: "eu", nome: "Ana Souza", curto: "Ana S." } as const
 
 export type Privacidade = "aberto" | "fechado"
@@ -16,7 +18,9 @@ export type Grupo = {
   fixado: string | null
   privacidade: Privacidade
   membros: number
+  /** Capa enviada pela moderação; sem ela, o grupo aparece pelo selo. */
   capa: string | null
+  selo: NomeDoSelo
   /** Motivo da sugestão para quem ainda não está no grupo. */
   motivo: string
   participa: boolean
@@ -73,7 +77,8 @@ export const GRUPOS: readonly Grupo[] = [
     fixado: "Fotos de crianças só com autorização dos pais.",
     privacidade: "aberto",
     membros: 540,
-    capa: "demo/mesa.webp",
+    capa: null,
+    selo: "familias",
     motivo: "Porque você marcou Filhos pequenos",
     participa: false,
     novas: 0,
@@ -86,7 +91,8 @@ export const GRUPOS: readonly Grupo[] = [
     fixado: null,
     privacidade: "aberto",
     membros: 184,
-    capa: "demo/chegada.webp",
+    capa: null,
+    selo: "chegadas",
     motivo: "Para quem está chegando",
     participa: true,
     novas: 3,
@@ -99,7 +105,8 @@ export const GRUPOS: readonly Grupo[] = [
     fixado: null,
     privacidade: "aberto",
     membros: 97,
-    capa: "demo/pets.jpg",
+    capa: null,
+    selo: "pets",
     motivo: "Porque você marcou Pets",
     participa: false,
     novas: 0,
@@ -113,6 +120,7 @@ export const GRUPOS: readonly Grupo[] = [
     privacidade: "fechado",
     membros: 301,
     capa: null,
+    selo: "conjuges",
     motivo: "Popular em Manaus",
     participa: false,
     novas: 0,
@@ -126,6 +134,7 @@ export const GRUPOS: readonly Grupo[] = [
     privacidade: "aberto",
     membros: 73,
     capa: null,
+    selo: "corrida",
     motivo: "Popular em Manaus",
     participa: false,
     novas: 0,

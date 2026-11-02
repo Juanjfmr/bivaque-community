@@ -42,6 +42,10 @@ if (import.meta.env.DEV && caminho.startsWith(`${prefixo}f01`)) {
   void import("@/src/previa-grupos/PreviaGrupos").then(({ PreviaGrupos }) =>
     createRoot(elemento).render(<PreviaGrupos />),
   )
+} else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}pecas`)) {
+  void import("@/src/pecas/GaleriaDePecas").then(({ GaleriaDePecas }) =>
+    createRoot(elemento).render(<GaleriaDePecas />),
+  )
 } else {
   createRoot(elemento).render(<Aplicacao />)
 }

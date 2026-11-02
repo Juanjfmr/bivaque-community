@@ -1,23 +1,43 @@
 import { type FormEvent, useEffect, useRef, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
-import { Button } from "@/components/ui/button"
-import { type Comentario, EU, ROTULO_DO_TIPO, type Tipo } from "./dados"
-import { Avatar, Fotos, type PropsDaTela, Topo } from "./telas-grupos"
+import {
+  AreaDeTexto,
+  Avatar,
+  BarraDeAcao,
+  Botao,
+  BotaoDeIcone,
+  Chip,
+  Compositor,
+  Estado,
+  Nota,
+  Topo,
+} from "@/src/pecas/pecas"
+import { type Comentario, EU, type Tipo } from "./dados"
+import { novoId } from "./estado"
+import { Autoria, Fotos, type PropsDaTela, useFocoNoTitulo } from "./telas-grupos"
 
 // ── Detalhe da publicação ───────────────────────────────────────────────────
-export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & { id: string }) {
+export function PublicacaoTela({
+  estado,
+  despachar,
+  voltar,
+  avisar,
+  id,
+}: PropsDaTela & { id: string }) {
   const [texto, setTexto] = useState("")
   const [respondendo, setRespondendo] = useState<Comentario | null>(null)
   const [recemEnviado, setRecemEnviado] = useState<number>(0)
   const campo = useRef<HTMLTextAreaElement>(null)
-  const titulo = useRef<HTMLHeadingElement>(null)
+  const titulo = useFocoNoTitulo()
   const publicacao = estado.publicacoes.find((p) => p.id === id)
   const grupo = estado.grupos.find((g) => g.id === publicacao?.grupo)
+  const existiaAoAbrir = useRef(publicacao !== undefined)
+  const sumiu = publicacao === undefined
 
+  // Desfazer a publicação com ela aberta: a tela volta ao grupo, sem ficar vazia.
   useEffect(() => {
-    titulo.current?.focus()
-    window.scrollTo({ top: 0 })
-  }, [])
+    if (sumiu && existiaAoAbrir.current) voltar()
+  }, [sumiu, voltar])
 
   // Depois de enviar, leva o comentário novo para a vista.
   useEffect(() => {
@@ -25,7 +45,22 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
     document.querySelector('[data-recente="sim"]')?.scrollIntoView({ block: "center" })
   }, [recemEnviado])
 
-  if (publicacao === undefined || grupo === undefined) return null
+  if (publicacao === undefined || grupo === undefined) {
+    return (
+      <div className="pg-detalhe">
+        <Topo aoVoltar={voltar} />
+        <main className="pg-tela">
+          <h1 ref={titulo} tabIndex={-1} className="pc-titulo">
+            Esta publicação não está mais aqui
+          </h1>
+          <p className="pc-apoio">Quem publicou apagou. O resto do grupo continua igual.</p>
+          <Botao className="pg-voltar" onClick={voltar}>
+            Voltar
+          </Botao>
+        </main>
+      </div>
+    )
+  }
   const minha = publicacao.autor === EU.curto
   const pergunta = publicacao.tipo === "pergunta"
   const resolveu = publicacao.comentarios.find((item) => item.id === publicacao.resolvida)
@@ -45,7 +80,19 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
     setRecemEnviado((n) => n + 1)
   }
 
+  const salvar = () => {
+    if (publicacao.salva) {
+      // O aviso novo substitui o "salva", e com ele some o Desfazer antigo.
+      despachar({ tipo: "salvar", publicacao: id, valor: false })
+      avisar("Tirada dos salvos.")
+      return
+    }
+    despachar({ tipo: "salvar", publicacao: id, valor: true })
+    avisar("Publicação salva.", () => despachar({ tipo: "salvar", publicacao: id, valor: false }))
+  }
+
   const ultimoMeu = [...publicacao.comentarios].reverse().find((item) => item.autor === EU.curto)
+  const total = publicacao.comentarios.length
 
   return (
     <div className="pg-detalhe">
@@ -53,58 +100,47 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
         titulo={grupo.nome}
         aoVoltar={voltar}
         acao={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-lg"
-            aria-label={publicacao.salva ? "Remover dos salvos" : "Salvar publicação"}
+          <BotaoDeIcone
+            rotulo={publicacao.salva ? "Remover dos salvos" : "Salvar publicação"}
+            nome={publicacao.salva ? "bookmark" : "bookmark_border"}
+            preenchido={publicacao.salva}
             aria-pressed={publicacao.salva}
-            onClick={() => despachar({ tipo: "salvar", publicacao: id })}
-          >
-            <Icone nome={publicacao.salva ? "bookmark" : "bookmark_border"} />
-          </Button>
+            onClick={salvar}
+          />
         }
       />
       <main className="pg-tela pg-detalhe-corpo">
-        <header className="pg-autor">
-          <Avatar nome={publicacao.autor} />
-          <span>
-            <strong>{publicacao.autor}</strong>
-            {publicacao.quando}
-          </span>
-          <span className="pg-tipo" data-tipo={publicacao.tipo}>
-            {ROTULO_DO_TIPO[publicacao.tipo]}
-          </span>
-        </header>
+        <Autoria publicacao={publicacao} />
         <h1 ref={titulo} tabIndex={-1} className="pg-detalhe-texto">
           {publicacao.texto}
         </h1>
         <Fotos fotos={publicacao.fotos} rotulo={`Publicação de ${publicacao.autor}`} />
         {resolveu ? (
-          <a className="pg-resolvida pg-resolvida-link" href={`#comentario-${resolveu.id}`}>
+          <a className="pc-estado" href={`#comentario-${resolveu.id}`}>
             <Icone nome="check_circle" preenchido /> Resolvida pela resposta de {resolveu.autor}
           </a>
         ) : null}
         <footer className="pg-acoes">
-          <button
-            type="button"
+          <Botao
+            tom="texto"
+            compacto
+            icone="thumb_up"
             className="pg-acao"
             aria-pressed={publicacao.marcouUtil}
             onClick={() => despachar({ tipo: "util", publicacao: id })}
           >
-            <Icone nome="thumb_up" preenchido={publicacao.marcouUtil} />
             Útil{publicacao.uteis > 0 ? ` ${publicacao.uteis}` : ""}
-          </button>
+          </Botao>
         </footer>
 
         <section aria-labelledby="pg-comentarios" className="pg-comentarios">
-          <h2 id="pg-comentarios" className="pg-secao">
-            {publicacao.comentarios.length === 0
+          <h2 id="pg-comentarios" className="pc-subtitulo">
+            {total === 0
               ? "Ninguém comentou ainda"
-              : `${publicacao.comentarios.length} ${publicacao.comentarios.length === 1 ? "comentário" : "comentários"}`}
+              : `${total} ${total === 1 ? "comentário" : "comentários"}`}
           </h2>
-          {publicacao.comentarios.length === 0 ? (
-            <p className="pg-vazio">
+          {total === 0 ? (
+            <p className="pc-apoio">
               {pergunta
                 ? "Sabe a resposta? Seja a primeira pessoa a ajudar."
                 : "Comece a conversa."}
@@ -122,24 +158,22 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
                   data-resolveu={ehResolucao ? "sim" : "nao"}
                   data-recente={comentario.id === ultimoMeu?.id && recemEnviado > 0 ? "sim" : "nao"}
                 >
-                  <Avatar nome={comentario.autor} />
+                  <Avatar nome={comentario.autor} tamanho={comentario.respondeA ? 32 : 40} />
                   <div className="pg-comentario-corpo">
                     <p className="pg-comentario-cabeca">
-                      <strong>{comentario.autor}</strong> {comentario.quando}
+                      <strong>{comentario.autor}</strong>
+                      <span className="pc-miudo">{comentario.quando}</span>
                     </p>
-                    {ehResolucao ? (
-                      <p className="pg-selo-resolveu">
-                        <Icone nome="check_circle" preenchido /> Resolveu
-                      </p>
-                    ) : null}
+                    {ehResolucao ? <Estado>Resolveu</Estado> : null}
                     <p className="pg-comentario-texto">
                       {comentario.para ? <span className="pg-para">{comentario.para} </span> : null}
                       {comentario.texto}
                     </p>
                     <div className="pg-comentario-acoes">
-                      <button
-                        type="button"
-                        className="pg-acao pg-acao-miuda"
+                      <Botao
+                        tom="texto"
+                        compacto
+                        className="pg-acao"
                         aria-pressed={comentario.marcouUtil}
                         onClick={() =>
                           despachar({
@@ -150,19 +184,21 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
                         }
                       >
                         Útil{comentario.uteis > 0 ? ` ${comentario.uteis}` : ""}
-                      </button>
-                      <button
-                        type="button"
-                        className="pg-acao pg-acao-miuda"
+                      </Botao>
+                      <Botao
+                        tom="texto"
+                        compacto
+                        className="pg-acao"
                         aria-label={`Responder a ${comentario.autor}`}
                         onClick={() => responder(comentario)}
                       >
                         Responder
-                      </button>
+                      </Botao>
                       {minha && pergunta && comentario.autor !== EU.curto ? (
-                        <button
-                          type="button"
-                          className="pg-acao pg-acao-miuda"
+                        <Botao
+                          tom="texto"
+                          compacto
+                          className="pg-acao"
                           aria-pressed={ehResolucao}
                           onClick={() =>
                             despachar({
@@ -173,7 +209,7 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
                           }
                         >
                           {ehResolucao ? "Desmarcar" : "Marcar que resolveu"}
-                        </button>
+                        </Botao>
                       ) : null}
                     </div>
                   </div>
@@ -187,37 +223,25 @@ export function PublicacaoTela({ estado, despachar, voltar, id }: PropsDaTela & 
       <form className="pg-barra-comentar" onSubmit={enviar}>
         {respondendo ? (
           <p className="pg-respondendo">
-            Respondendo a <strong>{respondendo.autor}</strong>
-            <button
-              type="button"
-              aria-label="Cancelar resposta"
+            <span>
+              Respondendo a <strong>{respondendo.autor}</strong>
+            </span>
+            <BotaoDeIcone
+              rotulo="Cancelar resposta"
+              nome="close"
               onClick={() => setRespondendo(null)}
-            >
-              <Icone nome="close" />
-            </button>
+            />
           </p>
         ) : null}
         <div className="pg-barra-comentar-linha">
-          <label htmlFor="pg-comentar" className="sr-only">
-            {respondendo ? `Responder a ${respondendo.autor}` : "Escrever comentário"}
-          </label>
-          <textarea
-            id="pg-comentar"
-            ref={campo}
-            rows={1}
+          <Compositor
+            rotulo={respondendo ? `Responder a ${respondendo.autor}` : "Escrever comentário"}
+            rotuloDoEnvio="Enviar comentário"
+            valor={texto}
+            aoMudar={setTexto}
+            campoRef={campo}
             placeholder={respondendo ? `Responder a ${respondendo.autor}` : "Escreva um comentário"}
-            value={texto}
-            onChange={(evento) => setTexto(evento.target.value)}
           />
-          <Button
-            type="submit"
-            size="icon-lg"
-            className="pg-enviar"
-            aria-label="Enviar comentário"
-            disabled={texto.trim() === ""}
-          >
-            <Icone nome="send" />
-          </Button>
         </div>
       </form>
     </div>
@@ -236,6 +260,7 @@ export function Escrever({
   estado,
   despachar,
   voltar,
+  avisar,
   grupo: idDoGrupo,
   textoInicial,
 }: PropsDaTela & { grupo: string; textoInicial: string }) {
@@ -243,12 +268,8 @@ export function Escrever({
   const [texto, setTexto] = useState(textoInicial)
   const [fotos, setFotos] = useState<string[]>([])
   const [problema, setProblema] = useState<string | null>(null)
-  const titulo = useRef<HTMLHeadingElement>(null)
+  const titulo = useFocoNoTitulo()
   const grupo = estado.grupos.find((g) => g.id === idDoGrupo)
-
-  useEffect(() => {
-    titulo.current?.focus()
-  }, [])
 
   if (grupo === undefined) return null
   const dica = TIPOS.find((item) => item.id === tipo)?.dica ?? ""
@@ -272,13 +293,18 @@ export function Escrever({
       setProblema("Escreva algo antes de publicar.")
       return
     }
+    const id = novoId("p")
     despachar({
       tipo: "publicar",
       grupo: idDoGrupo,
       tipoDaPublicacao: tipo,
       texto: texto.trim(),
       fotos,
+      id,
     })
+    avisar("Publicado. Os membros do grupo já podem ver.", () =>
+      despachar({ tipo: "apagar", publicacao: id }),
+    )
     voltar()
   }
 
@@ -286,33 +312,23 @@ export function Escrever({
     <form className="pg-escrever-tela" onSubmit={publicar} noValidate>
       <Topo titulo="Nova publicação" aoVoltar={voltar} />
       <main className="pg-tela">
-        <h1 ref={titulo} tabIndex={-1} className="pg-titulo pg-titulo-menor">
+        <h1 ref={titulo} tabIndex={-1} className="pc-titulo">
           Em {grupo.nome}
         </h1>
-        <fieldset className="pg-tipos">
+        <fieldset className="pc-chips">
           <legend className="sr-only">Tipo de publicação</legend>
           {TIPOS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="pg-chip"
-              aria-pressed={tipo === item.id}
-              onClick={() => setTipo(item.id)}
-            >
+            <Chip key={item.id} selecionado={tipo === item.id} onClick={() => setTipo(item.id)}>
               {item.rotulo}
-            </button>
+            </Chip>
           ))}
         </fieldset>
-        <label htmlFor="pg-texto" className="sr-only">
-          Texto da publicação
-        </label>
-        <textarea
-          id="pg-texto"
-          className="pg-texto"
+        <AreaDeTexto
+          rotulo="Texto da publicação"
           rows={6}
           placeholder={dica}
           value={texto}
-          aria-describedby="pg-escrever-erro"
+          erro={problema}
           onChange={(evento) => {
             setTexto(evento.target.value)
             setProblema(null)
@@ -323,28 +339,30 @@ export function Escrever({
             {fotos.map((foto, indice) => (
               <li key={foto}>
                 <img src={foto} alt={`Foto ${indice + 1}`} />
-                <button
-                  type="button"
-                  aria-label={`Tirar a foto ${indice + 1}`}
+                <BotaoDeIcone
+                  rotulo={`Tirar a foto ${indice + 1}`}
+                  nome="close"
+                  tom="sobre-foto"
+                  compacto
+                  className="pg-anexo-tirar"
                   onClick={() => setFotos((atuais) => atuais.filter((item) => item !== foto))}
-                >
-                  <Icone nome="close" />
-                </button>
+                />
               </li>
             ))}
           </ul>
         ) : null}
         {fotos.length > 0 && regraDeFoto ? (
-          <p className="pg-regra-foto">
-            <Icone nome="info" />
+          <Nota icone="info">
             Neste grupo: {regraDeFoto.charAt(0).toLowerCase() + regraDeFoto.slice(1)}
-          </p>
+          </Nota>
         ) : null}
-        <p id="pg-escrever-erro" className="pg-erro" aria-live="polite">
-          {problema}
-        </p>
         <div className="pg-escrever-ferramentas">
-          <label className="pg-anexar" data-cheio={fotos.length >= LIMITE_DE_FOTOS ? "sim" : "nao"}>
+          <label
+            className="pc-botao pg-anexar"
+            data-tom="contorno"
+            data-tamanho="compacto"
+            data-cheio={fotos.length >= LIMITE_DE_FOTOS ? "sim" : "nao"}
+          >
             <Icone nome="add_photo_alternate" />
             {fotos.length >= LIMITE_DE_FOTOS ? "4 de 4 fotos" : `Fotos (${fotos.length} de 4)`}
             <input
@@ -359,7 +377,7 @@ export function Escrever({
               }}
             />
           </label>
-          <p className="pg-quem-ve">
+          <p className="pc-miudo pg-quem-ve">
             <Icone nome={grupo.privacidade === "fechado" ? "lock" : "group"} />
             {grupo.privacidade === "fechado"
               ? "Só membros do grupo veem"
@@ -367,11 +385,11 @@ export function Escrever({
           </p>
         </div>
       </main>
-      <div className="pg-barra">
-        <Button type="submit" className="pg-botao">
+      <BarraDeAcao>
+        <Botao type="submit" tom="principal" cheio>
           Publicar
-        </Button>
-      </div>
+        </Botao>
+      </BarraDeAcao>
     </form>
   )
 }

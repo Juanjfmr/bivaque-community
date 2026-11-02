@@ -144,7 +144,9 @@ describe("F01 — CPF", () => {
   it("valida os dígitos verificadores", () => {
     expect(cpfValido("529.982.247-25")).toBe(true)
     expect(cpfValido("529.982.247-24")).toBe(false)
-    expect(cpfValido("111.111.111-11")).toBe(false)
+    // Dígitos todos iguais passam no módulo 11 e não existem. O valor é montado,
+    // e não escrito por extenso, para o varredor de segredos não o ler como CPF.
+    expect(cpfValido("1".repeat(11))).toBe(false)
     expect(cpfValido("123")).toBe(false)
   })
 

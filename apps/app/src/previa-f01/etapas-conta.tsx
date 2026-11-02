@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { IconeGoogle } from "@/components/bivaque/icone-google"
-import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { NomeDeIcone } from "@/lib/icones"
+import {
+  Botao,
+  Campo,
+  CampoDeCodigo,
+  CampoDeEscolha,
+  EscolhaIlustrada,
+  Ilustracao,
+  Nota,
+  type OpcaoIlustrada,
+} from "@/src/pecas/pecas"
 import {
   cpfValido,
   type Momento,
@@ -12,7 +20,7 @@ import {
   type Progresso,
   type Via,
 } from "./fluxo"
-import { Campo, Moldura } from "./moldura"
+import { Moldura } from "./moldura"
 import { CIDADES, type EventoDoFunil } from "./servidor-simulado"
 
 export type PropsDaEtapa = {
@@ -62,10 +70,9 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
 
   return (
     <div className="f01-porta">
-      <picture className="f01-porta-foto">
-        <source media="(min-width: 900px)" srcSet={`${base}demo/landing-hero.webp`} />
-        <img src={`${base}demo/landing-hero-retrato.webp`} alt="" />
-      </picture>
+      <div className="f01-porta-arte">
+        <Ilustracao nome="porta" proporcao="16 / 10" className="f01-porta-cena" prioridade />
+      </div>
       <div className="f01-porta-conteudo">
         <picture>
           <source
@@ -78,44 +85,42 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
             alt="Bivaque"
           />
         </picture>
-        <h1 className="f01-porta-titulo" tabIndex={-1}>
+        <h1 className="pc-destaque f01-porta-titulo" tabIndex={-1}>
           A comunidade militar da sua cidade.
         </h1>
-        <p className="f01-porta-apoio">
+        <p className="f01-apoio">
           Para militares das Forças federais, veteranos, pensionistas e famílias. Todo membro é
           verificado.
         </p>
         <div className="f01-porta-botoes">
-          <Button
-            type="button"
-            className="f01-botao f01-botao-apple"
-            aria-busy={conectando === "apple" ? "true" : undefined}
+          <Botao
+            cheio
+            className="f01-apple"
+            carregando={conectando === "apple"}
             disabled={conectando !== null}
             onClick={() => entrarCom("apple")}
           >
-            <IconeApple />
+            {conectando === "apple" ? null : <IconeApple />}
             {conectando === "apple" ? "Conectando…" : "Continuar com Apple"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="f01-botao"
-            aria-busy={conectando === "google" ? "true" : undefined}
+          </Botao>
+          <Botao
+            cheio
+            tom="contorno"
+            carregando={conectando === "google"}
             disabled={conectando !== null}
             onClick={() => entrarCom("google")}
           >
-            <IconeGoogle />
+            {conectando === "google" ? null : <IconeGoogle />}
             {conectando === "google" ? "Conectando…" : "Continuar com Google"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="f01-botao"
+          </Botao>
+          <Botao
+            cheio
+            tom="contorno"
             disabled={conectando !== null}
             onClick={() => concluir({ via: "email" })}
           >
             Continuar com e-mail
-          </Button>
+          </Botao>
         </div>
         {convite ? (
           <form
@@ -137,18 +142,18 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
                 setErroDoConvite(null)
               }}
               acessorio={
-                <Button type="submit" size="sm" className="f01-convite-usar">
+                <Botao type="submit" compacto>
                   Usar
-                </Button>
+                </Botao>
               }
             />
           </form>
         ) : (
-          <button type="button" className="f01-link" onClick={() => setConvite(true)}>
+          <button type="button" className="pc-link f01-link" onClick={() => setConvite(true)}>
             Tenho um código de convite
           </button>
         )}
-        <p className="f01-porta-rodape">
+        <p className="pc-miudo">
           Já tem conta? Use o mesmo botão de antes. <a href={`${base}ajuda`}>Ajuda</a>
         </p>
       </div>
@@ -200,7 +205,6 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
 
 // ── Código ──────────────────────────────────────────────────────────────────
 const ESPERA_DO_REENVIO = 60
-const CASAS = [0, 1, 2, 3, 4, 5] as const
 
 export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
   const [codigo, setCodigo] = useState("")
@@ -240,7 +244,7 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
       apoio={
         <>
           Enviado para <strong>{progresso.emailMascarado ?? "o seu e-mail"}</strong>.{" "}
-          <button type="button" className="f01-link-texto" onClick={voltar}>
+          <button type="button" className="pc-link" onClick={voltar}>
             Trocar
           </button>
         </>
@@ -248,51 +252,24 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
       aoEnviar={() => conferir(codigo)}
       acao={{ rotulo: conferindo ? "Conferindo…" : "Continuar", carregando: conferindo }}
     >
-      <div className="f01-casas" data-erro={problema ? "sim" : "nao"}>
-        {CASAS.map((indice) => (
-          <span
-            key={indice}
-            className="f01-casa"
-            data-atual={indice === codigo.length ? "sim" : "nao"}
-            aria-hidden="true"
-          >
-            {codigo[indice] ?? ""}
-          </span>
-        ))}
-        <input
-          className="f01-casas-entrada"
-          aria-label="Código de 6 números"
-          aria-invalid={problema ? "true" : undefined}
-          aria-describedby="f01-codigo-erro"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="[0-9]*"
-          maxLength={6}
-          value={codigo}
-          onChange={(evento) => {
-            const so = evento.target.value.replace(/\D/g, "").slice(0, 6)
-            setCodigo(so)
-            setProblema(null)
-            if (so.length === 6) conferir(so)
-          }}
-        />
-      </div>
-      <p id="f01-codigo-erro" className="f01-erro" aria-live="polite">
-        {problema ? (
-          <>
-            <Icone nome="error" />
-            {problema}
-          </>
-        ) : null}
-      </p>
-      <p className="f01-ajuda" aria-live="polite">
+      <CampoDeCodigo
+        rotulo="Código de 6 números"
+        valor={codigo}
+        erro={problema}
+        aoMudar={(digitos) => {
+          setCodigo(digitos)
+          setProblema(null)
+          if (digitos.length === 6) conferir(digitos)
+        }}
+      />
+      <p className="pc-apoio" aria-live="polite">
         {aviso ? `${aviso} ` : ""}
         {restante > 0 ? (
           `Reenviar em ${restante} s. Confira também o spam.`
         ) : (
           <button
             type="button"
-            className="f01-link-texto"
+            className="pc-link"
             onClick={() => {
               setRestante(ESPERA_DO_REENVIO)
               setAviso("Código novo enviado.")
@@ -332,7 +309,7 @@ export function Aceite({ concluir }: PropsDaEtapa) {
       aoEnviar={() => concluir()}
       acao={{ rotulo: "Aceito e continuo" }}
     >
-      <ul className="f01-promessas">
+      <ul className="f01-itens">
         {PROMESSAS.map((promessa) => (
           <li key={promessa.titulo}>
             <Icone nome={promessa.icone} />
@@ -343,7 +320,7 @@ export function Aceite({ concluir }: PropsDaEtapa) {
           </li>
         ))}
       </ul>
-      <p className="f01-ajuda f01-legal">
+      <p className="pc-miudo f01-legal">
         Ao continuar, você aceita a{" "}
         <a href={`${base}privacidade`} target="_blank" rel="noopener noreferrer">
           Política de Privacidade
@@ -401,7 +378,7 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
       <div className="f01-detalhe">
         <button
           type="button"
-          className="f01-detalhe-botao"
+          className="pc-link f01-detalhe-botao"
           aria-expanded={porque}
           aria-controls="f01-porque-cpf"
           onClick={() => setPorque((aberto) => !aberto)}
@@ -409,13 +386,15 @@ export function Cpf({ concluir, erro }: PropsDaEtapa) {
           Por que o CPF?
           <Icone nome="expand_more" />
         </button>
-        <div id="f01-porque-cpf" hidden={!porque} className="f01-detalhe-texto">
-          O Portal da Transparência diz só se há vínculo e a categoria (ativo, veterano ou
-          pensionista). Posto, unidade e salário não chegam até nós. Se não der certo pelo CPF, você
-          envia um documento.
+        <div id="f01-porque-cpf" hidden={!porque}>
+          <Nota icone="shield_person">
+            O Portal da Transparência diz só se há vínculo e a categoria (ativo, veterano ou
+            pensionista). Posto, unidade e salário não chegam até nós. Se não der certo pelo CPF,
+            você envia um documento.
+          </Nota>
         </div>
       </div>
-      <p className="f01-ajuda">Cônjuge ou dependente entra pelo convite de quem é militar.</p>
+      <p className="pc-apoio">Cônjuge ou dependente entra pelo convite de quem é militar.</p>
     </Moldura>
   )
 }
@@ -461,7 +440,7 @@ export function Nome({ progresso, concluir }: PropsDaEtapa) {
         />
       </div>
       {veioDaConta ? (
-        <p className="f01-ajuda">
+        <p className="pc-apoio">
           Veio da sua conta {progresso.via === "google" ? "Google" : "Apple"}. Pode corrigir.
         </p>
       ) : null}
@@ -470,11 +449,24 @@ export function Nome({ progresso, concluir }: PropsDaEtapa) {
 }
 
 // ── Cidade e momento ────────────────────────────────────────────────────────
-const MOMENTOS: readonly { id: Momento; titulo: string; icone: NomeDeIcone }[] = [
-  { id: "chegando", titulo: "Chegando", icone: "flight_land" },
-  { id: "morando", titulo: "Moro aqui", icone: "home" },
-  { id: "saindo", titulo: "Saindo", icone: "local_shipping" },
+const MOMENTOS: readonly OpcaoIlustrada<Momento>[] = [
+  { valor: "chegando", rotulo: "Chegando", selo: "chegadas" },
+  { valor: "morando", rotulo: "Moro aqui", selo: "morando" },
+  { valor: "saindo", rotulo: "Saindo", selo: "saindo" },
 ]
+
+const MESES_ANTES = 6
+const MESES_DEPOIS = 18
+
+/** Meses perto de hoje, para quem chega ou sai escolher sem calendário. */
+function mesesProximos(hoje = new Date()): readonly { valor: string; rotulo: string }[] {
+  const formato = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" })
+  return Array.from({ length: MESES_ANTES + MESES_DEPOIS + 1 }, (_, indice) => {
+    const data = new Date(hoje.getFullYear(), hoje.getMonth() - MESES_ANTES + indice, 1)
+    const valor = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`
+    return { valor, rotulo: formato.format(data) }
+  })
+}
 
 type ProblemaDaCidade = { campo: "cidade" | "momento"; texto: string } | null
 
@@ -496,67 +488,35 @@ export function CidadeEMomento({ progresso, concluir }: PropsDaEtapa) {
     concluir({ cidade, momento })
   }
 
-  const erroNaCidade = problema?.campo === "cidade"
-
   return (
     <Moldura titulo="Onde você está?" aoEnviar={enviar} acao={{ rotulo: "Continuar" }}>
-      <div className="f01-campo-bloco">
-        <div className="f01-campo f01-campo-select" data-erro={erroNaCidade ? "sim" : "nao"}>
-          <select
-            id="f01-cidade"
-            value={cidade}
-            data-vazio={cidade === "" ? "sim" : "nao"}
-            aria-invalid={erroNaCidade ? "true" : undefined}
-            aria-describedby="f01-cidade-erro"
-            onChange={(evento) => {
-              setCidade(evento.target.value)
-              setProblema(null)
-            }}
-          >
-            <option value="" disabled hidden />
-            {CIDADES.map((item) => (
-              <option key={item.nome} value={item.nome}>
-                {item.nome}, {item.uf}
-              </option>
-            ))}
-          </select>
-          <label htmlFor="f01-cidade">Cidade</label>
-          <span className="f01-campo-acessorio">
-            <Icone nome="expand_more" />
-          </span>
-        </div>
-        <p id="f01-cidade-erro" className="f01-erro" aria-live="polite">
-          {erroNaCidade ? problema.texto : null}
-        </p>
-      </div>
-      <fieldset className="f01-momento">
-        <legend>Seu momento na cidade</legend>
-        <RadioGroup
-          value={momento}
-          onValueChange={(valor) => {
-            setMomento(valor as Momento)
-            setProblema(null)
-          }}
-          className="f01-momentos"
-          aria-describedby="f01-momento-erro"
-        >
-          {MOMENTOS.map((item) => (
-            <label key={item.id} htmlFor={`f01-momento-${item.id}`} className="f01-momento-opcao">
-              <RadioGroupItem id={`f01-momento-${item.id}`} value={item.id} className="sr-only" />
-              <Icone nome={item.icone} />
-              {item.titulo}
-            </label>
-          ))}
-        </RadioGroup>
-        <p id="f01-momento-erro" className="f01-erro" aria-live="polite">
-          {problema?.campo === "momento" ? problema.texto : null}
-        </p>
-      </fieldset>
+      <CampoDeEscolha
+        rotulo="Cidade"
+        value={cidade}
+        erro={problema?.campo === "cidade" ? problema.texto : null}
+        opcoes={CIDADES.map((item) => ({ valor: item.nome, rotulo: `${item.nome}, ${item.uf}` }))}
+        onChange={(evento) => {
+          setCidade(evento.target.value)
+          setProblema(null)
+        }}
+      />
+      <EscolhaIlustrada
+        legenda="Seu momento na cidade"
+        nome="momento"
+        opcoes={MOMENTOS}
+        valor={momento}
+        erro={problema?.campo === "momento" ? problema.texto : null}
+        aoEscolher={(valor) => {
+          setMomento(valor)
+          setQuando("")
+          setProblema(null)
+        }}
+      />
       {momento === "chegando" || momento === "saindo" ? (
-        <Campo
+        <CampoDeEscolha
           rotulo={momento === "chegando" ? "Mês da chegada (opcional)" : "Mês da saída (opcional)"}
-          type="month"
           value={quando}
+          opcoes={mesesProximos()}
           onChange={(evento) => setQuando(evento.target.value)}
         />
       ) : null}

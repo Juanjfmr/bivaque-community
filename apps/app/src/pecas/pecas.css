@@ -1,0 +1,1194 @@
+/*
+ * As peças do Bivaque (rodada de identidade, 02/11/2026). Uma biblioteca só,
+ * usada por todas as prévias; a regra de cada decisão está em
+ * docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md.
+ *
+ * - Texto: sem-serifa em tudo; a serifa só no destaque (porta, boas-vindas).
+ * - Cor: Brasa só na ação principal da tela. Seleção é Grafite; link é tinta
+ *   sublinhada; o verde-ardósia (--success) só marca o que já está feito.
+ * - Forma: todo botão é pílula. Cartão 16, campo 12. Nada mais.
+ * - Ícone: 20 px ao lado de texto, 24 px sozinho, na cor do texto, com o peso
+ *   do texto ao lado (eixo wght da fonte).
+ */
+
+.pc {
+  --pc-tinta: var(--foreground);
+  --pc-suave: var(--muted-foreground);
+  --pc-linha: var(--border);
+  --pc-fundo: var(--background);
+  --pc-cartao: var(--card);
+  --pc-tom: color-mix(in srgb, var(--foreground) 7%, transparent);
+  --pc-tom-forte: color-mix(in srgb, var(--foreground) 13%, transparent);
+  --pc-acao: var(--brasa);
+  --pc-acao-texto: var(--brasa-foreground);
+  --pc-feito: var(--success);
+  --pc-perigo: var(--destructive);
+  --pc-papel: #f2f0eb;
+
+  --pc-fs-destaque: 30px;
+  --pc-fs-titulo: 24px;
+  --pc-fs-subtitulo: 17px;
+  --pc-fs-corpo: 16px;
+  --pc-fs-apoio: 14px;
+  --pc-fs-miudo: 13px;
+
+  --pc-raio-cartao: 16px;
+  --pc-raio-campo: 12px;
+  --pc-pilula: 999px;
+
+  --pc-toque: 120ms cubic-bezier(0.2, 0, 0, 1);
+  --pc-entrada: 280ms cubic-bezier(0.2, 0, 0, 1);
+
+  min-height: 100dvh;
+  background: var(--pc-fundo);
+  color: var(--pc-tinta);
+  font-family: var(--font-plain);
+  font-size: var(--pc-fs-corpo);
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pc :where(h1, h2, h3, p, ul, ol, dl, dd, fieldset, figure) {
+  margin: 0;
+  padding: 0;
+}
+
+.pc :where(ul, ol) {
+  list-style: none;
+}
+
+.pc :where(fieldset) {
+  min-width: 0;
+  border: 0;
+}
+
+/* O app põe serifa em todo h1; aqui a serifa é só do destaque. */
+.pc :where(h1, h2, h3, legend) {
+  font-family: inherit;
+}
+
+/* ── ícone: o peso acompanha o texto ao lado ───────────────────────────── */
+.pc .bv-icone {
+  font-size: 20px;
+  font-variation-settings:
+    "FILL" var(--pc-preenchido, 0),
+    "wght" var(--pc-peso, 300);
+}
+
+.pc .bv-icone-preenchido {
+  --pc-preenchido: 1;
+}
+
+.pc .pc-icone-24 {
+  font-size: 24px;
+}
+
+/* ── texto ─────────────────────────────────────────────────────────────── */
+.pc-destaque {
+  font-family: var(--font-brand);
+  font-size: var(--pc-fs-destaque);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.5px;
+  text-wrap: balance;
+  outline: none;
+}
+
+.pc-titulo {
+  font-size: var(--pc-fs-titulo);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.4px;
+  text-wrap: balance;
+  outline: none;
+}
+
+.pc-subtitulo {
+  font-size: var(--pc-fs-subtitulo);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.pc-corpo {
+  font-size: var(--pc-fs-corpo);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.pc-apoio {
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-apoio);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.pc-miudo {
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-miudo);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Link no meio do texto (sem classe); o resto dos `<a>` usa a peça que é. */
+.pc :where(a:not([class])),
+.pc-link {
+  color: var(--pc-tinta);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.pc-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (min-width: 1024px) {
+  .pc {
+    --pc-fs-destaque: 40px;
+  }
+}
+
+/* ── botão: uma forma só, a pílula ─────────────────────────────────────── */
+.pc-botao {
+  --pc-peso: 500;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: var(--pc-pilula);
+  background: var(--pc-tom);
+  color: var(--pc-tinta);
+  font-family: inherit;
+  font-size: var(--pc-fs-corpo);
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--pc-toque),
+    background-color var(--pc-toque),
+    color var(--pc-toque),
+    opacity var(--pc-toque);
+}
+
+.pc-botao[data-tom="principal"] {
+  background: var(--pc-acao);
+  color: var(--pc-acao-texto);
+}
+
+.pc-botao[data-tom="contorno"] {
+  border-color: var(--pc-linha);
+  background: var(--pc-cartao);
+}
+
+.pc-botao[data-tom="texto"] {
+  padding: 0 12px;
+  background: transparent;
+}
+
+/* Ligado (entrou, marcado): seleção é Grafite. No botão de texto (Útil),
+   ligado é tinta cheia com o ícone cheio, sem fundo. */
+.pc-botao[aria-pressed="true"] {
+  background: var(--pc-tinta);
+  color: var(--pc-fundo);
+}
+
+.pc-botao[data-tom="texto"][aria-pressed="true"] {
+  background: transparent;
+  color: var(--pc-tinta);
+}
+
+.pc-botao[data-tamanho="compacto"] {
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: var(--pc-fs-apoio);
+}
+
+.pc-botao[data-tamanho="compacto"] .bv-icone {
+  font-size: 18px;
+}
+
+/* Compacto e chip desenham 36 e 40 px, mas o dedo acerta 44: a área de toque
+   cresce para cima e para baixo sem mudar o desenho. */
+.pc-botao[data-tamanho="compacto"],
+.pc-chip {
+  position: relative;
+}
+
+.pc-botao[data-tamanho="compacto"]::after,
+.pc-chip::after {
+  position: absolute;
+  inset: -4px 0;
+  content: "";
+}
+
+.pc-botao[data-largura="cheia"] {
+  width: 100%;
+}
+
+.pc-botao:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pc-botao[aria-busy="true"] {
+  opacity: 1;
+}
+
+.pc-botao-icone {
+  --pc-peso: 400;
+
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pc-pilula);
+  background: transparent;
+  color: var(--pc-tinta);
+  cursor: pointer;
+  transition:
+    transform var(--pc-toque),
+    background-color var(--pc-toque);
+}
+
+.pc-botao-icone[data-tom="principal"] {
+  background: var(--pc-acao);
+  color: var(--pc-acao-texto);
+}
+
+.pc-botao-icone[data-tom="tom"] {
+  background: var(--pc-tom);
+}
+
+.pc-botao-icone[data-tom="sobre-foto"] {
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+}
+
+/* Compacto desenha 32 px; a área de toque continua com 44. */
+.pc-botao-icone[data-tamanho="compacto"] {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.pc-botao-icone[data-tamanho="compacto"]::after {
+  position: absolute;
+  inset: -6px;
+  content: "";
+}
+
+.pc-botao-icone[data-tamanho="compacto"] .bv-icone {
+  font-size: 18px;
+}
+
+.pc-botao-icone:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pc-botao-icone .bv-icone {
+  font-size: 24px;
+}
+
+/* O botão que fica sobre o conteúdo, no canto, sempre à mão. */
+.pc-flutuante {
+  position: fixed;
+  right: 16px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 20;
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.12),
+    0 8px 24px rgb(0 0 0 / 0.16);
+}
+
+.pc-girando {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: pc-gira 700ms linear infinite;
+}
+
+@keyframes pc-gira {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* ── chip ──────────────────────────────────────────────────────────────── */
+.pc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pc-chip {
+  --pc-peso: 500;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-pilula);
+  background: var(--pc-cartao);
+  color: var(--pc-tinta);
+  font-family: inherit;
+  font-size: var(--pc-fs-apoio);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    transform var(--pc-toque),
+    background-color var(--pc-toque),
+    color var(--pc-toque);
+}
+
+.pc-chip[aria-pressed="true"],
+.pc-chip[aria-selected="true"] {
+  border-color: var(--pc-tinta);
+  background: var(--pc-tinta);
+  color: var(--pc-fundo);
+}
+
+.pc-chip .bv-icone {
+  margin-left: -4px;
+  font-size: 18px;
+}
+
+/* ── cartão ────────────────────────────────────────────────────────────── */
+.pc-cartao {
+  display: block;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--pc-linha) 75%, transparent);
+  border-radius: var(--pc-raio-cartao);
+  background: var(--pc-cartao);
+  color: inherit;
+  text-align: start;
+}
+
+/* ── lista e linha ─────────────────────────────────────────────────────── */
+.pc-lista > :where(li + li) {
+  border-top: 1px solid var(--pc-linha);
+}
+
+.pc-linha {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--pc-toque);
+}
+
+.pc-linha:disabled {
+  cursor: default;
+}
+
+.pc-linha-texto {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pc-linha-titulo {
+  font-size: var(--pc-fs-corpo);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pc-linha-acessorio {
+  display: inline-flex;
+  align-items: center;
+  color: var(--pc-suave);
+}
+
+.pc-linha > .bv-icone:first-child {
+  color: var(--pc-tinta);
+  font-size: 24px;
+}
+
+/* ── avatar e selo ─────────────────────────────────────────────────────── */
+.pc-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--pc-avatar, 40px);
+  height: var(--pc-avatar, 40px);
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--pc-avatar-fundo, var(--pc-tom-forte));
+  color: var(--pc-avatar-tinta, var(--pc-tinta));
+  font-size: calc(var(--pc-avatar, 40px) * 0.38);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.2px;
+}
+
+.pc-avatar img,
+.pc-selo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Pessoa sem foto: as iniciais num dos tons da família das ilustrações. */
+.pc-avatar[data-tom="0"] {
+  --pc-avatar-fundo: #d9cbb0;
+  --pc-avatar-tinta: #253033;
+}
+
+.pc-avatar[data-tom="1"] {
+  --pc-avatar-fundo: #5f6c50;
+  --pc-avatar-tinta: #fff;
+}
+
+.pc-avatar[data-tom="2"] {
+  --pc-avatar-fundo: #5d7480;
+  --pc-avatar-tinta: #fff;
+}
+
+.pc-avatar[data-tom="3"] {
+  --pc-avatar-fundo: #ecd2c6;
+  --pc-avatar-tinta: #6b2a20;
+}
+
+.pc-selo {
+  display: block;
+  flex: none;
+  width: var(--pc-selo, 48px);
+  height: var(--pc-selo, 48px);
+  overflow: hidden;
+  border-radius: calc(var(--pc-selo, 48px) * 0.25);
+  background: var(--pc-papel);
+}
+
+/* ── ilustração ────────────────────────────────────────────────────────── */
+/* A família é desenhada sobre Papel: no escuro ela vira um quadro de Papel,
+   nunca um retângulo claro sangrando até a borda. */
+.pc-ilustracao {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--pc-raio-cartao);
+  background: var(--pc-papel);
+}
+
+.pc-ilustracao img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── campo ─────────────────────────────────────────────────────────────── */
+.pc-campo-bloco {
+  display: grid;
+  gap: 6px;
+}
+
+.pc-campo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-raio-campo);
+  background: var(--pc-cartao);
+  transition:
+    border-color var(--pc-toque),
+    box-shadow var(--pc-toque);
+}
+
+.pc-campo:focus-within {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 1px var(--pc-tinta);
+}
+
+.pc-campo[data-erro="sim"] {
+  border-color: var(--pc-perigo);
+  box-shadow: 0 0 0 1px var(--pc-perigo);
+}
+
+.pc-campo :where(input, select) {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  padding: 22px 16px 6px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--pc-tinta);
+  font: inherit;
+  font-size: var(--pc-fs-corpo);
+  outline: none;
+  appearance: none;
+}
+
+.pc-campo label {
+  position: absolute;
+  top: 17px;
+  left: 17px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-corpo);
+  line-height: 1.4;
+  pointer-events: none;
+  transform-origin: left top;
+  transition: transform var(--pc-toque);
+}
+
+.pc-campo :where(input:focus, input:not(:placeholder-shown), input[type="month"]) + label,
+.pc-campo :where(select:focus, select[data-vazio="nao"]) + label {
+  transform: translateY(-10px) scale(0.8);
+}
+
+.pc-campo-acessorio {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 6px;
+  color: var(--pc-suave);
+}
+
+.pc-campo-acessorio:has(.bv-icone:only-child) {
+  padding-right: 14px;
+  pointer-events: none;
+}
+
+.pc-erro {
+  --pc-peso: 500;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--pc-perigo);
+  font-size: var(--pc-fs-apoio);
+  font-weight: 500;
+}
+
+.pc-erro:empty {
+  display: none;
+}
+
+.pc-erro .bv-icone {
+  margin-top: 1px;
+  font-size: 18px;
+}
+
+.pc-area {
+  width: 100%;
+  min-height: 160px;
+  padding: 14px 16px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-raio-campo);
+  background: var(--pc-cartao);
+  color: var(--pc-tinta);
+  font: inherit;
+  font-size: var(--pc-fs-corpo);
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.pc-area::placeholder,
+.pc-busca input::placeholder {
+  color: var(--pc-suave);
+  opacity: 1;
+}
+
+.pc-area:focus {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 1px var(--pc-tinta);
+}
+
+.pc-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-pilula);
+  background: var(--pc-cartao);
+  color: var(--pc-suave);
+}
+
+.pc-busca:focus-within {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 1px var(--pc-tinta);
+}
+
+.pc-busca input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  border: 0;
+  background: transparent;
+  color: var(--pc-tinta);
+  font: inherit;
+  font-size: var(--pc-fs-corpo);
+  outline: none;
+}
+
+/* ── código em casas ───────────────────────────────────────────────────── */
+.pc-casas {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 22rem;
+}
+
+.pc-casa {
+  display: grid;
+  place-items: center;
+  height: 56px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-raio-campo);
+  background: var(--pc-cartao);
+  font-size: var(--pc-fs-titulo);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-casas:focus-within .pc-casa[data-atual="sim"] {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 1px var(--pc-tinta);
+}
+
+.pc-casas[data-erro="sim"] .pc-casa {
+  border-color: var(--pc-perigo);
+}
+
+.pc-casas-entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  opacity: 0.01;
+}
+
+/* ── escolha com selo ──────────────────────────────────────────────────── */
+.pc-escolha {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pc-escolha-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.25rem, 1fr));
+  gap: 8px;
+}
+
+.pc-escolha-opcao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-raio-cartao);
+  background: var(--pc-cartao);
+  cursor: pointer;
+  transition:
+    border-color var(--pc-toque),
+    box-shadow var(--pc-toque),
+    transform var(--pc-toque);
+}
+
+.pc-escolha-opcao:active {
+  transform: scale(0.97);
+}
+
+.pc-escolha-arte {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  background: var(--pc-papel);
+}
+
+.pc-escolha-arte img {
+  width: 64%;
+  height: auto;
+}
+
+.pc-escolha-rotulo {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: var(--pc-fs-apoio);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* O check fica no canto da arte, sem tirar espaço do nome. */
+.pc-escolha-marca {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--pc-cartao);
+  color: var(--pc-tinta);
+}
+
+.pc-escolha-marca .bv-icone {
+  font-size: 24px;
+}
+
+.pc-escolha-opcao:has(input:checked) {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 1px var(--pc-tinta);
+}
+
+.pc-escolha-opcao:has(input:checked) .pc-escolha-marca {
+  display: grid;
+}
+
+.pc-escolha-opcao:has(input:focus-visible),
+.pc-arquivo:has(+ input:focus-visible) {
+  outline: 2px solid var(--pc-tinta);
+  outline-offset: 2px;
+}
+
+/* ── envio de arquivo ──────────────────────────────────────────────────── */
+.pc-arquivo {
+  --pc-peso: 400;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px;
+  border: 1.5px dashed var(--outline);
+  border-radius: var(--pc-raio-cartao);
+  background: var(--pc-cartao);
+  cursor: pointer;
+}
+
+.pc-arquivo[data-escolhido="sim"] {
+  border-style: solid;
+  border-color: var(--pc-feito);
+}
+
+.pc-arquivo .bv-icone {
+  font-size: 28px;
+}
+
+.pc-arquivo[data-escolhido="sim"] .bv-icone {
+  color: var(--pc-feito);
+}
+
+.pc-arquivo span {
+  display: flex;
+  flex-direction: column;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-apoio);
+}
+
+.pc-arquivo strong {
+  color: var(--pc-tinta);
+  font-size: var(--pc-fs-corpo);
+  font-weight: 600;
+}
+
+/* ── compositor de comentário ──────────────────────────────────────────── */
+.pc-compositor {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.pc-compositor textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  padding: 10px 18px;
+  border: 1px solid var(--pc-linha);
+  border-radius: 22px;
+  background: var(--pc-cartao);
+  color: var(--pc-tinta);
+  font: inherit;
+  font-size: var(--pc-fs-corpo);
+  line-height: 1.45;
+  resize: none;
+  field-sizing: content;
+  outline: none;
+}
+
+.pc-compositor textarea::placeholder {
+  color: var(--pc-suave);
+  opacity: 1;
+}
+
+.pc-compositor textarea:focus {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 1px var(--pc-tinta);
+}
+
+/* ── estado, nota e progresso ──────────────────────────────────────────── */
+/* O que já está feito (vínculo confirmado, resolvida): ardósia e ícone cheio. */
+.pc-estado {
+  --pc-peso: 500;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pc-feito);
+  font-size: var(--pc-fs-apoio);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.pc-estado .bv-icone {
+  font-size: 20px;
+}
+
+.pc-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--pc-raio-campo);
+  background: var(--pc-tom);
+  font-size: var(--pc-fs-apoio);
+  line-height: 1.45;
+}
+
+.pc-nota > .bv-icone {
+  flex: none;
+  margin-top: 1px;
+}
+
+.pc-progresso {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--pc-pilula);
+  background: var(--pc-tom-forte);
+}
+
+.pc-progresso > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pc-tinta);
+  transform-origin: left;
+  transition: transform var(--pc-entrada);
+}
+
+/* ── topo e barra de ação ──────────────────────────────────────────────── */
+/* Os controles do topo alinham com a coluna do conteúdo (40rem, ou a que a
+   tela declarar em --pc-coluna), e não com as bordas da janela. */
+.pc-topo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: calc(56px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 0 0;
+  padding-inline: max(4px, calc((100% - var(--pc-coluna, 40rem)) / 2 + 6px));
+  background: color-mix(in srgb, var(--pc-fundo) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.pc-topo-titulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--pc-fs-subtitulo);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-barra {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--pc-linha);
+  background: var(--pc-fundo);
+}
+
+.pc-barra-dentro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .pc-barra {
+    position: static;
+    padding: 0;
+    border-top: 0;
+    background: transparent;
+  }
+
+  .pc-barra-dentro {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    max-width: none;
+    margin: 0;
+  }
+
+  .pc-barra-dentro .pc-botao[data-largura="cheia"] {
+    width: auto;
+    min-width: 220px;
+  }
+}
+
+/* ── folha que sobe de baixo ───────────────────────────────────────────── */
+.pc-folha {
+  width: 100%;
+  max-width: 34rem;
+  max-height: 88dvh;
+  margin: auto auto 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  overflow: auto;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  background: var(--pc-cartao);
+  color: var(--pc-tinta);
+  font-family: var(--font-plain);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.18);
+  transition: transform var(--pc-entrada);
+}
+
+.pc-folha[open] {
+  animation: pc-folha-sobe var(--pc-entrada);
+}
+
+.pc-folha::backdrop {
+  background: rgb(15 20 22 / 0.42);
+  animation: pc-esmaece var(--pc-entrada);
+}
+
+@media (min-width: 768px) {
+  .pc-folha {
+    margin: auto;
+    border-radius: 24px;
+  }
+
+  .pc-folha-alca {
+    display: none;
+  }
+}
+
+.pc-folha-alca {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.pc-folha-alca::before {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--pc-tom-forte);
+  content: "";
+}
+
+.pc-folha-cabeca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px 0 20px;
+}
+
+.pc-folha-corpo {
+  display: grid;
+  gap: 16px;
+  padding: 8px 20px 24px;
+}
+
+@keyframes pc-folha-sobe {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes pc-esmaece {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── aviso com desfazer ────────────────────────────────────────────────── */
+.pc-aviso {
+  --pc-peso: 500;
+
+  position: fixed;
+  right: 16px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  left: 16px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 30rem;
+  min-height: 52px;
+  margin: 0 auto;
+  padding: 6px 6px 6px 16px;
+  border-radius: 14px;
+  background: var(--pc-tinta);
+  color: var(--pc-fundo);
+  font-size: var(--pc-fs-apoio);
+  font-weight: 550;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.22);
+  animation: pc-aviso-sobe var(--pc-entrada);
+}
+
+.pc-aviso > span {
+  flex: 1;
+}
+
+.pc-aviso .pc-botao {
+  min-height: 40px;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@keyframes pc-aviso-sobe {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ── esqueleto ─────────────────────────────────────────────────────────── */
+.pc-esqueleto {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--pc-tom) 0%, var(--pc-tom-forte) 50%, var(--pc-tom) 100%);
+  background-size: 200% 100%;
+  animation: pc-brilho 1.4s ease-in-out infinite;
+}
+
+@keyframes pc-brilho {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ── entrada de tela ───────────────────────────────────────────────────── */
+/* Só opacidade: um transform no invólucro prenderia a barra fixa e o botão
+   flutuante dentro dele enquanto a animação roda. */
+.pc-entra {
+  animation: pc-entra var(--pc-entrada);
+}
+
+@keyframes pc-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── toque e foco ──────────────────────────────────────────────────────── */
+@media (hover: hover) {
+  .pc-botao:not(:disabled):hover {
+    filter: brightness(0.95);
+  }
+
+  .pc-chip:hover,
+  .pc-botao-icone:not(:disabled):hover,
+  .pc-botao[data-tom="texto"]:not(:disabled):hover {
+    background-color: var(--pc-tom);
+  }
+
+  .pc-chip[aria-pressed="true"]:hover,
+  .pc-chip[aria-selected="true"]:hover {
+    background-color: var(--pc-tinta);
+  }
+}
+
+.pc-botao:not(:disabled):active,
+.pc-botao-icone:not(:disabled):active,
+.pc-chip:active,
+.pc-linha:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* O título recebe foco por programa para anunciar a tela; não é parada de Tab
+   e não ganha anel. */
+.pc :where(button, a, input, select, textarea, summary, [tabindex]:not(h1, h2)):focus-visible,
+.pc-folha :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--pc-tinta);
+  outline-offset: 2px;
+}
+
+.pc :where(h1, h2)[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.pc :where(.pc-campo, .pc-busca) :where(input, select):focus-visible,
+.pc .pc-area:focus-visible {
+  outline: none;
+}
+
+/* Movimento reduzido: toda transição e entrada usa as duas durações acima,
+   então zerá-las basta; o brilho do esqueleto e o giro param (o estado
+   ocupado continua dito pelo texto e por aria-busy). */
+@media (prefers-reduced-motion: reduce) {
+  .pc,
+  .pc-folha {
+    --pc-toque: 0ms;
+    --pc-entrada: 0ms;
+  }
+
+  .pc-esqueleto {
+    animation: none;
+  }
+
+  .pc-girando {
+    animation: none;
+  }
+}

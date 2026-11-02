@@ -107,6 +107,34 @@ describe("Grupos — publicar e entrar", () => {
     expect(depois.boasVindas).not.toContain("familias")
   })
 
+  it("Desfazer logo depois de publicar tira a publicação do feed", () => {
+    const publicado = reduzir(ESTADO_INICIAL, {
+      tipo: "publicar",
+      grupo: "familias",
+      tipoDaPublicacao: "conversa",
+      texto: "Oi, pessoal",
+      fotos: [],
+      id: "p-recem",
+    })
+    expect(publicado.publicacoes[0]?.id).toBe("p-recem")
+    const desfeito = reduzir(publicado, { tipo: "apagar", publicacao: "p-recem" })
+    expect(desfeito.publicacoes.some((p) => p.id === "p-recem")).toBe(false)
+  })
+
+  it("o Desfazer do salvar fixa o valor de antes, em vez de alternar", () => {
+    const salva = reduzir(ESTADO_INICIAL, { tipo: "salvar", publicacao: "p-berco" })
+    expect(publicacao(salva, "p-berco").salva).toBe(true)
+    // Desfazer duas vezes (aviso antigo ainda na tela) não volta a salvar.
+    const desfeita = reduzir(salva, { tipo: "salvar", publicacao: "p-berco", valor: false })
+    const deNovo = reduzir(desfeita, { tipo: "salvar", publicacao: "p-berco", valor: false })
+    expect(publicacao(deNovo, "p-berco").salva).toBe(false)
+  })
+
+  it("não apaga publicação de outra pessoa", () => {
+    const depois = reduzir(ESTADO_INICIAL, { tipo: "apagar", publicacao: "p-pediatra" })
+    expect(depois.publicacoes.some((p) => p.id === "p-pediatra")).toBe(true)
+  })
+
   it("Útil alterna e a contagem acompanha", () => {
     const um = reduzir(ESTADO_INICIAL, { tipo: "util", publicacao: "p-berco" })
     expect(publicacao(um, "p-berco").uteis).toBe(12)
