@@ -130,6 +130,10 @@ function Cabecalho() {
   const { fracao, aoVoltar, verificacao, etapa } = useMoldura()
   const vinculo =
     etapa === "nome" || etapa === "cidade" ? ESTADO_DO_VINCULO[verificacao] : undefined
+  // A fase em que a pessoa está, das quatro do painel do computador.
+  const indiceDaFase = FASES.findIndex((f) => f.etapas.includes(etapa))
+  const fase =
+    indiceDaFase === -1 ? null : { indice: indiceDaFase + 1, titulo: FASES[indiceDaFase]?.titulo }
   return (
     <header className="f01-cabecalho">
       {aoVoltar ? (
@@ -138,6 +142,11 @@ function Cabecalho() {
       {fracao === null ? null : (
         <div className="f01-progresso">
           <Progresso fracao={fracao} rotulo="Progresso do cadastro" />
+          {fase ? (
+            <p className="f01-fase">
+              Parte {fase.indice} de {FASES.length} · {fase.titulo}
+            </p>
+          ) : null}
         </div>
       )}
       <span className="f01-vinculo" aria-live="polite" data-estado={verificacao}>
