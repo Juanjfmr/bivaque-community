@@ -4745,17 +4745,18 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "Decisão do dono em 25/09/2026 (ADR-20260925-aviso-de-pedido): um pedido novo avisa quem pode lê-lo (cidade, ou grupo), no máximo 3 avisos por pessoa em 24 h e o excedente vira um aviso único do dia; sino na hora e resumo diário por e-mail só para quem ligar; pedido parado 24 h avisa de novo; 3 dias depois da primeira resposta, quem pediu é perguntado se alguma ajudou a resolver.",
       "checklist": [
         "ADR com as decisões do dono [FEITO 25/09]",
-        "Migrations 20260926022408 e 20260926022416: tipo, preferência indications, entregas, jobs [FEITO; aplicadas à mão no banco local]",
-        "pgTAP aviso-de-pedido.sql [FEITO 22/22, com controle negativo]",
+        "Migrations 20260926022408 e 20260926022416: tipo, preferência indications, entregas, jobs [FEITO; saem do reset limpo desde 02/11]",
+        "pgTAP aviso-de-pedido.sql [FEITO: suíte completa 158 arquivos/2448 asserções PASS em 02/11]",
         "Texto e destino no sino, preferência em Configurações, e-mail do resumo [FEITO]",
         "Prova no navegador: pedido de uma conta aparece no sino de outra [FEITO 25/09]",
-        "Medir tempo até a primeira resposta e pedidos sem resposta em 24 h depois do lançamento"
+        "Medição pós-lançamento (tempo até a primeira resposta e pedidos sem resposta em 24 h) transferida para LAN-PROVA"
       ],
       "proof": [
+        "02/11: prova de banco refeita pela fila e card fechado no escopo pré-lançamento. `supabase db reset --local --no-seed` reaplicou a história inteira — as migrations 20260926022408 e 20260926022416 saem do reset limpo, não são mais 'aplicadas à mão' —, `test:db` deu PASS com 158 arquivos e 2448 asserções (inclui as 22 de aviso-de-pedido.sql e os controles negativos) e `db:lint` não achou erro de schema. `pnpm test` da raiz verde, incluindo os quatro arquivos de tests/unit/notifications (texto e destino do sino, preferência, e-mail do resumo e a correção da grade de Configurações no celular). Limite conhecido: rodar o arquivo isolado por `supabase test db <arquivo>` falha porque o modo de caminho único não monta os `fixtures/*.inc`; a prova canônica é a suíte completa. A medição de tempo até a primeira resposta e de pedidos sem resposta em 24 h é pós-lançamento e passou para LAN-PROVA.",
         "pgTAP aviso-de-pedido.sql 22/22 no banco local; sem a preferência desligada e sem o bloqueio, os casos 5 e 7 falham",
         "Navegador 25/09: membro-2 pede pela caixa; o job avisa 303 membros da cidade (seed); membro-3 vê \"Alguém da sua cidade pediu uma indicação\" com o título no sino, a 375, e o toque abre o pedido; em Configurações a linha Pedidos de indicação aparece com sino ligado e resumo por e-mail desligado, e ligar o resumo grava. Achado no caminho: a grade de Configurações crescia além de 375 px no celular — corrigida"
       ],
@@ -4768,8 +4769,10 @@
         "supabase/migrations/20260926022416_aviso_de_pedido.sql"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-25",
-      "sourceRevision": "a15d00f8"
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "21bb7264",
+      "completedChecklist": [true, true, true, true, true, true],
+      "completedAt": "2026-11-02"
     },
     {
       "id": "WEB-OG-METADATABASE",
@@ -6010,6 +6013,7 @@
       "sourceRevision": "fc67e19e",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: checklist ganhou a medição pós-lançamento herdada de INDICACOES-AVISO (tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h), que só se mede depois de o app estar no ar.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-PROVA",
@@ -6022,7 +6026,8 @@
         "E2E de todas as jornadas em três tamanhos e dois temas",
         "Revisão de segurança final sem CRITICAL/HIGH",
         "Desempenho e concorrência dentro do alvo",
-        "Ensaio de deploy e relatório final com a lista de ratificação"
+        "Ensaio de deploy e relatório final com a lista de ratificação",
+        "Medir tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h (herdado de INDICACOES-AVISO)"
       ],
       "dependencies": ["LAN-TROCA", "LAN-LOJA", "OPS-CONCORRENCIA-LANCAMENTO"]
     },
