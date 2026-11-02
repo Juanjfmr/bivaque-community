@@ -6007,6 +6007,34 @@
       "sourceRevision": "521fca4a",
       "links": ["docs/LANCAMENTO.md"],
       "proof": ["02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7)."]
+    },
+    {
+      "id": "CI-E2E-UPSTREAM-INSTAVEL",
+      "title": "E2E da web antiga cai por resposta inválida do Supabase local no CI",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "Em 02/11 o job Install, test, and build caiu duas vezes, em PRs que não tocam o código (#120 e #121), com [WebServer] An invalid response was received from the upstream server e The destination stream closed early. Os testes que caíram: group-event-detail-denials (grupo privado, mobile-375) e provider-vitrine (tablet-768). A nova execução passou no #120. Teste instável no CI ensina a ignorar vermelho.",
+      "checklist": [
+        "Reproduzir com a mesma carga do CI (workers e projetos)",
+        "Achar a causa: pool do Supabase local, Kong ou o servidor Next sob paralelismo",
+        "Corrigir a causa, não aumentar timeout",
+        "Dez execuções seguidas verdes no CI"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/group-event-detail-denials.spec.ts",
+        "tests/e2e/provider-vitrine.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "ccd458c7",
+      "links": [
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
+      ],
+      "proof": ["02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."]
     }
   ]
 }
