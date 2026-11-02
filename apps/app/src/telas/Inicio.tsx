@@ -208,7 +208,7 @@ export function Inicio() {
         <div className="mt-4">
           <EsqueletoDeLista linhas={4} />
         </div>
-      ) : (
+      ) : dados !== null ? (
         <>
           <div
             data-home="conteudo"
@@ -389,7 +389,7 @@ export function Inicio() {
             </Botao>
           </div>
         </>
-      )}
+      ) : null}
     </section>
   )
 }
