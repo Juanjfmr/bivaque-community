@@ -74,7 +74,16 @@ enable_confirmations = false
 secure_password_change = true
 max_frequency = "1s"
 otp_length = 6
-otp_expiry = 3600
+# ADR-20261101-entrada-unica-por-codigo: o código vale 10 minutos (era 1 hora).
+# O reenvio de 60 s é da tela e do GoTrue; a validade curta é a do código.
+otp_expiry = 600
+
+# ADR-20261101, §2: o e-mail do código tem o código no assunto e no corpo, em
+# texto grande, sem link clicável. O template é o mesmo do magic link do GoTrue,
+# servido daqui — a produção usa o SMTP próprio do dono (BLOCK-RESEND).
+[auth.email.template.magic_link]
+subject = "Seu código do Bivaque: {{ .Token }}"
+content_path = "./supabase/templates/magic_link.html"
 
 [auth.sms]
 enable_signup = false

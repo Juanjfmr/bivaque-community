@@ -21,6 +21,7 @@
       "!**/docs/historico/design/visual-guide-2026-09-06",
       "!**/.vercel",
       "!**/supabase/.temp",
+      "!**/supabase/templates",
       "!**/apps/mobile/dist-android",
       "!**/apps/mobile/dist-ios",
       "!**/apps/mobile/.expo",
