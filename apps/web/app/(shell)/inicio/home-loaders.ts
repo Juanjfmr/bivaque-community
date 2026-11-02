@@ -9,12 +9,16 @@
 //   quando troca de cidade, comunidade ou nova tentativa dispara outra carga, a
 //   resposta atrasada da carga anterior é descartada em vez de sobrescrever o
 //   contexto atual.
-// - Os loaders só leem pelo mesmo canal de antes: mesmas tabelas, mesmo RPC
-//   feed_community, mesmo filtro de eventos. Nenhuma API ou permissão muda.
+// - Os loaders leem pelo mesmo canal de sempre: mesmas tabelas e RLS de
+//   leitura, mesmo filtro de eventos. Nenhuma API ou permissão muda.
+//
+// O feed saiu daqui no lote 5 (tarefa N2 — ADR-20261023): o Início não publica
+// nem lista publicações da cidade, então `loadCityFeed`/`loadFollowedFeed` e a
+// leitura `feed_locality` nem chegaram ao banco. O que resta nesta página é a
+// comunidade primária (saudação e convite a entrar) e o próximo encontro.
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
-import { COUNT_CAP } from "./hub-loaders"
 
 type InicioClient = SupabaseClient<Database>
 
@@ -23,10 +27,6 @@ export type PrimaryCommunity =
   | { status: "error" }
   | { status: "none" }
   | { status: "ready"; id: string; name: string | null }
-
-export const FEED_ERROR_MESSAGE = "Não foi possível carregar as publicações. Tente novamente."
-
-export type FeedOutcome = { status: "ok"; posts: unknown[] } | { status: "error"; message: string }
 
 export type NextEvent = {
   id: string
@@ -115,50 +115,6 @@ export async function loadPrimaryCommunity(supabase: InicioClient): Promise<Prim
     // Rejeição de rede (getUser/arquitetura offline) é erro recuperável na
     // seção — nunca carregamento infinito nem rejection não tratada.
     return { status: "error" }
-  }
-}
-
-/** Quantas publicações a prévia do Início lê (mostra 3; conta novidade sobre todas). */
-export const COMMUNITY_PREVIEW_READ = COUNT_CAP
-
-export async function loadCommunityFeed(
-  supabase: InicioClient,
-  communityId: string,
-): Promise<FeedOutcome> {
-  try {
-    // A prévia mostra 3, mas o selo "N novas" conta sobre o que foi lido: 50
-    // cobre o selo até o teto dele ("50+", hub-loaders COUNT_CAP) sem trazer a
-    // comunidade inteira (350 publicações na Vila Ajuricaba antes deste teto).
-    const { data, error: feedError } = await supabase.rpc("feed_community", {
-      p_community_id: communityId,
-      p_order: "recent",
-      p_limit: COMMUNITY_PREVIEW_READ,
-    })
-
-    if (feedError) {
-      // O erro é lido e devolvido como estado recuperável — renderizar lista
-      // vazia no lugar de uma consulta que falhou é o bug que a casa proíbe.
-      return { status: "error", message: FEED_ERROR_MESSAGE }
-    }
-
-    return { status: "ok", posts: (data as unknown[] | null) ?? [] }
-  } catch {
-    return { status: "error", message: FEED_ERROR_MESSAGE }
-  }
-}
-
-// A aba "Acompanhando" (prancha 01) lê o mesmo canal dos outros feeds:
-// o RPC feed_following revalida a matriz de visibilidade no servidor — seguir
-// um post nunca concede leitura que a pessoa já não teria.
-export async function loadFollowedFeed(supabase: InicioClient): Promise<FeedOutcome> {
-  try {
-    const { data, error } = await supabase.rpc("feed_following")
-    if (error) {
-      return { status: "error", message: FEED_ERROR_MESSAGE }
-    }
-    return { status: "ok", posts: (data as unknown[] | null) ?? [] }
-  } catch {
-    return { status: "error", message: FEED_ERROR_MESSAGE }
   }
 }
 

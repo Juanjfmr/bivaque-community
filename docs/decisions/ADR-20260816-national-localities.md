@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-08-16
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-16-p0-localidades-nacionais.md — GitHub issue #20
+linked_plan: docs/historico/superpowers/plans/2026-08-16-p0-localidades-nacionais.md — GitHub issue #20
 critic_verdict: PASS
 critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do dono (Juan) na sessao de execucao: aprovar e executar a P0. Aprovacao humana ja consta na secao Approval. A implementacao esta destravada conforme a RISK_MATRIX.md.
 ---
@@ -46,7 +46,7 @@ Evidência atual:
 - `apps/web/lib/locality.ts` define `PILOT_LOCALITY_ID` como fonte de verdade do piloto.
 - `apps/web/lib/onboarding/verifyAndProvision.ts` provisiona membro e perfil sempre em `PILOT_LOCALITY_ID` após verificação de CPF e também no aceite de convite familiar.
 - `apps/web/app/(preauth)/onboarding/page.tsx` apresenta "Não sou de Manaus — entrar na lista de espera" e envia `PILOT_LOCALITY_ID`.
-- `docs/PRODUCT_STATUS.md` já registra que a waitlist para outras localidades grava Manaus e que o feed municipal usa `PILOT_LOCALITY_ID`.
+- `docs/historico/PRODUCT_STATUS.md` já registra que a waitlist para outras localidades grava Manaus e que o feed municipal usa `PILOT_LOCALITY_ID`.
 - `supabase/migrations/20260802000100_locality_profile_foundation.sql` já possui a entidade genérica `localities`.
 
 ## Decision
@@ -75,7 +75,7 @@ Para evitar nova regressão conceitual:
 
 ### Precedência sobre o canon ainda não reconciliado
 
-Até `docs/BIVAQUE.md` ser reconciliado nesta P0, **este ADR prevalece sobre qualquer trecho geográfico conflitante daquele documento**. Em particular, ficam superadas imediatamente as formulações que tratam:
+Até `docs/historico/BIVAQUE.md` ser reconciliado nesta P0, **este ADR prevalece sobre qualquer trecho geográfico conflitante daquele documento**. Em particular, ficam superadas imediatamente as formulações que tratam:
 
 - §1.2: o público como restrito a "pensionistas de Manaus";
 - §5.2: "Manaus" como concessão geográfica fixa após verificação, em vez da localidade real selecionada;
@@ -128,12 +128,12 @@ Nenhuma divergência relevante. A decisão remove uma restrição artificial int
 
 - Decisão humana registrada na conversa de 2026-08-16: "Embora Manaus seja o piloto, isso não deveria ser hardcoded. Deveria ser possível se cadastrar em qualquer localidade do Brasil. O diferencial é a atenção que Manaus vai receber pra incorporar os usuários"; aprovação subsequente: "Concordo, registre pois isso deve ser a próxima correção antes de mais nada".
 - Correção conceitual subsequente na mesma conversa: o Bivaque já é concebido para múltiplas localidades e o produto-mãe já é multi-tenant; não tratar essas propriedades como features futuras introduzidas por esta P0.
-- `docs/BIVAQUE.md`
+- `docs/historico/BIVAQUE.md`
 - `apps/web/lib/locality.ts`
 - `apps/web/lib/onboarding/verifyAndProvision.ts`
 - `apps/web/app/(preauth)/onboarding/page.tsx`
 - `apps/web/app/api/onboarding/route.ts`
-- `docs/PRODUCT_STATUS.md`
+- `docs/historico/PRODUCT_STATUS.md`
 - `supabase/migrations/20260802000100_locality_profile_foundation.sql`
 - `supabase/migrations/20260802000600_onboarding_consent_waitlist.sql`
 

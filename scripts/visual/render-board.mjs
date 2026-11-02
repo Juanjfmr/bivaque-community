@@ -18,7 +18,14 @@ import { chromium } from "@playwright/test"
 
 const here = fileURLToPath(new URL(".", import.meta.url))
 const repoRoot = join(here, "..", "..")
-const manifestPath = join(repoRoot, "docs", "design", "visual-guide-2026-09-06", "manifest.json")
+const manifestPath = join(
+  repoRoot,
+  "docs",
+  "historico",
+  "design",
+  "visual-guide-2026-09-06",
+  "manifest.json",
+)
 
 const args = process.argv.slice(2)
 const boardId = args.find((a) => !a.startsWith("--"))

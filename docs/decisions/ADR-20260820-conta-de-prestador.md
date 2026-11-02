@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-08-20
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-20-onda-g-vitrine.md
+linked_plan: docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md
 critic_verdict: PASS
 critic_review: Revisao adversarial executada em 2026-08-20 na mesma sessao que escreveu o ADR — o critico NAO foi independente, e isso fica registrado aqui em vez de ser omitido. A revisao achou e corrigiu seis defeitos de implementabilidade antes da aprovacao (helper inalcancavel por policy, leitura de display_name negada pela RLS, sync_paid_reach contradizendo a tolerancia de 7 dias, recurso sem tabela, revogacao de ficha sem task, e uma citacao de migration errada sobre exclusao de conta). Nenhum defeito atingiu as decisoes em si. Veredito PASS.
 ---
@@ -142,9 +142,9 @@ fundador no caminho crítico de cada prestador, e a §5.1 já avisa que a vila e
 
 ## Evidence and sources
 
-- `docs/BIVAQUE.md` §1.3 (a linha do prestador na tabela de papéis), §4.1, §6.2, §7.2.1, §12.
+- `docs/historico/BIVAQUE.md` §1.3 (a linha do prestador na tabela de papéis), §4.1, §6.2, §7.2.1, §12.
 - Decisões D17, D20, D26, D36, D37, D43, D44, D45 na tabela do §9.
-- `docs/PRODUCT_STATUS.md` §7 — as cinco linhas da vitrine, todas "não existe" — e §8, a linha
+- `docs/historico/PRODUCT_STATUS.md` §7 — as cinco linhas da vitrine, todas "não existe" — e §8, a linha
   "Conversa membro ↔ prestador" com os três defeitos da máquina de DM.
 - `apps/web/middleware.ts:135-153` — o funil que prende a conta sem membership.
 - `apps/web/app/components/bivaque/bottom-nav.tsx:33-34` — o comentário que registra, no

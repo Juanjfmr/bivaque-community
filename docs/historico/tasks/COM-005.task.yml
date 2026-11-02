@@ -1,0 +1,76 @@
+task_id: COM-005
+objective: >
+  Lote 5, tarefa B2: motivo no pedido de entrada do grupo Fechado, com as protecoes do ADR, e o convite como
+  link para a tela do grupo.
+authority:
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (aceito pelo dono em 2026-10-23)
+  - docs/agents/mapas/lote5-comunidade.md
+  - docs/agents/LICOES.md
+  - prototypes/bivaque-html/src/ (a especificacao)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapa prototipo x Next de 23/10/2026 (docs/agents/mapas/lote5-comunidade.md). Base codex/lote5-base com
+    COM-001, COM-002 e COM-003 ja integradas.
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/groups/
+  - tests/unit/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/COM-005.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - db reset fora da fila (os unicos permitidos sao node scripts/agents/prova-fila.mjs -- npx supabase db reset --local e --local --no-seed)
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar arquivos de outra tarefa do lote 5
+  - editar prototypes/bivaque-html
+  - rodar qualquer comando em segundo plano ou terminar com comando ainda rodando
+  - criar ou mudar policies de encerrar grupo (sao da COM-006)
+acceptance:
+  - Migration na faixa 20261024121000. O pedido ao grupo Fechado aceita motivo de ate 300 caracteres (CHECK no banco); so quem aprova no grupo (dono e moderador) e a propria pessoa leem o motivo, provado por pgTAP positivo e negativo (outro membro, nao membro, anonimo)
+  - O motivo e apagado quando o pedido e aprovado ou recusado, e um job pg_cron (a extensao ja esta habilitada no projeto) apaga o motivo de pedido sem decisao com mais de 30 dias; pgTAP das tres vias
+  - No maximo 3 pedidos da mesma pessoa ao mesmo grupo em 30 dias, contados numa tabela propria de tentativas (recusar apaga a linha de participacao), com RLS fechada e pgTAP do quarto pedido recusado
+  - A tela do pedido avisa para nao incluir endereco, telefone, CPF ou dados de saude, com o texto e o layout de prototypes/bivaque-html/src/features/groups/
+  - Convite e um botao que copia ou compartilha o link da tela do grupo; no grupo Fechado o link leva ao pedido, nunca a entrada direta; e2e dos dois casos
+  - A nova UI fica em componentes novos dentro de apps/web/app/(shell)/groups/[id]/, e page.tsx so ganha o import e a linha que renderiza, para reduzir conflito entre COM-005, COM-006 e COM-007
+  - e2e nos tres viewports de pedir com motivo, aprovar e ver o motivo sumir
+proof:
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco
+  - npx pnpm@11.18.0 generate:types logo depois da prova de banco
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY de npx supabase status -o env
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e (specs da tarefa)
+risk: dado pessoal em texto livre; RLS de leitura do motivo; job agendado
+adr: docs/decisions/ADR-20261023-comunidade-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+# evidencia COM-005 — executada em 23/10/2026 na branch codex/lote5-grupo-pedido
+# (todas as provas abaixo foram rodadas e lidas nesta sessao)
+# test:db: PASS — 158 arquivos, 2437 testes. supabase/tests/group-join-reason.sql ok (37 asserts: estrutura e RLS fechada das duas tabelas novas; job pg_cron agendado; matriz de leitura do motivo com positivos do autor, do dono e do moderador e negativos de outro membro, de nao membro e do anon; aprovacao e recusa apagando o motivo; a tentativa sobrevivendo a recusa; o quarto pedido recusado com 54000 sem criar participacao; CHECK de 300 caracteres; limpeza do pedido sem decisao ha mais de 30 dias)
+# generate:types: ok — database.generated.ts ganhou group_join_reasons, group_join_attempts e join_group(p_group_id, p_reason?)
+# gate: VERDE em lint, typecheck, typecheck:e2e, test (141 scope) e secrets; o estagio build foi PULADO porque apps/web/.env.local nao existe (proibido criar neste lote)
+# build: ok — pnpm --filter web build com NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY exportadas de supabase status -o env, sem criar arquivo de env
+# e2e: group-join-reason.spec.ts (1 teste x 3 projetos) e group-admin-cycle.spec.ts (3 testes x 3 projetos) — 12 passou, 0 falhou, pela fila, --workers=1. O spec proprio pede com motivo, ve o aviso do que nao incluir, aprova e ve o motivo sumir, e prova o convite nos dois casos (o link do Fechado leva ao pedido, nunca a entrada direta; o do Aberto entra direto); o ciclo de administracao passou a pedir pelo dialogo novo
+# e2e (ambiente): uma rodada da prova combinada falhou com ERR_CONNECTION_REFUSED nos 12 testes por o webServer nao ter subido; repetida em seguida, 12/12. Nao era o diff; a rodada limpa esta no commit do e2e
+# e2e (ambiente): o clique no Radio do HeroUI e interceptado no formulario de criar grupo; a prova cria os grupos do cenario pela RPC create_group (a API autenticada), e nao pela tela
+# ambiente: o npx deste shell esta quebrado (erro do relay WSL); generate:types usou node_modules/.bin/supabase e o build usou o pnpm 11.18.0 do PATH
+# desenho: o motivo so e reescrito em pedido novo — pedido ja pendente nao consome tentativa nem troca o texto, como no community_join_reasons; a recusa apaga o motivo pelo on delete cascade da participacao, e a aprovacao o apaga na RPC approve_group_member
+# pendente: a fila de pedidos do moderador ficou no detalhe do grupo (componente de servidor GroupJoinRequests), sem usar o painel Gerenciar da lista; dono pelo owner_user_id e dono pela linha de participacao sao ambos aceitos
+# pendente: transicao de quadro (tools/backend-kanban/public/board.json) esta fora dos allowed_paths deste contrato — nenhuma foi feita
+#
+# correcao da revisao independente — 24/10/2026, branch codex/lote5-grupo-pedido
+# apps/web: busca confirmou que nao ha INSERT em group_memberships; ha leituras, deletes e RPC join_group. A migration revoga INSERT de authenticated e remove group_memberships_insert_self.
+# Banco: migration ajustada no lugar; limite passou a trigger before insert nomeado group_join_attempt_limit_before_insert; join_group nao conta separadamente. pgTAP acrescenta recusa de INSERT direto e quatro ciclos aceitos em grupo Aberto.
+# UI/E2E: CTA de grupo Fechado na lista abre o detalhe com o dialogo; o e2e prova essa rota. Apos aprovar, o spec consulta group_join_reasons pela API autenticada como autor e dono e exige lista vazia.
+# Provas deste ambiente: npx pnpm@11.18.0 gate nao iniciou; PowerShell bloqueou npx.ps1. npx.cmd pnpm@11.18.0 gate tentou buscar pnpm no registry e falhou com EACCES de rede antes de qualquer estagio.
+# Commit: tentativa de git add/commit falhou antes de criar o indice porque .git/worktrees/lote5-grupo-pedido/index.lock recebeu Permission denied; arquivos continuam modificados e sem commit.
+# Pendente para o coordenador: pgTAP pela fila, generate:types, gate, build e2e pela fila (group-admin-cycle.spec.ts e group-join-reason.spec.ts); ambiente CLI sem Docker e sem acesso ao registry. Tipos gerados nao mudaram porque schema publico e assinatura da RPC permaneceram iguais.

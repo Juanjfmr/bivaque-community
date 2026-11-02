@@ -98,15 +98,20 @@ describe("montagem no shell", () => {
     expect(fab.slice(0, fab.indexOf("export function CreateButton"))).not.toContain("inert")
   })
 
-  it("a página Comunidade recarrega o feed quando o shell publica", () => {
+  it("a Comunidade não é mais um feed — nem o Início", () => {
+    // N2: a vista "Conversa" saiu da Comunidade e o Início não ganhou feed
+    // (ADR-20261023). Nenhuma das duas telas lista publicações da cidade; o que
+    // se publica vive no feed do grupo.
     const community = read("apps", "web", "app", "(shell)", "community", "page.tsx")
-    expect(community).toContain("window.addEventListener(POST_CREATED_EVENT, handleCreated)")
-    expect(community).toContain("window.removeEventListener(POST_CREATED_EVENT, handleCreated)")
+    expect(community).not.toContain("POST_CREATED_EVENT")
+    expect(community).not.toContain("FeedPost")
+    expect(inicio).not.toContain("<CityFeed")
   })
 
-  it("o Início não monta um segundo botão e recarrega quando o shell publica", () => {
+  it("o Início não monta um segundo botão de criação", () => {
     expect(inicio).not.toContain("<CreateFab")
     expect(inicio).not.toContain("<CreateButton")
-    expect(inicio).toContain("window.addEventListener(POST_CREATED_EVENT, handleCreated)")
+    // Publicar não muda nada na tela: o Início não tem seção para recarregar.
+    expect(inicio).not.toContain("POST_CREATED_EVENT")
   })
 })

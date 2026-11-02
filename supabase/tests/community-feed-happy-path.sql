@@ -5,6 +5,10 @@ select plan(18);
 
 \ir fixtures/foundation.inc
 \ir fixtures/community.inc
+-- Lote 5, N2: publicar só existe dentro de um grupo. O grupo do cenário vem de
+-- groups.inc (Grupo de Corrida, público, em Manaus) e os inserts abaixo trazem
+-- `group_id` — sem ele a policy de insert recusa.
+\ir fixtures/groups.inc
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- HAPPY PATH: member-one creates all four post types
@@ -21,10 +25,11 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 -- text post
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, created_at)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, created_at)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Post de texto simples',
       '2026-08-02 14:01:00+00'
@@ -36,10 +41,11 @@ select lives_ok(
 -- photo post
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, photo_path, created_at)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, photo_path, created_at)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'photo',
       'Foto da comunidade',
       'event-photos/10000000-0000-4000-8000-000000000001/foto1.jpg',
@@ -52,10 +58,11 @@ select lives_ok(
 -- link post
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, link_url, created_at)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, link_url, created_at)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'link',
       'Noticia interessante',
       'https://example.com/noticia',
@@ -68,10 +75,11 @@ select lives_ok(
 -- poll post
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, poll_options, created_at)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, poll_options, created_at)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'poll',
       'Qual o melhor dia?',
       '["Segunda-feira", "Quarta-feira", "Sexta-feira"]'::jsonb,
@@ -96,10 +104,11 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 -- text post by member-two
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, created_at)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, created_at)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000002',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Post do membro dois',
       '2026-08-02 14:05:00+00'
@@ -301,10 +310,11 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'photo',
       'Foto sem arquivo'
     )
@@ -318,10 +328,11 @@ select lives_ok(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       ''
     )
@@ -337,10 +348,11 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, photo_path)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, photo_path)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Post de texto com foto',
       'event-photos/fake.jpg'

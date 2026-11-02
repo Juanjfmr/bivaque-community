@@ -14,6 +14,10 @@ select plan(7);
 
 \ir fixtures/foundation.inc
 \ir fixtures/community.inc
+-- Lote 5, N2: publicar só existe dentro de um grupo. O grupo público de
+-- groups.inc (Manaus) sustenta o negativo da origem; o grupo do DESTINO
+-- (locality 0003) entra logo abaixo, junto da localidade.
+\ir fixtures/groups.inc
 
 -- A third locality as the destination. foundation ships Manaus (0001) and
 -- Fixture City (0002); test-destination (0003) lives in this fixture only.
@@ -25,6 +29,29 @@ values (
   'TD',
   'BR',
   '8888888'
+);
+
+-- Grupo aberto do destino, com member-one aprovado: é onde o teste positivo
+-- publica. Sem grupo não há publicação (policy de insert, lote 5 N2).
+insert into public.groups (
+  id, name, description, visibility, locality_id, created_by, owner_user_id
+)
+values (
+  '40000000-0000-4000-8000-000000000003',
+  'Grupo do destino',
+  'Grupo do destino da transferência',
+  'public',
+  '00000000-0000-4000-8000-000000000003',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001'
+);
+
+insert into public.group_memberships (group_id, user_id, role, status)
+values (
+  '40000000-0000-4000-8000-000000000003',
+  '10000000-0000-4000-8000-000000000001',
+  'owner',
+  'approved'
 );
 
 -- Declare a transfer with a past term date to exercise the degradation
@@ -91,10 +118,11 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'text',
       'Publicar na origem depois da degradacao'
     )
@@ -108,10 +136,11 @@ select throws_ok(
 -- and active).
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
     values (
       '00000000-0000-4000-8000-000000000003',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000003',
       'text',
       'Publicar no destino depois da degradacao'
     )

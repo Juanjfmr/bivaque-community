@@ -257,11 +257,14 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
               {shown.display_name ?? "Membro"}
             </p>
             {/* Tempo relativo e, quando o alcance não é a comunidade, o chip que
-                diz o tamanho do público (regra 2 da §12): post de cidade e post
-                de grupo falam para públicos muito diferentes. */}
+                diz o tamanho do público (regra 2 da §12): post de grupo e post
+                de cidade falam para públicos muito diferentes. O grupo manda no
+                chip: desde o lote 5 N2 a publicação existe só dentro de um
+                grupo, e `feed_group` não devolve `community_id` — olhar só
+                `community_id` deixava o feed do grupo sem alcance nenhum. */}
             <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-ui-ink-2">
               <span>{formatRelativeTime(shown.created_at)}</span>
-              {shown.community_id === null && shown.group_id ? (
+              {shown.group_id ? (
                 <Chip size="sm" variant="soft" aria-label="Alcance: só o grupo">
                   {groupName || "Grupo"}
                 </Chip>

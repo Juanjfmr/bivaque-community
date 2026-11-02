@@ -1,0 +1,62 @@
+name: Bivaque App Visual Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'apps/app/**'
+      - '.github/workflows/bivaque-app-visual-smoke.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  app-visual-smoke:
+    name: App mobile-first / 320-360-375-430-768-1440
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Vite app
+        run: pnpm --filter @bivaque/app build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Verify shared visual components
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts tests/e2e/mobile-first.spec.ts tests/e2e/r72-mobile-p0.spec.ts tests/e2e/r72-mobile-p1.spec.ts tests/e2e/menu-criar-fluxos.spec.ts tests/e2e/anuncio-contato.spec.ts tests/e2e/conversas-grupos-mobile.spec.ts tests/e2e/pr116-historico.spec.ts tests/e2e/home-vitrine-21st.spec.ts --trace=retain-on-failure
+
+      - name: Capture app screens (not proof mode)
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/visual-capture.spec.ts
+
+      - name: Capture real mobile conversations and groups
+        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/conversas-grupos-visual.spec.ts
+
+      - name: Save test and screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-visual-evidence
+          if-no-files-found: ignore
+          path: |
+            apps/app/test-results/
+            apps/app/artifacts/visual/
+            apps/app/artifacts/visual-mobile/

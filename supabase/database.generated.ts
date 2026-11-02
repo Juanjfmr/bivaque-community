@@ -595,10 +595,69 @@ export type Database = {
           },
         ]
       }
+      group_join_attempts: {
+        Row: {
+          attempted_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_attempts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_join_reasons: {
+        Row: {
+          created_at: string
+          group_id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_reasons_group_id_user_id_fkey"
+            columns: ["group_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "group_memberships"
+            referencedColumns: ["group_id", "user_id"]
+          },
+        ]
+      }
       group_memberships: {
         Row: {
           group_id: string
           joined_at: string
+          notify_level: Database["public"]["Enums"]["group_notify_level"]
           role: Database["public"]["Enums"]["group_membership_role"]
           status: Database["public"]["Enums"]["group_membership_status"]
           user_id: string
@@ -606,6 +665,7 @@ export type Database = {
         Insert: {
           group_id: string
           joined_at?: string
+          notify_level?: Database["public"]["Enums"]["group_notify_level"]
           role?: Database["public"]["Enums"]["group_membership_role"]
           status?: Database["public"]["Enums"]["group_membership_status"]
           user_id: string
@@ -613,6 +673,7 @@ export type Database = {
         Update: {
           group_id?: string
           joined_at?: string
+          notify_level?: Database["public"]["Enums"]["group_notify_level"]
           role?: Database["public"]["Enums"]["group_membership_role"]
           status?: Database["public"]["Enums"]["group_membership_status"]
           user_id?: string
@@ -638,6 +699,8 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          pinned_post_id: string | null
+          rules: string | null
           visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Insert: {
@@ -650,6 +713,8 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          pinned_post_id?: string | null
+          rules?: string | null
           visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Update: {
@@ -662,6 +727,8 @@ export type Database = {
           locality_id?: string
           name?: string
           owner_user_id?: string
+          pinned_post_id?: string | null
+          rules?: string | null
           visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Relationships: [
@@ -684,6 +751,13 @@ export type Database = {
             columns: ["locality_id"]
             isOneToOne: false
             referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "groups_pinned_post_id_fkey"
+            columns: ["pinned_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -1289,6 +1363,44 @@ export type Database = {
           },
         ]
       }
+      member_entry_moments: {
+        Row: {
+          arrival_date: string | null
+          created_at: string
+          departure_date: string | null
+          destination_locality_id: string | null
+          moment: Database["public"]["Enums"]["entry_moment"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arrival_date?: string | null
+          created_at?: string
+          departure_date?: string | null
+          destination_locality_id?: string | null
+          moment: Database["public"]["Enums"]["entry_moment"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          arrival_date?: string | null
+          created_at?: string
+          departure_date?: string | null
+          destination_locality_id?: string | null
+          moment?: Database["public"]["Enums"]["entry_moment"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_entry_moments_destination_locality_id_fkey"
+            columns: ["destination_locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       national_holidays: {
         Row: {
           date: string
@@ -1453,6 +1565,21 @@ export type Database = {
           target_id?: string
           target_type?: string
           type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: []
+      }
+      onboarding_release_notices: {
+        Row: {
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          requested_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2010,6 +2137,7 @@ export type Database = {
           author_id: string
           body: string
           created_at: string
+          edited_at: string | null
           id: string
           is_deleted: boolean
           request_id: string
@@ -2018,6 +2146,7 @@ export type Database = {
           author_id: string
           body: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_deleted?: boolean
           request_id: string
@@ -2026,6 +2155,7 @@ export type Database = {
           author_id?: string
           body?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_deleted?: boolean
           request_id?: string
@@ -2082,10 +2212,12 @@ export type Database = {
           body: string
           category: Database["public"]["Enums"]["recommendation_category"]
           created_at: string
+          edited_at: string | null
           group_id: string | null
           id: string
           is_deleted: boolean
           is_resolved: boolean
+          last_resolved_reply_id: string | null
           locality_id: string | null
           resolved_at: string | null
           resolved_by: string | null
@@ -2098,10 +2230,12 @@ export type Database = {
           body: string
           category?: Database["public"]["Enums"]["recommendation_category"]
           created_at?: string
+          edited_at?: string | null
           group_id?: string | null
           id?: string
           is_deleted?: boolean
           is_resolved?: boolean
+          last_resolved_reply_id?: string | null
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
@@ -2114,10 +2248,12 @@ export type Database = {
           body?: string
           category?: Database["public"]["Enums"]["recommendation_category"]
           created_at?: string
+          edited_at?: string | null
           group_id?: string | null
           id?: string
           is_deleted?: boolean
           is_resolved?: boolean
+          last_resolved_reply_id?: string | null
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
@@ -2131,6 +2267,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_requests_last_resolved_reply_id_fkey"
+            columns: ["last_resolved_reply_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_replies"
             referencedColumns: ["id"]
           },
           {
@@ -2531,6 +2674,10 @@ export type Database = {
         Args: { p_caller_user_id?: string; p_event_id: string }
         Returns: undefined
       }
+      complete_verification_document_removal: {
+        Args: { p_storage_object_path: string }
+        Returns: undefined
+      }
       consume_verification_attempt: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -2575,11 +2722,22 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              p_code_hash: string
+              p_invitee_email_digest: string
+              p_invitee_email_hint: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
       create_group: {
         Args: {
           p_description?: string
           p_locality_id: string
           p_name: string
+          p_rules?: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Returns: string
@@ -2644,6 +2802,32 @@ export type Database = {
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string
+      }
+      family_invite_code_accept: {
+        Args: {
+          p_accepted_by_user_id: string
+          p_code_hash: string
+          p_consent_version: number
+          p_display_name: string
+          p_origin_digest: string
+        }
+        Returns: {
+          link_id: string
+          status: string
+        }[]
+      }
+      family_invite_code_preview: {
+        Args: {
+          p_code_hash: string
+          p_email_digest?: string
+          p_origin_digest: string
+        }
+        Returns: {
+          expires_at: string
+          invitee_email_hint: string
+          inviter_name: string
+          status: string
+        }[]
       }
       feed_community: {
         Args: {
@@ -2750,6 +2934,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_verified_family_holder: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       is_account_deletion_pending: { Args: never; Returns: boolean }
       is_account_suspended: { Args: { p_user_id: string }; Returns: boolean }
       is_community_member: {
@@ -2766,7 +2954,10 @@ export type Database = {
       }
       is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
-      join_group: { Args: { p_group_id: string }; Returns: undefined }
+      join_group: {
+        Args: { p_group_id: string; p_reason?: string }
+        Returns: undefined
+      }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }
       list_available_groups_for_interests: {
         Args: { p_locality_id: string; p_user_id: string }
@@ -2798,6 +2989,13 @@ export type Database = {
           revoked_at: string
         }[]
       }
+      list_group_activity: {
+        Args: { p_locality_id: string }
+        Returns: {
+          group_id: string
+          recent_post_count: number
+        }[]
+      }
       list_hidden_questions: {
         Args: never
         Returns: {
@@ -2814,6 +3012,7 @@ export type Database = {
           p_category?: Database["public"]["Enums"]["recommendation_category"]
           p_limit?: number
           p_locality_id: string
+          p_mine?: boolean
           p_offset?: number
           p_query?: string
           p_resolved?: boolean
@@ -2906,6 +3105,17 @@ export type Database = {
           request_title: string
         }[]
       }
+      list_question_replies: {
+        Args: { p_request_id: string }
+        Returns: {
+          author_id: string
+          body: string
+          created_at: string
+          edited_at: string
+          id: string
+          is_removed: boolean
+        }[]
+      }
       list_user_group_interests: {
         Args: { p_user_id: string }
         Returns: {
@@ -2946,6 +3156,10 @@ export type Database = {
         Returns: undefined
       }
       my_account_kind: { Args: never; Returns: string }
+      my_group_notify_level: {
+        Args: { p_group_id: string }
+        Returns: Database["public"]["Enums"]["group_notify_level"]
+      }
       my_verification_document: {
         Args: { p_user_id: string }
         Returns: {
@@ -3013,6 +3227,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      pin_group_post: {
+        Args: { p_group_id: string; p_post_id: string }
+        Returns: undefined
+      }
       profile_affiliations_for: {
         Args: { p_target_user_id: string }
         Returns: {
@@ -3061,6 +3279,19 @@ export type Database = {
           p_website_url: string
         }
         Returns: string
+      }
+      provision_member_entry: {
+        Args: {
+          p_arrival_date?: string
+          p_consent_version: number
+          p_departure_date?: string
+          p_destination_locality_id?: string
+          p_display_name: string
+          p_locality_id: string
+          p_moment?: Database["public"]["Enums"]["entry_moment"]
+          p_user_id: string
+        }
+        Returns: undefined
       }
       provision_member_locality: {
         Args: { p_locality_id: string; p_user_id: string }
@@ -3160,20 +3391,42 @@ export type Database = {
         Args: { p_listing_id: string; p_path: string; p_position?: number }
         Returns: string[]
       }
+      replace_verification_document: {
+        Args: {
+          p_mime_type: string
+          p_storage_object_path: string
+          p_user_id: string
+        }
+        Returns: {
+          document_id: string
+          replaced_storage_object_path: string
+        }[]
+      }
       request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
       }
-      resend_family_invitation: {
-        Args: {
-          p_invitation_id: string
-          p_invitee_email_digest: string
-          p_inviter_user_id: string
-          p_token_digest: string
-        }
-        Returns: string
-      }
+      resend_family_invitation:
+        | {
+            Args: {
+              p_invitation_id: string
+              p_invitee_email_digest: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_code_hash: string
+              p_invitation_id: string
+              p_invitee_email_digest: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
       resolve_report: {
         Args: {
           p_action: string
@@ -3247,6 +3500,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_group_notify_level: {
+        Args: {
+          p_group_id: string
+          p_level: Database["public"]["Enums"]["group_notify_level"]
+        }
+        Returns: undefined
+      }
+      set_group_rules: {
+        Args: { p_group_id: string; p_rules: string }
+        Returns: undefined
+      }
       set_profile_bio: { Args: { p_bio: string }; Returns: undefined }
       settle_account_possessions: {
         Args: { p_user_id: string }
@@ -3291,6 +3555,7 @@ export type Database = {
         Args: { p_action: string; p_listing_id: string }
         Returns: Database["public"]["Enums"]["listing_status"]
       }
+      unpin_group_post: { Args: { p_group_id: string }; Returns: undefined }
       update_member_business_page: {
         Args: {
           p_bio?: string
@@ -3339,11 +3604,13 @@ export type Database = {
         | "listing"
         | "event_question"
         | "service_request"
+      entry_moment: "arriving" | "resident" | "leaving"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
+      group_notify_level: "all" | "highlights" | "none"
       group_visibility: "public" | "private"
       listing_condition: "new" | "used"
       listing_deal: "rent" | "sale"
@@ -3377,6 +3644,7 @@ export type Database = {
         | "service_request"
         | "recommendation_request"
         | "support_answered"
+        | "group_post"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3579,11 +3847,13 @@ export const Constants = {
         "event_question",
         "service_request",
       ],
+      entry_moment: ["arriving", "resident", "leaving"],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
       event_status: ["upcoming", "cancelled", "completed"],
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
+      group_notify_level: ["all", "highlights", "none"],
       group_visibility: ["public", "private"],
       listing_condition: ["new", "used"],
       listing_deal: ["rent", "sale"],
@@ -3619,6 +3889,7 @@ export const Constants = {
         "service_request",
         "recommendation_request",
         "support_answered",
+        "group_post",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

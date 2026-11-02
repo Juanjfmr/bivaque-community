@@ -2,6 +2,13 @@
 
 This matrix decides whether a plan can be executed directly or must pass product decision review first.
 
+## Delegation (owner, 02/11/2026)
+
+The owner, who wrote this matrix, delegated R3 decisions to the coordinating agent for the launch:
+decide, record in an ADR, list in [`RATIFICACAO.md`](RATIFICACAO.md), and present the list for
+ratification at the end of the work. Delegation does not cover real personal data or real CPF in
+tests, production databases, secrets in the repository, or signing a postmortem's §7.
+
 ## Levels
 
 | Level | Meaning | Approval rule |
@@ -9,7 +16,7 @@ This matrix decides whether a plan can be executed directly or must pass product
 | R0 | Mechanical implementation with no product behavior change. Examples: formatting, build wiring, narrow test fixes. | Executor may proceed if the plan is otherwise valid. |
 | R1 | Reversible local UX or copy change that does not affect access, privacy, security, onboarding, retention, pricing, or data shape. | May proceed after product-critic returns `PASS`. |
 | R2 | Product behavior, onboarding, auth, recovery, notifications, visibility, scope, access, retention, moderation, or exclusion decisions. | Requires approved ADR and `critic_verdict: pass`. |
-| R3 | Security, privacy, personal data, permissions, RLS, destructive migrations, payments, monetization, legal/compliance, or irreversible decisions. | Requires explicit human approval in an approved ADR and `critic_verdict: pass`. |
+| R3 | Security, privacy, personal data, permissions, RLS, destructive migrations, payments, monetization, legal/compliance, or irreversible decisions. | Requires an ADR and `critic_verdict: pass`. Under the owner's delegation of 02/11/2026 the agent may accept it (`Aceito por delegação — aguarda ratificação`) with `security-auditor` and an independent reviewer; the ADR is listed in [`RATIFICACAO.md`](RATIFICACAO.md) for the owner to ratify. |
 
 ## Automatic elevation terms
 
@@ -42,8 +49,9 @@ Any plan touching RLS, private data, identity verification, Supabase policies, s
 ## R3 automatic terms
 
 The R3 row above is prose; this block is the same rule in operable form, read by
-`scripts/agents/task-contract.mjs`. A plan containing any of these is R3 — it needs an
-approved ADR with human approval, and the `security-auditor` runs alongside the reviewer.
+`scripts/agents/task-contract.mjs`. A plan containing any of these is R3 — it needs an ADR
+accepted by the owner or by delegation (listed in `RATIFICACAO.md`), and the
+`security-auditor` runs alongside the reviewer.
 
 ```text
 pagamento
@@ -72,7 +80,7 @@ they live in the validator's own list because they name code, not policy.
 - Risks and reversal cost.
 - Success metric and reopen condition.
 - Independent critic verdict of exactly `PASS`.
-- Human approval recorded in the ADR.
+- Human approval recorded in the ADR, or acceptance by delegation listed in `RATIFICACAO.md`.
 
 ## Incidents (postmortem is not optional)
 

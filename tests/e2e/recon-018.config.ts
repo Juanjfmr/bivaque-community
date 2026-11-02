@@ -7,7 +7,7 @@ import { defineConfig } from "@playwright/test"
 // mesmos três viewports do contrato. A suíte completa continua rodando pelo
 // config raiz na integração, quando o ambiente for exclusivo.
 
-const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+const chromiumExecutablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
 
 export default defineConfig({
   testDir: ".",
@@ -15,7 +15,7 @@ export default defineConfig({
   outputDir: "../../test-results/recon-018",
   reporter: [["list"]],
   use: {
-    baseURL: process.env.APP_URL ?? "http://127.0.0.1:3137",
+    baseURL: process.env["APP_URL"] ?? "http://127.0.0.1:3137",
     locale: "pt-BR",
     ...(chromiumExecutablePath
       ? { launchOptions: { executablePath: chromiumExecutablePath } }

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { seedSession } from "./helpers/session"
 
 test.describe("onboarding: verified holder and invited family", () => {
@@ -8,48 +9,49 @@ test.describe("onboarding: verified holder and invited family", () => {
     // Contrato atualizado em 2026-09-07 com razão explícita: o heading
     // "Bivaque" e o botão de magic link pertenciam à tela anterior;
     // ADR-20260907-login-com-senha tirou o link da tela e a prancha 36 deu o
-    // título atual. Marca segue coberta pelo link de retorno ao início.
+    // título atual. PORT-003: a marca passou a ser o símbolo da casca da entrada,
+    // como no protótipo, e a saída da entrada é o "Sair" do topo.
     await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Bivaque, voltar ao início" }).first(),
-    ).toBeVisible()
+    await expect(page.getByText("Bivaque", { exact: true })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Sair" })).toHaveAttribute("href", "/")
 
     // The login page renders the password form and the Google OAuth button
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
 
-    // Navigate to the consent page
+    // Navigate to the consent page. Sem sessão, a rota é pública (ADR-20260907)
+    // e diz o que fazer: entrar para registrar o aceite. A tela de aceite de
+    // verdade é a de quem entrou pelo Google (PR #104), coberta abaixo.
     await page.goto("/consent")
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
-    await expect(page.getByRole("button", { name: "Concordar e continuar" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
+    await expect(page.getByText("Entre na sua conta para registrar o aceite.")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
   })
 
   test("consent page shows terms and accept button", async ({ page }) => {
     await seedSession(page.context())
     await page.goto("/consent")
 
-    // "Bem-vindo ao Bivaque" never existed on this page — found realigning
-    // this spec against the real rendered /consent, which renders "Termos de
-    // uso" plus the Código de conduta and Política de privacidade sections.
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
-    await expect(page.locator("#documents-heading")).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Ler a Política de privacidade completa" }),
-    ).toBeVisible()
+    // "Bem-vindo ao Bivaque" nunca existiu nesta página — achado ao realinhar
+    // este spec contra o /consent de verdade. PORT-003: o título e a linha do
+    // aceite são os do passo "Aceite" do protótipo
+    // (`renderEntryGoogleConsent`), com os dois documentos como links.
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
+    await expect(page.getByText("Passo 1 de 3 · Conta")).toBeVisible()
+    await expect(page.getByRole("link", { name: "Política de privacidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Código de conduta" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
-    await expect(acceptButton).toBeDisabled()
 
-    const consentCheckbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    // Negativa: sem marcar, a tela explica em vez de registrar.
+    await acceptButton.click()
+    await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
+
+    const consentCheckbox = page.getByRole("checkbox", { name: /Li e aceito a/ })
     await consentCheckbox.focus()
     await page.keyboard.press("Space")
     await expect(consentCheckbox).toBeChecked()
-    await expect(acceptButton).toBeEnabled()
     await acceptButton.click()
 
     // Accepting stores the consent cookie and proceeds to onboarding
@@ -58,14 +60,16 @@ test.describe("onboarding: verified holder and invited family", () => {
 
   test("onboarding page shows verification flow", async ({ page }) => {
     await seedSession(page.context())
+    await stubVerificationStatus(page, null)
     await page.goto("/onboarding")
 
     // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
-    // the landmark rather than the Bivaque wordmark.
-    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Verificar acesso" })).toBeVisible()
+    // the landmark rather than the Bivaque wordmark. PORT-004: a tela é a do
+    // protótipo — CPF direto, sem a pergunta do tipo de vínculo.
+    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Conferir e continuar" })).toBeVisible()
 
-    const cpfInput = page.getByLabel("CPF")
+    const cpfInput = page.locator("#onboarding-cpf input")
     await expect(cpfInput).toBeVisible()
   })
 

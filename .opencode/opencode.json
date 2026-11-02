@@ -1,6 +1,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
 
+  // 23/10/2026, autorizado pelo dono: o implementador reseta o banco LOCAL e roda as
+  // provas da propria frente, uma de cada vez, pela fila (scripts/agents/prova-fila.mjs).
+  // So os dois comandos exatos abaixo, sem curinga (um `*` deixaria colar `--linked` no fim);
+  // qualquer outro `db reset` continua pedindo confirmacao
+  // (config global) e `--linked` (producao) continua proibido.
+  "permission": {
+    "bash": {
+      "node scripts/agents/prova-fila.mjs -- npx supabase db reset --local": "allow",
+      "node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed": "allow"
+    }
+  },
+
   // Config de projeto. Mescla sobre `~/.config/opencode/opencode.json`.
   // MCP custa contexto em TODA request — só liga aqui o que este repo usa.
 
@@ -39,10 +51,16 @@
     // browser de captura é só via scripts/visual/loop.mjs; (2) não navegar
     // no app local durante janelas db:reset → test:db (gatilho do perfil
     // fantasma "Visual Capture" — ver armadilhas no AGENTS.md).
+    //
+    // Desligado em 23/10/2026: cada `opencode run` sobe a própria cadeia
+    // (npx + node, ~230 MB) e ela fica viva depois que a execução termina. Com
+    // execuções paralelas do lote 4 a RAM livre chegou a 0,3 GB, e as tarefas
+    // de implementação não usam o navegador. Religar só numa sessão que vá
+    // depurar o browser, e derrubar a cadeia ao terminar.
     "chrome-devtools": {
       "type": "local",
       "command": ["npx", "chrome-devtools-mcp@latest"],
-      "enabled": true
+      "enabled": false
     }
   }
 }

@@ -1,0 +1,77 @@
+[
+  {
+    "package": "@tanstack/react-query",
+    "version": "5.104.1",
+    "publishedAt": "2026-10-02T10:04:57.02Z"
+  },
+  {
+    "package": "@tanstack/react-router",
+    "version": "1.170.42",
+    "publishedAt": "2026-10-10T07:29:52.636Z"
+  },
+  {
+    "package": "class-variance-authority",
+    "version": "0.7.1",
+    "publishedAt": "2024-11-26T08:20:34.604Z"
+  },
+  {
+    "package": "clsx",
+    "version": "2.1.1",
+    "publishedAt": "2024-04-23T05:26:04.645Z"
+  },
+  {
+    "package": "radix-ui",
+    "version": "1.7.0",
+    "publishedAt": "2026-10-05T23:09:03.272Z"
+  },
+  {
+    "package": "react",
+    "version": "19.1.0",
+    "publishedAt": "2025-03-28T19:59:42.053Z"
+  },
+  {
+    "package": "react-dom",
+    "version": "19.1.0",
+    "publishedAt": "2025-03-28T19:59:53.229Z"
+  },
+  {
+    "package": "tailwind-merge",
+    "version": "3.7.0",
+    "publishedAt": "2026-09-12T20:10:15.257Z"
+  },
+  {
+    "package": "@tailwindcss/vite",
+    "version": "4.3.3",
+    "publishedAt": "2026-07-16T12:04:06.316Z"
+  },
+  {
+    "package": "@types/react",
+    "version": "19.3.0",
+    "publishedAt": "2026-09-09T18:08:49.75Z"
+  },
+  {
+    "package": "@types/react-dom",
+    "version": "19.3.0",
+    "publishedAt": "2026-09-09T18:07:51.886Z"
+  },
+  {
+    "package": "@vitejs/plugin-react",
+    "version": "6.1.2",
+    "publishedAt": "2026-10-05T10:08:27.143Z"
+  },
+  {
+    "package": "tailwindcss",
+    "version": "4.3.3",
+    "publishedAt": "2026-07-16T12:03:35.267Z"
+  },
+  {
+    "package": "tw-animate-css",
+    "version": "1.4.0",
+    "publishedAt": "2025-09-24T05:25:53.055Z"
+  },
+  {
+    "package": "vite",
+    "version": "8.3.4",
+    "publishedAt": "2026-10-08T12:07:04.441Z"
+  }
+]

@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-10-22
 expires_at:
-linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 2)
+linked_plan: docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 2)
 critic_verdict: PASS
 critic_review: Aprovado pelo dono em 22/10/2026 com um ajuste (chamado só com conta). Regras levantadas do protótipo, arquivo por arquivo, antes da redação.
 ---
@@ -139,7 +139,7 @@ Nenhuma.
   - `src/features/profile/hood-privacy.js`, `settings.js` e `hidden.js`;
   - `src/features/support/help.js`;
   - `src/features/owner/console.js`.
-- **Auditoria:** `docs/AUDITORIA_ADERENCIA_2026-10-19.md`, seções 2.1, 2.2 e 6.
+- **Auditoria:** `docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md`, seções 2.1, 2.2 e 6.
 - **Banco atual:** texto livre de bairro em `20260911043053_listings_market_and_homes.sql` e em
   `20260911051005_listing_alert_deliveries.sql`.
 

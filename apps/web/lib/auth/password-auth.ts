@@ -41,7 +41,17 @@ export interface PasswordAuthView {
 
 const COPY_INVALID_LOGIN = "E-mail ou senha incorretos."
 const EMAIL_TAKEN = "Este e-mail já tem conta no Bivaque."
-const COPY_SENHA_CURTA = "A senha precisa ter ao menos 8 caracteres, com letras e números."
+
+/**
+ * A regra da senha como a especificação a escreve no apoio do campo
+ * (`entryPasswordField` em account.js) e como o erro a repete em minúscula
+ * (`A senha precisa ter …`). Exportada para a tela mostrar exatamente a mesma
+ * frase que o provedor cobra: duas cópias divergiriam no primeiro ajuste.
+ */
+export const SENHA_REGRA = "Ao menos 8 caracteres, com letras e números."
+export const SENHA_REGRA_ERRO = `A senha precisa ter ${SENHA_REGRA.toLowerCase()}`
+
+const COPY_SENHA_CURTA = SENHA_REGRA_ERRO
 const OFFLINE = "Verifique sua conexão e tente de novo."
 const FAILED = "Não foi possível continuar agora. Tente novamente em instantes."
 

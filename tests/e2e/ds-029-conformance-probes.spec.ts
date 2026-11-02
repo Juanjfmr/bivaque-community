@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
@@ -92,19 +92,42 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
+// Abre o compositor no tamanho do projeto e DEVOLVE o gatilho que a pessoa
+// usou: é ele que tem de receber o foco de volta quando o modal fecha.
+//
+// Lote 5, N2 (ADR-20261023): a linha de publicar saiu de /community e o
+// compositor passou a abrir pela linha do Início (a partir de md) ou pelo menu
+// de criação do shell no telefone. Os dois gatilhos sobrevivem ao modal, que é
+// o que o retorno de foco exige.
+async function openComposerWithTrigger(page: Page): Promise<Locator> {
+  await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
+  // A saudação só existe depois da montagem: esperá-la prova que o React
+  // hidratou, e o clique não cai no vazio.
+  await expect(page.locator("main").getByRole("heading", { level: 1 })).toBeVisible({
+    timeout: 20000,
+  })
+
+  const width = page.viewportSize()?.width ?? 0
+  if (width >= 768) {
+    const trigger = page.getByTestId("intent-pergunta")
+    await trigger.click()
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10000 })
+    return trigger
+  }
+
+  const trigger = page.getByRole("button", { name: "Criar" })
+  await trigger.click()
+  await page.getByRole("button", { name: /Fazer uma pergunta/i }).click()
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10000 })
+  return trigger
+}
+
 test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
   test("opening the composer moves focus into the dialog", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    await page.waitForLoadState("networkidle")
-
-    const trigger = page.getByRole("button", { name: /^Escreva|^Publicar$/ }).first()
-    await expect(trigger).toBeVisible({ timeout: 15000 })
-    await trigger.click()
+    await openComposerWithTrigger(page)
 
     const dialog = page.getByRole("dialog")
-    await expect(dialog).toBeVisible({ timeout: 10000 })
-
     const activeIsInsideDialog = await dialog
       .evaluate((el) => el.contains(document.activeElement))
       .catch(() => false)
@@ -113,11 +136,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
 
   test("Escape closes the modal and focus returns to the trigger", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    await page.waitForLoadState("networkidle")
-
-    const trigger = page.getByRole("button", { name: /^Escreva|^Publicar$/ }).first()
-    await trigger.click()
+    const trigger = await openComposerWithTrigger(page)
 
     const dialog = page.getByRole("dialog")
     await expect(dialog).toBeVisible({ timeout: 10000 })

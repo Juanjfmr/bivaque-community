@@ -15,7 +15,7 @@ import { GUIDE_DIR, loadFlowCatalog } from "./flows/catalog.mjs"
 
 const here = fileURLToPath(new URL(".", import.meta.url))
 const repoRoot = join(here, "..", "..")
-const OUT_MD = join(repoRoot, "docs", "journeys", "FLOWS.md")
+const OUT_MD = join(repoRoot, "docs", "historico", "journeys", "FLOWS.md")
 const HTML = join(GUIDE_DIR, "flows.html")
 const CHECK = process.argv.includes("--check")
 

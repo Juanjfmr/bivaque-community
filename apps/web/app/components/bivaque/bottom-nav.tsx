@@ -29,7 +29,7 @@ export interface NavItem {
 // ── Os containers de navegação ──────────────────────────────────────────────
 //
 // A navegação do shell do membro espelha o MODELO DE PRODUTO da versão de
-// 2026-09-06 (docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7),
+// 2026-09-06 (docs/historico/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7),
 // que substitui os quatro containers históricos do ADR-20260816. São quatro:
 //
 //   - "inicio"      → home de quem participa: a chegada, o que está acontecendo

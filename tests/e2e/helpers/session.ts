@@ -24,7 +24,7 @@
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { type BrowserContext, request } from "@playwright/test"
+import { type APIRequestContext, type BrowserContext, request } from "@playwright/test"
 
 export function readEnvLocal(key: string): string | undefined {
   try {
@@ -185,3 +185,35 @@ export const BOTTOM_NAV = 'nav:has([aria-label="Seções do aplicativo"])'
  * for its two states: 64px as an icon rail, 256px expanded.
  */
 export const SIDEBAR = 'aside:has(nav[aria-label="Navegação principal"])'
+
+/**
+ * A REST client authenticated as the same user whose session lives on
+ * `context`, for specs that need to see the DATABASE effect of a UI action.
+ *
+ * The password-grant cookie carries the access token ("base64-<base64url>",
+ * see encodeAuthCookieValue); PostgREST reads the token from `Authorization`,
+ * not from the cookie, so it is decoded here and sent as a Bearer header with
+ * the anon key. The user's own RLS still governs what the read returns — the
+ * point is to observe a row that the app itself would hide, such as a reply
+ * whose parent request was deleted.
+ */
+export async function apiForSession(context: BrowserContext): Promise<APIRequestContext> {
+  const { anonKey } = requireEnv()
+  const cookies = await context.cookies()
+  const authCookie = cookies.find((cookie) => /^sb-.*-auth-token$/.test(cookie.name))
+  if (!authCookie) {
+    throw new Error("this context has no session cookie: call signInAs before apiForSession")
+  }
+  const raw = authCookie.value.startsWith("base64-")
+    ? authCookie.value.slice("base64-".length)
+    : authCookie.value
+  const decoded = Buffer.from(raw.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8")
+  const session = JSON.parse(decoded) as { access_token?: string }
+  if (!session.access_token) {
+    throw new Error("the session cookie has no access_token")
+  }
+  return request.newContext({
+    baseURL: SUPABASE_URL,
+    extraHTTPHeaders: { apikey: anonKey, Authorization: `Bearer ${session.access_token}` },
+  })
+}

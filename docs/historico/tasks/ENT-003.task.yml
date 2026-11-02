@@ -1,0 +1,80 @@
+# ENT-003 — F01, lote 3: consulta indisponível, envio de identidade e análise (+ correções do ENT-002)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor, auditoria de segurança e verificação de
+# runtime: Claude Code. Sem backend: o arquivo nunca sai do navegador.
+task_id: ENT-003
+
+objective: >
+  No app (apps/app), as rotas /app/entrar/consulta-indisponivel, /app/entrar/documento e
+  /app/entrar/analise passam para a composição de etapa (EntradaEtapa, passo 2 Vínculo), como nas
+  referências aprovadas em 30/10/2026: resultado com ícone e duas ações, área de envio tracejada de
+  arquivo único e linha do tempo da análise com prazos. O arquivo escolhido continua só na memória
+  da página, e a tela passa a mostrar apenas o tipo e o tamanho dele, nunca o nome (que pode conter o
+  CPF). Corrige também dois detalhes do ENT-002 no indicador e no vínculo confirmado.
+
+authority:
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md (B · Etapa, Regras de consistência, Valor e atrito, Celular)
+  - docs/design/fluxos-2026-10-30/individuais/F01/F01-06-consulta-indisponivel.png, F01-07-documento.png, F01-08-analise.png e as mesmas em celular/
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (análise pendente com linha do tempo, reenvio de documento e aviso)
+  - prototypes/bivaque-html/src/features/entry/account.js (do documento ficam só tipo e tamanho; tipos PDF, JPG e PNG até 10 MB)
+  - docs/agents/tasks/ENT-002.task.yml (componente EntradaEtapa e padrão de testes)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 30/10/2026 em docs/design/fluxos-2026-10-30/individuais/F01/previa-atual/
+    06-consulta-indisponivel-desktop.png, 07-documento-desktop.png e 08-analise-desktop.png: cartão
+    único com aviso de demonstração, input de arquivo nativo que exibe o nome do arquivo e lista
+    numerada simples na análise. Revisão do ENT-002 (.visual/ENT-002/resultado-desktop-1440.png):
+    traço solto sob o círculo do passo 5 e check de cerca de 16 px no vínculo confirmado.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-003/
+
+forbidden:
+  - enviar, ler o conteúdo, converter ou guardar o arquivo escolhido (fica só como File em memória; sem FileReader, sem URL.createObjectURL, sem localStorage, sem log)
+  - exibir o nome do arquivo em qualquer lugar da tela
+  - mudar o tratamento do CPF ou as telas de acesso (ENT-001)
+  - instalar, remover ou atualizar dependências
+  - copiar código de blocos do 21st.dev (File Dropzone e Process Timeline são referência de anatomia)
+  - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo
+  - criar texto, campo ou destino que não esteja nesta lista de aceite
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Consulta indisponível (/app/entrar/consulta-indisponivel): EntradaEtapa no passo 2. Ícone de traço de nuvem com alerta (Material Symbols cloud_off ou equivalente já hospedado) acima do título \"Não foi possível concluir a consulta.\"; apoio \"A fonte oficial está fora do ar agora. Não é nada com seus dados.\" e segunda linha \"Tente novamente em alguns minutos ou envie sua identidade para análise.\"; botão principal \"Tentar novamente\" (volta ao vínculo) e secundário \"Enviar identidade\" (vai ao documento)."
+  - "Documento (/app/entrar/documento): passo 2. Título \"Envie sua identidade.\"; apoio \"Se a consulta por CPF não for concluída, você pode enviar sua identidade militar digital.\"; área de envio com borda tracejada, ícone de documento e botão \"Selecionar arquivo\" (o input type=file fica dentro, acessível pelo rótulo e por teclado, aceitando application/pdf, image/jpeg e image/png); nota \"Envie um único arquivo completo. PDF, JPG ou PNG, até 10 MB.\"; depois de escolher, a área mostra um cartão com ícone, o tipo e o tamanho (ex.: \"PDF · 420 KB\") e o botão \"Trocar arquivo\", e nunca o nome; arquivo de tipo ou tamanho inválido mostra o erro \"Escolha um PDF, JPG ou PNG de até 10 MB.\" (role=alert) e mantém o envio desabilitado; botão principal \"Enviar arquivo\" desabilitado até haver arquivo válido, então vai à análise como hoje; link \"Voltar\" para o vínculo."
+  - "Análise (/app/entrar/analise): passo 2. Título \"Vínculo em análise.\"; apoio \"Acompanhe as etapas da análise por aqui.\"; linha do tempo vertical com três marcos: \"Documento enviado\" (concluído, check em círculo Grafite), \"Em análise\" (atual, círculo Grafite com o número 2) com a linha \"Até 2 dias úteis, normalmente no mesmo dia\", e \"Resultado\" (futuro, círculo vazado em var(--muted-foreground)) com a linha \"Você recebe um aviso assim que liberar\"; lista ordenada com aria-current=\"step\" no marco atual; caixa desenhada em Grafite \"Avise-me quando houver uma atualização.\" (estado local, como hoje); botão secundário \"Substituir documento\" (vai ao documento)."
+  - "Sem o parágrafo \"Jornada demonstrativa\" e sem \"Na demonstração\" nessas três telas."
+  - "Correção do ENT-002: no indicador de ≥768 px, o passo 5 não tem nenhum traço ou linha solta entre o círculo e o rótulo \"Negócio\"; o conector só existe entre círculos."
+  - "Correção do ENT-002: no vínculo confirmado, o check dentro do círculo Grafite de 72 px tem pelo menos 36 px."
+  - "Sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; foco no título ao abrir; foco visível; tema escuro pelos tokens."
+  - "Os specs entrada-etapa, entrada-acesso e entrada-21st continuam verdes, com entrada-21st ajustado só onde dependia do nome do arquivo, do aviso de demonstração ou dos textos substituídos."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 lint
+  - "Teste que escolhe um arquivo chamado 12345678909.pdf e confirma que o nome não aparece no DOM (document.body.innerText e atributos) e que a tela mostra o tipo e o tamanho"
+  - "Teste de arquivo inválido (ex.: text/plain e PDF acima de 10 MB) mostrando o erro e mantendo Enviar arquivo desabilitado"
+  - "Capturas de página inteira das três telas (documento também com arquivo escolhido) em 375, 768 e 1440 px em .visual/ENT-003/, comparadas pelo revisor com as referências"
+
+risk: entrada, verificação de identidade por documento e acessibilidade
+risk_level: R3
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

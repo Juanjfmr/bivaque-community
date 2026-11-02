@@ -4,7 +4,7 @@
 //   node scripts/visual/loop.mjs --fast     skip build/serve, capture against a running dev server
 //
 // Exit code is 0 only when every gate passed AND the visual audit has no high-severity
-// findings. The loop driver (see docs/agents/QWEN_BUILD_PROMPT.md) keeps iterating while
+// findings. The loop driver (see docs/historico/agents/QWEN_BUILD_PROMPT.md) keeps iterating while
 // this exits non-zero.
 
 import { spawn, spawnSync } from "node:child_process"

@@ -190,7 +190,11 @@ export function CreateFab({ onAsk }: { onAsk: () => void }) {
             aria-label="Criar"
             className="flex flex-col items-end gap-3"
           >
-            <ActionItems onAsk={onAsk} onDone={() => close(false)} variant="fab" />
+            {/* `close(true)` devolve o foco ao gatilho antes de a ação
+                acontecer. Escolher "Fazer uma pergunta" não navega: abre o
+                compositor, e é o gatilho do shell que tem de receber o foco de
+                volta quando o modal fecha (DS-029). */}
+            <ActionItems onAsk={onAsk} onDone={() => close(true)} variant="fab" />
           </ul>
         ) : null}
         <button
@@ -247,7 +251,7 @@ export function CreateButton({ onAsk }: { onAsk: () => void }) {
       {open ? (
         <div className="motion-card-enter absolute top-full right-0 z-30 mt-2 w-72 rounded-ui-lg border border-ui-line bg-ui-surface p-2 shadow-ui-hover">
           <ul id={menuId} ref={listRef} aria-label="Criar">
-            <ActionItems onAsk={onAsk} onDone={() => close(false)} variant="popover" />
+            <ActionItems onAsk={onAsk} onDone={() => close(true)} variant="popover" />
           </ul>
         </div>
       ) : null}

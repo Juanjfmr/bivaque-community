@@ -10,18 +10,21 @@ function read(relativePath: string): string {
 }
 
 describe("admission screens follow boards 38 and 69", () => {
-  it("renders the verify access screen with the four role options", () => {
+  // PORT-004 (frente B): a prancha 38 da elegibilidade passou a ser a tela do
+  // protótipo (`renderEntryCpf`): CPF direto, "Por que o CPF" e o link do
+  // convite, sem a pergunta do tipo de vínculo. A expectativa antiga guardava as
+  // quatro opções e o texto "Verificar meu acesso"; o contrato novo guarda o que
+  // passou a valer, e continua recusando o que não pode voltar.
+  it("renders the eligibility screen with the prototype copy", () => {
     const page = read("page.tsx")
 
-    expect(page).toContain("Verificar meu acesso")
-    expect(page).toContain("Como você deseja verificar seu acesso?")
-    expect(page).toContain("Sou militar das Forças Armadas")
-    expect(page).toContain("Sou veterano")
-    expect(page).toContain("Sou pensionista")
-    expect(page).toContain("Recebi um convite familiar")
-    expect(page).toContain("Digite seu CPF")
-    expect(page).toContain("A verificação por CPF é praticamente instantânea.")
-    expect(page).toContain("Se não conseguirmos confirmar, você poderá enviar sua identidade.")
+    expect(page).toContain("Confirme seu vínculo.")
+    expect(page).toContain("Para militares federais ativos, veteranos e pensionistas militares.")
+    expect(page).toContain("Por que o CPF")
+    expect(page).toContain("É cônjuge ou dependente?")
+    expect(page).toContain('href="/convite"')
+    expect(page).not.toContain("Como você deseja verificar seu acesso?")
+    expect(page).not.toContain("RadioGroup")
   })
 
   it("renders the progress rail with the three board-38 steps", () => {
@@ -33,17 +36,26 @@ describe("admission screens follow boards 38 and 69", () => {
     expect(shell).toContain("Seu progresso")
   })
 
+  it("keeps the result and pending states of the prototype", () => {
+    const page = read("page.tsx")
+    const status = read("status/page.tsx")
+
+    expect(page).toContain("Não localizamos o vínculo.")
+    expect(page).toContain("Não conseguimos consultar agora.")
+    expect(page).toContain("Tentar de novo")
+    expect(status).toContain("pendingTimeline")
+    expect(status).toContain("Você pode sair e voltar: o status fica aqui.")
+  })
+
   it("exposes the single-file document route and its replacement state", () => {
     const page = read("documento/page.tsx")
     const form = read("document-upload.tsx")
 
-    expect(page).toContain("Enviar identidade")
-    expect(page).toContain("Precisamos de outro arquivo")
-    expect(page).toContain("Voltar à verificação")
-    expect(form).toContain("Identidade militar digital")
-    expect(form).toContain("Arquivo não legível")
-    expect(form).toContain("Envie o documento completo em um único arquivo.")
-    expect(form).toContain("Substituir arquivo")
+    expect(page).toContain("Envie um documento.")
+    expect(page).toContain("A equipe pediu outro documento.")
+    expect(form).toContain("Enviar um documento")
+    expect(form).toContain("PDF, JPG ou PNG, até 10 MB.")
+    expect(form).toContain('aria-label="Documento para análise"')
   })
 
   it("does not claim AI recognition nor promise a deadline", () => {

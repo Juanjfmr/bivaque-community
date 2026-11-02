@@ -224,7 +224,7 @@ export function renderNextCard(board) {
     "",
     "Contrato do agente:",
     "- resolver o card escolhido; drift é evidência temporária, não entrega final",
-    "- antes de implementar: ler AGENTS.md, docs/BIVAQUE.md, docs/PRODUCT_STATUS.md e BOARD.md",
+    "- antes de implementar: ler AGENTS.md, docs/LANCAMENTO.md e BOARD.md",
     `- abrir o detalhe: node tools/backend-kanban/src/board.mjs --card ${card.id}`,
     "- ao terminar: atualizar board.json, regenerar BOARD.md, validar e commitar junto da mudança",
     "",

@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-08-20
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-20-onda-g-vitrine.md
+linked_plan: docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md
 critic_verdict: PASS
 critic_review: Revisao adversarial executada em 2026-08-20 na mesma sessao que escreveu o ADR — o critico NAO foi independente, e isso fica registrado aqui em vez de ser omitido. A revisao achou e corrigiu seis defeitos de implementabilidade antes da aprovacao (helper inalcancavel por policy, leitura de display_name negada pela RLS, sync_paid_reach contradizendo a tolerancia de 7 dias, recurso sem tabela, revogacao de ficha sem task, e uma citacao de migration errada sobre exclusao de conta). Nenhum defeito atingiu as decisoes em si. Veredito PASS.
 ---
@@ -131,15 +131,15 @@ linha futura**: ela não conflita com nada aqui e depende da onda de eventos, n�
 
 ## Evidence and sources
 
-- `docs/BIVAQUE.md` §7.1 a §7.5 (a linha, as cinco linhas de receita, as doze categorias, os
+- `docs/historico/BIVAQUE.md` §7.1 a §7.5 (a linha, as cinco linhas de receita, as doze categorias, os
   cinco proibidos, o filtro de três perguntas, a ordem de grandeza), §10.2, §12 regra 8.
 - Decisões D26, D27, D28, D29, D41 na tabela do §9.
-- `docs/PRODUCT_STATUS.md` §7, linha "Alcance pago", e §11, linha "Cobrança" — as duas marcadas
+- `docs/historico/PRODUCT_STATUS.md` §7, linha "Alcance pago", e §11, linha "Cobrança" — as duas marcadas
   como bloqueio externo por CNPJ.
 - `apps/web/lib/portal/client.ts` e `apps/web/lib/portal/guard.ts` — o padrão de terceiro
   server-side com chave em ambiente, throttle e breaker, que o cliente do Asaas segue.
 - `packages/domain/src/pii-scrub.ts` — o filtro que roda antes de qualquer log de payload.
-- `docs/superpowers/plans/2026-08-20-onda-g-vitrine.md`, Tasks 7 e 8.
+- `docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md`, Tasks 7 e 8.
 
 ## Benefits
 

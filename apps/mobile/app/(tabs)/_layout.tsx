@@ -1,7 +1,7 @@
 // apps/mobile/app/(tabs)/_layout.tsx
 // Layout do navegador de tabs com os quatro containers do produto.
 //
-// Os containers derivam de docs/BIVAQUE.md §3.1 (três níveis de pertencimento)
+// Os containers derivam de docs/historico/BIVAQUE.md §3.1 (três níveis de pertencimento)
 // e §6.3 (os dois ciclos), e são EXATAMENTE quatro (VISUAL_GUIDE.md §0
 // Navegação — teto de cinco, e o web tem quatro). Esta fundação espelha os
 // rótulos e a ordem do bottom-nav do apps/web (apps/web/app/components/

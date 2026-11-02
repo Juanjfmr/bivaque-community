@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-17
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
 critic_verdict:
 critic_review:
 ---
@@ -14,7 +14,7 @@ critic_review:
 
 ## Problem
 
-A prancha 51-web-perfil e a [correção 6 do responsável](../design/visual-guide-2026-09-06/DECISOES-2026-09-07.md)
+A prancha 51-web-perfil e a [correção 6 do responsável](../historico/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md)
 autorizam campos autodeclarados e opcionais no perfil, cada um com um controle
 **"Exibir no perfil" desligado por padrão**, alterável e removível depois.
 

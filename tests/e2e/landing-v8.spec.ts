@@ -32,6 +32,10 @@ function onlyCaptureProjects(testInfo: TestInfo) {
 async function openLanding(page: Page) {
   await page.goto("/")
   await expect(page.locator("#landing")).toBeVisible()
+  // Os botões são md-filled-button: só navegam depois que o elemento é
+  // registrado no cliente. Clicar antes disso não faz nada, e no celular do CI
+  // o clique chegava antes do registro.
+  await page.waitForFunction(() => customElements.get("md-filled-button") !== undefined)
 }
 
 const flat = (text: string | null | undefined) =>
@@ -73,8 +77,10 @@ function luminance({ r, g, b }: { r: number; g: number; b: number }) {
 }
 
 function contrast(a: string, b: string) {
-  const [light, dark] = [luminance(parseColor(a)), luminance(parseColor(b))].sort((x, y) => y - x)
-  return Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100
+  const [lighter = 0, darker = 0] = [luminance(parseColor(a)), luminance(parseColor(b))].sort(
+    (x, y) => y - x,
+  )
+  return Math.round(((lighter + 0.05) / (darker + 0.05)) * 100) / 100
 }
 
 // Os valores de token são hex; a sonda precisa ficar DENTRO de `.ld`, porque é

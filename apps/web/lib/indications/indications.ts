@@ -33,9 +33,14 @@ export const INDICATION_SEARCH_DEBOUNCE_MS = 300
 export const INDICATION_SIMILAR_LIMIT = 5
 /** Página da lista de indicações. */
 export const INDICATION_PAGE_SIZE = 20
-/** Título do pedido: o mesmo intervalo do CHECK do banco. */
-export const INDICATION_TITLE_MIN = 3
-export const INDICATION_TITLE_MAX = 200
+/**
+ * Título do pedido: o mesmo intervalo do CHECK do banco
+ * (`recommendation_requests_title_check`, migration 20261024110000). O ADR
+ * 20261023 (seção 2) fixa 8 a 300 caracteres e retira a regra dos "2 termos"
+ * do protótipo.
+ */
+export const INDICATION_TITLE_MIN = 8
+export const INDICATION_TITLE_MAX = 300
 
 export function indicationHref(requestId: string): string {
   return `/indicacoes/${requestId}`
@@ -161,7 +166,9 @@ export function suggestCategory(text: string): IndicationCategory | null {
 /** O pedido está pronto para publicar? Devolve o motivo quando não está. */
 export function titleProblem(title: string): string | null {
   const length = title.trim().length
-  if (length < INDICATION_TITLE_MIN) return "Escreva o que você procura."
+  if (length < INDICATION_TITLE_MIN) {
+    return "Escreva o que você procura com um pouco mais de contexto."
+  }
   if (length > INDICATION_TITLE_MAX) {
     return `Encurte o pedido para até ${INDICATION_TITLE_MAX} caracteres.`
   }
@@ -177,10 +184,32 @@ export function indicationStatus(
   return row.reply_count > 0 ? "respondido" : "sem_resposta"
 }
 
-export const STATUS_LABELS: Record<IndicationStatus, string> = {
-  resolvido: "Resolvido",
-  respondido: "Respondido",
-  sem_resposta: "Sem resposta",
+/**
+ * Pílula da pergunta, conforme o protótipo (`question.js`): "Resolvida" quando
+ * resolvida, "N respostas" quando ainda está aberta e já foi respondida, e "Sem
+ * resposta" quando ninguém respondeu. O estado de resolvida vem de
+ * `is_resolved` — o estado da pergunta, nunca da presença de `resolved_reply_id`.
+ */
+export function indicationStatusLabel(
+  row: Pick<IndicationRow, "is_resolved" | "reply_count">,
+): string {
+  if (row.is_resolved) return "Resolvida"
+  return row.reply_count > 0
+    ? `${row.reply_count} ${row.reply_count === 1 ? "resposta" : "respostas"}`
+    : "Sem resposta"
+}
+
+/**
+ * Rótulo da resolução (ADR-20261023, seção 2): "Resolvida" quando há uma resposta
+ * marcada, e "Resolvida por quem perguntou" quando a pergunta foi resolvida sem
+ * marcar resposta. `null` enquanto a pergunta está aberta.
+ */
+export function resolutionLabel(
+  isResolved: boolean,
+  resolvedReplyId: string | null,
+): string | null {
+  if (!isResolved) return null
+  return resolvedReplyId ? "Resolvida" : "Resolvida por quem perguntou"
 }
 
 /** "há 3 dias", "hoje", "ontem" — o suficiente para julgar se a dica é atual. */

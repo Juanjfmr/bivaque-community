@@ -1,23 +1,50 @@
 import { createServerClient as createSsrServerClient } from "@supabase/ssr"
-import { UserRound } from "lucide-react"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import type { Database } from "supabase/database.generated"
 import { readDocumentStatus } from "../../../../lib/onboarding/document-status"
+import {
+  pendingHeadline,
+  pendingLead,
+  pendingTimeline,
+} from "../../../../lib/onboarding/elegibility"
+import { statusScreen } from "../../../../lib/onboarding/screens"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
-import { SUPPORT_EMAIL } from "../../../../lib/support"
-import { AdmissionShell } from "../components/admission-shell"
-import styles from "../onboarding.module.css"
+import { EntryShell } from "../../../components/entry/entry-shell"
+import { EntryHeading } from "../components/entry-heading"
+import { EntrySignOut } from "../components/entry-signout"
+import "../components/entry-elegibilidade.css"
+import { MaterialIcon } from "../../../components/material/material-icon"
+import { NotifyWhenReleased } from "./notify-when-released"
 import { StatusActions } from "./status-actions"
 
 export const dynamic = "force-dynamic"
-
-const VALID_STATES = ["pending", "rejected", "temporary_error"] as const
 
 interface OutcomeRpcRow {
   status: string
 }
 
+// PORT-004 (lote 4, frente B): a análise pendente como `renderEntryPending`.
+//
+// A tela é de quem está em análise — inclusive de quem teve o documento
+// recusado pela equipe, que é o estado "A equipe pediu outro documento." do
+// protótipo. Confirmado vai para a cidade, e o resto (não localizado, fonte
+// fora do ar) é resultado na própria `/onboarding`. Por isso o documento é lido
+// ANTES do desvio: `rejected` sozinho não distingue a recusa da fonte oficial
+// da recusa manual, e desviar primeiro mandava quem teve o arquivo recusado
+// para "Não localizamos o vínculo", sem o caminho de enviar outro.
+//
+// A linha do tempo tem os quatro passos do protótipo. O passo do documento
+// depende da situação real no banco (`readDocumentStatus`): sem documento, o
+// passo atual é a consulta feita pela fonte oficial; com documento em análise,
+// ele vira "Documento enviado" com a data do envio.
+//
+// O bloco de arquivo segue o protótipo: "Enviar um documento" quando não há
+// nada enviado, "Enviar outro documento" quando a equipe recusou o arquivo ou
+// quando um ainda está na fila. A troca em análise usa o mesmo caminho de envio
+// (`/onboarding/documento`), e o servidor substitui o anterior em vez de abrir
+// uma segunda análise.
 export default async function OnboardingStatusPage() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -26,7 +53,7 @@ export default async function OnboardingStatusPage() {
   }
 
   const cookieStore = await cookies()
-  const authClient = createSsrServerClient(url, anonKey, {
+  const authClient = createSsrServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -44,7 +71,7 @@ export default async function OnboardingStatusPage() {
   }
 
   const serviceClient = createServiceClient()
-  const [outcomeResult, membershipResult] = await Promise.all([
+  const [outcomeResult, membershipResult, noticeResult, document] = await Promise.all([
     serviceClient.rpc("read_verification_status", { p_user_id: user.id }),
     serviceClient
       .from("locality_memberships")
@@ -52,99 +79,81 @@ export default async function OnboardingStatusPage() {
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle(),
+    // A preferência é lida com a sessão da pessoa, não com o cliente de
+    // serviço: a policy de RLS é o que garante que a linha é dela.
+    authClient
+      .from("onboarding_release_notices")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    readDocumentStatus(serviceClient, user.id),
   ])
 
-  if (outcomeResult.error || membershipResult.error) {
-    throw new Error("Falha ao consultar o estado da verificação. Tente novamente.")
+  if (outcomeResult.error || membershipResult.error || noticeResult.error) {
+    throw new Error("Falha ao consultar o estado da análise. Tente novamente.")
   }
 
   if (membershipResult.data !== null) {
     redirect("/community")
   }
 
-  const row = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0] ?? null
-  const status = row?.status ?? null
+  const status = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0]?.status ?? null
+  const screen = statusScreen({ status, document: document.situation })
 
-  if (status === "verified") {
+  if (screen.screen === "locality") {
     redirect("/onboarding/locality")
   }
-
-  if (status === null || !VALID_STATES.includes(status as (typeof VALID_STATES)[number])) {
+  if (screen.screen === "result") {
     redirect("/onboarding")
   }
 
-  const document = await readDocumentStatus(serviceClient, user.id)
-
-  if (document.situation === "needs_replacement") {
-    redirect("/onboarding/documento")
-  }
-
-  const isIdentityReview = document.situation === "in_review"
-  const isTemporaryError = status === "temporary_error"
-
-  if (isIdentityReview) {
-    return (
-      <AdmissionShell
-        stage="access"
-        titleId="status-heading"
-        title="Estamos analisando sua identidade"
-        description="A conferência do documento pode levar um pouco mais. Volte aqui para acompanhar."
-      >
-        <div className={styles["stack"]}>
-          <div className={styles["replacementCard"]}>
-            <span className={styles["uploadIcon"]} aria-hidden="true">
-              <UserRound />
-            </span>
-            <p className={styles["replacementTitle"]}>Identidade em análise</p>
-          </div>
-          <StatusActions refresh />
-        </div>
-      </AdmissionShell>
-    )
-  }
-
-  const title =
-    status === "pending"
-      ? "Estamos analisando sua identidade"
-      : isTemporaryError
-        ? "Não conseguimos concluir agora."
-        : "Não conseguimos confirmar sua elegibilidade."
-
-  const description =
-    status === "pending"
-      ? "Você não precisa repetir seus dados. Assim que a análise terminar, sua entrada continua do ponto em que parou."
-      : isTemporaryError
-        ? "Não conseguimos confirmar agora. Seus dados estão salvos; tente de novo em instantes."
-        : "Não encontramos seu vínculo pelo CPF."
+  const { askedForReplacement } = screen
+  const hasDocument = document.situation === "in_review" || document.situation === "approved"
+  const canSendAnotherDocument =
+    askedForReplacement || document.situation === "in_review" || document.situation === "none"
+  const documentBlockTitle =
+    hasDocument || askedForReplacement ? "Enviar outro documento" : "Enviar um documento"
+  const steps = pendingTimeline({
+    askedForReplacement,
+    email: user.email ?? "",
+    uploadedAt: hasDocument ? document.uploadedAt : null,
+  })
 
   return (
-    <AdmissionShell stage="access" titleId="status-heading" title={title} description={description}>
-      <div className={styles["stack"]}>
-        {status === "pending" ? (
-          <p className={styles["statusLead"]}>
-            Em caso de dúvida, escreva para <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
-          </p>
-        ) : (
-          <p className={styles["statusLead"]}>
-            Confira seus dados e tente de novo. Se estiver tudo certo, envie sua identidade e a
-            equipe analisa.
-          </p>
-        )}
+    <EntryShell action={<EntrySignOut />}>
+      <div className="en-form">
+        <EntryHeading>{pendingHeadline({ askedForReplacement, hasDocument })}</EntryHeading>
+        <p className="en-lead">{pendingLead(hasDocument)}</p>
 
-        {status !== "pending" && (
-          <Link href="/onboarding" className={styles["textAction"]}>
-            Tentar novamente
+        <ol className="en-time">
+          {steps.map((step, index) => (
+            <li className={step.state === "todo" ? undefined : step.state} key={step.title}>
+              <i aria-hidden="true">{step.state === "done" ? "✓" : index + 1}</i>
+              <span>
+                <b>{step.title}</b>
+                {step.detail}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        {canSendAnotherDocument && (
+          <Link className="en-file" href="/onboarding/documento">
+            <MaterialIcon name="upload" />
+            <span>
+              <b>{documentBlockTitle}</b>
+              PDF, JPG ou PNG, até 10 MB.
+              {hasDocument ? " O novo substitui o que está na fila." : ""}
+            </span>
           </Link>
         )}
 
-        {status !== "pending" && (
-          <Link href="/onboarding/documento" className={styles["textAction"]}>
-            Enviar identidade
-          </Link>
-        )}
+        <NotifyWhenReleased initial={noticeResult.data !== null} />
 
-        <StatusActions refresh={status === "pending"} />
+        <p className="en-foot">Você pode sair e voltar: o status fica aqui.</p>
+
+        <StatusActions />
       </div>
-    </AdmissionShell>
+    </EntryShell>
   )
 }

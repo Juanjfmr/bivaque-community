@@ -1,0 +1,75 @@
+# ENT-004 — F01, lote 4: cidade e momento, sugestões de grupos (+ correção do ENT-003)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor e verificação de runtime: Claude Code.
+# Sem backend: seleção de grupos e momento continuam estado local da demonstração.
+task_id: ENT-004
+
+objective: >
+  No app (apps/app), /app/entrar/cidade (passo 3, Cidade) e /app/entrar/sugestoes-grupos (passo 4,
+  Grupos) passam para a composição de etapa, como nas referências aprovadas em 30/10/2026: cidade com
+  ícone de lugar, momento em três cartões de rádio na mesma linha, campos condicionais de data e
+  destino; grupos sugeridos em cartões selecionáveis com foto de capa e caixa de seleção, em grade
+  2 × 2 no desktop e uma coluna no celular. Mesmos campos, regras condicionais, filtros (só grupos
+  abertos da cidade) e destinos de hoje. Corrige a checagem de tipo do documento do ENT-003.
+
+authority:
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md (B · Etapa, Regras de consistência, Componentes, Celular)
+  - docs/design/fluxos-2026-10-30/individuais/F01/F01-09-cidade.png, F01-09b-cidade-chegando.png, F01-09c-cidade-saindo.png, F01-10-grupos.png e as mesmas em celular/
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (cidade e momento numa tela: cidade, momento, data, destino, como quer ser chamado)
+  - docs/agents/tasks/ENT-002.task.yml e ENT-003.task.yml (EntradaEtapa e padrão de testes)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 30/10/2026 em docs/design/fluxos-2026-10-30/individuais/F01/previa-atual/
+    09-cidade-desktop.png, 09b-cidade-chegando-desktop.png, 09c-cidade-saindo-desktop.png e
+    10-sugestoes-grupos-desktop.png: cartão único, rádios nativos azuis, checkbox nativa sem foto
+    nos grupos, avisos de demonstração. Revisão do ENT-003: validação de tipo usa o operador in, que
+    aceita propriedades herdadas do objeto.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-004/
+
+forbidden:
+  - mudar a regra dos campos condicionais (Chegando mostra data de chegada; Saindo mostra data de saída e destino; Moro aqui não mostra nenhum)
+  - mostrar grupos fechados ou de outra cidade nas sugestões, ou criar participação ao selecionar
+  - instalar, remover ou atualizar dependências
+  - copiar código de blocos do 21st.dev (Radio Group e Card Style Checkbox são referência de anatomia)
+  - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo
+  - criar texto, campo ou destino que não esteja nesta lista de aceite
+  - mudar as telas dos lotes anteriores além da correção indicada
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Cidade (/app/entrar/cidade): EntradaEtapa no passo 3 (Conta e Vínculo concluídos). Título \"Sua cidade e seu momento.\"; campo \"Cidade\" com ícone de lugar à esquerda e o valor atual (Manaus na demonstração); grupo \"Seu momento\" com três cartões de rádio na mesma linha, de largura igual, cada um com rádio desenhado em Grafite e o rótulo (Chegando, Moro aqui, Saindo), o selecionado com borda Grafite de 2 px; campo \"Como quer ser chamado\"; Chegando mostra \"Data de chegada\" e Saindo mostra \"Data de saída\" e \"Cidade de destino\", como hoje, com ícone de calendário no campo de data; botão principal \"Continuar\" (vai aos grupos como hoje). No celular os três cartões continuam na mesma linha se couberem em 320 px; se não couberem, empilham sem rolagem horizontal."
+  - "Grupos (/app/entrar/sugestoes-grupos): passo 4. Título \"Encontre seus grupos.\"; apoio \"Conheça alguns grupos de {cidade}. Escolher é opcional.\"; os grupos abertos da cidade (os mesmos de hoje, até 4) em cartões selecionáveis: foto de capa no topo vinda de apresentacao.img do grupo (via import.meta.env.BASE_URL + demo/...), sem foto quando o grupo não tiver; nome em negrito, descrição curta em cinza e caixa de seleção desenhada em Grafite; o cartão inteiro é o rótulo da caixa; selecionado com borda Grafite de 2 px; grade 2 × 2 em ≥768 px e uma coluna no celular com a foto à esquerda; estados de carregando (\"Buscando sugestões…\") e vazio (\"Ainda não há grupos sugeridos para esta cidade. Você pode continuar.\") mantidos e estilizados; ações \"Continuar\" (principal) e \"Escolher depois\" (secundária), os dois indo ao negócio como hoje. Sem o aviso \"Demonstração: selecionar grupos não cria participação.\""
+  - "Sem o parágrafo \"Jornada demonstrativa\" nas duas telas. Foco no título ao abrir; foco visível; sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; tema escuro pelos tokens."
+  - "Correção do ENT-003: a validação do tipo do documento usa Object.hasOwn(TIPOS_DE_DOCUMENTO, tipo) em vez do operador in."
+  - "entrada-21st.spec.ts continua verde, ajustado só nos textos substituídos (aviso de demonstração dos grupos e mensagem de vazio)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 lint
+  - "Testes: os três momentos com os campos condicionais; seleção de um cartão de grupo marca a caixa e a borda; Recife (sem grupos) mostra o vazio; nenhum grupo fechado nas sugestões; documento com tipo \"toString\" é recusado"
+  - "Capturas de página inteira de cidade (moro, chegando, saindo) e grupos (um selecionado) em 375, 768 e 1440 px em .visual/ENT-004/"
+
+risk: entrada e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

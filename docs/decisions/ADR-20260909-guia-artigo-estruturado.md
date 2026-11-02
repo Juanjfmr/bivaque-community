@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-09
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
 critic_verdict:
 critic_review: Sem critico adversarial nesta rodada. A aprovacao registrada e autorizacao humana explicita do dono (Juan) na sessao de 09/09/2026 — ver a secao Approval.
 ---
@@ -92,9 +92,9 @@ publica.
 
 ## Evidence and sources
 
-- Leitura da prancha 25 em [`PRANCHAS-WEB-RESTANTES.md`](../agents/PRANCHAS-WEB-RESTANTES.md).
+- Leitura da prancha 25 em [`PRANCHAS-WEB-RESTANTES.md`](../historico/agents/PRANCHAS-WEB-RESTANTES.md).
 - §4.5 R36–R39 da especificação de 08/09.
-- [`HANDOFF-2026-09-09-fidelidade-pranchas.md`](../agents/HANDOFF-2026-09-09-fidelidade-pranchas.md):
+- [`HANDOFF-2026-09-09-fidelidade-pranchas.md`](../historico/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md):
   "o RECON-013 foi escrito lendo o esquema da tabela em vez do desenho".
 - Colunas atuais de `arrival_guide_entries` em `supabase/database.generated.ts`.
 
@@ -129,7 +129,7 @@ Se a curadoria passar a ser distribuída (membros editando diretamente), D4 muda
 
 Aprovado em 09/09/2026 pelo dono do produto (Juan), por autorização explícita na sessão de
 Claude Code que redigiu este ADR: "Aprovo as adr", referindo-se aos seis ADRs de 09/09/2026
-listados em [RECON-WEB-EXECUCAO.md](../agents/RECON-WEB-EXECUCAO.md).
+listados em [RECON-WEB-EXECUCAO.md](../historico/agents/RECON-WEB-EXECUCAO.md).
 
 Destrava o contrato RECON-030.
 

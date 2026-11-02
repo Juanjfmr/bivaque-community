@@ -7,6 +7,9 @@ select plan(6);
 
 \ir fixtures/foundation.inc
 \ir fixtures/storage.inc
+-- Lote 5, N2: a publicação que dá visibilidade à foto só existe dentro de um
+-- grupo — o grupo público de groups.inc, em Manaus, com member-one de dono.
+\ir fixtures/groups.inc
 
 -- ── Anon cannot access event-photos ────────────────────────────────────────
 set local role anon;
@@ -57,10 +60,11 @@ set local role authenticated;
 -- fixture setup.
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content, photo_path)
+    insert into public.posts (locality_id, user_id, group_id, post_type, content, photo_path)
     values (
       '00000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000001',
+      '40000000-0000-4000-8000-000000000001',
       'photo',
       'Foto do evento',
       'test-member-one.jpg'

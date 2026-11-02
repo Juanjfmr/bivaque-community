@@ -56,7 +56,7 @@ test("defines seven complete typography roles in the token source", () => {
 
 test("ships the generated typography layer and all documented legacy sizes", () => {
   const css = read("packages", "tokens", "src", "tokens.css")
-  const document = read("docs", "agents", "DESIGN_SYSTEM.md")
+  const document = read("docs", "historico", "agents", "DESIGN_SYSTEM.md")
 
   for (const role of Object.keys(roles)) {
     const cssRole = role.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)

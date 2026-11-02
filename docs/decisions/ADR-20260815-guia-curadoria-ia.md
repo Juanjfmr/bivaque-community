@@ -71,8 +71,8 @@ custo, o humano detém a decisão.
 
 ## Evidence and sources
 
-- D31 adia IA no `docs/BIVAQUE.md`.
-- `docs/PRODUCT_STATUS.md` aponta o guia como rota já existente, com curadoria via
+- D31 adia IA no `docs/historico/BIVAQUE.md`.
+- `docs/historico/PRODUCT_STATUS.md` aponta o guia como rota já existente, com curadoria via
   `service_role`.
 - `supabase/migrations/20260802001100_recommendations.sql` define
   `recommendation_replies`; a onda F precisa expor esse ciclo para que a curadoria tenha

@@ -92,12 +92,12 @@ pagar por segurança comunitária.
 
 ## Evidence and sources
 
-- Prancha 52 (`docs/design/visual-guide-2026-09-06/52-web-configuracoes.png`) — "Excluir conta" e
+- Prancha 52 (`docs/historico/design/visual-guide-2026-09-06/52-web-configuracoes.png`) — "Excluir conta" e
   o aviso de que nada é apagado por aquele botão.
 - [`ADR-20260820-suspensao-de-conta`](ADR-20260820-suspensao-de-conta.md) — "Não existe caminho de
   exclusão de conta no produto hoje" e a distinção entre suspensão e autodefesa (denunciar,
   bloquear).
-- `docs/design/visual-guide-2026-09-06/AGENTS.md` — "Não implementar … prazo de retenção ou
+- `docs/historico/design/visual-guide-2026-09-06/AGENTS.md` — "Não implementar … prazo de retenção ou
   exclusão instantânea por causa de texto gerado".
 - `supabase/migrations/20260819010000_self_delete_policies.sql` — políticas de autodelete
   existentes; não são o caminho de exclusão de conta (nota do ADR de suspensão).

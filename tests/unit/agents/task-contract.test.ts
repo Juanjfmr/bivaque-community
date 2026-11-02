@@ -16,7 +16,7 @@ task_id: DS-021
 objective: >
   Restaurar a semântica de teclado do seletor de localidade.
 authority:
-  - docs/agents/DESIGN_SPEC.md
+  - docs/historico/agents/DESIGN_SPEC.md
 baseline:
   status: FAIL-EVIDENCED
   evidence: .visual/run-1/report.json

@@ -60,12 +60,14 @@ describe("lançador de intenções da Home (DS-006)", () => {
     expect(launcher).toContain('aria-labelledby="intent-launcher-titulo"')
   })
 
-  it("quem não tem comunidade é orientado pelo feed, não por um lançador maior", () => {
-    // Desde 25/09/2026 o lançador é uma linha só em todo estado; a explicação
-    // para quem ainda não participa mora no estado vazio do feed, com a ação.
-    const section = read("apps", "web", "app", "(shell)", "inicio", "community-section.tsx")
+  it("quem não participa ainda é orientado pelo convite, não por um lançador maior", () => {
+    // Desde 25/09/2026 o lançador é uma linha só em todo estado; o caminho de
+    // quem não participa mora no JoinCommunityCard e, para publicar, no estado
+    // sem grupos do compositor (lote 5 N2: o Início não tem mais feed).
+    const composer = read("apps", "web", "app", "components", "bivaque", "feed-post-create.tsx")
+    const joinCard = read("apps", "web", "app", "(shell)", "inicio", "join-community.tsx")
     expect(launcher).not.toContain('variant === "explain"')
-    expect(section).toContain("Você ainda não participa de uma comunidade")
-    expect(section).toContain('href="/communities"')
+    expect(composer).toContain("Você ainda não participa de um grupo")
+    expect(joinCard).toContain('href="/communities"')
   })
 })

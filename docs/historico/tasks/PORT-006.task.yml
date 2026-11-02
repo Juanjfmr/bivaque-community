@@ -1,0 +1,289 @@
+task_id: PORT-006
+objective: >
+  Frente D do lote 4: convite de familiar por código digitado em /convite, criando a conta na mesma tela
+  (o link continua valendo e já vem com o código), com código curto de uso único, validade de 7 dias e
+  limite de tentativas; a tela Conta apagada; a Ajuda pública (fora da área logada) com contato por
+  e-mail; e as páginas legais na pele da marca.
+authority:
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (aprovado pelo dono em 2026-10-22)
+  - docs/decisions/ADR-20261022-porte-visual-material-web.md
+  - prototypes/bivaque-html/src/features/entry/ (a especificação)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mapeamento protótipo x Next de 22/10/2026 (handoff): a tela atual diverge do protótipo nos pontos
+    do objetivo. Base codex/entrada-base com os adaptadores e a casca da PORT-002.
+allowed_paths:
+  - apps/web/app/(preauth)/convite/
+  - apps/web/app/(preauth)/conta-apagada/
+  - apps/web/app/(preauth)/privacidade/
+  - apps/web/app/(preauth)/codigo-de-conduta/
+  - apps/web/app/(shell)/ajuda/
+  - apps/web/app/(public)/
+  - apps/web/app/(shell)/configuracoes/conta/page.tsx
+  # Autorizado pelo coordenador em 22/10/2026 (correção da revisão): é a tela onde
+  # o código do convite aparece ao lado do link, para quem convida.
+  - apps/web/app/(shell)/configuracoes/familia/page.tsx
+  - apps/web/app/(shell)/profile/family-invite-section-actions.ts
+  - apps/web/app/(shell)/profile/family-invite-section.tsx
+  - apps/web/app/landing/
+  - apps/web/proxy.ts
+  - apps/web/lib/convite/
+  - apps/web/lib/outbox/
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - tests/unit/
+  - tests/scope/
+  - tests/e2e/
+  - scripts/port/
+  - docs/agents/tasks/PORT-006.task.yml
+forbidden:
+  - push, merge, deploy, db push ou --linked
+  - criar ou commitar apps/web/.env.local ou supabase/config.toml
+  - instalar pacotes
+  - editar os adaptadores de apps/web/app/components/material/ ou apps/web/app/components/entry/ (são da base PORT-002; se faltar algo, registre no relatório)
+  - editar arquivos de outra frente do lote 4
+  - editar prototypes/bivaque-html
+acceptance:
+  - O convite ganha código curto (sem caracteres ambíguos), de uso único e validade de 7 dias; aceitar por código cria a conta com o e-mail do convite, a senha e o aceite gravado
+  - Tentativas de código têm limite por origem e por e-mail, com mensagem única para errado, vencido ou usado (pgTAP do limite e dos negativos)
+  - Quem convida vê o código no perfil junto do link
+  - Depois de apagar a conta, a pessoa cai em /conta-apagada (pública)
+  - A Ajuda funciona sem login (proxy libera /ajuda) e com login mostra Meus chamados; o contato de quem está fora é por e-mail; a landing religa Ajuda e Fale com a gente
+  - Páginas legais na pele da marca; comparação de captura e e2e
+proof:
+  - npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 --filter web build
+  - npx playwright test (specs da frente)
+risk: convite, criação de conta e páginas públicas
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+# --- Evidência de execução — 22/10/2026, branch codex/entrada-convite ---
+# Revisão de código confrontada: esta mesma árvore, sem commit anterior da
+# frente (o contrato chegou em c52cdaa2). Commits desta execução: 8b4c0771
+# (banco), 8e36c85b (tela do convite), 899e668c (código no e-mail e nas ações
+# do titular), d005d109 (conta apagada, Ajuda pública e páginas legais),
+# 838406f9 (e2e e captura).
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   — 45/45 em 5 arquivos. tests/unit/notifications e tests/unit/profile (o
+#   e-mail e o perfil que esta frente tocou) — 91/91 na mesma execução.
+# npx pnpm@11.18.0 exec vitest run tests/privacy — 189/189, porque
+#   supabase/database.generated.ts foi editado à mão.
+# npx pnpm@11.18.0 exec biome check <arquivos alterados> — 0 erro, 3 avisos
+#   (noDescendingSpecificity nos seletores descendentes de ajuda.css; não
+#   reprovam o gate, que usa biome check sem --error-on-warnings).
+# node --test tests/scope/entrada-public-paths.test.mjs rls-structure
+#   normalize-generated-types invite-digest-serialization
+#   design-system-contract — 25/25.
+#
+# NÃO executados nesta frente, por instrução do lote (máquina com pouca memória
+# e quatro frentes em paralelo): supabase db reset, test:db, db:lint, gate,
+# next build, Playwright e a captura de scripts/port. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#   node scripts/port/compare-entrada-publica.mjs
+#
+# Pendência nomeada: o código NÃO aparece na tela de quem convida
+# (apps/web/app/(shell)/configuracoes/familia/page.tsx), que está fora do
+# allowed_paths. As ações já devolvem { code, token } e o e-mail já leva o
+# código; exibir ao lado do link exige três linhas nessa página.
+# Divergência registrada: o e-mail do convite é digitado na tela, não somente
+# lido, porque o banco guarda só o digest do endereço convidado.
+#
+# ── Correção da revisão do coordenador — 22/10/2026, mesma branch ──────────────
+# Revisão de código confrontada: esta mesma árvore, sobre d916a4b7. Commits
+# desta correção: 2b2bca9f (banco), 49da5e67 (pgTAP), 378ff1f4 (leitura do
+# status) e 92314194 (código na tela de quem convida). A pendência nomeada na
+# execução anterior — o código ausente na tela de quem convida — fecha em
+# 92314194; o bloco antigo fica como histórico.
+#
+# Desenho do status: private.record_family_invite_code_attempt devolve ok ou
+# rate_limited em vez de lançar 54000, e as duas funções públicas devolvem uma
+# linha de status — preview: ok, unavailable, email_mismatch, rate_limited
+# (campos da tela só em ok); aceite: ok com link_id, unavailable ou
+# rate_limited. Assim a transação confirma o insert da tentativa; era a exceção
+# que o desfazia e deixava o limite contando só quem acertava. Errado, vencido,
+# revogado e usado continuam na mesma frase; entrada inválida (digest de
+# tamanho errado) segue exceção.
+#
+# pgTAP novo (supabase/tests/family-invite-code.sql, 23 asserções, nenhum
+# insert direto na tabela de tentativas): código errado deixa 1 tentativa
+# gravada; 15 chamadas ao preview da mesma origem gravam 15 linhas e a 16a
+# devolve rate_limited sem gravar contagem nova; o código certo depois do
+# limite também devolve rate_limited; 10 chamadas do mesmo e-mail, de origens
+# diferentes, gravam 10 linhas e a 11a devolve rate_limited; o aceite que falha
+# dentro de accept_family_invitation (e-mail diferente) também deixa a
+# tentativa gravada; seguem certo, vencido, usado, revogado, authenticated sem
+# leitura do code_hash e anon sem execução.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   — 52/52 em 5 arquivos. Com tests/privacy na mesma execução: 241/241 em 14
+#   arquivos (supabase/database.generated.ts editado à mão).
+# node --test tests/scope/normalize-generated-types.test.mjs — 3/3.
+# npx pnpm@11.18.0 exec biome check nos arquivos alterados — 0 erro, 1 aviso
+#   pré-existente (noTemplateCurlyInString em invite-screen.test.ts:86); o
+#   biome não lê os dois .sql.
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-006.task.yml — ok.
+#
+# NÃO executados, por instrução da correção: supabase db reset, test:db,
+# db:lint, gate, next build, Playwright e a captura. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#
+# Observação para quem rodar o e2e: com a correção, a tentativa errada passou a
+# ficar gravada no banco de desenvolvimento. Várias execuções do spec de código
+# errado na mesma hora, da mesma origem, podem esgotar o teto de 15 e trocar a
+# frase esperada por rate_limited. O reset com seed antes do e2e (como no CI)
+# resolve; não é defeito do caminho.
+#
+# ── Segunda correção da revisão independente — 22/10/2026, mesma branch ──────
+# Revisão confrontada: esta mesma árvore, sobre 6e6b041c (base corrigida e
+# code_hash autorizado nas guardas de coluna). Commits desta correção:
+#   09e2891b — banco: trava do limite, só falha conta, retomada do aceite
+#   3e32ab14 — servidor: retomada do provisionamento e preview só sem sessão
+#   aa60be53 — tela: erro sem campo visível aparece na etapa
+# O bloco anterior fica como histórico; aqui ele é corrigido.
+#
+# P2-1 (concorrência do limite). record_family_invite_code_attempt foi partido
+# em três funções: lock_family_invite_code_attempts (pg_advisory_xact_lock com
+# hashtextextended, origem primeiro e e-mail depois, SEMPRE nessa ordem, como
+# open_support_ticket em 20261022130521), family_invite_code_attempt_gate (teto
+# antes do código; devolve ok ou rate_limited) e record_family_invite_code_
+# failure (grava só a tentativa que falhou, sob a mesma trava). O gate é
+# chamado nas duas funções antes de o código ser conferido — no aceite, depois
+# da retomada do próprio vínculo, que não é adivinhação. O nome antigo sai; a
+# evidência anterior que o cita é histórica.
+#
+# P2-2 (limite barrando o aceite correto). O teto conta só falha: erro,
+# vencido, usado, revogado e e-mail diferente gravam linha; código certo não
+# grava. pgTAP: 15 erros pela função barram a 16ª e o código certo depois do
+# limite; preview e aceite certos deixam a tabela de tentativas vazia.
+#
+# P2-3 (convite consumido sem acesso). Escolha: RETOMADA, não transação única.
+# Atômico exigiria reimplementar o provisionamento (membership + perfil) dentro
+# da migration ou refatorar apps/web/lib/onboarding/verifyAndProvision.ts, que
+# está fora dos allowed_paths — nos dois casos um segundo caminho de admissão,
+# que é o que provision.ts existe para evitar. Então: o aceite devolve ok e o
+# MESMO vínculo quando o próprio aceitante repete o código, e o servidor conclui
+# o provisionamento. Para a retomada ser alcançável, acceptInviteAction deixa de
+# rodar o preview quando já existe sessão com o e-mail do formulário (o preview
+# responderia unavailable e barraria antes do aceite). A retomada não chama
+# provisionMember quando já há localidade corrente: provision_member_locality
+# fecha a corrente antes de inserir a nova, então repetir moveria a pessoa (e,
+# na mesma localidade, a deixaria sem corrente); o perfil é garantido à parte.
+# Provas: pgTAP (mesmo vínculo, segundo vínculo inexistente, outra pessoa recebe
+# a resposta genérica) e tests/unit/convite/invite-provision.test.ts (falha no
+# meio e nova tentativa conclui; quem já tem localidade não é movido).
+#
+# P2-4 (falha invisível no formulário). stageError (apps/web/lib/convite/
+# form-error.ts) decide: erro de campo da etapa atual fica no campo; erro sem
+# campo, ou de campo de outra etapa (field code na etapa da conta), vai para
+# o EntryError da etapa, que tem role=alert. As listas de campos por etapa
+# vivem no mesmo módulo, para o teste usar a lista que o componente usa.
+#
+# P2-5 (testes que não provam). invite-screen.test.ts perdeu a prova por
+# posição de texto e a busca por NO_LINK. No lugar: invite-actions.test.ts roda
+# acceptInviteAction com o cliente Supabase simulado e confere a ordem
+# (preview → signUp → consentimento → aceite; sem preview com sessão do mesmo
+# e-mail) e cada falha (preview recusado, limite, e-mail diferente, cadastro
+# barrado, confirmação pendente, aceite recusado, exceção no aceite);
+# invite-provision.test.ts confere a ordem das chamadas do provisionamento.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   — 75/75 em 8 arquivos. Com tests/unit/onboarding na mesma execução (o
+#   provisionamento que esta correção toca): 138/138 em 20 arquivos.
+# npx pnpm@11.18.0 exec biome check <arquivos alterados> — 0 erro, 1 aviso
+#   pré-existente (noTemplateCurlyInString em invite-screen.test.ts:79).
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-006.task.yml — ok.
+#
+# NÃO executados, por instrução desta correção: db reset, test:db, db:lint,
+# gate, build e Playwright. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#
+# Limite da prova da concorrência: o pgTAP prova que a trava é tomada (linhas em
+# pg_locks no backend da sessão depois do gate) e que o teto vale na sequência;
+# duas sessões simultâneas exigiriam dblink, que o banco de teste não tem. A
+# serialização vem de a contagem acontecer depois da trava de transação.
+#
+# ── Terceira correção da revisão — 22/10/2026, mesma branch ──────────────────
+# Revisão confrontada: esta mesma árvore, sobre 548aff7c. O desenho foi definido
+# pelo coordenador e é o que está abaixo; o bloco anterior fica como histórico.
+#
+# 1. ACEITE, VÍNCULO E ACESSO NUMA TRANSAÇÃO SÓ. private.family_invite_code_accept
+# ganhou p_display_name e p_consent_version e passou a fazer, depois do vínculo
+# e sob a trava do próprio convite, o que era o segundo request do servidor:
+# resolve a localidade CORRENTE do titular, chama public.provision_member_locality
+# e grava o perfil no mesmo upsert da rota de provisionamento. Não repete o
+# provisionamento quando a pessoa já é corrente naquela localidade (repetir
+# fecharia a corrente e, na mesma localidade, a deixaria sem corrente).
+# Qualquer falha desfaz tudo, inclusive o convite voltar a pending — não existe
+# mais convite usado sem acesso, e dois aceites concorrentes não transformam a
+# corrente recém-criada em leaving. Falha de contrato continua exceção: digest
+# inválido (22023), nome fora da política de nome (22023), versão de aceite não
+# positiva (22023) e titular sem localidade corrente (P0005). A retomada ficou:
+# o mesmo aceitante que repete o código recebe ok e o MESMO vínculo.
+# apps/web/lib/convite/provision.ts só chama a RPC e traduz o status — o
+# provisionamento em TypeScript (ensureFamilyMember, provisionMember) saiu.
+#
+# 2. ERRO DE CONSENTIMENTO VISÍVEL. `consent` saiu de ACCOUNT_STEP_FIELDS
+# (apps/web/lib/convite/form-error.ts): o checkbox do Material não tem área de
+# erro, então listá-lo escondia a recusa exatamente como o caso do `code` que a
+# correção anterior resolveu. A etapa da conta foi extraída para
+# InviteAccountStep (exportada, sem estado) e o teste de renderização prova os
+# três lugares: erro de código na área da etapa, erro de consentimento na área
+# da etapa, erro genérico na área da etapa — e, como prova negativa, erro de
+# senha no campo e área da etapa vazia.
+#
+# pgTAP (supabase/tests/family-invite-code.sql, 39 asserções): convite 06 tem
+# titular sem localidade corrente, o aceite lança P0005 e o convite continua
+# pending, sem link; convite 07 é aceito por non-member, que passa a ter vínculo,
+# membership corrente na localidade do titular e perfil com nome e versão do
+# aceite; repetir o aceite devolve ok com o mesmo vínculo, uma única membership
+# (nenhuma linha leaving) e a mesma corrente. Preparo em bloco DO com perform,
+# para não imprimir linha solta e quebrar a contagem do TAP.
+#
+# npx pnpm@11.18.0 exec tsc -p apps/web --noEmit — VERDE, sem saída.
+# npx pnpm@11.18.0 exec vitest run tests/unit/convite tests/unit/ui/ajuda-publica.test.ts
+#   tests/unit/profile — 101/101 em 11 arquivos.
+# npx pnpm@11.18.0 exec biome check nos arquivos alterados — 0 erro, 1 aviso
+#   pré-existente (noTemplateCurlyInString em invite-screen.test.ts:79).
+# node --test tests/scope/invite-digest-serialization.test.mjs
+#   normalize-generated-types rls-structure consent-version — 14/14.
+# node scripts/agents/task-contract.mjs docs/agents/tasks/PORT-006.task.yml — ok.
+#
+# NÃO executados, por instrução desta correção: db reset, test:db, db:lint,
+# gate, build e Playwright. Ficam para o coordenador:
+#   npx supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db &&
+#   npx pnpm@11.18.0 db:lint
+#   npx pnpm@11.18.0 gate
+#   npx pnpm@11.18.0 --filter web build
+#   npx playwright test tests/e2e/entrada-convite-publica.spec.ts
+#
+# Limite das provas de banco: as asserções acima não rodaram nesta sessão (o
+# banco é do coordenador). A corrida entre dois aceites continua provada por
+# desenho — o provisionamento acontece depois do `for update` na linha do
+# convite — e não por duas sessões simultâneas, que exigiriam dblink.
+

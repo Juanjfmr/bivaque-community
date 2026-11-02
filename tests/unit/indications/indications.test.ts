@@ -6,8 +6,10 @@ import {
   INDICATIONS_HREF,
   indicationHref,
   indicationStatus,
+  indicationStatusLabel,
   queryTerms,
   relativeAge,
+  resolutionLabel,
   suggestCategory,
   titleProblem,
 } from "../../../apps/web/lib/indications/indications"
@@ -37,16 +39,21 @@ describe("categoria sugerida pelo pedido", () => {
 
 describe("pedido pronto para publicar", () => {
   it("vazio ou curto demais pede o que falta", () => {
-    expect(titleProblem("  ")).toBe("Escreva o que você procura.")
-    expect(titleProblem("ab")).toBe("Escreva o que você procura.")
+    expect(titleProblem("  ")).toBe("Escreva o que você procura com um pouco mais de contexto.")
+    expect(titleProblem("ab")).toBe("Escreva o que você procura com um pouco mais de contexto.")
+    expect(titleProblem("Eletric")).toBe(
+      "Escreva o que você procura com um pouco mais de contexto.",
+    )
   })
 
-  it("uma frase curta basta", () => {
+  it("oito caracteres já bastam (ADR-20261023)", () => {
+    expect(titleProblem("Chaveiro")).toBeNull()
     expect(titleProblem("Pediatra")).toBeNull()
   })
 
   it("acima do teto do banco, pede para encurtar", () => {
-    expect(titleProblem("a".repeat(201))).toContain("200")
+    expect(titleProblem("a".repeat(301))).toContain("300")
+    expect(titleProblem("a".repeat(300))).toBeNull()
   })
 })
 
@@ -59,6 +66,21 @@ describe("estado do pedido", () => {
   })
   it("sem resposta", () => {
     expect(indicationStatus({ is_resolved: false, reply_count: 0 })).toBe("sem_resposta")
+  })
+})
+
+describe("a pílula e o rótulo da resolução (ADR-20261023, seção 2)", () => {
+  it("resolvida é 'Resolvida', e a contagem aparece quando há respostas", () => {
+    expect(indicationStatusLabel({ is_resolved: true, reply_count: 3 })).toBe("Resolvida")
+    expect(indicationStatusLabel({ is_resolved: false, reply_count: 1 })).toBe("1 resposta")
+    expect(indicationStatusLabel({ is_resolved: false, reply_count: 2 })).toBe("2 respostas")
+    expect(indicationStatusLabel({ is_resolved: false, reply_count: 0 })).toBe("Sem resposta")
+  })
+
+  it("com resposta marcada é 'Resolvida'; sem resposta é 'Resolvida por quem perguntou'", () => {
+    expect(resolutionLabel(true, "reply-a")).toBe("Resolvida")
+    expect(resolutionLabel(true, null)).toBe("Resolvida por quem perguntou")
+    expect(resolutionLabel(false, "reply-a")).toBeNull()
   })
 })
 

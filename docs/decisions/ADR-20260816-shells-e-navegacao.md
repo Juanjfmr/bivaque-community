@@ -5,7 +5,7 @@ risk: R2
 owner: Juan
 approved_at: 2026-08-16
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-16-onda-e-a-vila.md
+linked_plan: docs/historico/superpowers/plans/2026-08-16-onda-e-a-vila.md
 critic_verdict: PASS
 critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do dono (Juan) na sessao de execucao: aprovar e executar a sequencia P0 a F. Aprovacao humana ja consta na secao Approval. A implementacao esta destravada conforme a RISK_MATRIX.md.
 ---
@@ -15,7 +15,7 @@ critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do do
 > **Supersessão parcial — 2026-09-06.** Os quatro containers nomeados neste ADR
 > (`cidade`/`community`/`groups`/`me`) foram substituídos por `inicio`/`explorar`/
 > `comunidades`/`perfil` sob autorização do
-> [`PROCESSO-DE-CONSTRUCAO.md`](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md) §7.
+> [`PROCESSO-DE-CONSTRUCAO.md`](../historico/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md) §7.
 > **A regra 2 (destino novo entra num container, nunca vira aba; teto de cinco;
 > regra falsificável) permanece válida e é o motivo de o novo conjunto também
 > ter quatro itens.** A mecânica de shells por papel (membro / prestador /
@@ -33,7 +33,7 @@ divergência abaixo apareceu.
 
 **Três sintomas já visíveis no código:**
 
-1. **Spec e código já divergem, e nada testa isso.** `docs/agents/VISUAL_GUIDE.md:46-49`
+1. **Spec e código já divergem, e nada testa isso.** `docs/historico/agents/VISUAL_GUIDE.md:46-49`
    especifica bottom nav com **4 itens** (Minha comunidade, Grupos, Eventos, Perfil), com
    Indicações via ícone no cabeçalho, e sidebar desktop com 5 incluindo Perfil.
    `apps/web/app/components/bivaque/bottom-nav.tsx:107` faz outra coisa: **remove** Perfil e
@@ -130,7 +130,7 @@ toque de 44px, que já é o backlog de 106 achados `high` da auditoria visual.
 
 ## Market or reference baseline
 
-O baseline do projeto está no próprio repositório. `docs/agents/nextdoor-refs/ANALYSIS.md:60,175`
+O baseline do projeto está no próprio repositório. `docs/historico/agents/nextdoor-refs/ANALYSIS.md:60,175`
 registra o Nextdoor com **4 itens de navegação mais um FAB**: Home, Search, For Sale, Faves.
 
 O dado que importa é o que **não** está lá: o Nextdoor tem grupos, eventos, vizinhos, mensagens,
@@ -147,13 +147,13 @@ previsto quando houver densidade para sustentá-la.
 
 ## Evidence and sources
 
-- `docs/agents/nextdoor-refs/ANALYSIS.md:60,175` — o baseline, 4 itens mais FAB.
-- `docs/agents/VISUAL_GUIDE.md:46-49` — a spec de navegação que o código não implementa.
+- `docs/historico/agents/nextdoor-refs/ANALYSIS.md:60,175` — o baseline, 4 itens mais FAB.
+- `docs/historico/agents/VISUAL_GUIDE.md:46-49` — a spec de navegação que o código não implementa.
 - `apps/web/app/components/bivaque/bottom-nav.tsx:32-77,104-107` — `NAV_ITEMS` e o teto de cinco.
 - `apps/web/app/(shell)/community/page.tsx:203-210` — o guia escondido de quem tem vila.
 - `apps/web/app/(admin)/` — três páginas sem console.
 - `apps/web/app/(shell)/communities/[id]/page.tsx:164-196` — a moderação do dono dentro do feed.
-- `docs/BIVAQUE.md` §1.3 (papéis), §3.1 (níveis), §6.2 e D48 (o que o nível municipal é), §6.3
+- `docs/historico/BIVAQUE.md` §1.3 (papéis), §3.1 (níveis), §6.2 e D48 (o que o nível municipal é), §6.3
   (os dois ciclos), §12 regra 4; D36, D37, D43.
 - Provocação do dono em 2026-08-16: *"precisamos construir o mvp pensando no futuro, hoje temos 5
   amanhã talvez 13 e nem todos poderão entrar na navegação"*, e o pedido das duas telas de

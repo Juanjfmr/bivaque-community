@@ -7,7 +7,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "pnpm --filter web build",
+    "build": "pnpm --filter web build && pnpm --filter @bivaque/app build",
     "db:lint": "supabase db lint --local --level error",
     "db:reset": "supabase db reset --local",
     "gate": "node scripts/gate.mjs",

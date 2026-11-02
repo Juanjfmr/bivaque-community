@@ -1,0 +1,71 @@
+task_id: HARNESS-001
+
+objective: >
+  O próximo lote deixa de repetir os erros que o lote 4 só descobriu na integração: as
+  lições ficam registradas num arquivo que toda tarefa anexa, os specs e2e passam a ter
+  typecheck dentro do gate, e as provas que disputam o banco local e a porta 3000 ganham
+  uma fila que serializa a vez.
+
+authority:
+  - Pedido do coordenador em 23/10/2026 — infraestrutura de harness para o próximo lote
+  - docs/agents/AGENT_ARCHITECTURE.md (papéis e loop de execução)
+  - docs/agents/TASK_CONTRACT.md (formato do contrato)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 23/10/2026, branch codex/harness-licoes-e-fila, base 37702a86, host win32:
+    docs/agents/LICOES.md não existia; tests/e2e não tinha tsconfig e o gate não rodava
+    tsc sobre ele — o tsconfig criado para a medição acusou 19 erros de tipo, inclusive um
+    helper de sessão recebendo o alvo errado, que só aparecia no navegador; não havia fila
+    de provas para o banco local e a porta 3000.
+
+allowed_paths:
+  - docs/agents/LICOES.md
+  - docs/agents/tasks/HARNESS-001.task.yml
+  - scripts/agents/
+  - scripts/gate.mjs
+  - tests/e2e/
+  - tests/scope/
+  - tests/unit/
+
+forbidden:
+  - mudar código de produto, schema, migração ou tipos gerados
+  - instalar dependência nova
+  - rodar next build ou Playwright nesta tarefa
+  - criar ou commitar .env, ou imprimir valor de credencial
+
+acceptance:
+  - docs/agents/LICOES.md existe, em português, por tema, com sintoma, causa e jeito certo
+  - o gate roda o typecheck dos specs e2e em estágio próprio e falha quando um spec erra o tipo
+  - os 19 erros de tipo medidos na base ficam em zero sem alterar o produto
+  - scripts/agents/prova-fila.mjs pega a trava, espera a vez, avisa quem segura, solta no fim e toma trava velha
+  - há teste determinístico em tests/scope cobrindo pegar, esperar, soltar e trava velha
+  - o contrato valida no task-contract.mjs
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HARNESS-001.task.yml
+  - npx pnpm@11.18.0 gate
+  - node --test tests/scope/prova-fila.test.mjs
+
+risk: >
+  Ferramenta de harness e diagnóstico: toca testes, o script do gate e documentação de
+  agentes. Não muda tela, produto, banco nem autorização.
+
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true
+# Evidência desta execução — 23/10/2026, branch codex/harness-licoes-e-fila, base 37702a86, host win32.
+# node scripts/agents/task-contract.mjs docs/agents/tasks/HARNESS-001.task.yml: válido, R1, retry 3.
+# pnpm gate com pnpm 11.18.0: GATE VERDE. lint 22s, typecheck 16s, typecheck:e2e 7s, test 25s, secrets 7s.
+# PULOU build porque falta apps/web/.env.local. next build não rodou, conforme o contrato.
+# O estágio novo typecheck:e2e roda tsc -p tests/e2e/tsconfig.json.
+# Antes dele, 19 erros de tipo nos specs e2e; depois, 0. Nenhum arquivo de produto foi tocado.
+# node --test tests/scope/prova-fila.test.mjs: 11 passaram, 0 falharam.
+# Prova real do script: prova-fila.mjs -- node -e ... imprimiu a trava obtida e devolveu o código do comando (0, 2 sem separador, 7 com erro).
+# Revisão independente e prova de runtime por terceiro: ainda não houve, reviewer_must_differ_from_executor true.

@@ -13,6 +13,10 @@ exigindo ADR (R3) antes de chegar ao banco.
 
 ## 1. Onde trabalhar
 
+> **Superado em 02/11/2026** pelo mandato do dono registrado no `AGENTS.md` da raiz: a linha do
+> `apps/app` vai para a main, o merge é do agente e o deploy segue do dono. O método (§3 em
+> diante) continua valendo.
+
 - **Base de código: branch `codex/app`**, não o main. O `apps/app` (React de página única, Vite,
   TanStack Router/Query, shadcn/ui) é o app logado, pelo
   `docs/decisions/ADR-20261024-front-react-spa.md` (aceito em 25/10). O `AGENTS.md` do main ainda
@@ -30,9 +34,9 @@ exigindo ADR (R3) antes de chegar ao banco.
 - `docs/decisions/ADR-20261024-front-react-spa.md` — app, visual, navegação.
 - `docs/decisions/ADR-20261024-redesenho-da-comunidade.md` — domínio de grupos, publicações,
   comentários, "Útil", ocultar. **Não prevê foto em publicação nem resposta encadeada.**
-- `docs/agents/prototipo-shadcn/STATUS.md` — estado das entregas (ENT-001 a ENT-005 no F01).
-- `docs/agents/prototipo-shadcn/21ST-TRIAGEM-2026-10-26.md` — componentes do 21st.dev triados.
-- `docs/design/fluxos-2026-10-30/` — mapa F01–F10, direção de arte do F01, 28 referências do F01
+- `docs/historico/agents/prototipo-shadcn/STATUS.md` — estado das entregas (ENT-001 a ENT-005 no F01).
+- `docs/historico/agents/prototipo-shadcn/21ST-TRIAGEM-2026-10-26.md` — componentes do 21st.dev triados.
+- `docs/historico/design/fluxos-2026-10-30/` — mapa F01–F10, direção de arte do F01, 28 referências do F01
   (desktop aprovado em 30/10; celular aguardando aceite), candidatos do 21st por flow.
 - Brandbook: `docs/brand/` (Grafite `#253033`, Papel `#F2F0EB`, Brasa `#B84A3A`, Noto Serif/Sans).
 

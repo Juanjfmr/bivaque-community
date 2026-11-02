@@ -3,7 +3,7 @@
 Cliente nativo React Native + Expo do Bivaque Community. Esta é a **fundação** —
 não a jornada autenticada. Foi autorizada por
 [`docs/decisions/ADR-20260831-mobile-native.md`](../decisions/ADR-20260831-mobile-native.md)
-(aceito, R3) e por [`docs/agents/tasks/MOB-000.task.yml`](../agents/tasks/MOB-000.task.yml)
+(aceito, R3) e por [`docs/historico/tasks/MOB-000.task.yml`](../agents/tasks/MOB-000.task.yml)
 (execução R1). A autorização política e a implementação executável são contratos
 separados.
 
@@ -11,7 +11,7 @@ separados.
 
 - Um segundo cliente executável do mesmo produto, pareado com `apps/web`.
 - Quatro telas-placeholder (Cidade, Minha comunidade, Grupos, Eu) que
-  espelham os containers de `docs/agents/VISUAL_GUIDE.md §0 Navegação`.
+  espelham os containers de `docs/historico/agents/VISUAL_GUIDE.md §0 Navegação`.
 - Integração nativa ao tooling do monorepo: `pnpm typecheck`,
   `pnpm lint`, `pnpm test:scope` continuam verdes com este workspace.
 - Bundle Metro exportável para Android e iOS.

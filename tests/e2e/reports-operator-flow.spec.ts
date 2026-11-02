@@ -43,35 +43,6 @@ interface PasswordGrantBody {
   token_type: string
 }
 
-interface OpenReport {
-  id: string
-  target_type: string
-  target_id: string
-  status: string
-  created_at: string
-}
-
-async function _mintOperatorSession(): Promise<PasswordGrantBody> {
-  const anonKey =
-    process.env["SUPABASE_ANON_KEY"] ??
-    readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
-    readEnvLocal("SUPABASE_ANON_KEY")
-  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
-
-  const api = await request.newContext()
-  const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
-  })
-  if (response.status() !== 200) {
-    await api.dispose()
-    throw new Error(`Password grant for operator failed with ${response.status()}`)
-  }
-  const body = (await response.json()) as PasswordGrantBody
-  await api.dispose()
-  return body
-}
-
 async function signInOperator(page: import("@playwright/test").Page): Promise<void> {
   const anonKey =
     process.env["SUPABASE_ANON_KEY"] ??
@@ -106,21 +77,6 @@ async function signInOperator(page: import("@playwright/test").Page): Promise<vo
     { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
     { name: "bivaque-consent-version", value: CURRENT_CONSENT, ...shared },
   ])
-}
-
-async function _listOpenReports(operatorToken: string): Promise<OpenReport[]> {
-  const api = await request.newContext()
-  const response = await api.post(`${SUPABASE_URL}/rest/v1/rpc/list_open_reports`, {
-    headers: {
-      apikey: process.env["SUPABASE_ANON_KEY"] ?? readEnvLocal("SUPABASE_ANON_KEY") ?? "",
-      Authorization: `Bearer ${operatorToken}`,
-      "Content-Type": "application/json",
-    },
-    data: {},
-  })
-  const rows = (await response.json()) as OpenReport[]
-  await api.dispose()
-  return rows
 }
 
 test.describe("report flow: operator resolve via painel", () => {

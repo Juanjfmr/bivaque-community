@@ -132,7 +132,9 @@ select columns_are(
   array[
     'id', 'inviter_user_id', 'token_digest', 'invitee_email_digest',
     'invitee_email_hint', 'status', 'expires_at', 'accepted_by_user_id',
-    'accepted_at', 'created_at'
+    'accepted_at', 'created_at',
+    -- PORT-006: o código digitável do convite, só como hash (ADR-20261022-entrada-do-prototipo).
+    'code_hash'
   ],
   'GUARD: family_invitations columns match authorized set'
 );
@@ -309,14 +311,16 @@ select results_eq(
       and tablename = 'group_memberships'
       and policyname in (
         'group_memberships_select',
-        'group_memberships_insert_self',
-        'group_memberships_update_moderator',
         'group_memberships_delete_self',
         'group_memberships_delete_moderator'
       )
   $$,
-  array[5::bigint],
-  'GUARD: all 5 group_memberships policies intact'
+  -- COM-003 (lote 5): sai group_memberships_update_moderator, que deixava o
+  -- moderador se promover a dono; papel e status só mudam por RPC definer.
+  -- COM-005 (lote 5): sai group_memberships_insert_self, que deixava pedir sem
+  -- o limite de tentativas; entrar e pedir só pelas RPCs.
+  array[3::bigint],
+  'GUARD: all 3 group_memberships policies intact'
 );
 
 select results_eq(
@@ -574,8 +578,8 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'group_memberships'
   $$,
-  array[5::bigint],
-  'GUARD: group_memberships has exactly 5 policies'
+  array[3::bigint],
+  'GUARD: group_memberships has exactly 3 policies'
 );
 
 select results_eq(

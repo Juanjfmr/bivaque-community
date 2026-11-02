@@ -1,0 +1,82 @@
+# ENT-005 — F01, lote 5: negócio opcional (escolha, formulário em cinco etapas e interesse)
+#
+# Executor: OpenCode com deepseek-v4.1-flash. Revisor e verificação de runtime: Claude Code.
+# Sem backend: o rascunho do negócio continua só na sessão e nada é publicado.
+task_id: ENT-005
+
+objective: >
+  No app (apps/app), /app/entrar/negocio, /app/entrar/negocio-formulario e
+  /app/entrar/negocio-interesse passam para a composição de etapa (passo 5, Negócio opcional) como
+  nas referências aprovadas em 30/10/2026: escolha com três ações empilhadas, formulário em cinco
+  etapas com progresso interno "Passo X de 5" e barra de cinco segmentos, subtítulos em Noto Serif,
+  cartões de rádio, chips de especialidade e de dias, campos de horário, fotos com capa e revisão com
+  "Editar"; "Voltar" e "Continuar" lado a lado. Mesmos campos, validações, limites e destinos de hoje.
+  A capa do grupo de chegada nos dados de demonstração troca para a foto de chegada.
+
+authority:
+  - docs/design/fluxos-2026-10-30/F01-DIRECAO.md (Regras de consistência: Ações e Progresso do negócio; Componentes; Celular)
+  - docs/design/fluxos-2026-10-30/individuais/F01/F01-11-negocio.png, F01-12a-negocio-oferece.png, F01-12b-negocio-onde.png, F01-12c-negocio-atendimento.png, F01-12d-negocio-conhecer.png, F01-12e-negocio-confira.png, F01-12f-negocio-interesse.png e as mesmas em celular/
+  - docs/agents/tasks/ENT-002.task.yml a ENT-004.task.yml (EntradaEtapa e padrão de testes)
+  - docs/design/fluxos-2026-10-30/F02-DIRECAO.md (fotografia: sem cena noturna nem multidão de festa)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas de 30/10/2026 em docs/design/fluxos-2026-10-30/individuais/F01/previa-atual/
+    11-negocio-desktop.png, 12-negocio-interesse-desktop.png e 12a…12e-negocio-etapa*-desktop.png:
+    cartão único, "Passo X de 5 · Nenhuma informação será publicada nesta demonstração", rádios e
+    caixas nativos, botão Continuar em Brasa, ações pequenas à direita. Revisão do ENT-004
+    (.visual/ENT-004/grupos-desktop-1440.png): a capa de "Chegadas 2027 em Manaus" é a foto de festa
+    noturna (friends), fora da direção de fotografia.
+
+allowed_paths:
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/components/bivaque/formulario-negocio.tsx
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/src/styles.css
+  - apps/app/lib/demo/cenarios.ts
+  - apps/app/tests/e2e/entrada-etapa.spec.ts
+  - apps/app/tests/e2e/entrada-acesso.spec.ts
+  - apps/app/tests/e2e/entrada-21st.spec.ts
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - .visual/ENT-005/
+
+forbidden:
+  - mudar campos, validações, limites (até 6 fotos JPG/PNG/WebP/AVIF de até 12 MB, contatos), mensagens de erro ou o fato de o rascunho ficar só na sessão
+  - publicar, enviar ou guardar o negócio fora do estado da sessão
+  - em cenarios.ts, mudar qualquer coisa além do campo img do grupo turma-manaus-2027 (de "friends" para "chegada", nas duas ocorrências)
+  - instalar, remover ou atualizar dependências
+  - copiar código de blocos do 21st.dev (Onboarding Wizard Form é referência de anatomia)
+  - usar Base UI, Material Web ou HeroUI; usar Brasa fora do logo (o Continuar do formulário deixa de ser Brasa)
+  - criar texto, campo ou destino que não esteja nesta lista de aceite
+  - editar migrations, Supabase, apps/web ou apps/mobile
+  - delegar a subagentes
+
+acceptance:
+  - "Escolha (/app/entrar/negocio): EntradaEtapa no passo 5 (quatro anteriores concluídos). Título \"Você tem um negócio ou oferece algum serviço?\" (Noto Serif, centralizado); apoio \"No Mercado, você pode apresentar seu negócio ou serviço à comunidade.\"; nota \"Esta etapa é opcional. Você pode voltar a ela depois.\"; três ações empilhadas na largura da coluna: \"Divulgar agora\" (principal Grafite), \"Tenho interesse em criar\" (contorno) e \"Decidir depois\" (texto); destinos de hoje."
+  - "Formulário (/app/entrar/negocio-formulario): passo 5. Título \"Apresente seu negócio.\" centralizado; logo abaixo, centralizado, \"Passo X de 5\" em var(--muted-foreground) e uma barra de cinco segmentos (concluídos e atual em Grafite, futuros em var(--border)); o texto \"Nenhuma informação será publicada nesta demonstração\" sai. Subtítulo de cada etapa (\"O que você oferece?\", \"Onde você atende?\", \"Como funciona seu atendimento?\", \"Como podem conhecer seu trabalho?\", \"Confira sua página\") em Noto Serif semibold, alinhado à esquerda da coluna de 560 px. Rádios de área e de atendimento como cartões de linha inteira (borda Grafite de 2 px no selecionado), com os campos condicionais logo abaixo do cartão selecionado; especialidades e dias como chips de seleção (selecionado em Grafite com texto claro e check); campos de horário lado a lado; fotos em miniaturas quadradas com a primeira marcada \"Capa\" e um quadro tracejado \"+\" para adicionar; a revisão em cartão com a foto de capa no topo e uma linha por bloco com ícone, valor e link \"Editar\" que volta à etapa correspondente. Ações: \"Voltar\" (contorno) e \"Continuar\" (principal Grafite) lado a lado, metade da coluna cada; na etapa 5 o principal é \"Salvar rascunho\". A nota \"Rascunho local de {cidade}, apenas nesta sessão. Nenhum dado será enviado.\" sai; o status depois de salvar continua (\"Rascunho salvo nesta sessão. Seu negócio não foi publicado.\") com o botão \"Continuar\"."
+  - "Interesse (/app/entrar/negocio-interesse): passo 5. Título \"Ideias para seu negócio.\"; apoio \"Quando quiser, explore os negócios locais no Mercado e conheça o que a comunidade procura.\"; \"Continuar\" (principal) e \"Voltar\" (contorno) empilhados; destinos de hoje."
+  - "Dados de demonstração: o grupo turma-manaus-2027 usa img \"chegada\" (as duas ocorrências em cenarios.ts)."
+  - "Foco no título ao abrir e ao trocar de etapa; foco visível; sem rolagem horizontal em 320, 360, 375, 430, 768 e 1440 px; tema escuro pelos tokens."
+  - "Os specs entrada-etapa, entrada-acesso e entrada-21st continuam verdes; entrada-acesso deixa de usar /app/entrar/negocio como exemplo de tela em cartão (use /app/entrar/boas-vindas); entrada-21st ajustado só onde dependia dos textos substituídos."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- tests/e2e/entrada-etapa.spec.ts tests/e2e/entrada-acesso.spec.ts tests/e2e/entrada-21st.spec.ts
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 lint
+  - "Testes: percorrer as cinco etapas com Passo X de 5 e a barra corretos; Editar na revisão volta à etapa certa; validações de hoje mantidas (nome curto, bairro faltando, horário inválido, contatos inválidos, foto inválida); Salvar rascunho mostra o status sem publicar; capa da turma com chegada.webp"
+  - "Capturas de página inteira de escolha, cada uma das cinco etapas preenchidas como nas referências, revisão e interesse em 375, 768 e 1440 px em .visual/ENT-005/"
+
+risk: entrada e acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261022-entrada-do-prototipo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

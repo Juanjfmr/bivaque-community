@@ -4,6 +4,10 @@ const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // Só no CI: uma nova tentativa para a suíte da web antiga, que cai em testes diferentes a
+  // cada execução quando o Supabase local perde a conexão (CI-E2E-UPSTREAM-INSTAVEL). O
+  // relatório marca o caso como "flaky"; a causa segue aberta no quadro.
+  retries: process.env["CI"] ? 1 : 0,
   outputDir: "test-results",
   reporter: [["html", { open: "never", outputFolder: "playwright-report" }], ["list"]],
   use: {

@@ -54,28 +54,35 @@ function readEnvLocal(key: string): string | undefined {
   return undefined
 }
 
-const APP_URL = process.env.APP_URL ?? "http://127.0.0.1:3000"
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:55321"
-const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
-  readEnvLocal("SUPABASE_ANON_KEY")
+// Reads the value or stops the suite with the same message the previous
+// top-level guard printed. Returns `string` so the call sites below see a
+// narrowed value: a module-level `if (!x) throw` guard does not narrow a
+// `const` inside the async functions that use it, and that was one of the
+// errors the e2e typecheck now catches.
+function requiredEnv(name: string, value: string | undefined, hint: string): string {
+  if (!value) throw new Error(`${name} is required. ${hint}`)
+  return value
+}
+
+const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
+const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
+const SUPABASE_ANON_KEY = requiredEnv(
+  "SUPABASE_ANON_KEY",
+  process.env["SUPABASE_ANON_KEY"] ??
+    readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
+    readEnvLocal("SUPABASE_ANON_KEY"),
+  "Set it in the environment or as NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.",
+)
 
 const USER_EMAIL =
-  process.env.USER_EMAIL ?? readEnvLocal("BIVAQUE_VISUAL_EMAIL") ?? "visual@bivaque.example.invalid"
-const USER_PASSWORD = process.env.USER_PASSWORD ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
-
-if (!SUPABASE_ANON_KEY) {
-  throw new Error(
-    "SUPABASE_ANON_KEY is required. Set it in the environment or as NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.",
-  )
-}
-
-if (!USER_PASSWORD) {
-  throw new Error(
-    "USER_PASSWORD is required. Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
-  )
-}
+  process.env["USER_EMAIL"] ??
+  readEnvLocal("BIVAQUE_VISUAL_EMAIL") ??
+  "visual@bivaque.example.invalid"
+const USER_PASSWORD = requiredEnv(
+  "USER_PASSWORD",
+  process.env["USER_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD"),
+  "Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
+)
 
 async function getSessionViaPasswordGrant(): Promise<{
   accessToken: string

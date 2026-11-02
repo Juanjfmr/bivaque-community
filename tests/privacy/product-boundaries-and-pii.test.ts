@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
@@ -36,29 +37,34 @@ const EXCLUDED_DIRS = new Set([
 
 function collectFiles(dir: string): string[] {
   const files: string[] = []
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry)
-    if (EXCLUDED_DIRS.has(entry)) continue
-    const stat = statSync(full)
-    if (stat.isDirectory()) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name)
+    if (EXCLUDED_DIRS.has(entry.name)) continue
+    const isDirectory = entry.isSymbolicLink() ? statSync(full).isDirectory() : entry.isDirectory()
+    if (isDirectory) {
       files.push(...collectFiles(full))
-    } else if (SOURCE_EXTENSIONS.has(entry.slice(entry.lastIndexOf(".")))) {
+    } else if (SOURCE_EXTENSIONS.has(entry.name.slice(entry.name.lastIndexOf(".")))) {
       files.push(full)
     }
   }
   return files
 }
 
-function scan(pattern: RegExp, exclude: RegExp[] = []): string[] {
+async function scan(pattern: RegExp, exclude: RegExp[] = []): Promise<string[]> {
   const hits: string[] = []
-  for (const file of collectFiles(root)) {
-    const content = readFileSync(file, "utf8")
-    if (exclude.some((e) => e.test(file))) continue
-    for (const line of content.split("\n")) {
-      if (pattern.test(line)) {
-        hits.push(`${file}: ${line.trim().slice(0, 120)}`)
-      }
-    }
+  const files = collectFiles(root).filter((file) => !exclude.some((e) => e.test(file)))
+  for (let offset = 0; offset < files.length; offset += 32) {
+    const batch = await Promise.all(
+      files.slice(offset, offset + 32).map(async (file) => {
+        const content = await readFile(file, "utf8")
+        const matches: string[] = []
+        for (const line of content.split("\n")) {
+          if (pattern.test(line)) matches.push(`${file}: ${line.trim().slice(0, 120)}`)
+        }
+        return matches
+      }),
+    )
+    hits.push(...batch.flat())
   }
   return hits
 }
@@ -73,10 +79,10 @@ describe("product boundaries and PII audit", () => {
     expect(nextConfig).not.toContain('"export"')
   })
 
-  it("keeps declared product-boundary terms out of product source", () => {
+  it("keeps declared product-boundary terms out of product source", async () => {
     // Given the source tree (excluding files that legitimately mention
     // boundary terms inside prohibition regexes, denial tests, and docs)
-    const hits = scan(
+    const hits = await scan(
       /\b(firebase|microservice|anonymous posting|anon_posts?|public verification badge|alerts? broadcast)\b/i,
       [
         /feed-post\.tsx$/,
@@ -113,9 +119,9 @@ describe("product boundaries and PII audit", () => {
     expect(hits).toEqual([])
   })
 
-  it("has no second UI library imports", () => {
+  it("has no second UI library imports", async () => {
     // Given the web app sources
-    const hits = scan(/from ["'](shadcn|@radix-ui|@headlessui|@mui|@chakra)/)
+    const hits = await scan(/from ["'](shadcn|@radix-ui|@headlessui|@mui|@chakra)/)
 
     // Then HeroUI remains the only component library
     expect(hits).toEqual([])

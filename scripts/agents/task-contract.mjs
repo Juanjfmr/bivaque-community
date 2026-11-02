@@ -353,7 +353,7 @@ export function validateContract(contract) {
     : required
   if (effective === "R3" && !contract.adr) {
     push(
-      "R3 exige `adr:` apontando para um ADR aprovado em docs/decisions/ — decisão R3 não é do agente",
+      "R3 exige `adr:` apontando para um ADR em docs/decisions/, aceito pelo dono ou por delegação e listado em RATIFICACAO.md",
     )
   }
   if (contract.adr && !String(contract.adr).includes("docs/decisions/")) {

@@ -5,9 +5,9 @@ risk: R3
 owner: Juan
 approved_at: 2026-10-19
 expires_at:
-linked_plan: docs/agents/LOTE-SEGURANCA-2026-10-19.md
+linked_plan: docs/historico/agents/LOTE-SEGURANCA-2026-10-19.md
 critic_verdict: PASS
-critic_review: Os defeitos vêm da auditoria de aderência independente (Codex gpt-6.1-sol, docs/AUDITORIA_ADERENCIA_2026-10-19.md). H1, H2 e H3 foram reconferidos no código por outra sessão (Claude Opus). Este ADR não cria fronteira nova; restaura a que os ADRs e as telas já prometem.
+critic_review: Os defeitos vêm da auditoria de aderência independente (Codex gpt-6.1-sol, docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md). H1, H2 e H3 foram reconferidos no código por outra sessão (Claude Opus). Este ADR não cria fronteira nova; restaura a que os ADRs e as telas já prometem.
 ---
 
 # Correções de segurança antes de abrir o Bivaque
@@ -69,7 +69,7 @@ Nenhuma.
 
 ## Evidence and sources
 
-`docs/AUDITORIA_ADERENCIA_2026-10-19.md`, seção 5, itens H1, H2, H3, H4, M1 e M2, com as linhas de código e
+`docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md`, seção 5, itens H1, H2, H3, H4, M1 e M2, com as linhas de código e
 as migrations citadas ali.
 
 ## Benefits

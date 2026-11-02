@@ -1,7 +1,8 @@
 /* PORT-001 (R73) — landing pública v8 (título F) do protótipo (R71 e R72) no
    Next. Estrutura, medidas e comportamento visual vêm de
    prototypes/bivaque-html/src/styles/landing.css; as cores vêm de
-   ../brand-tokens.css, escopadas em `.ld`.
+   ../brand-tokens.css, escopadas em `.bv-skin`, que a raiz da landing carrega
+   junto com `.ld` (PORT-002).
 
    O que muda em relação ao protótipo, e por quê:
    - a página rola no documento (o protótipo rola em #main), então

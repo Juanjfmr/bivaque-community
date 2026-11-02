@@ -52,8 +52,9 @@ test.describe("BottomNav visibility across viewports", () => {
     const sidebar = page.locator(SIDEBAR)
     await expect(sidebar).toBeVisible()
     expect((await sidebar.boundingBox())?.width).toBe(64)
-    // A Início também tem um link "Comunidades" no conteúdo: o que se prova
-    // aqui é o rótulo da barra lateral, presente mesmo sem ser desenhado.
+    // A Início também tem um link "Comunidades" no conteúdo (o convite do
+    // JoinCommunityCard, "Ver comunidades"): o que se prova é o item da barra
+    // lateral, então o locator é escopado nela — como no teste de 1440px.
     await expect(sidebar.getByRole("link", { name: "Comunidades" })).toBeAttached()
   })
 

@@ -44,7 +44,12 @@ const SYSTEM_TALK: Array<[string, RegExp]> = [
   ["regra interna citada", /\(D\d{2}\)|§\s?\d|\bonda correspondente\b/],
   ["mecânica da URL", /\?q=|\bna URL\b/],
   ["o sistema se justificando", /estado vazio honesto|não inventa|contornaria o acesso/i],
-  ["o banco explicado", /o banco guarda|digest do token|fonte oficial/i],
+  // "fonte oficial" saiu desta regra em 22/10/2026: o protótipo do
+  // ADR-20261022-entrada-do-prototipo usa a expressão nas telas de
+  // elegibilidade (account.js, o "Por que o CPF" e o resultado da consulta), e a
+  // copy de lá é a especificação desta entrada. A regra continua pegando a
+  // mecânica que ela perseguia: o banco e o digest explicados na tela.
+  ["o banco explicado", /o banco guarda|digest do token/i],
   ["refazer consulta", /refaz(er)? (as |a )?(consulta|busca)/i],
   ["promessa de recurso", /entra junto d[ae]|quando o canal de .+ estiver disponível/i],
 ]

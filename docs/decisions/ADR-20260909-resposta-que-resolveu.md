@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-09
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
 critic_verdict:
 critic_review: Sem critico adversarial nesta rodada. A aprovacao registrada e escolha explicita do dono (Juan) na sessao de 09/09/2026 — ver a secao Approval.
 ---
@@ -103,7 +103,7 @@ fórum com placar.
 
 ## Evidence and sources
 
-- Prancha 15 e a leitura em [`PRANCHAS-WEB-RESTANTES.md`](../agents/PRANCHAS-WEB-RESTANTES.md),
+- Prancha 15 e a leitura em [`PRANCHAS-WEB-RESTANTES.md`](../historico/agents/PRANCHAS-WEB-RESTANTES.md),
   seção 15-web-conversa, com a conferência de colunas de 09/09/2026.
 - `supabase/migrations/20260821000011_recommendation_reply_notify.sql` — origem de
   `resolved_by` e `resolved_at`.

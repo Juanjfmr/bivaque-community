@@ -1,0 +1,216 @@
+/* PORT-005 (lote 4 da entrada) — cidade e momento, e as boas-vindas.
+   As regras são as do protótipo (prototypes/bivaque-html/src/styles/entry.css,
+   rodada 56: .en-form md-outlined-select, .en-sub, .en-lbl, .en-seg, .en-date,
+   .en-badge, .en-welcome, .en-tile). Elas moram aqui, e não em
+   components/entry/entry.css, porque essa folha é da base da PORT-002 e este
+   contrato não pode editá-la; o escopo `.bv-entry` é o mesmo, então a cascata
+   fica igual à das outras telas da entrada.
+
+   Duas diferenças em relação ao protótipo, as duas por causa do catálogo
+   nacional (o protótipo tem ~40 cidades na maquete, o Next tem 5.570):
+   - a escolha de cidade e de destino é busca + lista, e não um
+     `md-outlined-select` com todas as opções (ver city-picker.tsx);
+   - os itens da lista são botões com `aria-pressed`, o mesmo padrão da tela de
+     cidade que já existia antes desta rodada. */
+
+.bv-entry .en-sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .en-lbl {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+/* Grupo "Seu momento": três opções no mesmo trilho, como no protótipo. O rádio
+   nativo fica invisível por cima do rótulo (o clique no texto marca), e o
+   contorno de foco vai para o texto, que é o que a pessoa vê. */
+.bv-entry .en-seg {
+  display: flex;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 0 0 4px;
+}
+
+.bv-entry .en-seg label {
+  flex: 1;
+  position: relative;
+}
+
+.bv-entry .en-seg label + label {
+  border-left: 1px solid var(--md-sys-color-outline);
+}
+
+.bv-entry .en-seg input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bv-entry .en-seg span {
+  display: block;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.bv-entry .en-seg input:checked + span {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bv-entry .en-seg input:focus-visible + span {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -3px;
+}
+
+/* Data de chegada ou de saída. O protótipo usa o `<input type="date">` nativo,
+   com o rótulo em cima; o `min` do campo vem de hoje e o servidor reconfere. */
+.bv-entry .en-date {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .en-date input {
+  height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 16px;
+}
+
+.bv-entry .en-date input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+/* Escolha de cidade: busca + lista. */
+.bv-entry .en-picker {
+  margin: 0 0 12px;
+}
+
+.bv-entry .en-chosen {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .en-chosen b {
+  color: var(--md-sys-color-on-surface);
+}
+
+.bv-entry .en-cities {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.bv-entry .en-city {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bv-entry .en-city:hover {
+  border-color: var(--md-sys-color-outline);
+}
+
+.bv-entry .en-city[data-state="selected"] {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bv-entry .en-city-uf {
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bv-entry .en-city[data-state="selected"] .en-city-uf {
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Boas-vindas: selo, título e lead centrados, cartões de primeiro passo. */
+.bv-entry .en-badge {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  margin: 28px auto 14px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.bv-entry .en-welcome .en-h1,
+.bv-entry .en-welcome .en-lead {
+  text-align: center;
+}
+
+.bv-entry .en-welcome .en-h1:focus {
+  outline: none;
+}
+
+.bv-entry .en-tile {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bv-entry .en-tile md-icon {
+  flex: none;
+  color: var(--md-sys-color-primary);
+}
+
+.bv-entry .en-tile b {
+  display: block;
+  font-size: 15px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.bv-entry .en-tile:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}

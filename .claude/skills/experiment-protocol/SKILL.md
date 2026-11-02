@@ -34,11 +34,12 @@ Este é o ponto em que a maioria dos harnesses erra: colaboração entre produto
 - Ordem: eliminatórios → medida objetiva → ofício (argumentado, e marcado como argumento).
 - Nenhum candidato passa os eliminatórios? O resultado é `NENHUM`, não o menos ruim.
 
-## 4. Decisão humana
+## 4. Decisão
 
-O juiz entrega ranking, distância entre candidatos e **a pergunta que sobra**.
-Escolher é humano. Experimento que termina em escolha automática virou implementação
-disfarçada de método.
+O juiz entrega ranking, distância entre candidatos e **a pergunta que sobra**. Quem escolhe
+é o coordenador, sob o mandato do dono de 02/11/2026: registra a escolha, o motivo e a pergunta
+que sobrou no card, e o dono vê o resultado no marco seguinte. O juiz nunca escolhe — juiz que
+escolhe virou implementação disfarçada de método.
 
 ## Caso especial: medir uma skill
 

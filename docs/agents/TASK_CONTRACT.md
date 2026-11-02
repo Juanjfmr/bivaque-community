@@ -23,7 +23,7 @@ modelo, de harness e de sessão; o contrato continua.
 |---|---|---|
 | `task_id` | sim | `<PREFIXO>-<NNN>`. Prefixos: `DS` design system, `RUN` achado de execução, `EXP` experimento, `HRN` harness, `SEC` fronteira de confiança |
 | `objective` | sim | a propriedade que o produto passa a ter — não a tarefa que o agente executa |
-| `authority` | sim | de onde vem a autoridade: spec, ADR, auditoria, linha do `PRODUCT_STATUS.md`. Tarefa sem autoridade é improviso |
+| `authority` | sim | de onde vem a autoridade: item de `docs/LANCAMENTO.md`, ADR, card do quadro, achado de revisão. Tarefa sem autoridade é improviso |
 | `baseline` | sim | estado **medido** antes de executar: `FAIL-EVIDENCED`, `PASS-EVIDENCED` ou `NOT-APPLICABLE`, com `evidence` |
 | `allowed_paths` | sim | fronteira de escrita. `**` e `.` são recusados: blast radius não declarado é blast radius infinito |
 | `forbidden` | sim | o que a tarefa não faz mesmo parecendo certo. É cerca — **não** eleva risco |
@@ -47,7 +47,7 @@ Cada uma existe porque a ausência já custou trabalho neste repositório:
 3. **Prova não executável.** "Li o código" não é prova. Existir não é evidência.
 4. **Risco declarado abaixo do que a tarefa toca.** Elevação automática pelo vocabulário
    da `RISK_MATRIX`; tocar em RLS, policy, migration, CPF ou schema `private` é R3.
-5. **R3 sem ADR.** Decisão R3 não é do agente.
+5. **R3 sem ADR.** Decisão R3 sempre tem ADR; o agente pode aceitá-lo por delegação do dono (02/11/2026), listando-o em `docs/decisions/RATIFICACAO.md`.
 6. **Revisor não independente fora de R0.** Ver §1 da arquitetura.
 7. **`on_budget_exhausted: PASS`.** Fechar por cansaço é como o mapa antigo passou a mentir.
 

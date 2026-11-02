@@ -33,9 +33,12 @@ decide quem vê o quê.
    - Caminho de negação com teste negativo — só o positivo não prova nada.
 2. **Secrets**: nenhum `.env`, token ou credencial em código, comentário, log ou commit.
 3. **Injeção**: SQL interpolado, shell injection, XSS em output.
-4. **Dado proibido**: CPF cru, payload do Portal, organização militar, posto, endereço,
-   documento ou selo público de verificação **não se persistem** (AGENTS.md). Afiliação
-   declarada segue proibida enquanto o ADR estiver `proposed`.
+4. **Dado proibido**: CPF cru, payload do Portal, OM inferida, posto e selo público de
+   verificação **não se persistem** (AGENTS.md). CEP e coordenadas seguem o ADR de localização
+   (origem do perfil só para cálculo, ilegível para outro membro; endereço do anúncio pela
+   escolha exata/aproximada de quem anuncia). Documento de verificação fica privado dentro do
+   fluxo aprovado, com descarte; PDF assinado válido é preservado byte a byte. Exibir Força/OM
+   a outros membros segue fora (BLOCK-AFFILIATION).
 5. **Dependências**: alertas relevantes de auditoria/dependabot.
 
 ## Regras

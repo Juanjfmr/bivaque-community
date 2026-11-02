@@ -1,38 +1,30 @@
 # Bivaque Community
 
-Comunidade local de acesso controlado para militares federais, veteranos e pensionistas
-militares, em piloto na cidade de Manaus. Next.js renderizado no servidor, sobre Supabase.
+Comunidade de acesso verificado para militares federais, veteranos, pensionistas e famílias,
+organizada por cidade, em todo o Brasil. App em React (`apps/app`) sobre um servidor Next.js
+(`apps/web`) e Supabase.
 
 Repositório privado. Não é pacote publicado — não existe `npm install bivaque-community`.
 
-**Estado: pré-lançamento.** O produto não está no ar. Ver
-[`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) para o que existe hoje, com evidência
-arquivo:linha.
+**Estado: pré-lançamento.** O que falta para lançar, e o que é "pronto", está em
+[`docs/LANCAMENTO.md`](docs/LANCAMENTO.md).
 
 ## Onde está a documentação
 
-**Reconstrução pelo Figma atual:** [referência, checkpoints e evidências](docs/agents/FIGMA-RASTREABILIDADE.md).
-O registro distingue trabalho preservado, provas concluídas e fluxos ainda pendentes.
-
-Este README é um roteador. Nada de produto vive aqui, para não virar mais uma cópia que
-envelhece.
+Este README é um roteador. Nada de produto vive aqui.
 
 | Pergunta | Documento |
 |---|---|
-| o que o produto **deve** ser — visão, papéis, decisões, monetização, sequenciamento | [`docs/BIVAQUE.md`](docs/BIVAQUE.md) |
-| o que o código **faz** hoje, e a distância até o alvo | [`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) |
-| comandos, armadilhas de ambiente, contratos de teste | [`AGENTS.md`](AGENTS.md) |
-| decisões de risco alto, como ADR, e a régua que classifica risco | [`docs/decisions/`](docs/decisions/) |
-| ondas de trabalho e como executá-las | [`docs/superpowers/plans/README.md`](docs/superpowers/plans/README.md) |
-| design system, linguagem visual e rubrica de auditoria | [`docs/agents/DESIGN_SYSTEM.md`](docs/agents/DESIGN_SYSTEM.md) |
+| o que entra no lançamento, o que é pronto, a ordem | [`docs/LANCAMENTO.md`](docs/LANCAMENTO.md) |
+| regras para quem trabalha no repositório: comandos, fronteiras, evidência | [`AGENTS.md`](AGENTS.md) |
+| como cada coisa funciona e por quê; a régua de risco | [`docs/decisions/`](docs/decisions/) |
+| a régua visual e a identidade das peças | [`docs/agents/regua-nextdoor/`](docs/agents/regua-nextdoor/) |
+| o quadro de trabalho | [`tools/backend-kanban/BOARD.md`](tools/backend-kanban/BOARD.md) |
 | o banco: ambientes, migrations, RLS | [`supabase/README.md`](supabase/README.md) |
 | textos que o membro aceita | [`docs/legal/`](docs/legal/) |
-| auditoria de coerência produto × backend, com 151 achados | [`docs/red-team/`](docs/red-team/) |
+| marca | [`docs/brand/`](docs/brand/) |
 | como relatar vulnerabilidade | [`SECURITY.md`](SECURITY.md) |
-
-**`docs/BIVAQUE.md` e `docs/PRODUCT_STATUS.md` nunca se inferem um do outro.** O primeiro
-descreve decisões, muitas ainda não construídas; o segundo descreve realidade. Ler decisão
-como feature entregue é o erro que produziu o mapa que esses dois substituíram.
+| documentos que já foram autoridade | [`docs/historico/`](docs/historico/) — registro, não instrução |
 
 ## Rodar
 

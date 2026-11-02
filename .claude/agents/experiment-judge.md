@@ -40,8 +40,8 @@ Leia a skill `experiment-protocol`; a régua visual está em
 
 - Uma tabela candidato × critério, com evidência (`arquivo:linha`, número da auditoria).
 - Um ranking, com a distância entre eles: "A e B empatam, C fica atrás" é resultado válido.
-- **A pergunta que sobra para o humano**, explícita. Você não decide o vencedor: experimento
-  visual termina em decisão humana.
+- **A pergunta que sobra**, explícita. Você não decide o vencedor: quem decide é o
+  coordenador, com o seu ranking à frente.
 - Se nenhum candidato passa os eliminatórios, o resultado é `NENHUM` — não o menos ruim.
 
 Responda em português brasileiro.

@@ -34,7 +34,12 @@ type AnsweredRow = {
   id: string
   body: string
   created_at: string
-  request: { id: string; title: string; resolved_reply_id: string | null } | null
+  request: {
+    id: string
+    title: string
+    is_resolved: boolean
+    resolved_reply_id: string | null
+  } | null
 }
 
 type State =
@@ -61,7 +66,7 @@ export function ProfileIndications({ userId }: { userId: string }) {
       supabase
         .from("recommendation_replies")
         .select(
-          "id, body, created_at, request:recommendation_requests!recommendation_replies_request_id_fkey(id, title, resolved_reply_id)",
+          "id, body, created_at, request:recommendation_requests!recommendation_replies_request_id_fkey(id, title, is_resolved, resolved_reply_id)",
         )
         .eq("author_id", userId)
         .order("created_at", { ascending: false })
@@ -167,7 +172,11 @@ export function ProfileIndications({ userId }: { userId: string }) {
             ) : (
               <ul className="mt-2 divide-y divide-ui-line">
                 {state.answered.map((row) => {
-                  const helped = row.request?.resolved_reply_id === row.id
+                  // A marca "Ajudou a resolver" vem do ESTADO DA PERGUNTA: so a
+                  // pergunta resolvida com esta resposta como resolucao atual
+                  // acende o check (ADR-20261023, secao 2).
+                  const helped =
+                    row.request?.is_resolved === true && row.request?.resolved_reply_id === row.id
                   return (
                     <li key={row.id}>
                       <Link

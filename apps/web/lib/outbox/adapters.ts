@@ -95,11 +95,37 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
         subject: "Você recebeu um convite de comunidade",
         text: "Você foi convidado para uma comunidade. Acesse o Bivaque para aceitar.",
       }
-    case "family_invite":
+    case "family_invite": {
+      // O código vai no corpo e no link (ADR-20261022-entrada-do-prototipo,
+      // item 2). O mesmo convite continua valendo pelo link antigo, que agora
+      // chega junto. O código em claro existe só nesta mensagem: o banco
+      // guarda o hash (20261023120000).
+      const rawCode = typeof payload["invite_code"] === "string" ? payload["invite_code"] : ""
+      const code = rawCode.replace(/[^A-Za-z0-9]/g, "").toUpperCase()
+      const origin = siteOrigin()
+
+      if (code.length === 0) {
+        // Convite emitido antes desta mudança: sem código, o e-mail continua
+        // sendo o aviso de sempre em vez de prometer um código vazio.
+        return {
+          subject: "Você recebeu um convite",
+          text: "Alguém da sua família te convidou para a comunidade. Acesse o Bivaque para aceitar.",
+        }
+      }
+
       return {
         subject: "Você recebeu um convite",
-        text: "Alguém da sua família te convidou para a comunidade. Acesse o Bivaque para aceitar.",
+        text: [
+          "Alguém da sua família te convidou para entrar no Bivaque.",
+          "",
+          `Seu código é ${code}. Ele vale 7 dias e só pode ser usado uma vez.`,
+          "",
+          `Entre em ${origin}/convite e digite o código, ou abra ${origin}/convite?codigo=${code}`,
+          "",
+          "O convite vale só para este e-mail: crie a conta com este mesmo endereço.",
+        ].join("\n"),
       }
+    }
     case "provider_invite": {
       const path =
         typeof payload["invite_path"] === "string" &&

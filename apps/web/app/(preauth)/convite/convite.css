@@ -1,0 +1,58 @@
+/* PORT-006 (lote 4 da entrada) — o que a tela de convite acrescenta à pele da
+   entrada (components/entry/entry.css, da PORT-002): a faixa de quem convidou e
+   o avatar de iniciais, copiados de .en-inv / .en-av em
+   prototypes/bivaque-html/src/styles/entry.css. As cores vêm dos tokens da
+   marca, como no resto da entrada — nenhuma cor literal aqui. */
+
+.bv-entry .en-inv {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  margin: 4px 0 14px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bv-entry .en-inv b {
+  display: block;
+  font-size: 15px;
+}
+
+.bv-entry .en-av {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  font-weight: 700;
+}
+
+.bv-entry .en-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 20px;
+  margin: 4px 0 8px;
+}
+
+.bv-entry .en-check a {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bv-entry .en-hint {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  margin: 12px 0 0;
+}

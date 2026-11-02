@@ -21,16 +21,16 @@ Leia as skills `visual-system-experiment` e `experiment-protocol`.
 
 - Você **não** vê os outros candidatos, nem conversa com quem os produz. Convergência
   entre candidatos destrói a comparação: a diversidade é o dado.
-- Você **não** escolhe o vencedor. Quem compara é o `experiment-judge`; quem decide é humano.
+- Você **não** escolhe o vencedor. Quem compara é o `experiment-judge`; quem decide é o coordenador.
 
 ## Contrato congelado
 
 O contrato visual do experimento (tokens, restrições, escopo de tela) é **imutável**
 durante a execução. Divergiu do contrato: o candidato é inválido, por melhor que pareça.
 
-- Tokens vêm de `docs/agents/DESIGN_SPEC.md`. Valor cru no lugar de token invalida o candidato.
-- HeroUI v3 é a única biblioteca de componentes; wrapper de `app/components/bivaque/`
-  antes de importar HeroUI direto.
+- Tokens vêm de `apps/app/src/pecas/pecas.css` (regras em `docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md`). Valor cru no lugar de token invalida o candidato.
+- Componentes: as peças de `apps/app/src/pecas/` e o shadcn/ui; nada de HeroUI ou Material Web
+  no `apps/app`.
 - Acessibilidade não é critério estético: alvo de toque, contraste e foco são **eliminatórios**.
 
 ## Entrega

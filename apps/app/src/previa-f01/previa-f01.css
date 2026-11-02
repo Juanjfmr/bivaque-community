@@ -1,0 +1,674 @@
+/*
+ * Prévia do F01: só a disposição do fluxo. Botão, campo, chip, cartão, lista,
+ * selo, ilustração, escala de texto e cores vêm das peças (src/pecas/pecas.css);
+ * nada aqui redefine uma peça.
+ */
+
+/* ── etapa ───────────────────────────────────────────────────────────────── */
+.f01-tela {
+  min-height: 100dvh;
+}
+
+.f01-etapa {
+  display: flex;
+  flex-direction: column;
+  max-width: 32rem;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 0 16px calc(152px + env(safe-area-inset-bottom));
+}
+
+.f01-cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: calc(56px + env(safe-area-inset-top));
+  margin: 0 -16px;
+  padding: env(safe-area-inset-top) 104px 0 8px;
+  background: var(--pc-fundo);
+}
+
+.f01-cabecalho:not(:has(.f01-voltar)) {
+  padding-left: 16px;
+}
+
+.f01-progresso {
+  flex: 1;
+}
+
+.f01-vinculo {
+  --pc-peso: 500;
+
+  position: absolute;
+  top: calc(52px + env(safe-area-inset-top));
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-miudo);
+  font-weight: 550;
+}
+
+.f01-vinculo .bv-icone {
+  font-size: 16px;
+}
+
+.f01-vinculo[data-estado="confirmada"] {
+  color: var(--pc-feito);
+}
+
+.f01-corpo {
+  padding-top: 32px;
+}
+
+.f01-cena {
+  width: min(76%, 20rem);
+  margin-bottom: 20px;
+}
+
+.f01-apoio {
+  margin-top: 8px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-corpo);
+  text-wrap: pretty;
+}
+
+.f01-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.f01-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.f01-dupla {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .f01-dupla {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── listas com ícone ────────────────────────────────────────────────────── */
+.f01-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.f01-itens li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.f01-itens .bv-icone {
+  font-size: 24px;
+}
+
+.f01-itens span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-apoio);
+}
+
+.f01-itens strong {
+  color: var(--pc-tinta);
+  font-size: var(--pc-fs-corpo);
+  font-weight: 600;
+}
+
+.f01-itens-lista {
+  gap: 0;
+}
+
+.f01-itens-lista li {
+  padding: 14px 0;
+}
+
+.f01-itens-lista li + li {
+  border-top: 1px solid var(--pc-linha);
+}
+
+.f01-marcadores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-apoio);
+}
+
+.f01-marcadores li {
+  position: relative;
+  padding-left: 16px;
+}
+
+.f01-marcadores li::before {
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.f01-legal a {
+  color: inherit;
+}
+
+/* ── porta ───────────────────────────────────────────────────────────────── */
+.f01-porta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-height: 100dvh;
+}
+
+.f01-porta-arte {
+  padding: calc(16px + env(safe-area-inset-top)) 16px 0;
+}
+
+.f01-porta-cena {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.f01-porta-conteudo {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 24px 16px calc(32px + env(safe-area-inset-bottom));
+}
+
+.f01-logo {
+  width: auto;
+  height: 24px;
+}
+
+.f01-porta-titulo {
+  margin-top: 20px;
+}
+
+.f01-porta-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+/* Apple pede o botão preto (branco no escuro), com o logo e o texto deles. */
+.f01-apple.pc-botao {
+  background: #000;
+  color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .f01-apple.pc-botao {
+    background: #fff;
+    color: #000;
+  }
+}
+
+.f01-convite {
+  margin-top: 16px;
+}
+
+.f01-link {
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: 8px;
+  font-size: var(--pc-fs-apoio);
+}
+
+.f01-porta-conteudo > .pc-miudo {
+  margin-top: 4px;
+}
+
+@media (min-width: 900px) {
+  .f01-porta {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-content: stretch;
+  }
+
+  .f01-porta-arte {
+    display: grid;
+    place-items: center;
+    padding: 48px;
+    border-right: 1px solid var(--pc-linha);
+  }
+
+  .f01-porta-cena {
+    max-width: 44rem;
+  }
+
+  .f01-porta-conteudo {
+    justify-content: center;
+    max-width: 26rem;
+    padding: 48px 0;
+  }
+}
+
+/* ── CPF ─────────────────────────────────────────────────────────────────── */
+.f01-detalhe {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.f01-detalhe-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  font-size: var(--pc-fs-apoio);
+  text-decoration: none;
+}
+
+.f01-detalhe-botao[aria-expanded="true"] .bv-icone {
+  transform: rotate(180deg);
+}
+
+/* ── grupos sugeridos ────────────────────────────────────────────────────── */
+.f01-grupo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+/* ── verificação e documento ─────────────────────────────────────────────── */
+.f01-linha-do-tempo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.f01-linha-do-tempo li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--pc-suave);
+}
+
+.f01-linha-do-tempo li::before {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--pc-linha);
+  border-radius: 999px;
+  content: "";
+}
+
+.f01-linha-do-tempo li[data-estado="feito"]::before {
+  border-color: var(--pc-feito);
+  background: var(--pc-feito);
+}
+
+.f01-linha-do-tempo li[data-estado="atual"] {
+  color: var(--pc-tinta);
+  font-weight: 600;
+}
+
+.f01-linha-do-tempo li[data-estado="atual"]::before {
+  border-color: var(--pc-tinta);
+  box-shadow: 0 0 0 4px var(--pc-tom-forte);
+}
+
+/* Na etapa em curso, o giro toma o lugar da bolinha. */
+.f01-linha-do-tempo li:has(.pc-girando)::before {
+  display: none;
+}
+
+.f01-linha-do-tempo .pc-girando {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-left: -2px;
+}
+
+.f01-linha-opcao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* ── avisos ──────────────────────────────────────────────────────────────── */
+.f01-notificacoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--pc-tom);
+}
+
+.f01-notificacao {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--pc-cartao);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.f01-notificacao-marca {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #253033;
+  color: #f2f0eb;
+  font-family: var(--font-brand);
+  font-weight: 600;
+}
+
+.f01-notificacao > span:last-child {
+  display: flex;
+  flex-direction: column;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-miudo);
+}
+
+.f01-notificacao strong {
+  color: var(--pc-tinta);
+  font-size: var(--pc-fs-apoio);
+  font-weight: 600;
+}
+
+/* ── início: boas-vindas e primeiros passos ──────────────────────────────── */
+.f01-inicio {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 48px;
+}
+
+.f01-boas-vindas {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.f01-boas-vindas-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.f01-boas-vindas-texto .f01-apoio {
+  margin-top: 0;
+}
+
+.f01-boas-vindas-cidade {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.f01-boas-vindas-cidade .bv-icone {
+  font-size: 16px;
+}
+
+.f01-passos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.f01-passos-cabeca {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.f01-passos-lista .pc-linha {
+  min-height: 56px;
+}
+
+.f01-passos-lista li[data-feito="sim"] .pc-linha {
+  color: var(--pc-suave);
+}
+
+.f01-passos-lista li[data-feito="sim"] .bv-icone {
+  color: var(--pc-feito);
+}
+
+.f01-recomecar {
+  align-self: flex-start;
+  margin-left: -12px;
+}
+
+@media (min-width: 768px) {
+  .f01-inicio {
+    padding-top: 32px;
+  }
+}
+
+/* ── computador: painel das fases ao lado ────────────────────────────────── */
+.f01-lado {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .f01-etapa {
+    min-height: auto;
+    padding-bottom: 64px;
+  }
+
+  .f01-conteudo + .pc-barra,
+  .f01-corpo + .pc-barra {
+    margin-top: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .f01-tela {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  }
+
+  .f01-etapa {
+    width: 100%;
+    max-width: 30rem;
+    padding: 0 0 64px;
+  }
+
+  .f01-cabecalho {
+    height: auto;
+    min-height: 64px;
+    margin: 0;
+    padding: 24px 0 0;
+  }
+
+  .f01-cabecalho:not(:has(.f01-voltar)) {
+    padding-left: 0;
+  }
+
+  .f01-voltar {
+    margin-left: -10px;
+  }
+
+  .f01-vinculo {
+    top: 76px;
+    left: 0;
+  }
+
+  .f01-corpo {
+    padding-top: 56px;
+  }
+
+  .f01-cena {
+    display: none;
+  }
+
+  .f01-lado {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 40px;
+    height: 100dvh;
+    padding: 48px 56px;
+    border-left: 1px solid var(--pc-linha);
+  }
+
+  .f01-lado-logo {
+    position: absolute;
+    top: 32px;
+    left: 56px;
+  }
+
+  .f01-lado-logo img {
+    width: auto;
+    height: 22px;
+  }
+
+  .f01-lado-cena {
+    width: 100%;
+    max-width: 36rem;
+    aspect-ratio: 3 / 2;
+  }
+
+  .f01-fases {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .f01-fases li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--pc-suave);
+    font-size: var(--pc-fs-corpo);
+  }
+
+  .f01-fases li[data-estado="atual"] {
+    color: var(--pc-tinta);
+    font-weight: 650;
+  }
+
+  .f01-fase-marca {
+    --pc-peso: 500;
+
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid currentColor;
+    border-radius: 999px;
+    font-size: var(--pc-fs-miudo);
+    font-weight: 650;
+  }
+
+  .f01-fases li[data-estado="feito"] .f01-fase-marca {
+    border-color: transparent;
+    background: var(--pc-tom-forte);
+    color: var(--pc-tinta);
+  }
+
+  .f01-fases li[data-estado="atual"] .f01-fase-marca {
+    border-color: var(--pc-tinta);
+    background: var(--pc-tinta);
+    color: var(--pc-fundo);
+  }
+
+  .f01-fase-marca .bv-icone {
+    font-size: 16px;
+  }
+}
+
+/* ── painel da prévia (andaime, fora do produto) ─────────────────────────── */
+/* `.pc-botao` compacto é `position: relative` (área de toque); aqui ele flutua. */
+.f01-gatilho-do-painel.pc-botao {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 30;
+  backdrop-filter: blur(6px);
+}
+
+.f01-painel {
+  max-height: 85dvh;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.f01-painel-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+
+.f01-painel-corpo fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.f01-painel-corpo legend,
+.f01-painel-titulo {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.f01-painel-opcao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 15px;
+}
+
+.f01-painel-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.f01-painel-funil {
+  max-height: 200px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  font-size: 12px;
+}
+
+.f01-painel-funil li {
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}

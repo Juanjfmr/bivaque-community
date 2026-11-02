@@ -3,7 +3,7 @@
 > Status: vigente desde 2026-08-22. Substitui a configuração de agentes anterior
 > (`code-reviewer`, `explore-haiku`, `test-writer`, `test-runner`).
 > A auditoria que motivou esta versão está em
-> [`HARNESS-PHASE0-2026-08-22.md`](HARNESS-PHASE0-2026-08-22.md).
+> [`HARNESS-PHASE0-2026-08-22.md`](../historico/agents/HARNESS-PHASE0-2026-08-22.md).
 
 ## 1. O princípio
 
@@ -76,7 +76,9 @@ Um `PASS` do revisor não fecha tarefa. Quem fecha é a prova de runtime.
 | `.claude/agents/experiment-judge.md` | opus | não | comparação cega entre candidatos |
 
 Roteamento por custo é deliberado: descoberta é barata (haiku), execução é média (sonnet),
-julgamento é caro (opus). Rodar tudo no modelo mais caro é desperdício, não rigor.
+julgamento é caro (opus). Rodar tudo no modelo mais caro é desperdício, não rigor. Trabalho
+mecânico com contrato fechado pode ir a um executor externo (DeepSeek ou Qwen pelo OpenCode) no
+papel de `implementer`; revisão e verificação continuam nos papéis acima.
 
 `tests/scope/agent-architecture.test.mjs` trava esse conjunto: papel somente-leitura que
 ganhar `Write`/`Edit` derruba a suíte.
@@ -140,7 +142,7 @@ recalculado pelo validador de contrato a partir do que a tarefa **toca**.
 | R0 | implementer + gate | gate verde |
 | R1 | implementer → reviewer → runtime-verifier | prova de runtime |
 | R2 | idem + ADR aprovado | prova de runtime + veredito do revisor |
-| R3 | idem + `security-auditor` em paralelo | prova de runtime + aprovação humana no ADR |
+| R3 | idem + `security-auditor` em paralelo | prova de runtime + ADR aceito pelo dono ou por delegação (listado em `RATIFICACAO.md`) |
 
 `CRITICAL`/`HIGH` do `security-auditor` bloqueia o fechamento independentemente do revisor.
 
@@ -167,7 +169,7 @@ AGENTS      especializam responsabilidade     (não decidem produto)
 CONTRATO    define o que é "pronto"           (não executa)
 TESTES      produzem evidência determinística (não interpretam)
 VERIFIER    adjudica a evidência              (não conserta)
-HUMANO      decide o que é questão de produto (não é opcional em R3)
+DONO        delega e ratifica                 (R3 por delegação, ratificado no fim)
 ```
 
 Nenhuma camada deve tentar cobrir a de baixo. Hook não é juiz; verificador que conserta
@@ -202,5 +204,5 @@ Honestidade sobre o próprio harness, para não repetir o erro do mapa antigo:
   (papéis, ferramentas, skills, contrato) — não a sequência em tempo de execução.
 - **Nenhuma skill foi medida ainda.** O protocolo A/B está escrito em
   `experiment-protocol`; nenhuma das sete passou por ele. Elas são hipóteses.
-- **O E2E continua exigindo humano** pelos motivos de estado de banco descritos em
-  `docs/superpowers/plans/README.md`. Nenhuma mudança aqui altera isso.
+- **O E2E disputa o banco local e a porta do servidor**: quem roda passa pela fila
+  `scripts/agents/prova-fila.mjs` e espera a vez.

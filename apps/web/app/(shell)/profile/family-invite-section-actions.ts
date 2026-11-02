@@ -3,6 +3,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import { generateInviteCode, inviteCodeHash } from "../../../lib/convite/digest"
 import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import { emailHint } from "./family-invite-email-hint"
@@ -59,7 +60,7 @@ export async function getFamilyInviteDataAction(): Promise<FamilyInviteData | nu
 
 export async function sendFamilyInviteAction(
   formData: FormData,
-): Promise<{ token: string } | undefined> {
+): Promise<{ code: string; token: string } | undefined> {
   const email = formData.get("email")
   if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error("email inválido")
@@ -82,7 +83,12 @@ export async function sendFamilyInviteAction(
   const normalizedEmail = email.trim().toLowerCase()
   const emailDigest = createHash("sha256").update(normalizedEmail).digest("hex")
 
-  const { error } = await supabase.rpc("create_family_invitation", {
+  // O código é o que a pessoa pode ditar ou digitar quando o link se perde
+  // (ADR-20261022-entrada-do-prototipo, item 2). O banco recebe só o hash.
+  const code = generateInviteCode()
+
+  const { data: invitationId, error } = await supabase.rpc("create_family_invitation", {
+    p_code_hash: byteaDigestParam(inviteCodeHash(code)),
     p_inviter_user_id: userId,
     p_token_digest: byteaDigestParam(tokenDigest),
     // O digest do e-mail precisa da MESMA serialização do token: sem o
@@ -103,12 +109,14 @@ export async function sendFamilyInviteAction(
 
   // The link must reach the invitee. Enqueueing is the contract — the Resend
   // adapter (D1) delivers. The raw e-mail only ever lives in the outbox
-  // recipient column and never becomes a private table column.
+  // recipient column and never becomes a private table column. O código em
+  // claro segue o mesmo caminho: existe no payload para o e-mail poder
+  // carregá-lo, e em nenhum outro lugar.
   const { error: outboxError } = await supabase.from("outbox").insert({
     recipient: normalizedEmail,
     channel: "email",
     type: "family_invite",
-    payload: { user_id: userId },
+    payload: { user_id: userId, invitation_id: invitationId, invite_code: code },
   })
 
   if (outboxError) {
@@ -119,7 +127,7 @@ export async function sendFamilyInviteAction(
 
   // The token is shown exactly once, right here: it is not persisted, logged,
   // or sent in navigation. The digest is the only stored form (20260815130000).
-  return { token: token.toString("hex") }
+  return { code, token: token.toString("hex") }
 }
 
 export async function revokeFamilyInviteAction(formData: FormData) {
@@ -153,7 +161,7 @@ export async function revokeFamilyInviteAction(formData: FormData) {
 // deixa de valer no mesmo instante.
 export async function resendFamilyInviteAction(
   formData: FormData,
-): Promise<{ token: string } | undefined> {
+): Promise<{ code: string; token: string } | undefined> {
   const invitationId = formData.get("invitationId")
   const email = formData.get("email")
   if (typeof invitationId !== "string" || invitationId.length === 0) {
@@ -171,9 +179,12 @@ export async function resendFamilyInviteAction(
   const tokenDigest = createHash("sha256").update(token).digest("hex")
   const normalizedEmail = email.trim().toLowerCase()
   const emailDigest = createHash("sha256").update(normalizedEmail).digest("hex")
+  // Reemitir gira o código junto com o token: o código antigo morre aqui.
+  const code = generateInviteCode()
 
   const supabase = createServiceClient()
   const { error } = await supabase.rpc("resend_family_invitation", {
+    p_code_hash: byteaDigestParam(inviteCodeHash(code)),
     p_invitation_id: invitationId,
     p_inviter_user_id: userId,
     p_token_digest: byteaDigestParam(tokenDigest),
@@ -192,7 +203,12 @@ export async function resendFamilyInviteAction(
     recipient: normalizedEmail,
     channel: "email",
     type: "family_invite",
-    payload: { user_id: userId, resent: true },
+    payload: {
+      user_id: userId,
+      invitation_id: invitationId,
+      invite_code: code,
+      resent: true,
+    },
   })
 
   if (outboxError) {
@@ -202,6 +218,6 @@ export async function resendFamilyInviteAction(
   revalidatePath("/profile")
   revalidatePath("/configuracoes/familia")
 
-  // Mesma regra do envio: o token aparece uma vez, aqui.
-  return { token: token.toString("hex") }
+  // Mesma regra do envio: o token (e agora o código) aparece uma vez, aqui.
+  return { code, token: token.toString("hex") }
 }

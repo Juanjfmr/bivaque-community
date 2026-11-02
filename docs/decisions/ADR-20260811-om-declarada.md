@@ -68,7 +68,7 @@ verificado pelo sistema.
 - **Projeto-mãe Bivaque**: expunha força e situação entre pares verificados e protegia a OM
   por anti-mosaico.
 
-Fontes em [`BIVAQUE.md`](../BIVAQUE.md) §2.
+Fontes em [`BIVAQUE.md`](../historico/BIVAQUE.md) §2.
 
 ## Proposed divergence from baseline
 

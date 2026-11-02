@@ -1,84 +1,178 @@
 # AGENTS.md — Bivaque Community
 
-National, verification-gated community for federal military, veterans, pensioners and families.
-Next.js web + React Native/Expo mobile share Supabase contracts and authorization, never web UI.
+National, verification-gated community for federal military, veterans, pensioners and their families,
+organized by city (Manaus is an example, not an access boundary). Launch without charging.
 Respond in Brazilian Portuguese. Preserve other sessions' changes; inspect the working diff first.
 
-## Authority and context — read once, then consult by task
+- `apps/app` — the signed-in app: React single-page app (Vite, TanStack Router/Query, shadcn/ui),
+  served at `/app`. Its own rules: [apps/app/AGENTS.md](apps/app/AGENTS.md).
+- `apps/web` — Next.js: server (auth, sessions, Portal, media, API routes, workers) and the public
+  landing. Its old signed-in screens leave journey by journey: [apps/web/AGENTS.md](apps/web/AGENTS.md).
+- `supabase/` — database, RLS and pgTAP: [supabase/AGENTS.md](supabase/AGENTS.md).
+- Store app: Capacitor over the same `apps/app` build, after web. `apps/mobile` (React Native) and
+  `apps/prototipo` are frozen: do not extend them.
 
-1. Current authority: the [22/10 handoff](docs/agents/HANDOFF-COORDENACAO-2026-10-22.md), the relevant lot in [the 19/10 audit §6](docs/AUDITORIA_ADERENCIA_2026-10-19.md), and the selected card. The HTML prototype is the product specification; Next remains the technical base. Consult only the relevant flow, not the entire audit on every task.
-2. Apply the accepted ADRs for [Material Web porting](docs/decisions/ADR-20261022-porte-visual-material-web.md), [entry](docs/decisions/ADR-20261022-entrada-do-prototipo.md), [location](docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md) and [data foundation](docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md) where applicable. Later explicit owner decisions override older product/scoped instructions. These decisions authorize implementation; they do not prove it is delivered.
-3. The lean cadence in [process §0](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md#0-execução-enxuta-das-pranchas-web--08092026) still applies. September specs, Figma/PNG guides and [BIVAQUE.md](docs/BIVAQUE.md) are historical context wherever October decisions replace them. Do not restart W00 or restore superseded layouts/navigation. Deliver entry, action, persistence, feedback, follow-up and the main failure path. Mobile does not block this web delivery.
-4. Read nearest scoped instructions for technical work in `apps/web/**` or `supabase/**`, subject to the current ADRs above. [PRODUCT_STATUS.md](docs/PRODUCT_STATUS.md) records dated evidence; verify source and runtime. Before selecting work, compare the checkout base and board with the latest merged PRs; do not mistake this older branch's code for current main.
+## Mandate (owner, 02/11/2026)
 
-Later explicit owner instructions and the current construction authority supersede conflicting older product/design choices. Preserve security, privacy, server authorization, accessibility and data integrity; do not reopen product choices already authorized. Technical R3 decisions still follow [RISK_MATRIX.md](docs/decisions/RISK_MATRIX.md).
+The goal is the launch defined in [docs/LANCAMENTO.md](docs/LANCAMENTO.md), complete. Half work does
+not count: a flow is done only when entry, action, persistence, feedback, follow-up and the main
+failure path work in the integrated app and are proven at 375/768/1440 in both themes.
 
-Target: national, organized by city; Manaus is an example, not an access boundary. Launch without charging. Follow the current prototype's navigation, brand and system-following light/dark themes. `communities` and `community_id` are legacy; their presence in the database does not make communities a current product feature.
-Entry follows ADR-20261022-entrada-do-prototipo: account → acceptance for Google when needed → CPF without a prior relationship question → result/review → city and moment → welcome. `/consent` is required by the Google acceptance step (PR #104); do not remove it using an older orphan-route card. Family code, pending timeline, resume, deleted-account and public Help are authorized scope, not automatically implemented features.
-Declared OM may be used privately for the person's own distance calculations. Exposure of Force/OM to other members remains pending under BLOCK-AFFILIATION; do not infer permission to disclose from the older September guide.
+- **The agent decides.** Product, design and technical choices inside the launch scope are made by
+  the agent, recorded once (ADR or card) and executed. Do not ask the owner what can be decided;
+  bring decisions only at the milestones in `LANCAMENTO.md`.
+- **R3 by delegation.** The agent may decide R3 items (security, privacy, personal data, RLS,
+  destructive migrations, legal/compliance) through an ADR with status
+  `Aceito por delegação — aguarda ratificação`, with `security-auditor` and an independent reviewer,
+  and lists it in [docs/decisions/RATIFICACAO.md](docs/decisions/RATIFICACAO.md). The owner ratifies
+  the list at the end. Delegation never covers: real personal data or real CPF in tests, live Portal
+  calls outside the server flow, production databases, secrets in the repository.
+- **Merge on main is the agent's** after green CI of the delivered revision, independent review and
+  runtime proof. Merge integrates; it does not publish (`vercel.json` disables main deployments and
+  migrations reach production only from the `producao` branch).
+- **The owner's acts:** publishing (advancing `producao`), store submission, creating accounts and
+  entering keys or passwords, legal sign-off, real-phone tests at milestones, ratification.
+- **Brand:** the owner authorized changing the palette (02/11). Visual identity decisions live in
+  [IDENTIDADE-DAS-PECAS.md](docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md) and its ADR.
 
-The private parent `Juanjfmr/Bivaque` is reference, not law (see BIVAQUE §1.5). Forja-90 is legacy reference only: never copy its files. `docs/journeys/MAP.md` is historical.
+## Sources of truth — in this order, read by task
+
+1. [docs/LANCAMENTO.md](docs/LANCAMENTO.md) — scope, definition of done, order, owner milestones.
+2. The board card (below).
+3. Accepted ADRs in [docs/decisions/](docs/decisions/). The governing ones: the
+   [React SPA](docs/decisions/ADR-20261024-front-react-spa.md) (app, navigation, API security
+   contract, swap order), [Community redesign](docs/decisions/ADR-20261024-redesenho-da-comunidade.md),
+   [entry](docs/decisions/ADR-20261022-entrada-do-prototipo.md),
+   [location](docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md),
+   [data foundation](docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md) and the
+   two of 01/11 ([entry by code](docs/decisions/ADR-20261101-entrada-unica-por-codigo.md),
+   [photo and reply in groups](docs/decisions/ADR-20261101-foto-e-resposta-nos-grupos.md)). A later ADR
+   or a later explicit owner instruction wins over an older one.
+4. Visual and interaction bar: [docs/agents/regua-nextdoor/](docs/agents/regua-nextdoor/) — Nextdoor
+   (via Mobbin) is the bar; every rebuilt screen starts from cited Mobbin references.
+5. [docs/historico/](docs/historico/) is history, never instruction. Do not restore anything from it
+   without bringing it into a live source with a date and a reason.
+
+Navigation: Início · Comunidade · [Criar] · Mercado · Você, with Conversas as a top icon.
+`communities`/`community_id` are legacy; their presence in the database is not a product feature.
+Declared OM may be used privately for the person's own distance calculations; exposing Force/OM to
+other members stays out of scope (BLOCK-AFFILIATION).
 
 ## Execution and evidence
 
-- Deliver one small flow or 1–3 related screens per batch. Reuse its card and contract; no separate plan/report when they already define acceptance. A blocker stops dependent work, not independent flows.
-- One executor writes per checkout. Parallel executors require isolated worktrees, independent paths and separate servers/ports; worktrees do not isolate databases. Resets/migrations/database-writing tests are exclusive on the target stack. Never reset a shared or remote database to obtain a green check.
-- Before delegation, read [AGENT_ARCHITECTURE.md](docs/agents/AGENT_ARCHITECTURE.md) and [TASK_CONTRACT.md](docs/agents/TASK_CONTRACT.md). Use one valid `docs/agents/tasks/*.task.yml` per delegated batch; validate with `node scripts/agents/task-contract.mjs <path>`. Isolated subagents are the default; a communicating team needs justification. Follow the risk routing, including R3 approval/security review.
-- Implementer, reviewer and runtime-verifier are distinct where the risk/process requires them. Reviewer forms the first verdict from criteria/reference/diff, without the implementer's defense. An exhausted `retry_budget` yields FAIL/BLOCKED/HUMAN_DECISION, never PASS.
-- During edits, run affected checks. At stable implementation batch closure, run the complete gate once and the required flow/denial/visual proofs; avoid duplicate builds. R0 documentation-only maintenance uses links/references, affected contract checks and lint; do not claim an unrun global gate passed. UI batches audit touched routes at 375/768/1440 before closing. Apply the current process over older serial-wave audit rules.
-- Integration/publication requires the applicable regression, CI of the delivered revision and process G6. CI, code review and runtime verification are separate layers: report what actually ran and against which revision. There is no fully automated independent review/runtime chain.
-- Record evidence once in the card; logs/captures belong in `.visual/` or the existing evidence directory. Update PRODUCT_STATUS only when a functioning claim changes; remove a row only after the complete user cycle is proven. Historical evidence is not a fresh PASS.
-- Correct introduced regressions, broken primary flows, privacy/access defects and essential accessibility failures before integration. Proven preexisting failures remain open with a concrete next step; they do not make the global gate green.
+- Work in an isolated worktree per line of work. One executor writes per checkout; parallel
+  executors need disjoint paths and separate servers/ports. Worktrees do not isolate databases:
+  resets, migrations and database-writing tests are exclusive on the target stack. Never reset a
+  shared or remote database to obtain a green check.
+- Delegation follows [AGENT_ARCHITECTURE.md](docs/agents/AGENT_ARCHITECTURE.md) and
+  [TASK_CONTRACT.md](docs/agents/TASK_CONTRACT.md): one valid `docs/agents/tasks/*.task.yml` per
+  delegated batch, validated with `node scripts/agents/task-contract.mjs <path>`. Mechanical work goes
+  to the external implementers (DeepSeek, Qwen); judgment, boundaries and review stay with the
+  coordinator. GPT-6 Astra (`codex exec -m gpt-6-astra`) generates images and reviews blind.
+- Implementer, reviewer and runtime-verifier are distinct where risk requires. The reviewer forms
+  the first verdict from criteria, reference and diff, without the implementer's defense. An exhausted
+  `retry_budget` yields FAIL/BLOCKED/HUMAN_DECISION, never PASS. Verify delegated work on disk and in
+  git, never from the executor's report.
+- During edits run affected checks; at batch closure run the complete gate once plus the flow,
+  denial and visual proofs. Report what actually ran and against which revision. UI batches audit
+  touched routes at 375/768/1440 in light and dark before closing.
+- Correct introduced regressions, broken primary flows, privacy/access defects and essential
+  accessibility failures before merging. Proven preexisting failures stay open on the board with a
+  concrete next step; they do not make the gate green.
+- Evidence is recorded once in the card; logs and captures go to `.visual/<run>/` (ignored).
 
 ## Board workflow
 
-Read [tools/backend-kanban/BOARD.md](tools/backend-kanban/BOARD.md) before planning/changing the repository; then consult `node tools/backend-kanban/src/board.mjs --card <ID>` or `--search <terms>`. Autonomous card work uses `node tools/backend-kanban/src/board.mjs --next`: implement, validate, update and commit one returned card. Priority never overrides current product authority or observed runtime.
+Read [tools/backend-kanban/BOARD.md](tools/backend-kanban/BOARD.md) before planning or changing the
+repository; then consult `node tools/backend-kanban/src/board.mjs --card <ID>` or
+`--search <terms>`. Autonomous card work uses `node tools/backend-kanban/src/board.mjs --next`:
+implement, validate, update and commit one returned card. Priority never overrides the launch
+definition or observed runtime.
 
-Documentation/board reconciliation baseline: main `37702a86` (PRs #99–#105 merged). Done statuses describe the integrated main revision, not a local runtime PASS. Reconcile later main changes before implementation; preserve local historical proof by its original revision.
-
-- Keep material transitions with the work: proof, blocker, drift, priority/status or completion; merely starting work is not a board transition. Routine read-only answers need no update.
-- Edit canonical `tools/backend-kanban/public/board.json`, never BOARD.md by hand. Regenerate with `node tools/backend-kanban/src/board.mjs --write-summary`; CI rejects invalid data or a stale summary. Do not create a second task system or mark done without applicable acceptance and evidence.
-- **Resolve cards; do not stop at drift.** Reconcile the stale source, implement the missing behavior or record a real blocker and concrete resolution step. A `done` card may not keep open drift.
-- **A `done` card may not depend on a card that still has work** (`now`, `next` or `repo`); the validator refuses it. Depending on a `blocked` or `frozen` card is allowed: those wait on a human decision, not on work.
-- **The discovering agent records a genuinely new task.** Search existing IDs, titles and checklists first; extend the same closure contract where possible. Otherwise add a stable ID, priority/category/status, source evidence, updatedAt, confronted Git `sourceRevision`, checklist and explicit `dependencies`. New product/personal-data/payment/RLS/R3 work enters `blocked` or `repo` until its required decision/ADR exists; discovery is not authority to invent scope.
+- Keep material transitions with the work: proof, blocker, drift, priority/status or completion;
+  merely starting work is not a board transition. Routine read-only answers need no update.
+- Edit canonical `tools/backend-kanban/public/board.json`, never BOARD.md by hand. Regenerate with
+  `node tools/backend-kanban/src/board.mjs --write-summary`; CI rejects invalid data
+  or a stale summary. Do not create a second task system or mark done without applicable acceptance
+  and evidence.
+- **Resolve cards; do not stop at drift.** Reconcile the stale source, implement the missing
+  behavior or record a real blocker and concrete resolution step. A `done`
+  card may not keep open drift.
+- **A `done` card may not depend on a card that still has work** (`now`, `next` or `repo`); the
+  validator refuses it. Depending on a `blocked` or `frozen` card is allowed.
+- **The discovering agent records a genuinely new task.** Search existing IDs, titles and
+  checklists first; extend the same closure contract where possible. Otherwise add a stable ID,
+  priority/category/status, source evidence, updatedAt, confronted Git `sourceRevision`, checklist
+  and explicit `dependencies`. New product/personal-data/payment/RLS/R3 work enters `blocked` or `repo`
+  until its required decision/ADR exists (under the mandate the agent may write that ADR);
+  discovery is not authority to invent scope.
 
 ## Commands and validation
 
-Node >=22; use `npx pnpm@11.18.0` (pnpm/corepack are not on the dev host PATH). `package.json`, configs and tests define exact versions/scripts; do not casually upgrade pins.
+Node >=22; use `npx pnpm@11.18.0` (pnpm/corepack are not on the host PATH). `package.json`, configs
+and tests define exact versions; do not casually upgrade pins.
 
 ```sh
 npx pnpm@11.18.0 gate        # lint -> typecheck -> build -> test -> secrets; stops at first failure
 npx pnpm@11.18.0 gate --fast # lint + typecheck only; partial, not completion proof
-npx pnpm@11.18.0 test        # unit + privacy + scope
+npx pnpm@11.18.0 test        # unit + workspaces + privacy + scope
 npx pnpm@11.18.0 test:scope  # after scripts/config changes
-npx pnpm@11.18.0 test:e2e    # browser + configured backend/seed; CI reuses its existing build
-npx pnpm@11.18.0 test:db     # canonical database test name; never db:test
+npx pnpm@11.18.0 test:db     # database tests (never db:test)
 npx pnpm@11.18.0 db:lint
+npx pnpm@11.18.0 --filter @bivaque/app test:e2e   # apps/app: vite preview on 127.0.0.1:3200/app/
+npx pnpm@11.18.0 test:e2e    # apps/web: Playwright on 127.0.0.1:3000
 ```
 
-- Supabase needs Docker and `npx pnpm@11.18.0 exec supabase start` first. Confirm the target stack before any reset. Local only, never `--linked`.
-- DB proof: reset `--local --no-seed`, then `test:db` and `db:lint`, without dev server/capture writes. Reset with seed separately for E2E. The two states are deliberate; do not merge them. See `.github/workflows/pull-request-ci.yml` for CI order.
-- Write `apps/web/.env.local` before build: Next inlines `NEXT_PUBLIC_*`. CI derives disposable keys from the local stack, without repository Supabase secrets. Never print secrets.
-- `node scripts/visual/loop.mjs` runs the complete gate, serves, captures and audits; do not repeat its gate/build. `--fast` runs lint/types and captures against a running server. Capture only: `node scripts/visual/capture.mjs`; set `BIVAQUE_VISUAL_ROUTE` for a registered route. Confirm the intended role/page, not login/403; captures alone do not prove interactions. Evidence: `.visual/<run>/`.
-- Playwright projects: `mobile-375`, `tablet-768`, `desktop-1440`; server `http://127.0.0.1:3000`. Smoke expects heading "Bivaque" and `/api/health` -> `{"status":"ok"}`. Use `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` only as a local browser override.
-- E2E credentials come from env, falling back to `.env.local`; fail when absent, never inline them. Specs use `process.cwd()` for paths, not `import.meta` (CJS transpilation). Reports/results are ignored and excluded from Biome; no pre-lint cleanup needed.
-- Before blaming a diff, reproduce the failure cleanly. Visual Capture can insert a ghost profile and spoil pgTAP counts: reset only the isolated target without server/capture, then rerun. Inspect stale ignored `dev-server.pid`/`.log` before retrying the visual server.
+- Supabase needs Docker and `npx pnpm@11.18.0 exec supabase start`. Local only, never `--linked`.
+- DB proof: reset `--local --no-seed`, then `test:db` and `db:lint`, with no dev server or capture
+  writing. Reset with seed separately for E2E. The two states are deliberate; do not merge them.
+- Write `apps/web/.env.local` before building: Next inlines `NEXT_PUBLIC_*`. CI derives disposable
+  keys from the local stack. Never print secrets.
+- E2E credentials come from env, falling back to `.env.local`; fail when absent, never inline them.
+  Specs use `process.cwd()` for paths, not `import.meta`.
+- Before blaming a diff, reproduce the failure cleanly. A capture tool can insert a ghost profile and
+  spoil pgTAP counts: reset only the isolated target without server/capture, then rerun.
 
 ## Technical and data boundaries
 
-- Workspace roots: `apps/{web,mobile}` and `packages/{contracts,domain,tokens}`. Next stays on the server runtime; no `output: "export"`.
-- Web porting uses exactly pinned Material Web 2.5.0 through typed client adapters, per-component registration, self-hosted Noto/Material Symbols and scoped R70 tokens in both themes. HeroUI remains only on screens not yet ported; remove it from each ported screen. No shadcn/Radix/Headless UI. Preserve required providers in their actual layouts; do not restore a provider at the root if it suppresses server HTML (PR #101). The older DESIGN_SYSTEM/QWEN/PNG guidance does not override the accepted porting ADR. Mobile uses native React Native UI.
-- Supabase CLI remains pinned at 2.107.0 with `[inbucket]`, not `[local_smtp]`. Scope tests lock workspace/config/script contracts; update tests only for deliberate contract changes.
-- Never edit an applied migration: add a timestamped migration via `npx pnpm@11.18.0 exec supabase migration new <name>`.
-- Scope columns and all policies reading them land in the same migration. Enable and force RLS, minimize grants. The `private` trust schema is never exposed via Data API; anon/authenticated have no table privileges there. Preserve only explicitly granted helper execution, including `private.is_locality_member(uuid)`.
-- Generate only public types with `npx pnpm@11.18.0 generate:types`; never expose the private schema. Source of truth: migrations, not wrappers or generated types alone.
-- pgTAP fixtures use synthetic `example.invalid` identities/fixed UUIDs inside rollback transactions. Development personas belong in local `supabase/seed.sql`, not migrations; keep seed separate from pgTAP fixtures. For seeded `auth.users`, token columns are `''`, never NULL, to avoid GoTrue password-grant failures.
-- Never persist raw CPF, Portal payload, inferred OM, rank or a public verification badge. The location ADR permits CEP/coordinates: CEP required for property, optional for resale/service request/profile; the profile origin is calculation-only and must not be readable by another member. Item address/map disclosure follows the advertiser's approved exact/approximate choice, not the profile visibility setting. Geocoding is server-side (BrasilAPI, Google fallback), cached; do not invent coordinates. Declared OM for private calculations does not authorize public affiliation. Identity documents remain private within the approved verification flow; valid signed PDF is preserved byte-for-byte, not treated like a photo to rewrite. Preserve removal/disposal and positive/negative authorization proofs.
-- Portal da Transparência is server-only; `chave-api-dados` is a secret, never committed/logged. Tests use fixtures, no real CPF or live Portal calls. Map source `reformado` only to internal `veteran`. Family members remain independent Auth users after invite acceptance.
-- Follow Biome (double quotes, no semicolons, 2 spaces, width 100; no explicit any/non-null assertions/parameter assignment; type-only imports). Implementation and its tests are one unit; permission/denial paths need positive and negative cases. Use conventional commits.
+- Workspace roots: `apps/{app,web,mobile,prototipo}` and `packages/{contracts,domain,tokens}`. Next
+  stays on the server runtime; no `output: "export"`.
+- Every new API route follows SPA ADR §5 with positive and negative tests: one session resolver
+  (web cookie or `Authorization` token; conflicts refused; an invalid token never falls back to the
+  cookie; it yields a user client under RLS; `service_role` only with explicit authorization in
+  code); CSRF via `Origin` allowlist plus an app header on cookie writes; explicit CORS, no
+  credentialed wildcard; protected media by short-lived signed URL or authenticated fetch; uploads
+  still pass `sanitize-image`. Shared validation lives in one module called by old and new paths.
+- Each journey moves in order (SPA ADR §8): interface with demo data → visual acceptance → database
+  and API → E2E at three sizes → migrated test coverage → only then the old `apps/web` screen leaves,
+  with its code and tests. Old routes redirect to the new ones; proxy gates move in the same PR,
+  without redirect cycles. Under the mandate, visual acceptance is the agent's (blind Astra review
+  against the Nextdoor bar), presented to the owner at the milestones.
+- Never edit an applied migration: add one with `npx pnpm@11.18.0 exec supabase migration new <name>`.
+  Scope columns and every policy reading them land in the same migration. Enable and force RLS,
+  minimize grants. The `private` schema is never exposed through the Data API; anon/authenticated
+  have no table privileges there, except explicitly granted helpers such as
+  `private.is_locality_member(uuid)`. Generate only public types (`generate:types`).
+- pgTAP fixtures use synthetic `example.invalid` identities and fixed UUIDs inside rollback
+  transactions. Development personas live in `supabase/seed.sql`, never in migrations. Seeded
+  `auth.users` token columns are `''`, never NULL.
+- Never persist raw CPF, Portal payload, inferred OM, rank or a public verification badge. CEP and
+  coordinates follow the location ADR: the profile origin is calculation-only and unreadable by other
+  members; item address disclosure follows the advertiser's exact/approximate choice. Geocoding is
+  server-side and cached; never invent coordinates. Identity documents stay private within the
+  verification flow; a valid signed PDF is preserved byte for byte.
+- Portal da Transparência is server-only; `chave-api-dados` is a secret, never committed or logged.
+  Tests use fixtures. Map source `reformado` only to internal `veteran`. Family members are
+  independent Auth users after invite acceptance.
+- Biome: double quotes, no semicolons, 2 spaces, width 100; no explicit any, non-null assertions or
+  parameter assignment; type-only imports. Implementation and its tests are one unit; permission and
+  denial paths need positive and negative cases. Conventional commits, in Portuguese.
 
-## Harness references — consult when needed
+## Harness
 
-- Repository procedures: `.claude/skills/` (`execute-task`, `adversarial-review`, `runtime-proof`, `gate-before-done`, `plan-execution`, `experiment-protocol`, `visual-system-experiment`). Do not assume machine-local plugins exist; OpenCode equivalents are versioned here.
-- OpenCode config: `.opencode/opencode.json`; wave execution context: [plans README](docs/superpowers/plans/README.md), subject to process §0. `/run-plan` executes a plan, `/gate` measures, `/harness-doctor` audits configuration.
-- Code graph: `codebase-memory-mcp`, project `bivaque-community`; never graphify. For architecture/symbol questions use the available graph with the project parameter, checking freshness/coverage. Fall back to `rg` and exact source when unavailable, stale or partial; do not block simple file searches on indexing.
+- Procedures: `.claude/skills/` (`execute-task`, `adversarial-review`, `runtime-proof`,
+  `gate-before-done`, `plan-execution`, `experiment-protocol`, `visual-system-experiment`); agent
+  roles in `.claude/agents/`. Lessons already paid for: [LICOES.md](docs/agents/LICOES.md).
+- OpenCode executors: `.opencode/opencode.json`. Codex: no project agents; call it per task.
+- Code graph: `codebase-memory-mcp`, project `bivaque-community`, when available and fresh; otherwise
+  `rg` and exact source.

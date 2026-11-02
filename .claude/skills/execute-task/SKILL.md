@@ -31,7 +31,7 @@ Reproduza o estado que o contrato declara em `baseline`. Duas saídas possíveis
 
 - reproduz → siga.
 - **não reproduz** → o contrato está errado. Pare e diga. Plano errado é informação,
-  não obstáculo (`docs/superpowers/plans/README.md`).
+  não obstáculo.
 
 ## 3. Implemente dentro da cerca
 

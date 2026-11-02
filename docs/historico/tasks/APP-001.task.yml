@@ -1,0 +1,46 @@
+task_id: APP-001
+objective: O apps/app compila como SPA Vite com Router, Query e base shadcn, integrado aos comandos de qualidade.
+authority:
+  - docs/agents/prototipo-shadcn/PLANO-ONDAS.md seção 4 onda 1a
+  - docs/decisions/ADR-20261024-front-react-spa.md
+  - docs/agents/prototipo-shadcn/inventario.md seções 1 e 5 a 9
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Base 4e16b026 não contém apps/app; package.json build só inclui web, verificado em 25/10/2026.
+allowed_paths:
+  - apps/app/
+  - package.json
+  - pnpm-lock.yaml
+  - biome.json
+  - scripts/gate.mjs
+  - tests/scope/workspace-foundation.test.mjs
+  - tests/scope/local-command-surface.test.mjs
+  - tests/scope/app-foundation.test.mjs
+  - docs/agents/tasks/APP-001.task.yml
+  - docs/agents/prototipo-shadcn/STATUS.md
+  - docs/agents/prototipo-shadcn/versoes-1a.json
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - criar telas de jornadas antes da bateria de navegação da 1b
+  - alterar apps/web, apps/mobile, banco, produção ou criar .env.local
+  - pacote cn, dependências flutuantes ou com menos de duas semanas
+  - remover apps/prototipo antes do aceite visual da onda 1
+acceptance:
+  - Vite React 19.1 Router Query Tailwind 4 Radix e utilitários shadcn fixados com datas npm registradas até 11/10/2026
+  - cn local usa clsx e tailwind-merge; components.json aponta para utils local e rsc false
+  - Typecheck recursivo inclui app; build raiz inclui web e app; preview fixo em 3200 e base /app
+  - Biome aceita Tailwind no app e teste de escopo autoriza apps/app mantendo proteções do Next
+  - Gate completo aceita variáveis públicas de processo sem exigir gravação de .env.local; build app nunca é pulado por falta do env web
+proof:
+  - node --test tests/scope/app-foundation.test.mjs tests/scope/workspace-foundation.test.mjs
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 gate
+risk: infraestrutura de frontend
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

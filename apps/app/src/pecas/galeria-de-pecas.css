@@ -1,0 +1,175 @@
+/* A galeria das peças: só a disposição da vitrine. As peças vêm de pecas.css. */
+
+.gp {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: calc(32px + env(safe-area-inset-top)) 16px 96px;
+}
+
+.gp-cabeca {
+  display: grid;
+  gap: 8px;
+  max-width: 38rem;
+}
+
+.gp-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pc-linha);
+}
+
+.gp-secao-cabeca {
+  display: grid;
+  gap: 4px;
+  max-width: 38rem;
+}
+
+.gp-pilha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gp-pilha-curta {
+  display: grid;
+  gap: 6px;
+}
+
+.gp-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Cada campo na altura dele: a grade não estica a busca até a área de texto. */
+.gp-grade {
+  display: grid;
+  align-items: start;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .gp-grade {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-cores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 16px;
+}
+
+.gp-cores li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gp-amostra {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--pc-linha);
+  border-radius: 12px;
+}
+
+.gp-grupo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.gp-publicacao {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 36rem;
+}
+
+.gp-autor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gp-acoes {
+  display: flex;
+  gap: 4px;
+  margin: -4px 0 -8px -12px;
+}
+
+.gp-acao:not([aria-pressed="true"]) {
+  color: var(--pc-suave);
+}
+
+.gp-selos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 16px;
+}
+
+.gp-selos li,
+.gp-cenas li {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.gp-cenas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 16px;
+}
+
+.gp-cenas .pc-ilustracao {
+  width: 100%;
+}
+
+.gp-regras {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-apoio);
+  list-style: disc;
+}
+
+.gp-sobre-foto {
+  position: relative;
+  width: 120px;
+}
+
+.gp-sobre-foto img {
+  display: block;
+  width: 120px;
+  aspect-ratio: 1;
+  border-radius: var(--pc-raio-campo);
+  object-fit: cover;
+}
+
+.gp-sobre-foto .gp-sobre-foto-botao {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.gp-compositor,
+.gp-estreita {
+  max-width: 30rem;
+}
+
+.gp-icone-texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

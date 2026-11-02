@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest"
 // e a galeria publica um fluxo que não existe.
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url))
-const guideDir = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
+const guideDir = join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06")
 
 type Artifact = { id: string; kind: string; group: string; screens: string[] }
 type Group = { id: string; label: string; aliases: string[] }

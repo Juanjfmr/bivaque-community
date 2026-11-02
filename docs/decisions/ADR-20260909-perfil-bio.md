@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-09
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
 critic_verdict:
 critic_review: Sem critico adversarial nesta rodada. A aprovacao registrada e autorizacao humana explicita do dono (Juan) na sessao de 09/09/2026 — ver a secao Approval.
 ---
@@ -80,8 +80,8 @@ porque o perfil não pode virar veículo de dado que a verificação promete nã
 
 ## Evidence and sources
 
-- Prancha 51 e a leitura em [`PRANCHAS-WEB-RESTANTES.md`](../agents/PRANCHAS-WEB-RESTANTES.md).
-- [`HANDOFF-2026-09-09-fidelidade-pranchas.md`](../agents/HANDOFF-2026-09-09-fidelidade-pranchas.md),
+- Prancha 51 e a leitura em [`PRANCHAS-WEB-RESTANTES.md`](../historico/agents/PRANCHAS-WEB-RESTANTES.md).
+- [`HANDOFF-2026-09-09-fidelidade-pranchas.md`](../historico/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md),
   tabela "Abertas — precisam de backend", linha `/profile`.
 - §4.8 C02 da especificação de 08/09.
 - `ADR-20260908-perfil-campos-opcionais` D2 e D3.
@@ -118,7 +118,7 @@ Se o perfil ganhar público segmentado (bio diferente por audiência), D2 é rea
 
 Aprovado em 09/09/2026 pelo dono do produto (Juan), por autorização explícita na sessão de
 Claude Code que redigiu este ADR: "Aprovo as adr", referindo-se aos seis ADRs de 09/09/2026
-listados em [RECON-WEB-EXECUCAO.md](../agents/RECON-WEB-EXECUCAO.md).
+listados em [RECON-WEB-EXECUCAO.md](../historico/agents/RECON-WEB-EXECUCAO.md).
 
 Destrava o contrato RECON-020.
 

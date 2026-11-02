@@ -17,6 +17,11 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 // declaracao local exatamente para esse drift nao voltar.
 const REPORTER_EMAIL = "dono-vila@bivaque.example.invalid"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
+// Lote 5, N2 (ADR-20261023): publicar existe só dentro de um grupo, então o
+// post denunciável é lido no feed do GRUPO. O grupo abaixo é público ("Estudos
+// para Concurso"), de Manaus, e as publicações do seed com este texto marcador
+// pertencem a outros membros — o denunciante não é o autor.
+const GROUP_FEED_URL = "/groups/60000000-0000-4000-8000-000000000005"
 const TARGET_POST_TEXT =
   "A feira do fim de semana abriu mais cedo e estava tranquila na primeira hora."
 
@@ -172,14 +177,16 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
     try {
       const page = await context.newPage()
       await signInAsCookie(context, REPORTER_EMAIL)
-      await page.goto("/community", { waitUntil: "load" })
-      await expect(page).toHaveURL(/\/community$/)
+      // O feed onde o post denunciável aparece é o do grupo (lote 5 N2: a
+      // publicação vive dentro de um grupo).
+      await page.goto(GROUP_FEED_URL, { waitUntil: "load" })
+      await expect(page).toHaveURL(/\/groups\//)
 
       // O post municipal fixo pertence ao proprio dono-vila e nao pode ser
       // denunciado por ele. Este texto vem dos posts gerados por outros
       // membros e reduz o locator ao artigo correto antes de abrir o menu.
       const post = page.getByRole("article").filter({ hasText: TARGET_POST_TEXT }).first()
-      await expect(post).toBeVisible({ timeout: 10000 })
+      await expect(post).toBeVisible({ timeout: 20000 })
       await post.getByRole("button", { name: "Mais opções" }).click()
       await page.getByRole("menuitem", { name: /Denunciar/i }).click()
 

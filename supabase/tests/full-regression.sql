@@ -553,6 +553,8 @@ select throws_ok(
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- ACCEPTANCE: vocabulary is no longer rejected at the schema level (D21)
+-- Lote 5, N2: publicar só existe dentro de um grupo — os dois inserts usam o
+-- grupo público de regression.inc, de que member-one é dono aprovado.
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 set local role authenticated;
@@ -561,16 +563,16 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
-    values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'text', 'Meu CPF e 123456')
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
+    values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000020', 'text', 'Meu CPF e 123456')
   $$,
   'CPF in post content is accepted (D21)'
 );
 
 select lives_ok(
   $$
-    insert into public.posts (locality_id, user_id, post_type, content)
-    values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'text', 'Minha patente militar')
+    insert into public.posts (locality_id, user_id, group_id, post_type, content)
+    values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000020', 'text', 'Minha patente militar')
   $$,
   'patente in post content is accepted (D21)'
 );

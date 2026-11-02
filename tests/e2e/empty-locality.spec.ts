@@ -13,9 +13,13 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 // count via lib/locality-density.ts (`STALE_LOCALITY_THRESHOLD = 30`).
 //
 // This spec proves the property end-to-end: a member in a locality with fewer
-// than 30 members sees the honest empty state on feed, events and guide, with
-// an action path forward ("Publicar" / "Criar evento"), and **does not** see
-// the standard "nenhuma ..." copy that would describe a quiet room.
+// than 30 members sees the honest empty state on events and guide, with an
+// action path forward ("Criar evento"), and **does not** see the standard
+// "nenhuma ..." copy that would describe a quiet room.
+//
+// O caso do FEED saiu no lote 5, tarefa N2 (ADR-20261023): a cidade não tem
+// feed — a conversa é de perguntas e respostas, e publicar só existe dentro de
+// um grupo. A densidade da cidade continua provada em eventos e Guia.
 //
 // The spec needs a second-locality seed account whose locality has fewer than
 // 30 members. Task 10 Step 3 adds the second locality to the seed; until then
@@ -125,26 +129,6 @@ async function signInAs(page: Page, email: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 test.describe("locality below the §3.4 density threshold: honest empty state", () => {
-  test("feed renders the honest empty state with an action path", async ({ page }) => {
-    // Given a member whose locality has fewer than 30 members
-    await signInAs(page, EMPTY_LOCALITY_EMAIL)
-
-    // When they open the feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-
-    // Then the honest copy is rendered instead of "Nenhuma publicação ainda"
-    await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible({ timeout: 15000 })
-
-    // And the standard quiet-room copy is **not** rendered — that would
-    // describe a quiet room, not a beginning, and is the failure this spec
-    // exists to catch.
-    await expect(page.getByText("Nenhuma publicação ainda")).toHaveCount(0)
-
-    // And the action path (Publicar) is rendered, so the member can be the
-    // first instead of staring at a blank room
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
-  })
-
   test("events renders the honest empty state with an action path", async ({ page }) => {
     // Given a member whose locality has fewer than 30 members
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
@@ -204,12 +188,13 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     // Given a member whose locality has fewer than 30 members
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
 
-    // When they open the feed
+    // When they open the Comunidade — desde o lote 5 N2 o que ela mostra é o
+    // painel de Indicações (perguntas da cidade), não um feed
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
 
     // Then the page is interactive
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible({
-      timeout: 15000,
+    await expect(page.getByRole("region", { name: "O que você procura?" })).toBeVisible({
+      timeout: 20000,
     })
 
     // And there is no error banner — the empty state must not look like a

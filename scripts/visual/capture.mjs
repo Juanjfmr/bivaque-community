@@ -82,19 +82,26 @@ export const HEADINGS = {
   "/": "Bivaque",
   "/login": "^Que bom ter você de volta\\.$",
   "/signup": "^Vamos começar\\.$",
-  "/consent": "^Antes de entrar, conheça as regras\\.$",
+  // Lote 4 (PORT-003): o passo Aceite do Google segue renderEntryGoogleConsent.
+  "/consent": "^Antes de entrar, as regras\\.$",
   // Os títulos que o funil escreve de verdade (onboarding/page.tsx:258, 275): o
   // contrato anterior citava copy que não existe em nenhum arquivo do
   // repositório — foi escrita de memória, nunca medida, e a tela real não podia
   // passar. Com o ator certo (rejeitado@) o passo de verificação aparece.
-  "/onboarding": "^(Verificar meu acesso|Aceite seu convite\\.|Preparando o próximo passo\\.)$",
+  // Lote 4 (PORT-004): a elegibilidade do protótipo, com o CPF direto e os
+  // estados do resultado (renderEntryCpf e renderEntryResult).
+  "/onboarding":
+    "^(Confirme seu vínculo\\.|Não localizamos o vínculo\\.|Não conseguimos consultar agora\\.)$",
   // status/page.tsx:90.
-  "/onboarding/status?status=pending": "^Estamos analisando sua identidade$",
+  // Lote 4 (PORT-004): a análise pendente de renderEntryPending.
+  "/onboarding/status?status=pending":
+    "^(Sua elegibilidade está em análise\\.|Recebemos seu documento\\.|A equipe pediu outro documento\\.)$",
   "/onboarding/welcome": "^Você chegou ao Bivaque\\.$",
   // O h1 real do passo (locality/page.tsx:117) é a pergunta, não o rótulo do
   // passo no guia: o contrato antigo veio da prancha e nunca foi medido — com
   // o ator certo (verificado sem localidade) a tela aparece e o título é este.
-  "/onboarding/locality": "^Qual cidade você quer explorar\\?$",
+  // Lote 4 (PORT-005): cidade e momento numa tela (renderEntryCity).
+  "/onboarding/locality": "^Onde e em que momento\\?$",
   "/admissions": "^Fila de admissões$",
   "/reports": "^Fila de denúncias$",
   "/arrivals": "^Chegadas declaradas$",
@@ -163,7 +170,8 @@ export const HEADINGS = {
   // e o "nada para confirmar". A variante ?estado=expirado é chave própria.
   "/auth/confirmar-email": "^(Confira seu e-mail|Nada para confirmar)$",
   "/auth/confirmar-email?estado=expirado": "^Confira seu e-mail$",
-  "/onboarding/documento": "^(Enviar identidade|Precisamos de outro arquivo)$",
+  // Lote 4 (PORT-004): o documento do protótipo.
+  "/onboarding/documento": "^(Envie um documento\\.|A equipe pediu outro documento\\.)$",
   "/onboarding/perfil": "^Deixe com a sua cara\\.$",
   "/mercado": "^O que você precisa pode estar por perto$",
   "/mercado/novo": "^Novo anúncio$",

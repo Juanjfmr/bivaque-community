@@ -54,6 +54,7 @@ vi.mock("@supabase/ssr", () => ({ createServerClient: () => mocks.auth }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: () => mocks.service }))
 vi.mock("web/lib/onboarding/document-status", () => ({
   readDocumentPaths: async () => [],
+  readDocumentStatus: async () => ({ situation: "none", uploadedAt: null }),
 }))
 vi.mock("web/lib/storage/sanitize-image", async (importOriginal) => {
   const actual = await importOriginal<typeof import("web/lib/storage/sanitize-image")>()

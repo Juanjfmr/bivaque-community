@@ -5,7 +5,7 @@ risk: R2
 owner: Juan
 approved_at: 2026-10-20
 expires_at:
-linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md
+linked_plan: docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md
 critic_verdict: PASS
 critic_review: A direção foi validada por maquete nos dois temas (docs/brand/maquete-2026-10-20), comparada com o brandbook oficial (docs/brand/reference/BIVAQUE_brandbook.pdf) página a página, com os contrastes calculados. O dono aprovou em 20/10/2026.
 ---

@@ -63,13 +63,12 @@ test.describe("onboarding: denial paths", () => {
 
   test("consent page stays reachable as the exception path, not as a gate", async ({ page }) => {
     // ADR-20260907 manteve /consent como rota: é o caminho de exceção para quem
-    // precisa reler ou registrar o aceite fora do cadastro.
+    // precisa reler ou registrar o aceite fora do cadastro. PORT-003: a tela é o
+    // passo "Aceite" do protótipo, com o título da especificação.
     const response = await page.goto("/consent")
     expect(response?.ok()).toBeTruthy()
 
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
   })
 
   test("onboarding denies an anonymous visitor", async ({ page }) => {
@@ -111,7 +110,18 @@ test.describe("onboarding: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("consent is enforced at account creation", () => {
-  test("the signup form asks for consent and blocks until it is given", async ({ page }) => {
+  // PORT-003: a especificação deixa o botão ativo e explica no envio; o portão
+  // de verdade é o servidor. A propriedade continua a mesma — sem aceite não se
+  // cria conta — e a prova passou a ser mais forte: nenhuma request sai.
+  test("the signup form asks for consent and refuses the send until it is given", async ({
+    page,
+  }) => {
+    let signupRequests = 0
+    await page.route("**/auth/v1/signup**", async (route) => {
+      signupRequests += 1
+      await route.abort()
+    })
+
     await page.goto("/signup")
 
     await expect(page.getByRole("heading", { name: "Vamos começar." })).toBeVisible()
@@ -120,14 +130,21 @@ test.describe("consent is enforced at account creation", () => {
     await expect(consent).toBeVisible()
     await expect(consent).not.toBeChecked()
 
-    // Negativa: sem aceite, não se cria conta
     const submit = page.getByRole("button", { name: "Criar conta" })
-    await expect(submit).toBeDisabled()
 
-    // Positiva: com aceite, o caminho abre
+    // Negativa: sem aceite, a tela explica e nada sai.
+    await page.locator("#en-name input").fill("Ana de Teste")
+    await page.locator("#en-email input").fill("sem-aceite@exemplo.invalid")
+    await page.locator("#en-pass input").fill("senha-forte-123")
+    await submit.click()
+    await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
+    expect(signupRequests).toBe(0)
+
+    // Positiva: com aceite, o caminho abre.
     await consent.check()
     await expect(consent).toBeChecked()
-    await expect(submit).toBeEnabled()
+    await submit.click()
+    await expect.poll(() => signupRequests).toBe(1)
   })
 
   test("the consent line links to both documents", async ({ page }) => {

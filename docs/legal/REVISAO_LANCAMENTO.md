@@ -87,8 +87,8 @@ Enviar ao dono e a assessoria juridica:
 - este dossie;
 - `docs/legal/PRIVACIDADE.md`;
 - `docs/legal/CODIGO_DE_CONDUTA.md`;
-- `docs/BIVAQUE.md` secoes 4, 5, 7, 10, 11 e 12;
-- `docs/PRODUCT_STATUS.md` secoes de entrada, convites, moderacao e infraestrutura;
+- `docs/historico/BIVAQUE.md` secoes 4, 5, 7, 10, 11 e 12;
+- `docs/historico/PRODUCT_STATUS.md` secoes de entrada, convites, moderacao e infraestrutura;
 - ADRs vigentes relacionados a conta de prestador, alcance pago, suspensao e localidades;
 - ADRs propostos ou bloqueados: afiliacao declarada, IA/curadoria e governanca de terceiros.
 

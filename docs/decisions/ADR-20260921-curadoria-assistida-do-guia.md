@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-21
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md
 critic_verdict:
 critic_review: Sem critico adversarial nesta rodada. A aprovacao registrada e escolha explicita do dono (Juan) na sessao de 21/09/2026 — ver a secao Approval.
 ---

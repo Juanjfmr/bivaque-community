@@ -6,7 +6,7 @@ owner: Juan
 approved_at: 2026-10-22
 accepted_at: 2026-10-22
 expires_at:
-linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 4)
+linked_plan: docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 4)
 critic_verdict: PASS
 critic_review: Aprovado pelo dono em 22/10/2026, a partir do mapeamento protótipo × Next da entrada.
 ---

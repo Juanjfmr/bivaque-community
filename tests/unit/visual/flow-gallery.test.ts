@@ -9,8 +9,8 @@ import { describe, expect, it } from "vitest"
 // coberta por `flows-gallery.mjs --check` e `flows-verify.mjs --check`.
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url))
-const guideDir = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
-const flowsMdPath = join(repoRoot, "docs", "journeys", "FLOWS.md")
+const guideDir = join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06")
+const flowsMdPath = join(repoRoot, "docs", "historico", "journeys", "FLOWS.md")
 
 type Step = {
   tela: string
@@ -107,7 +107,7 @@ describe("flows.html — artefato gerado", () => {
 })
 
 describe("FLOWS.md — índice gerado", () => {
-  it("existe em docs/journeys/", () => {
+  it("existe em docs/historico/journeys/", () => {
     expect(existsSync(flowsMdPath), `FLOWS.md ausente em ${flowsMdPath}`).toBe(true)
   })
 

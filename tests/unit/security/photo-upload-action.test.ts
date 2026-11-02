@@ -69,7 +69,10 @@ vi.mock("next/navigation", () => ({ redirect: vi.fn() }))
 vi.mock("@supabase/ssr", () => ({ createServerClient: () => mocks.client }))
 vi.mock("web/lib/listings/ssr-client", () => ({ createListingClient: () => mocks.client }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: () => mocks.service }))
-vi.mock("web/lib/onboarding/document-status", () => ({ readDocumentPaths: async () => [] }))
+vi.mock("web/lib/onboarding/document-status", () => ({
+  readDocumentPaths: async () => [],
+  readDocumentStatus: async () => ({ situation: "none", uploadedAt: null }),
+}))
 
 beforeEach(() => {
   vi.clearAllMocks()

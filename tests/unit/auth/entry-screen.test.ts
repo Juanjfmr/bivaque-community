@@ -18,15 +18,20 @@ const webEntry = read(
   "components",
   "bivaque-sign-in.tsx",
 )
-const webEntryStyles = read(
+// PORT-003: a entrada deixou de ter folha própria. A pele vem da casca da
+// PORT-002 (`components/entry/entry.css`), e o que faltava nela mora em
+// `entry-auth.css`, no mesmo diretório do componente.
+const entryShellCss = read("apps", "web", "app", "components", "entry", "entry.css")
+const entryFormsCss = read(
   "apps",
   "web",
   "app",
   "(preauth)",
   "login",
   "components",
-  "bivaque-sign-in.module.css",
+  "entry-auth.css",
 )
+const brandTokens = read("apps", "web", "app", "brand-tokens.css")
 const mobileIndex = read("apps", "mobile", "app", "index.tsx")
 const mobileWelcome = read("apps", "mobile", "app", "(auth)", "boas-vindas.tsx")
 const mobileAccess = read("apps", "mobile", "app", "(auth)", "acesso.tsx")
@@ -35,11 +40,10 @@ const mobileLayout = read("apps", "mobile", "app", "_layout.tsx")
 
 describe("web entry screen", () => {
   // Expectativas atualizadas em 2026-09-07 contra a prancha 36-web-auth-entrada,
-  // e não para ficar verde. A anterior travava a troca por abas (modeSwitch +
-  // aria-current); a prancha aprovada não tem abas — cada tela é um destino com
-  // título próprio e a navegação recíproca acontece nos links de rodapé. A
-  // cobertura não caiu: continua exigindo os dois destinos, agora pelos hrefs do
-  // copy de cada modo, e soma o título de cada prancha como asserção.
+  // e de novo em 2026-10-22 contra a entrada do protótipo (PORT-003,
+  // ADR-20261022-entrada-do-prototipo). A anterior travava a troca por abas
+  // (modeSwitch + aria-current); a prancha aprovada não tem abas — cada tela é um
+  // destino com título próprio. Agora os dois destinos são os da especificação.
   it("offers both paths as navigation to their own routes", () => {
     expect(webEntry).toContain('alternateHref: "/signup"')
     expect(webEntry).toContain('alternateHref: "/login"')
@@ -50,14 +54,23 @@ describe("web entry screen", () => {
     expect(webEntry).toContain("Vamos começar.")
   })
 
-  it("keeps the footer links at the minimum touch target", () => {
-    const links = webEntryStyles.match(/\.entryLinks a \{[^}]*\}/)?.[0] ?? ""
-    expect(links).toContain("min-height: 44px")
+  it("keeps the footer at the minimum touch target", () => {
+    // O pé da entrada passou a ser botão de texto do Material, e a altura mínima
+    // é a do componente nos tokens da marca — não uma regra local que cada tela
+    // repetiria. O `flex-wrap` mantém os dois botões lado a lado em 1440 e um por
+    // linha em 375.
+    expect(brandTokens).toMatch(/--md-text-button-container-height:\s*44px/)
+    expect(entryShellCss).toContain(".bv-entry .en-foot {")
+    expect(entryFormsCss).toContain("flex-wrap: wrap")
   })
 
-  it("uses the focus tokens for the visible ring, not the action colour", () => {
-    expect(webEntryStyles).toContain("outline: 2px solid var(--semantic-focus-outer)")
-    expect(webEntryStyles).not.toContain("outline: 2px solid var(--semantic-action-primary)")
+  it("uses the brand token for the visible ring, not a loose colour", () => {
+    // O anel de foco é o da casca, desenhado com o token da marca; nenhuma regra
+    // da entrada pinta foco com cor solta (o teste de escopo também recusa `#`).
+    expect(entryShellCss).toMatch(/\.bv-entry :focus-visible \{[^}]*var\(--md-sys-color-primary\)/)
+    for (const css of [entryShellCss, entryFormsCss]) {
+      expect(css).not.toMatch(/outline:\s*\d+px solid rgb\(/)
+    }
   })
 })
 

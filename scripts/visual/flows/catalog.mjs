@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url"
 const here = fileURLToPath(new URL(".", import.meta.url))
 const repoRoot = join(here, "..", "..", "..")
 
-export const GUIDE_DIR = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
+export const GUIDE_DIR = join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06")
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"))
 

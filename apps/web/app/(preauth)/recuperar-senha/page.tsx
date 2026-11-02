@@ -1,17 +1,24 @@
 "use client"
 
-import { Button } from "@heroui/react"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { submitEntryFormOnEnter } from "../../../lib/auth/entry-enter"
+import { isEntryEmailOk, normalizeEntryEmail } from "../../../lib/auth/entry-form"
 import { classifyEntrySend } from "../../../lib/auth/entry-send"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { computeResendCooldown, formatCountdown } from "../../components/auth/resend-clock"
-import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
-import styles from "./recuperar-senha.module.css"
+import { EntryError } from "../../components/entry/entry-error"
+import { EntryShell } from "../../components/entry/entry-shell"
+import { MaterialFilledButton } from "../../components/material/filled-button"
+import { MaterialIcon } from "../../components/material/material-icon"
+import { MaterialOutlinedTextField } from "../../components/material/outlined-text-field"
+import { MaterialTextButton } from "../../components/material/text-button"
+import "../login/components/entry-auth.css"
 
 /**
- * Pedido de recuperação de senha.
+ * Pedido de recuperação de senha, como `renderEntryForgot` em
+ * `prototypes/bivaque-html/src/features/entry/login.js`: "Recuperar a senha.",
+ * o envio, e o painel neutro depois do envio com "Voltar para entrar" e "Usar
+ * outro e-mail".
  *
  * A resposta é sempre a mesma, tenha o endereço conta ou não. Aqui, ao
  * contrário do login, o provedor NÃO neutraliza por conta própria — quem pede
@@ -22,7 +29,8 @@ import styles from "./recuperar-senha.module.css"
  * O que NÃO pode virar "enviado": limite de reenvio e falha de rede. São
  * distinguíveis da resposta neutra (R07) porque não falam sobre a conta — o
  * classificador compartilhado de entry-send decide, com o cooldown real do
- * servidor em precedência sobre a janela padrão.
+ * servidor em precedência sobre a janela padrão. O protótipo não tem esses dois
+ * estados; eles ficam porque são comportamento do provedor, não enfeite.
  */
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("")
@@ -32,6 +40,13 @@ export default function RecuperarSenhaPage() {
   const [cooldown, setCooldown] = useState(0)
   const [limite, setLimite] = useState<string | null>(null)
   const [falha, setFalha] = useState<string | null>(null)
+  // Só o erro do próprio campo pinta o campo de vermelho. Limite de reenvio e
+  // falha de rede são do provedor e do transporte: marcar o e-mail como errado
+  // por causa deles culparia quem digitou certo.
+  const [fieldError, setFieldError] = useState(false)
+  // O Enter chama `requestSubmit()` direto; o `loading` só vale no render
+  // seguinte, e a ref barra o segundo Enter antes disso.
+  const submittingRef = useRef(false)
 
   const counting = cooldown > 0
   useEffect(() => {
@@ -46,16 +61,30 @@ export default function RecuperarSenhaPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (loading || cooldown > 0) return
+    if (submittingRef.current || loading || cooldown > 0) return
+    submittingRef.current = true
     setLoading(true)
     setOffline(false)
     setLimite(null)
     setFalha(null)
+    setFieldError(false)
+
+    // `entry-forgot-submit`: endereço torto não sai para o provedor.
+    if (!isEntryEmailOk(normalizeEntryEmail(email))) {
+      setFalha("Confira o e-mail.")
+      setFieldError(true)
+      submittingRef.current = false
+      setLoading(false)
+      return
+    }
 
     try {
-      const { error } = await createBrowserClient().auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/callback?next=/nova-senha`,
-      })
+      const { error } = await createBrowserClient().auth.resetPasswordForEmail(
+        normalizeEntryEmail(email),
+        {
+          redirectTo: `${window.location.origin}/auth/callback?next=/nova-senha`,
+        },
+      )
       const view = classifyEntrySend(error)
       if (view.outcome === "sent") {
         // Neutro: "sent" cobre conta existente, inexistente e erro que fala da
@@ -85,79 +114,82 @@ export default function RecuperarSenhaPage() {
       // depender da conta existir.
       setOffline(true)
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
 
+  const problem = offline ? "Verifique sua conexão e tente de novo." : (limite ?? falha ?? null)
+
+  // `entry-go senha` no protótipo volta para a mesma tela limpa: é o que "Usar
+  // outro e-mail" faz.
+  const startOver = () => {
+    setSent(false)
+    setEmail("")
+    setOffline(false)
+    setLimite(null)
+    setFalha(null)
+    setFieldError(false)
+  }
+
   return (
-    <main className={styles["root"]}>
-      <div className={styles["panel"]} aria-hidden="true">
-        <span className={styles["panelWordmark"]}>BIVAQUE</span>
-      </div>
-      <div className={styles["formPane"]}>
-        <section className={styles["card"]} aria-labelledby="recuperar-title">
-          <h1 id="recuperar-title">Esqueceu sua senha?</h1>
-          <p className={styles["lead"]}>
-            Digite seu e-mail. Enviamos um link para você criar uma senha nova.
+    <EntryShell backHref="/login">
+      {sent ? (
+        <div className="en-form">
+          <h1 className="en-h1">Recuperar a senha.</h1>
+          <p className="en-ok" role="status">
+            <MaterialIcon name="check_circle" />
+            {`Se ${email} puder entrar no Bivaque, o link para criar uma nova senha já está a caminho. Confira também o spam.`}
           </p>
+          <MaterialFilledButton href="/login" type="button">
+            Voltar para entrar
+          </MaterialFilledButton>
+          <MaterialTextButton onClick={startOver} type="button">
+            Usar outro e-mail
+          </MaterialTextButton>
+        </div>
+      ) : (
+        // `noValidate`: a validação e a mensagem são desta tela, na frase do
+        // protótipo; o balão nativo do navegador não tem tradução nem ordem.
+        <form
+          className="en-form"
+          noValidate
+          onKeyDown={submitEntryFormOnEnter}
+          onSubmit={handleSubmit}
+        >
+          <h1 className="en-h1">Recuperar a senha.</h1>
+          <p className="en-lead">Mandamos um link para criar uma senha nova.</p>
 
-          <form className={styles["form"]} onSubmit={handleSubmit}>
-            <label className={styles["field"]} htmlFor="recuperar-email">
-              <span>Seu e-mail</span>
-              <span className={styles["inputShell"]}>
-                <input
-                  id="recuperar-email"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="nome@exemplo.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </span>
-            </label>
+          <MaterialOutlinedTextField
+            autocomplete="email"
+            // `false` não vai: num elemento customizado o React escreve
+            // `error="false"`, e o Material lê qualquer valor presente como
+            // verdadeiro. `undefined` some do HTML e mantém o campo neutro.
+            error={fieldError ? true : undefined}
+            id="en-email"
+            inputmode="email"
+            label="E-mail"
+            onChange={(value) => {
+              setEmail(value)
+              setFieldError(false)
+              setFalha(null)
+            }}
+            required
+            type="email"
+            value={email}
+          />
 
-            <Button
-              type="submit"
-              variant="primary"
-              className={styles["primaryButton"] ?? ""}
-              isDisabled={loading || cooldown > 0}
-            >
-              {loading
-                ? "Enviando..."
-                : cooldown > 0
-                  ? `Aguarde ${formatCountdown(cooldown)}`
-                  : "Enviar link"}
-            </Button>
-          </form>
+          <EntryError id="en-err">{problem}</EntryError>
 
-          <Link href={{ pathname: "/login" }} className={styles["back"]}>
-            <ArrowLeft aria-hidden="true" />
-            <span>Voltar para entrar</span>
-          </Link>
-
-          {offline && (
-            <FeedbackAlert
-              variant="warning"
-              title="Sem conexão"
-              description="Verifique sua conexão e tente de novo."
-            />
-          )}
-
-          {limite && <FeedbackAlert variant="warning" description={limite} />}
-
-          {falha && <FeedbackAlert variant="danger" description={falha} />}
-
-          {sent && (
-            <FeedbackAlert
-              variant="success"
-              title="Confira seu e-mail"
-              description={`Se ${email} puder entrar no Bivaque, o link para criar uma senha nova já está a caminho. Confira também o spam.`}
-            />
-          )}
-        </section>
-      </div>
-    </main>
+          <MaterialFilledButton disabled={loading || cooldown > 0 ? true : undefined} type="submit">
+            {loading
+              ? "Enviando..."
+              : cooldown > 0
+                ? `Aguarde ${formatCountdown(cooldown)}`
+                : "Enviar link"}
+          </MaterialFilledButton>
+        </form>
+      )}
+    </EntryShell>
   )
 }

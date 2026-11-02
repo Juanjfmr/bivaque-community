@@ -20,7 +20,11 @@ export type ReplyResolution = "marked" | "resolved_without_reply" | "open"
  * - "open": a pergunta ainda não foi resolvida.
  */
 export function replyResolution(view: ResolutionView, replyId: string): ReplyResolution {
-  if (view.resolved_reply_id === replyId) {
+  // "marked" exige a PERGUNTA resolvida: o ponteiro sozinho nao basta. Um estado
+  // {is_resolved: false, resolved_reply_id: "..."} nao pode aparecer como a
+  // resposta que resolveu — a leitura olha o estado da pergunta (ADR-20261023,
+  // secao 2). O banco tambem nao deixa a autoria gravar esse estado.
+  if (view.is_resolved && view.resolved_reply_id === replyId) {
     return "marked"
   }
   return view.is_resolved ? "resolved_without_reply" : "open"

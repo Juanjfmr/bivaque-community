@@ -7,12 +7,14 @@
 // classifica como 'server' em lib/composer/publish-error.ts e exibe copy
 // generica identica a qualquer outra negacao (anti-enumeracao §4.3).
 //
-// Persona: dono-vila@bivaque.example.invalid (dona da Vila Ajuricaba, ja
-// semeada em supabase/seed.sql, UUID 20000000-...-008). Nao existe persona
-// dedicada de suspensao: o teste alterna is_suspended=false -> true via
-// service_role antes do cenario e restaura no cleanup. O seed ja teve uma
-// persona membro-suspenso@, mas ela saiu — a fixture vivia numa migration
-// (que iria a producao) e nenhum teste a consumia.
+// Persona: membro-1@bivaque.example.invalid (membro verificado de Manaus,
+// UUID 30000000-...-001, aprovado no grupo "Pais e Filhos"). Publicar existe só
+// dentro de um grupo desde o lote 5 N2 (ADR-20261023), então a persona precisa
+// de grupo para chegar ao insert. Nao existe persona dedicada de suspensao: o
+// teste alterna is_suspended=false -> true via service_role antes do cenario e
+// restaura no cleanup. O seed ja teve uma persona membro-suspenso@, mas ela
+// saiu — a fixture vivia numa migration (que iria a producao) e nenhum teste a
+// consumia.
 //
 // Cenarios cobertos:
 //   - caminho try/catch do submit: POST /rest/v1/posts retorna 42501
@@ -29,17 +31,17 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { BrowserContext } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
+import { chooseTestGroup, openComposer } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 
-// Reusamos dono-vila@ (ja validada em publish-golden-slice) e alternamos
-// suspensa antes do teste / reabilitada no cleanup. Isso evita a
-// complexidade de seedar uma persona suspensa que precisa navegar o
-// proxy.ts sem cair em /onboarding (proxy.ts: kind===null).
-const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
-const VILA_OWNER_USER_ID = "20000000-0000-4000-8000-000000000008"
+// Alternamos a suspensao da persona antes do teste / reabilitada no cleanup.
+// Isso evita a complexidade de seedar uma persona suspensa que precisa navegar
+// o proxy.ts sem cair em /onboarding (proxy.ts: kind===null).
+const MEMBER_EMAIL = "membro-1@bivaque.example.invalid"
+const MEMBER_USER_ID = "30000000-0000-4000-8000-000000000001"
 
 function readEnvLocal(key: string): string | undefined {
   try {
@@ -88,20 +90,20 @@ interface PasswordGrant {
   token_type: string
 }
 
-async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
+async function seedMemberSession(context: BrowserContext): Promise<void> {
   const { anonKey, password } = requireCredentials()
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: VILA_OWNER_EMAIL, password },
+    data: { email: MEMBER_EMAIL, password },
   })
   if (response.status() !== 200) {
     await api.dispose()
-    throw new Error(`Password grant for ${VILA_OWNER_EMAIL} failed: ${response.status()}`)
+    throw new Error(`Password grant for ${MEMBER_EMAIL} failed: ${response.status()}`)
   }
   const grant = (await response.json()) as PasswordGrant
   await api.dispose()
-  const cookieValue = encodeAuthCookieValue(grant, VILA_OWNER_EMAIL)
+  const cookieValue = encodeAuthCookieValue(grant, MEMBER_EMAIL)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
   await context.addCookies([
@@ -146,10 +148,10 @@ async function setSuspended(serviceRoleKey: string, suspended: boolean): Promise
     const response = suspended
       ? await api.post(`${SUPABASE_URL}/rest/v1/profile_suspensions`, {
           headers,
-          data: { user_id: VILA_OWNER_USER_ID },
+          data: { user_id: MEMBER_USER_ID },
         })
       : await api.delete(
-          `${SUPABASE_URL}/rest/v1/profile_suspensions?user_id=eq.${VILA_OWNER_USER_ID}`,
+          `${SUPABASE_URL}/rest/v1/profile_suspensions?user_id=eq.${MEMBER_USER_ID}`,
           { headers },
         )
     if (!response.ok()) {
@@ -174,20 +176,20 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
     try {
       const context = await browser.newContext()
       const page = await context.newPage()
-      await seedVilaOwnerSession(context)
+      await seedMemberSession(context)
       await page.setViewportSize({ width: 1280, height: 800 })
-      await page.goto("/community", { waitUntil: "load" })
 
-      // Persona eh a dona da Vila Ajuricaba (mesma do publish-golden-slice).
-      // Como ela esta suspensa, o RLS veto no POST /rest/v1/posts
-      // (policy posts_insert_locality_member tem AND NOT is_account_suspended(auth.uid())).
-      const publishButton = page.getByRole("button", { name: "Publicar" }).first()
-      await expect(publishButton).toBeVisible({ timeout: 15000 })
-      await publishButton.click()
-      await page.getByRole("heading", { name: "Criar publicação" }).waitFor({ timeout: 10000 })
+      // Persona eh membro de Manaus com grupo. Como ela esta suspensa, o RLS
+      // veto no POST /rest/v1/posts (policy posts_insert_locality_member tem
+      // AND NOT is_account_suspended(auth.uid())).
+      await openComposer(page)
+      const composer = page.getByRole("dialog")
+      await chooseTestGroup(composer)
 
-      await page.getByLabel("Pergunta").fill(`${contentPrefix} membro suspenso tentou publicar`)
-      await page.getByTestId("publish-submit").click()
+      // Escopado ao diálogo: a página do Início tem a seção "Perguntas abertas",
+      // e um getByLabel de página inteira casa com os dois (strict mode).
+      await composer.getByLabel("Pergunta").fill(`${contentPrefix} membro suspenso tentou publicar`)
+      await composer.getByTestId("publish-submit").click()
 
       // Copy generica: lib/composer/publish-error.ts classifica 42501 como
       // 'server' e exibe exatamente o mesmo texto de qualquer outra falha.
@@ -201,7 +203,7 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
 
       // Modal continua aberto com o rascunho preservado (botao Cancelar e
       // Publicar seguem visiveis) — o membro nao perdeu o que escreveu.
-      await expect(page.getByTestId("publish-submit")).toBeVisible()
+      await expect(composer.getByTestId("publish-submit")).toBeVisible()
 
       // Prova negativa via DB: query com a service_role (bypassa RLS)
       // confirma que NENHUM post com o prefixo unico do run chegou.
@@ -211,7 +213,7 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
       const api = await request.newContext()
       try {
         const check = await api.get(
-          `${SUPABASE_URL}/rest/v1/posts?select=id&user_id=eq.${VILA_OWNER_USER_ID}&content=like.*${encodeURIComponent(contentPrefix)}*`,
+          `${SUPABASE_URL}/rest/v1/posts?select=id&user_id=eq.${MEMBER_USER_ID}&content=like.*${encodeURIComponent(contentPrefix)}*`,
           { headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` } },
         )
         if (!check.ok()) {

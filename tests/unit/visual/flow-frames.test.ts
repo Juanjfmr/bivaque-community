@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest"
 // dos limites, sobreposto ou com a contagem errada falha aqui, no gate normal.
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url))
-const guideDir = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
+const guideDir = join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06")
 
 type Frame = { x: number; y: number; w: number; h: number }
 type Board = { expected: number; frames: Frame[] }

@@ -6,7 +6,7 @@ import { defineConfig } from "@playwright/test"
 // servidor jaca de pe (build + next start). Por isso nenhum `webServer` aqui:
 // o da raiz aponta para a :3000, que e de outra sessao.
 
-const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+const chromiumExecutablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
 
 export default defineConfig({
   testDir: ".",
@@ -20,7 +20,7 @@ export default defineConfig({
   // maior da folga sem afrouxar assercao nenhuma (os expect mantem o padrao).
   timeout: 90_000,
   use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://127.0.0.1:3147",
+    baseURL: process.env["PLAYWRIGHT_TEST_BASE_URL"] ?? "http://127.0.0.1:3147",
     ...(chromiumExecutablePath
       ? { launchOptions: { executablePath: chromiumExecutablePath } }
       : {}),

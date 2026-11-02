@@ -65,15 +65,15 @@ test.describe("indicações com memória", () => {
       .getByRole("link", { name: new RegExp(question) })
       .click()
     await helper.waitForURL(`**${requestPath}`)
-    await helper.getByLabel("Sua indicação").fill(answer)
-    await helper.getByRole("button", { name: "Responder" }).click()
+    await helper.getByLabel("Sua resposta").fill(answer)
+    await helper.getByRole("button", { name: "Enviar indicação" }).click()
     await expect(helper.getByText("1 resposta")).toBeVisible()
 
     // Quem pediu marca a resposta que resolveu.
     await asker.reload()
     await asker.getByRole("button", { name: /^Ajudou a resolver/ }).click()
     await expect(asker.getByText(/Ajudou a resolver · resposta de/)).toBeVisible()
-    await expect(asker.getByText("Resolvido por quem pediu")).toBeVisible()
+    await expect(asker.getByText("Resolvida")).toBeVisible()
 
     // Uma terceira pessoa procura e vê a resposta sem abrir a conversa.
     const laterContext = await browser.newContext()
@@ -84,7 +84,7 @@ test.describe("indicações com memória", () => {
     const hit = later
       .getByRole("region", { name: "O que você procura?" })
       .getByRole("link", { name: new RegExp(question) })
-    await expect(hit).toContainText("Resolvido")
+    await expect(hit).toContainText("Resolvida")
     await expect(hit).toContainText(answer)
 
     await Promise.all([askerContext.close(), helperContext.close(), laterContext.close()])
@@ -95,8 +95,10 @@ test.describe("indicações com memória", () => {
   }) => {
     await signInAs(page.context(), LATER)
     await page.goto("/community")
-    await page.getByRole("tab", { name: "Indicações" }).click()
-    await expect(page).toHaveURL(/\/community\?vista=indicacoes$/)
+    await expect(page).toHaveURL(/\/community/)
     await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
+    // Desde o lote 5 N2 a Comunidade não tem aba "Conversa": a vista de
+    // indicações é o que a rota mostra, e /indicacoes continua chegando nela.
+    await expect(page.getByRole("tab", { name: "Conversa" })).toHaveCount(0)
   })
 })

@@ -57,7 +57,9 @@ select columns_are(
     'expires_at',
     'accepted_by_user_id',
     'accepted_at',
-    'created_at'
+    'created_at',
+    -- PORT-006: o código digitável do convite, só como hash (ADR-20261022-entrada-do-prototipo).
+    'code_hash'
   ],
   'family invitations retain digests plus the display hint (D2 Task 4) and lifecycle metadata only'
 );
