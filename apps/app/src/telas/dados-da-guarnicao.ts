@@ -21,7 +21,8 @@ export const OMS_MANAUS: readonly OmDoGuia[] = [
     forca: "EB",
     bairro: "Ponta Negra",
     status: "Endereço documental corroborado; ponto não homologado",
-    fonte: "https://licitacoeseb.12rm.eb.mil.br/server/api/core/bitstreams/6db36000-0a35-4113-8260-c0f7f52a4ae0/content",
+    fonte:
+      "https://licitacoeseb.12rm.eb.mil.br/server/api/core/bitstreams/6db36000-0a35-4113-8260-c0f7f52a4ae0/content",
   },
   {
     id: "07324fe1c063a619db1d5948",
@@ -30,7 +31,8 @@ export const OMS_MANAUS: readonly OmDoGuia[] = [
     forca: "EB",
     bairro: "Compensa",
     status: "Endereço documental corroborado; ponto não homologado",
-    fonte: "https://licitacoeseb.12rm.eb.mil.br/bitstreams/85ab0e46-ed62-4522-8c40-a5f50d6fc7ef/download",
+    fonte:
+      "https://licitacoeseb.12rm.eb.mil.br/bitstreams/85ab0e46-ed62-4522-8c40-a5f50d6fc7ef/download",
   },
   {
     id: "c52395dc502ff8be0ca673d7",
@@ -71,7 +73,10 @@ export const OMS_MANAUS: readonly OmDoGuia[] = [
 export const BAIRROS_MANAUS = [
   { nome: "Ponta Negra", apoio: "Orla e opções residenciais; confira o trajeto para sua OM." },
   { nome: "Flores", apoio: "Compare moradia e escolas próximas; confirme valores nos anúncios." },
-  { nome: "Planalto", apoio: "Consulte a oferta de serviços locais e as indicações dos moradores." },
+  {
+    nome: "Planalto",
+    apoio: "Consulte a oferta de serviços locais e as indicações dos moradores.",
+  },
   { nome: "Parque 10", apoio: "Pesquise escolas, comércio e deslocamento nos horários de pico." },
   { nome: "Dom Pedro", apoio: "Compare rotinas de bairro e alternativas de transporte." },
 ] as const
