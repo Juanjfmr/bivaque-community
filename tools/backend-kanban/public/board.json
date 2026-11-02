@@ -5533,6 +5533,7 @@
       ],
       "completedChecklist": [true, true, true, false, false, false, false],
       "proof": [
+        "02/11: segunda revisão independente do GPT-6 Astra (.visual/PECAS/revisao-astra-2.md, fora do Git) confirmou 6 de 7 defeitos e 8 de 10 pontos visuais resolvidos em 7a1a95d1; o restante foi corrigido em 7a27676d: a pausa do aviso com foco e ponteiro, a precedência do movimento reduzido e \"Ver a resposta\", que por âncora levava à lista de grupos (defeito de 01/11). Na revisão 7a27676d: app 125/125, typecheck e build verdes, test:scope 150/150; percursos de Grupos em 375, 768 e 1440, claro e escuro, sem erro; prova de comportamento com 15 de 15 verificações (inclui foco no Desfazer com ponteiro, salto para a resposta com foco e destaque, movimento reduzido).",
         "02/11: rodada de identidade na revisão 7a1a95d1. App: testes 125/125, typecheck e build verdes, nenhum arquivo de prévia no dist; test:scope 150/150 (o varredor de segredos acusava um CPF de exemplo num teste do F01 de 01/11, corrigido). Percursos por robô do F01 e de Grupos em 375, 768 e 1440, claro e escuro: sem erro de console, sem transbordo e no máximo uma ação em Brasa por tela; galeria com folha (Esc fecha) e aviso com Desfazer; prova de comportamento dos achados da revisão (Desfazer com a publicação aberta volta ao grupo, Desfazer antigo some ao tirar dos salvos, aviso para com foco, alvo de 44 px no botão sobre foto). Ilustrações geradas pelo GPT-6 Astra e normalizadas no Papel; revisão independente do Astra em .visual/PECAS/revisao-astra.md (fora do Git), achados de código corrigidos. Lint da raiz falha só em arquivos que a rodada não tocou (styles.css, Conversa.tsx, apps/web, scripts/load, docs/brand); gate completo da raiz não foi rodado.",
         "01/11: prévias do F01 (901e4c73, 3636fdae, 0eb22586) e de Grupos (ef89dd6b) com testes de fluxo; padrão de tela em docs/agents/regua-nextdoor/PADRAO-DE-TELA.md (8a2dd166)."
       ],
@@ -5552,7 +5553,7 @@
       ],
       "dependencies": ["APP-001"],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "7a1a95d1"
+      "sourceRevision": "7a27676d"
     }
   ]
 }
