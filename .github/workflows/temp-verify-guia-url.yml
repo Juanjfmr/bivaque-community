@@ -1,0 +1,30 @@
+name: Temp verify Bivaque Guia React URL
+on:
+  push:
+    branches:
+      - feat/home-guia-integrado-react-20261102
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe immutable React preview URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app/app/"
+          curl --retry 3 --retry-delay 3 -fLsS -D /tmp/headers -o /tmp/index.html -w 'HTTP=%{http_code} FINAL=%{url_effective}\n' "$URL"
+          sed -n '1,30p' /tmp/headers
+          grep -q 'id="root"' /tmp/index.html
+          SCRIPT=$(grep -oE '/app/assets/[^"]+\.js' /tmp/index.html | head -1)
+          STYLE=$(grep -oE '/app/assets/[^"]+\.css' /tmp/index.html | head -1)
+          test -n "$SCRIPT" && test -n "$STYLE"
+          curl -fLsS -D /tmp/jsheaders -o /tmp/script.js "https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app$SCRIPT"
+          curl -fLsS -D /tmp/cssheaders -o /tmp/style.css "https://bivaque-guia-react-preview-a9jk473e7-hub-militar.vercel.app$STYLE"
+          printf 'JS_BYTES=%s CSS_BYTES=%s\n' "$(wc -c < /tmp/script.js)" "$(wc -c < /tmp/style.css)"
+          grep -q 'Favoritos da vizinhança' /tmp/script.js
+          grep -q 'Imóveis para morar' /tmp/script.js
+          test "$(wc -c </tmp/script.js)" -gt 10000
+          test "$(wc -c </tmp/style.css)" -gt 10000
+          echo 'BIVAQUE_REACT_PREVIEW_HTTP_OK'
