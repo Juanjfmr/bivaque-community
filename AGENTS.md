@@ -68,7 +68,9 @@ other members stays out of scope (BLOCK-AFFILIATION).
   [TASK_CONTRACT.md](docs/agents/TASK_CONTRACT.md): one valid `docs/agents/tasks/*.task.yml` per
   delegated batch, validated with `node scripts/agents/task-contract.mjs <path>`. Mechanical work goes
   to the external implementers (DeepSeek, Qwen); judgment, boundaries and review stay with the
-  coordinator. GPT-6 Astra (`codex exec -m gpt-6-astra`) generates images and reviews blind.
+  coordinator. Reviews and blind judgments use another model: the `reviewer` subagent (Claude) or
+  DeepSeek through OpenCode. GPT-6 Astra (`codex exec -m gpt-6-astra`) is reserved for extremely
+  hard work, such as the illustration family (owner, 02/11); routine images use `gpt-6.1-terra`.
 - Implementer, reviewer and runtime-verifier are distinct where risk requires. The reviewer forms
   the first verdict from criteria, reference and diff, without the implementer's defense. An exhausted
   `retry_budget` yields FAIL/BLOCKED/HUMAN_DECISION, never PASS. Verify delegated work on disk and in
@@ -146,8 +148,8 @@ npx pnpm@11.18.0 test:e2e    # apps/web: Playwright on 127.0.0.1:3000
 - Each journey moves in order (SPA ADR §8): interface with demo data → visual acceptance → database
   and API → E2E at three sizes → migrated test coverage → only then the old `apps/web` screen leaves,
   with its code and tests. Old routes redirect to the new ones; proxy gates move in the same PR,
-  without redirect cycles. Under the mandate, visual acceptance is the agent's (blind Astra review
-  against the Nextdoor bar), presented to the owner at the milestones.
+  without redirect cycles. Under the mandate, visual acceptance is the agent's (blind review by
+  another model against the Nextdoor bar), presented to the owner at the milestones.
 - Never edit an applied migration: add one with `npx pnpm@11.18.0 exec supabase migration new <name>`.
   Scope columns and every policy reading them land in the same migration. Enable and force RLS,
   minimize grants. The `private` schema is never exposed through the Data API; anon/authenticated

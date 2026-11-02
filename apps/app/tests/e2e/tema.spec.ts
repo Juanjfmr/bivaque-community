@@ -4,12 +4,12 @@
  * O tema: os tokens do protótipo, claro e escuro seguindo o sistema, inclusive
  * quando a pessoa troca o tema com o app aberto (ADR §2).
  *
- * As cores medidas são as do `apps/prototipo/app/globals.css`, que é a tradução
- * aprovada dos tokens do protótipo de HTML.
+ * As cores medidas são as da paleta da fase 1 (ADR-20261102-paleta-fria), que
+ * substituiu a tradução dos tokens do protótipo de HTML.
  */
 
-const CLARO = { fundo: "242, 240, 235", tinta: "37, 48, 51", barra: "#F2F0EB" }
-const ESCURO = { fundo: "23, 30, 32", tinta: "236, 234, 228", barra: "#171E20" }
+const CLARO = { fundo: "243, 245, 246", tinta: "28, 38, 43", barra: "#F3F5F6" }
+const ESCURO = { fundo: "16, 20, 23", tinta: "232, 236, 238", barra: "#101417" }
 
 /**
  * A cor **resolvida** de um token, e não o texto bruto dele: o build minifica

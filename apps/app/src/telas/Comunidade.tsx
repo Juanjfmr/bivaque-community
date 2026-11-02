@@ -5,15 +5,12 @@ import { useEffect, useMemo, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Campo } from "@/components/bivaque/campos"
-import { CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
-import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
-import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import type { Pergunta } from "@/lib/dados/contrato"
@@ -27,8 +24,8 @@ import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
  * A Comunidade da onda 3 (protótipo: features/community/views.js), com dados
  * de demonstração.
  *
- * V1: abas Indicações, Grupos e Negócios; filtros Para ajudar, Resolvidas e
- * Minhas; contagem de resolvidas; lista de perguntas e negócios. Ficam para o
+ * Abas Indicações e Grupos (Negócios mora no Mercado, ADR do app §3.1); filtros
+ * Para ajudar, Resolvidas e Minhas; contagem de resolvidas; lista de perguntas. Ficam para o
  * refino: abas com indicador deslizante, botão "Perguntar", paginação e o
  * bloco de quem está esperando resposta.
  */
@@ -36,7 +33,6 @@ import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
 const ABAS: readonly ItemDeFiltro[] = [
   { id: "ind", rotulo: "Indicações" },
   { id: "grp", rotulo: "Grupos" },
-  { id: "biz", rotulo: "Negócios" },
 ]
 
 const FILTROS: readonly ItemDeFiltro[] = [
@@ -124,13 +120,6 @@ export function Comunidade() {
   const resolvidas = useMemo(() => {
     if (dados === null) return 0
     return dados.perguntas.filter((pergunta) => pergunta.is_resolved === true).length
-  }, [dados])
-
-  const negocios = useMemo(() => {
-    if (dados === null) return []
-    return dados.negocios
-      .map((negocio) => ({ negocio, apresentacao: registro(negocio.apresentacao) }))
-      .sort((a, b) => numero(b.apresentacao["recN"]) - numero(a.apresentacao["recN"]))
   }, [dados])
 
   const grupos = useMemo(() => {
@@ -235,7 +224,9 @@ export function Comunidade() {
           <div className="flex items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 py-3">
             <Icone nome="history_edu" className="size-6 shrink-0 text-(--primary)" />
             <span className="grid gap-0.5">
-              <b className="text-[15px]">{resolvidas} indicações resolvidas</b>
+              <b className="text-[15px]">
+                {resolvidas} {resolvidas === 1 ? "indicação resolvida" : "indicações resolvidas"}
+              </b>
               <small className="text-(--on-surface-variant)">
                 Busque uma resposta antes de perguntar.
               </small>
@@ -291,59 +282,24 @@ export function Comunidade() {
             </div>
           )}
         </>
-      ) : aba === "grp" ? (
-        grupos.length === 0 ? (
-          <EstadoVazio
-            titulo="Ainda sem grupos nesta cidade"
-            texto="Grupos reúnem quem tem a mesma rotina, o mesmo ciclo ou o mesmo interesse."
-            icone="group"
-          />
-        ) : (
-          <div className="grid gap-2">
-            {grupos.map(({ grupo, apresentacao }) => (
-              <LinhaDeLista
-                key={grupo.id}
-                icone="group"
-                titulo={texto(apresentacao["t"], grupo.name)}
-                subtitulo={`${numero(apresentacao["members"])} membros`}
-                onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
-              />
-            ))}
-          </div>
-        )
-      ) : negocios.length === 0 ? (
+      ) : grupos.length === 0 ? (
         <EstadoVazio
-          titulo="Ainda sem negócios cadastrados"
-          texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-          icone="storefront"
+          titulo="Ainda sem grupos nesta cidade"
+          texto="Grupos reúnem quem tem a mesma rotina, o mesmo ciclo ou o mesmo interesse."
+          icone="group"
         />
       ) : (
-        <Secao
-          acoes={
-            <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
-              Ver todos os negócios
-            </Botao>
-          }
-        >
-          <Grade formato="cartoes">
-            {negocios.map(({ negocio, apresentacao }) => (
-              <CartaoDeNegocio
-                key={negocio.id}
-                negocio={{
-                  id: negocio.id,
-                  fonte: texto(apresentacao["imagem"]),
-                  nome: texto(apresentacao["name"], negocio.display_name),
-                  categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                  cidade: casca.cidade,
-                  indicacoes: numero(apresentacao["recN"]),
-                  patrocinado: apresentacao["spon"] === true,
-                  aguardando: apresentacao["claimed"] === false,
-                }}
-                aoAbrir={() => void navegacao.irPara("negocio", { parametros: { id: negocio.id } })}
-              />
-            ))}
-          </Grade>
-        </Secao>
+        <div className="grid gap-2">
+          {grupos.map(({ grupo, apresentacao }) => (
+            <LinhaDeLista
+              key={grupo.id}
+              icone="group"
+              titulo={texto(apresentacao["t"], grupo.name)}
+              subtitulo={`${numero(apresentacao["members"])} membros`}
+              onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
+            />
+          ))}
+        </div>
       )}
     </section>
   )

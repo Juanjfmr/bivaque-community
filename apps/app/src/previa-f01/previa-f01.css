@@ -672,3 +672,16 @@
   padding: 3px 0;
   border-bottom: 1px solid var(--border);
 }
+
+/* A parte em que a pessoa está, sob a barra; no computador o painel das fases já diz isso. */
+.f01-fase {
+  margin: 6px 0 0;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-miudo);
+}
+
+@media (min-width: 1024px) {
+  .f01-fase {
+    display: none;
+  }
+}

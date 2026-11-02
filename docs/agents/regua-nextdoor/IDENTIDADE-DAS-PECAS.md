@@ -19,10 +19,12 @@ selo, ilustração, nota, aviso ou folha. O CSS da tela cuida só da disposiçã
 biblioteca e na galeria antes de entrar na tela.
 
 **Cor.**
-- Brasa aparece uma vez por tela, no botão principal.
-- Seleção (chip marcado, aba, "Entrou", Útil ligado) é Grafite.
+- Paleta fria (ADR-20261102-paleta-fria): fundo cinza-claro, cartão branco; no escuro, fundo quase preto frio.
+- A ação de concluir (Publicar, Continuar, Entrar) é ardósia (`--acao`), uma vez por tela.
+- Brasa só no "começar a criar": o botão flutuante de escrever e o Criar da barra (`--pc-criar`).
+- Seleção (chip marcado, aba, "Entrou", Útil ligado) é a tinta.
 - Link é tinta sublinhada.
-- O ardósia (`--success`) marca só o que já está feito: vínculo confirmado, pergunta resolvida.
+- A cor de feito (`--success`) marca só o que já está feito: vínculo confirmado, pergunta resolvida.
 - Nenhuma cor serve para enfeitar rótulo: o tipo da publicação, o motivo da sugestão e "novas publicações" são
   texto, sem cor.
 
@@ -32,7 +34,8 @@ biblioteca e na galeria antes de entrar na tela.
 - Botão só de ícone é um círculo de 44.
 
 **Texto.**
-- Noto Sans em tudo, com uma escala só: título 24, subtítulo 17, corpo 16, apoio 14, miúdo 13.
+- Noto Sans em tudo, com uma escala só: título 24, seção 20, subtítulo 17, corpo 16, apoio 14, miúdo 13.
+  Seção é o título de um bloco numa lista ou num feed ("Seus grupos", "Acontecendo em Manaus").
 - A Noto Serif fica só no destaque: a frase da porta e as boas-vindas, 30 no celular e 40 no computador.
 - A fonte do brandbook continua. Trocar de família é decisão do dono.
 
@@ -52,8 +55,8 @@ biblioteca e na galeria antes de entrar na tela.
 - Selos (um objeto por tema) substituem o monograma dos grupos e ilustram escolhas pequenas (o momento na
   cidade). Em miniatura, selo; cena só onde tem espaço para ser lida.
 - Foto só quando é de um membro: foto da publicação, foto de perfil, capa enviada pela moderação.
-- O fundo de toda ilustração é exatamente o Papel (`#F2F0EB`). No claro ela pousa na página sem moldura; no escuro
-  vira um quadro de Papel com raio.
+- Toda ilustração tem fundo transparente e pousa em qualquer fundo, claro ou escuro, sem moldura. Selo e
+  escolha ilustrada ficam num quadrado de tom (`--pc-tom`).
 
 **Composição das peças.**
 - No feed, cada publicação é um cartão branco sobre o Papel.
@@ -66,7 +69,7 @@ biblioteca e na galeria antes de entrar na tela.
 - Código em casas: um campo só por baixo, para colar e para o preenchimento automático do celular.
 - Escolha com selo: rádios nativos, com o check no canto da arte.
 - Envio de arquivo: a área inteira abre o seletor e mostra o que foi escolhido.
-- Compositor de comentário: o campo em pílula e o envio em Brasa.
+- Compositor de comentário: o campo em pílula e o envio na cor de ação.
 
 **Toque e retorno.**
 - Botão, chip e linha encolhem 3% ao toque.

@@ -19,13 +19,28 @@ export type Estado = {
   boasVindas: readonly string[]
   /** Pedidos de entrada em grupo fechado. */
   pedidos: readonly string[]
+  /** Publicações que a pessoa ocultou ou denunciou: somem só para ela. */
+  ocultas: readonly string[]
+  /** Denúncias enviadas, com o motivo, como a fila da moderação as receberia. */
+  denuncias: readonly { publicacao: string; motivo: MotivoDaDenuncia }[]
 }
+
+export const MOTIVOS_DA_DENUNCIA = [
+  { valor: "ofensa", rotulo: "Ofensa, ameaça ou assédio" },
+  { valor: "dado-pessoal", rotulo: "Expõe dado de alguém (endereço, telefone, documento, foto)" },
+  { valor: "golpe", rotulo: "Golpe, propaganda ou venda proibida" },
+  { valor: "fora-do-grupo", rotulo: "Fora do assunto do grupo" },
+  { valor: "outro", rotulo: "Outro motivo" },
+] as const
+export type MotivoDaDenuncia = (typeof MOTIVOS_DA_DENUNCIA)[number]["valor"]
 
 export const ESTADO_INICIAL: Estado = {
   grupos: GRUPOS,
   publicacoes: PUBLICACOES,
   boasVindas: [],
   pedidos: [],
+  ocultas: [],
+  denuncias: [],
 }
 
 export type Acao =
@@ -48,6 +63,10 @@ export type Acao =
       id?: string
     }
   | { tipo: "apagar"; publicacao: string }
+  /** `valor: false` é o Desfazer: a publicação volta. */
+  | { tipo: "ocultar"; publicacao: string; valor: boolean }
+  /** Denunciar também oculta para quem denunciou. */
+  | { tipo: "denunciar"; publicacao: string; motivo: MotivoDaDenuncia }
 
 let sequencia = 0
 export const novoId = (prefixo: string): string => `${prefixo}-${Date.now()}-${++sequencia}`
@@ -154,6 +173,17 @@ export function reduzir(estado: Estado, acao: Acao): Estado {
         boasVindas: estado.boasVindas.filter((id) => id !== acao.grupo),
       }
     }
+    case "ocultar": {
+      const sem = estado.ocultas.filter((id) => id !== acao.publicacao)
+      return { ...estado, ocultas: acao.valor ? [...sem, acao.publicacao] : sem }
+    }
+    case "denunciar":
+      if (estado.denuncias.some((d) => d.publicacao === acao.publicacao)) return estado
+      return {
+        ...estado,
+        denuncias: [...estado.denuncias, { publicacao: acao.publicacao, motivo: acao.motivo }],
+        ocultas: [...estado.ocultas.filter((id) => id !== acao.publicacao), acao.publicacao],
+      }
     case "apagar":
       // Só quem publicou apaga (o Desfazer logo depois de publicar).
       return {

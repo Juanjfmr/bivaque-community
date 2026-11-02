@@ -214,13 +214,13 @@ test("o tema escuro usa os tokens, troca a marca e mantém a foto e a frase", as
   await page.goto("/app/entrar/login")
   await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
-    "rgb(23, 30, 32)",
+    "rgb(16, 20, 23)",
   )
   expect(
     await page
       .locator(".entrada-acesso-formulario input#login-email")
       .evaluate((campo) => getComputedStyle(campo).backgroundColor),
-  ).toBe("rgb(32, 41, 43)")
+  ).toBe("rgb(26, 32, 36)")
   expect(
     await page
       .getByRole("img", { name: "Bivaque" })
@@ -368,7 +368,7 @@ test("convite pede o código em maiúsculas, o e-mail somente leitura e o aceite
   const emailDoConvite = page.getByLabel("E-mail do convite")
   await expect(emailDoConvite).toHaveAttribute("readonly", "")
   expect(await emailDoConvite.evaluate((campo) => getComputedStyle(campo).backgroundColor)).toBe(
-    "rgb(238, 235, 229)",
+    "rgb(234, 238, 240)",
   )
   await expect(page.locator(".entrada-acesso-somente-leitura [data-icone='lock']")).toBeVisible()
 
@@ -431,12 +431,12 @@ test("o convite e a conta apagada seguem os tokens no tema escuro", async ({ pag
     await page
       .locator("#convite-codigo")
       .evaluate((campo) => getComputedStyle(campo).backgroundColor),
-  ).toBe("rgb(32, 41, 43)")
+  ).toBe("rgb(26, 32, 36)")
   expect(
     await page
       .locator(".entrada-acesso-somente-leitura input")
       .evaluate((campo) => getComputedStyle(campo).backgroundColor),
-  ).toBe("rgb(35, 45, 47)")
+  ).toBe("rgb(32, 39, 44)")
   expect(
     await page
       .getByRole("img", { name: "Bivaque" })
@@ -447,7 +447,7 @@ test("o convite e a conta apagada seguem os tokens no tema escuro", async ({ pag
   await expect(page.getByRole("heading", { name: "Conta apagada." })).toBeVisible()
   expect(
     await page.locator(".entrada-acesso-marco").evaluate((marco) => getComputedStyle(marco).color),
-  ).toBe("rgb(236, 234, 228)")
+  ).toBe("rgb(232, 236, 238)")
 })
 
 test("retomar, convite, convite indisponível e conta apagada não rolam na horizontal", async ({

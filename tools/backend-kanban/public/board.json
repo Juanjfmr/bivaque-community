@@ -5617,9 +5617,11 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "sourceRevision": "532dd246",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: revisão às cegas (subagente Claude) — Grupos e Entrada em parte, app real abaixo da régua; corrigidos ação sólida no escuro e concordância; serifa nos títulos já corrigida. Restante (abas em dois níveis, subtítulos explicativos, capa do grupo) fica nas jornadas.",
+        "02/11: paleta escolhida às cegas entre três candidatas; app 127/127, tema.spec 30/30, percursos F01, Grupos e menu sem erro; 15 falhas E2E pré-existentes registradas em APP-E2E-PREEXISTENTES.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-F1-IDENTIDADE",
@@ -5627,14 +5629,15 @@
       "priority": "P1",
       "category": "frontend",
       "status": "next",
-      "description": "Paleta revisada (autorizada em 02/11) num ADR de identidade; casca com barra de baixo e coluna no computador em todas as telas; achados do veredito de maturidade: topo e recepção do grupo, menu ⋯ com Denunciar, rostos nos personagens, arte sem placa no escuro, títulos de seção, layout de computador, etapas do F01. Fecha com revisão do Astra no nível e o marco 1 do dono.",
+      "description": "Paleta fria (ADR-20261102-paleta-fria) nos tokens do apps/app e na landing; Brasa só no criar; ilustrações transparentes; títulos em Noto Sans; menu ⋯ com denúncia; topo e recepção do grupo; parte atual do F01; título de seção; Comunidade sem Negócios. A troca das peças nas telas antigas acontece jornada a jornada (fases 2 a 5), não aqui. Rostos de pessoas: a prévia segue com iniciais; foto vem do membro no produto.",
       "checklist": [
         "ADR de identidade com a paleta revisada",
-        "Casca e peças em todas as telas do apps/app",
-        "Achados do veredito de maturidade resolvidos",
-        "Revisão às cegas do Astra no nível; marco 1 apresentado ao dono"
+        "Paleta e tipografia valendo no app inteiro e na landing (tokens globais)",
+        "Achados do veredito de maturidade resolvidos nas telas-modelo (F01 e Grupos)",
+        "Revisão às cegas por outro modelo; marco 1 apresentado ao dono"
       ],
-      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR"]
+      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR", "APP-E2E-PREEXISTENTES"],
+      "completedChecklist": [true, true, true, false]
     },
     {
       "phase": "Lançamento",
@@ -6007,6 +6010,62 @@
       "sourceRevision": "521fca4a",
       "links": ["docs/LANCAMENTO.md"],
       "proof": ["02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7)."]
+    },
+    {
+      "id": "CI-E2E-UPSTREAM-INSTAVEL",
+      "title": "E2E da web antiga cai por resposta inválida do Supabase local no CI",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "Em 02/11 o job Install, test, and build caiu duas vezes, em PRs que não tocam o código (#120 e #121), com [WebServer] An invalid response was received from the upstream server e The destination stream closed early. Os testes que caíram: group-event-detail-denials (grupo privado, mobile-375) e provider-vitrine (tablet-768). A nova execução passou no #120. Teste instável no CI ensina a ignorar vermelho.",
+      "checklist": [
+        "Reproduzir com a mesma carga do CI (workers e projetos)",
+        "Achar a causa: pool do Supabase local, Kong ou o servidor Next sob paralelismo",
+        "Corrigir a causa, não aumentar timeout",
+        "Dez execuções seguidas verdes no CI"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/group-event-detail-denials.spec.ts",
+        "tests/e2e/provider-vitrine.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "ccd458c7",
+      "links": [
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
+      ],
+      "proof": ["02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."]
+    },
+    {
+      "id": "APP-E2E-PREEXISTENTES",
+      "title": "Três specs E2E do apps/app falham na linha de base e o CI não os roda",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Em 02/11, rodando a suíte inteira do apps/app (vite preview, seis tamanhos), 15 casos falham igualmente na linha de base feat/f01-regua-nextdoor (e2967be3/8df34e8c) e na fase 1: casca-visual (o topo da conversa: clique em Paulo R. estoura 30 s em todos os tamanhos; o topo em 320), rolagem-foco (posições de rolagem restauradas diferentes do esperado em 320, 360 e 430) e componentes (a grade em 768). O job App mobile-first do CI roda só um subconjunto, por isso ninguém viu.",
+      "checklist": [
+        "Reproduzir cada um e achar a causa (dados da conversa, altura de lista, grade)",
+        "Corrigir o código ou o teste, conforme a causa",
+        "Pôr a suíte inteira do apps/app no CI, ou registrar por que fica fora",
+        "Suíte do apps/app verde nos seis tamanhos"
+      ],
+      "dependencies": [],
+      "tests": [
+        "apps/app/tests/e2e/casca-visual.spec.ts",
+        "apps/app/tests/e2e/rolagem-foco.spec.ts",
+        "apps/app/tests/e2e/componentes.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "9fb3953e",
+      "links": ["docs/LANCAMENTO.md"],
+      "proof": [
+        "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte."
+      ]
     }
   ]
 }

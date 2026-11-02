@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import {
   Avatar,
@@ -9,12 +9,13 @@ import {
   Estado,
   Folha,
   Linha,
-  Nota,
+  Progresso,
   Selo,
   Topo,
 } from "@/src/pecas/pecas"
-import { type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
+import { EU, type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
 import type { Acao, Estado as EstadoDaPrevia } from "./estado"
+import { MenuDaPublicacao } from "./menu-da-publicacao"
 
 const base = import.meta.env.BASE_URL
 
@@ -74,7 +75,7 @@ export function Lista({ estado, despachar, navegar }: PropsDaTela) {
       />
       {meus.length > 0 ? (
         <section aria-labelledby="pg-meus" className="pg-bloco">
-          <h2 id="pg-meus" className="pc-subtitulo">
+          <h2 id="pg-meus" className="pc-secao">
             Seus grupos
           </h2>
           <ul className="pc-lista">
@@ -98,7 +99,7 @@ export function Lista({ estado, despachar, navegar }: PropsDaTela) {
         </section>
       ) : null}
       <section aria-labelledby="pg-outros" className="pg-bloco">
-        <h2 id="pg-outros" className="pc-subtitulo">
+        <h2 id="pg-outros" className="pc-secao">
           Para você em Manaus
         </h2>
         {outros.length === 0 ? (
@@ -168,16 +169,18 @@ export function Fotos({ fotos, rotulo }: { fotos: readonly string[]; rotulo: str
   )
 }
 
-/** Quem escreveu, quando e o tipo, no alto de publicação e de detalhe. */
-export function Autoria({ publicacao }: { publicacao: Publicacao }) {
+/** Quem escreveu, o tipo e quando, no alto de publicação e de detalhe, com o "⋯". */
+export function Autoria({ publicacao, menu }: { publicacao: Publicacao; menu?: ReactNode }) {
   return (
     <header className="pg-autor">
       <Avatar nome={publicacao.autor} />
       <span className="pc-linha-texto">
         <span className="pc-linha-titulo">{publicacao.autor}</span>
-        <span className="pc-miudo">{publicacao.quando}</span>
+        <span className="pc-miudo">
+          {ROTULO_DO_TIPO[publicacao.tipo]} · {publicacao.quando}
+        </span>
       </span>
-      <span className="pc-miudo pg-tipo">{ROTULO_DO_TIPO[publicacao.tipo]}</span>
+      {menu}
     </header>
   )
 }
@@ -187,16 +190,21 @@ function ItemDaPublicacao({
   publicacao,
   despachar,
   navegar,
+  avisar,
 }: {
   publicacao: Publicacao
   despachar: PropsDaTela["despachar"]
   navegar: Navegar
+  avisar: PropsDaTela["avisar"]
 }) {
   const total = publicacao.comentarios.length
   const abrir = () => navegar({ nome: "publicacao", id: publicacao.id })
   return (
     <Cartao className="pg-publicacao" aria-labelledby={`pg-pub-${publicacao.id}`}>
-      <Autoria publicacao={publicacao} />
+      <Autoria
+        publicacao={publicacao}
+        menu={<MenuDaPublicacao publicacao={publicacao} despachar={despachar} avisar={avisar} />}
+      />
       <button type="button" className="pg-publicacao-corpo" onClick={abrir}>
         <span id={`pg-pub-${publicacao.id}`} className="pg-publicacao-texto">
           {publicacao.texto}
@@ -254,15 +262,33 @@ export function GrupoTela({
 }: PropsDaTela & { id: string }) {
   const [filtro, setFiltro] = useState<"recentes" | "sem-resposta">("recentes")
   const [sobreAberto, setSobreAberto] = useState(false)
+  const [leuRegras, setLeuRegras] = useState(false)
   const titulo = useFocoNoTitulo()
   const grupo = estado.grupos.find((g) => g.id === id)
   if (grupo === undefined) return null
   const publicacoes = estado.publicacoes
-    .filter((p) => p.grupo === id)
+    .filter((p) => p.grupo === id && !estado.ocultas.includes(p.id))
     .filter((p) => filtro === "recentes" || (p.tipo === "pergunta" && p.comentarios.length === 0))
   const fechadoParaMim = grupo.privacidade === "fechado" && !grupo.participa
   const pediu = estado.pedidos.includes(id)
   const novo = estado.boasVindas.includes(id)
+  // Conta o olá dado depois de entrar, não uma publicação antiga da mesma pessoa.
+  const disseOla = estado.publicacoes.some(
+    (p) => p.grupo === id && p.autor === EU.curto && p.quando === "agora",
+  )
+  const passosFeitos = Number(disseOla) + Number(leuRegras)
+  const abrirSobre = () => {
+    setSobreAberto(true)
+    setLeuRegras(true)
+  }
+  const convidar = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      avisar("Link do grupo copiado. É só colar na conversa.")
+    } catch {
+      avisar("Não deu para copiar o link. Tente de novo.")
+    }
+  }
 
   return (
     <div className="pg-grupo">
@@ -285,20 +311,24 @@ export function GrupoTela({
               </p>
             </div>
           </div>
-          {fechadoParaMim ? null : (
-            <Botao
-              tom="texto"
-              compacto
-              icone="info"
-              className="pg-movel-sobre"
-              aria-haspopup="dialog"
-              onClick={() => setSobreAberto(true)}
-            >
-              Sobre o grupo e regras
-            </Botao>
-          )}
 
-          {grupo.participa ? null : (
+          {grupo.participa ? (
+            <div className="pg-cabeca-acoes">
+              <Botao compacto icone="person_add" onClick={convidar}>
+                Convidar
+              </Botao>
+              <Botao
+                compacto
+                tom="contorno"
+                icone="info"
+                className="pg-movel-sobre"
+                aria-haspopup="dialog"
+                onClick={abrirSobre}
+              >
+                Sobre e regras
+              </Botao>
+            </div>
+          ) : (
             <Botao
               tom="principal"
               cheio
@@ -318,40 +348,51 @@ export function GrupoTela({
             <Cartao className="pg-boas-vindas" aria-labelledby="pg-bv-titulo">
               <div className="pg-boas-vindas-cabeca">
                 <h2 id="pg-bv-titulo" className="pc-subtitulo">
-                  Você entrou. Comece por aqui
+                  Comece por aqui
                 </h2>
                 <BotaoDeIcone
                   rotulo="Fechar boas-vindas"
                   nome="close"
+                  compacto
                   onClick={() => despachar({ tipo: "fechar-boas-vindas", grupo: id })}
                 />
               </div>
-              <div className="pg-boas-vindas-acoes">
-                <Botao
-                  compacto
-                  icone="chat_bubble"
-                  onClick={() =>
-                    navegar({
-                      nome: "escrever",
-                      grupo: id,
-                      texto:
-                        "Oi, pessoal! Sou a Ana, cheguei agora em Manaus com dois filhos pequenos.",
-                    })
-                  }
-                >
-                  Diga olá
-                </Botao>
-                <Botao
-                  compacto
-                  icone="person_add"
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(window.location.href)
-                    avisar("Link do grupo copiado. É só colar na conversa.")
-                  }}
-                >
-                  Convidar alguém
-                </Botao>
-              </div>
+              <Progresso
+                fracao={passosFeitos / 2}
+                rotulo={`${passosFeitos} de 2 passos feitos`}
+                maximo={2}
+                valor={passosFeitos}
+              />
+              <p className="pc-miudo">{passosFeitos} de 2 passos feitos</p>
+              <ul className="pc-lista">
+                <li>
+                  <Linha
+                    marca={
+                      <Icone nome={disseOla ? "check_circle" : "forum"} preenchido={disseOla} />
+                    }
+                    titulo="Diga olá ao grupo"
+                    apoio="Conte de onde veio e o que procura. Quem chegou antes responde."
+                    onClick={() =>
+                      navegar({
+                        nome: "escrever",
+                        grupo: id,
+                        texto:
+                          "Oi, pessoal! Sou a Ana, cheguei agora em Manaus com dois filhos pequenos.",
+                      })
+                    }
+                  />
+                </li>
+                <li>
+                  <Linha
+                    marca={
+                      <Icone nome={leuRegras ? "check_circle" : "gavel"} preenchido={leuRegras} />
+                    }
+                    titulo="Leia as regras do grupo"
+                    apoio={`${grupo.regras.length} regras, menos de um minuto.`}
+                    onClick={abrirSobre}
+                  />
+                </li>
+              </ul>
             </Cartao>
           ) : null}
 
@@ -364,7 +405,6 @@ export function GrupoTela({
             </>
           ) : (
             <>
-              {grupo.fixado ? <Nota icone="info">{grupo.fixado}</Nota> : null}
               <div className="pc-chips" role="tablist" aria-label="Publicações">
                 {(
                   [
@@ -394,6 +434,7 @@ export function GrupoTela({
                       publicacao={publicacao}
                       despachar={despachar}
                       navegar={navegar}
+                      avisar={avisar}
                     />
                   ))}
                 </div>

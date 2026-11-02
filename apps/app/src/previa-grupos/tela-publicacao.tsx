@@ -14,6 +14,7 @@ import {
 } from "@/src/pecas/pecas"
 import { type Comentario, EU, type Tipo } from "./dados"
 import { novoId } from "./estado"
+import { MenuDaPublicacao } from "./menu-da-publicacao"
 import { Autoria, Fotos, type PropsDaTela, useFocoNoTitulo } from "./telas-grupos"
 
 // ── Detalhe da publicação ───────────────────────────────────────────────────
@@ -31,12 +32,15 @@ export function PublicacaoTela({
   const [destaque, setDestaque] = useState<{ id: string; vez: number } | null>(null)
   const campo = useRef<HTMLTextAreaElement>(null)
   const titulo = useFocoNoTitulo()
-  const publicacao = estado.publicacoes.find((p) => p.id === id)
+  // Oculta ou denunciada some para quem fez, como se não estivesse mais aqui.
+  const publicacao = estado.ocultas.includes(id)
+    ? undefined
+    : estado.publicacoes.find((p) => p.id === id)
   const grupo = estado.grupos.find((g) => g.id === publicacao?.grupo)
   const existiaAoAbrir = useRef(publicacao !== undefined)
   const sumiu = publicacao === undefined
 
-  // Desfazer a publicação com ela aberta: a tela volta ao grupo, sem ficar vazia.
+  // Desfazer a publicação, ocultar ou denunciar com ela aberta: a tela volta ao grupo.
   useEffect(() => {
     if (sumiu && existiaAoAbrir.current) voltar()
   }, [sumiu, voltar])
@@ -123,7 +127,10 @@ export function PublicacaoTela({
         }
       />
       <main className="pg-tela pg-detalhe-corpo">
-        <Autoria publicacao={publicacao} />
+        <Autoria
+          publicacao={publicacao}
+          menu={<MenuDaPublicacao publicacao={publicacao} despachar={despachar} avisar={avisar} />}
+        />
         <h1 ref={titulo} tabIndex={-1} className="pg-detalhe-texto">
           {publicacao.texto}
         </h1>

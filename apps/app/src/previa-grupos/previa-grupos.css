@@ -105,14 +105,18 @@
 .pg-boas-vindas {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 14px;
+  gap: 8px;
+  padding-bottom: 8px;
 }
 
-.pg-boas-vindas-acoes {
+.pg-cabeca-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.pg-boas-vindas .pc-lista {
+  margin: 0 -4px;
 }
 
 .pg-boas-vindas-cabeca {
@@ -159,11 +163,6 @@
   content: "";
 }
 
-.pg-movel-sobre {
-  align-self: flex-start;
-  margin: -8px 0 -4px -12px;
-}
-
 .pg-feed {
   display: flex;
   flex-direction: column;
@@ -184,9 +183,71 @@
   gap: 12px;
 }
 
-.pg-tipo {
+/* O "⋯" no canto do autor, alinhado ao topo do nome. */
+.pg-mais {
   align-self: flex-start;
-  margin-left: auto;
+  margin: -6px -8px 0 auto;
+}
+
+.pg-menu {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -8px;
+}
+
+.pg-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--pc-raio-campo);
+  background: none;
+  color: var(--pc-tinta);
+  font: inherit;
+  font-size: var(--pc-fs-corpo);
+  text-align: start;
+  cursor: pointer;
+}
+
+.pg-menu-item:active {
+  background: var(--pc-tom);
+}
+
+.pg-menu-item[data-perigo="sim"] {
+  color: var(--pc-perigo);
+}
+
+.pg-denuncia {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pg-motivos {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pg-motivo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  font-size: var(--pc-fs-corpo);
+  cursor: pointer;
+}
+
+.pg-motivo input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--pc-acao);
 }
 
 .pg-publicacao-corpo {

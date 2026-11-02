@@ -142,3 +142,28 @@ describe("Grupos — publicar e entrar", () => {
     expect(publicacao(dois, "p-berco").uteis).toBe(11)
   })
 })
+
+describe("ocultar e denunciar", () => {
+  it("ocultar some com a publicação só da lista de quem ocultou, e o Desfazer devolve", () => {
+    const oculta = reduzir(ESTADO_INICIAL, {
+      tipo: "ocultar",
+      publicacao: "p-pediatra",
+      valor: true,
+    })
+    expect(oculta.ocultas).toEqual(["p-pediatra"])
+    expect(oculta.publicacoes.some((p) => p.id === "p-pediatra")).toBe(true)
+    const volta = reduzir(oculta, { tipo: "ocultar", publicacao: "p-pediatra", valor: false })
+    expect(volta.ocultas).toEqual([])
+  })
+
+  it("denunciar registra o motivo uma vez e oculta para quem denunciou", () => {
+    const uma = reduzir(ESTADO_INICIAL, {
+      tipo: "denunciar",
+      publicacao: "p-pediatra",
+      motivo: "golpe",
+    })
+    const duas = reduzir(uma, { tipo: "denunciar", publicacao: "p-pediatra", motivo: "ofensa" })
+    expect(duas.denuncias).toEqual([{ publicacao: "p-pediatra", motivo: "golpe" }])
+    expect(duas.ocultas).toEqual(["p-pediatra"])
+  })
+})

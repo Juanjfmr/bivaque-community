@@ -207,7 +207,7 @@ export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
       </p>
       {perguntas.length > 0 ? (
         <section aria-labelledby="f01-perguntas" className="f01-bloco">
-          <h2 id="f01-perguntas" className="pc-subtitulo">
+          <h2 id="f01-perguntas" className="pc-secao">
             {textos.secao}
           </h2>
           <ul className="f01-itens f01-itens-lista">
@@ -224,7 +224,7 @@ export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
       ) : null}
       {comGente && cidade?.encontro ? (
         <section aria-labelledby="f01-encontro" className="f01-bloco">
-          <h2 id="f01-encontro" className="pc-subtitulo">
+          <h2 id="f01-encontro" className="pc-secao">
             Para conhecer gente
           </h2>
           <ul className="f01-itens f01-itens-lista">
@@ -275,7 +275,7 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
         ))}
       </ul>
       <section aria-labelledby="f01-grupos-titulo" className="f01-bloco">
-        <h2 id="f01-grupos-titulo" className="pc-subtitulo">
+        <h2 id="f01-grupos-titulo" className="pc-secao">
           Grupos para você
         </h2>
         <ul className="pc-lista f01-grupos" aria-live="polite">
@@ -555,7 +555,7 @@ export function InicioComPrimeirosPassos({
       </section>
       {cidade?.encontro || primeiraPergunta ? (
         <section aria-labelledby="f01-acontecendo" className="f01-bloco">
-          <h2 id="f01-acontecendo" className="pc-subtitulo">
+          <h2 id="f01-acontecendo" className="pc-secao">
             Acontecendo em {cidade?.nome}
           </h2>
           <ul className="f01-itens f01-itens-lista">

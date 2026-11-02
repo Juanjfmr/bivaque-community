@@ -780,7 +780,7 @@ test("a escolha do negócio fica no passo 5, com as três ações empilhadas", a
 
   // Principal em Grafite; "Decidir depois" é só texto.
   expect(await acoes.nth(0).evaluate((botao) => getComputedStyle(botao).backgroundColor)).toBe(
-    "rgb(37, 48, 51)",
+    "rgb(28, 38, 43)",
   )
   expect(await acoes.nth(2).evaluate((botao) => getComputedStyle(botao).backgroundColor)).toBe(
     "rgba(0, 0, 0, 0)",
@@ -1201,12 +1201,12 @@ test("o negócio segue os tokens no tema escuro", async ({ page }) => {
       .locator(".entrada-etapa-acoes .entrada-etapa-acao")
       .last()
       .evaluate((botao) => getComputedStyle(botao).backgroundColor),
-  ).toBe("rgb(236, 234, 228)")
+  ).toBe("rgb(232, 236, 238)")
   expect(
     await page
       .locator(".entrada-etapa-subtitulo")
       .evaluate((subtitulo) => getComputedStyle(subtitulo).color),
-  ).toBe("rgb(236, 234, 228)")
+  ).toBe("rgb(232, 236, 238)")
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     .toBe(true)
@@ -1453,14 +1453,14 @@ test("as boas-vindas seguem os tokens no tema escuro", async ({ page }) => {
   await page.goto("/app/entrar/boas-vindas")
   await expect(page.getByRole("heading", { name: "Você chegou ao Bivaque." })).toBeVisible()
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
-    "rgb(23, 30, 32)",
+    "rgb(16, 20, 23)",
   )
   expect(
     await page
       .locator(".entrada-etapa-atalho")
       .first()
       .evaluate((atalho) => getComputedStyle(atalho).backgroundColor),
-  ).toBe("rgb(32, 41, 43)")
+  ).toBe("rgb(26, 32, 36)")
   expect(
     await page
       .getByRole("img", { name: "Bivaque" })

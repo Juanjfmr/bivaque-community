@@ -414,8 +414,9 @@ test.describe("landing v8", () => {
     await openLanding(page)
     const darkSurface = await tokenColor(page, "--md-sys-color-surface")
     expect(darkSurface).not.toBe(lightSurface)
-    expect(darkSurface).toBe("rgb(23, 30, 32)")
-    expect(lightSurface).toBe("rgb(242, 240, 235)")
+    // A landing usa a paleta fria (ADR-20261102-paleta-fria), escopada em .bv-skin.ld.
+    expect(darkSurface).toBe("rgb(16, 20, 23)")
+    expect(lightSurface).toBe("rgb(243, 245, 246)")
   })
 
   test("mantém as cores do símbolo na folha do menu e no topo sólido", async ({
