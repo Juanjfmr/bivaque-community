@@ -19,11 +19,12 @@
   --pc-cartao: var(--card);
   --pc-tom: color-mix(in srgb, var(--foreground) 7%, transparent);
   --pc-tom-forte: color-mix(in srgb, var(--foreground) 13%, transparent);
-  --pc-acao: var(--brasa);
-  --pc-acao-texto: var(--brasa-foreground);
+  --pc-acao: var(--acao);
+  --pc-acao-texto: var(--acao-foreground);
+  --pc-criar: var(--brasa);
+  --pc-criar-texto: var(--brasa-foreground);
   --pc-feito: var(--success);
   --pc-perigo: var(--destructive);
-  --pc-papel: #f2f0eb;
 
   --pc-fs-destaque: 30px;
   --pc-fs-titulo: 24px;
@@ -307,8 +308,11 @@
   font-size: 24px;
 }
 
-/* O botão que fica sobre o conteúdo, no canto, sempre à mão. */
+/* O botão que fica sobre o conteúdo, no canto, sempre à mão. É o "começar a criar":
+   a única peça em Brasa. */
 .pc-flutuante {
+  --pc-acao: var(--pc-criar);
+  --pc-acao-texto: var(--pc-criar-texto);
   position: fixed;
   right: 16px;
   bottom: calc(24px + env(safe-area-inset-bottom));
@@ -487,17 +491,16 @@
   height: var(--pc-selo, 48px);
   overflow: hidden;
   border-radius: calc(var(--pc-selo, 48px) * 0.25);
-  background: var(--pc-papel);
+  background: var(--pc-tom);
 }
 
 /* ── ilustração ────────────────────────────────────────────────────────── */
-/* A família é desenhada sobre Papel: no escuro ela vira um quadro de Papel,
-   nunca um retângulo claro sangrando até a borda. */
+/* A família tem fundo transparente: pousa em qualquer fundo, claro ou escuro,
+   sem quadro. */
 .pc-ilustracao {
   display: block;
   overflow: hidden;
   border-radius: var(--pc-raio-cartao);
-  background: var(--pc-papel);
 }
 
 .pc-ilustracao img {
@@ -733,7 +736,7 @@
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 3;
-  background: var(--pc-papel);
+  background: var(--pc-tom);
 }
 
 .pc-escolha-arte img {

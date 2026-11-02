@@ -9,7 +9,7 @@ import { useEffect } from "react"
  * `<meta name="theme-color">`, e é isso que este gancho acompanha — inclusive
  * quando a pessoa troca o tema com o app aberto.
  */
-export const COR_DA_BARRA = { claro: "#F2F0EB", escuro: "#171E20" } as const
+export const COR_DA_BARRA = { claro: "#F3F5F6", escuro: "#101417" } as const
 
 export function useCorDaBarraDoSistema(): void {
   useEffect(() => {
