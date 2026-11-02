@@ -257,12 +257,14 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Título de tela em Noto Sans: a serifa fica só no destaque da porta e das boas-vindas
+     (ADR-20261102-paleta-fria; identidade das peças). */
   h1 {
-    font-family: var(--font-brand);
+    font-family: var(--font-plain);
     font-size: var(--type-title-size);
     line-height: var(--type-title-line);
     letter-spacing: var(--type-title-tracking);
-    font-weight: 600;
+    font-weight: 700;
     margin: 0;
   }
 
@@ -751,26 +753,6 @@
     var(--surface-low) 48%
   );
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-variant) 52%, transparent);
-}
-
-.bv-home-kicker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--on-surface-variant);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.105em;
-  text-transform: uppercase;
-}
-
-.bv-home-kicker-ponto {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  flex: none;
-  border-radius: 999px;
-  background: var(--brasa);
 }
 
 [data-home="abertura"] [data-cabeca="pagina"] {

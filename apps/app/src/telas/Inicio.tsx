@@ -179,9 +179,6 @@ export function Inicio() {
     <section data-tela="inicio" className="grid gap-2">
       <header data-home="abertura" className="bv-home-intro">
         <div data-home="apresentacao">
-          <p className="bv-home-kicker">
-            <span className="bv-home-kicker-ponto" aria-hidden="true" />A vida acontece por aqui
-          </p>
           <CabecaDePagina
             className="bv-home-heading"
             titulo={`Sua rede em ${casca.cidade}`}
