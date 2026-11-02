@@ -14,8 +14,8 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-- **INDICACOES-MEMORIA** · P1 · Indicações com memória: pedir começa por procurar, e a resposta que resolveu fica achável
-- **RED-003** · P1 · Comunidade: R3 migration e pgTAP da matriz aprovada
+- **LAN-F01** · P1 · F01 Entrada e onboarding ligada ao banco
+- **AJUDA-PUBLICA** · P2 · Ajuda pública para quem está fora
 
 ## Bloqueios
 
