@@ -243,6 +243,14 @@
   aspect-ratio: 2;
 }
 
+.pg-resolvida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  font-size: var(--pc-fs-apoio);
+}
+
 .pg-acoes {
   display: flex;
   gap: 4px;
@@ -307,22 +315,27 @@
   animation: pg-destaque 1.6s ease-out;
 }
 
+/* Quem chega pelo "Ver a resposta" vê a resposta piscar. */
+.pg-comentario[data-destacado="sim"] .pg-comentario-corpo {
+  animation: pg-destaque 1.6s ease-out;
+}
+
+.pg-comentario:focus {
+  outline: none;
+}
+
 @keyframes pg-destaque {
   from {
     background: var(--pc-tom-forte);
   }
 }
 
+/* Depois das duas regras que animam, com a mesma especificidade: aqui vence. */
 @media (prefers-reduced-motion: reduce) {
   .pg-comentario[data-recente="sim"] .pg-comentario-corpo,
-  .pg-comentario:target .pg-comentario-corpo {
+  .pg-comentario[data-destacado="sim"] .pg-comentario-corpo {
     animation: none;
   }
-}
-
-/* Quem chega pelo "Resolvida pela resposta de…" vê a resposta piscar. */
-.pg-comentario:target .pg-comentario-corpo {
-  animation: pg-destaque 1.6s ease-out;
 }
 
 .pg-comentario-cabeca {

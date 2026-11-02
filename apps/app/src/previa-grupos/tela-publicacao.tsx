@@ -27,6 +27,8 @@ export function PublicacaoTela({
   const [texto, setTexto] = useState("")
   const [respondendo, setRespondendo] = useState<Comentario | null>(null)
   const [recemEnviado, setRecemEnviado] = useState<number>(0)
+  // O comentário para onde "Ver a resposta" levou; `vez` repete o destaque.
+  const [destaque, setDestaque] = useState<{ id: string; vez: number } | null>(null)
   const campo = useRef<HTMLTextAreaElement>(null)
   const titulo = useFocoNoTitulo()
   const publicacao = estado.publicacoes.find((p) => p.id === id)
@@ -64,6 +66,17 @@ export function PublicacaoTela({
   const minha = publicacao.autor === EU.curto
   const pergunta = publicacao.tipo === "pergunta"
   const resolveu = publicacao.comentarios.find((item) => item.id === publicacao.resolvida)
+
+  // Sem âncora (#): a prévia navega pelo histórico, e um salto por âncora
+  // virava troca de tela. O botão rola até a resposta, põe o foco nela e a destaca.
+  const irParaResposta = (idDoComentario: string) => {
+    const alvo = document.getElementById(`comentario-${idDoComentario}`)
+    if (alvo === null) return
+    const reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    alvo.scrollIntoView({ block: "center", behavior: reduzido ? "auto" : "smooth" })
+    alvo.focus({ preventScroll: true })
+    setDestaque((atual) => ({ id: idDoComentario, vez: (atual?.vez ?? 0) + 1 }))
+  }
 
   const responder = (comentario: Comentario) => {
     setRespondendo(comentario)
@@ -116,9 +129,13 @@ export function PublicacaoTela({
         </h1>
         <Fotos fotos={publicacao.fotos} rotulo={`Publicação de ${publicacao.autor}`} />
         {resolveu ? (
-          <a className="pc-estado" href={`#comentario-${resolveu.id}`}>
-            <Icone nome="check_circle" preenchido /> Resolvida pela resposta de {resolveu.autor}
-          </a>
+          // O estado diz o que é; o botão-link, aonde ir. Juntos, não pareciam um atalho.
+          <p className="pg-resolvida">
+            <Estado>Resolvida</Estado>
+            <button type="button" className="pc-link" onClick={() => irParaResposta(resolveu.id)}>
+              Ver a resposta de {resolveu.autor}
+            </button>
+          </p>
         ) : null}
         <footer className="pg-acoes">
           <Botao
@@ -153,13 +170,19 @@ export function PublicacaoTela({
                 <li
                   key={comentario.id}
                   id={`comentario-${comentario.id}`}
+                  tabIndex={-1}
                   className="pg-comentario"
+                  data-destacado={destaque?.id === comentario.id ? "sim" : "nao"}
                   data-resposta={comentario.respondeA ? "sim" : "nao"}
                   data-resolveu={ehResolucao ? "sim" : "nao"}
                   data-recente={comentario.id === ultimoMeu?.id && recemEnviado > 0 ? "sim" : "nao"}
                 >
                   <Avatar nome={comentario.autor} tamanho={comentario.respondeA ? 32 : 40} />
-                  <div className="pg-comentario-corpo">
+                  <div
+                    className="pg-comentario-corpo"
+                    // Remontar o corpo repete o destaque a cada "Ver a resposta".
+                    key={destaque?.id === comentario.id ? destaque.vez : 0}
+                  >
                     <p className="pg-comentario-cabeca">
                       <strong>{comentario.autor}</strong>
                       <span className="pc-miudo">{comentario.quando}</span>

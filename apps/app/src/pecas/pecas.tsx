@@ -794,7 +794,11 @@ export function Aviso({ aviso, aoSumir }: { aviso: AvisoDaTela | null; aoSumir: 
 }
 
 function AvisoAtivo({ aviso, aoSumir }: { aviso: AvisoDaTela; aoSumir: () => void }) {
-  const [pausado, setPausado] = useState(false)
+  // Foco e ponteiro pausam cada um por si: o ponteiro sair não solta o tempo
+  // enquanto o foco continua no Desfazer, e vice-versa.
+  const [comFoco, setComFoco] = useState(false)
+  const [comPonteiro, setComPonteiro] = useState(false)
+  const pausado = comFoco || comPonteiro
 
   useEffect(() => {
     if (pausado) return
@@ -807,11 +811,11 @@ function AvisoAtivo({ aviso, aoSumir }: { aviso: AvisoDaTela; aoSumir: () => voi
     // biome-ignore lint/a11y/noStaticElementInteractions: pausa de tempo, não é ação.
     <div
       className="pc-aviso"
-      onPointerEnter={() => setPausado(true)}
-      onPointerLeave={() => setPausado(false)}
-      onFocus={() => setPausado(true)}
+      onPointerEnter={() => setComPonteiro(true)}
+      onPointerLeave={() => setComPonteiro(false)}
+      onFocus={() => setComFoco(true)}
       onBlur={(evento) => {
-        if (!evento.currentTarget.contains(evento.relatedTarget as Node | null)) setPausado(false)
+        if (!evento.currentTarget.contains(evento.relatedTarget as Node | null)) setComFoco(false)
       }}
     >
       <span>{aviso.texto}</span>

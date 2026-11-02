@@ -26,9 +26,10 @@ export function PreviaGrupos() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: registro único.
   useEffect(() => {
     window.history.replaceState({ tela }, "")
+    // Entrada sem estado (âncora, link externo) não é uma tela da prévia: fica onde está.
     const aoVoltar = (evento: PopStateEvent) => {
       const anterior = (evento.state as { tela?: Tela } | null)?.tela
-      setTela(anterior ?? { nome: "lista" })
+      if (anterior) setTela(anterior)
     }
     window.addEventListener("popstate", aoVoltar)
     return () => window.removeEventListener("popstate", aoVoltar)
