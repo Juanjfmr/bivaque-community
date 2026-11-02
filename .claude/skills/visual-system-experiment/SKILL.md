@@ -45,4 +45,5 @@ que quebra seis asserts de pgTAP parecendo regressão real.
 ## Julgamento
 
 A régua está em `references/evaluation-rubric.md`. Ordem: eliminatórios → objetivo → ofício.
-Termina em decisão humana, sempre.
+Termina numa decisão do coordenador, registrada no card com o ranking do juiz e a pergunta que
+sobrou; o dono vê o resultado no marco seguinte.

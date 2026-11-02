@@ -61,7 +61,7 @@ Todos os itens, sem exceção:
   app do membro) e fecha pelos mesmos critérios 1 a 5, nestes ciclos: fila de verificação manual
   (documento → decisão → aviso ao membro → descarte); denúncia (conteúdo → decisão → efeito →
   aviso a quem denunciou, sem revelar a ação); suspensão (aplicar → efeito no app → encerrar). Fecha
-  na fase 4, junto do F04, que gera as denúncias. E-mail transacional pelo domínio do Bivaque;
+  na fase 4, depois do F04 (fase 3), que gera as denúncias. E-mail transacional pelo domínio do Bivaque;
   registro de erros sem dado pessoal.
 - **Desempenho.** Lighthouse em modo celular, com a emulação e a rede padrão dele (Slow 4G, CPU
   4x), cache vazio, contra o build de produção e a stack local com seed: LCP ≤ 2,5 s e TBT ≤ 200 ms
@@ -72,9 +72,10 @@ Todos os itens, sem exceção:
   nativo, sessão ao reabrir, foto pela câmera, links profundos. "Pronto para envio" é: projeto
   Android e iOS no repositório; build de release do Android (AAB) e do iOS (arquivo do Xcode, num
   executor macOS do CI) gerados pelo CI sem a assinatura de produção; os cinco itens provados no
-  emulador Android e no simulador iOS. Assinar com as chaves das lojas, preencher as fichas e
-  enviar são atos do dono; o que depender só disso fica registrado como "bloqueado pelo dono", não
-  como pronto.
+  emulador Android e no simulador iOS. Com isso o pacote está pronto para envio. Assinar com as
+  chaves das lojas, preencher as fichas e enviar vêm depois, como atos do dono; se algum dos cinco
+  itens só puder ser provado com uma conta ou chave do dono (por exemplo, o Apple Sign In real),
+  ele fica "bloqueado pelo dono" e o pacote não está pronto até essa prova.
 
 ## Ordem
 

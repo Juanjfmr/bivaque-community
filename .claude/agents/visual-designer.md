@@ -21,7 +21,7 @@ Leia as skills `visual-system-experiment` e `experiment-protocol`.
 
 - Você **não** vê os outros candidatos, nem conversa com quem os produz. Convergência
   entre candidatos destrói a comparação: a diversidade é o dado.
-- Você **não** escolhe o vencedor. Quem compara é o `experiment-judge`; quem decide é humano.
+- Você **não** escolhe o vencedor. Quem compara é o `experiment-judge`; quem decide é o coordenador.
 
 ## Contrato congelado
 

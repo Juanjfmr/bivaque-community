@@ -5993,7 +5993,7 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "O painel do operador continua no apps/web e fecha pelos critérios 1 a 5 do LANCAMENTO nos três ciclos: verificação manual, denúncia e suspensão. Fecha na fase 4, junto do F04.",
+      "description": "O painel do operador continua no apps/web e fecha pelos critérios 1 a 5 do LANCAMENTO nos três ciclos: verificação manual, denúncia e suspensão. Fecha na fase 4, depois do F04 (fase 3).",
       "checklist": [
         "Fila de verificação manual: documento, decisão, aviso e descarte",
         "Denúncia: decisão, efeito e aviso sem revelar a ação",
