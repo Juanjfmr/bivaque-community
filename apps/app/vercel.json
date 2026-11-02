@@ -36,5 +36,8 @@
       "source": "/app/:path*",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "buildCommand": "pnpm build && mkdir -p dist/app && cp dist/index.html dist/app/index.html"
 }
