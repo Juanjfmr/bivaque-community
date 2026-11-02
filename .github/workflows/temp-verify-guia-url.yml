@@ -1,8 +1,8 @@
 name: Temp verify Bivaque Guia React URL
 on:
-  push:
+  pull_request:
     branches:
-      - feat/home-guia-integrado-react-20261102
+      - main
 permissions:
   contents: read
 jobs:
