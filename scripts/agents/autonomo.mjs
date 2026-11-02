@@ -161,10 +161,15 @@ while (cards < MAX_CARDS) {
     continue
   }
 
-  // Gate local; vermelho volta para o DeepSeek.
+  // Prova local: lint, tipos e a suíte de testes. O build do apps/web precisa das variáveis
+  // locais, que o laço não cria; build e E2E ficam com o CI, que é o portão.
   let verde = false
   for (let tentativa = 1; tentativa <= 3; tentativa++) {
-    const gate = rodar("npx", ["pnpm@11.18.0", "gate"], { timeout: 45 * MINUTO })
+    const rapido = rodar("npx", ["pnpm@11.18.0", "gate", "--fast"], { timeout: 20 * MINUTO })
+    const gate =
+      rapido.codigo === 0
+        ? rodar("npx", ["pnpm@11.18.0", "test"], { timeout: 30 * MINUTO })
+        : rapido
     if (gate.codigo === 0) {
       verde = true
       break
