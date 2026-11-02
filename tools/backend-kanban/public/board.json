@@ -5634,7 +5634,7 @@
         "Achados do veredito de maturidade resolvidos",
         "Revisão às cegas do Astra no nível; marco 1 apresentado ao dono"
       ],
-      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR"]
+      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR", "APP-E2E-PREEXISTENTES"]
     },
     {
       "phase": "Lançamento",
@@ -6035,6 +6035,34 @@
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
       ],
       "proof": ["02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."]
+    },
+    {
+      "id": "APP-E2E-PREEXISTENTES",
+      "title": "Três specs E2E do apps/app falham na linha de base e o CI não os roda",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Em 02/11, rodando a suíte inteira do apps/app (vite preview, seis tamanhos), 15 casos falham igualmente na linha de base feat/f01-regua-nextdoor (e2967be3/8df34e8c) e na fase 1: casca-visual (o topo da conversa: clique em Paulo R. estoura 30 s em todos os tamanhos; o topo em 320), rolagem-foco (posições de rolagem restauradas diferentes do esperado em 320, 360 e 430) e componentes (a grade em 768). O job App mobile-first do CI roda só um subconjunto, por isso ninguém viu.",
+      "checklist": [
+        "Reproduzir cada um e achar a causa (dados da conversa, altura de lista, grade)",
+        "Corrigir o código ou o teste, conforme a causa",
+        "Pôr a suíte inteira do apps/app no CI, ou registrar por que fica fora",
+        "Suíte do apps/app verde nos seis tamanhos"
+      ],
+      "dependencies": [],
+      "tests": [
+        "apps/app/tests/e2e/casca-visual.spec.ts",
+        "apps/app/tests/e2e/rolagem-foco.spec.ts",
+        "apps/app/tests/e2e/componentes.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "9fb3953e",
+      "links": ["docs/LANCAMENTO.md"],
+      "proof": [
+        "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte."
+      ]
     }
   ]
 }
