@@ -5913,11 +5913,11 @@
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-TROCA",
-      "title": "Fase 6: saem as telas antigas do apps/web, com redirecionamentos e portões do proxy",
+      "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
       "priority": "P1",
       "category": "frontend",
       "status": "next",
-      "description": "Depois de cada jornada pronta, a tela antiga sai com código e testes; ao fim, nenhuma rota antiga serve tela. Saem também as ferramentas de setembro que leem docs/historico.",
+      "description": "Cada jornada já tira a tela antiga no lote que a fecha (critério 6 do LANCAMENTO). Esta fase varre resíduos, rotas sem dono e as ferramentas de setembro que leem docs/historico. No apps/web ficam só landing, servidor e painel do operador.",
       "checklist": [
         "Cada rota antiga redireciona para a nova, sem ciclo",
         "Portões do proxy movidos com teste por perfil",
@@ -5934,7 +5934,8 @@
         "LAN-F08",
         "LAN-F09",
         "LAN-F10",
-        "PROXY-SURFACE-RISK"
+        "PROXY-SURFACE-RISK",
+        "LAN-OP"
       ]
     },
     {
@@ -5954,9 +5955,10 @@
       "status": "next",
       "description": "Mesmo build do apps/app: Google pelo navegador do sistema, Apple nativo, sessão ao reabrir, câmera, links profundos. O envio às lojas é ato do dono.",
       "checklist": [
-        "Build Android e iOS a partir do apps/app",
-        "Login Google e Apple, sessão, foto e links profundos provados",
-        "Pacote pronto para envio"
+        "Projeto Android e iOS no repositório, sobre o build do apps/app",
+        "Login Google e Apple, sessão, câmera e links profundos provados no emulador Android e no simulador iOS",
+        "Builds de release (AAB e arquivo do Xcode em executor macOS) gerados pelo CI sem assinatura de produção",
+        "Assinatura, fichas e envio registrados como atos do dono"
       ],
       "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"]
     },
@@ -5983,6 +5985,28 @@
         "Ensaio de deploy e relatório final com a lista de ratificação"
       ],
       "dependencies": ["LAN-TROCA", "LAN-LOJA", "OPS-CONCORRENCIA-LANCAMENTO"]
+    },
+    {
+      "id": "LAN-OP",
+      "title": "Operação: painel do operador com verificação manual, denúncia e suspensão",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "description": "O painel do operador continua no apps/web e fecha pelos critérios 1 a 5 do LANCAMENTO nos três ciclos: verificação manual, denúncia e suspensão. Fecha na fase 4, junto do F04.",
+      "checklist": [
+        "Fila de verificação manual: documento, decisão, aviso e descarte",
+        "Denúncia: decisão, efeito e aviso sem revelar a ação",
+        "Suspensão: aplicar, efeito no app e encerrar",
+        "E2E e teste de banco com casos positivos e negativos"
+      ],
+      "dependencies": ["LAN-F04"],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "521fca4a",
+      "links": ["docs/LANCAMENTO.md"],
+      "proof": ["02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7)."]
     }
   ]
 }

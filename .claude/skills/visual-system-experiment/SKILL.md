@@ -18,8 +18,8 @@ O protocolo geral está em `experiment-protocol`. Aqui ficam as especificidades 
 
 - **Tokens.** `apps/app/src/pecas/pecas.css` (regras em `docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md`) é a fonte da verdade. Valor cru no lugar de token
   invalida o candidato, por melhor que pareça.
-- **HeroUI v3** é a única biblioteca de componentes. Wrapper de `apps/web/app/components/bivaque/`
-  antes de importar HeroUI direto — o wrapper é o que mantém o sistema coerente.
+- **Componentes:** as peças de `apps/app/src/pecas/` e o shadcn/ui; nada de HeroUI ou Material
+  Web no `apps/app`. Peça que falta entra na biblioteca, não é desenhada no candidato.
 - **Acessibilidade é eliminatória**, não estética: alvo de toque, contraste, foco visível,
   ordem de leitura. Reprovou aqui, não compete por mérito.
 - **Três viewports**: 375 / 768 / 1440. Candidato que só funciona em um não é candidato.

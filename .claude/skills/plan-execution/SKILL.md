@@ -19,7 +19,8 @@ Para cada todo, nesta ordem:
 
 1. Leia o todo inteiro antes de tocar em qualquer arquivo.
 2. **Implementação e teste são um todo só.** Nada fecha sem prova na mesma unidade.
-3. Gate entre cada todo, não só no fim (skill `gate-before-done`). Vermelho **para** a execução.
+3. Entre cada todo, `gate --fast` e os testes que o todo tocou; o gate completo roda uma vez no
+   fechamento do lote (skill `gate-before-done`). Vermelho **para** a execução.
 4. Um commit por todo, convencional (`feat/fix/chore(escopo): …`), com o escopo que o plano indica.
 
 ## Pare e diga — não improvise

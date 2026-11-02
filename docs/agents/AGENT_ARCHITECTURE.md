@@ -76,7 +76,9 @@ Um `PASS` do revisor não fecha tarefa. Quem fecha é a prova de runtime.
 | `.claude/agents/experiment-judge.md` | opus | não | comparação cega entre candidatos |
 
 Roteamento por custo é deliberado: descoberta é barata (haiku), execução é média (sonnet),
-julgamento é caro (opus). Rodar tudo no modelo mais caro é desperdício, não rigor.
+julgamento é caro (opus). Rodar tudo no modelo mais caro é desperdício, não rigor. Trabalho
+mecânico com contrato fechado pode ir a um executor externo (DeepSeek ou Qwen pelo OpenCode) no
+papel de `implementer`; revisão e verificação continuam nos papéis acima.
 
 `tests/scope/agent-architecture.test.mjs` trava esse conjunto: papel somente-leitura que
 ganhar `Write`/`Edit` derruba a suíte.
@@ -167,7 +169,7 @@ AGENTS      especializam responsabilidade     (não decidem produto)
 CONTRATO    define o que é "pronto"           (não executa)
 TESTES      produzem evidência determinística (não interpretam)
 VERIFIER    adjudica a evidência              (não conserta)
-HUMANO      decide o que é questão de produto (não é opcional em R3)
+DONO        delega e ratifica                 (R3 por delegação, ratificado no fim)
 ```
 
 Nenhuma camada deve tentar cobrir a de baixo. Hook não é juiz; verificador que conserta

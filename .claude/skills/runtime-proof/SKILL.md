@@ -38,8 +38,8 @@ Confirme que a falha reproduz num estado limpo. As armadilhas conhecidas (perfil
 
 pgTAP roda contra banco **sem** seed (`db:reset --no-seed`); E2E precisa do oposto, porque
 autentica como usuário semeado. Colapsar os dois em um só deixa seis asserts de perfil
-vermelhos. Se você mexeu em migration, o seed do E2E foi embora: escreva o spec, **commite
-sem executar**, e registre o estado real como "código feito".
+vermelhos. Se você mexeu em migration, o seed do E2E foi embora: rode o reset **com** seed
+(sequência em `supabase/AGENTS.md`) e só então o E2E. Spec que não rodou não fecha nada.
 
 ## Veredito
 

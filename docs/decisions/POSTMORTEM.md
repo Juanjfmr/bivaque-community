@@ -6,7 +6,7 @@
 > quando vira **ação com data e verificador**, não quando vira anedota num doc.
 >
 > Para cada incidente, copie este arquivo para `docs/decisions/POSTMORTEM-<id>-<romeu>.md`
-> e preencha. Uma coluna do `PRODUCT_STATUS.md` / o loop de dívida fecham só
+> e preencha. O card da dívida no quadro fecha só
 > quando a **última ação** da seção 5 está `[*]` **e** o verificador assinou a 7.
 
 ## 1. Identificação
@@ -55,7 +55,7 @@
 - [ ] Este incidente produziu ≥1 ação com data e verificador (seção 5).
 - [ ] A ação impede a recorrência (teste mental da regra acima responde *sim*).
 - [ ] O mecanismo está coberto por um **teste automático** (unit/scope/pgTAP/e2e) — não só por convenção.
-- [ ] A lição entrou num harness/guardrail (`AGENTS.md`, scope test, skill) **ou** está sinalizada no `PRODUCT_STATUS.md` como dívida com data.
+- [ ] A lição entrou num harness/guardrail (`AGENTS.md`, scope test, skill) **ou** está registrada como card no quadro, com data.
 
 ## 7. Verificação de fechamento (assinada)
 

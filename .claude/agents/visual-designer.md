@@ -29,8 +29,8 @@ O contrato visual do experimento (tokens, restrições, escopo de tela) é **imu
 durante a execução. Divergiu do contrato: o candidato é inválido, por melhor que pareça.
 
 - Tokens vêm de `apps/app/src/pecas/pecas.css` (regras em `docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md`). Valor cru no lugar de token invalida o candidato.
-- HeroUI v3 é a única biblioteca de componentes; wrapper de `app/components/bivaque/`
-  antes de importar HeroUI direto.
+- Componentes: as peças de `apps/app/src/pecas/` e o shadcn/ui; nada de HeroUI ou Material Web
+  no `apps/app`.
 - Acessibilidade não é critério estético: alvo de toque, contraste e foco são **eliminatórios**.
 
 ## Entrega

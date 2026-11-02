@@ -34,7 +34,8 @@ Todos os itens, sem exceção:
 4. **Segura e privada.** Rotas no contrato do ADR do app (§5), RLS forçada, nada de CPF cru, payload
    do Portal ou dado proibido gravado; `security-auditor` sem CRITICAL/HIGH nos lotes R3.
 5. **Acessível.** Teclado, leitor de tela, contraste AA, alvos de 44 px, movimento reduzido.
-6. **Trocada.** A tela antiga do `apps/web` saiu, com redirecionamento e portão do proxy ajustados.
+6. **Trocada.** A tela antiga do `apps/web` saiu no mesmo lote que fechou a jornada, com
+   redirecionamento e portão do proxy ajustados. A troca acontece jornada por jornada, não no fim.
 
 ## As jornadas
 
@@ -56,14 +57,24 @@ Todos os itens, sem exceção:
 - **Identidade.** Uma biblioteca de peças, a casca (barra de baixo no celular e coluna no
   computador) em todas as telas e a mesma cara em todas as jornadas. Paleta revisada (autorizada em
   02/11), registrada no ADR de identidade.
-- **Operação.** Painel do operador para fila de verificação manual, denúncias e suspensão; e-mail
-  transacional pelo domínio do Bivaque; registro de erros sem dado pessoal.
-- **Desempenho.** Primeira tela útil em até 2,5 s num celular médio em 4G; nenhuma lista sem
-  paginação.
+- **Operação (OP).** O painel do operador continua no `apps/web` (ferramenta interna, fora do
+  app do membro) e fecha pelos mesmos critérios 1 a 5, nestes ciclos: fila de verificação manual
+  (documento → decisão → aviso ao membro → descarte); denúncia (conteúdo → decisão → efeito →
+  aviso a quem denunciou, sem revelar a ação); suspensão (aplicar → efeito no app → encerrar). Fecha
+  na fase 4, junto do F04, que gera as denúncias. E-mail transacional pelo domínio do Bivaque;
+  registro de erros sem dado pessoal.
+- **Desempenho.** Lighthouse em modo celular, com a emulação e a rede padrão dele (Slow 4G, CPU
+  4x), cache vazio, contra o build de produção e a stack local com seed: LCP ≤ 2,5 s e TBT ≤ 200 ms
+  na mediana de três execuções em Início, grupo, Mercado e conversa. Nenhuma lista sem paginação.
 - **Legal.** Termos, Política de Privacidade e Código de Conduta no app, na versão revisada pelo
   advogado (pacote em `docs/legal/`).
 - **App de loja.** Capacitor sobre o mesmo build: login Google pelo navegador do sistema, Apple
-  nativo, sessão ao reabrir, foto pela câmera, links profundos.
+  nativo, sessão ao reabrir, foto pela câmera, links profundos. "Pronto para envio" é: projeto
+  Android e iOS no repositório; build de release do Android (AAB) e do iOS (arquivo do Xcode, num
+  executor macOS do CI) gerados pelo CI sem a assinatura de produção; os cinco itens provados no
+  emulador Android e no simulador iOS. Assinar com as chaves das lojas, preencher as fichas e
+  enviar são atos do dono; o que depender só disso fica registrado como "bloqueado pelo dono", não
+  como pronto.
 
 ## Ordem
 
@@ -73,9 +84,9 @@ Todos os itens, sem exceção:
 | 1 | Identidade final: paleta, casca em todas as telas, rodada de maturidade (topo de grupo, menu "⋯", rostos, arte no escuro, computador) | revisão do Astra "no nível" na casca e nas telas-modelo |
 | 2 | F01 ligado ao banco (ADR de entrada aceito por delegação) | F01 pronto pelos seis critérios |
 | 3 | F04 ligado, com o redesenho da Comunidade (RED-003) provado | F04 pronto |
-| 4 | F02, F03, F09 e F10 | cada uma pronta |
+| 4 | F02, F03, F09 e F10; operação (OP) | cada uma pronta |
 | 5 | F06, F07, F05 e F08 | cada uma pronta |
-| 6 | Troca: saem as telas antigas do `apps/web`, redirecionamentos, proxy, ferramentas de setembro | nenhuma rota antiga servindo tela |
+| 6 | Varredura da troca: resíduos das telas antigas, rotas sem dono, ferramentas de setembro que leem `docs/historico` | nenhuma rota de membro no `apps/web` servindo tela; só landing, servidor e painel do operador |
 | 7 | App de loja e prova final: e2e completo, segurança, desempenho, acessibilidade, ensaio de deploy | relatório final e lista de ratificação |
 
 ## Marcos com o dono

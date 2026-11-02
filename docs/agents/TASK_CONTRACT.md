@@ -23,7 +23,7 @@ modelo, de harness e de sessão; o contrato continua.
 |---|---|---|
 | `task_id` | sim | `<PREFIXO>-<NNN>`. Prefixos: `DS` design system, `RUN` achado de execução, `EXP` experimento, `HRN` harness, `SEC` fronteira de confiança |
 | `objective` | sim | a propriedade que o produto passa a ter — não a tarefa que o agente executa |
-| `authority` | sim | de onde vem a autoridade: spec, ADR, auditoria, linha do `PRODUCT_STATUS.md`. Tarefa sem autoridade é improviso |
+| `authority` | sim | de onde vem a autoridade: item de `docs/LANCAMENTO.md`, ADR, card do quadro, achado de revisão. Tarefa sem autoridade é improviso |
 | `baseline` | sim | estado **medido** antes de executar: `FAIL-EVIDENCED`, `PASS-EVIDENCED` ou `NOT-APPLICABLE`, com `evidence` |
 | `allowed_paths` | sim | fronteira de escrita. `**` e `.` são recusados: blast radius não declarado é blast radius infinito |
 | `forbidden` | sim | o que a tarefa não faz mesmo parecendo certo. É cerca — **não** eleva risco |

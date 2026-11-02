@@ -7,11 +7,11 @@ comparação estética, por melhor que pareça.
 
 | Critério | Reprova quando |
 |---|---|
-| Alvo de toque | qualquer alvo interativo abaixo do mínimo do `DESIGN_SPEC` em 375 |
+| Alvo de toque | qualquer alvo interativo abaixo de 44 px em 375 (`IDENTIDADE-DAS-PECAS.md`) |
 | Contraste | texto ou ícone informativo abaixo do mínimo, em claro **ou** escuro |
 | Foco | foco de teclado invisível, ou ordem de foco que não segue a leitura |
 | Semântica | papel/rótulo errado (botão que é `div`, campo sem label associada) |
-| Token | valor cru onde existe token; token inventado fora do `DESIGN_SPEC` |
+| Token | valor cru onde existe token; token inventado fora de `apps/app/src/pecas/pecas.css` |
 | Regressão | um estado que existia (vazio, carregando, erro) sumiu |
 | Fronteira | escreveu fora de `allowed_paths` |
 

@@ -49,8 +49,9 @@ Any plan touching RLS, private data, identity verification, Supabase policies, s
 ## R3 automatic terms
 
 The R3 row above is prose; this block is the same rule in operable form, read by
-`scripts/agents/task-contract.mjs`. A plan containing any of these is R3 — it needs an
-approved ADR with human approval, and the `security-auditor` runs alongside the reviewer.
+`scripts/agents/task-contract.mjs`. A plan containing any of these is R3 — it needs an ADR
+accepted by the owner or by delegation (listed in `RATIFICACAO.md`), and the
+`security-auditor` runs alongside the reviewer.
 
 ```text
 pagamento
