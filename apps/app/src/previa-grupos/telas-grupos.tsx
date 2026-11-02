@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import {
   Avatar,
@@ -15,6 +15,7 @@ import {
 } from "@/src/pecas/pecas"
 import { type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
 import type { Acao, Estado as EstadoDaPrevia } from "./estado"
+import { MenuDaPublicacao } from "./menu-da-publicacao"
 
 const base = import.meta.env.BASE_URL
 
@@ -168,16 +169,18 @@ export function Fotos({ fotos, rotulo }: { fotos: readonly string[]; rotulo: str
   )
 }
 
-/** Quem escreveu, quando e o tipo, no alto de publicação e de detalhe. */
-export function Autoria({ publicacao }: { publicacao: Publicacao }) {
+/** Quem escreveu, o tipo e quando, no alto de publicação e de detalhe, com o "⋯". */
+export function Autoria({ publicacao, menu }: { publicacao: Publicacao; menu?: ReactNode }) {
   return (
     <header className="pg-autor">
       <Avatar nome={publicacao.autor} />
       <span className="pc-linha-texto">
         <span className="pc-linha-titulo">{publicacao.autor}</span>
-        <span className="pc-miudo">{publicacao.quando}</span>
+        <span className="pc-miudo">
+          {ROTULO_DO_TIPO[publicacao.tipo]} · {publicacao.quando}
+        </span>
       </span>
-      <span className="pc-miudo pg-tipo">{ROTULO_DO_TIPO[publicacao.tipo]}</span>
+      {menu}
     </header>
   )
 }
@@ -187,16 +190,21 @@ function ItemDaPublicacao({
   publicacao,
   despachar,
   navegar,
+  avisar,
 }: {
   publicacao: Publicacao
   despachar: PropsDaTela["despachar"]
   navegar: Navegar
+  avisar: PropsDaTela["avisar"]
 }) {
   const total = publicacao.comentarios.length
   const abrir = () => navegar({ nome: "publicacao", id: publicacao.id })
   return (
     <Cartao className="pg-publicacao" aria-labelledby={`pg-pub-${publicacao.id}`}>
-      <Autoria publicacao={publicacao} />
+      <Autoria
+        publicacao={publicacao}
+        menu={<MenuDaPublicacao publicacao={publicacao} despachar={despachar} avisar={avisar} />}
+      />
       <button type="button" className="pg-publicacao-corpo" onClick={abrir}>
         <span id={`pg-pub-${publicacao.id}`} className="pg-publicacao-texto">
           {publicacao.texto}
@@ -258,7 +266,7 @@ export function GrupoTela({
   const grupo = estado.grupos.find((g) => g.id === id)
   if (grupo === undefined) return null
   const publicacoes = estado.publicacoes
-    .filter((p) => p.grupo === id)
+    .filter((p) => p.grupo === id && !estado.ocultas.includes(p.id))
     .filter((p) => filtro === "recentes" || (p.tipo === "pergunta" && p.comentarios.length === 0))
   const fechadoParaMim = grupo.privacidade === "fechado" && !grupo.participa
   const pediu = estado.pedidos.includes(id)
@@ -394,6 +402,7 @@ export function GrupoTela({
                       publicacao={publicacao}
                       despachar={despachar}
                       navegar={navegar}
+                      avisar={avisar}
                     />
                   ))}
                 </div>
