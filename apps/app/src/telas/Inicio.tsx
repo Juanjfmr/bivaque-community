@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque/cartao-vitrine"
+import { CartaoVitrineAnuncio } from "@/components/bivaque/cartao-vitrine"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
@@ -17,6 +17,7 @@ import { iconeDeDado, type NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
+import { FavoritosDaVizinhanca, GuiaDaCidadeNaHome, MoradiaNaCidade } from "@/src/telas/GuiaNaHome"
 
 /**
  * O Início da onda 2 (protótipo: features/home/views.js renderHome e
@@ -66,10 +67,6 @@ function tamanho(valor: unknown): number {
   return Array.isArray(valor) ? valor.length : 0
 }
 
-function primeiros(valor: unknown): string | null {
-  return Array.isArray(valor) && typeof valor[0] === "string" ? valor[0] : null
-}
-
 export function Inicio() {
   const casca = useCasca()
   const navegacao = useNavegacao()
@@ -78,7 +75,6 @@ export function Inicio() {
   const [rodada, setRodada] = useState(0)
   const [exemplo, setExemplo] = useState(0)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
-  const [presencas, setPresencas] = useState<ReadonlySet<string>>(() => new Set())
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -116,27 +112,10 @@ export function Inicio() {
     })
   }, [])
 
-  const alternarPresenca = useCallback((id: string) => {
-    setPresencas((atual) => {
-      const proximo = new Set(atual)
-      if (proximo.has(id)) proximo.delete(id)
-      else proximo.add(id)
-      return proximo
-    })
-  }, [])
-
-  const negocios = useMemo(() => {
-    if (dados === null) return []
-    return dados.negocios
-      .map((negocio) => ({ negocio, apresentacao: registro(negocio.apresentacao) }))
-      .sort((a, b) => numero(b.apresentacao["recN"]) - numero(a.apresentacao["recN"]))
-      .slice(0, 4)
-  }, [dados])
-
   const anuncios = useMemo(() => {
     if (dados === null) return []
     return dados.anuncios
-      .filter((anuncio) => anuncio.status === "active")
+      .filter((anuncio) => anuncio.status === "active" && anuncio.kind !== "property" && anuncio.kind !== "imovel")
       .slice(0, 4)
       .map((anuncio) => ({ anuncio, apresentacao: registro(anuncio.apresentacao) }))
   }, [dados])
@@ -149,18 +128,20 @@ export function Inicio() {
       .slice(0, 2)
   }, [dados])
 
-  const encontro = useMemo(() => {
-    if (dados === null) return null
+  const eventos = useMemo(() => {
+    if (dados === null) return []
     const agora = Date.now()
-    const proximos = dados.eventos
-      .map((evento) => ({
-        evento,
-        quando:
-          typeof evento.starts_at === "string" ? new Date(evento.starts_at).getTime() : Number.NaN,
-      }))
-      .filter(({ quando }) => Number.isFinite(quando) && quando >= agora)
-      .sort((a, b) => a.quando - b.quando)
-    return proximos[0]?.evento ?? null
+    return dados.eventos
+      .filter(evento => evento.status !== "cancelled" && typeof evento.starts_at === "string")
+      .filter(evento => {
+        const quando = Date.parse(typeof evento.starts_at === "string" ? evento.starts_at : "")
+        return Number.isFinite(quando) && quando >= agora
+      })
+      .sort((a, b) =>
+        Date.parse(typeof a.starts_at === "string" ? a.starts_at : "") -
+        Date.parse(typeof b.starts_at === "string" ? b.starts_at : "")
+      )
+      .slice(0, 3)
   }, [dados])
 
   const perguntas = useMemo(() => {
@@ -234,49 +215,22 @@ export function Inicio() {
             className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start"
           >
             <div className="bv-home-principal min-w-0">
-              <Secao
-                titulo="Serviços recomendados"
-                acoes={
-                  <Botao tom="texto" onClick={() => void navegacao.irPara("negocios")}>
-                    Ver negócios
-                  </Botao>
-                }
-              >
-                <p className="text-sm text-(--on-surface-variant)">
-                  Indicados pela comunidade de {casca.cidade}
-                </p>
-                {negocios.length === 0 ? (
-                  <EstadoVazio
-                    titulo="Ainda sem negócios cadastrados"
-                    texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-                    icone="storefront"
-                  />
-                ) : (
-                  <Grade formato="carrossel-mobile">
-                    {negocios.map(({ negocio, apresentacao }) => (
-                      <CartaoVitrineNegocio
-                        key={negocio.id}
-                        negocio={{
-                          id: negocio.id,
-                          fonte: texto(apresentacao["imagem"]),
-                          nome: texto(apresentacao["name"], negocio.display_name),
-                          categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                          bairro: primeiros(apresentacao["hoods"]),
-                          cidade: casca.cidade,
-                          indicacoes: numero(apresentacao["recN"]),
-                          patrocinado: apresentacao["spon"] === true,
-                          aguardando: apresentacao["claimed"] === false,
-                          salvo: salvos.has(negocio.id),
-                        }}
-                        aoSalvar={() => alternarSalvo(negocio.id)}
-                        aoAbrir={() =>
-                          void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
-                        }
-                      />
-                    ))}
-                  </Grade>
-                )}
-              </Secao>
+              <FavoritosDaVizinhanca
+                dados={dados}
+                cidade={casca.cidade}
+                salvos={salvos}
+                aoSalvar={alternarSalvo}
+                aoAbrirNegocio={id => void navegacao.irPara("negocio", { parametros: { id } })}
+                aoAbrirNegocios={() => void navegacao.irPara("negocios")}
+              />
+              <MoradiaNaCidade
+                dados={dados}
+                cidade={casca.cidade}
+                salvos={salvos}
+                aoSalvar={alternarSalvo}
+                aoAbrirAnuncio={id => void navegacao.irPara("anuncio", { parametros: { id } })}
+                aoAbrirImoveis={() => void navegacao.irPara("imoveis")}
+              />
 
               <button
                 type="button"
@@ -296,7 +250,7 @@ export function Inicio() {
                 <Icone nome="chevron_right" className="size-5 shrink-0 text-(--brasa)" />
               </button>
 
-              <Secao titulo="Oportunidades perto de você">
+              <Secao titulo="Desapegos na cidade">
                 {anuncios.length === 0 ? (
                   <EstadoVazio
                     titulo="As primeiras oportunidades aparecem aqui"
@@ -352,28 +306,27 @@ export function Inicio() {
                 </Secao>
               )}
 
-              {encontro === null ? null : (
-                <Secao
-                  titulo="Próximo encontro"
-                  acoes={
-                    <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
-                      Agenda
-                    </Botao>
-                  }
-                >
-                  <LinhaDeLista
-                    icone="event"
-                    titulo={texto(encontro.title)}
-                    subtitulo={resumoDoEncontro(encontro.starts_at, texto(encontro.venue))}
-                    fim={
-                      <span className="text-[13px] font-medium text-(--primary)">
-                        {presencas.has(encontro.id) ? "Confirmado" : "Vou"}
-                      </span>
-                    }
-                    onClick={() => alternarPresenca(encontro.id)}
-                  />
-                </Secao>
-              )}
+              <Secao
+                titulo="Próximos encontros"
+                acoes={<Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>Agenda</Botao>}
+              >
+                {eventos.length === 0 ? (
+                  <p className="text-sm text-(--on-surface-variant)">Nenhum encontro futuro registrado nesta cidade.</p>
+                ) : (
+                  <div className="grid gap-2">
+                    {eventos.map(evento => (
+                      <LinhaDeLista
+                        key={evento.id}
+                        icone="event"
+                        titulo={evento.title}
+                        subtitulo={resumoDoEncontro(evento.starts_at, texto(evento.venue))}
+                        fim={<span className="text-[13px] font-medium text-(--primary)">Ver evento</span>}
+                        onClick={() => void navegacao.irPara("evento", { parametros: { id: evento.id } })}
+                      />
+                    ))}
+                  </div>
+                )}
+              </Secao>
 
               <Secao
                 titulo="A comunidade procura"
@@ -417,21 +370,11 @@ export function Inicio() {
               </Secao>
             </aside>
           </div>
-          <Secao
-            titulo={`Guia de ${casca.cidade}`}
-            acoes={
-              <Botao tom="texto" onClick={() => void navegacao.irPara("guia")}>
-                Abrir guia
-              </Botao>
-            }
-          >
-            <LinhaDeLista
-              icone="map"
-              titulo="Organize moradia, mudança e serviços"
-              subtitulo="Um roteiro prático para se estabelecer na cidade."
-              onClick={() => void navegacao.irPara("guia")}
-            />
-          </Secao>
+          <GuiaDaCidadeNaHome
+            cidade={casca.cidade}
+            aoAbrirGuia={() => void navegacao.irPara("guia")}
+            aoAbrirImoveis={() => void navegacao.irPara("imoveis")}
+          />
 
           <div className="mt-7 flex items-center gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)">
             <Icone nome="add_business" className="size-6 shrink-0 text-(--primary)" />
