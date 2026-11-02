@@ -5374,22 +5374,29 @@
       "phase": "Lote 4 — Entrada",
       "priority": "P2",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "No Next, /ajuda exige sessão; a landing perdeu Ajuda e Fale com a gente. Criar a Ajuda pública e religar os links.",
       "checklist": [
         "Ajuda pública fora do grupo (shell)",
         "Religar Ajuda e Fale com a gente na landing"
       ],
       "proof": [
+        "02/11: entrega conferida no código e nos testes, não só no quadro. Ajuda pública: apps/web/app/(public)/ajuda/page.tsx com conteúdo sem login e “Meus chamados” só com sessão; apps/web/proxy.ts tem /ajuda em PUBLIC_PATHS; links de volta na landing (Ajuda no rodapé e Fale com a gente em Perguntas). Cobertura E2E: tests/e2e/entrada-convite-publica.spec.ts, casos “a Ajuda abre sem login, com as perguntas e o e-mail de contato” e “a landing religa Ajuda e Fale com a gente”; a suíte raiz roda no CI e passou na revisão 8b76f2dd (Install, test, and build verde). Histórico: d005d109 e ac4abdde.",
         "02/11: posto em now por instrução do dono: é dependência do LAN-F01 e entra antes dele."
       ],
-      "tests": [],
-      "links": ["docs/historico/agents/PORT_001.md"],
+      "tests": ["tests/e2e/entrada-convite-publica.spec.ts"],
+      "links": [
+        "docs/historico/agents/PORT_001.md",
+        "apps/web/app/(public)/ajuda/page.tsx",
+        "apps/web/proxy.ts",
+        "tests/e2e/entrada-convite-publica.spec.ts"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "f05fc69b",
+      "sourceRevision": "08d59aed",
       "blockers": [],
-      "completedChecklist": [false, false],
+      "completedChecklist": [true, true],
+      "completedAt": "2026-11-02",
       "id": "AJUDA-PUBLICA",
       "title": "Ajuda pública para quem está fora"
     },
