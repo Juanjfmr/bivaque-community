@@ -1,9 +1,11 @@
 name: Deploy migrations
 
 on:
+  # Deploy é ato do dono: só o push na branch producao (ou o disparo manual)
+  # leva migrations ao banco de produção. Merge na main integra, não publica.
   push:
     branches:
-      - main
+      - producao
   workflow_dispatch:
 
 permissions:
