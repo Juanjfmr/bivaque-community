@@ -218,7 +218,11 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     await page.evaluate(() => window.scrollTo(0, 0))
     await pinned.getByRole("button", { name: /Responder/ }).click()
     await pinned.getByRole("textbox", { name: "Comentário" }).fill(commentText)
-    await pinned.getByRole("button", { name: "Enviar comentário" }).click()
+    // O clique rola o botão até a borda de cima, debaixo do cabeçalho fixo, que
+    // intercepta o toque em 375 px. Centralizar antes deixa o botão livre.
+    const enviar = pinned.getByRole("button", { name: "Enviar comentário" })
+    await enviar.evaluate((el) => el.scrollIntoView({ block: "center" }))
+    await enviar.click()
     await expect(pinned.getByText(commentText)).toBeVisible({ timeout: 15_000 })
 
     // ── A denúncia abre a partir da fixada ────────────────────────────────

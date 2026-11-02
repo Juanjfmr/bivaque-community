@@ -123,9 +123,11 @@ test.describe("conversa por URL estavel", () => {
     await context.close()
   })
 
-  test("bloquear na conversa aparece em Pessoas bloqueadas e desbloquear desfaz", async ({
-    browser,
-  }) => {
+  // @stateful: bloqueia e desbloqueia o mesmo par na conta compartilhada; em paralelo nos três
+  // tamanhos, um projeto desbloqueava no meio do outro (CI-E2E-UPSTREAM-INSTAVEL, 02/11).
+  test("bloquear na conversa aparece em Pessoas bloqueadas e desbloquear desfaz", {
+    tag: "@stateful",
+  }, async ({ browser }) => {
     const context = await browser.newContext()
     await seedAs(context, MEMBRO_1_EMAIL)
     const page = await context.newPage()

@@ -90,7 +90,8 @@ test.describe("vitrine de prestadores", () => {
     await expect(page.getByText("Limpeza completa")).toBeVisible()
   })
 
-  test("prestador entra e publica um item de catálogo", async ({ page }) => {
+  // @stateful: grava no catálogo do mesmo prestador semeado, nos três tamanhos.
+  test("prestador entra e publica um item de catálogo", { tag: "@stateful" }, async ({ page }) => {
     // Ciclo completo (navegar, preencher três campos, publicar por Server
     // Action, revalidar) contra servidor recém-compilado em lote serial não
     // cabe no teto padrão de 30s — visto em 2026-08-25.

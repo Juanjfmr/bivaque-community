@@ -220,7 +220,10 @@ test.describe("prancha 36 — criar conta", () => {
     )
   })
 
-  test("e-mail já cadastrado sugere entrar, sem criar segunda conta", async ({ page }) => {
+  // @stateful: chama o cadastro do Auth; três projetos em paralelo batiam no limite de taxa.
+  test("e-mail já cadastrado sugere entrar, sem criar segunda conta", {
+    tag: "@stateful",
+  }, async ({ page }) => {
     await page.goto("/signup")
     await page.locator("#en-name input").fill("Ana de Teste")
     await page.locator("#en-email input").fill(MEMBER_EMAIL)

@@ -170,7 +170,9 @@ async function withPersona(
 
 test.setTimeout(180_000)
 
-test.describe("cinco pessoas sintéticas interagindo", () => {
+// @stateful: publica, curte e comenta com as personas semeadas que os outros specs também usam;
+// no lote paralelo competia com eles e estourava o tempo (CI-E2E-UPSTREAM-INSTAVEL, 02/11).
+test.describe("cinco pessoas sintéticas interagindo", { tag: "@stateful" }, () => {
   test("publicação, duas curtidas e comentário viram notificação para a autora", async ({
     browser,
   }) => {
