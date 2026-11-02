@@ -1,0 +1,43 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/app/",
+      "permanent": false
+    },
+    {
+      "source": "/app",
+      "destination": "/app/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/app/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/app/fonts/:path*",
+      "destination": "/fonts/:path*"
+    },
+    {
+      "source": "/app/demo/:path*",
+      "destination": "/demo/:path*"
+    },
+    {
+      "source": "/app/brand/:path*",
+      "destination": "/brand/:path*"
+    },
+    {
+      "source": "/app/ilustracoes/:path*",
+      "destination": "/ilustracoes/:path*"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/index.html"
+    }
+  ],
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "buildCommand": "pnpm build && mkdir -p dist/app && cp dist/index.html dist/app/index.html"
+}
