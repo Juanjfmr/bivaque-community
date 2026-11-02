@@ -9,11 +9,11 @@ import {
   Estado,
   Folha,
   Linha,
-  Nota,
+  Progresso,
   Selo,
   Topo,
 } from "@/src/pecas/pecas"
-import { type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
+import { EU, type Grupo, type Publicacao, ROTULO_DO_TIPO } from "./dados"
 import type { Acao, Estado as EstadoDaPrevia } from "./estado"
 import { MenuDaPublicacao } from "./menu-da-publicacao"
 
@@ -262,6 +262,7 @@ export function GrupoTela({
 }: PropsDaTela & { id: string }) {
   const [filtro, setFiltro] = useState<"recentes" | "sem-resposta">("recentes")
   const [sobreAberto, setSobreAberto] = useState(false)
+  const [leuRegras, setLeuRegras] = useState(false)
   const titulo = useFocoNoTitulo()
   const grupo = estado.grupos.find((g) => g.id === id)
   if (grupo === undefined) return null
@@ -271,6 +272,23 @@ export function GrupoTela({
   const fechadoParaMim = grupo.privacidade === "fechado" && !grupo.participa
   const pediu = estado.pedidos.includes(id)
   const novo = estado.boasVindas.includes(id)
+  // Conta o olá dado depois de entrar, não uma publicação antiga da mesma pessoa.
+  const disseOla = estado.publicacoes.some(
+    (p) => p.grupo === id && p.autor === EU.curto && p.quando === "agora",
+  )
+  const passosFeitos = Number(disseOla) + Number(leuRegras)
+  const abrirSobre = () => {
+    setSobreAberto(true)
+    setLeuRegras(true)
+  }
+  const convidar = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      avisar("Link do grupo copiado. É só colar na conversa.")
+    } catch {
+      avisar("Não deu para copiar o link. Tente de novo.")
+    }
+  }
 
   return (
     <div className="pg-grupo">
@@ -293,20 +311,24 @@ export function GrupoTela({
               </p>
             </div>
           </div>
-          {fechadoParaMim ? null : (
-            <Botao
-              tom="texto"
-              compacto
-              icone="info"
-              className="pg-movel-sobre"
-              aria-haspopup="dialog"
-              onClick={() => setSobreAberto(true)}
-            >
-              Sobre o grupo e regras
-            </Botao>
-          )}
 
-          {grupo.participa ? null : (
+          {grupo.participa ? (
+            <div className="pg-cabeca-acoes">
+              <Botao compacto icone="person_add" onClick={convidar}>
+                Convidar
+              </Botao>
+              <Botao
+                compacto
+                tom="contorno"
+                icone="info"
+                className="pg-movel-sobre"
+                aria-haspopup="dialog"
+                onClick={abrirSobre}
+              >
+                Sobre e regras
+              </Botao>
+            </div>
+          ) : (
             <Botao
               tom="principal"
               cheio
@@ -326,40 +348,51 @@ export function GrupoTela({
             <Cartao className="pg-boas-vindas" aria-labelledby="pg-bv-titulo">
               <div className="pg-boas-vindas-cabeca">
                 <h2 id="pg-bv-titulo" className="pc-subtitulo">
-                  Você entrou. Comece por aqui
+                  Comece por aqui
                 </h2>
                 <BotaoDeIcone
                   rotulo="Fechar boas-vindas"
                   nome="close"
+                  compacto
                   onClick={() => despachar({ tipo: "fechar-boas-vindas", grupo: id })}
                 />
               </div>
-              <div className="pg-boas-vindas-acoes">
-                <Botao
-                  compacto
-                  icone="chat_bubble"
-                  onClick={() =>
-                    navegar({
-                      nome: "escrever",
-                      grupo: id,
-                      texto:
-                        "Oi, pessoal! Sou a Ana, cheguei agora em Manaus com dois filhos pequenos.",
-                    })
-                  }
-                >
-                  Diga olá
-                </Botao>
-                <Botao
-                  compacto
-                  icone="person_add"
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(window.location.href)
-                    avisar("Link do grupo copiado. É só colar na conversa.")
-                  }}
-                >
-                  Convidar alguém
-                </Botao>
-              </div>
+              <Progresso
+                fracao={passosFeitos / 2}
+                rotulo={`${passosFeitos} de 2 passos feitos`}
+                maximo={2}
+                valor={passosFeitos}
+              />
+              <p className="pc-miudo">{passosFeitos} de 2 passos feitos</p>
+              <ul className="pc-lista">
+                <li>
+                  <Linha
+                    marca={
+                      <Icone nome={disseOla ? "check_circle" : "forum"} preenchido={disseOla} />
+                    }
+                    titulo="Diga olá ao grupo"
+                    apoio="Conte de onde veio e o que procura. Quem chegou antes responde."
+                    onClick={() =>
+                      navegar({
+                        nome: "escrever",
+                        grupo: id,
+                        texto:
+                          "Oi, pessoal! Sou a Ana, cheguei agora em Manaus com dois filhos pequenos.",
+                      })
+                    }
+                  />
+                </li>
+                <li>
+                  <Linha
+                    marca={
+                      <Icone nome={leuRegras ? "check_circle" : "gavel"} preenchido={leuRegras} />
+                    }
+                    titulo="Leia as regras do grupo"
+                    apoio={`${grupo.regras.length} regras, menos de um minuto.`}
+                    onClick={abrirSobre}
+                  />
+                </li>
+              </ul>
             </Cartao>
           ) : null}
 
@@ -372,7 +405,6 @@ export function GrupoTela({
             </>
           ) : (
             <>
-              {grupo.fixado ? <Nota icone="info">{grupo.fixado}</Nota> : null}
               <div className="pc-chips" role="tablist" aria-label="Publicações">
                 {(
                   [

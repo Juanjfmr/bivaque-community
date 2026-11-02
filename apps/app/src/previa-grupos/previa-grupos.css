@@ -105,14 +105,18 @@
 .pg-boas-vindas {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 14px;
+  gap: 8px;
+  padding-bottom: 8px;
 }
 
-.pg-boas-vindas-acoes {
+.pg-cabeca-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.pg-boas-vindas .pc-lista {
+  margin: 0 -4px;
 }
 
 .pg-boas-vindas-cabeca {
@@ -159,10 +163,6 @@
   content: "";
 }
 
-.pg-movel-sobre {
-  align-self: flex-start;
-  margin: -8px 0 -4px -12px;
-}
 
 .pg-feed {
   display: flex;
