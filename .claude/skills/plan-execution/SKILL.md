@@ -1,18 +1,17 @@
 ---
 name: plan-execution
 description: >
-  Execute a plan from docs/superpowers/plans/ todo by todo, gating between each
-  one, with a stop rule when a todo is wrong or impossible. Use when running a
-  wave, when the user points at a plan file, or when asked to "seguir o plano".
+  Execute a written plan (a launch phase, a card checklist or a plan file) todo by todo,
+  gating between each one, with a stop rule when a todo is wrong or impossible. Use when
+  running a phase of docs/LANCAMENTO.md, when pointed at a plan, or asked to "seguir o plano".
 ---
 
 # plan-execution
 
 O plano é **contrato**, não sugestão. Ele foi escrito com contexto que você não tem.
 
-**Antes de executar qualquer onda, leia `docs/superpowers/plans/README.md` inteiro.**
-Ele carrega a ordem, por que as ondas são seriais, as paradas obrigatórias e o que fecha
-uma onda. Sessão que pula esse arquivo já procurou orientação no lugar errado.
+**Antes de executar, leia `docs/LANCAMENTO.md`**: a fase do plano, o que a fecha e os
+critérios de pronto de uma jornada. Plano que contradiz esse arquivo está errado.
 
 ## O laço
 
@@ -32,23 +31,23 @@ Para cada todo, nesta ordem:
 
 Improvisar em fronteira de confiança é como este repositório produziu quatro vazamentos.
 
-## Serial, uma onda por vez
+## Serial no banco
 
-Ondas são independentes em código e **seriais na execução**, por dois motivos que não estão
+Frentes podem correr em paralelo em código, mas são **seriais no banco**, por dois motivos que não estão
 no código: banco local único (cada onda precisa de `db:reset` exclusivo) e loop visual único
 (a captura insere perfil no banco e quebra o pgTAP de outra onda). Termine, feche, comece a próxima.
 
-## O que fecha uma onda
+## O que fecha uma fase
 
-A auditoria visual das telas que ela tocou (`docs/superpowers/plans/2026-08-05-auditoria-telas.md`).
-Não existe rodada de auditoria "no fim". Nenhum trabalho seguinte começa antes disso — exceto
-acessibilidade e segurança, que não esperam onda nenhuma.
+Os seis critérios de pronto de `docs/LANCAMENTO.md` em cada jornada que ela tocou, incluindo a
+captura em 375/768/1440 nos dois temas e a revisão às cegas contra a régua. Não existe rodada de
+auditoria "no fim".
 
 ## Onde a verdade mora
 
-- O que o produto **deve** ser: `docs/BIVAQUE.md`.
-- O que o código **faz** hoje: `docs/PRODUCT_STATUS.md`.
-- Nunca infira um do outro. Ler decisão como feature entregue é o erro que produziu o mapa
-  que esses dois substituíram.
-- Uma linha só sai do `PRODUCT_STATUS.md` quando o usuário **fecha o ciclo** — entrada,
-  ação, feedback, retorno e o caminho triste principal. Capacidade no banco não fecha linha.
+- O que o produto **deve** ser: `docs/LANCAMENTO.md` e os ADRs aceitos.
+- O que o código **faz** hoje: código, migrations, testes e o quadro — nunca um texto.
+- Nunca infira um do outro. Ler decisão como feature entregue é o erro mais caro deste
+  repositório.
+- Uma jornada só fecha quando a pessoa **fecha o ciclo** — entrada, ação, feedback, retorno e
+  o caminho triste principal. Capacidade no banco não fecha jornada.

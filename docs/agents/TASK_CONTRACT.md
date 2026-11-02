@@ -47,7 +47,7 @@ Cada uma existe porque a ausência já custou trabalho neste repositório:
 3. **Prova não executável.** "Li o código" não é prova. Existir não é evidência.
 4. **Risco declarado abaixo do que a tarefa toca.** Elevação automática pelo vocabulário
    da `RISK_MATRIX`; tocar em RLS, policy, migration, CPF ou schema `private` é R3.
-5. **R3 sem ADR.** Decisão R3 não é do agente.
+5. **R3 sem ADR.** Decisão R3 sempre tem ADR; o agente pode aceitá-lo por delegação do dono (02/11/2026), listando-o em `docs/decisions/RATIFICACAO.md`.
 6. **Revisor não independente fora de R0.** Ver §1 da arquitetura.
 7. **`on_budget_exhausted: PASS`.** Fechar por cansaço é como o mapa antigo passou a mentir.
 

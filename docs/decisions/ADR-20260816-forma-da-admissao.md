@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-08-16
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-16-p0-localidades-nacionais.md
+linked_plan: docs/historico/superpowers/plans/2026-08-16-p0-localidades-nacionais.md
 critic_verdict: PASS
 critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do dono (Juan) na sessao de execucao: aprovar e executar a P0. Aprovacao humana ja consta na secao Approval. A implementacao esta destravada conforme a RISK_MATRIX.md.
 ---
@@ -134,7 +134,7 @@ Nenhuma divergência relevante. A decisão aproxima a implementação do padrão
 - `apps/web/app/(preauth)/onboarding/page.tsx:431-474` e
   `apps/web/app/(preauth)/onboarding/status/page.tsx:127-132` — as duas entradas da waitlist
   geográfica.
-- `docs/BIVAQUE.md` §4.1, §4.2, §4.3, §5.2, §12 regras 2 e 3; D08, D11, D12, D23.
+- `docs/historico/BIVAQUE.md` §4.1, §4.2, §4.3, §5.2, §12 regras 2 e 3; D08, D11, D12, D23.
 - `docs/decisions/ADR-20260816-national-localities.md` — a decisão que torna a localidade uma
   pergunta real.
 - Decisão do dono em 2026-08-16: *"isso deve ser objeto de um onboarding após a elegibilidade"*.

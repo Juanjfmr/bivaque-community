@@ -6,7 +6,7 @@ owner: Juan
 approved_at: 2026-08-16
 accepted_at: 2026-08-17
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-16-onda-t-transferencia.md
+linked_plan: docs/historico/superpowers/plans/2026-08-16-onda-t-transferencia.md
 critic_verdict: PASS
 critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do dono (Juan) na sessao de execucao: aprovar e executar a P0. Aprovacao humana ja consta na secao Approval. A implementacao esta destravada conforme a RISK_MATRIX.md.
 ---
@@ -158,7 +158,7 @@ transferência — é temporária por natureza, e porque a densidade local é o 
 
 - Caso relatado pelo dono em 2026-08-16: o sargento servindo no Rio, transferido para Manaus,
   precisando vender na origem e resolver escola, casa e serviços no destino.
-- `docs/BIVAQUE.md` §10 (a janela de dezembro é bilateral), §3.1 (pertencimento aditivo), §3.4
+- `docs/historico/BIVAQUE.md` §10 (a janela de dezembro é bilateral), §3.1 (pertencimento aditivo), §3.4
   (densidade), §4.1 (cada fato é atestado por quem consegue atestá-lo), §5.2 e D14 (a vila é
   concedida pelo dono), §6.2 e D48 (o nível municipal é referência), §7.8 (degradar em vez de
   quebrar), §11 (irreversibilidade como risco).

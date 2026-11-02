@@ -6,7 +6,7 @@ owner: Juan
 approved_at: 2026-10-23
 accepted_at: 2026-10-23
 expires_at:
-linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 5)
+linked_plan: docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 5)
 critic_verdict: PASS
 critic_review: >
   Duas críticas do DeepSeek V4.1 Flash em 23/10/2026. A primeira comparou com Nextdoor, Grupos do Facebook, Reddit,
@@ -21,7 +21,7 @@ critic_review: >
 ## Problem
 
 O protótipo é a especificação do Bivaque (opção A, 19/10/2026). O mapa protótipo × Next da Comunidade e dos grupos
-(`docs/agents/mapas/lote5-comunidade.md`, 23/10/2026, com arquivo e linha dos dois lados) achou 14 divergências de
+(`docs/historico/agents/mapas/lote5-comunidade.md`, 23/10/2026, com arquivo e linha dos dois lados) achou 14 divergências de
 regra de negócio:
 
 1. **Navegação e estrutura.**
@@ -268,12 +268,12 @@ conhecida), e por isso tem estado explícito em dois campos.
 
 ## Evidence and sources
 
-- Mapa protótipo × Next: `docs/agents/mapas/lote5-comunidade.md` (23/10/2026).
+- Mapa protótipo × Next: `docs/historico/agents/mapas/lote5-comunidade.md` (23/10/2026).
 - Críticas: DeepSeek V4.1 Flash, duas rodadas em 23/10/2026 (resumidas em `critic_review`).
 - Protótipo: `prototypes/bivaque-html/src/features/community/`, `groups/` e `profile/` (`hidden.js`, `blocks.js`).
 - Banco: `20260805214709_community_scope.sql` (escopo de leitura de posts), `20260911025357` (resolução),
   `20260802001500` (`dm_blocks`), `20261022130511` (`hidden_questions`).
-- Plano: `docs/AUDITORIA_ADERENCIA_2026-10-19.md`, seção 6, lote 5.
+- Plano: `docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md`, seção 6, lote 5.
 
 ## Benefits
 

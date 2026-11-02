@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url"
 
 const repoRoot = fileURLToPath(new URL("../../", import.meta.url))
 const VISUAL = join(repoRoot, ".visual")
-const GUIDE = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
+const GUIDE = join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06")
 const INVENTORY = join(repoRoot, "docs", "agents", "PRANCHAS-WEB-RESTANTES.md")
 const OUT_DIR = join(VISUAL, "compare")
 

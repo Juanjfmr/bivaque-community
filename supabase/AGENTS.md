@@ -1,6 +1,6 @@
 # Supabase — scoped agent instructions
 
-> **DRAFT.** Applies to `supabase/**` and to any change whose correctness depends on Supabase Database, Auth, Storage, RLS, RPCs, grants, Cron, `pg_net`, or local Supabase state.
+> Applies to `supabase/**` and to any change whose correctness depends on Supabase Database, Auth, Storage, RLS, RPCs, grants, Cron, `pg_net`, or local Supabase state.
 >
 > This file is intentionally **not** a Supabase handbook. General Supabase/Postgres practice comes from the official `supabase/agent-skills` repository. This file contains only Bivaque-specific constraints and the local workflow needed to apply those skills safely.
 
@@ -53,8 +53,8 @@ If the same approach fails 2–3 times, stop repeating it. Re-read the error, do
 - Public generated types: `supabase/database.generated.ts`
 - Database tests: `supabase/tests/*.sql`
 - Local runtime/E2E data: `supabase/seed.sql`
-- Product authorization intent: `docs/BIVAQUE.md` + applicable ADRs
-- Implemented-state inventory: `docs/PRODUCT_STATUS.md`
+- Product authorization intent: `docs/LANCAMENTO.md` and the accepted ADRs in `docs/decisions/`
+- Implemented state: migrations, tests and the board — never a narrative document
 
 Generated types, old plans, and application wrappers are not proof of the clean database state.
 
@@ -186,10 +186,3 @@ After upstream Supabase verification and Bivaque database gates pass, verify the
 - application/runtime evidence exists when the change crosses the DB boundary;
 - no database error on the changed path is silently reinterpreted as a valid empty state;
 - no local pinned-version constraint was silently changed.
-
-## Questions to settle before finalizing this file
-
-1. Should Bivaque pin the two upstream skills by per-skill release or by repository commit SHA? The upstream repository publishes independent semver versions for both skills.
-2. Should CI verify that the expected Supabase skills are installed/available to supported harnesses?
-3. Which Bivaque incidents should become automated scope tests instead of remaining as local prose here?
-4. Should E2E stop knowing stable UUIDs entirely and use named seed helpers/contracts?

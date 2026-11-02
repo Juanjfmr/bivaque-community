@@ -13,11 +13,11 @@ task_id: XX-000
 objective: >
   Descreva a propriedade que o produto passa a ter, não a tarefa que o agente executa.
 
-# De onde vem a autoridade desta tarefa: spec, ADR, achado de auditoria, linha do
-# PRODUCT_STATUS.md. Tarefa sem autoridade é improviso.
+# De onde vem a autoridade desta tarefa: item de docs/LANCAMENTO.md, ADR, card do quadro,
+# achado de revisão. Tarefa sem autoridade é improviso.
 authority:
-  - docs/BIVAQUE.md §X
-  - docs/agents/VISUAL_AUDIT-....md
+  - docs/LANCAMENTO.md (F0X)
+  - docs/decisions/ADR-....md
 
 # Estado medido ANTES de executar. UNKNOWN é recusado pelo validador de propósito:
 # quem não mediu não sabe se está corrigindo ou reescrevendo.

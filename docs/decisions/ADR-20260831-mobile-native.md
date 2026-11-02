@@ -60,7 +60,7 @@ cliente independente e deve preservar padrões nativos.
 ## Evidence and sources
 
 - Direção explícita do dono em 2026-08-31: web para desktop e app nativo Android/iOS.
-- `docs/BIVAQUE.md` §8 e D31, emendados nesta decisão.
+- `docs/historico/BIVAQUE.md` §8 e D31, emendados nesta decisão.
 - `AGENTS.md` e `tests/scope/workspace-foundation.test.mjs` continham a restrição a
   `apps/mobile` que esta decisão remove.
 - Parecer independente anterior apontou como condições inegociáveis: sem WebView, sem

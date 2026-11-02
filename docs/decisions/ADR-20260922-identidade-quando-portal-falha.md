@@ -15,7 +15,7 @@ critic_review: Veredito registrado por aprovação explícita do dono (Juan) em 
 ## Problem
 
 A tela `/onboarding` promete "Se não conseguirmos confirmar, você poderá enviar sua identidade", e
-a decisão de 07/09/2026 (`docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md`) define o
+a decisão de 07/09/2026 (`docs/historico/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md`) define o
 CPF como caminho rápido, com a identidade como alternativa. No resultado `temporary_error`, quando o
 Portal da Transparência está indisponível, a promessa não se cumpre:
 

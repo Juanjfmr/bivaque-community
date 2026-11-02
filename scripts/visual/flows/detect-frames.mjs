@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url"
 import { inflateSync } from "node:zlib"
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url))
-const guideDir = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
+const guideDir = join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06")
 const outPath = join(repoRoot, "scripts", "visual", "flows", "frames.json")
 const overridesPath = join(repoRoot, "scripts", "visual", "flows", "frames.overrides.json")
 

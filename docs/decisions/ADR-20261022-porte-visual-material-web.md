@@ -5,7 +5,7 @@ risk: R2
 owner: Juan
 approved_at: 2026-10-22
 expires_at:
-linked_plan: docs/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 3)
+linked_plan: docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md (seção 6, lote 3)
 critic_verdict: PASS
 critic_review: Aprovado pelo dono em 22/10/2026. Fundamentado na auditoria de 19/10 (seções 3.4 e 3.5) e no protótipo R70.
 ---
@@ -79,7 +79,7 @@ Nenhuma.
 - `prototypes/bivaque-html/src/vendor/material-web-2.5.0.js`
 - `prototypes/bivaque-html/src/styles/base.css` e `fonts.css`
 - `prototypes/bivaque-html/docs/ROUND_70.md`
-- `docs/AUDITORIA_ADERENCIA_2026-10-19.md`, seções 3.4, 3.5 e 6
+- `docs/historico/AUDITORIA_ADERENCIA_2026-10-19.md`, seções 3.4, 3.5 e 6
 
 ## Benefits
 

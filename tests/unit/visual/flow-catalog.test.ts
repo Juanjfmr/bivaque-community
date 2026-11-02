@@ -12,7 +12,7 @@ import { loadFlowCatalog } from "../../../scripts/visual/flows/catalog.mjs"
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url))
 const manifest = JSON.parse(
   readFileSync(
-    join(repoRoot, "docs", "design", "visual-guide-2026-09-06", "manifest.json"),
+    join(repoRoot, "docs", "historico", "design", "visual-guide-2026-09-06", "manifest.json"),
     "utf8",
   ),
 ) as { artifacts: Array<{ id: string; title: string; kind: string; screens: string[] }> }

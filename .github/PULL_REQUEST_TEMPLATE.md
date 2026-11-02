@@ -2,36 +2,29 @@
 <!-- One-sentence summary of the change. -->
 
 ## Why
-<!-- Link the issue, spec, or plan that motivates this. If a plan exists under `docs/superpowers/plans/`, link it. If this closes a row on `docs/journeys/MAP.md`, name it. -->
+<!-- Name the board card (and the docs/LANCAMENTO.md item) this closes. -->
 
 ## Scope
-<!-- Files touched, surfaces affected (UI, DB, edge, CI). One-line per area. -->
+<!-- Files touched, surfaces affected (UI, DB, API, CI). One line per area. -->
 
 ## Gate evidence
-<!-- Paste the green output of `npx pnpm@11.18.0 gate` from the last run. -->
-<!-- If you only ran `--fast`, say so explicitly and explain why `--fast` is sufficient for this change. -->
+<!-- Green output of `npx pnpm@11.18.0 gate` from the last run, with the revision. -->
+<!-- If only `--fast` ran, say so and why it is enough for this change. -->
 
 ## Tests
-<!-- What you added or updated, and where. -->
-<!-- RED → GREEN proof for any behavior change: test runner output before AND after. -->
-<!-- pgTAP changes: paste `npx pnpm@11.18.0 test:db` excerpt. -->
-<!-- E2E: which spec(s) and which viewports. -->
+<!-- What was added or updated, and where. RED → GREEN proof for any behavior change. -->
+<!-- pgTAP: `npx pnpm@11.18.0 test:db` excerpt. E2E: specs, viewports and themes. -->
 
 ## Visual impact
-<!-- If a screen was created, redesigned, or touched, link the visual audit run under `docs/agents/`. -->
-<!-- Phase 1 (accessibility) and Phase 2 (critical visual bugs) may run at any time. -->
-<!-- Everything else cosmetic waits its wave — see MAP §10.2. -->
+<!-- Screens touched: captures at 375/768/1440, light and dark, under `.visual/<run>/`, and the Nextdoor bar verdict. -->
 
 ## Privacy and trust boundary
-<!-- Required when touching: auth, RLS, the `private` schema, the verification flow, family accounts, or anything that reads/writes CPF / Portal / military org / rank / residential address / documents. -->
-<!-- Confirm the scope column + its policies landed in the same migration (MAP Padrão 6). -->
+<!-- Required when touching auth, RLS, the `private` schema, verification, family accounts, or anything that reads or writes CPF, Portal data, military organization, rank, address or documents. -->
+<!-- Confirm the scope column and its policies landed in the same migration, with positive and negative tests. -->
+<!-- R3 decided by delegation: link the ADR and its row in docs/decisions/RATIFICACAO.md. -->
 
 ## Risks
-<!-- Anything reviewers should scrutinize. Migration safety, ordering, backfill semantics, lock scope. -->
+<!-- Anything reviewers should scrutinize: migration safety, ordering, backfill, lock scope. -->
 
 ## Out of scope
-<!-- Anything intentionally left for follow-up, with a pointer (issue, plan, MAP row). -->
-
-## Conventional commit
-<!-- `feat|fix|chore|test(scope): …` -->
-<!-- One commit per todo. Implementation and test are ONE todo. -->
+<!-- Anything intentionally left for follow-up, with its board card. -->

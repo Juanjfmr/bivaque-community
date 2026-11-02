@@ -6,10 +6,9 @@ o sistema de tickets, não grava em Supabase e não modifica o frontend produtiv
 Leia este README junto do [README da raiz](../../README.md). O roteador da raiz aponta para as
 fontes que governam cada decisão:
 
-- `docs/BIVAQUE.md`: visão e decisões de produto;
-- `docs/PRODUCT_STATUS.md`: estado registrado do runtime;
-- migrations, código e testes: evidência primária do que realmente existe;
-- `docs/superpowers/plans/README.md`: protocolo e ordem das ondas.
+- `docs/LANCAMENTO.md`: escopo, definição de pronto, ordem e marcos do lançamento;
+- `docs/decisions/`: os ADRs que dizem como cada coisa funciona;
+- migrations, código e testes: evidência primária do que realmente existe.
 
 Quando uma dessas fontes diverge da evidência primária, registre o card com `drift` apenas como
 evidência temporária. Drift não é entrega: o próximo passo do agente é reconciliar o texto, mudar o

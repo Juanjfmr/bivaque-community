@@ -51,4 +51,4 @@ We credit reporters in the fix commit unless anonymity is requested. A "thank yo
 - Findings in upstream dependencies without an exploitable path through Bivaque.
 - Rate-limiting / DoS against the gated surface without demonstrated impact.
 - UI/UX issues without a security consequence.
-- Reports about features that the product map (`docs/journeys/MAP.md`) records as **explicitly excluded** (marketplace, ads, AI, video, native app, other cities) — those are not built and not built toward.
+- Reports about features that the launch definition (`docs/LANCAMENTO.md`) keeps out of scope, such as payments and checkout — those are not built.

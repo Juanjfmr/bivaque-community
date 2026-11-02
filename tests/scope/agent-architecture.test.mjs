@@ -26,7 +26,7 @@ const AGENTS = {
 }
 
 // Aposentados na Phase 0 (2026-08-22). Voltar com um deles é reabrir a divergência
-// que a auditoria fechou — ver docs/agents/HARNESS-PHASE0-2026-08-22.md §2.
+// que a auditoria fechou — ver docs/historico/agents/HARNESS-PHASE0-2026-08-22.md §2.
 const RETIRED_AGENTS = ["code-reviewer", "explore-haiku", "test-runner", "test-writer"]
 
 const SKILLS = [

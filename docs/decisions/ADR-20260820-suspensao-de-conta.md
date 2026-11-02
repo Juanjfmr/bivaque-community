@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-08-20
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-20-onda-h-operacao.md
+linked_plan: docs/historico/superpowers/plans/2026-08-20-onda-h-operacao.md
 critic_verdict: PASS
 critic_review: Revisao adversarial executada em 2026-08-20 na mesma sessao que escreveu o ADR — o critico NAO foi independente, e isso fica registrado aqui em vez de ser omitido. A revisao achou e corrigiu seis defeitos de implementabilidade antes da aprovacao (helper inalcancavel por policy, leitura de display_name negada pela RLS, sync_paid_reach contradizendo a tolerancia de 7 dias, recurso sem tabela, revogacao de ficha sem task, e uma citacao de migration errada sobre exclusao de conta). Nenhum defeito atingiu as decisoes em si. Veredito PASS.
 ---
@@ -147,12 +147,12 @@ declarado ao suspenso na própria tela, em vez de descrito como um processo que 
 
 ## Evidence and sources
 
-- `docs/BIVAQUE.md` §2 (o que copiar e o que não copiar do Nextdoor), §4.4 (os três prazos e a
+- `docs/historico/BIVAQUE.md` §2 (o que copiar e o que não copiar do Nextdoor), §4.4 (os três prazos e a
   governança), §5.1, §10.2, §11.7, §11.11, §12 regras 3, 6 e 7.
 - Decisões D12, D14, D24, D25, D38, D51 na tabela do §9.
-- `docs/PRODUCT_STATUS.md` §9 — as oito linhas de moderação, com "Ação sobre pessoa: não
+- `docs/historico/PRODUCT_STATUS.md` §9 — as oito linhas de moderação, com "Ação sobre pessoa: não
   existe".
-- `docs/red-team/lote-2-moderacao.md`, achados F160 a F165.
+- `docs/historico/red-team/lote-2-moderacao.md`, achados F160 a F165.
 - `docs/PILOT_RUNBOOK.md` §6 (resolução de denúncia, "sem revelar a ação tomada") e §10.
 - `supabase/migrations/20260820045749_locality_switcher_write_guard.sql:1-7` — o precedente que
   prova o risco de execução: a onda T injetou um guard em três tabelas de escrita e **esqueceu

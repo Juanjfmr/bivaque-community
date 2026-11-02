@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-09
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
 critic_verdict:
 critic_review: Sem critico adversarial nesta rodada. A aprovacao registrada e autorizacao humana explicita do dono (Juan) na sessao de 09/09/2026 — ver a secao Approval.
 ---
@@ -86,7 +86,7 @@ servidor depois de checar o acesso ao recurso.
 ## Evidence and sources
 
 - Pranchas 13, 19, 21, 43, 45, 63, 64, 65 — leitura em
-  [`PRANCHAS-WEB-RESTANTES.md`](../agents/PRANCHAS-WEB-RESTANTES.md).
+  [`PRANCHAS-WEB-RESTANTES.md`](../historico/agents/PRANCHAS-WEB-RESTANTES.md).
 - Buckets existentes: `supabase/migrations/` (`avatars`, `event-photos`,
   `verification-documents`).
 - §4.7 R49/R53 da especificação: "Não expor endereço residencial".
@@ -124,7 +124,7 @@ D2 precisa de um ramo novo e este ADR é reaberto.
 
 Aprovado em 09/09/2026 pelo dono do produto (Juan), por autorização explícita na sessão de
 Claude Code que redigiu este ADR: "Aprovo as adr", referindo-se aos seis ADRs de 09/09/2026
-listados em [RECON-WEB-EXECUCAO.md](../agents/RECON-WEB-EXECUCAO.md).
+listados em [RECON-WEB-EXECUCAO.md](../historico/agents/RECON-WEB-EXECUCAO.md).
 
 Destrava os contratos que criam bucket e policy de midia: RECON-025, RECON-026, RECON-027 e RECON-034.
 

@@ -143,10 +143,13 @@ function isPlaceholder(lineContent) {
 const repoRoots = ["apps", "packages", "supabase", "scripts", "tests", "docs"]
 
 function isRepoPath(matchText) {
-  const slash = matchText.indexOf("/")
+  // A relative link ("../../docs/...") reaches the regex as "/docs/...": the dots are outside
+  // its character class. The leading slash is dropped before the root is checked.
+  const path = matchText.replace(/^\/+/, "")
+  const slash = path.indexOf("/")
   if (slash === -1) return false
-  if (!repoRoots.includes(matchText.slice(0, slash))) return false
-  return /^[A-Za-z0-9._/-]+$/.test(matchText)
+  if (!repoRoots.includes(path.slice(0, slash))) return false
+  return /^[A-Za-z0-9._/-]+$/.test(path)
 }
 
 // Git commit hashes have a fixed shape that real secrets do not: only hex

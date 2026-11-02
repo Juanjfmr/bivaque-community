@@ -95,7 +95,7 @@ promover alguém automaticamente concederia poder que ninguém escolheu.
 
 ## Evidence and sources
 
-- Prancha 43 (`docs/design/visual-guide-2026-09-06/43-web-comunidade-grupos.png`) — "Sair" no hero
+- Prancha 43 (`docs/historico/design/visual-guide-2026-09-06/43-web-comunidade-grupos.png`) — "Sair" no hero
   e "Cancelar pedido" no pedido pendente.
 - `.visual/compare/julgamento.md` — 43: itens 1 e 5 registram as duas ausências; grep sem
   `leave_community`/cancelamento em `apps/web`.
@@ -105,7 +105,7 @@ promover alguém automaticamente concederia poder que ninguém escolheu.
   "degradar em vez de quebrar" para a origem; aqui a vila termina por ato do titular.
 - [`ADR-20260820-suspensao-de-conta`](ADR-20260820-suspensao-de-conta.md) — bloqueio e denúncia
   são autodefesa e permanecem; nenhum dos dois depende de continuar membro.
-- `docs/BIVAQUE.md` §5.2 / D14 — a vila é concedida pelo dono; sair não muda quem concede.
+- `docs/historico/BIVAQUE.md` §5.2 / D14 — a vila é concedida pelo dono; sair não muda quem concede.
 
 ## Benefits
 

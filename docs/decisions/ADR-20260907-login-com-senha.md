@@ -65,7 +65,7 @@ de senha errada; aqui não.
 - `supabase/config.toml` — política de senha já configurada.
 - `tests/unit/auth/passwordless-login.test.ts` — contrato que esta decisão
   substitui.
-- `docs/design/visual-guide-2026-09-06/30-mobile-auth-entrada.png` — a prancha
+- `docs/historico/design/visual-guide-2026-09-06/30-mobile-auth-entrada.png` — a prancha
   aprovada em 06/09 não tem campo de senha. Esta instrução é posterior e
   prevalece (§2 do processo de construção); a prancha precisa ser regerada.
 

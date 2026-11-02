@@ -8,7 +8,7 @@ const root = join(import.meta.dirname, "..", "..")
 const read = (...parts) => readFileSync(join(root, ...parts), "utf8")
 
 test("the canonical design system covers the complete product-design contract", () => {
-  const source = read("docs", "agents", "DESIGN_SYSTEM.md")
+  const source = read("docs", "historico", "agents", "DESIGN_SYSTEM.md")
   const requiredSections = [
     "## 1. Autoridade e uso",
     "## 2. Caráter de marca",
@@ -31,7 +31,7 @@ test("the canonical design system covers the complete product-design contract", 
 })
 
 test("documented token paths resolve in the canonical token source", () => {
-  const source = read("docs", "agents", "DESIGN_SYSTEM.md")
+  const source = read("docs", "historico", "agents", "DESIGN_SYSTEM.md")
   const tokens = JSON.parse(read("packages", "tokens", "src", "tokens.json"))
   const inventory = source.match(/#### Nomes[\s\S]*?(?=\n### )/)?.[0] ?? ""
   const paths = [...inventory.matchAll(/`(primitive|semantic|component)\.([a-z0-9-]+)`/g)].map(
@@ -69,7 +69,7 @@ test("documented token paths resolve in the canonical token source", () => {
 
 test("legacy design documents redirect to the one canonical system", () => {
   for (const file of ["DESIGN_SPEC.md", "VISUAL_GUIDE.md"]) {
-    const source = read("docs", "agents", file)
+    const source = read("docs", "historico", "agents", file)
     assert.match(source, /redirecionamento de compatibilidade/)
     assert.match(source, /DESIGN_SYSTEM\.md/)
     assert.match(source, /não é uma segunda autoridade|Não adicione regras aqui/)

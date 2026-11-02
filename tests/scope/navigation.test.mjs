@@ -16,7 +16,7 @@ import test from "node:test"
 
 const root = join(import.meta.dirname, "..", "..")
 const NAV_PATH = join(root, "apps", "web", "app", "components", "bivaque", "bottom-nav.tsx")
-const GUIDE_PATH = join(root, "docs", "agents", "DESIGN_SYSTEM.md")
+const GUIDE_PATH = join(root, "docs", "historico", "agents", "DESIGN_SYSTEM.md")
 
 const CEILING = 5
 

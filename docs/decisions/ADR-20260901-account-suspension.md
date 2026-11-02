@@ -98,7 +98,7 @@ o princípio "Bivaque não toca em `auth.*`".
 
 - BIVAQUE.md §4.3 Privacidade + §6.3 ciclos de moderação + §7.3 Proibidos
 - AGENTS.md §Supabase: nunca tocar `auth.users` schema
-- Wave H Task 8 (`docs/superpowers/plans/2026-08-05-onda-h.md`) — denúncia
+- Wave H Task 8 (`docs/historico/superpowers/plans/2026-08-05-onda-h.md`) — denúncia
   por membro (já implementado) + caminho denied (este ADR cobre)
 - product-critic verdict 2026-08-31 (item 10: denied sem prova negativa)
 - `RISK_MATRIX.md` — R3 exige ADR aprovado

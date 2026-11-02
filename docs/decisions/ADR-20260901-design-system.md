@@ -27,7 +27,7 @@ locais não verificáveis.
 ## Decision
 
 O Bivaque passa a ter **um único sistema canônico** em
-[`docs/agents/DESIGN_SYSTEM.md`](../agents/DESIGN_SYSTEM.md). `DESIGN_SPEC.md` e
+[`docs/historico/agents/DESIGN_SYSTEM.md`](../historico/agents/DESIGN_SYSTEM.md). `DESIGN_SPEC.md` e
 `VISUAL_GUIDE.md` tornam-se redirecionamentos de compatibilidade, não fontes secundárias.
 
 Escolhemos a direção **Casa comum**: calor humano com disciplina editorial. Ela combina a
@@ -91,11 +91,11 @@ essa evidência em vez de copiar uma interface concorrente.
 ## Evidence and sources
 
 - Pedido explícito do dono nesta conversa em 2026-09-01.
-- `docs/BIVAQUE.md` §1.2, §3, §4, §6 e §12 — comunidade local, escopo, confiança e limites.
-- `docs/agents/design-audit/ADJUDICATION.md` — manifesto de reescrita e survivors vNext.
-- `docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md` — três
+- `docs/historico/BIVAQUE.md` §1.2, §3, §4, §6 e §12 — comunidade local, escopo, confiança e limites.
+- `docs/historico/agents/design-audit/ADJUDICATION.md` — manifesto de reescrita e survivors vNext.
+- `docs/historico/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md` — três
   direções coerentes e seus trade-offs.
-- `docs/agents/design-audit/CONFLICT_MATRIX.md` — conflito entre as duas autoridades antigas.
+- `docs/historico/agents/design-audit/CONFLICT_MATRIX.md` — conflito entre as duas autoridades antigas.
 
 ## Benefits
 

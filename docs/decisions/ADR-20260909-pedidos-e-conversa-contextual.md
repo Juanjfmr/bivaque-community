@@ -5,7 +5,7 @@ risk: R3
 owner: Juan
 approved_at: 2026-09-09
 expires_at:
-linked_plan: docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+linked_plan: docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
 critic_verdict:
 critic_review: Sem critico adversarial nesta rodada. A aprovacao registrada e autorizacao humana explicita do dono (Juan) na sessao de 09/09/2026 — ver a secao Approval.
 ---
@@ -98,7 +98,7 @@ nem ranking. O Bivaque não participa da negociação.
 ## Evidence and sources
 
 - Leitura das pranchas 17, 23, 62 e 67 em
-  [`PRANCHAS-WEB-RESTANTES.md`](../agents/PRANCHAS-WEB-RESTANTES.md).
+  [`PRANCHAS-WEB-RESTANTES.md`](../historico/agents/PRANCHAS-WEB-RESTANTES.md).
 - §4.6 R42–R46, §4.4 R34 e §6 ("Conversa contextual", "Pedido") da especificação de 08/09.
 - Tabelas existentes: `dm_conversations`, `dm_messages`, `dm_blocks`,
   `recommendation_requests`.
@@ -138,7 +138,7 @@ sem contexto (mensagem direta livre), D2 é reaberto.
 
 Aprovado em 09/09/2026 pelo dono do produto (Juan), por autorização explícita na sessão de
 Claude Code que redigiu este ADR: "Aprovo as adr", referindo-se aos seis ADRs de 09/09/2026
-listados em [RECON-WEB-EXECUCAO.md](../agents/RECON-WEB-EXECUCAO.md).
+listados em [RECON-WEB-EXECUCAO.md](../historico/agents/RECON-WEB-EXECUCAO.md).
 
 Destrava os contratos RECON-022, RECON-023, RECON-024 e RECON-029.
 

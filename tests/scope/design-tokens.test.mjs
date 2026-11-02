@@ -86,7 +86,7 @@ test("carries the palette authorised on 2026-09-06", () => {
   const tokens = JSON.parse(readFileSync(join(root, "packages/tokens/src/tokens.json"), "utf8"))
 
   // When the approved values are checked
-  // (docs/design/visual-guide-2026-09-06: verde profundo, fundo claro, sálvia)
+  // (docs/historico/design/visual-guide-2026-09-06: verde profundo, fundo claro, sálvia)
   assert.equal(tokens.primitive["pine-700"], "#164734")
   assert.equal(tokens.primitive["paper-50"], "#FAFBF8")
   assert.equal(tokens.primitive["pine-100"], "#EEF1E7")
