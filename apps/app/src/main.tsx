@@ -28,15 +28,19 @@ function Aplicacao() {
   )
 }
 
-// Prévia clicável do F01 novo (régua Nextdoor, 01/11/2026): só no servidor de
-// desenvolvimento, fora do roteador e da casca. O build de produção não a leva.
-const naPreviaDoF01 =
-  import.meta.env.DEV &&
-  window.location.pathname.startsWith(`${import.meta.env.BASE_URL}previa/f01`)
+// Prévias clicáveis da régua Nextdoor (01/11/2026): só no servidor de
+// desenvolvimento, fora do roteador e da casca. `import.meta.env.DEV` fica
+// direto no `if`, para o build de produção eliminar o ramo e não levar as prévias.
+const caminho = window.location.pathname
+const prefixo = `${import.meta.env.BASE_URL}previa/`
 
-if (naPreviaDoF01) {
+if (import.meta.env.DEV && caminho.startsWith(`${prefixo}f01`)) {
   void import("@/src/previa-f01/PreviaF01").then(({ PreviaF01 }) =>
     createRoot(elemento).render(<PreviaF01 />),
+  )
+} else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}grupos`)) {
+  void import("@/src/previa-grupos/PreviaGrupos").then(({ PreviaGrupos }) =>
+    createRoot(elemento).render(<PreviaGrupos />),
   )
 } else {
   createRoot(elemento).render(<Aplicacao />)
