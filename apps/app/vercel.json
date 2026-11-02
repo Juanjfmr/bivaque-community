@@ -17,6 +17,22 @@
       "destination": "/assets/:path*"
     },
     {
+      "source": "/app/fonts/:path*",
+      "destination": "/fonts/:path*"
+    },
+    {
+      "source": "/app/demo/:path*",
+      "destination": "/demo/:path*"
+    },
+    {
+      "source": "/app/brand/:path*",
+      "destination": "/brand/:path*"
+    },
+    {
+      "source": "/app/ilustracoes/:path*",
+      "destination": "/ilustracoes/:path*"
+    },
+    {
       "source": "/app/:path*",
       "destination": "/index.html"
     }
