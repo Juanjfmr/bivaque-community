@@ -75,7 +75,7 @@ export function Lista({ estado, despachar, navegar }: PropsDaTela) {
       />
       {meus.length > 0 ? (
         <section aria-labelledby="pg-meus" className="pg-bloco">
-          <h2 id="pg-meus" className="pc-subtitulo">
+          <h2 id="pg-meus" className="pc-secao">
             Seus grupos
           </h2>
           <ul className="pc-lista">
@@ -99,7 +99,7 @@ export function Lista({ estado, despachar, navegar }: PropsDaTela) {
         </section>
       ) : null}
       <section aria-labelledby="pg-outros" className="pg-bloco">
-        <h2 id="pg-outros" className="pc-subtitulo">
+        <h2 id="pg-outros" className="pc-secao">
           Para você em Manaus
         </h2>
         {outros.length === 0 ? (

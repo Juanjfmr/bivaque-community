@@ -28,6 +28,7 @@
 
   --pc-fs-destaque: 30px;
   --pc-fs-titulo: 24px;
+  --pc-fs-secao: 20px;
   --pc-fs-subtitulo: 17px;
   --pc-fs-corpo: 16px;
   --pc-fs-apoio: 14px;
@@ -102,6 +103,14 @@
   letter-spacing: -0.4px;
   text-wrap: balance;
   outline: none;
+}
+
+/* Título de seção numa lista ou num feed ("Seus grupos"): entre o título e o subtítulo. */
+.pc-secao {
+  font-size: var(--pc-fs-secao);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
 }
 
 .pc-subtitulo {

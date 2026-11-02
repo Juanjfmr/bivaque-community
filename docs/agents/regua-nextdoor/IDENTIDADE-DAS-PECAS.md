@@ -34,7 +34,8 @@ biblioteca e na galeria antes de entrar na tela.
 - Botão só de ícone é um círculo de 44.
 
 **Texto.**
-- Noto Sans em tudo, com uma escala só: título 24, subtítulo 17, corpo 16, apoio 14, miúdo 13.
+- Noto Sans em tudo, com uma escala só: título 24, seção 20, subtítulo 17, corpo 16, apoio 14, miúdo 13.
+  Seção é o título de um bloco numa lista ou num feed ("Seus grupos", "Acontecendo em Manaus").
 - A Noto Serif fica só no destaque: a frase da porta e as boas-vindas, 30 no celular e 40 no computador.
 - A fonte do brandbook continua. Trocar de família é decisão do dono.
 
