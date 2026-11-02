@@ -166,7 +166,7 @@ export function MoradiaNaCidade({
   dados, cidade, salvos, aoSalvar, aoAbrirAnuncio, aoAbrirImoveis,
 }: Pick<Props, "dados" | "cidade" | "salvos" | "aoSalvar" | "aoAbrirAnuncio" | "aoAbrirImoveis">) {
   const imoveis = dados.anuncios.filter(item =>
-    item.status === "active" && (item.kind === "property" || item.kind === "imovel")
+    item.status === "active" && (item.kind === "property")
   )
   return (
     <Secao
