@@ -115,7 +115,7 @@ export function Inicio() {
   const anuncios = useMemo(() => {
     if (dados === null) return []
     return dados.anuncios
-      .filter((anuncio) => anuncio.status === "active" && anuncio.kind !== "property" && anuncio.kind !== "imovel")
+      .filter((anuncio) => anuncio.status === "active" && anuncio.kind !== "property")
       .slice(0, 4)
       .map((anuncio) => ({ anuncio, apresentacao: registro(anuncio.apresentacao) }))
   }, [dados])
