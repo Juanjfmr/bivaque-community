@@ -10,5 +10,6 @@ que dependia dele volta para o quadro.
 
 | ADR | Decisão em uma linha | Aceito em | Revisão e auditoria | Ratificação |
 |---|---|---|---|---|
-| [ADR-20261101-entrada-unica-por-codigo](ADR-20261101-entrada-unica-por-codigo.md) | Entrada única por Google, Apple ou código no e-mail, sem senha | proposto; aceite no lote do F01 | pendente | — |
+| [ADR-20261101-entrada-unica-por-codigo](ADR-20261101-entrada-unica-por-codigo.md) | Entrada única por Google, Apple ou código no e-mail, sem senha | 02/11/2026, por delegação (lote do F01/LAN-F01) | pendente — sem outro modelo disponível neste executor | — |
 | [ADR-20261101-foto-e-resposta-nos-grupos](ADR-20261101-foto-e-resposta-nos-grupos.md) | Foto na publicação e resposta encadeada nos grupos | proposto; aceite no lote de Grupos | pendente | — |
+| [ADR-20261102-progresso-da-entrada](ADR-20261102-progresso-da-entrada.md) | O rascunho da entrada mora em tabela própria, com leitura só do dono e escrita só pela rota | 02/11/2026, por delegação (lote do F01/LAN-F01) | pendente — sem outro modelo disponível neste executor | — |

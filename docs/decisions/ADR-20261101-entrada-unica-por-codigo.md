@@ -1,12 +1,12 @@
 ---
 id: ADR-20261101-entrada-unica-por-codigo
-status: proposed
+status: Aceito por delegação — aguarda ratificação
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-11-02 (por delegação do dono em 02/11; aceite no lote do F01, aguarda ratificação)
 expires_at:
 linked_plan: docs/agents/regua-nextdoor/HANDOFF.md (seções 6.5 e 7)
-critic_verdict: pending
+critic_verdict: pendente — revisão independente e security-auditor não disponíveis neste executor; listado em RATIFICACAO.md
 critic_review:
 ---
 
