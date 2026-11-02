@@ -5617,9 +5617,11 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "sourceRevision": "532dd246",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: revisão às cegas (subagente Claude) — Grupos e Entrada em parte, app real abaixo da régua; corrigidos ação sólida no escuro e concordância; serifa nos títulos já corrigida. Restante (abas em dois níveis, subtítulos explicativos, capa do grupo) fica nas jornadas.",
+        "02/11: paleta escolhida às cegas entre três candidatas; app 127/127, tema.spec 30/30, percursos F01, Grupos e menu sem erro; 15 falhas E2E pré-existentes registradas em APP-E2E-PREEXISTENTES.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-F1-IDENTIDADE",
@@ -5627,14 +5629,15 @@
       "priority": "P1",
       "category": "frontend",
       "status": "next",
-      "description": "Paleta revisada (autorizada em 02/11) num ADR de identidade; casca com barra de baixo e coluna no computador em todas as telas; achados do veredito de maturidade: topo e recepção do grupo, menu ⋯ com Denunciar, rostos nos personagens, arte sem placa no escuro, títulos de seção, layout de computador, etapas do F01. Fecha com revisão do Astra no nível e o marco 1 do dono.",
+      "description": "Paleta fria (ADR-20261102-paleta-fria) nos tokens do apps/app e na landing; Brasa só no criar; ilustrações transparentes; títulos em Noto Sans; menu ⋯ com denúncia; topo e recepção do grupo; parte atual do F01; título de seção; Comunidade sem Negócios. A troca das peças nas telas antigas acontece jornada a jornada (fases 2 a 5), não aqui. Rostos de pessoas: a prévia segue com iniciais; foto vem do membro no produto.",
       "checklist": [
         "ADR de identidade com a paleta revisada",
-        "Casca e peças em todas as telas do apps/app",
-        "Achados do veredito de maturidade resolvidos",
-        "Revisão às cegas do Astra no nível; marco 1 apresentado ao dono"
+        "Paleta e tipografia valendo no app inteiro e na landing (tokens globais)",
+        "Achados do veredito de maturidade resolvidos nas telas-modelo (F01 e Grupos)",
+        "Revisão às cegas por outro modelo; marco 1 apresentado ao dono"
       ],
-      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR", "APP-E2E-PREEXISTENTES"]
+      "dependencies": ["LAN-F0-FUNDACAO", "APP-001", "APP-REGUA-NEXTDOOR", "APP-E2E-PREEXISTENTES"],
+      "completedChecklist": [true, true, true, false]
     },
     {
       "phase": "Lançamento",
