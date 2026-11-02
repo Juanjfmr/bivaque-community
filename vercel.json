@@ -1,4 +1,5 @@
 {
+  "git": { "deploymentEnabled": { "main": false } },
   "buildCommand": "pnpm --filter web build",
   "outputDirectory": ".next",
   "installCommand": "npx pnpm@11.18.0 install --frozen-lockfile",
