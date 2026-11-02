@@ -7,7 +7,6 @@ import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
-import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import type { DadosDaCidade } from "@/lib/dados"
 import { iconeDeDado } from "@/lib/icones"
