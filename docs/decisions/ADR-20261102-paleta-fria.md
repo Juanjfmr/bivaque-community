@@ -24,7 +24,8 @@ deixava a cor da marca sem significado próprio.
 - **Fundo e superfícies frios.** Claro: fundo `#F3F5F6`, cartão branco, tinta `#1C262B`, apoio `#525E64`, linha
   `#DEE3E6`. Escuro: fundo `#101417`, cartão `#1A2024`, tinta `#E8ECEE`, apoio `#9CAAB2`, linha `#303A3E`.
 - **Ação de concluir em ardósia** (`--acao`): Publicar, Continuar, Entrar. Claro `#26424F` com texto branco;
-  escuro `#A5BFC8` com texto `#17282F`.
+  escuro `#E8ECEE` com texto `#101417` (a primeira versão, `#A5BFC8`, lia como botão desativado na revisão
+  às cegas de 02/11).
 - **Brasa só em "começar a criar"** (`--pc-criar`): o botão flutuante de escrever e o Criar da barra. Ela vira a
   assinatura da marca, não a cor de todo botão.
 - **Ilustrações com fundo transparente**, para pousarem em qualquer fundo; acaba a placa clara no escuro. Selos e

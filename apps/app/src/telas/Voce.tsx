@@ -78,10 +78,10 @@ export function Voce() {
       </div>
 
       <div className="grid grid-cols-4 gap-2">
-        <Contador valor={contagens.salvos} rotulo="salvos" />
-        <Contador valor={contagens.anuncios} rotulo="anúncios" />
-        <Contador valor={contagens.perguntas} rotulo="perguntas" />
-        <Contador valor={contagens.grupos} rotulo="grupos" />
+        <Contador valor={contagens.salvos} rotulo={["salvo", "salvos"]} />
+        <Contador valor={contagens.anuncios} rotulo={["anúncio", "anúncios"]} />
+        <Contador valor={contagens.perguntas} rotulo={["pergunta", "perguntas"]} />
+        <Contador valor={contagens.grupos} rotulo={["grupo", "grupos"]} />
       </div>
 
       <Secao titulo="Seu Bivaque">
@@ -157,11 +157,13 @@ export function Voce() {
   )
 }
 
-function Contador({ valor, rotulo }: { valor: number; rotulo: string }) {
+function Contador({ valor, rotulo }: { valor: number; rotulo: readonly [string, string] }) {
   return (
     <div className="grid justify-items-center gap-0.5 rounded-2xl bg-(--surface-lowest) px-2 py-3 ring-1 ring-(--outline-variant)">
       <b className="text-[18px]">{valor}</b>
-      <small className="text-center text-[11.5px] text-(--on-surface-variant)">{rotulo}</small>
+      <small className="text-center text-[11.5px] text-(--on-surface-variant)">
+        {valor === 1 ? rotulo[0] : rotulo[1]}
+      </small>
     </div>
   )
 }

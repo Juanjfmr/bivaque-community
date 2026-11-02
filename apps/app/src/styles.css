@@ -148,8 +148,9 @@
     --ring: rgb(232 236 238);
     --success: rgb(159 188 192);
     --success-foreground: rgb(23 30 32);
-    --acao: rgb(165 191 200);
-    --acao-foreground: rgb(23 40 47);
+    /* No escuro a ação é clara e sólida: o azul-acinzentado lia como desativado. */
+    --acao: rgb(232 236 238);
+    --acao-foreground: rgb(16 20 23);
     --brasa: rgb(224 122 90);
     --brasa-foreground: rgb(23 30 32);
     --accent-text: rgb(224 122 90);

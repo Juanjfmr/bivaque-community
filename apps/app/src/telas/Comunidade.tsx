@@ -224,7 +224,9 @@ export function Comunidade() {
           <div className="flex items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 py-3">
             <Icone nome="history_edu" className="size-6 shrink-0 text-(--primary)" />
             <span className="grid gap-0.5">
-              <b className="text-[15px]">{resolvidas} indicações resolvidas</b>
+              <b className="text-[15px]">
+                {resolvidas} {resolvidas === 1 ? "indicação resolvida" : "indicações resolvidas"}
+              </b>
               <small className="text-(--on-surface-variant)">
                 Busque uma resposta antes de perguntar.
               </small>
