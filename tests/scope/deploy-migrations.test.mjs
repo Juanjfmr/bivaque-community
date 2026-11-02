@@ -24,11 +24,14 @@ test("production migrations run from CI only, after the gate", () => {
 })
 
 test("a merge on main never deploys the site", () => {
-  // Given the Vercel project configuration
-  const vercel = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"))
+  // Given the Vercel configuration at the repository root and at the project's Root Directory
+  // (apps/web), which is where Vercel reads it from
+  for (const file of ["vercel.json", join("apps", "web", "vercel.json")]) {
+    const vercel = JSON.parse(readFileSync(join(root, file), "utf8"))
 
-  // Then pushes to main do not create deployments; production follows the producao branch
-  assert.equal(vercel.git?.deploymentEnabled?.main, false)
+    // Then pushes to main do not create deployments; production follows the producao branch
+    assert.equal(vercel.git?.deploymentEnabled?.main, false, file)
+  }
 })
 
 test("no local command surface pushes or links to production", () => {
