@@ -132,14 +132,15 @@ export function Inicio() {
     if (dados === null) return []
     const agora = Date.now()
     return dados.eventos
-      .filter(evento => evento.status !== "cancelled" && typeof evento.starts_at === "string")
-      .filter(evento => {
+      .filter((evento) => evento.status !== "cancelled" && typeof evento.starts_at === "string")
+      .filter((evento) => {
         const quando = Date.parse(typeof evento.starts_at === "string" ? evento.starts_at : "")
         return Number.isFinite(quando) && quando >= agora
       })
-      .sort((a, b) =>
-        Date.parse(typeof a.starts_at === "string" ? a.starts_at : "") -
-        Date.parse(typeof b.starts_at === "string" ? b.starts_at : "")
+      .sort(
+        (a, b) =>
+          Date.parse(typeof a.starts_at === "string" ? a.starts_at : "") -
+          Date.parse(typeof b.starts_at === "string" ? b.starts_at : ""),
       )
       .slice(0, 3)
   }, [dados])
@@ -220,7 +221,7 @@ export function Inicio() {
                 cidade={casca.cidade}
                 salvos={salvos}
                 aoSalvar={alternarSalvo}
-                aoAbrirNegocio={id => void navegacao.irPara("negocio", { parametros: { id } })}
+                aoAbrirNegocio={(id) => void navegacao.irPara("negocio", { parametros: { id } })}
                 aoAbrirNegocios={() => void navegacao.irPara("negocios")}
               />
               <MoradiaNaCidade
@@ -228,7 +229,7 @@ export function Inicio() {
                 cidade={casca.cidade}
                 salvos={salvos}
                 aoSalvar={alternarSalvo}
-                aoAbrirAnuncio={id => void navegacao.irPara("anuncio", { parametros: { id } })}
+                aoAbrirAnuncio={(id) => void navegacao.irPara("anuncio", { parametros: { id } })}
                 aoAbrirImoveis={() => void navegacao.irPara("imoveis")}
               />
 
@@ -308,20 +309,32 @@ export function Inicio() {
 
               <Secao
                 titulo="Próximos encontros"
-                acoes={<Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>Agenda</Botao>}
+                acoes={
+                  <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
+                    Agenda
+                  </Botao>
+                }
               >
                 {eventos.length === 0 ? (
-                  <p className="text-sm text-(--on-surface-variant)">Nenhum encontro futuro registrado nesta cidade.</p>
+                  <p className="text-sm text-(--on-surface-variant)">
+                    Nenhum encontro futuro registrado nesta cidade.
+                  </p>
                 ) : (
                   <div className="grid gap-2">
-                    {eventos.map(evento => (
+                    {eventos.map((evento) => (
                       <LinhaDeLista
                         key={evento.id}
                         icone="event"
                         titulo={evento.title}
                         subtitulo={resumoDoEncontro(evento.starts_at, texto(evento.venue))}
-                        fim={<span className="text-[13px] font-medium text-(--primary)">Ver evento</span>}
-                        onClick={() => void navegacao.irPara("evento", { parametros: { id: evento.id } })}
+                        fim={
+                          <span className="text-[13px] font-medium text-(--primary)">
+                            Ver evento
+                          </span>
+                        }
+                        onClick={() =>
+                          void navegacao.irPara("evento", { parametros: { id: evento.id } })
+                        }
                       />
                     ))}
                   </div>
