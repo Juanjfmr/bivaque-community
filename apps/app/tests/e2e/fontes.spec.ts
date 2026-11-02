@@ -79,9 +79,7 @@ test.describe("fontes locais", () => {
 
   // Desde a paleta fria (ADR-20261102-paleta-fria), o título de tela também é Noto Sans; a
   // Noto Serif fica só no destaque da porta e das boas-vindas.
-  test("o texto e o título do app são desenhados com a Noto Sans", async ({
-    page,
-  }) => {
+  test("o texto e o título do app são desenhados com a Noto Sans", async ({ page }) => {
     await abrirGaleria(page)
     await page.evaluate(() => document.fonts.ready)
     const familias = await page.evaluate(() => {
