@@ -6,7 +6,7 @@
 
 > O ADR-20261024-front-react-spa governa o app: React de página única no apps/app (shadcn/ui), o Next como servidor e landing, o app de loja em Capacitor depois da web. O protótipo HTML é a especificação até cada onda ser aprovada pelo dono no app novo; as referências por fluxo estão em docs/design/fluxos-2026-10-30. Figma de setembro/outubro, pranchas e W00 são histórico preservado como frozen; não reiniciar. Contagens abaixo incluem infraestrutura, Mobile e histórico; cards done antigos não são percentual de fidelidade atual. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila. Reconciliado com origin/main: todos os IDs remotos preservados; snapshots locais antigos não substituem entregas de outros agentes.
 
-**Mapa:** 134 frentes · 8 agora · 7 bloqueadas · 68 concluídas · 0 drifts
+**Mapa:** 135 frentes · 8 agora · 8 bloqueadas · 68 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -28,6 +28,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-LEGAL-AI** · BLOCK · Governança LGPD para IA e terceiros — Revisão jurídica; Decisões do dono
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para abertura pública — Abertura pública; Prova E2E/deploy
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
+- **APP-REGUA-NEXTDOOR** · P1 · Régua Nextdoor: F01 e Grupos refeitos em prévia, com a identidade das peças — ADR-20261101-entrada-unica-por-codigo e ADR-20261101-foto-e-resposta-nos-grupos (R3) aguardam aprovação do dono; nada liga ao banco antes.
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime iOS em device real — Android já provado no emulador — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança

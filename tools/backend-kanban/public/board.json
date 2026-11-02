@@ -5513,6 +5513,46 @@
       "links": ["apps/web/app/landing/landing.tsx", "tests/e2e/landing-v8.spec.ts"],
       "updatedAt": "2026-10-31",
       "sourceRevision": "59a33028"
+    },
+    {
+      "id": "APP-REGUA-NEXTDOOR",
+      "title": "Régua Nextdoor: F01 e Grupos refeitos em prévia, com a identidade das peças",
+      "phase": "SPA e redesenho — novembro",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "blocked",
+      "description": "Refação do F01 e de Grupos pela régua Nextdoor (docs/agents/regua-nextdoor/HANDOFF.md em main), em prévias clicáveis com dados simulados que só existem no servidor de desenvolvimento: /app/previa/f01, /app/previa/grupos e a galeria /app/previa/pecas. Em 02/11 o dono escolheu a rodada de identidade das peças: biblioteca única em apps/app/src/pecas, família de ilustrações no lugar das fotos de IA, Brasa só na ação principal, botão pílula, serifa só no destaque. Nada fala com o banco: a ligação espera a aprovação dos dois ADRs R3 de 01/11. Branch local feat/f01-regua-nextdoor, sem push.",
+      "checklist": [
+        "Prévia clicável do F01 pela régua, com ADR de entrada única por código",
+        "Prévia clicável de Grupos pela régua, com ADR de foto e resposta nos grupos",
+        "Rodada de identidade das peças: biblioteca, galeria e família de ilustrações",
+        "Aceite visual do dono sobre F01, Grupos e a galeria",
+        "Aprovação do dono dos dois ADRs de 01/11 (R3)",
+        "Ligar F01 e Grupos ao banco e portar as peças para components/bivaque",
+        "Prova em celular real"
+      ],
+      "completedChecklist": [true, true, true, false, false, false, false],
+      "proof": [
+        "02/11: rodada de identidade na revisão 7a1a95d1. App: testes 125/125, typecheck e build verdes, nenhum arquivo de prévia no dist; test:scope 150/150 (o varredor de segredos acusava um CPF de exemplo num teste do F01 de 01/11, corrigido). Percursos por robô do F01 e de Grupos em 375, 768 e 1440, claro e escuro: sem erro de console, sem transbordo e no máximo uma ação em Brasa por tela; galeria com folha (Esc fecha) e aviso com Desfazer; prova de comportamento dos achados da revisão (Desfazer com a publicação aberta volta ao grupo, Desfazer antigo some ao tirar dos salvos, aviso para com foco, alvo de 44 px no botão sobre foto). Ilustrações geradas pelo GPT-6 Astra e normalizadas no Papel; revisão independente do Astra em .visual/PECAS/revisao-astra.md (fora do Git), achados de código corrigidos. Lint da raiz falha só em arquivos que a rodada não tocou (styles.css, Conversa.tsx, apps/web, scripts/load, docs/brand); gate completo da raiz não foi rodado.",
+        "01/11: prévias do F01 (901e4c73, 3636fdae, 0eb22586) e de Grupos (ef89dd6b) com testes de fluxo; padrão de tela em docs/agents/regua-nextdoor/PADRAO-DE-TELA.md (8a2dd166)."
+      ],
+      "blockers": [
+        "ADR-20261101-entrada-unica-por-codigo e ADR-20261101-foto-e-resposta-nos-grupos (R3) aguardam aprovação do dono; nada liga ao banco antes."
+      ],
+      "links": [
+        "docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md",
+        "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md",
+        "docs/decisions/ADR-20261101-entrada-unica-por-codigo.md",
+        "docs/decisions/ADR-20261101-foto-e-resposta-nos-grupos.md"
+      ],
+      "tests": [
+        "apps/app/tests/previa-f01.test.ts",
+        "apps/app/tests/previa-grupos.test.ts",
+        "apps/app/tests/pecas.test.ts"
+      ],
+      "dependencies": ["APP-001"],
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "7a1a95d1"
     }
   ]
 }
