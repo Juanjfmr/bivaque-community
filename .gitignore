@@ -6,6 +6,8 @@ coverage/
 playwright-report/
 test-results/
 .visual/
+# capturas transitórias do visual-capture do app (a evidência vai para .visual/)
+apps/app/artifacts/visual/
 dev-server.log
 dev-server.pid
 .env

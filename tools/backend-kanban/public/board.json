@@ -5390,7 +5390,7 @@
       "id": "APP-001",
       "title": "SPA nova: onda 1, base e navegação",
       "category": "frontend",
-      "description": "Auditoria visual Codex da fonte4f0a59ac: CORREÇÕES; adoção shadcn PARCIAL.152pares atuais e8vistas768 examinados.6famílias base com uso real; Select só galeria; sobreposição/paleta e outros padrões montados diretamente no Radix. NovosV13,V14,V15; demais omissõesV1 abertas.",
+      "description": "Base e navegação da SPA (onda 1) fechadas: casca, movimento, dados por interfaces e peças montadas sobre as bases shadcn. A auditoria visual de 26/10 foi resolvida (S01: bases dropdown-menu, alert-dialog, command e dialog; S02: paleta sobre Command; V13 e V14 conferidos) ou superada (V15, pelo ADR-20261102-paleta-fria). A composição das jornadas segue nas LAN-F01 a LAN-F10, na ordem do SPA ADR §8.",
       "checklist": [
         "Esqueleto e gate com versões fixas",
         "Navegação testada antes das telas",
@@ -5399,6 +5399,9 @@
         "Instrumentos revisados e capturas aprovadas"
       ],
       "proof": [
+        "02/11: APP-001 fechada como base e navegação. S01 resolvido: menu-de-linha e confirmacao não montam mais Radix direto — compõem bases novas em components/ui (dropdown-menu.tsx e alert-dialog.tsx), e sobreposicao e MenuCriar compõem components/ui/dialog. S02 resolvido: a Paleta foi refeita sobre components/ui/command (cmdk 1.1.1 fixo no package.json e no lockfile, publicação registrada em docs/agents/prototipo-shadcn/versoes-1a.json), com filtro que ignora acento como o resto do app e o histórico intacto (mesmo useSobreposicaoDaEntrada; jornadas-reais 52 e 74 verdes). Contrato novo tests/base-shadcn.test.ts (4/4) proíbe radix-ui e cmdk fora de components/ui, exige cada base e seu consumidor declarado e a presença das bases de tela. V13 conferido: chips de filtro em faixa horizontal (flex-nowrap com overflow-x) e indicador na caixa do chip escolhido; V14 conferido: título de pergunta em várias linhas (whitespace-normal break-words), sem truncate; V15 encerrado como SUPERADO pelo ADR-20261102-paleta-fria — a ação de concluir é ardósia e a Brasa fica no criar, então restaurar brasa no preenchido contrariaria o ADR aceito. O Criar ficou em 56 px compacto e 58 px aberto no celular e 52 px no desktop; a regra de 50 px que morava numa seção da Início saiu (o CSS da tela não redefine peça da casca) e a geometria ficou registrada em IDENTIDADE-DAS-PECAS.md; casca.spec:178 e acessibilidade.spec:56 passam nos seis tamanhos.",
+        "02/11 provas desta rodada: gate --fast verde (lint, typecheck e typecheck:e2e); npx pnpm test verde (unitárias, workspaces, privacidade e 147/147 de escopo, depois de registrar a publicação do cmdk); apps/app build ok; unitários do app 131/131 em 16 arquivos (inclui o contrato base-shadcn); E2E focal (componentes, sobreposicoes, jornadas-reais, casca, acessibilidade, menu-criar-fluxos, abas, rotas e pr116-historico) 885 passed, 26 skipped e 1 falha conhecida: a grade da galeria com 2 colunas em 768, pré-existente e registrada em APP-E2E-PREEXISTENTES (não é da base). Capturas reais a 375/768/1440 nos dois temas em .visual/APP-001/ (40 arquivos; visual-capture.spec 24/24).",
+        "02/11: o resíduo do blocker de pipeline (revisor automático do PR sem parecer e preview Vercel legado com Root Directory ausente, com dois projetos sob quota) foi extraído para PIPELINE-REVISAO-E-PREVIEW, blocked: são atos do dono e de infraestrutura, não mudam a base nem a navegação. O restante da composição visual (V02 e V04 a V12) segue a ordem do SPA ADR §8 nas jornadas LAN-F01 a LAN-F10, e o aceite visual da onda 1 foi substituído pelo marco 1 fechado em LAN-F1-IDENTIDADE.",
         "31/10: e2e completo do apps/app na F01 juntada ao #116 (revisão 6a5feb29): 1756 passaram, 23 falharam e 75 pulados. As 23 são PREEXISTENTES no #116: a mesma lista falha em e041fade sozinho. 15 delas já falhavam antes da F01 sair do #116 (topo da conversa sem \"Paulo R.\" nos seis tamanhos; Encontro cortado em 320; rolagem e foco por entrada, com clique interceptado pelo Criar ou pelos controles de prova; grade da galeria com 2 colunas em 768). 8 vêm do #116 (8a554d8a): o Criar compacto foi a 50 px no celular e casca.spec:178 e acessibilidade.spec:56 esperam 56 px. Próximo passo: decidir 50 ou 56 px e alinhar CSS ou teste; corrigir a conversa de demonstração e os cliques interceptados. Nenhuma é da entrada.",
         "28/10: onboarding demonstrativo inclui etapa opcional de negocios; divulgar reutiliza formulario e salva rascunho apenas na sessao, interesse e decidir depois nao publicam. Gate completo verde; 18/18 E2E em 375/768/1440. Backend e aceite visual independente pendentes.",
         "27/10: sugestoes de grupos abertas da cidade no onboarding demonstrativo, selecao opcional e estado vazio; nenhum vinculo criado. Gate completo verde; 15/15 E2E em 375/768/1440, instrumento aprovado em revisao estatica. Integracao real e auditoria visual independente pendentes.",
@@ -5432,19 +5435,45 @@
         "docs/historico/tasks/APP-008.task.yml",
         "docs/historico/tasks/APP-010.task.yml"
       ],
-      "sourceRevision": "6a5feb29",
+      "sourceRevision": "3f0a9965",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "now",
+      "status": "done",
       "tests": [],
       "dependencies": [],
-      "updatedAt": "2026-10-31",
-      "blockers": [
-        "Aceite visual da onda1 pendente. Adoção shadcn parcial: corrigir S01/S02 e comprovar consumo real dos componentes equivalentes, preservando navegação/histórico aprovados.",
-        "Corrigir V13 filtros, V14 títulos de perguntas e V15 variante das ações; grade/recentes V02 e omissões V04–V12 permanecem. Primeiro fechamento recomendado: base compartilhada com reuso shadcn, filtros e botões.",
-        "PR116: normalizar executor da revisão automática sem parecer e definir pelo dono o destino do preview Vercel legado com Root Directory ausente; dois outros projetos estão sob quota. Não é falha dos builds locais nem aceite visual global. Evidências e próximos passos no STATUS APP-010."
+      "updatedAt": "2026-11-02",
+      "blockers": [],
+      "completedChecklist": [true, true, true, true, true],
+      "completedAt": "2026-11-02"
+    },
+    {
+      "id": "PIPELINE-REVISAO-E-PREVIEW",
+      "title": "Parecer automático do PR e preview Vercel legado",
+      "category": "infra",
+      "description": "Resíduo do APP-001 (PR #116): o revisor automático do repositório roda sem publicar parecer e o preview Vercel legado ficou com Root Directory ausente, com dois outros projetos sob quota do dono. Não é falha de build local nem de aceite visual; enquanto não for resolvido, o CI é a única revisão automática do PR.",
+      "checklist": [
+        "Revisor automático do PR publica parecer (ou é desligado com motivo)",
+        "Destino do preview Vercel legado definido pelo dono (Root Directory e quota)"
       ],
-      "completedChecklist": [true, true, false, true, false]
+      "proof": [
+        "02/11: extraído do APP-001 ao fechá-lo; evidências no STATUS APP-010 (docs/historico/agents/prototipo-shadcn/STATUS.md)."
+      ],
+      "links": [
+        "docs/historico/agents/prototipo-shadcn/STATUS.md",
+        "docs/LANCAMENTO.md"
+      ],
+      "sourceRevision": "3f0a9965",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "status": "blocked",
+      "tests": [],
+      "dependencies": [],
+      "updatedAt": "2026-11-02",
+      "blockers": [
+        "Vercel: Root Directory do preview legado e quota dos projetos — ato do dono.",
+        "Revisor automático do PR sem parecer — executor e credenciais são do repositório e da máquina do dono."
+      ],
+      "completedChecklist": [false, false]
     },
     {
       "id": "RED-003",
