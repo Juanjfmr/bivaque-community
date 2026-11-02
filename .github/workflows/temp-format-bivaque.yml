@@ -1,0 +1,31 @@
+name: Temp Biome source formatting
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format changed files
+        run: |
+          pnpm exec biome format --write apps/app/src/telas/Guia.tsx apps/app/src/telas/GuiaNaHome.tsx apps/app/src/telas/Inicio.tsx apps/app/src/telas/dados-da-guarnicao.ts
+      - name: Emit formatted sources for PR author
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from base64 import b64encode
+          for name in ("Guia.tsx", "GuiaNaHome.tsx", "Inicio.tsx", "dados-da-guarnicao.ts"):
+              p=Path("apps/app/src/telas")/name
+              print("FORMATTED_START:"+name+":"+b64encode(p.read_bytes()).decode()+":FORMATTED_END")
+          PY
