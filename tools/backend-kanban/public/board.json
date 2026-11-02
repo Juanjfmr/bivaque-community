@@ -5691,6 +5691,7 @@
       "blockers": [],
       "updatedAt": "2026-11-02",
       "proof": [
+        "02/11: lote 3 — rotas do rascunho da entrada: GET/PUT /api/app/entry/progress com o resolvedor de sessão do lote 1, CSRF de escrita (Origin + cabeçalho do app) e CORS explícito; GET lê com o cliente do usuário sob RLS e devolve o progresso inicial quando não há linha; PUT valida o corpo num módulo puro (forma fechada, sem CPF/documento/senha/token, limite de 6 KB) e grava com o cliente de serviço usando o id da SESSÃO, nunca o do corpo; OPTIONS responde só para origem da lista. A lista de etapas do servidor é comparada em teste com apps/app/src/previa-f01/fluxo.ts para não drifar. 48/48 testes em tests/unit/app-api (17 do contrato, 7 da sessão, 11 da validação, 13 da rota); gate --fast e pnpm test verdes. BIVAQUE_APP_ORIGINS documentada no .env.example.",
         "02/11: lote 2 — rascunho da entrada no banco. ADR-20261102-progresso-da-entrada (R3, aceito por delegação) e migration 20261102220435_entry_progress: tabela por pessoa com versão, etapa e estado JSONB mínimo, RLS forçada, leitura só do dono, sem grant nem policy de escrita (a rota grava como service_role), CHECKs de etapa/versão/forma, purge incluída em finalize_account_deletion. ADR-20261101-entrada-unica-por-codigo aceito por delegação no mesmo lote e as duas linhas em RATIFICACAO.md. Prova pela fila: db reset --local --no-seed + test:db PASS 159 arquivos/2461 asserções (entry-progresso.sql com 13, incluindo RLS e CHECKs), generate:types e db:lint sem erro.",
         "02/11: primeiro lote — contrato de segurança das rotas /api do app em apps/web/lib/app-api (contrato.ts, sessao.ts e sessao-do-next.ts): credencial única (cookie da web OU Bearer do app de loja), conflito recusado, token malformado ou inválido nunca cai para o cookie, CSRF de escrita com Origin e cabeçalho do app, CORS explícito sem curinga com credencial. 24/24 testes em tests/unit/app-api (positivo e negativo em cada regra); gate --fast e pnpm test verdes. As rotas consumidoras e o resto do card entram nos próximos lotes.",
         "02/11: posto em now por instrução do dono; a ordem do docs/LANCAMENTO.md manda entregar o F01 ligado ao banco (ADR-20261101-entrada-unica-por-codigo). Dependência ainda aberta: AJUDA-PUBLICA, que é feita antes; LAN-F1-IDENTIDADE, APP-F01-ENTRADA-VISUAL e APP-001 estão fechadas.",
@@ -5713,15 +5714,18 @@
       "tests": [
         "tests/unit/app-api/contrato.test.ts",
         "tests/unit/app-api/sessao.test.ts",
+        "tests/unit/app-api/entry-progresso.test.ts",
+        "tests/unit/app-api/entry-progress-route.test.ts",
         "supabase/tests/entry-progresso.sql"
       ],
       "links": [
         "docs/LANCAMENTO.md",
         "docs/decisions/ADR-20261101-entrada-unica-por-codigo.md",
         "docs/decisions/ADR-20261102-progresso-da-entrada.md",
-        "supabase/migrations/20261102220435_entry_progress.sql"
+        "supabase/migrations/20261102220435_entry_progress.sql",
+        "apps/web/app/api/app/entry/progress/route.ts"
       ],
-      "sourceRevision": "f5479947",
+      "sourceRevision": "1f09368d",
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
     },
     {
