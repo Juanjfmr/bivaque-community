@@ -5694,6 +5694,7 @@
       "sourceRevision": "fc67e19e",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: primeiro lote — contrato de segurança das rotas /api do app em apps/web/lib/app-api (contrato.ts, sessao.ts e sessao-do-next.ts): credencial única (cookie da web OU Bearer do app de loja), conflito recusado, token malformado ou inválido nunca cai para o cookie, CSRF de escrita com Origin e cabeçalho do app, CORS explícito sem curinga com credencial. 24/24 testes em tests/unit/app-api (positivo e negativo em cada regra); gate --fast e pnpm test verdes. As rotas consumidoras e o resto do card entram nos próximos lotes.",
         "02/11: posto em now por instrução do dono; a ordem do docs/LANCAMENTO.md manda entregar o F01 ligado ao banco (ADR-20261101-entrada-unica-por-codigo). Dependência ainda aberta: AJUDA-PUBLICA, que é feita antes; LAN-F1-IDENTIDADE, APP-F01-ENTRADA-VISUAL e APP-001 estão fechadas.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
@@ -5702,7 +5703,7 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "Escopo em docs/LANCAMENTO.md (F01). Pronta só pelos seis critérios de pronto.",
+      "description": "Escopo em docs/LANCAMENTO.md (F01) e ADR-20261101-entrada-unica-por-codigo. Plano da frente, em ordem: 1) contrato de segurança das rotas /api do app (SPA ADR §5.1 a §5.3), em lib/app-api com testes; 2) progresso da entrada no banco (migration R3 com RLS e pgTAP) e as rotas GET/PUT /api/app/entry/progress; 3) ponte de autenticação por código no servidor (envio e verificação do OTP, cookie de sessão, reenvio de 60 s e limites); 4) cidade, momento, grupos e avisos; 5) verificação de CPF pelo caminho do Portal que já existe, com documento e revisão; 6) portar o visual aprovado da prévia para /app/entrar, retirar a tela antiga do apps/web com redirect e ajustar o portão do proxy. Cada passo entra com teste positivo e negativo e prova de runtime própria.",
       "checklist": [
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
         "Revisão às cegas contra a régua Nextdoor, com referências do Mobbin citadas",
@@ -5711,6 +5712,7 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
+      "tests": ["tests/unit/app-api/contrato.test.ts", "tests/unit/app-api/sessao.test.ts"],
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
     },
     {
