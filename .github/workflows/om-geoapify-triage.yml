@@ -1,0 +1,68 @@
+name: OM Geoapify - offline QA of 267 candidates
+# Safe: downloads EXISTING completed-batch artifact. Never invokes submit or paid Geoapify API.
+on:
+  push:
+    branches: [feat/om-catalog-staging-20261021]
+    paths: [.github/workflows/om-geoapify-triage.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  review-queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download ORIGINAL recovered results (no resubmission)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/om/provider
+          gh run download 39769999309 --repo "$GITHUB_REPOSITORY" \
+            --name om-geoapify-recovery-original-batch-unverified \
+            --dir /tmp/om/provider
+          test -s /tmp/om/provider/provider_results_unverified.json
+          echo 'db1fe824a0aea3f7908add1fa4ab737ea2cb7ece093bc3027e4b5b7b7adde652  /tmp/om/provider/geocoding_manifest.json' | sha256sum -c -
+          python - <<'PY'
+          import json
+          p='/tmp/om/provider/'
+          assert json.load(open(p+'batch_job.json'))['id']=='4253ec562d7c4d5896a3907de3ed30fa'
+          assert len(json.load(open(p+'provider_results_unverified.json')))==537
+          PY
+      - name: Rebuild source list and audit 267 candidates offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/om-catalog/normalize.py data/om/raw_oms_1416.csv /tmp/om/normalized
+          python scripts/om-catalog/audit_sites.py \
+            --organizations /tmp/om/normalized/military_organizations.csv \
+            --sites /tmp/om/normalized/military_sites.csv \
+            --localities data/om/ibge_localities.csv \
+            --out /tmp/om/audit
+          python scripts/om-catalog/triage_geoapify_recovery.py \
+            --manifest /tmp/om/provider/geocoding_manifest.json \
+            --provider /tmp/om/provider/provider_results_unverified.json \
+            --suggestions /tmp/om/provider/unverified_suggestions.csv \
+            --queue /tmp/om/audit/geocoding_queue.csv \
+            --organizations /tmp/om/normalized/military_organizations.csv \
+            --out /tmp/om/review
+          python - <<'PY'
+          import json,os
+          s=json.load(open('/tmp/om/review/triage_summary.json'))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('### Geoapify candidate triage: unverified\n\n')
+              for k,v in s.items():f.write(f'- {k}: {v}\n')
+          PY
+      - name: Upload audit queues
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bivaque-om-geocodes-267-manual-audit
+          path: /tmp/om/review/
+          retention-days: 30
+          if-no-files-found: warn
