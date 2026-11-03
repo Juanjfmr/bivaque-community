@@ -22,6 +22,7 @@
       "!**/.vercel",
       "!**/supabase/.temp",
       "!**/supabase/templates",
+      "!**/apps/web/public/app",
       "!**/apps/mobile/dist-android",
       "!**/apps/mobile/dist-ios",
       "!**/apps/mobile/.expo",
