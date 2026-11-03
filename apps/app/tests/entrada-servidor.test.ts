@@ -11,8 +11,8 @@ import {
   verificarCodigo,
 } from "../src/entrada/servidor"
 
-// O cliente das rotas /api/app/entry: URL, credenciais, cabeÃ§alho do app e
-// traduÃ§Ã£o de cada resposta. O CPF vai no corpo e nunca na URL.
+// O cliente das rotas /api/app/entry: URL, credenciais, cabeçalho do app e
+// tradução de cada resposta. O CPF vai no corpo e nunca na URL.
 
 const fetchFalso = vi.fn()
 
@@ -41,7 +41,7 @@ afterEach(() => {
 })
 
 describe("progresso", () => {
-  it("GET com credencial de sessÃ£o e o cabeÃ§alho do app", async () => {
+  it("GET com credencial de sessão e o cabeçalho do app", async () => {
     responda(200, { autenticado: true, via: "cookie", progresso: { versao: 2, etapa: "porta" } })
     const resposta = await lerProgresso()
     expect(resposta.autenticado).toBe(true)
@@ -52,7 +52,7 @@ describe("progresso", () => {
     expect(init.body).toBeUndefined()
   })
 
-  it("401 vira 'sem sessÃ£o', sem erro de tela", async () => {
+  it("401 vira 'sem sessão', sem erro de tela", async () => {
     responda(401, { autenticado: false })
     expect(await lerProgresso()).toEqual({ autenticado: false })
   })
@@ -76,7 +76,7 @@ describe("progresso", () => {
   })
 })
 
-describe("cÃ³digo", () => {
+describe("código", () => {
   it("envio 200 devolve o tempo de reenvio", async () => {
     responda(200, { enviado: true, reenviarEm: 60 })
     expect(await enviarCodigo("pessoa@example.invalid")).toEqual({
@@ -96,14 +96,14 @@ describe("cÃ³digo", () => {
     })
   })
 
-  it("verificaÃ§Ã£o 400 Ã© cÃ³digo invÃ¡lido, com a mensagem Ãºnica", async () => {
+  it("verificação 400 é código inválido, com a mensagem única", async () => {
     responda(400, { erro: "codigo-invalido" })
     expect(await verificarCodigo("pessoa@example.invalid", "123456")).toEqual({
       estado: "codigo-invalido",
     })
   })
 
-  it("verificaÃ§Ã£o 200 autentica", async () => {
+  it("verificação 200 autentica", async () => {
     responda(200, { autenticado: true })
     expect(await verificarCodigo("pessoa@example.invalid", "123456")).toEqual({
       estado: "autenticado",
@@ -111,7 +111,7 @@ describe("cÃ³digo", () => {
   })
 })
 
-describe("aceite, verificaÃ§Ã£o e CPF", () => {
+describe("aceite, verificação e CPF", () => {
   it("aceite POST sem corpo", async () => {
     responda(200, { aceito: true })
     await aceitarTermos()
@@ -121,12 +121,12 @@ describe("aceite, verificaÃ§Ã£o e CPF", () => {
     expect(init.body).toBeUndefined()
   })
 
-  it("status da verificaÃ§Ã£o volta tipado", async () => {
+  it("status da verificação volta tipado", async () => {
     responda(200, { autenticado: true, status: "pending", membroDaCidade: false, checkedAt: null })
     expect(await lerVerificacao()).toEqual({ status: "pending", membroDaCidade: false })
   })
 
-  it("CPF vai no corpo, nunca na URL, e o resultado nÃ£o traz motivo", async () => {
+  it("CPF vai no corpo, nunca na URL, e o resultado não traz motivo", async () => {
     responda(200, { outcome: { status: "verified" } })
     const resultado = await consultarCpf("52998224725")
     expect(resultado).toEqual({ status: "verified" })
@@ -136,7 +136,7 @@ describe("aceite, verificaÃ§Ã£o e CPF", () => {
     expect(JSON.parse(String(init.body))).toEqual({ cpf: "52998224725" })
   })
 
-  it("CPF recusado pela rota vira FalhaDaEntrada com o cÃ³digo", async () => {
+  it("CPF recusado pela rota vira FalhaDaEntrada com o código", async () => {
     responda(403, { erro: "aceite-pendente" })
     await expect(consultarCpf("52998224725")).rejects.toBeInstanceOf(FalhaDaEntrada)
   })
