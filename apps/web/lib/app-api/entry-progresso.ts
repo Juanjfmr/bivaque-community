@@ -1,21 +1,21 @@
 ﻿/**
- * O rascunho da entrada: forma e validaÃ§Ã£o no servidor (LAN-F01,
+ * O rascunho da entrada: forma e validação no servidor (LAN-F01,
  * ADR-20261102-progresso-da-entrada).
  *
- * A rota Ã© a Ãºnica escritora da tabela `entry_progress`, entÃ£o a validaÃ§Ã£o mora
- * aqui, num mÃ³dulo puro, e nÃ£o no cliente. TrÃªs regras nÃ£o sÃ£o negociÃ¡veis:
+ * A rota é a única escritora da tabela `entry_progress`, então a validação mora
+ * aqui, num módulo puro, e não no cliente. Três regras não são negociáveis:
  *
- * 1. **Nada de segredo no rascunho.** CPF, documento, senha e token nunca sÃ£o
- *    gravados â€” o CPF Ã© consultado no servidor e sÃ³ o resultado volta; o e-mail
- *    do cÃ³digo Ã© derivado da sessÃ£o, nÃ£o do corpo. Chave com esse nome Ã© recusa,
- *    nÃ£o campo ignorado, para o erro aparecer em teste.
- * 2. **Forma fechada.** SÃ³ as chaves conhecidas do estado entram; chave
- *    desconhecida Ã© recusa. Assim o JSONB nÃ£o vira depÃ³sito de dado pessoal.
- * 3. **Tamanho limitado.** O rascunho Ã© um punhado de escolhas; um corpo grande
- *    demais Ã© recusado antes de chegar ao banco.
+ * 1. **Nada de segredo no rascunho.** CPF, documento, senha e token nunca são
+ *    gravados — o CPF é consultado no servidor e só o resultado volta; o e-mail
+ *    do código é derivado da sessão, não do corpo. Chave com esse nome é recusa,
+ *    não campo ignorado, para o erro aparecer em teste.
+ * 2. **Forma fechada.** Só as chaves conhecidas do estado entram; chave
+ *    desconhecida é recusa. Assim o JSONB não vira depósito de dado pessoal.
+ * 3. **Tamanho limitado.** O rascunho é um punhado de escolhas; um corpo grande
+ *    demais é recusado antes de chegar ao banco.
  *
- * A lista de etapas Ã© a mesma de `apps/app/src/previa-f01/fluxo.ts`; o teste
- * `tests/unit/app-api/entry-progresso.test.ts` compara as duas para nÃ£o drifar.
+ * A lista de etapas é a mesma de `apps/app/src/previa-f01/fluxo.ts`; o teste
+ * `tests/unit/app-api/entry-progresso.test.ts` compara as duas para não drifar.
  */
 
 export const ETAPAS_DO_FLUXO = [
@@ -76,8 +76,8 @@ export type Validacao =
 /** O limite do rascunho inteiro, em bytes de JSON serializado. */
 export const LIMITE_DO_ESTADO = 6 * 1024
 
-// Chaves que um rascunho NUNCA tem: dado sensÃ­vel fica no servidor e nÃ£o no
-// estado retomÃ¡vel. A comparaÃ§Ã£o Ã© sem caixa porque o JSON Ã© escrito Ã  mÃ£o.
+// Chaves que um rascunho NUNCA tem: dado sensível fica no servidor e não no
+// estado retomável. A comparação é sem caixa porque o JSON é escrito à mão.
 const CAMPOS_PROIBIDOS = new Set([
   "cpf",
   "documento",
@@ -129,8 +129,8 @@ function listaDeTextos(valor: unknown, limite: number, tamanho: number): string[
 /**
  * Valida o corpo do `PUT /api/app/entry/progress`.
  *
- * Devolve o progresso **normalizado** (sÃ³ as chaves conhecidas, textos sem
- * espaÃ§o nas pontas), nÃ£o o corpo original: a rota grava o resultado, nunca o
+ * Devolve o progresso **normalizado** (só as chaves conhecidas, textos sem
+ * espaço nas pontas), não o corpo original: a rota grava o resultado, nunca o
  * que o cliente mandou.
  */
 export function validarProgresso(entrada: unknown): Validacao {

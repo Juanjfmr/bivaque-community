@@ -15,14 +15,14 @@ import { createServerClient } from "../../../../../lib/supabase/server"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-// Consulta do vÃ­nculo pelo CPF no app (LAN-F01). O CPF chega no corpo, Ã©
-// validado e consultado no Portal **no servidor**, e nÃ£o Ã© gravado nem devolvido:
-// a resposta Ã© o resultado sem motivo tÃ©cnico (ADR-20260922-identidade-quando-
-// portal-falha), e o log nunca carrega o CPF. A regra de elegibilidade Ã© a mesma
-// funÃ§Ã£o que a web usa â€” um caminho sÃ³, duas portas.
+// Consulta do vínculo pelo CPF no app (LAN-F01). O CPF chega no corpo, é
+// validado e consultado no Portal **no servidor**, e não é gravado nem devolvido:
+// a resposta é o resultado sem motivo técnico (ADR-20260922-identidade-quando-
+// portal-falha), e o log nunca carrega o CPF. A regra de elegibilidade é a mesma
+// função que a web usa — um caminho só, duas portas.
 //
-// O aceite Ã© exigido antes: o CPF Ã© consultado no Portal assim que digitado, e a
-// pessoa precisa ter visto a polÃ­tica que explica esse uso (ADR de entrada Â§3).
+// O aceite é exigido antes: o CPF é consultado no Portal assim que digitado, e a
+// pessoa precisa ter visto a política que explica esse uso (ADR de entrada §3).
 
 const CORPO_MAXIMO = 4 * 1024
 

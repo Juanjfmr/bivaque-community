@@ -1,10 +1,10 @@
 ﻿import { NextRequest as RequisicaoDoNext } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-// A rota fala com dois clientes: o do usuÃ¡rio (leitura sob RLS) e o de serviÃ§o
-// (escrita, porque a tabela nÃ£o tem grant de escrita). O teste troca os dois e
-// o resolvedor de sessÃ£o, e prova o que a rota promete: dono da linha vem da
-// sessÃ£o, CSRF da escrita, forma validada e nada de confiar no corpo.
+// A rota fala com dois clientes: o do usuário (leitura sob RLS) e o de serviço
+// (escrita, porque a tabela não tem grant de escrita). O teste troca os dois e
+// o resolvedor de sessão, e prova o que a rota promete: dono da linha vem da
+// sessão, CSRF da escrita, forma validada e nada de confiar no corpo.
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
@@ -75,7 +75,7 @@ beforeEach(() => {
 })
 
 describe("GET /api/app/entry/progress", () => {
-  it("sem sessÃ£o responde 401 e nÃ£o lÃª rascunho", async () => {
+  it("sem sessão responde 401 e não lê rascunho", async () => {
     resolver.mockResolvedValue({
       estado: "recusada",
       sessao: { estado: "recusada", motivo: "sem-credencial" },
@@ -109,7 +109,7 @@ describe("GET /api/app/entry/progress", () => {
     })
   })
 
-  it("rascunho fora da forma vira progresso inicial, nÃ£o erro de tela", async () => {
+  it("rascunho fora da forma vira progresso inicial, não erro de tela", async () => {
     mockMaybeSingle.mockResolvedValue({
       data: { versao: 2, etapa: "etapa-inexistente", estado: {} },
       error: null,
@@ -134,7 +134,7 @@ describe("PUT /api/app/entry/progress", () => {
     estado: { cidade: "Manaus", momento: "chegando" },
   }
 
-  it("sem sessÃ£o responde 401", async () => {
+  it("sem sessão responde 401", async () => {
     resolver.mockResolvedValue({
       estado: "recusada",
       sessao: { estado: "recusada", motivo: "token-invalido" },
@@ -144,14 +144,14 @@ describe("PUT /api/app/entry/progress", () => {
     )
   })
 
-  it("escrita por cookie sem o cabeÃ§alho do app Ã© recusada antes de qualquer gravaÃ§Ã£o", async () => {
+  it("escrita por cookie sem o cabeçalho do app é recusada antes de qualquer gravação", async () => {
     const resposta = await PUT(requisicao("PUT", { corpo: CORPO }))
     expect(resposta.status).toBe(403)
     expect(await resposta.json()).toEqual({ erro: "cabecalho-ausente" })
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 
-  it("origem fora da lista Ã© recusada", async () => {
+  it("origem fora da lista é recusada", async () => {
     const resposta = await PUT(
       requisicao("PUT", {
         origem: "https://evil.example.invalid",
@@ -163,7 +163,7 @@ describe("PUT /api/app/entry/progress", () => {
     expect(await resposta.json()).toEqual({ erro: "origem-recusada" })
   })
 
-  it("corpo invÃ¡lido e grande demais sÃ£o recusados", async () => {
+  it("corpo inválido e grande demais são recusados", async () => {
     expect((await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: [] }))).status).toBe(400)
     expect(
       (await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", texto: "{quebrado" }))).status,
@@ -175,7 +175,7 @@ describe("PUT /api/app/entry/progress", () => {
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 
-  it("grava com o id da SESSÃƒO, nunca com o do corpo", async () => {
+  it("grava com o id da SESSÃO, nunca com o do corpo", async () => {
     const resposta = await PUT(
       requisicao("PUT", {
         cabecalho: "bivaque-spa",
@@ -186,12 +186,12 @@ describe("PUT /api/app/entry/progress", () => {
         },
       }),
     )
-    // O CPF no estado Ã© recusado: nada de dado sensÃ­vel no rascunho.
+    // O CPF no estado é recusado: nada de dado sensível no rascunho.
     expect(resposta.status).toBe(400)
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 
-  it("grava o rascunho validado do dono da sessÃ£o", async () => {
+  it("grava o rascunho validado do dono da sessão", async () => {
     const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ ok: true, progresso: CORPO })
@@ -206,7 +206,7 @@ describe("PUT /api/app/entry/progress", () => {
     )
   })
 
-  it("falha de gravaÃ§Ã£o vira 503", async () => {
+  it("falha de gravação vira 503", async () => {
     mockUpsert.mockResolvedValue({ error: { message: "db offline" } })
     const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
     expect(resposta.status).toBe(503)
@@ -214,7 +214,7 @@ describe("PUT /api/app/entry/progress", () => {
 })
 
 describe("OPTIONS da rota", () => {
-  it("responde preflight sÃ³ para origem da lista", () => {
+  it("responde preflight só para origem da lista", () => {
     const sim = OPTIONS(requisicao("OPTIONS"))
     expect(sim.status).toBe(204)
     expect(sim.headers.get("access-control-allow-origin")).toBe(ORIGEM)
