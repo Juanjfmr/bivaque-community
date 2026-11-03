@@ -1,55 +1,29 @@
-﻿import { createServerClient } from "@supabase/ssr"
-import { type NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
-import {
-  cabecalhosDeCors,
-  cabecalhosDePreflight,
-  origemPermitida,
-  VALOR_DO_CABECALHO_DO_APP,
-} from "../../../../../../lib/app-api/contrato"
 import {
   codigoDeEntrada,
   emailDeEntrada,
   SEGUNDOS_DE_REENVIO,
   vereditoDaVerificacao,
 } from "../../../../../../lib/app-api/entrada-otp"
+import { conferirPorta, opcoesDoApp, responder } from "../../../../../../lib/app-api/rota-do-app"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-// VerificaÃ§Ã£o do cÃ³digo de entrada (LAN-F01, ADR-20261101-entrada-unica-por-codigo).
+// Verificação do código de entrada (LAN-F01, ADR-20261101-entrada-unica-por-codigo).
 //
-// SÃ³ esta rota cria a sessÃ£o do app: o `verifyOtp` devolve a sessÃ£o e os cookies
-// do `@supabase/ssr` sÃ£o gravados na resposta. O caminho de erro Ã© deliberadamente
-// Ãºnico â€” cÃ³digo errado, vencido ou reusado respondem "CÃ³digo invÃ¡lido ou
+// Só esta rota cria a sessão do app: o `verifyOtp` devolve a sessão e os cookies
+// do `@supabase/ssr` são gravados na resposta. O caminho de erro é deliberadamente
+// único — código errado, vencido ou reusado respondem "Código inválido ou
 // vencido", sem dizer qual foi e sem o erro cru do GoTrue.
 //
-// A porta do app (cabeÃ§alho prÃ³prio + origem na lista) tambÃ©m protege contra
-// login CSRF: um site de terceiro nÃ£o consegue verificar um cÃ³digo e fixar a
-// sessÃ£o da vÃ­tima na conta do atacante.
+// A porta do app (cabeçalho próprio + origem na lista) também protege contra
+// login CSRF: um site de terceiro não consegue verificar um código e fixar a
+// sessão da vítima na conta do atacante.
 
 const CORPO_MAXIMO = 4 * 1024
-
-function origensPermitidas(request: NextRequest): string[] {
-  const doAmbiente = (process.env["BIVAQUE_APP_ORIGINS"] ?? "")
-    .split(",")
-    .map((origem) => origem.trim())
-    .filter((origem) => origem !== "")
-  return [new URL(request.url).origin, ...doAmbiente]
-}
-
-type Porta = "ok" | "origem-recusada" | "cabecalho-ausente"
-
-function conferirPorta(request: NextRequest): Porta {
-  const origem = request.headers.get("origin")
-  if (origem !== null && !origemPermitida(origem, origensPermitidas(request))) {
-    return "origem-recusada"
-  }
-  if (request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
-    return "cabecalho-ausente"
-  }
-  return "ok"
-}
 
 type CookieParaGravar = Readonly<{
   name: string
@@ -57,31 +31,8 @@ type CookieParaGravar = Readonly<{
   options?: Record<string, unknown>
 }>
 
-function responder(
-  request: NextRequest,
-  corpo: unknown,
-  status: number,
-  cookies: readonly CookieParaGravar[] = [],
-): NextResponse {
-  const resposta = NextResponse.json(corpo, {
-    status,
-    headers: {
-      "cache-control": "no-store",
-      ...cabecalhosDeCors(request.headers.get("origin"), origensPermitidas(request)),
-    },
-  })
-  for (const cookie of cookies) {
-    if (cookie.options === undefined) {
-      resposta.cookies.set(cookie.name, cookie.value)
-    } else {
-      resposta.cookies.set(cookie.name, cookie.value, cookie.options as never)
-    }
-  }
-  return resposta
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const porta = conferirPorta(request)
+  const porta = conferirPorta(request, "cookie")
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -105,9 +56,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "codigo-invalido" }, 400)
   }
 
-  // Os cookies saem daqui, nÃ£o do cliente: o `@supabase/ssr` escreve a sessÃ£o
-  // na resposta depois de o GoTrue validar o cÃ³digo. Guardar a lista e aplicÃ¡-la
-  // depois monta a resposta jÃ¡ com o corpo certo e os cookies.
+  // Os cookies saem daqui, não do cliente: o `@supabase/ssr` escreve a sessão
+  // na resposta depois de o GoTrue validar o código. Guardar a lista e aplicá-la
+  // depois monta a resposta já com o corpo certo e os cookies.
   const paraGravar: CookieParaGravar[] = []
   const cliente = createServerClient<Database>(url, anon, {
     cookies: {
@@ -126,41 +77,38 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     type: "email",
   })
 
+  const resposta = (corpoDaResposta: unknown, status: number): NextResponse => {
+    const montada = responder(request, corpoDaResposta, status)
+    for (const cookie of paraGravar) {
+      if (cookie.options === undefined) {
+        montada.cookies.set(cookie.name, cookie.value)
+      } else {
+        montada.cookies.set(cookie.name, cookie.value, cookie.options as never)
+      }
+    }
+    return montada
+  }
+
   if (error !== null) {
     const veredito = vereditoDaVerificacao(error)
     if (veredito.estado === "limite") {
-      return responder(
-        request,
-        { erro: "limite", reenviarEm: SEGUNDOS_DE_REENVIO },
-        429,
-        paraGravar,
-      )
+      return resposta({ erro: "limite", reenviarEm: SEGUNDOS_DE_REENVIO }, 429)
     }
     if (veredito.estado === "codigo-invalido") {
-      return responder(request, { erro: "codigo-invalido" }, 400, paraGravar)
+      return resposta({ erro: "codigo-invalido" }, 400)
     }
-    return responder(request, { erro: "indisponivel" }, 503, paraGravar)
+    return resposta({ erro: "indisponivel" }, 503)
   }
 
   if (data.session === null) {
-    // Sem sessÃ£o nÃ£o hÃ¡ entrada: o GoTrue validou o cÃ³digo mas nÃ£o devolveu
-    // sessÃ£o, e seguir adiante fingiria um login que nÃ£o existe.
-    return responder(request, { erro: "codigo-invalido" }, 400)
+    // Sem sessão não há entrada: o GoTrue validou o código mas não devolveu
+    // sessão, e seguir adiante fingiria um login que não existe.
+    return resposta({ erro: "codigo-invalido" }, 400)
   }
 
-  return responder(request, { autenticado: true }, 200, paraGravar)
+  return resposta({ autenticado: true }, 200)
 }
 
 export function OPTIONS(request: NextRequest): NextResponse {
-  const cabecalhos = cabecalhosDePreflight(
-    request.headers.get("origin"),
-    origensPermitidas(request),
-  )
-  if (Object.keys(cabecalhos).length === 0) {
-    return new NextResponse(null, { status: 403, headers: { "cache-control": "no-store" } })
-  }
-  return new NextResponse(null, {
-    status: 204,
-    headers: { "cache-control": "no-store", ...cabecalhos },
-  })
+  return opcoesDoApp(request)
 }

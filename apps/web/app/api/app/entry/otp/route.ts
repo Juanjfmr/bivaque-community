@@ -1,17 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
-import { type NextRequest, NextResponse } from "next/server"
+import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
-import {
-  cabecalhosDeCors,
-  cabecalhosDePreflight,
-  origemPermitida,
-  VALOR_DO_CABECALHO_DO_APP,
-} from "../../../../../lib/app-api/contrato"
 import {
   emailDeEntrada,
   SEGUNDOS_DE_REENVIO,
   vereditoDoEnvio,
 } from "../../../../../lib/app-api/entrada-otp"
+import { conferirPorta, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -30,40 +25,8 @@ export const dynamic = "force-dynamic"
 
 const CORPO_MAXIMO = 4 * 1024
 
-function origensPermitidas(request: NextRequest): string[] {
-  const doAmbiente = (process.env["BIVAQUE_APP_ORIGINS"] ?? "")
-    .split(",")
-    .map((origem) => origem.trim())
-    .filter((origem) => origem !== "")
-  return [new URL(request.url).origin, ...doAmbiente]
-}
-
-type Porta = "ok" | "origem-recusada" | "cabecalho-ausente"
-
-function conferirPorta(request: NextRequest): Porta {
-  const origem = request.headers.get("origin")
-  // POST de navegador sempre manda Origin; a ausência é cliente nativo.
-  if (origem !== null && !origemPermitida(origem, origensPermitidas(request))) {
-    return "origem-recusada"
-  }
-  if (request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
-    return "cabecalho-ausente"
-  }
-  return "ok"
-}
-
-function responder(request: NextRequest, corpo: unknown, status: number): NextResponse {
-  return NextResponse.json(corpo, {
-    status,
-    headers: {
-      "cache-control": "no-store",
-      ...cabecalhosDeCors(request.headers.get("origin"), origensPermitidas(request)),
-    },
-  })
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const porta = conferirPorta(request)
+  const porta = conferirPorta(request, "cookie")
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -106,15 +69,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 export function OPTIONS(request: NextRequest): NextResponse {
-  const cabecalhos = cabecalhosDePreflight(
-    request.headers.get("origin"),
-    origensPermitidas(request),
-  )
-  if (Object.keys(cabecalhos).length === 0) {
-    return new NextResponse(null, { status: 403, headers: { "cache-control": "no-store" } })
-  }
-  return new NextResponse(null, {
-    status: 204,
-    headers: { "cache-control": "no-store", ...cabecalhos },
-  })
+  return opcoesDoApp(request)
 }

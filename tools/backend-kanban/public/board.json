@@ -5691,6 +5691,7 @@
       "blockers": [],
       "updatedAt": "2026-11-02",
       "proof": [
+        "02/11: lote 5 — o meio do onboarding no app: POST /api/app/entry/consent (aceite com as versões do contrato, autor = sessão), GET /api/app/entry/verification (status cru da verificação + se já é membro da cidade, sem motivo técnico), POST /api/app/entry/cpf (CPF validado, aceite exigido antes, consulta no Portal pelo servidor, resultado sem motivo e CPF nunca logado nem devolvido) e POST /api/app/entry/provision (nome/cidade/momento pela mesma validação e pelo mesmo provision_member_entry da web, só com verificação confirmada, apagando o rascunho ao concluir). O encanamento comum (origem, CSRF, CORS, sessão, corpo) foi para apps/web/lib/app-api/rota-do-app.ts e as rotas dos lotes 3 e 4 passaram a usá-lo, sem mudar comportamento. 16 testes novos, 90/90 em tests/unit/app-api; gate --fast e pnpm test verdes.",
         "02/11: lote 4 — a porta por código no servidor. POST /api/app/entry/otp envia com signInWithOtp no servidor (shouldCreateUser), responde IGUAL para conta nova e existente (anti-enumeração, reusando classifyEntrySend), 429 só para limite com segundos e 503 para transporte; POST /api/app/entry/otp/verify valida o formato (6 dígitos), chama verifyOtp e grava os cookies da sessão na resposta, com mensagem única para código errado/vencido/reusado e 400/429/503 no resto. As duas exigem o cabeçalho do app e origem na lista (login CSRF). config.toml: otp_expiry 600 e template do e-mail com o código grande e sem link (supabase/templates/magic_link.html, conteúdo validado no restart local do Supabase); biome passa a ignorar supabase/templates para não ler a expressão GoTrue como template JS. 26 testes novos (13 de normalização/vereditos e 13 das rotas), 74/74 em tests/unit/app-api; gate --fast e pnpm test verdes.",
         "02/11: lote 3 — rotas do rascunho da entrada: GET/PUT /api/app/entry/progress com o resolvedor de sessão do lote 1, CSRF de escrita (Origin + cabeçalho do app) e CORS explícito; GET lê com o cliente do usuário sob RLS e devolve o progresso inicial quando não há linha; PUT valida o corpo num módulo puro (forma fechada, sem CPF/documento/senha/token, limite de 6 KB) e grava com o cliente de serviço usando o id da SESSÃO, nunca o do corpo; OPTIONS responde só para origem da lista. A lista de etapas do servidor é comparada em teste com apps/app/src/previa-f01/fluxo.ts para não drifar. 48/48 testes em tests/unit/app-api (17 do contrato, 7 da sessão, 11 da validação, 13 da rota); gate --fast e pnpm test verdes. BIVAQUE_APP_ORIGINS documentada no .env.example.",
         "02/11: lote 2 — rascunho da entrada no banco. ADR-20261102-progresso-da-entrada (R3, aceito por delegação) e migration 20261102220435_entry_progress: tabela por pessoa com versão, etapa e estado JSONB mínimo, RLS forçada, leitura só do dono, sem grant nem policy de escrita (a rota grava como service_role), CHECKs de etapa/versão/forma, purge incluída em finalize_account_deletion. ADR-20261101-entrada-unica-por-codigo aceito por delegação no mesmo lote e as duas linhas em RATIFICACAO.md. Prova pela fila: db reset --local --no-seed + test:db PASS 159 arquivos/2461 asserções (entry-progresso.sql com 13, incluindo RLS e CHECKs), generate:types e db:lint sem erro.",
@@ -5719,6 +5720,7 @@
         "tests/unit/app-api/entry-progress-route.test.ts",
         "tests/unit/app-api/entrada-otp.test.ts",
         "tests/unit/app-api/entrada-otp-rotas.test.ts",
+        "tests/unit/app-api/entrada-rotas.test.ts",
         "supabase/tests/entry-progresso.sql"
       ],
       "links": [
@@ -5729,9 +5731,14 @@
         "apps/web/app/api/app/entry/progress/route.ts",
         "apps/web/app/api/app/entry/otp/route.ts",
         "apps/web/app/api/app/entry/otp/verify/route.ts",
+        "apps/web/app/api/app/entry/consent/route.ts",
+        "apps/web/app/api/app/entry/verification/route.ts",
+        "apps/web/app/api/app/entry/cpf/route.ts",
+        "apps/web/app/api/app/entry/provision/route.ts",
+        "apps/web/lib/app-api/rota-do-app.ts",
         "supabase/templates/magic_link.html"
       ],
-      "sourceRevision": "ff4b7466",
+      "sourceRevision": "1bd1b699",
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
     },
     {
@@ -6105,7 +6112,8 @@
       "dependencies": [],
       "tests": [
         "tests/e2e/group-event-detail-denials.spec.ts",
-        "tests/e2e/provider-vitrine.spec.ts"
+        "tests/e2e/provider-vitrine.spec.ts",
+        "tests/e2e/group-join-reason.spec.ts"
       ],
       "blockers": [],
       "updatedAt": "2026-11-02",
@@ -6115,6 +6123,7 @@
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
       ],
       "proof": [
+        "02/11: mais uma queda do lote @stateful no CI do PR #125 (revisão 1bd1b699, job Install, test, and build): group-join-reason.spec.ts:176 esperou o botão Entrar no grupo aberto e não o achou, nos dois retries; o rerun sem mudança de código fechou verde (21m40s). É a mesma assinatura das quedas anteriores — teste serial dependente de estado/conexão do Supabase local —, não regressão do diff, e fica registrada aqui em vez de sumir do relatório.",
         "02/11: causa achada em parte — specs que gravam na conta semeada rodavam em paralelo nos três tamanhos. recon-032 (bloquear), provider-vitrine (catálogo), recon-018 (cadastro, limite do Auth) e synthetic-people foram para o lote serial @stateful; group-base centraliza o botão antes do clique (cabeçalho fixo). Com isso o CI do #121 e do #122 fechou verde. Ficou retries: 1 só no CI da suíte da web antiga, como paliativo visível (flaky no relatório); a perda de conexão com o Supabase local sob carga segue sem causa.",
         "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."
       ],
