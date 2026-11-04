@@ -232,7 +232,7 @@ export function DescobertaLab() {
                 <button
                   type="button"
                   className="bv-descoberta-abrir"
-                  aria-label={"Ver detalhes de " + item.titulo}
+                  aria-label={`Ver detalhes de ${item.titulo}`}
                   onClick={(evento) => {
                     origem.current = evento.currentTarget
                     mudarDetalhe(item)
@@ -242,14 +242,14 @@ export function DescobertaLab() {
                     src={assetUrl(item.imagem)}
                     alt=""
                     loading="lazy"
-                    style={{ viewTransitionName: aberto?.id === item.id ? "none" : "bv-lab-imagem-" + item.id }}
+                    style={{ viewTransitionName: aberto?.id === item.id ? "none" : `bv-lab-imagem-${item.id}` }}
                   />
                 </button>
                 <span className="bv-descoberta-selo">{item.destaque ? "Divulgação · exemplo" : item.grupo}</span>
                 <button
                   type="button"
                   className="bv-descoberta-salvar"
-                  aria-label={(salvos.has(item.id) ? "Remover dos salvos: " : "Salvar: ") + item.titulo}
+                  aria-label={`${salvos.has(item.id) ? "Remover dos salvos: " : "Salvar: "}${item.titulo}`}
                   aria-pressed={salvos.has(item.id)}
                   onClick={() => alternarSalvo(item.id)}
                 >
@@ -281,7 +281,7 @@ export function DescobertaLab() {
           <h2>Uma pergunta pode ajudar muita gente.</h2>
           <p>Encontre recomendações e conversas que continuam úteis para quem chega depois.</p>
           <Button variant="outline" onClick={() => void navegacao.irPara("comunidade")}>
-            Explorar Comunidade <Icone nome="arrow_forward" />
+            Explorar Comunidade <Icone nome="chevron_right" />
           </Button>
         </div>
       </div>
@@ -293,7 +293,7 @@ export function DescobertaLab() {
           <p>Descubra como os negócios podem aparecer na vitrine local do Bivaque.</p>
         </div>
         <Button onClick={() => void navegacao.irPara("negocios")}>
-          Conhecer Negócios <Icone nome="arrow_forward" />
+          Conhecer Negócios <Icone nome="chevron_right" />
         </Button>
       </div>
 
@@ -319,7 +319,7 @@ export function DescobertaLab() {
                 src={assetUrl(aberto.imagem)}
                 alt={aberto.titulo}
                 className="bv-descoberta-detalhe-imagem"
-                style={{ viewTransitionName: "bv-lab-imagem-" + aberto.id }}
+                style={{ viewTransitionName: `bv-lab-imagem-${aberto.id}` }}
               />
               <span className="bv-descoberta-detalhe-tipo">{aberto.grupo} · exemplo fictício</span>
               <p>{aberto.descricao}</p>
@@ -344,7 +344,7 @@ export function DescobertaLab() {
                     disabled={rascunho.trim().length === 0}
                     onClick={() => setMensagemEnviada(true)}
                   >
-                    Simular pedido <Icone nome="arrow_forward" />
+                    Simular pedido <Icone nome="chevron_right" />
                   </Button>
                   <small>Nesta prévia, nada é enviado a pessoas ou empresas.</small>
                 </div>
