@@ -57,7 +57,16 @@ export type Progresso = {
   emailMascarado: string | null
   verificacao: Verificacao
   nome: { nome: string; sobrenome: string } | null
+  /** Nome da cidade para exibir; o canônico é `cidadeIbge`. */
   cidade: string | null
+  /** Código IBGE do catálogo (`YYYYYYY`), único vocabulário de cidade no banco. */
+  cidadeIbge: string | null
+  /** Código IBGE do destino; só existe quando o momento é "saindo". */
+  destinoIbge: string | null
+  /** Data da chegada em `YYYY-MM-DD`; só existe quando o momento é "chegando". */
+  dataChegada: string | null
+  /** Data da saída em `YYYY-MM-DD`; só existe quando o momento é "saindo". */
+  dataSaida: string | null
   momento: Momento | null
   interesses: readonly string[]
   grupos: readonly string[]
@@ -119,6 +128,10 @@ export function progressoInicial(): Progresso {
     verificacao: "nao-iniciada",
     nome: null,
     cidade: null,
+    cidadeIbge: null,
+    destinoIbge: null,
+    dataChegada: null,
+    dataSaida: null,
     momento: null,
     interesses: [],
     grupos: [],

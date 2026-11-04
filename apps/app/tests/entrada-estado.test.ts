@@ -77,6 +77,33 @@ describe("progresso vindo do servidor", () => {
       avisos: "ativados",
     })
   })
+
+  it("aceita cidade e destino por código IBGE e data de calendário", () => {
+    const estado = estadoDoServidor({
+      cidade: "Manaus",
+      cidadeIbge: "1302603",
+      destinoIbge: "3304557",
+      dataChegada: "2026-12-01",
+      dataSaida: "2027-01-31",
+    })
+    expect(estado).toEqual({
+      cidade: "Manaus",
+      cidadeIbge: "1302603",
+      destinoIbge: "3304557",
+      dataChegada: "2026-12-01",
+      dataSaida: "2027-01-31",
+    })
+  })
+
+  it("descarta código IBGE e data fora do formato canônico", () => {
+    const estado = estadoDoServidor({
+      cidadeIbge: "130260",
+      destinoIbge: 3304557,
+      dataChegada: "2026-02-30",
+      dataSaida: "31/01/2027",
+    })
+    expect(estado).toEqual({})
+  })
 })
 
 describe("estado enviado ao servidor", () => {
@@ -108,6 +135,24 @@ describe("estado enviado ao servidor", () => {
   it("não inventa chave para caminho de convite", () => {
     const progresso = { ...progressoInicial(), convite: true }
     expect(estadoParaServidor(progresso)).toEqual({ convite: true })
+  })
+
+  it("leva cidade, destino e datas canônicos para o rascunho", () => {
+    const progresso = {
+      ...progressoInicial(),
+      cidade: "Manaus",
+      cidadeIbge: "1302603",
+      momento: "saindo" as const,
+      destinoIbge: "3304557",
+      dataSaida: "2027-01-31",
+    }
+    expect(estadoParaServidor(progresso)).toEqual({
+      cidade: "Manaus",
+      cidadeIbge: "1302603",
+      momento: "saindo",
+      destinoIbge: "3304557",
+      dataSaida: "2027-01-31",
+    })
   })
 
   it("paraServidor devolve versão, etapa e estado", () => {

@@ -65,6 +65,43 @@ describe("progresso válido", () => {
   it("o progresso inicial é a porta, na versão do fluxo", () => {
     expect(progressoInicial()).toEqual({ versao: VERSAO_DO_FLUXO, etapa: "porta", estado: {} })
   })
+
+  it("aceita o modelo canônico da cidade: código IBGE e data de calendário", () => {
+    const resultado = validarProgresso({
+      versao: 2,
+      etapa: "cidade",
+      estado: {
+        cidade: "Manaus",
+        cidadeIbge: "1302603",
+        momento: "saindo",
+        destinoIbge: "3304557",
+        dataSaida: "2027-01-31",
+      },
+    })
+    expect(resultado).toEqual({
+      ok: true,
+      progresso: {
+        versao: 2,
+        etapa: "cidade",
+        estado: {
+          cidade: "Manaus",
+          cidadeIbge: "1302603",
+          momento: "saindo",
+          destinoIbge: "3304557",
+          dataSaida: "2027-01-31",
+        },
+      },
+    })
+  })
+
+  it("aceita data de chegada válida", () => {
+    const resultado = validarProgresso({
+      versao: 2,
+      etapa: "cidade",
+      estado: { cidadeIbge: "1302603", momento: "chegando", dataChegada: "2026-12-01" },
+    })
+    expect(resultado.ok).toBe(true)
+  })
 })
 
 describe("progresso recusado", () => {
@@ -151,6 +188,15 @@ describe("progresso recusado", () => {
       { grupos: ["ok", 2] },
       { avisos: "talvez" },
       { convite: "sim" },
+      // Modelo canônico: código IBGE de 7 dígitos e data de calendário real.
+      { cidadeIbge: "130260" },
+      { cidadeIbge: "130260A" },
+      { cidadeIbge: 1302603 },
+      { destinoIbge: "930455" },
+      { dataChegada: "2026-02-30" },
+      { dataChegada: "31/01/2027" },
+      { dataSaida: "2027-13-01" },
+      { dataSaida: 20270131 },
     ]
     for (const estado of casos) {
       expect(

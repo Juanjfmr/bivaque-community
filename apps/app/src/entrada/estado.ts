@@ -30,12 +30,39 @@ const AVISOS: readonly string[] = ["ativados", "agora-nao"]
 export type EstadoDoServidor = Readonly<{
   nome?: Readonly<{ nome: string; sobrenome: string }>
   cidade?: string
+  cidadeIbge?: string
+  destinoIbge?: string
+  dataChegada?: string
+  dataSaida?: string
   momento?: Momento
   interesses?: readonly string[]
   grupos?: readonly string[]
   avisos?: "ativados" | "agora-nao"
   convite?: boolean
 }>
+
+// Modelo canônico da entrada: cidade e destino em código IBGE, data em
+// `YYYY-MM-DD` de calendário real. O estado que volta do servidor passa por aqui
+// de novo (defesa contra linha antiga), então a regra não pode divergir.
+const CODIGO_IBGE = /^\d{7}$/
+const DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/
+
+function codigoIbge(valor: unknown): string | undefined {
+  return typeof valor === "string" && CODIGO_IBGE.test(valor) ? valor : undefined
+}
+
+function dataIso(valor: unknown): string | undefined {
+  if (typeof valor !== "string") return undefined
+  const achado = DATA_ISO.exec(valor)
+  if (achado === null) return undefined
+  const [ano, mes, dia] = [Number(achado[1]), Number(achado[2]), Number(achado[3])]
+  const data = new Date(Date.UTC(ano, mes - 1, dia))
+  return data.getUTCFullYear() === ano &&
+    data.getUTCMonth() === mes - 1 &&
+    data.getUTCDate() === dia
+    ? valor
+    : undefined
+}
 
 function etapaValida(valor: unknown): IdDaEtapa | null {
   return typeof valor === "string" && (ETAPAS as readonly string[]).includes(valor)
@@ -62,6 +89,10 @@ export function estadoDoServidor(valor: unknown): EstadoDoServidor {
   const estado: {
     nome?: { nome: string; sobrenome: string }
     cidade?: string
+    cidadeIbge?: string
+    destinoIbge?: string
+    dataChegada?: string
+    dataSaida?: string
     momento?: Momento
     interesses?: string[]
     grupos?: string[]
@@ -72,6 +103,14 @@ export function estadoDoServidor(valor: unknown): EstadoDoServidor {
   const nome = nomes(dados["nome"])
   if (nome !== undefined) estado.nome = nome
   if (typeof dados["cidade"] === "string") estado.cidade = dados["cidade"]
+  const cidadeIbge = codigoIbge(dados["cidadeIbge"])
+  if (cidadeIbge !== undefined) estado.cidadeIbge = cidadeIbge
+  const destinoIbge = codigoIbge(dados["destinoIbge"])
+  if (destinoIbge !== undefined) estado.destinoIbge = destinoIbge
+  const dataChegada = dataIso(dados["dataChegada"])
+  if (dataChegada !== undefined) estado.dataChegada = dataChegada
+  const dataSaida = dataIso(dados["dataSaida"])
+  if (dataSaida !== undefined) estado.dataSaida = dataSaida
   if (typeof dados["momento"] === "string" && MOMENTOS.includes(dados["momento"])) {
     estado.momento = dados["momento"] as Momento
   }
@@ -127,6 +166,10 @@ export function estadoParaServidor(progresso: Progresso): EstadoDoServidor {
   return {
     ...(progresso.nome === null ? {} : { nome: progresso.nome }),
     ...(progresso.cidade === null ? {} : { cidade: progresso.cidade }),
+    ...(progresso.cidadeIbge === null ? {} : { cidadeIbge: progresso.cidadeIbge }),
+    ...(progresso.destinoIbge === null ? {} : { destinoIbge: progresso.destinoIbge }),
+    ...(progresso.dataChegada === null ? {} : { dataChegada: progresso.dataChegada }),
+    ...(progresso.dataSaida === null ? {} : { dataSaida: progresso.dataSaida }),
     ...(progresso.momento === null ? {} : { momento: progresso.momento }),
     ...(progresso.interesses.length === 0 ? {} : { interesses: progresso.interesses }),
     ...(progresso.grupos.length === 0 ? {} : { grupos: progresso.grupos }),

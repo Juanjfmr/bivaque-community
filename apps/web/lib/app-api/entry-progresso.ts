@@ -43,7 +43,16 @@ export type MomentoDoRascunho = "chegando" | "morando" | "saindo"
 
 export type EstadoDoRascunho = Readonly<{
   nome?: Readonly<{ nome: string; sobrenome: string }>
+  /** Nome da cidade para exibir; o canônico é `cidadeIbge`. */
   cidade?: string
+  /** Código IBGE do catálogo (7 dígitos). */
+  cidadeIbge?: string
+  /** Código IBGE do destino; só quando o momento é "saindo". */
+  destinoIbge?: string
+  /** Data da chegada em `YYYY-MM-DD`; só quando o momento é "chegando". */
+  dataChegada?: string
+  /** Data da saída em `YYYY-MM-DD`; só quando o momento é "saindo". */
+  dataSaida?: string
   momento?: MomentoDoRascunho
   interesses?: readonly string[]
   grupos?: readonly string[]
@@ -99,6 +108,10 @@ const CAMPOS_PROIBIDOS = new Set([
 const CHAVES_DO_ESTADO = new Set([
   "nome",
   "cidade",
+  "cidadeIbge",
+  "destinoIbge",
+  "dataChegada",
+  "dataSaida",
   "momento",
   "interesses",
   "grupos",
@@ -107,6 +120,27 @@ const CHAVES_DO_ESTADO = new Set([
 ])
 
 const MOMENTOS: readonly string[] = ["chegando", "morando", "saindo"]
+
+// Código IBGE de município: 7 dígitos. Data: `YYYY-MM-DD` de calendário real
+// (o `Date` do JS normaliza 2026-02-30 para 2026-03-02, então o teste é o
+// round-trip, não a validade do construtor).
+const CODIGO_IBGE = /^\d{7}$/
+const DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/
+
+function codigoIbgeValido(valor: unknown): valor is string {
+  return typeof valor === "string" && CODIGO_IBGE.test(valor)
+}
+
+function dataValida(valor: unknown): valor is string {
+  if (typeof valor !== "string") return false
+  const achado = DATA_ISO.exec(valor)
+  if (achado === null) return false
+  const [ano, mes, dia] = [Number(achado[1]), Number(achado[2]), Number(achado[3])]
+  const data = new Date(Date.UTC(ano, mes - 1, dia))
+  return (
+    data.getUTCFullYear() === ano && data.getUTCMonth() === mes - 1 && data.getUTCDate() === dia
+  )
+}
 const AVISOS: readonly string[] = ["ativados", "agora-nao"]
 
 const LIMITE_DO_NOME = 80
@@ -168,6 +202,10 @@ export function validarProgresso(entrada: unknown): Validacao {
   const estado: {
     nome?: { nome: string; sobrenome: string }
     cidade?: string
+    cidadeIbge?: string
+    destinoIbge?: string
+    dataChegada?: string
+    dataSaida?: string
     momento?: MomentoDoRascunho
     interesses?: string[]
     grupos?: string[]
@@ -192,6 +230,37 @@ export function validarProgresso(entrada: unknown): Validacao {
       return { ok: false, motivo: "estado-invalido" }
     }
     estado.cidade = estadoBruto["cidade"].trim()
+  }
+
+  // Modelo canônico da entrada (ADR-20261101 §1 e PORT-005): cidade e destino
+  // são código IBGE do catálogo, nunca texto livre; data é `YYYY-MM-DD` de
+  // calendário real.
+  if (estadoBruto["cidadeIbge"] !== undefined) {
+    if (!codigoIbgeValido(estadoBruto["cidadeIbge"])) {
+      return { ok: false, motivo: "estado-invalido" }
+    }
+    estado.cidadeIbge = estadoBruto["cidadeIbge"]
+  }
+
+  if (estadoBruto["destinoIbge"] !== undefined) {
+    if (!codigoIbgeValido(estadoBruto["destinoIbge"])) {
+      return { ok: false, motivo: "estado-invalido" }
+    }
+    estado.destinoIbge = estadoBruto["destinoIbge"]
+  }
+
+  if (estadoBruto["dataChegada"] !== undefined) {
+    if (!dataValida(estadoBruto["dataChegada"])) {
+      return { ok: false, motivo: "estado-invalido" }
+    }
+    estado.dataChegada = estadoBruto["dataChegada"]
+  }
+
+  if (estadoBruto["dataSaida"] !== undefined) {
+    if (!dataValida(estadoBruto["dataSaida"])) {
+      return { ok: false, motivo: "estado-invalido" }
+    }
+    estado.dataSaida = estadoBruto["dataSaida"]
   }
 
   if (estadoBruto["momento"] !== undefined) {
