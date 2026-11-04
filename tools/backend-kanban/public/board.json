@@ -5785,11 +5785,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
-      "links": ["docs/LANCAMENTO.md"],
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
+      "links": ["docs/LANCAMENTO.md", "https://bazardavila.app.br/vender"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus."
       ],
       "id": "LAN-F06",
       "title": "F06 Mercado e moradia ligados ao banco",
@@ -5803,9 +5804,42 @@
         "E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
         "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3",
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
-        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
+        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy",
+        "Situação do anúncio: disponível ou vendido, marcar vendido em um toque, filtro \"Só disponíveis\" e contagem à venda/vendidos na vitrine do anunciante",
+        "Interesse abre a conversa com mensagem pronta e editável que cita o item e o preço"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS", "APP-001"]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
+      "links": [
+        "https://bazardavila.app.br/mapa",
+        "https://bazardavila.app.br/c/miranda",
+        "docs/decisions/ADR-20261022-entrada-do-prototipo.md",
+        "docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"
+      ],
+      "proof": [
+        "04/11: registrado a partir da análise do Bazar da Vila; faixa desenhada nas direções 1, 2 e 5 do Início (canvas de wireframes)."
+      ],
+      "id": "MERCADO-BAZAR-MUDANCA",
+      "title": "Bazar de mudança: os desapegos de quem está saindo da cidade, agrupados",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Referência: Bazar da Vila (bazardavila.app.br, visto em 04/11), app só de desapego para famílias de vilas militares, com 3 bazares abertos em Manaus. Cada família que vai se mudar vira um bazar: nome, bairro, itens à venda e \"Mudança em N dias\"; o comprador junta itens num carrinho e manda uma mensagem só. No Bivaque o dado já existe: a entrada grava o momento Saindo com data e destino (ADR-20261022-entrada-do-prototipo §3), hoje usado só na Início da própria pessoa. Mostrar a outros membros que alguém está saindo, e quando, é exposição nova de dado pessoal (sinal de casa vazia): fica em repo até o ADR de privacidade existir. Não traz do Bazar da Vila o link público sem cadastro, o WhatsApp como canal nem os planos pagos (BLOCK-ASAAS).",
+      "checklist": [
+        "ADR de privacidade (R3 por delegação, com security-auditor): o anunciante escolhe aparecer como bazar de mudança; a data aparece no máximo como mês (\"Mudança em dezembro\"); destino e endereço nunca aparecem; o bazar some quando a data passa ou o momento muda",
+        "Agrupamento por anunciante saindo: vitrine do bazar com bairro, itens à venda e vendidos, e busca e filtro por categoria dentro dele",
+        "Faixa \"Bazares de mudança perto de você\" no Mercado e na Início, com estado vazio que não ocupa espaço",
+        "Vários itens do mesmo bazar numa só conversa, com a lista e o total na mensagem pronta",
+        "Cadastro em sequência para quem vai anunciar muitos itens: foto, preço e próximo, com meta de 30 segundos por item",
+        "E2E em 375/768/1440, claro e escuro; RLS e pgTAP do que o bazar expõe, com casos positivos e negativos"
+      ],
+      "dependencies": ["LAN-F06"]
     },
     {
       "phase": "Lançamento",
