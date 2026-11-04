@@ -6018,7 +6018,7 @@
       "priority": "P1",
       "category": "backend",
       "status": "repo",
-      "description": "O push entra no lançamento (dono, 04/11). Vale para o app de loja (Capacitor, FCM no Android e APNs no iOS) e, onde o navegador permitir, para a web instalada. O token do aparelho é dado pessoal e cria um destino de envio novo: fica em repo até o ADR por delegação (R3, com security-auditor) fixar armazenamento, retenção, revogação ao sair ou apagar a conta e o que o texto do push pode conter na tela bloqueada. Chaves do Firebase e da Apple são atos do dono.",
+      "description": "O push entra no lançamento (dono, 04/11). Vale para o app de loja (Capacitor, FCM do Google no Android e APNs no iOS) e, onde o navegador permitir, para a web instalada. O token do aparelho é dado pessoal e cria um destino de envio novo: fica em repo até o ADR por delegação (R3, com security-auditor) fixar armazenamento, retenção, revogação ao sair ou apagar a conta e o que o texto do push pode conter na tela bloqueada. Chaves do serviço de push do Google e da Apple são atos do dono. Ponto do ADR: o limite de produto proíbe o termo da plataforma do Google no código (tests/privacy/product-boundaries-and-pii.test.ts); o ADR decide se o SDK de mensagens do Android é exceção explícita.",
       "checklist": [
         "ADR por delegação e linha em docs/decisions/RATIFICACAO.md: tabela de tokens com RLS forçada, um token por aparelho, apagado ao sair, ao apagar a conta e quando o provedor o recusa; texto na tela bloqueada sem dado pessoal de terceiros",
         "Registro do token no app de loja (plugin de push do Capacitor) e, onde houver suporte, na web instalada, com pedido de permissão em contexto e não na abertura",

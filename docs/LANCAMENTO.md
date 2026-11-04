@@ -109,7 +109,7 @@ O dono é chamado só nestes pontos, com tudo pronto para olhar no celular:
 
 - [ ] Na Vercel, trocar a Production Branch de `main` para `producao` (uma vez).
 - [ ] Publicar: avançar a branch `producao` (ou rodar o workflow de migrations manualmente).
-- [ ] Contas e chaves de produção: Google OAuth, Apple Sign In, Firebase Cloud Messaging e chave de
+- [ ] Contas e chaves de produção: Google OAuth, Apple Sign In, serviço de push do Google (FCM) e chave de
       push da Apple (APNs), domínio de e-mail (Resend), chave do
       Portal da Transparência no ambiente de produção, Apple Developer e Google Play.
 - [ ] Revisão do advogado nos textos legais.
