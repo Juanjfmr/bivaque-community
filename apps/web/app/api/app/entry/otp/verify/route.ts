@@ -2,12 +2,26 @@ import { createServerClient } from "@supabase/ssr"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import {
+  consumirTentativa,
+  invalidarCodigo,
+  TENTATIVAS_POR_CODIGO,
+} from "../../../../../../lib/app-api/entrada-limite"
+import {
   codigoDeEntrada,
   emailDeEntrada,
   SEGUNDOS_DE_REENVIO,
   vereditoDaVerificacao,
 } from "../../../../../../lib/app-api/entrada-otp"
-import { conferirPorta, opcoesDoApp, responder } from "../../../../../../lib/app-api/rota-do-app"
+import {
+  aplicarCookies,
+  clienteDeServicoOuNulo,
+  conferirPorta,
+  opcoesDoApp,
+  responder,
+  respostaIndisponivel,
+} from "../../../../../../lib/app-api/rota-do-app"
+import { opcoesDoCookieDaSessao } from "../../../../../../lib/auth/cookie-options"
+import { log } from "../../../../../../lib/logger"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -18,6 +32,12 @@ export const dynamic = "force-dynamic"
 // do `@supabase/ssr` são gravados na resposta. O caminho de erro é deliberadamente
 // único — código errado, vencido ou reusado respondem "Código inválido ou
 // vencido", sem dizer qual foi e sem o erro cru do GoTrue.
+//
+// Seis tentativas por código (ADR §2). A tentativa é consumida no banco ANTES de
+// o GoTrue ser chamado, por e-mail: tentativas paralelas não passam do teto. No
+// 6º erro o código é invalidado no servidor (`generateLink` sem envio troca o
+// token por outro que ninguém recebe), e a 7ª tentativa — mesmo com o código que
+// antes estava certo — falha com a mesma mensagem única, sem tocar o GoTrue.
 //
 // A porta do app (cabeçalho próprio + origem na lista) também protege contra
 // login CSRF: um site de terceiro não consegue verificar um código e fixar a
@@ -37,7 +57,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anon) return responder(request, { erro: "indisponivel" }, 503)
+  if (!url || !anon) return respostaIndisponivel(request)
 
   let bruto: unknown
   try {
@@ -56,6 +76,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "codigo-invalido" }, 400)
   }
 
+  // O limitador de tentativas fecha em falha: sem ele a rota viraria o adivinhador
+  // de código sem teto que a auditoria de 04/11 apontou.
+  const servico = clienteDeServicoOuNulo()
+  if (servico === null) return respostaIndisponivel(request)
+  const tentativa = await consumirTentativa(servico, email)
+  if (tentativa === null) {
+    log.error("entry otp verify: limiter unavailable")
+    return respostaIndisponivel(request)
+  }
+  if (tentativa === 0) return responder(request, { erro: "codigo-invalido" }, 400)
+
   // Os cookies saem daqui, não do cliente: o `@supabase/ssr` escreve a sessão
   // na resposta depois de o GoTrue validar o código. Guardar a lista e aplicá-la
   // depois monta a resposta já com o corpo certo e os cookies.
@@ -69,6 +100,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         for (const cookie of cookies) paraGravar.push(cookie)
       },
     },
+    // As mesmas opções do callback do OAuth: `Secure` em produção. Sem isto o
+    // cookie da sessão nascia sem `Secure` e podia viajar em HTTP.
+    cookieOptions: opcoesDoCookieDaSessao(),
   })
 
   const { data, error } = await cliente.auth.verifyOtp({
@@ -77,17 +111,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     type: "email",
   })
 
-  const resposta = (corpoDaResposta: unknown, status: number): NextResponse => {
-    const montada = responder(request, corpoDaResposta, status)
-    for (const cookie of paraGravar) {
-      if (cookie.options === undefined) {
-        montada.cookies.set(cookie.name, cookie.value)
-      } else {
-        montada.cookies.set(cookie.name, cookie.value, cookie.options as never)
-      }
-    }
-    return montada
-  }
+  const resposta = (corpoDaResposta: unknown, status: number): NextResponse =>
+    aplicarCookies(responder(request, corpoDaResposta, status), paraGravar)
 
   if (error !== null) {
     const veredito = vereditoDaVerificacao(error)
@@ -95,9 +120,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return resposta({ erro: "limite", reenviarEm: SEGUNDOS_DE_REENVIO }, 429)
     }
     if (veredito.estado === "codigo-invalido") {
+      if (tentativa >= TENTATIVAS_POR_CODIGO && !(await invalidarCodigo(servico, email))) {
+        // A 7ª tentativa já é barrada pelo limite; o log não leva o e-mail.
+        log.error("entry otp verify: could not invalidate the code after the last attempt")
+      }
       return resposta({ erro: "codigo-invalido" }, 400)
     }
-    return resposta({ erro: "indisponivel" }, 503)
+    return respostaIndisponivel(request)
   }
 
   if (data.session === null) {

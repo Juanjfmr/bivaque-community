@@ -1,12 +1,20 @@
 import { createClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { consumirEnvio, ipConfiavel } from "../../../../../lib/app-api/entrada-limite"
 import {
   emailDeEntrada,
   SEGUNDOS_DE_REENVIO,
   vereditoDoEnvio,
 } from "../../../../../lib/app-api/entrada-otp"
-import { conferirPorta, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
+import {
+  clienteDeServicoOuNulo,
+  conferirPorta,
+  opcoesDoApp,
+  responder,
+  respostaIndisponivel,
+} from "../../../../../lib/app-api/rota-do-app"
+import { log } from "../../../../../lib/logger"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -19,7 +27,12 @@ export const dynamic = "force-dynamic"
 //    "enviado" (o GoTrue cria a conta para o endereço novo). Limite de reenvio
 //    e falha de transporte são os únicos estados distinguíveis, porque nenhum
 //    dos dois fala sobre a existência da conta.
-// 2. **A porta do app.** A rota exige o cabeçalho do app e recusa origem fora
+// 2. **Limite por e-mail e por IP, no banco.** No máximo um envio por e-mail a
+//    cada 60 s e um teto por hora por e-mail e por IP confiável (cabeçalho que a
+//    plataforma escreve, nunca `x-forwarded-for`). O limite é consumido ANTES do
+//    GoTrue e não consulta a conta: a resposta 429 é a mesma exista ela ou não.
+//    Sem o limitador a rota era um disparador de e-mails para qualquer endereço.
+// 3. **A porta do app.** A rota exige o cabeçalho do app e recusa origem fora
 //    da lista: um formulário de outro site não consegue disparar e-mails nem
 //    fixar a credencial de outra pessoa (login CSRF na verificação).
 
@@ -31,7 +44,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anon) return responder(request, { erro: "indisponivel" }, 503)
+  if (!url || !anon) return respostaIndisponivel(request)
 
   let bruto: unknown
   try {
@@ -46,6 +59,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     typeof bruto === "object" && bruto !== null ? (bruto as { email?: unknown }).email : undefined,
   )
   if (email === null) return responder(request, { erro: "email-invalido" }, 400)
+
+  // O limitador vem antes do GoTrue. Sem a configuração do servidor ou sem
+  // resposta do banco, a rota fecha (503): falhar aberto desligaria o limite
+  // justo quando alguém abusa.
+  const servico = clienteDeServicoOuNulo()
+  if (servico === null) return respostaIndisponivel(request)
+  const limite = await consumirEnvio(servico, email, ipConfiavel(request.headers))
+  if ("indisponivel" in limite) {
+    log.error("entry otp send: limiter unavailable")
+    return respostaIndisponivel(request)
+  }
+  if (!limite.liberado) {
+    return responder(request, { erro: "limite", reenviarEm: limite.reenviarEm }, 429, {
+      "retry-after": String(limite.reenviarEm),
+    })
+  }
 
   // Cliente anônimo no servidor: a chave pública fica no servidor e o app não
   // precisa falar com o GoTrue. `shouldCreateUser` é o que faz conta nova e
@@ -63,9 +92,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { enviado: true, reenviarEm: SEGUNDOS_DE_REENVIO }, 200)
   }
   if (veredito.estado === "limite") {
-    return responder(request, { erro: "limite", reenviarEm: veredito.reenviarEm }, 429)
+    return responder(request, { erro: "limite", reenviarEm: veredito.reenviarEm }, 429, {
+      "retry-after": String(veredito.reenviarEm),
+    })
   }
-  return responder(request, { erro: "indisponivel" }, 503)
+  return respostaIndisponivel(request)
 }
 
 export function OPTIONS(request: NextRequest): NextResponse {

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import type { NextRequest } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { opcoesDoCookieDaSessao } from "../auth/cookie-options"
 import { temCookieDeSessao } from "./contrato"
 import { resolverSessao, type Sessao, type UsuarioDaSessao } from "./sessao"
 
@@ -17,6 +18,13 @@ import { resolverSessao, type Sessao, type UsuarioDaSessao } from "./sessao"
  * cada rota.
  */
 
+/** Um cookie que o `@supabase/ssr` pediu para gravar (renovação de token). */
+export type CookieParaGravar = Readonly<{
+  name: string
+  value: string
+  options?: Record<string, unknown>
+}>
+
 export type SessaoDaRequisicao =
   | {
       readonly estado: "autenticada"
@@ -24,8 +32,16 @@ export type SessaoDaRequisicao =
       readonly usuario: UsuarioDaSessao
       readonly cliente: SupabaseClient<Database>
       readonly cabecalhos: Readonly<Record<string, string>>
+      /**
+       * Cookies renovados durante a leitura da sessão. A rota precisa gravá-los
+       * na resposta, senão o token renovado só existe na memória desta
+       * requisição e a sessão morre quando o token de acesso vence (1 hora).
+       */
+      readonly cookiesParaGravar?: readonly CookieParaGravar[]
     }
   | { readonly estado: "recusada"; readonly sessao: Extract<Sessao, { estado: "recusada" }> }
+  // Falta de configuração do servidor: não é credencial recusada, é serviço fora.
+  | { readonly estado: "indisponivel" }
 
 function ambiente(): { url: string; anon: string } | null {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -34,19 +50,28 @@ function ambiente(): { url: string; anon: string } | null {
   return { url, anon }
 }
 
-/** Cookie do SSR sem escrita: a renovação de token é do proxy, não da rota. */
+/**
+ * Cliente do cookie da web. O proxy NÃO renova a sessão em `/api` e `/app`
+ * (são caminhos públicos do portão), então a renovação é desta leitura: os
+ * cookies que o `@supabase/ssr` pede para gravar vão para `gravar`, e a rota os
+ * põe na resposta com as mesmas opções do callback (`Secure` em produção).
+ */
 function clienteDoCookie(
   url: string,
   anon: string,
   request: NextRequest,
+  gravar: CookieParaGravar[],
 ): SupabaseClient<Database> {
   return createServerClient<Database>(url, anon, {
     cookies: {
       getAll() {
         return request.cookies.getAll()
       },
-      setAll() {},
+      setAll(cookies) {
+        for (const cookie of cookies) gravar.push(cookie)
+      },
     },
+    cookieOptions: opcoesDoCookieDaSessao(),
   })
 }
 
@@ -62,17 +87,16 @@ export async function resolverSessaoDaRequisicao(
   request: NextRequest,
 ): Promise<SessaoDaRequisicao> {
   const config = ambiente()
-  if (config === null) {
-    return { estado: "recusada", sessao: { estado: "recusada", motivo: "sem-credencial" } }
-  }
+  if (config === null) return { estado: "indisponivel" }
 
   let cliente: SupabaseClient<Database> | null = null
   let cabecalhos: Readonly<Record<string, string>> = {}
+  const cookiesParaGravar: CookieParaGravar[] = []
 
   const sessao = await resolverSessao(request.headers.get("authorization"), {
     temCookie: () => temCookieDeSessao(request.cookies.getAll().map((cookie) => cookie.name)),
     async lerUsuarioDoCookie() {
-      const doCookie = clienteDoCookie(config.url, config.anon, request)
+      const doCookie = clienteDoCookie(config.url, config.anon, request, cookiesParaGravar)
       const { data } = await doCookie.auth.getUser()
       if (data.user === null) return null
       cliente = doCookie
@@ -103,5 +127,7 @@ export async function resolverSessaoDaRequisicao(
     usuario: sessao.usuario,
     cliente,
     cabecalhos,
+    // Só o cookie renova; no token do app de loja a lista fica vazia.
+    cookiesParaGravar: sessao.via === "cookie" ? cookiesParaGravar : [],
   }
 }

@@ -1,4 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+import type { Database } from "supabase/database.generated"
+import { createServerClient } from "../supabase/server"
 import {
   avaliarEscrita,
   cabecalhosDeCors,
@@ -6,7 +9,11 @@ import {
   origemPermitida,
   VALOR_DO_CABECALHO_DO_APP,
 } from "./contrato"
-import { resolverSessaoDaRequisicao, type SessaoDaRequisicao } from "./sessao-do-next"
+import {
+  type CookieParaGravar,
+  resolverSessaoDaRequisicao,
+  type SessaoDaRequisicao,
+} from "./sessao-do-next"
 
 /**
  * O encanamento comum das rotas `/api/app` (SPA ADR §5): origem, CSRF, CORS,
@@ -28,13 +35,36 @@ export function origensPermitidas(request: Request): string[] {
   return [new URL(request.url).origin, ...doAmbiente]
 }
 
+/**
+ * Cookies renovados por requisição. `exigirSessao` registra a lista e
+ * `responder` a aplica em QUALQUER resposta daquela requisição — inclusive as de
+ * recusa e erro: o token renovado já foi consumido no GoTrue (a rotação invalida
+ * o antigo), então perdê-lo por um 400 deixaria a pessoa sem sessão.
+ */
+const cookiesDaRequisicao = new WeakMap<Request, readonly CookieParaGravar[]>()
+
+/** Grava na resposta os cookies que o `@supabase/ssr` pediu (opções do callback). */
+export function aplicarCookies(
+  resposta: NextResponse,
+  cookies: readonly CookieParaGravar[],
+): NextResponse {
+  for (const cookie of cookies) {
+    if (cookie.options === undefined) {
+      resposta.cookies.set(cookie.name, cookie.value)
+    } else {
+      resposta.cookies.set(cookie.name, cookie.value, cookie.options as never)
+    }
+  }
+  return resposta
+}
+
 export function responder(
   request: Request,
   corpo: unknown,
   status: number,
   extras: Readonly<Record<string, string>> = {},
 ): NextResponse {
-  return NextResponse.json(corpo, {
+  const resposta = NextResponse.json(corpo, {
     status,
     headers: {
       "cache-control": "no-store",
@@ -42,6 +72,25 @@ export function responder(
       ...extras,
     },
   })
+  return aplicarCookies(resposta, cookiesDaRequisicao.get(request) ?? [])
+}
+
+/**
+ * O cliente de serviço (`service_role`), ou `null` quando o servidor não tem a
+ * configuração. A rota responde 503 em vez de deixar o `throw` virar 500: falta
+ * de variável de ambiente é serviço fora, não erro do pedido.
+ */
+export function clienteDeServicoOuNulo(): SupabaseClient<Database> | null {
+  try {
+    return createServerClient()
+  } catch {
+    return null
+  }
+}
+
+/** A resposta de serviço fora, a mesma em toda rota. */
+export function respostaIndisponivel(request: Request): NextResponse {
+  return responder(request, { erro: "indisponivel" }, 503)
 }
 
 export function opcoesDoApp(request: Request): NextResponse {
@@ -82,11 +131,17 @@ export async function exigirSessao(request: Request): Promise<SessaoOuRecusa> {
   const sessao = await resolverSessaoDaRequisicao(
     request as unknown as Parameters<typeof resolverSessaoDaRequisicao>[0],
   )
+  if (sessao.estado === "indisponivel") {
+    return { ok: false, resposta: respostaIndisponivel(request) }
+  }
   if (sessao.estado === "recusada") {
     return {
       ok: false,
       resposta: responder(request, { autenticado: false, motivo: sessao.sessao.motivo }, 401),
     }
+  }
+  if (sessao.cookiesParaGravar !== undefined && sessao.cookiesParaGravar.length > 0) {
+    cookiesDaRequisicao.set(request, sessao.cookiesParaGravar)
   }
   return { ok: true, sessao }
 }
