@@ -6202,7 +6202,8 @@
       "proof": [
         "02/11: mais uma queda do lote @stateful no CI do PR #125 (revisão 1bd1b699, job Install, test, and build): group-join-reason.spec.ts:176 esperou o botão Entrar no grupo aberto e não o achou, nos dois retries; o rerun sem mudança de código fechou verde (21m40s). É a mesma assinatura das quedas anteriores — teste serial dependente de estado/conexão do Supabase local —, não regressão do diff, e fica registrada aqui em vez de sumir do relatório.",
         "02/11: causa achada em parte — specs que gravam na conta semeada rodavam em paralelo nos três tamanhos. recon-032 (bloquear), provider-vitrine (catálogo), recon-018 (cadastro, limite do Auth) e synthetic-people foram para o lote serial @stateful; group-base centraliza o botão antes do clique (cabeçalho fixo). Com isso o CI do #121 e do #122 fechou verde. Ficou retries: 1 só no CI da suíte da web antiga, como paliativo visível (flaky no relatório); a perda de conexão com o Supabase local sob carga segue sem causa.",
-        "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."
+        "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120.",
+        "04/11: PR #128, revisão dd75d8d0, job Install, test, and build: group-admin-cycle.spec.ts:120 (membro pendente cancela o pedido, @stateful) falhou em 1440 nos dois retries e foi flaky em 768; depois de Cancelar pedido o botão Pedir entrada não apareceu em 5 s. O código da revisão é idêntico ao de origin/ds/lancamento f1d14a2d, cujo Pull Request CI fechou verde em 03/11; mesma família de queda do lote @stateful de grupo."
       ],
       "completedChecklist": [true, true, false, false]
     },

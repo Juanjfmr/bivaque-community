@@ -1,3 +1,4 @@
 {
-  "git": { "deploymentEnabled": { "main": false } }
+  "git": { "deploymentEnabled": { "main": false } },
+  "buildCommand": "cd ../.. && pnpm --filter @bivaque/app build && node scripts/export-app-to-web.mjs && pnpm --filter web build"
 }
