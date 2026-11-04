@@ -198,6 +198,37 @@ Os limites de tentativa do código de convite não mudam.
   negativo.
 - **Contas com senha hoje:** passam a entrar por código. Nenhuma perde acesso, desde que o e-mail continue delas.
 
+## Consequences — emenda de 04/11/2026 (SEC-007, lote A do F01)
+
+A revisão independente e a auditoria de 04/11 sobre a primeira implementação das rotas `/api/app/entry/*` mediram que
+os limites do §2 estavam escritos e não implementados. O desenho que os cumpre, sem mudar a decisão:
+
+- **O limitador mora no banco**, em `private.entry_otp_limits`, com duas funções do schema `private` executáveis só por
+  `service_role` e pontes `public.entry_otp_send_gate` e `public.entry_otp_verify_attempt` (a Data API só resolve
+  `public`; `anon` e `authenticated` não executam nenhuma das quatro). A chave é HMAC-SHA256 do e-mail normalizado ou do
+  IP, calculado no servidor: o banco nunca vê o endereço. A inundação de um e-mail esgota o contador dele e de mais
+  ninguém; pedido recusado não gasta a cota do IP.
+- **Envio:** no máximo 1 por e-mail a cada 60 s, 6 por hora por e-mail e 30 por hora por IP. O limite é consumido antes do
+  GoTrue e não consulta a conta, então o 429 (com os segundos) é igual exista ou não a conta. O IP vem só de
+  `x-vercel-forwarded-for` ou `x-real-ip`, que a plataforma escreve; `x-forwarded-for` é do cliente e nunca é
+  identidade. Sem nenhum dos dois (desenvolvimento local) vale só o limite por e-mail. Isto pressupõe o deploy na Vercel.
+- **Verificação:** a tentativa é consumida no banco antes do GoTrue (paralelas não passam do teto). No 6º erro o código é
+  invalidado no servidor com `generateLink` (sem envio de e-mail; medido contra o GoTrue local: o código antigo passa a
+  responder `otp_expired`), e a 7ª tentativa, mesmo com o código antes certo, falha com a mesma mensagem única sem chegar
+  ao GoTrue. Um envio liberado reabre as seis tentativas.
+- **Falha fecha:** sem resposta do limitador as duas rotas respondem 503; falhar aberto desligaria o limite quando há
+  abuso.
+- **GoTrue:** `max_frequency = "60s"`, `[auth.rate_limit]` explícito e o e-mail de confirmação de cadastro também leva o
+  código (o `magic_link` já levava).
+- **O cookie da sessão** gravado na verificação, e o renovado nas rotas que leem a sessão por cookie, usam as opções do
+  callback do OAuth (`Secure` em produção). O proxy não renova em `/api` nem em `/app`; a renovação é da própria rota.
+
+Risco residual aceito: o endpoint público do GoTrue (`/auth/v1/verify`) continua alcançável com a chave anônima. O contador
+por e-mail só vê tentativas que passam pela rota do app; quem fala direto com o GoTrue é contido pelo limite por IP do
+próprio GoTrue (`token_verifications`) e pela validade de 10 minutos. Fechar isso de vez exige o hook de verificação do
+GoTrue ou o SMTP/Auth próprio de produção, e fica para a ligação de produção (BLOCK-RESEND). O `generateLink` cria a conta
+de um endereço que ainda não a tinha, o mesmo efeito que `signInWithOtp` com criação já tem.
+
 ## Reversal cost
 
 Médio:

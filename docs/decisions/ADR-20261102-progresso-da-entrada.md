@@ -45,12 +45,14 @@ progresso salvo".
   dado pessoal do repositório (`tests/privacy`) lê nomes de etapa com aparência de PII como
   coluna proibida — e a coluna é `text` livre de formato controlado, não um conjunto de
   valores de negócio.
-- **Ciclo de vida:** o rascunho é apagado quando a entrada termina (a rota de provisionamento
-  apaga a linha na mesma transação lógica) e pela purga da conta
+- **Ciclo de vida:** o rascunho é apagado quando a entrada termina — dentro de
+  `provision_member_entry`, na mesma transação do vínculo, do perfil e do momento (emenda de 04/11, SEC-007; antes era a
+  rota do app, em outra chamada) — e pela purga da conta
   (`finalize_account_deletion`), porque o GoTrue faz soft delete em `auth.users` e o
   `ON DELETE CASCADE` nunca dispara.
 - A versão antiga do rascunho não é migrada: a leitura devolve o progresso inicial quando
-  `versao` é diferente da atual, e a pessoa recomeça da porta. Isso substitui migração de
+  `versao` é diferente da atual (no servidor e no app), o PUT recusa versão diferente da atual
+  (`versao-invalida`), e a pessoa recomeça da porta. Isso substitui migração de
   rascunho por uma regra simples e sem perda de dado canônico.
 
 ## Alternatives considered
@@ -110,6 +112,18 @@ manter histórico.
 - **Dois caminhos para o mesmo dado** (rascunho e canônico) durante a entrada. Mitigação: o
   rascunho só guarda o que o canônico ainda não tem; no provisionamento, o canônico vence e a
   linha é apagada.
+
+## Consequences — emenda de 04/11/2026 (SEC-007, lote A do F01)
+
+- **O rascunho sai dentro do provisionamento.** `provision_member_entry` é o ponto comum dos três caminhos de conclusão
+  (rota do app, `/api/onboarding` da web e convite familiar). Apagar a linha ali fecha o defeito de a web e o convite
+  deixarem nome e cidade parados no banco, e de a limpeza da rota do app falhar só com log. Uma falha do provisionamento
+  desfaz também a remoção do rascunho (pgTAP em `entry-provision-atomic.sql`).
+- **O destino vem do estado canônico.** O GET devolve a etapa final (`inicio`) a quem já tem vínculo com a cidade, lido
+  pelo cliente do usuário sob RLS; um rascunho que sobrou não manda a pessoa de volta à porta.
+- **A versão é regra do validador**, não só da leitura: `validarProgresso` recusa versão diferente de `VERSAO_DO_FLUXO`, e
+  o app confere a versão de novo ao montar o progresso.
+- **Sobrenome vazio é aceito** no rascunho (quem tem um nome só avança); o nome continua obrigatório.
 
 ## Reversal cost
 
