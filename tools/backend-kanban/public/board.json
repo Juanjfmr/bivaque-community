@@ -5674,11 +5674,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo."
       ],
       "id": "LAN-F02",
       "title": "F02 Início e busca ligados ao banco",
@@ -5897,11 +5898,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH)."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -5915,14 +5917,41 @@
         "E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
         "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3",
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
-        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
+        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy",
+        "Preferências por canal (no app, e-mail, push), e o push abre o destino certo"
       ],
       "dependencies": [
         "LAN-F1-IDENTIDADE",
         "OUTBOX-INVITE-RECIPIENTS",
         "NOTIF-DEEPLINKS",
-        "APP-001"
+        "APP-001",
+        "LAN-PUSH"
       ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
+      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
+      "proof": [
+        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo."
+      ],
+      "id": "LAN-PUSH",
+      "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "description": "O push entra no lançamento (dono, 04/11). Vale para o app de loja (Capacitor, FCM no Android e APNs no iOS) e, onde o navegador permitir, para a web instalada. O token do aparelho é dado pessoal e cria um destino de envio novo: fica em repo até o ADR por delegação (R3, com security-auditor) fixar armazenamento, retenção, revogação ao sair ou apagar a conta e o que o texto do push pode conter na tela bloqueada. Chaves do Firebase e da Apple são atos do dono.",
+      "checklist": [
+        "ADR por delegação e linha em docs/decisions/RATIFICACAO.md: tabela de tokens com RLS forçada, um token por aparelho, apagado ao sair, ao apagar a conta e quando o provedor o recusa; texto na tela bloqueada sem dado pessoal de terceiros",
+        "Registro do token no app de loja (plugin de push do Capacitor) e, onde houver suporte, na web instalada, com pedido de permissão em contexto e não na abertura",
+        "Envio pelo mesmo outbox dos avisos, respeitando a preferência por canal e o bloqueio entre membros",
+        "Toque na notificação abre o destino certo pelos links profundos (NOTIF-DEEPLINKS)",
+        "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens"
+      ],
+      "dependencies": ["NOTIF-DEEPLINKS"]
     },
     {
       "phase": "Lançamento",

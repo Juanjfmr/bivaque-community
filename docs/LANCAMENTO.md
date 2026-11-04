@@ -14,6 +14,12 @@ coisa funciona; nada fora daqui entra no lançamento sem uma linha nova aqui, co
 - O banco tem o domínio da Comunidade em redesenho (RED-003), ainda sem prova completa.
 - A linha do `apps/app` (cerca de 560 commits) ainda não está na main.
 
+## Mudanças de escopo
+
+- 04/11/2026, decisão do dono: a notificação push no celular entra no lançamento (F09 e app de
+  loja). Motivo: sem push a pessoa não volta ao app. O token do aparelho é dado pessoal; o desenho
+  passa por ADR por delegação antes do código (card LAN-PUSH).
+
 ## O que é "lançado"
 
 Uma pessoa de qualquer cidade do Brasil instala ou abre o Bivaque, entra, tem o vínculo militar
@@ -49,7 +55,7 @@ Todos os itens, sem exceção:
 | F06 | Mercado e moradia | Desapegos e imóveis com filtros, detalhe, interesse que abre conversa; criar, revisar e gerenciar anúncio; endereço exato ou aproximado por escolha | Checkout e pagamento (BLOCK-ASAAS) |
 | F07 | Negócios e serviços | Categorias, ficha do negócio, pedido e acompanhamento, ficha própria e convite de prestador | Alcance pago, Bivaque Mais |
 | F08 | Guia | Busca e categorias, leitura, salvar, sugerir atualização | Curadoria por IA |
-| F09 | Conversas e avisos | Caixa, conversa contextual, resposta; avisos no app e por e-mail com destino certo; preferências | Presença e confirmação de leitura |
+| F09 | Conversas e avisos | Caixa, conversa contextual, resposta; avisos no app, por e-mail e por push no celular, com destino certo; preferências por canal | Presença e confirmação de leitura |
 | F10 | Você, família e conta | Perfil e edição, família (convite e saída), privacidade, bloqueados, ocultados, salvos, apagar conta | Exibir Força e OM a outros (BLOCK-AFFILIATION) |
 
 ## O que vale para o app inteiro
@@ -69,11 +75,12 @@ Todos os itens, sem exceção:
 - **Legal.** Termos, Política de Privacidade e Código de Conduta no app, na versão revisada pelo
   advogado (pacote em `docs/legal/`).
 - **App de loja.** Capacitor sobre o mesmo build: login Google pelo navegador do sistema, Apple
-  nativo, sessão ao reabrir, foto pela câmera, links profundos. "Pronto para envio" é: projeto
+  nativo, sessão ao reabrir, foto pela câmera, links profundos, notificação push que abre o destino
+  certo. "Pronto para envio" é: projeto
   Android e iOS no repositório; build de release do Android (AAB) e do iOS (arquivo do Xcode, num
-  executor macOS do CI) gerados pelo CI sem a assinatura de produção; os cinco itens provados no
+  executor macOS do CI) gerados pelo CI sem a assinatura de produção; os seis itens provados no
   emulador Android e no simulador iOS. Com isso o pacote está pronto para envio. Assinar com as
-  chaves das lojas, preencher as fichas e enviar vêm depois, como atos do dono; se algum dos cinco
+  chaves das lojas, preencher as fichas e enviar vêm depois, como atos do dono; se algum dos seis
   itens só puder ser provado com uma conta ou chave do dono (por exemplo, o Apple Sign In real),
   ele fica "bloqueado pelo dono" e o pacote não está pronto até essa prova.
 
@@ -102,7 +109,8 @@ O dono é chamado só nestes pontos, com tudo pronto para olhar no celular:
 
 - [ ] Na Vercel, trocar a Production Branch de `main` para `producao` (uma vez).
 - [ ] Publicar: avançar a branch `producao` (ou rodar o workflow de migrations manualmente).
-- [ ] Contas e chaves de produção: Google OAuth, Apple Sign In, domínio de e-mail (Resend), chave do
+- [ ] Contas e chaves de produção: Google OAuth, Apple Sign In, Firebase Cloud Messaging e chave de
+      push da Apple (APNs), domínio de e-mail (Resend), chave do
       Portal da Transparência no ambiente de produção, Apple Developer e Google Play.
 - [ ] Revisão do advogado nos textos legais.
 - [ ] Teste no celular nos marcos.
