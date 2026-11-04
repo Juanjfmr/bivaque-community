@@ -121,9 +121,8 @@ function trocarComTransicao(atualizar: () => void) {
   const transicao = documento.startViewTransition(() => flushSync(atualizar)) as {
     finished?: Promise<unknown>
   }
-  void transicao.finished?.finally(() => {
-    document.documentElement.classList.remove("bv-lab-transicao")
-  })
+  const limpar = () => document.documentElement.classList.remove("bv-lab-transicao")
+  void transicao.finished?.then(limpar, limpar)
 }
 
 export function DescobertaLab() {
