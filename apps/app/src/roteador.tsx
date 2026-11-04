@@ -151,7 +151,7 @@ const descobertaLab = createRoute({
   getParentRoute: () => raiz,
   path: "/galeria/descoberta",
   component: () =>
-    import.meta.env.DEV || import.meta.env.VITE_BIVAQUE_DISCOVERY_PREVIEW === "true" || modoDeProvaAtivo() ? <DescobertaLab /> : <TelaIndisponivel />,
+    import.meta.env.DEV || import.meta.env["VITE_BIVAQUE_DISCOVERY_PREVIEW"] === "true" || modoDeProvaAtivo() ? <DescobertaLab /> : <TelaIndisponivel />,
 })
 
 const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria, mercadoLab, descobertaLab])
