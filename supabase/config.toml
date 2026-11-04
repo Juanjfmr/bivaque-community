@@ -98,9 +98,12 @@ content_path = "./supabase/templates/confirmation.html"
 # SEC-007: limites do GoTrue por IP, explícitos para não dependerem do padrão da
 # versão. `token_verifications` é o teto de verificações de código por IP (5
 # minutos); `email_sent` é por hora e vale para o projeto inteiro no SMTP padrão.
-# O limite por e-mail mora no banco (private.entry_otp_limits).
+# O limite por e-mail, por IP e o teto global de envio moram no banco
+# (private.entry_otp_limits). SEC-008: `email_sent` fica ACIMA do teto por IP (30/h) e
+# do teto global do servidor (50/h, `entry_otp_send_gate`), para que o servidor corte o
+# envio antes de o GoTrue ficar sem e-mail para todo mundo.
 [auth.rate_limit]
-email_sent = 30
+email_sent = 60
 sms_sent = 30
 anonymous_users = 30
 token_refresh = 150

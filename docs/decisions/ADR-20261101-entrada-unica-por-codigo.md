@@ -214,7 +214,7 @@ os limites do §2 estavam escritos e não implementados. O desenho que os cumpre
   identidade. Sem nenhum dos dois (desenvolvimento local) vale só o limite por e-mail. Isto pressupõe o deploy na Vercel.
 - **Verificação:** a tentativa é consumida no banco antes do GoTrue (paralelas não passam do teto). No 6º erro o código é
   invalidado no servidor com `generateLink` (sem envio de e-mail; medido contra o GoTrue local: o código antigo passa a
-  responder `otp_expired`), e a 7ª tentativa, mesmo com o código antes certo, falha com a mesma mensagem única sem chegar
+  responder `otp_expired`; o tipo de link depende do estado da conta, ver a emenda do SEC-008), e a 7ª tentativa, mesmo com o código antes certo, falha com a mesma mensagem única sem chegar
   ao GoTrue. Um envio liberado reabre as seis tentativas.
 - **Falha fecha:** sem resposta do limitador as duas rotas respondem 503; falhar aberto desligaria o limite quando há
   abuso.
@@ -228,6 +228,75 @@ por e-mail só vê tentativas que passam pela rota do app; quem fala direto com 
 próprio GoTrue (`token_verifications`) e pela validade de 10 minutos. Fechar isso de vez exige o hook de verificação do
 GoTrue ou o SMTP/Auth próprio de produção, e fica para a ligação de produção (BLOCK-RESEND). O `generateLink` cria a conta
 de um endereço que ainda não a tinha, o mesmo efeito que `signInWithOtp` com criação já tem.
+
+## Consequences — emenda de 04/11/2026 (SEC-008, lote A2 do F01)
+
+A revisão independente do SEC-007 (PASS com ressalva: I-1, I-2, M-1, M-5) e a auditoria do `security-auditor` (LIBERA com M1,
+M2, L1 a L5), ambas sobre `1ea22a9f`, apontaram o que a emenda anterior deixou aberto. O SEC-008 fecha, sem mudar a decisão
+do §2:
+
+- **Verificação limitada por IP (I-2, M1).** A verificação consome um escopo `verify_ip` por IP confiável (30 por 10
+  minutos) ANTES do escopo por e-mail (6 por código). Um cliente que gira por muitos endereços esgota o IP dele, não o de
+  todos. Recusa não gasta cota de nenhum dos dois escopos. A resposta é 429 com os segundos até a janela reabrir; o teto do
+  e-mail continua respondendo a mesma mensagem única do código inválido.
+- **Teto global de envio (M2).** O escopo `send_global` limita o projeto inteiro a 50 envios por hora, abaixo do
+  `email_sent` do GoTrue (60 no `config.toml` local; antes 30, igual ao teto por IP). O servidor corta antes de o GoTrue
+  ficar sem e-mail para todos. Os três tetos (e-mail, IP, global) só contam quando os três deixam passar.
+- **O reset das tentativas sai do portão (M2).** Antes o envio liberado zerava as seis tentativas antes de o GoTrue
+  confirmar o envio; se o GoTrue recusasse (reenvio de 60 s dele), o código antigo seguia vivo e já ganhava tentativas
+  novas. Agora `entry_otp_send_confirmed` é uma chamada própria, feita pela rota só depois de o GoTrue confirmar.
+- **Invalidação com o tipo de link certo (I-1, L3).** `generateLink` de tipo `magiclink` só troca o token de uma conta
+  confirmada. O código de uma conta ainda não confirmada (confirmação ligada) é um token de confirmação, e o `magiclink`
+  não o toca. O servidor lê o estado da conta (`entry_otp_account_state`, só `service_role`) e usa `magiclink` para conta
+  confirmada e `invite` para conta não confirmada (troca o token de confirmação sem pedir senha). E-mail sem conta: não há
+  código, nenhuma chamada ao GoTrue e nenhuma conta criada (o `generateLink` do SEC-007 criava uma).
+- **Segredo do limitador sem padrão público (M-1, L1).** Em produção, sem `BIVAQUE_LIMITER_PEPPER` (ausente, vazio ou só
+  espaço) as duas rotas respondem 503 antes de tocar banco ou GoTrue. O padrão existe só fora de produção. A variável está
+  documentada em `apps/web/.env.example`, sem valor.
+- **IPv6 pelo /64 (L4).** Nos dois escopos de IP o IPv6 entra reduzido ao prefixo /64 antes do hash; IPv4 embutido em IPv6
+  vira o IPv4. Um cliente com um /64 não ganha 2^64 chaves.
+- **RLS forçada (L2).** `private.entry_otp_limits` passa a ter `FORCE ROW LEVEL SECURITY`; pgTAP prova
+  `relforcerowsecurity`, nenhum privilégio de tabela para `anon` e `authenticated` (e nem `service_role` lê a tabela
+  direto) e a ausência de policy.
+
+### Prova de runtime da invalidação (acceptance 5)
+
+Medido em 04/11/2026 contra o GoTrue local com `enable_confirmations = true` ligado só localmente (o `config.toml` commitado
+segue `false`; a stack foi reiniciada com o valor ligado e de novo com o commitado). O script chama o código real do servidor
+(`apps/web/lib/app-api/entrada-limite.ts`) com o cliente de serviço local: envio pelo portão, `signInWithOtp`,
+`entry_otp_send_confirmed`, leitura do código no Mailpit local, seis erros com a tentativa consumida no banco, invalidação no
+6º erro, a 7ª tentativa pela rota e, por fim, o código original enviado direto ao GoTrue (o que faria quem ignora o app):
+
+| Estado da conta | Estado lido | Invalidação no 6º erro | 7ª tentativa pela rota | Código original direto no GoTrue |
+| --- | --- | --- | --- | --- |
+| Nova, não confirmada | `unconfirmed` | `invite` (ok) | esgotado, sem tocar o GoTrue | recusado (`otp_expired`, HTTP 403) |
+| Existente, confirmada | `confirmed` | `magiclink` (ok) | esgotado, sem tocar o GoTrue | recusado (`otp_expired`, HTTP 403) |
+| Controle: nova, só `magiclink` (SEC-007) | `unconfirmed` | `magiclink` (ok) | esgotado | **ENTROU (código ainda vale)** |
+
+Os seis erros responderam `otp_expired` no GoTrue e as tentativas foram numeradas de 1 a 6 em ambos os estados. A linha de
+controle reproduz o defeito I-1 e mostra que a medição distingue o comportamento. Fora do controle, medido antes na matriz:
+`invite` e `signup` invalidam o código da conta nova; `recovery` e `magiclink` não.
+
+### Custos e limites aceitos
+
+- **DoS dirigido a um e-mail.** Quem sabe o e-mail de alguém consegue, sem conta nem sessão, matar o código dessa pessoa
+  enquanto ele está em trânsito: seis verificações erradas esgotam o contador do e-mail e invalidam o código; e seis envios
+  por hora consomem o teto de envio daquele endereço. O IP do atacante limita o ritmo (30 verificações por 10 minutos e 30
+  envios por hora por IP), mas não impede o alvo de ficar sem código por um tempo. É a contrapartida de o limite ser por
+  e-mail, necessário contra adivinhação distribuída. Mitigações: reenvio visível de 60 s, Google e Apple como caminho de um
+  toque, janela de 10 minutos e hora. Mede-se o abuso pelo 429 e pelo 400 sem entrada; passkeys (alternativa 4) reduzem o
+  risco.
+- **O envio é contado antes do GoTrue.** Se o GoTrue falhar depois (transporte, limite dele), a cota do e-mail, do IP e a
+  global já foram gastas e não voltam. A pessoa pode ver 429 sem ter recebido o código. Foi o preço de não depender de uma
+  segunda ida ao banco para devolver cota e de o limite não consultar a conta.
+- **Limites de produção a dimensionar.** Os números deste ADR (6 por hora por e-mail, 30 por IP, 50 globais, 30 verificações
+  por IP em 10 minutos) são de desenvolvimento. A produção precisa dimensionar `email_sent`, `token_verifications` e
+  `sign_in_sign_ups` do GoTrue e o teto global do servidor com o SMTP escolhido e o volume esperado do lançamento. O teto
+  global do servidor tem de ficar sempre abaixo do `email_sent`. O cuidado fica em BLOCK-RESEND.
+- **Resíduo do `/auth/v1/verify` público (L5).** Continua como na emenda anterior: o contador por e-mail só vê tentativas que
+  passam pela rota do app. Quem fala direto com o GoTrue é contido pelo limite por IP do próprio GoTrue
+  (`token_verifications`) e pela validade de 10 minutos. Fechar de vez exige o hook de verificação ou o Auth próprio; item
+  explícito em BLOCK-RESEND.
 
 ## Reversal cost
 

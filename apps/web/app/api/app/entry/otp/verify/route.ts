@@ -4,6 +4,8 @@ import type { Database } from "supabase/database.generated"
 import {
   consumirTentativa,
   invalidarCodigo,
+  ipConfiavel,
+  limitadorConfigurado,
   TENTATIVAS_POR_CODIGO,
 } from "../../../../../../lib/app-api/entrada-limite"
 import {
@@ -33,11 +35,14 @@ export const dynamic = "force-dynamic"
 // único — código errado, vencido ou reusado respondem "Código inválido ou
 // vencido", sem dizer qual foi e sem o erro cru do GoTrue.
 //
-// Seis tentativas por código (ADR §2). A tentativa é consumida no banco ANTES de
-// o GoTrue ser chamado, por e-mail: tentativas paralelas não passam do teto. No
-// 6º erro o código é invalidado no servidor (`generateLink` sem envio troca o
-// token por outro que ninguém recebe), e a 7ª tentativa — mesmo com o código que
-// antes estava certo — falha com a mesma mensagem única, sem tocar o GoTrue.
+// Seis tentativas por código e 30 por IP em 10 minutos (ADR §2). A tentativa é
+// consumida no banco ANTES de o GoTrue ser chamado: primeiro o escopo do IP
+// confiável (um cliente só não gira por muitos endereços), depois o do e-mail;
+// tentativas paralelas não passam do teto. No 6º erro o código é invalidado no
+// servidor (`generateLink` sem envio troca o token por outro que ninguém recebe,
+// com o tipo de link certo pelo estado da conta), e a 7ª tentativa — mesmo com o
+// código que antes estava certo — falha com a mesma mensagem única, sem tocar o
+// GoTrue. Em produção, sem `BIVAQUE_LIMITER_PEPPER` a rota responde 503.
 //
 // A porta do app (cabeçalho próprio + origem na lista) também protege contra
 // login CSRF: um site de terceiro não consegue verificar um código e fixar a
@@ -58,6 +63,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   if (!url || !anon) return respostaIndisponivel(request)
+  if (!limitadorConfigurado()) {
+    log.error("entry otp verify: limiter secret is not configured")
+    return respostaIndisponivel(request)
+  }
 
   let bruto: unknown
   try {
@@ -80,12 +89,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // de código sem teto que a auditoria de 04/11 apontou.
   const servico = clienteDeServicoOuNulo()
   if (servico === null) return respostaIndisponivel(request)
-  const tentativa = await consumirTentativa(servico, email)
-  if (tentativa === null) {
+  const veredito = await consumirTentativa(servico, email, ipConfiavel(request.headers))
+  if ("indisponivel" in veredito) {
     log.error("entry otp verify: limiter unavailable")
     return respostaIndisponivel(request)
   }
-  if (tentativa === 0) return responder(request, { erro: "codigo-invalido" }, 400)
+  if ("limiteDoIp" in veredito) {
+    return responder(request, { erro: "limite", reenviarEm: veredito.limiteDoIp }, 429, {
+      "retry-after": String(veredito.limiteDoIp),
+    })
+  }
+  if ("esgotado" in veredito) return responder(request, { erro: "codigo-invalido" }, 400)
+  const tentativa = veredito.tentativa
 
   // Os cookies saem daqui, não do cliente: o `@supabase/ssr` escreve a sessão
   // na resposta depois de o GoTrue validar o código. Guardar a lista e aplicá-la
@@ -115,11 +130,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     aplicarCookies(responder(request, corpoDaResposta, status), paraGravar)
 
   if (error !== null) {
-    const veredito = vereditoDaVerificacao(error)
-    if (veredito.estado === "limite") {
+    const causa = vereditoDaVerificacao(error)
+    if (causa.estado === "limite") {
       return resposta({ erro: "limite", reenviarEm: SEGUNDOS_DE_REENVIO }, 429)
     }
-    if (veredito.estado === "codigo-invalido") {
+    if (causa.estado === "codigo-invalido") {
       if (tentativa >= TENTATIVAS_POR_CODIGO && !(await invalidarCodigo(servico, email))) {
         // A 7ª tentativa já é barrada pelo limite; o log não leva o e-mail.
         log.error("entry otp verify: could not invalidate the code after the last attempt")

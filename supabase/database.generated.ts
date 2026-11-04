@@ -2826,11 +2826,17 @@ export type Database = {
       }
       degrade_locality_origins: { Args: never; Returns: number }
       delete_group: { Args: { p_group_id: string }; Returns: undefined }
+      entry_otp_account_state: { Args: { p_email: string }; Returns: string }
+      entry_otp_send_confirmed: {
+        Args: { p_email_hash: string }
+        Returns: undefined
+      }
       entry_otp_send_gate: {
         Args: {
           p_cooldown_seconds?: number
           p_email_hash: string
           p_email_hourly?: number
+          p_global_hourly?: number
           p_ip_hash?: string
           p_ip_hourly?: number
         }
@@ -2839,6 +2845,8 @@ export type Database = {
       entry_otp_verify_attempt: {
         Args: {
           p_email_hash: string
+          p_ip_hash?: string
+          p_ip_max?: number
           p_max?: number
           p_window_seconds?: number
         }

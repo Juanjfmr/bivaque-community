@@ -1,7 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
-import { consumirEnvio, ipConfiavel } from "../../../../../lib/app-api/entrada-limite"
+import {
+  confirmarEnvio,
+  consumirEnvio,
+  ipConfiavel,
+  limitadorConfigurado,
+} from "../../../../../lib/app-api/entrada-limite"
 import {
   emailDeEntrada,
   SEGUNDOS_DE_REENVIO,
@@ -27,11 +32,14 @@ export const dynamic = "force-dynamic"
 //    "enviado" (o GoTrue cria a conta para o endereço novo). Limite de reenvio
 //    e falha de transporte são os únicos estados distinguíveis, porque nenhum
 //    dos dois fala sobre a existência da conta.
-// 2. **Limite por e-mail e por IP, no banco.** No máximo um envio por e-mail a
-//    cada 60 s e um teto por hora por e-mail e por IP confiável (cabeçalho que a
-//    plataforma escreve, nunca `x-forwarded-for`). O limite é consumido ANTES do
-//    GoTrue e não consulta a conta: a resposta 429 é a mesma exista ela ou não.
-//    Sem o limitador a rota era um disparador de e-mails para qualquer endereço.
+// 2. **Limite por e-mail, por IP e global, no banco.** No máximo um envio por
+//    e-mail a cada 60 s, um teto por hora por e-mail e por IP confiável
+//    (cabeçalho que a plataforma escreve, nunca `x-forwarded-for`) e um teto global
+//    abaixo do orçamento de e-mail do GoTrue: um cliente só não esgota o e-mail do
+//    projeto. O limite é consumido ANTES do GoTrue e não consulta a conta: a
+//    resposta 429 é a mesma exista ela ou não. As seis tentativas do código só são
+//    devolvidas DEPOIS de o GoTrue confirmar o envio.
+//    Em produção, sem `BIVAQUE_LIMITER_PEPPER` a rota responde 503.
 // 3. **A porta do app.** A rota exige o cabeçalho do app e recusa origem fora
 //    da lista: um formulário de outro site não consegue disparar e-mails nem
 //    fixar a credencial de outra pessoa (login CSRF na verificação).
@@ -45,6 +53,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   if (!url || !anon) return respostaIndisponivel(request)
+  if (!limitadorConfigurado()) {
+    log.error("entry otp send: limiter secret is not configured")
+    return respostaIndisponivel(request)
+  }
 
   let bruto: unknown
   try {
@@ -89,6 +101,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const veredito = vereditoDoEnvio(error)
   if (veredito.estado === "enviado") {
+    // O GoTrue confirmou: só agora o código novo reabre as seis tentativas.
+    if (!(await confirmarEnvio(servico, email))) {
+      log.error("entry otp send: could not reopen the attempts after the send")
+    }
     return responder(request, { enviado: true, reenviarEm: SEGUNDOS_DE_REENVIO }, 200)
   }
   if (veredito.estado === "limite") {

@@ -8,17 +8,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("@supabase/supabase-js", () => ({ createClient: vi.fn() }))
 vi.mock("@supabase/ssr", () => ({ createServerClient: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
+vi.mock("web/lib/logger", () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }))
 
 import { createServerClient } from "@supabase/ssr"
 import { createClient } from "@supabase/supabase-js"
 import { POST as ENVIAR, OPTIONS as OPTIONS_ENVIO } from "web/app/api/app/entry/otp/route"
 import { POST as VERIFICAR } from "web/app/api/app/entry/otp/verify/route"
 import { chaveDeLimite } from "web/lib/app-api/entrada-limite"
+import { log } from "web/lib/logger"
 import { createServerClient as criarClienteDeServico } from "web/lib/supabase/server"
 
 const criarAnonimo = vi.mocked(createClient)
 const criarComCookies = vi.mocked(createServerClient)
 const criarServico = vi.mocked(criarClienteDeServico)
+const logError = vi.mocked(log.error)
 
 // O NextRequest normaliza o host do URL para localhost no runner; o que importa
 // é a origem do cabeçalho bater com a do request, como no runtime.
@@ -39,8 +42,18 @@ const agora = { segundos: 1_000 }
 let ultimoEnvio = new Map<string, number>()
 let envioPorHora = new Map<string, number>()
 let tentativas = new Map<string, number>()
+let verificacoesPorIp = new Map<string, number>()
+let estadoDaConta = "confirmed"
+const TETO_GLOBAL = 50
+const TETO_VERIFICACAO_POR_IP = 30
+let enviosGlobais = 0
 
 function limitadorEmMemoria(nome: string, args: Record<string, unknown>) {
+  if (nome === "entry_otp_account_state") return { data: estadoDaConta, error: null }
+  if (nome === "entry_otp_send_confirmed") {
+    tentativas.delete(String(args["p_email_hash"]))
+    return { data: null, error: null }
+  }
   if (nome === "entry_otp_send_gate") {
     const email = String(args["p_email_hash"])
     const ip = args["p_ip_hash"] === undefined ? null : String(args["p_ip_hash"])
@@ -50,16 +63,22 @@ function limitadorEmMemoria(nome: string, args: Record<string, unknown>) {
     }
     if ((envioPorHora.get(email) ?? 0) >= 6) return { data: 3600, error: null }
     if (ip !== null && (envioPorHora.get(ip) ?? 0) >= 30) return { data: 3600, error: null }
+    if (enviosGlobais >= TETO_GLOBAL) return { data: 3600, error: null }
     ultimoEnvio.set(email, agora.segundos)
     envioPorHora.set(email, (envioPorHora.get(email) ?? 0) + 1)
     if (ip !== null) envioPorHora.set(ip, (envioPorHora.get(ip) ?? 0) + 1)
-    tentativas.delete(email)
+    enviosGlobais += 1
     return { data: 0, error: null }
   }
   const email = String(args["p_email_hash"])
+  const ip = args["p_ip_hash"] === undefined ? null : String(args["p_ip_hash"])
+  if (ip !== null && (verificacoesPorIp.get(ip) ?? 0) >= TETO_VERIFICACAO_POR_IP) {
+    return { data: -420, error: null }
+  }
   const feitas = tentativas.get(email) ?? 0
   if (feitas >= 6) return { data: 0, error: null }
   tentativas.set(email, feitas + 1)
+  if (ip !== null) verificacoesPorIp.set(ip, (verificacoesPorIp.get(ip) ?? 0) + 1)
   return { data: feitas + 1, error: null }
 }
 
@@ -89,9 +108,13 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "chave-anonima")
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   vi.stubEnv("NODE_ENV", "test")
+  vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "")
   ultimoEnvio = new Map()
   envioPorHora = new Map()
   tentativas = new Map()
+  verificacoesPorIp = new Map()
+  estadoDaConta = "confirmed"
+  enviosGlobais = 0
   mockRpc.mockImplementation(async (nome: string, args: Record<string, unknown>) =>
     limitadorEmMemoria(nome, args),
   )
@@ -283,6 +306,107 @@ describe("POST /api/app/entry/otp (envio)", () => {
     expect(mockEnviarOtp).not.toHaveBeenCalled()
   })
 
+  it("o reset das tentativas só acontece depois de o GoTrue confirmar o envio", async () => {
+    // Seis erros gastam o código; o GoTrue então recusa o reenvio (60 s dele).
+    mockVerificarOtp.mockResolvedValue({
+      data: { session: null },
+      error: { code: "invalid_otp", message: "Invalid OTP", status: 400 },
+    })
+    for (let erro = 1; erro <= 6; erro++) {
+      await VERIFICAR(
+        requisicao(URL_VERIFICACAO, "POST", { corpo: { email: "a@b.invalid", codigo: "123456" } }),
+      )
+    }
+    agora.segundos += 61
+    mockEnviarOtp.mockResolvedValue({
+      error: { code: "over_email_send_rate_limit", message: "after 30 seconds", status: 429 },
+    })
+    const recusado = await ENVIAR(
+      requisicao(URL_ENVIO, "POST", { corpo: { email: "a@b.invalid" } }),
+    )
+    expect(recusado.status).toBe(429)
+    expect(mockRpc).not.toHaveBeenCalledWith("entry_otp_send_confirmed", expect.anything())
+    // As tentativas do código antigo continuam gastas.
+    const aindaGasto = await VERIFICAR(
+      requisicao(URL_VERIFICACAO, "POST", { corpo: { email: "a@b.invalid", codigo: "123456" } }),
+    )
+    expect(aindaGasto.status).toBe(400)
+    expect(mockVerificarOtp).toHaveBeenCalledTimes(6)
+
+    // Falha de transporte também não confirma.
+    agora.segundos += 61
+    mockEnviarOtp.mockResolvedValue({ error: { name: "TypeError", message: "Failed to fetch" } })
+    expect(
+      (await ENVIAR(requisicao(URL_ENVIO, "POST", { corpo: { email: "a@b.invalid" } }))).status,
+    ).toBe(503)
+    expect(mockRpc).not.toHaveBeenCalledWith("entry_otp_send_confirmed", expect.anything())
+
+    // O GoTrue confirma: agora sim a rota reabre as tentativas, com o hash do e-mail.
+    agora.segundos += 61
+    mockEnviarOtp.mockResolvedValue({ error: null })
+    expect(
+      (await ENVIAR(requisicao(URL_ENVIO, "POST", { corpo: { email: "a@b.invalid" } }))).status,
+    ).toBe(200)
+    expect(mockRpc).toHaveBeenCalledWith("entry_otp_send_confirmed", {
+      p_email_hash: chaveDeLimite("email", "a@b.invalid"),
+    })
+    mockVerificarOtp.mockResolvedValue({ data: { session: { access_token: "t" } }, error: null })
+    expect(
+      (
+        await VERIFICAR(
+          requisicao(URL_VERIFICACAO, "POST", {
+            corpo: { email: "a@b.invalid", codigo: "123456" },
+          }),
+        )
+      ).status,
+    ).toBe(200)
+  })
+
+  it("falha do banco ao reabrir as tentativas não derruba o envio nem vaza o e-mail no log", async () => {
+    mockRpc.mockImplementation(async (nome: string, args: Record<string, unknown>) =>
+      nome === "entry_otp_send_confirmed"
+        ? { data: null, error: { message: "boom" } }
+        : limitadorEmMemoria(nome, args),
+    )
+    const resposta = await ENVIAR(
+      requisicao(URL_ENVIO, "POST", { corpo: { email: "segredo@example.invalid" } }),
+    )
+    expect(resposta.status).toBe(200)
+    expect(JSON.stringify(logError.mock.calls)).not.toContain("segredo@example.invalid")
+  })
+
+  it("o teto global de envio vira 429 para qualquer e-mail e IP, sem chamar o GoTrue", async () => {
+    enviosGlobais = TETO_GLOBAL
+    const resposta = await ENVIAR(
+      requisicao(URL_ENVIO, "POST", {
+        corpo: { email: "novo@example.invalid" },
+        extras: { "x-vercel-forwarded-for": "203.0.113.50" },
+      }),
+    )
+    expect(resposta.status).toBe(429)
+    expect(mockEnviarOtp).not.toHaveBeenCalled()
+  })
+
+  it("em produção, sem o segredo do limitador (ausente ou vazio), o envio responde 503", async () => {
+    vi.stubEnv("NODE_ENV", "production")
+    for (const valor of [undefined, "", "   "]) {
+      if (valor === undefined) vi.stubEnv("BIVAQUE_LIMITER_PEPPER", undefined as unknown as string)
+      else vi.stubEnv("BIVAQUE_LIMITER_PEPPER", valor)
+      const resposta = await ENVIAR(
+        requisicao(URL_ENVIO, "POST", { corpo: { email: "a@b.invalid" } }),
+      )
+      expect(resposta.status).toBe(503)
+      expect(await resposta.json()).toEqual({ erro: "indisponivel" })
+    }
+    expect(mockRpc).not.toHaveBeenCalled()
+    expect(mockEnviarOtp).not.toHaveBeenCalled()
+
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "segredo-de-teste-da-producao")
+    expect(
+      (await ENVIAR(requisicao(URL_ENVIO, "POST", { corpo: { email: "a@b.invalid" } }))).status,
+    ).toBe(200)
+  })
+
   it("falta de variável de ambiente responde 503, não 500", async () => {
     criarServico.mockImplementation(() => {
       throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
@@ -412,6 +536,100 @@ describe("POST /api/app/entry/otp/verify", () => {
     expect((await pedido()).status).toBe(200)
   })
 
+  it("o limitador de verificação recebe o hash do IP confiável (IPv6 pelo /64) e não o valor", async () => {
+    await pedido(undefined, { extras: { "x-vercel-forwarded-for": "2001:db8:aaaa:bbbb:1:2:3:4" } })
+    expect(mockRpc).toHaveBeenCalledWith("entry_otp_verify_attempt", {
+      p_email_hash: chaveDeLimite("email", "a@b.invalid"),
+      p_max: 6,
+      p_ip_hash: chaveDeLimite("ip", "2001:db8:aaaa:bbbb::"),
+    })
+    expect(JSON.stringify(mockRpc.mock.calls)).not.toMatch(/@|2001:db8/)
+  })
+
+  it("x-forwarded-for do cliente não vira IP da verificação", async () => {
+    await pedido(undefined, { extras: { "x-forwarded-for": "198.51.100.77" } })
+    const argumentos = mockRpc.mock.calls[0]?.[1] as Record<string, unknown>
+    expect(argumentos["p_ip_hash"]).toBeUndefined()
+  })
+
+  it("o teto de verificação por IP vira 429 com os segundos e não chama o GoTrue", async () => {
+    const extras = { "x-vercel-forwarded-for": "203.0.113.9" }
+    mockVerificarOtp.mockResolvedValue({
+      data: { session: null },
+      error: { code: "invalid_otp", message: "Invalid OTP", status: 400 },
+    })
+    // Um IP girando por 30 e-mails diferentes gasta o teto sem gastar o de nenhum e-mail.
+    for (let i = 0; i < TETO_VERIFICACAO_POR_IP; i++) {
+      const resposta = await pedido(
+        { email: `alvo${i}@example.invalid`, codigo: "123456" },
+        { extras },
+      )
+      expect(resposta.status).toBe(400)
+    }
+    expect(mockVerificarOtp).toHaveBeenCalledTimes(TETO_VERIFICACAO_POR_IP)
+
+    const barrada = await pedido(
+      { email: "alvo-novo@example.invalid", codigo: "123456" },
+      { extras },
+    )
+    expect(barrada.status).toBe(429)
+    expect(await barrada.json()).toEqual({ erro: "limite", reenviarEm: 420 })
+    expect(barrada.headers.get("retry-after")).toBe("420")
+    expect(barrada.headers.get("set-cookie")).toBeNull()
+    expect(mockVerificarOtp).toHaveBeenCalledTimes(TETO_VERIFICACAO_POR_IP)
+
+    // Outro IP segue verificando.
+    mockVerificarOtp.mockResolvedValue({ data: { session: { access_token: "t" } }, error: null })
+    const outroIp = await pedido(
+      { email: "alvo-novo@example.invalid", codigo: "123456" },
+      { extras: { "x-vercel-forwarded-for": "203.0.113.77" } },
+    )
+    expect(outroIp.status).toBe(200)
+  })
+
+  it("o 6º erro invalida com o tipo de link do estado da conta (confirmada: magiclink; nova: invite)", async () => {
+    mockVerificarOtp.mockResolvedValue({
+      data: { session: null },
+      error: { code: "otp_expired", message: "Token has expired or is invalid", status: 403 },
+    })
+    for (const [estado, tipo] of [
+      ["confirmed", "magiclink"],
+      ["unconfirmed", "invite"],
+    ] as const) {
+      estadoDaConta = estado
+      mockGenerateLink.mockClear()
+      tentativas = new Map()
+      for (let erro = 1; erro <= 6; erro++) await pedido()
+      expect(mockGenerateLink).toHaveBeenCalledTimes(1)
+      expect(mockGenerateLink).toHaveBeenCalledWith({ type: tipo, email: "a@b.invalid" })
+    }
+  })
+
+  it("e-mail sem conta: o 6º erro não cria conta nenhuma", async () => {
+    estadoDaConta = "none"
+    mockVerificarOtp.mockResolvedValue({
+      data: { session: null },
+      error: { code: "otp_expired", message: "Token has expired or is invalid", status: 403 },
+    })
+    for (let erro = 1; erro <= 6; erro++) {
+      const resposta = await pedido()
+      expect(resposta.status).toBe(400)
+    }
+    expect(mockGenerateLink).not.toHaveBeenCalled()
+  })
+
+  it("em produção, sem o segredo do limitador (ausente ou vazio), a verificação responde 503", async () => {
+    vi.stubEnv("NODE_ENV", "production")
+    for (const valor of ["", "   "]) {
+      vi.stubEnv("BIVAQUE_LIMITER_PEPPER", valor)
+      const resposta = await pedido()
+      expect(resposta.status).toBe(503)
+      expect(await resposta.json()).toEqual({ erro: "indisponivel" })
+    }
+    expect(mockRpc).not.toHaveBeenCalled()
+    expect(mockVerificarOtp).not.toHaveBeenCalled()
+  })
+
   it("sem resposta do limitador a verificação fecha em 503 e não chama o GoTrue", async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: "boom" } })
     const resposta = await pedido()
@@ -421,6 +639,7 @@ describe("POST /api/app/entry/otp/verify", () => {
 
   it("o cookie da sessão leva Secure em produção e não leva fora dela", async () => {
     vi.stubEnv("NODE_ENV", "production")
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "segredo-de-teste-da-producao")
     const emProducao = await pedido()
     expect(emProducao.headers.get("set-cookie")).toMatch(/;\s*Secure/i)
 
