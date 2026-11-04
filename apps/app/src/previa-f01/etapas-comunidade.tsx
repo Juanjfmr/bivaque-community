@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { NomeDeIcone } from "@/lib/icones"
+import { useServidorDaEntrada } from "@/src/entrada/contexto"
+import type { GrupoDaEntrada } from "@/src/entrada/servidor"
 import {
   Botao,
   CampoDeArquivo,
@@ -243,9 +245,24 @@ const membrosDoGrupo = (total: number): string => {
 }
 
 export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [interesses, setInteresses] = useState<readonly string[]>(progresso.interesses)
   const [grupos, setGrupos] = useState<readonly string[]>(progresso.grupos)
+  const [gruposReais, setGruposReais] = useState<readonly GrupoDaEntrada[] | null>(null)
+  const [falhaDosGrupos, setFalhaDosGrupos] = useState(false)
   const sugestoes = sugerirGrupos(interesses, progresso.momento)
+
+  const carregarGrupos = () => {
+    if (servidor === null) return
+    setFalhaDosGrupos(false)
+    setGruposReais(null)
+    servidor.carregarGrupos().then(
+      (lista) => setGruposReais(lista),
+      () => setFalhaDosGrupos(true),
+    )
+  }
+
+  useEffect(carregarGrupos, [servidor])
 
   const alternar = (lista: readonly string[], item: string) =>
     lista.includes(item) ? lista.filter((x) => x !== item) : [...lista, item]
@@ -278,30 +295,72 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
         <h2 id="f01-grupos-titulo" className="pc-secao">
           Grupos para você
         </h2>
-        <ul className="pc-lista f01-grupos" aria-live="polite">
-          {sugestoes.map(({ grupo, motivo }) => {
-            const entrou = grupos.includes(grupo.id)
-            return (
-              <li key={grupo.id} className="f01-grupo">
-                <Selo nome={grupo.selo} />
-                <span className="pc-linha-texto">
-                  <span className="pc-linha-titulo">{grupo.nome}</span>
-                  <span className="pc-apoio">{membrosDoGrupo(grupo.membros)}</span>
-                  <span className="pc-miudo">{motivo}</span>
-                </span>
-                <Botao
-                  compacto
-                  aria-pressed={entrou}
-                  aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
-                  onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
-                >
-                  {entrou ? <Icone nome="check" /> : null}
-                  {entrou ? "Entrou" : "Entrar"}
-                </Botao>
-              </li>
-            )
-          })}
-        </ul>
+        {servidor === null ? (
+          <ul className="pc-lista f01-grupos" aria-live="polite">
+            {sugestoes.map(({ grupo, motivo }) => {
+              const entrou = grupos.includes(grupo.id)
+              return (
+                <li key={grupo.id} className="f01-grupo">
+                  <Selo nome={grupo.selo} />
+                  <span className="pc-linha-texto">
+                    <span className="pc-linha-titulo">{grupo.nome}</span>
+                    <span className="pc-apoio">{membrosDoGrupo(grupo.membros)}</span>
+                    <span className="pc-miudo">{motivo}</span>
+                  </span>
+                  <Botao
+                    compacto
+                    aria-pressed={entrou}
+                    aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
+                    onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
+                  >
+                    {entrou ? <Icone nome="check" /> : null}
+                    {entrou ? "Entrou" : "Entrar"}
+                  </Botao>
+                </li>
+              )
+            })}
+          </ul>
+        ) : falhaDosGrupos ? (
+          <p className="pc-apoio" aria-live="polite">
+            Não foi possível carregar os grupos agora.{" "}
+            <button type="button" className="pc-link" onClick={carregarGrupos}>
+              Tentar de novo
+            </button>
+          </p>
+        ) : gruposReais === null ? (
+          <p className="pc-apoio" aria-live="polite">
+            Carregando os grupos da sua cidade…
+          </p>
+        ) : gruposReais.length === 0 ? (
+          <p className="pc-apoio">
+            Ainda não há grupos públicos na sua cidade. Você pode continuar sem grupos.
+          </p>
+        ) : (
+          <ul className="pc-lista f01-grupos" aria-live="polite">
+            {gruposReais.map((grupo) => {
+              const entrou = grupos.includes(grupo.id)
+              return (
+                <li key={grupo.id} className="f01-grupo">
+                  <span className="pc-linha-texto">
+                    <span className="pc-linha-titulo">{grupo.nome}</span>
+                    {grupo.descricao === null ? null : (
+                      <span className="pc-apoio">{grupo.descricao}</span>
+                    )}
+                  </span>
+                  <Botao
+                    compacto
+                    aria-pressed={entrou}
+                    aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
+                    onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
+                  >
+                    {entrou ? <Icone nome="check" /> : null}
+                    {entrou ? "Entrou" : "Entrar"}
+                  </Botao>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </section>
     </Moldura>
   )

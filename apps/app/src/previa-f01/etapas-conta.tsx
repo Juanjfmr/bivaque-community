@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { IconeGoogle } from "@/components/bivaque/icone-google"
 import type { NomeDeIcone } from "@/lib/icones"
+import { CidadeEMomentoCanonica } from "@/src/entrada/cidade-canonica"
+import { useServidorDaEntrada } from "@/src/entrada/contexto"
 import {
   Botao,
   Campo,
@@ -163,25 +165,44 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
 
 // ── E-mail ──────────────────────────────────────────────────────────────────
 export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [email, setEmail] = useState(progresso.convite ? EMAIL_DO_CONVITE : "")
   const [problema, setProblema] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const enviar = () => {
+  const enviar = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
       setProblema("Falta algo no e-mail, como o @ ou o domínio.")
       erro("email-invalido")
       return
     }
     setEnviando(true)
-    window.setTimeout(() => concluir({ emailMascarado: mascararEmail(email) }), 700)
+    // Sem servidor (prévia de desenvolvimento) o comportamento continua simulado.
+    if (servidor === null) {
+      window.setTimeout(() => concluir({ emailMascarado: mascararEmail(email) }), 700)
+      return
+    }
+    const resultado = await servidor.enviarCodigo(email.trim())
+    setEnviando(false)
+    if (resultado.estado === "enviado") {
+      servidor.emailEmTransito.current = email.trim()
+      concluir({ emailMascarado: mascararEmail(email) })
+      return
+    }
+    if (resultado.estado === "limite") {
+      setProblema(`Aguarde ${resultado.reenviarEm} s para pedir outro código.`)
+      return
+    }
+    setProblema("Não foi possível enviar o código agora. Verifique a conexão e tente de novo.")
   }
 
   return (
     <Moldura
       titulo={progresso.convite ? "Convite de Marcos S." : "Qual é o seu e-mail?"}
       apoio={progresso.convite ? "Para a família. O código vai para o e-mail do convite." : null}
-      aoEnviar={enviar}
+      aoEnviar={() => {
+        void enviar()
+      }}
       acao={{ rotulo: enviando ? "Enviando…" : "Enviar código", carregando: enviando }}
     >
       <Campo
@@ -207,6 +228,7 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
 const ESPERA_DO_REENVIO = 60
 
 export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [codigo, setCodigo] = useState("")
   const [problema, setProblema] = useState<string | null>(null)
   const [restante, setRestante] = useState(ESPERA_DO_REENVIO)
@@ -219,23 +241,68 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
     return () => window.clearTimeout(passo)
   }, [restante])
 
-  // Na prévia, qualquer código de 6 números vale, menos 000000 (mostra o erro).
-  const conferir = (valor: string) => {
+  const reenviar = async () => {
+    if (servidor === null) {
+      setRestante(ESPERA_DO_REENVIO)
+      setAviso("Código novo enviado.")
+      return
+    }
+    const email = servidor.emailEmTransito.current
+    if (email === null) {
+      setProblema("Volte e informe o e-mail de novo.")
+      return
+    }
+    const resultado = await servidor.enviarCodigo(email)
+    if (resultado.estado === "enviado") {
+      setRestante(ESPERA_DO_REENVIO)
+      setAviso("Código novo enviado.")
+      return
+    }
+    if (resultado.estado === "limite") {
+      setProblema(`Aguarde ${resultado.reenviarEm} s para pedir outro código.`)
+      return
+    }
+    setProblema("Não foi possível enviar outro código agora. Tente de novo.")
+  }
+
+  const conferir = async (valor: string) => {
     if (valor.length !== 6) {
       setProblema("O código tem 6 números.")
       return
     }
     setConferindo(true)
-    window.setTimeout(() => {
-      setConferindo(false)
-      if (valor === "000000") {
-        setProblema("Código errado ou vencido. Confira ou peça outro.")
-        setCodigo("")
-        erro("codigo-invalido")
-        return
-      }
+    // Sem servidor (prévia): qualquer código de 6 números vale, menos 000000.
+    if (servidor === null) {
+      window.setTimeout(() => {
+        setConferindo(false)
+        if (valor === "000000") {
+          setProblema("Código errado ou vencido. Confira ou peça outro.")
+          setCodigo("")
+          erro("codigo-invalido")
+          return
+        }
+        concluir()
+      }, 600)
+      return
+    }
+    const resultado = await servidor.verificarCodigo(valor)
+    setConferindo(false)
+    if (resultado.estado === "autenticado") {
+      setCodigo("")
       concluir()
-    }, 600)
+      return
+    }
+    if (resultado.estado === "limite") {
+      setProblema(`Muitas tentativas. Aguarde ${resultado.reenviarEm} s e peça outro código.`)
+      return
+    }
+    if (resultado.estado === "codigo-invalido") {
+      setProblema("Código errado ou vencido. Confira ou peça outro.")
+      setCodigo("")
+      erro("codigo-invalido")
+      return
+    }
+    setProblema("Não foi possível conferir o código agora. Tente de novo.")
   }
 
   return (
@@ -249,7 +316,9 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
           </button>
         </>
       }
-      aoEnviar={() => conferir(codigo)}
+      aoEnviar={() => {
+        void conferir(codigo)
+      }}
       acao={{ rotulo: conferindo ? "Conferindo…" : "Continuar", carregando: conferindo }}
     >
       <CampoDeCodigo
@@ -259,7 +328,7 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
         aoMudar={(digitos) => {
           setCodigo(digitos)
           setProblema(null)
-          if (digitos.length === 6) conferir(digitos)
+          if (digitos.length === 6) void conferir(digitos)
         }}
       />
       <p className="pc-apoio" aria-live="polite">
@@ -271,8 +340,7 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
             type="button"
             className="pc-link"
             onClick={() => {
-              setRestante(ESPERA_DO_REENVIO)
-              setAviso("Código novo enviado.")
+              void reenviar()
             }}
           >
             Reenviar código
@@ -341,27 +409,58 @@ export function Aceite({ concluir }: PropsDaEtapa) {
 
 // ── CPF ─────────────────────────────────────────────────────────────────────
 export function Cpf({ concluir, erro }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [cpf, setCpf] = useState("")
   const [problema, setProblema] = useState<string | null>(null)
   const [porque, setPorque] = useState(false)
+  const [conferindo, setConferindo] = useState(false)
 
-  const enviar = () => {
+  const enviar = async () => {
     if (!cpfValido(cpf)) {
       setProblema("Esse CPF não existe. Confira os números.")
       erro("cpf-invalido")
       return
     }
-    // O CPF vai para o servidor e não volta: daqui em diante só existe o estado.
-    setCpf("")
-    concluir({ verificacao: "consultando" })
+    // Sem servidor (prévia): só simula a consulta no Portal.
+    if (servidor === null) {
+      setCpf("")
+      concluir({ verificacao: "consultando" })
+      return
+    }
+    setConferindo(true)
+    try {
+      const resultado = await servidor.consultarCpf(cpf.replace(/\D/g, ""))
+      setCpf("")
+      if (resultado.status === "verified") {
+        concluir({ verificacao: "confirmada" })
+        return
+      }
+      if (resultado.status === "pending") {
+        concluir({ verificacao: "consultando" })
+        return
+      }
+      if (resultado.status === "rejected") {
+        concluir({ verificacao: "nao-encontrada" })
+        return
+      }
+      concluir({ verificacao: "portal-fora" })
+    } catch {
+      setProblema(
+        "Não foi possível confirmar agora. Você pode tentar de novo ou enviar um documento.",
+      )
+    } finally {
+      setConferindo(false)
+    }
   }
 
   return (
     <Moldura
       titulo="Qual é o seu CPF?"
       apoio="Ele confirma que você é militar, veterano ou pensionista."
-      aoEnviar={enviar}
-      acao={{ rotulo: "Confirmar vínculo" }}
+      aoEnviar={() => {
+        void enviar()
+      }}
+      acao={{ rotulo: conferindo ? "Confirmando…" : "Confirmar vínculo", carregando: conferindo }}
     >
       <Campo
         rotulo="CPF"
@@ -470,7 +569,26 @@ function mesesProximos(hoje = new Date()): readonly { valor: string; rotulo: str
 
 type ProblemaDaCidade = { campo: "cidade" | "momento"; texto: string } | null
 
-export function CidadeEMomento({ progresso, concluir }: PropsDaEtapa) {
+/**
+ * A etapa aprovada tem duas implementações: a de produção, ligada ao catálogo
+ * canônico (cidade por IBGE, data e destino), e a da prévia de design, com a
+ * lista fixa e o mês simulado. Sem servidor no contexto, a prévia continua
+ * clicável exatamente como foi aprovada.
+ */
+export function CidadeEMomento(props: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
+  if (servidor !== null) {
+    return (
+      <CidadeEMomentoCanonica
+        progresso={props.progresso}
+        concluir={(mudancas) => props.concluir(mudancas)}
+      />
+    )
+  }
+  return <CidadeEMomentoDePrevia {...props} />
+}
+
+function CidadeEMomentoDePrevia({ progresso, concluir }: PropsDaEtapa) {
   const [cidade, setCidade] = useState(progresso.cidade ?? "")
   const [momento, setMomento] = useState<Momento | "">(progresso.momento ?? "")
   const [quando, setQuando] = useState("")

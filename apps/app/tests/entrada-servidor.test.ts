@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   aceitarTermos,
+  carregarCidades,
+  carregarEstados,
+  carregarGrupos,
   consultarCpf,
   enviarCodigo,
   FalhaDaEntrada,
   lerProgresso,
   lerVerificacao,
   provisionar,
+  registrarCombinado,
+  salvarAvisos,
+  salvarInteresses,
   salvarProgresso,
   verificarCodigo,
 } from "../src/entrada/servidor"
@@ -176,5 +182,81 @@ describe("provisionamento", () => {
     await expect(
       provisionar({ ibgeCode: "1302603", displayName: "Ana Souza" }),
     ).rejects.toMatchObject({ codigo: "verificacao-pendente", status: 403 })
+  })
+})
+
+describe("fim do onboarding", () => {
+  it("interesses manda os grupos no corpo", async () => {
+    responda(200, { ok: true, grupos: ["g-1"] })
+    await salvarInteresses(["g-1"])
+    expect(ultimaChamada().url).toBe("/api/app/entry/interests")
+    expect(JSON.parse(String(ultimaChamada().init.body))).toEqual({ grupos: ["g-1"] })
+  })
+
+  it("combinado manda a versão do Código de Conduta", async () => {
+    responda(200, { ok: true, versao: 2 })
+    await registrarCombinado(2)
+    expect(JSON.parse(String(ultimaChamada().init.body))).toEqual({ versao: 2 })
+  })
+
+  it("avisos manda a escolha", async () => {
+    responda(200, { ok: true, avisos: "agora-nao" })
+    await salvarAvisos("agora-nao")
+    expect(JSON.parse(String(ultimaChamada().init.body))).toEqual({ avisos: "agora-nao" })
+  })
+
+  it("falha de gravação vira FalhaDaEntrada", async () => {
+    responda(503, { erro: "gravacao-indisponivel" })
+    await expect(registrarCombinado(2)).rejects.toMatchObject({
+      codigo: "gravacao-indisponivel",
+      status: 503,
+    })
+  })
+})
+
+describe("catálogo e grupos", () => {
+  it("estados vêm da rota pública de localidades", async () => {
+    fetchFalso.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ufs: ["AM", "RR"] }),
+    })
+    expect(await carregarEstados()).toEqual(["AM", "RR"])
+    expect(ultimaChamada().url).toBe("/api/localities")
+  })
+
+  it("cidades vêm mapeadas por código IBGE", async () => {
+    fetchFalso.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        municipalities: [
+          { id: "x", cityName: "Manaus", ibgeCode: "1302603" },
+          { id: "y", cityName: 42, ibgeCode: "1302603" },
+        ],
+      }),
+    })
+    expect(await carregarCidades("AM")).toEqual([{ ibgeCode: "1302603", cityName: "Manaus" }])
+  })
+
+  it("grupos vêm mapeados da rota da entrada", async () => {
+    responda(200, {
+      autenticado: true,
+      grupos: [
+        { id: "g-1", nome: "Vizinhança", descricao: "Rua 10" },
+        { id: "g-2", nome: "Escola", descricao: null },
+        { id: 3, nome: "fora do contrato" },
+      ],
+    })
+    expect(await carregarGrupos()).toEqual([
+      { id: "g-1", nome: "Vizinhança", descricao: "Rua 10" },
+      { id: "g-2", nome: "Escola", descricao: null },
+    ])
+    expect(ultimaChamada().url).toBe("/api/app/entry/groups")
+  })
+
+  it("sem sessão, grupos falham com 'sem-sessao'", async () => {
+    responda(401, { autenticado: false })
+    await expect(carregarGrupos()).rejects.toMatchObject({ codigo: "sem-sessao", status: 401 })
   })
 })

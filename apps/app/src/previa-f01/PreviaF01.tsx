@@ -8,32 +8,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Botao } from "@/src/pecas/pecas"
-import {
-  Avisos,
-  Combinado,
-  Documento,
-  InicioComPrimeirosPassos,
-  InteressesEGrupos,
-  PreviaDaCidade,
-  Verificacao,
-} from "./etapas-comunidade"
-import {
-  Aceite,
-  CidadeEMomento,
-  Codigo,
-  Cpf,
-  Email,
-  Nome,
-  Porta,
-  type PropsDaEtapa,
-} from "./etapas-conta"
+import { InicioComPrimeirosPassos } from "./etapas-comunidade"
+import type { PropsDaEtapa } from "./etapas-conta"
 import {
   concluir as concluirEtapa,
   etapaAnterior,
   FLAGS_PADRAO,
   type Flags,
   fracaoDoProgresso,
-  type IdDaEtapa,
   progressoInicial,
   receberVerificacao,
   voltar as voltarEtapa,
@@ -50,25 +32,8 @@ import {
   registrarEvento,
   salvarProgresso,
 } from "./servidor-simulado"
+import { TELAS_DA_ENTRADA } from "./telas"
 import "./previa-f01.css"
-
-type TelaDaEtapa = (props: PropsDaEtapa) => React.ReactNode
-
-const TELAS: Record<Exclude<IdDaEtapa, "inicio">, TelaDaEtapa> = {
-  porta: Porta,
-  email: Email,
-  codigo: Codigo,
-  aceite: Aceite,
-  cpf: Cpf,
-  nome: Nome,
-  cidade: CidadeEMomento,
-  verificacao: Verificacao,
-  documento: Documento,
-  "previa-cidade": PreviaDaCidade,
-  interesses: InteressesEGrupos,
-  combinado: Combinado,
-  avisos: Avisos,
-}
 
 /**
  * A prévia clicável do F01 novo, com dados simulados. Só existe no servidor de
@@ -142,7 +107,7 @@ export function PreviaF01() {
       <InicioComPrimeirosPassos progresso={progresso} flags={flags} aoRecomecar={recomecar} />
     ) : (
       (() => {
-        const Tela = TELAS[progresso.etapa]
+        const Tela = TELAS_DA_ENTRADA[progresso.etapa]
         return <Tela progresso={progresso} concluir={concluir} voltar={voltar} erro={erro} />
       })()
     )

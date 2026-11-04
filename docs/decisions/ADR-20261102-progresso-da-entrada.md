@@ -125,6 +125,26 @@ manter histórico.
   o app confere a versão de novo ao montar o progresso.
 - **Sobrenome vazio é aceito** no rascunho (quem tem um nome só avança); o nome continua obrigatório.
 
+## Consequences — emenda de 04/11/2026 (lote B: o combinado)
+
+O lote B liga a tela aprovada ao servidor real e precisa decidir onde mora o registro do "combinado" — a etapa que mostra
+as quatro regras de convivência em linguagem simples depois da prévia da cidade, com a versão do Código de Conduta na tela.
+O ADR de entrada §3 diz que ele **não é um segundo aceite jurídico**; por isso não reusa `consent_acceptances` (que é o
+aceite) nem uma coluna em `profiles` (que é lida por outros membros sob as regras de visibilidade e não deve ganhar um dado
+novo de graça).
+
+- **Tabela própria, fechada por padrão.** `public.entry_commitments` (`user_id` chave primária com cascade de
+  `auth.users`, `versao` inteira de 1 a 1000, `aceito_em`) tem RLS habilitada e forçada; `authenticated` só faz `SELECT` da
+  própria linha; `anon` não tem privilégio; a escrita é só do `service_role`, pela rota `POST /api/app/entry/combinado`, que
+  aceita apenas a versão atual do contrato (`CODE_OF_CONDUCT_VERSION`, hoje 2) com o id da sessão.
+- **Some junto com a conta.** A purga (`finalize_account_deletion`, copiada na migration `20261104215006_entry_commitments`
+  com o delete novo) apaga a linha; o rascunho da entrada continua sendo apagado dentro do provisionamento e a purga cobre o
+  caso de a conta ser apagada com o combinado já gravado.
+- **Prova.** `supabase/tests/entry-commitments.sql` com 14 asserções (RLS forçada, leitura só do dono, outro membro zero,
+  `anon` e escrita de `authenticated` recusados com 42501, CHECK de versão, purga); `db reset --local --no-seed` +
+  `test:db` PASS 161 arquivos / 2549 asserções. A revisão independente desta emenda continua pendente e está em
+  [RATIFICACAO.md](RATIFICACAO.md).
+
 ## Reversal cost
 
 Baixo: apagar a tabela e a rota de progresso; o app volta ao estado em memória. Nenhuma outra

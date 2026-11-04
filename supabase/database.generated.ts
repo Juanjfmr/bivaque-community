@@ -434,6 +434,24 @@ export type Database = {
           },
         ]
       }
+      entry_commitments: {
+        Row: {
+          aceito_em: string
+          user_id: string
+          versao: number
+        }
+        Insert: {
+          aceito_em?: string
+          user_id: string
+          versao: number
+        }
+        Update: {
+          aceito_em?: string
+          user_id?: string
+          versao?: number
+        }
+        Relationships: []
+      }
       entry_progress: {
         Row: {
           created_at: string

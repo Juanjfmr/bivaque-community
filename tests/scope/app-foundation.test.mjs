@@ -44,3 +44,21 @@ test("publicação conjunta: o app é servido em /app pelo Next (SPA ADR §8)", 
   const gitignore = read(".gitignore")
   assert.match(gitignore, /apps\/web\/public\/app\//)
 })
+
+test("entrada real: a rota /app/entrar usa a tela do servidor, não a demonstrativa", () => {
+  const roteador = read("apps/app/src/roteador.tsx")
+  assert.match(roteador, /import \{ TelaDeEntrada \} from "@\/src\/entrada\/TelaDeEntrada"/)
+  assert.match(roteador, /entrar: TelaDeEntrada/)
+  assert.doesNotMatch(roteador, /import \{ Entrar \}/)
+  // As rotas novas do lote B existem e a versão do combinado é a do domínio.
+  for (const rota of ["interests", "combinado", "notices", "groups"]) {
+    assert.ok(read(`apps/web/app/api/app/entry/${rota}/route.ts`).length > 0, rota)
+  }
+  const consent = read("packages/domain/src/consent.ts")
+  const versaoDoDominio = /export const CODE_OF_CONDUCT_VERSION = (\d+)/.exec(consent)?.[1]
+  assert.ok(versaoDoDominio, "CODE_OF_CONDUCT_VERSION não encontrada")
+  assert.match(
+    read("apps/app/src/entrada/TelaDeEntrada.tsx"),
+    new RegExp(`VERSAO_DO_CODIGO_DE_CONDUTA = ${versaoDoDominio}\\b`),
+  )
+})

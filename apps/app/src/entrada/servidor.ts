@@ -207,3 +207,110 @@ export async function provisionar(entrada: EntradaDoProvisionamento): Promise<vo
     )
   }
 }
+
+export async function salvarInteresses(grupos: readonly string[]): Promise<void> {
+  const resposta = await pedir("interests", { metodo: "POST", corpo: { grupos } })
+  if (resposta.status !== 200) {
+    throw new FalhaDaEntrada(
+      texto(resposta.corpo, "erro") ?? "interesses-nao-salvos",
+      resposta.status,
+    )
+  }
+}
+
+/** O combinado é registrado com a versão do Código de Conduta que a tela mostrou. */
+export async function registrarCombinado(versao: number): Promise<void> {
+  const resposta = await pedir("combinado", { metodo: "POST", corpo: { versao } })
+  if (resposta.status !== 200) {
+    throw new FalhaDaEntrada(
+      texto(resposta.corpo, "erro") ?? "combinado-nao-registrado",
+      resposta.status,
+    )
+  }
+}
+
+export async function salvarAvisos(avisos: "ativados" | "agora-nao"): Promise<void> {
+  const resposta = await pedir("notices", { metodo: "POST", corpo: { avisos } })
+  if (resposta.status !== 200) {
+    throw new FalhaDaEntrada(texto(resposta.corpo, "erro") ?? "avisos-nao-salvos", resposta.status)
+  }
+}
+
+// ── catálogo de cidades (rotas públicas do Next, mesma origem) ─────────────
+export type CidadeDoCatalogo = Readonly<{ ibgeCode: string; cityName: string }>
+
+let estadosEmCache: readonly string[] | null = null
+const cidadesEmCache = new Map<string, readonly CidadeDoCatalogo[]>()
+
+export async function carregarEstados(): Promise<readonly string[]> {
+  if (estadosEmCache !== null) return estadosEmCache
+  let resposta: Response
+  try {
+    resposta = await fetch("/api/localities", { credentials: "include" })
+  } catch {
+    throw new FalhaDaEntrada("rede", 0)
+  }
+  if (!resposta.ok) throw new FalhaDaEntrada("catalogo-indisponivel", resposta.status)
+  const corpo = (await resposta.json().catch(() => ({}))) as { ufs?: unknown }
+  const ufs = Array.isArray(corpo.ufs)
+    ? corpo.ufs.filter((uf): uf is string => typeof uf === "string")
+    : []
+  estadosEmCache = ufs
+  return ufs
+}
+
+export async function carregarCidades(uf: string): Promise<readonly CidadeDoCatalogo[]> {
+  const guardadas = cidadesEmCache.get(uf)
+  if (guardadas !== undefined) return guardadas
+  let resposta: Response
+  try {
+    resposta = await fetch(`/api/localities/${encodeURIComponent(uf)}`, {
+      credentials: "include",
+    })
+  } catch {
+    throw new FalhaDaEntrada("rede", 0)
+  }
+  if (!resposta.ok) throw new FalhaDaEntrada("catalogo-indisponivel", resposta.status)
+  const corpo = (await resposta.json().catch(() => ({}))) as { municipalities?: unknown }
+  const lista = Array.isArray(corpo.municipalities) ? corpo.municipalities : []
+  const cidades = lista.flatMap((linha): CidadeDoCatalogo[] => {
+    if (typeof linha !== "object" || linha === null) return []
+    const dados = linha as Record<string, unknown>
+    return typeof dados["ibgeCode"] === "string" && typeof dados["cityName"] === "string"
+      ? [{ ibgeCode: dados["ibgeCode"], cityName: dados["cityName"] }]
+      : []
+  })
+  cidadesEmCache.set(uf, cidades)
+  return cidades
+}
+
+export type GrupoDaEntrada = Readonly<{
+  id: string
+  nome: string
+  descricao: string | null
+}>
+
+export async function carregarGrupos(): Promise<readonly GrupoDaEntrada[]> {
+  const resposta = await pedir("groups")
+  if (resposta.status === 401) throw new FalhaDaEntrada("sem-sessao", 401)
+  if (resposta.status !== 200) {
+    throw new FalhaDaEntrada(
+      texto(resposta.corpo, "erro") ?? "grupos-indisponiveis",
+      resposta.status,
+    )
+  }
+  const lista = Array.isArray(resposta.corpo["grupos"]) ? resposta.corpo["grupos"] : []
+  return lista.flatMap((linha): GrupoDaEntrada[] => {
+    if (typeof linha !== "object" || linha === null) return []
+    const dados = linha as Record<string, unknown>
+    return typeof dados["id"] === "string" && typeof dados["nome"] === "string"
+      ? [
+          {
+            id: dados["id"],
+            nome: dados["nome"],
+            descricao: typeof dados["descricao"] === "string" ? dados["descricao"] : null,
+          },
+        ]
+      : []
+  })
+}
