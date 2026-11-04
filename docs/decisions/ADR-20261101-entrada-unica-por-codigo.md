@@ -277,6 +277,23 @@ Os seis erros responderam `otp_expired` no GoTrue e as tentativas foram numerada
 controle reproduz o defeito I-1 e mostra que a medição distingue o comportamento. Fora do controle, medido antes na matriz:
 `invite` e `signup` invalidam o código da conta nova; `recovery` e `magiclink` não.
 
+**Reprodução independente em 04/11/2026 pelo executor do SEC-008**, com o mesmo ambiente (`enable_confirmations = true`
+só local, `config.toml` commitado com `false`), contra o GoTrue local e as rotas reais (`/api/app/entry/otp` e
+`/api/app/entry/otp/verify`), endereços sintéticos `example.invalid`, código lido no Mailpit local e o token final
+conferido direto no GoTrue (o que faria quem ignora o app):
+
+| Caso | Envio | Seis erros pela rota | Código original direto no GoTrue depois |
+| --- | --- | --- | --- |
+| A. conta confirmada, controle | 200 | — | ENTROU (`email`) |
+| B. conta confirmada, ataque | 200 | 400 × 6 | recusado — código morto |
+| C. conta nova (não confirmada), ataque | 200 | 400 × 6 | recusado — código morto |
+| D. conta nova, controle | 200 | — | ENTROU (`email`) |
+
+Os controles A e D provam que os códigos chegavam vivos antes do ataque; B e C provam a invalidação no 6º erro nos dois
+estados de conta, inclusive o caso I-1 (conta nova com confirmação ligada). Evidência completa com os corpos de cada
+resposta em `.visual/sec008/prova-*.json` (ignorada). O `config.toml` foi revertido para `false` e a stack reiniciada com o
+valor commitado antes do fechamento do lote.
+
 ### Custos e limites aceitos
 
 - **DoS dirigido a um e-mail.** Quem sabe o e-mail de alguém consegue, sem conta nem sessão, matar o código dessa pessoa
