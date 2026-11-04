@@ -17,6 +17,23 @@ const nextConfig: NextConfig = {
       { source: "/app/:caminho*", destination: "/app/index.html" },
     ]
   },
+  // SEC-007: nenhuma resposta do Next (páginas, rotas /api e o app em /app) pode
+  // ser embutida em outro site. `frame-ancestors 'none'` é a regra moderna e o
+  // `X-Frame-Options: DENY` cobre navegador que ainda não a lê. Sem isso, um site
+  // de terceiro podia emoldurar a tela de entrada e fazer a pessoa clicar às
+  // cegas (clickjacking). As regras de /app e /api já ficam cobertas: os
+  // cabeçalhos são avaliados antes do sistema de arquivos.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+    ]
+  },
   experimental: {
     serverActions: {
       // SEC-006: as fotos de Moradia, Pedido e Mercado vão para Server Actions
