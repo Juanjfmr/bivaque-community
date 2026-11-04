@@ -1,4 +1,4 @@
-﻿/**
+/**
  * O rascunho da entrada: forma e validação no servidor (LAN-F01,
  * ADR-20261102-progresso-da-entrada).
  *
@@ -61,6 +61,11 @@ export function progressoInicial(): Progresso {
   return { versao: VERSAO_DO_FLUXO, etapa: "porta", estado: {} }
 }
 
+/** Quem já tem vínculo com a cidade terminou a entrada: a etapa final, sem rascunho. */
+export function progressoFinal(): Progresso {
+  return { versao: VERSAO_DO_FLUXO, etapa: "inicio", estado: {} }
+}
+
 export type MotivoDeRecusa =
   | "corpo-invalido"
   | "versao-invalida"
@@ -116,6 +121,10 @@ const ehObjeto = (valor: unknown): valor is Record<string, unknown> =>
 const ehTexto = (valor: unknown, maximo: number): valor is string =>
   typeof valor === "string" && valor.trim() !== "" && valor.length <= maximo
 
+// O sobrenome pode ficar vazio no rascunho: quem tem um nome só avança sem ele.
+const ehTextoOuVazio = (valor: unknown, maximo: number): valor is string =>
+  typeof valor === "string" && valor.length <= maximo
+
 function listaDeTextos(valor: unknown, limite: number, tamanho: number): string[] | null {
   if (!Array.isArray(valor) || valor.length > limite) return null
   const itens: string[] = []
@@ -137,9 +146,9 @@ export function validarProgresso(entrada: unknown): Validacao {
   if (!ehObjeto(entrada)) return { ok: false, motivo: "corpo-invalido" }
 
   const versao = entrada["versao"]
-  if (typeof versao !== "number" || !Number.isInteger(versao) || versao < 1 || versao > 1000) {
-    return { ok: false, motivo: "versao-invalida" }
-  }
+  // ADR-20261102: versão diferente da atual não é migrada. No PUT é recusa; na
+  // leitura de uma linha antiga a rota devolve o progresso inicial.
+  if (versao !== VERSAO_DO_FLUXO) return { ok: false, motivo: "versao-invalida" }
 
   const etapa = entrada["etapa"]
   if (typeof etapa !== "string" || !(ETAPAS_DO_FLUXO as readonly string[]).includes(etapa)) {
@@ -171,7 +180,7 @@ export function validarProgresso(entrada: unknown): Validacao {
     if (
       !ehObjeto(nome) ||
       !ehTexto(nome["nome"], LIMITE_DO_NOME) ||
-      !ehTexto(nome["sobrenome"], LIMITE_DO_NOME)
+      !ehTextoOuVazio(nome["sobrenome"], LIMITE_DO_NOME)
     ) {
       return { ok: false, motivo: "estado-invalido" }
     }

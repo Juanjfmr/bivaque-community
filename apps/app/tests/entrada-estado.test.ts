@@ -31,6 +31,17 @@ describe("progresso vindo do servidor", () => {
     expect(progresso.convite).toBe(false)
   })
 
+  it("versão diferente da atual volta ao progresso inicial, com etapa e estado descartados", () => {
+    // Negativo (SEC-007): rascunho de outra versão não é aproveitado em parte.
+    for (const versao of [1, 3, "2", undefined]) {
+      const progresso = progressoDoServidor({
+        autenticado: true,
+        progresso: { versao, etapa: "cidade", estado: { cidade: "Manaus" } },
+      })
+      expect(progresso).toEqual(progressoInicial())
+    }
+  })
+
   it("etapa desconhecida ou fora da forma volta para a porta", () => {
     const progresso = progressoDoServidor({
       autenticado: true,

@@ -1,4 +1,4 @@
-﻿import { NextRequest as RequisicaoDoNext } from "next/server"
+import { NextRequest as RequisicaoDoNext } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // A rota fala com dois clientes: o do usuário (leitura sob RLS) e o de serviço
@@ -23,14 +23,18 @@ const ORIGEM = "http://localhost:3000"
 const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/progress`
 
 const mockMaybeSingle = vi.fn()
+const mockVinculo = vi.fn()
 const mockUpsert = vi.fn()
 
+// Duas leituras do usuário, sob RLS: o rascunho (`entry_progress`) e o vínculo
+// com a cidade (`locality_memberships`), que decide o destino.
 function clienteDoUsuario() {
   return {
-    from: () => ({
-      select: () => ({
-        eq: () => ({ maybeSingle: mockMaybeSingle }),
-      }),
+    from: (tabela: string) => ({
+      select: () =>
+        tabela === "locality_memberships"
+          ? { eq: () => ({ limit: () => ({ maybeSingle: mockVinculo }) }) }
+          : { eq: () => ({ maybeSingle: mockMaybeSingle }) },
     }),
   }
 }
@@ -67,6 +71,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+  mockVinculo.mockResolvedValue({ data: null, error: null })
   mockUpsert.mockResolvedValue({ error: null })
   criarClienteDeServico.mockReturnValue({
     from: () => ({ upsert: mockUpsert }),
@@ -124,6 +129,54 @@ describe("GET /api/app/entry/progress", () => {
     mockMaybeSingle.mockResolvedValue({ data: null, error: { message: "db offline" } })
     const resposta = await GET(requisicao("GET"))
     expect(resposta.status).toBe(503)
+  })
+
+  it("falha na leitura do vínculo também é 503: não decide o destino às cegas", async () => {
+    mockVinculo.mockResolvedValue({ data: null, error: { message: "db offline" } })
+    expect((await GET(requisicao("GET"))).status).toBe(503)
+  })
+
+  it("quem já tem vínculo com a cidade recebe a etapa final, não a porta", async () => {
+    mockVinculo.mockResolvedValue({
+      data: { locality_id: "00000000-0000-4000-8000-000000000001" },
+      error: null,
+    })
+    const semRascunho = await GET(requisicao("GET"))
+    expect(await semRascunho.json()).toEqual({
+      autenticado: true,
+      via: "cookie",
+      progresso: { versao: 2, etapa: "inicio", estado: {} },
+    })
+
+    // Rascunho que sobrou não manda quem terminou de volta ao meio da entrada.
+    mockMaybeSingle.mockResolvedValue({
+      data: { versao: 2, etapa: "cidade", estado: { cidade: "Manaus" } },
+      error: null,
+    })
+    const comRascunho = (await (await GET(requisicao("GET"))).json()) as {
+      progresso: { etapa: string; estado: unknown }
+    }
+    expect(comRascunho.progresso).toEqual({ versao: 2, etapa: "inicio", estado: {} })
+  })
+
+  it("sem vínculo o rascunho continua mandando (a etapa não é forçada)", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { versao: 2, etapa: "cidade", estado: {} },
+      error: null,
+    })
+    const corpo = (await (await GET(requisicao("GET"))).json()) as { progresso: { etapa: string } }
+    expect(corpo.progresso.etapa).toBe("cidade")
+  })
+
+  it("rascunho de versão diferente da atual volta ao progresso inicial", async () => {
+    for (const versao of [1, 3]) {
+      mockMaybeSingle.mockResolvedValue({
+        data: { versao, etapa: "cidade", estado: { cidade: "Manaus" } },
+        error: null,
+      })
+      const corpo = (await (await GET(requisicao("GET"))).json()) as { progresso: unknown }
+      expect(corpo.progresso).toEqual({ versao: 2, etapa: "porta", estado: {} })
+    }
   })
 })
 
@@ -189,6 +242,32 @@ describe("PUT /api/app/entry/progress", () => {
     // O CPF no estado é recusado: nada de dado sensível no rascunho.
     expect(resposta.status).toBe(400)
     expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("recusa versão diferente da atual (400) sem gravar", async () => {
+    for (const versao of [1, 3]) {
+      const resposta = await PUT(
+        requisicao("PUT", { cabecalho: "bivaque-spa", corpo: { ...CORPO, versao } }),
+      )
+      expect(resposta.status).toBe(400)
+      expect(await resposta.json()).toEqual({ erro: "versao-invalida" })
+    }
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("aceita sobrenome vazio no rascunho", async () => {
+    const corpo = { ...CORPO, etapa: "nome", estado: { nome: { nome: "Madonna", sobrenome: "" } } }
+    const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo }))
+    expect(resposta.status).toBe(200)
+    expect(mockUpsert).toHaveBeenCalledTimes(1)
+  })
+
+  it("falta de variável do servidor responde 503, não 500", async () => {
+    criarClienteDeServico.mockImplementation(() => {
+      throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+    })
+    const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
+    expect(resposta.status).toBe(503)
   })
 
   it("grava o rascunho validado do dono da sessão", async () => {

@@ -92,6 +92,9 @@ export async function salvarProgresso(progresso: unknown): Promise<void> {
 export type EnvioDoCodigo =
   | { readonly estado: "enviado"; readonly reenviarEm: number }
   | { readonly estado: "limite"; readonly reenviarEm: number }
+  // O servidor recusou o endereço (forma inválida): a tela diz "e-mail inválido",
+  // não "indisponível" — a pessoa corrige, não espera.
+  | { readonly estado: "email-invalido" }
   | { readonly estado: "indisponivel" }
 
 export async function enviarCodigo(email: string): Promise<EnvioDoCodigo> {
@@ -104,7 +107,9 @@ export async function enviarCodigo(email: string): Promise<EnvioDoCodigo> {
     const reenviarEm = resposta.corpo["reenviarEm"]
     return { estado: "limite", reenviarEm: typeof reenviarEm === "number" ? reenviarEm : 60 }
   }
-  if (resposta.status === 400) return { estado: "indisponivel" }
+  if (resposta.status === 400 && resposta.corpo["erro"] === "email-invalido") {
+    return { estado: "email-invalido" }
+  }
   return { estado: "indisponivel" }
 }
 

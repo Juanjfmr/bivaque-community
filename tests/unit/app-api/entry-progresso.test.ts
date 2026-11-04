@@ -77,6 +77,39 @@ describe("progresso recusado", () => {
     }
   })
 
+  it("versão diferente da atual é recusada, inclusive as antigas e as futuras", () => {
+    // ADR-20261102: versão diferente não é migrada; a rota devolve o inicial.
+    for (const versao of [VERSAO_DO_FLUXO - 1, VERSAO_DO_FLUXO + 1, 1, 999]) {
+      expect(validarProgresso({ versao, etapa: "porta" }), String(versao)).toEqual({
+        ok: false,
+        motivo: "versao-invalida",
+      })
+    }
+  })
+
+  it("sobrenome vazio é aceito, nome vazio não", () => {
+    const aceito = validarProgresso({
+      versao: VERSAO_DO_FLUXO,
+      etapa: "nome",
+      estado: { nome: { nome: "Madonna", sobrenome: "" } },
+    })
+    expect(aceito).toEqual({
+      ok: true,
+      progresso: {
+        versao: VERSAO_DO_FLUXO,
+        etapa: "nome",
+        estado: { nome: { nome: "Madonna", sobrenome: "" } },
+      },
+    })
+    expect(
+      validarProgresso({
+        versao: VERSAO_DO_FLUXO,
+        etapa: "nome",
+        estado: { nome: { nome: "", sobrenome: "Souza" } },
+      }),
+    ).toEqual({ ok: false, motivo: "estado-invalido" })
+  })
+
   it("versão fora da faixa ou que não é inteiro", () => {
     for (const versao of [0, 1001, 2.5, "2", null]) {
       expect(validarProgresso({ versao, etapa: "porta" }), String(versao)).toEqual({

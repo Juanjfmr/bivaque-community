@@ -1,4 +1,4 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   aceitarTermos,
   consultarCpf,
@@ -94,6 +94,20 @@ describe("código", () => {
       estado: "limite",
       reenviarEm: 47,
     })
+  })
+
+  it("e-mail recusado pelo servidor é 'e-mail inválido', não 'indisponível' (SEC-007)", async () => {
+    responda(400, { erro: "email-invalido" })
+    expect(await enviarCodigo("x")).toEqual({ estado: "email-invalido" })
+  })
+
+  it("400 sem o motivo do e-mail, 403 e 503 continuam indisponíveis", async () => {
+    responda(400, { erro: "corpo-invalido" })
+    expect(await enviarCodigo("pessoa@example.invalid")).toEqual({ estado: "indisponivel" })
+    responda(403, { erro: "origem-recusada" })
+    expect(await enviarCodigo("pessoa@example.invalid")).toEqual({ estado: "indisponivel" })
+    responda(503, { erro: "indisponivel" })
+    expect(await enviarCodigo("pessoa@example.invalid")).toEqual({ estado: "indisponivel" })
   })
 
   it("verificação 400 é código inválido, com a mensagem única", async () => {

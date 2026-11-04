@@ -109,11 +109,14 @@ export function progressoDoServidor(resposta: RespostaDeProgressoDoServidor): Pr
     return inicial
   }
   const dados = resposta.progresso as Record<string, unknown>
+  // ADR-20261102: rascunho de outra versão do fluxo não é migrado nem aproveitado
+  // em parte — a pessoa recomeça da porta. O servidor já devolve o inicial; o app
+  // não confia nisso (cache, resposta antiga) e confere a versão também.
+  if (dados["versao"] !== VERSAO_DO_FLUXO) return inicial
   const etapa = etapaValida(dados["etapa"]) ?? "porta"
-  const versao = typeof dados["versao"] === "number" ? dados["versao"] : VERSAO_DO_FLUXO
   return {
     ...inicial,
-    versao,
+    versao: VERSAO_DO_FLUXO,
     etapa,
     ...estadoDoServidor(dados["estado"]),
   }
