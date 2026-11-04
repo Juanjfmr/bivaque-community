@@ -23,13 +23,15 @@ test.describe("laboratório da descoberta", () => {
   test("favoritar, abrir detalhe, simular contato e devolver foco", async ({ page }) => {
     const salvar = page.getByRole("button", { name: "Salvar: Casa Organizada" })
     await salvar.click()
-    await expect(page.getByRole("button", { name: "Remover dos salvos: Casa Organizada" }))
-      .toHaveAttribute("aria-pressed", "true")
+    await expect(
+      page.getByRole("button", { name: "Remover dos salvos: Casa Organizada" }),
+    ).toHaveAttribute("aria-pressed", "true")
     const abrir = page.getByRole("button", { name: "Ver detalhes de Casa Organizada" })
     await abrir.click()
     const detalhe = page.getByRole("dialog", { name: "Casa Organizada" })
     await expect(detalhe).toBeVisible()
-    await detalhe.getByRole("textbox", { name: "Experimente escrever uma mensagem" })
+    await detalhe
+      .getByRole("textbox", { name: "Experimente escrever uma mensagem" })
       .fill("Gostaria de mais informações")
     await detalhe.getByRole("button", { name: "Simular pedido" }).click()
     await expect(detalhe.getByRole("status")).toContainText("Nenhuma mensagem foi enviada")
@@ -43,9 +45,9 @@ test.describe("laboratório da descoberta", () => {
     page.on("pageerror", (erro) => erros.push(erro.message))
     for (const tema of ["light", "dark"] as const) {
       await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
-      await expect.poll(() =>
-        page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-      ).toBe(true)
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true)
       await page.getByRole("button", { name: "Ver detalhes de Berço em madeira" }).click()
       await expect(page.getByRole("dialog", { name: "Berço em madeira" })).toBeVisible()
       await page.keyboard.press("Escape")
