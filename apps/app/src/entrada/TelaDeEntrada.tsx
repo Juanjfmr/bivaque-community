@@ -69,7 +69,13 @@ export function TelaDeEntrada() {
     () => ({
       emailEmTransito,
       enviarCodigo,
-      verificarCodigo: (codigo) => verificarCodigo(emailEmTransito.current ?? "", codigo),
+      verificarCodigo: async (codigo) => {
+        const resultado = await verificarCodigo(emailEmTransito.current ?? "", codigo)
+        // A sessão nasce nesta chamada: a tela passa a gravar o rascunho e a
+        // provisionar a partir daqui.
+        if (resultado.estado === "autenticado") setAutenticado(true)
+        return resultado
+      },
       consultarCpf,
       carregarEstados,
       carregarCidades,
@@ -205,6 +211,19 @@ export function TelaDeEntrada() {
     if (progresso === null || !autenticado) return
     if (provisionado.current) return
     if (progresso.verificacao !== "confirmada" || progresso.etapa === "inicio") return
+    // Retomar depois da prévia significa que o cadastro já foi feito numa sessão
+    // anterior; tentar de novo duplicaria o provisionamento. Antes disso (porta,
+    // e-mail, aceite, CPF, nome, cidade) ainda não há o que provisionar.
+    if (progresso.etapa !== "verificacao" && progresso.etapa !== "previa-cidade") {
+      if (
+        progresso.etapa === "interesses" ||
+        progresso.etapa === "combinado" ||
+        progresso.etapa === "avisos"
+      ) {
+        provisionado.current = true
+      }
+      return
+    }
     void provisionarDoRascunho(progresso)
   }, [progresso, autenticado, provisionarDoRascunho])
 

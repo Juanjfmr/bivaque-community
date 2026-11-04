@@ -26,13 +26,29 @@ export type Porta = "ok" | "origem-recusada" | "cabecalho-ausente"
 
 export type SessaoAutenticada = Extract<SessaoDaRequisicao, { estado: "autenticada" }>
 
-/** A origem da própria web entra sozinha (o app é servido em /app no mesmo domínio). */
+/**
+ * As origens aceitas numa escrita por cookie: a do próprio pedido e as da
+ * lista explícita do ambiente.
+ *
+ * A origem do pedido também vem do `Host` que a plataforma entregou, não só de
+ * `new URL(request.url).origin`: em execução local o Next normaliza o host do
+ * `url` para `localhost` mesmo quando o navegador abriu `127.0.0.1`, e o
+ * `Origin` do navegador é o endereço real da barra. Comparar `Origin` com o
+ * `Host` é a checagem de mesma origem; usar só o `url` recusava uma origem
+ * legítima. O `x-forwarded-proto` da borda define o esquema quando existe.
+ */
 export function origensPermitidas(request: Request): string[] {
   const doAmbiente = (process.env["BIVAQUE_APP_ORIGINS"] ?? "")
     .split(",")
     .map((origem) => origem.trim())
     .filter((origem) => origem !== "")
-  return [new URL(request.url).origin, ...doAmbiente]
+  const doPedido = new URL(request.url).origin
+  const host = request.headers.get("host")
+  const protocolo =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ??
+    new URL(request.url).protocol.replace(":", "")
+  const doHost = host === null || host === "" ? [] : [`${protocolo}://${host}`]
+  return [...new Set([doPedido, ...doHost, ...doAmbiente])]
 }
 
 /**
