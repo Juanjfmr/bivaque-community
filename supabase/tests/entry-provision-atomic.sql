@@ -14,7 +14,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(24);
 
 \ir fixtures/foundation.inc
 
@@ -25,6 +25,15 @@ insert into auth.users (id, email)
 values
   ('10000000-0000-4000-8000-000000000006', 'entry-rollback@example.invalid'),
   ('10000000-0000-4000-8000-000000000007', 'entry-family@example.invalid');
+
+-- SEC-007: as três pessoas têm rascunho da entrada. O provisionamento apaga a
+-- linha na mesma transação — nos dois caminhos que concluem, com e sem momento —
+-- e uma falha preserva o rascunho junto com o resto do estado anterior.
+insert into public.entry_progress (user_id, versao, etapa, estado)
+values
+  ('10000000-0000-4000-8000-000000000005', 2, 'avisos', '{"cidade": "Manaus"}'::jsonb),
+  ('10000000-0000-4000-8000-000000000006', 2, 'cidade', '{"cidade": "Manaus"}'::jsonb),
+  ('10000000-0000-4000-8000-000000000007', 2, 'inicio', '{}'::jsonb);
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- 1. Falha no meio não deixa a entrada pela metade
@@ -74,6 +83,15 @@ select is(
   ),
   0::bigint,
   'a falha do momento não deixa linha de momento'
+);
+
+select is(
+  (
+    select count(*) from public.entry_progress
+    where user_id = '10000000-0000-4000-8000-000000000006'
+  ),
+  1::bigint,
+  'a falha do momento preserva o rascunho: apagar e concluir são um fato só'
 );
 
 -- Destino fora do catálogo: a FK recusa depois do vínculo e do perfil, e a
@@ -185,6 +203,15 @@ select results_eq(
   'o momento declarado e a data de chegada ficam na linha do dono'
 );
 
+select is(
+  (
+    select count(*) from public.entry_progress
+    where user_id = '10000000-0000-4000-8000-000000000005'
+  ),
+  0::bigint,
+  'concluir a entrada apaga o rascunho dentro do provisionamento'
+);
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- 3. Convite familiar: provisiona sem momento, e não inventa momento
 -- ───────────────────────────────────────────────────────────────────────────
@@ -227,6 +254,15 @@ select is(
   ),
   0::bigint,
   'quem entra por convite não ganha momento inventado'
+);
+
+select is(
+  (
+    select count(*) from public.entry_progress
+    where user_id = '10000000-0000-4000-8000-000000000007'
+  ),
+  0::bigint,
+  'o convite familiar, sem momento, também apaga o rascunho'
 );
 
 reset role;
