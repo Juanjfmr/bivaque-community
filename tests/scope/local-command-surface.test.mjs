@@ -14,8 +14,13 @@ test("exposes the local root command surface", () => {
   // When the local scripts are inspected
   const scripts = rootPackage.scripts
 
-  // Then build, database, and E2E commands are available from the root
-  assert.equal(scripts.build, "pnpm --filter web build && pnpm --filter @bivaque/app build")
+  // Then build, database, and E2E commands are available from the root.
+  // O app vem antes da web porque o dist dele é copiado para `apps/web/public/app`
+  // e é o Next que serve `/app` (SPA ADR §8).
+  assert.equal(
+    scripts.build,
+    "pnpm --filter @bivaque/app build && node scripts/export-app-to-web.mjs && pnpm --filter web build",
+  )
   assert.equal(scripts["db:reset"], "supabase db reset --local")
   assert.equal(scripts["test:db"], "supabase test db")
   assert.equal(scripts["db:test"], undefined)

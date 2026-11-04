@@ -434,6 +434,33 @@ export type Database = {
           },
         ]
       }
+      entry_progress: {
+        Row: {
+          created_at: string
+          estado: Json
+          etapa: string
+          updated_at: string
+          user_id: string
+          versao: number
+        }
+        Insert: {
+          created_at?: string
+          estado?: Json
+          etapa: string
+          updated_at?: string
+          user_id: string
+          versao: number
+        }
+        Update: {
+          created_at?: string
+          estado?: Json
+          etapa?: string
+          updated_at?: string
+          user_id?: string
+          versao?: number
+        }
+        Relationships: []
+      }
       event_invites: {
         Row: {
           created_at: string

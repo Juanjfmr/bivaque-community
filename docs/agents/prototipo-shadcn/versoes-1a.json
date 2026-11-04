@@ -20,6 +20,11 @@
     "publishedAt": "2024-04-23T05:26:04.645Z"
   },
   {
+    "package": "cmdk",
+    "version": "1.1.1",
+    "publishedAt": "2025-03-14T19:21:16.194Z"
+  },
+  {
     "package": "radix-ui",
     "version": "1.7.0",
     "publishedAt": "2026-10-05T23:09:03.272Z"

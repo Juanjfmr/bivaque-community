@@ -32,6 +32,11 @@ const PUBLIC_PATHS = [
   "/ajuda",
   "/favicon.ico",
   "/icon.svg",
+  // SPA ADR §8: o app é servido em /app pelo mesmo domínio. A entrada é a
+  // própria porta do app (`/app/entrar`): quem chega sem sessão precisa dela, e
+  // o app resolve a sessão e a etapa pelas rotas /api/app. O portão da web não
+  // gateia o app — gateia as telas antigas que ainda existem.
+  "/app",
 ]
 const CONSENT_COOKIE = "bivaque-consent-version"
 

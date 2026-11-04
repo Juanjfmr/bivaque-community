@@ -28,3 +28,19 @@ test("build raiz e gate incluem app sem depender do arquivo de ambiente web", ()
   assert.match(read("scripts/gate.mjs"), /NEXT_PUBLIC_SUPABASE_URL/)
   assert.match(read("scripts/gate.mjs"), /name: "build:app"/)
 })
+
+test("publicação conjunta: o app é servido em /app pelo Next (SPA ADR §8)", () => {
+  const scripts = JSON.parse(read("package.json")).scripts
+  // O build copia o dist do app para public/app ANTES do build da web.
+  assert.match(scripts.build, /export-app-to-web\.mjs/)
+  assert.ok(scripts.build.indexOf("export-app-to-web") < scripts.build.indexOf("filter web build"))
+  assert.match(read("scripts/export-app-to-web.mjs"), /apps", "web", "public", "app"/)
+  const next = read("apps/web/next.config.ts")
+  assert.match(next, /source: "\/app"/)
+  assert.match(next, /destination: "\/app\/index\.html"/)
+  // O portão da web não gateia o app: a entrada é a porta do próprio app.
+  assert.match(read("apps/web/proxy.ts"), /PUBLIC_PATHS[\s\S]*"\/app"/)
+  // Artefato gerado não é versionado.
+  const gitignore = read(".gitignore")
+  assert.match(gitignore, /apps\/web\/public\/app\//)
+})

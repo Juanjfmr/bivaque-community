@@ -1,9 +1,15 @@
 "use client"
 
-import { AlertDialog } from "radix-ui"
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
-import { Botao } from "./botao"
 
 /**
  * A confirmação (inventário §7, `shell/dialogs.js`: `confirm`).
@@ -14,6 +20,11 @@ import { Botao } from "./botao"
  *
  * Como o menu ⋮, ela é uma sobreposição da **entrada**: o Voltar do sistema a
  * fecha antes de trocar de rota (`overlayDepth` do protótipo).
+ *
+ * A caixa e as ações vêm da base shadcn (`components/ui/alert-dialog`), não do
+ * Radix direto: é a correção do achado S01 da auditoria de 26/10. A ação de
+ * perigo usa a variante `destructive` do botão; a de concluir usa a `brasa`,
+ * que é a ação da peça (ADR-20261102-paleta-fria mantém a brasa no criar).
  */
 export function Confirmacao({
   titulo,
@@ -33,37 +44,30 @@ export function Confirmacao({
   const { aberto, aoMudarAberto } = useSobreposicaoDaEntrada("confirmacao")
 
   return (
-    <AlertDialog.Root open={aberto} onOpenChange={aoMudarAberto}>
-      <AlertDialog.Portal>
-        <AlertDialog.Overlay data-scrim="sobreposicao" className="bv-scrim" />
-        <AlertDialog.Content
-          data-sobreposicao="confirmacao"
-          className="bv-painel fixed inset-x-4 top-24 z-45 mx-auto grid max-w-110 gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-4"
-        >
-          <AlertDialog.Title className="text-lg leading-6">{titulo}</AlertDialog.Title>
-          <AlertDialog.Description className="text-sm text-(--on-surface-variant)">
-            {texto}
-          </AlertDialog.Description>
-          <div className="flex flex-wrap justify-end gap-2">
-            <AlertDialog.Cancel asChild>
-              <Botao tom="texto" data-acao="cancelar">
-                {cancelar}
-              </Botao>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action asChild>
-              <Botao
-                tom={perigo ? "perigo" : "preenchido"}
-                data-acao="confirmar"
-                onClick={() => {
-                  aoConfirmar()
-                }}
-              >
-                {confirmar}
-              </Botao>
-            </AlertDialog.Action>
-          </div>
-        </AlertDialog.Content>
-      </AlertDialog.Portal>
-    </AlertDialog.Root>
+    <AlertDialog open={aberto} onOpenChange={aoMudarAberto}>
+      <AlertDialogContent data-sobreposicao="confirmacao" className="max-w-110">
+        <AlertDialogTitle>{titulo}</AlertDialogTitle>
+        <AlertDialogDescription>{texto}</AlertDialogDescription>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            variant="ghost"
+            data-acao="cancelar"
+            className="min-h-11 rounded-xl px-4 text-sm"
+          >
+            {cancelar}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant={perigo ? "destructive" : "brasa"}
+            data-acao="confirmar"
+            className="min-h-11 rounded-xl px-4 text-sm"
+            onClick={() => {
+              aoConfirmar()
+            }}
+          >
+            {confirmar}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

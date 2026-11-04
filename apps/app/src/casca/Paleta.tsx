@@ -1,9 +1,17 @@
 "use client"
 
-import { Dialog } from "radix-ui"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect } from "react"
 
 import { Icone } from "@/components/bivaque/icone"
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
 import { normalizar } from "@/lib/texto"
@@ -13,6 +21,12 @@ import { normalizar } from "@/lib/texto"
  * desktop. V1: Ir para e Ações, com teclado, foco contido e devolução ao
  * acionador. Os grupos de resultados (negócios, anúncios, perguntas) e as
  * buscas recentes ficam para o refino.
+ *
+ * A peça é o `Command` do shadcn, sobre `cmdk` (achado S02 da auditoria de
+ * 26/10): a filtragem, a seleção e as teclas são da peça, e não uma lista
+ * manual sobre Radix. O que continua sendo do app é o histórico: abrir e
+ * fechar passam por `useSobreposicaoDaEntrada`, então o Voltar do sistema
+ * fecha a paleta antes de sair da tela.
  */
 
 type Item = {
@@ -117,13 +131,11 @@ const ITENS: readonly Item[] = [
 ]
 
 const DESKTOP = "(min-width: 1024px)"
+const GRUPOS = ["Ações", "Ir para"] as const
 
 export function Paleta() {
   const { abrir: abrirSobreposicao, fecharSobreposicao: fechar, irPara } = useNavegacao()
   const aberta = useEntradaDaTela().sobreposicao === "paleta"
-  const [consulta, definirConsulta] = useState("")
-  const [ativo, definirAtivo] = useState(0)
-  const campo = useRef<HTMLInputElement | null>(null)
 
   const abrir = useCallback(() => {
     if (typeof document === "undefined" || !window.matchMedia(DESKTOP).matches) return
@@ -150,114 +162,52 @@ export function Paleta() {
     return () => document.removeEventListener("keydown", aoTeclar)
   }, [abrir])
 
-  useEffect(() => {
-    if (aberta) return
-    definirConsulta("")
-    definirAtivo(0)
-  }, [aberta])
+  if (!aberta) return null
 
-  const filtrados = ITENS.filter((item) =>
-    normalizar(item.rotulo).includes(normalizar(consulta).trim()),
-  )
-  const grupos: readonly (typeof ITENS)[number]["grupo"][] = ["Ações", "Ir para"]
-  const itensVisiveis = grupos.flatMap((grupo) => filtrados.filter((item) => item.grupo === grupo))
-
-  const escolher = (indice: number) => {
-    const item = itensVisiveis[indice]
-    if (item === undefined) return
+  const escolher = (item: Item) => {
     void irPara(item.destino, { parametros: item.parametros ?? {}, replace: true })
   }
 
-  if (!aberta) return null
-
   return (
-    <Dialog.Root
+    <CommandDialog
       open
       onOpenChange={(valor) => {
         if (!valor) fechar()
       }}
+      title="Buscar e ir para"
+      description="Busque um destino ou escolha uma ação."
+      className="w-[calc(100%-32px)] max-w-xl"
     >
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content
-          data-sobreposicao="paleta"
-          aria-label="Buscar e ir para"
-          onOpenAutoFocus={(evento) => {
-            evento.preventDefault()
-            campo.current?.focus({ preventScroll: true })
-          }}
-          className="fixed top-[12vh] left-1/2 z-50 grid w-[calc(100%-32px)] max-w-xl -translate-x-1/2 gap-2 rounded-2xl bg-(--surface-lowest) p-3 shadow-[0_18px_50px_var(--shadow-soft)]"
-        >
-          <Dialog.Title className="sr-only">Buscar e ir para</Dialog.Title>
-          <Dialog.Description className="sr-only">
-            Busque um destino ou escolha uma ação.
-          </Dialog.Description>
-          <div className="relative">
-            <Icone
-              nome="search"
-              className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-(--on-surface-variant)"
-            />
-            <input
-              ref={campo}
-              type="text"
-              aria-label="Buscar ou ir para"
-              placeholder="Buscar ou ir para…"
-              value={consulta}
-              onChange={(evento) => {
-                definirConsulta(evento.target.value)
-                definirAtivo(0)
-              }}
-              onKeyDown={(evento) => {
-                if (evento.key === "ArrowDown") {
-                  evento.preventDefault()
-                  definirAtivo((atual) => (atual + 1) % Math.max(1, itensVisiveis.length))
-                } else if (evento.key === "ArrowUp") {
-                  evento.preventDefault()
-                  definirAtivo(
-                    (atual) =>
-                      (atual - 1 + Math.max(1, itensVisiveis.length)) %
-                      Math.max(1, itensVisiveis.length),
-                  )
-                } else if (evento.key === "Enter") {
-                  evento.preventDefault()
-                  escolher(ativo)
-                }
-              }}
-              className="min-h-12 w-full rounded-xl bg-(--surface-lowest) pl-11 text-sm ring-1 ring-(--outline-variant) outline-none"
-            />
-          </div>
-
-          <div id="paleta-lista" className="grid max-h-[50vh] gap-1 overflow-y-auto">
-            {itensVisiveis.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-(--on-surface-variant)">Nada encontrado.</p>
-            ) : (
-              itensVisiveis.map((item, indice) => (
-                <div key={item.id}>
-                  <button
-                    type="button"
-                    aria-current={indice === ativo ? "true" : undefined}
-                    onClick={() => escolher(indice)}
-                    onMouseMove={() => definirAtivo(indice)}
-                    className={
-                      indice === ativo
-                        ? "flex min-h-11 w-full items-center gap-3 rounded-xl bg-(--secondary-container) px-3 text-left text-sm"
-                        : "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm hover:bg-(--muted)"
-                    }
-                  >
-                    <Icone nome={item.icone} className="size-5 shrink-0" />
-                    <span className="grow">{item.rotulo}</span>
-                    <span className="text-[12px] text-(--on-surface-variant)">{item.grupo}</span>
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-
-          <p className="text-[12px] text-(--on-surface-variant)">
-            ↑ ↓ navegar · ↵ abrir · Esc fechar
-          </p>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      <Command
+        // A busca ignora acento e caixa, como o resto do app (`normalizar`).
+        filter={(valor, busca) => (normalizar(valor).includes(normalizar(busca).trim()) ? 1 : 0)}
+        label="Buscar e ir para"
+      >
+        {/* O `label` da peça nomeia o campo: o cmdk liga o `aria-labelledby` do
+            input a ele, e o placeholder é só a dica visual. */}
+        <CommandInput autoFocus placeholder="Buscar ou ir para…" />
+        <CommandList data-sobreposicao="paleta" label="Destinos e ações">
+          <CommandEmpty>Nada encontrado.</CommandEmpty>
+          {GRUPOS.map((grupo) => (
+            <CommandGroup key={grupo} heading={grupo}>
+              {ITENS.filter((item) => item.grupo === grupo).map((item) => (
+                <CommandItem
+                  key={item.id}
+                  value={item.rotulo}
+                  data-escolha={item.id}
+                  onSelect={() => escolher(item)}
+                >
+                  <Icone nome={item.icone} className="size-5 shrink-0" />
+                  <span className="grow">{item.rotulo}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+        </CommandList>
+        <p className="px-3 pb-2 text-[12px] text-(--on-surface-variant)">
+          ↑ ↓ navegar · ↵ abrir · Esc fechar
+        </p>
+      </Command>
+    </CommandDialog>
   )
 }
