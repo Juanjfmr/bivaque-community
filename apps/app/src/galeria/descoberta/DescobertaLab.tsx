@@ -4,7 +4,13 @@ import { flushSync } from "react-dom"
 import { Icone } from "@/components/bivaque/icone"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { assetUrl } from "@/lib/assets"
 import { useNavegacao } from "@/lib/navegacao/react"
 import "./descoberta-lab.css"
@@ -32,7 +38,8 @@ const ITENS: readonly Item[] = [
     subtitulo: "Organização e apoio doméstico",
     bairro: "Adrianópolis",
     imagem: "service",
-    descricao: "Organização de ambientes e rotinas domésticas. Perfil fictício criado para testar a experiência de descoberta de serviços.",
+    descricao:
+      "Organização de ambientes e rotinas domésticas. Perfil fictício criado para testar a experiência de descoberta de serviços.",
     destaque: true,
   },
   {
@@ -42,7 +49,8 @@ const ITENS: readonly Item[] = [
     subtitulo: "Cuidados com animais",
     bairro: "Parque Dez",
     imagem: "pets",
-    descricao: "Cuidados e visitas para animais de estimação. Atendimento, disponibilidade e preços são ilustrativos.",
+    descricao:
+      "Cuidados e visitas para animais de estimação. Atendimento, disponibilidade e preços são ilustrativos.",
   },
   {
     id: "oficina-bairro",
@@ -60,7 +68,8 @@ const ITENS: readonly Item[] = [
     subtitulo: "Saúde e bem-estar",
     bairro: "Vieiralves",
     imagem: "dentist",
-    descricao: "Página de exemplo para testar uma ficha de profissional, sem representar atendimento real.",
+    descricao:
+      "Página de exemplo para testar uma ficha de profissional, sem representar atendimento real.",
   },
   {
     id: "berco",
@@ -90,7 +99,8 @@ const ITENS: readonly Item[] = [
     bairro: "Ponta Negra",
     imagem: "apartment",
     preco: "R$ 2.600/mês",
-    descricao: "Imóvel fictício para testar a descoberta de moradia e a passagem da lista para a página de detalhes.",
+    descricao:
+      "Imóvel fictício para testar a descoberta de moradia e a passagem da lista para a página de detalhes.",
   },
   {
     id: "casa",
@@ -100,12 +110,16 @@ const ITENS: readonly Item[] = [
     bairro: "Cidade Nova",
     imagem: "interior",
     preco: "R$ 2.100/mês",
-    descricao: "Imóvel de demonstração. Endereço exato não é mostrado e não há disponibilidade real.",
+    descricao:
+      "Imóvel de demonstração. Endereço exato não é mostrado e não há disponibilidade real.",
   },
 ]
 
 function normalizar(valor: string): string {
-  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
 }
 
 function trocarComTransicao(atualizar: () => void) {
@@ -173,7 +187,9 @@ export function DescobertaLab() {
           <Icone nome="location_on" /> Explorando Manaus
         </div>
         <h1>Descubra o que acontece perto de você.</h1>
-        <p>Gente que presta serviços, boas oportunidades e respostas da comunidade em um só lugar.</p>
+        <p>
+          Gente que presta serviços, boas oportunidades e respostas da comunidade em um só lugar.
+        </p>
       </header>
 
       <div className="bv-descoberta-busca">
@@ -185,7 +201,12 @@ export function DescobertaLab() {
           onChange={(evento) => setBusca(evento.target.value)}
         />
         {busca !== "" ? (
-          <Button variant="ghost" size="icon" aria-label="Limpar busca" onClick={() => setBusca("")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Limpar busca"
+            onClick={() => setBusca("")}
+          >
             <Icone nome="close" />
           </Button>
         ) : null}
@@ -196,7 +217,9 @@ export function DescobertaLab() {
           <button
             key={opcao}
             type="button"
-            className={opcao === categoria ? "bv-descoberta-categoria ativa" : "bv-descoberta-categoria"}
+            className={
+              opcao === categoria ? "bv-descoberta-categoria ativa" : "bv-descoberta-categoria"
+            }
             aria-pressed={opcao === categoria}
             onClick={() => setCategoria(opcao)}
           >
@@ -220,7 +243,13 @@ export function DescobertaLab() {
           <Icone nome="search_off" />
           <h3>Nada encontrado nesta prévia</h3>
           <p>Tente outro bairro, categoria ou palavra-chave.</p>
-          <Button variant="outline" onClick={() => { setBusca(""); setCategoria("Tudo") }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setBusca("")
+              setCategoria("Tudo")
+            }}
+          >
             Limpar filtros
           </Button>
         </div>
@@ -242,10 +271,15 @@ export function DescobertaLab() {
                     src={assetUrl(item.imagem)}
                     alt=""
                     loading="lazy"
-                    style={{ viewTransitionName: aberto?.id === item.id ? "none" : `bv-lab-imagem-${item.id}` }}
+                    style={{
+                      viewTransitionName:
+                        aberto?.id === item.id ? "none" : `bv-lab-imagem-${item.id}`,
+                    }}
                   />
                 </button>
-                <span className="bv-descoberta-selo">{item.destaque ? "Divulgação · exemplo" : item.grupo}</span>
+                <span className="bv-descoberta-selo">
+                  {item.destaque ? "Divulgação · exemplo" : item.grupo}
+                </span>
                 <button
                   type="button"
                   className="bv-descoberta-salvar"
@@ -266,7 +300,9 @@ export function DescobertaLab() {
               >
                 <strong>{item.titulo}</strong>
                 <span>{item.subtitulo}</span>
-                <small><Icone nome="location_on" /> {item.bairro}, Manaus</small>
+                <small>
+                  <Icone nome="location_on" /> {item.bairro}, Manaus
+                </small>
                 {item.preco ? <b className="bv-descoberta-preco">{item.preco}</b> : null}
               </button>
             </article>
@@ -275,7 +311,9 @@ export function DescobertaLab() {
       )}
 
       <div className="bv-descoberta-comunidade">
-        <div className="bv-descoberta-comunidade-icone"><Icone nome="forum" /></div>
+        <div className="bv-descoberta-comunidade-icone">
+          <Icone nome="forum" />
+        </div>
         <div>
           <span>QUEM MORA AQUI SABE</span>
           <h2>Uma pergunta pode ajudar muita gente.</h2>
@@ -299,7 +337,9 @@ export function DescobertaLab() {
 
       <Sheet
         open={aberto !== null}
-        onOpenChange={(valor) => { if (!valor) mudarDetalhe(null) }}
+        onOpenChange={(valor) => {
+          if (!valor) mudarDetalhe(null)
+        }}
       >
         <SheetContent
           side="bottom"
@@ -311,7 +351,9 @@ export function DescobertaLab() {
         >
           <SheetHeader className="bv-descoberta-detalhe-header">
             <SheetTitle>{aberto?.titulo ?? "Detalhes"}</SheetTitle>
-            <SheetDescription>{aberto?.subtitulo} · {aberto?.bairro}, Manaus</SheetDescription>
+            <SheetDescription>
+              {aberto?.subtitulo} · {aberto?.bairro}, Manaus
+            </SheetDescription>
           </SheetHeader>
           {aberto ? (
             <div className="bv-descoberta-detalhe-corpo">
@@ -323,7 +365,9 @@ export function DescobertaLab() {
               />
               <span className="bv-descoberta-detalhe-tipo">{aberto.grupo} · exemplo fictício</span>
               <p>{aberto.descricao}</p>
-              {aberto.preco ? <strong className="bv-descoberta-detalhe-preco">{aberto.preco}</strong> : null}
+              {aberto.preco ? (
+                <strong className="bv-descoberta-detalhe-preco">{aberto.preco}</strong>
+              ) : null}
               {mensagemEnviada ? (
                 <p className="bv-descoberta-confirmacao" role="status">
                   Pedido simulado. Nenhuma mensagem foi enviada e nenhum dado foi salvo.
