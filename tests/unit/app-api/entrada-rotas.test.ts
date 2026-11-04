@@ -31,6 +31,9 @@ const ORIGEM = "http://localhost:3000"
 const CABECALHO = { "x-bivaque-app": "bivaque-spa" }
 
 const mockRpc = vi.fn()
+// O cliente DO USUÁRIO (sessão), sob RLS: a rota de verificação lê só por ele.
+const mockRpcDoUsuario = vi.fn()
+const mockVinculoDoUsuario = vi.fn()
 const mockDeleteEq = vi.fn()
 const mockMaybeSingleLocalidade = vi.fn()
 const mockMaybeSingleCidade = vi.fn()
@@ -54,6 +57,24 @@ function clienteDeServico() {
   }
 }
 
+function clienteDoUsuario() {
+  return {
+    rpc: mockRpcDoUsuario,
+    from: (tabela: string) => ({
+      select: () => ({
+        eq: () => ({
+          limit: () => ({
+            maybeSingle: () =>
+              tabela === "locality_memberships"
+                ? mockVinculoDoUsuario()
+                : Promise.reject(new Error(`tabela inesperada: ${tabela}`)),
+          }),
+        }),
+      }),
+    }),
+  }
+}
+
 function requerer(caminho: string, corpo?: unknown) {
   return new NextRequest(`${ORIGEM}/app/api/app/entry/${caminho}`, {
     method: corpo === undefined ? "GET" : "POST",
@@ -67,7 +88,7 @@ function sessaoAutenticada() {
     estado: "autenticada",
     via: "cookie",
     usuario: PESSOA,
-    cliente: clienteDeServico(),
+    cliente: clienteDoUsuario(),
     cabecalhos: {},
   }
 }
@@ -87,6 +108,11 @@ beforeEach(() => {
     }
     return { data: null, error: null }
   })
+  mockRpcDoUsuario.mockResolvedValue({
+    data: [{ status: "verified", checked_at: null, updated_at: null }],
+    error: null,
+  })
+  mockVinculoDoUsuario.mockResolvedValue({ data: { locality_id: "x" }, error: null })
   mockDeleteEq.mockResolvedValue({ error: null })
   mockMaybeSingleLocalidade.mockResolvedValue({ data: { locality_id: "x" }, error: null })
   mockMaybeSingleCidade.mockResolvedValue({
@@ -156,9 +182,19 @@ describe("GET /api/app/entry/verification", () => {
     })
   })
 
+  it("lê pelo cliente do usuário sob RLS, sem service_role", async () => {
+    await VERIFICACAO(requerer("verification"))
+    // A leitura é a RPC escopada por auth.uid() (sem id de parâmetro) e a leitura
+    // própria de locality_memberships; o cliente de serviço nem é criado.
+    expect(mockRpcDoUsuario).toHaveBeenCalledWith("my_verification_status")
+    expect(mockVinculoDoUsuario).toHaveBeenCalledTimes(1)
+    expect(criarCliente).not.toHaveBeenCalled()
+    expect(mockRpc).not.toHaveBeenCalled()
+  })
+
   it("sem resultado de verificação devolve status nulo", async () => {
-    mockRpc.mockResolvedValue({ data: [], error: null })
-    mockMaybeSingleLocalidade.mockResolvedValue({ data: null, error: null })
+    mockRpcDoUsuario.mockResolvedValue({ data: [], error: null })
+    mockVinculoDoUsuario.mockResolvedValue({ data: null, error: null })
     const corpo = (await (await VERIFICACAO(requerer("verification"))).json()) as {
       status: string | null
       membroDaCidade: boolean
@@ -168,8 +204,30 @@ describe("GET /api/app/entry/verification", () => {
   })
 
   it("falha de leitura vira 503", async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: "db offline" } })
+    mockRpcDoUsuario.mockResolvedValue({ data: null, error: { message: "db offline" } })
     expect((await VERIFICACAO(requerer("verification"))).status).toBe(503)
+  })
+
+  it("servidor sem configuração responde 503, não 401 nem 500", async () => {
+    resolver.mockResolvedValue({ estado: "indisponivel" } as never)
+    const resposta = await VERIFICACAO(requerer("verification"))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "indisponivel" })
+  })
+})
+
+describe("falta de variável de ambiente nas rotas de escrita", () => {
+  it.each([
+    ["consent", ACEITAR, undefined],
+    ["cpf", CONSULTAR_CPF, { cpf: "52998224725" }],
+    ["provision", PROVISIONAR, { ibge_code: "1302603", display_name: "Ana", moment: "resident" }],
+  ] as const)("%s responde 503, não 500", async (caminho, rota, corpo) => {
+    criarCliente.mockImplementation(() => {
+      throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+    })
+    const resposta = await rota(requerer(caminho, corpo))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "indisponivel" })
   })
 })
 
@@ -238,7 +296,7 @@ describe("POST /api/app/entry/provision", () => {
     expect(provisionar).not.toHaveBeenCalled()
   })
 
-  it("provisiona com o id da sessão e apaga o rascunho ao concluir", async () => {
+  it("provisiona com o id da sessão; o rascunho sai no banco, não por esta rota", async () => {
     const resposta = await PROVISIONAR(requerer("provision", CORPO))
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ localityMember: true })
@@ -250,7 +308,10 @@ describe("POST /api/app/entry/provision", () => {
         localityId: "00000000-0000-4000-8000-000000000001",
       }),
     )
-    expect(mockDeleteEq).toHaveBeenCalledWith("user_id", PESSOA.id)
+    // O rascunho é apagado dentro de provision_member_entry, na mesma transação
+    // (migration 20261104135131; prova em supabase/tests/entry-provision-atomic.sql).
+    // A rota não faz uma segunda escrita que pudesse falhar por conta própria.
+    expect(mockDeleteEq).not.toHaveBeenCalled()
   })
 
   it("falha do provisionamento vira 503", async () => {

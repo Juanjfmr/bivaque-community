@@ -1,16 +1,17 @@
-﻿import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION, isValidCpf } from "@bivaque/domain"
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION, isValidCpf } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
 import {
+  clienteDeServicoOuNulo,
   conferirEscrita,
   exigirSessao,
   lerCorpoJson,
   opcoesDoApp,
   responder,
+  respostaIndisponivel,
 } from "../../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../../lib/logger"
 import { verifyEligibility } from "../../../../../lib/onboarding/verifyAndProvision"
 import { withoutReason } from "../../../../../lib/portal/browser-outcome"
-import { createServerClient } from "../../../../../lib/supabase/server"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -20,6 +21,9 @@ export const dynamic = "force-dynamic"
 // a resposta é o resultado sem motivo técnico (ADR-20260922-identidade-quando-
 // portal-falha), e o log nunca carrega o CPF. A regra de elegibilidade é a mesma
 // função que a web usa — um caminho só, duas portas.
+//
+// Quem já está verificado não é rebaixado: `verifyEligibility` devolve o estado
+// canônico sem chamar o Portal nem regravar o resultado, nas duas portas.
 //
 // O aceite é exigido antes: o CPF é consultado no Portal assim que digitado, e a
 // pessoa precisa ter visto a política que explica esse uso (ADR de entrada §3).
@@ -43,7 +47,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "cpf-invalido" }, 400)
   }
 
-  const cliente = createServerClient()
+  const cliente = clienteDeServicoOuNulo()
+  if (cliente === null) return respostaIndisponivel(request)
   const userId = sessao.sessao.usuario.id
 
   const { data: aceitou, error: consentError } = await cliente.rpc("has_accepted_consent", {

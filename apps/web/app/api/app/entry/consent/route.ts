@@ -1,13 +1,14 @@
 import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
 import {
+  clienteDeServicoOuNulo,
   conferirEscrita,
   exigirSessao,
   opcoesDoApp,
   responder,
+  respostaIndisponivel,
 } from "../../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../../lib/logger"
-import { createServerClient } from "../../../../../lib/supabase/server"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,7 +26,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const porta = conferirEscrita(request, sessao.sessao.via)
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
-  const { error } = await createServerClient().rpc("record_consent_acceptance", {
+  const servico = clienteDeServicoOuNulo()
+  if (servico === null) return respostaIndisponivel(request)
+  const { error } = await servico.rpc("record_consent_acceptance", {
     p_user_id: sessao.sessao.usuario.id,
     p_consent_version: CONSENT_VERSION,
     p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,

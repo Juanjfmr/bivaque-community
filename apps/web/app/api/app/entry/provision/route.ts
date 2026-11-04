@@ -1,16 +1,17 @@
 import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
 import {
+  clienteDeServicoOuNulo,
   conferirEscrita,
   exigirSessao,
   lerCorpoJson,
   opcoesDoApp,
   responder,
+  respostaIndisponivel,
 } from "../../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../../lib/logger"
 import { validateProvisionInput } from "../../../../../lib/onboarding/provision-validation"
 import { provisionMember } from "../../../../../lib/onboarding/verifyAndProvision"
-import { createServerClient } from "../../../../../lib/supabase/server"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -22,8 +23,10 @@ export const dynamic = "force-dynamic"
 // (`validateProvisionInput`): cidade é código IBGE do catálogo, nunca texto
 // livre; o momento e as datas seguem o CHECK da tabela.
 //
-// Ao concluir, o rascunho da entrada é apagado: o banco canônico passa a ser a
-// fonte, como manda o ADR-20261102.
+// Ao concluir, o rascunho da entrada é apagado DENTRO de `provision_member_entry`,
+// na mesma transação do vínculo (ADR-20261102): vale para esta rota, para a da web
+// e para o convite familiar, e uma falha não deixa a entrada concluída com o
+// rascunho para trás.
 
 const CORPO_MAXIMO = 8 * 1024
 
@@ -38,7 +41,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!lido.ok) return responder(request, { erro: "corpo-invalido" }, lido.status)
 
   const corpo = lido.corpo
-  const cliente = createServerClient()
+  const cliente = clienteDeServicoOuNulo()
+  if (cliente === null) return respostaIndisponivel(request)
   const userId = sessao.sessao.usuario.id
 
   const validacao = validateProvisionInput({
@@ -115,19 +119,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               destinationLocalityId: destinoId,
             },
     })
-
-    // O rascunho cumpriu o papel: apagar é o ciclo de vida do ADR. Falha aqui
-    // não desfaz a entrada; a purga da conta também conhece a linha.
-    const { error: limpezaError } = await cliente
-      .from("entry_progress")
-      .delete()
-      .eq("user_id", userId)
-    if (limpezaError) {
-      log.error("provision: entry progress cleanup failed", {
-        error: limpezaError.message,
-        userId,
-      })
-    }
 
     return responder(request, resultado, 200)
   } catch (erro: unknown) {
