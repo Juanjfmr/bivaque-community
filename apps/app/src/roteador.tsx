@@ -3,6 +3,7 @@ import type { ComponentType } from "react"
 
 import { ROTAS } from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
+import { DescobertaLab } from "@/src/galeria/descoberta/DescobertaLab"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
 import { TelaGaleria } from "@/src/galeria/TelaGaleria"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
@@ -145,7 +146,15 @@ const mercadoLab = createRoute({
     import.meta.env.DEV || modoDeProvaAtivo() ? <MercadoLab /> : <TelaIndisponivel />,
 })
 
-const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria, mercadoLab])
+/** Prévia isolada e sem dados reais: nunca aparece na navegação de produto. */
+const descobertaLab = createRoute({
+  getParentRoute: () => raiz,
+  path: "/galeria/descoberta",
+  component: () =>
+    import.meta.env.DEV || modoDeProvaAtivo() ? <DescobertaLab /> : <TelaIndisponivel />,
+})
+
+const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria, mercadoLab, descobertaLab])
 
 export const roteador = createRouter({
   basepath: "/app",
