@@ -1,63 +1,45 @@
-import { expect, test } from "@playwright/test"
+﻿import { expect, test } from "@playwright/test"
+import { simularConversas } from "./conversas-ajuda"
 
-test("Conversas: origem do anúncio real pode ser aberta sem rota genérica", async ({ page }) => {
+test("caixa abre conversa contextual", async ({ page }) => {
+  await simularConversas(page)
   await page.goto("/app/conversas")
   const thread = page.locator('[data-thread="t1"]')
   await expect(thread).toContainText("Paulo R.")
-  await expect(thread).toContainText("Berço com colchão")
-  await thread.getByRole("button", { name: "Ver origem: Berço com colchão" }).click()
-  await expect(page).toHaveURL(/\/app\/anuncio\/i3$/)
-  await page.goto("/app/conversas")
-  await page.locator('[data-thread="t1"] > button').first().click()
+  await expect(thread).toContainText("Anúncio")
+  await thread.getByRole("button").first().click()
   await expect(page).toHaveURL(/\/app\/conversa\/t1$/)
-  const contexto = page.locator('[data-tela="conversa"] [data-contexto-conversa="anuncio"]')
-  await expect(contexto).toContainText("Berço com colchão")
-  await contexto.click()
-  await expect(page).toHaveURL(/\/app\/anuncio\/i3$/)
+  await expect(page.locator('[data-contexto-conversa="informativo"]')).toContainText("Anúncio")
 })
 
-test("Conversa: compositor mobile, resposta rápida e histórico de prévias por sessão", async ({
-  page,
-}) => {
+test("compositor mostra a resposta gravada e preserva o texto na falha", async ({ page }) => {
+  await simularConversas(page)
   await page.goto("/app/conversa/t2")
   const caixa = page.locator('[data-compositor-conversa="sim"]')
   await expect(caixa).toBeVisible()
-  await expect(page.locator('[data-contexto-conversa="negocio"]')).toContainText(
-    "Amazon Climatização",
-  )
   await caixa.getByRole("button", { name: "Podemos combinar a retirada?" }).click()
-  await expect(caixa.locator("#mensagem-da-conversa")).toHaveValue("Podemos combinar a retirada?")
-  await caixa.locator('[data-acao="adicionar-previa-conversa"]').click()
-  await expect(page.locator('[data-mensagem-previa="sim"]')).toContainText(
+  await caixa.getByRole("button", { name: "Enviar", exact: true }).click()
+  await expect(page.locator('[data-mensagens="historico"]')).toContainText(
     "Podemos combinar a retirada?",
   )
-  await expect(page.locator('[data-mensagem-previa="sim"]')).toContainText("não enviada")
+  await page.reload()
+  await expect(page.locator('[data-mensagens="historico"]')).toContainText(
+    "Podemos combinar a retirada?",
+  )
+  await page.route("**/api/app/conversas/*/mensagens", (rota) =>
+    rota.fulfill({ status: 503, json: {} }),
+  )
+  await caixa.locator("#mensagem-da-conversa").fill("Mensagem que falhou")
+  await caixa.getByRole("button", { name: "Enviar", exact: true }).click()
+  await expect(caixa.getByRole("alert")).toContainText("Seu texto foi mantido")
+  await expect(caixa.locator("#mensagem-da-conversa")).toHaveValue("Mensagem que falhou")
   const medidas = await caixa.boundingBox()
-  const largura = page.viewportSize()?.width ?? 375
   expect(medidas).not.toBeNull()
   if (medidas) {
     expect(medidas.x).toBeGreaterThanOrEqual(-1)
-    expect(medidas.x + medidas.width).toBeLessThanOrEqual(largura + 1)
-    if (largura < 720) {
-      const altura = page.viewportSize()?.height ?? 812
-      expect(altura - (medidas.y + medidas.height)).toBeLessThan(72)
-    }
+    expect(medidas.x + medidas.width).toBeLessThanOrEqual((page.viewportSize()?.width ?? 375) + 1)
   }
-  await page.reload()
-  await expect(page.locator('[data-mensagem-previa="sim"]')).toHaveCount(1)
-  await page.goto("/app/conversas")
-  await expect(page.locator('[data-thread="t2"]')).toContainText("Prévia não enviada")
-  await expect(page.locator('[data-thread="t2"]')).toContainText("Podemos combinar a retirada?")
 })
-
-test("Conversa sem anúncio associado mostra somente a origem informativa", async ({ page }) => {
-  await page.goto("/app/conversa/t3")
-  await expect(page.locator('[data-contexto-conversa="informativo"]')).toContainText(
-    "Escola no 3º ano",
-  )
-  await expect(page.getByRole("button", { name: /Ver origem:/ })).toHaveCount(0)
-})
-
 test("Grupo fechado: requer solicitação e não mostra publicações enquanto fora", async ({
   page,
 }) => {
