@@ -1,12 +1,25 @@
-﻿import { expect, test } from "@playwright/test"
+﻿import { mkdirSync } from "node:fs"
+import { join } from "node:path"
+import { expect, test } from "@playwright/test"
 import { simularConversas } from "./conversas-ajuda"
 
-test("caixa abre conversa contextual", async ({ page }) => {
+test("caixa abre conversa contextual", async ({ page }, testInfo) => {
   await simularConversas(page)
   await page.goto("/app/conversas")
   const thread = page.locator('[data-thread="t1"]')
   await expect(thread).toContainText("Paulo R.")
   await expect(thread).toContainText("Anúncio")
+  const diretorio = join(process.cwd(), "../../.visual/run-011/capturas-simuladas")
+  mkdirSync(diretorio, { recursive: true })
+  for (const tema of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
+    await page.screenshot({
+      path: join(diretorio, `${testInfo.project.name}-caixa-${tema}.png`),
+      fullPage: true,
+      animations: "disabled",
+    })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
   await thread.getByRole("button").first().click()
   await expect(page).toHaveURL(/\/app\/conversa\/t1$/)
   await expect(page.locator('[data-contexto-conversa="informativo"]')).toContainText("Anúncio")
