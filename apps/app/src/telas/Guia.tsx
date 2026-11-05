@@ -117,6 +117,9 @@ export function Guia() {
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const montada = useRef(true)
+  // Identifica a carga vigente: resposta de um filtro antigo não entra na lista
+  // nova quando a pessoa troca a busca enquanto "Ver mais" está no ar.
+  const carga = useRef(0)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -136,6 +139,7 @@ export function Guia() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     const controle = new AbortController()
+    carga.current += 1
     setDados(null)
     setErro(null)
     void lerGuia({ q: busca, categoria, signal: controle.signal })
@@ -151,17 +155,19 @@ export function Guia() {
 
   async function carregarMais() {
     if (dados === null || dados.proximo === null || carregandoMais) return
+    const cargaDoPedido = carga.current
     setCarregandoMais(true)
     setErroAoCarregarMais(null)
     try {
       const proxima = await lerGuia({ q: busca, categoria, depois: dados.proximo })
+      if (cargaDoPedido !== carga.current) return
       setDados({
         entradas: [...dados.entradas, ...proxima.entradas],
         proximo: proxima.proximo,
         cidade: proxima.cidade || dados.cidade,
       })
     } catch (falha: unknown) {
-      if (!foiAbortada(falha)) {
+      if (cargaDoPedido === carga.current && !foiAbortada(falha)) {
         setErroAoCarregarMais(mensagemDaFalha(falha, "Não foi possível carregar mais referências."))
       }
     } finally {
