@@ -26,6 +26,9 @@ export const dynamic = "force-dynamic"
 // a identidade de quem grava. O autor é o id da SESSÃO; a linha é uma por pessoa
 // (upsert por user_id) e a tabela não tem grant de escrita para cliente, então a
 // gravação usa o cliente de serviço.
+//
+// A etapa só existe depois do provisionamento: quem não tem vínculo com a cidade
+// não grava o combinado nem avança o marcador (409, como /groups).
 
 const CORPO_MAXIMO = 4 * 1024
 
@@ -51,10 +54,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "versao-invalida" }, 400, sessao.sessao.cabecalhos)
   }
 
+  const userId = sessao.sessao.usuario.id
+
+  // Sem vínculo não há etapa do combinado para concluir: a resposta é 409, igual
+  // à dos grupos, e o marcador não sai do lugar.
+  const cidade = await sessao.sessao.cliente
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle()
+
+  if (cidade.error) {
+    log.error("entry commitment: locality read failed", { error: cidade.error.message, userId })
+    return responder(request, { erro: "leitura-indisponivel" }, 503, sessao.sessao.cabecalhos)
+  }
+
+  if (cidade.data === null) {
+    return responder(request, { erro: "sem-cidade" }, 409, sessao.sessao.cabecalhos)
+  }
+
   const servico = clienteDeServicoOuNulo()
   if (servico === null) return respostaIndisponivel(request)
 
-  const userId = sessao.sessao.usuario.id
   const { error } = await servico
     .from("entry_commitments")
     .upsert({ user_id: userId, versao: CODE_OF_CONDUCT_VERSION }, { onConflict: "user_id" })

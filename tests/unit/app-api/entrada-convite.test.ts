@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // Aceite do convite familiar pelo app (RUN-002). A rota não cria conta: a
 // sessão já nasceu no código de e-mail, o e-mail vem dela, e o banco confere o
@@ -86,6 +86,8 @@ beforeEach(() => {
   })
 })
 
+afterEach(() => vi.unstubAllEnvs())
+
 describe("POST /api/app/entry/invite", () => {
   it("sem sessão responde 401 e não lê o corpo", async () => {
     resolver.mockResolvedValue({
@@ -97,6 +99,18 @@ describe("POST /api/app/entry/invite", () => {
 
     expect(resposta.status).toBe(401)
     expect(await resposta.json()).toEqual({ autenticado: false, motivo: "sem-credencial" })
+    expect(prever).not.toHaveBeenCalled()
+  })
+
+  it("sem o segredo do limitador responde 503, não 500", async () => {
+    vi.stubEnv("NODE_ENV", "production")
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "")
+
+    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
+
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "indisponivel" })
+    expect(consultarConsentimento).not.toHaveBeenCalled()
     expect(prever).not.toHaveBeenCalled()
   })
 

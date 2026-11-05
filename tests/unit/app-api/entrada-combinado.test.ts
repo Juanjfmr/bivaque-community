@@ -26,6 +26,7 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/combinado`
 
 const mockUpsert = vi.fn()
 const mockMarcador = vi.fn()
+const mockCidade = vi.fn()
 const mockFrom = vi.fn((tabela: string) =>
   tabela === "entry_progress" ? { upsert: mockMarcador } : { upsert: mockUpsert },
 )
@@ -35,7 +36,16 @@ function sessaoAutenticada() {
     estado: "autenticada",
     via: "cookie",
     usuario: PESSOA,
-    cliente: { from: () => ({}) },
+    cliente: {
+      from: (tabela: string) => {
+        if (tabela !== "locality_memberships") throw new Error(`tabela inesperada: ${tabela}`)
+        return {
+          select: () => ({
+            eq: () => ({ limit: () => ({ maybeSingle: mockCidade }) }),
+          }),
+        }
+      },
+    },
     cabecalhos: {},
   }
 }
@@ -74,6 +84,10 @@ beforeEach(() => {
   criarCliente.mockReturnValue({ from: mockFrom } as never)
   mockUpsert.mockResolvedValue({ error: null })
   mockMarcador.mockResolvedValue({ error: null })
+  mockCidade.mockResolvedValue({
+    data: { locality_id: "00000000-0000-4000-8000-000000000001" },
+    error: null,
+  })
 })
 
 describe("POST /api/app/entry/combinado", () => {
@@ -118,6 +132,24 @@ describe("POST /api/app/entry/combinado", () => {
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 
+  it("sem vínculo com a cidade responde 409 e não grava nem avança o marcador", async () => {
+    mockCidade.mockResolvedValue({ data: null, error: null })
+    const resposta = await POST(requisicao({ corpo: { versao: CODE_OF_CONDUCT_VERSION } }))
+    expect(resposta.status).toBe(409)
+    expect(await resposta.json()).toEqual({ erro: "sem-cidade" })
+    expect(mockUpsert).not.toHaveBeenCalled()
+    expect(mockMarcador).not.toHaveBeenCalled()
+  })
+
+  it("falha ao ler o vínculo vira 503 e não grava", async () => {
+    mockCidade.mockResolvedValue({ data: null, error: { message: "db offline" } })
+    const resposta = await POST(requisicao({ corpo: { versao: CODE_OF_CONDUCT_VERSION } }))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
+    expect(mockUpsert).not.toHaveBeenCalled()
+    expect(mockMarcador).not.toHaveBeenCalled()
+  })
+
   it("corpo que não é objeto ou JSON quebrado é 400 corpo-invalido", async () => {
     for (const texto of ["[]", '"texto"', "null", "{ versao: 2, quebrado"]) {
       const resposta = await POST(requisicao({ texto }))
@@ -145,6 +177,8 @@ describe("POST /api/app/entry/combinado", () => {
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ ok: true, versao: CODE_OF_CONDUCT_VERSION })
     expect(mockFrom).toHaveBeenCalledWith("entry_commitments")
+    // A etapa só grava com vínculo: a leitura da cidade aconteceu antes.
+    expect(mockCidade).toHaveBeenCalled()
     // O id do corpo (OUTRO_ID) não é usado: o autor é o usuário da sessão, e a
     // versão gravada é a do contrato compartilhado.
     expect(mockUpsert).toHaveBeenCalledWith(
