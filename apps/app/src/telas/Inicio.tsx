@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
+import { CartaoVitrineAnuncio } from "@/components/bivaque/cartao-vitrine"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
@@ -29,6 +29,7 @@ export function Inicio() {
   const [dados, setDados] = useState<InicioDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
   const sugestao = "escola perto de casa"
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -111,14 +112,23 @@ export function Inicio() {
               ) : (
                 <Grade formato="carrossel-mobile">
                   {dados.anuncios.slice(0, 4).map((item) => (
-                    <CartaoDeFoto
+                    <CartaoVitrineAnuncio
                       key={item.id}
                       anuncio={{
                         id: item.id,
                         titulo: item.title,
                         preco: null,
+                        salvo: salvos.has(item.id),
                         meta: item.detalhe ?? dados.cidade,
                       }}
+                      aoSalvar={() =>
+                        setSalvos((atual) => {
+                          const proximo = new Set(atual)
+                          if (proximo.has(item.id)) proximo.delete(item.id)
+                          else proximo.add(item.id)
+                          return proximo
+                        })
+                      }
                       aoAbrir={() =>
                         void navegacao.irPara("anuncio", { parametros: { id: item.id } })
                       }
