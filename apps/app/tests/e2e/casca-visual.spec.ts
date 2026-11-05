@@ -46,6 +46,10 @@ test("o topo preserva ações e mostra Encontro sem cortar em 375", async ({ pag
   const topo = page.locator('[data-topo="barra"]')
   const titulo = topo.locator('[data-titulo="topo"]')
   await expect(titulo).toHaveText("Encontro")
+  // A largura do título é medida: antes da troca de fonte ela pode não caber.
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
   for (const nome of ["Voltar", "Conversas", "Buscar"]) {
     const botao = topo.getByRole("button", { name: nome, exact: true })
     await expect(botao).toBeVisible()
@@ -59,6 +63,10 @@ test("o topo preserva ações e mostra Encontro sem cortar em 375", async ({ pag
 
 test("o topo da conversa acompanha a pessoa e não conserva nome ao sair", async ({ page }) => {
   await page.goto("/app/conversa/nao-existe")
+  // A largura do título é medida três vezes abaixo.
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
   const topo = page.locator('[data-topo="barra"]')
   const titulo = topo.locator('[data-titulo="topo"]')
   await expect(

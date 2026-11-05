@@ -29,7 +29,17 @@ test.describe("fontes locais", () => {
   test("as três famílias carregam do próprio app, sem rede externa", async ({ page }) => {
     const { pedidos, respostas } = await comRegistro(page, async () => {
       await abrirGaleria(page)
-      await page.evaluate(() => document.fonts.ready)
+      // A carga é pedida, não presumida: a galeria pode não usar as três famílias
+      // (a serifa saiu dela), e o navegador só baixa a face que alguma regra usa.
+      // O pedido acontece dentro do registro, então a origem dele é medida abaixo.
+      await page.evaluate(async () => {
+        await Promise.all([
+          document.fonts.load('24px "Material Symbols Outlined"'),
+          document.fonts.load('400 16px "Noto Sans"'),
+          document.fonts.load('600 16px "Noto Serif"'),
+        ])
+        await document.fonts.ready
+      })
     })
 
     const deFora = pedidos.filter(
