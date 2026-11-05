@@ -169,7 +169,7 @@ export function Evento() {
             {cancelado ? "Encontro cancelado" : "Encontro da comunidade"}
           </Etiqueta>
           {encontro.souOrganizador ? (
-            <Botao tom="texto" icone="edit" className="ml-auto" onClick={() => setEditando(true)}>
+            <Botao tom="tonal" icone="edit" className="ml-auto" onClick={() => setEditando(true)}>
               Editar
             </Botao>
           ) : null}
@@ -184,7 +184,9 @@ export function Evento() {
         <Icone nome="location_on" className="size-6 shrink-0 text-(--primary)" />
         <span className="grid gap-0.5">
           <b className="text-[15px]">{texto(encontro.local, "Local a confirmar")}</b>
-          <small className="text-(--on-surface-variant)">{encontro.cidade}</small>
+          <small data-cidade-do-evento className="text-(--on-surface-variant)">
+            {encontro.cidade}
+          </small>
         </span>
       </div>
 
@@ -230,7 +232,9 @@ export function Evento() {
           ) : presenca === null ? null : (
             <div className="flex flex-wrap justify-end gap-2">
               <Botao
-                tom={presenca.minha === "not_going" ? "tonal" : "contornado"}
+                // Tonal nos dois estados: o tom de contorno não segue o tema
+                // escuro (defeito do piece, registrado no card) e o botão sumia.
+                tom="tonal"
                 aria-pressed={presenca.minha === "not_going"}
                 disabled={ocupado}
                 onClick={() => void mudarPresenca("not_going")}
@@ -247,7 +251,7 @@ export function Evento() {
                 {presenca.minha === "going" ? "Presença confirmada" : "Vou"}
               </Botao>
               {presenca.minha === null ? null : (
-                <Botao tom="texto" disabled={ocupado} onClick={() => void mudarPresenca(null)}>
+                <Botao tom="tonal" disabled={ocupado} onClick={() => void mudarPresenca(null)}>
                   Cancelar presença
                 </Botao>
               )}
@@ -285,7 +289,7 @@ export function Evento() {
               )}
               <div className="flex justify-end">
                 <Botao
-                  tom="contornado"
+                  tom="tonal"
                   type="submit"
                   disabled={enviandoPergunta || pergunta.trim() === ""}
                 >

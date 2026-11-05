@@ -79,7 +79,14 @@ function contraste(texto: string, fundo: string): number {
 async function coresDoBotao(
   page: Page,
   nome: string,
-): Promise<{ texto: string; fundo: string; borda: string }> {
+): Promise<{
+  texto: string
+  fundo: string
+  borda: string
+  temaEscuro: boolean
+  fgVar: string
+  bgVar: string
+}> {
   return page.getByRole("button", { name: nome, exact: true }).evaluate((elemento) => {
     const alvo = elemento as HTMLElement
     const estilo = getComputedStyle(alvo)
@@ -94,8 +101,47 @@ async function coresDoBotao(
       }
       no = no.parentElement
     }
-    return { texto: estilo.color, fundo, borda: estilo.borderTopColor }
+    const raiz = getComputedStyle(document.documentElement)
+    return {
+      texto: estilo.color,
+      fundo,
+      borda: estilo.borderTopColor,
+      temaEscuro: window.matchMedia("(prefers-color-scheme: dark)").matches,
+      fgVar: raiz.getPropertyValue("--foreground").trim(),
+      bgVar: raiz.getPropertyValue("--background").trim(),
+    }
   })
+}
+
+/**
+ * Deixa a presença de partida em branco. As três larguras rodam em série com a
+ * MESMA persona: um teste que começa presumindo "ainda não confirmei" quebra
+ * quando a largura anterior deixou a presença gravada.
+ */
+async function garantirSemPresenca(page: Page): Promise<void> {
+  const confirmada = page.getByRole("button", { name: "Presença confirmada" })
+  if ((await confirmada.count()) === 0) return
+  await page.getByRole("button", { name: "Cancelar presença" }).click()
+  await expect(page.getByRole("button", { name: "Vou", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  )
+}
+
+/**
+ * O token da sessão semeada, lido do próprio cookie que o app usa. O PostgREST
+ * autentica por `Authorization: Bearer` — o cookie do `@supabase/ssr` só é
+ * entendido pelo supabase-js —, então a leitura do banco pela mesma pessoa passa
+ * por aqui, sob RLS.
+ */
+async function tokenDaSessao(context: BrowserContext): Promise<string> {
+  const cookie = (await context.cookies()).find((item) => /^sb-.*-auth-token$/.test(item.name))
+  if (cookie === undefined) throw new Error("a sessão semeada não está nos cookies")
+  const sessao = JSON.parse(
+    Buffer.from(cookie.value.replace(/^base64-/, ""), "base64url").toString("utf8"),
+  ) as { access_token?: string }
+  if (typeof sessao.access_token !== "string") throw new Error("cookie de sessão sem token")
+  return sessao.access_token
 }
 
 async function entrarComo(context: BrowserContext, email: string): Promise<void> {
@@ -129,6 +175,7 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
 
     // Cor computada no escuro: o tema do sistema chega até a tela.
     await page.emulateMedia({ colorScheme: "dark" })
+    await page.waitForFunction(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
     const noEscuro = await corDoTitulo(page)
     expect(noEscuro, "no escuro o título é claro").toHaveLength(3)
     for (const canal of noEscuro) expect(canal).toBeGreaterThan(128)
@@ -137,7 +184,7 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     const criar = await coresDoBotao(page, "Criar encontro")
     expect(
       contraste(criar.texto, criar.fundo),
-      `"Criar encontro" no escuro: ${criar.texto} sobre ${criar.fundo}`,
+      `"Criar encontro" no escuro: ${criar.texto} sobre ${criar.fundo} (temaEscuro=${criar.temaEscuro})`,
     ).toBeGreaterThanOrEqual(4.5)
 
     await page.emulateMedia({ colorScheme: "light" })
@@ -149,10 +196,11 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     await expect(
       page.getByRole("heading", { level: 1, name: ENCONTRO_FUTURO_SEMEADO }),
     ).toBeVisible({ timeout: 30_000 })
-    // A cidade mostrada é a do ENCONTRO.
-    await expect(page.getByText("Manaus")).toBeVisible()
+    // A cidade mostrada é a do ENCONTRO, não a da casca.
+    await expect(page.locator("[data-cidade-do-evento]")).toHaveText("Manaus")
 
     // Presença: o que a tela mostra depois é o que ficou gravado.
+    await garantirSemPresenca(page)
     await page.getByRole("button", { name: "Vou", exact: true }).click()
     await expect(page.getByRole("button", { name: "Presença confirmada" })).toHaveAttribute(
       "aria-pressed",
@@ -164,13 +212,14 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       "a presença precisa sobreviver ao recarregamento",
     ).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 })
 
-    // Contraste das ações de presença no escuro.
+    // Contraste das ações de presença no escuro — medido, não olhado.
     await page.emulateMedia({ colorScheme: "dark" })
+    await page.waitForFunction(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
     for (const nome of ["Não vou", "Cancelar presença"]) {
       const cores = await coresDoBotao(page, nome)
       expect(
         contraste(cores.texto, cores.fundo),
-        `"${nome}" no escuro: ${cores.texto} sobre ${cores.fundo}`,
+        `"${nome}" no escuro: ${cores.texto} sobre ${cores.fundo} (temaEscuro=${cores.temaEscuro}, --foreground=${cores.fgVar}, --background=${cores.bgVar})`,
       ).toBeGreaterThanOrEqual(4.5)
     }
     await page.emulateMedia({ colorScheme: "light" })
@@ -207,7 +256,7 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       {
         headers: {
           apikey: process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? "",
-          prefer: "return=representation",
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
         },
       },
     )
@@ -227,6 +276,8 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     await expect(
       page.getByRole("heading", { level: 1, name: ENCONTRO_FUTURO_SEMEADO }),
     ).toBeVisible({ timeout: 30_000 })
+
+    await garantirSemPresenca(page)
 
     // A rota de presença cai. A tela não pode fingir que gravou.
     await page.route("**/api/app/eventos/*/presenca", (rota) => rota.abort())
@@ -332,6 +383,31 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     ).toBeVisible({ timeout: 30_000 })
   })
 
+  test("sessão vencida e acesso negado têm saídas próprias", async ({ page, context }) => {
+    test.setTimeout(120_000)
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    // 401: a saída é entrar de novo — tentar de novo com o mesmo cookie não resolve.
+    await page.route("**/api/app/eventos", (rota) =>
+      rota.fulfill({ status: 401, body: '{"autenticado":false,"motivo":"sem-credencial"}' }),
+    )
+    await page.goto("/app/agenda")
+    const sessao = page.locator('[data-estado="sessao-vencida"]')
+    await expect(sessao).toBeVisible({ timeout: 30_000 })
+    await expect(sessao.getByRole("button", { name: "Entrar de novo" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0)
+
+    // 403: negado, sem botão que repete a mesma chamada.
+    await page.unroute("**/api/app/eventos")
+    await page.route("**/api/app/eventos", (rota) =>
+      rota.fulfill({ status: 403, body: '{"erro":"recusado"}' }),
+    )
+    await page.goto("/app/agenda")
+    await expect(page.locator('[data-estado="negado"]')).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Entrar de novo" })).toHaveCount(0)
+  })
+
   test("503 no detalhe do encontro mostra erro, não tela vazia", async ({ page, context }) => {
     test.setTimeout(120_000)
     await entrarComo(context, MEMBRO_SEMEADO)
@@ -370,7 +446,7 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 1, name: ENCONTRO_FUTURO_SEMEADO }),
     ).toBeVisible({ timeout: 30_000 })
     // A cidade mostrada é a do evento, não a de quem olha.
-    await expect(page.locator('[data-tela="evento"]').getByText("Manaus")).toBeVisible()
+    await expect(page.locator("[data-cidade-do-evento]")).toHaveText("Manaus")
     await expect(page.locator('[data-visitante="sim"]')).toContainText("Encontro de outra cidade")
     await expect(page.getByRole("button", { name: "Vou", exact: true })).toHaveCount(0)
     await expect(page.getByRole("button", { name: "Não vou", exact: true })).toHaveCount(0)
