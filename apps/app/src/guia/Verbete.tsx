@@ -6,18 +6,10 @@ import { Botao } from "@/components/bivaque/botao"
 import { Campo, Formulario } from "@/components/bivaque/campos"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
-import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
 import { lerVerbete, marcarNoGuia, sugerirAtualizacao, type VerbeteDoGuia } from "@/lib/dados/guia"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
-import {
-  acessoNegado,
-  ICONE_DA_CATEGORIA,
-  mensagemDaFalha,
-  ROTULO_DA_CATEGORIA,
-  sessaoVencida,
-  validarSugestao,
-} from "@/src/guia/comum"
+import { acessoNegado, mensagemDaFalha, sessaoVencida, validarSugestao } from "@/src/guia/comum"
 
 /**
  * O verbete do Guia (F08), aberto numa folha sobre a lista.
@@ -111,11 +103,6 @@ export function Verbete({
   const { entrada, podeSugerir } = verbete
   return (
     <div data-verbete="guia" className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Icone nome={ICONE_DA_CATEGORIA[entrada.categoria]} className="size-5 text-(--primary)" />
-        <Etiqueta>{ROTULO_DA_CATEGORIA[entrada.categoria]}</Etiqueta>
-      </div>
-
       {entrada.descricao === "" ? null : (
         <p className="text-sm text-(--on-surface-variant)">{entrada.descricao}</p>
       )}

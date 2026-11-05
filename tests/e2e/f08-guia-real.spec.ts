@@ -118,9 +118,9 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     await capturar(page, testInfo.project.name, "guia")
 
     await abrirVerbete(page, ESCOLA_SEMEADA)
-    await expect(page.getByRole("dialog")).toContainText("Turno integral")
+    await expect(page.getByRole("dialog")).toContainText("turno integral")
     await capturar(page, testInfo.project.name, "verbete")
-    await page.getByRole("button", { name: "Fechar" }).click()
+    await page.getByRole("button", { name: "Fechar", exact: true }).click()
     await expect(page.getByRole("dialog")).toHaveCount(0)
   })
 
@@ -237,12 +237,17 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
     const cabecalhos = { authorization: `Bearer ${token}`, "content-type": "application/json" }
     const marcar = await api.put(`/api/app/guia/${HOSPITAL_ID}/salvo`, { headers: cabecalhos })
-    expect(marcar.status(), "salvar referência de outra cidade é recusado").toBe(404)
+    // Ler o guia é nacional (policy com `has_current_locality`); escrever é da
+    // cidade. A recusa é da RLS, e a mensagem do Postgres não volta.
+    expect(marcar.status(), "salvar referência de outra cidade é recusado").toBe(403)
+    expect(JSON.stringify(await marcar.json())).not.toMatch(/row-level security/)
     const sugestao = await api.post(`/api/app/guia/${HOSPITAL_ID}/sugestao`, {
       headers: cabecalhos,
       data: { descricao: "Mudou o telefone." },
     })
-    expect(sugestao.status(), "sugerir sobre referência de outra cidade é recusado").toBe(404)
+    // O seed local não tem artigo publicado: a sugestão não tem onde pousar.
+    expect(sugestao.status()).toBe(400)
+    expect(await sugestao.json()).toMatchObject({ erro: "sem-artigo" })
 
     const semSessao = await api.get("/api/app/guia")
     expect(semSessao.status(), "a rota exige sessão").toBe(401)

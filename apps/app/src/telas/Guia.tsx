@@ -14,10 +14,11 @@ import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import {
   CATEGORIAS_DO_GUIA,
   type CategoriaDoGuia,
+  type EntradaDoGuia,
   type GuiaDaCidade,
   lerGuia,
 } from "@/lib/dados/guia"
-import { useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import {
@@ -43,14 +44,13 @@ import { Verbete } from "@/src/guia/Verbete"
  * do sistema fecha a folha antes de sair da tela.
  */
 export function Guia() {
-  const folha = useSobreposicaoDaEntrada("folha")
   const [termo, setTermo] = useState("")
   const [busca, setBusca] = useState("")
   const [categoria, setCategoria] = useState<CategoriaDoGuia | null>(null)
   const [dados, setDados] = useState<GuiaDaCidade | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [aberta, setAberta] = useState<string | null>(null)
+  const [aberta, setAberta] = useState<EntradaDoGuia | null>(null)
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const montada = useRef(true)
@@ -106,13 +106,8 @@ export function Guia() {
     }
   }
 
-  function abrirVerbete(id: string) {
-    setAberta(id)
-    folha.aoMudarAberto(true)
-  }
-
-  function fecharVerbete() {
-    folha.aoMudarAberto(false)
+  function abrirVerbete(entrada: EntradaDoGuia) {
+    setAberta(entrada)
   }
 
   function atualizarSalvo(id: string, salvo: boolean) {
@@ -201,7 +196,7 @@ export function Guia() {
                     <Icone nome="bookmark" className="size-5 shrink-0 text-(--primary)" />
                   ) : undefined
                 }
-                onClick={() => abrirVerbete(entrada.id)}
+                onClick={() => abrirVerbete(entrada)}
               />
             ))}
           </Lista>
@@ -223,11 +218,18 @@ export function Guia() {
         </>
       )}
 
-      {folha.aberto && aberta !== null ? (
-        <Sobreposicao id="folha" titulo="Referência do guia" aoFechar={fecharVerbete}>
-          <Verbete id={aberta} aoMudarSalvo={atualizarSalvo} />
+      {aberta === null ? null : (
+        // O título é o nome da referência: sem ele a folha não diz o que a
+        // pessoa abriu. O verbete carrega o resto pelo id.
+        <Sobreposicao
+          id="folha"
+          titulo={aberta.nome}
+          descricao={ROTULO_DA_CATEGORIA[aberta.categoria]}
+          aoFechar={() => setAberta(null)}
+        >
+          <Verbete id={aberta.id} aoMudarSalvo={atualizarSalvo} />
         </Sobreposicao>
-      ) : null}
+      )}
     </section>
   )
 }
