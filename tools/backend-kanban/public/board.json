@@ -6081,12 +6081,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-04",
-      "sourceRevision": "29fcc8f",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "19e5ef5a",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH)."
+        "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
+        "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6110,6 +6111,52 @@
         "APP-001",
         "LAN-PUSH"
       ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "19e5ef5a",
+      "status": "repo",
+      "dependencies": [],
+      "id": "DM-INSERT-VETO-EXCLUSAO",
+      "title": "Mensagem direta: policy de insert não veta conta com exclusão ou suspensa",
+      "priority": "P2",
+      "category": "backend",
+      "description": "A policy dm_messages_insert_sender deixa inserir mensagem com conta em exclusão pedida ou suspensa, enquanto a RPC send_conversation_message veta os dois casos. A correção entra em migration nova (alter policy), sem editar migration aplicada, com pgTAP positivo e negativo.",
+      "checklist": [
+        "Migration nova com alter policy em dm_messages_insert_sender vetando conta com exclusão pedida e conta suspensa, no mesmo critério da RPC send_conversation_message",
+        "pgTAP positivo: remetente ativo continua inserindo; negativo: conta com exclusão pedida e conta suspensa não inserem",
+        "Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API",
+        "Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão"
+      ],
+      "links": ["docs/LANCAMENTO.md"]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "19e5ef5a",
+      "status": "repo",
+      "dependencies": [],
+      "id": "F09-ENVIO-PELA-RPC",
+      "title": "F09: envio de resposta pela RPC e achados baixos da revisão Qwen",
+      "priority": "P2",
+      "category": "backend",
+      "description": "A rota POST /api/app/conversas/[id]/mensagens faz INSERT cru. Deve usar a RPC send_conversation_message, que dá idempotência e a transição do pedido de serviço. Junto, os achados baixos da revisão Qwen do RUN-011.",
+      "checklist": [
+        "Rota de envio chamando send_conversation_message, com idempotência por chave e a transição do pedido de serviço, com prova positiva e negativa",
+        "Validação do texto extraída para um módulo compartilhado entre a rota nova e o chat antigo (apps/web/app/components/bivaque/chat-thread.tsx), com as mesmas regras",
+        "N+1 da caixa (apps/web/app/api/app/conversas/route.ts) reduzido: nome e última mensagem sem uma consulta por conversa; medido no E2E real",
+        "Teste enfraquecido restaurado em apps/app/tests/e2e/conversas-grupos-mobile.spec.ts: compositor encostado embaixo abaixo de 720 px",
+        "BOM (U+FEFF) removido da primeira linha dos arquivos do F09 que o recebem, sem tocar no conteúdo",
+        "Link 'Ver origem' de conversa para anúncio ou negócio restaurado quando a tela de destino não ler demonstração"
+      ],
+      "links": ["apps/web/app/api/app/conversas/[id]/mensagens/route.ts"]
     },
     {
       "phase": "Lançamento",
