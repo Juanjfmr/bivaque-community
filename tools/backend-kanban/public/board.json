@@ -6008,11 +6008,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "ca6498ee",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "05/11: RUN-010 (GPT Sol 6.1) — entram as cinco rotas da sessão (categorias e negócios da cidade atual, ficha com foto por URL assinada de 5 min, criação de pedido, lista e detalhe dos próprios pedidos) e a porta de dados do app, com cancelamento, paginação e falha que preserva o texto; 'Onde atende' usa a cidade real; Mercado segue intacto. Commits c68b9ea6, 16b4b4c7, f1fdb588, 55ea0cd8 e ca6498ee. Números: 126 testes de API passam (70 da F07 e 56 de pedidos antigos); gate final verde sem build Next (falta configuração local); 2.174 de unidade, 261 do app, 76 mobile, 19 web, 189 de privacidade e 192 de escopo passam; 'Onde atende' com 18 cenários em 375/768/1440, claro e escuro, em HTTP controlado; 42 capturas estáveis. Não rodou: E2E com banco local real (Docker negado), pgTAP e build Next. Revisões: Qwen PASS COM RESSALVAS (.visual/run-010/revisao-qwen.md); auditoria de segurança válida do coordenador (security-auditor, Sonnet 5.5): LIBERA COM RESSALVAS, sem crítico nem alto. O arquivo .visual/run-010/45-auditoria.log é autoavaliação do executor e não conta como revisão. Ressalvas abertas no cartão F07-RESSALVAS-REVISAO. E2E com banco real roda no check Install, test, and build do CI deste PR.",
+        "05/11: decisão do coordenador, a ratificar pelo dono — a ficha do negócio no app deixa de mostrar contagem de indicações e horário, selo Patrocinado, Benefício para a comunidade e aviso de ficha não assumida, porque não há coluna real para eles (provider_profiles); 'Onde atende' mostra só a cidade. Volta quando houver dado."
       ],
       "id": "LAN-F07",
       "title": "F07 Negócios e serviços ligados ao banco",
@@ -6029,6 +6031,30 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU", "APP-001"]
+    },
+    {
+      "id": "F07-RESSALVAS-REVISAO",
+      "title": "F07 ressalvas da revisão e da auditoria do RUN-010",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Ressalvas baixas e médias da revisão e da auditoria de segurança do RUN-010 (LAN-F07). Não bloqueiam o merge; cada item precisa de prova própria antes de ser marcado.",
+      "checklist": [
+        "Chave de idempotência limitada a 120 caracteres na rota (hoje aceita 200; o banco aceita 120)",
+        "Paginação de comunidades ordenada e sem URL excessiva em alcanceDaCidade",
+        "Foto indisponível não derruba a ficha inteira (degradar para foto: null)",
+        "Registrar falhas das cinco rotas no servidor, sem dado pessoal nos logs",
+        "Retirar o export antigo de Negocios em apps/app/src/telas/Mercado.tsx"
+      ],
+      "completedChecklist": [false, false, false, false, false],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "links": ["docs/agents/tasks/RUN-010.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "ca6498ee"
     },
     {
       "phase": "Lançamento",

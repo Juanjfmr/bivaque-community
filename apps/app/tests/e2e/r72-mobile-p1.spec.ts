@@ -45,11 +45,35 @@ test("P1: abrir anúncio conserva a foto da listagem nos detalhes", async ({ pag
     .toBeGreaterThan(0)
 })
 
+const FOTO_DA_FICHA = "https://storage.example.invalid/provider-photos/ficha.png?token=teste"
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  "base64",
+)
+const FICHA_DE_TESTE = {
+  id: "n-capa",
+  nome: "Oficina Exemplo",
+  categoria: "assistencia_tecnica",
+  categoriaNome: "Assistência técnica",
+  descricao: null,
+  cidade: "Manaus",
+  podePedir: false,
+  servicos: [],
+  foto: FOTO_DA_FICHA,
+  fotoDescricao: "Fachada da oficina",
+}
+
 test("P1: negócios e grupos apresentam capas quando a fixture tem imagens", async ({ page }) => {
+  // A ficha lê a API da F07: a foto chega como URL assinada pelo servidor, não como chave.
+  await page.route(/\/api\/app\/negocios\/[^/?]+(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { negocio: FICHA_DE_TESTE } }),
+  )
+  await page.route("https://storage.example.invalid/**", (rota) =>
+    rota.fulfill({ contentType: "image/png", body: PNG_1X1 }),
+  )
   await page.goto("/app/inicio")
   const negocio = page.locator('[data-tela="inicio"] [data-cartao="negocio"] img').first()
   await expect(negocio).toBeVisible()
-  const origem = await negocio.getAttribute("src")
   await page
     .locator('[data-tela="inicio"] [data-cartao="negocio"] [data-acao="abrir-foto"]')
     .first()
@@ -57,7 +81,10 @@ test("P1: negócios e grupos apresentam capas quando a fixture tem imagens", asy
   await expect(page).toHaveURL(/\/app\/negocio\/[^/]+$/)
   const capaNegocio = page.locator('[data-tela="negocio"] [data-capa="foto"] img')
   await expect(capaNegocio).toBeVisible()
-  await expect(capaNegocio).toHaveAttribute("src", origem ?? "")
+  await expect(capaNegocio).toHaveAttribute("src", FOTO_DA_FICHA)
+  await expect
+    .poll(() => capaNegocio.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
   await page.goto("/app/grupo/g-cmm")
   const capaGrupo = page.locator('[data-tela="grupo"] [data-capa="foto"] img')
   await expect(capaGrupo).toBeVisible()
