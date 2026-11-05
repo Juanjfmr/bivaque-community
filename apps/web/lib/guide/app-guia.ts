@@ -46,6 +46,15 @@ export function cursorDaEntrada(nome: string, id: string): string {
   return `${nome}|${id}`
 }
 
+/**
+ * Valor dentro de `"…"` num filtro do PostgREST: `\` e `"` são sintaxe e
+ * precisam de escape. Sem isso, um nome como `Colégio "Militar"` quebra a
+ * página 2, e um cursor forjado vira filtro.
+ */
+export function valorEntreAspas(valor: string): string {
+  return valor.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+}
+
 export function lerCursor(valor: string): { nome: string; id: string } | null {
   const separador = valor.lastIndexOf("|")
   if (separador <= 0) return null

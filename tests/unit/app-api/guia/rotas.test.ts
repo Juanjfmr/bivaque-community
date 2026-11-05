@@ -269,6 +269,28 @@ describe("rotas do guia do app", () => {
       })
     })
 
+    it("cursor com aspas no último nome continua escapado e vira a página", async () => {
+      const mock = mockClient({ entradas: [] })
+      authenticate(mock)
+      const cursor = `Colégio "Militar"|${ID}`
+      await listar(req("GET", `${BASE}?depois=${encodeURIComponent(cursor)}`))
+      expect(mock.orCalls).toEqual([
+        `name.gt."Colégio \\"Militar\\"",and(name.eq."Colégio \\"Militar\\"",id.gt.${ID})`,
+      ])
+    })
+
+    it("cursor forjado não fecha as aspas nem acrescenta condição", async () => {
+      const mock = mockClient({ entradas: [] })
+      authenticate(mock)
+      const cursor = `x",status.neq.approved|${ID}`
+      await listar(req("GET", `${BASE}?depois=${encodeURIComponent(cursor)}`))
+      const filtro = mock.orCalls[0] ?? ""
+      expect(filtro).toBe(
+        `name.gt."x\\",status.neq.approved",and(name.eq."x\\",status.neq.approved",id.gt.${ID})`,
+      )
+      expect(filtro.split("and(")).toHaveLength(2)
+    })
+
     it("a cidade é a da sessão: locality_id na query não muda a lista", async () => {
       const mock = mockClient({ entradas: [] })
       authenticate(mock)

@@ -8,6 +8,7 @@ import {
   lerCursor,
   termoAceito,
   termoDeBusca,
+  valorEntreAspas,
 } from "../../../../lib/guide/app-guia"
 import { log } from "../../../../lib/logger"
 import { cidadeDaSessao } from "../eventos/_comum"
@@ -66,10 +67,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       query = query.or(`name.ilike."%${termo}%",description.ilike."%${termo}%"`)
     }
     // Keyset composto: duas entradas com o mesmo nome não se repetem na virada.
+    // O nome vem do cursor, então entra escapado — aspas e barra não viram filtro.
+    const nomeDoCursor = cursor === null ? "" : valorEntreAspas(cursor.nome)
     query =
       cursor === null
         ? query
-        : query.or(`name.gt."${cursor.nome}",and(name.eq."${cursor.nome}",id.gt.${cursor.id})`)
+        : query.or(`name.gt."${nomeDoCursor}",and(name.eq."${nomeDoCursor}",id.gt.${cursor.id})`)
     const result = await query
       .order("name", { ascending: true })
       .order("id", { ascending: true })
