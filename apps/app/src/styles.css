@@ -900,14 +900,11 @@
     margin-top: 15px;
   }
 
-  [data-nav="principal"] [data-acao="criar"] [data-criar="botao"] {
-    width: 50px;
-    min-width: 50px;
-    height: 50px;
-    margin-top: -32px;
-    border-radius: 15px;
-    box-shadow: 0 4px 12px var(--shadow-strong);
-  }
+  /* O Criar é peça da casca: a geometria dele vive nas regras da navegação
+     (`[data-acao="criar"]`, acima) e nenhuma tela a redefine — 56 px compacto,
+     58 px aberto no celular. A regra de 50 px que morava aqui foi embora com o
+     achado do card APP-001 (50 contra 56 px) e com a regra de identidade de
+     que o CSS da tela cuida só da disposição. */
 
   [data-nav="principal"] [data-aba] {
     gap: 2px;

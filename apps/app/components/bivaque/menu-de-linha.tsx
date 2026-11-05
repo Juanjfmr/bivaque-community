@@ -1,8 +1,13 @@
 "use client"
 
-import { DropdownMenu } from "radix-ui"
 import type { ReactNode } from "react"
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { cn } from "@/lib/utils"
 import { BotaoDeIcone } from "./botao"
@@ -19,6 +24,10 @@ import { BotaoDeIcone } from "./botao"
  * no protótipo (`shell/create-menu.js` com `contextMenu=true` empilha
  * histórico). Os itens continuam sendo de quem usa o componente: eles são
  * conteúdo da tela, não do menu.
+ *
+ * A caixa vem da base shadcn (`components/ui/dropdown-menu`), não do Radix
+ * direto: é a correção do achado S01 da auditoria de 26/10. O comportamento de
+ * foco, teclado e portal continua sendo do Radix, por baixo da base.
  */
 export function MenuDaLinha({
   rotulo,
@@ -32,8 +41,8 @@ export function MenuDaLinha({
   const { aberto, aoMudarAberto } = useSobreposicaoDaEntrada("menu-de-linha")
 
   return (
-    <DropdownMenu.Root open={aberto} onOpenChange={aoMudarAberto} modal>
-      <DropdownMenu.Trigger asChild>
+    <DropdownMenu open={aberto} onOpenChange={aoMudarAberto} modal>
+      <DropdownMenuTrigger asChild>
         <BotaoDeIcone
           rotulo={rotulo}
           nome="more_vert"
@@ -41,22 +50,17 @@ export function MenuDaLinha({
           data-acao="opcoes"
           onClick={() => aoMudarAberto(true)}
         />
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          data-sobreposicao="menu-de-linha"
-          aria-label={rotulo}
-          sideOffset={6}
-          align="end"
-          className={cn(
-            "z-60 min-w-52 rounded-xl border border-(--outline-variant) bg-(--popover) p-1 text-(--popover-foreground) shadow-[0_8px_24px_var(--shadow-soft)]",
-            className,
-          )}
-        >
-          {children}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        data-sobreposicao="menu-de-linha"
+        aria-label={rotulo}
+        sideOffset={6}
+        align="end"
+        className={cn("min-w-52", className)}
+      >
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -64,16 +68,10 @@ export function ItemDoMenu({
   children,
   perigo = false,
   ...props
-}: React.ComponentProps<typeof DropdownMenu.Item> & { perigo?: boolean }) {
+}: React.ComponentProps<typeof DropdownMenuItem> & { perigo?: boolean }) {
   return (
-    <DropdownMenu.Item
-      className={cn(
-        "flex min-h-11 cursor-default items-center gap-2 rounded-lg px-3 text-sm outline-none select-none data-[highlighted]:bg-(--muted)",
-        perigo && "text-(--destructive)",
-      )}
-      {...props}
-    >
+    <DropdownMenuItem variant={perigo ? "destructive" : "default"} {...props}>
       {children}
-    </DropdownMenu.Item>
+    </DropdownMenuItem>
   )
 }

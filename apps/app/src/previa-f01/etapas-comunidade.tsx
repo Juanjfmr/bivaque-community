@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { NomeDeIcone } from "@/lib/icones"
+import { useServidorDaEntrada } from "@/src/entrada/contexto"
+import { FalhaDaEntrada, type GrupoDaEntrada } from "@/src/entrada/servidor"
 import {
   Botao,
   CampoDeArquivo,
@@ -13,10 +15,10 @@ import {
   Progresso,
   Selo,
 } from "@/src/pecas/pecas"
+import { type DadosDaPrevia, INTERESSES } from "./entrada-dados"
 import type { PropsDaEtapa } from "./etapas-conta"
-import { contagemPublica, type Flags, MINIMO_PARA_EXIBIR, type Momento } from "./fluxo"
+import { contagemPublica, type Flags, type Momento } from "./fluxo"
 import { Moldura } from "./moldura"
-import { cidadePorNome, INTERESSES, perguntasDoMomento, sugerirGrupos } from "./servidor-simulado"
 
 const base = import.meta.env.BASE_URL
 
@@ -95,9 +97,11 @@ const TIPOS = new Set(["application/pdf", "image/jpeg", "image/png"])
 const LIMITE = 10 * 1024 * 1024
 
 export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [problema, setProblema] = useState<string | null>(null)
   const [avisar, setAvisar] = useState(true)
+  const [enviando, setEnviando] = useState(false)
 
   if (progresso.verificacao === "documento-em-analise") {
     return (
@@ -137,18 +141,41 @@ export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
 
   const tamanho = arquivo ? `${Math.max(1, Math.round(arquivo.size / 1024))} KB` : ""
 
+  const enviar = async () => {
+    if (arquivo === null) {
+      setProblema("Escolha o arquivo antes de enviar.")
+      return
+    }
+    // Sem servidor (prévia) o envio continua simulado.
+    if (servidor === null) {
+      concluir({ verificacao: "documento-em-analise" })
+      return
+    }
+    setEnviando(true)
+    try {
+      await servidor.enviarDocumento(arquivo)
+      setArquivo(null)
+      concluir({ verificacao: "documento-em-analise" })
+    } catch (falha) {
+      const recusado = falha instanceof FalhaDaEntrada && falha.codigo === "documento-recusado"
+      setProblema(
+        recusado
+          ? "O arquivo não foi aceito. Confira o formato e o tamanho."
+          : "Não foi possível enviar o arquivo agora. Tente de novo.",
+      )
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   return (
     <Moldura
       titulo="Envie um documento"
       apoio="Só a equipe de verificação vê. O arquivo é apagado depois da análise."
       aoEnviar={() => {
-        if (arquivo === null) {
-          setProblema("Escolha o arquivo antes de enviar.")
-          return
-        }
-        concluir({ verificacao: "documento-em-analise" })
+        void enviar()
       }}
-      acao={{ rotulo: "Enviar para análise" }}
+      acao={{ rotulo: enviando ? "Enviando…" : "Enviar para análise", carregando: enviando }}
       secundaria={{ rotulo: "Voltar", aoTocar: voltar }}
     >
       <CampoDeArquivo
@@ -184,23 +211,28 @@ const PREVIA_DO_MOMENTO: Record<Momento, { titulo: (cidade: string) => string; s
   },
 }
 
-export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
-  const cidade = cidadePorNome(progresso.cidade)
-  const nome = cidade?.nome ?? "sua cidade"
+export function PreviaDaCidade({ progresso, concluir, previa, provisionando }: PropsDaEtapa) {
+  const cidade = previa?.cidade ?? null
+  const nome = cidade?.nome ?? progresso.cidade ?? "sua cidade"
   const momento = progresso.momento ?? "morando"
-  const comGente = cidade !== null && cidade.membros >= MINIMO_PARA_EXIBIR
-  const perguntas = cidade && comGente ? perguntasDoMomento(cidade, momento) : []
+  const comGente = cidade?.comGente === true
+  const perguntas = comGente ? cidade.perguntas.slice(0, 3) : []
   const textos = PREVIA_DO_MOMENTO[momento]
 
   return (
     <Moldura
-      titulo={comGente ? textos.titulo(nome) : `Você está entre os primeiros em ${nome}.`}
+      titulo={comGente ? textos.titulo(nome) : `Você já está em ${nome}.`}
       apoio={
-        comGente ? null : "Faça a primeira pergunta. Quem chegar depois já encontra a resposta."
+        comGente
+          ? null
+          : "A comunidade está aqui. Faça a primeira pergunta e quem chegar depois encontra a resposta."
       }
       ilustracao="encontro"
       aoEnviar={() => concluir()}
-      acao={{ rotulo: "Continuar" }}
+      acao={{
+        rotulo: provisionando === true ? "Confirmando…" : "Continuar",
+        carregando: provisionando === true,
+      }}
     >
       <p className="f01-selo">
         <Estado icone="verified_user">Vínculo confirmado</Estado>
@@ -242,10 +274,35 @@ const membrosDoGrupo = (total: number): string => {
   return faixa ? `${maiuscula(faixa)} membros` : "Grupo novo"
 }
 
-export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
+export function InteressesEGrupos({ progresso, concluir, previa }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [interesses, setInteresses] = useState<readonly string[]>(progresso.interesses)
   const [grupos, setGrupos] = useState<readonly string[]>(progresso.grupos)
-  const sugestoes = sugerirGrupos(interesses, progresso.momento)
+  const [gruposReais, setGruposReais] = useState<readonly GrupoDaEntrada[] | null>(null)
+  const [falhaDosGrupos, setFalhaDosGrupos] = useState(false)
+  const [semVinculo, setSemVinculo] = useState(false)
+  const sugestoes = previa?.sugestoes ?? []
+
+  const carregarGrupos = () => {
+    if (servidor === null) return
+    setFalhaDosGrupos(false)
+    setSemVinculo(false)
+    setGruposReais(null)
+    servidor.carregarGrupos().then(
+      (lista) => setGruposReais(lista),
+      (falha: unknown) => {
+        // 409: o provisionamento ainda não terminou. Não é falha de rede e não
+        // melhora com "Tentar de novo" em laço — a pessoa volta uma etapa.
+        if (falha instanceof FalhaDaEntrada && falha.status === 409) {
+          setSemVinculo(true)
+          return
+        }
+        setFalhaDosGrupos(true)
+      },
+    )
+  }
+
+  useEffect(carregarGrupos, [servidor])
 
   const alternar = (lista: readonly string[], item: string) =>
     lista.includes(item) ? lista.filter((x) => x !== item) : [...lista, item]
@@ -278,30 +335,76 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
         <h2 id="f01-grupos-titulo" className="pc-secao">
           Grupos para você
         </h2>
-        <ul className="pc-lista f01-grupos" aria-live="polite">
-          {sugestoes.map(({ grupo, motivo }) => {
-            const entrou = grupos.includes(grupo.id)
-            return (
-              <li key={grupo.id} className="f01-grupo">
-                <Selo nome={grupo.selo} />
-                <span className="pc-linha-texto">
-                  <span className="pc-linha-titulo">{grupo.nome}</span>
-                  <span className="pc-apoio">{membrosDoGrupo(grupo.membros)}</span>
-                  <span className="pc-miudo">{motivo}</span>
-                </span>
-                <Botao
-                  compacto
-                  aria-pressed={entrou}
-                  aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
-                  onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
-                >
-                  {entrou ? <Icone nome="check" /> : null}
-                  {entrou ? "Entrou" : "Entrar"}
-                </Botao>
-              </li>
-            )
-          })}
-        </ul>
+        {servidor === null ? (
+          <ul className="pc-lista f01-grupos" aria-live="polite">
+            {sugestoes.map(({ id, nome, membros, selo, motivo }) => {
+              const entrou = grupos.includes(id)
+              return (
+                <li key={id} className="f01-grupo">
+                  <Selo nome={selo} />
+                  <span className="pc-linha-texto">
+                    <span className="pc-linha-titulo">{nome}</span>
+                    <span className="pc-apoio">{membrosDoGrupo(membros)}</span>
+                    <span className="pc-miudo">{motivo}</span>
+                  </span>
+                  <Botao
+                    compacto
+                    aria-pressed={entrou}
+                    aria-label={`${entrou ? "Sair de" : "Entrar em"} ${nome}`}
+                    onClick={() => setGrupos((atual) => alternar(atual, id))}
+                  >
+                    {entrou ? <Icone nome="check" /> : null}
+                    {entrou ? "Entrou" : "Entrar"}
+                  </Botao>
+                </li>
+              )
+            })}
+          </ul>
+        ) : semVinculo ? (
+          <p className="pc-apoio" role="status">
+            Seu cadastro ainda não foi confirmado. Volte e confirme a cidade para ver os grupos.
+          </p>
+        ) : falhaDosGrupos ? (
+          <p className="pc-apoio" aria-live="polite">
+            Não foi possível carregar os grupos agora.{" "}
+            <button type="button" className="pc-link" onClick={carregarGrupos}>
+              Tentar de novo
+            </button>
+          </p>
+        ) : gruposReais === null ? (
+          <p className="pc-apoio" aria-live="polite">
+            Carregando os grupos da sua cidade…
+          </p>
+        ) : gruposReais.length === 0 ? (
+          <p className="pc-apoio">
+            Ainda não há grupos públicos na sua cidade. Você pode continuar sem grupos.
+          </p>
+        ) : (
+          <ul className="pc-lista f01-grupos" aria-live="polite">
+            {gruposReais.map((grupo) => {
+              const entrou = grupos.includes(grupo.id)
+              return (
+                <li key={grupo.id} className="f01-grupo">
+                  <span className="pc-linha-texto">
+                    <span className="pc-linha-titulo">{grupo.nome}</span>
+                    {grupo.descricao === null ? null : (
+                      <span className="pc-apoio">{grupo.descricao}</span>
+                    )}
+                  </span>
+                  <Botao
+                    compacto
+                    aria-pressed={entrou}
+                    aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
+                    onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
+                  >
+                    {entrou ? <Icone nome="check" /> : null}
+                    {entrou ? "Entrou" : "Entrar"}
+                  </Botao>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </section>
     </Moldura>
   )
@@ -391,14 +494,14 @@ export function Avisos({ concluir }: PropsDaEtapa) {
           <span className="f01-notificacao-marca">B</span>
           <span>
             <strong>Nova resposta à sua pergunta</strong>
-            Carla R.: a Dra. Lúcia atende pelo FUSEx, terça e quinta.
+            Quem respondeu aparece aqui, com o texto e o grupo.
           </span>
         </div>
         <div className="f01-notificacao">
           <span className="f01-notificacao-marca">B</span>
           <span>
-            <strong>Chegadas 2026, amanhã às 9h</strong>
-            Café de boas-vindas. 12 pessoas vão.
+            <strong>Encontro perto de você</strong>
+            Quando houver um encontro na sua cidade, a data e o lugar chegam assim.
           </span>
         </div>
       </div>
@@ -443,10 +546,12 @@ export function InicioComPrimeirosPassos({
   progresso,
   flags,
   aoRecomecar,
+  previa,
 }: {
   progresso: PropsDaEtapa["progresso"]
   flags: Flags
   aoRecomecar: () => void
+  previa?: DadosDaPrevia
 }) {
   const [feitos, setFeitos] = useState<ReadonlySet<string>>(() => new Set())
   const momento = progresso.momento ?? "morando"
@@ -493,8 +598,8 @@ export function InicioComPrimeirosPassos({
       : []),
   ]
   const concluidos = passos.filter((passo) => passo.feito).length
-  const cidade = cidadePorNome(progresso.cidade)
-  const primeiraPergunta = cidade ? perguntasDoMomento(cidade, momento)[0] : undefined
+  const cidade = previa?.cidade ?? null
+  const primeiraPergunta = cidade?.perguntas[0]
 
   return (
     <main className="f01-inicio">

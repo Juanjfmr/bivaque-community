@@ -579,9 +579,14 @@
         "Verificar domínio",
         "Configurar DKIM e SPF",
         "Inserir secret fora do Git",
-        "Ativar adaptador e prova de entrega"
+        "Ativar adaptador e prova de entrega",
+        "Fechar o resíduo do /auth/v1/verify público (hook de verificação ou Auth próprio), como decide o ADR de entrada §2",
+        "Dimensionar email_sent, token_verifications e sign_in_sign_ups de produção, com o teto global do servidor sempre abaixo do email_sent",
+        "Garantir em produção email_sent e sign_in_sign_ups acima do disjuntor global do servidor (500/h); ajuste é do dono"
       ],
       "proof": [
+        "05/11: RUN-004 rodada 2 — o disjuntor global ficou em 500/h; no config local email_sent e sign_in_sign_ups subiram para 600. Em produção os dois precisam ficar acima de 500/h (o signInWithOtp sai do servidor, então o limite de sign-in do GoTrue vira limite global da rota). Ajuste do dono no projeto de deploy.",
+        "04/11: SEC-008 fechou as ressalvas do limitador no ADR de entrada e deixou aqui os dois itens de produção: (a) o resíduo do /auth/v1/verify público — o contador por e-mail só vê tentativas que passam pela rota do app, e quem fala direto com o GoTrue é contido só pelo limite por IP do próprio GoTrue (token_verifications) e pela validade de 10 minutos; fechar de vez exige o hook de verificação ou o Auth próprio; (b) o dimensionamento de email_sent (60/h no config local, acima do teto global do servidor de 50/h), token_verifications (30 por 5 min) e sign_in_sign_ups (30) para o SMTP/Resend real e o volume do lançamento. Números de produção dependem do projeto de deploy e da entrega real provada.",
         "apps/web/lib/outbox/adapters.ts mantém adaptadores indisponíveis",
         "convites e decisão de documento já enfileiram mensagens",
         "Conta Resend juanjfmr1 e domínio stoqio.com.br confirmados em 2026-08-24 na região sa-east-1",
@@ -595,10 +600,10 @@
         "Provar uma entrega real pelo outbox em ambiente implantado"
       ],
       "links": ["Status: infraestrutura | ../../docs/historico/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-24",
-      "sourceRevision": "27922b5",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "cd550fcc",
       "dependencies": [],
-      "completedChecklist": [true, true, true, false, false]
+      "completedChecklist": [true, true, true, false, false, false, false, false]
     },
     {
       "id": "BLOCK-WHATSAPP",
@@ -3871,7 +3876,7 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "frozen",
       "description": "Member-initiated leave e cancelamento do próprio pedido pendente. Toca membership, RLS e dados pessoais — exige decisão humana/ADR antes de construir. ADR-20260914-saida-de-comunidade aprovado por Juan em 14/09.",
       "checklist": [
         "ADR/R3: política de saída (efeito em conteúdo, grupos e histórico) ✅ (ADR-20260914-saida-de-comunidade aprovado)",
@@ -3881,6 +3886,7 @@
         "PENDENTE: E2E do fluxo de saída com reentrada; verificação canônica db (no-seed) no operador"
       ],
       "proof": [
+        "02/11: congelado por instrução do dono: é card do modelo antigo de comunidades (ADR-20261024-redesenho-da-comunidade). Sair da comunidade e cancelar pedido de entrada voltam no LAN-F04, sobre o redesenho, e não como trabalho independente.",
         "julgamento.md 43: itens 1 e 5 marcados corrigidos em 14/09 (Sair no hero com modal; Cancelar pedido no PendingBody)",
         "Captura válida .visual/recon050/shots/ — membro (dono-vila@): botão Sair visível, valid=true, 375/768/1440",
         "Captura válida .visual/recon050-pendente20/shots/ — pendente (membro-20@): botão Cancelar pedido visível, valid=true",
@@ -3892,7 +3898,7 @@
         ".visual/compare/julgamento.md",
         "docs/decisions/ADR-20260914-saida-de-comunidade.md"
       ],
-      "updatedAt": "2026-09-14",
+      "updatedAt": "2026-11-02",
       "sourceRevision": "167ac0a",
       "dependencies": [],
       "completedAt": null
@@ -4705,7 +4711,7 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "status": "next",
       "description": "Decisão do dono em 25/09/2026: as comunidades existem para substituir o grupo de WhatsApp com memória — \"as pessoas pedem indicação pelo whatsapp e 10 minutos depois ninguem mais acha\". O pedido de indicação morava só em /recommendations, a busca não o alcançava e saúde exigia grupo. ADR-20260925-memoria-de-indicacoes: saúde sem trava nem aviso, resolvido alimenta a busca (altera a D5 de ADR-20260909-resposta-que-resolveu), Indicações + Orçamentos. Entregue: list_indications (busca em português sem acento, no pedido e nas respostas), /indicacoes com busca antes de pedir, /indicacoes/[id] como endereço único, vista Indicações na Comunidade.",
       "checklist": [
         "ADR com as decisões do dono [FEITO 25/09]",
@@ -4721,6 +4727,7 @@
         "Referências do Mobbin para o desenho (MCP desconectado na sessão de 25/09)"
       ],
       "proof": [
+        "02/11: card do modelo antigo de comunidades (ADR-20261024-redesenho-da-comunidade); não é o próximo trabalho independente — entra no LAN-F04. Não fechar só no quadro (instrução do dono em 02/11).",
         "pgTAP memoria-de-indicacoes.sql 12/12 no banco local (migration aplicada à mão)",
         "Reset limpo rodado pelo dono em 25/09/2026: supabase db reset --local --no-seed e test:db — Files=130, Tests=1726, Result: PASS; as 6 migrations da branch aplicam do zero",
         "Navegador 375 e 1440, três contas: foco na caixa com ?pedir=1; 'Alguém indica pediatra?' traz o pedido resolvido com a resposta; frase nova sem parecido abre 'Pedir à cidade' com categoria sugerida; publicar leva a /indicacoes/<id>; outro membro acha a pergunta sem acento e responde; a autora marca 'Isso resolveu'; um terceiro busca por prefixo e vê a resposta sem abrir a conversa; /community?vista=indicacoes acende Comunidades; nenhum erro de página"
@@ -4736,7 +4743,7 @@
         "apps/web/app/components/indications/"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-11-02",
       "sourceRevision": "686fd5fd"
     },
     {
@@ -4745,17 +4752,18 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "Decisão do dono em 25/09/2026 (ADR-20260925-aviso-de-pedido): um pedido novo avisa quem pode lê-lo (cidade, ou grupo), no máximo 3 avisos por pessoa em 24 h e o excedente vira um aviso único do dia; sino na hora e resumo diário por e-mail só para quem ligar; pedido parado 24 h avisa de novo; 3 dias depois da primeira resposta, quem pediu é perguntado se alguma ajudou a resolver.",
       "checklist": [
         "ADR com as decisões do dono [FEITO 25/09]",
-        "Migrations 20260926022408 e 20260926022416: tipo, preferência indications, entregas, jobs [FEITO; aplicadas à mão no banco local]",
-        "pgTAP aviso-de-pedido.sql [FEITO 22/22, com controle negativo]",
+        "Migrations 20260926022408 e 20260926022416: tipo, preferência indications, entregas, jobs [FEITO; saem do reset limpo desde 02/11]",
+        "pgTAP aviso-de-pedido.sql [FEITO: suíte completa 158 arquivos/2448 asserções PASS em 02/11]",
         "Texto e destino no sino, preferência em Configurações, e-mail do resumo [FEITO]",
         "Prova no navegador: pedido de uma conta aparece no sino de outra [FEITO 25/09]",
-        "Medir tempo até a primeira resposta e pedidos sem resposta em 24 h depois do lançamento"
+        "Medição pós-lançamento (tempo até a primeira resposta e pedidos sem resposta em 24 h) transferida para LAN-PROVA"
       ],
       "proof": [
+        "02/11: prova de banco refeita pela fila e card fechado no escopo pré-lançamento. `supabase db reset --local --no-seed` reaplicou a história inteira — as migrations 20260926022408 e 20260926022416 saem do reset limpo, não são mais 'aplicadas à mão' —, `test:db` deu PASS com 158 arquivos e 2448 asserções (inclui as 22 de aviso-de-pedido.sql e os controles negativos) e `db:lint` não achou erro de schema. `pnpm test` da raiz verde, incluindo os quatro arquivos de tests/unit/notifications (texto e destino do sino, preferência, e-mail do resumo e a correção da grade de Configurações no celular). Limite conhecido: rodar o arquivo isolado por `supabase test db <arquivo>` falha porque o modo de caminho único não monta os `fixtures/*.inc`; a prova canônica é a suíte completa. A medição de tempo até a primeira resposta e de pedidos sem resposta em 24 h é pós-lançamento e passou para LAN-PROVA.",
         "pgTAP aviso-de-pedido.sql 22/22 no banco local; sem a preferência desligada e sem o bloqueio, os casos 5 e 7 falham",
         "Navegador 25/09: membro-2 pede pela caixa; o job avisa 303 membros da cidade (seed); membro-3 vê \"Alguém da sua cidade pediu uma indicação\" com o título no sino, a 375, e o toque abre o pedido; em Configurações a linha Pedidos de indicação aparece com sino ligado e resumo por e-mail desligado, e ligar o resumo grava. Achado no caminho: a grade de Configurações crescia além de 375 px no celular — corrigida"
       ],
@@ -4768,8 +4776,10 @@
         "supabase/migrations/20260926022416_aviso_de_pedido.sql"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-25",
-      "sourceRevision": "a15d00f8"
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "21bb7264",
+      "completedChecklist": [true, true, true, true, true, true],
+      "completedAt": "2026-11-02"
     },
     {
       "id": "WEB-OG-METADATABASE",
@@ -5369,20 +5379,29 @@
       "phase": "Lote 4 — Entrada",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "No Next, /ajuda exige sessão; a landing perdeu Ajuda e Fale com a gente. Criar a Ajuda pública e religar os links.",
       "checklist": [
         "Ajuda pública fora do grupo (shell)",
         "Religar Ajuda e Fale com a gente na landing"
       ],
-      "proof": [],
-      "tests": [],
-      "links": ["docs/historico/agents/PORT_001.md"],
+      "proof": [
+        "02/11: entrega conferida no código e nos testes, não só no quadro. Ajuda pública: apps/web/app/(public)/ajuda/page.tsx com conteúdo sem login e “Meus chamados” só com sessão; apps/web/proxy.ts tem /ajuda em PUBLIC_PATHS; links de volta na landing (Ajuda no rodapé e Fale com a gente em Perguntas). Cobertura E2E: tests/e2e/entrada-convite-publica.spec.ts, casos “a Ajuda abre sem login, com as perguntas e o e-mail de contato” e “a landing religa Ajuda e Fale com a gente”; a suíte raiz roda no CI e passou na revisão 8b76f2dd (Install, test, and build verde). Histórico: d005d109 e ac4abdde.",
+        "02/11: posto em now por instrução do dono: é dependência do LAN-F01 e entra antes dele."
+      ],
+      "tests": ["tests/e2e/entrada-convite-publica.spec.ts"],
+      "links": [
+        "docs/historico/agents/PORT_001.md",
+        "apps/web/app/(public)/ajuda/page.tsx",
+        "apps/web/proxy.ts",
+        "tests/e2e/entrada-convite-publica.spec.ts"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-10-22",
-      "sourceRevision": "f05fc69b",
+      "updatedAt": "2026-11-02",
+      "sourceRevision": "08d59aed",
       "blockers": [],
-      "completedChecklist": [false, false],
+      "completedChecklist": [true, true],
+      "completedAt": "2026-11-02",
       "id": "AJUDA-PUBLICA",
       "title": "Ajuda pública para quem está fora"
     },
@@ -5390,15 +5409,19 @@
       "id": "APP-001",
       "title": "SPA nova: onda 1, base e navegação",
       "category": "frontend",
-      "description": "Auditoria visual Codex da fonte4f0a59ac: CORREÇÕES; adoção shadcn PARCIAL.152pares atuais e8vistas768 examinados.6famílias base com uso real; Select só galeria; sobreposição/paleta e outros padrões montados diretamente no Radix. NovosV13,V14,V15; demais omissõesV1 abertas.",
+      "description": "Base e navegação da SPA (onda 1) fechadas: casca, movimento, dados por interfaces e peças montadas sobre as bases shadcn. A auditoria visual de 26/10 foi resolvida (S01: bases dropdown-menu, alert-dialog, command e dialog; S02: paleta sobre Command; V13 e V14 conferidos) ou superada (V15, pelo ADR-20261102-paleta-fria). A composição das jornadas segue nas LAN-F01 a LAN-F10, na ordem do SPA ADR §8.",
       "checklist": [
         "Esqueleto e gate com versões fixas",
         "Navegação testada antes das telas",
         "Casca, componentes e movimento",
         "Dados por interfaces",
-        "Instrumentos revisados e capturas aprovadas"
+        "Instrumentos revisados e capturas produzidas (aceite visual só com revisão às cegas de cada jornada)"
       ],
       "proof": [
+        "02/11 (correção de registro): a caixa de capturas aprovadas estava marcada sem revisão às cegas de outro modelo; pela regra do dono de 02/11, aprovação visual só depois da revisão às cegas. O item passa a registrar o que de fato houve — instrumento revisado e capturas produzidas —, e o aceite visual da base fica com as revisões às cegas das jornadas (LAN-F01 a LAN-F10).",
+        "02/11: APP-001 fechada como base e navegação. S01 resolvido: menu-de-linha e confirmacao não montam mais Radix direto — compõem bases novas em components/ui (dropdown-menu.tsx e alert-dialog.tsx), e sobreposicao e MenuCriar compõem components/ui/dialog. S02 resolvido: a Paleta foi refeita sobre components/ui/command (cmdk 1.1.1 fixo no package.json e no lockfile, publicação registrada em docs/agents/prototipo-shadcn/versoes-1a.json), com filtro que ignora acento como o resto do app e o histórico intacto (mesmo useSobreposicaoDaEntrada; jornadas-reais 52 e 74 verdes). Contrato novo tests/base-shadcn.test.ts (4/4) proíbe radix-ui e cmdk fora de components/ui, exige cada base e seu consumidor declarado e a presença das bases de tela. V13 conferido: chips de filtro em faixa horizontal (flex-nowrap com overflow-x) e indicador na caixa do chip escolhido; V14 conferido: título de pergunta em várias linhas (whitespace-normal break-words), sem truncate; V15 encerrado como SUPERADO pelo ADR-20261102-paleta-fria — a ação de concluir é ardósia e a Brasa fica no criar, então restaurar brasa no preenchido contrariaria o ADR aceito. O Criar ficou em 56 px compacto e 58 px aberto no celular e 52 px no desktop; a regra de 50 px que morava numa seção da Início saiu (o CSS da tela não redefine peça da casca) e a geometria ficou registrada em IDENTIDADE-DAS-PECAS.md; casca.spec:178 e acessibilidade.spec:56 passam nos seis tamanhos.",
+        "02/11 provas desta rodada: gate --fast verde (lint, typecheck e typecheck:e2e); npx pnpm test verde (unitárias, workspaces, privacidade e 147/147 de escopo, depois de registrar a publicação do cmdk); apps/app build ok; unitários do app 131/131 em 16 arquivos (inclui o contrato base-shadcn); E2E focal (componentes, sobreposicoes, jornadas-reais, casca, acessibilidade, menu-criar-fluxos, abas, rotas e pr116-historico) 885 passed, 26 skipped e 1 falha conhecida: a grade da galeria com 2 colunas em 768, pré-existente e registrada em APP-E2E-PREEXISTENTES (não é da base). Capturas reais a 375/768/1440 nos dois temas em .visual/APP-001/ (40 arquivos; visual-capture.spec 24/24).",
+        "02/11: o resíduo do blocker de pipeline (revisor automático do PR sem parecer e preview Vercel legado com Root Directory ausente, com dois projetos sob quota) foi extraído para PIPELINE-REVISAO-E-PREVIEW, blocked: são atos do dono e de infraestrutura, não mudam a base nem a navegação. O restante da composição visual (V02 e V04 a V12) segue a ordem do SPA ADR §8 nas jornadas LAN-F01 a LAN-F10, e o aceite visual da onda 1 foi substituído pelo marco 1 fechado em LAN-F1-IDENTIDADE.",
         "31/10: e2e completo do apps/app na F01 juntada ao #116 (revisão 6a5feb29): 1756 passaram, 23 falharam e 75 pulados. As 23 são PREEXISTENTES no #116: a mesma lista falha em e041fade sozinho. 15 delas já falhavam antes da F01 sair do #116 (topo da conversa sem \"Paulo R.\" nos seis tamanhos; Encontro cortado em 320; rolagem e foco por entrada, com clique interceptado pelo Criar ou pelos controles de prova; grade da galeria com 2 colunas em 768). 8 vêm do #116 (8a554d8a): o Criar compacto foi a 50 px no celular e casca.spec:178 e acessibilidade.spec:56 esperam 56 px. Próximo passo: decidir 50 ou 56 px e alinhar CSS ou teste; corrigir a conversa de demonstração e os cliques interceptados. Nenhuma é da entrada.",
         "28/10: onboarding demonstrativo inclui etapa opcional de negocios; divulgar reutiliza formulario e salva rascunho apenas na sessao, interesse e decidir depois nao publicam. Gate completo verde; 18/18 E2E em 375/768/1440. Backend e aceite visual independente pendentes.",
         "27/10: sugestoes de grupos abertas da cidade no onboarding demonstrativo, selecao opcional e estado vazio; nenhum vinculo criado. Gate completo verde; 15/15 E2E em 375/768/1440, instrumento aprovado em revisao estatica. Integracao real e auditoria visual independente pendentes.",
@@ -5432,19 +5455,42 @@
         "docs/historico/tasks/APP-008.task.yml",
         "docs/historico/tasks/APP-010.task.yml"
       ],
-      "sourceRevision": "6a5feb29",
+      "sourceRevision": "3f0a9965",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "now",
+      "status": "done",
       "tests": [],
       "dependencies": [],
-      "updatedAt": "2026-10-31",
-      "blockers": [
-        "Aceite visual da onda1 pendente. Adoção shadcn parcial: corrigir S01/S02 e comprovar consumo real dos componentes equivalentes, preservando navegação/histórico aprovados.",
-        "Corrigir V13 filtros, V14 títulos de perguntas e V15 variante das ações; grade/recentes V02 e omissões V04–V12 permanecem. Primeiro fechamento recomendado: base compartilhada com reuso shadcn, filtros e botões.",
-        "PR116: normalizar executor da revisão automática sem parecer e definir pelo dono o destino do preview Vercel legado com Root Directory ausente; dois outros projetos estão sob quota. Não é falha dos builds locais nem aceite visual global. Evidências e próximos passos no STATUS APP-010."
+      "updatedAt": "2026-11-02",
+      "blockers": [],
+      "completedChecklist": [true, true, true, true, true],
+      "completedAt": "2026-11-02"
+    },
+    {
+      "id": "PIPELINE-REVISAO-E-PREVIEW",
+      "title": "Parecer automático do PR e preview Vercel legado",
+      "category": "infra",
+      "description": "Resíduo do APP-001 (PR #116): o revisor automático do repositório roda sem publicar parecer e o preview Vercel legado ficou com Root Directory ausente, com dois outros projetos sob quota do dono. Não é falha de build local nem de aceite visual; enquanto não for resolvido, o CI é a única revisão automática do PR.",
+      "checklist": [
+        "Revisor automático do PR publica parecer (ou é desligado com motivo)",
+        "Destino do preview Vercel legado definido pelo dono (Root Directory e quota)"
       ],
-      "completedChecklist": [true, true, false, true, false]
+      "proof": [
+        "02/11: extraído do APP-001 ao fechá-lo; evidências no STATUS APP-010 (docs/historico/agents/prototipo-shadcn/STATUS.md)."
+      ],
+      "links": ["docs/historico/agents/prototipo-shadcn/STATUS.md", "docs/LANCAMENTO.md"],
+      "sourceRevision": "3f0a9965",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "status": "blocked",
+      "tests": [],
+      "dependencies": [],
+      "updatedAt": "2026-11-02",
+      "blockers": [
+        "Vercel: Root Directory do preview legado e quota dos projetos — ato do dono.",
+        "Revisor automático do PR sem parecer — executor e credenciais são do repositório e da máquina do dono."
+      ],
+      "completedChecklist": [false, false]
     },
     {
       "id": "RED-003",
@@ -5458,6 +5504,7 @@
         "Revisão independente de segurança"
       ],
       "proof": [
+        "02/11: não recomeça do zero — o trabalho está na branch codex/redesenho-r3; fica em next e só entra quando chegar o LAN-F04 (instrução do dono em 02/11).",
         "25/10: conferir-matriz.test.mjs 1/1; contrato RED-003 validado R3, retry 3",
         "25/10: revisão independente estática FAIL parcial, 8 HIGH e dependências bloqueando replay; relatório em b1362bf1 no worktree R3, rodada de reparo 1/3; sem prova de banco ou PASS.",
         "25/10: primeiro replay pela fila FAIL antes de pgTAP, SQLSTATE2BP01 no DROP can_read_listing com cinco policies dependentes; relatório f1bd28ce, migration SHA 5CD18B010992C9D534A5E29578986B5FC28A50438C159037B9DF0CDA871D81D3. Quatro erros de lint reproduzidos no R2 limpo, contrato ampliado para correção mínima.",
@@ -5469,10 +5516,10 @@
       "sourceRevision": "b57f1035",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "now",
+      "status": "next",
       "tests": [],
       "dependencies": [],
-      "updatedAt": "2026-10-25",
+      "updatedAt": "2026-11-02",
       "blockers": [
         "Banco completo ainda sem PASS; fixtures e permissões remanescentes",
         "Revisão final independente de segurança pendente"
@@ -5495,6 +5542,7 @@
       ],
       "completedChecklist": [true, true, true, true, true, true, true],
       "proof": [
+        "02/11: integração conferida e card fechado. O PR #118 (feat/f01-entrada-visual) foi integrado em 01/11 na branch do #116 (codex/ui-foundation-21st-20261026) e o #121 levou a linha do apps/app para a main em 02/11; origin/main contém apps/app/src/previa-f01 e os três specs de entrada, e esta branch está 5 commits à frente e 0 atrás da main, sem pendência de integração. Provas desta rodada: gate --fast verde; pnpm test verde (unitárias, workspaces, privacidade e 147/147 de escopo); apps/app build ok; E2E dos três specs do card (entrada-acesso, entrada-21st e entrada-etapa) nos seis tamanhos: 418 passed, 68 skipped e 0 falha (a primeira rodada teve 1 falha intermitente dos rádios do negócio em 768, que passou isolada e na segunda rodada completa). O aceite visual do dono (28/28 telas, claro e escuro, celular e desktop) segue na prova de 01/11. O backend do F01 é a LAN-F01, não este card.",
         "01/11: aceite visual do dono concluído em quatro rodadas na página Aceite da Entrada (https://claude.ai/artifact/Taqq3VFZwWyXsSRvtB75BK): 28 de 28 telas aprovadas, claro e escuro, celular e desktop. ENT-007 trouxe acesso e boas-vindas sobre os blocos sign-in-3 e Onboarding Welcome Screen, grupos sobre o Card Style Checkbox, o formulário do negócio sobre o Onboarding Wizard Form e o Radio Group (código real dos blocos do 21st, com crédito) e fotos próprias para 13b, 13c, 16, 17 e 18. Provas do contrato na revisão b3c2cc32: typecheck, lint, test:scope 150/150 e e2e de entrada 418 passaram, 0 falharam; revisão do Codex aprovada (.visual/ENT-007/revisao-codex-7.md). Gate completo da raiz não foi rodado nesta rodada; CI do PR #118 roda o app e o web.",
         "30/10: gate da raiz na revisão cee11eb8: lint, typecheck, typecheck:e2e, build:app, test (1726 domínio, 92 app, 76 mobile, 19 web, 189 privacidade, 150 escopo) e secrets verdes; build do apps/web PULADO por falta do arquivo de ambiente local do web — gate não é completo. Esta frente não tocou apps/web.",
         "30/10: ENT-006 (boas-vindas por momento, retomar, convite, convite indisponível, conta apagada; cartão antigo removido) entregue pelo OpenCode. Verificação independente na revisão a1872617: typecheck e build verdes, 373 E2E passaram e 41 pulados por desenho, test:scope 150/150, lint sem erros. Toda /app/entrar/* está no visual aprovado; falta o aceite visual do dono.",
@@ -5512,20 +5560,19 @@
         "docs/historico/agents/prototipo-shadcn/STATUS.md",
         "docs/historico/tasks/ENT-007.task.yml"
       ],
-      "sourceRevision": "b3c2cc32",
+      "sourceRevision": "d2cd3cad",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
-      "status": "now",
+      "status": "done",
       "tests": [
         "apps/app/tests/e2e/entrada-acesso.spec.ts",
         "apps/app/tests/e2e/entrada-21st.spec.ts",
         "apps/app/tests/e2e/entrada-etapa.spec.ts"
       ],
       "dependencies": ["APP-001"],
-      "updatedAt": "2026-11-01",
-      "blockers": [
-        "Integração: o PR #118 (feat/f01-entrada-visual) aponta para a branch do PR #116 (codex/ui-foundation-21st-20261026); a entrega só vale no main depois de decidir e fazer a ordem de integração #116 → #118 → main."
-      ]
+      "updatedAt": "2026-11-02",
+      "blockers": [],
+      "completedAt": "2026-11-02"
     },
     {
       "id": "LANDING-CTA-ANTES-DO-REGISTRO",
@@ -5646,20 +5693,34 @@
     },
     {
       "phase": "Lançamento",
-      "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
-      "links": ["docs/LANCAMENTO.md"],
+      "updatedAt": "2026-11-05",
       "proof": [
+        "05/11 rodada 2 — revisão independente FAIL, auditoria PASS com ressalvas, CI vermelho no replay limpo (commits 874575e1, 87e8dc8f, 3be21dcf, a2344b9d, a3e64140, 18805363, 08fab331, e07e975f, 6cf82317, f5e48625). Replay limpo de verdade: o CLI não alcança o pipe do Docker neste host, então recriei o banco do zero com psql (drop de public/private sobre o schema base do Supabase, restauração dos grants base e aplicação de TODAS as migrations em ordem); nesse banco, entry-otp-limiter 76/76 (as 6 falhas do CI eram teste, não esquema: o IP X chegava a 8 envios e o teto novo de 8/h bloqueava o caso de reabertura da hora; os padrões de IP/e-mail também precisavam de % no LIKE), entry-provision-atomic 24/24, entry-progress-purge 5/5 e db lint sem erro. Disjuntor: email_sent e sign_in_sign_ups subiram para 600 no config.toml, acima dos 500/h; teste de escopo lê config e migration e falha se regredir; ADR-20261101 registra o custo (8 IPs não travam; ~63 ainda travam; desafio humano depois) e o card novo ENTRADA-DESAFIO-HUMANO (repo, P2, dependência BLOCK-RESEND) cobre Turnstile e o risco de CGNAT/Wi-Fi de OM; BLOCK-RESEND ganhou o item de produção do dono. Falha de provedor vai sempre para /app/entrar?erro=provedor, qualquer next. Retomada: interesses grava o marcador combinado e combinado grava avisos com o id da sessão; GET ignora marcador de versão antiga com vínculo; E2E recarrega no combinado e nos avisos e cai na etapa certa. Prévia da cidade deixou de afirmar primeiros sem dado real. Falha de rede no convite/código tem mensagem fixa e o botão volta (teste de unidade e E2E com a rota derrubada). Rascunho abandonado expira por job pg_cron diário, com pgTAP positivo/negativo e GET que devolve 503 se o delete falhar; ADR-20261102 corrigido para estado {cidade}. Origem do convite virou IP confiável + /64 + HMAC do limitador nos três lugares, com teste. Menores: 400 do aceite com mensagem por motivo, fallback da família no app, varredura transitiva de imports, has_accepted_consent com as duas versões, unavailable/email_mismatch/rate_limited sem outbox, estado Confirmando… no provisionamento e retomada com erro de verificação e Tentar de novo. Provas: pnpm test 2024/2024 (root; 208 arquivos), apps/app 190/190, mobile 76/76, web 19/19, escopo 160/160; vitest app-api+onboarding+convite 492/492; gate --fast verde; E2E f01-entrada-real 24/24 (8 casos × 375/768/1440), incluindo conta nova pelo OTP/Mailpit, falha do provisionamento com Confirmando…, erro do provedor, rede derrubada no convite e retomada em combinado/avisos. Desvio registrado: /invite/<token> é convite de comunidade, não código de família; a página aponta para /app/entrar e o token não é preservado, então o convite continua pendente (comentário da página diz a verdade). Card fica em now até a revisão independente da rodada 2.",
+        "05/11: RUN-004, correções da revisão do PR #128 (base 3f76e7f5; commits 562a44f5, 254d0b48, 74611df7, 41b89be5, 1d6b1b5e, 46f38ca5, 82f348bf, 4e7add4d, c3a123e6). Provisionamento virou portão: /groups sem vínculo responde 409 e o app trata sem laço; a prévia da cidade só avança com o POST /provision confirmado e a falha fica na mesma etapa com 'Tentar de novo'; a retomada decide pelo servidor (o rascunho sobrevive como marcador da etapa seguinte, com o nome da cidade para exibir, e o PUT responde 409 a quem já tem vínculo); a entrada termina sem linha em entry_progress (a rota dos avisos apaga). O caminho real não importa mais o servidor simulado: a prévia mostra estado neutro honesto e o teste de escopo falha se o import voltar. Convite: valida o código antes do envio (o envio cria conta), traz o e-mail do convite só de leitura e o título de quem convidou; 400, 429 e 503 têm mensagens próprias; o aceite exige has_accepted_consent nas versões vigentes; outbox, configuracoes/familia e /invite não levam mais à tela antiga de senha. ADR-20261101 registra a decisão do dono (o /cpf pode devolver nome e resultado) e o limitador (8/h por IP, 500/h global como disjuntor); ADR-20261102 registra o marcador e o prazo de 30 dias do rascunho. Provas: vitest app-api+convite+onboarding 482/482; apps/app 180/180; pnpm test 2019/2019 (158 arquivos, inclui escopo); gate --fast verde; pgTAP entry-provision-atomic 24/24 e entry-otp-limiter 75/75 executados via psql contra o stack local com as migrations aplicadas. Limitação registrada: o CLI do Supabase não alcança o pipe do Docker neste host, então o reset limpo e o test:db pela fila ficaram bloqueados; db lint --db-url respondeu sem erro e os dois pgTAP rodaram no banco local. E2E f01-entrada-real 21/21 (7 casos × 375/768/1440, incluindo o erro do provedor na porta) e o caso da conta nova recarrega depois do provisionamento e volta à prévia, não ao Início com conta realmente nova criada pelo OTP e código lido no Mailpit, caso de falha do provisionamento, asserção de cor computada no tema escuro e capturas em .visual/f01-entrada/. Correção de texto: a 'conta nova' da prova de 04/11 era pré-criada; agora o caso cria a conta pelo OTP. Desvio: /invite/<token> é convite de comunidade, não código de família; a página aponta para /app/entrar sem código. Card segue em now até a nova revisão independente.",
+        "05/11: lote C parte 1 (RUN-002, contrato R3 validado): porta por Google e convite familiar sem senha. Google: POST /api/app/entry/oauth devolve a URL de autorização com PKCE em cookie e redirect para /auth/callback?next=/app/entrar; o progresso passa a informar provedor (google/email) lido da sessão, e o callback não desvia mais o app para /consent (ele faz o próprio aceite). Provado por unidade (8 testes), sem credencial Google local. Convite: POST /api/app/entry/invite valida código, nome e consentimento, chama preview/accept existentes e provisiona o vínculo com a cidade de quem convidou; /app/entrar aceita ?convite=CODIGO, guarda o código só em memória (nunca no rascunho), mostra o campo já preenchido e pula CPF, cidade, verificação, documento e prévia. 12 testes da rota + 2 do provedor no progresso; app-api 249/249 e app 180/180. E2E do convite no navegador contra o Next servindo /app e o Supabase local com seed: porta → código → e-mail OTP lido no Mailpit → aceite → nome (sem campo CPF) → aceite do convite → grupos/combinado/avisos → Início, com sonda de vínculo sob RLS; a suíte da entrada ficou 15/15 (5 casos × 375/768/1440) e as capturas claro/escuro em .visual/f01-entrada/. No caminho, corrigido o CHECK de family_invitations (o harness voltou a mascarar o domínio pelo último ponto) e o teto de 5 convites ativos (o helper revoga os pendentes do titular de teste antes de criar). Falta para fechar o card: revisão cega, acessibilidade ampliada, retirada das telas antigas do apps/web (RUN-003) e I-4/I-5.",
+        "04/11: caminho de falha do CPF ligado e provado. O núcleo do envio de documento saiu da Server Action da web para apps/web/lib/onboarding/upload-verification-document.ts (mesma lógica, mesmas mensagens; a action só resolve a sessão e delega), a rota POST /api/app/entry/document recebe multipart com sessão/CSRF, teto de 12 MB pelo content-length, 400 com motivo nas recusas de validação e 503 sem eco de infraestrutura, e a etapa documento do app envia o arquivo de verdade e fica na linha do tempo 'Documento em análise' sem avançar como se já estivesse aprovada. 11 testes da rota + 12 do núcleo; E2E novo (conta sem vínculo → Portal fora → envio → análise) e 12/12 no total em 375/768/1440. No CI, o único vermelho foi o flake conhecido group-admin-cycle:120 (@stateful), já no card CI-E2E-UPSTREAM-INSTAVEL; os testes da entrada passaram.",
+        "04/11: E2E da entrada real no navegador, contra o Next servindo /app e o Supabase local com seed: 9/9 passando (3 casos × 375/768/1440) — conta nova percorre porta → e-mail → código lido no Mailpit → aceite → CPF → nome → cidade (UF/catálogo/data) → provisionamento → prévia → grupos reais → combinado → avisos → Início, com sonda de persistência sob RLS devolvendo verified e membroDaCidade; código errado com a mensagem única e o certo ainda entra; membro com sessão cai no Início. 90 capturas em claro e escuro em .visual/f01-entrada/. No caminho, dois defeitos reais: a checagem de origem das escritas por cookie recusava 127.0.0.1 porque o Next normaliza o host do url para localhost — agora a lista também deriva a origem do Host + x-forwarded-proto (4 testes novos); e o provisionamento marcava como já feito ao passar por etapas anteriores à verificação — a guarda foi corrigida. Harness em tests/e2e/f01-entrada-real.spec.ts + tests/e2e/entrada-real-ajuda.ts. Falta para fechar o card: revisão às cegas contra a régua Nextdoor, acessibilidade ampliada, retirada das telas antigas do apps/web (lote C) e os achados I-4/I-5.",
+        "04/11: lote B, modelo de dados parte 1 — o rascunho e o fluxo passam a carregar cidade e destino por código IBGE (7 dígitos) e data de chegada/saída em YYYY-MM-DD de calendário real, validados nos dois lados (servidor em entry-progresso.ts e app em estado.ts): chave desconhecida segue recusada, código fora de 7 dígitos é recusado e data impossível (2026-02-30) ou fora do formato ISO é descartada. O nome da cidade continua no rascunho só para exibir; o canônico é o código. Testes: +4 no app (161/161) e casos canônicos/negativos no app-api (160/160); gate --fast e pnpm test verdes. Próximo: rotas de interesses/grupos e avisos, decisão do combinado e a tela ligada.",
+        "04/11: lote B, servidor do fim da entrada e tela ligada. Rotas novas, todas com sessão e CSRF: POST /api/app/entry/interests (grupos UUID, teto 20, RPC record_user_group_interests com a cidade da sessão, 17 testes), POST /api/app/entry/combinado (só a versão atual do Código de Conduta, grava entry_commitments com o id da sessão, 13 testes), POST /api/app/entry/notices (ativados/agora-nao nas quatro colunas de notification_preferences, 12 testes) e GET /api/app/entry/groups (grupos públicos da cidade, 10 testes). Banco: migration 20261104215006_entry_commitments (tabela própria do combinado, RLS forçada, leitura só do dono, sem escrita de cliente, purga copiada com o delete novo; ADR-20261102 emendado como R3 e RATIFICACAO atualizada), pgTAP entry-commitments.sql com 14 asserções e test:db PASS 161 arquivos/2549 asserções; tipos regenerados pela fila. Tela: /app/entrar passa a renderizar a máquina de estados aprovada ligada ao rascunho do servidor (carga/retomada, OTP real com e-mail só em memória, aceite, CPF pelo servidor, nome, cidade canônica por IBGE com data e destino, verificação com polling e provisionamento, interesses, combinado, avisos e ida ao Início); a etapa de cidade ganhou a versão canônica (11 testes puros) e a de interesses passou a listar os grupos reais; a tela demonstrativa (telas/Entrar.tsx) e as três suítes E2E da entrada antiga saíram. App: 180/180; app-api: 212/212; gate --fast e pnpm test verdes. Falta para fechar o card: o harness E2E da raiz nos três tamanhos e dois temas (em execução) e os achados I-4/I-5.",
+        "04/11: contrato do Lote B (ligar a tela aprovada ao servidor real) escrito e validado como R3: docs/agents/tasks/RUN-001.task.yml (node scripts/agents/task-contract.mjs — ok, R3, retry 3). Ele fixa o modelo de dados alinhado (cidade por ibge_code, momento arriving/resident/leaving, data YYYY-MM-DD, destino quando saindo), a gravação dos interesses, grupos, avisos e do combinado nas tabelas canônicas, a saída do servidor-simulado do caminho de produção, o harness de E2E da raiz contra o Next servindo /app (375, 768, 1440, dois temas, conta nova e existente) e os achados I-4 e I-5 da revisão de 04/11 — cujo texto ainda não está no repositório e precisa ser anexado ao card antes do fechamento.",
+        "04/11: SEC-008 fechado no que o executor podia fechar. Prova de runtime do 6º erro refeita pelo executor contra o GoTrue local com `enable_confirmations = true` só localmente, por endereços sintéticos e rotas reais: conta confirmada e conta nova (não confirmada) têm os seis erros respondidos com 400 e o código original deixa de valer no GoTrue (recusado direto, sem passar pela rota), enquanto os dois controles provam que os mesmos códigos entravam antes do ataque. Tabela medida no ADR de entrada e evidência em `.visual/sec008/prova-*.json`; `config.toml` revertido para `false` e stack reiniciada com o valor commitado. `pnpm test` completo e `db:lint` rodados neste lote; BLOCK-RESEND ganhou os dois itens que faltavam (resíduo do `/auth/v1/verify` público e dimensionamento de `email_sent`, `token_verifications` e `sign_in_sign_ups`). A revisão independente do SEC-008 continua pendente e registrada em RATIFICACAO.md — o executor não revisa o que implementou.",
+        "04/11: SEC-007, lote A do F01 (endurecer o servidor da entrada antes de ligar as telas), a partir dos relatórios do reviewer e do security-auditor de 04/11. Banco: migration 20261104135127_entry_otp_limiter (private.entry_otp_limits, chave por hash; funções private e pontes public só service_role, authenticated e anon recusados) e 20261104135131_provision_apaga_rascunho (provision_member_entry apaga o rascunho na mesma transação, valendo para app, web e convite familiar). Servidor: envio com 1 por e-mail a cada 60 s e teto por hora por e-mail (6) e por IP confiável (30; x-vercel-forwarded-for ou x-real-ip, nunca x-forwarded-for), 429 com segundos e sem revelar a conta; verificação consome a tentativa antes do GoTrue, no 6º erro invalida o código por generateLink (medido no GoTrue local: o código antigo passa a otp_expired e nenhum e-mail sai) e a 7ª falha com a mesma mensagem; o limitador falha fechado (503). Sessão: as rotas que leem o cookie gravam o cookie renovado na resposta com as opções do callback (Secure em produção), e a verificação do código também. Progresso: versão diferente de VERSAO_DO_FLUXO volta ao inicial (servidor e app) e o PUT recusa; sobrenome vazio aceito; GET de quem tem vínculo devolve inicio. Verificado não é rebaixado pelo mesmo módulo nas duas portas; a rota de verificação lê pelo cliente do usuário sob RLS (my_verification_status), sem service_role. Next: frame-ancestors 'none' e X-Frame-Options DENY, portão do proxy casa /app exato ou /app/, vercel.json constrói app, exporta e constrói o web, falta de variável responde 503, e-mail inválido no app, sem BOM. config.toml: max_frequency 60s, [auth.rate_limit] explícito e template de confirmação com o código. ADRs de entrada e de progresso emendados na seção de consequências. Rodou contra 965b4c34 (mais a emenda dos ADRs): db reset --local --no-seed e test:db PASS 160 arquivos/2496 asserções (159/2461 antes: entry-otp-limiter.sql com 32 e 3 novas em entry-provision-atomic.sql), db:lint sem erro, generate:types; vitest unit 197 arquivos/1883 testes, apps/app 18/158, test:scope 154/154, gate completo verde (lint, typecheck, build, build:app, test, secrets). Fora deste lote e aberto: ligar as telas ao servidor real (lote seguinte) e o endpoint público do GoTrue, que o contador por e-mail não enxerga (risco residual no ADR de entrada).",
+        "02/11: lote 6a — o app passa a ser servido em /app pelo Next (SPA ADR §8) e ganha o cliente da entrada real. Publicação conjunta: scripts/export-app-to-web.mjs copia apps/app/dist para apps/web/public/app (gerado, ignorado no Git e no Biome), o build da raiz roda app -> exportação -> web, next.config.ts reescreve /app e /app/* para o index do app, e /app entra em PUBLIC_PATHS do proxy (a entrada é a porta do próprio app). Conferido no servidor local: GET /app e GET /app/entrar devolvem o index com id=root (200) e o asset /app/assets/*.js é servido (200). No app, src/entrada/servidor.ts fala com as rotas /api/app/entry (progresso, código, aceite, verificação, CPF, provisionamento) com credentials include e o cabeçalho do app, e src/entrada/estado.ts traduz o rascunho para o fluxo com forma fechada; 24 testes novos em apps/app/tests (155/155) e o contrato de publicação em tests/scope/app-foundation.test.mjs. A tela ligada a essas rotas e a prova E2E em 375/768/1440 nos dois temas vêm no lote 6b — o card não fecha antes disso.",
+        "02/11: lote 5 — o meio do onboarding no app: POST /api/app/entry/consent (aceite com as versões do contrato, autor = sessão), GET /api/app/entry/verification (status cru da verificação + se já é membro da cidade, sem motivo técnico), POST /api/app/entry/cpf (CPF validado, aceite exigido antes, consulta no Portal pelo servidor, resultado sem motivo e CPF nunca logado nem devolvido) e POST /api/app/entry/provision (nome/cidade/momento pela mesma validação e pelo mesmo provision_member_entry da web, só com verificação confirmada, apagando o rascunho ao concluir). O encanamento comum (origem, CSRF, CORS, sessão, corpo) foi para apps/web/lib/app-api/rota-do-app.ts e as rotas dos lotes 3 e 4 passaram a usá-lo, sem mudar comportamento. 16 testes novos, 90/90 em tests/unit/app-api; gate --fast e pnpm test verdes.",
+        "02/11: lote 4 — a porta por código no servidor. POST /api/app/entry/otp envia com signInWithOtp no servidor (shouldCreateUser), responde IGUAL para conta nova e existente (anti-enumeração, reusando classifyEntrySend), 429 só para limite com segundos e 503 para transporte; POST /api/app/entry/otp/verify valida o formato (6 dígitos), chama verifyOtp e grava os cookies da sessão na resposta, com mensagem única para código errado/vencido/reusado e 400/429/503 no resto. As duas exigem o cabeçalho do app e origem na lista (login CSRF). config.toml: otp_expiry 600 e template do e-mail com o código grande e sem link (supabase/templates/magic_link.html, conteúdo validado no restart local do Supabase); biome passa a ignorar supabase/templates para não ler a expressão GoTrue como template JS. 26 testes novos (13 de normalização/vereditos e 13 das rotas), 74/74 em tests/unit/app-api; gate --fast e pnpm test verdes.",
+        "02/11: lote 3 — rotas do rascunho da entrada: GET/PUT /api/app/entry/progress com o resolvedor de sessão do lote 1, CSRF de escrita (Origin + cabeçalho do app) e CORS explícito; GET lê com o cliente do usuário sob RLS e devolve o progresso inicial quando não há linha; PUT valida o corpo num módulo puro (forma fechada, sem CPF/documento/senha/token, limite de 6 KB) e grava com o cliente de serviço usando o id da SESSÃO, nunca o do corpo; OPTIONS responde só para origem da lista. A lista de etapas do servidor é comparada em teste com apps/app/src/previa-f01/fluxo.ts para não drifar. 48/48 testes em tests/unit/app-api (17 do contrato, 7 da sessão, 11 da validação, 13 da rota); gate --fast e pnpm test verdes. BIVAQUE_APP_ORIGINS documentada no .env.example.",
+        "02/11: lote 2 — rascunho da entrada no banco. ADR-20261102-progresso-da-entrada (R3, aceito por delegação) e migration 20261102220435_entry_progress: tabela por pessoa com versão, etapa e estado JSONB mínimo, RLS forçada, leitura só do dono, sem grant nem policy de escrita (a rota grava como service_role), CHECKs de etapa/versão/forma, purge incluída em finalize_account_deletion. ADR-20261101-entrada-unica-por-codigo aceito por delegação no mesmo lote e as duas linhas em RATIFICACAO.md. Prova pela fila: db reset --local --no-seed + test:db PASS 159 arquivos/2461 asserções (entry-progresso.sql com 13, incluindo RLS e CHECKs), generate:types e db:lint sem erro.",
+        "02/11: primeiro lote — contrato de segurança das rotas /api do app em apps/web/lib/app-api (contrato.ts, sessao.ts e sessao-do-next.ts): credencial única (cookie da web OU Bearer do app de loja), conflito recusado, token malformado ou inválido nunca cai para o cookie, CSRF de escrita com Origin e cabeçalho do app, CORS explícito sem curinga com credencial. 24/24 testes em tests/unit/app-api (positivo e negativo em cada regra); gate --fast e pnpm test verdes. As rotas consumidoras e o resto do card entram nos próximos lotes.",
+        "02/11: posto em now por instrução do dono; a ordem do docs/LANCAMENTO.md manda entregar o F01 ligado ao banco (ADR-20261101-entrada-unica-por-codigo). Dependência ainda aberta: AJUDA-PUBLICA, que é feita antes; LAN-F1-IDENTIDADE, APP-F01-ENTRADA-VISUAL e APP-001 estão fechadas.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-F01",
       "title": "F01 Entrada e onboarding ligada ao banco",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
-      "description": "Escopo em docs/LANCAMENTO.md (F01). Pronta só pelos seis critérios de pronto.",
+      "status": "now",
+      "description": "Escopo em docs/LANCAMENTO.md (F01) e ADR-20261101-entrada-unica-por-codigo. Plano da frente, em ordem: 1) contrato de segurança das rotas /api do app (SPA ADR §5.1 a §5.3), em lib/app-api com testes; 2) progresso da entrada no banco (migration R3 com RLS e pgTAP) e as rotas GET/PUT /api/app/entry/progress; 3) ponte de autenticação por código no servidor (envio e verificação do OTP, cookie de sessão, reenvio de 60 s e limites); 4) cidade, momento, grupos e avisos; 5) verificação de CPF pelo caminho do Portal que já existe, com documento e revisão; 6) portar o visual aprovado da prévia para /app/entrar, retirar a tela antiga do apps/web com redirect e ajustar o portão do proxy. Cada passo entra com teste positivo e negativo e prova de runtime própria.",
       "checklist": [
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
         "Revisão às cegas contra a régua Nextdoor, com referências do Mobbin citadas",
@@ -5668,17 +5729,69 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
+      "tests": [
+        "tests/unit/app-api/contrato.test.ts",
+        "tests/unit/app-api/sessao.test.ts",
+        "tests/unit/app-api/entry-progresso.test.ts",
+        "tests/unit/app-api/entry-progress-route.test.ts",
+        "tests/unit/app-api/entrada-otp.test.ts",
+        "tests/unit/app-api/entrada-otp-rotas.test.ts",
+        "tests/unit/app-api/entrada-rotas.test.ts",
+        "tests/unit/app-api/entrada-interesses.test.ts",
+        "tests/unit/app-api/entrada-combinado.test.ts",
+        "tests/unit/app-api/entrada-avisos.test.ts",
+        "tests/unit/app-api/entrada-grupos.test.ts",
+        "tests/unit/app-api/entrada-oauth.test.ts",
+        "tests/unit/app-api/entrada-convite.test.ts",
+        "apps/app/tests/entrada-estado.test.ts",
+        "apps/app/tests/entrada-servidor.test.ts",
+        "apps/app/tests/cidade-canonica.test.ts",
+        "tests/scope/app-foundation.test.mjs",
+        "supabase/tests/entry-progresso.sql",
+        "supabase/tests/entry-commitments.sql",
+        "supabase/tests/entry-otp-limiter.sql",
+        "supabase/tests/entry-provision-atomic.sql",
+        "tests/unit/app-api/entrada-limite.test.ts",
+        "tests/unit/app-api/sessao-renovacao.test.ts",
+        "tests/unit/onboarding/verificado-nao-rebaixa.test.ts",
+        "tests/unit/onboarding/proxy-portao-do-app.test.ts",
+        "tests/unit/infra/cabecalhos-de-seguranca.test.ts",
+        "tests/scope/supabase-config.test.mjs",
+        "tests/scope/vercel-publica-o-app.test.mjs"
+      ],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/decisions/ADR-20261101-entrada-unica-por-codigo.md",
+        "docs/decisions/ADR-20261102-progresso-da-entrada.md",
+        "supabase/migrations/20261102220435_entry_progress.sql",
+        "apps/web/app/api/app/entry/progress/route.ts",
+        "apps/web/app/api/app/entry/otp/route.ts",
+        "apps/web/app/api/app/entry/otp/verify/route.ts",
+        "apps/web/app/api/app/entry/consent/route.ts",
+        "apps/web/app/api/app/entry/verification/route.ts",
+        "apps/web/app/api/app/entry/cpf/route.ts",
+        "apps/web/app/api/app/entry/provision/route.ts",
+        "apps/web/lib/app-api/rota-do-app.ts",
+        "supabase/templates/magic_link.html",
+        "docs/agents/tasks/RUN-001.task.yml",
+        "docs/agents/tasks/RUN-002.task.yml",
+        "apps/web/app/api/app/entry/oauth/route.ts",
+        "apps/web/app/api/app/entry/invite/route.ts",
+        "docs/agents/HANDOFF-20261104.md"
+      ],
+      "sourceRevision": "429b64f2",
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo."
       ],
       "id": "LAN-F02",
       "title": "F02 Início e busca ligados ao banco",
@@ -5785,11 +5898,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
-      "links": ["docs/LANCAMENTO.md"],
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
+      "links": ["docs/LANCAMENTO.md", "https://bazardavila.app.br/vender"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus."
       ],
       "id": "LAN-F06",
       "title": "F06 Mercado e moradia ligados ao banco",
@@ -5803,9 +5917,42 @@
         "E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
         "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3",
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
-        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
+        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy",
+        "Situação do anúncio: disponível ou vendido, marcar vendido em um toque, filtro \"Só disponíveis\" e contagem à venda/vendidos na vitrine do anunciante",
+        "Interesse abre a conversa com mensagem pronta e editável que cita o item e o preço"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS", "APP-001"]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
+      "links": [
+        "https://bazardavila.app.br/mapa",
+        "https://bazardavila.app.br/c/miranda",
+        "docs/decisions/ADR-20261022-entrada-do-prototipo.md",
+        "docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"
+      ],
+      "proof": [
+        "04/11: registrado a partir da análise do Bazar da Vila; faixa desenhada nas direções 1, 2 e 5 do Início (canvas de wireframes)."
+      ],
+      "id": "MERCADO-BAZAR-MUDANCA",
+      "title": "Bazar de mudança: os desapegos de quem está saindo da cidade, agrupados",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Referência: Bazar da Vila (bazardavila.app.br, visto em 04/11), app só de desapego para famílias de vilas militares, com 3 bazares abertos em Manaus. Cada família que vai se mudar vira um bazar: nome, bairro, itens à venda e \"Mudança em N dias\"; o comprador junta itens num carrinho e manda uma mensagem só. No Bivaque o dado já existe: a entrada grava o momento Saindo com data e destino (ADR-20261022-entrada-do-prototipo §3), hoje usado só na Início da própria pessoa. Mostrar a outros membros que alguém está saindo, e quando, é exposição nova de dado pessoal (sinal de casa vazia): fica em repo até o ADR de privacidade existir. Não traz do Bazar da Vila o link público sem cadastro, o WhatsApp como canal nem os planos pagos (BLOCK-ASAAS).",
+      "checklist": [
+        "ADR de privacidade (R3 por delegação, com security-auditor): o anunciante escolhe aparecer como bazar de mudança; a data aparece no máximo como mês (\"Mudança em dezembro\"); destino e endereço nunca aparecem; o bazar some quando a data passa ou o momento muda",
+        "Agrupamento por anunciante saindo: vitrine do bazar com bairro, itens à venda e vendidos, e busca e filtro por categoria dentro dele",
+        "Faixa \"Bazares de mudança perto de você\" no Mercado e na Início, com estado vazio que não ocupa espaço",
+        "Vários itens do mesmo bazar numa só conversa, com a lista e o total na mensagem pronta",
+        "Cadastro em sequência para quem vai anunciar muitos itens: foto, preço e próximo, com meta de 30 segundos por item",
+        "E2E em 375/768/1440, claro e escuro; RLS e pgTAP do que o bazar expõe, com casos positivos e negativos"
+      ],
+      "dependencies": ["LAN-F06"]
     },
     {
       "phase": "Lançamento",
@@ -5863,11 +6010,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH)."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -5881,14 +6029,41 @@
         "E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
         "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3",
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
-        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
+        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy",
+        "Preferências por canal (no app, e-mail, push), e o push abre o destino certo"
       ],
       "dependencies": [
         "LAN-F1-IDENTIDADE",
         "OUTBOX-INVITE-RECIPIENTS",
         "NOTIF-DEEPLINKS",
-        "APP-001"
+        "APP-001",
+        "LAN-PUSH"
       ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-04",
+      "sourceRevision": "29fcc8f",
+      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
+      "proof": [
+        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo."
+      ],
+      "id": "LAN-PUSH",
+      "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "description": "O push entra no lançamento (dono, 04/11). Vale para o app de loja (Capacitor, FCM do Google no Android e APNs no iOS) e, onde o navegador permitir, para a web instalada. O token do aparelho é dado pessoal e cria um destino de envio novo: fica em repo até o ADR por delegação (R3, com security-auditor) fixar armazenamento, retenção, revogação ao sair ou apagar a conta e o que o texto do push pode conter na tela bloqueada. Chaves do serviço de push do Google e da Apple são atos do dono. Ponto do ADR: o limite de produto proíbe o termo da plataforma do Google no código (tests/privacy/product-boundaries-and-pii.test.ts); o ADR decide se o SDK de mensagens do Android é exceção explícita.",
+      "checklist": [
+        "ADR por delegação e linha em docs/decisions/RATIFICACAO.md: tabela de tokens com RLS forçada, um token por aparelho, apagado ao sair, ao apagar a conta e quando o provedor o recusa; texto na tela bloqueada sem dado pessoal de terceiros",
+        "Registro do token no app de loja (plugin de push do Capacitor) e, onde houver suporte, na web instalada, com pedido de permissão em contexto e não na abertura",
+        "Envio pelo mesmo outbox dos avisos, respeitando a preferência por canal e o bloqueio entre membros",
+        "Toque na notificação abre o destino certo pelos links profundos (NOTIF-DEEPLINKS)",
+        "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens"
+      ],
+      "dependencies": ["NOTIF-DEEPLINKS"]
     },
     {
       "phase": "Lançamento",
@@ -5984,6 +6159,7 @@
       "sourceRevision": "fc67e19e",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
+        "02/11: checklist ganhou a medição pós-lançamento herdada de INDICACOES-AVISO (tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h), que só se mede depois de o app estar no ar.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
       "id": "LAN-PROVA",
@@ -5996,7 +6172,8 @@
         "E2E de todas as jornadas em três tamanhos e dois temas",
         "Revisão de segurança final sem CRITICAL/HIGH",
         "Desempenho e concorrência dentro do alvo",
-        "Ensaio de deploy e relatório final com a lista de ratificação"
+        "Ensaio de deploy e relatório final com a lista de ratificação",
+        "Medir tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h (herdado de INDICACOES-AVISO)"
       ],
       "dependencies": ["LAN-TROCA", "LAN-LOJA", "OPS-CONCORRENCIA-LANCAMENTO"]
     },
@@ -6039,7 +6216,8 @@
       "dependencies": [],
       "tests": [
         "tests/e2e/group-event-detail-denials.spec.ts",
-        "tests/e2e/provider-vitrine.spec.ts"
+        "tests/e2e/provider-vitrine.spec.ts",
+        "tests/e2e/group-join-reason.spec.ts"
       ],
       "blockers": [],
       "updatedAt": "2026-11-02",
@@ -6049,8 +6227,11 @@
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
       ],
       "proof": [
+        "04/11: em revisões intermediárias da mesma linha também caíram group-admin-cycle.spec.ts:120 (@stateful) e um caso de Imóveis em 320; a revisão final 1ea22a9f fechou o job verde, sem mudança de código nas telas — mesma família de instabilidade do lote serial, registrada aqui para não virar ruído de PR.",
+        "02/11: mais uma queda do lote @stateful no CI do PR #125 (revisão 1bd1b699, job Install, test, and build): group-join-reason.spec.ts:176 esperou o botão Entrar no grupo aberto e não o achou, nos dois retries; o rerun sem mudança de código fechou verde (21m40s). É a mesma assinatura das quedas anteriores — teste serial dependente de estado/conexão do Supabase local —, não regressão do diff, e fica registrada aqui em vez de sumir do relatório.",
         "02/11: causa achada em parte — specs que gravam na conta semeada rodavam em paralelo nos três tamanhos. recon-032 (bloquear), provider-vitrine (catálogo), recon-018 (cadastro, limite do Auth) e synthetic-people foram para o lote serial @stateful; group-base centraliza o botão antes do clique (cabeçalho fixo). Com isso o CI do #121 e do #122 fechou verde. Ficou retries: 1 só no CI da suíte da web antiga, como paliativo visível (flaky no relatório); a perda de conexão com o Supabase local sob carga segue sem causa.",
-        "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120."
+        "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120.",
+        "04/11: PR #128, revisão dd75d8d0, job Install, test, and build: group-admin-cycle.spec.ts:120 (membro pendente cancela o pedido, @stateful) falhou em 1440 nos dois retries e foi flaky em 768; depois de Cancelar pedido o botão Pedir entrada não apareceu em 5 s. O código da revisão é idêntico ao de origin/ds/lancamento f1d14a2d, cujo Pull Request CI fechou verde em 03/11; mesma família de queda do lote @stateful de grupo."
       ],
       "completedChecklist": [true, true, false, false]
     },
@@ -6172,6 +6353,31 @@
         "Identificar a causa de configuração ou provedor sem confundir execução com veredito.",
         "Reexecutar o serviço e exigir parecer independente; não substituir por sucesso vazio."
       ]
+    },
+    {
+      "id": "ENTRADA-DESAFIO-HUMANO",
+      "title": "Desafio humano no envio do código quando o disjuntor global estiver perto do teto",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "O disjuntor global do limitador (500 envios/h) existe para uma pessoa não travar a entrada de todos. Quando o volume legítimo chegar perto dele, é preciso um desafio humano (por exemplo Turnstile) antes do envio, e acompanhar as recusas de 8/h por IP em redes compartilhadas (CGNAT, Wi-Fi de OM).",
+      "checklist": [
+        "Definir o provedor de desafio (Turnstile) e onde ele entra antes do envio",
+        "Disparar o desafio quando o global estiver perto do teto, sem cobrar de quem só está entrando",
+        "Acompanhar pelo log.warn as recusas por IP em redes compartilhadas (CGNAT, Wi-Fi de OM)",
+        "Provar o caminho positivo e o negativo sem bloquear a entrada normal",
+        "Decidir o limite de produção com o volume real do lançamento"
+      ],
+      "proof": [
+        "05/11: aberto na revisão do RUN-004 rodada 2. O disjuntor de 500/h e o teto de 8/h por IP estão no ADR-20261101; o desafio humano e o risco de CGNAT/OM ficam aqui para depois da prova de volume, com dependência de BLOCK-RESEND."
+      ],
+      "blockers": ["Depende do projeto de deploy e do volume real de produção (BLOCK-RESEND)"],
+      "links": ["docs/decisions/ADR-20261101-entrada-unica-por-codigo.md"],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "874575e1",
+      "dependencies": ["BLOCK-RESEND"],
+      "completedChecklist": [false, false, false, false, false]
     }
   ],
   "launch": {

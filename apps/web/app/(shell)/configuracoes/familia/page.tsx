@@ -100,7 +100,7 @@ export default function ConfiguracoesFamiliaPage() {
       formData.set("email", resendEmail)
       const result = await resendFamilyInviteAction(formData)
       if (result?.token) {
-        setInviteLink(`/onboarding?invite=${result.token}`)
+        setInviteLink(result.code ? `/app/entrar?convite=${result.code}` : "/app/entrar")
         setInviteCode(result.code ?? null)
         setLinkInviteId(invitationId)
         setResendingId(null)
@@ -122,7 +122,7 @@ export default function ConfiguracoesFamiliaPage() {
     try {
       const result = await sendFamilyInviteAction(formData)
       if (result?.token) {
-        setInviteLink(`/onboarding?invite=${result.token}`)
+        setInviteLink(result.code ? `/app/entrar?convite=${result.code}` : "/app/entrar")
         setInviteCode(result.code ?? null)
         const fresh = await getFamilyInviteDataAction()
         setData(fresh)
@@ -138,10 +138,10 @@ export default function ConfiguracoesFamiliaPage() {
 
   const copyLink = async () => {
     if (!inviteLink) return
-    // Com o código em mãos, o que se copia é a tela /convite já preenchida: é o
-    // caminho que o e-mail também entrega, e não depende do link de onboarding.
+    // Com o código em mãos, o que se copia é a entrada do app já preenchida: é o
+    // caminho que o e-mail também entrega.
     const target = inviteCode
-      ? new URL(`/convite?codigo=${inviteCode}`, window.location.origin).toString()
+      ? new URL(`/app/entrar?convite=${inviteCode}`, window.location.origin).toString()
       : new URL(inviteLink, window.location.origin).toString()
     try {
       await navigator.clipboard.writeText(target)
@@ -266,7 +266,7 @@ export default function ConfiguracoesFamiliaPage() {
                 </p>
                 {inviteCode ? (
                   <p className="mt-2 text-sm">
-                    Código para digitar na tela do convite:{" "}
+                    Código para digitar na entrada do app:{" "}
                     <span className="font-mono text-base font-semibold tracking-[0.2em]">
                       {inviteCode}
                     </span>
@@ -291,7 +291,7 @@ export default function ConfiguracoesFamiliaPage() {
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
         <h3 className="text-sm font-semibold">Como funciona a entrada</h3>
         <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted">
-          <li>O familiar cria a própria conta e passa pela verificação como qualquer membro.</li>
+          <li>O familiar entra pelo código, sem senha, sem CPF e sem verificação própria.</li>
           <li>
             A conta dele é independente da sua: nada de perfil, conteúdo ou participação é
             compartilhado automaticamente.

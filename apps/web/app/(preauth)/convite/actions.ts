@@ -3,6 +3,7 @@
 import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { cookies, headers } from "next/headers"
+import { ipConfiavel } from "../../../lib/app-api/entrada-limite"
 import { classifySignUp, passwordProblem } from "../../../lib/auth/password-auth"
 import {
   type FamilyInviteCodeStatus,
@@ -11,12 +12,7 @@ import {
   isInviteCodeShape,
   normalizeInviteCode,
 } from "../../../lib/convite/code"
-import {
-  inviteCodeHash,
-  inviteEmailDigest,
-  inviteOriginDigest,
-  originFromForwardedFor,
-} from "../../../lib/convite/digest"
+import { inviteCodeHash, inviteEmailDigest, inviteOriginDigest } from "../../../lib/convite/digest"
 import {
   acceptFamilyInviteCode,
   type FamilyInvitePreview,
@@ -67,8 +63,7 @@ export type InviteAcceptResult =
 
 async function requestOriginDigest(): Promise<string> {
   const headerBag = await headers()
-  const forwarded = headerBag.get("x-forwarded-for") ?? headerBag.get("x-real-ip")
-  return inviteOriginDigest(originFromForwardedFor(forwarded))
+  return inviteOriginDigest(ipConfiavel(headerBag))
 }
 
 // Endereço canônico do app, para o link de confirmação voltar para cá.
