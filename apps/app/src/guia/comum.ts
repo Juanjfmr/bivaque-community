@@ -45,6 +45,11 @@ export function acessoNegado(falha: unknown): boolean {
   return falha instanceof FalhaDaApi && falha.codigo === "recusado"
 }
 
+/** Referência fora do ar ou id que não existe: não adianta "Tentar de novo". */
+export function naoEncontrado(falha: unknown): boolean {
+  return falha instanceof FalhaDaApi && falha.codigo === "nao-encontrado"
+}
+
 export function foiAbortada(falha: unknown): boolean {
   return falha instanceof DOMException && falha.name === "AbortError"
 }

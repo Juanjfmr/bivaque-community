@@ -5,11 +5,17 @@ import { useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo, Formulario } from "@/components/bivaque/campos"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
+import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { lerVerbete, marcarNoGuia, sugerirAtualizacao, type VerbeteDoGuia } from "@/lib/dados/guia"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
-import { acessoNegado, mensagemDaFalha, sessaoVencida, validarSugestao } from "@/src/guia/comum"
+import {
+  acessoNegado,
+  mensagemDaFalha,
+  naoEncontrado,
+  sessaoVencida,
+  validarSugestao,
+} from "@/src/guia/comum"
 
 /**
  * O verbete do Guia (F08), aberto numa folha sobre a lista.
@@ -27,7 +33,7 @@ export function Verbete({
   readonly aoMudarSalvo: (id: string, salvo: boolean) => void
 }) {
   const [verbete, setVerbete] = useState<VerbeteDoGuia | null>(null)
-  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "ausente" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -49,7 +55,15 @@ export function Verbete({
       })
       .catch((falha: unknown) => {
         if (controle.signal.aborted) return
-        setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
+        setErro(
+          sessaoVencida(falha)
+            ? "sessao"
+            : acessoNegado(falha)
+              ? "negado"
+              : naoEncontrado(falha)
+                ? "ausente"
+                : "falhou",
+        )
       })
     return () => controle.abort()
   }, [id, rodada])
@@ -97,6 +111,14 @@ export function Verbete({
 
   if (erro === "sessao") return <EstadoDeSessaoVencida />
   if (erro === "negado") return <EstadoNegado texto="O guia é de quem mora na cidade." />
+  if (erro === "ausente") {
+    return (
+      <EstadoVazio
+        titulo="Referência não encontrada"
+        texto="Ela saiu do guia ou o endereço está errado."
+      />
+    )
+  }
   if (erro === "falhou") return <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
   if (verbete === null) return <EsqueletoDeLista linhas={3} />
 

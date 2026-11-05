@@ -41,8 +41,9 @@ import { Verbete } from "@/src/guia/Verbete"
  * filtro sem resultado, sessão vencida e falha recuperável: banco fora não
  * vira "a cidade não tem guia".
  *
- * A leitura do verbete abre numa folha da entrada de navegação, então o Voltar
- * do sistema fecha a folha antes de sair da tela.
+ * A leitura do verbete abre numa folha sobre a lista. A folha é estado local da
+ * tela: o Voltar do sistema não a fecha — quem fecha é o botão, o Escape ou o
+ * arrasto —, e o histórico do roteador não é empilhado por ela.
  */
 /**
  * O roteiro de chegada e os atalhos aprovados (protótipo:
