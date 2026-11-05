@@ -5808,12 +5808,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-04",
-      "sourceRevision": "29fcc8f",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "25610401",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo."
+        "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo.",
+        "05/11: RUN-012 — implementação com GPT Terra 6.1 (rodadas 5005a5b0 a 8118f0fb). Revisão Qwen FAIL: desenho aprovado retirado sem motivo de dado; sem gravação. Auditoria security-auditor (Sonnet 5.5): LIBERA COM RESSALVAS. Rodada única de correção por Sonnet 5.5 (780480e8, 6ec43f62, 2dcdf54c, aecdba82, 25610401): desenho aprovado restaurado; perguntas ocultas respeitadas via list_indications; presença do próximo encontro pela rota do F05, gravada e relida; termo de busca validado e escapado; E2E sem sessão (401) e presença persistida. Provas no HEAD 25610401: gate --fast verde; gate completo verde com build pulado; vitest app 24/241, mobile 12/76, web 1/19, raiz 213/2123, scope 196; início e busca 46 testes. Não rodou: E2E com banco (Docker/supabase start indisponível nesta máquina; roda no CI), build do Next, prova visual 375/768/1440, revisão independente final."
       ],
       "id": "LAN-F02",
       "title": "F02 Início e busca ligados ao banco",
@@ -5830,6 +5831,26 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
+    },
+    {
+      "id": "F02-RESSALVAS",
+      "title": "F02 Início e busca: ressalvas da auditoria e vazios do banco",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Ressalvas do RUN-012 (F02) que não bloquearam a integração. search_providers não recorta pela cidade da sessão na busca: o alcance é decidido por can_see_provider, sem vazamento, mas o rótulo 'em {cidade}' pode contar negócio visível por alcance de comunidade. Salvar anúncio no Início continua estado local e pertence ao F06. Foto e autor da pergunta entram quando o banco tiver o dado.",
+      "checklist": [
+        "search_providers recortado pela cidade da sessão na busca",
+        "Salvar anúncio no Início persiste (pertence ao F06)",
+        "Foto e autor da pergunta exibidos quando existirem no banco"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/tasks/RUN-012.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "25610401"
     },
     {
       "phase": "Lançamento",
