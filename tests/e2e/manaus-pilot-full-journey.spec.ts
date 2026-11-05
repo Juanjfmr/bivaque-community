@@ -73,27 +73,6 @@ test.describe("holder onboarding journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("family invite journey", () => {
-  test("an old invite link is forwarded to the invite screen without the token", async ({
-    page,
-  }) => {
-    // Given an invite token in the query string, from a link created before
-    // this deploy
-    // When a user opens the onboarding page with an invite token
-    await seedSession(page.context())
-    await page.goto(
-      "/onboarding?invite=0000000000000000000000000000000000000000000000000000000000000000",
-    )
-
-    // Then the eligibility step does not accept the invite itself: it forwards
-    // to the invite screen (front D) in legacy mode, and the token stays out of
-    // the URL. The invite screen asks for a new link instead of trusting a
-    // token that only this old address knew how to read.
-    // Who already has a current locality is sent on from /convite to the
-    // home screen (the invite screen has nothing left to do for a member).
-    await page.waitForURL(/\/inicio$/)
-    await expect(page).not.toHaveURL(/invite=|legado=/)
-  })
-
   test("the legacy invite screen asks for a new invite", async ({ page }) => {
     // Given someone without a session who arrives from an old invite link
     // When the forwarded address opens
@@ -109,14 +88,16 @@ test.describe("family invite journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("community feed", () => {
-  test("feed page refuses an anonymous visitor into login", async ({ page }) => {
+  test("feed page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser without consent
     // When the user navigates directly to /community
     await page.goto("/community")
 
     // Then the middleware redirects to the consent gate
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("feed page with consent cookie renders the community heading", async ({ page, context }) => {
@@ -161,7 +142,7 @@ test.describe("community feed", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("groups journey", () => {
-  test("groups page refuses an anonymous visitor into login", async ({ page }) => {
+  test("groups page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates directly to /groups
     await page.goto("/groups")
@@ -169,8 +150,10 @@ test.describe("groups journey", () => {
     // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
     // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
     // o destino mudou.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("groups page with consent cookie renders groups UI", async ({ page, context }) => {
@@ -230,7 +213,7 @@ test.describe("groups journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations journey", () => {
-  test("recommendations page refuses an anonymous visitor into login", async ({ page }) => {
+  test("recommendations page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /recommendations
     await page.goto("/recommendations")
@@ -238,8 +221,10 @@ test.describe("recommendations journey", () => {
     // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
     // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
     // o destino mudou.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   // /recommendations foi aposentada em 25/09/2026 (ADR-20260925-memoria-de-indicacoes):
@@ -266,7 +251,7 @@ test.describe("recommendations journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("events journey", () => {
-  test("events page refuses an anonymous visitor into login", async ({ page }) => {
+  test("events page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
@@ -274,8 +259,10 @@ test.describe("events journey", () => {
     // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
     // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
     // o destino mudou.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("events page with consent cookie renders events UI", async ({ page, context }) => {
@@ -306,7 +293,7 @@ test.describe("events journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications journey", () => {
-  test("notifications page refuses an anonymous visitor into login", async ({ page }) => {
+  test("notifications page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /notifications
     await page.goto("/notifications")
@@ -314,8 +301,10 @@ test.describe("notifications journey", () => {
     // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
     // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
     // o destino mudou.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({
@@ -338,7 +327,7 @@ test.describe("notifications journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("contextual DM and report journey", () => {
-  test("messages page refuses an anonymous visitor into login", async ({ page }) => {
+  test("messages page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /messages
     await page.goto("/messages")
@@ -346,8 +335,10 @@ test.describe("contextual DM and report journey", () => {
     // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
     // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
     // o destino mudou.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("messages page with consent cookie renders messages UI", async ({ page, context }) => {
@@ -369,7 +360,7 @@ test.describe("contextual DM and report journey", () => {
 
 // The app shell (header, sidebar, BottomNav) is mounted by `(shell)/layout.tsx`
 // and therefore exists only on authenticated routes. The `(preauth)` group has
-// no layout of its own, so /login, /consent and /onboarding are deliberately
+// no layout of its own, so /app/entrar and /consent are deliberately
 // chrome-free. Positive BottomNav coverage lives in shell-navigation.spec.ts,
 // which signs in first; here we pin the boundary.
 test.describe("preauth routes render no app shell", () => {
@@ -386,7 +377,7 @@ test.describe("preauth routes render no app shell", () => {
     await expect(page.locator(BOTTOM_NAV)).toHaveCount(0)
   })
 
-  for (const path of ["/login", "/consent", "/onboarding"]) {
+  for (const path of ["/app/entrar", "/consent"]) {
     test(`no shell chrome on ${path}`, async ({ page }) => {
       // Given a preauth route
       await page.goto(path)
@@ -404,9 +395,8 @@ test.describe("preauth routes render no app shell", () => {
 
 test.describe("accessibility across journeys", () => {
   const KEY_PAGES = [
-    { path: "/login", name: "login" },
+    { path: "/app/entrar", name: "app entry" },
     { path: "/consent", name: "consent" },
-    { path: "/onboarding", name: "onboarding" },
   ]
 
   for (const { path, name } of KEY_PAGES) {

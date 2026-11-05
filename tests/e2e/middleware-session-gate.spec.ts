@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import { CURRENT_CONSENT } from "./helpers/session"
 
-test("redirects unauthenticated GET /community to /login with redirect param", async ({
+test("redirects unauthenticated GET /community to the app entry with redirect param", async ({
   browser,
 }) => {
   const context = await browser.newContext()
@@ -12,7 +12,9 @@ test("redirects unauthenticated GET /community to /login with redirect param", a
 
   await page.goto("/community")
 
-  await expect(page).toHaveURL("http://127.0.0.1:3000/login?redirect=%2Fcommunity")
+  // O proxy manda a /login?redirect=...; a web leva a /app/entrar (ENTRADA-WEB-ANTIGA),
+  // e o redirect de configuração repassa a query.
+  await expect(page).toHaveURL("http://127.0.0.1:3000/app/entrar?redirect=%2Fcommunity")
   await context.close()
 })
 

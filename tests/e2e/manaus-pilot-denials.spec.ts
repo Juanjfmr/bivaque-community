@@ -39,16 +39,20 @@ test.describe("anonymous visitor: protected route denial", () => {
   ]
 
   for (const route of PROTECTED_ROUTES) {
-    test(`${route} refuses an anonymous visitor and sends them to login`, async ({ page }) => {
+    test(`${route} refuses an anonymous visitor and sends them to the app entry`, async ({
+      page,
+    }) => {
       // Given an unauthenticated browser
       // When the user navigates directly to a protected route
       await page.goto(route)
 
       // Then the proxy refuses and routes to the entry screen, keeping the
       // intended destination so the person does not lose their way
-      await page.waitForURL(/\/login/)
+      await page.waitForURL(/\/app\/entrar/)
       expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
-      await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+      await expect(
+        page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+      ).toBeVisible()
     })
   }
 
@@ -58,15 +62,19 @@ test.describe("anonymous visitor: protected route denial", () => {
     await page.goto("/community")
 
     // Then they are refused into the entry screen
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
 
     // When they try to navigate back to community, passing through the entry
     await page.goto("/community")
 
     // Then the refusal repeats — passar pela tela de entrada não concede sessão
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -75,18 +83,20 @@ test.describe("anonymous visitor: protected route denial", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("private group admission: denial paths", () => {
-  test("groups page without auth is refused into login", async ({ page }) => {
+  test("groups page without auth is refused into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /groups
     await page.goto("/groups")
 
     // Then the proxy refuses into the entry screen (ADR-20260907: o portão de
     // consentimento saiu; quem decide o acesso é a sessão)
-    await page.waitForURL(/\/login/)
-    expect(page.url()).toContain("/login")
+    await page.waitForURL(/\/app\/entrar/)
+    expect(page.url()).toContain("/app/entrar")
   })
 
-  test("groups page with consent but no Supabase auth redirects to /login", async ({ page }) => {
+  test("groups page with consent but no Supabase auth redirects to /app/entrar", async ({
+    page,
+  }) => {
     // Given a browser with the consent cookie but no Supabase auth session
     await setConsentCookie(page)
 
@@ -97,7 +107,7 @@ test.describe("private group admission: denial paths", () => {
     // to /login antes da pagina renderizar; o setError("Voce precisa
     // entrar para acessar os grupos.") de apps/web/app/(shell)/groups/page.tsx
     // nunca tem chance de aparecer.
-    await page.waitForURL(/\/login/, { timeout: 10000 })
+    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
   })
 
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
@@ -107,7 +117,7 @@ test.describe("private group admission: denial paths", () => {
 
     // Then the proxy refuses antes de o Next tratar a rota — a recusa não
     // depende de o grupo existir, e por isso não vaza existência
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
   })
 })
 
@@ -116,18 +126,20 @@ test.describe("private group admission: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("DM without context: denial paths", () => {
-  test("messages page refuses an anonymous visitor into login", async ({ page }) => {
+  test("messages page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /messages
     await page.goto("/messages")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
-  test("messages page with consent but no auth redirects to /login", async ({ page }) => {
+  test("messages page with consent but no auth redirects to /app/entrar", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase session
     await setConsentCookie(page)
 
@@ -137,7 +149,7 @@ test.describe("DM without context: denial paths", () => {
     // Then the middleware session gate (apps/web/middleware.ts) sends them
     // to /login; o heading "Mensagens" e o loading "Carregando conversas"
     // de apps/web/app/(shell)/messages/page.tsx nunca renderizam.
-    await page.waitForURL(/\/login/, { timeout: 10000 })
+    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
   })
 })
 
@@ -238,15 +250,17 @@ test.describe("trust boundary: API denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("events RSVP: denial paths", () => {
-  test("events page refuses an anonymous visitor into login", async ({ page }) => {
+  test("events page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -255,15 +269,17 @@ test.describe("events RSVP: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications: denial paths", () => {
-  test("notifications page refuses an anonymous visitor into login", async ({ page }) => {
+  test("notifications page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /notifications
     await page.goto("/notifications")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -272,15 +288,17 @@ test.describe("notifications: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations: denial paths", () => {
-  test("recommendations page refuses an anonymous visitor into login", async ({ page }) => {
+  test("recommendations page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /recommendations
     await page.goto("/recommendations")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -313,8 +331,10 @@ test.describe("consent cookie tampering: it is not a gate", () => {
 
       // Then the refusal is exactly the same as without any cookie: the cookie
       // never granted access, and after the ADR it does not deny it either
-      await page.waitForURL(/\/login/)
-      await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+      await page.waitForURL(/\/app\/entrar/)
+      await expect(
+        page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+      ).toBeVisible()
     })
   }
 
@@ -335,6 +355,7 @@ test.describe("consent cookie tampering: it is not a gate", () => {
     // portão a cada visita.
     await expect(page).not.toHaveURL(/\/consent/)
     await expect(page).not.toHaveURL(/\/login/)
+    await expect(page).not.toHaveURL(/\/app\/entrar/)
   })
 
   test("consent page is always accessible regardless of cookie state", async ({ page }) => {

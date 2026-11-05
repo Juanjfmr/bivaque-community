@@ -21,7 +21,7 @@ test.describe("onboarding: denial paths", () => {
   test("protected routes deny an anonymous visitor and send them to login", async ({ page }) => {
     for (const route of PROTECTED_ROUTES) {
       await page.goto(route)
-      await page.waitForURL(/\/login/)
+      await page.waitForURL(/\/app\/entrar/)
       // O destino pretendido sobrevive à recusa, senão a pessoa perde o caminho
       expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
     }
@@ -29,10 +29,12 @@ test.describe("onboarding: denial paths", () => {
 
   test("an anonymous visitor never renders community content", async ({ page }) => {
     await page.goto("/community")
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
 
     // A recusa é real: a tela de entrada, não o conteúdo protegido
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("the consent cookie is not a gate: garbage value changes nothing", async ({ page }) => {
@@ -48,7 +50,7 @@ test.describe("onboarding: denial paths", () => {
 
     // Então a recusa é a mesma de sempre — o cookie não concede nem nega nada.
     // ADR-20260907: o portão saiu do proxy; quem decide é a sessão.
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
   })
 
   test("consent page stays reachable as the exception path, not as a gate", async ({ page }) => {
