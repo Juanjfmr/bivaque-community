@@ -3,8 +3,8 @@
  *
  * A ordem das etapas é configuração (`FLUXO_F01`), não código espalhado em
  * telas: tirar, pular ou reordenar uma etapa é mudar esta lista. O progresso
- * (`Progresso`) é o que o servidor vai guardar — na prévia ele mora num
- * repositório simulado (`servidor-simulado.ts`), com a mesma forma.
+ * (`Progresso`) é o que o servidor vai guardar; na prévia de design ele mora no
+ * armazenamento local, com a mesma forma.
  *
  * Decisões do dono em 01/11/2026: Negócio fora do onboarding (flag nos
  * primeiros passos); entrada por código, sem senha; Apple na prévia; aceite

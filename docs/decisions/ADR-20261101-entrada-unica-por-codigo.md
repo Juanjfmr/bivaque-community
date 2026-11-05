@@ -120,6 +120,15 @@ O convite por código (ADR-20261022-entrada-do-prototipo §2) perde a senha:
 
 Os limites de tentativa do código de convite não mudam.
 
+### Decisão do dono em 05/11/2026 — o que o CPF devolve
+
+O dono decidiu, ao fechar a revisão do PR #128, que `POST /api/app/entry/cpf` **pode devolver o nome
+sugerido e o resultado da consulta**. O vínculo entre o nome e o militar já é público no Portal da
+Transparência; a rota não revela nada que uma consulta pública ao mesmo CPF não revelasse. O CPF
+continua sem ser gravado, sem voltar na resposta e sem entrar em log, e o resultado segue sem motivo
+técnico. Esta decisão encerra o ponto: revisões futuras não reabrem o que a rota devolve, só o que
+ela persiste e registra.
+
 ### O que não muda
 
 - a verificação pelo Portal e o caminho do documento (ADR-20260922-identidade-quando-portal-falha);
@@ -306,14 +315,46 @@ valor commitado antes do fechamento do lote.
 - **O envio é contado antes do GoTrue.** Se o GoTrue falhar depois (transporte, limite dele), a cota do e-mail, do IP e a
   global já foram gastas e não voltam. A pessoa pode ver 429 sem ter recebido o código. Foi o preço de não depender de uma
   segunda ida ao banco para devolver cota e de o limite não consultar a conta.
-- **Limites de produção a dimensionar.** Os números deste ADR (6 por hora por e-mail, 30 por IP, 50 globais, 30 verificações
-  por IP em 10 minutos) são de desenvolvimento. A produção precisa dimensionar `email_sent`, `token_verifications` e
-  `sign_in_sign_ups` do GoTrue e o teto global do servidor com o SMTP escolhido e o volume esperado do lançamento. O teto
-  global do servidor tem de ficar sempre abaixo do `email_sent`. O cuidado fica em BLOCK-RESEND.
+- **Limites de produção a dimensionar.** Os números deste ADR (6 por hora por e-mail, 8 por IP, 500
+  globais, 30 verificações por IP em 10 minutos) são de desenvolvimento. A produção precisa dimensionar
+  `email_sent`, `token_verifications` e `sign_in_sign_ups` do GoTrue e o teto global do servidor com o
+  SMTP escolhido e o volume esperado do lançamento. O teto global do servidor tem de ficar sempre
+  abaixo do `email_sent`. O cuidado fica em BLOCK-RESEND.
 - **Resíduo do `/auth/v1/verify` público (L5).** Continua como na emenda anterior: o contador por e-mail só vê tentativas que
   passam pela rota do app. Quem fala direto com o GoTrue é contido pelo limite por IP do próprio GoTrue
   (`token_verifications`) e pela validade de 10 minutos. Fechar de vez exige o hook de verificação ou o Auth próprio; item
   explícito em BLOCK-RESEND.
+
+## Consequences — emenda de 05/11/2026 (RUN-004, revisão do PR #128)
+
+A revisão independente mediu que o teto global fixo de 50 envios por hora, somado ao teto de 30 por IP,
+permitia que uma pessoa determinada esgotasse o e-mail do projeto e travasse a entrada de todos. A
+decisão do §2 não muda; o dimensionamento muda:
+
+- **Envio por IP: 8 por hora.** A faixa pedida pela revisão é 5 a 10. O suficiente para uma pessoa
+  legitima que errou o endereço algumas vezes, longe do que permite girar endereços.
+- **Envio por e-mail: 6 por hora (inalterado).** Continua sendo o teto que protege um endereço de
+  adivinhação distribuída.
+- **Global: 500 por hora, como disjuntor.** Com 6 por e-mail e 8 por IP, uma pessoa
+  não chega perto do global; ele só corta abuso coordenado em massa. O custo aceito é o e-mail
+  do GoTrue poder ser consumido por muitos IPs distintos antes de o disjuntor abrir; o alerta é o
+  log fixo da rota quando o limitador recusa, sem e-mail, IP ou código. Em produção o número ainda
+  depende do `email_sent` do SMTP escolhido (BLOCK-RESEND). O disjuntor fica sempre abaixo dele:
+  no `config.toml` local o orçamento sobe para `email_sent = 600` e `sign_in_sign_ups = 600`, e um
+  teste de escopo falha se qualquer um dos dois voltar a ficar abaixo de 500. O `signInWithOtp`
+  sai do servidor, então o limite de sign-in do GoTrue é, na prática, um limite global da rota.
+- **O custo do disjuntor.** Com 8 envios por IP e 500 globais, 8 IPs não travam mais a entrada de
+  todos; cerca de 63 IPs (500 ÷ 8) ainda travariam até a janela reabrir. O desafio humano (por
+  exemplo Turnstile) fica para depois, no card ENTRADA-DESAFIO-HUMANO: ele entra quando o global
+  estiver perto do teto, não antes, para não cobrar de quem só está entrando.
+- **O teto por IP e as redes compartilhadas.** 8/h por IP pode recusar quem está atrás de CGNAT ou
+  do Wi-Fi de uma OM, onde muitas pessoas compartilham o mesmo endereço. O `log.warn` fixo da rota
+  (sem e-mail/IP) é o sinal para acompanhar; se o volume aparecer, o caminho é o desafio humano do
+  card acima, não aumentar o teto de envio.
+- **Prova.** `supabase/tests/entry-otp-limiter.sql` cobre os três padrões (6, 8 e 500), o nono
+  envio do mesmo IP recusado, o global cheio recusando e o pedido recusado que não gasta cota;
+  `tests/scope/entrada-limite-config.test.mjs` lê `config.toml` e o padrão da migration e falha se
+  o disjuntor não ficar abaixo de `email_sent` e `sign_in_sign_ups`.
 
 ## Reversal cost
 

@@ -1,3 +1,5 @@
+import { validateLaunch } from "./readiness-lib.mjs"
+
 const priorities = new Set(["P0", "P1", "P2", "P3", "BLOCK", "HOLD"])
 const categories = new Set([
   "backend",
@@ -61,6 +63,7 @@ export function validateBoard(board) {
     return errors
   }
 
+  if (board.launch) errors.push(...validateLaunch(board))
   const ids = new Set()
   for (const card of board.cards) {
     if (!card || typeof card !== "object" || Array.isArray(card)) {

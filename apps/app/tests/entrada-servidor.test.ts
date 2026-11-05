@@ -9,6 +9,7 @@ import {
   FalhaDaEntrada,
   lerProgresso,
   lerVerificacao,
+  previewConvite,
   provisionar,
   registrarCombinado,
   salvarAvisos,
@@ -128,6 +129,41 @@ describe("código", () => {
     expect(await verificarCodigo("pessoa@example.invalid", "123456")).toEqual({
       estado: "autenticado",
     })
+  })
+
+  it("falha de rede no envio e na verificação não trava a tela", async () => {
+    fetchFalso.mockRejectedValue(new Error("offline"))
+    expect(await enviarCodigo("pessoa@example.invalid")).toEqual({ estado: "indisponivel" })
+    expect(await verificarCodigo("pessoa@example.invalid", "123456")).toEqual({
+      estado: "indisponivel",
+    })
+  })
+})
+
+describe("convite", () => {
+  it("prévia válida devolve quem convidou e o e-mail declarado", async () => {
+    responda(200, { inviterName: "Maria Souza", email: "familia@example.invalid" })
+    expect(await previewConvite("BVQ7K2MA")).toEqual({
+      estado: "ok",
+      inviterName: "Maria Souza",
+      email: "familia@example.invalid",
+    })
+    expect(ultimaChamada().url).toBe("/api/app/entry/invite/preview")
+    expect(JSON.parse(String(ultimaChamada().init.body))).toEqual({ codigo: "BVQ7K2MA" })
+  })
+
+  it("falha de rede na prévia vira indisponível, não exceção", async () => {
+    fetchFalso.mockRejectedValue(new Error("offline"))
+    expect(await previewConvite("BVQ7K2MA")).toEqual({ estado: "indisponivel" })
+  })
+
+  it("e-mail de outro convite e limite têm estados próprios", async () => {
+    responda(400, { erro: "email-nao-confere" })
+    expect(await previewConvite("BVQ7K2MA", "outro@example.invalid")).toEqual({
+      estado: "email-nao-confere",
+    })
+    responda(429, { erro: "convite-limite" })
+    expect(await previewConvite("BVQ7K2MA")).toEqual({ estado: "limite" })
   })
 })
 

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 
 const sourceDirectory = fileURLToPath(new URL(".", import.meta.url))
 const toolDirectory = resolve(sourceDirectory, "..")
-const publicDirectory = join(toolDirectory, "public")
+const publicDirectory = join(toolDirectory, "dist")
 const port = Number.parseInt(process.env.KANBAN_PORT ?? "4175", 10)
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -35,7 +35,15 @@ createServer((request, response) => {
   const relativePath = requestPath === "/" ? "index.html" : requestPath.slice(1)
   const filePath = normalize(join(publicDirectory, relativePath))
 
-  if (!filePath.startsWith(publicDirectory) || !existsSync(filePath)) {
+  if (!filePath.startsWith(`${publicDirectory}/`) && !filePath.startsWith(`${publicDirectory}\\`)) {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" })
+    response.end("Not found")
+    return
+  }
+  if (
+    !["index.html", "styles.css", "app.js", "snapshot.json"].includes(relativePath) ||
+    !existsSync(filePath)
+  ) {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" })
     response.end("Not found")
     return

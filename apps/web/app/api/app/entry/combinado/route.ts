@@ -1,5 +1,6 @@
 import { CODE_OF_CONDUCT_VERSION } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
+import { avancarMarcador } from "../../../../../lib/app-api/marcador-da-entrada"
 import {
   clienteDeServicoOuNulo,
   conferirEscrita,
@@ -60,6 +61,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (error) {
     log.error("entry commitment record failed", { error: error.message, userId })
+    return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
+  }
+
+  // O combinado foi aceito: a retomada segue para os avisos, não de volta aos
+  // interesses.
+  if (!(await avancarMarcador(servico, userId, "avisos"))) {
+    log.error("entry commitment: draft marker write failed", { userId })
     return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
   }
 

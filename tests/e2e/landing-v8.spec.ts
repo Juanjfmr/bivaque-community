@@ -28,14 +28,12 @@ function onlyCaptureProjects(testInfo: TestInfo) {
 }
 
 // O `goto` pode resolver antes de o documento da landing estar no DOM; toda
-// medição espera a raiz aparecer.
+// medição espera a raiz aparecer. O CTA é um `<a href>` no HTML do servidor
+// (LANDING-CTA-ANTES-DO-REGISTRO): a página é usável no primeiro toque, antes
+// de qualquer registro de componente no cliente.
 async function openLanding(page: Page) {
   await page.goto("/")
   await expect(page.locator("#landing")).toBeVisible()
-  // Os botões são md-filled-button: só navegam depois que o elemento é
-  // registrado no cliente. Clicar antes disso não faz nada, e no celular do CI
-  // o clique chegava antes do registro.
-  await page.waitForFunction(() => customElements.get("md-filled-button") !== undefined)
 }
 
 const flat = (text: string | null | undefined) =>
@@ -225,52 +223,45 @@ test.describe("landing v8", () => {
     // Given a landing pública
     await openLanding(page)
 
-    // Then o Material Web já registrou o componente e cada CTA tem um <a>
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          Boolean(document.getElementById("ld-hero-cta")?.shadowRoot?.querySelector("a")),
-        ),
-      )
-      .toBe(true)
-
-    const ctas = await page.locator("md-filled-button").evaluateAll((hosts) =>
-      hosts
-        .filter((host) => (host.textContent ?? "").replace(/\s+/g, " ").trim() === "Criar conta")
-        .map((host) => {
-          const link = host.shadowRoot?.querySelector("a")
-          return {
-            href: link?.getAttribute("href") ?? null,
-            tag: link?.tagName ?? null,
-          }
-        }),
+    // Then os cinco CTAs (topo, dobra, chamada final, barra fixa e folha) já
+    // vêm do servidor como âncoras: nada precisa registrar componente no
+    // cliente para o primeiro toque navegar
+    const ctas = await page.locator("a.ld-cta-btn").evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        href: node.getAttribute("href"),
+        label: (node.textContent ?? "").replace(/\s+/g, " ").trim(),
+      })),
     )
-    expect(ctas.length).toBeGreaterThan(0)
+    expect(ctas).toHaveLength(5)
     for (const cta of ctas) {
-      expect(cta.tag, "com href o CTA é um <a>, não um <button>").toBe("A")
       expect(cta.href, "todo Criar conta leva ao cadastro").toBe("/signup")
+      expect(cta.label).toBe("Criar conta")
     }
 
-    // And a árvore de acessibilidade expõe cada CTA como link "Criar conta" — o
-    // rótulo entra no <a> do shadow root pelo slot, então quem prova o nome é a
-    // consulta por papel, não o textContent do link.
+    // And a árvore de acessibilidade expõe cada CTA como link "Criar conta"
     const links = page.getByRole("link", { name: "Criar conta", includeHidden: true })
     await expect(links).toHaveCount(ctas.length)
     for (let index = 0; index < ctas.length; index++) {
       await expect(links.nth(index)).toHaveAttribute("href", "/signup")
     }
 
-    // And o CTA da dobra é focável, e o foco entra no link do shadow root
-    const focus = await page.locator("#ld-hero-cta").evaluate((host) => {
-      host.focus()
-      const active = host.shadowRoot?.activeElement
+    // And o CTA da dobra entra na ordem de tabulação e mostra o anel de foco
+    let reached = false
+    for (let step = 0; step < 16 && !reached; step++) {
+      await page.keyboard.press("Tab")
+      reached = await page.evaluate(() => document.activeElement?.id === "ld-hero-cta")
+    }
+    expect(reached, "o CTA da dobra recebe foco pelo teclado").toBe(true)
+    const ring = await page.locator("#ld-hero-cta").evaluate((element) => {
+      const style = getComputedStyle(element)
       return {
-        href: active?.getAttribute("href") ?? null,
-        inner: active?.tagName ?? null,
-        outer: document.activeElement === host,
+        style: style.outlineStyle,
+        width: style.outlineWidth,
+        offset: style.outlineOffset,
+        tag: element.tagName,
       }
     })
-    expect(focus).toEqual({ href: "/signup", inner: "A", outer: true })
+    expect(ring).toEqual({ style: "solid", width: "3px", offset: "2px", tag: "A" })
   })
 
   test("leva todo Criar conta para /signup", async ({ page }, testInfo) => {
@@ -286,8 +277,8 @@ test.describe("landing v8", () => {
 
     // And o CTA da chamada final também
     await openLanding(page)
-    await page.locator("#fim md-filled-button").scrollIntoViewIfNeeded()
-    await page.locator("#fim md-filled-button").click()
+    await page.locator("#fim .ld-cta-btn").scrollIntoViewIfNeeded()
+    await page.locator("#fim .ld-cta-btn").click()
     await expect(page).toHaveURL(/\/signup$/)
 
     if (narrow) {
@@ -295,13 +286,13 @@ test.describe("landing v8", () => {
       await openLanding(page)
       await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }))
       await expect(page.locator("#ld-bar")).toHaveClass(/ld-show/)
-      await page.locator("#ld-bar md-filled-button").click()
+      await page.locator("#ld-bar .ld-cta-btn").click()
       await expect(page).toHaveURL(/\/signup$/)
 
       // And o CTA da folha do menu também
       await openLanding(page)
       await page.locator("#ld-top [data-ld-menu]").click()
-      await page.locator("#ld-sheet .ld-sheet-acts md-filled-button").click()
+      await page.locator("#ld-sheet .ld-sheet-acts .ld-cta-btn").click()
       await expect(page).toHaveURL(/\/signup$/)
       return
     }
@@ -310,7 +301,7 @@ test.describe("landing v8", () => {
     await openLanding(page)
     await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }))
     await expect(page.locator("#ld-top")).toHaveClass(/ld-show-cta/)
-    await page.locator("#ld-top .ld-cta md-filled-button").click()
+    await page.locator("#ld-top .ld-cta .ld-cta-btn").click()
     await expect(page).toHaveURL(/\/signup$/)
   })
 
@@ -630,9 +621,7 @@ test.describe("landing v8", () => {
     ).toBe(true)
   })
 
-  test("registra o Material Web só no cliente, sem erro de hidratação", async ({
-    page,
-  }, testInfo) => {
+  test("monta o comportamento no cliente, sem erro de hidratação", async ({ page }, testInfo) => {
     onlyCaptureProjects(testInfo)
 
     // Given um navegador que ouve o console e os erros de página
@@ -646,10 +635,11 @@ test.describe("landing v8", () => {
     await openLanding(page)
     await expect(page.locator("#ld-hero-cta")).toBeVisible()
 
-    // Then o elemento do Material foi registrado no cliente (o import dinâmico
-    // do adaptador chega depois da hidratação)
+    // Then a ilha de comportamento montou: é ela que tira a folha do menu do
+    // alcance do teclado. O CTA não espera por isso — já é um `<a href>` no
+    // HTML do servidor, e a landing não registra mais botão do Material.
     await expect
-      .poll(() => page.evaluate(() => Boolean(customElements.get("md-filled-button"))))
+      .poll(() => page.evaluate(() => document.getElementById("ld-sheet")?.inert === true))
       .toBe(true)
 
     // And nenhuma mensagem é de hidratação, e nenhuma exceção de página aconteceu

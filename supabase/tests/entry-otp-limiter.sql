@@ -11,8 +11,8 @@
 --   * só service_role executa (positivo); authenticated e anon são recusados
 --     (negativo), nas pontes públicas e nas funções do schema private;
 --   * a tabela guarda hash, nunca o valor em claro, e a Data API não a alcança;
---   * (SEC-008) teto global de envio abaixo do orçamento do GoTrue, que o pedido
---     recusado não gasta; teto de verificação por IP consumido antes do e-mail, que a
+--   * (SEC-008) teto global de envio como disjuntor alto, que o pedido recusado
+--     não gasta; teto de verificação por IP consumido antes do e-mail, que a
 --     recusa também não gasta; o envio liberado NÃO reabre as tentativas (só
 --     `entry_otp_send_confirmed`, depois do GoTrue); RLS forçada na tabela e
 --     nenhum privilégio de tabela para anon e authenticated; estado da conta.
@@ -20,13 +20,16 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(71);
+select plan(76);
 
 -- Hashes sintéticos (sha256 hex de 64 caracteres); a tabela nunca vê e-mail.
 \set email_a '''aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'''
 \set email_b '''bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'''
 \set ip_x '''1111111111111111111111111111111111111111111111111111111111111111'''
 \set ip_y '''2222222222222222222222222222222222222222222222222222222222222222'''
+-- IPs limpos para os casos que não querem herdar o teto do IP X.
+\set ip_w '''3333333333333333333333333333333333333333333333333333333333333333'''
+\set ip_v '''4444444444444444444444444444444444444444444444444444444444444444'''
 
 -- A lógica corre com o dono do banco para poder envelhecer as linhas (a tabela
 -- do schema private não tem grant para nenhum papel da Data API); a seção de
@@ -134,7 +137,7 @@ update private.entry_otp_limits
  where scope = 'send_email' and key_hash = :email_a;
 
 select is(
-  public.entry_otp_send_gate(:email_a, :ip_x),
+  public.entry_otp_send_gate(:email_a, :ip_w),
   0,
   'passada a hora, o e-mail A volta a receber'
 );
@@ -157,9 +160,16 @@ select ok(
 );
 
 select is(
-  public.entry_otp_send_gate(repeat('d', 64), :ip_x),
+  public.entry_otp_send_gate(repeat('d', 64), :ip_v),
   0,
   'o teto de um IP não afeta outro IP'
+);
+
+-- Com o teto padrão de 8 por hora, o IP X (que já fez 8 envios) recusa o nono,
+-- mesmo com um e-mail novo: é o comportamento que a revisão pediu.
+select ok(
+  public.entry_otp_send_gate(repeat('e', 64), :ip_x) > 0,
+  'o nono envio do mesmo IP na hora é recusado'
 );
 
 select throws_ok(
@@ -293,8 +303,32 @@ select ok(
 
 select ok(
   pg_get_function_arguments('public.entry_otp_send_gate(text, text, integer, integer, integer, integer)'::regprocedure)
-    like '%p_global_hourly integer DEFAULT 50',
-  'o teto global padrão (50 por hora) fica abaixo do email_sent do GoTrue local (60)'
+    like '%p_global_hourly integer DEFAULT 500',
+  'o teto global padrão (500 por hora) é disjuntor de abuso, não a cota de uma pessoa'
+);
+
+select ok(
+  pg_get_function_arguments('public.entry_otp_send_gate(text, text, integer, integer, integer, integer)'::regprocedure)
+    like '%p_ip_hourly integer DEFAULT 8%',
+  'o envio por IP padrão é 8 por hora (a faixa pedida é 5 a 10)'
+);
+
+select ok(
+  pg_get_function_arguments('public.entry_otp_send_gate(text, text, integer, integer, integer, integer)'::regprocedure)
+    like '%p_email_hourly integer DEFAULT 6%',
+  'o envio por e-mail continua em 6 por hora'
+);
+
+select is(
+  public.entry_otp_send_gate(repeat('41', 32), repeat('14', 32), 0),
+  0,
+  'com os padrões, um envio passa e começa a contar nos três tetos'
+);
+
+select is(
+  (select hits from private.entry_otp_limits where scope = 'send_ip' and key_hash = repeat('14', 32)),
+  1,
+  'o envio conta no teto por IP'
 );
 
 -- ── verificação por IP (SEC-008) ────────────────────────────────────────────

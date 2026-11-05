@@ -34,12 +34,13 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/invite`
 const CABECALHO = "bivaque-spa"
 
 const consultarConsentimento = vi.fn()
+const registrarMarcador = vi.fn()
 const servico = {
   from: (tabela: string) => {
-    if (tabela !== "consent_acceptances") throw new Error(`tabela inesperada: ${tabela}`)
-    return { select: () => ({ eq: consultarConsentimento }) }
+    if (tabela !== "entry_progress") throw new Error(`tabela inesperada: ${tabela}`)
+    return { upsert: registrarMarcador }
   },
-  rpc: vi.fn(),
+  rpc: consultarConsentimento,
 }
 
 function sessaoAutenticada() {
@@ -68,7 +69,8 @@ function requisicao(opcoes: { origem?: string; cabecalho?: string; corpo?: unkno
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
-  consultarConsentimento.mockResolvedValue({ count: 1, error: null })
+  consultarConsentimento.mockResolvedValue({ data: true, error: null })
+  registrarMarcador.mockResolvedValue({ error: null })
   criarCliente.mockReturnValue(servico as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
   prever.mockResolvedValue({
@@ -133,7 +135,7 @@ describe("POST /api/app/entry/invite", () => {
   })
 
   it("exige o aceite dos textos antes de criar o vínculo", async () => {
-    consultarConsentimento.mockResolvedValue({ count: 0, error: null })
+    consultarConsentimento.mockResolvedValue({ data: false, error: null })
 
     const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
 
@@ -195,6 +197,15 @@ describe("POST /api/app/entry/invite", () => {
       originDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
       userId: PESSOA.id,
     })
+    expect(consultarConsentimento).toHaveBeenCalledWith("has_accepted_consent", {
+      p_user_id: PESSOA.id,
+      p_consent_version: 2,
+      p_code_of_conduct_version: 2,
+    })
+    expect(registrarMarcador).toHaveBeenCalledWith(
+      { user_id: PESSOA.id, versao: 2, etapa: "interesses", estado: {} },
+      { onConflict: "user_id" },
+    )
   })
 
   it("traduz o erro de nome do banco sem vazar detalhe", async () => {

@@ -118,7 +118,7 @@ const IP_VALIDO = /^[0-9a-fA-F:.]{2,45}$/
  * O IP do cliente segundo a plataforma, ou `null`. Só `x-vercel-forwarded-for` e
  * `x-real-ip` entram; o primeiro valor da lista vence e precisa ser um IP de verdade.
  */
-export function ipConfiavel(cabecalhos: Headers): string | null {
+export function ipConfiavel(cabecalhos: Pick<Headers, "get">): string | null {
   for (const nome of ["x-vercel-forwarded-for", "x-real-ip"]) {
     const bruto = cabecalhos.get(nome)
     if (bruto === null) continue

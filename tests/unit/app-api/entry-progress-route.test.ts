@@ -29,6 +29,7 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/progress`
 const mockMaybeSingle = vi.fn()
 const mockVinculo = vi.fn()
 const mockUpsert = vi.fn()
+const mockDelete = vi.fn()
 
 // Duas leituras do usuário, sob RLS: o rascunho (`entry_progress`) e o vínculo
 // com a cidade (`locality_memberships`), que decide o destino.
@@ -77,8 +78,12 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: null, error: null })
   mockVinculo.mockResolvedValue({ data: null, error: null })
   mockUpsert.mockResolvedValue({ error: null })
+  mockDelete.mockResolvedValue({ error: null })
   criarClienteDeServico.mockReturnValue({
-    from: () => ({ upsert: mockUpsert }),
+    from: () => ({
+      upsert: mockUpsert,
+      delete: () => ({ eq: mockDelete }),
+    }),
   } as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
 })
@@ -103,6 +108,40 @@ describe("GET /api/app/entry/progress", () => {
       via: "cookie",
       progresso: { versao: 2, etapa: "porta", estado: {} },
     })
+  })
+
+  it("rascunho vencido é apagado na leitura e a entrada recomeça", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        versao: 2,
+        etapa: "cidade",
+        estado: {},
+        updated_at: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      error: null,
+    })
+    const resposta = await GET(requisicao("GET"))
+    expect(resposta.status).toBe(200)
+    expect(mockDelete).toHaveBeenCalledWith("user_id", PESSOA.id)
+    expect(((await resposta.json()) as { progresso: { etapa: string } }).progresso.etapa).toBe(
+      "porta",
+    )
+  })
+
+  it("falha ao apagar o rascunho vencido vira 503, não sucesso com dado para trás", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        versao: 2,
+        etapa: "cidade",
+        estado: {},
+        updated_at: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      error: null,
+    })
+    mockDelete.mockResolvedValue({ error: { message: "db offline" } })
+    const resposta = await GET(requisicao("GET"))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
   })
 
   it("informa o Google quando a sessão nasceu no OAuth", async () => {
@@ -183,15 +222,41 @@ describe("GET /api/app/entry/progress", () => {
       progresso: { versao: 2, etapa: "inicio", estado: {} },
     })
 
-    // Rascunho que sobrou não manda quem terminou de volta ao meio da entrada.
+    // O rascunho que sobreviveu ao provisionamento é o marcador da etapa
+    // seguinte: com vínculo, ele retoma a entrada em vez de pular para o Início.
     mockMaybeSingle.mockResolvedValue({
-      data: { versao: 2, etapa: "cidade", estado: { cidade: "Manaus" } },
+      data: {
+        versao: 2,
+        etapa: "previa-cidade",
+        estado: { cidade: "Manaus" },
+        updated_at: new Date().toISOString(),
+      },
       error: null,
     })
     const comRascunho = (await (await GET(requisicao("GET"))).json()) as {
       progresso: { etapa: string; estado: unknown }
     }
-    expect(comRascunho.progresso).toEqual({ versao: 2, etapa: "inicio", estado: {} })
+    expect(comRascunho.progresso.etapa).toBe("previa-cidade")
+  })
+
+  it("marcador de versão antiga com vínculo é ignorado e vira a etapa final", async () => {
+    mockVinculo.mockResolvedValue({
+      data: { locality_id: "00000000-0000-4000-8000-000000000001" },
+      error: null,
+    })
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        versao: 1,
+        etapa: "combinado",
+        estado: {},
+        updated_at: new Date().toISOString(),
+      },
+      error: null,
+    })
+    const corpo = (await (await GET(requisicao("GET"))).json()) as {
+      progresso: { etapa: string }
+    }
+    expect(corpo.progresso.etapa).toBe("inicio")
   })
 
   it("sem vínculo o rascunho continua mandando (a etapa não é forçada)", async () => {
@@ -260,6 +325,21 @@ describe("PUT /api/app/entry/progress", () => {
       requisicao("PUT", { cabecalho: "bivaque-spa", texto: "x".repeat(40 * 1024) }),
     )
     expect(resposta.status).toBe(413)
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("quem já tem vínculo com a cidade recebe 409 e o rascunho não é regravado", async () => {
+    mockVinculo.mockResolvedValue({ data: { locality_id: "cidade" }, error: null })
+    const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
+    expect(resposta.status).toBe(409)
+    expect(await resposta.json()).toEqual({ erro: "entrada-concluida" })
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("falha ao conferir o vínculo é 503, não gravação às cegas", async () => {
+    mockVinculo.mockResolvedValue({ data: null, error: { message: "boom" } })
+    const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
+    expect(resposta.status).toBe(503)
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 

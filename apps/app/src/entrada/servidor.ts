@@ -85,6 +85,9 @@ export async function lerProgresso(): Promise<RespostaDeProgresso> {
 
 export async function salvarProgresso(progresso: unknown): Promise<void> {
   const resposta = await pedir("progress", { metodo: "PUT", corpo: progresso })
+  // 409 = a pessoa já tem vínculo com a cidade; o rascunho não é mais escrito.
+  // Não é falha a mostrar na tela.
+  if (resposta.status === 409) return
   if (resposta.status !== 200) {
     throw new FalhaDaEntrada(
       texto(resposta.corpo, "erro") ?? "progresso-nao-salvo",
@@ -102,7 +105,14 @@ export type EnvioDoCodigo =
   | { readonly estado: "indisponivel" }
 
 export async function enviarCodigo(email: string): Promise<EnvioDoCodigo> {
-  const resposta = await pedir("otp", { metodo: "POST", corpo: { email } })
+  let resposta: Resposta
+  try {
+    resposta = await pedir("otp", { metodo: "POST", corpo: { email } })
+  } catch {
+    // Falha de rede não pode deixar o botão girando: a tela mostra a mensagem
+    // fixa e volta ao normal.
+    return { estado: "indisponivel" }
+  }
   if (resposta.status === 200) {
     const reenviarEm = resposta.corpo["reenviarEm"]
     return { estado: "enviado", reenviarEm: typeof reenviarEm === "number" ? reenviarEm : 60 }
@@ -124,7 +134,12 @@ export type VerificacaoDoCodigo =
   | { readonly estado: "indisponivel" }
 
 export async function verificarCodigo(email: string, codigo: string): Promise<VerificacaoDoCodigo> {
-  const resposta = await pedir("otp/verify", { metodo: "POST", corpo: { email, codigo } })
+  let resposta: Resposta
+  try {
+    resposta = await pedir("otp/verify", { metodo: "POST", corpo: { email, codigo } })
+  } catch {
+    return { estado: "indisponivel" }
+  }
   if (resposta.status === 200) return { estado: "autenticado" }
   if (resposta.status === 400) return { estado: "codigo-invalido" }
   if (resposta.status === 429) {
@@ -316,6 +331,45 @@ export async function aceitarConvite(entrada: { codigo: string; nome: string }):
       resposta.status,
     )
   }
+}
+
+export type PreviewDoConvite =
+  | Readonly<{ estado: "ok"; inviterName: string; email: string | null }>
+  | Readonly<{ estado: "email-nao-confere" }>
+  | Readonly<{ estado: "invalido" }>
+  | Readonly<{ estado: "limite" }>
+  | Readonly<{ estado: "indisponivel" }>
+
+/**
+ * Valida o código do convite antes de qualquer envio de e-mail. Devolve o nome
+ * de quem convidou (para o título da etapa) e o endereço que o convite declara,
+ * quando existe — é ele que vira o campo só de leitura.
+ */
+export async function previewConvite(codigo: string, email?: string): Promise<PreviewDoConvite> {
+  let resposta: Resposta
+  try {
+    resposta = await pedir("invite/preview", {
+      metodo: "POST",
+      corpo: { codigo, ...(email === undefined ? {} : { email }) },
+    })
+  } catch {
+    return { estado: "indisponivel" }
+  }
+  if (resposta.status === 200) {
+    const inviterName = texto(resposta.corpo, "inviterName")
+    return {
+      estado: "ok",
+      inviterName: inviterName === null || inviterName.trim() === "" ? "família" : inviterName,
+      email: texto(resposta.corpo, "email"),
+    }
+  }
+  if (resposta.status === 429) return { estado: "limite" }
+  if (resposta.status === 400) {
+    return resposta.corpo["erro"] === "email-nao-confere"
+      ? { estado: "email-nao-confere" }
+      : { estado: "invalido" }
+  }
+  return { estado: "indisponivel" }
 }
 
 /**

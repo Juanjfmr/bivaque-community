@@ -3,6 +3,7 @@ import type {
   CidadeDoCatalogo,
   EnvioDoCodigo,
   GrupoDaEntrada,
+  PreviewDoConvite,
   ResultadoDoCpf,
   VerificacaoDoCodigo,
 } from "./servidor"
@@ -33,6 +34,10 @@ export type ServidorDaEntrada = Readonly<{
   enviarDocumento: (arquivo: File) => Promise<void>
   iniciarGoogle: () => Promise<string>
   aceitarConvite: (entrada: { codigo: string; nome: string }) => Promise<void>
+  /** Valida o convite antes do envio; devolve quem convidou e o e-mail declarado. */
+  previewConvite: (codigo: string, email?: string) => Promise<PreviewDoConvite>
+  /** O que a prévia do convite devolveu, para a etapa de e-mail e o título. */
+  convitePreview: RefObject<PreviewDoConvite | null>
   /** O código do convite vive só aqui: é credencial e não entra no rascunho. */
   codigoDoConvite: RefObject<string | null>
   registrarConvite: (codigo: string) => void

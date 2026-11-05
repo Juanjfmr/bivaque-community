@@ -203,13 +203,14 @@ select results_eq(
   'o momento declarado e a data de chegada ficam na linha do dono'
 );
 
-select is(
-  (
-    select count(*) from public.entry_progress
+select results_eq(
+  $$
+    select etapa, estado->>'cidade', versao
+    from public.entry_progress
     where user_id = '10000000-0000-4000-8000-000000000005'
-  ),
-  0::bigint,
-  'concluir a entrada apaga o rascunho dentro do provisionamento'
+  $$,
+  $$ values ('previa-cidade'::text, 'Manaus'::text, 2) $$,
+  'concluir o provisionamento troca o rascunho pelo marcador da etapa seguinte, com a cidade para exibir'
 );
 
 -- ───────────────────────────────────────────────────────────────────────────
@@ -256,13 +257,14 @@ select is(
   'quem entra por convite não ganha momento inventado'
 );
 
-select is(
-  (
-    select count(*) from public.entry_progress
+select results_eq(
+  $$
+    select etapa, estado->>'cidade'
+    from public.entry_progress
     where user_id = '10000000-0000-4000-8000-000000000007'
-  ),
-  0::bigint,
-  'o convite familiar, sem momento, também apaga o rascunho'
+  $$,
+  $$ values ('previa-cidade'::text, 'Manaus'::text) $$,
+  'o convite familiar, sem momento, também deixa o marcador da etapa seguinte com a cidade'
 );
 
 reset role;

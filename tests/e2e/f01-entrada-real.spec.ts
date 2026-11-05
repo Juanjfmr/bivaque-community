@@ -4,6 +4,7 @@ import {
   CPF_SINTETICO,
   capturarEmDoisTemas,
   capturarFinais,
+  contarRascunhosDaEntrada,
   criarContaConfirmada,
   criarContaVerificada,
   criarConvitePendente,
@@ -13,6 +14,7 @@ import {
   esperarProvisionamento,
   lerCodigoDoEmail,
   MEMBRO_SEMEADO,
+  marcarVinculoVerificadoPorEmail,
   preencherCodigoDeEntrada,
   semearSessaoDeMembro,
 } from "./entrada-real-ajuda"
@@ -59,14 +61,10 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
   test("conta nova percorre a entrada real até o Início", async ({ page }, testInfo) => {
     test.setTimeout(240_000)
     const projeto = testInfo.project.name
+    // Conta realmente nova: o endereço é gerado aqui e a conta nasce no envio
+    // do OTP. O vínculo é marcado como verificado só depois do código, pelo
+    // caminho canônico do banco (o Portal não responde no stack local).
     const email = enderecoSintetico(`entrada-${projeto}`)
-
-    // Fixture: conta sintética confirmada e vínculo já `verified`. É o que faz a
-    // rota do CPF devolver `verified` sem chamar o Portal.
-    const conta = await criarContaVerificada(email)
-    expect(conta.userId, "a conta sintética precisa existir no Auth local").toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    )
 
     await page.emulateMedia({ colorScheme: "light" })
     await page.goto(ROTA_DA_ENTRADA)
@@ -94,6 +92,12 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
 
     // ── aceite antes do CPF ───────────────────────────────────────────────
     await esperarEtapaDaEntrada(page, "Antes de começar")
+    // A conta existe agora (o OTP a criou). O id vem do Auth local e o vínculo
+    // é marcado como verificado antes do CPF.
+    const userId = await marcarVinculoVerificadoPorEmail(email)
+    expect(userId, "a conta nova precisa existir no Auth local").toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    )
     await capturarEmDoisTemas(page, projeto, "aceite")
     await page.getByRole("button", { name: "Aceito e continuo" }).click()
 
@@ -143,13 +147,19 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     }
 
     // ── prévia da cidade ──────────────────────────────────────────────────
-    await esperarEtapaDaEntrada(page, /Em Manaus, sempre tem alguém precisando do que você sabe\./)
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
     // O selo e o texto do vínculo trazem o ícone (ligadura) no mesmo elemento:
     // por isso a busca é por trecho, não por texto exato.
     await expect(page.getByText("Vínculo confirmado").first()).toBeVisible()
     // O provisionamento limpa a falha que a tela mostrou enquanto faltava dado.
     await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
     await capturarEmDoisTemas(page, projeto, "previa-cidade")
+
+    // Retomada: recarregar depois do provisionamento volta à etapa pendente
+    // (a prévia), não ao Início. Sem o marcador no servidor, o combinado seria
+    // pulado.
+    await page.reload()
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
 
     // ── interesses e grupos reais da cidade ───────────────────────────────
     const carregamentoDosGrupos = esperarGruposDaCidade(page)
@@ -189,10 +199,17 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
 
     // ── o combinado ───────────────────────────────────────────────────────
     await esperarEtapaDaEntrada(page, "O combinado")
+    // O combinado é a etapa pendente depois de interesses: recarregar volta
+    // aqui, não a interesses.
+    await page.reload()
+    await esperarEtapaDaEntrada(page, "O combinado")
     await capturarEmDoisTemas(page, projeto, "combinado")
     await page.getByRole("button", { name: "Entendi" }).click()
 
     // ── avisos: escolher "agora não" também é escolher ────────────────────
+    await esperarEtapaDaEntrada(page, "Saiba quando responderem")
+    // Depois do combinado, a etapa pendente é avisos.
+    await page.reload()
     await esperarEtapaDaEntrada(page, "Saiba quando responderem")
     await capturarEmDoisTemas(page, projeto, "avisos")
     await page.getByRole("button", { name: "Agora não" }).click()
@@ -205,6 +222,28 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     ).toBeVisible({ timeout: 30_000 })
     await capturarEmDoisTemas(page, projeto, "inicio")
     await capturarFinais(page, projeto)
+
+    // O tema escuro não é só captura: a cor computada muda de fato entre os
+    // temas. Uma captura pode sair igual sem ninguém notar; a cor não.
+    const corDoTexto = async () =>
+      page.evaluate(() => {
+        const alvo = document.querySelector("main h1") ?? document.querySelector("main")
+        return alvo === null ? "" : getComputedStyle(alvo).color
+      })
+    await page.emulateMedia({ colorScheme: "light" })
+    const corNoClaro = await corDoTexto()
+    await page.emulateMedia({ colorScheme: "dark" })
+    const corNoEscuro = await corDoTexto()
+    expect(corNoClaro, "a cor do texto precisa ser computável no tema claro").not.toBe("")
+    expect(corNoEscuro, "a cor do texto precisa ser computável no tema escuro").not.toBe("")
+    expect(corNoEscuro, "o tema escuro muda a cor computada do texto").not.toBe(corNoClaro)
+    await page.emulateMedia({ colorScheme: "light" })
+
+    // Prova de que a entrada termina sem rascunho: a última etapa apaga a linha.
+    expect(
+      await contarRascunhosDaEntrada(email),
+      "entry_progress não pode guardar rascunho depois do fim da entrada",
+    ).toBe(0)
 
     // Prova de persistência atravessando o banco: a rota de verificação lê, sob
     // RLS, o estado canônico e o vínculo da sessão que a própria entrada criou.
@@ -221,6 +260,133 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     expect(sonda.status, "GET /api/app/entry/verification").toBe(200)
     expect(sonda.corpo?.status, "o vínculo precisa estar verificado no banco").toBe("verified")
     expect(sonda.corpo?.membroDaCidade, "a pessoa precisa ter vínculo com a cidade").toBe(true)
+  })
+
+  test("provisionamento que falha mantém a pessoa na prévia da cidade, com Tentar de novo", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    const projeto = testInfo.project.name
+    const email = enderecoSintetico(`provisiona-${projeto}`)
+    await criarContaVerificada(email)
+
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(ROTA_DA_ENTRADA)
+    await page.getByRole("button", { name: "Continuar com e-mail" }).click()
+    await esperarEtapaDaEntrada(page, "Qual é o seu e-mail?")
+    await page.getByLabel("E-mail").fill(email)
+    const desde = new Date()
+    await page.getByRole("button", { name: "Enviar código" }).click()
+    await esperarEtapaDaEntrada(page, "Digite o código")
+    const lido = await lerCodigoDoEmail(email, { desde })
+    await preencherCodigoDeEntrada(page, lido.codigo)
+    await esperarEtapaDaEntrada(page, "Antes de começar")
+    await page.getByRole("button", { name: "Aceito e continuo" }).click()
+
+    await esperarEtapaDaEntrada(page, "Qual é o seu CPF?")
+    await page.getByLabel("CPF").fill(CPF_SINTETICO)
+    await page.getByRole("button", { name: "Confirmar vínculo" }).click()
+
+    await esperarEtapaDaEntrada(page, "Como você se chama?")
+    await page.getByLabel("Nome", { exact: true }).fill("Pessoa")
+    await page.getByLabel("Sobrenome").fill("Sintética")
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+
+    await esperarEtapaDaEntrada(page, "Onde você está?")
+    await page.getByLabel("Estado (UF)").selectOption({ label: "AM" })
+    const selectDaCidade = page.getByLabel("Cidade", { exact: true })
+    await expect(selectDaCidade).toBeEnabled({ timeout: 30_000 })
+    await selectDaCidade.selectOption({ label: "Manaus" })
+    await page.getByText("Moro aqui", { exact: true }).click()
+
+    // Todo provisionamento falha enquanto o teste quer provar o portão.
+    let falhar = true
+    await page.route("**/api/app/entry/provision", async (rota) => {
+      if (falhar) {
+        // Segura a resposta para o teste ver o estado "Confirmando…".
+        await new Promise((resolver) => setTimeout(resolver, 700))
+        await rota.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ erro: "provisionamento-indisponivel" }),
+        })
+        return
+      }
+      await rota.continue()
+    })
+
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+    await expect(page.getByRole("button", { name: "Confirmando…" })).toBeVisible({
+      timeout: 5_000,
+    })
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
+    await expect(page.getByRole("alert")).toContainText(
+      "Não foi possível confirmar seu cadastro agora.",
+    )
+
+    // A prévia não avança sem o servidor confirmar, mesmo clicando de novo.
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
+    await expect(page.getByText("O que interessa a você?")).toHaveCount(0)
+    // Deixa a segunda resposta atrasada do provisionamento assentar antes de
+    // liberar o servidor; senão o próximo wait captura o 503 anterior.
+    await page.waitForTimeout(900)
+
+    // Agora o servidor responde: o Tentar de novo conclui e a etapa avança.
+    falhar = false
+    const confirmacao = esperarProvisionamento(page)
+    await page.getByRole("button", { name: "Tentar de novo" }).click()
+    expect((await confirmacao).status()).toBe(200)
+    await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+    await esperarEtapaDaEntrada(page, "O que interessa a você?")
+
+    // Falha ao conferir o vínculo na retomada: mensagem fixa e Tentar de novo,
+    // não "faltou dado do cadastro".
+    await page.route("**/api/app/entry/verification", (rota) => rota.abort("failed"))
+    await page.reload()
+    await expect(page.getByRole("alert")).toContainText(
+      "Não foi possível conferir seu vínculo agora. Tente de novo.",
+    )
+    await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
+    await page.unroute("**/api/app/entry/verification")
+  })
+
+  test("erro do provedor aparece na porta com mensagem fixa e sem detalhe técnico", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(60_000)
+    const projeto = testInfo.project.name
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(`${ROTA_DA_ENTRADA}?erro=provedor`)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole("alert")).toContainText(
+      "Não foi possível entrar com o provedor agora. Tente de novo.",
+    )
+    await capturarEmDoisTemas(page, projeto, "porta-erro-provedor")
+  })
+
+  test("rede cai na prévia do convite: mensagem fixa e botão volta ao normal", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(90_000)
+    const projeto = testInfo.project.name
+    const email = enderecoSintetico(`convite-rede-${projeto}`)
+    const { codigo } = await criarConvitePendente(email)
+
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(`${ROTA_DA_ENTRADA}?convite=${codigo}`)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await page.route("**/api/app/entry/invite/preview", (rota) => rota.abort("failed"))
+    await page.getByRole("button", { name: "Usar", exact: true }).click()
+    await expect(page.getByText("O convite está indisponível agora. Tente de novo.")).toBeVisible({
+      timeout: 20_000,
+    })
+    await expect(page.getByRole("button", { name: "Usar", exact: true })).toBeEnabled()
   })
 
   test("convite familiar entra sem CPF e sem cidade, pelo código do link", async ({
@@ -245,8 +411,11 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Usar", exact: true }).click()
 
     // ── e-mail e código de verdade ────────────────────────────────────────
-    await esperarEtapaDaEntrada(page, "Convite de Marcos S.")
-    await page.getByLabel("E-mail").fill(email)
+    await esperarEtapaDaEntrada(page, /Convite de /)
+    // O convite declara o e-mail: o campo vem preenchido e só de leitura.
+    const campoDoEmailDoConvite = page.getByLabel("E-mail")
+    await expect(campoDoEmailDoConvite).toHaveValue(email)
+    await expect(campoDoEmailDoConvite).not.toBeEditable()
     const desde = new Date()
     await page.getByRole("button", { name: "Enviar código" }).click()
     await esperarEtapaDaEntrada(page, "Digite o código")

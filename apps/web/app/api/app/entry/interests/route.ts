@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server"
+import { avancarMarcador } from "../../../../../lib/app-api/marcador-da-entrada"
 import {
   clienteDeServicoOuNulo,
   conferirEscrita,
@@ -109,6 +110,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Mensagem fixa mais o erro do banco: os ids dos grupos não entram no log,
     // e a mensagem do banco nunca volta para o cliente.
     log.error("entry interests write failed", { error: gravacaoError.message })
+    return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
+  }
+
+  // A retomada precisa saber que interesses já foi feito: o marcador avança para
+  // o combinado com o id da sessão.
+  if (!(await avancarMarcador(servico, userId, "combinado"))) {
+    log.error("entry interests: draft marker write failed", { userId })
     return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
   }
 

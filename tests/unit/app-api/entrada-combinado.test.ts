@@ -25,7 +25,10 @@ const ORIGEM = "http://localhost:3000"
 const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/combinado`
 
 const mockUpsert = vi.fn()
-const mockFrom = vi.fn(() => ({ upsert: mockUpsert }))
+const mockMarcador = vi.fn()
+const mockFrom = vi.fn((tabela: string) =>
+  tabela === "entry_progress" ? { upsert: mockMarcador } : { upsert: mockUpsert },
+)
 
 function sessaoAutenticada() {
   return {
@@ -70,6 +73,7 @@ beforeEach(() => {
   resolver.mockResolvedValue(sessaoAutenticada() as never)
   criarCliente.mockReturnValue({ from: mockFrom } as never)
   mockUpsert.mockResolvedValue({ error: null })
+  mockMarcador.mockResolvedValue({ error: null })
 })
 
 describe("POST /api/app/entry/combinado", () => {
@@ -147,6 +151,18 @@ describe("POST /api/app/entry/combinado", () => {
       { user_id: PESSOA.id, versao: CODE_OF_CONDUCT_VERSION },
       { onConflict: "user_id" },
     )
+    expect(mockFrom).toHaveBeenCalledWith("entry_progress")
+    expect(mockMarcador).toHaveBeenCalledWith(
+      { user_id: PESSOA.id, versao: 2, etapa: "avisos", estado: {} },
+      { onConflict: "user_id" },
+    )
+  })
+
+  it("falha ao avançar o marcador vira 503, não sucesso sem retomada", async () => {
+    mockMarcador.mockResolvedValue({ error: { message: "db offline" } })
+    const resposta = await POST(requisicao({ corpo: { versao: CODE_OF_CONDUCT_VERSION } }))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "gravacao-indisponivel" })
   })
 
   it("falha do upsert vira 503 gravacao-indisponivel", async () => {

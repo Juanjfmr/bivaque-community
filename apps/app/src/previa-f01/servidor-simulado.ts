@@ -5,14 +5,10 @@
  * recebe o resultado, como o servidor real fará.
  */
 import type { NomeDoSelo } from "@/src/pecas/pecas"
-import {
-  type IdDaEtapa,
-  type Progresso,
-  progressoInicial,
-  VERSAO_DO_FLUXO,
-  type Verificacao,
-  type Via,
-} from "./fluxo"
+import type { EventoDoFunil } from "./entrada-dados"
+import { type Progresso, progressoInicial, VERSAO_DO_FLUXO, type Verificacao } from "./fluxo"
+
+export type { EventoDoFunil } from "./entrada-dados"
 
 // ── Progresso salvo ("no servidor") ─────────────────────────────────────────
 // Na prévia, o armazenamento local faz o papel da tabela de progresso: fechar
@@ -83,19 +79,6 @@ export function consultarVinculo(
 }
 
 // ── Funil: só etapa, ação e tempo; nenhum dado pessoal ──────────────────────
-export type EventoDoFunil = {
-  /** Número de ordem do evento na sessão. */
-  seq: number
-  acao: "vista" | "concluida" | "voltou" | "erro" | "pulou"
-  etapa: IdDaEtapa
-  versao: number
-  via: Via | null
-  /** Milissegundos desde que a etapa apareceu (só em "concluida"). */
-  ms?: number
-  /** Código fechado do motivo (só em "erro"), nunca texto livre. */
-  motivo?: "codigo-invalido" | "cpf-invalido" | "email-invalido" | "documento-invalido"
-}
-
 const eventos: EventoDoFunil[] = []
 const ouvintes = new Set<() => void>()
 
@@ -222,21 +205,6 @@ export function cidadePorNome(nome: string | null): Cidade | null {
 }
 
 // ── Interesses e grupos ─────────────────────────────────────────────────────
-export const INTERESSES: readonly string[] = [
-  "Escola e creche",
-  "Saúde",
-  "Mudança",
-  "Imóveis",
-  "Desapegos",
-  "Pets",
-  "Esporte",
-  "Cônjuges",
-  "Filhos pequenos",
-  "Trabalho e renda",
-  "Passeios",
-  "Serviços da casa",
-]
-
 export type GrupoSugerido = {
   id: string
   nome: string

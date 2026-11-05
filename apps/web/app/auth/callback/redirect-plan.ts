@@ -15,10 +15,18 @@
 
 export const CONFIRM_EMAIL_PATH = "/auth/confirmar-email"
 
+// A porta do app tem onde mostrar a falha do provedor: ela volta para a própria
+// tela, com uma mensagem fixa, em vez do beco do callback-error da web.
+const APP_ENTRY_PREFIX = "/app/"
+
 export function callbackFailureTarget(sanitizedNext: string): string {
-  return sanitizedNext === CONFIRM_EMAIL_PATH
-    ? `${CONFIRM_EMAIL_PATH}?estado=expirado`
-    : "/auth/callback-error"
+  if (sanitizedNext === CONFIRM_EMAIL_PATH) return `${CONFIRM_EMAIL_PATH}?estado=expirado`
+  // Qualquer destino do app volta para a porta, que é a única tela que mostra a
+  // mensagem fixa do provedor. O Início e as demais telas não leem o parâmetro.
+  if (sanitizedNext === "/app" || sanitizedNext.startsWith(APP_ENTRY_PREFIX)) {
+    return "/app/entrar?erro=provedor"
+  }
+  return "/auth/callback-error"
 }
 
 export function callbackSuccessTarget(sanitizedNext: string): string {
@@ -49,7 +57,7 @@ export const CONSENT_STEP_PATH = "/consent"
 
 // A entrada do app faz o próprio aceite; o callback do Google não desvia para
 // a tela de consentimento da web quando o destino é ela.
-const APP_ENTRY_PREFIX = "/app/"
+// (APP_ENTRY_PREFIX é declarado acima, junto do destino da falha.)
 
 // Destinos que não podem ser desviados: o convite de prestador tem fluxo
 // próprio, fora da entrada de membro; a recuperação de senha precisa chegar a

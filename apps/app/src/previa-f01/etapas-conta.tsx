@@ -14,6 +14,7 @@ import {
   Nota,
   type OpcaoIlustrada,
 } from "@/src/pecas/pecas"
+import type { DadosDaPrevia, EventoDoFunil } from "./entrada-dados"
 import {
   cpfValido,
   type Momento,
@@ -23,13 +24,18 @@ import {
   type Via,
 } from "./fluxo"
 import { Moldura } from "./moldura"
-import { CIDADES, type EventoDoFunil } from "./servidor-simulado"
 
 export type PropsDaEtapa = {
   progresso: Progresso
   concluir: (mudancas?: Partial<Progresso>) => void
   voltar: () => void
   erro: (motivo: NonNullable<EventoDoFunil["motivo"]>) => void
+  /** Mensagem fixa da falha do provedor, capturada pela tela antes do roteador. */
+  avisoDoProvedor?: string | null
+  /** O provisionamento automático está em andamento: a prévia não avança. */
+  provisionando?: boolean
+  /** Só a prévia de design injeta conteúdo simulado; o caminho real não passa. */
+  previa?: DadosDaPrevia
 }
 
 const base = import.meta.env.BASE_URL
@@ -48,7 +54,7 @@ function IconeApple() {
   )
 }
 
-export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
+export function Porta({ progresso, concluir, erro, avisoDoProvedor }: PropsDaEtapa) {
   const servidor = useServidorDaEntrada()
   const [conectando, setConectando] = useState<Via | null>(null)
   // Quem chega por `/app/entrar?convite=CODIGO` já abre no caminho do convite,
@@ -56,13 +62,17 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
   const [convite, setConvite] = useState(progresso.convite)
   const [codigo, setCodigo] = useState(servidor?.codigoDoConvite.current ?? "")
   const [erroDoConvite, setErroDoConvite] = useState<string | null>(null)
+  const [conferindo, setConferindo] = useState(false)
+  // A tela capturou `?erro=provedor` na primeira renderização, antes de o
+  // roteador normalizar a URL; a porta só mostra a mensagem fixa.
+  const [falhaDoProvedor, setFalhaDoProvedor] = useState<string | null>(avisoDoProvedor ?? null)
 
   // Com servidor, o Google começa o OAuth de verdade (o callback da web grava a
   // sessão e o app retoma no aceite). Sem servidor, é a prévia simulada.
   const entrarCom = async (via: Exclude<Via, "email">) => {
     if (via === "apple" && servidor !== null) {
-      setErroDoConvite(
-        "Entrar com Apple chega quando a conta da Apple existir. Use o Google ou o código no e-mail.",
+      setFalhaDoProvedor(
+        "Não foi possível entrar com Apple agora. Use o Google ou o código no e-mail.",
       )
       return
     }
@@ -73,7 +83,7 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
         window.location.assign(url)
       } catch {
         setConectando(null)
-        setErroDoConvite("Não foi possível abrir o Google agora. Tente de novo.")
+        setFalhaDoProvedor("Não foi possível abrir o Google agora. Tente de novo.")
       }
       return
     }
@@ -81,7 +91,7 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
     window.setTimeout(() => concluir({ via, nome: NOME_DA_CONTA[via] }), 900)
   }
 
-  const usarConvite = () => {
+  const usarConvite = async () => {
     const limpo = codigo.trim().toUpperCase()
     if (!/^[A-Z0-9]{4}-?[A-Z0-9]{4}$/.test(limpo)) {
       setErroDoConvite("São 8 letras e números, como BVQ7-K2MA.")
@@ -90,6 +100,24 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
     }
     // O código é credencial: fica só na memória do fluxo e é consumido no aceite,
     // depois do e-mail e do código do e-mail. Não vai para o rascunho.
+    if (servidor !== null) {
+      // Valida o convite ANTES de pedir o envio: o envio de código cria conta, e
+      // um convite inválido não pode chegar ao GoTrue.
+      setConferindo(true)
+      const preview = await servidor.previewConvite(limpo)
+      setConferindo(false)
+      if (preview.estado !== "ok") {
+        setErroDoConvite(
+          preview.estado === "limite"
+            ? "Muitas tentativas seguidas. Espere alguns minutos."
+            : preview.estado === "indisponivel"
+              ? "O convite está indisponível agora. Tente de novo."
+              : "Este convite não existe, venceu ou já foi usado.",
+        )
+        return
+      }
+      servidor.convitePreview.current = preview
+    }
     servidor?.registrarConvite(limpo)
     concluir({ via: "email", convite: true })
   }
@@ -152,13 +180,18 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
             Continuar com e-mail
           </Botao>
         </div>
+        {falhaDoProvedor === null ? null : (
+          <Nota icone="error" role="alert">
+            {falhaDoProvedor}
+          </Nota>
+        )}
         {convite ? (
           <form
             className="f01-convite"
             noValidate
             onSubmit={(evento) => {
               evento.preventDefault()
-              usarConvite()
+              void usarConvite()
             }}
           >
             <Campo
@@ -172,7 +205,7 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
                 setErroDoConvite(null)
               }}
               acessorio={
-                <Botao type="submit" compacto>
+                <Botao type="submit" compacto carregando={conferindo}>
                   Usar
                 </Botao>
               }
@@ -194,12 +227,20 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
 // ── E-mail ──────────────────────────────────────────────────────────────────
 export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
   const servidor = useServidorDaEntrada()
-  // Na prévia o e-mail do convite é fixo e só de exibição; no caminho real ele é
-  // o e-mail da conta que vai receber o código (o convite só conhece o hash).
+  // Na prévia o e-mail do convite é fixo e só de exibição. No caminho real, a
+  // prévia do convite devolve o endereço em que ele foi emitido; quando existe,
+  // o campo vem preenchido e é só de leitura.
+  const preview = servidor?.convitePreview.current ?? null
+  const emailDoConvite = preview?.estado === "ok" ? preview.email : null
+  const preenchidoPeloConvite = progresso.convite && emailDoConvite !== null
   const preenchidoPelaPrevia = progresso.convite && servidor === null
-  const [email, setEmail] = useState(preenchidoPelaPrevia ? EMAIL_DO_CONVITE : "")
+  const [email, setEmail] = useState(
+    preenchidoPeloConvite ? emailDoConvite : preenchidoPelaPrevia ? EMAIL_DO_CONVITE : "",
+  )
   const [problema, setProblema] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const tituloDoConvite =
+    preview?.estado === "ok" && preview.inviterName !== "" ? preview.inviterName : "família"
 
   const enviar = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
@@ -207,12 +248,38 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
       erro("email-invalido")
       return
     }
-    setEnviando(true)
     // Sem servidor (prévia de desenvolvimento) o comportamento continua simulado.
     if (servidor === null) {
       window.setTimeout(() => concluir({ emailMascarado: mascararEmail(email) }), 700)
       return
     }
+    // O convite vale para um endereço só: quando ele não trouxe o e-mail pronto,
+    // confere o digitado antes de mandar o código (que criaria a conta).
+    if (progresso.convite && !preenchidoPeloConvite) {
+      const codigo = servidor.codigoDoConvite.current
+      if (codigo !== null) {
+        setEnviando(true)
+        const conferencia = await servidor.previewConvite(codigo, email.trim())
+        setEnviando(false)
+        if (conferencia.estado === "email-nao-confere") {
+          setProblema("Este convite não vale para este e-mail. Confira com quem convidou.")
+          return
+        }
+        if (conferencia.estado === "limite") {
+          setProblema("Muitas tentativas seguidas. Espere alguns minutos.")
+          return
+        }
+        if (conferencia.estado === "indisponivel") {
+          setProblema("O convite está indisponível agora. Tente de novo.")
+          return
+        }
+        if (conferencia.estado === "invalido") {
+          setProblema("Este convite não existe, venceu ou já foi usado.")
+          return
+        }
+      }
+    }
+    setEnviando(true)
     const resultado = await servidor.enviarCodigo(email.trim())
     setEnviando(false)
     if (resultado.estado === "enviado") {
@@ -229,7 +296,7 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
 
   return (
     <Moldura
-      titulo={progresso.convite ? "Convite de Marcos S." : "Qual é o seu e-mail?"}
+      titulo={progresso.convite ? `Convite de ${tituloDoConvite}` : "Qual é o seu e-mail?"}
       apoio={progresso.convite ? "Para a família. O código vai para o e-mail do convite." : null}
       aoEnviar={() => {
         void enviar()
@@ -242,7 +309,7 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
         inputMode="email"
         autoComplete="email"
         value={email}
-        readOnly={preenchidoPelaPrevia}
+        readOnly={preenchidoPelaPrevia || preenchidoPeloConvite}
         erro={problema}
         ajuda="Vamos mandar um código de 6 números para você entrar."
         acessorio={progresso.convite ? <Icone nome="lock" /> : null}
@@ -619,7 +686,7 @@ export function CidadeEMomento(props: PropsDaEtapa) {
   return <CidadeEMomentoDePrevia {...props} />
 }
 
-function CidadeEMomentoDePrevia({ progresso, concluir }: PropsDaEtapa) {
+function CidadeEMomentoDePrevia({ progresso, concluir, previa }: PropsDaEtapa) {
   const [cidade, setCidade] = useState(progresso.cidade ?? "")
   const [momento, setMomento] = useState<Momento | "">(progresso.momento ?? "")
   const [quando, setQuando] = useState("")
@@ -643,7 +710,7 @@ function CidadeEMomentoDePrevia({ progresso, concluir }: PropsDaEtapa) {
         rotulo="Cidade"
         value={cidade}
         erro={problema?.campo === "cidade" ? problema.texto : null}
-        opcoes={CIDADES.map((item) => ({ valor: item.nome, rotulo: `${item.nome}, ${item.uf}` }))}
+        opcoes={previa?.cidades ?? []}
         onChange={(evento) => {
           setCidade(evento.target.value)
           setProblema(null)

@@ -30,6 +30,7 @@ const GRUPO_B = "20000000-0000-4000-8000-00000000000b"
 
 const mockVinculo = vi.fn()
 const mockRpc = vi.fn()
+const mockMarcador = vi.fn()
 const mockEq = vi.fn()
 // O cliente do USUÁRIO não aparece neste caminho: a tabela é operacional e só
 // o cliente de serviço, autorizado no código, lê e grava. Se a rota tocar nele,
@@ -39,6 +40,7 @@ const mockClienteDoUsuario = vi.fn()
 function clienteDeServico() {
   return {
     from: (tabela: string) => {
+      if (tabela === "entry_progress") return { upsert: mockMarcador }
       if (tabela !== "locality_memberships") throw new Error(`tabela inesperada: ${tabela}`)
       return {
         select: () => ({
@@ -90,6 +92,7 @@ beforeEach(() => {
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   mockVinculo.mockResolvedValue({ data: { locality_id: CIDADE }, error: null })
   mockRpc.mockResolvedValue({ data: null, error: null })
+  mockMarcador.mockResolvedValue({ error: null })
   criarCliente.mockReturnValue(clienteDeServico() as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
 })
@@ -215,7 +218,18 @@ describe("POST /api/app/entry/interests", () => {
       p_locality_id: CIDADE,
       p_group_ids: [GRUPO_A, GRUPO_B],
     })
+    expect(mockMarcador).toHaveBeenCalledWith(
+      { user_id: PESSOA.id, versao: 2, etapa: "combinado", estado: {} },
+      { onConflict: "user_id" },
+    )
     expect(mockClienteDoUsuario).not.toHaveBeenCalled()
+  })
+
+  it("falha ao avançar o marcador vira 503, não sucesso sem retomada", async () => {
+    mockMarcador.mockResolvedValue({ error: { message: "db offline" } })
+    const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A] } }))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "gravacao-indisponivel" })
   })
 
   it("duplicados saem antes de gravar, inclusive variante de caixa", async () => {

@@ -1,0 +1,39 @@
+task_id: RUN-130
+objective: Painel online de prontidão por jornada e camada com atualização automática e percentual rastreável.
+authority:
+  - Pedido explícito do dono em 05/11/2026 e proposta aprovada nesta sessão
+  - docs/LANCAMENTO.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Quadro local em tools/backend-kanban com contagens históricas sem painel de prontidão nem publicação automática; base 29fcc8f8; 9 testes existentes verdes.
+allowed_paths:
+  - tools/backend-kanban/
+  - tests/scope/readiness.test.mjs
+  - tests/scope/readiness-publish.test.mjs
+  - .github/workflows/readiness-dashboard.yml
+  - .github/workflows/pull-request-ci.yml
+  - .github/workflows/bivaque-app-visual-smoke.yml
+  - docs/agents/tasks/RUN-130.task.yml
+forbidden:
+  - alterar telas do aplicativo ou contratos de banco
+  - publicar o aplicativo ou avançar a branch producao
+  - publicar o board completo ou logs no painel
+acceptance:
+  - Dez jornadas vigentes referenciam cards canônicos sem uma segunda fila.
+  - Percentuais de frontend e backend separados e total por jornada integrada, sem médias artificiais.
+  - Cards históricos não comprovam funcionamento atual; execução ausente ou inconclusiva não vira sucesso.
+  - Painel responsivo nos dois temas em 375, 768 e 1440 com busca, filtros, detalhes e falha de carregamento.
+  - Atualização por integração, término dos checks, publicação e agendamento com versão e data explícitas.
+  - Site separado apresenta somente resumo permitido e preserva o processo de publicação do aplicativo.
+proof:
+  - node --test tests/scope/readiness.test.mjs tests/scope/readiness-publish.test.mjs
+  - node tools/backend-kanban/src/board.mjs --check
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:scope
+risk: ferramenta de acompanhamento
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

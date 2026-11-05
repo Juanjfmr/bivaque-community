@@ -581,9 +581,11 @@
         "Inserir secret fora do Git",
         "Ativar adaptador e prova de entrega",
         "Fechar o resíduo do /auth/v1/verify público (hook de verificação ou Auth próprio), como decide o ADR de entrada §2",
-        "Dimensionar email_sent, token_verifications e sign_in_sign_ups de produção, com o teto global do servidor sempre abaixo do email_sent"
+        "Dimensionar email_sent, token_verifications e sign_in_sign_ups de produção, com o teto global do servidor sempre abaixo do email_sent",
+        "Garantir em produção email_sent e sign_in_sign_ups acima do disjuntor global do servidor (500/h); ajuste é do dono"
       ],
       "proof": [
+        "05/11: RUN-004 rodada 2 — o disjuntor global ficou em 500/h; no config local email_sent e sign_in_sign_ups subiram para 600. Em produção os dois precisam ficar acima de 500/h (o signInWithOtp sai do servidor, então o limite de sign-in do GoTrue vira limite global da rota). Ajuste do dono no projeto de deploy.",
         "04/11: SEC-008 fechou as ressalvas do limitador no ADR de entrada e deixou aqui os dois itens de produção: (a) o resíduo do /auth/v1/verify público — o contador por e-mail só vê tentativas que passam pela rota do app, e quem fala direto com o GoTrue é contido só pelo limite por IP do próprio GoTrue (token_verifications) e pela validade de 10 minutos; fechar de vez exige o hook de verificação ou o Auth próprio; (b) o dimensionamento de email_sent (60/h no config local, acima do teto global do servidor de 50/h), token_verifications (30 por 5 min) e sign_in_sign_ups (30) para o SMTP/Resend real e o volume do lançamento. Números de produção dependem do projeto de deploy e da entrega real provada.",
         "apps/web/lib/outbox/adapters.ts mantém adaptadores indisponíveis",
         "convites e decisão de documento já enfileiram mensagens",
@@ -598,10 +600,10 @@
         "Provar uma entrega real pelo outbox em ambiente implantado"
       ],
       "links": ["Status: infraestrutura | ../../docs/historico/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-11-04",
+      "updatedAt": "2026-11-05",
       "sourceRevision": "cd550fcc",
       "dependencies": [],
-      "completedChecklist": [true, true, true, false, false, false, false]
+      "completedChecklist": [true, true, true, false, false, false, false, false]
     },
     {
       "id": "BLOCK-WHATSAPP",
@@ -5578,20 +5580,38 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Os CTAs Criar conta da landing pública (apps/web/app/landing/landing.tsx, função Cta) são md-filled-button com href. O elemento só navega depois de registrado no cliente; antes disso o toque não leva a lugar nenhum. No CI, o e2e landing-v8 em 375 px clicou antes do registro e ficou em / duas vezes (31/10/2026); o teste passou a esperar o registro (59a33028), mas uma pessoa num celular lento ainda pode tocar cedo demais. A landing continua no Next pelo ADR-20261024-front-react-spa §4.",
       "checklist": [
         "O CTA navega para /signup mesmo antes do JavaScript (por exemplo, um <a href> real dentro ou no lugar do botão)",
         "e2e que clica antes do registro do elemento e chega a /signup",
         "Mesma correção nos outros md-filled-button com href da landing (chamada final, barra fixa, folha do menu)"
       ],
-      "completedChecklist": [false, false, false],
+      "completedChecklist": [true, true, true],
       "dependencies": [],
-      "proof": [],
-      "tests": ["tests/e2e/landing-v8.spec.ts"],
-      "links": ["apps/web/app/landing/landing.tsx", "tests/e2e/landing-v8.spec.ts"],
-      "updatedAt": "2026-10-31",
-      "sourceRevision": "59a33028"
+      "proof": [
+        "HTML servido em 05/11/2026: cinco `<a class=\"ld-cta-btn\" href=\"/signup\">Criar conta</a>` e nenhum `<md-filled-button>` (antes: cinco botões cujo link só existia depois do registro no cliente).",
+        "e2e pela fila de provas, build de produção em 127.0.0.1:3000: 27 passed, 21 skipped, 0 failed — landing-v8.spec.ts e landing-sem-js.spec.ts.",
+        "Sem JavaScript (contexto novo com javaScriptEnabled false): o toque no CTA da dobra e no da chamada final chega a /signup em 375, 768 e 1440, e os cinco CTAs estão no DOM como link para /signup.",
+        "landing-v8.spec.ts deixou de esperar o registro do elemento (openLanding sem waitForFunction) e continua verde nos dois tamanhos; o CTA da dobra entra na ordem de tabulação e mostra o anel de foco 3px/2px, e topo sólido, barra fixa, folha do menu e chamada final navegam.",
+        "Capturas 375/768/1440 × claro/escuro em .visual/run-005/{antes,depois}: 22 recortes, 20 byte-idênticos; os dois do topo sólido (122×44) diferem em 442 e 447 pixels, todos na faixa do rótulo (x 24–97, y 16–27), com deslocamento de 0,19 px no centroide do texto — mesma caixa, mesmas cores, mesma tipografia. Nenhuma mudança perceptível.",
+        "tests/unit/landing/cta-sem-js.test.ts: 4 testes verdes — cinco âncoras no markup do servidor, nenhum md-filled-button, id da dobra preservado e a aparência Brasa (cor, recorte, altura e espaçamento) presa em landing.css.",
+        "gate --fast verde: lint, typecheck e typecheck:e2e (que cobre os specs novos)."
+      ],
+      "tests": [
+        "tests/e2e/landing-v8.spec.ts",
+        "tests/e2e/landing-sem-js.spec.ts",
+        "tests/unit/landing/cta-sem-js.test.ts"
+      ],
+      "links": [
+        "apps/web/app/landing/landing.tsx",
+        "apps/web/app/landing/landing.css",
+        "tests/e2e/landing-v8.spec.ts",
+        "tests/e2e/landing-sem-js.spec.ts"
+      ],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "f6e1115a",
+      "completedAt": "2026-11-05"
     },
     {
       "id": "APP-REGUA-NEXTDOOR",
@@ -5694,6 +5714,8 @@
       "blockers": [],
       "updatedAt": "2026-11-05",
       "proof": [
+        "05/11 rodada 2 — revisão independente FAIL, auditoria PASS com ressalvas, CI vermelho no replay limpo (commits 874575e1, 87e8dc8f, 3be21dcf, a2344b9d, a3e64140, 18805363, 08fab331, e07e975f, 6cf82317, f5e48625). Replay limpo de verdade: o CLI não alcança o pipe do Docker neste host, então recriei o banco do zero com psql (drop de public/private sobre o schema base do Supabase, restauração dos grants base e aplicação de TODAS as migrations em ordem); nesse banco, entry-otp-limiter 76/76 (as 6 falhas do CI eram teste, não esquema: o IP X chegava a 8 envios e o teto novo de 8/h bloqueava o caso de reabertura da hora; os padrões de IP/e-mail também precisavam de % no LIKE), entry-provision-atomic 24/24, entry-progress-purge 5/5 e db lint sem erro. Disjuntor: email_sent e sign_in_sign_ups subiram para 600 no config.toml, acima dos 500/h; teste de escopo lê config e migration e falha se regredir; ADR-20261101 registra o custo (8 IPs não travam; ~63 ainda travam; desafio humano depois) e o card novo ENTRADA-DESAFIO-HUMANO (repo, P2, dependência BLOCK-RESEND) cobre Turnstile e o risco de CGNAT/Wi-Fi de OM; BLOCK-RESEND ganhou o item de produção do dono. Falha de provedor vai sempre para /app/entrar?erro=provedor, qualquer next. Retomada: interesses grava o marcador combinado e combinado grava avisos com o id da sessão; GET ignora marcador de versão antiga com vínculo; E2E recarrega no combinado e nos avisos e cai na etapa certa. Prévia da cidade deixou de afirmar primeiros sem dado real. Falha de rede no convite/código tem mensagem fixa e o botão volta (teste de unidade e E2E com a rota derrubada). Rascunho abandonado expira por job pg_cron diário, com pgTAP positivo/negativo e GET que devolve 503 se o delete falhar; ADR-20261102 corrigido para estado {cidade}. Origem do convite virou IP confiável + /64 + HMAC do limitador nos três lugares, com teste. Menores: 400 do aceite com mensagem por motivo, fallback da família no app, varredura transitiva de imports, has_accepted_consent com as duas versões, unavailable/email_mismatch/rate_limited sem outbox, estado Confirmando… no provisionamento e retomada com erro de verificação e Tentar de novo. Provas: pnpm test 2024/2024 (root; 208 arquivos), apps/app 190/190, mobile 76/76, web 19/19, escopo 160/160; vitest app-api+onboarding+convite 492/492; gate --fast verde; E2E f01-entrada-real 24/24 (8 casos × 375/768/1440), incluindo conta nova pelo OTP/Mailpit, falha do provisionamento com Confirmando…, erro do provedor, rede derrubada no convite e retomada em combinado/avisos. Desvio registrado: /invite/<token> é convite de comunidade, não código de família; a página aponta para /app/entrar e o token não é preservado, então o convite continua pendente (comentário da página diz a verdade). Card fica em now até a revisão independente da rodada 2.",
+        "05/11: RUN-004, correções da revisão do PR #128 (base 3f76e7f5; commits 562a44f5, 254d0b48, 74611df7, 41b89be5, 1d6b1b5e, 46f38ca5, 82f348bf, 4e7add4d, c3a123e6). Provisionamento virou portão: /groups sem vínculo responde 409 e o app trata sem laço; a prévia da cidade só avança com o POST /provision confirmado e a falha fica na mesma etapa com 'Tentar de novo'; a retomada decide pelo servidor (o rascunho sobrevive como marcador da etapa seguinte, com o nome da cidade para exibir, e o PUT responde 409 a quem já tem vínculo); a entrada termina sem linha em entry_progress (a rota dos avisos apaga). O caminho real não importa mais o servidor simulado: a prévia mostra estado neutro honesto e o teste de escopo falha se o import voltar. Convite: valida o código antes do envio (o envio cria conta), traz o e-mail do convite só de leitura e o título de quem convidou; 400, 429 e 503 têm mensagens próprias; o aceite exige has_accepted_consent nas versões vigentes; outbox, configuracoes/familia e /invite não levam mais à tela antiga de senha. ADR-20261101 registra a decisão do dono (o /cpf pode devolver nome e resultado) e o limitador (8/h por IP, 500/h global como disjuntor); ADR-20261102 registra o marcador e o prazo de 30 dias do rascunho. Provas: vitest app-api+convite+onboarding 482/482; apps/app 180/180; pnpm test 2019/2019 (158 arquivos, inclui escopo); gate --fast verde; pgTAP entry-provision-atomic 24/24 e entry-otp-limiter 75/75 executados via psql contra o stack local com as migrations aplicadas. Limitação registrada: o CLI do Supabase não alcança o pipe do Docker neste host, então o reset limpo e o test:db pela fila ficaram bloqueados; db lint --db-url respondeu sem erro e os dois pgTAP rodaram no banco local. E2E f01-entrada-real 21/21 (7 casos × 375/768/1440, incluindo o erro do provedor na porta) e o caso da conta nova recarrega depois do provisionamento e volta à prévia, não ao Início com conta realmente nova criada pelo OTP e código lido no Mailpit, caso de falha do provisionamento, asserção de cor computada no tema escuro e capturas em .visual/f01-entrada/. Correção de texto: a 'conta nova' da prova de 04/11 era pré-criada; agora o caso cria a conta pelo OTP. Desvio: /invite/<token> é convite de comunidade, não código de família; a página aponta para /app/entrar sem código. Card segue em now até a nova revisão independente.",
         "05/11: lote C parte 1 (RUN-002, contrato R3 validado): porta por Google e convite familiar sem senha. Google: POST /api/app/entry/oauth devolve a URL de autorização com PKCE em cookie e redirect para /auth/callback?next=/app/entrar; o progresso passa a informar provedor (google/email) lido da sessão, e o callback não desvia mais o app para /consent (ele faz o próprio aceite). Provado por unidade (8 testes), sem credencial Google local. Convite: POST /api/app/entry/invite valida código, nome e consentimento, chama preview/accept existentes e provisiona o vínculo com a cidade de quem convidou; /app/entrar aceita ?convite=CODIGO, guarda o código só em memória (nunca no rascunho), mostra o campo já preenchido e pula CPF, cidade, verificação, documento e prévia. 12 testes da rota + 2 do provedor no progresso; app-api 249/249 e app 180/180. E2E do convite no navegador contra o Next servindo /app e o Supabase local com seed: porta → código → e-mail OTP lido no Mailpit → aceite → nome (sem campo CPF) → aceite do convite → grupos/combinado/avisos → Início, com sonda de vínculo sob RLS; a suíte da entrada ficou 15/15 (5 casos × 375/768/1440) e as capturas claro/escuro em .visual/f01-entrada/. No caminho, corrigido o CHECK de family_invitations (o harness voltou a mascarar o domínio pelo último ponto) e o teto de 5 convites ativos (o helper revoga os pendentes do titular de teste antes de criar). Falta para fechar o card: revisão cega, acessibilidade ampliada, retirada das telas antigas do apps/web (RUN-003) e I-4/I-5.",
         "04/11: caminho de falha do CPF ligado e provado. O núcleo do envio de documento saiu da Server Action da web para apps/web/lib/onboarding/upload-verification-document.ts (mesma lógica, mesmas mensagens; a action só resolve a sessão e delega), a rota POST /api/app/entry/document recebe multipart com sessão/CSRF, teto de 12 MB pelo content-length, 400 com motivo nas recusas de validação e 503 sem eco de infraestrutura, e a etapa documento do app envia o arquivo de verdade e fica na linha do tempo 'Documento em análise' sem avançar como se já estivesse aprovada. 11 testes da rota + 12 do núcleo; E2E novo (conta sem vínculo → Portal fora → envio → análise) e 12/12 no total em 375/768/1440. No CI, o único vermelho foi o flake conhecido group-admin-cycle:120 (@stateful), já no card CI-E2E-UPSTREAM-INSTAVEL; os testes da entrada passaram.",
         "04/11: E2E da entrada real no navegador, contra o Next servindo /app e o Supabase local com seed: 9/9 passando (3 casos × 375/768/1440) — conta nova percorre porta → e-mail → código lido no Mailpit → aceite → CPF → nome → cidade (UF/catálogo/data) → provisionamento → prévia → grupos reais → combinado → avisos → Início, com sonda de persistência sob RLS devolvendo verified e membroDaCidade; código errado com a mensagem única e o certo ainda entra; membro com sessão cai no Início. 90 capturas em claro e escuro em .visual/f01-entrada/. No caminho, dois defeitos reais: a checagem de origem das escritas por cookie recusava 127.0.0.1 porque o Next normaliza o host do url para localhost — agora a lista também deriva a origem do Host + x-forwarded-proto (4 testes novos); e o provisionamento marcava como já feito ao passar por etapas anteriores à verificação — a guarda foi corrigida. Harness em tests/e2e/f01-entrada-real.spec.ts + tests/e2e/entrada-real-ajuda.ts. Falta para fechar o card: revisão às cegas contra a régua Nextdoor, acessibilidade ampliada, retirada das telas antigas do apps/web (lote C) e os achados I-4/I-5.",
@@ -6259,7 +6281,7 @@
     },
     {
       "id": "APP-E2E-PREEXISTENTES",
-      "title": "Três specs E2E do apps/app falham na linha de base e o CI não os roda",
+      "title": "Instabilidades E2E do apps/app e cobertura no CI",
       "phase": "Lançamento",
       "priority": "P1",
       "category": "testing",
@@ -6269,21 +6291,285 @@
         "Reproduzir cada um e achar a causa (dados da conversa, altura de lista, grade)",
         "Corrigir o código ou o teste, conforme a causa",
         "Pôr a suíte inteira do apps/app no CI, ou registrar por que fica fora",
-        "Suíte do apps/app verde nos seis tamanhos"
+        "Suíte do apps/app verde nos seis tamanhos",
+        "Reproduzir o corpoCabe intermitente em mobile-360 com fontes frias e prontas; corrigir causa ou medição sem afrouxar limite."
       ],
       "dependencies": [],
       "tests": [
         "apps/app/tests/e2e/casca-visual.spec.ts",
         "apps/app/tests/e2e/rolagem-foco.spec.ts",
-        "apps/app/tests/e2e/componentes.spec.ts"
+        "apps/app/tests/e2e/componentes.spec.ts",
+        "apps/app/tests/e2e/r72-mobile-p1.spec.ts"
       ],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "9fb3953e",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte."
+        "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte.",
+        "05/11, PR #129 (nenhuma alteração em apps/app): App Visual Smoke 42052189989 tentativa 1 teve 1 falha em r72-mobile-p1 corpoCabe a 360 (275 pass/6 skip); tentativa 2 da mesma fonte passou. Falha inicial preservada em .visual/run-130/ci-app-visual-failed.log; não declarada como correção do aplicativo."
       ]
+    },
+    {
+      "id": "RUN-130",
+      "title": "Painel online de prontidão do Bivaque",
+      "phase": "Acompanhamento",
+      "priority": "P1",
+      "category": "infra",
+      "status": "done",
+      "description": "Pedido do dono em 05/11: painel por jornada, frontend e backend, percentuais auditáveis, atualização automática e consulta online; contrato RUN-130.",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
+      "dependencies": [],
+      "links": [
+        "docs/agents/tasks/RUN-130.task.yml",
+        "Painel online | https://bivaque-progresso.vercel.app",
+        "PR #129 | https://github.com/Juanjfmr/bivaque-community/pull/129",
+        "Coleta automática | https://github.com/Juanjfmr/bivaque-community/actions/runs/42055825188"
+      ],
+      "proof": [
+        "Baseline 29fcc8f8: quadro somente local, sem percentuais por jornada; 9 testes existentes verdes.",
+        "Gate completo verde após corrigir somente o relógio da fixture vencida (.visual/run-130/gate-after-clock-fix.log).",
+        "Runtime independente: primeiro FAIL por perda de foco corrigido e rechecado em 375/768/1440, claro/escuro; PASS local em .visual/run-130/runtime/veredito-final.md.",
+        "Revisão independente: primeiro FAIL preservado, reparos e regressões testados; segundo parecer PASS em .visual/run-130/review/segundo-parecer-final.md (29/29 checks específicos).",
+        "Gate final da fonte reparada: lint, tipos, tipos E2E, Next build, Vite build, testes (incluindo 167 scope) e secrets verdes em .visual/run-130/gate-final.log.",
+        "CI do código ea92299a: Pull Request CI 42052190198 PASS, banco/schema/tipos e E2E 840+98 passed (27+16 skipped); App Visual Smoke 42052189989 PASS na segunda tentativa. Árvores Git de ea92299a e integração 6c24227c idênticas.",
+        "PR #129 integrado em 6c24227c. Revisão automática DeepSeek 42052189953 falhou na execução e não é PASS; revisão independente de código e runtime têm pareceres próprios.",
+        "Online protegido: https://bivaque-progresso.vercel.app — HTML, JS, CSS e snapshot com os mesmos corpos do artefato local; board.json=404; anônimo recebe 302 para autenticação. Prova independente em .visual/run-130/runtime-online/veredito.md.",
+        "Automação real: workflow Painel de prontidao 42055825188 PASS após push na main; gerou commit 57aba122cd06541092e29fe2ba9afcdc1bc2c93b em painel-prontidao; Vercel dpl_G53TbB3yU6AoLtcoV17MgV1avNdB READY; snapshot online 6c24227c gerado às 15:31:42 UTC, refreshError=false.",
+        "Indicador inicial deliberadamente provisório: dez jornadas mapeadas; nenhuma herdou comprovação de produto de cards históricos. A conclusão deste card comprova o painel, não as jornadas do Bivaque."
+      ],
+      "checklist": [
+        "Vincular as dez jornadas aos cards existentes e distinguir declaração de prova.",
+        "Testar cálculo, evidência ausente, regressões e versão divergente.",
+        "Implementar resumo, camadas, filtros e detalhes acessíveis nos dois temas.",
+        "Atualizar automaticamente o resumo a partir de main, verificações e publicação.",
+        "Publicar somente os arquivos permitidos em projeto separado.",
+        "Revisão independente e prova em 375/768/1440, claro e escuro."
+      ],
+      "completedAt": "2026-11-05"
+    },
+    {
+      "id": "TEST-CLOCK-UNIT",
+      "title": "Fixture temporal do teste de provisionamento venceu em 04/11",
+      "phase": "Qualidade",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "description": "A data fixa de chegada ficou no passado em 05/11. Somente o relógio da fixture foi isolado; código de produção e expectativas preservados.",
+      "updatedAt": "2026-11-05",
+      "completedAt": "2026-11-05",
+      "sourceRevision": "29fcc8f898a8c064579a99c36ca3a368a1f52ebd",
+      "dependencies": [],
+      "links": ["docs/agents/tasks/RUN-131.task.yml"],
+      "proof": [
+        "Reproduzido na worktree limpa painel-baseline em 29fcc8f8: 1 failed / 14 passed (.visual/run-130/baseline-test.log).",
+        "Após fixar o relógio em 02/11: os mesmos 15 testes passaram, com Date restaurado após cada caso."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/onboarding/provision-requires-verification.test.ts"
+      ],
+      "checklist": [
+        "Reproduzir sem o diff.",
+        "Isolar Date na fixture e restaurar após cada caso.",
+        "Preservar e executar os 15 casos existentes."
+      ]
+    },
+    {
+      "id": "CI-REVIEW-EXECUTION",
+      "title": "Revisão automática DeepSeek encerra com is_error sem parecer",
+      "phase": "Qualidade",
+      "priority": "P2",
+      "category": "infra",
+      "status": "repo",
+      "description": "No PR #129 o serviço de revisão inicializou, encerrou em uma interação com is_error:true e não produziu parecer. A revisão independente foi executada separadamente; este erro do harness não foi convertido em PASS.",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
+      "dependencies": [],
+      "links": [
+        "Execução com falha | https://github.com/Juanjfmr/bivaque-community/actions/runs/42052189953"
+      ],
+      "proof": [
+        "42052189953: completed/failure, is_error:true, num_turns:1, modelUsage vazio; log local em .visual/run-130/ci-review-failed.log."
+      ],
+      "checklist": [
+        "Reproduzir a falha do serviço de revisão fora do diff do painel.",
+        "Identificar a causa de configuração ou provedor sem confundir execução com veredito.",
+        "Reexecutar o serviço e exigir parecer independente; não substituir por sucesso vazio."
+      ]
+    },
+    {
+      "id": "MATERIAL-BOTAO-HREF-SEM-JS",
+      "title": "Botão Material com href só navega depois do JavaScript, fora da landing; regra de Brasa morta no brand-tokens",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Achado da revisão do RUN-005 (05/11/2026). O MaterialFilledButton com href só navega depois de registrado no cliente, o mesmo defeito corrigido na landing. Continua em apps/web/app/(public)/ajuda/page.tsx:180 (pública, fica) e nas telas antigas de entrada (login/entry-resume.tsx:72, nova-senha/page.tsx:132, onboarding/welcome/page.tsx:157, recuperar-senha/page.tsx:144), que o RUN-003 retira. Além disso, apps/web/app/brand-tokens.css:163-180 (.ld md-filled-button) ficou sem consumidor e tests/scope/entrada-skin.test.mjs:45-50 congela essa regra morta com uma descrição que já não é verdade; o comentário de apps/web/app/components/material/filled-button.tsx:26-33 também.",
+      "checklist": [
+        "Ajuda pública: CTA com href vira <a href> real, com E2E sem JavaScript",
+        "Remover .ld md-filled-button do brand-tokens.css e reescrever o teste de escopo para a regra real (.ld .ld-cta-btn em Brasa, sem Brasa em .bv-skin md-filled-button)",
+        "Atualizar o comentário de filled-button.tsx",
+        "Telas antigas de entrada: confirmar que saíram com o RUN-003; se alguma ficar, mesma correção"
+      ],
+      "dependencies": [],
+      "links": [
+        "apps/web/app/(public)/ajuda/page.tsx",
+        "apps/web/app/brand-tokens.css",
+        "tests/scope/entrada-skin.test.mjs"
+      ],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "f6e1115a"
+    },
+    {
+      "id": "ENTRADA-DESAFIO-HUMANO",
+      "title": "Desafio humano no envio do código quando o disjuntor global estiver perto do teto",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "O disjuntor global do limitador (500 envios/h) existe para uma pessoa não travar a entrada de todos. Quando o volume legítimo chegar perto dele, é preciso um desafio humano (por exemplo Turnstile) antes do envio, e acompanhar as recusas de 8/h por IP em redes compartilhadas (CGNAT, Wi-Fi de OM).",
+      "checklist": [
+        "Definir o provedor de desafio (Turnstile) e onde ele entra antes do envio",
+        "Disparar o desafio quando o global estiver perto do teto, sem cobrar de quem só está entrando",
+        "Acompanhar pelo log.warn as recusas por IP em redes compartilhadas (CGNAT, Wi-Fi de OM)",
+        "Provar o caminho positivo e o negativo sem bloquear a entrada normal",
+        "Decidir o limite de produção com o volume real do lançamento"
+      ],
+      "proof": [
+        "05/11: aberto na revisão do RUN-004 rodada 2. O disjuntor de 500/h e o teto de 8/h por IP estão no ADR-20261101; o desafio humano e o risco de CGNAT/OM ficam aqui para depois da prova de volume, com dependência de BLOCK-RESEND."
+      ],
+      "blockers": ["Depende do projeto de deploy e do volume real de produção (BLOCK-RESEND)"],
+      "links": ["docs/decisions/ADR-20261101-entrada-unica-por-codigo.md"],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "874575e1",
+      "dependencies": ["BLOCK-RESEND"],
+      "completedChecklist": [false, false, false, false, false]
     }
-  ]
+  ],
+  "launch": {
+    "version": "2026-11-05",
+    "title": "Prontidão do Bivaque",
+    "source": "docs/LANCAMENTO.md",
+    "paths": {
+      "frontend": ["apps/app", "packages/tokens"],
+      "backend": ["apps/web", "supabase", "packages/contracts", "packages/domain"],
+      "integration": ["apps", "packages", "supabase", "tests", ".github/workflows"]
+    },
+    "checks": {
+      "frontend": [
+        {
+          "workflow": "pull-request-ci.yml",
+          "steps": ["Lint", "Typecheck", "Build web app"]
+        },
+        {
+          "workflow": "bivaque-app-visual-smoke.yml",
+          "steps": ["Verify shared visual components"]
+        }
+      ],
+      "backend": [
+        {
+          "workflow": "pull-request-ci.yml",
+          "steps": ["Database tests", "Schema lint", "Check generated types drift"]
+        }
+      ],
+      "integration": [
+        {
+          "workflow": "pull-request-ci.yml",
+          "steps": [
+            "Unit, privacy and scope tests",
+            "Secrets scan",
+            "Root E2E tests (parallel, excluding @stateful)",
+            "Root E2E tests (stateful, serial)"
+          ]
+        }
+      ]
+    },
+    "gates": ["LAN-OP", "LAN-TROCA", "LAN-PROVA", "BLOCK-LEGAL-ENTRY", "BLOCK-RESEND", "LAN-LOJA"],
+    "journeys": [
+      {
+        "id": "F01",
+        "title": "Entrada e conta",
+        "cardId": "LAN-F01",
+        "nextStep": "Ligar a entrada ao servidor e comprovar a jornada completa.",
+        "frontend": ["LAN-F01"],
+        "backend": ["MVP-01-ADMISSION"]
+      },
+      {
+        "id": "F02",
+        "title": "Início e busca",
+        "cardId": "LAN-F02",
+        "nextStep": "Ligar o início e a busca aos dados reais.",
+        "frontend": ["LAN-F02"],
+        "backend": ["LAN-F02"]
+      },
+      {
+        "id": "F03",
+        "title": "Criar e publicar",
+        "cardId": "LAN-F03",
+        "nextStep": "Concluir os quatro tipos de criação, rascunhos e tratamento de falha.",
+        "frontend": ["LAN-F03"],
+        "backend": ["LAN-F03"]
+      },
+      {
+        "id": "F04",
+        "title": "Comunidade e grupos",
+        "cardId": "LAN-F04",
+        "nextStep": "Concluir o redesenho do banco e ligar os grupos ao aplicativo.",
+        "frontend": ["LAN-F04"],
+        "backend": ["RED-003", "MVP-03-COMMUNITY"]
+      },
+      {
+        "id": "F05",
+        "title": "Eventos",
+        "cardId": "LAN-F05",
+        "nextStep": "Ligar agenda, presença, criação e edição ao aplicativo integrado.",
+        "frontend": ["LAN-F05"],
+        "backend": ["MVP-03-COMMUNITY"]
+      },
+      {
+        "id": "F06",
+        "title": "Desapegos e imóveis",
+        "cardId": "LAN-F06",
+        "nextStep": "Comprovar anúncios, localização, filtros e conversa de interesse.",
+        "frontend": ["LAN-F06"],
+        "backend": ["LAN-F06"]
+      },
+      {
+        "id": "F07",
+        "title": "Negócios e serviços",
+        "cardId": "LAN-F07",
+        "nextStep": "Concluir negócio, pedido de serviço e acompanhamento.",
+        "frontend": ["LAN-F07"],
+        "backend": ["G-TASK-1", "LAN-F07"]
+      },
+      {
+        "id": "F08",
+        "title": "Guia",
+        "cardId": "LAN-F08",
+        "nextStep": "Ligar busca, leitura, salvos e sugestões aos dados reais.",
+        "frontend": ["LAN-F08"],
+        "backend": ["LAN-F08"]
+      },
+      {
+        "id": "F09",
+        "title": "Conversas e avisos",
+        "cardId": "LAN-F09",
+        "nextStep": "Ligar conversas e avisos; comprovar o destino e o canal de e-mail.",
+        "frontend": ["LAN-F09"],
+        "backend": ["DONE-OUTBOX-FOUNDATION"]
+      },
+      {
+        "id": "F10",
+        "title": "Você, família e conta",
+        "cardId": "LAN-F10",
+        "nextStep": "Ligar perfil, família e configurações; comprovar seus ciclos.",
+        "frontend": ["LAN-F10"],
+        "backend": ["DONE-PROFILE-RPCS", "LAN-F10"]
+      }
+    ]
+  }
 }

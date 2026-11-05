@@ -145,6 +145,32 @@ novo de graça).
   `test:db` PASS 161 arquivos / 2549 asserções. A revisão independente desta emenda continua pendente e está em
   [RATIFICACAO.md](RATIFICACAO.md).
 
+## Consequences — emenda de 05/11/2026 (RUN-004: retomada e prazo)
+
+A revisão do PR #128 mediu que apagar o rascunho dentro do provisionamento (emenda do SEC-007) deixava
+o GET sem saber em que etapa do fim da entrada a pessoa estava: quem recarregava logo depois de
+provisionar ia direto ao Início, pulando interesses, o combinado e os avisos. A correção sem voltar a
+aceitar escrita do cliente:
+
+- **O provisionamento troca o rascunho por um marcador.** `provision_member_entry` grava
+  `etapa = 'previa-cidade'`, `estado = '{"cidade": "<nome>"}'` (upsert) na mesma transação. O nome é
+  só para a prévia exibir; o canônico continua no vínculo/IBGE. A tela não escreve mais o
+  rascunho a partir daí: o PUT responde 409 `entrada-concluida` a quem já tem vínculo. O convite
+  familiar grava o marcador `interesses`, porque o caminho dele pula a cidade e a prévia.
+- **O marcador some no fim.** A rota dos avisos (última etapa) apaga a linha da sessão; a purga da
+  conta continua cobrindo o caso de abandono. Ao final da entrada, `entry_progress` não tem linha da
+  pessoa.
+- **Rascunho abandonado expira em 30 dias.** O job diário `bivaque-entry-progress-purge` (pg_cron)
+  apaga `entry_progress` com `updated_at` mais velho que 30 dias; a leitura do GET mantém a mesma
+  regra como defesa e agora falha com 503 se o delete da limpeza falhar. Sem cron novo no servidor
+  de aplicação e sem confiar no relógio do cliente.
+- **A leitura decide pelo rascunho quando ele existe.** Com vínculo e marcador, a etapa devolvida é a
+  do marcador; sem marcador, quem tem vínculo terminou (Início). Membro antigo, sem rascunho, também
+  cai no Início — o marcador só existe para quem passou pela entrada nova.
+- **Prova.** `entry-provision-atomic.sql` passa a exigir o marcador em vez da ausência da linha;
+  `entry-progress-route.test.ts` cobre o 409 e a retomada pelo marcador. A prova de "sem linha no fim"
+  é a rota dos avisos apagando (teste unitário) mais a consulta no E2E.
+
 ## Reversal cost
 
 Baixo: apagar a tabela e a rota de progresso; o app volta ao estado em memória. Nenhuma outra

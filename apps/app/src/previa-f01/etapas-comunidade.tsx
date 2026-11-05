@@ -15,10 +15,10 @@ import {
   Progresso,
   Selo,
 } from "@/src/pecas/pecas"
+import { type DadosDaPrevia, INTERESSES } from "./entrada-dados"
 import type { PropsDaEtapa } from "./etapas-conta"
-import { contagemPublica, type Flags, MINIMO_PARA_EXIBIR, type Momento } from "./fluxo"
+import { contagemPublica, type Flags, type Momento } from "./fluxo"
 import { Moldura } from "./moldura"
-import { cidadePorNome, INTERESSES, perguntasDoMomento, sugerirGrupos } from "./servidor-simulado"
 
 const base = import.meta.env.BASE_URL
 
@@ -211,23 +211,28 @@ const PREVIA_DO_MOMENTO: Record<Momento, { titulo: (cidade: string) => string; s
   },
 }
 
-export function PreviaDaCidade({ progresso, concluir }: PropsDaEtapa) {
-  const cidade = cidadePorNome(progresso.cidade)
-  const nome = cidade?.nome ?? "sua cidade"
+export function PreviaDaCidade({ progresso, concluir, previa, provisionando }: PropsDaEtapa) {
+  const cidade = previa?.cidade ?? null
+  const nome = cidade?.nome ?? progresso.cidade ?? "sua cidade"
   const momento = progresso.momento ?? "morando"
-  const comGente = cidade !== null && cidade.membros >= MINIMO_PARA_EXIBIR
-  const perguntas = cidade && comGente ? perguntasDoMomento(cidade, momento) : []
+  const comGente = cidade?.comGente === true
+  const perguntas = comGente ? cidade.perguntas.slice(0, 3) : []
   const textos = PREVIA_DO_MOMENTO[momento]
 
   return (
     <Moldura
-      titulo={comGente ? textos.titulo(nome) : `Você está entre os primeiros em ${nome}.`}
+      titulo={comGente ? textos.titulo(nome) : `Você já está em ${nome}.`}
       apoio={
-        comGente ? null : "Faça a primeira pergunta. Quem chegar depois já encontra a resposta."
+        comGente
+          ? null
+          : "A comunidade está aqui. Faça a primeira pergunta e quem chegar depois encontra a resposta."
       }
       ilustracao="encontro"
       aoEnviar={() => concluir()}
-      acao={{ rotulo: "Continuar" }}
+      acao={{
+        rotulo: provisionando === true ? "Confirmando…" : "Continuar",
+        carregando: provisionando === true,
+      }}
     >
       <p className="f01-selo">
         <Estado icone="verified_user">Vínculo confirmado</Estado>
@@ -269,21 +274,31 @@ const membrosDoGrupo = (total: number): string => {
   return faixa ? `${maiuscula(faixa)} membros` : "Grupo novo"
 }
 
-export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
+export function InteressesEGrupos({ progresso, concluir, previa }: PropsDaEtapa) {
   const servidor = useServidorDaEntrada()
   const [interesses, setInteresses] = useState<readonly string[]>(progresso.interesses)
   const [grupos, setGrupos] = useState<readonly string[]>(progresso.grupos)
   const [gruposReais, setGruposReais] = useState<readonly GrupoDaEntrada[] | null>(null)
   const [falhaDosGrupos, setFalhaDosGrupos] = useState(false)
-  const sugestoes = sugerirGrupos(interesses, progresso.momento)
+  const [semVinculo, setSemVinculo] = useState(false)
+  const sugestoes = previa?.sugestoes ?? []
 
   const carregarGrupos = () => {
     if (servidor === null) return
     setFalhaDosGrupos(false)
+    setSemVinculo(false)
     setGruposReais(null)
     servidor.carregarGrupos().then(
       (lista) => setGruposReais(lista),
-      () => setFalhaDosGrupos(true),
+      (falha: unknown) => {
+        // 409: o provisionamento ainda não terminou. Não é falha de rede e não
+        // melhora com "Tentar de novo" em laço — a pessoa volta uma etapa.
+        if (falha instanceof FalhaDaEntrada && falha.status === 409) {
+          setSemVinculo(true)
+          return
+        }
+        setFalhaDosGrupos(true)
+      },
     )
   }
 
@@ -322,21 +337,21 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
         </h2>
         {servidor === null ? (
           <ul className="pc-lista f01-grupos" aria-live="polite">
-            {sugestoes.map(({ grupo, motivo }) => {
-              const entrou = grupos.includes(grupo.id)
+            {sugestoes.map(({ id, nome, membros, selo, motivo }) => {
+              const entrou = grupos.includes(id)
               return (
-                <li key={grupo.id} className="f01-grupo">
-                  <Selo nome={grupo.selo} />
+                <li key={id} className="f01-grupo">
+                  <Selo nome={selo} />
                   <span className="pc-linha-texto">
-                    <span className="pc-linha-titulo">{grupo.nome}</span>
-                    <span className="pc-apoio">{membrosDoGrupo(grupo.membros)}</span>
+                    <span className="pc-linha-titulo">{nome}</span>
+                    <span className="pc-apoio">{membrosDoGrupo(membros)}</span>
                     <span className="pc-miudo">{motivo}</span>
                   </span>
                   <Botao
                     compacto
                     aria-pressed={entrou}
-                    aria-label={`${entrou ? "Sair de" : "Entrar em"} ${grupo.nome}`}
-                    onClick={() => setGrupos((atual) => alternar(atual, grupo.id))}
+                    aria-label={`${entrou ? "Sair de" : "Entrar em"} ${nome}`}
+                    onClick={() => setGrupos((atual) => alternar(atual, id))}
                   >
                     {entrou ? <Icone nome="check" /> : null}
                     {entrou ? "Entrou" : "Entrar"}
@@ -345,6 +360,10 @@ export function InteressesEGrupos({ progresso, concluir }: PropsDaEtapa) {
               )
             })}
           </ul>
+        ) : semVinculo ? (
+          <p className="pc-apoio" role="status">
+            Seu cadastro ainda não foi confirmado. Volte e confirme a cidade para ver os grupos.
+          </p>
         ) : falhaDosGrupos ? (
           <p className="pc-apoio" aria-live="polite">
             Não foi possível carregar os grupos agora.{" "}
@@ -475,14 +494,14 @@ export function Avisos({ concluir }: PropsDaEtapa) {
           <span className="f01-notificacao-marca">B</span>
           <span>
             <strong>Nova resposta à sua pergunta</strong>
-            Carla R.: a Dra. Lúcia atende pelo FUSEx, terça e quinta.
+            Quem respondeu aparece aqui, com o texto e o grupo.
           </span>
         </div>
         <div className="f01-notificacao">
           <span className="f01-notificacao-marca">B</span>
           <span>
-            <strong>Chegadas 2026, amanhã às 9h</strong>
-            Café de boas-vindas. 12 pessoas vão.
+            <strong>Encontro perto de você</strong>
+            Quando houver um encontro na sua cidade, a data e o lugar chegam assim.
           </span>
         </div>
       </div>
@@ -527,10 +546,12 @@ export function InicioComPrimeirosPassos({
   progresso,
   flags,
   aoRecomecar,
+  previa,
 }: {
   progresso: PropsDaEtapa["progresso"]
   flags: Flags
   aoRecomecar: () => void
+  previa?: DadosDaPrevia
 }) {
   const [feitos, setFeitos] = useState<ReadonlySet<string>>(() => new Set())
   const momento = progresso.momento ?? "morando"
@@ -577,8 +598,8 @@ export function InicioComPrimeirosPassos({
       : []),
   ]
   const concluidos = passos.filter((passo) => passo.feito).length
-  const cidade = cidadePorNome(progresso.cidade)
-  const primeiraPergunta = cidade ? perguntasDoMomento(cidade, momento)[0] : undefined
+  const cidade = previa?.cidade ?? null
+  const primeiraPergunta = cidade?.perguntas[0]
 
   return (
     <main className="f01-inicio">

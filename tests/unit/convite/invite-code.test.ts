@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   asFamilyInviteCodeStatus,
   INVITE_CODE_ALPHABET,
@@ -15,7 +15,6 @@ import {
   inviteCodeHash,
   inviteEmailDigest,
   inviteOriginDigest,
-  originFromForwardedFor,
   sha256Hex,
 } from "web/lib/convite/digest"
 
@@ -86,21 +85,29 @@ describe("digest", () => {
     expect(inviteEmailDigest("  Familiar@Exemplo.COM ")).toBe(sha256Hex("familiar@exemplo.com"))
   })
 
-  it("a origem é hasheada com prefixo de domínio e nunca volta ao IP", () => {
+  it("a origem é HMAC com o segredo do limitador, /64 no IPv6 e nunca volta ao IP", () => {
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "pepper-do-teste")
     const digest = inviteOriginDigest("203.0.113.7")
     expect(digest).toMatch(/^[0-9a-f]{64}$/)
     expect(digest).not.toContain("203.0.113.7")
     expect(inviteOriginDigest("203.0.113.8")).not.toBe(digest)
+    // IPv6 entra reduzido ao /64, como no limitador.
+    expect(inviteOriginDigest("2001:db8:0:1::1")).toBe(inviteOriginDigest("2001:db8:0:1:ffff::2"))
     // Sem origem conhecida o digest existe e é estável, para o limite por
     // origem ainda valer em ambiente sem proxy.
     expect(inviteOriginDigest(null)).toBe(inviteOriginDigest(""))
   })
 
-  it("lê a primeira entrada do x-forwarded-for", () => {
-    expect(originFromForwardedFor("198.51.100.9, 10.0.0.1")).toBe("198.51.100.9")
-    expect(originFromForwardedFor("")).toBeNull()
-    expect(originFromForwardedFor(null)).toBeNull()
+  it("o digest da origem muda com o segredo do limitador", () => {
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "pepper-a")
+    const a = inviteOriginDigest("203.0.113.7")
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "pepper-b")
+    expect(inviteOriginDigest("203.0.113.7")).not.toBe(a)
   })
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 describe("mensagens", () => {
