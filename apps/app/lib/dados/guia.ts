@@ -114,6 +114,16 @@ export async function lerGuia(
   }
 }
 
+/** O que a pessoa salvou, na ordem em que salvou — a lista da tela Salvos. */
+export async function lerSalvosDoGuia(
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly EntradaDoGuia[]> {
+  const corpo = await ler("/api/app/guia/salvos", opcoes)
+  const lista = corpo["entradas"]
+  if (!Array.isArray(lista)) throw foraDoContrato()
+  return lista.map((linha) => lerEntrada(exigirRegistro(linha)))
+}
+
 export async function lerVerbete(
   id: string,
   opcoes: { signal?: AbortSignal } = {},

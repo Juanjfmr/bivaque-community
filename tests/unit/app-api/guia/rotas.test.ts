@@ -7,6 +7,7 @@ import { GET as detalhe } from "web/app/api/app/guia/[id]/route"
 import { DELETE as desmarcar, PUT as marcar } from "web/app/api/app/guia/[id]/salvo/route"
 import { POST as sugerir } from "web/app/api/app/guia/[id]/sugestao/route"
 import { GET as listar } from "web/app/api/app/guia/route"
+import { GET as listarSalvos } from "web/app/api/app/guia/salvos/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
@@ -163,6 +164,7 @@ describe("rotas do guia do app", () => {
 
   it.each([
     ["GET guia", () => listar(req("GET"))],
+    ["GET salvos do guia", () => listarSalvos(req("GET", `${BASE}/salvos`))],
     ["GET verbete", () => detalhe(req("GET"), context)],
     ["PUT salvo", () => marcar(req("PUT"), context)],
     ["DELETE salvo", () => desmarcar(req("DELETE"), context)],
@@ -305,6 +307,54 @@ describe("rotas do guia do app", () => {
     })
   })
 
+  describe("salvos do guia", () => {
+    it("devolve as referências salvas pela sessão com o marcador ligado", async () => {
+      const mock = mockClient({ salvas: [ID] })
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos`))
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({
+        entradas: [
+          {
+            id: ID,
+            categoria: "school",
+            nome: "Escola Modelo",
+            descricao: "Turno integral.",
+            site: "https://escola.example.invalid",
+            telefone: "(92) 3000-0001",
+            salvo: true,
+          },
+        ],
+      })
+      expect(mock.inCalls).toContainEqual({
+        table: "arrival_guide_entries",
+        column: "id",
+        valores: [ID],
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "arrival_guide_entries",
+        column: "status",
+        value: "approved",
+      })
+    })
+
+    it("sem salvamentos responde lista vazia sem consultar o diretório", async () => {
+      const mock = mockClient({ salvas: [] })
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos`))
+      expect(await json(resposta)).toEqual({ entradas: [] })
+      expect(mock.inCalls).toHaveLength(0)
+    })
+
+    it("falha de leitura vira 503, nunca lista vazia", async () => {
+      const mock = mockClient({ erroNaTabela: "guide_entry_saves" })
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos`))
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "leitura-indisponivel" })
+    })
+  })
+
   describe("verbete", () => {
     it("devolve a entrada, o marcador e se há artigo para sugerir", async () => {
       const mock = mockClient({ salvo: true, artigo: { id: "artigo-1" } })
@@ -386,9 +436,9 @@ describe("rotas do guia do app", () => {
       expect(resposta.status).toBe(200)
       expect(await json(resposta)).toEqual({ salvo: false })
       expect(mock.deletes).toContain("guide_entry_saves")
-      expect(mock.eqCalls.filter((chamada) => chamada.table === "arrival_guide_entries")).toHaveLength(
-        0,
-      )
+      expect(
+        mock.eqCalls.filter((chamada) => chamada.table === "arrival_guide_entries"),
+      ).toHaveLength(0)
     })
 
     it("recusa da RLS é 403 sem eco da mensagem do Postgres", async () => {

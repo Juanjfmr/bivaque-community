@@ -169,7 +169,16 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     expect(lidas.status(), "o salvamento precisa ser legível pela própria pessoa").toBe(200)
     expect((await lidas.json()) as { entry_id: string }[]).toHaveLength(1)
 
+    // A tela Salvos lê o guia salvo pela sessão, não só os anúncios da demo.
+    await page.goto("/app/salvos")
+    await expect(
+      page.locator('[data-salvos="guia"]').getByText(HOSPITAL_SEMEADO),
+      "a referência salva precisa aparecer em Salvos",
+    ).toBeVisible({ timeout: 30_000 })
+
     // Devolve a persona ao estado inicial.
+    await page.goto("/app/guia")
+    await abrirVerbete(page, HOSPITAL_SEMEADO)
     await page.getByRole("button", { name: "Salvo no seu guia" }).click()
     await expect(page.getByRole("button", { name: "Salvar no seu guia" })).toBeVisible({
       timeout: 30_000,
