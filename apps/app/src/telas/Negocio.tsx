@@ -96,6 +96,14 @@ export function Negocio() {
               </ul>
             </Secao>
           )}
+          <Secao titulo="Onde atende">
+            <ul className="flex flex-wrap gap-2">
+              <li className="flex min-h-9 items-center gap-1.5 rounded-full bg-(--surface-lowest) px-3 text-sm ring-1 ring-(--outline-variant)">
+                <Icone nome="location_on" className="size-4 text-(--primary)" />
+                {negocio.cidade}
+              </li>
+            </ul>
+          </Secao>
           <Secao titulo="Pedir um serviço">
             <p className="text-sm text-(--on-surface-variant)">
               Descreva o que precisa. Valores e pagamento são combinados entre vocês.

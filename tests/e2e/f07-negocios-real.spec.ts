@@ -107,6 +107,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Ver negócio: Climatiza Manaus", exact: true }).click()
     await expect(page.getByRole("heading", { level: 1, name: "Climatiza Manaus" })).toBeVisible()
     await expect(page.getByText("Limpeza completa")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Onde atende", exact: true })).toBeVisible()
     await capturar(page, testInfo.project.name, "02-ficha")
 
     const pedir = page.getByRole("button", { name: "Pedir orçamento", exact: true })

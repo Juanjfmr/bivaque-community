@@ -114,6 +114,7 @@ for (const tema of ["light", "dark"] as const) {
       await page.getByRole("button", { name: `Ver negócio: ${resumo.nome}`, exact: true }).click()
       await expect(page.getByRole("heading", { level: 1, name: resumo.nome })).toBeVisible()
       await expect(page.getByText("Limpeza completa")).toBeVisible()
+      await expect(page.getByRole("heading", { name: "Onde atende", exact: true })).toBeVisible()
       await capturar(page, `${testInfo.project.name}-${tema}-02-ficha`)
 
       const pedir = page.getByRole("button", { name: "Pedir orçamento", exact: true })
