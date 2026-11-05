@@ -34,6 +34,8 @@ export type GuiaDaCidade = Readonly<{
 
 export type VerbeteDoGuia = Readonly<{
   entrada: EntradaDoGuia
+  /** Salvar e sugerir exigem a cidade da sessão; fora dela os dois são falsos. */
+  podeSalvar: boolean
   /** Só há onde pousar a sugestão quando a referência tem artigo publicado. */
   podeSugerir: boolean
 }>
@@ -119,6 +121,7 @@ export async function lerVerbete(
   const corpo = await ler(`/api/app/guia/${encodeURIComponent(id)}`, opcoes)
   return {
     entrada: lerEntrada(exigirRegistro(corpo["entrada"])),
+    podeSalvar: corpo["podeSalvar"] === true,
     podeSugerir: corpo["podeSugerir"] === true,
   }
 }

@@ -27,6 +27,7 @@ const entrada = {
   description: "Turno integral.",
   website_url: "https://escola.example.invalid",
   phone: "(92) 3000-0001",
+  locality_id: CIDADE,
 }
 
 type Opcoes = {
@@ -310,6 +311,7 @@ describe("rotas do guia do app", () => {
       authenticate(mock)
       const corpo = await json(await detalhe(req("GET"), context))
       expect(corpo["entrada"]).toMatchObject({ id: ID, nome: "Escola Modelo", salvo: true })
+      expect(corpo["podeSalvar"]).toBe(true)
       expect(corpo["podeSugerir"]).toBe(true)
     })
 
@@ -321,10 +323,26 @@ describe("rotas do guia do app", () => {
       expect(mock.from).not.toHaveBeenCalled()
     })
 
-    it("entrada inexistente ou de outra cidade é 404", async () => {
+    it("entrada inexistente — inclusive pendente na curadoria — é 404", async () => {
       const mock = mockClient({ entrada: null })
       authenticate(mock)
       expect((await detalhe(req("GET"), context)).status).toBe(404)
+    })
+
+    it("verbete de outra cidade abre, mas salvar e sugerir são falsos", async () => {
+      // A leitura é nacional (migration 20260925161111): o 200 não promete
+      // escrita. Sem artigo publicado a sugestão já seria falsa; o que este
+      // teste fixa é a cidade — com artigo, ainda assim é falso.
+      const outraCidade = mockClient({
+        entrada: { ...entrada, locality_id: "00000000-0000-4000-8000-0000000000bb" },
+        artigo: { id: "artigo-1" },
+      })
+      authenticate(outraCidade)
+      const resposta = await detalhe(req("GET"), context)
+      expect(resposta.status).toBe(200)
+      const corpo = await json(resposta)
+      expect(corpo["podeSalvar"]).toBe(false)
+      expect(corpo["podeSugerir"]).toBe(false)
     })
 
     it("falha de leitura vira 503", async () => {

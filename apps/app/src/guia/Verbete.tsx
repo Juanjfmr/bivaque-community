@@ -100,7 +100,7 @@ export function Verbete({
   if (erro === "falhou") return <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
   if (verbete === null) return <EsqueletoDeLista linhas={3} />
 
-  const { entrada, podeSugerir } = verbete
+  const { entrada, podeSalvar, podeSugerir } = verbete
   return (
     <div data-verbete="guia" className="grid gap-4">
       {entrada.descricao === "" ? null : (
@@ -129,14 +129,21 @@ export function Verbete({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Botao
-          tom="tonal"
-          icone={entrada.salvo ? "bookmark" : "bookmark_border"}
-          disabled={ocupado}
-          onClick={() => void alternarSalvo()}
-        >
-          {entrada.salvo ? "Salvo no seu guia" : "Salvar no seu guia"}
-        </Botao>
+        {podeSalvar ? (
+          <Botao
+            tom="tonal"
+            icone={entrada.salvo ? "bookmark" : "bookmark_border"}
+            disabled={ocupado}
+            onClick={() => void alternarSalvo()}
+          >
+            {entrada.salvo ? "Salvo no seu guia" : "Salvar no seu guia"}
+          </Botao>
+        ) : (
+          <p className="text-sm text-(--on-surface-variant)">
+            Esta referência é de outra cidade. Salvar e sugerir ficam no guia da cidade em que você
+            mora.
+          </p>
+        )}
         {aviso === null ? null : (
           <p role="status" className="text-sm text-(--on-surface-variant)">
             {aviso}
@@ -144,44 +151,46 @@ export function Verbete({
         )}
       </div>
 
-      <section className="grid gap-2 border-t border-(--outline-variant) pt-4">
-        <h3 className="text-[17px]">Sugerir atualização</h3>
-        {podeSugerir ? (
-          <Formulario>
-            <Campo
-              id="sugestao-descricao"
-              rotulo="O que precisa mudar?"
-              valor={descricao}
-              aoMudar={setDescricao}
-              area
-              nota="A curadoria revisa antes de mudar o Guia."
-            />
-            <Campo
-              id="sugestao-referencia"
-              rotulo="Onde confirmar (opcional)"
-              valor={referencia}
-              aoMudar={setReferencia}
-            />
-            {erroDaSugestao === null ? null : (
-              <p role="alert" className="text-sm text-(--destructive)">
-                {erroDaSugestao}
-              </p>
-            )}
-            {sugestaoEnviada ? (
-              <p role="status" className="text-sm text-(--on-surface-variant)">
-                Sugestão enviada. Ela entra na fila da curadoria.
-              </p>
-            ) : null}
-            <Botao disabled={enviando} onClick={() => void enviarSugestao()}>
-              {enviando ? "Enviando…" : "Enviar sugestão"}
-            </Botao>
-          </Formulario>
-        ) : (
-          <p className="text-sm text-(--on-surface-variant)">
-            Esta referência ainda não tem ficha publicada para atualizar.
-          </p>
-        )}
-      </section>
+      {podeSalvar ? (
+        <section className="grid gap-2 border-t border-(--outline-variant) pt-4">
+          <h3 className="text-[17px]">Sugerir atualização</h3>
+          {podeSugerir ? (
+            <Formulario>
+              <Campo
+                id="sugestao-descricao"
+                rotulo="O que precisa mudar?"
+                valor={descricao}
+                aoMudar={setDescricao}
+                area
+                nota="A curadoria revisa antes de mudar o Guia."
+              />
+              <Campo
+                id="sugestao-referencia"
+                rotulo="Onde confirmar (opcional)"
+                valor={referencia}
+                aoMudar={setReferencia}
+              />
+              {erroDaSugestao === null ? null : (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  {erroDaSugestao}
+                </p>
+              )}
+              {sugestaoEnviada ? (
+                <p role="status" className="text-sm text-(--on-surface-variant)">
+                  Sugestão enviada. Ela entra na fila da curadoria.
+                </p>
+              ) : null}
+              <Botao disabled={enviando} onClick={() => void enviarSugestao()}>
+                {enviando ? "Enviando…" : "Enviar sugestão"}
+              </Botao>
+            </Formulario>
+          ) : (
+            <p className="text-sm text-(--on-surface-variant)">
+              Esta referência ainda não tem ficha publicada para atualizar.
+            </p>
+          )}
+        </section>
+      ) : null}
     </div>
   )
 }
