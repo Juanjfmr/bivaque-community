@@ -1,0 +1,63 @@
+# Card APP-E2E-PREEXISTENTES (05/11/2026), frente paralela ao RUN-004.
+task_id: RUN-006
+
+objective: >
+  A suíte E2E inteira do apps/app passa nos seis tamanhos e o CI roda a suíte
+  inteira, para que nenhuma regressão do app passe sem ser vista.
+
+authority:
+  - tools/backend-kanban card APP-E2E-PREEXISTENTES
+  - docs/LANCAMENTO.md (definição de pronto: provas no CI)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em 02/11/2026, a suíte inteira do apps/app (vite preview, seis tamanhos) teve
+    15 falhas iguais na linha de base e na fase 1: casca-visual (clique em
+    "Paulo R." no topo da conversa estoura 30 s em todos os tamanhos; o topo em
+    320), rolagem-foco (posições de rolagem restauradas diferentes em 320, 360 e
+    430) e componentes (a grade em 768). O job "App mobile-first" do CI roda só
+    um subconjunto.
+
+allowed_paths:
+  - apps/app/src
+  - apps/app/tests
+  - apps/app/e2e
+  - apps/app/playwright.config.ts
+  - apps/app/package.json
+  - .github/workflows
+  - tests/scope
+  - docs/agents/tasks/RUN-006.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - apagar, pular (skip/fixme) ou afrouxar asserção para ficar verde sem achar a causa
+  - mudar o desenho aprovado das telas para fazer teste passar
+  - tocar em apps/app/src/entrada e apps/app/src/previa-f01 (estão em correção no RUN-004)
+  - tocar no apps/web ou no banco
+  - push, merge ou force-push (o coordenador publica depois da revisão)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Cada falha reproduzida e com a causa escrita no card (dado da conversa, altura de lista, grade ou teste errado)."
+  - "Correção no código quando o defeito é do app; correção no teste só quando o teste está errado, com o motivo no commit."
+  - "Suíte inteira do apps/app verde nos seis tamanhos, rodada duas vezes seguidas sem falha intermitente."
+  - "O job App mobile-first do CI passa a rodar a suíte inteira (ou o card registra, com motivo, o que fica fora); teste de escopo trava isso."
+  - "Card atualizado com os números reais e o commit; status done só com tudo acima verde."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - suíte E2E inteira do apps/app pelo script do pacote, duas vezes
+  - npx pnpm@11.18.0 test:scope
+
+risk: cobertura de teste e CI do app
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
