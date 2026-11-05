@@ -85,16 +85,59 @@ body.ld-locked {
   overflow: hidden;
 }
 
-/* O preflight do Tailwind (`* { padding: 0 }`) vence o `:host` do Material na
-   cascata da árvore externa. Sem repor, o CTA perde os 12px/24px do componente
-   e o rótulo encosta na borda arredondada. As medidas saem dos tokens do próprio
-   botão, como no _shared.scss do @material/web. */
-.ld md-filled-button {
+/* O CTA é um link nativo (LANDING-CTA-ANTES-DO-REGISTRO) que mantém o visual
+   do botão preenchido do Material que ele substituiu: mesmas cores (os tokens
+   da Brasa), mesma medida de rótulo (14/20, peso 500, sem tracking, como o
+   componente media) e mesmo recorte cheio. A fonte é a herdada de `.ld`, a
+   mesma que o `:host` do Material aplicava. As medidas de espaço saem dos
+   tokens do botão, como no _shared.scss do @material/web. */
+.ld .ld-cta-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--md-filled-button-container-height);
   padding-block: calc(
     (var(--md-filled-button-container-height) - var(--md-filled-button-label-text-line-height)) /
     2
   );
   padding-inline: var(--md-filled-button-leading-space) var(--md-filled-button-trailing-space);
+  border-radius: 9999px;
+  background: var(--bv-brasa);
+  color: var(--bv-on-brasa);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: var(--md-filled-button-label-text-line-height);
+  text-decoration: none;
+  text-wrap: nowrap;
+  vertical-align: top;
+  user-select: none;
+}
+
+/* A camada de estado do Material continua: 8% no hover, 12% no toque. */
+.ld .ld-cta-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--bv-on-brasa);
+  opacity: 0;
+  transition: opacity 0.1s linear;
+  pointer-events: none;
+}
+
+.ld .ld-cta-btn:hover::after {
+  opacity: 0.08;
+}
+
+.ld .ld-cta-btn:active::after {
+  opacity: 0.12;
+}
+
+/* O anel de foco do Material: 3px, deslocado 2px, na cor secundária. */
+.ld .ld-cta-btn:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
 }
 
 /* Ícone: a fonte é a Material Symbols Outlined self-hosted. */
@@ -980,7 +1023,7 @@ body.ld-locked {
   justify-items: stretch;
 }
 
-.ld-sheet-acts md-filled-button {
+.ld-sheet-acts .ld-cta-btn {
   width: 100%;
 }
 
@@ -1071,7 +1114,7 @@ body.ld-locked {
     font-size: 17px;
   }
 
-  .ld-hero .ld-hero-copy > md-filled-button {
+  .ld-hero .ld-hero-copy > .ld-cta-btn {
     width: 100%;
   }
 
@@ -1124,7 +1167,7 @@ body.ld-locked {
     margin: 0;
   }
 
-  .ld-final md-filled-button {
+  .ld-final .ld-cta-btn {
     width: 100%;
   }
 
@@ -1160,7 +1203,7 @@ body.ld-locked {
     visibility: visible;
   }
 
-  .ld-bar md-filled-button {
+  .ld-bar .ld-cta-btn {
     width: 100%;
   }
 }

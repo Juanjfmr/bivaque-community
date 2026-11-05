@@ -1,6 +1,5 @@
 /* biome-ignore-all lint/performance/noImgElement: fotos finais em WebP com art direction, carregadas antes da captura da comparação (PORT-001) */
 import Link from "next/link"
-import { MaterialFilledButton } from "../components/material/filled-button"
 import { MaterialIcon } from "../components/material/material-icon"
 import { materialSymbols, notoSans, notoSerif } from "../fonts/landing-fonts"
 import "../brand-tokens.css"
@@ -10,8 +9,12 @@ import "./landing.css"
 
 // PORT-001 (R73): a landing v8 do protótipo (R71 e R72), palavra por palavra.
 // Este arquivo é servidor: nenhum texto da página vira estado de cliente. A
-// interatividade mora em <LandingBehavior />, e os CTAs no adaptador cliente do
-// Material Web, que recebe o texto como children daqui.
+// interatividade mora em <LandingBehavior />.
+//
+// O CTA é um `<a href>` de verdade (LANDING-CTA-ANTES-DO-REGISTRO): o
+// `md-filled-button` do Material só vira link depois de registrado no cliente,
+// e um toque antes disso não levava a lugar nenhum. A aparência continua a do
+// botão preenchido — os estilos moram em `.ld-cta-btn`, em landing.css.
 //
 // As fotos são <img> e não <Image /> de propósito: o topo usa <picture> para a
 // versão retrato (art direction que o next/image não faz sem getImageProps) e
@@ -99,11 +102,13 @@ const FAQ = [
 // A pergunta do CPF abre: é a dúvida que trava o cadastro.
 const FAQ_OPEN = 3
 
+// O CTA é um link nativo: navega no primeiro toque, antes de qualquer
+// JavaScript. O visual do botão preenchido do Material vem de `.ld-cta-btn`.
 function Cta({ id }: Readonly<{ id?: string }>) {
   return (
-    <MaterialFilledButton href="/signup" id={id}>
+    <Link className="ld-cta-btn" href="/signup" id={id}>
       Criar conta
-    </MaterialFilledButton>
+    </Link>
   )
 }
 

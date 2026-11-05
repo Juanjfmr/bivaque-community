@@ -61,9 +61,7 @@ export function LandingBehavior() {
 
     const sheetFocusables = () =>
       Array.from(
-        sheet.querySelectorAll<HTMLElement>(
-          'a[href],button,md-filled-button,[tabindex]:not([tabindex="-1"])',
-        ),
+        sheet.querySelectorAll<HTMLElement>('a[href],button,[tabindex]:not([tabindex="-1"])'),
       ).filter((node) => node.getClientRects().length > 0 && !node.hasAttribute("disabled"))
 
     const sync = () => {
@@ -191,8 +189,7 @@ export function LandingBehavior() {
         setMenu(false)
         return
       }
-      // Os CTAs do Material não passam por aqui: com `href`, o próprio `<a>`
-      // do shadow root navega sem depender desta ilha.
+      // Os CTAs são links nativos: navegam sozinhos, com ou sem esta ilha.
     }
 
     // Tab e Shift+Tab dão a volta dentro da folha: o último item volta ao
