@@ -1,5 +1,6 @@
 import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
+import { ipConfiavel } from "../../../../../lib/app-api/entrada-limite"
 import {
   clienteDeServicoOuNulo,
   conferirEscrita,
@@ -14,7 +15,6 @@ import {
   inviteCodeHash,
   inviteEmailDigest,
   inviteOriginDigest,
-  originFromForwardedFor,
 } from "../../../../../lib/convite/digest"
 import {
   acceptFamilyInviteCode,
@@ -101,9 +101,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const codeHash = inviteCodeHash(codigo)
   const emailDigest = inviteEmailDigest(email)
-  const originDigest = inviteOriginDigest(
-    originFromForwardedFor(request.headers.get("x-forwarded-for")),
-  )
+  const originDigest = inviteOriginDigest(ipConfiavel(request.headers))
 
   try {
     const preview = await previewFamilyInviteCode(servico, { codeHash, emailDigest, originDigest })

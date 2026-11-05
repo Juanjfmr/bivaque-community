@@ -1,4 +1,5 @@
-import { createHash, randomInt } from "node:crypto"
+import { createHash, createHmac, randomInt } from "node:crypto"
+import { normalizarIp } from "../app-api/entrada-limite"
 import { INVITE_CODE_ALPHABET, INVITE_CODE_LENGTH } from "./code"
 
 // PORT-006 (lote 4 da entrada) — o segredo do convite, só no servidor.
@@ -44,16 +45,25 @@ export function inviteEmailDigest(email: string): string {
   return sha256Hex(normalizeInviteEmail(email))
 }
 
-// O IP não é guardado: só o hash, e com prefixo de domínio para que o mesmo
-// endereço, em outro contexto, não produza o mesmo digest.
-export function inviteOriginDigest(origin: string | null | undefined): string {
-  const value = origin?.trim()
-  return sha256Hex(`bivaque-family-invite-origin:${value && value.length > 0 ? value : "unknown"}`)
+// A origem do convite é o IP confiável (o que a plataforma escreve), reduzido
+// ao /64 quando IPv6 e hasheado com HMAC-SHA256 do mesmo segredo do limitador.
+// O banco guarda só o digest: um dump não devolve IP nenhum, e a mesma origem em
+// outro contexto não produz o mesmo valor (prefixo `convite:`).
+const SEGREDO_DE_DESENVOLVIMENTO = "bivaque-entrada-desenvolvimento"
+
+function segredoDaOrigem(): string {
+  const configurado = process.env["BIVAQUE_LIMITER_PEPPER"]
+  if (configurado !== undefined && configurado.trim() !== "") return configurado
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("BIVAQUE_LIMITER_PEPPER is required in production")
+  }
+  return SEGREDO_DE_DESENVOLVIMENTO
 }
 
-// A primeira entrada de `x-forwarded-for` é a origem do cliente; o resto é
-// cadeia de proxy e não identifica ninguém.
-export function originFromForwardedFor(header: string | null | undefined): string | null {
-  const first = header?.split(",")[0]?.trim()
-  return first && first.length > 0 ? first : null
+export function inviteOriginDigest(ip: string | null | undefined): string {
+  const normalizado =
+    ip !== null && ip !== undefined && ip.trim() !== "" ? normalizarIp(ip.trim()) : "desconhecido"
+  return createHmac("sha256", segredoDaOrigem())
+    .update(`bivaque-family-invite-origin:${normalizado}`)
+    .digest("hex")
 }

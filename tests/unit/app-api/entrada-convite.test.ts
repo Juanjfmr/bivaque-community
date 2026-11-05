@@ -197,6 +197,15 @@ describe("POST /api/app/entry/invite", () => {
       originDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
       userId: PESSOA.id,
     })
+    expect(consultarConsentimento).toHaveBeenCalledWith("has_accepted_consent", {
+      p_user_id: PESSOA.id,
+      p_consent_version: 2,
+      p_code_of_conduct_version: 2,
+    })
+    expect(registrarMarcador).toHaveBeenCalledWith(
+      { user_id: PESSOA.id, versao: 2, etapa: "interesses", estado: {} },
+      { onConflict: "user_id" },
+    )
   })
 
   it("traduz o erro de nome do banco sem vazar detalhe", async () => {

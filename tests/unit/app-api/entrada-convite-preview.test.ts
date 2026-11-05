@@ -98,20 +98,28 @@ describe("POST /api/app/entry/invite/preview", () => {
     })
   })
 
-  it("limite de tentativas vira 429 e indisponível vira 503", async () => {
+  it("limite de tentativas vira 429 e indisponível vira 503, sem ler o outbox", async () => {
     prever.mockResolvedValueOnce({ status: "rate_limited" })
     expect((await POST(requisicao({ cabecalho: CABECALHO }))).status).toBe(429)
+    expect(mockOutboxLimite).not.toHaveBeenCalled()
 
     prever.mockRejectedValueOnce(new Error("boom"))
     const indisponivel = await POST(requisicao({ cabecalho: CABECALHO }))
     expect(indisponivel.status).toBe(503)
     expect(await indisponivel.json()).toEqual({ erro: "convite-indisponivel" })
+    expect(mockOutboxLimite).not.toHaveBeenCalled()
   })
 
-  it("e-mail de outro convite é 400 com o motivo próprio", async () => {
+  it("convite indisponível e e-mail de outro convite são 400 sem ler o outbox", async () => {
+    prever.mockResolvedValueOnce({ status: "unavailable" })
+    const invalido = await POST(requisicao({ cabecalho: CABECALHO }))
+    expect(invalido.status).toBe(400)
+    expect(await invalido.json()).toEqual({ erro: "convite-invalido" })
+
     prever.mockResolvedValueOnce({ status: "email_mismatch" })
-    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
-    expect(resposta.status).toBe(400)
-    expect(await resposta.json()).toEqual({ erro: "email-nao-confere" })
+    const outro = await POST(requisicao({ cabecalho: CABECALHO }))
+    expect(outro.status).toBe(400)
+    expect(await outro.json()).toEqual({ erro: "email-nao-confere" })
+    expect(mockOutboxLimite).not.toHaveBeenCalled()
   })
 })

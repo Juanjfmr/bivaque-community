@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server"
+import { ipConfiavel } from "../../../../../../lib/app-api/entrada-limite"
 import {
   clienteDeServicoOuNulo,
   conferirPorta,
@@ -12,7 +13,6 @@ import {
   inviteCodeHash,
   inviteEmailDigest,
   inviteOriginDigest,
-  originFromForwardedFor,
 } from "../../../../../../lib/convite/digest"
 import { previewFamilyInviteCode } from "../../../../../../lib/convite/provision"
 import { log } from "../../../../../../lib/logger"
@@ -59,9 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (servico === null) return respostaIndisponivel(request)
 
   const codeHash = inviteCodeHash(codigo)
-  const originDigest = inviteOriginDigest(
-    originFromForwardedFor(request.headers.get("x-forwarded-for")),
-  )
+  const originDigest = inviteOriginDigest(ipConfiavel(request.headers))
 
   try {
     const preview = await previewFamilyInviteCode(servico, {
