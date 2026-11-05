@@ -372,6 +372,10 @@
   overflow-x: clip;
   padding: 0 16px calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
   overscroll-behavior: contain;
+  /* A rolagem é da entrada, restaurada por `lib/navegacao`: a âncora do
+     navegador ajustava a posição restaurada quando o conteúdo acima assentava
+     (fontes, listas) e a tela abria em outro ponto (+100 px em 320). */
+  overflow-anchor: none;
 }
 
 /* A navegação: barra de baixo no celular e coluna da esquerda a partir de
