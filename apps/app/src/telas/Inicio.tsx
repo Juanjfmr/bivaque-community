@@ -17,10 +17,10 @@ import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
 
 const ATALHOS: readonly { rota: string; icone: NomeDeIcone; rotulo: string }[] = [
-  { rota: "negocios", icone: "storefront", rotulo: "Neg?cios" },
+  { rota: "negocios", icone: "storefront", rotulo: "Negócios" },
   { rota: "desapegos", icone: "sell", rotulo: "Desapegos" },
-  { rota: "imoveis", icone: "apartment", rotulo: "Im?veis" },
-  { rota: "comunidade", icone: "volunteer_activism", rotulo: "Indica??es" },
+  { rota: "imoveis", icone: "apartment", rotulo: "Imóveis" },
+  { rota: "comunidade", icone: "volunteer_activism", rotulo: "Indicações" },
 ]
 
 export function Inicio() {
@@ -101,11 +101,11 @@ export function Inicio() {
           className="grid min-w-0 gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start"
         >
           <div className="bv-home-principal min-w-0">
-            <Secao titulo="Oportunidades perto de voc?">
+            <Secao titulo="Oportunidades perto de você">
               {dados.anuncios.length === 0 ? (
                 <EstadoVazio
                   titulo="As primeiras oportunidades aparecem aqui"
-                  texto="Quando algu?m publicar nesta cidade, voc? poder? consultar e entrar em contato."
+                  texto="Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato."
                   icone="sell"
                 />
               ) : (
@@ -130,7 +130,7 @@ export function Inicio() {
           </div>
           <aside aria-label="Comunidade na cidade" className="min-w-0 lg:sticky lg:top-16">
             <Secao
-              titulo="Pr?ximo encontro"
+              titulo="Próximo encontro"
               acoes={
                 <Botao tom="texto" onClick={() => void navegacao.irPara("agenda")}>
                   Agenda
@@ -140,7 +140,7 @@ export function Inicio() {
               {dados.eventos.length === 0 ? (
                 <EstadoVazio
                   titulo="Nenhum encontro agendado"
-                  texto="Os pr?ximos encontros aparecem aqui."
+                  texto="Os próximos encontros aparecem aqui."
                   icone="event"
                 />
               ) : (
@@ -170,7 +170,7 @@ export function Inicio() {
               {dados.perguntas.length === 0 ? (
                 <EstadoVazio
                   titulo="Uma pergunta pode ajudar muita gente"
-                  texto="Compartilhe uma d?vida com sua cidade."
+                  texto="Compartilhe uma dúvida com sua cidade."
                   icone="forum"
                 />
               ) : (

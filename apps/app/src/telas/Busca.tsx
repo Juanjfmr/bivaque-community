@@ -14,9 +14,9 @@ import { useCasca } from "@/src/contexto/casca"
 
 const FILTROS: readonly ItemDeFiltro[] = [
   { id: "all", rotulo: "Tudo" },
-  { id: "anuncios", rotulo: "An?ncios" },
-  { id: "negocios", rotulo: "Neg?cios" },
-  { id: "perguntas", rotulo: "Indica??es" },
+  { id: "anuncios", rotulo: "Anúncios" },
+  { id: "negocios", rotulo: "Negócios" },
+  { id: "perguntas", rotulo: "Indicações" },
   { id: "grupos", rotulo: "Grupos" },
   { id: "guia", rotulo: "Guia" },
 ]
@@ -51,11 +51,11 @@ export function Busca() {
     dados === null
       ? []
       : [
-          { chave: "anuncios", titulo: "An?ncios", rota: "anuncio", itens: dados.anuncios },
-          { chave: "negocios", titulo: "Neg?cios", rota: "negocio", itens: dados.negocios },
+          { chave: "anuncios", titulo: "Anúncios", rota: "anuncio", itens: dados.anuncios },
+          { chave: "negocios", titulo: "Negócios", rota: "negocio", itens: dados.negocios },
           {
             chave: "perguntas",
-            titulo: "Indica??es e respostas",
+            titulo: "Indicações e respostas",
             rota: "pergunta",
             itens: dados.perguntas,
           },
@@ -68,7 +68,7 @@ export function Busca() {
     <section data-tela="busca" className="grid gap-2">
       <CabecaDePagina
         titulo={`Buscar em ${dados?.cidade ?? casca.cidade}`}
-        subtitulo="Encontre oportunidades, neg?cios e respostas da comunidade."
+        subtitulo="Encontre oportunidades, negócios e respostas da comunidade."
       />
       <ChipsDeFiltro
         itens={FILTROS}
@@ -79,7 +79,7 @@ export function Busca() {
       />
       {termo.length < 2 ? (
         <EstadoVazio
-          titulo="O que voc? procura?"
+          titulo="O que você procura?"
           texto="Digite pelo menos duas letras para buscar na sua cidade."
           icone="search"
         />
@@ -89,8 +89,8 @@ export function Busca() {
         <EsqueletoDeLista linhas={4} />
       ) : total === 0 ? (
         <EstadoVazio
-          titulo={`Nada sobre ?${termo}?`}
-          texto="Tente termos mais simples ou pe?a uma indica??o ? comunidade."
+          titulo={`Nada sobre “${termo}”`}
+          texto="Tente termos mais simples ou peça uma indicação à comunidade."
           icone="search_off"
         />
       ) : (
