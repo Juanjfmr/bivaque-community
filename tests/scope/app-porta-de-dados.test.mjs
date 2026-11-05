@@ -151,3 +151,70 @@ test("as rotas de eventos têm a função única de UUID", () => {
     )
   }
 })
+
+// F08 / RUN-009: o guia copiou o molde do F05 — e a cópia precisa manter as
+// mesmas garantias, não só os mesmos nomes.
+
+const TELAS_DO_GUIA = ["apps/app/src/telas/Guia.tsx", "apps/app/src/guia/Verbete.tsx"]
+
+test("as telas do guia leem pela porta da jornada, nunca pela demonstração", () => {
+  for (const tela of TELAS_DO_GUIA) {
+    const fonte = read(...tela.split("/"))
+    assert.doesNotMatch(fonte, /dadosDoApp/, `${tela} ainda usa dadosDoApp`)
+    assert.doesNotMatch(fonte, /from "@\/lib\/dados"$/m, `${tela} ainda importa a demonstração`)
+    assert.match(fonte, /from "@\/lib\/dados\/guia"/, `${tela} não lê pela porta do guia`)
+  }
+})
+
+test("as rotas do guia usam a sessão sob RLS, nunca o cliente de serviço", () => {
+  const rotas = arquivos("apps/web/app/api/app/guia").filter((caminho) =>
+    caminho.endsWith("route.ts"),
+  )
+  assert.ok(rotas.length >= 4, `esperava as rotas do guia, achei ${rotas.length}`)
+  for (const caminho of rotas) {
+    const fonte = ler(caminho)
+    assert.doesNotMatch(
+      fonte,
+      /clienteDeServicoOuNulo|service_role/,
+      `${relativo(caminho)} usa privilégio onde a RLS da sessão basta`,
+    )
+    assert.match(
+      fonte,
+      /exigirSessao/,
+      `${relativo(caminho)} não resolve a sessão pelo encanamento`,
+    )
+    assert.match(fonte, /opcoesDoApp/, `${relativo(caminho)} não responde ao preflight do contrato`)
+  }
+})
+
+test("toda escrita das rotas do guia passa pela conferência de CSRF", () => {
+  const escritas = arquivos("apps/web/app/api/app/guia").filter((caminho) =>
+    /export async function (POST|PUT|PATCH|DELETE)/.test(ler(caminho)),
+  )
+  assert.ok(escritas.length >= 2, `esperava as escritas do guia, achei ${escritas.length}`)
+  for (const caminho of escritas) {
+    assert.match(
+      ler(caminho),
+      /conferirEscrita\(/,
+      `${relativo(caminho)} escreve sem conferir a porta`,
+    )
+  }
+})
+
+test("as rotas do guia reusam a cidade e o id do encanamento do F05", () => {
+  for (const caminho of arquivos("apps/web/app/api/app/guia").filter((c) =>
+    c.endsWith("route.ts"),
+  )) {
+    const fonte = ler(caminho)
+    assert.doesNotMatch(
+      fonte,
+      /from\("locality_memberships"\)/,
+      `${relativo(caminho)} lê a cidade por conta própria em vez de _comum.ts`,
+    )
+    assert.doesNotMatch(
+      fonte,
+      /const UUID =/,
+      `${relativo(caminho)} redefine o regex de UUID em vez de usar _comum.ts`,
+    )
+  }
+})

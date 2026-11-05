@@ -1411,6 +1411,19 @@ values
   )
 on conflict (id) do nothing;
 
+-- RUN-009: uma ficha publicada para o caminho de sucesso da sugestão no app.
+-- A escola fica sem artigo de propósito: a tela precisa mostrar os dois
+-- estados (com formulário e com a frase de "ainda não tem ficha").
+insert into public.guide_articles (entry_id, title, summary, status, reviewed_at)
+values (
+  'a0000000-0000-4000-8000-000000000003',
+  'Transportadora Ajuricaba',
+  'Mudanças locais e interestaduais, com avaliação de volume antes do fechamento.',
+  'published',
+  now()
+)
+on conflict (entry_id) do nothing;
+
 -- ── Guia de chegada: fila de curadoria pendente (desenvolvimento) ──────────
 -- A leitura pública enxerga apenas status = approved; estes dois itens
 -- exercitam a fila do operador sem aparecer para membros.
