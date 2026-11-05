@@ -6259,7 +6259,7 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
+      "status": "done",
       "description": "Em 02/11, rodando a suíte inteira do apps/app (vite preview, seis tamanhos), 15 casos falham igualmente na linha de base feat/f01-regua-nextdoor (e2967be3/8df34e8c) e na fase 1: casca-visual (o topo da conversa: clique em Paulo R. estoura 30 s em todos os tamanhos; o topo em 320), rolagem-foco (posições de rolagem restauradas diferentes do esperado em 320, 360 e 430) e componentes (a grade em 768). O job App mobile-first do CI roda só um subconjunto, por isso ninguém viu.",
       "checklist": [
         "Reproduzir cada um e achar a causa (dados da conversa, altura de lista, grade)",
@@ -6277,11 +6277,42 @@
       ],
       "blockers": [],
       "updatedAt": "2026-11-05",
-      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
+      "sourceRevision": "45c0ccb1",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte.",
-        "05/11, PR #129 (nenhuma alteração em apps/app): App Visual Smoke 42052189989 tentativa 1 teve 1 falha em r72-mobile-p1 corpoCabe a 360 (275 pass/6 skip); tentativa 2 da mesma fonte passou. Falha inicial preservada em .visual/run-130/ci-app-visual-failed.log; não declarada como correção do aplicativo."
+        "05/11, PR #129 (nenhuma alteração em apps/app): App Visual Smoke 42052189989 tentativa 1 teve 1 falha em r72-mobile-p1 corpoCabe a 360 (275 pass/6 skip); tentativa 2 da mesma fonte passou. Falha inicial preservada em .visual/run-130/ci-app-visual-failed.log; não declarada como correção do aplicativo.",
+        "05/11, worktree fix/app-e2e-preexistentes (base 29fcc8f8): as 15 falhas do card reproduzidas na suíte inteira do apps/app, nas mesmas seis larguras — casca-visual (o clique em Paulo R. estoura 30 s em 320/360/375/430/768/1440; o título do topo em 320), rolagem-foco (320, 360 e 430) e componentes (a grade em 768).",
+        "Causa de cada uma: (1) casca-visual/Paulo R. — as iniciais do avatar entravam no nome acessível do botão (\"PR Paulo R. …\"), então o seletor por nome não achava a linha; (2) casca-visual/320 — o título tinha 68 px para uma palavra de 70 px, e um nome de uma palavra só não descia de linha; (3) rolagem-foco — a âncora de rolagem do navegador ajustava o #conteudo depois da restauração (+100 px em 320, +48 px em 430) e, em 320/360, o painel sticky da prova com 444 px cobria a lista e o clique era corrigido pelo navegador, salvando outra posição; (4) componentes/768 — o teste carregava as faixas do protótipo (3 colunas em 720), e `.bv-grade` foi trocada em 26/10 para 2 colunas até 1080.",
+        "05/11: suíte inteira do apps/app verde duas vezes seguidas, uma passada por tamanho na fila de provas: 306 (320) + 306 (360) + 318 (375) + 306 (430) + 306 (768) + 312 (1440) = 1854 casos por passada. Nenhum skip novo.",
+        "05/11: `--filter @bivaque/app test` 127 testes; `test:scope` 148 (inclui o novo `tests/scope/app-suite-ci.test.mjs`); `gate --fast` verde.",
+        "CI: o job App mobile-first passou a chamar `pnpm --filter @bivaque/app test:e2e` (config inteiro, six sizes) e o teste de escopo recusa recorte por lista de specs ou por projeto; tempo do job 20 → 60 min.",
+        "Fora de allowed_paths, registrado e não alterado: `apps/app/components/bivaque/grade.tsx` ainda documenta as faixas antigas (480/720/1200) no comentário da peça, e as imagens de captura em `apps/app/artifacts/visual-mobile/` (tracked) mudam com o topo de 320 e o Criar — restauradas, não commitadas."
+      ],
+      "completedAt": "2026-11-05"
+    },
+    {
+      "id": "APP-SOBREPOSICAO-ENTRADA-CORRIDA",
+      "title": "Abrir sobreposição no primeiro quadro pode ser apagado pelo registro da entrada",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Em duas passadas da suíte inteira do apps/app (05/11, 768 e 375), o caso `casca.spec.ts:118` (trocar de cidade) estourou 30 s esperando `[data-campo=\"cidade\"]`: o diálogo não abria. O `materializarEntrada` (`apps/app/lib/navegacao/react.tsx`) decide pelo estado do render; se uma sobreposição é aberta entre o primeiro quadro e o `replace` dele, esse `replace` grava `entradaPadrao` por cima e apaga a sobreposição. A guarda correta é decidir dentro do transform (`chave === CHAVE_SEM_REGISTRO`), e ela foi escrita e revertida nesta frente porque `apps/app/lib` está fora dos allowed_paths do RUN-006.",
+      "checklist": [
+        "Reproduzir sob carga: suíte inteira repetida até o timeout de `casca.spec.ts:118` aparecer com trace",
+        "Gravar a entrada só quando ela ainda não existe, decidindo no instante da escrita (CHAVE_SEM_REGISTRO)",
+        "Prova: o caso de trocar de cidade em 768 e 375, e a suíte inteira duas vezes"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/e2e/casca.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "45c0ccb1",
+      "links": ["docs/LANCAMENTO.md", "apps/app/lib/navegacao/react.tsx"],
+      "proof": [
+        "05/11: 2 falhas em 5 passadas completas (768 e 375), nenhuma reproduzida em isolamento (`--repeat-each=15`) nem nas duas passadas finais com as correções do RUN-006.",
+        "Mecanismo lido no código: `materializarEntrada` usa `temEntrada(estado)` do render; a escrita é assíncrona e pode vencer a de `abrir()`."
       ]
     },
     {

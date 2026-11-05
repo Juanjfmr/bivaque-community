@@ -17,7 +17,7 @@ jobs:
   app-visual-smoke:
     name: App mobile-first / 320-360-375-430-768-1440
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -43,14 +43,10 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Verify shared visual components
-        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/base-visual.spec.ts tests/e2e/mobile-first.spec.ts tests/e2e/r72-mobile-p0.spec.ts tests/e2e/r72-mobile-p1.spec.ts tests/e2e/menu-criar-fluxos.spec.ts tests/e2e/anuncio-contato.spec.ts tests/e2e/conversas-grupos-mobile.spec.ts tests/e2e/pr116-historico.spec.ts tests/e2e/home-vitrine-21st.spec.ts --trace=retain-on-failure
-
-      - name: Capture app screens (not proof mode)
-        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/visual-capture.spec.ts
-
-      - name: Capture real mobile conversations and groups
-        run: pnpm --dir apps/app exec playwright test --config playwright.config.ts tests/e2e/conversas-grupos-visual.spec.ts
+      - name: Verify the app suite, six sizes
+        # A suíte inteira, pelo script do pacote: spec nova entra sozinha. A
+        # lista fixa de antes deixou 15 casos vermelhos passarem batido.
+        run: pnpm --filter @bivaque/app test:e2e --trace=retain-on-failure
 
       - name: Save test and screenshot evidence
         if: always()
