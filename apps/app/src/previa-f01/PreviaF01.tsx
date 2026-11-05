@@ -8,6 +8,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Botao } from "@/src/pecas/pecas"
+import type { DadosDaPrevia } from "./entrada-dados"
 import { InicioComPrimeirosPassos } from "./etapas-comunidade"
 import type { PropsDaEtapa } from "./etapas-conta"
 import {
@@ -16,6 +17,7 @@ import {
   FLAGS_PADRAO,
   type Flags,
   fracaoDoProgresso,
+  MINIMO_PARA_EXIBIR,
   progressoInicial,
   receberVerificacao,
   voltar as voltarEtapa,
@@ -25,15 +27,44 @@ import {
   apagarProgresso,
   CENARIOS,
   type Cenario,
+  CIDADES,
+  cidadePorNome,
   consultarVinculo,
   eventosDoFunil,
   lerProgresso,
   ouvirFunil,
+  perguntasDoMomento,
   registrarEvento,
   salvarProgresso,
+  sugerirGrupos,
 } from "./servidor-simulado"
 import { TELAS_DA_ENTRADA } from "./telas"
 import "./previa-f01.css"
+
+/** O conteúdo simulado que a prévia injeta nas etapas compartilhadas. */
+function dadosDaPrevia(progresso: ReturnType<typeof progressoInicial>): DadosDaPrevia {
+  const cidade = cidadePorNome(progresso.cidade)
+  return {
+    cidades: CIDADES.map((item) => ({ valor: item.nome, rotulo: `${item.nome}, ${item.uf}` })),
+    cidade:
+      cidade === null
+        ? null
+        : {
+            nome: cidade.nome,
+            uf: cidade.uf,
+            comGente: cidade.membros >= MINIMO_PARA_EXIBIR,
+            perguntas: perguntasDoMomento(cidade, progresso.momento),
+            encontro: cidade.encontro,
+          },
+    sugestoes: sugerirGrupos(progresso.interesses, progresso.momento).map(({ grupo, motivo }) => ({
+      id: grupo.id,
+      nome: grupo.nome,
+      membros: grupo.membros,
+      selo: grupo.selo,
+      motivo,
+    })),
+  }
+}
 
 /**
  * A prévia clicável do F01 novo, com dados simulados. Só existe no servidor de
@@ -104,11 +135,24 @@ export function PreviaF01() {
 
   const conteudo =
     progresso.etapa === "inicio" ? (
-      <InicioComPrimeirosPassos progresso={progresso} flags={flags} aoRecomecar={recomecar} />
+      <InicioComPrimeirosPassos
+        progresso={progresso}
+        flags={flags}
+        aoRecomecar={recomecar}
+        previa={dadosDaPrevia(progresso)}
+      />
     ) : (
       (() => {
         const Tela = TELAS_DA_ENTRADA[progresso.etapa]
-        return <Tela progresso={progresso} concluir={concluir} voltar={voltar} erro={erro} />
+        return (
+          <Tela
+            progresso={progresso}
+            concluir={concluir}
+            voltar={voltar}
+            erro={erro}
+            previa={dadosDaPrevia(progresso)}
+          />
+        )
       })()
     )
 
