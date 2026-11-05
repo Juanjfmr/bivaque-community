@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
@@ -10,10 +10,9 @@ import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
 import { type AgendaDaCidade, lerAgenda } from "@/lib/dados/eventos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
-import { acessoNegado, mensagemDaFalha, sessaoVencida } from "@/src/eventos/formulario"
+import { acessoNegado, foiAbortada, mensagemDaFalha, sessaoVencida } from "@/src/eventos/formulario"
 
 /**
  * A agenda da cidade, do banco (F05 / ADR-20261105).
@@ -27,8 +26,10 @@ import { acessoNegado, mensagemDaFalha, sessaoVencida } from "@/src/eventos/form
  * "Ver mais encontros" em vez de cortar o resto em silêncio.
  */
 export function Agenda() {
-  const casca = useCasca()
   const navegacao = useNavegacao()
+  // Uma sessão de rede por tela: desmontar cancela o que ainda estava a caminho.
+  const [controle] = useState(() => new AbortController())
+  const montada = useRef(true)
   const [dados, setDados] = useState<AgendaDaCidade | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
@@ -37,6 +38,14 @@ export function Agenda() {
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
+
+  useEffect(() => {
+    montada.current = true
+    return () => {
+      montada.current = false
+      controle.abort()
+    }
+  }, [controle])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
@@ -61,25 +70,33 @@ export function Agenda() {
     setCarregandoMais(true)
     setErroAoCarregarMais(null)
     try {
-      const proxima = await lerAgenda({ depois: dados.proximo })
+      const proxima = await lerAgenda({ depois: dados.proximo, signal: controle.signal })
       setDados({
         encontros: [...dados.encontros, ...proxima.encontros],
         proximo: proxima.proximo,
+        cidade: proxima.cidade || dados.cidade,
       })
     } catch (falha: unknown) {
-      setErroAoCarregarMais(mensagemDaFalha(falha, "agenda"))
+      if (!foiAbortada(falha)) setErroAoCarregarMais(mensagemDaFalha(falha, "agenda"))
     } finally {
-      setCarregandoMais(false)
+      if (montada.current) setCarregandoMais(false)
     }
   }
 
   const carregando = dados === null && erro === null
+  // A cidade do cabeçalho é a do vínculo `current`, devolvida pela rota — não a
+  // cidade da demonstração que o resto do app ainda mostra na casca.
+  const cidadeDaAgenda = dados?.cidade ?? ""
 
   return (
     <section data-tela="agenda" className="grid gap-2">
       <CabecaDePagina
         titulo="Agenda da cidade"
-        subtitulo={`Encontros da comunidade de ${casca.cidade}.`}
+        subtitulo={
+          cidadeDaAgenda === ""
+            ? "Encontros da sua cidade."
+            : `Encontros da comunidade de ${cidadeDaAgenda}.`
+        }
         acao={
           carregando ? undefined : (
             <Botao tom="tonal" icone="add" onClick={() => setCriando(true)}>

@@ -57,15 +57,18 @@ describe("agenda da cidade", () => {
         },
       ],
       proximo: "2026-11-10T12:00:00.000Z|e1",
+      cidade: "Manaus",
     })
     const agenda = await lerAgenda()
     expect(chamada(buscar).caminho).toBe("/api/app/eventos")
     expect(agenda.encontros[0]?.titulo).toBe("Café da manhã")
     expect(agenda.proximo).toBe("2026-11-10T12:00:00.000Z|e1")
+    // O nome da cidade vem da rota (vínculo current), não da demonstração.
+    expect(agenda.cidade).toBe("Manaus")
   })
 
   it("devolve o cursor opaco sem interpretar", async () => {
-    const buscar = responder({ eventos: [], proximo: null })
+    const buscar = responder({ eventos: [], proximo: null, cidade: "Manaus" })
     const agenda = await lerAgenda({ depois: "2026-11-10T12:00:00.000Z|e1" })
     expect(chamada(buscar).caminho).toBe(
       "/api/app/eventos?depois=2026-11-10T12%3A00%3A00.000Z%7Ce1",

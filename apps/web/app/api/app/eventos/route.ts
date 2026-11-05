@@ -12,7 +12,7 @@ import {
   validateEventForm,
 } from "../../../../lib/events/event-form"
 import { log } from "../../../../lib/logger"
-import { cidadeDaSessao, ehUuid } from "./_comum"
+import { caminhoDeCapaValido, cidadeDaSessao, ehUuid, interpretarErroDoBanco } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -20,11 +20,30 @@ export const dynamic = "force-dynamic"
 const LIMITE_PADRAO = 20
 const LIMITE_MAXIMO = 50
 
+/**
+ * Instante do cursor, reescrito antes de entrar no filtro.
+ *
+ * A âncora no fim é o que impede um valor com `"`, `,`, `(` ou `)` de virar
+ * sintaxe do PostgREST: só passa o formato que o servidor emite. A saída é
+ * reconstruída em UTC e **mantém os microssegundos** — `toISOString()` cortaria
+ * para milissegundos, o `eq` do desempate nunca casaria e a virada da página
+ * repetiria o último encontro.
+ */
+function instanteDoCursor(valor: string): string | null {
+  const casado = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(\.\d{1,6})?(Z|[+-]00:00)$/.exec(valor)
+  if (!casado) return null
+  const [, dia, hora, fracao = ""] = casado
+  const canonico = `${dia}T${hora}${fracao}Z`
+  return Number.isFinite(Date.parse(canonico)) ? canonico : null
+}
+
 /** O cursor é opaco para quem chama: `comecaEm|id`, os dois campos da ordenação. */
 function lerCursor(valor: string): { comecaEm: string; id: string } | null {
-  const [comecaEm, id, ...resto] = valor.split("|")
-  if (resto.length > 0 || comecaEm === undefined || id === undefined) return null
-  if (!Number.isFinite(Date.parse(comecaEm)) || !/^\d{4}-\d\d-\d\dT/.test(comecaEm)) return null
+  const separador = valor.lastIndexOf("|")
+  if (separador <= 0) return null
+  const comecaEm = instanteDoCursor(valor.slice(0, separador))
+  const id = valor.slice(separador + 1)
+  if (comecaEm === null) return null
   return ehUuid(id) ? { comecaEm, id } : null
 }
 
@@ -54,7 +73,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .from("events")
       .select("id,title,venue,starts_at,status")
       .eq("locality_id", cidade.id)
+      // Cancelado e concluído não entram na agenda — a mesma régua da web antiga
+      // (`events/page.tsx`, RECON-007 A.2).
       .neq("status", "completed")
+      .neq("status", "cancelled")
     // Keyset composto: dois encontros no mesmo horário não se perdem nem se
     // repetem na virada da página — o id desempata, na mesma ordem do `order`.
     query =
@@ -79,7 +101,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const ultimo = eventos.at(-1)
     const proximo =
       eventos.length === limite && ultimo !== undefined ? `${ultimo.comecaEm}|${ultimo.id}` : null
-    return responder(request, { eventos, proximo }, 200)
+    // O nome da cidade vem daqui: a tela não pode anunciar a cidade da
+    // demonstração enquanto lista os encontros do vínculo `current`.
+    return responder(request, { eventos, proximo, cidade: cidade.nome }, 200)
   } catch (error) {
     log.error("app eventos: read failed", {
       error: error instanceof Error ? error.message : "unknown",
@@ -113,6 +137,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const mensagem = validateEventForm(corpo.input)
   if (mensagem) return responder(request, { erro: "dados-invalidos", mensagem }, 400)
   const userId = auth.sessao.usuario.id
+  if (!caminhoDeCapaValido(corpo.input.coverPath, userId)) {
+    return responder(
+      request,
+      { erro: "dados-invalidos", mensagem: "A capa precisa estar na sua pasta de fotos." },
+      400,
+    )
+  }
   try {
     const client = auth.sessao.cliente
     const cidade = await cidadeDaSessao(client, userId)
@@ -127,8 +158,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
       .select("id")
       .single()
-    if (result.error?.code === "42501") return responder(request, { erro: "recusado" }, 403)
-    if (result.error || !result.data) throw result.error ?? new Error("insert without result")
+    if (result.error) {
+      const falha = interpretarErroDoBanco(result.error.code, {
+        recusado: "Sua conta não pode criar encontros nesta cidade.",
+        dados: "Revise os dados do encontro: algo não é aceito.",
+      })
+      if (falha.status !== 503) return responder(request, falha.corpo, falha.status)
+      throw result.error
+    }
+    if (!result.data) throw new Error("insert without result")
     return responder(request, { evento: { id: result.data.id } }, 201)
   } catch (error) {
     log.error("app eventos: create failed", {

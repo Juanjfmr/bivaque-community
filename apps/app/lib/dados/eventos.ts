@@ -20,6 +20,8 @@ export type EncontroDaAgenda = Readonly<{
 
 export type AgendaDaCidade = Readonly<{
   encontros: readonly EncontroDaAgenda[]
+  /** Cidade do vínculo `current` de quem está na sessão — a que a lista mostra. */
+  cidade: string
   /**
    * Cursor opaco da próxima página (`comecaEm|id`). Opaco de propósito: a ordem
    * é do servidor, e a tela só devolve o que recebeu.
@@ -131,6 +133,7 @@ export async function lerAgenda(
       }
     }),
     proximo: texto(corpo["proximo"]),
+    cidade: texto(corpo["cidade"]) ?? "",
   }
 }
 
