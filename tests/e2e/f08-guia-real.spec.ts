@@ -36,6 +36,7 @@ const ESCOLA_SEMEADA = "Escola Modelo do Centro"
 const HOSPITAL_SEMEADO = "Hospital de Referência da Cidade"
 const TRANSPORTADORA_SEMEADA = "Transportadora Ajuricaba"
 const HOSPITAL_ID = "a0000000-0000-4000-8000-000000000002"
+const TRANSPORTADORA_ID = "a0000000-0000-4000-8000-000000000003"
 
 /** Persona semeada de outra cidade (Rio): não enxerga o guia de Manaus. */
 const MEMBRO_DE_OUTRA_CIDADE = "membro-rio@bivaque.example.invalid"
@@ -197,6 +198,31 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
       page.getByText("Esta referência ainda não tem ficha publicada para atualizar."),
     ).toBeVisible()
     await expect(page.getByLabel("O que precisa mudar?")).toHaveCount(0)
+  })
+
+  test("sugestão no verbete com ficha publicada grava e confirma", async ({ page, context }) => {
+    test.setTimeout(120_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+
+    await page.goto("/app/guia")
+    await abrirVerbete(page, TRANSPORTADORA_SEMEADA)
+    await page.getByLabel("O que precisa mudar?").fill("O telefone do balcão mudou.")
+    await page.getByRole("button", { name: "Enviar sugestão" }).click()
+    await expect(
+      page.getByText("Sugestão enviada. Ela entra na fila da curadoria."),
+      "o envio precisa terminar com a confirmação, não com o formulário limpo em silêncio",
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByLabel("O que precisa mudar?")).toHaveValue("")
+
+    // O 201 por trás da confirmação, sem passar pela interface.
+    const token = await tokenDaSessao(context)
+    const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+    const resposta = await api.post(`/api/app/guia/${TRANSPORTADORA_ID}/sugestao`, {
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      data: { descricao: "O horário de atendimento mudou." },
+    })
+    expect(resposta.status(), "sugerir com artigo publicado grava a sugestão").toBe(201)
+    await api.dispose()
   })
 
   test("servidor fora mostra erro com Tentar de novo, nunca diretório vazio", async ({
