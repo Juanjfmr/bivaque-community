@@ -158,6 +158,15 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
     await capturarEmDoisTemas(page, projeto, "previa-cidade")
 
+    // Retomada: recarregar depois do provisionamento volta à etapa pendente
+    // (a prévia), não ao Início. Sem o marcador no servidor, o combinado seria
+    // pulado.
+    await page.reload()
+    await esperarEtapaDaEntrada(
+      page,
+      /Em Manaus, sempre tem alguém precisando do que você sabe\.|Você está entre os primeiros em Manaus\./,
+    )
+
     // ── interesses e grupos reais da cidade ───────────────────────────────
     const carregamentoDosGrupos = esperarGruposDaCidade(page)
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
