@@ -78,9 +78,9 @@ export async function DELETE(request: NextRequest, { params }: Context): Promise
   const userId = auth.sessao.usuario.id
   try {
     const client = auth.sessao.cliente
-    if (!(await entradaVisivel(client, id))) {
-      return responder(request, { erro: "entrada-nao-encontrada" }, 404)
-    }
+    // Só o DELETE dispensa a entrada existir: remover o próprio salvamento é
+    // sempre permitido (policy `guide_entry_saves_delete_own`), inclusive de
+    // referência que saiu do ar. A RLS já limita ao próprio `user_id`.
     const result = await client.from("guide_entry_saves").delete().eq("entry_id", id)
     if (result.error) throw result.error
     return responder(request, { salvo: false }, 200)

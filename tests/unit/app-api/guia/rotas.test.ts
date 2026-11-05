@@ -353,11 +353,24 @@ describe("rotas do guia do app", () => {
       expect((await json(await marcar(req("PUT"), context))).salvo).toBe(true)
     })
 
-    it("entrada inexistente é 404, não 403 de policy", async () => {
+    it("entrada inexistente é 404 ao salvar, não 403 de policy", async () => {
       const mock = mockClient({ entrada: null })
       authenticate(mock)
       expect((await marcar(req("PUT"), context)).status).toBe(404)
-      expect((await desmarcar(req("DELETE"), context)).status).toBe(404)
+    })
+
+    it("remove o próprio salvamento mesmo com a entrada fora do ar", async () => {
+      // A policy de delete só olha o dono; exigir a entrada visível deixaria o
+      // item preso na lista depois que a curadoria tira a referência do ar.
+      const mock = mockClient({ entrada: null })
+      authenticate(mock)
+      const resposta = await desmarcar(req("DELETE"), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ salvo: false })
+      expect(mock.deletes).toContain("guide_entry_saves")
+      expect(mock.eqCalls.filter((chamada) => chamada.table === "arrival_guide_entries")).toHaveLength(
+        0,
+      )
     })
 
     it("recusa da RLS é 403 sem eco da mensagem do Postgres", async () => {
