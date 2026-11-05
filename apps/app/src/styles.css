@@ -354,6 +354,9 @@
     font-size: 16px;
     line-height: 20px;
     white-space: normal;
+    /* Nome de uma palavra só ("Climatização") não cede no meio sem isto: em
+       320 px ele passava da caixa em vez de descer para a linha seguinte. */
+    overflow-wrap: anywhere;
   }
 
   [data-topo="barra"] [data-acao="cidade"] {
@@ -363,6 +366,14 @@
 
   [data-topo="barra"] [data-acao="cidade"] .size-5 {
     display: none;
+  }
+}
+
+/* Em 320 px o título "Encontro" não cabe com os três botões e o chip: o
+   intervalo entre as ações cai para 2 px. */
+@media (max-width: 359.98px) {
+  [data-topo="barra"] {
+    gap: 2px;
   }
 }
 
