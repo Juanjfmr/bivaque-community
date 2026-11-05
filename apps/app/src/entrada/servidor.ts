@@ -290,6 +290,30 @@ export type GrupoDaEntrada = Readonly<{
   descricao: string | null
 }>
 
+/**
+ * Envia o documento de identidade para a análise manual. Multipart de verdade:
+ * o `content-type` com o boundary é do navegador, nunca escrito à mão. O arquivo
+ * não vai para o rascunho nem fica na memória da tela depois da resposta.
+ */
+export async function enviarDocumento(arquivo: File): Promise<void> {
+  const formulario = new FormData()
+  formulario.append("documento", arquivo)
+  let resposta: Response
+  try {
+    resposta = await fetch("/api/app/entry/document", {
+      method: "POST",
+      credentials: "include",
+      headers: { "x-bivaque-app": "bivaque-spa" },
+      body: formulario,
+    })
+  } catch {
+    throw new FalhaDaEntrada("rede", 0)
+  }
+  if (resposta.status === 200) return
+  const corpo = (await resposta.json().catch(() => ({}))) as Record<string, unknown>
+  throw new FalhaDaEntrada(texto(corpo, "erro") ?? "documento-indisponivel", resposta.status)
+}
+
 export async function carregarGrupos(): Promise<readonly GrupoDaEntrada[]> {
   const resposta = await pedir("groups")
   if (resposta.status === 401) throw new FalhaDaEntrada("sem-sessao", 401)

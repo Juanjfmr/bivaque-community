@@ -472,20 +472,14 @@ async function marcarVinculoVerificado(userId: string, classe: string): Promise<
 }
 
 /**
- * Cria (ou reaproveita) o usuário de Auth local com `email_confirm: true` e grava
- * `private.verification_outcomes` como `verified` — a rota do CPF devolve
- * `verified` sem consultar o Portal.
- *
- * A conta nasce com senha sintética para o password grant funcionar se o mesmo
- * endereço for reaproveitado por um rerun.
+ * Cria (ou reaproveita) o usuário de Auth local com `email_confirm: true`, sem
+ * tocar em `verification_outcomes`. É a conta do caminho de falha: o CPF
+ * consulta o Portal de verdade (no stack local, sem chave, ele está fora) e a
+ * pessoa cai no envio de documento.
  */
-export async function criarContaVerificada(
-  email: string,
-  opcoes: OpcoesDaConta = {},
-): Promise<ContaVerificada> {
+export async function criarContaConfirmada(email: string): Promise<ContaVerificada> {
   const alvo = exigirEmailSintetico(email)
-  const senha = opcoes.senha ?? SENHA_SINTETICA
-  const classe = opcoes.classe ?? CLASSE_DE_ELEGIBILIDADE
+  const senha = SENHA_SINTETICA
   const url = urlDoSupabase()
   const servico = exigirChaveDeServico()
 
@@ -523,8 +517,21 @@ export async function criarContaVerificada(
     }
   }
 
-  await marcarVinculoVerificado(userId, classe)
   return { email: alvo, userId, senha }
+}
+
+/**
+ * Cria (ou reaproveita) o usuário de Auth local com `email_confirm: true` e grava
+ * `private.verification_outcomes` como `verified` — a rota do CPF devolve
+ * `verified` sem consultar o Portal.
+ */
+export async function criarContaVerificada(
+  email: string,
+  opcoes: OpcoesDaConta = {},
+): Promise<ContaVerificada> {
+  const conta = await criarContaConfirmada(email)
+  await marcarVinculoVerificado(conta.userId, opcoes.classe ?? CLASSE_DE_ELEGIBILIDADE)
+  return conta
 }
 
 // ── Sessão da persona semeada (caso do membro existente) ────────────────────

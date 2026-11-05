@@ -22,6 +22,7 @@ import {
   carregarGrupos,
   consultarCpf,
   enviarCodigo,
+  enviarDocumento,
   lerProgresso,
   lerVerificacao,
   provisionar,
@@ -83,6 +84,7 @@ export function TelaDeEntrada() {
       salvarInteresses,
       registrarCombinado,
       salvarAvisos,
+      enviarDocumento,
     }),
     [],
   )
@@ -241,6 +243,15 @@ export function TelaDeEntrada() {
       setFalha(
         "Entrar com Google ou Apple ainda não está ligado nesta versão. Use o código no e-mail.",
       )
+      return
+    }
+    // Documento enviado não avança: a pessoa fica na linha do tempo da análise
+    // ("Documento em análise") em vez de cair na prévia da cidade como se já
+    // estivesse aprovada.
+    if (atual.etapa === "documento" && mudancas?.verificacao === "documento-em-analise") {
+      setFalha(null)
+      setTentar(null)
+      setProgresso({ ...atual, verificacao: "documento-em-analise" })
       return
     }
     try {

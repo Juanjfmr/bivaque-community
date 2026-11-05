@@ -3,7 +3,7 @@ import { Icone } from "@/components/bivaque/icone"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useServidorDaEntrada } from "@/src/entrada/contexto"
-import type { GrupoDaEntrada } from "@/src/entrada/servidor"
+import { FalhaDaEntrada, type GrupoDaEntrada } from "@/src/entrada/servidor"
 import {
   Botao,
   CampoDeArquivo,
@@ -97,9 +97,11 @@ const TIPOS = new Set(["application/pdf", "image/jpeg", "image/png"])
 const LIMITE = 10 * 1024 * 1024
 
 export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [problema, setProblema] = useState<string | null>(null)
   const [avisar, setAvisar] = useState(true)
+  const [enviando, setEnviando] = useState(false)
 
   if (progresso.verificacao === "documento-em-analise") {
     return (
@@ -139,18 +141,41 @@ export function Documento({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
 
   const tamanho = arquivo ? `${Math.max(1, Math.round(arquivo.size / 1024))} KB` : ""
 
+  const enviar = async () => {
+    if (arquivo === null) {
+      setProblema("Escolha o arquivo antes de enviar.")
+      return
+    }
+    // Sem servidor (prévia) o envio continua simulado.
+    if (servidor === null) {
+      concluir({ verificacao: "documento-em-analise" })
+      return
+    }
+    setEnviando(true)
+    try {
+      await servidor.enviarDocumento(arquivo)
+      setArquivo(null)
+      concluir({ verificacao: "documento-em-analise" })
+    } catch (falha) {
+      const recusado = falha instanceof FalhaDaEntrada && falha.codigo === "documento-recusado"
+      setProblema(
+        recusado
+          ? "O arquivo não foi aceito. Confira o formato e o tamanho."
+          : "Não foi possível enviar o arquivo agora. Tente de novo.",
+      )
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   return (
     <Moldura
       titulo="Envie um documento"
       apoio="Só a equipe de verificação vê. O arquivo é apagado depois da análise."
       aoEnviar={() => {
-        if (arquivo === null) {
-          setProblema("Escolha o arquivo antes de enviar.")
-          return
-        }
-        concluir({ verificacao: "documento-em-analise" })
+        void enviar()
       }}
-      acao={{ rotulo: "Enviar para análise" }}
+      acao={{ rotulo: enviando ? "Enviando…" : "Enviar para análise", carregando: enviando }}
       secundaria={{ rotulo: "Voltar", aoTocar: voltar }}
     >
       <CampoDeArquivo

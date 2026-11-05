@@ -4,6 +4,7 @@ import {
   CPF_SINTETICO,
   capturarEmDoisTemas,
   capturarFinais,
+  criarContaConfirmada,
   criarContaVerificada,
   enderecoSintetico,
   esperarEtapaDaEntrada,
@@ -269,6 +270,73 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await preencherCodigoDeEntrada(page, lido.codigo)
     await esperarEtapaDaEntrada(page, "Antes de começar")
     await expect(page.getByText("Código errado ou vencido. Confira ou peça outro.")).toHaveCount(0)
+  })
+
+  test("documento: sem vínculo no Portal, o envio entra para análise", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    const projeto = testInfo.project.name
+    const email = enderecoSintetico(`entrada-doc-${projeto}`)
+    // Sem vínculo pré-gravado: a rota do CPF consulta o Portal, que no stack
+    // local não tem chave e responde "fora do ar". É o caminho de falha real.
+    await criarContaConfirmada(email)
+
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(ROTA_DA_ENTRADA)
+    await page.getByRole("button", { name: "Continuar com e-mail" }).click()
+    await esperarEtapaDaEntrada(page, "Qual é o seu e-mail?")
+    await page.getByLabel("E-mail").fill(email)
+    const desde = new Date()
+    await page.getByRole("button", { name: "Enviar código" }).click()
+    await esperarEtapaDaEntrada(page, "Digite o código")
+    const lido = await lerCodigoDoEmail(email, { desde })
+    await preencherCodigoDeEntrada(page, lido.codigo)
+
+    await esperarEtapaDaEntrada(page, "Antes de começar")
+    await page.getByRole("button", { name: "Aceito e continuo" }).click()
+
+    await esperarEtapaDaEntrada(page, "Qual é o seu CPF?")
+    await page.getByLabel("CPF").fill(CPF_SINTETICO)
+    await page.getByRole("button", { name: "Confirmar vínculo" }).click()
+
+    await esperarEtapaDaEntrada(page, "Como você se chama?")
+    await page.getByLabel("Nome", { exact: true }).fill("Pessoa")
+    await page.getByLabel("Sobrenome").fill("Sintética")
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+
+    await esperarEtapaDaEntrada(page, "Onde você está?")
+    await page.getByLabel("Estado (UF)").selectOption({ label: "AM" })
+    const selectDaCidade = page.getByLabel("Cidade", { exact: true })
+    await expect(selectDaCidade).toBeEnabled({ timeout: 30_000 })
+    await selectDaCidade.selectOption({ label: "Manaus" })
+    await page.getByText("Moro aqui", { exact: true }).click()
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+
+    await esperarEtapaDaEntrada(page, "O Portal está fora do ar")
+    await page.getByRole("button", { name: "Enviar documento" }).click()
+
+    await esperarEtapaDaEntrada(page, "Envie um documento")
+    // PDF mínimo válido pela regra do servidor (assinatura `%PDF-` no offset 0).
+    const pdf = Buffer.from(
+      "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
+    )
+    await page.getByLabel("Escolher arquivo").setInputFiles({
+      name: "identidade.pdf",
+      mimeType: "application/pdf",
+      buffer: pdf,
+    })
+    const envio = page.waitForResponse(
+      (resposta) =>
+        resposta.url().includes("/api/app/entry/document") &&
+        resposta.request().method() === "POST",
+    )
+    await page.getByRole("button", { name: "Enviar para análise" }).click()
+    const resposta = await envio
+    expect(resposta.status(), `POST /api/app/entry/document respondeu ${resposta.status()}`).toBe(
+      200,
+    )
+    await esperarEtapaDaEntrada(page, "Documento em análise")
   })
 
   test("membro com sessão em /app/entrar cai no Início", async ({ page, context }, testInfo) => {

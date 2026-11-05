@@ -30,6 +30,7 @@ export type ServidorDaEntrada = Readonly<{
   salvarInteresses: (grupos: readonly string[]) => Promise<void>
   registrarCombinado: (versao: number) => Promise<void>
   salvarAvisos: (avisos: "ativados" | "agora-nao") => Promise<void>
+  enviarDocumento: (arquivo: File) => Promise<void>
 }>
 
 const Contexto = createContext<ServidorDaEntrada | null>(null)
