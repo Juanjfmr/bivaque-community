@@ -8,34 +8,51 @@ import {
   opcoesDoApp,
   responder,
 } from "../../../../../../lib/app-api/rota-do-app"
+import { situacaoDoCorpo } from "../../../../../../lib/events/event-rsvp"
 import { log } from "../../../../../../lib/logger"
+import { cidadeDaSessao, ehUuid, encontroDaSessao } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 type Context = { params: Promise<{ id: string }> }
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-async function presence(
+// Presença é de quem é da cidade do encontro. O encontro de outra cidade ABRE
+// para leitura (migration 20260925161111), mas confirmar, trocar ou cancelar
+// presença continua barrado — aqui antes de ir ao banco, e de novo na RLS.
+
+async function responderPresenca(
   request: NextRequest,
   client: SupabaseClient<Database>,
   id: string,
   date: string,
-  mine: string | null,
+  minha: string | null,
 ): Promise<NextResponse> {
-  const result = await client
+  const { count, error } = await client
     .from("event_rsvps")
     .select("event_id", { count: "exact", head: true })
     .eq("event_id", id)
     .eq("occurrence_date", date)
     .eq("status", "going")
-  if (result.error) throw result.error
-  return responder(request, { presenca: { confirmados: result.count ?? 0, minha: mine } }, 200)
+  if (error) throw error
+  return responder(request, { presenca: { confirmados: count ?? 0, minha } }, 200)
 }
 
-async function eventDate(client: SupabaseClient<Database>, id: string) {
-  const result = await client.from("events").select("starts_at").eq("id", id).maybeSingle()
-  if (result.error) throw result.error
-  return result.data?.starts_at.slice(0, 10) ?? null
+/** A situação de quem pede, já gravada. */
+async function minhaPresenca(
+  client: SupabaseClient<Database>,
+  id: string,
+  userId: string,
+  date: string,
+): Promise<string | null> {
+  const { data, error } = await client
+    .from("event_rsvps")
+    .select("status")
+    .eq("event_id", id)
+    .eq("user_id", userId)
+    .eq("occurrence_date", date)
+    .maybeSingle()
+  if (error) throw error
+  return data?.status ?? null
 }
 
 export async function PUT(request: NextRequest, { params }: Context): Promise<NextResponse> {
@@ -44,34 +61,45 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
   const porta = conferirEscrita(request, auth.sessao.via)
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
   const { id } = await params
-  if (!UUID.test(id)) return responder(request, { erro: "evento-nao-encontrado" }, 404)
-  const body = await lerCorpoJson(request)
-  if (!body.ok) return responder(request, { erro: "corpo-invalido" }, 400)
-  const status = body.corpo["situacao"]
-  if (status !== "going" && status !== "not_going" && status !== "interested")
-    return responder(request, { erro: "dados-invalidos" }, 400)
+  if (!ehUuid(id)) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+    return responder(
+      request,
+      { erro: "dados-invalidos", mensagem: "Envie a presença em JSON." },
+      400,
+    )
+  }
+  const lido = await lerCorpoJson(request)
+  if (!lido.ok) return responder(request, { erro: "corpo-invalido" }, 400)
+  const situacao = situacaoDoCorpo(lido.corpo)
+  if (situacao === null) {
+    return responder(request, { erro: "dados-invalidos", mensagem: "Presença inválida." }, 400)
+  }
   const client = auth.sessao.cliente
   const userId = auth.sessao.usuario.id
   try {
-    const date = await eventDate(client, id)
-    if (!date) return responder(request, { erro: "evento-nao-encontrado" }, 404)
-    const result = await client
+    const encontro = await encontroDaSessao(client, id)
+    if (encontro === null) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+    const cidade = await cidadeDaSessao(client, userId)
+    if (cidade === null || cidade.id !== encontro.locality_id) {
+      return responder(request, { erro: "de-outra-cidade" }, 403)
+    }
+    const date = encontro.starts_at.slice(0, 10)
+    const gravado = await client
       .from("event_rsvps")
       .upsert(
-        { event_id: id, user_id: userId, status, occurrence_date: date },
+        { event_id: id, user_id: userId, status: situacao, occurrence_date: date },
         { onConflict: "event_id,user_id,occurrence_date" },
       )
-    if (result.error?.code === "42501") return responder(request, { erro: "recusado" }, 403)
-    if (result.error) throw result.error
-    const mine = await client
-      .from("event_rsvps")
-      .select("status")
-      .eq("event_id", id)
-      .eq("user_id", userId)
-      .eq("occurrence_date", date)
-      .maybeSingle()
-    if (mine.error) throw mine.error
-    return await presence(request, client, id, date, mine.data?.status ?? null)
+    if (gravado.error?.code === "42501") return responder(request, { erro: "recusado" }, 403)
+    if (gravado.error) throw gravado.error
+    return await responderPresenca(
+      request,
+      client,
+      id,
+      date,
+      await minhaPresenca(client, id, userId, date),
+    )
   } catch (error) {
     log.error("app evento presence: write failed", {
       error: error instanceof Error ? error.message : "unknown",
@@ -87,20 +115,25 @@ export async function DELETE(request: NextRequest, { params }: Context): Promise
   const porta = conferirEscrita(request, auth.sessao.via)
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
   const { id } = await params
-  if (!UUID.test(id)) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+  if (!ehUuid(id)) return responder(request, { erro: "evento-nao-encontrado" }, 404)
   const client = auth.sessao.cliente
   const userId = auth.sessao.usuario.id
   try {
-    const date = await eventDate(client, id)
-    if (!date) return responder(request, { erro: "evento-nao-encontrado" }, 404)
-    const result = await client
+    const encontro = await encontroDaSessao(client, id)
+    if (encontro === null) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+    const cidade = await cidadeDaSessao(client, userId)
+    if (cidade === null || cidade.id !== encontro.locality_id) {
+      return responder(request, { erro: "de-outra-cidade" }, 403)
+    }
+    const date = encontro.starts_at.slice(0, 10)
+    const removido = await client
       .from("event_rsvps")
       .delete()
       .eq("event_id", id)
       .eq("user_id", userId)
       .eq("occurrence_date", date)
-    if (result.error) throw result.error
-    return await presence(request, client, id, date, null)
+    if (removido.error) throw removido.error
+    return await responderPresenca(request, client, id, date, null)
   } catch (error) {
     log.error("app evento presence: delete failed", {
       error: error instanceof Error ? error.message : "unknown",

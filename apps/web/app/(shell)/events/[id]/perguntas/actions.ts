@@ -77,15 +77,7 @@ export async function askQuestionAction(formData: FormData): Promise<QuestionAct
 
   // `rpc` é chamado NO cliente: separar a função em variável perde o `this` e
   // ela explode em "cannot read properties of undefined (reading 'rest')".
-  const opened = (await supabase.rpc(
-    "open_event_question" as never,
-    {
-      p_event_id: eventId,
-    } as never,
-  )) as unknown as {
-    data: string | null
-    error: { message: string } | null
-  }
+  const opened = await supabase.rpc("open_event_question", { p_event_id: eventId })
   if (opened.error || !opened.data) {
     return { ok: false, message: friendlyQuestionError(opened.error?.message) }
   }

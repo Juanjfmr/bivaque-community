@@ -12,12 +12,15 @@ import {
   normalizeQuestion,
 } from "../../../../../../lib/events/question-thread"
 import { log } from "../../../../../../lib/logger"
+import { cidadeDaSessao, ehUuid, encontroDaSessao } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 type Context = { params: Promise<{ id: string }> }
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-type OpenQuestionAberto = Readonly<{ data: string | null; error: { message: string } | null }>
+
+/** O que a função do banco recusa e a tela precisa traduzir. */
+const RECUSA_DA_FUNCAO =
+  /another context|blocked|organizer|cannot access|event not found|unauthenticated/i
 
 export async function POST(request: NextRequest, { params }: Context): Promise<NextResponse> {
   const auth = await exigirSessao(request)
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
   const porta = conferirEscrita(request, auth.sessao.via)
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
   const { id } = await params
-  if (!UUID.test(id)) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+  if (!ehUuid(id)) return responder(request, { erro: "evento-nao-encontrado" }, 404)
   const body = await lerCorpoJson(request)
   if (!body.ok || typeof body.corpo["texto"] !== "string" || !canSendQuestion(body.corpo["texto"]))
     return responder(request, { erro: "corpo-invalido" }, 400)
@@ -33,44 +36,40 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
   const client = auth.sessao.cliente
   const userId = auth.sessao.usuario.id
   try {
-    const event = await client.from("events").select("organizer_id").eq("id", id).maybeSingle()
-    if (event.error) throw event.error
-    if (!event.data) return responder(request, { erro: "evento-nao-encontrado" }, 404)
-    if (event.data.organizer_id === userId) return responder(request, { erro: "recusado" }, 403)
-    // `rpc` é chamado NO cliente: separar a função em variável perde o `this` e
-    // ela explode em "cannot read properties of undefined (reading 'rest')".
-    const opened = (await client.rpc(
-      "open_event_question" as never,
-      {
-        p_event_id: id,
-      } as never,
-    )) as unknown as OpenQuestionAberto
-    if (opened.error || !opened.data) {
-      const message = opened.error?.message ?? ""
-      if (
-        /another context|blocked|organizer|cannot access|event not found|unauthenticated/i.test(
-          message,
-        )
-      )
+    const encontro = await encontroDaSessao(client, id)
+    if (encontro === null) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+    // Perguntar ao organizador é de quem é da cidade do encontro — a mesma régua
+    // da presença. A função do banco também recusaria; aqui a recusa é explícita.
+    const cidade = await cidadeDaSessao(client, userId)
+    if (cidade === null || cidade.id !== encontro.locality_id) {
+      return responder(request, { erro: "de-outra-cidade" }, 403)
+    }
+    if (encontro.organizer_id === userId) return responder(request, { erro: "recusado" }, 403)
+    const aberta = await client.rpc("open_event_question", { p_event_id: id })
+    if (aberta.error || !aberta.data) {
+      const message = aberta.error?.message ?? ""
+      if (RECUSA_DA_FUNCAO.test(message)) {
         return responder(
           request,
           { erro: "recusado", mensagem: friendlyQuestionError(message) },
           403,
         )
-      throw opened.error ?? new Error("question RPC returned no conversation")
+      }
+      throw aberta.error ?? new Error("question RPC returned no conversation")
     }
-    const inserted = await client
+    const inserida = await client
       .from("dm_messages")
       .insert({
-        conversation_id: opened.data,
+        conversation_id: aberta.data,
         sender_id: userId,
         content: normalizeQuestion(texto),
       })
       .select("id")
       .single()
-    if (inserted.error || !inserted.data)
-      throw inserted.error ?? new Error("message insert returned no result")
-    return responder(request, { conversaId: opened.data, mensagemId: inserted.data.id }, 201)
+    if (inserida.error || !inserida.data) {
+      throw inserida.error ?? new Error("message insert returned no result")
+    }
+    return responder(request, { conversaId: aberta.data, mensagemId: inserida.data.id }, 201)
   } catch (error) {
     log.error("app evento question: write failed", {
       error: error instanceof Error ? error.message : "unknown",
