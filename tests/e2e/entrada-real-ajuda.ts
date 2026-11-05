@@ -565,6 +565,30 @@ export async function criarConvitePendente(email: string): Promise<{ codigo: str
         "public.create_family_invitation, concedida a service_role.",
     )
   }
+  const invitationId = Array.isArray(resposta.corpo) ? resposta.corpo[0] : resposta.corpo
+  // O e-mail do convite vive no destinatário do outbox (o banco guarda o
+  // digest). A prévia do app devolve esse endereço a quem tem o código, e é o
+  // que deixa o campo de e-mail só de leitura no caminho real.
+  const envio = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/outbox`,
+    {
+      metodo: "POST",
+      cabecalhos: { ...cabecalhosDeServico(exigirChaveDeServico()), Prefer: "return=minimal" },
+      corpo: {
+        recipient: alvo,
+        channel: "email",
+        type: "family_invite",
+        payload: { invitation_id: invitationId, invite_code: codigo },
+      },
+    },
+    "Supabase (enfileirar convite familiar)",
+  )
+  if (envio.status !== 201 && envio.status !== 204) {
+    throw new Error(
+      `Não foi possível enfileirar o e-mail do convite: HTTP ${envio.status} ` +
+        `(${resumoDoCorpo(envio.corpo)}).`,
+    )
+  }
   return { codigo }
 }
 
@@ -629,6 +653,80 @@ export async function criarContaVerificada(
   const conta = await criarContaConfirmada(email)
   await marcarVinculoVerificado(conta.userId, opcoes.classe ?? CLASSE_DE_ELEGIBILIDADE)
   return conta
+}
+
+/**
+ * Descobre o id de um usuário pelo e-mail via Admin API. Usado pela conta que o
+ * próprio fluxo criou (o OTP cria a conta): o teste não a pré-cria, mas precisa
+ * do id para marcar o vínculo e ler o rascunho.
+ */
+export async function idDoUsuarioPorEmail(email: string): Promise<string | null> {
+  const alvo = exigirEmailSintetico(email)
+  const chave = exigirChaveDeServico()
+  const url = `${urlDoSupabase()}/auth/v1/admin/users?page=1&per_page=1000`
+  const resposta = await pedirJson(
+    url,
+    { cabecalhos: cabecalhosDeServico(chave) },
+    "Supabase admin (listar usuários)",
+  )
+  if (resposta.status !== 200) {
+    throw new Error(
+      `Não foi possível listar os usuários do Auth local: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+  const corpo = comoRegistro(resposta.corpo)
+  const usuarios = Array.isArray(corpo["users"]) ? corpo["users"] : []
+  for (const item of usuarios) {
+    const registro = comoRegistro(item)
+    const id = registro["id"]
+    const endereco = registro["email"]
+    if (typeof id === "string" && typeof endereco === "string" && endereco.toLowerCase() === alvo) {
+      return id
+    }
+  }
+  return null
+}
+
+/**
+ * Marca o vínculo como `verified` para uma conta que nasceu no próprio fluxo
+ * (o OTP criou). Devolve o id, para a prova de rascunho no banco.
+ */
+export async function marcarVinculoVerificadoPorEmail(
+  email: string,
+  classe: string = CLASSE_DE_ELEGIBILIDADE,
+): Promise<string> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) {
+    throw new Error(
+      `A conta ${mascararEmail(email)} não apareceu no Auth local depois do código; ` +
+        "o envio do OTP criou a conta?",
+    )
+  }
+  await marcarVinculoVerificado(id, classe)
+  return id
+}
+
+/**
+ * Prova de que a entrada terminou sem rascunho: conta as linhas de
+ * `entry_progress` da pessoa (service role, tabela pública sob RLS forçada).
+ */
+export async function contarRascunhosDaEntrada(email: string): Promise<number> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error(`A conta ${mascararEmail(email)} não existe no Auth local.`)
+  const chave = exigirChaveDeServico()
+  const url = `${urlDoSupabase()}/rest/v1/entry_progress?select=user_id&user_id=eq.${id}`
+  const resposta = await pedirJson(
+    url,
+    { cabecalhos: cabecalhosDeServico(chave) },
+    "Supabase (ler rascunho)",
+  )
+  if (resposta.status !== 200 || !Array.isArray(resposta.corpo)) {
+    throw new Error(
+      `Não foi possível ler entry_progress: HTTP ${resposta.status} (${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+  return resposta.corpo.length
 }
 
 // ── Sessão da persona semeada (caso do membro existente) ────────────────────
