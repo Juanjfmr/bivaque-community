@@ -9,6 +9,10 @@ test("P1: perguntas exibem avatar shadcn, enunciado completo e estado abaixo", a
   await expect(titulo).toBeVisible()
   const estado = linha.locator("[data-tom]")
   await expect(estado).toBeVisible()
+  // A medida abaixo é de texto: antes da troca de fonte a caixa pode não caber.
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
   const medidas = await linha.evaluate((elemento) => {
     const titulo = elemento.querySelector("[data-titulo-linha]")
     const estado = elemento.querySelector("[data-tom]")

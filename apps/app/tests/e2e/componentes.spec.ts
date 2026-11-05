@@ -130,7 +130,13 @@ test.describe("a galeria de prova cobre a seção 7", () => {
     // O foco vai para o primeiro cartão novo: quem carregou mais não perde a vez.
     await expect(bloco.locator('[data-item-lista="item-25"]')).toBeFocused()
 
-    await bloco.locator('[data-acao="mostrar-mais"]').click()
+    // O botão é reserva: onde o fim da lista cai na margem de carga (600 px), o
+    // bloco seguinte entra sozinho e o botão sai do DOM no meio do clique. A
+    // tentativa de clique não é a prova — o estado final é.
+    const mostrarMais = bloco.locator('[data-acao="mostrar-mais"]')
+    if ((await mostrarMais.count()) === 1) {
+      await mostrarMais.click({ timeout: 5_000 }).catch(() => undefined)
+    }
     await expect(itens).toHaveCount(60)
     await expect(bloco.locator('[data-acao="mostrar-mais"]')).toHaveCount(0)
     await expect(bloco.locator('[data-fim="lista"]')).toBeVisible()
@@ -146,7 +152,9 @@ test.describe("a galeria de prova cobre a seção 7", () => {
           .filter((parte) => parte !== "").length,
     )
     const largura = page.viewportSize()?.width ?? 0
-    const esperado = largura < 480 ? 1 : largura < 720 ? 2 : largura < 1200 ? 3 : 4
+    // As faixas são as de `.bv-grade` em `src/styles.css`: 1 coluna no telefone,
+    // 2 depois da barra lateral (720 px), 3 em 1080 e 4 em 1440.
+    const esperado = largura < 720 ? 1 : largura < 1080 ? 2 : largura < 1440 ? 3 : 4
     expect(colunas).toBe(esperado)
   })
 
