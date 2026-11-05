@@ -328,6 +328,9 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
     await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
     await expect(page.getByText("O que interessa a você?")).toHaveCount(0)
+    // Deixa a segunda resposta atrasada do provisionamento assentar antes de
+    // liberar o servidor; senão o próximo wait captura o 503 anterior.
+    await page.waitForTimeout(900)
 
     // Agora o servidor responde: o Tentar de novo conclui e a etapa avança.
     falhar = false
