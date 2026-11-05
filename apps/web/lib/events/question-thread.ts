@@ -10,6 +10,18 @@ export const QUESTION_MAX_LENGTH = 2000
 /** Copy obrigatória da falha de envio (prancha 67): o texto permanece no campo. */
 export const QUESTION_SEND_FAILURE_COPY = "Não foi possível enviar. Seu texto foi mantido."
 
+export function friendlyQuestionError(message: string | undefined): string {
+  if (!message) return QUESTION_SEND_FAILURE_COPY
+  if (message.includes("another context"))
+    return "Você já tem uma conversa com quem organiza este evento sobre outro assunto. Continue por ela."
+  if (message.includes("blocked")) return "Não é possível enviar a esta pessoa."
+  if (message.includes("cannot access event") || message.includes("event not found"))
+    return "Você não tem acesso a este evento."
+  if (message.includes("organizer cannot ask")) return "Você organiza este evento."
+  if (message.includes("unauthenticated")) return "Sua sessão expirou. Entre novamente para enviar."
+  return QUESTION_SEND_FAILURE_COPY
+}
+
 export type QuestionMessage = {
   id: string
   senderId: string

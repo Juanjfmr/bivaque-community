@@ -14,6 +14,7 @@ import { cookies } from "next/headers"
 import type { Database } from "supabase/database.generated"
 import {
   canSendQuestion,
+  friendlyQuestionError,
   normalizeQuestion,
   QUESTION_SEND_FAILURE_COPY,
 } from "../../../../../lib/events/question-thread"
@@ -46,26 +47,6 @@ type OpenEventQuestionRpc = (
   fn: "open_event_question",
   args: { p_event_id: string },
 ) => PromiseLike<{ data: string | null; error: { message: string } | null }>
-
-function friendlyQuestionError(message: string | undefined): string {
-  if (!message) return QUESTION_SEND_FAILURE_COPY
-  if (message.includes("another context")) {
-    return "Você já tem uma conversa com quem organiza este evento sobre outro assunto. Continue por ela."
-  }
-  if (message.includes("blocked")) {
-    return "Não é possível enviar a esta pessoa."
-  }
-  if (message.includes("cannot access event") || message.includes("event not found")) {
-    return "Você não tem acesso a este evento."
-  }
-  if (message.includes("organizer cannot ask")) {
-    return "Você organiza este evento."
-  }
-  if (message.includes("unauthenticated")) {
-    return "Sua sessão expirou. Entre novamente para enviar."
-  }
-  return QUESTION_SEND_FAILURE_COPY
-}
 
 async function insertQuestionMessage(
   conversationId: string,

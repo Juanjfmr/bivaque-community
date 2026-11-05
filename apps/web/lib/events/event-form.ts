@@ -18,6 +18,26 @@ export type EventFormInput = {
   coverPath: string
 }
 
+/** Mapeia o corpo do app para a entrada do formulário; tipo errado é erro de dados. */
+export function eventInputFromBody(corpo: Record<string, unknown>): EventFormInput | null {
+  const { titulo, descricao = "", comecaEm, local = "", capa = "" } = corpo
+  if (
+    typeof titulo !== "string" ||
+    typeof comecaEm !== "string" ||
+    typeof descricao !== "string" ||
+    typeof local !== "string" ||
+    typeof capa !== "string"
+  )
+    return null
+  return {
+    title: titulo,
+    description: descricao,
+    startsAt: comecaEm,
+    venue: local,
+    coverPath: capa,
+  }
+}
+
 export type EventPayload = {
   title: string
   description: string | null
