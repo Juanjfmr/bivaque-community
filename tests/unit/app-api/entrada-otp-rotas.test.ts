@@ -44,7 +44,7 @@ let envioPorHora = new Map<string, number>()
 let tentativas = new Map<string, number>()
 let verificacoesPorIp = new Map<string, number>()
 let estadoDaConta = "confirmed"
-const TETO_GLOBAL = 50
+const TETO_GLOBAL = 500
 const TETO_VERIFICACAO_POR_IP = 30
 let enviosGlobais = 0
 

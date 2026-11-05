@@ -315,14 +315,33 @@ valor commitado antes do fechamento do lote.
 - **O envio é contado antes do GoTrue.** Se o GoTrue falhar depois (transporte, limite dele), a cota do e-mail, do IP e a
   global já foram gastas e não voltam. A pessoa pode ver 429 sem ter recebido o código. Foi o preço de não depender de uma
   segunda ida ao banco para devolver cota e de o limite não consultar a conta.
-- **Limites de produção a dimensionar.** Os números deste ADR (6 por hora por e-mail, 30 por IP, 50 globais, 30 verificações
-  por IP em 10 minutos) são de desenvolvimento. A produção precisa dimensionar `email_sent`, `token_verifications` e
-  `sign_in_sign_ups` do GoTrue e o teto global do servidor com o SMTP escolhido e o volume esperado do lançamento. O teto
-  global do servidor tem de ficar sempre abaixo do `email_sent`. O cuidado fica em BLOCK-RESEND.
+- **Limites de produção a dimensionar.** Os números deste ADR (6 por hora por e-mail, 8 por IP, 500
+  globais, 30 verificações por IP em 10 minutos) são de desenvolvimento. A produção precisa dimensionar
+  `email_sent`, `token_verifications` e `sign_in_sign_ups` do GoTrue e o teto global do servidor com o
+  SMTP escolhido e o volume esperado do lançamento. O teto global do servidor tem de ficar sempre
+  abaixo do `email_sent`. O cuidado fica em BLOCK-RESEND.
 - **Resíduo do `/auth/v1/verify` público (L5).** Continua como na emenda anterior: o contador por e-mail só vê tentativas que
   passam pela rota do app. Quem fala direto com o GoTrue é contido pelo limite por IP do próprio GoTrue
   (`token_verifications`) e pela validade de 10 minutos. Fechar de vez exige o hook de verificação ou o Auth próprio; item
   explícito em BLOCK-RESEND.
+
+## Consequences — emenda de 05/11/2026 (RUN-004, revisão do PR #128)
+
+A revisão independente mediu que o teto global fixo de 50 envios por hora, somado ao teto de 30 por IP,
+permitia que uma pessoa determinada esgotasse o e-mail do projeto e travasse a entrada de todos. A
+decisão do §2 não muda; o dimensionamento muda:
+
+- **Envio por IP: 8 por hora.** A faixa pedida pela revisão é 5 a 10. O suficiente para uma pessoa
+  legitima que errou o endereço algumas vezes, longe do que permite girar endereços.
+- **Envio por e-mail: 6 por hora (inalterado).** Continua sendo o teto que protege um endereço de
+  adivinhação distribuída.
+- **Global: 500 por hora, como disjuntor.** Com 6 por e-mail e 8 por IP, uma pessoa não chega perto
+  do global; ele só corta abuso coordenado em massa. O custo aceito é o e-mail do GoTrue poder ser
+  consumido por muitos IPs distintos antes de o disjuntor abrir; o alerta é o log fixo da rota quando
+  o limitador recusa, sem e-mail, IP ou código. Em produção o número ainda depende do `email_sent` do
+  SMTP escolhido (BLOCK-RESEND); o disjuntor fica sempre abaixo dele.
+- **Prova.** `supabase/tests/entry-otp-limiter.sql` cobre os três padrões (6, 8 e 500), o envio que
+  conta no teto por IP e o pedido recusado que não gasta cota.
 
 ## Reversal cost
 

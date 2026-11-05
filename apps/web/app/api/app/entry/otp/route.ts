@@ -83,6 +83,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return respostaIndisponivel(request)
   }
   if (!limite.liberado) {
+    // Alerta do disjuntor: sem e-mail, sem IP e sem código no log.
+    log.warn("entry otp send: rate limited", { retryAfterSeconds: limite.reenviarEm })
     return responder(request, { erro: "limite", reenviarEm: limite.reenviarEm }, 429, {
       "retry-after": String(limite.reenviarEm),
     })
@@ -108,6 +110,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { enviado: true, reenviarEm: SEGUNDOS_DE_REENVIO }, 200)
   }
   if (veredito.estado === "limite") {
+    log.warn("entry otp send: GoTrue rate limited", { retryAfterSeconds: veredito.reenviarEm })
     return responder(request, { erro: "limite", reenviarEm: veredito.reenviarEm }, 429, {
       "retry-after": String(veredito.reenviarEm),
     })
