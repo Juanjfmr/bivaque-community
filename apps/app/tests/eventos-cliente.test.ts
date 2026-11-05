@@ -78,7 +78,7 @@ describe("cliente do app", () => {
     expect((falha as FalhaDaApi).status).toBe(status)
   })
 
-  it("leva a mensagem do servidor para a tela", async () => {
+  it("400 é pedido inválido e leva o motivo e a mensagem do servidor", async () => {
     espiao(
       { erro: "dados-invalidos", mensagem: "O título precisa de pelo menos 2 caracteres." },
       400,
@@ -86,8 +86,25 @@ describe("cliente do app", () => {
     const falha = (await enviar("POST", "/api/app/eventos", {}).catch(
       (erro: unknown) => erro,
     )) as FalhaDaApi
-    expect(falha.codigo).toBe("indisponivel")
+    expect(falha.codigo).toBe("invalido")
+    expect(falha.motivoDoServidor).toBe("dados-invalidos")
     expect(falha.mensagem).toBe("O título precisa de pelo menos 2 caracteres.")
+  })
+
+  it("500 é serviço fora, não pedido inválido", async () => {
+    espiao({ erro: "boom" }, 500)
+    const falha = (await ler("/api/app/eventos").catch((erro: unknown) => erro)) as FalhaDaApi
+    expect(falha.codigo).toBe("indisponivel")
+    expect(falha.status).toBe(500)
+  })
+
+  it("403 leva o motivo curto que a tela ramifica", async () => {
+    espiao({ erro: "de-outra-cidade" }, 403)
+    const falha = (await enviar("PUT", "/api/app/eventos/1/presenca", {}).catch(
+      (erro: unknown) => erro,
+    )) as FalhaDaApi
+    expect(falha.codigo).toBe("recusado")
+    expect(falha.motivoDoServidor).toBe("de-outra-cidade")
   })
 
   it("queda de rede vira código de rede, sem status", async () => {

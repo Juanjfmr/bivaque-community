@@ -50,17 +50,55 @@ export function paraCampoDeDataHora(iso: string): string {
   return `${data.getFullYear()}-${dois(data.getMonth() + 1)}-${dois(data.getDate())}T${dois(data.getHours())}:${dois(data.getMinutes())}`
 }
 
+/** Cada ação tem a sua frase quando o servidor não manda uma. */
+export type AcaoQueFalha = "agenda" | "encontro" | "criar" | "editar" | "presenca" | "pergunta"
+
+const PADRAO: Readonly<Record<AcaoQueFalha, string>> = {
+  agenda: "Não foi possível carregar a agenda. Tente de novo.",
+  encontro: "Não foi possível carregar o encontro. Tente de novo.",
+  criar: "Não foi possível criar o encontro. Tente de novo.",
+  editar: "Não foi possível salvar as alterações. Tente de novo.",
+  presenca: "Não foi possível registrar sua presença. Tente de novo.",
+  pergunta: "Não foi possível enviar. Seu texto foi mantido.",
+}
+
 /**
- * O que a pessoa lê quando uma escrita falha. A decisão é pelo código do
- * cliente (`status` do servidor), nunca pelo texto da resposta.
+ * O que a pessoa lê quando uma escrita falha.
+ *
+ * A ordem importa: a frase do SERVIDOR vem primeiro — é a única que sabe o
+ * motivo exato —, depois o motivo curto que o servidor devolveu, e só no fim a
+ * frase da ação. Dizer "só quem organiza" para toda recusa transformava uma
+ * pergunta bloqueada em acusação de autoria.
  */
-export function mensagemDaFalha(falha: unknown): string {
-  if (falha instanceof FalhaDaApi) {
-    if (falha.codigo === "sem-sessao") return "Sua sessão expirou. Entre de novo para continuar."
-    if (falha.codigo === "recusado") return "Só quem organiza pode mudar este encontro."
-    if (falha.codigo === "nao-encontrado") return "Este encontro não está mais disponível."
-    if (falha.codigo === "limite") return "Muitas tentativas seguidas. Espere um pouco."
-    if (falha.mensagem !== null) return falha.mensagem
+export function mensagemDaFalha(falha: unknown, acao: AcaoQueFalha): string {
+  if (!(falha instanceof FalhaDaApi)) return PADRAO[acao]
+  if (falha.codigo === "sem-sessao") return "Sua sessão expirou. Entre de novo para continuar."
+  if (falha.codigo === "limite") return "Muitas tentativas seguidas. Espere um pouco."
+  if (falha.motivoDoServidor === "de-outra-cidade") {
+    return "Este encontro é de outra cidade: presença e pergunta ficam para quem mora lá."
   }
-  return "Não foi possível salvar agora. Tente de novo."
+  if (falha.motivoDoServidor === "sem-cidade") {
+    return "Escolha a sua cidade antes de criar um encontro."
+  }
+  if (falha.motivoDoServidor === "nao-organiza") {
+    return "Só quem organiza pode mudar este encontro."
+  }
+  if (falha.mensagem !== null) return falha.mensagem
+  if (falha.codigo === "nao-encontrado") return "Este encontro não está mais disponível."
+  return PADRAO[acao]
+}
+
+/** O encontro pedido não existe (ou não é visível): a tela é de indisponível. */
+export function encontroSumiu(falha: unknown): boolean {
+  return falha instanceof FalhaDaApi && falha.codigo === "nao-encontrado"
+}
+
+/** Sessão vencida: a saída é entrar de novo, não tentar de novo. */
+export function sessaoVencida(falha: unknown): boolean {
+  return falha instanceof FalhaDaApi && falha.codigo === "sem-sessao"
+}
+
+/** Recusa de acesso: entrar de novo não resolve, tentar de novo também não. */
+export function acessoNegado(falha: unknown): boolean {
+  return falha instanceof FalhaDaApi && falha.codigo === "recusado"
 }

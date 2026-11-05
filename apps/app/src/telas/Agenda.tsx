@@ -11,23 +11,30 @@ import { type AgendaDaCidade, lerAgenda } from "@/lib/dados/eventos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
+import { acessoNegado, mensagemDaFalha, sessaoVencida } from "@/src/eventos/formulario"
 
 /**
- * A agenda da cidade, agora do banco (F05 / ADR-20261105).
+ * A agenda da cidade, do banco (F05 / ADR-20261105).
  *
- * O que a tela desenha não mudou: os encontros futuros agrupados por dia. O que
- * mudou é de onde vem o dado — `lib/dados/eventos`, que fala com
- * `/api/app/eventos` — e por isso a tela passou a distinguir carregando, vazio
- * de verdade e falha recuperável. Banco fora não vira "nenhum encontro".
+ * O desenho não mudou: encontros futuros agrupados por dia. Mudou de onde vem o
+ * dado — `lib/dados/eventos`, que fala com `/api/app/eventos` — e por isso a
+ * tela distingue carregando, vazio de verdade, falha recuperável, sessão
+ * vencida e acesso negado. Banco fora não vira "nenhum encontro".
+ *
+ * A paginação é por cursor: quando o servidor devolve `proximo`, a lista mostra
+ * "Ver mais encontros" em vez de cortar o resto em silêncio.
  */
 export function Agenda() {
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<AgendaDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [criando, setCriando] = useState(false)
+  const [carregandoMais, setCarregandoMais] = useState(false)
+  const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -35,20 +42,38 @@ export function Agenda() {
   useEffect(() => {
     const controle = new AbortController()
     setDados(null)
-    setErro(false)
+    setErro(null)
     void lerAgenda({ signal: controle.signal })
       .then((lidos) => {
         if (!controle.signal.aborted) setDados(lidos)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (controle.signal.aborted) return
+        setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
     return () => controle.abort()
   }, [rodada])
 
   const dias = useMemo(() => (dados === null ? [] : agruparPorDia(dados.encontros)), [dados])
 
-  const carregando = dados === null && !erro
+  async function carregarMais() {
+    if (dados === null || dados.proximo === null || carregandoMais) return
+    setCarregandoMais(true)
+    setErroAoCarregarMais(null)
+    try {
+      const proxima = await lerAgenda({ depois: dados.proximo })
+      setDados({
+        encontros: [...dados.encontros, ...proxima.encontros],
+        proximo: proxima.proximo,
+      })
+    } catch (falha: unknown) {
+      setErroAoCarregarMais(mensagemDaFalha(falha, "agenda"))
+    } finally {
+      setCarregandoMais(false)
+    }
+  }
+
+  const carregando = dados === null && erro === null
 
   return (
     <section data-tela="agenda" className="grid gap-2">
@@ -64,7 +89,11 @@ export function Agenda() {
         }
       />
 
-      {erro ? (
+      {erro === "sessao" ? (
+        <EstadoDeSessaoVencida />
+      ) : erro === "negado" ? (
+        <EstadoNegado texto="Sua conta não tem acesso à agenda desta cidade." />
+      ) : erro === "falhou" ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
@@ -76,22 +105,38 @@ export function Agenda() {
           acao={{ rotulo: "Criar o primeiro", aoAcionar: () => setCriando(true) }}
         />
       ) : (
-        dias.map((dia) => (
-          <section key={dia.chave} className="grid gap-2">
-            <h2 className="px-1 text-[15px] font-semibold">{rotuloDoDia(dia.chave)}</h2>
-            <Lista>
-              {dia.itens.map((evento) => (
-                <LinhaDeLista
-                  key={evento.id}
-                  icone="event"
-                  titulo={evento.titulo}
-                  subtitulo={subtituloDoEncontro(evento.comecaEm, evento.local)}
-                  onClick={() => void navegacao.irPara("evento", { parametros: { id: evento.id } })}
-                />
-              ))}
-            </Lista>
-          </section>
-        ))
+        <>
+          {dias.map((dia) => (
+            <section key={dia.chave} className="grid gap-2">
+              <h2 className="px-1 text-[15px] font-semibold">{rotuloDoDia(dia.chave)}</h2>
+              <Lista>
+                {dia.itens.map((evento) => (
+                  <LinhaDeLista
+                    key={evento.id}
+                    icone="event"
+                    titulo={evento.titulo}
+                    subtitulo={subtituloDoEncontro(evento.comecaEm, evento.local)}
+                    onClick={() =>
+                      void navegacao.irPara("evento", { parametros: { id: evento.id } })
+                    }
+                  />
+                ))}
+              </Lista>
+            </section>
+          ))}
+          {dados !== null && dados.proximo === null ? null : (
+            <div className="grid justify-items-center gap-2 pt-2">
+              {erroAoCarregarMais === null ? null : (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  {erroAoCarregarMais}
+                </p>
+              )}
+              <Botao tom="contornado" disabled={carregandoMais} onClick={() => void carregarMais()}>
+                {carregandoMais ? "Carregando…" : "Ver mais encontros"}
+              </Botao>
+            </div>
+          )}
+        </>
       )}
 
       {criando ? (

@@ -10,7 +10,6 @@ import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
 import { Secao } from "@/components/bivaque/secao"
-import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarEncontro,
   cancelarPresenca,
@@ -22,27 +21,36 @@ import {
 import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
-import { useCasca } from "@/src/contexto/casca"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
-import { mensagemDaFalha } from "@/src/eventos/formulario"
+import {
+  acessoNegado,
+  encontroSumiu,
+  mensagemDaFalha,
+  sessaoVencida,
+} from "@/src/eventos/formulario"
 import { texto } from "@/src/telas/comum"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
 /**
- * O encontro, agora do banco (F05 / ADR-20261105).
+ * O encontro, do banco (F05 / ADR-20261105).
+ *
+ * A cidade mostrada é a do ENCONTRO, não a de quem olha: desde a decisão de 25/09
+ * (migration 20260925161111) um membro lê encontros de outras cidades, e a tela
+ * precisa dizer de qual cidade é o que ele está vendo. Visitante não recebe
+ * "Vou"/"Não vou" nem pergunta — o servidor recusaria, e oferecer botão que
+ * falha é pior do que explicar por que ele não existe.
  *
  * Presença e pergunta mostram o que ficou gravado, não um otimismo local: a tela
  * espera a resposta do servidor para mudar, e quando a escrita falha o estado
- * anterior continua na tela com a mensagem do que aconteceu. Um "vou" que não
- * gravou e some no recarregamento seria a mentira mais cara desta tela.
+ * anterior continua com a mensagem do que aconteceu.
  */
 export function Evento() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
-  const casca = useCasca()
 
   const [encontro, setEncontro] = useState<Encontro | null>(null)
-  const [erro, setErro] = useState<"falhou" | "nao-encontrado" | null>(null)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "sumiu" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -67,9 +75,13 @@ export function Evento() {
       .catch((falha: unknown) => {
         if (controle.signal.aborted) return
         setErro(
-          falha instanceof FalhaDaApi && falha.codigo === "nao-encontrado"
-            ? "nao-encontrado"
-            : "falhou",
+          sessaoVencida(falha)
+            ? "sessao"
+            : encontroSumiu(falha)
+              ? "sumiu"
+              : acessoNegado(falha)
+                ? "negado"
+                : "falhou",
         )
       })
     return () => controle.abort()
@@ -78,8 +90,21 @@ export function Evento() {
   const validacao = validarParametros("evento", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
-  if (erro === "nao-encontrado") return <TelaIndisponivel />
-
+  if (erro === "sumiu") return <TelaIndisponivel />
+  if (erro === "sessao") {
+    return (
+      <section data-tela="evento" className="grid gap-2">
+        <EstadoDeSessaoVencida />
+      </section>
+    )
+  }
+  if (erro === "negado") {
+    return (
+      <section data-tela="evento" className="grid gap-2">
+        <EstadoNegado texto="Sua conta não tem acesso a este encontro." />
+      </section>
+    )
+  }
   if (erro === "falhou") {
     return (
       <section data-tela="evento" className="grid gap-2">
@@ -87,7 +112,6 @@ export function Evento() {
       </section>
     )
   }
-
   if (encontro === null) {
     return (
       <section data-tela="evento" className="grid gap-2">
@@ -99,20 +123,22 @@ export function Evento() {
   const quando = new Date(encontro.comecaEm)
   const rotuloDaData = Number.isNaN(quando.getTime()) ? "" : rotuloDeDataHora(quando)
   const cancelado = encontro.situacao === "cancelled"
+  const presenca = encontro.presenca
+  const podeMarcar = !encontro.visitante && !encontro.souOrganizador && !cancelado
 
   async function mudarPresenca(situacao: PresencaDoEncontro | null) {
     if (encontro === null || ocupado) return
     setOcupado(true)
     setAviso(null)
     try {
-      const presenca =
+      const gravada =
         situacao === null
           ? await cancelarPresenca(encontro.id)
           : await marcarPresenca(encontro.id, situacao)
-      setEncontro({ ...encontro, presenca })
+      setEncontro({ ...encontro, presenca: gravada })
     } catch (falha: unknown) {
       // Nada mudou na tela: o estado anterior continua sendo o que o banco tem.
-      setAviso(mensagemDaFalha(falha))
+      setAviso(mensagemDaFalha(falha, "presenca"))
     } finally {
       setOcupado(false)
     }
@@ -129,7 +155,7 @@ export function Evento() {
       setPerguntaEnviada(true)
     } catch (falha: unknown) {
       // O texto continua no campo: é o que a pessoa escreveu.
-      setErroDaPergunta(mensagemDaFalha(falha))
+      setErroDaPergunta(mensagemDaFalha(falha, "pergunta"))
     } finally {
       setEnviandoPergunta(false)
     }
@@ -158,7 +184,7 @@ export function Evento() {
         <Icone nome="location_on" className="size-6 shrink-0 text-(--primary)" />
         <span className="grid gap-0.5">
           <b className="text-[15px]">{texto(encontro.local, "Local a confirmar")}</b>
-          <small className="text-(--on-surface-variant)">{casca.cidade}</small>
+          <small className="text-(--on-surface-variant)">{encontro.cidade}</small>
         </span>
       </div>
 
@@ -168,56 +194,75 @@ export function Evento() {
         </Secao>
       )}
 
-      <Secao titulo="Presença">
-        <div className="grid grid-cols-3 gap-2">
-          <Fato valor={String(encontro.presenca.confirmados)} rotulo="confirmados" />
-          <Fato valor="Livre" rotulo="participação" />
-          <Fato valor={rotuloDaMinha(encontro.presenca.minha)} rotulo="sua presença" />
-        </div>
-
-        {encontro.souOrganizador ? (
+      {encontro.visitante ? (
+        <section
+          data-visitante="sim"
+          aria-labelledby="encontro-de-outra-cidade"
+          className="grid gap-1 rounded-2xl bg-(--surface-lowest) px-4 py-4 ring-1 ring-(--outline-variant)"
+        >
+          <h2 id="encontro-de-outra-cidade" className="text-[15px] font-semibold">
+            Encontro de outra cidade
+          </h2>
           <p className="text-sm text-(--on-surface-variant)">
-            Você organiza este encontro: a presença é de quem participa.
+            Você está vendo {encontro.cidade}. Confirmar presença e perguntar ao organizador ficam
+            para quem mora lá.
           </p>
-        ) : cancelado ? (
-          <p className="text-sm text-(--on-surface-variant)">
-            O encontro foi cancelado. Não é preciso confirmar presença.
-          </p>
-        ) : (
-          <div className="flex flex-wrap justify-end gap-2">
-            <Botao
-              tom={encontro.presenca.minha === "not_going" ? "tonal" : "contornado"}
-              aria-pressed={encontro.presenca.minha === "not_going"}
-              disabled={ocupado}
-              onClick={() => void mudarPresenca("not_going")}
-            >
-              Não vou
-            </Botao>
-            <Botao
-              tom={encontro.presenca.minha === "going" ? "tonal" : "preenchido"}
-              icone={encontro.presenca.minha === "going" ? "check" : "event_available"}
-              aria-pressed={encontro.presenca.minha === "going"}
-              disabled={ocupado}
-              onClick={() => void mudarPresenca("going")}
-            >
-              {encontro.presenca.minha === "going" ? "Presença confirmada" : "Vou"}
-            </Botao>
-            {encontro.presenca.minha === null ? null : (
-              <Botao tom="texto" disabled={ocupado} onClick={() => void mudarPresenca(null)}>
-                Cancelar presença
-              </Botao>
-            )}
+        </section>
+      ) : (
+        <Secao titulo="Presença">
+          <div className="grid grid-cols-3 gap-2">
+            <Fato
+              valor={presenca === null ? "—" : String(presenca.confirmados)}
+              rotulo="confirmados"
+            />
+            <Fato valor="Livre" rotulo="participação" />
+            <Fato valor={rotuloDaMinha(presenca?.minha ?? null)} rotulo="sua presença" />
           </div>
-        )}
 
-        {aviso === null ? null : (
-          <p role="alert" className="text-sm text-(--destructive)">
-            {aviso}
-          </p>
-        )}
-      </Secao>
+          {encontro.souOrganizador ? (
+            <p className="text-sm text-(--on-surface-variant)">
+              Você organiza este encontro: a presença é de quem participa.
+            </p>
+          ) : cancelado ? (
+            <p className="text-sm text-(--on-surface-variant)">
+              O encontro foi cancelado. Não é preciso confirmar presença.
+            </p>
+          ) : presenca === null ? null : (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Botao
+                tom={presenca.minha === "not_going" ? "tonal" : "contornado"}
+                aria-pressed={presenca.minha === "not_going"}
+                disabled={ocupado}
+                onClick={() => void mudarPresenca("not_going")}
+              >
+                Não vou
+              </Botao>
+              <Botao
+                tom={presenca.minha === "going" ? "tonal" : "preenchido"}
+                icone={presenca.minha === "going" ? "check" : "event_available"}
+                aria-pressed={presenca.minha === "going"}
+                disabled={ocupado}
+                onClick={() => void mudarPresenca("going")}
+              >
+                {presenca.minha === "going" ? "Presença confirmada" : "Vou"}
+              </Botao>
+              {presenca.minha === null ? null : (
+                <Botao tom="texto" disabled={ocupado} onClick={() => void mudarPresenca(null)}>
+                  Cancelar presença
+                </Botao>
+              )}
+            </div>
+          )}
 
-      {encontro.souOrganizador || cancelado ? null : (
+          {aviso === null ? null : (
+            <p role="alert" className="text-sm text-(--destructive)">
+              {aviso}
+            </p>
+          )}
+        </Secao>
+      )}
+
+      {podeMarcar ? (
         <Secao titulo="Perguntar a quem organiza">
           {perguntaEnviada ? (
             <p className="text-[15px] leading-6">
@@ -250,7 +295,7 @@ export function Evento() {
             </form>
           )}
         </Secao>
-      )}
+      ) : null}
 
       {editando ? (
         <FormularioDeEncontro
@@ -266,7 +311,7 @@ export function Evento() {
   )
 }
 
-function rotuloDaMinha(minha: Encontro["presenca"]["minha"]): string {
+function rotuloDaMinha(minha: PresencaDoEncontro | null): string {
   if (minha === "going") return "Sim"
   if (minha === "not_going") return "Não"
   if (minha === "interested") return "Interesse"

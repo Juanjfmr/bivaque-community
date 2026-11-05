@@ -70,7 +70,7 @@ export function FormularioDeEncontro({
       }
       aoSalvar(id)
     } catch (falha: unknown) {
-      setErro(mensagemDaFalha(falha))
+      setErro(mensagemDaFalha(falha, editando ? "editar" : "criar"))
     } finally {
       setSalvando(false)
     }

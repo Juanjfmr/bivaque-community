@@ -20,7 +20,10 @@ export type EncontroDaAgenda = Readonly<{
 
 export type AgendaDaCidade = Readonly<{
   encontros: readonly EncontroDaAgenda[]
-  /** Cursor da próxima página; `null` quando acabou. */
+  /**
+   * Cursor opaco da próxima página (`comecaEm|id`). Opaco de propósito: a ordem
+   * é do servidor, e a tela só devolve o que recebeu.
+   */
   proximo: string | null
 }>
 
@@ -39,9 +42,13 @@ export type Encontro = Readonly<{
   comecaEm: string
   terminaEm: string | null
   situacao: string
-  capa: string | null
-  presenca: Presenca
+  /** Cidade do evento — não a de quem está olhando. */
+  cidade: string
+  /** Presença só existe para quem é da cidade do encontro. */
+  presenca: Presenca | null
   souOrganizador: boolean
+  /** Encontro de outra cidade: abre para ler, sem presença e sem pergunta. */
+  visitante: boolean
 }>
 
 /** O que a tela manda criar ou editar. O escopo não entra: é da sessão. */
@@ -54,22 +61,22 @@ export type DadosDoEncontro = Readonly<{
 
 type Corpo = Record<string, unknown>
 
+function foraDoContrato(): FalhaDaApi {
+  return new FalhaDaApi("indisponivel", 0, null, "Resposta do servidor fora do contrato.")
+}
+
 function texto(valor: unknown): string | null {
   return typeof valor === "string" && valor !== "" ? valor : null
 }
 
 function exigirTexto(corpo: Corpo, chave: string): string {
   const valor = texto(corpo[chave])
-  if (valor === null) {
-    throw new FalhaDaApi("indisponivel", 0, "Resposta do servidor fora do contrato.")
-  }
+  if (valor === null) throw foraDoContrato()
   return valor
 }
 
 function exigirRegistro(valor: unknown): Corpo {
-  if (valor === null || typeof valor !== "object" || Array.isArray(valor)) {
-    throw new FalhaDaApi("indisponivel", 0, "Resposta do servidor fora do contrato.")
-  }
+  if (valor === null || typeof valor !== "object" || Array.isArray(valor)) throw foraDoContrato()
   return valor as Corpo
 }
 
@@ -80,14 +87,15 @@ export function presencaDe(valor: unknown): PresencaDoEncontro | null {
 function lerPresenca(valor: unknown): Presenca {
   const corpo = exigirRegistro(valor)
   const confirmados = corpo["confirmados"]
-  return {
-    confirmados: typeof confirmados === "number" && Number.isFinite(confirmados) ? confirmados : 0,
-    minha: presencaDe(corpo["minha"]),
-  }
+  // Zero é uma contagem legítima; ausência é resposta quebrada. Tratar ausência
+  // como zero inventaria "ninguém confirmou".
+  if (typeof confirmados !== "number" || !Number.isFinite(confirmados)) throw foraDoContrato()
+  return { confirmados, minha: presencaDe(corpo["minha"]) }
 }
 
 function lerEncontro(corpo: Corpo): Encontro {
   const evento = exigirRegistro(corpo["evento"])
+  const visitante = corpo["visitante"] === true
   return {
     id: exigirTexto(evento, "id"),
     titulo: exigirTexto(evento, "titulo"),
@@ -96,9 +104,10 @@ function lerEncontro(corpo: Corpo): Encontro {
     comecaEm: exigirTexto(evento, "comecaEm"),
     terminaEm: texto(evento["terminaEm"]),
     situacao: texto(evento["situacao"]) ?? "upcoming",
-    capa: texto(evento["capa"]),
-    presenca: lerPresenca(corpo["presenca"]),
+    cidade: texto(evento["cidade"]) ?? "",
+    presenca: visitante ? null : lerPresenca(corpo["presenca"]),
     souOrganizador: corpo["souOrganizador"] === true,
+    visitante,
   }
 }
 
@@ -109,9 +118,7 @@ export async function lerAgenda(
   const busca = opcoes.depois === undefined ? "" : `?depois=${encodeURIComponent(opcoes.depois)}`
   const corpo = await ler(`/api/app/eventos${busca}`, opcoes)
   const lista = corpo["eventos"]
-  if (!Array.isArray(lista)) {
-    throw new FalhaDaApi("indisponivel", 0, "Resposta do servidor fora do contrato.")
-  }
+  if (!Array.isArray(lista)) throw foraDoContrato()
   return {
     encontros: lista.map((linha) => {
       const encontro = exigirRegistro(linha)

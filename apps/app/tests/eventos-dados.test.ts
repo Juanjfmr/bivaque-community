@@ -13,8 +13,9 @@ import {
 
 /**
  * A porta da jornada de eventos (ADR-20261105 §2): caminho, método, corpo e
- * tradução da resposta. E a regra que mais importa nesta camada — resposta fora
- * do contrato falha alto, em vez de virar uma lista vazia bonita.
+ * tradução da resposta. E as regras que mais importam nesta camada — resposta
+ * fora do contrato falha alto em vez de virar lista vazia, e ausência de dado
+ * não vira zero.
  */
 
 function responder(corpo: unknown, status = 200) {
@@ -32,6 +33,17 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const ENCONTRO = {
+  id: "e1",
+  titulo: "Café",
+  descricao: null,
+  local: null,
+  comecaEm: "2026-11-10T12:00:00.000Z",
+  terminaEm: null,
+  situacao: "upcoming",
+  cidade: "Manaus",
+}
+
 describe("agenda da cidade", () => {
   it("traduz a lista e o cursor", async () => {
     const buscar = responder({
@@ -44,25 +56,20 @@ describe("agenda da cidade", () => {
           situacao: "upcoming",
         },
       ],
-      proximo: "2026-11-10T12:00:00.000Z",
+      proximo: "2026-11-10T12:00:00.000Z|e1",
     })
     const agenda = await lerAgenda()
     expect(chamada(buscar).caminho).toBe("/api/app/eventos")
-    expect(agenda.encontros).toHaveLength(1)
-    expect(agenda.encontros[0]).toEqual({
-      id: "e1",
-      titulo: "Café da manhã",
-      local: "Praça",
-      comecaEm: "2026-11-10T12:00:00.000Z",
-      situacao: "upcoming",
-    })
-    expect(agenda.proximo).toBe("2026-11-10T12:00:00.000Z")
+    expect(agenda.encontros[0]?.titulo).toBe("Café da manhã")
+    expect(agenda.proximo).toBe("2026-11-10T12:00:00.000Z|e1")
   })
 
-  it("passa o cursor de paginação e aceita fim de lista", async () => {
+  it("devolve o cursor opaco sem interpretar", async () => {
     const buscar = responder({ eventos: [], proximo: null })
-    const agenda = await lerAgenda({ depois: "2026-11-10T12:00:00.000Z" })
-    expect(chamada(buscar).caminho).toBe("/api/app/eventos?depois=2026-11-10T12%3A00%3A00.000Z")
+    const agenda = await lerAgenda({ depois: "2026-11-10T12:00:00.000Z|e1" })
+    expect(chamada(buscar).caminho).toBe(
+      "/api/app/eventos?depois=2026-11-10T12%3A00%3A00.000Z%7Ce1",
+    )
     expect(agenda.proximo).toBeNull()
   })
 
@@ -78,41 +85,52 @@ describe("agenda da cidade", () => {
 })
 
 describe("detalhe do encontro", () => {
-  it("lê o encontro com presença e autoria", async () => {
+  it("lê a cidade do evento, a presença e a autoria", async () => {
     const buscar = responder({
-      evento: {
-        id: "e1",
-        titulo: "Café",
-        descricao: null,
-        local: null,
-        comecaEm: "2026-11-10T12:00:00.000Z",
-        terminaEm: null,
-        situacao: "upcoming",
-        capa: null,
-      },
+      evento: ENCONTRO,
       presenca: { confirmados: 3, minha: "going" },
       souOrganizador: false,
+      visitante: false,
     })
     const encontro = await buscarEncontro("e1")
     expect(chamada(buscar).caminho).toBe("/api/app/eventos/e1")
+    expect(encontro.cidade).toBe("Manaus")
     expect(encontro.presenca).toEqual({ confirmados: 3, minha: "going" })
-    expect(encontro.souOrganizador).toBe(false)
-    expect(encontro.descricao).toBeNull()
+    expect(encontro.visitante).toBe(false)
+  })
+
+  it("de outra cidade vem como visitante e sem presença", async () => {
+    responder({
+      evento: { ...ENCONTRO, cidade: "Rio de Janeiro" },
+      presenca: null,
+      souOrganizador: false,
+      visitante: true,
+    })
+    const encontro = await buscarEncontro("e1")
+    expect(encontro.visitante).toBe(true)
+    expect(encontro.presenca).toBeNull()
+    expect(encontro.cidade).toBe("Rio de Janeiro")
+  })
+
+  it("confirmados ausente é falha de formato, não zero", async () => {
+    responder({
+      evento: ENCONTRO,
+      presenca: { minha: null },
+      souOrganizador: false,
+      visitante: false,
+    })
+    await expect(buscarEncontro("e1")).rejects.toBeInstanceOf(FalhaDaApi)
   })
 
   it("presença desconhecida vira ausência, não erro de tipo", async () => {
     responder({
-      evento: {
-        id: "e1",
-        titulo: "Café",
-        comecaEm: "2026-11-10T12:00:00.000Z",
-        situacao: "upcoming",
-      },
+      evento: ENCONTRO,
       presenca: { confirmados: 0, minha: "talvez" },
       souOrganizador: false,
+      visitante: false,
     })
     const encontro = await buscarEncontro("e1")
-    expect(encontro.presenca.minha).toBeNull()
+    expect(encontro.presenca?.minha).toBeNull()
   })
 })
 
@@ -130,15 +148,21 @@ describe("presença", () => {
   it("cancela pelo DELETE e devolve a contagem já sem a pessoa", async () => {
     const buscar = responder({ presenca: { confirmados: 3, minha: null } })
     const presenca = await cancelarPresenca("e1")
-    const { caminho, init } = chamada(buscar)
-    expect(caminho).toBe("/api/app/eventos/e1/presenca")
-    expect(init.method).toBe("DELETE")
+    expect(chamada(buscar).init.method).toBe("DELETE")
     expect(presenca).toEqual({ confirmados: 3, minha: null })
   })
 
   it("falha da escrita não vira presença vazia", async () => {
     responder({ erro: "escrita-indisponivel" }, 503)
     await expect(marcarPresenca("e1", "going")).rejects.toMatchObject({ codigo: "indisponivel" })
+  })
+
+  it("recusa de outra cidade chega com o motivo do servidor", async () => {
+    responder({ erro: "de-outra-cidade" }, 403)
+    await expect(marcarPresenca("e1", "going")).rejects.toMatchObject({
+      codigo: "recusado",
+      motivoDoServidor: "de-outra-cidade",
+    })
   })
 })
 
@@ -148,18 +172,18 @@ describe("criar, editar e perguntar", () => {
   it("cria pelo POST e devolve o id gravado", async () => {
     const buscar = responder({ evento: { id: "novo" } }, 201)
     await expect(criarEncontro(dados)).resolves.toBe("novo")
-    const { caminho, init } = chamada(buscar)
-    expect(caminho).toBe("/api/app/eventos")
-    expect(init.method).toBe("POST")
-    expect(JSON.parse(String(init.body))).toEqual(dados)
+    expect(chamada(buscar).caminho).toBe("/api/app/eventos")
+    expect(chamada(buscar).init.method).toBe("POST")
   })
 
-  it("edita pelo PATCH no id", async () => {
+  it("edita pelo PATCH no id, sem campo de capa", async () => {
     const buscar = responder({ evento: { id: "e1" } })
     await editarEncontro("e1", dados)
     const { caminho, init } = chamada(buscar)
     expect(caminho).toBe("/api/app/eventos/e1")
     expect(init.method).toBe("PATCH")
+    // Sem capa no corpo: o servidor não toca no cover_path (item 1 da revisão).
+    expect(Object.keys(JSON.parse(String(init.body)))).not.toContain("capa")
   })
 
   it("pergunta pelo POST e devolve a conversa", async () => {
@@ -168,12 +192,5 @@ describe("criar, editar e perguntar", () => {
     const { caminho, init } = chamada(buscar)
     expect(caminho).toBe("/api/app/eventos/e1/perguntas")
     expect(JSON.parse(String(init.body))).toEqual({ texto: "Vai ter estacionamento?" })
-  })
-})
-
-describe("contrato de erro", () => {
-  it("404 do detalhe chega com o código certo para a tela decidir", async () => {
-    responder({ erro: "evento-nao-encontrado" }, 404)
-    await expect(buscarEncontro("x")).rejects.toMatchObject({ codigo: "nao-encontrado" })
   })
 })

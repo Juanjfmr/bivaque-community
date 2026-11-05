@@ -11,7 +11,11 @@
  *   sem `x-bivaque-app` (CSRF), e mais ninguém manda esse cabeçalho;
  * - **sem retentativa em escrita**: repetir um POST duplica a pergunta e a
  *   presença. Quem decide repetir é a tela, com o botão na frente;
- * - **erro tipado**: a tela decide pelo `status`, nunca pelo texto da resposta.
+ * - **erro tipado**: a tela decide pelo `codigo`, nunca pelo texto da resposta.
+ *
+ * O corpo de erro do servidor é `{ erro, mensagem? }`: `erro` é o código curto
+ * que a tela ramifica (`de-outra-cidade`, `nao-organiza`, `sem-cidade`, …) e
+ * `mensagem` é o texto pronto para a pessoa, quando o servidor tem um.
  */
 
 export const CABECALHOS_DO_APP: Readonly<Record<string, string>> = {
@@ -23,11 +27,13 @@ export type CodigoDeFalha =
   | "sem-sessao"
   | "recusado"
   | "nao-encontrado"
+  | "invalido"
   | "conflito"
   | "limite"
   | "indisponivel"
 
 const POR_STATUS: Readonly<Record<number, CodigoDeFalha>> = {
+  400: "invalido",
   401: "sem-sessao",
   403: "recusado",
   404: "nao-encontrado",
@@ -39,14 +45,22 @@ const POR_STATUS: Readonly<Record<number, CodigoDeFalha>> = {
 export class FalhaDaApi extends Error {
   readonly status: number
   readonly codigo: CodigoDeFalha
-  /** Texto que o servidor mandou para a pessoa, quando mandou. */
+  /** Código curto que o servidor mandou (`erro`), quando mandou. */
+  readonly motivoDoServidor: string | null
+  /** Texto que o servidor preparou para a pessoa, quando preparou. */
   readonly mensagem: string | null
 
-  constructor(codigo: CodigoDeFalha, status: number, mensagem: string | null = null) {
+  constructor(
+    codigo: CodigoDeFalha,
+    status: number,
+    motivoDoServidor: string | null = null,
+    mensagem: string | null = null,
+  ) {
     super(`api: ${codigo} (${status})`)
     this.name = "FalhaDaApi"
     this.codigo = codigo
     this.status = status
+    this.motivoDoServidor = motivoDoServidor
     this.mensagem = mensagem
   }
 }
@@ -57,8 +71,10 @@ function textoOuNulo(corpo: Record<string, unknown>, chave: string): string | nu
 }
 
 function falhaDe(status: number, corpo: Record<string, unknown>): FalhaDaApi {
+  // 500 e qualquer status não mapeado são indisponibilidade: o servidor caiu ou
+  // respondeu algo que este cliente não conhece. Só 400 é "o pedido está errado".
   const codigo = POR_STATUS[status] ?? "indisponivel"
-  return new FalhaDaApi(codigo, status, textoOuNulo(corpo, "mensagem"))
+  return new FalhaDaApi(codigo, status, textoOuNulo(corpo, "erro"), textoOuNulo(corpo, "mensagem"))
 }
 
 async function chamar(
