@@ -3,86 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Kanban local e versionado do caminho de fechamento e lançamento do MVP Bivaque."
-    />
-    <title>Bivaque — Mapa do MVP</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Estágio do Bivaque, entregas comprovadas e o que falta para lançar." />
+    <title>Bivaque · Progresso do produto</title>
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" type="module"></script>
   </head>
   <body>
-    <a class="skip-link" href="#board">Pular para o quadro</a>
-    <main>
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">Bivaque Community · fonte versionada no Git</p>
-          <h1>Mapa de fechamento do MVP</h1>
-          <p class="lede">
-            Código, migrations e testes definem a realidade. Documentação divergente entra como
-            <strong>drift</strong> temporário; o card continua aberto até reconciliar, bloquear ou
-            provar conclusão.
-          </p>
-        </div>
-        <div class="header-meta">
-          <span id="updated-at">Carregando dados…</span>
-          <span class="git-note">Colaboração: commits pequenos por card</span>
-        </div>
-      </header>
-
-      <section class="principles" aria-label="Princípios de execução">
-        <article>
-          <span class="principle-label">Regra de autorização</span>
-          <p>
-            <code>service_role</code> não carrega identidade. RPCs que usam <code>auth.uid()</code>
-            exigem teste com o mesmo caller do runtime.
-          </p>
-        </article>
-        <article>
-          <span class="principle-label">Princípio de IA</span>
-          <p><strong>AI is a consumer of Bivaque.</strong> Com IA desligada, o produto continua.</p>
-        </article>
-        <article>
-          <span class="principle-label">Definição de concluído</span>
-          <p>Um card só vai para DONE com contrato, negações, caller real e prova registrada.</p>
-        </article>
-        <article>
-          <span class="principle-label">Fila autônoma</span>
-          <p><code>board.mjs --next</code> escolhe um card elegível; resolva um por commit.</p>
-        </article>
-      </section>
-
-      <section class="metrics" aria-label="Resumo do quadro" id="metrics"></section>
-
-      <section class="controls" aria-label="Filtros do quadro">
-        <label class="search-control">
-          <span>Buscar cards</span>
-          <input id="search" type="search" placeholder="ID, frente, prova, bloqueio…" autocomplete="off" />
-        </label>
-        <fieldset class="filter-control">
-          <legend>Filtrar por frente</legend>
-          <div class="filter-buttons" id="filters"></div>
-        </fieldset>
-      </section>
-
-      <p class="result-summary" id="result-summary" aria-live="polite"></p>
-      <section class="board" id="board" aria-label="Quadro de lançamento do MVP"></section>
+    <a href="#main" class="skip-link">Pular para o conteúdo</a>
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Bivaque, início do painel"><span class="brand-mark" aria-hidden="true">b.</span>Bivaque<span class="brand-caption">Progresso do produto</span></a>
+      <div class="header-actions"><span id="sync-state" class="sync-state">Carregando…</span><button type="button" id="refresh">Atualizar agora</button></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="load-message" role="status" aria-live="polite">Buscando o retrato mais recente do Bivaque…</div>
+      <noscript><p>Ative o JavaScript para consultar os indicadores e filtros do painel.</p></noscript>
+      <div id="dashboard" hidden>
+        <section class="overview" aria-labelledby="overview-title">
+          <div class="overview-heading"><p class="eyebrow">CAMINHO PARA O LANÇAMENTO</p><h1 id="overview-title">Onde estamos</h1><p class="subtitle">O que já foi comprovado. O que falta para usar de verdade.</p></div>
+          <div id="stage" class="stage"></div>
+          <div class="hero-progress"><div><span class="metric-label">Jornadas Web comprovadas</span><p class="hero-number"><strong id="overall-percent">—</strong><span>pronto</span></p><p id="overall-count"></p></div><div class="remaining"><strong id="remaining-percent"></strong><span>restante do escopo Web</span></div></div>
+          <progress id="overall-progress" max="100" value="0" aria-label="Jornadas Web comprovadas"></progress>
+          <p class="scope-note">O percentual mede entregas comprovadas, sem estimar prazo. Operação, legal e pacote de loja aparecem como requisitos adicionais abaixo.</p>
+        </section>
+        <aside id="provisional" class="notice" hidden><strong>Levantamento inicial · percentual provisório</strong><p>Há implementação registrada no quadro. As provas por camada ainda precisam ser vinculadas às jornadas atuais. “Não comprovado” não significa “não existe”.</p></aside>
+        <section id="layer-metrics" class="layer-metrics" aria-label="Progresso por camada"></section>
+        <section class="next-step" aria-labelledby="next-title"><div><p class="eyebrow">PRÓXIMO PASSO</p><h2 id="next-title">Conferindo a próxima entrega…</h2></div><a href="#journeys">Ver o que falta <span aria-hidden="true">↓</span></a></section>
+        <section class="journeys-section" id="journeys" aria-labelledby="journeys-title">
+          <div class="section-heading"><div><p class="eyebrow">DO PLANO À ENTREGA</p><h2 id="journeys-title">Por funcionalidade</h2></div><span id="journey-count"></span></div>
+          <div class="controls"><label class="search"><span>Buscar funcionalidade</span><input type="search" id="search" placeholder="Ex.: entrada, imóveis, conversas" /></label><label><span>Consultar camada</span><select id="layer"><option value="integration">Jornada completa</option><option value="frontend">Frontend · telas e interações</option><option value="backend">Backend · dados e regras</option></select></label></div>
+          <fieldset class="filters" id="filters" aria-label="Filtrar por situação"></fieldset>
+          <p id="result-summary" class="result-summary" aria-live="polite"></p>
+          <div id="journey-list" class="journey-list"></div>
+        </section>
+        <section aria-labelledby="gates-title"><div class="section-heading"><div><p class="eyebrow">ALÉM DAS DEZ JORNADAS</p><h2 id="gates-title">Condições para lançar</h2></div><span id="gate-count"></span></div><p class="subtitle">Chegar a 100% das jornadas Web não libera a publicação enquanto estas condições estiverem pendentes.</p><div id="gate-list" class="gate-list"></div></section>
+        <section class="technical" aria-labelledby="technical-title"><div class="section-heading"><div><p class="eyebrow">CONFIANÇA NOS NÚMEROS</p><h2 id="technical-title">Versão e comprovação</h2></div></div><div id="version-info" class="version-info"></div><div id="check-list" class="check-list"></div><details class="method"><summary>Como o percentual é calculado?</summary><div><p><strong>Percentual principal = jornadas completas comprovadas ÷ jornadas previstas × 100.</strong> O valor é arredondado para baixo. Cada camada tem seu próprio indicador; o geral não é a média entre frontend e backend.</p><p>Uma jornada exige implementação registrada, aceite com referências de revisão, verificações automáticas na versão analisada e comprovação de frontend, backend e integração. Um teste ignorado, ausente ou inconclusivo não conta como sucesso.</p><p>Os cards são a fonte das entregas. A automação consulta os resultados e recalcula o painel; ela não substitui a revisão de produto, a revisão visual ou a aprovação do lançamento. Alterações nas partes comprovadas exigem nova avaliação.</p><p>Dados de demonstração, trabalho histórico e o antigo app React Native não contam como jornadas entregues. O pacote Capacitor é acompanhado nas condições de lançamento.</p><p id="scope-version"></p></div></details></section>
+        <section id="changes-section" hidden aria-labelledby="changes-title"><h2 id="changes-title">Desde a última atualização</h2><ul id="changes"></ul></section>
+      </div>
     </main>
-    <template id="card-template">
-      <article class="card">
-        <div class="card-topline">
-          <span class="priority"></span>
-          <span class="category"></span>
-          <span class="phase"></span>
-        </div>
-        <p class="card-title"></p>
-        <p class="description"></p>
-        <div class="card-signals"></div>
-        <details>
-          <summary>Contrato, provas e próximos passos</summary>
-          <div class="card-detail"></div>
-        </details>
-      </article>
-    </template>
-    <script type="module" src="./app.js"></script>
+    <footer><span>Bivaque · acompanhamento de entregas</span><span>Atualização automática · fonte única no repositório</span></footer>
   </body>
 </html>

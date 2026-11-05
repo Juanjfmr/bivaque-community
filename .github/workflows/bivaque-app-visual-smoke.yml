@@ -1,6 +1,8 @@
 name: Bivaque App Visual Smoke
 
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - 'apps/app/**'

@@ -6237,7 +6237,7 @@
     },
     {
       "id": "APP-E2E-PREEXISTENTES",
-      "title": "Três specs E2E do apps/app falham na linha de base e o CI não os roda",
+      "title": "Instabilidades E2E do apps/app e cobertura no CI",
       "phase": "Lançamento",
       "priority": "P1",
       "category": "testing",
@@ -6247,20 +6247,111 @@
         "Reproduzir cada um e achar a causa (dados da conversa, altura de lista, grade)",
         "Corrigir o código ou o teste, conforme a causa",
         "Pôr a suíte inteira do apps/app no CI, ou registrar por que fica fora",
-        "Suíte do apps/app verde nos seis tamanhos"
+        "Suíte do apps/app verde nos seis tamanhos",
+        "Reproduzir o corpoCabe intermitente em mobile-360 com fontes frias e prontas; corrigir causa ou medição sem afrouxar limite."
       ],
       "dependencies": [],
       "tests": [
         "apps/app/tests/e2e/casca-visual.spec.ts",
         "apps/app/tests/e2e/rolagem-foco.spec.ts",
-        "apps/app/tests/e2e/componentes.spec.ts"
+        "apps/app/tests/e2e/componentes.spec.ts",
+        "apps/app/tests/e2e/r72-mobile-p1.spec.ts"
       ],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "9fb3953e",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte."
+        "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte.",
+        "05/11, PR #129 (nenhuma alteração em apps/app): App Visual Smoke 42052189989 tentativa 1 teve 1 falha em r72-mobile-p1 corpoCabe a 360 (275 pass/6 skip); tentativa 2 da mesma fonte passou. Falha inicial preservada em .visual/run-130/ci-app-visual-failed.log; não declarada como correção do aplicativo."
+      ]
+    },
+    {
+      "id": "RUN-130",
+      "title": "Painel online de prontidão do Bivaque",
+      "phase": "Acompanhamento",
+      "priority": "P1",
+      "category": "infra",
+      "status": "done",
+      "description": "Pedido do dono em 05/11: painel por jornada, frontend e backend, percentuais auditáveis, atualização automática e consulta online; contrato RUN-130.",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
+      "dependencies": [],
+      "links": [
+        "docs/agents/tasks/RUN-130.task.yml",
+        "Painel online | https://bivaque-progresso.vercel.app",
+        "PR #129 | https://github.com/Juanjfmr/bivaque-community/pull/129",
+        "Coleta automática | https://github.com/Juanjfmr/bivaque-community/actions/runs/42055825188"
+      ],
+      "proof": [
+        "Baseline 29fcc8f8: quadro somente local, sem percentuais por jornada; 9 testes existentes verdes.",
+        "Gate completo verde após corrigir somente o relógio da fixture vencida (.visual/run-130/gate-after-clock-fix.log).",
+        "Runtime independente: primeiro FAIL por perda de foco corrigido e rechecado em 375/768/1440, claro/escuro; PASS local em .visual/run-130/runtime/veredito-final.md.",
+        "Revisão independente: primeiro FAIL preservado, reparos e regressões testados; segundo parecer PASS em .visual/run-130/review/segundo-parecer-final.md (29/29 checks específicos).",
+        "Gate final da fonte reparada: lint, tipos, tipos E2E, Next build, Vite build, testes (incluindo 167 scope) e secrets verdes em .visual/run-130/gate-final.log.",
+        "CI do código ea92299a: Pull Request CI 42052190198 PASS, banco/schema/tipos e E2E 840+98 passed (27+16 skipped); App Visual Smoke 42052189989 PASS na segunda tentativa. Árvores Git de ea92299a e integração 6c24227c idênticas.",
+        "PR #129 integrado em 6c24227c. Revisão automática DeepSeek 42052189953 falhou na execução e não é PASS; revisão independente de código e runtime têm pareceres próprios.",
+        "Online protegido: https://bivaque-progresso.vercel.app — HTML, JS, CSS e snapshot com os mesmos corpos do artefato local; board.json=404; anônimo recebe 302 para autenticação. Prova independente em .visual/run-130/runtime-online/veredito.md.",
+        "Automação real: workflow Painel de prontidao 42055825188 PASS após push na main; gerou commit 57aba122cd06541092e29fe2ba9afcdc1bc2c93b em painel-prontidao; Vercel dpl_G53TbB3yU6AoLtcoV17MgV1avNdB READY; snapshot online 6c24227c gerado às 15:31:42 UTC, refreshError=false.",
+        "Indicador inicial deliberadamente provisório: dez jornadas mapeadas; nenhuma herdou comprovação de produto de cards históricos. A conclusão deste card comprova o painel, não as jornadas do Bivaque."
+      ],
+      "checklist": [
+        "Vincular as dez jornadas aos cards existentes e distinguir declaração de prova.",
+        "Testar cálculo, evidência ausente, regressões e versão divergente.",
+        "Implementar resumo, camadas, filtros e detalhes acessíveis nos dois temas.",
+        "Atualizar automaticamente o resumo a partir de main, verificações e publicação.",
+        "Publicar somente os arquivos permitidos em projeto separado.",
+        "Revisão independente e prova em 375/768/1440, claro e escuro."
+      ],
+      "completedAt": "2026-11-05"
+    },
+    {
+      "id": "TEST-CLOCK-UNIT",
+      "title": "Fixture temporal do teste de provisionamento venceu em 04/11",
+      "phase": "Qualidade",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "description": "A data fixa de chegada ficou no passado em 05/11. Somente o relógio da fixture foi isolado; código de produção e expectativas preservados.",
+      "updatedAt": "2026-11-05",
+      "completedAt": "2026-11-05",
+      "sourceRevision": "29fcc8f898a8c064579a99c36ca3a368a1f52ebd",
+      "dependencies": [],
+      "links": ["docs/agents/tasks/RUN-131.task.yml"],
+      "proof": [
+        "Reproduzido na worktree limpa painel-baseline em 29fcc8f8: 1 failed / 14 passed (.visual/run-130/baseline-test.log).",
+        "Após fixar o relógio em 02/11: os mesmos 15 testes passaram, com Date restaurado após cada caso."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/onboarding/provision-requires-verification.test.ts"
+      ],
+      "checklist": [
+        "Reproduzir sem o diff.",
+        "Isolar Date na fixture e restaurar após cada caso.",
+        "Preservar e executar os 15 casos existentes."
+      ]
+    },
+    {
+      "id": "CI-REVIEW-EXECUTION",
+      "title": "Revisão automática DeepSeek encerra com is_error sem parecer",
+      "phase": "Qualidade",
+      "priority": "P2",
+      "category": "infra",
+      "status": "repo",
+      "description": "No PR #129 o serviço de revisão inicializou, encerrou em uma interação com is_error:true e não produziu parecer. A revisão independente foi executada separadamente; este erro do harness não foi convertido em PASS.",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6c24227c1f84f2a3dd7fc8c2ed46f03f13085618",
+      "dependencies": [],
+      "links": [
+        "Execução com falha | https://github.com/Juanjfmr/bivaque-community/actions/runs/42052189953"
+      ],
+      "proof": [
+        "42052189953: completed/failure, is_error:true, num_turns:1, modelUsage vazio; log local em .visual/run-130/ci-review-failed.log."
+      ],
+      "checklist": [
+        "Reproduzir a falha do serviço de revisão fora do diff do painel.",
+        "Identificar a causa de configuração ou provedor sem confundir execução com veredito.",
+        "Reexecutar o serviço e exigir parecer independente; não substituir por sucesso vazio."
       ]
     },
     {
@@ -6288,5 +6379,127 @@
       "dependencies": ["BLOCK-RESEND"],
       "completedChecklist": [false, false, false, false, false]
     }
-  ]
+  ],
+  "launch": {
+    "version": "2026-11-05",
+    "title": "Prontidão do Bivaque",
+    "source": "docs/LANCAMENTO.md",
+    "paths": {
+      "frontend": ["apps/app", "packages/tokens"],
+      "backend": ["apps/web", "supabase", "packages/contracts", "packages/domain"],
+      "integration": ["apps", "packages", "supabase", "tests", ".github/workflows"]
+    },
+    "checks": {
+      "frontend": [
+        {
+          "workflow": "pull-request-ci.yml",
+          "steps": ["Lint", "Typecheck", "Build web app"]
+        },
+        {
+          "workflow": "bivaque-app-visual-smoke.yml",
+          "steps": ["Verify shared visual components"]
+        }
+      ],
+      "backend": [
+        {
+          "workflow": "pull-request-ci.yml",
+          "steps": ["Database tests", "Schema lint", "Check generated types drift"]
+        }
+      ],
+      "integration": [
+        {
+          "workflow": "pull-request-ci.yml",
+          "steps": [
+            "Unit, privacy and scope tests",
+            "Secrets scan",
+            "Root E2E tests (parallel, excluding @stateful)",
+            "Root E2E tests (stateful, serial)"
+          ]
+        }
+      ]
+    },
+    "gates": ["LAN-OP", "LAN-TROCA", "LAN-PROVA", "BLOCK-LEGAL-ENTRY", "BLOCK-RESEND", "LAN-LOJA"],
+    "journeys": [
+      {
+        "id": "F01",
+        "title": "Entrada e conta",
+        "cardId": "LAN-F01",
+        "nextStep": "Ligar a entrada ao servidor e comprovar a jornada completa.",
+        "frontend": ["LAN-F01"],
+        "backend": ["MVP-01-ADMISSION"]
+      },
+      {
+        "id": "F02",
+        "title": "Início e busca",
+        "cardId": "LAN-F02",
+        "nextStep": "Ligar o início e a busca aos dados reais.",
+        "frontend": ["LAN-F02"],
+        "backend": ["LAN-F02"]
+      },
+      {
+        "id": "F03",
+        "title": "Criar e publicar",
+        "cardId": "LAN-F03",
+        "nextStep": "Concluir os quatro tipos de criação, rascunhos e tratamento de falha.",
+        "frontend": ["LAN-F03"],
+        "backend": ["LAN-F03"]
+      },
+      {
+        "id": "F04",
+        "title": "Comunidade e grupos",
+        "cardId": "LAN-F04",
+        "nextStep": "Concluir o redesenho do banco e ligar os grupos ao aplicativo.",
+        "frontend": ["LAN-F04"],
+        "backend": ["RED-003", "MVP-03-COMMUNITY"]
+      },
+      {
+        "id": "F05",
+        "title": "Eventos",
+        "cardId": "LAN-F05",
+        "nextStep": "Ligar agenda, presença, criação e edição ao aplicativo integrado.",
+        "frontend": ["LAN-F05"],
+        "backend": ["MVP-03-COMMUNITY"]
+      },
+      {
+        "id": "F06",
+        "title": "Desapegos e imóveis",
+        "cardId": "LAN-F06",
+        "nextStep": "Comprovar anúncios, localização, filtros e conversa de interesse.",
+        "frontend": ["LAN-F06"],
+        "backend": ["LAN-F06"]
+      },
+      {
+        "id": "F07",
+        "title": "Negócios e serviços",
+        "cardId": "LAN-F07",
+        "nextStep": "Concluir negócio, pedido de serviço e acompanhamento.",
+        "frontend": ["LAN-F07"],
+        "backend": ["G-TASK-1", "LAN-F07"]
+      },
+      {
+        "id": "F08",
+        "title": "Guia",
+        "cardId": "LAN-F08",
+        "nextStep": "Ligar busca, leitura, salvos e sugestões aos dados reais.",
+        "frontend": ["LAN-F08"],
+        "backend": ["LAN-F08"]
+      },
+      {
+        "id": "F09",
+        "title": "Conversas e avisos",
+        "cardId": "LAN-F09",
+        "nextStep": "Ligar conversas e avisos; comprovar o destino e o canal de e-mail.",
+        "frontend": ["LAN-F09"],
+        "backend": ["DONE-OUTBOX-FOUNDATION"]
+      },
+      {
+        "id": "F10",
+        "title": "Você, família e conta",
+        "cardId": "LAN-F10",
+        "nextStep": "Ligar perfil, família e configurações; comprovar seus ciclos.",
+        "frontend": ["LAN-F10"],
+        "backend": ["DONE-PROFILE-RPCS", "LAN-F10"]
+      }
+    ]
+  }
 }

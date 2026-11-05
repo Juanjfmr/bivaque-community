@@ -34,6 +34,8 @@ interface LocalitiesQuery {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] })
+  vi.setSystemTime(new Date("2026-11-02T12:00:00Z"))
   vi.stubEnv("SUPABASE_URL", "https://example.supabase.co")
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
 
@@ -81,6 +83,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllEnvs()
   vi.clearAllMocks()
   verificationStatus = null
