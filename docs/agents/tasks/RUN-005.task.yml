@@ -1,0 +1,55 @@
+# Card LANDING-CTA-ANTES-DO-REGISTRO (05/11/2026), frente paralela ao RUN-004.
+task_id: RUN-005
+
+objective: >
+  Todo botão da landing pública que leva a uma página navega no primeiro toque,
+  mesmo antes de o JavaScript registrar o componente Material Web.
+
+authority:
+  - tools/backend-kanban card LANDING-CTA-ANTES-DO-REGISTRO
+  - docs/decisions/ADR-20261024-front-react-spa.md (§4, a landing fica no Next)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/landing/landing.tsx (função Cta) usa md-filled-button com href,
+    que só navega depois de registrado no cliente. No CI de 31/10/2026 o
+    tests/e2e/landing-v8.spec.ts em 375 px clicou antes do registro e ficou em /
+    duas vezes; o teste passou a esperar o registro (59a33028), escondendo o defeito.
+
+allowed_paths:
+  - apps/web/app/landing
+  - tests/e2e/landing-v8.spec.ts
+  - tests/e2e/landing-sem-js.spec.ts
+  - tests/unit/landing
+  - docs/agents/tasks/RUN-005.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - mudar a aparência dos botões nos dois temas (a correção é de comportamento)
+  - tocar fora da landing pública
+  - push, merge ou force-push (o coordenador publica depois da revisão)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "O CTA Criar conta e todos os outros md-filled-button/md-*-button com href da landing (chamada final, barra fixa, folha do menu) são um <a href> real ou estão dentro de um, com foco visível e nome acessível; navegam sem JavaScript."
+  - "E2E com JavaScript desligado (javaScriptEnabled false) toca cada CTA e chega ao destino em 375/768/1440."
+  - "landing-v8.spec.ts deixa de esperar o registro do elemento antes de clicar e continua verde."
+  - "Capturas 375/768/1440 nos dois temas sem mudança visual perceptível nos botões, em .visual/run-005/."
+  - "Card atualizado com a prova e o commit; status done só com tudo acima verde."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx playwright test tests/e2e/landing-v8.spec.ts tests/e2e/landing-sem-js.spec.ts
+  - node scripts/visual/capture.mjs (rota da landing)
+
+risk: comportamento de navegação da landing pública
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
