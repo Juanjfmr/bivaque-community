@@ -1,6 +1,12 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
-import { type BrowserContext, expect, type Page, test } from "@playwright/test"
+import {
+  request as apiRequest,
+  type BrowserContext,
+  expect,
+  type Page,
+  test,
+} from "@playwright/test"
 import { MEMBRO_SEMEADO, semearSessaoDeMembro } from "./entrada-real-ajuda"
 
 // F05 — a agenda e o encontro do app lendo e gravando no banco de verdade
@@ -162,6 +168,12 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 1, name: "Agenda da cidade" }),
       "a agenda real não está servida em /app/agenda: rode `npx pnpm@11.18.0 app:export`",
     ).toBeVisible({ timeout: 30_000 })
+
+    // O cabeçalho diz a cidade do vínculo `current`, não a da demonstração.
+    await expect(
+      page.getByText("Encontros da comunidade de Manaus."),
+      "o título da agenda precisa usar a cidade que a rota devolveu",
+    ).toBeVisible()
 
     const agenda = page.locator('[data-tela="agenda"]')
     const linhaDoFuturo = agenda.locator('[data-linha="lista"]', {
@@ -452,5 +464,29 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     await expect(page.getByRole("button", { name: "Não vou", exact: true })).toHaveCount(0)
     await expect(page.getByLabel("Sua pergunta")).toHaveCount(0)
     await capturar(page, testInfo.project.name, "encontro-de-visitante")
+
+    // A tela esconde; o servidor precisa recusar. Escrita direta na rota, sem
+    // passar pela interface e sem cookie (Bearer puro): mandar as duas
+    // credenciais seria recusado como conflito e não provaria a autorização.
+    const token = await tokenDaSessao(context)
+    const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+    const cabecalhos = {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    }
+    const presenca = await api.put(
+      "/api/app/eventos/70000000-0000-4000-8000-000000000005/presenca",
+      { headers: cabecalhos, data: { situacao: "going" } },
+    )
+    expect(presenca.status(), "presença de visita é recusada no servidor").toBe(403)
+    expect((await presenca.json()) as { erro: string }).toEqual({ erro: "de-outra-cidade" })
+
+    const pergunta = await api.post(
+      "/api/app/eventos/70000000-0000-4000-8000-000000000005/perguntas",
+      { headers: cabecalhos, data: { texto: "Posso participar mesmo morando longe?" } },
+    )
+    expect(pergunta.status(), "pergunta de visita é recusada no servidor").toBe(403)
+    expect((await pergunta.json()) as { erro: string }).toEqual({ erro: "de-outra-cidade" })
+    await api.dispose()
   })
 })
