@@ -1,0 +1,24 @@
+task_id: RUN-131
+objective: Fixar somente a data de referência de uma fixture temporal vencida, mantendo os casos positivos e negativos.
+authority:
+  - Falha do gate na entrega RUN-130, reproduzida na base limpa 29fcc8f8 em 05/11/2026
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: .visual/run-130/baseline-test.log registra 1 falha e 14 casos verdes; chegada em 04/11 já era passado no relógio de 05/11.
+allowed_paths:
+  - tests/unit/
+  - docs/agents/tasks/RUN-131.task.yml
+forbidden:
+  - alterar qualquer arquivo além da fixture temporal provision-requires-verification.test.ts e deste contrato
+  - alterar código de produção, permissões, contrato ou expectativas dos casos
+acceptance:
+  - Os mesmos 15 casos passam com o relógio fixado em 02/11/2026 e o relógio real é restaurado ao fim de cada caso.
+proof:
+  - npx pnpm@11.18.0 exec vitest run tests/unit/onboarding/provision-requires-verification.test.ts
+risk: estabilidade de fixture, sem mudança de comportamento do produto
+risk_level: R0
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: false

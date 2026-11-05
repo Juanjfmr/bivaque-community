@@ -1,0 +1,73 @@
+name: Painel de prontidao
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [Pull Request CI, Bivaque App Visual Smoke]
+    types: [completed]
+    branches: [main]
+  deployment_status:
+  schedule:
+    - cron: '17 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+  deployments: read
+
+concurrency:
+  group: readiness-dashboard
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      (github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main')) &&
+      (github.event_name != 'deployment_status' ||
+      (github.event.deployment.production_environment == true &&
+      (github.event.deployment.environment == 'Production – bivaque-community-web' || github.event.deployment.environment == 'Production')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Testar calculo e artefato permitido
+        run: node --test tests/scope/readiness.test.mjs tests/scope/readiness-publish.test.mjs
+      - name: Preparar historico do painel
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git config --global credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
+          mkdir -p "$RUNNER_TEMP/bivaque-readiness-site"
+          git -C "$RUNNER_TEMP/bivaque-readiness-site" init -b painel-prontidao
+          git -C "$RUNNER_TEMP/bivaque-readiness-site" remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+          if git ls-remote --exit-code origin refs/heads/painel-prontidao; then
+            git -C "$RUNNER_TEMP/bivaque-readiness-site" fetch origin painel-prontidao
+            git -C "$RUNNER_TEMP/bivaque-readiness-site" reset --hard FETCH_HEAD
+            cp "$RUNNER_TEMP/bivaque-readiness-site/snapshot.json" "$RUNNER_TEMP/previous-readiness.json"
+          fi
+      - name: Recalcular a partir da main e dos resultados atuais
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/backend-kanban/src/publish.mjs --github --out "$RUNNER_TEMP/bivaque-readiness-site" --previous "$RUNNER_TEMP/previous-readiness.json"
+      - name: Publicar somente o resumo em branch separada
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          cd "$RUNNER_TEMP/bivaque-readiness-site"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html styles.css app.js snapshot.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(painel): atualizar retrato de $GITHUB_SHA"
+            git push origin HEAD:refs/heads/painel-prontidao
+          fi
