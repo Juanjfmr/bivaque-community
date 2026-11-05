@@ -59,11 +59,22 @@ const nextConfig: NextConfig = {
   // rota pode voltar se o uso real pedir. `/consent` e `/auth/callback` ficam
   // fora de propósito: o aceite do Google e a troca do código dependem deles.
   async redirects() {
-    return ENTRADA_ANTIGA.map((source) => ({
-      source,
-      destination: ENTRADA_DO_APP,
-      permanent: false,
-    }))
+    // /login?redirect=X (o proxy manda para cá quem não tem sessão) precisa levar
+    // o destino de retorno. Esta regra vem antes da genérica: o Next aplica a
+    // primeira que casa, e a genérica descartaria a query.
+    return [
+      {
+        source: "/login",
+        has: [{ type: "query", key: "redirect", value: "(?<destino>.+)" }],
+        destination: `${ENTRADA_DO_APP}?redirect=:destino`,
+        permanent: false,
+      },
+      ...ENTRADA_ANTIGA.map((source) => ({
+        source,
+        destination: ENTRADA_DO_APP,
+        permanent: false,
+      })),
+    ]
   },
   experimental: {
     serverActions: {

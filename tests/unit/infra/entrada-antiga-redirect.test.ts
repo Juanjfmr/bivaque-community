@@ -23,10 +23,14 @@ async function regras() {
   return (await nextConfig.redirects?.()) ?? []
 }
 
-function regraPara(
-  lista: { source: string; destination: string; permanent: boolean }[],
-  caminho: string,
-) {
+type RegraDeRedirect = {
+  source: string
+  destination: string
+  permanent: boolean
+  has?: unknown[]
+}
+
+function regraPara(lista: RegraDeRedirect[], caminho: string) {
   return lista.filter((regra) => casa(regra.source, caminho))
 }
 
@@ -46,7 +50,7 @@ describe("telas antigas de entrada redirecionam para /app/entrar", () => {
   for (const caminho of antigas) {
     it(`${caminho} cai em ${DESTINO} por redirect temporário`, async () => {
       const lista = await regras()
-      const casadas = regraPara(lista, caminho)
+      const casadas = regraPara(lista, caminho).filter((regra) => regra.has === undefined)
       expect(casadas.length, `${caminho} precisa de uma regra`).toBeGreaterThan(0)
       for (const regra of casadas) {
         expect(regra.destination).toBe(DESTINO)
@@ -54,6 +58,29 @@ describe("telas antigas de entrada redirecionam para /app/entrar", () => {
       }
     })
   }
+})
+
+describe("o login preserva o destino de retorno", () => {
+  // O proxy manda quem não tem sessão para /login?redirect=<destino>. A regra com
+  // `has` repassa a query para a porta do app; a genérica a descartaria.
+  it("/login?redirect=X vai para /app/entrar?redirect=X por redirect temporário", async () => {
+    const lista = await regras()
+    const comQuery = regraPara(lista, "/login").filter((regra) => regra.has !== undefined)
+    expect(comQuery).toHaveLength(1)
+    expect(comQuery[0]?.destination).toBe(`${DESTINO}?redirect=:destino`)
+    expect(comQuery[0]?.permanent).toBe(false)
+    expect(comQuery[0]?.has).toEqual([{ type: "query", key: "redirect", value: "(?<destino>.+)" }])
+  })
+
+  it("a regra com query vem antes da genérica, que descartaria a query", async () => {
+    const lista = await regras()
+    const indiceComQuery = lista.findIndex((regra) => regra.has !== undefined)
+    const indiceGenerica = lista.findIndex(
+      (regra) => regra.has === undefined && casa(regra.source, "/login"),
+    )
+    expect(indiceComQuery).toBeGreaterThanOrEqual(0)
+    expect(indiceComQuery).toBeLessThan(indiceGenerica)
+  })
 })
 
 describe("as rotas que continuam fora do redirect", () => {
