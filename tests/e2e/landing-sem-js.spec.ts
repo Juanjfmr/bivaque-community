@@ -4,9 +4,9 @@ import { expect, test } from "@playwright/test"
 // servidor, então a página navega sem JavaScript e no primeiro toque, antes de
 // qualquer componente ser registrado no cliente.
 //
-// A barra fixa e a folha do menu só aparecem quando a ilha de comportamento
-// roda: sem JavaScript elas ficam escondidas e não são tocáveis em navegador
-// nenhum. A prova delas aqui é a marcação servida (as cinco âncoras iguais no
+// O CTA do topo, a barra fixa e a folha do menu só aparecem quando a ilha de
+// comportamento roda: sem JavaScript eles ficam escondidos e não são tocáveis
+// em navegador nenhum. A prova delas aqui é a marcação servida (as cinco âncoras iguais no
 // HTML); o toque nas cinco, com JavaScript ligado, está em landing-v8.spec.ts.
 const SIZES = [
   [375, 812],
