@@ -130,7 +130,8 @@ export function Conversas() {
                     void navegacao.irPara("conversa", { parametros: { id: conversa.id } })
                   }
                 >
-                  <Avatar size="lg">
+                  {/* As iniciais repetem o nome ao lado: decorativas, fora do nome acessível. */}
+                  <Avatar size="lg" aria-hidden="true">
                     <AvatarFallback className="bg-(--secondary-container) font-semibold">
                       {iniciais(nome)}
                     </AvatarFallback>
