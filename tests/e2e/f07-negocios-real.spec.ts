@@ -8,9 +8,11 @@ import {
   test,
 } from "@playwright/test"
 import { chaveAnonimaDoSupabase, semearSessaoDeMembro, urlDoSupabase } from "./entrada-real-ajuda"
+import { readEnvLocal } from "./helpers/session"
 
 // RUN-010: usa somente o banco LOCAL semeado e a sessão de quem solicita.
-// A fila fornece as variáveis no processo; este spec não busca arquivos .env.
+// As variáveis vêm do processo ou do arquivo local do apps/web, pela mesma
+// resolução dos demais specs reais (a CI escreve esse arquivo antes da prova).
 const MEMBRO = "membro-1@bivaque.example.invalid"
 const OUTRA_CIDADE = "membro-rio@bivaque.example.invalid"
 const PRESTADOR = "prestador-seed@bivaque.example.invalid"
@@ -20,14 +22,11 @@ const CAPTURAS = join(process.cwd(), ".visual", "run-010", "capturas")
 const CABECALHOS = { origin: "http://127.0.0.1:3000", "x-bivaque-app": "bivaque-spa" }
 
 function exigirAmbienteLocal() {
-  for (const nome of [
-    "SUPABASE_URL",
-    "SUPABASE_ANON_KEY",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    "BIVAQUE_VISUAL_PASSWORD",
-  ]) {
-    if (!process.env[nome]) throw new Error(`Defina ${nome} no processo antes da prova F07.`)
-  }
+  // A chave anônima tem erro próprio no helper; a senha segue a mesma ordem:
+  // processo primeiro, depois apps/web. Nada é embutido aqui.
+  chaveAnonimaDoSupabase()
+  const senha = process.env["BIVAQUE_VISUAL_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
+  if (!senha) throw new Error("BIVAQUE_VISUAL_PASSWORD não configurada antes da prova F07.")
   const url = new URL(urlDoSupabase())
   if (url.hostname !== "127.0.0.1" && url.hostname !== "localhost")
     throw new Error("A prova F07 só pode rodar no banco local.")
