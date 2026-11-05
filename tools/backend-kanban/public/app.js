@@ -1,193 +1,247 @@
+const names = { frontend: "Frontend", backend: "Backend", integration: "Jornada completa" }
+const labels = {
+  pending: "A fazer",
+  partial: "Em andamento",
+  unverified: "A comprovar",
+  verified: "Comprovado",
+  blocked: "Bloqueado",
+  failed: "Falha na verificação",
+  declared: "Conclusão registrada",
+}
+const checkLabels = {
+  success: "verificações passaram",
+  failure: "verificação com falha",
+  pending: "verificação pendente",
+  inconclusive: "verificação inconclusiva",
+}
+const gateNames = {
+  "LAN-OP": "Operação e atendimento",
+  "LAN-TROCA": "Troca das telas antigas",
+  "LAN-PROVA": "Prova final e ratificação",
+  "BLOCK-LEGAL-ENTRY": "Revisão dos textos legais",
+  "BLOCK-RESEND": "Entrega real de e-mails",
+  "LAN-LOJA": "Pacote Android e iOS para envio",
+}
 const filters = [
   ["all", "Todas"],
-  ["backend", "Backend"],
-  ["intelligence", "Discovery & IA"],
-  ["infra", "Infra"],
-  ["frontend", "Frontend congelado"],
-  ["testing", "Testes"],
-  ["repo", "Repo / PRs"],
-  ["governance", "Governança"],
-  ["drift", "Com drift"],
+  ["remaining", "O que falta"],
+  ["verified", "Comprovadas"],
+  ["blocked", "Bloqueadas"],
+  ["failed", "Com falha"],
 ]
-
-const columns = [
-  ["now", "AGORA", "Caminho crítico até o lançamento"],
-  ["next", "PRÓXIMO", "Entra após fechar suas dependências"],
-  ["blocked", "BLOQUEADO", "Exige decisão, credencial ou terceiro"],
-  ["frozen", "FRONTEND CONGELADO", "Conhecido, fora da trilha backend-first"],
-  ["repo", "TRIAGEM DO REPO", "Decisões de PR, issue, CI e governança"],
-  ["done", "DONE", "Evidência preservada; não desaparece"],
-]
-
-const categoryLabels = {
-  backend: "backend",
-  frontend: "frontend",
-  governance: "governança",
-  infra: "infra",
-  intelligence: "discovery & IA",
-  repo: "repositório",
-  testing: "testes",
+const $ = (selector) => document.querySelector(selector)
+const escapeHtml = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char],
+  )
+const badge = (status, label = labels[status]) =>
+  `<span class="badge badge-${escapeHtml(status)}">${escapeHtml(label)}</span>`
+const date = (value) => {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime())
+    ? "Não informado"
+    : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(parsed)
 }
-
-let board
-let activeFilter = "all"
+const safeGithub = (value) => {
+  try {
+    const url = new URL(value)
+    return url.protocol === "https:" && url.hostname === "github.com" ? url.href : null
+  } catch {
+    return null
+  }
+}
+let report
+let filter = "all"
+let layer = "integration"
 let query = ""
+let busy = false
 
-const cardTemplate = document.querySelector("#card-template")
-const boardElement = document.querySelector("#board")
-const metricsElement = document.querySelector("#metrics")
-const filtersElement = document.querySelector("#filters")
-const summaryElement = document.querySelector("#result-summary")
-
-function plural(count, singular, pluralForm) {
-  return `${count} ${count === 1 ? singular : pluralForm}`
+function currentStatus(journey) {
+  return layer === "integration" ? journey.status : journey[layer].status
 }
 
-function list(title, values) {
-  if (!values?.length) return ""
-  return `<section><h4>${title}</h4><ul>${values.map((item) => `<li>${item}</li>`).join("")}</ul></section>`
-}
-
-function linkedList(title, values) {
-  if (!values?.length) return ""
-  const entries = values.map((value) => {
-    const [label, url] = value.split(" | ")
-    return url?.startsWith("http")
-      ? `<li><a href="${url}" target="_blank" rel="noreferrer">${label}</a></li>`
-      : `<li><code>${value}</code></li>`
+function renderJourneys() {
+  const focusedId = document.activeElement?.closest(".journey")?.dataset.id
+  const open = new Set(
+    [...document.querySelectorAll(".journey[open]")].map((element) => element.dataset.id),
+  )
+  const visible = report.journeys.filter((journey) => {
+    const status = currentStatus(journey)
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "remaining"
+        ? !journey[layer].verified
+        : filter === "blocked"
+          ? journey.blocked
+          : status === filter)
+    return (
+      matchesFilter &&
+      `${journey.id} ${journey.title} ${journey.nextStep}`
+        .toLocaleLowerCase("pt-BR")
+        .includes(query)
+    )
   })
-  return `<section><h4>${title}</h4><ul>${entries.join("")}</ul></section>`
-}
-
-function searchable(card) {
-  return JSON.stringify(card).toLocaleLowerCase("pt-BR")
-}
-
-function matches(card) {
-  const filterMatches =
-    activeFilter === "all" ||
-    (activeFilter === "drift" ? Boolean(card.drift) : card.category === activeFilter)
-  return filterMatches && searchable(card).includes(query.toLocaleLowerCase("pt-BR"))
-}
-
-function createCard(card) {
-  const fragment = cardTemplate.content.cloneNode(true)
-  const cardElement = fragment.querySelector(".card")
-  cardElement.dataset.cardId = card.id
-  cardElement.querySelector(".priority").textContent = card.priority
-  cardElement.querySelector(".priority").classList.add(`priority-${card.priority.toLowerCase()}`)
-  cardElement.querySelector(".category").textContent = categoryLabels[card.category]
-  cardElement.querySelector(".phase").textContent = card.phase ?? card.id
-  cardElement.querySelector(".card-title").textContent = card.title
-  cardElement.querySelector(".description").textContent = card.description
-
-  const signals = []
-  if (card.blockers?.length)
-    signals.push(`<span class="signal signal-block">${card.blockers.length} bloqueio(s)</span>`)
-  if (card.drift) signals.push('<span class="signal signal-drift">drift a resolver</span>')
-  if (card.proof?.length) signals.push(`<span class="signal">${card.proof.length} prova(s)</span>`)
-  cardElement.querySelector(".card-signals").innerHTML = signals.join("")
-
-  const drift = card.drift
-    ? `<section class="drift"><h4>Drift a resolver</h4><p><strong>Documentado:</strong> ${card.drift.documented}</p><p><strong>Observado:</strong> ${card.drift.observed}</p><p><strong>Resolver:</strong> ${card.drift.action}</p></section>`
-    : ""
-  const metadata = [
-    card.owner && `<span><strong>Owner:</strong> ${card.owner}</span>`,
-    card.branch && `<span><strong>Branch:</strong> ${card.branch}</span>`,
-    card.updatedAt && `<span><strong>Atualizado:</strong> ${card.updatedAt}</span>`,
-    card.sourceRevision &&
-      `<span><strong>Fonte confrontada:</strong> <code>${card.sourceRevision}</code></span>`,
-    card.completedAt && `<span><strong>Concluído:</strong> ${card.completedAt}</span>`,
-  ].filter(Boolean)
-
-  cardElement.querySelector(".card-detail").innerHTML = [
-    metadata.length ? `<p class="metadata">${metadata.join("")}</p>` : "",
-    list("Dependências", card.dependencies),
-    list("Checklist de fechamento", card.checklist),
-    list("Provas existentes", card.proof),
-    list("Testes", card.tests),
-    list("Bloqueadores", card.blockers),
-    drift,
-    linkedList("Referências", card.links),
-  ].join("")
-  return fragment
-}
-
-function renderMetrics() {
-  const p0p1 = board.cards.filter((card) => card.priority === "P0" || card.priority === "P1").length
-  const blocked = board.cards.filter((card) => card.status === "blocked").length
-  const done = board.cards.filter((card) => card.status === "done").length
-  const drift = board.cards.filter((card) => card.drift).length
-  const metrics = [
-    [board.cards.length, "frentes mapeadas"],
-    [p0p1, "P0 / P1"],
-    [blocked, "bloqueadas"],
-    [done, "concluídas"],
-    [drift, "drifts abertos"],
-  ]
-  metricsElement.innerHTML = metrics
-    .map(([value, label]) => `<article><strong>${value}</strong><span>${label}</span></article>`)
-    .join("")
+  $("#result-summary").textContent =
+    `${visible.length} de ${report.journeys.length} funcionalidades · ${names[layer]}. Os filtros não alteram o percentual do escopo.`
+  $("#journey-list").innerHTML = visible.length
+    ? visible
+        .map(
+          (
+            journey,
+          ) => `<details class="journey" data-id="${escapeHtml(journey.id)}" ${open.has(journey.id) ? "open" : ""}>
+    <summary><span class="journey-id">${escapeHtml(journey.id)}</span><h3>${escapeHtml(journey.title)}</h3>${badge(currentStatus(journey))}</summary>
+    <div class="journey-body"><div class="layer-grid">${Object.entries(names)
+      .map(([key, name]) => {
+        const state = journey[key]
+        return `<div class="layer-detail"><h4>${name}</h4>${badge(state.status)}<p>${state.declared ? "Implementação registrada como concluída." : "Implementação ainda não concluída no quadro atual."}</p><p>${state.evidenceCount ? `${state.evidenceCount} referência(s) de aceite · ${state.evidenceCurrent ? "fonte compatível" : "precisa reconferir a versão"}.` : "Sem aceite estruturado vinculado a esta camada."}</p><p class="card-ids">Cards: ${state.cards.map(escapeHtml).join(" · ")}</p></div>`
+      })
+      .join(
+        "",
+      )}</div><p class="journey-next"><strong>${journey.integration.verified ? "Entrega comprovada." : "Falta:"}</strong> ${journey.integration.verified ? "Requisitos gerais e publicação são acompanhados separadamente." : escapeHtml(journey.nextStep)}</p></div></details>`,
+        )
+        .join("")
+    : '<p class="empty">Nenhuma funcionalidade corresponde a este filtro. Tente “Todas” ou limpe a busca.</p>'
+  if (focusedId) {
+    ;[...document.querySelectorAll(".journey")]
+      .find((element) => element.dataset.id === focusedId)
+      ?.querySelector("summary")
+      ?.focus({ preventScroll: true })
+  }
 }
 
 function renderFilters() {
-  filtersElement.replaceChildren()
-  for (const [value, label] of filters) {
-    const button = document.createElement("button")
-    button.type = "button"
-    button.textContent = label
-    button.classList.toggle("is-active", activeFilter === value)
-    button.setAttribute("aria-pressed", String(activeFilter === value))
-    button.addEventListener("click", () => {
-      activeFilter = value
-      render()
-    })
-    filtersElement.append(button)
-  }
-}
-
-function renderBoard() {
-  const visible = board.cards.filter(matches)
-  boardElement.replaceChildren()
-  for (const [status, title, description] of columns) {
-    const cards = visible.filter((card) => card.status === status)
-    const column = document.createElement("section")
-    column.className = "column"
-    column.dataset.status = status
-    column.innerHTML = `<header><div><h2>${title}</h2><p>${description}</p></div><span>${cards.length}</span></header>`
-    const cardsElement = document.createElement("div")
-    cardsElement.className = "cards"
-    if (cards.length) {
-      cards.forEach((card) => {
-        cardsElement.append(createCard(card))
+  $("#filters").replaceChildren(
+    ...filters.map(([value, label]) => {
+      const button = document.createElement("button")
+      button.type = "button"
+      button.textContent = label
+      button.setAttribute("aria-pressed", String(filter === value))
+      button.addEventListener("click", () => {
+        filter = value
+        for (const sibling of $("#filters").children)
+          sibling.setAttribute("aria-pressed", String(sibling === button))
+        renderJourneys()
       })
-    } else {
-      cardsElement.innerHTML = '<p class="empty-column">Nenhum card com este filtro.</p>'
-    }
-    column.append(cardsElement)
-    boardElement.append(column)
+      return button
+    }),
+  )
+}
+
+function renderReport() {
+  const overall = report.metrics.integration
+  $("#stage").innerHTML = badge("partial", report.stage)
+  $("#overall-percent").textContent = `${overall.percent}%`
+  $("#overall-count").textContent =
+    `${overall.verified} de ${overall.total} jornadas com o ciclo completo comprovado`
+  $("#remaining-percent").textContent = `${100 - overall.percent}%`
+  $("#overall-progress").value = overall.percent
+  $("#provisional").hidden = !report.provisional
+  $("#layer-metrics").innerHTML = Object.entries(names)
+    .map(([key, name]) => {
+      const metric = report.metrics[key]
+      const caption =
+        key === "frontend"
+          ? "Telas, interações e apresentação"
+          : key === "backend"
+            ? "Dados, regras e persistência"
+            : "A experiência funcionando inteira"
+      return `<article class="layer-metric"><span class="metric-label">${name}</span><strong>${metric.percent}%</strong><p>${caption}</p><small>${metric.verified}/${metric.total} comprovadas · ${metric.declared}/${metric.total} com conclusão registrada</small></article>`
+    })
+    .join("")
+  $("#next-title").textContent = report.nextStep
+  $("#journey-count").textContent = `${overall.total} jornadas no escopo Web`
+  const pendingGates = report.gates.filter((gate) => gate.status !== "verified")
+  $("#gate-count").textContent = `${pendingGates.length} condições a comprovar`
+  $("#gate-list").innerHTML = report.gates
+    .map(
+      (gate) =>
+        `<article class="gate"><div><h3>${escapeHtml(gateNames[gate.id] ?? gate.title)}</h3><p class="card-ids">${escapeHtml(gate.id)}</p></div>${badge(gate.status)}</article>`,
+    )
+    .join("")
+  const production = report.production
+  $("#version-info").innerHTML =
+    `<div><p>Código analisado</p><strong>${escapeHtml(report.revision.slice(0, 12))}</strong></div><div><p>Última consulta automática</p><strong>${escapeHtml(date(report.generatedAt))}</strong></div><div><p>Aplicativo publicado</p><strong>${production ? escapeHtml(production.revision.slice(0, 12)) : "Publicação ainda não confirmada"}</strong>${production ? `<p>${production.revision === report.revision ? "Mesma versão analisada; publicação não substitui prova de uso." : "Versão diferente da analisada."}</p>` : ""}</div>`
+  $("#check-list").innerHTML = Object.entries(names)
+    .map(([key, name]) => {
+      const check = report.checks[key]
+      const url = check?.urls?.map(safeGithub).find(Boolean)
+      const content = `${name}: ${checkLabels[check?.status ?? "pending"]}`
+      return url
+        ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(content)} ↗</a>`
+        : `<span>${escapeHtml(content)}</span>`
+    })
+    .join("")
+  $("#scope-version").textContent =
+    `Escopo ${report.scopeVersion} · ${report.source} · Quadro atualizado em ${report.boardUpdatedAt}.`
+  $("#changes-section").hidden = !report.changes.length
+  $("#changes").innerHTML = report.changes
+    .map((change) => `<li>${escapeHtml(change.title)}</li>`)
+    .join("")
+  renderJourneys()
+}
+
+function freshness() {
+  if (!report) return
+  const age = Date.now() - new Date(report.generatedAt).getTime()
+  const stale = !Number.isFinite(age) || age > 3 * 60 * 60 * 1000
+  const message = report.refreshError
+    ? "Consulta à origem inconclusiva. Os números não representam uma nova comprovação."
+    : stale
+      ? "O retrato tem mais de 3 horas. A atualização automática precisa ser conferida."
+      : ""
+  $("#load-message").textContent = message
+  $("#load-message").hidden = !message
+  $("#sync-state").textContent = report.refreshError
+    ? "Origem indisponível"
+    : stale
+      ? "Dados desatualizados"
+      : `Consultado: ${date(report.generatedAt)}`
+}
+
+async function refresh() {
+  if (busy) return
+  busy = true
+  $("#refresh").disabled = true
+  try {
+    const response = await fetch("./snapshot.json", {
+      cache: "no-store",
+      signal: AbortSignal.timeout(20000),
+    })
+    if (!response.ok) throw new Error("snapshot indisponível")
+    const next = await response.json()
+    if (next.schemaVersion !== 1 || !next.journeys?.length || !next.metrics?.integration)
+      throw new Error("snapshot inválido")
+    report = next
+    $("#dashboard").hidden = false
+    renderReport()
+    freshness()
+  } catch {
+    $("#load-message").hidden = false
+    $("#load-message").textContent = report
+      ? "Não foi possível atualizar. O último retrato continua visível, com sua data original. Tente novamente."
+      : "Não foi possível carregar o painel. Use “Atualizar agora” para tentar novamente."
+    $("#sync-state").textContent = "Atualização indisponível"
+  } finally {
+    busy = false
+    $("#refresh").disabled = false
   }
-  summaryElement.textContent = `${plural(visible.length, "card encontrado", "cards encontrados")} no filtro atual.`
 }
 
-function render() {
-  renderFilters()
-  renderBoard()
-}
-
-async function start() {
-  const response = await fetch("./board.json", { cache: "no-store" })
-  if (!response.ok) throw new Error("Não foi possível carregar board.json")
-  board = await response.json()
-  document.querySelector("#updated-at").textContent = `Snapshot: ${board.updatedAt}`
-  renderMetrics()
-  render()
-  document.querySelector("#search").addEventListener("input", (event) => {
-    query = event.target.value.trim()
-    renderBoard()
-  })
-}
-
-start().catch((error) => {
-  boardElement.innerHTML = `<p class="load-error">Falha ao carregar o quadro: ${error.message}</p>`
+$("#refresh").addEventListener("click", refresh)
+$("#search").addEventListener("input", (event) => {
+  query = event.target.value.trim().toLocaleLowerCase("pt-BR")
+  if (report) renderJourneys()
+})
+$("#layer").addEventListener("change", (event) => {
+  layer = event.target.value
+  if (report) renderJourneys()
+})
+renderFilters()
+refresh()
+setInterval(() => {
+  if (!document.hidden) refresh()
+}, 60000)
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refresh()
 })
