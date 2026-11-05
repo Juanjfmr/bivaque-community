@@ -12,7 +12,7 @@ import {
   validateEventForm,
 } from "../../../../../lib/events/event-form"
 import { log } from "../../../../../lib/logger"
-import { cidadeDaSessao, ehUuid } from "../_comum"
+import { caminhoDeCapaValido, cidadeDaSessao, ehUuid, interpretarErroDoBanco } from "../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -125,6 +125,13 @@ export async function PATCH(request: NextRequest, { params }: Context): Promise<
   const mensagem = validateEventForm(corpo.input)
   if (mensagem) return responder(request, { erro: "dados-invalidos", mensagem }, 400)
   const userId = auth.sessao.usuario.id
+  if (!caminhoDeCapaValido(corpo.input.coverPath, userId)) {
+    return responder(
+      request,
+      { erro: "dados-invalidos", mensagem: "A capa precisa estar na sua pasta de fotos." },
+      400,
+    )
+  }
   try {
     const client = auth.sessao.cliente
     const current = await client.from("events").select("id,organizer_id").eq("id", id).maybeSingle()
@@ -140,9 +147,17 @@ export async function PATCH(request: NextRequest, { params }: Context): Promise<
       .select("id")
       .single()
     // A RLS recusou depois da checagem de autoria (ex.: vínculo de cidade que
-    // deixou de valer): é recusa, não indisponibilidade.
-    if (result.error?.code === "42501") return responder(request, { erro: "recusado" }, 403)
-    if (result.error || !result.data) throw result.error ?? new Error("update without result")
+    // deixou de valer): é recusa, não indisponibilidade. Check violado é dado
+    // inválido. A mensagem do Postgres nunca chega à pessoa.
+    if (result.error) {
+      const falha = interpretarErroDoBanco(result.error.code, {
+        recusado: "Só quem organiza pode mudar este encontro.",
+        dados: "Revise os dados do encontro: algo não é aceito.",
+      })
+      if (falha.status !== 503) return responder(request, falha.corpo, falha.status)
+      throw result.error
+    }
+    if (!result.data) throw new Error("update without result")
     return responder(request, { evento: { id: result.data.id } }, 200)
   } catch (error) {
     log.error("app evento: update failed", {

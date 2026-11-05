@@ -3,8 +3,9 @@
  *
  * O valor aceito é fixo no enum do banco (`event_rsvp_status`) e quem decide se
  * a pessoa PODE confirmar é a RLS (`private.can_access_event`), não esta função.
- * Aqui só se recusa o que nem chega a ser consultado — o mesmo caminho para a
- * rota do app e para a ação antiga.
+ * Hoje só a rota do app usa este módulo: a ação antiga da web continua com a
+ * checagem embutida em `events/[id]/page.tsx` e passa a ser servida por aqui
+ * quando aquela tela sair.
  */
 export const SITUACOES_DE_PRESENCA = ["going", "not_going", "interested"] as const
 

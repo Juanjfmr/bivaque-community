@@ -10,7 +10,7 @@ import {
 } from "../../../../../../lib/app-api/rota-do-app"
 import { situacaoDoCorpo } from "../../../../../../lib/events/event-rsvp"
 import { log } from "../../../../../../lib/logger"
-import { cidadeDaSessao, ehUuid, encontroDaSessao } from "../../_comum"
+import { cidadeDaSessao, ehUuid, encontroDaSessao, interpretarErroDoBanco } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -91,8 +91,16 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
         { event_id: id, user_id: userId, status: situacao, occurrence_date: date },
         { onConflict: "event_id,user_id,occurrence_date" },
       )
-    if (gravado.error?.code === "42501") return responder(request, { erro: "recusado" }, 403)
-    if (gravado.error) throw gravado.error
+    if (gravado.error) {
+      // `P0001` aqui é o trigger que impede o organizador de confirmar presença
+      // no próprio encontro — recusa com a frase da presença, não erro técnico.
+      const falha = interpretarErroDoBanco(gravado.error.code, {
+        recusado: "Você não pode confirmar presença neste encontro.",
+        dados: "Escolha entre vou, não vou ou tenho interesse.",
+      })
+      if (falha.status !== 503) return responder(request, falha.corpo, falha.status)
+      throw gravado.error
+    }
     return await responderPresenca(
       request,
       client,
@@ -132,7 +140,14 @@ export async function DELETE(request: NextRequest, { params }: Context): Promise
       .eq("event_id", id)
       .eq("user_id", userId)
       .eq("occurrence_date", date)
-    if (removido.error) throw removido.error
+    if (removido.error) {
+      const falha = interpretarErroDoBanco(removido.error.code, {
+        recusado: "Você não pode cancelar presença neste encontro.",
+        dados: "Não foi possível cancelar a presença.",
+      })
+      if (falha.status !== 503) return responder(request, falha.corpo, falha.status)
+      throw removido.error
+    }
     return await responderPresenca(request, client, id, date, null)
   } catch (error) {
     log.error("app evento presence: delete failed", {

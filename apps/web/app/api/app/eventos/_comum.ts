@@ -64,3 +64,41 @@ export async function encontroDaSessao(
   if (error) throw error
   return data
 }
+
+/**
+ * O que uma recusa do banco significa para a rota. A mensagem do Postgres nunca
+ * vai para a pessoa: ela é técnica, em inglês, e às vezes cita a política.
+ *
+ * - `42501` (RLS/permissão) e `P0001` (o `raise` de um trigger, como o que
+ *   impede o organizador de confirmar presença no próprio encontro) são recusa;
+ * - `23514` (check) e `22023` (argumento inválido do Postgres) são dado inválido;
+ * - o resto é indisponibilidade: a rota não sabe o que aconteceu.
+ */
+export type ErroDoBanco = Readonly<{
+  status: 400 | 403 | 503
+  corpo: Readonly<Record<string, unknown>>
+}>
+
+export function interpretarErroDoBanco(
+  codigo: string | undefined,
+  mensagens: Readonly<{ recusado: string; dados: string }>,
+): ErroDoBanco {
+  if (codigo === "42501" || codigo === "P0001") {
+    return { status: 403, corpo: { erro: "recusado", mensagem: mensagens.recusado } }
+  }
+  if (codigo === "23514" || codigo === "22023") {
+    return { status: 400, corpo: { erro: "dados-invalidos", mensagem: mensagens.dados } }
+  }
+  return { status: 503, corpo: { erro: "escrita-indisponivel" } }
+}
+
+/**
+ * O caminho de capa que o app pode mandar: vazio (tirar a capa) ou dentro da
+ * pasta de quem organiza. `..`, `//` e `\` nunca são caminho legítimo de bucket
+ * — são tentativa de sair da pasta.
+ */
+export function caminhoDeCapaValido(valor: string, userId: string): boolean {
+  if (valor === "") return true
+  if (valor.includes("..") || valor.includes("//") || valor.includes("\\")) return false
+  return valor.startsWith(`${userId}/`)
+}

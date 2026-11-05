@@ -45,6 +45,8 @@ type Options = {
   errorTable?: string
   rpcError?: string
   updateError?: { code: string; message: string } | null
+  insertError?: { code: string; message: string } | null
+  upsertError?: { code: string; message: string } | null
 }
 
 function mockClient(options: Options = {}) {
@@ -54,6 +56,7 @@ function mockClient(options: Options = {}) {
   const updates: unknown[] = []
   const deletes: string[] = []
   const orCalls: string[] = []
+  const neqCalls: Array<{ column: string; value: unknown }> = []
   const donosDoRpc: unknown[] = []
   const rpc = function (this: unknown) {
     donosDoRpc.push(this)
@@ -82,7 +85,10 @@ function mockClient(options: Options = {}) {
         }
       }
       if (table === "events") {
-        if (operation === "insert") return { data: { id: ID }, error: null }
+        if (operation === "insert") {
+          if (options.insertError) return { data: null, error: options.insertError }
+          return { data: { id: ID }, error: null }
+        }
         if (operation === "update") {
           if (options.updateError) return { data: null, error: options.updateError }
           return { data: { id: ID }, error: null }
@@ -92,7 +98,11 @@ function mockClient(options: Options = {}) {
         return { data: options.events ?? [event], error: null }
       }
       if (table === "event_rsvps") {
-        if (operation === "upsert" || operation === "delete") return { data: null, error: null }
+        if (operation === "upsert") {
+          if (options.upsertError) return { data: null, error: options.upsertError }
+          return { data: null, error: null }
+        }
+        if (operation === "delete") return { data: null, error: null }
         if (isCount) {
           return {
             data: null,
@@ -118,7 +128,11 @@ function mockClient(options: Options = {}) {
       orCalls.push(filtro)
       return query
     }
-    for (const method of ["neq", "gte", "gt", "order"]) query[method] = () => query
+    query["neq"] = (column: string, value: unknown) => {
+      neqCalls.push({ column, value })
+      return query
+    }
+    for (const method of ["gte", "gt", "order"]) query[method] = () => query
     query["limit"] = () => query
     query["maybeSingle"] = async () => answer(true)
     query["single"] = async () => answer(true)
@@ -160,6 +174,7 @@ function mockClient(options: Options = {}) {
     updates,
     deletes,
     orCalls,
+    neqCalls,
     donosDoRpc,
   }
 }
@@ -575,7 +590,10 @@ describe("rotas de eventos do app", () => {
         context,
       )
       expect(resposta.status).toBe(403)
-      expect(await json(resposta)).toEqual({ erro: "recusado" })
+      expect(await json(resposta)).toEqual({
+        erro: "recusado",
+        mensagem: "Só quem organiza pode mudar este encontro.",
+      })
     })
 
     it("falha de banco no PATCH é 503", async () => {
@@ -695,6 +713,124 @@ describe("rotas de eventos do app", () => {
       )
       expect(resposta.status).toBe(503)
       expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+  })
+
+  // Rodada 3: o que a revisão de contrato e a auditoria pediram para fechar.
+  describe("ressalvas de 05/11", () => {
+    it("cancelado e concluído não entram na agenda", async () => {
+      const mock = mockClient({ events: [] })
+      authenticate(mock)
+      await listar(req("GET"))
+      expect(mock.neqCalls).toContainEqual({ column: "status", value: "completed" })
+      expect(mock.neqCalls).toContainEqual({ column: "status", value: "cancelled" })
+    })
+
+    it("a agenda devolve o nome da cidade da sessão", async () => {
+      const mock = mockClient({ events: [] })
+      authenticate(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect(corpo["cidade"]).toBe("Manaus")
+    })
+
+    it("o cursor é reescrito em UTC sem perder microssegundos", async () => {
+      const mock = mockClient({ events: [] })
+      authenticate(mock)
+      const cursor = "2026-11-08T15:10:32.779237+00:00|10000000-0000-4000-8000-000000000001"
+      expect(
+        (await listar(req("GET", `${BASE}?depois=${encodeURIComponent(cursor)}`))).status,
+      ).toBe(200)
+      expect(mock.orCalls[0]).toBe(
+        'starts_at.gt."2026-11-08T15:10:32.779237Z",and(starts_at.eq."2026-11-08T15:10:32.779237Z",id.gt.10000000-0000-4000-8000-000000000001)',
+      )
+    })
+
+    it.each([
+      ["aspas", '2026-11-08T15:10:32Z"|10000000-0000-4000-8000-000000000001'],
+      ["vírgula", "2026-11-08T15:10:32Z,|10000000-0000-4000-8000-000000000001"],
+      ["parênteses", "2026-11-08T15:10:32Z)|10000000-0000-4000-8000-000000000001"],
+      ["sem instante", "|10000000-0000-4000-8000-000000000001"],
+      ["id inválido", "2026-11-08T15:10:32Z|nao-e-uuid"],
+    ])("cursor com %s é 400, sem consultar o banco", async (_label, cursor) => {
+      const mock = mockClient({ events: [] })
+      authenticate(mock)
+      const resposta = await listar(req("GET", `${BASE}?depois=${encodeURIComponent(cursor)}`))
+      expect(resposta.status).toBe(400)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it.each([
+      ["de outra pessoa", (user: string) => "outra-pessoa/capa.jpg"],
+      ["com ..", (user: string) => `${user}/../capa.jpg`],
+      ["com //", (user: string) => `${user}//capa.jpg`],
+      ["com barra invertida", (user: string) => `${user}capa.jpg`],
+    ])("capa %s é 400 no criar e no editar", async (_label, capa) => {
+      const corpo = { titulo: "Encontro", comecaEm: DATE, capa: capa(USER) }
+      const criando = mockClient()
+      authenticate(criando)
+      expect((await criar(req("POST", BASE, JSON.stringify(corpo)))).status).toBe(400)
+      expect(criando.inserts).toHaveLength(0)
+
+      const editando = mockClient()
+      authenticate(editando)
+      expect(
+        (await editar(req("PATCH", `${BASE}/${ID}`, JSON.stringify(corpo)), context)).status,
+      ).toBe(400)
+      expect(editando.updates).toHaveLength(0)
+    })
+
+    it("capa dentro da pasta de quem organiza passa", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const corpo = { titulo: "Encontro", comecaEm: DATE, capa: `${USER}/capa.jpg` }
+      expect(
+        (await editar(req("PATCH", `${BASE}/${ID}`, JSON.stringify(corpo)), context)).status,
+      ).toBe(200)
+      expect(mock.updates[0]).toHaveProperty("cover_path", `${USER}/capa.jpg`)
+    })
+
+    it("check violado no criar e no editar é 400, sem a mensagem do Postgres", async () => {
+      const violado = {
+        code: "23514",
+        message: 'new row violates check constraint "events_title_check"',
+      }
+      const criando = mockClient({ insertError: violado })
+      authenticate(criando)
+      const criada = await criar(
+        req("POST", BASE, JSON.stringify({ titulo: "Encontro", comecaEm: DATE })),
+      )
+      expect(criada.status).toBe(400)
+      expect(await json(criada)).toEqual({
+        erro: "dados-invalidos",
+        mensagem: "Revise os dados do encontro: algo não é aceito.",
+      })
+
+      const editando = mockClient({ updateError: violado })
+      authenticate(editando)
+      const editada = await editar(
+        req("PATCH", `${BASE}/${ID}`, JSON.stringify({ titulo: "Encontro", comecaEm: DATE })),
+        context,
+      )
+      expect(editada.status).toBe(400)
+      expect(JSON.stringify(await json(editada))).not.toContain("constraint")
+    })
+
+    it("organizador confirmando no próprio encontro é 403 com a frase da presença", async () => {
+      const mock = mockClient({
+        upsertError: { code: "P0001", message: "organizer cannot rsvp own event" },
+      })
+      authenticate(mock)
+      const resposta = await presenca(
+        req("PUT", `${BASE}/${ID}/presenca`, '{"situacao":"going"}'),
+        context,
+      )
+      expect(resposta.status).toBe(403)
+      const corpo = await json(resposta)
+      expect(corpo).toEqual({
+        erro: "recusado",
+        mensagem: "Você não pode confirmar presença neste encontro.",
+      })
+      expect(JSON.stringify(corpo)).not.toContain("rsvp own event")
     })
   })
 })
