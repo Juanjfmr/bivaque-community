@@ -1,0 +1,61 @@
+# Card LAN-F01 (05/11/2026): a rodada curta que fecha o F01, pelo ADR-20261105.
+task_id: RUN-008
+
+objective: >
+  Fechar as três sobras da revisão do PR #128 para que o LAN-F01 possa fechar:
+  convite sem segredo do limitador responde 503, o combinado só avança o marcador
+  de quem tem vínculo, e o job de purga tem prova negativa de permissão.
+
+authority:
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - tools/backend-kanban card LAN-F01
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão e auditoria da rodada 2 do RUN-004 (05/11, PR #128 integrado em 95993940):
+    as rotas do convite em apps/web/app/api/app/entry/invite respondem 500 quando o
+    segredo (pepper) do limitador não está configurado, em vez de 503 como as rotas do
+    código (ver limitadorConfigurado() em apps/web/lib/app-api/entrada-limite.ts); a
+    rota do combinado avança o marcador da entrada sem exigir vínculo com a cidade; o
+    pgTAP da purga do rascunho não prova que anon/authenticated não executam o job.
+
+allowed_paths:
+  - apps/web/app/api/app/entry
+  - apps/web/lib/app-api
+  - tests/unit/app-api
+  - supabase/tests/entry-progress-purge.sql
+  - docs/agents/tasks/RUN-008.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - nova migration ou mudança de política RLS (se a correção exigir, registrar no card e parar)
+  - mudar o desenho ou o fluxo da entrada além das três sobras (ADR-20261105 congela a entrada)
+  - tocar no apps/app
+  - push, merge ou force-push (o coordenador publica)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Convite sem pepper: as rotas do convite respondem 503 com corpo tipado, sem eco de infraestrutura, com teste de unidade para cada rota."
+  - "Combinado: sem vínculo com a cidade a rota não avança o marcador (409, como /groups), com teste positivo e negativo."
+  - "Purga: pgTAP prova que anon e authenticated não executam a função/job de purga e que o dono do job executa."
+  - "Card LAN-F01: primeiro item do checklist marcado com os commits e números reais."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api
+  - pgTAP entry-progress-purge.sql pela fila de provas (node scripts/agents/prova-fila.mjs)
+  - npx pnpm@11.18.0 test:scope
+
+risk: rotas de entrada e prova de permissão no banco
+risk_level: R3
+adr: docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
