@@ -147,10 +147,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     }
 
     // ── prévia da cidade ──────────────────────────────────────────────────
-    await esperarEtapaDaEntrada(
-      page,
-      /Em Manaus, sempre tem alguém precisando do que você sabe\.|Você está entre os primeiros em Manaus\./,
-    )
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
     // O selo e o texto do vínculo trazem o ícone (ligadura) no mesmo elemento:
     // por isso a busca é por trecho, não por texto exato.
     await expect(page.getByText("Vínculo confirmado").first()).toBeVisible()
@@ -162,10 +159,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     // (a prévia), não ao Início. Sem o marcador no servidor, o combinado seria
     // pulado.
     await page.reload()
-    await esperarEtapaDaEntrada(
-      page,
-      /Em Manaus, sempre tem alguém precisando do que você sabe\.|Você está entre os primeiros em Manaus\./,
-    )
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
 
     // ── interesses e grupos reais da cidade ───────────────────────────────
     const carregamentoDosGrupos = esperarGruposDaCidade(page)
@@ -320,20 +314,14 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     })
 
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
-    await esperarEtapaDaEntrada(
-      page,
-      /Em Manaus, sempre tem alguém precisando do que você sabe\.|Você está entre os primeiros em Manaus\./,
-    )
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
     await expect(page.getByRole("alert")).toContainText(
       "Não foi possível confirmar seu cadastro agora.",
     )
 
     // A prévia não avança sem o servidor confirmar, mesmo clicando de novo.
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
-    await esperarEtapaDaEntrada(
-      page,
-      /Em Manaus, sempre tem alguém precisando do que você sabe\.|Você está entre os primeiros em Manaus\./,
-    )
+    await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
     await expect(page.getByText("O que interessa a você?")).toHaveCount(0)
 
     // Agora o servidor responde: o Tentar de novo conclui e a etapa avança.

@@ -221,9 +221,11 @@ export function PreviaDaCidade({ progresso, concluir, previa }: PropsDaEtapa) {
 
   return (
     <Moldura
-      titulo={comGente ? textos.titulo(nome) : `Você está entre os primeiros em ${nome}.`}
+      titulo={comGente ? textos.titulo(nome) : `Você já está em ${nome}.`}
       apoio={
-        comGente ? null : "Faça a primeira pergunta. Quem chegar depois já encontra a resposta."
+        comGente
+          ? null
+          : "A comunidade está aqui. Faça a primeira pergunta e quem chegar depois encontra a resposta."
       }
       ilustracao="encontro"
       aoEnviar={() => concluir()}
