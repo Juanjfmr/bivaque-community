@@ -100,6 +100,15 @@ function provisionRequest(body: Record<string, unknown> = {}): Request {
   })
 }
 
+// Data de calendário relativa ao dia do teste: o contrato pede que o arquivo
+// siga verde hoje e daqui a um ano. A folga cobre o "hoje" de UTC-5 usado na
+// validação do servidor.
+const dataRelativa = (dias: number): string => {
+  const data = new Date()
+  data.setUTCDate(data.getUTCDate() + dias)
+  return data.toISOString().slice(0, 10)
+}
+
 const provisionCalls = () =>
   mockRpc.mock.calls.filter(([name]) => name === "provision_member_entry").length
 
@@ -166,12 +175,11 @@ describe("provision exige verificação", () => {
 describe("provision exige o momento da entrada", () => {
   it("grava o momento e a data de chegada na mesma chamada do vínculo e do perfil", async () => {
     verificationStatus = "verified"
-    const response = await POST(
-      provisionRequest({ arrival_date: "2026-11-04", moment: "arriving" }),
-    )
+    const chegada = dataRelativa(2)
+    const response = await POST(provisionRequest({ arrival_date: chegada, moment: "arriving" }))
     expect(response.status).toBe(200)
     expect(provisionArgs()).toEqual({
-      p_arrival_date: "2026-11-04",
+      p_arrival_date: chegada,
       p_consent_version: 2,
       p_display_name: "Pessoa",
       p_locality_id: MANAUS.id,
@@ -182,9 +190,10 @@ describe("provision exige o momento da entrada", () => {
 
   it("grava o destino da saída já resolvido no catálogo", async () => {
     verificationStatus = "verified"
+    const saida = dataRelativa(3)
     const response = await POST(
       provisionRequest({
-        departure_date: "2026-11-20",
+        departure_date: saida,
         destination_ibge_code: RIO.ibge,
         ibge_code: MANAUS.ibge,
         moment: "leaving",
@@ -195,7 +204,7 @@ describe("provision exige o momento da entrada", () => {
     // código pedido, então o id abaixo só pode vir do Rio.
     expect(provisionArgs()).toEqual({
       p_consent_version: 2,
-      p_departure_date: "2026-11-20",
+      p_departure_date: saida,
       p_destination_locality_id: RIO.id,
       p_display_name: "Pessoa",
       p_locality_id: MANAUS.id,
@@ -216,7 +225,7 @@ describe("provision exige o momento da entrada", () => {
     expect(await unknown.json()).toEqual({ error: "moment is required" })
 
     const noDestination = await POST(
-      provisionRequest({ departure_date: "2026-11-20", moment: "leaving" }),
+      provisionRequest({ departure_date: dataRelativa(3), moment: "leaving" }),
     )
     expect(noDestination.status).toBe(400)
     expect(await noDestination.json()).toEqual({ error: "destination is required" })
@@ -227,14 +236,16 @@ describe("provision exige o momento da entrada", () => {
   it("recusa data no passado e data de saída em quem chega", async () => {
     verificationStatus = "verified"
 
-    const past = await POST(provisionRequest({ arrival_date: "2020-01-01", moment: "arriving" }))
+    const past = await POST(
+      provisionRequest({ arrival_date: dataRelativa(-10), moment: "arriving" }),
+    )
     expect(past.status).toBe(400)
     expect(await past.json()).toEqual({ error: "date is in the past" })
 
     const mixed = await POST(
       provisionRequest({
-        arrival_date: "2030-01-01",
-        departure_date: "2030-02-01",
+        arrival_date: dataRelativa(30),
+        departure_date: dataRelativa(40),
         moment: "arriving",
       }),
     )
@@ -262,7 +273,7 @@ describe("a cidade e o destino são resolvidos pelo código pedido", () => {
     verificationStatus = "verified"
     const response = await POST(
       provisionRequest({
-        departure_date: "2026-11-20",
+        departure_date: dataRelativa(3),
         destination_ibge_code: "9999999",
         moment: "leaving",
       }),
@@ -276,7 +287,7 @@ describe("a cidade e o destino são resolvidos pelo código pedido", () => {
     verificationStatus = "verified"
     const response = await POST(
       provisionRequest({
-        departure_date: "2026-11-20",
+        departure_date: dataRelativa(3),
         destination_ibge_code: MANAUS.ibge,
         ibge_code: MANAUS.ibge,
         moment: "leaving",
@@ -293,7 +304,7 @@ describe("a cidade e o destino são resolvidos pelo código pedido", () => {
     verificationStatus = "verified"
     const response = await POST(
       provisionRequest({
-        departure_date: "2026-11-20",
+        departure_date: dataRelativa(3),
         destination_ibge_code: RIO.ibge,
         ibge_code: MANAUS.ibge,
         moment: "leaving",
