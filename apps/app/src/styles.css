@@ -1467,10 +1467,17 @@ body[data-profundidade="sim"] [data-casca="app"] {
   top: 0;
   z-index: 3;
   display: flex;
-  flex-wrap: wrap;
+  /* Uma linha com rolagem própria: quebrado em várias linhas no telefone, o
+     andaime ficava com 444 px e cobria a lista que a própria prova mede. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 4px;
   padding: 6px 0;
   background: var(--background);
+}
+
+[data-prova="controles-da-tela"] > * {
+  flex: none;
 }
 
 [data-lista="prova"] {
