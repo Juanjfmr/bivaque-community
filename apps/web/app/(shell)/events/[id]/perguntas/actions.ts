@@ -14,6 +14,7 @@ import { cookies } from "next/headers"
 import type { Database } from "supabase/database.generated"
 import {
   canSendQuestion,
+  friendlyQuestionError,
   normalizeQuestion,
   QUESTION_SEND_FAILURE_COPY,
 } from "../../../../../lib/events/question-thread"
@@ -36,35 +37,6 @@ async function getAuthClient() {
       setAll() {},
     },
   })
-}
-
-// A função `open_event_question` nasce nesta entrega; `database.generated.ts` só
-// ganha a assinatura depois de `supabase gen types` contra a stack migrada. O
-// cast abaixo é o mesmo recurso local já usado para o enum event_rsvp: descreve
-// o contrato exato sem `any`, e some quando os tipos forem regenerados.
-type OpenEventQuestionRpc = (
-  fn: "open_event_question",
-  args: { p_event_id: string },
-) => PromiseLike<{ data: string | null; error: { message: string } | null }>
-
-function friendlyQuestionError(message: string | undefined): string {
-  if (!message) return QUESTION_SEND_FAILURE_COPY
-  if (message.includes("another context")) {
-    return "Você já tem uma conversa com quem organiza este evento sobre outro assunto. Continue por ela."
-  }
-  if (message.includes("blocked")) {
-    return "Não é possível enviar a esta pessoa."
-  }
-  if (message.includes("cannot access event") || message.includes("event not found")) {
-    return "Você não tem acesso a este evento."
-  }
-  if (message.includes("organizer cannot ask")) {
-    return "Você organiza este evento."
-  }
-  if (message.includes("unauthenticated")) {
-    return "Sua sessão expirou. Entre novamente para enviar."
-  }
-  return QUESTION_SEND_FAILURE_COPY
 }
 
 async function insertQuestionMessage(
@@ -103,18 +75,14 @@ export async function askQuestionAction(formData: FormData): Promise<QuestionAct
   } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: "Sua sessão expirou. Entre novamente para enviar." }
 
-  const openEventQuestion = supabase.rpc as unknown as OpenEventQuestionRpc
-  const { data: conversationId, error: openError } = await openEventQuestion(
-    "open_event_question",
-    {
-      p_event_id: eventId,
-    },
-  )
-  if (openError || !conversationId) {
-    return { ok: false, message: friendlyQuestionError(openError?.message) }
+  // `rpc` é chamado NO cliente: separar a função em variável perde o `this` e
+  // ela explode em "cannot read properties of undefined (reading 'rest')".
+  const opened = await supabase.rpc("open_event_question", { p_event_id: eventId })
+  if (opened.error || !opened.data) {
+    return { ok: false, message: friendlyQuestionError(opened.error?.message) }
   }
 
-  return insertQuestionMessage(conversationId, user.id, content, eventId)
+  return insertQuestionMessage(opened.data, user.id, content, eventId)
 }
 
 /** Resposta no fio já existente (autor ou organizador — a RLS decide). */

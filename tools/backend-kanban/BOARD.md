@@ -6,7 +6,7 @@
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 163 frentes · 1 agora · 8 bloqueadas · 78 concluídas · 0 drifts
+**Mapa:** 164 frentes · 2 agora · 8 bloqueadas · 78 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -15,6 +15,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Agora
 
 - **LAN-F01** · P1 · F01 Entrada e onboarding ligada ao banco
+- **LAN-F05** · P1 · F05 Eventos ligados ao banco
 
 ## Bloqueios
 

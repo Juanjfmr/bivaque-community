@@ -1,71 +1,123 @@
 "use client"
 
 import { useParams } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
+import { Campo } from "@/components/bivaque/campos"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
 import { Secao } from "@/components/bivaque/secao"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import {
+  buscarEncontro,
+  cancelarPresenca,
+  type Encontro,
+  marcarPresenca,
+  type PresencaDoEncontro,
+  perguntarAoOrganizador,
+} from "@/lib/dados/eventos"
 import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
-import { useCasca } from "@/src/contexto/casca"
-import { numero, registro, texto } from "@/src/telas/comum"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
+import {
+  acessoNegado,
+  encontroSumiu,
+  foiAbortada,
+  mensagemDaFalha,
+  sessaoVencida,
+} from "@/src/eventos/formulario"
+import { texto } from "@/src/telas/comum"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
 /**
- * O encontro da onda 4 (protótipo: features/events/views.js, renderEvent).
- * Confirmar presença é estado local nesta sessão. Editar e cancelar ficam para
- * o refino (editor de evento).
+ * O encontro, do banco (F05 / ADR-20261105).
+ *
+ * A cidade mostrada é a do ENCONTRO, não a de quem olha: desde a decisão de 25/09
+ * (migration 20260925161111) um membro lê encontros de outras cidades, e a tela
+ * precisa dizer de qual cidade é o que ele está vendo. Visitante não recebe
+ * "Vou"/"Não vou" nem pergunta — o servidor recusaria, e oferecer botão que
+ * falha é pior do que explicar por que ele não existe.
+ *
+ * Presença e pergunta mostram o que ficou gravado, não um otimismo local: a tela
+ * espera a resposta do servidor para mudar, e quando a escrita falha o estado
+ * anterior continua com a mensagem do que aconteceu.
  */
 export function Evento() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
-  const casca = useCasca()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+
+  const [encontro, setEncontro] = useState<Encontro | null>(null)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "sumiu" | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [confirmado, setConfirmado] = useState(false)
+  const [ocupado, setOcupado] = useState(false)
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [editando, setEditando] = useState(false)
+
+  const [pergunta, setPergunta] = useState("")
+  const [perguntaEnviada, setPerguntaEnviada] = useState(false)
+  const [erroDaPergunta, setErroDaPergunta] = useState<string | null>(null)
+  const [enviandoPergunta, setEnviandoPergunta] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
+
+  // Uma sessão de rede por tela: sair cancela escrita que ainda estava a caminho.
+  const [controle] = useState(() => new AbortController())
+  useEffect(() => () => controle.abort(), [controle])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     const controle = new AbortController()
-    setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+    setEncontro(null)
+    setErro(null)
+    void buscarEncontro(id, { signal: controle.signal })
+      .then((lido) => {
+        if (!controle.signal.aborted) setEncontro(lido)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (controle.signal.aborted) return
+        setErro(
+          sessaoVencida(falha)
+            ? "sessao"
+            : encontroSumiu(falha)
+              ? "sumiu"
+              : acessoNegado(falha)
+                ? "negado"
+                : "falhou",
+        )
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [id, rodada])
 
   const validacao = validarParametros("evento", { id })
-  const evento = useMemo(
-    () => (dados === null ? null : (dados.eventos.find((item) => item.id === id) ?? null)),
-    [dados, id],
-  )
-
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
-  if (erro) {
+  if (erro === "sumiu") return <TelaIndisponivel />
+  if (erro === "sessao") {
+    return (
+      <section data-tela="evento" className="grid gap-2">
+        <EstadoDeSessaoVencida />
+      </section>
+    )
+  }
+  if (erro === "negado") {
+    return (
+      <section data-tela="evento" className="grid gap-2">
+        <EstadoNegado texto="Sua conta não tem acesso a este encontro." />
+      </section>
+    )
+  }
+  if (erro === "falhou") {
     return (
       <section data-tela="evento" className="grid gap-2">
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       </section>
     )
   }
-
-  if (dados === null) {
+  if (encontro === null) {
     return (
       <section data-tela="evento" className="grid gap-2">
         <EsqueletoDeLista linhas={3} />
@@ -73,62 +125,206 @@ export function Evento() {
     )
   }
 
-  if (evento === null) return <TelaIndisponivel />
+  const quando = new Date(encontro.comecaEm)
+  const rotuloDaData = Number.isNaN(quando.getTime()) ? "" : rotuloDeDataHora(quando)
+  const cancelado = encontro.situacao === "cancelled"
+  const presenca = encontro.presenca
+  const podeMarcar = !encontro.visitante && !encontro.souOrganizador && !cancelado
 
-  const apresentacao = registro(evento.apresentacao)
-  const confirmados = numero(apresentacao["going"]) + (confirmado ? 1 : 0)
-  const vagas = numero(apresentacao["max"])
-  const quando = typeof evento.starts_at === "string" ? new Date(evento.starts_at) : null
-  const rotulo = quando === null ? "" : rotuloDeDataHora(quando)
+  async function mudarPresenca(situacao: PresencaDoEncontro | null) {
+    if (encontro === null || ocupado) return
+    setOcupado(true)
+    setAviso(null)
+    try {
+      const gravada =
+        situacao === null
+          ? await cancelarPresenca(encontro.id, { signal: controle.signal })
+          : await marcarPresenca(encontro.id, situacao, { signal: controle.signal })
+      setEncontro({ ...encontro, presenca: gravada })
+    } catch (falha: unknown) {
+      // Nada mudou na tela: o estado anterior continua sendo o que o banco tem.
+      if (!foiAbortada(falha)) setAviso(mensagemDaFalha(falha, "presenca"))
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  async function enviarPergunta(evento: React.FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
+    if (encontro === null || enviandoPergunta) return
+    setEnviandoPergunta(true)
+    setErroDaPergunta(null)
+    try {
+      await perguntarAoOrganizador(encontro.id, pergunta, { signal: controle.signal })
+      setPergunta("")
+      setPerguntaEnviada(true)
+    } catch (falha: unknown) {
+      // O texto continua no campo: é o que a pessoa escreveu.
+      if (!foiAbortada(falha)) setErroDaPergunta(mensagemDaFalha(falha, "pergunta"))
+    } finally {
+      setEnviandoPergunta(false)
+    }
+  }
 
   return (
     <section data-tela="evento" className="grid gap-2">
       <div className="grid gap-2 px-1">
-        <Etiqueta tom="neutro" icone="event">
-          Encontro da comunidade
-        </Etiqueta>
+        <div className="flex flex-wrap items-center gap-2">
+          <Etiqueta tom={cancelado ? "aviso" : "neutro"} icone="event">
+            {cancelado ? "Encontro cancelado" : "Encontro da comunidade"}
+          </Etiqueta>
+          {encontro.souOrganizador ? (
+            <Botao tom="tonal" icone="edit" className="ml-auto" onClick={() => setEditando(true)}>
+              Editar
+            </Botao>
+          ) : null}
+        </div>
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[24px] leading-8">
-          {evento.title}
+          {encontro.titulo}
         </h1>
-        <p className="text-sm text-(--on-surface-variant)">{rotulo}</p>
+        <p className="text-sm text-(--on-surface-variant)">{rotuloDaData}</p>
       </div>
 
       <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)">
         <Icone nome="location_on" className="size-6 shrink-0 text-(--primary)" />
         <span className="grid gap-0.5">
-          <b className="text-[15px]">{texto(evento.venue, "Local a confirmar")}</b>
-          <small className="text-(--on-surface-variant)">{casca.cidade}</small>
+          <b className="text-[15px]">{texto(encontro.local, "Local a confirmar")}</b>
+          <small data-cidade-do-evento className="text-(--on-surface-variant)">
+            {encontro.cidade}
+          </small>
         </span>
       </div>
 
-      {evento.description === null || evento.description === "" ? null : (
+      {encontro.descricao === null ? null : (
         <Secao titulo="Sobre o encontro">
-          <p className="text-[15px] leading-6">{evento.description}</p>
+          <p className="text-[15px] leading-6">{encontro.descricao}</p>
         </Secao>
       )}
 
-      <Secao titulo="Presença">
-        <div className="grid grid-cols-3 gap-2">
-          <Fato valor={String(confirmados)} rotulo="confirmados" />
-          <Fato
-            valor={vagas === 0 ? "Livre" : String(vagas)}
-            rotulo={vagas === 0 ? "participação" : "vagas totais"}
-          />
-          <Fato valor={confirmado ? "Sim" : "—"} rotulo="sua presença" />
-        </div>
-        <div className="flex justify-end">
-          <Botao
-            tom={confirmado ? "tonal" : "preenchido"}
-            icone={confirmado ? "check" : "event_available"}
-            aria-pressed={confirmado}
-            onClick={() => setConfirmado((atual) => !atual)}
-          >
-            {confirmado ? "Presença confirmada" : "Confirmar presença"}
-          </Botao>
-        </div>
-      </Secao>
+      {encontro.visitante ? (
+        <section
+          data-visitante="sim"
+          aria-labelledby="encontro-de-outra-cidade"
+          className="grid gap-1 rounded-2xl bg-(--surface-lowest) px-4 py-4 ring-1 ring-(--outline-variant)"
+        >
+          <h2 id="encontro-de-outra-cidade" className="text-[15px] font-semibold">
+            Encontro de outra cidade
+          </h2>
+          <p className="text-sm text-(--on-surface-variant)">
+            Você está vendo {encontro.cidade}. Confirmar presença e perguntar ao organizador ficam
+            para quem mora lá.
+          </p>
+        </section>
+      ) : (
+        <Secao titulo="Presença">
+          <div className="grid grid-cols-3 gap-2">
+            <Fato
+              valor={presenca === null ? "—" : String(presenca.confirmados)}
+              rotulo="confirmados"
+            />
+            <Fato valor="Livre" rotulo="participação" />
+            <Fato valor={rotuloDaMinha(presenca?.minha ?? null)} rotulo="sua presença" />
+          </div>
+
+          {encontro.souOrganizador ? (
+            <p className="text-sm text-(--on-surface-variant)">
+              Você organiza este encontro: a presença é de quem participa.
+            </p>
+          ) : cancelado ? (
+            <p className="text-sm text-(--on-surface-variant)">
+              O encontro foi cancelado. Não é preciso confirmar presença.
+            </p>
+          ) : presenca === null ? null : (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Botao
+                // Tonal nos dois estados: o tom de contorno não segue o tema
+                // escuro (defeito do piece, registrado no card) e o botão sumia.
+                tom="tonal"
+                aria-pressed={presenca.minha === "not_going"}
+                disabled={ocupado}
+                onClick={() => void mudarPresenca("not_going")}
+              >
+                Não vou
+              </Botao>
+              <Botao
+                tom={presenca.minha === "going" ? "tonal" : "preenchido"}
+                icone={presenca.minha === "going" ? "check" : "event_available"}
+                aria-pressed={presenca.minha === "going"}
+                disabled={ocupado}
+                onClick={() => void mudarPresenca("going")}
+              >
+                {presenca.minha === "going" ? "Presença confirmada" : "Vou"}
+              </Botao>
+              {presenca.minha === null ? null : (
+                <Botao tom="tonal" disabled={ocupado} onClick={() => void mudarPresenca(null)}>
+                  Cancelar presença
+                </Botao>
+              )}
+            </div>
+          )}
+
+          {aviso === null ? null : (
+            <p role="alert" className="text-sm text-(--destructive)">
+              {aviso}
+            </p>
+          )}
+        </Secao>
+      )}
+
+      {podeMarcar ? (
+        <Secao titulo="Perguntar a quem organiza">
+          {perguntaEnviada ? (
+            <p className="text-[15px] leading-6">
+              Sua pergunta foi enviada. A resposta chega em Conversas.
+            </p>
+          ) : (
+            <form className="grid gap-3" onSubmit={(evento) => void enviarPergunta(evento)}>
+              <Campo
+                id="pergunta-ao-organizador"
+                rotulo="Sua pergunta"
+                valor={pergunta}
+                aoMudar={setPergunta}
+                area
+                nota="Sua pergunta será enviada a quem organiza este evento."
+              />
+              {erroDaPergunta === null ? null : (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  {erroDaPergunta}
+                </p>
+              )}
+              <div className="flex justify-end">
+                <Botao
+                  tom="tonal"
+                  type="submit"
+                  disabled={enviandoPergunta || pergunta.trim() === ""}
+                >
+                  {enviandoPergunta ? "Enviando…" : "Enviar pergunta"}
+                </Botao>
+              </div>
+            </form>
+          )}
+        </Secao>
+      ) : null}
+
+      {editando ? (
+        <FormularioDeEncontro
+          encontro={encontro}
+          aoFechar={() => setEditando(false)}
+          aoSalvar={() => {
+            setEditando(false)
+            setRodada((atual) => atual + 1)
+          }}
+        />
+      ) : null}
     </section>
   )
+}
+
+function rotuloDaMinha(minha: PresencaDoEncontro | null): string {
+  if (minha === "going") return "Sim"
+  if (minha === "not_going") return "Não"
+  if (minha === "interested") return "Interesse"
+  return "—"
 }
 
 function Fato({ valor, rotulo }: { valor: string; rotulo: string }) {

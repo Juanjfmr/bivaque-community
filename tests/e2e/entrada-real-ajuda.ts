@@ -98,12 +98,23 @@ export function urlDoMailpit(): string {
   ).replace(/\/+$/, "")
 }
 
-function urlDoSupabase(): string {
+export function urlDoSupabase(): string {
   return (
     lerDoAmbiente("SUPABASE_URL") ??
     lerDoAmbiente("NEXT_PUBLIC_SUPABASE_URL") ??
     URL_DO_SUPABASE_PADRAO
   ).replace(/\/+$/, "")
+}
+
+/** Chave anônima do Supabase, lida como a URL: do processo ou do arquivo local do apps/web. */
+export function chaveAnonimaDoSupabase(): string {
+  const chave = lerDoAmbiente("NEXT_PUBLIC_SUPABASE_ANON_KEY") ?? lerDoAmbiente("SUPABASE_ANON_KEY")
+  if (chave === undefined || chave.length === 0) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY não está configurada: defina no ambiente ou no arquivo local do apps/web.",
+    )
+  }
+  return chave
 }
 
 function exigirChaveDeServico(): string {
