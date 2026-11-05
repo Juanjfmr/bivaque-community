@@ -51,6 +51,10 @@ allowed_paths:
   - apps/web/app/(shell)/invite
   - apps/web/lib/outbox
   - apps/web/workers
+  # Rodada 2 (05/11, coordenador): caminhos que as correções exigem.
+  - apps/web/app/auth/callback
+  - apps/web/app/(preauth)/convite/actions.ts
+  - supabase/config.toml
   - apps/app/src/entrada
   - apps/app/src/previa-f01
   - apps/app/tests
