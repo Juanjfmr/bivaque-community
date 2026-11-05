@@ -26,6 +26,7 @@ import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
 import {
   acessoNegado,
   encontroSumiu,
+  foiAbortada,
   mensagemDaFalha,
   sessaoVencida,
 } from "@/src/eventos/formulario"
@@ -62,6 +63,10 @@ export function Evento() {
   const [enviandoPergunta, setEnviandoPergunta] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
+
+  // Uma sessão de rede por tela: sair cancela escrita que ainda estava a caminho.
+  const [controle] = useState(() => new AbortController())
+  useEffect(() => () => controle.abort(), [controle])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
@@ -133,12 +138,12 @@ export function Evento() {
     try {
       const gravada =
         situacao === null
-          ? await cancelarPresenca(encontro.id)
-          : await marcarPresenca(encontro.id, situacao)
+          ? await cancelarPresenca(encontro.id, { signal: controle.signal })
+          : await marcarPresenca(encontro.id, situacao, { signal: controle.signal })
       setEncontro({ ...encontro, presenca: gravada })
     } catch (falha: unknown) {
       // Nada mudou na tela: o estado anterior continua sendo o que o banco tem.
-      setAviso(mensagemDaFalha(falha, "presenca"))
+      if (!foiAbortada(falha)) setAviso(mensagemDaFalha(falha, "presenca"))
     } finally {
       setOcupado(false)
     }
@@ -150,12 +155,12 @@ export function Evento() {
     setEnviandoPergunta(true)
     setErroDaPergunta(null)
     try {
-      await perguntarAoOrganizador(encontro.id, pergunta)
+      await perguntarAoOrganizador(encontro.id, pergunta, { signal: controle.signal })
       setPergunta("")
       setPerguntaEnviada(true)
     } catch (falha: unknown) {
       // O texto continua no campo: é o que a pessoa escreveu.
-      setErroDaPergunta(mensagemDaFalha(falha, "pergunta"))
+      if (!foiAbortada(falha)) setErroDaPergunta(mensagemDaFalha(falha, "pergunta"))
     } finally {
       setEnviandoPergunta(false)
     }

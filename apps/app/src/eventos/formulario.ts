@@ -102,3 +102,8 @@ export function sessaoVencida(falha: unknown): boolean {
 export function acessoNegado(falha: unknown): boolean {
   return falha instanceof FalhaDaApi && falha.codigo === "recusado"
 }
+
+/** A chamada foi cancelada porque a tela saiu: não é falha para mostrar. */
+export function foiAbortada(falha: unknown): boolean {
+  return falha instanceof DOMException && falha.name === "AbortError"
+}

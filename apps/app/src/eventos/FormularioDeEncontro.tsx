@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { Campo, Formulario } from "@/components/bivaque/campos"
@@ -13,6 +13,7 @@ import {
 } from "@/lib/dados/eventos"
 import {
   corpoDoEncontro,
+  foiAbortada,
   mensagemDaFalha,
   paraCampoDeDataHora,
   validarEncontro,
@@ -47,6 +48,9 @@ export function FormularioDeEncontro({
   const [local, setLocal] = useState(encontro?.local ?? "")
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
+  // Fechar a folha cancela a gravação que ainda estava a caminho.
+  const [controle] = useState(() => new AbortController())
+  useEffect(() => () => controle.abort(), [controle])
 
   async function gravar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
@@ -63,14 +67,14 @@ export function FormularioDeEncontro({
       const corpo = corpoDoEncontro(dados)
       let id: string
       if (encontro === undefined) {
-        id = await criarEncontro(corpo)
+        id = await criarEncontro(corpo, { signal: controle.signal })
       } else {
-        await editarEncontro(encontro.id, corpo)
+        await editarEncontro(encontro.id, corpo, { signal: controle.signal })
         id = encontro.id
       }
       aoSalvar(id)
     } catch (falha: unknown) {
-      setErro(mensagemDaFalha(falha, editando ? "editar" : "criar"))
+      if (!foiAbortada(falha)) setErro(mensagemDaFalha(falha, editando ? "editar" : "criar"))
     } finally {
       setSalvando(false)
     }
