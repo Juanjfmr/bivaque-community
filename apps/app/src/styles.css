@@ -915,10 +915,9 @@
     margin-top: 15px;
   }
 
+  /* O tamanho vem da regra base (58 px; 56 compacto). Estas três linhas
+     reduziam o Criar para 50 px no telefone e venciam as duas. */
   [data-nav="principal"] [data-acao="criar"] [data-criar="botao"] {
-    width: 50px;
-    min-width: 50px;
-    height: 50px;
     margin-top: -32px;
     border-radius: 15px;
     box-shadow: 0 4px 12px var(--shadow-strong);
