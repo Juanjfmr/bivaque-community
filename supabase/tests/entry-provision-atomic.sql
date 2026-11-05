@@ -205,12 +205,12 @@ select results_eq(
 
 select results_eq(
   $$
-    select etapa, estado, versao
+    select etapa, estado->>'cidade', versao
     from public.entry_progress
     where user_id = '10000000-0000-4000-8000-000000000005'
   $$,
-  $$ values ('previa-cidade'::text, '{}'::jsonb, 2) $$,
-  'concluir o provisionamento troca o rascunho pelo marcador da etapa seguinte'
+  $$ values ('previa-cidade'::text, 'Manaus'::text, 2) $$,
+  'concluir o provisionamento troca o rascunho pelo marcador da etapa seguinte, com a cidade para exibir'
 );
 
 -- ───────────────────────────────────────────────────────────────────────────
@@ -259,12 +259,12 @@ select is(
 
 select results_eq(
   $$
-    select etapa, estado
+    select etapa, estado->>'cidade'
     from public.entry_progress
     where user_id = '10000000-0000-4000-8000-000000000007'
   $$,
-  $$ values ('previa-cidade'::text, '{}'::jsonb) $$,
-  'o convite familiar, sem momento, também deixa o marcador da etapa seguinte'
+  $$ values ('previa-cidade'::text, 'Manaus'::text) $$,
+  'o convite familiar, sem momento, também deixa o marcador da etapa seguinte com a cidade'
 );
 
 reset role;
