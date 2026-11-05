@@ -192,12 +192,18 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     expect(noEscuro, "no escuro o título é claro").toHaveLength(3)
     for (const canal of noEscuro) expect(canal).toBeGreaterThan(128)
 
-    // A ação da tela é legível no escuro — medido, não olhado.
-    const criar = await coresDoBotao(page, "Criar encontro")
-    expect(
-      contraste(criar.texto, criar.fundo),
-      `"Criar encontro" no escuro: ${criar.texto} sobre ${criar.fundo} (temaEscuro=${criar.temaEscuro})`,
-    ).toBeGreaterThanOrEqual(4.5)
+    // A ação da tela é legível no escuro — medido, não olhado. O botão anima
+    // `color` e `background-color` (pecas.css), então a medida espera a cor
+    // assentar: logo depois da troca de tema ela ainda está no meio do caminho.
+    await expect
+      .poll(
+        async () => {
+          const criar = await coresDoBotao(page, "Criar encontro")
+          return contraste(criar.texto, criar.fundo)
+        },
+        { message: '"Criar encontro" no escuro, depois da transição, abaixo de 4.5:1' },
+      )
+      .toBeGreaterThanOrEqual(4.5)
 
     await page.emulateMedia({ colorScheme: "light" })
     const noClaro = await corDoTitulo(page)
@@ -227,12 +233,17 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     // Contraste das ações de presença no escuro — medido, não olhado.
     await page.emulateMedia({ colorScheme: "dark" })
     await page.waitForFunction(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
+    // Os botões animam a cor: a medida espera a transição assentar.
     for (const nome of ["Não vou", "Cancelar presença"]) {
-      const cores = await coresDoBotao(page, nome)
-      expect(
-        contraste(cores.texto, cores.fundo),
-        `"${nome}" no escuro: ${cores.texto} sobre ${cores.fundo} (temaEscuro=${cores.temaEscuro}, --foreground=${cores.fgVar}, --background=${cores.bgVar})`,
-      ).toBeGreaterThanOrEqual(4.5)
+      await expect
+        .poll(
+          async () => {
+            const cores = await coresDoBotao(page, nome)
+            return contraste(cores.texto, cores.fundo)
+          },
+          { message: `"${nome}" no escuro, depois da transição, abaixo de 4.5:1` },
+        )
+        .toBeGreaterThanOrEqual(4.5)
     }
     await page.emulateMedia({ colorScheme: "light" })
     await capturar(page, projeto, "encontro-com-presenca")
