@@ -1,5 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server"
-import { ipConfiavel } from "../../../../../../lib/app-api/entrada-limite"
+import { ipConfiavel, limitadorConfigurado } from "../../../../../../lib/app-api/entrada-limite"
 import {
   clienteDeServicoOuNulo,
   conferirPorta,
@@ -38,6 +38,13 @@ const CORPO_MAXIMO = 4 * 1024
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const porta = conferirPorta(request, "cookie")
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
+
+  // O digest da origem usa o segredo do limitador. Sem ele, a rota responde 503
+  // — como as rotas do código — em vez de o `throw` virar 500.
+  if (!limitadorConfigurado()) {
+    log.error("entry invite preview: limiter secret is not configured")
+    return respostaIndisponivel(request)
+  }
 
   const lido = await lerCorpoJson(request, CORPO_MAXIMO)
   if (!lido.ok) {

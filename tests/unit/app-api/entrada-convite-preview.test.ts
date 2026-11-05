@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // A prévia do convite valida o código antes de qualquer envio de e-mail (o envio
 // cria conta) e devolve o nome de quem convidou e o endereço declarado. O teste
@@ -70,6 +70,8 @@ beforeEach(() => {
   })
 })
 
+afterEach(() => vi.unstubAllEnvs())
+
 describe("POST /api/app/entry/invite/preview", () => {
   it("sem o cabeçalho do app ou com origem fora da lista não valida nada", async () => {
     const semCabecalho = await POST(requisicao())
@@ -78,6 +80,17 @@ describe("POST /api/app/entry/invite/preview", () => {
       requisicao({ cabecalho: CABECALHO, origem: "https://evil.example.invalid" }),
     )
     expect(origemRuim.status).toBe(403)
+    expect(prever).not.toHaveBeenCalled()
+  })
+
+  it("sem o segredo do limitador responde 503, não 500", async () => {
+    vi.stubEnv("NODE_ENV", "production")
+    vi.stubEnv("BIVAQUE_LIMITER_PEPPER", "")
+
+    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
+
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "indisponivel" })
     expect(prever).not.toHaveBeenCalled()
   })
 
