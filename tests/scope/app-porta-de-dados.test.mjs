@@ -27,6 +27,12 @@ const relativo = (caminhoAbsoluto) => caminhoAbsoluto.slice(root.length + 1).rep
 /** As telas que JÁ foram ligadas ao banco. A lista é explícita de propósito. */
 const TELAS_LIGADAS = ["apps/app/src/telas/Agenda.tsx", "apps/app/src/telas/Evento.tsx"]
 
+/**
+ * Telas de outra jornada que importam a porta de eventos de propósito: o Início
+ * (F02) grava a presença do próximo encontro pela rota do F05.
+ */
+const LEEM_A_PORTA_DE_EVENTOS = ["apps/app/src/telas/Inicio.tsx"]
+
 test("as telas ligadas leem pela porta da jornada, nunca pela demonstração", () => {
   for (const tela of TELAS_LIGADAS) {
     const fonte = read(...tela.split("/"))
@@ -38,7 +44,9 @@ test("as telas ligadas leem pela porta da jornada, nunca pela demonstração", (
 
 test("a demonstração continua servindo as telas que ainda não foram ligadas", () => {
   const telas = arquivos("apps/app/src/telas")
-  const ligadas = new Set(TELAS_LIGADAS.map((tela) => join(root, ...tela.split("/"))))
+  const ligadas = new Set(
+    [...TELAS_LIGADAS, ...LEEM_A_PORTA_DE_EVENTOS].map((tela) => join(root, ...tela.split("/"))),
+  )
   for (const caminho of telas) {
     if (ligadas.has(caminho)) continue
     assert.doesNotMatch(
