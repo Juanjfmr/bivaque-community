@@ -1,6 +1,6 @@
 import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
-import { ipConfiavel } from "../../../../../lib/app-api/entrada-limite"
+import { ipConfiavel, limitadorConfigurado } from "../../../../../lib/app-api/entrada-limite"
 import {
   clienteDeServicoOuNulo,
   conferirEscrita,
@@ -61,6 +61,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const porta = conferirEscrita(request, sessao.sessao.via)
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
+
+  // O digest da origem usa o segredo do limitador. Sem ele, a rota responde 503
+  // — como as rotas do código — em vez de o `throw` virar 500.
+  if (!limitadorConfigurado()) {
+    log.error("entry invite: limiter secret is not configured")
+    return respostaIndisponivel(request)
+  }
 
   const lido = await lerCorpoJson(request)
   if (!lido.ok) return responder(request, { erro: "corpo-invalido" }, lido.status)
