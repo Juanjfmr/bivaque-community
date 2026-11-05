@@ -7,7 +7,12 @@ import {
   type Page,
   test,
 } from "@playwright/test"
-import { MEMBRO_SEMEADO, semearSessaoDeMembro } from "./entrada-real-ajuda"
+import {
+  chaveAnonimaDoSupabase,
+  MEMBRO_SEMEADO,
+  semearSessaoDeMembro,
+  urlDoSupabase,
+} from "./entrada-real-ajuda"
 
 // F05 — a agenda e o encontro do app lendo e gravando no banco de verdade
 // (RUN-007 / ADR-20261105). O que este arquivo prova é a jornada inteira:
@@ -275,10 +280,10 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     const { conversaId } = (await enviada.json()) as { conversaId: string }
     expect(conversaId).toMatch(/^[0-9a-f-]{36}$/)
     const lidas = await page.request.get(
-      `${process.env["NEXT_PUBLIC_SUPABASE_URL"]}/rest/v1/dm_messages?select=content&conversation_id=eq.${conversaId}`,
+      `${urlDoSupabase()}/rest/v1/dm_messages?select=content&conversation_id=eq.${conversaId}`,
       {
         headers: {
-          apikey: process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? "",
+          apikey: chaveAnonimaDoSupabase(),
           authorization: `Bearer ${await tokenDaSessao(context)}`,
         },
       },
