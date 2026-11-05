@@ -11,6 +11,12 @@ import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
+import {
+  buscarEncontro,
+  cancelarPresenca,
+  marcarPresenca,
+  type Presenca,
+} from "@/lib/dados/eventos"
 import { type InicioDaCidade, lerInicio } from "@/lib/dados/inicio"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
@@ -24,7 +30,9 @@ import { rotuloDaCategoria } from "@/src/inicio/categorias"
  * exemplo que gira, atalhos, serviços, contratação, oportunidades, grupos,
  * próximo encontro, perguntas, guia e o convite de negócio.
  *
- * Salvar um cartão é estado local e pertence ao F06 (anúncios salvos). O que o
+ * "Vou/Confirmado" do próximo encontro grava pela rota de presença do F05 e
+ * mostra o que o banco devolveu. Salvar um cartão é estado local e pertence ao
+ * F06 (anúncios salvos). O que o
  * banco ainda não tem — foto de anúncio e de negócio, autor da pergunta,
  * indicações do negócio — fica de fora do cartão, sem valor inventado.
  */
@@ -62,6 +70,10 @@ export function Inicio() {
   const [rodada, setRodada] = useState(0)
   const [exemplo, setExemplo] = useState(0)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
+  const [presenca, setPresenca] = useState<Presenca | null>(null)
+  const [erroPresenca, setErroPresenca] = useState(false)
+  const [gravando, setGravando] = useState(false)
+  const [tentativaPresenca, setTentativaPresenca] = useState(0)
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
@@ -78,6 +90,39 @@ export function Inicio() {
       })
     return () => controle.abort()
   }, [rodada])
+
+  const eventoId = dados?.eventos[0]?.id
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tentativa solicita nova leitura
+  useEffect(() => {
+    const controle = new AbortController()
+    setPresenca(null)
+    setErroPresenca(false)
+    if (eventoId !== undefined) {
+      void buscarEncontro(eventoId, { signal: controle.signal })
+        .then((encontro) => {
+          if (!controle.signal.aborted) setPresenca(encontro.presenca)
+        })
+        .catch(() => {
+          if (!controle.signal.aborted) setErroPresenca(true)
+        })
+    }
+    return () => controle.abort()
+  }, [eventoId, tentativaPresenca])
+
+  async function alternarPresenca(id: string) {
+    if (presenca === null || gravando) return
+    setGravando(true)
+    setErroPresenca(false)
+    try {
+      setPresenca(
+        presenca.minha === "going" ? await cancelarPresenca(id) : await marcarPresenca(id, "going"),
+      )
+    } catch {
+      setErroPresenca(true)
+    } finally {
+      setGravando(false)
+    }
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -290,10 +335,31 @@ export function Inicio() {
                     icone="event"
                     titulo={encontro.title}
                     subtitulo={resumoDoEncontro(encontro.comecaEm, encontro.local)}
-                    onClick={() =>
-                      void navegacao.irPara("evento", { parametros: { id: encontro.id } })
+                    fim={
+                      <span className="text-[13px] font-medium text-(--primary)">
+                        {presenca?.minha === "going" ? "Confirmado" : "Vou"}
+                      </span>
                     }
+                    aria-pressed={presenca?.minha === "going"}
+                    disabled={presenca === null || gravando}
+                    onClick={() => void alternarPresenca(encontro.id)}
                   />
+                  {erroPresenca ? (
+                    <p role="alert" className="mt-2 text-sm text-(--destructive)">
+                      Não foi possível {presenca === null ? "carregar" : "gravar"} sua presença.{" "}
+                      {presenca === null ? (
+                        <button
+                          type="button"
+                          className="font-medium underline"
+                          onClick={() => setTentativaPresenca((valor) => valor + 1)}
+                        >
+                          Tentar de novo
+                        </button>
+                      ) : (
+                        "Tente de novo."
+                      )}
+                    </p>
+                  ) : null}
                 </Secao>
               )}
 
