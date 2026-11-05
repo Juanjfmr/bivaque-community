@@ -1,4 +1,4 @@
-﻿import type { NextRequest, NextResponse } from "next/server"
+import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
 import { cidadeDaSessao } from "../eventos/_comum"
 
@@ -22,14 +22,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const inicio = (pagina - 1) * TAMANHO
     const fim = inicio + TAMANHO
     const [perguntas, eventos, anuncios] = await Promise.all([
-      client
-        .from("recommendation_requests")
-        .select("id,title,body,is_resolved,created_at")
-        .eq("locality_id", cidade.id)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: false })
-        .range(inicio, fim),
+      // A RPC já esconde as perguntas que a própria pessoa ocultou (hidden_questions).
+      client.rpc("list_indications", {
+        p_locality_id: cidade.id,
+        p_resolved: false,
+        p_limit: TAMANHO + 1,
+        p_offset: inicio,
+      }),
       client
         .from("events")
         .select("id,title,venue,starts_at,status")

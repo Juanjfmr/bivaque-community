@@ -1,4 +1,4 @@
-﻿import { NextRequest } from "next/server"
+import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
@@ -41,7 +41,15 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
     })
     return query
   }
-  return { client: { from }, filtros }
+  const chamadas: Array<[string, Record<string, unknown>]> = []
+  const rpc = (nome: string, args: Record<string, unknown>) => {
+    chamadas.push([nome, args])
+    return Promise.resolve({
+      data: Array.from({ length: quantidade }, (_, indice) => ({ id: `${nome}-${indice}` })),
+      error: nome === falha ? { message: "segredo postgres" } : null,
+    })
+  }
+  return { client: { from, rpc }, filtros, chamadas }
 }
 
 function autenticar(mock: ReturnType<typeof cliente>) {
@@ -74,12 +82,17 @@ describe("início do app", () => {
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toMatchObject({
       cidade: "Manaus",
-      perguntas: [{ id: "recommendation_requests-0" }],
+      perguntas: [{ id: "list_indications-0" }],
       eventos: [{ id: "events-0" }],
       anuncios: [{ id: "listings-0" }],
     })
     expect(mock.filtros).toContainEqual(["locality_memberships", "kind", "current"])
-    for (const tabela of ["recommendation_requests", "events", "listings"])
+    expect(mock.chamadas).toContainEqual([
+      "list_indications",
+      { p_locality_id: "cidade-atual", p_resolved: false, p_limit: 21, p_offset: 0 },
+    ])
+    expect(mock.filtros.some(([tabela]) => tabela === "recommendation_requests")).toBe(false)
+    for (const tabela of ["events", "listings"])
       expect(mock.filtros).toContainEqual([tabela, "locality_id", "cidade-atual"])
   })
 
@@ -88,12 +101,12 @@ describe("início do app", () => {
     expect((await GET(new NextRequest(`${url}?pagina=-1`))).status).toBe(400)
   })
 
-  it("recusa quem n?o tem cidade atual", async () => {
+  it("recusa quem não tem cidade atual", async () => {
     autenticar(cliente("", true))
     expect((await GET(new NextRequest(url))).status).toBe(403)
   })
 
-  it("limita as se??es e informa quando h? pr?xima p?gina", async () => {
+  it("limita as seções e informa quando há próxima página", async () => {
     autenticar(cliente("", false, 21))
     const corpo = await (await GET(new NextRequest(url))).json()
     expect(corpo.perguntas).toHaveLength(20)
