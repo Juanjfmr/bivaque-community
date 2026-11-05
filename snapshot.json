@@ -1,0 +1,500 @@
+{
+  "schemaVersion": 1,
+  "title": "Prontidão do Bivaque",
+  "scopeVersion": "2026-11-05",
+  "source": "docs/LANCAMENTO.md",
+  "generatedAt": "2026-11-05T15:10:40.402Z",
+  "revision": "ea92299a6f1d6940eb36bcd6103420c64c2c9e90",
+  "boardUpdatedAt": "2026-11-05",
+  "stage": "Em construção",
+  "metrics": {
+    "frontend": {
+      "verified": 0,
+      "declared": 0,
+      "total": 10,
+      "percent": 0
+    },
+    "backend": {
+      "verified": 0,
+      "declared": 3,
+      "total": 10,
+      "percent": 0
+    },
+    "integration": {
+      "verified": 0,
+      "declared": 0,
+      "total": 10,
+      "percent": 0
+    }
+  },
+  "remaining": 10,
+  "provisional": true,
+  "journeys": [
+    {
+      "id": "F01",
+      "title": "Entrada e conta",
+      "cardId": "LAN-F01",
+      "nextStep": "Ligar a entrada ao servidor e comprovar a jornada completa.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F01"
+        ]
+      },
+      "backend": {
+        "status": "unverified",
+        "declared": true,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "MVP-01-ADMISSION"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F01"
+        ]
+      },
+      "blocked": false,
+      "status": "partial"
+    },
+    {
+      "id": "F02",
+      "title": "Início e busca",
+      "cardId": "LAN-F02",
+      "nextStep": "Ligar o início e a busca aos dados reais.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F02"
+        ]
+      },
+      "backend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F02"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F02"
+        ]
+      },
+      "blocked": false,
+      "status": "pending"
+    },
+    {
+      "id": "F03",
+      "title": "Criar e publicar",
+      "cardId": "LAN-F03",
+      "nextStep": "Concluir os quatro tipos de criação, rascunhos e tratamento de falha.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F03"
+        ]
+      },
+      "backend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F03"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F03"
+        ]
+      },
+      "blocked": false,
+      "status": "pending"
+    },
+    {
+      "id": "F04",
+      "title": "Comunidade e grupos",
+      "cardId": "LAN-F04",
+      "nextStep": "Concluir o redesenho do banco e ligar os grupos ao aplicativo.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F04"
+        ]
+      },
+      "backend": {
+        "status": "partial",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "RED-003",
+          "MVP-03-COMMUNITY"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F04"
+        ]
+      },
+      "blocked": false,
+      "status": "partial"
+    },
+    {
+      "id": "F05",
+      "title": "Eventos",
+      "cardId": "LAN-F05",
+      "nextStep": "Ligar agenda, presença, criação e edição ao aplicativo integrado.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F05"
+        ]
+      },
+      "backend": {
+        "status": "unverified",
+        "declared": true,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "MVP-03-COMMUNITY"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F05"
+        ]
+      },
+      "blocked": false,
+      "status": "partial"
+    },
+    {
+      "id": "F06",
+      "title": "Desapegos e imóveis",
+      "cardId": "LAN-F06",
+      "nextStep": "Comprovar anúncios, localização, filtros e conversa de interesse.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F06"
+        ]
+      },
+      "backend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F06"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F06"
+        ]
+      },
+      "blocked": false,
+      "status": "pending"
+    },
+    {
+      "id": "F07",
+      "title": "Negócios e serviços",
+      "cardId": "LAN-F07",
+      "nextStep": "Concluir negócio, pedido de serviço e acompanhamento.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F07"
+        ]
+      },
+      "backend": {
+        "status": "partial",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "G-TASK-1",
+          "LAN-F07"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F07"
+        ]
+      },
+      "blocked": false,
+      "status": "partial"
+    },
+    {
+      "id": "F08",
+      "title": "Guia",
+      "cardId": "LAN-F08",
+      "nextStep": "Ligar busca, leitura, salvos e sugestões aos dados reais.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F08"
+        ]
+      },
+      "backend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F08"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F08"
+        ]
+      },
+      "blocked": false,
+      "status": "pending"
+    },
+    {
+      "id": "F09",
+      "title": "Conversas e avisos",
+      "cardId": "LAN-F09",
+      "nextStep": "Ligar conversas e avisos; comprovar o destino e o canal de e-mail.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F09"
+        ]
+      },
+      "backend": {
+        "status": "unverified",
+        "declared": true,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "DONE-OUTBOX-FOUNDATION"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F09"
+        ]
+      },
+      "blocked": false,
+      "status": "partial"
+    },
+    {
+      "id": "F10",
+      "title": "Você, família e conta",
+      "cardId": "LAN-F10",
+      "nextStep": "Ligar perfil, família e configurações; comprovar seus ciclos.",
+      "frontend": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F10"
+        ]
+      },
+      "backend": {
+        "status": "partial",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "DONE-PROFILE-RPCS",
+          "LAN-F10"
+        ]
+      },
+      "integration": {
+        "status": "pending",
+        "declared": false,
+        "verified": false,
+        "evidenceCount": 0,
+        "evidenceRevision": null,
+        "evidenceCurrent": false,
+        "cards": [
+          "LAN-F10"
+        ]
+      },
+      "blocked": false,
+      "status": "partial"
+    }
+  ],
+  "gates": [
+    {
+      "id": "LAN-OP",
+      "title": "Operação: painel do operador com verificação manual, denúncia e suspensão",
+      "status": "pending"
+    },
+    {
+      "id": "LAN-TROCA",
+      "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
+      "status": "pending"
+    },
+    {
+      "id": "LAN-PROVA",
+      "title": "Fase 7: prova final do lançamento e lista de ratificação",
+      "status": "pending"
+    },
+    {
+      "id": "BLOCK-LEGAL-ENTRY",
+      "title": "Textos legais da entrada prontos para abertura pública",
+      "status": "blocked"
+    },
+    {
+      "id": "BLOCK-RESEND",
+      "title": "Resend e domínio de e-mail transacional",
+      "status": "blocked"
+    },
+    {
+      "id": "LAN-LOJA",
+      "title": "Fase 7: app de loja em Capacitor pronto para envio",
+      "status": "pending"
+    }
+  ],
+  "changes": [],
+  "checks": {
+    "frontend": {
+      "status": "pending",
+      "revision": "ea92299a6f1d6940eb36bcd6103420c64c2c9e90",
+      "urls": []
+    },
+    "backend": {
+      "status": "pending",
+      "revision": "ea92299a6f1d6940eb36bcd6103420c64c2c9e90",
+      "urls": []
+    },
+    "integration": {
+      "status": "pending",
+      "revision": "ea92299a6f1d6940eb36bcd6103420c64c2c9e90",
+      "urls": []
+    }
+  },
+  "production": null,
+  "refreshError": false,
+  "nextStep": "Ligar a entrada ao servidor e comprovar a jornada completa."
+}

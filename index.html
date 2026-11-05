@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Estágio do Bivaque, entregas comprovadas e o que falta para lançar." />
+    <title>Bivaque · Progresso do produto</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" type="module"></script>
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Pular para o conteúdo</a>
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Bivaque, início do painel"><span class="brand-mark" aria-hidden="true">b.</span>Bivaque<span class="brand-caption">Progresso do produto</span></a>
+      <div class="header-actions"><span id="sync-state" class="sync-state">Carregando…</span><button type="button" id="refresh">Atualizar agora</button></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div id="load-message" role="status" aria-live="polite">Buscando o retrato mais recente do Bivaque…</div>
+      <noscript><p>Ative o JavaScript para consultar os indicadores e filtros do painel.</p></noscript>
+      <div id="dashboard" hidden>
+        <section class="overview" aria-labelledby="overview-title">
+          <div class="overview-heading"><p class="eyebrow">CAMINHO PARA O LANÇAMENTO</p><h1 id="overview-title">Onde estamos</h1><p class="subtitle">O que já foi comprovado. O que falta para usar de verdade.</p></div>
+          <div id="stage" class="stage"></div>
+          <div class="hero-progress"><div><span class="metric-label">Jornadas Web comprovadas</span><p class="hero-number"><strong id="overall-percent">—</strong><span>pronto</span></p><p id="overall-count"></p></div><div class="remaining"><strong id="remaining-percent"></strong><span>restante do escopo Web</span></div></div>
+          <progress id="overall-progress" max="100" value="0" aria-label="Jornadas Web comprovadas"></progress>
+          <p class="scope-note">O percentual mede entregas comprovadas, sem estimar prazo. Operação, legal e pacote de loja aparecem como requisitos adicionais abaixo.</p>
+        </section>
+        <aside id="provisional" class="notice" hidden><strong>Levantamento inicial · percentual provisório</strong><p>Há implementação registrada no quadro. As provas por camada ainda precisam ser vinculadas às jornadas atuais. “Não comprovado” não significa “não existe”.</p></aside>
+        <section id="layer-metrics" class="layer-metrics" aria-label="Progresso por camada"></section>
+        <section class="next-step" aria-labelledby="next-title"><div><p class="eyebrow">PRÓXIMO PASSO</p><h2 id="next-title">Conferindo a próxima entrega…</h2></div><a href="#journeys">Ver o que falta <span aria-hidden="true">↓</span></a></section>
+        <section class="journeys-section" id="journeys" aria-labelledby="journeys-title">
+          <div class="section-heading"><div><p class="eyebrow">DO PLANO À ENTREGA</p><h2 id="journeys-title">Por funcionalidade</h2></div><span id="journey-count"></span></div>
+          <div class="controls"><label class="search"><span>Buscar funcionalidade</span><input type="search" id="search" placeholder="Ex.: entrada, imóveis, conversas" /></label><label><span>Consultar camada</span><select id="layer"><option value="integration">Jornada completa</option><option value="frontend">Frontend · telas e interações</option><option value="backend">Backend · dados e regras</option></select></label></div>
+          <fieldset class="filters" id="filters" aria-label="Filtrar por situação"></fieldset>
+          <p id="result-summary" class="result-summary" aria-live="polite"></p>
+          <div id="journey-list" class="journey-list"></div>
+        </section>
+        <section aria-labelledby="gates-title"><div class="section-heading"><div><p class="eyebrow">ALÉM DAS DEZ JORNADAS</p><h2 id="gates-title">Condições para lançar</h2></div><span id="gate-count"></span></div><p class="subtitle">Chegar a 100% das jornadas Web não libera a publicação enquanto estas condições estiverem pendentes.</p><div id="gate-list" class="gate-list"></div></section>
+        <section class="technical" aria-labelledby="technical-title"><div class="section-heading"><div><p class="eyebrow">CONFIANÇA NOS NÚMEROS</p><h2 id="technical-title">Versão e comprovação</h2></div></div><div id="version-info" class="version-info"></div><div id="check-list" class="check-list"></div><details class="method"><summary>Como o percentual é calculado?</summary><div><p><strong>Percentual principal = jornadas completas comprovadas ÷ jornadas previstas × 100.</strong> O valor é arredondado para baixo. Cada camada tem seu próprio indicador; o geral não é a média entre frontend e backend.</p><p>Uma jornada exige implementação registrada, aceite com referências de revisão, verificações automáticas na versão analisada e comprovação de frontend, backend e integração. Um teste ignorado, ausente ou inconclusivo não conta como sucesso.</p><p>Os cards são a fonte das entregas. A automação consulta os resultados e recalcula o painel; ela não substitui a revisão de produto, a revisão visual ou a aprovação do lançamento. Alterações nas partes comprovadas exigem nova avaliação.</p><p>Dados de demonstração, trabalho histórico e o antigo app React Native não contam como jornadas entregues. O pacote Capacitor é acompanhado nas condições de lançamento.</p><p id="scope-version"></p></div></details></section>
+        <section id="changes-section" hidden aria-labelledby="changes-title"><h2 id="changes-title">Desde a última atualização</h2><ul id="changes"></ul></section>
+      </div>
+    </main>
+    <footer><span>Bivaque · acompanhamento de entregas</span><span>Atualização automática · fonte única no repositório</span></footer>
+  </body>
+</html>
