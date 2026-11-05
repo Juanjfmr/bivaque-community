@@ -69,6 +69,7 @@ async function capturar(page: Page, projeto: string, etapa: string) {
     await page.screenshot({
       path: join(CAPTURAS, `${projeto}-${tema}-${etapa}.png`),
       fullPage: true,
+      animations: "disabled",
     })
   }
   await page.emulateMedia({ colorScheme: "light" })

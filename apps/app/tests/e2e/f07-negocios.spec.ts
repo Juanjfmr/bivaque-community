@@ -46,7 +46,11 @@ async function capturar(page: Page, nome: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   )
-  await page.screenshot({ path: join(DIRETORIO, `${nome}.png`), fullPage: true })
+  await page.screenshot({
+    path: join(DIRETORIO, `${nome}.png`),
+    fullPage: true,
+    animations: "disabled",
+  })
 }
 
 function luminancia(cor: string) {
