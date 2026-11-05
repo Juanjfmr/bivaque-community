@@ -39,15 +39,6 @@ async function getAuthClient() {
   })
 }
 
-// A função `open_event_question` nasce nesta entrega; `database.generated.ts` só
-// ganha a assinatura depois de `supabase gen types` contra a stack migrada. O
-// cast abaixo é o mesmo recurso local já usado para o enum event_rsvp: descreve
-// o contrato exato sem `any`, e some quando os tipos forem regenerados.
-type OpenEventQuestionRpc = (
-  fn: "open_event_question",
-  args: { p_event_id: string },
-) => PromiseLike<{ data: string | null; error: { message: string } | null }>
-
 async function insertQuestionMessage(
   conversationId: string,
   senderId: string,
@@ -84,18 +75,22 @@ export async function askQuestionAction(formData: FormData): Promise<QuestionAct
   } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: "Sua sessão expirou. Entre novamente para enviar." }
 
-  const openEventQuestion = supabase.rpc as unknown as OpenEventQuestionRpc
-  const { data: conversationId, error: openError } = await openEventQuestion(
-    "open_event_question",
+  // `rpc` é chamado NO cliente: separar a função em variável perde o `this` e
+  // ela explode em "cannot read properties of undefined (reading 'rest')".
+  const opened = (await supabase.rpc(
+    "open_event_question" as never,
     {
       p_event_id: eventId,
-    },
-  )
-  if (openError || !conversationId) {
-    return { ok: false, message: friendlyQuestionError(openError?.message) }
+    } as never,
+  )) as unknown as {
+    data: string | null
+    error: { message: string } | null
+  }
+  if (opened.error || !opened.data) {
+    return { ok: false, message: friendlyQuestionError(opened.error?.message) }
   }
 
-  return insertQuestionMessage(conversationId, user.id, content, eventId)
+  return insertQuestionMessage(opened.data, user.id, content, eventId)
 }
 
 /** Resposta no fio já existente (autor ou organizador — a RLS decide). */

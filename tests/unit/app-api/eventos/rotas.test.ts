@@ -447,4 +447,24 @@ describe("rotas de eventos do app", () => {
     expect(response.status).toBe(503)
     expect(await json(response)).toEqual({ erro: "escrita-indisponivel" })
   })
+
+  // Regressão de 05/11: a rota fazia `const rpc = client.rpc` e chamava a
+  // função solta, perdendo o `this` — em runtime virava 503 "cannot read
+  // properties of undefined (reading 'rest')". O caso só pega isso se olhar
+  // QUEM é o `this` da chamada.
+  it("pergunta abre a conversa NO cliente, sem perder o this", async () => {
+    const mock = mockClient({ event: { ...event, organizer_id: "outro-organizador" } })
+    const donos: unknown[] = []
+    ;(mock.client as unknown as { rpc: unknown }).rpc = function (this: unknown) {
+      donos.push(this)
+      return Promise.resolve({ data: "conversation-1", error: null })
+    }
+    authenticate(mock)
+    const resposta = await perguntar(
+      req("POST", `${BASE}/${ID}/perguntas`, '{"texto":"Vai ter estacionamento?"}'),
+      context,
+    )
+    expect(resposta.status).toBe(201)
+    expect(donos[0]).toBe(mock.client)
+  })
 })

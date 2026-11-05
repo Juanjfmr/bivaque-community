@@ -17,10 +17,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 type Context = { params: Promise<{ id: string }> }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-type OpenQuestion = (
-  fn: "open_event_question",
-  args: { p_event_id: string },
-) => PromiseLike<{ data: string | null; error: { message: string } | null }>
+type OpenQuestionAberto = Readonly<{ data: string | null; error: { message: string } | null }>
 
 export async function POST(request: NextRequest, { params }: Context): Promise<NextResponse> {
   const auth = await exigirSessao(request)
@@ -40,8 +37,14 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
     if (event.error) throw event.error
     if (!event.data) return responder(request, { erro: "evento-nao-encontrado" }, 404)
     if (event.data.organizer_id === userId) return responder(request, { erro: "recusado" }, 403)
-    const rpc = client.rpc as unknown as OpenQuestion
-    const opened = await rpc("open_event_question", { p_event_id: id })
+    // `rpc` é chamado NO cliente: separar a função em variável perde o `this` e
+    // ela explode em "cannot read properties of undefined (reading 'rest')".
+    const opened = (await client.rpc(
+      "open_event_question" as never,
+      {
+        p_event_id: id,
+      } as never,
+    )) as unknown as OpenQuestionAberto
     if (opened.error || !opened.data) {
       const message = opened.error?.message ?? ""
       if (
