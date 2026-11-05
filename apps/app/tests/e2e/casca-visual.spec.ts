@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test"
+﻿import { expect, test } from "@playwright/test"
+import { simularConversas } from "./conversas-ajuda"
 
 test("a busca tem uma entrada que filtra e limpa os resultados", async ({ page }) => {
   await page.goto("/app/busca")
@@ -62,6 +63,7 @@ test("o topo preserva ações e mostra Encontro sem cortar em 375", async ({ pag
 })
 
 test("o topo da conversa acompanha a pessoa e não conserva nome ao sair", async ({ page }) => {
+  await simularConversas(page)
   await page.goto("/app/conversa/nao-existe")
   // A largura do título é medida três vezes abaixo.
   await page.evaluate(async () => {
