@@ -1,16 +1,42 @@
 "use client"
 
 import { useEffect, useState } from "react"
+
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { Grade } from "@/components/bivaque/grade"
+import { Icone } from "@/components/bivaque/icone"
+import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
-import { type BuscaDaCidade, buscarNaCidade } from "@/lib/dados/inicio"
+import {
+  type AnuncioDoInicio,
+  type BuscaDaCidade,
+  buscarNaCidade,
+  type InicioDaCidade,
+  lerInicio,
+} from "@/lib/dados/inicio"
+import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
+import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
+
+/**
+ * A busca, com o conteúdo real da cidade da sessão (LAN-F02). O desenho é o da
+ * onda 2 (protótipo: features/search/views.js): campo, chips de escopo,
+ * contagem, resultados por tipo com teto no "Tudo" e "Ver todos", grade
+ * "Explorar" e sugestões quando não há termo, vazio honesto e erro com tentar
+ * de novo. Ficam para o refino: sinônimos, trecho da resposta que bateu,
+ * palavras que completam o texto e buscas recentes.
+ *
+ * Sem termo, a grade "Explorar" lê o Início da cidade; com termo (2+ letras),
+ * os resultados vêm da rota de busca. Foto de anúncio e de negócio ainda não
+ * existe no banco, então o cartão usa a capa com ícone.
+ */
 
 const FILTROS: readonly ItemDeFiltro[] = [
   { id: "all", rotulo: "Tudo" },
@@ -21,55 +47,97 @@ const FILTROS: readonly ItemDeFiltro[] = [
   { id: "guia", rotulo: "Guia" },
 ]
 
+const SUGESTOES = ["escola", "berço", "mudança", "mecânico"] as const
+const TAMANHO_DA_LISTA = 20
+
+type Achados = Pick<BuscaDaCidade, "anuncios" | "negocios" | "perguntas" | "grupos" | "guia">
+
+const SEM_ACHADOS: Achados = { anuncios: [], negocios: [], perguntas: [], grupos: [], guia: [] }
+
+/** Contagem que não afirma mais do que a página lida mostra. */
+function contagem(quantidade: number, truncada: boolean): string {
+  return truncada ? `${quantidade}+` : String(quantidade)
+}
+
+function precoDe(anuncio: AnuncioDoInicio): number | null {
+  return anuncio.precoCentavos === null ? null : anuncio.precoCentavos / 100
+}
+
 export function Busca() {
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<BuscaDaCidade | null>(null)
+  const [explorar, setExplorar] = useState<InicioDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [escopo, setEscopo] = useState("all")
-  const termo = casca.consulta.trim()
+  const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
+  const { consulta, definirConsulta: setConsulta } = casca
+  const termo = consulta.trim()
+  const comTermo = termo.length >= 2
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const controle = new AbortController()
-    setDados(null)
     setErro(false)
-    if (termo.length < 2) return () => controle.abort()
-    void buscarNaCidade(termo, { signal: controle.signal })
-      .then((valor) => {
-        if (!controle.signal.aborted) setDados(valor)
-      })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
-      })
+    const falhou = () => {
+      if (!controle.signal.aborted) setErro(true)
+    }
+    if (comTermo) {
+      setDados(null)
+      void buscarNaCidade(termo, { signal: controle.signal })
+        .then((valor) => {
+          if (!controle.signal.aborted) setDados(valor)
+        })
+        .catch(falhou)
+    } else {
+      setExplorar(null)
+      void lerInicio({ signal: controle.signal })
+        .then((valor) => {
+          if (!controle.signal.aborted) setExplorar(valor)
+        })
+        .catch(falhou)
+    }
     return () => controle.abort()
-  }, [termo, rodada])
+  }, [termo, comTermo, rodada])
 
-  const secoes =
-    dados === null
-      ? []
-      : [
-          { chave: "anuncios", titulo: "Anúncios", rota: "anuncio", itens: dados.anuncios },
-          { chave: "negocios", titulo: "Negócios", rota: "negocio", itens: dados.negocios },
-          {
-            chave: "perguntas",
-            titulo: "Indicações e respostas",
-            rota: "pergunta",
-            itens: dados.perguntas,
-          },
-          { chave: "grupos", titulo: "Grupos", rota: "grupo", itens: dados.grupos },
-          { chave: "guia", titulo: "Guia", rota: "guia", itens: dados.guia },
-        ].filter((secao) => escopo === "all" || secao.chave === escopo)
-  const total = secoes.reduce((soma, secao) => soma + secao.itens.length, 0)
+  // Uma consulta digitada tem precedência sobre a categoria tocada na grade.
+  useEffect(() => {
+    if (termo !== "") setCategoriaAtiva(null)
+  }, [termo])
+
+  const cidade = (comTermo ? dados?.cidade : explorar?.cidade) ?? casca.cidade
+  const explorando = !comTermo && categoriaAtiva === null
+  const carregando = comTermo ? dados === null : explorar === null
+  const achados: Achados = comTermo
+    ? (dados ?? SEM_ACHADOS)
+    : {
+        ...SEM_ACHADOS,
+        negocios: (explorar?.negocios ?? []).filter((negocio) =>
+          negocioDoGrupo(categoriaAtiva, negocio.categoria),
+        ),
+      }
+
+  const mostrando = (tipo: string): boolean => escopo === "all" || escopo === tipo
+  const total =
+    (mostrando("anuncios") ? achados.anuncios.length : 0) +
+    (mostrando("negocios") ? achados.negocios.length : 0) +
+    (mostrando("perguntas") ? achados.perguntas.length : 0) +
+    (mostrando("grupos") ? achados.grupos.length : 0) +
+    (mostrando("guia") ? achados.guia.length : 0)
+  const teto = escopo === "all" ? 4 : Number.POSITIVE_INFINITY
+  const negociosDaCidade = explorar?.negocios ?? []
+  const anunciosDaCidade = explorar?.anuncios ?? []
+  const anunciosTruncados = explorar !== null && explorar.proximo !== null
 
   return (
     <section data-tela="busca" className="grid gap-2">
       <CabecaDePagina
-        titulo={`Buscar em ${dados?.cidade ?? casca.cidade}`}
+        titulo={`Buscar em ${cidade}`}
         subtitulo="Encontre oportunidades, negócios e respostas da comunidade."
       />
+
       <ChipsDeFiltro
         itens={FILTROS}
         valor={escopo}
@@ -77,58 +145,255 @@ export function Busca() {
         rotulo="Filtrar por tipo"
         className="mt-1"
       />
-      {termo.length < 2 ? (
-        <EstadoVazio
-          titulo="O que você procura?"
-          texto="Digite pelo menos duas letras para buscar na sua cidade."
-          icone="search"
-        />
-      ) : erro ? (
-        <EstadoDeErro aoTentar={() => setRodada((valor) => valor + 1)} />
-      ) : dados === null ? (
+
+      {erro ? (
+        <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
+      ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
+      ) : explorando ? (
+        <>
+          <Secao titulo={`Explorar em ${cidade}`} className="mt-4">
+            <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
+              {EXPLORAR.filter((item) =>
+                negociosDaCidade.some((negocio) => negocioDoGrupo(item.id, negocio.categoria)),
+              )
+                .slice(0, 6)
+                .map((item) => {
+                  const quantidade = negociosDaCidade.filter((negocio) =>
+                    negocioDoGrupo(item.id, negocio.categoria),
+                  ).length
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-explorar-categoria={item.id}
+                      onClick={() => {
+                        setCategoriaAtiva(item.id)
+                        setEscopo("negocios")
+                      }}
+                      className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                    >
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                        <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                      </span>
+                      <span className="grid min-w-0 gap-0.5">
+                        <b className="text-[13px] leading-4">{item.rotulo}</b>
+                        <small className="text-xs text-(--on-surface-variant)">
+                          {contagem(quantidade, negociosDaCidade.length >= TAMANHO_DA_LISTA)}{" "}
+                          {quantidade === 1 ? "negócio" : "negócios"}
+                        </small>
+                      </span>
+                    </button>
+                  )
+                })}
+              {[
+                {
+                  id: "imoveis",
+                  rotulo: "Imóveis",
+                  icone: "apartment",
+                  quantidade: anunciosDaCidade.filter((a) => a.tipo === "property").length,
+                },
+                {
+                  id: "desapegos",
+                  rotulo: "Desapegos",
+                  icone: "sell",
+                  quantidade: anunciosDaCidade.filter((a) => a.tipo !== "property").length,
+                },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-explorar-categoria={item.id}
+                  onClick={() => void navegacao.irPara(item.id)}
+                  className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                    <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                  </span>
+                  <span className="grid min-w-0 gap-0.5">
+                    <b className="text-[13px] leading-4">{item.rotulo}</b>
+                    <small className="text-xs text-(--on-surface-variant)">
+                      {contagem(item.quantidade, anunciosTruncados)} disponíveis
+                    </small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Secao>
+          <Secao titulo="Sugestões" className="mt-4">
+            <div className="grid gap-1">
+              {SUGESTOES.map((sugestao) => (
+                <LinhaDeLista
+                  key={sugestao}
+                  icone="trending_up"
+                  titulo={sugestao}
+                  onClick={() => setConsulta(sugestao)}
+                />
+              ))}
+            </div>
+          </Secao>
+        </>
       ) : total === 0 ? (
         <EstadoVazio
           titulo={`Nada sobre “${termo}”`}
-          texto="Tente termos mais simples ou peça uma indicação à comunidade."
+          texto="Tente termos mais simples. Se a dúvida ainda não tiver resposta, pergunte à comunidade."
           icone="search_off"
+          acao={{
+            rotulo: "Pedir indicação",
+            aoAcionar: () => void navegacao.irPara("comunidade"),
+          }}
         />
       ) : (
         <>
           <p className="text-sm text-(--on-surface-variant)">
-            {total} {total === 1 ? "resultado" : "resultados"} em {dados.cidade}
+            {total === 1 ? `${total} resultado` : `${total} resultados`} em {cidade}
           </p>
-          {secoes
-            .filter((secao) => secao.itens.length > 0)
-            .map((secao) => (
-              <Secao key={secao.chave} titulo={secao.titulo}>
-                <div className="grid gap-2">
-                  {secao.itens.map((item) => (
-                    <LinhaDeLista
-                      key={item.id}
-                      icone={
-                        secao.chave === "grupos"
-                          ? "group"
-                          : secao.chave === "guia"
-                            ? "map"
-                            : secao.chave === "perguntas"
-                              ? "forum"
-                              : secao.chave === "negocios"
-                                ? "storefront"
-                                : "sell"
-                      }
-                      titulo={item.title}
-                      subtitulo={item.detalhe ?? ""}
-                      onClick={() =>
-                        void navegacao.irPara(secao.rota, { parametros: { id: item.id } })
-                      }
-                    />
-                  ))}
-                </div>
-              </Secao>
-            ))}
+
+          {mostrando("anuncios") && achados.anuncios.length > 0 ? (
+            <Secao
+              titulo="Anúncios"
+              acoes={
+                escopo === "all" ? (
+                  <BotaoVerTodos
+                    quando={achados.anuncios.length > 4}
+                    rotulo={`Ver todos os ${achados.anuncios.length} anúncios`}
+                    aoAcionar={() => setEscopo("anuncios")}
+                  />
+                ) : undefined
+              }
+            >
+              <Grade formato="cartoes">
+                {achados.anuncios.slice(0, teto).map((anuncio) => (
+                  <CartaoDeFoto
+                    key={anuncio.id}
+                    anuncio={{
+                      id: anuncio.id,
+                      titulo: anuncio.title,
+                      preco: precoDe(anuncio),
+                      icone: anuncio.tipo === "property" ? "apartment" : "sell",
+                      meta: anuncio.bairro ?? cidade,
+                    }}
+                    aoAbrir={() =>
+                      void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
+                    }
+                  />
+                ))}
+              </Grade>
+            </Secao>
+          ) : null}
+
+          {mostrando("negocios") && achados.negocios.length > 0 ? (
+            <Secao
+              titulo="Negócios"
+              acoes={
+                escopo === "all" ? (
+                  <BotaoVerTodos
+                    quando={achados.negocios.length > 4}
+                    rotulo={`Ver todos os ${achados.negocios.length} negócios`}
+                    aoAcionar={() => setEscopo("negocios")}
+                  />
+                ) : undefined
+              }
+            >
+              <Grade formato="cartoes">
+                {achados.negocios.slice(0, teto).map((negocio) => (
+                  <CartaoDeNegocio
+                    key={negocio.id}
+                    negocio={{
+                      id: negocio.id,
+                      nome: negocio.nome,
+                      categoria: rotuloDaCategoria(negocio.categoria),
+                      cidade,
+                    }}
+                    aoAbrir={() =>
+                      void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
+                    }
+                  />
+                ))}
+              </Grade>
+            </Secao>
+          ) : null}
+
+          {mostrando("perguntas") && achados.perguntas.length > 0 ? (
+            <Secao titulo="Indicações e respostas">
+              <div className="grid gap-2">
+                {achados.perguntas.slice(0, escopo === "all" ? 5 : teto).map((pergunta) => (
+                  <LinhaDePergunta
+                    key={pergunta.id}
+                    pergunta={{
+                      id: pergunta.id,
+                      pergunta: pergunta.title,
+                      autor: "Alguém da cidade",
+                      tópico: pergunta.grupo ?? "",
+                      cidade,
+                      respostas: pergunta.respostas,
+                      resolvida: pergunta.resolvida,
+                    }}
+                    onClick={() =>
+                      void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
+                    }
+                  />
+                ))}
+              </div>
+            </Secao>
+          ) : null}
+
+          {mostrando("grupos") && achados.grupos.length > 0 ? (
+            <Secao titulo="Grupos">
+              <div className="grid gap-2">
+                {achados.grupos.slice(0, escopo === "all" ? 5 : teto).map((grupo) => (
+                  <LinhaDeLista
+                    key={grupo.id}
+                    icone="group"
+                    titulo={grupo.nome}
+                    subtitulo={`${grupo.membros} ${grupo.membros === 1 ? "membro" : "membros"}`}
+                    onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
+                  />
+                ))}
+              </div>
+            </Secao>
+          ) : null}
+
+          {mostrando("guia") && achados.guia.length > 0 ? (
+            <Secao titulo="Guia">
+              <div className="grid gap-2">
+                {achados.guia.slice(0, escopo === "all" ? 5 : teto).map((entrada) => (
+                  <LinhaDeLista
+                    key={entrada.id}
+                    icone="map"
+                    titulo={entrada.title}
+                    subtitulo={entrada.detalhe ?? ""}
+                    onClick={() =>
+                      void navegacao.irPara("guia", { parametros: { id: entrada.id } })
+                    }
+                  />
+                ))}
+              </div>
+            </Secao>
+          ) : null}
         </>
       )}
     </section>
+  )
+}
+
+function BotaoVerTodos({
+  quando,
+  rotulo,
+  aoAcionar,
+}: {
+  quando: boolean
+  rotulo: string
+  aoAcionar: () => void
+}) {
+  if (!quando) return null
+  return (
+    <button
+      type="button"
+      onClick={aoAcionar}
+      className="rounded-xl px-3 text-sm font-medium text-(--primary) hover:bg-(--muted)"
+    >
+      {rotulo}
+    </button>
   )
 }

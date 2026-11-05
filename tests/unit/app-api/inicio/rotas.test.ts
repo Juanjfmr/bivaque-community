@@ -13,7 +13,7 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
   const filtros: Array<[string, string, unknown]> = []
   const from = (tabela: string) => {
     const query: Record<string, unknown> = {}
-    for (const metodo of ["select", "order", "limit", "range", "gte", "neq"]) {
+    for (const metodo of ["select", "order", "limit", "range", "gte", "neq", "in"]) {
       query[metodo] = () => query
     }
     query["eq"] = (coluna: string, valor: unknown) => {
@@ -31,6 +31,9 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
         : {
             data: Array.from({ length: quantidade }, (_, indice) => ({
               id: `${tabela}-${indice}`,
+              group_id: "grupo-1",
+              name: "Vizinhos",
+              group_memberships: [{ count: 3 }],
             })),
             error: tabela === falha ? { message: "segredo postgres" } : null,
           }
@@ -45,7 +48,16 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
   const rpc = (nome: string, args: Record<string, unknown>) => {
     chamadas.push([nome, args])
     return Promise.resolve({
-      data: Array.from({ length: quantidade }, (_, indice) => ({ id: `${nome}-${indice}` })),
+      data: Array.from({ length: quantidade }, (_, indice) => ({
+        id: `${nome}-${indice}`,
+        title: "Escola",
+        reply_count: 2,
+        is_resolved: false,
+        group_name: null,
+        display_name: "Eletricista",
+        category: "casa_e_reformas",
+        bio: "segredo da bio",
+      })),
       error: nome === falha ? { message: "segredo postgres" } : null,
     })
   }
@@ -96,6 +108,33 @@ describe("início do app", () => {
       expect(mock.filtros).toContainEqual([tabela, "locality_id", "cidade-atual"])
   })
 
+  it("traz negócios e grupos da pessoa só na primeira página, sem campos além dos usados", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    const corpo = await (await GET(new NextRequest(url))).json()
+    expect(corpo.negocios).toEqual([
+      { id: "search_providers-0", display_name: "Eletricista", category: "casa_e_reformas" },
+    ])
+    expect(corpo.grupos).toEqual([{ id: "groups-0", name: "Vizinhos", members: 3 }])
+    expect(corpo.perguntas[0]).toEqual({
+      id: "list_indications-0",
+      title: "Escola",
+      reply_count: 2,
+      is_resolved: false,
+      group_name: null,
+    })
+    expect(mock.filtros).toContainEqual(["group_memberships", "user_id", "pessoa"])
+    expect(mock.filtros).toContainEqual(["group_memberships", "status", "approved"])
+    expect(mock.filtros).toContainEqual(["groups", "locality_id", "cidade-atual"])
+
+    const segunda = cliente()
+    autenticar(segunda)
+    const outra = await (await GET(new NextRequest(`${url}?pagina=2`))).json()
+    expect(outra.negocios).toEqual([])
+    expect(outra.grupos).toEqual([])
+    expect(segunda.chamadas.some(([nome]) => nome === "search_providers")).toBe(false)
+  })
+
   it("recusa página inválida", async () => {
     autenticar(cliente())
     expect((await GET(new NextRequest(`${url}?pagina=-1`))).status).toBe(400)
@@ -119,4 +158,14 @@ describe("início do app", () => {
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo postgres")
   })
+
+  it.each(["list_indications", "search_providers", "group_memberships", "groups"])(
+    "devolve 503 e não lista vazia quando %s falha",
+    async (falha) => {
+      autenticar(cliente(falha))
+      const resposta = await GET(new NextRequest(url))
+      expect(resposta.status).toBe(503)
+      expect(await resposta.text()).not.toContain("segredo postgres")
+    },
+  )
 })

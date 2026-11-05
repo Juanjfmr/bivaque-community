@@ -15,6 +15,19 @@ export function termoValido(valor: string): boolean {
   )
 }
 
+/** Termo da busca do app: 2+ caracteres válidos e ao menos uma letra ou número. */
+export function termoBuscavel(valor: string): boolean {
+  return termoValido(valor) && valor.length >= 2 && /[\p{L}\p{N}]/u.test(valor)
+}
+
+/**
+ * Padrão de `ilike` com o termo literal: `\`, `%` e `_` escapados e `*` fora —
+ * o PostgREST trata `*` como `%` no valor, e não há escape para ele.
+ */
+export function padraoDoTermo(termo: string): string {
+  return `%${termo.replace(/\*/g, "").replace(/[\\%_]/g, "\\$&")}%`
+}
+
 export function resolveTerm(get: (key: string) => string | null): string {
   const q = get("q")
   if (q !== null) return q.trim()
