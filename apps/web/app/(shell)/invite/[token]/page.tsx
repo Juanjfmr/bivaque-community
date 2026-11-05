@@ -2,8 +2,8 @@
 //
 // Server Component: reads session, calls accept_community_invitation via the
 // service client. Three outcomes:
-//   1. not logged in → /login?next=/invite/<token>
-//   2. logged in but not verified → /onboarding?next=/invite/<token>
+//   1. not logged in → /app/entrar (a porta do app; nada de senha)
+//   2. logged in but not verified → /app/entrar (a entrada do app decide a etapa)
 //      (D15 gate; the verification is mandatory)
 //   3. verified → success: redirect to the community
 //   4. expired / already-used / not-found → render the friendly error UI
@@ -45,7 +45,10 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
     data: { user },
   } = await authClient.auth.getUser()
   if (!user) {
-    redirect(`/login?next=/invite/${token}`)
+    // Link de comunidade não carrega código de família; a pessoa entra pela
+    // porta do app e volta pelo caminho que já existe. A tela antiga de senha
+    // não é mais destino de membro.
+    redirect("/app/entrar")
   }
 
   const supabase = createServiceClient()
@@ -55,7 +58,7 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
     p_user_id: user.id,
   })
   if (userIsVerified !== true) {
-    redirect(`/onboarding?next=/invite/${token}`)
+    redirect("/app/entrar")
   }
 
   // Compute the digest locally — the RPC receives the digest, not the raw
@@ -74,11 +77,9 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
 
   if (error) {
     if (error.message.includes("verification required")) {
-      // D15 gate. The invite stays pending; we save the link in the next param
-      // so the user can re-open it after verification. The onboarding flow
-      // may later honor next, but the important invariant is that NOTHING is
-      // created here without verification.
-      redirect(`/onboarding?next=/invite/${token}`)
+      // D15 gate. The invite stays pending; the app entry is where the person
+      // continues. NOTHING is created here without verification.
+      redirect("/app/entrar")
     }
     return <InviteError message={friendlyError(error.message)} />
   }

@@ -112,7 +112,7 @@ describe("tela de quem convida", () => {
   it("mostra o código ao lado do link e copia a tela do convite já preenchida", () => {
     expect(familiaPage).toContain("setInviteCode(result.code")
     // O "copiar" leva a tela do convite já com o código, e não o link antigo.
-    expect(familiaPage).toContain("new URL(`/convite?codigo=")
+    expect(familiaPage).toContain("new URL(`/app/entrar?convite=")
   })
 
   it("avisa que o código também foi para o e-mail e que não volta ao recarregar", () => {
