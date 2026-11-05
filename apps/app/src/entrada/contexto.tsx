@@ -31,6 +31,11 @@ export type ServidorDaEntrada = Readonly<{
   registrarCombinado: (versao: number) => Promise<void>
   salvarAvisos: (avisos: "ativados" | "agora-nao") => Promise<void>
   enviarDocumento: (arquivo: File) => Promise<void>
+  iniciarGoogle: () => Promise<string>
+  aceitarConvite: (entrada: { codigo: string; nome: string }) => Promise<void>
+  /** O código do convite vive só aqui: é credencial e não entra no rascunho. */
+  codigoDoConvite: RefObject<string | null>
+  registrarConvite: (codigo: string) => void
 }>
 
 const Contexto = createContext<ServidorDaEntrada | null>(null)

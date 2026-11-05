@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr"
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js"
 import type { NextRequest } from "next/server"
 import type { Database } from "supabase/database.generated"
 import { opcoesDoCookieDaSessao } from "../auth/cookie-options"
@@ -83,6 +83,15 @@ function clienteDoToken(url: string, anon: string, token: string): SupabaseClien
   })
 }
 
+/** O usuário do GoTrue no formato que as rotas consomem, com o provedor. */
+function usuarioDaSessao(usuario: User): UsuarioDaSessao {
+  return {
+    id: usuario.id,
+    email: usuario.email ?? null,
+    appMetadata: usuario.app_metadata,
+  }
+}
+
 export async function resolverSessaoDaRequisicao(
   request: NextRequest,
 ): Promise<SessaoDaRequisicao> {
@@ -100,7 +109,7 @@ export async function resolverSessaoDaRequisicao(
       const { data } = await doCookie.auth.getUser()
       if (data.user === null) return null
       cliente = doCookie
-      return { id: data.user.id, email: data.user.email ?? null }
+      return usuarioDaSessao(data.user)
     },
     async lerUsuarioDoToken(token) {
       const anonimo = createClient<Database>(config.url, config.anon, {
@@ -112,7 +121,7 @@ export async function resolverSessaoDaRequisicao(
       // O app de loja manda o token no cabeçalho; a rota devolve o mesmo par
       // para o cliente conferir que a credencial foi aceita.
       cabecalhos = { vary: "Authorization" }
-      return { id: data.user.id, email: data.user.email ?? null }
+      return usuarioDaSessao(data.user)
     },
   })
 

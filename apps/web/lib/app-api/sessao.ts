@@ -14,7 +14,16 @@ import { resolverCredencial } from "./contrato"
  * do usuário (`sessao-do-next.ts`) ou só do id.
  */
 
-export type UsuarioDaSessao = Readonly<{ id: string; email: string | null }>
+export type UsuarioDaSessao = Readonly<{
+  id: string
+  email: string | null
+  /**
+   * `app_metadata` do GoTrue. O `provider` registra por onde a conta nasceu
+   * (`google` ou `email`); a entrada no app lê daqui para retomar na etapa
+   * certa sem pedir de novo a credencial que a pessoa já usou.
+   */
+  appMetadata: Readonly<Record<string, unknown>>
+}>
 
 export type Sessao =
   | {

@@ -60,6 +60,7 @@ function texto(corpo: Record<string, unknown>, chave: string): string | null {
 export type RespostaDeProgresso = Readonly<{
   autenticado: boolean
   via?: string
+  provedor?: "google" | "email"
   progresso?: unknown
 }>
 
@@ -75,6 +76,9 @@ export async function lerProgresso(): Promise<RespostaDeProgresso> {
   return {
     autenticado: resposta.corpo["autenticado"] === true,
     ...(typeof resposta.corpo["via"] === "string" ? { via: resposta.corpo["via"] } : {}),
+    ...(resposta.corpo["provedor"] === "google" || resposta.corpo["provedor"] === "email"
+      ? { provedor: resposta.corpo["provedor"] }
+      : {}),
     progresso: resposta.corpo["progresso"],
   }
 }
@@ -289,6 +293,30 @@ export type GrupoDaEntrada = Readonly<{
   nome: string
   descricao: string | null
 }>
+
+/** Inicia o OAuth do Google: devolve a URL de autorização (o PKCE vai em cookie). */
+export async function iniciarGoogle(): Promise<string> {
+  const resposta = await pedir("oauth", { metodo: "POST", corpo: { provedor: "google" } })
+  const url = texto(resposta.corpo, "url")
+  if (resposta.status !== 200 || url === null) {
+    throw new FalhaDaEntrada(texto(resposta.corpo, "erro") ?? "oauth-indisponivel", resposta.status)
+  }
+  return url
+}
+
+/** Aceita o convite familiar já autenticado: sem senha e sem CPF. */
+export async function aceitarConvite(entrada: { codigo: string; nome: string }): Promise<void> {
+  const resposta = await pedir("invite", {
+    metodo: "POST",
+    corpo: { codigo: entrada.codigo, nome: entrada.nome },
+  })
+  if (resposta.status !== 200) {
+    throw new FalhaDaEntrada(
+      texto(resposta.corpo, "erro") ?? "convite-indisponivel",
+      resposta.status,
+    )
+  }
+}
 
 /**
  * Envia o documento de identidade para a análise manual. Multipart de verdade:

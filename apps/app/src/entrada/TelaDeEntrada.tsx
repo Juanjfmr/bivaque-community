@@ -16,6 +16,7 @@ import "@/src/previa-f01/previa-f01.css"
 import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
 import {
+  aceitarConvite,
   aceitarTermos,
   carregarCidades,
   carregarEstados,
@@ -23,6 +24,7 @@ import {
   consultarCpf,
   enviarCodigo,
   enviarDocumento,
+  iniciarGoogle,
   lerProgresso,
   lerVerificacao,
   provisionar,
@@ -61,14 +63,37 @@ export function TelaDeEntrada() {
   const [falha, setFalha] = useState<string | null>(null)
   const [tentar, setTentar] = useState<(() => void) | null>(null)
   const emailEmTransito = useRef<string | null>(null)
+  const codigoDoConvite = useRef<string | null>(null)
   const provisionando = useRef(false)
   const provisionado = useRef(false)
   const progressoRef = useRef<Progresso | null>(null)
   progressoRef.current = progresso
 
+  // O link do convite chega como `/app/entrar?convite=CODIGO`. O código é
+  // credencial: fica só na memória do fluxo e some da barra de endereço; o
+  // rascunho guarda apenas o fato de a pessoa estar nesse caminho.
+  const conviteDaUrl = useMemo(() => {
+    const bruto = new URLSearchParams(window.location.search).get("convite") ?? ""
+    const codigo = bruto
+      .normalize("NFKC")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+    return /^[A-Z0-9]{8}$/.test(codigo) ? codigo : null
+  }, [])
+
+  useEffect(() => {
+    if (conviteDaUrl === null) return
+    codigoDoConvite.current = conviteDaUrl
+    window.history.replaceState(null, "", window.location.pathname)
+  }, [conviteDaUrl])
+
   const servidor = useMemo<ServidorDaEntrada>(
     () => ({
       emailEmTransito,
+      codigoDoConvite,
+      registrarConvite: (codigo) => {
+        codigoDoConvite.current = codigo
+      },
       enviarCodigo,
       verificarCodigo: async (codigo) => {
         const resultado = await verificarCodigo(emailEmTransito.current ?? "", codigo)
@@ -85,6 +110,8 @@ export function TelaDeEntrada() {
       registrarCombinado,
       salvarAvisos,
       enviarDocumento,
+      iniciarGoogle,
+      aceitarConvite,
     }),
     [],
   )
@@ -97,7 +124,13 @@ export function TelaDeEntrada() {
         if (!ativo) return
         const doServidor = progressoDoServidor(resposta)
         if (!resposta.autenticado) {
-          setProgresso(doServidor)
+          // Quem chegou pelo link do convite começa a porta já no contexto do
+          // convite; o código já está na memória, não no rascunho.
+          setProgresso(
+            conviteDaUrl === null
+              ? doServidor
+              : { ...doServidor, convite: true, via: "email", etapa: "porta" },
+          )
           return
         }
         setAutenticado(true)
@@ -122,7 +155,7 @@ export function TelaDeEntrada() {
     return () => {
       ativo = false
     }
-  }, [])
+  }, [conviteDaUrl])
 
   // ── salva o rascunho a cada mudança de etapa (com atraso curto) ───────────
   useEffect(() => {
@@ -253,6 +286,26 @@ export function TelaDeEntrada() {
       setTentar(null)
       setProgresso({ ...atual, verificacao: "documento-em-analise" })
       return
+    }
+    // Convite de familiar: no fim do nome, o aceite provisiona o vínculo com a
+    // cidade de quem convidou. Sem código na memória, não há como aceitar.
+    if (atual.etapa === "nome" && atual.convite) {
+      const codigo = codigoDoConvite.current
+      const nome = mudancas?.nome ?? atual.nome
+      if (codigo === null || nome === null) {
+        setFalha("O convite se perdeu nesta sessão. Volte e entre de novo com o código.")
+        return
+      }
+      try {
+        await aceitarConvite({ codigo, nome: `${nome.nome} ${nome.sobrenome}`.trim() })
+        codigoDoConvite.current = null
+      } catch {
+        setFalha("Não foi possível aceitar o convite agora. Tente de novo.")
+        setTentar(() => () => {
+          void concluir(mudancas)
+        })
+        return
+      }
     }
     try {
       if (atual.etapa === "aceite") await aceitarTermos()

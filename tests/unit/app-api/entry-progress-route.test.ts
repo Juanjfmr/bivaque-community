@@ -16,7 +16,11 @@ import { createServerClient } from "web/lib/supabase/server"
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
 const criarClienteDeServico = vi.mocked(createServerClient)
 
-const PESSOA = { id: "10000000-0000-4000-8000-000000000001", email: "pessoa@example.invalid" }
+const PESSOA = {
+  id: "10000000-0000-4000-8000-000000000001",
+  email: "pessoa@example.invalid",
+  appMetadata: {},
+}
 // O NextRequest normaliza o host do URL para localhost no runner de teste; o que
 // importa é a origem do cabeçalho bater com a do request, como no runtime.
 const ORIGEM = "http://localhost:3000"
@@ -94,6 +98,37 @@ describe("GET /api/app/entry/progress", () => {
   it("sem rascunho devolve o progresso inicial", async () => {
     const resposta = await GET(requisicao("GET"))
     expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({
+      autenticado: true,
+      via: "cookie",
+      progresso: { versao: 2, etapa: "porta", estado: {} },
+    })
+  })
+
+  it("informa o Google quando a sessão nasceu no OAuth", async () => {
+    resolver.mockResolvedValue({
+      ...sessaoAutenticada(),
+      usuario: { ...PESSOA, appMetadata: { provider: "google" } },
+    } as never)
+
+    const resposta = await GET(requisicao("GET"))
+
+    expect(await resposta.json()).toEqual({
+      autenticado: true,
+      via: "cookie",
+      provedor: "google",
+      progresso: { versao: 2, etapa: "porta", estado: {} },
+    })
+  })
+
+  it("não inventa provedor para sessão de e-mail ou metadado desconhecido", async () => {
+    resolver.mockResolvedValue({
+      ...sessaoAutenticada(),
+      usuario: { ...PESSOA, appMetadata: { provider: "github" } },
+    } as never)
+
+    const resposta = await GET(requisicao("GET"))
+
     expect(await resposta.json()).toEqual({
       autenticado: true,
       via: "cookie",

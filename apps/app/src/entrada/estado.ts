@@ -128,6 +128,7 @@ export function estadoDoServidor(valor: unknown): EstadoDoServidor {
 
 export type RespostaDeProgressoDoServidor = Readonly<{
   autenticado: boolean
+  provedor?: "google" | "email"
   progresso?: unknown
 }>
 
@@ -136,7 +137,9 @@ export type RespostaDeProgressoDoServidor = Readonly<{
  *
  * O que é de sessão (via), do aparelho (e-mail mascarado) e da consulta
  * (verificação) começa no valor inicial: quem preenche é a tela, com a rota
- * própria, não o rascunho.
+ * própria, não o rascunho. A exceção é o provedor: uma sessão que nasceu no
+ * Google não passa pela porta de e-mail, então o `via` vem da sessão e a etapa
+ * inicial é o aceite.
  */
 export function progressoDoServidor(resposta: RespostaDeProgressoDoServidor): Progresso {
   const inicial = progressoInicial()
@@ -153,10 +156,13 @@ export function progressoDoServidor(resposta: RespostaDeProgressoDoServidor): Pr
   // não confia nisso (cache, resposta antiga) e confere a versão também.
   if (dados["versao"] !== VERSAO_DO_FLUXO) return inicial
   const etapa = etapaValida(dados["etapa"]) ?? "porta"
+  const doGoogle = resposta.provedor === "google"
   return {
     ...inicial,
     versao: VERSAO_DO_FLUXO,
-    etapa,
+    ...(doGoogle && etapa === "porta"
+      ? { via: "google" as const, etapa: "aceite" as const }
+      : { etapa }),
     ...estadoDoServidor(dados["estado"]),
   }
 }

@@ -47,6 +47,10 @@ export function shouldRecordSignupConsent(
  */
 export const CONSENT_STEP_PATH = "/consent"
 
+// A entrada do app faz o próprio aceite; o callback do Google não desvia para
+// a tela de consentimento da web quando o destino é ela.
+const APP_ENTRY_PREFIX = "/app/"
+
 // Destinos que não podem ser desviados: o convite de prestador tem fluxo
 // próprio, fora da entrada de membro; a recuperação de senha precisa chegar a
 // /nova-senha, porque o código do link já foi consumido na troca.
@@ -57,6 +61,10 @@ export function consentStepTarget(
   sanitizedNext = "/onboarding",
 ): string | null {
   if (hasAnyAcceptance) return null
+  // O app tem a própria etapa de aceite: ela grava o consentimento pela rota
+  // da entrada, com o autor vindo da sessão. Desviar para o /consent da web
+  // tiraria a pessoa do fluxo do app no meio do OAuth.
+  if (sanitizedNext.startsWith(APP_ENTRY_PREFIX)) return null
   if (OUTSIDE_MEMBER_ENTRY.some((prefix) => sanitizedNext.startsWith(prefix))) return null
   return CONSENT_STEP_PATH
 }

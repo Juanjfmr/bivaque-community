@@ -75,11 +75,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         ? progressoInicial()
         : lerProgresso(rascunho.data)
 
+  // O provedor da sessão: quem entrou pelo Google não passa pela porta de
+  // e-mail de novo. É `app_metadata.provider` do GoTrue, não algo do rascunho.
+  const provedorBruto = sessao.sessao.usuario.appMetadata?.["provider"]
+  const provedor =
+    provedorBruto === "google" || provedorBruto === "email" ? provedorBruto : undefined
+
   return responder(
     request,
     {
       autenticado: true,
       via: sessao.sessao.via,
+      ...(provedor === undefined ? {} : { provedor }),
       progresso,
     },
     200,

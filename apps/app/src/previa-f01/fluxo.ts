@@ -96,17 +96,24 @@ export const FLUXO_F01: readonly DefinicaoDaEtapa[] = [
   { id: "aceite", noProgresso: true, permiteVoltar: false },
   { id: "cpf", noProgresso: true, permiteVoltar: false, quando: (p) => !p.convite },
   { id: "nome", noProgresso: true, permiteVoltar: false },
-  { id: "cidade", noProgresso: true, permiteVoltar: true },
+  // Quem entra por convite de familiar já tem cidade e vínculo (o aceite cria):
+  // a etapa de cidade, a espera e o documento não fazem sentido nesse caminho.
+  { id: "cidade", noProgresso: true, permiteVoltar: true, quando: (p) => !p.convite },
   // A espera só aparece se a consulta ainda não terminou quando a pessoa chega
   // aqui, ou se terminou sem confirmar. Com o vínculo confirmado, some.
   {
     id: "verificacao",
     noProgresso: true,
     permiteVoltar: false,
-    quando: (p) => p.verificacao !== "confirmada",
+    quando: (p) => !p.convite && p.verificacao !== "confirmada",
   },
-  { id: "documento", noProgresso: true, permiteVoltar: true, quando: precisaDeDocumento },
-  { id: "previa-cidade", noProgresso: true, permiteVoltar: false },
+  {
+    id: "documento",
+    noProgresso: true,
+    permiteVoltar: true,
+    quando: (p) => !p.convite && precisaDeDocumento(p),
+  },
+  { id: "previa-cidade", noProgresso: true, permiteVoltar: false, quando: (p) => !p.convite },
   { id: "interesses", noProgresso: true, permiteVoltar: true },
   { id: "combinado", noProgresso: true, permiteVoltar: true },
   { id: "avisos", noProgresso: true, permiteVoltar: true },

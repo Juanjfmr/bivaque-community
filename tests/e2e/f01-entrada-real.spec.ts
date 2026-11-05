@@ -6,6 +6,7 @@ import {
   capturarFinais,
   criarContaConfirmada,
   criarContaVerificada,
+  criarConvitePendente,
   enderecoSintetico,
   esperarEtapaDaEntrada,
   esperarGruposDaCidade,
@@ -220,6 +221,92 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     expect(sonda.status, "GET /api/app/entry/verification").toBe(200)
     expect(sonda.corpo?.status, "o vínculo precisa estar verificado no banco").toBe("verified")
     expect(sonda.corpo?.membroDaCidade, "a pessoa precisa ter vínculo com a cidade").toBe(true)
+  })
+
+  test("convite familiar entra sem CPF e sem cidade, pelo código do link", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(240_000)
+    const projeto = testInfo.project.name
+    const email = enderecoSintetico(`convite-${projeto}`)
+    const { codigo } = await criarConvitePendente(email)
+
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(`${ROTA_DA_ENTRADA}?convite=${codigo}`)
+
+    // O link abre a porta já no caminho do convite, com o código na memória do
+    // fluxo (não no rascunho) e visível para conferência.
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    const campoDoConvite = page.getByLabel("Código do convite")
+    await expect(campoDoConvite).toHaveValue(codigo, { timeout: 20_000 })
+    await capturarEmDoisTemas(page, projeto, "convite-porta")
+    await page.getByRole("button", { name: "Usar", exact: true }).click()
+
+    // ── e-mail e código de verdade ────────────────────────────────────────
+    await esperarEtapaDaEntrada(page, "Convite de Marcos S.")
+    await page.getByLabel("E-mail").fill(email)
+    const desde = new Date()
+    await page.getByRole("button", { name: "Enviar código" }).click()
+    await esperarEtapaDaEntrada(page, "Digite o código")
+    const lido = await lerCodigoDoEmail(email, { desde })
+    await preencherCodigoDeEntrada(page, lido.codigo)
+
+    // ── aceite e nome; o convite pula CPF, cidade e prévia ────────────────
+    await esperarEtapaDaEntrada(page, "Antes de começar")
+    await page.getByRole("button", { name: "Aceito e continuo" }).click()
+
+    await esperarEtapaDaEntrada(page, "Como você se chama?")
+    await expect(page.getByLabel("CPF"), "o convite não pede CPF").toHaveCount(0)
+    await page.getByLabel("Nome", { exact: true }).fill("Familiar")
+    await page.getByLabel("Sobrenome").fill("Convidada")
+    await capturarEmDoisTemas(page, projeto, "convite-nome")
+
+    const aceiteDoConvite = page.waitForResponse(
+      (resposta) =>
+        resposta.url().includes("/api/app/entry/invite") && resposta.request().method() === "POST",
+      { timeout: 60_000 },
+    )
+    await page.getByRole("button", { name: "Continuar", exact: true }).click()
+    const respostaDoConvite = await aceiteDoConvite
+    if (respostaDoConvite.status() !== 200) {
+      throw new Error(
+        `POST /api/app/entry/invite respondeu ${respostaDoConvite.status()}: ` +
+          `${(await respostaDoConvite.text()).slice(0, 200)}`,
+      )
+    }
+
+    // ── o convite já criou o vínculo: seguem interesses, combinado, avisos ─
+    await esperarEtapaDaEntrada(page, "O que interessa a você?")
+    const primeiroGrupo = page.getByRole("button", { name: /^Entrar em /i }).first()
+    await expect(primeiroGrupo).toBeVisible({ timeout: 30_000 })
+    await primeiroGrupo.click()
+    await page.getByRole("button", { name: "Continuar com 1 grupo" }).click()
+
+    await esperarEtapaDaEntrada(page, "O combinado")
+    await page.getByRole("button", { name: "Entendi" }).click()
+
+    await esperarEtapaDaEntrada(page, "Saiba quando responderem")
+    await page.getByRole("button", { name: "Agora não" }).click()
+
+    await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 30_000 })
+    await expect(page.getByRole("heading", { level: 1, name: /Sua rede em/ })).toBeVisible({
+      timeout: 30_000,
+    })
+    await capturarEmDoisTemas(page, projeto, "convite-inicio")
+
+    // O aceite do convite criou o vínculo com a cidade de quem convidou: a
+    // sonda sob RLS confere o fato no banco, não só a tela.
+    const sonda = await page.evaluate(async () => {
+      const resposta = await fetch("/api/app/entry/verification", { credentials: "include" })
+      const corpo = (await resposta.json().catch(() => null)) as {
+        membroDaCidade?: boolean
+      } | null
+      return { status: resposta.status, corpo }
+    })
+    expect(sonda.status, "GET /api/app/entry/verification").toBe(200)
+    expect(sonda.corpo?.membroDaCidade, "o convite precisa ter criado o vínculo").toBe(true)
   })
 
   test("código errado mostra a mensagem única de erro e o código certo ainda entra", async ({

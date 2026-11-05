@@ -43,12 +43,23 @@ export function origensPermitidas(request: Request): string[] {
     .map((origem) => origem.trim())
     .filter((origem) => origem !== "")
   const doPedido = new URL(request.url).origin
+  return [...new Set([doPedido, origemDoPedido(request), ...doAmbiente])]
+}
+
+/**
+ * A origem que o navegador abriu, reconstruída do `Host` que a plataforma
+ * entregou e do `x-forwarded-proto` da borda. É ela — nunca um domínio fixo —
+ * que o OAuth usa no `redirectTo`: o callback volta ao mesmo endereço que
+ * iniciou o fluxo, seja local, prévia ou produção. Sem `Host`, vale a origem do
+ * `url` do pedido.
+ */
+export function origemDoPedido(request: Request): string {
   const host = request.headers.get("host")
+  if (host === null || host === "") return new URL(request.url).origin
   const protocolo =
     request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ??
     new URL(request.url).protocol.replace(":", "")
-  const doHost = host === null || host === "" ? [] : [`${protocolo}://${host}`]
-  return [...new Set([doPedido, ...doHost, ...doAmbiente])]
+  return `${protocolo}://${host}`
 }
 
 /**

@@ -48,14 +48,35 @@ function IconeApple() {
   )
 }
 
-export function Porta({ concluir, erro }: PropsDaEtapa) {
+export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
+  const servidor = useServidorDaEntrada()
   const [conectando, setConectando] = useState<Via | null>(null)
-  const [convite, setConvite] = useState(false)
-  const [codigo, setCodigo] = useState("")
+  // Quem chega por `/app/entrar?convite=CODIGO` já abre no caminho do convite,
+  // com o código que a tela guardou na memória (nunca no rascunho).
+  const [convite, setConvite] = useState(progresso.convite)
+  const [codigo, setCodigo] = useState(servidor?.codigoDoConvite.current ?? "")
   const [erroDoConvite, setErroDoConvite] = useState<string | null>(null)
 
-  // Google e Apple: na prévia, a conta "volta" em menos de um segundo.
-  const entrarCom = (via: Exclude<Via, "email">) => {
+  // Com servidor, o Google começa o OAuth de verdade (o callback da web grava a
+  // sessão e o app retoma no aceite). Sem servidor, é a prévia simulada.
+  const entrarCom = async (via: Exclude<Via, "email">) => {
+    if (via === "apple" && servidor !== null) {
+      setErroDoConvite(
+        "Entrar com Apple chega quando a conta da Apple existir. Use o Google ou o código no e-mail.",
+      )
+      return
+    }
+    if (via === "google" && servidor !== null) {
+      setConectando(via)
+      try {
+        const url = await servidor.iniciarGoogle()
+        window.location.assign(url)
+      } catch {
+        setConectando(null)
+        setErroDoConvite("Não foi possível abrir o Google agora. Tente de novo.")
+      }
+      return
+    }
     setConectando(via)
     window.setTimeout(() => concluir({ via, nome: NOME_DA_CONTA[via] }), 900)
   }
@@ -67,7 +88,10 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
       erro("codigo-invalido")
       return
     }
-    concluir({ via: "email", convite: true, verificacao: "confirmada" })
+    // O código é credencial: fica só na memória do fluxo e é consumido no aceite,
+    // depois do e-mail e do código do e-mail. Não vai para o rascunho.
+    servidor?.registrarConvite(limpo)
+    concluir({ via: "email", convite: true })
   }
 
   return (
@@ -100,7 +124,9 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
             className="f01-apple"
             carregando={conectando === "apple"}
             disabled={conectando !== null}
-            onClick={() => entrarCom("apple")}
+            onClick={() => {
+              void entrarCom("apple")
+            }}
           >
             {conectando === "apple" ? null : <IconeApple />}
             {conectando === "apple" ? "Conectando…" : "Continuar com Apple"}
@@ -110,7 +136,9 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
             tom="contorno"
             carregando={conectando === "google"}
             disabled={conectando !== null}
-            onClick={() => entrarCom("google")}
+            onClick={() => {
+              void entrarCom("google")
+            }}
           >
             {conectando === "google" ? null : <IconeGoogle />}
             {conectando === "google" ? "Conectando…" : "Continuar com Google"}
@@ -166,7 +194,10 @@ export function Porta({ concluir, erro }: PropsDaEtapa) {
 // ── E-mail ──────────────────────────────────────────────────────────────────
 export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
   const servidor = useServidorDaEntrada()
-  const [email, setEmail] = useState(progresso.convite ? EMAIL_DO_CONVITE : "")
+  // Na prévia o e-mail do convite é fixo e só de exibição; no caminho real ele é
+  // o e-mail da conta que vai receber o código (o convite só conhece o hash).
+  const preenchidoPelaPrevia = progresso.convite && servidor === null
+  const [email, setEmail] = useState(preenchidoPelaPrevia ? EMAIL_DO_CONVITE : "")
   const [problema, setProblema] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -211,7 +242,7 @@ export function Email({ progresso, concluir, erro }: PropsDaEtapa) {
         inputMode="email"
         autoComplete="email"
         value={email}
-        readOnly={progresso.convite}
+        readOnly={preenchidoPelaPrevia}
         erro={problema}
         ajuda="Vamos mandar um código de 6 números para você entrar."
         acessorio={progresso.convite ? <Icone nome="lock" /> : null}

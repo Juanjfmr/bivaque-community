@@ -30,6 +30,7 @@
  * concedida apenas a `service_role` — o mesmo caminho do servidor.
  */
 
+import { createHash, randomBytes, randomInt } from "node:crypto"
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { type BrowserContext, expect, type Page } from "@playwright/test"
@@ -40,6 +41,9 @@ export const CPF_SINTETICO = "52998224725"
 
 /** Endereço da persona semeada que já é membro de Manaus. */
 export const MEMBRO_SEMEADO = "visual@bivaque.example.invalid"
+
+// Titular verificado com cidade no seed (Manaus): é quem "convida" nos testes.
+const INVITER_VERIFICADO = "20000000-0000-4000-8000-000000000001"
 
 const URL_DO_MAILPIT_PADRAO = "http://127.0.0.1:55324"
 const URL_DO_SUPABASE_PADRAO = "http://127.0.0.1:55321"
@@ -129,8 +133,14 @@ function senhaDaPersona(): string {
 }
 
 export function mascararEmail(email: string): string {
+  // Mesma regra de `emailHint` (apps/web/app/(shell)/profile/family-invite-email-hint.ts):
+  // o CHECK de family_invitations recusa domínio com mais de um rótulo visível.
   const [usuario = "", dominio = ""] = email.trim().split("@")
-  return `${usuario.slice(0, 1)}***@${dominio}`
+  const visivelLocal = usuario.length <= 2 ? usuario.slice(0, 1) : usuario.slice(0, 2)
+  const visivelDominio = dominio.length <= 2 ? dominio.slice(0, 1) : dominio.slice(0, 2)
+  const ponto = dominio.lastIndexOf(".")
+  const tld = ponto > 2 ? dominio.slice(ponto) : ""
+  return `${visivelLocal}***@${visivelDominio}***${tld}`
 }
 
 function exigirEmailSintetico(email: string): string {
@@ -469,6 +479,93 @@ async function marcarVinculoVerificado(userId: string, classe: string): Promise<
         "concedida a service_role.",
     )
   }
+}
+
+/**
+ * O titular do seed tem teto de 5 convites ativos. Como cada rodada deixa o
+ * convite pendente quando o fluxo falha antes do aceite, a rodada seguinte
+ * esbarraria no teto. Revoga os pendentes do próprio titular de teste antes de
+ * criar o próximo — sempre no banco local, com service_role.
+ */
+async function revogarConvitesPendentesDoTitular(): Promise<void> {
+  const chave = exigirChaveDeServico()
+  const listagem = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/rpc/list_pending_invites_with_hint`,
+    {
+      metodo: "POST",
+      cabecalhos: cabecalhosDeServico(chave),
+      corpo: { p_user_id: INVITER_VERIFICADO },
+    },
+    "Supabase (listar convites pendentes)",
+  )
+  if (listagem.status !== 200) {
+    throw new Error(
+      `Não foi possível listar os convites pendentes do titular de teste: HTTP ${listagem.status} ` +
+        `(${resumoDoCorpo(listagem.corpo)}). A ponte é ` +
+        "public.list_pending_invites_with_hint, concedida a service_role.",
+    )
+  }
+  if (!Array.isArray(listagem.corpo)) return
+  for (const item of listagem.corpo) {
+    const id = comoRegistro(item)["id"]
+    if (typeof id !== "string") continue
+    const revogacao = await pedirJson(
+      `${urlDoSupabase()}/rest/v1/rpc/revoke_family_invitation`,
+      {
+        metodo: "POST",
+        cabecalhos: cabecalhosDeServico(chave),
+        corpo: { p_invitation_id: id, p_inviter_user_id: INVITER_VERIFICADO },
+      },
+      "Supabase (revogar convite pendente)",
+    )
+    if (revogacao.status !== 200 && revogacao.status !== 204) {
+      throw new Error(
+        `Não foi possível revogar o convite pendente de teste: HTTP ${revogacao.status} ` +
+          `(${resumoDoCorpo(revogacao.corpo)}). A ponte é ` +
+          "public.revoke_family_invitation, concedida a service_role.",
+      )
+    }
+  }
+}
+
+/**
+ * Cria um convite familiar PENDENTE para `email`, pelo RPC que a tela do titular
+ * usa (`create_family_invitation`). Quem convida é a persona verificada com
+ * cidade do seed. Devolve o código em claro — ele só existe aqui e na tela; o
+ * banco guarda o hash.
+ */
+export async function criarConvitePendente(email: string): Promise<{ codigo: string }> {
+  const alvo = exigirEmailSintetico(email)
+  await revogarConvitesPendentesDoTitular()
+  const alfabeto = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+  let codigo = ""
+  for (let indice = 0; indice < 8; indice += 1) {
+    codigo += alfabeto[randomInt(0, alfabeto.length)]
+  }
+  const sha256 = (valor: string) => createHash("sha256").update(valor).digest("hex")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/rpc/create_family_invitation`,
+    {
+      metodo: "POST",
+      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+      corpo: {
+        p_code_hash: `\\x${sha256(codigo)}`,
+        p_inviter_user_id: INVITER_VERIFICADO,
+        p_token_digest: `\\x${sha256(randomBytes(32).toString("hex"))}`,
+        p_invitee_email_digest: `\\x${sha256(alvo.trim().toLowerCase())}`,
+        p_invitee_email_hint: mascararEmail(alvo),
+      },
+    },
+    "Supabase (criar convite familiar)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 201) {
+    throw new Error(
+      `Não foi possível criar o convite familiar de ${mascararEmail(alvo)}: HTTP ` +
+        `${resposta.status} (${resumoDoCorpo(resposta.corpo)}). A ponte é ` +
+        "public.create_family_invitation, concedida a service_role.",
+    )
+  }
+  return { codigo }
 }
 
 /**
