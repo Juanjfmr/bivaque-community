@@ -21,9 +21,10 @@ const APP_ENTRY_PREFIX = "/app/"
 
 export function callbackFailureTarget(sanitizedNext: string): string {
   if (sanitizedNext === CONFIRM_EMAIL_PATH) return `${CONFIRM_EMAIL_PATH}?estado=expirado`
-  if (sanitizedNext.startsWith(APP_ENTRY_PREFIX)) {
-    const [caminho] = sanitizedNext.split("?")
-    return `${caminho ?? "/app/entrar"}?erro=provedor`
+  // Qualquer destino do app volta para a porta, que é a única tela que mostra a
+  // mensagem fixa do provedor. O Início e as demais telas não leem o parâmetro.
+  if (sanitizedNext === "/app" || sanitizedNext.startsWith(APP_ENTRY_PREFIX)) {
+    return "/app/entrar?erro=provedor"
   }
   return "/auth/callback-error"
 }

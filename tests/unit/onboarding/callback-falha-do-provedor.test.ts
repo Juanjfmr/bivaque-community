@@ -6,9 +6,11 @@ import { callbackFailureTarget } from "web/app/auth/callback/redirect-plan"
 // um marcador fixo, e a tela mostra a mensagem sem detalhe técnico.
 
 describe("destino da falha do callback", () => {
-  it("a entrada do app volta para a própria porta com o marcador", () => {
+  it("qualquer destino do app volta para a porta com o marcador", () => {
     expect(callbackFailureTarget("/app/entrar")).toBe("/app/entrar?erro=provedor")
-    expect(callbackFailureTarget("/app/inicio?x=1")).toBe("/app/inicio?erro=provedor")
+    expect(callbackFailureTarget("/app/inicio?x=1")).toBe("/app/entrar?erro=provedor")
+    expect(callbackFailureTarget("/app/comunidade")).toBe("/app/entrar?erro=provedor")
+    expect(callbackFailureTarget("/app")).toBe("/app/entrar?erro=provedor")
   })
 
   it("confirmação de e-mail continua no painel expirado", () => {
