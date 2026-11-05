@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test"
-import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { CURRENT_CONSENT, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -181,22 +180,6 @@ test.describe("non-Manaus locality: denial paths", () => {
     // Then the API rejects with 401 (auth check runs before action dispatch)
     expect(response.status()).toBe(401)
   })
-
-  test("onboarding does not offer a geographic waitlist for non-Manaus users", async ({ page }) => {
-    // Given the onboarding page
-    // When a non-Manaus user visits the onboarding page
-    await seedSession(page.context())
-    await page.goto("/onboarding")
-
-    // Then the geographic waitlist entry point is gone — P0 Task 8 makes
-    // eligibility, not geography, the gate. Whoever is eligible joins their
-    // own locality; whoever is not is rejected without a waitlist detour.
-    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
-    await expect(page.getByRole("link", { name: /lista de espera/ })).toHaveCount(0)
-
-    // And the waitlist form (which used to load on click) is not rendered
-    await expect(page.getByLabel("E-mail")).toHaveCount(0)
-  })
 })
 
 // ---------------------------------------------------------------------------
@@ -368,39 +351,15 @@ test.describe("consent cookie tampering: it is not a gate", () => {
     await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
   })
 
-  test("login page is always accessible regardless of cookie state", async ({ page }) => {
-    // Given any consent cookie state
-    // When the user navigates to /login
-    await page.goto("/login")
-
-    // Then the login page renders regardless. O título é o da prancha
-    // 36-web-auth-entrada, fixado por ADR-20260907-login-com-senha — o heading
-    // "Bivaque" pertencia à tela anterior.
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
-  })
-
-  test("onboarding refuses an anonymous visitor into login", async ({ page }) => {
+  test("onboarding refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given a browser without a session
     // When the user navigates to /onboarding
     await page.goto("/onboarding")
 
-    // Then the proxy refuses before the CPF form. O aceite não é mais cobrado
-    // aqui: ele é condição de criar a conta (ver onboarding-denials.spec.ts).
-    await page.waitForURL(/\/login/)
-  })
-
-  test("onboarding renders when consent is present", async ({ page }) => {
-    // Given the consent cookie
-    await seedSession(page.context())
-    // A conta do seed é verificada e membro, então o leitor de situação é
-    // fixado no transporte para a tela de CPF aparecer (PORT-004).
-    await stubVerificationStatus(page, null)
-
-    // When the user navigates to /onboarding
-    await page.goto("/onboarding")
-
-    // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+    // Then the proxy refuses before the CPF form, and the web sends the person
+    // on to /app/entrar (ENTRADA-WEB-ANTIGA). O aceite não é mais cobrado aqui:
+    // ele é condição de criar a conta (ver onboarding-denials.spec.ts).
+    await page.waitForURL(/\/app\/entrar/)
   })
 })
 

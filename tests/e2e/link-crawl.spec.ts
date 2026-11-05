@@ -39,8 +39,12 @@ const BROKEN_TEXT = /não encontrad[oa]|Algo deu errado|This page could not be f
 // `chega` é onde a primeira entrada TEM de cair. Se não cair, a persona não entrou (o proxy
 // falha fechado em /onboarding quando não consegue ler o tipo da conta) e tudo o que ela
 // percorresse seria o app visto por outra pessoa — o spec para antes de medir errado.
+// /login e /signup não são entradas declaradas: a web as manda para /app/entrar
+// (ENTRADA-WEB-ANTIGA), e o rastreador as percorre pelos links da landing.
+// A persona de verificado sem cidade saiu com a mesma mudança: a única entrada dela era
+// /onboarding/locality, que agora também cai em /app/entrar.
 const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; chega: RegExp }> = [
-  { nome: "visitante", email: null, entradas: ["/", "/login", "/signup"], chega: /^\/$/ },
+  { nome: "visitante", email: null, entradas: ["/"], chega: /^\/$/ },
   {
     nome: "membro",
     email: "membro-1@bivaque.example.invalid",
@@ -67,12 +71,6 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
     // passam por frontier.enter, que ignora o teto por rota.
     entradas: ["/prestador", "/prestador?tab=em_conversa", "/prestador?tab=encerrados"],
     chega: /^\/prestador$/,
-  },
-  {
-    nome: "verificado sem cidade",
-    email: "verified-no-membership@bivaque.example.invalid",
-    entradas: ["/onboarding/locality"],
-    chega: /^\/onboarding\/locality$/,
   },
 ]
 
