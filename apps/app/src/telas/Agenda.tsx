@@ -2,27 +2,32 @@
 
 import { useEffect, useMemo, useState } from "react"
 
+import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { type AgendaDaCidade, lerAgenda } from "@/lib/dados/eventos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
-import { texto } from "@/src/telas/comum"
+import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
 
 /**
- * A Agenda da cidade da onda 4 (protótipo: features/events/views.js), com os
- * encontros futuros agrupados por dia. Filtro por público e "Criar encontro"
- * ficam para o refino.
+ * A agenda da cidade, agora do banco (F05 / ADR-20261105).
+ *
+ * O que a tela desenha não mudou: os encontros futuros agrupados por dia. O que
+ * mudou é de onde vem o dado — `lib/dados/eventos`, que fala com
+ * `/api/app/eventos` — e por isso a tela passou a distinguir carregando, vazio
+ * de verdade e falha recuperável. Banco fora não vira "nenhum encontro".
  */
 export function Agenda() {
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
+  const [dados, setDados] = useState<AgendaDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [criando, setCriando] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -31,8 +36,7 @@ export function Agenda() {
     const controle = new AbortController()
     setDados(null)
     setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
+    void lerAgenda({ signal: controle.signal })
       .then((lidos) => {
         if (!controle.signal.aborted) setDados(lidos)
       })
@@ -40,30 +44,9 @@ export function Agenda() {
         if (!controle.signal.aborted) setErro(true)
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [rodada])
 
-  const dias = useMemo(() => {
-    if (dados === null) return []
-    const inicioDeHoje = new Date()
-    inicioDeHoje.setHours(0, 0, 0, 0)
-    const futuros = dados.eventos
-      .map((evento) => ({
-        evento,
-        quando:
-          typeof evento.starts_at === "string" ? new Date(evento.starts_at).getTime() : Number.NaN,
-      }))
-      .filter(({ quando }) => Number.isFinite(quando) && quando >= inicioDeHoje.getTime())
-      .sort((a, b) => a.quando - b.quando)
-    const agrupados: { chave: string; itens: (typeof futuros)[number][] }[] = []
-    for (const item of futuros) {
-      const data = new Date(item.quando)
-      const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`
-      const ultimo = agrupados[agrupados.length - 1]
-      if (ultimo?.chave === chave) ultimo.itens.push(item)
-      else agrupados.push({ chave, itens: [item] })
-    }
-    return agrupados
-  }, [dados])
+  const dias = useMemo(() => (dados === null ? [] : agruparPorDia(dados.encontros)), [dados])
 
   const carregando = dados === null && !erro
 
@@ -72,6 +55,13 @@ export function Agenda() {
       <CabecaDePagina
         titulo="Agenda da cidade"
         subtitulo={`Encontros da comunidade de ${casca.cidade}.`}
+        acao={
+          carregando ? undefined : (
+            <Botao tom="contornado" icone="add" onClick={() => setCriando(true)}>
+              Criar encontro
+            </Botao>
+          )
+        }
       />
 
       {erro ? (
@@ -83,18 +73,19 @@ export function Agenda() {
           titulo="Nenhum encontro agendado"
           texto="Os próximos encontros aparecerão aqui."
           icone="event"
+          acao={{ rotulo: "Criar o primeiro", aoAcionar: () => setCriando(true) }}
         />
       ) : (
         dias.map((dia) => (
           <section key={dia.chave} className="grid gap-2">
             <h2 className="px-1 text-[15px] font-semibold">{rotuloDoDia(dia.chave)}</h2>
             <Lista>
-              {dia.itens.map(({ evento, quando }) => (
+              {dia.itens.map((evento) => (
                 <LinhaDeLista
                   key={evento.id}
                   icone="event"
-                  titulo={evento.title}
-                  subtitulo={subtituloDoEncontro(quando, texto(evento.venue))}
+                  titulo={evento.titulo}
+                  subtitulo={subtituloDoEncontro(evento.comecaEm, evento.local)}
                   onClick={() => void navegacao.irPara("evento", { parametros: { id: evento.id } })}
                 />
               ))}
@@ -102,8 +93,41 @@ export function Agenda() {
           </section>
         ))
       )}
+
+      {criando ? (
+        <FormularioDeEncontro
+          aoFechar={() => setCriando(false)}
+          aoSalvar={(id) => {
+            setCriando(false)
+            void navegacao.irPara("evento", { parametros: { id } })
+          }}
+        />
+      ) : null}
     </section>
   )
+}
+
+type EncontroNaAgenda = AgendaDaCidade["encontros"][number]
+
+/** Futuros primeiro, agrupados pelo dia local de quem está usando o app. */
+function agruparPorDia(
+  encontros: AgendaDaCidade["encontros"],
+): readonly { chave: string; itens: readonly EncontroNaAgenda[] }[] {
+  const inicioDeHoje = new Date()
+  inicioDeHoje.setHours(0, 0, 0, 0)
+  const futuros = encontros
+    .map((evento) => ({ evento, quando: new Date(evento.comecaEm).getTime() }))
+    .filter(({ quando }) => Number.isFinite(quando) && quando >= inicioDeHoje.getTime())
+    .sort((a, b) => a.quando - b.quando)
+
+  const agrupados: { chave: string; itens: EncontroNaAgenda[] }[] = []
+  for (const { evento, quando } of futuros) {
+    const chave = chaveLocal(new Date(quando))
+    const ultimo = agrupados[agrupados.length - 1]
+    if (ultimo?.chave === chave) ultimo.itens.push(evento)
+    else agrupados.push({ chave, itens: [evento] })
+  }
+  return agrupados
 }
 
 function chaveLocal(data: Date): string {
@@ -124,8 +148,9 @@ function rotuloDoDia(chave: string): string {
   return extenso.charAt(0).toUpperCase() + extenso.slice(1)
 }
 
-function subtituloDoEncontro(quando: number, local: string): string {
-  const data = new Date(quando)
+function subtituloDoEncontro(comecaEm: string, local: string | null): string {
+  const data = new Date(comecaEm)
+  if (Number.isNaN(data.getTime())) return local ?? ""
   const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-  return local === "" ? hora : `${hora} · ${local}`
+  return local === null ? hora : `${hora} · ${local}`
 }
