@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-11-02
+**Snapshot:** 2026-11-05
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 154 frentes · 5 agora · 7 bloqueadas · 71 concluídas · 0 drifts
+**Mapa:** 162 frentes · 1 agora · 8 bloqueadas · 78 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -14,11 +14,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-- **APP-001** · P1 · SPA nova: onda 1, base e navegação
-- **APP-F01-ENTRADA-VISUAL** · P1 · F01: entrada e onboarding no visual aprovado (apps/app)
-- **INDICACOES-AVISO** · P1 · Aviso de pedido de indicação: a cidade fica sabendo em minutos
-- **INDICACOES-MEMORIA** · P1 · Indicações com memória: pedir começa por procurar, e a resposta que resolveu fica achável
-- **RED-003** · P1 · Comunidade: R3 migration e pgTAP da matriz aprovada
+- **LAN-F01** · P1 · F01 Entrada e onboarding ligada ao banco
 
 ## Bloqueios
 
@@ -28,6 +24,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime iOS em device real — Android já provado no emulador — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
+- **PIPELINE-REVISAO-E-PREVIEW** · P2 · Parecer automático do PR e preview Vercel legado — Vercel: Root Directory do preview legado e quota dos projetos — ato do dono.; Revisor automático do PR sem parecer — executor e credenciais são do repositório e da máquina do dono.
 - **WEB-OG-METADATABASE** · P2 · OG da raiz resolve para localhost sem metadataBase — Dominio canonico de producao nao decidido; apps/web/.env.example nao possui variavel de URL publica
 
 ## Drift aberto
@@ -37,6 +34,7 @@ Nenhum card.
 ## Triagem prioritária
 
 - **APP-SOBREPOSICAO-ENTRADA-CORRIDA** · P1 · Abrir sobreposição no primeiro quadro pode ser apagado pelo registro da entrada
+- **LAN-PUSH** · P1 · Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo
 - **PROXY-SURFACE-RISK** · P1 · Superfície de escape do gate de rota documentada e reduzida
 
 ## Comandos

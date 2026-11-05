@@ -32,7 +32,26 @@ const PUBLIC_PATHS = [
   "/ajuda",
   "/favicon.ico",
   "/icon.svg",
+  // SPA ADR §8: o app é servido em /app pelo mesmo domínio. A entrada é a
+  // própria porta do app (`/app/entrar`): quem chega sem sessão precisa dela, e
+  // o app resolve a sessão e a etapa pelas rotas /api/app. O portão da web não
+  // gateia o app — gateia as telas antigas que ainda existem.
+  "/app",
 ]
+// Caminhos que casam por pasta: o próprio caminho ou ele como prefixo de pasta
+// (`/app` e `/app/entrar`, nunca `/application` ou `/approve`). Os demais da lista
+// casam por prefixo simples porque precisam (`/auth/callback` cobre
+// `/auth/callback-error`), mas um prefixo solto em `/app` abriria o portão para
+// qualquer rota nova que comece com essas três letras.
+const PUBLIC_POR_PASTA = new Set(["/app"])
+
+function caminhoPublico(pathname: string): boolean {
+  return PUBLIC_PATHS.some((caminho) =>
+    PUBLIC_POR_PASTA.has(caminho)
+      ? pathname === caminho || pathname.startsWith(`${caminho}/`)
+      : pathname.startsWith(caminho),
+  )
+}
 const CONSENT_COOKIE = "bivaque-consent-version"
 
 const SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -52,7 +71,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Public paths bypass all checks — no session round-trip needed.
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  if (caminhoPublico(pathname)) {
     return NextResponse.next()
   }
 

@@ -1,0 +1,77 @@
+# Lote A2 do F01: fechar as ressalvas da revisão e da auditoria do SEC-007 (04/11/2026).
+task_id: SEC-008
+
+objective: >
+  A porta de entrada deixa de poder ser derrubada por um único cliente (verificação limitada por IP
+  confiável e teto global de envio), o código morre de verdade no 6º erro também para conta nova com
+  confirmação ligada, e o limitador não guarda hash reversível nem tabela sem RLS forçada.
+
+authority:
+  - docs/LANCAMENTO.md (F01, critério 4)
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (§2 e emenda de 04/11)
+  - docs/agents/tasks/SEC-007.task.yml (lote anterior)
+  - tools/backend-kanban card LAN-F01 e BLOCK-RESEND
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão independente do SEC-007 em 1ea22a9f (PASS-COM-RESSALVA: I-1 generateLink magiclink não
+    invalida o código de conta nova com confirmação ligada; I-2 verificação sem limite por IP;
+    M-1 pepper com padrão público; M-5 RATIFICACAO sem revisão registrada) e auditoria do
+    security-auditor em 1ea22a9f (LIBERA com M1 verify sem limite por IP, M2 teto de envio por IP
+    igual ao orçamento global de e-mail e reset de tentativas antes do envio confirmado; L1 pepper;
+    L2 RLS não forçada em private.entry_otp_limits; L3 generateLink; L4 IPv6 sem /64; L5 resíduo
+    do /auth/v1/verify público fora do quadro).
+
+allowed_paths:
+  - apps/web/app/api/app/entry/**
+  - apps/web/lib/app-api/**
+  - apps/web/.env.example
+  - supabase/migrations/**
+  - supabase/tests/**
+  - supabase/config.toml
+  - supabase/database.generated.ts
+  - tests/unit/app-api/**
+  - tests/scope/**
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/decisions/RATIFICACAO.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - editar migration já aplicada (criar migration nova)
+  - mexer em apps/app/src/previa-f01 ou nas telas
+  - confiar em X-Forwarded-For do cliente
+  - dar grant a anon/authenticated em função ou tabela do limitador
+  - deixar enable_confirmations ligado no supabase/config.toml commitado só para a prova (a prova liga localmente e volta)
+  - registrar e-mail, código, IP em claro ou token em log
+
+acceptance:
+  - verificação do código consome um escopo verify_ip por IP confiável (30 por 10 min) antes do escopo por e-mail; IPv6 é normalizado para /64 antes do hash, nos dois escopos de IP
+  - envio tem teto global (escopo send_global) abaixo do orçamento de e-mail do GoTrue; o config.toml local tem email_sent maior que o teto por IP; o reset das tentativas do código acontece só depois de o GoTrue confirmar o envio
+  - em produção (NODE_ENV production) sem BIVAQUE_LIMITER_PEPPER, ou com valor vazio, as rotas de código respondem 503; a variável está documentada em apps/web/.env.example sem valor real
+  - private.entry_otp_limits com RLS forçada, com asserções pgTAP de relforcerowsecurity e de has_table_privilege negativo para anon e authenticated
+  - no 6º erro o código é invalidado também para conta ainda não confirmada (tipo de link certo pelo estado da conta), provado em runtime contra o GoTrue local com enable_confirmations ligado temporariamente, nos dois estados de conta; o resultado medido fica no ADR
+  - ADR de entrada registra o DoS dirigido a um e-mail (6 erros matam o código em trânsito; 6 envios por hora), o custo de experiência do envio contado antes do GoTrue e os limites de produção a dimensionar; RATIFICACAO.md registra a revisão independente e a auditoria de 04/11 do SEC-007
+  - BLOCK-RESEND ganha item explícito para o resíduo do /auth/v1/verify público e para dimensionar email_sent, token_verifications e sign_in_sign_ups de produção
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 exec supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - "prova de runtime da invalidação com enable_confirmations ligado, conta nova e conta existente, com saída registrada no card"
+
+risk: segurança da autenticação e disponibilidade da entrada
+risk_level: R3
+
+adr: docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

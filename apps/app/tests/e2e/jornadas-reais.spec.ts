@@ -76,8 +76,12 @@ test("escolher na paleta não deixa camada fantasma no histórico", async ({ pag
   await page.goto("/app/inicio")
   await page.keyboard.press("Control+k")
   const paleta = page.getByRole("dialog", { name: "Buscar e ir para", exact: true })
-  await paleta.getByLabel("Buscar ou ir para").fill("Salvos")
-  await paleta.getByRole("button", { name: /Salvos/ }).click()
+  await expect(paleta).toBeVisible()
+  // O `label` da peça Command nomeia o campo e o `aria-labelledby` do cmdk
+  // aponta para ele; o placeholder é só a dica visual.
+  await paleta.getByLabel("Buscar e ir para", { exact: true }).fill("Salvos")
+  // A peça Command expõe as escolhas como opções de uma lista de comandos.
+  await paleta.getByRole("option", { name: "Salvos", exact: true }).click()
   await expect(page).toHaveURL(/\/app\/salvos$/)
   await expect(paleta).toHaveCount(0)
   await page.goBack()

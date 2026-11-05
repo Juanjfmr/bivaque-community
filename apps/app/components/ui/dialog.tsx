@@ -42,6 +42,7 @@ function DialogOverlay({
 function DialogContent({
   className,
   overlayClassName,
+  overlayProps,
   children,
   showCloseButton = true,
   unstyled = false,
@@ -49,13 +50,16 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   /** Classes adicionais do fundo; o overlay continua único e preso ao Portal. */
   overlayClassName?: string
+  /** Atributos do fundo (por exemplo `data-criar-fundo`), para quem já o pinta por CSS. */
+  overlayProps?: React.ComponentProps<typeof DialogPrimitive.Overlay> &
+    Readonly<Record<`data-${string}`, string | undefined>>
   /** O shell R72 fornece as três geometrias próprias: folha, diálogo e gaveta. */
   unstyled?: boolean
   showCloseButton?: boolean
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay className={overlayClassName} />
+      <DialogOverlay className={overlayClassName} {...overlayProps} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

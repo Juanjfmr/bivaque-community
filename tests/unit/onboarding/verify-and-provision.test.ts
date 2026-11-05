@@ -3,8 +3,14 @@ import { provisionMember, verifyEligibility } from "web/lib/onboarding/verifyAnd
 
 type VerifySupabase = Parameters<typeof verifyEligibility>[0]
 
-function makeSupabase(attemptAllowed: boolean) {
+type LinhaDeStatus = { status: string; eligibility_class: string | null }
+
+function makeSupabase(attemptAllowed: boolean, atual: LinhaDeStatus | null = null) {
   const rpc = vi.fn(async (name: string) => {
+    // SEC-007: a leitura do estado canônico vem antes de qualquer consulta.
+    if (name === "read_verification_status") {
+      return { data: atual === null ? [] : [atual], error: null }
+    }
     if (name === "consume_verification_attempt") {
       return { data: attemptAllowed, error: null }
     }
@@ -49,8 +55,11 @@ describe("verifyEligibility (P0 Task 4)", () => {
     // ADR-20260922-identidade-quando-portal-falha: sem a chave, o erro temporário é
     // GRAVADO, para /onboarding/documento abrir a alternativa por identidade. Não consome
     // tentativa nem chama o Portal — a anti-enumeração continua intacta.
-    expect(supabase.rpc).toHaveBeenCalledTimes(1)
-    expect(supabase.rpc).toHaveBeenCalledWith("upsert_verification_outcome", {
+    expect(supabase.rpc).toHaveBeenCalledTimes(2)
+    expect(supabase.rpc).toHaveBeenNthCalledWith(1, "read_verification_status", {
+      p_user_id: "user-1",
+    })
+    expect(supabase.rpc).toHaveBeenNthCalledWith(2, "upsert_verification_outcome", {
       p_user_id: "user-1",
       p_status: "temporary_error",
     })
@@ -58,7 +67,11 @@ describe("verifyEligibility (P0 Task 4)", () => {
 
   it("surfaces a failure to record the temporary result instead of hiding it", async () => {
     vi.stubEnv("PORTAL_DADOS_API_KEY", "")
-    const rpc = vi.fn(async () => ({ data: null, error: { message: "boom" } }))
+    const rpc = vi.fn(async (nome: string) =>
+      nome === "read_verification_status"
+        ? { data: [], error: null }
+        : { data: null, error: { message: "boom" } },
+    )
     const supabase = { rpc, from: vi.fn() } as unknown as VerifySupabase
 
     await expect(
@@ -78,7 +91,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     })
 
     expect(result).toEqual({ outcome: { status: "pending" } })
-    expect(supabase.rpc).toHaveBeenCalledTimes(1)
+    expect(supabase.rpc).toHaveBeenCalledTimes(2)
     expect(supabase.rpc).toHaveBeenCalledWith("consume_verification_attempt", {
       p_user_id: "user-1",
     })
@@ -104,6 +117,62 @@ describe("verifyEligibility (P0 Task 4)", () => {
 
     // The negative is the test of the task: verify touches no table.
     expect(supabase.from).not.toHaveBeenCalled()
+  })
+})
+
+describe("verifyEligibility não rebaixa quem já está verificado (SEC-007)", () => {
+  const entrada = { userId: "user-1", cpf: "12345678901", consentVersion: 2 }
+
+  it("verificado volta verificado, sem Portal, sem tentativa e sem regravar", async () => {
+    vi.stubEnv("PORTAL_DADOS_API_KEY", "chave-valida")
+    const fetchEspia = vi.fn()
+    vi.stubGlobal("fetch", fetchEspia)
+    const supabase = makeSupabase(true, { status: "verified", eligibility_class: "veteran" })
+
+    await expect(verifyEligibility(supabase, entrada)).resolves.toEqual({
+      outcome: { status: "verified", eligibilityClass: "veteran" },
+    })
+
+    expect(fetchEspia).not.toHaveBeenCalled()
+    expect(supabase.rpc).toHaveBeenCalledTimes(1)
+    expect(supabase.rpc).toHaveBeenCalledWith("read_verification_status", { p_user_id: "user-1" })
+  })
+
+  it("verificado continua verificado mesmo com a chave do Portal ausente", async () => {
+    vi.stubEnv("PORTAL_DADOS_API_KEY", "")
+    const supabase = makeSupabase(true, {
+      status: "verified",
+      eligibility_class: "active_federal_military",
+    })
+
+    const resultado = await verifyEligibility(supabase, entrada)
+
+    expect(resultado.outcome.status).toBe("verified")
+    expect(supabase.rpc).not.toHaveBeenCalledWith("upsert_verification_outcome", expect.anything())
+  })
+
+  it("quem não está verificado segue o caminho normal (rejeitado consulta de novo)", async () => {
+    vi.stubEnv("PORTAL_DADOS_API_KEY", "")
+    const supabase = makeSupabase(true, { status: "rejected", eligibility_class: null })
+
+    const resultado = await verifyEligibility(supabase, entrada)
+
+    expect(resultado.outcome.status).toBe("temporary_error")
+    expect(supabase.rpc).toHaveBeenCalledWith("upsert_verification_outcome", {
+      p_user_id: "user-1",
+      p_status: "temporary_error",
+    })
+  })
+
+  it("erro na leitura do estado não vira consulta às cegas", async () => {
+    vi.stubEnv("PORTAL_DADOS_API_KEY", "chave-valida")
+    const rpc = vi.fn(async () => ({ data: null, error: { message: "boom" } }))
+    const supabase = { rpc, from: vi.fn() } as unknown as VerifySupabase
+
+    await expect(verifyEligibility(supabase, entrada)).rejects.toThrow(
+      /Failed to read verification status/,
+    )
+    expect(rpc).toHaveBeenCalledTimes(1)
   })
 })
 

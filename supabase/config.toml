@@ -72,9 +72,46 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 secure_password_change = true
-max_frequency = "1s"
+# SEC-007: reenvio de 60 s também no GoTrue (ADR-20261101 §2). O servidor aplica o
+# mesmo piso por e-mail antes de chamar o GoTrue; aqui ele vale mesmo para quem
+# falar direto com o endpoint público.
+max_frequency = "60s"
 otp_length = 6
-otp_expiry = 3600
+# ADR-20261101-entrada-unica-por-codigo: o código vale 10 minutos (era 1 hora).
+# O reenvio de 60 s é da tela e do GoTrue; a validade curta é a do código.
+otp_expiry = 600
+
+# ADR-20261101, §2: o e-mail do código tem o código no assunto e no corpo, em
+# texto grande, sem link clicável. O template é o mesmo do magic link do GoTrue,
+# servido daqui — a produção usa o SMTP próprio do dono (BLOCK-RESEND).
+[auth.email.template.magic_link]
+subject = "Seu código do Bivaque: {{ .Token }}"
+content_path = "./supabase/templates/magic_link.html"
+
+# Conta nova: `signInWithOtp` com criação de conta manda o e-mail de CONFIRMAÇÃO
+# DE CADASTRO, não o de magic link. Sem este bloco a pessoa nova receberia o
+# link do template padrão, e não o código. Mesmo corpo do magic link.
+[auth.email.template.confirmation]
+subject = "Seu código do Bivaque: {{ .Token }}"
+content_path = "./supabase/templates/confirmation.html"
+
+# SEC-007: limites do GoTrue por IP, explícitos para não dependerem do padrão da
+# versão. `token_verifications` é o teto de verificações de código por IP (5
+# minutos); `email_sent` é por hora e vale para o projeto inteiro no SMTP padrão.
+# O limite por e-mail, por IP e o teto global de envio moram no banco
+# (private.entry_otp_limits). SEC-008/RUN-004: `email_sent` e `sign_in_sign_ups`
+# ficam ACIMA do disjuntor global do servidor (500/h em `entry_otp_send_gate`),
+# para que o servidor corte o envio antes de o GoTrue ficar sem e-mail para todo
+# mundo. O teto por IP é 8/h; o de e-mail, 6/h. `sign_in_sign_ups` é uma janela
+# de 5 minutos, então 600 é folgado até para o disjuntor horário.
+[auth.rate_limit]
+email_sent = 600
+sms_sent = 30
+anonymous_users = 30
+token_refresh = 150
+sign_in_sign_ups = 600
+token_verifications = 30
+web3 = 30
 
 [auth.sms]
 enable_signup = false

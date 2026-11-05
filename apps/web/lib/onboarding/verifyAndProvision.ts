@@ -2,7 +2,7 @@ import { CONSENT_VERSION } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { byteaDigestParam } from "../invites-bytea"
-import type { VerificationResult } from "../portal"
+import type { EligibilityClass, VerificationResult } from "../portal"
 import { createPortalVerificationGuard, verifyCpfWithErrorCode } from "../portal"
 import type { EntryMoment } from "./provision-validation"
 
@@ -52,6 +52,29 @@ export async function verifyEligibility(
 
   if (consentVersion < CONSENT_VERSION) {
     throw new Error("consent version not accepted")
+  }
+
+  // SEC-007: quem já está verificado NÃO é rebaixado. A consulta de CPF regrava
+  // o resultado (`upsert_verification_outcome`), então um verificado que
+  // consultasse de novo — Portal fora do ar, chave ausente, CPF digitado errado —
+  // voltava para `temporary_error`/`rejected` e perdia o acesso que já tinha.
+  // O estado canônico vale: devolve o verificado sem chamar o Portal, sem gastar
+  // tentativa e sem regravar. Os dois caminhos (rota do app e /api/onboarding)
+  // passam por aqui — um módulo só.
+  const { data: atual, error: atualError } = await supabase.rpc("read_verification_status", {
+    p_user_id: userId,
+  })
+  if (atualError) {
+    throw new Error(`Failed to read verification status: ${atualError.message}`)
+  }
+  const linha = (atual as { status: string; eligibility_class: string | null }[] | null)?.[0]
+  if (linha?.status === "verified" && linha.eligibility_class !== null) {
+    return {
+      outcome: {
+        status: "verified",
+        eligibilityClass: linha.eligibility_class as EligibilityClass,
+      },
+    }
   }
 
   const apiKey = process.env["PORTAL_DADOS_API_KEY"]

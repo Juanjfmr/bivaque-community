@@ -32,6 +32,9 @@ biblioteca e na galeria antes de entrar na tela.
 - Todo botão é pílula. Cartão tem raio 16, campo 12.
 - Botão principal, de tom, de contorno e de texto: alto 48, ou 36 no compacto.
 - Botão só de ícone é um círculo de 44.
+- O Criar da casca é peça própria, o FAB: quadrado de canto 18 em Brasa, 58 aberto e 56
+  compacto no celular, 52 no desktop, sempre com 44 px ou mais de alvo de toque. Não é o
+  botão só de ícone da linha acima (APP-001, 02/11).
 
 **Texto.**
 - Noto Sans em tudo, com uma escala só: título 24, seção 20, subtítulo 17, corpo 16, apoio 14, miúdo 13.

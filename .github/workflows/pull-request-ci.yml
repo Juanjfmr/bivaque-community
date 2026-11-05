@@ -1,6 +1,8 @@
 name: Pull Request CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -120,6 +122,9 @@ jobs:
             echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
             echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
             echo "BIVAQUE_E2E_OPERATOR_PASSWORD=bivaque-e2e-local"
+            # Disposable pepper for the local limiter: production requires a real
+            # secret; the E2E of the entry needs the OTP routes answering 200.
+            echo "BIVAQUE_LIMITER_PEPPER=ci-e2e-limiter-pepper"
           } > apps/web/.env.local
 
       - name: Build web app

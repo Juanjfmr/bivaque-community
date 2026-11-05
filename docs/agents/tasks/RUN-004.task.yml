@@ -1,0 +1,118 @@
+# Correções da revisão independente do PR #128 (05/11/2026), na base 3f76e7f5.
+# A revisão (contrato FAIL, segurança PASS com ressalvas) foi feita por modelos
+# diferentes do executor. O dono decidiu cada item em 05/11: o item do nome
+# civil devolvido pelo /cpf fica como está (decisão abaixo); todos os outros
+# são corrigidos neste contrato.
+task_id: RUN-004
+
+objective: >
+  Fechar os achados da revisão do PR #128 para que a entrada no app aguente a
+  falha, não deixe dado pessoal para trás, não mostre dado inventado e prove em
+  E2E o que o card LAN-F01 afirma. O PR só vai à main depois de nova revisão.
+
+authority:
+  - docs/LANCAMENTO.md (F01)
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (§1, §4 e §6)
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md
+  - tools/backend-kanban card LAN-F01
+  - decisão do dono em 05/11/2026 (registrada no ADR de entrada por este contrato)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão do commit 3f76e7f5. (1) TelaDeEntrada avança da prévia da cidade sem
+    esperar o provisionamento; /api/app/entry/groups sem vínculo responde 200
+    vazio ("Ainda não há grupos na sua cidade") e interesses entram em laço de
+    "Tente de novo". (2) PUT /api/app/entry/progress faz upsert sem checar
+    vínculo e o useEffect de TelaDeEntrada.tsx (~161-173) salva a cada etapa,
+    recriando o rascunho depois do provisionamento, contra o ADR-20261102.
+    (3) apps/app/src/previa-f01/etapas-comunidade.tsx:21 importa
+    servidor-simulado (Manaus com membros, perguntas e encontro inventados) e
+    etapas-conta.tsx:232 tem "Convite de Marcos S." fixo. (4)
+    tests/unit/onboarding/provision-requires-verification.test.ts:167-178 usa
+    arrival_date "2026-11-04" fixa e falha desde 05/11 (400 em vez de 200).
+    (5) Convite: e-mail editável (ADR §6 manda só leitura), conta pode nascer
+    antes de o código ser validado, 400 e 503 tratados igual, links do outbox
+    e de configuracoes/familia levam à tela antiga com senha. (6) Erro do
+    Google/Apple não aparece na porta. (7) Retomada depois do provisionamento
+    pula o combinado. (8) Migration 20261104183608 deixa 30 envios/h por IP e
+    teto global de 50/h, que pode ser esgotado de propósito. (9) E2E: a "conta
+    nova" é pré-criada, não há caso de falha, o tema escuro só tem captura.
+    (10) Menores: convite aceita aceite de versão antiga; notices e groups usam
+    service_role onde bastava a sessão; rascunho abandonado sem prazo;
+    confirmarEnvio em erros que denunciam a conta.
+
+allowed_paths:
+  - apps/web/app/api/app/entry
+  - apps/web/lib/app-api
+  - apps/web/lib/convite
+  - apps/web/lib/onboarding
+  - apps/web/app/(shell)/configuracoes/familia
+  - apps/web/app/(shell)/invite
+  - apps/web/lib/outbox
+  - apps/web/workers
+  # Rodada 2 (05/11, coordenador): caminhos que as correções exigem.
+  - apps/web/app/auth/callback
+  - apps/web/app/(preauth)/convite/actions.ts
+  - supabase/config.toml
+  - apps/app/src/entrada
+  - apps/app/src/previa-f01
+  - apps/app/tests
+  - supabase/migrations
+  - supabase/tests
+  - packages/contracts
+  - tests/unit
+  - tests/e2e
+  - tests/scope
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/RUN-004.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - mudar a resposta de /api/app/entry/cpf (decisão do dono: o nome sugerido e o resultado continuam como estão)
+  - editar migration já existente; mudança de banco entra em migration nova (supabase migration new)
+  - resetar banco que não seja o local, usar --linked ou tocar em produção
+  - aposentar as telas antigas da web (login, signup, onboarding): isso é o RUN-003
+  - tocar na worktree .claude/worktrees/deepseek
+  - ler, criar ou editar arquivos .env
+  - push, merge ou force-push (o coordenador publica depois da revisão)
+  - senha ou CPF no caminho do convite; dado inventado em tela de produção
+  - mexer no apps/web fora dos caminhos listados
+
+acceptance:
+  - "Decisão do dono registrada no ADR-20261101 (seção de decisões, 05/11/2026): /api/app/entry/cpf pode devolver o nome sugerido e o resultado da consulta, porque o vínculo de militar com o nome é público no Portal da Transparência; revisões futuras não reabrem esse ponto."
+  - "Provisionamento: a prévia da cidade só avança com o provisionamento confirmado pelo servidor; falha mostra mensagem fixa e Tentar de novo na mesma etapa; a retomada decide pelo estado do servidor (verificado e sem vínculo leva a provisionar); /api/app/entry/groups e interests sem vínculo respondem 409 e o app trata 409 sem laço. Unidade da rota + E2E com o provisionamento falhando."
+  - "Rascunho: PUT /api/app/entry/progress responde 409 quando a pessoa já tem vínculo de cidade; o app para de salvar depois do provisionamento; prova (pgTAP ou consulta no E2E) de que entry_progress fica sem linha da pessoa no fim da entrada."
+  - "Sem servidor-simulado no caminho real: nenhum import de servidor-simulado a partir de apps/app/src/entrada nem das etapas usadas por ela; a prévia da cidade mostra dado real do servidor ou um estado neutro honesto; o título do convite vem do preview do convite (nome de quem convidou ou texto genérico); um teste de escopo falha se o caminho real voltar a importar o simulado; asserções E2E sobre texto simulado trocadas."
+  - "tests/unit/onboarding/provision-requires-verification.test.ts usa data relativa ou relógio fixo (vi.useFakeTimers/setSystemTime), nunca data de calendário; verde hoje e daqui a um ano."
+  - "Convite: o app valida o código (preview) antes de pedir o envio do código por e-mail; o e-mail vem do convite e é só leitura quando o convite declara e-mail; nenhuma conta nasce antes da validação; 400 (código inválido/vencido) e 503 (indisponível) têm mensagens diferentes; os links do outbox e de configuracoes/familia e /invite apontam para /app/entrar?convite=CODIGO; o aceite exige has_accepted_consent com as versões vigentes (CONSENT_VERSION e CODE_OF_CONDUCT_VERSION)."
+  - "Porta: erro de Google ou Apple (retorno do callback com erro, ou falha de rede ao pedir a URL) aparece na porta com mensagem fixa, sem detalhe técnico."
+  - "Retomada: quem recarrega depois do provisionamento volta à etapa pendente certa, sem pular o combinado."
+  - "Limitador: migration nova baixa o envio por IP para entre 5 e 10 por hora e troca o teto global fixo por um que não deixe uma pessoa travar a entrada de todos (por exemplo por e-mail + IP, com o global só como disjuntor alto e alerta); o custo e o motivo ficam no ADR-20261101; pgTAP cobre os novos tetos."
+  - "Menores: notices e groups usam o cliente da sessão (RLS) no lugar do service_role quando a RLS basta; rascunho abandonado tem prazo (30 dias) com expiração aplicada no servidor e registrada no ADR-20261102; confirmarEnvio não distingue conta existente de conta nova em nenhuma resposta."
+  - "E2E de verdade em 375/768/1440: conta realmente nova (e-mail gerado no teste, código lido no Mailpit) até o Início; caso do provisionamento que falha; pelo menos uma asserção de cor computada no tema escuro, não só captura."
+  - "Card LAN-F01 corrigido: o texto não chama de conta nova a conta pré-criada; prova nova registrada com o commit; o card fica em now até a nova revisão independente."
+
+proof:
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api tests/unit/onboarding tests/unit/convite
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db (depois do reset local sem seed pela fila)
+  - node scripts/agents/prova-fila.mjs -- npx playwright test tests/e2e/f01-entrada-real.spec.ts --workers=1 (depois do reset local com seed)
+  - capturas dos três tamanhos nos dois temas em .visual/f01-entrada/
+
+risk: autenticação, consentimento, limitador e dado pessoal no caminho de entrada
+risk_level: R3
+
+adr: docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,11 +1,11 @@
 "use client"
 
-import { Dialog } from "radix-ui"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
 
 import { Icone } from "@/components/bivaque/icone"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao } from "@/lib/navegacao/react"
 import { TIPOS_RASCUNHO, type TipoRascunho } from "@/lib/rascunhos-criacao"
@@ -189,114 +189,110 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
   }
 
   return (
-    <Dialog.Root
+    <Dialog
       open
       onOpenChange={(aberto) => {
         if (!aberto) aoFechar()
       }}
     >
-      <Dialog.Portal>
-        <Dialog.Overlay
-          data-scrim="sobreposicao"
-          data-criar-fundo={painel ? "painel" : "pilha"}
-          className="bv-scrim"
-        />
-        <Dialog.Content
-          ref={popup}
-          data-sobreposicao="menu-criar"
-          data-modo={painel ? "painel" : "pilha"}
-          onOpenAutoFocus={(evento) => {
-            // O foco vai para a primeira escolha (§5.4), não para o botão de
-            // fechar: o foco automático do Radix não decide por nós.
-            evento.preventDefault()
-            posicionar()
-            lista.current?.querySelector<HTMLElement>("[data-escolha]")?.focus()
-          }}
-          className="bv-painel bv-criar-menu"
-        >
-          <div className={cn("flex items-start justify-between gap-3", !painel && "sr-only")}>
-            <div>
-              <Dialog.Title className="text-lg leading-6">Criar no Bivaque</Dialog.Title>
-              <Dialog.Description className="mt-0.5 text-sm text-(--on-surface-variant)">
-                {painel ? "O que você quer publicar ou pedir?" : "Escolha o que publicar"}
-              </Dialog.Description>
-            </div>
-            {painel ? <kbd className="bv-criar-atalho">C</kbd> : null}
-            {painel ? (
-              <button
-                type="button"
-                data-acao="fechar-sobreposicao"
-                aria-label="Fechar"
-                onClick={aoFechar}
-                className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-(--muted)"
-              >
-                <Icone nome="close" className="size-6" />
-              </button>
-            ) : null}
+      <DialogContent
+        ref={popup}
+        unstyled
+        showCloseButton={false}
+        data-sobreposicao="menu-criar"
+        data-modo={painel ? "painel" : "pilha"}
+        overlayProps={{ "data-criar-fundo": painel ? "painel" : "pilha" }}
+        onOpenAutoFocus={(evento) => {
+          // O foco vai para a primeira escolha (§5.4), não para o botão de
+          // fechar: o foco automático do Radix não decide por nós.
+          evento.preventDefault()
+          posicionar()
+          lista.current?.querySelector<HTMLElement>("[data-escolha]")?.focus()
+        }}
+        className="bv-painel bv-criar-menu"
+      >
+        <div className={cn("flex items-start justify-between gap-3", !painel && "sr-only")}>
+          <div>
+            <DialogTitle className="text-lg leading-6">Criar no Bivaque</DialogTitle>
+            <DialogDescription className="mt-0.5 text-sm text-(--on-surface-variant)">
+              {painel ? "O que você quer publicar ou pedir?" : "Escolha o que publicar"}
+            </DialogDescription>
           </div>
-          {!painel ? (
-            <button type="button" data-criar="fechar" aria-label="Fechar" onClick={aoFechar}>
-              <Icone nome="close" />
+          {painel ? <kbd className="bv-criar-atalho">C</kbd> : null}
+          {painel ? (
+            <button
+              type="button"
+              data-acao="fechar-sobreposicao"
+              aria-label="Fechar"
+              onClick={aoFechar}
+              className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-(--muted)"
+            >
+              <Icone nome="close" className="size-6" />
             </button>
           ) : null}
+        </div>
+        {!painel ? (
+          <button type="button" data-criar="fechar" aria-label="Fechar" onClick={aoFechar}>
+            <Icone nome="close" />
+          </button>
+        ) : null}
 
-          {tipo !== null ? (
-            <div
-              data-criar-etapa="formulario"
-              className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2"
-            >
-              <FormularioDeCriacao
-                key={tipo}
-                tipo={tipo}
-                cidade={casca.cidade}
-                aoCancelar={() => setTipo(null)}
-                aoConcluir={() => {
-                  setTipo(null)
-                  setConcluido(true)
-                }}
-              />
+        {tipo !== null ? (
+          <div
+            data-criar-etapa="formulario"
+            className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2"
+          >
+            <FormularioDeCriacao
+              key={tipo}
+              tipo={tipo}
+              cidade={casca.cidade}
+              aoCancelar={() => setTipo(null)}
+              aoConcluir={() => {
+                setTipo(null)
+                setConcluido(true)
+              }}
+            />
+          </div>
+        ) : concluido ? (
+          <div data-criar-etapa="concluido" className="grid gap-4 p-3">
+            <b className="text-lg">Rascunho salvo nesta sessão</b>
+            <p className="text-sm text-(--on-surface-variant)">
+              Este conteúdo não foi publicado. Você pode consultá-lo e excluí-lo em Meus anúncios.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>
+                Ver meus rascunhos
+              </Botao>
+              <Botao tom="contornado" onClick={() => setConcluido(false)}>
+                Criar outro
+              </Botao>
             </div>
-          ) : concluido ? (
-            <div data-criar-etapa="concluido" className="grid gap-4 p-3">
-              <b className="text-lg">Rascunho salvo nesta sessão</b>
-              <p className="text-sm text-(--on-surface-variant)">
-                Este conteúdo não foi publicado. Você pode consultá-lo e excluí-lo em Meus anúncios.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>
-                  Ver meus rascunhos
-                </Botao>
-                <Botao tom="contornado" onClick={() => setConcluido(false)}>
-                  Criar outro
-                </Botao>
-              </div>
-            </div>
-          ) : painel ? (
-            <div
-              ref={lista}
-              role="dialog"
-              aria-label="Criar publicação"
-              data-lista-de-escolhas="sim"
-              onKeyDown={aoTeclar}
-              className="mt-2 grid grid-cols-2 gap-1"
-            >
-              {escolhas}
-            </div>
-          ) : (
-            <div
-              ref={lista}
-              role="menu"
-              aria-label="Criar publicação"
-              data-lista-de-escolhas="sim"
-              onKeyDown={aoTeclar}
-              className="grid justify-items-center gap-2"
-            >
-              {escolhas}
-            </div>
-          )}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          </div>
+        ) : painel ? (
+          <div
+            ref={lista}
+            role="dialog"
+            aria-label="Criar publicação"
+            data-lista-de-escolhas="sim"
+            onKeyDown={aoTeclar}
+            className="mt-2 grid grid-cols-2 gap-1"
+          >
+            {escolhas}
+          </div>
+        ) : (
+          <div
+            ref={lista}
+            role="menu"
+            aria-label="Criar publicação"
+            data-lista-de-escolhas="sim"
+            onKeyDown={aoTeclar}
+            className="grid justify-items-center gap-2"
+          >
+            {escolhas}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }
 

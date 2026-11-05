@@ -1,0 +1,102 @@
+# Lote B do F01 (04/11/2026): ligar a tela aprovada da entrada ao servidor real.
+# Autoridade: docs/LANCAMENTO.md (F01), ADR de entrada, ADR de progresso, card
+# LAN-F01 e o handoff de 04/11 (docs/agents/HANDOFF-20261104.md, seção Lote B).
+task_id: RUN-001
+
+objective: >
+  A entrada do app deixa de ser demonstrativa. A tela aprovada de
+  apps/app/src/previa-f01 roda em /app/entrar sobre a máquina de estados real,
+  grava e retoma o rascunho pelo servidor, autentica pelo código do e-mail com as
+  rotas /api/app/entry e provisiona cidade, momento, interesses, grupos, avisos e
+  o combinado nas tabelas canônicas — com prova de ponta a ponta no navegador, em
+  375, 768 e 1440 e nos dois temas, contra o Next servindo /app e o Supabase local
+  com seed.
+
+authority:
+  - docs/LANCAMENTO.md (F01, critério 1 e 3)
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md
+  - docs/agents/HANDOFF-20261104.md (Lote B)
+  - tools/backend-kanban card LAN-F01
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/previa-f01/PreviaF01.tsx ainda lê e salva o progresso em
+    servidor-simulado.ts (localStorage) e só existe no servidor de desenvolvimento
+    (main.tsx, import.meta.env.DEV). A rota /app/entrar usa apps/app/src/telas/Entrar.tsx,
+    a tela demonstrativa anterior, e as rotas /api/app/entry (progresso, otp,
+    verificação, aceite, cpf, provisionamento) não têm nenhum consumidor no app. O
+    servidor já está fechado pelo SEC-008 (gate --fast, pnpm test e db:lint verdes em
+    04/11); falta a tela. Os achados I-4 e I-5 da revisão de 04/11 são citados no
+    handoff, mas o texto deles não está no repositório.
+
+allowed_paths:
+  - apps/app/src/previa-f01
+  - apps/app/src/entrada
+  - apps/app/src/telas/Entrar.tsx
+  - apps/app/src/telas/comum.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/src/main.tsx
+  - apps/app/src/styles.css
+  - apps/app/tests
+  - apps/web/app/api/app/entry
+  - apps/web/lib/app-api
+  - apps/web/lib/onboarding
+  - apps/web/proxy.ts
+  - supabase/migrations
+  - supabase/tests
+  - supabase/config.toml
+  - supabase/database.generated.ts
+  - tests/e2e
+  - tests/unit/app-api
+  - tests/unit/onboarding
+  - tests/scope
+  - apps/web/.env.example
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md
+  - docs/decisions/RATIFICACAO.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - editar migration já aplicada (criar migration nova)
+  - aceitar cidade, momento ou data sem validação do servidor e do catálogo
+  - gravar CPF, payload do Portal ou dado pessoal em rascunho, log ou URL
+  - deixar o caminho de produção lendo localStorage para decidir etapa
+  - mexer em apps/prototipo, apps/mobile ou produção/Vercel
+  - redesenhar telas aprovadas sem a revisão às cegas do lote
+  - fechar o lote sem o texto dos achados I-4 e I-5 anexado ao card
+  - empurrar trabalho novo para ds/lancamento (o branch desta linha é o do PR 128)
+
+acceptance:
+  - /app/entrar renderiza a máquina de estados aprovada (PreviaF01) e cada etapa grava o rascunho pelo PUT /api/app/entry/progress; retomar em outro aparelho abre na etapa em que a pessoa parou e versão antiga volta ao início.
+  - envio e verificação do código usam POST /api/app/entry/otp e /otp/verify reais, com a mensagem única de código inválido, o reenvio de 60 s e o limite de 5xx/429 tratados na tela; nada de simulador no caminho de produção.
+  - cidade pelo ibge_code do catálogo, momento arriving/resident/leaving, data de chegada/saída em YYYY-MM-DD e destino obrigatório quando a pessoa está saindo; nenhum texto livre de cidade ou data inventada.
+  - interesses e grupos gravados em user_group_interests, avisos em notification_preferences (e preferência de e-mail só quando ligada), e o combinado registrado com a versão do Código de Conduta; se precisar de schema novo, a emenda é feita no ADR-20261102 antes da migration.
+  - CPF vai no corpo do POST /api/app/entry/cpf, aceite é exigido antes, a resposta não traz motivo técnico e o valor não aparece em log, URL ou armazenamento local; documento e revisão seguem o caminho existente.
+  - servidor-simulado.ts sai do caminho de produção (fica só na prévia DEV ou é removido) e nenhum estado local decide a etapa em produção.
+  - harness de E2E no Playwright da raiz, contra o Next servindo /app e o Supabase local com seed: 375, 768 e 1440, claro e escuro, conta nova e conta existente, com capturas em .visual/.
+  - os achados I-4 e I-5 da revisão de 04/11 ficam fechados, com o texto do achado anexado ao card e a correção provada.
+  - revisão independente por outro modelo e, por tocar modelo de dados, parecer do security-auditor antes de marcar o LAN-F01 como done.
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 exec supabase db reset --local --no-seed
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test:db
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 exec supabase db reset --local
+  - node scripts/agents/prova-fila.mjs -- npx playwright test tests/e2e/f01-entrada-real.spec.ts --project mobile-375 --project tablet-768 --project desktop-1440
+  - capturas dos três tamanhos e dois temas em .visual/ (não versionadas)
+
+risk: jornada de entrada, dado pessoal e modelo de dados da cidade, do momento e dos interesses
+risk_level: R3
+
+adr: docs/decisions/ADR-20261102-progresso-da-entrada.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

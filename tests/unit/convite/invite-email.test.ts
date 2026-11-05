@@ -24,7 +24,7 @@ describe("e-mail de convite familiar", () => {
     expect(email.subject).toBe("Você recebeu um convite")
     expect(email.text).toContain("7K4M9QRT")
     expect(email.text).toContain("7 dias")
-    expect(email.text).toContain("/convite?codigo=7K4M9QRT")
+    expect(email.text).toContain("/app/entrar?convite=7K4M9QRT")
   })
 
   it("diz que o convite vale só para o e-mail que recebeu", () => {
