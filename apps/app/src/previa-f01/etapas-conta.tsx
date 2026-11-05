@@ -30,6 +30,8 @@ export type PropsDaEtapa = {
   concluir: (mudancas?: Partial<Progresso>) => void
   voltar: () => void
   erro: (motivo: NonNullable<EventoDoFunil["motivo"]>) => void
+  /** Mensagem fixa da falha do provedor, capturada pela tela antes do roteador. */
+  avisoDoProvedor?: string | null
   /** Só a prévia de design injeta conteúdo simulado; o caminho real não passa. */
   previa?: DadosDaPrevia
 }
@@ -50,7 +52,7 @@ function IconeApple() {
   )
 }
 
-export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
+export function Porta({ progresso, concluir, erro, avisoDoProvedor }: PropsDaEtapa) {
   const servidor = useServidorDaEntrada()
   const [conectando, setConectando] = useState<Via | null>(null)
   // Quem chega por `/app/entrar?convite=CODIGO` já abre no caminho do convite,
@@ -59,20 +61,9 @@ export function Porta({ progresso, concluir, erro }: PropsDaEtapa) {
   const [codigo, setCodigo] = useState(servidor?.codigoDoConvite.current ?? "")
   const [erroDoConvite, setErroDoConvite] = useState<string | null>(null)
   const [conferindo, setConferindo] = useState(false)
-  // O callback do OAuth volta com `?erro=provedor`: a tela mostra a mensagem
-  // fixa e limpa o parâmetro, sem detalhe técnico.
-  const [falhaDoProvedor, setFalhaDoProvedor] = useState<string | null>(() =>
-    new URLSearchParams(window.location.search).get("erro") === "provedor"
-      ? "Não foi possível entrar com o provedor agora. Tente de novo."
-      : null,
-  )
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("erro") !== "provedor") return
-    const url = new URL(window.location.href)
-    url.searchParams.delete("erro")
-    window.history.replaceState(null, "", `${url.pathname}${url.search}`)
-  }, [])
+  // A tela capturou `?erro=provedor` na primeira renderização, antes de o
+  // roteador normalizar a URL; a porta só mostra a mensagem fixa.
+  const [falhaDoProvedor, setFalhaDoProvedor] = useState<string | null>(avisoDoProvedor ?? null)
 
   // Com servidor, o Google começa o OAuth de verdade (o callback da web grava a
   // sessão e o app retoma no aceite). Sem servidor, é a prévia simulada.

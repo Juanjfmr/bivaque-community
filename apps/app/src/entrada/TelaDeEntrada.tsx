@@ -95,6 +95,16 @@ export function TelaDeEntrada() {
     return /^[A-Z0-9]{8}$/.test(codigo) ? codigo : null
   }, [])
 
+  // O roteador normaliza a URL ao montar; a leitura do erro precisa acontecer
+  // aqui, na primeira renderização, como a do convite.
+  const avisoDoProvedor = useMemo(
+    () =>
+      new URLSearchParams(window.location.search).get("erro") === "provedor"
+        ? "Não foi possível entrar com o provedor agora. Tente de novo."
+        : null,
+    [],
+  )
+
   useEffect(() => {
     if (conviteDaUrl === null) return
     codigoDoConvite.current = conviteDaUrl
@@ -412,6 +422,7 @@ export function TelaDeEntrada() {
                 void concluir(mudancas)
               }}
               voltar={voltar}
+              avisoDoProvedor={avisoDoProvedor}
               erro={() => {
                 // O funil anônimo da prévia não existe no caminho de produção.
               }}

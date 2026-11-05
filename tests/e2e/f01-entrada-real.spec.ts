@@ -330,6 +330,22 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await esperarEtapaDaEntrada(page, "O que interessa a você?")
   })
 
+  test("erro do provedor aparece na porta com mensagem fixa e sem detalhe técnico", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(60_000)
+    const projeto = testInfo.project.name
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(`${ROTA_DA_ENTRADA}?erro=provedor`)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole("alert")).toContainText(
+      "Não foi possível entrar com o provedor agora. Tente de novo.",
+    )
+    await capturarEmDoisTemas(page, projeto, "porta-erro-provedor")
+  })
+
   test("convite familiar entra sem CPF e sem cidade, pelo código do link", async ({
     page,
   }, testInfo) => {
