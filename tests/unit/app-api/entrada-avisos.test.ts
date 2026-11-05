@@ -1,10 +1,13 @@
 import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-// A etapa "avisos" da entrada grava nas preferências canônicas de notificação.
-// O teste troca a sessão e o cliente de serviço, e prova o contrato: CSRF da
+// A etapa "avisos" da entrada grava nas preferências canônicas de notificação
+// pelo cliente da SESSÃO (a RLS da tabela já deixa o dono escrever a própria
+// linha) e apaga o rascunho pelo cliente de serviço, porque a entrada termina
+// aqui. O teste troca a sessão e os dois clientes, e prova o contrato: CSRF da
 // escrita, os dois valores aceitos, o dono da linha vindo da SESSÃO, os quatro
-// booleanos gravados juntos (e só eles) e a falha de gravação virando 503.
+// booleanos gravados juntos (e só eles), a limpeza do rascunho e a falha virando
+// 503.
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
@@ -23,9 +26,10 @@ const ORIGEM = "http://localhost:3000"
 const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/notices`
 
 const mockUpsert = vi.fn()
+const mockDelete = vi.fn()
 
 function clienteDeServico() {
-  return { from: () => ({ upsert: mockUpsert }) }
+  return { from: () => ({ delete: () => ({ eq: mockDelete }) }) }
 }
 
 function sessaoAutenticada() {
@@ -33,7 +37,7 @@ function sessaoAutenticada() {
     estado: "autenticada",
     via: "cookie",
     usuario: PESSOA,
-    cliente: { from: () => ({}) },
+    cliente: { from: () => ({ upsert: mockUpsert }) },
     cabecalhos: {},
   }
 }
@@ -59,6 +63,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   mockUpsert.mockResolvedValue({ error: null })
+  mockDelete.mockResolvedValue({ error: null })
   criarCliente.mockReturnValue(clienteDeServico() as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
 })
@@ -198,6 +203,19 @@ describe("POST /api/app/entry/notices", () => {
 
   it("falha do upsert vira 503", async () => {
     mockUpsert.mockResolvedValue({ error: { message: "db offline" } })
+    const resposta = await POST(requisicao({ corpo: { avisos: "ativados" } }))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "gravacao-indisponivel" })
+  })
+
+  it("ao concluir a entrada, apaga o rascunho da SESSÃO (sem linha no fim)", async () => {
+    const resposta = await POST(requisicao({ corpo: { avisos: "agora-nao" } }))
+    expect(resposta.status).toBe(200)
+    expect(mockDelete).toHaveBeenCalledWith("user_id", PESSOA.id)
+  })
+
+  it("falha ao apagar o rascunho vira 503, não sucesso com dado para trás", async () => {
+    mockDelete.mockResolvedValue({ error: { message: "db offline" } })
     const resposta = await POST(requisicao({ corpo: { avisos: "ativados" } }))
     expect(resposta.status).toBe(503)
     expect(await resposta.json()).toEqual({ erro: "gravacao-indisponivel" })

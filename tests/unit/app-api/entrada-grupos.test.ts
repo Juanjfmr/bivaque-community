@@ -4,19 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // A rota dos grupos da etapa de interesses: sessão obrigatória, cidade vinda da
 // sessão (nunca do pedido) e leitura pelo cliente de serviço — o app não fala
 // com o Supabase. O teste troca a sessão e o cliente e prova o contrato: 401
-// sem sessão, lista vazia sem cidade, grupos públicos da cidade mapeados para
-// nome/descricao e 503 em qualquer falha de leitura, nunca lista vazia
-// silenciosa.
+// sem sessão, 409 sem cidade (o provisionamento não terminou), grupos públicos
+// da cidade mapeados para nome/descricao e 503 em qualquer falha de leitura,
+// nunca lista vazia silenciosa.
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
-vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
 import { GET, OPTIONS } from "web/app/api/app/entry/groups/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
-import { createServerClient } from "web/lib/supabase/server"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
-const criarCliente = vi.mocked(createServerClient)
 
 const PESSOA = { id: "10000000-0000-4000-8000-000000000001", email: "pessoa@example.invalid" }
 const CIDADE = "00000000-0000-4000-8000-000000000001"
@@ -36,7 +33,7 @@ const mockGruposFiltroVisibilidade = vi.fn()
 const mockGruposOrdem = vi.fn()
 const mockGruposLimite = vi.fn()
 
-function clienteDeServico() {
+function clienteDoUsuario() {
   return {
     from: (tabela: string) => {
       if (tabela === "locality_memberships") {
@@ -85,17 +82,8 @@ function clienteDeServico() {
   }
 }
 
-// O cliente da sessão é o do usuário, sob RLS. Aqui ele existe só para provar
-// que a rota NÃO o usa: a cidade é resolvida no servidor e a leitura é do
-// cliente de serviço.
-function clienteDoUsuario() {
-  return {
-    from: () => {
-      throw new Error("a rota dos grupos deve ler pelo cliente de serviço")
-    },
-  }
-}
-
+// A rota lê pelo cliente da sessão, sob RLS: a leitura do vínculo é a do dono e
+// a policy de `groups` já exige ser membro da cidade.
 function sessaoAutenticada() {
   return {
     estado: "autenticada",
@@ -122,24 +110,23 @@ beforeEach(() => {
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   mockVinculo.mockResolvedValue({ data: { locality_id: CIDADE }, error: null })
   mockGruposLimite.mockResolvedValue({ data: [], error: null })
-  criarCliente.mockReturnValue(clienteDeServico() as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
 })
 
 describe("GET /api/app/entry/groups", () => {
-  it("sem sessão responde 401 com o motivo e não cria cliente", async () => {
+  it("sem sessão responde 401 com o motivo e não lê nada", async () => {
     semSessao()
     const resposta = await GET(requisicao())
     expect(resposta.status).toBe(401)
     expect(await resposta.json()).toEqual({ autenticado: false, motivo: "sem-credencial" })
-    expect(criarCliente).not.toHaveBeenCalled()
+    expect(mockVinculoSelect).not.toHaveBeenCalled()
   })
 
-  it("sem cidade ainda devolve lista vazia, sem consultar grupos", async () => {
+  it("sem cidade responde 409 e não consulta grupos", async () => {
     mockVinculo.mockResolvedValue({ data: null, error: null })
     const resposta = await GET(requisicao())
-    expect(resposta.status).toBe(200)
-    expect(await resposta.json()).toEqual({ autenticado: true, grupos: [] })
+    expect(resposta.status).toBe(409)
+    expect(await resposta.json()).toEqual({ erro: "sem-cidade" })
     expect(mockGruposSelect).not.toHaveBeenCalled()
   })
 
@@ -177,11 +164,6 @@ describe("GET /api/app/entry/groups", () => {
     expect(mockGruposLimite).toHaveBeenCalledWith(50)
   })
 
-  it("lê pelo cliente de serviço, não pelo cliente da sessão", async () => {
-    await GET(requisicao())
-    expect(criarCliente).toHaveBeenCalledTimes(1)
-  })
-
   it("leitura da cidade que falha vira 503, nunca lista vazia", async () => {
     mockVinculo.mockResolvedValue({ data: null, error: { message: "db offline" } })
     const resposta = await GET(requisicao())
@@ -195,15 +177,6 @@ describe("GET /api/app/entry/groups", () => {
     const resposta = await GET(requisicao())
     expect(resposta.status).toBe(503)
     expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
-  })
-
-  it("servidor sem configuração responde 503, não 500", async () => {
-    criarCliente.mockImplementation(() => {
-      throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
-    })
-    const resposta = await GET(requisicao())
-    expect(resposta.status).toBe(503)
-    expect(await resposta.json()).toEqual({ erro: "indisponivel" })
   })
 
   it("responde com os cabeçalhos de CORS e no-store do contrato", async () => {

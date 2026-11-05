@@ -183,15 +183,21 @@ describe("GET /api/app/entry/progress", () => {
       progresso: { versao: 2, etapa: "inicio", estado: {} },
     })
 
-    // Rascunho que sobrou não manda quem terminou de volta ao meio da entrada.
+    // O rascunho que sobreviveu ao provisionamento é o marcador da etapa
+    // seguinte: com vínculo, ele retoma a entrada em vez de pular para o Início.
     mockMaybeSingle.mockResolvedValue({
-      data: { versao: 2, etapa: "cidade", estado: { cidade: "Manaus" } },
+      data: {
+        versao: 2,
+        etapa: "previa-cidade",
+        estado: { cidade: "Manaus" },
+        updated_at: new Date().toISOString(),
+      },
       error: null,
     })
     const comRascunho = (await (await GET(requisicao("GET"))).json()) as {
       progresso: { etapa: string; estado: unknown }
     }
-    expect(comRascunho.progresso).toEqual({ versao: 2, etapa: "inicio", estado: {} })
+    expect(comRascunho.progresso.etapa).toBe("previa-cidade")
   })
 
   it("sem vínculo o rascunho continua mandando (a etapa não é forçada)", async () => {
@@ -260,6 +266,21 @@ describe("PUT /api/app/entry/progress", () => {
       requisicao("PUT", { cabecalho: "bivaque-spa", texto: "x".repeat(40 * 1024) }),
     )
     expect(resposta.status).toBe(413)
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("quem já tem vínculo com a cidade recebe 409 e o rascunho não é regravado", async () => {
+    mockVinculo.mockResolvedValue({ data: { locality_id: "cidade" }, error: null })
+    const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
+    expect(resposta.status).toBe(409)
+    expect(await resposta.json()).toEqual({ erro: "entrada-concluida" })
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("falha ao conferir o vínculo é 503, não gravação às cegas", async () => {
+    mockVinculo.mockResolvedValue({ data: null, error: { message: "boom" } })
+    const resposta = await PUT(requisicao("PUT", { cabecalho: "bivaque-spa", corpo: CORPO }))
+    expect(resposta.status).toBe(503)
     expect(mockUpsert).not.toHaveBeenCalled()
   })
 

@@ -1,3 +1,4 @@
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import type { NextRequest, NextResponse } from "next/server"
 import {
   clienteDeServicoOuNulo,
@@ -80,18 +81,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const servico = clienteDeServicoOuNulo()
   if (servico === null) return respostaIndisponivel(request)
 
-  // A etapa de aceite grava o consentimento antes; sem ele o vínculo não pode
-  // ser criado (o convite não substitui o aceite dos textos).
-  const { count, error: consentError } = await servico
-    .from("consent_acceptances")
-    .select("user_id", { count: "exact", head: true })
-    .eq("user_id", sessao.sessao.usuario.id)
+  // A etapa de aceite grava o consentimento antes; sem ele, nas versões
+  // vigentes, o vínculo não pode ser criado (o convite não substitui o aceite
+  // dos textos). `has_accepted_consent` confere as duas versões de uma vez, em
+  // vez de contar linhas de qualquer versão antiga.
+  const { data: consentimento, error: consentError } = await servico.rpc("has_accepted_consent", {
+    p_user_id: sessao.sessao.usuario.id,
+    p_consent_version: CONSENT_VERSION,
+    p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
+  })
 
   if (consentError !== null) {
     log.error("entry invite consent lookup failed", { message: consentError.message })
     return respostaIndisponivel(request)
   }
-  if ((count ?? 0) === 0) {
+  if (consentimento !== true) {
     return responder(request, { erro: "consentimento-pendente" }, 400)
   }
 
@@ -122,6 +126,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     if (aceite.status !== "ok") {
       return responder(request, { erro: "convite-invalido" }, 400)
+    }
+
+    // O convite já criou o vínculo. O marcador do rascunho aponta a etapa
+    // seguinte do caminho do convite (interesses), para a retomada não voltar
+    // ao nome nem pular o combinado. A tela não escreve mais o rascunho a
+    // partir daqui.
+    const { error: marcadorError } = await servico.from("entry_progress").upsert(
+      {
+        user_id: sessao.sessao.usuario.id,
+        versao: 2,
+        etapa: "interesses",
+        estado: {},
+      },
+      { onConflict: "user_id" },
+    )
+    if (marcadorError) {
+      log.error("entry invite: draft marker write failed", { message: marcadorError.message })
     }
 
     return responder(request, { localityMember: true }, 200, sessao.sessao.cabecalhos)

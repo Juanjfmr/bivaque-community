@@ -34,12 +34,13 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/invite`
 const CABECALHO = "bivaque-spa"
 
 const consultarConsentimento = vi.fn()
+const registrarMarcador = vi.fn()
 const servico = {
   from: (tabela: string) => {
-    if (tabela !== "consent_acceptances") throw new Error(`tabela inesperada: ${tabela}`)
-    return { select: () => ({ eq: consultarConsentimento }) }
+    if (tabela !== "entry_progress") throw new Error(`tabela inesperada: ${tabela}`)
+    return { upsert: registrarMarcador }
   },
-  rpc: vi.fn(),
+  rpc: consultarConsentimento,
 }
 
 function sessaoAutenticada() {
@@ -68,7 +69,8 @@ function requisicao(opcoes: { origem?: string; cabecalho?: string; corpo?: unkno
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
-  consultarConsentimento.mockResolvedValue({ count: 1, error: null })
+  consultarConsentimento.mockResolvedValue({ data: true, error: null })
+  registrarMarcador.mockResolvedValue({ error: null })
   criarCliente.mockReturnValue(servico as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
   prever.mockResolvedValue({
@@ -133,7 +135,7 @@ describe("POST /api/app/entry/invite", () => {
   })
 
   it("exige o aceite dos textos antes de criar o vínculo", async () => {
-    consultarConsentimento.mockResolvedValue({ count: 0, error: null })
+    consultarConsentimento.mockResolvedValue({ data: false, error: null })
 
     const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
 

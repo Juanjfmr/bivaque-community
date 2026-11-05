@@ -53,13 +53,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // "ativados" liga os quatro tipos; "agora-nao" desliga os quatro. Nada de
-  // mesclar com o estado anterior: a etapa vale por inteiro.
+  // mesclar com o estado anterior: a etapa vale por inteiro. A gravação usa o
+  // cliente da sessão: a RLS da tabela já deixa o dono ler, inserir e atualizar
+  // a própria linha.
   const ativados = avisos === "ativados"
-  const servico = clienteDeServicoOuNulo()
-  if (servico === null) return respostaIndisponivel(request)
-
   const userId = sessao.sessao.usuario.id
-  const { error } = await servico.from("notification_preferences").upsert(
+  const { error } = await sessao.sessao.cliente.from("notification_preferences").upsert(
     {
       user_id: userId,
       messages: ativados,
@@ -74,6 +73,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (error) {
     log.error("entry notices: notification preferences write failed", {
       error: error.message,
+      userId,
+    })
+    return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
+  }
+
+  // O aviso é a última etapa: a entrada termina aqui, e o rascunho não fica
+  // para trás. A tabela não tem escrita para o cliente — o ciclo de vida do
+  // rascunho é da rota, com autorização explícita no código.
+  const servico = clienteDeServicoOuNulo()
+  if (servico === null) return respostaIndisponivel(request)
+  const { error: limpezaError } = await servico
+    .from("entry_progress")
+    .delete()
+    .eq("user_id", userId)
+  if (limpezaError) {
+    log.error("entry notices: draft cleanup failed", {
+      error: limpezaError.message,
       userId,
     })
     return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
