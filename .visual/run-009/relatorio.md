@@ -119,3 +119,54 @@ Contrato: `docs/agents/tasks/RUN-009.task.yml`. Quadro e `RATIFICACAO.md` não f
   `lib/navegacao/entrada.ts` e `Sobreposicoes.tsx`, fora dos caminhos permitidos deste contrato.
 - **Custo:** 4 arquivos de rota + 2 módulos + 2 telas + 5 arquivos de prova. Sem migration, sem
   dependência nova, sem alteração em quadro, `.env` ou `apps/web/lib/app-api`.
+
+
+## Correção (05/11, rodada única — revisão Haiku 5.5 + auditoria Sonnet 5.5)
+
+Branch `feat/f08-guia`, base `60a1ba7f`. Nove commits: um por item, mais um de lint
+pré-existente que impedia o gate de ficar verde.
+
+| item | commit | conteúdo |
+|---|---|---|
+| 1 BLOQUEIA | `1ad7a243` | roteiro de 5 passos e atalhos (imóveis, busca, comunidade, negócios) restaurados acima do diretório real |
+| 2 ALTA | `7d6f54ef` | `DELETE /salvo` não exige mais entrada visível/aprovada; teste de salvo com entrada fora do ar → 200 |
+| 5 MÉDIA | `77900025` | verbete de outra cidade abre 200 mas devolve `podeSalvar: false` e `podeSugerir: false`; tela esconde salvar/sugerir; comentário e nome do teste corrigidos |
+| 3 ALTA | `5b2555e3` | `GET /api/app/guia/salvos` + `lerSalvosDoGuia` + seção "Referências do guia" em Salvos; E2E confere a referência em `/app/salvos` |
+| 4 ALTA | `cc7c0a44` | E2E do caminho de sucesso da sugestão (201 e confirmação na tela); seed ganhou uma ficha publicada (Transportadora) para o 201 existir |
+| 6 MÉDIA | `50071c7d` | cursor `depois` escapado (`valorEntreAspas`) no filtro do PostgREST; testes positivo (`Colégio "Militar"`) e negativo (cursor forjado) |
+| 7 MÉDIA | `cca6dba5` | `carregarMais` descarta resposta de filtro antigo por id de carga |
+| 8 BAIXA | `f3cf5205` | verbete 404 mostra "Referência não encontrada" sem "Tentar de novo"; comentário do Voltar corrigido |
+| — | `98db813a` | `chore(lint)`: fragmento inútil em `apps/web/app/(admin)/arrivals/page.tsx` que já deixava `main` vermelho (biome unsafe fix, sem mudança de comportamento) |
+
+### Números (rodados nesta sessão)
+
+- `npx pnpm@11.18.0 gate` → **verde**: lint, typecheck, typecheck:e2e, test, secrets. Build **pulado** (falta `apps/web/.env.local`, e `.env` é proibido nesta rodada).
+- `npx pnpm@11.18.0 gate --fast` → verde (lint, typecheck, typecheck:e2e).
+- `npx pnpm@11.18.0 exec vitest run tests/unit/app-api/guia` → **43 passed / 2 files** (eram 36 no início da correção).
+- `npx pnpm@11.18.0 --filter @bivaque/app test` → **245 passed / 24 files**.
+- `npx pnpm@11.18.0 test:unit` → **2147 passed / 213 files**.
+- `npx pnpm@11.18.0 test:scope` → **194 passed / 0 fail**.
+
+### O que não rodou, e por quê
+
+1. **E2E (`tests/e2e/f08-guia-real.spec.ts`) não rodou nesta máquina.** O banco local não sobe
+   (mesmo erro de named pipe do Docker Desktop registrado acima) e o doc da rodada manda rodar no
+   CI. As mudanças de E2E (itens 3 e 4) estão cobertas só por `typecheck:e2e` aqui; a prova viva
+   fica no CI.
+2. **`db reset --no-seed`, `test:db` e `db:lint` não rodaram** — sem banco local e sem migration
+   nova (o seed mudou, migration não).
+3. **Build de `apps/web` não rodou** — `gate` pula quando falta `apps/web/.env.local`, e criar/lar
+   `.env` está fora do permitido nesta rodada.
+4. **Auditoria visual em 375/768/1440 (claro/escuro) não rodou** — sem servidor/build; capturas
+   continuam as da execução original.
+
+### Decisões que o coordenador precisa conhecer
+
+- **Seed (`supabase/seed.sql`)** ganhou uma linha em `guide_articles` (Transportadora Ajuricaba,
+  `published`). Sem ela o 201 da sugestão não tem onde pousar e o item 4 seria impossível no CI. A
+  escola continua sem artigo de propósito, para o teste de "sem ficha publicada" seguir válido.
+- **Item 5:** a leitura nacional do banco foi mantida (o contrato não pede policy nova). O que mudou é
+  a resposta: `podeSalvar`/`podeSugerir` falsos fora da cidade da sessão, e a tela não oferece o que
+  falharia. O `PUT` continua sendo recusado pela RLS (403), como o E2E já provava.
+- **Item 6:** a escolha foi escapar (`valorEntreAspas`) em vez de recusar o cursor, porque recusar
+  quebraria a página 2 de qualquer nome com aspas — exatamente o caso pedido.
