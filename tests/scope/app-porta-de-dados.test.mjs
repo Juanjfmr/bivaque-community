@@ -4,7 +4,6 @@ import { join } from "node:path"
 import test from "node:test"
 
 const root = join(import.meta.dirname, "..", "..")
-const read = (...segments) => readFileSync(join(root, ...segments), "utf8")
 
 function arquivos(diretorio) {
   const caminho = join(root, diretorio)
@@ -17,63 +16,138 @@ function arquivos(diretorio) {
   return encontrados
 }
 
-function ler(caminhoAbsoluto) {
-  return readFileSync(caminhoAbsoluto, "utf8")
-}
+const ler = (caminhoAbsoluto) => readFileSync(caminhoAbsoluto, "utf8")
+const read = (...segmentos) => readFileSync(join(root, ...segmentos), "utf8")
+const relativo = (caminhoAbsoluto) => caminhoAbsoluto.slice(root.length + 1).replaceAll("\\", "/")
 
-// F05 / ADR-20261105: a jornada de eventos saiu da demonstração. Este teste é o
-// que impede a volta silenciosa — uma tela que lê de `dadosDoApp` "funciona" em
-// qualquer estado do banco, então voltar para ela não quebra teste nenhum.
-test("Agenda e Evento não leem mais a demonstração", () => {
-  for (const tela of ["Agenda.tsx", "Evento.tsx"]) {
-    const fonte = read("apps", "app", "src", "telas", tela)
+// F05 / ADR-20261105: a jornada de eventos saiu da demonstração. Estes testes são
+// o molde que as próximas oito jornadas copiam — o que eles travam não é a F05,
+// é o formato da porta.
+
+/** As telas que JÁ foram ligadas ao banco. A lista é explícita de propósito. */
+const TELAS_LIGADAS = ["apps/app/src/telas/Agenda.tsx", "apps/app/src/telas/Evento.tsx"]
+
+test("as telas ligadas leem pela porta da jornada, nunca pela demonstração", () => {
+  for (const tela of TELAS_LIGADAS) {
+    const fonte = read(...tela.split("/"))
     assert.doesNotMatch(fonte, /dadosDoApp/, `${tela} ainda usa dadosDoApp`)
-    assert.doesNotMatch(fonte, /from "@\/lib\/dados"/, `${tela} ainda importa a demonstração`)
-    assert.match(
-      fonte,
-      /from "@\/lib\/dados\/eventos"/,
-      `${tela} precisa ler pela porta da jornada (lib/dados/eventos)`,
-    )
+    assert.doesNotMatch(fonte, /from "@\/lib\/dados"$/m, `${tela} ainda importa a demonstração`)
+    assert.match(fonte, /from "@\/lib\/dados\/eventos"/, `${tela} não lê pela porta da jornada`)
   }
 })
 
 test("a demonstração continua servindo as telas que ainda não foram ligadas", () => {
   const telas = arquivos("apps/app/src/telas")
-  const aindaNaDemo = telas.filter((caminho) => ler(caminho).includes("dadosDoApp"))
-  // F05 ligou duas telas; as outras continuam na demonstração de propósito.
+  const ligadas = new Set(TELAS_LIGADAS.map((tela) => join(root, ...tela.split("/"))))
+  for (const caminho of telas) {
+    if (ligadas.has(caminho)) continue
+    assert.doesNotMatch(
+      ler(caminho),
+      /@\/lib\/dados\/eventos/,
+      `${relativo(caminho)} passou a ler a jornada de eventos sem estar na lista das ligadas`,
+    )
+  }
+  // A demonstração continua existindo e servindo o resto.
   assert.ok(
-    aindaNaDemo.length >= 10,
-    `só ${aindaNaDemo.length} telas ainda leem a demonstração: a F05 não podia ter ligado as outras jornadas`,
+    telas.some((caminho) => ler(caminho).includes("dadosDoApp")),
+    "nenhuma tela lê a demonstração: a galeria e as outras jornadas quebraram",
   )
-  for (const caminho of aindaNaDemo) {
-    assert.ok(
-      !caminho.endsWith("Agenda.tsx") && !caminho.endsWith("Evento.tsx"),
-      `${caminho} voltou para a demonstração`,
+})
+
+test("os módulos de dados não conhecem a demonstração", () => {
+  const jornadas = arquivos("apps/app/lib/dados").filter((caminho) => !caminho.endsWith("index.ts"))
+  assert.ok(jornadas.length >= 1, "nenhum módulo de jornada em lib/dados")
+  for (const caminho of jornadas) {
+    assert.doesNotMatch(
+      ler(caminho),
+      /dadosDoApp|lib\/demo|demo\//,
+      `${relativo(caminho)} volta à demonstração`,
     )
   }
 })
 
+test("só o cliente único chama /api/app", () => {
+  // A entrada tem o cliente próprio dela, que migra para o único depois do #128
+  // (pendência registrada no ADR). É a ÚNICA exceção aceita: se aparecer outra,
+  // o molde já nasceu com duas portas.
+  const EXCECOES = new Set(["apps/app/src/entrada/servidor.ts"])
+  const infratores = arquivos("apps/app")
+    .filter(
+      (caminho) =>
+        !caminho.includes("tests") &&
+        !caminho.includes("node_modules") &&
+        !caminho.includes("dist"),
+    )
+    .filter((caminho) => relativo(caminho) !== "apps/app/lib/api/cliente.ts")
+    .filter((caminho) => !EXCECOES.has(relativo(caminho)))
+    .filter((caminho) => /fetch\(/.test(ler(caminho)) && /\/api\/app/.test(ler(caminho)))
+  assert.deepEqual(infratores.map(relativo), [], "chamada direta a /api/app fora do cliente")
+})
+
 test("as rotas de eventos usam a sessão sob RLS, nunca o cliente de serviço", () => {
-  const rotas = arquivos("apps/web/app/api/app/eventos")
-  assert.ok(rotas.length >= 4, `esperava as rotas da jornada, achei ${rotas.length} arquivos`)
+  const rotas = arquivos("apps/web/app/api/app/eventos").filter((caminho) =>
+    caminho.endsWith("route.ts"),
+  )
+  assert.ok(rotas.length >= 4, `esperava as rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = ler(caminho)
     assert.doesNotMatch(
       fonte,
       /clienteDeServicoOuNulo|service_role/,
-      `${caminho} usa privilégio onde a RLS da sessão basta`,
+      `${relativo(caminho)} usa privilégio onde a RLS da sessão basta`,
     )
-    assert.match(fonte, /exigirSessao/, `${caminho} não resolve a sessão pelo encanamento do app`)
-    assert.match(fonte, /opcoesDoApp/, `${caminho} não responde ao preflight do contrato`)
+    assert.match(
+      fonte,
+      /exigirSessao/,
+      `${relativo(caminho)} não resolve a sessão pelo encanamento`,
+    )
+    assert.match(fonte, /opcoesDoApp/, `${relativo(caminho)} não responde ao preflight do contrato`)
   }
 })
 
 test("toda escrita das rotas passa pela conferência de CSRF", () => {
-  const rotas = arquivos("apps/web/app/api/app/eventos").filter((caminho) =>
+  const escritas = arquivos("apps/web/app/api/app/eventos").filter((caminho) =>
     /export async function (POST|PUT|PATCH|DELETE)/.test(ler(caminho)),
   )
-  assert.ok(rotas.length >= 4, `esperava as escritas da jornada, achei ${rotas.length} arquivos`)
-  for (const caminho of rotas) {
-    assert.match(ler(caminho), /conferirEscrita\(/, `${caminho} escreve sem conferir a porta`)
+  assert.ok(escritas.length >= 4, `esperava as escritas da jornada, achei ${escritas.length}`)
+  for (const caminho of escritas) {
+    assert.match(
+      ler(caminho),
+      /conferirEscrita\(/,
+      `${relativo(caminho)} escreve sem conferir a porta`,
+    )
+  }
+})
+
+test("a cidade da sessão é lida no vínculo current, num lugar só", () => {
+  const comum = read("apps", "web", "app", "api", "app", "eventos", "_comum.ts")
+  assert.match(comum, /eq\("kind", "current"\)/)
+  for (const caminho of arquivos("apps/web/app/api/app/eventos").filter((c) =>
+    c.endsWith("route.ts"),
+  )) {
+    assert.doesNotMatch(
+      ler(caminho),
+      /from\("locality_memberships"\)/,
+      `${relativo(caminho)} lê a cidade por conta própria em vez de _comum.ts`,
+    )
+  }
+})
+
+test("o detalhe não devolve caminho cru de mídia", () => {
+  const rota = read(...["apps", "web", "app", "api", "app", "eventos", "[id]", "route.ts"])
+  assert.doesNotMatch(rota, /cover_path/, "o detalhe projeta o caminho do bucket na resposta")
+  assert.doesNotMatch(rota, /capa:/, "o detalhe devolve capa crua")
+})
+
+test("as rotas de eventos têm a função única de UUID", () => {
+  for (const caminho of arquivos("apps/web/app/api/app/eventos").filter((c) =>
+    c.endsWith("route.ts"),
+  )) {
+    const fonte = ler(caminho)
+    assert.doesNotMatch(
+      fonte,
+      /const UUID =/,
+      `${relativo(caminho)} redefine o regex de UUID em vez de usar _comum.ts`,
+    )
   }
 })

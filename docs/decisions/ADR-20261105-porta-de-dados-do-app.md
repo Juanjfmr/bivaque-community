@@ -80,6 +80,68 @@ podem discordar sobre o que é um evento válido.
 Falha de leitura do banco é `503`, nunca lista vazia: um banco fora renderizado
 como "nenhum encontro" esconde o erro no meio da tela.
 
+### 3.1. O corpo de erro
+
+Toda rota do app responde erro no mesmo formato, e o cliente decide pelo
+`codigo`, nunca pelo texto:
+
+```json
+{ "erro": "<codigo-curto>", "mensagem": "<frase pronta, quando existe>" }
+```
+
+| Status | `codigo` no cliente | Quando |
+|---|---|---|
+| 400 | `invalido` | corpo, tipo ou parâmetro fora da régua |
+| 401 | `sem-sessao` | credencial ausente, vencida ou conflitante |
+| 403 | `recusado` | origem/cabeçalho (CSRF), autoria, cidade, RLS |
+| 404 | `nao-encontrado` | não existe ou não é visível para esta pessoa |
+| 409 | `conflito` | a operação colide com o estado atual |
+| 429 | `limite` | limite de tentativas |
+| 500/503 | `indisponivel` | serviço fora — nunca "o pedido estava errado" |
+
+`erro` é o motivo curto que a tela ramifica (`de-outra-cidade`,
+`nao-organiza`, `sem-cidade`, `dados-invalidos`, …). `mensagem` é a frase que o
+servidor já preparou para a pessoa; quando existe, vence a frase padrão da
+tela. A tela escolhe a frase final por ação: recusa de pergunta não é recusa de
+autoria.
+
+### 3.2. Mídia nunca sai como caminho
+
+O detalhe nunca devolve caminho cru do bucket (`cover_path` e similares): ou a
+rota assina uma URL de vida curta (`createSignedUrls`, SPA ADR §5.4), ou não
+devolve nada. Hoje a tela de encontro não desenha capa, então a rota não devolve
+nada — e o teste de escopo garante que nenhum campo com cara de caminho volte
+ao corpo.
+
+### 3.3. A cidade é a do vínculo `current`
+
+Cidade, autoria e papel vêm do banco pela sessão, e o vínculo é lido com
+`kind = 'current'`: quem está em transferência tem duas linhas (a atual e a que
+está deixando) e ler sem o filtro cai na cidade errada. O recorte vive em
+`apps/web/app/api/app/eventos/_comum.ts`. **As rotas de entrada repetem esse
+padrão em código próprio**; elas migram para a função única junto com o cliente
+da entrada, depois do #128.
+
+### 3.4. Encontro de outra cidade é visita, não 404
+
+Decisão do dono de 25/09 (migration `20260925161111_consulta_outra_cidade`):
+membro com cidade atual LÊ encontros de alcance cidade de qualquer cidade. Por
+isso o detalhe não é 404 para quem é de fora — ele devolve a cidade do encontro
+e `visitante: true`, e a tela explica que presença e pergunta ficam para quem
+mora lá. Confirmar presença e perguntar ao organizador continuam negados para
+visitante (403 `de-outra-cidade`, antes do banco e de novo na RLS), e a rota não
+devolve contagem de confirmados para quem é de fora: a RLS nega a leitura de
+`event_rsvps`, e um zero ali seria a mentira "ninguém confirmou".
+
+### 3.5. A paginação é por cursor composto
+
+Lista paginada devolve `proximo` opaco; a tela devolve o mesmo valor em
+`?depois=`. O cursor é `comecaEm|id` — os dois campos da ordenação, na mesma
+ordem do `order`. Só `starts_at` perderia ou repetiria encontros no mesmo
+horário na virada da página. A tela mostra "Ver mais" enquanto houver cursor;
+listar menos que o total sem dizer nada é o corte silencioso que o
+`apps/app/AGENTS.md` proíbe.
+
 ### 4. A tela
 
 A tela troca `dadosDoApp` pelo módulo da jornada e passa a distinguir os estados
