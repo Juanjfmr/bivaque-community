@@ -4,6 +4,17 @@
 // as the old alias, never as a second meaning. When both are present `q` wins:
 // one parameter, one meaning, no silent merge.
 
+export function termoValido(valor: string): boolean {
+  return (
+    valor.length > 0 &&
+    valor.length <= 100 &&
+    [...valor].every((letra) => {
+      const codigo = letra.charCodeAt(0)
+      return codigo >= 32 && codigo !== 127
+    })
+  )
+}
+
 export function resolveTerm(get: (key: string) => string | null): string {
   const q = get("q")
   if (q !== null) return q.trim()

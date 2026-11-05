@@ -25,6 +25,7 @@ allowed_paths:
   - "apps/app/src/roteador.tsx"
   - "apps/app/tests"
   - "apps/web/app/api/app/inicio"
+  - "apps/web/app/api/app/busca" # rota exigida pela aceita??o
   - "apps/web/lib/search"
   - "apps/web/app/(shell)/inicio"
   - "apps/web/app/(shell)/explorar"

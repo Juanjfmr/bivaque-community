@@ -24,7 +24,7 @@ import {
 // Quantos pedidos a busca traz: o grupo mostra três e conta o resto.
 const INDICATION_SEARCH_LIMIT = 20
 
-import { isSessionExpiredError, resolveTerm } from "../../../../lib/search/params"
+import { isSessionExpiredError, resolveTerm, termoValido } from "../../../../lib/search/params"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { Card } from "../../../components/bivaque/card"
 import { AccessUnavailableState, EmptyState } from "../../../components/bivaque/empty-state"
@@ -127,7 +127,7 @@ function BuscaContent() {
     searchSeq.current = seq
     const supabase = supabaseRef.current
 
-    if (term === "") {
+    if (!termoValido(term)) {
       setGroups([])
       setStatus("idle")
       return
