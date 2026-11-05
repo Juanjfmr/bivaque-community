@@ -5580,20 +5580,38 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Os CTAs Criar conta da landing pública (apps/web/app/landing/landing.tsx, função Cta) são md-filled-button com href. O elemento só navega depois de registrado no cliente; antes disso o toque não leva a lugar nenhum. No CI, o e2e landing-v8 em 375 px clicou antes do registro e ficou em / duas vezes (31/10/2026); o teste passou a esperar o registro (59a33028), mas uma pessoa num celular lento ainda pode tocar cedo demais. A landing continua no Next pelo ADR-20261024-front-react-spa §4.",
       "checklist": [
         "O CTA navega para /signup mesmo antes do JavaScript (por exemplo, um <a href> real dentro ou no lugar do botão)",
         "e2e que clica antes do registro do elemento e chega a /signup",
         "Mesma correção nos outros md-filled-button com href da landing (chamada final, barra fixa, folha do menu)"
       ],
-      "completedChecklist": [false, false, false],
+      "completedChecklist": [true, true, true],
       "dependencies": [],
-      "proof": [],
-      "tests": ["tests/e2e/landing-v8.spec.ts"],
-      "links": ["apps/web/app/landing/landing.tsx", "tests/e2e/landing-v8.spec.ts"],
-      "updatedAt": "2026-10-31",
-      "sourceRevision": "59a33028"
+      "proof": [
+        "HTML servido em 05/11/2026: cinco `<a class=\"ld-cta-btn\" href=\"/signup\">Criar conta</a>` e nenhum `<md-filled-button>` (antes: cinco botões cujo link só existia depois do registro no cliente).",
+        "e2e pela fila de provas, build de produção em 127.0.0.1:3000: 27 passed, 21 skipped, 0 failed — landing-v8.spec.ts e landing-sem-js.spec.ts.",
+        "Sem JavaScript (contexto novo com javaScriptEnabled false): o toque no CTA da dobra e no da chamada final chega a /signup em 375, 768 e 1440, e os cinco CTAs estão no DOM como link para /signup.",
+        "landing-v8.spec.ts deixou de esperar o registro do elemento (openLanding sem waitForFunction) e continua verde nos dois tamanhos; o CTA da dobra entra na ordem de tabulação e mostra o anel de foco 3px/2px, e topo sólido, barra fixa, folha do menu e chamada final navegam.",
+        "Capturas 375/768/1440 × claro/escuro em .visual/run-005/{antes,depois}: 22 recortes, 20 byte-idênticos; os dois do topo sólido (122×44) diferem em 442 e 447 pixels, todos na faixa do rótulo (x 24–97, y 16–27), com deslocamento de 0,19 px no centroide do texto — mesma caixa, mesmas cores, mesma tipografia. Nenhuma mudança perceptível.",
+        "tests/unit/landing/cta-sem-js.test.ts: 4 testes verdes — cinco âncoras no markup do servidor, nenhum md-filled-button, id da dobra preservado e a aparência Brasa (cor, recorte, altura e espaçamento) presa em landing.css.",
+        "gate --fast verde: lint, typecheck e typecheck:e2e (que cobre os specs novos)."
+      ],
+      "tests": [
+        "tests/e2e/landing-v8.spec.ts",
+        "tests/e2e/landing-sem-js.spec.ts",
+        "tests/unit/landing/cta-sem-js.test.ts"
+      ],
+      "links": [
+        "apps/web/app/landing/landing.tsx",
+        "apps/web/app/landing/landing.css",
+        "tests/e2e/landing-v8.spec.ts",
+        "tests/e2e/landing-sem-js.spec.ts"
+      ],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "f6e1115a",
+      "completedAt": "2026-11-05"
     },
     {
       "id": "APP-REGUA-NEXTDOOR",
@@ -6353,6 +6371,32 @@
         "Identificar a causa de configuração ou provedor sem confundir execução com veredito.",
         "Reexecutar o serviço e exigir parecer independente; não substituir por sucesso vazio."
       ]
+    },
+    {
+      "id": "MATERIAL-BOTAO-HREF-SEM-JS",
+      "title": "Botão Material com href só navega depois do JavaScript, fora da landing; regra de Brasa morta no brand-tokens",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Achado da revisão do RUN-005 (05/11/2026). O MaterialFilledButton com href só navega depois de registrado no cliente, o mesmo defeito corrigido na landing. Continua em apps/web/app/(public)/ajuda/page.tsx:180 (pública, fica) e nas telas antigas de entrada (login/entry-resume.tsx:72, nova-senha/page.tsx:132, onboarding/welcome/page.tsx:157, recuperar-senha/page.tsx:144), que o RUN-003 retira. Além disso, apps/web/app/brand-tokens.css:163-180 (.ld md-filled-button) ficou sem consumidor e tests/scope/entrada-skin.test.mjs:45-50 congela essa regra morta com uma descrição que já não é verdade; o comentário de apps/web/app/components/material/filled-button.tsx:26-33 também.",
+      "checklist": [
+        "Ajuda pública: CTA com href vira <a href> real, com E2E sem JavaScript",
+        "Remover .ld md-filled-button do brand-tokens.css e reescrever o teste de escopo para a regra real (.ld .ld-cta-btn em Brasa, sem Brasa em .bv-skin md-filled-button)",
+        "Atualizar o comentário de filled-button.tsx",
+        "Telas antigas de entrada: confirmar que saíram com o RUN-003; se alguma ficar, mesma correção"
+      ],
+      "dependencies": [],
+      "links": [
+        "apps/web/app/(public)/ajuda/page.tsx",
+        "apps/web/app/brand-tokens.css",
+        "tests/scope/entrada-skin.test.mjs"
+      ],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "f6e1115a"
     },
     {
       "id": "ENTRADA-DESAFIO-HUMANO",
