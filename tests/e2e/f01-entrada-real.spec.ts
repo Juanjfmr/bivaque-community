@@ -350,6 +350,27 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await capturarEmDoisTemas(page, projeto, "porta-erro-provedor")
   })
 
+  test("rede cai na prévia do convite: mensagem fixa e botão volta ao normal", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(90_000)
+    const projeto = testInfo.project.name
+    const email = enderecoSintetico(`convite-rede-${projeto}`)
+    const { codigo } = await criarConvitePendente(email)
+
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(`${ROTA_DA_ENTRADA}?convite=${codigo}`)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await page.route("**/api/app/entry/invite/preview", (rota) => rota.abort("failed"))
+    await page.getByRole("button", { name: "Usar", exact: true }).click()
+    await expect(page.getByText("O convite está indisponível agora. Tente de novo.")).toBeVisible({
+      timeout: 20_000,
+    })
+    await expect(page.getByRole("button", { name: "Usar", exact: true })).toBeEnabled()
+  })
+
   test("convite familiar entra sem CPF e sem cidade, pelo código do link", async ({
     page,
   }, testInfo) => {

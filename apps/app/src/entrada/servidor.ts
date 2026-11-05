@@ -105,7 +105,14 @@ export type EnvioDoCodigo =
   | { readonly estado: "indisponivel" }
 
 export async function enviarCodigo(email: string): Promise<EnvioDoCodigo> {
-  const resposta = await pedir("otp", { metodo: "POST", corpo: { email } })
+  let resposta: Resposta
+  try {
+    resposta = await pedir("otp", { metodo: "POST", corpo: { email } })
+  } catch {
+    // Falha de rede não pode deixar o botão girando: a tela mostra a mensagem
+    // fixa e volta ao normal.
+    return { estado: "indisponivel" }
+  }
   if (resposta.status === 200) {
     const reenviarEm = resposta.corpo["reenviarEm"]
     return { estado: "enviado", reenviarEm: typeof reenviarEm === "number" ? reenviarEm : 60 }
@@ -127,7 +134,12 @@ export type VerificacaoDoCodigo =
   | { readonly estado: "indisponivel" }
 
 export async function verificarCodigo(email: string, codigo: string): Promise<VerificacaoDoCodigo> {
-  const resposta = await pedir("otp/verify", { metodo: "POST", corpo: { email, codigo } })
+  let resposta: Resposta
+  try {
+    resposta = await pedir("otp/verify", { metodo: "POST", corpo: { email, codigo } })
+  } catch {
+    return { estado: "indisponivel" }
+  }
   if (resposta.status === 200) return { estado: "autenticado" }
   if (resposta.status === 400) return { estado: "codigo-invalido" }
   if (resposta.status === 429) {
@@ -334,10 +346,15 @@ export type PreviewDoConvite =
  * quando existe — é ele que vira o campo só de leitura.
  */
 export async function previewConvite(codigo: string, email?: string): Promise<PreviewDoConvite> {
-  const resposta = await pedir("invite/preview", {
-    metodo: "POST",
-    corpo: { codigo, ...(email === undefined ? {} : { email }) },
-  })
+  let resposta: Resposta
+  try {
+    resposta = await pedir("invite/preview", {
+      metodo: "POST",
+      corpo: { codigo, ...(email === undefined ? {} : { email }) },
+    })
+  } catch {
+    return { estado: "indisponivel" }
+  }
   if (resposta.status === 200) {
     const inviterName = texto(resposta.corpo, "inviterName")
     return {
