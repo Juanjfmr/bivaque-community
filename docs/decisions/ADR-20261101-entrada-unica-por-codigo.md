@@ -120,6 +120,15 @@ O convite por código (ADR-20261022-entrada-do-prototipo §2) perde a senha:
 
 Os limites de tentativa do código de convite não mudam.
 
+### Decisão do dono em 05/11/2026 — o que o CPF devolve
+
+O dono decidiu, ao fechar a revisão do PR #128, que `POST /api/app/entry/cpf` **pode devolver o nome
+sugerido e o resultado da consulta**. O vínculo entre o nome e o militar já é público no Portal da
+Transparência; a rota não revela nada que uma consulta pública ao mesmo CPF não revelasse. O CPF
+continua sem ser gravado, sem voltar na resposta e sem entrar em log, e o resultado segue sem motivo
+técnico. Esta decisão encerra o ponto: revisões futuras não reabrem o que a rota devolve, só o que
+ela persiste e registra.
+
 ### O que não muda
 
 - a verificação pelo Portal e o caminho do documento (ADR-20260922-identidade-quando-portal-falha);
