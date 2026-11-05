@@ -4,7 +4,11 @@ import { MEMBRO_SEMEADO, semearSessaoDeMembro } from "./entrada-real-ajuda"
 test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
   test("mostra a cidade da sessão e busca conteúdo semeado", async ({ page, context }) => {
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    const inicio = page.waitForResponse((resposta) => resposta.url().endsWith("/api/app/inicio"))
     await page.goto("/app/inicio")
+    const resposta = await inicio
+    expect(resposta.status()).toBe(200)
+    expect((await resposta.json()) as { cidade: string }).toMatchObject({ cidade: "Manaus" })
     await expect(page.getByRole("heading", { name: "Sua rede em Manaus" })).toBeVisible()
     await expect(page.getByText("Piquenique das famílias")).toBeVisible({ timeout: 30_000 })
     await page.getByRole("button", { name: "Buscar no Bivaque" }).click()
