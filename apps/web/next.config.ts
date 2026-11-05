@@ -1,6 +1,23 @@
 import { withSentryConfig } from "@sentry/nextjs"
 import type { NextConfig } from "next"
 
+// Telas antigas de entrada da web (ENTRADA-WEB-ANTIGA). Os caminhos são exatos,
+// salvo a subárvore de onboarding. A lista não inclui `/conta-apagada`,
+// `/convite`, `/prestador-convite`, `/privacidade`, `/ajuda` nem `/consent`:
+// esses seguem públicos ou têm fluxo próprio (ADR-20261022-entrada-do-prototipo).
+const ENTRADA_ANTIGA: readonly string[] = [
+  "/login",
+  "/signup",
+  "/recuperar-senha",
+  "/nova-senha",
+  "/onboarding",
+  "/onboarding/:caminho*",
+  "/auth/confirmar-email",
+  "/auth/callback-error",
+]
+
+const ENTRADA_DO_APP = "/app/entrar"
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@bivaque/contracts", "@bivaque/domain", "@bivaque/tokens"],
@@ -33,6 +50,19 @@ const nextConfig: NextConfig = {
         ],
       },
     ]
+  },
+  // ENTRADA-WEB-ANTIGA (ADR-20261105-entrada-enxuta-e-r3-sem-parada): as telas
+  // antigas de entrada da web saem e a porta do app (`/app/entrar`) é a única
+  // entrada. Redirect de configuração roda antes do proxy e do sistema de
+  // arquivos, então o endereço antigo nem chega ao portão. Temporário (307): a
+  // rota pode voltar se o uso real pedir. `/consent` e `/auth/callback` ficam
+  // fora de propósito: o aceite do Google e a troca do código dependem deles.
+  async redirects() {
+    return ENTRADA_ANTIGA.map((source) => ({
+      source,
+      destination: ENTRADA_DO_APP,
+      permanent: false,
+    }))
   },
   experimental: {
     serverActions: {
