@@ -120,9 +120,9 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
           "",
           `Seu código é ${code}. Ele vale 7 dias e só pode ser usado uma vez.`,
           "",
-          `Entre em ${origin}/convite e digite o código, ou abra ${origin}/convite?codigo=${code}`,
+          `Abra ${origin}/app/entrar?convite=${code} ou entre em ${origin}/app/entrar e digite o código.`,
           "",
-          "O convite vale só para este e-mail: crie a conta com este mesmo endereço.",
+          "O convite vale só para este e-mail: entre com este mesmo endereço.",
         ].join("\n"),
       }
     }

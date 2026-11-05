@@ -8,32 +8,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Botao } from "@/src/pecas/pecas"
-import {
-  Avisos,
-  Combinado,
-  Documento,
-  InicioComPrimeirosPassos,
-  InteressesEGrupos,
-  PreviaDaCidade,
-  Verificacao,
-} from "./etapas-comunidade"
-import {
-  Aceite,
-  CidadeEMomento,
-  Codigo,
-  Cpf,
-  Email,
-  Nome,
-  Porta,
-  type PropsDaEtapa,
-} from "./etapas-conta"
+import type { DadosDaPrevia } from "./entrada-dados"
+import { InicioComPrimeirosPassos } from "./etapas-comunidade"
+import type { PropsDaEtapa } from "./etapas-conta"
 import {
   concluir as concluirEtapa,
   etapaAnterior,
   FLAGS_PADRAO,
   type Flags,
   fracaoDoProgresso,
-  type IdDaEtapa,
+  MINIMO_PARA_EXIBIR,
   progressoInicial,
   receberVerificacao,
   voltar as voltarEtapa,
@@ -43,31 +27,43 @@ import {
   apagarProgresso,
   CENARIOS,
   type Cenario,
+  CIDADES,
+  cidadePorNome,
   consultarVinculo,
   eventosDoFunil,
   lerProgresso,
   ouvirFunil,
+  perguntasDoMomento,
   registrarEvento,
   salvarProgresso,
+  sugerirGrupos,
 } from "./servidor-simulado"
+import { TELAS_DA_ENTRADA } from "./telas"
 import "./previa-f01.css"
 
-type TelaDaEtapa = (props: PropsDaEtapa) => React.ReactNode
-
-const TELAS: Record<Exclude<IdDaEtapa, "inicio">, TelaDaEtapa> = {
-  porta: Porta,
-  email: Email,
-  codigo: Codigo,
-  aceite: Aceite,
-  cpf: Cpf,
-  nome: Nome,
-  cidade: CidadeEMomento,
-  verificacao: Verificacao,
-  documento: Documento,
-  "previa-cidade": PreviaDaCidade,
-  interesses: InteressesEGrupos,
-  combinado: Combinado,
-  avisos: Avisos,
+/** O conteúdo simulado que a prévia injeta nas etapas compartilhadas. */
+function dadosDaPrevia(progresso: ReturnType<typeof progressoInicial>): DadosDaPrevia {
+  const cidade = cidadePorNome(progresso.cidade)
+  return {
+    cidades: CIDADES.map((item) => ({ valor: item.nome, rotulo: `${item.nome}, ${item.uf}` })),
+    cidade:
+      cidade === null
+        ? null
+        : {
+            nome: cidade.nome,
+            uf: cidade.uf,
+            comGente: cidade.membros >= MINIMO_PARA_EXIBIR,
+            perguntas: perguntasDoMomento(cidade, progresso.momento),
+            encontro: cidade.encontro,
+          },
+    sugestoes: sugerirGrupos(progresso.interesses, progresso.momento).map(({ grupo, motivo }) => ({
+      id: grupo.id,
+      nome: grupo.nome,
+      membros: grupo.membros,
+      selo: grupo.selo,
+      motivo,
+    })),
+  }
 }
 
 /**
@@ -139,11 +135,24 @@ export function PreviaF01() {
 
   const conteudo =
     progresso.etapa === "inicio" ? (
-      <InicioComPrimeirosPassos progresso={progresso} flags={flags} aoRecomecar={recomecar} />
+      <InicioComPrimeirosPassos
+        progresso={progresso}
+        flags={flags}
+        aoRecomecar={recomecar}
+        previa={dadosDaPrevia(progresso)}
+      />
     ) : (
       (() => {
-        const Tela = TELAS[progresso.etapa]
-        return <Tela progresso={progresso} concluir={concluir} voltar={voltar} erro={erro} />
+        const Tela = TELAS_DA_ENTRADA[progresso.etapa]
+        return (
+          <Tela
+            progresso={progresso}
+            concluir={concluir}
+            voltar={voltar}
+            erro={erro}
+            previa={dadosDaPrevia(progresso)}
+          />
+        )
       })()
     )
 

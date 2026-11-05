@@ -6,6 +6,10 @@ coverage/
 playwright-report/
 test-results/
 .visual/
+# capturas transitórias do visual-capture do app (a evidência vai para .visual/)
+apps/app/artifacts/visual/
+# build do app copiado para ser servido em /app pelo Next (gerado, não versionado)
+apps/web/public/app/
 dev-server.log
 dev-server.pid
 .env

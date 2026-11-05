@@ -3,6 +3,7 @@ import type { ComponentType } from "react"
 
 import { ROTAS } from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
+import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
 import { TelaGaleria } from "@/src/galeria/TelaGaleria"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
@@ -19,7 +20,6 @@ import { Contato } from "@/src/telas/Contato"
 import { Conversa } from "@/src/telas/Conversa"
 import { Conversas } from "@/src/telas/Conversas"
 import { Dono } from "@/src/telas/Dono"
-import { Entrar } from "@/src/telas/Entrar"
 import { Evento } from "@/src/telas/Evento"
 import { Grupo } from "@/src/telas/Grupo"
 import { Guia } from "@/src/telas/Guia"
@@ -63,7 +63,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   conduta: Conduta,
   contato: Contato,
   dono: Dono,
-  entrar: Entrar,
+  entrar: TelaDeEntrada,
   ocultados: Ocultados,
   privacidade: Privacidade,
   voce: Voce,

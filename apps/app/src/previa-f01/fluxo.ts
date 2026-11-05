@@ -3,8 +3,8 @@
  *
  * A ordem das etapas é configuração (`FLUXO_F01`), não código espalhado em
  * telas: tirar, pular ou reordenar uma etapa é mudar esta lista. O progresso
- * (`Progresso`) é o que o servidor vai guardar — na prévia ele mora num
- * repositório simulado (`servidor-simulado.ts`), com a mesma forma.
+ * (`Progresso`) é o que o servidor vai guardar; na prévia de design ele mora no
+ * armazenamento local, com a mesma forma.
  *
  * Decisões do dono em 01/11/2026: Negócio fora do onboarding (flag nos
  * primeiros passos); entrada por código, sem senha; Apple na prévia; aceite
@@ -57,7 +57,16 @@ export type Progresso = {
   emailMascarado: string | null
   verificacao: Verificacao
   nome: { nome: string; sobrenome: string } | null
+  /** Nome da cidade para exibir; o canônico é `cidadeIbge`. */
   cidade: string | null
+  /** Código IBGE do catálogo (`YYYYYYY`), único vocabulário de cidade no banco. */
+  cidadeIbge: string | null
+  /** Código IBGE do destino; só existe quando o momento é "saindo". */
+  destinoIbge: string | null
+  /** Data da chegada em `YYYY-MM-DD`; só existe quando o momento é "chegando". */
+  dataChegada: string | null
+  /** Data da saída em `YYYY-MM-DD`; só existe quando o momento é "saindo". */
+  dataSaida: string | null
   momento: Momento | null
   interesses: readonly string[]
   grupos: readonly string[]
@@ -87,17 +96,24 @@ export const FLUXO_F01: readonly DefinicaoDaEtapa[] = [
   { id: "aceite", noProgresso: true, permiteVoltar: false },
   { id: "cpf", noProgresso: true, permiteVoltar: false, quando: (p) => !p.convite },
   { id: "nome", noProgresso: true, permiteVoltar: false },
-  { id: "cidade", noProgresso: true, permiteVoltar: true },
+  // Quem entra por convite de familiar já tem cidade e vínculo (o aceite cria):
+  // a etapa de cidade, a espera e o documento não fazem sentido nesse caminho.
+  { id: "cidade", noProgresso: true, permiteVoltar: true, quando: (p) => !p.convite },
   // A espera só aparece se a consulta ainda não terminou quando a pessoa chega
   // aqui, ou se terminou sem confirmar. Com o vínculo confirmado, some.
   {
     id: "verificacao",
     noProgresso: true,
     permiteVoltar: false,
-    quando: (p) => p.verificacao !== "confirmada",
+    quando: (p) => !p.convite && p.verificacao !== "confirmada",
   },
-  { id: "documento", noProgresso: true, permiteVoltar: true, quando: precisaDeDocumento },
-  { id: "previa-cidade", noProgresso: true, permiteVoltar: false },
+  {
+    id: "documento",
+    noProgresso: true,
+    permiteVoltar: true,
+    quando: (p) => !p.convite && precisaDeDocumento(p),
+  },
+  { id: "previa-cidade", noProgresso: true, permiteVoltar: false, quando: (p) => !p.convite },
   { id: "interesses", noProgresso: true, permiteVoltar: true },
   { id: "combinado", noProgresso: true, permiteVoltar: true },
   { id: "avisos", noProgresso: true, permiteVoltar: true },
@@ -119,6 +135,10 @@ export function progressoInicial(): Progresso {
     verificacao: "nao-iniciada",
     nome: null,
     cidade: null,
+    cidadeIbge: null,
+    destinoIbge: null,
+    dataChegada: null,
+    dataSaida: null,
     momento: null,
     interesses: [],
     grupos: [],

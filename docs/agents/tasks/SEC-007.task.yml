@@ -1,0 +1,96 @@
+# Lote A do F01: endurecer o servidor da entrada antes de ligar as telas.
+# Origem: revisão independente (reviewer) e auditoria (security-auditor) de 04/11/2026
+# sobre o trabalho do executor DeepSeek (origin/ds/lancamento, HEAD f1d14a2d).
+task_id: SEC-007
+
+objective: >
+  A porta de entrada do app (rotas /api/app/entry/*) passa a resistir a abuso do código por
+  e-mail, mantém a sessão viva além da primeira hora, não rebaixa quem já foi verificado, decide o
+  destino pelo estado canônico e apaga o rascunho com dado pessoal em todo caminho de conclusão.
+
+authority:
+  - docs/LANCAMENTO.md (F01, critérios 1, 3 e 4)
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (§1 destino pelo servidor; §2 seis tentativas, limite por e-mail e IP, reenvio de 60 s)
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md (versão diferente volta ao inicial; rascunho apagado ao terminar)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5.1 cliente do usuário sob RLS; §5.2 CSRF)
+  - tools/backend-kanban card LAN-F01
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Relatórios de 04/11 do reviewer (FAIL: B-1 sessão sem renovação, B-2 OTP sem limite; I-2, I-3,
+    I-6, I-7, I-8, M-2, M-3, M-7, M-8) e do security-auditor (BLOQUEIA: HIGH OTP sem limite e IP do
+    servidor; MEDIUM cookie sem Secure; LOW rota de verificação com service_role, rascunho não
+    apagado em todo caminho, sem frame-ancestors). Revisão 30628fb5..dd75d8d0 do branch
+    ccr-2c6b6b22-i5rd59: gate --fast verde, pnpm test verde, test:db PASS 159/2461.
+
+allowed_paths:
+  - apps/web/app/api/app/entry/**
+  - apps/web/lib/app-api/**
+  - apps/web/lib/onboarding/**
+  - apps/web/lib/auth/**
+  - apps/web/proxy.ts
+  - apps/web/next.config.ts
+  - apps/app/src/entrada/**
+  - supabase/migrations/**
+  - supabase/tests/**
+  - supabase/config.toml
+  - supabase/templates/**
+  - supabase/database.generated.ts
+  - tests/unit/app-api/**
+  - tests/unit/onboarding/**
+  - tests/scope/**
+  - apps/app/tests/**
+  - vercel.json
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md
+  - docs/decisions/RATIFICACAO.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - editar migration já aplicada (criar migration nova com supabase migration new)
+  - ligar as telas do F01 ao servidor real ou mexer em apps/app/src/previa-f01 (é o lote seguinte)
+  - mudar o modelo de cidade, momento, data, destino, interesses ou combinado (lote seguinte)
+  - confiar em X-Forwarded-For vindo do cliente como identidade de IP
+  - expor o schema private ou dar grant a anon/authenticated em função de limite
+  - registrar CPF, código, e-mail em claro ou token em log
+  - resetar banco remoto ou usar --linked
+
+acceptance:
+  - envio do código - no máximo 1 por e-mail a cada 60 s e teto por hora por e-mail e por IP confiável (x-vercel-forwarded-for ou x-real-ip da plataforma); a resposta acima do limite é 429 com segundos, sem revelar se a conta existe
+  - verificação do código - no 6º erro do mesmo e-mail o código é invalidado no servidor (por exemplo generateLink sem envio) e a 7ª tentativa com o código antes certo falha com a mesma mensagem única
+  - o limitador mora no banco em função do schema private executável só por service_role, com chave por hash do e-mail normalizado; nenhuma inundação de um e-mail afeta outro e-mail
+  - supabase/config.toml com max_frequency de 60 s e seção [auth.rate_limit] explícita; o template de confirmação de cadastro também leva o código e não link
+  - a rota que renova a sessão por cookie grava os cookies renovados na resposta, com as mesmas opções de cookie do callback (Secure em produção); o cookie gravado na verificação do código também leva Secure em produção
+  - progresso com versão diferente de VERSAO_DO_FLUXO volta ao progresso inicial no servidor e no app, e o PUT recusa versão diferente da atual
+  - sobrenome vazio é aceito no rascunho
+  - GET de progresso de quem já tem vínculo com a cidade devolve a etapa final (inicio), não a porta
+  - a consulta de CPF de quem já está verificado não rebaixa o status, nas duas portas (rota do app e /api/onboarding), pelo mesmo módulo
+  - a rota de verificação lê pelo cliente do usuário sob RLS (my_verification_status e leitura própria de locality_memberships), sem service_role
+  - o rascunho é apagado dentro do provisionamento no banco, valendo para todos os caminhos de conclusão (app, web e convite familiar)
+  - respostas do Next com frame-ancestors 'none' e X-Frame-Options DENY; o portão do proxy casa /app exato ou /app/ como prefixo, não "/app" solto
+  - vercel.json constrói o app, exporta para apps/web/public/app e constrói o web, para /app existir no deploy
+  - falta de variável de ambiente nas rotas responde 503, não 500; e-mail inválido no app mostra "e-mail inválido", não "indisponível"; sem BOM UTF-8 nos arquivos tocados
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 exec supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 test:scope
+  - "testes negativos novos: errado sete vezes; reenvio antes de 60 s; inundação de um e-mail não afeta outro; cookie renovado persistido; versão antiga descartada; verificado não rebaixado; pgTAP do limitador com positivo de service_role e negativo de authenticated e anon"
+
+risk: segurança da autenticação e dado pessoal
+risk_level: R3
+
+adr: docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,88 @@
+# Lote C, parte 1 (04/11/2026): Google e convite familiar sem senha no app.
+# A aposentadoria das telas antigas do apps/web fica para o RUN-003, porque exige
+# migrar o login de toda a suíte E2E da web no mesmo movimento.
+task_id: RUN-002
+
+objective: >
+  A porta da entrada no app passa a oferecer os dois caminhos que não dependem de
+  senha: entrar com Google (o session nasce no callback da web e o app retoma a
+  etapa certa, com o provedor lido da sessão) e entrar por convite de familiar
+  digitando só o e-mail e o código, sem CPF nem senha — o aceite do convite
+  provisiona o vínculo com a cidade de quem convidou, reusando a transação
+  canônica do convite.
+
+authority:
+  - docs/LANCAMENTO.md (F01, critérios 1 e 2)
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (§1, §4 e §6)
+  - docs/agents/HANDOFF-20261104.md (Lote C)
+  - tools/backend-kanban card LAN-F01
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A tela real de /app/entrar (apps/app/src/entrada/TelaDeEntrada.tsx) responde
+    os dois botões de provedor com uma mensagem de indisponibilidade ("Entrar com
+    Google ou Apple ainda não está ligado nesta versão") e o fluxo de convite do
+    app é demonstrativo: a etapa da porta chama concluir({ convite: true }) sem
+    validar código nem registrar o aceite. O web já tem o OAuth no
+    /auth/callback e o aceite transacional do convite em
+    apps/web/lib/convite/provision.ts, mas nenhuma rota /api/app os expõe.
+
+allowed_paths:
+  - apps/web/app/api/app/entry
+  - apps/web/lib/app-api
+  - apps/web/lib/convite
+  - apps/web/app/auth/callback
+  - apps/app/src/entrada
+  - apps/app/src/previa-f01/etapas-conta.tsx
+  - apps/app/src/previa-f01/fluxo.ts
+  - apps/app/tests
+  - tests/unit/app-api
+  - tests/unit/convite
+  - tests/e2e
+  - tests/scope
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/decisions/RATIFICACAO.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - senha em qualquer etapa do app (o convite do app é sem senha por decisão)
+  - CPF no caminho do convite
+  - confiar em e-mail, código, user_id ou nome vindos do formulário sem validação do servidor
+  - criar conta antes de o código do convite ser validado
+  - aceitar convite de e-mail diferente do da sessão quando o convite tiver e-mail declarado
+  - mexer em apps/web/app/(preauth)/login, signup, recuperar-senha, nova-senha e onboarding neste contrato
+  - Apple: fica bloqueado pelo dono até existir a conta
+  - alterar migration já aplicada
+
+acceptance:
+  - POST /api/app/entry/oauth (sessão não exigida) devolve 200 { url } com a URL de autorização do Google (redirectTo no domínio da requisição, /auth/callback?next=/app/entrar), recusa provedor diferente de google e origem fora da lista, e nunca expõe chave; o botão Google da porta navega para essa URL e o erro de rede mostra a mensagem fixa.
+  - GET /api/app/entry/progress passa a informar o provedor da sessão (google ou email, lido de user.app_metadata.provider); o app usa isso para retomar no aceite com via google quando a sessão nasceu no Google, sem reexibir e-mail e código.
+  - POST /api/app/entry/invite (sessão + CSRF) valida o código no formato do domínio e aceita pelo menos 8 caracteres; sem sessão 401; formato inválido 400; código inválido/limite/e-mail divergente 400/429 com mensagem única, sem dizer qual; sucesso 200 { localityMember: true } e o app vai ao Início.
+  - O aceite do convite reusa previewFamilyInviteCode e acceptFamilyInviteCode (hash do código, digest de e-mail e de origem) numa transação do banco; registro de consentimento já feito pela etapa de aceite é exigido antes; nome vem da etapa nome do fluxo; nenhuma conta é criada antes da validação do código quando o e-mail não tem sessão.
+  - Na tela: /app/entrar?convite=CODIGO abre a porta no contexto de convite (nome de quem convidou ou genérico), o e-mail digitado é o da sessão, o código chega no e-mail, e depois do aceite e do nome o app chama a rota do convite e entra; a etapa de CPF não aparece no caminho do convite.
+  - O caminho de Google e o de convite não criam nem alteram dados sem a sessão resolvida no servidor; CPF e senha nunca entram em log, URL ou rascunho.
+  - E2E: convite familiar de ponta a ponta em 375/768/1440 (convite semeado, código lido no Mailpit, aceite, nome, Início); Google fica provado por unidade (URL de autorização, plano do callback e retomada com via google), porque o stack local não tem credencial do Google — o motivo fica registrado no card.
+  - Revisão independente por outro modelo antes de fechar.
+
+proof:
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 exec supabase db reset --local
+  - node scripts/agents/prova-fila.mjs -- npx playwright test tests/e2e/f01-entrada-real.spec.ts --workers=1
+  - capturas dos três tamanhos em .visual/f01-entrada/
+
+risk: autenticação, consentimento e dado pessoal no caminho de entrada
+risk_level: R3
+
+adr: docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
