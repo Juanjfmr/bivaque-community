@@ -68,8 +68,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const idade = Date.now() - Date.parse(linha.updated_at)
     if (Number.isFinite(idade) && idade > PRAZO_DO_RASCUNHO_MS) {
       const servico = clienteDeServicoOuNulo()
-      if (servico !== null) {
-        await servico.from("entry_progress").delete().eq("user_id", userId)
+      if (servico === null) {
+        return responder(request, { erro: "leitura-indisponivel" }, 503, sessao.sessao.cabecalhos)
+      }
+      const { error: limpezaError } = await servico
+        .from("entry_progress")
+        .delete()
+        .eq("user_id", userId)
+      if (limpezaError) {
+        // Não ignora o erro da limpeza: se o rascunho vencido não sai, a pessoa
+        // não deve continuar como se ele tivesse sido apagado.
+        return responder(request, { erro: "leitura-indisponivel" }, 503, sessao.sessao.cabecalhos)
       }
       linha = null
     }

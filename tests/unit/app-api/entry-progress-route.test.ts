@@ -29,6 +29,7 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/progress`
 const mockMaybeSingle = vi.fn()
 const mockVinculo = vi.fn()
 const mockUpsert = vi.fn()
+const mockDelete = vi.fn()
 
 // Duas leituras do usuário, sob RLS: o rascunho (`entry_progress`) e o vínculo
 // com a cidade (`locality_memberships`), que decide o destino.
@@ -77,8 +78,12 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: null, error: null })
   mockVinculo.mockResolvedValue({ data: null, error: null })
   mockUpsert.mockResolvedValue({ error: null })
+  mockDelete.mockResolvedValue({ error: null })
   criarClienteDeServico.mockReturnValue({
-    from: () => ({ upsert: mockUpsert }),
+    from: () => ({
+      upsert: mockUpsert,
+      delete: () => ({ eq: mockDelete }),
+    }),
   } as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
 })
@@ -103,6 +108,40 @@ describe("GET /api/app/entry/progress", () => {
       via: "cookie",
       progresso: { versao: 2, etapa: "porta", estado: {} },
     })
+  })
+
+  it("rascunho vencido é apagado na leitura e a entrada recomeça", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        versao: 2,
+        etapa: "cidade",
+        estado: {},
+        updated_at: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      error: null,
+    })
+    const resposta = await GET(requisicao("GET"))
+    expect(resposta.status).toBe(200)
+    expect(mockDelete).toHaveBeenCalledWith("user_id", PESSOA.id)
+    expect(((await resposta.json()) as { progresso: { etapa: string } }).progresso.etapa).toBe(
+      "porta",
+    )
+  })
+
+  it("falha ao apagar o rascunho vencido vira 503, não sucesso com dado para trás", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        versao: 2,
+        etapa: "cidade",
+        estado: {},
+        updated_at: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      error: null,
+    })
+    mockDelete.mockResolvedValue({ error: { message: "db offline" } })
+    const resposta = await GET(requisicao("GET"))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
   })
 
   it("informa o Google quando a sessão nasceu no OAuth", async () => {

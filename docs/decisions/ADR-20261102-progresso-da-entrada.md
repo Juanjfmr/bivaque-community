@@ -153,15 +153,17 @@ provisionar ia direto ao Início, pulando interesses, o combinado e os avisos. A
 aceitar escrita do cliente:
 
 - **O provisionamento troca o rascunho por um marcador.** `provision_member_entry` grava
-  `etapa = 'previa-cidade'`, `estado = '{}'` (upsert) na mesma transação. A tela não escreve mais o
+  `etapa = 'previa-cidade'`, `estado = '{"cidade": "<nome>"}'` (upsert) na mesma transação. O nome é
+  só para a prévia exibir; o canônico continua no vínculo/IBGE. A tela não escreve mais o
   rascunho a partir daí: o PUT responde 409 `entrada-concluida` a quem já tem vínculo. O convite
   familiar grava o marcador `interesses`, porque o caminho dele pula a cidade e a prévia.
 - **O marcador some no fim.** A rota dos avisos (última etapa) apaga a linha da sessão; a purga da
   conta continua cobrindo o caso de abandono. Ao final da entrada, `entry_progress` não tem linha da
   pessoa.
-- **Rascunho abandonado expira em 30 dias.** O prazo é aplicado no servidor, na leitura do GET: linha
-  com `updated_at` mais velho que 30 dias é apagada e tratada como ausente. Sem cron novo e sem
-  confiar no relógio do cliente.
+- **Rascunho abandonado expira em 30 dias.** O job diário `bivaque-entry-progress-purge` (pg_cron)
+  apaga `entry_progress` com `updated_at` mais velho que 30 dias; a leitura do GET mantém a mesma
+  regra como defesa e agora falha com 503 se o delete da limpeza falhar. Sem cron novo no servidor
+  de aplicação e sem confiar no relógio do cliente.
 - **A leitura decide pelo rascunho quando ele existe.** Com vínculo e marcador, a etapa devolvida é a
   do marcador; sem marcador, quem tem vínculo terminou (Início). Membro antigo, sem rascunho, também
   cai no Início — o marcador só existe para quem passou pela entrada nova.
