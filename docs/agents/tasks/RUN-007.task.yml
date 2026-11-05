@@ -1,0 +1,96 @@
+# F05 Eventos ligado ao banco, como piloto da porta de dados real do app (05/11/2026).
+# Base: 3f76e7f5 (PR #128), porque a fundação das rotas do app (apps/web/lib/app-api)
+# e o /app servido pelo Next só existem nele. Quando o #128 entrar na main, esta
+# branch é rebaseada nela.
+#
+# Por que piloto: as 20 telas do app leem de uma fonte de demonstração única
+# (apps/app/lib/dados, `dadosDoApp.lerCidade`). Este contrato define o jeito de
+# uma jornada sair da demonstração; F08, F07 e as outras repetem o mesmo molde.
+task_id: RUN-007
+
+objective: >
+  A agenda da cidade, o detalhe do evento, a presença (vou / não vou / cancelar),
+  a pergunta ao organizador e o criar/editar evento no apps/app passam a ler e
+  gravar no banco real pela sessão do membro, e o molde da porta de dados real
+  fica pronto para as próximas jornadas.
+
+authority:
+  - docs/LANCAMENTO.md (F05 e os seis critérios de pronto)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5, contrato das rotas do app; §8, troca jornada a jornada)
+  - tools/backend-kanban card LAN-F05
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/telas/Agenda.tsx e Evento.tsx leem `dadosDoApp` de
+    apps/app/lib/dados/index.ts (criarDadosDemo, dados fixos). Nenhuma rota
+    /api/app/ de eventos existe. A web antiga tem a lógica em
+    apps/web/app/(shell)/events (event-actions.ts, presence-controls.tsx,
+    [id]/perguntas/actions.ts) e apps/web/lib/events (event-form.ts,
+    question-thread.ts); o banco já tem events, event_rsvps, perguntas do evento
+    e capa (migrations 20260802001200 a 20261024090000).
+
+allowed_paths:
+  - apps/app/lib/api
+  - apps/app/lib/dados
+  - apps/app/src/telas/Agenda.tsx
+  - apps/app/src/telas/Evento.tsx
+  - apps/app/src/eventos
+  - apps/app/src/roteador.tsx
+  - apps/app/tests
+  - apps/web/app/api/app/eventos
+  - apps/web/lib/events
+  - apps/web/app/(shell)/events/event-actions.ts
+  - apps/web/app/(shell)/events/[id]/perguntas/actions.ts
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit/app-api/eventos
+  - tests/unit/events
+  - tests/e2e/f05-eventos-real.spec.ts
+  - tests/scope
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/RUN-007.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - tocar em apps/app/src/entrada, apps/app/src/previa-f01, apps/web/app/api/app/entry e apps/web/lib/app-api (em correção no RUN-004); só importar de lib/app-api
+  - tocar em apps/web/proxy.ts, next.config e nas telas antigas de entrada (RUN-003)
+  - retirar a tela antiga /events do apps/web neste contrato (fica para depois do #128 na main)
+  - confiar em user_id, locality_id, organizer_id ou papel vindos do corpo, da query ou do app
+  - service_role onde a RLS da sessão basta; dado de outro membro além do que a tela já mostra
+  - editar migration existente (mudança de banco só em migration nova, se for mesmo necessária)
+  - mudar o desenho aprovado das telas Agenda e Evento (troca a fonte do dado, não o visual)
+  - quebrar as outras 18 telas que ainda leem a demonstração
+  - push, merge ou force-push; ler, criar ou editar arquivos .env
+
+acceptance:
+  - "ADR-20261105-porta-de-dados-do-app (R3, aceito por delegação) descreve o molde: cliente único apps/app/lib/api/cliente.ts (credentials include, cabeçalho x-bivaque-app, JSON, erro tipado 401/403/404/409/429/503, sem retentativa em escrita, AbortSignal); um módulo por jornada em apps/app/lib/dados (aqui eventos.ts) que só fala com /api/app/<jornada>; a tela troca dadosDoApp pelo módulo da jornada; a demonstração continua servindo as telas que ainda não foram ligadas e a galeria; o cliente da entrada (src/entrada/servidor.ts) migra para o cliente único depois do #128 (anotado como pendência)."
+  - "Rotas no apps/web, todas com exigirSessao/conferirEscrita/opcoesDoApp de lib/app-api e o cliente Supabase DA SESSÃO (RLS): GET /api/app/eventos (agenda da cidade da pessoa, futuros primeiro, paginado), GET /api/app/eventos/[id], PUT e DELETE /api/app/eventos/[id]/presenca, POST /api/app/eventos/[id]/perguntas, POST /api/app/eventos e PATCH /api/app/eventos/[id] (só o organizador). A validação vive no mesmo módulo de apps/web/lib/events que a Server Action antiga usa (extraia se precisar), um caminho só, duas portas."
+  - "Cada rota tem teste de unidade com casos positivo e negativo: sem sessão 401, origem ou cabeçalho errado 403, evento inexistente ou fora do alcance 404 (correção de 05/11: encontro de alcance cidade de OUTRA cidade é legível por decisão do dono de 25/09, migration 20260925161111; o detalhe abre como visitante e presença/pergunta são negadas), edição por quem não organiza 403, corpo inválido 400, erro do banco vira 503 (nunca lista vazia)."
+  - "Agenda e Evento leem do módulo real: carregando, vazio honesto da cidade, erro com Tentar de novo; presença e pergunta mostram o resultado gravado e voltam ao estado anterior com mensagem se falhar; criar e editar validam no cliente e no servidor e levam ao detalhe do evento gravado."
+  - "pgTAP só se houver migration nova; senão o card registra que as políticas existentes cobrem e quais testes de banco já as provam."
+  - "E2E tests/e2e/f05-eventos-real.spec.ts contra o banco local com seed, em 375/768/1440, nos dois temas: membro vê a agenda da própria cidade e não vê evento de outra; marca e cancela presença e a mudança sobrevive ao recarregar; envia pergunta; organizador cria e edita; quem não organiza não vê editar; falha principal (servidor fora) mostra erro, não lista vazia. Pelo menos uma asserção de cor computada no escuro."
+  - "Teste de escopo: Agenda.tsx e Evento.tsx não importam mais dadosDoApp; as rotas de eventos não usam clienteDeServicoOuNulo."
+  - "Capturas 375/768/1440 nos dois temas em .visual/f05-eventos/; card LAN-F05 com a prova real e o commit; o card fica em now (faltam revisão às cegas, acessibilidade e a retirada da tela antiga)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/eventos tests/unit/events
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs banco (se houver migration)
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f05-eventos-real.spec.ts
+
+risk: leitura e escrita de dados de membros por rota nova do app
+risk_level: R3
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -3,6 +3,7 @@ import {
   canSendQuestion,
   deriveQuestionViewState,
   destinationNotice,
+  friendlyQuestionError,
   hasRelevantEventChange,
   normalizeQuestion,
   QUESTION_MAX_LENGTH,
@@ -103,5 +104,25 @@ describe("hasRelevantEventChange (espelha notify_event_change)", () => {
 describe("copy de falha", () => {
   it("a mensagem de falha é a da prancha e afirma que o texto foi mantido", () => {
     expect(QUESTION_SEND_FAILURE_COPY).toBe("Não foi possível enviar. Seu texto foi mantido.")
+  })
+})
+
+// RUN-007: a copy de falha passou a ser uma função compartilhada entre a Server
+// Action antiga e a rota do app — um caminho só, duas portas. A tradução é a
+// mesma nos dois casos, e é isso que este caso trava.
+describe("friendlyQuestionError", () => {
+  it("traduz cada recusa do banco para a frase da pessoa", () => {
+    expect(friendlyQuestionError("pair already has a conversation with another context")).toContain(
+      "outro assunto",
+    )
+    expect(friendlyQuestionError("blocked")).toBe("Não é possível enviar a esta pessoa.")
+    expect(friendlyQuestionError("cannot access event")).toBe("Você não tem acesso a este evento.")
+    expect(friendlyQuestionError("organizer cannot ask")).toBe("Você organiza este evento.")
+    expect(friendlyQuestionError("unauthenticated")).toContain("sessão expirou")
+  })
+
+  it("sem motivo técnico, cai na copy da prancha", () => {
+    expect(friendlyQuestionError(undefined)).toBe(QUESTION_SEND_FAILURE_COPY)
+    expect(friendlyQuestionError("erro de rede")).toBe(QUESTION_SEND_FAILURE_COPY)
   })
 })

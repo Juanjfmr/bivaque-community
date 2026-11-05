@@ -5888,19 +5888,47 @@
     },
     {
       "phase": "Lançamento",
-      "tests": [],
-      "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "tests": [
+        "tests/unit/app-api/eventos/rotas.test.ts",
+        "tests/unit/app-api/eventos/event-form.test.ts",
+        "tests/unit/events/question-thread.test.ts",
+        "apps/app/tests/eventos-cliente.test.ts",
+        "apps/app/tests/eventos-dados.test.ts",
+        "apps/app/tests/eventos-formulario.test.ts",
+        "tests/scope/app-porta-de-dados.test.mjs",
+        "tests/e2e/f05-eventos-real.spec.ts"
+      ],
+      "blockers": [
+        "`supabase db reset`, `supabase gen types --local` e `prova-sequencia.mjs` bloqueados nesta máquina: o CLI não abre o pipe do Docker. Resolver o acesso do CLI (Docker Desktop) e reexecutar `node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f05-eventos-real.spec.ts` para a prova canônica."
+      ],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "7faad666",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "05/11, rodada 1: F05 ligada ao banco no app (RUN-007; ADR-20261105, R3 aceito por delegação). Cliente único, um módulo por jornada, rotas /api/app/eventos* com o cliente da sessão sob RLS, validação compartilhada com a Server Action antiga. Agenda e Evento saíram do dadosDoApp.",
+        "05/11, rodada 2 — o que a revisão independente (FAIL) e a auditoria (PASS com ressalvas) pediram, item por item:",
+        "05/11 (1, HIGH) A edição não apaga mais a capa: `eventInputFromBody` devolve `{ input, temCapa }` e `buildEventUpdatePayload` só inclui `cover_path` quando `capa` veio no corpo. Sem `capa`, a chave nem entra no update. Teste negativo na rota (`PATCH sem capa preserva a capa gravada`) e no módulo.",
+        "05/11 (2, HIGH) Encontro de outra cidade abre como VISITANTE, não 404 (decisão do dono de 25/09, migration 20260925161111): o detalhe devolve `cidade` do evento e `visitante`, não devolve contagem de confirmados para quem é de fora (a RLS nega `event_rsvps` e um zero seria 'ninguém confirmou'), e presença/pergunta respondem 403 `de-outra-cidade` antes do banco. A tela mostra a cidade do evento e, para visitante, esconde Vou/Não vou e a pergunta com a frase 'Encontro de outra cidade'. Testes de rota (GET 200 visitante true; PUT e POST 403) e E2E (membro do Rio abre encontro de Manaus e não vê presença nem pergunta). Regra no ADR §3.4.",
+        "05/11 (3, MEDIUM) A cidade da sessão é lida com `.eq(\"kind\", \"current\")` numa função só (`apps/web/app/api/app/eventos/_comum.ts`), como o layout da web: quem está em transferência não cai mais na cidade errada. Teste com vínculo current e outro leaving; teste de escopo proíbe ler `locality_memberships` fora do `_comum.ts`. As rotas de entrada repetem o padrão e migram depois do #128 (ADR §3.3).",
+        "05/11 (4, MEDIUM) Mensagem de falha por ação: a frase do SERVIDOR vem primeiro, depois o motivo curto (`de-outra-cidade`, `nao-organiza`, `sem-cidade`) e só então a frase da ação. Pergunta usa 'Não foi possível enviar. Seu texto foi mantido.', presença a sua, criar sem cidade a sua; só a edição por quem não organiza diz 'Só quem organiza…'. 7 casos de unidade.",
+        "05/11 (5, MEDIUM) Estado negado: 401 leva a 'Entrar de novo' (para /app/entrar) e 403 a 'Sem acesso' sem 'Tentar de novo'. E2E prova os dois na Agenda (rota respondendo 401 e 403).",
+        "05/11 (6, MEDIUM) Paginação por cursor composto `comecaEm|id` (o `id` desempata dois encontros no mesmo horário; o teste verifica o `or` gerado) e a Agenda mostra 'Ver mais encontros' enquanto houver cursor — nada é cortado em silêncio. O filtro foi validado contra o PostgREST local antes de entrar (o `+00:00` precisa ir codificado e o instante não pode perder microssegundos).",
+        "05/11 (7, MEDIUM, molde copiável) ADR §3.1 fixa o corpo de erro `{ erro, mensagem? }` com a tabela de status→código; o cliente distingue 400 (`invalido`, com a mensagem) de 500/503 (`indisponivel`) e expõe `motivoDoServidor`. §3.2 fixa mídia: caminho de bucket nunca sai; a tela não desenha capa, então o detalhe não devolve capa nenhuma (teste de escopo garante que `cover_path` não volte). §3.5 fixa o cursor. Teste de escopo reescrito com lista explícita das telas ligadas, proibição de `fetch` para /api/app fora do cliente único (exceção única e nomeada: o cliente da entrada, que migra depois do #128), `lib/dados` sem a demo, CSRF em toda escrita, UUID e cidade num lugar só.",
+        "05/11 (8, menores) `confirmados` ausente é falha de formato (não zero); PUT de presença confere `content-type` e valida a situação por um módulo de `apps/web/lib/events` (`event-rsvp.ts`); os casts `as never` de `open_event_question` saíram (a função já está em `database.generated.ts`); regex de UUID numa função só; testes de 503 e de 403 de CSRF também em PATCH, PUT, DELETE e pergunta; PATCH barrado pela RLS depois da checagem de autoria vira 403; E2E cobre cor computada no escuro da ação 'Criar encontro', a mensagem gravada da pergunta (lida da conversa com o token da sessão, sob RLS), escrita que falha e volta ao estado anterior, 503 no detalhe e contraste medido das ações de presença (corrigido: o tom de contorno não segue o tema escuro).",
+        "05/11, provas desta rodada (lidas nesta worktree): `gate --fast` verde (lint, typecheck, typecheck:e2e); `vitest run tests/unit/app-api/eventos tests/unit/events` 93/93; `--filter @bivaque/app test` 225/225; `test:scope` 165/165 (fail 0); `test:privacy` 189/189; E2E `f05-eventos-real.spec.ts` 21/21 (7 casos × 375/768/1440) contra o build desta worktree, provado pelo hash do bundle; 30 capturas em .visual/f05-eventos (5 etapas × 3 larguras × 2 temas).",
+        "05/11: ambiente: `supabase db reset`, `supabase gen types --local` e `prova-sequencia.mjs` continuam bloqueados (o CLI 2.107.0 não abre o pipe do Docker). Por isso o seed foi aplicado pelo mesmo `supabase/seed.sql` sobre o schema já migrado e o E2E roda com servidor próprio em porta própria, conferindo o hash do bundle servido. Os tipos públicos já traziam `open_event_question`, então a regeneração não era necessária para tirar os casts; o comando canônico fica para quando o CLI voltar.",
+        "05/11: fora do alcance deste contrato, com próximo passo: (a) a validação de presença foi extraída para `event-rsvp.ts` e é usada pela rota nova, mas a Server Action antiga mora em `apps/web/app/(shell)/events/[id]/page.tsx`, fora dos `allowed_paths` — a troca entra quando a tela antiga sair; (b) 'Ver mais encontros' não é exercitado pelo E2E porque o seed tem 13 encontros futuros e a página é de 20 — a lógica está coberta em teste de rota; (c) revisão às cegas, acessibilidade e retirada da tela /events continuam pendentes, por isso o card fica em now.",
+        "05/11: defeito de piece registrado (fora dos allowed_paths): os tons `contornado` e `texto` do `Botao` não seguem o tema escuro — o texto e o fundo computados vêm do tema claro (`rgb(28,38,43)` sobre superfície clara) mesmo com `prefers-color-scheme: dark` valendo. A tela da jornada passou a usar o tom `tonal` (par de tokens correto) e o contraste é medido no E2E; o piece precisa do ajuste para as próximas jornadas não repetirem o problema.",
+        "05/11, rodada 3 — ressalvas da revisão de contrato (Qwen, PASS com ressalvas) e da auditoria de segurança (Sonnet, LIBERA com ressalvas), fechadas: (1) cancelado e concluído ficam fora da agenda, como na web antiga; (2) a agenda devolve o nome da cidade do vínculo `current` e o cabeçalho usa esse nome — a tela não anuncia mais a cidade da demonstração; (3) o instante do cursor é reescrito em UTC com regex ancorada no fim (só o formato do servidor passa) e **sem perder microssegundos** — `toISOString()` cortaria para milissegundos, o `eq` do desempate nunca casaria e a virada da página repetiria o último encontro, que é justamente o defeito que a rodada 2 fechou; cursor com aspas, vírgula, parênteses ou id inválido é 400; (4) capa só dentro da pasta de quem organiza, recusando `..`, `//` e ``; (5) recusa do banco vira erro tipado — `P0001` (organizador confirmando no próprio encontro) e `42501` são 403, `23514`/`22023` são 400, e a mensagem do Postgres nunca sai; (6) `AbortSignal` em toda chamada, incluindo as escritas e o 'Ver mais', cancelando ao desmontar; (7) comentário do módulo de presença corrigido (a ação antiga ainda tem a checagem embutida); (8) E2E de escrita direta do visitante na rota de presença e de pergunta, sem interface, com Bearer puro (cookie + Bearer seria recusado como conflito e não provaria autorização) → 403 `de-outra-cidade`.",
+        "05/11: as políticas que cobrem a jornada já estão provadas no banco pelos pgTAP `supabase/tests/consulta-outra-cidade.sql` (leitura de encontro de outra cidade e o corte de presença), `event-questions.sql` e `event-question-with-service-request.sql` (pergunta vinculada ao evento e destinatário derivado no banco), `events-rsvp.sql`, `event-rsvp-scope.sql` e `event-rsvp-not-going.sql` (presença por cidade, escopo e o terceiro estado) e `events-insert-returning.sql`/`events-private-venue-denials.sql` (criação e local). Nenhuma migration nova nesta entrega.",
+        "05/11: `npx pnpm@11.18.0 gate` COMPLETO verde no fechamento da rodada 3 (lint, typecheck, typecheck:e2e, build, build:app, test, secrets). A falha que travava `test` nas rodadas 1 e 2 era a data fixa de `provision-requires-verification.test.ts` e foi corrigida na main mesclada em `f8b01dca` (o teste passou a usar data relativa); 2066/2066."
       ],
       "id": "LAN-F05",
       "title": "F05 Eventos ligados ao banco",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "now",
       "description": "Escopo em docs/LANCAMENTO.md (F05). Pronta só pelos seis critérios de pronto.",
       "checklist": [
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
@@ -6453,6 +6481,31 @@
       "sourceRevision": "874575e1",
       "dependencies": ["BLOCK-RESEND"],
       "completedChecklist": [false, false, false, false, false]
+    },
+    {
+      "id": "EVENTOS-UPDATE-ALCANCE-NO-BANCO",
+      "title": "Alcance do encontro pode mudar por escrita direta no banco",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "O organizador consegue mudar `locality_id` (e as outras colunas de alcance: `group_id`, `community_id`) do próprio encontro escrevendo direto no PostgREST, sem passar pela rota do app. O motivo é que o `grant update` em `events` é da tabela inteira (supabase/migrations/20260802001200_events_rsvp.sql:81) e a policy `events_update_organizer` só confere `organizer_id` — a regra 'editar não muda alcance' (R35) existe apenas em `apps/web/lib/events/event-form.ts`, no payload da rota. No mesmo cartão: a RLS de presença e de pergunta usa `private.is_locality_member`/`private.can_access_event`, que aceitam vínculo `leaving`, enquanto a rota exige `kind = 'current'` — o banco é mais permissivo que a rota para quem está em transferência.",
+      "checklist": [
+        "Migration nova (nunca editar a aplicada): trigger de imutabilidade de `locality_id`, `group_id` e `community_id` em `events` depois do insert, ou grants de UPDATE por coluna excluindo as de alcance",
+        "pgTAP positivo: o organizador continua editando título, descrição, local, horário e capa",
+        "pgTAP negativo: UPDATE de `locality_id`/`group_id`/`community_id` pelo organizador é recusado (P0001 ou 42501)",
+        "Decidir e provar se presença/pergunta devem exigir vínculo `current` também na RLS, alinhando banco e rota",
+        "Registrar a decisão em ADR se a correção mudar o contrato do banco"
+      ],
+      "proof": [
+        "05/11: achado da auditoria de segurança (Sonnet) e da revisão de contrato (Qwen) da rodada 3 do RUN-007, confirmado no código: `20260802001200_events_rsvp.sql:81` concede UPDATE na tabela toda e a policy só confere `organizer_id`; a rota `/api/app/eventos/[id]` monta o payload sem as colunas de alcance, então a regra só vale por ali.",
+        "05/11: efeito observado na jornada — o app recusa mudar alcance na edição, mas a mesma pessoa com um cliente PostgREST e a sessão dela muda a cidade do encontro, e o encontro sai da agenda de quem o via."
+      ],
+      "tests": [],
+      "dependencies": [],
+      "sourceRevision": "7faad666",
+      "updatedAt": "2026-11-05",
+      "blockers": []
     }
   ],
   "launch": {

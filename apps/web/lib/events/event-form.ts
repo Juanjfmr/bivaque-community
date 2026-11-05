@@ -18,6 +18,36 @@ export type EventFormInput = {
   coverPath: string
 }
 
+/**
+ * O corpo do app já lido para o formulário. `temCapa` é o que separa "não mandou
+ * capa" de "mandou capa vazia": na edição, o primeiro preserva a capa atual e o
+ * segundo a remove — tratar os dois como iguais apagava a capa a cada salvar.
+ */
+export type EventBodyInput = Readonly<{ input: EventFormInput; temCapa: boolean }>
+
+/** Mapeia o corpo do app para a entrada do formulário; tipo errado é erro de dados. */
+export function eventInputFromBody(corpo: Record<string, unknown>): EventBodyInput | null {
+  const { titulo, descricao = "", comecaEm, local = "", capa } = corpo
+  if (
+    typeof titulo !== "string" ||
+    typeof comecaEm !== "string" ||
+    typeof descricao !== "string" ||
+    typeof local !== "string" ||
+    (capa !== undefined && typeof capa !== "string")
+  )
+    return null
+  return {
+    input: {
+      title: titulo,
+      description: descricao,
+      startsAt: comecaEm,
+      venue: local,
+      coverPath: typeof capa === "string" ? capa : "",
+    },
+    temCapa: typeof capa === "string",
+  }
+}
+
 export type EventPayload = {
   title: string
   description: string | null
@@ -56,6 +86,23 @@ export function buildEventPayload(input: EventFormInput): EventPayload {
     // normaliza vazio para null.
     cover_path: (input.coverPath ?? "").trim() ? (input.coverPath ?? "").trim() : null,
   }
+}
+
+export type EventPatchPayload = Omit<EventPayload, "cover_path"> & { cover_path?: string | null }
+
+/**
+ * Payload de edição. Sem `capa` no corpo, `cover_path` nem entra no update — é o
+ * que impede salvar o título de apagar a capa do encontro. Com `capa` (mesmo
+ * vazia), a troca é intencional: vazia vira `null` e tira a capa.
+ */
+export function buildEventUpdatePayload(
+  input: EventFormInput,
+  temCapa: boolean,
+): EventPatchPayload {
+  const payload = buildEventPayload(input)
+  if (temCapa) return payload
+  const { cover_path: _ignorada, ...semCapa } = payload
+  return semCapa
 }
 
 export type EventCreatePayload = EventPayload & {
