@@ -1,7 +1,6 @@
 import type { NextRequest, NextResponse } from "next/server"
 import type { Json } from "supabase/database.generated"
 import {
-  type Progresso,
   progressoFinal,
   progressoInicial,
   validarProgresso,
@@ -33,13 +32,6 @@ const CORPO_MAXIMO = 32 * 1024
 
 // Rascunho sem atividade por 30 dias não é retomada: é abandono.
 const PRAZO_DO_RASCUNHO_MS = 30 * 24 * 60 * 60 * 1000
-
-function lerProgresso(linha: unknown): Progresso {
-  const validado = validarProgresso(linha)
-  // Linha de versão antiga ou fora da forma não vira erro de tela: devolve o
-  // progresso inicial, e a pessoa recomeça da porta.
-  return validado.ok ? validado.progresso : progressoInicial()
-}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const sessao = await exigirSessao(request)
@@ -85,10 +77,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // ADR-20261101 §1: o servidor decide o destino pelo estado canônico. O
   // rascunho que sobrevive ao provisionamento é o marcador da etapa seguinte
-  // (prévia da cidade); sem rascunho, quem tem vínculo terminou a entrada.
+  // (prévia, combinado, avisos); sem rascunho, quem tem vínculo terminou a
+  // entrada. Linha de versão antiga ou fora da forma é ignorada: com vínculo,
+  // ela vira a etapa final, nunca leva a pessoa de volta à porta.
+  const validado = linha === null ? null : validarProgresso(linha)
   const progresso =
-    linha !== null
-      ? lerProgresso(linha)
+    validado !== null && validado.ok
+      ? validado.progresso
       : vinculo.data !== null
         ? progressoFinal()
         : progressoInicial()

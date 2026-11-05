@@ -200,6 +200,26 @@ describe("GET /api/app/entry/progress", () => {
     expect(comRascunho.progresso.etapa).toBe("previa-cidade")
   })
 
+  it("marcador de versão antiga com vínculo é ignorado e vira a etapa final", async () => {
+    mockVinculo.mockResolvedValue({
+      data: { locality_id: "00000000-0000-4000-8000-000000000001" },
+      error: null,
+    })
+    mockMaybeSingle.mockResolvedValue({
+      data: {
+        versao: 1,
+        etapa: "combinado",
+        estado: {},
+        updated_at: new Date().toISOString(),
+      },
+      error: null,
+    })
+    const corpo = (await (await GET(requisicao("GET"))).json()) as {
+      progresso: { etapa: string }
+    }
+    expect(corpo.progresso.etapa).toBe("inicio")
+  })
+
   it("sem vínculo o rascunho continua mandando (a etapa não é forçada)", async () => {
     mockMaybeSingle.mockResolvedValue({
       data: { versao: 2, etapa: "cidade", estado: {} },

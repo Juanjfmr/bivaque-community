@@ -205,10 +205,17 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
 
     // ── o combinado ───────────────────────────────────────────────────────
     await esperarEtapaDaEntrada(page, "O combinado")
+    // O combinado é a etapa pendente depois de interesses: recarregar volta
+    // aqui, não a interesses.
+    await page.reload()
+    await esperarEtapaDaEntrada(page, "O combinado")
     await capturarEmDoisTemas(page, projeto, "combinado")
     await page.getByRole("button", { name: "Entendi" }).click()
 
     // ── avisos: escolher "agora não" também é escolher ────────────────────
+    await esperarEtapaDaEntrada(page, "Saiba quando responderem")
+    // Depois do combinado, a etapa pendente é avisos.
+    await page.reload()
     await esperarEtapaDaEntrada(page, "Saiba quando responderem")
     await capturarEmDoisTemas(page, projeto, "avisos")
     await page.getByRole("button", { name: "Agora não" }).click()
