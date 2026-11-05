@@ -9,7 +9,7 @@ import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
 const url = "http://localhost:3000/api/app/inicio"
 
-function cliente(falha = "") {
+function cliente(falha = "", semCidade = false, quantidade = 1) {
   const filtros: Array<[string, string, unknown]> = []
   const from = (tabela: string) => {
     const query: Record<string, unknown> = {}
@@ -23,11 +23,15 @@ function cliente(falha = "") {
     const resposta = () =>
       tabela === "locality_memberships"
         ? {
-            data: { locality_id: "cidade-atual", localities: { city_name: "Manaus" } },
+            data: semCidade
+              ? null
+              : { locality_id: "cidade-atual", localities: { city_name: "Manaus" } },
             error: null,
           }
         : {
-            data: [{ id: tabela }],
+            data: Array.from({ length: quantidade }, (_, indice) => ({
+              id: `${tabela}-${indice}`,
+            })),
             error: tabela === falha ? { message: "segredo postgres" } : null,
           }
     query["maybeSingle"] = async () => resposta()
@@ -70,9 +74,9 @@ describe("início do app", () => {
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toMatchObject({
       cidade: "Manaus",
-      perguntas: [{ id: "recommendation_requests" }],
-      eventos: [{ id: "events" }],
-      anuncios: [{ id: "listings" }],
+      perguntas: [{ id: "recommendation_requests-0" }],
+      eventos: [{ id: "events-0" }],
+      anuncios: [{ id: "listings-0" }],
     })
     expect(mock.filtros).toContainEqual(["locality_memberships", "kind", "current"])
     for (const tabela of ["recommendation_requests", "events", "listings"])
@@ -82,6 +86,18 @@ describe("início do app", () => {
   it("recusa página inválida", async () => {
     autenticar(cliente())
     expect((await GET(new NextRequest(`${url}?pagina=-1`))).status).toBe(400)
+  })
+
+  it("recusa quem n?o tem cidade atual", async () => {
+    autenticar(cliente("", true))
+    expect((await GET(new NextRequest(url))).status).toBe(403)
+  })
+
+  it("limita as se??es e informa quando h? pr?xima p?gina", async () => {
+    autenticar(cliente("", false, 21))
+    const corpo = await (await GET(new NextRequest(url))).json()
+    expect(corpo.perguntas).toHaveLength(20)
+    expect(corpo.proximo).toBe(2)
   })
 
   it("mostra indisponibilidade sem expor erro do banco", async () => {
