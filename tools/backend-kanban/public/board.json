@@ -580,7 +580,6 @@
         "Configurar DKIM e SPF",
         "Inserir secret fora do Git",
         "Ativar adaptador e prova de entrega",
-        "Fechar o resíduo do /auth/v1/verify público (hook de verificação ou Auth próprio), como decide o ADR de entrada §2",
         "Dimensionar email_sent, token_verifications e sign_in_sign_ups de produção, com o teto global do servidor sempre abaixo do email_sent",
         "Garantir em produção email_sent e sign_in_sign_ups acima do disjuntor global do servidor (500/h); ajuste é do dono"
       ],
@@ -593,17 +592,21 @@
         "DKIM TXT resend._domainkey, MX send prioridade 10 e SPF TXT send publicados na Locaweb; Resolve-DnsName confirmou os três registros na internet",
         "Resend verificou stoqio.com.br, incluindo DKIM, MX e SPF, em 2026-08-24",
         "GitHub Actions possui secret RESEND_API_KEY desde 2026-08-17, sem leitura ou exposição do valor",
-        "Vercel mostra Juanjfmr/bivaque-community apenas como novo repositório ainda não importado; não existe projeto do Bivaque para configurar o runtime ou provar entrega"
+        "Vercel mostra Juanjfmr/bivaque-community apenas como novo repositório ainda não importado; não existe projeto do Bivaque para configurar o runtime ou provar entrega",
+        "05/11: o resíduo do /auth/v1/verify público saiu deste cartão para ENTRADA-DESAFIO-HUMANO (congelado), pelo ADR-20261105."
       ],
       "blockers": [
         "Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL",
         "Provar uma entrega real pelo outbox em ambiente implantado"
       ],
-      "links": ["Status: infraestrutura | ../../docs/historico/PRODUCT_STATUS.md"],
+      "links": [
+        "Status: infraestrutura | ../../docs/historico/PRODUCT_STATUS.md",
+        "docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"
+      ],
       "updatedAt": "2026-11-05",
-      "sourceRevision": "cd550fcc",
+      "sourceRevision": "6e3b61fb",
       "dependencies": [],
-      "completedChecklist": [true, true, true, false, false, false, false, false]
+      "completedChecklist": [true, true, true, false, false, false, false]
     },
     {
       "id": "BLOCK-WHATSAPP",
@@ -5731,7 +5734,8 @@
         "02/11: lote 2 — rascunho da entrada no banco. ADR-20261102-progresso-da-entrada (R3, aceito por delegação) e migration 20261102220435_entry_progress: tabela por pessoa com versão, etapa e estado JSONB mínimo, RLS forçada, leitura só do dono, sem grant nem policy de escrita (a rota grava como service_role), CHECKs de etapa/versão/forma, purge incluída em finalize_account_deletion. ADR-20261101-entrada-unica-por-codigo aceito por delegação no mesmo lote e as duas linhas em RATIFICACAO.md. Prova pela fila: db reset --local --no-seed + test:db PASS 159 arquivos/2461 asserções (entry-progresso.sql com 13, incluindo RLS e CHECKs), generate:types e db:lint sem erro.",
         "02/11: primeiro lote — contrato de segurança das rotas /api do app em apps/web/lib/app-api (contrato.ts, sessao.ts e sessao-do-next.ts): credencial única (cookie da web OU Bearer do app de loja), conflito recusado, token malformado ou inválido nunca cai para o cookie, CSRF de escrita com Origin e cabeçalho do app, CORS explícito sem curinga com credencial. 24/24 testes em tests/unit/app-api (positivo e negativo em cada regra); gate --fast e pnpm test verdes. As rotas consumidoras e o resto do card entram nos próximos lotes.",
         "02/11: posto em now por instrução do dono; a ordem do docs/LANCAMENTO.md manda entregar o F01 ligado ao banco (ADR-20261101-entrada-unica-por-codigo). Dependência ainda aberta: AJUDA-PUBLICA, que é feita antes; LAN-F1-IDENTIDADE, APP-F01-ENTRADA-VISUAL e APP-001 estão fechadas.",
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "05/11: PR #128 integrado na main (95993940). Pelo ADR-20261105 a entrada fica congelada; a revisão às cegas Nextdoor e a auditoria de acessibilidade separada deixam de ser portão do F01 (a acessibilidade mínima é a do E2E); a retirada da tela antiga do apps/web vai para ENTRADA-WEB-ANTIGA."
       ],
       "id": "LAN-F01",
       "title": "F01 Entrada e onboarding ligada ao banco",
@@ -5740,12 +5744,10 @@
       "status": "now",
       "description": "Escopo em docs/LANCAMENTO.md (F01) e ADR-20261101-entrada-unica-por-codigo. Plano da frente, em ordem: 1) contrato de segurança das rotas /api do app (SPA ADR §5.1 a §5.3), em lib/app-api com testes; 2) progresso da entrada no banco (migration R3 com RLS e pgTAP) e as rotas GET/PUT /api/app/entry/progress; 3) ponte de autenticação por código no servidor (envio e verificação do OTP, cookie de sessão, reenvio de 60 s e limites); 4) cidade, momento, grupos e avisos; 5) verificação de CPF pelo caminho do Portal que já existe, com documento e revisão; 6) portar o visual aprovado da prévia para /app/entrar, retirar a tela antiga do apps/web com redirect e ajustar o portão do proxy. Cada passo entra com teste positivo e negativo e prova de runtime própria.",
       "checklist": [
+        "Rodada curta: rotas do convite sem pepper respondem 503; combinado só avança o marcador de quem tem vínculo; pgTAP negativo da permissão do job de purga",
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
-        "Revisão às cegas contra a régua Nextdoor, com referências do Mobbin citadas",
         "E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
-        "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3",
-        "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
-        "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
+        "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3"
       ],
       "tests": [
         "tests/unit/app-api/contrato.test.ts",
@@ -5795,10 +5797,12 @@
         "docs/agents/tasks/RUN-002.task.yml",
         "apps/web/app/api/app/entry/oauth/route.ts",
         "apps/web/app/api/app/entry/invite/route.ts",
-        "docs/agents/HANDOFF-20261104.md"
+        "docs/agents/HANDOFF-20261104.md",
+        "docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"
       ],
-      "sourceRevision": "429b64f2",
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
+      "sourceRevision": "6e3b61fb",
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"],
+      "completedChecklist": [false, false, false, false]
     },
     {
       "phase": "Lançamento",
@@ -6435,24 +6439,51 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "backend",
-      "status": "repo",
+      "status": "frozen",
       "description": "O disjuntor global do limitador (500 envios/h) existe para uma pessoa não travar a entrada de todos. Quando o volume legítimo chegar perto dele, é preciso um desafio humano (por exemplo Turnstile) antes do envio, e acompanhar as recusas de 8/h por IP em redes compartilhadas (CGNAT, Wi-Fi de OM).",
       "checklist": [
         "Definir o provedor de desafio (Turnstile) e onde ele entra antes do envio",
         "Disparar o desafio quando o global estiver perto do teto, sem cobrar de quem só está entrando",
         "Acompanhar pelo log.warn as recusas por IP em redes compartilhadas (CGNAT, Wi-Fi de OM)",
         "Provar o caminho positivo e o negativo sem bloquear a entrada normal",
-        "Decidir o limite de produção com o volume real do lançamento"
+        "Decidir o limite de produção com o volume real do lançamento",
+        "Fechar o resíduo do /auth/v1/verify público (hook de envio ou Auth próprio), vindo do BLOCK-RESEND"
       ],
       "proof": [
-        "05/11: aberto na revisão do RUN-004 rodada 2. O disjuntor de 500/h e o teto de 8/h por IP estão no ADR-20261101; o desafio humano e o risco de CGNAT/OM ficam aqui para depois da prova de volume, com dependência de BLOCK-RESEND."
+        "05/11: aberto na revisão do RUN-004 rodada 2. O disjuntor de 500/h e o teto de 8/h por IP estão no ADR-20261101; o desafio humano e o risco de CGNAT/OM ficam aqui para depois da prova de volume, com dependência de BLOCK-RESEND.",
+        "05/11: congelado pelo ADR-20261105-entrada-enxuta-e-r3-sem-parada. Fora do caminho do lançamento; reabre só com abuso ou volume observado em produção."
       ],
-      "blockers": ["Depende do projeto de deploy e do volume real de produção (BLOCK-RESEND)"],
-      "links": ["docs/decisions/ADR-20261101-entrada-unica-por-codigo.md"],
+      "blockers": ["Reabre só com abuso ou volume real observado em produção (ADR-20261105)"],
+      "links": [
+        "docs/decisions/ADR-20261101-entrada-unica-por-codigo.md",
+        "docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"
+      ],
       "updatedAt": "2026-11-05",
-      "sourceRevision": "874575e1",
+      "sourceRevision": "6e3b61fb",
       "dependencies": ["BLOCK-RESEND"],
-      "completedChecklist": [false, false, false, false, false]
+      "completedChecklist": [false, false, false, false, false, false]
+    },
+    {
+      "id": "ENTRADA-WEB-ANTIGA",
+      "title": "Retirar a tela antiga da entrada no apps/web, com redirecionamento e portão do proxy",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Saiu do portão do LAN-F01 pelo ADR-20261105-entrada-enxuta-e-r3-sem-parada. A entrada do lançamento é a do app (/app/entrar); as telas antigas de entrada do apps/web (login, onboarding, recuperar e nova senha) devem redirecionar para ela, sem quebrar /consent do Google.",
+      "checklist": [
+        "Listar as rotas antigas de entrada ainda servidas pelo apps/web",
+        "Redirecionar para /app/entrar preservando /consent e /auth/callback",
+        "E2E: rota antiga leva à entrada do app em 375/768/1440"
+      ],
+      "completedChecklist": [false, false, false],
+      "dependencies": ["LAN-F01"],
+      "links": ["docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "6e3b61fb"
     }
   ],
   "launch": {

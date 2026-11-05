@@ -9,6 +9,21 @@ decide, record in an ADR, list in [`RATIFICACAO.md`](RATIFICACAO.md), and presen
 ratification at the end of the work. Delegation does not cover real personal data or real CPF in
 tests, production databases, secrets in the repository, or signing a postmortem's §7.
 
+## Lean execution (owner, 05/11/2026)
+
+[ADR-20261105-entrada-enxuta-e-r3-sem-parada](ADR-20261105-entrada-enxuta-e-r3-sem-parada.md) narrows
+how the levels below are applied. Where this section and the table disagree, this section wins:
+
+- **No stop for approval.** R2 and R3 work is implemented without waiting; the decision is listed in
+  `RATIFICACAO.md` and ratified by the owner in batch at the end.
+- **ADR only for a new decision.** Work that follows an accepted ADR or the prototype cites that ADR in
+  its card; it needs no new ADR and no product-critic verdict. The minimum evidence below applies only
+  to a new ADR.
+- **One review per PR, not per round.** R3: one `security-auditor` pass before merge, alongside the
+  single contract review. Between rounds the gate is CI.
+- **At most one fix round after review.** Blocking or high findings are fixed in it; medium and low
+  findings become board cards, not another round.
+
 ## Levels
 
 | Level | Meaning | Approval rule |
