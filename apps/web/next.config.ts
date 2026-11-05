@@ -5,6 +5,9 @@ import type { NextConfig } from "next"
 // salvo a subárvore de onboarding. A lista não inclui `/conta-apagada`,
 // `/convite`, `/prestador-convite`, `/privacidade`, `/ajuda` nem `/consent`:
 // esses seguem públicos ou têm fluxo próprio (ADR-20261022-entrada-do-prototipo).
+// Também ficam de fora `/auth/confirmar-email` e `/auth/callback-error`: são o
+// caminho de falha dos links de e-mail e do OAuth (redirect-plan.ts) e têm tela
+// própria, com o painel de reenvio e a mensagem de falha.
 const ENTRADA_ANTIGA: readonly string[] = [
   "/login",
   "/signup",
@@ -12,8 +15,6 @@ const ENTRADA_ANTIGA: readonly string[] = [
   "/nova-senha",
   "/onboarding",
   "/onboarding/:caminho*",
-  "/auth/confirmar-email",
-  "/auth/callback-error",
 ]
 
 const ENTRADA_DO_APP = "/app/entrar"

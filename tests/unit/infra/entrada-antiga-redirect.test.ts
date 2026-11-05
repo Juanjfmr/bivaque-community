@@ -41,8 +41,6 @@ describe("telas antigas de entrada redirecionam para /app/entrar", () => {
     "/onboarding/documento",
     "/onboarding/perfil",
     "/onboarding/welcome",
-    "/auth/confirmar-email",
-    "/auth/callback-error",
   ]
 
   for (const caminho of antigas) {
@@ -64,6 +62,16 @@ describe("as rotas que continuam fora do redirect", () => {
     expect(regraPara(lista, "/consent")).toEqual([])
     expect(regraPara(lista, "/auth/callback")).toEqual([])
     expect(regraPara(lista, "/auth/callback?next=/app/entrar")).toEqual([])
+  })
+
+  // Falha de link de e-mail e de OAuth: o callback manda para estas duas telas
+  // (redirect-plan.ts). Redirecioná-las jogaria a pessoa na entrada crua, sem a
+  // mensagem de expirado nem o botão de reenvio.
+  it("/auth/confirmar-email e /auth/callback-error seguem com tela própria, sem redirect", async () => {
+    const lista = await regras()
+    expect(regraPara(lista, "/auth/confirmar-email")).toEqual([])
+    expect(regraPara(lista, "/auth/confirmar-email?estado=expirado")).toEqual([])
+    expect(regraPara(lista, "/auth/callback-error")).toEqual([])
   })
 
   it("rotas públicas que não são entrada antiga seguem sem redirect", async () => {
