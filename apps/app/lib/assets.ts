@@ -1,6 +1,8 @@
 import { dadosDoApp } from "./dados"
 
-/** Mesmo resolver do protótipo: imagem embutida, chave local ou ausência. */
+/** Mesmo resolver do protótipo: imagem embutida, URL assinada real, chave local ou ausência. */
 export function assetUrl(ref: string | null | undefined): string {
-  return typeof ref === "string" && ref !== "" ? dadosDoApp.imagem(ref) : ""
+  if (typeof ref !== "string" || ref === "") return ""
+  if (/^https?:\/\//.test(ref)) return ref
+  return dadosDoApp.imagem(ref)
 }

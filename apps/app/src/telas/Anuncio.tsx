@@ -1,7 +1,8 @@
 "use client"
 
 import { useParams } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
+
 import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
 import { Capa } from "@/components/bivaque/capa"
@@ -11,29 +12,37 @@ import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { type AnuncioDetalhado, abrirInteresse, buscarAnuncio } from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
-import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { iniciais } from "@/lib/texto"
 import { useCasca } from "@/src/contexto/casca"
-import { registro, texto } from "@/src/telas/comum"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
+import { anuncioSumiu, mensagemDaFalha } from "@/src/mercado/falha"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
 /**
- * O anúncio da onda 6 (protótipo: features/listings/detail.js, renderItem), com
- * dados de demonstração. Salvar é estado local; conversa leva a Conversas.
- * Editor, fotos, mapa do bairro e denúncia ficam para o refino.
+ * O anúncio, do banco (LAN-F06, no molde do F05).
+ *
+ * A tela é a mesma de sempre: capa, preço, bairro e cidade aproximados, "Sobre o
+ * anúncio", quem anuncia, salvar, as duas ações e o rascunho local de contato.
+ * Mudou a fonte: `lib/dados/mercado`, com carregando, vazio honesto por campo,
+ * erro recuperável, sessão vencida, acesso negado e "sumiu". O endereço exato
+ * nunca aparece: a localização mostrada é o bairro, por escolha de quem anuncia.
+ *
+ * Interesse sem otimismo: o botão só muda depois da resposta, e a falha deixa o
+ * estado anterior com a mensagem do que aconteceu.
  */
 export function Anuncio() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [anuncio, setAnuncio] = useState<AnuncioDetalhado | null>(null)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "sumiu" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [salvo, setSalvo] = useState(false)
   const interesse = useSobreposicaoDaEntrada("contato-interesse")
@@ -48,24 +57,43 @@ export function Anuncio() {
   const [valorOferta, setValorOferta] = useState("")
   const [rascunhoContato, setRascunhoContato] = useState<string | null>(null)
   const [erroContato, setErroContato] = useState("")
+  const [enviandoInteresse, setEnviandoInteresse] = useState(false)
+  const [avisoInteresse, setAvisoInteresse] = useState<string | null>(null)
+  const [conversaId, setConversaId] = useState<string | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
+
+  // Uma sessão de rede por tela: sair cancela o que ainda estava a caminho.
+  const [controle] = useState(() => new AbortController())
+  useEffect(() => () => controle.abort(), [controle])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     const controle = new AbortController()
-    setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+    setAnuncio(null)
+    setErro(null)
+    setConversaId(null)
+    setAvisoInteresse(null)
+    void buscarAnuncio(id, { signal: controle.signal })
+      .then((lido) => {
+        if (controle.signal.aborted) return
+        setAnuncio(lido)
+        setSalvo(lido.salvo)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (controle.signal.aborted) return
+        setErro(
+          sessaoVencida(falha)
+            ? "sessao"
+            : anuncioSumiu(falha)
+              ? "sumiu"
+              : acessoNegado(falha)
+                ? "negado"
+                : "falhou",
+        )
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [id, rodada])
 
   useEffect(() => {
     setRascunhoContato(null)
@@ -111,23 +139,47 @@ export function Anuncio() {
     }
   }
 
-  const validacao = validarParametros("anuncio", { id })
-  const anuncio = useMemo(
-    () => (dados === null ? null : (dados.anuncios.find((item) => item.id === id) ?? null)),
-    [dados, id],
-  )
+  /** Grava o interesse no servidor; nada muda na tela antes da resposta. */
+  async function enviarInteresse() {
+    if (enviandoInteresse) return
+    setEnviandoInteresse(true)
+    setAvisoInteresse(null)
+    try {
+      setConversaId(await abrirInteresse(id, { signal: controle.signal }))
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) setAvisoInteresse(mensagemDaFalha(falha, "interesse"))
+    } finally {
+      setEnviandoInteresse(false)
+    }
+  }
 
+  const validacao = validarParametros("anuncio", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
-  if (erro) {
+  if (erro === "sumiu") return <TelaIndisponivel />
+
+  if (erro === "sessao") {
+    return (
+      <section data-tela="anuncio" className="grid gap-2">
+        <EstadoDeSessaoVencida />
+      </section>
+    )
+  }
+  if (erro === "negado") {
+    return (
+      <section data-tela="anuncio" className="grid gap-2">
+        <EstadoNegado texto="Sua conta não tem acesso a este anúncio." />
+      </section>
+    )
+  }
+  if (erro === "falhou") {
     return (
       <section data-tela="anuncio" className="grid gap-2">
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       </section>
     )
   }
-
-  if (dados === null) {
+  if (anuncio === null) {
     return (
       <section data-tela="anuncio" className="grid gap-2">
         <EsqueletoDeLista linhas={3} />
@@ -135,23 +187,23 @@ export function Anuncio() {
     )
   }
 
-  if (anuncio === null) return <TelaIndisponivel />
-
-  const apresentacao = registro(anuncio.apresentacao)
-  const imovel = anuncio.kind === "property"
+  const imovel = anuncio.tipo === "property"
   const ativo = anuncio.status === "active"
-  const vendedor = texto(apresentacao["seller"], "Membro da comunidade")
-  const conversaVinculada = dados.conversas.find(
-    (conversa) => conversa.context_type === "listing" && conversa.context_id === anuncio.id,
-  )
+  const preco = anuncio.precoCents === null ? null : anuncio.precoCents / 100
+  const cidadeDoAnuncio = anuncio.cidade ?? casca.cidade
+  const localizacao =
+    anuncio.bairro === null ? cidadeDoAnuncio : `${anuncio.bairro} · ${cidadeDoAnuncio}`
+  const localizacaoAproximada =
+    anuncio.bairro === null ? cidadeDoAnuncio : `${anuncio.bairro}, ${cidadeDoAnuncio}`
+  const vendedor = anuncio.donoNome ?? "Membro da comunidade"
 
   return (
     <section data-tela="anuncio" className="grid gap-2">
       <div className="relative">
         <Capa
-          fonte={texto(apresentacao["imagem"])}
-          alt={texto(apresentacao["title"], anuncio.title)}
-          icone={iconeDeDado(apresentacao["icon"])}
+          fonte={anuncio.foto ?? anuncio.fotos[0] ?? null}
+          alt={anuncio.titulo}
+          icone={imovel ? "apartment" : undefined}
         />
         <span className="absolute top-2 left-2">
           <Etiqueta tom="neutro">
@@ -170,30 +222,28 @@ export function Anuncio() {
       </div>
 
       <div className="grid gap-1 px-1">
-        {typeof anuncio.price_cents === "number" ? (
-          <b className="text-[22px]">{moeda(anuncio.price_cents / 100)}</b>
-        ) : null}
+        {preco === null ? null : <b className="text-[22px]">{moeda(preco)}</b>}
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[24px] leading-8">
-          {texto(apresentacao["title"], anuncio.title)}
+          {anuncio.titulo}
         </h1>
-        <p className="text-sm text-(--on-surface-variant)">
-          {texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade)} · {casca.cidade}
-        </p>
+        <p className="text-sm text-(--on-surface-variant)">{localizacao}</p>
       </div>
 
-      {anuncio.description === null || anuncio.description === "" ? null : (
-        <Secao titulo="Sobre o anúncio">
-          <p className="text-[15px] leading-6">{anuncio.description}</p>
-        </Secao>
-      )}
+      <Secao titulo="Sobre o anúncio">
+        {anuncio.descricao === null ? (
+          <p className="text-[15px] leading-6 text-(--on-surface-variant)">
+            Quem anunciou não escreveu uma descrição.
+          </p>
+        ) : (
+          <p className="text-[15px] leading-6">{anuncio.descricao}</p>
+        )}
+      </Secao>
 
       <Secao titulo="Localização aproximada">
         <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)">
           <Icone nome="location_on" className="size-6 shrink-0 text-(--primary)" />
           <span className="grid gap-0.5">
-            <b className="text-[15px]">
-              {texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade)}, {casca.cidade}
-            </b>
+            <b className="text-[15px]">{localizacaoAproximada}</b>
             <small className="text-(--on-surface-variant)">
               O endereço exato pode ser combinado na conversa.
             </small>
@@ -208,20 +258,26 @@ export function Anuncio() {
           </span>
           <span className="grid gap-0.5">
             <b className="text-[15px]">{vendedor}</b>
-            <small className="text-(--on-surface-variant)">
-              {texto(apresentacao["note"], "Membro da comunidade")}
-            </small>
+            {anuncio.donoNome === null ? null : (
+              <small className="text-(--on-surface-variant)">Membro da comunidade</small>
+            )}
           </span>
         </div>
         <div data-acoes-anuncio="sim" className="bv-anuncio-acoes flex flex-wrap gap-2">
-          <Botao
-            data-acao="contato-interesse"
-            icone="chat_bubble"
-            disabled={!ativo}
-            onClick={() => abrirContato("interesse")}
-          >
-            Tenho interesse
-          </Botao>
+          {conversaId === null ? (
+            <Botao
+              data-acao="contato-interesse"
+              icone="chat_bubble"
+              disabled={!ativo || enviandoInteresse}
+              onClick={() => void enviarInteresse()}
+            >
+              {enviandoInteresse ? "Enviando…" : "Tenho interesse"}
+            </Botao>
+          ) : (
+            <Botao tom="tonal" icone="check" data-estado="interesse-gravado" disabled>
+              Conversa aberta
+            </Botao>
+          )}
           <Botao
             data-acao="contato-oferta"
             tom="contornado"
@@ -232,14 +288,18 @@ export function Anuncio() {
             Fazer uma oferta
           </Botao>
         </div>
-        {conversaVinculada === undefined ? null : (
+        {avisoInteresse === null ? null : (
+          <p role="alert" className="text-sm text-(--destructive)">
+            {avisoInteresse}
+          </p>
+        )}
+        {conversaId === null ? null : (
           <Botao
             tom="texto"
-            onClick={() =>
-              void navegacao.irPara("conversa", { parametros: { id: conversaVinculada.id } })
-            }
+            data-acao="ver-conversa"
+            onClick={() => void navegacao.irPara("conversa", { parametros: { id: conversaId } })}
           >
-            Ver conversa demonstrativa sobre o anúncio
+            Ver conversa
           </Botao>
         )}
         {rascunhoContato === null ? null : (
