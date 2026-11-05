@@ -99,15 +99,17 @@ content_path = "./supabase/templates/confirmation.html"
 # versão. `token_verifications` é o teto de verificações de código por IP (5
 # minutos); `email_sent` é por hora e vale para o projeto inteiro no SMTP padrão.
 # O limite por e-mail, por IP e o teto global de envio moram no banco
-# (private.entry_otp_limits). SEC-008: `email_sent` fica ACIMA do teto por IP (30/h) e
-# do teto global do servidor (50/h, `entry_otp_send_gate`), para que o servidor corte o
-# envio antes de o GoTrue ficar sem e-mail para todo mundo.
+# (private.entry_otp_limits). SEC-008/RUN-004: `email_sent` e `sign_in_sign_ups`
+# ficam ACIMA do disjuntor global do servidor (500/h em `entry_otp_send_gate`),
+# para que o servidor corte o envio antes de o GoTrue ficar sem e-mail para todo
+# mundo. O teto por IP é 8/h; o de e-mail, 6/h. `sign_in_sign_ups` é uma janela
+# de 5 minutos, então 600 é folgado até para o disjuntor horário.
 [auth.rate_limit]
-email_sent = 60
+email_sent = 600
 sms_sent = 30
 anonymous_users = 30
 token_refresh = 150
-sign_in_sign_ups = 30
+sign_in_sign_ups = 600
 token_verifications = 30
 web3 = 30
 

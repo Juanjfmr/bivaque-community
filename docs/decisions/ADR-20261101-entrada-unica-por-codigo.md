@@ -335,13 +335,26 @@ decisão do §2 não muda; o dimensionamento muda:
   legitima que errou o endereço algumas vezes, longe do que permite girar endereços.
 - **Envio por e-mail: 6 por hora (inalterado).** Continua sendo o teto que protege um endereço de
   adivinhação distribuída.
-- **Global: 500 por hora, como disjuntor.** Com 6 por e-mail e 8 por IP, uma pessoa não chega perto
-  do global; ele só corta abuso coordenado em massa. O custo aceito é o e-mail do GoTrue poder ser
-  consumido por muitos IPs distintos antes de o disjuntor abrir; o alerta é o log fixo da rota quando
-  o limitador recusa, sem e-mail, IP ou código. Em produção o número ainda depende do `email_sent` do
-  SMTP escolhido (BLOCK-RESEND); o disjuntor fica sempre abaixo dele.
-- **Prova.** `supabase/tests/entry-otp-limiter.sql` cobre os três padrões (6, 8 e 500), o envio que
-  conta no teto por IP e o pedido recusado que não gasta cota.
+- **Global: 500 por hora, como disjuntor.** Com 6 por e-mail e 8 por IP, uma pessoa
+  não chega perto do global; ele só corta abuso coordenado em massa. O custo aceito é o e-mail
+  do GoTrue poder ser consumido por muitos IPs distintos antes de o disjuntor abrir; o alerta é o
+  log fixo da rota quando o limitador recusa, sem e-mail, IP ou código. Em produção o número ainda
+  depende do `email_sent` do SMTP escolhido (BLOCK-RESEND). O disjuntor fica sempre abaixo dele:
+  no `config.toml` local o orçamento sobe para `email_sent = 600` e `sign_in_sign_ups = 600`, e um
+  teste de escopo falha se qualquer um dos dois voltar a ficar abaixo de 500. O `signInWithOtp`
+  sai do servidor, então o limite de sign-in do GoTrue é, na prática, um limite global da rota.
+- **O custo do disjuntor.** Com 8 envios por IP e 500 globais, 8 IPs não travam mais a entrada de
+  todos; cerca de 63 IPs (500 ÷ 8) ainda travariam até a janela reabrir. O desafio humano (por
+  exemplo Turnstile) fica para depois, no card ENTRADA-DESAFIO-HUMANO: ele entra quando o global
+  estiver perto do teto, não antes, para não cobrar de quem só está entrando.
+- **O teto por IP e as redes compartilhadas.** 8/h por IP pode recusar quem está atrás de CGNAT ou
+  do Wi-Fi de uma OM, onde muitas pessoas compartilham o mesmo endereço. O `log.warn` fixo da rota
+  (sem e-mail/IP) é o sinal para acompanhar; se o volume aparecer, o caminho é o desafio humano do
+  card acima, não aumentar o teto de envio.
+- **Prova.** `supabase/tests/entry-otp-limiter.sql` cobre os três padrões (6, 8 e 500), o nono
+  envio do mesmo IP recusado, o global cheio recusando e o pedido recusado que não gasta cota;
+  `tests/scope/entrada-limite-config.test.mjs` lê `config.toml` e o padrão da migration e falha se
+  o disjuntor não ficar abaixo de `email_sent` e `sign_in_sign_ups`.
 
 ## Reversal cost
 

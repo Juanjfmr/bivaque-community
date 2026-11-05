@@ -581,9 +581,11 @@
         "Inserir secret fora do Git",
         "Ativar adaptador e prova de entrega",
         "Fechar o resíduo do /auth/v1/verify público (hook de verificação ou Auth próprio), como decide o ADR de entrada §2",
-        "Dimensionar email_sent, token_verifications e sign_in_sign_ups de produção, com o teto global do servidor sempre abaixo do email_sent"
+        "Dimensionar email_sent, token_verifications e sign_in_sign_ups de produção, com o teto global do servidor sempre abaixo do email_sent",
+        "Garantir em produção email_sent e sign_in_sign_ups acima do disjuntor global do servidor (500/h); ajuste é do dono"
       ],
       "proof": [
+        "05/11: RUN-004 rodada 2 — o disjuntor global ficou em 500/h; no config local email_sent e sign_in_sign_ups subiram para 600. Em produção os dois precisam ficar acima de 500/h (o signInWithOtp sai do servidor, então o limite de sign-in do GoTrue vira limite global da rota). Ajuste do dono no projeto de deploy.",
         "04/11: SEC-008 fechou as ressalvas do limitador no ADR de entrada e deixou aqui os dois itens de produção: (a) o resíduo do /auth/v1/verify público — o contador por e-mail só vê tentativas que passam pela rota do app, e quem fala direto com o GoTrue é contido só pelo limite por IP do próprio GoTrue (token_verifications) e pela validade de 10 minutos; fechar de vez exige o hook de verificação ou o Auth próprio; (b) o dimensionamento de email_sent (60/h no config local, acima do teto global do servidor de 50/h), token_verifications (30 por 5 min) e sign_in_sign_ups (30) para o SMTP/Resend real e o volume do lançamento. Números de produção dependem do projeto de deploy e da entrega real provada.",
         "apps/web/lib/outbox/adapters.ts mantém adaptadores indisponíveis",
         "convites e decisão de documento já enfileiram mensagens",
@@ -598,10 +600,10 @@
         "Provar uma entrega real pelo outbox em ambiente implantado"
       ],
       "links": ["Status: infraestrutura | ../../docs/historico/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-11-04",
+      "updatedAt": "2026-11-05",
       "sourceRevision": "cd550fcc",
       "dependencies": [],
-      "completedChecklist": [true, true, true, false, false, false, false]
+      "completedChecklist": [true, true, true, false, false, false, false, false]
     },
     {
       "id": "BLOCK-WHATSAPP",
@@ -6259,6 +6261,31 @@
       "proof": [
         "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte."
       ]
+    },
+    {
+      "id": "ENTRADA-DESAFIO-HUMANO",
+      "title": "Desafio humano no envio do código quando o disjuntor global estiver perto do teto",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "O disjuntor global do limitador (500 envios/h) existe para uma pessoa não travar a entrada de todos. Quando o volume legítimo chegar perto dele, é preciso um desafio humano (por exemplo Turnstile) antes do envio, e acompanhar as recusas de 8/h por IP em redes compartilhadas (CGNAT, Wi-Fi de OM).",
+      "checklist": [
+        "Definir o provedor de desafio (Turnstile) e onde ele entra antes do envio",
+        "Disparar o desafio quando o global estiver perto do teto, sem cobrar de quem só está entrando",
+        "Acompanhar pelo log.warn as recusas por IP em redes compartilhadas (CGNAT, Wi-Fi de OM)",
+        "Provar o caminho positivo e o negativo sem bloquear a entrada normal",
+        "Decidir o limite de produção com o volume real do lançamento"
+      ],
+      "proof": [
+        "05/11: aberto na revisão do RUN-004 rodada 2. O disjuntor de 500/h e o teto de 8/h por IP estão no ADR-20261101; o desafio humano e o risco de CGNAT/OM ficam aqui para depois da prova de volume, com dependência de BLOCK-RESEND."
+      ],
+      "blockers": ["Depende do projeto de deploy e do volume real de produção (BLOCK-RESEND)"],
+      "links": ["docs/decisions/ADR-20261101-entrada-unica-por-codigo.md"],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "874575e1",
+      "dependencies": ["BLOCK-RESEND"],
+      "completedChecklist": [false, false, false, false, false]
     }
   ]
 }
