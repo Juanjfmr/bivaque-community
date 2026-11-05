@@ -303,6 +303,8 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     let falhar = true
     await page.route("**/api/app/entry/provision", async (rota) => {
       if (falhar) {
+        // Segura a resposta para o teste ver o estado "Confirmando…".
+        await new Promise((resolver) => setTimeout(resolver, 700))
         await rota.fulfill({
           status: 503,
           contentType: "application/json",
@@ -314,6 +316,9 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     })
 
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
+    await expect(page.getByRole("button", { name: "Confirmando…" })).toBeVisible({
+      timeout: 5_000,
+    })
     await esperarEtapaDaEntrada(page, /Você já está em Manaus\./)
     await expect(page.getByRole("alert")).toContainText(
       "Não foi possível confirmar seu cadastro agora.",
@@ -332,6 +337,16 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
     await esperarEtapaDaEntrada(page, "O que interessa a você?")
+
+    // Falha ao conferir o vínculo na retomada: mensagem fixa e Tentar de novo,
+    // não "faltou dado do cadastro".
+    await page.route("**/api/app/entry/verification", (rota) => rota.abort("failed"))
+    await page.reload()
+    await expect(page.getByRole("alert")).toContainText(
+      "Não foi possível conferir seu vínculo agora. Tente de novo.",
+    )
+    await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
+    await page.unroute("**/api/app/entry/verification")
   })
 
   test("erro do provedor aparece na porta com mensagem fixa e sem detalhe técnico", async ({

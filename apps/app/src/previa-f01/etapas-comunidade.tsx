@@ -211,7 +211,7 @@ const PREVIA_DO_MOMENTO: Record<Momento, { titulo: (cidade: string) => string; s
   },
 }
 
-export function PreviaDaCidade({ progresso, concluir, previa }: PropsDaEtapa) {
+export function PreviaDaCidade({ progresso, concluir, previa, provisionando }: PropsDaEtapa) {
   const cidade = previa?.cidade ?? null
   const nome = cidade?.nome ?? progresso.cidade ?? "sua cidade"
   const momento = progresso.momento ?? "morando"
@@ -229,7 +229,10 @@ export function PreviaDaCidade({ progresso, concluir, previa }: PropsDaEtapa) {
       }
       ilustracao="encontro"
       aoEnviar={() => concluir()}
-      acao={{ rotulo: "Continuar" }}
+      acao={{
+        rotulo: provisionando === true ? "Confirmando…" : "Continuar",
+        carregando: provisionando === true,
+      }}
     >
       <p className="f01-selo">
         <Estado icone="verified_user">Vínculo confirmado</Estado>

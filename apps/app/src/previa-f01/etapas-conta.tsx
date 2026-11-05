@@ -32,6 +32,8 @@ export type PropsDaEtapa = {
   erro: (motivo: NonNullable<EventoDoFunil["motivo"]>) => void
   /** Mensagem fixa da falha do provedor, capturada pela tela antes do roteador. */
   avisoDoProvedor?: string | null
+  /** O provisionamento automático está em andamento: a prévia não avança. */
+  provisionando?: boolean
   /** Só a prévia de design injeta conteúdo simulado; o caminho real não passa. */
   previa?: DadosDaPrevia
 }

@@ -100,9 +100,7 @@ export default function ConfiguracoesFamiliaPage() {
       formData.set("email", resendEmail)
       const result = await resendFamilyInviteAction(formData)
       if (result?.token) {
-        setInviteLink(
-          result.code ? `/app/entrar?convite=${result.code}` : `/onboarding?invite=${result.token}`,
-        )
+        setInviteLink(result.code ? `/app/entrar?convite=${result.code}` : "/app/entrar")
         setInviteCode(result.code ?? null)
         setLinkInviteId(invitationId)
         setResendingId(null)
@@ -124,9 +122,7 @@ export default function ConfiguracoesFamiliaPage() {
     try {
       const result = await sendFamilyInviteAction(formData)
       if (result?.token) {
-        setInviteLink(
-          result.code ? `/app/entrar?convite=${result.code}` : `/onboarding?invite=${result.token}`,
-        )
+        setInviteLink(result.code ? `/app/entrar?convite=${result.code}` : "/app/entrar")
         setInviteCode(result.code ?? null)
         const fresh = await getFamilyInviteDataAction()
         setData(fresh)

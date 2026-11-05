@@ -5,6 +5,10 @@
 //   1. not logged in → /app/entrar (a porta do app; nada de senha)
 //   2. logged in but not verified → /app/entrar (a entrada do app decide a etapa)
 //      (D15 gate; the verification is mandatory)
+//
+// O token do convite de comunidade NÃO é preservado nesse desvio: o app não tem
+// rota para ele e o convite continua pendente. O card LAN-F01 registra o desvio
+// (RUN-004 rodada 2); a tela antiga de senha deixou de ser destino.
 //   3. verified → success: redirect to the community
 //   4. expired / already-used / not-found → render the friendly error UI
 //
@@ -46,8 +50,8 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
   } = await authClient.auth.getUser()
   if (!user) {
     // Link de comunidade não carrega código de família; a pessoa entra pela
-    // porta do app e volta pelo caminho que já existe. A tela antiga de senha
-    // não é mais destino de membro.
+    // porta do app. O token não é preservado: o convite continua pendente e o
+    // card registra o desvio.
     redirect("/app/entrar")
   }
 

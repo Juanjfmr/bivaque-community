@@ -15,6 +15,7 @@ import { TELAS_DA_ENTRADA } from "@/src/previa-f01/telas"
 import "@/src/previa-f01/previa-f01.css"
 import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
+import { mensagemDoConvite } from "./mensagens"
 import {
   aceitarConvite,
   aceitarTermos,
@@ -59,22 +60,13 @@ const MOMENTO_DO_PROVISIONAMENTO = {
   saindo: "leaving",
 } as const
 
-/** Mensagem fixa por tipo de falha do convite: 400, 429 e 503 não se confundem. */
-function mensagemDoConvite(falha: unknown): string {
-  if (falha instanceof FalhaDaEntrada) {
-    if (falha.status === 400) return "Código inválido ou vencido. Volte e confira o convite."
-    if (falha.status === 429) return "Muitas tentativas. Espere um pouco e tente de novo."
-    if (falha.status === 503) return "O convite está indisponível agora. Tente de novo."
-  }
-  return "Não foi possível aceitar o convite agora. Tente de novo."
-}
-
 export function TelaDeEntrada() {
   const navegacao = useNavegacao()
   const [progresso, setProgresso] = useState<Progresso | null>(null)
   const [autenticado, setAutenticado] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
   const [tentar, setTentar] = useState<(() => void) | null>(null)
+  const [provisionandoAgora, setProvisionandoAgora] = useState(false)
   const emailEmTransito = useRef<string | null>(null)
   const codigoDoConvite = useRef<string | null>(null)
   const convitePreview = useRef<PreviewDoConvite | null>(null)
@@ -174,7 +166,12 @@ export function TelaDeEntrada() {
           }
           setProgresso(receberVerificacao(doServidor, verificacaoDoStatus(verificacao.status)))
         } catch {
-          if (ativo) setProgresso(doServidor)
+          if (!ativo) return
+          // Falha ao conferir o vínculo não é "faltou dado do cadastro": é
+          // leitura indisponível, com a mesma mensagem fixa e Tentar de novo.
+          setFalha("Não foi possível conferir seu vínculo agora. Tente de novo.")
+          setTentar(() => () => window.location.reload())
+          setProgresso(doServidor)
         }
       })
       .catch(() => {
@@ -252,6 +249,7 @@ export function TelaDeEntrada() {
       return false
     }
     provisionando.current = true
+    setProvisionandoAgora(true)
     try {
       await provisionar({
         ibgeCode: atual.cidadeIbge,
@@ -282,6 +280,7 @@ export function TelaDeEntrada() {
       return false
     } finally {
       provisionando.current = false
+      setProvisionandoAgora(false)
     }
   }, [])
 
@@ -423,6 +422,7 @@ export function TelaDeEntrada() {
               }}
               voltar={voltar}
               avisoDoProvedor={avisoDoProvedor}
+              provisionando={provisionandoAgora}
               erro={() => {
                 // O funil anônimo da prévia não existe no caminho de produção.
               }}
