@@ -57,7 +57,7 @@ export function Agenda() {
         subtitulo={`Encontros da comunidade de ${casca.cidade}.`}
         acao={
           carregando ? undefined : (
-            <Botao tom="contornado" icone="add" onClick={() => setCriando(true)}>
+            <Botao tom="tonal" icone="add" onClick={() => setCriando(true)}>
               Criar encontro
             </Botao>
           )
