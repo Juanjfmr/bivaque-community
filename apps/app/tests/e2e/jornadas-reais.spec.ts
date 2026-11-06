@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test"
+import { simularInicio } from "./inicio-ajuda"
 import { simularPerguntas } from "./perguntas-ajuda"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 // Sem o fixture de apoio: estes casos exercitam as telas usadas pela pessoa.
 test("o Início normal mostra conteúdo e não o andaime de navegação", async ({ page }) => {

@@ -12,7 +12,7 @@ test("conversas ligadas usam a porta real e preservam as demais jornadas", () =>
     assert.doesNotMatch(fonte, /dadosDoApp|lerMensagensDePrevia|guardarMensagemDePrevia/)
     assert.match(fonte, /@\/lib\/dados\/conversas/)
   }
-  assert.match(ler("apps/app/src/telas/Inicio.tsx"), /dadosDoApp/)
+  assert.match(ler("apps/app/src/telas/Inicio.tsx"), /@\/lib\/dados\/inicio/)
 })
 
 test("rotas de conversas usam sessão e não usam privilégio de serviço", () => {

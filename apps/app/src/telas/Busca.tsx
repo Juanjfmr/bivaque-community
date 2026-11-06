@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
@@ -12,211 +12,129 @@ import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import {
+  type AnuncioDoInicio,
+  type BuscaDaCidade,
+  buscarNaCidade,
+  type InicioDaCidade,
+  lerInicio,
+} from "@/lib/dados/inicio"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { normalizar } from "@/lib/texto"
 import { useCasca } from "@/src/contexto/casca"
+import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
 
 /**
- * A busca da onda 2 (protótipo: features/search/views.js), com dados de
- * demonstração.
+ * A busca, com o conteúdo real da cidade da sessão (LAN-F02). O desenho é o da
+ * onda 2 (protótipo: features/search/views.js): campo, chips de escopo,
+ * contagem, resultados por tipo com teto no "Tudo" e "Ver todos", grade
+ * "Explorar" e sugestões quando não há termo, vazio honesto e erro com tentar
+ * de novo. Ficam para o refino: sinônimos, trecho da resposta que bateu,
+ * palavras que completam o texto e buscas recentes.
  *
- * V1: campo, chips de escopo, contagem, resultados por tipo com teto no "Tudo"
- * e "Ver todos", sugestões, vazio honesto e erro com tentar de novo. Ficam para o refino:
- * sinônimos, trecho da resposta que bateu, palavras que completam o texto,
- * buscas recentes e o bloco "Explorar".
+ * Sem termo, a grade "Explorar" lê o Início da cidade; com termo (2+ letras),
+ * os resultados vêm da rota de busca. Foto de anúncio e de negócio ainda não
+ * existe no banco, então o cartão usa a capa com ícone.
  */
 
 const FILTROS: readonly ItemDeFiltro[] = [
   { id: "all", rotulo: "Tudo" },
-  { id: "items", rotulo: "Anúncios" },
-  { id: "biz", rotulo: "Negócios" },
-  { id: "asks", rotulo: "Indicações" },
-  { id: "groups", rotulo: "Grupos" },
-  { id: "events", rotulo: "Encontros" },
+  { id: "anuncios", rotulo: "Anúncios" },
+  { id: "negocios", rotulo: "Negócios" },
+  { id: "perguntas", rotulo: "Indicações" },
+  { id: "grupos", rotulo: "Grupos" },
+  { id: "guia", rotulo: "Guia" },
 ]
 
 const SUGESTOES = ["escola", "berço", "mudança", "mecânico"] as const
+const TAMANHO_DA_LISTA = 20
 
-// Categorias da grade "Explorar" do HTML R72. Só exibimos categorias que
-// possuem negócios na cidade consultada, usando a categoria real da fixture.
-const EXPLORAR = [
-  { id: "saude", rotulo: "Saúde", icone: "medical_services", termos: ["saúde"] },
-  { id: "educacao", rotulo: "Educação", icone: "school", termos: ["aulas", "educação"] },
-  {
-    id: "reparos",
-    rotulo: "Casa e reparos",
-    icone: "build",
-    termos: ["elétrica", "climatização", "refrigeração"],
-  },
-  {
-    id: "mudanca",
-    rotulo: "Mudança e transporte",
-    icone: "local_shipping",
-    termos: ["mudança", "transporte"],
-  },
-  { id: "pets", rotulo: "Pets", icone: "pets", termos: ["pets"] },
-  { id: "comida", rotulo: "Festas e comida", icone: "cake", termos: ["comida", "festas"] },
-  { id: "limpeza", rotulo: "Limpeza e jardim", icone: "home", termos: ["limpeza", "jardim"] },
-] as const
+type Achados = Pick<BuscaDaCidade, "anuncios" | "negocios" | "perguntas" | "grupos" | "guia">
 
-function negocioDaCategoria(
-  categoria: string | null,
-  negocio: DadosDaCidade["negocios"][number],
-): boolean {
-  const grupo = EXPLORAR.find((item) => item.id === categoria)
-  if (!grupo) return false
-  const apresentacao = registro(negocio.apresentacao)
-  const nome = normalizar(texto(apresentacao["cat"], negocio.category ?? ""))
-  return grupo.termos.some((termo) => nome.includes(normalizar(termo)))
+const SEM_ACHADOS: Achados = { anuncios: [], negocios: [], perguntas: [], grupos: [], guia: [] }
+
+/** Contagem que não afirma mais do que a página lida mostra. */
+function contagem(quantidade: number, truncada: boolean): string {
+  return truncada ? `${quantidade}+` : String(quantidade)
 }
 
-const PARADAS = new Set([
-  "de",
-  "da",
-  "do",
-  "das",
-  "dos",
-  "em",
-  "no",
-  "na",
-  "para",
-  "com",
-  "um",
-  "uma",
-  "por",
-  "perto",
-])
-
-function termos(consulta: string): string[] {
-  return normalizar(consulta)
-    .split(/[^a-z0-9]+/)
-    .filter((parte) => parte.length > 1 && !PARADAS.has(parte))
-}
-
-/** Todos os termos precisam aparecer no texto; consulta vazia não casa. */
-function combina(consulta: string, texto: string): boolean {
-  const partes = termos(consulta)
-  if (partes.length === 0) return false
-  const palheiro = normalizar(texto)
-  return partes.every((parte) => palheiro.includes(parte))
-}
-
-function registro(valor: unknown): Record<string, unknown> {
-  return valor !== null && typeof valor === "object" && !Array.isArray(valor)
-    ? (valor as Record<string, unknown>)
-    : {}
-}
-
-function texto(valor: unknown, reserva = ""): string {
-  return typeof valor === "string" ? valor : reserva
-}
-
-function tamanho(valor: unknown): number {
-  return Array.isArray(valor) ? valor.length : 0
+function precoDe(anuncio: AnuncioDoInicio): number | null {
+  return anuncio.precoCentavos === null ? null : anuncio.precoCentavos / 100
 }
 
 export function Busca() {
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
+  const [dados, setDados] = useState<BuscaDaCidade | null>(null)
+  const [explorar, setExplorar] = useState<InicioDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
-  const { consulta, definirConsulta: setConsulta } = casca
   const [escopo, setEscopo] = useState("all")
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
-
+  const { consulta, definirConsulta: setConsulta } = casca
+  const termo = consulta.trim()
+  const comTermo = termo.length >= 2
   useRolagemEFoco(CARGA_CONCLUIDA)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const controle = new AbortController()
-    setDados(null)
     setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
-      })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
-      })
+    const falhou = () => {
+      if (!controle.signal.aborted) setErro(true)
+    }
+    if (comTermo) {
+      setDados(null)
+      void buscarNaCidade(termo, { signal: controle.signal })
+        .then((valor) => {
+          if (!controle.signal.aborted) setDados(valor)
+        })
+        .catch(falhou)
+    } else {
+      setExplorar(null)
+      void lerInicio({ signal: controle.signal })
+        .then((valor) => {
+          if (!controle.signal.aborted) setExplorar(valor)
+        })
+        .catch(falhou)
+    }
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [termo, comTermo, rodada])
 
   // Uma consulta digitada tem precedência sobre a categoria tocada na grade.
   useEffect(() => {
-    if (consulta.trim() !== "") setCategoriaAtiva(null)
-  }, [consulta])
+    if (termo !== "") setCategoriaAtiva(null)
+  }, [termo])
 
-  const achados = useMemo(() => {
-    const vazio = { items: [], biz: [], asks: [], groups: [], events: [] }
-    if (dados === null) return vazio
-    if (termos(consulta).length === 0 && categoriaAtiva !== null) {
-      return {
-        ...vazio,
-        biz: dados.negocios.filter((negocio) => negocioDaCategoria(categoriaAtiva, negocio)),
+  const cidade = (comTermo ? dados?.cidade : explorar?.cidade) ?? casca.cidade
+  const explorando = !comTermo && categoriaAtiva === null
+  const carregando = comTermo ? dados === null : explorar === null
+  const achados: Achados = comTermo
+    ? (dados ?? SEM_ACHADOS)
+    : {
+        ...SEM_ACHADOS,
+        negocios: (explorar?.negocios ?? []).filter((negocio) =>
+          negocioDoGrupo(categoriaAtiva, negocio.categoria),
+        ),
       }
-    }
-    if (termos(consulta).length === 0) return vazio
-    const items = dados.anuncios.filter((anuncio) => {
-      const apresentacao = registro(anuncio.apresentacao)
-      return (
-        anuncio.status === "active" &&
-        combina(
-          consulta,
-          [
-            anuncio.title,
-            anuncio.description ?? "",
-            texto(apresentacao["hood"], anuncio.neighborhood ?? ""),
-          ].join(" "),
-        )
-      )
-    })
-    const biz = dados.negocios.filter((negocio) => {
-      const apresentacao = registro(negocio.apresentacao)
-      return combina(
-        consulta,
-        [negocio.display_name, negocio.category ?? "", texto(apresentacao["cat"])].join(" "),
-      )
-    })
-    const asks = dados.perguntas.filter((pergunta) => {
-      const apresentacao = registro(pergunta.apresentacao)
-      return combina(
-        consulta,
-        [texto(apresentacao["q"], pergunta.title), texto(apresentacao["topic"])].join(" "),
-      )
-    })
-    const groups = dados.grupos.filter((grupo) => {
-      const apresentacao = registro(grupo.apresentacao)
-      return combina(consulta, [grupo.name, texto(apresentacao["t"])].join(" "))
-    })
-    const events = dados.eventos.filter((evento) =>
-      combina(consulta, [evento.title, evento.description ?? "", evento.venue ?? ""].join(" ")),
-    )
-    return { items, biz, asks, groups, events }
-  }, [dados, consulta, categoriaAtiva])
-
-  const total =
-    (escopo === "all" || escopo === "items" ? achados.items.length : 0) +
-    (escopo === "all" || escopo === "biz" ? achados.biz.length : 0) +
-    (escopo === "all" || escopo === "asks" ? achados.asks.length : 0) +
-    (escopo === "all" || escopo === "groups" ? achados.groups.length : 0) +
-    (escopo === "all" || escopo === "events" ? achados.events.length : 0)
 
   const mostrando = (tipo: string): boolean => escopo === "all" || escopo === tipo
+  const total =
+    (mostrando("anuncios") ? achados.anuncios.length : 0) +
+    (mostrando("negocios") ? achados.negocios.length : 0) +
+    (mostrando("perguntas") ? achados.perguntas.length : 0) +
+    (mostrando("grupos") ? achados.grupos.length : 0) +
+    (mostrando("guia") ? achados.guia.length : 0)
   const teto = escopo === "all" ? 4 : Number.POSITIVE_INFINITY
-  const carregando = dados === null && !erro
-  const negociosDaCidade = dados?.negocios ?? []
-  const anunciosDaCidade = dados?.anuncios ?? []
-  const explorando = termos(consulta).length === 0 && categoriaAtiva === null
+  const negociosDaCidade = explorar?.negocios ?? []
+  const anunciosDaCidade = explorar?.anuncios ?? []
+  const anunciosTruncados = explorar !== null && explorar.proximo !== null
 
   return (
     <section data-tela="busca" className="grid gap-2">
       <CabecaDePagina
-        titulo={`Buscar em ${casca.cidade}`}
+        titulo={`Buscar em ${cidade}`}
         subtitulo="Encontre oportunidades, negócios e respostas da comunidade."
       />
 
@@ -234,15 +152,15 @@ export function Busca() {
         <EsqueletoDeLista linhas={4} />
       ) : explorando ? (
         <>
-          <Secao titulo={`Explorar em ${casca.cidade}`} className="mt-4">
+          <Secao titulo={`Explorar em ${cidade}`} className="mt-4">
             <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
               {EXPLORAR.filter((item) =>
-                negociosDaCidade.some((negocio) => negocioDaCategoria(item.id, negocio)),
+                negociosDaCidade.some((negocio) => negocioDoGrupo(item.id, negocio.categoria)),
               )
                 .slice(0, 6)
                 .map((item) => {
                   const quantidade = negociosDaCidade.filter((negocio) =>
-                    negocioDaCategoria(item.id, negocio),
+                    negocioDoGrupo(item.id, negocio.categoria),
                   ).length
                   return (
                     <button
@@ -251,7 +169,7 @@ export function Busca() {
                       data-explorar-categoria={item.id}
                       onClick={() => {
                         setCategoriaAtiva(item.id)
-                        setEscopo("biz")
+                        setEscopo("negocios")
                       }}
                       className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
                     >
@@ -261,7 +179,8 @@ export function Busca() {
                       <span className="grid min-w-0 gap-0.5">
                         <b className="text-[13px] leading-4">{item.rotulo}</b>
                         <small className="text-xs text-(--on-surface-variant)">
-                          {quantidade} {quantidade === 1 ? "negócio" : "negócios"}
+                          {contagem(quantidade, negociosDaCidade.length >= TAMANHO_DA_LISTA)}{" "}
+                          {quantidade === 1 ? "negócio" : "negócios"}
                         </small>
                       </span>
                     </button>
@@ -272,13 +191,13 @@ export function Busca() {
                   id: "imoveis",
                   rotulo: "Imóveis",
                   icone: "apartment",
-                  quantidade: anunciosDaCidade.filter((a) => a.kind === "property").length,
+                  quantidade: anunciosDaCidade.filter((a) => a.tipo === "property").length,
                 },
                 {
                   id: "desapegos",
                   rotulo: "Desapegos",
                   icone: "sell",
-                  quantidade: anunciosDaCidade.filter((a) => a.kind !== "property").length,
+                  quantidade: anunciosDaCidade.filter((a) => a.tipo !== "property").length,
                 },
               ].map((item) => (
                 <button
@@ -294,7 +213,7 @@ export function Busca() {
                   <span className="grid min-w-0 gap-0.5">
                     <b className="text-[13px] leading-4">{item.rotulo}</b>
                     <small className="text-xs text-(--on-surface-variant)">
-                      {item.quantidade} disponíveis
+                      {contagem(item.quantidade, anunciosTruncados)} disponíveis
                     </small>
                   </span>
                 </button>
@@ -316,7 +235,7 @@ export function Busca() {
         </>
       ) : total === 0 ? (
         <EstadoVazio
-          titulo={`Nada sobre “${consulta}”`}
+          titulo={`Nada sobre “${termo}”`}
           texto="Tente termos mais simples. Se a dúvida ainda não tiver resposta, pergunte à comunidade."
           icone="search_off"
           acao={{
@@ -327,149 +246,125 @@ export function Busca() {
       ) : (
         <>
           <p className="text-sm text-(--on-surface-variant)">
-            {total === 1 ? `${total} resultado` : `${total} resultados`} em {casca.cidade}
+            {total === 1 ? `${total} resultado` : `${total} resultados`} em {cidade}
           </p>
 
-          {mostrando("items") && achados.items.length > 0 ? (
+          {mostrando("anuncios") && achados.anuncios.length > 0 ? (
             <Secao
               titulo="Anúncios"
               acoes={
                 escopo === "all" ? (
                   <BotaoVerTodos
-                    quando={achados.items.length > 4}
-                    rotulo={`Ver todos os ${achados.items.length} anúncios`}
-                    aoAcionar={() => setEscopo("items")}
+                    quando={achados.anuncios.length > 4}
+                    rotulo={`Ver todos os ${achados.anuncios.length} anúncios`}
+                    aoAcionar={() => setEscopo("anuncios")}
                   />
                 ) : undefined
               }
             >
               <Grade formato="cartoes">
-                {achados.items.slice(0, teto).map((anuncio) => {
-                  const apresentacao = registro(anuncio.apresentacao)
-                  return (
-                    <CartaoDeFoto
-                      key={anuncio.id}
-                      anuncio={{
-                        id: anuncio.id,
-                        fonte: texto(apresentacao["imagem"]),
-                        rotulo: texto(apresentacao["flag"]) || undefined,
-                        porMes: texto(apresentacao["per"]) === "/mês",
-                        titulo: texto(apresentacao["title"], anuncio.title),
-                        preco:
-                          typeof anuncio.price_cents === "number"
-                            ? anuncio.price_cents / 100
-                            : null,
-                        icone: iconeDeDado(apresentacao["icon"]),
-                        meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
-                      }}
-                      aoAbrir={() =>
-                        void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
-                      }
-                    />
-                  )
-                })}
+                {achados.anuncios.slice(0, teto).map((anuncio) => (
+                  <CartaoDeFoto
+                    key={anuncio.id}
+                    anuncio={{
+                      id: anuncio.id,
+                      titulo: anuncio.title,
+                      preco: precoDe(anuncio),
+                      icone: anuncio.tipo === "property" ? "apartment" : "sell",
+                      meta: anuncio.bairro ?? cidade,
+                    }}
+                    aoAbrir={() =>
+                      void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
+                    }
+                  />
+                ))}
               </Grade>
             </Secao>
           ) : null}
 
-          {mostrando("biz") && achados.biz.length > 0 ? (
+          {mostrando("negocios") && achados.negocios.length > 0 ? (
             <Secao
               titulo="Negócios"
               acoes={
                 escopo === "all" ? (
                   <BotaoVerTodos
-                    quando={achados.biz.length > 4}
-                    rotulo={`Ver todos os ${achados.biz.length} negócios`}
-                    aoAcionar={() => setEscopo("biz")}
+                    quando={achados.negocios.length > 4}
+                    rotulo={`Ver todos os ${achados.negocios.length} negócios`}
+                    aoAcionar={() => setEscopo("negocios")}
                   />
                 ) : undefined
               }
             >
               <Grade formato="cartoes">
-                {achados.biz.slice(0, teto).map((negocio) => {
-                  const apresentacao = registro(negocio.apresentacao)
-                  return (
-                    <CartaoDeNegocio
-                      key={negocio.id}
-                      negocio={{
-                        id: negocio.id,
-                        fonte: texto(apresentacao["imagem"]),
-                        nome: texto(apresentacao["name"], negocio.display_name),
-                        categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                        cidade: casca.cidade,
-                        indicacoes:
-                          typeof apresentacao["recN"] === "number" ? apresentacao["recN"] : 0,
-                        aguardando: apresentacao["claimed"] === false,
-                      }}
-                      aoAbrir={() =>
-                        void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
-                      }
-                    />
-                  )
-                })}
+                {achados.negocios.slice(0, teto).map((negocio) => (
+                  <CartaoDeNegocio
+                    key={negocio.id}
+                    negocio={{
+                      id: negocio.id,
+                      nome: negocio.nome,
+                      categoria: rotuloDaCategoria(negocio.categoria),
+                      cidade,
+                    }}
+                    aoAbrir={() =>
+                      void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
+                    }
+                  />
+                ))}
               </Grade>
             </Secao>
           ) : null}
 
-          {mostrando("asks") && achados.asks.length > 0 ? (
+          {mostrando("perguntas") && achados.perguntas.length > 0 ? (
             <Secao titulo="Indicações e respostas">
               <div className="grid gap-2">
-                {achados.asks.slice(0, escopo === "all" ? 5 : teto).map((pergunta) => {
-                  const apresentacao = registro(pergunta.apresentacao)
-                  return (
-                    <LinhaDePergunta
-                      key={pergunta.id}
-                      pergunta={{
-                        id: pergunta.id,
-                        pergunta: texto(apresentacao["q"], pergunta.title),
-                        autor: texto(apresentacao["who"], "Alguém da cidade"),
-                        tópico: texto(apresentacao["topic"], ""),
-                        cidade: casca.cidade,
-                        respostas: tamanho(apresentacao["answers"]),
-                        resolvida: pergunta.is_resolved === true,
-                      }}
-                      onClick={() =>
-                        void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
-                      }
-                    />
-                  )
-                })}
+                {achados.perguntas.slice(0, escopo === "all" ? 5 : teto).map((pergunta) => (
+                  <LinhaDePergunta
+                    key={pergunta.id}
+                    pergunta={{
+                      id: pergunta.id,
+                      pergunta: pergunta.title,
+                      autor: "Alguém da cidade",
+                      tópico: pergunta.grupo ?? "",
+                      cidade,
+                      respostas: pergunta.respostas,
+                      resolvida: pergunta.resolvida,
+                    }}
+                    onClick={() =>
+                      void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
+                    }
+                  />
+                ))}
               </div>
             </Secao>
           ) : null}
 
-          {mostrando("groups") && achados.groups.length > 0 ? (
+          {mostrando("grupos") && achados.grupos.length > 0 ? (
             <Secao titulo="Grupos">
               <div className="grid gap-2">
-                {achados.groups.slice(0, escopo === "all" ? 5 : teto).map((grupo) => {
-                  const apresentacao = registro(grupo.apresentacao)
-                  return (
-                    <LinhaDeLista
-                      key={grupo.id}
-                      icone="group"
-                      titulo={texto(apresentacao["t"], grupo.name)}
-                      subtitulo={`${typeof apresentacao["members"] === "number" ? apresentacao["members"] : 0} membros`}
-                      onClick={() =>
-                        void navegacao.irPara("grupo", { parametros: { id: grupo.id } })
-                      }
-                    />
-                  )
-                })}
+                {achados.grupos.slice(0, escopo === "all" ? 5 : teto).map((grupo) => (
+                  <LinhaDeLista
+                    key={grupo.id}
+                    icone="group"
+                    titulo={grupo.nome}
+                    subtitulo={`${grupo.membros} ${grupo.membros === 1 ? "membro" : "membros"}`}
+                    onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
+                  />
+                ))}
               </div>
             </Secao>
           ) : null}
 
-          {mostrando("events") && achados.events.length > 0 ? (
-            <Secao titulo="Encontros">
+          {mostrando("guia") && achados.guia.length > 0 ? (
+            <Secao titulo="Guia">
               <div className="grid gap-2">
-                {achados.events.slice(0, escopo === "all" ? 5 : teto).map((evento) => (
+                {achados.guia.slice(0, escopo === "all" ? 5 : teto).map((entrada) => (
                   <LinhaDeLista
-                    key={evento.id}
-                    icone="event"
-                    titulo={evento.title}
-                    subtitulo={evento.venue ?? ""}
+                    key={entrada.id}
+                    icone="map"
+                    titulo={entrada.title}
+                    subtitulo={entrada.detalhe ?? ""}
                     onClick={() =>
-                      void navegacao.irPara("evento", { parametros: { id: evento.id } })
+                      void navegacao.irPara("guia", { parametros: { id: entrada.id } })
                     }
                   />
                 ))}

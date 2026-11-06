@@ -1,5 +1,10 @@
 ﻿import { expect, test } from "@playwright/test"
 import { simularConversas } from "./conversas-ajuda"
+import { simularInicio } from "./inicio-ajuda"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 test("a busca tem uma entrada que filtra e limpa os resultados", async ({ page }) => {
   await page.goto("/app/busca")

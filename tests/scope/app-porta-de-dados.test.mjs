@@ -35,6 +35,12 @@ const TELAS_LIGADAS = [
   { tela: "apps/app/src/telas/Anuncio.tsx", porta: /from "@\/lib\/dados\/mercado"/ },
 ]
 
+/**
+ * Telas de outra jornada que importam a porta de eventos de propósito: o Início
+ * (F02) grava a presença do próximo encontro pela rota do F05.
+ */
+const LEEM_A_PORTA_DE_EVENTOS = ["apps/app/src/telas/Inicio.tsx"]
+
 test("as telas ligadas leem pela porta da jornada, nunca pela demonstração", () => {
   for (const { tela, porta } of TELAS_LIGADAS) {
     const fonte = read(...tela.split("/"))
@@ -46,7 +52,10 @@ test("as telas ligadas leem pela porta da jornada, nunca pela demonstração", (
 
 test("a demonstração continua servindo as telas que ainda não foram ligadas", () => {
   const telas = arquivos("apps/app/src/telas")
-  const ligadas = new Set(TELAS_LIGADAS.map(({ tela }) => join(root, ...tela.split("/"))))
+  const ligadas = new Set([
+    ...TELAS_LIGADAS.map(({ tela }) => join(root, ...tela.split("/"))),
+    ...LEEM_A_PORTA_DE_EVENTOS.map((tela) => join(root, ...tela.split("/"))),
+  ])
   const portas = TELAS_LIGADAS.map(({ porta }) => porta)
   for (const caminho of telas) {
     if (ligadas.has(caminho)) continue

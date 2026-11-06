@@ -1,7 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
-
+import { useCallback, useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque/cartao-vitrine"
@@ -12,22 +11,30 @@ import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
-import { iconeDeDado, type NomeDeIcone } from "@/lib/icones"
+import {
+  buscarEncontro,
+  cancelarPresenca,
+  marcarPresenca,
+  type Presenca,
+} from "@/lib/dados/eventos"
+import { type InicioDaCidade, lerInicio } from "@/lib/dados/inicio"
+import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
+import { rotuloDaCategoria } from "@/src/inicio/categorias"
 
 /**
- * O Início da onda 2 (protótipo: features/home/views.js renderHome e
- * features/home/desktop.js), com dados de demonstração.
+ * O Início, com o conteúdo real da cidade da sessão (LAN-F02). O desenho é o
+ * da onda 2 (protótipo: features/home/views.js renderHome): cabeça, busca com
+ * exemplo que gira, atalhos, serviços, contratação, oportunidades, grupos,
+ * próximo encontro, perguntas, guia e o convite de negócio.
  *
- * V1: cabeça com a cidade, busca com exemplo que gira, atalhos, faixa de
- * contratação, serviços recomendados, oportunidades, grupos, próximo
- * encontro, perguntas da cidade, guia e o convite de negócio. Salvar e
- * confirmar são estado local (sem backend). Ficam para o refino: patrocinado
- * na posição fixa, "Continue de onde parou", plano
- * de chegada/saída e as duas colunas do desktop — a ordem segue a do celular.
+ * "Vou/Confirmado" do próximo encontro grava pela rota de presença do F05 e
+ * mostra o que o banco devolveu. Salvar um cartão é estado local e pertence ao
+ * F06 (anúncios salvos). O que o
+ * banco ainda não tem — foto de anúncio e de negócio, autor da pergunta,
+ * indicações do negócio — fica de fora do cartão, sem valor inventado.
  */
 
 const EXEMPLOS_DE_BUSCA = [
@@ -47,56 +54,75 @@ const ATALHOS: readonly Atalho[] = [
   { rota: "comunidade", icone: "volunteer_activism", rotulo: "Indicações" },
 ]
 
-/** Leitura defensiva do campo Json "apresentacao" do contrato, sem any. */
-function registro(valor: unknown): Record<string, unknown> {
-  return valor !== null && typeof valor === "object" && !Array.isArray(valor)
-    ? (valor as Record<string, unknown>)
-    : {}
-}
-
-function texto(valor: unknown, reserva = ""): string {
-  return typeof valor === "string" ? valor : reserva
-}
-
-function numero(valor: unknown): number {
-  return typeof valor === "number" && Number.isFinite(valor) ? valor : 0
-}
-
-function tamanho(valor: unknown): number {
-  return Array.isArray(valor) ? valor.length : 0
-}
-
-function primeiros(valor: unknown): string | null {
-  return Array.isArray(valor) && typeof valor[0] === "string" ? valor[0] : null
+function resumoDoEncontro(comecaEm: string | null, local: string | null): string {
+  const data = new Date(comecaEm ?? "")
+  if (Number.isNaN(data.getTime())) return local ?? ""
+  const dia = data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+  const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+  return local === null ? `${dia} · ${hora}` : `${dia} · ${hora} · ${local}`
 }
 
 export function Inicio() {
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
+  const [dados, setDados] = useState<InicioDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [exemplo, setExemplo] = useState(0)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
-  const [presencas, setPresencas] = useState<ReadonlySet<string>>(() => new Set())
-
+  const [presenca, setPresenca] = useState<Presenca | null>(null)
+  const [erroPresenca, setErroPresenca] = useState(false)
+  const [gravando, setGravando] = useState(false)
+  const [tentativaPresenca, setTentativaPresenca] = useState(0)
   useRolagemEFoco(CARGA_CONCLUIDA)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const controle = new AbortController()
     setDados(null)
     setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+    void lerInicio({ signal: controle.signal })
+      .then((valor) => {
+        if (!controle.signal.aborted) setDados(valor)
       })
       .catch(() => {
         if (!controle.signal.aborted) setErro(true)
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [rodada])
+
+  const eventoId = dados?.eventos[0]?.id
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tentativa solicita nova leitura
+  useEffect(() => {
+    const controle = new AbortController()
+    setPresenca(null)
+    setErroPresenca(false)
+    if (eventoId !== undefined) {
+      void buscarEncontro(eventoId, { signal: controle.signal })
+        .then((encontro) => {
+          if (!controle.signal.aborted) setPresenca(encontro.presenca)
+        })
+        .catch(() => {
+          if (!controle.signal.aborted) setErroPresenca(true)
+        })
+    }
+    return () => controle.abort()
+  }, [eventoId, tentativaPresenca])
+
+  async function alternarPresenca(id: string) {
+    if (presenca === null || gravando) return
+    setGravando(true)
+    setErroPresenca(false)
+    try {
+      setPresenca(
+        presenca.minha === "going" ? await cancelarPresenca(id) : await marcarPresenca(id, "going"),
+      )
+    } catch {
+      setErroPresenca(true)
+    } finally {
+      setGravando(false)
+    }
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -116,64 +142,15 @@ export function Inicio() {
     })
   }, [])
 
-  const alternarPresenca = useCallback((id: string) => {
-    setPresencas((atual) => {
-      const proximo = new Set(atual)
-      if (proximo.has(id)) proximo.delete(id)
-      else proximo.add(id)
-      return proximo
-    })
-  }, [])
-
-  const negocios = useMemo(() => {
-    if (dados === null) return []
-    return dados.negocios
-      .map((negocio) => ({ negocio, apresentacao: registro(negocio.apresentacao) }))
-      .sort((a, b) => numero(b.apresentacao["recN"]) - numero(a.apresentacao["recN"]))
-      .slice(0, 4)
-  }, [dados])
-
-  const anuncios = useMemo(() => {
-    if (dados === null) return []
-    return dados.anuncios
-      .filter((anuncio) => anuncio.status === "active")
-      .slice(0, 4)
-      .map((anuncio) => ({ anuncio, apresentacao: registro(anuncio.apresentacao) }))
-  }, [dados])
-
-  const grupos = useMemo(() => {
-    if (dados === null) return []
-    return dados.grupos
-      .map((grupo) => ({ grupo, apresentacao: registro(grupo.apresentacao) }))
-      .filter(({ apresentacao }) => apresentacao["on"] === true)
-      .slice(0, 2)
-  }, [dados])
-
-  const encontro = useMemo(() => {
-    if (dados === null) return null
-    const agora = Date.now()
-    const proximos = dados.eventos
-      .map((evento) => ({
-        evento,
-        quando:
-          typeof evento.starts_at === "string" ? new Date(evento.starts_at).getTime() : Number.NaN,
-      }))
-      .filter(({ quando }) => Number.isFinite(quando) && quando >= agora)
-      .sort((a, b) => a.quando - b.quando)
-    return proximos[0]?.evento ?? null
-  }, [dados])
-
-  const perguntas = useMemo(() => {
-    if (dados === null) return []
-    return dados.perguntas
-      .map((pergunta) => ({ pergunta, apresentacao: registro(pergunta.apresentacao) }))
-      .filter(({ apresentacao }) => texto(apresentacao["status"], "open") === "open")
-      .sort((a, b) => tamanho(a.apresentacao["answers"]) - tamanho(b.apresentacao["answers"]))
-      .slice(0, 2)
-  }, [dados])
-
   const sugestao = EXEMPLOS_DE_BUSCA[exemplo] ?? ""
-  const carregando = dados === null && !erro
+  const cidade = dados?.cidade ?? casca.cidade
+  const negocios = dados?.negocios.slice(0, 4) ?? []
+  const anuncios = dados?.anuncios.slice(0, 4) ?? []
+  const grupos = dados?.grupos.slice(0, 2) ?? []
+  const encontro = dados?.eventos[0] ?? null
+  const perguntas = [...(dados?.perguntas ?? [])]
+    .sort((a, b) => a.respostas - b.respostas)
+    .slice(0, 2)
 
   return (
     <section data-tela="inicio" className="grid gap-2">
@@ -181,7 +158,7 @@ export function Inicio() {
         <div data-home="apresentacao">
           <CabecaDePagina
             className="bv-home-heading"
-            titulo={`Sua rede em ${casca.cidade}`}
+            titulo={`Sua rede em ${cidade}`}
             subtitulo="Moradia, serviços e boas indicações da comunidade militar."
           />
         </div>
@@ -221,9 +198,9 @@ export function Inicio() {
 
       {erro ? (
         <div className="mt-4">
-          <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
+          <EstadoDeErro aoTentar={() => setRodada((valor) => valor + 1)} />
         </div>
-      ) : carregando ? (
+      ) : dados === null ? (
         <div className="mt-4">
           <EsqueletoDeLista linhas={4} />
         </div>
@@ -243,7 +220,7 @@ export function Inicio() {
                 }
               >
                 <p className="text-sm text-(--on-surface-variant)">
-                  Indicados pela comunidade de {casca.cidade}
+                  Indicados pela comunidade de {cidade}
                 </p>
                 {negocios.length === 0 ? (
                   <EstadoVazio
@@ -253,19 +230,14 @@ export function Inicio() {
                   />
                 ) : (
                   <Grade formato="carrossel-mobile">
-                    {negocios.map(({ negocio, apresentacao }) => (
+                    {negocios.map((negocio) => (
                       <CartaoVitrineNegocio
                         key={negocio.id}
                         negocio={{
                           id: negocio.id,
-                          fonte: texto(apresentacao["imagem"]),
-                          nome: texto(apresentacao["name"], negocio.display_name),
-                          categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                          bairro: primeiros(apresentacao["hoods"]),
-                          cidade: casca.cidade,
-                          indicacoes: numero(apresentacao["recN"]),
-                          patrocinado: apresentacao["spon"] === true,
-                          aguardando: apresentacao["claimed"] === false,
+                          nome: negocio.nome,
+                          categoria: rotuloDaCategoria(negocio.categoria),
+                          cidade,
                           salvo: salvos.has(negocio.id),
                         }}
                         aoSalvar={() => alternarSalvo(negocio.id)}
@@ -309,18 +281,16 @@ export function Inicio() {
                   />
                 ) : (
                   <Grade formato="carrossel-mobile">
-                    {anuncios.map(({ anuncio, apresentacao }) => (
+                    {anuncios.map((anuncio) => (
                       <CartaoVitrineAnuncio
                         key={anuncio.id}
                         anuncio={{
                           id: anuncio.id,
-                          fonte: texto(apresentacao["imagem"]),
-                          rotulo: texto(apresentacao["flag"]) || undefined,
-                          porMes: texto(apresentacao["per"]) === "/mês",
-                          titulo: texto(apresentacao["title"], anuncio.title),
-                          preco: precoDoAnuncio(anuncio.price_cents),
-                          icone: iconeDeDado(apresentacao["icon"]),
-                          meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
+                          titulo: anuncio.title,
+                          preco:
+                            anuncio.precoCentavos === null ? null : anuncio.precoCentavos / 100,
+                          icone: anuncio.tipo === "property" ? "apartment" : "sell",
+                          meta: anuncio.bairro ?? cidade,
                           salvo: salvos.has(anuncio.id),
                         }}
                         aoSalvar={() => alternarSalvo(anuncio.id)}
@@ -337,12 +307,12 @@ export function Inicio() {
               {grupos.length === 0 ? null : (
                 <Secao titulo="Nos seus grupos">
                   <div className="grid gap-2">
-                    {grupos.map(({ grupo, apresentacao }) => (
+                    {grupos.map((grupo) => (
                       <LinhaDeLista
                         key={grupo.id}
                         icone="group"
-                        titulo={texto(apresentacao["t"], grupo.name)}
-                        subtitulo={`${numero(apresentacao["members"])} membros`}
+                        titulo={grupo.nome}
+                        subtitulo={`${grupo.membros} ${grupo.membros === 1 ? "membro" : "membros"}`}
                         onClick={() =>
                           void navegacao.irPara("grupo", { parametros: { id: grupo.id } })
                         }
@@ -363,15 +333,33 @@ export function Inicio() {
                 >
                   <LinhaDeLista
                     icone="event"
-                    titulo={texto(encontro.title)}
-                    subtitulo={resumoDoEncontro(encontro.starts_at, texto(encontro.venue))}
+                    titulo={encontro.title}
+                    subtitulo={resumoDoEncontro(encontro.comecaEm, encontro.local)}
                     fim={
                       <span className="text-[13px] font-medium text-(--primary)">
-                        {presencas.has(encontro.id) ? "Confirmado" : "Vou"}
+                        {presenca?.minha === "going" ? "Confirmado" : "Vou"}
                       </span>
                     }
-                    onClick={() => alternarPresenca(encontro.id)}
+                    aria-pressed={presenca?.minha === "going"}
+                    disabled={presenca === null || gravando}
+                    onClick={() => void alternarPresenca(encontro.id)}
                   />
+                  {erroPresenca ? (
+                    <p role="alert" className="mt-2 text-sm text-(--destructive)">
+                      Não foi possível {presenca === null ? "carregar" : "gravar"} sua presença.{" "}
+                      {presenca === null ? (
+                        <button
+                          type="button"
+                          className="font-medium underline"
+                          onClick={() => setTentativaPresenca((valor) => valor + 1)}
+                        >
+                          Tentar de novo
+                        </button>
+                      ) : (
+                        "Tente de novo."
+                      )}
+                    </p>
+                  ) : null}
                 </Secao>
               )}
 
@@ -395,17 +383,17 @@ export function Inicio() {
                   />
                 ) : (
                   <div className="grid gap-2">
-                    {perguntas.map(({ pergunta, apresentacao }) => (
+                    {perguntas.map((pergunta) => (
                       <LinhaDePergunta
                         key={pergunta.id}
                         pergunta={{
                           id: pergunta.id,
-                          pergunta: texto(apresentacao["q"], pergunta.title),
-                          autor: texto(apresentacao["who"], "Alguém da cidade"),
-                          tópico: texto(apresentacao["topic"], ""),
-                          cidade: casca.cidade,
-                          respostas: tamanho(apresentacao["answers"]),
-                          resolvida: pergunta.is_resolved === true,
+                          pergunta: pergunta.title,
+                          autor: "Alguém da cidade",
+                          tópico: pergunta.grupo ?? "",
+                          cidade,
+                          respostas: pergunta.respostas,
+                          resolvida: pergunta.resolvida,
                         }}
                         onClick={() =>
                           void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
@@ -418,7 +406,7 @@ export function Inicio() {
             </aside>
           </div>
           <Secao
-            titulo={`Guia de ${casca.cidade}`}
+            titulo={`Guia de ${cidade}`}
             acoes={
               <Botao tom="texto" onClick={() => void navegacao.irPara("guia")}>
                 Abrir guia
@@ -449,18 +437,4 @@ export function Inicio() {
       )}
     </section>
   )
-}
-
-/** Preço em reais do anúncio, ou nulo quando o dado não vier. */
-function precoDoAnuncio(centavos: unknown): number | null {
-  return typeof centavos === "number" && Number.isFinite(centavos) ? centavos / 100 : null
-}
-
-/** "08 de nov. · 14:00 · Local" a partir do carimbo de data do encontro. */
-function resumoDoEncontro(startsAt: unknown, local: string): string {
-  const data = new Date(typeof startsAt === "string" ? startsAt : "")
-  if (Number.isNaN(data.getTime())) return local
-  const dia = data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-  const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-  return `${dia} · ${hora} · ${local}`
 }

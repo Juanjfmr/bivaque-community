@@ -1,0 +1,75 @@
+# LAN-F02 (05/11/2026): F02 Início e busca ligado ao banco, no molde do F05 (ADR-20261105-porta-de-dados-do-app).
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-012
+
+objective: >
+  O Início do apps/app passa a mostrar o conteúdo real da cidade da sessão (perguntas, eventos e anúncios recentes) e a Busca passa a procurar no conteúdo real (perguntas, grupos, anúncios, negócios e guia), com resultados que levam ao conteúdo, no molde do F05. Ranking por IA fica fora.
+
+authority:
+  - docs/LANCAMENTO.md (F02)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (o molde)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo)
+  - tools/backend-kanban card LAN-F02
+  - referência viva: o F05 na main (apps/app/lib/dados/eventos.ts, apps/web/app/api/app/eventos, tests/e2e/f05-eventos-real.spec.ts)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Inicio.tsx e Busca.tsx leem a demonstração. A web antiga tem o início em apps/web/app/(shell)/inicio e a busca em apps/web/lib/search; o banco tem a RPC feed_community (medida em ~1000 req/s no OPS-CONCORRENCIA-LANCAMENTO).
+
+allowed_paths:
+  - "apps/app/lib/dados/inicio.ts"
+  - "apps/app/src/inicio"
+  - "apps/app/src/telas/Inicio.tsx"
+  - "apps/app/src/telas/Busca.tsx"
+  - "apps/app/src/roteador.tsx"
+  - "apps/app/tests"
+  - "apps/web/app/api/app/inicio"
+  - "apps/web/app/api/app/busca" # rota exigida pela aceita??o
+  - "apps/web/lib/search"
+  - "apps/web/app/(shell)/inicio"
+  - "apps/web/app/(shell)/explorar"
+  - "supabase/migrations"
+  - "supabase/tests"
+  - "tests/unit/app-api/inicio"
+  - "tests/e2e/f02-inicio-real.spec.ts"
+  - "tests/scope"
+  - "docs/agents/tasks/RUN-012.task.yml"
+  - ".visual/run-012"
+
+forbidden:
+  - "tocar em apps/app/lib/api/cliente.ts, apps/web/lib/app-api, apps/app/src/entrada, apps/web/app/api/app/entry e apps/web/app/api/app/eventos (só importar)"
+  - "editar tools/backend-kanban (o coordenador atualiza o quadro no merge) ou RATIFICACAO.md"
+  - "confiar em user_id, locality_id, papel ou dono vindos do corpo, da query ou do app"
+  - "service_role onde a RLS da sessão basta"
+  - "editar migration existente (mudança de banco só em migration nova, se for mesmo necessária)"
+  - "mudar o desenho aprovado das telas (troca a fonte do dado, não o visual)"
+  - "quebrar as telas que ainda leem a demonstração"
+  - "super engenharia: nada além do caminho principal, da gravação, do retorno e da falha principal"
+  - "push, merge ou force-push; ler, criar ou editar arquivos .env"
+
+acceptance:
+  - "Rotas no apps/web com exigirSessao/conferirEscrita/opcoesDoApp de lib/app-api e o cliente Supabase DA SESSÃO: GET /api/app/inicio (resumo da cidade da sessão, paginado) e GET /api/app/busca?q= (resultados por tipo, termo validado e limitado). Validação no mesmo módulo de apps/web/lib que a tela antiga usa (extrair se precisar)."
+  - "Cada rota com teste de unidade positivo e negativo: sem sessão 401, origem/cabeçalho errado 403, inexistente ou fora do alcance 404, corpo inválido 400, erro do banco 503 (nunca lista vazia), sem eco da mensagem do Postgres."
+  - "Módulo apps/app/lib/dados/inicio.ts usa o cliente único (sem editá-lo), com AbortSignal; as telas trocam dadosDoApp pelo módulo: carregando, vazio honesto, erro com Tentar de novo, escrita mostra o resultado gravado e volta ao estado anterior com mensagem se falhar."
+  - "E2E tests/e2e/f02-inicio-real.spec.ts contra o banco local com seed em 375/768/1440: caminho principal, gravação que sobrevive ao recarregar, negação de acesso e falha principal. Se o banco local não subir, registrar o comando exato no relatório e entregar com unidade + app."
+  - "Teste de escopo: as telas da jornada não importam mais dadosDoApp; as rotas não usam clienteDeServicoOuNulo."
+  - "Relatório curto em .visual/run-012/relatorio.md: o que entrou, commits, números das provas e o que não rodou (o coordenador leva ao card LAN-F02)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/inicio
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f02-inicio-real.spec.ts
+
+risk: leitura e escrita de dados de membros por rota nova do app
+risk_level: R3
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

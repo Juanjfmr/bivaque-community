@@ -27,8 +27,11 @@ test("Comunidade e Pergunta leem pela porta real, nunca pela demonstração", ()
     assert.doesNotMatch(fonte, /from "@\/lib\/dados"$/m, `${tela} ainda importa a demonstração`)
     assert.match(fonte, /@\/lib\/dados\/perguntas/, `${tela} não lê pela porta da jornada`)
   }
-  // As outras jornadas continuam na demonstração: a porta não é big bang.
-  assert.match(ler("apps/app/src/telas/Inicio.tsx"), /dadosDoApp/)
+  // A porta não é big bang: cada jornada migra na sua. O Início saiu da
+  // demonstração pela LAN-F02, pela porta de `lib/dados/inicio`.
+  const inicio = ler("apps/app/src/telas/Inicio.tsx")
+  assert.doesNotMatch(inicio, /dadosDoApp/, "Inicio.tsx ainda usa dadosDoApp")
+  assert.match(inicio, /@\/lib\/dados\/inicio/, "Inicio.tsx não lê pela porta do Início")
 })
 
 test("as rotas de perguntas usam a sessão sob RLS, nunca o cliente de serviço", () => {

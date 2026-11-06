@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test"
+import { simularInicio } from "./inicio-ajuda"
 import { simularPerguntas } from "./perguntas-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 test("R72 P0: Home contém carrosséis operáveis e prévia do próximo cartão", async ({ page }) => {
   await page.goto("/app/inicio")
