@@ -6162,10 +6162,10 @@
       "category": "backend",
       "description": "A policy dm_messages_insert_sender deixa inserir mensagem com conta em exclusão pedida ou suspensa, enquanto a RPC send_conversation_message veta os dois casos. A correção entra em migration nova (alter policy), sem editar migration aplicada, com pgTAP positivo e negativo.",
       "checklist": [
-        "Migration nova com alter policy em dm_messages_insert_sender vetando conta com exclusão pedida e conta suspensa, no mesmo critério da RPC send_conversation_message",
+        "[x] Migration nova com alter policy em dm_messages_insert_sender vetando conta com exclusão pedida e conta suspensa, no mesmo critério da RPC send_conversation_message — cumprido por trigger BEFORE INSERT (mesmo efeito, cobre também a RPC e o service_role)",
         "[x] pgTAP positivo: remetente ativo continua inserindo; negativo: conta com exclusão pedida e conta suspensa não inserem",
-        "Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API",
-        "Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão"
+        "[x] Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API — grant residual levado ao RLS-RESSALVAS-RUN017",
+        "[x] Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão — provado pelo test:db do CI do PR #144"
       ],
       "links": ["docs/LANCAMENTO.md"],
       "completedAt": "2026-11-06"
@@ -6602,7 +6602,7 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "backend",
-      "status": "done",
+      "status": "next",
       "description": "O organizador consegue mudar `locality_id` (e as outras colunas de alcance: `group_id`, `community_id`) do próprio encontro escrevendo direto no PostgREST, sem passar pela rota do app. O motivo é que o `grant update` em `events` é da tabela inteira (supabase/migrations/20260802001200_events_rsvp.sql:81) e a policy `events_update_organizer` só confere `organizer_id` — a regra 'editar não muda alcance' (R35) existe apenas em `apps/web/lib/events/event-form.ts`, no payload da rota. No mesmo cartão: a RLS de presença e de pergunta usa `private.is_locality_member`/`private.can_access_event`, que aceitam vínculo `leaving`, enquanto a rota exige `kind = 'current'` — o banco é mais permissivo que a rota para quem está em transferência.",
       "checklist": [
         "[x] Migration nova (nunca editar a aplicada): trigger de imutabilidade de `locality_id`, `group_id` e `community_id` em `events` depois do insert, ou grants de UPDATE por coluna excluindo as de alcance",
@@ -6620,8 +6620,7 @@
       "dependencies": [],
       "sourceRevision": "f9492a1d",
       "updatedAt": "2026-11-06",
-      "blockers": [],
-      "completedAt": "2026-11-06"
+      "blockers": []
     },
     {
       "id": "ENTRADA-WEB-ANTIGA",
