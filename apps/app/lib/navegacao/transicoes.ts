@@ -59,6 +59,19 @@ export function abrirSobreposicao(atual: EstadoDaEntrada, id: Sobreposicao): Est
   return { ...atual, chave: novaChaveDeEntrada(), sobreposicao: id }
 }
 
+/**
+ * Busca (filtro na URL) na navegação por `irPara`: ao trocar de rota, os
+ * parâmetros da tela anterior não seguem — cada rota lê só os próprios (F06).
+ * Na mesma rota não se passa nada e o middleware mantém o filtro no endereço
+ * (LAN-F06: regravações de rolagem/foco não perdem a busca).
+ */
+export function buscaAoTrocarDeRota(
+  rotaAtual: string,
+  rotaDestino: string,
+): Record<string, unknown> | undefined {
+  return rotaAtual === rotaDestino ? undefined : {}
+}
+
 export type DecisaoDeVolta = {
   /** Descartar a entrada atual do histórico. */
   readonly popar: boolean

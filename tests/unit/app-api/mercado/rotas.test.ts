@@ -4,12 +4,35 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // route.ts reexporta o POST de _criar, que importa a foto (server-only).
 vi.mock("server-only", () => ({}))
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
+vi.mock("web/lib/storage/listing-photo", () => ({
+  enviarFotoDoAnuncio: vi.fn(),
+  FalhaDaFoto: class extends Error {
+    constructor(
+      readonly status: number,
+      mensagem: string,
+    ) {
+      super(mensagem)
+    }
+  },
+}))
+// O bucket é servido pelo cliente de serviço (service_role), como na web.
+const { removerObjetos } = vi.hoisted(() => ({ removerObjetos: vi.fn() }))
+vi.mock("web/lib/supabase/server", () => ({
+  createServerClient: () => ({
+    storage: { from: () => ({ remove: removerObjetos }) },
+  }),
+}))
 
 import type { AnuncioBruto } from "web/app/api/app/mercado/_comum"
+import { PATCH as editar } from "web/app/api/app/mercado/[id]/_editar"
 import { POST as interesse } from "web/app/api/app/mercado/[id]/interesse/route"
 import { GET as detalhe } from "web/app/api/app/mercado/[id]/route"
+import { POST as situacao } from "web/app/api/app/mercado/[id]/situacao/route"
 import { GET as listar } from "web/app/api/app/mercado/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
+import { enviarFotoDoAnuncio, FalhaDaFoto } from "web/lib/storage/listing-photo"
+
+const fotoMock = vi.mocked(enviarFotoDoAnuncio)
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
 const BASE = "http://localhost:3000/api/app/mercado"
@@ -82,6 +105,25 @@ const IMOVEL_VENDA: AnuncioBruto = {
   },
 }
 
+/** Corpo válido de edição (desapego), no mesmo formato do criar. */
+const EDICAO_OBJ = {
+  titulo: "Mesa de jantar",
+  bairro: "Centro",
+  preco: "450",
+  descricao: "Mesa em bom estado, sem riscos.",
+  categoria: "casa_moveis",
+  condicao: "used",
+}
+const EDICAO = JSON.stringify(EDICAO_OBJ)
+
+const EDICAO_FOTO = JSON.stringify({
+  ...EDICAO_OBJ,
+  foto: { tipo: "image/png", conteudo: "aGVsbG8=" },
+})
+
+/** Desapego do próprio titular — o único que a edição aceita ler. */
+const MEU_ITEM: AnuncioBruto = { ...ANUNCIO, owner_user_id: USER, address: "Rua A, 100" }
+
 type Options = {
   cidade?: { id: string; nome: string } | null
   listings?: (typeof ANUNCIO)[]
@@ -89,7 +131,10 @@ type Options = {
   profileName?: string | null
   saved?: boolean
   errorTable?: string
-  rpcError?: { code: string; message: string } | null
+  rpcError?: { code?: string; message: string } | null
+  writeError?: { code: string; message: string } | null
+  rpcData?: unknown
+  rpcThrows?: boolean
 }
 
 function mockClient(options: Options = {}) {
@@ -100,13 +145,15 @@ function mockClient(options: Options = {}) {
   const lteCalls: Array<{ column: string; value: unknown }> = []
   const orderCalls: Array<{ column: string; ascending: boolean }> = []
   const rpcCalls: Array<{ name: string; args: Record<string, unknown> }> = []
+  const updateCalls: Record<string, unknown>[] = []
 
   const rpc = (name: string, args: Record<string, unknown>) => {
     rpcCalls.push({ name, args })
+    if (options.rpcThrows) return Promise.reject(new Error("sem resposta do banco"))
     return Promise.resolve(
       options.rpcError
         ? { data: null, error: options.rpcError }
-        : { data: "conversation-1", error: null },
+        : { data: options.rpcData ?? "conversation-1", error: null },
     )
   }
 
@@ -118,7 +165,11 @@ function mockClient(options: Options = {}) {
   }
 
   const from = vi.fn((table: string) => {
+    let atualizando = false
     const answer = (single = false) => {
+      if (table === "listings" && atualizando && options.writeError) {
+        return { data: null, error: options.writeError }
+      }
       if (options.errorTable === table) {
         return { data: null, error: { message: "boom", code: "XX000" } }
       }
@@ -158,6 +209,11 @@ function mockClient(options: Options = {}) {
     }
     const query: Record<string, unknown> = {}
     query["select"] = () => query
+    query["update"] = (payload: Record<string, unknown>) => {
+      atualizando = true
+      updateCalls.push(payload)
+      return query
+    }
     query["eq"] = (column: string, value: unknown) => {
       eqCalls.push({ table, column, value })
       return query
@@ -202,6 +258,7 @@ function mockClient(options: Options = {}) {
     lteCalls,
     orderCalls,
     rpcCalls,
+    updateCalls,
   }
 }
 
@@ -242,6 +299,11 @@ describe("rotas de mercado do app", () => {
     [
       "POST interesse",
       () => interesse(req("POST", `${BASE}/${ID}/interesse`, undefined, headersSemCorpo), context),
+    ],
+    ["PATCH editar", () => editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)],
+    [
+      "POST situação",
+      () => situacao(req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}'), context),
     ],
   ])("%s recusa ausência de sessão", async (_label, invoke) => {
     expect((await invoke()).status).toBe(401)
@@ -676,6 +738,342 @@ describe("rotas de mercado do app", () => {
       )
       expect(resposta.status).toBe(503)
       expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+  })
+
+  describe("editar (PATCH)", () => {
+    it("o dono grava os campos validados e a situação não sai daqui", async () => {
+      const mock = mockClient({ listing: MEU_ITEM })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ anuncio: { id: ID } })
+      // O dono vem da sessão, nunca do corpo: as duas leituras filtram por ele.
+      expect(mock.eqCalls).toContainEqual({
+        table: "listings",
+        column: "owner_user_id",
+        value: USER,
+      })
+      const payload = mock.updateCalls[0]
+      expect(payload).toMatchObject({
+        title: "Mesa de jantar",
+        description: "Mesa em bom estado, sem riscos.",
+        price_cents: 45000,
+        category: "casa_moveis",
+        condition: "used",
+        neighborhood: "Centro",
+      })
+      expect(payload).not.toHaveProperty("status")
+      // Endereço ausente no corpo preserva o gravado (regra do formulário da web).
+      expect(payload?.["address"]).toBe("Rua A, 100")
+    })
+
+    it("não dono (invisível sob RLS) é 404, sem gravar", async () => {
+      const mock = mockClient({ listing: null })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)
+      expect(resposta.status).toBe(404)
+      expect(await json(resposta)).toEqual({ erro: "anuncio-nao-encontrado" })
+      expect(mock.updateCalls).toHaveLength(0)
+    })
+
+    it("imóvel não é editável pelo app", async () => {
+      const mock = mockClient({ listing: { ...IMOVEL, owner_user_id: USER } })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)
+      expect(resposta.status).toBe(400)
+      expect(await json(resposta)).toMatchObject({ erro: "dados-invalidos" })
+      expect(mock.updateCalls).toHaveLength(0)
+    })
+
+    it("campos obrigatórios ausentes são 400 antes de tocar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, '{"titulo":"Mesa"}'), context)
+      expect(resposta.status).toBe(400)
+      expect(await json(resposta)).toEqual({ erro: "dados-invalidos" })
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("a validação da web devolve os campos em erro, sem gravar", async () => {
+      const mock = mockClient({ listing: MEU_ITEM })
+      authenticate(mock)
+      const resposta = await editar(
+        req("PATCH", `${BASE}/${ID}`, JSON.stringify({ ...EDICAO_OBJ, titulo: "ab", preco: "x" })),
+        context,
+      )
+      expect(resposta.status).toBe(400)
+      const corpo = await json(resposta)
+      expect(corpo).toMatchObject({ erro: "dados-invalidos" })
+      expect(corpo["campos"]).toMatchObject({
+        title: expect.any(String),
+        price: expect.any(String),
+      })
+      expect(mock.updateCalls).toHaveLength(0)
+    })
+
+    it("foto inválida é 400 antes de tocar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await editar(
+        req(
+          "PATCH",
+          `${BASE}/${ID}`,
+          JSON.stringify({ ...EDICAO_OBJ, foto: { tipo: "image/gif", conteudo: "aGVsbG8=" } }),
+        ),
+        context,
+      )
+      expect(resposta.status).toBe(400)
+      expect(await json(resposta)).toEqual({ erro: "foto-invalida" })
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("com foto a capa troca pela pasta do próprio anúncio", async () => {
+      const mock = mockClient({ listing: MEU_ITEM })
+      authenticate(mock)
+      fotoMock.mockResolvedValue("b1000000/0-foto.png")
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(200)
+      expect(mock.rpcCalls).toEqual([
+        {
+          name: "replace_listing_photo",
+          args: { p_listing_id: ID, p_path: "b1000000/0-foto.png", p_position: 0 },
+        },
+      ])
+    })
+
+    it("a troca da capa apaga do bucket só os caminhos antigos da pasta do anúncio", async () => {
+      const mock = mockClient({
+        listing: MEU_ITEM,
+        rpcData: [`${ID}/0-um.png`, `${ID}/0-dois.png`, "fora-da-pasta/0.png"],
+      })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      removerObjetos.mockResolvedValue({ error: null })
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(200)
+      expect(removerObjetos).toHaveBeenCalledTimes(1)
+      expect(removerObjetos).toHaveBeenCalledWith([`${ID}/0-um.png`, `${ID}/0-dois.png`])
+    })
+
+    it("sem caminhos antigos não há apagamento no bucket", async () => {
+      const mock = mockClient({ listing: MEU_ITEM, rpcData: [] })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(200)
+      expect(removerObjetos).not.toHaveBeenCalled()
+    })
+
+    it("recusa SQL definitiva da RPC apaga o objeto novo, que ficou sem linha", async () => {
+      const mock = mockClient({ listing: MEU_ITEM, rpcError: { code: "42501", message: "rls" } })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      removerObjetos.mockResolvedValue({ error: null })
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(503)
+      expect(removerObjetos).toHaveBeenCalledWith([`${ID}/0-novo.png`])
+    })
+
+    it.each([
+      ["erro sem SQLSTATE", { message: "gateway indisponível" }],
+      ["código PostgREST", { code: "PGRST500", message: "upstream" }],
+      ["sem resposta do transporte", null],
+    ])("falha inconclusiva (%s) não apaga nada do bucket", async (_caso, rpcError) => {
+      const mock = mockClient({
+        listing: MEU_ITEM,
+        ...(rpcError === null ? { rpcThrows: true } : { rpcError }),
+      })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(503)
+      expect(removerObjetos).not.toHaveBeenCalled()
+    })
+
+    it("a falha da foto vem com o status e a mensagem do helper", async () => {
+      const mock = mockClient({ listing: MEU_ITEM })
+      authenticate(mock)
+      fotoMock.mockRejectedValue(new FalhaDaFoto(400, "Envie uma imagem JPEG, PNG ou WebP válida."))
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(400)
+      expect(await json(resposta)).toEqual({
+        erro: "falha-na-foto",
+        mensagem: "Envie uma imagem JPEG, PNG ou WebP válida.",
+      })
+      expect(mock.rpcCalls).toHaveLength(0)
+    })
+
+    it("recusa de RLS na escrita vira 403 sem ecoar o Postgres", async () => {
+      const mock = mockClient({ listing: MEU_ITEM, writeError: { code: "42501", message: "rls" } })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)
+      expect(resposta.status).toBe(403)
+      const corpo = await json(resposta)
+      expect(corpo).toEqual({
+        erro: "recusado",
+        mensagem: "Sua conta não pode editar este anúncio.",
+      })
+      expect(JSON.stringify(corpo)).not.toContain("rls")
+    })
+
+    it("falha de leitura do anúncio é 503", async () => {
+      const mock = mockClient({ errorTable: "listings" })
+      authenticate(mock)
+      expect((await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)).status).toBe(503)
+    })
+
+    it("id fora do formato é 404, sem consultar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: "nao-e-uuid" }) }
+      expect((await editar(req("PATCH", `${BASE}/nao-e-uuid`, EDICAO), invalido)).status).toBe(404)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("recusa origem fora da lista e cookie sem o cabeçalho do app", async () => {
+      const origem = mockClient()
+      authenticate(origem)
+      const fora = await editar(
+        req("PATCH", `${BASE}/${ID}`, EDICAO, { ...headers, origin: "https://fora.example" }),
+        context,
+      )
+      expect(fora.status).toBe(403)
+      expect(origem.from).not.toHaveBeenCalled()
+
+      const cabecalho = mockClient()
+      authenticate(cabecalho)
+      const semApp = await editar(
+        req("PATCH", `${BASE}/${ID}`, EDICAO, {
+          origin: "http://localhost:3000",
+          "content-type": "application/json",
+        }),
+        context,
+      )
+      expect(semApp.status).toBe(403)
+      expect(cabecalho.from).not.toHaveBeenCalled()
+    })
+
+    it("content-type que não é JSON é 400", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await editar(
+        req("PATCH", `${BASE}/${ID}`, "corpo", {
+          origin: "http://localhost:3000",
+          "x-bivaque-app": "bivaque-spa",
+          "content-type": "text/plain",
+        }),
+        context,
+      )
+      expect(resposta.status).toBe(400)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("situação (POST)", () => {
+    it.each(["pause", "reactivate", "close", "sell"])(
+      "%s transiciona pela RPC e devolve a situação nova",
+      async (acao) => {
+        const mock = mockClient({ rpcData: "paused" })
+        authenticate(mock)
+        const resposta = await situacao(
+          req("POST", `${BASE}/${ID}/situacao`, JSON.stringify({ acao })),
+          context,
+        )
+        expect(resposta.status).toBe(200)
+        expect(await json(resposta)).toEqual({ status: "paused" })
+        expect(mock.rpcCalls).toEqual([
+          { name: "transition_listing", args: { p_listing_id: ID, p_action: acao } },
+        ])
+      },
+    )
+
+    it.each([
+      ["publish", '{"acao":"publish"}'],
+      ["ação ausente", "{}"],
+      ["ação não textual", '{"acao":42}'],
+    ])("%s é 400 antes da RPC", async (_caso, corpo) => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await situacao(req("POST", `${BASE}/${ID}/situacao`, corpo), context)
+      expect(resposta.status).toBe(400)
+      expect(await json(resposta)).toEqual({ erro: "dados-invalidos" })
+      expect(mock.rpcCalls).toHaveLength(0)
+    })
+
+    it("não dono (42501 da RPC) é 403 recusado, sem eco técnico", async () => {
+      const mock = mockClient({ rpcError: { code: "42501", message: "only the owner" } })
+      authenticate(mock)
+      const resposta = await situacao(
+        req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}'),
+        context,
+      )
+      expect(resposta.status).toBe(403)
+      const corpo = await json(resposta)
+      expect(corpo).toEqual({
+        erro: "recusado",
+        mensagem: "Só quem anunciou pode mudar a situação deste anúncio.",
+      })
+      expect(JSON.stringify(corpo)).not.toContain("owner")
+    })
+
+    it("anúncio inexistente (P0002 da RPC) é 404", async () => {
+      const mock = mockClient({ rpcError: { code: "P0002", message: "not found" } })
+      authenticate(mock)
+      const resposta = await situacao(
+        req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}'),
+        context,
+      )
+      expect(resposta.status).toBe(404)
+      expect(await json(resposta)).toEqual({ erro: "anuncio-nao-encontrado" })
+    })
+
+    it("passagem impossível (22023 da RPC) é 409, não 503", async () => {
+      const mock = mockClient({ rpcError: { code: "22023", message: "cannot move" } })
+      authenticate(mock)
+      const resposta = await situacao(
+        req("POST", `${BASE}/${ID}/situacao`, '{"acao":"reactivate"}'),
+        context,
+      )
+      expect(resposta.status).toBe(409)
+      expect(await json(resposta)).toMatchObject({ erro: "estado-invalido" })
+    })
+
+    it("falha genérica da RPC é 503", async () => {
+      const mock = mockClient({ rpcError: { code: "XX000", message: "boom" } })
+      authenticate(mock)
+      const resposta = await situacao(
+        req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}'),
+        context,
+      )
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+
+    it("recusa origem fora da lista antes da RPC", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await situacao(
+        req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}', {
+          ...headers,
+          origin: "https://fora.example",
+        }),
+        context,
+      )
+      expect(resposta.status).toBe(403)
+      expect(mock.rpcCalls).toHaveLength(0)
+    })
+
+    it("id fora do formato é 404, sem consultar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: "nao-e-uuid" }) }
+      const resposta = await situacao(
+        req("POST", `${BASE}/nao-e-uuid/situacao`, '{"acao":"pause"}'),
+        invalido,
+      )
+      expect(resposta.status).toBe(404)
+      expect(mock.rpcCalls).toHaveLength(0)
     })
   })
 })

@@ -1,5 +1,6 @@
 "use client"
 
+import { useLocation, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
@@ -15,7 +16,12 @@ import { Icone } from "@/components/bivaque/icone"
 import { type ListaDoMercado, lerMercado } from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import {
+  useNavegacao,
+  useRolagemEFoco,
+  useRotaAtual,
+  useSobreposicaoDaEntrada,
+} from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import {
   excluirRascunhoImovel,
@@ -35,6 +41,12 @@ import {
   rotuloDaCapa,
   totalMensal,
 } from "@/src/mercado/cartao"
+import {
+  type FiltrosDaUrl,
+  lerFiltrosDaUrl,
+  mudarFiltroNaUrl,
+  semAcento,
+} from "@/src/mercado/filtros-url"
 
 /**
  * O Mercado do app, do banco (LAN-F06, no molde do F05).
@@ -69,9 +81,26 @@ export function ListaDeMercado({
   const [rodada, setRodada] = useState(0)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
-  const [tipo, setTipo] = useState("todos")
-  const [minimoQuartos, setMinimoQuartos] = useState("0")
-  const [maximoMensal, setMaximoMensal] = useState("todos")
+  // Os filtros vêm e vão pela URL (LAN-F06): link antigo com filtro abre
+  // filtrado, recarregar mantém a seleção, e o Voltar do roteador a devolve.
+  const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
+  const filtros = useMemo(() => lerFiltrosDaUrl(busca), [busca])
+  const navegar = useNavigate()
+  const rota = useRotaAtual()
+  const gravarFiltros = (novos: Partial<FiltrosDaUrl>) => {
+    void navegar({
+      to: rota.caminho,
+      search: (atual: Record<string, unknown>) => mudarFiltroNaUrl(atual, novos),
+      replace: true,
+      state: true,
+      resetScroll: false,
+    })
+  }
+  const tipo = filtros.tipoImovel
+  // A select mostra as opções da tela; um valor de link antigo fora delas ainda
+  // filtra (o filtro numérico usa `filtros`, não o rótulo exibido).
+  const minimoQuartos = String(filtros.quartos)
+  const maximoMensal = filtros.valorMaxReais === null ? "todos" : String(filtros.valorMaxReais)
   const [ordenacao, setOrdenacao] = useState("relevancia")
   const [modoLista, setModoLista] = useState(false)
   const { aberto: criandoImovel, aoMudarAberto: setCriandoImovel } =
@@ -83,6 +112,7 @@ export function ListaDeMercado({
 
   // A cidade é a da sessão, devolvida pela rota; `casca.cidade` segue no cabeçalho
   // enquanto a rota não traz nome (vazio honesto, nunca cidade inventada).
+  // A `pagina` da URL persegue o cursor do servidor até a página pedida.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
@@ -91,7 +121,7 @@ export function ListaDeMercado({
     setDados(null)
     setErro(null)
     void lerMercado(
-      { tipo: inicial === "imoveis" ? "property" : "item" },
+      { tipo: inicial === "imoveis" ? "property" : "item", pagina: filtros.pagina },
       { signal: controle.signal },
     )
       .then((lidos) => {
@@ -102,7 +132,7 @@ export function ListaDeMercado({
         setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
     return () => controle.abort()
-  }, [inicial, rodada])
+  }, [inicial, rodada, filtros.pagina])
 
   useEffect(() => {
     if (inicial !== "imoveis") return
@@ -118,26 +148,38 @@ export function ListaDeMercado({
     setRascunhos(lerRascunhosImoveis(casca.cidade))
   }
 
-  const itens = useMemo(
-    () =>
-      dados === null
-        ? []
-        : dados.anuncios.filter((anuncio) =>
-            inicial === "imoveis" ? ehImovel(anuncio) : !ehImovel(anuncio),
-          ),
-    [dados, inicial],
-  )
+  const itens = useMemo(() => {
+    if (dados === null) return []
+    const q = semAcento(filtros.q)
+    return dados.anuncios.filter((anuncio) => {
+      if (inicial === "imoveis" ? !ehImovel(anuncio) : ehImovel(anuncio)) return false
+      if (q !== "" && !semAcento(`${anuncio.titulo} ${anuncio.descricao ?? ""}`).includes(q))
+        return false
+      if (inicial !== "imoveis") {
+        if (
+          filtros.precoMinCents !== null &&
+          (anuncio.precoCents === null || anuncio.precoCents < filtros.precoMinCents)
+        )
+          return false
+        if (
+          filtros.precoMaxCents !== null &&
+          (anuncio.precoCents === null || anuncio.precoCents > filtros.precoMaxCents)
+        )
+          return false
+      }
+      return true
+    })
+  }, [dados, inicial, filtros])
 
   const imoveisFiltrados = useMemo(() => {
     if (inicial !== "imoveis") return itens
     const filtrados = itens.filter((anuncio) => {
       if (tipo !== "todos" && !doTipo(anuncio, tipo)) return false
-      const quantidade = anuncio.quartos
-      if (minimoQuartos !== "0" && (quantidade === null || quantidade < Number(minimoQuartos)))
+      if (filtros.quartos > 0 && (anuncio.quartos === null || anuncio.quartos < filtros.quartos))
         return false
-      if (maximoMensal !== "todos") {
+      if (filtros.valorMaxReais !== null) {
         const mensal = totalMensal(anuncio)
-        if (mensal === null || mensal > Number(maximoMensal)) return false
+        if (mensal === null || mensal > filtros.valorMaxReais) return false
       }
       return true
     })
@@ -150,12 +192,10 @@ export function ListaDeMercado({
       if (precoB === null) return -1
       return ordenacao === "menor" ? precoA - precoB : precoB - precoA
     })
-  }, [inicial, itens, tipo, minimoQuartos, maximoMensal, ordenacao])
+  }, [inicial, itens, tipo, filtros, ordenacao])
 
   const limparFiltros = () => {
-    setTipo("todos")
-    setMinimoQuartos("0")
-    setMaximoMensal("todos")
+    gravarFiltros({ q: "", tipoImovel: "todos", quartos: 0, valorMaxReais: null })
     setOrdenacao("relevancia")
   }
 
@@ -255,6 +295,18 @@ export function ListaDeMercado({
         />
       ) : null}
 
+      {filtros.q === "" ? null : (
+        <Botao
+          tom="texto"
+          icone="close"
+          data-acao="limpar-busca"
+          className="justify-self-start"
+          onClick={() => gravarFiltros({ q: "" })}
+        >
+          Limpar busca: {filtros.q}
+        </Botao>
+      )}
+
       {inicial === "imoveis" && !carregando && erro === null ? (
         <div data-filtros-imoveis="sim" className="mt-2 grid gap-2">
           <div className="flex items-center justify-between gap-2">
@@ -281,7 +333,7 @@ export function ListaDeMercado({
                 id="tipo-imovel"
                 rotulo="Tipo"
                 valor={tipo}
-                aoMudar={setTipo}
+                aoMudar={(v) => gravarFiltros({ tipoImovel: v })}
                 opcoes={[
                   { valor: "todos", titulo: "Todos" },
                   { valor: "apartamento", titulo: "Apartamento" },
@@ -292,7 +344,7 @@ export function ListaDeMercado({
                 id="quartos-imovel"
                 rotulo="Quartos"
                 valor={minimoQuartos}
-                aoMudar={setMinimoQuartos}
+                aoMudar={(v) => gravarFiltros({ quartos: Number(v) || 0 })}
                 opcoes={[
                   { valor: "0", titulo: "Qualquer" },
                   { valor: "2", titulo: "2 ou mais" },
@@ -304,7 +356,9 @@ export function ListaDeMercado({
                   id="total-mensal-imovel"
                   rotulo="Total por mês até (aluguel + condomínio informado)"
                   valor={maximoMensal}
-                  aoMudar={setMaximoMensal}
+                  aoMudar={(v) =>
+                    gravarFiltros({ valorMaxReais: v === "todos" ? null : Number(v) })
+                  }
                   opcoes={[
                     { valor: "todos", titulo: "Qualquer valor" },
                     { valor: "3000", titulo: "R$ 3.000" },

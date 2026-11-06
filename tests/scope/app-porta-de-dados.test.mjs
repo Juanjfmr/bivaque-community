@@ -179,7 +179,7 @@ test("as rotas do mercado usam a sessão sob RLS, nunca o cliente de serviço", 
   const rotas = arquivos("apps/web/app/api/app/mercado").filter((caminho) =>
     caminho.endsWith("route.ts"),
   )
-  assert.ok(rotas.length === 4, `esperava as 4 rotas da jornada, achei ${rotas.length}`)
+  assert.ok(rotas.length === 5, `esperava as 5 rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = ler(caminho)
     assert.doesNotMatch(

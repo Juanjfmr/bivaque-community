@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { MAX_PHOTO_BYTES } from "../../../../lib/listings/types"
 
 /**
  * O que as rotas do Mercado compartilham: o formato de id que elas aceitam, a
@@ -36,6 +37,33 @@ export async function cidadeDaSessao(
   if (error) throw error
   if (data === null) return null
   return { id: data.locality_id, nome: data.localities?.city_name ?? "" }
+}
+
+/**
+ * A foto do corpo, no formato combinado com o app (`{tipo, conteudo}` base64).
+ * `null` é "sem foto"; `"invalida"` é recusa da rota (400) antes de tocar o
+ * banco. Criar e editar usam a mesma leitura — um formato, duas jornadas.
+ */
+export function lerFotoDoCorpo(
+  valor: unknown,
+): { readonly foto: File | null } | { readonly invalida: true } {
+  if (valor === null || valor === undefined) return { foto: null }
+  if (typeof valor !== "object" || Array.isArray(valor)) return { invalida: true }
+  const corpo = valor as Record<string, unknown>
+  const tipo = corpo["tipo"]
+  const conteudo = corpo["conteudo"]
+  if (
+    typeof tipo !== "string" ||
+    !["image/jpeg", "image/png", "image/webp"].includes(tipo) ||
+    typeof conteudo !== "string" ||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(conteudo) ||
+    conteudo.length % 4 !== 0
+  ) {
+    return { invalida: true }
+  }
+  const bytes = Buffer.from(conteudo, "base64")
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_PHOTO_BYTES) return { invalida: true }
+  return { foto: new File([bytes], "foto", { type: tipo }) }
 }
 
 /**
