@@ -6619,17 +6619,19 @@
       "status": "repo",
       "description": "Saiu do portão do LAN-F01 pelo ADR-20261105-entrada-enxuta-e-r3-sem-parada. A entrada do lançamento é a do app (/app/entrar); as telas antigas de entrada do apps/web (login, onboarding, recuperar e nova senha) devem redirecionar para ela, sem quebrar /consent do Google.",
       "checklist": [
-        "Listar as rotas antigas de entrada ainda servidas pelo apps/web",
-        "Redirecionar para /app/entrar preservando /consent e /auth/callback",
+        "[x] Listar as rotas antigas de entrada ainda servidas pelo apps/web",
+        "[x] Redirecionar para /app/entrar preservando /consent e /auth/callback",
         "E2E: rota antiga leva à entrada do app em 375/768/1440"
       ],
       "dependencies": ["LAN-F01"],
       "links": ["docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"],
-      "proof": [],
+      "proof": [
+        "05/11: lote de acabamento (Haiku 5.5) — redirecionamento 307 das rotas antigas de entrada do apps/web para /app/entrar em apps/web/next.config.ts, com /consent, /auth/callback, /auth/confirmar-email e /auth/callback-error fora; E2E antigos migrados (commits 2a9acabb, c0397181, c9f77ae1, 6b50e9f0); revisão Qwen FAIL na primeira entrega (E2E não migrados, caminho de falha do e-mail), corrigido na rodada única"
+      ],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-05",
-      "sourceRevision": "15f1e273"
+      "sourceRevision": "6b50e9f0"
     }
   ],
   "launch": {

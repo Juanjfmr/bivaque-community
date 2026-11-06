@@ -48,13 +48,6 @@ const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
 const SECOND_LOCALITY_EMAIL =
   process.env["BIVAQUE_E2E_LOCALITY_TWO_EMAIL"] ?? "membro-rio@bivaque.example.invalid"
 
-// Verified-without-membership account for the onboarding path. The two-phase
-// admission (Task 4) makes this a real state; the seed needs an account in it
-// for this test to run green.
-const VERIFIED_NO_MEMBERSHIP_EMAIL =
-  process.env["BIVAQUE_E2E_VERIFIED_NO_MEMBERSHIP_EMAIL"] ??
-  "verified-no-membership@bivaque.example.invalid"
-
 // Manaus-specific seed content used as cross-city leak markers. The second
 // locality must not see these — if it does, the feed/events/guide is still
 // scoped to a pilot constant instead of the member's locality. The community
@@ -269,63 +262,5 @@ test.describe("two localities: each member sees only their own city", () => {
     // the member's locality; a Manaus entry surfacing for a second-locality
     // member is the leak this test exists to catch.
     await expect(page.getByText(MANAUS_GUIDE_ENTRY)).toHaveCount(0)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Group 2: eligible second-locality onboarding — no geographic waitlist
-// ---------------------------------------------------------------------------
-
-test.describe("eligible second-locality onboarding: no geographic waitlist", () => {
-  test("verified member without membership is routed to the locality step, not the waitlist", async ({
-    page,
-  }) => {
-    // Given a verified member who has not chosen a locality yet. The
-    // two-phase admission (Task 4) makes this a real state: eligibility is
-    // confirmed, but no membership exists. The seed needs an account in
-    // this state for the test to run green.
-    await signInAs(page, VERIFIED_NO_MEMBERSHIP_EMAIL)
-
-    // When they hit the onboarding status page
-    await page.goto(`${APP_URL}/onboarding/status`, { waitUntil: "load" })
-
-    // Then they are redirected to the post-eligibility locality step, not
-    // the waitlist. This is the acceptance criterion 2 of issue #20: an
-    // eligible member joins their own locality, no geographic waitlist.
-    await page.waitForURL(/\/onboarding\/locality/, { timeout: 10000 })
-
-    // And the locality chooser is rendered
-    await expect(page.getByRole("heading", { name: "Onde e em que momento?" })).toBeVisible()
-
-    // And the geographic waitlist form is NOT rendered on the eligible path
-    await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toHaveCount(0)
-    await expect(page.getByText("Entrar na lista de espera de outras localidades")).toHaveCount(0)
-  })
-
-  test("the locality step offers the catalog, not the waitlist form", async ({ page }) => {
-    // Given a verified member at the locality step
-    await signInAs(page, VERIFIED_NO_MEMBERSHIP_EMAIL)
-
-    // When they open the locality step directly
-    await page.goto(`${APP_URL}/onboarding/locality`, { waitUntil: "load" })
-
-    // Then the locality chooser heading is visible
-    await expect(page.getByRole("heading", { name: "Onde e em que momento?" })).toBeVisible({
-      timeout: 15000,
-    })
-
-    // PORT-005: a tela agora é a do protótipo — cidade, momento, datas e nome na
-    // mesma página. A cidade continua sendo busca por nome com lista de
-    // resultados (o catálogo é nacional, 5.570 cidades, e não caberia num
-    // select), e a lista segue rotulada "Cidades disponíveis".
-    await expect(page.getByRole("searchbox", { name: "Cidade" })).toBeVisible({ timeout: 15000 })
-    await expect(page.getByRole("list", { name: "Cidades disponíveis" })).toBeVisible({
-      timeout: 15000,
-    })
-    await expect(page.getByRole("radiogroup", { name: "Seu momento" })).toBeVisible()
-
-    // And the waitlist entry point is not on this page — the eligible path
-    // never offers the geographic waitlist.
-    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
   })
 })

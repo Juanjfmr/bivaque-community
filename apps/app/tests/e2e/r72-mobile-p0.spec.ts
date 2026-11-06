@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularInicio } from "./inicio-ajuda"
+import { simularPerguntas } from "./perguntas-ajuda"
 
 test.beforeEach(async ({ page }) => {
   await simularInicio(page)
@@ -46,6 +47,7 @@ test("R72 P0: Busca explora categorias em duas colunas e encontra negócios", as
 })
 
 test("R72 P0: Perguntar salva apenas nesta sessão e abre detalhe válido", async ({ page }) => {
+  await simularPerguntas(page)
   await page.goto("/app/comunidade")
   await page.locator('[data-acao="perguntar"]').click()
   const dialogo = page.locator('[data-fluxo="perguntar"]')

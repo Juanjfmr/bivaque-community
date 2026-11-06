@@ -16,7 +16,7 @@ import {
 test.describe("denuncia do membro: dialog, recibo e acompanhamento", () => {
   test("anonimo nao abre o dialog de denuncia", async ({ page }) => {
     await page.goto(`/denuncias/nova?tipo=post&id=${REPORT_TARGET_POST_ID}`)
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
   })
 
   test("tipo fora do vocabulario nao desenha formulario", async ({ browser }) => {

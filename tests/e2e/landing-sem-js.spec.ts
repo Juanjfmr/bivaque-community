@@ -75,13 +75,13 @@ test("navega no primeiro toque, com JavaScript desligado, em 375/768/1440", asyn
 
     // When a pessoa toca o CTA da dobra
     await page.locator("#ld-hero-cta").click()
-    await expect(page).toHaveURL(/\/signup$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
 
     // And depois toca o da chamada final
     await page.goto("/")
     await page.locator("#fim .ld-cta-btn").scrollIntoViewIfNeeded()
     await page.locator("#fim .ld-cta-btn").click()
-    await expect(page).toHaveURL(/\/signup$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
 
     await context.close()
     testInfo.annotations.push({ type: "largura", description: `${width}px` })

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularInicio } from "./inicio-ajuda"
+import { simularPerguntas } from "./perguntas-ajuda"
 
 // Regressões V13–V15 da auditoria visual de 26/10/2026.
 // Testes executados pelos projetos 375, 768 e 1440 do app.
@@ -43,6 +44,7 @@ test("V13: filtros continuam em uma faixa sem selecionar duas linhas", async ({ 
 })
 
 test("V14: perguntas mostram o título completo sem truncar no celular", async ({ page }) => {
+  await simularPerguntas(page)
   await page.goto("/app/comunidade")
   await expect(page.locator('[data-tela="comunidade"]')).toBeVisible()
   const titulo = page.locator('[data-tela="comunidade"] [data-titulo-linha]').first()

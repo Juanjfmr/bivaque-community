@@ -10,24 +10,31 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
-import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import type { Pergunta } from "@/lib/dados/contrato"
+import { type FiltroDePerguntas, type ListaDePerguntas, lerPerguntas } from "@/lib/dados/perguntas"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { useCasca } from "@/src/contexto/casca"
-import { contagemDeRespostas, numero, registro, texto } from "@/src/telas/comum"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
+import { mensagemDaFalha } from "@/src/perguntas/estado"
+import { registro, texto } from "@/src/telas/comum"
 
 /**
- * A Comunidade da onda 3 (protótipo: features/community/views.js), com dados
- * de demonstração.
+ * A Comunidade: as perguntas da cidade, do banco (F04 / ADR-20261105).
  *
- * Abas Indicações e Grupos (Negócios mora no Mercado, ADR do app §3.1); filtros
- * Para ajudar, Resolvidas e Minhas; contagem de resolvidas; lista de perguntas. Ficam para o
- * refino: abas com indicador deslizante, botão "Perguntar", paginação e o
- * bloco de quem está esperando resposta.
+ * O desenho não mudou — abas Indicações e Grupos, filtros Para ajudar, Resolvidas
+ * e Minhas, contagem de resolvidas e lista de perguntas. Mudou de onde vem o
+ * dado: `lib/dados/perguntas`, que fala com `/api/app/perguntas`, e por isso a
+ * tela distingue carregando, vazio de verdade, falha recuperável, sessão vencida
+ * e acesso negado. Banco fora não vira "ninguém perguntou nada".
+ *
+ * O que este lote NÃO liga: grupos (a aba mostra o vazio honesto até a jornada
+ * existir), publicar com foto, Útil, salvar, seguir, fixar e denúncia. A caixa de
+ * "Perguntar" continua gravando só nesta sessão de demonstração, como o próprio
+ * texto dela diz — publicar de verdade é o lote seguinte.
  */
 
 const ABAS: readonly ItemDeFiltro[] = [
@@ -41,46 +48,64 @@ const FILTROS: readonly ItemDeFiltro[] = [
   { id: "mine", rotulo: "Minhas" },
 ]
 
+/** O filtro da tela vira o filtro do servidor: quem filtra é o banco. */
+const FILTRO_DO_SERVIDOR: Readonly<Record<string, FiltroDePerguntas>> = {
+  help: "ajuda",
+  ok: "resolvidas",
+  mine: "minhas",
+}
+
 export function Comunidade() {
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [lista, setLista] = useState<ListaDePerguntas | null>(null)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [aba, setAba] = useState("ind")
   const [filtro, setFiltro] = useState("help")
+  const [carregandoMais, setCarregandoMais] = useState(false)
+  const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
     useSobreposicaoDaEntrada("perguntar")
   const [tituloNovo, setTituloNovo] = useState("")
   const [topicoNovo, setTopicoNovo] = useState("")
   const [erroAoCriar, setErroAoCriar] = useState("")
   const [perguntasLocais, setPerguntasLocais] = useState<Pergunta[]>([])
+  // Uma sessão de rede por tela: sair cancela a página que ainda estava a caminho.
+  const [controle] = useState(() => new AbortController())
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
+  useEffect(() => () => controle.abort(), [controle])
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
-    const controle = new AbortController()
-    setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+    const pedido = new AbortController()
+    setLista(null)
+    setErro(null)
+    setErroAoCarregarMais(null)
+    void lerPerguntas({
+      filtro: FILTRO_DO_SERVIDOR[filtro] ?? "ajuda",
+      signal: pedido.signal,
+    })
+      .then((lidas) => {
+        if (!pedido.signal.aborted) setLista(lidas)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (pedido.signal.aborted) return
+        setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
-    return () => controle.abort()
-  }, [casca.cidade, rodada])
+    return () => pedido.abort()
+  }, [filtro, rodada])
 
   useEffect(() => {
     setPerguntasLocais(lerPerguntasLocais(casca.cidade))
   }, [casca.cidade])
 
   const publicarPergunta = () => {
-    if (dados === null) return
-    const criada = criarPerguntaLocal(casca.cidade, dados.localidade.id, tituloNovo, topicoNovo)
+    // Publicar de verdade é o lote seguinte: a pergunta local vive só nesta aba,
+    // como a caixa de texto já avisa.
+    const criada = criarPerguntaLocal(casca.cidade, "", tituloNovo, topicoNovo)
     if (criada === "limite") {
       setErroAoCriar(
         "Limite de 30 perguntas nesta sessão atingido. As anteriores foram preservadas e seu texto continua no formulário.",
@@ -102,32 +127,62 @@ export function Comunidade() {
     void navegacao.irPara("pergunta", { parametros: { id: criada.id }, replace: true })
   }
 
-  const respostas = useMemo(() => contagemDeRespostas(dados), [dados])
+  async function carregarMais() {
+    if (lista === null || lista.proximo === null || carregandoMais) return
+    setCarregandoMais(true)
+    setErroAoCarregarMais(null)
+    try {
+      const proxima = await lerPerguntas({
+        filtro: FILTRO_DO_SERVIDOR[filtro] ?? "ajuda",
+        depois: lista.proximo,
+        signal: controle.signal,
+      })
+      setLista({
+        perguntas: [...lista.perguntas, ...proxima.perguntas],
+        proximo: proxima.proximo,
+        cidade: proxima.cidade || lista.cidade,
+        resolvidas: lista.resolvidas,
+      })
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) setErroAoCarregarMais(mensagemDaFalha(falha, "lista"))
+    } finally {
+      setCarregandoMais(false)
+    }
+  }
+
+  const cidadeDaLista = lista?.cidade || casca.cidade
 
   const perguntas = useMemo(() => {
-    if (dados === null) return []
-    return [...perguntasLocais, ...dados.perguntas]
-      .map((pergunta) => ({ pergunta, apresentacao: registro(pergunta.apresentacao) }))
-      .filter(({ pergunta, apresentacao }) => {
-        const minha = apresentacao["mine"] === true
-        if (filtro === "mine") return minha
-        if (filtro === "ok") return pergunta.is_resolved === true
-        return pergunta.is_resolved !== true && !minha
-      })
-      .sort((a, b) => (respostas.get(a.pergunta.id) ?? 0) - (respostas.get(b.pergunta.id) ?? 0))
-  }, [dados, filtro, respostas, perguntasLocais])
+    const reais = (lista?.perguntas ?? []).map((pergunta) => ({
+      id: pergunta.id,
+      pergunta: pergunta.titulo,
+      autor: pergunta.autor === "" ? "Alguém da cidade" : pergunta.autor,
+      propria: pergunta.propria,
+      tópico: pergunta.assunto,
+      cidade: cidadeDaLista,
+      respostas: pergunta.respostas,
+      resolvida: pergunta.resolvida,
+    }))
+    // A pergunta criada na caixa de demonstração é sempre "minha" e nunca
+    // resolvida: ela só aparece no filtro que a mostra.
+    const locais =
+      filtro === "mine"
+        ? perguntasLocais.map((pergunta) => ({
+            id: pergunta.id,
+            pergunta: pergunta.title,
+            autor: "Você",
+            propria: true,
+            tópico: texto(registro(pergunta.apresentacao)["topic"], ""),
+            cidade: cidadeDaLista,
+            respostas: 0,
+            resolvida: false,
+          }))
+        : []
+    return [...locais, ...reais]
+  }, [lista, filtro, perguntasLocais, cidadeDaLista])
 
-  const resolvidas = useMemo(() => {
-    if (dados === null) return 0
-    return dados.perguntas.filter((pergunta) => pergunta.is_resolved === true).length
-  }, [dados])
-
-  const grupos = useMemo(() => {
-    if (dados === null) return []
-    return dados.grupos.map((grupo) => ({ grupo, apresentacao: registro(grupo.apresentacao) }))
-  }, [dados])
-
-  const carregando = dados === null && !erro
+  const carregando = lista === null && erro === null
+  const resolvidas = lista?.resolvidas ?? 0
 
   return (
     <section data-tela="comunidade" className="grid gap-2">
@@ -215,7 +270,11 @@ export function Comunidade() {
         </DialogContent>
       </Dialog>
 
-      {erro ? (
+      {erro === "sessao" ? (
+        <EstadoDeSessaoVencida />
+      ) : erro === "negado" ? (
+        <EstadoNegado texto="Sua conta não tem acesso à comunidade desta cidade." />
+      ) : erro === "falhou" ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
@@ -261,19 +320,10 @@ export function Comunidade() {
             />
           ) : (
             <div className="grid gap-2">
-              {perguntas.map(({ pergunta, apresentacao }) => (
+              {perguntas.map((pergunta) => (
                 <LinhaDePergunta
                   key={pergunta.id}
-                  pergunta={{
-                    id: pergunta.id,
-                    pergunta: texto(apresentacao["q"], pergunta.title),
-                    autor: texto(apresentacao["who"], "Alguém da cidade"),
-                    propria: apresentacao["mine"] === true,
-                    tópico: texto(apresentacao["topic"], ""),
-                    cidade: casca.cidade,
-                    respostas: respostas.get(pergunta.id) ?? 0,
-                    resolvida: pergunta.is_resolved === true,
-                  }}
+                  pergunta={pergunta}
                   onClick={() =>
                     void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
                   }
@@ -281,25 +331,26 @@ export function Comunidade() {
               ))}
             </div>
           )}
+
+          {lista !== null && lista.proximo === null ? null : (
+            <div className="grid justify-items-center gap-2 pt-2">
+              {erroAoCarregarMais === null ? null : (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  {erroAoCarregarMais}
+                </p>
+              )}
+              <Botao tom="tonal" disabled={carregandoMais} onClick={() => void carregarMais()}>
+                {carregandoMais ? "Carregando…" : "Ver mais perguntas"}
+              </Botao>
+            </div>
+          )}
         </>
-      ) : grupos.length === 0 ? (
+      ) : (
         <EstadoVazio
           titulo="Ainda sem grupos nesta cidade"
           texto="Grupos reúnem quem tem a mesma rotina, o mesmo ciclo ou o mesmo interesse."
           icone="group"
         />
-      ) : (
-        <div className="grid gap-2">
-          {grupos.map(({ grupo, apresentacao }) => (
-            <LinhaDeLista
-              key={grupo.id}
-              icone="group"
-              titulo={texto(apresentacao["t"], grupo.name)}
-              subtitulo={`${numero(apresentacao["members"])} membros`}
-              onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
-            />
-          ))}
-        </div>
       )}
     </section>
   )
