@@ -175,6 +175,21 @@ export async function buscarAnuncio(
   }
 }
 
+export async function lerMeusAnuncios(
+  opcoes: { signal?: AbortSignal; depois?: string } = {},
+): Promise<ListaDoMercado> {
+  const busca = new URLSearchParams()
+  if (opcoes.depois !== undefined) busca.set("depois", opcoes.depois)
+  const corpo = await ler(`/api/app/mercado/meus?${busca}`, opcoes)
+  const anuncios = corpo["anuncios"]
+  if (!Array.isArray(anuncios)) throw foraDoContrato()
+  return {
+    anuncios: anuncios.map((linha) => lerAnuncio(exigirRegistro(linha))),
+    proximo: corpo["proximo"] === null ? null : exigirTexto(corpo, "proximo"),
+    cidade: texto(corpo["cidade"]),
+  }
+}
+
 /** "Tenho interesse": abre (ou reaproveita) a conversa com quem anuncia. */
 export async function abrirInteresse(
   id: string,

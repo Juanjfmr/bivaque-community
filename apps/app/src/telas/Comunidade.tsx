@@ -4,23 +4,20 @@ import { useEffect, useMemo, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { Campo } from "@/components/bivaque/campos"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import type { Pergunta } from "@/lib/dados/contrato"
 import { type FiltroDePerguntas, type ListaDePerguntas, lerPerguntas } from "@/lib/dados/perguntas"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { criarPerguntaLocal, lerPerguntasLocais } from "@/lib/perguntas-locais"
 import { useCasca } from "@/src/contexto/casca"
+import { Perguntar } from "@/src/criar/Perguntar"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
 import { mensagemDaFalha } from "@/src/perguntas/estado"
-import { registro, texto } from "@/src/telas/comum"
 
 /**
  * A Comunidade: as perguntas da cidade, do banco (F04 / ADR-20261105).
@@ -31,10 +28,7 @@ import { registro, texto } from "@/src/telas/comum"
  * tela distingue carregando, vazio de verdade, falha recuperável, sessão vencida
  * e acesso negado. Banco fora não vira "ninguém perguntou nada".
  *
- * O que este lote NÃO liga: grupos (a aba mostra o vazio honesto até a jornada
- * existir), publicar com foto, Útil, salvar, seguir, fixar e denúncia. A caixa de
- * "Perguntar" continua gravando só nesta sessão de demonstração, como o próprio
- * texto dela diz — publicar de verdade é o lote seguinte.
+ * A criação usa a porta real do F03, com rascunho e revisão antes de publicar.
  */
 
 const ABAS: readonly ItemDeFiltro[] = [
@@ -67,10 +61,6 @@ export function Comunidade() {
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
     useSobreposicaoDaEntrada("perguntar")
-  const [tituloNovo, setTituloNovo] = useState("")
-  const [topicoNovo, setTopicoNovo] = useState("")
-  const [erroAoCriar, setErroAoCriar] = useState("")
-  const [perguntasLocais, setPerguntasLocais] = useState<Pergunta[]>([])
   // Uma sessão de rede por tela: sair cancela a página que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -97,35 +87,6 @@ export function Comunidade() {
       })
     return () => pedido.abort()
   }, [filtro, rodada])
-
-  useEffect(() => {
-    setPerguntasLocais(lerPerguntasLocais(casca.cidade))
-  }, [casca.cidade])
-
-  const publicarPergunta = () => {
-    // Publicar de verdade é o lote seguinte: a pergunta local vive só nesta aba,
-    // como a caixa de texto já avisa.
-    const criada = criarPerguntaLocal(casca.cidade, "", tituloNovo, topicoNovo)
-    if (criada === "limite") {
-      setErroAoCriar(
-        "Limite de 30 perguntas nesta sessão atingido. As anteriores foram preservadas e seu texto continua no formulário.",
-      )
-      return
-    }
-    if (!criada) {
-      setErroAoCriar(
-        "Não foi possível guardar a pergunta nesta sessão. Confira o texto e tente novamente.",
-      )
-      return
-    }
-    setPerguntasLocais((atual) => [criada, ...atual])
-    setTituloNovo("")
-    setTopicoNovo("")
-    setErroAoCriar("")
-    setAba("ind")
-    setFiltro("mine")
-    void navegacao.irPara("pergunta", { parametros: { id: criada.id }, replace: true })
-  }
 
   async function carregarMais() {
     if (lista === null || lista.proximo === null || carregandoMais) return
@@ -163,23 +124,8 @@ export function Comunidade() {
       respostas: pergunta.respostas,
       resolvida: pergunta.resolvida,
     }))
-    // A pergunta criada na caixa de demonstração é sempre "minha" e nunca
-    // resolvida: ela só aparece no filtro que a mostra.
-    const locais =
-      filtro === "mine"
-        ? perguntasLocais.map((pergunta) => ({
-            id: pergunta.id,
-            pergunta: pergunta.title,
-            autor: "Você",
-            propria: true,
-            tópico: texto(registro(pergunta.apresentacao)["topic"], ""),
-            cidade: cidadeDaLista,
-            respostas: 0,
-            resolvida: false,
-          }))
-        : []
-    return [...locais, ...reais]
-  }, [lista, filtro, perguntasLocais, cidadeDaLista])
+    return reais
+  }, [lista, cidadeDaLista])
 
   const carregando = lista === null && erro === null
   const resolvidas = lista?.resolvidas ?? 0
@@ -222,51 +168,17 @@ export function Comunidade() {
         >
           <DialogTitle className="pr-12 text-xl">Pedir uma indicação</DialogTitle>
           <DialogDescription className="text-sm text-(--on-surface-variant)">
-            A pergunta ficará somente nesta sessão de demonstração. Não será publicada para outros
-            usuários.
+            Peça uma indicação à cidade da sua conta. Você revisa antes de publicar.
           </DialogDescription>
-          <form
-            className="mt-4 grid gap-4"
-            onSubmit={(evento) => {
-              evento.preventDefault()
-              publicarPergunta()
-            }}
-          >
-            <Campo
-              id="nova-pergunta"
-              rotulo="O que você precisa saber?"
-              valor={tituloNovo}
-              aoMudar={(valor) => {
-                setTituloNovo(valor)
-                setErroAoCriar("")
-              }}
-              minLength={12}
-              maxLength={300}
-              required
-              placeholder="Ex.: alguém indica um pediatra no bairro?"
+          {criandoPergunta ? (
+            <Perguntar
+              cidade={casca.cidade}
+              aoCancelar={() => setCriandoPergunta(false)}
+              aoSalvar={(id) =>
+                void navegacao.irPara("pergunta", { parametros: { id }, replace: true })
+              }
             />
-            <Campo
-              id="topico-pergunta"
-              rotulo="Assunto (opcional)"
-              valor={topicoNovo}
-              aoMudar={setTopicoNovo}
-              maxLength={60}
-              placeholder="Saúde, escola, serviços..."
-            />
-            {erroAoCriar === "" ? null : (
-              <p role="alert" className="text-sm text-(--destructive)">
-                {erroAoCriar}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Botao type="button" tom="texto" onClick={() => setCriandoPergunta(false)}>
-                Cancelar
-              </Botao>
-              <Botao type="submit" disabled={tituloNovo.trim().length < 12}>
-                Adicionar pergunta
-              </Botao>
-            </div>
-          </form>
+          ) : null}
         </DialogContent>
       </Dialog>
 

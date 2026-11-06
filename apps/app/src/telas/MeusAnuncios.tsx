@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { lerMeusAnuncios } from "@/lib/dados/criar"
+import type { ListaDoMercado } from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
-import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import {
@@ -20,23 +20,28 @@ import {
 } from "@/lib/rascunhos-criacao"
 import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
-import { registro, texto } from "@/src/telas/comum"
+import { lerRascunho } from "@/src/criar/rascunho"
+import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 
 /**
- * Meus anúncios (onda 5): os anúncios da própria pessoa na demonstração.
- * Editar e pausar chegam com o editor (onda 6).
+ * Anúncios da sessão sob RLS; mantém os rascunhos das jornadas ainda locais.
  */
 export function MeusAnuncios() {
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [dados, setDados] = useState<ListaDoMercado | null>(null)
+  const [erro, setErro] = useState<unknown>(null)
+  const [carregandoMais, setCarregandoMais] = useState(false)
+  const [erroMais, setErroMais] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [rascunhos, setRascunhos] = useState<RascunhoImovel[]>([])
   const [outros, setOutros] = useState<RascunhoCriacao[]>([])
   const [expandido, setExpandido] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState<string | null>(null)
   const [erroLocal, setErroLocal] = useState("")
+  const [desapegoLocal] = useState(() =>
+    lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" }),
+  )
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -44,14 +49,13 @@ export function MeusAnuncios() {
   useEffect(() => {
     const controle = new AbortController()
     setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
+    setErro(null)
+    void lerMeusAnuncios({ signal: controle.signal })
       .then((lidos) => {
         if (!controle.signal.aborted) setDados(lidos)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (!controle.signal.aborted) setErro(falha)
       })
     return () => controle.abort()
   }, [casca.cidade, rodada])
@@ -61,21 +65,45 @@ export function MeusAnuncios() {
     setOutros(lerRascunhosCriacao(casca.cidade))
   }, [casca.cidade])
 
-  const meus = useMemo(() => {
-    if (dados === null) return []
-    return dados.anuncios
-      .map((anuncio) => ({ anuncio, apresentacao: registro(anuncio.apresentacao) }))
-      .filter(({ apresentacao }) => apresentacao["mine"] === true)
-  }, [dados])
+  const meus = dados?.anuncios ?? []
+  const carregando = dados === null && erro === null
+  const [controle] = useState(() => new AbortController())
+  useEffect(() => () => controle.abort(), [controle])
 
-  const carregando = dados === null && !erro
+  async function carregarMais() {
+    if (!dados?.proximo || carregandoMais) return
+    setCarregandoMais(true)
+    setErroMais(false)
+    try {
+      const mais = await lerMeusAnuncios({ depois: dados.proximo, signal: controle.signal })
+      if (!controle.signal.aborted)
+        setDados({ ...mais, anuncios: [...dados.anuncios, ...mais.anuncios] })
+    } catch {
+      if (!controle.signal.aborted) setErroMais(true)
+    } finally {
+      if (!controle.signal.aborted) setCarregandoMais(false)
+    }
+  }
 
   return (
     <section data-tela="meus-anuncios" className="grid gap-2">
       <CabecaDePagina
         titulo="Meus anúncios"
-        subtitulo="Anúncios e rascunhos desta sessão, separados por estado."
+        subtitulo="Seus anúncios por estado e os rascunhos desta aba."
       />
+
+      {desapegoLocal.titulo !== "" && (
+        <section
+          data-rascunho-desapego="sim"
+          className="mt-3 grid gap-2 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)"
+        >
+          <b className="text-sm">Rascunho de desapego — não publicado</b>
+          <p className="break-words text-sm">{desapegoLocal.titulo}</p>
+          <Botao tom="texto" onClick={() => void navegacao.abrir("menu-criar")}>
+            Continuar em Criar
+          </Botao>
+        </section>
+      )}
 
       {rascunhos.length === 0 ? null : (
         <section data-meus-rascunhos="sim" className="mt-4 grid gap-2">
@@ -103,7 +131,7 @@ export function MeusAnuncios() {
         <section data-rascunhos-criacao="sim" className="mt-3 grid gap-2">
           <b className="text-[15px]">Outros rascunhos — não publicados ({outros.length})</b>
           <p className="text-xs text-(--on-surface-variant)">
-            Pedidos, encontros, negócios e desapegos ainda não são visíveis para outros membros.
+            Indicações e negócios ainda não são visíveis para outros membros.
           </p>
           {outros.map((item) => (
             <article
@@ -189,8 +217,8 @@ export function MeusAnuncios() {
         </section>
       )}
 
-      {erro ? (
-        <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
+      {erro !== null ? (
+        <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
       ) : meus.length === 0 ? (
@@ -204,25 +232,42 @@ export function MeusAnuncios() {
           icone="sell"
           acao={{
             rotulo: "Anunciar desapego",
-            aoAcionar: () => void navegacao.irPara("desapegos"),
+            aoAcionar: () => void navegacao.abrir("menu-criar"),
           }}
         />
       ) : (
         <Grade formato="cartoes">
-          {meus.map(({ anuncio, apresentacao }) => (
+          {meus.map((anuncio) => (
             <CartaoDeFoto
               key={anuncio.id}
               anuncio={{
                 id: anuncio.id,
-                titulo: texto(apresentacao["title"], anuncio.title),
-                preco: typeof anuncio.price_cents === "number" ? anuncio.price_cents / 100 : null,
-                icone: iconeDeDado(apresentacao["icon"]),
-                meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
+                titulo: anuncio.titulo,
+                fonte: anuncio.foto,
+                rotulo:
+                  (
+                    {
+                      draft: "Rascunho",
+                      active: "Ativo",
+                      paused: "Pausado",
+                      reserved: "Reservado",
+                      sold: "Vendido",
+                      closed: "Encerrado",
+                    } as Record<string, string>
+                  )[anuncio.status] ?? anuncio.status,
+                preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
+                meta: anuncio.bairro ?? anuncio.cidade ?? "",
               }}
               aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
             />
           ))}
         </Grade>
+      )}
+      {erroMais && <p role="alert">Não foi possível carregar mais anúncios. Tente de novo.</p>}
+      {dados?.proximo && (
+        <Botao tom="contornado" disabled={carregandoMais} onClick={() => void carregarMais()}>
+          {carregandoMais ? "Carregando…" : erroMais ? "Tentar de novo" : "Ver mais anúncios"}
+        </Botao>
       )}
     </section>
   )

@@ -22,6 +22,8 @@ allowed_paths:
   - "apps/app/src/criar"
   - "apps/app/src/casca/MenuCriar.tsx"
   - "apps/app/src/telas/MeusAnuncios.tsx"
+  # O compositor existente vive aqui; troca da gravação autorizada pelo F03.
+  - "apps/app/src/telas/Comunidade.tsx"
   - "apps/app/lib/dados/perguntas.ts"
   - "apps/app/lib/dados/mercado.ts"
   - "apps/app/src/roteador.tsx"

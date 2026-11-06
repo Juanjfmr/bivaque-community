@@ -33,6 +33,7 @@ const TELAS_LIGADAS = [
   { tela: "apps/app/src/telas/Evento.tsx", porta: /from "@\/lib\/dados\/eventos"/ },
   { tela: "apps/app/src/telas/Mercado.tsx", porta: /from "@\/lib\/dados\/mercado"/ },
   { tela: "apps/app/src/telas/Anuncio.tsx", porta: /from "@\/lib\/dados\/mercado"/ },
+  { tela: "apps/app/src/telas/MeusAnuncios.tsx", porta: /from "@\/lib\/dados\/criar"/ },
 ]
 
 /**
@@ -178,7 +179,7 @@ test("as rotas do mercado usam a sessão sob RLS, nunca o cliente de serviço", 
   const rotas = arquivos("apps/web/app/api/app/mercado").filter((caminho) =>
     caminho.endsWith("route.ts"),
   )
-  assert.ok(rotas.length === 3, `esperava as 3 rotas da jornada, achei ${rotas.length}`)
+  assert.ok(rotas.length === 4, `esperava as 4 rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = ler(caminho)
     assert.doesNotMatch(
