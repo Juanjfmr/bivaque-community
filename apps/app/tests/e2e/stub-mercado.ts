@@ -206,7 +206,7 @@ function anuncioPorId(id: string): (typeof ANUNCIOS)[number] | undefined {
 /** Aplica interceptações em `page` para todas as rotas `/api/app/mercado*`. */
 export function aplicarStubMercado(page: Page): void {
   // ── LISTAGEM: GET /api/app/mercado?tipo=item|property ─────────────
-  page.route("*/api/app/mercado?", async (route) => {
+  page.route(/\/api\/app\/mercado\?[^#]*$/, async (route) => {
     const url = route.request().url()
     const parsed = new URL(url, "http://localhost")
     const tipo = parsed.searchParams.get("tipo")
@@ -232,9 +232,8 @@ export function aplicarStubMercado(page: Page): void {
   })
 
   // ── INTERESSE: POST /api/app/mercado/<id>/interesse ──────────────
-  // Deve ser registrado ANTES do handler genérico de detalhes para ter
-  // prioridade — Playwright usa ordem de definição para múltiplos handlers.
-  page.route("*/api/app/mercado/*/interesse", async (route) => {
+  // Os padrões são exclusivos: o detalhe não captura o caminho de interesse.
+  page.route(/\/api\/app\/mercado\/[^/?#]+\/interesse(?:\?[^#]*)?$/, async (route) => {
     if (route.request().method() !== "POST") {
       return route.continue()
     }
@@ -246,9 +245,7 @@ export function aplicarStubMercado(page: Page): void {
   })
 
   // ── DETALHE: GET /api/app/mercado/<id> (qualquer parâmetro após o id) ─
-  // Catch-all para qualquer outro caminho sob /api/app/mercado/.
-  // Só executa quando nenhum handler anterior casou.
-  page.route("*/api/app/mercado/*", async (route) => {
+  page.route(/\/api\/app\/mercado\/[^/?#]+(?:\?[^#]*)?$/, async (route) => {
     if (route.request().method() !== "GET") {
       return route.continue()
     }
