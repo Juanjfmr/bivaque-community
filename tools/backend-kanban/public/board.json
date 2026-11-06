@@ -5857,11 +5857,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "06/11: RUN-015 integrado pelo PR #145 (f9492a1d): perguntar à cidade, anunciar desapego com foto (publicação pela RPC transition_listing) e Meus anúncios, com rascunho, revisão e erro preservado; migration nova veta pergunta de conta suspensa. Implementação GPT Sol 6.1 (parcial) e Qwen 3.8 Flash; revisão DeepSeek V4.1 Flash FAIL (publicação por UPDATE direto recusada pela guarda) e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; rodada única de correção fechou; CI verde com o E2E real. Publicação em grupo fica para o F04 Grupos."
       ],
       "id": "LAN-F03",
       "title": "F03 Criar: pergunta, publicação com foto, evento e anúncio",
@@ -6148,10 +6149,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "proof": [],
-      "updatedAt": "2026-11-05",
-      "sourceRevision": "19e5ef5a",
-      "status": "repo",
+      "proof": [
+        "06/11: fechado pela migration do RUN-017, PR #144 (fea99058), com pgTAP positivo e negativo; revisão Haiku 5.5 PASS COM RESSALVAS e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde."
+      ],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
+      "status": "done",
       "dependencies": [],
       "id": "DM-INSERT-VETO-EXCLUSAO",
       "title": "Mensagem direta: policy de insert não veta conta com exclusão ou suspensa",
@@ -6159,12 +6162,13 @@
       "category": "backend",
       "description": "A policy dm_messages_insert_sender deixa inserir mensagem com conta em exclusão pedida ou suspensa, enquanto a RPC send_conversation_message veta os dois casos. A correção entra em migration nova (alter policy), sem editar migration aplicada, com pgTAP positivo e negativo.",
       "checklist": [
-        "Migration nova com alter policy em dm_messages_insert_sender vetando conta com exclusão pedida e conta suspensa, no mesmo critério da RPC send_conversation_message",
-        "pgTAP positivo: remetente ativo continua inserindo; negativo: conta com exclusão pedida e conta suspensa não inserem",
-        "Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API",
-        "Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão"
+        "[x] Migration nova com alter policy em dm_messages_insert_sender vetando conta com exclusão pedida e conta suspensa, no mesmo critério da RPC send_conversation_message — cumprido por trigger BEFORE INSERT (mesmo efeito, cobre também a RPC e o service_role)",
+        "[x] pgTAP positivo: remetente ativo continua inserindo; negativo: conta com exclusão pedida e conta suspensa não inserem",
+        "[x] Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API — grant residual levado ao RLS-RESSALVAS-RUN017",
+        "[x] Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão — provado pelo test:db do CI do PR #144"
       ],
-      "links": ["docs/LANCAMENTO.md"]
+      "links": ["docs/LANCAMENTO.md"],
+      "completedAt": "2026-11-06"
     },
     {
       "phase": "Lançamento",
@@ -6219,11 +6223,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "06/11: RUN-016 integrado pelo PR #143 (385d9850): perfil próprio (ler e editar nome e bio), minhas publicações, bloqueados e ocultados com desfazer, e pedido de exclusão pelo fluxo existente. Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde com o E2E real. Família ficou fora (ver F10-FAMILIA)."
       ],
       "id": "LAN-F10",
       "title": "F10 Você, família e conta ligados ao banco",
@@ -6597,23 +6602,24 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "backend",
-      "status": "repo",
+      "status": "next",
       "description": "O organizador consegue mudar `locality_id` (e as outras colunas de alcance: `group_id`, `community_id`) do próprio encontro escrevendo direto no PostgREST, sem passar pela rota do app. O motivo é que o `grant update` em `events` é da tabela inteira (supabase/migrations/20260802001200_events_rsvp.sql:81) e a policy `events_update_organizer` só confere `organizer_id` — a regra 'editar não muda alcance' (R35) existe apenas em `apps/web/lib/events/event-form.ts`, no payload da rota. No mesmo cartão: a RLS de presença e de pergunta usa `private.is_locality_member`/`private.can_access_event`, que aceitam vínculo `leaving`, enquanto a rota exige `kind = 'current'` — o banco é mais permissivo que a rota para quem está em transferência.",
       "checklist": [
-        "Migration nova (nunca editar a aplicada): trigger de imutabilidade de `locality_id`, `group_id` e `community_id` em `events` depois do insert, ou grants de UPDATE por coluna excluindo as de alcance",
-        "pgTAP positivo: o organizador continua editando título, descrição, local, horário e capa",
-        "pgTAP negativo: UPDATE de `locality_id`/`group_id`/`community_id` pelo organizador é recusado (P0001 ou 42501)",
+        "[x] Migration nova (nunca editar a aplicada): trigger de imutabilidade de `locality_id`, `group_id` e `community_id` em `events` depois do insert, ou grants de UPDATE por coluna excluindo as de alcance",
+        "[x] pgTAP positivo: o organizador continua editando título, descrição, local, horário e capa",
+        "[x] pgTAP negativo: UPDATE de `locality_id`/`group_id`/`community_id` pelo organizador é recusado (P0001 ou 42501)",
         "Decidir e provar se presença/pergunta devem exigir vínculo `current` também na RLS, alinhando banco e rota",
         "Registrar a decisão em ADR se a correção mudar o contrato do banco"
       ],
       "proof": [
         "05/11: achado da auditoria de segurança (Sonnet) e da revisão de contrato (Qwen) da rodada 3 do RUN-007, confirmado no código: `20260802001200_events_rsvp.sql:81` concede UPDATE na tabela toda e a policy só confere `organizer_id`; a rota `/api/app/eventos/[id]` monta o payload sem as colunas de alcance, então a regra só vale por ali.",
-        "05/11: efeito observado na jornada — o app recusa mudar alcance na edição, mas a mesma pessoa com um cliente PostgREST e a sessão dela muda a cidade do encontro, e o encontro sai da agenda de quem o via."
+        "05/11: efeito observado na jornada — o app recusa mudar alcance na edição, mas a mesma pessoa com um cliente PostgREST e a sessão dela muda a cidade do encontro, e o encontro sai da agenda de quem o via.",
+        "06/11: fechado pela migration do RUN-017, PR #144 (fea99058), com pgTAP positivo e negativo; revisão Haiku 5.5 PASS COM RESSALVAS e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde."
       ],
       "tests": [],
       "dependencies": [],
-      "sourceRevision": "7faad666",
-      "updatedAt": "2026-11-05",
+      "sourceRevision": "f9492a1d",
+      "updatedAt": "2026-11-06",
       "blockers": []
     },
     {
@@ -6648,17 +6654,19 @@
       "status": "repo",
       "description": "Ressalvas do RUN-014 (F04) integrado pelo PR #140 sem bloquear a integração. A policy recommendation_replies_insert não veta vínculo read_only nem conta suspensa.",
       "checklist": [
-        "Policy recommendation_replies_insert vetar vínculo read_only e conta suspensa, em migration nova com pgTAP",
+        "[x] Policy recommendation_replies_insert vetar vínculo read_only e conta suspensa, em migration nova com pgTAP",
         "Paginação de Comunidade não descartar resposta de filtro antigo",
         "Régua da resposta duplicada na tela antiga retirada",
         "Contagem do cabeçalho exata, não aproximada"
       ],
-      "proof": [],
+      "proof": [
+        "06/11: fechado pela migration 20261106090200 do RUN-017, PR #144 (fea99058), com pgTAP recommendation-replies-active-member.sql (3 casos: positivo com vínculo ativo, negativo com vínculo read_only e negativo com conta suspensa)."
+      ],
       "tests": [],
       "links": ["docs/agents/tasks/RUN-014.task.yml"],
       "dependencies": [],
       "updatedAt": "2026-11-06",
-      "sourceRevision": "83470086"
+      "sourceRevision": "f9492a1d"
     },
     {
       "id": "F06-RESSALVAS",
@@ -6686,19 +6694,22 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "description": "Achado do security-auditor no RUN-009 (F08), liberado com ressalvas pelo PR #139. authenticated tem SELECT na tabela inteira arrival_guide_entries, e submitted_by fica legível via Data API em entradas aprovadas. Exige revisão R3.",
       "checklist": [
-        "Revogar SELECT de authenticated na tabela inteira e conceder por coluna, sem submitted_by, em migration nova",
-        "pgTAP: leitura de entrada aprovada sem submitted_by e negativa de acesso à coluna",
-        "Revisão de segurança R3 antes da integração"
+        "[x] Revogar SELECT de authenticated na tabela inteira e conceder por coluna, sem submitted_by, em migration nova",
+        "[x] pgTAP: leitura de entrada aprovada sem submitted_by e negativa de acesso à coluna",
+        "[x] Revisão de segurança R3 antes da integração"
       ],
-      "proof": [],
+      "proof": [
+        "06/11: fechado pela migration do RUN-017, PR #144 (fea99058), com pgTAP positivo e negativo; revisão Haiku 5.5 PASS COM RESSALVAS e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde."
+      ],
       "tests": [],
       "links": ["docs/agents/tasks/RUN-009.task.yml"],
       "dependencies": [],
       "updatedAt": "2026-11-06",
-      "sourceRevision": "83470086"
+      "sourceRevision": "f9492a1d",
+      "completedAt": "2026-11-06"
     },
     {
       "id": "F08-RESSALVAS",
@@ -6718,6 +6729,93 @@
       "dependencies": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "83470086"
+    },
+    {
+      "phase": "Lançamento",
+      "status": "repo",
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
+      "id": "F10-FAMILIA",
+      "title": "F10 família: ligar convite e vínculo familiar ao app",
+      "priority": "P1",
+      "category": "backend",
+      "description": "Família ficou fora do PR #143 (RUN-016). public.create_family_invitation só tem execute para service_role (supabase/migrations/20260806160942_family_invite_wrappers.sql:36-38), então o membro não cria convite pela própria sessão. Risco R3: exige migration nova ou rota com verificação de posse, pgTAP e revisão de segurança antes da integração.",
+      "checklist": [
+        "Rotas GET e POST /api/app/voce/familia e tela da família ligadas ao banco, sem service_role no cliente",
+        "Caminho de convite por migration nova ou rota com verificação de posse, sem editar migration aplicada",
+        "pgTAP positivo (titular cria convite) e negativo (outro membro ou não titular é recusado)",
+        "Jornada inteira com dados reais: entrada, ação, gravação, retorno e falha principal, em 375/768/1440",
+        "Revisão de segurança R3 antes da integração"
+      ],
+      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+    },
+    {
+      "phase": "Lançamento",
+      "status": "repo",
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
+      "id": "F10-RESSALVAS",
+      "title": "F10: ressalvas da revisão e da auditoria do RUN-016",
+      "priority": "P3",
+      "category": "backend",
+      "description": "Ressalvas do RUN-016 (F10) integrado pelo PR #143 sem bloquear a integração.",
+      "checklist": [
+        "Teste de IDOR no DELETE de bloqueio entre membros (outro membro não remove bloqueio alheio)",
+        "Teste do 403 ao desocultar conteúdo",
+        "PATCH do perfil não responde 503 depois de já gravar quando a leitura da cidade falha"
+      ],
+      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+    },
+    {
+      "phase": "Lançamento",
+      "status": "repo",
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
+      "id": "RLS-RESSALVAS-RUN017",
+      "title": "RUN-017: ressalvas de RLS, grants e telas da revisão de segurança",
+      "priority": "P3",
+      "category": "backend",
+      "description": "Ressalvas aceitas na integração do RUN-017 (PR #144, fea99058), sem bloquear a integração.",
+      "checklist": [
+        "Remover grants a authenticated em private.account_unavailable e private.dm_conversation_unavailable",
+        "Tirar confidence e reviewed_by do grant por coluna de arrival_guide_entries",
+        "pgTAP da RPC send_conversation_message com participante suspenso",
+        "Positivo de events: trocar lives_ok vazio por teste que afirma a escrita",
+        "Mensagem própria para conta indisponível nas telas de mensagem direta"
+      ],
+      "links": ["docs/agents/tasks/RUN-017.task.yml"]
+    },
+    {
+      "phase": "Lançamento",
+      "status": "repo",
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "f9492a1d",
+      "id": "F03-RESSALVAS",
+      "title": "F03: ressalvas da revisão e da auditoria do RUN-015",
+      "priority": "P3",
+      "category": "backend",
+      "description": "Ressalvas do RUN-015 (F03) integrado pelo PR #145 (f9492a1d) sem bloquear a integração.",
+      "checklist": [
+        "listings_update_owner passa a checar suspensão, sem reaproveitar rascunho antigo pela chave",
+        "lerCorpoJson aplica o teto antes de ler o corpo inteiro (~13,9 MB no mercado)"
+      ],
+      "links": ["docs/agents/tasks/RUN-015.task.yml"]
     }
   ],
   "launch": {
