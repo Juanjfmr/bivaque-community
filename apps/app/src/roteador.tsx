@@ -1,3 +1,4 @@
+import type { SearchMiddleware } from "@tanstack/react-router"
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router"
 import type { ComponentType } from "react"
 
@@ -48,6 +49,28 @@ const raiz = createRootRoute({
   component: Casca,
   notFoundComponent: () => <TelaIndisponivel />,
 })
+
+/**
+ * Nas rotas do Mercado, a busca (filtros na URL) sobrevive às navegações que
+ * não mexem nela — inclusive as regravações de estado da entrada (rolagem,
+ * foco) que a camada fina faz em `replace`. Quem passa `search` explícito
+ * manda; sem ele, o filtro atual continua no endereço (LAN-F06).
+ */
+const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) => {
+  const atual = ctx.search ?? {}
+  // O tipo público não declara, mas o segundo argumento de `next` pede o meta:
+  // ele diz se o pedido passou `search` explícito (o filtro da tela) ou não —
+  // no segundo caso o endereço mantém o que está lá (LAN-F06).
+  const saida = ctx.next as unknown as (
+    nova: Record<string, unknown>,
+    coletar?: boolean,
+  ) => { search?: Record<string, unknown>; meta?: Record<string, unknown> }
+  const resultado = saida(atual, true)
+  return resultado.meta && "explicit" in resultado.meta ? (resultado.search ?? atual) : atual
+}
+
+const BUSCA_PERSISTENTE = { middlewares: [manterBuscaDoMercado] }
+const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado"])
 
 /**
  * As telas reais do produto entram aqui conforme cada onda. Fora do modo de
@@ -108,12 +131,18 @@ const paginas = ROTAS.filter(
   (rota) => rota.nome !== "mercado" && rota.nome !== "indisponivel",
 ).flatMap((rota) => {
   const Tela = () => <TelaDaRota nome={rota.nome} />
+  const busca = ROTAS_COM_BUSCA.has(rota.nome) ? { search: BUSCA_PERSISTENTE } : {}
   const definicoes = [
-    createRoute({ getParentRoute: () => raiz, path: rota.caminho, component: Tela }),
+    createRoute({ getParentRoute: () => raiz, path: rota.caminho, component: Tela, ...busca }),
   ]
   if (rota.caminhoSemParametro !== null) {
     definicoes.push(
-      createRoute({ getParentRoute: () => raiz, path: rota.caminhoSemParametro, component: Tela }),
+      createRoute({
+        getParentRoute: () => raiz,
+        path: rota.caminhoSemParametro,
+        component: Tela,
+        ...busca,
+      }),
     )
   }
   return definicoes
@@ -125,6 +154,7 @@ const mercado = createRoute({
   getParentRoute: () => raiz,
   path: "/mercado",
   component: () => <TelaDaRota nome="mercado" />,
+  search: BUSCA_PERSISTENTE,
 })
 
 /**
