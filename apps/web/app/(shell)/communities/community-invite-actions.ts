@@ -134,19 +134,10 @@ export async function sendCommunityInviteAction(
     throw new Error(error.message)
   }
 
-  // Enfileiramento no outbox, mesma rota que o convite familiar usa.
-  // O token NÃO vai no payload — o link é mostrado uma única vez na resposta.
-  const { error: outboxError } = await supabase.from("outbox").insert({
-    recipient: "owner-link@local",
-    channel: "email",
-    type: "community_invite",
-    payload: { community_id: communityId, inviter_user_id: userId, invite_id: inviteId },
-  })
-
-  if (outboxError) {
-    throw new Error(`Falha ao enfileirar a entrega: ${outboxError.message}`)
-  }
-
+  // Sem outbox: este convite não tem e-mail de convidado. O convite de
+  // comunidade é um link que o dono compartilha, e o token só existe na
+  // resposta — enfileirar sem endereço criava e-mail para ninguém. O aviso no
+  // app continua no convite pendente.
   revalidatePath(`/communities/${communityId}`)
 
   return { token: token.toString("hex"), inviteId: inviteId ?? "" }
