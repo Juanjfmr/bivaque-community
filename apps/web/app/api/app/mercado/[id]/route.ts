@@ -8,7 +8,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 type Context = { params: Promise<{ id: string }> }
 
-export { editarAnuncio as PATCH } from "./_editar"
+export { PATCH } from "./_editar"
 
 // O detalhe lê o anúncio pela RLS (`private.can_read_listing`): o que não é
 // visível volta como 404, nunca 403 — a resposta não entrega a existência.

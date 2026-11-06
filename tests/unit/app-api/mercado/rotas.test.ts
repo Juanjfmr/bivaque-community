@@ -18,12 +18,12 @@ vi.mock("web/lib/storage/listing-photo", () => ({
 
 import type { AnuncioBruto } from "web/app/api/app/mercado/_comum"
 import { PATCH as editar } from "web/app/api/app/mercado/[id]/_editar"
-import { POST as situacao } from "web/app/api/app/mercado/[id]/situacao/route"
 import { POST as interesse } from "web/app/api/app/mercado/[id]/interesse/route"
 import { GET as detalhe } from "web/app/api/app/mercado/[id]/route"
+import { POST as situacao } from "web/app/api/app/mercado/[id]/situacao/route"
 import { GET as listar } from "web/app/api/app/mercado/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
-import { FalhaDaFoto, enviarFotoDoAnuncio } from "web/lib/storage/listing-photo"
+import { enviarFotoDoAnuncio, FalhaDaFoto } from "web/lib/storage/listing-photo"
 
 const fotoMock = vi.mocked(enviarFotoDoAnuncio)
 
@@ -796,7 +796,10 @@ describe("rotas de mercado do app", () => {
       expect(resposta.status).toBe(400)
       const corpo = await json(resposta)
       expect(corpo).toMatchObject({ erro: "dados-invalidos" })
-      expect(corpo["campos"]).toMatchObject({ title: expect.any(String), price: expect.any(String) })
+      expect(corpo["campos"]).toMatchObject({
+        title: expect.any(String),
+        price: expect.any(String),
+      })
       expect(mock.updateCalls).toHaveLength(0)
     })
 
@@ -849,7 +852,10 @@ describe("rotas de mercado do app", () => {
       const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)
       expect(resposta.status).toBe(403)
       const corpo = await json(resposta)
-      expect(corpo).toEqual({ erro: "recusado", mensagem: "Sua conta não pode editar este anúncio." })
+      expect(corpo).toEqual({
+        erro: "recusado",
+        mensagem: "Sua conta não pode editar este anúncio.",
+      })
       expect(JSON.stringify(corpo)).not.toContain("rls")
     })
 
@@ -978,7 +984,10 @@ describe("rotas de mercado do app", () => {
     it("falha genérica da RPC é 503", async () => {
       const mock = mockClient({ rpcError: { code: "XX000", message: "boom" } })
       authenticate(mock)
-      const resposta = await situacao(req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}'), context)
+      const resposta = await situacao(
+        req("POST", `${BASE}/${ID}/situacao`, '{"acao":"pause"}'),
+        context,
+      )
       expect(resposta.status).toBe(503)
       expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
     })

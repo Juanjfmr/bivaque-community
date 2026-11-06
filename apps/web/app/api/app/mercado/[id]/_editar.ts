@@ -7,7 +7,7 @@ import {
 } from "../../../../../lib/app-api/rota-do-app"
 import { validateListingEdit } from "../../../../../lib/listings/lifecycle"
 import { MAX_PHOTO_BYTES } from "../../../../../lib/listings/types"
-import { FalhaDaFoto, enviarFotoDoAnuncio } from "../../../../../lib/storage/listing-photo"
+import { enviarFotoDoAnuncio, FalhaDaFoto } from "../../../../../lib/storage/listing-photo"
 import { ehUuid, interpretarErroDoBanco, lerFotoDoCorpo } from "../_comum"
 
 type Context = { params: Promise<{ id: string }> }
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: Context): Promise<
       condition: String(corpo["condicao"]),
       description: String(corpo["descricao"]),
       neighborhood: String(corpo["bairro"]),
-      address: typeof enderecoBruto === "string" ? enderecoBruto : existente.data.address,
+      address: typeof enderecoBruto === "string" ? enderecoBruto : (existente.data.address ?? ""),
     })
     if (!validacao.ok) {
       return responder(request, { erro: "dados-invalidos", campos: validacao.errors }, 400)
