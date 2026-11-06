@@ -61,8 +61,9 @@ test.describe("F03 — criação real", { tag: "@stateful" }, () => {
     await form.locator("#nova-pergunta").fill(titulo)
     await form.locator("#topico-pergunta").fill("Educação")
     await form.getByRole("button", { name: "Salvar rascunho" }).click()
+    // Recarregar devolve a entrada com a sobreposição aberta (ADR da SPA): o
+    // formulário volta sozinho, com o rascunho. Não há botão a clicar por baixo.
     await page.reload()
-    await page.locator('[data-acao="perguntar"]').click()
     await expect(form.locator("#nova-pergunta")).toHaveValue(titulo)
     const rota = /\/api\/app\/perguntas$/
     await page.route(rota, (pedido) =>
@@ -111,8 +112,8 @@ test.describe("F03 — criação real", { tag: "@stateful" }, () => {
       .setInputFiles({ name: "mesa.png", mimeType: "image/png", buffer: foto })
     await expect(form.getByAltText("Foto escolhida para o anúncio")).toBeVisible()
     await form.getByRole("button", { name: "Salvar rascunho" }).click()
+    // O menu Criar também volta aberto na recarga; a escolha é o próximo passo.
     await page.reload()
-    await page.locator('[data-acao="criar"]').click()
     await page.locator('[data-escolha="create-item"]').click()
     await expect(form.locator("#criacao-titulo")).toHaveValue(titulo)
     const rota = /\/api\/app\/mercado$/
