@@ -54,10 +54,9 @@ const mocks = vi.hoisted(() => {
 
   function resolve(scope: "user" | "service", name: string, filters: Array<[string, unknown]>) {
     if (name === "listings") {
-      if (scope === "user") {
-        // O cliente do usuário não faz a reconferência; o service_role faz.
-        return { data: { id: "fixture-listing" }, error: null, count: 0 }
-      }
+      // A reconferência de posse passou a ser feita pela cliente DA SESSÃO com
+      // filtro owner_user_id (SEC-006 no caminho do app): sob RLS o filtro é
+      // real, então o mock o aplica em qualquer escopo.
       const id = filterValue(filters, "id")
       const owner = filterValue(filters, "owner_user_id")
       const found = state.listingOwned && id === "fixture-listing" && owner === state.listingOwner
@@ -381,13 +380,13 @@ describe("SEC-006 mercado", () => {
     await uploadListingPhotoAction(photoForm(await locationImage("jpeg")))
 
     expect(mocks.state.filters).toContainEqual({
-      scope: "service",
+      scope: "user",
       table: "listings",
       column: "id",
       value: "fixture-listing",
     })
     expect(mocks.state.filters).toContainEqual({
-      scope: "service",
+      scope: "user",
       table: "listings",
       column: "owner_user_id",
       value: "fixture-user",

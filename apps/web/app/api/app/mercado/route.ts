@@ -7,6 +7,8 @@ import { type AnuncioBruto, baseDoAnuncio, cidadeDaSessao, ehUuid, SELECT_ANUNCI
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+export { criarDesapego as POST } from "./_criar"
+
 const LIMITE_PADRAO = 20
 const LIMITE_MAXIMO = 50
 

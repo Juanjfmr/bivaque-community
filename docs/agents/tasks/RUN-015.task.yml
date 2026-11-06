@@ -1,0 +1,80 @@
+# LAN-F03 (05/11/2026): F03 Criar ligado ao banco, no molde do F05 (ADR-20261105-porta-de-dados-do-app).
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-015
+
+objective: >
+  O menu Criar do apps/app passa a criar de verdade: perguntar à cidade (grava a pergunta na cidade da sessão e leva ao detalhe do F04) e anunciar desapego (grava o anúncio com foto e leva ao detalhe do F06), cada um com rascunho local, revisão antes de publicar, erro com o texto preservado; e Meus anúncios lista os anúncios do próprio membro. Encontro e pedido já existem (F05, F07) e só são ligados ao menu. Publicação em grupo fica fora (depende do F04 Grupos).
+
+authority:
+  - docs/LANCAMENTO.md (F03)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (o molde)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo)
+  - tools/backend-kanban card LAN-F03
+  - referência viva: o F05 na main (apps/app/lib/dados/eventos.ts, apps/web/app/api/app/eventos, tests/e2e/f05-eventos-real.spec.ts)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    MenuCriar.tsx abre formulários de demonstração para pergunta e anúncio; MeusAnuncios.tsx lê a demonstração. As rotas do F04 (/api/app/perguntas) e do F06 (/api/app/mercado) só leem; a web antiga cria pergunta em apps/web/lib/recommendations e anúncio em apps/web/lib/listings, com upload de foto em apps/web/lib/storage.
+
+allowed_paths:
+  - "apps/app/lib/dados/criar.ts"
+  - "apps/app/src/criar"
+  - "apps/app/src/casca/MenuCriar.tsx"
+  - "apps/app/src/telas/MeusAnuncios.tsx"
+  # O compositor existente vive aqui; troca da gravação autorizada pelo F03.
+  - "apps/app/src/telas/Comunidade.tsx"
+  - "apps/app/lib/dados/perguntas.ts"
+  - "apps/app/lib/dados/mercado.ts"
+  - "apps/app/src/roteador.tsx"
+  - "apps/app/tests"
+  - "apps/web/app/api/app/criar"
+  - "apps/web/app/api/app/perguntas"
+  - "apps/web/app/api/app/mercado"
+  - "apps/web/lib/recommendations"
+  - "apps/web/lib/listings"
+  - "apps/web/lib/storage"
+  - "supabase/migrations"
+  - "supabase/tests"
+  - "tests/unit/app-api/criar"
+  - "tests/e2e/f03-criar-real.spec.ts"
+  - "tests/scope"
+  - "docs/agents/tasks/RUN-015.task.yml"
+  - ".visual/run-015"
+
+forbidden:
+  - "tocar em apps/app/lib/api/cliente.ts, apps/web/lib/app-api, apps/app/src/entrada, apps/web/app/api/app/entry e apps/web/app/api/app/eventos (só importar)"
+  - "editar tools/backend-kanban (o coordenador atualiza o quadro no merge) ou RATIFICACAO.md"
+  - "confiar em user_id, locality_id, papel ou dono vindos do corpo, da query ou do app"
+  - "service_role onde a RLS da sessão basta"
+  - "editar migration existente (mudança de banco só em migration nova, se for mesmo necessária)"
+  - "mudar o desenho aprovado das telas (troca a fonte do dado, não o visual)"
+  - "quebrar as telas que ainda leem a demonstração"
+  - "super engenharia: nada além do caminho principal, da gravação, do retorno e da falha principal"
+  - "push, merge ou force-push; ler, criar ou editar arquivos .env"
+
+acceptance:
+  - "Rotas no apps/web com exigirSessao/conferirEscrita/opcoesDoApp de lib/app-api e o cliente Supabase DA SESSÃO: POST /api/app/perguntas (pergunta na cidade da sessão), POST /api/app/mercado (anúncio de desapego; foto pelo mesmo caminho de upload da web, na pasta do próprio membro) e GET /api/app/mercado/meus (anúncios do próprio membro). Validação no mesmo módulo de apps/web/lib que a tela antiga usa (extrair se precisar)."
+  - "Cada rota com teste de unidade positivo e negativo: sem sessão 401, origem/cabeçalho errado 403, inexistente ou fora do alcance 404, corpo inválido 400, erro do banco 503 (nunca lista vazia), sem eco da mensagem do Postgres."
+  - "Módulo apps/app/lib/dados/criar.ts usa o cliente único (sem editá-lo), com AbortSignal; as telas trocam dadosDoApp pelo módulo: carregando, vazio honesto, erro com Tentar de novo, escrita mostra o resultado gravado e volta ao estado anterior com mensagem se falhar."
+  - "E2E tests/e2e/f03-criar-real.spec.ts contra o banco local com seed em 375/768/1440: caminho principal, gravação que sobrevive ao recarregar, negação de acesso e falha principal. Se o banco local não subir, registrar o comando exato no relatório e entregar com unidade + app."
+  - "Teste de escopo: as telas da jornada não importam mais dadosDoApp; as rotas não usam clienteDeServicoOuNulo."
+  - "Relatório curto em .visual/run-015/relatorio.md: o que entrou, commits, números das provas e o que não rodou (o coordenador leva ao card LAN-F03)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/criar
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f03-criar-real.spec.ts
+
+risk: leitura e escrita de dados de membros por rota nova do app
+risk_level: R3
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

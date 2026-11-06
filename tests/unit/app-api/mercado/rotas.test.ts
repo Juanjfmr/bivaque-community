@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+// route.ts reexporta o POST de _criar, que importa a foto (server-only).
+vi.mock("server-only", () => ({}))
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
 import type { AnuncioBruto } from "web/app/api/app/mercado/_comum"
