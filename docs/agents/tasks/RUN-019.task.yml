@@ -3,15 +3,16 @@
 task_id: RUN-019
 
 objective: >
-  Nenhuma rota de membro do apps/web serve mais tela antiga: cada rota antiga de membro redireciona para a
-  tela equivalente do app (/app/...), sem ciclo, preservando os parâmetros úteis; no apps/web ficam só a
-  landing, o servidor (rotas /api, /auth, /consent, convites) e o painel do operador. Código antigo só sai
-  quando nada mais o usa.
+  Fase 1 do LAN-TROCA: aplicar 307 somente para messages (caixa, conversation UUID e detalhe),
+  detalhes de mercado/imoveis/indicacoes/pedidos/prestadores, lista de pedidos, bloqueados,
+  família (Você, PR #147), inicio e explorar. Preservar IDs e query úteis, sem ciclo.
+  Todas as demais rotas e as edições de anúncios ficam na web. A varredura integral segue no cartão.
 
 authority:
   - docs/LANCAMENTO.md (critério 6 e fase 6)
   - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
   - tools/backend-kanban card LAN-TROCA
+  - decisão explícita do coordenador em 06/11/2026 (fase 1, sem revisão por outro modelo, push autorizado)
   - referência viva: o redirecionamento das telas antigas de entrada em apps/web/next.config.ts (PR #136) e o rastreador tests/e2e/link-crawl.spec.ts
 
 baseline:
@@ -19,8 +20,9 @@ baseline:
   evidence: >
     apps/web/app/(shell)/ ainda serve as telas antigas de membro: cidade, communities, community, configuracoes,
     denuncias, events, explorar, groups, guide, imoveis, indicacoes, inicio, localidade, mercado, messages,
-    meus-anuncios, negocio, notifications, pedidos, prestadores, profile, recommendations e salvos, enquanto
-    as jornadas equivalentes já estão no app (F01 a F10 na main; F04 só perguntas da cidade).
+    meus-anuncios, negocio, notifications, pedidos, prestadores, profile, recommendations e salvos.
+    A conferência integral encontrou lacunas; a decisão do coordenador autoriza somente a fase 1
+    descrita no objetivo. Os demais caminhos ficam na web até suas jornadas fecharem.
 
 allowed_paths:
   - apps/web/next.config.ts
@@ -33,13 +35,15 @@ allowed_paths:
   - tests/scope
   - docs/agents/tasks/RUN-019.task.yml
   - .visual/run-019
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
 
 forbidden:
   - redirecionar rota cuja jornada ainda não existe no app: os grupos (groups/*, community, communities) ficam como estão até o F04 Grupos; registre no relatório
   - mexer no painel do operador, nas rotas /api, /auth, /consent, /invite e na landing
   - apagar código ainda importado por rota viva, Server Action usada pelo app ou teste que segue valendo
   - pular teste (skip/fixme) ou afrouxar asserção; o teste de uma tela que saiu sai junto com ela
-  - push, merge ou force-push
+  - merge ou force-push (push origin chore/lan-troca autorizado pelo coordenador)
   - ler, criar ou editar arquivos .env
 
 acceptance:
@@ -52,7 +56,7 @@ acceptance:
 proof:
   - npx pnpm@11.18.0 gate --fast
   - npx pnpm@11.18.0 test:scope
-  - npx pnpm@11.18.0 exec vitest run tests/unit
+  - npx pnpm@11.18.0 exec vitest run tests/unit --maxWorkers=1 --no-file-parallelism
   - E2E da raiz no CI (inclui link-crawl)
 
 risk: navegação e portões de acesso do apps/web
@@ -65,11 +69,19 @@ on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
 
-# Conferência de 06/11/2026 contra o roteador e as telas reais; ver .visual/run-019/relatorio.md.
-blocked_by:
-  - >
-    A premissa de equivalência completa F01-F10 não se confirma: faltam família, preferências
-    de avisos, acompanhamento de denúncias, edição de anúncios e consumo de filtros/IDs por URL.
-    Salvos não lista as indicações salvas e o detalhe de evento não oferece os convites antigos.
-    Concluir essas superfícies nas jornadas correspondentes antes de retirar suas rotas;
-    os arquivos necessários ficam fora de allowed_paths deste contrato.
+# Fase 1 autorizada em 06/11/2026 após a conferência do relatório.
+# Sem revisão por outro modelo e sem E2E, servidor, build ou gate completo localmente.
+# reviewer_must_differ_from_executor permanece para o fechamento integral;
+# nesta fase a revisão está expressamente dispensada pelo coordenador.
+phase_1_note: >
+  Esta entrega é a fase 1, não o fechamento integral do LAN-TROCA. Família entrou pelo PR #147.
+  As demais rotas e seus códigos antigos ficam para o cartão LAN-TROCA e suas jornadas.
+remaining_gaps:
+  - "LAN-F04 / INDICACOES-MEMORIA: grupos, seguir/salvar e resolver pergunta, denúncias e acompanhamento."
+  - "LAN-F06: criação e edição de anúncios, Meus anúncios, alertas de imóveis e filtros de URL."
+  - "LAN-F07: criação endereçável de pedido com prestador, negócio próprio/catálogo e resposta pela conversa."
+  - "LAN-F09: avisos, preferências por canal e bloqueio iniciado no detalhe da conversa."
+  - "LAN-F10: Salvos com indicações, perfil de outra pessoa, interesses e portas restantes de conta/perfil."
+  - "LAN-F05: convites individuais/fan-out, histórico de perguntas e entrada direta para criar/editar evento."
+  - "LAN-F02 / LAN-F08: q/search, filtros de URL e leitura endereçável do Guia/localidade/cidade por ID."
+  - "LAN-TROCA: remover resíduos só sem importadores; CI/runtime e rastreador ainda devem provar a revisão."

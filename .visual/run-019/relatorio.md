@@ -1,14 +1,18 @@
-# RUN-019 — conferência antes da troca
+# RUN-019 — LAN-TROCA, fase 1
 
-Data: 06/11/2026. Branch: chore/lan-troca. Revisão inicial: 86c4851f. Worktree inicialmente limpo.
+Data: 06/11/2026. Branch: `chore/lan-troca`. Base conferida: `f64c1cab`. Worktree inicialmente limpo.
 
-## Resultado
+## Resultado aplicado
 
-BLOQUEADO: o baseline confirma as telas antigas, mas a premissa de equivalência completa das jornadas F01–F10 não se confirma. Nenhum redirecionamento foi aplicado e nenhuma tela ou teste foi apagado. A restrição do próprio contrato proíbe redirecionar jornada que ainda não existe no app. Substituir essas telas por suas listas/páginas ancestrais descartaria funções, IDs ou filtros.
+Decisão explícita do coordenador: executar o recorte agora. Foram adicionadas 13 regras temporárias (307) para 12 rotas antigas, em `apps/web/next.config.ts`, no padrão do PR #136. Todos os destinos foram conferidos em `apps/app/src/roteador.tsx` (TELAS_REAIS, montagem de paginas e base `/app`) e no catálogo `apps/app/lib/navegacao/rotas.ts`. Família entrou em Você pelo PR #147.
 
-## Tabela rota antiga → destino no app
+A regra `/messages?conversation=<uuid>` vem antes da caixa genérica e leva ao detalhe. O UUID preserva seu valor; query adicional segue pelo mecanismo do Next, inclusive a query conversation original. Valor vazio ou inválido segue para a caixa. Os IDs dos outros detalhes são preservados. As expressões de detalhes excluem os segmentos estáticos `novo` e `alertas`; as regras não capturam `/editar` nem subárvores. Todas as outras rotas continuam na web, com seus aliases e portões existentes.
 
-Inventário: 58 páginas em apps/web/app/(shell). Conferência contra apps/app/src/roteador.tsx e o catálogo apps/app/lib/navegacao/rotas.ts: base /app, TELAS_REAIS e montagem de paginas. Candidato indica rota real registrada, não equivalência aceita. Os parâmetros :id correspondem a $id no catálogo. Todas as rotas ficam nesta revisão.
+Os 307 rodam antes do proxy. `/app` já é público por pasta no proxy: autenticação, autorização e recusas são do app e de suas APIs. Sem sessão, Conversas e Conversa mostram o estado de sessão vencida, sem conteúdo protegido. `proxy.ts`, roteador, APIs, telas de produto, ambiente e segredos não foram alterados.
+
+O diagnóstico anterior era uma conferência integral; esta autorização o substitui para o recorte abaixo. **Fase 1 aplicada não significa LAN-TROCA integral concluído**, nem prova de runtime. A tabela mantém o inventário de 58 páginas: 12 rotas trocadas e 46 mantidas nesta fase.
+
+## Tabela atual — rota antiga → destino ou permanência
 
 | Rota antiga | Destino ou permanência | Conferência / motivo |
 | --- | --- | --- |
@@ -18,118 +22,96 @@ Inventário: 58 páginas em apps/web/app/(shell). Conferência contra apps/app/s
 | `/communities/[id]` | Fica | Fica até F04 Grupos, conforme proibição expressa. |
 | `/communities` | Fica | Fica até F04 Grupos, conforme proibição expressa. |
 | `/community` | Fica | Fica até F04 Grupos, conforme proibição expressa. |
-| `/configuracoes/bloqueados` | `/app/bloqueados` (candidato, não aplicado) | Candidato; precisa provar equivalência da lista e remoção. |
+| `/configuracoes/bloqueados` | `/app/bloqueados` | Aplicado: 307; destino registrado no app. |
 | `/configuracoes/conta` | Fica | Inclui saída de família, ausente no app. |
-| `/configuracoes/familia` | Fica | Não há gestão de família no app. |
+| `/configuracoes/familia` | `/app/voce` | Aplicado: 307; destino registrado no app. |
 | `/configuracoes/notificacoes` | Fica | Não há preferências por canal no app. |
 | `/configuracoes` | Fica | Leva às preferências de notificações; não há equivalente no app. |
 | `/denuncias/[id]` | Fica | Não há acompanhamento de denúncia por ID no app. |
 | `/denuncias/nova` | Fica | Não há formulário equivalente endereçável no app. |
 | `/denuncias` | Fica | Não há lista/acompanhamento de denúncias; chamados são outro domínio. |
-| `/events/[id]/editar` | `/app/evento/:id` (candidato, não aplicado) | Edição existe como ação local; falta entrada endereçável para abrir a edição. |
-| `/events/[id]` | `/app/evento/:id` (candidato, não aplicado) | Bloqueado: detalhe antigo tem fan-out ausente na tela nova. |
+| `/events/[id]/editar` | `/app/evento/:id` (fica nesta fase) | Edição existe como ação local; falta entrada endereçável para abrir a edição. |
+| `/events/[id]` | `/app/evento/:id` (fica nesta fase) | Bloqueado: detalhe antigo tem fan-out ausente na tela nova. |
 | `/events/[id]/perguntas` | Fica | Histórico e parâmetro `com` não equivalem ao envio de uma pergunta no detalhe do app. |
 | `/events/novo` | Fica | Criação existe em diálogo local, sem destino direto registrado. |
-| `/events` | `/app/agenda` (candidato, não aplicado) | Bloqueado: a lista antiga inclui convites individuais; a Agenda nova não os lista. |
-| `/explorar/busca` | `/app/busca` (candidato, não aplicado) | Pendência de compatibilidade: Busca lê casca.consulta e não q/search da URL. A jornada existe. |
-| `/explorar` | `/app/busca` (candidato, não aplicado) | Candidato; a tela Busca está registrada e tem a grade Explorar. |
-| `/explorar/servicos` | `/app/negocios` (candidato, não aplicado) | Pendência de compatibilidade: q/search/bairro/tipo/page da URL não são consumidos. A jornada existe. |
+| `/events` | `/app/agenda` (fica nesta fase) | Bloqueado: a lista antiga inclui convites individuais; a Agenda nova não os lista. |
+| `/explorar/busca` | `/app/busca` (fica nesta fase) | Pendência de compatibilidade: Busca lê casca.consulta e não q/search da URL. A jornada existe. |
+| `/explorar` | `/app/busca` | Aplicado: 307; destino registrado no app. |
+| `/explorar/servicos` | `/app/negocios` (fica nesta fase) | Pendência de compatibilidade: q/search/bairro/tipo/page da URL não são consumidos. A jornada existe. |
 | `/groups/[id]` | Fica | Fica até F04 Grupos, conforme proibição expressa. |
 | `/groups` | Fica | Fica até F04 Grupos, conforme proibição expressa. |
 | `/guide/[id]/correcao` | Fica | Não há destino direto para correção do verbete por ID. |
 | `/guide/[id]` | Fica | O verbete abre em estado local do Guia, sem rota por ID. |
-| `/guide` | `/app/guia` (candidato, não aplicado) | Pendência de compatibilidade: filtros q/categoria da URL não são consumidos. A jornada existe. |
+| `/guide` | `/app/guia` (fica nesta fase) | Pendência de compatibilidade: filtros q/categoria da URL não são consumidos. A jornada existe. |
 | `/guide/sugerir` | Fica | Não há formulário equivalente endereçável no app. |
 | `/imoveis/[id]/editar` | Fica | Não há edição de anúncio na tela nova. |
-| `/imoveis/[id]` | `/app/anuncio/:id` (candidato, não aplicado) | Candidato para o detalhe; a rota vizinha de edição fica na web. A falta de edição não bloqueia sozinha este detalhe. |
+| `/imoveis/[id]` | `/app/anuncio/:id` | Aplicado: 307; destino registrado no app. |
 | `/imoveis/alertas` | Fica | Não há gestão de alertas de busca no app. |
 | `/imoveis/novo` | Fica | Criação existe em diálogo local, sem destino direto registrado. |
-| `/imoveis` | `/app/imoveis` (candidato, não aplicado) | Pendência de compatibilidade: filtros da URL não são consumidos pela lista. A jornada existe. |
-| `/indicacoes/[id]` | `/app/pergunta/:id` (candidato, não aplicado) | Candidato; preservar ID e provar todas as ações da indicação. |
+| `/imoveis` | `/app/imoveis` (fica nesta fase) | Pendência de compatibilidade: filtros da URL não são consumidos pela lista. A jornada existe. |
+| `/indicacoes/[id]` | `/app/pergunta/:id` | Aplicado: 307; destino registrado no app. |
 | `/indicacoes` | Alias existente mantido | Já usa redirect() de página; só pedir=1 abre a caixa na jornada antiga em /community. Não preserva q. |
-| `/inicio` | `/app/inicio` (candidato, não aplicado) | Candidato; conferir entradas para jornadas ainda mantidas na web. |
+| `/inicio` | `/app/inicio` | Aplicado: 307; destino registrado no app. |
 | `/invite/[token]` | Fica | Fluxo do servidor expressamente fora do escopo. |
 | `/localidade` | Fica | Abas e serviços por localidade não têm equivalente completo no app. |
 | `/mercado/[id]/editar` | Fica | Não há edição de anúncio na tela nova. |
-| `/mercado/[id]` | `/app/anuncio/:id` (candidato, não aplicado) | Candidato para o detalhe; a rota vizinha de edição fica na web. A falta de edição não bloqueia sozinha este detalhe. |
+| `/mercado/[id]` | `/app/anuncio/:id` | Aplicado: 307; destino registrado no app. |
 | `/mercado/novo` | Fica | Criação existe em diálogo local, sem destino direto registrado. |
-| `/mercado` | `/app/mercado` (candidato, não aplicado) | Pendência de compatibilidade: filtros da URL não são consumidos pela lista. A jornada existe. |
-| `/messages/[id]` | `/app/conversa/:id` (candidato, não aplicado) | Candidato; preservar ID, participação e ações de segurança. |
-| `/messages` | `/app/conversas` (candidato, não aplicado) | Candidato; conversation=<UUID> deve levar a /app/conversa/<UUID> antes da regra genérica. |
-| `/meus-anuncios` | `/app/meus-anuncios` (candidato, não aplicado) | Bloqueado: a lista nova não oferece edição como a antiga. |
+| `/mercado` | `/app/mercado` (fica nesta fase) | Pendência de compatibilidade: filtros da URL não são consumidos pela lista. A jornada existe. |
+| `/messages/[id]` | `/app/conversa/:id` | Aplicado: 307; destino registrado no app. |
+| `/messages` | `/app/conversas` | Aplicado: 307; destino registrado no app; conversation UUID tem prioridade e abre o detalhe. |
+| `/meus-anuncios` | `/app/meus-anuncios` (fica nesta fase) | Bloqueado: a lista nova não oferece edição como a antiga. |
 | `/negocio/catalogo` | Fica | Não há gestão do catálogo próprio no app. |
 | `/negocio` | Fica | Gestão do negócio próprio não equivale à ficha de outro prestador. |
 | `/notifications` | Fica | O ícone notifications não tem lista integrada nem rota no app. |
-| `/pedidos/[id]` | `/app/pedido/:id` (candidato, não aplicado) | Candidato; confirmar ações por papel antes da troca. |
+| `/pedidos/[id]` | `/app/pedido/:id` | Aplicado: 307; destino registrado no app. |
 | `/pedidos/novo` | Fica | Precisa preservar o prestador; o formulário do app é estado local da ficha. |
-| `/pedidos` | `/app/pedidos` (candidato, não aplicado) | Candidato; confirmar o acompanhamento completo do pedido. |
-| `/prestadores/[id]` | `/app/negocio/:id` (candidato, não aplicado) | Candidato; ambos identificam provider_profiles, mas conferir portfólio/ações. |
+| `/pedidos` | `/app/pedidos` | Aplicado: 307; destino registrado no app. |
+| `/prestadores/[id]` | `/app/negocio/:id` | Aplicado: 307; destino registrado no app. |
 | `/profile/[userId]` | Fica | Perfil de outro membro não equivale ao próprio Você. |
-| `/profile/editar` | `/app/voce` (candidato, não aplicado) | Edição existe como ação local; falta entrada endereçável para abrir a edição. |
+| `/profile/editar` | `/app/voce` (fica nesta fase) | Edição existe como ação local; falta entrada endereçável para abrir a edição. |
 | `/profile/interests` | Fica | Interesses e sugestões de grupos dependem do F04 Grupos. |
-| `/profile` | `/app/voce` (candidato, não aplicado) | Bloqueado: Você não tem entradas para família, interesses e próprio negócio existentes no perfil antigo. |
+| `/profile` | Fica | Família já está em Você (PR #147); interesses, negócio próprio e demais portas do perfil continuam fora deste recorte. |
 | `/recommendations` | Alias existente mantido | Já usa redirect() de página: focus UUID leva ao detalhe da indicação; aba=request abre a caixa; aba=saved vai a /salvos?aba=indicacao; demais vão a /community. |
-| `/salvos` | `/app/salvos` (candidato, não aplicado) | Bloqueado: Salvos novo tem anúncios via dadosDoApp e guia; não lista as indicações salvas da tela antiga. |
+| `/salvos` | `/app/salvos` (fica nesta fase) | Bloqueado: Salvos novo tem anúncios via dadosDoApp e guia; não lista as indicações salvas da tela antiga. |
 
-## Evidência dos bloqueios
+## Testes e rastreador ajustados
 
-- apps/app/src/roteador.tsx: não registra família, preferências de notificações, acompanhamento de denúncias, perfil de outro membro, gestão do catálogo próprio ou alertas imobiliários.
-- apps/app/src/telas/Voce.tsx: edita nome/bio e oferece atalhos, sem família/interesses/negócio próprio. Redirecionar /profile para Você retiraria portas de funções ainda vivas.
-- apps/app/src/telas/Salvos.tsx: consulta dadosDoApp.lerCidade para anúncios e lerSalvosDoGuia para referências. Não consulta as indicações salvas que /salvos e recon-032-salvos.spec.ts exercitam.
-- apps/app/src/telas/Busca.tsx: o termo vem de casca.consulta, sem consumo de q/search da URL.
-- apps/app/src/telas/Guia.tsx: termo, categoria e verbete são estado local; não há rota por ID no catálogo.
-- apps/app/src/telas/Anuncio.tsx e MeusAnuncios.tsx: não oferecem a edição exercida pelas rotas antigas de editar anúncio.
-- apps/web/app/(shell)/events/[id]/page.tsx mantém as seção de fan-out; apps/app/src/telas/Evento.tsx não as oferece.
-- O padrão de 307 do PR #136 foi lido em apps/web/next.config.ts: redirects de configuração com permanent: false, antes do proxy; a regra específica com query vem antes da genérica.
-- O proxy deixa /app e seus descendentes passarem sem sessão; a autorização passa ao app e às APIs. O redirect de next.config roda antes do proxy e altera o portão efetivo. O redirect() de página roda depois do proxy, e poderia preservá-lo; este último mecanismo existe nos aliases de indicações, mas não substitui o padrão de next.config exigido no pedido.
+- Novo teste unitário executa as regras reais usando `getPathMatch`, `matchHas`, `prepareDestination` e `getRedirectStatus`, as mesmas funções do servidor Next instalado. O helper experimental instalado descarta as capturas de `has`; por isso não consegue interpolar `conversation`. Não foi alterado pacote instalado nem criada implementação de roteamento no produto.
+- Cobertura de cada 307, preservação de ID/query codificada, precedência da conversa, query inválida, destino registrado, ausência de ciclo e todas as páginas que ficam na web, incluindo criação, alertas e edição. Casos de permanência também cobrem query e barra final. Os unitários do proxy cobrem os 11 destinos distintos como entradas de `/app`, sem voltar ao portão antigo.
+- E2E de F02, F07, F09 e F10 passam por portas antigas e afirmam o destino do app; conversa por URL mantém envio, recarga e negativa de participante. Recusas sem sessão esperam o estado real do app. Ficha do prestador, imóvel, indicação e convite familiar passam a esperar os destinos novos.
+- O shell antigo continua sendo testado por `/profile`; compositor e foco seguem por `/community`. Nenhuma dessas jornadas foi retirada.
+- Casos mortos retirados, sem novo skip/fixme: tipografia exclusiva da Home antiga (2 casos), fluxo web completo de pedir/responder serviço (1; as jornadas reais F07/F09 permanecem), layout sem feed da Home (1), editar pelo detalhe do imóvel antigo (1), resolver no detalhe da indicação antigo (1), bloquear pelo detalhe da conversa antiga (1), navegação Perfil na caixa antiga (1) e recusas anônimas duplicadas da caixa antiga (2). Salvos continua com prova de lista, abertura no app, remoção e recarga; a fixture do salvamento usa a identidade sintética sob RLS, pois o detalhe novo não tem o toggle antigo.
+- O rastreador continua visitando links antigos. Eles agora são classificados como `redirect`, em vez de exigir uma porta de tela web que saiu. As páginas que ficam continuam sujeitas à exigência de porta; `/profile` é entrada adicional para percorrê-las. A unidade prova que redirect segue visitável e que criação continua exigindo porta.
 
-## O que entrou
+## Continuação registrada no cartão
 
-- Esta tabela foi o primeiro artefato, antes de alterações rastreadas.
-- Registro de blocked_by no contrato com causa e passo de resolução, sem mudar acceptance ou enfraquecer a prova.
-- Nenhuma alteração em configuração, proxy, telas, E2E, quadro, arquivos de ambiente ou segredos.
-- Instalação de dependências com npx pnpm@11.18.0 install --frozen-lockfile; sem alterar pins.
+O `blocked_by` do RUN-019 foi substituído por `phase_1_note` e `remaining_gaps`. O mesmo fechamento do cartão LAN-TROCA foi estendido, mantendo `status: next`; não foi criada fila paralela. Pendências: grupos, seguir/salvar/resolver pergunta e denúncias (F04); convites individuais/fan-out, histórico e criar/editar evento (F05); criar/editar anúncios, Meus anúncios, alertas e filtros (F06); negócio próprio/catálogo, criação endereçável e acompanhamento da resposta do pedido (F07); avisos, preferências e iniciar bloqueio na conversa (F09); indicações em Salvos, perfil alheio, interesses e portas restantes da conta (F10); consumo de q/search/filtros e Guia/cidade/localidade por ID (F02/F08).
 
-## Passo concreto para destravar
+Os arquivos antigos de produto permanecem nesta fase. Não houve limpeza de código que possa sustentar Server Actions ou outras rotas ainda vivas. A remoção futura exige conferir importadores. O requisito de revisão independente do contrato continua documentado para o fechamento integral; nesta fase não foi pedido parecer a outro modelo, conforme ordem explícita do coordenador.
 
-Concluir as superfícies ausentes nas jornadas correspondentes e expor entradas que consumam ID, ação e filtros de URL. Depois reexecutar a tabela, aplicar somente os 307 com equivalência comprovada, migrar/retirar E2E junto das telas e provar portões por perfil. Grupos continuam até F04 Grupos. A implementação dessas jornadas exigiria caminhos fora de allowed_paths do RUN-019, portanto não foi inventada neste lote.
+## Provas da fase 1
 
-## Recorte possível e decisões após a revisão
+Provas do diff de código que resultou em `21e333fb` e `1b7c82e3`, a partir de `f64c1cab`. A suíte unitária verificou a configuração, seus testes e o modelo do rastreador finais. Após ela, apenas os E2E receberam os últimos ajustes de seletor e preservação das asserções de Salvos; o `gate --fast` foi repetido sobre esses ajustes e passou. A documentação e o cartão foram atualizados depois, sem alterar o código verificado.
 
-A revisão identificou nove candidatas sem bloqueio funcional demonstrado na tabela inicial: /configuracoes/bloqueados, /explorar, /indicacoes/[id], /inicio, /messages, /messages/[id], /pedidos, /pedidos/[id] e /prestadores/[id]. Elas não foram implementadas: o objetivo integral segue bloqueado e esta entrega é o diagnóstico, não uma troca parcial aceita.
+| Verificação | Resultado |
+| --- | --- |
+| `npx pnpm@11.18.0 gate --fast` | PASS: lint (1.612 arquivos; 24 avisos e 50 infos, zero erros), tipos dos workspaces e tipos dos E2E; última rodada 9 s / 10 s / 6 s. |
+| `npx pnpm@11.18.0 test:scope` | PASS: 222/222, sem falha, skip ou cancelamento. |
+| `npx pnpm@11.18.0 exec vitest run tests/unit --maxWorkers=1 --no-file-parallelism` | PASS: 226/226 arquivos e 2.525/2.525 testes; 68,61 s. |
+| `node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-019.task.yml` | Contrato R2 válido, sem blocked_by. |
+| `git diff --check` | PASS. |
 
-O caminho mínimo de continuação é implementar essas nove regras em next.config, com permanent: false, IDs preservados e a regra de conversation antes da genérica; testar cada mapeamento e os perfis do proxy; revisar os E2E e o rastreador que exercem essas telas. O reviewer contou 89 ocorrências em 16 arquivos de E2E; essa contagem é dele, não prova de runtime. Depois ampliar o contrato para as telas e a navegação realmente faltantes, incluindo apps/app/src/telas/**, a casca e o menu antigo em apps/web/app/components/** quando necessários.
+O teste novo foi executado antes da implementação e confirmou a ausência dos redirecionamentos. Depois passou com as regras reais. A primeira rodada de `gate --fast` encontrou a formatação do JSON do quadro; corrigida com o formatador existente, sem mudança de pins. Não se atribuiu essa falha ao baseline.
 
-Decisões do executor:
+Logs locais: `fase1-gate-fast.log`, `fase1-scope.log`, `fase1-unit.log` e `redirects.log`, nesta pasta ignorada. A tabela e este relatório são versionados; logs e scripts auxiliares não entram no commit.
 
-- A sugestão do reviewer de usar redirect() de página ou redirecionar depois da sessão no proxy preservaria o portão antigo, mas não foi adotada: o dono exigiu explicitamente o padrão de PR #136 em next.config. O custo é continuar devendo as nove regras possíveis.
-- A sugestão de exigir E2E local liberado não foi adotada. O dono já autorizou sua execução no CI; a restrição local não bloqueia editar E2E nem é motivo para suspender código por si só. Nesta revisão nenhum E2E foi alterado porque nenhuma tela saiu.
-- Pendências de consumo de query e de abertura direta de um painel foram separadas de jornadas ausentes. Não são, sozinhas, prova de que o destino não existe. Ainda precisam de uma decisão de compatibilidade na implementação para não prometer conservação de comportamento que o código não atende.
+Commits por parte:
 
-## Validação, commits e números
+- `21e333fb` — `fix(rotas): aplica 307 da primeira fase do LAN-TROCA`.
+- `1b7c82e3` — `test(rotas): migra expectativas e rastreador para a fase 1`.
+- Fechamento documental: `docs(rotas): registra entrega e lacunas da fase 1` (contrato, quadro e relatório).
 
-Provas executadas contra `3ae2cd69`, com ajuste apenas de texto/UTF-8 deste relatório ainda no diff. O código de produto é o mesmo da revisão inicial `86c4851f`. Nenhuma asserção foi alterada e nenhum teste foi pulado.
+O push autorizado tem como destino `origin chore/lan-troca`. Não há PR, merge ou publicação neste lote.
 
-| Comando | Resultado | Números |
-| --- | --- | --- |
-| `node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-019.task.yml` | Válido, BLOQUEADO | 1 contrato R2 |
-| `npx pnpm@11.18.0 gate --fast` | PASS | Lint: 1.605 arquivos, 24 avisos e 50 infos, sem erro; tipos dos 7 workspaces e dos E2E verdes. Etapas: 36 s / 72 s / 34 s. |
-| `npx pnpm@11.18.0 test:scope` | PASS | 220/220, zero falhas, pulos ou cancelamentos; 7,71 s. |
-| `npx pnpm@11.18.0 exec vitest run tests/unit --maxWorkers=1 --no-file-parallelism` | PASS | 224/224 arquivos, 2.423/2.423 testes; 145,64 s. Um worker para conter memória. |
-| `git diff --check` | PASS | Sem erros de whitespace. |
-
-Logs locais: `gate-fast.log`, `test-scope.log`, `unit.log`. A instalação congelada adicionou 1.162 pacotes em 11 min 30,8 s e não alterou o lockfile.
-
-Números da troca: 58 páginas inventariadas; 23 destinos candidatos existentes; 7 rotas de grupos preservadas; 1 convite de servidor fora do escopo; 0 redirects adicionados; 0 telas ou testes removidos; 0 arquivos de produto alterados.
-
-Commits:
-
-- `3ae2cd69` — `docs(rotas): confere tabela e registra bloqueios do RUN-019` (contrato validado e tabela inicial).
-- `254e0886` — `docs(rotas): registra verificações autorizadas do RUN-019` (resultados das três verificações e texto em UTF-8).
-- Commit de fechamento deste relatório: `docs(rotas): registra provas e parecer do RUN-019`; somente documentação, sem mudança nos arquivos verificados.
-
-Não rodaram: E2E, rastreador de links em runtime, servidor, banco, build, gate completo e provas visuais 375/768/1440 nos dois temas, conforme a limitação explícita do dono. O typecheck dos E2E rodou dentro de gate --fast; isso não executa o navegador. Não se declara runtime/CI verde nem o contrato concluído.
-
-Revisão independente realizada por Claude Opus, somente leitura de contrato e fontes: diagnóstico PASS-COM-RESSALVA; objetivo original FAIL por implementação ausente. Log local: revisao.log. A contagem independente confirmou 58 páginas, 23 candidatos, 7 rotas de grupos e 1 convite de servidor. Os seis grupos de correções factuais/de redação apontados foram corrigidos nesta única passagem: aliases, parâmetros, posição do redirect em relação ao proxy, detalhe versus edição e frases do relatório. Não foi pedida outra revisão.
-
-Pedido posterior do dono autoriza o push ao fim, prevalecendo sobre a proibição antiga do contrato. Sem PR ou merge. O quadro fica intacto.
+Não executados, por instrução explícita: E2E, servidor, banco, build, gate completo e capturas 375/768/1440 nos dois temas. Nenhuma revisão foi solicitada a outro modelo ou ao Claude. O typecheck dos E2E não executa navegador. O CI e o rastreador de links em runtime ainda precisam provar a revisão entregue; não se declara o lançamento nem o LAN-TROCA integral concluído.
