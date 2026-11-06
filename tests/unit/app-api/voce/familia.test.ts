@@ -4,6 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
+// RUN-020, correção: a janela deslizante é a primeira barreira do limite. Aqui
+// ela é simulada; o teste prova que a recusa vira 429 antes de criar.
+const janela = vi.hoisted(() => ({ recusando: false }))
+
+vi.mock("web/lib/limits", () => ({
+  createLimiterStore: () => ({ record: async () => (janela.recusando ? 11 : 1) }),
+}))
+
 import { DELETE as revogar } from "web/app/api/app/voce/familia/[id]/route"
 import { POST as convidar, GET as familia } from "web/app/api/app/voce/familia/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
@@ -142,7 +150,9 @@ const PENDENTE: Linha = {
 describe("família do titular no app", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
     vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
+    janela.recusando = false
     vi.mocked(resolverSessaoDaRequisicao).mockResolvedValue({
       estado: "recusada",
       sessao: { estado: "recusada", motivo: "sem-credencial" },
@@ -259,6 +269,18 @@ describe("família do titular no app", () => {
     expect(resposta.status).toBe(429)
     expect(await resposta.json()).toMatchObject({ erro: "limite" })
     // Recusa antes de criar: nada foi gravado nem enfileirado.
+    expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
+    expect(mock.enfileirados).toHaveLength(0)
+  })
+
+  it("janela atômica cheia é 429 mesmo com o outbox vazio", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid")
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token-de-teste")
+    janela.recusando = true
+    const mock = autenticar({ enviadosRecentes: 0 })
+    const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
+    expect(resposta.status).toBe(429)
+    expect(await resposta.json()).toMatchObject({ erro: "limite" })
     expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
     expect(mock.enfileirados).toHaveLength(0)
   })

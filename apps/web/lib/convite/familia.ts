@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from "node:crypto"
+import { allowSlidingWindow } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { byteaDigestParam } from "../invites-bytea"
+import { createLimiterStore } from "../limits"
 import {
   generateInviteCode,
   inviteCodeHash,
@@ -110,6 +112,38 @@ async function enviosNaUltimaHora(client: Cliente, userId: string): Promise<numb
   return count ?? 0
 }
 
+/**
+ * Barreira atômica: a mesma janela deslizante das outras rotas
+ * (`community-invite-actions`), com chave por titular. A contagem do outbox lê o
+ * passado; dois POST simultâneos leem o mesmo passado e passam os dois. Sem
+ * Upstash no ambiente a janela não existe — é o comportamento das outras rotas
+ * que a usam — e sobra só a contagem.
+ */
+export async function permitirEnvioDeConvite(userId: string): Promise<boolean> {
+  const url = process.env["UPSTASH_REDIS_REST_URL"]
+  const token = process.env["UPSTASH_REDIS_REST_TOKEN"]
+  if (!url || !token) return true
+  const { Redis } = await import("@upstash/redis")
+  return allowSlidingWindow(
+    createLimiterStore(new Redis({ url, token })),
+    `bivaque:limit:familyInvite:${userId}`,
+    LIMITE_DE_ENVIOS_POR_HORA,
+    JANELA_DE_LIMITE_MS,
+  )
+}
+
+function recusaPorLimite(): FalhaDeConvite {
+  return new FalhaDeConvite("limite", "Muitos convites em pouco tempo. Tente novamente mais tarde.")
+}
+
+/** As duas barreiras do limite: a janela atômica primeiro, a contagem depois. */
+export async function conferirLimiteDeEnvio(client: Cliente, userId: string): Promise<void> {
+  if (!(await permitirEnvioDeConvite(userId))) throw recusaPorLimite()
+  if ((await enviosNaUltimaHora(client, userId)) >= LIMITE_DE_ENVIOS_POR_HORA) {
+    throw recusaPorLimite()
+  }
+}
+
 /** Os convites pendentes do titular e se ele pode convidar. */
 export async function lerFamilia(client: Cliente, userId: string): Promise<FamiliaDoTitular> {
   const [podeConvidar, pendentes] = await Promise.all([
@@ -148,12 +182,7 @@ export async function enviarConvite(
     throw new FalhaDeConvite("nao-titular", "Apenas titulares verificados podem enviar convites.")
   }
 
-  if ((await enviosNaUltimaHora(client, userId)) >= LIMITE_DE_ENVIOS_POR_HORA) {
-    throw new FalhaDeConvite(
-      "limite",
-      "Muitos convites em pouco tempo. Tente novamente mais tarde.",
-    )
-  }
+  await conferirLimiteDeEnvio(client, userId)
 
   const token = randomBytes(32)
   const tokenDigest = createHash("sha256").update(token).digest("hex")

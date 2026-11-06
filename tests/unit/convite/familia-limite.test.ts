@@ -1,10 +1,25 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { enviarConvite, FalhaDeConvite } from "web/lib/convite/familia"
 
 // RUN-020 (b): teto de ritmo do convite de família. O módulo é a única porta
 // (rota do app e tela antiga), então o limite vale para as duas. A contagem vem
 // do outbox: cada envio deixa uma linha `family_invite` do titular, inclusive
 // depois de revogado — revogar não desfaz o e-mail que já saiu.
+//
+// A contagem sozinha não é atômica: dois POST simultâneos leem o mesmo passado.
+// A janela deslizante do repositório é a primeira barreira e é ela que este
+// teste simula recusando (RUN-020, rodada de correção).
+
+const janela = vi.hoisted(() => ({ recusando: false, chave: "" }))
+
+vi.mock("web/lib/limits", () => ({
+  createLimiterStore: () => ({
+    record: async (chave: string) => {
+      janela.chave = chave
+      return janela.recusando ? 11 : 1
+    },
+  }),
+}))
 
 const USER = "20000000-0000-4000-8000-000000000001"
 const NOVO = "70000000-0000-4000-8000-000000000002"
@@ -65,6 +80,36 @@ function banco(opcoes: { enviados?: number; erroNaContagem?: boolean } = {}) {
 }
 
 describe("limite de ritmo do convite de família", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    janela.recusando = false
+  })
+
+  it("janela atômica recusando barra antes de criar, mesmo com o outbox vazio", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid")
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token-de-teste")
+    janela.recusando = true
+    const mock = banco({ enviados: 0 })
+    const falha = await enviarConvite(mock.client, USER, "familiar@example.invalid").catch(
+      (erro: unknown) => erro,
+    )
+    expect(falha).toBeInstanceOf(FalhaDeConvite)
+    expect((falha as FalhaDeConvite).motivo).toBe("limite")
+    // A chave é por titular, não global.
+    expect(janela.chave).toBe(`bivaque:limit:familyInvite:${USER}`)
+    expect(mock.chamadas).not.toContain("create_family_invitation")
+    expect(mock.enfileirados).toHaveLength(0)
+  })
+
+  it("janela atômica dentro do teto não atrapalha o envio", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid")
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token-de-teste")
+    const mock = banco({ enviados: 0 })
+    const { convite } = await enviarConvite(mock.client, USER, "familiar@example.invalid")
+    expect(convite.id).toBe(NOVO)
+    expect(mock.enfileirados).toHaveLength(1)
+  })
+
   it("10 envios na última hora recusam o próximo antes de criar ou enfileirar", async () => {
     const mock = banco({ enviados: 10 })
     const falha = await enviarConvite(mock.client, USER, "familiar@example.invalid").catch(
