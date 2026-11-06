@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
-import { GET as listar } from "web/app/api/app/avisos/route"
 import { POST as marcarLido } from "web/app/api/app/avisos/lidos/route"
-import { GET as lerPreferencias, PATCH as salvarPreferencias } from "web/app/api/app/avisos/preferencias/route"
+import {
+  GET as lerPreferencias,
+  PATCH as salvarPreferencias,
+} from "web/app/api/app/avisos/preferencias/route"
+import { GET as listar } from "web/app/api/app/avisos/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
@@ -181,7 +184,10 @@ describe("rotas de avisos do app", () => {
     ["GET preferências", () => lerPreferencias(req("GET", `${BASE}/preferencias`))],
     [
       "PATCH preferências",
-      () => salvarPreferencias(req("PATCH", `${BASE}/preferencias`, JSON.stringify(preferenciaGravada))),
+      () =>
+        salvarPreferencias(
+          req("PATCH", `${BASE}/preferencias`, JSON.stringify(preferenciaGravada)),
+        ),
     ],
   ])("%s recusa ausência de sessão", async (_rotulo, invocar) => {
     expect((await invocar()).status).toBe(401)
@@ -301,7 +307,9 @@ describe("rotas de avisos do app", () => {
     it("marca todos os não lidos da sessão quando não há id", async () => {
       const mock = mockClient({ atualizados: [{ id: "a" }, { id: "b" }] })
       autenticar(mock)
-      const resposta = await marcarLido(req("POST", `${BASE}/lidos`, JSON.stringify({ todos: true })))
+      const resposta = await marcarLido(
+        req("POST", `${BASE}/lidos`, JSON.stringify({ todos: true })),
+      )
       expect(await json(resposta)).toEqual({ atualizados: 2 })
       expect(filtroDe(mock.chamadas, "recipient_user_id", USER)).toBe(true)
       expect(mock.chamadas.some((chamada) => chamada.coluna === "id")).toBe(false)
@@ -335,7 +343,9 @@ describe("rotas de avisos do app", () => {
     it("falha de escrita é 503 sem eco da mensagem do banco", async () => {
       const mock = mockClient({ erroNaEscrita: { message: "boom" } })
       autenticar(mock)
-      const resposta = await marcarLido(req("POST", `${BASE}/lidos`, JSON.stringify({ todos: true })))
+      const resposta = await marcarLido(
+        req("POST", `${BASE}/lidos`, JSON.stringify({ todos: true })),
+      )
       expect(resposta.status).toBe(503)
       const corpo = await json(resposta)
       expect(corpo).toEqual({ erro: "escrita-indisponivel" })
@@ -355,7 +365,11 @@ describe("rotas de avisos do app", () => {
         productNews: false,
         indications: true,
       })
-      const canais = preferencias["channels"] as { notificationType: string; channel: string; enabled: boolean }[]
+      const canais = preferencias["channels"] as {
+        notificationType: string
+        channel: string
+        enabled: boolean
+      }[]
       expect(canais).toHaveLength(12)
       // O e-mail das indicações é o resumo diário: nasce desligado.
       expect(
@@ -417,7 +431,8 @@ describe("rotas de avisos do app", () => {
       })
       await salvarPreferencias(req("PATCH", `${BASE}/preferencias`, corpo))
       const matriz = mock.chamadas.find(
-        (chamada) => chamada.op === "upsert" && chamada.table === "notification_channel_preferences",
+        (chamada) =>
+          chamada.op === "upsert" && chamada.table === "notification_channel_preferences",
       )
       expect(matriz?.corpo).toMatchObject([{ notification_type: "events", enabled: false }])
     })
@@ -427,7 +442,10 @@ describe("rotas de avisos do app", () => {
       ["tipo que não é booleano", { ...preferenciaGravada, comments: "sim" }],
       [
         "canal fora da lista",
-        { ...preferenciaGravada, channels: [{ notificationType: "comments", channel: "fax", enabled: true }] },
+        {
+          ...preferenciaGravada,
+          channels: [{ notificationType: "comments", channel: "fax", enabled: true }],
+        },
       ],
       [
         "tipo de aviso desconhecido",

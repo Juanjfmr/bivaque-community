@@ -119,7 +119,9 @@ export type AtualizacaoDePreferencias = Readonly<{
 }>
 
 /** Corpo do PATCH, ou `null` quando não é o que esta rota aceita. */
-export function validarAtualizacao(corpo: Record<string, unknown>): AtualizacaoDePreferencias | null {
+export function validarAtualizacao(
+  corpo: Record<string, unknown>,
+): AtualizacaoDePreferencias | null {
   const comments = corpo["comments"]
   const events = corpo["events"]
   const productNews = corpo["productNews"]

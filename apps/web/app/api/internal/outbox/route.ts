@@ -304,6 +304,9 @@ async function processBatch(
 
   const channelPreferencesByUser = new Map<string, ChannelPreferenceRow[]>()
   for (const row of channelPreferences) {
+    // `push` (F09) é preferência guardada para o LAN-PUSH; este despachante só
+    // entrega e-mail/in-app e o leitor não aceita o canal novo.
+    if (row.channel === "push") continue
     const bucket = channelPreferencesByUser.get(row.user_id) ?? []
     bucket.push({
       notification_type: row.notification_type,

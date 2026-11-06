@@ -1,8 +1,17 @@
 "use client"
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react"
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 
 import { dadosDoApp } from "@/lib/dados"
+import { lerAvisos } from "@/lib/dados/avisos"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 
 /**
@@ -64,15 +73,47 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
     return {
       cidade: semente.cidade ?? resumo?.cidade ?? CIDADE_PADRAO,
       cidadeDeCasa: semente.cidadeDeCasa ?? resumo?.cidadeDeCasa ?? CIDADE_PADRAO,
-      avisos: semente.avisos ?? resumo?.avisos ?? 0,
+      avisos: semente.avisos ?? 0,
       conversas: semente.conversas ?? resumo?.conversas ?? 0,
       nomeDaPessoa: semente.nomeDaPessoa ?? resumo?.nomeDaPessoa ?? "",
     }
   })
 
+  // O contador de avisos é o do servidor (a mesma contagem da tela de avisos),
+  // não mais o número da demonstração. Em modo de prova a semente manda, e a
+  // bateria não fala com a rota. Falha aqui deixa o contador em zero: a tela de
+  // avisos é quem mostra o erro e oferece "Tentar de novo".
+  useEffect(() => {
+    if (modoDeProvaAtivo()) return
+    const controle = new AbortController()
+    void lerAvisos({ limite: "1", signal: controle.signal })
+      .then((lista) => {
+        if (!controle.signal.aborted) {
+          setEstado((anterior) => ({ ...anterior, avisos: lista.naoLidos }))
+        }
+      })
+      .catch(() => undefined)
+    return () => controle.abort()
+  }, [])
+
   const definir = useCallback((pedaco: Partial<EstadoDaCasca>) => {
     setEstado((anterior) => ({ ...anterior, ...pedaco }))
   }, [])
+
+  // O contador do sino é do servidor. Falha aqui não vira erro de tela: o
+  // número é um adorno até a pessoa abrir os Avisos, e é lá que a falha de
+  // leitura aparece com "Tentar de novo". Em modo de prova, quem semeia é a
+  // bateria.
+  useEffect(() => {
+    if (modoDeProvaAtivo()) return
+    const controle = new AbortController()
+    void lerAvisos({ limite: "1", signal: controle.signal })
+      .then((lista) => {
+        if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
+      })
+      .catch(() => {})
+    return () => controle.abort()
+  }, [definir])
 
   const trocarCidade = useCallback(
     (cidade: string) => {

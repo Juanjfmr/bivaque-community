@@ -11,6 +11,49 @@ import type { Page } from "@playwright/test"
  * tela que não é a de produção.
  */
 export async function simularVoce(page: Page) {
+  // Preferências de aviso (F09): a área Você lê e grava a matriz de canais.
+  // A simulação devolve o mesmo corpo de `/api/app/avisos/preferencias`.
+  const canaisDeAviso = (escolha: {
+    comments: boolean
+    events: boolean
+    productNews: boolean
+    indications: boolean
+  }) => ({
+    comments: escolha.comments,
+    events: escolha.events,
+    productNews: escolha.productNews,
+    indications: escolha.indications,
+    channels: (["comments", "events", "product_news", "indications"] as const).flatMap(
+      (notificationType) =>
+        (["in_app", "email", "push"] as const).map((channel) => ({
+          notificationType,
+          channel,
+          enabled:
+            notificationType === "product_news"
+              ? escolha.productNews
+              : escolha[notificationType] && channel !== "push",
+        })),
+    ),
+  })
+  let preferenciasDeAviso = canaisDeAviso({
+    comments: true,
+    events: true,
+    productNews: false,
+    indications: true,
+  })
+  await page.route(/\/api\/app\/avisos\/preferencias$/, async (rota) => {
+    if (rota.request().method() === "PATCH") {
+      const corpo = rota.request().postDataJSON() as {
+        comments: boolean
+        events: boolean
+        productNews: boolean
+        indications: boolean
+        channels: typeof preferenciasDeAviso.channels
+      }
+      preferenciasDeAviso = { ...corpo }
+    }
+    return rota.fulfill({ json: { preferencias: preferenciasDeAviso } })
+  })
   const perfil = {
     nome: "Ana Verificada",
     bio: "Mãe de dois, moro no Centro.",
