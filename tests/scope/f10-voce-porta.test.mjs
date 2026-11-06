@@ -57,7 +57,12 @@ test("o módulo da porta não conhece a demonstração nem fala HTTP por conta p
 })
 
 test("as rotas da jornada usam a sessão sob RLS, nunca o cliente de serviço", () => {
-  const rotas = arquivos(ROTAS).filter((caminho) => caminho.endsWith("route.ts"))
+  // A família é a exceção medida (RUN-018): os wrappers públicos de convite só
+  // têm execute para service_role, então a rota abre o privilégio DEPOIS da
+  // sessão e só para eles. O teste da exceção vem logo abaixo.
+  const rotas = arquivos(ROTAS)
+    .filter((caminho) => caminho.endsWith("route.ts"))
+    .filter((caminho) => !relativo(caminho).includes("/familia/"))
   assert.ok(rotas.length >= 6, `esperava as rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = ler(caminho)
@@ -77,6 +82,38 @@ test("as rotas da jornada usam a sessão sob RLS, nunca o cliente de serviço", 
       /searchParams\.get\("(user_id|usuario|userId|dono)"\)|corpo\[(?:"|')(user_id|userId|usuario)/,
       `${relativo(caminho)} aceita o dono vindo do pedido`,
     )
+  }
+})
+
+test("a família usa o privilégio só depois da sessão e só nos wrappers de convite", () => {
+  const rotas = arquivos(join(ROTAS, "familia")).filter((caminho) => caminho.endsWith("route.ts"))
+  assert.ok(rotas.length >= 2, `esperava as rotas de família, achei ${rotas.length}`)
+  const doModulo = /lerFamilia|enviarConvite|revogarConvite/
+  for (const caminho of rotas) {
+    const fonte = ler(caminho)
+    const sessao = fonte.indexOf("exigirSessao(")
+    const privilegio = fonte.indexOf("clienteDeServicoOuNulo(")
+    assert.ok(sessao >= 0, `${relativo(caminho)} não resolve a sessão pelo encanamento`)
+    assert.ok(privilegio > sessao, `${relativo(caminho)} abre o privilégio antes da sessão`)
+    assert.match(fonte, doModulo, `${relativo(caminho)} usa o privilégio fora dos wrappers`)
+    assert.match(fonte, /opcoesDoApp/, `${relativo(caminho)} não responde ao preflight do contrato`)
+    assert.doesNotMatch(
+      fonte,
+      /corpo\[(?:"|')((user_id|userId|usuario))(?:"|')\]|searchParams\.get\("(user_id|userId|usuario)"\)/,
+      `${relativo(caminho)} aceita o dono vindo do pedido`,
+    )
+  }
+})
+
+test("a extração do módulo de família mantém a tela antiga funcionando", () => {
+  const acao = read("apps", "web", "app", "(shell)", "profile", "family-invite-section-actions.ts")
+  assert.match(
+    acao,
+    /from "\.\.\/\.\.\/\.\.\/lib\/convite\/familia"/,
+    "a Server Action antiga não importa o módulo compartilhado",
+  )
+  for (const funcao of ["lerFamilia", "enviarConvite", "revogarConvite"]) {
+    assert.match(acao, new RegExp(funcao), `a Server Action antiga não usa ${funcao}`)
   }
 })
 
