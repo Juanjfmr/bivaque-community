@@ -1,0 +1,76 @@
+# LAN-F06 (06/11/2026): gerenciar anúncio no app (editar, pausar, reativar, encerrar), no molde das jornadas na main.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-023
+
+objective: >
+  Em Meus anúncios do apps/app o membro passa a editar o próprio anúncio (texto, preço, fotos) e mudar sua
+  situação (pausar, reativar, encerrar/vendido) pela sessão, com as transições pela RPC transition_listing
+  que o banco exige; e as listas de Mercado e Imóveis passam a ler os filtros da URL (q, tipo, faixa de preço,
+  quartos, página) para que links antigos com filtro continuem úteis.
+
+authority:
+  - docs/LANCAMENTO.md (F06: criar, revisar e gerenciar anúncio)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - tools/backend-kanban cards LAN-F06 e LAN-TROCA (lacunas: edição de anúncio, filtros na URL)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Meus anúncios (apps/app/src/telas/MeusAnuncios.tsx) lista os anúncios do membro (F03) mas não edita nem
+    muda situação; a edição existe só na web antiga (/mercado/[id]/editar e /imoveis/[id]/editar, lógica em
+    apps/web/lib/listings). A guarda private.listings_guard_status_transition só aceita troca de status pela
+    RPC transition_listing (migration 20260911043436). Mercado e Imóveis do app não leem filtros da URL.
+
+allowed_paths:
+  - apps/app/lib/dados/mercado.ts
+  - apps/app/src/mercado
+  - apps/app/src/telas/MeusAnuncios.tsx
+  - apps/app/src/telas/Mercado.tsx
+  - apps/app/src/telas/Anuncio.tsx
+  - apps/app/src/roteador.tsx
+  - apps/app/tests
+  - apps/web/app/api/app/mercado
+  - apps/web/lib/listings
+  - apps/web/lib/storage
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit/app-api/mercado
+  - tests/unit/app-api/criar
+  - tests/e2e/f06-mercado-real.spec.ts
+  - tests/scope
+  - docs/agents/tasks/RUN-023.task.yml
+  - .visual/run-023
+
+forbidden:
+  - trocar status de anúncio por UPDATE direto (só pela RPC transition_listing)
+  - editar anúncio de outro membro; dono vindo do corpo
+  - editar migration existente
+  - mudar o desenho aprovado; quebrar criar, detalhe e interesse
+  - pedir revisão a outro modelo (o coordenador cuida)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "PATCH /api/app/mercado/[id] (só o dono; campos editáveis validados no mesmo módulo da web; fotos pela pasta do próprio anúncio) e POST /api/app/mercado/[id]/situacao (pausar, reativar, encerrar pela RPC transition_listing); não dono 404/403."
+  - "Meus anúncios oferece editar e mudar situação, com o resultado gravado e erro que preserva o que foi digitado."
+  - "Mercado e Imóveis leem q, tipo, faixa de preço, quartos e página da URL e mantêm a URL ao filtrar."
+  - "Testes de unidade positivo e negativo das rotas novas; testes do apps/app ajustados com page.route (RegExp)."
+  - "E2E da raiz: editar e pausar um anúncio próprio, recarregar e ver gravado, e devolver o estado ao terminar."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/mercado tests/unit/app-api/criar
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz com banco no CI
+
+risk: edição de dado do próprio membro e transição de situação
+risk_level: R3
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
