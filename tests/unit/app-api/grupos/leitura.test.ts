@@ -133,6 +133,26 @@ describe("grupos — diretório e detalhe sob RLS", () => {
     autenticar(mock)
     expect((await listar(req())).status).toBe(503)
   })
+  it.each(["groups", "group_memberships"])("diretório propaga falha em %s sem eco", async (erro) => {
+    const mock = mockClient({ erro })
+    autenticar(mock)
+    const r = await listar(req())
+    expect(r.status).toBe(503)
+    expect(await r.json()).toEqual({ erro: "leitura-indisponivel" })
+  })
+  it("detalhe recusa ordem desconhecida antes do banco", async () => {
+    const mock = mockClient()
+    autenticar(mock)
+    expect((await detalhe(req("GET", BASE + "/" + ID + "?ordem=qualquer"), context)).status).toBe(400)
+    expect(mock.from).not.toHaveBeenCalled()
+  })
+  it("detalhe traduz ordem e cursor para o feed sob RLS", async () => {
+    const mock = mockClient()
+    autenticar(mock)
+    expect((await detalhe(req("GET", BASE + "/" + ID + "?ordem=discutidas&depois=20"), context)).status).toBe(200)
+    expect(mock.rpc).toHaveBeenCalledWith("feed_group", { p_group_id: ID, p_order: "discussed" })
+    expect(mock.chamadas).toContainEqual({ tabela: "feed_group", metodo: "range", args: [20, 39] })
+  })
   it("preflight aceita a origem local e recusa outra", () => {
     expect(OPTIONS(req("OPTIONS")).status).toBe(204)
     expect(
