@@ -264,7 +264,7 @@ test.describe("landing v8", () => {
     expect(ring).toEqual({ style: "solid", width: "3px", offset: "2px", tag: "A" })
   })
 
-  test("leva todo Criar conta para /signup", async ({ page }, testInfo) => {
+  test("leva todo Criar conta para a entrada do app", async ({ page }, testInfo) => {
     onlyCaptureProjects(testInfo)
     const narrow = testInfo.project.name === "mobile-375"
 
@@ -273,13 +273,13 @@ test.describe("landing v8", () => {
 
     // Then o CTA da dobra abre o cadastro
     await page.locator("#ld-hero-cta").click()
-    await expect(page).toHaveURL(/\/signup$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
 
     // And o CTA da chamada final também
     await openLanding(page)
     await page.locator("#fim .ld-cta-btn").scrollIntoViewIfNeeded()
     await page.locator("#fim .ld-cta-btn").click()
-    await expect(page).toHaveURL(/\/signup$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
 
     if (narrow) {
       // And no celular a barra fixa, quando aparece, leva ao mesmo lugar
@@ -287,13 +287,13 @@ test.describe("landing v8", () => {
       await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }))
       await expect(page.locator("#ld-bar")).toHaveClass(/ld-show/)
       await page.locator("#ld-bar .ld-cta-btn").click()
-      await expect(page).toHaveURL(/\/signup$/)
+      await expect(page).toHaveURL(/\/app\/entrar$/)
 
       // And o CTA da folha do menu também
       await openLanding(page)
       await page.locator("#ld-top [data-ld-menu]").click()
       await page.locator("#ld-sheet .ld-sheet-acts .ld-cta-btn").click()
-      await expect(page).toHaveURL(/\/signup$/)
+      await expect(page).toHaveURL(/\/app\/entrar$/)
       return
     }
 
@@ -302,10 +302,10 @@ test.describe("landing v8", () => {
     await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }))
     await expect(page.locator("#ld-top")).toHaveClass(/ld-show-cta/)
     await page.locator("#ld-top .ld-cta .ld-cta-btn").click()
-    await expect(page).toHaveURL(/\/signup$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
   })
 
-  test("leva Entrar para /login", async ({ page }, testInfo) => {
+  test("leva Entrar para a entrada do app", async ({ page }, testInfo) => {
     onlyCaptureProjects(testInfo)
     const narrow = testInfo.project.name === "mobile-375"
 
@@ -314,12 +314,12 @@ test.describe("landing v8", () => {
 
     // Then o Entrar do topo abre o login
     await page.locator("#ld-top .ld-text").click()
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
 
     // And o do rodapé também
     await openLanding(page)
     await page.locator(".ld-footer nav a", { hasText: "Entrar" }).click()
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
 
     // And os links legais vão para as páginas do Next
     await openLanding(page)
@@ -335,7 +335,7 @@ test.describe("landing v8", () => {
     await openLanding(page)
     await page.locator("#ld-top [data-ld-menu]").click()
     await page.locator("#ld-sheet .ld-sheet-acts a", { hasText: "Entrar" }).click()
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/app\/entrar$/)
   })
 
   test("não faz requisição externa", async ({ page }, testInfo) => {

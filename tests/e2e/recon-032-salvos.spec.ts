@@ -20,7 +20,7 @@ import { REQUEST_ID, REQUEST_TITLE, VISUAL_EMAIL } from "./helpers/recon032-fixt
 test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () => {
   test("anonimo nao ve a tela de salvos", async ({ page }) => {
     await page.goto("/salvos")
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
   })
 
   test("salvar na origem aparece em Salvos; remover reflete na origem", async ({ browser }) => {

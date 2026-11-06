@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test"
-import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { CURRENT_CONSENT, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -40,16 +39,20 @@ test.describe("anonymous visitor: protected route denial", () => {
   ]
 
   for (const route of PROTECTED_ROUTES) {
-    test(`${route} refuses an anonymous visitor and sends them to login`, async ({ page }) => {
+    test(`${route} refuses an anonymous visitor and sends them to the app entry`, async ({
+      page,
+    }) => {
       // Given an unauthenticated browser
       // When the user navigates directly to a protected route
       await page.goto(route)
 
       // Then the proxy refuses and routes to the entry screen, keeping the
       // intended destination so the person does not lose their way
-      await page.waitForURL(/\/login/)
+      await page.waitForURL(/\/app\/entrar/)
       expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
-      await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+      await expect(
+        page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+      ).toBeVisible()
     })
   }
 
@@ -59,15 +62,19 @@ test.describe("anonymous visitor: protected route denial", () => {
     await page.goto("/community")
 
     // Then they are refused into the entry screen
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
 
     // When they try to navigate back to community, passing through the entry
     await page.goto("/community")
 
     // Then the refusal repeats — passar pela tela de entrada não concede sessão
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -76,18 +83,20 @@ test.describe("anonymous visitor: protected route denial", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("private group admission: denial paths", () => {
-  test("groups page without auth is refused into login", async ({ page }) => {
+  test("groups page without auth is refused into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /groups
     await page.goto("/groups")
 
     // Then the proxy refuses into the entry screen (ADR-20260907: o portão de
     // consentimento saiu; quem decide o acesso é a sessão)
-    await page.waitForURL(/\/login/)
-    expect(page.url()).toContain("/login")
+    await page.waitForURL(/\/app\/entrar/)
+    expect(page.url()).toContain("/app/entrar")
   })
 
-  test("groups page with consent but no Supabase auth redirects to /login", async ({ page }) => {
+  test("groups page with consent but no Supabase auth redirects to /app/entrar", async ({
+    page,
+  }) => {
     // Given a browser with the consent cookie but no Supabase auth session
     await setConsentCookie(page)
 
@@ -98,7 +107,7 @@ test.describe("private group admission: denial paths", () => {
     // to /login antes da pagina renderizar; o setError("Voce precisa
     // entrar para acessar os grupos.") de apps/web/app/(shell)/groups/page.tsx
     // nunca tem chance de aparecer.
-    await page.waitForURL(/\/login/, { timeout: 10000 })
+    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
   })
 
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
@@ -108,7 +117,7 @@ test.describe("private group admission: denial paths", () => {
 
     // Then the proxy refuses antes de o Next tratar a rota — a recusa não
     // depende de o grupo existir, e por isso não vaza existência
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
   })
 })
 
@@ -117,18 +126,20 @@ test.describe("private group admission: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("DM without context: denial paths", () => {
-  test("messages page refuses an anonymous visitor into login", async ({ page }) => {
+  test("messages page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /messages
     await page.goto("/messages")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
-  test("messages page with consent but no auth redirects to /login", async ({ page }) => {
+  test("messages page with consent but no auth redirects to /app/entrar", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase session
     await setConsentCookie(page)
 
@@ -138,7 +149,7 @@ test.describe("DM without context: denial paths", () => {
     // Then the middleware session gate (apps/web/middleware.ts) sends them
     // to /login; o heading "Mensagens" e o loading "Carregando conversas"
     // de apps/web/app/(shell)/messages/page.tsx nunca renderizam.
-    await page.waitForURL(/\/login/, { timeout: 10000 })
+    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
   })
 })
 
@@ -180,22 +191,6 @@ test.describe("non-Manaus locality: denial paths", () => {
 
     // Then the API rejects with 401 (auth check runs before action dispatch)
     expect(response.status()).toBe(401)
-  })
-
-  test("onboarding does not offer a geographic waitlist for non-Manaus users", async ({ page }) => {
-    // Given the onboarding page
-    // When a non-Manaus user visits the onboarding page
-    await seedSession(page.context())
-    await page.goto("/onboarding")
-
-    // Then the geographic waitlist entry point is gone — P0 Task 8 makes
-    // eligibility, not geography, the gate. Whoever is eligible joins their
-    // own locality; whoever is not is rejected without a waitlist detour.
-    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
-    await expect(page.getByRole("link", { name: /lista de espera/ })).toHaveCount(0)
-
-    // And the waitlist form (which used to load on click) is not rendered
-    await expect(page.getByLabel("E-mail")).toHaveCount(0)
   })
 })
 
@@ -255,15 +250,17 @@ test.describe("trust boundary: API denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("events RSVP: denial paths", () => {
-  test("events page refuses an anonymous visitor into login", async ({ page }) => {
+  test("events page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -272,15 +269,17 @@ test.describe("events RSVP: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications: denial paths", () => {
-  test("notifications page refuses an anonymous visitor into login", async ({ page }) => {
+  test("notifications page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /notifications
     await page.goto("/notifications")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -289,15 +288,17 @@ test.describe("notifications: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations: denial paths", () => {
-  test("recommendations page refuses an anonymous visitor into login", async ({ page }) => {
+  test("recommendations page refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /recommendations
     await page.goto("/recommendations")
 
     // Then the proxy refuses into the entry screen. ADR-20260907: o portão
     // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/login/)
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await page.waitForURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 })
 
@@ -330,8 +331,10 @@ test.describe("consent cookie tampering: it is not a gate", () => {
 
       // Then the refusal is exactly the same as without any cookie: the cookie
       // never granted access, and after the ADR it does not deny it either
-      await page.waitForURL(/\/login/)
-      await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+      await page.waitForURL(/\/app\/entrar/)
+      await expect(
+        page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+      ).toBeVisible()
     })
   }
 
@@ -352,6 +355,7 @@ test.describe("consent cookie tampering: it is not a gate", () => {
     // portão a cada visita.
     await expect(page).not.toHaveURL(/\/consent/)
     await expect(page).not.toHaveURL(/\/login/)
+    await expect(page).not.toHaveURL(/\/app\/entrar/)
   })
 
   test("consent page is always accessible regardless of cookie state", async ({ page }) => {
@@ -368,39 +372,15 @@ test.describe("consent cookie tampering: it is not a gate", () => {
     await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
   })
 
-  test("login page is always accessible regardless of cookie state", async ({ page }) => {
-    // Given any consent cookie state
-    // When the user navigates to /login
-    await page.goto("/login")
-
-    // Then the login page renders regardless. O título é o da prancha
-    // 36-web-auth-entrada, fixado por ADR-20260907-login-com-senha — o heading
-    // "Bivaque" pertencia à tela anterior.
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
-  })
-
-  test("onboarding refuses an anonymous visitor into login", async ({ page }) => {
+  test("onboarding refuses an anonymous visitor into the app entry", async ({ page }) => {
     // Given a browser without a session
     // When the user navigates to /onboarding
     await page.goto("/onboarding")
 
-    // Then the proxy refuses before the CPF form. O aceite não é mais cobrado
-    // aqui: ele é condição de criar a conta (ver onboarding-denials.spec.ts).
-    await page.waitForURL(/\/login/)
-  })
-
-  test("onboarding renders when consent is present", async ({ page }) => {
-    // Given the consent cookie
-    await seedSession(page.context())
-    // A conta do seed é verificada e membro, então o leitor de situação é
-    // fixado no transporte para a tela de CPF aparecer (PORT-004).
-    await stubVerificationStatus(page, null)
-
-    // When the user navigates to /onboarding
-    await page.goto("/onboarding")
-
-    // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
+    // Then the proxy refuses before the CPF form, and the web sends the person
+    // on to /app/entrar (ENTRADA-WEB-ANTIGA). O aceite não é mais cobrado aqui:
+    // ele é condição de criar a conta (ver onboarding-denials.spec.ts).
+    await page.waitForURL(/\/app\/entrar/)
   })
 })
 

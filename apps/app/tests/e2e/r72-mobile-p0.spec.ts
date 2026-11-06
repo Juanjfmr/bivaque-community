@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { simularPerguntas } from "./perguntas-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 
 test("R72 P0: Home contém carrosséis operáveis e prévia do próximo cartão", async ({ page }) => {
@@ -42,6 +43,7 @@ test("R72 P0: Busca explora categorias em duas colunas e encontra negócios", as
 })
 
 test("R72 P0: Perguntar salva apenas nesta sessão e abre detalhe válido", async ({ page }) => {
+  await simularPerguntas(page)
   await page.goto("/app/comunidade")
   await page.locator('[data-acao="perguntar"]').click()
   const dialogo = page.locator('[data-fluxo="perguntar"]')

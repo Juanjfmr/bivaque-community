@@ -145,11 +145,13 @@ test.describe("group detail: RLS decides, not the page", () => {
 
     // The admission gate (middleware, wave D2 2026-08-15) intercepts the
     // outsider before this segment ever resolves: no locality membership
-    // means /onboarding/status, never the group page. The security property
-    // is unchanged - no group content can render - and the gate makes the
-    // boundary stronger, not weaker. The segment's own notFound() remains as
-    // defence in depth for anyone who reaches it without access.
-    await expect(page).toHaveURL(/\/onboarding\/status/)
+    // sends the person to the entry, never the group page. The gate's target
+    // is /onboarding/status, which the web now redirects to /app/entrar
+    // (ENTRADA-WEB-ANTIGA). The security property is unchanged - no group
+    // content can render - and the gate makes the boundary stronger, not
+    // weaker. The segment's own notFound() remains as defence in depth for
+    // anyone who reaches it without access.
+    await expect(page).toHaveURL(/\/app\/entrar/)
     await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toHaveCount(0)
   })
 
@@ -177,10 +179,11 @@ test.describe("event detail: RLS decides, not the page", () => {
     await signInAs(page, OUTSIDER_EMAIL)
     await page.goto(`/events/${UPCOMING_EVENT_ID}`)
 
-    // Same gate as the group case: the middleware redirects to
-    // /onboarding/status before the event segment resolves. No event content
-    // may render for someone who cannot access it.
-    await expect(page).toHaveURL(/\/onboarding\/status/)
+    // Same gate as the group case: the middleware sends the person to the
+    // entry (/onboarding/status, redirected on to /app/entrar) before the
+    // event segment resolves. No event content may render for someone who
+    // cannot access it.
+    await expect(page).toHaveURL(/\/app\/entrar/)
     await expect(page.getByRole("heading", { name: "Torneio amistoso de futebol" })).toHaveCount(0)
   })
 })

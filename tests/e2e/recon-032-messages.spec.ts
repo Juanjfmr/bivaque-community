@@ -67,9 +67,9 @@ test.beforeAll(async () => {
 })
 
 test.describe("conversa por URL estavel", () => {
-  test("anonimo cai em login antes de ver qualquer mensagem", async ({ page }) => {
+  test("anonimo cai na entrada do app antes de ver qualquer mensagem", async ({ page }) => {
     await page.goto(`/messages/${conversationId}`)
-    await page.waitForURL(/\/login/)
+    await page.waitForURL(/\/app\/entrar/)
   })
 
   test("quem nao e participante nao ve a conversa, nem por URL direta", async ({ browser }) => {

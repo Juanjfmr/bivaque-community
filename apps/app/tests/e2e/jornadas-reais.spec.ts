@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { simularPerguntas } from "./perguntas-ajuda"
 
 // Sem o fixture de apoio: estes casos exercitam as telas usadas pela pessoa.
 test("o Início normal mostra conteúdo e não o andaime de navegação", async ({ page }) => {
@@ -10,6 +11,7 @@ test("o Início normal mostra conteúdo e não o andaime de navegação", async 
 })
 
 test("enviar indicação mantém a resposta visível na sessão", async ({ page }) => {
+  await simularPerguntas(page)
   await page.goto("/app/pergunta/a1")
   const campo = page.getByLabel("Sua resposta")
   const enviar = page.getByRole("button", { name: "Enviar indicação", exact: true })

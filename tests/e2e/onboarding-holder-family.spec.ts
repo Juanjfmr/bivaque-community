@@ -1,33 +1,7 @@
 import { expect, test } from "@playwright/test"
-import { stubVerificationStatus } from "./helpers/onboarding-status"
 import { seedSession } from "./helpers/session"
 
 test.describe("onboarding: verified holder and invited family", () => {
-  test("verified Manaus holder completes onboarding and reaches community", async ({ page }) => {
-    // Given a user who has just logged in and accepted consent
-    await page.goto("/login")
-    // Contrato atualizado em 2026-09-07 com razão explícita: o heading
-    // "Bivaque" e o botão de magic link pertenciam à tela anterior;
-    // ADR-20260907-login-com-senha tirou o link da tela e a prancha 36 deu o
-    // título atual. PORT-003: a marca passou a ser o símbolo da casca da entrada,
-    // como no protótipo, e a saída da entrada é o "Sair" do topo.
-    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
-    await expect(page.getByText("Bivaque", { exact: true })).toBeVisible()
-    await expect(page.getByRole("link", { name: "Sair" })).toHaveAttribute("href", "/")
-
-    // The login page renders the password form and the Google OAuth button
-    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
-
-    // Navigate to the consent page. Sem sessão, a rota é pública (ADR-20260907)
-    // e diz o que fazer: entrar para registrar o aceite. A tela de aceite de
-    // verdade é a de quem entrou pelo Google (PR #104), coberta abaixo.
-    await page.goto("/consent")
-    await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
-    await expect(page.getByText("Entre na sua conta para registrar o aceite.")).toBeVisible()
-    await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible()
-  })
-
   test("consent page shows terms and accept button", async ({ page }) => {
     await seedSession(page.context())
     await page.goto("/consent")
@@ -54,34 +28,9 @@ test.describe("onboarding: verified holder and invited family", () => {
     await expect(consentCheckbox).toBeChecked()
     await acceptButton.click()
 
-    // Accepting stores the consent cookie and proceeds to onboarding
-    await page.waitForURL(/\/onboarding/)
-  })
-
-  test("onboarding page shows verification flow", async ({ page }) => {
-    await seedSession(page.context())
-    await stubVerificationStatus(page, null)
-    await page.goto("/onboarding")
-
-    // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
-    // the landmark rather than the Bivaque wordmark. PORT-004: a tela é a do
-    // protótipo — CPF direto, sem a pergunta do tipo de vínculo.
-    await expect(page.getByRole("heading", { name: "Confirme seu vínculo." })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Conferir e continuar" })).toBeVisible()
-
-    const cpfInput = page.locator("#onboarding-cpf input")
-    await expect(cpfInput).toBeVisible()
-  })
-
-  test("onboarding does not offer a geographic waitlist as a fallback", async ({ page }) => {
-    await seedSession(page.context())
-    await page.goto("/onboarding")
-
-    // P0 Task 8: the verify step no longer offers a geographic waitlist.
-    // Eligibility is the gate; whoever passes it joins their own locality.
-    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
-    await expect(page.getByRole("link", { name: /lista de espera/ })).toHaveCount(0)
-    await expect(page.getByLabel("E-mail")).toHaveCount(0)
+    // Accepting stores the consent and proceeds to the entry. The web's
+    // /onboarding now redirects to /app/entrar (ENTRADA-WEB-ANTIGA).
+    await page.waitForURL(/\/app\/entrar/)
   })
 
   test("root serves the public landing when not authenticated", async ({ page }) => {
@@ -92,25 +41,5 @@ test.describe("onboarding: verified holder and invited family", () => {
     // pública e a ausência de redirecionamento continuam sendo o contrato.
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByText("Juntos somos mais fortes.").first()).toBeVisible()
-  })
-
-  // Renomeado e reescrito em 2026-09-07 com razão explícita: o envio por link
-  // saiu da tela (ADR-20260907-login-com-senha). O que este teste ainda prova:
-  // os campos de entrada aceitam texto e o submit do formulário de senha está
-  // presente — a interação fechada da prancha 36.
-  test("email and password inputs work and submit is present", async ({ page }) => {
-    await page.goto("/login")
-
-    const emailInput = page.getByLabel("E-mail")
-    await emailInput.fill("test@example.invalid")
-    await expect(emailInput).toHaveValue("test@example.invalid")
-
-    // exact: o botão "Mostrar senha" também contém "senha" no aria-label e
-    // casaria em matching parcial.
-    const passwordInput = page.getByLabel("Senha", { exact: true })
-    await passwordInput.fill("senha-de-teste-123")
-    await expect(passwordInput).toHaveValue("senha-de-teste-123")
-
-    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
   })
 })

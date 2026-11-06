@@ -175,6 +175,9 @@ test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
     expect(page.url(), "/community NAO redireciona para /login (sessao aceita)").not.toContain(
       "/login",
     )
+    expect(page.url(), "/community NAO cai na entrada do app (sessao aceita)").not.toContain(
+      "/app/entrar",
+    )
 
     const cookies = await ctx.cookies()
     const session = cookies.find((c) => c.name === cookie.name)
@@ -241,11 +244,14 @@ test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
     const freshPage = await freshCtx.newPage()
     await freshPage.goto(`${APP_URL}/community`, { waitUntil: "load" })
     expect(freshPage.url(), "Sessao persiste apos fechar/reabrir").not.toContain("/login")
+    expect(freshPage.url(), "Sessao persiste apos fechar/reabrir (sem entrada)").not.toContain(
+      "/app/entrar",
+    )
 
     await browser.close()
   })
 
-  test("Cenario 3: logout via 'Sair da conta' redireciona para /login", async () => {
+  test("Cenario 3: logout via 'Sair da conta' redireciona para /app/entrar", async () => {
     const grant = await getSessionViaPasswordGrant()
     const cookie = buildSessionCookie(grant)
 
@@ -268,6 +274,9 @@ test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
 
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     expect(page.url(), "Sessao valida permite /community").not.toContain("/login")
+    expect(page.url(), "Sessao valida permite /community (sem entrada)").not.toContain(
+      "/app/entrar",
+    )
 
     await page.goto(`${APP_URL}/profile`, { waitUntil: "load" })
     const configTab = page.getByRole("tab", { name: /Configurações/i })
@@ -293,12 +302,14 @@ test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
     })
     await confirmarBtn.click()
     await page.waitForTimeout(3000)
-    expect(page.url(), "Logout redireciona para /login").toContain("/login")
+    expect(page.url(), "Logout redireciona para /app/entrar").toContain("/app/entrar")
     await page.waitForTimeout(3000)
-    expect(page.url(), "Logout redireciona para /login").toContain("/login")
+    expect(page.url(), "Logout redireciona para /app/entrar").toContain("/app/entrar")
 
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    expect(page.url(), "Apos logout, /community redireciona para /login").toContain("/login")
+    expect(page.url(), "Apos logout, /community redireciona para /app/entrar").toContain(
+      "/app/entrar",
+    )
 
     await browser.close()
   })

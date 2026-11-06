@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test"
+import { simularPerguntas } from "./perguntas-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 
 test("P1: perguntas exibem avatar shadcn, enunciado completo e estado abaixo", async ({ page }) => {
+  await simularPerguntas(page)
   await page.goto("/app/comunidade")
   const linha = page.locator('[data-tela="comunidade"] [data-linha="pergunta"]').first()
   await expect(linha).toBeVisible()
