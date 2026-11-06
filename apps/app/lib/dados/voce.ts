@@ -35,6 +35,16 @@ export type PedidoDeExclusao = Readonly<{
   pedido: Readonly<{ solicitadoEm: string | null; prazoEm: string | null }>
   pendente: boolean
 }>
+export type ConvitePendente = Readonly<{
+  id: string
+  emailMascarado: string | null
+  criadoEm: string
+  expiraEm: string
+}>
+export type FamiliaDoTitular = Readonly<{
+  podeConvidar: boolean
+  pendentes: readonly ConvitePendente[]
+}>
 
 type Corpo = Record<string, unknown>
 type Opcoes = { signal?: AbortSignal }
@@ -193,4 +203,43 @@ export async function pedirExclusao(opcoes: Opcoes = {}): Promise<PedidoDeExclus
     },
     pendente: booleano(corpo, "pendente"),
   }
+}
+
+function lerConvite(valor: unknown): ConvitePendente {
+  const item = registro(valor)
+  return {
+    id: texto(item, "id"),
+    emailMascarado: textoOuNulo(item, "emailMascarado"),
+    criadoEm: texto(item, "criadoEm"),
+    expiraEm: texto(item, "expiraEm"),
+  }
+}
+
+/** Os convites de família do titular e se ele pode convidar (RUN-018). */
+export async function lerFamilia(opcoes: Opcoes = {}): Promise<FamiliaDoTitular> {
+  const corpo = await ler("/api/app/voce/familia", opcoes)
+  const familia = registro(corpo["familia"])
+  return {
+    podeConvidar: booleano(familia, "podeConvidar"),
+    pendentes: lista(familia, "pendentes").map(lerConvite),
+  }
+}
+
+/** Envia o convite e devolve o convite GRAVADO, não o e-mail enviado. */
+export async function convidarFamiliar(
+  email: string,
+  opcoes: Opcoes = {},
+): Promise<ConvitePendente> {
+  const corpo = await enviar("POST", "/api/app/voce/familia", { email }, opcoes)
+  return lerConvite(corpo["convite"])
+}
+
+export async function revogarConvite(id: string, opcoes: Opcoes = {}): Promise<void> {
+  const corpo = await enviar(
+    "DELETE",
+    `/api/app/voce/familia/${encodeURIComponent(id)}`,
+    undefined,
+    opcoes,
+  )
+  if (corpo["removido"] !== true) throw foraDoContrato()
 }

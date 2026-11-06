@@ -14,6 +14,7 @@ import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
 import { EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
+import { Familia } from "@/src/voce/Familia"
 
 /**
  * Você (onda 8, F10): identidade, contadores e os atalhos principais, agora
@@ -153,6 +154,10 @@ export function Voce() {
             onClick={() => void navegacao.irPara("pedidos")}
           />
         </div>
+      </Secao>
+
+      <Secao titulo="Família">
+        <Familia />
       </Secao>
 
       <Secao titulo="Privacidade e ajuda">

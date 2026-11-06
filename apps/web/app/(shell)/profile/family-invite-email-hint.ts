@@ -1,27 +1,8 @@
-// Shared mask rule with the SQL function private.family_invite_email_hint:
-// display at most two characters of the local part and two of the domain, then
-// a mask. The mask identifies a pending invite in the list without letting
-// anyone reconstruct the e-mail.
+// O mascaramento do e-mail convidado vive em `lib/convite`, junto do restante
+// do módulo de família (RUN-018). Este caminho continua valendo para a tela
+// antiga e para o teste que o importa.
 //
-// Lives outside family-invite-section-actions.ts ("use server") because Next
-// 16 requires every export of a "use server" file to be an async Server
-// Action — a plain sync helper co-located there fails the production build
-// with "Server Actions must be async functions" (found running onda T/F's
-// closing E2E batch, unrelated to either wave's own code).
-export function emailHint(email: string): string {
-  const trimmed = email.trim().toLowerCase()
-  const at = trimmed.indexOf("@")
-  if (at <= 0 || at === trimmed.length - 1) return "***@***"
-  const local = trimmed.slice(0, at)
-  const domain = trimmed.slice(at + 1)
-  const visibleLocal = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2)
-  // O ÚLTIMO ponto, não o primeiro: com `indexOf` o rótulo de
-  // 'familiar@bivaque.example.invalid' virava 'bi***.example.invalid' e o CHECK
-  // da tabela (`^[^@\s]{1,2}\*{3}@[^@\s]{1,2}\*{3}\.[a-z]{2,}$`) recusava o
-  // convite — medido em runtime em 15/09/2026, e valia para qualquer domínio de
-  // dois níveis ('@exemplo.com.br').
-  const dot = domain.lastIndexOf(".")
-  const visibleDomain = domain.length <= 2 ? domain.slice(0, 1) : domain.slice(0, 2)
-  const tld = dot > 2 ? domain.slice(dot) : ""
-  return `${visibleLocal}***@${visibleDomain}***${tld}`
-}
+// Ficava fora de family-invite-section-actions.ts ("use server") porque Next 16
+// exige que todo export de um arquivo "use server" seja uma Server Action
+// assíncrona — um helper síncrono ali derruba o build de produção.
+export { emailHint } from "../../../lib/convite/hint"

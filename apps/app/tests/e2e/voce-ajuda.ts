@@ -62,6 +62,24 @@ export async function simularVoce(page: Page) {
       ocultadoEm: "2026-11-02T08:00:00.000Z",
     },
   ]
+  // Família (RUN-018): mesma regra de máscara da tela antiga, só que aqui é
+  // simulação — o banco de verdade está em tests/e2e/f10-voce-real.spec.ts.
+  const mascarar = (email: string): string => {
+    const [local = "", dominio = ""] = email.trim().toLowerCase().split("@")
+    const visivelLocal = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2)
+    const visivelDominio = dominio.length <= 2 ? dominio.slice(0, 1) : dominio.slice(0, 2)
+    const ponto = dominio.lastIndexOf(".")
+    return `${visivelLocal}***@${visivelDominio}***${ponto > 2 ? dominio.slice(ponto) : ""}`
+  }
+  let pendentes = [
+    {
+      id: "c1",
+      emailMascarado: "ma***@gm***.com",
+      criadoEm: "2026-11-01T10:00:00.000Z",
+      expiraEm: "2026-11-08T10:00:00.000Z",
+    },
+  ]
+  let proximoConvite = 2
 
   await page.route(/\/api\/app\/voce(?:\/|\?|$)/, async (rota) => {
     const url = new URL(rota.request().url())
@@ -96,6 +114,29 @@ export async function simularVoce(page: Page) {
         const antes = ocultados.length
         ocultados = ocultados.filter((item) => item.id !== alvo)
         return ocultados.length === antes
+          ? rota.fulfill({ status: 404, json: { erro: "nao-encontrado" } })
+          : rota.fulfill({ json: { removido: true } })
+      }
+    }
+    if (recurso === "familia") {
+      if (alvo === undefined) {
+        if (metodo === "POST") {
+          const corpo = rota.request().postDataJSON() as { email?: string }
+          const convite = {
+            id: `c${proximoConvite++}`,
+            emailMascarado: mascarar(String(corpo.email ?? "")),
+            criadoEm: "2026-11-06T12:00:00.000Z",
+            expiraEm: "2026-11-13T12:00:00.000Z",
+          }
+          pendentes = [...pendentes, convite]
+          return rota.fulfill({ status: 201, json: { convite } })
+        }
+        return rota.fulfill({ json: { familia: { podeConvidar: true, pendentes } } })
+      }
+      if (metodo === "DELETE") {
+        const antes = pendentes.length
+        pendentes = pendentes.filter((convite) => convite.id !== alvo)
+        return pendentes.length === antes
           ? rota.fulfill({ status: 404, json: { erro: "nao-encontrado" } })
           : rota.fulfill({ json: { removido: true } })
       }
