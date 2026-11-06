@@ -8,7 +8,7 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { lerMeusAnuncios } from "@/lib/dados/criar"
-import type { ListaDoMercado } from "@/lib/dados/mercado"
+import type { AnuncioDaLista, ListaDoMercado } from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -21,6 +21,7 @@ import {
 import { lerRascunhosImoveis, type RascunhoImovel } from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
 import { lerRascunho } from "@/src/criar/rascunho"
+import { GerenciarAnuncio } from "@/src/mercado/gerenciar"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 
 /**
@@ -39,6 +40,7 @@ export function MeusAnuncios() {
   const [expandido, setExpandido] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState<string | null>(null)
   const [erroLocal, setErroLocal] = useState("")
+  const [gerenciando, setGerenciando] = useState<AnuncioDaLista | null>(null)
   const [desapegoLocal] = useState(() =>
     lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" }),
   )
@@ -238,30 +240,48 @@ export function MeusAnuncios() {
       ) : (
         <Grade formato="cartoes">
           {meus.map((anuncio) => (
-            <CartaoDeFoto
-              key={anuncio.id}
-              anuncio={{
-                id: anuncio.id,
-                titulo: anuncio.titulo,
-                fonte: anuncio.foto,
-                rotulo:
-                  (
-                    {
-                      draft: "Rascunho",
-                      active: "Ativo",
-                      paused: "Pausado",
-                      reserved: "Reservado",
-                      sold: "Vendido",
-                      closed: "Encerrado",
-                    } as Record<string, string>
-                  )[anuncio.status] ?? anuncio.status,
-                preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
-                meta: anuncio.bairro ?? anuncio.cidade ?? "",
-              }}
-              aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
-            />
+            <div key={anuncio.id} className="grid gap-1">
+              <CartaoDeFoto
+                anuncio={{
+                  id: anuncio.id,
+                  titulo: anuncio.titulo,
+                  fonte: anuncio.foto,
+                  rotulo:
+                    (
+                      {
+                        draft: "Rascunho",
+                        active: "Ativo",
+                        paused: "Pausado",
+                        reserved: "Reservado",
+                        sold: "Vendido",
+                        closed: "Encerrado",
+                      } as Record<string, string>
+                    )[anuncio.status] ?? anuncio.status,
+                  preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
+                  meta: anuncio.bairro ?? anuncio.cidade ?? "",
+                }}
+                aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
+              />
+              <Botao
+                tom="texto"
+                data-acao="gerenciar-anuncio"
+                data-valor={anuncio.id}
+                onClick={() => setGerenciando(anuncio)}
+              >
+                Gerenciar
+              </Botao>
+            </div>
           ))}
         </Grade>
+      )}
+      {gerenciando === null ? null : (
+        <GerenciarAnuncio
+          key={gerenciando.id}
+          anuncio={gerenciando}
+          aberto
+          aoFechar={() => setGerenciando(null)}
+          aoGravar={() => setRodada((atual) => atual + 1)}
+        />
       )}
       {erroMais && <p role="alert">Não foi possível carregar mais anúncios. Tente de novo.</p>}
       {dados?.proximo && (
