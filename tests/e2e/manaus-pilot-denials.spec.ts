@@ -102,11 +102,9 @@ test.describe("private group admission: denial paths", () => {
     // When the user navigates to the groups page
     await page.goto("/groups")
 
-    // Grupos continua na web: sem sessão, o proxy preserva o destino na entrada do app.
-    await expect(page).toHaveURL(/\/app\/entrar\?redirect=(?:%2F|\/)groups$/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
+    // Grupos continua na web até o F04: sem sessão, o portão do proxy manda para a
+    // entrada do app antes da página renderizar.
+    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
   })
 
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
