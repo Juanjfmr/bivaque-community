@@ -8,7 +8,7 @@ import {
 import { lerNovoDesapego } from "../../../../lib/listings/create"
 import { MAX_PHOTO_BYTES } from "../../../../lib/listings/types"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "../../../../lib/storage/listing-photo"
-import { cidadeDaSessao, ehUuid, interpretarErroDoBanco } from "./_comum"
+import { cidadeDaSessao, ehUuid, interpretarErroDoBanco, lerFotoDoCorpo } from "./_comum"
 
 /** Chave de envio estável no rascunho: repetir após falha não cria outro anúncio. */
 export async function criarDesapego(request: NextRequest): Promise<NextResponse> {
@@ -26,30 +26,9 @@ export async function criarDesapego(request: NextRequest): Promise<NextResponse>
   if (typeof id !== "string" || !ehUuid(id)) {
     return responder(request, { erro: "dados-invalidos" }, 400)
   }
-  let foto: File | null = null
-  if (corpo["foto"] !== null && corpo["foto"] !== undefined) {
-    const bruto = corpo["foto"]
-    if (typeof bruto !== "object" || Array.isArray(bruto)) {
-      return responder(request, { erro: "foto-invalida" }, 400)
-    }
-    const valor = bruto as Record<string, unknown>
-    const tipo = valor["tipo"]
-    const conteudo = valor["conteudo"]
-    if (
-      typeof tipo !== "string" ||
-      !["image/jpeg", "image/png", "image/webp"].includes(tipo) ||
-      typeof conteudo !== "string" ||
-      !/^[A-Za-z0-9+/]+={0,2}$/.test(conteudo) ||
-      conteudo.length % 4 !== 0
-    ) {
-      return responder(request, { erro: "foto-invalida" }, 400)
-    }
-    const bytes = Buffer.from(conteudo, "base64")
-    if (bytes.byteLength === 0 || bytes.byteLength > MAX_PHOTO_BYTES) {
-      return responder(request, { erro: "foto-invalida" }, 400)
-    }
-    foto = new File([bytes], "foto", { type: tipo })
-  }
+  const lida = lerFotoDoCorpo(corpo["foto"])
+  if ("invalida" in lida) return responder(request, { erro: "foto-invalida" }, 400)
+  const foto = lida.foto
   try {
     const client = auth.sessao.cliente
     const userId = auth.sessao.usuario.id
