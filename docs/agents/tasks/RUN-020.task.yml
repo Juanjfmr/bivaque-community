@@ -1,0 +1,66 @@
+# OUTBOX-INVITE-RECIPIENTS (06/11/2026) + limite de envio dos convites de família (ressalva do RUN-018).
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-020
+
+objective: >
+  Todo convite que entra no outbox chega a um endereço de e-mail real e leva o link de aceite; e o envio de
+  convites de família ganha limite de ritmo por titular, com recusa 429 tipada na rota do app.
+
+authority:
+  - tools/backend-kanban cards OUTBOX-INVITE-RECIPIENTS e F10-FAMILIA
+  - docs/agents/tasks/RUN-018.task.yml (ressalva: sem limite de envio; contrato pedia 429)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    community_invite usa o literal 'owner-link@local' como destinatário
+    (apps/web/app/(shell)/communities/community-invite-actions.ts:140) e event_invite usa
+    'event-invite:{eventId}' (apps/web/app/(shell)/events/event-invites-actions.ts:213), repassados crus ao to:
+    da Resend (apps/web/lib/outbox/adapters.ts:120); community_invite, family_invite e event_invite não levam
+    link de aceite. O envio de convite de família (apps/web/lib/convite/familia.ts) só tem o teto de 5 pendentes:
+    criar → revogar → criar enfileira e-mails sem limite de ritmo.
+
+allowed_paths:
+  - apps/web/app/(shell)/communities/community-invite-actions.ts
+  - apps/web/app/(shell)/events/event-invites-actions.ts
+  - apps/web/lib/outbox
+  - apps/web/lib/convite
+  - apps/web/app/api/app/voce/familia
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit
+  - tests/scope
+  - docs/agents/tasks/RUN-020.task.yml
+  - .visual/run-020
+
+forbidden:
+  - editar migration existente (limite no banco só em migration nova com pgTAP)
+  - enviar e-mail de verdade em teste; chave da Resend em código
+  - expor token de convite além do link de aceite que o próprio convidado recebe
+  - push, merge ou force-push
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "community_invite e event_invite endereçam o convidado real; quando não há e-mail de convidado, a ação não enfileira e responde com erro claro."
+  - "community_invite leva link para /invite/{token}, event_invite para /events/{id} (ou a rota equivalente do app), family_invite para o aceite do convite familiar."
+  - "O adaptador recusa qualquer to: que não seja endereço de e-mail válido, com teste."
+  - "Convite de família: limite de ritmo por titular (por exemplo 10 envios por hora, contando também os revogados), no servidor ou no banco; a rota POST /api/app/voce/familia responde 429 {erro:'limite'} com teste; a ação antiga da web respeita o mesmo limite."
+  - "Testes de unidade cobrem enfileiramento com destinatário válido, recusa de destinatário inválido e o 429."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec vitest run tests/unit/outbox tests/unit/app-api/voce
+  - test:db no CI se houver migration
+
+risk: entrega de e-mail para terceiros e limite de abuso
+risk_level: R3
+adr: docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
