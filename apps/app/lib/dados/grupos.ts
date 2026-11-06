@@ -22,6 +22,8 @@ export type PublicacaoReal = Readonly<{
   comentarios: number
   uteis: number
   util: boolean
+  salva: boolean
+  oculta: boolean
   fotos: readonly string[]
 }>
 export type ListaDeGrupos = Readonly<{
@@ -86,6 +88,8 @@ function publicacao(valor: unknown): PublicacaoReal {
     comentarios: numero(p["comentarios"]),
     uteis: numero(p["uteis"]),
     util: booleano(p["util"]),
+    salva: booleano(p["salva"]),
+    oculta: booleano(p["oculta"]),
     fotos: lista(p["fotos"], texto),
   }
 }
@@ -100,7 +104,7 @@ export async function lerGrupos(opcoes: Opcoes & { depois?: string } = {}): Prom
 }
 export async function buscarGrupo(
   id: string,
-  opcoes: Opcoes & { depois?: string; ordem?: "recentes" | "discutidas" } = {},
+  opcoes: Opcoes & { depois?: string; ordem?: OrdemDoGrupo } = {},
 ): Promise<DetalheDoGrupo> {
   const busca = new URLSearchParams({ ordem: opcoes.ordem ?? "recentes" })
   if (opcoes.depois !== undefined) busca.set("depois", opcoes.depois)
@@ -136,6 +140,8 @@ export type ComentarioReal = Readonly<{
   parentId: string | null
   respondeA: string | null
   para: string
+  uteis: number
+  util: boolean
 }>
 export type DetalheDaPublicacao = Readonly<{
   publicacao: PublicacaoReal
@@ -154,6 +160,8 @@ function comentario(valor: unknown): ComentarioReal {
     parentId: cursor(c["parentId"]),
     respondeA: cursor(c["respondeA"]),
     para: texto(c["para"]),
+    uteis: numero(c["uteis"]),
+    util: booleano(c["util"]),
   }
 }
 export async function buscarPublicacao(
@@ -229,4 +237,51 @@ export async function lerPedidosDoGrupo(
     }),
     proximo: cursor(corpo["proximo"]),
   }
+}
+
+export type OrdemDoGrupo = "recentes" | "discutidas" | "salvas" | "ocultadas"
+export type AcaoDaPublicacao = "util" | "salvar" | "fixar" | "ocultar"
+export async function agirNaPublicacao(
+  id: string,
+  acao: AcaoDaPublicacao,
+  valor: boolean,
+  opcoes: Opcoes = {},
+) {
+  const corpo = await enviar(
+    "PUT",
+    `/api/app/grupos/publicacoes/${encodeURIComponent(id)}/acoes`,
+    { acao, valor },
+    opcoes,
+  )
+  return { publicacao: publicacao(corpo["publicacao"]), fixada: cursor(corpo["fixada"]) }
+}
+export async function marcarComentarioUtil(
+  id: string,
+  comentarioId: string,
+  valor: boolean,
+  opcoes: Opcoes = {},
+) {
+  const corpo = await enviar(
+    "PUT",
+    `/api/app/grupos/publicacoes/${encodeURIComponent(id)}/acoes`,
+    { acao: "util", valor, comentarioId },
+    opcoes,
+  )
+  const c = registro(corpo["comentario"])
+  return { id: texto(c["id"]), uteis: numero(c["uteis"]), util: booleano(c["util"]) }
+}
+
+export async function denunciarPublicacao(
+  id: string,
+  motivo: string,
+  explicacao: string,
+  opcoes: Opcoes = {},
+): Promise<string> {
+  const corpo = await enviar(
+    "POST",
+    `/api/app/grupos/publicacoes/${encodeURIComponent(id)}/denuncia`,
+    { motivo, explicacao },
+    opcoes,
+  )
+  return texto(registro(corpo["denuncia"])["id"])
 }

@@ -11,6 +11,7 @@ import {
   pagina,
   participacao,
   publicacaoDaSessao,
+  reacoesDosComentarios,
 } from "../../_comum"
 
 export const runtime = "nodejs"
@@ -51,6 +52,11 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       linhas.map((c) => c.user_id),
     )
     const porId = new Map(linhas.map((c) => [c.id, c]))
+    const reacoes = await reacoesDosComentarios(
+      client,
+      linhas.map((c) => c.id),
+      userId,
+    )
     const publicacoes = await apresentarPublicacoes(client, [post], userId)
     return responder(
       request,
@@ -66,6 +72,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           parentId: c.parent_id,
           respondeA: c.reply_to_id,
           para: nomes.get(porId.get(c.reply_to_id ?? "")?.user_id ?? "") ?? "",
+          ...(reacoes.get(c.id) ?? { uteis: 0, util: false }),
         })),
         proximo: linhas.length === 50 ? String(depois + 50) : null,
       },

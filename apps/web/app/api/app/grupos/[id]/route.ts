@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
   if (!ehUuid(id)) return responder(request, { erro: "grupo-nao-encontrado" }, 404)
   const depois = pagina(request)
   const ordem = new URL(request.url).searchParams.get("ordem") ?? "recentes"
-  if (depois === null || !["recentes", "discutidas"].includes(ordem)) {
+  if (depois === null || !["recentes", "discutidas", "salvas", "ocultadas"].includes(ordem)) {
     return responder(request, { erro: "pagina-invalida" }, 400)
   }
   try {
@@ -38,7 +38,13 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const feed = await client
       .rpc("feed_group", {
         p_group_id: id,
-        p_order: ordem === "discutidas" ? "discussed" : "recent",
+        p_order:
+          {
+            recentes: "recent",
+            discutidas: "discussed",
+            salvas: "saved",
+            ocultadas: "hidden",
+          }[ordem] ?? "recent",
       })
       .range(depois, depois + 19)
     if (feed.error) throw feed.error

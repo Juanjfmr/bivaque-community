@@ -14,10 +14,12 @@ import {
   type ComentarioReal,
   comentarPublicacao,
   type DetalheDaPublicacao,
+  marcarComentarioUtil,
 } from "@/lib/dados/grupos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
+import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
 import { quandoDe } from "@/src/telas/comum"
 
@@ -33,8 +35,17 @@ export function Publicacao() {
   const [erroEnvio, setErroEnvio] = useState("")
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
+  const [comentarioOcupado, setComentarioOcupado] = useState(false)
   const compositor = useRef<HTMLDivElement>(null)
   const [controle] = useState(() => new AbortController())
+  const acoes = useAcoesDaPublicacao({
+    admin: dados?.grupo.admin ?? false,
+    fixada: dados?.grupo.fixada ?? null,
+    aoMudar: ({ publicacao, fixada }) =>
+      setDados((atual) =>
+        atual ? { ...atual, publicacao, grupo: { ...atual.grupo, fixada } } : atual,
+      ),
+  })
   useRolagemEFoco(CARGA_CONCLUIDA)
   useEffect(() => () => controle.abort(), [controle])
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura
@@ -112,6 +123,29 @@ export function Publicacao() {
     setAlvo(comentario)
     compositor.current?.querySelector("textarea")?.focus()
   }
+  async function utilNoComentario(c: ComentarioReal) {
+    if (comentarioOcupado) return
+    setComentarioOcupado(true)
+    setErroEnvio("")
+    try {
+      const salvo = await marcarComentarioUtil(id, c.id, !c.util, { signal: controle.signal })
+      if (!controle.signal.aborted)
+        setDados((atual) =>
+          atual
+            ? {
+                ...atual,
+                comentarios: atual.comentarios.map((linha) =>
+                  linha.id === salvo.id ? { ...linha, ...salvo } : linha,
+                ),
+              }
+            : atual,
+        )
+    } catch {
+      if (!controle.signal.aborted) setErroEnvio("Não foi possível atualizar Útil. Tente de novo.")
+    } finally {
+      if (!controle.signal.aborted) setComentarioOcupado(false)
+    }
+  }
   if (erro) return <EstadoDaLeitura erro={erro} aoTentar={() => setRodada((r) => r + 1)} />
   if (!dados)
     return (
@@ -146,9 +180,19 @@ export function Publicacao() {
           ) : null}
           <p className="whitespace-pre-wrap break-words text-[15px] leading-6">{c.texto}</p>
           {grupo.membro ? (
-            <Botao tom="texto" className="justify-self-start" onClick={() => responder(c)}>
-              Responder
-            </Botao>
+            <div className="flex flex-wrap gap-2">
+              <Botao tom="texto" className="justify-self-start" onClick={() => responder(c)}>
+                Responder
+              </Botao>
+              <Botao
+                tom="texto"
+                disabled={comentarioOcupado}
+                aria-pressed={c.util}
+                onClick={() => void utilNoComentario(c)}
+              >
+                Útil ({c.uteis})
+              </Botao>
+            </div>
           ) : null}
         </div>
       </article>
@@ -177,9 +221,13 @@ export function Publicacao() {
           tipo: "publicacao",
           autor: p.propria ? "Você" : p.autor || "Membro do grupo",
           quando: quandoDe(p.criadaEm),
+          menu: grupo.membro ? acoes.menu(p) : undefined,
         }}
+        {...(grupo.membro ? { aoMarcarUtil: () => acoes.util(p) } : {})}
         aoComentar={() => compositor.current?.querySelector("textarea")?.focus()}
       />
+      {acoes.retorno}
+      {p.oculta ? <p role="status">Esta publicação está oculta para você no grupo.</p> : null}
       {p.fotos.map((foto) => (
         <img key={foto} src={foto} alt="Foto da publicação" className="w-full rounded-2xl" />
       ))}

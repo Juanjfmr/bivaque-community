@@ -8,10 +8,11 @@ import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
-import { buscarGrupo, type DetalheDoGrupo } from "@/lib/dados/grupos"
+import { buscarGrupo, type DetalheDoGrupo, type OrdemDoGrupo } from "@/lib/dados/grupos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
+import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
 import { Escrever } from "@/src/grupos/Escrever"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
 import { Participacao } from "@/src/grupos/Participacao"
@@ -25,10 +26,28 @@ export function Grupo() {
   const [dados, setDados] = useState<DetalheDoGrupo | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
-  const [ordem, setOrdem] = useState<"recentes" | "discutidas">("recentes")
+  const [ordem, setOrdem] = useState<OrdemDoGrupo>("recentes")
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
   const [controle] = useState(() => new AbortController())
+  const acoes = useAcoesDaPublicacao({
+    admin: dados?.grupo.admin ?? false,
+    fixada: dados?.grupo.fixada ?? null,
+    aoMudar: ({ publicacao, fixada }) =>
+      setDados((atual) =>
+        atual
+          ? {
+              ...atual,
+              grupo: { ...atual.grupo, fixada },
+              publicacoes: atual.publicacoes
+                .map((p) => (p.id === publicacao.id ? publicacao : p))
+                .filter((p) =>
+                  ordem === "ocultadas" ? p.oculta : !p.oculta && (ordem !== "salvas" || p.salva),
+                ),
+            }
+          : atual,
+      ),
+  })
   useRolagemEFoco(CARGA_CONCLUIDA)
   useEffect(() => () => controle.abort(), [controle])
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura
@@ -122,16 +141,29 @@ export function Grupo() {
           <fieldset
             data-ordenacao-grupo="sim"
             aria-label="Ordenar publicações"
-            className="flex gap-2"
+            className="flex flex-wrap gap-2"
           >
-            {(["recentes", "discutidas"] as const).map((chave) => (
+            {(
+              [
+                "recentes",
+                "discutidas",
+                ...(grupo.membro ? (["salvas", "ocultadas"] as const) : []),
+              ] as const
+            ).map((chave) => (
               <Botao
                 key={chave}
                 tom={ordem === chave ? "tonal" : "contornado"}
                 aria-pressed={ordem === chave}
                 onClick={() => setOrdem(chave)}
               >
-                {chave === "recentes" ? "Recentes" : "Mais discutidas"}
+                {
+                  {
+                    recentes: "Recentes",
+                    discutidas: "Mais discutidas",
+                    salvas: "Salvas",
+                    ocultadas: "Ocultadas",
+                  }[chave]
+                }
               </Botao>
             ))}
           </fieldset>
@@ -155,7 +187,9 @@ export function Grupo() {
                     tipo: "publicacao",
                     autor: p.autor || "Membro do grupo",
                     quando: quandoDe(p.criadaEm),
+                    menu: grupo.membro ? acoes.menu(p) : undefined,
                   }}
+                  {...(grupo.membro ? { aoMarcarUtil: () => acoes.util(p) } : {})}
                   aoComentar={() =>
                     void navegacao.irPara("publicacao", { parametros: { id: p.id } })
                   }
@@ -181,6 +215,7 @@ export function Grupo() {
           ) : null}
         </>
       )}
+      {acoes.retorno}
     </section>
   )
 }

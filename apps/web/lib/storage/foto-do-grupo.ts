@@ -47,10 +47,12 @@ export async function enviarFotoDoGrupo(
   const extensao = TIPOS[file.type as keyof typeof TIPOS]
   const caminho = `${userId}/grupos/${grupoId}/${randomUUID()}.${extensao}`
   // SEC-006: só o upload exige serviço; vínculo conferido acima pela sessão sob RLS.
-  const { error } = await createServerClient().storage.from("event-photos").upload(caminho, imagem, {
-    contentType: file.type,
-    upsert: false,
-  })
+  const { error } = await createServerClient()
+    .storage.from("event-photos")
+    .upload(caminho, imagem, {
+      contentType: file.type,
+      upsert: false,
+    })
   if (error) throw error
   return { caminho }
 }

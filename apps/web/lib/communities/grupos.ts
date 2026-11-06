@@ -44,6 +44,18 @@ type BancoDosGrupos = Database & {
         Insert: Comentarios["Insert"] & Partial<CamposDoFio>
         Update: Comentarios["Update"] & Partial<CamposDoFio>
       }
+      hidden_posts: {
+        Row: { user_id: string; post_id: string; hidden_at: string }
+        Insert: { user_id: string; post_id: string; hidden_at?: string }
+        Update: { hidden_at?: string }
+        Relationships: []
+      }
+      comment_reactions: {
+        Row: { user_id: string; comment_id: string; created_at: string }
+        Insert: { user_id: string; comment_id: string; created_at?: string }
+        Update: { created_at?: string }
+        Relationships: []
+      }
     }
   }
 }

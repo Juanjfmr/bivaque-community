@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { clienteDosGrupos } from "../../../../lib/communities/grupos"
 import { nomesDeAutores } from "../perguntas/_comum"
 
 export const CAMPOS_DO_GRUPO =
@@ -90,6 +91,20 @@ export async function apresentarPublicacoes(
     )
   if (reacoes.error) throw reacoes.error
   const minhas = new Set((reacoes.data ?? []).map((linha) => linha.post_id))
+  const ids = linhas.map((linha) => linha.id)
+  const salvas = await client
+    .from("post_saves")
+    .select("post_id")
+    .eq("user_id", userId)
+    .in("post_id", ids)
+  const ocultas = await clienteDosGrupos(client)
+    .from("hidden_posts")
+    .select("post_id")
+    .eq("user_id", userId)
+    .in("post_id", ids)
+  if (salvas.error || ocultas.error) throw salvas.error ?? ocultas.error
+  const meusSalvos = new Set((salvas.data ?? []).map((linha) => linha.post_id))
+  const minhasOcultas = new Set((ocultas.data ?? []).map((linha) => linha.post_id))
   const caminhosDaLinha = (linha: LinhaDaPublicacao) =>
     linha.photo_paths?.length ? linha.photo_paths : linha.photo_path ? [linha.photo_path] : []
   const caminhos = linhas.flatMap(caminhosDaLinha)
@@ -112,6 +127,8 @@ export async function apresentarPublicacoes(
     comentarios: linha.comments[0]?.count ?? 0,
     uteis: linha.post_reactions[0]?.count ?? 0,
     util: minhas.has(linha.id),
+    salva: meusSalvos.has(linha.id),
+    oculta: minhasOcultas.has(linha.id),
     fotos: caminhosDaLinha(linha).map((path) => fotos.get(path)),
   }))
 }
@@ -137,3 +154,25 @@ export type ComentarioBruto = {
   reply_to_id: string | null
 }
 export const CAMPOS_DO_COMENTARIO = "id,user_id,content,created_at,parent_id,reply_to_id"
+
+export async function reacoesDosComentarios(
+  client: SupabaseClient<Database>,
+  ids: string[],
+  userId: string,
+) {
+  const estados = new Map<string, { uteis: number; util: boolean }>()
+  if (ids.length === 0) return estados
+  const result = await clienteDosGrupos(client)
+    .from("comment_reactions")
+    .select("comment_id,user_id")
+    .in("comment_id", ids)
+  if (result.error) throw result.error
+  for (const linha of result.data ?? []) {
+    const anterior = estados.get(linha.comment_id) ?? { uteis: 0, util: false }
+    estados.set(linha.comment_id, {
+      uteis: anterior.uteis + 1,
+      util: anterior.util || linha.user_id === userId,
+    })
+  }
+  return estados
+}

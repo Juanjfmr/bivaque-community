@@ -102,7 +102,7 @@ test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fix
   await page.goto("/app/grupo/g-cmm")
   const capaGrupo = page.locator('[data-tela="grupo"] [data-capa="foto"] img')
   await expect(capaGrupo).toHaveCount(0)
-  await expect(page.locator('[data-tela="grupo"]')).toContainText("Fam?lias do CMM")
+  await expect(page.locator('[data-tela="grupo"]')).toContainText("Famílias do CMM")
 })
 
 test("P1: home desktop separa o catálogo do contexto sem duplicar seções", async ({ page }) => {

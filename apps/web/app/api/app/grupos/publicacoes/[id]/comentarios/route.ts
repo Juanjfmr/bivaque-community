@@ -82,6 +82,8 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
           parentId: c.parent_id,
           respondeA: c.reply_to_id,
           para: "",
+          uteis: 0,
+          util: false,
         },
       },
       201,

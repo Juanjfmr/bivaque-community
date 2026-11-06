@@ -152,6 +152,19 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       if (partes[2] === "acoes") {
         const acao = corpo["acao"]
         const valor = corpo["valor"] === true
+        if (typeof corpo["comentarioId"] === "string") {
+          const comentario = comentarios.find(
+            (c) => c.id === corpo["comentarioId"] && c.postId === post.id,
+          )
+          if (!comentario) {
+            await rota.fulfill({ status: 404, json: {} })
+            return
+          }
+          if (comentario.util !== valor) comentario.uteis += valor ? 1 : -1
+          comentario.util = valor
+          await rota.fulfill({ json: { comentario } })
+          return
+        }
         if (acao === "util") {
           if (post.util !== valor) post.uteis += valor ? 1 : -1
           post.util = valor

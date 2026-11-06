@@ -60,6 +60,9 @@ type Opcoes = {
   rpcErro?: string
   codigo?: string
   storageErro?: "upload" | "sign"
+  salvas?: boolean
+  ocultas?: boolean
+  reacoesComentarios?: { comment_id: string; user_id: string }[]
 }
 export function mockClient(opcoes: Opcoes = {}) {
   const chamadas: { tabela: string; metodo: string; args: unknown[] }[] = []
@@ -92,6 +95,12 @@ export function mockClient(opcoes: Opcoes = {}) {
       if (tabela === "group_join_reasons") data = [{ user_id: USER, reason: "Quero participar." }]
       if (tabela === "profiles") data = [{ user_id: USER, display_name: "Ana" }]
       if (tabela === "post_reactions") data = [{ post_id: POST }]
+      if (tabela === "post_saves") data = opcoes.salvas ? [{ post_id: POST }] : []
+      if (tabela === "hidden_posts") data = opcoes.ocultas ? [{ post_id: POST }] : []
+      if (tabela === "comment_reactions") {
+        const linhas = opcoes.reacoesComentarios ?? [{ comment_id: COMMENT, user_id: USER }]
+        data = singular ? (linhas[0] ?? null) : linhas
+      }
       if (tabela === "feed_group") data = (opcoes.posts ?? [post]).map((p) => ({ id: p["id"] }))
       if (operacao === "insert")
         data = singular
@@ -103,7 +112,11 @@ export function mockClient(opcoes: Opcoes = {}) {
               })
             : { id: POST, content: "Texto gravado", created_at: DATA }
           : [{ id: POST }]
-      return { data, error: null }
+      return {
+        data,
+        error: null,
+        count: tabela === "comment_reactions" ? (opcoes.reacoesComentarios?.length ?? 1) : null,
+      }
     }
     const q: Record<string, unknown> = {}
     for (const metodo of [
