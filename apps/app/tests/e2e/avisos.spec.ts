@@ -1,9 +1,12 @@
-import { abrir, expect, test } from "./apoio"
+import { expect, test } from "@playwright/test"
 
 /**
  * Avisos (F09) no app de prova: `/app` é servido pelo Vite puro, sem Next e sem
  * banco. As rotas `/api/app/avisos` são simuladas com `page.route` (RegExp), no
  * mesmo contrato que o servidor devolve — o que se mede é a tela de verdade.
+ *
+ * `test` vem do Playwright cru, não do `apoio`: o modo de prova daquele arquivo
+ * troca a tela real pela TelaDeProva, e aqui se mede a tela de verdade.
  */
 
 const PUBLICACAO = "90000000-0000-4000-8000-000000000001"
@@ -67,7 +70,7 @@ async function simularAvisos(page: import("@playwright/test").Page) {
 test.describe("F09 — avisos", () => {
   test("lista, marca como lido e abre o destino no app", async ({ page }) => {
     await simularAvisos(page)
-    await abrir(page, "/app/avisos")
+    await page.goto("/app/avisos")
 
     const naoLidas = page.locator('[data-aviso-item="a1"]')
     await expect(naoLidas).toBeVisible()

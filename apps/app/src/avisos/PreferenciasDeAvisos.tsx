@@ -197,8 +197,16 @@ export function PreferenciasDeAvisos() {
         />
       </div>
 
-      <Botao tom="tonal" onClick={salvar} disabled={!sujo || salvando} className="justify-self-end">
-        {salvando ? "Salvando…" : "Salvar preferências"}
+      {/* "Gravar", não "Salvar": o Salvar do perfil casa com qualquer nome que
+          contenha "Salvar" no seletor por papel, e esta seção vive na mesma tela. */}
+      <Botao
+        tom="tonal"
+        onClick={salvar}
+        disabled={!sujo || salvando}
+        aria-label="Gravar preferências de avisos"
+        className="justify-self-end"
+      >
+        {salvando ? "Salvando…" : "Gravar preferências"}
       </Botao>
     </div>
   )
