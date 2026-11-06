@@ -93,8 +93,6 @@ test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fix
   await expect
     .poll(() => capaNegocio.evaluate((el) => (el as HTMLImageElement).naturalWidth))
     .toBeGreaterThan(0)
-    .poll(() => capaNegocio.evaluate((el) => (el as HTMLImageElement).naturalWidth))
-    .toBeGreaterThan(0)
   await page.goto("/app/grupo/g-cmm")
   const capaGrupo = page.locator('[data-tela="grupo"] [data-capa="foto"] img')
   await expect(capaGrupo).toBeVisible()
