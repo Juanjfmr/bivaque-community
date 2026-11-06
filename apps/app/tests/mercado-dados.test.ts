@@ -129,7 +129,6 @@ describe("detalhe do anúncio", () => {
       anuncio: {
         ...ANUNCIO,
         endereco: "Rua X, 100",
-        donoId: "u1",
         donoNome: "Ricardo A.",
         fotos: ["https://exemplo.invalid/1"],
         meu: false,
@@ -148,7 +147,7 @@ describe("detalhe do anúncio", () => {
 
   it("dono sem nome é null, não 'Membro' inventado na porta", async () => {
     responder({
-      anuncio: { ...ANUNCIO, donoId: "u1", donoNome: null, fotos: [], endereco: null },
+      anuncio: { ...ANUNCIO, donoNome: null, fotos: [], endereco: null },
     })
     const anuncio = await buscarAnuncio("a1")
     expect(anuncio.donoNome).toBeNull()
@@ -156,7 +155,7 @@ describe("detalhe do anúncio", () => {
   })
 
   it("fotos quebrado é falha de contrato", async () => {
-    responder({ anuncio: { ...ANUNCIO, donoId: "u1", fotos: [42] } })
+    responder({ anuncio: { ...ANUNCIO, fotos: [42] } })
     await expect(buscarAnuncio("a1")).rejects.toBeInstanceOf(FalhaDaApi)
   })
 })

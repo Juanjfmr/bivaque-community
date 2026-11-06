@@ -10,7 +10,7 @@
  *   GET /api/app/mercado?tipo=item|property
  *     → { cidade, proximo: null, anuncios: [ … ] }
  *   GET /api/app/mercado/<id>
- *     → { anuncio: { …campos da tela, endereco: null, donoId, donoNome, fotos: [], meu: false, salvo: false } }
+ *     → { anuncio: { …campos da tela, endereco: null, donoNome, fotos: [], meu: false, salvo: false } }
  *   POST /api/app/mercado/<id>/interesse
  *     → { conversaId }
  */
@@ -291,7 +291,6 @@ export function aplicarStubMercado(page: Page): void {
           foto: an.foto,
           criadoEm: an.criadoEm,
           endereco: null,
-          donoId: "dono-de-exemplo-id",
           donoNome: "Maria Silva",
           fotos: [],
           meu: false,

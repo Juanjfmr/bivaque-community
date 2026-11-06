@@ -38,7 +38,6 @@ export type AnuncioDetalhado = Readonly<
   AnuncioDaLista & {
     /** Só existe para o nível que o anunciante escolheu — a tela nunca mostra. */
     endereco: string | null
-    donoId: string
     donoNome: string | null
     fotos: readonly string[]
     meu: boolean
@@ -169,7 +168,6 @@ export async function buscarAnuncio(
   return {
     ...lerAnuncio(corpo),
     endereco: texto(corpo["endereco"]),
-    donoId: exigirTexto(corpo, "donoId"),
     donoNome: texto(corpo["donoNome"]),
     fotos,
     meu: corpo["meu"] === true,

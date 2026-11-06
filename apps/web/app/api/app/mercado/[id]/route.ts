@@ -52,7 +52,6 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
         anuncio: {
           ...baseDoAnuncio(row),
           endereco: row.address,
-          donoId: row.owner_user_id,
           donoNome: perfil.data?.display_name ?? null,
           fotos: urls,
           meu: row.owner_user_id === userId,
