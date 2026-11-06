@@ -217,7 +217,9 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
 
   const { data, error } = await supabase
     .from("arrival_guide_entries")
-    .select("*")
+    .select(
+      "id, locality_id, category, name, description, website_url, phone, updated_at, reviewed_at, review_note, source, source_reply_id",
+    )
     .eq("id", entryId)
     .eq("status", "approved")
     .maybeSingle()

@@ -122,7 +122,7 @@ function GuideContent() {
 
     const { data, error: guideError } = await supabase
       .from("arrival_guide_entries")
-      .select("*")
+      .select("id, category, name, description, website_url, phone, updated_at, reviewed_at")
       .eq("locality_id", viewingLocalityId)
       .eq("status", "approved")
       .order("category")

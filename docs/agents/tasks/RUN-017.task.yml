@@ -1,0 +1,65 @@
+# Quatro achados de segurança das auditorias de 05/11 (Sonnet 5.5), todos anteriores às jornadas e no banco.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-017
+
+objective: >
+  Fechar no banco, em migrations novas com pgTAP positivo e negativo, quatro brechas que só a rota do app
+  barrava: o organizador muda o alcance do próprio encontro por PostgREST; conta com exclusão pedida ou
+  suspensa envia mensagem; vínculo só de leitura ou conta suspensa responde pergunta; e quem sugeriu um
+  verbete do guia fica legível pela Data API.
+
+authority:
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - docs/decisions/RISK_MATRIX.md
+  - tools/backend-kanban cards EVENTOS-UPDATE-ALCANCE-NO-BANCO, DM-INSERT-VETO-EXCLUSAO, F04-RESSALVAS, GUIA-SUBMITTED-BY-COLUNA
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    (1) grant update em events é da tabela inteira (20260802001200_events_rsvp.sql:81) e a policy
+    events_update_organizer só confere organizer_id: o organizador muda locality_id/group_id/community_id.
+    (2) a policy dm_messages_insert_sender (20260825212538_dm_provider_context_rpcs.sql:156-165) não veta
+    private.account_deletion_requested nem conta suspensa, ao contrário da RPC send_conversation_message.
+    (3) a policy recommendation_replies_insert (20260815220000_recommendation_reply_cycle.sql:82-97) só exige
+    can_see_locality_recommendation: não exige access = 'active' nem veta is_account_suspended.
+    (4) authenticated tem select na tabela inteira arrival_guide_entries (20260815181708_arrival_guide.sql:33)
+    e submitted_by (20260915210000_guide_entry_suggestion.sql:17) fica legível em entradas aprovadas.
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests
+  - packages/contracts
+  - apps/web/lib/database.types.ts
+  - tests/scope
+  - docs/agents/tasks/RUN-017.task.yml
+  - .visual/run-017
+
+forbidden:
+  - editar migration existente (só migrations novas, via npx pnpm@11.18.0 exec supabase migration new <nome>)
+  - mudar comportamento além das quatro brechas
+  - quebrar as rotas do app que já dependem dessas tabelas (eventos, conversas, perguntas, guia)
+  - reset de banco compartilhado ou remoto; push, merge ou force-push
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "(1) events: alcance imutável depois do insert (trigger ou grants por coluna); pgTAP: organizador ainda edita título, descrição, local, horário e capa; UPDATE de locality_id/group_id/community_id é recusado."
+  - "(2) dm_messages: insert recusado para remetente ou destinatário com exclusão pedida ou suspenso; pgTAP positivo e negativo."
+  - "(3) recommendation_replies: insert exige vínculo ativo (access = 'active') e veta conta suspensa; pgTAP positivo e negativo."
+  - "(4) arrival_guide_entries: authenticated não lê submitted_by (revogar por coluna ou view), sem quebrar a leitura do guia pelo app; pgTAP."
+  - "Políticas novas no mesmo lugar das colunas que leem; RLS continua forçada; tipos públicos regenerados só se a forma mudar."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - pgTAP dos quatro arquivos novos (o CI roda test:db; o Docker desta máquina não alcança o CLI)
+
+risk: segurança e RLS no banco
+risk_level: R3
+adr: docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
