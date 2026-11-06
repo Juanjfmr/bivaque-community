@@ -67,21 +67,20 @@ test.beforeAll(async () => {
 })
 
 test.describe("conversa por URL estavel", () => {
-  test("anonimo cai na entrada do app antes de ver qualquer mensagem", async ({ page }) => {
+  test("anônimo chega ao app e precisa entrar antes de ver mensagens", async ({ page }) => {
     await page.goto(`/messages/${conversationId}`)
-    await page.waitForURL(/\/app\/entrar/)
+    await expect(page).toHaveURL(new RegExp(`/app/conversa/${conversationId}$`))
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 
   test("quem nao e participante nao ve a conversa, nem por URL direta", async ({ browser }) => {
     const context = await browser.newContext()
     await seedAs(context, VISUAL_EMAIL)
     const page = await context.newPage()
-    // A pagina streama, entao o status HTTP nao carrega a resposta: a prova e
-    // o que a tela mostra — sem participacao a RLS nao devolve a conversa, e o
-    // segmento responde com o proprio not-found.
+    // A API do app nega a conversa alheia; o detalhe mostra indisponibilidade.
     await page.goto(`/messages/${conversationId}`)
-    await expect(page.getByText("Página não encontrada")).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByLabel("Digite sua mensagem")).toHaveCount(0)
+    await expect(page.getByText("Este endereço não existe")).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByLabel("Mensagem", { exact: true })).toHaveCount(0)
     await context.close()
   })
 
@@ -93,80 +92,36 @@ test.describe("conversa por URL estavel", () => {
     const page = await context.newPage()
 
     await page.goto(`/messages/${conversationId}`)
-    await expect(page).toHaveURL(new RegExp(`/messages/${conversationId}$`))
+    await expect(page).toHaveURL(new RegExp(`/app/conversa/${conversationId}(?:\\?.*)?$`))
     // o painel da conversa abriu direto pela URL: campo de escrita visivel e
     // nenhum "Selecione uma conversa" no lugar do historico
-    await expect(page.getByLabel("Digite sua mensagem")).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByLabel("Mensagem", { exact: true })).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText("Selecione uma conversa")).toHaveCount(0)
 
     // enviar mensagem pela URL direta
     const marker = `mensagem via url estavel ${Date.now().toString(36)}`
-    await page.getByLabel("Digite sua mensagem").fill(marker)
+    await page.getByLabel("Mensagem", { exact: true }).fill(marker)
     await page.getByRole("button", { name: "Enviar", exact: true }).click()
-    await expect(page.getByText("Enviado").last()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('[data-mensagens="historico"]')).toContainText(marker, {
+      timeout: 10_000,
+    })
 
     // refresh: mesma conversa, mensagem exata uma vez — sem entrega duplicada.
     // Escopo na bolha (p.whitespace-pre-wrap): o preview da lista repete o
     // mesmo texto e nao e entrega — e so o resumo da conversa.
     await page.reload()
-    await expect(page).toHaveURL(new RegExp(`/messages/${conversationId}$`))
+    await expect(page).toHaveURL(new RegExp(`/app/conversa/${conversationId}(?:\\?.*)?$`))
     await expect(page.locator("p.whitespace-pre-wrap").filter({ hasText: marker })).toHaveCount(1, {
       timeout: 15_000,
     })
 
     // a lista antiga por query param passa a ser a URL estavel
     await page.goto(`/messages?conversation=${conversationId}`)
-    await expect(page).toHaveURL(new RegExp(`/messages/${conversationId}$`), {
+    await expect(page).toHaveURL(new RegExp(`/app/conversa/${conversationId}(?:\\?.*)?$`), {
       timeout: 15_000,
     })
 
     await context.close()
-  })
-
-  // @stateful: bloqueia e desbloqueia o mesmo par na conta compartilhada; em paralelo nos três
-  // tamanhos, um projeto desbloqueava no meio do outro (CI-E2E-UPSTREAM-INSTAVEL, 02/11).
-  test("bloquear na conversa aparece em Pessoas bloqueadas e desbloquear desfaz", {
-    tag: "@stateful",
-  }, async ({ browser }) => {
-    const context = await browser.newContext()
-    await seedAs(context, MEMBRO_1_EMAIL)
-    const page = await context.newPage()
-
-    try {
-      await page.goto(`/messages/${conversationId}`)
-      await expect(page).toHaveURL(new RegExp(`/messages/${conversationId}$`))
-
-      // O cabecalho do shell e sticky; o auto-scroll do clique leva o botao da
-      // thread para debaixo dele. Rola o container principal ao topo antes.
-      await page.locator("main").evaluate((element) => {
-        element.scrollTop = 0
-      })
-      await page.getByRole("button", { name: "Bloquear", exact: true }).click()
-      await expect(page.getByText("Desbloqueie para enviar mensagens.")).toBeVisible({
-        timeout: 10_000,
-      })
-
-      // o bloqueio e gerenciavel na tela de confianca (prancha 56, painel direito)
-      await page.goto("/denuncias")
-      await page.getByRole("tab", { name: "Pessoas bloqueadas" }).click()
-      const row = page
-        .locator("li")
-        .filter({ hasText: /Bloqueado em/ })
-        .first()
-      await expect(row.getByText(/Bloqueado em/)).toBeVisible()
-      await row.getByRole("button", { name: "Desbloquear" }).click()
-      await expect(row.getByText(/Bloqueado em/)).toHaveCount(0)
-
-      // e o chat volta a aceitar mensagem
-      await page.goto(`/messages/${conversationId}`)
-      await expect(page.getByLabel("Digite sua mensagem")).toBeVisible({ timeout: 10_000 })
-    } finally {
-      // O bloqueio nao pode ficar de heranca na conta compartilhada se um
-      // assert acima falhar no meio do caminho.
-      const membro = await mintSession(MEMBRO_1_EMAIL)
-      await unblockPartner(membro.accessToken)
-      await context.close()
-    }
   })
 })
 

@@ -4,14 +4,7 @@ import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
-// DS-011 — Conceptual parent is responsive-invariant.
-//
-// `/messages` and `/notifications` are not nav containers; both navs fall back
-// to the **Perfil** container for them (bottom-nav.tsx and app-shell.tsx share
-// the same fallback: /messages|/notifications -> "perfil", everything else ->
-// "inicio"). The active primary container must stay the same across viewport
-// changes — the bottom-nav mirrors the sidebar fallback.
-// Post PROCESSO-DE-CONSTRUCAO §7: "Eu" -> "Perfil", "Comunidade" -> "Início".
+// DS-011: a navegação antiga continua em /notifications na fase 1.
 
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -91,20 +84,8 @@ async function signInAndVisit(page: Page, url: string) {
 const BOTTOM_NAV = '[data-slot="tabs-list"][aria-label="Seções do aplicativo"]'
 const SIDEBAR_NAV = 'aside nav[aria-label="Navegação principal"]'
 
-test.describe("DS-011 mobile — BottomNav activates 'Perfil' for /messages and /notifications", () => {
+test.describe("DS-011 mobile — BottomNav activates 'Perfil' for /notifications", () => {
   test.use({ viewport: { width: 375, height: 812 } })
-
-  test("/messages activates 'Perfil', not 'Início'", async ({ page }) => {
-    await signInAndVisit(page, "/messages")
-    const tablist = page.locator(BOTTOM_NAV)
-    await expect(tablist).toBeVisible({ timeout: 15000 })
-
-    const perfil = page.getByRole("tab", { name: "Perfil", exact: true })
-    const inicio = page.getByRole("tab", { name: "Início", exact: true })
-
-    await expect(perfil).toHaveAttribute("aria-selected", "true")
-    await expect(inicio).toHaveAttribute("aria-selected", "false")
-  })
 
   test("/notifications activates 'Perfil', not 'Início'", async ({ page }) => {
     await signInAndVisit(page, "/notifications")
@@ -119,11 +100,11 @@ test.describe("DS-011 mobile — BottomNav activates 'Perfil' for /messages and 
   })
 })
 
-test.describe("DS-011 desktop — sidebar still activates 'Perfil' for /messages (no regression)", () => {
+test.describe("DS-011 desktop — sidebar still activates 'Perfil' for /notifications (no regression)", () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
-  test("/messages activates 'Perfil' in the sidebar", async ({ page }) => {
-    await signInAndVisit(page, "/messages")
+  test("/notifications activates 'Perfil' in the sidebar", async ({ page }) => {
+    await signInAndVisit(page, "/notifications")
     const sidebarNav = page.locator(SIDEBAR_NAV)
     await expect(sidebarNav).toBeVisible({ timeout: 15000 })
 

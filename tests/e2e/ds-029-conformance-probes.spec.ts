@@ -92,28 +92,13 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-// Abre o compositor no tamanho do projeto e DEVOLVE o gatilho que a pessoa
-// usou: é ele que tem de receber o foco de volta quando o modal fecha.
-//
-// Lote 5, N2 (ADR-20261023): a linha de publicar saiu de /community e o
-// compositor passou a abrir pela linha do Início (a partir de md) ou pelo menu
-// de criação do shell no telefone. Os dois gatilhos sobrevivem ao modal, que é
-// o que o retorno de foco exige.
+// LAN-TROCA fase 1: prova o foco do compositor que continua em /community.
 async function openComposerWithTrigger(page: Page): Promise<Locator> {
-  await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
-  // A saudação só existe depois da montagem: esperá-la prova que o React
-  // hidratou, e o clique não cai no vazio.
+  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+  // Espera a montagem antes de clicar no menu do shell.
   await expect(page.locator("main").getByRole("heading", { level: 1 })).toBeVisible({
     timeout: 20000,
   })
-
-  const width = page.viewportSize()?.width ?? 0
-  if (width >= 768) {
-    const trigger = page.getByTestId("intent-pergunta")
-    await trigger.click()
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10000 })
-    return trigger
-  }
 
   const trigger = page.getByRole("button", { name: "Criar" })
   await trigger.click()

@@ -75,7 +75,8 @@ async function capturar(page: Page, projeto: string, etapa: string) {
 }
 
 async function abrirFicha(page: Page) {
-  await page.goto(`/app/negocio/${NEGOCIO}`)
+  await page.goto(`/prestadores/${NEGOCIO}`)
+  await expect(page).toHaveURL(new RegExp(`/app/negocio/${NEGOCIO}$`))
   await expect(page.getByRole("heading", { level: 1, name: "Climatiza Manaus" })).toBeVisible({
     timeout: 30_000,
   })

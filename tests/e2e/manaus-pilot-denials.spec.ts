@@ -35,7 +35,6 @@ test.describe("anonymous visitor: protected route denial", () => {
     "/profile",
     "/recommendations",
     "/notifications",
-    "/messages",
   ]
 
   for (const route of PROTECTED_ROUTES) {
@@ -103,11 +102,9 @@ test.describe("private group admission: denial paths", () => {
     // When the user navigates to the groups page
     await page.goto("/groups")
 
-    // Then the middleware session gate (apps/web/middleware.ts) sends them
-    // to /login antes da pagina renderizar; o setError("Voce precisa
-    // entrar para acessar os grupos.") de apps/web/app/(shell)/groups/page.tsx
-    // nunca tem chance de aparecer.
-    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
+    // O app recebe a rota e recusa a leitura sem sess?o.
+    await expect(page).toHaveURL(/\/app\/conversas$/)
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible({ timeout: 10000 })
   })
 
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
@@ -126,30 +123,16 @@ test.describe("private group admission: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("DM without context: denial paths", () => {
-  test("messages page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /messages
-    await page.goto("/messages")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
-    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
-  })
-
-  test("messages page with consent but no auth redirects to /app/entrar", async ({ page }) => {
+  test("messages sem sessão chega ao app e recusa a leitura", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase session
     await setConsentCookie(page)
 
     // When the user navigates to the messages page
     await page.goto("/messages")
 
-    // Then the middleware session gate (apps/web/middleware.ts) sends them
-    // to /login; o heading "Mensagens" e o loading "Carregando conversas"
-    // de apps/web/app/(shell)/messages/page.tsx nunca renderizam.
-    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
+    // O app recebe a rota; a API recusa a leitura sem sessão.
+    await expect(page).toHaveURL(/\/app\/conversas$/)
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible({ timeout: 10000 })
   })
 })
 

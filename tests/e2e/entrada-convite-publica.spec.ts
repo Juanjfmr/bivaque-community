@@ -135,6 +135,6 @@ test.describe("Ajuda com sessão", () => {
     // quem já tem localidade corrente não volta à etapa do código.
     await page.goto("/convite?codigo=7K4M9QRT")
 
-    await expect(page).toHaveURL(/\/inicio$/, { timeout: 20_000 })
+    await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 20_000 })
   })
 })

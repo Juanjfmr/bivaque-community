@@ -53,14 +53,14 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
   {
     nome: "membro",
     email: "membro-1@bivaque.example.invalid",
-    entradas: ["/inicio"],
-    chega: /^\/inicio$/,
+    entradas: ["/inicio", "/profile"],
+    chega: /^\/app\/inicio$/,
   },
   {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
-    entradas: ["/inicio"],
-    chega: /^\/inicio$/,
+    entradas: ["/inicio", "/profile"],
+    chega: /^\/app\/inicio$/,
   },
   {
     nome: "operador",
@@ -196,7 +196,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
-  { route: "/messages/[id]", porta: "FLUXO: escolher conversa na caixa, ou ?conversation=" },
   {
     route: "/negocio/catalogo",
     porta: "CONDICIONAL: 'Catálogo' em /negocio, só depois que a página do negócio existe",
@@ -327,6 +326,22 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
       listFiles(APP_DIR, "page.tsx"),
       listFiles(APP_DIR, "route.ts"),
       caminhosDoCatalogo(ROTAS),
+      // Continuam sendo links válidos e são visitados; deixaram de ser telas
+      // da web cuja porta o inventário exige (LAN-TROCA fase 1).
+      [
+        "/messages",
+        "/messages/[id]",
+        "/mercado/[id]",
+        "/imoveis/[id]",
+        "/indicacoes/[id]",
+        "/pedidos",
+        "/pedidos/[id]",
+        "/prestadores/[id]",
+        "/configuracoes/bloqueados",
+        "/configuracoes/familia",
+        "/inicio",
+        "/explorar",
+      ],
     )
     const reached = new Set<string>()
     const broken: Broken[] = []

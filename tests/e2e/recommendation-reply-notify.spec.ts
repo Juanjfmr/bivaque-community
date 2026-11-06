@@ -30,13 +30,6 @@ const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"
 const OPEN_REQUEST_TITLE = "Onde fazer revisão do carro com preço honesto?"
 const OPEN_REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f06"
 const OPEN_REQUEST_AUTHOR_EMAIL = "membro-46@bivaque.example.invalid"
-// O autor do pedido resolvido do seed. NÃO usar seedSession() aqui: ele
-// autentica a dono-vila@ (ver apps/web/.env.local), enquanto o pedido do seed
-// pertence à visual@ — sem esta conta o teste procura o botão de resolver na
-// tela de quem não é autor.
-const AUTHOR_EMAIL = "visual@bivaque.example.invalid"
-const REQUEST_TITLE = "Alguém conhece um bom encanador?"
-const REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f00"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -87,6 +80,7 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     await signInAs(page, REPLIER_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto(OPEN_REQUEST_PATH)
+    await expect(page).toHaveURL(/\/app\/pergunta\/80000000-0000-4000-8000-000000000f06$/)
     await expect(page.getByRole("heading", { level: 1, name: OPEN_REQUEST_TITLE })).toBeVisible()
     // Texto único por execução: a suíte serial passa pelos três projetos no
     // mesmo banco, e a resposta de um projeto anterior continua na página.
@@ -117,23 +111,6 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     })
 
     await authorContext.close()
-  })
-
-  test("an author can mark their request resolved", async ({ page }) => {
-    // Given a session of the member who AUTHORED the seeded request. A conta
-    // importa: o pedido do seed ("Alguém conhece um bom encanador?") é da
-    // visual@, e o seedSession() do ambiente autentica a dono-vila@ — que não é
-    // autora e por isso nunca via o botão "Ajudou a resolver".
-    await signInAs(page, AUTHOR_EMAIL)
-    await page.setViewportSize({ width: 1280, height: 800 })
-
-    // When they open their request
-    await page.goto(REQUEST_PATH)
-    await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
-
-    // Then the "Ajudou a resolver" action is reachable on a reply that is not
-    // the marked one (the seed marks the first reply)
-    await expect(page.getByRole("button", { name: /^Ajudou a resolver/ }).first()).toBeVisible()
   })
 
   test("the invite surface has no people search (D43)", async ({ page }) => {

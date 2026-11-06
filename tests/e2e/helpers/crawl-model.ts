@@ -14,7 +14,7 @@ export interface RoutePattern {
    * "page": página do Next; "app": tela do SPA servida em /app (catálogo do roteador);
    * "handler": rota de API.
    */
-  readonly kind: "page" | "app" | "handler"
+  readonly kind: "page" | "app" | "handler" | "redirect"
   readonly regex: RegExp
   /** Estáticas vencem dinâmicas quando as duas casam ("/pedidos/novo" x "/pedidos/[id]"). */
   readonly dynamicSegments: number
@@ -72,9 +72,13 @@ export function buildPatterns(
   pageFiles: string[],
   handlerFiles: string[],
   caminhosDoApp: readonly string[] = [],
+  redirecionadas: readonly string[] = [],
 ): RoutePattern[] {
   const all = [
-    ...pageFiles.map((file) => patternFor(routeFromFile(file), "page")),
+    ...pageFiles.map((file) => {
+      const route = routeFromFile(file)
+      return patternFor(route, redirecionadas.includes(route) ? "redirect" : "page")
+    }),
     ...handlerFiles.map((file) => patternFor(routeFromFile(file), "handler")),
     ...caminhosDoApp.map((caminho) =>
       patternFor(`${PREFIXO_DO_APP}${moldeDoRoteador(caminho)}`, "app"),

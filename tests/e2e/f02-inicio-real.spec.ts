@@ -5,7 +5,8 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
   test("mostra a cidade da sessão e busca conteúdo semeado", async ({ page, context }) => {
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
     const inicio = page.waitForResponse((resposta) => resposta.url().endsWith("/api/app/inicio"))
-    await page.goto("/app/inicio")
+    await page.goto("/inicio")
+    await expect(page).toHaveURL(/\/app\/inicio$/)
     const resposta = await inicio
     expect(resposta.status()).toBe(200)
     expect((await resposta.json()) as { cidade: string }).toMatchObject({ cidade: "Manaus" })
