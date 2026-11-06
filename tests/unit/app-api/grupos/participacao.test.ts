@@ -72,6 +72,18 @@ describe("participação de grupo", () => {
         .status,
     ).toBe(400)
   })
+  it.each([null, [], "texto"])("pedido recusa corpo que não é objeto", async (corpo) => {
+    const mock = mockClient()
+    autenticar(mock)
+    expect((await entrar(req("PUT", url, corpo), context)).status).toBe(400)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+  it("sem cidade não entra nem pede entrada", async () => {
+    const mock = mockClient({ cidade: false })
+    autenticar(mock)
+    expect((await entrar(req("PUT", url, {}), context)).status).toBe(403)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
   it("grupo inexistente é 404 em ambas as escritas", async () => {
     const mock = mockClient({ grupo: null })
     autenticar(mock)

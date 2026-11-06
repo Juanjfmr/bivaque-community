@@ -55,3 +55,10 @@ it("falha de leitura é 503", async () => {
   expect(r.status).toBe(503)
   expect(JSON.stringify(await r.json())).not.toContain("segredo")
 })
+it.each(["group_join_reasons", "profiles"])("erro em %s não vira motivo vazio", async (erro) => {
+  const mock = mockClient({ erro })
+  autenticar(mock)
+  const r = await GET(req(), context)
+  expect(r.status).toBe(503)
+  expect(await r.json()).toEqual({ erro: "leitura-indisponivel" })
+})
