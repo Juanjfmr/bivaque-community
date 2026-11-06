@@ -1,9 +1,11 @@
 import { appendFileSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs"
 import { join, relative } from "node:path"
 import { type BrowserContext, expect, test } from "@playwright/test"
+import { ROTAS } from "../../apps/app/lib/navegacao/rotas"
 import {
   type AllowedUnreached,
   buildPatterns,
+  caminhosDoCatalogo,
   Frontier,
   internalTarget,
   type RoutePattern,
@@ -16,7 +18,8 @@ import { signInAs } from "./helpers/session"
 //
 // Cada persona entra pelas portas reais dela e segue todo <a href> que o app renderiza, página
 // após página. Reprova quando:
-//   1. um link leva a rota que não existe, a 404, ou à tela "Algo deu errado";
+//   1. um link leva a rota que não existe (nem página do Next nem tela do app em /app, pelo
+//      catálogo do roteador), a 404, ou à tela "Algo deu errado";
 //   2. uma rota de página não é alcançada por nenhum link de nenhuma persona e não tem porta
 //      declarada em PORTAS_FORA_DO_LINK — ou seja, só se chega a ela digitando a URL;
 //   3. uma porta declarada ficou velha: a rota passou a ter link, ou deixou de existir.
@@ -34,7 +37,9 @@ const NAV_TIMEOUT = 15_000
 const PROGRESS = join(OUT_DIR, "progresso.log")
 // Cada segmento tem o próprio "não encontrado" ("Imóvel não encontrado", "Denúncia não
 // encontrada"...) e, com streaming, o notFound() chega com HTTP 200. O texto é o sinal.
-const BROKEN_TEXT = /não encontrad[oa]|Algo deu errado|This page could not be found/i
+// "Este endereço não existe" é a tela de endereço inexistente do próprio SPA (TelaIndisponivel).
+const BROKEN_TEXT =
+  /não encontrad[oa]|Algo deu errado|This page could not be found|Este endereço não existe/i
 
 // `chega` é onde a primeira entrada TEM de cair. Se não cair, a persona não entrou (o proxy
 // falha fechado em /onboarding quando não consegue ler o tipo da conta) e tudo o que ela
@@ -317,7 +322,12 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
   test.describe.configure({ timeout: 25 * 60_000 })
 
   test("todo link leva a uma tela real e toda tela tem porta", async ({ browser }) => {
-    const patterns = buildPatterns(listFiles(APP_DIR, "page.tsx"), listFiles(APP_DIR, "route.ts"))
+    // Telas do SPA em /app: o catálogo do roteador (apps/app) é a autoridade do que existe lá.
+    const patterns = buildPatterns(
+      listFiles(APP_DIR, "page.tsx"),
+      listFiles(APP_DIR, "route.ts"),
+      caminhosDoCatalogo(ROTAS),
+    )
     const reached = new Set<string>()
     const broken: Broken[] = []
     const redirects: Array<{ persona: string; target: string; landed: string }> = []

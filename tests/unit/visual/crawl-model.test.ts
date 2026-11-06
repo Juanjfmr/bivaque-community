@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
+import { ROTAS } from "../../../apps/app/lib/navegacao/rotas"
 import {
   buildPatterns,
+  caminhosDoCatalogo,
   Frontier,
   internalTarget,
   matchRoute,
@@ -133,5 +135,36 @@ describe("modelo do rastreador de links", () => {
     const reached = new Set(["/pedidos/[id]"])
     const allowed = [{ route: "/pedidos/[id]", porta: "velha: hoje tem link" }]
     expect(staleAllowances(patterns, reached, allowed)).toEqual(["/pedidos/[id]"])
+  })
+
+  it("tela do app em /app casa pelo catálogo real, com e sem parâmetro", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS, caminhosDoCatalogo(ROTAS))
+    expect(matchRoute("/app/ajuda", patterns)).toMatchObject({ route: "/app/ajuda", kind: "app" })
+    expect(matchRoute("/app/ajuda/apagar-conta", patterns)).toMatchObject({
+      route: "/app/ajuda/[topico]",
+      kind: "app",
+    })
+    expect(matchRoute("/app/entrar", patterns)).toMatchObject({ route: "/app/entrar", kind: "app" })
+    expect(matchRoute("/app/entrar/cidade", patterns)?.kind).toBe("app")
+  })
+
+  it("o que não está no catálogo do app continua quebrado, e /ajuda sem /app não vira tela do app", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS, caminhosDoCatalogo(ROTAS))
+    expect(matchRoute("/app/nao-existe", patterns)).toBeNull()
+    expect(matchRoute("/app/ajuda/a/b", patterns)).toBeNull()
+    expect(matchRoute("/ajuda", patterns)).toBeNull()
+  })
+
+  it("tela do app é visitada, mas não conta como rota de página sem porta", () => {
+    const patterns = buildPatterns([], [], caminhosDoCatalogo(ROTAS))
+    expect(unreachedRoutes(patterns, new Set(), [])).toEqual([])
+    const frontier = new Frontier(patterns, 1)
+    const casou = frontier.offer({
+      target: "/app/ajuda",
+      from: "/app/entrar",
+      persona: "visitante",
+    })
+    expect(casou?.kind).toBe("app")
+    expect(frontier.next()?.target).toBe("/app/ajuda")
   })
 })
