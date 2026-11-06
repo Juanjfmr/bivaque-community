@@ -86,7 +86,7 @@ test.describe("F09 — avisos reais", { tag: "@stateful" }, () => {
     await capturar(page, testInfo.project.name, "voce-preferencias")
 
     await respostas.click()
-    await page.getByRole("button", { name: "Salvar preferências" }).click()
+    await page.getByRole("button", { name: "Gravar preferências de avisos" }).click()
     await expect(page.getByRole("status")).toContainText("Preferências de aviso salvas.", {
       timeout: 30_000,
     })
@@ -100,7 +100,7 @@ test.describe("F09 — avisos reais", { tag: "@stateful" }, () => {
 
     // Devolve o estado ao terminar.
     await page.getByRole("checkbox", { name: "Avisos de respostas" }).click()
-    await page.getByRole("button", { name: "Salvar preferências" }).click()
+    await page.getByRole("button", { name: "Gravar preferências de avisos" }).click()
     await expect(page.getByRole("status")).toContainText("Preferências de aviso salvas.", {
       timeout: 30_000,
     })
