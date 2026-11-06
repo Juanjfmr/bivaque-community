@@ -58,6 +58,7 @@ describe("id local (§7 helpers)", () => {
 describe("imagem de asset (§7 primitivos)", () => {
   it("deixa passar o data: URI e devolve vazio no que ainda não existe", () => {
     expect(assetUrl("data:image/png;base64,AAA")).toBe("data:image/png;base64,AAA")
+    expect(assetUrl("http://127.0.0.1:54321/sign/x")).toBe("http://127.0.0.1:54321/sign/x")
     // O mapa de assets é dado de demonstração, que chega na onda 1d.
     expect(assetUrl("foto-do-hero")).toBe("")
     expect(assetUrl(undefined)).toBe("")

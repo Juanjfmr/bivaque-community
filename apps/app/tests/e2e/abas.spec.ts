@@ -7,6 +7,14 @@ import {
   subAbaAtiva,
   test,
 } from "./apoio"
+import { aplicarStubMercado } from "./stub-mercado"
+
+// Intercepta `/api/app/mercado*` antes de qualquer spec tocar no Mercado ou Anuncio.
+// Specs que só navegam por telas estáticas continuam passando — o stub só intercepta
+// requisições para as rotas que realmente existem; as outras passam sem efeito colateral.
+test.beforeEach(async ({ page }) => {
+  aplicarStubMercado(page)
+})
 
 const SELETOR_ABRIR_PERGUNTA = '[data-acao="abrir-pergunta"][data-valor="pergunta-dificil"]'
 

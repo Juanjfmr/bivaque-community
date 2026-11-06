@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularInicio } from "./inicio-ajuda"
+import { aplicarStubMercado } from "./stub-mercado"
 
 test.beforeEach(async ({ page }) => {
   await simularInicio(page)
@@ -54,6 +55,7 @@ test("mobile: topo e barra inferior cabem inteiros, com alvos de toque", async (
 })
 
 test("mobile: carrossel mostra próximo cartão e foto abre o anúncio", async ({ page }) => {
+  aplicarStubMercado(page)
   const largura = page.viewportSize()?.width ?? 0
   test.skip(largura >= 720, "Critério de cards grandes apenas no mobile")
 
@@ -79,6 +81,7 @@ test("mobile: carrossel mostra próximo cartão e foto abre o anúncio", async (
 })
 
 test("mobile: fotos de imóveis reais da fixture e título sem caixa de foco", async ({ page }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/imoveis")
 
   const titulo = page.locator('[data-tela="imoveis"] [data-titulo-da-tela]')

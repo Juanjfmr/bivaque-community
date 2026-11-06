@@ -1,17 +1,18 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Selecao } from "@/components/bivaque/campos"
-import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
+import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
 import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { type ListaDoMercado, lerMercado } from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
@@ -22,15 +23,28 @@ import {
   type RascunhoImovel,
 } from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
-import { numero, registro, texto } from "@/src/telas/comum"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
+import {
+  atributosDoImovel,
+  complementoDoImovel,
+  doTipo,
+  eAluguel,
+  ehImovel,
+  precoEmReais,
+  rotuloDaCapa,
+  totalMensal,
+} from "@/src/mercado/cartao"
 
 /**
- * O Mercado da onda 5 (protótipo: features/listings/catalog.js), com dados de
- * demonstração.
+ * O Mercado do app, do banco (LAN-F06, no molde do F05).
  *
- * V1: uma lista por aba (Desapegos, Imóveis, Negócios), com as sub-abas
- * navegando de verdade, contagem, salvar local e vazios. Ficam para o refino:
- * filtros de ordenação, faixa de preço, mapa, painel de bairro e paginação.
+ * O desenho é o mesmo de sempre: uma lista por aba (Desapegos, Imóveis,
+ * Negócios), sub-abas navegando de verdade, contagem, salvar local, filtros no
+ * cliente e rascunhos. Mudou de onde vem o dado — `lib/dados/mercado`, que fala
+ * com `/api/app/mercado` — e por isso a tela distingue carregando, vazio de
+ * verdade, falha recuperável, sessão vencida e acesso negado. Banco fora não
+ * vira "nada anunciado".
  */
 
 export type AbaDoMercado = "desapegos" | "imoveis" | "negocios"
@@ -41,53 +55,6 @@ const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "negocios", rotulo: "Negócios" },
 ]
 
-function ehImovel(kind: unknown): boolean {
-  return kind === "imovel" || kind === "property"
-}
-
-/** Não presumir condomínio zero quando o valor não consta do anúncio. */
-function totalMensal(anuncio: DadosDaCidade["anuncios"][number]): number | null {
-  if (typeof anuncio.price_cents !== "number") return null
-  const aluguel = anuncio.price_cents / 100
-  const descricao = anuncio.description ?? ""
-  const valor = /condomínio\s+de\s+R\$\s*([\d.,]+)/i.exec(descricao)?.[1]
-  if (!valor) return null
-  const condominio = Number(valor.replaceAll(".", "").replace(",", "."))
-  return Number.isFinite(condominio) ? aluguel + condominio : null
-}
-
-function quartos(anuncio: DadosDaCidade["anuncios"][number]): number | null {
-  const nome = /\b(\d+)\s+quartos?\b/i.exec(anuncio.title)?.[1]
-  return nome ? Number(nome) : null
-}
-
-/** Resumo apenas de atributos explicitamente informados pelo anunciante. */
-function atributosDoImovel(anuncio: DadosDaCidade["anuncios"][number]): string[] {
-  const descricao = anuncio.description ?? ""
-  const itens: string[] = []
-  const quantidadeDeQuartos = quartos(anuncio)
-  if (quantidadeDeQuartos !== null) itens.push(`${quantidadeDeQuartos} quartos`)
-  const area = /(\d+(?:[.,]\d+)?)\s*m²/i.exec(descricao)?.[1]
-  if (area) itens.push(`${area} m²`)
-  const vaga = /(\d+)\s+vagas?\b/i.exec(descricao)?.[1]
-  if (vaga) itens.push(`${vaga} ${vaga === "1" ? "vaga" : "vagas"}`)
-  else if (/\buma vaga\b/i.test(descricao)) itens.push("1 vaga")
-  return itens
-}
-
-function complementoDoImovel(anuncio: DadosDaCidade["anuncios"][number]): string | undefined {
-  const descricao = anuncio.description ?? ""
-  const partes: string[] = []
-  const condominio = /condomínio\s+de\s+R\$\s*([\d.,]+)/i.exec(descricao)?.[1]
-  if (condominio) {
-    const valor = Number(condominio.replaceAll(".", "").replace(",", "."))
-    if (Number.isFinite(valor)) partes.push(`Condomínio ${moeda(valor)}`)
-  }
-  const disponibilidade = /disponível a partir de ([^.]+)/i.exec(descricao)?.[1]
-  if (disponibilidade) partes.push(`Disponível a partir de ${disponibilidade.trim()}`)
-  return partes.length === 0 ? undefined : partes.join(" · ")
-}
-
 export function ListaDeMercado({
   inicial,
   comAbas = true,
@@ -97,8 +64,8 @@ export function ListaDeMercado({
 }) {
   const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [dados, setDados] = useState<ListaDoMercado | null>(null)
+  const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
@@ -114,21 +81,28 @@ export function ListaDeMercado({
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
+  // A cidade é a da sessão, devolvida pela rota; `casca.cidade` segue no cabeçalho
+  // enquanto a rota não traz nome (vazio honesto, nunca cidade inventada).
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
+    // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
+    if (inicial === "negocios") return
     const controle = new AbortController()
     setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
+    setErro(null)
+    void lerMercado(
+      { tipo: inicial === "imoveis" ? "property" : "item" },
+      { signal: controle.signal },
+    )
       .then((lidos) => {
         if (!controle.signal.aborted) setDados(lidos)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (controle.signal.aborted) return
+        setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [inicial, rodada])
 
   useEffect(() => {
     if (inicial !== "imoveis") return
@@ -144,26 +118,22 @@ export function ListaDeMercado({
     setRascunhos(lerRascunhosImoveis(casca.cidade))
   }
 
-  const itens = useMemo(() => {
-    if (dados === null) return []
-    return dados.anuncios
-      .map((anuncio) => ({ anuncio, apresentacao: registro(anuncio.apresentacao) }))
-      .filter(({ anuncio }) =>
-        inicial === "imoveis"
-          ? anuncio.kind !== null && ehImovel(anuncio.kind)
-          : !ehImovel(anuncio.kind),
-      )
-  }, [dados, inicial])
+  const itens = useMemo(
+    () =>
+      dados === null
+        ? []
+        : dados.anuncios.filter((anuncio) =>
+            inicial === "imoveis" ? ehImovel(anuncio) : !ehImovel(anuncio),
+          ),
+    [dados, inicial],
+  )
 
   const imoveisFiltrados = useMemo(() => {
     if (inicial !== "imoveis") return itens
-    const filtrados = itens.filter(({ anuncio }) => {
-      if (tipo !== "todos" && !anuncio.title.toLocaleLowerCase("pt-BR").includes(tipo)) return false
-      const quartosDoImovel = quartos(anuncio)
-      if (
-        minimoQuartos !== "0" &&
-        (quartosDoImovel === null || quartosDoImovel < Number(minimoQuartos))
-      )
+    const filtrados = itens.filter((anuncio) => {
+      if (tipo !== "todos" && !doTipo(anuncio, tipo)) return false
+      const quantidade = anuncio.quartos
+      if (minimoQuartos !== "0" && (quantidade === null || quantidade < Number(minimoQuartos)))
         return false
       if (maximoMensal !== "todos") {
         const mensal = totalMensal(anuncio)
@@ -173,8 +143,8 @@ export function ListaDeMercado({
     })
     return filtrados.sort((a, b) => {
       if (ordenacao === "relevancia") return 0
-      const precoA = totalMensal(a.anuncio)
-      const precoB = totalMensal(b.anuncio)
+      const precoA = totalMensal(a)
+      const precoB = totalMensal(b)
       if (precoA === null && precoB === null) return 0
       if (precoA === null) return 1
       if (precoB === null) return -1
@@ -189,13 +159,6 @@ export function ListaDeMercado({
     setOrdenacao("relevancia")
   }
 
-  const negocios = useMemo(() => {
-    if (dados === null) return []
-    return dados.negocios
-      .map((negocio) => ({ negocio, apresentacao: registro(negocio.apresentacao) }))
-      .sort((a, b) => numero(b.apresentacao["recN"]) - numero(a.apresentacao["recN"]))
-  }, [dados])
-
   const alternarSalvo = (id: string) => {
     setSalvos((atual) => {
       const proximo = new Set(atual)
@@ -205,7 +168,8 @@ export function ListaDeMercado({
     })
   }
 
-  const carregando = dados === null && !erro
+  const carregando = inicial !== "negocios" && dados === null && erro === null
+  const cidade = dados?.cidade ?? casca.cidade
   const titulo =
     inicial === "desapegos" ? "Desapegos" : inicial === "imoveis" ? "Imóveis" : "Negócios locais"
 
@@ -216,7 +180,7 @@ export function ListaDeMercado({
         subtitulo={
           inicial === "imoveis"
             ? "Aluguel e venda"
-            : `O que a comunidade de ${casca.cidade} está anunciando.`
+            : `O que a comunidade de ${cidade} está anunciando.`
         }
         acao={
           inicial === "imoveis" ? (
@@ -291,7 +255,7 @@ export function ListaDeMercado({
         />
       ) : null}
 
-      {inicial === "imoveis" && !carregando && !erro ? (
+      {inicial === "imoveis" && !carregando && erro === null ? (
         <div data-filtros-imoveis="sim" className="mt-2 grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Botao
@@ -400,45 +364,21 @@ export function ListaDeMercado({
         </div>
       ) : null}
 
-      {erro ? (
+      {erro === "sessao" ? (
+        <EstadoDeSessaoVencida />
+      ) : erro === "negado" ? (
+        <EstadoNegado texto="Sua conta não tem acesso ao Mercado desta cidade." />
+      ) : erro === "falhou" ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
       ) : inicial === "negocios" ? (
-        negocios.length === 0 ? (
-          <EstadoVazio
-            titulo="Ainda sem negócios cadastrados"
-            texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-            icone="storefront"
-          />
-        ) : (
-          <>
-            <p className="text-sm text-(--on-surface-variant)">
-              {negocios.length === 1 ? "1 negócio" : `${negocios.length} negócios`} em{" "}
-              {casca.cidade}
-            </p>
-            <Grade formato="cartoes">
-              {negocios.map(({ negocio, apresentacao }) => (
-                <CartaoDeNegocio
-                  key={negocio.id}
-                  negocio={{
-                    id: negocio.id,
-                    fonte: texto(apresentacao["imagem"]),
-                    nome: texto(apresentacao["name"], negocio.display_name),
-                    categoria: texto(apresentacao["cat"], negocio.category ?? ""),
-                    cidade: casca.cidade,
-                    indicacoes: numero(apresentacao["recN"]),
-                    patrocinado: apresentacao["spon"] === true,
-                    aguardando: apresentacao["claimed"] === false,
-                  }}
-                  aoAbrir={() =>
-                    void navegacao.irPara("negocio", { parametros: { id: negocio.id } })
-                  }
-                />
-              ))}
-            </Grade>
-          </>
-        )
+        // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
+        <EstadoVazio
+          titulo="Ainda sem negócios cadastrados"
+          texto="As indicações da comunidade ajudarão a formar o guia de serviços."
+          icone="storefront"
+        />
       ) : (inicial === "imoveis" ? imoveisFiltrados.length === 0 : itens.length === 0) ? (
         <EstadoVazio
           titulo={
@@ -460,26 +400,27 @@ export function ListaDeMercado({
         <>
           {inicial === "imoveis" ? null : (
             <p className="text-sm text-(--on-surface-variant)">
-              {itens.length} anúncios em {casca.cidade}
+              {itens.length} anúncios em {cidade}
             </p>
           )}
           <Grade
             formato="cartoes"
             className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : ""}
           >
-            {(inicial === "imoveis" ? imoveisFiltrados : itens).map(({ anuncio, apresentacao }) => (
+            {(inicial === "imoveis" ? imoveisFiltrados : itens).map((anuncio) => (
               <CartaoDeFoto
                 key={anuncio.id}
                 anuncio={{
                   id: anuncio.id,
-                  fonte: texto(apresentacao["imagem"]),
-                  rotulo: texto(apresentacao["flag"]) || undefined,
-                  porMes: texto(apresentacao["per"]) === "/mês",
-                  titulo: texto(apresentacao["title"], anuncio.title),
-                  preco: typeof anuncio.price_cents === "number" ? anuncio.price_cents / 100 : null,
-                  icone: iconeDeDado(apresentacao["icon"]),
-                  meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
-                  salvo: salvos.has(anuncio.id) || apresentacao["saved"] === true,
+                  // A capa já sabe ficar sem imagem quando a fonte é nula.
+                  fonte: anuncio.foto ?? null,
+                  rotulo: rotuloDaCapa(anuncio),
+                  porMes: eAluguel(anuncio),
+                  titulo: anuncio.titulo,
+                  preco: precoEmReais(anuncio),
+                  icone: ehImovel(anuncio) ? "apartment" : iconeDeDado(anuncio.categoria),
+                  meta: anuncio.bairro ?? anuncio.cidade ?? cidade,
+                  salvo: salvos.has(anuncio.id),
                   ...(inicial === "imoveis"
                     ? {
                         detalhes: atributosDoImovel(anuncio),

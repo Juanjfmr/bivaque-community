@@ -24,8 +24,16 @@ const relativo = (caminhoAbsoluto) => caminhoAbsoluto.slice(root.length + 1).rep
 // o molde que as próximas oito jornadas copiam — o que eles travam não é a F05,
 // é o formato da porta.
 
-/** As telas que JÁ foram ligadas ao banco. A lista é explícita de propósito. */
-const TELAS_LIGADAS = ["apps/app/src/telas/Agenda.tsx", "apps/app/src/telas/Evento.tsx"]
+/**
+ * As telas que JÁ foram ligadas ao banco, com a porta da jornada de cada uma.
+ * A lista é explícita de propósito.
+ */
+const TELAS_LIGADAS = [
+  { tela: "apps/app/src/telas/Agenda.tsx", porta: /from "@\/lib\/dados\/eventos"/ },
+  { tela: "apps/app/src/telas/Evento.tsx", porta: /from "@\/lib\/dados\/eventos"/ },
+  { tela: "apps/app/src/telas/Mercado.tsx", porta: /from "@\/lib\/dados\/mercado"/ },
+  { tela: "apps/app/src/telas/Anuncio.tsx", porta: /from "@\/lib\/dados\/mercado"/ },
+]
 
 /**
  * Telas de outra jornada que importam a porta de eventos de propósito: o Início
@@ -34,26 +42,30 @@ const TELAS_LIGADAS = ["apps/app/src/telas/Agenda.tsx", "apps/app/src/telas/Even
 const LEEM_A_PORTA_DE_EVENTOS = ["apps/app/src/telas/Inicio.tsx"]
 
 test("as telas ligadas leem pela porta da jornada, nunca pela demonstração", () => {
-  for (const tela of TELAS_LIGADAS) {
+  for (const { tela, porta } of TELAS_LIGADAS) {
     const fonte = read(...tela.split("/"))
     assert.doesNotMatch(fonte, /dadosDoApp/, `${tela} ainda usa dadosDoApp`)
     assert.doesNotMatch(fonte, /from "@\/lib\/dados"$/m, `${tela} ainda importa a demonstração`)
-    assert.match(fonte, /from "@\/lib\/dados\/eventos"/, `${tela} não lê pela porta da jornada`)
+    assert.match(fonte, porta, `${tela} não lê pela porta da jornada`)
   }
 })
 
 test("a demonstração continua servindo as telas que ainda não foram ligadas", () => {
   const telas = arquivos("apps/app/src/telas")
-  const ligadas = new Set(
-    [...TELAS_LIGADAS, ...LEEM_A_PORTA_DE_EVENTOS].map((tela) => join(root, ...tela.split("/"))),
-  )
+  const ligadas = new Set([
+    ...TELAS_LIGADAS.map(({ tela }) => join(root, ...tela.split("/"))),
+    ...LEEM_A_PORTA_DE_EVENTOS.map((tela) => join(root, ...tela.split("/"))),
+  ])
+  const portas = TELAS_LIGADAS.map(({ porta }) => porta)
   for (const caminho of telas) {
     if (ligadas.has(caminho)) continue
-    assert.doesNotMatch(
-      ler(caminho),
-      /@\/lib\/dados\/eventos/,
-      `${relativo(caminho)} passou a ler a jornada de eventos sem estar na lista das ligadas`,
-    )
+    for (const porta of portas) {
+      assert.doesNotMatch(
+        ler(caminho),
+        porta,
+        `${relativo(caminho)} passou a ler uma jornada ligada sem estar na lista das ligadas`,
+      )
+    }
   }
   // A demonstração continua existindo e servindo o resto.
   assert.ok(
@@ -149,6 +161,70 @@ test("o detalhe não devolve caminho cru de mídia", () => {
 
 test("as rotas de eventos têm a função única de UUID", () => {
   for (const caminho of arquivos("apps/web/app/api/app/eventos").filter((c) =>
+    c.endsWith("route.ts"),
+  )) {
+    const fonte = ler(caminho)
+    assert.doesNotMatch(
+      fonte,
+      /const UUID =/,
+      `${relativo(caminho)} redefine o regex de UUID em vez de usar _comum.ts`,
+    )
+  }
+})
+
+// ── F06 (mercado): mesmo molde da porta ─────────────────────────────────────
+
+test("as rotas do mercado usam a sessão sob RLS, nunca o cliente de serviço", () => {
+  const rotas = arquivos("apps/web/app/api/app/mercado").filter((caminho) =>
+    caminho.endsWith("route.ts"),
+  )
+  assert.ok(rotas.length === 3, `esperava as 3 rotas da jornada, achei ${rotas.length}`)
+  for (const caminho of rotas) {
+    const fonte = ler(caminho)
+    assert.doesNotMatch(
+      fonte,
+      /clienteDeServicoOuNulo|service_role/,
+      `${relativo(caminho)} usa privilégio onde a RLS da sessão basta`,
+    )
+    assert.match(
+      fonte,
+      /exigirSessao/,
+      `${relativo(caminho)} não resolve a sessão pelo encanamento`,
+    )
+    assert.match(fonte, /opcoesDoApp/, `${relativo(caminho)} não responde ao preflight do contrato`)
+  }
+})
+
+test("toda escrita das rotas do mercado passa pela conferência de CSRF", () => {
+  const escritas = arquivos("apps/web/app/api/app/mercado").filter((caminho) =>
+    /export async function (POST|PUT|PATCH|DELETE)/.test(ler(caminho)),
+  )
+  assert.ok(escritas.length >= 1, `esperava a escrita da jornada, achei ${escritas.length}`)
+  for (const caminho of escritas) {
+    assert.match(
+      ler(caminho),
+      /conferirEscrita\(/,
+      `${relativo(caminho)} escreve sem conferir a porta`,
+    )
+  }
+})
+
+test("a cidade da sessão do mercado é lida no vínculo current, num lugar só", () => {
+  const comum = read("apps", "web", "app", "api", "app", "mercado", "_comum.ts")
+  assert.match(comum, /eq\("kind", "current"\)/)
+  for (const caminho of arquivos("apps/web/app/api/app/mercado").filter((c) =>
+    c.endsWith("route.ts"),
+  )) {
+    assert.doesNotMatch(
+      ler(caminho),
+      /from\("locality_memberships"\)/,
+      `${relativo(caminho)} lê a cidade por conta própria em vez de _comum.ts`,
+    )
+  }
+})
+
+test("as rotas do mercado têm a função única de UUID", () => {
+  for (const caminho of arquivos("apps/web/app/api/app/mercado").filter((c) =>
     c.endsWith("route.ts"),
   )) {
     const fonte = ler(caminho)
