@@ -3699,7 +3699,7 @@ export type Database = {
         | "verification_gated"
       locality_membership_access: "active" | "read_only"
       locality_membership_kind: "current" | "leaving"
-      notification_channel: "in_app" | "email"
+      notification_channel: "in_app" | "email" | "push"
       notification_type:
         | "comment"
         | "group_admission"
@@ -3944,7 +3944,7 @@ export const Constants = {
       ],
       locality_membership_access: ["active", "read_only"],
       locality_membership_kind: ["current", "leaving"],
-      notification_channel: ["in_app", "email"],
+      notification_channel: ["in_app", "email", "push"],
       notification_type: [
         "comment",
         "group_admission",
