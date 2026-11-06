@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { createServerClient } from "../supabase/server"
 import { sanitizeImage } from "./sanitize-image"
 
 export const FOTO_DO_GRUPO_MAX = 5 * 1024 * 1024
@@ -29,6 +30,14 @@ export async function enviarFotoDoGrupo(
   grupoId: string,
   file: File,
 ): Promise<{ caminho: string } | { invalida: true }> {
+  const membro = await client
+    .from("group_memberships")
+    .select("group_id")
+    .eq("group_id", grupoId)
+    .eq("user_id", userId)
+    .eq("status", "approved")
+    .maybeSingle()
+  if (membro.error || !membro.data) throw new Error("membership unavailable")
   let imagem: Buffer
   try {
     imagem = await sanitizeImage(file, FOTO_DO_GRUPO_MAX)
@@ -37,8 +46,8 @@ export async function enviarFotoDoGrupo(
   }
   const extensao = TIPOS[file.type as keyof typeof TIPOS]
   const caminho = `${userId}/grupos/${grupoId}/${randomUUID()}.${extensao}`
-  // O upload usa a própria sessão: owner e vínculo são conferidos de novo pelo Storage.
-  const { error } = await client.storage.from("event-photos").upload(caminho, imagem, {
+  // SEC-006: só o upload exige serviço; vínculo conferido acima pela sessão sob RLS.
+  const { error } = await createServerClient().storage.from("event-photos").upload(caminho, imagem, {
     contentType: file.type,
     upsert: false,
   })

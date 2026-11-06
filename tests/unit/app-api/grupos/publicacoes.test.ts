@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("server-only", () => ({}))
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/storage/sanitize-image", () => ({ sanitizeImage: vi.fn() }))
+vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
 import { POST as foto } from "web/app/api/app/grupos/[id]/fotos/route"
 import { POST as publicar } from "web/app/api/app/grupos/[id]/publicacoes/route"
@@ -10,6 +11,7 @@ import { POST as comentar } from "web/app/api/app/grupos/publicacoes/[id]/coment
 import { GET as detalhe } from "web/app/api/app/grupos/publicacoes/[id]/route"
 import { lerPublicacaoDoGrupo } from "web/lib/composer/post-attachment"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
+import { createServerClient } from "web/lib/supabase/server"
 import {
   autenticar,
   BASE,
@@ -56,6 +58,7 @@ describe("publicar, ler e comentar em grupo", () => {
     vi.clearAllMocks()
     semSessao()
     vi.mocked(sanitizeImage).mockResolvedValue(Buffer.from("pixels sem EXIF"))
+    vi.mocked(createServerClient).mockReturnValue(mockClient().client)
   })
   it.each(escritas)("$nome exige sessão", async (c) => {
     expect((await c.chamar(req("POST", c.url, c.corpo), c.context)).status).toBe(401)
@@ -80,6 +83,7 @@ describe("publicar, ler e comentar em grupo", () => {
     expect((await c.chamar(req("POST", c.url, c.corpo), c.context)).status).toBe(403)
     expect(mock.chamadas.some((chamada) => chamada.metodo === "insert")).toBe(false)
     expect(sanitizeImage).not.toHaveBeenCalled()
+    expect(createServerClient).not.toHaveBeenCalled()
   })
   it.each(escritas)("$nome não revela grupo/publicação inexistente", async (c) => {
     const mock = mockClient({ grupo: null, posts: [] })
@@ -166,15 +170,18 @@ describe("publicar, ler e comentar em grupo", () => {
     expect(r.status).toBe(status)
     expect(JSON.stringify(await r.json())).not.toContain("segredo")
   })
-  it("foto é sanitizada no servidor e enviada pela sessão para a própria pasta", async () => {
+  it("foto é sanitizada; só o upload usa serviço, após conferir vínculo sob RLS", async () => {
     const mock = mockClient()
+    const storage = mockClient()
+    vi.mocked(createServerClient).mockReturnValue(storage.client)
     autenticar(mock)
     const r = await foto(req("POST", fotos, imagem), context)
     expect(r.status).toBe(201)
     const corpo = await r.json()
     expect(corpo.caminho).toMatch(new RegExp("^" + USER + "/grupos/" + ID + "/[0-9a-f-]+\\.png$"))
     expect(sanitizeImage).toHaveBeenCalledWith(expect.any(File), 5 * 1024 * 1024)
-    expect(mock.upload).toHaveBeenCalledWith(corpo.caminho, Buffer.from("pixels sem EXIF"), {
+    expect(mock.upload).not.toHaveBeenCalled()
+    expect(storage.upload).toHaveBeenCalledWith(corpo.caminho, Buffer.from("pixels sem EXIF"), {
       contentType: "image/png",
       upsert: false,
     })
@@ -196,9 +203,11 @@ describe("publicar, ler e comentar em grupo", () => {
     vi.mocked(sanitizeImage).mockRejectedValue(new Error("detalhe interno"))
     expect((await foto(req("POST", fotos, imagem), context)).status).toBe(400)
     expect(mock.upload).not.toHaveBeenCalled()
+    expect(createServerClient).not.toHaveBeenCalled()
   })
   it("erro do storage é 503 sem eco", async () => {
-    const mock = mockClient({ storageErro: "upload" })
+    const mock = mockClient()
+    vi.mocked(createServerClient).mockReturnValue(mockClient({ storageErro: "upload" }).client)
     autenticar(mock)
     const r = await foto(req("POST", fotos, imagem), context)
     expect(r.status).toBe(503)
