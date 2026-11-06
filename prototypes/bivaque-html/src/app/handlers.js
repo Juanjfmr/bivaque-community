@@ -47,6 +47,7 @@ async function perform(action,value,el){
  case 'clear-recent':if(mutate(()=>{state.recent=[];},{redraw:false})){$('#search-results')&&($('#search-results').innerHTML=searchResults());notify('Buscas recentes apagadas','delete');$('#search-query')?.focus();}break;
  case 'search-explore':if(value.startsWith('biz|')){bizQuery='';bizCat=value.slice(4);navigate('negocios');}else navigate(value==='imovel'?'imoveis':'desapegos');break;
  case 'search-type':searchType=value;render();globalFocus(action,value);break;
+ case 'guide-hood':{const hood=hoodInfo(value,state.city);if(!hood){notify('Bairro indisponível nesta cidade.','info');break;}catalogFilter='imovel';catalogAttrs={...catalogAttrs,imovel:{...structuredClone(CATALOG_DEFAULTS.imovel),hoods:[hood.name]}};navigate('imoveis');break;}
  case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value==='imovel'?'imovel':'desapego';catalogAttrs={...catalogAttrs,[catalogFilter]:structuredClone(CATALOG_DEFAULTS[catalogFilter])};navigate(catalogFilter==='imovel'?'imoveis':'desapegos');}break;
  case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='desapego';catalogAttrs={...catalogAttrs,desapego:structuredClone(CATALOG_DEFAULTS.desapego)};navigate('desapegos');break;
  case 'verified-info':openVerifiedInfo();break;
