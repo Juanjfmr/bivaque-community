@@ -347,21 +347,40 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
       await dialogo.getByRole("button", { name: "Reativar" }).click()
       await expect(dialogo).toContainText("Situação atual: Ativo", { timeout: 30_000 })
     } finally {
-      // Devolve o estado do seed (título, preço e situação), custe o que custar.
-      await page.goto("/app/meus-anuncios").catch(() => undefined)
-      if (await botaoGerenciar.isVisible().catch(() => false)) {
-        await botaoGerenciar.click().catch(() => undefined)
-        const reativar = dialogo.getByRole("button", { name: "Reativar" })
-        if (await reativar.isVisible().catch(() => false)) {
-          await reativar.click().catch(() => undefined)
-          await expect(dialogo).toContainText("Situação atual: Ativo", { timeout: 30_000 })
+      // Devolve o estado do seed pelas próprias rotas, sem depender do que a
+      // tela deixou para trás: reativar pela rota /situacao (409 = já estava
+      // ativo) e gravar os campos do seed pelo PATCH. Sem restauração provada,
+      // o teste falha — não há mais `isVisible` sem espera nem erro engolido.
+      const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+      try {
+        const cabecalhos = {
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
+          "content-type": "application/json",
         }
-        await dialogo.getByLabel("Título").fill("Mesa de jantar com 6 cadeiras")
-        await dialogo.getByLabel(/Preço pedido/).fill("450")
-        await dialogo.getByRole("button", { name: "Salvar alterações" }).click()
-        await expect(dialogo.getByRole("alert")).toContainText("Alterações salvas", {
-          timeout: 30_000,
+        const reativado = await api.post(`/api/app/mercado/${MESA}/situacao`, {
+          headers: cabecalhos,
+          data: { acao: "reactivate" },
         })
+        expect([200, 409], `reativar o anúncio do seed falhou (${reativado.status()})`).toContain(
+          reativado.status(),
+        )
+        const gravado = await api.patch(`/api/app/mercado/${MESA}`, {
+          headers: cabecalhos,
+          data: {
+            titulo: "Mesa de jantar com 6 cadeiras",
+            bairro: "Centro",
+            preco: "450",
+            descricao: "Mesa de madeira maciça, usada por dois anos, sem riscos na tampa.",
+            categoria: "casa_moveis",
+            condicao: "used",
+          },
+        })
+        expect(
+          gravado.status(),
+          `restaurar título e preço do seed falhou (${JSON.stringify(await gravado.json())})`,
+        ).toBe(200)
+      } finally {
+        await api.dispose()
       }
     }
   })
