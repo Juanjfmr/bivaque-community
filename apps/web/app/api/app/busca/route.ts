@@ -1,5 +1,6 @@
 import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
+import { contarMembrosAprovados } from "../../../../lib/search/contagem-de-membros"
 import { padraoDoTermo, resolveTerm, termoBuscavel } from "../../../../lib/search/params"
 import { cidadeDaSessao } from "../eventos/_comum"
 
@@ -22,10 +23,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       client.rpc("list_indications", { p_locality_id: cidade.id, p_query: termo, p_limit: LIMITE }),
       client
         .from("groups")
-        .select("id,name,group_memberships(count)")
+        .select("id,name")
         .eq("locality_id", cidade.id)
         .eq("is_deleted", false)
-        .eq("group_memberships.status", "approved")
         .ilike("name", padrao)
         .order("name")
         .limit(LIMITE),
@@ -50,6 +50,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if ([perguntas, grupos, anuncios, negocios, guia].some((resultado) => resultado.error)) {
       throw new Error("leitura indisponível")
     }
+    const gruposDaCidade = grupos.data ?? []
+    const membros = await contarMembrosAprovados(
+      client,
+      gruposDaCidade.map((grupo) => grupo.id),
+    )
     return responder(
       request,
       {
@@ -61,10 +66,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           is_resolved: linha.is_resolved,
           group_name: linha.group_name,
         })),
-        grupos: (grupos.data ?? []).map((linha) => ({
+        grupos: gruposDaCidade.map((linha) => ({
           id: linha.id,
           name: linha.name,
-          members: linha.group_memberships?.[0]?.count ?? 0,
+          members: membros.get(linha.id) ?? 0,
         })),
         anuncios: anuncios.data ?? [],
         negocios: (negocios.data ?? []).slice(0, LIMITE).map((linha) => ({

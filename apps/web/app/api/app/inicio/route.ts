@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
+import { contarMembrosAprovados } from "../../../../lib/search/contagem-de-membros"
 import { cidadeDaSessao } from "../eventos/_comum"
 
 export const runtime = "nodejs"
@@ -13,7 +14,9 @@ type Cliente = SupabaseClient<Database>
 
 /**
  * Os grupos da cidade dos quais a pessoa participa, com a contagem de membros.
- * Tudo sob a RLS da sessão: só aparece o que a própria pessoa já enxerga.
+ * Tudo sob a RLS da sessão: só aparece o que a própria pessoa já enxerga. A
+ * contagem não usa embed (`group_memberships(count)`): o grant de
+ * `group_memberships` é por coluna e o embed daria 403 (ver o helper).
  */
 async function gruposDaPessoa(client: Cliente, userId: string, cidadeId: string) {
   const minhas = await client
@@ -22,22 +25,26 @@ async function gruposDaPessoa(client: Cliente, userId: string, cidadeId: string)
     .eq("user_id", userId)
     .eq("status", "approved")
   if (minhas.error) throw minhas.error
-  const ids = (minhas.data ?? []).map((linha) => linha.group_id)
+  const ids = [...new Set((minhas.data ?? []).map((linha) => linha.group_id))]
   if (ids.length === 0) return []
   const grupos = await client
     .from("groups")
-    .select("id,name,group_memberships(count)")
+    .select("id,name")
     .in("id", ids)
     .eq("locality_id", cidadeId)
     .eq("is_deleted", false)
-    .eq("group_memberships.status", "approved")
     .order("name")
     .limit(TAMANHO)
   if (grupos.error) throw grupos.error
-  return (grupos.data ?? []).map((grupo) => ({
+  const linhas = grupos.data ?? []
+  const membros = await contarMembrosAprovados(
+    client,
+    linhas.map((grupo) => grupo.id),
+  )
+  return linhas.map((grupo) => ({
     id: grupo.id,
     name: grupo.name,
-    members: grupo.group_memberships?.[0]?.count ?? 0,
+    members: membros.get(grupo.id) ?? 0,
   }))
 }
 

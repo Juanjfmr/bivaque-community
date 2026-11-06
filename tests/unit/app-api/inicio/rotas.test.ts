@@ -11,32 +11,46 @@ const url = "http://localhost:3000/api/app/inicio"
 
 function cliente(falha = "", semCidade = false, quantidade = 1) {
   const filtros: Array<[string, string, unknown]> = []
+  const selects: Array<[string, string]> = []
   const from = (tabela: string) => {
     const query: Record<string, unknown> = {}
-    for (const metodo of ["select", "order", "limit", "range", "gte", "neq", "in"]) {
+    for (const metodo of ["order", "limit", "range", "gte", "neq", "in"]) {
       query[metodo] = () => query
+    }
+    query["select"] = (colunas: string) => {
+      selects.push([tabela, colunas])
+      return query
     }
     query["eq"] = (coluna: string, valor: unknown) => {
       filtros.push([tabela, coluna, valor])
       return query
     }
-    const resposta = () =>
-      tabela === "locality_memberships"
-        ? {
-            data: semCidade
-              ? null
-              : { locality_id: "cidade-atual", localities: { city_name: "Manaus" } },
-            error: null,
-          }
-        : {
-            data: Array.from({ length: quantidade }, (_, indice) => ({
-              id: `${tabela}-${indice}`,
-              group_id: "grupo-1",
-              name: "Vizinhos",
-              group_memberships: [{ count: 3 }],
-            })),
-            error: tabela === falha ? { message: "segredo postgres" } : null,
-          }
+    // Vínculos vêm só com as colunas concedidas: a contagem é por group_id.
+    const linhasDeVinculo = Array.from({ length: 3 }, () => ({ group_id: "groups-0" }))
+    const linhasDeGrupo = Array.from({ length: quantidade }, (_, indice) => ({
+      id: `groups-${indice}`,
+      name: "Vizinhos",
+    }))
+    const resposta = () => {
+      if (tabela === "locality_memberships")
+        return {
+          data: semCidade
+            ? null
+            : { locality_id: "cidade-atual", localities: { city_name: "Manaus" } },
+          error: null,
+        }
+      const dados =
+        tabela === "group_memberships"
+          ? linhasDeVinculo
+          : tabela === "groups"
+            ? linhasDeGrupo
+            : Array.from({ length: quantidade }, (_, indice) => ({
+                id: `${tabela}-${indice}`,
+                group_id: "grupo-1",
+                name: "Vizinhos",
+              }))
+      return { data: dados, error: tabela === falha ? { message: "segredo postgres" } : null }
+    }
     query["maybeSingle"] = async () => resposta()
     // biome-ignore lint/suspicious/noThenProperty: reproduz o builder do PostgREST
     Object.defineProperty(query, "then", {
@@ -61,7 +75,7 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
       error: nome === falha ? { message: "segredo postgres" } : null,
     })
   }
-  return { client: { from, rpc }, filtros, chamadas }
+  return { client: { from, rpc }, filtros, chamadas, selects }
 }
 
 function autenticar(mock: ReturnType<typeof cliente>) {
@@ -126,6 +140,9 @@ describe("início do app", () => {
     expect(mock.filtros).toContainEqual(["group_memberships", "user_id", "pessoa"])
     expect(mock.filtros).toContainEqual(["group_memberships", "status", "approved"])
     expect(mock.filtros).toContainEqual(["groups", "locality_id", "cidade-atual"])
+    // Sem embed `group_memberships(count)`: o grant por coluna dá 403 nele.
+    expect(mock.selects).toContainEqual(["group_memberships", "group_id"])
+    expect(mock.selects.some(([, colunas]) => colunas.includes("count"))).toBe(false)
 
     const segunda = cliente()
     autenticar(segunda)

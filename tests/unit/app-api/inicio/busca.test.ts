@@ -13,6 +13,7 @@ const url = "http://localhost:3000/api/app/busca"
 function autenticar(falha = "", semCidade = false) {
   const filtros: Array<[string, string, unknown]> = []
   const padroes: Array<[string, string, string]> = []
+  const selects: Array<[string, string]> = []
   function resposta(tabela: string) {
     if (tabela === "locality_memberships")
       return {
@@ -20,6 +21,12 @@ function autenticar(falha = "", semCidade = false) {
           ? null
           : { locality_id: "cidade-atual", localities: { city_name: "Manaus" } },
         error: null,
+      }
+    // Vínculos vêm só com group_id (colunas concedidas); dois membros aprovados em "groups".
+    if (tabela === "group_memberships")
+      return {
+        data: [{ group_id: "groups" }, { group_id: "groups" }],
+        error: tabela === falha ? { message: "segredo postgres" } : null,
       }
     return {
       data: [
@@ -36,7 +43,6 @@ function autenticar(falha = "", semCidade = false) {
           reply_count: 1,
           is_resolved: false,
           group_name: null,
-          group_memberships: [{ count: 2 }],
           matched_reply_body: "texto da resposta",
           reach_source: "paid",
           bio: "segredo da bio",
@@ -47,7 +53,12 @@ function autenticar(falha = "", semCidade = false) {
   }
   function from(tabela: string) {
     const query: Record<string, unknown> = {}
-    for (const metodo of ["select", "order", "limit"]) query[metodo] = () => query
+    for (const metodo of ["order", "limit"]) query[metodo] = () => query
+    query["select"] = (colunas: string) => {
+      selects.push([tabela, colunas])
+      return query
+    }
+    query["in"] = () => query
     query["ilike"] = (coluna: string, padrao: string) => {
       padroes.push([tabela, coluna, padrao])
       return query
@@ -71,7 +82,7 @@ function autenticar(falha = "", semCidade = false) {
     cliente: client,
     cabecalhos: {},
   } as never)
-  return { filtros, padroes }
+  return { filtros, padroes, selects }
 }
 
 const buscar = (consulta: string) =>
@@ -97,7 +108,7 @@ describe("busca do app", () => {
     expect((await buscar("casa")).status).toBe(403)
   })
   it("devolve os cinco tipos na cidade da sessão, só com os campos que a tela usa", async () => {
-    const { filtros } = autenticar()
+    const { filtros, selects } = autenticar()
     const resposta = await buscar("casa")
     expect(resposta.status).toBe(200)
     const corpo = await resposta.json()
@@ -118,6 +129,10 @@ describe("busca do app", () => {
     expect(corpo.grupos[0]).toEqual({ id: "groups", name: "Casa", members: 2 })
     expect(filtros).toContainEqual(["groups", "locality_id", "cidade-atual"])
     expect(filtros).toContainEqual(["arrival_guide_entries", "status", "approved"])
+    // Sem embed `group_memberships(count)`: a contagem vem de linhas por group_id.
+    expect(selects).toContainEqual(["groups", "id,name"])
+    expect(selects).toContainEqual(["group_memberships", "group_id"])
+    expect(selects.some(([, colunas]) => colunas.includes("count"))).toBe(false)
   })
   it("escapa o termo hostil no padrão do ilike", async () => {
     const { padroes } = autenticar()
@@ -130,6 +145,12 @@ describe("busca do app", () => {
   })
   it("não esconde falha de leitura nem expõe o banco", async () => {
     autenticar("groups")
+    const resposta = await buscar("casa")
+    expect(resposta.status).toBe(503)
+    expect(await resposta.text()).not.toContain("segredo postgres")
+  })
+  it("devolve 503 quando só a contagem de membros falha, sem lista vazia", async () => {
+    autenticar("group_memberships")
     const resposta = await buscar("casa")
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo postgres")
