@@ -133,7 +133,13 @@ function mockClient(options: Options = {}) {
       }
       if (table === "listings") {
         if (single)
-          return { data: options.listing === undefined ? ANUNCIO : options.listing, error: null }
+          return {
+            data:
+              options.listing === null
+                ? null
+                : { ...(options.listing ?? ANUNCIO), locality_id: CIDADE },
+            error: null,
+          }
         return { data: options.listings ?? [ANUNCIO], error: null }
       }
       if (table === "profiles") {
@@ -508,6 +514,32 @@ describe("rotas de mercado do app", () => {
           args: { p_other_user_id: OWNER, p_context_type: "listing", p_context_id: ID },
         },
       ])
+    })
+
+    it.each([
+      ["sem cidade atual", null],
+      ["em outra cidade", { id: OUTRA_CIDADE, nome: "Outra cidade" }],
+    ])("recusa interesse %s antes da RPC", async (_caso, cidade) => {
+      const mock = mockClient({ cidade })
+      authenticate(mock)
+      const resposta = await interesse(req("POST", `${BASE}/${ID}/interesse`, "{}"), context)
+      expect(resposta.status).toBe(403)
+      expect(await json(resposta)).toEqual({ erro: "de-outra-cidade" })
+      expect(mock.rpcCalls).toHaveLength(0)
+      expect(mock.eqCalls).toContainEqual({
+        table: "locality_memberships",
+        column: "kind",
+        value: "current",
+      })
+    })
+
+    it("falha ao consultar a cidade recusa a escrita sem chamar a RPC", async () => {
+      const mock = mockClient({ errorTable: "locality_memberships" })
+      authenticate(mock)
+      const resposta = await interesse(req("POST", `${BASE}/${ID}/interesse`, "{}"), context)
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+      expect(mock.rpcCalls).toHaveLength(0)
     })
 
     it("corpo {} com content-type JSON também abre", async () => {

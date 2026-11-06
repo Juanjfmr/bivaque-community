@@ -7,7 +7,7 @@ import {
   responder,
 } from "../../../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../../../lib/logger"
-import { ehUuid, interpretarErroDoBanco } from "../../_comum"
+import { cidadeDaSessao, ehUuid, interpretarErroDoBanco } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -40,11 +40,15 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
   try {
     const leitura = await client
       .from("listings")
-      .select("id, owner_user_id")
+      .select("id, owner_user_id, locality_id")
       .eq("id", id)
       .maybeSingle()
     if (leitura.error) throw leitura.error
     if (leitura.data === null) return responder(request, { erro: "anuncio-nao-encontrado" }, 404)
+    const cidade = await cidadeDaSessao(client, userId)
+    if (cidade === null || cidade.id !== leitura.data.locality_id) {
+      return responder(request, { erro: "de-outra-cidade" }, 403)
+    }
     const { owner_user_id: donoId } = leitura.data
 
     if (donoId === userId) {
