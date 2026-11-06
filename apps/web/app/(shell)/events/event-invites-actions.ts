@@ -208,16 +208,9 @@ export async function sendEventInvitesAction(
     ? (inserted as unknown as unknown[]).length
     : 0
 
-  const serviceClient = createServiceClient()
-  const { error: outboxError } = await serviceClient.from("outbox").insert(
-    inviteeIds.map((invitee) => ({
-      recipient: `event-invite:${eventId}`,
-      channel: "email",
-      type: "event_invite",
-      payload: { event_id: eventId, invitee_user_id: invitee },
-    })),
-  )
-  if (outboxError) throw new Error(outboxError.message)
+  // Sem outbox: o convite de evento não tem e-mail do convidado. O aviso
+  // chega pela própria linha em event_invites (Convites no app); enfileirar
+  // sem endereço só produzia e-mail endereçado a ninguém.
 
   return { invited: insertedCount }
 }

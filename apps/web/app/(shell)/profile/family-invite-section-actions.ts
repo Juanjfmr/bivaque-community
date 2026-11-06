@@ -4,7 +4,12 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { generateInviteCode, inviteCodeHash } from "../../../lib/convite/digest"
-import { enviarConvite, lerFamilia, revogarConvite } from "../../../lib/convite/familia"
+import {
+  conferirLimiteDeEnvio,
+  enviarConvite,
+  lerFamilia,
+  revogarConvite,
+} from "../../../lib/convite/familia"
 import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
@@ -123,6 +128,8 @@ export async function resendFamilyInviteAction(
   const code = generateInviteCode()
 
   const supabase = createServiceClient()
+  // O reenvio conta no mesmo teto do envio: é outro e-mail saindo.
+  await conferirLimiteDeEnvio(supabase, userId)
   const { error } = await supabase.rpc("resend_family_invitation", {
     p_code_hash: byteaDigestParam(inviteCodeHash(code)),
     p_invitation_id: invitationId,

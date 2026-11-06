@@ -20,6 +20,8 @@ export function respostaDaFalhaDeConvite(request: Request, falha: unknown): Next
       return responder(request, { erro: "nao-titular", mensagem: falha.message }, 403)
     case "teto-de-convites":
       return responder(request, { erro: "teto-de-convites", mensagem: falha.message }, 409)
+    case "limite":
+      return responder(request, { erro: "limite", mensagem: falha.message }, 429)
     case "convite-nao-encontrado":
       return responder(request, { erro: "nao-encontrado", mensagem: falha.message }, 404)
     default:

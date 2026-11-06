@@ -4,6 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
+// RUN-020, correção: a janela deslizante é a primeira barreira do limite. Aqui
+// ela é simulada; o teste prova que a recusa vira 429 antes de criar.
+const janela = vi.hoisted(() => ({ recusando: false }))
+
+vi.mock("web/lib/limits", () => ({
+  createLimiterStore: () => ({ record: async () => (janela.recusando ? 11 : 1) }),
+}))
+
 import { DELETE as revogar } from "web/app/api/app/voce/familia/[id]/route"
 import { POST as convidar, GET as familia } from "web/app/api/app/voce/familia/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
@@ -37,6 +45,7 @@ function banco(
   opcoes: {
     verificado?: boolean
     pendentes?: Linha[]
+    enviadosRecentes?: number
     erro?: "is_verified_holder" | "list_pending_invites_with_hint" | "create" | "revoke"
     mensagem?: string
     outboxFalha?: boolean
@@ -45,6 +54,18 @@ function banco(
   const chamadas: { nome: string; args: Record<string, unknown> }[] = []
   const enfileirados: Record<string, unknown>[] = []
   const linhas: Linha[] = [...(opcoes.pendentes ?? [])]
+
+  type Consulta = {
+    eq: () => Consulta
+    contains: () => Consulta
+    gte: () => Promise<{ count: number; error: null }>
+  }
+  // O limite de ritmo do módulo conta as linhas de `family_invite` no outbox.
+  const consulta: Consulta = {
+    eq: () => consulta,
+    contains: () => consulta,
+    gte: async () => ({ count: opcoes.enviadosRecentes ?? 0, error: null }),
+  }
 
   const rpc = vi.fn(async (nome: string, args: Record<string, unknown> = {}) => {
     chamadas.push({ nome, args })
@@ -80,6 +101,7 @@ function banco(
   const from = vi.fn((tabela: string) => {
     if (tabela !== "outbox") throw new Error(`tabela inesperada: ${tabela}`)
     return {
+      select: vi.fn(() => consulta),
       insert: vi.fn(async (valor: Record<string, unknown>) => {
         enfileirados.push(valor)
         return opcoes.outboxFalha
@@ -128,7 +150,9 @@ const PENDENTE: Linha = {
 describe("família do titular no app", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
     vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
+    janela.recusando = false
     vi.mocked(resolverSessaoDaRequisicao).mockResolvedValue({
       estado: "recusada",
       sessao: { estado: "recusada", motivo: "sem-credencial" },
@@ -237,6 +261,28 @@ describe("família do titular no app", () => {
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(409)
     expect(await resposta.json()).toMatchObject({ erro: "teto-de-convites" })
+  })
+
+  it("décimo primeiro envio na hora é 429 de limite", async () => {
+    const mock = autenticar({ enviadosRecentes: 10 })
+    const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
+    expect(resposta.status).toBe(429)
+    expect(await resposta.json()).toMatchObject({ erro: "limite" })
+    // Recusa antes de criar: nada foi gravado nem enfileirado.
+    expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
+    expect(mock.enfileirados).toHaveLength(0)
+  })
+
+  it("janela atômica cheia é 429 mesmo com o outbox vazio", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid")
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token-de-teste")
+    janela.recusando = true
+    const mock = autenticar({ enviadosRecentes: 0 })
+    const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
+    expect(resposta.status).toBe(429)
+    expect(await resposta.json()).toMatchObject({ erro: "limite" })
+    expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
+    expect(mock.enfileirados).toHaveLength(0)
   })
 
   it.each([
