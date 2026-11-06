@@ -80,7 +80,10 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
 ]
 
 // Rotas legítimas que nenhum <a href> alcança. Cada uma diz por onde se chega de verdade.
-// Rota que só se alcança digitando a URL NÃO entra aqui: ela é defeito e o spec reprova.
+// Rota que só se alcança digitando a URL NÃO entra aqui. A exceção é a dívida declarada: a
+// porta existia e a fase em curso a retirou da navegação, com a tela antiga ainda viva — a
+// linha nomeia o que falta e a fase que a fecha, e a checagem de porta velha obriga a tirá-la
+// quando a porta voltar.
 // Triagem de 22/09/2026 (rota a rota, no código). Categorias: FLUXO (redirect, passo após
 // envio), EXTERNO (e-mail, link compartilhado), BOTÃO (router.push — navegação que deveria
 // ser link), CONDICIONAL (link que só aparece em certo estado ou atrás de uma aba que o
@@ -112,6 +115,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor e 'Criar o primeiro grupo' em Interesses, que só aparecem para quem não tem grupo; o painel 'Grupos ativos' saiu com o feed da Início (lote 5 N2)",
     dependeDeDados: true,
+  },
+  {
+    route: "/groups/[id]",
+    porta:
+      "DÍVIDA LAN-TROCA: 'Grupos ativos' no rail da Início web saiu com a fase 1; grupos ficam na web até F04",
   },
   {
     route: "/communities/[id]/admin",
@@ -170,6 +178,20 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
   {
+    route: "/events",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era o rail e o feed da Início web, que a fase 1 trocou por /app/inicio; a Agenda nova não lista convites individuais (F05)",
+  },
+  {
+    route: "/events/[id]",
+    porta:
+      "DÍVIDA LAN-TROCA: só a lista antiga de /events leva ao detalhe, cujo fan-out falta na tela nova (F05)",
+  },
+  {
+    route: "/events/[id]/perguntas",
+    porta: "DÍVIDA LAN-TROCA: histórico aberto pelo detalhe antigo de /events/[id] (F05)",
+  },
+  {
     route: "/events/[id]/editar",
     porta: "CONDICIONAL: 'Editar evento' para quem organiza",
     dependeDeDados: true,
@@ -185,6 +207,21 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     dependeDeDados: true,
   },
   {
+    route: "/imoveis",
+    porta:
+      "DÍVIDA LAN-TROCA: a lista antiga perdeu a porta do rail e do mercado da Início web; a nova é /app/imoveis, sem os filtros de URL (F06)",
+  },
+  {
+    route: "/imoveis/alertas",
+    porta:
+      "DÍVIDA LAN-TROCA: 'Criar alerta' dentro de /imoveis antigos, sem equivalente no app (F06)",
+  },
+  {
+    route: "/imoveis/novo",
+    porta:
+      "DÍVIDA LAN-TROCA: 'Anunciar imóvel' dentro de /imoveis antigos, sem destino direto no app (F06)",
+  },
+  {
     route: "/imoveis/[id]/editar",
     porta: "CONDICIONAL: 'Editar anúncio' no detalhe, só para o dono",
     dependeDeDados: true,
@@ -195,7 +232,17 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
+  {
+    route: "/localidade",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era o rail da Início web e a aba Sobre da comunidade, fora do percurso do rastreador (F02/F08)",
+  },
   { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
+  {
+    route: "/mercado/novo",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era o menu '+' da casca web, que a fase 1 substituiu pela casca do app (F06)",
+  },
   {
     route: "/negocio/catalogo",
     porta: "CONDICIONAL: 'Catálogo' em /negocio, só depois que a página do negócio existe",
@@ -219,6 +266,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   { route: "/onboarding/status", porta: "FLUXO: proxy e notificação de entrada recusada" },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding" },
   { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },
+  {
+    route: "/profile/[userId]",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta eram os autores no feed da Início web; o perfil de outra pessoa segue na web (F10)",
+  },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
   {
     route: "/recommendations",

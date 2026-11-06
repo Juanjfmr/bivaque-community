@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { encerrarPedidoAberto } from "./helpers/pedidos"
 import { signInAs } from "./helpers/session"
 
 // LAN-TROCA fase 1: criação e painel do prestador continuam na web.
@@ -40,6 +41,7 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       const requestPath = await acompanhar.getAttribute("href")
       if (!requestPath) throw new Error("Confirmação sem link para acompanhar o pedido")
       const requestId = requestPath.split("/").at(-1)
+      if (!requestId) throw new Error("Confirmação sem ID de pedido no link")
 
       // O mesmo pedido aparece para a outra persona, que responde pela web.
       await provider.goto("/prestador")
@@ -122,6 +124,10 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       await pedido.click()
       await expect(member).toHaveURL(new RegExp(`/app/pedido/${requestId}$`))
       await expect(member.locator("[data-descricao-do-pedido]")).toHaveText(need)
+
+      // A mesma persona abre o pedido em cada largura: encerrar devolve a vaga
+      // do teto de pedidos abertos, e o banco fica como estava.
+      await encerrarPedidoAberto(memberContext, requestId)
     } finally {
       await memberContext.close()
       await providerContext.close()

@@ -8,6 +8,7 @@ import {
   test,
 } from "@playwright/test"
 import { chaveAnonimaDoSupabase, semearSessaoDeMembro, urlDoSupabase } from "./entrada-real-ajuda"
+import { encerrarPedidoAberto } from "./helpers/pedidos"
 import { readEnvLocal } from "./helpers/session"
 
 // RUN-010: usa somente o banco LOCAL semeado e a sessão de quem solicita.
@@ -174,6 +175,9 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     await capturar(page, testInfo.project.name, "05-meus-pedidos")
     await linha.click()
     await expect(page.locator("[data-descricao-do-pedido]")).toHaveText(descricao)
+
+    // A próxima largura usa a mesma persona: encerrar devolve a vaga do teto.
+    await encerrarPedidoAberto(context, gravado.pedido.id)
   })
 
   test("falha ao gravar mantém o texto e a leitura permite tentar de novo", async ({
