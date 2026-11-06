@@ -1,63 +1,73 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
+import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { LinhaDeAjuste } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { FalhaDaApi } from "@/lib/api/cliente"
+import { lerPerfil, type PerfilDaConta, salvarPerfil } from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
-import { useCasca } from "@/src/contexto/casca"
-import { registro } from "@/src/telas/comum"
+import { EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
 
 /**
- * Você da onda 8 (protótipo: features/profile/views.js, renderProfile), com
- * dados de demonstração. V1: identidade, contadores e os atalhos principais.
- * Editar perfil, família, alertas e notificações ficam para o refino.
+ * Você (onda 8, F10): identidade, contadores e os atalhos principais, agora
+ * lidos da conta de verdade (`/api/app/voce`) em vez da demonstração. O desenho
+ * é o aprovado; o que mudou foi a fonte do dado e a edição do próprio perfil.
  */
 export function Voce() {
-  const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
+  const [conta, setConta] = useState<PerfilDaConta | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [editando, setEditando] = useState(false)
+  const [salvando, setSalvando] = useState(false)
+  const [mensagem, setMensagem] = useState<string | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     const controle = new AbortController()
-    setDados(null)
+    setConta(null)
     setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+    void lerPerfil({ signal: controle.signal })
+      .then((lida) => {
+        if (!controle.signal.aborted) setConta(lida)
       })
       .catch(() => {
         if (!controle.signal.aborted) setErro(true)
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [rodada])
 
-  const contagens = useMemo(() => {
-    if (dados === null) return { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 }
-    return {
-      salvos: dados.anuncios.filter((anuncio) => registro(anuncio.apresentacao)["saved"] === true)
-        .length,
-      anuncios: dados.anuncios.filter((anuncio) => registro(anuncio.apresentacao)["mine"] === true)
-        .length,
-      perguntas: dados.perguntas.filter(
-        (pergunta) => registro(pergunta.apresentacao)["mine"] === true,
-      ).length,
-      grupos: dados.grupos.filter((grupo) => registro(grupo.apresentacao)["on"] === true).length,
-    }
-  }, [dados])
+  const perfil = conta?.perfil ?? null
+  const carregando = conta === null && !erro
+  const nome = perfil?.nome ?? "Você"
+  const contagens = conta?.contagens ?? { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 }
 
-  const nome = casca.nomeDaPessoa === "" ? "Você" : casca.nomeDaPessoa
+  const gravar = (dados: { nome: string; bio: string }) => {
+    setSalvando(true)
+    setMensagem(null)
+    void salvarPerfil(dados)
+      .then((gravado) => {
+        setConta((atual) => (atual === null ? atual : { ...atual, perfil: gravado }))
+        setEditando(false)
+      })
+      .catch((falha: unknown) => {
+        setMensagem(
+          falha instanceof FalhaDaApi && falha.mensagem !== null
+            ? falha.mensagem
+            : "Não foi possível salvar. Tente de novo.",
+        )
+      })
+      .finally(() => setSalvando(false))
+  }
 
   return (
     <section data-tela="voce" className="grid gap-2">
@@ -65,24 +75,56 @@ export function Voce() {
 
       {erro ? <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} /> : null}
 
-      <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)">
-        <span className="grid size-14 shrink-0 place-items-center rounded-full bg-(--secondary-container) text-lg font-semibold">
-          {iniciais(nome)}
-        </span>
-        <span className="grid gap-0.5">
-          <b className="text-[17px]">{nome}</b>
-          <small className="text-(--on-surface-variant)">
-            {casca.cidade} · {erro ? "sem dados agora" : "perfil de demonstração"}
-          </small>
-        </span>
-      </div>
+      {carregando ? (
+        <EsqueletoDeLista linhas={1} />
+      ) : (
+        <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)">
+          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-(--secondary-container) text-lg font-semibold">
+            {iniciais(nome)}
+          </span>
+          <span className="grid min-w-0 grow gap-0.5">
+            <b className="text-[17px]">{nome}</b>
+            <small className="text-(--on-surface-variant)">
+              {perfil === null ? "perfil indisponível agora" : perfil.cidade}
+            </small>
+            {perfil?.bio === null || perfil?.bio === undefined ? null : (
+              <small className="text-(--on-surface-variant)">{perfil.bio}</small>
+            )}
+          </span>
+          {perfil === null ? null : (
+            <Botao
+              tom="texto"
+              icone="edit"
+              className="shrink-0"
+              onClick={() => {
+                setMensagem(null)
+                setEditando((aberto) => !aberto)
+              }}
+            >
+              Editar
+            </Botao>
+          )}
+        </div>
+      )}
 
-      <div className="grid grid-cols-4 gap-2">
-        <Contador valor={contagens.salvos} rotulo={["salvo", "salvos"]} />
-        <Contador valor={contagens.anuncios} rotulo={["anúncio", "anúncios"]} />
-        <Contador valor={contagens.perguntas} rotulo={["pergunta", "perguntas"]} />
-        <Contador valor={contagens.grupos} rotulo={["grupo", "grupos"]} />
-      </div>
+      {editando && perfil !== null ? (
+        <EdicaoDePerfil
+          perfil={perfil}
+          salvando={salvando}
+          mensagem={mensagem}
+          aoSalvar={gravar}
+          aoCancelar={() => setEditando(false)}
+        />
+      ) : null}
+
+      {carregando ? null : (
+        <div className="grid grid-cols-4 gap-2">
+          <Contador valor={contagens.salvos} rotulo={["salvo", "salvos"]} />
+          <Contador valor={contagens.anuncios} rotulo={["anúncio", "anúncios"]} />
+          <Contador valor={contagens.perguntas} rotulo={["pergunta", "perguntas"]} />
+          <Contador valor={contagens.grupos} rotulo={["grupo", "grupos"]} />
+        </div>
+      )}
 
       <Secao titulo="Seu Bivaque">
         <div className="grid gap-2">
