@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   type CanalDoAviso,
+  comTipo,
   lerPreferenciasDeAviso,
   type PreferenciasDeAviso,
   salvarPreferenciasDeAviso,
@@ -93,7 +94,7 @@ export function PreferenciasDeAvisos() {
   }, [rodada])
 
   function alterarTipo(tipo: TipoDoAviso, ativo: boolean) {
-    setPreferencias((atual) => (atual === null ? atual : { ...atual, [tipo]: ativo }))
+    setPreferencias((atual) => (atual === null ? atual : comTipo(atual, tipo, ativo)))
     setSujo(true)
   }
 
@@ -105,13 +106,7 @@ export function PreferenciasDeAvisos() {
   function salvar() {
     if (preferencias === null || salvando) return
     setSalvando(true)
-    void salvarPreferenciasDeAviso({
-      comments: preferencias.comments,
-      events: preferencias.events,
-      productNews: preferencias.productNews,
-      indications: preferencias.indications,
-      channels: preferencias.channels,
-    })
+    void salvarPreferenciasDeAviso(preferencias)
       .then((gravadas) => {
         setPreferencias(gravadas)
         setSujo(false)

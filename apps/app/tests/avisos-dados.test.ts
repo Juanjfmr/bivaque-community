@@ -2,12 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
+  chaveDaPreferencia,
+  comTipo,
   destinoEmRota,
   lerAvisos,
   lerPreferenciasDeAviso,
   marcarLido,
   marcarTodosLidos,
+  type PreferenciasDeAviso,
   salvarPreferenciasDeAviso,
+  TIPOS_DO_AVISO,
 } from "@/lib/dados/avisos"
 
 const aviso = {
@@ -25,7 +29,7 @@ function responder(corpo: unknown, status = 200) {
   return fetch
 }
 
-function preferencias() {
+function preferencias(): PreferenciasDeAviso {
   return {
     comments: true,
     events: false,
@@ -105,6 +109,26 @@ describe("porta de avisos", () => {
       "/api/app/avisos/preferencias",
       expect.objectContaining({ method: "PATCH" }),
     )
+  })
+
+  it("liga e desliga cada tipo, inclusive novidades, e manda a chave certa no PATCH", async () => {
+    for (const tipo of TIPOS_DO_AVISO) {
+      const chave = chaveDaPreferencia(tipo)
+      const antes = preferencias()[chave]
+      const ligado = comTipo(preferencias(), tipo, !antes)
+      expect(ligado[chave], tipo).toBe(!antes)
+      expect(comTipo(ligado, tipo, antes)[chave], tipo).toBe(antes)
+
+      const escrita = responder({ preferencias: { ...preferencias(), [chave]: !antes } })
+      await salvarPreferenciasDeAviso(ligado)
+      expect(escrita).toHaveBeenCalledWith(
+        "/api/app/avisos/preferencias",
+        expect.objectContaining({
+          method: "PATCH",
+          body: expect.stringContaining(`"${chave}":${String(!antes)}`),
+        }),
+      )
+    }
   })
 
   it("preferência com canal desconhecido é falha de contrato", async () => {

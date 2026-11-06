@@ -50,6 +50,22 @@ export type PreferenciasDeAviso = Readonly<{
   channels: readonly CanalDaPreferencia[]
 }>
 
+/** O tipo do aviso no servidor e a chave da preferência não têm o mesmo nome. */
+export type ChaveDaPreferencia = Exclude<keyof PreferenciasDeAviso, "channels">
+
+export function chaveDaPreferencia(tipo: TipoDoAviso): ChaveDaPreferencia {
+  return tipo === "product_news" ? "productNews" : tipo
+}
+
+/** Liga ou desliga um tipo sem tocar nos canais escolhidos. */
+export function comTipo(
+  preferencias: PreferenciasDeAviso,
+  tipo: TipoDoAviso,
+  ativo: boolean,
+): PreferenciasDeAviso {
+  return { ...preferencias, [chaveDaPreferencia(tipo)]: ativo }
+}
+
 type Corpo = Record<string, unknown>
 type Opcoes = { signal?: AbortSignal }
 
