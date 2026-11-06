@@ -96,7 +96,6 @@ const nextConfig: NextConfig = {
           // As páginas estáticas e /:id/editar continuam na web.
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
-          ["/indicacoes/:id", "/app/pergunta/:id"],
           ["/pedidos", "/app/pedidos"],
           ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],
           ["/prestadores/:id", "/app/negocio/:id"],

@@ -17,7 +17,6 @@ const TROCADAS = [
   [`/messages/${ID}`, `/app/conversa/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/imoveis/${ID}`, `/app/anuncio/${ID}`],
-  [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   ["/pedidos", "/app/pedidos"],
   [`/pedidos/${ID}`, `/app/pedido/${ID}`],
   [`/prestadores/${ID}`, `/app/negocio/${ID}`],

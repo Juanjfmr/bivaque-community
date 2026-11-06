@@ -102,9 +102,11 @@ test.describe("private group admission: denial paths", () => {
     // When the user navigates to the groups page
     await page.goto("/groups")
 
-    // O app recebe a rota e recusa a leitura sem sess?o.
-    await expect(page).toHaveURL(/\/app\/conversas$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible({ timeout: 10000 })
+    // Grupos continua na web: sem sessão, o proxy preserva o destino na entrada do app.
+    await expect(page).toHaveURL(/\/app\/entrar\?redirect=(?:%2F|\/)groups$/)
+    await expect(
+      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible()
   })
 
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {

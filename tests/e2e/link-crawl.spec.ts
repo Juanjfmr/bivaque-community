@@ -333,7 +333,6 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/messages/[id]",
         "/mercado/[id]",
         "/imoveis/[id]",
-        "/indicacoes/[id]",
         "/pedidos",
         "/pedidos/[id]",
         "/prestadores/[id]",

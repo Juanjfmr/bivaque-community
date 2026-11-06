@@ -4,8 +4,9 @@ task_id: RUN-019
 
 objective: >
   Fase 1 do LAN-TROCA: aplicar 307 somente para messages (caixa, conversation UUID e detalhe),
-  detalhes de mercado/imoveis/indicacoes/pedidos/prestadores, lista de pedidos, bloqueados,
+  detalhes de mercado/imoveis/pedidos/prestadores, lista de pedidos, bloqueados,
   família (Você, PR #147), inicio e explorar. Preservar IDs e query úteis, sem ciclo.
+  Indicações fica na web até F04 para preservar Ajudou a resolver (decisão revista em 06/11).
   Todas as demais rotas e as edições de anúncios ficam na web. A varredura integral segue no cartão.
 
 authority:

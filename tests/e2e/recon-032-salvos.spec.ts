@@ -1,5 +1,5 @@
-﻿// LAN-TROCA fase 1: Salvos permanece na web; seu link abre a pergunta no app.
-// O toggle do detalhe antigo saiu. A fixture usa a sessão sintética sob RLS.
+﻿// LAN-TROCA fase 1: Salvos e o detalhe da indicação permanecem na web até F04.
+// A fixture usa a sessão sintética sob RLS.
 import { expect, test } from "@playwright/test"
 import { mintSession, restDelete, restInsert, seedAs } from "./helpers/recon032"
 import { REQUEST_ID, REQUEST_TITLE, VISUAL_EMAIL } from "./helpers/recon032-fixtures"
@@ -10,7 +10,7 @@ test.describe("salvos preservados na web", { tag: "@stateful" }, () => {
     await page.waitForURL(/\/app\/entrar/)
   })
 
-  test("indicação salva abre o app e a remoção persiste na web", async ({ browser }) => {
+  test("indicação salva abre o detalhe e a remoção persiste na web", async ({ browser }) => {
     const sessao = await mintSession(VISUAL_EMAIL)
     const filtro = { user_id: `eq.${sessao.id}`, request_id: `eq.${REQUEST_ID}` }
     expect(await restDelete("recommendation_saves", sessao.accessToken, filtro)).toBe(true)
@@ -36,7 +36,7 @@ test.describe("salvos preservados na web", { tag: "@stateful" }, () => {
       await expect(page.getByText("Nenhum item salvo corresponde à busca.")).toBeVisible()
       await busca.fill("")
       await link.click()
-      await expect(page).toHaveURL(new RegExp(`/app/pergunta/${REQUEST_ID}$`))
+      await expect(page).toHaveURL(new RegExp(`/indicacoes/${REQUEST_ID}$`))
       await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
       await page.goto("/salvos")
       const removido = page.waitForResponse(
