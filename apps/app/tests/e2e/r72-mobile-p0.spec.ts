@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { aplicarStubMercado } from "./stub-mercado"
 
 test("R72 P0: Home contém carrosséis operáveis e prévia do próximo cartão", async ({ page }) => {
   await page.goto("/app/inicio")
@@ -55,6 +56,7 @@ test("R72 P0: Perguntar salva apenas nesta sessão e abre detalhe válido", asyn
 })
 
 test("R72 P0: Imóveis filtra, ordena e alterna entre lista e grade", async ({ page }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/imoveis")
   await expect(page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')).toHaveCount(2)
   await page.locator('[data-acao="filtros-imoveis"]').click()

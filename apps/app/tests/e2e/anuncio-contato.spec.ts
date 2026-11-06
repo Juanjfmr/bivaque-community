@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test"
+import { aplicarStubMercado } from "./stub-mercado"
 
 test("Anúncio: interesse abre editor e guarda rascunho sem enviar", async ({ page }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/anuncio/i3")
   await page.getByRole("button", { name: "Tenho interesse" }).click()
   const folha = page.locator('[data-fluxo="rascunho-contato"]')
@@ -18,14 +20,15 @@ test("Anúncio: interesse abre editor e guarda rascunho sem enviar", async ({ pa
   )
   await page.locator('[data-acao="excluir-contato"]').click()
   await expect(page.locator('[data-rascunho-contato="sim"]')).toHaveCount(0)
-  await expect(
-    page.getByRole("button", { name: "Ver conversa demonstrativa sobre o anúncio" }),
-  ).toBeVisible()
-  await page.getByRole("button", { name: "Ver conversa demonstrativa sobre o anúncio" }).click()
-  await expect(page).toHaveURL(/\/app\/conversa\/t1$/)
+  // Interesse real no stub devolve conversaId → botão muda de "Tenho interesse" para
+  // "Conversa aberta" e aparece o link "Ver conversa". A demo mostrava um botão
+  // "Ver conversa demonstrativa"; agora o fluxo é o mesmo do banco.
+  await expect(page.getByRole("button", { name: "Conversa aberta" })).toBeVisible()
+  await page.getByRole("button", { name: "Ver conversa" }).click()
 })
 
 test("Anúncio: oferta exige valor e conserva uma proposta apenas local", async ({ page }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/anuncio/i2")
   await page.getByRole("button", { name: "Fazer uma oferta" }).click()
   const folha = page.locator('[data-fluxo="rascunho-contato"]')

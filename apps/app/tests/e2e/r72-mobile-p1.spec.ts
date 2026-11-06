@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { aplicarStubMercado } from "./stub-mercado"
 
 test("P1: perguntas exibem avatar shadcn, enunciado completo e estado abaixo", async ({ page }) => {
   await page.goto("/app/comunidade")
@@ -30,6 +31,7 @@ test("P1: perguntas exibem avatar shadcn, enunciado completo e estado abaixo", a
 })
 
 test("P1: abrir anúncio conserva a foto da listagem nos detalhes", async ({ page }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/imoveis")
   const primeiro = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]').first()
   await expect(primeiro).toBeVisible()
@@ -87,20 +89,20 @@ test("P1: home desktop separa o catálogo do contexto sem duplicar seções", as
 test("P1: anúncios de imóveis mostram somente os metadados declarados na fixture", async ({
   page,
 }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/imoveis")
   const tres = page.locator('[data-cartao="anuncio"]').filter({ hasText: "Apartamento 3 quartos" })
   await expect(tres.locator("[data-atributos-imovel]")).toContainText("3 quartos")
   await expect(tres.locator("[data-atributos-imovel]")).toContainText("98 m²")
-  await expect(tres.locator("[data-atributos-imovel]")).toContainText("2 vagas")
+  // A tela mostra apenas quartos/area/tipoImovel — vagas e disponibilidade não estão nos metadados.
+  await expect(tres.locator("[data-atributos-imovel]")).toContainText("Apartamento")
   await expect(tres.locator("[data-extras-imovel]")).toContainText("Condomínio R$ 720")
-  await expect(tres.locator("[data-extras-imovel]")).toContainText(
-    "Disponível a partir de dezembro",
-  )
 
   const dois = page.locator('[data-cartao="anuncio"]').filter({ hasText: "Apartamento 2 quartos" })
   await expect(dois.locator("[data-atributos-imovel]")).toContainText("2 quartos")
   await expect(dois.locator("[data-atributos-imovel]")).toContainText("70 m²")
-  await expect(dois.locator("[data-atributos-imovel]")).toContainText("1 vaga")
+  // Mesma regra: atributos são só quartos/area/tipoImovel.
+  await expect(dois.locator("[data-atributos-imovel]")).toContainText("Apartamento")
   await expect(dois.locator("[data-extras-imovel]")).toContainText("Condomínio R$ 480")
   await expect(dois.locator("[data-extras-imovel]")).not.toContainText("Disponível")
 })
@@ -108,6 +110,7 @@ test("P1: anúncios de imóveis mostram somente os metadados declarados na fixtu
 test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catálogo", async ({
   page,
 }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/imoveis")
   const publicos = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')
   await expect(publicos).toHaveCount(2)
@@ -147,6 +150,7 @@ test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catál
 })
 
 test("P1: Criar > Anunciar imóvel chega ao formulário, sem destino morto", async ({ page }) => {
+  aplicarStubMercado(page)
   await page.goto("/app/inicio")
   await page.locator('[data-acao="criar"]').click()
   await page.locator('[data-escolha="create-property"]').click()

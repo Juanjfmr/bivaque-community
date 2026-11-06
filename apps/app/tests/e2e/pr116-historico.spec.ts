@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { aplicarStubMercado } from "./stub-mercado"
 
 for (const caso of [
   { escolha: "create-property", caminho: "/app/imoveis", painel: '[data-fluxo="rascunho-imovel"]' },
@@ -31,7 +32,7 @@ for (const caso of [
     campo: "#nova-pergunta",
   },
   {
-    caminho: "/app/anuncio/i1",
+    caminho: "/app/anuncio/a-1",
     botao: "Tenho interesse",
     painel: '[data-fluxo="rascunho-contato"]',
     campo: "#mensagem-contato",
@@ -44,6 +45,7 @@ for (const caso of [
   },
 ]) {
   test(`Voltar fecha ${caso.botao} antes de sair da rota e Avançar reabre`, async ({ page }) => {
+    aplicarStubMercado(page)
     await page.goto("/app/inicio")
     await page.goto(caso.caminho)
     const acionador = page.getByRole("button", { name: caso.botao, exact: true }).first()
@@ -95,6 +97,7 @@ test("Voltar fecha escrever/sair do grupo e preserva o texto", async ({ page }) 
 test("limite de imóveis informa o problema e preserva o rascunho antigo e o texto novo", async ({
   page,
 }) => {
+  aplicarStubMercado(page)
   await page.addInitScript(() => {
     // Entrada sintética da prova; o resultado é conferido na interface.
     sessionStorage.setItem(
