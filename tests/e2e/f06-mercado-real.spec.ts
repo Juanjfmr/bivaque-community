@@ -296,4 +296,73 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
     await expect(page.locator('[data-estado="erro"]')).toBeVisible({ timeout: 30_000 })
     await expect(page.getByRole("heading", { level: 2, name: "Sobre o anúncio" })).toHaveCount(0)
   })
+
+  // Gestão do próprio anúncio (RUN-023): editar texto/preço e pausar/reativar
+  // pela sessão, com a recarga provando o gravado no banco — e o estado do seed
+  // devolvido ao terminar. O pause/reactivate passa pela RPC transition_listing;
+  // nenhum UPDATE direto de status acontece aqui.
+  test("editar e pausar o próprio anúncio persistem através da recarga", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(240_000)
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    const MESA = "b1000000-0000-4000-8000-000000000001"
+    const botaoGerenciar = page.locator(`[data-acao="gerenciar-anuncio"][data-valor="${MESA}"]`)
+    const cartaoMesa = page.locator('[data-tela="meus-anuncios"] [data-cartao="anuncio"]', {
+      hasText: "Mesa de jantar",
+    })
+    const dialogo = page.locator(`[data-gerenciar-anuncio="${MESA}"]`)
+
+    try {
+      await page.goto("/app/meus-anuncios")
+      await expect(cartaoMesa).toContainText("Mesa de jantar com 6 cadeiras", { timeout: 30_000 })
+
+      await botaoGerenciar.click()
+      await expect(dialogo.getByLabel("Título")).toHaveValue("Mesa de jantar com 6 cadeiras")
+      await dialogo.getByLabel("Título").fill("Mesa de jantar com quatro cadeiras")
+      await dialogo.getByLabel(/Preço pedido/).fill("420")
+      await dialogo.getByRole("button", { name: "Salvar alterações" }).click()
+      await expect(dialogo.getByRole("alert")).toContainText("Alterações salvas", {
+        timeout: 30_000,
+      })
+
+      // Recarregar: o que aparece é o que está no banco.
+      await page.goto("/app/meus-anuncios")
+      await expect(cartaoMesa).toContainText("Mesa de jantar com quatro cadeiras", {
+        timeout: 30_000,
+      })
+
+      // Pausar pela situação — o chip do card reflete o banco após a recarga.
+      await botaoGerenciar.click()
+      await expect(dialogo).toContainText("Situação atual: Ativo")
+      await dialogo.getByRole("button", { name: "Pausar" }).click()
+      await expect(dialogo).toContainText("Situação atual: Pausado", { timeout: 30_000 })
+      await page.goto("/app/meus-anuncios")
+      await expect(cartaoMesa).toContainText("Pausado", { timeout: 30_000 })
+
+      // Reativar: a volta também é uma transição pela RPC.
+      await botaoGerenciar.click()
+      await dialogo.getByRole("button", { name: "Reativar" }).click()
+      await expect(dialogo).toContainText("Situação atual: Ativo", { timeout: 30_000 })
+    } finally {
+      // Devolve o estado do seed (título, preço e situação), custe o que custar.
+      await page.goto("/app/meus-anuncios").catch(() => undefined)
+      if (await botaoGerenciar.isVisible().catch(() => false)) {
+        await botaoGerenciar.click().catch(() => undefined)
+        const reativar = dialogo.getByRole("button", { name: "Reativar" })
+        if (await reativar.isVisible().catch(() => false)) {
+          await reativar.click().catch(() => undefined)
+          await expect(dialogo).toContainText("Situação atual: Ativo", { timeout: 30_000 })
+        }
+        await dialogo.getByLabel("Título").fill("Mesa de jantar com 6 cadeiras")
+        await dialogo.getByLabel(/Preço pedido/).fill("450")
+        await dialogo.getByRole("button", { name: "Salvar alterações" }).click()
+        await expect(dialogo.getByRole("alert")).toContainText("Alterações salvas", {
+          timeout: 30_000,
+        })
+      }
+    }
+  })
 })
