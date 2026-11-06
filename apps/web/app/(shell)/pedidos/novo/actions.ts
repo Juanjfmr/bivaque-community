@@ -4,12 +4,11 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { log } from "../../../../lib/logger"
 import {
-  firstFailure,
   SERVICE_REQUEST_MAX_PHOTOS,
   SERVICE_REQUEST_PHOTO_MAX_BYTES,
-  validateRequestDescription,
+  serviceRequestFailure,
   validateRequestPhotos,
-  validateRequestWhen,
+  validateServiceRequest,
 } from "../../../../lib/service-requests/request-form"
 import { isDefiniteSqlRejection } from "../../../../lib/storage/rpc-outcome"
 import { sanitizeImage } from "../../../../lib/storage/sanitize-image"
@@ -69,10 +68,7 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
   const when = text(formData, "when")
   const idempotencyKey = text(formData, "idempotencyKey").trim()
 
-  const validation = firstFailure(
-    validateRequestDescription(description),
-    validateRequestWhen(when),
-  )
+  const validation = validateServiceRequest(description, when)
   if (!validation.ok) {
     return { status: "error", message: validation.message }
   }
@@ -97,21 +93,10 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
   })
 
   if (error) {
-    // ADR-20260923-teto-de-pedidos-por-par: cinco em aberto por par, recusados
-    // com 54000 (o mesmo código do teto de convites). A recusa precisa dizer a
-    // saída — "feche ou cancele um" —, senão vira o erro genérico abaixo e a
-    // pessoa reenvia o mesmo pedido sem entender.
-    if (error.code === "54000") {
-      return {
-        status: "error",
-        message:
-          "Você já tem cinco pedidos em aberto com este prestador. Feche ou cancele um para enviar outro.",
-      }
-    }
     log.error("pedidos: create_service_request failed", { error: error.message, user_id: user.id })
     return {
       status: "error",
-      message: "Não foi possível enviar o pedido agora. Seu texto continua aqui — tente novamente.",
+      message: serviceRequestFailure(error.code).mensagem,
     }
   }
 

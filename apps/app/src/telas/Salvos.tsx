@@ -7,16 +7,21 @@ import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
+import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { type EntradaDoGuia, lerSalvosDoGuia } from "@/lib/dados/guia"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
+import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
 import { registro, texto } from "@/src/telas/comum"
 
 /**
- * Salvos (onda 5): os anúncios marcados como salvos na demonstração. O salvar
- * de verdade (por conta) chega com o backend; aqui a lista é de leitura.
+ * Salvos: os anúncios da demonstração e as referências do guia salvas pelo
+ * membro. A seção de anúncios continua de leitura; a do guia vem da rota da
+ * sessão (`/api/app/guia/salvos`), então sobrevive ao recarregar e vale para a
+ * conta, não para o aparelho.
  */
 export function Salvos() {
   const casca = useCasca()
@@ -24,6 +29,9 @@ export function Salvos() {
   const [dados, setDados] = useState<DadosDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [guia, setGuia] = useState<readonly EntradaDoGuia[] | null>(null)
+  const [erroDoGuia, setErroDoGuia] = useState(false)
+  const [rodadaDoGuia, setRodadaDoGuia] = useState(0)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -43,6 +51,21 @@ export function Salvos() {
     return () => controle.abort()
   }, [casca.cidade, rodada])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  useEffect(() => {
+    const controle = new AbortController()
+    setGuia(null)
+    setErroDoGuia(false)
+    void lerSalvosDoGuia({ signal: controle.signal })
+      .then((lidas) => {
+        if (!controle.signal.aborted) setGuia(lidas)
+      })
+      .catch(() => {
+        if (!controle.signal.aborted) setErroDoGuia(true)
+      })
+    return () => controle.abort()
+  }, [rodadaDoGuia])
+
   const itens = useMemo(() => {
     if (dados === null) return []
     return dados.anuncios
@@ -54,7 +77,10 @@ export function Salvos() {
 
   return (
     <section data-tela="salvos" className="grid gap-2">
-      <CabecaDePagina titulo="Salvos" subtitulo="Anúncios guardados para ver com calma." />
+      <CabecaDePagina
+        titulo="Salvos"
+        subtitulo="Anúncios e referências do guia guardados para ver com calma."
+      />
 
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
@@ -62,7 +88,7 @@ export function Salvos() {
         <EsqueletoDeLista linhas={3} />
       ) : itens.length === 0 ? (
         <EstadoVazio
-          titulo="Nada salvo por aqui"
+          titulo="Nenhum anúncio salvo"
           texto="Toque no marcador de um anúncio para guardá-lo nesta lista."
           icone="bookmark_border"
           acao={{
@@ -88,6 +114,34 @@ export function Salvos() {
           ))}
         </Grade>
       )}
+
+      <section data-salvos="guia" className="grid gap-2">
+        <h2 className="text-[17px]">Referências do guia</h2>
+        {erroDoGuia ? (
+          <EstadoDeErro
+            titulo="Não foi possível carregar suas referências"
+            aoTentar={() => setRodadaDoGuia((atual) => atual + 1)}
+          />
+        ) : guia === null ? (
+          <EsqueletoDeLista linhas={2} />
+        ) : guia.length === 0 ? (
+          <p className="text-sm text-(--on-surface-variant)">
+            Nenhuma referência do guia salva ainda.
+          </p>
+        ) : (
+          <Lista>
+            {guia.map((entrada) => (
+              <LinhaDeLista
+                key={entrada.id}
+                icone={ICONE_DA_CATEGORIA[entrada.categoria]}
+                titulo={entrada.nome}
+                subtitulo={entrada.descricao}
+                onClick={() => void navegacao.irPara("guia")}
+              />
+            ))}
+          </Lista>
+        )}
+      </section>
     </section>
   )
 }

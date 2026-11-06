@@ -62,4 +62,15 @@ describe("imagem de asset (§7 primitivos)", () => {
     expect(assetUrl("foto-do-hero")).toBe("")
     expect(assetUrl(undefined)).toBe("")
   })
+
+  it("deixa passar a URL assinada que o servidor entrega para a foto do negócio", () => {
+    const assinada = "https://storage.example.invalid/provider-photos/ficha.png?token=teste"
+    expect(assetUrl(assinada)).toBe(assinada)
+    const local = "http://127.0.0.1:54321/storage/v1/object/sign/provider-photos/a.png?token=teste"
+    expect(assetUrl(local)).toBe(local)
+  })
+
+  it("não trata outro esquema como imagem resolvida", () => {
+    expect(assetUrl("javascript:alert(1)")).toBe("")
+  })
 })

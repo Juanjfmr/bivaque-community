@@ -50,21 +50,49 @@ test("P1: abrir anúncio conserva a foto da listagem nos detalhes", async ({ pag
     .toBeGreaterThan(0)
 })
 
+const FOTO_DA_FICHA = "https://storage.example.invalid/provider-photos/ficha.png?token=teste"
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  "base64",
+)
+const FICHA_DE_TESTE = {
+  id: "n-capa",
+  nome: "Oficina Exemplo",
+  categoria: "assistencia_tecnica",
+  categoriaNome: "Assistência técnica",
+  descricao: null,
+  cidade: "Manaus",
+  podePedir: false,
+  servicos: [],
+  foto: FOTO_DA_FICHA,
+  fotoDescricao: "Fachada da oficina",
+}
+
 test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fixture", async ({
   page,
 }) => {
+  // A ficha lê a API da F07: a foto chega como URL assinada pelo servidor, não como chave.
+  await page.route(/\/api\/app\/negocios\/[^/?]+(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { negocio: FICHA_DE_TESTE } }),
+  )
+  await page.route("https://storage.example.invalid/**", (rota) =>
+    rota.fulfill({ contentType: "image/png", body: PNG_1X1 }),
+  )
   await page.goto("/app/inicio")
   const negocio = page.locator('[data-tela="inicio"] [data-cartao="negocio"]').first()
   await expect(negocio).toBeVisible()
-  // O banco não tem foto de negócio (commit 6ec43f62): o cartão do Início usa a
-  // capa do desenho, sem inventar imagem. A foto da persona aparece no detalhe.
+  // O Início lê /api/app/inicio, que não traz foto: o cartão usa a capa do
+  // desenho, sem inventar imagem (6ec43f62). A foto assinada é da ficha.
   await expect(negocio.locator('[data-capa="foto"]')).toBeVisible()
   await expect(negocio.locator('[data-capa="foto"] img')).toHaveCount(0)
   await negocio.locator('[data-acao="abrir-foto"]').first().click()
   await expect(page).toHaveURL(/\/app\/negocio\/[^/]+$/)
   const capaNegocio = page.locator('[data-tela="negocio"] [data-capa="foto"] img')
   await expect(capaNegocio).toBeVisible()
+  await expect(capaNegocio).toHaveAttribute("src", FOTO_DA_FICHA)
   await expect
+    .poll(() => capaNegocio.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
     .poll(() => capaNegocio.evaluate((el) => (el as HTMLImageElement).naturalWidth))
     .toBeGreaterThan(0)
   await page.goto("/app/grupo/g-cmm")
