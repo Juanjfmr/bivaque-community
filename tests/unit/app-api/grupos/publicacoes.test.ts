@@ -106,7 +106,10 @@ describe("publicar, ler e comentar em grupo", () => {
   it("publica texto e quatro fotos com autoria/cidade/grupo da sessão e do banco", async () => {
     const mock = mockClient()
     autenticar(mock)
-    const caminhos = Array.from({ length: 4 }, (_, i) => `${USER}/grupos/${ID}/foto-${i}.png`)
+    const caminhos = Array.from(
+      { length: 4 },
+      (_, i) => `${USER}/grupos/${ID}/30000000-0000-4000-8000-00000000000${i}.png`,
+    )
     const r = await publicar(
       req("POST", publicacoes, {
         texto: "  Uma publicação real.  ",
