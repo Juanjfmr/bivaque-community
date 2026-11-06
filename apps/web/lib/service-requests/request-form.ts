@@ -69,3 +69,65 @@ export function validateRequestPhotos(files: { size: number; type: string }[]): 
 export function firstFailure(...results: FieldValidation[]): FieldValidation {
   return results.find((result) => !result.ok) ?? ok
 }
+
+export type RequestInput = Readonly<{
+  descricao: string
+  quando: string | null
+  chave: string | null
+}>
+
+export function validateServiceRequest(description: string, when: string | null): FieldValidation {
+  return firstFailure(validateRequestDescription(description), validateRequestWhen(when))
+}
+
+/** Campos de escopo e autoria nunca entram no pedido; são da sessão e do RPC. */
+export function requestInputFromBody(body: Record<string, unknown>): RequestInput | null {
+  if (typeof body["descricao"] !== "string") return null
+  if (body["quando"] != null && typeof body["quando"] !== "string") return null
+  if (body["chave"] != null && typeof body["chave"] !== "string") return null
+  const descricao = body["descricao"].trim()
+  const quando = typeof body["quando"] === "string" ? body["quando"].trim() || null : null
+  const chave = typeof body["chave"] === "string" ? body["chave"].trim() || null : null
+  if (!validateServiceRequest(descricao, quando).ok || (chave !== null && chave.length > 200))
+    return null
+  return { descricao, quando, chave }
+}
+
+/** A mesma recusa na web antiga e no app; mensagem técnica nunca sai do servidor. */
+export function serviceRequestFailure(code: string | undefined): {
+  status: 400 | 403 | 404 | 429 | 503
+  erro: string
+  mensagem: string
+} {
+  if (code === "54000")
+    return {
+      status: 429,
+      erro: "limite",
+      mensagem:
+        "Você já tem cinco pedidos em aberto com este prestador. Feche ou cancele um para enviar outro.",
+    }
+  if (code === "42501")
+    return {
+      status: 403,
+      erro: "recusado",
+      mensagem: "Sua conta não pode enviar um pedido a este negócio. Seu texto continua aqui.",
+    }
+  if (code === "P0002")
+    return {
+      status: 404,
+      erro: "negocio-nao-encontrado",
+      mensagem: "Este negócio não está disponível.",
+    }
+  if (code === "22023" || code === "23514")
+    return {
+      status: 400,
+      erro: "dados-invalidos",
+      mensagem: "Revise a descrição e o prazo do serviço.",
+    }
+  return {
+    status: 503,
+    erro: "escrita-indisponivel",
+    mensagem:
+      "Não foi possível confirmar o pedido agora. Seu texto continua aqui — tente novamente.",
+  }
+}

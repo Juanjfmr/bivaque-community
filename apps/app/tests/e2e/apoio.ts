@@ -1,4 +1,5 @@
-import { test as base, expect, type Locator, type Page } from "@playwright/test"
+﻿import { test as base, expect, type Locator, type Page } from "@playwright/test"
+import { simularConversas } from "./conversas-ajuda"
 
 // Apoio dos specs de navegação. Tudo aqui mede o que a pessoa veria: URL,
 // texto, atributo visível, foco, rolagem real do contêiner e valor de campo.
@@ -14,6 +15,7 @@ import { test as base, expect, type Locator, type Page } from "@playwright/test"
 export const test = base.extend<{ modoDeProva: undefined }>({
   modoDeProva: [
     async ({ page }, use) => {
+      await simularConversas(page)
       await page.addInitScript(() => {
         ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ =
           true

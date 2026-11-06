@@ -6008,11 +6008,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "ca6498ee",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "05/11: RUN-010 (GPT Sol 6.1) — entram as cinco rotas da sessão (categorias e negócios da cidade atual, ficha com foto por URL assinada de 5 min, criação de pedido, lista e detalhe dos próprios pedidos) e a porta de dados do app, com cancelamento, paginação e falha que preserva o texto; 'Onde atende' usa a cidade real; Mercado segue intacto. Commits c68b9ea6, 16b4b4c7, f1fdb588, 55ea0cd8 e ca6498ee. Números: 126 testes de API passam (70 da F07 e 56 de pedidos antigos); gate final verde sem build Next (falta configuração local); 2.174 de unidade, 261 do app, 76 mobile, 19 web, 189 de privacidade e 192 de escopo passam; 'Onde atende' com 18 cenários em 375/768/1440, claro e escuro, em HTTP controlado; 42 capturas estáveis. Não rodou: E2E com banco local real (Docker negado), pgTAP e build Next. Revisões: Qwen PASS COM RESSALVAS (.visual/run-010/revisao-qwen.md); auditoria de segurança válida do coordenador (security-auditor, Sonnet 5.5): LIBERA COM RESSALVAS, sem crítico nem alto. O arquivo .visual/run-010/45-auditoria.log é autoavaliação do executor e não conta como revisão. Ressalvas abertas no cartão F07-RESSALVAS-REVISAO. E2E com banco real roda no check Install, test, and build do CI deste PR.",
+        "05/11: decisão do coordenador, a ratificar pelo dono — a ficha do negócio no app deixa de mostrar contagem de indicações e horário, selo Patrocinado, Benefício para a comunidade e aviso de ficha não assumida, porque não há coluna real para eles (provider_profiles); 'Onde atende' mostra só a cidade. Volta quando houver dado."
       ],
       "id": "LAN-F07",
       "title": "F07 Negócios e serviços ligados ao banco",
@@ -6029,6 +6031,30 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU", "APP-001"]
+    },
+    {
+      "id": "F07-RESSALVAS-REVISAO",
+      "title": "F07 ressalvas da revisão e da auditoria do RUN-010",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Ressalvas baixas e médias da revisão e da auditoria de segurança do RUN-010 (LAN-F07). Não bloqueiam o merge; cada item precisa de prova própria antes de ser marcado.",
+      "checklist": [
+        "Chave de idempotência limitada a 120 caracteres na rota (hoje aceita 200; o banco aceita 120)",
+        "Paginação de comunidades ordenada e sem URL excessiva em alcanceDaCidade",
+        "Foto indisponível não derruba a ficha inteira (degradar para foto: null)",
+        "Registrar falhas das cinco rotas no servidor, sem dado pessoal nos logs",
+        "Retirar o export antigo de Negocios em apps/app/src/telas/Mercado.tsx"
+      ],
+      "completedChecklist": [false, false, false, false, false],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "links": ["docs/agents/tasks/RUN-010.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "ca6498ee"
     },
     {
       "phase": "Lançamento",
@@ -6060,12 +6086,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-04",
-      "sourceRevision": "29fcc8f",
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "19e5ef5a",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH)."
+        "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
+        "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6089,6 +6116,52 @@
         "APP-001",
         "LAN-PUSH"
       ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "19e5ef5a",
+      "status": "repo",
+      "dependencies": [],
+      "id": "DM-INSERT-VETO-EXCLUSAO",
+      "title": "Mensagem direta: policy de insert não veta conta com exclusão ou suspensa",
+      "priority": "P2",
+      "category": "backend",
+      "description": "A policy dm_messages_insert_sender deixa inserir mensagem com conta em exclusão pedida ou suspensa, enquanto a RPC send_conversation_message veta os dois casos. A correção entra em migration nova (alter policy), sem editar migration aplicada, com pgTAP positivo e negativo.",
+      "checklist": [
+        "Migration nova com alter policy em dm_messages_insert_sender vetando conta com exclusão pedida e conta suspensa, no mesmo critério da RPC send_conversation_message",
+        "pgTAP positivo: remetente ativo continua inserindo; negativo: conta com exclusão pedida e conta suspensa não inserem",
+        "Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API",
+        "Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão"
+      ],
+      "links": ["docs/LANCAMENTO.md"]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "proof": [],
+      "updatedAt": "2026-11-05",
+      "sourceRevision": "19e5ef5a",
+      "status": "repo",
+      "dependencies": [],
+      "id": "F09-ENVIO-PELA-RPC",
+      "title": "F09: envio de resposta pela RPC e achados baixos da revisão Qwen",
+      "priority": "P2",
+      "category": "backend",
+      "description": "A rota POST /api/app/conversas/[id]/mensagens faz INSERT cru. Deve usar a RPC send_conversation_message, que dá idempotência e a transição do pedido de serviço. Junto, os achados baixos da revisão Qwen do RUN-011.",
+      "checklist": [
+        "Rota de envio chamando send_conversation_message, com idempotência por chave e a transição do pedido de serviço, com prova positiva e negativa",
+        "Validação do texto extraída para um módulo compartilhado entre a rota nova e o chat antigo (apps/web/app/components/bivaque/chat-thread.tsx), com as mesmas regras",
+        "N+1 da caixa (apps/web/app/api/app/conversas/route.ts) reduzido: nome e última mensagem sem uma consulta por conversa; medido no E2E real",
+        "Teste enfraquecido restaurado em apps/app/tests/e2e/conversas-grupos-mobile.spec.ts: compositor encostado embaixo abaixo de 720 px",
+        "BOM (U+FEFF) removido da primeira linha dos arquivos do F09 que o recebem, sem tocar no conteúdo",
+        "Link 'Ver origem' de conversa para anúncio ou negócio restaurado quando a tela de destino não ler demonstração"
+      ],
+      "links": ["apps/web/app/api/app/conversas/[id]/mensagens/route.ts"]
     },
     {
       "phase": "Lançamento",

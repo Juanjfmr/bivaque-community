@@ -92,38 +92,36 @@ export default async function AdminArrivalsPage() {
       </div>
 
       {volume.length === 0 ? (
-        <>
-          <div className="flex flex-col items-center gap-4 rounded-md border border-border p-10 text-center">
-            <span
-              aria-hidden="true"
-              className="grid h-12 w-12 place-items-center rounded-full bg-[var(--semantic-selected)]"
+        <div className="flex flex-col items-center gap-4 rounded-md border border-border p-10 text-center">
+          <span
+            aria-hidden="true"
+            className="grid h-12 w-12 place-items-center rounded-full bg-[var(--semantic-selected)]"
+          >
+            <X size={20} className="text-muted" />
+          </span>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Nenhuma transferência declarada no momento
+          </h2>
+          <p className="max-w-md text-sm text-muted">
+            Ninguém declarou mudança para outra cidade agora. Quando alguém declarar, a cidade de
+            destino aparece aqui.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Link
+              href={"/arrivals" as Route}
+              className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
             >
-              <X size={20} className="text-muted" />
-            </span>
-            <h2 className="text-lg font-semibold tracking-tight">
-              Nenhuma transferência declarada no momento
-            </h2>
-            <p className="max-w-md text-sm text-muted">
-              Ninguém declarou mudança para outra cidade agora. Quando alguém declarar, a cidade de
-              destino aparece aqui.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Link
-                href={"/arrivals" as Route}
-                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
-              >
-                <RefreshCw size={16} aria-hidden="true" />
-                Atualizar agora
-              </Link>
-              <Link
-                href="/admissions"
-                className="inline-flex min-h-11 items-center rounded-md bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors hover:bg-[var(--semantic-action-primary-hover)]"
-              >
-                Abrir Admissões
-              </Link>
-            </div>
+              <RefreshCw size={16} aria-hidden="true" />
+              Atualizar agora
+            </Link>
+            <Link
+              href="/admissions"
+              className="inline-flex min-h-11 items-center rounded-md bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors hover:bg-[var(--semantic-action-primary-hover)]"
+            >
+              Abrir Admissões
+            </Link>
           </div>
-        </>
+        </div>
       ) : (
         <table className="w-full border-collapse text-sm">
           <thead>
