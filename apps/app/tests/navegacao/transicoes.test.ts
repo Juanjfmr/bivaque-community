@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { descritorDaAcao, entradaPadrao } from "../../lib/navegacao/entrada"
 import {
   abrirSobreposicao,
+  buscaAoTrocarDeRota,
   definirFiltro,
   entrarEmRota,
   limparFiltro,
@@ -71,5 +72,16 @@ describe("transições de navegação", () => {
     expect(voltar(comPai, "inicio")).toEqual({ popar: true, nome: null })
     expect(voltar(BASE, "inicio")).toEqual({ popar: false, nome: "inicio" })
     expect(voltar(BASE, null)).toEqual({ popar: false, nome: null })
+  })
+
+  it("trocar de rota manda busca vazia explícita: o filtro da aba anterior não segue", () => {
+    expect(buscaAoTrocarDeRota("desapegos", "imoveis")).toEqual({})
+    expect(buscaAoTrocarDeRota("imoveis", "desapegos")).toEqual({})
+    expect(buscaAoTrocarDeRota("mercado", "negocios")).toEqual({})
+  })
+
+  it("navegar na mesma rota não passa busca: o middleware mantém o filtro (LAN-F06)", () => {
+    expect(buscaAoTrocarDeRota("desapegos", "desapegos")).toBeUndefined()
+    expect(buscaAoTrocarDeRota("imoveis", "imoveis")).toBeUndefined()
   })
 })

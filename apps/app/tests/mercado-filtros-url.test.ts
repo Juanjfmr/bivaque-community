@@ -92,6 +92,12 @@ describe("escrever filtros na URL", () => {
     )
   })
 
+  it("limpar o filtro de texto remove q do endereço, preservando o resto", () => {
+    expect(mesclarFiltrosNaUrl({ q: "mesa", tipo: "casa" }, filtrosParaUrl({ q: "" }))).toEqual({
+      tipo: "casa",
+    })
+  })
+
   it("roda de volta o que escreveu", () => {
     const busca = mesclarFiltrosNaUrl({}, filtrosParaUrl({ q: "sofá", tipoImovel: "apartamento" }))
     expect(lerFiltrosDaUrl(busca)).toMatchObject({ q: "sofá", tipoImovel: "apartamento" })

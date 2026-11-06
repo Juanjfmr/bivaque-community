@@ -54,7 +54,9 @@ const raiz = createRootRoute({
  * Nas rotas do Mercado, a busca (filtros na URL) sobrevive às navegações que
  * não mexem nela — inclusive as regravações de estado da entrada (rolagem,
  * foco) que a camada fina faz em `replace`. Quem passa `search` explícito
- * manda; sem ele, o filtro atual continua no endereço (LAN-F06).
+ * manda; sem ele, o filtro atual continua no endereço (LAN-F06). A troca de aba
+ * passa `search: {}` explícito (`buscaAoTrocarDeRota`): o filtro da aba
+ * anterior não segue para a nova.
  */
 const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) => {
   const atual = ctx.search ?? {}

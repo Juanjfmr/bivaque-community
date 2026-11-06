@@ -196,7 +196,7 @@ export function ListaDeMercado({
   }, [inicial, itens, tipo, filtros, ordenacao])
 
   const limparFiltros = () => {
-    gravarFiltros({ tipoImovel: "todos", quartos: 0, valorMaxReais: null })
+    gravarFiltros({ q: "", tipoImovel: "todos", quartos: 0, valorMaxReais: null })
     setOrdenacao("relevancia")
   }
 
@@ -295,6 +295,18 @@ export function ListaDeMercado({
           rotulo="Seções do Mercado"
         />
       ) : null}
+
+      {filtros.q === "" ? null : (
+        <Botao
+          tom="texto"
+          icone="close"
+          data-acao="limpar-busca"
+          className="justify-self-start"
+          onClick={() => gravarFiltros({ q: "" })}
+        >
+          Limpar busca: {filtros.q}
+        </Botao>
+      )}
 
       {inicial === "imoveis" && !carregando && erro === null ? (
         <div data-filtros-imoveis="sim" className="mt-2 grid gap-2">

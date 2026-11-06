@@ -22,7 +22,12 @@ import {
 } from "./entrada"
 import { type CargaDaEntrada, registrarRolagem, restaurarEntrada } from "./restauracao"
 import { type Aba, ROTA_INDISPONIVEL, type Rota, rotaPeloCaminho, rotaPorNome } from "./rotas"
-import { abrirSobreposicao, voltar as decidirVolta, entrarEmRota } from "./transicoes"
+import {
+  abrirSobreposicao,
+  buscaAoTrocarDeRota,
+  voltar as decidirVolta,
+  entrarEmRota,
+} from "./transicoes"
 
 /**
  * A ligação entre a camada fina e o React. As telas futuras falam com esta
@@ -221,6 +226,9 @@ export function useNavegacao(): Navegacao {
       if (!destinoRota) return
       const atual = lerEstadoDaRota(roteador)
       const decisao = entrarEmRota({ atual: atual.entrada, rotaAtual: atual.rota.nome })
+      // Trocar de rota (ex.: desapegos → imóveis) não leva a busca da tela
+      // anterior: cada rota lê só os próprios parâmetros (F06).
+      const busca = buscaAoTrocarDeRota(atual.rota.nome, destinoRota.nome)
       // A entrada que fica para trás guarda onde a pessoa parou e o que abriu
       // a próxima tela; é o que o Voltar devolve.
       await gravar(
@@ -234,6 +242,7 @@ export function useNavegacao(): Navegacao {
       await roteador.navigate({
         to: destinoRota.caminho,
         params: opcoes.parametros ?? {},
+        ...(busca === undefined ? {} : { search: busca }),
         state: { [CHAVE_DA_ENTRADA]: decisao.entrada },
         replace: opcoes.replace ?? decisao.replace,
         resetScroll: false,
