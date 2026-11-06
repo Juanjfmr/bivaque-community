@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test"
+import { simularInicio } from "./inicio-ajuda"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 test("P1: perguntas exibem avatar shadcn, enunciado completo e estado abaixo", async ({ page }) => {
   await page.goto("/app/comunidade")
@@ -45,19 +50,23 @@ test("P1: abrir anúncio conserva a foto da listagem nos detalhes", async ({ pag
     .toBeGreaterThan(0)
 })
 
-test("P1: negócios e grupos apresentam capas quando a fixture tem imagens", async ({ page }) => {
+test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fixture", async ({
+  page,
+}) => {
   await page.goto("/app/inicio")
-  const negocio = page.locator('[data-tela="inicio"] [data-cartao="negocio"] img').first()
+  const negocio = page.locator('[data-tela="inicio"] [data-cartao="negocio"]').first()
   await expect(negocio).toBeVisible()
-  const origem = await negocio.getAttribute("src")
-  await page
-    .locator('[data-tela="inicio"] [data-cartao="negocio"] [data-acao="abrir-foto"]')
-    .first()
-    .click()
+  // O banco não tem foto de negócio (commit 6ec43f62): o cartão do Início usa a
+  // capa do desenho, sem inventar imagem. A foto da persona aparece no detalhe.
+  await expect(negocio.locator('[data-capa="foto"]')).toBeVisible()
+  await expect(negocio.locator('[data-capa="foto"] img')).toHaveCount(0)
+  await negocio.locator('[data-acao="abrir-foto"]').first().click()
   await expect(page).toHaveURL(/\/app\/negocio\/[^/]+$/)
   const capaNegocio = page.locator('[data-tela="negocio"] [data-capa="foto"] img')
   await expect(capaNegocio).toBeVisible()
-  await expect(capaNegocio).toHaveAttribute("src", origem ?? "")
+  await expect
+    .poll(() => capaNegocio.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
   await page.goto("/app/grupo/g-cmm")
   const capaGrupo = page.locator('[data-tela="grupo"] [data-capa="foto"] img')
   await expect(capaGrupo).toBeVisible()

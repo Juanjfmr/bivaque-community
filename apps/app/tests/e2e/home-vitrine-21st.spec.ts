@@ -1,8 +1,13 @@
 import { expect, test } from "@playwright/test"
+import { simularInicio } from "./inicio-ajuda"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 // Prova da adoção do componente real Product Card (Delta Components / 21st.dev)
 // em anúncios e negócios da Home, sem alterar os contratos dos detalhes.
-test("Home: vitrine 21st mostra negócios e anúncios com fotos e texto reais", async ({ page }) => {
+test("Home: vitrine 21st mostra negócios e anúncios com capa e texto reais", async ({ page }) => {
   await page.goto("/app/inicio")
   const inicio = page.locator('[data-tela="inicio"]')
   await expect(inicio.locator('[data-home="abertura"]')).toBeVisible()
@@ -19,11 +24,13 @@ test("Home: vitrine 21st mostra negócios e anúncios com fotos e texto reais", 
     await expect(card.locator('[data-slot="product-card-badge"]')).toBeVisible()
   }
 
-  const img = negocio.locator('[data-capa="foto"] img')
-  await expect(img).toBeVisible()
-  await expect
-    .poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth))
-    .toBeGreaterThan(0)
+  // O banco não tem foto de anúncio nem de negócio: o cartão usa a capa do
+  // desenho, sem inventar imagem (commit 6ec43f62). A foto só entra quando a
+  // fonte existe, e é o detalhe que a traz.
+  for (const card of [negocio, anuncio]) {
+    await expect(card.locator('[data-capa="foto"]')).toBeVisible()
+    await expect(card.locator('[data-capa="foto"] img')).toHaveCount(0)
+  }
 })
 
 test("Home: salvar na vitrine é independente de navegar para o detalhe", async ({ page }) => {

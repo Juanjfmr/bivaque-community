@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test"
+import { simularInicio } from "./inicio-ajuda"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 test("mobile: topo e barra inferior cabem inteiros, com alvos de toque", async ({ page }) => {
   const largura = page.viewportSize()?.width ?? 0

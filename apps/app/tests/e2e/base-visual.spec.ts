@@ -1,7 +1,12 @@
 import { expect, test } from "@playwright/test"
+import { simularInicio } from "./inicio-ajuda"
 
 // Regressões V13–V15 da auditoria visual de 26/10/2026.
 // Testes executados pelos projetos 375, 768 e 1440 do app.
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
+
 test("V13: filtros continuam em uma faixa sem selecionar duas linhas", async ({ page }) => {
   await page.goto("/app/busca")
   await expect(page.locator('[data-tela="busca"]')).toBeVisible()
@@ -32,8 +37,8 @@ test("V13: filtros continuam em uma faixa sem selecionar duas linhas", async ({ 
     })
 
   await expect.poll(coincideComSelecionado).toBe(true)
-  await faixa.locator('[data-chip="events"]').click()
-  await expect(faixa.locator('[data-chip="events"]')).toHaveAttribute("data-estado", "on")
+  await faixa.locator('[data-chip="negocios"]').click()
+  await expect(faixa.locator('[data-chip="negocios"]')).toHaveAttribute("data-estado", "on")
   await expect.poll(coincideComSelecionado).toBe(true)
 })
 
