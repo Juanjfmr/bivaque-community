@@ -44,6 +44,7 @@ export type MotivoDeRecusa =
   | "email-invalido"
   | "nao-titular"
   | "teto-de-convites"
+  | "limite"
   | "convite-nao-encontrado"
   | "banco"
 
@@ -87,6 +88,28 @@ async function titularVerificado(client: Cliente, userId: string): Promise<boole
   return data === true
 }
 
+/**
+ * Teto de ritmo por titular: 10 envios por hora. Conta as linhas de outbox do
+ * tipo `family_invite` do próprio titular na última hora — cada envio deixa
+ * uma, revogado ou não, porque revogar não apaga o que já foi enviado. O
+ * `private.family_invitations` não é exposto na Data API; o outbox é, e é o
+ * registro real da entrega.
+ */
+const LIMITE_DE_ENVIOS_POR_HORA = 10
+const JANELA_DE_LIMITE_MS = 60 * 60 * 1000
+
+async function enviosNaUltimaHora(client: Cliente, userId: string): Promise<number> {
+  const { count, error } = await client
+    .from("outbox")
+    .select("id", { count: "exact", head: true })
+    .eq("type", "family_invite")
+    .contains("payload", { user_id: userId })
+    .gte("created_at", new Date(Date.now() - JANELA_DE_LIMITE_MS).toISOString())
+  if (error)
+    throw new FalhaDeConvite("banco", "Não foi possível conferir o limite de envios agora.")
+  return count ?? 0
+}
+
 /** Os convites pendentes do titular e se ele pode convidar. */
 export async function lerFamilia(client: Cliente, userId: string): Promise<FamiliaDoTitular> {
   const [podeConvidar, pendentes] = await Promise.all([
@@ -123,6 +146,13 @@ export async function enviarConvite(
 
   if (!(await titularVerificado(client, userId))) {
     throw new FalhaDeConvite("nao-titular", "Apenas titulares verificados podem enviar convites.")
+  }
+
+  if ((await enviosNaUltimaHora(client, userId)) >= LIMITE_DE_ENVIOS_POR_HORA) {
+    throw new FalhaDeConvite(
+      "limite",
+      "Muitos convites em pouco tempo. Tente novamente mais tarde.",
+    )
   }
 
   const token = randomBytes(32)

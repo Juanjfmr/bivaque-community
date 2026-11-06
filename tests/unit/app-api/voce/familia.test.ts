@@ -37,6 +37,7 @@ function banco(
   opcoes: {
     verificado?: boolean
     pendentes?: Linha[]
+    enviadosRecentes?: number
     erro?: "is_verified_holder" | "list_pending_invites_with_hint" | "create" | "revoke"
     mensagem?: string
     outboxFalha?: boolean
@@ -45,6 +46,18 @@ function banco(
   const chamadas: { nome: string; args: Record<string, unknown> }[] = []
   const enfileirados: Record<string, unknown>[] = []
   const linhas: Linha[] = [...(opcoes.pendentes ?? [])]
+
+  type Consulta = {
+    eq: () => Consulta
+    contains: () => Consulta
+    gte: () => Promise<{ count: number; error: null }>
+  }
+  // O limite de ritmo do módulo conta as linhas de `family_invite` no outbox.
+  const consulta: Consulta = {
+    eq: () => consulta,
+    contains: () => consulta,
+    gte: async () => ({ count: opcoes.enviadosRecentes ?? 0, error: null }),
+  }
 
   const rpc = vi.fn(async (nome: string, args: Record<string, unknown> = {}) => {
     chamadas.push({ nome, args })
@@ -80,6 +93,7 @@ function banco(
   const from = vi.fn((tabela: string) => {
     if (tabela !== "outbox") throw new Error(`tabela inesperada: ${tabela}`)
     return {
+      select: vi.fn(() => consulta),
       insert: vi.fn(async (valor: Record<string, unknown>) => {
         enfileirados.push(valor)
         return opcoes.outboxFalha
@@ -237,6 +251,16 @@ describe("família do titular no app", () => {
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(409)
     expect(await resposta.json()).toMatchObject({ erro: "teto-de-convites" })
+  })
+
+  it("décimo primeiro envio na hora é 429 de limite", async () => {
+    const mock = autenticar({ enviadosRecentes: 10 })
+    const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
+    expect(resposta.status).toBe(429)
+    expect(await resposta.json()).toMatchObject({ erro: "limite" })
+    // Recusa antes de criar: nada foi gravado nem enfileirado.
+    expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
+    expect(mock.enfileirados).toHaveLength(0)
   })
 
   it.each([
