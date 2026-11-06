@@ -111,3 +111,15 @@ export function mesclarFiltrosNaUrl(
   }
   return saida
 }
+
+/**
+ * Trocar um filtro volta para a página 1: a posição alcançada pelo cursor não
+ * significa nada para o novo filtro (F06). Um `pagina` explícito no patch — a
+ * paginação da própria tela — vence a volta.
+ */
+export function mudarFiltroNaUrl(
+  atual: Record<string, unknown>,
+  filtros: Partial<FiltrosDaUrl>,
+): Record<string, unknown> {
+  return mesclarFiltrosNaUrl(atual, filtrosParaUrl({ pagina: 1, ...filtros }))
+}

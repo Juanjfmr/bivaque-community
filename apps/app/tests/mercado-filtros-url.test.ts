@@ -5,6 +5,7 @@ import {
   filtrosParaUrl,
   lerFiltrosDaUrl,
   mesclarFiltrosNaUrl,
+  mudarFiltroNaUrl,
   semAcento,
 } from "@/src/mercado/filtros-url"
 
@@ -101,6 +102,28 @@ describe("escrever filtros na URL", () => {
   it("roda de volta o que escreveu", () => {
     const busca = mesclarFiltrosNaUrl({}, filtrosParaUrl({ q: "sofá", tipoImovel: "apartamento" }))
     expect(lerFiltrosDaUrl(busca)).toMatchObject({ q: "sofá", tipoImovel: "apartamento" })
+  })
+})
+
+describe("mudarFiltroNaUrl", () => {
+  it("trocar filtro zera a página: o cursor antigo não vale para o novo filtro", () => {
+    const atual = { q: "mesa", pagina: 3 }
+    expect(mudarFiltroNaUrl(atual, { q: "sofá" })).toEqual({ q: "sofá" })
+    expect(mudarFiltroNaUrl({ pagina: "5", tipo: "casa" }, { quartos: 2 })).toEqual({
+      tipo: "casa",
+      quartos: 2,
+    })
+  })
+
+  it("página explícita no patch (a paginação da tela) vence a volta", () => {
+    expect(mudarFiltroNaUrl({ q: "mesa", pagina: 2 }, { pagina: 3 })).toEqual({
+      q: "mesa",
+      pagina: 3,
+    })
+  })
+
+  it("voltar ao padrão remove a chave em vez de deixar null literal", () => {
+    expect(mudarFiltroNaUrl({ q: "mesa", pagina: 2 }, { q: "" })).toEqual({})
   })
 })
 

@@ -43,9 +43,8 @@ import {
 } from "@/src/mercado/cartao"
 import {
   type FiltrosDaUrl,
-  filtrosParaUrl,
   lerFiltrosDaUrl,
-  mesclarFiltrosNaUrl,
+  mudarFiltroNaUrl,
   semAcento,
 } from "@/src/mercado/filtros-url"
 
@@ -91,7 +90,7 @@ export function ListaDeMercado({
   const gravarFiltros = (novos: Partial<FiltrosDaUrl>) => {
     void navegar({
       to: rota.caminho,
-      search: (atual: Record<string, unknown>) => mesclarFiltrosNaUrl(atual, filtrosParaUrl(novos)),
+      search: (atual: Record<string, unknown>) => mudarFiltroNaUrl(atual, novos),
       replace: true,
       state: true,
       resetScroll: false,
