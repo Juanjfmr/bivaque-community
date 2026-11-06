@@ -27,8 +27,11 @@ import {
 // serial (`--workers=1`). A abertura é idempotente (open_conversation), então
 // as três larguras reaproveitam a mesma conversa em série.
 
-/** Anúncio ativo de terceiro, para o detalhe e o "Tenho interesse". */
+/** Anúncio legível de Gabriela, bloqueada pelo titular no seed. */
 const ITEM_ATIVO_DE_TERCEIRO = "b1000000-0000-4000-8000-000000000004"
+
+// Heitor não está em dm_blocks: open_conversation recusa Gabriela com 42501.
+const ITEM_ATIVO_PARA_INTERESSE = "b1000000-0000-4000-8000-000000000005"
 
 /** Item pausado do próprio titular (20000000-…0001 = a persona do teste). */
 const ITEM_PAUSADO_DO_TITULAR = "b1000000-0000-4000-8000-000000000002"
@@ -152,26 +155,27 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
     test.setTimeout(180_000)
     await entrarComo(context, MEMBRO_SEMEADO)
 
-    await page.goto(`/app/anuncio/${ITEM_ATIVO_DE_TERCEIRO}`)
+    await page.goto(`/app/anuncio/${ITEM_ATIVO_PARA_INTERESSE}`)
     await expect(
-      page.getByRole("heading", { level: 1, name: "Berço portátil desmontável" }),
+      page.getByRole("heading", { level: 1, name: "Notebook 14 polegadas, 8 GB" }),
     ).toBeVisible({ timeout: 30_000 })
 
     const resposta = page.waitForResponse(
       (r) => r.url().includes("/interesse") && r.request().method() === "POST",
     )
     await page.getByRole("button", { name: "Tenho interesse" }).click()
+    const enviada = await resposta
+    const corpo = (await enviada.json()) as { conversaId: string }
+    expect(enviada.status(), JSON.stringify(corpo)).toBe(200)
+    const { conversaId } = corpo
+    expect(conversaId).toMatch(/^[0-9a-f-]{36}$/)
+
     await expect(page.getByRole("button", { name: "Conversa aberta" })).toHaveAttribute(
       "data-estado",
       "interesse-gravado",
       { timeout: 30_000 },
     )
     await expect(page.getByRole("button", { name: "Ver conversa" })).toBeVisible()
-
-    const enviada = await resposta
-    expect(enviada.status()).toBe(200)
-    const { conversaId } = (await enviada.json()) as { conversaId: string }
-    expect(conversaId).toMatch(/^[0-9a-f-]{36}$/)
 
     // Sem otimismo: recarregar volta ao "Tenho interesse"; a prova da gravação
     // é o banco, não a tela.
@@ -191,7 +195,7 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
     )
     expect(lidas.status(), "a conversa precisa ser legível por quem abriu").toBe(200)
     const linhas = (await lidas.json()) as { context_type: string; context_id: string }[]
-    expect(linhas).toEqual([{ context_type: "listing", context_id: ITEM_ATIVO_DE_TERCEIRO }])
+    expect(linhas).toEqual([{ context_type: "listing", context_id: ITEM_ATIVO_PARA_INTERESSE }])
   })
 
   test("sessão vencida e acesso negado têm saídas próprias", async ({ page, context }) => {
@@ -237,6 +241,14 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
     })
     expect(proprio.status(), "interesse no próprio anúncio é recusado").toBe(400)
     expect((await proprio.json()) as { erro: string }).toMatchObject({ erro: "dados-invalidos" })
+
+    // O bloqueio do seed continua valendo: ler o anúncio não permite conversar.
+    const bloqueado = await api.post(`/api/app/mercado/${ITEM_ATIVO_DE_TERCEIRO}/interesse`, {
+      headers: cabecalhos,
+      data: {},
+    })
+    expect(bloqueado.status(), "interesse em anunciante bloqueado é recusado").toBe(403)
+    expect(await bloqueado.json()).toMatchObject({ erro: "recusado" })
 
     // Query inválida: sem `tipo`, e filtro de imóvel sobre `tipo=item`.
     const semTipo = await api.get("/api/app/mercado", { headers: cabecalhos })

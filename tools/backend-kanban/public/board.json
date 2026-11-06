@@ -5948,12 +5948,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-04",
-      "sourceRevision": "29fcc8f",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "22f286d2",
       "links": ["docs/LANCAMENTO.md", "https://bazardavila.app.br/vender"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus."
+        "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus.",
+        "06/11, PR #141: corrigidos os RegExp do stub (b4573706), cidade atual antes da RPC com negativas (da149708) e remoção de donoId (22f286d2). E2E de interesse passa a usar o notebook de Heitor: Gabriela, dona do berço original, já está bloqueada no seed, e open_conversation recusa o par com 42501. Mantido caso negativo de bloqueio e checada resposta antes do atributo. Provas locais: gate --fast (lint/tipos/E2E tipos), 53 testes unitários de Mercado e 202 de escopo passaram. Sem E2E, servidor, banco ou gate completo por instrução do dono; próximo passo: CI da revisão entregue provar E2E real. Jornada permanece next, sem declaração de fechamento. Logs: .visual/run-013/correcoes-{gate-fast,unit-mercado,scope}.log."
       ],
       "id": "LAN-F06",
       "title": "F06 Mercado e moradia ligados ao banco",
