@@ -126,17 +126,14 @@ export async function criarDesapego(request: NextRequest): Promise<NextResponse>
       const removidas = await client.from("listing_photos").delete().eq("listing_id", id)
       if (removidas.error) throw removidas.error
     }
-    const publicado = await client
-      .from("listings")
-      .update({ status: "active", published_at: new Date().toISOString() })
-      .eq("id", id)
-      .eq("owner_user_id", userId)
-      .eq("status", "draft")
-      .select("id")
-      .single()
-    if (publicado.error || !publicado.data)
-      throw publicado.error ?? new Error("publish without result")
-    return responder(request, { anuncio: { id: publicado.data.id } }, 201)
+    // A guarda listings_guard_status_transition recusa UPDATE direto da situação
+    // (42501): publicar é transição de servidor, pela única via autorizada.
+    const publicado = await client.rpc("transition_listing", {
+      p_listing_id: id,
+      p_action: "publish",
+    })
+    if (publicado.error) throw publicado.error
+    return responder(request, { anuncio: { id } }, 201)
   } catch (erro) {
     if (erro instanceof FalhaDaFoto) {
       return responder(request, { erro: "falha-na-foto", mensagem: erro.message }, erro.status)

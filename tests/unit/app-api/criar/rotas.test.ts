@@ -75,9 +75,8 @@ function cliente(opcoes: Opcoes = {}) {
   const escritas: { tabela: string; valor: Record<string, unknown> }[] = []
   const from = vi.fn((tabela: string) => {
     let operacao = "select"
-    let publicando = false
     const resultado = (single: boolean) => {
-      if (opcoes.erroTabela === tabela || (publicando && opcoes.erroPublicacao)) {
+      if (opcoes.erroTabela === tabela) {
         return { data: null, error: { code: "XX000", message: "segredo do Postgres" } }
       }
       if (operacao !== "select") {
@@ -112,7 +111,6 @@ function cliente(opcoes: Opcoes = {}) {
     for (const metodo of ["insert", "update"])
       query[metodo] = (valor: Record<string, unknown>) => {
         operacao = metodo
-        publicando = valor["status"] === "active"
         escritas.push({ tabela, valor })
         return query
       }
@@ -123,9 +121,13 @@ function cliente(opcoes: Opcoes = {}) {
       Promise.resolve(resultado(false)).then(resolve)
     return query
   })
-  const rpc = vi.fn(async () => ({
+  const rpc = vi.fn(async (funcao: string) => ({
     data: [],
-    error: opcoes.erroRpc ? { message: "segredo do Postgres" } : null,
+    error:
+      (funcao === "replace_listing_photo" && opcoes.erroRpc) ||
+      (funcao === "transition_listing" && opcoes.erroPublicacao)
+        ? { message: "segredo do Postgres" }
+        : null,
   }))
   const client = { from, rpc, storage: { from: vi.fn(() => ({ createSignedUrl: vi.fn() })) } }
   resolver.mockResolvedValue({
@@ -256,7 +258,10 @@ describe("F03 — fronteira de criação", () => {
       p_path: `${ID}/foto.jpg`,
       p_position: 0,
     })
-    expect(mock.escritas.at(-1)?.valor["status"]).toBe("active")
+    expect(mock.rpc).toHaveBeenCalledWith("transition_listing", {
+      p_listing_id: ID,
+      p_action: "publish",
+    })
   })
 
   it("anúncio: repetir chave publicada devolve o resultado sem duplicar", async () => {
@@ -271,7 +276,7 @@ describe("F03 — fronteira de criação", () => {
       existente: { id: ID, status: "draft", locality_id: CIDADE, kind: "item" },
     })
     expect((await anuncio(post("mercado", item))).status).toBe(201)
-    expect(mock.escritas).toHaveLength(2)
+    expect(mock.escritas).toHaveLength(1)
     expect(mock.escritas[0]?.valor).not.toHaveProperty("owner_user_id")
   })
   it("anúncio: chave de outra pessoa dá 404", async () => {
@@ -306,7 +311,7 @@ describe("F03 — fronteira de criação", () => {
           )
         ).status,
       ).toBe(status)
-      expect(mock.escritas.some((e) => e.valor["status"] === "active")).toBe(false)
+      expect(mock.rpc).not.toHaveBeenCalled()
     }
   })
   it("anúncio: falha no registro da foto e na publicação dão 503", async () => {
