@@ -1,0 +1,66 @@
+# LAN-TROCA (06/11/2026): as rotas de membro do apps/web passam a levar ao app, agora que as jornadas estão ligadas.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-019
+
+objective: >
+  Nenhuma rota de membro do apps/web serve mais tela antiga: cada rota antiga de membro redireciona para a
+  tela equivalente do app (/app/...), sem ciclo, preservando os parâmetros úteis; no apps/web ficam só a
+  landing, o servidor (rotas /api, /auth, /consent, convites) e o painel do operador. Código antigo só sai
+  quando nada mais o usa.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 e fase 6)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - tools/backend-kanban card LAN-TROCA
+  - referência viva: o redirecionamento das telas antigas de entrada em apps/web/next.config.ts (PR #136) e o rastreador tests/e2e/link-crawl.spec.ts
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/ ainda serve as telas antigas de membro: cidade, communities, community, configuracoes,
+    denuncias, events, explorar, groups, guide, imoveis, indicacoes, inicio, localidade, mercado, messages,
+    meus-anuncios, negocio, notifications, pedidos, prestadores, profile, recommendations e salvos, enquanto
+    as jornadas equivalentes já estão no app (F01 a F10 na main; F04 só perguntas da cidade).
+
+allowed_paths:
+  - apps/web/next.config.ts
+  - apps/web/proxy.ts
+  - apps/web/app/(shell)
+  - apps/web/lib
+  - apps/app/src/roteador.tsx
+  - tests/e2e
+  - tests/unit
+  - tests/scope
+  - docs/agents/tasks/RUN-019.task.yml
+  - .visual/run-019
+
+forbidden:
+  - redirecionar rota cuja jornada ainda não existe no app: os grupos (groups/*, community, communities) ficam como estão até o F04 Grupos; registre no relatório
+  - mexer no painel do operador, nas rotas /api, /auth, /consent, /invite e na landing
+  - apagar código ainda importado por rota viva, Server Action usada pelo app ou teste que segue valendo
+  - pular teste (skip/fixme) ou afrouxar asserção; o teste de uma tela que saiu sai junto com ela
+  - push, merge ou force-push
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Tabela no relatório: cada rota antiga de membro → destino no app (ou 'fica, motivo'), conferida contra o roteador do app (apps/app/src/roteador.tsx) para não apontar a tela inexistente."
+  - "Redirecionamentos 307 no next.config (mesmo padrão do PR #136), sem ciclo e preservando ids e query úteis; teste de unidade/escopo cobre cada um e as rotas que ficam."
+  - "Portões do proxy continuam corretos por perfil (visitante, membro, operador), com teste."
+  - "E2E da raiz que exercitavam as telas antigas: migrados para esperar o destino no app ou retirados junto com a tela; o rastreador de links continua verde."
+  - "Código antigo removido só quando o rg não acha mais importador."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec vitest run tests/unit
+  - E2E da raiz no CI (inclui link-crawl)
+
+risk: navegação e portões de acesso do apps/web
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
