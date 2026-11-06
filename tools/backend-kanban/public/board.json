@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-11-05",
+  "updatedAt": "2026-11-06",
   "sourcePolicy": "docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.",
   "cards": [
     {
@@ -6250,11 +6250,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "5f34bfe2",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "06/11: RUN-019 fase 1, autorizada pelo coordenador após o inventário de .visual/run-019/relatorio.md; família incluída pelo PR #147. Commits 21e333fb (13 regras 307 para 12 rotas, IDs/query e negativas) e 1b7c82e3 (E2E e rastreador adaptados). Gate --fast passou (lint e tipos, incluindo E2E), escopo 222/222 e unitários 2.525/2.525 em 226 arquivos, com um worker. Contrato substitui blocked_by por nota da fase 1 e lacunas no fechamento deste cartão. Sem revisão por outro modelo, E2E, servidor, banco, build ou gate completo local por ordem explícita; runtime/rastreador ficam para CI. LAN-TROCA permanece next, sem fechamento integral.",
+        "06/11: rodada única após FAIL de .visual/run-019/revisao-qwen.md, confrontada com 5f34bfe2. Corrigida a recusa de /groups para /app/entrar?redirect=/groups e o comentário corrompido; decisão revista mantém /indicacoes/:id na web até F04 para preservar Ajudou a resolver, com spec recommendation-reply-notify restaurado de origin/main, negativa unitária e rastreador ajustados; jornada de serviço de duas personas restaurada entre criação/painel web e pedido/conversa no app, sem skip. Ficam 12 regras 307 para 11 rotas. Gate --fast, escopo 222/222 e unitários 2.525/2.525 (226 arquivos, um worker, 60,32 s) passaram no diff local. Relatório registra o recorte e a ausência da gravação de leitura do acompanhamento antigo. Sem E2E, servidor, ambiente, segredos ou nova revisão externa por ordem explícita. BLOQUEIO: git add recusado ao criar .git/worktrees/lan-troca/index.lock fora da raiz gravável do sandbox; nenhum commit novo nem push. Próximo passo: criar os três commits por item em sessão com acesso aos metadados Git e executar git push origin chore/lan-troca; runtime segue para CI."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6265,7 +6267,10 @@
       "checklist": [
         "Cada rota antiga redireciona para a nova, sem ciclo",
         "Portões do proxy movidos com teste por perfil",
-        "Código, testes e ferramentas antigas removidos"
+        "Código, testes e ferramentas antigas removidos",
+        "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
+        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); grupos, seguir/salvar/resolver e denúncias (F04); convites/fan-out e criar/editar evento (F05); criar/editar anúncios, Meus anúncios e alertas (F06); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); indicações em Salvos, perfil alheio/interesses e portas de conta (F10)",
+        "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
         "LAN-F01",

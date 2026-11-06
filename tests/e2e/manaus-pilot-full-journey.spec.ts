@@ -327,20 +327,6 @@ test.describe("notifications journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("contextual DM and report journey", () => {
-  test("messages page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /messages
-    await page.goto("/messages")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
-    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
-    // o destino mudou.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
-  })
-
   test("messages page with consent cookie renders messages UI", async ({ page, context }) => {
     // Given a browser with consent cookie
     await seedSession(context)
@@ -349,8 +335,9 @@ test.describe("contextual DM and report journey", () => {
     await page.goto("/messages")
 
     // Then the messages page renders its heading and primary action
-    await expect(page.getByRole("heading", { name: "Mensagens" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Nova conversa" })).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/conversas$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Conversas" })).toBeVisible()
+    await expect(page.locator('[data-filtros-conversas="sim"]')).toBeVisible()
   })
 })
 

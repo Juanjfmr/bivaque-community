@@ -37,7 +37,8 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     test.setTimeout(180_000)
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
 
-    await page.goto("/app/voce")
+    await page.goto("/configuracoes/familia")
+    await expect(page).toHaveURL(/\/app\/voce$/)
     await expect(
       page.getByRole("heading", { level: 1, name: "Você" }),
       "a tela real não está em /app/voce: rode `npx pnpm@11.18.0 app:export`",
@@ -84,7 +85,8 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     await capturar(page, testInfo.project.name, "minhas")
 
     // Bloqueados: a lista real, com o nome que a RLS deixa ler.
-    await page.goto("/app/bloqueados")
+    await page.goto("/configuracoes/bloqueados")
+    await expect(page).toHaveURL(/\/app\/bloqueados$/)
     await expect(page.getByRole("heading", { level: 1, name: "Pessoas bloqueadas" })).toBeVisible({
       timeout: 30_000,
     })

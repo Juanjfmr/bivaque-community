@@ -45,6 +45,22 @@ describe("portão do proxy para /app", () => {
     },
   )
 
+  it.each([
+    "/app/conversas",
+    "/app/conversa/41000000-0000-4000-8000-000000000051",
+    "/app/anuncio/41000000-0000-4000-8000-000000000051",
+    "/app/pergunta/41000000-0000-4000-8000-000000000051",
+    "/app/pedidos",
+    "/app/pedido/41000000-0000-4000-8000-000000000051",
+    "/app/negocio/41000000-0000-4000-8000-000000000051",
+    "/app/bloqueados",
+    "/app/voce",
+    "/app/inicio",
+    "/app/busca",
+  ])("LAN-TROCA: %s chega ao portão do app sem voltar à web", async (caminho) => {
+    expect(passou(await pedir(proxy, caminho))).toBe(true)
+  })
+
   it.each(["/application", "/approve", "/apple-touch", "/app-secreto", "/appx/entrar"])(
     "%s NÃO é o app: segue para o login sem sessão",
     async (caminho) => {

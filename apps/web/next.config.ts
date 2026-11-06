@@ -74,6 +74,41 @@ const nextConfig: NextConfig = {
         destination: ENTRADA_DO_APP,
         permanent: false,
       })),
+      // LAN-TROCA fase 1: só as jornadas autorizadas. A query segue pelo Next;
+      // conversation UUID escolhe o detalhe antes da regra genérica da caixa.
+      {
+        source: "/messages",
+        has: [
+          {
+            type: "query",
+            key: "conversation",
+            value:
+              "(?<conversa>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/conversa/:conversa",
+        permanent: false,
+      },
+      ...(
+        [
+          ["/messages", "/app/conversas"],
+          ["/messages/:id", "/app/conversa/:id"],
+          // As páginas estáticas e /:id/editar continuam na web.
+          ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
+          ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
+          ["/pedidos", "/app/pedidos"],
+          ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],
+          ["/prestadores/:id", "/app/negocio/:id"],
+          ["/configuracoes/bloqueados", "/app/bloqueados"],
+          ["/configuracoes/familia", "/app/voce"],
+          ["/inicio", "/app/inicio"],
+          ["/explorar", "/app/busca"],
+        ] as const
+      ).map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: false,
+      })),
     ]
   },
   experimental: {

@@ -1,154 +1,63 @@
-// RECON-032 — ciclo de Salvos (prancha 54, painel direito; spec C09).
-// Estado compartilhado: o spec deixa o pedido do seed SALVO ao final, que é a
-// fixture da captura /salvos. Idempotente por construção: começa limpando.
-//
-// Localizadores: o seed tem UM pedido de indicação e nenhum outro botão
-// "Seguir respostas" visível na página do pedido (o de edição só existe para o
-// autor). O spec afirma essa unicidade (toHaveCount(1)) em vez de assumi-la — se o
-// seed ganhar outro pedido, ele falha alto em vez de clicar no card errado.
-
+﻿// LAN-TROCA fase 1: Salvos e o detalhe da indicação permanecem na web até F04.
+// A fixture usa a sessão sintética sob RLS.
 import { expect, test } from "@playwright/test"
-import { seedAs } from "./helpers/recon032"
+import { mintSession, restDelete, restInsert, seedAs } from "./helpers/recon032"
 import { REQUEST_ID, REQUEST_TITLE, VISUAL_EMAIL } from "./helpers/recon032-fixtures"
 
-// NOTA de tentativa revertida: limpar recommendation_saves via service role NÃO é
-// possível — service_role não tem grant de DELETE nesta tabela (o grant é mínimo
-// por desenho, e afrouxá-lo para o teste passar seria trocar segurança por
-// conveniência). O estado inicial continua sendo limpo pela UI, que é o fluxo
-// autorizado, com a espera de rede que o próprio teste já faz.
-
-test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () => {
-  test("anonimo nao ve a tela de salvos", async ({ page }) => {
+test.describe("salvos preservados na web", { tag: "@stateful" }, () => {
+  test("anônimo não vê a tela de salvos", async ({ page }) => {
     await page.goto("/salvos")
     await page.waitForURL(/\/app\/entrar/)
   })
 
-  test("salvar na origem aparece em Salvos; remover reflete na origem", async ({ browser }) => {
+  test("indicação salva abre o detalhe e a remoção persiste na web", async ({ browser }) => {
+    const sessao = await mintSession(VISUAL_EMAIL)
+    const filtro = { user_id: `eq.${sessao.id}`, request_id: `eq.${REQUEST_ID}` }
+    expect(await restDelete("recommendation_saves", sessao.accessToken, filtro)).toBe(true)
+    await restInsert("recommendation_saves", sessao.accessToken, {
+      user_id: sessao.id,
+      request_id: REQUEST_ID,
+    })
     const context = await browser.newContext()
     await seedAs(context, VISUAL_EMAIL)
     const page = await context.newPage()
-
-    // ── estado inicial honesto: limpa qualquer resto de execução anterior ──
-    await page.goto("/salvos")
-    await expect(page.getByRole("heading", { name: "Salvos" })).toBeVisible()
-    const leftovers = page.getByRole("button", { name: /Remover dos salvos/ })
-    if ((await leftovers.count()) > 0) {
-      // Esperar a remoção CONCLUIR antes de sair da tela: sem isso o clique
-      // dispara o DELETE e a navegação seguinte pode chegar antes de o servidor
-      // gravar. O estado então diverge (UI sem o item, banco com ele) e o POST
-      // do ciclo bate em duplicate key — a falha aparecia só em viewport
-      // estreito, onde a lista demora mais a montar.
-      const removed = page.waitForResponse(
+    try {
+      await page.goto("/salvos")
+      const link = page.getByRole("link", { name: REQUEST_TITLE })
+      await expect(link).toBeVisible()
+      await expect(page.getByText("Salvo em", { exact: false })).toBeVisible()
+      await expect(page.getByText("Outros", { exact: true })).toBeVisible()
+      await expect(page.getByRole("tab", { name: "Indicações" })).toBeVisible()
+      await expect(link).toHaveAttribute("href", new RegExp(`/indicacoes/${REQUEST_ID}$`))
+      const busca = page.getByLabel("Buscar nos salvos")
+      await busca.fill("encanador")
+      await expect(link).toBeVisible()
+      await busca.fill("zzz-inexistente")
+      await expect(page.getByText("Nenhum item salvo corresponde à busca.")).toBeVisible()
+      await busca.fill("")
+      await link.click()
+      await expect(page).toHaveURL(new RegExp(`/indicacoes/${REQUEST_ID}$`))
+      await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
+      await page.goto("/salvos")
+      const removido = page.waitForResponse(
         (r) => r.url().includes("recommendation_saves") && r.request().method() === "DELETE",
-        { timeout: 10_000 },
       )
-      await leftovers.first().click()
-      await removed
+      const remover = page.getByRole("button", { name: /Remover dos salvos/ })
+      await expect(remover).toHaveCount(1)
+      await remover.click()
+      expect((await removido).ok()).toBe(true)
+      await expect(page.getByText("Nada salvo ainda")).toBeVisible()
+      await expect(page.getByText(REQUEST_TITLE, { exact: true })).toHaveCount(0)
+      await page.reload()
+      await expect(link).toHaveCount(0)
+    } finally {
+      expect(await restDelete("recommendation_saves", sessao.accessToken, filtro)).toBe(true)
+      // Mantém a fixture salva que a captura RECON-032 já usava após este ciclo.
+      await restInsert("recommendation_saves", sessao.accessToken, {
+        user_id: sessao.id,
+        request_id: REQUEST_ID,
+      })
+      await context.close()
     }
-
-    // ── salvar na origem ─────────────────────────────────────────────────────
-    // Desde 25/09/2026 o pedido tem página própria, /indicacoes/<id>
-    // (ADR-20260925-memoria-de-indicacoes), com o "Seguir respostas" no cabeçalho.
-    // O rótulo veio do ADR-20261023, seção 2: o salvar passou a ser "seguir
-    // respostas".
-    await page.goto(`/indicacoes/${REQUEST_ID}`)
-    await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible({
-      timeout: 15_000,
-    })
-    // O estado do toggle vem do servidor; se sobrou um salvamento de execucao
-    // anterior, ele abre como "Seguindo respostas" e precisa voltar a "Seguir
-    // respostas" antes do ciclo deste spec.
-    // O seletor anterior era /^Salv/, que casava "Salvar", "Salvo" e qualquer
-    // outro rótulo começando com "Salv" — resolvia para 2 elementos e falhava
-    // por ambiguidade, não por defeito. O regex exato resolve o toggle sem
-    // depender de estrutura de card.
-    const saveToggle = page.getByRole("button", { name: /^Segu(ir|indo) respostas$/ })
-    await expect(saveToggle).toHaveCount(1, { timeout: 10_000 })
-    // Estado inicial EXPLÍCITO: o ciclo deste spec grava e o próprio teste não
-    // limpa, então a rodada seguinte abre com "Seguindo respostas" e o insert do
-    // ciclo bate em duplicate key (23505) — verificado por REST: a RLS permite o
-    // insert e o 409 vinha do save preexistente. Desmarcar sempre, mesmo que o
-    // botão já esteja em "Seguir respostas" (a espera abaixo é idempotente).
-    // A escrita é uma chamada de rede; esperar a RESPOSTA antes de olhar o
-    // rótulo evita ler o estado antes de o pedido sair. Sonda em 375/768/1440
-    // mostrou o ciclo correto (DELETE 204 -> POST 201), e o spec falhava só em
-    // viewport estreito, onde a lista demora mais a montar.
-    if ((await saveToggle.textContent())?.trim() === "Seguindo respostas") {
-      const cleared = page.waitForResponse(
-        (r) => r.url().includes("recommendation_saves") && r.request().method() === "DELETE",
-        { timeout: 10_000 },
-      )
-      await saveToggle.click()
-      await cleared
-      await expect(saveToggle).toHaveText("Seguir respostas", { timeout: 10_000 })
-    }
-    const saved = page.waitForResponse(
-      (r) => r.url().includes("recommendation_saves") && r.request().method() === "POST",
-      { timeout: 10_000 },
-    )
-    await saveToggle.click()
-    await saved
-    // Estabiliza antes de ler o rótulo. O POST 201 já voltou, mas o React troca
-    // o nó do botão ao atualizar o estado, e a asserção sobre o locator antigo
-    // ficava 10s lendo "Seguir respostas" com a escrita já confirmada. Medido com o
-    // próprio spec instrumentado: com esta espera ele passa 2/2 em tablet; sem ela,
-    // falha nos dois viewports estreitos. É limitação de OBSERVAÇÃO do teste, não
-    // defeito do produto — a sonda provou DELETE 204 -> POST 201 -> Seguindo
-    // respostas.
-    await page.waitForTimeout(1500)
-    await expect(page.getByRole("button", { name: /^Segu(ir|indo) respostas$/ })).toHaveText(
-      "Seguindo respostas",
-      {
-        timeout: 10_000,
-      },
-    )
-
-    // ── o que foi guardado está no destino, com tipo e conteúdo reais ───────
-    await page.goto("/salvos")
-    await expect(page.getByRole("link", { name: REQUEST_TITLE })).toBeVisible({
-      timeout: 10_000,
-    })
-    await expect(page.getByText("Salvo em", { exact: false })).toBeVisible({ timeout: 10_000 })
-    // chip do tipo do pedido (categoria real do seed: "outros") e a aba do
-    // tipo salvavel — a prancha chama cada tipo pelo nome
-    await expect(page.getByText("Outros", { exact: true })).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByRole("tab", { name: "Indicações" })).toBeVisible()
-
-    // abrir leva ao destino real do pedido
-    await expect(page.getByRole("link", { name: REQUEST_TITLE })).toHaveAttribute(
-      "href",
-      new RegExp(`/indicacoes/${REQUEST_ID}$`),
-    )
-
-    // ── busca da prancha ─────────────────────────────────────────────────────
-    const search = page.getByLabel("Buscar nos salvos")
-    await search.fill("encanador")
-    await expect(page.getByRole("link", { name: REQUEST_TITLE })).toBeVisible()
-    await search.fill("zzz-inexistente")
-    await expect(page.getByText("Nenhum item salvo corresponde à busca.")).toBeVisible()
-    await search.fill("")
-
-    // ── remover no destino reflete na origem (sincronismo nos dois sentidos) ─
-    const removeButtons = page.getByRole("button", { name: /Remover dos salvos/ })
-    await expect(removeButtons).toHaveCount(1)
-    await removeButtons.first().click()
-    await expect(page.getByText("Nada salvo ainda")).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(REQUEST_TITLE, { exact: true })).toHaveCount(0)
-
-    // Volta para a origem: a página do próprio pedido.
-    await page.goto(`/indicacoes/${REQUEST_ID}`)
-    await expect(page.getByRole("button", { name: "Seguir respostas", exact: true })).toBeVisible({
-      timeout: 10_000,
-    })
-
-    // ── restaura a fixture para a captura visual ─────────────────────────────
-    await page.getByRole("button", { name: "Seguir respostas", exact: true }).click()
-    await expect(page.getByRole("button", { name: "Seguindo respostas", exact: true })).toBeVisible(
-      {
-        timeout: 10_000,
-      },
-    )
-
-    await context.close()
   })
 })

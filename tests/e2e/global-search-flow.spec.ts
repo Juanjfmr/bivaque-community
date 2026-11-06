@@ -64,7 +64,7 @@ test.describe("busca global do cabecalho", () => {
     await signIn(context, "visual@bivaque.example.invalid")
     const page = await context.newPage()
 
-    await page.goto("/inicio")
+    await page.goto("/profile")
     // O shell monta dois campos (desktop e celular, um sempre escondido), cada
     // um com o próprio id desde 25/09/2026: o teste usa o que está à vista.
     const field = page.getByLabel("Buscar no Bivaque").locator("visible=true")
@@ -153,7 +153,7 @@ test.describe("busca de servicos (prancha 61, painel direito)", () => {
     await expect(page.getByText("Vila Ajuricaba, Manaus")).toBeVisible()
 
     await page.getByRole("button", { name: "Ver ficha" }).click()
-    await expect(page).toHaveURL(new RegExp(`/prestadores/${PROVIDER_ID}`))
+    await expect(page).toHaveURL(new RegExp(`/app/negocio/${PROVIDER_ID}$`))
 
     await context.close()
   })

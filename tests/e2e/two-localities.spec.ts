@@ -161,7 +161,10 @@ test.describe("two localities: each member sees only their own city", () => {
     // Then the city section is interactive (load control — without it the
     // negative assertions in the sibling test could pass vacuously on an error
     // page)
-    await expect(page.locator("#secao-perguntas")).toBeVisible({ timeout: 20000 })
+    await expect(page).toHaveURL(/\/app\/inicio$/)
+    await expect(page.getByRole("heading", { name: "Sua rede em Manaus" })).toBeVisible({
+      timeout: 20000,
+    })
 
     // And an open Manaus question is rendered for them
     await expect(page.getByText(MANAUS_QUESTION_MARKER).first()).toBeVisible({
@@ -183,7 +186,8 @@ test.describe("two localities: each member sees only their own city", () => {
 
     // And no Manaus question is on the page — the section must resolve from the
     // member's locality, not a pilot constant
-    await expect(page.locator("#secao-perguntas")).toHaveCount(0)
+    await expect(page).toHaveURL(/\/app\/inicio$/)
+    await expect(page.getByRole("heading", { name: "Sua rede em Rio de Janeiro" })).toBeVisible()
     await expect(page.getByText(MANAUS_QUESTION_MARKER)).toHaveCount(0)
 
     // And no Manaus event title leaks through the right rail or anywhere else

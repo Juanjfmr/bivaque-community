@@ -25,6 +25,16 @@ const PAGES = [
 const HANDLERS = ["api/health/route.ts", "auth/callback/route.ts"]
 
 describe("modelo do rastreador de links", () => {
+  it("redirecionamento continua visitável, sem exigir porta de tela antiga", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS, [], ["/pedidos/[id]"])
+    const frontier = new Frontier(patterns, 1)
+    expect(
+      frontier.offer({ target: "/pedidos/123", from: "/profile", persona: "membro" })?.kind,
+    ).toBe("redirect")
+    expect(frontier.next()?.target).toBe("/pedidos/123")
+    expect(unreachedRoutes(patterns, new Set(), [])).not.toContain("/pedidos/[id]")
+    expect(unreachedRoutes(patterns, new Set(), [])).toContain("/pedidos/novo")
+  })
   it("tira os grupos de rota da URL", () => {
     expect(routeFromFile("(shell)/pedidos/[id]/page.tsx")).toBe("/pedidos/[id]")
     expect(routeFromFile("page.tsx")).toBe("/")

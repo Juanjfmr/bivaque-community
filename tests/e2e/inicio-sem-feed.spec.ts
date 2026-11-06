@@ -1,26 +1,7 @@
-// O Início sem feed e o compositor só em grupo (lote 5, tarefa N2 —
-// ADR-20261023-comunidade-do-prototipo).
-//
-// O que este spec prova em runtime:
-//   1. o Início NÃO tem feed da cidade: nenhuma seção, nenhuma aba, nenhum
-//      "Carregar mais". A leitura `feed_locality` que a versão anterior usava
-//      nem chegou ao banco;
-//   2. a Comunidade não tem feed nem a vista "Conversa", nem a linha de
-//      publicar: o que fica é o painel de Indicações;
-//   3. o compositor só oferece grupo: quem participa escolhe o grupo de destino
-//      e o aviso de alcance descreve esse grupo;
-//   4. sem grupo nenhum, publicar não acontece: o caminho é entrar em um grupo,
-//      e o primário fica desabilitado.
-//
-// LIMITE: a recusa do BANCO para publicação sem grupo é provada no pgTAP
-// (`supabase/tests/publicacao-so-em-grupo.sql`), onde o insert direto pode ser
-// exercitado. A tela nunca é a autoridade da regra — ela só não oferece o que o
-// banco recusaria.
-//
-// Este spec substitui `inicio-feed-cidade.spec.ts`, que provava o feed no
-// Início; a decisão do dono (no ADR) foi seguir o protótipo, que não tem feed.
+// LAN-TROCA fase 1: a Home antiga saiu; Comunidade e compositor de grupos
+// permanecem na web. A recusa de publicação sem grupo segue no pgTAP.
 
-import { type BrowserContext, expect, type Page, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { openComposer } from "./helpers/composer"
 import { signInAs } from "./helpers/session"
 
@@ -34,26 +15,7 @@ const VILA_OWNER = "dono-vila@bivaque.example.invalid"
 const CITY_FEED = "#secao-cidade"
 const GROUP_NAME = "Pais e Filhos"
 
-async function openHome(context: BrowserContext, email: string, page: Page): Promise<void> {
-  await signInAs(context, email)
-  await page.goto("/inicio", { waitUntil: "load" })
-  // Âncora positiva: sem ela, "não tem feed" passaria numa página de erro.
-  await expect(page.locator("main").getByRole("heading", { level: 1 })).toBeVisible({
-    timeout: 20000,
-  })
-}
-
-test.describe("o Início sem feed da cidade", () => {
-  test("não há seção, aba nem paginação de feed", async ({ page, context }) => {
-    await openHome(context, MANAUS_MEMBER, page)
-
-    await expect(page.locator(CITY_FEED)).toHaveCount(0)
-    await expect(page.getByText("Na sua cidade")).toHaveCount(0)
-    await expect(page.getByRole("tab", { name: "Recentes" })).toHaveCount(0)
-    await expect(page.getByRole("tab", { name: "Acompanhando" })).toHaveCount(0)
-    await expect(page.getByRole("button", { name: "Carregar mais" })).toHaveCount(0)
-  })
-
+test.describe("a Comunidade antiga preservada na fase 1", () => {
   test("a Comunidade fica com as perguntas: sem feed, sem Conversa, sem publicar", async ({
     page,
     context,

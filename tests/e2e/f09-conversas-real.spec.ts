@@ -28,7 +28,8 @@ test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
   }, testInfo) => {
     test.setTimeout(180_000)
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
-    await page.goto("/app/conversas")
+    await page.goto("/messages")
+    await expect(page).toHaveURL(/\/app\/conversas$/)
     const linha = page.locator(`[data-thread="${CONVERSA}"]`)
     await expect(linha).toBeVisible({ timeout: 30_000 })
     await capturar(page, testInfo.project.name, "caixa")
