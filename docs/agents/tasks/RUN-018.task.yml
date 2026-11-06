@@ -1,0 +1,76 @@
+# LAN-F10 / F10-FAMILIA (06/11/2026): a família na área Você do app, no molde das jornadas na main.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-018
+
+objective: >
+  A área Você do apps/app passa a mostrar a família de verdade: convites familiares pendentes do titular,
+  enviar convite e revogar convite pendente, pela sessão do membro, reaproveitando o mesmo módulo de
+  servidor que a tela antiga do apps/web usa (configuracoes/familia). Nada da tela aprovada some.
+
+authority:
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (o molde)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo)
+  - tools/backend-kanban cards LAN-F10 e F10-FAMILIA
+  - referência viva: apps/web/app/api/app/voce (F10 na main) e apps/web/app/(shell)/configuracoes/familia
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    public.create_family_invitation, revoke_family_invitation, list_pending_family_invitations e
+    is_verified_holder recebem p_user_id e só têm execute para service_role
+    (supabase/migrations/20260806160942_family_invite_wrappers.sql:17-96). A tela antiga chama esses wrappers
+    no servidor depois de conferir a sessão (apps/web/app/(shell)/profile/family-invite-section-actions.ts e
+    configuracoes/familia). O app não tem rota de família; a área Você não mostra a família.
+
+allowed_paths:
+  - apps/web/app/api/app/voce/familia
+  - apps/web/app/(shell)/profile/family-invite-section-actions.ts
+  - apps/web/app/(shell)/configuracoes/familia
+  - apps/web/lib/invites-bytea.ts
+  - apps/web/lib/convite
+  - apps/app/lib/dados/voce.ts
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/voce
+  - apps/app/tests
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit/app-api/voce
+  - tests/e2e/f10-voce-real.spec.ts
+  - tests/scope
+  - docs/agents/tasks/RUN-018.task.yml
+  - .visual/run-018
+
+forbidden:
+  - editar migration existente (se uma for mesmo necessária, só nova, com pgTAP positivo e negativo)
+  - passar ao banco um user_id vindo do corpo, da query ou do app: o id é sempre o da sessão
+  - usar o cliente de serviço antes de conferir a sessão e a posse; usá-lo para qualquer outra coisa além dos wrappers de família
+  - devolver token, hash ou e-mail completo de convite na resposta (só o e-mail mascarado que a web já mostra)
+  - mudar o desenho aprovado de Voce.tsx; quebrar as outras partes do F10
+  - push, merge ou force-push
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "GET /api/app/voce/familia: convites pendentes do titular da sessão (e-mail mascarado, data, situação) e se a pessoa pode convidar (is_verified_holder); sem sessão 401; erro 503 sem eco."
+  - "POST /api/app/voce/familia: envia convite pelo mesmo módulo de servidor da tela antiga (mesmas regras: titular verificado, teto de convites ativos, e-mail válido, entrega pelo outbox); conferirEscrita; recusas viram 400/403/409/429 tipados."
+  - "DELETE /api/app/voce/familia/[id]: revoga convite pendente do próprio titular; convite de outro titular dá 404."
+  - "Teste de unidade positivo e negativo por rota: sem sessão, origem errada, não titular, convite alheio, corpo inválido, teto atingido, erro do banco."
+  - "Módulo apps/app/lib/dados/voce.ts e a tela: a seção de família da área Você lê e grava pela rota, com carregando, vazio honesto, erro com Tentar de novo e resultado gravado."
+  - "Teste de escopo: a extração do módulo compartilhado mantém a ação antiga funcionando (ela importa o mesmo módulo)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/voce
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz com banco no CI (tests/e2e/f10-voce-real.spec.ts com o caso da família)
+
+risk: convite familiar e dado de terceiro (e-mail) por rota nova do app
+risk_level: R3
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

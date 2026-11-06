@@ -4,13 +4,16 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { generateInviteCode, inviteCodeHash } from "../../../lib/convite/digest"
+import { enviarConvite, lerFamilia, revogarConvite } from "../../../lib/convite/familia"
 import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
-import { emailHint } from "./family-invite-email-hint"
+
+// As regras de família vivem em `lib/convite/familia.ts`, chamadas daqui e de
+// `/api/app/voce/familia` (RUN-018): um módulo, duas portas. Este arquivo só
+// resolve a sessão do cookie e revalida as páginas antigas.
 
 type PendingInviteRow = {
   id: string
-  invitee_email_digest: string
   invitee_email_hint: string | null
   created_at: string
   expires_at: string
@@ -46,88 +49,36 @@ export async function getFamilyInviteDataAction(): Promise<FamilyInviteData | nu
   const userId = await readSessionUserId()
   if (!userId) return null
 
-  const supabase = createServiceClient()
-  const [{ data: isVerified }, { data: pendingData }] = await Promise.all([
-    supabase.rpc("is_verified_holder", { p_user_id: userId }),
-    supabase.rpc("list_pending_invites_with_hint", { p_user_id: userId }),
-  ])
-
+  const familia = await lerFamilia(createServiceClient(), userId)
   return {
-    isVerified: isVerified === true,
-    pending: (pendingData as PendingInviteRow[] | null) ?? [],
+    isVerified: familia.podeConvidar,
+    pending: familia.pendentes.map((convite) => ({
+      id: convite.id,
+      invitee_email_hint: convite.emailMascarado,
+      created_at: convite.criadoEm,
+      expires_at: convite.expiraEm,
+    })),
   }
 }
 
 export async function sendFamilyInviteAction(
   formData: FormData,
 ): Promise<{ code: string; token: string } | undefined> {
-  const email = formData.get("email")
-  if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error("email inválido")
-  }
-
   const userId = await readSessionUserId()
   if (!userId) throw new Error("não autenticado")
 
-  const supabase = createServiceClient()
-  const { data: isVerified } = await supabase.rpc("is_verified_holder", {
-    p_user_id: userId,
-  })
-  if (!isVerified) {
-    throw new Error("apenas titulares verificados podem enviar convites")
-  }
-
-  const { createHash, randomBytes } = await import("node:crypto")
-  const token = randomBytes(32)
-  const tokenDigest = createHash("sha256").update(token).digest("hex")
-  const normalizedEmail = email.trim().toLowerCase()
-  const emailDigest = createHash("sha256").update(normalizedEmail).digest("hex")
-
-  // O código é o que a pessoa pode ditar ou digitar quando o link se perde
-  // (ADR-20261022-entrada-do-prototipo, item 2). O banco recebe só o hash.
-  const code = generateInviteCode()
-
-  const { data: invitationId, error } = await supabase.rpc("create_family_invitation", {
-    p_code_hash: byteaDigestParam(inviteCodeHash(code)),
-    p_inviter_user_id: userId,
-    p_token_digest: byteaDigestParam(tokenDigest),
-    // O digest do e-mail precisa da MESMA serialização do token: sem o
-    // prefixo \x o PostgREST entrega 64 bytes (hex nu) e o CHECK
-    // octet_length = 32 derruba o insert com 23514 — provado em runtime em
-    // 15/09/2026 (o convite familiar nunca criava convite). Ver
-    // lib/invites-bytea.ts.
-    p_invitee_email_digest: byteaDigestParam(emailDigest),
-    p_invitee_email_hint: emailHint(email),
-  })
-
-  if (error) {
-    if (error.message.includes("maximum 5")) {
-      throw new Error("máximo de 5 convites ativos. Revogue um antes de enviar outro.")
-    }
-    throw new Error(error.message)
-  }
-
-  // The link must reach the invitee. Enqueueing is the contract — the Resend
-  // adapter (D1) delivers. The raw e-mail only ever lives in the outbox
-  // recipient column and never becomes a private table column. O código em
-  // claro segue o mesmo caminho: existe no payload para o e-mail poder
-  // carregá-lo, e em nenhum outro lugar.
-  const { error: outboxError } = await supabase.from("outbox").insert({
-    recipient: normalizedEmail,
-    channel: "email",
-    type: "family_invite",
-    payload: { user_id: userId, invitation_id: invitationId, invite_code: code },
-  })
-
-  if (outboxError) {
-    throw new Error(`Falha ao enfileirar o convite: ${outboxError.message}`)
-  }
+  // O e-mail é validado no módulo, que é o mesmo que a rota do app usa.
+  const { codigo, token } = await enviarConvite(
+    createServiceClient(),
+    userId,
+    formData.get("email"),
+  )
 
   revalidatePath("/profile")
 
   // The token is shown exactly once, right here: it is not persisted, logged,
   // or sent in navigation. The digest is the only stored form (20260815130000).
-  return { code, token: token.toString("hex") }
+  return { code: codigo, token }
 }
 
 export async function revokeFamilyInviteAction(formData: FormData) {
@@ -139,18 +90,7 @@ export async function revokeFamilyInviteAction(formData: FormData) {
   const userId = await readSessionUserId()
   if (!userId) throw new Error("não autenticado")
 
-  const supabase = createServiceClient()
-  const { error } = await supabase.rpc("revoke_family_invitation", {
-    p_invitation_id: invitationId,
-    p_inviter_user_id: userId,
-  })
-
-  if (error) {
-    if (error.message.includes("not found or not revocable")) {
-      throw new Error("Convite não encontrado ou já não pode ser revogado.")
-    }
-    throw new Error(error.message)
-  }
+  await revogarConvite(createServiceClient(), userId, invitationId)
 
   revalidatePath("/profile")
   revalidatePath("/configuracoes/familia")

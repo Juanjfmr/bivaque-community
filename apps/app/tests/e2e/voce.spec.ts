@@ -68,3 +68,37 @@ test("falha de leitura mostra erro com tentar de novo, e a exclusão registra o 
   await expect(page.getByRole("status")).toContainText("Pedido registrado")
   await expect(page.getByRole("status")).toContainText("06/12/2026")
 })
+
+test("a família vem da rota: convite enviado entra na lista e a revogação some", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await page.goto("/app/voce")
+
+  const familia = page.locator('[data-secao="sim"]', { hasText: "Família" })
+  await expect(familia.getByText("Convites pendentes (1 de 5)")).toBeVisible()
+  await expect(familia.getByText("ma***@gm***.com")).toBeVisible()
+
+  // Enviar: o que aparece é o convite GRAVADO, devolvido pelo servidor.
+  await familia.getByLabel("E-mail do familiar").fill("familiar@example.invalid")
+  await familia.getByRole("button", { name: "Enviar convite" }).click()
+  await expect(familia.getByRole("status")).toContainText(
+    "Convite enviado para fa***@ex***.invalid.",
+  )
+  await expect(familia.getByText("Convites pendentes (2 de 5)")).toBeVisible()
+  await expect(
+    familia.locator('[data-linha="lista"]').filter({ hasText: "fa***@ex***.invalid" }),
+  ).toHaveCount(1)
+
+  // Recarregar prova a gravação: a lista volta do servidor, não do estado local.
+  await page.reload()
+  await expect(familia.getByText("Convites pendentes (2 de 5)")).toBeVisible()
+
+  // Revogar: a linha sai da lista e o código deixa de valer.
+  await familia
+    .getByRole("button", { name: /Revogar/ })
+    .last()
+    .click()
+  await expect(familia.getByRole("status")).toContainText("Convite revogado")
+  await expect(familia.getByText("Convites pendentes (1 de 5)")).toBeVisible()
+})

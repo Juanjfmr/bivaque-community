@@ -160,4 +160,46 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
       "a recusa não pode mexer no estado",
     ).toHaveCount(1)
   })
+
+  test("a família vem do banco: o convite entra na lista e a revogação some", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(120_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/voce")
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    const familia = page.locator('[data-secao="sim"]', { hasText: "Família" })
+    const linhas = familia.locator('[data-linha="lista"]')
+    await expect(familia.getByText(/Convites pendentes \(\d+ de 5\)/)).toBeVisible({
+      timeout: 30_000,
+    })
+    const antes = await linhas.count()
+
+    // Envio real: o módulo de servidor da tela antiga cria o convite e o outbox.
+    await familia.getByLabel("E-mail do familiar").fill("familia.e2e@example.invalid")
+    await familia.getByRole("button", { name: "Enviar convite" }).click()
+    await expect(familia.getByRole("status")).toContainText("Convite enviado para", {
+      timeout: 30_000,
+    })
+    await expect(linhas).toHaveCount(antes + 1)
+    await capturar(page, testInfo.project.name, "voce-familia")
+
+    // Gravação que sobrevive ao recarregar: a lista volta do banco.
+    await page.reload()
+    await expect(linhas).toHaveCount(antes + 1, { timeout: 30_000 })
+
+    // Revoga o que este teste criou e devolve o seed (roda em três larguras).
+    await familia
+      .getByRole("button", { name: /Revogar/ })
+      .last()
+      .click()
+    await expect(familia.getByRole("status")).toContainText("Convite revogado", {
+      timeout: 30_000,
+    })
+    await expect(linhas).toHaveCount(antes)
+  })
 })
