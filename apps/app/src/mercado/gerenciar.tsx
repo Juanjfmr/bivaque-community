@@ -42,6 +42,18 @@ const ROTULOS_DE_ACAO: Record<AcaoDeSituacao, string> = {
   sell: "Marcar como vendido",
 }
 
+// Pausar e encerrar tiram o anúncio da vista da cidade: pedem segunda confirmação
+// antes de transicionar (F06 — o mesmo cuidado que encerrar já tinha).
+const ROTULOS_DE_CONFIRMACAO: Record<"pause" | "close", string> = {
+  pause: "Confirmar pausa",
+  close: "Confirmar encerramento",
+}
+
+const ROTULOS_EM_ANDAMENTO: Record<"pause" | "close", string> = {
+  pause: "Pausando…",
+  close: "Encerrando…",
+}
+
 /** Espelha o que a RPC aceita para a situação atual; o servidor é a autoridade. */
 export function acoesDeSituacao(anuncio: AnuncioDaLista): readonly AcaoDeSituacao[] {
   switch (anuncio.status) {
@@ -91,6 +103,7 @@ export function GerenciarAnuncio({
   const [salvando, setSalvando] = useState(false)
   const [mudando, setMudando] = useState<AcaoDeSituacao | null>(null)
   const [confirmarEncerrar, setConfirmarEncerrar] = useState(false)
+  const [confirmarPausar, setConfirmarPausar] = useState(false)
   const controle = useRef<AbortController | null>(null)
   const leitor = useRef<FileReader | null>(null)
 
@@ -136,6 +149,7 @@ export function GerenciarAnuncio({
     } finally {
       setMudando(null)
       if (acao === "close") setConfirmarEncerrar(false)
+      if (acao === "pause") setConfirmarPausar(false)
     }
   }
 
@@ -161,41 +175,47 @@ export function GerenciarAnuncio({
         </DialogDescription>
 
         <div data-acoes-situacao="sim" className="flex flex-wrap gap-2">
-          {acoesDeSituacao({ ...anuncio, status }).map((acao) =>
-            acao === "close" ? (
-              confirmarEncerrar ? (
+          {acoesDeSituacao({ ...anuncio, status }).map((acao) => {
+            const pedindoConfirmacao =
+              (acao === "pause" && confirmarPausar) || (acao === "close" && confirmarEncerrar)
+            if (pedindoConfirmacao)
+              return (
                 <Botao
                   key={acao}
                   tom="contornado"
-                  data-acao="confirmar-encerrar"
+                  data-acao={`confirmar-${acao}`}
                   disabled={mudando !== null}
                   onClick={() => void transicionar(acao)}
                 >
-                  {mudando === acao ? "Encerrando…" : "Confirmar encerramento"}
-                </Botao>
-              ) : (
-                <Botao
-                  key={acao}
-                  tom="texto"
-                  data-acao="situacao-close"
-                  disabled={mudando !== null}
-                  onClick={() => setConfirmarEncerrar(true)}
-                >
-                  Encerrar
+                  {mudando === acao ? ROTULOS_EM_ANDAMENTO[acao] : ROTULOS_DE_CONFIRMACAO[acao]}
                 </Botao>
               )
-            ) : (
+            if (acao === "pause" || acao === "close")
+              return (
+                <Botao
+                  key={acao}
+                  tom={acao === "pause" ? "contornado" : "texto"}
+                  data-acao={`situacao-${acao}`}
+                  disabled={mudando !== null}
+                  onClick={() =>
+                    acao === "pause" ? setConfirmarPausar(true) : setConfirmarEncerrar(true)
+                  }
+                >
+                  {ROTULOS_DE_ACAO[acao]}
+                </Botao>
+              )
+            return (
               <Botao
                 key={acao}
-                tom={acao === "pause" ? "contornado" : "tonal"}
+                tom="tonal"
                 data-acao={`situacao-${acao}`}
                 disabled={mudando !== null}
                 onClick={() => void transicionar(acao)}
               >
                 {mudando === acao ? "Salvando…" : ROTULOS_DE_ACAO[acao]}
               </Botao>
-            ),
-          )}
+            )
+          })}
           {acoesDeSituacao({ ...anuncio, status }).length === 0 ? (
             <p className="text-sm text-(--on-surface-variant)">
               Este anúncio não tem mudança de situação disponível aqui.

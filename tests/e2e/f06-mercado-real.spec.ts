@@ -334,10 +334,15 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
         timeout: 30_000,
       })
 
-      // Pausar pela situação — o chip do card reflete o banco após a recarga.
+      // Pausar pela situação — com confirmação antes: um toque não transiciona.
       await botaoGerenciar.click()
       await expect(dialogo).toContainText("Situação atual: Ativo")
       await dialogo.getByRole("button", { name: "Pausar" }).click()
+      await expect(dialogo.getByRole("button", { name: "Confirmar pausa" })).toBeVisible()
+      await expect(dialogo, "pausar sem confirmar não muda o banco").toContainText(
+        "Situação atual: Ativo",
+      )
+      await dialogo.getByRole("button", { name: "Confirmar pausa" }).click()
       await expect(dialogo).toContainText("Situação atual: Pausado", { timeout: 30_000 })
       await page.goto("/app/meus-anuncios")
       await expect(cartaoMesa).toContainText("Pausado", { timeout: 30_000 })
