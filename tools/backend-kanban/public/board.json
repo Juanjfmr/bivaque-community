@@ -5808,13 +5808,14 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-05",
-      "sourceRevision": "25610401",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo.",
-        "05/11: RUN-012 — implementação com GPT Terra 6.1 (rodadas 5005a5b0 a 8118f0fb). Revisão Qwen FAIL: desenho aprovado retirado sem motivo de dado; sem gravação. Auditoria security-auditor (Sonnet 5.5): LIBERA COM RESSALVAS. Rodada única de correção por Sonnet 5.5 (780480e8, 6ec43f62, 2dcdf54c, aecdba82, 25610401): desenho aprovado restaurado; perguntas ocultas respeitadas via list_indications; presença do próximo encontro pela rota do F05, gravada e relida; termo de busca validado e escapado; E2E sem sessão (401) e presença persistida. Provas no HEAD 25610401: gate --fast verde; gate completo verde com build pulado; vitest app 24/241, mobile 12/76, web 1/19, raiz 213/2123, scope 196; início e busca 46 testes. Não rodou: E2E com banco (Docker/supabase start indisponível nesta máquina; roda no CI), build do Next, prova visual 375/768/1440, revisão independente final."
+        "05/11: RUN-012 — implementação com GPT Terra 6.1 (rodadas 5005a5b0 a 8118f0fb). Revisão Qwen FAIL: desenho aprovado retirado sem motivo de dado; sem gravação. Auditoria security-auditor (Sonnet 5.5): LIBERA COM RESSALVAS. Rodada única de correção por Sonnet 5.5 (780480e8, 6ec43f62, 2dcdf54c, aecdba82, 25610401): desenho aprovado restaurado; perguntas ocultas respeitadas via list_indications; presença do próximo encontro pela rota do F05, gravada e relida; termo de busca validado e escapado; E2E sem sessão (401) e presença persistida. Provas no HEAD 25610401: gate --fast verde; gate completo verde com build pulado; vitest app 24/241, mobile 12/76, web 1/19, raiz 213/2123, scope 196; início e busca 46 testes. Não rodou: E2E com banco (Docker/supabase start indisponível nesta máquina; roda no CI), build do Next, prova visual 375/768/1440, revisão independente final.",
+        "06/11: integrado pelo PR #138 (83470086) depois de specs do app simularem as rotas reais e de três merges da main; CI verde (um teste instável de grupos passou na repetição)."
       ],
       "id": "LAN-F02",
       "title": "F02 Início e busca ligados ao banco",
@@ -5882,11 +5883,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora."
       ],
       "id": "LAN-F04",
       "title": "F04 Comunidade e grupos ligados ao banco, com o redesenho provado",
@@ -5970,13 +5972,14 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-06",
-      "sourceRevision": "377df52e",
+      "sourceRevision": "83470086",
       "links": ["docs/LANCAMENTO.md", "https://bazardavila.app.br/vender"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus.",
         "06/11, PR #141: corrigidos os RegExp do stub (b4573706), cidade atual antes da RPC com negativas (da149708) e remoção de donoId (22f286d2). E2E de interesse passa a usar o notebook de Heitor: Gabriela, dona do berço original, já está bloqueada no seed, e open_conversation recusa o par com 42501. Mantido caso negativo de bloqueio e checada resposta antes do atributo. Provas locais: gate --fast (lint/tipos/E2E tipos), 53 testes unitários de Mercado e 202 de escopo passaram. Sem E2E, servidor, banco ou gate completo por instrução do dono; próximo passo: CI da revisão entregue provar E2E real. Jornada permanece next, sem declaração de fechamento. Logs: .visual/run-013/correcoes-{gate-fast,unit-mercado,scope}.log.",
-        "06/11, correção do check App mobile-first do PR #141 sobre 377df52e: reproduzidas 5 falhas e 20 passes nos cinco arquivos pedidos em mobile-375. Todos já instalavam o stub; completados fotos com URLs absolutas, galeria e aluguéis equivalentes à demo (3 quartos/98 m²/R$ 3.200 + R$ 720; 2 quartos/70 m²/R$ 2.400 + R$ 480). Decisão: restaurar Tenho interesse abrindo o editor existente, manter Guardar sem enviar sem POST e abrir a conversa somente pela ação explícita Abrir conversa; sem alteração de CSS ou desenho das telas. E2E integrado ajustado ao passo e acrescentada negativa 503 com preservação do texto e nova tentativa. Prova final dos cinco arquivos: 26/26 passam, zero pulados, em 375 px; build Vite e gate --fast verdes; servidor da porta 3200 encerrado. Logs: .visual/pr141-mobile-first/{antes,build,final,gate-fast}.log. Sem gate completo, banco, E2E integrado ou outras larguras nesta correção, conforme escopo solicitado; F06 permanece next e CI deve provar a revisão enviada."
+        "06/11, correção do check App mobile-first do PR #141 sobre 377df52e: reproduzidas 5 falhas e 20 passes nos cinco arquivos pedidos em mobile-375. Todos já instalavam o stub; completados fotos com URLs absolutas, galeria e aluguéis equivalentes à demo (3 quartos/98 m²/R$ 3.200 + R$ 720; 2 quartos/70 m²/R$ 2.400 + R$ 480). Decisão: restaurar Tenho interesse abrindo o editor existente, manter Guardar sem enviar sem POST e abrir a conversa somente pela ação explícita Abrir conversa; sem alteração de CSS ou desenho das telas. E2E integrado ajustado ao passo e acrescentada negativa 503 com preservação do texto e nova tentativa. Prova final dos cinco arquivos: 26/26 passam, zero pulados, em 375 px; build Vite e gate --fast verdes; servidor da porta 3200 encerrado. Logs: .visual/pr141-mobile-first/{antes,build,final,gate-fast}.log. Sem gate completo, banco, E2E integrado ou outras larguras nesta correção, conforme escopo solicitado; F06 permanece next e CI deve provar a revisão enviada.",
+        "05/11–06/11: RUN-013 (lista, detalhe e interesse do Mercado) integrado pelo PR #141 (b0719459). Implementação Qwen 3.8 Flash; revisão GLM-5.3-Flash FAIL (stub dos testes inerte, E2E sem prova); security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (interesse sem checagem de cidade); correção por GPT Sol 6.1: stub por RegExp, 403 de-outra-cidade antes da RPC, donoId retirado, specs do app com dados equivalentes; CI verde com o E2E real. Criar, editar e Meus anúncios continuam fora."
       ],
       "id": "LAN-F06",
       "title": "F06 Mercado e moradia ligados ao banco",
@@ -6083,11 +6086,12 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "05/11–06/11: RUN-009 integrado pelo PR #139 (e59e6008). Implementação DeepSeek V4.1 Flash; revisão de contrato Haiku 5.5 FAIL (roteiro e atalhos retirados, salvo preso, Salvos sem verbetes, sugestão sem E2E); auditoria security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (cursor sem escape); rodada única de correção no DeepSeek V4.1 Flash gratuito fechou tudo; CI verde com o E2E real. Observação: arrival_guide_entries tem leitura nacional por policy; salvar/sugerir só da cidade."
       ],
       "id": "LAN-F08",
       "title": "F08 Guia ligado ao banco",
@@ -6634,6 +6638,86 @@
       "blockers": [],
       "updatedAt": "2026-11-05",
       "sourceRevision": "6b50e9f0"
+    },
+    {
+      "id": "F04-RESSALVAS",
+      "title": "F04 Comunidade: ressalvas da revisão e da auditoria",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Ressalvas do RUN-014 (F04) integrado pelo PR #140 sem bloquear a integração. A policy recommendation_replies_insert não veta vínculo read_only nem conta suspensa.",
+      "checklist": [
+        "Policy recommendation_replies_insert vetar vínculo read_only e conta suspensa, em migration nova com pgTAP",
+        "Paginação de Comunidade não descartar resposta de filtro antigo",
+        "Régua da resposta duplicada na tela antiga retirada",
+        "Contagem do cabeçalho exata, não aproximada"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/tasks/RUN-014.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086"
+    },
+    {
+      "id": "F06-RESSALVAS",
+      "title": "F06 Mercado: ressalvas da revisão e da auditoria",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Ressalvas do RUN-013 (F06) integrado pelo PR #141 sem bloquear a integração.",
+      "checklist": [
+        "Filtros de quartos e tipo via property_details restringirem o anúncio pai",
+        "Imóvel com price_cents nulo não ser excluído da ordenação e do filtro de preço",
+        "Salvar anúncio do Início (vindo do F02) persistir"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/tasks/RUN-013.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086"
+    },
+    {
+      "id": "GUIA-SUBMITTED-BY-COLUNA",
+      "title": "Guia: ocultar quem sugeriu (submitted_by) na Data API",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Achado do security-auditor no RUN-009 (F08), liberado com ressalvas pelo PR #139. authenticated tem SELECT na tabela inteira arrival_guide_entries, e submitted_by fica legível via Data API em entradas aprovadas. Exige revisão R3.",
+      "checklist": [
+        "Revogar SELECT de authenticated na tabela inteira e conceder por coluna, sem submitted_by, em migration nova",
+        "pgTAP: leitura de entrada aprovada sem submitted_by e negativa de acesso à coluna",
+        "Revisão de segurança R3 antes da integração"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/tasks/RUN-009.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086"
+    },
+    {
+      "id": "F08-RESSALVAS",
+      "title": "F08 Guia: Voltar do sistema não fecha a folha do verbete",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Ressalva do RUN-009 (F08) integrado pelo PR #139. O Voltar do sistema não fecha a folha do verbete.",
+      "checklist": [
+        "Voltar do sistema fechar a folha do verbete, com id de sobreposição próprio em lib/navegacao",
+        "E2E do Voltar do sistema com a folha aberta"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/tasks/RUN-009.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-06",
+      "sourceRevision": "83470086"
     }
   ],
   "launch": {
