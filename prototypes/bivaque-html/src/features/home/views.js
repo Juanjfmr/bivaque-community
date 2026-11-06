@@ -9,24 +9,31 @@ function homeSearchRotate(){
  clearInterval(homeSearchTimer);if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;let i=0;
  homeSearchTimer=setInterval(()=>{const el=$('#home-search .home-search-ex');if(!el||i===HOME_SEARCH_EXAMPLES.length-1||$('#home-search').matches(':focus-within,:hover')){clearInterval(homeSearchTimer);return;}i+=1;el.textContent=`“${HOME_SEARCH_EXAMPLES[i]}”`;el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'none'}],{duration:260,easing:'ease-out'});},3200);
 }
+function homeQuickActions(){
+ if(readonly())return '';
+ return '<div class="home-r73-actions" role="group" aria-label="Participar da comunidade">'+
+  '<button type="button" class="home-r73-action home-r73-action-ask" data-action="ask">'+icon('forum')+'<span><b>Pedir indicação</b><small>Quem conhece pode ajudar</small></span>'+icon('arrow_forward')+'</button>'+
+  '<button type="button" class="home-r73-action home-r73-action-recommend" data-action="indicate">'+icon('person_add')+'<span><b>Indicar alguém</b><small>Compartilhe um bom contato</small></span>'+icon('arrow_forward')+'</button></div>';
+}
 function renderHome(){
  if(HOME_DESKTOP.matches)return renderHomeDesktop();
  const arriving=state.mode==='chegando'&&!readonly(),leaving=state.mode==='saindo'&&!readonly();
- const city=`<button type="button" class="h1-city" data-action="city" aria-haspopup="dialog" title="Trocar de cidade">${esc(state.city)}${icon('expand_more')}</button>`;
- const subtitle=arriving?`${countDays(state.arrival)} dias para chegar · ${dateLabel(state.arrival)}`:leaving?`${countDays(state.leaveDate)} dias para sua mudança para ${state.dest}`:'';
- let h=`<div class="home-mob"><div class="page-head"><div><h1>${readonly()?'Conheça':'O que você precisa em'} ${city}</h1>${subtitle?`<p>${esc(subtitle)}</p>`:''}</div></div><div class="home-top"><button type="button" id="home-search" class="home-search-button" data-action="search" aria-label="Buscar no Bivaque">${icon('search')}<span>Busque <b class="home-search-ex">“${esc(HOME_SEARCH_EXAMPLES[0])}”</b></span></button><nav class="intent-grid" aria-label="Áreas">${(arriving?[['apartment','Imóveis','imovel'],['storefront','Negócios','biz'],['sell','Desapegos','desapego'],['volunteer_activism','Indicações','ind']]:[['storefront','Negócios','biz'],['sell','Desapegos','desapego'],['apartment','Imóveis','imovel'],['volunteer_activism','Indicações','ind']]).map(([ic,label,v])=>`<button type="button" class="intent" data-action="intent" data-value="${v}">${icon(ic)}<span>${label}</span></button>`).join('')}</nav></div>`;
- if(!readonly())h+=`<div class="home-alerts"><button type="button" class="home-hire" data-action="create-request">${icon('build')}<span class="grow"><b>Precisa contratar?</b><small>Receba até ${REQUEST_LIMIT} propostas da comunidade.</small></span>${icon('chevron_right')}</button></div>`;
+ const city='<button type="button" class="h1-city" data-action="city" aria-haspopup="dialog" title="Trocar de cidade">'+esc(state.city)+icon('expand_more')+'</button>';
+ const subtitle=arriving?countDays(state.arrival)+' dias para chegar · '+dateLabel(state.arrival):leaving?countDays(state.leaveDate)+' dias para sua mudança para '+state.dest:'';
+ let h='<div class="home-mob home-r73"><header class="home-r73-intro"><div class="page-head"><div><h1>'+(readonly()?'Conheça':'Sua comunidade em')+' '+city+'</h1>'+(subtitle?'<p>'+esc(subtitle)+'</p>':'')+'</div></div>'+
+  '<button type="button" id="home-search" class="home-search-button home-r73-search" data-action="search" aria-label="Buscar no Bivaque">'+icon('search')+'<span>O que você procura?</span>'+icon('tune')+'</button>'+
+  homeQuickActions()+'</header>';
  h+=readonlyHtml()+homeResumeHtml();
  if((arriving||leaving)&&state.plan[state.mode])h+=renderPlan(state.mode);
- // Nos cartões estreitos do carrossel, "Retirada/Disponível a partir de" vira "A partir de".
- h+=homeDeskServices(1)+homeDeskItems(arriving,'Oportunidades').replace(/(Retirada|Disponível) a partir de /g,'A partir de ');
- h+=homeDeskGroups()+homeDeskEvent()+homeDeskArrival(arriving,leaving);
- const qs=cityAsks().filter(q=>q.status==='open').sort((a,b)=>a.answers.length-b.answers.length).slice(0,2);
- h+=`<section class="section">${sectionTitle('A comunidade procura','Ver perguntas','nav','comunidade')}${qs.length?`<div class="list">${qs.map(questionRow).join('')}</div>`:empty('Uma pergunta pode ajudar muita gente','Busque uma indicação ou compartilhe uma dúvida com sua cidade.','forum',readonly()?'':'ask',readonly()?'':'Pedir indicação')}</section>`;
- h+=`<section class="section">${sectionTitle(`Guia de ${state.city}`,'Abrir guia','guide')}<button type="button" class="list-row list" data-action="guide">${icon('map')}<span class="txt"><b>Organize moradia, mudança e serviços</b><small>Um roteiro prático para se estabelecer na cidade.</small></span>${icon('chevron_right')}</button></section>`;
- if(!readonly())h+=`<div class="context-strip readonly home-biz-cta">${icon('add_business')}<span class="grow"><b>Tem um negócio?</b><br>Crie sua página e receba pedidos da comunidade.</span>${btn(state.myBiz?.live?'Minha página':'Criar página','my-biz','','text')}</div>`;
- homeSearchRotate();
- return `${h}</div>`;
+ h+=homeTrustSpotlight();
+ h+=homeOpportunityMosaic();
+ h+=homeCommunityAnswers();
+ h+=homeDeskGroups()+homeDeskEvent();
+ h+='<section class="section home-r73-guide">'+sectionTitle('Descubra '+state.city,'Abrir Guia','guide')+
+  '<button type="button" class="home-r73-guide-link" data-action="guide">'+icon('map')+'<span><b>Conheça sua cidade</b><small>Bairros, moradia, serviços e a experiência de quem já vive aqui.</small></span>'+icon('arrow_forward')+'</button></section>';
+ h+=homeDeskArrival(arriving,leaving);
+ if(!readonly())h+='<div class="context-strip readonly home-biz-cta">'+icon('add_business')+'<span class="grow"><b>Tem um negócio?</b><br>Crie sua página e receba pedidos da comunidade.</span>'+btn(state.myBiz?.live?'Minha página':'Criar página','my-biz','','text')+'</div>';
+ return h+'</div>';
 }
 // Rodada 15: o plano vira uma linha do tempo (referências: Timeline da Dice UI e Vertical Titled Stepper no 21st.dev). Cada etapa é um nó na trilha: concluída, próxima ou pendente.
 function renderPlan(kind,full=false){const steps=state.plan[kind],n=steps.filter(x=>x.done).length,current=steps.findIndex(x=>!x.done),raw=countDays(kind==='chegando'?state.arrival:state.leaveDate),days=Number.isFinite(raw)?raw:null,all=steps.length&&n===steps.length;return `<section class="section"><div class="progress-wrap plan-card"><div class="plan-head">${planRing(n,steps.length)}<div class="grow"><h3>${kind==='chegando'?'Sua chegada':'Sua saída'}</h3><span class="small muted">${n} de ${steps.length} etapas</span></div>${all?`<span class="plan-days plan-done">${icon('check_circle')}Tudo pronto</span>`:days===null?'':`<span class="plan-days" aria-label="${days} ${days===1?'dia':'dias'} ${kind==='chegando'?'para chegar':'para a mudança'}">${icon(kind==='chegando'?'flight_land':'local_shipping')}<b>${days}</b> ${days===1?'dia':'dias'}</span>`}</div><ol class="plan-steps">${steps.map((x,i)=>[x,i]).slice(full?0:Math.max(0,Math.min(current<0?0:current-1,steps.length-3)),full?steps.length:Math.max(0,Math.min(current<0?0:current-1,steps.length-3))+3).map(([x,i])=>`<li class="plan-step ${x.done?'is-done':i===current?'is-current':'is-todo'}"><span class="plan-node"><md-checkbox ${x.done?'checked':''} aria-label="Marcar ${esc(x.t)} como concluído" data-action="plan-check" data-value="${kind}|${x.id}"></md-checkbox></span><button type="button" data-action="plan-go" data-value="${kind}|${x.id}"><b>${esc(x.t)}${i===current?'<span class="plan-now">Próxima</span>':''}</b><small>${esc(x.s)}</small></button>${icon('chevron_right')}</li>`).join('')}</ol>${full?'':planNextHtml(kind,steps,current)}${full?'':btn('Ver plano completo','plan',kind,'text','checklist')}</div></section>`;}
