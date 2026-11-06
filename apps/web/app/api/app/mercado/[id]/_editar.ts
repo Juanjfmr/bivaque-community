@@ -8,6 +8,8 @@ import {
 import { validateListingEdit } from "../../../../../lib/listings/lifecycle"
 import { MAX_PHOTO_BYTES } from "../../../../../lib/listings/types"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "../../../../../lib/storage/listing-photo"
+import { isDefiniteSqlRejection } from "../../../../../lib/storage/rpc-outcome"
+import { createServerClient as criarClienteServico } from "../../../../../lib/supabase/server"
 import { ehUuid, interpretarErroDoBanco, lerFotoDoCorpo } from "../_comum"
 
 type Context = { params: Promise<{ id: string }> }
@@ -109,15 +111,40 @@ export async function PATCH(request: NextRequest, { params }: Context): Promise<
     }
 
     // A foto troca a capa (posição 0) na pasta do próprio anúncio; sem foto no
-    // corpo, as fotos atuais continuam como estão.
+    // corpo, as fotos atuais continuam como estão. O ciclo é o da web
+    // (`replaceListingPhotoAction`): a RPC devolve os caminhos antigos que a
+    // troca substituiu, e eles saem do bucket pelo serviço — a posse deste
+    // anúncio foi conferida pela sessão acima. Recusa SQL definitiva (a
+    // transação não commitou) apaga o objeto novo; falha inconclusiva não
+    // apaga nada, porque o commit pode ter acontecido com a resposta perdida.
     if (lida.foto !== null) {
       const path = await enviarFotoDoAnuncio(client, userId, id, 0, lida.foto)
+      const servico = criarClienteServico()
+      let antigos: string[] = []
+      let recusa: { message: string; code?: string } | null = null
+      // Rejeição de transporte (sem resposta) pula para o catch de fora: nenhum
+      // objeto é apagado, não há prova de que a transação não commitou.
       const registro = await client.rpc("replace_listing_photo", {
         p_listing_id: id,
         p_path: path,
         p_position: 0,
       })
-      if (registro.error) throw registro.error
+      if (registro.error) recusa = registro.error
+      else if (Array.isArray(registro.data)) antigos = registro.data as string[]
+      if (recusa !== null) {
+        if (isDefiniteSqlRejection(recusa)) {
+          const limpeza = await servico.storage.from("listing-photos").remove([path])
+          if (limpeza.error)
+            console.error("[mercado] falha ao remover objeto sem linha:", limpeza.error.message)
+        }
+        throw recusa
+      }
+      const aApagar = antigos.filter((p) => p !== path && p.startsWith(`${id}/`))
+      if (aApagar.length > 0) {
+        const limpeza = await servico.storage.from("listing-photos").remove(aApagar)
+        if (limpeza.error)
+          console.error("[mercado] falha ao remover fotos anteriores:", limpeza.error.message)
+      }
     }
     return responder(request, { anuncio: { id } }, 200)
   } catch (erro) {

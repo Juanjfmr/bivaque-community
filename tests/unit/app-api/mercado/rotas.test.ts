@@ -15,6 +15,13 @@ vi.mock("web/lib/storage/listing-photo", () => ({
     }
   },
 }))
+// O bucket é servido pelo cliente de serviço (service_role), como na web.
+const { removerObjetos } = vi.hoisted(() => ({ removerObjetos: vi.fn() }))
+vi.mock("web/lib/supabase/server", () => ({
+  createServerClient: () => ({
+    storage: { from: () => ({ remove: removerObjetos }) },
+  }),
+}))
 
 import type { AnuncioBruto } from "web/app/api/app/mercado/_comum"
 import { PATCH as editar } from "web/app/api/app/mercado/[id]/_editar"
@@ -124,9 +131,10 @@ type Options = {
   profileName?: string | null
   saved?: boolean
   errorTable?: string
-  rpcError?: { code: string; message: string } | null
+  rpcError?: { code?: string; message: string } | null
   writeError?: { code: string; message: string } | null
   rpcData?: unknown
+  rpcThrows?: boolean
 }
 
 function mockClient(options: Options = {}) {
@@ -141,6 +149,7 @@ function mockClient(options: Options = {}) {
 
   const rpc = (name: string, args: Record<string, unknown>) => {
     rpcCalls.push({ name, args })
+    if (options.rpcThrows) return Promise.reject(new Error("sem resposta do banco"))
     return Promise.resolve(
       options.rpcError
         ? { data: null, error: options.rpcError }
@@ -831,6 +840,55 @@ describe("rotas de mercado do app", () => {
           args: { p_listing_id: ID, p_path: "b1000000/0-foto.png", p_position: 0 },
         },
       ])
+    })
+
+    it("a troca da capa apaga do bucket só os caminhos antigos da pasta do anúncio", async () => {
+      const mock = mockClient({
+        listing: MEU_ITEM,
+        rpcData: [`${ID}/0-um.png`, `${ID}/0-dois.png`, "fora-da-pasta/0.png"],
+      })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      removerObjetos.mockResolvedValue({ error: null })
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(200)
+      expect(removerObjetos).toHaveBeenCalledTimes(1)
+      expect(removerObjetos).toHaveBeenCalledWith([`${ID}/0-um.png`, `${ID}/0-dois.png`])
+    })
+
+    it("sem caminhos antigos não há apagamento no bucket", async () => {
+      const mock = mockClient({ listing: MEU_ITEM, rpcData: [] })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(200)
+      expect(removerObjetos).not.toHaveBeenCalled()
+    })
+
+    it("recusa SQL definitiva da RPC apaga o objeto novo, que ficou sem linha", async () => {
+      const mock = mockClient({ listing: MEU_ITEM, rpcError: { code: "42501", message: "rls" } })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      removerObjetos.mockResolvedValue({ error: null })
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(503)
+      expect(removerObjetos).toHaveBeenCalledWith([`${ID}/0-novo.png`])
+    })
+
+    it.each([
+      ["erro sem SQLSTATE", { message: "gateway indisponível" }],
+      ["código PostgREST", { code: "PGRST500", message: "upstream" }],
+      ["sem resposta do transporte", null],
+    ])("falha inconclusiva (%s) não apaga nada do bucket", async (_caso, rpcError) => {
+      const mock = mockClient({
+        listing: MEU_ITEM,
+        ...(rpcError === null ? { rpcThrows: true } : { rpcError }),
+      })
+      authenticate(mock)
+      fotoMock.mockResolvedValue(`${ID}/0-novo.png`)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO_FOTO), context)
+      expect(resposta.status).toBe(503)
+      expect(removerObjetos).not.toHaveBeenCalled()
     })
 
     it("a falha da foto vem com o status e a mensagem do helper", async () => {
