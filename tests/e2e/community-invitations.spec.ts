@@ -93,15 +93,19 @@ test.describe("community member invite", { tag: "@stateful" }, () => {
     await expect(page.getByRole("button", { name: /Copiar/ })).toBeVisible()
   })
 
-  test("the invite accept page redirects unverified invitees to onboarding", async ({ page }) => {
+  test("the invite accept page redirects unverified invitees to the app entry", async ({
+    page,
+  }) => {
     // Given a session of an unverified user
     await signInAs(page, REJECTED_EMAIL)
 
     // When they open an invite link
     await page.goto("/invite/0000000000000000000000000000000000000000000000000000000000000000")
 
-    // Then the D15 gate redirects them to onboarding with the link preserved
-    await page.waitForURL(/\/onboarding/)
+    // Then the D15 gate redirects them to the entry with the link preserved.
+    // The gate's target is /onboarding (web), which now redirects to
+    // /app/entrar (ENTRADA-WEB-ANTIGA); the query survives the redirect.
+    await page.waitForURL(/\/app\/entrar/)
     const url = new URL(page.url())
     expect(url.searchParams.get("next")).toContain("/invite/")
   })

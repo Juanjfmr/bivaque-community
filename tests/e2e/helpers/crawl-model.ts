@@ -10,11 +10,18 @@
 export interface RoutePattern {
   /** Forma canônica, com segmentos dinâmicos: "/pedidos/[id]". */
   readonly route: string
-  readonly kind: "page" | "handler"
+  /**
+   * "page": página do Next; "app": tela do SPA servida em /app (catálogo do roteador);
+   * "handler": rota de API.
+   */
+  readonly kind: "page" | "app" | "handler"
   readonly regex: RegExp
   /** Estáticas vencem dinâmicas quando as duas casam ("/pedidos/novo" x "/pedidos/[id]"). */
   readonly dynamicSegments: number
 }
+
+/** Prefixo público do SPA: o Next o serve com rewrite para o index.html (next.config.ts). */
+export const PREFIXO_DO_APP = "/app"
 
 /** "(shell)/pedidos/[id]/page.tsx" -> "/pedidos/[id]". Grupos entre parênteses somem da URL. */
 export function routeFromFile(file: string): string {
@@ -26,27 +33,52 @@ export function routeFromFile(file: string): string {
   return `/${parts.join("/")}`
 }
 
-export function buildPatterns(pageFiles: string[], handlerFiles: string[]): RoutePattern[] {
-  const make = (file: string, kind: RoutePattern["kind"]): RoutePattern => {
-    const route = routeFromFile(file)
-    const segments = route.split("/").filter(Boolean)
-    const body = segments
-      .map((segment) => {
-        if (segment.startsWith("[[...") || segment.startsWith("[...")) return "(?:/.*)?"
-        if (segment.startsWith("[")) return "/[^/]+"
-        return `/${segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`
-      })
-      .join("")
-    return {
-      route,
-      kind,
-      regex: new RegExp(`^${body === "" ? "/" : body}/?$`),
-      dynamicSegments: segments.filter((segment) => segment.startsWith("[")).length,
-    }
+function patternFor(route: string, kind: RoutePattern["kind"]): RoutePattern {
+  const segments = route.split("/").filter(Boolean)
+  const body = segments
+    .map((segment) => {
+      if (segment.startsWith("[[...") || segment.startsWith("[...")) return "(?:/.*)?"
+      if (segment.startsWith("[")) return "/[^/]+"
+      return `/${segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`
+    })
+    .join("")
+  return {
+    route,
+    kind,
+    regex: new RegExp(`^${body === "" ? "/" : body}/?$`),
+    dynamicSegments: segments.filter((segment) => segment.startsWith("[")).length,
   }
+}
+
+/** Caminho do catálogo do roteador do app ("/ajuda/$topico") -> molde do modelo ("/ajuda/[topico]"). */
+function moldeDoRoteador(caminho: string): string {
+  return caminho.replace(/\$([A-Za-z]+)/g, "[$1]")
+}
+
+/** Forma com e sem parâmetro de cada rota do catálogo, como strings de caminho. */
+export function caminhosDoCatalogo(
+  rotas: readonly { readonly caminho: string; readonly caminhoSemParametro: string | null }[],
+): string[] {
+  return rotas
+    .flatMap((rota) => [rota.caminho, rota.caminhoSemParametro])
+    .filter((caminho): caminho is string => caminho !== null)
+}
+
+/**
+ * Padrões das rotas do Next (páginas e handlers) e das telas do app em /app. A tela do app só
+ * casa se o caminho estiver no catálogo do roteador: /app/qualquer-coisa segue quebrado.
+ */
+export function buildPatterns(
+  pageFiles: string[],
+  handlerFiles: string[],
+  caminhosDoApp: readonly string[] = [],
+): RoutePattern[] {
   const all = [
-    ...pageFiles.map((file) => make(file, "page")),
-    ...handlerFiles.map((file) => make(file, "handler")),
+    ...pageFiles.map((file) => patternFor(routeFromFile(file), "page")),
+    ...handlerFiles.map((file) => patternFor(routeFromFile(file), "handler")),
+    ...caminhosDoApp.map((caminho) =>
+      patternFor(`${PREFIXO_DO_APP}${moldeDoRoteador(caminho)}`, "app"),
+    ),
   ]
   return all.sort((a, b) => a.dynamicSegments - b.dynamicSegments)
 }
@@ -93,7 +125,10 @@ export class Frontier {
     private readonly capPerRoute: number,
   ) {}
 
-  /** Devolve a rota casada (ou null se não existe); só enfileira página ainda não esgotada. */
+  /**
+   * Devolve a rota casada (ou null se não existe); enfileira página ou tela do app ainda não
+   * esgotada. Handler de API é casado, mas não visitado.
+   */
   offer(visit: Visit): RoutePattern | null {
     const pathname = visit.target.split("?")[0] ?? visit.target
     const pattern = matchRoute(pathname, this.patterns)
