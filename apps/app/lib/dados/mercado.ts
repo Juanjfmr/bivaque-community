@@ -53,6 +53,8 @@ export type FiltrosDoMercado = Readonly<{
   valorMax?: number
   tipoImovel?: string
   depois?: string
+  /** Página (1-based) que a URL pediu: a porta persegue o cursor até ela. */
+  pagina?: number
 }>
 
 export type ListaDoMercado = Readonly<{
@@ -121,10 +123,29 @@ function lerAnuncio(corpo: Corpo): AnuncioDaLista {
  * Anúncios reais da cidade da sessão, por aba. Os filtros de imóvel (`quartos`,
  * `valor_max`, `tipo_imovel`) só vão na query com `tipo=property`: com item o
  * servidor os recusaria, e montar parâmetro inválido é o mesmo erro.
+ *
+ * `pagina` existe para link antigo com `?pagina=N`: a porta persegue o cursor
+ * do servidor página a página e devolve a página pedida — sem inventar offset.
  */
 export async function lerMercado(
   filtros: FiltrosDoMercado,
   opcoes: { signal?: AbortSignal } = {},
+): Promise<ListaDoMercado> {
+  const alvo =
+    Number.isInteger(filtros.pagina) && (filtros.pagina ?? 1) > 1
+      ? Math.min(filtros.pagina as number, 25)
+      : 1
+  let atual = await lerPaginaMercado(filtros, opcoes)
+  for (let pagina = 1; pagina < alvo; pagina++) {
+    if (atual.proximo === null || opcoes.signal?.aborted) break
+    atual = await lerPaginaMercado({ ...filtros, depois: atual.proximo, pagina: 1 }, opcoes)
+  }
+  return atual
+}
+
+async function lerPaginaMercado(
+  filtros: FiltrosDoMercado,
+  opcoes: { signal?: AbortSignal },
 ): Promise<ListaDoMercado> {
   const busca = new URLSearchParams({ tipo: exigirTipo(filtros.tipo) })
   if (filtros.ordem !== undefined) busca.set("ordem", filtros.ordem)
@@ -202,4 +223,66 @@ export async function abrirInteresse(
     opcoes,
   )
   return exigirTexto(corpo, "conversaId")
+}
+
+/** O que a tela de gestão envia para editar o próprio desapego. */
+export type EdicaoDoDesapego = Readonly<{
+  titulo: string
+  bairro: string
+  preco: string
+  descricao: string
+  categoria: string
+  condicao: string
+  /** Data URL local; ausente ou vazio = as fotos continuam como estão. */
+  foto?: string
+}>
+
+/**
+ * Grava a edição do próprio anúncio. A validação é a mesma da web, no servidor;
+ * a tela só mostra o erro e preserva o que foi digitado.
+ */
+export async function editarDesapego(
+  id: string,
+  dados: EdicaoDoDesapego,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<void> {
+  const foto =
+    dados.foto === undefined || dados.foto === ""
+      ? null
+      : /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(dados.foto)
+  if (dados.foto !== undefined && dados.foto !== "" && foto === null) {
+    throw new FalhaDaApi("invalido", 400)
+  }
+  await enviar(
+    "PATCH",
+    `/api/app/mercado/${encodeURIComponent(id)}`,
+    {
+      titulo: dados.titulo,
+      bairro: dados.bairro,
+      preco: dados.preco.replace(".", ","),
+      descricao: dados.descricao,
+      categoria: dados.categoria,
+      condicao: dados.condicao,
+      ...(foto ? { foto: { tipo: foto[1], conteudo: foto[2] } } : {}),
+    },
+    opcoes,
+  )
+}
+
+/** Ações de situação que o app oferece — o servidor decide a passagem. */
+export type AcaoDeSituacao = "pause" | "reactivate" | "close" | "sell"
+
+/** Pausar, reativar, encerrar ou marcar vendido; devolve a situação nova. */
+export async function mudarSituacao(
+  id: string,
+  acao: AcaoDeSituacao,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<string> {
+  const corpo = await enviar(
+    "POST",
+    `/api/app/mercado/${encodeURIComponent(id)}/situacao`,
+    { acao },
+    opcoes,
+  )
+  return exigirTexto(corpo, "status")
 }

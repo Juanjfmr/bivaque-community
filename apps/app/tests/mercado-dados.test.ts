@@ -4,7 +4,13 @@ import { fileURLToPath } from "node:url"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { abrirInteresse, buscarAnuncio, lerMercado } from "@/lib/dados/mercado"
+import {
+  abrirInteresse,
+  buscarAnuncio,
+  editarDesapego,
+  lerMercado,
+  mudarSituacao,
+} from "@/lib/dados/mercado"
 
 /**
  * A porta do Mercado (LAN-F06), espelhando `eventos-dados.test.ts`: caminho,
@@ -180,6 +186,129 @@ describe("interesse", () => {
     const falha = (await abrirInteresse("a1").catch((erro: unknown) => erro)) as FalhaDaApi
     expect(falha.codigo).toBe("indisponivel")
     expect(falha.mensagem).toBe("O Mercado está fora no momento.")
+  })
+})
+
+describe("gerenciar o próprio anúncio (editar e situação)", () => {
+  const DADOS = {
+    titulo: "Mesa de jantar",
+    bairro: "Centro",
+    preco: "450",
+    descricao: "Mesa em bom estado, retirada no Centro.",
+    categoria: "casa_moveis",
+    condicao: "used",
+  }
+
+  it("grava a edição por PATCH no caminho do anúncio", async () => {
+    const buscar = responder({ anuncio: { id: "a1" } })
+    await editarDesapego("a1", DADOS)
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado/a1")
+    expect(init.method).toBe("PATCH")
+    expect(JSON.parse(String(init.body))).toEqual(DADOS)
+  })
+
+  it("preço com ponto vira vírgula (a validação é a da web) e foto vira base64", async () => {
+    const buscar = responder({ anuncio: { id: "a1" } })
+    await editarDesapego("a1", {
+      ...DADOS,
+      preco: "450.50",
+      foto: "data:image/png;base64,aGVsbG8=",
+    })
+    const corpo = JSON.parse(String(chamada(buscar).init.body)) as Record<string, unknown>
+    expect(corpo["preco"]).toBe("450,50")
+    expect(corpo["foto"]).toEqual({ tipo: "image/png", conteudo: "aGVsbG8=" })
+  })
+
+  it("sem foto escolhida o corpo não fala de foto — as atuais continuam", async () => {
+    const buscar = responder({ anuncio: { id: "a1" } })
+    await editarDesapego("a1", { ...DADOS, foto: "" })
+    expect(JSON.parse(String(chamada(buscar).init.body))).not.toHaveProperty("foto")
+  })
+
+  it("data URL que não é imagem é recusada antes de sair", async () => {
+    const buscar = responder({})
+    await expect(
+      editarDesapego("a1", { ...DADOS, foto: "data:text/html;base64,abc=" }),
+    ).rejects.toMatchObject({ codigo: "invalido" })
+    expect(buscar).not.toHaveBeenCalled()
+  })
+
+  it("campos do servidor em erro chegam como dados inválidos", async () => {
+    responder({ erro: "dados-invalidos", mensagem: "Revise os dados." }, 400)
+    const falha = (await editarDesapego("a1", DADOS).catch((erro: unknown) => erro)) as FalhaDaApi
+    expect(falha.codigo).toBe("invalido")
+    expect(falha.motivoDoServidor).toBe("dados-invalidos")
+    expect(falha.mensagem).toBe("Revise os dados.")
+  })
+
+  it("muda a situação pela rota própria e devolve a situação nova", async () => {
+    const buscar = responder({ status: "paused" })
+    await expect(mudarSituacao("a1", "pause")).resolves.toBe("paused")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado/a1/situacao")
+    expect(init.method).toBe("POST")
+    expect(JSON.parse(String(init.body))).toEqual({ acao: "pause" })
+  })
+
+  it("passagem recusada chega como conflito, com a mensagem do servidor", async () => {
+    responder({ erro: "estado-invalido", mensagem: "Não é possível agora." }, 409)
+    const falha = (await mudarSituacao("a1", "reactivate").catch(
+      (erro: unknown) => erro,
+    )) as FalhaDaApi
+    expect(falha.codigo).toBe("conflito")
+    expect(falha.mensagem).toBe("Não é possível agora.")
+  })
+
+  it("situação que não vem é falha de contrato, não sucesso silencioso", async () => {
+    responder({})
+    await expect(mudarSituacao("a1", "pause")).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+})
+
+describe("página pedida pela URL", () => {
+  it("persegue o cursor até a página e devolve aquela página", async () => {
+    const buscar = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            anuncios: [{ ...ANUNCIO, id: "p1" }],
+            proximo: "2026-11-01T12:00:00.000Z|p1",
+            cidade: "Manaus",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ anuncios: [{ ...ANUNCIO, id: "p2" }], proximo: null, cidade: "Manaus" }),
+          { status: 200 },
+        ),
+      )
+    vi.stubGlobal("fetch", buscar)
+    const lista = await lerMercado({ tipo: "property", pagina: 2 })
+    const segunda = buscar.mock.calls[1] as unknown as [string]
+    expect(String(segunda[0])).toContain("depois=")
+    expect(lista.anuncios.map((anuncio) => anuncio.id)).toEqual(["p2"])
+  })
+
+  it("página além do fim devolve a última página real, nunca lista vazia fingida", async () => {
+    const buscar = responder({
+      anuncios: [{ ...ANUNCIO, id: "p1" }],
+      proximo: null,
+      cidade: "Manaus",
+    })
+    const lista = await lerMercado({ tipo: "property", pagina: 9 })
+    expect(buscar).toHaveBeenCalledTimes(1)
+    expect(lista.anuncios.map((anuncio) => anuncio.id)).toEqual(["p1"])
+  })
+
+  it("pagina 1 (ou ausente) é uma chamada só, como sempre foi", async () => {
+    const buscar = responder({ anuncios: [], proximo: null, cidade: null })
+    await lerMercado({ tipo: "item" })
+    expect(buscar).toHaveBeenCalledTimes(1)
+    expect(chamada(buscar).caminho).toBe("/api/app/mercado?tipo=item")
   })
 })
 
