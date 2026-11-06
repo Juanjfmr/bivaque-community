@@ -149,6 +149,7 @@ describe("destino do aviso no app", () => {
       parametros: { id: "90000000-0000-4000-8000-000000000001" },
     })
     expect(destinoEmRota("/app/voce")).toEqual({ nome: "voce", parametros: undefined })
+    expect(destinoEmRota("/app/chamados")).toEqual({ nome: "chamados", parametros: undefined })
   })
 
   it("decodifica id com caractere escapado", () => {

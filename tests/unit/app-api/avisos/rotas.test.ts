@@ -282,6 +282,22 @@ describe("rotas de avisos do app", () => {
       expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/voce")
     })
 
+    it("resposta do suporte abre os chamados da pessoa", async () => {
+      const mock = mockClient({
+        avisos: [
+          {
+            ...linha,
+            type: "support_answered",
+            action: "answered",
+            target_type: "support_ticket",
+          },
+        ],
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/chamados")
+    })
+
     it("falha de leitura vira 503, nunca lista vazia", async () => {
       const mock = mockClient({ errorTable: "notifications" })
       autenticar(mock)

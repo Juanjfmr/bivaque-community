@@ -193,6 +193,7 @@ const ROTAS_DE_DESTINO = new Set([
   "pedido",
   "anuncio",
   "comunidade",
+  "chamados",
   "voce",
 ])
 

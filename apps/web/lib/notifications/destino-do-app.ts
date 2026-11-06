@@ -68,6 +68,9 @@ export function destinoDoAviso(aviso: AvisoDoBanco): string {
       return `/app/pergunta/${aviso.alvoId}`
     case "service_request":
       return `/app/pedido/${aviso.alvoId}`
+    // A resposta do suporte tem jornada: os chamados da pessoa.
+    case "support_ticket":
+      return "/app/chamados"
     case "listing":
       return `/app/anuncio/${aviso.alvoId}`
     default:
