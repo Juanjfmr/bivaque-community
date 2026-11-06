@@ -1,7 +1,14 @@
 import type { NextRequest, NextResponse } from "next/server"
-import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
+import {
+  conferirEscrita,
+  exigirSessao,
+  lerCorpoJson,
+  opcoesDoApp,
+  responder,
+} from "../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../lib/logger"
-import { cidadeDaSessao } from "../eventos/_comum"
+import { lerNovaPergunta } from "../../../../lib/recommendations/create"
+import { cidadeDaSessao, interpretarErroDoBanco } from "../eventos/_comum"
 import { nomesDeAutores } from "./_comum"
 
 export const runtime = "nodejs"
@@ -143,6 +150,45 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       userId,
     })
     return responder(request, { erro: "leitura-indisponivel" }, 503)
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const auth = await exigirSessao(request)
+  if (!auth.ok) return auth.resposta
+  const porta = conferirEscrita(request, auth.sessao.via)
+  if (porta !== "ok") return responder(request, { erro: porta }, 403)
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    return responder(request, { erro: "corpo-invalido" }, 400)
+  }
+  const lido = await lerCorpoJson(request)
+  const pergunta = lido.ok ? lerNovaPergunta(lido.corpo) : null
+  if (!pergunta) return responder(request, { erro: "dados-invalidos" }, 400)
+  try {
+    const client = auth.sessao.cliente
+    const userId = auth.sessao.usuario.id
+    const cidade = await cidadeDaSessao(client, userId)
+    if (!cidade) return responder(request, { erro: "sem-cidade" }, 403)
+    const result = await client
+      .from("recommendation_requests")
+      .insert({
+        ...pergunta,
+        author_id: userId,
+        locality_id: cidade.id,
+      })
+      .select("id")
+      .single()
+    if (result.error) {
+      const falha = interpretarErroDoBanco(result.error.code, {
+        recusado: "Sua conta não pode perguntar nesta cidade.",
+        dados: "Revise os dados da pergunta.",
+      })
+      return responder(request, falha.corpo, falha.status)
+    }
+    if (!result.data) throw new Error("insert without result")
+    return responder(request, { pergunta: { id: result.data.id } }, 201)
+  } catch {
+    return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }
 

@@ -7,6 +7,7 @@
 // e é do chamador), porque privilégio não é identidade.
 
 import { revalidatePath } from "next/cache"
+import { enviarFotoDoAnuncio, FalhaDaFoto } from "../storage/listing-photo"
 import { isDefiniteSqlRejection } from "../storage/rpc-outcome"
 import { sanitizeImage } from "../storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../supabase/server"
@@ -340,35 +341,23 @@ export async function uploadListingPhotoAction(
     return { error: "Sessão expirada. Entre novamente para enviar a foto." }
   }
 
-  const service = createServiceClient()
-  const { data: ownedListing, error: ownershipError } = await service
-    .from("listings")
-    .select("id")
-    .eq("id", listingId)
-    .eq("owner_user_id", userId)
-    .maybeSingle()
-  if (ownershipError) {
-    return { error: ownershipError.message }
-  }
-  if (!ownedListing) {
-    return { error: "Este anúncio não existe ou não é seu." }
-  }
-
-  let image: Buffer
   try {
-    image = await sanitizeImage(file, MAX_PHOTO_BYTES)
+    const path = await enviarFotoDoAnuncio(
+      await createListingClient(),
+      userId,
+      listingId,
+      position,
+      file,
+    )
+    return { path }
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Imagem inválida." }
+    return {
+      error:
+        error instanceof FalhaDaFoto
+          ? error.message
+          : "Não foi possível enviar a foto. Confira a imagem e tente novamente.",
+    }
   }
-
-  const path = buildListingPhotoPath(listingId, position, file.type)
-  const { error: uploadError } = await service.storage
-    .from("listing-photos")
-    .upload(path, image, { contentType: file.type, upsert: false })
-  if (uploadError) {
-    return { error: uploadError.message }
-  }
-  return { path }
 }
 
 export async function createPropertyAction(formData: FormData): Promise<ActionState> {
