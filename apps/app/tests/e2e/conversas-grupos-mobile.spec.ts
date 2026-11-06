@@ -1,7 +1,8 @@
-﻿import { mkdirSync } from "node:fs"
+import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { expect, test } from "@playwright/test"
 import { simularConversas } from "./conversas-ajuda"
+import { simularGrupos } from "./grupos-ajuda"
 
 test("caixa abre conversa contextual", async ({ page }, testInfo) => {
   await simularConversas(page)
@@ -56,6 +57,7 @@ test("compositor mostra a resposta gravada e preserva o texto na falha", async (
 test("Grupo fechado: requer solicitação e não mostra publicações enquanto fora", async ({
   page,
 }) => {
+  await simularGrupos(page)
   await page.goto("/app/grupo/g-cmm")
   await expect(page.locator('[data-controles-grupo="sim"]')).toBeVisible()
   await expect(page.locator('[data-compositor-grupo="sim"]')).toHaveCount(0)
@@ -65,8 +67,12 @@ test("Grupo fechado: requer solicitação e não mostra publicações enquanto f
     "Assuntos da escola e das turmas",
   )
   await page.locator('[data-acao="grupo-participar"]').click()
+  await page
+    .getByLabel("Por que você quer entrar? (opcional)")
+    .fill("Sou responsável por um aluno.")
+  await page.getByRole("button", { name: "Enviar pedido" }).click()
   await expect(page.locator('[data-estado-participacao="pendente"]')).toContainText(
-    "Nada foi enviado",
+    "Pedido enviado",
   )
   await page.reload()
   await expect(page.locator('[data-estado-participacao="pendente"]')).toBeVisible()
@@ -77,6 +83,7 @@ test("Grupo fechado: requer solicitação e não mostra publicações enquanto f
 test("Grupo aberto: entrar, escrever rascunho, excluir e sair com confirmação", async ({
   page,
 }) => {
+  await simularGrupos(page)
   await page.goto("/app/grupo/g-pets")
   await page.locator('[data-acao="grupo-participar"]').click()
   await expect(page.locator('[data-estado-participacao="membro"]')).toBeVisible()
@@ -100,12 +107,13 @@ test("Grupo aberto: entrar, escrever rascunho, excluir e sair com confirmação"
 test("Grupo com administrador mostra pedidos, mas não oferece aprovação fictícia", async ({
   page,
 }) => {
+  await simularGrupos(page)
   await page.goto("/app/grupo/g-futebol")
   const pedidos = page.locator('[data-pedidos-entrada="sim"]')
   await expect(pedidos).toBeVisible()
   await pedidos.locator("summary").click()
   await expect(pedidos).toContainText("Bruno C.")
   await expect(pedidos).toContainText("Thiago S.")
-  await expect(pedidos).toContainText("requerem o servidor")
+  await expect(pedidos).not.toContainText("ilustrativa")
   await expect(page.locator('[data-compositor-grupo="sim"]')).toBeVisible()
 })

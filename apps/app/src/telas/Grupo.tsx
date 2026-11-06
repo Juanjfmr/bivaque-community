@@ -1,236 +1,186 @@
 "use client"
 
 import { useParams } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
-
+import { useEffect, useState } from "react"
+import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { Capa } from "@/components/bivaque/capa"
-import {
-  CartaoDePublicacao,
-  type TipoDePublicacao,
-} from "@/components/bivaque/cartao-de-publicacao"
+import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
-import { Icone } from "@/components/bivaque/icone"
-import { InteracoesDoGrupo } from "@/components/bivaque/interacoes-grupo"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { buscarGrupo, type DetalheDoGrupo } from "@/lib/dados/grupos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { validarParametros } from "@/lib/navegacao/rotas"
 import { useCasca } from "@/src/contexto/casca"
-import { contagemDeComentarios, numero, quandoDe, registro, texto } from "@/src/telas/comum"
-import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
-
-/**
- * O grupo da onda 4 (protótipo: features/groups/views.js), com dados de
- * demonstração.
- *
- * V1: nome, membros, privacidade, aviso fixado e as publicações do grupo no
- * cartão completo. Ficam para o refino: pedidos de entrada, moderação, menu do
- * autor, escrever no grupo, encerrado/só leitura e o "motivo" do grupo.
- */
-
-const TIPOS: readonly TipoDePublicacao[] = ["pergunta", "evento", "enquete", "oferta", "publicacao"]
-
-function tipoDe(valor: unknown): TipoDePublicacao {
-  return typeof valor === "string" && (TIPOS as readonly string[]).includes(valor)
-    ? (valor as TipoDePublicacao)
-    : "publicacao"
-}
+import { Escrever } from "@/src/grupos/Escrever"
+import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
+import { Participacao } from "@/src/grupos/Participacao"
+import { Pedidos } from "@/src/grupos/Pedidos"
+import { quandoDe } from "@/src/telas/comum"
 
 export function Grupo() {
-  const parametros = useParams({ strict: false }) as Record<string, string | undefined>
-  const id = parametros["id"] ?? ""
-  const casca = useCasca()
+  const { id = "" } = useParams({ strict: false }) as { id?: string }
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const casca = useCasca()
+  const [dados, setDados] = useState<DetalheDoGrupo | null>(null)
+  const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
-  const [uteis, setUteis] = useState<ReadonlySet<string>>(() => new Set())
   const [ordem, setOrdem] = useState<"recentes" | "discutidas">("recentes")
-
+  const [mais, setMais] = useState(false)
+  const [erroMais, setErroMais] = useState(false)
+  const [controle] = useState(() => new AbortController())
   useRolagemEFoco(CARGA_CONCLUIDA)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  useEffect(() => () => controle.abort(), [controle])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura
   useEffect(() => {
-    const controle = new AbortController()
+    const pedido = new AbortController()
     setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
+    setErro(null)
+    void buscarGrupo(id, { ordem, signal: pedido.signal })
       .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+        if (!pedido.signal.aborted) setDados(lidos)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (!pedido.signal.aborted) setErro(falha)
       })
-    return () => controle.abort()
-  }, [casca.cidade, rodada])
-
-  const validacao = validarParametros("grupo", { id })
-  const grupo = useMemo(
-    () => (dados === null ? null : (dados.grupos.find((item) => item.id === id) ?? null)),
-    [dados, id],
-  )
-  const apresentacao = registro(grupo?.apresentacao)
-  const comentarios = useMemo(() => contagemDeComentarios(dados), [dados])
-  const publicacoes = useMemo(() => {
-    if (dados === null) return []
-    return dados.publicacoes
-      .filter((item) => item.group_id === id)
-      .sort((a, b) =>
-        ordem === "discutidas"
-          ? (comentarios.get(b.id) ?? 0) - (comentarios.get(a.id) ?? 0)
-          : numero(registro(b.apresentacao)["at"]) - numero(registro(a.apresentacao)["at"]),
-      )
-  }, [dados, id, ordem, comentarios])
-
-  const alternarUtil = (chave: string) => {
-    setUteis((atual) => {
-      const proximo = new Set(atual)
-      if (proximo.has(chave)) proximo.delete(chave)
-      else proximo.add(chave)
-      return proximo
-    })
+    return () => pedido.abort()
+  }, [id, ordem, rodada])
+  async function carregarMais() {
+    if (!dados?.proximo || mais) return
+    setMais(true)
+    setErroMais(false)
+    try {
+      const pagina = await buscarGrupo(id, {
+        ordem,
+        depois: dados.proximo,
+        signal: controle.signal,
+      })
+      if (!controle.signal.aborted)
+        setDados({ ...pagina, publicacoes: [...dados.publicacoes, ...pagina.publicacoes] })
+    } catch {
+      if (!controle.signal.aborted) setErroMais(true)
+    } finally {
+      if (!controle.signal.aborted) setMais(false)
+    }
   }
-
-  if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
-
-  if (erro) {
+  if (erro) return <EstadoDaLeitura erro={erro} aoTentar={() => setRodada((r) => r + 1)} />
+  if (!dados)
     return (
-      <section data-tela="grupo" className="grid gap-2">
-        <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
-      </section>
-    )
-  }
-
-  if (dados === null) {
-    return (
-      <section data-tela="grupo" className="grid gap-2">
+      <section data-tela="grupo">
         <EsqueletoDeLista linhas={3} />
       </section>
     )
-  }
-
-  if (grupo === null) return <TelaIndisponivel />
-
-  const membros = numero(apresentacao["members"])
-  const privacidade = texto(apresentacao["privacy"], "aberto")
-  const fixado = texto(apresentacao["pinned"])
-  const pedidos = Array.isArray(apresentacao["requests"])
-    ? apresentacao["requests"].map((valor) => {
-        const item = registro(valor)
-        return { nome: texto(item["name"], "Membro"), nota: texto(item["note"]) }
-      })
-    : []
-
+  const { grupo, publicacoes } = dados
   return (
-    <section data-tela="grupo" className="grid gap-2">
-      {texto(apresentacao["img"]) === "" ? null : (
-        <Capa
-          fonte={texto(apresentacao["img"])}
-          alt={`Capa do grupo ${grupo.name}`}
-          className="rounded-2xl"
-        />
-      )}
+    <section data-tela="grupo" className="grid gap-3">
       <CabecaDePagina
-        titulo={texto(apresentacao["t"], grupo.name)}
-        subtitulo={`${membros > 0 ? `${membros} membros` : "Grupo novo"} · ${privacidade === "fechado" ? "Fechado" : "Aberto"}`}
-        acao={privacidade === "fechado" ? <Etiqueta tom="neutro">Fechado</Etiqueta> : undefined}
+        titulo={grupo.nome}
+        subtitulo={`${grupo.membros === null ? "" : `${grupo.membros} membros · `}${grupo.fechado ? "Fechado" : "Aberto"}`}
+        acao={grupo.fechado ? <Etiqueta tom="neutro">Fechado</Etiqueta> : undefined}
       />
-
-      <InteracoesDoGrupo
-        id={id}
-        cidade={casca.cidade}
-        fechado={privacidade === "fechado"}
-        membro={apresentacao["on"] === true}
-        pendente={apresentacao["pending"] === true}
-        admin={apresentacao["role"] === "admin"}
-        sobre={texto(apresentacao["about"], grupo.description ?? "")}
-        regras={texto(
-          apresentacao["rules"],
-          "Respeite todos os membros e mantenha as conversas pertinentes.",
-        )}
-        pedidos={pedidos}
+      <Participacao
+        key={grupo.id}
+        grupo={grupo}
+        aoMudar={(salvo) => {
+          setDados((atual) =>
+            atual
+              ? {
+                  ...atual,
+                  grupo: salvo,
+                  publicacoes: salvo.fechado && !salvo.membro ? [] : atual.publicacoes,
+                  proximo: salvo.fechado && !salvo.membro ? null : atual.proximo,
+                }
+              : atual,
+          )
+          if (salvo.membro && !grupo.membro)
+            void buscarGrupo(id, { ordem, signal: controle.signal })
+              .then(setDados)
+              .catch((falha: unknown) => {
+                if (!controle.signal.aborted) setErro(falha)
+              })
+        }}
+      />
+      <details
+        data-regras-grupo="sim"
+        className="rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
       >
-        {fixado === "" ? null : (
-          <p className="flex items-center gap-2 rounded-2xl bg-(--secondary-container) px-4 py-3 text-sm">
-            <Icone nome="pin" className="size-5 shrink-0" />
-            {fixado}
-          </p>
-        )}
-
-        <fieldset
-          data-ordenacao-grupo="sim"
-          aria-label="Ordenar publicações"
-          className="flex min-w-0 gap-2 overflow-x-auto pb-1"
-        >
-          {(
-            [
-              ["recentes", "Recentes"],
-              ["discutidas", "Mais discutidas"],
-            ] as const
-          ).map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type="button"
-              aria-pressed={ordem === chave}
-              className={
-                ordem === chave
-                  ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
-                  : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
-              }
-              onClick={() => setOrdem(chave)}
-            >
-              {rotulo}
-            </button>
-          ))}
-        </fieldset>
-        {publicacoes.length === 0 ? (
-          <EstadoVazio
-            titulo="Ainda sem publicações"
-            texto="Quando alguém escrever no grupo, o que importa aparece aqui."
-            icone="forum"
-          />
-        ) : (
-          <div className="grid gap-3">
-            {publicacoes.map((item) => {
-              const dadosDaPublicacao = registro(item.apresentacao)
-              const encontro = registro(dadosDaPublicacao["event"])
-              return (
+        <summary className="min-h-11 cursor-pointer text-sm font-semibold">
+          Sobre o grupo e regras
+        </summary>
+        <p className="mt-2 whitespace-pre-wrap text-sm">
+          {grupo.regras || "Este grupo ainda não informou regras."}
+        </p>
+      </details>
+      {grupo.admin ? <Pedidos key={grupo.id} id={grupo.id} /> : null}
+      {grupo.membro ? <Escrever key={grupo.id} grupo={grupo} cidade={casca.cidade} /> : null}
+      {grupo.fechado && !grupo.membro ? (
+        <p className="rounded-xl bg-(--surface-low) px-3 py-3 text-sm">
+          O conteúdo dos grupos fechados é reservado aos membros.
+        </p>
+      ) : (
+        <>
+          <fieldset
+            data-ordenacao-grupo="sim"
+            aria-label="Ordenar publicações"
+            className="flex gap-2"
+          >
+            {(["recentes", "discutidas"] as const).map((chave) => (
+              <Botao
+                key={chave}
+                tom={ordem === chave ? "tonal" : "contornado"}
+                aria-pressed={ordem === chave}
+                onClick={() => setOrdem(chave)}
+              >
+                {chave === "recentes" ? "Recentes" : "Mais discutidas"}
+              </Botao>
+            ))}
+          </fieldset>
+          {publicacoes.length === 0 ? (
+            <EstadoVazio
+              titulo="Ainda sem publicações"
+              texto="Quando alguém escrever no grupo, o que importa aparece aqui."
+              icone="forum"
+            />
+          ) : (
+            publicacoes.map((p) => (
+              <div key={p.id} className="grid gap-2">
+                {grupo.fixada === p.id ? (
+                  <Etiqueta tom="neutro" icone="pin">
+                    Publicação fixada
+                  </Etiqueta>
+                ) : null}
                 <CartaoDePublicacao
-                  key={item.id}
                   publicacao={{
-                    id: item.id,
-                    tipo: tipoDe(dadosDaPublicacao["tipo"]),
-                    autor: texto(dadosDaPublicacao["author"], "Membro do grupo"),
-                    quando: quandoDe(dadosDaPublicacao["at"]),
-                    texto: texto(dadosDaPublicacao["text"], item.content),
-                    resolvida: dadosDaPublicacao["resolved"] === true,
-                    comentarios: comentarios.get(item.id) ?? 0,
-                    uteis: numero(dadosDaPublicacao["useful"]),
-                    util: dadosDaPublicacao["liked"] === true || uteis.has(item.id),
-                    ...(Object.keys(encontro).length === 0
-                      ? {}
-                      : {
-                          encontro: {
-                            data: `${texto(encontro["date"])} ${texto(encontro["time"])}`.trim(),
-                            local: texto(encontro["place"]),
-                            confirmado: encontro["on"] === true,
-                          },
-                        }),
+                    ...p,
+                    tipo: "publicacao",
+                    autor: p.autor || "Membro do grupo",
+                    quando: quandoDe(p.criadaEm),
                   }}
-                  aoMarcarUtil={() => alternarUtil(item.id)}
                   aoComentar={() =>
-                    void navegacao.irPara("publicacao", { parametros: { id: item.id } })
+                    void navegacao.irPara("publicacao", { parametros: { id: p.id } })
                   }
                 />
-              )
-            })}
-          </div>
-        )}
-      </InteracoesDoGrupo>
+                {p.fotos.map((foto) => (
+                  <img
+                    key={foto}
+                    src={foto}
+                    alt="Foto da publicação"
+                    className="w-full rounded-2xl"
+                  />
+                ))}
+              </div>
+            ))
+          )}
+          {erroMais ? (
+            <p role="alert">Não foi possível carregar mais publicações. Tente de novo.</p>
+          ) : null}
+          {dados.proximo ? (
+            <Botao tom="tonal" disabled={mais} onClick={() => void carregarMais()}>
+              {mais ? "Carregando…" : "Ver mais publicações"}
+            </Botao>
+          ) : null}
+        </>
+      )}
     </section>
   )
 }

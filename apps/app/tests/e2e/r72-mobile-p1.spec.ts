@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test"
+import { simularGrupos } from "./grupos-ajuda"
 import { simularInicio } from "./inicio-ajuda"
 import { simularPerguntas } from "./perguntas-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 
 test.beforeEach(async ({ page }) => {
   await simularInicio(page)
+  await simularGrupos(page)
 })
 
 test("P1: perguntas exibem avatar shadcn, enunciado completo e estado abaixo", async ({ page }) => {
@@ -99,8 +101,8 @@ test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fix
     .toBeGreaterThan(0)
   await page.goto("/app/grupo/g-cmm")
   const capaGrupo = page.locator('[data-tela="grupo"] [data-capa="foto"] img')
-  await expect(capaGrupo).toBeVisible()
-  await expect(capaGrupo).toHaveAttribute("src", /classroom/)
+  await expect(capaGrupo).toHaveCount(0)
+  await expect(page.locator('[data-tela="grupo"]')).toContainText("Fam?lias do CMM")
 })
 
 test("P1: home desktop separa o catálogo do contexto sem duplicar seções", async ({ page }) => {

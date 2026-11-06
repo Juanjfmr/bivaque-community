@@ -17,6 +17,7 @@ import { useCasca } from "@/src/contexto/casca"
 import { Perguntar } from "@/src/criar/Perguntar"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
+import { Diretorio } from "@/src/grupos/Diretorio"
 import { mensagemDaFalha } from "@/src/perguntas/estado"
 
 /**
@@ -182,7 +183,9 @@ export function Comunidade() {
         </DialogContent>
       </Dialog>
 
-      {erro === "sessao" ? (
+      {aba === "grp" ? (
+        <Diretorio />
+      ) : erro === "sessao" ? (
         <EstadoDeSessaoVencida />
       ) : erro === "negado" ? (
         <EstadoNegado texto="Sua conta não tem acesso à comunidade desta cidade." />

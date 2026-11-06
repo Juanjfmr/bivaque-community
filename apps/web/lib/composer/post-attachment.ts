@@ -82,3 +82,28 @@ export function attachmentPublishBlocker(
   }
   return null
 }
+
+/** A mesma derivação do compositor antigo, com autoria e destino definidos pelo servidor. */
+export function lerPublicacaoDoGrupo(corpo: Record<string, unknown>, userId: string) {
+  const texto = typeof corpo["texto"] === "string" ? corpo["texto"].trim() : ""
+  const fotos = corpo["fotos"] === undefined ? [] : corpo["fotos"]
+  if (texto.length < 1 || texto.length > 2000 || !Array.isArray(fotos) || fotos.length > 4)
+    return null
+  const caminhos: string[] = []
+  for (const foto of fotos) {
+    if (
+      typeof foto !== "string" ||
+      !foto.startsWith(`${userId}/`) ||
+      foto.length > 300 ||
+      foto.includes("..") ||
+      foto.includes("//") ||
+      foto.includes("\\") ||
+      foto.endsWith("/")
+    )
+      return null
+    caminhos.push(foto)
+  }
+  if (new Set(caminhos).size !== caminhos.length) return null
+  const derivado = derivePostType(caminhos.length > 0 ? "photo" : null, caminhos[0] ?? "", "")
+  return { content: texto, post_type: derivado.postType, ...derivado.extras, photo_paths: caminhos }
+}
