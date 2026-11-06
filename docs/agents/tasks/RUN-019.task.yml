@@ -64,3 +64,12 @@ on_budget_exhausted: HUMAN_DECISION
 
 closure:
   requires_runtime_evidence: true
+
+# Conferência de 06/11/2026 contra o roteador e as telas reais; ver .visual/run-019/relatorio.md.
+blocked_by:
+  - >
+    A premissa de equivalência completa F01-F10 não se confirma: faltam família, preferências
+    de avisos, acompanhamento de denúncias, edição de anúncios e consumo de filtros/IDs por URL.
+    Salvos não lista as indicações salvas e o detalhe de evento não oferece os convites antigos.
+    Concluir essas superfícies nas jornadas correspondentes antes de retirar suas rotas;
+    os arquivos necessários ficam fora de allowed_paths deste contrato.
