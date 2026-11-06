@@ -1,29 +1,14 @@
 import { expect, test } from "@playwright/test"
+import { simularCriar } from "./criar-ajuda"
+
+test.beforeEach(async ({ page }) => simularCriar(page))
 
 const CASOS = [
-  {
-    id: "create-request",
-    nome: "Pedir um serviço",
-    titulo: "Instalação e limpeza de ar-condicionado",
-    extra: "Ponta Negra",
-  },
-  {
-    id: "create-item",
-    nome: "Desapego",
-    titulo: "Mesa com quatro cadeiras seminova",
-    extra: "Flores",
-  },
   {
     id: "indicate",
     nome: "Indicação de negócio",
     titulo: "Oficina automotiva de confiança",
     extra: "Manutenção automotiva",
-  },
-  {
-    id: "create-event",
-    nome: "Encontro",
-    titulo: "Café de boas-vindas da comunidade",
-    extra: "Centro de convivência",
   },
   {
     id: "my-biz",
@@ -45,8 +30,6 @@ for (const caso of CASOS) {
     await form
       .locator("#criacao-descricao")
       .fill("Atendimento a combinar com a comunidade, somente uma prévia demonstrativa.")
-    if (caso.id === "create-item") await form.locator("#criacao-preco").fill("750")
-    if (caso.id === "create-event") await form.locator("#criacao-horario").fill("2027-02-12T18:30")
 
     const limites = await form.boundingBox()
     const largura = page.viewportSize()?.width ?? 375
@@ -93,8 +76,9 @@ test("Criar > Pedir indicação navega e abre formulário de perguntas existente
   await page
     .locator('[data-fluxo="perguntar"] input#nova-pergunta')
     .fill("Indicam um serviço de manutenção de bicicletas?")
-  await page.locator('[data-fluxo="perguntar"] button[type="submit"]').click()
-  await expect(page).toHaveURL(/\/app\/pergunta\/pergunta-demo-/)
+  await page.getByRole("button", { name: "Revisar pergunta" }).click()
+  await page.getByRole("button", { name: "Publicar pergunta" }).click()
+  await expect(page).toHaveURL(/\/app\/pergunta\/90000000-/)
 })
 
 test("As sete escolhas do Criar têm destinos ou formulário, sem ação silenciosa", async ({
@@ -103,11 +87,19 @@ test("As sete escolhas do Criar têm destinos ou formulário, sem ação silenci
   await page.goto("/app/inicio")
   await page.locator('[data-acao="criar"]').click()
   await expect(page.locator("[data-escolha]")).toHaveCount(7)
-  for (const id of ["create-request", "create-item", "indicate", "create-event", "my-biz"]) {
+  for (const id of ["create-item", "indicate", "my-biz"]) {
     await page.locator(`[data-escolha="${id}"]`).click()
     await expect(page.locator(`[data-formulario-criacao="${id}"]`)).toBeVisible()
     await page.getByRole("button", { name: "Voltar" }).click()
   }
+  await page.locator('[data-escolha="create-event"]').click()
+  await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
+  await page.getByRole("button", { name: "Fechar", exact: true }).click()
+  await page.locator('[data-escolha="create-request"]').click()
+  await expect(page).toHaveURL(/\/app\/negocios$/)
+  // Negócios é rota filha: a barra com o Criar só existe nas raízes no celular.
+  await page.goto("/app/inicio")
+  await page.locator('[data-acao="criar"]').click()
   await page.locator('[data-escolha="create-property"]').click()
   await expect(page).toHaveURL(/\/app\/imoveis$/)
   await expect(page.locator('[data-fluxo="rascunho-imovel"]')).toBeVisible()

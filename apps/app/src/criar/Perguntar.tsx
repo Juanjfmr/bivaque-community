@@ -22,6 +22,10 @@ export function Perguntar({
   const [salvando, setSalvando] = useState(false)
   const controle = useRef<AbortController | null>(null)
   useEffect(() => () => controle.current?.abort(), [])
+  // O rascunho é local e automático: voltar/avançar devolve o texto ainda não publicado.
+  useEffect(() => {
+    guardarRascunho(chave, dados)
+  }, [chave, dados])
 
   async function publicar() {
     if (controle.current) return

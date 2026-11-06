@@ -40,6 +40,10 @@ export function Desapego({
     },
     [],
   )
+  // O rascunho é local e automático: voltar/avançar devolve os campos ainda não publicados.
+  useEffect(() => {
+    guardarRascunho(chave, dados)
+  }, [chave, dados])
 
   async function publicar() {
     if (controle.current) return

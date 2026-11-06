@@ -32,12 +32,28 @@ const PERGUNTAS = [
 ]
 
 export async function simularPerguntas(page: Page) {
+  const perguntas = [...PERGUNTAS]
   await page.route(/\/api\/app\/perguntas(?:\/|\?|$)/, async (rota) => {
     const url = new URL(rota.request().url())
     const [, , , id, acao] = url.pathname.split("/").filter(Boolean)
     if (id === undefined) {
+      if (rota.request().method() === "POST") {
+        const corpo = rota.request().postDataJSON() as { titulo: string }
+        const criada = {
+          id: "90000000-0000-4000-8000-000000000099",
+          titulo: corpo.titulo,
+          categoria: "outros",
+          criadaEm: new Date().toISOString(),
+          autor: "Você",
+          propria: true,
+          resolvida: false,
+          respostas: 0,
+        }
+        perguntas.unshift(criada)
+        return rota.fulfill({ status: 201, json: { pergunta: { id: criada.id } } })
+      }
       return rota.fulfill({
-        json: { perguntas: PERGUNTAS, proximo: null, cidade: "Manaus", resolvidas: 1 },
+        json: { perguntas, proximo: null, cidade: "Manaus", resolvidas: 1 },
       })
     }
     if (acao === "respostas") {
@@ -49,7 +65,7 @@ export async function simularPerguntas(page: Page) {
         },
       })
     }
-    const pergunta = PERGUNTAS.find((item) => item.id === id)
+    const pergunta = perguntas.find((item) => item.id === id)
     if (pergunta === undefined) {
       return rota.fulfill({ status: 404, json: { erro: "pergunta-nao-encontrada" } })
     }

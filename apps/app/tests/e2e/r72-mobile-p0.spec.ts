@@ -47,15 +47,16 @@ test("R72 P0: Busca explora categorias em duas colunas e encontra negócios", as
   await expect(page).toHaveURL(/\/app\/imoveis$/)
 })
 
-test("R72 P0: Perguntar salva apenas nesta sessão e abre detalhe válido", async ({ page }) => {
+test("R72 P0: Perguntar revisa e abre detalhe da resposta simulada da API", async ({ page }) => {
   await simularPerguntas(page)
   await page.goto("/app/comunidade")
   await page.locator('[data-acao="perguntar"]').click()
   const dialogo = page.locator('[data-fluxo="perguntar"]')
   await expect(dialogo).toBeVisible()
   await dialogo.locator("#nova-pergunta").fill("Alguém indica uma escola para crianças pequenas?")
-  await dialogo.getByRole("button", { name: "Adicionar pergunta" }).click()
-  await expect(page).toHaveURL(/\/app\/pergunta\/pergunta-demo-/)
+  await dialogo.getByRole("button", { name: "Revisar pergunta" }).click()
+  await dialogo.getByRole("button", { name: "Publicar pergunta" }).click()
+  await expect(page).toHaveURL(/\/app\/pergunta\/90000000-/)
   await expect(page.getByText("Alguém indica uma escola para crianças pequenas?")).toBeVisible()
   await page.goto("/app/comunidade")
   await page.locator('[data-tela="comunidade"] [data-chip="mine"]').click()
