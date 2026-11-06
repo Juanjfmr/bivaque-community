@@ -173,6 +173,21 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
 function resendAdapter(): ChannelAdapter {
   return {
     async send(message: OutboxMessage) {
+      const [local, domain] = message.recipient.split("@")
+      if (
+        message.recipient.length > 254 ||
+        !local ||
+        local.length > 64 ||
+        !domain ||
+        !/^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*$/.test(local) ||
+        !/^[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/.test(domain) ||
+        domain
+          .split(".")
+          .some((label) => label.length > 63 || label.startsWith("-") || label.endsWith("-")) ||
+        message.recipient !== `${local}@${domain}`
+      ) {
+        return { ok: false, error: "invalid email recipient" }
+      }
       const apiKey = process.env["RESEND_API_KEY"]
       const from = process.env["RESEND_FROM_EMAIL"]
       if (!apiKey) {
