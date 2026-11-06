@@ -90,6 +90,27 @@ describe("grupos — diretório e detalhe sob RLS", () => {
     expect(JSON.stringify(corpo)).not.toContain("foto.jpg")
     expect(mock.chamadas).toContainEqual({ tabela: "feed_group", metodo: "range", args: [0, 19] })
   })
+  it("foto sem URL assinada sai do feed em vez de derrubar a leitura", async () => {
+    const semUrl = USER + "/grupos/" + ID + "/30000000-0000-4000-8000-000000000002.png"
+    const mock = mockClient({
+      posts: [
+        {
+          ...post,
+          photo_paths: [
+            USER + "/grupos/" + ID + "/30000000-0000-4000-8000-000000000001.png",
+            semUrl,
+          ],
+        },
+      ],
+      semUrl,
+    })
+    autenticar(mock)
+    const r = await detalhe(req("GET", BASE + "/" + ID), context)
+    expect(r.status).toBe(200)
+    const corpo = await r.json()
+    expect(corpo.publicacoes[0].fotos).toEqual(["https://storage.example.invalid/assinada"])
+    expect(JSON.stringify(corpo)).not.toContain(semUrl)
+  })
   it("fechado sem participação não consulta nem retorna conteúdo ou contagem de membros", async () => {
     const mock = mockClient({ grupo: { ...grupo, visibility: "private" }, membro: null })
     autenticar(mock)

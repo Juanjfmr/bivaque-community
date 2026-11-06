@@ -115,7 +115,10 @@ export async function apresentarPublicacoes(
     for (const foto of assinadas.data ?? []) {
       if (foto.path && foto.signedUrl) fotos.set(foto.path, foto.signedUrl)
     }
-    if (fotos.size !== new Set(caminhos).size) throw new Error("photo unavailable")
+    // Uma foto sem URL não pode derrubar o feed inteiro: a publicação sai sem ela.
+    for (const caminho of caminhos) {
+      if (!fotos.has(caminho)) console.error("[grupos] foto sem URL assinada:", caminho)
+    }
   }
   return linhas.map((linha) => ({
     id: linha.id,
@@ -129,7 +132,7 @@ export async function apresentarPublicacoes(
     util: minhas.has(linha.id),
     salva: meusSalvos.has(linha.id),
     oculta: minhasOcultas.has(linha.id),
-    fotos: caminhosDaLinha(linha).map((path) => fotos.get(path)),
+    fotos: caminhosDaLinha(linha).flatMap((path) => fotos.get(path) ?? []),
   }))
 }
 

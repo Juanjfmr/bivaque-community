@@ -60,6 +60,7 @@ type Opcoes = {
   rpcErro?: string
   codigo?: string
   storageErro?: "upload" | "sign"
+  semUrl?: string
   salvas?: boolean
   ocultas?: boolean
   reacoesComentarios?: { comment_id: string; user_id: string }[]
@@ -175,7 +176,10 @@ export function mockClient(opcoes: Opcoes = {}) {
     error: opcoes.storageErro === "upload" ? { message: "segredo-storage" } : null,
   }))
   const sign = vi.fn(async (paths: string[]) => ({
-    data: paths.map((path) => ({ path, signedUrl: "https://storage.example.invalid/assinada" })),
+    data: paths.map((path) => ({
+      path,
+      signedUrl: path === opcoes.semUrl ? null : "https://storage.example.invalid/assinada",
+    })),
     error: opcoes.storageErro === "sign" ? { message: "segredo-storage" } : null,
   }))
   const storage = { from: vi.fn(() => ({ upload, createSignedUrls: sign })) }
