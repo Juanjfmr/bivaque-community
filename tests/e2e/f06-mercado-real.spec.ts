@@ -164,6 +164,7 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
       (r) => r.url().includes("/interesse") && r.request().method() === "POST",
     )
     await page.getByRole("button", { name: "Tenho interesse" }).click()
+    await page.getByRole("button", { name: "Abrir conversa", exact: true }).click()
     const enviada = await resposta
     const corpo = (await enviada.json()) as { conversaId: string }
     expect(enviada.status(), JSON.stringify(corpo)).toBe(200)

@@ -10,7 +10,7 @@
  *   GET /api/app/mercado?tipo=item|property
  *     → { cidade, proximo: null, anuncios: [ … ] }
  *   GET /api/app/mercado/<id>
- *     → { anuncio: { …campos da tela, endereco: null, donoNome, fotos: [], meu: false, salvo: false } }
+ *     → { anuncio: { …campos da tela, endereco: null, donoNome, fotos, meu: false, salvo: false } }
  *   POST /api/app/mercado/<id>/interesse
  *     → { conversaId }
  */
@@ -35,7 +35,7 @@ const ANUNCIOS = [
     tipoImovel: null,
     areaM2: null,
     condoFeeCents: null,
-    foto: null,
+    foto: "/app/demo/sofa.jpg",
     criadoEm: "2026-11-04T12:00:00Z",
   },
   {
@@ -100,7 +100,7 @@ const ANUNCIOS = [
     tipo: "item" as const,
     titulo: "Berço com colchão",
     descricao: "Berço berçoberço madeira natural",
-    precoCents: null,
+    precoCents: 45000,
     deal: null,
     bairro: "Adolpho Lisboa",
     cidade: "Manaus",
@@ -111,7 +111,7 @@ const ANUNCIOS = [
     tipoImovel: null,
     areaM2: null,
     condoFeeCents: null,
-    foto: null,
+    foto: "/app/demo/crib.jpg",
     criadoEm: "2026-11-05T08:00:00Z",
   },
   {
@@ -158,7 +158,7 @@ const ANUNCIOS = [
     tipo: "property" as const,
     titulo: "Apartamento 3 quartos Ponta Negra",
     descricao: "Vista pro rio, acabamento premium",
-    precoCents: 420000,
+    precoCents: 320000,
     deal: "rent",
     bairro: "Flores",
     cidade: "Manaus",
@@ -169,7 +169,7 @@ const ANUNCIOS = [
     tipoImovel: "apartment",
     areaM2: 98,
     condoFeeCents: 72000,
-    foto: null,
+    foto: "/app/demo/apartment.jpg",
     criadoEm: "2026-11-04T10:00:00Z",
   },
   {
@@ -177,18 +177,18 @@ const ANUNCIOS = [
     tipo: "property" as const,
     titulo: "Apartamento 2 quartos Centro",
     descricao: "Garagem coberta, quintal amplo",
-    precoCents: 280000,
-    deal: "sale",
+    precoCents: 240000,
+    deal: "rent",
     bairro: "Centro",
     cidade: "Manaus",
     status: "active",
     condicao: "usado",
-    categoria: "venda",
+    categoria: "aluguel",
     quartos: 2,
     tipoImovel: "apartment",
     areaM2: 70,
     condoFeeCents: 48000,
-    foto: null,
+    foto: "/app/demo/interior.jpg",
     criadoEm: "2026-11-02T08:00:00Z",
   },
 ] as const
@@ -219,7 +219,11 @@ export function aplicarStubMercado(page: Page): void {
       })
     }
 
-    const resultados = listaPorTipo(tipo)
+    // A API entrega URLs prontas; os arquivos da demonstração são servidos pelo preview.
+    const resultados = listaPorTipo(tipo).map((anuncio) => ({
+      ...anuncio,
+      foto: anuncio.foto === null ? null : new URL(anuncio.foto, url).href,
+    }))
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -267,6 +271,7 @@ export function aplicarStubMercado(page: Page): void {
 
     const an = anuncioPorId(id)
     if (!an) return route.continue()
+    const foto = an.foto === null ? null : new URL(an.foto, url).href
 
     await route.fulfill({
       status: 200,
@@ -288,11 +293,11 @@ export function aplicarStubMercado(page: Page): void {
           tipoImovel: an.tipoImovel,
           areaM2: an.areaM2,
           condoFeeCents: an.condoFeeCents,
-          foto: an.foto,
+          foto,
           criadoEm: an.criadoEm,
           endereco: null,
           donoNome: "Maria Silva",
-          fotos: [],
+          fotos: foto === null ? [] : [foto],
           meu: false,
           salvo: false,
         },

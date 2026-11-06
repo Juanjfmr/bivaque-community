@@ -107,6 +107,7 @@ export function Anuncio() {
   const abrirContato = (tipo: "interesse" | "oferta") => {
     setTipoContato(tipo)
     setErroContato("")
+    setAvisoInteresse(null)
     setMensagem(
       tipo === "interesse"
         ? "Olá! Tenho interesse neste anúncio. Podemos combinar os detalhes?"
@@ -146,6 +147,7 @@ export function Anuncio() {
     setAvisoInteresse(null)
     try {
       setConversaId(await abrirInteresse(id, { signal: controle.signal }))
+      setTipoContato(null)
     } catch (falha: unknown) {
       if (!foiAbortada(falha)) setAvisoInteresse(mensagemDaFalha(falha, "interesse"))
     } finally {
@@ -269,7 +271,7 @@ export function Anuncio() {
               data-acao="contato-interesse"
               icone="chat_bubble"
               disabled={!ativo || enviandoInteresse}
-              onClick={() => void enviarInteresse()}
+              onClick={() => abrirContato("interesse")}
             >
               {enviandoInteresse ? "Enviando…" : "Tenho interesse"}
             </Botao>
@@ -288,11 +290,6 @@ export function Anuncio() {
             Fazer uma oferta
           </Botao>
         </div>
-        {avisoInteresse === null ? null : (
-          <p role="alert" className="text-sm text-(--destructive)">
-            {avisoInteresse}
-          </p>
-        )}
         {conversaId === null ? null : (
           <Botao
             tom="texto"
@@ -384,6 +381,11 @@ export function Anuncio() {
                   {erroContato}
                 </p>
               )}
+              {avisoInteresse === null ? null : (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  {avisoInteresse}
+                </p>
+              )}
               <div className="flex justify-end gap-2">
                 <Botao type="button" tom="texto" onClick={() => setTipoContato(null)}>
                   Cancelar
@@ -391,6 +393,16 @@ export function Anuncio() {
                 <Botao type="submit" data-acao="guardar-contato">
                   Guardar sem enviar
                 </Botao>
+                {tipoContato === "interesse" ? (
+                  <Botao
+                    type="button"
+                    tom="contornado"
+                    disabled={enviandoInteresse}
+                    onClick={() => void enviarInteresse()}
+                  >
+                    {enviandoInteresse ? "Abrindo…" : "Abrir conversa"}
+                  </Botao>
+                ) : null}
               </div>
             </form>
           </DialogContent>
