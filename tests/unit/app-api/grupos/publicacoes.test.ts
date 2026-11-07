@@ -162,6 +162,67 @@ describe("publicar, ler e comentar em grupo", () => {
       photo_paths: [],
     })
   })
+  it("publica texto em grupo FECHADO com o insert que o banco aceita", async () => {
+    const mock = mockClient({
+      grupo: { ...grupo, visibility: "private" },
+      membro: { group_id: ID, user_id: USER, role: "owner", status: "approved" },
+    })
+    autenticar(mock)
+    const r = await publicar(
+      req("POST", publicacoes, { texto: "Conteúdo reservado", fotos: [] }),
+      context,
+    )
+    expect(r.status).toBe(201)
+    expect(await r.json()).toEqual({ publicacao: { id: POST } })
+    expect(mock.chamadas).toContainEqual({
+      tabela: "posts",
+      metodo: "insert",
+      args: [
+        {
+          content: "Conteúdo reservado",
+          post_type: "text",
+          photo_paths: [],
+          group_id: ID,
+          locality_id: CITY,
+          community_id: null,
+          user_id: USER,
+        },
+      ],
+    })
+  })
+  it("a leitura do grupo não pede o embed de contagem, que o grant por coluna recusa", async () => {
+    const mock = mockClient()
+    autenticar(mock)
+    expect((await publicar(req("POST", publicacoes, { texto: "Olá" }), context)).status).toBe(201)
+    // `group_memberships(count)` exige SELECT de tabela; a 20261024120000 só
+    // concede colunas a `authenticated` e o embed virava 503 na publicação.
+    expect(JSON.stringify(mock.chamadas)).not.toContain("group_memberships(count)")
+    expect(mock.chamadas).toContainEqual({
+      tabela: "groups",
+      metodo: "select",
+      args: ["id,name,description,rules,visibility,locality_id,owner_user_id,pinned_post_id"],
+    })
+  })
+  it("503 desconhecido deixa código e mensagem no log, sem o texto publicado", async () => {
+    const registrado: string[] = []
+    const consoleError = vi.spyOn(console, "error").mockImplementation((linha: unknown) => {
+      registrado.push(String(linha))
+    })
+    try {
+      const mock = mockClient({ erroEscrita: "posts", codigo: "XX000" })
+      autenticar(mock)
+      const r = await publicar(req("POST", publicacoes, { texto: "Texto reservado" }), context)
+      expect(r.status).toBe(503)
+      expect(await r.json()).toEqual({ erro: "escrita-indisponivel" })
+      const linha = registrado.join("\n")
+      expect(linha).toContain("app grupos: publish failed")
+      expect(linha).toContain("XX000")
+      expect(linha).toContain("segredo-do-banco")
+      expect(linha).not.toContain("Texto reservado")
+    } finally {
+      consoleError.mockRestore()
+    }
+  })
   it.each([
     ["42501", 403],
     ["23514", 400],

@@ -1,5 +1,6 @@
 import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../../lib/app-api/rota-do-app"
+import { contarMembrosAprovados } from "../../../../../../lib/search/contagem-de-membros"
 import { ehUuid } from "../../../eventos/_comum"
 import { nomesDeAutores } from "../../../perguntas/_comum"
 import {
@@ -12,6 +13,7 @@ import {
   participacao,
   publicacaoDaSessao,
   reacoesDosComentarios,
+  registrarFalha,
 } from "../../_comum"
 
 export const runtime = "nodejs"
@@ -58,11 +60,12 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       userId,
     )
     const publicacoes = await apresentarPublicacoes(client, [post], userId)
+    const membros = (await contarMembrosAprovados(client, [grupo.id])).get(grupo.id) ?? 0
     return responder(
       request,
       {
         publicacao: publicacoes[0],
-        grupo: apresentarGrupo(grupo, membro, userId),
+        grupo: apresentarGrupo(grupo, membro, userId, membros),
         comentarios: linhas.map((c) => ({
           id: c.id,
           texto: c.content,
@@ -78,7 +81,8 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       },
       200,
     )
-  } catch {
+  } catch (error) {
+    registrarFalha("publication detail", error)
     return responder(request, { erro: "leitura-indisponivel" }, 503)
   }
 }

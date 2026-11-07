@@ -1,16 +1,36 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { clienteDosGrupos } from "../../../../lib/communities/grupos"
+import { log } from "../../../../lib/logger"
 import { nomesDeAutores } from "../perguntas/_comum"
 
+/**
+ * Sem `group_memberships(count)`: o embed de contagem exige SELECT de TABELA em
+ * `group_memberships`, e a 20261024120000 o trocou por grant de coluna para
+ * `authenticated`. O PostgREST responde 403 nesse embed, e a rota traduzia o
+ * throw em 503 — a publicação em grupo fechado nunca chegava ao insert. A
+ * contagem sai de `contarMembrosAprovados`, como em /api/app/inicio.
+ */
 export const CAMPOS_DO_GRUPO =
-  "id,name,description,rules,visibility,locality_id,owner_user_id,pinned_post_id,group_memberships(count)"
+  "id,name,description,rules,visibility,locality_id,owner_user_id,pinned_post_id"
+
+/**
+ * A causa de um 503 fica no log do servidor: código e mensagem do Postgres, que
+ * dizem qual policy/gatilho recusou. Nunca o corpo do pedido, o texto publicado
+ * ou o id de quem pediu.
+ */
+export function registrarFalha(etapa: string, erro: unknown) {
+  const postgres = (erro ?? {}) as { code?: unknown; message?: unknown }
+  log.error(`app grupos: ${etapa} failed`, {
+    codigo: typeof postgres.code === "string" ? postgres.code : "sem-codigo",
+    mensagem: typeof postgres.message === "string" ? postgres.message : String(erro),
+  })
+}
 
 export async function grupoDaSessao(client: SupabaseClient<Database>, id: string) {
   const { data, error } = await client
     .from("groups")
     .select(CAMPOS_DO_GRUPO)
-    .eq("group_memberships.status", "approved")
     .eq("id", id)
     .eq("is_deleted", false)
     .maybeSingle()
@@ -32,7 +52,12 @@ export async function participacao(client: SupabaseClient<Database>, id: string,
 type Grupo = NonNullable<Awaited<ReturnType<typeof grupoDaSessao>>>
 type Participacao = Awaited<ReturnType<typeof participacao>>
 
-export function apresentarGrupo(grupo: Grupo, membro: Participacao, userId: string) {
+export function apresentarGrupo(
+  grupo: Grupo,
+  membro: Participacao,
+  userId: string,
+  membros: number,
+) {
   const aprovado = membro?.status === "approved"
   return {
     id: grupo.id,
@@ -43,8 +68,7 @@ export function apresentarGrupo(grupo: Grupo, membro: Participacao, userId: stri
     membro: aprovado,
     pendente: membro?.status === "pending",
     admin: aprovado && grupo.owner_user_id === userId,
-    membros:
-      grupo.visibility === "private" && !aprovado ? null : (grupo.group_memberships[0]?.count ?? 0),
+    membros: grupo.visibility === "private" && !aprovado ? null : membros,
     fixada: grupo.pinned_post_id,
   }
 }

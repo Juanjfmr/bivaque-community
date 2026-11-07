@@ -14,6 +14,7 @@ import {
   grupoDaSessao,
   participacao,
   publicacaoDaSessao,
+  registrarFalha,
 } from "../../../_comum"
 
 export const runtime = "nodejs"
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
         recusado: "Sua conta não pode comentar nesta publicação.",
         dados: "Revise o comentário e a resposta escolhida.",
       })
+      if (falha.status === 503) registrarFalha("comment", result.error)
       return responder(request, falha.corpo, falha.status)
     }
     const c = result.data
@@ -88,7 +90,8 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
       },
       201,
     )
-  } catch {
+  } catch (error) {
+    registrarFalha("comment", error)
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }

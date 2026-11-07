@@ -1,5 +1,6 @@
 import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
+import { contarMembrosAprovados } from "../../../../../lib/search/contagem-de-membros"
 import { ehUuid } from "../../eventos/_comum"
 import {
   apresentarGrupo,
@@ -9,6 +10,7 @@ import {
   type LinhaDaPublicacao,
   pagina,
   participacao,
+  registrarFalha,
 } from "../_comum"
 
 export const runtime = "nodejs"
@@ -31,7 +33,8 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const grupo = await grupoDaSessao(client, id)
     if (!grupo) return responder(request, { erro: "grupo-nao-encontrado" }, 404)
     const membro = await participacao(client, id, userId)
-    const resumo = apresentarGrupo(grupo, membro, userId)
+    const membros = (await contarMembrosAprovados(client, [id])).get(id) ?? 0
+    const resumo = apresentarGrupo(grupo, membro, userId, membros)
     if (resumo.fechado && !resumo.membro) {
       return responder(request, { grupo: resumo, publicacoes: [], proximo: null }, 200)
     }
@@ -74,7 +77,8 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       },
       200,
     )
-  } catch {
+  } catch (error) {
+    registrarFalha("group detail", error)
     return responder(request, { erro: "leitura-indisponivel" }, 503)
   }
 }

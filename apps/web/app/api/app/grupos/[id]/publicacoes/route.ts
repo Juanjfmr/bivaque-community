@@ -9,7 +9,7 @@ import {
 import { clienteDosGrupos } from "../../../../../../lib/communities/grupos"
 import { lerPublicacaoDoGrupo } from "../../../../../../lib/composer/post-attachment"
 import { ehUuid, interpretarErroDoBanco } from "../../../eventos/_comum"
-import { grupoDaSessao, participacao } from "../../_comum"
+import { grupoDaSessao, participacao, registrarFalha } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -48,11 +48,13 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
         recusado: "Sua conta não pode publicar neste grupo.",
         dados: "Revise o texto e as fotos da publicação.",
       })
+      if (falha.status === 503) registrarFalha("publish", result.error)
       return responder(request, falha.corpo, falha.status)
     }
     if (!result.data) throw new Error("insert without result")
     return responder(request, { publicacao: { id: result.data.id } }, 201)
-  } catch {
+  } catch (error) {
+    registrarFalha("publish", error)
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }

@@ -74,6 +74,21 @@ describe("grupos — diretório e detalhe sob RLS", () => {
     autenticar(mock)
     expect((await (await listar(req())).json()).proximo).toBe("20")
   })
+  it("a contagem de membros vem por coluna, sem o embed que o grant recusa", async () => {
+    const mock = mockClient()
+    autenticar(mock)
+    expect(await (await detalhe(req(), context)).json()).toMatchObject({
+      grupo: { membros: 1 },
+    })
+    // `group_memberships(count)` exigiria SELECT de tabela, que a 20261024120000
+    // tirou de `authenticated`: o PostgREST respondia 403 e a rota, 503.
+    expect(JSON.stringify(mock.chamadas)).not.toContain("group_memberships(count)")
+    expect(mock.chamadas).toContainEqual({
+      tabela: "group_memberships",
+      metodo: "select",
+      args: ["group_id"],
+    })
+  })
   it("detalhe devolve somente publicações visíveis e URLs assinadas, sem caminho bruto", async () => {
     const mock = mockClient({ posts: [{ ...post, photo_path: USER + "/foto.jpg" }] })
     autenticar(mock)

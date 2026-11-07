@@ -13,6 +13,7 @@ import {
   grupoDaSessao,
   participacao,
   publicacaoDaSessao,
+  registrarFalha,
 } from "../../../_comum"
 
 export const runtime = "nodejs"
@@ -110,6 +111,7 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
         recusado: "Sua conta não pode realizar esta ação.",
         dados: "Revise a ação escolhida.",
       })
+      if (falha.status === 503) registrarFalha("post action", result.error)
       return responder(request, falha.corpo, falha.status)
     }
     if (typeof comentarioId === "string") {
@@ -141,7 +143,8 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
       },
       200,
     )
-  } catch {
+  } catch (error) {
+    registrarFalha("post action", error)
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }

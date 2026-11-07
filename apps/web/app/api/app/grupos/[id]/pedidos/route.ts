@@ -2,7 +2,7 @@ import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../../lib/app-api/rota-do-app"
 import { ehUuid } from "../../../eventos/_comum"
 import { nomesDeAutores } from "../../../perguntas/_comum"
-import { grupoDaSessao, pagina, participacao } from "../../_comum"
+import { grupoDaSessao, pagina, participacao, registrarFalha } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -57,7 +57,8 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       },
       200,
     )
-  } catch {
+  } catch (error) {
+    registrarFalha("join requests", error)
     return responder(request, { erro: "leitura-indisponivel" }, 503)
   }
 }

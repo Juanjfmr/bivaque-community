@@ -1,7 +1,8 @@
 import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
+import { contarMembrosAprovados } from "../../../../lib/search/contagem-de-membros"
 import { cidadeDaSessao } from "../eventos/_comum"
-import { apresentarGrupo, CAMPOS_DO_GRUPO, pagina } from "./_comum"
+import { apresentarGrupo, CAMPOS_DO_GRUPO, pagina, registrarFalha } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -19,7 +20,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const grupos = await client
       .from("groups")
       .select(CAMPOS_DO_GRUPO)
-      .eq("group_memberships.status", "approved")
       .eq("locality_id", cidade.id)
       .eq("is_deleted", false)
       .order("name")
@@ -27,6 +27,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .range(depois, depois + 19)
     if (grupos.error) throw grupos.error
     const linhas = grupos.data ?? []
+    const contagem = await contarMembrosAprovados(
+      client,
+      linhas.map((grupo) => grupo.id),
+    )
     const minhas = await client
       .from("group_memberships")
       .select("group_id,status,role")
@@ -44,6 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             grupo,
             (minhas.data ?? []).find((m) => m.group_id === grupo.id) ?? null,
             userId,
+            contagem.get(grupo.id) ?? 0,
           ),
         ),
         cidade: cidade.nome,
@@ -51,7 +56,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       200,
     )
-  } catch {
+  } catch (error) {
+    registrarFalha("group directory", error)
     return responder(request, { erro: "leitura-indisponivel" }, 503)
   }
 }

@@ -8,7 +8,7 @@ import {
 } from "../../../../../../lib/app-api/rota-do-app"
 import { enviarFotoDoGrupo, lerFotoDoGrupo } from "../../../../../../lib/storage/foto-do-grupo"
 import { ehUuid } from "../../../eventos/_comum"
-import { grupoDaSessao, participacao } from "../../_comum"
+import { grupoDaSessao, participacao, registrarFalha } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -37,7 +37,8 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
     const resultado = await enviarFotoDoGrupo(client, userId, id, file)
     if ("invalida" in resultado) return responder(request, { erro: "foto-invalida" }, 400)
     return responder(request, { caminho: resultado.caminho }, 201)
-  } catch {
+  } catch (error) {
+    registrarFalha("photo upload", error)
     return responder(request, { erro: "foto-indisponivel" }, 503)
   }
 }

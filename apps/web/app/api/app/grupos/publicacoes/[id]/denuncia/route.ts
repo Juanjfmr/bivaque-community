@@ -8,7 +8,7 @@ import {
 } from "../../../../../../../lib/app-api/rota-do-app"
 import { composeReason, validateReportInput } from "../../../../../../../lib/reports/reports"
 import { ehUuid, interpretarErroDoBanco } from "../../../../eventos/_comum"
-import { grupoDaSessao, participacao, publicacaoDaSessao } from "../../../_comum"
+import { grupoDaSessao, participacao, publicacaoDaSessao, registrarFalha } from "../../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -63,11 +63,13 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
         recusado: "Sua conta não pode denunciar esta publicação.",
         dados: "Revise o motivo da denúncia.",
       })
+      if (falha.status === 503) registrarFalha("report", result.error)
       return responder(request, falha.corpo, falha.status)
     }
     if (!result.data) throw new Error("insert without result")
     return responder(request, { denuncia: { id: result.data.id } }, 201)
-  } catch {
+  } catch (error) {
+    registrarFalha("report", error)
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }

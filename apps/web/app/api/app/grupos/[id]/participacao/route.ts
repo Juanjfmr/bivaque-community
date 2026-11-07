@@ -7,8 +7,9 @@ import {
   responder,
 } from "../../../../../../lib/app-api/rota-do-app"
 import { entrarNoGrupo, lerMotivo } from "../../../../../../lib/communities/grupos"
+import { contarMembrosAprovados } from "../../../../../../lib/search/contagem-de-membros"
 import { cidadeDaSessao, ehUuid, interpretarErroDoBanco } from "../../../eventos/_comum"
-import { apresentarGrupo, grupoDaSessao, participacao } from "../../_comum"
+import { apresentarGrupo, grupoDaSessao, participacao, registrarFalha } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -74,13 +75,16 @@ async function mudar(
         recusado: "Não foi possível mudar sua participação neste grupo.",
         dados: "Revise o motivo do pedido.",
       })
+      if (falha.status === 503) registrarFalha("membership change", result.error)
       return responder(request, falha.corpo, falha.status)
     }
     const atualizado = await grupoDaSessao(client, id)
     if (!atualizado) return responder(request, { erro: "grupo-nao-encontrado" }, 404)
     const membro = await participacao(client, id, userId)
-    return responder(request, { grupo: apresentarGrupo(atualizado, membro, userId) }, 200)
-  } catch {
+    const membros = (await contarMembrosAprovados(client, [id])).get(id) ?? 0
+    return responder(request, { grupo: apresentarGrupo(atualizado, membro, userId, membros) }, 200)
+  } catch (error) {
+    registrarFalha("membership change", error)
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }
