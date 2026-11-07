@@ -1,8 +1,18 @@
 "use client"
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react"
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 
 import { dadosDoApp } from "@/lib/dados"
+import { lerAvisos } from "@/lib/dados/avisos"
+import { lerProgresso } from "@/src/entrada/servidor"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 
 /**
@@ -64,7 +74,7 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
     return {
       cidade: semente.cidade ?? resumo?.cidade ?? CIDADE_PADRAO,
       cidadeDeCasa: semente.cidadeDeCasa ?? resumo?.cidadeDeCasa ?? CIDADE_PADRAO,
-      avisos: semente.avisos ?? resumo?.avisos ?? 0,
+      avisos: semente.avisos ?? 0,
       conversas: semente.conversas ?? resumo?.conversas ?? 0,
       nomeDaPessoa: semente.nomeDaPessoa ?? resumo?.nomeDaPessoa ?? "",
     }
@@ -73,6 +83,26 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   const definir = useCallback((pedaco: Partial<EstadoDaCasca>) => {
     setEstado((anterior) => ({ ...anterior, ...pedaco }))
   }, [])
+
+  // O contador de avisos é o do servidor (a mesma contagem da tela de avisos),
+  // não mais o número da demonstração. Em modo de prova a semente manda, e a
+  // bateria não fala com a rota. Sem sessão não há aviso a buscar: quem diz se
+  // ela existe é a rota de progresso que a entrada já usa. Falha deixa o
+  // contador em zero — a tela de avisos é quem mostra o erro e oferece "Tentar
+  // de novo".
+  useEffect(() => {
+    if (modoDeProvaAtivo()) return
+    const controle = new AbortController()
+    void lerProgresso()
+      .then((sessao) => {
+        if (!sessao.autenticado || controle.signal.aborted) return
+        return lerAvisos({ limite: "1", signal: controle.signal }).then((lista) => {
+          if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
+        })
+      })
+      .catch(() => undefined)
+    return () => controle.abort()
+  }, [definir])
 
   const trocarCidade = useCallback(
     (cidade: string) => {

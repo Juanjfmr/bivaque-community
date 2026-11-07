@@ -78,6 +78,7 @@ export function BarraDoTopo({
               nome="notifications"
               data-acao="avisos"
               className="relative"
+              onClick={() => void navegacao.irPara("avisos")}
             >
               <Contador quantidade={casca.avisos} nome="avisos" />
             </BotaoDeIcone>

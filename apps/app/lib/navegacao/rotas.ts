@@ -21,6 +21,7 @@ export type NomeDeRota =
   | "comunidade"
   | "conversas"
   | "conversa"
+  | "avisos"
   | "voce"
   | "busca"
   | "catalogo"
@@ -115,6 +116,9 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["comunidade", "/comunidade", "Comunidade", "comunidade", { raiz: true }],
   ["conversas", "/conversas", "Conversas", "sem-aba", { raiz: true }],
   ["conversa", "/conversa/$id", "Conversa", "sem-aba", { parametro: "id", pai: "conversas" }],
+  // Avisos (F09) é tela própria, fora das 33 do inventário: a lista de avisos
+  // da web antiga vira página no app, aberta pelo sino da Início.
+  ["avisos", "/avisos", "Avisos", "sem-aba", { pai: "inicio" }],
   ["voce", "/voce", "Você", "voce", { raiz: true }],
   ["busca", "/busca", "Buscar", "origem", { pai: "inicio" }],
   ["catalogo", "/catalogo", "Desapegos", "mercado", { pai: "inicio" }],
@@ -181,7 +185,7 @@ export const ROTAS: readonly Rota[] = LINHAS.map(([nome, caminho, titulo, dono, 
 
 /** Os 33 nomes da seção 1 do inventário, sem as rotas internas do app. */
 export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
-  (rota) => rota.nome !== "mercado" && rota.nome !== "indisponivel",
+  (rota) => rota.nome !== "mercado" && rota.nome !== "indisponivel" && rota.nome !== "avisos",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

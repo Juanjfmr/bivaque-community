@@ -13,6 +13,7 @@ import { Agenda } from "@/src/telas/Agenda"
 import { Ajuda } from "@/src/telas/Ajuda"
 import { Anuncio } from "@/src/telas/Anuncio"
 import { ApagarConta } from "@/src/telas/ApagarConta"
+import { Avisos } from "@/src/telas/Avisos"
 import { Bloqueados } from "@/src/telas/Bloqueados"
 import { Busca } from "@/src/telas/Busca"
 import { Chamados } from "@/src/telas/Chamados"
@@ -84,6 +85,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   ajuda: Ajuda,
   anuncio: Anuncio,
   "apagar-conta": ApagarConta,
+  avisos: Avisos,
   bloqueados: Bloqueados,
   chamados: Chamados,
   conduta: Conduta,

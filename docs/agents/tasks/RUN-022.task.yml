@@ -1,0 +1,80 @@
+# LAN-F09 (06/11/2026): avisos no app e preferências por canal, no molde das jornadas na main.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-022
+
+objective: >
+  O membro passa a ver seus avisos no app (lista com não lidos, marcar como lido, tocar leva ao destino
+  certo: conversa, pergunta, evento, pedido, grupo) e a ajustar as preferências de aviso por canal (no app,
+  e-mail, push), pela sessão, reaproveitando a lógica que a web antiga usa em notifications e
+  configuracoes/notificacoes. Push no celular real fica fora (depende das chaves do dono).
+
+authority:
+  - docs/LANCAMENTO.md (F09: avisos no app, por e-mail e por push, com destino certo; preferências por canal)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - tools/backend-kanban card LAN-F09
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O app não tem lista de avisos nem rota (o ícone de avisos da casca usa a demonstração). A web antiga tem
+    a lista em apps/web/app/(shell)/notifications e as preferências em configuracoes/notificacoes, com a
+    lógica em apps/web/lib/notifications e a tabela notification_preferences (as quatro colunas que a
+    entrada do F01 já grava).
+
+allowed_paths:
+  - apps/app/lib/dados/avisos.ts
+  - apps/app/src/avisos
+  - apps/app/src/telas/Avisos.tsx
+  - apps/app/src/contexto/casca.tsx
+  - apps/app/src/casca
+  - apps/app/src/roteador.tsx
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/tests
+  - apps/web/app/api/app/avisos
+  - apps/web/lib/notifications
+  - apps/web/app/(shell)/notifications
+  - apps/web/app/(shell)/configuracoes/notificacoes
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit/app-api/avisos
+  - tests/e2e/f09-avisos-real.spec.ts
+  - tests/scope
+  - docs/agents/tasks/RUN-022.task.yml
+  - .visual/run-022
+
+forbidden:
+  - tocar em apps/app/lib/api/cliente.ts, apps/web/lib/app-api e nas rotas de outras jornadas (só importar)
+  - editar tools/backend-kanban ou RATIFICACAO.md
+  - aviso de outro membro; user_id vindo do corpo ou da query
+  - service_role onde a RLS da sessão basta
+  - editar migration existente
+  - mudar o desenho aprovado da casca; quebrar as outras telas
+  - pedir revisão a outro modelo (o coordenador cuida)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "GET /api/app/avisos (avisos do próprio membro, paginado, com contagem de não lidos), POST /api/app/avisos/lidos (marcar um ou todos), GET e PATCH /api/app/avisos/preferencias (canais app, e-mail, push por tipo, no formato que a web já usa)."
+  - "Cada aviso traz o destino no app (rota /app/... da jornada correspondente); destino sem jornada no app cai na tela segura mais próxima, nunca em 404."
+  - "Testes de unidade positivo e negativo por rota (401, 403 de origem, corpo inválido 400, erro do banco 503 sem eco, aviso de outro membro invisível)."
+  - "A casca mostra a contagem real de não lidos; a tela de avisos e a seção de preferências na área Você leem e gravam pela rota, com carregando, vazio honesto, erro com Tentar de novo."
+  - "Testes do apps/app que esperavam a demonstração simulam as rotas com page.route (RegExp)."
+  - "E2E tests/e2e/f09-avisos-real.spec.ts contra o banco: ver aviso semeado, marcar lido, recarregar e continuar lido, mudar preferência e persistir; devolve o estado ao terminar."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/avisos
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz com banco no CI
+
+risk: avisos e preferências pessoais por rota nova do app
+risk_level: R3
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

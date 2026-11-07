@@ -13,6 +13,7 @@ import { lerPerfil, type PerfilDaConta, salvarPerfil } from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
+import { PreferenciasDeAvisos } from "@/src/avisos/PreferenciasDeAvisos"
 import { EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
 import { Familia } from "@/src/voce/Familia"
 
@@ -158,6 +159,10 @@ export function Voce() {
 
       <Secao titulo="Família">
         <Familia />
+      </Secao>
+
+      <Secao titulo="Avisos">
+        <PreferenciasDeAvisos />
       </Secao>
 
       <Secao titulo="Privacidade e ajuda">
