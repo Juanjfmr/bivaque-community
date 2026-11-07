@@ -1,4 +1,5 @@
 import type { ChannelAdapter, OutboxChannel, OutboxMessage } from "@bivaque/domain"
+import { adaptadorPush, pushDesligado } from "../push/adaptador"
 import { montarEmailDoResumo } from "../resumo/conteudo"
 
 function unavailableAdapter(channel: OutboxChannel): ChannelAdapter {
@@ -233,7 +234,11 @@ export function createChannelAdapters(): Record<OutboxChannel, ChannelAdapter> {
   // Um canal so desde 18/09/2026. O 'whatsapp' saiu junto com o valor do enum:
   // era unavailableAdapter desde sempre — declarar um canal que o adaptador
   // recusa era a ambiguidade que mantinha o card aberto.
+  //
+  // O push (RUN-029) fica desligado, sem erro, quando as chaves VAPID não estão
+  // no ambiente: o aviso não é retentado e o produto não promete o que não tem.
   return {
     email: process.env["RESEND_API_KEY"] ? resendAdapter() : unavailableAdapter("email"),
+    push: adaptadorPush() ?? pushDesligado(),
   }
 }

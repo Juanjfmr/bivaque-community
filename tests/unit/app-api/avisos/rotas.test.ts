@@ -521,8 +521,8 @@ describe("rotas de avisos do app", () => {
       expect(
         canais.find((item) => item.notificationType === "indications" && item.channel === "email"),
       ).toMatchObject({ enabled: false })
-      // Push nasce desligado: ainda não há envio (LAN-PUSH), e canal ligado
-      // que não entrega seria a tela mentindo.
+      // Push nasce desligado: só entrega com a escolha explícita do canal, e
+      // canal ligado que não entrega seria a tela mentindo.
       expect(
         canais.find((item) => item.notificationType === "comments" && item.channel === "push"),
       ).toMatchObject({ enabled: false })
