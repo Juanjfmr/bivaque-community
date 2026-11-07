@@ -19,7 +19,8 @@ test.describe.configure({ mode: "serial" })
 for (const theme of ["light", "dark"] as const) {
   test(`três ciclos do operador, ${theme} @stateful`, async ({ page, request }, info) => {
     const url = lerCredencial("SUPABASE_URL") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_URL")
-    const anon = lerCredencial("SUPABASE_ANON_KEY") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    const anon =
+      lerCredencial("SUPABASE_ANON_KEY") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_ANON_KEY")
     const key = lerCredencial("SUPABASE_SERVICE_ROLE_KEY")
     if (!url || !anon || !key) throw new Error("Credenciais descartáveis da stack local ausentes")
     if (!["127.0.0.1", "localhost"].includes(new URL(url).hostname)) {
