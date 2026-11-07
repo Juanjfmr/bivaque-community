@@ -99,6 +99,9 @@ select public.provision_member_entry(
   p_consent_version := 2
 );
 
+-- As conferências leem group_memberships, que service_role não lê pela Data API.
+reset role;
+
 select ok(
   exists (
     select 1 from public.group_memberships
