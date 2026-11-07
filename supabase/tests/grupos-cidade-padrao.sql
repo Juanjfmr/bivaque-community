@@ -203,18 +203,18 @@ select is(
 -- 3. A marca é só do operador: fechada para o membro nas duas portas
 -- ───────────────────────────────────────────────────────────────────────────
 
-select hasnt_column_privilege(
-  'authenticated', 'public', 'groups', 'is_default', 'UPDATE',
+select ok(
+  not has_column_privilege('authenticated', 'public.groups', 'is_default', 'UPDATE'),
   'membro nem por update direto alcança a marca de padrão'
 );
 
-select hasnt_column_privilege(
-  'authenticated', 'public', 'groups', 'is_default', 'INSERT',
+select ok(
+  not has_column_privilege('authenticated', 'public.groups', 'is_default', 'INSERT'),
   'nem criando grupo o membro nasce com a marca'
 );
 
-select has_column_privilege(
-  'authenticated', 'public', 'groups', 'name', 'UPDATE',
+select ok(
+  has_column_privilege('authenticated', 'public.groups', 'name', 'UPDATE'),
   'as colunas que o dono escreve continuam granteadas'
 );
 
