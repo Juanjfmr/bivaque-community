@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { mkdir } from "node:fs/promises"
+import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { expect, test } from "@playwright/test"
 import { createClient } from "@supabase/supabase-js"
@@ -27,6 +27,7 @@ for (const theme of ["light", "dark"] as const) {
     })
     const users: { id: string; email: string }[] = []
     const paths: string[] = []
+    const documents: string[] = []
     const posts: string[] = []
     const reports: string[] = []
     const artifact = join(process.cwd(), ".visual", "run-024", "e2e", info.project.name, theme)
@@ -69,6 +70,7 @@ for (const theme of ["light", "dark"] as const) {
         p_mime_type: "application/pdf",
       })
       if (result.error || !result.data) throw new Error("Falha no documento sintético")
+      documents.push(result.data)
       return { id: result.data, path, pdf }
     }
     async function capture(name: string) {
@@ -292,14 +294,16 @@ for (const theme of ["light", "dark"] as const) {
           failures.push(label)
         }
       }
+      // A auditoria permanece; seus target_id sintéticos ficam identificados no manifesto.
+      await cleanup("manifesto das fixtures", async () => {
+        await writeFile(
+          join(artifact, `fixtures-${randomUUID()}.json`),
+          JSON.stringify({ run: "RUN-024", users, documents, posts, reports }, null, 2),
+        )
+        return { error: null }
+      })
       const ids = users.map((user) => user.id)
       if (ids.length) {
-        await cleanup("auditoria", () =>
-          admin.from("operator_actions").delete().in("actor_id", ids),
-        )
-        await cleanup("eventos automáticos", () =>
-          admin.from("operator_actions").delete().in("target_id", ids),
-        )
         await cleanup("avisos", () =>
           admin.from("notifications").delete().in("recipient_user_id", ids),
         )

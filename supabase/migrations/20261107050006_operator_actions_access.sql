@@ -3,6 +3,6 @@
 alter policy operator_actions_select_operator on public.operator_actions
   using ((select private.is_operator()));
 
--- Manutenção pelo servidor e limpeza de fixtures locais, nunca escrita pela sessão de membro.
+-- Trilha só de acréscimo, inclusive para o servidor e as fixtures locais.
 revoke all on public.operator_actions from service_role;
-grant select, insert, delete on public.operator_actions to service_role;
+grant select, insert on public.operator_actions to service_role;

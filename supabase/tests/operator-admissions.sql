@@ -32,6 +32,12 @@ select throws_ok($$select public.prepare_operator_document_removals('10000000-00
   '42501','forbidden','não operador não executa descarte');
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid='public.operator_actions'::regclass),'auditoria força RLS');
 select table_privs_are('public','operator_actions','authenticated',array['SELECT'],'autenticado não escreve auditoria');
+select table_privs_are('public','operator_actions','service_role',array['SELECT','INSERT'],'servidor só lê e acrescenta auditoria');
+set local role service_role;
+select throws_ok($$delete from public.operator_actions
+  where target_id='24000000-0000-4000-8000-000000000001'$$,
+  '42501',null,'servidor não apaga nem auditoria sintética');
+reset role;
 select function_privs_are('public','prepare_verification_document_removals',array[]::text[],'authenticated',array[]::text[],'membro não executa job');
 
 set local role authenticated;
