@@ -30,6 +30,32 @@ afterEach(() => {
 })
 
 describe("resumo da cidade no e-mail do outbox", () => {
+  it("neutraliza links em títulos e autoria sem alterar os links do Bivaque", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://bivaque.example.invalid")
+    const titulo =
+      "Veja HTTPS://site-falso.example.invalid www.site-falso.example.invalid a@example.invalid"
+    const neutro =
+      "Veja HTTPS[:]//site-falso.example.invalid www[.]site-falso.example.invalid a[@]example.invalid"
+    const email = renderEmail({
+      ...message,
+      payload: {
+        ...message.payload,
+        content: {
+          ...message.payload.content,
+          questions: [{ id, title: titulo }],
+          events: [{ id, title: titulo, starts_at: "2026-11-08T12:00:00Z" }],
+          replies: [{ id, title: titulo, author: titulo }],
+        },
+      },
+    })
+    expect(email.text.split(neutro)).toHaveLength(5)
+    expect(email.text).not.toContain(titulo)
+    expect(email.text).toContain(`https://bivaque.example.invalid/app/pergunta/${id}`)
+    expect(email.text).toContain(`https://bivaque.example.invalid/app/evento/${id}`)
+    expect(email.text).toContain(
+      `https://bivaque.example.invalid/api/app/resumo/descadastro?token=${token}`,
+    )
+  })
   it("traz as três seções e descadastro, sem copiar dados extras do payload", () => {
     const email = renderEmail(message)
     expect(email.subject).toContain("Manaus")

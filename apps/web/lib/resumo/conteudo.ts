@@ -8,6 +8,9 @@ function texto(valor: unknown): string {
   if (typeof valor !== "string" || valor.length === 0) throw new Error("invalid city digest")
   return valor.replace(/[\r\n]/g, " ")
 }
+function textoDeMembro(valor: unknown): string {
+  return texto(valor).replaceAll("://", "[:]//").replace(/www\./gi, "www[.]").replaceAll("@", "[@]")
+}
 function itens(valor: unknown): Registro[] {
   if (!Array.isArray(valor)) throw new Error("invalid city digest")
   return valor.map(registro)
@@ -38,7 +41,7 @@ export function montarEmailDoResumo(payload: Registro, origem: string) {
             "",
             "Perguntas novas",
             ...perguntas.map(
-              (p) => `• ${texto(p["title"])} — ${link(origem, "pergunta", p["id"])}`,
+              (p) => `• ${textoDeMembro(p["title"])} — ${link(origem, "pergunta", p["id"])}`,
             ),
           ]
         : []),
@@ -51,7 +54,7 @@ export function montarEmailDoResumo(payload: Registro, origem: string) {
               if (!Number.isFinite(data.getTime())) throw new Error("invalid city digest date")
               return (
                 "• " +
-                texto(e["title"]) +
+                textoDeMembro(e["title"]) +
                 " (" +
                 data.toLocaleDateString("pt-BR", { timeZone: "UTC" }) +
                 " UTC) — " +
@@ -67,9 +70,9 @@ export function montarEmailDoResumo(payload: Registro, origem: string) {
             ...respostas.map(
               (r) =>
                 "• " +
-                texto(r["author"]) +
+                textoDeMembro(r["author"]) +
                 " respondeu: " +
-                texto(r["title"]) +
+                textoDeMembro(r["title"]) +
                 " — " +
                 link(origem, "pergunta", r["id"]),
             ),
