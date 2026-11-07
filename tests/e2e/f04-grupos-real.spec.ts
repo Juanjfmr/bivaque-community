@@ -1,7 +1,14 @@
 import { randomUUID } from "node:crypto"
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
-import { type APIRequestContext, expect, type Page, request, test } from "@playwright/test"
+import {
+  type APIRequestContext,
+  type APIResponse,
+  expect,
+  type Page,
+  request,
+  test,
+} from "@playwright/test"
 import sharp from "sharp"
 import { urlDoSupabase } from "./entrada-real-ajuda"
 import { apiForSession, readEnvLocal, signInAs } from "./helpers/session"
@@ -37,49 +44,71 @@ async function servicoLocal(): Promise<APIRequestContext> {
   })
 }
 
+// Cada passo da fixture diz qual recurso recusou e o que o PostgREST respondeu:
+// sem isso, um 403/400 de uma das chamadas virava "limpeza dos efeitos da fixture".
+async function conferir(etapa: string, resposta: APIResponse) {
+  const corpo = resposta.ok() ? "" : await resposta.text()
+  expect(resposta.ok(), `${etapa}: ${resposta.url()} -> ${resposta.status()} ${corpo}`).toBe(true)
+  return resposta
+}
+
 async function limpar(servico: APIRequestContext, grupos: string[]) {
   const filtro = `in.(${grupos.join(",")})`
   const consulta = await servico.get(`/rest/v1/posts?select=id&group_id=${filtro}`)
-  expect(consulta.status(), "localizar publicações criadas para limpeza").toBe(200)
+  await conferir("localizar as publicações da fixture", consulta)
   const posts = (await consulta.json()) as { id: string }[]
-  const alvos = [...grupos, ...posts.map((p) => p.id)].join(",")
-  const resultados = await Promise.allSettled([
-    servico.delete(`/rest/v1/notifications?target_id=in.(${alvos})`),
-    servico.delete(
-      `/rest/v1/reports?target_type=eq.post&target_id=in.(${posts.map((p) => p.id).join(",")})`,
-    ),
-    servico.patch(`/rest/v1/groups?id=${filtro}`, { data: { pinned_post_id: null } }),
-  ])
-  for (const resultado of resultados) {
-    if (resultado.status === "rejected") throw resultado.reason
-    expect(resultado.value.ok(), "limpeza dos efeitos da fixture").toBe(true)
-  }
+  const publicacoes = posts.map((p) => p.id)
+  const alvos = [...grupos, ...publicacoes].join(",")
+
+  // Em ordem, uma de cada vez: sem FK entre os efeitos e o alvo, a sequência só
+  // precisa respeitar a referência de `groups.pinned_post_id` e o cascade.
+  await conferir(
+    "apagar os avisos dos efeitos da fixture",
+    await servico.delete(`/rest/v1/notifications?target_id=in.(${alvos})`),
+  )
+  // Só com publicação existe denúncia; `in.()` vazio é filtro inválido para o PostgREST.
+  if (publicacoes.length > 0)
+    await conferir(
+      "apagar as denúncias das publicações da fixture",
+      await servico.delete(
+        `/rest/v1/reports?target_type=eq.post&target_id=in.(${publicacoes.join(",")})`,
+      ),
+    )
+  await conferir(
+    "desafixar a publicação antes de apagá-la",
+    await servico.patch(`/rest/v1/groups?id=${filtro}`, { data: { pinned_post_id: null } }),
+  )
   // Comentários, Útil, salvos e ocultadas têm cascade por publicação.
-  expect((await servico.delete(`/rest/v1/posts?group_id=${filtro}`)).ok()).toBe(true)
+  await conferir(
+    "apagar as publicações da fixture",
+    await servico.delete(`/rest/v1/posts?group_id=${filtro}`),
+  )
   // Inclui memberships, motivos e tentativas: nenhuma linha anterior do seed foi alterada.
-  expect((await servico.delete(`/rest/v1/groups?id=${filtro}`)).ok()).toBe(true)
+  await conferir(
+    "apagar os grupos da fixture",
+    await servico.delete(`/rest/v1/groups?id=${filtro}`),
+  )
   for (const grupo of grupos) {
     const prefixo = `${MEMBRO}/grupos/${grupo}`
     const lista = await servico.post("/storage/v1/object/list/event-photos", {
       data: { prefix: prefixo, limit: 100 },
     })
-    expect(lista.ok()).toBe(true)
+    await conferir(`listar as fotos de ${grupo} na API de storage`, lista)
     const fotos = (await lista.json()) as { name: string }[]
     if (fotos.length > 0)
-      expect(
-        (
-          await servico.delete("/storage/v1/object/event-photos", {
-            data: { prefixes: fotos.map((f) => `${prefixo}/${f.name}`) },
-          })
-        ).ok(),
-      ).toBe(true)
+      await conferir(
+        `apagar as fotos de ${grupo} na API de storage`,
+        await servico.delete("/storage/v1/object/event-photos", {
+          data: { prefixes: fotos.map((f) => `${prefixo}/${f.name}`) },
+        }),
+      )
   }
   const restantes = await servico.get(`/rest/v1/groups?select=id&id=${filtro}`)
-  expect(restantes.ok()).toBe(true)
+  await conferir("conferir os grupos restantes da fixture", restantes)
   expect(await restantes.json()).toEqual([])
-  const publicacoes = await servico.get(`/rest/v1/posts?select=id&group_id=${filtro}`)
-  expect(publicacoes.ok()).toBe(true)
-  expect(await publicacoes.json()).toEqual([])
+  const sobraram = await servico.get(`/rest/v1/posts?select=id&group_id=${filtro}`)
+  await conferir("conferir as publicações restantes da fixture", sobraram)
+  expect(await sobraram.json()).toEqual([])
 }
 
 test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
@@ -102,44 +131,42 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
     const fechado = randomUUID()
     let banco: APIRequestContext | null = null
     try {
-      expect(
-        (
-          await servico.post("/rest/v1/groups", {
-            data: [
-              {
-                id: aberto,
-                name: "Grupo F04 aberto",
-                description: "Fixture local F04",
-                visibility: "public",
-                locality_id: CIDADE,
-                created_by: DONO,
-                owner_user_id: DONO,
-              },
-              {
-                id: fechado,
-                name: "Grupo F04 fechado",
-                description: "Fixture local F04",
-                visibility: "private",
-                locality_id: CIDADE,
-                created_by: DONO,
-                owner_user_id: DONO,
-              },
-            ],
-          })
-        ).ok(),
-      ).toBe(true)
-      expect(
-        (
-          await servico.post("/rest/v1/group_memberships", {
-            data: [aberto, fechado].map((group_id) => ({
-              group_id,
-              user_id: DONO,
-              role: "owner",
-              status: "approved",
-            })),
-          })
-        ).ok(),
-      ).toBe(true)
+      await conferir(
+        "criar os grupos da fixture",
+        await servico.post("/rest/v1/groups", {
+          data: [
+            {
+              id: aberto,
+              name: "Grupo F04 aberto",
+              description: "Fixture local F04",
+              visibility: "public",
+              locality_id: CIDADE,
+              created_by: DONO,
+              owner_user_id: DONO,
+            },
+            {
+              id: fechado,
+              name: "Grupo F04 fechado",
+              description: "Fixture local F04",
+              visibility: "private",
+              locality_id: CIDADE,
+              created_by: DONO,
+              owner_user_id: DONO,
+            },
+          ],
+        }),
+      )
+      await conferir(
+        "inscrever o dono nos grupos da fixture",
+        await servico.post("/rest/v1/group_memberships", {
+          data: [aberto, fechado].map((group_id) => ({
+            group_id,
+            user_id: DONO,
+            role: "owner",
+            status: "approved",
+          })),
+        }),
+      )
       await signInAs(context, "visual@bivaque.example.invalid")
       const cabecalhos = { origin: origem.origin, "x-bivaque-app": "bivaque-spa" }
       const privado = await page.request.post(`/api/app/grupos/${fechado}/publicacoes`, {
