@@ -42,6 +42,11 @@ function comoLinhaDaWeb(aviso: AvisoDoBanco): NotificationRow {
 }
 
 export function rotuloDoAviso(aviso: AvisoDoBanco): string {
+  if (aviso.tipo === "moderation_decision") {
+    const decisao =
+      aviso.acao === "dismiss" ? "mantido" : aviso.acao === "hide" ? "ocultado" : "removido"
+    return `A moderação analisou um conteúdo seu. O conteúdo foi ${decisao}.`
+  }
   if (aviso.tipo === "verification_decision")
     return aviso.acao === "approved"
       ? "Sua verificação foi aprovada. Continue a entrada no Bivaque."

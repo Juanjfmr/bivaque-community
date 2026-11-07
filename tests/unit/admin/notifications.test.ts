@@ -20,3 +20,11 @@ it("aprovação e recusa levam à entrada com mensagem própria", () => {
   expect(rotuloDoAviso({ ...base, acao: "rejected" })).toContain("não foi aprovado")
   expect(destinoDoAviso(base)).toBe("/app/entrar/analise")
 })
+
+it("aviso ao autor informa decisão sem levar a uma denúncia privada", () => {
+  const notice = { ...base, tipo: "moderation_decision", acao: "hide" }
+  expect(rotuloDoAviso(notice)).toBe(
+    "A moderação analisou um conteúdo seu. O conteúdo foi ocultado.",
+  )
+  expect(destinoDoAviso(notice)).toBe("/app/voce")
+})

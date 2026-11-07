@@ -1,106 +1,58 @@
-import { NextResponse } from "next/server"
-import { log } from "../../../../../lib/logger"
+import {
+  conferirEscrita,
+  exigirSessao,
+  lerCorpoJson,
+  opcoesDoApp,
+  responder,
+} from "../../../../../lib/app-api/rota-do-app"
+import { applyReportDecision } from "../../../../../lib/reports/operator-decision"
 import { createServerClient } from "../../../../../lib/supabase/server"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-interface HideActionRequest {
-  action: "hide"
-  note?: string
-}
-
-interface ResolveActionRequest {
-  action: "resolve"
-  note?: string
-}
-
-type ActionRequest = HideActionRequest | ResolveActionRequest
-
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id: reportId } = await params
-
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "unauthenticated" }, { status: 401 })
+  const auth = await exigirSessao(request)
+  if (!auth.ok) return auth.resposta
+  if (conferirEscrita(request, auth.sessao.via) !== "ok") {
+    return responder(request, { error: "forbidden" }, 403)
   }
-
-  const supabase = createServerClient()
-  const token = authHeader.slice(7)
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser(token)
-
-  if (authError || !authUser) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
-  }
-
-  const userId = authUser.id
-
-  const { data: isOperator, error: opError } = await supabase.rpc("is_current_user_operator", {
-    p_user_id: userId,
+  const client = createServerClient()
+  const operatorId = auth.sessao.usuario.id
+  const { data: operator, error } = await client.rpc("is_current_user_operator", {
+    p_user_id: operatorId,
   })
+  if (error) return responder(request, { error: "unavailable" }, 503)
+  if (operator !== true) return responder(request, { error: "forbidden" }, 403)
 
-  if (opError) {
-    log.error("operator check failed", { error: opError.message, userId, reportId })
-    return NextResponse.json({ error: "internal" }, { status: 500 })
-  }
+  const body = await lerCorpoJson(request)
+  if (!body.ok) return responder(request, { error: "invalid json" }, body.status)
+  const { id } = await params
+  // "resolve" e nota opcional preservam os clientes da API antiga.
+  const action = body.corpo["action"] === "resolve" ? "dismiss" : body.corpo["action"]
+  const result = await applyReportDecision(
+    client,
+    operatorId,
+    id,
+    action,
+    body.corpo["note"] ?? "Decisão registrada pela operação",
+  )
+  const status = result.ok
+    ? 200
+    : result.error === "forbidden"
+      ? 403
+      : result.error === "already-resolved"
+        ? 404
+        : result.error === "resolve-failed"
+          ? 503
+          : 400
+  return responder(
+    request,
+    result.ok ? { ok: true, action: body.corpo["action"], reportId: id } : { error: result.error },
+    status,
+  )
+}
 
-  if (!isOperator) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 })
-  }
-
-  let body: ActionRequest
-  try {
-    body = (await request.json()) as ActionRequest
-  } catch {
-    return NextResponse.json({ error: "invalid json" }, { status: 400 })
-  }
-
-  const action = body.action
-  if (action !== "hide" && action !== "resolve") {
-    return NextResponse.json({ error: "unknown action" }, { status: 400 })
-  }
-
-  const note = body.note ?? null
-
-  try {
-    // H-Task 3: ocultar, registrar e avisar sao um ato so. Esta rota e a Server
-    // Action de (admin)/reports/page.tsx faziam a mesma coisa de dois jeitos —
-    // e o jeito da pagina, que e o que o operador usa, nunca notificava o
-    // denunciante. Os dois chamam public.resolve_report agora.
-    //
-    // O nome externo da acao continua "resolve" para nao quebrar quem ja chama
-    // esta rota; no banco ele e 'dismiss'.
-    const { error: rpcError } = await supabase.rpc("resolve_report", {
-      p_report_id: reportId,
-      p_operator_user_id: userId,
-      p_action: action === "hide" ? "hide" : "dismiss",
-      // exactOptionalPropertyTypes: sem nota, a chave nao vai.
-      ...(note === null ? {} : { p_note: note }),
-    })
-
-    if (rpcError) {
-      if (rpcError.code === "P0002") {
-        return NextResponse.json({ error: "not found or already resolved" }, { status: 404 })
-      }
-      if (rpcError.code === "42501") {
-        return NextResponse.json({ error: "forbidden" }, { status: 403 })
-      }
-      log.error("resolve_report failed", { error: rpcError.message, userId, reportId, action })
-      return NextResponse.json({ error: "internal" }, { status: 500 })
-    }
-
-    return NextResponse.json({ ok: true, action, reportId })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "internal server error"
-    log.error("admin reports action failed", {
-      error: message,
-      userId,
-      reportId,
-    })
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
+export function OPTIONS(request: Request) {
+  return opcoesDoApp(request)
 }

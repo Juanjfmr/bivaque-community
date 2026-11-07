@@ -3767,6 +3767,7 @@ export type Database = {
         | "support_answered"
         | "group_post"
         | "verification_decision"
+        | "moderation_decision"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -4013,6 +4014,7 @@ export const Constants = {
         "support_answered",
         "group_post",
         "verification_decision",
+        "moderation_decision",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

@@ -62,6 +62,19 @@ export function DecisionForm({ action }: { action: DecisionAction }) {
             </div>
           </Radio.Content>
         </Radio>
+        <Radio value="remover">
+          <Radio.Content>
+            <Radio.Control>
+              <Radio.Indicator />
+            </Radio.Control>
+            <div className="flex flex-col gap-0.5">
+              <span>Remover conteúdo</span>
+              <span className="text-xs text-muted">
+                Remove da comunidade, preservando o registro da decisão.
+              </span>
+            </div>
+          </Radio.Content>
+        </Radio>
       </RadioGroup>
 
       <div className="flex flex-col gap-1">
