@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-11-06",
+  "updatedAt": "2026-11-07",
   "sourcePolicy": "docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.",
   "cards": [
     {
@@ -6354,10 +6354,13 @@
       "dependencies": ["LAN-F04"],
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "521fca4a",
-      "links": ["docs/LANCAMENTO.md"],
-      "proof": ["02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7)."]
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "59bbb2eb",
+      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "proof": [
+        "02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7).",
+        "07/11: ADR-20261107 confirma o LAN-OP no lançamento no modelo da administração do HumHub (fila de aprovação, denúncias, suspensão e registro das ações do operador)."
+      ]
     },
     {
       "id": "CI-E2E-UPSTREAM-INSTAVEL",
@@ -6821,6 +6824,116 @@
         "lerCorpoJson aplica o teto antes de ler o corpo inteiro (~13,9 MB no mercado)"
       ],
       "links": ["docs/agents/tasks/RUN-015.task.yml"]
+    },
+    {
+      "id": "RESUMO-CIDADE-EMAIL",
+      "title": "Resumo da cidade por e-mail",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "description": "ADR-20261107 item 2: perguntas novas da cidade, encontros da semana e respostas às perguntas do membro, por e-mail, na frequência escolhida nas preferências de aviso, pelo outbox e dentro dos limites de envio.",
+      "checklist": [
+        "Preferência de frequência (desligado, diário, semanal) junto das preferências por canal",
+        "Job que monta o resumo por membro e enfileira no outbox, respeitando limite global e descadastro em um toque",
+        "Teste do conteúdo (sem dado de terceiro) e do respeito à preferência",
+        "E2E: preferência gravada e resumo enfileirado"
+      ],
+      "dependencies": [],
+      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "59bbb2eb"
+    },
+    {
+      "id": "AVISOS-AGRUPADOS",
+      "title": "Avisos agrupados por alvo",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "ADR-20261107 item 3: avisos do mesmo tipo sobre o mesmo alvo viram uma linha ('Fulano e mais 3 pessoas responderam') com o destino do alvo.",
+      "checklist": [
+        "Agrupar na rota GET /api/app/avisos por tipo e alvo, com contagem e o mais recente",
+        "Marcar lido marca o grupo",
+        "Teste de unidade e do app"
+      ],
+      "dependencies": [],
+      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "59bbb2eb"
+    },
+    {
+      "id": "GRUPOS-CIDADE-AUTOMATICOS",
+      "title": "Grupos oficiais da cidade entram automaticamente ao concluir a entrada",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "ADR-20261107 item 4: grupos abertos da cidade marcados como padrão recebem o membro ao fim da entrada; grupo fechado nunca entra no automático; o membro pode sair.",
+      "checklist": [
+        "Marca de grupo padrão (migration nova, só operador marca)",
+        "Provisionamento da entrada inclui o membro nos grupos padrão da cidade",
+        "pgTAP positivo e negativo; E2E da entrada chega com os grupos"
+      ],
+      "dependencies": [],
+      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "59bbb2eb"
+    },
+    {
+      "id": "TOPICOS-PERGUNTAS",
+      "title": "Tópicos nas perguntas da cidade",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "ADR-20261107 item 5: etiquetas de lista fechada escolhidas ao perguntar, usadas para filtrar a lista de perguntas e a busca.",
+      "checklist": [
+        "Lista fechada de tópicos e coluna/tabela na pergunta (migration nova)",
+        "Escolha ao perguntar (F03) e filtro na Comunidade e na Busca",
+        "Testes de unidade, do app e E2E"
+      ],
+      "dependencies": [],
+      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "59bbb2eb"
+    },
+    {
+      "id": "HUMHUB-DEPOIS-DO-LANCAMENTO",
+      "title": "Recursos inspirados no HumHub para depois do lançamento",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "description": "ADR-20261107: itens avaliados e deixados para depois do lançamento.",
+      "checklist": [
+        "Menções (@pessoa) com aviso",
+        "Moderador de grupo além do dono",
+        "Bloquear pessoa dentro do grupo",
+        "Arquivar conteúdo",
+        "Atualização ao vivo (Supabase Realtime) em conversas e avisos",
+        "Tour de primeiro uso",
+        "Novo aceite quando os termos mudarem"
+      ],
+      "dependencies": [],
+      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "59bbb2eb"
     }
   ],
   "launch": {
