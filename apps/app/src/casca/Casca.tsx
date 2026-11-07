@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 import { FaixaDeVisita } from "@/components/bivaque/faixa-de-contexto"
 import { mostraFaixaDeVisita } from "@/lib/casca"
+import { sairDoAparelho, saiuDoApp } from "@/lib/dados/push"
 import {
   calcularMinimizada,
   prefersReduzido,
@@ -18,6 +19,7 @@ import { Paleta } from "@/src/casca/Paleta"
 import { Sobreposicoes } from "@/src/casca/Sobreposicoes"
 import { usePortaDeCargas } from "@/src/contexto/cargas"
 import { useCasca } from "@/src/contexto/casca"
+import { lerProgresso } from "@/src/entrada/servidor"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 
 /**
@@ -65,6 +67,20 @@ export function Casca() {
   useAtalhoDoCriar(() => {
     if (entrada.sobreposicao === null) void navegacao.abrir("menu-criar")
   }, comCascaDoApp)
+
+  // RUN-029: a rota de entrada, sem sessão, é a saída do app e apaga a
+  // inscrição deste aparelho. COM sessão (membro abrindo a entrada) nada
+  // acontece. Sem sessão, o DELETE responde 401: o navegador cancela a
+  // inscrição e o provedor devolve 410 no próximo envio, que apaga a linha.
+  useEffect(() => {
+    if (rota.nome !== "entrar") return
+    void lerProgresso()
+      .then((sessao) => {
+        if (saiuDoApp(rota.nome, sessao.autenticado)) return sairDoAparelho()
+        return undefined
+      })
+      .catch(() => undefined)
+  }, [rota.nome])
 
   const medir = useCallback(() => {
     const alvo = document.getElementById("conteudo")
