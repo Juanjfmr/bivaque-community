@@ -34,8 +34,8 @@ beforeEach(() => {
   mock.remove.mockResolvedValue({ error: null })
 })
 
-describe("admiss?es do operador", () => {
-  it("aprova com identidade da sess?o e descarta pela fila dur?vel", async () => {
+describe("admissões do operador", () => {
+  it("aprova com identidade da sessão e descarta pela fila durável", async () => {
     mock.rpc.mockImplementation(async (name: string) => ({
       data:
         name === "is_current_user_operator"
@@ -60,30 +60,30 @@ describe("admiss?es do operador", () => {
 
   it.each([
     () => decideDocumentAction(ID, "approved", ""),
-    () => decideDocumentAction(ID, "rejected", "Documento ileg?vel"),
+    () => decideDocumentAction(ID, "rejected", "Documento ilegível"),
     () => reprocessUserAction(ID),
     () => rejectPendingUserAction(ID, "Encerramento"),
     () => purgeDocumentsAction(),
-  ])("recusa n?o operador antes da a??o privilegiada", async (action) => {
+  ])("recusa não operador antes da ação privilegiada", async (action) => {
     mock.rpc.mockResolvedValue({ data: false, error: null })
     expect(await action()).toEqual({ ok: false, error: "forbidden" })
     expect(mock.rpc.mock.calls.map(([name]) => name)).toEqual(["is_current_user_operator"])
     expect(mock.remove).not.toHaveBeenCalled()
   })
 
-  it("recusa decis?o forjada e recusa sem motivo", async () => {
+  it("recusa decisão forjada e recusa sem motivo", async () => {
     expect(await decideDocumentAction(ID, "forged" as "approved", "")).toMatchObject({ ok: false })
     expect(await decideDocumentAction(ID, "rejected", " ")).toMatchObject({ ok: false })
     expect(mock.rpc.mock.calls.every(([name]) => name === "is_current_user_operator")).toBe(true)
   })
 
-  it("mant?m remo??o pendente sem fingir reverter a decis?o", async () => {
+  it("mantém remoção pendente sem fingir reverter a decisão", async () => {
     mock.rpc.mockImplementation(async (name: string) => ({
       data: name === "is_current_user_operator" ? true : [{ storage_object_path: "objeto.pdf" }],
       error: null,
     }))
     mock.remove.mockResolvedValue({ error: { message: "storage indispon?vel" } })
-    expect(await decideDocumentAction(ID, "rejected", "Ileg?vel")).toEqual({
+    expect(await decideDocumentAction(ID, "rejected", "Ilegível")).toEqual({
       ok: true,
       warning: "purge-pending",
     })
@@ -92,7 +92,7 @@ describe("admiss?es do operador", () => {
     ).toBe(false)
   })
 
-  it("falha de decis?o n?o dispara descarte", async () => {
+  it("falha de decisão não dispara descarte", async () => {
     mock.rpc.mockImplementation(async (name: string) => ({
       data: name === "is_current_user_operator" ? true : null,
       error: name === "decide_verification_document" ? { message: "already reviewed" } : null,

@@ -6,6 +6,7 @@ import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
 import { SupabaseAuthProvider } from "../components/bivaque/supabase-auth-provider"
 import { OperatorNav } from "./operator-nav"
+import "./operator-theme.css"
 
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -38,9 +39,14 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   }
 
   const serviceClient = createServiceClient()
-  const { data: isOperator } = await serviceClient.rpc("is_current_user_operator", {
-    p_user_id: user.id,
-  })
+  const { data: isOperator, error: operatorError } = await serviceClient.rpc(
+    "is_current_user_operator",
+    {
+      p_user_id: user.id,
+    },
+  )
+
+  if (operatorError) throw new Error("Não foi possível verificar o acesso ao painel")
 
   if (!isOperator) {
     redirect("/community")
@@ -48,7 +54,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
 
   return (
     <SupabaseAuthProvider>
-      <div className="flex min-h-screen flex-col">
+      <div className="operator-panel flex min-h-screen flex-col bg-background text-foreground">
         <nav
           aria-label="Painel do operador"
           className="border-b border-border bg-surface px-6 py-3"

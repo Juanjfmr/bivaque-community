@@ -3,9 +3,9 @@ create extension if not exists pgtap with schema extensions;
 select no_plan();
 \ir fixtures/foundation.inc
 insert into public.operators(auth_user_id) values('10000000-0000-4000-8000-000000000002');
-insert into public.posts(id,user_id,locality_id,content)
+insert into public.posts(id,user_id,locality_id,post_type,content)
   values('24000000-0000-4000-8000-000000000010','10000000-0000-4000-8000-000000000001',
-    '00000000-0000-4000-8000-000000000001','Conteúdo sintético');
+    '00000000-0000-4000-8000-000000000001','text','Conteúdo sintético');
 insert into public.reports(id,reporter_user_id,target_type,target_id,reason)
   values('24000000-0000-4000-8000-000000000011','10000000-0000-4000-8000-000000000004',
     'post','24000000-0000-4000-8000-000000000010','Outro: teste sintético');

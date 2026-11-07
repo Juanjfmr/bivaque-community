@@ -16,6 +16,7 @@ const ITEMS: NavItem[] = [
   { href: "/admissions", label: "Admissões" },
   { href: "/reports", label: "Denúncias" },
   { href: "/suspensions", label: "Suspensões" },
+  { href: "/operator-actions", label: "Registro das ações" },
   { href: "/guide-queue", label: "Guia" },
   { href: "/arrivals", label: "Chegadas" },
 ]

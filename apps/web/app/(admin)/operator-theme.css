@@ -1,0 +1,32 @@
+/* Painel interno: cores escuras do app, restritas a esta superfície. */
+@media (prefers-color-scheme: dark) {
+  .operator-panel {
+    color-scheme: dark;
+    --background: rgb(16 20 23);
+    --foreground: rgb(232 236 238);
+    --surface: rgb(26 32 36);
+    --surface-foreground: rgb(232 236 238);
+    --muted: rgb(156 170 178);
+    --border: rgb(48 58 62);
+    --accent: rgb(232 236 238);
+    --accent-foreground: rgb(16 20 23);
+    --default: rgb(32 39 44);
+    --default-foreground: rgb(232 236 238);
+    --field-background: rgb(26 32 36);
+    --field-foreground: rgb(232 236 238);
+    --field-placeholder: rgb(156 170 178);
+    --field-border: rgb(56 66 72);
+    --field-border-focus: rgb(232 236 238);
+    --danger: rgb(255 180 171);
+    --danger-foreground: rgb(105 0 5);
+    --semantic-canvas: rgb(16 20 23);
+    --semantic-surface: rgb(26 32 36);
+    --semantic-surface-sunken: rgb(32 39 44);
+    --semantic-surface-hover: rgb(38 46 51);
+    --semantic-text-primary: rgb(232 236 238);
+    --semantic-text-secondary: rgb(156 170 178);
+    --semantic-border: rgb(48 58 62);
+    --semantic-selected: rgb(36 50 57);
+    --semantic-focus: rgb(232 236 238);
+  }
+}

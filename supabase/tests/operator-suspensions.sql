@@ -13,8 +13,8 @@ select is((select count(*)::int from public.operator_actions where action='suspe
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
 select is(public.is_account_suspended(auth.uid()),true,'helper aciona veto existente');
-select throws_ok($$insert into public.posts(user_id,locality_id,content)
-  values(auth.uid(),'00000000-0000-4000-8000-000000000001','Não pode publicar')$$,
+select throws_ok($$insert into public.posts(user_id,locality_id,post_type,content)
+  values(auth.uid(),'00000000-0000-4000-8000-000000000001','text','Não pode publicar')$$,
   '42501',null,'suspenso não publica no app');
 reset role;
 set local role authenticated;
@@ -31,8 +31,8 @@ select is((select count(*)::int from public.operator_actions where action='suspe
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
 select is(public.is_account_suspended(auth.uid()),false,'escrita liberada');
-select lives_ok($$insert into public.posts(user_id,locality_id,content)
-  values(auth.uid(),'00000000-0000-4000-8000-000000000001','Pode publicar novamente')$$,'publica após encerramento');
+select lives_ok($$insert into public.posts(user_id,locality_id,post_type,content)
+  values(auth.uid(),'00000000-0000-4000-8000-000000000001','text','Pode publicar novamente')$$,'publica após encerramento');
 reset role;
 insert into public.profile_suspensions(user_id,expires_at)
   values('10000000-0000-4000-8000-000000000001',now()-interval '1 second');
