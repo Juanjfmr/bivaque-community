@@ -6763,13 +6763,13 @@
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
         "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo.",
-        "07/11: F09 completo na main — conversas (#135) e avisos (#151), E2E real no CI. Achados baixos seguem em F09-ENVIO-PELA-RPC."
+        "07/11: conversas (#135) e avisos (#151) na main, com E2E real no CI. Fecha quando NOTIF-DEEPLINKS e LAN-PUSH fecharem (dependências do card)."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
       "priority": "P1",
       "category": "frontend",
-      "status": "done",
+      "status": "next",
       "description": "Escopo em docs/LANCAMENTO.md (F09). Pronta só pelos seis critérios de pronto.",
       "checklist": [
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
