@@ -1,7 +1,14 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(39);
 \ir fixtures/foundation.inc
+
+select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid='private.city_digest_state'::regclass),'estado do resumo tem RLS forçada');
+select is((select count(*)::integer from pg_class c
+    cross join lateral aclexplode(coalesce(c.relacl,'{}'::aclitem[])) a
+    join pg_roles r on r.oid=a.grantee
+    where c.oid='private.city_digest_state'::regclass and r.rolname in ('anon','authenticated')),
+  0,'estado do resumo sem privilégio para anon e authenticated');
 
 select is((select city_digest_frequency::text from public.notification_preferences where user_id = '10000000-0000-4000-8000-000000000001'), null, 'sem preferência não é opt-in');
 insert into public.notification_preferences(user_id, city_digest_frequency) values
@@ -98,5 +105,18 @@ insert into public.notification_preferences(user_id,city_digest_frequency)
 select id,'daily'::public.city_digest_frequency from auth.users where email like 'digest-batch-%@example.invalid';
 select is(public.enqueue_city_digests(),100,'lote não ultrapassa 100 membros');
 select is(public.enqueue_city_digests(),1,'próxima chamada atende o restante sem duplicar');
+-- Membro não verificado (hidden-member) e membro banido não recebem resumo.
+insert into public.notification_preferences(user_id,city_digest_frequency)
+  values('10000000-0000-4000-8000-000000000004','daily');
+insert into auth.users(id,email,banned_until) values
+  ('d4000000-0000-4000-8000-000000000002','digest-banned@example.invalid',now()+interval '1 day');
+insert into public.locality_memberships(user_id,locality_id) values
+  ('d4000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001');
+insert into private.verification_outcomes(user_id,status,eligibility_class,checked_at) values
+  ('d4000000-0000-4000-8000-000000000002','verified'::private.verification_status,'veteran'::private.eligibility_class,now());
+insert into public.notification_preferences(user_id,city_digest_frequency) values
+  ('d4000000-0000-4000-8000-000000000002','daily');
+select is(public.enqueue_city_digests(),0,'não verificado e banido não recebem resumo');
+select ok(not exists(select 1 from public.outbox where recipient in ('hidden-member@example.invalid','digest-banned@example.invalid')),'fila sem linha para não verificado e banido');
 select * from finish();
 rollback;
