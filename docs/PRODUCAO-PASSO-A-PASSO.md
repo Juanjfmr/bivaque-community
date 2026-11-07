@@ -80,6 +80,9 @@ O job `bivaque-resumo-cidade` roda a cada dez minutos e usa `resumo-worker-endpo
 | `PORTAL_DADOS_API_KEY` | chave da API do Portal da Transparência (verificação por CPF) |
 | `RESEND_API_KEY` | Resend → API Keys |
 | `RESEND_FROM_EMAIL` | remetente no domínio verificado, ex. `Bivaque <avisos@SEU-DOMINIO>` |
+| `WEB_PUSH_PUBLIC_KEY` | par de chaves VAPID do Web Push (chave pública; é a única que vai ao navegador) |
+| `WEB_PUSH_PRIVATE_KEY` | par de chaves VAPID do Web Push (chave privada; só servidor, nunca no repositório ou no bundle) |
+| `WEB_PUSH_CONTACT` | contato exigido pelo padrão VAPID, ex. `mailto:avisos@SEU-DOMINIO` (não é segredo) |
 | `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` | Upstash → banco Redis (limites de envio) |
 | `OUTBOX_WORKER_SECRET` | o mesmo do Vault `outbox-worker-secret` |
 | `RECONCILE_WORKER_SECRET` | o mesmo do Vault `verification-reconcile-secret` |
@@ -87,6 +90,12 @@ O job `bivaque-resumo-cidade` roda a cada dez minutos e usa `resumo-worker-endpo
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | e-mail de suporte que aparece na Ajuda |
 | `SENTRY_DSN` | opcional (erros em produção) |
 | `RLS_PROBE_EMAIL` e `RLS_PROBE_PASSWORD` | opcional (conta de teste do probe de RLS do operador) |
+
+O push no aparelho (RUN-029) usa o par de chaves VAPID. Gere uma vez com
+`npx web-push@4.0.0 generate-vapid-keys` e guarde os três valores nas variáveis acima. Sem
+`WEB_PUSH_PUBLIC_KEY`/`WEB_PUSH_PRIVATE_KEY`, o envio fica desligado — sem erro e sem retentativa — e o
+app não oferece o interruptor de push. A chave privada nunca aparece em log, no repositório ou no bundle
+do cliente; a rota do app devolve só a pública.
 
 **Nunca** defina `BIVAQUE_AUTH_BYPASS` em produção.
 
