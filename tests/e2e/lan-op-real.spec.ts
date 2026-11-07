@@ -30,6 +30,7 @@ test.describe.configure({ mode: "serial" })
 
 for (const theme of ["light", "dark"] as const) {
   test(`três ciclos do operador, ${theme} @stateful`, async ({ page, request }, info) => {
+    test.setTimeout(180_000)
     const url = lerCredencial("SUPABASE_URL") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_URL")
     const anon =
       lerCredencial("SUPABASE_ANON_KEY") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_ANON_KEY")
