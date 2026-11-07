@@ -51,11 +51,12 @@ proof:
   - test:db no CI (Docker não existe localmente)
 
 risk: carga de dados públicos em tabela existente
-risk_level: R2
+risk_level: R3
+adr: docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md
 
 reviewer_must_differ_from_executor: true
 retry_budget: 2
 on_budget_exhausted: HUMAN_DECISION
 
 closure:
-  requires_runtime_evidence: false
+  requires_runtime_evidence: true
