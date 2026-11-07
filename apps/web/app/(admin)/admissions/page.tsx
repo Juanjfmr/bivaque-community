@@ -1,6 +1,8 @@
 import { Chip } from "@heroui/react"
 import type { Route } from "next"
 import Link from "next/link"
+import { notFound } from "next/navigation"
+import { requireOperatorId } from "../../../lib/admin/operator"
 import { createServerClient } from "../../../lib/supabase/server"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { PurgeForm } from "./purge-form"
@@ -87,13 +89,14 @@ export default async function AdminAdmissionsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const serviceClient = createServerClient()
+  if (!(await requireOperatorId(serviceClient))) notFound()
   const params = await searchParams
   const tab: Tab = firstParam(params["tab"]) === "concluidas" ? "concluidas" : "pendentes"
   const query = (firstParam(params["q"]) ?? "").trim().slice(0, 120)
   const parsedPage = Number.parseInt(firstParam(params["page"]) ?? "1", 10)
   const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
 
-  const serviceClient = createServerClient()
   const [{ data: queueRows, error: queueError }, { data: documentRows, error: documentsError }] =
     await Promise.all([
       serviceClient.rpc("list_verification_queue"),

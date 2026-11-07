@@ -1,7 +1,9 @@
 import type { Route } from "next"
 import { revalidatePath } from "next/cache"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
+import { requireOperatorId } from "../../../../lib/admin/operator"
 import { createServerClient } from "../../../../lib/supabase/server"
 import { EmptyState } from "../../../components/bivaque/empty-state"
 import { decideDocumentAction, rejectPendingUserAction, reprocessUserAction } from "../actions"
@@ -86,6 +88,8 @@ export default async function AdmissionAnalysisPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const serviceClient = createServerClient()
+  if (!(await requireOperatorId(serviceClient))) notFound()
   const { id: userId } = await params
 
   if (!UUID_RE.test(userId)) {
@@ -100,7 +104,6 @@ export default async function AdmissionAnalysisPage({
     )
   }
 
-  const serviceClient = createServerClient()
   const [{ data: queueRows, error: queueError }, { data: documentRows, error: documentsError }] =
     await Promise.all([
       serviceClient.rpc("list_verification_queue"),

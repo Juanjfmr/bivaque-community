@@ -2,6 +2,8 @@ import { scrubReportReason } from "@bivaque/domain"
 import { Chip } from "@heroui/react"
 import type { Route } from "next"
 import Link from "next/link"
+import { notFound } from "next/navigation"
+import { requireOperatorId } from "../../../../lib/admin/operator"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
 import { EmptyState } from "../../../components/bivaque/empty-state"
@@ -10,7 +12,7 @@ import { resolveReport } from "../actions"
 import { formatDate, resolveTargets, shortLabel, TARGET_LABELS } from "../targets"
 import { DecisionForm, type DecisionState } from "./decision-form"
 
-// A análise lê pelo service_role atrás do gate do layout; sem dynamic o build
+// A análise lê pelo service_role com conferência própria; sem dynamic o build
 // prerenderiza e quebra antes de existir request.
 export const dynamic = "force-dynamic"
 
@@ -118,13 +120,13 @@ export default async function AdminReportDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const serviceClient = createServiceClient()
+  if (!(await requireOperatorId(serviceClient))) notFound()
   const { id: reportId } = await params
 
   if (!UUID_RE.test(reportId)) {
     return <NotFoundView />
   }
-
-  const serviceClient = createServiceClient()
 
   // A denúncia aberta vem do RPC que já monta o caso (autor, trecho,
   // reincidência). Se não está na fila aberta, pode já ter sido encerrada —

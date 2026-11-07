@@ -2,6 +2,8 @@ import { scrubReportReason } from "@bivaque/domain"
 import { Chip } from "@heroui/react"
 import type { Route } from "next"
 import Link from "next/link"
+import { notFound } from "next/navigation"
+import { requireOperatorId } from "../../../lib/admin/operator"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import { SUPPORT_SLA_HOURS } from "../../../lib/support"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -63,8 +65,9 @@ export default async function AdminReportsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const filters = parseQueueParams(await searchParams)
   const serviceClient = createServiceClient()
+  if (!(await requireOperatorId(serviceClient))) notFound()
+  const filters = parseQueueParams(await searchParams)
 
   // As duas abas vêm de consulta real: a fila aberta pelo RPC que já existe e
   // o encerrado pela tabela de denúncias. Contagem de aba é o total SEM filtro.

@@ -1,8 +1,8 @@
-import { createServerClient } from "@supabase/ssr"
 import { RefreshCw, X } from "lucide-react"
 import type { Route } from "next"
-import { cookies } from "next/headers"
 import Link from "next/link"
+import { notFound } from "next/navigation"
+import { requireOperatorId } from "../../../lib/admin/operator"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda T Task 5, Step 2 — o console do fundador enxerga.
@@ -21,38 +21,11 @@ interface ArrivalVolumeRow {
 }
 
 export default async function AdminArrivalsPage() {
-  // The (admin) layout already gated this render on is_current_user_operator
-  // for the session's own user, but the RPC re-checks with an explicit id —
-  // service_role carries no auth.uid() of its own, so the caller must be
-  // read from the session's cookies here, the same way the layout did.
-  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
-  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
-  }
-
-  const cookieStore = await cookies()
-  const authClient = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll() {
-        // Server component, no writes.
-      },
-    },
-  })
-
-  const {
-    data: { user },
-  } = await authClient.auth.getUser()
-  if (!user) {
-    return null
-  }
-
   const serviceClient = createServiceClient()
+  const operatorId = await requireOperatorId(serviceClient)
+  if (!operatorId) notFound()
   const { data: volumeData, error } = await serviceClient.rpc("list_locality_arrivals_volume", {
-    p_user_id: user.id,
+    p_user_id: operatorId,
   })
 
   if (error) {
