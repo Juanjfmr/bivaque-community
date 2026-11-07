@@ -18,6 +18,8 @@ type AvisoSimulado = {
   destino: string
   lida: boolean
   criadaEm: string
+  grupo: string
+  total: number
 }
 
 async function simularAvisos(page: import("@playwright/test").Page) {
@@ -29,6 +31,8 @@ async function simularAvisos(page: import("@playwright/test").Page) {
       destino: `/app/publicacao/${PUBLICACAO}`,
       lida: false,
       criadaEm: "2026-11-06T12:00:00.000Z",
+      grupo: `comment|created|post|${PUBLICACAO}`,
+      total: 2,
     },
     {
       id: "a2",
@@ -37,15 +41,26 @@ async function simularAvisos(page: import("@playwright/test").Page) {
       destino: "/app/evento/e1",
       lida: true,
       criadaEm: "2026-11-05T12:00:00.000Z",
+      grupo: "event_rsvp|confirmed|event|e1",
+      total: 1,
     },
   ]
 
   await page.route(/\/api\/app\/avisos\/lidos$/, async (rota) => {
-    const corpo = rota.request().postDataJSON() as { id?: string; todos?: boolean }
+    const corpo = rota.request().postDataJSON() as {
+      id?: string
+      todos?: boolean
+      grupo?: string
+    }
     const naoLidas = avisos.filter((aviso) => !aviso.lida)
     if (corpo.todos === true) {
       for (const aviso of naoLidas) aviso.lida = true
       return rota.fulfill({ json: { atualizados: naoLidas.length } })
+    }
+    if (corpo.grupo !== undefined) {
+      const grupo = naoLidas.filter((aviso) => aviso.grupo === corpo.grupo)
+      for (const aviso of grupo) aviso.lida = true
+      return rota.fulfill({ json: { atualizados: grupo.length } })
     }
     const alvo = naoLidas.find((aviso) => aviso.id === corpo.id)
     if (alvo === undefined) return rota.fulfill({ json: { atualizados: 0 } })
@@ -75,6 +90,9 @@ test.describe("F09 — avisos", () => {
     const naoLidas = page.locator('[data-aviso-item="a1"]')
     await expect(naoLidas).toBeVisible()
     await expect(naoLidas).toHaveAttribute("data-nao-lida", "sim")
+    // O grupo entra como uma linha com a contagem dos avisos que o compõem.
+    await expect(naoLidas).toHaveAttribute("aria-label", /2 avisos/)
+    await expect(naoLidas.locator('[data-contagem="2"]')).toBeVisible()
     await expect(page.locator('[data-aviso-item="a2"]')).toHaveAttribute("data-nao-lida", "nao")
 
     await expect(page.getByRole("button", { name: "Marcar todas" })).toBeVisible()
@@ -84,6 +102,20 @@ test.describe("F09 — avisos", () => {
 
     await page.locator('[data-aviso-item="a1"]').click()
     await expect(page).toHaveURL(new RegExp(`/app/publicacao/${PUBLICACAO}$`))
+  })
+
+  test("tocar num aviso agrupado marca o grupo inteiro como lido", async ({ page }) => {
+    await simularAvisos(page)
+    await page.goto("/app/avisos")
+
+    await page.locator('[data-aviso-item="a1"]').click()
+    await expect(page).toHaveURL(new RegExp(`/app/publicacao/${PUBLICACAO}$`))
+
+    // A lista volta do servidor: o grupo saiu lido, com a contagem preservada.
+    await page.goto("/app/avisos")
+    const linha = page.locator('[data-aviso-item="a1"]')
+    await expect(linha).toHaveAttribute("data-nao-lida", "nao")
+    await expect(linha.locator('[data-contagem="2"]')).toBeVisible()
   })
 
   test("falha de leitura mostra erro com Tentar de novo, nunca lista vazia", async ({ page }) => {

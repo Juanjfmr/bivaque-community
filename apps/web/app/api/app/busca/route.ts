@@ -1,5 +1,9 @@
 import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
+import {
+  INDICATION_CATEGORIES,
+  type IndicationCategory,
+} from "../../../../lib/indications/indications"
 import { contarMembrosAprovados } from "../../../../lib/search/contagem-de-membros"
 import { padraoDoTermo, resolveTerm, termoBuscavel } from "../../../../lib/search/params"
 import { cidadeDaSessao } from "../eventos/_comum"
@@ -8,19 +12,32 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 const LIMITE = 20
 
+/** Lista fechada de tópicos (ADR-20261107 item 5): tópico fora dela é recusa. */
+const TOPICOS = new Set<string>(INDICATION_CATEGORIES.map((item) => item.id))
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
   if (!auth.ok) return auth.resposta
   const params = new URL(request.url).searchParams
   const termo = resolveTerm((chave) => params.get(chave))
   if (!termoBuscavel(termo)) return responder(request, { erro: "parametro-invalido" }, 400)
+  const brutoTopico = params.get("topico")
+  const topico = brutoTopico === null || brutoTopico === "" ? null : brutoTopico
+  if (topico !== null && !TOPICOS.has(topico)) {
+    return responder(request, { erro: "parametro-invalido" }, 400)
+  }
   try {
     const client = auth.sessao.cliente
     const cidade = await cidadeDaSessao(client, auth.sessao.usuario.id)
     if (cidade === null) return responder(request, { erro: "sem-cidade" }, 403)
     const padrao = padraoDoTermo(termo)
     const [perguntas, grupos, anuncios, negocios, guia] = await Promise.all([
-      client.rpc("list_indications", { p_locality_id: cidade.id, p_query: termo, p_limit: LIMITE }),
+      client.rpc("list_indications", {
+        p_locality_id: cidade.id,
+        p_query: termo,
+        p_limit: LIMITE,
+        ...(topico === null ? {} : { p_category: topico as IndicationCategory }),
+      }),
       client
         .from("groups")
         .select("id,name")

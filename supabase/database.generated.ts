@@ -786,6 +786,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          is_default: boolean
           is_deleted: boolean
           locality_id: string
           name: string
@@ -800,6 +801,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          is_default?: boolean
           is_deleted?: boolean
           locality_id: string
           name: string
@@ -814,6 +816,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          is_default?: boolean
           is_deleted?: boolean
           locality_id?: string
           name?: string
@@ -3644,6 +3647,10 @@ export type Database = {
           // `npx pnpm@11.18.0 generate:types` to restore this adjustment.
           p_path: string | null
         }
+        Returns: undefined
+      }
+      set_group_default: {
+        Args: { p_group_id: string; p_is_default: boolean }
         Returns: undefined
       }
       set_group_notify_level: {

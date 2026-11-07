@@ -74,6 +74,20 @@ const ASSUNTOS: Readonly<Record<string, string>> = {
   outros: "Outros",
 }
 
+/**
+ * A lista fechada de tópicos (ADR-20261107 item 5) — é o enum `category` do
+ * banco, e é a única fonte: escolha ao perguntar e filtro da lista aceitam só
+ * estes ids. Tópico livre não existe.
+ */
+export const TOPICOS_DAS_PERGUNTAS: ReadonlyArray<{
+  readonly id: string
+  readonly rotulo: string
+}> = Object.entries(ASSUNTOS).map(([id, rotulo]) => ({ id, rotulo }))
+
+export function rotuloDoTopico(id: string): string {
+  return ASSUNTOS[id] ?? ""
+}
+
 function foraDoContrato(): FalhaDaApi {
   return new FalhaDaApi("indisponivel", 0, null, "Resposta do servidor fora do contrato.")
 }
@@ -131,10 +145,17 @@ function lerResposta(linha: unknown): RespostaDaConversa {
 
 /** As perguntas da cidade de quem está na sessão, já filtradas e ordenadas no servidor. */
 export async function lerPerguntas(
-  opcoes: { signal?: AbortSignal; filtro?: FiltroDePerguntas; depois?: string } = {},
+  opcoes: {
+    signal?: AbortSignal
+    filtro?: FiltroDePerguntas
+    depois?: string
+    /** Id de TOPICOS_DAS_PERGUNTAS; vazio ou ausente é "todos". */
+    topico?: string | undefined
+  } = {},
 ): Promise<ListaDePerguntas> {
   const parametros = new URLSearchParams({ filtro: opcoes.filtro ?? "ajuda" })
   if (opcoes.depois !== undefined) parametros.set("depois", opcoes.depois)
+  if (opcoes.topico !== undefined && opcoes.topico !== "") parametros.set("topico", opcoes.topico)
   const corpo = await ler(`/api/app/perguntas?${parametros.toString()}`, opcoes)
   const lista = corpo["perguntas"]
   if (!Array.isArray(lista)) throw foraDoContrato()

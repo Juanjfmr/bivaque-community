@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
+import { ChipsDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarPergunta } from "@/lib/dados/criar"
+import { rotuloDoTopico, TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
 import { excluirRascunho, guardarRascunho, lerRascunho } from "./rascunho"
+
+/** Chip inicial da escolha: "sem tópico" deixa a régua do texto decidir a categoria. */
+const ITENS_DO_TOPICO = [
+  { id: "nenhum", rotulo: "Sem tópico" },
+  ...TOPICOS_DAS_PERGUNTAS.map(({ id, rotulo }) => ({ id, rotulo })),
+]
 
 export function Perguntar({
   cidade,
@@ -15,7 +23,9 @@ export function Perguntar({
   aoSalvar: (id: string) => void
 }) {
   const chave = `bivaque:f03:pergunta:${cidade}`
-  const [dados, setDados] = useState(() => lerRascunho(chave, { titulo: "", assunto: "" }))
+  const [dados, setDados] = useState(() =>
+    lerRascunho(chave, { titulo: "", assunto: "", topico: "" }),
+  )
   const [revisando, setRevisando] = useState(false)
   const [erro, setErro] = useState("")
   const [aviso, setAviso] = useState("")
@@ -72,6 +82,11 @@ export function Perguntar({
           <b>Revise sua pergunta</b>
           <p className="whitespace-pre-wrap break-words">{dados.titulo}</p>
           <p className="break-words text-sm">{dados.assunto}</p>
+          {dados.topico !== "" ? (
+            <p data-topico-revisado={dados.topico} className="text-sm">
+              Tópico: {rotuloDoTopico(dados.topico)}
+            </p>
+          ) : null}
           <p className="text-sm text-(--on-surface-variant)">
             Será publicada para a cidade da sua conta.
           </p>
@@ -88,6 +103,14 @@ export function Perguntar({
             required
             placeholder="Ex.: alguém indica um pediatra no bairro?"
           />
+          <div data-topicos="pergunta">
+            <ChipsDeFiltro
+              rotulo="Tópico da pergunta"
+              itens={ITENS_DO_TOPICO}
+              valor={dados.topico === "" ? "nenhum" : dados.topico}
+              aoEscolher={(id) => setDados({ ...dados, topico: id === "nenhum" ? "" : id })}
+            />
+          </div>
           <Campo
             id="topico-pergunta"
             rotulo="Assunto (opcional)"

@@ -15,7 +15,7 @@ import {
   type FiltroDeAvisos,
   type ListaDeAvisos,
   lerAvisos,
-  marcarLido,
+  marcarGrupoLido,
   marcarTodosLidos,
 } from "@/lib/dados/avisos"
 import type { NomeDeIcone } from "@/lib/icones"
@@ -124,15 +124,15 @@ export function Avisos() {
   async function marcarComoLida(aviso: AvisoRecebido) {
     if (aviso.lida) return
     try {
-      await marcarLido(aviso.id)
-      const naoLidos = Math.max(0, (dados?.naoLidos ?? 0) - 1)
+      const atualizados = await marcarGrupoLido(aviso.grupo)
+      const naoLidos = Math.max(0, (dados?.naoLidos ?? 0) - atualizados)
       setDados((atual) =>
         atual === null
           ? atual
           : {
               ...atual,
               avisos: atual.avisos.map((item) =>
-                item.id === aviso.id ? { ...item, lida: true } : item,
+                item.grupo === aviso.grupo ? { ...item, lida: true } : item,
               ),
               naoLidos,
             },
@@ -247,14 +247,30 @@ export function Avisos() {
                 subtitulo={quando(aviso.criadaEm)}
                 data-aviso-item={aviso.id}
                 data-nao-lida={aviso.lida ? "nao" : "sim"}
-                aria-label={`${aviso.texto}, ${quando(aviso.criadaEm)}${aviso.lida ? "" : ", não lida"}`}
+                aria-label={
+                  `${aviso.texto}, ${quando(aviso.criadaEm)}` +
+                  `${aviso.total > 1 ? `, ${aviso.total} avisos` : ""}` +
+                  `${aviso.lida ? "" : ", não lida"}`
+                }
                 onClick={() => abrir(aviso)}
                 fim={
-                  aviso.lida ? undefined : (
-                    <span
-                      aria-hidden="true"
-                      className="size-2.5 shrink-0 rounded-full bg-(--brasa)"
-                    />
+                  aviso.lida && aviso.total === 1 ? undefined : (
+                    <span className="flex shrink-0 items-center gap-2">
+                      {aviso.total > 1 ? (
+                        <span
+                          data-contagem={String(aviso.total)}
+                          className="rounded-full bg-(--secondary-container) px-2 py-0.5 text-xs font-semibold"
+                        >
+                          {aviso.total}
+                        </span>
+                      ) : null}
+                      {aviso.lida ? null : (
+                        <span
+                          aria-hidden="true"
+                          className="size-2.5 shrink-0 rounded-full bg-(--brasa)"
+                        />
+                      )}
+                    </span>
                   )
                 }
               />

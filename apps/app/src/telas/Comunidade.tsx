@@ -10,7 +10,12 @@ import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { type FiltroDePerguntas, type ListaDePerguntas, lerPerguntas } from "@/lib/dados/perguntas"
+import {
+  type FiltroDePerguntas,
+  type ListaDePerguntas,
+  lerPerguntas,
+  TOPICOS_DAS_PERGUNTAS,
+} from "@/lib/dados/perguntas"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
@@ -43,6 +48,12 @@ const FILTROS: readonly ItemDeFiltro[] = [
   { id: "mine", rotulo: "Minhas" },
 ]
 
+/** Filtro de tópico (ADR-20261107 item 5): a lista fechada, mais "todos". */
+const TOPICOS: readonly ItemDeFiltro[] = [
+  { id: "todos", rotulo: "Todos os tópicos" },
+  ...TOPICOS_DAS_PERGUNTAS,
+]
+
 /** O filtro da tela vira o filtro do servidor: quem filtra é o banco. */
 const FILTRO_DO_SERVIDOR: Readonly<Record<string, FiltroDePerguntas>> = {
   help: "ajuda",
@@ -58,6 +69,7 @@ export function Comunidade() {
   const [rodada, setRodada] = useState(0)
   const [aba, setAba] = useState("ind")
   const [filtro, setFiltro] = useState("help")
+  const [topico, setTopico] = useState("todos")
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
@@ -77,6 +89,7 @@ export function Comunidade() {
     setErroAoCarregarMais(null)
     void lerPerguntas({
       filtro: FILTRO_DO_SERVIDOR[filtro] ?? "ajuda",
+      topico: topico === "todos" ? undefined : topico,
       signal: pedido.signal,
     })
       .then((lidas) => {
@@ -87,7 +100,7 @@ export function Comunidade() {
         setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
     return () => pedido.abort()
-  }, [filtro, rodada])
+  }, [filtro, topico, rodada])
 
   async function carregarMais() {
     if (lista === null || lista.proximo === null || carregandoMais) return
@@ -96,6 +109,7 @@ export function Comunidade() {
     try {
       const proxima = await lerPerguntas({
         filtro: FILTRO_DO_SERVIDOR[filtro] ?? "ajuda",
+        topico: topico === "todos" ? undefined : topico,
         depois: lista.proximo,
         signal: controle.signal,
       })
@@ -220,6 +234,15 @@ export function Comunidade() {
             aoEscolher={setFiltro}
             rotulo="Filtrar perguntas"
           />
+
+          <div data-topicos="filtro-comunidade">
+            <ChipsDeFiltro
+              itens={TOPICOS}
+              valor={topico}
+              aoEscolher={setTopico}
+              rotulo="Filtrar por tópico"
+            />
+          </div>
 
           {perguntas.length === 0 ? (
             <EstadoVazio
