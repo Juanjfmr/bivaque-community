@@ -23,9 +23,15 @@ protótipo já têm. Municípios ausentes de `localities` geram zero linhas.
 
 ## Última geração (07/11/2026)
 
-17.575 polígonos na malha → 17.562 bairros em 895 municípios (a malha cobre só
-os municípios que publicam bairros; Manaus, Brasília e Natal não têm malha
-oficial de bairros — os bairros deles no catálogo são os do protótipo).
+17.575 polígonos na malha → 17.562 tuplas geradas em 895 municípios (a malha
+cobre só os municípios que publicam bairros). Dessas, 31 colidem com os bairros
+do protótipo e são puladas pelo `on conflict ... do nothing`: entram ~17.531
+linhas novas, e o protótipo fica como está.
+
+Só Brasília (5300108) fica sem bairros do IBGE: o catálogo dela é o do protótipo.
+Manaus (1302603) passa de 11 para 65 bairros (54 novos) e Natal (2408102) de 11
+para 36 (25 novos). Rio de Janeiro vai de 12 para 163.
+
 544 centros corrigidos de centroide para ponto interior do polígono; 0 nomes
 acima de 80 caracteres; 13 duplicados por (município, nome normalizado)
 descartados. SQL gerado: 970.825 bytes.

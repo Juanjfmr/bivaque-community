@@ -11,7 +11,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 \ir fixtures/foundation.inc
 
@@ -40,11 +40,23 @@ select has_function(
 -- Carga das quatro cidades (prototypes/.../data/demo/bairros.js)
 -- ───────────────────────────────────────────────────────────────────────────
 
+-- Manaus recebeu os bairros da malha do IBGE (RUN-028): o total já não é 11.
+-- O que o protótipo garante é que os 11 nomes continuam lá, com a grafia dele.
+select ok(
+  (select count(*) from public.neighborhoods
+    where locality_id = '00000000-0000-4000-8000-000000000001') >= 11,
+  'Manaus tem ao menos os 11 bairros do protótipo'
+);
+
 select is(
   (select count(*)::integer from public.neighborhoods
-    where locality_id = '00000000-0000-4000-8000-000000000001'),
+    where locality_id = '00000000-0000-4000-8000-000000000001'
+      and name in (
+        'Ponta Negra', 'Tarumã', 'Compensa', 'Planalto', 'Dom Pedro', 'Flores',
+        'Parque 10', 'Adrianópolis', 'Aleixo', 'Centro', 'Cidade Nova'
+      )),
   11,
-  'Manaus tem os 11 bairros do protótipo'
+  'os 11 nomes do protótipo de Manaus existem com a grafia dele'
 );
 
 -- Desde a carga nacional do IBGE (RUN-028, neighborhoods-ibge-nacional.sql) o
@@ -68,6 +80,13 @@ select ok(
 create temp table _leitura_total as
   select count(*)::integer as c from public.neighborhoods;
 grant select on table _leitura_total to public;
+
+-- Brasília (5300108) não tem linha na carga nacional: suas buscas esperam só a
+-- lista do protótipo, que é estável. O id é resolvido aqui, como postgres, porque
+-- não é UUID fixo e o membro pode não ler `localities` fora da sua cidade.
+create temp table _cidade_brasilia as
+  select id as c from public.localities where ibge_code = '5300108';
+grant select on table _cidade_brasilia to public;
 
 set local role authenticated;
 select set_config(
@@ -103,24 +122,21 @@ select results_eq(
   'busca ignora caixa, acento e espaço sobrando'
 );
 
--- "a": começam com "a" (Adrianópolis, Aleixo) e depois os que contêm, em
--- ordem alfabética. O limite corta em 6 e é ele que separa as duas listas.
--- "Dom Pedro" e "Flores" não entram: não têm a letra "a".
+-- "no" em Brasília: Noroeste começa pelo texto; Asa Norte e Lago Norte só o
+-- contêm. Em ordem puramente alfabética viriam Asa Norte, Lago Norte, Noroeste;
+-- a regra de prefixo é o que põe Noroeste primeiro.
 select results_eq(
   $$
     select name from public.search_neighborhoods(
-      '00000000-0000-4000-8000-000000000001', 'a'
+      (select c from _cidade_brasilia), 'no'
     )
   $$,
   $$ values
-    ('Adrianópolis'::text),
-    ('Aleixo'::text),
-    ('Cidade Nova'::text),
-    ('Compensa'::text),
-    ('Parque 10'::text),
-    ('Planalto'::text)
+    ('Noroeste'::text),
+    ('Asa Norte'::text),
+    ('Lago Norte'::text)
   $$,
-  'prefixo primeiro, ordem pelo nome e limite de 6'
+  'prefixo primeiro, depois os que contêm o texto, cada grupo em ordem'
 );
 
 select results_eq(
@@ -133,21 +149,23 @@ select results_eq(
   'a busca fica na cidade pedida: o Centro do Rio não aparece em Manaus'
 );
 
+-- Texto vazio: Brasília tem 9 bairros e a busca devolve 6. Aqui o limite é o que
+-- corta, e a ordem é a do nome sem acento.
 select results_eq(
   $$
     select name from public.search_neighborhoods(
-      '00000000-0000-4000-8000-000000000001', ''
+      (select c from _cidade_brasilia), ''
     )
   $$,
   $$ values
-    ('Adrianópolis'::text),
-    ('Aleixo'::text),
-    ('Centro'::text),
-    ('Cidade Nova'::text),
-    ('Compensa'::text),
-    ('Dom Pedro'::text)
+    ('Águas Claras'::text),
+    ('Asa Norte'::text),
+    ('Asa Sul'::text),
+    ('Cruzeiro'::text),
+    ('Guará'::text),
+    ('Lago Norte'::text)
   $$,
-  'texto vazio devolve os 6 primeiros da cidade, em ordem'
+  'texto vazio devolve os 6 primeiros da cidade, em ordem (de 9)'
 );
 
 select is(
