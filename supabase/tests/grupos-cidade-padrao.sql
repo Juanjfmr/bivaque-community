@@ -9,12 +9,14 @@
 --     entrada automática não regrava nem promove quem já tem linha);
 --   * a marca de padrão é escrita só pelo operador: nem por UPDATE nem por
 --     INSERT direto do membro, e a RPC recusar fora de `operators` é testada;
---   * o operador marca, e a RPC não inventa grupo.
+--   * o operador marca, e a RPC não inventa grupo;
+--   * grupo LEGADO de comunidade (community_id) fica fora do automático — e o
+--     operador não consegue marcá-lo padrão (desmarcar continua livre).
 
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(22);
 
 \ir fixtures/foundation.inc
 
@@ -24,6 +26,13 @@ values
   ('10000000-0000-4000-8000-000000000008', 'entra-grupos@example.invalid'),
   ('10000000-0000-4000-8000-000000000009', 'ja-participa@example.invalid');
 
+-- Comunidade legada da cidade 1, para o grupo 017 abaixo (FK composta
+-- groups (community_id, locality_id) exige a mesma cidade).
+insert into public.communities (id, name, locality_id, created_by, owner_user_id)
+values (
+  '71000000-0000-4000-8000-000000000017', 'Comunidade legada', '00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001'
+);
+
 -- Cenário de grupos (superusuário, antes das trocas de papel):
 --   010  público, padrão, cidade 1              → entra
 --   011  público, padrão, cidade 1              → entra
@@ -32,6 +41,7 @@ values
 --   014  público, padrão, OUTRA cidade          → não entra
 --   015  público, padrão, cidade 1, REMOVIDO    → não entra
 --   016  público, cidade 1, sem marca (default) → nasce não-padrao
+--   017  público, padrão, cidade 1, LEGADO de comunidade (community_id) → não entra
 insert into public.groups (
   id, name, visibility, locality_id, created_by, owner_user_id, is_default, is_deleted
 )
@@ -43,6 +53,16 @@ values
   ('40000000-0000-4000-8000-000000000014', 'Padrao de outra cidade', 'public', '00000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', true, false),
   ('40000000-0000-4000-8000-000000000015', 'Padrao removido', 'public', '00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', true, true),
   ('40000000-0000-4000-8000-000000000016', 'Nasce sem marca', 'public', '00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', false, false);
+
+-- 017 já nasce marcado padrão COM community_id (dado legado: só o fixture
+-- escreve a marca assim — a RPC passou a recusar exatamente isso).
+insert into public.groups (
+  id, name, visibility, locality_id, created_by, owner_user_id, is_default, is_deleted, community_id
+)
+values (
+  '40000000-0000-4000-8000-000000000017', 'Legado comunidade', 'public', '00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', true, false,
+  '71000000-0000-4000-8000-000000000017'
+);
 
 -- Quem já tem participação ANTES da entrada: 009 é 'member' no grupo 010 sem
 -- vínculo de cidade. O provisionamento não pode regravar nem duplicar a linha.
@@ -132,6 +152,15 @@ select ok(
       and group_id = '40000000-0000-4000-8000-000000000015'
   ),
   'padrão REMOVIDO não entra'
+);
+
+select ok(
+  not exists (
+    select 1 from public.group_memberships
+    where user_id = '10000000-0000-4000-8000-000000000008'
+      and group_id = '40000000-0000-4000-8000-000000000017'
+  ),
+  'grupo LEGADO de comunidade marcado padrão não entra no automático (e o provisionamento não falha por causa dele)'
 );
 
 select is(
@@ -242,6 +271,35 @@ select throws_ok(
   'P0001',
   'group not found',
   'o operador não marca grupo que não existe'
+);
+
+-- Grupo legado de comunidade: marcar é recusado, desmarcar continua livre.
+select throws_ok(
+  $$
+    select public.set_group_default(
+      p_group_id := '40000000-0000-4000-8000-000000000017',
+      p_is_default := true
+    )
+  $$,
+  'P0001',
+  'legacy community group cannot be marked as default',
+  'operador não marca grupo legado de comunidade como padrão'
+);
+
+select lives_ok(
+  $$
+    select public.set_group_default(
+      p_group_id := '40000000-0000-4000-8000-000000000017',
+      p_is_default := false
+    )
+  $$,
+  'operador consegue desmarcar a marca legado que já existe'
+);
+
+select is(
+  (select is_default from public.groups where id = '40000000-0000-4000-8000-000000000017'),
+  false,
+  'a desmarcação do legado ficou no banco'
 );
 
 select * from finish();

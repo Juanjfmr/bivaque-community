@@ -47,6 +47,16 @@ begin
     raise exception 'only an operator can mark the default group';
   end if;
 
+  -- Grupo legado de comunidade (community_id preenchido) não é grupo da
+  -- cidade: nunca entra no automático, e o operador não pode marcá-lo como
+  -- padrão. Desmarcar continua livre para limpar marca antiga.
+  if p_is_default and exists (
+    select 1 from public.groups
+    where id = p_group_id and community_id is not null
+  ) then
+    raise exception 'legacy community group cannot be marked as default';
+  end if;
+
   update public.groups
   set is_default = p_is_default
   where id = p_group_id;
@@ -123,9 +133,9 @@ begin
           destination_locality_id = excluded.destination_locality_id;
   end if;
 
-  -- Grupos automáticos (ADR-20261107 item 4): abertos, vivos e padrão da
-  -- cidade. Fechado nunca; participação existente (inclusive outra função) é
-  -- preservada. shortcut: quem sai de um grupo padrão e re-provisiona a MESMA
+  -- Grupos automáticos (ADR-20261107 item 4): abertos, vivos, padrão da cidade
+  -- e NÃO legados de comunidade. Fechado nunca; participação existente
+  -- (inclusive outra função) é preservada. shortcut: quem sai de um grupo padrão e re-provisiona a MESMA
   -- cidade entra de novo — sem registro de saída, o automático não tem como
   -- saber; se isso incomodar de verdade, a saída vira marca própria na
   -- participação e esta cláusula passa a respeitá-la.
@@ -140,6 +150,7 @@ begin
     and g.is_default
     and g.visibility = 'public'::public.group_visibility
     and g.is_deleted = false
+    and g.community_id is null
   on conflict (group_id, user_id) do nothing;
 
   -- Marcador da etapa seguinte, com o nome da cidade só para a prévia exibir.
