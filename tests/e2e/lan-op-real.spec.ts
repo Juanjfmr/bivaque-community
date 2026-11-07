@@ -6,6 +6,9 @@ import { createClient } from "@supabase/supabase-js"
 import type { Database } from "../../supabase/database.generated"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
+// "Caminhada no Mindu": grupo aberto do seed na primeira localidade (Manaus).
+const GRUPO_ABERTO_SEMEADO = "60000000-0000-4000-8000-000000000001"
+
 /** Mensagem curta da falha de limpeza (sem segredo: só a mensagem do erro do Supabase). */
 function motivoDaFalha(erro: unknown): string {
   if (erro instanceof Error) return erro.message.slice(0, 200)
@@ -184,12 +187,19 @@ for (const theme of ["light", "dark"] as const) {
       )
 
       // 2. Denúncia: alvo real e efeito sob o token do autor.
+      // Publicação só existe dentro de grupo: o membro entra num grupo aberto
+      // semeado da mesma cidade pela mesma RPC do produto.
+      check(
+        await member.client.rpc("join_group", { p_group_id: GRUPO_ABERTO_SEMEADO }),
+        "entrada no grupo aberto",
+      )
       const postId = randomUUID()
       posts.push(postId)
       check(
         await member.client.from("posts").insert({
           id: postId,
           user_id: member.id,
+          group_id: GRUPO_ABERTO_SEMEADO,
           post_type: "text",
           locality_id: locality.data.id,
           content: "Conteúdo sintético do RUN-024",
