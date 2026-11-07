@@ -2713,10 +2713,7 @@ export type Database = {
           is_holiday: boolean
         }[]
       }
-      city_digest_for_delivery: {
-        Args: { p_outbox_id: string }
-        Returns: Json
-      }
+      city_digest_for_delivery: { Args: { p_outbox_id: string }; Returns: Json }
       clear_recommendation_resolved_reply: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -3635,10 +3632,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["listing_status"]
       }
       unpin_group_post: { Args: { p_group_id: string }; Returns: undefined }
-      unsubscribe_city_digest: {
-        Args: { p_token: string }
-        Returns: boolean
-      }
+      unsubscribe_city_digest: { Args: { p_token: string }; Returns: boolean }
       update_member_business_page: {
         Args: {
           p_bio?: string
