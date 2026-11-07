@@ -42,9 +42,9 @@ begin
     execute format('update %s set is_deleted = true where id = $1',v_table) using v_report.target_id;
   end if;
   update public.reports set status='resolved', resolved_by=p_operator_user_id,
-    resolved_at=now(), operator_note=p_note where id=p_report_id;
+    resolved_at=now(), operator_note=nullif(btrim(p_note),'') where id=p_report_id;
   insert into public.operator_actions(actor_id,action,target_type,target_id,reason)
-    values(p_operator_user_id,'report_' || p_action,'report',p_report_id,p_note);
+    values(p_operator_user_id,'report_' || p_action,'report',p_report_id,nullif(btrim(p_note),''));
   insert into public.notifications(recipient_user_id,actor_user_id,type,action,target_type,target_id)
     values(v_report.reporter_user_id,null,'report_resolved','resolved','report',p_report_id);
   if v_author is not null then
