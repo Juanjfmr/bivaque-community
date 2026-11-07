@@ -232,7 +232,9 @@ for (const theme of ["light", "dark"] as const) {
       reports.push(reportId)
       await page.goto(`/reports/${reportId}`)
       await expect(page.getByText("Conteúdo sintético do RUN-024").first()).toBeVisible()
-      await page.getByRole("radio", { name: /Ocultar conteúdo/ }).check()
+      // Rádio do HeroUI: o input nativo é visualmente oculto; a pessoa clica no rótulo.
+      await page.getByText("Ocultar conteúdo", { exact: true }).click()
+      await expect(page.getByRole("radio", { name: /Ocultar conteúdo/ })).toBeChecked()
       await page.getByLabel(/Justificativa da decisão/).fill("Regra sintética do piloto")
       await capture("02-denuncia")
       await page.getByRole("button", { name: "Confirmar decisão" }).click()
