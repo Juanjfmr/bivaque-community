@@ -28,3 +28,13 @@ it("aviso ao autor informa decisão sem levar a uma denúncia privada", () => {
   )
   expect(destinoDoAviso(notice)).toBe("/app/voce")
 })
+
+it("suspensão e encerramento avisam sem publicar o motivo", () => {
+  expect(rotuloDoAviso({ ...base, tipo: "account_suspension", acao: "applied" })).toContain(
+    "suspensa",
+  )
+  expect(rotuloDoAviso({ ...base, tipo: "account_suspension", acao: "ended" })).toContain(
+    "encerrada",
+  )
+  expect(destinoDoAviso({ ...base, tipo: "account_suspension" })).toBe("/app/voce")
+})

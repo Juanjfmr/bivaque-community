@@ -194,6 +194,7 @@ export interface TargetRef {
 }
 
 export interface TargetInfo {
+  authorId?: string | null
   content: string | null
   authorName: string | null
   communityName: string | null
@@ -454,6 +455,7 @@ export async function resolveTargets(
         const row = providers.data?.find((p) => p.id === ref.target_id)
         if (row)
           out.set(ref.target_id, {
+            authorId: row.owner_user_id,
             content: [row.display_name, row.bio].filter(Boolean).join("\n"),
             authorName: authorNames.get(row.owner_user_id) ?? null,
             communityName: null,
@@ -466,6 +468,7 @@ export async function resolveTargets(
         if (!row) break
         out.set(ref.target_id, {
           content: row.content,
+          authorId: row.user_id,
           authorName: authorNames.get(row.user_id) ?? null,
           communityName:
             communityNameFor(row.community_id) ??
@@ -481,6 +484,7 @@ export async function resolveTargets(
           postScope.get(row.post_id) ?? commentPosts.data?.find((p) => p.id === row.post_id)
         out.set(ref.target_id, {
           content: row.content,
+          authorId: row.user_id,
           authorName: authorNames.get(row.user_id) ?? null,
           communityName: post
             ? (communityNameFor(post.community_id) ??
@@ -495,6 +499,7 @@ export async function resolveTargets(
         if (!row) break
         out.set(ref.target_id, {
           content: row.name,
+          authorId: row.owner_user_id,
           authorName: authorNames.get(row.owner_user_id) ?? null,
           communityName: communityNameFor(row.community_id),
           contentCreatedAt: row.created_at,
@@ -506,6 +511,7 @@ export async function resolveTargets(
         if (!row) break
         out.set(ref.target_id, {
           content: row.content,
+          authorId: row.sender_id,
           authorName: authorNames.get(row.sender_id) ?? null,
           communityName: null,
           contentCreatedAt: row.created_at,
@@ -517,6 +523,7 @@ export async function resolveTargets(
         if (!row) break
         out.set(ref.target_id, {
           content: row.title,
+          authorId: row.author_id,
           authorName: authorNames.get(row.author_id) ?? null,
           communityName: communityNameFor(
             row.group_id ? (groupScope.get(row.group_id) ?? null) : null,
@@ -533,6 +540,7 @@ export async function resolveTargets(
           replyRequests.data?.find((r) => r.id === row.request_id)
         out.set(ref.target_id, {
           content: row.body,
+          authorId: row.author_id,
           authorName: authorNames.get(row.author_id) ?? null,
           communityName: request?.group_id
             ? communityNameFor(groupScope.get(request.group_id) ?? null)

@@ -1630,6 +1630,7 @@ export type Database = {
       }
       operator_actions: {
         Row: {
+          expires_at: string | null
           action: string
           actor_id: string | null
           created_at: string
@@ -1639,6 +1640,7 @@ export type Database = {
           target_type: string
         }
         Insert: {
+          expires_at?: string | null
           action: string
           actor_id?: string | null
           created_at?: string
@@ -1648,6 +1650,7 @@ export type Database = {
           target_type: string
         }
         Update: {
+          expires_at?: string | null
           action?: string
           actor_id?: string | null
           created_at?: string
@@ -1904,14 +1907,17 @@ export type Database = {
       }
       profile_suspensions: {
         Row: {
+          expires_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          expires_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          expires_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3528,6 +3534,14 @@ export type Database = {
             }
             Returns: string
           }
+      operator_end_suspension: {
+        Args: { p_operator_user_id: string; p_reason: string; p_user_id: string }
+        Returns: undefined
+      }
+      operator_suspend_account: {
+        Args: { p_days: number; p_operator_user_id: string; p_reason: string; p_user_id: string }
+        Returns: undefined
+      }
       operator_reprocess_verification: {
         Args: { p_operator_user_id: string; p_user_id: string }
         Returns: undefined
@@ -3768,6 +3782,7 @@ export type Database = {
         | "group_post"
         | "verification_decision"
         | "moderation_decision"
+        | "account_suspension"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -4015,6 +4030,7 @@ export const Constants = {
         "group_post",
         "verification_decision",
         "moderation_decision",
+        "account_suspension",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

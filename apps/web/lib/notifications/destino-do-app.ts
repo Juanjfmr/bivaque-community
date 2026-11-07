@@ -42,6 +42,10 @@ function comoLinhaDaWeb(aviso: AvisoDoBanco): NotificationRow {
 }
 
 export function rotuloDoAviso(aviso: AvisoDoBanco): string {
+  if (aviso.tipo === "account_suspension")
+    return aviso.acao === "applied"
+      ? "Sua conta está suspensa para novas ações. Procure a Ajuda para recorrer."
+      : "Sua suspensão foi encerrada. Você pode voltar a participar."
   if (aviso.tipo === "moderation_decision") {
     const decisao =
       aviso.acao === "dismiss" ? "mantido" : aviso.acao === "hide" ? "ocultado" : "removido"

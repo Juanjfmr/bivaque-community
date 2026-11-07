@@ -1,5 +1,6 @@
 import { scrubReportReason } from "@bivaque/domain"
 import { Chip } from "@heroui/react"
+import type { Route } from "next"
 import Link from "next/link"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
@@ -180,6 +181,7 @@ export default async function AdminReportDetailPage({
     { target_type: view.targetType, target_id: view.targetId },
   ])
   const target = targets.get(view.targetId) ?? {
+    authorId: null,
     content: null,
     authorName: null,
     communityName: null,
@@ -248,6 +250,14 @@ export default async function AdminReportDetailPage({
                 <p className="text-sm text-muted">
                   O conteúdo denunciado não está disponível — pode já ter sido removido.
                 </p>
+              )}
+              {target.authorId && (
+                <Link
+                  href={`/suspensions?membro=${target.authorId}` as Route}
+                  className="inline-flex min-h-11 items-center text-sm underline"
+                >
+                  Suspender esta conta
+                </Link>
               )}
               {!caseClosed && view.openReportsOnTarget > 1 && (
                 <p className="text-xs font-medium text-danger">
