@@ -89,8 +89,7 @@ language sql stable security invoker set search_path = '' as $$
     (select count(*) from public.post_reactions r where r.post_id = p.id),
     exists (select 1 from public.post_reactions r where r.post_id = p.id and r.user_id = (select auth.uid())),
     exists (select 1 from public.post_follows f where f.post_id = p.id and f.user_id = (select auth.uid())),
-    (select pr.display_name from public.profiles pr where pr.user_id = p.user_id
-      order by (pr.locality_id = p.locality_id) desc, pr.locality_id limit 1)
+    (select pr.display_name from public.profiles pr where pr.user_id = p.user_id)
   from public.posts p
   join public.groups g on g.id = p.group_id and not g.is_deleted
   where p.group_id = p_group_id and not p.is_deleted
