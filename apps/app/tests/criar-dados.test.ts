@@ -93,4 +93,18 @@ describe("porta de criação", () => {
     expect(guardarRascunho("teste", dados)).toBe(false)
     expect(lerRascunho("teste", dados)).toEqual(dados)
   })
+  it("rascunho gravado antes do campo tópico continua válido (tópico fica opcional)", () => {
+    // O rascunho antigo da pergunta não tinha `topico`; ler não pode jogá-lo fora.
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => '{"titulo":"Alguém indica pediatra?","assunto":"Centro"}',
+      setItem: () => {},
+    })
+    expect(
+      lerRascunho("bivaque:f03:pergunta:Teste", { titulo: "", assunto: "", topico: "" }),
+    ).toEqual({
+      titulo: "Alguém indica pediatra?",
+      assunto: "Centro",
+      topico: "",
+    })
+  })
 })
