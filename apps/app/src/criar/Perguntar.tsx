@@ -113,11 +113,11 @@ export function Perguntar({
           </div>
           <Campo
             id="topico-pergunta"
-            rotulo="Detalhes (opcional)"
+            rotulo="Assunto (opcional)"
             valor={dados.assunto}
             aoMudar={(assunto) => setDados({ ...dados, assunto })}
             maxLength={60}
-            placeholder="Ex.: bairro, faixa de preço, o que já tentou"
+            placeholder="Saúde, escola, serviços..."
           />
         </>
       )}
