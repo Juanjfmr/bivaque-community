@@ -6,6 +6,15 @@ import { createClient } from "@supabase/supabase-js"
 import type { Database } from "../../supabase/database.generated"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
+/** Mensagem curta da falha de limpeza (sem segredo: só a mensagem do erro do Supabase). */
+function motivoDaFalha(erro: unknown): string {
+  if (erro instanceof Error) return erro.message.slice(0, 200)
+  if (typeof erro === "object" && erro !== null && "message" in erro) {
+    return String((erro as { message: unknown }).message).slice(0, 200)
+  }
+  return "erro sem mensagem"
+}
+
 /** Do processo ou do arquivo local do apps/web (o que o CI escreve), como os outros specs reais. */
 function lerCredencial(chave: string): string | undefined {
   const doProcesso = process.env[chave]
@@ -297,9 +306,10 @@ for (const theme of ["light", "dark"] as const) {
       const failures: string[] = []
       async function cleanup(label: string, operation: () => PromiseLike<{ error: unknown }>) {
         try {
-          if ((await operation()).error) failures.push(label)
-        } catch {
-          failures.push(label)
+          const { error } = await operation()
+          if (error) failures.push(`${label}: ${motivoDaFalha(error)}`)
+        } catch (erro) {
+          failures.push(`${label}: ${motivoDaFalha(erro)}`)
         }
       }
       // A auditoria permanece; seus target_id sintéticos ficam identificados no manifesto.
