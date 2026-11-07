@@ -195,6 +195,15 @@ describe("destino do aviso no app", () => {
     })
   })
 
+  it("a situação da entrada abre o passo pedido, com o estado validado", () => {
+    expect(destinoEmRota("/app/entrar/analise")).toEqual({
+      nome: "entrar",
+      parametros: { estado: "analise" },
+    })
+    expect(destinoEmRota("/app/entrar")).toEqual({ nome: "entrar", parametros: undefined })
+    expect(destinoEmRota("/app/entrar/passo-que-nao-existe")).toBeNull()
+  })
+
   it("rota fora do app é nula — quem chama escolhe a tela segura", () => {
     expect(destinoEmRota("/community?post=1")).toBeNull()
     expect(destinoEmRota("/app/nao-existe/1")).toBeNull()
