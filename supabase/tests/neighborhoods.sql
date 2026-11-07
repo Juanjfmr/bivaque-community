@@ -47,24 +47,27 @@ select is(
   'Manaus tem os 11 bairros do protótipo'
 );
 
-select is(
-  (select count(*)::integer from public.neighborhoods),
-  43,
-  'as quatro cidades carregam 43 bairros no total'
+-- Desde a carga nacional do IBGE (RUN-028, neighborhoods-ibge-nacional.sql) o
+-- total e a cobertura de cidades são maior: aqui vale o piso do protótipo.
+select ok(
+  (select count(*) from public.neighborhoods) >= 43,
+  'as quatro cidades carregam ao menos os 43 bairros do protótipo'
 );
 
-select is(
-  (
-    select count(distinct locality_id)::integer
-    from public.neighborhoods
-  ),
-  4,
-  'os bairros se distribuem pelas quatro cidades'
+select ok(
+  (select count(distinct locality_id) from public.neighborhoods) >= 4,
+  'os bairros se distribuem por ao menos as quatro cidades'
 );
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- Leitura e busca, como membro autenticado
 -- ───────────────────────────────────────────────────────────────────────────
+
+-- Total visto como postgres, para o membro comparar depois: a promessa é que a
+-- RLS deixa ler o catálogo INTEIRO, inclusive a carga nacional.
+create temp table _leitura_total as
+  select count(*)::integer as c from public.neighborhoods;
+grant select on table _leitura_total to public;
 
 set local role authenticated;
 select set_config(
@@ -76,7 +79,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select is(
   (select count(*)::integer from public.neighborhoods),
-  43,
+  (select c from _leitura_total),
   'membro autenticado lê o catálogo inteiro'
 );
 
