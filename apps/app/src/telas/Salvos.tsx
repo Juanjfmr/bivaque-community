@@ -9,6 +9,7 @@ import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
+import { lerPublicacoesSalvas, type PublicacaoReal } from "@/lib/dados/grupos"
 import { type EntradaDoGuia, lerSalvosDoGuia } from "@/lib/dados/guia"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
@@ -18,10 +19,10 @@ import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
 import { registro, texto } from "@/src/telas/comum"
 
 /**
- * Salvos: os anúncios da demonstração e as referências do guia salvas pelo
- * membro. A seção de anúncios continua de leitura; a do guia vem da rota da
- * sessão (`/api/app/guia/salvos`), então sobrevive ao recarregar e vale para a
- * conta, não para o aparelho.
+ * Salvos: os anúncios da demonstração, as publicações de grupo e as referências
+ * do guia salvas pelo membro. A seção de anúncios continua de leitura; as outras
+ * duas vêm das rotas da sessão (`/api/app/grupos/salvas` e `/api/app/guia/salvos`),
+ * então sobrevivem ao recarregar e valem para a conta, não para o aparelho.
  */
 export function Salvos() {
   const casca = useCasca()
@@ -29,6 +30,9 @@ export function Salvos() {
   const [dados, setDados] = useState<DadosDaCidade | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
+  const [publicacoes, setPublicacoes] = useState<readonly PublicacaoReal[] | null>(null)
+  const [erroDasPublicacoes, setErroDasPublicacoes] = useState(false)
+  const [rodadaDasPublicacoes, setRodadaDasPublicacoes] = useState(0)
   const [guia, setGuia] = useState<readonly EntradaDoGuia[] | null>(null)
   const [erroDoGuia, setErroDoGuia] = useState(false)
   const [rodadaDoGuia, setRodadaDoGuia] = useState(0)
@@ -65,6 +69,21 @@ export function Salvos() {
       })
     return () => controle.abort()
   }, [rodadaDoGuia])
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  useEffect(() => {
+    const controle = new AbortController()
+    setPublicacoes(null)
+    setErroDasPublicacoes(false)
+    void lerPublicacoesSalvas({ signal: controle.signal })
+      .then((lidas) => {
+        if (!controle.signal.aborted) setPublicacoes(lidas)
+      })
+      .catch(() => {
+        if (!controle.signal.aborted) setErroDasPublicacoes(true)
+      })
+    return () => controle.abort()
+  }, [rodadaDasPublicacoes])
 
   const itens = useMemo(() => {
     if (dados === null) return []
@@ -114,6 +133,38 @@ export function Salvos() {
           ))}
         </Grade>
       )}
+
+      <section data-salvos="publicacoes" className="grid gap-2">
+        <h2 className="text-[17px]">Publicações salvas</h2>
+        {erroDasPublicacoes ? (
+          <EstadoDeErro
+            titulo="Não foi possível carregar suas publicações"
+            aoTentar={() => setRodadaDasPublicacoes((atual) => atual + 1)}
+          />
+        ) : publicacoes === null ? (
+          <EsqueletoDeLista linhas={2} />
+        ) : publicacoes.length === 0 ? (
+          <p className="text-sm text-(--on-surface-variant)">
+            Nenhuma publicação salva ainda. Toque em Salvar publicação no menu de uma publicação de
+            grupo.
+          </p>
+        ) : (
+          <Lista>
+            {publicacoes.map((publicacao) => (
+              <LinhaDeLista
+                key={publicacao.id}
+                icone="forum"
+                titulo={publicacao.texto}
+                subtitulo={publicacao.autor || "Membro do grupo"}
+                tituloMultilinha
+                onClick={() =>
+                  void navegacao.irPara("publicacao", { parametros: { id: publicacao.id } })
+                }
+              />
+            ))}
+          </Lista>
+        )}
+      </section>
 
       <section data-salvos="guia" className="grid gap-2">
         <h2 className="text-[17px]">Referências do guia</h2>

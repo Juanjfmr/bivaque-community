@@ -3,6 +3,7 @@
 import { Button, Modal, useOverlayState } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { entrarNoGrupo, lerMotivo, MOTIVO_MAX } from "../../../../lib/communities/grupos"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { ModalCloseTrigger } from "../../../components/bivaque/close-button"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
@@ -17,7 +18,7 @@ import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 // (Fechado → pendente), grava o motivo na mesma transação e conta a tentativa
 // (no máximo 3 em 30 dias, erro 54000).
 
-const REASON_MAX = 300
+const REASON_MAX = MOTIVO_MAX
 
 export function GroupJoinRequest({
   groupId,
@@ -42,11 +43,13 @@ export function GroupJoinRequest({
     setError("")
     setSubmitting(true)
 
-    const trimmed = reason.trim()
-    const { error: rpcError } = await supabase.rpc("join_group", {
-      p_group_id: groupId,
-      ...(trimmed.length > 0 ? { p_reason: trimmed } : {}),
-    })
+    const trimmed = lerMotivo(reason)
+    if (trimmed === null) {
+      setError("Encurte o motivo para até 300 caracteres.")
+      setSubmitting(false)
+      return
+    }
+    const { error: rpcError } = await entrarNoGrupo(supabase, groupId, trimmed)
 
     setSubmitting(false)
 

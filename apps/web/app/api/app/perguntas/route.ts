@@ -6,6 +6,10 @@ import {
   opcoesDoApp,
   responder,
 } from "../../../../lib/app-api/rota-do-app"
+import {
+  INDICATION_CATEGORIES,
+  type IndicationCategory,
+} from "../../../../lib/indications/indications"
 import { log } from "../../../../lib/logger"
 import { lerNovaPergunta } from "../../../../lib/recommendations/create"
 import { cidadeDaSessao, interpretarErroDoBanco } from "../eventos/_comum"
@@ -16,6 +20,9 @@ export const dynamic = "force-dynamic"
 
 const LIMITE_PADRAO = 20
 const LIMITE_MAXIMO = 50
+
+/** O tópico escolhido ao perguntar é também o filtro da lista (item fechado do enum). */
+const TOPICOS = new Set<string>(INDICATION_CATEGORIES.map((item) => item.id))
 
 /**
  * Os filtros da tela viram os argumentos de `list_indications`, no servidor:
@@ -59,8 +66,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const depois = brutoDepois === null ? 0 : Number(brutoDepois)
   const brutoLimite = url.searchParams.get("limite")
   const limite = brutoLimite === null ? LIMITE_PADRAO : Number(brutoLimite)
+  const brutoTopico = url.searchParams.get("topico")
+  const topico = brutoTopico === null || brutoTopico === "" ? null : brutoTopico
   if (
     !ehFiltro(filtro) ||
+    (topico !== null && !TOPICOS.has(topico)) ||
     !Number.isInteger(depois) ||
     depois < 0 ||
     !Number.isInteger(limite) ||
@@ -101,6 +111,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       p_offset: depois,
       ...(regra.p_resolved === null ? {} : { p_resolved: regra.p_resolved }),
       ...(regra.p_mine === null ? {} : { p_mine: regra.p_mine }),
+      // Tópico é filtro de lista, não de cidade: a RPC já conhece p_category.
+      ...(topico === null ? {} : { p_category: topico as IndicationCategory }),
     })
     if (error) throw error
 

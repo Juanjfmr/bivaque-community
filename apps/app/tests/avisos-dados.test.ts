@@ -7,6 +7,7 @@ import {
   destinoEmRota,
   lerAvisos,
   lerPreferenciasDeAviso,
+  marcarGrupoLido,
   marcarLido,
   marcarTodosLidos,
   type PreferenciasDeAviso,
@@ -21,6 +22,8 @@ const aviso = {
   destino: "/app/publicacao/90000000-0000-4000-8000-000000000001",
   lida: false,
   criadaEm: "2026-11-06T12:00:00.000Z",
+  grupo: "comment|created|post|90000000-0000-4000-8000-000000000001",
+  total: 1,
 }
 
 function responder(corpo: unknown, status = 200) {
@@ -67,6 +70,15 @@ describe("porta de avisos", () => {
     await expect(lerAvisos()).rejects.toBeInstanceOf(FalhaDaApi)
   })
 
+  it("grupo sem contagem é falha de contrato: a tela não desenha número inventado", async () => {
+    responder({
+      avisos: [{ ...aviso, total: undefined }],
+      proximo: null,
+      naoLidos: 0,
+    })
+    await expect(lerAvisos()).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
   it("falha de leitura sobe com o código do servidor", async () => {
     responder({ erro: "leitura-indisponivel" }, 503)
     await expect(lerAvisos()).rejects.toMatchObject({ codigo: "indisponivel" })
@@ -85,6 +97,15 @@ describe("porta de avisos", () => {
     expect(todos).toHaveBeenCalledWith(
       "/api/app/avisos/lidos",
       expect.objectContaining({ method: "POST", body: '{"todos":true}' }),
+    )
+  })
+
+  it("marca o grupo pela chave opaca e devolve quantos avisos o grupo tinha", async () => {
+    const grupo = responder({ atualizados: 3 })
+    expect(await marcarGrupoLido(aviso.grupo)).toBe(3)
+    expect(grupo).toHaveBeenCalledWith(
+      "/api/app/avisos/lidos",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ grupo: aviso.grupo }) }),
     )
   })
 

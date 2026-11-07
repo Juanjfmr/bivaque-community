@@ -2,7 +2,12 @@ import { enviar, FalhaDaApi } from "../api/cliente"
 
 export { lerMeusAnuncios } from "./mercado"
 
-export type DadosDaPergunta = Readonly<{ titulo: string; assunto: string }>
+export type DadosDaPergunta = Readonly<{
+  titulo: string
+  assunto: string
+  /** Id da lista fechada (TOPICOS_DAS_PERGUNTAS); "" é "sem escolha" — vale a régua do texto. */
+  topico: string
+}>
 export type DadosDoDesapego = Readonly<{
   chave: string
   titulo: string

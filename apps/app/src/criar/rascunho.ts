@@ -5,7 +5,13 @@ export function lerRascunho<T extends Record<string, string>>(chave: string, ini
     const bruto: unknown = JSON.parse(sessionStorage.getItem(chave) ?? "null")
     if (!bruto || typeof bruto !== "object") return inicial
     const salvo = bruto as Record<string, unknown>
-    if (Object.keys(inicial).every((campo) => typeof salvo[campo] === "string")) return salvo as T
+    // Rascunho gravado antes de um campo existir (ex.: topico) continua válido:
+    // o que falta cai no inicial, o que foi escrito é preservado.
+    const fundido: Record<string, string> = { ...inicial }
+    for (const campo of Object.keys(inicial)) {
+      if (typeof salvo[campo] === "string") fundido[campo] = salvo[campo]
+    }
+    return fundido as T
   } catch {
     /* A pessoa ainda pode preencher e publicar. */
   }

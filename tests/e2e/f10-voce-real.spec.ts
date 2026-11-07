@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { expect, type Page, test } from "@playwright/test"
-import { MEMBRO_SEMEADO, semearSessaoDeMembro } from "./entrada-real-ajuda"
+import { MEMBRO_SEMEADO, restaurarPerfilSemeado, semearSessaoDeMembro } from "./entrada-real-ajuda"
 
 // F10 — a área "Você" lendo e gravando no banco de verdade (RUN-016 /
 // ADR-20261105). Contra o Next que serve `/app` e o Supabase local com seed.
@@ -30,6 +30,13 @@ async function capturar(page: Page, projeto: string, etapa: string): Promise<voi
 }
 
 test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
+  // Rede de segurança: se um passo falhar antes do "desfaz" da tela, o perfil da
+  // persona volta ao seed mesmo assim, e as próximas larguras e specs não herdam
+  // "Ana E2E".
+  test.afterEach(async () => {
+    await restaurarPerfilSemeado(MEMBRO_SEMEADO, { nome: NOME_SEMEADO, bio: null })
+  })
+
   test("o perfil vem da conta, a edição sobrevive ao recarregar e as listas são as do banco", async ({
     page,
     context,
@@ -56,7 +63,14 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     await expect(page.getByLabel("Nome")).toHaveValue(NOME_SEMEADO)
     await page.getByLabel("Nome").fill(NOME_EDITADO)
     await page.getByLabel("Apresentação").fill(bioGravada)
+    // Recarregar só depois que a gravação respondeu: o nome na tela é otimista.
+    const gravou = page.waitForResponse(
+      (resposta) =>
+        resposta.url().includes("/api/app/voce") && resposta.request().method() !== "GET",
+      { timeout: 30_000 },
+    )
     await page.getByRole("button", { name: "Salvar" }).click()
+    expect((await gravou).ok(), "a gravação do perfil precisa responder com sucesso").toBe(true)
     await expect(page.getByText(NOME_EDITADO)).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText(bioGravada)).toBeVisible()
     await capturar(page, testInfo.project.name, "voce-editada")

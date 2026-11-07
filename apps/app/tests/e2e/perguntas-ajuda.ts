@@ -38,11 +38,12 @@ export async function simularPerguntas(page: Page) {
     const [, , , id, acao] = url.pathname.split("/").filter(Boolean)
     if (id === undefined) {
       if (rota.request().method() === "POST") {
-        const corpo = rota.request().postDataJSON() as { titulo: string }
+        const corpo = rota.request().postDataJSON() as { titulo: string; topico?: string }
         const criada = {
           id: "90000000-0000-4000-8000-000000000099",
           titulo: corpo.titulo,
-          categoria: "outros",
+          // O tópico escolhido é a categoria gravada; sem escolha, "outros".
+          categoria: corpo.topico ?? "outros",
           criadaEm: new Date().toISOString(),
           autor: "Você",
           propria: true,
@@ -52,8 +53,14 @@ export async function simularPerguntas(page: Page) {
         perguntas.unshift(criada)
         return rota.fulfill({ status: 201, json: { pergunta: { id: criada.id } } })
       }
+      // O filtro de tópico é do servidor: a simulação respeita a query.
+      const brutoTopico = url.searchParams.get("topico")
+      const visiveis =
+        brutoTopico === null || brutoTopico === ""
+          ? perguntas
+          : perguntas.filter((item) => item.categoria === brutoTopico)
       return rota.fulfill({
-        json: { perguntas, proximo: null, cidade: "Manaus", resolvidas: 1 },
+        json: { perguntas: visiveis, proximo: null, cidade: "Manaus", resolvidas: 1 },
       })
     }
     if (acao === "respostas") {

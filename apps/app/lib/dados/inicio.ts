@@ -140,9 +140,13 @@ export async function lerInicio(
 
 export async function buscarNaCidade(
   termo: string,
-  opcoes: { signal?: AbortSignal } = {},
+  opcoes: { signal?: AbortSignal; topico?: string | undefined } = {},
 ): Promise<BuscaDaCidade> {
-  const corpo = await ler(`/api/app/busca?q=${encodeURIComponent(termo)}`, opcoes)
+  const sufixo =
+    opcoes.topico === undefined || opcoes.topico === ""
+      ? ""
+      : `&topico=${encodeURIComponent(opcoes.topico)}`
+  const corpo = await ler(`/api/app/busca?q=${encodeURIComponent(termo)}${sufixo}`, opcoes)
   return {
     cidade: cidade(corpo),
     perguntas: lista(corpo, "perguntas", pergunta),

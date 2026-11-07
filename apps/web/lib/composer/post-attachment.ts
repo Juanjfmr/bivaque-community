@@ -82,3 +82,26 @@ export function attachmentPublishBlocker(
   }
   return null
 }
+
+/** O caminho que `enviarFotoDoGrupo` gera: `<userId>/grupos/<grupo-uuid>/<uuid>.<ext>`.
+ *  Só esse formato é assinado: um caminho arbitrário sob o prefixo do usuário viraria
+ *  leitura de outro objeto do bucket, então qualquer desvio é recusado. */
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+const CAMINHO_DE_FOTO = new RegExp(`^[^/]+/grupos/${UUID}/${UUID}\\.(?:jpeg|png|webp)$`)
+
+/** A mesma derivação do compositor antigo, com autoria e destino definidos pelo servidor. */
+export function lerPublicacaoDoGrupo(corpo: Record<string, unknown>, userId: string) {
+  const texto = typeof corpo["texto"] === "string" ? corpo["texto"].trim() : ""
+  const fotos = corpo["fotos"] === undefined ? [] : corpo["fotos"]
+  if (texto.length < 1 || texto.length > 2000 || !Array.isArray(fotos) || fotos.length > 4)
+    return null
+  const caminhos: string[] = []
+  for (const foto of fotos) {
+    if (typeof foto !== "string" || !foto.startsWith(`${userId}/`) || !CAMINHO_DE_FOTO.test(foto))
+      return null
+    caminhos.push(foto)
+  }
+  if (new Set(caminhos).size !== caminhos.length) return null
+  const derivado = derivePostType(caminhos.length > 0 ? "photo" : null, caminhos[0] ?? "", "")
+  return { content: texto, post_type: derivado.postType, ...derivado.extras, photo_paths: caminhos }
+}

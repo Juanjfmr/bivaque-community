@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { buscarPergunta, lerPerguntas, responderPergunta } from "@/lib/dados/perguntas"
+import {
+  buscarPergunta,
+  lerPerguntas,
+  responderPergunta,
+  rotuloDoTopico,
+  TOPICOS_DAS_PERGUNTAS,
+} from "@/lib/dados/perguntas"
 
 /**
  * A porta da jornada de perguntas (ADR-20261105 §2): caminho, filtro, corpo e
@@ -62,6 +68,32 @@ describe("lista de perguntas", () => {
     const buscar = responder({ perguntas: [], proximo: null, cidade: "Manaus", resolvidas: 0 })
     await lerPerguntas({ filtro: "minhas", depois: "40" })
     expect(chamada(buscar).caminho).toBe("/api/app/perguntas?filtro=minhas&depois=40")
+  })
+
+  it("encaminha o tópico escolhido como filtro; vazio não vai na query", async () => {
+    const comTopico = responder({ perguntas: [], proximo: null, cidade: "Manaus", resolvidas: 0 })
+    await lerPerguntas({ topico: "moradia" })
+    expect(chamada(comTopico).caminho).toBe("/api/app/perguntas?filtro=ajuda&topico=moradia")
+    const semTopico = responder({ perguntas: [], proximo: null, cidade: "Manaus", resolvidas: 0 })
+    await lerPerguntas({ topico: "" })
+    expect(chamada(semTopico).caminho).toBe("/api/app/perguntas?filtro=ajuda")
+  })
+
+  it("a lista fechada de tópicos é a mesma régua do banco, com rótulo em português", () => {
+    expect(TOPICOS_DAS_PERGUNTAS.map((topico) => topico.id)).toEqual([
+      "saude_bem_estar",
+      "servicos_locais",
+      "educacao",
+      "moradia",
+      "transporte",
+      "alimentacao",
+      "esporte_lazer",
+      "outros",
+    ])
+    expect(TOPICOS_DAS_PERGUNTAS.every((topico) => topico.rotulo.length > 0)).toBe(true)
+    expect(rotuloDoTopico("moradia")).toBe("Moradia")
+    // Tópico fora da lista não ganha rótulo inventado.
+    expect(rotuloDoTopico("tópico livre")).toBe("")
   })
 
   it("categoria desconhecida vira vazio, não chute", async () => {

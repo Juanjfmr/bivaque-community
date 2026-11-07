@@ -23,7 +23,7 @@ describe("porta de criação", () => {
     const controle = new AbortController()
     expect(
       await publicarPergunta(
-        { titulo: "Alguém indica escola?", assunto: "Educação" },
+        { titulo: "Alguém indica escola?", assunto: "Educação", topico: "educacao" },
         { signal: controle.signal },
       ),
     ).toBe("gravada")
@@ -31,6 +31,11 @@ describe("porta de criação", () => {
       "/api/app/perguntas",
       expect.objectContaining({ signal: controle.signal, credentials: "include", method: "POST" }),
     )
+    // O tópico escolhido viaja junto: a lista fechada é a categoria do banco.
+    expect(JSON.parse(fetch.mock.calls[0]?.[1]?.body ?? "{}")).toMatchObject({
+      titulo: "Alguém indica escola?",
+      topico: "educacao",
+    })
   })
   it("desapego envia chave estável, centavos na notação da validação e foto", async () => {
     const fetch = vi
@@ -51,7 +56,7 @@ describe("porta de criação", () => {
     expect(fetch).toHaveBeenCalledTimes(1)
     fetch.mockResolvedValue(new Response("{}"))
     await expect(
-      publicarPergunta({ titulo: "Uma pergunta válida?", assunto: "" }),
+      publicarPergunta({ titulo: "Uma pergunta válida?", assunto: "", topico: "" }),
     ).rejects.toMatchObject({ codigo: "indisponivel" })
   })
   it("meus anúncios distingue vazio, erro e resposta fora do contrato", async () => {
@@ -87,5 +92,19 @@ describe("porta de criação", () => {
     })
     expect(guardarRascunho("teste", dados)).toBe(false)
     expect(lerRascunho("teste", dados)).toEqual(dados)
+  })
+  it("rascunho gravado antes do campo tópico continua válido (tópico fica opcional)", () => {
+    // O rascunho antigo da pergunta não tinha `topico`; ler não pode jogá-lo fora.
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => '{"titulo":"Alguém indica pediatra?","assunto":"Centro"}',
+      setItem: () => {},
+    })
+    expect(
+      lerRascunho("bivaque:f03:pergunta:Teste", { titulo: "", assunto: "", topico: "" }),
+    ).toEqual({
+      titulo: "Alguém indica pediatra?",
+      assunto: "Centro",
+      topico: "",
+    })
   })
 })

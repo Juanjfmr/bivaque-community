@@ -1,5 +1,6 @@
-﻿import { test as base, expect, type Locator, type Page } from "@playwright/test"
+import { test as base, expect, type Locator, type Page } from "@playwright/test"
 import { simularConversas } from "./conversas-ajuda"
+import { simularGrupos } from "./grupos-ajuda"
 import { simularVoce } from "./voce-ajuda"
 
 // Apoio dos specs de navegação. Tudo aqui mede o que a pessoa veria: URL,
@@ -17,6 +18,7 @@ export const test = base.extend<{ modoDeProva: undefined }>({
   modoDeProva: [
     async ({ page }, use) => {
       await simularConversas(page)
+      await simularGrupos(page)
       await simularVoce(page)
       await page.addInitScript(() => {
         ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ =
