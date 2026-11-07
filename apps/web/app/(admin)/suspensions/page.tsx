@@ -54,7 +54,7 @@ export default async function SuspensionsPage({
                   ? `Prazo: ${new Date(row.expires_at).toLocaleString("pt-BR")}`
                   : "Suspensão anterior sem prazo"}
                 {row.expires_at && Date.parse(row.expires_at) <= Date.now()
-                  ? " · Prazo encerrado; escrita já liberada."
+                  ? " · Prazo encerrado; bloqueio por suspensão encerrado."
                   : ""}
               </p>
               <SuspensionForm userId={row.user_id} ending />
