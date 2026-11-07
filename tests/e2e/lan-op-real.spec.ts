@@ -206,18 +206,29 @@ for (const theme of ["light", "dark"] as const) {
         }),
         "publicação real",
       )
-      const reportId = randomUUID()
-      reports.push(reportId)
+      // A denúncia sai da sessão de quem denuncia, como no produto (o papel de
+      // serviço não insere em reports). Denunciar exige cidade.
       check(
-        await admin.from("reports").insert({
-          id: reportId,
+        await admin.rpc("provision_member_locality", {
+          p_user_id: reporter.id,
+          p_locality_id: locality.data.id,
+        }),
+        "cidade de quem denuncia",
+      )
+      const denuncia = await reporter.client
+        .from("reports")
+        .insert({
           reporter_user_id: reporter.id,
           target_type: "post",
           target_id: postId,
           reason: "Outro: teste sintético",
-        }),
-        "denúncia real",
-      )
+        })
+        .select("id")
+        .single()
+      check(denuncia, "denúncia real")
+      const reportId = denuncia.data?.id
+      if (!reportId) throw new Error("A denúncia não devolveu o id")
+      reports.push(reportId)
       await page.goto(`/reports/${reportId}`)
       await expect(page.getByText("Conteúdo sintético do RUN-024").first()).toBeVisible()
       await page.getByRole("radio", { name: /Ocultar conteúdo/ }).check()
