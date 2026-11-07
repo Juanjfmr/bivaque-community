@@ -5884,12 +5884,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-06",
-      "sourceRevision": "83470086",
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "954dd638",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora."
+        "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora.",
+        "07/11: na main — perguntas (#140) e grupos (#153, merge 4673a768), E2E real nas três larguras no CI. Ressalvas seguem em F04-RESSALVAS. Fecha quando INDICACOES-MEMORIA fechar(em) (dependências do card)."
       ],
       "id": "LAN-F04",
       "title": "F04 Comunidade e grupos ligados ao banco, com o redesenho provado",
@@ -5972,15 +5973,16 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-06",
-      "sourceRevision": "83470086",
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "954dd638",
       "links": ["docs/LANCAMENTO.md", "https://bazardavila.app.br/vender"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus.",
         "06/11, PR #141: corrigidos os RegExp do stub (b4573706), cidade atual antes da RPC com negativas (da149708) e remoção de donoId (22f286d2). E2E de interesse passa a usar o notebook de Heitor: Gabriela, dona do berço original, já está bloqueada no seed, e open_conversation recusa o par com 42501. Mantido caso negativo de bloqueio e checada resposta antes do atributo. Provas locais: gate --fast (lint/tipos/E2E tipos), 53 testes unitários de Mercado e 202 de escopo passaram. Sem E2E, servidor, banco ou gate completo por instrução do dono; próximo passo: CI da revisão entregue provar E2E real. Jornada permanece next, sem declaração de fechamento. Logs: .visual/run-013/correcoes-{gate-fast,unit-mercado,scope}.log.",
         "06/11, correção do check App mobile-first do PR #141 sobre 377df52e: reproduzidas 5 falhas e 20 passes nos cinco arquivos pedidos em mobile-375. Todos já instalavam o stub; completados fotos com URLs absolutas, galeria e aluguéis equivalentes à demo (3 quartos/98 m²/R$ 3.200 + R$ 720; 2 quartos/70 m²/R$ 2.400 + R$ 480). Decisão: restaurar Tenho interesse abrindo o editor existente, manter Guardar sem enviar sem POST e abrir a conversa somente pela ação explícita Abrir conversa; sem alteração de CSS ou desenho das telas. E2E integrado ajustado ao passo e acrescentada negativa 503 com preservação do texto e nova tentativa. Prova final dos cinco arquivos: 26/26 passam, zero pulados, em 375 px; build Vite e gate --fast verdes; servidor da porta 3200 encerrado. Logs: .visual/pr141-mobile-first/{antes,build,final,gate-fast}.log. Sem gate completo, banco, E2E integrado ou outras larguras nesta correção, conforme escopo solicitado; F06 permanece next e CI deve provar a revisão enviada.",
-        "05/11–06/11: RUN-013 (lista, detalhe e interesse do Mercado) integrado pelo PR #141 (b0719459). Implementação Qwen 3.8 Flash; revisão GLM-5.3-Flash FAIL (stub dos testes inerte, E2E sem prova); security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (interesse sem checagem de cidade); correção por GPT Sol 6.1: stub por RegExp, 403 de-outra-cidade antes da RPC, donoId retirado, specs do app com dados equivalentes; CI verde com o E2E real. Criar, editar e Meus anúncios continuam fora."
+        "05/11–06/11: RUN-013 (lista, detalhe e interesse do Mercado) integrado pelo PR #141 (b0719459). Implementação Qwen 3.8 Flash; revisão GLM-5.3-Flash FAIL (stub dos testes inerte, E2E sem prova); security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (interesse sem checagem de cidade); correção por GPT Sol 6.1: stub por RegExp, 403 de-outra-cidade antes da RPC, donoId retirado, specs do app com dados equivalentes; CI verde com o E2E real. Criar, editar e Meus anúncios continuam fora.",
+        "07/11: na main — mercado (#141) e gerenciar anúncios (#152), E2E real no CI. Ressalvas seguem em F06-RESSALVAS. Fecha quando LOC-IMPL e DATA-IBGE-BAIRROS fechar(em) (dependências do card)."
       ],
       "id": "LAN-F06",
       "title": "F06 Mercado e moradia ligados ao banco",
@@ -6114,13 +6116,14 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-05",
-      "sourceRevision": "19e5ef5a",
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "954dd638",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
-        "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo."
+        "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo.",
+        "07/11: conversas (#135) e avisos (#151) na main, com E2E real no CI. Fecha quando NOTIF-DEEPLINKS e LAN-PUSH fecharem (dependências do card)."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6343,7 +6346,7 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "O painel do operador continua no apps/web e fecha pelos critérios 1 a 5 do LANCAMENTO nos três ciclos: verificação manual, denúncia e suspensão. Fecha na fase 4, depois do F04 (fase 3). RUN-024: implementação dos três ciclos e histórico entregue em feat/lan-op; fechamento ainda depende da prova de banco, E2E e visual no CI, sem revisão externa nesta execução por instrução do dono.",
       "checklist": [
         "Verificação manual implementada: fila, URL de 60s, decisão, aviso, registro e descarte durável; provar no banco/runtime",
@@ -6352,18 +6355,16 @@
         "Registro das ações com RLS de operador, paginação e negações; confirmar pgTAP",
         "E2E lan-op-real.spec.ts escrito: três ciclos, 375/768/1440 e dois temas, limpeza das fixtures com auditoria preservada e identificada por manifesto; executar em stack exclusiva com workers=1"
       ],
-      "dependencies": ["LAN-F04"],
+      "dependencies": [],
       "tests": [
         "RUN-024 em 5a2dbd5f: gate --fast verde (lint, tipos dos workspaces e dos E2E); não substitui build/runtime",
         "RUN-024: vitest tests/unit/admin --maxWorkers=1: 51/51; test:scope: 222/222",
         "Correção única RUN-024 sobre fdad6a80 com o diff de erros de admissão deste commit: gate --fast verde; vitest tests/unit/admin --maxWorkers=1: 69/69; test:scope: 222/222. Logs: .visual/run-024/correcao-{gate-fast,admin,scope}.log",
         "RUN-024 CI item 1, sobre 2ae4cb1f + diff deste commit: gate --fast verde; test:scope 222/222; vitest tests/unit/admin --maxWorkers=1 80/80 (6 falhas esperadas antes da correção). Logs: .visual/run-024/ci-item-1-{gate-fast,scope,admin,admin-red}.log."
       ],
-      "blockers": [
-        "CI 42344019317, item 2: cenário de operator-suspensions.sql não informa group_id obrigatório. O roteiro proíbe editar o teste. Próximo passo: dono autorizar fixtures/groups.inc e group_id nos dois inserts, mantendo as asserções de suspensão ativa e encerrada; depois banco no CI. Nenhuma mudança de policy resolve esse cenário sem contrariar a recusa de publicação sem grupo."
-      ],
+      "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "c8f4dad56da5e23dfda39866eb917c9c24285d42",
+      "sourceRevision": "954dd638",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
       "proof": [
         "02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7).",
@@ -6373,8 +6374,11 @@
         "07/11, rodada única de correção: 51490fcd corrige o delimitador SQL (demais migrations do lote conferidas); c9163bda aplica gate próprio nas cinco páginas com 15 negações unitárias; 24a5c622 recria private.account_unavailable em migration nova considerando expires_at e amplia pgTAP de conversas; fdad6a80 retira DELETE da auditoria, prova a negação em pgTAP e preserva a trilha sintética identificada por manifesto no E2E. Este commit mapeia os erros das três ações de admissão por código, sem devolver mensagem do Postgres. Nenhuma mudança na forma dos tipos públicos.",
         "Próximo passo: CI aplica as cinco migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Nesta rodada, só gate --fast, test:scope e vitest de admin por instrução do dono; sem .env, banco, servidor, E2E ou revisão por outro modelo. Card não está concluído.",
         "07/11, correção do CI 42344019317 — item 1: nota opcional no resolve_report, helper, API e formulário; limite de 1000 preservado, sem nota fabricada. Migration 20261107044654 editada com autorização expressa do dono (ainda restrita ao PR); report-resolution-unified.sql intacto. operator-reports.sql amplia casos de nota nula/vazia/limite e não duplicação do aviso. Tipos públicos sem mudança de forma. Prova de banco pendente no CI; sem Docker, .env ou revisão externa por instrução do dono.",
-        "07/11, CI item 2 investigado sobre c8f4dad5: operator_end_suspension já remove a linha; is_account_suspended considera expires_at > now(). A recusa de posts vem de group_id is not null na policy posts_insert_locality_member (20261024100000, linha 30): ambos os inserts de operator-suspensions.sql omitem grupo. publicacao-so-em-grupo.sql linhas 94–106 exige 42501 para esse mesmo cenário. Alterar o banco para aceitá-lo quebraria o contrato de publicação só em grupo. Proposta exata em .visual/run-024/ci-item-2-fixture-proposta.patch; diagnóstico em ci-item-2-diagnostico.md. Teste e RLS preservados enquanto aguarda exceção explícita do dono ao roteiro."
-      ]
+        "07/11, CI item 2 investigado sobre c8f4dad5: operator_end_suspension já remove a linha; is_account_suspended considera expires_at > now(). A recusa de posts vem de group_id is not null na policy posts_insert_locality_member (20261024100000, linha 30): ambos os inserts de operator-suspensions.sql omitem grupo. publicacao-so-em-grupo.sql linhas 94–106 exige 42501 para esse mesmo cenário. Alterar o banco para aceitá-lo quebraria o contrato de publicação só em grupo. Proposta exata em .visual/run-024/ci-item-2-fixture-proposta.patch; diagnóstico em ci-item-2-diagnostico.md. Teste e RLS preservados enquanto aguarda exceção explícita do dono ao roteiro.",
+        "07/11: painel do operador na main (#156, merge 954dd638): verificação manual, denúncia e suspensão com registro das ações; revisão Qwen + auditoria Sonnet (R3) com rodada única de correção; pgTAP e E2E real lan-op-real.spec.ts nas três larguras e dois temas no CI.",
+        "07/11: dependência de LAN-F04 retirada — o LAN-OP precisava das denúncias do F04 (tabela reports, #140 e #153), já na main; o que mantém LAN-F04 aberto é INDICACOES-MEMORIA, sem relação com o painel."
+      ],
+      "completedAt": "2026-11-07"
     },
     {
       "id": "CI-E2E-UPSTREAM-INSTAVEL",
@@ -6845,7 +6849,7 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "description": "ADR-20261107 item 2: perguntas novas da cidade, encontros da semana e respostas às perguntas do membro, por e-mail, na frequência escolhida nas preferências de aviso, pelo outbox e dentro dos limites de envio.",
       "checklist": [
         "Preferência de frequência (desligado, diário, semanal) junto das preferências por canal",
@@ -6855,11 +6859,14 @@
       ],
       "dependencies": [],
       "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
-      "proof": [],
+      "proof": [
+        "07/11: na main pelo #157 (merge cb584e9b), RUN-026; revisão Qwen PASS + auditoria Sonnet com ressalvas corrigidas; pgTAP resumo-cidade.sql e E2E da preferência. Envio real depende de Vault e Resend em produção (PRODUCAO-PASSO-A-PASSO)."
+      ],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "59bbb2eb"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "AVISOS-AGRUPADOS",
@@ -6867,7 +6874,7 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "ADR-20261107 item 3: avisos do mesmo tipo sobre o mesmo alvo viram uma linha ('Fulano e mais 3 pessoas responderam') com o destino do alvo.",
       "checklist": [
         "Agrupar na rota GET /api/app/avisos por tipo e alvo, com contagem e o mais recente",
@@ -6876,11 +6883,14 @@
       ],
       "dependencies": [],
       "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
-      "proof": [],
+      "proof": [
+        "07/11: na main pelo #155 (merge 6718b76c), RUN-025; testes de unidade, do app e CI verde."
+      ],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "59bbb2eb"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "GRUPOS-CIDADE-AUTOMATICOS",
@@ -6888,7 +6898,7 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "description": "ADR-20261107 item 4: grupos abertos da cidade marcados como padrão recebem o membro ao fim da entrada; grupo fechado nunca entra no automático; o membro pode sair.",
       "checklist": [
         "Marca de grupo padrão (migration nova, só operador marca)",
@@ -6897,11 +6907,14 @@
       ],
       "dependencies": [],
       "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
-      "proof": [],
+      "proof": [
+        "07/11: na main pelo #155 (merge 6718b76c), RUN-025; pgTAP grupos-cidade-padrao.sql e E2E da entrada chegando com o grupo padrão."
+      ],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "59bbb2eb"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "TOPICOS-PERGUNTAS",
@@ -6909,7 +6922,7 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "ADR-20261107 item 5: etiquetas de lista fechada escolhidas ao perguntar, usadas para filtrar a lista de perguntas e a busca.",
       "checklist": [
         "Lista fechada de tópicos e coluna/tabela na pergunta (migration nova)",
@@ -6918,11 +6931,14 @@
       ],
       "dependencies": [],
       "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
-      "proof": [],
+      "proof": [
+        "07/11: na main pelo #155 (merge 6718b76c), RUN-025; filtro de tópico no E2E f04-perguntas-real."
+      ],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "59bbb2eb"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "HUMHUB-DEPOIS-DO-LANCAMENTO",
@@ -6948,6 +6964,30 @@
       "blockers": [],
       "updatedAt": "2026-11-07",
       "sourceRevision": "59bbb2eb"
+    },
+    {
+      "id": "OPERADOR-EXCLUSAO-DOC-DECIDIDO",
+      "title": "Excluir conta de operador falha se ele decidiu documento ainda retido",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "private.verification_documents exige reviewed_by quando review_status <> 'pending' (20260815132000), mas a FK é on delete set null: apagar a conta do operador que decidiu um documento ainda retido viola o check e o Auth devolve 'Database error deleting user'. Achado no E2E do LAN-OP (#156), contornado lá apagando o membro antes do operador.",
+      "checklist": [
+        "Decidir o tratamento em migration nova: reviewed_by vira referência que sobrevive (ex.: on delete set null com check aceitando revisor removido) ou a exclusão de conta do operador anonimiza o revisor",
+        "pgTAP: excluir operador com documento decidido não falha e a trilha continua coerente",
+        "Conferir o fluxo de exclusão de conta (20260915101543) para operadores"
+      ],
+      "dependencies": ["LAN-OP"],
+      "links": [
+        "supabase/migrations/20260815132000_verification_documents.sql",
+        "tests/e2e/lan-op-real.spec.ts"
+      ],
+      "proof": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "954dd638"
     }
   ],
   "launch": {
