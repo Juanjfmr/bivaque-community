@@ -4,16 +4,23 @@ import { join } from "node:path"
 import { expect, test } from "@playwright/test"
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "../../supabase/database.generated"
-import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+
+/** Do processo ou do arquivo local do apps/web (o que o CI escreve), como os outros specs reais. */
+function lerCredencial(chave: string): string | undefined {
+  const doProcesso = process.env[chave]
+  if (typeof doProcesso === "string" && doProcesso.length > 0) return doProcesso
+  return readEnvLocal(chave)
+}
 
 // Rodar só com stack local exclusiva, seed e --workers=1. Não executado no RUN-024 local.
 test.describe.configure({ mode: "serial" })
 
 for (const theme of ["light", "dark"] as const) {
   test(`três ciclos do operador, ${theme} @stateful`, async ({ page, request }, info) => {
-    const url = process.env["SUPABASE_URL"]
-    const anon = process.env["SUPABASE_ANON_KEY"] ?? process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-    const key = process.env["SUPABASE_SERVICE_ROLE_KEY"]
+    const url = lerCredencial("SUPABASE_URL") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_URL")
+    const anon = lerCredencial("SUPABASE_ANON_KEY") ?? lerCredencial("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    const key = lerCredencial("SUPABASE_SERVICE_ROLE_KEY")
     if (!url || !anon || !key) throw new Error("Credenciais descartáveis da stack local ausentes")
     if (!["127.0.0.1", "localhost"].includes(new URL(url).hostname)) {
       throw new Error("RUN-024 só pode escrever na stack local")
