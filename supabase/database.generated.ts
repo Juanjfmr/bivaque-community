@@ -1628,6 +1628,36 @@ export type Database = {
         }
         Relationships: []
       }
+      operator_actions: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           auth_user_id: string
@@ -3498,6 +3528,26 @@ export type Database = {
             }
             Returns: string
           }
+      operator_reprocess_verification: {
+        Args: { p_operator_user_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      operator_reject_pending: {
+        Args: { p_operator_user_id: string; p_reason: string; p_user_id: string }
+        Returns: undefined
+      }
+      prepare_operator_document_removals: {
+        Args: { p_operator_user_id: string }
+        Returns: { storage_object_path: string }[]
+      }
+      prepare_verification_document_removals: {
+        Args: never
+        Returns: { storage_object_path: string }[]
+      }
+      read_operator_verification_document: {
+        Args: { p_document_id: string; p_operator_user_id: string }
+        Returns: { storage_object_path: string }[]
+      }
       resolve_report: {
         Args: {
           p_action: string
@@ -3716,6 +3766,7 @@ export type Database = {
         | "recommendation_request"
         | "support_answered"
         | "group_post"
+        | "verification_decision"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3961,6 +4012,7 @@ export const Constants = {
         "recommendation_request",
         "support_answered",
         "group_post",
+        "verification_decision",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

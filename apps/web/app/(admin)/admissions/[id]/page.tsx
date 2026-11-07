@@ -30,7 +30,16 @@ function formatDate(iso: string): string {
 // Mapeia o resultado da action (que já confirmou operador antes da chamada
 // privilegiada) em estado visual. O motivo interno do banco não é ecoado —
 // só as mensagens que o operador precisa para reagir.
-function decisionResult(r: { ok: boolean; error?: string }, okMessage: string): DecisionState {
+function decisionResult(
+  r: { ok: boolean; error?: string; warning?: string },
+  okMessage: string,
+): DecisionState {
+  if (r.ok && r.warning)
+    return {
+      status: "error",
+      message:
+        "Decisão registrada e aviso emitido. O descarte está pendente; use Descartar documentos pendentes na fila.",
+    }
   if (r.ok) return { status: "ok", message: okMessage }
   if (r.error === "forbidden") return { status: "forbidden", message: "" }
   if (r.error === "rejection requires a reason") {

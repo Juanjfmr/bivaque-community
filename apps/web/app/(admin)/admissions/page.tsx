@@ -3,6 +3,7 @@ import type { Route } from "next"
 import Link from "next/link"
 import { createServerClient } from "../../../lib/supabase/server"
 import { EmptyState } from "../../components/bivaque/empty-state"
+import { PurgeForm } from "./purge-form"
 import { QueryError } from "./query-error"
 
 // The operator panel reads through `service_role` behind `is_current_user_operator`
@@ -183,6 +184,7 @@ export default async function AdminAdmissionsPage({
         <p className="text-sm text-muted">Acompanhe as verificações de acesso ao Bivaque.</p>
       </header>
 
+      <PurgeForm />
       <nav aria-label="Situação das solicitações">
         <ul className="flex gap-6 border-b border-border text-sm">
           <li>

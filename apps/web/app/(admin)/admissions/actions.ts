@@ -1,76 +1,25 @@
 "use server"
 
-import { createServerClient } from "@supabase/ssr"
+import { scrubReportReason } from "@bivaque/domain"
 import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
+import { removeReviewedDocuments } from "../../../lib/admin/document-removals"
+import { requireOperatorId, UUID_RE } from "../../../lib/admin/operator"
 import { log } from "../../../lib/logger"
-import { canOperateAdmissions } from "../../../lib/security/admissions-authz"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
-async function readOperatorIdFromCookies(): Promise<string | null> {
-  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
-  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
-  }
-  const cookieStore = await cookies()
-  const authClient = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll() {
-        // read-only — writes sao no fluxo de mutacao
-      },
-    },
-  })
-  const {
-    data: { user },
-  } = await authClient.auth.getUser()
-  return user?.id ?? null
-}
-
-// Resolve o caller do contexto do servidor E confirma que ele e operador.
-// Uma Server Action nao passa pelo layout: o gate de (admin)/layout NAO vale
-// aqui. Ver apps/web/lib/security/admissions-authz.ts para o porque.
-async function requireOperatorId(
-  serviceClient: ReturnType<typeof createServiceClient>,
-): Promise<string | null> {
-  const callerId = await readOperatorIdFromCookies()
-
-  // Sem caller nao ha o que perguntar ao banco. Mandar "" fazia o RPC receber
-  // um uuid invalido e devolver erro, que a versao anterior descartava — falha
-  // fechado, mas por acidente, e a regra da casa e ler o error de toda consulta.
-  if (callerId === null) return null
-
-  const { data: isOperator, error } = await serviceClient.rpc("is_current_user_operator", {
-    p_user_id: callerId,
-  })
-
-  if (error) {
-    // Nao da para afirmar que e operador: nega e registra. Silenciar aqui seria
-    // transformar indisponibilidade do banco em decisao de autorizacao.
-    log.error("operator check failed", { caller_id: callerId, error: error.message })
-    return null
-  }
-
-  return canOperateAdmissions({ callerId, callerIsOperator: isOperator === true }) ? callerId : null
-}
-
-// Reprocessa o pending chamando verification_reconcile_step diretamente.
-// O RPC roda como service_role e nao tem parametro de caller, entao a
-// autorizacao precisa acontecer aqui, antes da chamada privilegiada.
+// Reprocessamento e registro são uma transação, com caller confirmado também no RPC.
 export async function reprocessUserAction(
   userId: string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; warning?: string }> {
   const serviceClient = createServiceClient()
   const operatorId = await requireOperatorId(serviceClient)
   if (!operatorId) {
     return { ok: false, error: "forbidden" }
   }
 
-  const { data, error } = await serviceClient.rpc("verification_reconcile_step", {
+  const { data, error } = await serviceClient.rpc("operator_reprocess_verification", {
     p_user_id: userId,
+    p_operator_user_id: operatorId,
   })
   if (error) {
     log.error("admission reprocess failed", {
@@ -89,16 +38,20 @@ export async function reprocessUserAction(
   return { ok: true }
 }
 
-// Aprova ou rejeita um documento de verificacao. O gate confia no chamador.
+// Caller vem da sessão; o RPC reconfere o operador antes de decidir.
 export async function decideDocumentAction(
   documentId: string,
   decision: "approved" | "rejected",
   reason: string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; warning?: string }> {
   const serviceClient = createServiceClient()
   const operatorId = await requireOperatorId(serviceClient)
   if (!operatorId) {
     return { ok: false, error: "forbidden" }
+  }
+
+  if (!UUID_RE.test(documentId) || (decision !== "approved" && decision !== "rejected")) {
+    return { ok: false, error: "invalid-decision" }
   }
 
   if (decision === "rejected" && reason.trim().length === 0) {
@@ -108,7 +61,7 @@ export async function decideDocumentAction(
   const { error } = await serviceClient.rpc("decide_verification_document", {
     p_document_id: documentId,
     p_decision: decision,
-    p_reason: reason.trim(),
+    p_reason: scrubReportReason(reason.trim()).slice(0, 1000),
     p_operator_user_id: operatorId,
   })
   if (error) {
@@ -125,8 +78,9 @@ export async function decideDocumentAction(
     operator_id: operatorId,
     decision,
   })
+  const purged = await removeReviewedDocuments(serviceClient, operatorId)
   revalidatePath("/admissions")
-  return { ok: true }
+  return purged ? { ok: true } : { ok: true, warning: "purge-pending" }
 }
 
 // Rejeicao definitiva de um pending (sem documento). Encerra o caso,
@@ -145,10 +99,10 @@ export async function rejectPendingUserAction(
     return { ok: false, error: "rejection requires a reason" }
   }
 
-  const { error } = await serviceClient.rpc("reject_pending_user", {
+  const { error } = await serviceClient.rpc("operator_reject_pending", {
     p_user_id: userId,
     p_operator_user_id: operatorId,
-    p_reason: reason.trim(),
+    p_reason: scrubReportReason(reason.trim()).slice(0, 1000),
   })
   if (error) {
     log.error("admission reject failed", {
@@ -161,4 +115,13 @@ export async function rejectPendingUserAction(
   log.info("admission reject ok", { user_id: userId, operator_id: operatorId })
   revalidatePath("/admissions")
   return { ok: true }
+}
+
+export async function purgeDocumentsAction(): Promise<{ ok: boolean; error?: string }> {
+  const client = createServiceClient()
+  const operatorId = await requireOperatorId(client)
+  if (!operatorId) return { ok: false, error: "forbidden" }
+  const ok = await removeReviewedDocuments(client, operatorId)
+  revalidatePath("/admissions")
+  return ok ? { ok: true } : { ok: false, error: "purge-pending" }
 }
