@@ -8,13 +8,16 @@ import {
   criarContaConfirmada,
   criarContaVerificada,
   criarConvitePendente,
+  desmarcarGrupoPadrao,
   enderecoSintetico,
   esperarEtapaDaEntrada,
   esperarGruposDaCidade,
   esperarProvisionamento,
   lerCodigoDoEmail,
   MEMBRO_SEMEADO,
+  marcarGrupoPadrao,
   marcarVinculoVerificadoPorEmail,
+  participacaoNoGrupo,
   preencherCodigoDeEntrada,
   semearSessaoDeMembro,
 } from "./entrada-real-ajuda"
@@ -58,6 +61,17 @@ const GRUPOS_PUBLICOS_SEMEADOS = [
 const ROTA_DA_ENTRADA = "/app/entrar"
 
 test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
+  // RUN-025b (ADR-20261107 item 4): a cidade tem um grupo oficial marcado como
+  // padrão pelo operador, e a conclusão da entrada coloca a pessoa nele sem
+  // escolha. A marca volta ao estado do seed no fim do caso, sempre.
+  let grupoPadraoMarcado: string | null = null
+  test.afterEach(async () => {
+    if (grupoPadraoMarcado === null) return
+    const id = grupoPadraoMarcado
+    grupoPadraoMarcado = null
+    await desmarcarGrupoPadrao(id)
+  })
+
   test("conta nova percorre a entrada real até o Início", async ({ page }, testInfo) => {
     test.setTimeout(240_000)
     const projeto = testInfo.project.name
@@ -65,6 +79,10 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     // do OTP. O vínculo é marcado como verificado só depois do código, pelo
     // caminho canônico do banco (o Portal não responde no stack local).
     const email = enderecoSintetico(`entrada-${projeto}`)
+
+    // Marca ANTES do provisionamento: é o fim da entrada que lê os padrões.
+    const grupoPadrao = await marcarGrupoPadrao("Caminhada no Mindu")
+    grupoPadraoMarcado = grupoPadrao
 
     await page.emulateMedia({ colorScheme: "light" })
     await page.goto(ROTA_DA_ENTRADA)
@@ -260,6 +278,15 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     expect(sonda.status, "GET /api/app/entry/verification").toBe(200)
     expect(sonda.corpo?.status, "o vínculo precisa estar verificado no banco").toBe("verified")
     expect(sonda.corpo?.membroDaCidade, "a pessoa precisa ter vínculo com a cidade").toBe(true)
+
+    // RUN-025b: o grupo padrão da cidade entrou SOZINHO — ninguém o escolheu
+    // antes do provisionamento. O estado canônico é o banco, lido pelo service
+    // role; a tela de interesses vem depois e não é prova de entrada automática.
+    const participacao = await participacaoNoGrupo(userId, grupoPadrao)
+    expect(
+      participacao,
+      "a conclusão da entrada não colocou a pessoa no grupo padrão da cidade",
+    ).toEqual({ role: "member", status: "approved" })
   })
 
   test("provisionamento que falha mantém a pessoa na prévia da cidade, com Tentar de novo", async ({

@@ -242,10 +242,66 @@ describe("rotas de avisos do app", () => {
           destino: `/app/publicacao/${linha.target_id}`,
           lida: false,
           criadaEm: DATA,
+          grupo: `comment|created|post|${linha.target_id}`,
+          total: 1,
         },
       ])
       expect(corpo["naoLidos"]).toBe(1)
       expect(corpo["proximo"]).toBeNull()
+    })
+
+    it("Agrupa avisos do mesmo tipo e alvo: uma linha, contagem e o mais recente", async () => {
+      const maisNova = {
+        ...linha,
+        id: "50000000-0000-4000-8000-000000000002",
+        created_at: "2026-11-02T12:00:00.000Z",
+      }
+      const outroAlvo = {
+        ...linha,
+        id: "50000000-0000-4000-8000-000000000003",
+        type: "group_post",
+        target_type: "group",
+      }
+      const mock = mockClient({ avisos: [maisNova, linha, outroAlvo], naoLidos: 3 })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      const avisos = corpo["avisos"] as Record<string, unknown>[]
+      expect(avisos).toHaveLength(2)
+      expect(avisos[0]).toMatchObject({
+        id: maisNova.id,
+        criadaEm: maisNova.created_at,
+        total: 2,
+        lida: false,
+        grupo: `comment|created|post|${linha.target_id}`,
+      })
+      expect(avisos[1]).toMatchObject({ id: outroAlvo.id, total: 1 })
+      // A contagem de não lidos continua sendo a dos avisos, não a das linhas.
+      expect(corpo["naoLidos"]).toBe(3)
+    })
+
+    it("o grupo só aparece lido quando todos os membros estão lidos", async () => {
+      const lidaMaisNova = { ...linha, read_at: DATA }
+      const lida = mockClient({ avisos: [lidaMaisNova, { ...linha, read_at: DATA }] })
+      autenticar(lida)
+      const corpoLido = await json(await listar(req("GET")))
+      expect((corpoLido["avisos"] as { total: number; lida: boolean }[])[0]).toMatchObject({
+        total: 2,
+        lida: true,
+      })
+
+      // A mais nova lida, a antiga pendente: o grupo continua não lido.
+      const antiga = mockClient({
+        avisos: [
+          { ...linha, read_at: DATA },
+          { ...linha, id: "50000000-0000-4000-8000-000000000009" },
+        ],
+      })
+      autenticar(antiga)
+      const corpoAberto = await json(await listar(req("GET")))
+      expect((corpoAberto["avisos"] as { total: number; lida: boolean }[])[0]).toMatchObject({
+        total: 2,
+        lida: false,
+      })
     })
 
     it("a pessoa vem da sessão; user_id na query não muda o recorte", async () => {
@@ -332,6 +388,36 @@ describe("rotas de avisos do app", () => {
       expect(mock.chamadas.some((chamada) => chamada.coluna === "id")).toBe(false)
     })
 
+    it("marca o grupo inteiro pela chave opaca, com todos os filtros do grupo", async () => {
+      const mock = mockClient({ atualizados: [{ id: "a" }, { id: "b" }, { id: "c" }] })
+      autenticar(mock)
+      const resposta = await marcarLido(
+        req(
+          "POST",
+          `${BASE}/lidos`,
+          JSON.stringify({ grupo: `comment|created|post|${linha.target_id}` }),
+        ),
+      )
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ atualizados: 3 })
+      expect(filtroDe(mock.chamadas, "recipient_user_id", USER)).toBe(true)
+      expect(filtroDe(mock.chamadas, "read_at", null)).toBe(true)
+      expect(filtroDe(mock.chamadas, "type", "comment")).toBe(true)
+      expect(filtroDe(mock.chamadas, "action", "created")).toBe(true)
+      expect(filtroDe(mock.chamadas, "target_type", "post")).toBe(true)
+      expect(filtroDe(mock.chamadas, "target_id", linha.target_id)).toBe(true)
+    })
+
+    it("uma chave truncada não vira 'marcar todos': os filtros faltam e é 400", async () => {
+      const mock = mockClient()
+      autenticar(mock)
+      const resposta = await marcarLido(
+        req("POST", `${BASE}/lidos`, JSON.stringify({ grupo: "comment|created|post" })),
+      )
+      expect(resposta.status).toBe(400)
+      expect(mock.chamadas.some((chamada) => chamada.op === "update")).toBe(false)
+    })
+
     it("o aviso de outra pessoa não é alcançado: zero linhas, sem revelar nada", async () => {
       const mock = mockClient({ atualizados: [] })
       autenticar(mock)
@@ -347,6 +433,9 @@ describe("rotas de avisos do app", () => {
       ["id fora do formato", { id: "nao-e-uuid" }],
       ["todos que não é booleano verdadeiro", { todos: "sim" }],
       ["corpo vazio", null],
+      ["grupo com alvo que não é uuid", { grupo: "comment|created|post|nao-e-uuid" }],
+      ["grupo com parte vazia", { grupo: `comment||post|${linha.target_id}` }],
+      ["grupo e id juntos", { id: AVISO, grupo: `comment|created|post|${linha.target_id}` }],
     ])("corpo inválido (%s) é 400", async (_rotulo, corpo) => {
       const mock = mockClient()
       autenticar(mock)

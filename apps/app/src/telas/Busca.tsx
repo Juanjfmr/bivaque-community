@@ -19,6 +19,7 @@ import {
   type InicioDaCidade,
   lerInicio,
 } from "@/lib/dados/inicio"
+import { TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -47,6 +48,12 @@ const FILTROS: readonly ItemDeFiltro[] = [
   { id: "guia", rotulo: "Guia" },
 ]
 
+/** O tópico filtra as perguntas da busca (ADR-20261107 item 5); lista fechada. */
+const TOPICOS: readonly ItemDeFiltro[] = [
+  { id: "todos", rotulo: "Todos os tópicos" },
+  ...TOPICOS_DAS_PERGUNTAS,
+]
+
 const SUGESTOES = ["escola", "berço", "mudança", "mecânico"] as const
 const TAMANHO_DA_LISTA = 20
 
@@ -71,6 +78,7 @@ export function Busca() {
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [escopo, setEscopo] = useState("all")
+  const [topico, setTopico] = useState("todos")
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
   const { consulta, definirConsulta: setConsulta } = casca
   const termo = consulta.trim()
@@ -86,7 +94,10 @@ export function Busca() {
     }
     if (comTermo) {
       setDados(null)
-      void buscarNaCidade(termo, { signal: controle.signal })
+      void buscarNaCidade(termo, {
+        signal: controle.signal,
+        topico: topico === "todos" ? undefined : topico,
+      })
         .then((valor) => {
           if (!controle.signal.aborted) setDados(valor)
         })
@@ -100,7 +111,7 @@ export function Busca() {
         .catch(falhou)
     }
     return () => controle.abort()
-  }, [termo, comTermo, rodada])
+  }, [termo, comTermo, rodada, topico])
 
   // Uma consulta digitada tem precedência sobre a categoria tocada na grade.
   useEffect(() => {
@@ -141,10 +152,25 @@ export function Busca() {
       <ChipsDeFiltro
         itens={FILTROS}
         valor={escopo}
-        aoEscolher={setEscopo}
+        aoEscolher={(id) => {
+          setEscopo(id)
+          // O tópico só alcança as perguntas: fora dos escopos delas, volta a "todos".
+          if (id !== "perguntas" && id !== "all") setTopico("todos")
+        }}
         rotulo="Filtrar por tipo"
         className="mt-1"
       />
+
+      {comTermo && (escopo === "perguntas" || escopo === "all") ? (
+        <div data-topicos="filtro-busca">
+          <ChipsDeFiltro
+            itens={TOPICOS}
+            valor={topico}
+            aoEscolher={setTopico}
+            rotulo="Filtrar perguntas por tópico"
+          />
+        </div>
+      ) : null}
 
       {erro ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />

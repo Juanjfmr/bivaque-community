@@ -60,11 +60,15 @@ test.describe("F03 — criação real", { tag: "@stateful" }, () => {
     const form = page.locator('[data-fluxo="perguntar"]')
     await form.locator("#nova-pergunta").fill(titulo)
     await form.locator("#topico-pergunta").fill("Educação")
+    // RUN-025c (ADR-20261107 item 5): o tópico é escolha da lista fechada, não
+    // chute do texto. A conferência no banco, adiante, passa a ler a escolha.
+    await form.getByLabel("Filtrar por Educação").click()
     await form.getByRole("button", { name: "Salvar rascunho" }).click()
     // Recarregar devolve a entrada com a sobreposição aberta (ADR da SPA): o
     // formulário volta sozinho, com o rascunho. Não há botão a clicar por baixo.
     await page.reload()
     await expect(form.locator("#nova-pergunta")).toHaveValue(titulo)
+    await expect(form.getByLabel("Filtrar por Educação")).toHaveAttribute("data-estado", "on")
     const rota = /\/api\/app\/perguntas$/
     await page.route(rota, (pedido) =>
       pedido.fulfill({ status: 503, json: { erro: "escrita-indisponivel" } }),

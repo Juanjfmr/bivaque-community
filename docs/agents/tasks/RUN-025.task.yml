@@ -1,0 +1,80 @@
+# ADR-20261107 itens 3, 4 e 5 (07/11/2026): avisos agrupados, grupos da cidade automáticos e tópicos nas perguntas.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-025
+
+objective: >
+  Três recursos pequenos decididos pelo dono: (a) avisos do mesmo tipo sobre o mesmo alvo aparecem como uma
+  linha agrupada na caixa de avisos; (b) ao concluir a entrada, o membro entra nos grupos abertos da cidade
+  marcados como padrão pelo operador; (c) perguntas da cidade ganham tópicos de uma lista fechada, escolhidos
+  ao perguntar e usados para filtrar a lista e a busca.
+
+authority:
+  - docs/decisions/ADR-20261107-recursos-inspirados-humhub.md (itens 3, 4 e 5)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (o molde)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo)
+  - tools/backend-kanban cards AVISOS-AGRUPADOS, GRUPOS-CIDADE-AUTOMATICOS e TOPICOS-PERGUNTAS
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A caixa de avisos (F09, /api/app/avisos) lista um aviso por linha; o provisionamento da entrada (F01) só
+    sugere grupos; as perguntas da cidade (F04 e F03, /api/app/perguntas) não têm tópico.
+
+allowed_paths:
+  - apps/web/app/api/app/avisos
+  - apps/web/lib/notifications
+  - apps/app/lib/dados/avisos.ts
+  - apps/app/src/avisos
+  - apps/app/src/telas/Avisos.tsx
+  - apps/web/app/api/app/entry/provision
+  - apps/web/lib/onboarding
+  - apps/web/app/api/app/perguntas
+  - apps/web/app/api/app/busca
+  - apps/web/lib/recommendations
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/src/telas/Busca.tsx
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/criar
+  - apps/app/tests
+  - supabase/migrations
+  - supabase/tests
+  - supabase/database.generated.ts
+  - tests/unit/app-api
+  - tests/e2e
+  - tests/scope
+  - docs/agents/tasks/RUN-025.task.yml
+  - .visual/run-025
+
+forbidden:
+  - grupo fechado no automático; operador é quem marca grupo padrão (nunca o membro)
+  - tópico livre (só a lista fechada)
+  - editar migration existente; ler profiles.locality_id (não existe mais)
+  - mudar o desenho aprovado além de acrescentar o filtro de tópico e a escolha de tópico
+  - pedir revisão a outro modelo (o coordenador cuida)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "(a) GET /api/app/avisos devolve avisos agrupados por tipo e alvo com contagem e o mais recente; marcar lido marca o grupo; teste de unidade e do app."
+  - "(b) migration nova com a marca de grupo padrão (escrita só do operador); o provisionamento inclui o membro nos grupos abertos padrão da sua cidade; pgTAP positivo e negativo; o E2E da entrada chega com esses grupos."
+  - "(c) migration nova com a lista fechada de tópicos e o vínculo à pergunta; escolher tópico ao perguntar; filtro por tópico na Comunidade e na Busca; testes de unidade, do app e E2E."
+  - "Tipos públicos regenerados (supabase/database.generated.ts) no formato do generate:types."
+  - "Os E2E devolvem o banco ao estado inicial (workers=1, três larguras em série)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz e test:db no CI
+
+risk: escrita em vínculo de grupo e novas tabelas
+risk_level: R3
+adr: docs/decisions/ADR-20261107-recursos-inspirados-humhub.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

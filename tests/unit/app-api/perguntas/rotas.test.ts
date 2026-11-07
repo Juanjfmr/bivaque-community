@@ -238,10 +238,34 @@ describe("rotas de perguntas do app", () => {
     it("valida os parâmetros antes de consultar o banco", async () => {
       const mock = mockClient()
       authenticate(mock)
-      for (const busca of ["?filtro=tudo", "?limite=51", "?limite=0", "?depois=-1", "?depois=x"]) {
+      for (const busca of [
+        "?filtro=tudo",
+        "?limite=51",
+        "?limite=0",
+        "?depois=-1",
+        "?depois=x",
+        "?topico=livre",
+      ]) {
         expect((await listar(req("GET", `${BASE}${busca}`))).status).toBe(400)
       }
       expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("o tópico da lista fechada vira p_category da função, no servidor", async () => {
+      const mock = mockClient({ perguntas: [] })
+      authenticate(mock)
+      await listar(req("GET", `${BASE}?topico=moradia`))
+      expect(mock.rpcCalls[0]?.args).toMatchObject({ p_category: "moradia" })
+
+      const semTopico = mockClient({ perguntas: [] })
+      authenticate(semTopico)
+      await listar(req("GET", `${BASE}`))
+      expect(semTopico.rpcCalls[0]?.args).not.toHaveProperty("p_category")
+
+      const vazio = mockClient({ perguntas: [] })
+      authenticate(vazio)
+      await listar(req("GET", `${BASE}?topico=`))
+      expect(vazio.rpcCalls[0]?.args).not.toHaveProperty("p_category")
     })
 
     it("mapeia as linhas, a autoria e o nome de quem perguntou", async () => {

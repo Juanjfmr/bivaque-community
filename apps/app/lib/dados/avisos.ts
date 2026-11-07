@@ -20,6 +20,13 @@ export type AvisoRecebido = Readonly<{
   lida: boolean
   criadaEm: string
   tipo: string
+  /**
+   * Chave opaca do grupo (mesmo tipo, ação e alvo). Marcar lido devolve a chave
+   * e o servidor alcança o grupo inteiro.
+   */
+  grupo: string
+  /** Quantos avisos entraram nesta linha. 1 = linha solteira. */
+  total: number
 }>
 
 export type ListaDeAvisos = Readonly<{
@@ -114,6 +121,8 @@ function lerAviso(valor: unknown): AvisoRecebido {
     lida: exigirBooleano(aviso, "lida"),
     criadaEm: exigirTexto(aviso, "criadaEm"),
     tipo: exigirTexto(aviso, "tipo"),
+    grupo: exigirTexto(aviso, "grupo"),
+    total: exigirNumero(aviso, "total"),
   }
 }
 
@@ -164,6 +173,12 @@ export async function lerAvisos(
 /** Marca um aviso como lido. Devolve quantos foram gravados (0 = já estava). */
 export async function marcarLido(id: string, opcoes: Opcoes = {}): Promise<number> {
   const corpo = await enviar("POST", "/api/app/avisos/lidos", { id }, opcoes)
+  return exigirNumero(corpo, "atualizados")
+}
+
+/** Marca o grupo inteiro como lido. Devolve quantos avisos o grupo tinha. */
+export async function marcarGrupoLido(grupo: string, opcoes: Opcoes = {}): Promise<number> {
+  const corpo = await enviar("POST", "/api/app/avisos/lidos", { grupo }, opcoes)
   return exigirNumero(corpo, "atualizados")
 }
 

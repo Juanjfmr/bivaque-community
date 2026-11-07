@@ -14,6 +14,7 @@ function autenticar(falha = "", semCidade = false) {
   const filtros: Array<[string, string, unknown]> = []
   const padroes: Array<[string, string, string]> = []
   const selects: Array<[string, string]> = []
+  const rpcArgs: Array<[string, Record<string, unknown>]> = []
   function resposta(tabela: string) {
     if (tabela === "locality_memberships")
       return {
@@ -74,7 +75,13 @@ function autenticar(falha = "", semCidade = false) {
     })
     return query
   }
-  const client = { from, rpc: (nome: string) => Promise.resolve(resposta(nome)) }
+  const client = {
+    from,
+    rpc: (nome: string, args?: Record<string, unknown>) => {
+      rpcArgs.push([nome, args ?? {}])
+      return Promise.resolve(resposta(nome))
+    },
+  }
   resolver.mockResolvedValue({
     estado: "autenticada",
     via: "cookie",
@@ -82,7 +89,7 @@ function autenticar(falha = "", semCidade = false) {
     cliente: client,
     cabecalhos: {},
   } as never)
-  return { filtros, padroes, selects }
+  return { filtros, padroes, selects, rpcArgs }
 }
 
 const buscar = (consulta: string) =>
@@ -154,6 +161,24 @@ describe("busca do app", () => {
     const resposta = await buscar("casa")
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo postgres")
+  })
+  it("o tópico da lista fechada estreita só as perguntas da busca", async () => {
+    const { rpcArgs } = autenticar()
+    const resposta = await GET(new NextRequest(`${url}?q=casa&topico=moradia`))
+    expect(resposta.status).toBe(200)
+    expect(rpcArgs).toContainEqual([
+      "list_indications",
+      expect.objectContaining({ p_category: "moradia" }),
+    ])
+    expect(rpcArgs).toContainEqual([
+      "search_providers",
+      expect.not.objectContaining({ p_category: expect.anything() }),
+    ])
+  })
+  it("tópico fora da lista fechada é 400, antes de consultar o banco", async () => {
+    const { rpcArgs } = autenticar()
+    expect((await GET(new NextRequest(`${url}?q=casa&topico=livre`))).status).toBe(400)
+    expect(rpcArgs).toHaveLength(0)
   })
 })
 

@@ -13,6 +13,18 @@ export const dynamic = "force-dynamic"
 const LIMITE_PADRAO = 20
 const LIMITE_MAXIMO = 50
 
+/** A linha agrupada como o app a recebe. */
+type LinhaDeAviso = {
+  id: string
+  tipo: string
+  texto: string
+  destino: string
+  lida: boolean
+  criadaEm: string
+  grupo: string
+  total: number
+}
+
 /**
  * Os avisos do próprio membro (F09), pela caixa que a web antiga usa
  * (`public.notifications`, RLS por destinatário).
@@ -68,8 +80,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (pagina.error) throw pagina.error
     if (contagem.error) throw contagem.error
 
+    // Avisos agrupados (ADR-20261107 item 3): mesmo tipo, ação e alvo viram uma
+    // linha só — a mais recente, com a contagem. A chave do grupo viaja opaca na
+    // resposta: quem marca lido devolve a chave e o servidor marca o grupo todo.
+    // shortcut: o agrupamento é dentro da página lida; um grupo que cruza a
+    // borda da página aparece uma vez em cada página com a contagem parcial.
     const linhas = pagina.data ?? []
-    const avisos = linhas.map((linha) => {
+    const grupos = new Map<string, LinhaDeAviso>()
+    for (const linha of linhas) {
       const aviso: AvisoDoBanco = {
         id: linha.id,
         tipo: linha.type,
@@ -80,15 +98,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         lida: linha.read_at !== null,
         criadaEm: linha.created_at,
       }
-      return {
-        id: aviso.id,
-        tipo: aviso.tipo,
-        texto: rotuloDoAviso(aviso),
-        destino: destinoDoAviso(aviso),
-        lida: aviso.lida,
-        criadaEm: aviso.criadaEm,
+      const chave = `${aviso.tipo}|${aviso.acao}|${aviso.alvoTipo}|${aviso.alvoId}`
+      const existente = grupos.get(chave)
+      if (existente === undefined) {
+        grupos.set(chave, {
+          id: aviso.id,
+          tipo: aviso.tipo,
+          texto: rotuloDoAviso(aviso),
+          destino: destinoDoAviso(aviso),
+          lida: aviso.lida,
+          criadaEm: aviso.criadaEm,
+          grupo: chave,
+          total: 1,
+        })
+      } else {
+        existente.total += 1
+        if (!aviso.lida) existente.lida = false
       }
-    })
+    }
+    const avisos = [...grupos.values()]
 
     return responder(
       request,
