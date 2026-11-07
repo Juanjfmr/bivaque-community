@@ -4714,7 +4714,7 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "description": "Decisão do dono em 25/09/2026: as comunidades existem para substituir o grupo de WhatsApp com memória — \"as pessoas pedem indicação pelo whatsapp e 10 minutos depois ninguem mais acha\". O pedido de indicação morava só em /recommendations, a busca não o alcançava e saúde exigia grupo. ADR-20260925-memoria-de-indicacoes: saúde sem trava nem aviso, resolvido alimenta a busca (altera a D5 de ADR-20260909-resposta-que-resolveu), Indicações + Orçamentos. Entregue: list_indications (busca em português sem acento, no pedido e nas respostas), /indicacoes com busca antes de pedir, /indicacoes/[id] como endereço único, vista Indicações na Comunidade.",
       "checklist": [
         "ADR com as decisões do dono [FEITO 25/09]",
@@ -4723,17 +4723,18 @@
         "/indicacoes, /indicacoes/[id] e vista Indicações na Comunidade [FEITO, provado a 375 e 1440]",
         "Todas as portas do pedido em /indicacoes/<id> (notificação, salvos, denúncia, Guia, Início, compartilhar) [FEITO]",
         "/pedidos rotulado Orçamentos [FEITO]",
-        "Spec E2E do ciclo pedir → responder → Ajudou a resolver → achar pela busca [ESCRITO: tests/e2e/indicacoes-memoria.spec.ts; não executado — CI sem cota e sem build local]",
+        "Spec E2E do ciclo pedir → responder → Ajudou a resolver → achar pela busca [FEITO: tests/e2e/indicacoes-memoria.spec.ts passa nas três larguras no CI run 42362969815, PR #156]",
         "Destino de /recommendations [FEITO 25/09: aposentada, redireciona por aba e por pedido; código e testes da página antiga removidos]",
         "Busca do cabeçalho incluir Indicações [FEITO: primeiro grupo, Ver todos leva o termo à caixa]",
         "Pedir pela conversa [FEITO: botão de criar e Início abrem /community?vista=indicacoes&pedir=1; quem não tem comunidade também vê a vista]",
-        "Referências do Mobbin para o desenho (MCP desconectado na sessão de 25/09)"
+        "Referências do Mobbin para o desenho [SUPERADO: as telas web de setembro saem pelo app (ADR-20261024-front-react-spa); o desenho do app segue o protótipo atual]"
       ],
       "proof": [
         "02/11: card do modelo antigo de comunidades (ADR-20261024-redesenho-da-comunidade); não é o próximo trabalho independente — entra no LAN-F04. Não fechar só no quadro (instrução do dono em 02/11).",
         "pgTAP memoria-de-indicacoes.sql 12/12 no banco local (migration aplicada à mão)",
         "Reset limpo rodado pelo dono em 25/09/2026: supabase db reset --local --no-seed e test:db — Files=130, Tests=1726, Result: PASS; as 6 migrations da branch aplicam do zero",
-        "Navegador 375 e 1440, três contas: foco na caixa com ?pedir=1; 'Alguém indica pediatra?' traz o pedido resolvido com a resposta; frase nova sem parecido abre 'Pedir à cidade' com categoria sugerida; publicar leva a /indicacoes/<id>; outro membro acha a pergunta sem acento e responde; a autora marca 'Isso resolveu'; um terceiro busca por prefixo e vê a resposta sem abrir a conversa; /community?vista=indicacoes acende Comunidades; nenhum erro de página"
+        "Navegador 375 e 1440, três contas: foco na caixa com ?pedir=1; 'Alguém indica pediatra?' traz o pedido resolvido com a resposta; frase nova sem parecido abre 'Pedir à cidade' com categoria sugerida; publicar leva a /indicacoes/<id>; outro membro acha a pergunta sem acento e responde; a autora marca 'Isso resolveu'; um terceiro busca por prefixo e vê a resposta sem abrir a conversa; /community?vista=indicacoes acende Comunidades; nenhum erro de página",
+        "07/11: E2E indicacoes-memoria.spec.ts (pedir, responder, resolver e achar depois; vista Indicações) PASS em mobile-375, tablet-768 e desktop-1440 no CI run 42362969815 (PR #156, merge 954dd638)."
       ],
       "tests": [
         "supabase/tests/memoria-de-indicacoes.sql",
@@ -4746,8 +4747,9 @@
         "apps/web/app/components/indications/"
       ],
       "dependencies": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "686fd5fd"
+      "updatedAt": "2026-11-07",
+      "sourceRevision": "dc9bfcbd",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "INDICACOES-AVISO",
@@ -5885,18 +5887,19 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "954dd638",
+      "sourceRevision": "dc9bfcbd",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora.",
-        "07/11: na main — perguntas (#140) e grupos (#153, merge 4673a768), E2E real nas três larguras no CI. Ressalvas seguem em F04-RESSALVAS. Fecha quando INDICACOES-MEMORIA fechar(em) (dependências do card)."
+        "07/11: na main — perguntas (#140) e grupos (#153, merge 4673a768), E2E real nas três larguras no CI. Ressalvas seguem em F04-RESSALVAS. Fecha quando INDICACOES-MEMORIA fechar(em) (dependências do card).",
+        "07/11: dependências RED-003 e RECON-050 retiradas — tratam de comunidades, legado fora do produto atual (AGENTS.md); INDICACOES-MEMORIA fechado com o E2E do CI. F04 completo: perguntas (#140), grupos (#153), tópicos (#155)."
       ],
       "id": "LAN-F04",
       "title": "F04 Comunidade e grupos ligados ao banco, com o redesenho provado",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Escopo em docs/LANCAMENTO.md (F04). Pronta só pelos seis critérios de pronto.",
       "checklist": [
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
@@ -5906,14 +5909,8 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": [
-        "LAN-F1-IDENTIDADE",
-        "RED-003",
-        "INDICACOES-MEMORIA",
-        "INDICACOES-AVISO",
-        "RECON-050",
-        "APP-001"
-      ]
+      "dependencies": ["LAN-F1-IDENTIDADE", "INDICACOES-MEMORIA", "INDICACOES-AVISO", "APP-001"],
+      "completedAt": "2026-11-07"
     },
     {
       "phase": "Lançamento",
