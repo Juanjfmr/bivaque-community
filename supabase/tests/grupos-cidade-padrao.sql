@@ -16,7 +16,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(24);
 
 \ir fixtures/foundation.inc
 
@@ -99,7 +99,7 @@ select public.provision_member_entry(
   p_consent_version := 2
 );
 
--- As conferências leem group_memberships, que service_role não lê pela Data API.
+-- As conferências rodam como dono do teste, fora do papel de serviço.
 reset role;
 
 select ok(
@@ -224,6 +224,11 @@ select ok(
 select ok(
   has_column_privilege('service_role', 'public.groups', 'is_default', 'UPDATE'),
   'o papel de serviço escreve a marca de padrão (só a coluna)'
+);
+
+select ok(
+  has_table_privilege('service_role', 'public.group_memberships', 'SELECT'),
+  'o papel de serviço lê a participação criada pela entrada'
 );
 
 -- A RPC: recusar quem não é operador, marcar quem é, não inventar grupo.
