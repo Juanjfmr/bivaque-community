@@ -1,0 +1,83 @@
+# ADR-20261107 item 2 (07/11/2026): resumo da cidade por e-mail.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-026
+
+objective: >
+  O membro escolhe, nas preferências de aviso do app, receber um resumo da cidade por e-mail (desligado,
+  diário ou semanal). Um job agendado monta, por membro que escolheu, o resumo do período: perguntas novas
+  da cidade dele, encontros dos próximos sete dias na cidade e respostas às perguntas que ele fez; e
+  enfileira um e-mail no outbox existente, respeitando o limite do outbox e com descadastro em um toque.
+  Sem novidade no período, nada é enviado.
+
+authority:
+  - docs/decisions/ADR-20261107-recursos-inspirados-humhub.md (item 2)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (o molde)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo)
+  - tools/backend-kanban card RESUMO-CIDADE-EMAIL
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    As preferências de aviso (apps/web/app/api/app/avisos/preferencias, apps/app/src/avisos/PreferenciasDeAvisos.tsx,
+    apps/web/lib/notifications/channel-preferences.ts) não têm frequência de resumo; o outbox
+    (supabase/migrations/*outbox*, apps/web/app/api/internal/outbox, apps/web/lib/outbox) e o pg_cron existem,
+    mas nenhum job monta resumo da cidade.
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/avisos
+  - apps/web/app/api/internal
+  - apps/web/app/api/app/resumo
+  - apps/web/lib/notifications
+  - apps/web/lib/outbox
+  - apps/web/lib/resumo
+  - packages/domain/src/outbox.ts
+  - apps/app/lib/dados/avisos.ts
+  - apps/app/src/avisos
+  - apps/app/tests
+  - tests/unit
+  - tests/e2e/resumo-cidade-real.spec.ts
+  - tests/scope
+  - docs/PRODUCAO-PASSO-A-PASSO.md
+  - docs/agents/tasks/RUN-026.task.yml
+  - .visual/run-026
+
+forbidden:
+  - dado de terceiro no e-mail além do que o membro já vê no app (nada de e-mail, CPF, OM, posto ou endereço de outra pessoa; autor só pelo nome de exibição)
+  - conteúdo de outra cidade, oculto, removido ou de conta suspensa/indisponível no resumo
+  - enviar e-mail fora do outbox existente ou furar o limite de lote do outbox
+  - segredo novo hardcoded; descadastro que exija login (o link de um toque basta, com token e expiração)
+  - editar migration existente; ler profiles.locality_id (não existe; a cidade vem do vínculo de localidade do membro)
+  - mudar o desenho aprovado das preferências além de acrescentar a escolha de frequência
+  - push, merge ou force-push; pedir revisão a outro modelo ou ao Claude
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Preferência de frequência (off, daily, weekly; padrão off) em migration nova, gravada pela rota de preferências do app sob RLS da sessão; o app mostra e grava a escolha."
+  - "Função de banco (security definer com search_path fixo, executável só por service_role) que monta e enfileira os resumos devidos, marca o último envio por membro e não reenvia no mesmo período; agendada no pg_cron no padrão dos jobs existentes."
+  - "O e-mail traz só itens do período, da cidade do membro, visíveis a ele; período sem novidade não gera e-mail."
+  - "Descadastro em um toque: link com token aleatório e expiração, rota que desliga a frequência sem sessão e responde com página simples."
+  - "pgTAP positivo e negativo (preferência off não recebe; outra cidade não entra; oculto não entra; segundo disparo no período não duplica; membro não chama a função)."
+  - "Testes de unidade da rota de preferências e da montagem do conteúdo; teste do app da escolha de frequência."
+  - "E2E tests/e2e/resumo-cidade-real.spec.ts: gravar a preferência pelo app e voltar ao estado inicial (workers=1, três larguras em série)."
+  - "Tipos públicos regenerados (supabase/database.generated.ts) no formato do generate:types; segredo novo de Vault, se houver, documentado por nome em docs/PRODUCAO-PASSO-A-PASSO.md."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit --maxWorkers=1
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz e test:db no CI
+
+risk: e-mail para membros com conteúdo da cidade, job agendado e descadastro sem sessão
+risk_level: R3
+adr: docs/decisions/ADR-20261107-recursos-inspirados-humhub.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

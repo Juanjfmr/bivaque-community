@@ -54,11 +54,12 @@ export type PreferenciasDeAviso = Readonly<{
   events: boolean
   productNews: boolean
   indications: boolean
+  resumoCidade: "off" | "daily" | "weekly"
   channels: readonly CanalDaPreferencia[]
 }>
 
 /** O tipo do aviso no servidor e a chave da preferência não têm o mesmo nome. */
-export type ChaveDaPreferencia = Exclude<keyof PreferenciasDeAviso, "channels">
+export type ChaveDaPreferencia = Exclude<keyof PreferenciasDeAviso, "channels" | "resumoCidade">
 
 export function chaveDaPreferencia(tipo: TipoDoAviso): ChaveDaPreferencia {
   return tipo === "product_news" ? "productNews" : tipo
@@ -128,12 +129,16 @@ function lerAviso(valor: unknown): AvisoRecebido {
 function lerPreferenciasDoCorpo(corpo: Corpo): PreferenciasDeAviso {
   const preferencias = exigirRegistro(corpo["preferencias"])
   const canais = preferencias["channels"]
+  const resumoCidade = preferencias["resumoCidade"]
+  if (resumoCidade !== "off" && resumoCidade !== "daily" && resumoCidade !== "weekly")
+    throw foraDoContrato()
   if (!Array.isArray(canais)) throw foraDoContrato()
   return {
     comments: exigirBooleano(preferencias, "comments"),
     events: exigirBooleano(preferencias, "events"),
     productNews: exigirBooleano(preferencias, "productNews"),
     indications: exigirBooleano(preferencias, "indications"),
+    resumoCidade,
     channels: canais.map((valor) => {
       const canal = exigirRegistro(valor)
       const notificationType = canal["notificationType"]

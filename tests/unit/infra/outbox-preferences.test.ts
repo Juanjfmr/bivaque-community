@@ -115,6 +115,7 @@ function clientFor(
   outboxRead.update.mockReturnValue(update)
 
   return {
+    rpc: vi.fn(),
     update: outboxRead,
     from: vi.fn((table: string) => {
       if (table === "outbox") return outboxRead
@@ -348,6 +349,50 @@ describe("event_invite outbox preference", () => {
         skipped: 1,
       })
       expect(send).not.toHaveBeenCalled()
+    },
+  )
+})
+
+describe("RUN-026: resumo revalidado antes da entrega", () => {
+  it("entrega só o conteúdo atual devolvido pelo banco", async () => {
+    const client = clientFor("city_digest", true)
+    const content = {
+      city: "Manaus",
+      questions: [{ id: "pergunta", title: "Visível" }],
+      events: [],
+      replies: [],
+    }
+    client.rpc.mockResolvedValue({ data: content, error: null })
+    expect(await dispatch(client)).toMatchObject({ sent: 1 })
+    expect(client.rpc).toHaveBeenCalledWith("city_digest_for_delivery", {
+      p_outbox_id: "10000000-0000-4000-8000-000000000001",
+    })
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: expect.objectContaining({ content }) }),
+    )
+  })
+  it("não entrega resumo desligado ou que ficou vazio", async () => {
+    const client = clientFor("city_digest", true)
+    client.rpc.mockResolvedValue({ data: null, error: null })
+    expect(await dispatch(client)).toMatchObject({ sent: 0, skipped: 1 })
+    expect(send).not.toHaveBeenCalled()
+  })
+  it.each(["returned", "rejected"])(
+    "falha %s adia sem enviar nem consumir tentativa",
+    async (modo) => {
+      const client = clientFor("city_digest", true)
+      if (modo === "returned")
+        client.rpc.mockResolvedValue({ data: null, error: { message: "offline" } })
+      else client.rpc.mockRejectedValue(new Error("offline"))
+      expect(await dispatch(client)).toMatchObject({ sent: 0, pending: 1 })
+      expect(send).not.toHaveBeenCalled()
+      expect(client.update.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "pending",
+          attempts: 0,
+          last_error: "digest_lookup_failed",
+        }),
+      )
     },
   )
 })

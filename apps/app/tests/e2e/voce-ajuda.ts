@@ -23,6 +23,7 @@ export async function simularVoce(page: Page) {
     events: escolha.events,
     productNews: escolha.productNews,
     indications: escolha.indications,
+    resumoCidade: "off" as "off" | "daily" | "weekly",
     channels: (["comments", "events", "product_news", "indications"] as const).flatMap(
       (notificationType) =>
         (["in_app", "email", "push"] as const).map((channel) => ({
@@ -48,6 +49,7 @@ export async function simularVoce(page: Page) {
         events: boolean
         productNews: boolean
         indications: boolean
+        resumoCidade: "off" | "daily" | "weekly"
         channels: typeof preferenciasDeAviso.channels
       }
       preferenciasDeAviso = { ...corpo }

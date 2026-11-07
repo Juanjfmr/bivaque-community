@@ -369,7 +369,20 @@ async function processBatch(
       continue
     }
 
-    const lastError = lookupErrors.get(message.id)
+    let lastError = lookupErrors.get(message.id)
+    let resumoDesligado = false
+    if (message.type === "city_digest" && !lastError) {
+      try {
+        const { data, error } = await supabase.rpc("city_digest_for_delivery", {
+          p_outbox_id: message.id,
+        })
+        if (error) lastError = "digest_lookup_failed"
+        else if (data === null) resumoDesligado = true
+        else message.payload["content"] = data
+      } catch {
+        lastError = "digest_lookup_failed"
+      }
+    }
     const mutation: OutboxMutation = lastError
       ? {
           // Nenhuma entrega foi tentada. A linha fica pending sem consumir a
@@ -381,7 +394,10 @@ async function processBatch(
           lastError,
           updatedAt: now,
         }
-      : await deliverOutboxMessage(message, deliveryDeps)
+      : await deliverOutboxMessage(message, {
+          ...deliveryDeps,
+          preferenceAllows: (item) => !resumoDesligado && deliveryDeps.preferenceAllows(item),
+        })
 
     const patch: OutboxUpdate = {
       status: mutation.status,

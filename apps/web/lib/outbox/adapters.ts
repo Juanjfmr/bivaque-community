@@ -1,4 +1,5 @@
 import type { ChannelAdapter, OutboxChannel, OutboxMessage } from "@bivaque/domain"
+import { montarEmailDoResumo } from "../resumo/conteudo"
 
 function unavailableAdapter(channel: OutboxChannel): ChannelAdapter {
   return {
@@ -35,6 +36,8 @@ function siteOrigin(): string {
 export function renderEmail(message: OutboxMessage): RenderedEmail {
   const payload = message.payload
   switch (message.type) {
+    case "city_digest":
+      return montarEmailDoResumo(payload, siteOrigin())
     case "verification_decision":
       return payload["status"] === "approved"
         ? {
@@ -197,7 +200,12 @@ function resendAdapter(): ChannelAdapter {
         return { ok: false, error: "email adapter is not configured (RESEND_FROM_EMAIL missing)" }
       }
 
-      const rendered = renderEmail(message)
+      let rendered: RenderedEmail
+      try {
+        rendered = renderEmail(message)
+      } catch {
+        return { ok: false, error: "invalid email payload" }
+      }
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {

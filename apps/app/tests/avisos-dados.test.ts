@@ -38,6 +38,7 @@ function preferencias(): PreferenciasDeAviso {
     events: false,
     productNews: false,
     indications: true,
+    resumoCidade: "off",
     channels: [
       { notificationType: "comments", channel: "in_app", enabled: true },
       { notificationType: "comments", channel: "email", enabled: true },
@@ -100,6 +101,19 @@ describe("porta de avisos", () => {
     )
   })
 
+  it.each(["off", "daily", "weekly"] as const)(
+    "grava a frequência %s e lê o resultado",
+    async (resumoCidade) => {
+      const escolha = { ...preferencias(), resumoCidade }
+      const escrita = responder({ preferencias: escolha })
+      expect(await salvarPreferenciasDeAviso(escolha)).toEqual(escolha)
+      expect(escrita).toHaveBeenCalledWith(
+        "/api/app/avisos/preferencias",
+        expect.objectContaining({ body: expect.stringContaining(JSON.stringify(resumoCidade)) }),
+      )
+    },
+  )
+
   it("marca o grupo pela chave opaca e devolve quantos avisos o grupo tinha", async () => {
     const grupo = responder({ atualizados: 3 })
     expect(await marcarGrupoLido(aviso.grupo)).toBe(3)
@@ -119,6 +133,7 @@ describe("porta de avisos", () => {
       events: false,
       productNews: false,
       indications: true,
+      resumoCidade: "off",
       channels: preferencias().channels.map((canal) => ({
         notificationType: canal.notificationType as "comments",
         channel: canal.channel as "in_app",

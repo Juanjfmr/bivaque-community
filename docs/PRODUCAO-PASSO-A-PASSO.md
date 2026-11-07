@@ -48,6 +48,7 @@ exclusões de conta. Ele lê o endereço e o segredo de cada worker no Vault. Su
 | Nome no Vault | Valor |
 |---|---|
 | `outbox-worker-endpoint` | `https://SEU-DOMINIO` |
+| `resumo-worker-endpoint` | `https://SEU-DOMINIO` (RUN-026; chama `/api/internal/resumo`) |
 | `outbox-worker-secret` | o mesmo valor de `OUTBOX_WORKER_SECRET` na Vercel |
 | `verification-reconcile-endpoint` | `https://SEU-DOMINIO` |
 | `verification-reconcile-secret` | o mesmo valor de `RECONCILE_WORKER_SECRET` na Vercel |
@@ -55,6 +56,8 @@ exclusões de conta. Ele lê o endereço e o segredo de cada worker no Vault. Su
 | `account-deletion-secret` | o mesmo valor de `ACCOUNT_DELETION_WORKER_SECRET` na Vercel |
 
 Gere cada segredo com 32 bytes aleatórios (por exemplo `openssl rand -hex 32`), um diferente por worker.
+
+O job `bivaque-resumo-cidade` roda a cada dez minutos e usa `resumo-worker-endpoint` e o segredo já existente `outbox-worker-secret` (`OUTBOX_WORKER_SECRET`). Sem os dois valores, não chama o worker. Não há segredo novo. Ele avalia até 100 membros por chamada, diário por dia UTC ou semanal por semana UTC (segunda-feira), desligado por padrão. O envio continua exclusivamente no outbox e sob o teto existente de 5.000 por lote. Cada seção mostra até 20 itens e aponta para a lista completa no app. O link de descadastro funciona sem login, com token aleatório de 32 bytes; o banco guarda só o hash fora do outbox. Vale por até 30 dias, até o próximo resumo ou uso. Desligar também cancela os resumos pendentes. Preferência, disponibilidade da conta e visibilidade do conteúdo são revalidadas antes de enviar.
 
 **Pronto quando:** depois do deploy (passo 4), um convite ou código de entrada sai do outbox em até um minuto.
 
