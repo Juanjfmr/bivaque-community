@@ -700,6 +700,34 @@ export async function idDoUsuarioPorEmail(email: string): Promise<string | null>
 }
 
 /**
+ * Devolve nome e apresentação de uma persona do seed pelo papel de serviço.
+ * Serve de `finally` para testes que editam o perfil: se a tela falhar no meio,
+ * a próxima largura ainda começa do seed.
+ */
+export async function restaurarPerfilSemeado(
+  email: string,
+  perfil: Readonly<{ nome: string; bio: string | null }>,
+): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const chave = exigirChaveDeServico()
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/profiles?user_id=eq.${id}`,
+    {
+      metodo: "PATCH",
+      cabecalhos: cabecalhosDeServico(chave),
+      corpo: { display_name: perfil.nome, bio: perfil.bio },
+    },
+    "Supabase (restaurar perfil semeado)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 204) {
+    throw new Error(
+      `O perfil semeado não foi restaurado: HTTP ${resposta.status} (${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+}
+
+/**
  * Marca o vínculo como `verified` para uma conta que nasceu no próprio fluxo
  * (o OTP criou). Devolve o id, para a prova de rascunho no banco.
  */
