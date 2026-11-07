@@ -220,6 +220,14 @@ export async function comentarPublicacao(
   return comentario(corpo["comentario"])
 }
 
+/** As publicações que a pessoa salvou — o destino do "Salvar publicação". */
+export async function lerPublicacoesSalvas(
+  opcoes: Opcoes = {},
+): Promise<readonly PublicacaoReal[]> {
+  const corpo = await ler("/api/app/grupos/salvas", opcoes)
+  return lista(corpo["publicacoes"], publicacao)
+}
+
 export type PedidosDoGrupo = Readonly<{
   pedidos: readonly Readonly<{ id: string; nome: string; motivo: string }>[]
   proximo: string | null

@@ -9,6 +9,7 @@ import {
   denunciarPublicacao,
   lerGrupos,
   lerPedidosDoGrupo,
+  lerPublicacoesSalvas,
   marcarComentarioUtil,
   mudarParticipacao,
   publicarNoGrupo,
@@ -121,6 +122,32 @@ it("resposta em fio retorna o comentário persistido", async () => {
 it("detalhe não transforma comentário fora do contrato em lista vazia", async () => {
   resposta({ publicacao: {}, grupo, comentarios: [], proximo: null })
   await expect(buscarPublicacao("p1")).rejects.toBeInstanceOf(FalhaDaApi)
+})
+
+it("lê as publicações salvas pela rota da sessão", async () => {
+  const publicacaoSalva = {
+    id: "p1",
+    grupoId: "g1",
+    texto: "Texto",
+    criadaEm: "2026-11-06",
+    autor: "Ana",
+    propria: false,
+    comentarios: 0,
+    uteis: 0,
+    util: false,
+    salva: true,
+    oculta: false,
+    fotos: [],
+  }
+  const fetch = resposta({ publicacoes: [publicacaoSalva] })
+  const signal = new AbortController().signal
+  expect(await lerPublicacoesSalvas({ signal })).toEqual([publicacaoSalva])
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/app/grupos/salvas",
+    expect.objectContaining({ credentials: "include", signal }),
+  )
+  resposta({ publicacoes: [{ ...publicacaoSalva, salva: "sim" }] })
+  await expect(lerPublicacoesSalvas()).rejects.toBeInstanceOf(FalhaDaApi)
 })
 
 const publicacao = {
