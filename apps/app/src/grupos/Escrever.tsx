@@ -91,7 +91,8 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
       if (indice >= 0) excluirRascunhoDoGrupo(cidade, grupo.id, indice)
       setTexto("")
       setFotos([])
-      setAberto(false)
+      // A publicação em tela aberta se fecha na própria navegação: fechar a
+      // sobreposição aqui daria um `history.back()` que desfaz a ida à publicação.
       void navegacao.irPara("publicacao", { parametros: { id } })
     } catch (falha: unknown) {
       if (!controle.signal.aborted)
