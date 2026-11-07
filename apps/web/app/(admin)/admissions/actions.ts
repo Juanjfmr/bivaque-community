@@ -7,6 +7,13 @@ import { requireOperatorId, UUID_RE } from "../../../lib/admin/operator"
 import { log } from "../../../lib/logger"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
+function admissionError(code: string): string {
+  if (code === "42501") return "forbidden"
+  if (code === "02000") return "not-found"
+  if (code === "22023") return "invalid-input"
+  return "unavailable"
+}
+
 // Reprocessamento e registro são uma transação, com caller confirmado também no RPC.
 export async function reprocessUserAction(
   userId: string,
@@ -25,9 +32,9 @@ export async function reprocessUserAction(
     log.error("admission reprocess failed", {
       user_id: userId,
       operator_id: operatorId,
-      error: error.message,
+      code: error.code,
     })
-    return { ok: false, error: error.message }
+    return { ok: false, error: admissionError(error.code) }
   }
   log.info("admission reprocess ok", {
     user_id: userId,
@@ -69,9 +76,9 @@ export async function decideDocumentAction(
       document_id: documentId,
       operator_id: operatorId,
       decision,
-      error: error.message,
+      code: error.code,
     })
-    return { ok: false, error: error.message }
+    return { ok: false, error: admissionError(error.code) }
   }
   log.info("admission decide ok", {
     document_id: documentId,
@@ -108,9 +115,9 @@ export async function rejectPendingUserAction(
     log.error("admission reject failed", {
       user_id: userId,
       operator_id: operatorId,
-      error: error.message,
+      code: error.code,
     })
-    return { ok: false, error: error.message }
+    return { ok: false, error: admissionError(error.code) }
   }
   log.info("admission reject ok", { user_id: userId, operator_id: operatorId })
   revalidatePath("/admissions")

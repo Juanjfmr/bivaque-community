@@ -100,4 +100,28 @@ describe("admissões do operador", () => {
     expect(await decideDocumentAction(ID, "approved", "")).toMatchObject({ ok: false })
     expect(mock.remove).not.toHaveBeenCalled()
   })
+
+  it.each([
+    { name: "reprocessamento", action: () => reprocessUserAction(ID) },
+    { name: "decisão", action: () => decideDocumentAction(ID, "approved", "") },
+    { name: "recusa", action: () => rejectPendingUserAction(ID, "Motivo sintético") },
+  ])("$name mapeia erros por código sem expor a mensagem do banco", async ({ action }) => {
+    for (const [code, error] of [
+      ["42501", "forbidden"],
+      ["02000", "not-found"],
+      ["22023", "invalid-input"],
+      ["P0001", "unavailable"],
+      ["XX000", "unavailable"],
+    ]) {
+      mock.rpc.mockImplementation(async (name: string) => ({
+        data: name === "is_current_user_operator" ? true : null,
+        error:
+          name === "is_current_user_operator"
+            ? null
+            : { code, message: "Detalhe interno do Postgres que não pode sair do servidor" },
+      }))
+      expect(await action()).toEqual({ ok: false, error })
+      expect(mock.remove).not.toHaveBeenCalled()
+    }
+  })
 })

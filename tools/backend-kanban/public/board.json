@@ -6350,23 +6350,25 @@
         "Denúncia implementada: manter/ocultar/remover logicamente, aviso privado ao autor, retorno genérico ao denunciante e registro; provar runtime",
         "Suspensão implementada: motivo, prazo, veto pelo helper existente, encerramento e expiração registrados; provar banco/runtime",
         "Registro das ações com RLS de operador, paginação e negações; confirmar pgTAP",
-        "E2E lan-op-real.spec.ts escrito: três ciclos, 375/768/1440 e dois temas, restauração obrigatória; executar em stack exclusiva com workers=1"
+        "E2E lan-op-real.spec.ts escrito: três ciclos, 375/768/1440 e dois temas, limpeza das fixtures com auditoria preservada e identificada por manifesto; executar em stack exclusiva com workers=1"
       ],
       "dependencies": ["LAN-F04"],
       "tests": [
         "RUN-024 em 5a2dbd5f: gate --fast verde (lint, tipos dos workspaces e dos E2E); não substitui build/runtime",
-        "RUN-024: vitest tests/unit/admin --maxWorkers=1: 51/51; test:scope: 222/222"
+        "RUN-024: vitest tests/unit/admin --maxWorkers=1: 51/51; test:scope: 222/222",
+        "Correção única RUN-024 sobre fdad6a80 com o diff de erros de admissão deste commit: gate --fast verde; vitest tests/unit/admin --maxWorkers=1: 69/69; test:scope: 222/222. Logs: .visual/run-024/correcao-{gate-fast,admin,scope}.log"
       ],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "5a2dbd5f4871e9d57defc6ca24ef0450f6e6d18a",
+      "sourceRevision": "fdad6a803af7b107d48806edf097a89e756b74f8",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
       "proof": [
         "02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7).",
         "07/11: ADR-20261107 confirma o LAN-OP no lançamento no modelo da administração do HumHub (fila de aprovação, denúncias, suspensão e registro das ações do operador).",
         "07/11 RUN-024: commits 06943c19 (verificação), fe8d220d (denúncias), 59d34b02 (suspensão), 5a2dbd5f (histórico/prova preparada). Runbook atualizado; logs e relatório em .visual/run-024/.",
         "Revisão pelo próprio executor, sem outro modelo por instrução expressa do dono. Corrigida a RLS do histórico para usar private.is_operator() já autorizado; a API pública is_current_user_operator(uuid) segue exclusiva do servidor.",
-        "Próximo passo: CI aplica as quatro migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Sem E2E, servidor, teste de banco ou arquivo de ambiente nesta máquina; tipos públicos atualizados manualmente porque o CLI não alcançou o Docker local. Card não está concluído."
+        "07/11, rodada única de correção: 51490fcd corrige o delimitador SQL (demais migrations do lote conferidas); c9163bda aplica gate próprio nas cinco páginas com 15 negações unitárias; 24a5c622 recria private.account_unavailable em migration nova considerando expires_at e amplia pgTAP de conversas; fdad6a80 retira DELETE da auditoria, prova a negação em pgTAP e preserva a trilha sintética identificada por manifesto no E2E. Este commit mapeia os erros das três ações de admissão por código, sem devolver mensagem do Postgres. Nenhuma mudança na forma dos tipos públicos.",
+        "Próximo passo: CI aplica as cinco migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Nesta rodada, só gate --fast, test:scope e vitest de admin por instrução do dono; sem .env, banco, servidor, E2E ou revisão por outro modelo. Card não está concluído."
       ]
     },
     {
