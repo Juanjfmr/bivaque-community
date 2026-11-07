@@ -38,6 +38,11 @@ allowed_paths:
   - tests/e2e/lan-op-real.spec.ts
   - tests/scope
   - docs/agents/tasks/RUN-024.task.yml
+  # Tipos pedidos pelo dono; manutenção das fontes vivas exigida pelo AGENTS.md.
+  - supabase/database.generated.ts
+  - docs/PILOT_RUNBOOK.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
   - .visual/run-024
 
 forbidden:
@@ -59,7 +64,7 @@ acceptance:
 
 proof:
   - npx pnpm@11.18.0 gate --fast
-  - npx pnpm@11.18.0 exec vitest run tests/unit/admin
+  - npx pnpm@11.18.0 exec vitest run tests/unit/admin --maxWorkers=1
   - npx pnpm@11.18.0 test:scope
   - E2E da raiz e test:db no CI
 
@@ -73,3 +78,7 @@ on_budget_exhausted: HUMAN_DECISION
 
 closure:
   requires_runtime_evidence: true
+
+# 07/11/2026: execução local limitada pelo dono a fast/scope/admin. Sem servidor, E2E,
+# testes de banco, env ou revisão externa. Runtime obrigatório permanece pendente de CI.
+# Código: 06943c19, fe8d220d, 59d34b02 e 5a2dbd5f. Evidência no card LAN-OP e relatório local.
