@@ -299,6 +299,9 @@ select lives_ok(
   'operador consegue desmarcar a marca legado que já existe'
 );
 
+-- O grupo legado de comunidade não é legível pela sessão do membro; confere como dono do teste.
+reset role;
+
 select is(
   (select is_default from public.groups where id = '40000000-0000-4000-8000-000000000017'),
   false,
