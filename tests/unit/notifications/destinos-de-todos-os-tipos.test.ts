@@ -22,7 +22,9 @@ const DIRETORIO = fileURLToPath(new URL("../../../supabase/migrations/", import.
 
 function tiposDoEnum(): string[] {
   const valores: string[] = []
-  for (const arquivo of readdirSync(DIRETORIO).filter((nome) => nome.endsWith(".sql")).sort()) {
+  for (const arquivo of readdirSync(DIRETORIO)
+    .filter((nome) => nome.endsWith(".sql"))
+    .sort()) {
     const texto = readFileSync(`${DIRETORIO}${arquivo}`, "utf8")
     const criado = /create\s+type\s+public\.notification_type\s+as\s+enum\s*\(([\s\S]*?)\);/.exec(
       texto,
@@ -124,9 +126,7 @@ describe("os três destinos da RUN-027", () => {
     expect(destinoDoAviso(denuncia, { alvoTipo: "post", alvoId: ALVO })).toBe(
       `/app/publicacao/${ALVO}`,
     )
-    expect(destinoDoAviso(denuncia, { alvoTipo: "group", alvoId: ALVO })).toBe(
-      `/app/grupo/${ALVO}`,
-    )
+    expect(destinoDoAviso(denuncia, { alvoTipo: "group", alvoId: ALVO })).toBe(`/app/grupo/${ALVO}`)
     expect(destinoDoAviso(denuncia, { alvoTipo: "recommendation_request", alvoId: ALVO })).toBe(
       `/app/pergunta/${ALVO}`,
     )

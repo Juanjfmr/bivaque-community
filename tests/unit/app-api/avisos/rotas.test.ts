@@ -375,7 +375,9 @@ describe("rotas de avisos do app", () => {
             target_id: "60000000-0000-4000-8000-000000000002",
           },
         ],
-        denuncias: [{ id: "60000000-0000-4000-8000-000000000002", target_type: "post", target_id: conteudo }],
+        denuncias: [
+          { id: "60000000-0000-4000-8000-000000000002", target_type: "post", target_id: conteudo },
+        ],
       })
       autenticar(mock)
       const corpo = await json(await listar(req("GET")))
