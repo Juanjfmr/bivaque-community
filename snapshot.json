@@ -3,8 +3,8 @@
   "title": "Prontidão do Bivaque",
   "scopeVersion": "2026-11-05",
   "source": "docs/LANCAMENTO.md",
-  "generatedAt": "2026-11-07T10:56:14.892Z",
-  "revision": "954dd63813e7ed3209f4f994bfce01abb4b51972",
+  "generatedAt": "2026-11-07T11:09:11.879Z",
+  "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
   "boardUpdatedAt": "2026-11-07",
   "stage": "Em construção",
   "metrics": {
@@ -448,7 +448,7 @@
     {
       "id": "LAN-OP",
       "title": "Operação: painel do operador com verificação manual, denúncia e suspensão",
-      "status": "pending"
+      "status": "declared"
     },
     {
       "id": "LAN-TROCA",
@@ -479,25 +479,25 @@
   "changes": [],
   "checks": {
     "frontend": {
-      "status": "inconclusive",
-      "revision": "954dd63813e7ed3209f4f994bfce01abb4b51972",
+      "status": "pending",
+      "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42364677863",
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42364677829"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944231",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944286"
       ]
     },
     "backend": {
-      "status": "success",
-      "revision": "954dd63813e7ed3209f4f994bfce01abb4b51972",
+      "status": "pending",
+      "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42364677863"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944231"
       ]
     },
     "integration": {
-      "status": "success",
-      "revision": "954dd63813e7ed3209f4f994bfce01abb4b51972",
+      "status": "pending",
+      "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42364677863"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944231"
       ]
     }
   },
