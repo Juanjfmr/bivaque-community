@@ -347,7 +347,10 @@ for (const theme of ["light", "dark"] as const) {
             p_storage_object_path: path,
           }),
         )
-      for (const user of users)
+      // Ordem inversa: o membro sai antes do operador e leva o próprio documento
+      // (cascade). Documento decidido exige `reviewed_by`; apagar o operador
+      // primeiro tentaria anulá-lo e o Auth recusaria a exclusão.
+      for (const user of [...users].reverse())
         await cleanup("conta sintética", () => admin.auth.admin.deleteUser(user.id))
       expect(failures, "limpeza obrigatória da stack local").toEqual([])
     }
