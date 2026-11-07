@@ -325,7 +325,13 @@ for (const theme of ["light", "dark"] as const) {
       await expect(
         page.getByRole("heading", { name: "Registro das ações", exact: true }),
       ).toBeVisible()
-      await expect(page.getByText("Suspensão encerrada", { exact: true })).toBeVisible()
+      // A trilha é só de acréscimo e guarda rodadas anteriores: confere a linha deste membro.
+      await expect(
+        page
+          .getByRole("listitem")
+          .filter({ hasText: member.id })
+          .filter({ has: page.getByText("Suspensão encerrada", { exact: true }) }),
+      ).toHaveCount(1)
       await capture("04-registro")
     } finally {
       // Só identidades/objetos aleatórios deste teste; continua limpando se uma etapa falhar.
