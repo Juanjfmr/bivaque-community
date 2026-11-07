@@ -58,7 +58,11 @@ describe("job e descadastro do resumo", () => {
     expect(rpc).not.toHaveBeenCalled()
     const url = `http://localhost/?token=${"b".repeat(64)}`
     rpc.mockResolvedValueOnce({ data: false, error: null })
-    expect((await GET(new Request(url))).status).toBe(400)
+    const vencido = await GET(new Request(url))
+    expect(vencido.status).toBe(400)
+    const html = await vencido.text()
+    expect(html).toContain("resumo mais recente")
+    expect(html).toContain("Você > Avisos")
     rpc.mockResolvedValueOnce({ data: null, error: {} })
     expect((await GET(new Request(url))).status).toBe(503)
     rpc.mockRejectedValueOnce(new Error("boom"))

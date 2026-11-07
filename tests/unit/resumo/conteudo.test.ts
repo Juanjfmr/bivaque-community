@@ -60,6 +60,8 @@ describe("resumo da cidade no e-mail do outbox", () => {
     const email = renderEmail(message)
     expect(email.subject).toContain("Manaus")
     expect(email.text).toContain("08/11/2026 UTC")
+    expect(email.text).toContain("vale até o próximo resumo")
+    expect(email.text).not.toContain("30 dias")
     for (const texto of [
       "Escolas do bairro",
       "Caminhada",

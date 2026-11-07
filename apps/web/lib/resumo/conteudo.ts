@@ -81,7 +81,7 @@ export function montarEmailDoResumo(payload: Registro, origem: string) {
       "",
       `Até 20 itens por seção. Veja todas as novidades no app: ${origem}/app/comunidade`,
       "",
-      "Você escolheu receber este resumo. Para parar em um toque (link válido por até 30 dias):",
+      "Você escolheu receber este resumo. Para parar em um toque (este link vale até o próximo resumo):",
       `${origem}/api/app/resumo/descadastro?token=${token}`,
     ].join("\n"),
   }
