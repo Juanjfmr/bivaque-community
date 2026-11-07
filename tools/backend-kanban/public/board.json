@@ -6377,7 +6377,8 @@
         "07/11, CI item 2 investigado sobre c8f4dad5: operator_end_suspension já remove a linha; is_account_suspended considera expires_at > now(). A recusa de posts vem de group_id is not null na policy posts_insert_locality_member (20261024100000, linha 30): ambos os inserts de operator-suspensions.sql omitem grupo. publicacao-so-em-grupo.sql linhas 94–106 exige 42501 para esse mesmo cenário. Alterar o banco para aceitá-lo quebraria o contrato de publicação só em grupo. Proposta exata em .visual/run-024/ci-item-2-fixture-proposta.patch; diagnóstico em ci-item-2-diagnostico.md. Teste e RLS preservados enquanto aguarda exceção explícita do dono ao roteiro.",
         "07/11: painel do operador na main (#156, merge 954dd638): verificação manual, denúncia e suspensão com registro das ações; revisão Qwen + auditoria Sonnet (R3) com rodada única de correção; pgTAP e E2E real lan-op-real.spec.ts nas três larguras e dois temas no CI.",
         "07/11: dependência de LAN-F04 retirada — o LAN-OP precisava das denúncias do F04 (tabela reports, #140 e #153), já na main; o que mantém LAN-F04 aberto é INDICACOES-MEMORIA, sem relação com o painel."
-      ]
+      ],
+      "completedAt": "2026-11-07"
     },
     {
       "id": "CI-E2E-UPSTREAM-INSTAVEL",
@@ -6864,7 +6865,8 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "954dd638"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "AVISOS-AGRUPADOS",
@@ -6887,7 +6889,8 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "954dd638"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "GRUPOS-CIDADE-AUTOMATICOS",
@@ -6910,7 +6913,8 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "954dd638"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "TOPICOS-PERGUNTAS",
@@ -6933,7 +6937,8 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "954dd638"
+      "sourceRevision": "954dd638",
+      "completedAt": "2026-11-07"
     },
     {
       "id": "HUMHUB-DEPOIS-DO-LANCAMENTO",
