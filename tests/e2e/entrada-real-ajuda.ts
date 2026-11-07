@@ -182,7 +182,7 @@ export function enderecoSintetico(prefixo: string): string {
 type RespostaHttp = Readonly<{ status: number; corpo: unknown }>
 
 type PedidoHttp = Readonly<{
-  metodo?: "GET" | "POST"
+  metodo?: "GET" | "POST" | "PATCH"
   cabecalhos?: Readonly<Record<string, string>>
   corpo?: unknown
 }>
@@ -945,4 +945,81 @@ export async function capturarFinais(page: Page, projeto: string): Promise<void>
     await capturar(page, `${projeto}-${tema}.png`)
   }
   await page.emulateMedia({ colorScheme: "light" })
+}
+
+// ── Marca de grupo padrão (RUN-025b, ADR-20261107 item 4) ──────────────────
+
+async function idDoGrupoSemeado(nome: string): Promise<string> {
+  const chave = exigirChaveDeServico()
+  const busca = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/groups?select=id&name=eq.${encodeURIComponent(nome)}`,
+    { cabecalhos: cabecalhosDeServico(chave) },
+    "Supabase (achar o grupo semeado)",
+  )
+  if (busca.status !== 200 || !Array.isArray(busca.corpo) || busca.corpo.length !== 1) {
+    throw new Error(
+      `O grupo semeado "${nome}" não apareceu exatamente uma vez (HTTP ${busca.status}). ` +
+        "A marca de padrão do E2E precisa de um grupo canônico da cidade.",
+    )
+  }
+  const id = textoDe(busca.corpo[0], "id")
+  if (id === null) throw new Error(`O grupo semeado "${nome}" veio sem id.`)
+  return id
+}
+
+/**
+ * Marca como padrão o grupo semeado com este nome e devolve o id — é a mesma
+ * escrita que a RPC `set_group_default` reserva ao operador; aqui o que se
+ * prova é o automático da entrada, não o painel do operador.
+ */
+export async function marcarGrupoPadrao(nome: string): Promise<string> {
+  const id = await idDoGrupoSemeado(nome)
+  await gravarMarcaDePadrao(id, true)
+  return id
+}
+
+/** Devolve a marca ao estado do seed. */
+export async function desmarcarGrupoPadrao(id: string): Promise<void> {
+  await gravarMarcaDePadrao(id, false)
+}
+
+async function gravarMarcaDePadrao(id: string, padrao: boolean): Promise<void> {
+  const chave = exigirChaveDeServico()
+  const gravacao = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/groups?id=eq.${id}`,
+    {
+      metodo: "PATCH",
+      cabecalhos: cabecalhosDeServico(chave),
+      corpo: { is_default: padrao },
+    },
+    `Supabase (${padrao ? "marcar" : "desmarcar"} grupo padrão)`,
+  )
+  if (gravacao.status !== 200 && gravacao.status !== 204) {
+    throw new Error(
+      `A marca de padrão não foi gravada: HTTP ${gravacao.status} (${resumoDoCorpo(gravacao.corpo)}).`,
+    )
+  }
+}
+
+/** A participação no grupo, lida no banco (estado canônico, não a tela). */
+export async function participacaoNoGrupo(
+  userId: string,
+  groupId: string,
+): Promise<{ role: string; status: string } | null> {
+  const chave = exigirChaveDeServico()
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/group_memberships?select=role,status&user_id=eq.${userId}&group_id=eq.${groupId}`,
+    { cabecalhos: cabecalhosDeServico(chave) },
+    "Supabase (ler participação no grupo padrão)",
+  )
+  if (resposta.status !== 200 || !Array.isArray(resposta.corpo)) {
+    throw new Error(
+      `Não foi possível ler a participação no grupo: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+  const linha = resposta.corpo[0]
+  if (linha === undefined) return null
+  const registro = comoRegistro(linha)
+  return { role: String(registro["role"]), status: String(registro["status"]) }
 }
