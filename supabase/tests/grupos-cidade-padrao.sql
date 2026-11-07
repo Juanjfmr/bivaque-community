@@ -16,7 +16,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 \ir fixtures/foundation.inc
 
@@ -219,6 +219,11 @@ select ok(
 select ok(
   has_column_privilege('authenticated', 'public.groups', 'name', 'UPDATE'),
   'as colunas que o dono escreve continuam granteadas'
+);
+
+select ok(
+  has_column_privilege('service_role', 'public.groups', 'is_default', 'UPDATE'),
+  'o papel de serviço escreve a marca de padrão (só a coluna)'
 );
 
 -- A RPC: recusar quem não é operador, marcar quem é, não inventar grupo.
