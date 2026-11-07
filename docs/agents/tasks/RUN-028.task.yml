@@ -1,0 +1,61 @@
+# DATA-IBGE-BAIRROS (07/11/2026): catálogo nacional de bairros a partir da malha oficial do IBGE (Censo 2022).
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-028
+
+objective: >
+  public.neighborhoods passa a ter os bairros oficiais do IBGE (malha de bairros do Censo 2022) de todos os
+  municípios que a publicam, cada um com nome e ponto central (centroide ou ponto interior do polígono),
+  ligados à cidade pelo código IBGE de 7 dígitos (localities.ibge_code). A carga é gerada por um script de ETL
+  versionado e reexecutável a cada censo, e entra no banco por migration nova idempotente. Os bairros do
+  protótipo que já existem continuam válidos (perfis podem apontar para eles).
+
+authority:
+  - tools/backend-kanban card DATA-IBGE-BAIRROS
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (seção 1, catálogo)
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    supabase/migrations/20261022120100_neighborhood_catalog_data.sql carrega só os ~43 bairros do protótipo
+    (Manaus e mais três cidades); o ADR-20261022 deixou a base nacional do IBGE para depois.
+
+allowed_paths:
+  - scripts/data/ibge-bairros
+  - supabase/migrations
+  - supabase/tests
+  - tests/scope
+  - docs/agents/tasks/RUN-028.task.yml
+  - .visual/run-028
+
+forbidden:
+  - editar migration existente (a carga do protótipo fica; a nacional entra em migration nova)
+  - apagar ou renomear bairro já existente (perfis e itens podem apontar para ele)
+  - endereço, CEP, setor censitário, população ou qualquer dado além de nome, cidade e ponto central público do bairro
+  - commitar o arquivo bruto do IBGE (shapefile/zip) no repositório; só o script e a saída final (SQL) entram
+  - dependência nova pesada de GIS no workspace (o script pode usar ferramenta já disponível ou pacote pequeno e fixado, só em scripts/data)
+  - push, merge ou force-push; pedir revisão a outro modelo ou ao Claude
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "scripts/data/ibge-bairros/: script que baixa a malha oficial de bairros do Censo 2022 do servidor do IBGE (URL e data de acesso no README do diretório), calcula o ponto central de cada bairro (ponto interior quando o centroide cair fora do polígono) e gera o SQL; reexecutável; README curto com como rodar."
+  - "Migration nova gerada pelo script: insert ... select join public.localities on ibge_code, on conflict (locality_id, name_key) do nothing; município ausente de localities vira zero linhas, nunca erro; nomes com até 80 caracteres (truncar com registro no relatório se houver maior)."
+  - "pgTAP: contagem mínima plausível de bairros nacionais carregados, um bairro conhecido de duas capitais com centro dentro de uma caixa aproximada, bairros do protótipo preservados, e reaplicar a carga não duplica."
+  - "Relatório em .visual/run-028/relatorio.md: fonte, número de municípios e bairros, tamanho do SQL gerado, casos de nome truncado ou centro corrigido."
+
+proof:
+  - node scripts/data/ibge-bairros/<script> (gera a migration)
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - test:db no CI (Docker não existe localmente)
+
+risk: carga de dados públicos em tabela existente
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: false
