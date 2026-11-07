@@ -1,0 +1,66 @@
+# NOTIF-DEEPLINKS (07/11/2026): todo aviso navega para destino que existe, no app.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-027
+
+objective: >
+  Os avisos do app (F09) têm rótulo e destino válidos para todo tipo de notificação que o banco grava,
+  inclusive os três apontados pelo card NOTIF-DEEPLINKS: invitation_accepted (convite de família aceito),
+  report_resolved (denúncia analisada) e admission_rejected (entrada recusada). Hoje os três caem na tela
+  segura /app/voce; cada um passa a abrir a tela do app que corresponde a ele, ou a tela segura quando o app
+  não tem a jornada, com um teste que prova o mapeamento de cada tipo. É a base do LAN-PUSH: o toque no push
+  usa o mesmo destino.
+
+authority:
+  - tools/backend-kanban card NOTIF-DEEPLINKS
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/lib/notifications/destino-do-app.ts:destinoDoAviso manda invitation_accepted, report_resolved e
+    admission_rejected para DESTINO_SEGURO (/app/voce) pelo default do switch por alvoTipo; não há teste que
+    percorra todos os valores de public.notification_type (enum nas migrations) e exija destino aceito por
+    apps/app/lib/dados/avisos.ts:destinoEmRota.
+
+allowed_paths:
+  - apps/web/lib/notifications
+  - apps/web/app/api/app/avisos
+  - apps/app/lib/dados/avisos.ts
+  - apps/app/src/avisos
+  - apps/app/src/telas/Avisos.tsx
+  - apps/app/tests
+  - tests/unit/app-api/avisos
+  - tests/unit/notifications
+  - docs/agents/tasks/RUN-027.task.yml
+  - .visual/run-027
+
+forbidden:
+  - criar rota nova no app ou mudar o desenho aprovado das telas (só destino, rótulo e ícone)
+  - destino para tela que não existe em apps/app (ROTAS_DE_DESTINO) ou endereço montado com dado não validado
+  - revelar quem denunciou no rótulo de report_resolved
+  - editar migration; tocar em apps/web/app/(shell) (tela antiga, sai pelo LAN-TROCA)
+  - push, merge ou force-push; pedir revisão a outro modelo ou ao Claude
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "invitation_accepted abre a tela de família do app se ela existir em ROTAS_DE_DESTINO; senão, a tela segura — decisão registrada no relatório."
+  - "report_resolved abre a tela do app mais próxima da denúncia (o conteúdo denunciado quando o alvo é conhecido e visível, senão a tela segura), sem revelar o denunciante."
+  - "admission_rejected tem rótulo próprio e abre a situação da entrada (/app/entrar/analise, como verification_decision)."
+  - "Teste de unidade que percorre TODOS os valores do enum public.notification_type (lidos das migrations ou de supabase/database.generated.ts) e exige rótulo não genérico e destino aceito por destinoEmRota ou igual a DESTINO_SEGURO."
+  - "Teste do app: tocar num aviso de cada um dos três tipos navega para o destino esperado."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/avisos tests/unit/notifications --maxWorkers=1
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+
+risk: navegação de avisos
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
