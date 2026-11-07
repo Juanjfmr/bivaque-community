@@ -61,6 +61,7 @@ type Options = {
   atualizados?: { id: string }[]
   preferencia?: typeof preferenciaLida | null
   matriz?: { notification_type: string; channel: string; enabled: boolean }[]
+  denuncias?: { id: string; target_type: string; target_id: string }[]
   errorTable?: string
   erroNaEscrita?: { code?: string; message: string }
 }
@@ -94,6 +95,9 @@ function mockClient(options: Options = {}) {
         }
         return { data: options.atualizados ?? [{ id: AVISO }], count: null, error: null }
       }
+      if (table === "reports") {
+        return { data: options.denuncias ?? null, count: null, error: null }
+      }
       if (table === "notification_preferences") {
         if (operacao === "upsert") return { data: null, count: null, error: null }
         return { data: options.preferencia ?? null, count: null, error: null }
@@ -116,6 +120,10 @@ function mockClient(options: Options = {}) {
     }
     query["is"] = (coluna: string, valor: unknown) => {
       chamadas.push({ table, op: operacao, coluna, valor })
+      return query
+    }
+    query["in"] = (coluna: string, valores: unknown[]) => {
+      chamadas.push({ table, op: operacao, coluna, valor: valores })
       return query
     }
     query["order"] = () => query
@@ -353,6 +361,94 @@ describe("rotas de avisos do app", () => {
       autenticar(mock)
       const corpo = await json(await listar(req("GET")))
       expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/chamados")
+    })
+
+    it("denúncia analisada abre o conteúdo denunciado quando o alvo é visível", async () => {
+      const conteudo = "60000000-0000-4000-8000-000000000001"
+      const mock = mockClient({
+        avisos: [
+          {
+            ...linha,
+            type: "report_resolved",
+            action: "resolved",
+            target_type: "report",
+            target_id: "60000000-0000-4000-8000-000000000002",
+          },
+        ],
+        denuncias: [{ id: "60000000-0000-4000-8000-000000000002", target_type: "post", target_id: conteudo }],
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["avisos"] as { destino: string; texto: string }[])[0]).toMatchObject({
+        destino: `/app/publicacao/${conteudo}`,
+        texto: "Sua denúncia foi analisada",
+      })
+      // A consulta de apoio é pela linha do report do próprio destinatário.
+      expect(mock.chamadas).toContainEqual(
+        expect.objectContaining({
+          table: "reports",
+          coluna: "id",
+          valor: ["60000000-0000-4000-8000-000000000002"],
+        }),
+      )
+    })
+
+    it("denúncia sem alvo legível cai na tela segura; falha na leitura de apoio também", async () => {
+      const semAlvo = {
+        ...linha,
+        type: "report_resolved",
+        action: "resolved",
+        target_type: "report",
+        target_id: "60000000-0000-4000-8000-000000000003",
+      }
+      const vazio = mockClient({ avisos: [semAlvo], denuncias: [] })
+      autenticar(vazio)
+      const corpoVazio = await json(await listar(req("GET")))
+      expect((corpoVazio["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/voce")
+
+      const comFalha = mockClient({ avisos: [semAlvo], errorTable: "reports" })
+      autenticar(comFalha)
+      const resposta = await listar(req("GET"))
+      expect(resposta.status).toBe(200)
+      const corpoFalha = await json(resposta)
+      expect((corpoFalha["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/voce")
+      expect(JSON.stringify(corpoFalha)).not.toContain("boom")
+    })
+
+    it("convite de família aceito abre Você; entrada recusada abre a situação da entrada", async () => {
+      const mock = mockClient({
+        avisos: [
+          {
+            ...linha,
+            id: "50000000-0000-4000-8000-000000000011",
+            type: "invitation_accepted",
+            action: "accepted",
+            target_type: "family_invitation",
+          },
+          {
+            ...linha,
+            id: "50000000-0000-4000-8000-000000000012",
+            type: "admission_rejected",
+            action: "rejected",
+            target_type: "user",
+          },
+        ],
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      const avisos = corpo["avisos"] as { tipo: string; destino: string; texto: string }[]
+      expect(avisos[0]).toMatchObject({
+        tipo: "invitation_accepted",
+        destino: "/app/voce",
+        texto: "aceitou seu convite de família",
+      })
+      expect(avisos[1]).toMatchObject({
+        tipo: "admission_rejected",
+        destino: "/app/entrar/analise",
+        texto: "Sua participação não foi liberada",
+      })
+      // Sem denúncia na página, a consulta de apoio nem acontece.
+      expect(mock.chamadas.some((chamada) => chamada.table === "reports")).toBe(false)
     })
 
     it("falha de leitura vira 503, nunca lista vazia", async () => {

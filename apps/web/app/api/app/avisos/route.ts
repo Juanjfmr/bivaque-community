@@ -2,6 +2,7 @@ import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../lib/logger"
 import {
+  type AlvoDaDenuncia,
   type AvisoDoBanco,
   destinoDoAviso,
   rotuloDoAviso,
@@ -86,6 +87,37 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // shortcut: o agrupamento é dentro da página lida; um grupo que cruza a
     // borda da página aparece uma vez em cada página com a contagem parcial.
     const linhas = pagina.data ?? []
+
+    // Denúncia analisada aponta para a linha do report, que não é tela no app.
+    // O conteúdo denunciado vem da própria denúncia — leitura pelo cliente da
+    // sessão, RLS reporter-only; nada aqui alcança denúncia alheia nem revela
+    // quem denunciou. Sem alvo (linha ausente ou consulta falhou), o destino
+    // degrada para a tela segura: a caixa de avisos não para por causa dele.
+    const alvosDaDenuncia = new Map<string, AlvoDaDenuncia>()
+    const idsDeDenuncia = [
+      ...new Set(
+        linhas.filter((linha) => linha.type === "report_resolved").map((linha) => linha.target_id),
+      ),
+    ]
+    if (idsDeDenuncia.length > 0) {
+      const denuncias = await client
+        .from("reports")
+        .select("id,target_type,target_id")
+        .in("id", idsDeDenuncia)
+      if (denuncias.error) {
+        log.error("app avisos: report targets unreadable", {
+          error: denuncias.error.message ?? "unknown",
+          userId,
+        })
+      }
+      for (const denuncia of denuncias.data ?? []) {
+        alvosDaDenuncia.set(denuncia.id, {
+          alvoTipo: denuncia.target_type,
+          alvoId: denuncia.target_id,
+        })
+      }
+    }
+
     const grupos = new Map<string, LinhaDeAviso>()
     for (const linha of linhas) {
       const aviso: AvisoDoBanco = {
@@ -105,7 +137,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           id: aviso.id,
           tipo: aviso.tipo,
           texto: rotuloDoAviso(aviso),
-          destino: destinoDoAviso(aviso),
+          destino: destinoDoAviso(aviso, alvosDaDenuncia.get(aviso.alvoId) ?? null),
           lida: aviso.lida,
           criadaEm: aviso.criadaEm,
           grupo: chave,
