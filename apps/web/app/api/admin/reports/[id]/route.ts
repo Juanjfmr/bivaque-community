@@ -30,13 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params
   // "resolve" e nota opcional preservam os clientes da API antiga.
   const action = body.corpo["action"] === "resolve" ? "dismiss" : body.corpo["action"]
-  const result = await applyReportDecision(
-    client,
-    operatorId,
-    id,
-    action,
-    body.corpo["note"] ?? "Decisão registrada pela operação",
-  )
+  const result = await applyReportDecision(client, operatorId, id, action, body.corpo["note"])
   const status = result.ok
     ? 200
     : result.error === "forbidden"

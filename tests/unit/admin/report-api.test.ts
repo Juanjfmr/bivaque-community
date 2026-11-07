@@ -23,10 +23,10 @@ import { POST } from "web/app/api/admin/reports/[id]/route"
 const ID = "24000000-0000-4000-8000-000000000002"
 const OP = "10000000-0000-4000-8000-000000000002"
 const params = { params: Promise.resolve({ id: ID }) }
-function request(action: unknown) {
+function request(action: unknown, note: unknown = "Regra") {
   return new Request("https://example.invalid", {
     method: "POST",
-    body: JSON.stringify({ action, note: "Regra" }),
+    body: JSON.stringify({ action, note }),
   })
 }
 beforeEach(() => {
@@ -51,6 +51,32 @@ it.each(["hide", "resolve", "remove"])("não operador recebe 403 em %s", async (
   mock.rpc.mockResolvedValue({ data: false, error: null })
   expect((await POST(request(action), params)).status).toBe(403)
   expect(mock.rpc).toHaveBeenCalledTimes(1)
+})
+it.each([null, "", "   "])("aceita nota opcional (%j)", async (note) => {
+  expect((await POST(request("hide", note), params)).status).toBe(200)
+  expect(mock.rpc).toHaveBeenCalledWith("resolve_report", {
+    p_action: "hide",
+    p_note: "",
+    p_operator_user_id: OP,
+    p_report_id: ID,
+  })
+})
+it("aceita corpo sem nota", async () => {
+  const withoutNote = new Request("https://example.invalid", {
+    method: "POST",
+    body: JSON.stringify({ action: "resolve" }),
+  })
+  expect((await POST(withoutNote, params)).status).toBe(200)
+  expect(mock.rpc).toHaveBeenCalledWith("resolve_report", {
+    p_action: "dismiss",
+    p_note: "",
+    p_operator_user_id: OP,
+    p_report_id: ID,
+  })
+})
+it.each([{}, [], 1, "a".repeat(1001)])("recusa nota inválida (%j)", async (note) => {
+  expect((await POST(request("hide", note), params)).status).toBe(400)
+  expect(mock.rpc.mock.calls.some(([name]) => name === "resolve_report")).toBe(false)
 })
 it("sessão recusada e CSRF recusado não chegam ao privilégio", async () => {
   mock.session.mockResolvedValueOnce({

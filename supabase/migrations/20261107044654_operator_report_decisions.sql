@@ -18,7 +18,7 @@ begin
     raise exception 'forbidden' using errcode = '42501';
   end if;
   if p_action is null or p_action not in ('hide','dismiss','remove')
-    or coalesce(btrim(p_note),'') = '' or char_length(p_note) > 1000 then
+    or char_length(p_note) > 1000 then
     raise exception 'invalid decision' using errcode = '22023';
   end if;
   select * into v_report from public.reports where id = p_report_id and status = 'open' for update;

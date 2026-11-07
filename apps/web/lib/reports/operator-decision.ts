@@ -20,14 +20,14 @@ export async function applyReportDecision(
   ) {
     return { ok: false, error: "invalid-decision" }
   }
-  if (typeof reason !== "string" || !reason.trim() || reason.length > 1000) {
-    return { ok: false, error: "missing-justification" }
+  if (reason != null && (typeof reason !== "string" || reason.length > 1000)) {
+    return { ok: false, error: "invalid-justification" }
   }
   const { error } = await client.rpc("resolve_report", {
     p_report_id: reportId,
     p_operator_user_id: operatorId,
     p_action: action,
-    p_note: scrubReportReason(reason.trim()).slice(0, 1000),
+    p_note: scrubReportReason(typeof reason === "string" ? reason.trim() : "").slice(0, 1000),
   })
   if (!error) return { ok: true }
   if (error.code === "P0002") return { ok: false, error: "already-resolved" }

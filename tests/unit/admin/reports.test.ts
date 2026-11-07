@@ -39,10 +39,22 @@ describe("decisões de denúncia", () => {
     expect(await resolveReport(ID, decision, "Motivo")).toEqual({ ok: false, error: "forbidden" })
     expect(mock.rpc).toHaveBeenCalledTimes(1)
   })
-  it("recusa corpo inválido, motivo vazio e alvo inválido", async () => {
+  it.each(["", "   "])("aceita justificativa vazia (%j)", async (note) => {
+    expect(await resolveReport(ID, "ocultar", note)).toEqual({ ok: true })
+    expect(mock.rpc).toHaveBeenCalledWith("resolve_report", {
+      p_report_id: ID,
+      p_operator_user_id: OP,
+      p_action: "hide",
+      p_note: "",
+    })
+  })
+  it("aceita justificativa com 1000 caracteres", async () => {
+    expect(await resolveReport(ID, "manter", "a".repeat(1000))).toEqual({ ok: true })
+  })
+  it("recusa corpo inválido, motivo longo e alvo inválido", async () => {
     for (const [id, decision, note] of [
       [ID, "forged", "Motivo"],
-      [ID, "ocultar", ""],
+      [ID, "ocultar", "a".repeat(1001)],
       ["forged", "manter", "Motivo"],
     ])
       expect(await resolveReport(id ?? "", decision ?? "", note ?? "")).toMatchObject({ ok: false })

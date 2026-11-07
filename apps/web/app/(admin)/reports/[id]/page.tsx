@@ -44,8 +44,8 @@ function decisionResult(r: { ok: boolean; error?: string }): DecisionState {
   if (r.error === "invalid-decision") {
     return { status: "error", message: "Selecione uma decisão antes de confirmar." }
   }
-  if (r.error === "missing-justification") {
-    return { status: "error", message: "A justificativa da decisão é obrigatória." }
+  if (r.error === "invalid-justification") {
+    return { status: "error", message: "Use uma justificativa de até 1.000 caracteres." }
   }
   if (r.error === "already-resolved") {
     return { status: "error", message: "Esta denúncia já foi encerrada por outra pessoa." }

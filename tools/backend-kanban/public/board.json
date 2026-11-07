@@ -6356,11 +6356,12 @@
       "tests": [
         "RUN-024 em 5a2dbd5f: gate --fast verde (lint, tipos dos workspaces e dos E2E); não substitui build/runtime",
         "RUN-024: vitest tests/unit/admin --maxWorkers=1: 51/51; test:scope: 222/222",
-        "Correção única RUN-024 sobre fdad6a80 com o diff de erros de admissão deste commit: gate --fast verde; vitest tests/unit/admin --maxWorkers=1: 69/69; test:scope: 222/222. Logs: .visual/run-024/correcao-{gate-fast,admin,scope}.log"
+        "Correção única RUN-024 sobre fdad6a80 com o diff de erros de admissão deste commit: gate --fast verde; vitest tests/unit/admin --maxWorkers=1: 69/69; test:scope: 222/222. Logs: .visual/run-024/correcao-{gate-fast,admin,scope}.log",
+        "RUN-024 CI item 1, sobre 2ae4cb1f + diff deste commit: gate --fast verde; test:scope 222/222; vitest tests/unit/admin --maxWorkers=1 80/80 (6 falhas esperadas antes da corre??o). Logs: .visual/run-024/ci-item-1-{gate-fast,scope,admin,admin-red}.log."
       ],
       "blockers": [],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "fdad6a803af7b107d48806edf097a89e756b74f8",
+      "sourceRevision": "2ae4cb1f9a2aa0801147281aee6d9874c677ab8e",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
       "proof": [
         "02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7).",
@@ -6368,7 +6369,8 @@
         "07/11 RUN-024: commits 06943c19 (verificação), fe8d220d (denúncias), 59d34b02 (suspensão), 5a2dbd5f (histórico/prova preparada). Runbook atualizado; logs e relatório em .visual/run-024/.",
         "Revisão pelo próprio executor, sem outro modelo por instrução expressa do dono. Corrigida a RLS do histórico para usar private.is_operator() já autorizado; a API pública is_current_user_operator(uuid) segue exclusiva do servidor.",
         "07/11, rodada única de correção: 51490fcd corrige o delimitador SQL (demais migrations do lote conferidas); c9163bda aplica gate próprio nas cinco páginas com 15 negações unitárias; 24a5c622 recria private.account_unavailable em migration nova considerando expires_at e amplia pgTAP de conversas; fdad6a80 retira DELETE da auditoria, prova a negação em pgTAP e preserva a trilha sintética identificada por manifesto no E2E. Este commit mapeia os erros das três ações de admissão por código, sem devolver mensagem do Postgres. Nenhuma mudança na forma dos tipos públicos.",
-        "Próximo passo: CI aplica as cinco migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Nesta rodada, só gate --fast, test:scope e vitest de admin por instrução do dono; sem .env, banco, servidor, E2E ou revisão por outro modelo. Card não está concluído."
+        "Próximo passo: CI aplica as cinco migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Nesta rodada, só gate --fast, test:scope e vitest de admin por instrução do dono; sem .env, banco, servidor, E2E ou revisão por outro modelo. Card não está concluído.",
+        "07/11, corre??o do CI 42344019317 ? item 1: nota opcional no resolve_report, helper, API e formul?rio; limite de 1000 preservado, sem nota fabricada. Migration 20261107044654 editada com autoriza??o expressa do dono (ainda restrita ao PR); report-resolution-unified.sql intacto. operator-reports.sql amplia casos de nota nula/vazia/limite e n?o duplica??o do aviso. Tipos p?blicos sem mudan?a de forma. Prova de banco pendente no CI; sem Docker, .env ou revis?o externa por instru??o do dono."
       ]
     },
     {
