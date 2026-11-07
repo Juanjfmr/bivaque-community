@@ -291,6 +291,7 @@ for (const theme of ["light", "dark"] as const) {
       const blocked = await member.client.from("posts").insert({
         id: blockedId,
         user_id: member.id,
+        group_id: GRUPO_ABERTO_SEMEADO,
         post_type: "text",
         locality_id: locality.data.id,
         content: "Escrita negada",
@@ -312,6 +313,7 @@ for (const theme of ["light", "dark"] as const) {
         await member.client.from("posts").insert({
           id: resumedId,
           user_id: member.id,
+          group_id: GRUPO_ABERTO_SEMEADO,
           post_type: "text",
           locality_id: locality.data.id,
           content: "Escrita restabelecida",
