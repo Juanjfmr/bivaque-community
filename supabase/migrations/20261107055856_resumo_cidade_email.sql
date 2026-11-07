@@ -146,6 +146,22 @@ $$;
 revoke all on function public.enqueue_city_digests() from public, anon, authenticated;
 grant execute on function public.enqueue_city_digests() to service_role;
 
+-- O snapshot do resumo (conteúdo e token em claro) não sobrevive ao desfecho da
+-- linha: `sent` e `skipped` já não têm entrega pendente nem link a desfazer.
+create function private.city_digest_limpar_snapshot()
+returns trigger language plpgsql set search_path = ''
+as $$
+begin
+  new.payload := new.payload - 'content' - 'unsubscribe_token';
+  return new;
+end;
+$$;
+create trigger city_digest_limpar_snapshot
+  before update on public.outbox
+  for each row
+  when (new.type = 'city_digest' and new.status in ('sent','skipped'))
+  execute function private.city_digest_limpar_snapshot();
+
 -- Reconsulta antes da entrega: remoção, suspensão, mudança de cidade e opt-out
 -- após enfileirar não podem transformar um snapshot antigo em divulgação.
 create function public.city_digest_for_delivery(p_outbox_id uuid)

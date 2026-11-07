@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(35);
 \ir fixtures/foundation.inc
 
 select is((select city_digest_frequency::text from public.notification_preferences where user_id = '10000000-0000-4000-8000-000000000001'), null, 'sem preferência não é opt-in');
@@ -31,6 +31,9 @@ update public.locality_memberships set locality_id='00000000-0000-4000-8000-0000
 select is((select public.city_digest_for_delivery(id)->'replies'->0->>'author' from public.outbox where type='city_digest'),'Alguém da cidade','não revela nome de perfil que o membro já não pode ler');
 update public.locality_memberships set locality_id='00000000-0000-4000-8000-000000000001' where user_id='10000000-0000-4000-8000-000000000002';
 select ok(not exists(select 1 from public.outbox where type='city_digest' and (payload->'content')::text like '%@%'),'conteúdo não expõe e-mail de autoria');
+-- O snapshot some quando a linha termina; o token é guardado aqui para as provas seguintes.
+create temp table resumo_token as
+  select payload->>'unsubscribe_token' as token from public.outbox where type='city_digest';
 insert into public.profile_suspensions(user_id) values ('10000000-0000-4000-8000-000000000002');
 select is((select public.city_digest_for_delivery(id) from public.outbox where type='city_digest'),null,'autoria suspensa não entra na entrega');
 delete from public.profile_suspensions where user_id='10000000-0000-4000-8000-000000000002';
@@ -55,11 +58,11 @@ insert into public.account_deletion_requests(user_id,due_at) values ('10000000-0
 select is((select public.city_digest_for_delivery(id) from public.outbox where type='city_digest'),null,'autoria indisponível some e resumo vazio não entrega');
 select ok(not public.unsubscribe_city_digest(repeat('a',64)),'token inválido não desliga');
 update private.city_digest_state set unsubscribe_expires_at=now()-interval '1 second';
-select ok(not public.unsubscribe_city_digest((select payload->>'unsubscribe_token' from public.outbox where type='city_digest')),'token expirado não desliga');
+select ok(not public.unsubscribe_city_digest((select token from resumo_token)),'token expirado não desliga');
 update private.city_digest_state set unsubscribe_expires_at=now()+interval '30 days';
-select ok(public.unsubscribe_city_digest((select payload->>'unsubscribe_token' from public.outbox where type='city_digest')),'token válido desliga sem sessão');
+select ok(public.unsubscribe_city_digest((select token from resumo_token)),'token válido desliga sem sessão');
 select is((select city_digest_frequency::text from public.notification_preferences where user_id='10000000-0000-4000-8000-000000000001'),'off','descadastro persistido');
-select ok(not public.unsubscribe_city_digest((select payload->>'unsubscribe_token' from public.outbox where type='city_digest')),'token de uso único');
+select ok(not public.unsubscribe_city_digest((select token from resumo_token)),'token de uso único');
 update public.notification_preferences set city_digest_frequency='daily' where user_id='10000000-0000-4000-8000-000000000001';
 update private.city_digest_state set last_period_at=now()-interval '8 days',last_enqueued_at=now()-interval '8 days';
 select is(public.enqueue_city_digests(),0,'sem novidade nada é enviado');
@@ -70,6 +73,16 @@ select is(public.enqueue_city_digests(),1,'semanal também monta e enfileira');
 select is(public.enqueue_city_digests(),0,'semanal não repete no mesmo período');
 update public.notification_preferences set city_digest_frequency='daily' where user_id='10000000-0000-4000-8000-000000000001';
 select is(public.enqueue_city_digests(),0,'trocar semanal por diário não reenvia no mesmo dia');
+-- O snapshot some com o desfecho da linha, sem tocar nas outras do outbox.
+select ok(not (payload ? 'content') and not (payload ? 'unsubscribe_token'),'descadastro limpa conteúdo e token')
+  from public.outbox where type='city_digest' and status='skipped';
+update public.outbox set status='sent' where type='city_digest' and status='pending';
+select ok(not (payload ? 'content') and not (payload ? 'unsubscribe_token'),'envio limpa conteúdo e token')
+  from public.outbox where type='city_digest' and status='sent';
+insert into public.outbox(recipient,channel,type,payload)
+  values('outro-aviso@example.invalid','email','welcome','{"content":"mantido","unsubscribe_token":"mantido"}'::jsonb);
+update public.outbox set status='sent' where type='welcome';
+select is((select payload from public.outbox where type='welcome'),'{"content":"mantido","unsubscribe_token":"mantido"}'::jsonb,'limpeza não toca em outras linhas do outbox');
 set local role anon;
 select throws_ok('select public.enqueue_city_digests()','42501',null,'anônimo não dispara o job');
 select throws_ok('select public.unsubscribe_city_digest(repeat(''a'',64))','42501',null,'anônimo não chama RPC direto');
