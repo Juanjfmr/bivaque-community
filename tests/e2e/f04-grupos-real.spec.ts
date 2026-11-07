@@ -360,6 +360,10 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           page.getByRole("button", { name: "Tirar dos salvos" }),
           "o menu mostra que a publicação está salva",
         ).toBeVisible(ESPERA)
+        await expect(
+          page.getByRole("button", { name: "Denunciar publicação", exact: true }),
+          "quem escreveu não denuncia a própria publicação",
+        ).toHaveCount(0, ESPERA)
         await page.getByRole("button", { name: "Ocultar publicação" }).click(ESPERA)
         await expect(
           page.getByText("Esta publicação está oculta para você no grupo."),
@@ -404,10 +408,11 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
       })
 
       await test.step("denúncia: outro membro denuncia e o registro aparece", async () => {
-        // A denúncia é de outro membro: o menu esconde "Denunciar publicação" na
-        // publicação de quem escreveu, e a rota responde `proprio-conteudo`.
+        // A publicação é de membro-1; quem denuncia é a dona do grupo, outro
+        // membro. O menu esconde "Denunciar publicação" na publicação de quem
+        // escreveu, e a rota responde `proprio-conteudo`.
         await context.clearCookies()
-        await signInAs(context, "membro-1@bivaque.example.invalid")
+        await signInAs(context, "visual@bivaque.example.invalid")
         await page.goto(`/app/publicacao/${id}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Denunciar publicação", exact: true }).click(ESPERA)
