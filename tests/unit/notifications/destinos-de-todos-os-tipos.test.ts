@@ -119,7 +119,7 @@ describe("os três destinos da RUN-027", () => {
     })
   })
 
-  it("denúncia analisada abre o conteúdo denunciado quando o alvo é conhecido", () => {
+  it("denúncia analisada abre o conteúdo denunciado quando o alvo está visível", () => {
     const denuncia = aviso("report_resolved")
     expect(rotuloDoAviso(denuncia)).toContain("denúncia foi analisada")
     expect(destinoDoAviso(denuncia)).toBe(DESTINO_SEGURO)
@@ -131,10 +131,24 @@ describe("os três destinos da RUN-027", () => {
       `/app/pergunta/${ALVO}`,
     )
     // Alvo sem tela correspondente no app (mensagem, comentário, prestador):
-    // tela segura, nunca endereço inventado.
-    for (const alvoTipo of ["message", "comment", "provider_profile", "recommendation_reply"]) {
+    // tela segura, nunca endereço inventado. Tipos com tela que a rota não
+    // confere (evento, anúncio, conversa) também: sem conferência, sem endereço.
+    for (const alvoTipo of [
+      "message",
+      "comment",
+      "provider_profile",
+      "recommendation_reply",
+      "event",
+      "listing",
+      "conversation",
+    ]) {
       expect(destinoDoAviso(denuncia, { alvoTipo, alvoId: ALVO }), alvoTipo).toBe(DESTINO_SEGURO)
     }
+  })
+
+  it("denúncia sem alvo conferido (apagado, oculto ou falha na leitura) cai na tela segura", () => {
+    // A rota passa `null` quando a visibilidade não confirma o alvo.
+    expect(destinoDoAviso(aviso("report_resolved"), null)).toBe(DESTINO_SEGURO)
   })
 
   it("a frase da denúncia não nomeia ninguém", () => {

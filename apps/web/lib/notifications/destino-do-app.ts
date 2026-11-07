@@ -63,8 +63,21 @@ export function rotuloDoAviso(aviso: AvisoDoBanco): string {
   return formatNotificationLabel(comoLinhaDaWeb(aviso))
 }
 
-/** Alvo conhecido da denúncia (linha `reports` do próprio denunciante). */
+/**
+ * Alvo da denúncia que o app abre (linha `reports` do próprio denunciante,
+ * conferida por `alvos-visiveis.ts`: só entra se a tela que o abre ainda o lê).
+ */
 export type AlvoDaDenuncia = Readonly<{ alvoTipo: string; alvoId: string }>
+
+/**
+ * Tipos de alvo de denúncia que têm tela no app e cuja visibilidade a rota
+ * confere antes de abrir. Os demais (comentário, mensagem) vão para a tela segura.
+ */
+export const ALVOS_DE_DENUNCIA_ABERTOS: ReadonlySet<string> = new Set([
+  "post",
+  "group",
+  "recommendation_request",
+])
 
 /** Tela segura quando o tipo não tem jornada no app. */
 export const DESTINO_SEGURO = "/app/voce"
@@ -93,6 +106,10 @@ function destinoPorAlvo(alvoTipo: string, alvoId: string): string {
   }
 }
 
+/**
+ * `alvoDaDenuncia` é só o alvo que a leitura confirmou visível (ou `null`). Quem
+ * chama não passa alvo apagado: a tela segura é o que sobra quando não há o que abrir.
+ */
 export function destinoDoAviso(
   aviso: AvisoDoBanco,
   alvoDaDenuncia: AlvoDaDenuncia | null = null,
@@ -110,14 +127,14 @@ export function destinoDoAviso(
   // O convite de família aceito: o app não tem jornada própria de família —
   // ela vive na tela Você. Decisão RUN-027, registrada no relatório.
   if (aviso.tipo === "invitation_accepted") return DESTINO_SEGURO
-  // A denúncia aponta para a linha do report, que não é tela no app. O conteúdo
-  // denunciado vem do alvo da própria denúncia (lido pelo denunciante, RLS
-  // reporter-only); sem alvo conhecido, a tela segura. A frase é impessoal:
-  // nada aqui revela quem denunciou nem a ação tomada.
+  // A denúncia aponta para a linha do report, que não é tela no app. Abre o
+  // conteúdo denunciado só se ele ainda é lido (conferido na rota); apagado,
+  // oculto, sem alvo ou tipo sem tela endereçável, a tela segura. A frase é
+  // impessoal: nada aqui revela quem denunciou nem a ação tomada.
   if (aviso.tipo === "report_resolved") {
-    return alvoDaDenuncia === null
-      ? DESTINO_SEGURO
-      : destinoPorAlvo(alvoDaDenuncia.alvoTipo, alvoDaDenuncia.alvoId)
+    return alvoDaDenuncia !== null && ALVOS_DE_DENUNCIA_ABERTOS.has(alvoDaDenuncia.alvoTipo)
+      ? destinoPorAlvo(alvoDaDenuncia.alvoTipo, alvoDaDenuncia.alvoId)
+      : DESTINO_SEGURO
   }
   return destinoPorAlvo(aviso.alvoTipo, aviso.alvoId)
 }

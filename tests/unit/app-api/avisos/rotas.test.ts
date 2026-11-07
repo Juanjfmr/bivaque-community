@@ -62,8 +62,22 @@ type Options = {
   preferencia?: typeof preferenciaLida | null
   matriz?: { notification_type: string; channel: string; enabled: boolean }[]
   denuncias?: { id: string; target_type: string; target_id: string }[]
+  // Conteúdo que a tela do app lê: a consulta de visibilidade aplica `id in` e
+  // `is_deleted = false` sobre estas linhas, como o banco faria.
+  conteudos?: Partial<Record<TabelaDeConteudo, { id: string; is_deleted: boolean }[]>>
   errorTable?: string
   erroNaEscrita?: { code?: string; message: string }
+}
+
+type TabelaDeConteudo = "posts" | "groups" | "recommendation_requests"
+const TABELAS_DE_CONTEUDO: readonly string[] = ["posts", "groups", "recommendation_requests"]
+
+type Filtro = { coluna: string; valor: unknown }
+
+function confere(linha: { id: string; is_deleted: boolean }, { coluna, valor }: Filtro): boolean {
+  if (coluna === "id") return Array.isArray(valor) && valor.includes(linha.id)
+  if (coluna === "is_deleted") return linha.is_deleted === valor
+  return true
 }
 
 type Chamada = {
@@ -80,12 +94,20 @@ function mockClient(options: Options = {}) {
   const from = vi.fn((table: string) => {
     let operacao: Chamada["op"] = "select"
     let contar = false
+    const filtros: Filtro[] = []
     const resposta = () => {
       if (options.errorTable === table) {
         return { data: null, count: null, error: { code: "XX000", message: "boom" } }
       }
       if (options.erroNaEscrita !== undefined && operacao !== "select") {
         return { data: null, count: null, error: options.erroNaEscrita }
+      }
+      if (TABELAS_DE_CONTEUDO.includes(table) && operacao === "select") {
+        const linhas = options.conteudos?.[table as TabelaDeConteudo] ?? []
+        const visiveis = linhas
+          .filter((linha) => filtros.every((filtro) => confere(linha, filtro)))
+          .map((linha) => ({ id: linha.id }))
+        return { data: visiveis, count: null, error: null }
       }
       if (table === "notifications") {
         if (operacao === "select") {
@@ -116,6 +138,7 @@ function mockClient(options: Options = {}) {
     }
     query["eq"] = (coluna: string, valor: unknown) => {
       chamadas.push({ table, op: operacao, coluna, valor })
+      filtros.push({ coluna, valor })
       return query
     }
     query["is"] = (coluna: string, valor: unknown) => {
@@ -124,6 +147,7 @@ function mockClient(options: Options = {}) {
     }
     query["in"] = (coluna: string, valores: unknown[]) => {
       chamadas.push({ table, op: operacao, coluna, valor: valores })
+      filtros.push({ coluna, valor: valores })
       return query
     }
     query["order"] = () => query
@@ -363,36 +387,102 @@ describe("rotas de avisos do app", () => {
       expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/chamados")
     })
 
-    it("denúncia analisada abre o conteúdo denunciado quando o alvo é visível", async () => {
-      const conteudo = "60000000-0000-4000-8000-000000000001"
+    const DENUNCIA = "60000000-0000-4000-8000-000000000002"
+    const CONTEUDO = "60000000-0000-4000-8000-000000000001"
+    const avisoDeDenuncia = {
+      ...linha,
+      type: "report_resolved",
+      action: "resolved",
+      target_type: "report",
+      target_id: DENUNCIA,
+    }
+
+    it("denúncia analisada abre o conteúdo denunciado quando o alvo ainda é visível", async () => {
       const mock = mockClient({
-        avisos: [
-          {
-            ...linha,
-            type: "report_resolved",
-            action: "resolved",
-            target_type: "report",
-            target_id: "60000000-0000-4000-8000-000000000002",
-          },
-        ],
-        denuncias: [
-          { id: "60000000-0000-4000-8000-000000000002", target_type: "post", target_id: conteudo },
-        ],
+        avisos: [avisoDeDenuncia],
+        denuncias: [{ id: DENUNCIA, target_type: "post", target_id: CONTEUDO }],
+        conteudos: { posts: [{ id: CONTEUDO, is_deleted: false }] },
       })
       autenticar(mock)
       const corpo = await json(await listar(req("GET")))
       expect((corpo["avisos"] as { destino: string; texto: string }[])[0]).toMatchObject({
-        destino: `/app/publicacao/${conteudo}`,
+        destino: `/app/publicacao/${CONTEUDO}`,
         texto: "Sua denúncia foi analisada",
       })
       // A consulta de apoio é pela linha do report do próprio destinatário.
       expect(mock.chamadas).toContainEqual(
-        expect.objectContaining({
-          table: "reports",
-          coluna: "id",
-          valor: ["60000000-0000-4000-8000-000000000002"],
-        }),
+        expect.objectContaining({ table: "reports", coluna: "id", valor: [DENUNCIA] }),
       )
+      // E o alvo é conferido com o filtro da tela que o abre: post não apagado.
+      expect(mock.chamadas).toContainEqual(
+        expect.objectContaining({ table: "posts", coluna: "is_deleted", valor: false }),
+      )
+    })
+
+    it("denúncia analisada abre o grupo denunciado quando o grupo ainda é visível", async () => {
+      const mock = mockClient({
+        avisos: [avisoDeDenuncia],
+        denuncias: [{ id: DENUNCIA, target_type: "group", target_id: CONTEUDO }],
+        conteudos: { groups: [{ id: CONTEUDO, is_deleted: false }] },
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe(`/app/grupo/${CONTEUDO}`)
+    })
+
+    it("denúncia analisada cujo post foi apagado cai na tela segura, mesmo com o report lido", async () => {
+      const mock = mockClient({
+        avisos: [avisoDeDenuncia],
+        denuncias: [{ id: DENUNCIA, target_type: "post", target_id: CONTEUDO }],
+        conteudos: { posts: [{ id: CONTEUDO, is_deleted: true }] },
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["avisos"] as { destino: string; texto: string }[])[0]).toMatchObject({
+        destino: "/app/voce",
+        texto: "Sua denúncia foi analisada",
+      })
+    })
+
+    it("denúncia analisada cujo grupo foi apagado cai na tela segura", async () => {
+      const mock = mockClient({
+        avisos: [avisoDeDenuncia],
+        denuncias: [{ id: DENUNCIA, target_type: "group", target_id: CONTEUDO }],
+        conteudos: { groups: [{ id: CONTEUDO, is_deleted: true }] },
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/voce")
+    })
+
+    it("denúncia de comentário ou mensagem cai na tela segura sem consultar o alvo", async () => {
+      const mock = mockClient({
+        avisos: [avisoDeDenuncia],
+        denuncias: [{ id: DENUNCIA, target_type: "comment", target_id: CONTEUDO }],
+        conteudos: { posts: [{ id: CONTEUDO, is_deleted: false }] },
+      })
+      autenticar(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/voce")
+      // O app não endereça comentário: nenhuma consulta de visibilidade para ele.
+      expect(mock.chamadas.some((chamada) => chamada.table === "comments")).toBe(false)
+      expect(mock.chamadas.some((chamada) => chamada.table === "posts")).toBe(false)
+    })
+
+    it("falha na consulta de visibilidade degrada para a tela segura, sem eco do banco", async () => {
+      const mock = mockClient({
+        avisos: [avisoDeDenuncia],
+        denuncias: [{ id: DENUNCIA, target_type: "post", target_id: CONTEUDO }],
+        conteudos: { posts: [{ id: CONTEUDO, is_deleted: false }] },
+        errorTable: "posts",
+      })
+      autenticar(mock)
+      const resposta = await listar(req("GET"))
+      expect(resposta.status).toBe(200)
+      const corpo = await json(resposta)
+      expect(corpo["avisos"]).toHaveLength(1)
+      expect((corpo["avisos"] as { destino: string }[])[0]?.destino).toBe("/app/voce")
+      expect(JSON.stringify(corpo)).not.toContain("boom")
     })
 
     it("denúncia sem alvo legível cai na tela segura; falha na leitura de apoio também", async () => {
