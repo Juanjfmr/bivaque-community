@@ -3,14 +3,14 @@
   "title": "Prontidão do Bivaque",
   "scopeVersion": "2026-11-05",
   "source": "docs/LANCAMENTO.md",
-  "generatedAt": "2026-11-07T11:29:39.228Z",
-  "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
+  "generatedAt": "2026-11-07T11:35:59.861Z",
+  "revision": "57c5acd8108fe0ad92accb9cb0cc8adfe18cfa70",
   "boardUpdatedAt": "2026-11-07",
   "stage": "Em construção",
   "metrics": {
     "frontend": {
       "verified": 0,
-      "declared": 0,
+      "declared": 1,
       "total": 10,
       "percent": 0
     },
@@ -22,7 +22,7 @@
     },
     "integration": {
       "verified": 0,
-      "declared": 0,
+      "declared": 1,
       "total": 10,
       "percent": 0
     }
@@ -159,8 +159,8 @@
       "cardId": "LAN-F04",
       "nextStep": "Concluir o redesenho do banco e ligar os grupos ao aplicativo.",
       "frontend": {
-        "status": "pending",
-        "declared": false,
+        "status": "unverified",
+        "declared": true,
         "verified": false,
         "evidenceCount": 0,
         "evidenceRevision": null,
@@ -182,8 +182,8 @@
         ]
       },
       "integration": {
-        "status": "pending",
-        "declared": false,
+        "status": "unverified",
+        "declared": true,
         "verified": false,
         "evidenceCount": 0,
         "evidenceRevision": null,
@@ -479,25 +479,25 @@
   "changes": [],
   "checks": {
     "frontend": {
-      "status": "inconclusive",
-      "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
+      "status": "pending",
+      "revision": "57c5acd8108fe0ad92accb9cb0cc8adfe18cfa70",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944231",
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944286"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42368848533",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42368848604"
       ]
     },
     "backend": {
-      "status": "success",
-      "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
+      "status": "pending",
+      "revision": "57c5acd8108fe0ad92accb9cb0cc8adfe18cfa70",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944231"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42368848533"
       ]
     },
     "integration": {
-      "status": "success",
-      "revision": "dc9bfcbd9d6d80e50b76e210873f581346d6b67e",
+      "status": "pending",
+      "revision": "57c5acd8108fe0ad92accb9cb0cc8adfe18cfa70",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42366944231"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/42368848533"
       ]
     }
   },
