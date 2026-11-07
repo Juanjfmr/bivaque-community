@@ -28,11 +28,14 @@ test("pergunta: rascunho, revisão, falha com texto preservado e detalhe gravado
   const titulo = "Indicam um serviço de manutenção de bicicletas?"
   await form.locator("#nova-pergunta").fill(titulo)
   await form.locator("#topico-pergunta").fill("Serviços")
+  // O tópico é a lista fechada (ADR-20261107 item 5): escolhido, vira categoria.
+  await form.getByLabel("Filtrar por Serviços").click()
   await form.getByRole("button", { name: "Salvar rascunho" }).click()
   await expect(form.getByRole("status")).toContainText("Rascunho salvo")
   // Recarregar restaura a entrada com a sobreposição aberta: o rascunho volta no formulário.
   await page.reload()
   await expect(form.locator("#nova-pergunta")).toHaveValue(titulo)
+  await expect(form.getByLabel("Filtrar por Serviços")).toHaveAttribute("data-estado", "on")
   const falhar = /\/api\/app\/perguntas$/
   await page.route(falhar, (rota) =>
     rota.request().method() === "POST"

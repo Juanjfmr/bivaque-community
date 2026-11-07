@@ -23,7 +23,7 @@ describe("porta de criação", () => {
     const controle = new AbortController()
     expect(
       await publicarPergunta(
-        { titulo: "Alguém indica escola?", assunto: "Educação" },
+        { titulo: "Alguém indica escola?", assunto: "Educação", topico: "educacao" },
         { signal: controle.signal },
       ),
     ).toBe("gravada")
@@ -31,6 +31,11 @@ describe("porta de criação", () => {
       "/api/app/perguntas",
       expect.objectContaining({ signal: controle.signal, credentials: "include", method: "POST" }),
     )
+    // O tópico escolhido viaja junto: a lista fechada é a categoria do banco.
+    expect(JSON.parse(fetch.mock.calls[0]?.[1]?.body ?? "{}")).toMatchObject({
+      titulo: "Alguém indica escola?",
+      topico: "educacao",
+    })
   })
   it("desapego envia chave estável, centavos na notação da validação e foto", async () => {
     const fetch = vi
@@ -51,7 +56,7 @@ describe("porta de criação", () => {
     expect(fetch).toHaveBeenCalledTimes(1)
     fetch.mockResolvedValue(new Response("{}"))
     await expect(
-      publicarPergunta({ titulo: "Uma pergunta válida?", assunto: "" }),
+      publicarPergunta({ titulo: "Uma pergunta válida?", assunto: "", topico: "" }),
     ).rejects.toMatchObject({ codigo: "indisponivel" })
   })
   it("meus anúncios distingue vazio, erro e resposta fora do contrato", async () => {

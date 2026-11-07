@@ -122,6 +122,47 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
     ).toBeVisible({ timeout: 30_000 })
   })
 
+  test("o filtro de tópico estreita a lista pela cidade real", async ({ page, context }) => {
+    test.setTimeout(120_000)
+    // RUN-025c (ADR-20261107 item 5): a lista fechada filtra no servidor. O
+    // ortopedista semeado é `saude_bem_estar`; mudança de tópico o esconde.
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/comunidade")
+    await expect(
+      page.locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO }),
+    ).toBeVisible({ timeout: 30_000 })
+
+    const pedidoSaude = page.waitForResponse((resposta) =>
+      resposta.url().includes("topico=saude_bem_estar"),
+    )
+    await page.locator('[data-topicos="filtro-comunidade"] [data-chip="saude_bem_estar"]').click()
+    await pedidoSaude
+    await expect(
+      page.locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO }),
+    ).toBeVisible({ timeout: 30_000 })
+
+    const pedidoTransporte = page.waitForResponse((resposta) =>
+      resposta.url().includes("topico=transporte"),
+    )
+    await page.locator('[data-topicos="filtro-comunidade"] [data-chip="transporte"]').click()
+    await pedidoTransporte
+    await expect(
+      page.locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO }),
+      "tópico errado não pode deixar a pergunta de saúde na lista",
+    ).toHaveCount(0)
+    await expect(page.getByRole("alert")).toHaveCount(0)
+
+    // Voltar a "todos" devolve a lista inteira, sem erro.
+    const pedidoTodos = page.waitForResponse((resposta) =>
+      resposta.url().includes("/api/app/perguntas"),
+    )
+    await page.locator('[data-topicos="filtro-comunidade"] [data-chip="todos"]').click()
+    await pedidoTodos
+    await expect(
+      page.locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO }),
+    ).toBeVisible({ timeout: 30_000 })
+  })
+
   test("Minhas é a autoria do servidor e a pergunta abre com a conversa", async ({
     page,
     context,

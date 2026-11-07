@@ -228,6 +228,24 @@ describe("F03 — fronteira de criação", () => {
     })
   })
 
+  it("pergunta: o tópico escolhido vence a sugestão do texto", async () => {
+    const mock = cliente()
+    const result = await pergunta(
+      post("perguntas", { titulo: "Alguém indica pediatra?", assunto: "", topico: "transporte" }),
+    )
+    expect(result.status).toBe(201)
+    expect(mock.escritas[0]?.valor).toMatchObject({ category: "transporte" })
+  })
+
+  it("pergunta: tópico fora da lista fechada é 400 e não grava", async () => {
+    const mock = cliente()
+    const result = await pergunta(
+      post("perguntas", { titulo: "Alguém indica pediatra?", assunto: "", topico: "saude-total" }),
+    )
+    expect(result.status).toBe(400)
+    expect(mock.escritas).toHaveLength(0)
+  })
+
   it("anúncio: grava sob a sessão, registra foto e só depois publica", async () => {
     const mock = cliente()
     const result = await anuncio(
