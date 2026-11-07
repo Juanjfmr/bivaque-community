@@ -2294,6 +2294,42 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          destination: string
+          id: string
+          key_auth: string | null
+          key_p256dh: string | null
+          kind: string
+          label: string | null
+          last_success_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          id?: string
+          key_auth?: string | null
+          key_p256dh?: string | null
+          kind: string
+          label?: string | null
+          last_success_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          id?: string
+          key_auth?: string | null
+          key_p256dh?: string | null
+          kind?: string
+          label?: string | null
+          last_success_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       recommendation_replies: {
         Row: {
           author_id: string
@@ -3891,7 +3927,7 @@ export type Database = {
         | "verification_decision"
         | "moderation_decision"
         | "account_suspension"
-      outbox_channel: "email"
+      outbox_channel: "email" | "push"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
@@ -4141,7 +4177,7 @@ export const Constants = {
         "moderation_decision",
         "account_suspension",
       ],
-      outbox_channel: ["email"],
+      outbox_channel: ["email", "push"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],
