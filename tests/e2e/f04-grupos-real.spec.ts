@@ -390,6 +390,17 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           page.getByRole("button", { name: "Desafixar publicação" }),
           "a fixação sobrevive ao recarregamento",
         ).toBeVisible(ESPERA)
+        // A recarga chega com o menu aberto na entrada, mas sem a publicação
+        // escolhida: a tela fecha o que não sabe restaurar e o corpo volta a
+        // responder ao toque, em vez de ficar inerte atrás de um diálogo vazio.
+        await page.reload({ timeout: ESPERA.timeout })
+        await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
+        await expect(
+          page.getByRole("dialog"),
+          "recarregar com o menu aberto não deixa a tela inerte",
+        ).toBeVisible(ESPERA)
+        await page.keyboard.press("Escape")
+        await expect(page.getByRole("dialog"), "Esc fecha o menu").toHaveCount(0, ESPERA)
       })
 
       await test.step("denúncia: outro membro denuncia e o registro aparece", async () => {

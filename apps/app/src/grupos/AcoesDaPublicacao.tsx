@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
@@ -30,6 +30,21 @@ export function useAcoesDaPublicacao({
   const [explicacao, setExplicacao] = useState("")
   const [controle] = useState(() => new AbortController())
   useEffect(() => () => controle.abort(), [controle])
+
+  // A entrada guarda a sobreposição, não a publicação escolhida: uma recarga
+  // com o menu aberto volta sem `selecionada`, e a casca deixaria o corpo
+  // inerte com um diálogo que não existe. Fecha pela entrada anterior, que
+  // guarda rolagem e foco.
+  const fechandoSemAlvo = useRef(false)
+  useEffect(() => {
+    if (!aberto) {
+      fechandoSemAlvo.current = false
+      return
+    }
+    if (selecionada !== null || fechandoSemAlvo.current) return
+    fechandoSemAlvo.current = true
+    aoMudarAberto(false)
+  }, [aberto, selecionada, aoMudarAberto])
 
   async function agir(p: PublicacaoReal, acao: AcaoDaPublicacao, valor: boolean) {
     if (ocupado) return
