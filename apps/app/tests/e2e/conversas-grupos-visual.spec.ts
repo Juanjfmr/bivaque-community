@@ -1,5 +1,6 @@
-﻿import { expect, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { simularConversas } from "./conversas-ajuda"
+import { simularGrupos } from "./grupos-ajuda"
 
 /** Capturas do app real para revisão de composição mobile; não homologam a R72. */
 const CENAS = [
@@ -12,6 +13,7 @@ for (const cena of CENAS) {
   for (const tema of ["light", "dark"] as const) {
     test(`captura mobile ${cena.id} ${tema}`, async ({ page }, testInfo) => {
       await simularConversas(page)
+      await simularGrupos(page)
       await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
       await page.goto(cena.rota)
       await expect(page.locator(`[data-tela="${cena.seletor}"]`)).toBeVisible()

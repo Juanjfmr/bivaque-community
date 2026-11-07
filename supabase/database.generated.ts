@@ -114,13 +114,41 @@ export type Database = {
           },
         ]
       }
+      comment_reactions: {
+        Row: {
+          comment_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
           created_at: string
           id: string
           is_deleted: boolean
+          parent_id: string | null
           post_id: string
+          reply_to_id: string | null
           user_id: string
         }
         Insert: {
@@ -128,7 +156,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_deleted?: boolean
+          parent_id?: string | null
           post_id: string
+          reply_to_id?: string | null
           user_id?: string
         }
         Update: {
@@ -136,15 +166,31 @@ export type Database = {
           created_at?: string
           id?: string
           is_deleted?: boolean
+          parent_id?: string | null
           post_id?: string
+          reply_to_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comments_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
             referencedColumns: ["id"]
           },
         ]
@@ -1016,6 +1062,32 @@ export type Database = {
           },
         ]
       }
+      hidden_posts: {
+        Row: {
+          hidden_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          hidden_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hidden_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hidden_questions: {
         Row: {
           hidden_at: string
@@ -1792,6 +1864,7 @@ export type Database = {
           link_url: string | null
           locality_id: string
           photo_path: string | null
+          photo_paths: string[]
           poll_options: Json | null
           post_type: Database["public"]["Enums"]["post_type"]
           user_id: string
@@ -1806,6 +1879,7 @@ export type Database = {
           link_url?: string | null
           locality_id: string
           photo_path?: string | null
+          photo_paths?: string[]
           poll_options?: Json | null
           post_type: Database["public"]["Enums"]["post_type"]
           user_id?: string
@@ -1820,6 +1894,7 @@ export type Database = {
           link_url?: string | null
           locality_id?: string
           photo_path?: string | null
+          photo_paths?: string[]
           poll_options?: Json | null
           post_type?: Database["public"]["Enums"]["post_type"]
           user_id?: string

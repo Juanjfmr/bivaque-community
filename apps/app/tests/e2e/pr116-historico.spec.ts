@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { simularGrupos } from "./grupos-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 
 for (const caso of [
@@ -68,6 +69,7 @@ for (const caso of [
 }
 
 test("Voltar fecha escrever/sair do grupo e preserva o texto", async ({ page }) => {
+  await simularGrupos(page)
   await page.goto("/app/grupo/g-pets")
   await page.locator('[data-acao="grupo-participar"]').click()
   const escrever = page.locator('[data-acao="escrever-grupo"]')
@@ -139,6 +141,7 @@ test("limite de imóveis informa o problema e preserva o rascunho antigo e o tex
 })
 
 test("limite do grupo avisa dentro do diálogo e mantém o texto digitado", async ({ page }) => {
+  await simularGrupos(page, { membro: true })
   await page.addInitScript(() => {
     sessionStorage.setItem("bivaque:grupo-previa:manaus:g-pets:estado", "membro")
     sessionStorage.setItem(

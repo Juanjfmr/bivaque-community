@@ -1,0 +1,86 @@
+# LAN-F04 (06/11/2026): grupos ligados ao banco, sobre as telas atuais do app, no molde das jornadas na main.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+# O aceite visual do redesenho de Grupos (APP-REGUA-NEXTDOOR) segue com o dono; este lote troca a fonte do dado, não o desenho.
+task_id: RUN-021
+
+objective: >
+  Os grupos do apps/app passam a ser reais: diretório de grupos da cidade da sessão, entrar em grupo aberto
+  e pedir entrada em grupo fechado com motivo, ver o grupo com suas publicações, publicar (texto e foto),
+  comentar e responder em fio, marcar Útil, salvar, fixar (admin) e ocultar, e denunciar publicação. Nada
+  da tela aprovada some; campo sem dado real mostra vazio honesto.
+
+authority:
+  - docs/LANCAMENTO.md (F04)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (o molde)
+  - docs/decisions/ADR-20261101-foto-e-resposta-nos-grupos.md (foto e resposta encadeada)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo)
+  - tools/backend-kanban card LAN-F04
+  - referência viva: apps/web/app/api/app/perguntas e eventos; a tela antiga em apps/web/app/(shell)/groups
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/telas/Grupo.tsx e Publicacao.tsx leem a demonstração; Comunidade.tsx já lê as perguntas da
+    cidade (F04 parcial). A web antiga tem grupos em apps/web/app/(shell)/groups e apps/web/lib/communities,
+    com entrada, pedido com motivo, publicação, comentário, fixar e denúncia; o banco tem groups, membros,
+    pedidos, posts, comentários e reports com RLS.
+
+allowed_paths:
+  - apps/app/lib/dados/grupos.ts
+  - apps/app/src/grupos
+  - apps/app/src/telas/Grupo.tsx
+  - apps/app/src/telas/Publicacao.tsx
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/src/roteador.tsx
+  - apps/app/tests
+  - apps/web/app/api/app/grupos
+  - apps/web/lib/communities
+  - apps/web/lib/composer
+  - apps/web/lib/reports
+  - apps/web/lib/saves
+  - apps/web/lib/storage
+  - apps/web/app/(shell)/groups
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit/app-api/grupos
+  - tests/e2e/f04-grupos-real.spec.ts
+  - tests/scope
+  - docs/agents/tasks/RUN-021.task.yml
+  - .visual/run-021
+
+forbidden:
+  - tocar em apps/app/lib/api/cliente.ts, apps/web/lib/app-api, apps/app/src/entrada e nas rotas de outras jornadas (só importar)
+  - editar tools/backend-kanban ou RATIFICACAO.md
+  - confiar em user_id, papel, grupo ou cidade vindos do corpo, da query ou do app
+  - service_role onde a RLS da sessão basta (exceção só para storage depois de conferir posse, padrão SEC-006)
+  - editar migration existente
+  - mudar o desenho aprovado das telas; inventar dado
+  - pedir revisão a outro modelo (o coordenador cuida)
+  - push, merge ou force-push fora do branch deste lote
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Rotas /api/app/grupos com a sessão sob RLS: diretório da cidade, detalhe do grupo com publicações paginadas, entrar/pedir com motivo, publicar (texto e foto pela pasta do próprio membro), comentar e responder em fio, Útil, salvar, fixar (só admin), ocultar e denunciar; grupo fechado sem participação não mostra publicações."
+  - "Cada rota com teste de unidade positivo e negativo (401, 403 de origem/cabeçalho, não membro, não admin, inexistente 404, corpo inválido 400, erro do banco 503 sem eco)."
+  - "Módulo apps/app/lib/dados/grupos.ts com o cliente único e AbortSignal; Grupo.tsx e Publicacao.tsx trocam dadosDoApp pelo módulo, com carregando, vazio honesto, erro com Tentar de novo e resultado gravado."
+  - "Testes do apps/app que esperavam a demonstração passam a simular as rotas com page.route (RegExp; no glob do Playwright * não cruza /)."
+  - "E2E tests/e2e/f04-grupos-real.spec.ts contra o banco com seed: entrar, publicar, comentar, recarregar e ver gravado; não membro negado; o spec devolve o banco ao estado inicial ao terminar (workers=1, três larguras em série)."
+  - "Relatório em .visual/run-021/relatorio.md: o que entrou, commits, números e o que não rodou."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/grupos
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz com banco no CI
+
+risk: leitura e escrita de dados de membros em grupos, foto e denúncia
+risk_level: R3
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

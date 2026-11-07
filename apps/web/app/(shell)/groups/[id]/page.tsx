@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
+import { entrarNoGrupo } from "../../../../lib/communities/grupos"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 import { GroupInviteButton } from "./group-invite-button"
 import { GroupJoinRequest } from "./group-join-request"
@@ -70,7 +71,7 @@ async function joinGroupAction(formData: FormData) {
   // The server derives status from groups.visibility through join_group
   // (public → approved, private → pending); the form's hidden field is
   // ignored on purpose.
-  const { error } = await supabase.rpc("join_group", { p_group_id: groupId })
+  const { error } = await entrarNoGrupo(supabase, groupId, "")
   if (error) throw new Error(error.message)
 
   revalidatePath(`/groups/${groupId}`)

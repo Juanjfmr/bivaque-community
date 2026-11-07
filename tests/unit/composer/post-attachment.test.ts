@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   attachmentPublishBlocker,
   derivePostType,
+  lerPublicacaoDoGrupo,
   normalizeAttachment,
   type PostAttachment,
 } from "../../../apps/web/lib/composer/post-attachment"
@@ -259,6 +260,40 @@ describe("coerência entre post_type e as colunas extras (as quatro CHECKs)", ()
       const vazio = { name: attachment, attachment, photoPath: "", linkUrl: "" }
       expect(blockerOf(vazio), attachment).not.toBeNull()
       expect(PUBLISHABLE.includes(vazio), attachment).toBe(false)
+    }
+  })
+})
+
+describe("lerPublicacaoDoGrupo: só o caminho que o upload gera é aceito", () => {
+  const USUARIO = "20000000-0000-4000-8000-000000000001"
+  const GRUPO = "90000000-0000-4000-8000-000000000001"
+  const gerado = `${USUARIO}/grupos/${GRUPO}/30000000-0000-4000-8000-000000000001.jpeg`
+
+  it("aceita o caminho de foto-do-grupo.ts", () => {
+    expect(lerPublicacaoDoGrupo({ texto: "Olá", fotos: [gerado] }, USUARIO)).toEqual({
+      content: "Olá",
+      post_type: "photo",
+      photo_path: gerado,
+      photo_paths: [gerado],
+    })
+  })
+
+  it.each([
+    `${USUARIO}/foto.png`,
+    `${USUARIO}/grupos/${GRUPO}/foto.png`,
+    `${USUARIO}/grupos/nao-e-uuid/30000000-0000-4000-8000-000000000001.png`,
+    `${USUARIO}/grupos/${GRUPO}/30000000-0000-4000-8000-000000000001.gif`,
+    `${USUARIO}/grupos/${GRUPO}/30000000-0000-4000-8000-000000000001.png/x`,
+  ])("recusa caminho fora do padrão: %s", (caminho) => {
+    expect(lerPublicacaoDoGrupo({ texto: "Olá", fotos: [caminho] }, USUARIO)).toBeNull()
+  })
+
+  it("recusa traversal mesmo sob o próprio prefixo", () => {
+    for (const caminho of [
+      `${USUARIO}/../grupos/${GRUPO}/30000000-0000-4000-8000-000000000001.png`,
+      `${USUARIO}/grupos/${GRUPO}/../../30000000-0000-4000-8000-000000000001.png`,
+    ]) {
+      expect(lerPublicacaoDoGrupo({ texto: "Olá", fotos: [caminho] }, USUARIO), caminho).toBeNull()
     }
   })
 })
