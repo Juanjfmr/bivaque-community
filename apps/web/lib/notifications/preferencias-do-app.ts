@@ -32,6 +32,7 @@ export type PreferenciasDoAviso = Readonly<{
   events: boolean
   productNews: boolean
   indications: boolean
+  resumoCidade: "off" | "daily" | "weekly"
   channels: readonly CanalDaPreferencia[]
 }>
 
@@ -68,7 +69,7 @@ export async function lerPreferencias(
   const [preferencia, matriz] = await Promise.all([
     client
       .from("notification_preferences")
-      .select("comments, events, product_news, indications")
+      .select("comments, events, product_news, indications, city_digest_frequency")
       .eq("user_id", userId)
       .maybeSingle(),
     client
@@ -107,10 +108,18 @@ export async function lerPreferencias(
     }
   }
 
-  return { comments, events, productNews, indications, channels }
+  return {
+    comments,
+    events,
+    productNews,
+    indications,
+    resumoCidade: linha?.city_digest_frequency ?? "off",
+    channels,
+  }
 }
 
 export type AtualizacaoDePreferencias = Readonly<{
+  resumoCidade?: "off" | "daily" | "weekly"
   comments: boolean
   events: boolean
   productNews: boolean
@@ -122,6 +131,14 @@ export type AtualizacaoDePreferencias = Readonly<{
 export function validarAtualizacao(
   corpo: Record<string, unknown>,
 ): AtualizacaoDePreferencias | null {
+  const resumoCidade = corpo["resumoCidade"]
+  if (
+    resumoCidade !== undefined &&
+    resumoCidade !== "off" &&
+    resumoCidade !== "daily" &&
+    resumoCidade !== "weekly"
+  )
+    return null
   const comments = corpo["comments"]
   const events = corpo["events"]
   const productNews = corpo["productNews"]
@@ -137,7 +154,7 @@ export function validarAtualizacao(
 
   const brutos = corpo["channels"]
   if (brutos === undefined) {
-    return { comments, events, productNews, indications, channels: null }
+    return { comments, events, productNews, indications, resumoCidade, channels: null }
   }
   if (!Array.isArray(brutos)) return null
 
@@ -156,7 +173,7 @@ export function validarAtualizacao(
     vistos.add(chave)
     channels.push({ notificationType, channel, enabled })
   }
-  return { comments, events, productNews, indications, channels }
+  return { comments, events, productNews, indications, resumoCidade, channels }
 }
 
 export async function salvarPreferencias(
@@ -171,6 +188,9 @@ export async function salvarPreferencias(
     events: atualizacao.events,
     product_news: atualizacao.productNews,
     indications: atualizacao.indications,
+    ...(atualizacao.resumoCidade === undefined
+      ? {}
+      : { city_digest_frequency: atualizacao.resumoCidade }),
     updated_at: agora,
   })
   if (erroDaPreferencia) throw erroDaPreferencia

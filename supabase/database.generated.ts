@@ -1546,6 +1546,7 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          city_digest_frequency: Database["public"]["Enums"]["city_digest_frequency"]
           comments: boolean
           events: boolean
           indications: boolean
@@ -1556,6 +1557,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          city_digest_frequency?: Database["public"]["Enums"]["city_digest_frequency"]
           comments?: boolean
           events?: boolean
           indications?: boolean
@@ -1566,6 +1568,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          city_digest_frequency?: Database["public"]["Enums"]["city_digest_frequency"]
           comments?: boolean
           events?: boolean
           indications?: boolean
@@ -2710,6 +2713,10 @@ export type Database = {
           is_holiday: boolean
         }[]
       }
+      city_digest_for_delivery: {
+        Args: { p_outbox_id: string }
+        Returns: Json
+      }
       clear_recommendation_resolved_reply: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -2844,6 +2851,7 @@ export type Database = {
       }
       degrade_locality_origins: { Args: never; Returns: number }
       delete_group: { Args: { p_group_id: string }; Returns: undefined }
+      enqueue_city_digests: { Args: never; Returns: number }
       entry_otp_account_state: { Args: { p_email: string }; Returns: string }
       entry_otp_send_confirmed: {
         Args: { p_email_hash: string }
@@ -3627,6 +3635,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["listing_status"]
       }
       unpin_group_post: { Args: { p_group_id: string }; Returns: undefined }
+      unsubscribe_city_digest: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       update_member_business_page: {
         Args: {
           p_bio?: string
@@ -3659,6 +3671,7 @@ export type Database = {
     }
     Enums: {
       arrival_guide_category: "school" | "hospital" | "transporter" | "courier"
+      city_digest_frequency: "off" | "daily" | "weekly"
       community_invitation_status:
         | "pending"
         | "accepted"
@@ -3900,6 +3913,7 @@ export const Constants = {
   public: {
     Enums: {
       arrival_guide_category: ["school", "hospital", "transporter", "courier"],
+      city_digest_frequency: ["off", "daily", "weekly"],
       community_invitation_status: [
         "pending",
         "accepted",

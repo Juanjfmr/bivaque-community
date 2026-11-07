@@ -7,6 +7,13 @@ import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   type CanalDoAviso,
@@ -195,6 +202,34 @@ export function PreferenciasDeAvisos() {
           aria-label="Novidades do Bivaque"
           className="mt-1"
         />
+      </div>
+
+      <div className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3">
+        <span id="rotulo-resumo-cidade" className="text-[15px] font-semibold">
+          Resumo da cidade por e-mail
+        </span>
+        <p className="text-[13px] text-(--on-surface-variant)">
+          Perguntas novas, encontros da semana e respostas às suas perguntas. Só chega quando há
+          novidades.
+        </p>
+        <Select
+          value={preferencias.resumoCidade}
+          disabled={salvando}
+          onValueChange={(valor) => {
+            if (valor !== "off" && valor !== "daily" && valor !== "weekly") return
+            setPreferencias({ ...preferencias, resumoCidade: valor })
+            setSujo(true)
+          }}
+        >
+          <SelectTrigger aria-labelledby="rotulo-resumo-cidade">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="off">Desligado</SelectItem>
+            <SelectItem value="daily">Diário</SelectItem>
+            <SelectItem value="weekly">Semanal</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* "Gravar", não "Salvar": o Salvar do perfil casa com qualquer nome que

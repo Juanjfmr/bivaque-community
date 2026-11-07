@@ -370,6 +370,45 @@ describe("rotas de avisos do app", () => {
   })
 
   describe("preferências", () => {
+    it.each(["off", "daily", "weekly"])(
+      "grava frequência %s sob a sessão",
+      async (resumoCidade) => {
+        const mock = mockClient()
+        autenticar(mock)
+        const resposta = await salvarPreferencias(
+          req(
+            "PATCH",
+            BASE + "/preferencias",
+            JSON.stringify({ ...preferenciaGravada, resumoCidade }),
+          ),
+        )
+        expect(resposta.status).toBe(200)
+        expect(mock.chamadas).toContainEqual(
+          expect.objectContaining({
+            table: "notification_preferences",
+            op: "upsert",
+            corpo: expect.objectContaining({ user_id: USER, city_digest_frequency: resumoCidade }),
+          }),
+        )
+      },
+    )
+    it("recusa frequência desconhecida sem gravar", async () => {
+      const mock = mockClient()
+      autenticar(mock)
+      expect(
+        (
+          await salvarPreferencias(
+            req(
+              "PATCH",
+              BASE + "/preferencias",
+              JSON.stringify({ ...preferenciaGravada, resumoCidade: "hourly" }),
+            ),
+          )
+        ).status,
+      ).toBe(400)
+      expect(mock.chamadas.some((chamada) => chamada.op === "upsert")).toBe(false)
+    })
+
     it("devolve o padrão da web quando não há linha gravada", async () => {
       const mock = mockClient()
       autenticar(mock)
