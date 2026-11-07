@@ -1,0 +1,75 @@
+# LAN-OP (07/11/2026): painel do operador no apps/web, no modelo da administração do HumHub (ADR-20261107 item 1).
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-024
+
+objective: >
+  O operador fecha os três ciclos do piloto no painel do apps/web (área (admin)): verificação manual
+  (fila de documentos enviados, ver o documento, aprovar ou recusar com motivo, aviso ao membro e descarte do
+  documento conforme a regra), denúncias (fila, decisão com efeito no conteúdo e aviso ao denunciado sem
+  revelar quem denunciou) e suspensão (aplicar com motivo e prazo, efeito no app, encerrar), com registro de
+  cada ação do operador.
+
+authority:
+  - docs/LANCAMENTO.md (LAN-OP, critérios 1 a 5)
+  - docs/decisions/ADR-20261107-recursos-inspirados-humhub.md (item 1)
+  - docs/decisions/ADR-20260901-account-suspension.md
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - tools/backend-kanban card LAN-OP
+  - docs/PILOT_RUNBOOK.md (procedimentos do operador)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O painel do operador vive em apps/web/app/(admin) e não fecha os três ciclos com aviso, efeito e registro
+    (card LAN-OP). Os documentos de verificação ficam privados no fluxo aprovado; denúncias entram pela
+    tabela reports (F04); suspensão segue o ADR-20260901.
+
+allowed_paths:
+  - apps/web/app/(admin)
+  - apps/web/app/api/admin
+  - apps/web/lib/admin
+  - apps/web/lib/reports
+  - apps/web/lib/onboarding
+  - apps/web/lib/notifications
+  - apps/web/lib/storage
+  - supabase/migrations
+  - supabase/tests
+  - tests/unit/admin
+  - tests/e2e/lan-op-real.spec.ts
+  - tests/scope
+  - docs/agents/tasks/RUN-024.task.yml
+  - .visual/run-024
+
+forbidden:
+  - acesso ao painel por quem não é operador (o papel de operador vem do banco, nunca do cliente)
+  - persistir CPF bruto, payload do Portal, OM inferida ou posto; reescrever PDF assinado válido
+  - revelar ao denunciado quem denunciou
+  - editar migration existente
+  - mudar o app do membro além do efeito necessário (suspensão já barra escrita pelas policies)
+  - pedir revisão a outro modelo (o coordenador cuida)
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Verificação manual: fila, abrir documento por URL assinada curta, aprovar ou recusar com motivo; o membro recebe aviso; o documento segue a regra de descarte; registro da ação."
+  - "Denúncias: fila com o conteúdo denunciado, decisão (manter, ocultar ou remover) com efeito real e aviso ao autor sem revelar o denunciante; registro da ação."
+  - "Suspensão: aplicar com motivo e prazo, efeito no app (escrita barrada pelas policies existentes), encerrar; registro da ação."
+  - "Registro do operador: quem, quando, o quê, sobre qual alvo, legível só por operadores."
+  - "Testes de unidade positivo e negativo (não operador recebe 403/404 em cada ação) e pgTAP para qualquer tabela/policy nova."
+  - "E2E tests/e2e/lan-op-real.spec.ts contra o banco: um ciclo de cada, devolvendo o banco ao estado inicial (workers=1)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/admin
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz e test:db no CI
+
+risk: ações de operador sobre contas, documentos de identidade e conteúdo
+risk_level: R3
+adr: docs/decisions/ADR-20261107-recursos-inspirados-humhub.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
