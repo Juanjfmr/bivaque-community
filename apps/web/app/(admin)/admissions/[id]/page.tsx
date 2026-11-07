@@ -1,7 +1,9 @@
 import type { Route } from "next"
 import { revalidatePath } from "next/cache"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
+import { requireOperatorId } from "../../../../lib/admin/operator"
 import { createServerClient } from "../../../../lib/supabase/server"
 import { EmptyState } from "../../../components/bivaque/empty-state"
 import { decideDocumentAction, rejectPendingUserAction, reprocessUserAction } from "../actions"
@@ -30,7 +32,16 @@ function formatDate(iso: string): string {
 // Mapeia o resultado da action (que já confirmou operador antes da chamada
 // privilegiada) em estado visual. O motivo interno do banco não é ecoado —
 // só as mensagens que o operador precisa para reagir.
-function decisionResult(r: { ok: boolean; error?: string }, okMessage: string): DecisionState {
+function decisionResult(
+  r: { ok: boolean; error?: string; warning?: string },
+  okMessage: string,
+): DecisionState {
+  if (r.ok && r.warning)
+    return {
+      status: "error",
+      message:
+        "Decisão registrada e aviso emitido. O descarte está pendente; use Descartar documentos pendentes na fila.",
+    }
   if (r.ok) return { status: "ok", message: okMessage }
   if (r.error === "forbidden") return { status: "forbidden", message: "" }
   if (r.error === "rejection requires a reason") {
@@ -77,6 +88,8 @@ export default async function AdmissionAnalysisPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const serviceClient = createServerClient()
+  if (!(await requireOperatorId(serviceClient))) notFound()
   const { id: userId } = await params
 
   if (!UUID_RE.test(userId)) {
@@ -91,7 +104,6 @@ export default async function AdmissionAnalysisPage({
     )
   }
 
-  const serviceClient = createServerClient()
   const [{ data: queueRows, error: queueError }, { data: documentRows, error: documentsError }] =
     await Promise.all([
       serviceClient.rpc("list_verification_queue"),

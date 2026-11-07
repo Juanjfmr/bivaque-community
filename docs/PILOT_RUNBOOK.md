@@ -1,6 +1,7 @@
 # Bivaque Community — Pilot Runbook
 
-Versao alvo: piloto fechado de Manaus, com admissao por verificacao (cadastro aberto + verificacao de elegibilidade via Portal).
+Versão alvo: lançamento nacional, organizado por cidade, sem cobrança. Manaus é uma cidade de exemplo.
+Admissão por verificação, com exceção documental autorizada.
 
 Este documento descreve os procedimentos operacionais, de privacidade e de
 incidente para o operador humano que conduz o piloto fechado do Bivaque
@@ -97,8 +98,8 @@ a fila de verificacao e age quando ela falha ou estagna.
 - [ ] Verificar que o email do usuario nao esta associado a uma conta
       existente (Supabase Dashboard → Authentication → Users → buscar email).
 - [ ] Confirmar que o usuario pertence ao publico elegivel: militar federal
-      ativo, veterano (`reformado`) ou pensionista militar federal, com vinculo
-      ao municipio de Manaus.
+      ativo, veterano (`reformado`) ou pensionista militar federal, com cidade escolhida
+      no cadastro; Manaus não é limite de acesso.
 - [ ] Monitorar a verificacao pendente: quando o Portal nao responde ou a
       verificacao estagna, o operador diagnostica (secao 4) e reemite a
       verificacao se a causa for `TIMEOUT` ou `INVALID_KEY`.
@@ -116,8 +117,8 @@ order by created_at desc;
 
 ### Nao fazer
 
-- Nao aprovar manualmente quem nao passou pela verificacao do Portal.
-- Nao pular a etapa de verificacao do Portal.
+- Não conceder acesso sem verificação ou decisão documental no fluxo autorizado.
+- Não alterar payload ou resultado do Portal por console; a exceção usa o painel de documentos.
 - Nao criar contas em lote sem rastreabilidade individual.
 
 ---
@@ -191,19 +192,25 @@ conta Auth do familiar.
 
 Denuncias de conteudo (post, comentario, grupo, DM, pedido de indicacao, resposta de indicacao) chegam via **notificacao in-app** — o denunciante **nao** espera um e-mail externo, o sistema responde dentro da plataforma. O operador revisa e age pelo painel.
 
-O **modelo de denuncia e um so** (H-Task 1, commit `a0c7b65`): todos os 6 alvos vivem em `public.reports`. O caminho de resolucao tambem e um so (H-Task 3, commit `f6af5a4`): o RPC `resolve_report(p_report_id, p_operator_user_id, p_action, p_note)` — `p_action` em `('hide', 'dismiss')`, `service_role`-only — que oculta o alvo por tipo, marca a denuncia como resolvida, e notifica o denunciante num unico ato.
+O modelo é único: os sete tipos de alvo vivem em `public.reports`. O RPC
+`resolve_report(p_report_id, p_operator_user_id, p_action, p_note)` é exclusivo de `service_role`,
+reconfere o operador e grava decisão, efeito, avisos e registro numa transação. As ações são
+`dismiss` (manter), `hide` (ocultar) e `remove` (remover da comunidade). Ocultar e remover
+usam remoção lógica, preservando vínculos e evidência; a intenção fica distinta na auditoria.
 
 O **motivo da denuncia** (H-Task 2, `bd661e3`) e redigido no cliente por `scrubReportReason` e novamente pelo trigger `before insert or update of reason` em `public.reports` como cinto de seguranca server-side. O motivo passa por redacao automatica de CPF; **nao existe filtro de vocabulario** (D21 derrubou o anterior por proibir "patente" e "OM").
 
 ### Checklist de resolucao de denuncia
 
-- [ ] Abrir o painel `/admin/reports` autenticado como operador (gate duplo: auth + `is_current_user_operator`).
+- [ ] Abrir o painel `/reports` autenticado como operador (gate duplo: auth + `is_current_user_operator`).
 - [ ] A triagem mostra conteudo (trecho de 240 chars), autor (display_name), idade relativa com destaque SLA48h, e quantas denuncias abertas o mesmo alvo ja tem — o sinal mais barato de campanha coordenada (H-Task 4, `94aa2b5`).
 - [ ] Item com mais de 48h sem resolucao exige triagem imediata (ver §9 diario).
 - [ ] Classificar: conteudo proibido (discurso de odio, assedio, exposicao de dados privados) ou falsa denuncia.
 - [ ] **Ocultar** (acao `hide`): marca `is_deleted = true` no alvo via `resolve_report`. A UI some para todos. Cobre **7 alvos** — posts, comments, groups, dm_messages, recommendation_requests, recommendation_replies e, desde a onda G (`20260825185327`), `provider_profile` (a ficha da vitrine sai do ar para todos os escopos).
 - [ ] **Dispensar** (acao `dismiss`): marca `status = 'resolved'` sem ocultar. Para falsa denuncia.
-- [ ] Ambos os caminhos emem notificacao `report_resolved` para o denunciante **sem revelar a acao tomada** — o sistema registra a estrutura (`recipient_user_id`, `actor_user_id`, `type`, `target_id`), nunca o conteudo.
+- [ ] Os três caminhos emitem `report_resolved` genérico para quem denunciou, sem revelar a ação.
+- [ ] O autor recebe `moderation_decision` com a decisão, sem ID da denúncia, motivo, operador ou denunciante.
+- [ ] **Remover** (`remove`) retira o conteúdo da comunidade por remoção lógica; o registro permanece.
 - [ ] **Diagnostico SQL** (quando o painel nao bastar): preservado como passo de inspecao, NAO como primeiro passo. A coluna do autor e `user_id` (nao `author_id`), e `is_deleted` indica se o conteudo ja foi ocultado por moderacao:
 
       ```sql
@@ -225,11 +232,24 @@ on conflict (auth_user_id) do nothing;
 
 **Quem autoriza:** decisao do dono do produto. O runbook nao define; documente a politica interna (ex.: "apenas o admin principal concede; revogar com `delete from public.operators where auth_user_id = '<uuid>'`"). O acesso do painel e verificado pelo RPC `public.is_current_user_operator` (`apps/web/app/api/admin/route.ts` e migrations `20260806040949_operator_authorization.sql`, `20260806095803_fix_operator_repromotion.sql`, `20260806100231_restrict_operator_roster.sql`, `20260806111744_is_current_user_operator.sql`).
 
-### Suspensao e recurso (estado atual)
+### Suspensão e recurso — RUN-024 (07/11/2026)
 
-O desenho aprovado esta no ADR `suspensao-de-conta`: escrita do suspenso bloqueada por `private.is_suspended` em toda policy, tela propria em `/conta/suspensa`, recurso pelo canal de suporte com decisao registrada. **A implementacao nao comecou** — espera a assinatura do codigo de conduta (decisao humana pendente), e enquanto ela nao existir este runbook NAO descreve passos de suspensao porque executar passos de feature inexistente sob pressao e pior que nao ter secao.
+O painel `/suspensions` aplica e encerra suspensões. O estado vive em
+`public.profile_suspensions`, com leitura apenas da própria pessoa e escrita pelo servidor.
+Não existe coluna de suspensão em `profiles`. O helper `public.is_account_suspended` mantém
+o veto das policies existentes e considera o prazo, sem depender do job para liberar escrita.
 
-**O que o operador faz hoje num incidente grave:** ocultar o conteudo (`hide`) e/ou revogar o acesso envolvido pelos mecanismos que EXISTEM — revogacao de ficha de prestador e ato do dono da comunidade (onda G Task 6), remocao de moderador/pedido no console da vila, e escalacao para o dono (secao 9). A suspensao de conta entra neste runbook somente quando o codigo entrar no repositorio.
+- [ ] Abrir pelo link **Suspender esta conta** no conteúdo denunciado ou informar o UUID da conta.
+- [ ] Registrar motivo e prazo inteiro entre 1 e 365 dias. O operador não suspende a própria conta.
+- [ ] Confirmar o aviso de sucesso e a entrada na lista. Conflito não é sucesso: atualizar a lista.
+- [ ] Para aceitar recurso, preencher **Motivo do encerramento** na conta e clicar **Encerrar suspensão**.
+- [ ] Conferir a ação em `/operator-actions`. Motivo e prazo ficam restritos à operação.
+- [ ] A pessoa recebe aviso in-app sem o motivo interno. A leitura e a Ajuda continuam disponíveis.
+- [ ] O prazo libera a escrita automaticamente. O job de cinco minutos registra o encerramento
+      por prazo e emite o aviso; suspensões antigas sem prazo exigem encerramento manual.
+
+O recurso continua pelo canal de suporte existente. Quem decide registra o fundamento no encerramento.
+O painel não exclui conta ou conteúdo ao suspender.
 
 ### Escalacao
 
@@ -239,33 +259,54 @@ O desenho aprovado esta no ADR `suspensao-de-conta`: escrita do suspenso bloquea
 
 Admissoes sao a porta de entrada — cada pessoa passa por verificacao de elegibilidade antes de virar membro. A fila do operador existe para os casos que a automacao nao resolve sozinha.
 
-O painel `/admin/admissions` mostra dois conjuntos:
+O painel `/admissions` mostra dois conjuntos:
 
 1. **Documentos pendentes de decisao** — usuarios que enviaram PDF como excecao (D2 Task 6). O operador aprova ou rejeita com motivo obrigatorio.
 2. **Fila de verificacao** — usuarios em `pending` ou `temporary_error` que nao enviaram documento.
 
-### Tres acoes que o operador tem
+### Ações do operador
 
 | Acao | Quando | RPC chamado |
 |---|---|---|
-| **Reprocessar pending** | fila de verificacao, sem documento | `verification_reconcile_step` direto |
+| **Reprocessar pending** | fila de verificacao, sem documento | `operator_reprocess_verification` |
 | **Aprovar documento** | documento pending | `decide_verification_document(p_document_id, 'approved', null, p_operator_user_id)` |
 | **Rejeitar documento** | documento pending, com motivo | `decide_verification_document(p_document_id, 'rejected', p_reason, p_operator_user_id)` |
-| **Rejeitar definitivamente** | fila sem documento, sem perspectiva | `reject_pending_user(p_user_id, p_operator_user_id, p_reason)` |
+| **Rejeitar definitivamente** | fila sem documento, sem perspectiva | `operator_reject_pending(p_user_id, p_operator_user_id, p_reason)` |
 
 ### O que o operador NAO faz
 
-- **Nunca sobrepor um `rejected` do Portal** (§4.1). A elegibilidade e conferida pelo Estado; o operador nao concede.
+- A análise documental é a exceção autorizada quando o Portal não confirma. Não editar o Portal ou pular a análise; decidir pelo RPC do painel.
 - A excecao de "rejeitar definitivamente" e para quem esta `pending` ou `temporary_error` ha muito tempo — uma saida forcada quando o operador sabe que nao vai chegar documento.
 
 ### Checklist de decisao de admissao
 
-- [ ] Abrir `/admin/admissions` autenticado como operador (gate duplo).
+- [ ] Abrir `/admissions` autenticado como operador (gate duplo).
 - [ ] Verificar idade relativa — SLA48h; item alem disso exige triagem imediata.
 - [ ] Se ha documento: clicar "Aprovar" ou "Rejeitar" com motivo. A funcao exige motivo na rejeicao.
 - [ ] Se nao ha documento e ainda nao passou SLA: "Reprocessar" drena a fila (a `verification_reconcile_step` decide pelo teto de tentativas; rejeita apos teto com aviso por e-mail).
 - [ ] Se nao ha documento e ja passou SLA, ou se o reconciliador nao vai resolver: "Rejeitar definitivamente" com motivo. A pessoa recebe `notifications.type='admission_rejected'` e ve o estado em `/onboarding/status`.
 - [ ] Registrar: data, operador, uuid, motivo.
+
+### Descarte e registro — RUN-024 (07/11/2026)
+
+- [ ] Abrir o documento pelo link do painel: autenticação de operador e URL assinada de 60 segundos,
+      sem cache. O documento não é reescrito, inclusive quando é um PDF assinado.
+- [ ] Aprovar ou recusar com motivo na recusa. A decisão grava aviso in-app, registro do operador
+      e pedido de descarte na mesma transação; o e-mail continua pelo outbox.
+- [ ] O arquivo decidido é removido pelo Storage API. Documentos sem decisão vencem em sete dias e
+      também entram na fila de descarte. A marca de remoção só é confirmada após o Storage responder.
+- [ ] Se aparecer descarte pendente, usar **Descartar documentos pendentes** em `/admissions`.
+      A decisão permanece válida; a falha de Storage não apaga a fila nem finge reverter a análise.
+- [ ] O job de cinco minutos `bivaque-document-removals` repete até 100 remoções por chamada,
+      usando a ponte Vault existente do outbox (`outbox-worker-endpoint` e `outbox-worker-secret`).
+      O servidor usa o mesmo `OUTBOX_WORKER_SECRET`; nenhuma chave é devolvida ao navegador.
+      Sem essa configuração o job não entrega: configurar e provar no ambiente implantado.
+- [ ] Ver `/operator-actions`: quem, quando, ação, alvo, motivo e prazo, com paginação.
+      O histórico não contém o documento nem a identidade de quem denunciou. Só operadores o leem.
+
+As migrations do RUN-024 precisam estar aplicadas antes destes procedimentos. O código e os testes
+locais foram entregues em `feat/lan-op`; banco, E2E e capturas 375/768/1440 nos dois temas ainda
+precisam de execução no CI. Não interpretar `gate --fast` como prova de lançamento.
 
 ### Armadilha conhecida (registrada no plano da Task 6)
 

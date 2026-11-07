@@ -42,6 +42,19 @@ function comoLinhaDaWeb(aviso: AvisoDoBanco): NotificationRow {
 }
 
 export function rotuloDoAviso(aviso: AvisoDoBanco): string {
+  if (aviso.tipo === "account_suspension")
+    return aviso.acao === "applied"
+      ? "Sua conta está suspensa para novas ações. Procure a Ajuda para recorrer."
+      : "Sua suspensão foi encerrada. Você pode voltar a participar."
+  if (aviso.tipo === "moderation_decision") {
+    const decisao =
+      aviso.acao === "dismiss" ? "mantido" : aviso.acao === "hide" ? "ocultado" : "removido"
+    return `A moderação analisou um conteúdo seu. O conteúdo foi ${decisao}.`
+  }
+  if (aviso.tipo === "verification_decision")
+    return aviso.acao === "approved"
+      ? "Sua verificação foi aprovada. Continue a entrada no Bivaque."
+      : "Seu documento não foi aprovado. Consulte a situação da sua entrada."
   return formatNotificationLabel(comoLinhaDaWeb(aviso))
 }
 
@@ -49,6 +62,7 @@ export function rotuloDoAviso(aviso: AvisoDoBanco): string {
 export const DESTINO_SEGURO = "/app/voce"
 
 export function destinoDoAviso(aviso: AvisoDoBanco): string {
+  if (aviso.tipo === "verification_decision") return "/app/entrar/analise"
   // Os quatro avisos de pedido de indicação usam o mesmo tipo; o resumo do dia
   // aponta para a lista da cidade, não para um pedido.
   if (aviso.tipo === "recommendation_request" && aviso.acao === "digest") {

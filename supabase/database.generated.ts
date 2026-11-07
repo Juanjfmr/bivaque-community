@@ -1706,6 +1706,39 @@ export type Database = {
         }
         Relationships: []
       }
+      operator_actions: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          reason: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           auth_user_id: string
@@ -1955,14 +1988,17 @@ export type Database = {
       }
       profile_suspensions: {
         Row: {
+          expires_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          expires_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          expires_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3381,9 +3417,50 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      operator_end_suspension: {
+        Args: {
+          p_operator_user_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      operator_reject_pending: {
+        Args: {
+          p_operator_user_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      operator_reprocess_verification: {
+        Args: { p_operator_user_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      operator_suspend_account: {
+        Args: {
+          p_days: number
+          p_operator_user_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       pin_group_post: {
         Args: { p_group_id: string; p_post_id: string }
         Returns: undefined
+      }
+      prepare_operator_document_removals: {
+        Args: { p_operator_user_id: string }
+        Returns: {
+          storage_object_path: string
+        }[]
+      }
+      prepare_verification_document_removals: {
+        Args: never
+        Returns: {
+          storage_object_path: string
+        }[]
       }
       profile_affiliations_for: {
         Args: { p_target_user_id: string }
@@ -3454,6 +3531,12 @@ export type Database = {
       purge_account_contact_data: {
         Args: { p_contact_email: string; p_user_id: string }
         Returns: number
+      }
+      read_operator_verification_document: {
+        Args: { p_document_id: string; p_operator_user_id: string }
+        Returns: {
+          storage_object_path: string
+        }[]
       }
       read_provider_invitation: {
         Args: { p_token: string }
@@ -3805,6 +3888,9 @@ export type Database = {
         | "recommendation_request"
         | "support_answered"
         | "group_post"
+        | "verification_decision"
+        | "moderation_decision"
+        | "account_suspension"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -4051,6 +4137,9 @@ export const Constants = {
         "recommendation_request",
         "support_answered",
         "group_post",
+        "verification_decision",
+        "moderation_decision",
+        "account_suspension",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

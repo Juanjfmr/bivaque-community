@@ -19,8 +19,8 @@ const IDLE_STATE: DecisionState = { status: "idle", message: "" }
 // O veredito é sempre humano: nada aqui chega pré-selecionado. Sem
 // defaultValue, sem heurística, sem "sugestão" — a marcação e a justificativa
 // representam uma decisão que uma pessoa já tomou. O botão libera quando a
-// decisão está marcada; a justificativa é exigida pelo navegador (required)
-// e revalidada no servidor. O alvo da decisão vem do fechamento da página,
+// decisão está marcada; a justificativa é opcional e validada no servidor.
+// O alvo da decisão vem do fechamento da página,
 // nunca deste formulário.
 export function DecisionForm({ action }: { action: DecisionAction }) {
   const [state, formAction, isPending] = useActionState(action, IDLE_STATE)
@@ -62,18 +62,29 @@ export function DecisionForm({ action }: { action: DecisionAction }) {
             </div>
           </Radio.Content>
         </Radio>
+        <Radio value="remover">
+          <Radio.Content>
+            <Radio.Control>
+              <Radio.Indicator />
+            </Radio.Control>
+            <div className="flex flex-col gap-0.5">
+              <span>Remover conteúdo</span>
+              <span className="text-xs text-muted">
+                Remove da comunidade, preservando o registro da decisão.
+              </span>
+            </div>
+          </Radio.Content>
+        </Radio>
       </RadioGroup>
 
       <div className="flex flex-col gap-1">
         <label htmlFor={justificativaId} className="text-sm font-medium">
-          Justificativa da decisão <span aria-hidden="true">*</span>
-          <span className="sr-only"> (obrigatória)</span>
+          Justificativa da decisão (opcional)
         </label>
         <TextArea
           id={justificativaId}
           name="justificativa"
-          required
-          aria-required="true"
+          maxLength={1000}
           aria-describedby={`${justificativaId}-help`}
           disabled={isPending}
           className="w-full"

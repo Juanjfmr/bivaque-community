@@ -6343,23 +6343,37 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
-      "description": "O painel do operador continua no apps/web e fecha pelos critérios 1 a 5 do LANCAMENTO nos três ciclos: verificação manual, denúncia e suspensão. Fecha na fase 4, depois do F04 (fase 3).",
+      "status": "now",
+      "description": "O painel do operador continua no apps/web e fecha pelos critérios 1 a 5 do LANCAMENTO nos três ciclos: verificação manual, denúncia e suspensão. Fecha na fase 4, depois do F04 (fase 3). RUN-024: implementação dos três ciclos e histórico entregue em feat/lan-op; fechamento ainda depende da prova de banco, E2E e visual no CI, sem revisão externa nesta execução por instrução do dono.",
       "checklist": [
-        "Fila de verificação manual: documento, decisão, aviso e descarte",
-        "Denúncia: decisão, efeito e aviso sem revelar a ação",
-        "Suspensão: aplicar, efeito no app e encerrar",
-        "E2E e teste de banco com casos positivos e negativos"
+        "Verificação manual implementada: fila, URL de 60s, decisão, aviso, registro e descarte durável; provar no banco/runtime",
+        "Denúncia implementada: manter/ocultar/remover logicamente, aviso privado ao autor, retorno genérico ao denunciante e registro; provar runtime",
+        "Suspensão implementada: motivo, prazo, veto pelo helper existente, encerramento e expiração registrados; provar banco/runtime",
+        "Registro das ações com RLS de operador, paginação e negações; confirmar pgTAP",
+        "E2E lan-op-real.spec.ts escrito: três ciclos, 375/768/1440 e dois temas, limpeza das fixtures com auditoria preservada e identificada por manifesto; executar em stack exclusiva com workers=1"
       ],
       "dependencies": ["LAN-F04"],
-      "tests": [],
-      "blockers": [],
+      "tests": [
+        "RUN-024 em 5a2dbd5f: gate --fast verde (lint, tipos dos workspaces e dos E2E); não substitui build/runtime",
+        "RUN-024: vitest tests/unit/admin --maxWorkers=1: 51/51; test:scope: 222/222",
+        "Correção única RUN-024 sobre fdad6a80 com o diff de erros de admissão deste commit: gate --fast verde; vitest tests/unit/admin --maxWorkers=1: 69/69; test:scope: 222/222. Logs: .visual/run-024/correcao-{gate-fast,admin,scope}.log",
+        "RUN-024 CI item 1, sobre 2ae4cb1f + diff deste commit: gate --fast verde; test:scope 222/222; vitest tests/unit/admin --maxWorkers=1 80/80 (6 falhas esperadas antes da correção). Logs: .visual/run-024/ci-item-1-{gate-fast,scope,admin,admin-red}.log."
+      ],
+      "blockers": [
+        "CI 42344019317, item 2: cenário de operator-suspensions.sql não informa group_id obrigatório. O roteiro proíbe editar o teste. Próximo passo: dono autorizar fixtures/groups.inc e group_id nos dois inserts, mantendo as asserções de suspensão ativa e encerrada; depois banco no CI. Nenhuma mudança de policy resolve esse cenário sem contrariar a recusa de publicação sem grupo."
+      ],
       "updatedAt": "2026-11-07",
-      "sourceRevision": "59bbb2eb",
+      "sourceRevision": "c8f4dad56da5e23dfda39866eb917c9c24285d42",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
       "proof": [
         "02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7).",
-        "07/11: ADR-20261107 confirma o LAN-OP no lançamento no modelo da administração do HumHub (fila de aprovação, denúncias, suspensão e registro das ações do operador)."
+        "07/11: ADR-20261107 confirma o LAN-OP no lançamento no modelo da administração do HumHub (fila de aprovação, denúncias, suspensão e registro das ações do operador).",
+        "07/11 RUN-024: commits 06943c19 (verificação), fe8d220d (denúncias), 59d34b02 (suspensão), 5a2dbd5f (histórico/prova preparada). Runbook atualizado; logs e relatório em .visual/run-024/.",
+        "Revisão pelo próprio executor, sem outro modelo por instrução expressa do dono. Corrigida a RLS do histórico para usar private.is_operator() já autorizado; a API pública is_current_user_operator(uuid) segue exclusiva do servidor.",
+        "07/11, rodada única de correção: 51490fcd corrige o delimitador SQL (demais migrations do lote conferidas); c9163bda aplica gate próprio nas cinco páginas com 15 negações unitárias; 24a5c622 recria private.account_unavailable em migration nova considerando expires_at e amplia pgTAP de conversas; fdad6a80 retira DELETE da auditoria, prova a negação em pgTAP e preserva a trilha sintética identificada por manifesto no E2E. Este commit mapeia os erros das três ações de admissão por código, sem devolver mensagem do Postgres. Nenhuma mudança na forma dos tipos públicos.",
+        "Próximo passo: CI aplica as cinco migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Nesta rodada, só gate --fast, test:scope e vitest de admin por instrução do dono; sem .env, banco, servidor, E2E ou revisão por outro modelo. Card não está concluído.",
+        "07/11, correção do CI 42344019317 — item 1: nota opcional no resolve_report, helper, API e formulário; limite de 1000 preservado, sem nota fabricada. Migration 20261107044654 editada com autorização expressa do dono (ainda restrita ao PR); report-resolution-unified.sql intacto. operator-reports.sql amplia casos de nota nula/vazia/limite e não duplicação do aviso. Tipos públicos sem mudança de forma. Prova de banco pendente no CI; sem Docker, .env ou revisão externa por instrução do dono.",
+        "07/11, CI item 2 investigado sobre c8f4dad5: operator_end_suspension já remove a linha; is_account_suspended considera expires_at > now(). A recusa de posts vem de group_id is not null na policy posts_insert_locality_member (20261024100000, linha 30): ambos os inserts de operator-suspensions.sql omitem grupo. publicacao-so-em-grupo.sql linhas 94–106 exige 42501 para esse mesmo cenário. Alterar o banco para aceitá-lo quebraria o contrato de publicação só em grupo. Proposta exata em .visual/run-024/ci-item-2-fixture-proposta.patch; diagnóstico em ci-item-2-diagnostico.md. Teste e RLS preservados enquanto aguarda exceção explícita do dono ao roteiro."
       ]
     },
     {
