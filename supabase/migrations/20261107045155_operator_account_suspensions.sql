@@ -19,7 +19,7 @@ grant execute on function public.is_account_suspended(uuid) to authenticated;
 
 create function private.expire_account_suspension(p_user_id uuid)
 returns void language plpgsql security definer set search_path = ''
-as $
+as $$
 begin
   perform pg_advisory_xact_lock(hashtextextended('account_suspension:' || p_user_id::text,0));
   delete from public.profile_suspensions where user_id=p_user_id and expires_at<=now();
@@ -29,7 +29,7 @@ begin
   insert into public.notifications(recipient_user_id,actor_user_id,type,action,target_type,target_id)
     values(p_user_id,null,'account_suspension','ended','user',p_user_id);
 end;
-$;
+$$;
 revoke all on function private.expire_account_suspension(uuid) from public,anon,authenticated;
 
 create function public.operator_suspend_account(
