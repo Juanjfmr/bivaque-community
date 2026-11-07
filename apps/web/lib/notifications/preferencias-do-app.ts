@@ -119,7 +119,7 @@ export async function lerPreferencias(
 }
 
 export type AtualizacaoDePreferencias = Readonly<{
-  resumoCidade?: "off" | "daily" | "weekly"
+  resumoCidade: "off" | "daily" | "weekly" | undefined
   comments: boolean
   events: boolean
   productNews: boolean

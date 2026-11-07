@@ -59,12 +59,13 @@ as $$
       and a.deleted_at is null and (a.banned_until is null or a.banned_until <= now())
     order by e.starts_at, e.id limit 20
   ), new_replies as (
-    select q.id, q.title, coalesce(p.display_name, 'Membro') as author
+    select q.id, q.title, coalesce(p.display_name, 'Alguém da cidade') as author
     from public.recommendation_replies r
     join questions q on q.id = r.request_id
     join public.recommendation_requests own on own.id = q.id and own.author_id = p_user_id
     join auth.users a on a.id = r.author_id
     left join public.profiles p on p.user_id = r.author_id
+      and public.profile_is_visible_to_viewer(r.author_id, p_user_id)
     where not r.is_deleted and r.created_at > p_since and r.created_at <= p_until
       and r.author_id <> p_user_id and not private.account_unavailable(r.author_id)
       and a.deleted_at is null and (a.banned_until is null or a.banned_until <= now())
@@ -101,15 +102,20 @@ begin
   -- Teto menor que o limite global de 5.000 do outbox; o dispatcher não muda.
   -- Trava a preferência: concorrência e descadastro não avançam a mesma pessoa.
   for member in
-    select np.user_id, np.city_digest_frequency, u.email, s.last_enqueued_at,
+    select np.user_id, np.city_digest_frequency, u.email, s.last_enqueued_at, m.locality_id,
       case when np.city_digest_frequency = 'daily' then date_trunc('day',now(),'UTC')
         else date_trunc('week',now(),'UTC') end as period_at
     from public.notification_preferences np
     join auth.users u on u.id = np.user_id
+    join public.locality_memberships m on m.user_id=np.user_id and m.kind='current'
     left join private.city_digest_state s on s.user_id = np.user_id
     where np.city_digest_frequency <> 'off' and u.email is not null
       and not private.account_unavailable(np.user_id)
       and (s.last_period_at is null or s.last_period_at <
+        case when np.city_digest_frequency = 'daily' then date_trunc('day',now(),'UTC')
+          else date_trunc('week',now(),'UTC') end)
+      -- Trocar semanal por diário não reenvia no dia em que o semanal saiu.
+      and (s.last_enqueued_at is null or s.last_enqueued_at <
         case when np.city_digest_frequency = 'daily' then date_trunc('day',now(),'UTC')
           else date_trunc('week',now(),'UTC') end)
       and not exists (select 1 from public.notification_opt_outs o where o.channel = 'email' and o.recipient = u.email)
@@ -130,7 +136,7 @@ begin
       where user_id=member.user_id;
     insert into public.outbox(recipient,channel,type,payload)
     values(member.email,'email','city_digest',jsonb_build_object(
-      'user_id',member.user_id,'since',v_since,'until',now(),'content',v_content,
+      'user_id',member.user_id,'locality_id',member.locality_id,'since',v_since,'until',now(),'content',v_content,
       'unsubscribe_token',v_token));
     v_count := v_count + 1;
   end loop;
@@ -156,17 +162,14 @@ begin
   if not exists (
     select 1 from public.notification_preferences np join auth.users u on u.id=np.user_id
     join private.city_digest_state s on s.user_id=np.user_id
+    join public.locality_memberships m on m.user_id=np.user_id and m.kind='current'
+      and m.locality_id=(v_row.payload->>'locality_id')::uuid
     where np.user_id=v_user_id and np.city_digest_frequency <> 'off' and u.email=v_row.recipient
       and s.unsubscribe_hash=extensions.digest(v_row.payload->>'unsubscribe_token','sha256')
       and s.unsubscribe_expires_at > now()
   ) or exists (select 1 from public.notification_opt_outs o where o.channel='email' and o.recipient=v_row.recipient)
     then return null; end if;
   v_content := private.city_digest_content(v_user_id,(v_row.payload->>'since')::timestamptz,(v_row.payload->>'until')::timestamptz);
-  -- Só os itens originalmente enfileirados; outra cidade ou edição posterior não cria novidade retroativa.
-  select jsonb_set(jsonb_set(jsonb_set(v_content,
-    '{questions}',coalesce((select jsonb_agg(x) from jsonb_array_elements(v_content->'questions') x where exists(select 1 from jsonb_array_elements(v_row.payload->'content'->'questions') old where old->>'id'=x->>'id')), '[]'::jsonb)),
-    '{events}',coalesce((select jsonb_agg(x) from jsonb_array_elements(v_content->'events') x where exists(select 1 from jsonb_array_elements(v_row.payload->'content'->'events') old where old->>'id'=x->>'id')), '[]'::jsonb)),
-    '{replies}',coalesce((select jsonb_agg(x) from jsonb_array_elements(v_content->'replies') x where exists(select 1 from jsonb_array_elements(v_row.payload->'content'->'replies') old where old->>'id'=x->>'id')), '[]'::jsonb)) into v_content;
   if not private.city_digest_has_news(v_content) then return null; end if;
   return v_content;
 end;

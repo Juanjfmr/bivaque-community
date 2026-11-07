@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularVoce } from "./voce-ajuda"
+
 test("a escolha de frequência aparece, grava e volta do servidor", async ({ page }) => {
   await simularVoce(page)
   await page.goto("/app/voce")

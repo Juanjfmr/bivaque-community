@@ -201,7 +201,7 @@ describe("dispatcher honours the channel rule (integration with the delivery cor
 // ninguem declarar passa a furar a preferencia da pessoa em silencio.
 // Aqui todo tipo que o adaptador sabe montar precisa de uma decisao escrita.
 describe("todo tipo de outbox tem decisao declarada de preferencia", () => {
-  // null = transacional por decisao: a pessoa nao escolhe receber ou nao.
+  // null = fora desta matriz: transacional ou controlado por preferência específica.
   const DECISAO: Record<string, NotificationTypeKey | null> = {
     comment: "comments",
     event_rsvp: "events",
@@ -212,6 +212,8 @@ describe("todo tipo de outbox tem decisao declarada de preferencia", () => {
     product_news: "product_news",
     // ADR-20260925-aviso-de-pedido: resumo diário, opt-in.
     indications_digest: "indications",
+    // RUN-026: opt-in próprio, revalidado por city_digest_for_delivery antes do envio.
+    city_digest: null,
     verification_decision: null,
     verification_resolved: null,
     recommendation_reply: null,

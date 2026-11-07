@@ -47,6 +47,7 @@ const preferenciaLida = {
   events: false,
   product_news: false,
   indications: true,
+  city_digest_frequency: "weekly",
 }
 
 const canaisGravados = [
@@ -378,7 +379,7 @@ describe("rotas de avisos do app", () => {
         const resposta = await salvarPreferencias(
           req(
             "PATCH",
-            BASE + "/preferencias",
+            `${BASE}/preferencias`,
             JSON.stringify({ ...preferenciaGravada, resumoCidade }),
           ),
         )
@@ -400,7 +401,7 @@ describe("rotas de avisos do app", () => {
           await salvarPreferencias(
             req(
               "PATCH",
-              BASE + "/preferencias",
+              `${BASE}/preferencias`,
               JSON.stringify({ ...preferenciaGravada, resumoCidade: "hourly" }),
             ),
           )
@@ -415,6 +416,7 @@ describe("rotas de avisos do app", () => {
       const corpo = await json(await lerPreferencias(req("GET", `${BASE}/preferencias`)))
       const preferencias = corpo["preferencias"] as Record<string, unknown>
       expect(preferencias).toMatchObject({
+        resumoCidade: "off",
         comments: true,
         events: true,
         productNews: false,
@@ -449,7 +451,7 @@ describe("rotas de avisos do app", () => {
       expect(
         canais.find((item) => item.notificationType === "comments" && item.channel === "email"),
       ).toMatchObject({ enabled: false })
-      expect(corpo["preferencias"]).toMatchObject({ events: false })
+      expect(corpo["preferencias"]).toMatchObject({ events: false, resumoCidade: "weekly" })
     })
 
     it("grava a escolha com o dono vindo da sessão", async () => {

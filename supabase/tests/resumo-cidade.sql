@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(32);
 \ir fixtures/foundation.inc
 
 select is((select city_digest_frequency::text from public.notification_preferences where user_id = '10000000-0000-4000-8000-000000000001'), null, 'sem preferência não é opt-in');
@@ -27,10 +27,17 @@ select is((select jsonb_array_length(payload->'content'->'questions') from publi
 select is((select payload->'content'->'questions'->0->>'title' from public.outbox where type='city_digest'),'Pergunta da cidade','só pergunta visível');
 select is((select jsonb_array_length(payload->'content'->'replies') from public.outbox where type='city_digest'),1,'resposta nova a pergunta antiga entra');
 select is((select jsonb_array_length(payload->'content'->'events') from public.outbox where type='city_digest'),1,'encontro dos próximos sete dias entra');
+update public.locality_memberships set locality_id='00000000-0000-4000-8000-000000000002' where user_id='10000000-0000-4000-8000-000000000002';
+select is((select public.city_digest_for_delivery(id)->'replies'->0->>'author' from public.outbox where type='city_digest'),'Alguém da cidade','não revela nome de perfil que o membro já não pode ler');
+update public.locality_memberships set locality_id='00000000-0000-4000-8000-000000000001' where user_id='10000000-0000-4000-8000-000000000002';
 select ok(not exists(select 1 from public.outbox where type='city_digest' and (payload->'content')::text like '%@%'),'conteúdo não expõe e-mail de autoria');
 insert into public.profile_suspensions(user_id) values ('10000000-0000-4000-8000-000000000002');
 select is((select public.city_digest_for_delivery(id) from public.outbox where type='city_digest'),null,'autoria suspensa não entra na entrega');
 delete from public.profile_suspensions where user_id='10000000-0000-4000-8000-000000000002';
+
+update public.locality_memberships set locality_id='00000000-0000-4000-8000-000000000002' where user_id='10000000-0000-4000-8000-000000000001';
+select is((select public.city_digest_for_delivery(id) from public.outbox where type='city_digest'),null,'mudança de cidade cancela o snapshot pendente');
+update public.locality_memberships set locality_id='00000000-0000-4000-8000-000000000001' where user_id='10000000-0000-4000-8000-000000000001';
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000002',true);
@@ -40,6 +47,7 @@ select throws_ok('select public.unsubscribe_city_digest(repeat(''a'',64))','4250
 select is((select count(*)::integer from public.notification_preferences),1,'RLS só lê própria preferência');
 select lives_ok($$update public.notification_preferences set city_digest_frequency='weekly' where user_id='10000000-0000-4000-8000-000000000002'$$,'membro grava própria frequência');
 reset role;
+select set_config('request.jwt.claim.sub','',true);
 
 update public.recommendation_requests set is_deleted=true where id='d0000000-0000-4000-8000-000000000001';
 select is((select jsonb_array_length(public.city_digest_for_delivery(id)->'questions') from public.outbox where type='city_digest'),0,'revalida remoção depois da fila');
@@ -53,16 +61,29 @@ select ok(public.unsubscribe_city_digest((select payload->>'unsubscribe_token' f
 select is((select city_digest_frequency::text from public.notification_preferences where user_id='10000000-0000-4000-8000-000000000001'),'off','descadastro persistido');
 select ok(not public.unsubscribe_city_digest((select payload->>'unsubscribe_token' from public.outbox where type='city_digest')),'token de uso único');
 update public.notification_preferences set city_digest_frequency='daily' where user_id='10000000-0000-4000-8000-000000000001';
-update private.city_digest_state set last_period_at=now()-interval '8 days';
+update private.city_digest_state set last_period_at=now()-interval '8 days',last_enqueued_at=now()-interval '8 days';
 select is(public.enqueue_city_digests(),0,'sem novidade nada é enviado');
 delete from public.account_deletion_requests where user_id='10000000-0000-4000-8000-000000000002';
 update public.notification_preferences set city_digest_frequency='weekly' where user_id='10000000-0000-4000-8000-000000000001';
 update private.city_digest_state set last_period_at=now()-interval '8 days',last_enqueued_at=null;
 select is(public.enqueue_city_digests(),1,'semanal também monta e enfileira');
 select is(public.enqueue_city_digests(),0,'semanal não repete no mesmo período');
+update public.notification_preferences set city_digest_frequency='daily' where user_id='10000000-0000-4000-8000-000000000001';
+select is(public.enqueue_city_digests(),0,'trocar semanal por diário não reenvia no mesmo dia');
 set local role anon;
 select throws_ok('select public.enqueue_city_digests()','42501',null,'anônimo não dispara o job');
 select throws_ok('select public.unsubscribe_city_digest(repeat(''a'',64))','42501',null,'anônimo não chama RPC direto');
 reset role;
+-- UUIDs determinísticos e identidades sintéticas, sempre dentro do rollback.
+insert into auth.users(id,email)
+select ('d3000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid, 'digest-batch-'||n||'@example.invalid' from generate_series(1,101) n;
+insert into public.locality_memberships(user_id,locality_id)
+select id,'00000000-0000-4000-8000-000000000001'::uuid from auth.users where email like 'digest-batch-%@example.invalid';
+insert into private.verification_outcomes(user_id,status,eligibility_class,checked_at)
+select id,'verified'::private.verification_status,'veteran'::private.eligibility_class,now() from auth.users where email like 'digest-batch-%@example.invalid';
+insert into public.notification_preferences(user_id,city_digest_frequency)
+select id,'daily'::public.city_digest_frequency from auth.users where email like 'digest-batch-%@example.invalid';
+select is(public.enqueue_city_digests(),100,'lote não ultrapassa 100 membros');
+select is(public.enqueue_city_digests(),1,'próxima chamada atende o restante sem duplicar');
 select * from finish();
 rollback;
