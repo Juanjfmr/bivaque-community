@@ -7023,9 +7023,7 @@
         "Registro das ações com RLS de operador, paginação e negações; confirmar pgTAP",
         "E2E lan-op-real.spec.ts escrito: três ciclos, 375/768/1440 e dois temas, limpeza das fixtures com auditoria preservada e identificada por manifesto; executar em stack exclusiva com workers=1"
       ],
-      "dependencies": [
-        "LAN-F04"
-      ],
+      "dependencies": [],
       "tests": [
         "RUN-024 em 5a2dbd5f: gate --fast verde (lint, tipos dos workspaces e dos E2E); não substitui build/runtime",
         "RUN-024: vitest tests/unit/admin --maxWorkers=1: 51/51; test:scope: 222/222",
@@ -7048,7 +7046,8 @@
         "Próximo passo: CI aplica as cinco migrations em stack descartável, roda test:db/db:lint e o E2E @stateful do RUN-024 com --workers=1, audita capturas nos três tamanhos e dois temas. Nesta rodada, só gate --fast, test:scope e vitest de admin por instrução do dono; sem .env, banco, servidor, E2E ou revisão por outro modelo. Card não está concluído.",
         "07/11, correção do CI 42344019317 — item 1: nota opcional no resolve_report, helper, API e formulário; limite de 1000 preservado, sem nota fabricada. Migration 20261107044654 editada com autorização expressa do dono (ainda restrita ao PR); report-resolution-unified.sql intacto. operator-reports.sql amplia casos de nota nula/vazia/limite e não duplicação do aviso. Tipos públicos sem mudança de forma. Prova de banco pendente no CI; sem Docker, .env ou revisão externa por instrução do dono.",
         "07/11, CI item 2 investigado sobre c8f4dad5: operator_end_suspension já remove a linha; is_account_suspended considera expires_at > now(). A recusa de posts vem de group_id is not null na policy posts_insert_locality_member (20261024100000, linha 30): ambos os inserts de operator-suspensions.sql omitem grupo. publicacao-so-em-grupo.sql linhas 94–106 exige 42501 para esse mesmo cenário. Alterar o banco para aceitá-lo quebraria o contrato de publicação só em grupo. Proposta exata em .visual/run-024/ci-item-2-fixture-proposta.patch; diagnóstico em ci-item-2-diagnostico.md. Teste e RLS preservados enquanto aguarda exceção explícita do dono ao roteiro.",
-        "07/11: painel do operador na main (#156, merge 954dd638): verificação manual, denúncia e suspensão com registro das ações; revisão Qwen + auditoria Sonnet (R3) com rodada única de correção; pgTAP e E2E real lan-op-real.spec.ts nas três larguras e dois temas no CI."
+        "07/11: painel do operador na main (#156, merge 954dd638): verificação manual, denúncia e suspensão com registro das ações; revisão Qwen + auditoria Sonnet (R3) com rodada única de correção; pgTAP e E2E real lan-op-real.spec.ts nas três larguras e dois temas no CI.",
+        "07/11: dependência de LAN-F04 retirada — o LAN-OP precisava das denúncias do F04 (tabela reports, #140 e #153), já na main; o que mantém LAN-F04 aberto é INDICACOES-MEMORIA, sem relação com o painel."
       ]
     },
     {
