@@ -117,3 +117,87 @@ test("Grupo com administrador mostra pedidos, mas não oferece aprovação fict�
   await expect(pedidos).not.toContainText("ilustrativa")
   await expect(page.locator('[data-compositor-grupo="sim"]')).toBeVisible()
 })
+
+test("pedidos do grupo: duplo clique nao duplica pagina, erro preserva lista e retry avanca", async ({
+  page,
+}) => {
+  await simularGrupos(page)
+  let liberar: () => void = () => {
+    throw new Error("Pagina ainda nao solicitada")
+  }
+  const respostaPendente = new Promise<void>((resolve) => {
+    liberar = resolve
+  })
+  let paginasSolicitadas = 0
+  await page.route(/\/api\/app\/grupos\/g-futebol\/pedidos(?:\?|$)/, async (rota) => {
+    const depois = new URL(rota.request().url()).searchParams.get("depois")
+    if (depois === null)
+      return rota.fulfill({
+        json: {
+          pedidos: [{ id: "u1", nome: "Bruno C.", motivo: "Quero participar." }],
+          proximo: "pagina-2",
+        },
+      })
+    expect(depois).toBe("pagina-2")
+    paginasSolicitadas++
+    if (paginasSolicitadas === 1) {
+      await respostaPendente
+      return rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+    }
+    return rota.fulfill({
+      json: {
+        pedidos: [{ id: "u2", nome: "Thiago S.", motivo: "Sou novo na cidade." }],
+        proximo: null,
+      },
+    })
+  })
+
+  await page.goto("/app/grupo/g-futebol")
+  const pedidos = page.locator('[data-pedidos-entrada="sim"]')
+  await pedidos.locator("summary").click()
+  await expect(pedidos).toContainText("Bruno C.")
+  await pedidos.getByRole("button", { name: "Ver mais pedidos" }).evaluate((botao) => {
+    const alvo = botao as HTMLButtonElement
+    alvo.click()
+    alvo.click()
+  })
+  await expect.poll(() => paginasSolicitadas).toBe(1)
+  await expect(pedidos.getByRole("button", { name: "Carregando…" })).toBeDisabled()
+  liberar()
+
+  await expect(pedidos.getByRole("alert")).toContainText("Não foi possível carregar mais pedidos.")
+  await expect(pedidos).toContainText("Bruno C.")
+  await pedidos.getByRole("button", { name: "Ver mais pedidos" }).click()
+  await expect(pedidos).toContainText("Thiago S.")
+  await expect(pedidos.getByText("Bruno C.")).toHaveCount(1)
+  await expect(pedidos.getByText("Thiago S.")).toHaveCount(1)
+  await expect(pedidos.getByRole("button", { name: "Ver mais pedidos" })).toHaveCount(0)
+  expect(paginasSolicitadas).toBe(2)
+})
+
+test("pedidos do grupo: falha inicial oferece tentar de novo sem exibir vazio falso", async ({
+  page,
+}) => {
+  await simularGrupos(page)
+  let leituras = 0
+  await page.route(/\/api\/app\/grupos\/g-futebol\/pedidos(?:\?|$)/, async (rota) => {
+    leituras++
+    if (leituras === 1) return rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+    return rota.fulfill({
+      json: {
+        pedidos: [{ id: "u1", nome: "Bruno C.", motivo: "Quero participar." }],
+        proximo: null,
+      },
+    })
+  })
+
+  await page.goto("/app/grupo/g-futebol")
+  const pedidos = page.locator('[data-pedidos-entrada="sim"]')
+  await pedidos.locator("summary").click()
+  await expect(pedidos.getByRole("alert")).toContainText("Não foi possível carregar os pedidos.")
+  await expect(pedidos).not.toContainText("Nenhum pedido pendente.")
+  await pedidos.getByRole("button", { name: "Tentar de novo" }).click()
+  await expect(pedidos).toContainText("Bruno C.")
+  await expect(pedidos.getByRole("alert")).toHaveCount(0)
+  expect(leituras).toBe(2)
+})
