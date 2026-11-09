@@ -6,59 +6,7 @@
 
 Comparar três hipóteses de entrada em Manaus com dados inteiramente fictícios: **A Busca primeiro**, **B Resolver primeiro** e **C Comunidades primeiro**. Os agentes simulados não são usuários reais; suas atividades não entram no Bivaque, não produzem métricas de mercado e não fazem recomendações comerciais reais.
 
-## Instalação local (Docker Desktop + Node 22+)
-
-O MiroFish roda no computador do operador. O serviço utiliza LLM e Zep Cloud externos, portanto "local" **não** significa operação offline nem privacidade integral.
-
-1. Instale Git, Docker Desktop e Node.js 22+ (em Windows, habilite WSL2 no Docker Desktop). Em um diretório de trabalho, clone os projetos:
-
-```sh
-git clone https://github.com/666ghj/MiroFish.git
-git clone https://github.com/Juanjfmr/bivaque-community.git
-```
-
-2. Entre em `MiroFish`, copie `.env.example` para `.env` (PowerShell: `Copy-Item .env.example .env`; bash: `cp .env.example .env`) e preencha `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL_NAME` e `ZEP_API_KEY`. Não coloque as credenciais no Git.
-3. **Antes de iniciar**, edite `MiroFish/docker-compose.yml` e substitua a seção de portas por:
-
-```yaml
-    ports:
-      - "127.0.0.1:3000:3000"
-      - "127.0.0.1:5001:5001"
-```
-
-   As portas padrão `3000:3000` e `5001:5001` do upstream podem expor o serviço à rede local; o laboratório usa apenas loopback.
-4. Inicie o motor no diretório `MiroFish`:
-
-```sh
-docker compose up -d
-docker compose ps
-```
-
-   A interface fica em `http://127.0.0.1:3000`; a API deve responder em `http://127.0.0.1:5001/health`.
-5. Entre no diretório `bivaque-community`, selecione a branch do experimento e abra o laboratório:
-
-```sh
-git fetch origin
-git switch feature/mirofish-lab-interno-20261109
-cd tools/mirofish-lab
-node --test tests/*.test.mjs
-node src/cli.mjs doctor
-node src/cli.mjs plan
-node src/cli.mjs dashboard
-```
-
-   `dashboard` grava `runs/painel.html` para abrir localmente. Caso haja alterações de trabalho não salvas no checkout, preserve-as antes de trocar de branch.
-6. Apenas depois de verificar o ambiente e aceitar o custo de chamadas externas, inicie o cenário A:
-
-```sh
-node src/cli.mjs start A --execute --confirm-synthetic
-node src/cli.mjs status A
-node src/cli.mjs advance A --execute --confirm-synthetic
-```
-
-   Repita `advance A` manualmente, verificando as etapas; não o automatize às cegas. Não execute três cenários simultaneamente.
-
-## Operação detalhada (Node 22+)
+## Instalação e operação (Node 22+)
 
 1. Instale e execute o MiroFish upstream em sua máquina, seguindo https://github.com/666ghj/MiroFish. Configure **no ambiente desse serviço**, e nunca no repositório, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL_NAME` e `ZEP_API_KEY`. O serviço original utiliza LLM + Zep Cloud, ambos potencialmente pagos.
 2. **Não exponha o backend Flask à internet**: upstream não fornece o contrato de autenticação administrativa do Bivaque e permite CORS amplo. Deixe-o restrito a `127.0.0.1` / firewall. Este adaptador aceita somente loopback.
