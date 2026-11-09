@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { lerPedidosDoGrupo, type PedidosDoGrupo } from "@/lib/dados/grupos"
@@ -6,14 +6,21 @@ import { lerPedidosDoGrupo, type PedidosDoGrupo } from "@/lib/dados/grupos"
 export function Pedidos({ id }: { id: string }) {
   const [dados, setDados] = useState<PedidosDoGrupo | null>(null)
   const [erro, setErro] = useState(false)
+  const [erroMais, setErroMais] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [mais, setMais] = useState(false)
-  const [controle] = useState(() => new AbortController())
-  useEffect(() => () => controle.abort(), [controle])
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura
+  const controle = useRef<AbortController | null>(null)
+  const paginaEmCurso = useRef(false)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita uma nova leitura
   useEffect(() => {
     const pedido = new AbortController()
+    controle.current = pedido
+    paginaEmCurso.current = false
+    setDados(null)
     setErro(false)
+    setErroMais(false)
+    setMais(false)
     void lerPedidosDoGrupo(id, { signal: pedido.signal })
       .then((lidos) => {
         if (!pedido.signal.aborted) setDados(lidos)
@@ -23,20 +30,7 @@ export function Pedidos({ id }: { id: string }) {
       })
     return () => pedido.abort()
   }, [id, rodada])
-  async function carregarMais() {
-    if (!dados?.proximo || mais) return
-    setMais(true)
-    setErro(false)
-    try {
-      const pagina = await lerPedidosDoGrupo(id, { depois: dados.proximo, signal: controle.signal })
-      if (!controle.signal.aborted)
-        setDados({ ...pagina, pedidos: [...dados.pedidos, ...pagina.pedidos] })
-    } catch {
-      if (!controle.signal.aborted) setErro(true)
-    } finally {
-      if (!controle.signal.aborted) setMais(false)
-    }
-  }
+
   return (
     <details
       data-pedidos-entrada="sim"
@@ -67,9 +61,42 @@ export function Pedidos({ id }: { id: string }) {
         </ul>
       )}
       {dados?.proximo ? (
-        <Botao tom="texto" disabled={mais} onClick={() => void carregarMais()}>
-          Ver mais pedidos
-        </Botao>
+        <div className="grid justify-items-start gap-2">
+          {erroMais ? <p role="alert">Não foi possível carregar mais pedidos.</p> : null}
+          <Botao
+            tom="texto"
+            disabled={mais}
+            onClick={() => {
+              const pedido = controle.current
+              if (!pedido || pedido.signal.aborted || paginaEmCurso.current || !dados.proximo)
+                return
+              paginaEmCurso.current = true
+              const cursor = dados.proximo
+              setMais(true)
+              setErroMais(false)
+              void lerPedidosDoGrupo(id, { depois: cursor, signal: pedido.signal })
+                .then((pagina) => {
+                  if (!pedido.signal.aborted)
+                    setDados((atual) =>
+                      atual?.proximo === cursor
+                        ? { ...pagina, pedidos: [...atual.pedidos, ...pagina.pedidos] }
+                        : atual,
+                    )
+                })
+                .catch(() => {
+                  if (!pedido.signal.aborted) setErroMais(true)
+                })
+                .finally(() => {
+                  if (!pedido.signal.aborted) {
+                    paginaEmCurso.current = false
+                    setMais(false)
+                  }
+                })
+            }}
+          >
+            {mais ? "Carregando…" : "Ver mais pedidos"}
+          </Botao>
+        </div>
       ) : null}
     </details>
   )
