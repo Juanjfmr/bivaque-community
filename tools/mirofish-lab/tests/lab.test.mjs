@@ -8,10 +8,10 @@ import {upstreamBase,createClient} from '../src/client.mjs';
 import {start,advance,loadState} from '../src/runner.mjs';
 
 test('só loopback e caminhos permitidos; SSRF remoto bloqueado', async()=>{
-  for (const target of ['https://mirofish.example','http://127.0.0.1.evil.com','http://user:pw@127.0.0.1:5000','file:///etc/passwd','http://169.254.169.254']) {
+  for (const target of ['https://mirofish.example','http://127.0.0.1.evil.com','http://user:pw@127.0.0.1:5001','file:///etc/passwd','http://169.254.169.254']) {
     assert.throws(()=>upstreamBase(target));
   }
-  assert.equal(upstreamBase('http://127.0.0.1:5000'),'http://127.0.0.1:5000');
+  assert.equal(upstreamBase('http://127.0.0.1:5001'),'http://127.0.0.1:5001');
   const client=createClient({fetchImpl:async()=>{throw new Error('não deve chamar fetch');}});
   await assert.rejects(()=>client.request('/api/private/data'),/Endpoint não autorizado/);
 });
