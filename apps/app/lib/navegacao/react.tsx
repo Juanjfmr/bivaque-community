@@ -317,8 +317,7 @@ export function useNavegacao(): Navegacao {
       if (pendente) return pendente
       // O estado recebido pela casca pode ser de um render anterior. Conferir
       // também o roteador atual evita regravar uma sobreposição já aberta.
-      if (temEntrada(estado) || temEntrada(roteador.state.location.state))
-        return Promise.resolve()
+      if (temEntrada(estado) || temEntrada(roteador.state.location.state)) return Promise.resolve()
       const atual = lerEstadoDaRota(roteador)
       // A rota de fallback literal não tem endereço próprio para reescrever.
       if (atual.caminho === ROTA_INDISPONIVEL.caminho) return Promise.resolve()
