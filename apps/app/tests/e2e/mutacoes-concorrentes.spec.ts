@@ -111,7 +111,8 @@ test("família: convites duplicados e revogação concorrente ficam bloqueados",
   })
   const convites: unknown[] = []
   await page.route(/\/api\/app\/voce\/familia$/, async (rota) => {
-    if (rota.request().method() !== "POST") return rota.continue()
+    // Encaminha o GET à simulação de família já instalada; continue() ignora essa rota.
+    if (rota.request().method() !== "POST") return rota.fallback()
     convites.push(rota.request().postDataJSON())
     await pendente
     await rota.fulfill({
@@ -129,6 +130,7 @@ test("família: convites duplicados e revogação concorrente ficam bloqueados",
 
   await page.goto("/app/voce")
   const familia = page.locator('[data-secao="sim"]', { hasText: "Família" })
+  await expect(familia.getByText("Convites pendentes (1 de 5)")).toBeVisible()
   await familia.getByLabel("E-mail do familiar").fill("familiar@example.invalid")
   await familia.locator("form").evaluate((formulario) => {
     formulario.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
