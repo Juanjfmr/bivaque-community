@@ -34,10 +34,7 @@ function precisaConfirmar(acao: AcaoDeSituacao): acao is AcaoQueExigeConfirmacao
 }
 
 /** Transição pura. Evento inválido não inicia chamada nem altera estado. */
-export function transicaoDaGestao(
-  atual: EstadoDaGestao,
-  evento: EventoDaGestao,
-): EstadoDaGestao {
+export function transicaoDaGestao(atual: EstadoDaGestao, evento: EventoDaGestao): EstadoDaGestao {
   if (evento.tipo === "concluir") {
     return atual.fase === "executando" ? GESTAO_LIVRE : atual
   }
