@@ -1,5 +1,5 @@
 // Client-side adapter for a loopback-only upstream service, never exposed in Bivaque member routes.
-export function upstreamBase(value = process.env.MIROFISH_URL || 'http://127.0.0.1:5000') {
+export function upstreamBase(value = process.env.MIROFISH_URL || 'http://127.0.0.1:5001') {
   let url;
   try { url = new URL(value); } catch { throw new Error('MIROFISH_URL inválida.'); }
   if (!['http:', 'https:'].includes(url.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
