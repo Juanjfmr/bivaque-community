@@ -100,5 +100,4 @@ describe("transições de navegação", () => {
     const comFoco = { ...sobreposicao, foco: descritorDaAcao("cidade", "") }
     expect(materializarSeNecessario(comFoco)).toBe(comFoco)
   })
-
 })
