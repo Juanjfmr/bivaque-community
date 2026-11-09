@@ -105,7 +105,13 @@ export function Conversa() {
   }
   async function mais() {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || !dados?.anterior || carregandoMais || paginaEmCurso.current)
+    if (
+      !pedido ||
+      pedido.signal.aborted ||
+      !dados?.anterior ||
+      carregandoMais ||
+      paginaEmCurso.current
+    )
       return
     paginaEmCurso.current = true
     const cursor = dados.anterior
