@@ -65,7 +65,9 @@ test("gestão exige confirmar a pausa, bloqueia outras ações e permite cancela
 
 test("uma edição pendente bloqueia outra chamada e libera ao concluir", async ({ page }) => {
   const escritas: string[] = []
-  let liberar: () => void = () => { throw new Error("A edição não iniciou") }
+  let liberar: () => void = () => {
+    throw new Error("A edição não iniciou")
+  }
   const respostaPendente = new Promise<void>((resolve) => {
     liberar = resolve
   })
