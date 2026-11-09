@@ -101,9 +101,7 @@ test("grupo fechado: solicitação duplicada não envia dois PUTs nem fecha o di
   expect(pedidos).toHaveLength(1)
 })
 
-test("família: convites duplicados e revogação concorrente ficam bloqueados", async ({
-  page,
-}) => {
+test("família: convites duplicados e revogação concorrente ficam bloqueados", async ({ page }) => {
   await simularVoce(page)
   let liberar: () => void = () => {
     throw new Error("Convite ainda não iniciado")
