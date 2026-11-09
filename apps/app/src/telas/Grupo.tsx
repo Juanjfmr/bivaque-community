@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
@@ -30,6 +30,8 @@ export function Grupo() {
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
   const [controle] = useState(() => new AbortController())
+  const paginaPendente = useRef<AbortController | null>(null)
+  const geracaoDoGrupo = useRef(0)
   const acoes = useAcoesDaPublicacao({
     admin: dados?.grupo.admin ?? false,
     fixada: dados?.grupo.fixada ?? null,
@@ -52,6 +54,11 @@ export function Grupo() {
   useEffect(() => () => controle.abort(), [controle])
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura
   useEffect(() => {
+    geracaoDoGrupo.current += 1
+    paginaPendente.current?.abort()
+    paginaPendente.current = null
+    setMais(false)
+    setErroMais(false)
     const pedido = new AbortController()
     setDados(null)
     setErro(null)
@@ -62,24 +69,38 @@ export function Grupo() {
       .catch((falha: unknown) => {
         if (!pedido.signal.aborted) setErro(falha)
       })
-    return () => pedido.abort()
+    return () => {
+      pedido.abort()
+      geracaoDoGrupo.current += 1
+      paginaPendente.current?.abort()
+      paginaPendente.current = null
+    }
   }, [id, ordem, rodada])
   async function carregarMais() {
-    if (!dados?.proximo || mais) return
+    if (!dados?.proximo || mais || paginaPendente.current !== null) return
+    const pedido = new AbortController()
+    paginaPendente.current = pedido
+    const geracao = geracaoDoGrupo.current
+    const cursor = dados.proximo
     setMais(true)
     setErroMais(false)
     try {
       const pagina = await buscarGrupo(id, {
         ordem,
-        depois: dados.proximo,
-        signal: controle.signal,
+        depois: cursor,
+        signal: pedido.signal,
       })
-      if (!controle.signal.aborted)
-        setDados({ ...pagina, publicacoes: [...dados.publicacoes, ...pagina.publicacoes] })
+      if (pedido.signal.aborted || geracao !== geracaoDoGrupo.current) return
+      setDados((atual) => {
+        if (pedido.signal.aborted || geracao !== geracaoDoGrupo.current) return atual
+        if (atual === null || atual.proximo !== cursor) return atual
+        return { ...pagina, publicacoes: [...atual.publicacoes, ...pagina.publicacoes] }
+      })
     } catch {
-      if (!controle.signal.aborted) setErroMais(true)
+      if (!pedido.signal.aborted && geracao === geracaoDoGrupo.current) setErroMais(true)
     } finally {
-      if (!controle.signal.aborted) setMais(false)
+      if (paginaPendente.current === pedido) paginaPendente.current = null
+      if (geracao === geracaoDoGrupo.current) setMais(false)
     }
   }
   if (erro) return <EstadoDaLeitura erro={erro} aoTentar={() => setRodada((r) => r + 1)} />
@@ -111,12 +132,16 @@ export function Grupo() {
                 }
               : atual,
           )
-          if (salvo.membro && !grupo.membro)
+          if (salvo.membro && !grupo.membro) {
+            const geracao = geracaoDoGrupo.current
             void buscarGrupo(id, { ordem, signal: controle.signal })
-              .then(setDados)
-              .catch((falha: unknown) => {
-                if (!controle.signal.aborted) setErro(falha)
+              .then((lidos) => {
+                if (!controle.signal.aborted && geracao === geracaoDoGrupo.current) setDados(lidos)
               })
+              .catch((falha: unknown) => {
+                if (!controle.signal.aborted && geracao === geracaoDoGrupo.current) setErro(falha)
+              })
+          }
         }}
       />
       <details
