@@ -65,7 +65,7 @@ test("gestão exige confirmar a pausa, bloqueia outras ações e permite cancela
 
 test("uma edição pendente bloqueia outra chamada e libera ao concluir", async ({ page }) => {
   const escritas: string[] = []
-  let liberar: (() => void) | null = null
+  let liberar: () => void = () => { throw new Error("A edição não iniciou") }
   const respostaPendente = new Promise<void>((resolve) => {
     liberar = resolve
   })
@@ -90,8 +90,7 @@ test("uma edição pendente bloqueia outra chamada e libera ao concluir", async 
   await dialogo.locator('[data-acao="salvar-edicao"]').click()
   await expect(dialogo.locator('[data-acao="salvar-edicao"]')).toBeDisabled()
   await expect(dialogo.locator('[data-acao="situacao-pause"]')).toBeDisabled()
-  expect(escritas).toEqual(["edicao"])
-  if (liberar === null) throw new Error("A edição não iniciou")
+  await expect.poll(() => escritas).toEqual(["edicao"])
   liberar()
   await expect(dialogo.locator('[data-acao="salvar-edicao"]')).toBeEnabled()
   expect(escritas).toEqual(["edicao"])
