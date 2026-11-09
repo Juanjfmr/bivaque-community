@@ -68,7 +68,7 @@ export function Pedidos({ id }: { id: string }) {
             disabled={mais}
             onClick={() => {
               const pedido = controle.current
-              if (!pedido || pedido.signal.aborted || paginaEmCurso.current || !dados.proximo)
+              if (!pedido || pedido.signal.aborted || paginaEmCurso.current || !dados?.proximo)
                 return
               paginaEmCurso.current = true
               const cursor = dados.proximo
