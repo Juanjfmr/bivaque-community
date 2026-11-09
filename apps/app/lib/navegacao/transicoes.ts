@@ -1,7 +1,7 @@
 import { abaAtiva } from "./abas"
 import {
-  type EstadoDaEntrada,
   CHAVE_SEM_REGISTRO,
+  type EstadoDaEntrada,
   entradaPadrao,
   novaChaveDeEntrada,
   type Sobreposicao,
@@ -34,7 +34,6 @@ export function entrarEmRota(dados: {
     entrada: entradaPadrao({ origem, pai: dados.rotaAtual }),
   }
 }
-
 
 /**
  * Materializa apenas entradas ainda não registradas.
