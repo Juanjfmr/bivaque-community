@@ -215,7 +215,9 @@ export function GerenciarAnuncio({
                   tom={acao === "pause" ? "contornado" : "texto"}
                   data-acao={`situacao-${acao}`}
                   disabled={ocupado || gestao.fase === "confirmando"}
-                  onClick={() => { despachar({ tipo: "pedir-confirmacao", acao }) }}
+                  onClick={() => {
+                    despachar({ tipo: "pedir-confirmacao", acao })
+                  }}
                 >
                   {ROTULOS_DE_ACAO[acao]}
                 </Botao>
@@ -237,7 +239,9 @@ export function GerenciarAnuncio({
               type="button"
               tom="texto"
               data-acao="cancelar-confirmacao"
-              onClick={() => { despachar({ tipo: "cancelar-confirmacao" }) }}
+              onClick={() => {
+                despachar({ tipo: "cancelar-confirmacao" })
+              }}
             >
               Cancelar
             </Botao>
