@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest"
-import {
-  GESTAO_LIVRE,
-  transicaoDaGestao,
-} from "@/src/mercado/estado-de-gestao"
+import { GESTAO_LIVRE, transicaoDaGestao } from "@/src/mercado/estado-de-gestao"
 
 describe("máquina de gestão do anúncio", () => {
   it("confirma pausa antes de executar e volta a livre após a resposta", () => {
