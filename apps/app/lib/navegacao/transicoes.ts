@@ -1,6 +1,7 @@
 import { abaAtiva } from "./abas"
 import {
   type EstadoDaEntrada,
+  CHAVE_SEM_REGISTRO,
   entradaPadrao,
   novaChaveDeEntrada,
   type Sobreposicao,
@@ -32,6 +33,17 @@ export function entrarEmRota(dados: {
     replace: dados.atual.sobreposicao !== null,
     entrada: entradaPadrao({ origem, pai: dados.rotaAtual }),
   }
+}
+
+
+/**
+ * Materializa apenas entradas ainda não registradas.
+ * Recebe o estado no instante da escrita, não a captura de um render anterior:
+ * um registro já aberto (inclusive sobreposição) nunca pode ser substituído.
+ */
+export function materializarSeNecessario(atual: EstadoDaEntrada): EstadoDaEntrada {
+  if (atual.chave !== CHAVE_SEM_REGISTRO) return atual
+  return entradaPadrao({ origem: atual.origem, pai: atual.pai })
 }
 
 /** Trocar filtro não navega: reescreve a entrada atual, sem empilhar. */
