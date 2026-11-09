@@ -87,8 +87,9 @@ test("grupo fechado: solicitação duplicada não envia dois PUTs nem fecha o di
   await expect(dialogo).toBeVisible()
   await dialogo.locator("#motivo-grupo").fill("Sou responsável por um aluno.")
   await dialogo.getByRole("button", { name: "Enviar pedido" }).evaluate((botao) => {
-    ;(botao as HTMLButtonElement).click()
-    ;(botao as HTMLButtonElement).click()
+    const botaoDeEnvio = botao as HTMLButtonElement
+    botaoDeEnvio.click()
+    botaoDeEnvio.click()
   })
   await expect.poll(() => pedidos.length).toBe(1)
   await expect(dialogo).toHaveAttribute("aria-busy", "true")
