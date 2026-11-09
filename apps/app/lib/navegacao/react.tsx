@@ -239,6 +239,10 @@ export function useNavegacao(): Navegacao {
     async (destino: string, opcoes: OpcoesDeNavegacao = {}): Promise<void> => {
       const destinoRota = rotaPorNome(destino)
       if (!destinoRota) return
+      // Foco e rolagem pertencem ao clique original, antes de aguardar o
+      // registro inicial e possíveis commits da casca.
+      const foco = opcoes.foco ?? descritorDoFocoAtual()
+      const rolagem = rolagemAtual()
       await esperarMaterializacao(roteador)
       const atual = lerEstadoDaRota(roteador)
       const decisao = entrarEmRota({ atual: atual.entrada, rotaAtual: atual.rota.nome })
@@ -250,8 +254,8 @@ export function useNavegacao(): Navegacao {
       await gravar(
         (entrada) => ({
           ...entrada,
-          foco: opcoes.foco ?? descritorDoFocoAtual(),
-          rolagem: rolagemAtual(),
+          foco,
+          rolagem,
         }),
         true,
       )
@@ -269,12 +273,14 @@ export function useNavegacao(): Navegacao {
 
   const abrir = useCallback(
     async (id: Sobreposicao): Promise<void> => {
+      const foco = descritorDoFocoAtual()
+      const rolagem = rolagemAtual()
       await esperarMaterializacao(roteador)
       const atual = lerEstadoDaRota(roteador)
       const comFoco: EstadoDaEntrada = {
         ...atual.entrada,
-        foco: descritorDoFocoAtual(),
-        rolagem: rolagemAtual(),
+        foco,
+        rolagem,
       }
       await gravar(() => comFoco, true)
       await roteador.navigate({
