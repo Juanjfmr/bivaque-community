@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
@@ -41,6 +41,8 @@ export function MeusAnuncios() {
   const [confirmar, setConfirmar] = useState<string | null>(null)
   const [erroLocal, setErroLocal] = useState("")
   const [gerenciando, setGerenciando] = useState<AnuncioDaLista | null>(null)
+  const paginaPendente = useRef<AbortController | null>(null)
+  const geracaoDaLista = useRef(0)
   const [desapegoLocal] = useState(() =>
     lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" }),
   )
@@ -49,6 +51,12 @@ export function MeusAnuncios() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
+    // Uma nova cidade/releitura invalida também as páginas pendentes.
+    geracaoDaLista.current += 1
+    paginaPendente.current?.abort()
+    paginaPendente.current = null
+    setCarregandoMais(false)
+    setErroMais(false)
     const controle = new AbortController()
     setDados(null)
     setErro(null)
@@ -59,7 +67,12 @@ export function MeusAnuncios() {
       .catch((falha: unknown) => {
         if (!controle.signal.aborted) setErro(falha)
       })
-    return () => controle.abort()
+    return () => {
+      controle.abort()
+      geracaoDaLista.current += 1
+      paginaPendente.current?.abort()
+      paginaPendente.current = null
+    }
   }, [casca.cidade, rodada])
 
   useEffect(() => {
@@ -69,21 +82,29 @@ export function MeusAnuncios() {
 
   const meus = dados?.anuncios ?? []
   const carregando = dados === null && erro === null
-  const [controle] = useState(() => new AbortController())
-  useEffect(() => () => controle.abort(), [controle])
-
   async function carregarMais() {
-    if (!dados?.proximo || carregandoMais) return
+    if (!dados?.proximo || carregandoMais || paginaPendente.current !== null) return
+    const controle = new AbortController()
+    paginaPendente.current = controle
+    const geracao = geracaoDaLista.current
+    const cursor = dados.proximo
     setCarregandoMais(true)
     setErroMais(false)
     try {
-      const mais = await lerMeusAnuncios({ depois: dados.proximo, signal: controle.signal })
-      if (!controle.signal.aborted)
-        setDados({ ...mais, anuncios: [...dados.anuncios, ...mais.anuncios] })
+      const mais = await lerMeusAnuncios({ depois: cursor, signal: controle.signal })
+      if (controle.signal.aborted || geracao !== geracaoDaLista.current) return
+      setDados((atual) => {
+        // O cursor identifica a página-base. Nunca acrescente resultados a uma
+        // lista que foi substituída por troca de cidade, retry ou edição.
+        if (controle.signal.aborted || geracao !== geracaoDaLista.current) return atual
+        if (atual === null || atual.proximo !== cursor) return atual
+        return { ...mais, anuncios: [...atual.anuncios, ...mais.anuncios] }
+      })
     } catch {
-      if (!controle.signal.aborted) setErroMais(true)
+      if (!controle.signal.aborted && geracao === geracaoDaLista.current) setErroMais(true)
     } finally {
-      if (!controle.signal.aborted) setCarregandoMais(false)
+      if (paginaPendente.current === controle) paginaPendente.current = null
+      if (geracao === geracaoDaLista.current) setCarregandoMais(false)
     }
   }
 
