@@ -194,7 +194,8 @@ export function GerenciarAnuncio({
         <div data-acoes-situacao="sim" className="flex flex-wrap gap-2">
           {acoesDeSituacao({ ...anuncio, status }).map((acao) => {
             const pedindoConfirmacao =
-              (acao === "pause" && confirmarPausar) || (acao === "close" && confirmarEncerrar)
+              (acao === "pause" && (confirmarPausar || mudando === "pause")) ||
+              (acao === "close" && (confirmarEncerrar || mudando === "close"))
             if (pedindoConfirmacao)
               return (
                 <Botao
