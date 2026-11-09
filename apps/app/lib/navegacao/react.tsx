@@ -27,6 +27,7 @@ import {
   buscaAoTrocarDeRota,
   voltar as decidirVolta,
   entrarEmRota,
+  materializarSeNecessario,
 } from "./transicoes"
 
 /**
@@ -35,6 +36,18 @@ import {
  */
 
 type Roteador = ReturnType<typeof useRouter>
+
+/**
+ * A materialização inicial é assíncrona. Navegar antes de seu commit pode
+ * reordenar replaces e apagar uma sobreposição recém-aberta. Uma pendência por
+ * instância do roteador serializa somente essa primeira escrita.
+ */
+const MATERIALIZACOES = new WeakMap<Roteador, Promise<void>>()
+
+async function esperarMaterializacao(roteador: Roteador): Promise<void> {
+  // Falha na materialização não deve impedir a navegação da pessoa.
+  await MATERIALIZACOES.get(roteador)?.catch(() => {})
+}
 
 type EstadoDaRota = {
   readonly rota: Rota
@@ -197,12 +210,14 @@ export function useNavegacao(): Navegacao {
       // catálogo — e precisa da entrada materializada para devolver o foco.
       if (destino === undefined && atual.caminho === ROTA_INDISPONIVEL.caminho)
         return Promise.resolve()
+      const entrada = transformar(atual.entrada)
+      if (entrada === atual.entrada) return Promise.resolve()
       const caminho = destino?.caminho ?? atual.caminho
       const parametros = destino?.parametros ?? atual.parametros
       return roteador.navigate({
         to: caminho,
         params: parametros,
-        state: { [CHAVE_DA_ENTRADA]: transformar(atual.entrada) },
+        state: { [CHAVE_DA_ENTRADA]: entrada },
         replace,
         resetScroll: false,
       })
@@ -224,6 +239,11 @@ export function useNavegacao(): Navegacao {
     async (destino: string, opcoes: OpcoesDeNavegacao = {}): Promise<void> => {
       const destinoRota = rotaPorNome(destino)
       if (!destinoRota) return
+      // Foco e rolagem pertencem ao clique original, antes de aguardar o
+      // registro inicial e possíveis commits da casca.
+      const foco = opcoes.foco ?? descritorDoFocoAtual()
+      const rolagem = rolagemAtual()
+      await esperarMaterializacao(roteador)
       const atual = lerEstadoDaRota(roteador)
       const decisao = entrarEmRota({ atual: atual.entrada, rotaAtual: atual.rota.nome })
       // Trocar de rota (ex.: desapegos → imóveis) não leva a busca da tela
@@ -234,8 +254,8 @@ export function useNavegacao(): Navegacao {
       await gravar(
         (entrada) => ({
           ...entrada,
-          foco: opcoes.foco ?? descritorDoFocoAtual(),
-          rolagem: rolagemAtual(),
+          foco,
+          rolagem,
         }),
         true,
       )
@@ -253,11 +273,14 @@ export function useNavegacao(): Navegacao {
 
   const abrir = useCallback(
     async (id: Sobreposicao): Promise<void> => {
+      const foco = descritorDoFocoAtual()
+      const rolagem = rolagemAtual()
+      await esperarMaterializacao(roteador)
       const atual = lerEstadoDaRota(roteador)
       const comFoco: EstadoDaEntrada = {
         ...atual.entrada,
-        foco: descritorDoFocoAtual(),
-        rolagem: rolagemAtual(),
+        foco,
+        rolagem,
       }
       await gravar(() => comFoco, true)
       await roteador.navigate({
@@ -275,6 +298,7 @@ export function useNavegacao(): Navegacao {
   }, [roteador])
 
   const voltar = useCallback(async (): Promise<void> => {
+    await esperarMaterializacao(roteador)
     const atual = lerEstadoDaRota(roteador)
     const decisao = decidirVolta(atual.entrada, atual.rota.pai)
     if (decisao.popar) {
@@ -294,14 +318,22 @@ export function useNavegacao(): Navegacao {
   }, [roteador])
 
   const materializarEntrada = useCallback(
-    async (estado: unknown): Promise<void> => {
-      if (temEntrada(estado)) return
+    (estado: unknown): Promise<void> => {
+      const pendente = MATERIALIZACOES.get(roteador)
+      if (pendente) return pendente
+      // O estado recebido pela casca pode ser de um render anterior. Conferir
+      // também o roteador atual evita regravar uma sobreposição já aberta.
+      if (temEntrada(estado) || temEntrada(roteador.state.location.state)) return Promise.resolve()
       const atual = lerEstadoDaRota(roteador)
-      // A rota de fallback literal não tem endereço próprio para reescrever: ela
-      // fica com a identidade estável de "sem registro". Vê `gravar`.
-      if (atual.caminho === ROTA_INDISPONIVEL.caminho) return
-      const entrada = entradaPadrao({ origem: atual.entrada.origem, pai: atual.entrada.pai })
-      await gravar(() => entrada, true)
+      // A rota de fallback literal não tem endereço próprio para reescrever.
+      if (atual.caminho === ROTA_INDISPONIVEL.caminho) return Promise.resolve()
+      const tarefa = gravar(materializarSeNecessario, true)
+      MATERIALIZACOES.set(roteador, tarefa)
+      const limpar = () => {
+        if (MATERIALIZACOES.get(roteador) === tarefa) MATERIALIZACOES.delete(roteador)
+      }
+      void tarefa.then(limpar, limpar)
+      return tarefa
     },
     [gravar, roteador],
   )
