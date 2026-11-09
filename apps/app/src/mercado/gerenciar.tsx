@@ -7,17 +7,17 @@ import { Campo, Selecao } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
-  type EstadoDaGestao,
-  type EventoDaGestao,
-  GESTAO_LIVRE,
-  transicaoDaGestao,
-} from "@/src/mercado/estado-de-gestao"
-import {
   type AcaoDeSituacao,
   type AnuncioDaLista,
   editarDesapego,
   mudarSituacao,
 } from "@/lib/dados/mercado"
+import {
+  type EstadoDaGestao,
+  type EventoDaGestao,
+  GESTAO_LIVRE,
+  transicaoDaGestao,
+} from "@/src/mercado/estado-de-gestao"
 
 /**
  * Gerenciar o próprio anúncio (LAN-F06, prancha 21 no molde das telas): editar
@@ -214,7 +214,7 @@ export function GerenciarAnuncio({
                   tom={acao === "pause" ? "contornado" : "texto"}
                   data-acao={`situacao-${acao}`}
                   disabled={ocupado || gestao.fase === "confirmando"}
-                  onClick={() => despachar({ tipo: "pedir-confirmacao", acao })}
+                  onClick={() => { despachar({ tipo: "pedir-confirmacao", acao }) }}
                 >
                   {ROTULOS_DE_ACAO[acao]}
                 </Botao>
@@ -236,7 +236,7 @@ export function GerenciarAnuncio({
               type="button"
               tom="texto"
               data-acao="cancelar-confirmacao"
-              onClick={() => despachar({ tipo: "cancelar-confirmacao" })}
+              onClick={() => { despachar({ tipo: "cancelar-confirmacao" }) }}
             >
               Cancelar
             </Botao>
