@@ -43,6 +43,9 @@ export function EdicaoDePerfil({
   const [nome, setNome] = useState(perfil.nome)
   const [bio, setBio] = useState(perfil.bio ?? "")
   const [cep, setCep] = useState(perfil.localizacao.cep ?? "")
+  // Um CEP pela metade não pode virar `null` e apagar a localização em
+  // silêncio; o campo só libera o Salvar quando tem oito dígitos ou está vazio.
+  const cepIncompleto = cep.replace(/\D/g, "").length % 8 !== 0 && cep.trim() !== ""
 
   return (
     <Secao titulo="Editar perfil">
@@ -70,7 +73,11 @@ export function EdicaoDePerfil({
           inputMode="numeric"
           autoComplete="postal-code"
           maxLength={9}
-          nota="Opcional. O CEP só calcula a distância até o seu bairro e não aparece para outras pessoas."
+          nota={
+            cepIncompleto
+              ? "Digite os oito dígitos do CEP ou deixe em branco para apagar a localização."
+              : "Opcional. O CEP só calcula a distância até o seu bairro e não aparece para outras pessoas."
+          }
         />
         {mensagem === null ? null : (
           <p role="alert" className="text-sm text-(--destructive)">
@@ -81,7 +88,7 @@ export function EdicaoDePerfil({
           <Botao tom="texto" type="button" onClick={aoCancelar} disabled={salvando}>
             Cancelar
           </Botao>
-          <Botao type="submit" disabled={salvando}>
+          <Botao type="submit" disabled={salvando || cepIncompleto}>
             {salvando ? "Salvando…" : "Salvar"}
           </Botao>
         </div>

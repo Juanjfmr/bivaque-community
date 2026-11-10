@@ -123,6 +123,12 @@ test.describe("F10 — CEP do perfil no app", { tag: "@stateful" }, () => {
     )
     await capturarEmDoisTemas(page, testInfo.project.name, "voce-cep-recarregado")
 
+    // CEP pela metade não pode apagar a localização em silêncio: o Salvar fica
+    // desabilitado até os oito dígitos ou o campo vazio (limpeza explícita).
+    await page.getByLabel("CEP").fill("690")
+    await expect(page.getByRole("button", { name: "Salvar" })).toBeDisabled()
+    await page.getByLabel("CEP").fill(CEP_SEMEADO)
+
     // Limpar apaga a localização: o corpo vai com `cep: null` e a resposta diz
     // que a localização não está mais definida.
     const limpeza = page.waitForResponse(
