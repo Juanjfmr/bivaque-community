@@ -442,10 +442,12 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
 
     // ── e-mail e código de verdade ────────────────────────────────────────
     await esperarEtapaDaEntrada(page, /Convite de /)
-    // O convite declara o e-mail: o campo vem preenchido e só de leitura.
+    // RUN-135: a prévia sem sessão não revela o destinatário do outbox. O campo
+    // vem vazio e editável; a pessoa digita o próprio e-mail para receber o código.
     const campoDoEmailDoConvite = page.getByLabel("E-mail")
-    await expect(campoDoEmailDoConvite).toHaveValue(email)
-    await expect(campoDoEmailDoConvite).not.toBeEditable()
+    await expect(campoDoEmailDoConvite).toHaveValue("")
+    await expect(campoDoEmailDoConvite).toBeEditable()
+    await campoDoEmailDoConvite.fill(email)
     const desde = new Date()
     await page.getByRole("button", { name: "Enviar código" }).click()
     await esperarEtapaDaEntrada(page, "Digite o código")
