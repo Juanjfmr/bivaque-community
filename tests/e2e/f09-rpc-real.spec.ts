@@ -103,6 +103,9 @@ test.describe("F09 — envio pela RPC", { tag: "@stateful" }, () => {
       await contextoDoPrestador.close()
     }
 
+    // A conversa do seed já nasce "em conversa" (supabase/seed.sql:1161); esta
+    // asserção é de não regressão. A transição em si é provada no caso "pedido
+    // novo", que cria um pedido aberto e recebe a primeira resposta do prestador.
     const pedido = await page.request.get(`/api/app/pedidos/${PEDIDO}`)
     expect(pedido.status()).toBe(200)
     expect(((await pedido.json()) as { pedido: { situacao: string } }).pedido.situacao).toBe(
@@ -115,10 +118,6 @@ test.describe("F09 — envio pela RPC", { tag: "@stateful" }, () => {
     context,
     page,
   }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "desktop-1440",
-      "o pedido novo consome o teto do par; só a largura de desktop cria",
-    )
     test.setTimeout(180_000)
     await semearSessaoDeMembro(context, MEMBRO)
     const descricao = `Troca de filtro — ${Date.now()}`
