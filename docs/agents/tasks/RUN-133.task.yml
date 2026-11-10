@@ -37,6 +37,9 @@ allowed_paths:
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/unit/security/photo-upload-action.test.ts
   - tests/unit/outbox/convites-sem-endereco.test.ts
+  - tests/unit/ui/cidade-consulta.test.ts
+  - tests/unit/events/recon-043-eventos-vazios.test.ts
+  - tests/unit/events/event-invite-fanout.test.ts
   - tests/e2e/event-invites.spec.ts
   - tests/e2e/event-rsvp.spec.ts
   - tests/e2e/group-event-detail-denials.spec.ts
@@ -64,6 +67,7 @@ acceptance:
   - "tests/unit/infra/lan-troca-redirect.test.ts inclui as cinco trocas, prova 307, destino existente no catálogo do app e ausência de segundo salto, e segue verde."
   - "Os specs que visitavam /events passam a exigir o 307 ou deixam de visitar a rota com justificativa no diff; nenhuma cobertura de jornada é simplesmente apagada."
   - "A action de foto do post sai de (shell)/events para components/bivaque com os dois imports e o teste de segurança atualizados; o teste de convites sem endereço mantém o caso de comunidade; empty-locality e two-localities provam o 307 para /app/agenda."
+  - "Nenhum teste unitário lê arquivo removido: os testes de varredura que só existiam para as páginas antigas saem com elas (recon-043-eventos-vazios, event-invite-fanout) e a cobertura de visitante do detalhe do evento passa a ler apps/app/src/telas/Evento.tsx; a jornada de agenda/evento segue coberta por events-redirects.spec.ts e f05-eventos-real.spec.ts."
   - "tests/e2e/events-redirects.spec.ts prova no navegador (375/768/1440) que /events, /events/:id e /events/novo redirecionam para os destinos do app."
   - "Passam: gate --fast, test:scope, vitest do teste de troca, tsc -p tests/e2e; o E2E de navegador roda no CI (sem Supabase local)."
 

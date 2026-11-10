@@ -98,11 +98,11 @@ describe("costura das telas", () => {
   })
 
   // O banco recusa presença, pergunta ao organizador e correção do Guia a quem
-  // é de fora; a tela não oferece o botão que falharia.
+  // é de fora; a tela não oferece o botão que falharia. O detalhe do evento já
+  // vive no app; o Guia ainda está na web até o lote F08.
   it("quem consulta não vê ações que o banco recusaria", () => {
-    const event = web("app", "(shell)", "events", "[id]", "page.tsx")
-    expect(event).toContain("const isVisitor = localMembership === null")
-    expect(event).toContain("{!isOrganizer && !isVisitor ? (")
+    const event = read("apps", "app", "src", "telas", "Evento.tsx")
+    expect(event).toContain("encontro.visitante")
     expect(event).toContain("Encontro de outra cidade")
     const guide = web("app", "(shell)", "guide", "[id]", "page.tsx")
     expect(guide).toContain("const isVisitor = localMembership === null")
