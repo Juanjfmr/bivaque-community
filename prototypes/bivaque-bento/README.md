@@ -1,18 +1,36 @@
-Bivaque · Bento experimental
+# Bivaque · Experimento Bento
 
-Base: HTML R72 original do commit 2e2868de, copiado como blob Git byte-idêntico para reference/Bivaque_Material_Web.original.html. SHA-256 esperado da referência: 29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4.
+## Origem verificada
 
-O projeto React existente apps/prototipo já tem TypeScript, Tailwind 4, shadcn/ui e lucide-react. A pasta apps/prototipo/components/ui é resolvida por @/components/ui. O tema usa os tokens em apps/prototipo/app/globals.css.
+O arquivo `reference/Bivaque_Material_Web.R72.aprovado.html` foi remontado com os blobs do commit `2e2868de98f1` na ordem do manifesto `prototypes/bivaque-html/src/manifest.json`, conforme o procedimento `scripts/bivaque-html/round13-baseline.mjs`.
 
-A rota /experimentos/bento é uma adaptação das composições do Web3Bento para Bivaque: hero, busca, pilha de cartões, filtros, conteúdo, confiança e ações rápidas. O arquivo pedido web3-bento.tsx é mantido como ponto de importação, mas remove o domínio cripto; não é uma cópia literal do componente Web3 original. O HTML copiado é um documento de referência, não é injetado no React.
+SHA-256 verificado: `7e7657c3652ce6daff450d8dfe5d9ce8d8eda8d6189bcd3f2317a2f25fb61d2d`.
 
-Conteúdo demonstrativo; sem consultas ao Supabase ou alteração dos fluxos do produto, homepage e produção. Imagem de casa do Unsplash é ilustrativa.
+Tamanho: 3.459.709 bytes. Esta é a R72 aprovada em 22/10/2026. Não confundir com o arquivo `prototypes/bivaque-html/reference/Bivaque_Material_Web.original.html` (baseline histórica anterior, hash `29a402c4...`).
 
-Na raiz do repositório:
-  npx pnpm@11.18.0 install --frozen-lockfile
-  npx pnpm@11.18.0 --filter @bivaque/prototipo typecheck
-  npx pnpm@11.18.0 --filter @bivaque/prototipo build
-  npx pnpm@11.18.0 --filter @bivaque/prototipo dev
-Abrir http://localhost:3100/experimentos/bento
+## Integração isolada
 
-Testar 320/360/375/430/768/1440 px, claro/escuro, busca combinada, filtros, vazio, alternância de cartões, salvar, teclado, redução de movimento e links. Não afirmar build concluído sem executar.
+- Aplicativo React: `apps/prototipo` (Next.js, React, TypeScript, Tailwind 4, shadcn/ui).
+- Local de UI: `apps/prototipo/components/ui`, alias `@/components/ui`; estilos globais em `apps/prototipo/app/globals.css`.
+- Componente experimental: `apps/prototipo/components/ui/web3-bento.tsx`.
+- Exemplo de uso: `apps/prototipo/app/experimentos/bento/demo.tsx`.
+- Rota: `/experimentos/bento`. A Home `/inicio` não muda.
+- Sem dependências novas. `lucide-react`, shadcn e React já estão presentes.
+- O nome `web3-bento.tsx` foi mantido como o prompt exigiu, mas é uma adaptação para a comunidade Bivaque, não reprodução literal dos módulos financeiros.
+- O HTML R72 é preservado para comparação; o React não injeta a referência no DOM.
+- Conteúdo ilustrativo sem integração Supabase. Imagem de moradia do Unsplash, não anúncio.
+
+## Verificações locais
+
+Na raiz do monorepo:
+
+```sh
+npx pnpm@11.18.0 install --frozen-lockfile
+npx pnpm@11.18.0 --filter @bivaque/prototipo typecheck
+npx pnpm@11.18.0 --filter @bivaque/prototipo build
+npx pnpm@11.18.0 --filter @bivaque/prototipo dev
+```
+
+Abrir `http://localhost:3100/experimentos/bento`. Validar 320, 360, 375, 430, 768 e 1440 px; modos claro/escuro; teclado; busca+filtros; estado vazio; alternância dos cards; salvar; redução de movimento e links. Build, QA visual e publicação ainda não foram executados nesta entrega.
+
+Sem merge, deploy ou mudanças na R72 ou na Home atual.
