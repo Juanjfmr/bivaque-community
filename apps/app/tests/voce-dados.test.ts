@@ -54,6 +54,16 @@ describe("perfil da conta", () => {
     await expect(lerPerfil()).rejects.toBeInstanceOf(FalhaDaApi)
   })
 
+  it.each([
+    [401, "sem-sessao"],
+    [403, "recusado"],
+    [404, "nao-encontrado"],
+    [503, "indisponivel"],
+  ] as const)("preserva o código HTTP %i", async (status, codigo) => {
+    responder({ erro: "erro-da-rota" }, status)
+    await expect(lerPerfil()).rejects.toMatchObject({ codigo, status })
+  })
+
   it("salva pelo PATCH e devolve o estado gravado", async () => {
     const buscar = responder({
       perfil: { nome: "Ana Editada", bio: "Nova apresentação", cidade: "Manaus" },
