@@ -169,8 +169,14 @@ test.describe("event detail: RLS decides, not the page", () => {
     await signInAs(page, LOCALITY_MEMBER_EMAIL)
     const response = await page.goto(`/events/${UPCOMING_EVENT_ID}`)
 
+    // RUN-133/F05: o endereço antigo passa pelo redirect de configuração e
+    // aterra no encontro do app, com o mesmo id. A resposta final é a casca do
+    // SPA (200); quem decide o conteúdo é a RLS, via API.
     expect(response?.status()).toBe(200)
-    await expect(page.getByRole("heading", { name: "Torneio amistoso de futebol" })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`/app/evento/${UPCOMING_EVENT_ID}$`))
+    await expect(page.getByRole("heading", { name: "Torneio amistoso de futebol" })).toBeVisible({
+      timeout: 15000,
+    })
   })
 
   test("authenticated outsider without locality membership gets the not-found page", async ({
@@ -179,11 +185,13 @@ test.describe("event detail: RLS decides, not the page", () => {
     await signInAs(page, OUTSIDER_EMAIL)
     await page.goto(`/events/${UPCOMING_EVENT_ID}`)
 
-    // Same gate as the group case: the middleware sends the person to the
-    // entry (/onboarding/status, redirected on to /app/entrar) before the
-    // event segment resolves. No event content may render for someone who
-    // cannot access it.
-    await expect(page).toHaveURL(/\/app\/entrar/)
+    // A recusa mudou de superfície com a F05, não de dono: o portão do proxy já
+    // não vê este endereço (o redirect roda antes dele), então quem recusa é a
+    // RLS — a API não devolve a linha para quem não é da cidade e o app mostra
+    // a tela de endereço indisponível. Nenhum conteúdo do encontro renderiza.
+    await expect(page).toHaveURL(new RegExp(`/app/evento/${UPCOMING_EVENT_ID}$`))
+    await expect(page.locator('[data-tela="indisponivel"]')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText("Este endereço não existe")).toBeVisible()
     await expect(page.getByRole("heading", { name: "Torneio amistoso de futebol" })).toHaveCount(0)
   })
 })

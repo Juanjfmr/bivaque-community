@@ -17,12 +17,10 @@ vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
 import { createServerClient as createAuthClient } from "@supabase/ssr"
 import { sendCommunityInviteAction } from "web/app/(shell)/communities/community-invite-actions"
-import { sendEventInvitesAction } from "web/app/(shell)/events/event-invites-actions"
 import { createServerClient as createServiceClient } from "web/lib/supabase/server"
 
 const USER = "20000000-0000-4000-8000-000000000001"
 const COMUNIDADE = "40000000-0000-4000-8000-000000000001"
-const EVENTO = "50000000-0000-4000-8000-000000000001"
 const CONVITE = "70000000-0000-4000-8000-000000000001"
 
 type Chamada = { tabela: string; metodo: string; argumentos: unknown[] }
@@ -89,25 +87,6 @@ describe("convites sem endereço de e-mail", () => {
 
     expect(resultado?.inviteId).toBe(CONVITE)
     expect(resultado?.token).toMatch(/^[0-9a-f]{64}$/)
-    expect(serviceClient.from).not.toHaveBeenCalled()
-    expect(chamadas.some((chamada) => chamada.tabela === "outbox")).toBe(false)
-  })
-
-  it("convite de evento grava os convites no app e não enfileira nada", async () => {
-    const { chamadas, serviceClient } = autenticar({ convitesGravados: 2 })
-
-    const formData = new FormData()
-    formData.set("eventId", EVENTO)
-    formData.append("inviteeId", "30000000-0000-4000-8000-000000000001")
-    formData.append("inviteeId", "30000000-0000-4000-8000-000000000002")
-    const resultado = await sendEventInvitesAction(formData)
-
-    expect(resultado).toEqual({ invited: 2 })
-    expect(chamadas).toContainEqual({
-      tabela: "event_invites",
-      metodo: "upsert",
-      argumentos: [],
-    })
     expect(serviceClient.from).not.toHaveBeenCalled()
     expect(chamadas.some((chamada) => chamada.tabela === "outbox")).toBe(false)
   })

@@ -15,7 +15,7 @@ import { expect, test } from "@playwright/test"
 // em /signup saiu da web com a ENTRADA-WEB-ANTIGA; o aceite do app é coberto
 // pelo F01 (tests/e2e/f01-entrada-real.spec.ts).
 
-const PROTECTED_ROUTES = ["/community", "/groups", "/events", "/profile"]
+const PROTECTED_ROUTES = ["/community", "/groups", "/profile"]
 
 test.describe("onboarding: denial paths", () => {
   test("protected routes deny an anonymous visitor and send them to login", async ({ page }) => {
@@ -35,6 +35,20 @@ test.describe("onboarding: denial paths", () => {
     await expect(
       page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
     ).toBeVisible()
+  })
+
+  test("/events leaves the proxy gate and lands on the app agenda with query intact", async ({
+    page,
+  }) => {
+    // RUN-133/F05: /events saiu da lista de rotas que o portão vê — o redirect
+    // de configuração roda antes dele. A recusa continua, agora dentro do app
+    // (sem sessão, a agenda pede entrada de novo); a query chega ao destino.
+    await page.goto("/events?origem=aviso")
+
+    await expect(page).toHaveURL(/\/app\/agenda\?/)
+    expect(page.url()).toContain("origem=aviso")
+    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 
   test("the consent cookie is not a gate: garbage value changes nothing", async ({ page }) => {

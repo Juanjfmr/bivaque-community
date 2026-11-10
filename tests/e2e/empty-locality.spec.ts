@@ -129,31 +129,24 @@ async function signInAs(page: Page, email: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 test.describe("locality below the §3.4 density threshold: honest empty state", () => {
-  test("events renders the honest empty state with an action path", async ({ page }) => {
+  test("events redirects to the app agenda with the honest empty state", async ({ page }) => {
     // Given a member whose locality has fewer than 30 members
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
 
-    // When they open the events page
+    // When they open the old events route
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
-    // Then the events heading is visible.
-    //
-    // Ancorado no h1 pelo nome exato: a RECON-007 acrescentou a secao "Seus
-    // eventos", e getByRole casa por substring, entao { name: "Eventos" } passou
-    // a resolver DOIS titulos e a estourar o strict mode. O nivel 1 e o titulo
-    // da tela; o h2 e secao dentro dela.
-    await expect(page.getByRole("heading", { level: 1, name: "Explorar eventos" })).toBeVisible({
+    // Then the LAN-TROCA redirect takes them to the app agenda
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+
+    // And the app agenda renders its own honest empty state
+    await expect(page.getByRole("heading", { level: 1, name: "Agenda da cidade" })).toBeVisible({
       timeout: 15000,
     })
+    await expect(page.getByText("Nenhum encontro agendado")).toBeVisible()
 
-    // And the honest empty state is rendered
-    await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible()
-
-    // And the standard "Nenhum evento ainda" copy is not rendered
-    await expect(page.getByText("Nenhum evento ainda")).toHaveCount(0)
-
-    // And the action path (Criar evento) is rendered
-    await expect(page.getByRole("button", { name: "Criar evento" }).first()).toBeVisible()
+    // And the action path (Criar encontro) is rendered
+    await expect(page.getByRole("button", { name: "Criar encontro" }).first()).toBeVisible()
   })
 
   test("guide renders the honest empty state without a fake action", async ({ page }) => {

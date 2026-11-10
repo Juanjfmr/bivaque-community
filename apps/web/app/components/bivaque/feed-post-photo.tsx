@@ -58,7 +58,7 @@ export function PhotoField({
         if (!blob) throw new Error("não foi possível converter a imagem")
         const formData = new FormData()
         formData.append("photo", blob, file.name)
-        const { uploadPostPhotoAction } = await import("../../(shell)/events/upload-photo-action")
+        const { uploadPostPhotoAction } = await import("./post-photo-action")
         const result = await uploadPostPhotoAction(formData)
         if ("error" in result) {
           onError(result.error)

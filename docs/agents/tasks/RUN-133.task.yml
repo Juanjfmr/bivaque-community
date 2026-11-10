@@ -1,0 +1,84 @@
+# RUN-133 (10/11/2026): fecha o critério 6 do LAN-F05 — a tela antiga de eventos sai da web.
+# Autoridade: docs/LANCAMENTO.md critério 6; card LAN-F05; RUN-019 (LAN-TROCA fase 1).
+task_id: RUN-133
+
+objective: >
+  Nenhuma rota de membro do apps/web serve a tela antiga de eventos. /events, /events/novo,
+  /events/:id, /events/:id/editar e /events/:id/perguntas respondem 307 para /app/agenda ou
+  /app/evento/:id preservando id e query; as 18 páginas e ações antigas são removidas; o teste de
+  troca (TROCADAS) e os specs que visitavam /events passam a provar o redirecionamento em vez de
+  manter a tela viva. A action de foto do post sai para apps/web/app/components/bivaque e os dois
+  specs de localidade passam a provar o 307 para /app/agenda.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6, retirada da tela antiga)
+  - tools/backend-kanban card LAN-F05
+  - docs/agents/tasks/RUN-019.task.yml (LAN-TROCA fase 1)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/events/ tem 18 arquivos (page.tsx, novo/page.tsx, [id]/page.tsx,
+    [id]/editar/page.tsx, [id]/perguntas/page.tsx, event-actions.ts, event-form.tsx,
+    event-invite-fanout-section.tsx, event-invites-actions.ts, event-invites-section.tsx,
+    error/loading/not-found, upload-photo-action.ts, presence-controls.tsx); apps/web/next.config.ts:61-113
+    não tem regra de /events; tests/unit/infra/lan-troca-redirect.test.ts:14-27 não lista /events e
+    :88-101 afirma que página fora de TROCADAS continua na web. Specs que visitam /events:
+    tests/e2e/event-invites.spec.ts:80,89; event-rsvp.spec.ts:75; group-event-detail-denials.spec.ts:170,180;
+    link-crawl.spec.ts:181,186,191-200; locale-copy-diacritics.spec.ts:130-133;
+    manaus-pilot-denials.spec.ts:34,239; manaus-pilot-full-journey.spec.ts:257,273,282;
+    onboarding-denials.spec.ts:18.
+
+allowed_paths:
+  - apps/web/app/(shell)/events
+  - apps/web/app/components/bivaque/post-photo-action.ts
+  - apps/web/app/components/bivaque/feed-post-photo.tsx
+  - apps/web/next.config.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/security/photo-upload-action.test.ts
+  - tests/unit/outbox/convites-sem-endereco.test.ts
+  - tests/e2e/event-invites.spec.ts
+  - tests/e2e/event-rsvp.spec.ts
+  - tests/e2e/group-event-detail-denials.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/locale-copy-diacritics.spec.ts
+  - tests/e2e/manaus-pilot-denials.spec.ts
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/onboarding-denials.spec.ts
+  - tests/e2e/empty-locality.spec.ts
+  - tests/e2e/two-localities.spec.ts
+  - tests/e2e/events-redirects.spec.ts
+  - docs/agents/tasks/RUN-133.task.yml
+  - .visual/run-133
+
+forbidden:
+  - editar apps/app, apps/web/proxy.ts, supabase, migrations ou o servidor de eventos (API)
+  - criar tela nova ou mudar a navegação do app
+  - apagar spec sem substituir a cobertura por asserção de 307 (a jornada não pode sumir da prova)
+  - push, merge ou force-push; ler/criar/editar .env
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "/events responde 307 para /app/agenda; /events/novo para /app/agenda; /events/:id para /app/evento/:id; /events/:id/editar e /events/:id/perguntas para /app/evento/:id, com id e query preservados."
+  - "Não existe page.tsx nem action sob apps/web/app/(shell)/events; a remoção é completa, não um 404 sobre código vivo."
+  - "tests/unit/infra/lan-troca-redirect.test.ts inclui as cinco trocas, prova 307, destino existente no catálogo do app e ausência de segundo salto, e segue verde."
+  - "Os specs que visitavam /events passam a exigir o 307 ou deixam de visitar a rota com justificativa no diff; nenhuma cobertura de jornada é simplesmente apagada."
+  - "A action de foto do post sai de (shell)/events para components/bivaque com os dois imports e o teste de segurança atualizados; o teste de convites sem endereço mantém o caso de comunidade; empty-locality e two-localities provam o 307 para /app/agenda."
+  - "tests/e2e/events-redirects.spec.ts prova no navegador (375/768/1440) que /events, /events/:id e /events/novo redirecionam para os destinos do app."
+  - "Passam: gate --fast, test:scope, vitest do teste de troca, tsc -p tests/e2e; o E2E de navegador roda no CI (sem Supabase local)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/lan-troca-redirect.test.ts --maxWorkers=1
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+
+risk: retirada de tela antiga e redirecionamento
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,21 +1,16 @@
 // Onda F Task 3 — organizer event invitation fan-out.
 //
-// Committed without running per README "E2E precisa do dono". The original
-// event id (60000000-...-0010) is out of range for both the seed's groups
-// (60000000-...-0001 through 0008) and its 10 events (70000000-...) —
-// realigned against a real seed.sql event, signed in as its actual
-// organizer (the default seedSession() account organizes nothing in the
-// seed) — found running the E2E realignment.
+// RUN-133/F05: a tela antiga de eventos saiu inteira de apps/web e os endereços
+// antigos passam a chegar às telas do app (`/events/:id` → `/app/evento/:id`).
+// O fan-out de convites existia SÓ nessa tela; o app não tem equivalente
+// (`apps/app/src/eventos/` não tem seção de convites e não há `event_invites`
+// no SPA). A jornada não some da prova: ela vira a prova de que o endereço
+// antigo chega ao encontro novo e de que a antiga seção de convites — com a
+// busca de pessoas que a D43 proibia — não existe mais em lugar nenhum.
 //
-// Realigned once more: the invite fan-out section (apps/web/(shell)/events/
-// [id]/page.tsx) only renders when the event is not cancelled AND not
-// completed; the seed marks events 1..4 as `completed` and 5..10 as
-// `upcoming`. Event 1 with organizer membro-2 was unusable from this
-// surface; event 5 ("Piquenique das famílias", organized by membro-6 per
-// the cycle `30000000-...-(1 + (i % 12))`) is upcoming and exercises the
-// invite section. event-rsvp keeps the previous event id because the
-// three-state RSVP UI does NOT gate on `isCompleted` — it only gates on
-// `isCancelled`.
+// Comentário histórico mantido: o id original (60000000-...-0010) estava fora
+// do range do seed; o evento 5 ("Piquenique das famílias") é `upcoming` e é
+// organizado por membro-6.
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
@@ -70,32 +65,39 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("event invitation fan-out", () => {
-  test("the organizer sees the invite section with eligible members", async ({ page }) => {
+test.describe("event invitation fan-out: endereço antigo chega ao encontro novo", () => {
+  test("o organizador abre /events/:id e aterra no encontro do app", async ({ page }) => {
     // Given a session of the event's real organizer
     await signInAs(page, ORGANIZER_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    // When they open an event they organize
+    // When they open the old address of an event they organize
     await page.goto(`/events/${EVENT_ID}`)
 
-    // Then the invite fan-out section is visible
-    await expect(page.getByRole("heading", { name: /Convidar para este evento/ })).toBeVisible()
+    // Then the config redirect hands them to the app's event screen, with the id
+    await expect(page).toHaveURL(new RegExp(`/app/evento/${EVENT_ID}$`))
+    await expect(page.getByRole("heading", { name: "Piquenique das famílias" })).toBeVisible({
+      timeout: 15000,
+    })
+
+    // And the old invite fan-out section is gone with the old screen
+    await expect(page.getByRole("heading", { name: /Convidar para este evento/ })).toHaveCount(0)
   })
 
-  test("the invite section does NOT expose a people search field", async ({ page }) => {
+  test("a busca de pessoas da D43 não reapareceu no encontro do app", async ({ page }) => {
     // Given a session of the event's real organizer
     await signInAs(page, ORGANIZER_EMAIL)
     await page.goto(`/events/${EVENT_ID}`)
+    await expect(page).toHaveURL(new RegExp(`/app/evento/${EVENT_ID}$`))
 
-    // Then there is no people-search box in the invite SECTION (D43 forbids
-    // people search in the pilot). Escopado à seção de propósito: o cabeçalho
-    // tem um campo de busca GLOBAL de conteúdo (RECON-021), e contá-lo fazia o
-    // teste medir o elemento errado — a asserção dizia "sem busca de pessoas" e
-    // media "sem nenhum input de busca na página inteira".
-    const inviteSection = page
+    // Then no people-search box exists inside the presence block either. A D43
+    // proibia busca de pessoas na seção de convites; a seção saiu, então a
+    // asserção muda de superfície sem perder a propriedade: o encontro do app
+    // não oferece campo de busca de pessoas.
+    const presenca = page
       .locator("section")
-      .filter({ has: page.getByRole("heading", { name: /Convidar para este evento/ }) })
-    await expect(inviteSection.locator('input[type="search"]')).toHaveCount(0)
+      .filter({ has: page.getByRole("heading", { name: "Presença" }) })
+    await expect(presenca).toBeVisible({ timeout: 15000 })
+    await expect(presenca.locator('input[type="search"]')).toHaveCount(0)
   })
 })
