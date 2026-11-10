@@ -287,11 +287,11 @@ export function Web3Bento({ city = "Sua guarnição", items = DEMO, className = 
 
         <section className={tile + " sm:col-span-2"}>
           <SectionHeading>Seu próximo caminho</SectionHeading>
-          {[
+          {([
             [Compass, "Guia de cidade", "Entenda melhor a nova guarnição.", "/inicio"],
             [Store, "Negócios", "Serviços e oportunidades locais.", "/minhas"],
             [MessageCircle, "Grupos", "Converse sobre assuntos em comum.", "/comunidade"],
-          ].map(([Icon, name, detail, href]) => (
+          ] as Array<[typeof Compass, string, string, string]>).map(([Icon, name, detail, href]) => (
             <a key={String(name)} href={String(href)} className="flex min-h-[75px] items-center gap-3 rounded-xl px-2 hover:bg-(--surface-low)">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container) text-(--on-secondary-container)">
                 <Icon aria-hidden="true" className="size-5" />
