@@ -6,7 +6,8 @@
 --   * bairros conhecidos de duas capitais têm centro dentro da caixa esperada;
 --   * os 43 bairros do protótipo permanecem, inclusive com zona e centro
 --     originais onde a malha nacional tem homônimo (do nothing, não sobrescreve);
---   * reaplicar a carga não duplica;
+--   * o conflito por (locality_id, name_key) não duplica (a reaplicação
+--     integral da carga roda no passo de CI, no container do banco);
 --   * município ausente de `localities` vira zero linhas, nunca erro.
 
 begin;
@@ -125,18 +126,28 @@ select is(
 );
 
 -- ───────────────────────────────────────────────────────────────────────────
--- Reaplicar a carga não duplica
+-- O conflito por (locality_id, name_key) não duplica
+--
+-- A reaplicação integral do arquivo da carga roda no passo «Reapply the IBGE
+-- neighborhoods load» do pull-request-ci.yml: o cliente do pg_prove enxerga
+-- apenas supabase/tests, então um include de ../migrations falha dentro do
+-- container. Aqui fica a prova do mecanismo que sustenta a idempotência.
 -- ───────────────────────────────────────────────────────────────────────────
 
 create temp table _antes_da_reaplicacao as
   select count(*)::integer as c from public.neighborhoods;
 
-\ir ../migrations/20261107140757_ibge_bairros_censo_2022.sql
+insert into public.neighborhoods (locality_id, name, center_lat, center_lng)
+select locality_id, name, center_lat, center_lng
+from public.neighborhoods
+order by id
+limit 1
+on conflict (locality_id, name_key) do nothing;
 
 select is(
   (select count(*)::integer from public.neighborhoods),
   (select c from _antes_da_reaplicacao),
-  'reaplicar a carga não duplica bairro nenhum'
+  'o mesmo par (locality_id, name_key) não duplica bairro'
 );
 
 -- ───────────────────────────────────────────────────────────────────────────

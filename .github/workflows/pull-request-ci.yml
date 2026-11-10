@@ -142,6 +142,21 @@ jobs:
       - name: Reset local database (no seed)
         run: pnpm exec supabase db reset --local --no-seed
 
+      # O cliente do pg_prove só enxerga supabase/tests, então um include de
+      # ../migrations não resolve dentro do container. A reaplicação integral da
+      # carga nacional (prova de idempotência) roda aqui, no container do banco:
+      # a segunda aplicação não pode mudar a contagem.
+      - name: Reapply the IBGE neighborhoods load
+        run: |
+          set -euo pipefail
+          db=$(docker ps --filter "name=supabase_db_" --format "{{.Names}}" | head -n1)
+          test -n "$db"
+          before=$(docker exec -u postgres "$db" psql -U postgres -d postgres -tAc "select count(*) from public.neighborhoods")
+          docker exec -i -u postgres "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q < supabase/migrations/20261107140757_ibge_bairros_censo_2022.sql
+          after=$(docker exec -u postgres "$db" psql -U postgres -d postgres -tAc "select count(*) from public.neighborhoods")
+          echo "bairros antes=$before depois=$after"
+          test "$before" = "$after"
+
       - name: Database tests
         run: pnpm test:db
 
