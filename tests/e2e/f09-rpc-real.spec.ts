@@ -23,7 +23,10 @@ function exigirAmbienteLocal() {
 }
 
 async function enviarPelaTela(page: Page, conversa: string, texto: string) {
-  await expect(page.locator(HISTORICO)).toBeVisible({ timeout: 30_000 })
+  // Um pedido recém-criado pode não ter mensagem ainda (o pedido não é uma
+  // mensagem): o compositor aparece junto do estado vazio e a primeira fala
+  // cria o histórico. Por isso a espera é pelo compositor, não pelo histórico.
+  await expect(page.locator('[data-compositor-conversa="sim"]')).toBeVisible({ timeout: 30_000 })
   await page.getByLabel("Mensagem", { exact: true }).fill(texto)
   const espera = page.waitForResponse(
     (resposta) =>
