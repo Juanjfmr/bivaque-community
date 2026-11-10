@@ -101,8 +101,8 @@ test("a landing pinta a barra do navegador com o par claro e escuro", () => {
   const page = read("apps", "web", "app", "page.tsx")
   const themeColor = page.match(/themeColor:\s*\[[\s\S]*?\n\s*\]/)?.[0] ?? ""
 
-  assert.match(themeColor, /media: "\(prefers-color-scheme: light\)",\s*color: "#F2F0EB"/)
-  assert.match(themeColor, /media: "\(prefers-color-scheme: dark\)",\s*color: "#171E20"/)
+  assert.match(themeColor, /media: "\(prefers-color-scheme: light\)",\s*color: "#F3F5F6"/)
+  assert.match(themeColor, /media: "\(prefers-color-scheme: dark\)",\s*color: "#101417"/)
   assert.ok(
     themeColor.indexOf("prefers-color-scheme: light") <
       themeColor.indexOf("prefers-color-scheme: dark"),
