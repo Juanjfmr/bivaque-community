@@ -101,7 +101,10 @@ grant update (
   consent_version,
   consented_at,
   bio,
-  show_neighborhood
+  show_neighborhood,
+  -- `neighborhood` continua gravável pelo dono e por ninguém mais: a policy
+  -- filtra a linha; o SELECT acima é que esconde a coluna de terceiros.
+  neighborhood
 ) on public.profiles to authenticated;
 
 -- ---------------------------------------------------------------------------
