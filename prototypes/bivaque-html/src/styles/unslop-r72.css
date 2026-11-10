@@ -1,0 +1,136 @@
+/*
+ * Bivaque R72 — polimento de interface (A01–A10, M03–M06).
+ * Diretrizes: "Unslop" de Damir Sokolovsky, CC BY 4.0
+ * https://github.com/heydamir/unslop
+ * Nao substitui paleta, tipografia, icones ou a composicao aprovada.
+ * Selecao de escopo: esta folha vem por ultimo no manifesto e pode ser revertida isoladamente.
+ */
+
+/* Clarifica o preco mensal dos imoveis, sem duplicar o total no subtitulo. */
+.price-listing,
+.detail-title .price { font-variant-numeric: tabular-nums; }
+.price-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--md-sys-color-on-surface-variant);
+  font: 600 12px/18px var(--md-ref-typeface-plain);
+  letter-spacing: normal;
+}
+.price-breakdown {
+  margin: -2px 0 2px;
+  color: var(--md-sys-color-on-surface-variant);
+  font: 400 13px/19px var(--md-ref-typeface-plain);
+  font-variant-numeric: tabular-nums;
+}
+.detail-title .price-kicker { margin-bottom: 4px; font-size: 13px; line-height: 20px; }
+.card-body > .price-breakdown + h3 { margin-top: 4px; }
+
+/* A comunidade e as abas sao coisas diferentes: informacao calma, filtros separados. */
+.community-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  padding: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: 400 13px/20px var(--md-ref-typeface-plain);
+}
+.community-summary b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.community-summary span { color: var(--md-sys-color-on-surface-variant); }
+.community-sort-note { margin: 0 0 8px; font-size: 13px; }
+.filter-row[data-seg="question-filter"] {
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+.filter-row[data-seg="question-filter"] md-filter-chip {
+  --md-filter-chip-container-shape: 10px;
+}
+.list-row[data-action="open-question"] .txt small {
+  font-size: 13px;
+  line-height: 19px;
+}
+.list-row[data-action="open-question"] .txt > span:last-child .pill {
+  font-variant-numeric: tabular-nums;
+}
+
+/* O objeto, o bairro e o custo levam a hierarquia, nao os contornos. */
+.fpill {
+  min-height: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+.fpills {
+  scroll-padding-inline: 16px;
+  overscroll-behavior-x: contain;
+}
+.fsort { min-height: 44px; }
+.fbar { font-variant-numeric: tabular-nums; }
+.card-body .card-meta { line-height: 19px; }
+.card-body .card-line { line-height: 19px; }
+
+/* A busca diferencia mercados de servicos sem inventar relevancia por pontuacao. */
+.search-tile[data-value="imovel"],
+.search-tile[data-value="desapego"] {
+  background: var(--md-sys-color-surface-container-low);
+  border-color: var(--md-sys-color-outline-variant);
+}
+.search-tile small {
+  font-size: 13px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.search-sec .section-title { margin-bottom: 8px; }
+
+@media (max-width: 1023px) {
+  /* A primeira dobra mantem busca, quatro atalhos e convite a contratar,
+     mas devolve espaco ao conteudo — sem apertar os alvos interativos. */
+  .home-mob .page-head { margin-bottom: 8px; }
+  .home-mob .home-top .intent-grid { margin-top: 8px; gap: 8px; }
+  .home-mob .intent { min-height: 72px; gap: 4px; padding: 4px 2px 8px; font-size: 12px; line-height: 18px; }
+  .home-mob .intent md-icon { width: 44px; height: 40px; font-size: 22px; border-radius: 12px; }
+  /* A categoria Desapegos nao e outra acao primaria Brasa. */
+  .home-mob .intent:nth-child(2) md-icon {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+  .home-mob .home-alerts { margin-top: 8px; }
+  .home-mob .home-hire {
+    padding: 8px 12px;
+    gap: 12px;
+    border: 0;
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 12px;
+  }
+  .home-mob .home-hire small { font-size: 13px; line-height: 18px; }
+  .home-mob .section { margin-top: 20px; }
+  .home-mob .section-title { margin-bottom: 4px; }
+  .home-mob .home-sub { margin: 0 0 8px; }
+  .home-mob .home-row { gap: 12px; }
+  .home-mob .home-row .card-body { padding: 12px; gap: 4px; }
+  .home-mob .home-row .card-meta { font-size: 13px; line-height: 19px; }
+  .home-mob .home-biz .card-line { font-size: 12px; line-height: 18px; }
+  .home-mob .home-row .photo-card:not(.home-biz) .card-line { font-size: 12px; line-height: 18px; }
+  .home-mob .home-row .price-kicker,
+  .home-mob .home-row .price-breakdown { display: none; }
+  .home-mob .home-card:not(.home-arrival) { margin-top: 20px; }
+  .home-mob .home-card .list-row { padding-block: 12px; }
+}
+@media (max-width: 719px) {
+  .search-tile { gap: 8px; padding: 10px 12px; }
+  .search-tile b { font-size: 14px; line-height: 20px; }
+  .fpills { margin-top: 8px; margin-bottom: 8px; }
+  /* A borda cortada do proximo filtro continua visivel como pista de rolagem. */
+  .fpills .fpill { flex-shrink: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-mob .home-hire,
+  .search-tile { transition: none; }
+}
+@media (forced-colors: active) {
+  .home-mob .home-hire,
+  .search-tile[data-value="imovel"],
+  .search-tile[data-value="desapego"] { border: 1px solid CanvasText; }
+  .community-summary { color: CanvasText; }
+}
