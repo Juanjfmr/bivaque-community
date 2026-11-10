@@ -67,6 +67,7 @@ allowed_paths:
   - tests/unit/onboarding/proxy-portao-do-app.test.ts
   - tests/unit/onboarding/onboarding-proxy-allowlist.test.ts
   - tests/scope/entrada-public-paths.test.mjs
+  - tests/scope/app-foundation.test.mjs
   - tests/e2e/middleware-session-gate.spec.ts
   - docs/decisions/ADR-20261110-superficie-publica-do-proxy.md
   - docs/PRODUCAO-PASSO-A-PASSO.md
