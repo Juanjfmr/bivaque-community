@@ -87,8 +87,10 @@ O job `bivaque-resumo-cidade` roda a cada dez minutos e usa `resumo-worker-endpo
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | e-mail de suporte que aparece na Ajuda |
 | `SENTRY_DSN` | opcional (erros em produção) |
 | `RLS_PROBE_EMAIL` e `RLS_PROBE_PASSWORD` | opcional (conta de teste do probe de RLS do operador) |
+| `BIVAQUE_AUTH_BYPASS` | **não definir em produção**: só vale em `development`. Em `test`, `production` ou `NODE_ENV` ausente, o proxy responde 503 com log e não libera a rota (ADR-20261110-superficie-publica-do-proxy) |
 
-**Nunca** defina `BIVAQUE_AUTH_BYPASS` em produção.
+**Nunca** defina `BIVAQUE_AUTH_BYPASS` em produção: fora de `development` o proxy
+responde 503 com log, em vez de liberar a rota.
 
 4. Settings → Domains: aponte o domínio.
 5. Faça o push na `producao` (ou Redeploy). **Pronto quando:** `https://SEU-DOMINIO/api/health` responde
