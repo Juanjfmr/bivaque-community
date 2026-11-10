@@ -112,8 +112,8 @@
   .home-mob .home-row .card-meta { font-size: 13px; line-height: 19px; }
   .home-mob .home-biz .card-line { font-size: 12px; line-height: 18px; }
   .home-mob .home-row .photo-card:not(.home-biz) .card-line { font-size: 12px; line-height: 18px; }
-  .home-mob .home-row .price-kicker,
   .home-mob .home-row .price-breakdown { display: none; }
+  .home-mob .home-row .cover .pill { font-size: 12px; line-height: 18px; }
   .home-mob .home-card:not(.home-arrival) { margin-top: 20px; }
   .home-mob .home-card .list-row { padding-block: 12px; }
 }
