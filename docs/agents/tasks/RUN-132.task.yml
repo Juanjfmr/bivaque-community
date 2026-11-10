@@ -1,0 +1,73 @@
+# RUN-132 (10/11/2026): a prova do lançamento passa a ser publicada e medida, não só produzida.
+# Autoridade: docs/LANCAMENTO.md critérios 3 e 5; card LAN-PROVA; relatório do auditor de CI (10/11).
+task_id: RUN-132
+
+objective: >
+  O portão de prova do lançamento deixa de perder evidência: o PR CI publica .visual/ como artefato;
+  a acessibilidade das cinco superfícies principais (Início, Mercado, Negócios, Guia, Conversas) é medida
+  com axe nas três larguras e nos dois temas, falhando em serious/critical, incluindo contraste AA,
+  teclado, foco e movimento reduzido; a paginação "Ver mais" é exercitada em Guia e Negócios (Início
+  não tem o botão hoje; a lacuna fica registrada no spec e no relatório); e o
+  PR CI roda o typecheck dos specs e2e. O F05 deixa de depender de inspeção manual para os critérios 3 e 5.
+
+authority:
+  - docs/LANCAMENTO.md (critérios 3 e 5 por jornada; LAN-PROVA)
+  - tools/backend-kanban card LAN-PROVA
+  - docs/agents/AGENT_ARCHITECTURE.md (prova de runtime separada)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    .github/workflows/pull-request-ci.yml:171-181 sobe artefatos sem .visual/ (a captura é produzida por
+    F03/F05/F07/F08 e descartada); apps/app/tests/e2e/acessibilidade.spec.ts:1-176 não usa axe nem mede
+    contraste de conteúdo; apps/app/tests/e2e/paginacao-concorrente.spec.ts cobre só o cursor do F05, sem
+    "Ver mais" em Início/Guia/Negócios; scripts/gate.mjs:36-38 tem typecheck:e2e, mas o PR CI não o roda
+    (o stage só existe no gate completo, que roda apenas no deploy de producao, deploy-migrations.yml:37-38).
+
+allowed_paths:
+  - .github/workflows/pull-request-ci.yml
+  - apps/app/tests/e2e/acessibilidade.spec.ts
+  - apps/app/tests/e2e/paginacao.spec.ts
+  - apps/app/tests/e2e/apoio.ts
+  - apps/app/src/pecas
+  - apps/app/src/telas/Evento.tsx
+  - apps/app/package.json
+  - package.json
+  - pnpm-lock.yaml
+  - docs/agents/tasks/RUN-132.task.yml
+  - .visual/run-132
+
+forbidden:
+  - criar rota, tela ou peça nova; redesenhar navegação ou mudar o desenho aprovado
+  - editar apps/web, supabase, playwright.config.ts ou apps/app/src/fora-das-pecas (exceto Evento.tsx listado)
+  - usar test.fixme/test.skip para serious/critical, baixar o limiar de contraste ou apagar checagem existente
+  - Material Web ou HeroUI no app; qualquer mudança que só exista no preview (src/previa-*)
+  - push, merge ou force-push; pedir revisão a outro modelo; ler/criar/editar .env
+  - editar migration aplicada; tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "O job de PR sobe .visual/** com if: always() e nome visual-evidence, inclusive quando o teste falha; o workflow continua verde no caminho feliz."
+  - "Um spec de axe percorre /app/inicio, /app/mercado, /app/negocios, /app/guia e /app/conversas em claro e escuro, nas larguras 375, 768 e 1440, com wcag2a/wcag2aa/wcag21aa, e falha quando há violação serious ou critical; nenhuma violação séria fica em fixme."
+  - "A dependência de teste @axe-core/playwright fica no package.json da raiz, ao lado de @playwright/test, e é resolvida pelo workspace; a SPA não ganha dependência de execução nova e o scope test de dependências fixas da SPA continua verde."
+  - "O mesmo spec cobre teclado e foco: Tab alcança a ação primária, Enter ativa, Esc fecha sobreposição e o foco volta; 'Não vou' é clicado; prefers-reduced-motion é emulado e a animação de folha não roda; o contraste de texto e do tom contornado é >= 4,5 (ou 3,0 em texto grande) nos dois temas."
+  - "Um spec de paginação clica 'Ver mais' em Guia e Negócios (Início não tem o botão hoje e a lacuna fica registrada no cabeçalho do spec), exige a segunda página sem id duplicado e sem perder foco/rolagem; se o dado demo não tiver página 2, o spec ajusta só o dado de teste, nunca o seed canônico."
+  - "O PR CI roda `pnpm exec tsc -p tests/e2e/tsconfig.json` como passo próprio e falha quando um spec novo quebra o tipo."
+  - "As provas locais passam: gate --fast, test:scope, vitest do app, build do app e os specs novos/alvo no Playwright."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- acessibilidade.spec.ts paginacao.spec.ts
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+
+risk: acessibilidade e prova de lançamento
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

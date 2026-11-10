@@ -180,3 +180,160 @@ export async function voltarNoNavegador(page: Page, caminho: string): Promise<vo
   await page.goBack()
   await esperarCaminho(page, caminho)
 }
+
+/**
+ * A rota de progresso responde sem sessão. A casca então não busca avisos e as
+ * telas reais abrem no estado de quem ainda não entrou — o mesmo estado que a
+ * produção usa para a visita.
+ */
+export async function simularProgresso(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/entry\/progress(?:\?|$)/, async (rota) => {
+    await rota.fulfill({ json: { autenticado: false } })
+  })
+}
+
+const CATEGORIAS_DE_NEGOCIO = [
+  { id: "saude_e_bem_estar", nome: "Saúde e bem-estar" },
+  { id: "casa_e_construcao", nome: "Casa e construção" },
+]
+
+/** A primeira página dos negócios, com cursor para a segunda. */
+export const NEGOCIOS_DA_PROVA = {
+  cidade: "Manaus",
+  categorias: CATEGORIAS_DE_NEGOCIO,
+  negocios: [
+    {
+      id: "negocio-bem-viver",
+      nome: "Clínica Bem Viver",
+      categoria: "saude_e_bem_estar",
+      categoriaNome: "Saúde e bem-estar",
+      descricao: "Fisioterapia e pilates no Centro.",
+    },
+    {
+      id: "negocio-casa-nova",
+      nome: "Casa Nova Reformas",
+      categoria: "casa_e_construcao",
+      categoriaNome: "Casa e construção",
+      descricao: "Pintura e pequenos reparos.",
+    },
+  ],
+  proximo: "negocios-pagina-2",
+}
+
+/** A segunda página: um negócio novo, sem cursor seguinte. */
+export const NEGOCIOS_PAGINA_2 = {
+  cidade: "Manaus",
+  categorias: CATEGORIAS_DE_NEGOCIO,
+  negocios: [
+    {
+      id: "negocio-rio-negro",
+      nome: "Rio Negro Instalações",
+      categoria: "casa_e_construcao",
+      categoriaNome: "Casa e construção",
+      descricao: "Instalação de ar-condicionado.",
+    },
+  ],
+  proximo: null,
+}
+
+/** Duas páginas de negócios: sem `depois`, a primeira; com ele, a segunda. */
+export async function simularNegocios(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/negocios(?:\?|$)/, async (rota) => {
+    const depois = new URL(rota.request().url()).searchParams.get("depois")
+    await rota.fulfill({ json: depois === null ? NEGOCIOS_DA_PROVA : NEGOCIOS_PAGINA_2 })
+  })
+}
+
+/** A primeira página do guia, com cursor para a segunda. */
+export const GUIA_DA_PROVA = {
+  cidade: "Manaus",
+  entradas: [
+    {
+      id: "guia-escola-rio-negro",
+      categoria: "school",
+      nome: "Escola Municipal Rio Negro",
+      descricao: "Ensino fundamental no Centro.",
+      site: null,
+      telefone: null,
+      salvo: false,
+    },
+    {
+      id: "guia-hospital-getulio",
+      categoria: "hospital",
+      nome: "Hospital Universitário Getúlio Vargas",
+      descricao: "Atendimento pelo SUS.",
+      site: null,
+      telefone: null,
+      salvo: false,
+    },
+  ],
+  proximo: "guia-pagina-2",
+}
+
+/** A segunda página do guia: uma referência nova, sem cursor seguinte. */
+export const GUIA_PAGINA_2 = {
+  cidade: "Manaus",
+  entradas: [
+    {
+      id: "guia-transporte-rio-negro",
+      categoria: "transporter",
+      nome: "Transporte Rio Negro",
+      descricao: "Translado para consultas e exames.",
+      site: null,
+      telefone: null,
+      salvo: false,
+    },
+  ],
+  proximo: null,
+}
+
+/** Duas páginas do guia: sem `depois`, a primeira; com ele, a segunda. */
+export async function simularGuia(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/guia(?:\?|$)/, async (rota) => {
+    const depois = new URL(rota.request().url()).searchParams.get("depois")
+    await rota.fulfill({ json: depois === null ? GUIA_DA_PROVA : GUIA_PAGINA_2 })
+  })
+}
+
+/** Um encontro de outra pessoa na cidade de quem olha: presença disponível. */
+export const EVENTO_DA_PROVA = {
+  evento: {
+    id: "evento-da-prova",
+    titulo: "Encontro de veteranos no Parque",
+    descricao: "Uma manhã de conversa e café no Parque Municipal.",
+    local: "Parque Municipal",
+    comecaEm: "2026-12-12T15:00:00.000Z",
+    terminaEm: null,
+    situacao: "upcoming",
+    cidade: "Manaus",
+  },
+  presenca: { confirmados: 3, minha: null },
+  souOrganizador: false,
+  visitante: false,
+}
+
+/** O encontro da prova e a gravação de presença (PUT e DELETE). */
+export async function simularEvento(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/eventos\/evento-da-prova\/presenca(?:\?|$)/, async (rota) => {
+    if (rota.request().method() === "DELETE") {
+      await rota.fulfill({ json: { presenca: { confirmados: 2, minha: null } } })
+      return
+    }
+    const corpo = rota.request().postDataJSON() as { situacao?: string } | null
+    const situacao = corpo?.situacao ?? null
+    await rota.fulfill({
+      json: {
+        presenca: {
+          confirmados: situacao === "going" ? 4 : 3,
+          minha:
+            situacao === "going" || situacao === "not_going" || situacao === "interested"
+              ? situacao
+              : null,
+        },
+      },
+    })
+  })
+  await page.route(/\/api\/app\/eventos\/evento-da-prova(?:\?|$)/, async (rota) => {
+    await rota.fulfill({ json: EVENTO_DA_PROVA })
+  })
+}

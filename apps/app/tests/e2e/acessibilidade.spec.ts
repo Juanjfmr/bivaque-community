@@ -1,21 +1,358 @@
-import type { Locator } from "@playwright/test"
+import AxeBuilder from "@axe-core/playwright"
+import type { Locator, Page } from "@playwright/test"
+import { expect, test } from "@playwright/test"
+import type { AxeResults } from "axe-core"
 import {
   abrir,
   abrirGaleria,
-  expect,
+  EVENTO_DA_PROVA,
   SELETOR_AVISOS,
   SELETOR_BARRA,
   SELETOR_CONVERSAS,
   SELETOR_CRIAR,
+  SELETOR_MENU_CRIAR,
   SELETOR_NAVEGACAO,
-  test,
+  simularEvento,
+  simularGuia,
+  simularNegocios,
+  simularProgresso,
+  test as testDaProva,
 } from "./apoio"
+import { simularConversas } from "./conversas-ajuda"
+import { simularInicio } from "./inicio-ajuda"
+import { aplicarStubMercado } from "./stub-mercado"
 
 /**
- * Acessibilidade da casca (§5.9): alvos de 44 px, teclado, nome acessível sem o
- * texto do ícone, foco contido no diálogo e devolvido ao acionador, e nada de
- * rolagem horizontal em 375, 768 ou 1440.
+ * Acessibilidade das superfícies reais e da casca (§5.9).
+ *
+ * A matriz de axe roda nas cinco superfícies do lançamento, em 375, 768 e 1440,
+ * nos dois temas, pelas tags WCAG A/AA e 2.1 AA, e falha em impacto sério ou
+ * crítico — contraste AA entra por aí, sem limiar afrouxado. Teclado, foco,
+ * movimento reduzido e o botão «Não vou» do encontro são medidos no navegador,
+ * não deduzidos do código.
+ *
+ * As checagens antigas da casca continuam aqui e seguem no modo de prova: elas
+ * medem os controles fictícios que o modo desenha, e é isso que as tornava
+ * estáveis. As telas reais não usam esse modo — nelas o roteador monta as telas
+ * de produto, com as rotas de dado simuladas por `page.route`.
  */
+
+const LARGURAS = [375, 768, 1440] as const
+const TEMAS = ["light", "dark"] as const
+const TAGS_DO_AXE = ["wcag2a", "wcag2aa", "wcag21aa"] as const
+
+type Superficie = Readonly<{
+  nome: string
+  caminho: string
+  seletor: string
+  preparar: (page: Page) => Promise<void> | void
+}>
+
+const SUPERFICIES: readonly Superficie[] = [
+  {
+    nome: "Início",
+    caminho: "/app/inicio",
+    seletor: '[data-tela="inicio"]',
+    preparar: simularInicio,
+  },
+  {
+    nome: "Mercado",
+    caminho: "/app/mercado",
+    seletor: '[data-tela="desapegos"]',
+    preparar: aplicarStubMercado,
+  },
+  {
+    nome: "Negócios",
+    caminho: "/app/negocios",
+    seletor: '[data-tela="negocios"]',
+    preparar: simularNegocios,
+  },
+  {
+    nome: "Guia",
+    caminho: "/app/guia",
+    seletor: '[data-tela="guia"]',
+    preparar: simularGuia,
+  },
+  {
+    nome: "Conversas",
+    caminho: "/app/conversas",
+    seletor: '[data-tela="conversas"]',
+    preparar: simularConversas,
+  },
+]
+
+function descrever(
+  superficie: string,
+  largura: number,
+  tema: string,
+  violacoes: AxeResults["violations"],
+): string {
+  const linhas = violacoes.map(
+    (violacao) =>
+      `- [${violacao.impact ?? "sem impacto"}] ${violacao.id}: ${violacao.help} (${violacao.nodes.length} nó(s))`,
+  )
+  return `${superficie} em ${largura}px, tema ${tema}:\n${linhas.join("\n")}`
+}
+
+/** Espera as animações finitas da entrada acabarem; o teto evita travar em laço. */
+async function aguardarAnimacoes(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const limite = new Promise<void>((resolver) => {
+      setTimeout(resolver, 2000)
+    })
+    const animacoes = document
+      .getAnimations()
+      .map((animacao) => animacao.finished.catch(() => undefined))
+    await Promise.race([Promise.all(animacoes).then(() => undefined), limite])
+  })
+}
+
+test.describe("axe nas telas reais", () => {
+  for (const superficie of SUPERFICIES) {
+    test(`${superficie.nome}: sem violação séria em 375/768/1440, claro e escuro`, async ({
+      page,
+    }, info) => {
+      // A matriz fixa as três larguras de dentro de um projeto só; rodar nos seis
+      // projetos repetiria as mesmas trinta análises seis vezes.
+      test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
+      test.setTimeout(180_000)
+      await simularProgresso(page)
+      await superficie.preparar(page)
+
+      for (const largura of LARGURAS) {
+        await page.setViewportSize({ width: largura, height: 900 })
+        for (const tema of TEMAS) {
+          await page.emulateMedia({ colorScheme: tema })
+          await page.goto(superficie.caminho)
+          await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
+          await expect(page.locator(superficie.seletor)).toBeVisible()
+          await aguardarAnimacoes(page)
+
+          const resultado = await new AxeBuilder({ page }).withTags([...TAGS_DO_AXE]).analyze()
+          const graves = resultado.violations.filter(
+            (violacao) => violacao.impact === "serious" || violacao.impact === "critical",
+          )
+          expect(graves, descrever(superficie.nome, largura, tema, graves)).toEqual([])
+        }
+      }
+    })
+  }
+})
+
+test.describe("teclado e foco nas telas reais", () => {
+  test("Tab alcança a ação primária, Enter ativa, Esc fecha e devolve o foco", async ({ page }) => {
+    await simularProgresso(page)
+    await simularInicio(page)
+    await page.goto("/app/inicio")
+    await expect(page.locator('[data-tela="inicio"]')).toBeVisible()
+
+    // Começa sem ponto privilegiado: tira o foco de onde a entrada o deixou e
+    // percorre a página com Tab, como quem usa só o teclado.
+    await page.evaluate(() => {
+      const ativo = document.activeElement
+      if (ativo instanceof HTMLElement) ativo.blur()
+    })
+    const busca = page.locator('[data-acao="busca"]')
+    let alcancou = false
+    for (let volta = 0; volta < 160; volta += 1) {
+      await page.keyboard.press("Tab")
+      if (await busca.evaluate((elemento) => elemento === document.activeElement)) {
+        alcancou = true
+        break
+      }
+    }
+    expect(alcancou).toBe(true)
+
+    await page.keyboard.press("Enter")
+    await expect(page).toHaveURL(/\/app\/busca$/)
+    // Enter ativou a busca: a tela de resultados assume. O foco do campo do topo
+    // não é requisito do fluxo (o Tab já provou o alcance antes do Enter).
+    await expect(page.locator('[data-tela="busca"]')).toBeVisible()
+
+    await page.goto("/app/inicio")
+    await expect(page.locator('[data-tela="inicio"]')).toBeVisible()
+    const criar = page.locator(SELETOR_CRIAR)
+    await criar.focus()
+    await page.keyboard.press("Enter")
+    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
+    await page.keyboard.press("Escape")
+    await expect(page.locator(SELETOR_MENU_CRIAR)).toHaveCount(0)
+    await expect(criar).toBeFocused()
+  })
+})
+
+test.describe("movimento reduzido nas telas reais", () => {
+  test("com prefers-reduced-motion a folha do guia não anima", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await simularProgresso(page)
+    await simularGuia(page)
+    await page.goto("/app/guia")
+    await expect(page.locator('[data-tela="guia"]')).toBeVisible()
+
+    await page.locator('[data-linha="lista"]').first().click()
+    const folha = page.locator('[data-sobreposicao="folha"]')
+    await expect(folha).toBeVisible()
+
+    const animacao = await folha.evaluate((elemento) => {
+      const estilo = getComputedStyle(elemento)
+      return { nome: estilo.animationName, duracao: estilo.animationDuration }
+    })
+    expect(animacao.nome).toBe("none")
+    expect(Number.parseFloat(animacao.duracao)).toBe(0)
+  })
+})
+
+test.describe("contraste nas telas reais", () => {
+  test("texto e tom contornado passam AA nos dois temas", async ({ page }) => {
+    await simularProgresso(page)
+    await simularGuia(page)
+
+    for (const tema of TEMAS) {
+      await page.emulateMedia({ colorScheme: tema })
+      await page.goto("/app/guia")
+      const botao = page.getByRole("button", { name: "Ver mais referências" })
+      await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
+      await expect(botao).toBeVisible()
+      await aguardarAnimacoes(page)
+
+      const medida = await page.evaluate(() => {
+        type Canais = Readonly<{ r: number; g: number; b: number; a: number }>
+
+        function canais(valor: string): Canais {
+          const rgb = valor.match(/^rgba?\(([^)]+)\)$/)
+          if (rgb !== null) {
+            const partes = (rgb[1] ?? "").split(/[\s,/]+/).filter((parte) => parte !== "")
+            const [r = "0", g = "0", b = "0", a = "1"] = partes
+            return { r: Number(r), g: Number(g), b: Number(b), a: Number(a) }
+          }
+          const srgb = valor.match(/^color\(srgb\s+([^)]+)\)$/)
+          if (srgb !== null) {
+            const partes = (srgb[1] ?? "").split(/[\s/]+/).filter((parte) => parte !== "")
+            const [r = "0", g = "0", b = "0", a = "1"] = partes
+            return {
+              r: Number(r) * 255,
+              g: Number(g) * 255,
+              b: Number(b) * 255,
+              a: Number(a),
+            }
+          }
+          // Tailwind 4 resolve `dark:bg-(--input)/30` para oklab com alfa; o
+          // navegador serializa a cor computada nesse espaço, não em rgb.
+          const oklab = valor.match(/^oklab\(([^)]+)\)$/)
+          if (oklab !== null) {
+            const partes = (oklab[1] ?? "").split(/[\s/]+/).filter((parte) => parte !== "")
+            const [l = "0", a = "0", b = "0", alfa = "1"] = partes
+            const L = Number(l)
+            const A = Number(a)
+            const B = Number(b)
+            const l_ = L + 0.3963377774 * A + 0.2158037573 * B
+            const m_ = L - 0.1055613458 * A - 0.0638541728 * B
+            const s_ = L - 0.0894841775 * A - 1.291485548 * B
+            const l3 = l_ ** 3
+            const m3 = m_ ** 3
+            const s3 = s_ ** 3
+            const linear = (x: number) => {
+              const v = Math.max(0, Math.min(1, x))
+              return v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055
+            }
+            return {
+              r: linear(4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3) * 255,
+              g: linear(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3) * 255,
+              b: linear(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3) * 255,
+              a: alfa.endsWith("%") ? Number(alfa.slice(0, -1)) / 100 : Number(alfa),
+            }
+          }
+          throw new Error(`Cor não reconhecida: ${valor}`)
+        }
+
+        function luminancia(cor: Canais): number {
+          const canal = (valor: number) => {
+            const proporcao = valor / 255
+            return proporcao <= 0.03928 ? proporcao / 12.92 : ((proporcao + 0.055) / 1.055) ** 2.4
+          }
+          return 0.2126 * canal(cor.r) + 0.7152 * canal(cor.g) + 0.0722 * canal(cor.b)
+        }
+
+        function contraste(frente: Canais, fundo: Canais): number {
+          const claro = luminancia(frente) + 0.05
+          const escuro = luminancia(fundo) + 0.05
+          return claro > escuro ? claro / escuro : escuro / claro
+        }
+
+        function compor(frente: Canais, fundo: Canais): Canais {
+          return {
+            r: frente.r * frente.a + fundo.r * (1 - frente.a),
+            g: frente.g * frente.a + fundo.g * (1 - frente.a),
+            b: frente.b * frente.a + fundo.b * (1 - frente.a),
+            a: 1,
+          }
+        }
+
+        const titulo = document.querySelector("h1[data-titulo-da-tela]")
+        const botao = Array.from(document.querySelectorAll("button")).find((elemento) =>
+          (elemento.textContent ?? "").includes("Ver mais referências"),
+        )
+        if (!(titulo instanceof HTMLElement) || !(botao instanceof HTMLElement)) {
+          throw new Error("Título ou botão contornado não encontrado")
+        }
+
+        const fundoDoCorpo = canais(getComputedStyle(document.body).backgroundColor)
+        const estiloDoTitulo = getComputedStyle(titulo)
+        const tamanho = Number.parseFloat(estiloDoTitulo.fontSize)
+        const peso = Number.parseInt(estiloDoTitulo.fontWeight, 10) || 400
+        const limiar = tamanho >= 24 || (tamanho >= 18.66 && peso >= 700) ? 3 : 4.5
+
+        const sonda = document.createElement("span")
+        sonda.style.color = "var(--foreground)"
+        document.body.append(sonda)
+        const tinta = canais(getComputedStyle(sonda).color)
+        sonda.remove()
+
+        const corDoBotao = canais(getComputedStyle(botao).color)
+        const fundoDoBotao = canais(getComputedStyle(botao).backgroundColor)
+        const fundo = fundoDoBotao.a < 1 ? compor(fundoDoBotao, fundoDoCorpo) : fundoDoBotao
+
+        return {
+          texto: contraste(canais(estiloDoTitulo.color), fundoDoCorpo),
+          limiar,
+          contorno: contraste(corDoBotao, fundo),
+          usaTinta:
+            Math.abs(corDoBotao.r - tinta.r) < 1 &&
+            Math.abs(corDoBotao.g - tinta.g) < 1 &&
+            Math.abs(corDoBotao.b - tinta.b) < 1,
+        }
+      })
+
+      expect(medida.texto, `texto no tema ${tema}`).toBeGreaterThanOrEqual(medida.limiar)
+      expect(medida.contorno, `contorno no tema ${tema}`).toBeGreaterThanOrEqual(4.5)
+      expect(medida.usaTinta, `contorno usa a tinta no tema ${tema}`).toBe(true)
+    }
+  })
+})
+
+test.describe("presença no encontro", () => {
+  test("«Não vou» grava a presença e atualiza o estado", async ({ page }) => {
+    await simularProgresso(page)
+    await simularEvento(page)
+    await page.goto(`/app/evento/${EVENTO_DA_PROVA.evento.id}`)
+    await expect(page.locator('[data-tela="evento"]')).toBeVisible()
+
+    const naoVou = page.getByRole("button", { name: "Não vou", exact: true })
+    await expect(naoVou).toBeVisible()
+    const pedido = page.waitForRequest(
+      (requisicao) => requisicao.method() === "PUT" && requisicao.url().endsWith("/presenca"),
+    )
+    await naoVou.click()
+
+    const enviado = await pedido
+    expect(enviado.postDataJSON()).toEqual({ situacao: "not_going" })
+    await expect(naoVou).toHaveAttribute("aria-pressed", "true")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Casca no modo de prova (checagens preservadas da versão anterior do spec).
+// ---------------------------------------------------------------------------
 
 const MINIMO_DO_ALVO = 44
 
@@ -40,20 +377,20 @@ async function medirAlvos(locator: Locator): Promise<string[]> {
   return problemas
 }
 
-test.describe("alvos de toque e teclado", () => {
-  test("os controles da barra do topo têm 44 px", async ({ page }) => {
+testDaProva.describe("alvos de toque e teclado", () => {
+  testDaProva("os controles da barra do topo têm 44 px", async ({ page }) => {
     await abrir(page, "/app/inicio")
     const problemas = await medirAlvos(page.locator(`${SELETOR_BARRA} button`))
     expect(problemas).toEqual([])
   })
 
-  test("as abas da navegação têm 44 px", async ({ page }) => {
+  testDaProva("as abas da navegação têm 44 px", async ({ page }) => {
     await abrir(page, "/app/inicio")
     const problemas = await medirAlvos(page.locator(`${SELETOR_NAVEGACAO} button`))
     expect(problemas).toEqual([])
   })
 
-  test("o Criar também, inclusive compacto", async ({ page }) => {
+  testDaProva("o Criar também, inclusive compacto", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
     await abrir(page, "/app/inicio")
     const problemas = await medirAlvos(page.locator(SELETOR_CRIAR))
@@ -69,7 +406,7 @@ test.describe("alvos de toque e teclado", () => {
     }
   })
 
-  test("o teclado alcança os controles e a barra de baixo", async ({ page }) => {
+  testDaProva("o teclado alcança os controles e a barra de baixo", async ({ page }) => {
     await abrir(page, "/app/inicio")
 
     // A tela de prova já deixa o foco no título; percorre a página inteira com Tab
@@ -107,14 +444,14 @@ test.describe("alvos de toque e teclado", () => {
     )
   })
 
-  test("o botão Voltar tem nome acessível sem o texto do ícone", async ({ page }) => {
+  testDaProva("o botão Voltar tem nome acessível sem o texto do ícone", async ({ page }) => {
     await abrir(page, "/app/salvos")
     await expect(page.getByRole("button", { name: "Voltar", exact: true })).toHaveCount(1)
   })
 })
 
-test.describe("foco em sobreposição", () => {
-  test("o diálogo prende o foco e devolve ao acionador", async ({ page }) => {
+testDaProva.describe("foco em sobreposição", () => {
+  testDaProva("o diálogo prende o foco e devolve ao acionador", async ({ page }) => {
     await abrir(page, "/app/inicio")
     const acionador = page.locator(SELETOR_CRIAR)
     await acionador.click()
@@ -133,7 +470,7 @@ test.describe("foco em sobreposição", () => {
     await expect(acionador).toBeFocused()
   })
 
-  test("a folha de cidade prende o foco e devolve ao chip", async ({ page }) => {
+  testDaProva("a folha de cidade prende o foco e devolve ao chip", async ({ page }) => {
     await abrir(page, "/app/inicio")
     await page.locator('[data-acao="cidade"]').click()
     await expect(page.locator('[data-sobreposicao="cidade"]')).toBeVisible()
@@ -148,9 +485,9 @@ test.describe("foco em sobreposição", () => {
   })
 })
 
-test.describe("sem rolagem horizontal", () => {
+testDaProva.describe("sem rolagem horizontal", () => {
   for (const caminho of ["/app/inicio", "/app/salvos", "/app/mercado"]) {
-    test(`${caminho} cabe na largura, com a barra e sem a barra`, async ({ page }) => {
+    testDaProva(`${caminho} cabe na largura, com a barra e sem a barra`, async ({ page }) => {
       await abrir(page, caminho)
       const medidas = await page.evaluate(() => {
         const conteudo = document.getElementById("conteudo")
@@ -166,7 +503,7 @@ test.describe("sem rolagem horizontal", () => {
     })
   }
 
-  test("a galeria, que é a tela mais cheia, também cabe", async ({ page }) => {
+  testDaProva("a galeria, que é a tela mais cheia, também cabe", async ({ page }) => {
     await abrirGaleria(page)
     const excesso = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
