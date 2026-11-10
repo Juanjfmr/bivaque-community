@@ -1,0 +1,104 @@
+﻿# LOC-IMPL (sub-lote a) â€” localizaÃ§Ã£o privada do perfil (10/11/2026)
+# Proposta de contrato para o cartÃ£o LOC-IMPL, fase Lote 7 â€” Desapegos e ImÃ³veis.
+# O YAML abaixo Ã© a cÃ³pia que o executor leva para docs/agents/tasks/RUN-029.task.yml.
+task_id: RUN-029
+
+objective: >
+  O perfil do membro passa a guardar um CEP opcional e a coordenada derivada dele no servidor,
+  usados somente para cÃ¡lculo privado de distÃ¢ncia: a coordenada nunca Ã© devolvida ao cliente,
+  nunca Ã© legÃ­vel por outro membro, e a leitura de terceiros continua limitada ao bairro quando
+  a chave "Mostrar meu bairro" estÃ¡ ligada. A exclusÃ£o de conta apaga CEP e coordenada.
+
+authority:
+  - tools/backend-kanban card LOC-IMPL
+  - docs/LANCAMENTO.md (F10 â€” VocÃª, famÃ­lia e conta; F06 â€” Mercado e moradia)
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md (seÃ§Ã£o 4)
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (catÃ¡logo de bairros)
+  - AGENTS.md (dado pessoal e localizaÃ§Ã£o)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    public.profiles nÃ£o tem CEP nem coordenada: 20260802000100_locality_profile_foundation.sql:31-42
+    define o perfil sem esses campos, e 20261022120200_profile_neighborhood.sql:56-58 acrescenta
+    apenas neighborhood e show_neighborhood. A rota apps/web/app/api/app/voce/route.ts:45-47 aceita
+    somente nome/bio, e apps/web/app/api/app/voce/_comum.ts:38 lÃª apenas display_name,bio; a tela
+    apps/app/src/voce/EdicaoDePerfil.tsx:41-49 edita somente nome e apresentaÃ§Ã£o. NÃ£o existe
+    geocodificaÃ§Ã£o nem cache em apps/ (grep por brasilapi/geocod/nominatim sÃ³ encontra
+    apps/app/lib/demo/auxiliares.json:602). Nenhum teste prova leitura negativa de coordenada.
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests
+  - supabase/seed.sql
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/voce/route.ts
+  - apps/web/app/api/app/voce/_comum.ts
+  - apps/web/app/api/app/voce/localizacao
+  - apps/web/lib/geo
+  - apps/web/.env.example
+  - apps/app/lib/dados/voce.ts
+  - apps/app/src/voce
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/tests/voce-dados.test.ts
+  - apps/app/tests/e2e/voce.spec.ts
+  - tests/unit/app-api/voce
+  - tests/unit/profile
+  - tests/scope/f10-voce-porta.test.mjs
+  - tests/e2e/f10-voce-localizacao.spec.ts
+  - tests/e2e/entrada-real-ajuda.ts
+  - docs/agents/tasks/RUN-029.task.yml
+  - .visual/run-029
+
+forbidden:
+  - "editar migration jÃ¡ aplicada; a mudanÃ§a entra em migration nova criada com supabase migration new"
+  - "acrescentar CEP, latitude ou longitude a listings, listing_alerts, service_requests ou qualquer outra tabela neste lote"
+  - "devolver latitude, longitude ou o CEP cru em resposta de API, log, telemetria, mensagem de erro ou URL"
+  - "geocodificar no cliente, chamar BrasilAPI/Google do navegador ou expor GOOGLE_MAPS_API_KEY em NEXT_PUBLIC_*"
+  - "inventar coordenada, usar coordenada de outra pessoa ou gravar coordenada sem CEP (a constraint recusa)"
+  - "usar service_role para nome, bio, bairro ou leitura de perfil; o privilÃ©gio fica restrito Ã  rota de localizaÃ§Ã£o, ao cache pÃºblico e Ã  funÃ§Ã£o set_member_location"
+  - "aceitar user_id, owner ou papel vindos do corpo, da query ou do app"
+  - "criar cache por usuÃ¡rio ou guardar user_id no cache de CEP"
+  - "usar CEP ou coordenada de pessoa real em fixture, seed ou teste; sÃ³ dado sintÃ©tico"
+  - "reviver apps/prototipo ou apps/mobile; mexer na tela antiga apps/web/app/(shell)/profile"
+  - "adicionar dependÃªncia nova de geocodificaÃ§Ã£o (usar fetch nativo)"
+  - "alterar docs/decisions, tools/backend-kanban ou RATIFICACAO.md"
+  - "push, merge ou force-push; ler, criar ou editar arquivos .env (apps/web/.env.example Ã© permitido)"
+
+acceptance:
+  - "Migration nova (supabase migration new) acrescenta a public.profiles cep text, latitude numeric(9,6) e longitude numeric(9,6), com CHECK de CEP de 8 dÃ­gitos, coordenadas em faixa e a regra tudo-ou-nada (cep, latitude e longitude nulos juntos); comentÃ¡rios de coluna declaram que sÃ£o dado de cÃ¡lculo privado, nunca exibido a outro membro."
+  - "public.profiles continua com RLS habilitada e forÃ§ada; SELECT de authenticated repete exatamente a lista de colunas de 20261022120200_profile_neighborhood.sql:127-137, que jÃ¡ exclui neighborhood (lido sÃ³ por get_profile_neighborhood) e nÃ£o pode receber cep/latitude/longitude; INSERT e UPDATE de authenticated passam a ser por coluna e tambÃ©m excluem as trÃªs colunas; SELECT *, to_jsonb(p) e update direto de coordenada falham com 42501."
+  - "public.cep_geocodes (cep chave, latitude, longitude, source brasilapi|google, fetched_at) nasce com RLS habilitada e forÃ§ada, sem privilÃ©gio para anon/authenticated, grant all para service_role e policy service_role_all; nenhum membro lÃª ou escreve o cache."
+  - "public.get_my_profile_location() retorna (cep, definida) sÃ³ do auth.uid() e nunca latitude/longitude; public.distance_to_neighborhood(p_neighborhood_id uuid) retorna metros inteiros usando a origem do prÃ³prio chamador e o centro pÃºblico de public.neighborhoods, sem parÃ¢metro de usuÃ¡rio; ambas security definer, search_path vazio, execute sÃ³ authenticated (revogado de public/anon)."
+  - "public.set_member_location(p_user_id uuid, p_cep text, p_latitude numeric, p_longitude numeric) Ã© security definer, sÃ³ service_role, normaliza CEP para 8 dÃ­gitos, limpa as trÃªs colunas quando p_cep Ã© null e recusa CEP/coordenada invÃ¡lidos com 22023 e perfil ausente com P0002; Ã© o Ãºnico caminho de escrita de coordenada."
+  - "public.finalize_account_deletion Ã© recriada com cÃ³pia fiel do corpo vigente, que Ã© o da Ãºltima definiÃ§Ã£o em 20261104215006_entry_commitments.sql:39-199 (nÃ£o o de 20261022120200, substituÃ­do depois), e acrescenta cep = null, latitude = null e longitude = null Ã  atualizaÃ§Ã£o do perfil (linhas 87-94); pgTAP prova que a purga zera as trÃªs colunas."
+  - "GET /api/app/voce devolve localizacao: { cep: \"12345-678\" | null, definida: boolean } lido por get_my_profile_location, sem latitude/longitude; PATCH /api/app/voce devolve o mesmo campo e mantÃ©m nome/bio no cliente da sessÃ£o; falha da RPC vira 503, nunca perfil vazio."
+  - "PUT /api/app/voce/localizacao existe em runtime nodejs, exige sessÃ£o, conferirEscrita e corpo apenas { cep: string | null }; normaliza, consulta o cache, geocodifica no servidor quando faltar, grava o cache, chama set_member_location com o user_id da sessÃ£o (nunca do corpo/query) via cliente de serviÃ§o aberto sÃ³ depois da sessÃ£o, relÃª por get_my_profile_location e responde sem latitude/longitude; 400 corpo/CEP invÃ¡lido, 422 CEP nÃ£o encontrado, 503 geocodificador/banco indisponÃ­vel, sem eco de mensagem do Postgres."
+  - "tests/scope/f10-voce-porta.test.mjs ganha uma exceÃ§Ã£o medida para /localizacao/ e uma asserÃ§Ã£o prÃ³pria: exigirSessao antes de clienteDeServicoOuNulo, privilÃ©gio sÃ³ em cep_geocodes e rpc set_member_location, nenhum from(\"profiles\") e nenhum user_id vindo do pedido; as demais rotas da jornada continuam sem privilÃ©gio."
+  - "apps/web/lib/geo Ã© server-only: BrasilAPI v2 primeiro, Google Maps Geocoding sÃ³ como reserva e sÃ³ com GOOGLE_MAPS_API_KEY server-side, timeout curto, sem retry, cache por CEP e nenhum log de CEP ou coordenada; GOOGLE_MAPS_API_KEY documentada em apps/web/.env.example, nunca em NEXT_PUBLIC_*."
+  - "EdicaoDePerfil ganha Campo de CEP opcional (inputMode numÃ©rico, mÃ¡scara 00000-000) com a nota de que o CEP sÃ³ calcula distÃ¢ncia e nÃ£o aparece para outras pessoas; salvar grava nome/bio e, se o CEP mudou, chama salvarLocalizacao; recarregar mostra o CEP gravado, limpar o campo apaga a localizaÃ§Ã£o e falha da localizaÃ§Ã£o nÃ£o finge sucesso (perfil salvo, localizaÃ§Ã£o nÃ£o atualizada)."
+  - "Novo supabase/tests/profile-location.sql (fixtures sintÃ©ticas, rollback) prova positivo e negativo: dono lÃª o prÃ³prio CEP/definida; outro membro nÃ£o lÃª cep/latitude/longitude por select, select * nem to_jsonb (42501); update direto de coordenada Ã© negado; authenticated nÃ£o executa set_member_location (42501); anon nÃ£o executa as leituras; distance_to_neighborhood de A e B para o mesmo bairro usa origens diferentes; cache negado a authenticated; constraints recusam CEP invÃ¡lido, coordenada solta e fora de faixa (23514); apÃ³s finalize_account_deletion as trÃªs colunas estÃ£o nulas."
+  - "Testes de unidade: PUT /localizacao cobre 401/403/400/422/503/200, corpo com user_id ignorado, resposta sem latitude/longitude e cache hit sem rede; geocodificador cobre BrasilAPI, fallback Google, ambos falham, timeout, coordenada malformada e ausÃªncia de chave; apps/app/tests/voce-dados.test.ts cobre parse de localizacao e salvarLocalizacao; rotas.test.ts cobre GET/PATCH com localizacao e falha 503."
+  - "tests/e2e/f10-voce-localizacao.spec.ts (@stateful) usa a persona semeada e um CEP com linha em public.cep_geocodes no seed (sem rede), grava o CEP pela tela, recarrega, confirma a persistÃªncia e inspeciona os corpos de PUT/GET sem latitude/longitude; afterEach limpa a localizaÃ§Ã£o pela RPC de serviÃ§o; capturas 375/768/1440 nos dois temas em .visual/run-029/ e relatÃ³rio com comandos e o que nÃ£o rodou (Docker/CI)."
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-029.task.yml
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/voce tests/unit/profile
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 test:db (CI; Docker indisponÃ­vel localmente)
+  - npx pnpm@11.18.0 db:lint (CI; Docker indisponÃ­vel localmente)
+  - npx pnpm@11.18.0 generate:types && git diff --exit-code -- supabase/database.generated.ts (CI)
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f10-voce-localizacao.spec.ts
+
+risk: dado pessoal e RLS de localizaÃ§Ã£o do perfil
+risk_level: R3
+adr: docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

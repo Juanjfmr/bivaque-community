@@ -1,6 +1,12 @@
 import { enviar, FalhaDaApi, ler } from "../api/cliente"
 
-export type PerfilDaPessoa = Readonly<{ nome: string; bio: string | null; cidade: string }>
+export type LocalizacaoDoPerfil = Readonly<{ cep: string | null; definida: boolean }>
+export type PerfilDaPessoa = Readonly<{
+  nome: string
+  bio: string | null
+  cidade: string
+  localizacao: LocalizacaoDoPerfil
+}>
 export type ContagensDoPerfil = Readonly<{
   salvos: number
   anuncios: number
@@ -82,11 +88,17 @@ function booleano(corpo: Corpo, chave: string): boolean {
   return valor
 }
 
+function lerLocalizacao(valor: unknown): LocalizacaoDoPerfil {
+  const item = registro(valor)
+  return { cep: textoOuNulo(item, "cep"), definida: booleano(item, "definida") }
+}
+
 function lerPerfilDaPessoa(corpo: Corpo): PerfilDaPessoa {
   return {
     nome: texto(corpo, "nome"),
     bio: textoOuNulo(corpo, "bio"),
     cidade: textoOuNulo(corpo, "cidade") ?? "",
+    localizacao: lerLocalizacao(corpo["localizacao"]),
   }
 }
 
@@ -139,6 +151,20 @@ export async function salvarPerfil(
 ): Promise<PerfilDaPessoa> {
   const corpo = await enviar("PATCH", "/api/app/voce", dados, opcoes)
   return lerPerfilDaPessoa(registro(corpo["perfil"]))
+}
+
+/**
+ * Grava o CEP do perfil — ou apaga a localização, com `null`.
+ *
+ * O servidor geocodifica e devolve só o CEP e a marca de definida; latitude e
+ * longitude não passam por esta camada.
+ */
+export async function salvarLocalizacao(
+  cep: string | null,
+  opcoes: Opcoes = {},
+): Promise<LocalizacaoDoPerfil> {
+  const corpo = await enviar("PUT", "/api/app/voce/localizacao", { cep }, opcoes)
+  return lerLocalizacao(corpo["localizacao"])
 }
 
 export async function lerPublicacoes(opcoes: Opcoes = {}): Promise<PublicacoesDaPessoa> {
