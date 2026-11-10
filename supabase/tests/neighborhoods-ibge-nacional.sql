@@ -42,7 +42,7 @@ select ok(
       and n.name = 'Guadalupe'
       and n.center_lat between -22.86 and -22.82
       and n.center_lng between -43.39 and -43.36
-  ),
+  ) = 1,
   'Guadalupe (Rio de Janeiro) existe com centro na caixa esperada'
 );
 
@@ -54,7 +54,7 @@ select ok(
       and n.name = 'Aldeota'
       and n.center_lat between -3.76 and -3.72
       and n.center_lng between -38.52 and -38.49
-  ),
+  ) = 1,
   'Aldeota (Fortaleza) existe com centro na caixa esperada'
 );
 
