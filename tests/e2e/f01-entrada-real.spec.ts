@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import {
+  alvosMenoresQue,
   ContaIndisponivel,
   CPF_SINTETICO,
   capturarEmDoisTemas,
@@ -17,7 +18,9 @@ import {
   MEMBRO_SEMEADO,
   marcarGrupoPadrao,
   marcarVinculoVerificadoPorEmail,
+  medirContrastes,
   participacaoNoGrupo,
+  percorrerFocoComTab,
   preencherCodigoDeEntrada,
   semearSessaoDeMembro,
 } from "./entrada-real-ajuda"
@@ -439,10 +442,12 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
 
     // ── e-mail e código de verdade ────────────────────────────────────────
     await esperarEtapaDaEntrada(page, /Convite de /)
-    // O convite declara o e-mail: o campo vem preenchido e só de leitura.
+    // RUN-135: a prévia sem sessão não revela o destinatário do outbox. O campo
+    // vem vazio e editável; a pessoa digita o próprio e-mail para receber o código.
     const campoDoEmailDoConvite = page.getByLabel("E-mail")
-    await expect(campoDoEmailDoConvite).toHaveValue(email)
-    await expect(campoDoEmailDoConvite).not.toBeEditable()
+    await expect(campoDoEmailDoConvite).toHaveValue("")
+    await expect(campoDoEmailDoConvite).toBeEditable()
+    await campoDoEmailDoConvite.fill(email)
     const desde = new Date()
     await page.getByRole("button", { name: "Enviar código" }).click()
     await esperarEtapaDaEntrada(page, "Digite o código")
@@ -655,5 +660,63 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
       "membro autenticado em /app/entrar deveria terminar no Início",
     ).toBeVisible({ timeout: 30_000 })
     await capturarEmDoisTemas(page, projeto, "membro-inicio")
+  })
+
+  // Fecha o achado (b) da revisão de 10/11: o caso antigo só comparava "a cor
+  // escura é diferente da clara", e captura sozinha não prova acessibilidade.
+  // Aqui o tema escuro é medido no navegador: contraste WCAG por texto, ordem
+  // de tabulação com foco visível e alvo de toque de 44 px — e a captura dos
+  // dois temas continua, como evidência visual do mesmo ponto.
+  test("porta no tema escuro: contraste, foco de teclado e alvos de 44 px", async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(90_000)
+    const projeto = testInfo.project.name
+
+    await page.emulateMedia({ colorScheme: "dark" })
+    await page.goto(ROTA_DA_ENTRADA)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+      "O build servido em /app/entrar não é a entrada real (TelaDeEntrada).",
+    ).toBeVisible({ timeout: 20_000 })
+
+    // Contraste no estilo COMPUTADO, com os tokens do tema escuro: 4,5:1 no
+    // texto comum e 3:1 no texto grande. O logo é logotipo (isento) e fica fora.
+    const medidas = await medirContrastes(
+      page,
+      ".f01-porta h1, .f01-porta p, .f01-porta button, .f01-porta a",
+    )
+    expect(
+      medidas.length,
+      "a porta precisa ter texto medível no tema escuro",
+    ).toBeGreaterThanOrEqual(6)
+    const abaixoDoMinimo = medidas.filter((medida) => medida.razao < medida.minimo)
+    expect(
+      abaixoDoMinimo,
+      `contraste abaixo do mínimo no tema escuro: ${JSON.stringify(abaixoDoMinimo)}`,
+    ).toEqual([])
+
+    // Tab de verdade: a porta tem cinco controles (três provedores, o código do
+    // convite e a Ajuda), todos distintos e com sinal de foco visível.
+    const focos = await percorrerFocoComTab(page, 8)
+    expect(focos.length, "a porta precisa ter foco alcançável por Tab").toBeGreaterThanOrEqual(5)
+    expect(
+      new Set(focos.map((foco) => foco.rotulo)).size,
+      `a ordem de Tab repetiu controle: ${JSON.stringify(focos)}`,
+    ).toBeGreaterThanOrEqual(5)
+    const semSinal = focos.filter((foco) => !foco.comIndicador)
+    expect(semSinal, `foco sem contorno visível: ${JSON.stringify(semSinal)}`).toEqual([])
+
+    // Alvo de toque: 44x44 nos dois eixos. O link "Ajuda" mora dentro de uma
+    // frase e é a exceção de alvo em linha (WCAG 2.5.8), por isso não entra.
+    const pequenos = await alvosMenoresQue(
+      page,
+      ".f01-porta button, .f01-porta input:not([type=hidden]), .f01-porta select, " +
+        ".f01-porta textarea, .f01-porta a[href]:not(p a)",
+    )
+    expect(pequenos, `alvos menores que 44 px: ${JSON.stringify(pequenos)}`).toEqual([])
+
+    // A prova visual do mesmo ponto nos dois temas, no diretório de capturas.
+    await capturarEmDoisTemas(page, projeto, "porta-acessibilidade")
   })
 })

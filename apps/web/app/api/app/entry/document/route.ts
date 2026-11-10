@@ -34,10 +34,56 @@ export const dynamic = "force-dynamic"
 //   do código: mensagem de banco ou Storage nunca volta para o cliente, e o log
 //   fica só com a mensagem fixa, o id e o código.
 
-// O arquivo é 10 MB; 12 MB cobrem o overhead do multipart, o mesmo teto do
-// `bodySizeLimit` das Server Actions (next.config.ts). O cabeçalho é conferido
-// ANTES de ler o corpo, para não carregar 12 MB de multipart e só então recusar.
-const LIMITE_DECLARADO = 12 * 1024 * 1024
+// O arquivo é 10 MB, e o teto do CORPO também é 10 MB: o `content-length` do
+// multipart inclui o overhead do formulário, então um arquivo exatamente no
+// limite do núcleo chega aqui um pouco acima e é recusado antes de ser lido —
+// o teto efetivo do arquivo fica alguns bytes abaixo de 10 MB, de propósito:
+// carregar o corpo inteiro para só então recusar é o custo que a rota evita.
+const LIMITE_DO_CORPO = 10 * 1024 * 1024
+
+type CorpoDoDocumento =
+  | { readonly ok: true; readonly bytes: Uint8Array<ArrayBuffer> }
+  | { readonly ok: false; readonly status: 413 | 400 }
+
+/**
+ * Lê o corpo com teto, mesmo SEM `content-length` — ou com um número menor que
+ * o real. O cabeçalho é só uma dica do cliente: quem quiser contornar o teto
+ * omite ou mente, e aí o limite tem de valer na leitura. Acima do teto o fluxo
+ * é cancelado e nada é acumulado além dos pedaços já aceitos.
+ */
+async function lerCorpoComTeto(request: NextRequest): Promise<CorpoDoDocumento> {
+  const corpo = request.body
+  if (corpo === null) return { ok: true, bytes: new Uint8Array(0) }
+
+  const leitor = corpo.getReader()
+  const pedacos: Uint8Array[] = []
+  let total = 0
+  try {
+    for (;;) {
+      const { done, value } = await leitor.read()
+      if (done) break
+      if (value === undefined) continue
+      total += value.byteLength
+      if (total > LIMITE_DO_CORPO) {
+        await leitor.cancel()
+        return { ok: false, status: 413 }
+      }
+      pedacos.push(value)
+    }
+  } catch {
+    return { ok: false, status: 400 }
+  } finally {
+    leitor.releaseLock()
+  }
+
+  const bytes = new Uint8Array(total)
+  let deslocamento = 0
+  for (const pedaco of pedacos) {
+    bytes.set(pedaco, deslocamento)
+    deslocamento += pedaco.byteLength
+  }
+  return { ok: true, bytes }
+}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const sessao = await exigirSessao(request)
@@ -47,15 +93,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (porta !== "ok") return responder(request, { erro: porta }, 403, sessao.sessao.cabecalhos)
 
   const declarado = Number(request.headers.get("content-length") ?? "")
-  if (Number.isFinite(declarado) && declarado > LIMITE_DECLARADO) {
+  if (Number.isFinite(declarado) && declarado > LIMITE_DO_CORPO) {
     return responder(request, { erro: "grande-demais" }, 413, sessao.sessao.cabecalhos)
+  }
+
+  const corpo = await lerCorpoComTeto(request)
+  if (!corpo.ok) {
+    const erro = corpo.status === 413 ? "grande-demais" : "documento-ausente"
+    return responder(request, { erro }, corpo.status, sessao.sessao.cabecalhos)
   }
 
   // Corpo que não é multipart não tem campo nenhum: é o mesmo caso do arquivo
   // ausente, e não um 500. O `FormData` só é lido depois da porta e do teto.
   let formulario: FormData
   try {
-    formulario = await request.formData()
+    formulario = await new Response(corpo.bytes, {
+      headers: { "content-type": request.headers.get("content-type") ?? "" },
+    }).formData()
   } catch {
     return responder(request, { erro: "documento-ausente" }, 400, sessao.sessao.cabecalhos)
   }

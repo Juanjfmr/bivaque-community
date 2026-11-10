@@ -27,23 +27,33 @@ export type Porta = "ok" | "origem-recusada" | "cabecalho-ausente"
 export type SessaoAutenticada = Extract<SessaoDaRequisicao, { estado: "autenticada" }>
 
 /**
- * As origens aceitas numa escrita por cookie: a do próprio pedido e as da
- * lista explícita do ambiente.
- *
- * A origem do pedido também vem do `Host` que a plataforma entregou, não só de
- * `new URL(request.url).origin`: em execução local o Next normaliza o host do
- * `url` para `localhost` mesmo quando o navegador abriu `127.0.0.1`, e o
- * `Origin` do navegador é o endereço real da barra. Comparar `Origin` com o
- * `Host` é a checagem de mesma origem; usar só o `url` recusava uma origem
- * legítima. O `x-forwarded-proto` da borda define o esquema quando existe.
+ * As origens locais aceitas em qualquer ambiente: o servidor de desenvolvimento
+ * do Next e o preview estático do app (`apps/app`), nos dois nomes de loopback
+ * que o navegador pode usar. São fixas de propósito.
  */
-export function origensPermitidas(request: Request): string[] {
+const ORIGENS_LOCAIS = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:3200",
+  "http://127.0.0.1:3200",
+] as const
+
+/**
+ * As origens aceitas numa escrita por cookie: as locais fixas e a lista
+ * explícita do ambiente (`BIVAQUE_APP_ORIGINS`), que é o caminho de produção.
+ *
+ * Nada aqui é derivado do pedido. `Host` e `x-forwarded-proto` são cabeçalhos
+ * que quem chama controla: montar a origem a partir deles faria a checagem de
+ * mesma origem aprovar exatamente o pedido forjado que ela existe para conter
+ * (o `Origin` do atacante e o `Host` do atacante combinariam). A allowlist é a
+ * dos endereços em que o app roda, e só.
+ */
+export function origensPermitidas(): string[] {
   const doAmbiente = (process.env["BIVAQUE_APP_ORIGINS"] ?? "")
     .split(",")
     .map((origem) => origem.trim())
     .filter((origem) => origem !== "")
-  const doPedido = new URL(request.url).origin
-  return [...new Set([doPedido, origemDoPedido(request), ...doAmbiente])]
+  return [...new Set([...ORIGENS_LOCAIS, ...doAmbiente])]
 }
 
 /**
@@ -52,6 +62,9 @@ export function origensPermitidas(request: Request): string[] {
  * que o OAuth usa no `redirectTo`: o callback volta ao mesmo endereço que
  * iniciou o fluxo, seja local, prévia ou produção. Sem `Host`, vale a origem do
  * `url` do pedido.
+ *
+ * Não use esta função para a allowlist de escrita: `Host` e `x-forwarded-proto`
+ * vêm do pedido (`origensPermitidas` é fixa justamente por isso).
  */
 export function origemDoPedido(request: Request): string {
   const host = request.headers.get("host")
@@ -95,7 +108,7 @@ export function responder(
     status,
     headers: {
       "cache-control": "no-store",
-      ...cabecalhosDeCors(request.headers.get("origin"), origensPermitidas(request)),
+      ...cabecalhosDeCors(request.headers.get("origin"), origensPermitidas()),
       ...extras,
     },
   })
@@ -121,10 +134,7 @@ export function respostaIndisponivel(request: Request): NextResponse {
 }
 
 export function opcoesDoApp(request: Request): NextResponse {
-  const cabecalhos = cabecalhosDePreflight(
-    request.headers.get("origin"),
-    origensPermitidas(request),
-  )
+  const cabecalhos = cabecalhosDePreflight(request.headers.get("origin"), origensPermitidas())
   if (Object.keys(cabecalhos).length === 0) {
     return new NextResponse(null, { status: 403, headers: { "cache-control": "no-store" } })
   }
@@ -140,7 +150,7 @@ export function opcoesDoApp(request: Request): NextResponse {
  */
 export function conferirPorta(request: Request, via: "cookie" | "bearer"): Porta {
   const origem = request.headers.get("origin")
-  if (origem !== null && !origemPermitida(origem, origensPermitidas(request))) {
+  if (origem !== null && !origemPermitida(origem, origensPermitidas())) {
     return "origem-recusada"
   }
   if (via === "cookie" && request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
@@ -173,6 +183,36 @@ export async function exigirSessao(request: Request): Promise<SessaoOuRecusa> {
   return { ok: true, sessao }
 }
 
+export type SessaoOpcional =
+  | { readonly estado: "autenticada"; readonly sessao: SessaoAutenticada }
+  | { readonly estado: "anonima" }
+  | { readonly estado: "indisponivel" }
+
+/**
+ * A sessão quando existe, sem exigir uma: rota pública que muda de resposta para
+ * quem está autenticado (a prévia do convite devolve o e-mail da sessão, e só
+ * ele). Sessão recusada é anônimo — sem credencial, com token inválido ou com
+ * cookie e Bearer em conflito, a rota segue como visitante, nunca como outra
+ * pessoa. Sessão indisponível (falta de configuração do servidor) é devolvida
+ * como tal, sem virar 503 na rota que não exige sessão: quem chama decide se a
+ * falta de configuração impede a resposta inteira.
+ *
+ * Os cookies renovados são registrados mesmo assim: a rotação do GoTrue já
+ * invalidou o token antigo, e a resposta precisa gravar o novo.
+ */
+export async function sessaoOpcional(request: Request): Promise<SessaoOpcional> {
+  const sessao = await resolverSessaoDaRequisicao(
+    request as unknown as Parameters<typeof resolverSessaoDaRequisicao>[0],
+  )
+  if (sessao.estado !== "autenticada") {
+    return { estado: sessao.estado === "indisponivel" ? "indisponivel" : "anonima" }
+  }
+  if (sessao.cookiesParaGravar !== undefined && sessao.cookiesParaGravar.length > 0) {
+    cookiesDaRequisicao.set(request, sessao.cookiesParaGravar)
+  }
+  return { estado: "autenticada", sessao }
+}
+
 export type CorpoLido =
   | { readonly ok: true; readonly corpo: Record<string, unknown> }
   | { readonly ok: false; readonly status: 400 | 413 }
@@ -198,7 +238,7 @@ export function conferirEscrita(request: Request, via: "cookie" | "bearer"): Por
     via,
     origem: request.headers.get("origin"),
     cabecalhoDoApp: request.headers.get("x-bivaque-app"),
-    origensPermitidas: origensPermitidas(request),
+    origensPermitidas: origensPermitidas(),
   })
   return veredito.ok ? "ok" : veredito.motivo
 }

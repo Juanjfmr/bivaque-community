@@ -5,10 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // a rota só resolve a sessão, confere a porta da escrita, aplica o teto do corpo
 // antes de ler o multipart e traduz o resultado em 200/400/503. O teste troca a
 // sessão, o cliente de serviço e o núcleo, e prova o contrato: 401 sem sessão,
-// CSRF da escrita, 413 pelo `content-length` declarado, 400 sem arquivo, o id da
-// SESSÃO como dono (nunca um `user_id` do FormData), 400 com o motivo nas
-// recusas de validação, 503 genérico nas falhas de infraestrutura — sem ecoar
-// mensagem crua — e o preflight.
+// CSRF da escrita, 413 pelo `content-length` declarado (o teto na LEITURA do
+// fluxo, inclusive sem cabeçalho, tem prova em `entry/documento-corpo.test.ts`),
+// 400 sem arquivo, o id da SESSÃO como dono (nunca um `user_id` do FormData),
+// 400 com o motivo nas recusas de validação, 503 genérico nas falhas de
+// infraestrutura — sem ecoar mensagem crua — e o preflight.
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
@@ -36,7 +37,7 @@ const OUTRA_PESSOA = "10000000-0000-4000-8000-000000000999"
 // importa é a origem do cabeçalho bater com a do request, como no runtime.
 const ORIGEM = "http://localhost:3000"
 const URL_DA_ROTA = `${ORIGEM}/api/app/entry/document`
-const DOZE_MB = 12 * 1024 * 1024
+const DEZ_MB = 10 * 1024 * 1024
 
 // Conteúdo sintético: não é documento de ninguém, só bytes com o cabeçalho que
 // a exceção byte a byte do PDF exige.
@@ -135,16 +136,16 @@ describe("POST /api/app/entry/document", () => {
     expect(enviarDocumento).not.toHaveBeenCalled()
   })
 
-  it("content-length acima de 12 MB é 413 grande-demais sem ler o corpo", async () => {
-    const resposta = await POST(requisicao({ contentLength: String(DOZE_MB + 1) }))
+  it("content-length acima de 10 MB é 413 grande-demais sem ler o corpo", async () => {
+    const resposta = await POST(requisicao({ contentLength: String(DEZ_MB + 1) }))
 
     expect(resposta.status).toBe(413)
     expect(await resposta.json()).toEqual({ erro: "grande-demais" })
     expect(enviarDocumento).not.toHaveBeenCalled()
   })
 
-  it("content-length exatamente no teto de 12 MB segue para o núcleo", async () => {
-    const resposta = await POST(requisicao({ contentLength: String(DOZE_MB) }))
+  it("content-length exatamente no teto de 10 MB segue para o núcleo", async () => {
+    const resposta = await POST(requisicao({ contentLength: String(DEZ_MB) }))
 
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ ok: true })
