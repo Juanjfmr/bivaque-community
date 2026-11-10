@@ -212,11 +212,18 @@ os handlers permanecem como estavam.
   ok (R2, retry 2);
   `vitest run --pool=threads tests/unit/security/route-surface.test.ts
   tests/unit/security/api-surface.test.ts
-  tests/unit/onboarding/proxy-portao-do-app.test.ts` → 128 testes verdes;
+  tests/unit/onboarding/proxy-portao-do-app.test.ts
+  tests/unit/onboarding/onboarding-proxy-allowlist.test.ts` → 138 testes verdes
+  em 4 arquivos;
   `node tests/scope/entrada-public-paths.test.mjs` → 13 verdes;
+  `node tests/scope/app-foundation.test.mjs` → 4 verdes;
   `tsc -p tests/e2e/tsconfig.json` → exit 0. O `node --test` do script de
   escopo e o `gate`/`test:e2e` completos ficam para o CI: o sandbox local recusa
   spawn com stdio em pipe (EPERM) e não há Docker/Supabase local.
+- Correção de escopo no HEAD 1ae1dc20 (`test(escopo): le a superficie publica
+  no modulo novo`): o teste `tests/scope/app-foundation.test.mjs` ainda exigia
+  `PUBLIC_PATHS` no proxy; passou a ler `route-surface.ts`, e o arquivo entrou
+  no `allowed_paths` do contrato. A revisão independente acompanhou a mudança.
 
 ## Benefits
 

@@ -1,61 +1,61 @@
-# SuperfÃ­cie do portÃ£o de rota. Fecha os trÃªs escapes do inventÃ¡rio W00 sem
-# transformar /api em rota de membro: /landing vira espaÃ§o de assets, o
-# casamento por prefixo ganha fronteira e o bypass de autenticaÃ§Ã£o sÃ³ existe em
-# desenvolvimento. R2 pelo processo de 05/11: ADR novo (decisÃ£o nova), uma
-# revisÃ£o independente com critic_verdict PASS; sem security-auditor, porque o
-# lote nÃ£o toca banco, migration, permissÃ£o por linha nem credencial de worker.
+# Superfície do portão de rota. Fecha os três escapes do inventário W00 sem
+# transformar /api em rota de membro: /landing vira espaço de assets, o
+# casamento por prefixo ganha fronteira e o bypass de autenticação só existe em
+# desenvolvimento. R2 pelo processo de 05/11: ADR novo (decisão nova), uma
+# revisão independente com critic_verdict PASS; sem security-auditor, porque o
+# lote não toca banco, migration, permissão por linha nem credencial de worker.
 task_id: SEC-010
 
 objective: >
-  O portÃ£o de rota passa a ter uma superfÃ­cie pÃºblica declarada em um Ãºnico
-  mÃ³dulo tipado, com modo exato, pasta ou ativos por caminho; /landing deixa de
-  ser pÃ¡gina pÃºblica e vira apenas espaÃ§o de assets, com redirect exato para /;
-  BIVAQUE_AUTH_BYPASS sÃ³ permite passar em desenvolvimento e falha fechado com
+  O portão de rota passa a ter uma superfície pública declarada em um único
+  módulo tipado, com modo exato, pasta ou ativos por caminho; /landing deixa de
+  ser página pública e vira apenas espaço de assets, com redirect exato para /;
+  BIVAQUE_AUTH_BYPASS só permite passar em desenvolvimento e falha fechado com
   503 fora dele; e as 84 rotas de /api declaram sua postura de acesso em um
   manifesto testado, sem abrir nenhuma rota de membro.
 
 authority:
   - tools/backend-kanban card PROXY-SURFACE-RISK
-  - docs/decisions/ADR-20261024-front-react-spa.md Â§5 (linhas 106-125) e Â§8 (148-169)
-  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (pÃ¡ginas pÃºblicas de entrada)
-  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (uma revisÃ£o, uma correÃ§Ã£o)
-  - docs/decisions/RISK_MATRIX.md:33 e :90-98 (R2 e evidÃªncia mÃ­nima)
-  - docs/PRODUCAO-PASSO-A-PASSO.md:91 (a variÃ¡vel nunca vale em produÃ§Ã£o)
+  - docs/decisions/ADR-20261024-front-react-spa.md §5 (linhas 106-125) e §8 (148-169)
+  - docs/decisions/ADR-20261022-entrada-do-prototipo.md (páginas públicas de entrada)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (uma revisão, uma correção)
+  - docs/decisions/RISK_MATRIX.md:33 e :90-98 (R2 e evidência mínima)
+  - docs/PRODUCAO-PASSO-A-PASSO.md:91 (a variável nunca vale em produção)
   - docs/agents/AGENT_ARCHITECTURE.md:56-74 (implementer, reviewer e verifier distintos)
-  - AGENTS.md (mandato de 02/11 e revisÃ£o independente)
+  - AGENTS.md (mandato de 02/11 e revisão independente)
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    apps/web/proxy.ts:6-40 mantÃ©m PUBLIC_PATHS e :41-54 compara por prefixo solto
+    apps/web/proxy.ts:6-40 mantém PUBLIC_PATHS e :41-54 compara por prefixo solto
     (caminho === entrada ou startsWith(entrada + "/"), e o ramo PUBLIC_POR_PASTA
-    usa startsWith(entrada) sem barra). ConsequÃªncias vivas: /api inteiro escapa
-    do portÃ£o, /convite/ABCD1234 e /prestadorx tambÃ©m passam, e /landing fica na
-    lista sem pÃ¡gina correspondente. apps/web/proxy.ts:60-63 lÃª
+    usa startsWith(entrada) sem barra). Consequências vivas: /api inteiro escapa
+    do portão, /convite/ABCD1234 e /prestadorx também passam, e /landing fica na
+    lista sem página correspondente. apps/web/proxy.ts:60-63 lê
     BIVAQUE_AUTH_BYPASS e :69-71 devolve NextResponse.next() antes de qualquer
-    verificaÃ§Ã£o, sem NODE_ENV: a variÃ¡vel ligada em ambiente implantado desliga o
-    portÃ£o por completo. NÃ£o existe apps/web/app/landing/page.tsx; a landing Ã©
+    verificação, sem NODE_ENV: a variável ligada em ambiente implantado desliga o
+    portão por completo. Não existe apps/web/app/landing/page.tsx; a landing é
     apps/web/app/page.tsx:3 e :47, e apps/web/public/landing tem 9 assets usados
     por apps/web/app/landing/landing.tsx:223-365 e por
-    apps/web/app/(preauth)/onboarding/components/onboarding-shell.tsx:89, entÃ£o
-    remover /landing da lista sem tratar assets quebra imagens do "/" anÃ´nimo.
+    apps/web/app/(preauth)/onboarding/components/onboarding-shell.tsx:89, então
+    remover /landing da lista sem tratar assets quebra imagens do "/" anônimo.
     apps/web/next.config.ts:55-60 registra que redirects de config rodam antes do
     proxy e do filesystem; :61-122 redireciona /login, /signup, /recuperar-senha,
-    /nova-senha e toda a subÃ¡rvore /onboarding, de modo que a allowlist de
-    apps/web/proxy.ts:165-173 nÃ£o Ã© alcanÃ§Ã¡vel por HTTP (drift registrado, nÃ£o
+    /nova-senha e toda a subárvore /onboarding, de modo que a allowlist de
+    apps/web/proxy.ts:165-173 não é alcançável por HTTP (drift registrado, não
     corrigido neste lote). tests/unit/onboarding/proxy-portao-do-app.test.ts:10-32
-    sÃ³ exercita /app, nunca liga o bypass e nÃ£o conhece /landing.
+    só exercita /app, nunca liga o bypass e não conhece /landing.
     tests/e2e/middleware-session-gate.spec.ts:1-27 cobre apenas /community
-    anÃ´nimo e /api/health. tests/scope/entrada-public-paths.test.mjs:17-24
-    reimplementa o prefixo solto e :32 afirma /convite/ABCD1234, subrota que nÃ£o
+    anônimo e /api/health. tests/scope/entrada-public-paths.test.mjs:17-24
+    reimplementa o prefixo solto e :32 afirma /convite/ABCD1234, subrota que não
     existe (apps/web/app/(preauth)/convite/actions.ts:255 monta
-    /convite?codigo=...). As 84 rotas de apps/web/app/api/**/route.ts nÃ£o tÃªm
-    declaraÃ§Ã£o de postura: 61 usam exigirSessao, 4 sÃ£o de operador, 5 de
-    credencial de worker, 4 de token de sessÃ£o, 4 de porta sem sessÃ£o, 2 de
-    catÃ¡logo pÃºblico, 1 de descadastro por token e 3 de infraestrutura sem
+    /convite?codigo=...). As 84 rotas de apps/web/app/api/**/route.ts não têm
+    declaração de postura: 61 usam exigirSessao, 4 são de operador, 5 de
+    credencial de worker, 4 de token de sessão, 4 de porta sem sessão, 2 de
+    catálogo público, 1 de descadastro por token e 3 de infraestrutura sem
     guarda. docs/PRODUCAO-PASSO-A-PASSO.md:91 diz em prosa para nunca definir a
-    variÃ¡vel em produÃ§Ã£o, mas :71-89 nÃ£o a lista na tabela de ambiente.
-    Nada disso Ã© vulnerabilidade confirmada; Ã© superfÃ­cie sem decisÃ£o registrada.
+    variável em produção, mas :71-89 não a lista na tabela de ambiente.
+    Nada disso é vulnerabilidade confirmada; é superfície sem decisão registrada.
 
 allowed_paths:
   - apps/web/proxy.ts
@@ -77,28 +77,28 @@ allowed_paths:
   - .visual/run-proxy-surface
 
 forbidden:
-  - editar qualquer route.ts de apps/web/app/api ou mudar a guarda de uma rota; o lote declara a postura, nÃ£o altera o handler
-  - afrouxar a superfÃ­cie â€” acrescentar caminho pÃºblico, transformar entrada exata em pasta ou apagar uma prova sem decisÃ£o registrada no ADR
-  - criar pÃ¡gina nova, mover a landing de / ou criar apps/web/app/landing/page.tsx sÃ³ para justificar o prefixo
-  - tornar /auth/confirmar-email pÃºblico ou removÃª-lo do portÃ£o
+  - editar qualquer route.ts de apps/web/app/api ou mudar a guarda de uma rota; o lote declara a postura, não altera o handler
+  - afrouxar a superfície — acrescentar caminho público, transformar entrada exata em pasta ou apagar uma prova sem decisão registrada no ADR
+  - criar página nova, mover a landing de / ou criar apps/web/app/landing/page.tsx só para justificar o prefixo
+  - tornar /auth/confirmar-email público ou removê-lo do portão
   - alterar os redirects de /login, /signup, /recuperar-senha, /nova-senha ou /onboarding* em apps/web/next.config.ts
   - tocar apps/app, supabase/, migrations ou qualquer regra de banco
-  - ligar BIVAQUE_AUTH_BYPASS em CI, produÃ§Ã£o, .env.local do E2E ou em teste que nÃ£o seja unitÃ¡rio com NODE_ENV stubado
-  - usar dado real, CPF, conta de produÃ§Ã£o ou banco remoto; rodar --linked, Docker ou rede
-  - marcar o cartÃ£o como done antes do merge; commitar, fazer push ou merge
+  - ligar BIVAQUE_AUTH_BYPASS em CI, produção, .env.local do E2E ou em teste que não seja unitário com NODE_ENV stubado
+  - usar dado real, CPF, conta de produção ou banco remoto; rodar --linked, Docker ou rede
+  - marcar o cartão como done antes do merge; commitar, fazer push ou merge
 
 acceptance:
-  - "O ADR docs/decisions/ADR-20261110-superficie-publica-do-proxy.md Ã© aceito e registra a trava do bypass sÃ³ em desenvolvimento com 503 fora dele, o modelo exata/pasta/ativos, /landing como espaÃ§o de assets com redirect exato para /, /auth/callback e /auth/callback-error como entradas explÃ­citas, /auth/confirmar-email gateado, /api pÃºblico com postura declarada por rota e o drift dos redirects de config sobre /login, /signup, /recuperar-senha, /nova-senha e /onboarding*; inclui as seÃ§Ãµes de evidÃªncia mÃ­nima R2 â€” baseline, divergÃªncia, ao menos trÃªs alternativas, custo de reversÃ£o, mÃ©trica de sucesso e condiÃ§Ã£o de reabertura."
-  - "apps/web/lib/security/route-surface.ts Ã© a Ãºnica fonte da superfÃ­cie â€” exporta PUBLIC_SURFACE com modo exata, pasta ou ativos, casaFronteira, isPublicPath, entradaEmAndamento e areaDoPrestador; apps/web/proxy.ts importa essas funÃ§Ãµes e nÃ£o mantÃ©m PUBLIC_PATHS, PUBLIC_POR_PASTA nem comparaÃ§Ã£o por prefixo solto."
-  - "O modo exata casa o caminho e a barra final; pasta casa o caminho e a subÃ¡rvore; ativos casa sÃ³ a subÃ¡rvore. NÃ£o sÃ£o pÃºblicos /loginx, /convite/ABCD1234, /auth/callback-falso, /apiario, /prestador-convitex, /landing exato e /onboarding/statusx; sÃ£o pÃºblicos /login, /convite, /convite/, /auth/callback, /auth/callback-error, /api, /api/qualquer, /prestador-convite/abc e /landing/hero-bivaque-arrival.webp; os predicados internos aceitam /onboarding/status e /prestador/ficha, e recusam /onboarding/statusx e /prestadorx."
-  - "/landing deixa de ser entrada de pÃ¡gina â€” o proxy nÃ£o a trata como pÃºblica e apps/web/next.config.ts redireciona o caminho exato /landing para / com 307; /landing/* continua servindo os assets da landing ao anÃ´nimo com 200 e /landing/qualquer responde 404; nenhuma imagem de apps/web/app/landing/landing.tsx ou de onboarding-shell.tsx quebra."
-  - "BIVAQUE_AUTH_BYPASS=true sÃ³ permite passar em NODE_ENV=development; em test, production ou NODE_ENV ausente o proxy responde 503 com log e sem x-middleware-next; com a variÃ¡vel ausente ou falsa nada muda; o teste unitÃ¡rio cobre os quatro estados e prova que a resposta nÃ£o Ã© NextResponse.next."
-  - "apps/web/lib/security/api-surface.ts classifica exatamente as 84 rotas de apps/web/app/api/**/route.ts em oito posturas â€” sessÃ£o pela porta da rota, operador, credencial de worker, token de sessÃ£o, porta sem sessÃ£o, catÃ¡logo pÃºblico, descadastro por token e infraestrutura sem guarda â€”, cada uma com marcador de guarda no arquivo e prova negativa citada ou motivo explÃ­cito de ser pÃºblica; o teste unitÃ¡rio falha com rota nÃ£o classificada, classificaÃ§Ã£o Ã³rfÃ£ ou marcador ausente."
-  - "As duas allowlists internas do proxy usam casaFronteira â€” /onboarding/status, /onboarding/documento, /onboarding/locality, /onboarding/perfil e a subÃ¡rvore de /prestador passam, e vizinhos como /onboarding/statusx e /prestadorx nÃ£o passam; nenhuma rota de membro nova fica acessÃ­vel e nenhuma rota permitida hoje deixa de passar."
-  - "tests/unit/security/route-surface.test.ts prova a tabela de casamento com os positivos e negativos acima; tests/unit/onboarding/proxy-portao-do-app.test.ts mantÃ©m os casos de /app e ganha bypass e /landing; tests/scope/entrada-public-paths.test.mjs lÃª a nova lista e falha se o proxy voltar a comparar por prefixo solto ou se /ajuda sair de (public); tests/e2e/middleware-session-gate.spec.ts cobre anÃ´nimo, membro, prestador, prÃ©-admissÃ£o verificada e prÃ©-admissÃ£o pendente com maxRedirects 0, incluindo /landing exato, /landing/*, /convite/ABCD1234, /auth/confirmar-email, /prestadorx e /community."
-  - "O drift dos redirects de config, que hoje torna a allowlist de /onboarding* inalcanÃ§Ã¡vel por HTTP, fica registrado no ADR e no corpo do PR sem remover os redirects neste lote; o E2E prova o destino decidido pelo proxy antes de a config redirecionar."
-  - "npx pnpm@11.18.0 gate e npx pnpm@11.18.0 test:e2e ficam verdes no commit entregue; git diff --stat sÃ³ toca allowed_paths; a prova, a revisÃ£o e o critic_verdict PASS do revisor independente ficam registrados no cartÃ£o PROXY-SURFACE-RISK, e o status done sÃ³ Ã© marcado no merge do coordenador."
-  - "A tabela de ambiente de docs/PRODUCAO-PASSO-A-PASSO.md:71-89 passa a listar BIVAQUE_AUTH_BYPASS como variÃ¡vel sÃ³ de desenvolvimento, coerente com a linha 91 e com o 503 fora de development."
+  - "O ADR docs/decisions/ADR-20261110-superficie-publica-do-proxy.md é aceito e registra a trava do bypass só em desenvolvimento com 503 fora dele, o modelo exata/pasta/ativos, /landing como espaço de assets com redirect exato para /, /auth/callback e /auth/callback-error como entradas explícitas, /auth/confirmar-email gateado, /api público com postura declarada por rota e o drift dos redirects de config sobre /login, /signup, /recuperar-senha, /nova-senha e /onboarding*; inclui as seções de evidência mínima R2 — baseline, divergência, ao menos três alternativas, custo de reversão, métrica de sucesso e condição de reabertura."
+  - "apps/web/lib/security/route-surface.ts é a única fonte da superfície — exporta PUBLIC_SURFACE com modo exata, pasta ou ativos, casaFronteira, isPublicPath, entradaEmAndamento e areaDoPrestador; apps/web/proxy.ts importa essas funções e não mantém PUBLIC_PATHS, PUBLIC_POR_PASTA nem comparação por prefixo solto."
+  - "O modo exata casa o caminho e a barra final; pasta casa o caminho e a subárvore; ativos casa só a subárvore. Não são públicos /loginx, /convite/ABCD1234, /auth/callback-falso, /apiario, /prestador-convitex, /landing exato e /onboarding/statusx; são públicos /login, /convite, /convite/, /auth/callback, /auth/callback-error, /api, /api/qualquer, /prestador-convite/abc e /landing/hero-bivaque-arrival.webp; os predicados internos aceitam /onboarding/status e /prestador/ficha, e recusam /onboarding/statusx e /prestadorx."
+  - "/landing deixa de ser entrada de página — o proxy não a trata como pública e apps/web/next.config.ts redireciona o caminho exato /landing para / com 307; /landing/* continua servindo os assets da landing ao anônimo com 200 e /landing/qualquer responde 404; nenhuma imagem de apps/web/app/landing/landing.tsx ou de onboarding-shell.tsx quebra."
+  - "BIVAQUE_AUTH_BYPASS=true só permite passar em NODE_ENV=development; em test, production ou NODE_ENV ausente o proxy responde 503 com log e sem x-middleware-next; com a variável ausente ou falsa nada muda; o teste unitário cobre os quatro estados e prova que a resposta não é NextResponse.next."
+  - "apps/web/lib/security/api-surface.ts classifica exatamente as 84 rotas de apps/web/app/api/**/route.ts em oito posturas — sessão pela porta da rota, operador, credencial de worker, token de sessão, porta sem sessão, catálogo público, descadastro por token e infraestrutura sem guarda —, cada uma com marcador de guarda no arquivo e prova negativa citada ou motivo explícito de ser pública; o teste unitário falha com rota não classificada, classificação órfã ou marcador ausente."
+  - "As duas allowlists internas do proxy usam casaFronteira — /onboarding/status, /onboarding/documento, /onboarding/locality, /onboarding/perfil e a subárvore de /prestador passam, e vizinhos como /onboarding/statusx e /prestadorx não passam; nenhuma rota de membro nova fica acessível e nenhuma rota permitida hoje deixa de passar."
+  - "tests/unit/security/route-surface.test.ts prova a tabela de casamento com os positivos e negativos acima; tests/unit/onboarding/proxy-portao-do-app.test.ts mantém os casos de /app e ganha bypass e /landing; tests/scope/entrada-public-paths.test.mjs lê a nova lista e falha se o proxy voltar a comparar por prefixo solto ou se /ajuda sair de (public); tests/e2e/middleware-session-gate.spec.ts cobre anônimo, membro, prestador, pré-admissão verificada e pré-admissão pendente com maxRedirects 0, incluindo /landing exato, /landing/*, /convite/ABCD1234, /auth/confirmar-email, /prestadorx e /community."
+  - "O drift dos redirects de config, que hoje torna a allowlist de /onboarding* inalcançável por HTTP, fica registrado no ADR e no corpo do PR sem remover os redirects neste lote; o E2E prova o destino decidido pelo proxy antes de a config redirecionar."
+  - "npx pnpm@11.18.0 gate e npx pnpm@11.18.0 test:e2e ficam verdes no commit entregue; git diff --stat só toca allowed_paths; a prova, a revisão e o critic_verdict PASS do revisor independente ficam registrados no cartão PROXY-SURFACE-RISK, e o status done só é marcado no merge do coordenador."
+  - "A tabela de ambiente de docs/PRODUCAO-PASSO-A-PASSO.md:71-89 passa a listar BIVAQUE_AUTH_BYPASS como variável só de desenvolvimento, coerente com a linha 91 e com o 503 fora de development."
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-010.task.yml
@@ -107,17 +107,17 @@ proof:
   - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
   - npx pnpm@11.18.0 test:e2e
   - npx pnpm@11.18.0 gate
-  - revisÃ£o independente registra critic_verdict PASS para o ADR e o diff; achados CRITICAL ou HIGH bloqueiam e medium ou low viram cartÃ£o
+  - revisão independente registra critic_verdict PASS para o ADR e o diff; achados CRITICAL ou HIGH bloqueiam e medium ou low viram cartão
 
 risk: >
-  R2 â€” a superfÃ­cie do portÃ£o decide quem entra em Ã¡rea de membro e o que
-  continua pÃºblico na entrada, no convite, no prestador e na prÃ©-admissÃ£o. Errar
-  a fronteira abre rota de membro ou fecha pÃ¡gina pÃºblica, e o efeito Ã© de
-  produto, nÃ£o mecÃ¢nico. Por isso a decisÃ£o fica em ADR aprovado com
-  critic_verdict PASS de revisor independente, trÃªs alternativas, custo de
-  reversÃ£o, mÃ©trica e condiÃ§Ã£o de reabertura. O lote nÃ£o toca banco, migration,
-  permissÃ£o por linha nem credencial de worker; o manifesto apenas lÃª os
-  handlers existentes, e a reversÃ£o Ã© um revert do commit, sem migraÃ§Ã£o de
+  R2 — a superfície do portão decide quem entra em área de membro e o que
+  continua público na entrada, no convite, no prestador e na pré-admissão. Errar
+  a fronteira abre rota de membro ou fecha página pública, e o efeito é de
+  produto, não mecânico. Por isso a decisão fica em ADR aprovado com
+  critic_verdict PASS de revisor independente, três alternativas, custo de
+  reversão, métrica e condição de reabertura. O lote não toca banco, migration,
+  permissão por linha nem credencial de worker; o manifesto apenas lê os
+  handlers existentes, e a reversão é um revert do commit, sem migração de
   dados.
 
 risk_level: R2
