@@ -7,7 +7,7 @@ const ITEM_CONDITIONS=['Novo','Seminovo','Usado','Precisa de reparo'];
 function propertyCardLine(x){
  const facts=[x.beds?`${x.beds} ${x.beds===1?'quarto':'quartos'}`:'',x.area?`${x.area} m²`:'',x.parking?`${x.parking} ${x.parking===1?'vaga':'vagas'}`:''].filter(Boolean).join(' · ');
  const later=x.avail&&x.avail>dateISO(0);
- return `<p class="card-meta">${x.condo?`${money(itemTotal(x))} com condomínio`:'Sem condomínio'}</p><p class="card-line">${icon('apartment')}${esc(facts||'Imóvel')}</p><span class="avail${later?' later':''}">${later?`Disponível a partir de ${new Date(`${x.avail}T12:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:'Disponível agora'}</span>`;
+ return `<p class="card-line">${icon('apartment')}${esc(facts||'Imóvel')}</p><span class="avail${later?' later':''}">${later?`Disponível a partir de ${new Date(`${x.avail}T12:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:'Disponível agora'}</span>`;
 }
 function pickupText(x){return x.pickup&&x.pickup>dateISO(0)?`Retirada a partir de ${new Date(`${x.pickup}T12:00`).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:'';}
 function itemCardLine(x){
