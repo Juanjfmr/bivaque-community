@@ -2,40 +2,34 @@ import { NextRequest } from "next/server"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // A prévia do convite valida o código antes de qualquer envio de e-mail (o envio
-// cria conta) e devolve o nome de quem convidou e o endereço declarado. O teste
-// troca a prévia do banco e o cliente de serviço.
+// cria conta) e devolve o nome de quem convidou e, no máximo, a dica mascarada
+// do endereço. Quem chega sem sessão NUNCA recebe o destinatário completo — o
+// endereço é da pessoa que está falando com a rota, não do convite (RUN-135).
 
 vi.mock("web/lib/convite/provision", () => ({ previewFamilyInviteCode: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
+vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
 import { POST } from "web/app/api/app/entry/invite/preview/route"
+import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 import { previewFamilyInviteCode } from "web/lib/convite/provision"
 import { createServerClient } from "web/lib/supabase/server"
 
 const prever = vi.mocked(previewFamilyInviteCode)
 const criarCliente = vi.mocked(createServerClient)
+const resolver = vi.mocked(resolverSessaoDaRequisicao)
 
 const ORIGEM = "http://localhost:3000"
 const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/invite/preview`
 const CABECALHO = "bivaque-spa"
 const CODIGO = "BVQ7K2MA"
 
-const mockOutboxOrdenar = vi.fn()
-const mockOutboxLimite = vi.fn()
-
 function clienteDeServico() {
   return {
-    from: (tabela: string) => {
-      if (tabela !== "outbox") throw new Error(`tabela inesperada: ${tabela}`)
-      return {
-        select: () => ({
-          eq: () => ({
-            filter: () => ({
-              order: () => ({ limit: mockOutboxLimite }),
-            }),
-          }),
-        }),
-      }
+    from: () => {
+      // A prévia não consulta tabela nenhuma para achar o endereço: o
+      // destinatário do outbox nunca é fonte da resposta.
+      throw new Error("a prévia do convite não deve consultar tabelas")
     },
   }
 }
@@ -57,11 +51,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   criarCliente.mockReturnValue(clienteDeServico() as never)
-  mockOutboxOrdenar.mockReturnValue({
-    data: [{ recipient: "familia@example.invalid" }],
-    error: null,
-  })
-  mockOutboxLimite.mockImplementation(() => mockOutboxOrdenar())
+  resolver.mockResolvedValue({
+    estado: "recusada",
+    sessao: { estado: "recusada", motivo: "sem-credencial" },
+  } as never)
   prever.mockResolvedValue({
     status: "ok",
     expiresAt: "2026-11-20T12:00:00.000Z",
@@ -101,29 +94,55 @@ describe("POST /api/app/entry/invite/preview", () => {
     expect(prever).not.toHaveBeenCalled()
   })
 
-  it("convite válido devolve quem convidou e o e-mail declarado", async () => {
+  it("sem sessão devolve só a dica, nunca o destinatário completo", async () => {
     const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
+    expect(resposta.status).toBe(200)
+
+    const corpo = await resposta.json()
+    expect(corpo).toEqual({
+      inviterName: "Maria Souza",
+      email: null,
+      emailHint: "f***a@example.invalid",
+    })
+    // Nem o endereço sintético do "outbox", nem qualquer endereço completo.
+    expect(JSON.stringify(corpo)).not.toContain("familia@example.invalid")
+  })
+
+  it("com sessão devolve o e-mail da sessão, não o do corpo", async () => {
+    resolver.mockResolvedValue({
+      estado: "autenticada",
+      via: "cookie",
+      usuario: { id: "pessoa", email: "Pessoa@Example.INVALID", appMetadata: {} },
+      cliente: {},
+      cabecalhos: {},
+    } as never)
+
+    const resposta = await POST(
+      requisicao({
+        cabecalho: CABECALHO,
+        corpo: { codigo: CODIGO, email: "outra@example.invalid" },
+      }),
+    )
+
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({
       inviterName: "Maria Souza",
-      email: "familia@example.invalid",
+      email: "pessoa@example.invalid",
       emailHint: "f***a@example.invalid",
     })
   })
 
-  it("limite de tentativas vira 429 e indisponível vira 503, sem ler o outbox", async () => {
+  it("limite de tentativas vira 429 e indisponível vira 503, sem revelar endereço", async () => {
     prever.mockResolvedValueOnce({ status: "rate_limited" })
     expect((await POST(requisicao({ cabecalho: CABECALHO }))).status).toBe(429)
-    expect(mockOutboxLimite).not.toHaveBeenCalled()
 
     prever.mockRejectedValueOnce(new Error("boom"))
     const indisponivel = await POST(requisicao({ cabecalho: CABECALHO }))
     expect(indisponivel.status).toBe(503)
     expect(await indisponivel.json()).toEqual({ erro: "convite-indisponivel" })
-    expect(mockOutboxLimite).not.toHaveBeenCalled()
   })
 
-  it("convite indisponível e e-mail de outro convite são 400 sem ler o outbox", async () => {
+  it("convite indisponível e e-mail de outro convite são 400 sem revelar endereço", async () => {
     prever.mockResolvedValueOnce({ status: "unavailable" })
     const invalido = await POST(requisicao({ cabecalho: CABECALHO }))
     expect(invalido.status).toBe(400)
@@ -133,6 +152,5 @@ describe("POST /api/app/entry/invite/preview", () => {
     const outro = await POST(requisicao({ cabecalho: CABECALHO }))
     expect(outro.status).toBe(400)
     expect(await outro.json()).toEqual({ erro: "email-nao-confere" })
-    expect(mockOutboxLimite).not.toHaveBeenCalled()
   })
 })

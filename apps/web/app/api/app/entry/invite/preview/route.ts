@@ -7,6 +7,7 @@ import {
   opcoesDoApp,
   responder,
   respostaIndisponivel,
+  sessaoOpcional,
 } from "../../../../../../lib/app-api/rota-do-app"
 import { isInviteCodeShape, normalizeInviteCode } from "../../../../../../lib/convite/code"
 import {
@@ -28,10 +29,11 @@ export const dynamic = "force-dynamic"
 // (`family_invite_code_preview`); aqui só se resolve o nome de quem convidou e o
 // e-mail que o convite declara.
 //
-// O código é credencial: vai no corpo do POST, nunca na URL. Quem tem o código
-// pode ver o endereço para que ele foi emitido — é o próprio destinatário, e é
-// o que permite a etapa de e-mail vir preenchida e só de leitura. O endereço
-// continua sem entrar em log.
+// O código é credencial: vai no corpo do POST, nunca na URL. O endereço completo
+// NÃO é devolvido só por quem tem o código: quem chega sem sessão recebe apenas
+// a dica mascarada (`emailHint`); o endereço inteiro só sai para a sessão
+// autenticada, e é o endereço da própria sessão — nunca o destinatário do
+// outbox, que pode ser de outra pessoa. Nada disso entra em log.
 
 const CORPO_MAXIMO = 4 * 1024
 
@@ -85,28 +87,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return responder(request, { erro: "convite-invalido" }, 400)
     }
 
-    // O convite é emitido com o e-mail no destinatário do outbox; o banco guarda
-    // só o digest da tabela do convite. O endereço só é devolvido a quem tem o
-    // código, e nunca vai para log.
-    const { data: mensagens, error: outboxError } = await servico
-      .from("outbox")
-      .select("recipient")
-      .eq("type", "family_invite")
-      .filter("payload->>invite_code", "eq", codigo)
-      .order("created_at", { ascending: false })
-      .limit(1)
-
-    if (outboxError) {
-      log.error("entry invite preview: outbox lookup failed", { message: outboxError.message })
-    }
-
-    const destinatario = mensagens?.[0]?.recipient ?? null
+    // O endereço devolvido é o da SESSÃO, quando existe: é o único que a rota
+    // pode afirmar como sendo de quem está falando com ela. Sem sessão, só a
+    // dica mascarada; o destinatário do outbox nunca é revelado, porque ter o
+    // código não prova ser a pessoa para quem o convite foi emitido.
+    const sessao = await sessaoOpcional(request)
+    const emailDaSessao =
+      sessao.estado === "autenticada" && sessao.sessao.usuario.email !== null
+        ? sessao.sessao.usuario.email.trim().toLowerCase()
+        : null
 
     return responder(
       request,
       {
         inviterName: preview.inviterName,
-        email: destinatario,
+        email: emailDaSessao,
         emailHint: preview.inviteeEmailHint,
       },
       200,

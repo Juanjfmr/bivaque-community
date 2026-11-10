@@ -1,0 +1,74 @@
+# RUN-135 (10/11/2026): fecha o pacote de encerramento do LAN-F01 — prova, revisão registrada e 3 correções.
+# Autoridade: revisão independente de 10/11 (PASS-COM-RESSALVA); card LAN-F01; ADR-20261101-entrada-unica-por-codigo.
+task_id: RUN-135
+
+objective: >
+  O LAN-F01 passa a ter prova de fechamento honesta: o texto de I-4/I-5 entra no repositório como
+  reconstrução rotulada (o original não foi arquivado), a revisão independente de 10/11 fica registrada,
+  e três defeitos apontados por ela são corrigidos — preview de convite sem sessão não devolve o
+  destinatário do outbox, upload de documento respeita o teto antes de bufferizar, e a allowlist de
+  origem do app não deriva de Host/x-forwarded-proto. A jornada de entrada ganha prova em tema escuro
+  com contraste medido, teclado e alvos de 44 px.
+
+authority:
+  - docs/LANCAMENTO.md (F01; critérios 3 e 5)
+  - tools/backend-kanban card LAN-F01
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/agents/AGENT_ARCHITECTURE.md (revisor independente)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão independente de 10/11: (a) I-4/I-5 só existem como referência (HANDOFF-20261104.md:57;
+    RUN-001.task.yml:31,69,80; board.json:5730), sem texto; (b) tests/e2e/f01-entrada-real.spec.ts:251-258
+    mede só "cor escura != cor clara", sem razão de contraste, e entrada-real-ajuda.ts:957-967 só tira
+    screenshot; (c) apps/web/app/api/app/entry/invite/preview/route.ts:88-110 devolve o recipient completo
+    do outbox sem sessão; (d) apps/web/app/api/app/entry/document/route.ts:49-52 valida só content-length;
+    (e) apps/web/lib/app-api/rota-do-app.ts:40-63 aceita origem derivada de Host + x-forwarded-proto.
+
+allowed_paths:
+  - docs/agents/reviews
+  - apps/web/app/api/app/entry/invite/preview/route.ts
+  - apps/web/app/api/app/entry/document/route.ts
+  - apps/web/lib/app-api/rota-do-app.ts
+  - apps/app/src/entrada
+  - tests/unit/app-api/entry
+  - tests/unit/app-api/entrada-convite-preview.test.ts
+  - tests/unit/app-api/entrada-documento.test.ts
+  - tests/unit/app-api/rota-do-app.test.ts
+  - tests/e2e/f01-entrada-real.spec.ts
+  - tests/e2e/entrada-real-ajuda.ts
+  - docs/agents/tasks/RUN-135.task.yml
+  - .visual/run-135
+
+forbidden:
+  - inventar o texto original de I-4/I-5; o documento deve rotular o que é reconstrução e o que é revisão nova
+  - editar migration, supabase/, apps/web/app/api/app/entry/(auth|cpf|combinado|interesses) ou apps/app/src/pecas
+  - baixar o limiar de contraste, apagar caso do E2E ou trocar prova por comentário
+  - push, merge ou force-push; ler/criar/editar .env
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "docs/agents/reviews/2026-11-04-revisao.md registra: o texto original de I-4/I-5 não foi arquivado; a reconstrução a partir dos commits 874575e1..f5e48625 e do RUN-008, marcada como reconstrução; a revisão independente de 10/11 com veredito e achados; e o link para RUN-001:80 e para a prova do cartão."
+  - "O preview de convite sem sessão devolve só o hint (nunca o recipient do outbox); com sessão, o e-mail é o da sessão. Teste unitário cobre os dois caminhos."
+  - "O upload de documento rejeita corpo acima de 10 MB antes de chamar formData(), inclusive sem content-length; teste unitário com stream grande e com header ausente."
+  - "A allowlist de rota-do-app.ts é fixa (origens configuradas + localhost/127.0.0.1) e não aceita origem forjada por Host/x-forwarded-proto; teste unitário com Host malicioso."
+  - "O caso de entrada roda em tema escuro com razão de contraste >= 4,5 (ou 3,0 em texto grande), Tab/foco e alvos >= 44 px, e captura os dois temas; o E2E roda no CI (sem Supabase local)."
+  - "Passam: vitest dos testes unitários tocados, gate --fast e tsc -p tests/e2e; o E2E de entrada é provado no CI."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/entry --maxWorkers=1
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - "CI do PR: f01-entrada-real verde (a máquina não tem Docker/Supabase local)"
+
+risk: segurança da entrada e prova de acessibilidade
+risk_level: R2
+adr: docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

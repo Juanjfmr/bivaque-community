@@ -931,6 +931,192 @@ export function esperarGruposDaCidade(
   )
 }
 
+// ── acessibilidade medida (contraste, foco e alvo de toque) ─────────────────
+//
+// A barra do F01 pede o mínimo de acessibilidade provado no navegador, nos dois
+// temas: contraste WCAG 2.x, foco visível ao teclado e alvo de toque de 44 px.
+// As medidas rodam no contexto da página, sobre o estilo COMPUTADO — não sobre
+// o CSS-fonte — porque é o que a pessoa realmente vê, com os tokens do tema.
+
+export type MedidaDeContraste = {
+  readonly alvo: string
+  readonly texto: string
+  readonly razao: number
+  readonly minimo: number
+  readonly tamanhoPx: number
+  readonly peso: number
+  readonly corDoTexto: string
+  readonly corDeFundo: string
+}
+
+/**
+ * Contraste de cada texto visível que casa com `seletor`, contra o fundo
+ * efetivo (o primeiro ancestral com fundo opaco). O mínimo é 4,5:1, ou 3:1 para
+ * texto grande (>=24 px, ou >=18,66 px em peso >=700), como a WCAG define.
+ * Devolve uma linha por elemento; quem decide o veredito é o caso de teste.
+ */
+export async function medirContrastes(page: Page, seletor: string): Promise<MedidaDeContraste[]> {
+  return page.evaluate((consulta) => {
+    type Rgba = readonly [number, number, number, number]
+
+    const lerCor = (valor: string): Rgba | null => {
+      const achado = valor.match(
+        /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+))?\s*\)/,
+      )
+      if (achado === null) return null
+      const alfa = achado[4] === undefined ? 1 : Number(achado[4])
+      return [Number(achado[1]), Number(achado[2]), Number(achado[3]), alfa]
+    }
+
+    const canal = (valor: number): number => {
+      const proporcao = valor / 255
+      return proporcao <= 0.03928 ? proporcao / 12.92 : ((proporcao + 0.055) / 1.055) ** 2.4
+    }
+
+    const luminancia = (cor: readonly [number, number, number]): number =>
+      0.2126 * canal(cor[0]) + 0.7152 * canal(cor[1]) + 0.0722 * canal(cor[2])
+
+    const razao = (
+      primeira: readonly [number, number, number],
+      segunda: readonly [number, number, number],
+    ): number => {
+      const a = luminancia(primeira)
+      const b = luminancia(segunda)
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+    }
+
+    const fundoEfetivo = (elemento: Element): readonly [number, number, number] => {
+      let atual: Element | null = elemento
+      while (atual !== null) {
+        const cor = lerCor(getComputedStyle(atual).backgroundColor)
+        if (cor !== null && cor[3] >= 0.999) return [cor[0], cor[1], cor[2]]
+        atual = atual.parentElement
+      }
+      return [255, 255, 255]
+    }
+
+    const rotulo = (elemento: Element): string => {
+      const nome = elemento.getAttribute("aria-label")
+      if (nome !== null && nome.trim() !== "") return nome.trim()
+      const texto = (elemento.textContent ?? "").replace(/\s+/g, " ").trim()
+      return texto === "" ? elemento.tagName.toLowerCase() : texto.slice(0, 60)
+    }
+
+    const medidas: MedidaDeContraste[] = []
+    const vistos = new Set<Element>()
+    for (const alvo of Array.from(document.querySelectorAll(consulta))) {
+      if (vistos.has(alvo)) continue
+      vistos.add(alvo)
+      const estilo = getComputedStyle(alvo)
+      if (
+        estilo.display === "none" ||
+        estilo.visibility === "hidden" ||
+        Number(estilo.opacity) === 0 ||
+        alvo.getClientRects().length === 0
+      ) {
+        continue
+      }
+      const corDoTexto = lerCor(estilo.color)
+      if (corDoTexto === null) continue
+      const fundo = fundoEfetivo(alvo)
+      const tamanhoPx = Number.parseFloat(estilo.fontSize)
+      const peso = Number.parseInt(estilo.fontWeight, 10) || 400
+      const grande = tamanhoPx >= 24 || (tamanhoPx >= 18.66 && peso >= 700)
+      medidas.push({
+        alvo: `${alvo.tagName.toLowerCase()}:${rotulo(alvo)}`,
+        texto: rotulo(alvo),
+        razao: Math.round(razao([corDoTexto[0], corDoTexto[1], corDoTexto[2]], fundo) * 100) / 100,
+        minimo: grande ? 3 : 4.5,
+        tamanhoPx,
+        peso,
+        corDoTexto: estilo.color,
+        corDeFundo: `rgb(${fundo[0]}, ${fundo[1]}, ${fundo[2]})`,
+      })
+    }
+    return medidas
+  }, seletor)
+}
+
+export type FocoDeTeclado = {
+  readonly rotulo: string
+  readonly tag: string
+  readonly comIndicador: boolean
+  readonly contorno: string
+}
+
+/**
+ * Percorre a ordem de tabulação com `Tab` de verdade e devolve o que recebeu o
+ * foco, na ordem. Para quando o foco sai da página (corpo) ou no limite pedido.
+ * `comIndicador` olha o contorno computado: foco sem sinal visível reprova.
+ */
+export async function percorrerFocoComTab(page: Page, maximo = 8): Promise<FocoDeTeclado[]> {
+  const focos: FocoDeTeclado[] = []
+  for (let passo = 0; passo < maximo; passo += 1) {
+    await page.keyboard.press("Tab")
+    const foco = await page.evaluate(() => {
+      const ativo = document.activeElement
+      if (ativo === null || ativo === document.body || ativo === document.documentElement) {
+        return null
+      }
+      const estilo = getComputedStyle(ativo)
+      const rotulo = (ativo.getAttribute("aria-label") ?? ativo.textContent ?? "")
+        .replace(/\s+/g, " ")
+        .trim()
+      const largura = Number.parseFloat(estilo.outlineWidth)
+      return {
+        rotulo: rotulo === "" ? ativo.tagName.toLowerCase() : rotulo.slice(0, 60),
+        tag: ativo.tagName.toLowerCase(),
+        comIndicador: estilo.outlineStyle !== "none" && Number.isFinite(largura) && largura > 0,
+        contorno: `${estilo.outlineStyle} ${estilo.outlineWidth}`,
+      }
+    })
+    if (foco === null) break
+    focos.push(foco)
+  }
+  return focos
+}
+
+export type AlvoPequeno = {
+  readonly rotulo: string
+  readonly largura: number
+  readonly altura: number
+}
+
+/**
+ * Alvos interativos menores que `minimo` px nos dois eixos (a barra do F01 usa
+ * 44). Link dentro de uma frase fica fora: é a exceção de alvo em linha da
+ * WCAG 2.5.8, e a frase em volta é quem dá o alvo real.
+ */
+export async function alvosMenoresQue(
+  page: Page,
+  seletor: string,
+  minimo = 44,
+): Promise<AlvoPequeno[]> {
+  return page.evaluate(
+    ({ consulta, tamanho }) => {
+      const rotuloDe = (elemento: Element): string => {
+        const nome = elemento.getAttribute("aria-label")
+        if (nome !== null && nome.trim() !== "") return nome.trim()
+        const texto = (elemento.textContent ?? "").replace(/\s+/g, " ").trim()
+        return texto === "" ? elemento.tagName.toLowerCase() : texto.slice(0, 60)
+      }
+      const pequenos: AlvoPequeno[] = []
+      for (const alvo of Array.from(document.querySelectorAll(consulta))) {
+        const caixa = alvo.getBoundingClientRect()
+        if (caixa.width === 0 && caixa.height === 0) continue
+        if (caixa.width >= tamanho && caixa.height >= tamanho) continue
+        pequenos.push({
+          rotulo: rotuloDe(alvo),
+          largura: Math.round(caixa.width),
+          altura: Math.round(caixa.height),
+        })
+      }
+      return pequenos
+    },
+    { consulta: seletor, tamanho: minimo },
+  )
+}
+
 // ── capturas (evidência, nunca versionada: .visual/ é ignorada) ─────────────
 
 async function esperarAsFontes(page: Page): Promise<void> {
