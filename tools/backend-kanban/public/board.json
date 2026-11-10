@@ -2383,7 +2383,7 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Em apps/web/app/(shell)/notifications/page.tsx: invitation_accepted navega para /profile?user={actor} (:143), mas /profile não lê o parâmetro user — o perfil de terceiro é /profile/[userId], então o link cai no próprio perfil de quem clicou. report_resolved cai no default e não navega (:157), apesar de ter rótulo e aba. admission_rejected não aparece em nenhuma das três funções (classifyNotification, formatNotificationLabel, navigateToNotification), então exibe o texto genérico 'nova notificação' e não navega. O gate G1 exige que todo destino de retorno e deep link seja válido.",
       "checklist": [
         "invitation_accepted navega para /profile/{actorUserId}",
@@ -2391,12 +2391,16 @@
         "admission_rejected classificado, rotulado e com destino",
         "Teste cobre o mapeamento de cada tipo para o seu destino"
       ],
-      "proof": ["npx pnpm@11.18.0 gate"],
+      "proof": [
+        "npx pnpm@11.18.0 gate",
+        "10/11: PR #161 mergeado em 9e21be56; destino-do-app.ts mapeia os 18 tipos lidos das migrations; admission_rejected → /app/entrar/analise, invitation_accepted → destino seguro /app/voce, report_resolved → alvo visível ou seguro; testes destinos-de-todos-os-tipos e rotas cobrem o mapeamento."
+      ],
       "tests": [],
       "links": ["docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-11-10",
+      "sourceRevision": "9e21be56",
+      "completedAt": "2026-11-10"
     },
     {
       "id": "PROXY-SURFACE-RISK",
@@ -5337,7 +5341,7 @@
       "phase": "Lote 7 — Desapegos e Imóveis",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "description": "Substituir os 43 bairros do protótipo pela malha oficial nacional, com nome e centro; ETL única, atualização a cada censo.",
       "checklist": [
         "Baixar a malha de bairros do IBGE (Censo 2022)",
@@ -5345,16 +5349,19 @@
         "Substituir a carga do protótipo",
         "pgTAP e reset limpo"
       ],
-      "proof": [],
+      "proof": [
+        "10/11: PR #162 mergeado em 822ee307 (head 09a42212) com CI verde; a migration 20261107140757 carrega o Censo 2022 (17.562 bairros/895 municípios) de forma idempotente; o job «Reapply the IBGE neighborhoods load» reaplica a carga no container do banco e exige a mesma contagem; pgTAP e reset limpo."
+      ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["ADR-LOCALIZACAO"],
-      "updatedAt": "2026-10-22",
-      "sourceRevision": "f05fc69b",
+      "updatedAt": "2026-11-10",
+      "sourceRevision": "822ee307",
       "blockers": [],
       "completedChecklist": [false, false, false, false],
       "id": "DATA-IBGE-BAIRROS",
-      "title": "Carga da malha de bairros do IBGE (Censo 2022)"
+      "title": "Carga da malha de bairros do IBGE (Censo 2022)",
+      "completedAt": "2026-11-10"
     },
     {
       "phase": "Lote 7 — Desapegos e Imóveis",
@@ -5927,7 +5934,7 @@
       "blockers": [
         "`supabase db reset`, `supabase gen types --local` e `prova-sequencia.mjs` bloqueados nesta máquina: o CLI não abre o pipe do Docker. Resolver o acesso do CLI (Docker Desktop) e reexecutar `node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f05-eventos-real.spec.ts` para a prova canônica."
       ],
-      "updatedAt": "2026-11-05",
+      "updatedAt": "2026-11-10",
       "sourceRevision": "7faad666",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
@@ -5948,7 +5955,8 @@
         "05/11: defeito de piece registrado (fora dos allowed_paths): os tons `contornado` e `texto` do `Botao` não seguem o tema escuro — o texto e o fundo computados vêm do tema claro (`rgb(28,38,43)` sobre superfície clara) mesmo com `prefers-color-scheme: dark` valendo. A tela da jornada passou a usar o tom `tonal` (par de tokens correto) e o contraste é medido no E2E; o piece precisa do ajuste para as próximas jornadas não repetirem o problema.",
         "05/11, rodada 3 — ressalvas da revisão de contrato (Qwen, PASS com ressalvas) e da auditoria de segurança (Sonnet, LIBERA com ressalvas), fechadas: (1) cancelado e concluído ficam fora da agenda, como na web antiga; (2) a agenda devolve o nome da cidade do vínculo `current` e o cabeçalho usa esse nome — a tela não anuncia mais a cidade da demonstração; (3) o instante do cursor é reescrito em UTC com regex ancorada no fim (só o formato do servidor passa) e **sem perder microssegundos** — `toISOString()` cortaria para milissegundos, o `eq` do desempate nunca casaria e a virada da página repetiria o último encontro, que é justamente o defeito que a rodada 2 fechou; cursor com aspas, vírgula, parênteses ou id inválido é 400; (4) capa só dentro da pasta de quem organiza, recusando `..`, `//` e ``; (5) recusa do banco vira erro tipado — `P0001` (organizador confirmando no próprio encontro) e `42501` são 403, `23514`/`22023` são 400, e a mensagem do Postgres nunca sai; (6) `AbortSignal` em toda chamada, incluindo as escritas e o 'Ver mais', cancelando ao desmontar; (7) comentário do módulo de presença corrigido (a ação antiga ainda tem a checagem embutida); (8) E2E de escrita direta do visitante na rota de presença e de pergunta, sem interface, com Bearer puro (cookie + Bearer seria recusado como conflito e não provaria autorização) → 403 `de-outra-cidade`.",
         "05/11: as políticas que cobrem a jornada já estão provadas no banco pelos pgTAP `supabase/tests/consulta-outra-cidade.sql` (leitura de encontro de outra cidade e o corte de presença), `event-questions.sql` e `event-question-with-service-request.sql` (pergunta vinculada ao evento e destinatário derivado no banco), `events-rsvp.sql`, `event-rsvp-scope.sql` e `event-rsvp-not-going.sql` (presença por cidade, escopo e o terceiro estado) e `events-insert-returning.sql`/`events-private-venue-denials.sql` (criação e local). Nenhuma migration nova nesta entrega.",
-        "05/11: `npx pnpm@11.18.0 gate` COMPLETO verde no fechamento da rodada 3 (lint, typecheck, typecheck:e2e, build, build:app, test, secrets). A falha que travava `test` nas rodadas 1 e 2 era a data fixa de `provision-requires-verification.test.ts` e foi corrigida na main mesclada em `f8b01dca` (o teste passou a usar data relativa); 2066/2066."
+        "05/11: `npx pnpm@11.18.0 gate` COMPLETO verde no fechamento da rodada 3 (lint, typecheck, typecheck:e2e, build, build:app, test, secrets). A falha que travava `test` nas rodadas 1 e 2 era a data fixa de `provision-requires-verification.test.ts` e foi corrigida na main mesclada em `f8b01dca` (o teste passou a usar data relativa); 2066/2066.",
+        "10/11: retirada da tela antiga de /events concluída (PR #176, merge 0d3acb30: 5 redirects, 11 specs migrados, revisão independente PASS); restam a revisão cega contra a Nextdoor e a acessibilidade (critérios 2 e 5)."
       ],
       "id": "LAN-F05",
       "title": "F05 Eventos ligados ao banco",
@@ -6250,13 +6258,14 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-06",
+      "updatedAt": "2026-11-10",
       "sourceRevision": "5f34bfe2",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-019 fase 1, autorizada pelo coordenador após o inventário de .visual/run-019/relatorio.md; família incluída pelo PR #147. Commits 21e333fb (13 regras 307 para 12 rotas, IDs/query e negativas) e 1b7c82e3 (E2E e rastreador adaptados). Gate --fast passou (lint e tipos, incluindo E2E), escopo 222/222 e unitários 2.525/2.525 em 226 arquivos, com um worker. Contrato substitui blocked_by por nota da fase 1 e lacunas no fechamento deste cartão. Sem revisão por outro modelo, E2E, servidor, banco, build ou gate completo local por ordem explícita; runtime/rastreador ficam para CI. LAN-TROCA permanece next, sem fechamento integral.",
-        "06/11: rodada única após FAIL de .visual/run-019/revisao-qwen.md, confrontada com 5f34bfe2. Corrigida a recusa de /groups para /app/entrar?redirect=/groups e o comentário corrompido; decisão revista mantém /indicacoes/:id na web até F04 para preservar Ajudou a resolver, com spec recommendation-reply-notify restaurado de origin/main, negativa unitária e rastreador ajustados; jornada de serviço de duas personas restaurada entre criação/painel web e pedido/conversa no app, sem skip. Ficam 12 regras 307 para 11 rotas. Gate --fast, escopo 222/222 e unitários 2.525/2.525 (226 arquivos, um worker, 60,32 s) passaram no diff local. Relatório registra o recorte e a ausência da gravação de leitura do acompanhamento antigo. Sem E2E, servidor, ambiente, segredos ou nova revisão externa por ordem explícita. BLOQUEIO: git add recusado ao criar .git/worktrees/lan-troca/index.lock fora da raiz gravável do sandbox; nenhum commit novo nem push. Próximo passo: criar os três commits por item em sessão com acesso aos metadados Git e executar git push origin chore/lan-troca; runtime segue para CI."
+        "06/11: rodada única após FAIL de .visual/run-019/revisao-qwen.md, confrontada com 5f34bfe2. Corrigida a recusa de /groups para /app/entrar?redirect=/groups e o comentário corrompido; decisão revista mantém /indicacoes/:id na web até F04 para preservar Ajudou a resolver, com spec recommendation-reply-notify restaurado de origin/main, negativa unitária e rastreador ajustados; jornada de serviço de duas personas restaurada entre criação/painel web e pedido/conversa no app, sem skip. Ficam 12 regras 307 para 11 rotas. Gate --fast, escopo 222/222 e unitários 2.525/2.525 (226 arquivos, um worker, 60,32 s) passaram no diff local. Relatório registra o recorte e a ausência da gravação de leitura do acompanhamento antigo. Sem E2E, servidor, ambiente, segredos ou nova revisão externa por ordem explícita. BLOQUEIO: git add recusado ao criar .git/worktrees/lan-troca/index.lock fora da raiz gravável do sandbox; nenhum commit novo nem push. Próximo passo: criar os três commits por item em sessão com acesso aos metadados Git e executar git push origin chore/lan-troca; runtime segue para CI.",
+        "10/11: fase 1 + eventos — PR #176 mergeado em 0d3acb30; 18 arquivos antigos de /events removidos, 5 regras 307, 11 specs migrados + events-redirects.spec.ts, revisão independente PASS. Restam as superfícies de F02/F04/F06/F07/F09/F10 listadas no card."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6398,7 +6407,7 @@
         "tests/e2e/group-join-reason.spec.ts"
       ],
       "blockers": [],
-      "updatedAt": "2026-11-02",
+      "updatedAt": "2026-11-10",
       "sourceRevision": "1d395dcc",
       "links": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
@@ -6409,7 +6418,8 @@
         "02/11: mais uma queda do lote @stateful no CI do PR #125 (revisão 1bd1b699, job Install, test, and build): group-join-reason.spec.ts:176 esperou o botão Entrar no grupo aberto e não o achou, nos dois retries; o rerun sem mudança de código fechou verde (21m40s). É a mesma assinatura das quedas anteriores — teste serial dependente de estado/conexão do Supabase local —, não regressão do diff, e fica registrada aqui em vez de sumir do relatório.",
         "02/11: causa achada em parte — specs que gravam na conta semeada rodavam em paralelo nos três tamanhos. recon-032 (bloquear), provider-vitrine (catálogo), recon-018 (cadastro, limite do Auth) e synthetic-people foram para o lote serial @stateful; group-base centraliza o botão antes do clique (cabeçalho fixo). Com isso o CI do #121 e do #122 fechou verde. Ficou retries: 1 só no CI da suíte da web antiga, como paliativo visível (flaky no relatório); a perda de conexão com o Supabase local sob carga segue sem causa.",
         "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120.",
-        "04/11: PR #128, revisão dd75d8d0, job Install, test, and build: group-admin-cycle.spec.ts:120 (membro pendente cancela o pedido, @stateful) falhou em 1440 nos dois retries e foi flaky em 768; depois de Cancelar pedido o botão Pedir entrada não apareceu em 5 s. O código da revisão é idêntico ao de origin/ds/lancamento f1d14a2d, cujo Pull Request CI fechou verde em 03/11; mesma família de queda do lote @stateful de grupo."
+        "04/11: PR #128, revisão dd75d8d0, job Install, test, and build: group-admin-cycle.spec.ts:120 (membro pendente cancela o pedido, @stateful) falhou em 1440 nos dois retries e foi flaky em 768; depois de Cancelar pedido o botão Pedir entrada não apareceu em 5 s. O código da revisão é idêntico ao de origin/ds/lancamento f1d14a2d, cujo Pull Request CI fechou verde em 03/11; mesma família de queda do lote @stateful de grupo.",
+        "10/11: reapareceu no PR #177 (run 42885590360): group-admin-cycle.spec.ts:120 em tablet-768 e desktop-1440, mesmo timeout; o rerun sem mudança de código fechou verde — mesma assinatura da instabilidade do lote serial."
       ],
       "completedChecklist": [true, true, false, false]
     },
@@ -6457,7 +6467,7 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "Em duas passadas da suíte inteira do apps/app (05/11, 768 e 375), o caso `casca.spec.ts:118` (trocar de cidade) estourou 30 s esperando `[data-campo=\"cidade\"]`: o diálogo não abria. O `materializarEntrada` (`apps/app/lib/navegacao/react.tsx`) decide pelo estado do render; se uma sobreposição é aberta entre o primeiro quadro e o `replace` dele, esse `replace` grava `entradaPadrao` por cima e apaga a sobreposição. A guarda correta é decidir dentro do transform (`chave === CHAVE_SEM_REGISTRO`), e ela foi escrita e revertida nesta frente porque `apps/app/lib` está fora dos allowed_paths do RUN-006.",
       "checklist": [
         "Reproduzir sob carga: suíte inteira repetida até o timeout de `casca.spec.ts:118` aparecer com trace",
@@ -6467,13 +6477,15 @@
       "dependencies": [],
       "tests": ["apps/app/tests/e2e/casca.spec.ts"],
       "blockers": [],
-      "updatedAt": "2026-11-05",
-      "sourceRevision": "45c0ccb1",
+      "updatedAt": "2026-11-10",
+      "sourceRevision": "8b0f1d83",
       "links": ["docs/LANCAMENTO.md", "apps/app/lib/navegacao/react.tsx"],
       "proof": [
         "05/11: 2 falhas em 5 passadas completas (768 e 375), nenhuma reproduzida em isolamento (`--repeat-each=15`) nem nas duas passadas finais com as correções do RUN-006.",
-        "Mecanismo lido no código: `materializarEntrada` usa `temEntrada(estado)` do render; a escrita é assíncrona e pode vencer a de `abrir()`."
-      ]
+        "Mecanismo lido no código: `materializarEntrada` usa `temEntrada(estado)` do render; a escrita é assíncrona e pode vencer a de `abrir()`.",
+        "10/11: correção integrada pelo PR #170; transicoes.ts:43-46 decide no instante da escrita (CHAVE_SEM_REGISTRO) e react.tsx:320-339 serializa a materialização por roteador; teste transicoes.test.ts:90; CI verde na revisão integrada."
+      ],
+      "completedAt": "2026-11-10"
     },
     {
       "id": "RUN-130",
@@ -6661,11 +6673,12 @@
       "dependencies": ["LAN-F01"],
       "links": ["docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"],
       "proof": [
-        "05/11: lote de acabamento (Haiku 5.5) — redirecionamento 307 das rotas antigas de entrada do apps/web para /app/entrar em apps/web/next.config.ts, com /consent, /auth/callback, /auth/confirmar-email e /auth/callback-error fora; E2E antigos migrados (commits 2a9acabb, c0397181, c9f77ae1, 6b50e9f0); revisão Qwen FAIL na primeira entrega (E2E não migrados, caminho de falha do e-mail), corrigido na rodada única"
+        "05/11: lote de acabamento (Haiku 5.5) — redirecionamento 307 das rotas antigas de entrada do apps/web para /app/entrar em apps/web/next.config.ts, com /consent, /auth/callback, /auth/confirmar-email e /auth/callback-error fora; E2E antigos migrados (commits 2a9acabb, c0397181, c9f77ae1, 6b50e9f0); revisão Qwen FAIL na primeira entrega (E2E não migrados, caminho de falha do e-mail), corrigido na rodada única",
+        "10/11: 3/3 verificados — redirects em apps/web/next.config.ts e middleware-session-gate.spec.ts:18 prova /app/entrar nos 3 projetos; o card só fecha quando LAN-F01 (now) fechar, porque a regra do board não deixa done depender de now."
       ],
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-05",
+      "updatedAt": "2026-11-10",
       "sourceRevision": "6b50e9f0"
     },
     {
