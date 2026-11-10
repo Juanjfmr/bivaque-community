@@ -32,6 +32,7 @@ allowed_paths:
   - apps/app/src/pecas
   - apps/app/src/telas/Evento.tsx
   - apps/app/package.json
+  - package.json
   - pnpm-lock.yaml
   - docs/agents/tasks/RUN-132.task.yml
   - .visual/run-132
@@ -47,6 +48,7 @@ forbidden:
 acceptance:
   - "O job de PR sobe .visual/** com if: always() e nome visual-evidence, inclusive quando o teste falha; o workflow continua verde no caminho feliz."
   - "Um spec de axe percorre /app/inicio, /app/mercado, /app/negocios, /app/guia e /app/conversas em claro e escuro, nas larguras 375, 768 e 1440, com wcag2a/wcag2aa/wcag21aa, e falha quando há violação serious ou critical; nenhuma violação séria fica em fixme."
+  - "A dependência de teste @axe-core/playwright fica no package.json da raiz, ao lado de @playwright/test, e é resolvida pelo workspace; a SPA não ganha dependência de execução nova e o scope test de dependências fixas da SPA continua verde."
   - "O mesmo spec cobre teclado e foco: Tab alcança a ação primária, Enter ativa, Esc fecha sobreposição e o foco volta; 'Não vou' é clicado; prefers-reduced-motion é emulado e a animação de folha não roda; o contraste de texto e do tom contornado é >= 4,5 (ou 3,0 em texto grande) nos dois temas."
   - "Um spec de paginação clica 'Ver mais' em Guia e Negócios (Início não tem o botão hoje e a lacuna fica registrada no cabeçalho do spec), exige a segunda página sem id duplicado e sem perder foco/rolagem; se o dado demo não tiver página 2, o spec ajusta só o dado de teste, nunca o seed canônico."
   - "O PR CI roda `pnpm exec tsc -p tests/e2e/tsconfig.json` como passo próprio e falha quando um spec novo quebra o tipo."
