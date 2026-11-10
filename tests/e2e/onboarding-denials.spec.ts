@@ -37,16 +37,23 @@ test.describe("onboarding: denial paths", () => {
     ).toBeVisible()
   })
 
-  test("/events leaves the proxy gate and lands on the app agenda with query intact", async ({
+  test("/events redirects to the app agenda, and the query survives the HTTP hop", async ({
     page,
+    request,
   }) => {
     // RUN-133/F05: /events saiu da lista de rotas que o portão vê — o redirect
-    // de configuração roda antes dele. A recusa continua, agora dentro do app
-    // (sem sessão, a agenda pede entrada de novo); a query chega ao destino.
+    // de configuração roda antes dele. A query chega ao destino no 307; o
+    // roteador do app pode normalizá-la ao entrar, então a prova de query é a
+    // camada HTTP, e o navegador prova o destino e o estado de sessão.
+    const redirect = await request.get("/events?origem=aviso", { maxRedirects: 0 })
+    expect(redirect.status()).toBe(307)
+    const location = redirect.headers()["location"] ?? ""
+    expect(location).toContain("/app/agenda")
+    expect(location).toContain("origem=aviso")
+
     await page.goto("/events?origem=aviso")
 
-    await expect(page).toHaveURL(/\/app\/agenda\?/)
-    expect(page.url()).toContain("origem=aviso")
+    await expect(page).toHaveURL(/\/app\/agenda/)
     await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
     await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })

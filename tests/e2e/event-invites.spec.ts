@@ -90,14 +90,13 @@ test.describe("event invitation fan-out: endereço antigo chega ao encontro novo
     await page.goto(`/events/${EVENT_ID}`)
     await expect(page).toHaveURL(new RegExp(`/app/evento/${EVENT_ID}$`))
 
-    // Then no people-search box exists inside the presence block either. A D43
-    // proibia busca de pessoas na seção de convites; a seção saiu, então a
-    // asserção muda de superfície sem perder a propriedade: o encontro do app
-    // não oferece campo de busca de pessoas.
-    const presenca = page
-      .locator("section")
-      .filter({ has: page.getByRole("heading", { name: "Presença" }) })
-    await expect(presenca).toBeVisible({ timeout: 15000 })
-    await expect(presenca.locator('input[type="search"]')).toHaveCount(0)
+    // Then the event screen offers no people-search box. A D43 proibia busca de
+    // pessoas na seção de convites; a seção saiu com a tela antiga, então a
+    // asserção muda de superfície sem perder a propriedade. O bloco de presença
+    // não é exigido: o evento do seed está concluído e a tela o esconde.
+    const evento = page.locator('[data-tela="evento"]').first()
+    await expect(evento).toBeVisible({ timeout: 15000 })
+    await expect(evento.locator('input[type="search"]')).toHaveCount(0)
+    await expect(evento.getByRole("heading", { name: /Convidar para este evento/ })).toHaveCount(0)
   })
 })
