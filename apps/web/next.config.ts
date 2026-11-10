@@ -103,6 +103,15 @@ const nextConfig: NextConfig = {
           ["/configuracoes/familia", "/app/voce"],
           ["/inicio", "/app/inicio"],
           ["/explorar", "/app/busca"],
+          // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes
+          // de `/events/:id` porque o Next aplica a primeira regra que casa e
+          // `:id` capturaria "novo" como encontro. As regras com dois segmentos
+          // depois do id preservam o id no destino; a query segue pelo Next.
+          ["/events/novo", "/app/agenda"],
+          ["/events/:id/editar", "/app/evento/:id"],
+          ["/events/:id/perguntas", "/app/evento/:id"],
+          ["/events/:id", "/app/evento/:id"],
+          ["/events", "/app/agenda"],
         ] as const
       ).map(([source, destination]) => ({
         source,

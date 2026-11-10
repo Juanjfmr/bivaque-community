@@ -66,7 +66,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
 }
 
 test.describe("RSVP with not_going", () => {
-  test("the event detail page shows three RSVP buttons", async ({ page }) => {
+  test("the event detail page in the app shows the RSVP choices", async ({ page }) => {
     // Given a session of a locality member
     await seedSession(page.context())
     await page.setViewportSize({ width: 1280, height: 800 })
@@ -74,10 +74,15 @@ test.describe("RSVP with not_going", () => {
     // When they open an event detail (using a real seed.sql event id)
     await page.goto(`/events/${EVENT_ID}`)
 
-    // Then the three RSVP states are visible: Vou, Talvez, Não vou
-    await expect(page.getByRole("button", { name: /^Vou/ })).toBeVisible()
-    await expect(page.getByRole("button", { name: /^Talvez/ })).toBeVisible()
+    // Then RUN-133/F05 hands the old address to the app's event screen
+    await expect(page).toHaveURL(new RegExp(`/app/evento/${EVENT_ID}$`))
+
+    // And the choices the app really has are offered: Vou / Não vou. O "Talvez"
+    // era estado exclusivo da tela antiga e saiu com ela (o app modela presença
+    // como indo/não indo); a ausência fica provada em vez de sumir da cobertura.
+    await expect(page.getByRole("button", { name: /^Vou/ })).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole("button", { name: /^Não vou/ })).toBeVisible()
+    await expect(page.getByRole("button", { name: /^Talvez/ })).toHaveCount(0)
   })
 
   test("the organizer sees the not_going transition as a notification", async ({ page }) => {

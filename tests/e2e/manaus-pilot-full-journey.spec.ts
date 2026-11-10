@@ -251,40 +251,48 @@ test.describe("recommendations journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("events journey", () => {
-  test("events page refuses an anonymous visitor into the app entry", async ({ page }) => {
+  test("events page takes an anonymous visitor to the app agenda, which refuses the read", async ({
+    page,
+  }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
-    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
-    // o destino mudou.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
+    // Then RUN-133/F05: o redirect de configuração roda antes do portão e
+    // entrega a pessoa à agenda do app; sem sessão, a agenda não inventa
+    // conteúdo — pede entrada de novo dentro da própria tela.
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+    await expect(page.getByRole("heading", { name: "Agenda da cidade" })).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 
-  test("events page with consent cookie renders events UI", async ({ page, context }) => {
+  test("events page with consent cookie renders the app agenda", async ({ page, context }) => {
     // Given a browser with consent cookie
     await seedSession(context)
 
     // When the user navigates to the events page
     await page.goto("/events")
 
-    // Then the events page renders its UI
-    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible()
+    // Then the old address lands on the app's agenda, not the old screen
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Agenda da cidade" })).toBeVisible({
+      timeout: 15000,
+    })
   })
 
-  test("events page shows create event toggle", async ({ page, context }) => {
+  test("events page shows the create event action", async ({ page, context }) => {
     // Given the consent cookie
     await seedSession(context)
     await page.goto("/events")
 
-    // Then the create event toggle in the page header is visible. The empty states
-    // repeat the same call to action when the member has no events of their own,
-    // so the header toggle -- first in document order -- is the one asserted.
-    await expect(page.getByRole("button", { name: "Criar evento" }).first()).toBeVisible()
+    // Then the app's agenda offers "Criar encontro" (o antigo "Criar evento"
+    // morreu com a tela antiga; a ação continua existindo no app).
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+    await expect(page.getByRole("button", { name: "Criar encontro" }).first()).toBeVisible({
+      timeout: 15000,
+    })
   })
 })
 

@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs"
+import { existsSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 import { getRedirectStatus } from "next/dist/lib/redirect-status"
 import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match"
@@ -24,6 +24,11 @@ const TROCADAS = [
   ["/configuracoes/familia", "/app/voce"],
   ["/inicio", "/app/inicio"],
   ["/explorar", "/app/busca"],
+  ["/events", "/app/agenda"],
+  ["/events/novo", "/app/agenda"],
+  [`/events/${ID}`, `/app/evento/${ID}`],
+  [`/events/${ID}/editar`, `/app/evento/${ID}`],
+  [`/events/${ID}/perguntas`, `/app/evento/${ID}`],
 ] as const
 
 // Mesmos matchers do resolve-routes do Next, sem servidor. O helper experimental
@@ -106,4 +111,16 @@ describe("LAN-TROCA fase 1", () => {
       expect((await resolver(caminho)).headers.get("location")).toBeNull()
     },
   )
+
+  // F05: a tela antiga sai inteira — nenhum page.tsx e nenhuma action sobram
+  // para alguém "voltar" editando a pasta. A prova é de ausência: o diretório
+  // não existe mais no checkout. A falha lista o que sobrou, para o bloqueio
+  // nunca ser "um teste vermelho" sem nome.
+  it("a pasta antiga de eventos não deixa tela nem action para trás", () => {
+    const pasta = join(shell, "events")
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
 })
