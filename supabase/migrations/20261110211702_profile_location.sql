@@ -154,7 +154,7 @@ immutable
 set search_path = ''
 as $$
   select 2 * 6371008.8 * pg_catalog.asin(
-    pg_catalog.least(
+    least(
       1::double precision,
       pg_catalog.sqrt(
         pg_catalog.power(
