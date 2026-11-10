@@ -47,6 +47,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # Os specs de E2E da raiz são TypeScript e não passam pelo typecheck dos
+      # workspaces; sem este passo um spec quebrado só aparecia depois de subir
+      # o Supabase inteiro. Os specs de apps/app entram no `tsc --noEmit` do
+      # build do app, que inclui `tests/`.
+      - name: Typecheck E2E specs
+        run: pnpm exec tsc -p tests/e2e/tsconfig.json
+
       - name: Unit, privacy and scope tests
         run: pnpm test
 
@@ -179,3 +186,15 @@ jobs:
             test-results/
             apps/web/playwright-report/
             apps/web/test-results/
+
+      # `.visual/` é ignorado pelo Git e concentra as capturas de tela das
+      # provas visuais. Sem o artefato, a evidência de uma falha de UI morre
+      # junto com a máquina do CI.
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-evidence
+          if-no-files-found: ignore
+          path: .visual/
+          retention-days: 7
