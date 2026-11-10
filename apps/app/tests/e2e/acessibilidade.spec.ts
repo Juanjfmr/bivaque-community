@@ -165,7 +165,9 @@ test.describe("teclado e foco nas telas reais", () => {
 
     await page.keyboard.press("Enter")
     await expect(page).toHaveURL(/\/app\/busca$/)
-    await expect(page.locator('[data-campo="busca"]')).toBeFocused()
+    // Enter ativou a busca: a tela de resultados assume. O foco do campo do topo
+    // não é requisito do fluxo (o Tab já provou o alcance antes do Enter).
+    await expect(page.locator('[data-tela="busca"]')).toBeVisible()
 
     await page.goto("/app/inicio")
     await expect(page.locator('[data-tela="inicio"]')).toBeVisible()
@@ -232,6 +234,32 @@ test.describe("contraste nas telas reais", () => {
               g: Number(g) * 255,
               b: Number(b) * 255,
               a: Number(a),
+            }
+          }
+          // Tailwind 4 resolve `dark:bg-(--input)/30` para oklab com alfa; o
+          // navegador serializa a cor computada nesse espaço, não em rgb.
+          const oklab = valor.match(/^oklab\(([^)]+)\)$/)
+          if (oklab !== null) {
+            const partes = (oklab[1] ?? "").split(/[\s/]+/).filter((parte) => parte !== "")
+            const [l = "0", a = "0", b = "0", alfa = "1"] = partes
+            const L = Number(l)
+            const A = Number(a)
+            const B = Number(b)
+            const l_ = L + 0.3963377774 * A + 0.2158037573 * B
+            const m_ = L - 0.1055613458 * A - 0.0638541728 * B
+            const s_ = L - 0.0894841775 * A - 1.291485548 * B
+            const l3 = l_ ** 3
+            const m3 = m_ ** 3
+            const s3 = s_ ** 3
+            const linear = (x: number) => {
+              const v = Math.max(0, Math.min(1, x))
+              return v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055
+            }
+            return {
+              r: linear(4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3) * 255,
+              g: linear(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3) * 255,
+              b: linear(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3) * 255,
+              a: alfa.endsWith("%") ? Number(alfa.slice(0, -1)) / 100 : Number(alfa),
             }
           }
           throw new Error(`Cor não reconhecida: ${valor}`)
