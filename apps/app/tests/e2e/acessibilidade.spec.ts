@@ -52,6 +52,8 @@ type Superficie = Readonly<{
   nome: string
   caminho: string
   seletor: string
+  /** Conteúdo que só existe no estado populado; evita medir loading/erro. */
+  conteudo?: string
   preparar: (page: Page) => Promise<void> | void
   /** Abre a sobreposição ou popula a tela antes da análise, quando precisa. */
   abrir?: (page: Page) => Promise<void>
@@ -147,6 +149,7 @@ const SUPERFICIES_NOVAS: readonly Superficie[] = [
     nome: "Pedido",
     caminho: `/app/pedido/${PEDIDO_DA_PROVA.id}`,
     seletor: '[data-tela="pedido"]',
+    conteudo: 'button:has-text("Ver negócio")',
     preparar: simularPedido,
   },
 ]
@@ -355,6 +358,9 @@ test.describe("axe nas telas reais", () => {
           await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
           if (superficie.abrir !== undefined) await superficie.abrir(page)
           await expect(page.locator(superficie.seletor)).toBeVisible()
+          if (superficie.conteudo !== undefined) {
+            await expect(page.locator(superficie.conteudo)).toBeVisible()
+          }
           await aguardarAnimacoes(page)
 
           const resultado = await new AxeBuilder({ page }).withTags([...TAGS_DO_AXE]).analyze()
@@ -411,8 +417,9 @@ test.describe("teclado e foco nas telas reais", () => {
 })
 
 test.describe("teclado nas superfícies novas", () => {
-  // A matriz de teclado roda uma vez, no projeto que fixa 375/768/1440; os
-  // seis viewports de layout ficam nas capturas e na varredura de rolagem.
+  // O teclado novo roda uma vez no desktop-1440; o teste preexistente (:371)
+  // continua nos seis projetos. As três larguras de layout ficam na matriz
+  // axe, nas capturas e na varredura de rolagem.
   test.beforeEach(() => {
     if (test.info().project.name !== "desktop-1440") test.skip()
   })
@@ -549,9 +556,6 @@ test.describe("teclado nas superfícies novas", () => {
 })
 
 test.describe("movimento reduzido nas telas reais", () => {
-  test.beforeEach(() => {
-    if (test.info().project.name !== "desktop-1440") test.skip()
-  })
   test("com prefers-reduced-motion a folha do guia não anima", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await simularProgresso(page)
@@ -615,9 +619,6 @@ test.describe("movimento reduzido nas telas reais", () => {
 })
 
 test.describe("contraste nas telas reais", () => {
-  test.beforeEach(() => {
-    if (test.info().project.name !== "desktop-1440") test.skip()
-  })
   test("texto e tom contornado passam AA nos dois temas", async ({ page }) => {
     await simularProgresso(page)
     await simularGuia(page)
