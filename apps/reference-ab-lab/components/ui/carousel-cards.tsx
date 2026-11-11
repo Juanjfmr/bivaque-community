@@ -1,4 +1,4 @@
-/** Adapted from 21st.dev @kokonutd/carousel-cards, demo 19168 (MIT).\n * Source copy: 21st-carousel-cards.source.txt. Diff limited to props, accessible favorites and linking. */\n"use client";
+/** Adapted from 21st.dev @kokonutd/carousel-cards, demo 19168 (MIT).\n * Source copy: 21st-carousel-cards.source.txt. Adaptations: data props, accessible favorites, links, Bivaque price units, external images. */\n"use client";
 
 /**
  * @author: @dorianbaffier
@@ -20,6 +20,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export interface ExperienceItem {
   href?: string;
+  priceLabel?: string;
   id: string;
   title: string;
   image: string;
@@ -60,7 +61,7 @@ const ExperienceCard = ({ experience }: { experience: ExperienceItem }) => {
         variant="ghost"
       >
         <Heart className={`h-4 w-4 stroke-[2px] ${saved ? "fill-rose-500 text-rose-500" : ""}`} />
-        <span className="sr-only">Add to favorites</span>
+        <span className="sr-only">Salvar nos favoritos</span>
       </Button>
       {experience.badge && (
         <Badge className="absolute top-2 left-2 rounded-md bg-white/90 px-1.5 py-0.5 font-medium text-black text-xs">
@@ -98,7 +99,7 @@ const ExperienceCard = ({ experience }: { experience: ExperienceItem }) => {
           </span>
         )}
         <span className="ml-auto text-xs tracking-tight">
-          {experience.currency || "€"} {experience.price} / guest
+          {experience.price === 0 ? "Gratuito" : `${experience.currency || "R$"} ${experience.price.toLocaleString("pt-BR")} ${experience.priceLabel ?? ""}`}
         </span>
       </CardFooter>
     </div>
