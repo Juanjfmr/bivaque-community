@@ -100,13 +100,15 @@ const SUPERFICIES_DO_LANCAMENTO: readonly Superficie[] = [
  * a tela montar; a análise espera o resultado dele.
  */
 /**
- * Abre o menu Criar por clique. O Radix abre no pointerdown e o scrim sobe
- * antes de o click sintético terminar, então o Playwright vê o scrim
- * interceptando o alvo e repete para sempre; o caminho real de teclado
- * (Tab + Enter) é coberto em "teclado nas superfícies novas".
+ * Abre o menu Criar pelo teclado. O Radix sobe o scrim no pointerdown e o
+ * clique sintético do Playwright cai nele (o menu chega a abrir e fecha), então
+ * o preparo usa o mesmo caminho da pessoa: foco no botão Criar e Enter. O
+ * caminho de teclado da tela continua coberto em "teclado nas superfícies
+ * novas".
  */
 async function abrirMenuCriar(page: Page): Promise<void> {
-  await page.locator(SELETOR_CRIAR).click({ force: true })
+  await page.locator(SELETOR_CRIAR).focus()
+  await page.keyboard.press("Enter")
   await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
 }
 
@@ -734,16 +736,44 @@ test.describe("sem rolagem horizontal e sem erro de console", () => {
 
         const medidas = await page.evaluate(() => {
           const conteudo = document.querySelector("#conteudo")
+          if (conteudo === null) {
+            return { documento: 0, corpo: 0, conteudo: 0, transbordo: "" }
+          }
+          // Quando algo passa da largura, aponta o elemento mais largo para o
+          // relatório dizer onde olhar em vez de só o número.
+          const largura = conteudo.clientWidth
+          const transbordo =
+            conteudo.scrollWidth <= largura
+              ? ""
+              : Array.from(conteudo.querySelectorAll("*"))
+                  .map((elemento) => ({
+                    elemento,
+                    direita: elemento.getBoundingClientRect().right,
+                  }))
+                  .filter((item) => item.direita > largura + 1)
+                  .sort((a, b) => b.direita - a.direita)
+                  .slice(0, 3)
+                  .map((item) => {
+                    const nome = item.elemento.className
+                      .toString()
+                      .split(" ")
+                      .filter((classe) => classe !== "")
+                      .slice(0, 2)
+                      .join(".")
+                    return `${item.elemento.tagName.toLowerCase()}${nome === "" ? "" : `.${nome}`} até ${Math.round(item.direita)}px`
+                  })
+                  .join(" | ")
           return {
             documento: document.documentElement.scrollWidth - window.innerWidth,
             corpo: document.body.scrollWidth - window.innerWidth,
-            conteudo: conteudo === null ? 0 : conteudo.scrollWidth - conteudo.clientWidth,
+            conteudo: conteudo.scrollWidth - largura,
+            transbordo,
           }
         })
         const caminho = `${superficie.nome} em ${largura}px`
         expect(medidas.documento, caminho).toBeLessThanOrEqual(0)
         expect(medidas.corpo, caminho).toBeLessThanOrEqual(0)
-        expect(medidas.conteudo, caminho).toBeLessThanOrEqual(0)
+        expect(medidas.conteudo, `${caminho} ${medidas.transbordo}`).toBeLessThanOrEqual(0)
       }
     }
 
