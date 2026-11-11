@@ -1,0 +1,47 @@
+name: Browser smoke public Bivaque preview
+on:
+  push:
+    branches:
+      - bivaque21st-preview-20261111
+    paths:
+      - ".github/workflows/bivaque21st-browser-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        working-directory: experiments/bivaque-21st-native
+        run: npm install --no-audit --no-fund
+      - name: Test public links in Chromium
+        working-directory: experiments/bivaque-21st-native
+        run: |
+          node --input-type=module <<'JS'
+          import { chromium } from "@playwright/test";
+          const urls = [
+            "https://raw.githack.com/Juanjfmr/bivaque-community/bivaque21st-preview-20261111/preview-site/index.html",
+            "https://cdn.jsdelivr.net/gh/Juanjfmr/bivaque-community@bivaque21st-preview-20261111/preview-site/index.html",
+          ];
+          const browser = await chromium.launch({channel: "chrome", headless: true});
+          for (const url of urls) {
+            const page = await browser.newPage({viewport:{width:375,height:812}});
+            const errors=[];
+            page.on("pageerror",e=>errors.push(e.message));
+            try {
+              const resp=await page.goto(url,{waitUntil:"domcontentloaded",timeout:25000});
+              await page.waitForTimeout(1500);
+              const h1=await page.locator("h1").allTextContents();
+              const body=(await page.locator("body").innerText()).slice(0,130);
+              console.log(JSON.stringify({url,status:resp?.status(),h1,body,errors}));
+            }catch(e){console.log(JSON.stringify({url,error:String(e).slice(0,300)}))}
+            await page.close();
+          }
+          await browser.close();
+          JS
