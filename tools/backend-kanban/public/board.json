@@ -5938,8 +5938,8 @@
       "blockers": [
         "`supabase db reset`, `supabase gen types --local` e `prova-sequencia.mjs` bloqueados nesta máquina: o CLI não abre o pipe do Docker. Resolver o acesso do CLI (Docker Desktop) e reexecutar `node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f05-eventos-real.spec.ts` para a prova canônica."
       ],
-      "updatedAt": "2026-11-10",
-      "sourceRevision": "7faad666",
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "7c836a76",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -5960,13 +5960,15 @@
         "05/11, rodada 3 — ressalvas da revisão de contrato (Qwen, PASS com ressalvas) e da auditoria de segurança (Sonnet, LIBERA com ressalvas), fechadas: (1) cancelado e concluído ficam fora da agenda, como na web antiga; (2) a agenda devolve o nome da cidade do vínculo `current` e o cabeçalho usa esse nome — a tela não anuncia mais a cidade da demonstração; (3) o instante do cursor é reescrito em UTC com regex ancorada no fim (só o formato do servidor passa) e **sem perder microssegundos** — `toISOString()` cortaria para milissegundos, o `eq` do desempate nunca casaria e a virada da página repetiria o último encontro, que é justamente o defeito que a rodada 2 fechou; cursor com aspas, vírgula, parênteses ou id inválido é 400; (4) capa só dentro da pasta de quem organiza, recusando `..`, `//` e ``; (5) recusa do banco vira erro tipado — `P0001` (organizador confirmando no próprio encontro) e `42501` são 403, `23514`/`22023` são 400, e a mensagem do Postgres nunca sai; (6) `AbortSignal` em toda chamada, incluindo as escritas e o 'Ver mais', cancelando ao desmontar; (7) comentário do módulo de presença corrigido (a ação antiga ainda tem a checagem embutida); (8) E2E de escrita direta do visitante na rota de presença e de pergunta, sem interface, com Bearer puro (cookie + Bearer seria recusado como conflito e não provaria autorização) → 403 `de-outra-cidade`.",
         "05/11: as políticas que cobrem a jornada já estão provadas no banco pelos pgTAP `supabase/tests/consulta-outra-cidade.sql` (leitura de encontro de outra cidade e o corte de presença), `event-questions.sql` e `event-question-with-service-request.sql` (pergunta vinculada ao evento e destinatário derivado no banco), `events-rsvp.sql`, `event-rsvp-scope.sql` e `event-rsvp-not-going.sql` (presença por cidade, escopo e o terceiro estado) e `events-insert-returning.sql`/`events-private-venue-denials.sql` (criação e local). Nenhuma migration nova nesta entrega.",
         "05/11: `npx pnpm@11.18.0 gate` COMPLETO verde no fechamento da rodada 3 (lint, typecheck, typecheck:e2e, build, build:app, test, secrets). A falha que travava `test` nas rodadas 1 e 2 era a data fixa de `provision-requires-verification.test.ts` e foi corrigida na main mesclada em `f8b01dca` (o teste passou a usar data relativa); 2066/2066.",
-        "10/11: retirada da tela antiga de /events concluída (PR #176, merge 0d3acb30: 5 redirects, 11 specs migrados, revisão independente PASS); restam a revisão cega contra a Nextdoor e a acessibilidade (critérios 2 e 5)."
+        "10/11: retirada da tela antiga de /events concluída (PR #176, merge 0d3acb30: 5 redirects, 11 specs migrados, revisão independente PASS); restam a revisão cega contra a Nextdoor e a acessibilidade (critérios 2 e 5).",
+        "11/11: F05 fecha com os seis criterios entregues. Revisao cega contra a regua Nextdoor e auditoria de acessibilidade do app provadas no App Visual Smoke verde do PR #185 (matriz axe em 11 superficies x 3 larguras x 2 temas, teclado, contraste, reduced-motion e overflow; capturas .visual/run-136 retidas). Tela antiga de /events retirada pelo PR #176 (merge 0d3acb30: 5 redirects 307, portao do proxy, 11 specs migrados, revisao independente PASS). E2E f05-eventos-real 21/21 e gate completo verde na rodada 3. Ressalvas baixas da troca viraram cartoes (EVENTOS-LOCALITY-LINK, EVENTOS-RESIDUOS-POS-TROCA)."
       ],
       "id": "LAN-F05",
       "title": "F05 Eventos ligados ao banco",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
+      "completedAt": "2026-11-11",
       "description": "Escopo em docs/LANCAMENTO.md (F05). Pronta só pelos seis critérios de pronto.",
       "checklist": [
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal",
