@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Book, Check, Copy } from 'lucide-react';
+import { CalendarDays, Check, Copy } from 'lucide-react';
 
 // Shadcn UI Components
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -124,14 +124,14 @@ export function CommunityHubCard({
               Compartilhe o convite com pessoas da guarnição.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Input value={inviteLink} readOnly className="flex-grow" aria-label="Invite Link" />
+              <Input value={inviteLink} readOnly className="flex-grow" aria-label="Link de convite" />
               <Button onClick={copyToClipboard} className="w-full sm:w-auto">
                 {hasCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                 {hasCopied ? 'Copiado!' : 'Copiar convite'}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Get a free bestseller for every friend who joins!
+              Convites sujeitos às regras de acesso da comunidade.
             </p>
           </motion.div>
 
@@ -169,7 +169,7 @@ export function CommunityHubCard({
                   className="flex items-center gap-3 text-sm"
                 >
                   <div className="p-1.5 bg-muted rounded-md">
-                    <Book className="h-4 w-4 text-muted-foreground" />
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <span>
                     <span className="font-medium text-foreground">"{book.title}"</span> · {book.author}
