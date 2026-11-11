@@ -8,7 +8,7 @@ on:
       - ".github/workflows/bivaque-native-expo-ui-apk.yml"
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: bivaque-expo-ui-apk
   cancel-in-progress: true
@@ -55,11 +55,19 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk out/Bivaque_Expo_UI_Beta_Android.apk
           test -s out/Bivaque_Expo_UI_Beta_Android.apk
           sha256sum out/Bivaque_Expo_UI_Beta_Android.apk | tee out/SHA256SUMS.txt
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Bivaque-Expo-UI-Beta-Android
-          path: |
-            experiments/bivaque-native-v1/out/Bivaque_Expo_UI_Beta_Android.apk
-            experiments/bivaque-native-v1/out/SHA256SUMS.txt
-          retention-days: 14
+      - name: Publish public prerelease for Android testing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="bivaque-expo-ui-android-beta-0.2.0-20261111"
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --prerelease \
+              --title "Bivaque Expo UI · Beta nativo Android 0.2.0" \
+              --notes "Build de teste Android, isolado da produção. Expo SDK 56, Expo UI, Expo Image. Dados locais; não integrado ao Supabase."
+          fi
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" \
+            out/Bivaque_Expo_UI_Beta_Android.apk out/SHA256SUMS.txt --clobber
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets,url | \
+            node -e 'let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{const d=JSON.parse(s);console.log(d.url);for(const a of d.assets)console.log(a.name,a.url);if(!d.assets.some(a=>a.name==="Bivaque_Expo_UI_Beta_Android.apk"))process.exit(1)})'
