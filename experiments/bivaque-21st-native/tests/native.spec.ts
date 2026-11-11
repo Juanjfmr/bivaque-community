@@ -57,3 +57,38 @@ test("Detail, search, publish",async({page})=>{
  await expect(page.getByRole("button",{name:"Publicar"})).toBeEnabled();
  await page.screenshot({path:"proof/publicar.png",fullPage:true});
 });
+
+test("P0/P1 mobile: tabs legible, categories filter, save does not navigate",async({page})=>{
+  await page.setViewportSize({width:375,height:812});
+  const errors:string[]=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  await page.goto("/");
+  await page.getByRole("navigation",{name:"Bottom Navigation"}).getByRole("button",{name:"Mercado"}).click();
+  await expect(page.getByRole("radio",{name:"Desapegos"})).toBeVisible();
+  await page.screenshot({path:"proof/mercado-mobile-375.png",fullPage:true});
+  await page.getByRole("radio",{name:"Infantil"}).click();
+  await expect(page.getByText("Berço com colchão, pouco uso")).toBeVisible();
+  await expect(page.getByText("Geladeira duplex")).toHaveCount(0);
+  await page.getByRole("radio",{name:"Móveis"}).click();
+  await expect(page.getByText("Sofá de três lugares")).toBeVisible();
+  await expect(page.getByText("Berço com colchão, pouco uso")).toHaveCount(0);
+  await page.getByRole("radio",{name:"Todos"}).click();
+  await page.locator(".listing .save button").first().click();
+  await expect(page.getByText("Entre pessoas de confiança.")).toBeVisible();
+  await page.getByRole("navigation",{name:"Bottom Navigation"}).getByRole("button",{name:"Você"}).click();
+  await page.getByRole("button",{name:"Salvos"}).click();
+  await expect(page.getByText("Berço com colchão, pouco uso")).toBeVisible();
+  await page.screenshot({path:"proof/salvos-mobile-375.png",fullPage:true});
+  expect(errors).toEqual([]);
+});
+
+test("P1 mobile: native segmented and group header",async({page})=>{
+  await page.setViewportSize({width:375,height:812});
+  await page.goto("/");
+  await page.getByRole("navigation",{name:"Bottom Navigation"}).getByRole("button",{name:"Comunidade"}).click();
+  await expect(page.getByRole("radio",{name:"Perguntas"})).toBeVisible();
+  await page.getByRole("radio",{name:"Grupos"}).click();
+  await page.getByRole("button",{name:"Ver grupo"}).first().click();
+  await expect(page.getByText("Convide para o grupo")).toBeVisible();
+  await page.screenshot({path:"proof/grupo-mobile-375.png",fullPage:true});
+});
