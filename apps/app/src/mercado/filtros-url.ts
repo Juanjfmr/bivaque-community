@@ -9,6 +9,8 @@
  * `tipo` também aceito na grafia antiga (`apartment`/`house`).
  */
 
+import { mesclarNaUrl, texto } from "@/src/navegacao/quadro"
+
 export type FiltrosDaUrl = Readonly<{
   /** Busca de texto (título/descrição); "" quando ausente. */
   q: string
@@ -33,12 +35,6 @@ export const FILTROS_DA_URL_PADRAO: FiltrosDaUrl = {
   precoMinCents: null,
   precoMaxCents: null,
   pagina: 1,
-}
-
-function texto(valor: unknown): string | null {
-  if (typeof valor === "string" && valor.trim() !== "") return valor.trim()
-  if (typeof valor === "number" && Number.isFinite(valor)) return String(valor)
-  return null
 }
 
 /** Inteiro não negativo; torto vira null, nunca zero disfarçado. */
@@ -104,12 +100,7 @@ export function mesclarFiltrosNaUrl(
   atual: Record<string, unknown>,
   valores: Record<string, string | number | null>,
 ): Record<string, unknown> {
-  const saida: Record<string, unknown> = { ...atual }
-  for (const [chave, valor] of Object.entries(valores)) {
-    if (valor === null) delete saida[chave]
-    else saida[chave] = valor
-  }
-  return saida
+  return mesclarNaUrl(atual, valores)
 }
 
 /**

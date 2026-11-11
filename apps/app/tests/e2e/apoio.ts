@@ -393,3 +393,67 @@ export async function simularPedido(page: Page): Promise<void> {
     await rota.fulfill({ json: { pedido: PEDIDO_DA_PROVA } })
   })
 }
+
+/**
+ * A busca da prova (LAN-TROCA): um resultado de cada tipo que a tela mostra,
+ * todos falando do mesmo termo, mais um termo que não acha nada. Serve para
+ * separar "a lista filtrada chegou" de "o estado vazio abriu" sem depender dos
+ * fixtures de outra tela — o que interessa aqui é o termo que veio no endereço,
+ * não o conteúdo do banco.
+ */
+export const TERMO_DA_PROVA = "ipiranga"
+export const TERMO_SEM_ACHADO = "zarabatana"
+export const CIDADE_DA_BUSCA = "Manaus"
+
+/** Os campos de cada tipo que a rota `/api/app/busca` devolve. */
+export const BUSCA_DA_PROVA = {
+  anuncios: [
+    {
+      id: "anuncio-ipiranga",
+      title: "Moto 150cc seminova do Ipiranga",
+      tipo: "item",
+      precoCentavos: 850000,
+      bairro: "Ipiranga",
+    },
+  ],
+  negocios: [{ id: "negocio-ipiranga", nome: "Oficina Ipiranga", categoria: "servicos" }],
+  perguntas: [
+    {
+      id: "pergunta-ipiranga",
+      title: "Alguém indica mecânico perto da avenida Ipiranga?",
+      respostas: 2,
+      resolvida: false,
+      grupo: null,
+    },
+  ],
+  grupos: [{ id: "grupo-ipiranga", nome: "Vizinhos do Ipiranga", membros: 5 }],
+  guia: [
+    {
+      id: "guia-ipiranga",
+      title: "Serviços e escolas do Ipiranga",
+      detalhe: "Endereços e contatos do bairro.",
+    },
+  ],
+} as const
+
+const BUSCA_VAZIA = { anuncios: [], negocios: [], perguntas: [], grupos: [], guia: [] } as const
+
+/**
+ * `/api/app/busca` respondendo como o servidor: o termo do endereço decide se
+ * volta a lista da prova ou nada. O Início da cidade fica só com a cidade, para
+ * o estado sem termo não herdar resultado nenhum de outro fixture.
+ */
+export async function simularBuscaDaProva(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/busca(?:\?|$)/, async (rota) => {
+    const termo = new URL(rota.request().url()).searchParams.get("q") ?? ""
+    const achou = termo.toLocaleLowerCase("pt-BR") === TERMO_DA_PROVA
+    await rota.fulfill({
+      json: { cidade: CIDADE_DA_BUSCA, ...(achou ? BUSCA_DA_PROVA : BUSCA_VAZIA) },
+    })
+  })
+  await page.route(/\/api\/app\/inicio(?:\?|$)/, async (rota) => {
+    await rota.fulfill({
+      json: { ...BUSCA_VAZIA, cidade: CIDADE_DA_BUSCA, eventos: [], proximo: null },
+    })
+  })
+}

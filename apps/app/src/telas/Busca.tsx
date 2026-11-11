@@ -1,6 +1,7 @@
-﻿"use client"
+"use client"
 
-import { useEffect, useState } from "react"
+import { useLocation, useNavigate } from "@tanstack/react-router"
+import { useEffect, useRef, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
@@ -21,10 +22,12 @@ import {
 } from "@/lib/dados/inicio"
 import { TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useRotaAtual } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { termoDaUrl, termosParaUrl, trazOutroTermo } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
 import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
+import { mesclarNaUrl } from "@/src/navegacao/quadro"
 
 /**
  * A busca, com o conteúdo real da cidade da sessão (LAN-F02). O desenho é o da
@@ -37,6 +40,13 @@ import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/catego
  * Sem termo, a grade "Explorar" lê o Início da cidade; com termo (2+ letras),
  * os resultados vêm da rota de busca. Foto de anúncio e de negócio ainda não
  * existe no banco, então o cartão usa a capa com ícone.
+ *
+ * O termo também chega pelo endereço (LAN-TROCA): `/explorar/busca?q=<termo>`
+ * cai aqui como `/app/busca?q=<termo>`, e aí o campo já nasce preenchido —
+ * no primeiro render, sem passar pelo estado vazio. A URL é só a porta de
+ * entrada; a partir dela quem escreve é a pessoa, e a digitação vence o `q` de
+ * origem. Que o campo não seja limpo ao sair da tela é decisão do produto, não
+ * desta rota.
  */
 
 const FILTROS: readonly ItemDeFiltro[] = [
@@ -83,6 +93,58 @@ export function Busca() {
   const { consulta, definirConsulta: setConsulta } = casca
   const termo = consulta.trim()
   const comTermo = termo.length >= 2
+
+  // O termo do link entra no campo antes do primeiro desenho: assim a tela já
+  // abre pedindo os resultados, em vez de mostrar o estado vazio e só depois
+  // trocar pelo da consulta. `semeado` guarda o valor devolvido — a URL é só a
+  // porta de entrada, e nada além dele é reaplicado ao campo.
+  const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
+  const navegar = useNavigate()
+  const rota = useRotaAtual()
+  const semeado = useRef<string | null>(null)
+  if (semeado.current === null) {
+    const doLink = termoDaUrl(busca)
+    if (doLink !== "") {
+      semeado.current = doLink
+      if (doLink !== consulta) setConsulta(doLink)
+    }
+  }
+
+  // Enquanto o campo mostra o que o link trouxe, o endereço acompanha o termo de
+  // verdade: recarregar e o Voltar abrem a mesma consulta. A grafia antiga
+  // (`search`) sai do endereço. Depois que a pessoa digita, o endereço não é
+  // mais reescrito — a partir daí quem manda é o campo.
+  const consultaDoLink = semeado.current
+  const trazendo = consultaDoLink !== null
+  const termoDoEndereco = trazendo ? consultaDoLink : termo
+  const enderecoEmDia = termoDaUrl(busca) === termoDoEndereco
+  // biome-ignore lint/correctness/useExhaustiveDependencies: só a troca de termo reescreve o endereço
+  useEffect(() => {
+    if (!trazendo || enderecoEmDia) return
+    void navegar({
+      to: rota.caminho,
+      search: (atual: Record<string, unknown>) =>
+        mesclarNaUrl(atual, termosParaUrl(termoDoEndereco)),
+      replace: true,
+      resetScroll: false,
+    })
+  }, [enderecoEmDia, termoDoEndereco, trazendo, rota.caminho])
+
+  // Trocar de rota encerra a porta de entrada: o campo volta a ser só do app.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: segue a rota, não o termo
+  useEffect(() => {
+    semeado.current = null
+  }, [rota.nome])
+
+  // O endereço ganha outro termo que o campo não tem (o Voltar para a outra
+  // entrada, ou o `q` apagado à mão): o campo é do app e não fica preso ao
+  // endereço antigo.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: responde ao endereço
+  useEffect(() => {
+    if (semeado.current !== null) semeado.current = null
+    if (trazOutroTermo(busca, consulta)) setConsulta("")
+  }, [busca])
+
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
