@@ -1,4 +1,4 @@
-import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js"
+﻿import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import {
@@ -36,7 +36,7 @@ async function gravarLocalizacao(
   client: Cliente,
   argumentos: ArgumentosDeLocalizacao,
 ): Promise<{ error: PostgrestError | null }> {
-  const rpc = client.rpc as unknown as (
+  const rpc = client.rpc.bind(client) as unknown as (
     funcao: "set_member_location",
     args: ArgumentosDeLocalizacao,
   ) => PromiseLike<{ error: PostgrestError | null }>
