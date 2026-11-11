@@ -76,3 +76,23 @@ test("F02 vNext: carregamento, vazio e erro não são confundidos", async ({ pag
   await page.getByRole("button", { name: "Tentar novamente" }).click()
   await expect(page.locator(".pv-b-resultados .pc-linha")).toHaveCount(8)
 })
+
+test("F02 vNext: cenário escasso usa as mesmas fixtures nas duas composições", async ({ page }) => {
+  await page.goto("/app/previa/vnext?v=a")
+  await page.getByText("Testar estados", { exact: true }).click()
+  await page.getByLabel("Conjunto de dados").selectOption("escasso")
+  await expect(page.locator('[data-composicao="exploracao"]')).toBeVisible()
+  await expect(page.getByText("Como escolher uma escola ao chegar a Manaus?")).toBeVisible()
+  await expect(page.getByText("Reparos e manutenção residencial")).toBeVisible()
+  await page.getByRole("button", { name: "B · Buscar" }).click()
+  await expect(page.locator(".pv-b-resultados .pc-linha")).toHaveCount(2)
+})
+
+test("F02 vNext: comparação mantém alternativas e rótulos distintos", async ({ page }) => {
+  await page.goto("/app/previa/vnext?v=comparar")
+  await expect(page.locator('[data-composicao="exploracao"]')).toBeVisible()
+  await expect(page.locator('[data-composicao="busca"]')).toBeVisible()
+  await expect(page.getByText("BIVAQUE · F02 · DADOS SIMULADOS")).toBeVisible()
+  await expect(page.getByRole("button", { name: "A · Explorar" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "B · Buscar" })).toBeVisible()
+})
