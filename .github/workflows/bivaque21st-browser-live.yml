@@ -32,9 +32,8 @@ jobs:
           console.log("INTERSTITIAL",JSON.stringify((await page.locator("body").innerText()).slice(0,1000)));
           console.log("LINKS",JSON.stringify(await page.locator("a").evaluateAll(xs=>xs.slice(0,12).map(x=>({text:x.innerText,href:x.getAttribute("href")})))));
           console.log("BUTTONS",JSON.stringify(await page.locator("button").evaluateAll(xs=>xs.slice(0,15).map(x=>({text:x.innerText,type:x.type})))));
-          const ctx=page.context();
-          await ctx.addCookies([{name:"__Http-phish",value:"1",domain:"raw.githack.com",path:"/"}]);
-          await page.goto(u,{waitUntil:"domcontentloaded",timeout:25000});
+          await page.getByRole("button",{name:"Open the page"}).click();
+          await page.waitForLoadState("domcontentloaded",{timeout:25000});
           await page.waitForTimeout(2000);
           const h1=await page.locator("h1").allTextContents();
           const jsErrors=[];
