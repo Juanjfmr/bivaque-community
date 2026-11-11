@@ -66,6 +66,22 @@
 | 43 | Norma misturada com hipótese | L/V | AMEND | MUST / SHOULD / EXPERIMENT; DECISION segue ADR, não skill |
 | 44 | Dívida visual só registrada | L/V | AMEND | Vincular ao card, prova de encerramento e prazo; não criar outro backlog |
 
+## Situação real da execução neste PR
+
+**Os vereditos da tabela não são prova de implementação.** Abaixo está a situação das regras, após alterações nos arquivos ativos `PADRAO-DE-TELA.md`, `IDENTIDADE-DAS-PECAS.md` e `apps/app/AGENTS.md`:
+
+| Situação | IDs da matriz | O que efetivamente aconteceu |
+|---|---|---|
+| **APLICADO às normas vigentes (documental)** | 02, 04, 05, 06, 13, 15, 21, 23, 25, 26, 29, 30, 35, 37, 38, 40, 41, 42, 43 | O padrão ativo passou a escolher composição pela tarefa, não copiar F01; mudou limite rígido de subtítulo, regra global de 2 colunas e rodapé, adicionou primeira dobra, comparação de conteúdo equivalente, estados adversos e avaliação com prova. Há critérios detalhados em DESIGN-VNEXT. **Não houve alteração de telas nem teste de runtime.** |
+| **MOVIDO de documento** | 07 (parcial), 22 (conservado), 37 (parcial) | A definição de feed/listas/grupo sem capa passou da seção de identidade para o padrão de tela. As regras sobre avatar, fonte, cor e peças ficam na identidade; rótulo/código não são repetidos no padrão. |
+| **LEGADO NEUTRALIZADO por precedência, não apagado** | 01, 03, 08, 09, 11, 12, 16, 18, 19 | Regras do antigo repositório, como Aço, Home com 4 cards, proibição de carrossel e mobile em um único molde, não são importadas para as instruções atuais. **Arquivos históricos continuam existindo; nenhum arquivo do outro repositório foi excluído.** |
+| **CONFLITO TRATADO documentalmente** | 20 | O novo texto deixa claro que o fundo Papel de outubro não é fonte de tokens ativos; valor atual vem da ADR 02/11 e de `pecas.css`. **Não houve auditoria de todo o CSS em runtime.** |
+| **KEEP — já vigente** | 32, 39 | Preservados histórico/scroll/foco e experimento com julgamento independente; não havia regra a substituir. |
+| **EXPERIMENTOS NÃO EXECUTADOS** | 07, 10, 14, 17, 24, 27, 28, 31, 33, 34, 36 | Foram descritas hipóteses e provas futuras, **sem instalar componente, renderizar alternativa ou aprovar mudança visual**. |
+| **PENDÊNCIA DE EXECUÇÃO/QUADRO** | 44 | Foi criado critério de rastreabilidade no processo de revisão, mas nenhuma nova tarefa do board foi criada ou concluída; o fechamento pertence ao fluxo existente. |
+
+**Resultado honesto:** as regras documentais de composição foram efetivamente alteradas nesta branch; a biblioteca de componentes, o código React, a paleta, os fluxos, a R72 e os documentos históricos não foram modificados. A aplicação **visual** continua pendente. Um PR em rascunho não equivale a decisão mesclada em `main`.
+
 ## Separar diagnóstico de decisão
 
 **Documental confirmado:** 01–03, 05–06 (quanto ao modelo de revisão), 08–09, 11–12, 16, 18–20, 37, 39 (já tratado).  
