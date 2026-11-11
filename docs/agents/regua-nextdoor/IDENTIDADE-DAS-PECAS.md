@@ -9,7 +9,7 @@ acabamento inconsistente e nenhum comportamento de app. Esta rodada resolve as p
 - **Galeria:** `/app/previa/pecas`, só no servidor de desenvolvimento.
 - **Telas que já usam a biblioteca:** as prévias do F01 (`/app/previa/f01`) e de Grupos (`/app/previa/grupos`).
 
-Este documento manda nas peças. O [padrão de tela](PADRAO-DE-TELA.md) segue valendo para texto, composição e
+Este documento manda nas peças. O [contrato de telas](DESIGN.md) manda em texto, composição, movimento e
 prova.
 
 ## As regras

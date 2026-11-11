@@ -9,7 +9,8 @@ Served at `/app` beside the Next server. Root rules in [AGENTS.md](../../AGENTS.
   `/app/previa/pecas`. Screens compose pieces; a screen's CSS only lays them out and never redefines
   a piece. A missing piece is added to the library and the gallery, not drawn locally.
 - Rules of the pieces: [IDENTIDADE-DAS-PECAS.md](../../docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md).
-  Screen pattern: [PADRAO-DE-TELA.md](../../docs/agents/regua-nextdoor/PADRAO-DE-TELA.md). Bar and
+  Screen contract (composition, first fold, new city, motion, acceptance), read before any screen:
+  [DESIGN.md](../../docs/agents/regua-nextdoor/DESIGN.md). Bar and
   method: [regua-nextdoor/HANDOFF.md](../../docs/agents/regua-nextdoor/HANDOFF.md).
 - Every rebuilt screen starts from Nextdoor (or another mature app) screens on Mobbin, cited by link
   in the card. Illustrations come from the family in `public/ilustracoes/`; no AI photos of people.
