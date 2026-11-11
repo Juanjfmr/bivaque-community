@@ -186,7 +186,7 @@ function Exploracao({
                 {[...grupos.negocio, ...grupos.imovel].map((item) => (
                   <CartaoDeExemplo key={item.id} item={item} aoAbrir={aoAbrir} />
                 ))}
-              </div>
+              </section>
               <p className="pc-miudo pv-deslize">Deslize para ver mais; use Tab para navegar pelos itens.</p>
             </section>
           )}
@@ -337,7 +337,7 @@ export function PreviaVNext() {
             <Chip selecionado={variante === "a"} onClick={() => mudarVariante("a")}>A · Explorar</Chip>
             <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>B · Buscar</Chip>
             <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>Comparar</Chip>
-          </div>
+          </fieldset>
           <p className="sr-only" role="status" aria-live="polite">
             {nomeDoTipo(tipo)} · {itens.length} {itens.length === 1 ? "resultado" : "resultados"} · conteúdo de demonstração
           </p>
