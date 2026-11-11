@@ -12,6 +12,7 @@
 - Mesmos oito itens **explicitamente simulados**, mesmo termo/filtros, mesmas ações de abrir detalhe, mesmos estados vazio, escasso, erro e carregamento. Nenhum anúncio, rating, pessoa ou preço falso é apresentado como real.
 - Testes de dados e isolamento: `apps/app/tests/previa-vnext.test.ts`; testes de interação e screenshots: `apps/app/tests/lab/vnext.spec.ts`; suíte isolada: `apps/app/playwright.vnext.config.ts`; workflow `.github/workflows/design-vnext-visual.yml`. O fluxo de produção não usa essa configuração.
 - A primeira rodada de 24 capturas do GitHub Actions (`Bivaque Design vNext Visual Lab`, [execução 42932599652](https://github.com/Juanjfmr/bivaque-community/actions/runs/42932599652)) passou nas provas automatizadas. **Revisão visual real** dessas capturas mostrou que ambas ainda começavam por cabeçalho + busca + chips: A foi, por isso, refeita editorialmente. A segunda rodada e o parecer final devem ser confrontados com a mesma rubrica antes de escolher uma variante.
+- **Atualização 10/11:** foram adicionados testes Playwright para paridade de conteúdo escasso entre A/B e visualização simultânea de ambas as alternativas. O novo commit deve ser verificado na execução do workflow; **não registrar PASS antes da conclusão**.
 - **Pendentes:** comparação com capturas baseline do app real e Nextdoor; parecer cego independente; evidência de qualidade sem regressão; decisão para eventualmente promover; testes operacionais do Bivaque/CI completo. Não vender o sucesso do Playwright como aprovação de UI.
 
 ## Pré-requisitos e baseline
