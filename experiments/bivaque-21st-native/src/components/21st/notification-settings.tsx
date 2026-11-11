@@ -47,7 +47,7 @@ const GROUPS: Group[] = [
   },
 ];
 
-export function Notificações2() {
+export function Notifications2() {
   const [state, setState] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(
       GROUPS.flatMap((group) =>
@@ -95,4 +95,4 @@ export function Notificações2() {
   );
 }
 
-export default Notificações2;
+export default Notifications2;
