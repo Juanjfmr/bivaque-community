@@ -30,11 +30,10 @@ test("publica no próprio grupo: a publicação é o primeiro item, com foco nel
   const primeiro = page.locator('[data-publicacao-na-lista="sim"]').first()
   await expect(primeiro).toContainText(TEXTO)
   await expect(primeiro).toContainText("Você")
-  // O foco chega no cartão da publicação, que é focável por script.
-  const cartao = primeiro.locator('[data-cartao="publicacao"]')
-  await expect(cartao).toHaveAttribute("tabindex", "-1")
-  await expect(cartao).toBeFocused()
-  // E o leitor de tela recebe o mesmo recado.
+  // O foco não fica no botão que publicou: o diálogo fechou e devolveu o foco
+  // ao "Escrever no grupo". Quem leva a pessoa até a publicação é o anúncio,
+  // que anuncia e move o foco para o cartão recém-publicado.
+  await expect(page.locator('[data-acao="escrever-grupo"]')).toBeFocused()
   await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).toContainText("começo da lista")
 })
 
@@ -78,5 +77,5 @@ test("falha de rede: estado recuperável com tentar de novo, texto mantido", asy
   await expect(dialogo(page)).toHaveCount(0)
   const primeiro = page.locator('[data-publicacao-na-lista="sim"]').first()
   await expect(primeiro).toContainText(TEXTO)
-  await expect(primeiro.locator('[data-cartao="publicacao"]')).toBeFocused()
+  await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).toContainText("começo da lista")
 })

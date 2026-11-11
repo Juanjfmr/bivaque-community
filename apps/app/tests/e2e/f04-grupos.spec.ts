@@ -55,7 +55,9 @@ test("ocultar permite desfazer; denúncia usa motivo e mostra o envio", async ({
   await page.getByRole("button", { name: "Denunciar publicação", exact: true }).click()
   await page.getByLabel("Spam", { exact: true }).check()
   await page.getByRole("button", { name: "Enviar denúncia" }).click()
-  await expect(page.getByRole("status")).toContainText("Denúncia enviada")
+  // A tela anuncia o envio no seu próprio status; o recado da publicação
+  // recente continua ao vivo, sem ser um segundo `status`.
+  await expect(page.getByRole("status").filter({ hasText: "Denúncia enviada" })).toBeVisible()
 })
 
 test("falhas preservam publicação e comentário e oferecem nova leitura", async ({ page }) => {

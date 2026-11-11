@@ -242,7 +242,7 @@ export function Grupo() {
       ) : null}
       {/* O foco já leva ao cartão; o anúncio garante que quem usa leitor de
           tela saiba o que houve, inclusive quando a publicação não entrou. */}
-      <p role="status" aria-live="polite" data-anuncio-da-publicacao="sim" className="sr-only">
+      <p aria-live="polite" data-anuncio-da-publicacao="sim" className="sr-only">
         {anuncio}
       </p>
       {grupo.fechado && !grupo.membro ? (
