@@ -108,6 +108,36 @@
       "slug": "expand-menu",
       "install": "npx shadcn@latest add \"https://21st.dev/r/unlumen/expand-menu?api_key=$API_KEY_21ST\"",
       "original": "src/components/21st/upstream/expand-menu.tsx"
+    },
+    {
+      "id": 38984,
+      "slug": "command-menu",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/victor-teles/command-menu?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/command-menu.tsx"
+    },
+    {
+      "id": 8240,
+      "slug": "community-hub-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ravikatiyar162/community-hub-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/community-hub-card.tsx"
+    },
+    {
+      "id": 23552,
+      "slug": "segmented-control",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ddoemonn/segmented-control?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/segmented-control.tsx"
+    },
+    {
+      "id": 19941,
+      "slug": "toast-action",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/bundui/toast1?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/toast-action.tsx"
+    },
+    {
+      "id": 44878,
+      "slug": "profile-menu-expander",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/aloksivastava1025/grid-row-profile-expander?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/profile-menu-expander.tsx"
     }
   ]
 }
