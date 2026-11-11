@@ -28,8 +28,17 @@ const conversa = {
 }
 const mensagem = { id: ID, content: "Olá", sender_id: USER, created_at: "2026-11-02T12:00:00Z" }
 
-function cliente(opcoes: { ausente?: boolean; erro?: string } = {}) {
+type ChamadaDaRpc = { funcao: string; argumentos: Record<string, unknown> }
+type OpcoesDoCliente = {
+  ausente?: boolean
+  erro?: string
+  erroDoEnvio?: { code: string; message: string }
+  dadoDoEnvio?: unknown
+}
+
+function cliente(opcoes: OpcoesDoCliente = {}) {
   const insercoes: unknown[] = []
+  const chamadas: ChamadaDaRpc[] = []
   const from = vi.fn((tabela: string) => {
     let insert = false
     const resultado = (single = false) => {
@@ -60,10 +69,15 @@ function cliente(opcoes: { ausente?: boolean; erro?: string } = {}) {
     })
     return q
   })
-  return {
-    client: { from, rpc: vi.fn(async () => ({ data: "Maria", error: null })) } as never,
-    insercoes,
-  }
+  const rpc = vi.fn(async (funcao: string, argumentos: Record<string, unknown> = {}) => {
+    chamadas.push({ funcao, argumentos })
+    if (funcao === "send_conversation_message") {
+      if (opcoes.erroDoEnvio) return { data: null, error: opcoes.erroDoEnvio }
+      return { data: "dadoDoEnvio" in opcoes ? opcoes.dadoDoEnvio : mensagem, error: null }
+    }
+    return { data: "Maria", error: null }
+  })
+  return { client: { from, rpc } as never, insercoes, chamadas }
 }
 function autenticar(c = cliente()) {
   vi.mocked(resolverSessaoDaRequisicao).mockResolvedValue({
@@ -123,15 +137,93 @@ describe("conversas do app", () => {
       mensagens: [{ conteudo: "Olá", minha: true }],
     })
   })
-  it("grava com autoria da sessão e devolve o resultado", async () => {
+  it("envia pela RPC com autoria da sessão e devolve o resultado", async () => {
     const mock = autenticar()
     const resposta = await enviar(
       req("POST", `/${ID}/mensagens`, JSON.stringify({ texto: " Olá ", sender_id: OUTRO })),
       context,
     )
     expect(resposta.status).toBe(201)
-    expect(mock.insercoes).toEqual([{ conversation_id: ID, sender_id: USER, content: "Olá" }])
-    expect(await resposta.json()).toMatchObject({ mensagem: { conteudo: "Olá", minha: true } })
+    expect(mock.insercoes).toEqual([])
+    expect(mock.chamadas).toEqual([
+      {
+        funcao: "send_conversation_message",
+        argumentos: { p_conversation_id: ID, p_content: "Olá" },
+      },
+    ])
+    expect(await resposta.json()).toMatchObject({
+      mensagem: { id: ID, conteudo: "Olá", minha: true },
+    })
+  })
+  it("manda a clientKey aparada e o replay devolve o mesmo id", async () => {
+    const mock = autenticar()
+    const body = JSON.stringify({ texto: "Olá", clientKey: "  chave-1  " })
+    const primeira = await enviar(req("POST", `/${ID}/mensagens`, body), context)
+    const segunda = await enviar(req("POST", `/${ID}/mensagens`, body), context)
+    expect(primeira.status).toBe(201)
+    expect(segunda.status).toBe(201)
+    expect((await primeira.json()).mensagem.id).toBe(ID)
+    expect((await segunda.json()).mensagem.id).toBe(ID)
+    expect(mock.insercoes).toEqual([])
+    expect(mock.chamadas).toEqual([
+      {
+        funcao: "send_conversation_message",
+        argumentos: { p_conversation_id: ID, p_content: "Olá", p_client_key: "chave-1" },
+      },
+      {
+        funcao: "send_conversation_message",
+        argumentos: { p_conversation_id: ID, p_content: "Olá", p_client_key: "chave-1" },
+      },
+    ])
+  })
+  it("aceita clientKey de 120 caracteres", async () => {
+    const mock = autenticar()
+    const chave = "k".repeat(120)
+    const resposta = await enviar(
+      req("POST", `/${ID}/mensagens`, JSON.stringify({ texto: "Oi", clientKey: chave })),
+      context,
+    )
+    expect(resposta.status).toBe(201)
+    expect(mock.chamadas[0]?.argumentos["p_client_key"]).toBe(chave)
+  })
+  it.each([
+    ['{"texto":"Oi","clientKey":""}'],
+    ['{"texto":"Oi","clientKey":"   "}'],
+    [JSON.stringify({ texto: "Oi", clientKey: "x".repeat(121) })],
+    ['{"texto":"Oi","clientKey":42}'],
+    ['{"texto":"Oi","clientKey":null}'],
+    ['{"texto":"Oi","clientKey":{}}'],
+  ])("recusa clientKey inválida sem chamar a RPC", async (body) => {
+    const mock = autenticar()
+    expect((await enviar(req("POST", `/${ID}/mensagens`, body), context)).status).toBe(400)
+    expect(mock.chamadas).toEqual([])
+  })
+  it("responde 404 antes da RPC e não grava", async () => {
+    const mock = autenticar(cliente({ ausente: true }))
+    expect((await enviar(req("POST", `/${ID}/mensagens`, '{"texto":"Oi"}'), context)).status).toBe(
+      404,
+    )
+    expect(mock.chamadas).toEqual([])
+    expect(mock.insercoes).toEqual([])
+  })
+  it.each([
+    ["22023", 400, "corpo-invalido"],
+    ["23514", 400, "corpo-invalido"],
+    ["42501", 403, "recusado"],
+    ["XX000", 503, "escrita-indisponivel"],
+  ] as const)("mapeia o erro %s da RPC para %i", async (code, status, erro) => {
+    autenticar(cliente({ erroDoEnvio: { code, message: "segredo do banco" } }))
+    const resposta = await enviar(req("POST", `/${ID}/mensagens`, '{"texto":"Oi"}'), context)
+    expect(resposta.status).toBe(status)
+    const corpo = await resposta.text()
+    expect(JSON.parse(corpo)).toEqual({ erro })
+    expect(corpo).not.toContain("segredo do banco")
+  })
+  it("resposta da RPC fora do contrato não vira mensagem", async () => {
+    autenticar(cliente({ dadoDoEnvio: null }))
+    expect((await enviar(req("POST", `/${ID}/mensagens`, '{"texto":"Oi"}'), context)).status).toBe(
+      503,
+    )
   })
   it.each([headers.origin, "https://fora.example"])("recusa porta incorreta %s", async (origem) => {
     autenticar()
@@ -157,16 +249,17 @@ describe("conversas do app", () => {
     autenticar(cliente({ ausente: true }))
     expect((await chamar()).status).toBe(404)
   })
-  it.each([
-    ["caixa", "dm_conversations", () => listar(req("GET"))],
-    ["detalhe", "dm_messages", () => detalhe(req("GET", `/${ID}`), context)],
+  const falhas: [string, OpcoesDoCliente, () => Promise<Response>][] = [
+    ["caixa", { erro: "dm_conversations" }, () => listar(req("GET"))],
+    ["detalhe", { erro: "dm_messages" }, () => detalhe(req("GET", `/${ID}`), context)],
     [
       "envio",
-      "dm_messages",
+      { erroDoEnvio: { code: "XX000", message: "segredo do banco" } },
       () => enviar(req("POST", `/${ID}/mensagens`, '{"texto":"Oi"}'), context),
     ],
-  ])("%s informa falha do banco sem ecoar detalhes", async (_, tabela, chamar) => {
-    autenticar(cliente({ erro: tabela }))
+  ]
+  it.each(falhas)("%s informa falha do banco sem ecoar detalhes", async (_, opcoes, chamar) => {
+    autenticar(cliente(opcoes))
     const resposta = await chamar()
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo do banco")

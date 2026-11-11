@@ -2,76 +2,40 @@ import { CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { areaDoPrestador, entradaEmAndamento, isPublicPath } from "./lib/security/route-surface"
 
-const PUBLIC_PATHS = [
-  "/login",
-  "/signup",
-  // Recuperação de senha precisa ser pública pelos dois lados. Sem sessão, o
-  // portão mandaria para /login justamente quem não consegue entrar; com a
-  // sessão que o link de recuperação cria, o portão de consentimento mandaria
-  // para /consent antes de a pessoa definir a senha nova, e ela nunca chegaria
-  // a definir. ADR-20260907-login-com-senha.
-  "/recuperar-senha",
-  "/nova-senha",
-  "/auth/callback",
-  "/consent",
-  "/privacidade",
-  "/codigo-de-conduta",
-  "/api",
-  "/_next",
-  "/landing",
-  "/prestador-convite",
-  // ADR-20261022-entrada-do-prototipo, itens 6, 2 e 7: depois de apagar a conta
-  // a pessoa cai em /conta-apagada, quem chega pelo convite de familiar ainda
-  // não tem conta nem sessão, e a Ajuda (com as páginas legais) abre para quem
-  // está fora — quem não consegue entrar é justamente quem mais precisa ler as
-  // respostas. As três são públicas. /ajuda mostra "Meus chamados" quando há
-  // sessão, mas o conteúdo de ajuda não depende dela.
-  "/conta-apagada",
-  "/convite",
-  "/ajuda",
-  "/favicon.ico",
-  "/icon.svg",
-  // SPA ADR §8: o app é servido em /app pelo mesmo domínio. A entrada é a
-  // própria porta do app (`/app/entrar`): quem chega sem sessão precisa dela, e
-  // o app resolve a sessão e a etapa pelas rotas /api/app. O portão da web não
-  // gateia o app — gateia as telas antigas que ainda existem.
-  "/app",
-]
-// Caminhos que casam por pasta: o próprio caminho ou ele como prefixo de pasta
-// (`/app` e `/app/entrar`, nunca `/application` ou `/approve`). Os demais da lista
-// casam por prefixo simples porque precisam (`/auth/callback` cobre
-// `/auth/callback-error`), mas um prefixo solto em `/app` abriria o portão para
-// qualquer rota nova que comece com essas três letras.
-const PUBLIC_POR_PASTA = new Set(["/app"])
-
-function caminhoPublico(pathname: string): boolean {
-  return PUBLIC_PATHS.some((caminho) =>
-    PUBLIC_POR_PASTA.has(caminho)
-      ? pathname === caminho || pathname.startsWith(`${caminho}/`)
-      : pathname.startsWith(caminho),
-  )
-}
+// A superfície pública mora em `lib/security/route-surface.ts` — uma lista, três
+// modos (`exata`, `pasta`, `ativos`) e comparação por fronteira. Este arquivo não
+// decide mais quem é público por prefixo solto; só consulta e roteia.
 const CONSENT_COOKIE = "bivaque-consent-version"
 
 const SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"]
 const SUPABASE_ANON_KEY = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 
-// Test-only escape hatch: set BIVAQUE_AUTH_BYPASS=true in apps/web/.env.local
-// (gitignored) to disable the auth/consent gate while developing/QA'ing.
-// It is never set in CI or production, so the gate stays enforced there.
+// Atalho de desenvolvimento: `BIVAQUE_AUTH_BYPASS=true` em apps/web/.env.local
+// (gitignored) desliga o portão para desenvolver/QA. Só vale com
+// NODE_ENV=development. Em test/production — ou em qualquer ambiente em que a
+// variável apareça ligada sem ser desenvolvimento — a resposta é 503 com log,
+// nunca `NextResponse.next()`: uma configuração que abriria o portão não pode
+// ser ignorada em silêncio. ADR-20261110-superficie-publica-do-proxy.
 const AUTH_BYPASS = process.env["BIVAQUE_AUTH_BYPASS"] === "true"
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Test-only: skip every gate when the bypass env var is enabled.
   if (AUTH_BYPASS) {
+    if (process.env["NODE_ENV"] !== "development") {
+      console.error("[proxy] BIVAQUE_AUTH_BYPASS=true fora de development: portão fechado (503).")
+      return new NextResponse("O bypass de autenticação só existe em development.", {
+        status: 503,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      })
+    }
     return NextResponse.next()
   }
 
   // Public paths bypass all checks — no session round-trip needed.
-  if (caminhoPublico(pathname)) {
+  if (isPublicPath(pathname)) {
     return NextResponse.next()
   }
 
@@ -162,13 +126,7 @@ export async function proxy(request: NextRequest) {
   // autorização NÃO é desta allowlist: /api/onboarding `provision` exige
   // verificação `verified`, lida no servidor pelo usuário do token, e recusa o
   // resto com 403 (tests/unit/onboarding/provision-requires-verification.test.ts).
-  if (
-    pathname === "/onboarding" ||
-    pathname.startsWith("/onboarding/status") ||
-    pathname.startsWith("/onboarding/documento") ||
-    pathname.startsWith("/onboarding/locality") ||
-    pathname.startsWith("/onboarding/perfil")
-  ) {
+  if (entradaEmAndamento(pathname)) {
     return supabaseResponse
   }
 
@@ -204,7 +162,7 @@ export async function proxy(request: NextRequest) {
     // navegação). Deixa-o passar em /prestador e manda-o de volta para
     // lá em qualquer outra rota — sem membership, toda policy de
     // conteúdo nega; o redirect evita a tela vazia.
-    return pathname.startsWith("/prestador")
+    return areaDoPrestador(pathname)
       ? supabaseResponse
       : NextResponse.redirect(new URL("/prestador", request.url))
   }

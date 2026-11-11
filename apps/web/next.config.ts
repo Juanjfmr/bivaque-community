@@ -69,6 +69,12 @@ const nextConfig: NextConfig = {
         destination: `${ENTRADA_DO_APP}?redirect=:destino`,
         permanent: false,
       },
+      // /landing exato nunca foi página: o caminho existe só como espaço de
+      // assets (`apps/web/public/landing/`), protegido pelo modo `ativos` do
+      // proxy. Quem digita o endereço cai na landing de verdade em `/`; um
+      // asset (`/landing/hero-bivaque-arrival.webp`) continua servido em 200.
+      // ADR-20261110-superficie-publica-do-proxy.
+      { source: "/landing", destination: "/", permanent: false },
       ...ENTRADA_ANTIGA.map((source) => ({
         source,
         destination: ENTRADA_DO_APP,

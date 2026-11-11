@@ -6,6 +6,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // rota que começasse por essas três letras (`/application`, `/approve`, uma
 // rota futura) passava sem sessão. O teste roda o `proxy` de verdade, com o
 // cliente do Supabase trocado por um que não tem sessão nenhuma.
+//
+// SEC-010: o bypass `BIVAQUE_AUTH_BYPASS` só pode valer em development; fora
+// dele o portão fecha com 503 (nunca `NextResponse.next()`), e `/landing` deixa
+// de ser entrada de página — só os assets de `/landing/…` seguem públicos.
 
 vi.mock("@supabase/ssr", () => ({
   createServerClient: vi.fn(() => ({
@@ -15,11 +19,14 @@ vi.mock("@supabase/ssr", () => ({
 
 type Proxy = (request: NextRequest) => Promise<Response>
 
-async function carregarProxy(): Promise<Proxy> {
+type Ambiente = Readonly<{ bypass?: string | null; nodeEnv?: string | null }>
+
+async function carregarProxy({ bypass = "", nodeEnv = "test" }: Ambiente = {}): Promise<Proxy> {
   vi.resetModules()
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321")
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "chave-anonima")
-  vi.stubEnv("BIVAQUE_AUTH_BYPASS", "")
+  vi.stubEnv("BIVAQUE_AUTH_BYPASS", bypass === null ? undefined : bypass)
+  vi.stubEnv("NODE_ENV", nodeEnv === null ? undefined : nodeEnv)
   const modulo = await import("web/proxy")
   return modulo.proxy as Proxy
 }
@@ -71,13 +78,80 @@ describe("portão do proxy para /app", () => {
   )
 
   it("os outros caminhos públicos continuam abertos (a mudança é só do /app)", async () => {
-    for (const caminho of [
-      "/login",
-      "/api/app/entry/otp",
-      "/auth/callback-error",
-      "/convite/ABC",
-    ]) {
+    for (const caminho of ["/login", "/api/app/entry/otp", "/auth/callback-error", "/convite"]) {
       expect(passou(await pedir(proxy, caminho)), caminho).toBe(true)
+    }
+  })
+})
+
+describe("/landing é espaço de assets, não de páginas", () => {
+  let proxy: Proxy
+
+  beforeEach(async () => {
+    proxy = await carregarProxy()
+  })
+
+  it.each(["/landing/hero-bivaque-arrival.webp", "/landing/v8/hero.webp", "/landing/qualquer"])(
+    "%s é asset: passa sem sessão",
+    async (caminho) => {
+      expect(passou(await pedir(proxy, caminho))).toBe(true)
+    },
+  )
+
+  it("o caminho exato /landing não é público: sem sessão vai ao login", async () => {
+    const resposta = await pedir(proxy, "/landing")
+    expect(passou(resposta)).toBe(false)
+    expect(foiParaLogin(resposta)).toBe(true)
+  })
+
+  it("prefixo solto não abre /landingx nem /convite/ABCD1234", async () => {
+    for (const caminho of ["/landingx", "/convite/ABCD1234"]) {
+      const resposta = await pedir(proxy, caminho)
+      expect(passou(resposta), caminho).toBe(false)
+      expect(foiParaLogin(resposta), caminho).toBe(true)
+    }
+  })
+})
+
+describe("bypass de autenticação só em development", () => {
+  // /community exige sessão; /app é público e não provaria nada aqui.
+  const semSessao = "/community"
+
+  it("development + BIVAQUE_AUTH_BYPASS=true passa", async () => {
+    const proxy = await carregarProxy({ bypass: "true", nodeEnv: "development" })
+    expect(passou(await pedir(proxy, semSessao))).toBe(true)
+  })
+
+  it.each(["test", "production"])(
+    "NODE_ENV=%s + bypass=true responde 503, não NextResponse.next",
+    async (nodeEnv) => {
+      const erro = vi.spyOn(console, "error").mockImplementation(() => {})
+      const proxy = await carregarProxy({ bypass: "true", nodeEnv })
+      const resposta = await pedir(proxy, semSessao)
+      expect(resposta.status).toBe(503)
+      expect(passou(resposta)).toBe(false)
+      expect(await resposta.text()).toContain("development")
+      expect(erro).toHaveBeenCalled()
+      erro.mockRestore()
+    },
+  )
+
+  it("NODE_ENV ausente + bypass=true responde 503, não NextResponse.next", async () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {})
+    const proxy = await carregarProxy({ bypass: "true", nodeEnv: null })
+    const resposta = await pedir(proxy, semSessao)
+    expect(resposta.status).toBe(503)
+    expect(passou(resposta)).toBe(false)
+    expect(erro).toHaveBeenCalled()
+    erro.mockRestore()
+  })
+
+  it("bypass ausente ou false não muda nada: sem sessão, login", async () => {
+    for (const bypass of [null, "false"]) {
+      const proxy = await carregarProxy({ bypass })
+      const resposta = await pedir(proxy, semSessao)
+      expect(passou(resposta), String(bypass)).toBe(false)
+      expect(foiParaLogin(resposta), String(bypass)).toBe(true)
     }
   })
 })

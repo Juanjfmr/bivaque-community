@@ -10,7 +10,12 @@ import { Icone } from "@/components/bivaque/icone"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { buscarConversa, type DetalheDaConversa, enviarMensagem } from "@/lib/dados/conversas"
+import {
+  buscarConversa,
+  type DetalheDaConversa,
+  enviarMensagem,
+  novaChaveDeEnvio,
+} from "@/lib/dados/conversas"
 import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
@@ -34,6 +39,7 @@ export function Conversa() {
   const [erroLocal, setErroLocal] = useState("")
   const [mostrarSeguranca, setMostrarSeguranca] = useState(false)
   const controle = useRef<AbortController | null>(null)
+  const ultimaChave = useRef<{ texto: string; chave: string } | null>(null)
   useRolagemEFoco(CARGA_CONCLUIDA)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
@@ -65,6 +71,7 @@ export function Conversa() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de conversa limpa o rascunho
   useEffect(() => {
     setRascunho("")
+    ultimaChave.current = null
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const mostrarConversaNoTopo = casca.mostrarConversaNoTopo
@@ -75,15 +82,21 @@ export function Conversa() {
   async function enviar() {
     const pedido = controle.current
     if (!pedido || pedido.signal.aborted || enviando || !rascunho.trim()) return
+    const texto = rascunho
+    const anterior = ultimaChave.current
+    const clientKey =
+      anterior !== null && anterior.texto === texto ? anterior.chave : novaChaveDeEnvio()
+    ultimaChave.current = { texto, chave: clientKey }
     setEnviando(true)
     setErroLocal("")
     try {
-      const mensagem = await enviarMensagem(id, rascunho, { signal: pedido.signal })
+      const mensagem = await enviarMensagem(id, texto, { signal: pedido.signal, clientKey })
       if (!pedido.signal.aborted) {
         setDados((atual) =>
           atual ? { ...atual, mensagens: [...atual.mensagens, mensagem] } : atual,
         )
         setRascunho("")
+        ultimaChave.current = null
       }
     } catch {
       if (!pedido.signal.aborted) setErroLocal("Não foi possível enviar. Seu texto foi mantido.")

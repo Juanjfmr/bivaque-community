@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(31);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -105,6 +105,12 @@ select results_eq(
   'reenviar nao duplica a mensagem'
 );
 
+select is(
+  (select status::text from public.service_requests where idempotency_key = 'k-1'),
+  'open',
+  'a mensagem do solicitante mantem o pedido aberto'
+);
+
 -- ── limite de borda ──────────────────────────────────────────────────────────
 
 select throws_ok(
@@ -158,6 +164,59 @@ select results_eq(
   'select status::text from public.service_requests where idempotency_key = ''k-1''',
   array['in_conversation'::text],
   'a situacao permanece em conversa'
+);
+
+-- ── replay do prestador depois da transicao: uma mensagem, um aviso ─────────
+
+select set_config(
+  'app.r023_reply_id',
+  (
+    select id::text from public.dm_messages
+    where client_key = 'c-2'
+      and conversation_id = (
+        select conversation_id from public.service_requests where idempotency_key = 'k-1'
+      )
+  ),
+  true
+);
+select set_config(
+  'app.r023_updated_at',
+  (select updated_at::text from public.service_requests where idempotency_key = 'k-1'),
+  true
+);
+
+select is(
+  (
+    select public.send_conversation_message(
+      (select conversation_id from public.service_requests where idempotency_key = 'k-1'),
+      'Consigo sim, na quinta as 14h.',
+      'c-2'
+    )->>'id'
+  ),
+  current_setting('app.r023_reply_id'),
+  'o replay do prestador devolve a mesma mensagem'
+);
+
+select results_eq(
+  'select count(*) from public.dm_messages where client_key = ''c-2''',
+  array[1::bigint],
+  'o replay do prestador nao grava uma segunda mensagem'
+);
+
+select is(
+  (select updated_at from public.service_requests where idempotency_key = 'k-1'),
+  current_setting('app.r023_updated_at')::timestamptz,
+  'o replay do prestador nao mexe no pedido'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  'select count(*) from public.notifications where action = ''provider_first_reply'' and target_id = (select id from public.service_requests where idempotency_key = ''k-1'')',
+  array[1::bigint],
+  'o replay nao cria um segundo aviso para o solicitante'
 );
 
 -- ── leitura: estado proprio, nunca o do outro ────────────────────────────────
