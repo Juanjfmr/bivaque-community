@@ -9,7 +9,13 @@ import {
 import { clienteDosGrupos } from "../../../../../../lib/communities/grupos"
 import { lerPublicacaoDoGrupo } from "../../../../../../lib/composer/post-attachment"
 import { ehUuid, interpretarErroDoBanco } from "../../../eventos/_comum"
-import { grupoDaSessao, participacao, registrarFalha } from "../../_comum"
+import {
+  apresentarPublicacoes,
+  CAMPOS_DA_PUBLICACAO,
+  grupoDaSessao,
+  participacao,
+  registrarFalha,
+} from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"

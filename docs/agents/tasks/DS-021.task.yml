@@ -30,13 +30,15 @@ baseline:
 
 allowed_paths:
   - docs/agents/tasks/DS-021.task.yml
+  - apps/web/app/api/app/grupos/[id]/publicacoes/route.ts
   - apps/app/src/grupos/
   - apps/app/lib/dados/grupos.ts
   - apps/app/tests/
   - .visual/run-ds-021/
 
 forbidden:
-  - alterar apps/web (rota, action ou tela antiga)
+  - alterar apps/web além da rota de publicações do grupo (nenhuma action, tela antiga ou outra rota)
+  - tocar sessão, RLS ou validação da rota de publicações
   - alterar supabase ou migrations
   - criar rota nova ou peça nova fora de src/pecas
   - redesenhar o compositor ou mudar a navegação
