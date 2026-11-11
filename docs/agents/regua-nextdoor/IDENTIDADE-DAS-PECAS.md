@@ -9,7 +9,7 @@ acabamento inconsistente e nenhum comportamento de app. Esta rodada resolve as p
 - **Galeria:** `/app/previa/pecas`, só no servidor de desenvolvimento.
 - **Telas que já usam a biblioteca:** as prévias do F01 (`/app/previa/f01`) e de Grupos (`/app/previa/grupos`).
 
-Este documento manda nas peças. O [padrão de tela](PADRAO-DE-TELA.md) segue valendo para texto, composição e
+Este documento manda nas peças. O [contrato de telas](DESIGN.md) manda em texto, composição, movimento e
 prova.
 
 ## As regras
@@ -62,7 +62,7 @@ biblioteca e na galeria antes de entrar na tela.
   escolha ilustrada ficam num quadrado de tom (`--pc-tom`).
 
 **Uso das peças e separação de responsabilidades.**
-- Esta especificação rege a **aparência e o comportamento das peças**, não a composição completa de cada tela. Cards de publicação, listas de grupos/passos/regras e grupo sem capa são definidos e comparados no [padrão ativo de tela](PADRAO-DE-TELA.md); experimentos de arquitetura seguem o [contrato vNext](DESIGN-VNEXT.md).
+- Esta especificação rege a **aparência e o comportamento das peças**, não a composição completa de cada tela. Cards de publicação, listas de grupos/passos/regras e grupo sem capa são definidos e comparados no [contrato de telas](DESIGN.md), inclusive o laboratório de composição da sua §16.
 - Pessoa sem foto aparece pelas iniciais num dos quatro tons da família, sempre o mesmo para a mesma pessoa. Nunca substituir por retrato artificial apresentado como fotografia real.
 - Não reaproveitar a referência histórica ao fundo **Papel** como token normativo do app: os valores correntes vêm da [paleta fria](../../decisions/ADR-20261102-paleta-fria.md) e dos estilos em `apps/app/src/pecas/pecas.css`.
 

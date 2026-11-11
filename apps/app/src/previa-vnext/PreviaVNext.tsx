@@ -21,11 +21,11 @@ import {
 } from "./modelo"
 import "./previa-vnext.css"
 
-type Variante = "a" | "b" | "comparar"
+type Variante = "a" | "b" | "c" | "comparar"
 
 function varianteInicial(): Variante {
   const v = new URLSearchParams(window.location.search).get("v")
-  return v === "b" || v === "comparar" ? v : "a"
+  return v === "b" || v === "c" || v === "comparar" ? v : "a"
 }
 
 function nomeDoTipo(tipo: TipoDeFiltro): string {
@@ -289,6 +289,96 @@ function BuscaOrientada({
   )
 }
 
+/**
+ * C — resolver primeiro. Início de serviço: a busca abre a tela, atalhos
+ * filtram por necessidade, e a vida prática (serviços indicados e moradia)
+ * vem antes das perguntas, que aparecem como pedidos de indicação. Mesmos
+ * itens, busca e filtros de A e B.
+ */
+function Resolver({
+  busca,
+  aoBuscar,
+  tipo,
+  aoFiltrar,
+  itens,
+  base,
+  aoAbrir,
+  aoLimpar,
+}: PropsDaComposicao) {
+  const grupos = separarPorTipo(itens)
+  const atalhos = TIPOS.filter((item) => item.id !== "todos")
+  const trilho = (titulo: string, lista: readonly ItemDeExemplo[], rotulo: string) =>
+    lista.length > 0 && (
+      <section className="pv-grupo">
+        <CabecaDoGrupo titulo={titulo} quantidade={lista.length} />
+        <section className="pv-rail" aria-label={`${rotulo}; deslize horizontalmente`}>
+          {lista.map((item) => (
+            <CartaoDeExemplo key={item.id} item={item} aoAbrir={aoAbrir} />
+          ))}
+        </section>
+      </section>
+    )
+  return (
+    <section
+      className="pv-screen pv-c"
+      data-composicao="resolver"
+      aria-label="Alternativa C — resolver a vida prática"
+    >
+      <header className="pv-c-cabeca">
+        <p className="pc-miudo">MANAUS</p>
+        <CampoDeBusca
+          rotulo="Buscar exemplos na cidade"
+          placeholder="Do que você precisa em Manaus?"
+          value={busca}
+          onChange={(e) => aoBuscar(e.target.value)}
+        />
+        <fieldset className="pv-c-atalhos">
+          <legend className="sr-only">Atalhos por necessidade</legend>
+          {atalhos.map((item) => {
+            const quantidade = base.filter((i) => i.tipo === item.id).length
+            const ligado = tipo === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="pv-c-atalho"
+                aria-pressed={ligado}
+                onClick={() => aoFiltrar(ligado ? "todos" : item.id)}
+              >
+                <span className="pv-c-atalho-marca">
+                  <Icone nome={item.icone} />
+                </span>
+                <span>{item.rotulo}</span>
+                <span className="pc-miudo">{quantidade}</span>
+              </button>
+            )
+          })}
+        </fieldset>
+      </header>
+      {itens.length === 0 ? (
+        <Vazio busca={busca} aoLimpar={aoLimpar} />
+      ) : (
+        <div className="pv-c-conteudo">
+          {trilho("Serviços que a cidade indica", grupos.negocio, "Serviços indicados")}
+          {trilho("Moradia para a sua chegada", grupos.imovel, "Moradias")}
+          {grupos.pergunta.length > 0 && (
+            <section className="pv-grupo">
+              <CabecaDoGrupo titulo="Pediram indicação" quantidade={grupos.pergunta.length} />
+              <ListaDeItens itens={grupos.pergunta} aoAbrir={aoAbrir} />
+            </section>
+          )}
+          {grupos.evento.length > 0 && (
+            <section className="pv-grupo">
+              <CabecaDoGrupo titulo="Encontros" quantidade={grupos.evento.length} />
+              <ListaDeItens itens={grupos.evento} aoAbrir={aoAbrir} />
+            </section>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
 type PropsDaComposicao = {
   busca: string
   aoBuscar: (texto: string) => void
@@ -377,6 +467,9 @@ export function PreviaVNext() {
             <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>
               B · Buscar
             </Chip>
+            <Chip selecionado={variante === "c"} onClick={() => mudarVariante("c")}>
+              C · Resolver
+            </Chip>
             <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>
               Comparar
             </Chip>
@@ -411,6 +504,7 @@ export function PreviaVNext() {
           <div className={variante === "comparar" ? "pv-comparacao" : "pv-um"}>
             {(variante === "a" || variante === "comparar") && <Exploracao {...props} />}
             {(variante === "b" || variante === "comparar") && <BuscaOrientada {...props} />}
+            {(variante === "c" || variante === "comparar") && <Resolver {...props} />}
           </div>
         )}
       </div>

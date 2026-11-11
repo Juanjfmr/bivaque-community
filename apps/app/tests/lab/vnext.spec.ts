@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test"
 const VARIANTES = [
   { valor: "a", composicao: "exploracao" },
   { valor: "b", composicao: "busca" },
+  { valor: "c", composicao: "resolver" },
 ] as const
 
 const TEMAS = ["light", "dark"] as const
@@ -88,10 +89,34 @@ test("F02 vNext: cenário escasso usa as mesmas fixtures nas duas composições"
   await expect(page.locator(".pv-b-resultados .pc-linha")).toHaveCount(2)
 })
 
+test("F02 vNext: C põe serviços e moradia antes das perguntas e filtra pelos atalhos", async ({
+  page,
+}) => {
+  await page.goto("/app/previa/vnext?v=c")
+  const tela = page.locator('[data-composicao="resolver"]')
+  const titulos = await tela.locator(".pv-secao-cabeca h3").allTextContents()
+  expect(titulos).toEqual([
+    "Serviços que a cidade indica",
+    "Moradia para a sua chegada",
+    "Pediram indicação",
+    "Encontros",
+  ])
+  await tela.getByRole("button", { name: /Moradia/ }).click()
+  await expect(tela.getByRole("button", { name: /Moradia/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  )
+  await expect(tela.locator(".pv-rail-card")).toHaveCount(2)
+  await expect(tela.locator(".pv-secao-cabeca h3")).toHaveText(["Moradia para a sua chegada"])
+  await tela.getByRole("button", { name: /Moradia/ }).click()
+  await expect(tela.locator(".pv-rail-card")).toHaveCount(4)
+})
+
 test("F02 vNext: comparação mantém alternativas e rótulos distintos", async ({ page }) => {
   await page.goto("/app/previa/vnext?v=comparar")
   await expect(page.locator('[data-composicao="exploracao"]')).toBeVisible()
   await expect(page.locator('[data-composicao="busca"]')).toBeVisible()
+  await expect(page.locator('[data-composicao="resolver"]')).toBeVisible()
   await expect(page.getByText("BIVAQUE · F02 · DADOS SIMULADOS")).toBeVisible()
   await expect(page.getByRole("button", { name: "A · Explorar" })).toBeVisible()
   await expect(page.getByRole("button", { name: "B · Buscar" })).toBeVisible()
