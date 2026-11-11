@@ -1,4 +1,6 @@
-/** Adapted from 21st.dev @kokonutd/carousel-cards, demo 19168 (MIT).\n * Source copy: 21st-carousel-cards.source.txt. Adaptations: data props, accessible favorites, links, Bivaque price units, external images. */\n"use client";
+/** Adapted from 21st.dev @kokonutd/carousel-cards, demo 19168 (MIT).
+ * Source copy: 21st-carousel-cards.source.txt. Adaptations: data props, accessible favorites, links, Bivaque price units, external images. */
+"use client";
 
 /**
  * @author: @dorianbaffier
