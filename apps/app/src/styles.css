@@ -1003,7 +1003,10 @@
 .bv-grade {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr;
+  /* minmax(0, 1fr) e não 1fr: o mínimo automático do track respeita o
+     min-content de um título longo sem quebra e empurra a coluna para fora
+     da largura do telefone (a varredura de 11/11 pegou 766 px em 375). */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 /* Uma foto por linha em qualquer telefone, inclusive entre 480 e 719 px.

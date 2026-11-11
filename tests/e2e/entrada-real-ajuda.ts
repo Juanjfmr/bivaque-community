@@ -728,6 +728,32 @@ export async function restaurarPerfilSemeado(
 }
 
 /**
+ * Apaga CEP e coordenada de uma persona do seed pela RPC de serviço. É o
+ * `finally` do teste de localização: a próxima largura precisa começar sem
+ * localização, como o seed a deixou.
+ */
+export async function limparLocalizacaoSemeada(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const chave = exigirChaveDeServico()
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/rpc/set_member_location`,
+    {
+      metodo: "POST",
+      cabecalhos: cabecalhosDeServico(chave),
+      corpo: { p_user_id: id, p_cep: null, p_latitude: null, p_longitude: null },
+    },
+    "Supabase (limpar localização semeada)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 204) {
+    throw new Error(
+      `A localização semeada não foi limpa: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+}
+
+/**
  * Marca o vínculo como `verified` para uma conta que nasceu no próprio fluxo
  * (o OTP criou). Devolve o id, para a prova de rascunho no banco.
  */

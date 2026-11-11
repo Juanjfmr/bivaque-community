@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 
@@ -143,7 +143,7 @@ export function Busca() {
   const anunciosTruncados = explorar !== null && explorar.proximo !== null
 
   return (
-    <section data-tela="busca" className="grid gap-2">
+    <section data-tela="busca" className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
       <CabecaDePagina
         titulo={`Buscar em ${cidade}`}
         subtitulo="Encontre oportunidades, negócios e respostas da comunidade."
