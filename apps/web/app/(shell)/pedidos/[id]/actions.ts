@@ -8,6 +8,11 @@ import {
   validateEditDescription,
   validateMessageContent,
 } from "../../../../lib/service-requests/tracking"
+import {
+  falhaAoEditarPedido,
+  falhaAoEncerrarPedido,
+  falhaAoEnviarMensagem,
+} from "../../../../lib/service-requests/tracking-falhas"
 
 // RECON-023 — as escritas do acompanhamento do pedido.
 //
@@ -58,10 +63,6 @@ async function authedClient() {
   })
 }
 
-function isSessionError(message: string | undefined): boolean {
-  return (message ?? "").includes("unauthenticated")
-}
-
 export async function sendRequestMessage(input: {
   conversationId: string
   content: string
@@ -80,9 +81,13 @@ export async function sendRequestMessage(input: {
   })
 
   if (error) {
-    if (isSessionError(error.message)) return { status: "session" }
-    log.error("pedidos: send_conversation_message failed", { error: error.message })
-    return { status: "error", message: error.message }
+    log.error("pedidos: send_conversation_message failed", {
+      error: error.message,
+      code: error.code,
+    })
+    const falha = falhaAoEnviarMensagem(error)
+    if (falha.sessao) return { status: "session" }
+    return { status: "error", message: falha.frase }
   }
 
   const row = data as {
@@ -101,9 +106,10 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
   })
 
   if (error) {
-    if (isSessionError(error.message)) return { status: "session" }
-    log.error("pedidos: close_service_request failed", { error: error.message })
-    return { status: "error", message: error.message }
+    log.error("pedidos: close_service_request failed", { error: error.message, code: error.code })
+    const falha = falhaAoEncerrarPedido(error)
+    if (falha.sessao) return { status: "session" }
+    return { status: "error", message: falha.frase }
   }
 
   const row = data as {
@@ -138,9 +144,10 @@ export async function saveRequestEdit(input: {
   })
 
   if (error) {
-    if (isSessionError(error.message)) return { status: "session" }
-    log.error("pedidos: update_service_request failed", { error: error.message })
-    return { status: "error", message: error.message }
+    log.error("pedidos: update_service_request failed", { error: error.message, code: error.code })
+    const falha = falhaAoEditarPedido(error)
+    if (falha.sessao) return { status: "session" }
+    return { status: "error", message: falha.frase }
   }
 
   const row = data as { description: string; when_text: string | null }
