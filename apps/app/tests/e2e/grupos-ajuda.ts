@@ -15,6 +15,24 @@ export type RecusasDaPublicacao = {
   recusas?: readonly RespostaDePublicacao[]
 }
 
+/**
+ * O corpo chega cru e é lido aqui dentro de um try: `postDataJSON()` lança em
+ * JSON inválido e a rejeição assíncrona deixaria a rota sem resposta, fazendo a
+ * requisição vazar para a rede real. Um corpo que não é objeto vira objeto vazio.
+ */
+function corpoDaRequisicao(
+  request: { postData: () => string | null },
+  metodo: string,
+): Record<string, unknown> {
+  if (metodo === "GET" || metodo === "DELETE") return {}
+  try {
+    const lido: unknown = JSON.parse(request.postData() ?? "{}")
+    return typeof lido === "object" && lido !== null ? (lido as Record<string, unknown>) : {}
+  } catch {
+    return {}
+  }
+}
+
 export async function simularGrupos(
   page: Page,
   opcoes: { membro?: boolean } & RecusasDaPublicacao = {},
@@ -122,10 +140,7 @@ export async function simularGrupos(
       .split("/")
       .filter(Boolean)
     const metodo = request.method()
-    const corpo =
-      metodo === "GET" || metodo === "DELETE"
-        ? {}
-        : (request.postDataJSON() as Record<string, unknown>)
+    const corpo = corpoDaRequisicao(request, metodo)
     if (partes.length === 0) {
       await rota.fulfill({ json: { grupos, cidade: "Manaus", proximo: null } })
       return

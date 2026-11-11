@@ -28,9 +28,31 @@ function publicacao(id: string, extra: Partial<PublicacaoReal> = {}): Publicacao
   }
 }
 
+/** O que o detalhe do grupo devolve na API; os testes trocam o que precisam. */
+function detalhe(corpo: unknown) {
+  if (typeof corpo !== "object" || corpo === null) return corpo
+  const { grupo: g, ...resto } = corpo as Record<string, unknown>
+  return {
+    grupo: {
+      id: "g1",
+      nome: "Grupo de prova",
+      descricao: "",
+      regras: "",
+      fechado: false,
+      membro: true,
+      pendente: false,
+      admin: false,
+      membros: null,
+      fixada: null,
+      ...(typeof g === "object" && g !== null ? (g as Record<string, unknown>) : {}),
+    },
+    ...resto,
+  }
+}
+
 function servidor(corpo: unknown, status = 200) {
   const fetch = vi.fn(
-    async (..._args: unknown[]) => new Response(JSON.stringify(corpo), { status }),
+    async (..._args: unknown[]) => new Response(JSON.stringify(detalhe(corpo)), { status }),
   )
   vi.stubGlobal("fetch", fetch)
   return fetch
@@ -107,20 +129,24 @@ describe("colocarNaLista lê o servidor antes de dizer que entrou", () => {
     const fetch = vi.fn(async (url: string) => {
       if (url.includes("depois=")) {
         return new Response(
-          JSON.stringify({
-            grupo: { id: "g1" },
-            publicacoes: [publicacao("p-20"), publicacao("p-deslocada")],
-            proximo: null,
-          }),
+          JSON.stringify(
+            detalhe({
+              grupo: { id: "g1" },
+              publicacoes: [publicacao("p-20"), publicacao("p-deslocada")],
+              proximo: null,
+            }),
+          ),
           { status: 200 },
         )
       }
       return new Response(
-        JSON.stringify({
-          grupo: { id: "g1" },
-          publicacoes: [publicacao("p-nova"), ...cheia.slice(0, 19)],
-          proximo: "p-19",
-        }),
+        JSON.stringify(
+          detalhe({
+            grupo: { id: "g1" },
+            publicacoes: [publicacao("p-nova"), ...cheia.slice(0, 19)],
+            proximo: "p-19",
+          }),
+        ),
         { status: 200 },
       )
     })
@@ -131,9 +157,11 @@ describe("colocarNaLista lê o servidor antes de dizer que entrou", () => {
       { ordem: "recentes", proximo: "p-20" },
       "recentes",
     )
+    // O cursor vem da página que abriu depois da releitura e onde a publicação
+    // foi achada; o resto da lista continua alcançável por «Ver mais».
     expect(colocada).toEqual({
       anterior: expect.objectContaining({ publicacoes: expect.any(Array) }),
-      proximo: null,
+      proximo: "p-19",
       entraNaLista: true,
     })
   })

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
+  NAO_FOI_POSSIVEL,
   NAO_PERMITE_PUBLICAR,
   recusaAoPublicar,
   SESSAO_VENCIDA,
@@ -20,6 +21,21 @@ describe("recusa da publicação em frase", () => {
     ["policy do banco (42501/P0001)", pelaRota(403, "recusado", "42501"), NAO_PERMITE_PUBLICAR],
     ["sessão vencida", pelaRota(401), SESSAO_VENCIDA],
     ["credencial ausente", new FalhaDaApi("sem-sessao", 401, "sem-credencial"), SESSAO_VENCIDA],
+    [
+      "cabeçalho de escrita ausente",
+      pelaRota(403, "cabecalho-ausente"),
+      "A publicação não saiu por uma conferência de segurança do app. Recarregue a página, entre de novo e envie outra vez.",
+    ],
+    [
+      "gravação recusada por já existir",
+      pelaRota(409, "ja-publicado"),
+      "Esta publicação já foi enviada. Confira a lista do grupo antes de publicar o mesmo texto de novo.",
+    ],
+    [
+      "gravação indisponível fica recuperável",
+      pelaRota(503, "escrita-indisponivel"),
+      NAO_FOI_POSSIVEL,
+    ],
     [
       "origem recusada na escrita",
       pelaRota(403, "origem-recusada"),
