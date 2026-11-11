@@ -1,0 +1,60 @@
+name: Publish Bivaque 21st mobile test (static, isolated)
+on:
+  push:
+    branches:
+      - bivaque21st-preview-20261111
+    paths:
+      - ".github/workflows/bivaque21st-static-preview.yml"
+      - "experiments/bivaque-21st-native/**"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install, verify sources and build
+        working-directory: experiments/bivaque-21st-native
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm run typecheck
+      - name: Prepare self-contained static directory paths
+        run: |
+          mkdir -p preview-site
+          cp -a experiments/bivaque-21st-native/dist/. preview-site/
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          index=Path("preview-site/index.html")
+          html=index.read_text()
+          html=html.replace('src="/assets/','src="./assets/').replace('href="/assets/','href="./assets/')
+          assert 'src="./assets/' in html and 'href="./assets/' in html, "Vite assets did not match"
+          index.write_text(html)
+          js_files=list(Path("preview-site/assets").glob("*.js"))
+          assert len(js_files)==1, f"Expected one JS bundle; found {len(js_files)}"
+          js=js_files[0].read_text()
+          pattern=r'([a-zA-Z_$][\w$]*)="/",([a-zA-Z_$][\w$]*)=e=>\1\+"demo/"\+e'
+          match=re.search(pattern,js)
+          assert match, "Image asset base pattern not found; do not publish broken preview"
+          name=match.group(1)
+          js=js.replace(f'{name}="/"',f'{name}="./"',1)
+          js_files[0].write_text(js)
+          assert Path("preview-site/demo/crib.jpg").exists()
+          assert Path("preview-site/ilustracoes").is_dir()
+          print("Static files ready:",len(list(Path("preview-site").rglob("*"))))
+          PY
+      - name: Commit static files only to preview branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add preview-site/
+          if ! git diff --cached --quiet; then
+            git commit -m "build(preview): publish audited 21st.dev React demo"
+            git push origin HEAD:bivaque21st-preview-20261111
+          fi
