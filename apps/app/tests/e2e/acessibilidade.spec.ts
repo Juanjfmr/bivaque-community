@@ -99,6 +99,17 @@ const SUPERFICIES_DO_LANCAMENTO: readonly Superficie[] = [
  * negócio e o pedido. `abrir` é o passo que o teclado ou o clique dão depois de
  * a tela montar; a análise espera o resultado dele.
  */
+/**
+ * Abre o menu Criar por clique. O Radix abre no pointerdown e o scrim sobe
+ * antes de o click sintético terminar, então o Playwright vê o scrim
+ * interceptando o alvo e repete para sempre; o caminho real de teclado
+ * (Tab + Enter) é coberto em "teclado nas superfícies novas".
+ */
+async function abrirMenuCriar(page: Page): Promise<void> {
+  await page.locator(SELETOR_CRIAR).click({ force: true })
+  await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
+}
+
 const SUPERFICIES_NOVAS: readonly Superficie[] = [
   {
     nome: "Busca",
@@ -124,7 +135,7 @@ const SUPERFICIES_NOVAS: readonly Superficie[] = [
     seletor: SELETOR_MENU_CRIAR,
     preparar: simularInicio,
     abrir: async (page) => {
-      await page.locator(SELETOR_CRIAR).click()
+      await abrirMenuCriar(page)
       await expect(page.locator("[data-escolha]")).toHaveCount(7)
     },
   },
@@ -134,7 +145,7 @@ const SUPERFICIES_NOVAS: readonly Superficie[] = [
     seletor: '[data-sobreposicao="folha"]',
     preparar: simularInicio,
     abrir: async (page) => {
-      await page.locator(SELETOR_CRIAR).click()
+      await abrirMenuCriar(page)
       await page.locator('[data-escolha="create-event"]').click()
       await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
     },
@@ -417,7 +428,7 @@ test.describe("teclado e foco nas telas reais", () => {
 })
 
 test.describe("teclado nas superfícies novas", () => {
-  // O teclado novo roda uma vez no desktop-1440; o teste preexistente (:371)
+  // O teclado novo roda uma vez no desktop-1440; o teste preexistente (:377)
   // continua nos seis projetos. As três larguras de layout ficam na matriz
   // axe, nas capturas e na varredura de rolagem.
   test.beforeEach(() => {
@@ -715,6 +726,9 @@ test.describe("sem rolagem horizontal e sem erro de console", () => {
         await page.goto(superficie.caminho)
         await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
         if (superficie.abrir !== undefined) await superficie.abrir(page)
+        if (superficie.conteudo !== undefined) {
+          await expect(page.locator(superficie.conteudo)).toBeVisible()
+        }
         await expect(page.locator(superficie.seletor)).toBeVisible()
         await aguardarAnimacoes(page)
 
@@ -765,6 +779,9 @@ test.describe("capturas das superfícies novas", () => {
           await page.goto(superficie.caminho)
           await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
           if (superficie.abrir !== undefined) await superficie.abrir(page)
+          if (superficie.conteudo !== undefined) {
+            await expect(page.locator(superficie.conteudo)).toBeVisible()
+          }
           await expect(page.locator(superficie.seletor)).toBeVisible()
           await aguardarAnimacoes(page)
           await page.evaluate(async () => {

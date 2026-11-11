@@ -58,3 +58,4 @@ jobs:
             apps/app/test-results/
             apps/app/artifacts/visual/
             apps/app/artifacts/visual-mobile/
+            .visual/
