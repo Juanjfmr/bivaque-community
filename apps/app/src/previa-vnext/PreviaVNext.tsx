@@ -45,7 +45,8 @@ function Filtros({
   compacto?: boolean
 }) {
   return (
-    <div className={compacto ? "pv-filtros pv-filtros-coluna" : "pv-filtros"} role="group" aria-label="Filtrar por tipo de conteúdo">
+    <fieldset className={compacto ? "pv-filtros pv-filtros-coluna" : "pv-filtros"}>
+      <legend className="sr-only">Filtrar por tipo de conteúdo</legend>
       {TIPOS.map((item) => {
         const quantidade = item.id === "todos" ? itens.length : itens.filter((i) => i.tipo === item.id).length
         return (
@@ -54,7 +55,7 @@ function Filtros({
           </Chip>
         )
       })}
-    </div>
+    </fieldset>
   )
 }
 
@@ -181,7 +182,7 @@ function Exploracao({
                 titulo="Para resolver a vida prática"
                 quantidade={grupos.negocio.length + grupos.imovel.length}
               />
-              <div className="pv-rail" role="group" aria-label="Explorar serviços e moradias; deslize horizontalmente">
+              <section className="pv-rail" aria-label="Explorar serviços e moradias; deslize horizontalmente">
                 {[...grupos.negocio, ...grupos.imovel].map((item) => (
                   <CartaoDeExemplo key={item.id} item={item} aoAbrir={aoAbrir} />
                 ))}
@@ -331,7 +332,8 @@ export function PreviaVNext() {
               </div>
             </details>
           </div>
-          <div className="pv-escolhas" role="group" aria-label="Escolher composição">
+          <fieldset className="pv-escolhas">
+            <legend className="sr-only">Escolher composição</legend>
             <Chip selecionado={variante === "a"} onClick={() => mudarVariante("a")}>A · Explorar</Chip>
             <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>B · Buscar</Chip>
             <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>Comparar</Chip>
