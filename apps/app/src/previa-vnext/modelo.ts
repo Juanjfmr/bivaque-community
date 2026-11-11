@@ -117,7 +117,8 @@ export function filtrarExemplos(
   itens: readonly ItemDeExemplo[],
   opcoes: Readonly<{ busca: string; tipo: TipoDeFiltro; cenario: Cenario }>,
 ): readonly ItemDeExemplo[] {
-  if (opcoes.cenario === "vazio" || opcoes.cenario === "erro" || opcoes.cenario === "carregando") return []
+  if (opcoes.cenario === "vazio" || opcoes.cenario === "erro" || opcoes.cenario === "carregando")
+    return []
   const exemplos =
     opcoes.cenario === "escasso"
       ? itens.filter((item) => item.id === "p-escola" || item.id === "n-reparos")

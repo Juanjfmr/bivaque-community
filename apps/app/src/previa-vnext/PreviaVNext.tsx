@@ -12,12 +12,12 @@ import {
   Selo,
 } from "@/src/pecas/pecas"
 import {
+  type Cenario,
   filtrarExemplos,
   ITENS_DE_EXEMPLO,
+  type ItemDeExemplo,
   separarPorTipo,
   TIPOS,
-  type Cenario,
-  type ItemDeExemplo,
   type TipoDeFiltro,
 } from "./modelo"
 import "./previa-vnext.css"
@@ -48,10 +48,14 @@ function Filtros({
     <fieldset className={compacto ? "pv-filtros pv-filtros-coluna" : "pv-filtros"}>
       <legend className="sr-only">Filtrar por tipo de conteúdo</legend>
       {TIPOS.map((item) => {
-        const quantidade = item.id === "todos" ? itens.length : itens.filter((i) => i.tipo === item.id).length
+        const quantidade =
+          item.id === "todos" ? itens.length : itens.filter((i) => i.tipo === item.id).length
         return (
           <Chip key={item.id} selecionado={tipo === item.id} onClick={() => aoSelecionar(item.id)}>
-            {item.rotulo} <span className="pv-contagem" aria-hidden="true">{quantidade}</span>
+            {item.rotulo}{" "}
+            <span className="pv-contagem" aria-hidden="true">
+              {quantidade}
+            </span>
           </Chip>
         )
       })}
@@ -63,7 +67,9 @@ function CabecaDoGrupo({ titulo, quantidade }: { titulo: string; quantidade: num
   return (
     <div className="pv-secao-cabeca">
       <h3 className="pc-secao">{titulo}</h3>
-      <span className="pc-miudo">{quantidade} {quantidade === 1 ? "item" : "itens"}</span>
+      <span className="pc-miudo">
+        {quantidade} {quantidade === 1 ? "item" : "itens"}
+      </span>
     </div>
   )
 }
@@ -78,7 +84,9 @@ function Vazio({ busca, aoLimpar }: { busca: string; aoLimpar: () => void }) {
           ? "Não há exemplos para essa busca. Tente outra palavra ou retire o filtro."
           : "Uma cidade nova não precisa de cartões vazios para parecer movimentada."}
       </p>
-      <Botao tom="contorno" onClick={aoLimpar}>Limpar filtros</Botao>
+      <Botao tom="contorno" onClick={aoLimpar}>
+        Limpar filtros
+      </Botao>
     </div>
   )
 }
@@ -123,7 +131,9 @@ function CartaoDeExemplo({
       <h4 className="pc-subtitulo">{item.titulo}</h4>
       <p className="pc-apoio">{item.local}</p>
       <p className="pc-apoio pv-card-resumo">{item.resumo}</p>
-      <Botao tom="texto" onClick={() => aoAbrir(item)}>Ver contexto</Botao>
+      <Botao tom="texto" onClick={() => aoAbrir(item)}>
+        Ver contexto
+      </Botao>
     </Cartao>
   )
 }
@@ -145,7 +155,11 @@ function Exploracao({
 }: PropsDaComposicao) {
   const grupos = separarPorTipo(itens)
   return (
-    <section className="pv-screen pv-a" data-composicao="exploracao" aria-label="Alternativa A — exploração contextual">
+    <section
+      className="pv-screen pv-a"
+      data-composicao="exploracao"
+      aria-label="Alternativa A — exploração contextual"
+    >
       <div className="pv-a-abertura">
         <div className="pv-a-introducao">
           <p className="pc-miudo">MANAUS · EXPLORAR A CIDADE</p>
@@ -162,7 +176,9 @@ function Exploracao({
         <aside className="pv-a-contexto">
           <Selo nome="chegadas" tamanho={64} />
           <p className="pc-miudo">REDE LOCAL</p>
-          <p className="pc-subtitulo">A experiência de quem chegou antes ajuda quem está chegando.</p>
+          <p className="pc-subtitulo">
+            A experiência de quem chegou antes ajuda quem está chegando.
+          </p>
           <p className="pc-apoio">Nesta prévia, os exemplos são simulados.</p>
         </aside>
       </div>
@@ -182,12 +198,17 @@ function Exploracao({
                 titulo="Para resolver a vida prática"
                 quantidade={grupos.negocio.length + grupos.imovel.length}
               />
-              <section className="pv-rail" aria-label="Explorar serviços e moradias; deslize horizontalmente">
+              <section
+                className="pv-rail"
+                aria-label="Explorar serviços e moradias; deslize horizontalmente"
+              >
                 {[...grupos.negocio, ...grupos.imovel].map((item) => (
                   <CartaoDeExemplo key={item.id} item={item} aoAbrir={aoAbrir} />
                 ))}
               </section>
-              <p className="pc-miudo pv-deslize">Deslize para ver mais; use Tab para navegar pelos itens.</p>
+              <p className="pc-miudo pv-deslize">
+                Deslize para ver mais; use Tab para navegar pelos itens.
+              </p>
             </section>
           )}
           {grupos.evento.length > 0 && (
@@ -217,7 +238,11 @@ function BuscaOrientada({
   aoLimpar,
 }: PropsDaComposicao) {
   return (
-    <section className="pv-screen pv-b" data-composicao="busca" aria-label="Alternativa B — busca orientada">
+    <section
+      className="pv-screen pv-b"
+      data-composicao="busca"
+      aria-label="Alternativa B — busca orientada"
+    >
       <header className="pv-b-cabeca">
         <p className="pc-miudo">MANAUS · BUSCA LOCAL</p>
         <h2 className="pc-titulo">Encontre o que precisa.</h2>
@@ -237,7 +262,9 @@ function BuscaOrientada({
         <section className="pv-b-resultados" aria-label="Resultados da busca">
           <div className="pv-secao-cabeca">
             <h3 className="pc-secao">Resultados</h3>
-            <span className="pc-miudo">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
+            <span className="pc-miudo">
+              {itens.length} {itens.length === 1 ? "item" : "itens"}
+            </span>
           </div>
           {itens.length === 0 ? (
             <Vazio busca={busca} aoLimpar={aoLimpar} />
@@ -310,9 +337,7 @@ export function PreviaVNext() {
             </div>
             <details className="pv-opcoes">
               <summary>Testar estados</summary>
-              <p className="pc-apoio">
-                Os mesmos dados de demonstração nas duas versões.
-              </p>
+              <p className="pc-apoio">Os mesmos dados de demonstração nas duas versões.</p>
               <div className="pv-cenario">
                 <CampoDeEscolha
                   rotulo="Conjunto de dados"
@@ -334,20 +359,31 @@ export function PreviaVNext() {
           </div>
           <fieldset className="pv-escolhas">
             <legend className="sr-only">Escolher composição</legend>
-            <Chip selecionado={variante === "a"} onClick={() => mudarVariante("a")}>A · Explorar</Chip>
-            <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>B · Buscar</Chip>
-            <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>Comparar</Chip>
+            <Chip selecionado={variante === "a"} onClick={() => mudarVariante("a")}>
+              A · Explorar
+            </Chip>
+            <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>
+              B · Buscar
+            </Chip>
+            <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>
+              Comparar
+            </Chip>
           </fieldset>
           <p className="sr-only" role="status" aria-live="polite">
-            {nomeDoTipo(tipo)} · {itens.length} {itens.length === 1 ? "resultado" : "resultados"} · conteúdo de demonstração
+            {nomeDoTipo(tipo)} · {itens.length} {itens.length === 1 ? "resultado" : "resultados"} ·
+            conteúdo de demonstração
           </p>
         </header>
 
         {cenario === "erro" ? (
           <section className="pv-feedback" role="alert">
             <h2 className="pc-subtitulo">Não foi possível carregar os resultados</h2>
-            <p className="pc-apoio">Falha simulada de leitura. O erro não é apresentado como lista vazia.</p>
-            <Botao tom="principal" onClick={() => setCenario("completo")}>Tentar novamente</Botao>
+            <p className="pc-apoio">
+              Falha simulada de leitura. O erro não é apresentado como lista vazia.
+            </p>
+            <Botao tom="principal" onClick={() => setCenario("completo")}>
+              Tentar novamente
+            </Botao>
           </section>
         ) : cenario === "carregando" ? (
           <section className="pv-feedback" role="status" aria-label="Carregando exemplos">
@@ -355,7 +391,9 @@ export function PreviaVNext() {
             <Esqueleto largura="65%" altura={24} />
             <Esqueleto largura="100%" altura={64} />
             <Esqueleto largura="90%" altura={64} />
-            <Botao tom="contorno" onClick={() => setCenario("completo")}>Concluir simulação</Botao>
+            <Botao tom="contorno" onClick={() => setCenario("completo")}>
+              Concluir simulação
+            </Botao>
           </section>
         ) : (
           <div className={variante === "comparar" ? "pv-comparacao" : "pv-um"}>
@@ -364,14 +402,22 @@ export function PreviaVNext() {
           </div>
         )}
       </div>
-      <Folha aberta={detalhe !== null} aoFechar={() => setDetalhe(null)} titulo={detalhe?.titulo ?? "Detalhe"}>
+      <Folha
+        aberta={detalhe !== null}
+        aoFechar={() => setDetalhe(null)}
+        titulo={detalhe?.titulo ?? "Detalhe"}
+      >
         {detalhe !== null && (
           <div className="pv-detalhe">
             <p className="pc-miudo">DEMONSTRAÇÃO · {nomeDoTipo(detalhe.tipo)}</p>
             <p className="pc-corpo">{detalhe.resumo}</p>
-            <p className="pc-apoio">{detalhe.local} · {detalhe.contexto}</p>
+            <p className="pc-apoio">
+              {detalhe.local} · {detalhe.contexto}
+            </p>
             <p className="pc-miudo">O item é fictício e não tem destino no aplicativo real.</p>
-            <Botao tom="principal" onClick={() => setDetalhe(null)}>Fechar detalhe</Botao>
+            <Botao tom="principal" onClick={() => setDetalhe(null)}>
+              Fechar detalhe
+            </Botao>
           </div>
         )}
       </Folha>

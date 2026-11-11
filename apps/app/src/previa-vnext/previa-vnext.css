@@ -8,8 +8,7 @@
 .pv-laboratorio {
   width: min(100%, 1256px);
   margin: 0 auto;
-  padding: max(16px, env(safe-area-inset-top)) 16px
-    calc(48px + env(safe-area-inset-bottom));
+  padding: max(16px, env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
 }
 
 .pv-controles {
