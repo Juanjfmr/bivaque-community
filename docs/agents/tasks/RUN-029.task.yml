@@ -1,4 +1,4 @@
-﻿# LOC-IMPL (sub-lote a) â€” localizaÃ§Ã£o privada do perfil (10/11/2026)
+# LOC-IMPL (sub-lote a) â€” localizaÃ§Ã£o privada do perfil (10/11/2026)
 # Proposta de contrato para o cartÃ£o LOC-IMPL, fase Lote 7 â€” Desapegos e ImÃ³veis.
 # O YAML abaixo Ã© a cÃ³pia que o executor leva para docs/agents/tasks/RUN-029.task.yml.
 task_id: RUN-029
@@ -42,6 +42,7 @@ allowed_paths:
   - apps/app/src/telas/Voce.tsx
   - apps/app/tests/voce-dados.test.ts
   - apps/app/tests/e2e/voce.spec.ts
+  - apps/app/tests/e2e/voce-ajuda.ts
   - tests/unit/app-api/voce
   - tests/unit/profile
   - tests/scope/f10-voce-porta.test.mjs
