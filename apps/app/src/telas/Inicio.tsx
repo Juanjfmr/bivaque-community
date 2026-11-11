@@ -164,7 +164,7 @@ export function Inicio() {
       <header data-home="abertura" className="bv-home-intro">
         <div data-home="apresentacao">
           <div data-cabeca="pagina" className="bv-home-heading">
-            <h1>
+            <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1}>
               O que você precisa em <span data-home="cidade">{cidade}</span>?
             </h1>
           </div>
