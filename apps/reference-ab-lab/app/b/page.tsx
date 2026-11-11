@@ -1,8 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
-import { ArrowRight, Bell, Bookmark, CalendarDays, Check, ChevronDown, Compass, Heart, MapPin, MessageCircle, MoreHorizontal, Plus, Search, Send, Share2, ShoppingBag, SlidersHorizontal, UserRound, X } from "lucide-react";
+import { ArrowRight, Bell, Bookmark, CalendarDays, Check, ChevronDown, Compass, Heart, MessageCircle, MoreHorizontal, Plus, Search, Send, Share2, ShoppingBag, SlidersHorizontal, UserRound, X } from "lucide-react";
 import CarouselCards, {type ExperienceItem} from "@/components/ui/carousel-cards";
-import {events,homes,initialPosts,photos,services,type Post} from "@/data";
+import {homes,initialPosts,photos,services,type Post} from "@/data";
 import "./style.css";
 type FeedMode = "recentes" | "perguntas" | "indicacoes" | "encontros";
 export default function TelaB(){
