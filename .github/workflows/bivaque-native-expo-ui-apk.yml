@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: bivaque-expo-ui-apk
+  cancel-in-progress: true
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -30,7 +33,6 @@ jobs:
       - name: Install SDK 56 dependencies
         run: |
           npm install --no-audit --no-fund --legacy-peer-deps
-          npx expo install --fix --npm
           npx expo install --check
           npm ls expo @expo/ui react react-native --depth=0
       - name: Include assets
