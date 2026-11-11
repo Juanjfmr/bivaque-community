@@ -5,6 +5,7 @@ coverage/
 *.tsbuildinfo
 playwright-report/
 test-results/
+test-results-*/
 .visual/
 # capturas transitórias do visual-capture do app (a evidência vai para .visual/)
 apps/app/artifacts/visual/
