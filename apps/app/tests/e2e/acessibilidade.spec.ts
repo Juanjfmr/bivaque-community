@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs"
+﻿import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import AxeBuilder from "@axe-core/playwright"
 import type { Locator, Page } from "@playwright/test"
@@ -100,15 +100,14 @@ const SUPERFICIES_DO_LANCAMENTO: readonly Superficie[] = [
  * a tela montar; a análise espera o resultado dele.
  */
 /**
- * Abre o menu Criar pelo teclado. O Radix sobe o scrim no pointerdown e o
- * clique sintético do Playwright cai nele (o menu chega a abrir e fecha), então
- * o preparo usa o mesmo caminho da pessoa: foco no botão Criar e Enter. O
- * caminho de teclado da tela continua coberto em "teclado nas superfícies
- * novas".
+ * Abre o menu Criar para a matriz. O gesto sintético do Playwright (click) pode
+ * cair no scrim que o Radix sobe no pointerdown, e o foco direto não ativa o
+ * botão em toda largura; o dispatchEvent entrega o clique ao handler do botão,
+ * sem gesto. O caminho de teclado real continua coberto em "teclado nas
+ * superfícies novas".
  */
 async function abrirMenuCriar(page: Page): Promise<void> {
-  await page.locator(SELETOR_CRIAR).focus()
-  await page.keyboard.press("Enter")
+  await page.locator(SELETOR_CRIAR).dispatchEvent("click")
   await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
 }
 
