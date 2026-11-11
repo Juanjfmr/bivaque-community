@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Bivaque — Beta Nativo",
+    "slug": "bivaque-native-beta",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "bivaque-beta",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.bivaque.community.nativebeta",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": { "backgroundColor": "#f3f5f6" },
+      "permissions": []
+    },
+    "ios": { "bundleIdentifier": "com.bivaque.community.nativebeta", "supportsTablet": false },
+    "plugins": ["expo-router", ["expo-image-picker", {"photosPermission": "Escolha fotos para criar seus anúncios no Bivaque.", "cameraPermission": false}]],
+    "experiments": {"typedRoutes": false}
+  }
+}
