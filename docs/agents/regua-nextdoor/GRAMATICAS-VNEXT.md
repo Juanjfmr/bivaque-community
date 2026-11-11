@@ -28,7 +28,7 @@ A gramática vem da tarefa. A identidade vem das peças. Um card é apropriado o
 **Tarefa:** encontrar rápido algo útil na cidade, retomar participação e passar para o conteúdo.
 **Opção A — Exploração contextual:** localidade → atalhos substantivos por intenção → prévia de atividade/conteúdo real → trilhos de descoberta quando houver volume.
 **Opção B — Busca orientada:** busca e sugestões por categoria/tarefa → resultados tipados → filtros em sheet; caminho curto até conteúdo específico.
-**Trade-off:** A beneficia navegação sem termo exato; B beneficia usuário com destino. Testar cold start (0, 1, 20 registros), 320/375, exposição de itens reais na primeira dobra, tempo até pergunta/negócio/imóvel.
+**Estado do laboratório (10/11):** A e B foram implementadas em `apps/app/src/previa-vnext/`, com fixtures idênticas e captura automatizada; não estão aprovadas para a Home real. **Trade-off:** A beneficia navegação sem termo exato; B beneficia usuário com destino. Testar cold start (0, 1, 20 registros), 320/375, exposição de itens reais na primeira dobra, tempo até pergunta/negócio/imóvel.
 **Não fazer:** painel de métricas artificiais, caixa de busca gigante seguida por cartões gigantes, “continuar onde parou” sem ação real.
 
 ## F03 — Criar

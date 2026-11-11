@@ -1,6 +1,6 @@
 # Design vNext — contrato de composição e revisão antisslop
 
-> **Estado:** normas de composição e avaliação **incorporadas a `PADRAO-DE-TELA.md` em 10/11/2026**, neste PR de rascunho; alternativas visuais ainda não experimentadas nem aprovadas. Não substitui ADRs aceitos, `LANCAMENTO.md`, telas aprovadas ou a biblioteca vigente.  
+> **Estado:** normas de composição e avaliação **incorporadas a `PADRAO-DE-TELA.md` em 10/11/2026**, neste PR de rascunho. Há agora protótipos A/B **F02 isolados em DEV**, com testes de navegação e captura de screenshots; nenhuma variante foi aprovada para produção. Não substitui ADRs aceitos, `LANCAMENTO.md`, telas aprovadas ou a biblioteca vigente.  
 > **Escopo:** criação/revisão de tela no `apps/app`; `apps/web` mantém seus próprios contratos.  
 > **Evidências:** [matriz de regras](MATRIZ-DESIGN-VNEXT.md), [gramáticas por jornada](GRAMATICAS-VNEXT.md), [21st.dev](PESQUISA-21ST-VNEXT.md) e [plano de experimentos](EXPERIMENTOS-VNEXT.md).
 
@@ -79,6 +79,6 @@ Cada dimensão recebe **melhor / igual / pior / não verificado**, apontando a c
 
 ## 7. Governança desta proposta
 
-**Aplicado neste PR:** `PADRAO-DE-TELA.md` foi alterado **em suas regras normativas**, deixando F01 como referência de qualidade sem copiar sua composição em todos os módulos, substituindo desktop de duas colunas como regra global, tornando a ação inferior contextual e fortalecendo prova de primeira dobra e comparação. Preserva explicitamente a composição do F01 já aprovada. `IDENTIDADE-DAS-PECAS.md` transferiu orientações de distribuição de cartões/listas/grupos para o padrão de tela e corrigiu a referência desatualizada ao fundo Papel. As fontes continuam subordinadas a `AGENTS.md`, `LANCAMENTO.md` e ADRs; **nenhuma tela foi alterada**.
+**Aplicado neste PR:** `PADRAO-DE-TELA.md` foi alterado **em suas regras normativas**, deixando F01 como referência de qualidade sem copiar sua composição em todos os módulos, substituindo desktop de duas colunas como regra global, tornando a ação inferior contextual e fortalecendo prova de primeira dobra e comparação. Preserva explicitamente a composição do F01 já aprovada. `IDENTIDADE-DAS-PECAS.md` transferiu orientações de distribuição de cartões/listas/grupos para o padrão de tela e corrigiu a referência desatualizada ao fundo Papel. As fontes continuam subordinadas a `AGENTS.md`, `LANCAMENTO.md` e ADRs; **nenhuma tela real de produção foi alterada**. As variantes F02 vivem exclusivamente em `apps/app/src/previa-vnext/`, atrás de `import.meta.env.DEV`, sem tocar no roteador.
 
 As hipóteses de arquitetura em `GRAMATICAS-VNEXT.md` e `EXPERIMENTOS-VNEXT.md` **não se tornaram decisão visual de produto**. A promoção de uma composição para tela existente exige experimento, revisor independente, prova de runtime e aprovação conforme o processo vigente. A R72 segue congelada.

@@ -77,10 +77,11 @@
 | **LEGADO NEUTRALIZADO por precedência, não apagado** | 01, 03, 08, 09, 11, 12, 16, 18, 19 | Regras do antigo repositório, como Aço, Home com 4 cards, proibição de carrossel e mobile em um único molde, não são importadas para as instruções atuais. **Arquivos históricos continuam existindo; nenhum arquivo do outro repositório foi excluído.** |
 | **CONFLITO TRATADO documentalmente** | 20 | O novo texto deixa claro que o fundo Papel de outubro não é fonte de tokens ativos; valor atual vem da ADR 02/11 e de `pecas.css`. **Não houve auditoria de todo o CSS em runtime.** |
 | **KEEP — já vigente** | 32, 39 | Preservados histórico/scroll/foco e experimento com julgamento independente; não havia regra a substituir. |
-| **EXPERIMENTOS NÃO EXECUTADOS** | 07, 10, 14, 17, 24, 27, 28, 31, 33, 34, 36 | Foram descritas hipóteses e provas futuras, **sem instalar componente, renderizar alternativa ou aprovar mudança visual**. |
+| **F02 LAB IMPLEMENTADO, NÃO APROVADO** | 07, 10, 14, 17, 24, 28, 31, 34 (parcial) | O laboratório **A/B F02** implementa exploração editorial, resultados, filtros, rail e fixtures escassas/vazias/erro, com capturas reais em 6 larguras e dois temas. Não significa que regra visual tenha sido alterada nas telas de produto, nem prova melhora sobre baseline real. |
+| **EXPERIMENTOS AINDA PENDENTES** | 27, 33, 36 e aplicações restantes de 07, 10, 14, 17, 24, 28, 31, 34 | Outros módulos, integração externa e julgamento sobre a experiência real ainda não passaram por experimento e aprovação. |
 | **PENDÊNCIA DE EXECUÇÃO/QUADRO** | 44 | Foi criado critério de rastreabilidade no processo de revisão, mas nenhuma nova tarefa do board foi criada ou concluída; o fechamento pertence ao fluxo existente. |
 
-**Resultado honesto:** as regras documentais de composição foram efetivamente alteradas nesta branch; a biblioteca de componentes, o código React, a paleta, os fluxos, a R72 e os documentos históricos não foram modificados. A aplicação **visual** continua pendente. Um PR em rascunho não equivale a decisão mesclada em `main`.
+**Resultado honesto:** as regras documentais de composição foram alteradas e **código React novo foi criado apenas em laboratório DEV de F02**, sem modificar telas de produto. A biblioteca de peças, a paleta, a R72 e os documentos históricos permanecem intactos. A aplicação **visual** continua pendente. Um PR em rascunho não equivale a decisão mesclada em `main`.
 
 ## Separar diagnóstico de decisão
 

@@ -1,7 +1,18 @@
 # Design vNext — plano de experimentos e critérios de prova
 
-> **Estado:** experimentos PROPOSTOS. Não são aprovação de layouts, PRs de produção nem backlog paralelo.  
+> **Estado:** F02 A/B **implementado em prévia DEV, sem promoção de UI**, com Playwright automatizado (seis viewports e dois temas); F04, F06 e demais experimentos seguem propostos. Não são aprovação de layouts ou PRs de produção.  
 > **Regra de execução:** respeitar `LANCAMENTO.md` e o card ativo; usar `.claude/skills/visual-system-experiment/SKILL.md` / `experiment-protocol` e a biblioteca `apps/app/src/pecas/`. Não alterar R72, `apps/app` em produção, backend ou decisões soberanas nesta fase.
+
+## Execução materializada: laboratório F02
+
+- Fonte React: `apps/app/src/previa-vnext/PreviaVNext.tsx` e `modelo.ts`; CSS de **composição**, sem redefinir as peças, em `previa-vnext.css`.
+- Rotas locais `/app/previa/vnext?v=a`, `?v=b`, `?v=comparar` **somente com Vite dev**. O roteador e o bundle de produção não registram a prévia.
+- **A:** exploração editorial centrada em uma pergunta concreta, outras perguntas em linhas, descoberta horizontal de serviços e imóveis, eventos em lista; busca e filtro numa zona secundária.
+- **B:** busca objetiva, filtros por assunto e resultados compactos em lista; no desktop, filtros laterais.
+- Mesmos oito itens **explicitamente simulados**, mesmo termo/filtros, mesmas ações de abrir detalhe, mesmos estados vazio, escasso, erro e carregamento. Nenhum anúncio, rating, pessoa ou preço falso é apresentado como real.
+- Testes de dados e isolamento: `apps/app/tests/previa-vnext.test.ts`; testes de interação e screenshots: `apps/app/tests/lab/vnext.spec.ts`; suíte isolada: `apps/app/playwright.vnext.config.ts`; workflow `.github/workflows/design-vnext-visual.yml`. O fluxo de produção não usa essa configuração.
+- A primeira rodada de 24 capturas do GitHub Actions (`Bivaque Design vNext Visual Lab`, [execução 42932599652](https://github.com/Juanjfmr/bivaque-community/actions/runs/42932599652)) passou nas provas automatizadas. **Revisão visual real** dessas capturas mostrou que ambas ainda começavam por cabeçalho + busca + chips: A foi, por isso, refeita editorialmente. A segunda rodada e o parecer final devem ser confrontados com a mesma rubrica antes de escolher uma variante.
+- **Pendentes:** comparação com capturas baseline do app real e Nextdoor; parecer cego independente; evidência de qualidade sem regressão; decisão para eventualmente promover; testes operacionais do Bivaque/CI completo. Não vender o sucesso do Playwright como aprovação de UI.
 
 ## Pré-requisitos e baseline
 
@@ -70,10 +81,10 @@ Relatar **melhor/igual/pior/não verificado** com evidência concreta por crité
 
 **21st.dev:** comparar metadata e preview de Embla carousel, filtros, comentários e calendários; só recuperar/importar o código **depois** de selecionar candidato e confirmar que a biblioteca atual não resolve. Não instalar tema, não carregar código do catálogo em produção por conveniência. [Shortlist](PESQUISA-21ST-VNEXT.md).
 
-## Pacotes e sequência futura, sem execução neste lote
+## Pacotes e sequência futura
 
 1. **EXP-0: baseline real** — capturas e cobertura das rotas atuais; confirmar as lacunas ainda existentes.
-2. **EXP-1: teste F02** — duas alternativas independentes, juiz cego e relatório.
+2. **EXP-1: teste F02** — implementação e testes/capturas automatizados no laboratório DEV realizados; faltam baseline do app real, juiz cego e decisão de promoção.
 3. **EXP-2: F04** — sequência ler/perguntar/responder/voltar; duas alternativas.
 4. **EXP-3: F06** — lista e mapa apenas com informações permitidas; duas alternativas.
 5. **EXP-4: componentes** — escolher exclusivamente peças que superem baseline em experiência e a11y.
