@@ -6,6 +6,12 @@ on:
     paths:
       - "experiments/bivaque-21st-native/**"
       - ".github/workflows/bivaque-21st-native.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "experiments/bivaque-21st-native/**"
+      - ".github/workflows/bivaque-21st-native.yml"
   workflow_dispatch:
 permissions:
   contents: read
