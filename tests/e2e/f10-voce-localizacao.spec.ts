@@ -83,14 +83,20 @@ test.describe("F10 — CEP do perfil no app", { tag: "@stateful" }, () => {
     await expect(campoCep).toHaveValue(CEP_SEMEADO)
     await page.getByRole("button", { name: "Salvar" }).click()
     const respostaDoPut = await gravacao
-    expect(respostaDoPut.ok(), "a gravação do CEP precisa responder com sucesso").toBe(true)
+    // O corpo é lido uma vez e reaproveitado: a mensagem de falha precisa do
+    // status e do erro do servidor, e o teste segue com o mesmo JSON.
+    const textoDoPut = await respostaDoPut.text()
+    expect(
+      respostaDoPut.ok(),
+      `a gravação do CEP precisa responder com sucesso (HTTP ${respostaDoPut.status()}: ${textoDoPut})`,
+    ).toBe(true)
 
     // O corpo do pedido não leva identidade nem coordenada; o do resposta
     // devolve o CEP formatado e a marca de definida, nunca latitude/longitude.
     const corpoDoPedido = respostaDoPut.request().postDataJSON() as Record<string, unknown>
     expect(corpoDoPedido).toEqual({ cep: CEP_DIGITOS })
     expect(Object.hasOwn(corpoDoPedido, "user_id"), "user_id não vem do corpo").toBe(false)
-    const corpoDaResposta = (await respostaDoPut.json()) as {
+    const corpoDaResposta = JSON.parse(textoDoPut) as {
       localizacao?: { cep?: string | null; definida?: boolean }
     }
     expect(corpoDaResposta.localizacao).toEqual({ cep: CEP_SEMEADO, definida: true })
