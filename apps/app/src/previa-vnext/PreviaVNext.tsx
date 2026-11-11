@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
+import { BuscaGlobal, type ResultadoDeBusca } from "@/components/ui/busca-global"
+import {
+  Credenza,
+  CredenzaBody,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "@/components/ui/credenza"
 import {
   Botao,
   CampoDeBusca,
@@ -7,7 +16,6 @@ import {
   Cartao,
   Chip,
   Esqueleto,
-  Folha,
   Linha,
 } from "@/src/pecas/pecas"
 import {
@@ -295,16 +303,8 @@ function BuscaOrientada({
  * vem antes das perguntas, que aparecem como pedidos de indicação. Mesmos
  * itens, busca e filtros de A e B.
  */
-function Resolver({
-  busca,
-  aoBuscar,
-  tipo,
-  aoFiltrar,
-  itens,
-  base,
-  aoAbrir,
-  aoLimpar,
-}: PropsDaComposicao) {
+function Resolver({ busca, tipo, aoFiltrar, itens, base, aoAbrir, aoLimpar }: PropsDaComposicao) {
+  const [buscaAberta, setBuscaAberta] = useState(false)
   const grupos = separarPorTipo(itens)
   const atalhos = TIPOS.filter((item) => item.id !== "todos")
   const trilho = (titulo: string, lista: readonly ItemDeExemplo[], rotulo: string) =>
@@ -326,11 +326,22 @@ function Resolver({
     >
       <header className="pv-c-cabeca">
         <p className="pc-miudo">MANAUS</p>
-        <CampoDeBusca
-          rotulo="Buscar exemplos na cidade"
-          placeholder="Do que você precisa em Manaus?"
-          value={busca}
-          onChange={(e) => aoBuscar(e.target.value)}
+        <button type="button" className="pv-c-busca" onClick={() => setBuscaAberta(true)}>
+          <Icone nome="search" />
+          Do que você precisa em Manaus?
+        </button>
+        <BuscaGlobal
+          aberta={buscaAberta}
+          aoMudarAberta={setBuscaAberta}
+          aoEscolher={(r) => {
+            setBuscaAberta(false)
+            const item = base.find((i) => i.id === r.id)
+            if (item) aoAbrir(item)
+          }}
+          cidade="Manaus"
+          ultimosAbertos={[]}
+          recentes={base.slice(0, 4).map(paraResultado)}
+          resultados={base.map(paraResultado)}
         />
         <fieldset className="pv-c-atalhos">
           <legend className="sr-only">Atalhos por necessidade</legend>
@@ -377,6 +388,23 @@ function Resolver({
       )}
     </section>
   )
+}
+
+const TIPO_DE_BUSCA = {
+  pergunta: "pergunta",
+  negocio: "negocio",
+  imovel: "imovel",
+  evento: "encontro",
+} as const
+
+function paraResultado(item: ItemDeExemplo): ResultadoDeBusca {
+  return {
+    id: item.id,
+    tipo: TIPO_DE_BUSCA[item.tipo],
+    titulo: item.titulo,
+    trecho: item.contexto,
+    apoio: item.local,
+  }
 }
 
 type PropsDaComposicao = {
@@ -508,25 +536,28 @@ export function PreviaVNext() {
           </div>
         )}
       </div>
-      <Folha
-        aberta={detalhe !== null}
-        aoFechar={() => setDetalhe(null)}
-        titulo={detalhe?.titulo ?? "Detalhe"}
-      >
-        {detalhe !== null && (
-          <div className="pv-detalhe">
-            <p className="pc-miudo">DEMONSTRAÇÃO · {nomeDoTipo(detalhe.tipo)}</p>
-            <p className="pc-corpo">{detalhe.resumo}</p>
-            <p className="pc-apoio">
-              {detalhe.local} · {detalhe.contexto}
-            </p>
-            <p className="pc-miudo">O item é fictício e não tem destino no aplicativo real.</p>
-            <Botao tom="principal" onClick={() => setDetalhe(null)}>
-              Fechar detalhe
-            </Botao>
-          </div>
-        )}
-      </Folha>
+      <Credenza open={detalhe !== null} onOpenChange={(aberta) => !aberta && setDetalhe(null)}>
+        <CredenzaContent>
+          <CredenzaHeader>
+            <CredenzaTitle>{detalhe?.titulo ?? "Detalhe"}</CredenzaTitle>
+            <CredenzaDescription>
+              DEMONSTRAÇÃO · {detalhe !== null ? nomeDoTipo(detalhe.tipo) : ""}
+            </CredenzaDescription>
+          </CredenzaHeader>
+          {detalhe !== null && (
+            <CredenzaBody className="pv-detalhe">
+              <p className="pc-corpo">{detalhe.resumo}</p>
+              <p className="pc-apoio">
+                {detalhe.local} · {detalhe.contexto}
+              </p>
+              <p className="pc-miudo">O item é fictício e não tem destino no aplicativo real.</p>
+              <Botao tom="principal" onClick={() => setDetalhe(null)}>
+                Fechar detalhe
+              </Botao>
+            </CredenzaBody>
+          )}
+        </CredenzaContent>
+      </Credenza>
     </div>
   )
 }

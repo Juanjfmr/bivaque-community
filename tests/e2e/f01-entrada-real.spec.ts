@@ -238,7 +238,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     // ── o Início do app ───────────────────────────────────────────────────
     await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 30_000 })
     await expect(
-      page.getByRole("heading", { level: 1, name: /Sua rede em/ }),
+      page.getByRole("heading", { level: 1, name: /O que você precisa em/ }),
       "o Início do app não abriu depois do fim da entrada",
     ).toBeVisible({ timeout: 30_000 })
     await capturarEmDoisTemas(page, projeto, "inicio")
@@ -492,7 +492,9 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Agora não" }).click()
 
     await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 30_000 })
-    await expect(page.getByRole("heading", { level: 1, name: /Sua rede em/ })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { level: 1, name: /O que você precisa em/ }),
+    ).toBeVisible({
       timeout: 30_000,
     })
     await capturarEmDoisTemas(page, projeto, "convite-inicio")
@@ -656,7 +658,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     // Quem já é membro não repete a entrada: a tela devolve a pessoa ao Início.
     await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 30_000 })
     await expect(
-      page.getByRole("heading", { level: 1, name: /Sua rede em/ }),
+      page.getByRole("heading", { level: 1, name: /O que você precisa em/ }),
       "membro autenticado em /app/entrar deveria terminar no Início",
     ).toBeVisible({ timeout: 30_000 })
     await capturarEmDoisTemas(page, projeto, "membro-inicio")

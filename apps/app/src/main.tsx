@@ -48,6 +48,11 @@ if (import.meta.env.DEV && caminho.startsWith(`${prefixo}f01`)) {
   void import("@/src/previa-vnext/PreviaVNext").then(({ PreviaVNext }) =>
     createRoot(elemento).render(<PreviaVNext />),
   )
+} else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}inicio`)) {
+  // Início comercial (11/11/2026): tela-assinatura, só no desenvolvimento.
+  void import("@/src/previa-inicio/PreviaInicio").then(({ PreviaInicio }) =>
+    createRoot(elemento).render(<PreviaInicio />),
+  )
 } else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}pecas`)) {
   void import("@/src/pecas/GaleriaDePecas").then(({ GaleriaDePecas }) =>
     createRoot(elemento).render(<GaleriaDePecas />),
