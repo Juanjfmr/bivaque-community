@@ -61,11 +61,10 @@ biblioteca e na galeria antes de entrar na tela.
 - Toda ilustração tem fundo transparente e pousa em qualquer fundo, claro ou escuro, sem moldura. Selo e
   escolha ilustrada ficam num quadrado de tom (`--pc-tom`).
 
-**Composição das peças.**
-- No feed, cada publicação é um cartão branco sobre o Papel.
-- Lista (grupos, passos, regras) é linha plana com divisória.
-- Grupo sem capa aparece pelo selo e pelo nome, sem faixa vazia.
-- Pessoa sem foto aparece pelas iniciais num dos quatro tons da família, sempre o mesmo para a mesma pessoa.
+**Uso das peças e separação de responsabilidades.**
+- Esta especificação rege a **aparência e o comportamento das peças**, não a composição completa de cada tela. Cards de publicação, listas de grupos/passos/regras e grupo sem capa são definidos e comparados no [padrão ativo de tela](PADRAO-DE-TELA.md); experimentos de arquitetura seguem o [contrato vNext](DESIGN-VNEXT.md).
+- Pessoa sem foto aparece pelas iniciais num dos quatro tons da família, sempre o mesmo para a mesma pessoa. Nunca substituir por retrato artificial apresentado como fotografia real.
+- Não reaproveitar a referência histórica ao fundo **Papel** como token normativo do app: os valores correntes vêm da [paleta fria](../../decisions/ADR-20261102-paleta-fria.md) e dos estilos em `apps/app/src/pecas/pecas.css`.
 
 **Peças de entrada.**
 - Campo com o rótulo dentro, escolha numa lista, busca e área de texto.
