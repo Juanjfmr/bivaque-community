@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { BuscaGlobal, type ResultadoDeBusca } from "@/components/ui/busca-global"
 import { Icone } from "@/components/bivaque/icone"
+import { BuscaGlobal, type ResultadoDeBusca } from "@/components/ui/busca-global"
 import {
   Credenza,
   CredenzaBody,
