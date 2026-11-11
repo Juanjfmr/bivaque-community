@@ -47,7 +47,8 @@ Vai no cartão do quadro, em cinco linhas. Sem ficha, não há tela.
 
 Blocos do 21st.dev são matéria-prima de estrutura e interação. Entram despidos: cor, fonte, raio,
 sombra e ícone do bloco saem; ficam as peças e os tokens do Bivaque. Se o bloco traz algo reutilizável
-que a biblioteca não tem, vira peça na biblioteca e na galeria antes de entrar na tela.
+que a biblioteca não tem, vira peça na biblioteca e na galeria antes de entrar na tela. Quais apps e
+quais blocos servem de referência, e por quê: §14.
 
 ## 3. Texto
 
@@ -257,22 +258,67 @@ O revisor recusa a tela quando encontra qualquer item desta lista observável:
 - animação que não está na §8;
 - peça redesenhada no CSS da tela.
 
-## 14. Referências por tipo (Mobbin)
+## 14. Referências: de quem aprender e por quê
 
-Ponto de partida. A ficha da tela cita as suas, buscadas para o trabalho específico.
+Referência boa atende a dois critérios ao mesmo tempo: o app resolve **o mesmo trabalho** que a tela do
+Bivaque, e é reconhecido por fazê-lo bem. Prêmio sem parentesco de trabalho não serve (a maioria dos
+premiados da Apple é jogo, editor ou utilitário). Parentesco sem qualidade também não.
+
+**Quem entra, e com que papel** (revisto em 11/11/2026)
+
+| App | Por que tem a ver com o Bivaque | Credencial | Papel |
+|---|---|---|---|
+| Nextdoor | mesmo produto: comunidade local verificada, grupos, desapegos, encontros | líder da categoria; não é premiado por design | régua de função e de fluxo; **não** é teto de acabamento |
+| Partiful | encontros entre pessoas que se conhecem pouco, presença em dois toques | Melhor App de 2024 no Google Play; finalista de Impacto Cultural na App Store (2024) | acabamento e calor em Eventos e nos momentos de recompensa |
+| Airbnb | decidir sobre um lugar que não se conhece, com mapa e fatos; é o caso de quem é transferido | referência de mercado em detalhe e mapa; prêmio não verificado aqui | Decidir e Comparar com mapa (moradia, negócios) |
+| Vinted | compra e venda entre pessoas, com reputação e conversa a partir do item | grande mercado de segunda mão; prêmio não verificado aqui | Mercado: detalhe, vendedor, "falar com quem vende" |
+| Taobao | comparação densa de itens | Apple Design Award 2025, categoria Interação | só a interação de comparar e filtrar; **não** copiar a densidade promocional |
+| WhatsApp | é a conversa que o brasileiro já sabe usar | convenção dominante no Brasil | Conversar: não reinventar bolha, campo e anexos |
+
+Apps que apareceram na primeira busca e **não** são referência do Bivaque: LinkedIn, Reddit, TradingView,
+Facebook, TikTok, Wolt, talabat, Swiggy, Discord, Snapchat. Use um deles só quando a ficha da tela
+explicar qual interação específica ele resolve melhor do que os seis acima.
+
+Lacuna conhecida: o Mobbin não tem Nubank, e não foram conferidos iFood, QuintoAndar, OLX e Mercado
+Livre. Quando a tela depender de costume brasileiro (endereço, CEP, Pix, moradia), a ficha registra a
+referência por captura própria do app real, com data.
+
+**Telas de partida, por tipo**
 
 | Tipo | Referência | O que aproveitar |
 |---|---|---|
 | Acompanhar | [Nextdoor, feed](https://mobbin.com/screens/ed9fc5ab-889d-45e3-81bf-015ad6b46c69) · [topo do Início](https://mobbin.com/screens/ed239926-f476-46ca-87ec-e897ff20028b) | publicação inteira na dobra; cidade na barra; trilho com "ver mais" |
-| Comparar | [Nextdoor, For Sale](https://mobbin.com/screens/e20e764b-bd26-4adb-b8d9-e7ecb2ecb0ed) · [Nextdoor, grupos](https://mobbin.com/screens/d14c2272-ea7e-43e9-a46d-b8269e9b8163) · [Airbnb, lista com mapa](https://mobbin.com/screens/df8fc9ee-d109-458b-812e-f8621a15c314) | grade 2 colunas com preço e distância; linha densa com ação à direita; botão de mapa flutuante |
-| Decidir | [Airbnb, detalhe](https://mobbin.com/screens/df3523e0-6209-461c-af3a-8b2ee4cbb8ba) · [Partiful, evento](https://mobbin.com/screens/9b48b0a7-b832-48c5-8284-24d435c12c6a) | fatos e ação presos no rodapé; presença em dois toques |
-| Fazer | [Nextdoor, novo anúncio](https://mobbin.com/screens/dcf5ee8f-c4ae-42df-9dd8-cb6cf6960eec) | foto primeiro; rótulo dentro do campo; local aproximado no mapa |
-| Conversar | [Nextdoor, publicação e comentários](https://mobbin.com/screens/f86feba8-42ec-4fd4-8ace-fcad7d7d52f6) · [LinkedIn, caixa](https://mobbin.com/screens/80d1c0f3-eb69-4b8f-856e-8a509aabeefa) | campo de comentar fixo; filtros em chips sobre linhas densas |
-| Gerir | [Nextdoor, perfil](https://mobbin.com/screens/9fa1c528-5530-4f11-bc24-0244ea7279fe) | seções com "ver tudo" e linhas planas |
+| Comparar | [Nextdoor, For Sale](https://mobbin.com/screens/e20e764b-bd26-4adb-b8d9-e7ecb2ecb0ed) · [Vinted, vitrine](https://mobbin.com/screens/e5482041-520e-4c45-a7a2-048712073dd5) · [Airbnb, lista sobre mapa](https://mobbin.com/screens/fca1741d-8901-4f82-8ef8-1d3fb0d45589) · [Nextdoor, grupos](https://mobbin.com/screens/d14c2272-ea7e-43e9-a46d-b8269e9b8163) | grade de 2 colunas com preço e distância; folha de resultados que sobe sobre o mapa; linha densa com ação à direita |
+| Decidir | [Vinted, item](https://mobbin.com/screens/f15927fc-596e-4d40-8f4f-cd3b8f97df2d) · [Airbnb, detalhe](https://mobbin.com/screens/df3523e0-6209-461c-af3a-8b2ee4cbb8ba) · [Airbnb, lugar no mapa](https://mobbin.com/screens/fbc85668-e52a-4391-8c70-f64b7161c5ad) · [Partiful, evento](https://mobbin.com/screens/9b48b0a7-b832-48c5-8284-24d435c12c6a) | foto, vendedor e "falar com quem vende" na dobra; fatos e ação presos no rodapé; tempo de deslocamento a partir de casa; presença em dois toques |
+| Fazer | [Nextdoor, novo anúncio](https://mobbin.com/screens/dcf5ee8f-c4ae-42df-9dd8-cb6cf6960eec) · [Partiful, criar evento](https://mobbin.com/screens/f67fc557-6c59-4816-8e64-0c6ad11342c7) | foto primeiro; rótulo dentro do campo; local aproximado no mapa; opcionais como chips "+" em vez de campos vazios |
+| Conversar | [WhatsApp, conversa](https://mobbin.com/screens/ff7ec209-6c71-4eef-9df6-c5667fd27a49) · [Nextdoor, publicação e comentários](https://mobbin.com/screens/f86feba8-42ec-4fd4-8ace-fcad7d7d52f6) · [Partiful, comentar](https://mobbin.com/screens/fdb62215-e72b-49e1-b827-7f448d84bad6) | bolhas, campo e anexos como a pessoa já conhece; campo de comentar fixo que sobe com o teclado |
+| Gerir | [Nextdoor, perfil](https://mobbin.com/screens/9fa1c528-5530-4f11-bc24-0244ea7279fe) · [Nextdoor, editar perfil](https://mobbin.com/screens/f52c2de2-1124-4a8e-8461-c777d7487d12) | seções com "ver tudo" e linhas planas; aviso de salvo no rodapé |
 | Buscar | [Nextdoor, resultados](https://mobbin.com/screens/db95e37d-f921-4133-a0eb-5abf3ed1823f) | resultados agrupados por tipo, com abas |
-| Cidade nova | [Reddit, comunidade recém-criada](https://mobbin.com/screens/44c08e47-f74d-46ba-a267-aa7aafe05540) · [Nextdoor, boas-vindas do grupo](https://mobbin.com/screens/1d6df29b-09ab-4f98-b492-744947320e26) · [TradingView, vazio com sugestões](https://mobbin.com/screens/09448182-a68c-4455-8f69-20d7f09c87b8) | primeiros passos contados; vazio que já oferece o que seguir |
+| Cidade nova | [Nextdoor, boas-vindas do grupo](https://mobbin.com/screens/1d6df29b-09ab-4f98-b492-744947320e26) · [Partiful, confirmação em folha](https://mobbin.com/screens/f22d5d27-fdd9-48fd-85cc-dc356e028269) | primeiros passos contados no lugar do vazio; folha curta com uma ação |
 
-Armadilhas da busca no Mobbin: [HANDOFF.md](HANDOFF.md) §3.5.
+Armadilhas da busca no Mobbin: [HANDOFF.md](HANDOFF.md) §3.5. Busque pelo nome do app e do trabalho;
+busca genérica devolve apps sem parentesco.
+
+**Blocos da 21st.dev**
+
+O acervo é grande e desigual: há muita peça de vitrine (carrossel 3D, brilho, vidro) feita para página
+de marketing. Ela não entra no app. Entram blocos de estrutura, de autores que seguem o shadcn, que é a
+base do `apps/app`. Candidatos conferidos em 11/11/2026 pelo catálogo (o código ainda precisa ser lido
+antes de usar):
+
+| Necessidade | Bloco | Observação |
+|---|---|---|
+| Folha com pontos de parada (lista sobre mapa, detalhe curto) | [Drawer, snap points — coss](https://21st.dev/@coss.com/components/drawer/snap-points) | comparar com a folha da biblioteca; só entra o que ela não tem |
+| Folha no celular, diálogo no computador | [Credenza — redpangilinan](https://21st.dev/@redpangilinan/components/credenza) | resolve a §12 para tarefas curtas |
+| Vazio com ação | [Empty — shadcn](https://21st.dev/@shadcn/components/empty/outline) | a ilustração vem da família do Bivaque |
+| Primeiros passos na cidade nova | [Onboarding Checklist Drawer — ShadcnSpace](https://21st.dev/@shadcnspace/components/onboarding-checklist-drawer) | estrutura dos passos contados da §7 |
+| Campo de mensagem que cresce | [Textarea with Send Button — coss](https://21st.dev/@coss.com/components/p-textarea-15) | base do compositor de conversa |
+| Esqueleto de conversa | [Chat Thread Skeleton — Cnippet](https://21st.dev/@cnippet-dev/components/v-skeleton-9) | forma do que vem, §8 |
+| Galeria de fotos do anúncio | [Thumbnail image viewer — Waqar H. Syed](https://21st.dev/@ibrandify/components/thumbnail-image-viewer) | sem efeito 3D; arrastar e miniaturas |
+
+Regra de entrada, além da §2: crédito com nome, autor e link no topo do arquivo; `framer-motion`,
+`next/link` e Base UI do bloco saem e dão lugar ao que o app já usa; o movimento do bloco é trocado pelo
+vocabulário da §8. Bloco que só existe pelo efeito é recusado.
 
 ## 15. O que é regra e o que é hipótese
 
