@@ -1,6 +1,6 @@
 # Design vNext — contrato de composição e revisão antisslop
 
-> **Estado:** proposta operacional DOCUMENTAL para revisão no marco de identidade; não substitui ADRs aceitos, `LANCAMENTO.md` nem a biblioteca vigente. Data: 10/11/2026.  
+> **Estado:** normas de composição e avaliação **incorporadas a `PADRAO-DE-TELA.md` em 10/11/2026**, neste PR de rascunho; alternativas visuais ainda não experimentadas nem aprovadas. Não substitui ADRs aceitos, `LANCAMENTO.md`, telas aprovadas ou a biblioteca vigente.  
 > **Escopo:** criação/revisão de tela no `apps/app`; `apps/web` mantém seus próprios contratos.  
 > **Evidências:** [matriz de regras](MATRIZ-DESIGN-VNEXT.md), [gramáticas por jornada](GRAMATICAS-VNEXT.md), [21st.dev](PESQUISA-21ST-VNEXT.md) e [plano de experimentos](EXPERIMENTOS-VNEXT.md).
 
@@ -79,4 +79,6 @@ Cada dimensão recebe **melhor / igual / pior / não verificado**, apontando a c
 
 ## 7. Governança desta proposta
 
-Este documento **não** muda sozinho `PADRAO-DE-TELA.md` nem `IDENTIDADE-DAS-PECAS.md`. Onde o padrão atual fixa, por exemplo, desktop em duas colunas ou barra de ação inferior, preserve-o nas telas existentes e registre a hipótese alternativa em `EXPERIMENTOS-VNEXT.md`; qualquer substituição depende de decisão apropriada e prova. Aplicar a vNext inicialmente às **novas explorações isoladas**, nunca retroativamente a telas aprovadas.
+**Aplicado neste PR:** `PADRAO-DE-TELA.md` foi alterado **em suas regras normativas**, deixando F01 como referência de qualidade sem copiar sua composição em todos os módulos, substituindo desktop de duas colunas como regra global, tornando a ação inferior contextual e fortalecendo prova de primeira dobra e comparação. Preserva explicitamente a composição do F01 já aprovada. `IDENTIDADE-DAS-PECAS.md` transferiu orientações de distribuição de cartões/listas/grupos para o padrão de tela e corrigiu a referência desatualizada ao fundo Papel. As fontes continuam subordinadas a `AGENTS.md`, `LANCAMENTO.md` e ADRs; **nenhuma tela foi alterada**.
+
+As hipóteses de arquitetura em `GRAMATICAS-VNEXT.md` e `EXPERIMENTOS-VNEXT.md` **não se tornaram decisão visual de produto**. A promoção de uma composição para tela existente exige experimento, revisor independente, prova de runtime e aprovação conforme o processo vigente. A R72 segue congelada.
