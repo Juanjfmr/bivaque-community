@@ -64,7 +64,7 @@ const EventCard = React.forwardRef<HTMLDivElement, EventCardProps>(
           boxShadow: "0px 10px 20px -5px hsl(var(--primary) / 0.1)",
         }}
         transition={{ duration: 0.2, ease: "easeInOut" as const }}
-        aria-label={`${title} event details`}
+        aria-label={`Detalhes do encontro: ${title}`}
       >
         <div className="flex flex-col space-y-4">
           {/* Row 1: Title */}
@@ -77,15 +77,15 @@ const EventCard = React.forwardRef<HTMLDivElement, EventCardProps>(
 
           {/* Row 2: Date & Time */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-            <span className="text-muted-foreground">on</span>
+            <span className="text-muted-foreground">Quando</span>
             <span className="rounded-md bg-muted px-2.5 py-1 font-semibold text-muted-foreground">
               {date}
             </span>
-            <span className="text-muted-foreground">from</span>
+            <span className="text-muted-foreground">às</span>
             <span className="rounded-md bg-muted px-2.5 py-1 font-semibold text-muted-foreground">
               {startTime}
             </span>
-            <span className="text-muted-foreground">until</span>
+            <span className="text-muted-foreground">até</span>
             <span className="rounded-md bg-muted px-2.5 py-1 font-semibold text-muted-foreground">
               {endTime}
             </span>
@@ -93,12 +93,12 @@ const EventCard = React.forwardRef<HTMLDivElement, EventCardProps>(
 
           {/* Row 3: Location & Frequency */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-            <span className="text-muted-foreground">at</span>
+            <span className="text-muted-foreground">Local</span>
             <div className="inline-flex items-center gap-2 rounded-md bg-muted px-2.5 py-1 font-semibold text-muted-foreground">
               {locationIcon}
               <span>{location}</span>
             </div>
-            <span className="text-muted-foreground">every</span>
+            <span className="text-muted-foreground">Frequência</span>
             <span className="rounded-md bg-muted px-2.5 py-1 font-semibold text-muted-foreground">
               {frequency}
             </span>
