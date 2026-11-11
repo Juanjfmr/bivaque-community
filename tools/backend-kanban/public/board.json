@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-11-07",
+  "updatedAt": "2026-11-11",
   "sourcePolicy": "docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.",
   "cards": [
     {
@@ -7194,6 +7194,35 @@
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
       "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "PUSH-ENDURECER",
+      "title": "Push: limites de inscrição, saída do app e provas negativas que faltaram",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "description": "Médios e baixos da auditoria R3 do PR #163 (11/11/2026). O alto (purga voltando a deixar CEP e coordenadas) foi corrigido no próprio PR; estes ficam para o lote seguinte.",
+      "checklist": [
+        "Teto de inscrições por membro (trigger em push_subscriptions) e teto de envios por mensagem",
+        "Timeout no envio do web-push e envio sem segurar o lote do outbox (e-mail incluído)",
+        "Chamar desinscreverPush antes do signOut quando o Sair existir no apps/app",
+        "pgTAP: INSERT com user_id de outro membro dá 42501 e a trigger claim_push_subscription não altera a linha da vítima",
+        "Grant por coluna ou trigger que force created_at/last_success_at no INSERT",
+        "Apagar as linhas push do outbox na purga da conta",
+        "Decidir se a carência da exclusão suspende o push do aparelho"
+      ],
+      "proof": [
+        "11/11: auditoria security-auditor do #163; HIGH corrigido no PR, MEDIUM/LOW aqui."
+      ],
+      "tests": [],
+      "links": [
+        "docs/decisions/ADR-20261107-push-no-aparelho.md",
+        "docs/agents/tasks/RUN-137.task.yml"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "4677fd4f"
     }
   ],
   "launch": {

@@ -1,10 +1,11 @@
--- RUN-029 (LAN-PUSH, parte web): a purga da conta apaga a inscricao de push.
+-- RUN-137 (LAN-PUSH, parte web): a purga da conta apaga a inscricao de push.
 --
 -- ADR-20261107-push-no-aparelho, item 2 ("ao apagar a conta"). A FK de
 -- push_subscriptions ja tem ON DELETE CASCADE, mas a exclusao do GoTrue e soft
 -- delete: auth.users nunca sai de verdade, entao o CASCADE nao roda. A purga
 -- manual e o caminho real, como nas outras tabelas pessoais. O corpo abaixo e o
--- da migration 20261104215006 com uma linha nova; nada mais mudou.
+-- vigente de 20261110211702_profile_location.sql (que ja apaga CEP e coordenadas)
+-- com uma linha nova; nada mais mudou.
 --
 -- O item 2 tambem manda apagar a inscricao parada ha 90 dias sem envio aceito;
 -- e o job diario no fim deste arquivo.
@@ -63,6 +64,10 @@ begin
      set bio = null,
          -- DATA-001 (20261022120200): o bairro do perfil é dado pessoal e sai na purga.
          neighborhood = null,
+         -- LOC-IMPL (RUN-029): CEP e coordenada de cálculo privado também saem.
+         cep = null,
+         latitude = null,
+         longitude = null,
          consent_version = 0,
          consented_at = null,
          updated_at = now()
@@ -73,7 +78,7 @@ begin
   delete from public.consent_acceptances where user_id = p_user_id;
   delete from public.notification_preferences where user_id = p_user_id;
   delete from public.notification_channel_preferences where user_id = p_user_id;
-  -- RUN-029: o destino de push do aparelho e dado do titular. A exclusao real
+  -- RUN-137: o destino de push do aparelho e dado do titular. A exclusao real
   -- e soft delete, entao o ON DELETE CASCADE da FK de push_subscriptions nunca
   -- dispara aqui: sem esta linha, o aparelho continuaria recebendo aviso da
   -- conta apagada.

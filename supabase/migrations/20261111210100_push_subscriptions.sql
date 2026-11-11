@@ -1,4 +1,4 @@
--- RUN-029 (LAN-PUSH, parte web): inscrição do aparelho e o envio pelo outbox.
+-- RUN-137 (LAN-PUSH, parte web): inscrição do aparelho e o envio pelo outbox.
 --
 -- ADR-20261107-push-no-aparelho, itens 1 a 3. A tabela guarda o destino do
 -- provedor (endpoint do Web Push), as chaves públicas da inscrição, um rótulo

@@ -1,4 +1,4 @@
--- RUN-029 (LAN-PUSH, parte web): o outbox ganha o canal `push`.
+-- RUN-137 (LAN-PUSH, parte web): o outbox ganha o canal `push`.
 --
 -- A armadilha do Postgres já registrada em 20260809184316, 20260911050941 e
 -- 20261106214256: um valor novo de enum não pode ser usado na mesma transação
