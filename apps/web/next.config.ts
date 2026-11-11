@@ -69,6 +69,12 @@ const nextConfig: NextConfig = {
         destination: `${ENTRADA_DO_APP}?redirect=:destino`,
         permanent: false,
       },
+      // /landing exato nunca foi página: o caminho existe só como espaço de
+      // assets (`apps/web/public/landing/`), protegido pelo modo `ativos` do
+      // proxy. Quem digita o endereço cai na landing de verdade em `/`; um
+      // asset (`/landing/hero-bivaque-arrival.webp`) continua servido em 200.
+      // ADR-20261110-superficie-publica-do-proxy.
+      { source: "/landing", destination: "/", permanent: false },
       ...ENTRADA_ANTIGA.map((source) => ({
         source,
         destination: ENTRADA_DO_APP,
@@ -103,6 +109,15 @@ const nextConfig: NextConfig = {
           ["/configuracoes/familia", "/app/voce"],
           ["/inicio", "/app/inicio"],
           ["/explorar", "/app/busca"],
+          // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes
+          // de `/events/:id` porque o Next aplica a primeira regra que casa e
+          // `:id` capturaria "novo" como encontro. As regras com dois segmentos
+          // depois do id preservam o id no destino; a query segue pelo Next.
+          ["/events/novo", "/app/agenda"],
+          ["/events/:id/editar", "/app/evento/:id"],
+          ["/events/:id/perguntas", "/app/evento/:id"],
+          ["/events/:id", "/app/evento/:id"],
+          ["/events", "/app/agenda"],
         ] as const
       ).map(([source, destination]) => ({
         source,

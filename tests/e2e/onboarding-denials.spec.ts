@@ -15,7 +15,7 @@ import { expect, test } from "@playwright/test"
 // em /signup saiu da web com a ENTRADA-WEB-ANTIGA; o aceite do app é coberto
 // pelo F01 (tests/e2e/f01-entrada-real.spec.ts).
 
-const PROTECTED_ROUTES = ["/community", "/groups", "/events", "/profile"]
+const PROTECTED_ROUTES = ["/community", "/groups", "/profile"]
 
 test.describe("onboarding: denial paths", () => {
   test("protected routes deny an anonymous visitor and send them to login", async ({ page }) => {
@@ -35,6 +35,27 @@ test.describe("onboarding: denial paths", () => {
     await expect(
       page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
     ).toBeVisible()
+  })
+
+  test("/events redirects to the app agenda, and the query survives the HTTP hop", async ({
+    page,
+    request,
+  }) => {
+    // RUN-133/F05: /events saiu da lista de rotas que o portão vê — o redirect
+    // de configuração roda antes dele. A query chega ao destino no 307; o
+    // roteador do app pode normalizá-la ao entrar, então a prova de query é a
+    // camada HTTP, e o navegador prova o destino e o estado de sessão.
+    const redirect = await request.get("/events?origem=aviso", { maxRedirects: 0 })
+    expect(redirect.status()).toBe(307)
+    const location = redirect.headers()["location"] ?? ""
+    expect(location).toContain("/app/agenda")
+    expect(location).toContain("origem=aviso")
+
+    await page.goto("/events?origem=aviso")
+
+    await expect(page).toHaveURL(/\/app\/agenda/)
+    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 
   test("the consent cookie is not a gate: garbage value changes nothing", async ({ page }) => {

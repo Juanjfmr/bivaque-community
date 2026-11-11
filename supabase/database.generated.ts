@@ -114,6 +114,30 @@ export type Database = {
           },
         ]
       }
+      cep_geocodes: {
+        Row: {
+          cep: string
+          fetched_at: string
+          latitude: number
+          longitude: number
+          source: string
+        }
+        Insert: {
+          cep: string
+          fetched_at?: string
+          latitude: number
+          longitude: number
+          source: string
+        }
+        Update: {
+          cep?: string
+          fetched_at?: string
+          latitude?: number
+          longitude?: number
+          source?: string
+        }
+        Relationships: []
+      }
       comment_reactions: {
         Row: {
           comment_id: string
@@ -2007,10 +2031,13 @@ export type Database = {
       profiles: {
         Row: {
           bio: string | null
+          cep: string | null
           consent_version: number
           consented_at: string | null
           created_at: string
           display_name: string
+          latitude: number | null
+          longitude: number | null
           neighborhood: string | null
           show_neighborhood: boolean
           updated_at: string
@@ -2019,10 +2046,13 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          cep?: string | null
           consent_version?: number
           consented_at?: string | null
           created_at?: string
           display_name: string
+          latitude?: number | null
+          longitude?: number | null
           neighborhood?: string | null
           show_neighborhood?: boolean
           updated_at?: string
@@ -2031,10 +2061,13 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          cep?: string | null
           consent_version?: number
           consented_at?: string | null
           created_at?: string
           display_name?: string
+          latitude?: number | null
+          longitude?: number | null
           neighborhood?: string | null
           show_neighborhood?: boolean
           updated_at?: string
@@ -2998,6 +3031,10 @@ export type Database = {
       }
       degrade_locality_origins: { Args: never; Returns: number }
       delete_group: { Args: { p_group_id: string }; Returns: undefined }
+      distance_to_neighborhood: {
+        Args: { p_neighborhood_id: string }
+        Returns: number
+      }
       enqueue_city_digests: { Args: never; Returns: number }
       entry_otp_account_state: { Args: { p_email: string }; Returns: string }
       entry_otp_send_confirmed: {
@@ -3145,6 +3182,13 @@ export type Database = {
       finalize_account_deletion: {
         Args: { p_error?: string; p_user_id: string }
         Returns: string
+      }
+      get_my_profile_location: {
+        Args: never
+        Returns: {
+          cep: string
+          definida: boolean
+        }[]
       }
       get_profile_bio: { Args: { p_user_id: string }; Returns: string }
       get_profile_neighborhood: { Args: { p_user_id: string }; Returns: string }
@@ -3786,6 +3830,15 @@ export type Database = {
       }
       set_group_rules: {
         Args: { p_group_id: string; p_rules: string }
+        Returns: undefined
+      }
+      set_member_location: {
+        Args: {
+          p_cep: string
+          p_latitude: number
+          p_longitude: number
+          p_user_id: string
+        }
         Returns: undefined
       }
       set_profile_bio: { Args: { p_bio: string }; Returns: undefined }

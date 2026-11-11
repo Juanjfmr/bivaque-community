@@ -33,6 +33,7 @@
     "flows:check": "node scripts/visual/flows-gallery.mjs --check && node scripts/visual/flows-verify.mjs --check"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "^2.5.7",
     "@bivaque/contracts": "workspace:*",
     "@bivaque/domain": "workspace:*",

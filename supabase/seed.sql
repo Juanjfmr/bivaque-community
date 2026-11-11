@@ -232,6 +232,13 @@ values
   )
 on conflict (user_id) do nothing;
 
+-- Cache de CEP do E2E de localização (RUN-029): a persona grava 69000-000 e o
+-- PUT resolve pelo cache, sem rede. A coordenada é a do centro de Manaus, não
+-- de uma pessoa, e o CEP aqui é só a chave sintética do teste.
+insert into public.cep_geocodes (cep, latitude, longitude, source, fetched_at)
+values ('69000000', -3.101940, -60.025000, 'brasilapi', now() - interval '1 day')
+on conflict (cep) do nothing;
+
 -- Unresolved recommendation request authored by the same account, for
 -- tests/e2e/recommendation-reply-notify.spec.ts ("Marcar como resolvido" is
 -- only reachable for the request's own author). recommendation_requests had

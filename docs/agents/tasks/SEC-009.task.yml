@@ -1,0 +1,105 @@
+# F09: a rota de mensagens deixa de fazer INSERT cru e passa a usar a RPC que já
+# existe, com idempotência por client_key, autorização de participante e transição
+# do pedido. R3 pelo processo de 05/11: uma revisão independente e um security-auditor
+# antes do merge; não há decisão nova, então não há ADR novo.
+task_id: SEC-009
+
+objective: >
+  Enviar resposta pela rota do app passa a gravar pela RPC send_conversation_message:
+  repetir a mesma client_key devolve a mesma mensagem e não duplica, só participante
+  da conversa grava, e a primeira resposta do prestador move o pedido aberto para
+  in_conversation e cria o aviso uma única vez, com prova positiva e negativa.
+
+authority:
+  - docs/LANCAMENTO.md (F09, linha 58: caixa, conversa contextual, resposta)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+  - docs/decisions/ADR-20260922-conversa-por-pedido.md
+  - docs/decisions/ADR-20260922-aviso-da-primeira-resposta.md
+  - tools/backend-kanban card F09-ENVIO-PELA-RPC
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/app/conversas/[id]/mensagens/route.ts:36-44 faz INSERT cru em
+    dm_messages e não chama a RPC; por isso não aplica client_key, não move o pedido
+    e não cria o aviso de primeira resposta. tests/unit/app-api/conversas/rotas.test.ts:126-135
+    fixa esse INSERT como comportamento esperado. O app não envia chave:
+    apps/app/lib/dados/conversas.ts:75-87 manda só { texto } e
+    apps/app/src/telas/Conversa.tsx:75-93 reenvia o rascunho após falha sem chave.
+    A RPC vigente já tem a propriedade (supabase/migrations/20260922161000_service_request_first_reply_notice.sql:10-145):
+    idempotência por (conversation_id, sender_id, client_key), autorização de
+    participante, transição open -> in_conversation e aviso provider_first_reply.
+    O pgTAP já prova a RPC: idempotência
+    (supabase/tests/service-request-tracking.sql:69-106), primeira resposta (129-144),
+    não participante e terceiro (supabase/tests/service-requests.sql:380-403) e a
+    transição com first_responded_at (405-420). O que falta é a rota usar essa RPC e
+    o app mandar a chave. O E2E atual
+    (tests/e2e/f09-conversas-real.spec.ts:24-81) usa uma única sessão e não prova
+    idempotência nem transição. Checklist 1 do cartão F09-ENVIO-PELA-RPC.
+
+allowed_paths:
+  - apps/web/app/api/app/conversas/[id]/mensagens/route.ts
+  - apps/app/lib/dados/conversas.ts
+  - apps/app/src/telas/Conversa.tsx
+  - tests/unit/app-api/conversas/rotas.test.ts
+  - tests/e2e/f09-rpc-real.spec.ts
+  - supabase/tests/service-request-tracking.sql
+  - docs/agents/tasks/SEC-009.task.yml
+  - .visual/run-f09-rpc
+
+forbidden:
+  - editar migration aplicada ou criar migration, RPC, policy ou grant novos; se a prova achar lacuna na RPC, parar em HUMAN_DECISION
+  - alterar o schema de dm_messages, dm_conversations ou service_requests
+  - trocar a sessão da rota por service_role ou por cliente privilegiado
+  - mexer no N+1 da caixa, na validação compartilhada do chat antigo, no teste mobile de 720 px, no BOM dos demais arquivos ou no link "Ver origem"; são os itens 2 a 6 do cartão, fora deste lote
+  - tocar apps/web/app/components/bivaque/chat-thread.tsx ou apps/web/lib/events/question-thread.ts
+  - gerar chave nova ao reenviar o mesmo rascunho, ou reusar a chave depois de editar o texto
+  - aceitar client_key vazia ou em branco como se fosse idempotência
+  - retentar escrita automaticamente no cliente
+  - rodar Docker local, usar --linked ou rede; a prova de banco e o E2E rodam no CI
+  - editar .env ou imprimir segredo
+  - commitar, fazer push ou merge; o lote entrega o diff e a prova
+
+acceptance:
+  - "A rota POST chama client.rpc('send_conversation_message', { p_conversation_id: id, p_content: <texto normalizado>, p_client_key: <chave ou null> }) e não faz INSERT em dm_messages; o teste unitário falha se a rota voltar a usar from('dm_messages').insert."
+  - "clientKey é opcional no corpo; quando presente precisa ser string não vazia e, após trim, no máximo 120 caracteres. Chave inválida responde 400 corpo-invalido sem chamar a RPC; ausente vira null."
+  - "Duas chamadas com a mesma chave e o mesmo texto devolvem o mesmo id e deixam uma única linha em dm_messages; um caso pgTAP novo cobre o replay do prestador depois da transição, sem segundo aviso e sem mexer no pedido de novo."
+  - "Os casos pgTAP de participante, não participante e terceiro continuam verdes (service-requests.sql:380-403) e a rota responde 404 antes da RPC, sem gravar linha; chamada anônima também é recusada."
+  - "Mensagem do solicitante em pedido open mantém status open; a primeira resposta do prestador muda para in_conversation e cria exatamente um notification provider_first_reply; as respostas seguintes mantêm in_conversation."
+  - "O app envia clientKey em enviarMensagem; o mesmo rascunho reenviado após falha reusa a chave e não duplica; editar o texto gera chave nova. E2E com duas sessões reais (membro-1 e prestador) mostra a mensagem uma vez, a resposta do prestador e o pedido em in_conversation."
+  - "Erros da RPC: 22023 e 23514 viram 400 corpo-invalido; 42501 vira 403 recusado; falha de banco vira 503 escrita-indisponivel; nenhuma mensagem técnica vaza."
+  - "security-auditor independente audita o diff R3; nenhum achado CRITICAL/HIGH fica aberto; revisão e auditoria ficam registradas no cartão com o commit medido."
+  - "git diff --stat só toca allowed_paths; nenhuma migration, policy, grant ou tipo gerado muda."
+  - "CI verde no commit entregue: pull-request-ci completo, incluindo test:db depois de reset --local --no-seed e test:e2e:stateful depois de reset --local com seed."
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-009.task.yml
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:unit
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 exec supabase db reset --local
+  - npx pnpm@11.18.0 test:e2e:stateful --trace=retain-on-failure
+  - "as provas de banco e E2E são executadas pelo CI; esta máquina não tem Docker. O run do CI e o commit ficam no cartão."
+
+risk: >
+  R3: a rota é a fronteira de autorização de escrita em conversa e a client_key
+  controla duplicação, transição de pedido e aviso. O caminho toca RLS e
+  permissões por intermédio da RPC security definer e conteúdo de mensagem (dado
+  pessoal). A decisão de porta de dados já está no ADR-20261105-porta-de-dados-do-app,
+  aceito por delegação e listado em RATIFICACAO.md; não há decisão nova, então não
+  há ADR novo. Um security-auditor independente roda antes do merge; CRITICAL/HIGH
+  bloqueiam, medium/low viram cartão.
+
+risk_level: R3
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

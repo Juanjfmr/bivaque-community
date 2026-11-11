@@ -47,6 +47,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # Os specs de E2E da raiz são TypeScript e não passam pelo typecheck dos
+      # workspaces; sem este passo um spec quebrado só aparecia depois de subir
+      # o Supabase inteiro. Os specs de apps/app entram no `tsc --noEmit` do
+      # build do app, que inclui `tests/`.
+      - name: Typecheck E2E specs
+        run: pnpm exec tsc -p tests/e2e/tsconfig.json
+
       - name: Unit, privacy and scope tests
         run: pnpm test
 
@@ -142,6 +149,21 @@ jobs:
       - name: Reset local database (no seed)
         run: pnpm exec supabase db reset --local --no-seed
 
+      # O cliente do pg_prove só enxerga supabase/tests, então um include de
+      # ../migrations não resolve dentro do container. A reaplicação integral da
+      # carga nacional (prova de idempotência) roda aqui, no container do banco:
+      # a segunda aplicação não pode mudar a contagem.
+      - name: Reapply the IBGE neighborhoods load
+        run: |
+          set -euo pipefail
+          db=$(docker ps --filter "name=supabase_db_" --format "{{.Names}}" | head -n1)
+          test -n "$db"
+          before=$(docker exec -u postgres "$db" psql -U postgres -d postgres -tAc "select count(*) from public.neighborhoods")
+          docker exec -i -u postgres "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q < supabase/migrations/20261107140757_ibge_bairros_censo_2022.sql
+          after=$(docker exec -u postgres "$db" psql -U postgres -d postgres -tAc "select count(*) from public.neighborhoods")
+          echo "bairros antes=$before depois=$after"
+          test "$before" = "$after"
+
       - name: Database tests
         run: pnpm test:db
 
@@ -179,3 +201,16 @@ jobs:
             test-results/
             apps/web/playwright-report/
             apps/web/test-results/
+
+      # `.visual/` é ignorado pelo Git e concentra as capturas de tela das
+      # provas visuais. Sem o artefato, a evidência de uma falha de UI morre
+      # junto com a máquina do CI.
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-evidence
+          if-no-files-found: warn
+          include-hidden-files: true
+          path: .visual/
+          retention-days: 7

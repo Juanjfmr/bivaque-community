@@ -304,7 +304,7 @@ async function processBatch(
 
   const channelPreferencesByUser = new Map<string, ChannelPreferenceRow[]>()
   for (const row of channelPreferences) {
-    // `push` entra pelo mesmo leitor desde o RUN-029: a linha da matriz decide,
+    // `push` entra pelo mesmo leitor desde o RUN-137: a linha da matriz decide,
     // junto com o tipo, se o aviso do aparelho sai.
     const bucket = channelPreferencesByUser.get(row.user_id) ?? []
     bucket.push({

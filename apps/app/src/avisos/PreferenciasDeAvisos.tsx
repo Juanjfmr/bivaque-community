@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { useAvisos as useToast } from "@/components/bivaque/avisos"
 import { Botao } from "@/components/bivaque/botao"
@@ -98,6 +98,8 @@ export function PreferenciasDeAvisos() {
     ligado: false,
   })
   const [alternandoPush, setAlternandoPush] = useState(false)
+  // Guarda síncrona: um clique duplicado no mesmo quadro não dispara outro PATCH.
+  const envioEmCurso = useRef(false)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
@@ -123,11 +125,13 @@ export function PreferenciasDeAvisos() {
   }, [rodada])
 
   function alterarTipo(tipo: TipoDoAviso, ativo: boolean) {
+    if (envioEmCurso.current) return
     setPreferencias((atual) => (atual === null ? atual : comTipo(atual, tipo, ativo)))
     setSujo(true)
   }
 
   function alterarCanal(tipo: TipoDoAviso, canal: CanalDoAviso, ativo: boolean) {
+    if (envioEmCurso.current) return
     setPreferencias((atual) => (atual === null ? atual : comCanal(atual, tipo, canal, ativo)))
     setSujo(true)
   }
@@ -185,7 +189,8 @@ export function PreferenciasDeAvisos() {
   }
 
   function salvar() {
-    if (preferencias === null || salvando) return
+    if (preferencias === null || !sujo || envioEmCurso.current) return
+    envioEmCurso.current = true
     setSalvando(true)
     void salvarPreferenciasDeAviso(preferencias)
       .then((gravadas) => {
@@ -202,14 +207,17 @@ export function PreferenciasDeAvisos() {
           tipo: "erro",
         })
       })
-      .finally(() => setSalvando(false))
+      .finally(() => {
+        envioEmCurso.current = false
+        setSalvando(false)
+      })
   }
 
   if (erro) return <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
   if (preferencias === null) return <EsqueletoDeLista linhas={2} />
 
   return (
-    <div data-preferencias-de-aviso="sim" className="grid gap-3">
+    <div data-preferencias-de-aviso="sim" aria-busy={salvando} className="grid gap-3">
       <p className="text-sm text-(--on-surface-variant)">
         Escolha o que você quer receber e por onde. Os avisos no aparelho só chegam depois que você
         ligar o push abaixo.
@@ -252,6 +260,7 @@ export function PreferenciasDeAvisos() {
                 </span>
                 <Checkbox
                   checked={ligado}
+                  disabled={salvando}
                   onCheckedChange={(valor) => alterarTipo(tipo, valor === true)}
                   aria-label={`Avisos de ${titulo.toLowerCase()}`}
                   className="mt-1"
@@ -269,7 +278,7 @@ export function PreferenciasDeAvisos() {
                     <span key={canal} className="flex min-h-11 items-center gap-2 text-sm">
                       <Checkbox
                         checked={ligado && canalDe(preferencias, tipo, canal)}
-                        disabled={!ligado || (canal === "push" && !push.ligado)}
+                        disabled={!ligado || salvando || (canal === "push" && !push.ligado)}
                         onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
                         aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
                       />
@@ -295,6 +304,7 @@ export function PreferenciasDeAvisos() {
         </span>
         <Checkbox
           checked={preferencias.productNews}
+          disabled={salvando}
           onCheckedChange={(valor) => alterarTipo("product_news", valor === true)}
           aria-label="Novidades do Bivaque"
           className="mt-1"
@@ -313,6 +323,7 @@ export function PreferenciasDeAvisos() {
           value={preferencias.resumoCidade}
           disabled={salvando}
           onValueChange={(valor) => {
+            if (envioEmCurso.current) return
             if (valor !== "off" && valor !== "daily" && valor !== "weekly") return
             setPreferencias({ ...preferencias, resumoCidade: valor })
             setSujo(true)

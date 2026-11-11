@@ -1,4 +1,5 @@
 import { enviar, FalhaDaApi, ler } from "../api/cliente"
+import { ESTADOS_DA_ENTRADA } from "../navegacao/rotas"
 
 /**
  * A porta dos avisos do app (F09), no molde das outras jornadas: fala só com
@@ -203,18 +204,20 @@ export async function salvarPreferenciasDeAviso(
   )
 }
 
-/** Rotas que o app tem, na ordem em que um destino `/app/...` pode chegar. */
-const ROTAS_DE_DESTINO = new Set([
-  "publicacao",
-  "grupo",
-  "evento",
-  "conversa",
-  "pergunta",
-  "pedido",
-  "anuncio",
-  "comunidade",
-  "chamados",
-  "voce",
+/** Rotas que o app tem, e a chave do parâmetro que o destino entrega para cada uma. */
+const ROTAS_DE_DESTINO = new Map<string, "id" | "estado" | undefined>([
+  ["publicacao", "id"],
+  ["grupo", "id"],
+  ["evento", "id"],
+  ["conversa", "id"],
+  ["pergunta", "id"],
+  ["pedido", "id"],
+  ["anuncio", "id"],
+  // A situação da entrada é rota real do app: `/app/entrar/<estado>`, estado validado.
+  ["entrar", "estado"],
+  ["comunidade", undefined],
+  ["chamados", undefined],
+  ["voce", undefined],
 ])
 
 export type DestinoNoApp = Readonly<{
@@ -223,7 +226,8 @@ export type DestinoNoApp = Readonly<{
 }>
 
 /**
- * `/app/publicacao/<id>` vira `{ nome: "publicacao", parametros: { id } }`.
+ * `/app/publicacao/<id>` vira `{ nome: "publicacao", parametros: { id } }`;
+ * `/app/entrar/analise` vira `{ nome: "entrar", parametros: { estado: "analise" } }`.
  * Fora do contrato, `null` — quem chama decide a tela segura. Nunca se navega
  * para endereço inventado.
  */
@@ -231,10 +235,13 @@ export function destinoEmRota(destino: string): DestinoNoApp | null {
   const partes = /^\/app\/([a-z-]+)(?:\/([^/?#]+))?$/.exec(destino)
   if (partes === null) return null
   const nome = partes[1]
-  const id = partes[2]
+  const valor = partes[2]
   if (nome === undefined || !ROTAS_DE_DESTINO.has(nome)) return null
-  return {
-    nome,
-    parametros: id === undefined ? undefined : { id: decodeURIComponent(id) },
+  const chave = ROTAS_DE_DESTINO.get(nome)
+  if (chave === undefined || valor === undefined) return { nome, parametros: undefined }
+  const parametro = decodeURIComponent(valor)
+  if (chave === "estado" && !(ESTADOS_DA_ENTRADA as readonly string[]).includes(parametro)) {
+    return null
   }
+  return { nome, parametros: { [chave]: parametro } }
 }

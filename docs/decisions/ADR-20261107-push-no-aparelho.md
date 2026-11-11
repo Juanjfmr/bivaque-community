@@ -7,7 +7,7 @@ approved_at: 2026-11-07 (por delegação; mandato do lançamento de 02/11 e ADR-
 expires_at:
 linked_plan: docs/LANCAMENTO.md
 critic_verdict: pending
-critic_review: revisão independente e security-auditor no PR que implementa (RUN-029)
+critic_review: revisão independente e security-auditor no PR que implementa (RUN-137)
 ---
 
 # Push no aparelho: inscrição, envio pelo outbox e o que aparece na tela bloqueada
@@ -50,7 +50,7 @@ hoje, pelo padrão Web Push.
 6. **Chaves.** A chave privada do Web Push (VAPID) e as credenciais do Google e da Apple são segredos de
    servidor, configurados pelo dono no ambiente de produção; nenhum valor vai para o repositório. Sem a chave,
    o envio fica desligado e o app não oferece o push.
-7. **Ordem de entrega.** Agora: tabela, rotas, envio Web Push e inscrição na web instalada (RUN-029). Depois do
+7. **Ordem de entrega.** Agora: tabela, rotas, envio Web Push e inscrição na web instalada (RUN-137). Depois do
    empacotamento para as lojas: inscrição nativa (`android`, `ios`) e prova no emulador e no simulador.
 8. **Limite de produto.** O código não usa o nome da plataforma do Google proibido pelo teste de limites de
    produto (`tests/privacy/product-boundaries-and-pii.test.ts`); os adaptadores têm nomes neutros.

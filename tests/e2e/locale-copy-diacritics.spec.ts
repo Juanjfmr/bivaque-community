@@ -127,12 +127,21 @@ test.describe("DS-035 — Portuguese diacritics in segment fallbacks", () => {
     expect(text).not.toMatch(/nao existe/)
   })
 
-  test("/events/<unknown> segment not-found also renders the diacritized title", async ({
-    page,
-  }) => {
+  test("/events/<unknown> also renders the diacritized fallback title", async ({ page }) => {
+    // RUN-133/F05: a tela antiga de eventos saiu; /events/<id> passa a aterrar
+    // no encontro do app. O id inexistente continua exercitando a mesma
+    // propriedade — o fallback da rota tem acentuação completa — agora na tela
+    // de endereço indisponível do SPA, que não usa <main>.
     await signInAndVisit(page, `/events/${NOT_FOUND_GROUP_ID}`)
 
-    const body = page.locator("main")
-    await expect(body).toContainText("Página não encontrada", { timeout: 15000 })
+    await expect(page).toHaveURL(new RegExp(`/app/evento/${NOT_FOUND_GROUP_ID}$`))
+    const tela = page.locator('[data-tela="indisponivel"]')
+    await expect(tela).toBeVisible({ timeout: 15000 })
+    await expect(tela).toContainText("Página indisponível")
+
+    const text = (await tela.textContent()) ?? ""
+    expect(text).not.toMatch(/Pagina indisponivel/)
+    expect(text).not.toMatch(/endereco/)
+    expect(text).not.toMatch(/nao existe/)
   })
 })

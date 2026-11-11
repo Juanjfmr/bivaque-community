@@ -10,7 +10,7 @@ import type { Database } from "supabase/database.generated"
  * `lib/notifications/channel-preferences`); este módulo só persistência e
  * leitura.
  *
- * `push` é o terceiro canal. A entrega web já existe (RUN-029): quem entrega é o
+ * `push` é o terceiro canal. A entrega web já existe (RUN-137): quem entrega é o
  * outbox, com as chaves VAPID do servidor. A inscrição nativa de loja depende do
  * empacotamento e das chaves do dono, e ainda não existe.
  */

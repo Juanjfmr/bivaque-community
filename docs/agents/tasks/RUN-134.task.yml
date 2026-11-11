@@ -1,0 +1,58 @@
+# RUN-134 (10/11/2026): destrava o PR #162 — as duas asserções pgTAP de bairros comparam de fato.
+# Autoridade: card DATA-IBGE-BAIRROS; PR #162; docs/LANCAMENTO.md (F06 depende de DATA-IBGE-BAIRROS).
+task_id: RUN-134
+
+objective: >
+  O teste supabase/tests/neighborhoods-ibge-nacional.sql volta a ser pgTAP válido: as asserções de
+  Guadalupe e Aldeota comparam count(*) = 1 em vez de passar bigint para ok(), e o job "Database tests"
+  do PR #162 fica verde sem tocar na migration nem na carga nacional. Como o cliente do pg_prove só
+  enxerga supabase/tests, a reaplicação integral da carga passa a ser provada no CI, no container do
+  banco, e o pgTAP prova o conflito por (locality_id, name_key). Isso destrava DATA-IBGE-BAIRROS e,
+  em cadeia, o F06.
+
+authority:
+  - tools/backend-kanban card DATA-IBGE-BAIRROS
+  - PR #162 (feat/ibge-bairros)
+  - docs/LANCAMENTO.md (F06 depende de DATA-IBGE-BAIRROS)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    PR #162, job 128428911368, passo "Database tests":
+    "psql:.../neighborhoods-ibge-nacional.sql:47: ERROR: function ok(bigint, unknown) does not exist",
+    8/10 subtests falham. As linhas 36-47 (Guadalupe) e 49+ (Aldeota) chamam
+    ok((select count(*) from ...), '...') sem comparar com 1; a carga da migration passou duas vezes
+    (14:24:26 e 14:25:28), então o defeito é só a asserção.
+
+allowed_paths:
+  - supabase/tests/neighborhoods-ibge-nacional.sql
+  - .github/workflows/pull-request-ci.yml
+  - docs/agents/tasks/RUN-134.task.yml
+
+forbidden:
+  - editar a migration 20261107140757_ibge_bairros_censo_2022.sql ou qualquer outro arquivo de supabase/
+  - mudar plan(), apagar caso ou afrouxar a asserção para passar
+  - push, merge ou force-push; ler/criar/editar .env
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Toda chamada ok(...) do arquivo recebe expressão booleana; Guadalupe e Aldeota comparam count(*) = 1."
+  - "O plan(10) e os dez casos continuam existindo; nenhum caso foi removido ou marcado como skip."
+  - "O pgTAP prova o conflito por (locality_id, name_key) sem include de ../migrations; o passo Reapply the IBGE neighborhoods load reaplica a carga no container do banco e falha se a contagem mudar."
+  - "O diff toca as asserções, o bloco de idempotência do teste, o passo de CI e o próprio contrato; a migration e a carga ficam intactas."
+  - "Os passos Reapply the IBGE neighborhoods load e Database tests do PR #162 ficam verdes na revisão entregue."
+
+proof:
+  - git diff --stat
+  - git diff -- supabase/tests/neighborhoods-ibge-nacional.sql
+  - "CI do PR #162: passos Reapply the IBGE neighborhoods load e Database tests verdes (sem Supabase local nesta máquina; a prova é o job)"
+
+risk: teste de banco nacional (pgTAP)
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -12,6 +12,12 @@ import {
   editarDesapego,
   mudarSituacao,
 } from "@/lib/dados/mercado"
+import {
+  type EstadoDaGestao,
+  type EventoDaGestao,
+  GESTAO_LIVRE,
+  transicaoDaGestao,
+} from "@/src/mercado/estado-de-gestao"
 
 /**
  * Gerenciar o próprio anúncio (LAN-F06, prancha 21 no molde das telas): editar
@@ -100,16 +106,29 @@ export function GerenciarAnuncio({
   })
   const [status, setStatus] = useState(anuncio.status)
   const [aviso, setAviso] = useState("")
-  const [salvando, setSalvando] = useState(false)
-  const [mudando, setMudando] = useState<AcaoDeSituacao | null>(null)
-  const [confirmarEncerrar, setConfirmarEncerrar] = useState(false)
-  const [confirmarPausar, setConfirmarPausar] = useState(false)
+  const [gestao, setGestao] = useState<EstadoDaGestao>(GESTAO_LIVRE)
+  // A ref aplica a guarda no mesmo turno do clique, antes do próximo render.
+  // Assim dois eventos rápidos não iniciam duas chamadas mesmo com React em lote.
+  const gestaoAtual = useRef<EstadoDaGestao>(GESTAO_LIVRE)
+  function despachar(evento: EventoDaGestao): boolean {
+    const anterior = gestaoAtual.current
+    const proximo = transicaoDaGestao(anterior, evento)
+    if (proximo === anterior) return false
+    gestaoAtual.current = proximo
+    setGestao(proximo)
+    return true
+  }
+  const ocupado = gestao.fase === "executando"
+  const salvando = gestao.fase === "executando" && gestao.operacao === "edicao"
+  const mudando: AcaoDeSituacao | null =
+    gestao.fase === "executando" && gestao.operacao !== "edicao" ? gestao.operacao : null
+  const confirmarPausar = gestao.fase === "confirmando" && gestao.acao === "pause"
+  const confirmarEncerrar = gestao.fase === "confirmando" && gestao.acao === "close"
   const controle = useRef<AbortController | null>(null)
   const leitor = useRef<FileReader | null>(null)
 
   async function salvar() {
-    if (salvando || !item) return
-    setSalvando(true)
+    if (!item || !despachar({ tipo: "iniciar-edicao" })) return
     setAviso("")
     const envio = new AbortController()
     controle.current = envio
@@ -129,13 +148,13 @@ export function GerenciarAnuncio({
       }
     } finally {
       controle.current = null
-      setSalvando(false)
+      despachar({ tipo: "concluir" })
     }
   }
 
   async function transicionar(acao: AcaoDeSituacao) {
-    if (mudando !== null) return
-    setMudando(acao)
+    if (!acoesDeSituacao({ ...anuncio, status }).includes(acao)) return
+    if (!despachar({ tipo: "iniciar-situacao", acao })) return
     setAviso("")
     try {
       setStatus(await mudarSituacao(anuncio.id, acao))
@@ -147,14 +166,12 @@ export function GerenciarAnuncio({
           : "Não foi possível mudar a situação agora. Tente de novo.",
       )
     } finally {
-      setMudando(null)
-      if (acao === "close") setConfirmarEncerrar(false)
-      if (acao === "pause") setConfirmarPausar(false)
+      despachar({ tipo: "concluir" })
     }
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={(novo) => !novo && aoFechar()}>
+    <Dialog open={aberto} onOpenChange={(novo) => !novo && !ocupado && aoFechar()}>
       <DialogContent
         unstyled
         data-gerenciar-anuncio={anuncio.id}
@@ -177,14 +194,15 @@ export function GerenciarAnuncio({
         <div data-acoes-situacao="sim" className="flex flex-wrap gap-2">
           {acoesDeSituacao({ ...anuncio, status }).map((acao) => {
             const pedindoConfirmacao =
-              (acao === "pause" && confirmarPausar) || (acao === "close" && confirmarEncerrar)
+              (acao === "pause" && (confirmarPausar || mudando === "pause")) ||
+              (acao === "close" && (confirmarEncerrar || mudando === "close"))
             if (pedindoConfirmacao)
               return (
                 <Botao
                   key={acao}
                   tom="contornado"
                   data-acao={`confirmar-${acao}`}
-                  disabled={mudando !== null}
+                  disabled={ocupado}
                   onClick={() => void transicionar(acao)}
                 >
                   {mudando === acao ? ROTULOS_EM_ANDAMENTO[acao] : ROTULOS_DE_CONFIRMACAO[acao]}
@@ -196,10 +214,10 @@ export function GerenciarAnuncio({
                   key={acao}
                   tom={acao === "pause" ? "contornado" : "texto"}
                   data-acao={`situacao-${acao}`}
-                  disabled={mudando !== null}
-                  onClick={() =>
-                    acao === "pause" ? setConfirmarPausar(true) : setConfirmarEncerrar(true)
-                  }
+                  disabled={ocupado || gestao.fase === "confirmando"}
+                  onClick={() => {
+                    despachar({ tipo: "pedir-confirmacao", acao })
+                  }}
                 >
                   {ROTULOS_DE_ACAO[acao]}
                 </Botao>
@@ -209,13 +227,25 @@ export function GerenciarAnuncio({
                 key={acao}
                 tom="tonal"
                 data-acao={`situacao-${acao}`}
-                disabled={mudando !== null}
+                disabled={ocupado || gestao.fase === "confirmando"}
                 onClick={() => void transicionar(acao)}
               >
                 {mudando === acao ? "Salvando…" : ROTULOS_DE_ACAO[acao]}
               </Botao>
             )
           })}
+          {gestao.fase === "confirmando" ? (
+            <Botao
+              type="button"
+              tom="texto"
+              data-acao="cancelar-confirmacao"
+              onClick={() => {
+                despachar({ tipo: "cancelar-confirmacao" })
+              }}
+            >
+              Cancelar
+            </Botao>
+          ) : null}
           {acoesDeSituacao({ ...anuncio, status }).length === 0 ? (
             <p className="text-sm text-(--on-surface-variant)">
               Este anúncio não tem mudança de situação disponível aqui.
@@ -226,7 +256,7 @@ export function GerenciarAnuncio({
         {item ? (
           <form
             className="grid gap-3"
-            aria-busy={salvando}
+            aria-busy={ocupado}
             onSubmit={(evento) => {
               evento.preventDefault()
               void salvar()
@@ -331,10 +361,10 @@ export function GerenciarAnuncio({
               </div>
             )}
             <div className="flex justify-end gap-2">
-              <Botao type="button" tom="texto" onClick={aoFechar}>
+              <Botao type="button" tom="texto" disabled={ocupado} onClick={aoFechar}>
                 Fechar
               </Botao>
-              <Botao type="submit" data-acao="salvar-edicao" disabled={salvando}>
+              <Botao type="submit" data-acao="salvar-edicao" disabled={gestao.fase !== "livre"}>
                 {salvando ? "Salvando…" : "Salvar alterações"}
               </Botao>
             </div>
@@ -344,7 +374,7 @@ export function GerenciarAnuncio({
             <p className="self-start text-sm text-(--on-surface-variant)">
               A edição do texto é para desapego; deste imóvel você muda só a situação.
             </p>
-            <Botao tom="texto" onClick={aoFechar}>
+            <Botao tom="texto" disabled={ocupado} onClick={aoFechar}>
               Fechar
             </Botao>
           </div>

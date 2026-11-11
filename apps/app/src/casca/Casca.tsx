@@ -68,7 +68,7 @@ export function Casca() {
     if (entrada.sobreposicao === null) void navegacao.abrir("menu-criar")
   }, comCascaDoApp)
 
-  // RUN-029: a rota de entrada, sem sessão, é a saída do app e apaga a
+  // RUN-137: a rota de entrada, sem sessão, é a saída do app e apaga a
   // inscrição deste aparelho. COM sessão (membro abrindo a entrada) nada
   // acontece. Sem sessão, o DELETE responde 401: o navegador cancela a
   // inscrição e o provedor devolve 410 no próximo envio, que apaga a linha.

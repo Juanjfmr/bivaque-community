@@ -31,7 +31,6 @@ test.describe("anonymous visitor: protected route denial", () => {
   const PROTECTED_ROUTES = [
     "/community",
     "/groups",
-    "/events",
     "/profile",
     "/recommendations",
     "/notifications",
@@ -229,21 +228,27 @@ test.describe("trust boundary: API denial paths", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Denial 6: Events page denial — unauthenticated cannot RSVP
+// Denial 6: Events denial — unauthenticated cannot RSVP
+//
+// RUN-133/F05: /events deixou de ser rota protegida pelo portão do proxy — o
+// redirect de configuração roda ANTES dele e entrega a pessoa à agenda do app.
+// A recusa não desapareceu, mudou de dono: o app recebe a rota, a API responde
+// 401 sem sessão e a tela mostra "sua sessão venceu". Mesmo padrão já adotado
+// para /messages (Denial 5).
 // ---------------------------------------------------------------------------
 
 test.describe("events RSVP: denial paths", () => {
-  test("events page refuses an anonymous visitor into the app entry", async ({ page }) => {
+  test("events page refuses an anonymous visitor inside the app agenda", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
-    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
+    // Then the config redirect lands on the app's agenda, which refuses the
+    // read for lack of a session instead of rendering the old screen
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page.getByRole("button", { name: /^Vou/ })).toHaveCount(0)
   })
 })
 

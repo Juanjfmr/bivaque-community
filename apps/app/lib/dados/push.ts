@@ -2,7 +2,7 @@ import { enviar, FalhaDaApi, ler } from "../api/cliente"
 import { type CanalDaPreferencia, type PreferenciasDeAviso, TIPOS_DO_AVISO } from "./avisos"
 
 /**
- * A porta do push no app (RUN-029, ADR-20261107).
+ * A porta do push no app (RUN-137, ADR-20261107).
  *
  * A permissão do sistema só é pedida quando a pessoa liga o push nas
  * preferências — nunca ao abrir o app. A inscrição do aparelho vai para

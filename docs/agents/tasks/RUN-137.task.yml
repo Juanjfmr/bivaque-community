@@ -1,0 +1,91 @@
+# LAN-PUSH, parte web (07/11/2026): inscrição, envio pelo outbox e abertura no destino certo.
+# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-137
+
+objective: >
+  Na web instalada, o membro liga o push nas preferências de aviso, o navegador pede permissão naquele
+  momento, a inscrição do aparelho é gravada pela rota do app e, a partir daí, os avisos do canal push saem
+  pelo outbox existente como notificação com título "Bivaque" e frase fixa por tipo, sem dado de terceiro; o
+  toque abre o destino do aviso no app. Sair do app, apagar a conta ou o provedor recusar o destino remove a
+  inscrição. Sem a chave do Web Push configurada, o envio fica desligado e o app não oferece o push.
+
+authority:
+  - docs/decisions/ADR-20261107-push-no-aparelho.md
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+  - tools/backend-kanban card LAN-PUSH
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O canal push existe só na matriz de preferências (supabase/migrations/20261106214256_notification_push_channel.sql);
+    não há tabela de inscrições, rota de inscrição, service worker de push nem adaptador de envio no outbox
+    (apps/web/lib/outbox/adapters.ts envia só e-mail).
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/push
+  - apps/web/app/api/app/avisos
+  - apps/web/app/api/internal/outbox
+  - apps/web/lib/outbox
+  - apps/web/lib/notifications
+  - apps/web/lib/push
+  - apps/web/public
+  - apps/web/package.json
+  - pnpm-lock.yaml
+  - packages/domain/src/outbox.ts
+  - apps/app/lib/dados/avisos.ts
+  - apps/app/lib/dados/push.ts
+  - apps/app/src/avisos
+  - apps/app/src/casca
+  - apps/app/public
+  - apps/app/vite.config.ts
+  - apps/app/tests
+  - tests/unit
+  - tests/privacy
+  - tests/e2e/push-web-real.spec.ts
+  - tests/scope
+  - docs/PRODUCAO-PASSO-A-PASSO.md
+  - docs/agents/tasks/RUN-029.task.yml
+  - .visual/run-029
+
+forbidden:
+  - nome, foto, trecho de conteúdo ou qualquer dado de outro membro no título ou no corpo do push
+  - pedir permissão de notificação ao abrir o app (só ao ligar o push nas preferências)
+  - confiar em user_id do corpo; UPDATE de cliente na tabela de inscrições; leitura de inscrição de outro membro
+  - envio fora do outbox, furando a preferência por canal, o bloqueio entre membros ou o limite de lote
+  - chave privada do Web Push no repositório, em log ou no bundle do cliente (só a chave pública vai ao cliente)
+  - o nome da plataforma do Google proibido em tests/privacy/product-boundaries-and-pii.test.ts
+  - inscrição nativa de loja (android/ios) nesta rodada; dependência nova além de uma biblioteca de Web Push pequena e fixada no apps/web
+  - editar migration existente; mudar o desenho aprovado das preferências além do interruptor de push
+  - push, merge ou force-push no git; pedir revisão a outro modelo ou ao Claude
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "Migration nova com public.push_subscriptions conforme o ADR (RLS forçada, dono lê/cria/apaga só as suas, sem UPDATE de cliente, papel de serviço lê para enviar, destino único por kind, cascade na conta); pgTAP positivo e negativo."
+  - "POST /api/app/push grava a inscrição deste aparelho e DELETE a apaga, com exigirSessao/conferirEscrita e o cliente da sessão; a saída do app chama o DELETE."
+  - "Service worker de push no app: mostra título e corpo recebidos e, no toque, abre o destino do aviso pelo destinoEmRota (desconhecido cai na tela segura)."
+  - "Adaptador push no outbox: frase fixa por tipo (sem dado de terceiro), respeita preferência por canal e bloqueio; resposta gone/not found apaga a inscrição; sem chave configurada, desligado e sem erro."
+  - "Preferências de aviso: o interruptor de push pede permissão ao ligar e inscreve; negado mostra mensagem e mantém desligado; sem suporte do navegador, o interruptor não aparece."
+  - "Testes de unidade das rotas, do adaptador e da frase por tipo (teste de privacidade: nenhum campo de terceiro no payload); teste do app do interruptor; E2E tests/e2e/push-web-real.spec.ts gravando e apagando a inscrição pela rota (sem envio real)."
+  - "Tipos públicos regenerados; nomes das chaves novas documentados em docs/PRODUCAO-PASSO-A-PASSO.md, sem valores."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec vitest run tests/unit tests/privacy --maxWorkers=1
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 test:scope
+  - E2E da raiz e test:db no CI
+
+risk: dado pessoal novo (inscrição do aparelho) e destino de envio novo
+risk_level: R3
+adr: docs/decisions/ADR-20261107-push-no-aparelho.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

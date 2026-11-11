@@ -9,12 +9,12 @@ import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { LinhaDeAjuste } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { lerPerfil, type PerfilDaConta, salvarPerfil } from "@/lib/dados/voce"
+import { lerPerfil, type PerfilDaConta, salvarLocalizacao, salvarPerfil } from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
 import { PreferenciasDeAvisos } from "@/src/avisos/PreferenciasDeAvisos"
-import { EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
+import { digitosDoCep, EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
 import { Familia } from "@/src/voce/Familia"
 
 /**
@@ -53,22 +53,38 @@ export function Voce() {
   const nome = perfil?.nome ?? "Você"
   const contagens = conta?.contagens ?? { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 }
 
-  const gravar = (dados: { nome: string; bio: string }) => {
+  const gravar = (dados: { nome: string; bio: string; cep: string | null }) => {
     setSalvando(true)
     setMensagem(null)
-    void salvarPerfil(dados)
-      .then((gravado) => {
+    void (async () => {
+      try {
+        const gravado = await salvarPerfil({ nome: dados.nome, bio: dados.bio })
         setConta((atual) => (atual === null ? atual : { ...atual, perfil: gravado }))
+        const cepAnterior = digitosDoCep(perfil?.localizacao.cep ?? "")
+        if (dados.cep !== cepAnterior) {
+          try {
+            const localizacao = await salvarLocalizacao(dados.cep)
+            setConta((atual) =>
+              atual === null ? atual : { ...atual, perfil: { ...atual.perfil, localizacao } },
+            )
+          } catch {
+            // O perfil acima já está gravado; só a localização não foi. Fechar
+            // o formulário aqui seria fingir sucesso.
+            setMensagem("Perfil salvo, mas a localização não foi atualizada. Tente de novo.")
+            return
+          }
+        }
         setEditando(false)
-      })
-      .catch((falha: unknown) => {
+      } catch (falha: unknown) {
         setMensagem(
           falha instanceof FalhaDaApi && falha.mensagem !== null
             ? falha.mensagem
             : "Não foi possível salvar. Tente de novo.",
         )
-      })
-      .finally(() => setSalvando(false))
+      } finally {
+        setSalvando(false)
+      }
+    })()
   }
 
   return (

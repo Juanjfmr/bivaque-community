@@ -177,29 +177,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
-  {
-    route: "/events",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era o rail e o feed da Início web, que a fase 1 trocou por /app/inicio; a Agenda nova não lista convites individuais (F05)",
-  },
-  {
-    route: "/events/[id]",
-    porta:
-      "DÍVIDA LAN-TROCA: só a lista antiga de /events leva ao detalhe, cujo fan-out falta na tela nova (F05)",
-  },
-  {
-    route: "/events/[id]/perguntas",
-    porta: "DÍVIDA LAN-TROCA: histórico aberto pelo detalhe antigo de /events/[id] (F05)",
-  },
-  {
-    route: "/events/[id]/editar",
-    porta: "CONDICIONAL: 'Editar evento' para quem organiza",
-    dependeDeDados: true,
-  },
-  {
-    route: "/events/novo",
-    porta: "DÍVIDA EVENTOS-CRIACAO-DUPLICADA: /events cria pelo formulário embutido",
-  },
   { route: "/explorar/busca", porta: "FLUXO: formulário GET da busca global do cabeçalho" },
   {
     route: "/guide/[id]/correcao",

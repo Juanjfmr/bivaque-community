@@ -10,6 +10,7 @@ import { expect, test } from "@playwright/test"
  */
 
 const PUBLICACAO = "90000000-0000-4000-8000-000000000001"
+const CONTEUDO = "90000000-0000-4000-8000-000000000002"
 
 type AvisoSimulado = {
   id: string
@@ -42,6 +43,37 @@ async function simularAvisos(page: import("@playwright/test").Page) {
       lida: true,
       criadaEm: "2026-11-05T12:00:00.000Z",
       grupo: "event_rsvp|confirmed|event|e1",
+      total: 1,
+    },
+    // RUN-027: os três tipos que antes caíam todos em Você.
+    {
+      id: "a3",
+      tipo: "invitation_accepted",
+      texto: "aceitou seu convite de família",
+      destino: "/app/voce",
+      lida: false,
+      criadaEm: "2026-11-06T12:00:00.000Z",
+      grupo: "invitation_accepted|accepted|family_invitation|f1",
+      total: 1,
+    },
+    {
+      id: "a4",
+      tipo: "admission_rejected",
+      texto: "Sua participação não foi liberada",
+      destino: "/app/entrar/analise",
+      lida: false,
+      criadaEm: "2026-11-06T12:00:00.000Z",
+      grupo: "admission_rejected|rejected|user|u1",
+      total: 1,
+    },
+    {
+      id: "a5",
+      tipo: "report_resolved",
+      texto: "Sua denúncia foi analisada",
+      destino: `/app/publicacao/${CONTEUDO}`,
+      lida: false,
+      criadaEm: "2026-11-06T12:00:00.000Z",
+      grupo: "report_resolved|resolved|report|r1",
       total: 1,
     },
   ]
@@ -116,6 +148,24 @@ test.describe("F09 — avisos", () => {
     const linha = page.locator('[data-aviso-item="a1"]')
     await expect(linha).toHaveAttribute("data-nao-lida", "nao")
     await expect(linha.locator('[data-contagem="2"]')).toBeVisible()
+  })
+
+  test("tocar em cada um dos três tipos abre o destino correspondente (RUN-027)", async ({
+    page,
+  }) => {
+    await simularAvisos(page)
+
+    await page.goto("/app/avisos")
+    await page.locator('[data-aviso-item="a4"]').click()
+    await expect(page).toHaveURL(/\/app\/entrar\/analise$/)
+
+    await page.goto("/app/avisos")
+    await page.locator('[data-aviso-item="a3"]').click()
+    await expect(page).toHaveURL(/\/app\/voce$/)
+
+    await page.goto("/app/avisos")
+    await page.locator('[data-aviso-item="a5"]').click()
+    await expect(page).toHaveURL(new RegExp(`/app/publicacao/${CONTEUDO}$`))
   })
 
   test("falha de leitura mostra erro com Tentar de novo, nunca lista vazia", async ({ page }) => {

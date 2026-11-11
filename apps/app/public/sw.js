@@ -1,7 +1,7 @@
 /*
  * Service worker do app (`/app/sw.js`, escopo `/app/`).
  *
- * RUN-029 / ADR-20261107: mostra o título e o corpo recebidos do servidor —
+ * RUN-137 / ADR-20261107: mostra o título e o corpo recebidos do servidor —
  * título fixo "Bivaque" e frase fixa por tipo, sem dado de terceiro — e, no
  * toque, abre o destino do aviso no app. Destino fora do contrato cai na tela
  * segura (`/app/voce`), a mesma regra de `destinoEmRota` em

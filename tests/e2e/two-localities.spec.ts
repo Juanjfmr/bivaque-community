@@ -194,15 +194,16 @@ test.describe("two localities: each member sees only their own city", () => {
     await expect(page.getByText(MANAUS_EVENT_TITLE)).toHaveCount(0)
   })
 
-  test("Manaus member sees Manaus events, not a cross-city leak", async ({ page }) => {
+  test("Manaus member lands on the app agenda, not a cross-city leak", async ({ page }) => {
     // Given a Manaus member
     await signInAs(page, MANAUS_EMAIL)
 
-    // When they open the events page
+    // When they open the old events route
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
-    // Then the events heading is visible
-    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible({
+    // Then LAN-TROCA takes them to the app agenda
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Agenda da cidade" })).toBeVisible({
       timeout: 15000,
     })
   })
@@ -211,11 +212,12 @@ test.describe("two localities: each member sees only their own city", () => {
     // Given a second-locality member
     await signInAs(page, SECOND_LOCALITY_EMAIL)
 
-    // When they open the events page
+    // When they open the old events route
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
-    // Then the events heading is visible for their own locality
-    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible({
+    // Then LAN-TROCA lands on the app agenda for their own locality
+    await expect(page).toHaveURL(/\/app\/agenda$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Agenda da cidade" })).toBeVisible({
       timeout: 15000,
     })
 

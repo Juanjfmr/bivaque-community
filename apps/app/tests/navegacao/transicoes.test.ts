@@ -7,6 +7,7 @@ import {
   definirFiltro,
   entrarEmRota,
   limparFiltro,
+  materializarSeNecessario,
   voltar,
 } from "../../lib/navegacao/transicoes"
 
@@ -83,5 +84,20 @@ describe("transições de navegação", () => {
   it("navegar na mesma rota não passa busca: o middleware mantém o filtro (LAN-F06)", () => {
     expect(buscaAoTrocarDeRota("desapegos", "desapegos")).toBeUndefined()
     expect(buscaAoTrocarDeRota("imoveis", "imoveis")).toBeUndefined()
+  })
+  it("materializa a entrada ausente uma vez, preservando origem e pai", () => {
+    const ausente = { ...BASE, chave: "entrada-sem-registro", origem: "mercado" as const }
+    const materializada = materializarSeNecessario(ausente)
+    expect(materializada.chave).not.toBe(ausente.chave)
+    expect(materializada.origem).toBe("mercado")
+    expect(materializada.pai).toBeNull()
+    expect(materializada.sobreposicao).toBeNull()
+  })
+
+  it("um registro já aberto não é substituído por materialização atrasada", () => {
+    const sobreposicao = abrirSobreposicao(BASE, "cidade")
+    expect(materializarSeNecessario(sobreposicao)).toBe(sobreposicao)
+    const comFoco = { ...sobreposicao, foco: descritorDaAcao("cidade", "") }
+    expect(materializarSeNecessario(comFoco)).toBe(comFoco)
   })
 })

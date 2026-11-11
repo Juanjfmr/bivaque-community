@@ -1,87 +1,104 @@
-# LAN-PUSH, parte web (07/11/2026): inscrição, envio pelo outbox e abertura no destino certo.
-# Processo enxuto (ADR-20261105-entrada-enxuta-e-r3-sem-parada): uma rodada, uma revisão, no máximo uma correção.
+# LOC-IMPL (sub-lote a) â€” localizaÃ§Ã£o privada do perfil (10/11/2026)
+# Proposta de contrato para o cartÃ£o LOC-IMPL, fase Lote 7 â€” Desapegos e ImÃ³veis.
+# O YAML abaixo Ã© a cÃ³pia que o executor leva para docs/agents/tasks/RUN-029.task.yml.
 task_id: RUN-029
 
 objective: >
-  Na web instalada, o membro liga o push nas preferências de aviso, o navegador pede permissão naquele
-  momento, a inscrição do aparelho é gravada pela rota do app e, a partir daí, os avisos do canal push saem
-  pelo outbox existente como notificação com título "Bivaque" e frase fixa por tipo, sem dado de terceiro; o
-  toque abre o destino do aviso no app. Sair do app, apagar a conta ou o provedor recusar o destino remove a
-  inscrição. Sem a chave do Web Push configurada, o envio fica desligado e o app não oferece o push.
+  O perfil do membro passa a guardar um CEP opcional e a coordenada derivada dele no servidor,
+  usados somente para cÃ¡lculo privado de distÃ¢ncia: a coordenada nunca Ã© devolvida ao cliente,
+  nunca Ã© legÃ­vel por outro membro, e a leitura de terceiros continua limitada ao bairro quando
+  a chave "Mostrar meu bairro" estÃ¡ ligada. A exclusÃ£o de conta apaga CEP e coordenada.
 
 authority:
-  - docs/decisions/ADR-20261107-push-no-aparelho.md
-  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md
-  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
-  - tools/backend-kanban card LAN-PUSH
+  - tools/backend-kanban card LOC-IMPL
+  - docs/LANCAMENTO.md (F10 â€” VocÃª, famÃ­lia e conta; F06 â€” Mercado e moradia)
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md (seÃ§Ã£o 4)
+  - docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md (catÃ¡logo de bairros)
+  - AGENTS.md (dado pessoal e localizaÃ§Ã£o)
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    O canal push existe só na matriz de preferências (supabase/migrations/20261106214256_notification_push_channel.sql);
-    não há tabela de inscrições, rota de inscrição, service worker de push nem adaptador de envio no outbox
-    (apps/web/lib/outbox/adapters.ts envia só e-mail).
+    public.profiles nÃ£o tem CEP nem coordenada: 20260802000100_locality_profile_foundation.sql:31-42
+    define o perfil sem esses campos, e 20261022120200_profile_neighborhood.sql:56-58 acrescenta
+    apenas neighborhood e show_neighborhood. A rota apps/web/app/api/app/voce/route.ts:45-47 aceita
+    somente nome/bio, e apps/web/app/api/app/voce/_comum.ts:38 lÃª apenas display_name,bio; a tela
+    apps/app/src/voce/EdicaoDePerfil.tsx:41-49 edita somente nome e apresentaÃ§Ã£o. NÃ£o existe
+    geocodificaÃ§Ã£o nem cache em apps/ (grep por brasilapi/geocod/nominatim sÃ³ encontra
+    apps/app/lib/demo/auxiliares.json:602). Nenhum teste prova leitura negativa de coordenada.
 
 allowed_paths:
   - supabase/migrations
   - supabase/tests
+  - supabase/seed.sql
   - supabase/database.generated.ts
-  - apps/web/app/api/app/push
-  - apps/web/app/api/app/avisos
-  - apps/web/app/api/internal/outbox
-  - apps/web/lib/outbox
-  - apps/web/lib/notifications
-  - apps/web/lib/push
-  - apps/web/public
-  - apps/web/package.json
-  - pnpm-lock.yaml
-  - packages/domain/src/outbox.ts
-  - apps/app/lib/dados/avisos.ts
-  - apps/app/lib/dados/push.ts
-  - apps/app/src/avisos
-  - apps/app/src/casca
-  - apps/app/public
-  - apps/app/vite.config.ts
-  - apps/app/tests
-  - tests/unit
-  - tests/privacy
-  - tests/e2e/push-web-real.spec.ts
-  - tests/scope
-  - docs/PRODUCAO-PASSO-A-PASSO.md
+  - apps/web/app/api/app/voce/route.ts
+  - apps/web/app/api/app/voce/_comum.ts
+  - apps/web/app/api/app/voce/localizacao
+  - apps/web/lib/geo
+  # Criado pelo PR #182 depois da base da branch: a rota nova precisa entrar no
+  # manifesto (TOTAL_DE_ROTAS 85) para o teste de escopo do PR CI passar.
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/.env.example
+  - apps/app/lib/dados/voce.ts
+  - apps/app/src/voce
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/tests/voce-dados.test.ts
+  - apps/app/tests/e2e/voce.spec.ts
+  - apps/app/tests/e2e/voce-ajuda.ts
+  - tests/unit/app-api/voce
+  - tests/unit/profile
+  - tests/scope/f10-voce-porta.test.mjs
+  - tests/e2e/f10-voce-localizacao.spec.ts
+  - tests/e2e/entrada-real-ajuda.ts
   - docs/agents/tasks/RUN-029.task.yml
   - .visual/run-029
 
 forbidden:
-  - nome, foto, trecho de conteúdo ou qualquer dado de outro membro no título ou no corpo do push
-  - pedir permissão de notificação ao abrir o app (só ao ligar o push nas preferências)
-  - confiar em user_id do corpo; UPDATE de cliente na tabela de inscrições; leitura de inscrição de outro membro
-  - envio fora do outbox, furando a preferência por canal, o bloqueio entre membros ou o limite de lote
-  - chave privada do Web Push no repositório, em log ou no bundle do cliente (só a chave pública vai ao cliente)
-  - o nome da plataforma do Google proibido em tests/privacy/product-boundaries-and-pii.test.ts
-  - inscrição nativa de loja (android/ios) nesta rodada; dependência nova além de uma biblioteca de Web Push pequena e fixada no apps/web
-  - editar migration existente; mudar o desenho aprovado das preferências além do interruptor de push
-  - push, merge ou force-push no git; pedir revisão a outro modelo ou ao Claude
-  - ler, criar ou editar arquivos .env
+  - "editar migration jÃ¡ aplicada; a mudanÃ§a entra em migration nova criada com supabase migration new"
+  - "acrescentar CEP, latitude ou longitude a listings, listing_alerts, service_requests ou qualquer outra tabela neste lote"
+  - "devolver latitude, longitude ou o CEP cru em resposta de API, log, telemetria, mensagem de erro ou URL"
+  - "geocodificar no cliente, chamar BrasilAPI/Google do navegador ou expor GOOGLE_MAPS_API_KEY em NEXT_PUBLIC_*"
+  - "inventar coordenada, usar coordenada de outra pessoa ou gravar coordenada sem CEP (a constraint recusa)"
+  - "usar service_role para nome, bio, bairro ou leitura de perfil; o privilÃ©gio fica restrito Ã  rota de localizaÃ§Ã£o, ao cache pÃºblico e Ã  funÃ§Ã£o set_member_location"
+  - "aceitar user_id, owner ou papel vindos do corpo, da query ou do app"
+  - "criar cache por usuÃ¡rio ou guardar user_id no cache de CEP"
+  - "usar CEP ou coordenada de pessoa real em fixture, seed ou teste; sÃ³ dado sintÃ©tico"
+  - "reviver apps/prototipo ou apps/mobile; mexer na tela antiga apps/web/app/(shell)/profile"
+  - "adicionar dependÃªncia nova de geocodificaÃ§Ã£o (usar fetch nativo)"
+  - "alterar docs/decisions, tools/backend-kanban ou RATIFICACAO.md"
+  - "push, merge ou force-push; ler, criar ou editar arquivos .env (apps/web/.env.example Ã© permitido)"
 
 acceptance:
-  - "Migration nova com public.push_subscriptions conforme o ADR (RLS forçada, dono lê/cria/apaga só as suas, sem UPDATE de cliente, papel de serviço lê para enviar, destino único por kind, cascade na conta); pgTAP positivo e negativo."
-  - "POST /api/app/push grava a inscrição deste aparelho e DELETE a apaga, com exigirSessao/conferirEscrita e o cliente da sessão; a saída do app chama o DELETE."
-  - "Service worker de push no app: mostra título e corpo recebidos e, no toque, abre o destino do aviso pelo destinoEmRota (desconhecido cai na tela segura)."
-  - "Adaptador push no outbox: frase fixa por tipo (sem dado de terceiro), respeita preferência por canal e bloqueio; resposta gone/not found apaga a inscrição; sem chave configurada, desligado e sem erro."
-  - "Preferências de aviso: o interruptor de push pede permissão ao ligar e inscreve; negado mostra mensagem e mantém desligado; sem suporte do navegador, o interruptor não aparece."
-  - "Testes de unidade das rotas, do adaptador e da frase por tipo (teste de privacidade: nenhum campo de terceiro no payload); teste do app do interruptor; E2E tests/e2e/push-web-real.spec.ts gravando e apagando a inscrição pela rota (sem envio real)."
-  - "Tipos públicos regenerados; nomes das chaves novas documentados em docs/PRODUCAO-PASSO-A-PASSO.md, sem valores."
+  - "Migration nova (supabase migration new) acrescenta a public.profiles cep text, latitude numeric(9,6) e longitude numeric(9,6), com CHECK de CEP de 8 dÃ­gitos, coordenadas em faixa e a regra tudo-ou-nada (cep, latitude e longitude nulos juntos); comentÃ¡rios de coluna declaram que sÃ£o dado de cÃ¡lculo privado, nunca exibido a outro membro."
+  - "public.profiles continua com RLS habilitada e forÃ§ada; SELECT de authenticated repete exatamente a lista de colunas de 20261022120200_profile_neighborhood.sql:127-137, que jÃ¡ exclui neighborhood (lido sÃ³ por get_profile_neighborhood) e nÃ£o pode receber cep/latitude/longitude; INSERT e UPDATE de authenticated passam a ser por coluna e tambÃ©m excluem as trÃªs colunas; SELECT *, to_jsonb(p) e update direto de coordenada falham com 42501."
+  - "public.cep_geocodes (cep chave, latitude, longitude, source brasilapi|google, fetched_at) nasce com RLS habilitada e forÃ§ada, sem privilÃ©gio para anon/authenticated, grant all para service_role e policy service_role_all; nenhum membro lÃª ou escreve o cache."
+  - "public.get_my_profile_location() retorna (cep, definida) sÃ³ do auth.uid() e nunca latitude/longitude; public.distance_to_neighborhood(p_neighborhood_id uuid) retorna metros inteiros usando a origem do prÃ³prio chamador e o centro pÃºblico de public.neighborhoods, sem parÃ¢metro de usuÃ¡rio; ambas security definer, search_path vazio, execute sÃ³ authenticated (revogado de public/anon)."
+  - "public.set_member_location(p_user_id uuid, p_cep text, p_latitude numeric, p_longitude numeric) Ã© security definer, sÃ³ service_role, normaliza CEP para 8 dÃ­gitos, limpa as trÃªs colunas quando p_cep Ã© null e recusa CEP/coordenada invÃ¡lidos com 22023 e perfil ausente com P0002; Ã© o Ãºnico caminho de escrita de coordenada."
+  - "public.finalize_account_deletion Ã© recriada com cÃ³pia fiel do corpo vigente, que Ã© o da Ãºltima definiÃ§Ã£o em 20261104215006_entry_commitments.sql:39-199 (nÃ£o o de 20261022120200, substituÃ­do depois), e acrescenta cep = null, latitude = null e longitude = null Ã  atualizaÃ§Ã£o do perfil (linhas 87-94); pgTAP prova que a purga zera as trÃªs colunas."
+  - "GET /api/app/voce devolve localizacao: { cep: \"12345-678\" | null, definida: boolean } lido por get_my_profile_location, sem latitude/longitude; PATCH /api/app/voce devolve o mesmo campo e mantÃ©m nome/bio no cliente da sessÃ£o; falha da RPC vira 503, nunca perfil vazio."
+  - "PUT /api/app/voce/localizacao existe em runtime nodejs, exige sessÃ£o, conferirEscrita e corpo apenas { cep: string | null }; normaliza, consulta o cache, geocodifica no servidor quando faltar, grava o cache, chama set_member_location com o user_id da sessÃ£o (nunca do corpo/query) via cliente de serviÃ§o aberto sÃ³ depois da sessÃ£o, relÃª por get_my_profile_location e responde sem latitude/longitude; 400 corpo/CEP invÃ¡lido, 422 CEP nÃ£o encontrado, 503 geocodificador/banco indisponÃ­vel, sem eco de mensagem do Postgres."
+  - "tests/scope/f10-voce-porta.test.mjs ganha uma exceÃ§Ã£o medida para /localizacao/ e uma asserÃ§Ã£o prÃ³pria: exigirSessao antes de clienteDeServicoOuNulo, privilÃ©gio sÃ³ em cep_geocodes e rpc set_member_location, nenhum from(\"profiles\") e nenhum user_id vindo do pedido; as demais rotas da jornada continuam sem privilÃ©gio."
+  - "apps/web/lib/geo Ã© server-only: BrasilAPI v2 primeiro, Google Maps Geocoding sÃ³ como reserva e sÃ³ com GOOGLE_MAPS_API_KEY server-side, timeout curto, sem retry, cache por CEP e nenhum log de CEP ou coordenada; GOOGLE_MAPS_API_KEY documentada em apps/web/.env.example, nunca em NEXT_PUBLIC_*."
+  - "EdicaoDePerfil ganha Campo de CEP opcional (inputMode numÃ©rico, mÃ¡scara 00000-000) com a nota de que o CEP sÃ³ calcula distÃ¢ncia e nÃ£o aparece para outras pessoas; salvar grava nome/bio e, se o CEP mudou, chama salvarLocalizacao; recarregar mostra o CEP gravado, limpar o campo apaga a localizaÃ§Ã£o e falha da localizaÃ§Ã£o nÃ£o finge sucesso (perfil salvo, localizaÃ§Ã£o nÃ£o atualizada)."
+  - "Novo supabase/tests/profile-location.sql (fixtures sintÃ©ticas, rollback) prova positivo e negativo: dono lÃª o prÃ³prio CEP/definida; outro membro nÃ£o lÃª cep/latitude/longitude por select, select * nem to_jsonb (42501); update direto de coordenada Ã© negado; authenticated nÃ£o executa set_member_location (42501); anon nÃ£o executa as leituras; distance_to_neighborhood de A e B para o mesmo bairro usa origens diferentes; cache negado a authenticated; constraints recusam CEP invÃ¡lido, coordenada solta e fora de faixa (23514); apÃ³s finalize_account_deletion as trÃªs colunas estÃ£o nulas."
+  - "Testes de unidade: PUT /localizacao cobre 401/403/400/422/503/200, corpo com user_id ignorado, resposta sem latitude/longitude e cache hit sem rede; geocodificador cobre BrasilAPI, fallback Google, ambos falham, timeout, coordenada malformada e ausÃªncia de chave; apps/app/tests/voce-dados.test.ts cobre parse de localizacao e salvarLocalizacao; rotas.test.ts cobre GET/PATCH com localizacao e falha 503."
+  - "tests/e2e/f10-voce-localizacao.spec.ts (@stateful) usa a persona semeada e um CEP com linha em public.cep_geocodes no seed (sem rede), grava o CEP pela tela, recarrega, confirma a persistÃªncia e inspeciona os corpos de PUT/GET sem latitude/longitude; afterEach limpa a localizaÃ§Ã£o pela RPC de serviÃ§o; capturas 375/768/1440 nos dois temas em .visual/run-029/ e relatÃ³rio com comandos e o que nÃ£o rodou (Docker/CI)."
 
 proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-029.task.yml
   - npx pnpm@11.18.0 gate --fast
-  - npx pnpm@11.18.0 exec vitest run tests/unit tests/privacy --maxWorkers=1
+  - npx pnpm@11.18.0 exec vitest run tests/unit/app-api/voce tests/unit/profile
   - npx pnpm@11.18.0 --filter @bivaque/app test
   - npx pnpm@11.18.0 test:scope
-  - E2E da raiz e test:db no CI
+  - npx pnpm@11.18.0 test:db (CI; Docker indisponÃ­vel localmente)
+  - npx pnpm@11.18.0 db:lint (CI; Docker indisponÃ­vel localmente)
+  - npx pnpm@11.18.0 generate:types && git diff --exit-code -- supabase/database.generated.ts (CI)
+  - node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f10-voce-localizacao.spec.ts
 
-risk: dado pessoal novo (inscrição do aparelho) e destino de envio novo
+risk: dado pessoal e RLS de localizaÃ§Ã£o do perfil
 risk_level: R3
-adr: docs/decisions/ADR-20261107-push-no-aparelho.md
+adr: docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
 
 reviewer_must_differ_from_executor: true
 retry_budget: 2

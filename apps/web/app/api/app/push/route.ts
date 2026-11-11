@@ -13,7 +13,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 /**
- * A inscrição de push deste aparelho (RUN-029, ADR-20261107).
+ * A inscrição de push deste aparelho (RUN-137, ADR-20261107).
  *
  * - `GET` diz se o servidor tem as chaves VAPID — e devolve só a chave pública,
  *   nunca a privada. Sem configuração, o app não oferece o push.

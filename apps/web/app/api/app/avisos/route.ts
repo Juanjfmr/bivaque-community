@@ -2,6 +2,10 @@ import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../lib/logger"
 import {
+  alvosVisiveisDasDenuncias,
+  type DenunciaLida,
+} from "../../../../lib/notifications/alvos-visiveis"
+import {
   type AvisoDoBanco,
   destinoDoAviso,
   rotuloDoAviso,
@@ -86,6 +90,33 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // shortcut: o agrupamento é dentro da página lida; um grupo que cruza a
     // borda da página aparece uma vez em cada página com a contagem parcial.
     const linhas = pagina.data ?? []
+
+    // Denúncia analisada aponta para a linha do report, que não é tela no app.
+    // A linha vem pelo cliente da sessão (RLS reporter-only): nada alcança
+    // denúncia alheia nem revela quem denunciou. O alvo só entra no destino se
+    // a tela que o abre ainda o lê (alvosVisiveisDasDenuncias); apagado, sem
+    // leitura ou com falha, o destino é a tela segura, e a caixa não para.
+    const idsDeDenuncia = [
+      ...new Set(
+        linhas.filter((linha) => linha.type === "report_resolved").map((linha) => linha.target_id),
+      ),
+    ]
+    let denuncias: readonly DenunciaLida[] = []
+    if (idsDeDenuncia.length > 0) {
+      const lidas = await client
+        .from("reports")
+        .select("id,target_type,target_id")
+        .in("id", idsDeDenuncia)
+      if (lidas.error) {
+        log.error("app avisos: report targets unreadable", {
+          error: lidas.error.message ?? "unknown",
+          userId,
+        })
+      }
+      denuncias = lidas.data ?? []
+    }
+    const alvosDaDenuncia = await alvosVisiveisDasDenuncias(client, denuncias)
+
     const grupos = new Map<string, LinhaDeAviso>()
     for (const linha of linhas) {
       const aviso: AvisoDoBanco = {
@@ -105,7 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           id: aviso.id,
           tipo: aviso.tipo,
           texto: rotuloDoAviso(aviso),
-          destino: destinoDoAviso(aviso),
+          destino: destinoDoAviso(aviso, alvosDaDenuncia.get(aviso.alvoId) ?? null),
           lida: aviso.lida,
           criadaEm: aviso.criadaEm,
           grupo: chave,
