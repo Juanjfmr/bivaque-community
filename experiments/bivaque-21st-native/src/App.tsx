@@ -19,7 +19,7 @@ import{Notifications2}from "./components/21st/notification-settings";
 import{BookmarkIconButton}from "./components/21st/bookmark-icon-button";
 import{ExpandMenu}from "./components/21st/upstream/expand-menu";
 import{Button}from "./components/ui/button";
-import { CommandMenu, CommandMenuInput, CommandMenuList, CommandMenuGroup, CommandMenuGroupLabel, CommandMenuItem, CommandMenuEmpty } from "./components/21st/upstream/command-menu";
+import { CommandMenu, CommandMenuInput, CommandMenuList, CommandMenuGroup, CommandMenuGroupLabel, CommandMenuItem, CommandMenuEmpty } from "./components/21st/command-menu";
 import { SegmentedControl } from "./components/21st/upstream/segmented-control";
 import { CommunityHubCard } from "./components/21st/community-hub-card";
 import ExpandableProfileMenu from "./components/21st/upstream/profile-menu-expander";
