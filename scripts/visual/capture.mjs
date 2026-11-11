@@ -1453,6 +1453,21 @@ async function main() {
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
         // visual review, the full-page shot carries scroll rhythm and the bottom states.
+        // Images below the fold use loading="lazy"; a scroll pass loads them before the
+        // full-page shot, which otherwise captures empty boxes.
+        await page.evaluate(async () => {
+          const step = Math.max(320, Math.floor(window.innerHeight * 0.8))
+          for (let y = 0; y < document.body.scrollHeight; y += step) {
+            window.scrollTo(0, y)
+            await new Promise((resolve) => setTimeout(resolve, 60))
+          }
+          // `decoding="async"` pode segurar a pintura de uma imagem já baixada;
+          // esperar o decode evita que o print de página inteira mostre o quadro
+          // vazio mesmo com a imagem carregada.
+          await Promise.all(Array.from(document.images).map((img) => img.decode().catch(() => {})))
+          window.scrollTo(0, 0)
+          await new Promise((resolve) => setTimeout(resolve, 150))
+        })
         const fold = join(shotsDir, `${label}--fold.png`)
         const full = join(shotsDir, `${label}--full.png`)
         await page.screenshot({ path: fold })

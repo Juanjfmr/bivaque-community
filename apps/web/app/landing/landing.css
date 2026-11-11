@@ -662,7 +662,7 @@ body.ld-locked {
   align-items: start;
 }
 
-.ld-list i {
+.ld-list .ld-ico {
   display: grid;
   place-items: center;
   width: 44px;
@@ -1286,5 +1286,37 @@ body.ld-locked {
     --md-sys-color-outline-variant: rgb(48 58 62);
     --md-sys-color-inverse-surface: rgb(232 236 238);
     --md-sys-color-inverse-on-surface: rgb(28 38 43);
+  }
+}
+
+/* Sem JavaScript. A folha do menu é aberta pela ilha do comportamento; sem ela
+   a navegação do celular sumiria, porque a nav do topo é `display: none` em
+   ≤860px. Nesse caso a folha deixa de ser sobreposição e vira a última seção do
+   documento, com os mesmos links, e somem os botões que só o JS aciona. A
+   classe `ld-js` é posta por um script inline antes da primeira pintura; com
+   ela, nada abaixo vale. */
+html:not(.ld-js) [data-ld-close],
+html:not(.ld-js) .ld-menu-btn {
+  display: none;
+}
+
+/* Mesmo recorte da nav: só o celular perde a navegação do topo. No desktop a
+   nav do header continua visível e a folha segue escondida. */
+@media (max-width: 860px) {
+  html:not(.ld-js) .ld-sheet {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: block;
+    max-height: none;
+    overflow: visible;
+    padding: 0 0 56px;
+    background: transparent;
+    visibility: visible;
+    transform: none;
+  }
+
+  html:not(.ld-js) .ld-sheet-head {
+    display: none;
   }
 }
