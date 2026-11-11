@@ -17,7 +17,15 @@ for (const tema of TEMAS) {
 
       await expect(page.locator('[data-laboratorio="design-vnext-f02"]')).toBeVisible()
       await expect(page.locator(`[data-composicao="${variante.composicao}"]`)).toBeVisible()
-      await expect(page.getByRole("searchbox", { name: "Buscar exemplos na cidade" })).toBeVisible()
+      if (variante.valor === "c") {
+        await expect(
+          page.getByRole("button", { name: "Do que você precisa em Manaus?" }),
+        ).toBeVisible()
+      } else {
+        await expect(
+          page.getByRole("searchbox", { name: "Buscar exemplos na cidade" }),
+        ).toBeVisible()
+      }
       await expect(page.getByText("BIVAQUE · F02 · DADOS SIMULADOS")).toBeVisible()
 
       const medidas = await page.evaluate(() => ({
@@ -110,6 +118,23 @@ test("F02 vNext: C põe serviços e moradia antes das perguntas e filtra pelos a
   await expect(tela.locator(".pv-secao-cabeca h3")).toHaveText(["Moradia para a sua chegada"])
   await tela.getByRole("button", { name: /Moradia/ }).click()
   await expect(tela.locator(".pv-rail-card")).toHaveCount(4)
+})
+
+test("F02 vNext: C abre a busca da 21st, filtra por tipo e leva ao detalhe", async ({ page }) => {
+  await page.goto("/app/previa/vnext?v=c")
+  await page.getByRole("button", { name: "Do que você precisa em Manaus?" }).click()
+  const busca = page.getByRole("dialog", { name: "Buscar em Manaus" })
+  await expect(busca).toBeVisible()
+  await expect(busca.getByText("Novidades em Manaus")).toBeVisible()
+  await busca.getByPlaceholder("Do que você precisa em Manaus?").fill("MUDANÇA")
+  await expect(busca.getByRole("option")).toHaveCount(1)
+  await busca.getByRole("tab", { name: "Imóveis" }).click()
+  await expect(busca.getByRole("option")).toHaveCount(0)
+  await busca.getByRole("tab", { name: "Tudo" }).click()
+  await busca.getByRole("option").first().click()
+  await expect(page.getByRole("dialog", { name: "Mudanças e transporte" })).toBeVisible()
+  await page.getByRole("button", { name: "Fechar detalhe" }).click()
+  await expect(page.getByRole("dialog")).toHaveCount(0)
 })
 
 test("F02 vNext: comparação mantém alternativas e rótulos distintos", async ({ page }) => {

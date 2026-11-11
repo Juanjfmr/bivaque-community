@@ -361,8 +361,26 @@
   gap: 14px;
 }
 
-.pv-c-cabeca .pc-busca {
+.pv-c-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--pc-pilula);
+  background: var(--pc-cartao);
+  box-shadow: inset 0 0 0 1px var(--pc-linha);
+  color: var(--pc-suave);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--pc-toque);
+}
+
+.pv-c-busca:active {
+  transform: scale(0.985);
 }
 
 .pv-c-atalhos {
