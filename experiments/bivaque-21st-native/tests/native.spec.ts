@@ -19,10 +19,10 @@ test("Mercado: navigates and filters",async({page})=>{
  await page.getByRole("radio",{name:"Grátis"}).click();
  await expect(page.getByText("Armários de cozinha")).toBeVisible();
  await page.screenshot({path:"proof/mercado-filtrado.png",fullPage:true});
- await page.getByRole("button",{name:"Imóveis"}).click();
+ await page.getByRole("radio",{name:"Imóveis"}).click();
  await expect(page.getByText("Apartamento 3 quartos, mobiliado")).toBeVisible();
  await page.screenshot({path:"proof/imoveis.png",fullPage:true});
- await page.getByRole("button",{name:"Negócios"}).click();
+ await page.getByRole("radio",{name:"Negócios"}).click();
  await expect(page.getByText("Confeitaria da Lu")).toBeVisible();
  await page.screenshot({path:"proof/negocios.png",fullPage:true});
 });
@@ -31,10 +31,10 @@ test("Community: questions, groups, events",async({page})=>{
  await page.getByRole("navigation",{name:"Bottom Navigation"}).getByRole("button",{name:"Comunidade"}).click();
  await expect(page.getByText("Gente que se ajuda.")).toBeVisible();
  await page.screenshot({path:"proof/comunidade.png",fullPage:true});
- await page.getByRole("button",{name:"Grupos"}).click();
+ await page.getByRole("radio",{name:"Grupos"}).click();
  await expect(page.getByText("Chegando em Manaus")).toBeVisible();
  await page.getByRole("button",{name:"Entrar"}).first().click();
- await page.getByRole("button",{name:"Encontros"}).click();
+ await page.getByRole("radio",{name:"Encontros"}).click();
  await expect(page.getByText("Café de boas-vindas para quem chegou")).toBeVisible();
  await page.getByRole("button",{name:"Vou participar"}).first().click();
  await expect(page.getByText("Confirmado")).toBeVisible();
