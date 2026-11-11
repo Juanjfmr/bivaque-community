@@ -35,10 +35,11 @@ const animations = {
   },
 };
 
-export function BookmarkIconButton() {
-  const [isSaved, setIsSaved] = React.useState(false);
+export function BookmarkIconButton({ active, onChange }: { active?: boolean; onChange?: (next: boolean) => void } = {}) {
+  const [localSaved, setLocalSaved] = React.useState(false);
+  const isSaved = active ?? localSaved;
 
-  const handleClick = () => setIsSaved((prev) => !prev);
+  const handleClick = () => { if (active === undefined) setLocalSaved((prev) => !prev); onChange?.(!isSaved); };
 
   return (
     <div className="relative flex items-center justify-center">
