@@ -14,9 +14,13 @@ prova.
 
 ## As regras
 
-**Uma biblioteca só.** Tela nova se monta com as peças. Ela não redefine botão, chip, campo, cartão, lista, avatar,
-selo, ilustração, nota, aviso ou folha. O CSS da tela cuida só da disposição. Se falta uma peça, ela entra na
-biblioteca e na galeria antes de entrar na tela.
+**Uma identidade só, componentes de biblioteca.** Desde 11/11/2026 (decisão do dono), botão, folha, carrossel,
+busca, calendário e demais componentes vêm de bibliotecas testadas (shadcn, Radix, `cmdk`, `vaul`, `embla`,
+`motion` e blocos da 21st.dev sobre elas), não de peças escritas à mão. Este documento passa a valer como a
+**camada de identidade** que se aplica a eles: cor, forma, texto, ícone e imagem. A tela não redefine essa
+identidade no seu CSS, que cuida só da disposição. Cada componente adotado entra em `src/pecas/` e na galeria,
+já com a identidade aplicada. As peças próprias atuais são substituídas pelo componente de biblioteca
+equivalente conforme cada jornada é refeita.
 
 **Cor.**
 - Paleta fria (ADR-20261102-paleta-fria): fundo cinza-claro, cartão branco; no escuro, fundo quase preto frio.

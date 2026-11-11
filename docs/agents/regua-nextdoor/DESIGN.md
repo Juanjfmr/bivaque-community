@@ -51,9 +51,12 @@ Vai no cartão do quadro, em cinco linhas. Sem ficha, não há tela.
 4. **Primeira dobra.** O que aparece em 375 × 812 sem rolar (§6).
 5. **Pior caso.** Como a tela fica com um item, com nenhum e com dados ruins (§7).
 
-Blocos do 21st.dev são matéria-prima de estrutura e interação. Entram despidos: cor, fonte, raio,
-sombra e ícone do bloco saem; ficam as peças e os tokens do Bivaque. Se o bloco traz algo reutilizável
-que a biblioteca não tem, vira peça na biblioteca e na galeria antes de entrar na tela. Quais apps e
+**Componente de biblioteca antes de peça feita à mão** (decisão do dono, 11/11/2026). Componentes
+testados e usados por muita gente (shadcn, Radix, `cmdk`, `vaul`, `embla`, `motion` e os blocos da
+21st.dev construídos sobre eles) vencem a peça escrita aqui. Entram com o código do autor, instalados
+pelo registro da 21st ou do shadcn, e recebem só a identidade do Bivaque: tokens de cor, fonte, raio e
+ícones Material. O comportamento, a acessibilidade e o movimento do componente ficam como o autor fez.
+Peça própria só existe onde nenhuma biblioteca resolve. Quais apps e
 quais blocos servem de referência, e por quê: §14.
 
 ## 3. Texto
@@ -217,10 +220,11 @@ fechar, tela nova usa só o que existe e não inventa animação local.
 - Retorno tátil só no app de loja (Capacitor) e só em quatro momentos: ação principal concluída, ligar
   ou desligar, erro de envio, fim do puxar para atualizar.
 
-**Técnica.** Troca de tela e elemento compartilhado usam a View Transitions API do navegador, ligada
-no roteador (confirme a opção na versão fixada do TanStack Router antes de usar). Onde o navegador não
-suporta, a troca é imediata e nada quebra. Gesto e folha continuam em CSS e eventos de ponteiro. Não
-entra biblioteca de animação sem card que prove que o navegador não resolve.
+**Técnica.** O movimento usa `motion` (sucessor do `framer-motion`), a mesma biblioteca dos melhores
+blocos da 21st, com `MotionConfig reducedMotion="user"` na casca para respeitar o movimento reduzido.
+Troca de tela e elemento compartilhado usam `layoutId` do `motion` ou a View Transitions API ligada no
+roteador; folha com arrastar usa `vaul`; trilhos usam `embla-carousel`. As durações e a curva da
+tabela acima configuram essas bibliotecas; não se escreve animação à mão quando uma delas resolve.
 
 ## 9. Momentos de recompensa
 
@@ -340,51 +344,42 @@ busca genérica devolve apps sem parentesco.
 **Blocos da 21st.dev**
 
 O acervo é grande e desigual: há muita peça de vitrine (carrossel 3D, brilho, vidro) feita para página
-de marketing. Ela não entra no app. Em 11/11/2026 o código de 19 candidatos foi lido no registro da 21st,
-com a conta do dono, e conferido contra o que o `apps/app` já tem. O app não tem `motion`, `framer-motion`,
-`embla`, `vaul`, `lucide-react` nem `next`; já tem `radix-ui`, `cmdk`, `class-variance-authority` e as
-peças `Folha`, `Linha`, `Cartao`, `Compositor`, `Estado` e `Esqueleto`. Nenhum bloco foi instalado.
+de marketing, e ela não entra no app. Em 11/11/2026 o código de 19 candidatos foi lido no registro da
+21st, com a conta do dono. Pela regra da §2, o componente de biblioteca vence a peça feita à mão: entra
+com o código do autor e recebe só a identidade do Bivaque. Nenhum foi instalado ainda.
 
-**Adaptar** (entra como peça na biblioteca, com crédito, ícones Material e tokens):
+**Adotar** (um por necessidade; o escolhido é o mais acessível e o mais próximo do shadcn/Radix):
 
-| Necessidade | Bloco | Por que entra | O que muda |
+| Necessidade | Bloco | Base | O que se aplica por cima |
 |---|---|---|---|
-| Busca do Início e do F02 | [Command Menu 04 — ephraimduncan](https://21st.dev/@ephraimduncan/components/command-menu-04) | usa `cmdk`, que o app já tem; seções por tipo e recentes | ícones Tabler viram Material; 12 cores fixas viram tokens |
-| Galeria de fotos do anúncio e do imóvel | [Thumbnail image viewer — ibrandify](https://21st.dev/@ibrandify/components/thumbnail-image-viewer) | sem dependência; navega por teclado; 13 atributos de acessibilidade | 8 cores fixas viram tokens; troca de foto segue a §8 |
-| Primeiros passos da cidade nova | [Onboarding Checklist Drawer — ShadcnSpace](https://21st.dev/@shadcnspace/components/onboarding-checklist-drawer) | estrutura dos passos contados da §7, com progresso | vira conteúdo da `Folha`, não um drawer novo; ícones Lucide viram Material |
-| Esqueleto de conversa | [Chat Thread Skeleton — Cnippet](https://21st.dev/@cnippet-dev/components/v-skeleton-9) | 90 linhas, só a forma das bolhas | montado com a peça `Esqueleto` |
+| Busca do Início e do F02 | [Command Menu 04 — ephraimduncan](https://21st.dev/@ephraimduncan/components/command-menu-04) | `cmdk` (já no app) | ícones Material; 12 cores fixas viram tokens |
+| Trilhos horizontais | [Snap Carousel — ddoemonn](https://21st.dev/@ddoemonn/components/snap-carousel) | `motion` | 12 cores fixas viram tokens |
+| Galeria de fotos do anúncio e do imóvel | [Thumbnail image viewer — ibrandify](https://21st.dev/@ibrandify/components/thumbnail-image-viewer) | sem dependência | 8 cores fixas viram tokens |
+| Folha no celular, diálogo no computador | [Credenza — redpangilinan](https://21st.dev/@redpangilinan/components/credenza) | `vaul` + Radix Dialog | substitui a `Folha` própria; ícones Material |
+| Respostas e comentários | [Comment Thread — rmahammad](https://21st.dev/@rmahammad/components/comment-thread) | `motion` | tirar reações e menções fora do escopo; manter pendente, falhou e tentar de novo |
+| Filtros no computador | [Filter Token Bar — laziekiki](https://21st.dev/@laziekiki/components/filter-token-bar) | `motion` | no celular, os filtros abrem na folha |
+| Agenda de encontros | [Calendar — wensity](https://21st.dev/@wensity/components/calendar) | `motion` | ícones Material; sem modo de agendamento |
+| Primeiros passos da cidade nova | [Onboarding Checklist Drawer — ShadcnSpace](https://21st.dev/@shadcnspace/components/onboarding-checklist-drawer) | shadcn Drawer | ícones Material |
+| Vazio com ação | [Empty — shadcn](https://21st.dev/@shadcn/components/empty/outline) | shadcn | ilustração da família do Bivaque; substitui o `Estado` |
+| Linha de lista | [Item — shadcn](https://21st.dev/@shadcn/components/item/header) | shadcn | substitui a `Linha` |
+| Campo de mensagem | [Textarea with Send Button — coss](https://21st.dev/@coss.com/components/p-textarea-15) | shadcn | substitui o `Compositor` |
+| Esqueleto de conversa | [Chat Thread Skeleton — Cnippet](https://21st.dev/@cnippet-dev/components/v-skeleton-9) | shadcn Skeleton | nenhum ajuste de estrutura |
+| Cartão de indicação | [Testimonial Card — preetsuthar17](https://21st.dev/@preetsuthar17/components/testimonial-card) | Radix Avatar | tirar as estrelas: a indicação é a frase de um membro, não nota |
 
-**Referência de comportamento** (não se instala; usa `motion`, que o app não terá — porta-se o
-comportamento para CSS e eventos de ponteiro):
+**Não adotados**, porque outro bloco da mesma necessidade é melhor:
 
-| Necessidade | Bloco | O que copiar |
-|---|---|---|
-| Trilhos horizontais | [Snap Carousel — ddoemonn](https://21st.dev/@ddoemonn/components/snap-carousel) | snap, próximo cartão à vista, setas e teclado, movimento reduzido |
-| Envio de resposta | [Comment Thread — rmahammad](https://21st.dev/@rmahammad/components/comment-thread) | estados pendente, enviado, falhou e tentar de novo (são 2.700 linhas: só o modelo de estados) |
-| Filtros no computador | [Filter Token Bar — laziekiki](https://21st.dev/@laziekiki/components/filter-token-bar) | filtro composto com teclado; no celular a folha basta |
-| Agenda de encontros | [Calendar — wensity](https://21st.dev/@wensity/components/calendar) | pontos de evento no dia; sem virar agendamento de consulta |
-| Cartão de indicação | [Testimonial Card — preetsuthar17](https://21st.dev/@preetsuthar17/components/testimonial-card) | frase de quem indicou com autor; **sem** as estrelas do original |
-| Vazio com ação | [Empty — shadcn](https://21st.dev/@shadcn/components/empty/outline) | a peça `Estado` já resolve; serve de conferência |
-| Linha de lista | [Item — shadcn](https://21st.dev/@shadcn/components/item/header) | a peça `Linha` já resolve; serve de conferência |
+- [Carousel — shadcn](https://21st.dev/@shadcn/components/carousel) (`embla`): o Snap Carousel tem mais acessibilidade e movimento reduzido. Fica como alternativa se o trilho precisar de virtualização.
+- [Drawer — coss](https://21st.dev/@coss.com/components/drawer): usa Base UI; o Credenza resolve o mesmo sobre Radix, que o app já usa.
+- [Carousel Cards — kokonutd](https://21st.dev/@kokonutd/components/carousel-cards), [Product Card — ShadcnStore](https://21st.dev/@shadcnstore/components/product-card-1), [Product Card — deltacomponents](https://21st.dev/@deltacomponents/components/product-card/product-card-grid-demo) e [Hotel Card — uniquesonu](https://21st.dev/@uniquesonu/components/hotel-card-ui-component): dependem de `next` ou `next-themes`, têm nota em estrelas e quase nenhuma acessibilidade. O cartão de anúncio e de imóvel continua buscado na 21st.
+- Pelo catálogo: carrossel com rolagem automática, carrosséis 3D e com zoom, globo 3D, agenda de consulta comercial e respostas aninhadas com voto.
 
-**Recusados:**
-
-- [Carousel — shadcn](https://21st.dev/@shadcn/components/carousel): traz `embla` só para o que `scroll-snap` já faz; reconsiderar só se o computador precisar de setas que o CSS não resolva.
-- [Credenza](https://21st.dev/@redpangilinan/components/credenza) e [Drawer — coss](https://21st.dev/@coss.com/components/drawer): trazem `vaul` ou Base UI para o que a `Folha` já faz.
-- [Textarea with Send Button — coss](https://21st.dev/@coss.com/components/p-textarea-15): 12 linhas; o `Compositor` já existe.
-- [Carousel Cards — kokonutd](https://21st.dev/@kokonutd/components/carousel-cards): depende de `next`, tem estrelas e nenhum atributo de acessibilidade.
-- [Product Card — ShadcnStore](https://21st.dev/@shadcnstore/components/product-card-1), [Product Card — deltacomponents](https://21st.dev/@deltacomponents/components/product-card/product-card-grid-demo) e [Hotel Card — uniquesonu](https://21st.dev/@uniquesonu/components/hotel-card-ui-component): estrelas, `next` ou `next-themes`; o app já tem `components/ui/product-card.tsx`.
-- Antes, pelo catálogo: carrossel com rolagem automática, carrosséis 3D e com zoom, globo 3D, agenda de consulta comercial e respostas aninhadas com voto.
-
-Regra de entrada, além da §2: crédito com nome, autor e link no topo do arquivo; `framer-motion`,
-`motion`, `next/link`, `next-themes`, Base UI e ícones de outra família saem e dão lugar ao que o app já
-usa; o movimento do bloco é trocado pelo vocabulário da §8; estrelas e notas saem sempre. Bloco que só
-existe pelo efeito é recusado.
+Ao adotar: crédito com nome, autor e link no topo do arquivo; `next/link` e `next-themes` saem porque o app
+não é Next; ícones de outra família viram Material Symbols; estrelas e notas saem sempre.
 
 Antes de instalar um bloco: o problema aparece numa captura; há uma base para comparar; o ganho é
 observável (o próximo item à vista, o filtro que volta, o erro que se recupera), não "mais bonito";
-dependências, tamanho, acessibilidade e os dois temas foram conferidos no código de `get_component`.
-O tema da 21st nunca substitui a paleta.
+dependências, tamanho, acessibilidade e os dois temas foram conferidos no código. O tema da 21st nunca
+substitui a paleta.
 
 ## 15. O que é regra e o que é hipótese
 
