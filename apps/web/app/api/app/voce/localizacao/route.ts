@@ -44,6 +44,9 @@ async function gravarLocalizacao(
 }
 
 function respostaDaFalhaDeEscrita(request: NextRequest, codigo: string): NextResponse {
+  // Diagnóstico operacional: o código do banco não carrega CPF, CEP nem
+  // coordenada; sem ele o 503 vira adivinhação no CI.
+  console.error("localizacao: falha na escrita", { codigo })
   if (codigo === "P0002") return responder(request, { erro: "sem-perfil" }, 404)
   if (codigo === "22023") return responder(request, { erro: "dados-invalidos" }, 400)
   return responder(request, { erro: "localizacao-indisponivel" }, 503)
@@ -80,7 +83,13 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
   const cliente = auth.sessao.cliente
   const userId = auth.sessao.usuario.id
   const servico = clienteDeServicoOuNulo()
-  if (servico === null) return responder(request, { erro: "localizacao-indisponivel" }, 503)
+  if (servico === null) {
+    console.error("localizacao: cliente de servico indisponivel", {
+      temUrl: Boolean(process.env["SUPABASE_URL"]),
+      temChave: Boolean(process.env["SUPABASE_SERVICE_ROLE_KEY"]),
+    })
+    return responder(request, { erro: "localizacao-indisponivel" }, 503)
+  }
 
   try {
     if (cep === null) {
