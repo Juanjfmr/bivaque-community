@@ -302,33 +302,41 @@ export function PreviaVNext() {
     <div className="pc pv" data-laboratorio="design-vnext-f02">
       <div className="pv-laboratorio">
         <header className="pv-controles">
-          <p className="pc-miudo">BIVAQUE · LABORATÓRIO VISUAL · F02</p>
-          <h1 className="pc-titulo">Início e Busca: duas composições</h1>
-          <p className="pc-apoio">
-            Protótipos isolados com conteúdo idêntico. Não são telas publicadas nem dados reais.
-          </p>
-          <div className="pv-controles-linha">
-            <div className="pv-escolhas" role="group" aria-label="Escolher composição">
-              <Chip selecionado={variante === "a"} onClick={() => mudarVariante("a")}>A · Explorar</Chip>
-              <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>B · Buscar</Chip>
-              <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>Comparar</Chip>
+          <div className="pv-controles-topo">
+            <div>
+              <p className="pc-miudo">BIVAQUE · F02 · DADOS SIMULADOS</p>
+              <h1 className="pc-subtitulo">Comparar Início e Busca</h1>
             </div>
-            <div className="pv-cenario">
-              <CampoDeEscolha
-                rotulo="Conjunto de dados"
-                value={cenario}
-                onChange={(e) => setCenario(e.target.value as Cenario)}
-                opcoes={[
-                  { valor: "completo", rotulo: "Oito exemplos" },
-                  { valor: "escasso", rotulo: "Pouco conteúdo" },
-                  { valor: "vazio", rotulo: "Sem conteúdo" },
-                  { valor: "carregando", rotulo: "Carregando" },
-                  { valor: "erro", rotulo: "Falha de leitura" },
-                ]}
-              />
-            </div>
+            <details className="pv-opcoes">
+              <summary>Testar estados</summary>
+              <p className="pc-apoio">
+                Os mesmos dados de demonstração nas duas versões.
+              </p>
+              <div className="pv-cenario">
+                <CampoDeEscolha
+                  rotulo="Conjunto de dados"
+                  value={cenario}
+                  onChange={(e) => {
+                    setDetalhe(null)
+                    setCenario(e.target.value as Cenario)
+                  }}
+                  opcoes={[
+                    { valor: "completo", rotulo: "Oito exemplos" },
+                    { valor: "escasso", rotulo: "Pouco conteúdo" },
+                    { valor: "vazio", rotulo: "Sem conteúdo" },
+                    { valor: "carregando", rotulo: "Carregando" },
+                    { valor: "erro", rotulo: "Falha de leitura" },
+                  ]}
+                />
+              </div>
+            </details>
           </div>
-          <p className="pc-miudo" role="status" aria-live="polite">
+          <div className="pv-escolhas" role="group" aria-label="Escolher composição">
+            <Chip selecionado={variante === "a"} onClick={() => mudarVariante("a")}>A · Explorar</Chip>
+            <Chip selecionado={variante === "b"} onClick={() => mudarVariante("b")}>B · Buscar</Chip>
+            <Chip selecionado={variante === "comparar"} onClick={() => mudarVariante("comparar")}>Comparar</Chip>
+          </div>
+          <p className="sr-only" role="status" aria-live="polite">
             {nomeDoTipo(tipo)} · {itens.length} {itens.length === 1 ? "resultado" : "resultados"} · conteúdo de demonstração
           </p>
         </header>
