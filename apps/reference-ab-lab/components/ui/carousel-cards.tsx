@@ -36,6 +36,7 @@ interface ExperienceGridProps {
   title: string;
   items: ExperienceItem[];
   viewAllHref?: string;
+  onSelect?: (item: ExperienceItem) => void;
 }
 
 const sampleExperiences: ExperienceItem[] = [
@@ -214,7 +215,7 @@ const ExperienceCard = ({ experience }: { experience: ExperienceItem }) => {
         src={experience.image}
       />
       <Button
-        onClick={(event) => { event.preventDefault(); setSaved(!saved); }}
+        onClick={(event) => { event.preventDefault(); event.stopPropagation(); setSaved(!saved); }}
         aria-pressed={saved}
         aria-label={saved ? "Remover dos favoritos" : "Salvar nos favoritos"}
         className="absolute top-2 right-2 z-10 rounded-full bg-white/80 text-neutral-700 backdrop-blur-sm hover:bg-white/90 hover:text-black"
@@ -272,6 +273,7 @@ const ExperienceSection = ({
   title,
   items,
   viewAllHref = "#",
+  onSelect,
 }: ExperienceGridProps) => {
   const scrollContainer = React.useRef<HTMLDivElement>(null);
 
@@ -341,6 +343,7 @@ const ExperienceSection = ({
               <Link
                 className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 href={item.href ?? "#"}
+                onClick={(event) => { if (!item.href) { event.preventDefault(); onSelect?.(item); } }}
               >
                 <ExperienceCard experience={item} />
               </Link>
@@ -355,8 +358,10 @@ const ExperienceSection = ({
 
 export default function CarouselCards({
   sections,
+  onSelect,
 }: {
   sections: { title: string; items: ExperienceItem[]; viewAllHref?: string }[];
+  onSelect?: (item: ExperienceItem) => void;
 }) {
   return (
     <div className="mt-4 w-full space-y-4" data-component-source="21st.dev/kokonutd/carousel-cards">
@@ -366,6 +371,7 @@ export default function CarouselCards({
           title={section.title}
           items={section.items}
           viewAllHref={section.viewAllHref}
+          onSelect={onSelect}
         />
       ))}
     </div>
