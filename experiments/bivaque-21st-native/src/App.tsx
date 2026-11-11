@@ -37,7 +37,7 @@ export default function App(){
  const[saved,setSaved]=useState<string[]>([]),[liked,setLiked]=useState<string[]>([]),[going,setGoing]=useState<string[]>([]),[joined,setJoined]=useState<string[]>([]);
  const[search,setSearch]=useState(""),[draft,setDraft]=useState(""),[draftType,setDraftType]=useState("Anúncio"),[files,setFiles]=useState<File[]>([]),[dark,setDark]=useState(false),[sheet,setSheet]=useState(false);
  const[messages,setMessages]=useState<AgentMessage[]>([{id:"m1",role:"assistant",parts:[{type:"text",text:"Bem-vinda a Manaus! Qualquer dúvida sobre a Ponta Negra é só chamar."}]},{id:"m2",role:"user",parts:[{type:"text",text:"Obrigada! Já vou precisar de dica de feira :)"}]}]);
- useEffect(()=>document.documentElement.classList.toggle("dark",dark),[dark]);
+ useEffect(()=>{document.documentElement.classList.toggle("dark",dark)},[dark]);
  const navigate=(kind:string,id?:string)=>{setRoute({kind,id});window.scrollTo(0,0)},go=(t:number)=>{setTab(t);setRoute(null);window.scrollTo(0,0)};
  const flip=(id:string,v:string[],set:(a:string[])=>void)=>set(v.includes(id)?v.filter(x=>x!==id):[...v,id]);
  const save=(id:string)=>{flip(id,saved,setSaved);toast(saved.includes(id)?"Removido dos salvos":"Salvo no Bivaque")};
