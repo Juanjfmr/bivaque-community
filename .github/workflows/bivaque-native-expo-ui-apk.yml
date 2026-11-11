@@ -10,7 +10,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: bivaque-expo-ui-apk
+  group: bivaque-expo-ui-public-release
   cancel-in-progress: true
 jobs:
   android:
