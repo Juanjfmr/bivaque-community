@@ -127,7 +127,15 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
     const localizacao = await localizacaoDaSessao(cliente)
     return responder(request, { localizacao }, 200)
-  } catch {
+  } catch (erro) {
+    // O catch-all também responde 503: sem o código, a diferença entre sessão,
+    // cache e RPC vira adivinhação no CI. O código é operacional e não carrega
+    // CEP nem coordenada.
+    const codigo =
+      typeof erro === "object" && erro !== null && "code" in erro
+        ? String((erro as { code?: unknown }).code)
+        : "desconhecido"
+    console.error("localizacao: falha inesperada", { codigo })
     return responder(request, { erro: "localizacao-indisponivel" }, 503)
   }
 }
