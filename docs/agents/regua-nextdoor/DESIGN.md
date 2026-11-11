@@ -1,0 +1,419 @@
+# DESIGN — contrato de construção de telas (11/11/2026)
+
+Este é o documento que o agente lê antes de desenhar ou mexer em qualquer tela do `apps/app`. O dono
+entregou esta etapa ao agente em 11/11/2026, com liberdade para mudar tudo. Ele absorve o antigo
+`PADRAO-DE-TELA.md` e acrescenta o que faltava para o Bivaque sair de "correto" para "bem feito":
+composição por tipo de trabalho, primeira dobra, cidade nova, movimento e aceite demonstrável.
+
+Em 11/11/2026 este documento também absorveu o contrato "Design vNext" de 10/11 (PR #184): a rubrica
+comparativa, os antipadrões verificáveis, as opções por jornada e a pesquisa da 21st.dev. Os arquivos de
+origem estão em `docs/historico/agents/design-vnext/`, como evidência, e não instruem.
+
+**Quem manda em quê**
+
+| Assunto | Fonte |
+|---|---|
+| Como compor, mover, provar e aceitar uma tela | este documento |
+| Cor, forma, texto, ícone, imagem e comportamento de cada peça | [IDENTIDADE-DAS-PECAS.md](IDENTIDADE-DAS-PECAS.md) e `apps/app/src/pecas/` |
+| Como avaliar uma jornada contra o Nextdoor (quatro dimensões) | [HANDOFF.md](HANDOFF.md) §3 a §5 |
+| Escopo e definição de pronto | `docs/LANCAMENTO.md` |
+| Comparar composições antes de mudar uma tela | laboratório da §16 e skill `visual-system-experiment` |
+| Base de comparação congelada | R72 (`prototypes/bivaque-html/docs/VISUAL_BASELINE_R72.md`), que não se altera |
+| Histórico, pranchas, Figma, HTML antigo, repositório `Juanjfmr/Bivaque` | `docs/historico/` e fora daqui: nunca é instrução |
+
+Se este documento e uma peça da biblioteca discordarem, a peça está errada ou o documento está: corrija
+um dos dois no mesmo lote. Não desenhe uma terceira versão na tela.
+
+## 1. O princípio
+
+> O sistema garante que toda tela **pertence** ao Bivaque. Ele não exige que toda tela **se pareça**.
+
+| Fixo (não se discute por tela) | Aberto (decide-se por tela, com referência) |
+|---|---|
+| Peças, cores, tipos, ícones, ilustrações | Disposição: lista, grade, trilho, mapa, linha do tempo |
+| Texto que fala com a pessoa | Densidade e o que entra na primeira dobra |
+| Cinco estados de toda superfície assíncrona | Cabeçalho: curto, com busca, com contexto, ou nenhum |
+| Vocabulário de movimento (§8) | Qual gesto a tela oferece |
+| Acessibilidade, privacidade, alvos de 44 px | Como o computador usa o espaço extra |
+| Uma ação principal por tela, sempre no mesmo lugar | Ordem e agrupamento do conteúdo |
+
+Duas telas com a mesma anatomia e conteúdo trocado são um defeito, a não ser que façam o mesmo trabalho.
+
+## 2. Antes de desenhar: a ficha da tela
+
+Vai no cartão do quadro, em cinco linhas. Sem ficha, não há tela.
+
+1. **Trabalho.** O que a pessoa veio fazer, numa frase com verbo ("comparar anúncios perto de casa").
+2. **Tipo de trabalho.** Um dos sete da §4.
+3. **Referências.** Duas a quatro telas do Mobbin, com link, e o que se aproveita de cada uma (uma
+   interação específica, nunca "o estilo"). Nextdoor primeiro; outro app maduro quando o Nextdoor não
+   tem ou é fraco.
+4. **Primeira dobra.** O que aparece em 375 × 812 sem rolar (§6).
+5. **Pior caso.** Como a tela fica com um item, com nenhum e com dados ruins (§7).
+
+**Componente de biblioteca antes de peça feita à mão** (decisão do dono, 11/11/2026). Componentes
+testados e usados por muita gente (shadcn, Radix, `cmdk`, `vaul`, `embla`, `motion` e os blocos da
+21st.dev construídos sobre eles) vencem a peça escrita aqui. Entram com o código do autor, instalados
+pelo registro da 21st ou do shadcn, e recebem só a identidade do Bivaque: tokens de cor, fonte, raio e
+ícones Material. O comportamento, a acessibilidade e o movimento do componente ficam como o autor fez.
+Peça própria só existe onde nenhuma biblioteca resolve. Quais apps e
+quais blocos servem de referência, e por quê: §14.
+
+## 3. Texto
+
+- O título é a pergunta ou a afirmação para a pessoa. O apoio tem no máximo uma linha. Explicação longa
+  vai para um "Por que…?" que abre e fecha.
+- A tela fala com a pessoa, nunca descreve o sistema. Ficam fora: mecanismo, nome de função, "consulta",
+  URL, regra de privacidade (ela vale no código), métrica da plataforma.
+- O momento de valor é conteúdo concreto da vida da pessoa: a pergunta de quem chegou antes, o próximo
+  encontro. Nunca "mais de 1.000 membros".
+- O botão diz o que acontece: "Enviar código", "Continuar com 2 grupos".
+- Todo erro diz como sair. Todo vazio oferece o próximo passo real.
+- Dado de demonstração é crível: nomes variados, bairros reais da cidade, preços plausíveis, texto com
+  a irregularidade de gente de verdade. Nada de "Lorem", "Usuário 1" ou cinco itens com o mesmo tamanho.
+
+## 4. Composição por tipo de trabalho
+
+Regras que valem em todas:
+
+- Lista com divisória no lugar de cartão. Cartão só onde agrupa uma ação e em cada publicação do feed.
+- Barra de ação fixa no rodapé do celular, sempre no mesmo lugar. No máximo uma ação principal visível.
+- Espaço em múltiplos de 8 (8, 16, 24, 32, 48). Entre blocos de uma lista densa, 16; 32 ou mais só para
+  separar assuntos.
+- Nenhum ícone decorativo que pareça ação. Item feito fica marcado, sem riscado.
+- O rótulo fica dentro do campo e sobe ao digitar.
+
+O F01 aprovado é referência de acabamento e de interação, não molde: busca, mercado, agenda, conversa e
+leitura não copiam a sua arquitetura. A sequência automática título → apoio → busca → chips → cartões →
+ação é recusada quando não expressa o trabalho da tela.
+
+Cada tela escolhe **um** tipo. A coluna "Forma" é o ponto de partida, não um molde: desvie com referência.
+
+| Tipo | A pessoa quer | Forma de partida | Primeira dobra (375) | Evite |
+|---|---|---|---|---|
+| **Acompanhar** (Início, grupo, perguntas) | ver o que há de novo | feed de cartões, com um trilho horizontal de contexto no topo quando houver algo com data | 1 trilho curto + 1 publicação inteira + começo da segunda | cabeçalho de boas-vindas ocupando a dobra; métricas |
+| **Comparar** (Mercado, imóveis, negócios, agenda) | escolher entre vários | grade de 2 colunas com foto, ou linhas densas quando o texto decide; filtros em chips que rolam de lado; mapa quando distância decide | 4 itens em grade ou 5 linhas | um item por tela; filtro escondido em folha quando há só 3 |
+| **Decidir** (detalhe de anúncio, evento, negócio, pergunta) | saber se serve e agir | mídia no topo, fatos que decidem logo abaixo (preço, distância, data), ação fixa no rodapé | mídia + título + os 3 fatos + ação | descrição antes dos fatos; ação no fim da página |
+| **Fazer** (criar, editar, entrada, pedido) | terminar sem errar | uma decisão por etapa; folha para o que é curto, tela cheia para o que tem foto ou texto longo; rascunho automático | o campo ativo e a ação, com o teclado aberto | formulário inteiro de uma vez; botão desligado sem dizer o porquê |
+| **Conversar** (caixa, conversa, comentários) | responder rápido | linhas densas com avatar; na conversa, o contexto (anúncio, evento) preso no topo; campo fixo embaixo | 6 conversas, ou as 4 últimas mensagens + campo | caixa de escrever no fim da rolagem |
+| **Gerir** (Você, privacidade, avisos, meus anúncios) | achar um ajuste e mudar | seções com título e linhas planas; o valor atual à direita; mudança salva na hora, com Desfazer | identidade + 2 seções | tudo numa folha só; botão "Salvar" para um interruptor |
+| **Aprender** (guia, ajuda, regras) | ler e guardar | coluna de leitura de 60 a 70 caracteres; sumário que acompanha no computador; salvar no topo | título + primeiro parágrafo | cartões no lugar de texto corrido |
+
+**Opções por jornada.** Quando a mudança é de arquitetura, estas são as alternativas a comparar no
+laboratório (§16). São hipóteses, não telas aprovadas.
+
+| Jornada | Opção A | Opção B | O que decide |
+|---|---|---|---|
+| F02 Início | explorar: pergunta em destaque, trilhos de serviço e moradia, encontros | buscar: busca, filtros e resultados tipados | C, resolver (abaixo), é a direção do dono; A e B são o contraponto |
+| F03 Criar | escolha em lista que abre o editor | criar a partir de onde a pessoa estava, com contexto herdado | voltar preserva o rascunho nas duas |
+| F04 Comunidade | mural de perguntas em linhas; grupos com destino próprio | hub por participação: grupos seguidos e atividade | mural favorece descoberta, hub favorece retorno |
+| F05 Encontros | linha do tempo agrupada por data | agenda com faixa de dias e lista alternativa | poucos eventos favorecem a linha do tempo |
+| F06 Mercado | grade ou lista rica com foto, preço e distância | lista com mapa, só com localização permitida | mapa nunca sugere precisão que o anunciante não deu |
+| F07 Negócios | diretório por categoria com evidência de indicação | busca por necessidade ("o que você precisa resolver?") | sem estrela, nota ou orçamento prometido |
+| F08 Guia | leitura editorial com sumário | verbetes curtos com busca | parágrafo nunca vira cartão |
+| F09 Conversas | caixa cronológica, conversa à parte no celular | lista e conversa lado a lado no computador | o modelo do celular não muda |
+| F10 Você | seções de linhas com ações explícitas | resumo pessoal e atalhos para as tarefas | sem métrica, mascote ou selo de prestígio |
+
+## 5. Assinatura: o que só o Bivaque tem
+
+**O Início resolve a vida prática** (decisão do dono, 11/11/2026). Quem é transferido precisa montar a
+casa, achar serviço e moradia antes de querer conversar. Por isso o Início abre pela busca ("Do que você
+precisa em {cidade}?") e por atalhos de necessidade, e põe o que é comercial e útil antes das perguntas:
+desapegos de quem está saindo, negócios indicados por membros, moradia e pedidos de indicação. O lado
+comercial é alimentado pela comunidade: cada negócio aparece com a frase de quem indicou, e uma pergunta
+que pede indicação vira oportunidade de outro membro ajudar. Sem a comunidade, o Bivaque seria
+classificado. A composição exata se decide no laboratório (§16, candidato C).
+
+Três ideias do produto aparecem como desenho, não só como filtro. Uma tela que pode usar uma delas e não
+usa está genérica.
+
+- **O momento da pessoa** (chegando, morando, saindo). O Início e a Comunidade mudam de ordem e de
+  convite conforme o momento. Quem chega vê perguntas de quem chegou antes e o próximo encontro; quem
+  sai vê desapego, despedida e a cidade de destino.
+- **A distância a partir da sua origem.** Anúncio, negócio e encontro mostram "a 1,2 km de você" como
+  fato de primeira linha. A origem é privada: aparece só para a própria pessoa e nunca vira ponto no
+  mapa de outro membro.
+- **A data de transferência.** Onde houver prazo (retirada, despedida, chegada), a data organiza a
+  tela: "sai em 12 dias" pesa mais que a data de publicação.
+
+**Tela-assinatura.** Quatro telas carregam a cara do app: Início, Comunidade, Mercado e Você. Para
+essas, e só para essas, o lote produz dois candidatos com disposição de fato diferente (não variação de
+cor) e os submete ao `experiment-judge` às cegas, pela skill `visual-system-experiment`. As demais telas
+seguem a ficha e uma revisão.
+
+## 6. Primeira dobra
+
+Medida em 375 × 812, tema claro, com dados de demonstração críveis, sem rolar.
+
+1. A pessoa sabe onde está sem ler um título grande: a barra e o conteúdo bastam.
+2. A ação principal está alcançável pelo polegar.
+3. O conteúdo real cumpre o mínimo do tipo (coluna "Primeira dobra" da §4).
+4. Barra do topo, título, busca e filtros somam no máximo 35% da altura.
+5. Nada de ilustração, saudação ou explicação acima do primeiro conteúdo numa tela que a pessoa abre
+   todo dia. Ilustração de cena fica na porta, nas boas-vindas e nos vazios.
+
+Em 320 px a tela pode perder um item, nunca a ação. Os números 3 e 4 são o ponto de partida: mude com
+captura que mostre a tela melhor, e registre no cartão.
+
+## 7. Cidade nova e dados difíceis
+
+No lançamento, a maior parte das cidades terá pouco conteúdo. Vazio não é exceção: é a primeira tela de
+muita gente.
+
+**Três faixas, três desenhos** (por superfície, a partir da contagem que o servidor devolve):
+
+| Faixa | Itens | A tela |
+|---|---|---|
+| Vazia | 0 | cena ilustrada pequena, uma frase, **uma** ação que cria o primeiro item, e conteúdo que não depende da cidade (guia, grupos nacionais por momento) logo abaixo |
+| Rala | 1 a 5 | os itens em tamanho normal, sem grade esburacada nem "ver todos"; abaixo, um convite a contribuir em linha plana, não um banner |
+| Viva | 6 ou mais | a composição normal |
+
+- Nunca preencha com conteúdo inventado, contagem falsa ou "em alta" sem volume.
+- Seção sem item some inteira. Título de seção sobre o vazio é defeito.
+- Quem cria o primeiro item recebe um retorno à altura (§9).
+
+**Dados difíceis.** Toda prévia e todo teste visual incluem, na mesma tela: título de 120 caracteres;
+nome de 40; item sem foto; foto escura e foto em pé; preço de 7 dígitos e "grátis"; bairro de nome
+longo; texto com emoji e sem pontuação; um item com todos os campos opcionais vazios. Texto corta com
+reticências em linha definida; nada transborda nem empurra a ação para fora.
+
+## 8. Movimento e comportamento nativo
+
+Movimento explica de onde algo veio e para onde foi. Se não explica, não entra.
+
+**Estado em 11/11/2026.** A biblioteca já tem toque (encolhe 3%), folha que sobe e arrasta, aviso com
+Desfazer, esqueleto e movimento reduzido. Transição entre telas, gesto de voltar, elemento
+compartilhado e restauração de rolagem **ainda não existem**: são o card `DS-MOVIMENTO`. Até ele
+fechar, tela nova usa só o que existe e não inventa animação local.
+
+**Vocabulário** (tokens em `pecas.css`; os dois primeiros existem, os demais nascem no card):
+
+| Token | Valor | Uso |
+|---|---|---|
+| `--pc-toque` | 120 ms | resposta ao dedo: encolher, ligar, marcar |
+| `--pc-entrada` | 280 ms | folha, aviso, conteúdo que entra |
+| `--pc-saida` | 200 ms | o que sai é mais rápido do que o que entra |
+| `--pc-tela` | 320 ms | troca de tela e elemento compartilhado |
+| curva | `cubic-bezier(0.2, 0, 0, 1)` | uma só, para tudo; sem quique em interface de trabalho |
+
+**Padrões**
+
+| Situação | Movimento |
+|---|---|
+| Avançar na hierarquia (lista → detalhe) | a tela nova entra da direita; a anterior recua e escurece um pouco |
+| Voltar | o inverso, e o gesto de arrastar da borda acompanha o dedo |
+| Trocar de aba da barra | troca seca com esmaecer curto; aba não desliza |
+| Abrir item com foto (anúncio, evento, capa de grupo) | a foto é elemento compartilhado: cresce da miniatura até o topo do detalhe |
+| Tarefa curta sobre a tela | folha de baixo; arrastar fecha; voltar fecha a folha antes da tela |
+| Lista que recebe item | o item abre espaço e entra; nunca a lista inteira pisca |
+| Lista que perde item | o item recolhe; aviso com Desfazer |
+| Atualizar | puxar para baixo no topo de feed e caixa |
+| Carregar | esqueleto com a forma do que vem; sem girador no meio da tela |
+
+**Regras**
+
+- Só `transform` e `opacity`. Nada que mude medida de caixa durante a animação.
+- Nada se move sozinho em laço, fora o esqueleto e o girador dentro do botão.
+- Sem entrada em cascata de itens de lista, sem paralaxe, sem animação ao rolar.
+- Voltar e avançar restauram rolagem, filtros, aba ativa e foco de cada entrada do histórico.
+- Com movimento reduzido: durações zeram, deslize vira esmaecer, elemento compartilhado vira corte.
+- Retorno tátil só no app de loja (Capacitor) e só em quatro momentos: ação principal concluída, ligar
+  ou desligar, erro de envio, fim do puxar para atualizar.
+
+**Técnica.** O movimento usa `motion` (sucessor do `framer-motion`), a mesma biblioteca dos melhores
+blocos da 21st, com `MotionConfig reducedMotion="user"` na casca para respeitar o movimento reduzido.
+Troca de tela e elemento compartilhado usam `layoutId` do `motion` ou a View Transitions API ligada no
+roteador; folha com arrastar usa `vaul`; trilhos usam `embla-carousel`. As durações e a curva da
+tabela acima configuram essas bibliotecas; não se escreve animação à mão quando uma delas resolve.
+
+## 9. Momentos de recompensa
+
+Quatro momentos recebem cuidado a mais. Fora deles, o app é quieto.
+
+| Momento | O que acontece |
+|---|---|
+| Vínculo confirmado | a cena `vinculo` com um movimento único e curto; em seguida o conteúdo da cidade, não um "Continuar" vazio |
+| Primeira publicação, pergunta ou anúncio | o item aparece no topo da lista, já no lugar; aviso com Desfazer; na cidade vazia, uma linha "Você abriu a conversa em {cidade}" |
+| Pergunta resolvida | a marca de feito (`--success`) desenha uma vez; quem respondeu é avisado |
+| Entrou num grupo | o botão vira "Entrou" no lugar; o grupo sobe para "Seus grupos"; boas-vindas com um primeiro passo |
+
+Sem confete, sem som, sem contagem de sequência, sem medalha.
+
+## 10. Acabamento percebido
+
+- Ação que dá para desfazer grava na hora e mostra o resultado antes do servidor responder; se falhar,
+  volta ao estado anterior e diz como tentar de novo. Escrita nunca é repetida sozinha.
+- Imagem reserva o espaço pela proporção antes de carregar; nada pula. Foto de membro entra com
+  esmaecer; sem foto, o selo ou as iniciais.
+- O teclado nunca cobre o campo ativo nem a ação. A barra fixa sobe com ele.
+- Áreas seguras do aparelho respeitadas em cima e embaixo.
+- Texto do sistema em 200% não quebra a tela.
+- Foco visível só por teclado (`:focus-visible`); foco programático ao trocar de tela não desenha
+  contorno no título.
+- Rascunho de tudo que leva mais de uma etapa.
+
+## 11. Estados
+
+Toda superfície assíncrona distingue cinco estados, e cada um tem desenho próprio: carregando
+(esqueleto), vazio verdadeiro (§7), negado (por que e o que fazer), erro recuperável (tentar de novo no
+lugar) e com conteúdo. Consulta que falhou e aparece como lista vazia é bug.
+
+## 12. Tablet e computador
+
+- 768: a composição do celular com mais respiro lateral, ou duas colunas quando o tipo é Comparar.
+- 1440: a tela usa o espaço para **contexto**, nunca para esticar. Lista e detalhe lado a lado em
+  Comparar e Conversar; sumário ou painel de fases em Fazer e Aprender; coluna de leitura limitada em
+  Acompanhar, com o que é secundário à direita.
+- A coluna do celular solta no meio do monitor é defeito.
+- Passar o ponteiro revela ações secundárias; nenhuma ação existe só no ponteiro.
+
+## 13. Prova e aceite
+
+Uma tela fecha quando o cartão tem tudo isto, com captura ou saída de comando, não com afirmação:
+
+1. Ficha da §2 preenchida, com os links do Mobbin.
+2. Capturas em 375, 768 e 1440, claro e escuro, nas três faixas da §7 e com os dados difíceis.
+3. Primeira dobra conferida contra a §6, com os números medidos.
+4. Percurso por robô com a interação principal e a falha principal: sem erro de console, sem
+   transbordo horizontal, voltar restaura a tela anterior.
+5. Teclado e leitor de tela no caminho principal; contraste AA; alvos de 44 px; movimento reduzido.
+6. Revisão às cegas por outro modelo contra as referências, pela régua do HANDOFF: sem "Pior" em
+   interface e clareza. Cada dimensão recebe melhor, igual, pior ou **não verificado**, apontando a
+   captura. Não verificado não é aprovado, e não se inventa nota numérica.
+7. **Fidelidade de porte.** Se a tela substitui uma aprovada (prévia, protótipo ou tela antiga), uma
+   tabela no cartão lista cada elemento e interação da aprovada e o destino: mantido, mudado com
+   motivo, ou retirado com motivo. Elemento que some sem linha na tabela reprova o lote.
+
+O revisor recusa a tela quando encontra qualquer item desta lista observável:
+
+- duas telas vizinhas com a mesma anatomia e trabalhos diferentes;
+- cartão em volta de item de lista, ou cartão dentro de cartão;
+- mais de uma ação principal visível, ou a ação principal fora do lugar habitual;
+- parágrafo de apoio com mais de uma linha, ou texto que descreve o sistema;
+- seção com título e sem conteúdo; contagem ou selo inventado;
+- ilustração ou saudação acima do conteúdo numa tela de uso diário;
+- cor usada para enfeitar rótulo; ícone que parece ação e não é;
+- animação que não está na §8;
+- peça redesenhada no CSS da tela;
+- três ou mais telas de trabalhos diferentes com a mesma sequência de blocos;
+- sombra, desfoque, gradiente ou serifa usados para disfarçar hierarquia fraca;
+- gesto sem alternativa por toque ou teclado;
+- capturas só do estado feliz, com texto perfeito e todas as fotos presentes.
+
+## 14. Referências: de quem aprender e por quê
+
+Referência boa atende a dois critérios ao mesmo tempo: o app resolve **o mesmo trabalho** que a tela do
+Bivaque, e é reconhecido por fazê-lo bem. Prêmio sem parentesco de trabalho não serve (a maioria dos
+premiados da Apple é jogo, editor ou utilitário). Parentesco sem qualidade também não.
+
+**Quem entra, e com que papel** (revisto em 11/11/2026)
+
+| App | Por que tem a ver com o Bivaque | Credencial | Papel |
+|---|---|---|---|
+| Nextdoor | mesmo produto: comunidade local verificada, grupos, desapegos, encontros | líder da categoria; não é premiado por design | régua de função e de fluxo; **não** é teto de acabamento |
+| Partiful | encontros entre pessoas que se conhecem pouco, presença em dois toques | Melhor App de 2024 no Google Play; finalista de Impacto Cultural na App Store (2024) | acabamento e calor em Eventos e nos momentos de recompensa |
+| Airbnb | decidir sobre um lugar que não se conhece, com mapa e fatos; é o caso de quem é transferido | referência de mercado em detalhe e mapa; prêmio não verificado aqui | Decidir e Comparar com mapa (moradia, negócios) |
+| Vinted | compra e venda entre pessoas, com reputação e conversa a partir do item | grande mercado de segunda mão; prêmio não verificado aqui | Mercado: detalhe, vendedor, "falar com quem vende" |
+| Taobao | comparação densa de itens | Apple Design Award 2025, categoria Interação | só a interação de comparar e filtrar; **não** copiar a densidade promocional |
+| WhatsApp | é a conversa que o brasileiro já sabe usar | convenção dominante no Brasil | Conversar: não reinventar bolha, campo e anexos |
+
+Apps que apareceram na primeira busca e **não** são referência do Bivaque: LinkedIn, Reddit, TradingView,
+Facebook, TikTok, Wolt, talabat, Swiggy, Discord, Snapchat. Use um deles só quando a ficha da tela
+explicar qual interação específica ele resolve melhor do que os seis acima.
+
+Lacuna conhecida: o Mobbin não tem Nubank, e não foram conferidos iFood, QuintoAndar, OLX e Mercado
+Livre. Quando a tela depender de costume brasileiro (endereço, CEP, Pix, moradia), a ficha registra a
+referência por captura própria do app real, com data.
+
+**Telas de partida, por tipo**
+
+| Tipo | Referência | O que aproveitar |
+|---|---|---|
+| Acompanhar | [Nextdoor, feed](https://mobbin.com/screens/ed9fc5ab-889d-45e3-81bf-015ad6b46c69) · [topo do Início](https://mobbin.com/screens/ed239926-f476-46ca-87ec-e897ff20028b) | publicação inteira na dobra; cidade na barra; trilho com "ver mais" |
+| Comparar | [Nextdoor, For Sale](https://mobbin.com/screens/e20e764b-bd26-4adb-b8d9-e7ecb2ecb0ed) · [Vinted, vitrine](https://mobbin.com/screens/e5482041-520e-4c45-a7a2-048712073dd5) · [Airbnb, lista sobre mapa](https://mobbin.com/screens/fca1741d-8901-4f82-8ef8-1d3fb0d45589) · [Nextdoor, grupos](https://mobbin.com/screens/d14c2272-ea7e-43e9-a46d-b8269e9b8163) | grade de 2 colunas com preço e distância; folha de resultados que sobe sobre o mapa; linha densa com ação à direita |
+| Decidir | [Vinted, item](https://mobbin.com/screens/f15927fc-596e-4d40-8f4f-cd3b8f97df2d) · [Airbnb, detalhe](https://mobbin.com/screens/df3523e0-6209-461c-af3a-8b2ee4cbb8ba) · [Airbnb, lugar no mapa](https://mobbin.com/screens/fbc85668-e52a-4391-8c70-f64b7161c5ad) · [Partiful, evento](https://mobbin.com/screens/9b48b0a7-b832-48c5-8284-24d435c12c6a) | foto, vendedor e "falar com quem vende" na dobra; fatos e ação presos no rodapé; tempo de deslocamento a partir de casa; presença em dois toques |
+| Fazer | [Nextdoor, novo anúncio](https://mobbin.com/screens/dcf5ee8f-c4ae-42df-9dd8-cb6cf6960eec) · [Partiful, criar evento](https://mobbin.com/screens/f67fc557-6c59-4816-8e64-0c6ad11342c7) | foto primeiro; rótulo dentro do campo; local aproximado no mapa; opcionais como chips "+" em vez de campos vazios |
+| Conversar | [WhatsApp, conversa](https://mobbin.com/screens/ff7ec209-6c71-4eef-9df6-c5667fd27a49) · [Nextdoor, publicação e comentários](https://mobbin.com/screens/f86feba8-42ec-4fd4-8ace-fcad7d7d52f6) · [Partiful, comentar](https://mobbin.com/screens/fdb62215-e72b-49e1-b827-7f448d84bad6) | bolhas, campo e anexos como a pessoa já conhece; campo de comentar fixo que sobe com o teclado |
+| Gerir | [Nextdoor, perfil](https://mobbin.com/screens/9fa1c528-5530-4f11-bc24-0244ea7279fe) · [Nextdoor, editar perfil](https://mobbin.com/screens/f52c2de2-1124-4a8e-8461-c777d7487d12) | seções com "ver tudo" e linhas planas; aviso de salvo no rodapé |
+| Buscar | [Nextdoor, resultados](https://mobbin.com/screens/db95e37d-f921-4133-a0eb-5abf3ed1823f) | resultados agrupados por tipo, com abas |
+| Cidade nova | [Nextdoor, boas-vindas do grupo](https://mobbin.com/screens/1d6df29b-09ab-4f98-b492-744947320e26) · [Partiful, confirmação em folha](https://mobbin.com/screens/f22d5d27-fdd9-48fd-85cc-dc356e028269) | primeiros passos contados no lugar do vazio; folha curta com uma ação |
+
+Armadilhas da busca no Mobbin: [HANDOFF.md](HANDOFF.md) §3.5. Busque pelo nome do app e do trabalho;
+busca genérica devolve apps sem parentesco.
+
+**Blocos da 21st.dev**
+
+O acervo é grande e desigual: há muita peça de vitrine (carrossel 3D, brilho, vidro) feita para página
+de marketing, e ela não entra no app. Em 11/11/2026 o código de 19 candidatos foi lido no registro da
+21st, com a conta do dono. Pela regra da §2, o componente de biblioteca vence a peça feita à mão: entra
+com o código do autor e recebe só a identidade do Bivaque. Instalados até agora: Credenza (com o Drawer do shadcn sobre `vaul`) e Command Menu 04, usados nas prévias.
+
+**Adotar** (um por necessidade; o escolhido é o mais acessível e o mais próximo do shadcn/Radix):
+
+| Necessidade | Bloco | Base | O que se aplica por cima |
+|---|---|---|---|
+| Busca do Início e do F02 | [Command Menu 04 — ephraimduncan](https://21st.dev/@ephraimduncan/components/command-menu-04) | `cmdk` (já no app) | ícones Material; 12 cores fixas viram tokens |
+| Trilhos horizontais | [Snap Carousel — ddoemonn](https://21st.dev/@ddoemonn/components/snap-carousel) | `motion` | 12 cores fixas viram tokens |
+| Galeria de fotos do anúncio e do imóvel | [Thumbnail image viewer — ibrandify](https://21st.dev/@ibrandify/components/thumbnail-image-viewer) | sem dependência | 8 cores fixas viram tokens |
+| Folha no celular, diálogo no computador | [Credenza — redpangilinan](https://21st.dev/@redpangilinan/components/credenza) | `vaul` + Radix Dialog | substitui a `Folha` própria; ícones Material |
+| Respostas e comentários | [Comment Thread — rmahammad](https://21st.dev/@rmahammad/components/comment-thread) | `motion` | tirar reações e menções fora do escopo; manter pendente, falhou e tentar de novo |
+| Filtros no computador | [Filter Token Bar — laziekiki](https://21st.dev/@laziekiki/components/filter-token-bar) | `motion` | no celular, os filtros abrem na folha |
+| Agenda de encontros | [Calendar — wensity](https://21st.dev/@wensity/components/calendar) | `motion` | ícones Material; sem modo de agendamento |
+| Primeiros passos da cidade nova | [Onboarding Checklist Drawer — ShadcnSpace](https://21st.dev/@shadcnspace/components/onboarding-checklist-drawer) | shadcn Drawer | ícones Material |
+| Vazio com ação | [Empty — shadcn](https://21st.dev/@shadcn/components/empty/outline) | shadcn | ilustração da família do Bivaque; substitui o `Estado` |
+| Linha de lista | [Item — shadcn](https://21st.dev/@shadcn/components/item/header) | shadcn | substitui a `Linha` |
+| Campo de mensagem | [Textarea with Send Button — coss](https://21st.dev/@coss.com/components/p-textarea-15) | shadcn | substitui o `Compositor` |
+| Esqueleto de conversa | [Chat Thread Skeleton — Cnippet](https://21st.dev/@cnippet-dev/components/v-skeleton-9) | shadcn Skeleton | nenhum ajuste de estrutura |
+| Cartão de indicação | [Testimonial Card — preetsuthar17](https://21st.dev/@preetsuthar17/components/testimonial-card) | Radix Avatar | tirar as estrelas: a indicação é a frase de um membro, não nota |
+
+**Não adotados**, porque outro bloco da mesma necessidade é melhor:
+
+- [Carousel — shadcn](https://21st.dev/@shadcn/components/carousel) (`embla`): o Snap Carousel tem mais acessibilidade e movimento reduzido. Fica como alternativa se o trilho precisar de virtualização.
+- [Drawer — coss](https://21st.dev/@coss.com/components/drawer): usa Base UI; o Credenza resolve o mesmo sobre Radix, que o app já usa.
+- [Carousel Cards — kokonutd](https://21st.dev/@kokonutd/components/carousel-cards), [Product Card — ShadcnStore](https://21st.dev/@shadcnstore/components/product-card-1), [Product Card — deltacomponents](https://21st.dev/@deltacomponents/components/product-card/product-card-grid-demo) e [Hotel Card — uniquesonu](https://21st.dev/@uniquesonu/components/hotel-card-ui-component): dependem de `next` ou `next-themes`, têm nota em estrelas e quase nenhuma acessibilidade. O cartão de anúncio e de imóvel continua buscado na 21st.
+- Pelo catálogo: carrossel com rolagem automática, carrosséis 3D e com zoom, globo 3D, agenda de consulta comercial e respostas aninhadas com voto.
+
+Ao adotar: crédito com nome, autor e link no topo do arquivo; `next/link` e `next-themes` saem porque o app
+não é Next; ícones de outra família viram Material Symbols; estrelas e notas saem sempre.
+
+Antes de instalar um bloco: o problema aparece numa captura; há uma base para comparar; o ganho é
+observável (o próximo item à vista, o filtro que volta, o erro que se recupera), não "mais bonito";
+dependências, tamanho, acessibilidade e os dois temas foram conferidos no código. O tema da 21st nunca
+substitui a paleta.
+
+## 15. O que é regra e o que é hipótese
+
+- **Regra:** §1, §3, §8 (regras e movimento reduzido), §11, §13 e tudo em IDENTIDADE-DAS-PECAS.
+- **Ponto de partida, muda com evidência no cartão:** formas da §4, números da §6, faixas da §7,
+  durações da §8.
+- **Do dono:** trocar família de fonte, conjunto de ícones ou paleta; qualquer coisa fora do
+  `LANCAMENTO.md`.
+
+Regra nova entra aqui só quando um defeito real apareceu duas vezes. Este documento não deve crescer:
+o que vira peça sai do texto e vai para a biblioteca.
+
+## 16. Laboratório de composição
+
+Mudança de arquitetura numa tela se compara antes de chegar ao app, com as mesmas peças, os mesmos
+dados e as mesmas ações.
+
+- **Onde:** `apps/app/src/previa-vnext/`, aberto em `/app/previa/vnext` só no servidor de
+  desenvolvimento. O roteador e o pacote de produção não registram a prévia.
+- **F02 Início e busca:** `?v=a` (explorar), `?v=b` (buscar), `?v=c` (resolver a vida prática, a direção
+  do dono) e `?v=comparar` (as três lado a lado no computador). Oito itens de demonstração, marcados como
+  tal; estados completo, escasso, vazio, carregando e erro.
+- **Prova:** `apps/app/tests/previa-vnext.test.ts` (dados e isolamento) e
+  `apps/app/tests/lab/vnext.spec.ts` (interação e capturas em seis larguras e dois temas, pelo
+  `playwright.vnext.config.ts` e pelo workflow `design-vnext-visual.yml`).
+- **Falta para promover uma variante:** capturas da tela real como base, juízo cego do
+  `experiment-judge`, desapegos nos dados de demonstração (o laboratório ainda não tem esse tipo) e a
+  decisão registrada no card.
+- **Início comercial em prévia:** `src/previa-inicio/` em `/app/previa/inicio`, com fotos de
+  demonstração; serve de rascunho, e o que vale vai para `src/telas/Inicio.tsx`.
+- **Prévia publicada:** `apps/app/vercel.json` compila só o laboratório (`vite.vnext.config.ts`,
+  saída `dist-vnext`) para um projeto da Vercel com raiz em `apps/app`, com deploy da main
+  desligado como no resto do repositório. Publicar continua sendo ato do dono.
+- **Próximos laboratórios:** F04 Comunidade e F06 Mercado, com as opções da §4.
+
+Não se promove uma variante por diferença só cosmética, por perda de função ou de identidade, ou com
+evidência incompleta.

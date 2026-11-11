@@ -173,7 +173,7 @@ try {
         )
         assert(publicacaoApp, "Publicação da referência sem equivalente no app")
         const titulosNormais = {
-          inicio: "Sua rede em Manaus",
+          inicio: "O que você precisa em Manaus?",
           busca: "Buscar em Manaus",
           mercado: "Desapegos",
           anuncio: fixture.items.find((p) => p.id === "i1").title,

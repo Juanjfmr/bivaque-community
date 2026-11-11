@@ -5,12 +5,18 @@ Served at `/app` beside the Next server. Root rules in [AGENTS.md](../../AGENTS.
 
 ## Visual system
 
-- One piece library: `src/pecas/` (`pecas.tsx`, `pecas.css`), shown in the DEV gallery
-  `/app/previa/pecas`. Screens compose pieces; a screen's CSS only lays them out and never redefines
-  a piece. A missing piece is added to the library and the gallery, not drawn locally.
+- Library components first (owner, 11/11/2026): use tested components from shadcn, Radix, `cmdk`,
+  `vaul`, `embla-carousel`, `motion` and 21st.dev blocks built on them, installed with the author's
+  code; apply only the Bivaque identity (tokens, fonts, radius, Material icons). Hand-written pieces
+  exist only where no library solves the need. Adopted components live in `src/pecas/` and the DEV
+  gallery `/app/previa/pecas`; a screen's CSS only lays them out.
 - Rules of the pieces: [IDENTIDADE-DAS-PECAS.md](../../docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md).
-  Screen pattern: [PADRAO-DE-TELA.md](../../docs/agents/regua-nextdoor/PADRAO-DE-TELA.md). Bar and
-  method: [regua-nextdoor/HANDOFF.md](../../docs/agents/regua-nextdoor/HANDOFF.md).
+  Screen contract, read before any new or revised screen (composition by kind of work, first fold,
+  new city, motion, acceptance, composition lab):
+  [DESIGN.md](../../docs/agents/regua-nextdoor/DESIGN.md). Bar and method:
+  [regua-nextdoor/HANDOFF.md](../../docs/agents/regua-nextdoor/HANDOFF.md). An approved composition
+  changes only after a comparison in the lab (`src/previa-vnext/`); the contract does not authorize an
+  automatic production redesign.
 - Every rebuilt screen starts from Nextdoor (or another mature app) screens on Mobbin, cited by link
   in the card. Illustrations come from the family in `public/ilustracoes/`; no AI photos of people.
 - Both themes follow the system. Material Symbols are self-hosted, only the glyphs used, decorative

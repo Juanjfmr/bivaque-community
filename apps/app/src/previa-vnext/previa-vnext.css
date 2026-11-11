@@ -1,0 +1,451 @@
+/*
+ * F02 vNext — experimento comparativo, somente ambiente DEV.
+ * Estas regras dispõem conteúdo e regiões; Botao, Chip, CampoDeBusca, Linha,
+ * Cartao, Selo e Folha não são redesenhados aqui: vêm de src/pecas/.
+ * Cores, escala e raios sempre via tokens ativos da biblioteca.
+ */
+
+.pv-laboratorio {
+  width: min(100%, 1256px);
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
+}
+
+.pv-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--pc-linha);
+}
+
+.pv-controles-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.pv-opcoes {
+  min-width: 152px;
+}
+
+.pv-opcoes > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--pc-fs-apoio);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pv-opcoes[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.pv-opcoes .pc-apoio {
+  max-width: 28ch;
+}
+
+.pv-escolhas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.pv-cenario {
+  width: min(100%, 248px);
+}
+
+.pv-um,
+.pv-comparacao {
+  margin-top: 22px;
+}
+
+.pv-um {
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.pv-comparacao {
+  display: grid;
+  gap: 20px;
+}
+
+.pv-screen {
+  container-type: inline-size;
+  min-width: 0;
+  padding: 20px 16px 28px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-raio-cartao);
+  background: var(--pc-fundo);
+}
+
+.pv-screen :where(h2, h3, h4) {
+  max-width: 36ch;
+}
+
+.pv-a {
+  padding: 8px 0 28px;
+  border: 0;
+}
+
+.pv-a-abertura {
+  display: grid;
+  align-items: start;
+  gap: 22px;
+  padding: 8px 0 22px;
+  border-bottom: 1px solid var(--pc-linha);
+}
+
+.pv-a-introducao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pv-a-editoria {
+  margin-top: 12px;
+}
+
+.pv-a-titulo-destaque {
+  max-width: 25ch;
+  font-size: var(--pc-fs-titulo);
+  line-height: 1.24;
+  letter-spacing: -0.04em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.pv-a-resumo-destaque {
+  max-width: 46ch;
+}
+
+.pv-a-introducao .pc-botao {
+  margin-left: -12px;
+}
+
+.pv-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.pv-contagem {
+  font-size: var(--pc-fs-miudo);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.pv-a-contexto {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--pc-linha);
+}
+
+.pv-a-contexto .pc-busca {
+  width: 100%;
+}
+
+.pv-a-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 28px;
+}
+
+.pv-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pv-secao-cabeca {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pc-linha);
+}
+
+.pv-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(222px, min(80%, 290px));
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: 2px;
+  scroll-snap-type: x proximity;
+  padding: 2px 2px 14px;
+}
+
+.pv-rail > * {
+  scroll-snap-align: start;
+}
+
+.pv-rail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 218px;
+}
+
+.pv-rail-card .pc-botao {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.pv-card-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pv-card-resumo {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.pv-deslize {
+  margin-top: -6px;
+}
+
+.pv-b {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.pv-b-cabeca {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 680px;
+}
+
+.pv-b-cabeca .pc-busca {
+  margin-top: 12px;
+}
+
+.pv-b-corpo {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.pv-b-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pv-b-filtro-titulo {
+  padding-top: 2px;
+}
+
+.pv-filtros-coluna {
+  justify-content: flex-start;
+}
+
+.pv-b-resultados {
+  min-width: 0;
+}
+
+.pv-b-resultados > .pc-lista {
+  margin-top: 8px;
+}
+
+.pv-lista {
+  min-width: 0;
+}
+
+.pv-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 0;
+  max-width: 520px;
+}
+
+.pv-vazio > .bv-icone {
+  font-size: 24px;
+}
+
+.pv-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, 560px);
+  margin: 24px auto;
+  padding: 24px;
+  border: 1px solid var(--pc-linha);
+  border-radius: var(--pc-raio-cartao);
+}
+
+.pv-feedback > .pc-botao {
+  align-self: flex-start;
+}
+
+.pv-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pv-detalhe > .pc-botao {
+  align-self: stretch;
+}
+
+@container (min-width: 680px) {
+  .pv-a-abertura {
+    grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.8fr);
+  }
+
+  .pv-a-contexto {
+    padding: 6px 0 0 24px;
+    border-top: 0;
+    border-left: 1px solid var(--pc-linha);
+  }
+
+  .pv-b-corpo {
+    grid-template-columns: minmax(184px, 0.65fr) minmax(0, 2fr);
+    gap: 32px;
+  }
+
+  .pv-filtros-coluna {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pv-filtros-coluna .pc-chip {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 768px) {
+  .pv-laboratorio {
+    padding-inline: 32px;
+  }
+
+  .pv-screen {
+    padding: 30px;
+  }
+}
+
+.pv-c-cabeca {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pv-c-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--pc-pilula);
+  background: var(--pc-cartao);
+  box-shadow: inset 0 0 0 1px var(--pc-linha);
+  color: var(--pc-suave);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--pc-toque);
+}
+
+.pv-c-busca:active {
+  transform: scale(0.985);
+}
+
+.pv-c-atalhos {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 4px;
+  border: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pv-c-atalho {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 76px;
+  min-height: 44px;
+  padding: 4px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  color: var(--pc-tinta);
+  font: inherit;
+  font-size: var(--pc-fs-miudo);
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform var(--pc-toque);
+}
+
+.pv-c-atalho:active {
+  transform: scale(0.97);
+}
+
+.pv-c-atalho-marca {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--pc-tom);
+}
+
+.pv-c-atalho[aria-pressed="true"] .pv-c-atalho-marca {
+  background: var(--pc-tinta);
+  color: var(--pc-fundo);
+}
+
+.pv-c-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 24px;
+}
+
+@media (min-width: 1120px) {
+  .pv-comparacao {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-rail {
+    scroll-behavior: auto;
+  }
+}

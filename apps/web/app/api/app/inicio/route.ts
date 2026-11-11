@@ -4,6 +4,7 @@ import type { Database } from "supabase/database.generated"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
 import { contarMembrosAprovados } from "../../../../lib/search/contagem-de-membros"
 import { cidadeDaSessao } from "../eventos/_comum"
+import { assinar, capaDoAnuncio, capasDosNegocios } from "./_fotos"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -83,7 +84,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .range(inicio, fim),
       client
         .from("listings")
-        .select("id,title,kind,price_cents,neighborhood")
+        .select(
+          "id,title,kind,price_cents,neighborhood,available_until,listing_photos(path,position)",
+        )
         .eq("locality_id", cidade.id)
         .eq("status", "active")
         .order("created_at", { ascending: false })
@@ -97,6 +100,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       throw new Error("leitura indisponível")
     }
     const listas = [perguntas.data ?? [], eventos.data ?? [], anuncios.data ?? []] as const
+    const listaDeNegocios = (negocios.data ?? []).slice(0, TAMANHO)
+    // Fotos por URL assinada curta (SPA ADR §5): nunca o caminho cru do bucket.
+    const anunciosDaPagina = listas[2].slice(0, TAMANHO)
+    const capaDe = new Map(
+      anunciosDaPagina.map((linha) => [linha.id, capaDoAnuncio(linha.listing_photos)] as const),
+    )
+    const capasDeNegocio = await capasDosNegocios(
+      client,
+      listaDeNegocios.map((linha) => linha.id),
+    )
+    const [fotosDeAnuncio, fotosDeNegocio] = await Promise.all([
+      assinar(
+        client,
+        "listing-photos",
+        [...capaDe.values()].filter((caminho): caminho is string => caminho !== null),
+      ),
+      assinar(client, "provider-photos", [...capasDeNegocio.values()]),
+    ])
+    const fotoDoAnuncio = (id: string) => {
+      const caminho = capaDe.get(id)
+      return caminho == null ? null : (fotosDeAnuncio.get(caminho) ?? null)
+    }
+    const fotoDoNegocio = (id: string) => {
+      const caminho = capasDeNegocio.get(id)
+      return caminho === undefined ? null : (fotosDeNegocio.get(caminho) ?? null)
+    }
     return responder(
       request,
       {
@@ -109,11 +138,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           group_name: linha.group_name,
         })),
         eventos: listas[1].slice(0, TAMANHO),
-        anuncios: listas[2].slice(0, TAMANHO),
-        negocios: (negocios.data ?? []).slice(0, TAMANHO).map((linha) => ({
+        anuncios: anunciosDaPagina.map((linha) => ({
+          id: linha.id,
+          title: linha.title,
+          kind: linha.kind,
+          price_cents: linha.price_cents,
+          neighborhood: linha.neighborhood,
+          available_until: linha.available_until,
+          foto: fotoDoAnuncio(linha.id),
+        })),
+        negocios: listaDeNegocios.map((linha) => ({
           id: linha.id,
           display_name: linha.display_name,
           category: linha.category,
+          foto: fotoDoNegocio(linha.id),
         })),
         grupos,
         proximo: listas.some((lista) => lista.length > TAMANHO) ? pagina + 1 : null,

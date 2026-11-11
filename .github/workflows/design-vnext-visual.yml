@@ -1,0 +1,54 @@
+name: Bivaque Design vNext Visual Lab
+
+on:
+  pull_request:
+    paths:
+      - 'apps/app/src/previa-vnext/**'
+      - 'apps/app/playwright.vnext.config.ts'
+      - 'apps/app/tests/lab/**'
+      - '.github/workflows/design-vnext-visual.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vnext-visual:
+    name: F02 A/B / six sizes / two themes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Capture and verify both variants
+        run: pnpm --filter @bivaque/app exec playwright test --config playwright.vnext.config.ts --trace=retain-on-failure
+
+      - name: Upload comparative screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bivaque-vnext-f02-ab-screenshots
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            apps/app/artifacts/visual-vnext/
+            apps/app/test-results-vnext/

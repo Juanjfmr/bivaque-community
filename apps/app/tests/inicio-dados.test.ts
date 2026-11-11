@@ -30,6 +30,7 @@ describe("dados do início e busca", () => {
       id: "n",
       nome: "Eletricista",
       categoria: "casa_e_reformas",
+      foto: null,
     })
     expect(dados.grupos[0]).toEqual({ id: "g", nome: "Vizinhos", membros: 3 })
     expect(dados.eventos[0]?.local).toBe("Parque")
@@ -37,6 +38,37 @@ describe("dados do início e busca", () => {
       "/api/app/inicio",
       expect.objectContaining({ signal: controle.signal }),
     )
+  })
+  it("lê a foto assinada e o prazo de retirada, e recusa caminho cru do bucket", async () => {
+    const corpo = {
+      ...corpoDoInicio,
+      anuncios: [
+        {
+          id: "a",
+          title: "Berço",
+          kind: "item",
+          price_cents: 25000,
+          neighborhood: "Centro",
+          available_until: "2026-12-01",
+          foto: "https://storage.example.invalid/assinada.jpg?token=x",
+        },
+        { id: "b", title: "Casa", kind: "property", price_cents: null, foto: "anuncio/capa.jpg" },
+      ],
+      negocios: [
+        { id: "n", display_name: "Eletricista", category: "casa_e_reformas", foto: "javascript:x" },
+      ],
+    }
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(corpo))),
+    )
+    const dados = await lerInicio()
+    expect(dados.anuncios[0]).toMatchObject({
+      disponivelAte: "2026-12-01",
+      foto: "https://storage.example.invalid/assinada.jpg?token=x",
+    })
+    expect(dados.anuncios[1]?.foto).toBeNull()
+    expect(dados.negocios[0]?.foto).toBeNull()
   })
   it("codifica a consulta e mantém os cinco tipos", async () => {
     const fetch = vi.fn(

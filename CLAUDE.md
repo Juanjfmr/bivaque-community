@@ -14,3 +14,10 @@ Respond in Brazilian Portuguese.
   the same commit.
 - Do not ask the owner what the mandate already lets you decide. Report in one block at milestones:
   what is done and proven, what failed, what needs the owner's act.
+- **Stop asking for authorization at every step (owner, 11/11/2026, repeated).** Pick the
+  recommended path and carry it to the end: implement, test, commit, push, open PRs, merge them once
+  CI is green and the independent review and runtime proof required by `AGENTS.md` are done, and
+  close superseded PRs. Never end a turn with "can I proceed?", "shall I…?" or a
+  choice the mandate already covers. Ask only for the owner's acts (publishing, store, accounts,
+  keys and passwords, legal sign-off, ratification) or a real blocker you cannot route around, and
+  then say exactly what the owner must do.

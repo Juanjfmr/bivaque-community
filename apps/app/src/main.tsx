@@ -42,6 +42,17 @@ if (import.meta.env.DEV && caminho.startsWith(`${prefixo}f01`)) {
   void import("@/src/previa-grupos/PreviaGrupos").then(({ PreviaGrupos }) =>
     createRoot(elemento).render(<PreviaGrupos />),
   )
+} else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}vnext`)) {
+  // Experimentos F02 A/B: somente no servidor de desenvolvimento.
+  // Nunca entram na casca, no catálogo de rotas ou no bundle de produção.
+  void import("@/src/previa-vnext/PreviaVNext").then(({ PreviaVNext }) =>
+    createRoot(elemento).render(<PreviaVNext />),
+  )
+} else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}inicio`)) {
+  // Início comercial (11/11/2026): tela-assinatura, só no desenvolvimento.
+  void import("@/src/previa-inicio/PreviaInicio").then(({ PreviaInicio }) =>
+    createRoot(elemento).render(<PreviaInicio />),
+  )
 } else if (import.meta.env.DEV && caminho.startsWith(`${prefixo}pecas`)) {
   void import("@/src/pecas/GaleriaDePecas").then(({ GaleriaDePecas }) =>
     createRoot(elemento).render(<GaleriaDePecas />),

@@ -132,7 +132,7 @@ export function Comunidade() {
     const reais = (lista?.perguntas ?? []).map((pergunta) => ({
       id: pergunta.id,
       pergunta: pergunta.titulo,
-      autor: pergunta.autor === "" ? "Alguém da cidade" : pergunta.autor,
+      autor: pergunta.autor === "" ? null : pergunta.autor,
       propria: pergunta.propria,
       tópico: pergunta.assunto,
       cidade: cidadeDaLista,

@@ -7194,6 +7194,54 @@
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
       "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "DS-MOVIMENTO",
+      "title": "Movimento e comportamento nativo na casca e nas peças",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "DESIGN.md §8 a §10: o app ainda troca de tela sem transição, não restaura rolagem (roteador com scrollRestoration desligado) e não tem gesto de voltar nem elemento compartilhado. Este card constrói a camada uma vez, na casca e na biblioteca de peças, para todas as telas herdarem.",
+      "checklist": [
+        "Criar os tokens --pc-saida e --pc-tela em pecas.css e mostrar o vocabulário na galeria",
+        "Transição de avançar e voltar entre telas pela View Transitions API no roteador, com troca imediata onde não há suporte",
+        "Elemento compartilhado da miniatura ao detalhe em anúncio, evento e capa de grupo",
+        "Voltar e avançar restauram rolagem, filtros, aba ativa e foco de cada entrada do histórico",
+        "Gesto de arrastar da borda para voltar e puxar para atualizar em feed e caixa",
+        "Imagem reserva o espaço pela proporção e entra com esmaecer",
+        "Movimento reduzido: durações zeram, deslize vira esmaecer, elemento compartilhado vira corte",
+        "E2E em 375/768/1440 nos dois temas provando voltar, restauração e ausência de salto de layout",
+        "Retorno tátil nos quatro momentos da §8, só no app de loja, quando o Capacitor entrar"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/regua-nextdoor/DESIGN.md", "apps/app/src/previa-vnext/"],
+      "dependencies": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b"
+    },
+    {
+      "id": "DS-PRIMEIRA-DOBRA",
+      "title": "Prova automática da primeira dobra, da cidade nova e dos dados difíceis",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "DESIGN.md §6, §7 e §13: hoje a primeira dobra, as três faixas de volume e os dados difíceis são conferidos a olho. Este card põe a conferência no robô e dá às prévias um conjunto único de dados difíceis.",
+      "checklist": [
+        "Conjunto compartilhado de dados difíceis para as prévias (título longo, sem foto, foto em pé, preço extremo, campos opcionais vazios)",
+        "Cada tela principal com variante vazia, rala e viva acessível ao robô",
+        "Medição em 375 × 812: altura do cabeçalho até 35% e mínimo de itens reais por tipo de trabalho",
+        "Falha do teste aponta a tela e o número medido",
+        "Tabela de fidelidade de porte como item obrigatório do modelo de card de tela"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": ["docs/agents/regua-nextdoor/DESIGN.md"],
+      "dependencies": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b"
     }
   ],
   "launch": {

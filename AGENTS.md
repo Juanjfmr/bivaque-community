@@ -49,7 +49,8 @@ failure path work in the integrated app and are proven at 375/768/1440 in both t
    [photo and reply in groups](docs/decisions/ADR-20261101-foto-e-resposta-nos-grupos.md)). A later ADR
    or a later explicit owner instruction wins over an older one.
 4. Visual and interaction bar: [docs/agents/regua-nextdoor/](docs/agents/regua-nextdoor/) — Nextdoor
-   (via Mobbin) is the bar; every rebuilt screen starts from cited Mobbin references.
+   (via Mobbin) is the bar; every rebuilt screen starts from cited Mobbin references. Entry point for
+   building any screen: [DESIGN.md](docs/agents/regua-nextdoor/DESIGN.md).
 5. [docs/historico/](docs/historico/) is history, never instruction. Do not restore anything from it
    without bringing it into a live source with a date and a reason.
 

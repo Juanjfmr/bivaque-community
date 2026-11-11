@@ -12,7 +12,8 @@ import { Icone } from "./icone"
 export type PerguntaDaLinha = {
   readonly id: string
   readonly pergunta: string
-  readonly autor: string
+  /** Sem autor conhecido, a linha não inventa um: mostra o ícone da pergunta. */
+  readonly autor: string | null
   readonly propria?: boolean
   readonly tópico: string
   readonly cidade: string
@@ -37,16 +38,24 @@ export function LinhaDePergunta({
       )}
       {...props}
     >
-      <Avatar size="lg" className="mt-0.5 size-10 shrink-0">
-        <AvatarFallback className="bg-(--secondary-container) font-semibold text-(--on-secondary-container)">
-          {iniciais(autor)}
-        </AvatarFallback>
-      </Avatar>
-      <span className="grid min-w-0 grow gap-1.5">
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <b className="text-[13px] font-semibold">{autor}</b>
-          <small className="text-[12px] text-(--on-surface-variant)">{pergunta.cidade}</small>
+      {autor === null ? (
+        <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-(--secondary-container) text-(--on-secondary-container)">
+          <Icone nome="forum" className="size-5" />
         </span>
+      ) : (
+        <Avatar size="lg" className="mt-0.5 size-10 shrink-0">
+          <AvatarFallback className="bg-(--secondary-container) font-semibold text-(--on-secondary-container)">
+            {iniciais(autor)}
+          </AvatarFallback>
+        </Avatar>
+      )}
+      <span className="grid min-w-0 grow gap-1.5">
+        {autor === null ? null : (
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <b className="text-[13px] font-semibold">{autor}</b>
+            <small className="text-[12px] text-(--on-surface-variant)">{pergunta.cidade}</small>
+          </span>
+        )}
         <b
           data-titulo-linha
           className="whitespace-normal break-words text-[15px] leading-[1.45] font-semibold text-(--on-surface)"
