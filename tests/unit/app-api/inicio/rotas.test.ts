@@ -9,7 +9,7 @@ import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
 const url = "http://localhost:3000/api/app/inicio"
 
-function cliente(falha = "", semCidade = false, quantidade = 1) {
+function cliente(falha = "", semCidade = false, quantidade = 1, assinaFotos = true) {
   const filtros: Array<[string, string, unknown]> = []
   const selects: Array<[string, string]> = []
   const from = (tabela: string) => {
@@ -38,6 +38,30 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
             ? null
             : { locality_id: "cidade-atual", localities: { city_name: "Manaus" } },
           error: null,
+        }
+      if (tabela === "provider_portfolio_photos")
+        return {
+          data: [
+            { provider_id: "search_providers-0", photo_path: "negocio/capa.jpg", position: 0 },
+            { provider_id: "search_providers-0", photo_path: "negocio/outra.jpg", position: 1 },
+          ],
+          error: tabela === falha ? { message: "segredo postgres" } : null,
+        }
+      if (tabela === "listings")
+        return {
+          data: Array.from({ length: quantidade }, (_, indice) => ({
+            id: `listings-${indice}`,
+            title: "Berço",
+            kind: "item",
+            price_cents: 45000,
+            neighborhood: "Flores",
+            available_until: "2026-12-01",
+            listing_photos: [
+              { path: "anuncio/segunda.jpg", position: 2 },
+              { path: "anuncio/capa.jpg", position: 0 },
+            ],
+          })),
+          error: tabela === falha ? { message: "segredo postgres" } : null,
         }
       const dados =
         tabela === "group_memberships"
@@ -75,7 +99,24 @@ function cliente(falha = "", semCidade = false, quantidade = 1) {
       error: nome === falha ? { message: "segredo postgres" } : null,
     })
   }
-  return { client: { from, rpc }, filtros, chamadas, selects }
+  const assinados: Array<[string, string[]]> = []
+  const storage = {
+    from: (bucket: string) => ({
+      createSignedUrls: async (caminhos: string[]) => {
+        assinados.push([bucket, caminhos])
+        return {
+          data: assinaFotos
+            ? caminhos.map((caminho) => ({
+                path: caminho,
+                signedUrl: `https://assinada.invalid/${caminho}`,
+              }))
+            : [],
+          error: null,
+        }
+      },
+    }),
+  }
+  return { client: { from, rpc, storage }, filtros, chamadas, selects, assinados }
 }
 
 function autenticar(mock: ReturnType<typeof cliente>) {
@@ -127,7 +168,12 @@ describe("início do app", () => {
     autenticar(mock)
     const corpo = await (await GET(new NextRequest(url))).json()
     expect(corpo.negocios).toEqual([
-      { id: "search_providers-0", display_name: "Eletricista", category: "casa_e_reformas" },
+      {
+        id: "search_providers-0",
+        display_name: "Eletricista",
+        category: "casa_e_reformas",
+        foto: "https://assinada.invalid/negocio/capa.jpg",
+      },
     ])
     expect(corpo.grupos).toEqual([{ id: "groups-0", name: "Vizinhos", members: 3 }])
     expect(corpo.perguntas[0]).toEqual({
@@ -185,4 +231,37 @@ describe("início do app", () => {
       expect(await resposta.text()).not.toContain("segredo postgres")
     },
   )
+
+  it("devolve a capa do anúncio e do negócio por URL assinada, sem caminho cru", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    const resposta = await GET(new NextRequest(url))
+    expect(resposta.status).toBe(200)
+    const corpo = await resposta.json()
+    expect(corpo.anuncios[0]).toMatchObject({
+      available_until: "2026-12-01",
+      foto: "https://assinada.invalid/anuncio/capa.jpg",
+    })
+    expect(corpo.negocios[0].foto).toBe("https://assinada.invalid/negocio/capa.jpg")
+    expect(corpo.anuncios[0]).not.toHaveProperty("listing_photos")
+    expect(JSON.stringify(corpo)).not.toContain('"anuncio/')
+    expect(mock.assinados).toContainEqual(["listing-photos", ["anuncio/capa.jpg"]])
+    expect(mock.assinados).toContainEqual(["provider-photos", ["negocio/capa.jpg"]])
+  })
+
+  it("deixa a foto nula quando o storage não assina", async () => {
+    const mock = cliente("", false, 1, false)
+    autenticar(mock)
+    const corpo = await (await GET(new NextRequest(url))).json()
+    expect(corpo.anuncios[0].foto).toBeNull()
+    expect(corpo.negocios[0].foto).toBeNull()
+  })
+
+  it("falha a leitura quando o portfólio dos negócios não pode ser lido", async () => {
+    const mock = cliente("provider_portfolio_photos")
+    autenticar(mock)
+    const resposta = await GET(new NextRequest(url))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.text()).not.toContain("segredo")
+  })
 })

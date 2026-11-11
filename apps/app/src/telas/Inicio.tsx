@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
-import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoVitrineAnuncio, CartaoVitrineNegocio } from "@/components/bivaque/cartao-vitrine"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
@@ -60,6 +59,14 @@ function resumoDoEncontro(comecaEm: string | null, local: string | null): string
   const dia = data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
   const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
   return local === null ? `${dia} · ${hora}` : `${dia} · ${hora} · ${local}`
+}
+
+/** Quem anuncia está de mudança: o prazo de retirada vira o rótulo da foto. */
+function rotuloDeRetirada(disponivelAte: string | null): string | undefined {
+  if (disponivelAte === null) return undefined
+  const data = new Date(`${disponivelAte.slice(0, 10)}T12:00:00`)
+  if (Number.isNaN(data.getTime())) return undefined
+  return `Retirar até ${data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
 }
 
 export function Inicio() {
@@ -156,11 +163,11 @@ export function Inicio() {
     <section data-tela="inicio" className="grid gap-2">
       <header data-home="abertura" className="bv-home-intro">
         <div data-home="apresentacao">
-          <CabecaDePagina
-            className="bv-home-heading"
-            titulo={`Sua rede em ${cidade}`}
-            subtitulo="Moradia, serviços e boas indicações da comunidade militar."
-          />
+          <div data-cabeca="pagina" className="bv-home-heading">
+            <h1>
+              O que você precisa em <span data-home="cidade">{cidade}</span>?
+            </h1>
+          </div>
         </div>
         <div data-home="ferramentas" className="bv-home-ferramentas">
           <button
@@ -238,6 +245,7 @@ export function Inicio() {
                           nome: negocio.nome,
                           categoria: rotuloDaCategoria(negocio.categoria),
                           cidade,
+                          fonte: negocio.foto,
                           salvo: salvos.has(negocio.id),
                         }}
                         aoSalvar={() => alternarSalvo(negocio.id)}
@@ -291,6 +299,8 @@ export function Inicio() {
                             anuncio.precoCentavos === null ? null : anuncio.precoCentavos / 100,
                           icone: anuncio.tipo === "property" ? "apartment" : "sell",
                           meta: anuncio.bairro ?? cidade,
+                          fonte: anuncio.foto,
+                          rotulo: rotuloDeRetirada(anuncio.disponivelAte),
                           salvo: salvos.has(anuncio.id),
                         }}
                         aoSalvar={() => alternarSalvo(anuncio.id)}
@@ -389,7 +399,7 @@ export function Inicio() {
                         pergunta={{
                           id: pergunta.id,
                           pergunta: pergunta.title,
-                          autor: "Alguém da cidade",
+                          autor: null,
                           tópico: pergunta.grupo ?? "",
                           cidade,
                           respostas: pergunta.respostas,

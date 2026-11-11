@@ -349,7 +349,7 @@ export function Busca() {
                     pergunta={{
                       id: pergunta.id,
                       pergunta: pergunta.title,
-                      autor: "Alguém da cidade",
+                      autor: null,
                       tópico: pergunta.grupo ?? "",
                       cidade,
                       respostas: pergunta.respostas,

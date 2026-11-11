@@ -25,8 +25,17 @@ export type AnuncioDoInicio = Readonly<{
   tipo: string
   precoCentavos: number | null
   bairro: string | null
+  /** Data até quando dá para retirar (quem anuncia está de mudança). */
+  disponivelAte: string | null
+  /** URL assinada curta da capa; nunca um caminho do bucket. */
+  foto: string | null
 }>
-export type NegocioDoInicio = Readonly<{ id: string; nome: string; categoria: string }>
+export type NegocioDoInicio = Readonly<{
+  id: string
+  nome: string
+  categoria: string
+  foto: string | null
+}>
 export type GrupoDoInicio = Readonly<{ id: string; nome: string; membros: number }>
 export type ItemDoInicio = Readonly<{ id: string; title: string; detalhe: string | null }>
 
@@ -64,6 +73,18 @@ function textoOuNulo(linha: Linha, chave: string): string | null {
   return typeof valor === "string" && valor !== "" ? valor : null
 }
 
+/** Só aceita URL http(s): um caminho cru ou outro esquema não vira src de imagem. */
+function urlOuNula(linha: Linha, chave: string): string | null {
+  const valor = textoOuNulo(linha, chave)
+  if (valor === null) return null
+  try {
+    const url = new URL(valor)
+    return url.protocol === "https:" || url.protocol === "http:" ? valor : null
+  } catch {
+    return null
+  }
+}
+
 function numeroOuNulo(linha: Linha, chave: string): number | null {
   const valor = linha[chave]
   return typeof valor === "number" && Number.isFinite(valor) ? valor : null
@@ -97,11 +118,14 @@ const anuncio = (l: Linha): AnuncioDoInicio => ({
   tipo: textoOuNulo(l, "kind") ?? "",
   precoCentavos: numeroOuNulo(l, "price_cents"),
   bairro: textoOuNulo(l, "neighborhood"),
+  disponivelAte: textoOuNulo(l, "available_until"),
+  foto: urlOuNula(l, "foto"),
 })
 const negocio = (l: Linha): NegocioDoInicio => ({
   id: exigirTexto(l, "id"),
   nome: exigirTexto(l, "display_name"),
   categoria: textoOuNulo(l, "category") ?? "",
+  foto: urlOuNula(l, "foto"),
 })
 const grupo = (l: Linha): GrupoDoInicio => ({
   id: exigirTexto(l, "id"),
