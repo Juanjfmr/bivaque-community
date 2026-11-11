@@ -6,6 +6,7 @@ import {
   buscarGrupo,
   buscarPublicacao,
   comentarPublicacao,
+  contarPublicacoes,
   denunciarPublicacao,
   lerGrupos,
   lerPedidosDoGrupo,
@@ -80,9 +81,10 @@ it("participação mostra o resultado gravado e DELETE não manda corpo", async 
   )
 })
 
-it("publica texto/fotos e envia comentário pelo cliente único", async () => {
-  const fetch = resposta({ publicacao: { id: "p1" } })
-  expect(await publicarNoGrupo("g1", { texto: "Texto", fotos: ["pasta/foto.png"] })).toBe("p1")
+it("publica texto/fotos e devolve a publicação pronta e o cursor da próxima página", async () => {
+  const fetch = resposta({ publicacao, proximo: "p1" })
+  const criada = await publicarNoGrupo("g1", { texto: "Texto", fotos: ["pasta/foto.png"] })
+  expect(criada).toEqual({ publicacao, proximo: "p1" })
   expect(fetch).toHaveBeenCalledWith(
     "/api/app/grupos/g1/publicacoes",
     expect.objectContaining({
@@ -90,6 +92,23 @@ it("publica texto/fotos e envia comentário pelo cliente único", async () => {
       body: JSON.stringify({ texto: "Texto", fotos: ["pasta/foto.png"] }),
     }),
   )
+})
+
+it("publicação que volta de outro grupo ou fora do contrato não vira sucesso", async () => {
+  resposta({ publicacao: { ...publicacao, grupoId: "g2" }, proximo: null })
+  await expect(publicarNoGrupo("g1", { texto: "Texto", fotos: [] })).rejects.toBeInstanceOf(
+    FalhaDaApi,
+  )
+  resposta({ publicacao: { id: "p1" }, proximo: null })
+  await expect(publicarNoGrupo("g1", { texto: "Texto", fotos: [] })).rejects.toBeInstanceOf(
+    FalhaDaApi,
+  )
+})
+
+it("conta a primeira página para saber se a publicação abriu outra", async () => {
+  const fetch = resposta({ grupo, publicacoes: [publicacao], proximo: "p1" })
+  expect(await contarPublicacoes("g1", { ordem: "recentes" })).toBe(1)
+  expect(fetch).toHaveBeenCalledWith("/api/app/grupos/g1?ordem=recentes", expect.any(Object))
 })
 it("foto passa pelo cliente único com tipo e base64", async () => {
   const fetch = resposta({ caminho: "pasta/foto.png" })

@@ -1,6 +1,24 @@
 import type { Page } from "@playwright/test"
 
-export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {}) {
+/**
+ * Como o grupo responde a cada tentativa de publicar, em ordem: um número é o
+ * status HTTP (a rota real já manda `erro` e `mensagem`, como em
+ * `apps/web/app/api/app/grupos/[id]/publicacoes/route.ts`), `"rede"` aborta
+ * sem resposta. Esgotada a lista, a publicação grava.
+ */
+export type RespostaDePublicacao =
+  | Readonly<{ status: number; erro?: string; mensagem?: string }>
+  | "rede"
+
+export type RecusasDaPublicacao = {
+  /** Respostas de recusa por tentativa: a lista é consumida em ordem. */
+  recusas?: readonly RespostaDePublicacao[]
+}
+
+export async function simularGrupos(
+  page: Page,
+  opcoes: { membro?: boolean } & RecusasDaPublicacao = {},
+) {
   const grupos = [
     {
       id: "g-pets",
@@ -95,6 +113,7 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
     util: boolean
   }[] = []
   let sequencia = 1
+  const recusas: RespostaDePublicacao[] = [...(opcoes.recusas ?? [])]
   await page.route(/\/api\/app\/grupos(?:\/[^?]*)?(?:\?.*)?$/, async (rota) => {
     const request = rota.request()
     const url = new URL(request.url())
@@ -210,6 +229,21 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       return
     }
     if (partes[1] === "publicacoes" && metodo === "POST") {
+      const recusa = recusas.shift()
+      if (recusa === "rede") {
+        await rota.abort("failed")
+        return
+      }
+      if (recusa !== undefined) {
+        await rota.fulfill({
+          status: recusa.status,
+          json: {
+            ...(recusa.erro === undefined ? {} : { erro: recusa.erro }),
+            ...(recusa.mensagem === undefined ? {} : { mensagem: recusa.mensagem }),
+          },
+        })
+        return
+      }
       const publicacao = {
         id: `p-real-${sequencia++}`,
         grupoId: grupo.id,
@@ -225,7 +259,9 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
         fotos: [] as string[],
       }
       publicacoes.unshift(publicacao)
-      await rota.fulfill({ status: 201, json: { publicacao: { id: publicacao.id } } })
+      // O contrato da rota: a publicação pronta para a lista e o cursor que a
+      // segunda página abriria (a publicação mais nova vem depois na ordem).
+      await rota.fulfill({ status: 201, json: { publicacao, proximo: publicacao.id } })
       return
     }
     const ocultadas = url.searchParams.get("ordem") === "ocultadas"

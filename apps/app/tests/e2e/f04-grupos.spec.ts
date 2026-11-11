@@ -10,6 +10,11 @@ test("publica, comenta, responde e relê as ações gravadas", async ({ page }) 
   await page.getByRole("button", { name: "Escrever", exact: true }).click()
   await page.getByLabel("Sua publicação").fill("Publicação da comunidade")
   await page.getByRole("button", { name: "Publicar", exact: true }).click()
+  // Publicar não troca de tela: a publicação entra na lista do grupo, e
+  // comentar a ela é o gesto que abre a publicação (DS-021).
+  const nova = page.locator('[data-publicacao-na-lista="sim"]').first()
+  await expect(nova).toContainText("Publicação da comunidade")
+  await nova.getByRole("button", { name: "Comentar", exact: true }).click()
   await expect(page).toHaveURL(/\/app\/publicacao\/p-real-/)
   await page.getByLabel("Seu comentário").fill("Meu comentário")
   await page.getByRole("button", { name: "Comentar", exact: true }).last().click()

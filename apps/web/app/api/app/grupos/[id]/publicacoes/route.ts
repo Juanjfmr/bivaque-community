@@ -42,17 +42,25 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
       community_id: null,
       user_id: userId,
     }
-    const result = await clienteDosGrupos(client).from("posts").insert(linha).select("id").single()
-    if (result.error) {
-      const falha = interpretarErroDoBanco(result.error.code, {
+    const criado = await clienteDosGrupos(client)
+      .from("posts")
+      .insert(linha)
+      .select(CAMPOS_DA_PUBLICACAO)
+      .single()
+    if (criado.error) {
+      const falha = interpretarErroDoBanco(criado.error.code, {
         recusado: "Sua conta não pode publicar neste grupo.",
         dados: "Revise o texto e as fotos da publicação.",
       })
-      if (falha.status === 503) registrarFalha("publish", result.error)
+      if (falha.status === 503) registrarFalha("publish", criado.error)
       return responder(request, falha.corpo, falha.status)
     }
-    if (!result.data) throw new Error("insert without result")
-    return responder(request, { publicacao: { id: result.data.id } }, 201)
+    if (!criado.data) throw new Error("insert without result")
+    // A publicação volta montada como a lista a mostra (autor, hora, próprias),
+    // para a tela receber o cartão pronto e o cursor que a segunda página abre.
+    const [publicacao] = await apresentarPublicacoes(client, [criado.data], userId)
+    if (!publicacao) throw new Error("insert without presentation")
+    return responder(request, { publicacao, proximo: publicacao.id }, 201)
   } catch (error) {
     registrarFalha("publish", error)
     return responder(request, { erro: "escrita-indisponivel" }, 503)
