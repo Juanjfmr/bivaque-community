@@ -5376,14 +5376,16 @@
         "Coordenada do perfil fora de leitura de terceiros",
         "Desapego com bairro opcional"
       ],
-      "proof": [],
+      "proof": [
+        "11/11: perfil com CEP e coordenada cálculo-only provado (PR #183, head 4c5e7451): migration 20261110211702_profile_location.sql, grants por coluna (cep/latitude/longitude fora do SELECT de authenticated), RPCs get_my_profile_location/set_member_location/distance_to_neighborhood, API GET/PATCH /api/app/voce + PUT /localizacao, E2E f10-voce-localizacao com gravação verde no smoke. Restam anúncio, pedido, distância de mim e mapa."
+      ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["ADR-LOCALIZACAO", "DATA-IBGE-BAIRROS"],
-      "updatedAt": "2026-10-22",
-      "sourceRevision": "f05fc69b",
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "4c5e7451",
       "blockers": [],
-      "completedChecklist": [false, false, false, false, false],
+      "completedChecklist": [false, false, false, true, false],
       "id": "LOC-IMPL",
       "title": "Implementar localização no padrão de mercado"
     },
@@ -6326,12 +6328,13 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "d17efa4c",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: checklist ganhou a medição pós-lançamento herdada de INDICACOES-AVISO (tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h), que só se mede depois de o app estar no ar.",
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "11/11: matriz de acessibilidade do app verde no App Visual Smoke 43028844129 (PR #185, head d17efa4c): 11 superfícies × 3 larguras × 2 temas, axe wcag2a/2aa/21aa com falha serious/critical, teclado, contraste, reduced-motion e overflow; capturas em .visual/run-136 retidas pelo artefato do smoke."
       ],
       "id": "LAN-PROVA",
       "title": "Fase 7: prova final do lançamento e lista de ratificação",
@@ -7002,6 +7005,193 @@
       "blockers": [],
       "updatedAt": "2026-11-07",
       "sourceRevision": "954dd638"
+    },
+    {
+      "id": "LOC-LIMITE-GEOCODIFICACAO",
+      "title": "Localização: limitar a geocodificação e dar TTL ao cache",
+      "phase": "Lote 7 — Desapegos e Imóveis",
+      "priority": "P1",
+      "category": "governance",
+      "status": "repo",
+      "description": "O PUT /api/app/voce/localizacao geocodifica qualquer CEP no cache miss sem limite por pessoa/instalação e o cep_geocodes não tem TTL. Decidir limitador/cota e TTL antes de abrir o CEP para toda a base; hoje o custo/quota do provedor fica sem teto (achado MÉDIO da auditoria R3 do #183).",
+      "checklist": [
+        "Limite por sessão/IP e teto global na rota de localização",
+        "TTL e limpeza em cep_geocodes",
+        "Prova de abuso negada e de cache hit sem chamar o provedor",
+        "Registro no ADR de localização ou emenda"
+      ],
+      "proof": ["11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183)."],
+      "tests": [],
+      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
+      "dependencies": ["LOC-IMPL", "ADR-LOCALIZACAO"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "4c5e7451",
+      "blockers": [],
+      "completedChecklist": [false, false, false, false]
+    },
+    {
+      "id": "LOC-CEP-SEM-COORDENADA",
+      "title": "Localização: CEP conhecido sem coordenada não pode virar 422",
+      "phase": "Lote 7 — Desapegos e Imóveis",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "CEP válido que a BrasilAPI conhece mas devolve sem coordenada vira nao-encontrado e a rota responde 422 «CEP não encontrado». Definir o fallback (bairro/cidade, coordenada manual ou mensagem com o próximo passo) para não travar CEPs fora de capitais (achado MÉDIO do reviewer ed9d03ac no #183).",
+      "checklist": [
+        "Decidir o fallback de produto",
+        "Implementar e cobrir 422/503 no E2E",
+        "Atualizar o texto da tela e o contrato"
+      ],
+      "proof": [
+        "11/11: aberto a partir do parecer do reviewer ed9d03ac (PR #183); o E2E atual só cobre sucesso e CEP inválido."
+      ],
+      "tests": [],
+      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
+      "dependencies": ["LOC-IMPL"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "4c5e7451",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F09-B2-BLOQUEIO-E-CORRIDA",
+      "title": "Conversas: provar o bloqueio e a corrida da RPC de envio",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "A RPC send_conversation_message tem o ramo de conta bloqueada e a corrida do on conflict→reselect sem teste. Cobrir com dois clientes reais e pgTAP em rollback, sem depender do E2E feliz.",
+      "checklist": [
+        "pgTAP do bloqueio (42501) e da corrida com dois inserts",
+        "E2E de duas sessões quando o bloqueio for acionável",
+        "Prova no CI e no cartão"
+      ],
+      "proof": [
+        "11/11: aberto a partir da ressalva B2 do parecer de segurança e89e33e0 (PR #181)."
+      ],
+      "tests": [],
+      "links": [],
+      "dependencies": ["F09-ENVIO-PELA-RPC"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F09-B3-INSERT-DIRETO-DM",
+      "title": "Conversas: fechar o INSERT direto em dm_messages",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "governance",
+      "status": "repo",
+      "description": "O grant select,insert em dm_messages para authenticated (20260802001500:97) permite INSERT direto que pula a transição do pedido e a idempotência. Revogar o insert ou endurecer a policy, com prova positiva/negativa; é pré-existente, mas a RPC nova torna o caminho oficial.",
+      "checklist": [
+        "Revogar INSERT direto ou restringir por policy",
+        "pgTAP positivo (RPC) e negativo (INSERT direto)",
+        "Registro em RATIFICACAO.md se entrar em R3"
+      ],
+      "proof": [
+        "11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181)."
+      ],
+      "tests": [],
+      "links": [],
+      "dependencies": ["F09-ENVIO-PELA-RPC"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F09-B5-REPLAY-TEXTO-DIFERENTE",
+      "title": "Conversas: decidir o replay com a mesma chave e texto diferente",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "Replay com a mesma client_key e texto diferente devolve 201 com a mensagem antiga; soft-deleted idem. Decidir 409 conflito ou documentar a semântica e cobrir pgTAP/E2E, para não mascarar edição perdida.",
+      "checklist": [
+        "Decidir 409 ou semântica documentada",
+        "Cobrir replay com texto diferente e soft-deleted",
+        "Atualizar o contrato e o app se a resposta mudar"
+      ],
+      "proof": [
+        "11/11: aberto a partir da ressalva B5 do parecer de segurança e89e33e0 (PR #181)."
+      ],
+      "tests": [],
+      "links": [],
+      "dependencies": ["F09-ENVIO-PELA-RPC"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "EVENTOS-LOCALITY-LINK",
+      "title": "Eventos: «Ver todos os eventos» de outra cidade não pode cair na agenda local",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "city-reference.tsx:203 emite /events?locality=<id>; o 307 preserva a query, mas o app não lê locality (só locality_id), então o link de outra cidade cai na agenda da cidade de quem clica, em silêncio. Aceitar ?locality no app (rota/filtro de cidade) ou apontar o link para a rota da cidade quando existir; até lá, não prometer o que não acontece.",
+      "checklist": [
+        "Aceitar ?locality no app ou trocar o link para a rota da cidade",
+        "E2E do link de outra cidade com o destino correto",
+        "Prova de que a agenda local não muda"
+      ],
+      "proof": [
+        "11/11: aberto na revisão do #176 (achado MÉDIO do reviewer 7c4d0b40); o 307 e a query já são provados, falta o destino."
+      ],
+      "tests": [],
+      "links": [],
+      "dependencies": ["LAN-F05"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "ADR-CONVITE-EMAIL-EDITAVEL",
+      "title": "ADRs: alinhar o e-mail do convite ao campo vazio e editável",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "governance",
+      "status": "next",
+      "description": "ADR-20261101:117 e ADR-20261022:47 ainda dizem que o e-mail do convite familiar vem preenchido e só de leitura; o contrato novo (RUN-135) quer campo vazio e editável com hint mascarado, porque a prévia sem sessão não devolve o destinatário do outbox. Emendar os ADRs e o texto do produto.",
+      "checklist": [
+        "Emendar os dois ADRs com data e motivo",
+        "Conferir o texto da tela e o E2E do convite",
+        "Registrar em RATIFICACAO.md se a emenda for R3"
+      ],
+      "proof": ["11/11: aberto a partir da ressalva do reviewer f29e13e9 (PR #178)."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["LAN-F01"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "EVENTOS-RESIDUOS-POS-TROCA",
+      "title": "Eventos: limpar resíduos da tela antiga depois da troca",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "repo",
+      "status": "next",
+      "description": "Sobras da troca de /events: create-menu perdeu o atalho de criar evento; comentário falso em event-invites.spec.ts:96 (o evento 5 é upcoming; a seção some porque o membro 6 é organizador); scripts/visual/capture.mjs:188,361 ainda captura /events/novo; resíduos sem consumidor em active-nav.ts:58 e feed-right-rail.tsx:170; board.json/RUN-020/RUN-007 citam arquivos removidos.",
+      "checklist": [
+        "Restaurar o atalho de criar evento no menu",
+        "Corrigir comentário e captura órfã",
+        "Limpar resíduos e referências no board/docs"
+      ],
+      "proof": ["11/11: aberto na revisão do #176 (ressalvas BAIXAS do reviewer 7c4d0b40)."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["LAN-TROCA"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "9b0dbf2b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
     }
   ],
   "launch": {
