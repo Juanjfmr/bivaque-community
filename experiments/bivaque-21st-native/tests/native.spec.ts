@@ -69,7 +69,7 @@ test("P0/P1 mobile: tabs legible, categories filter, save does not navigate",asy
   await page.getByRole("radio",{name:"Infantil"}).click();
   await expect(page.getByText("Berço com colchão, pouco uso")).toBeVisible();
   await expect(page.getByText("Geladeira duplex")).toHaveCount(0);
-  await page.getByRole("radio",{name:"Móveis"}).click();
+  await page.getByRole("radio",{name:"Móveis",exact:true}).click();
   await expect(page.getByText("Sofá de três lugares")).toBeVisible();
   await expect(page.getByText("Berço com colchão, pouco uso")).toHaveCount(0);
   await page.getByRole("radio",{name:"Todos"}).click();
