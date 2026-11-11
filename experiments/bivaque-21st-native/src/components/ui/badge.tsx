@@ -1,0 +1,1 @@
+import React from "react";import{cn}from "@/lib/utils";export const Badge=({className,...p}:React.HTMLAttributes<HTMLSpanElement>)=><span {...p} className={cn("rounded-full bg-muted px-3 py-1 text-xs text-foreground",className)}/>;
