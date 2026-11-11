@@ -1,0 +1,657 @@
+/*
+ * Início comercial (prévia, 11/11/2026). Gramática de celular: conteúdo até a
+ * borda, trilhos que saem da tela, foto antes de texto, nenhuma caixa em volta
+ * de seção, barra flutuante. Cores e tipos pelos tokens das peças.
+ */
+.pi {
+  --pi-gutter: 16px;
+  --pi-curva: cubic-bezier(0.2, 0, 0, 1);
+  min-height: 100dvh;
+  background: var(--pc-fundo);
+  color: var(--pc-tinta);
+  font-family: var(--font-plain);
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(.pi) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pi-miudo {
+  font-size: var(--pc-fs-miudo);
+  color: var(--pc-suave);
+  line-height: 1.35;
+}
+
+/* Topo: fixo, translúcido, com a cidade como título. */
+.pi-topo {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: calc(env(safe-area-inset-top) + 6px) 8px 6px var(--pi-gutter);
+  background: color-mix(in srgb, var(--pc-fundo) 86%, transparent);
+  backdrop-filter: saturate(1.6) blur(18px);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+}
+
+.pi-cidade {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  font-size: var(--pc-fs-titulo);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pi-redondo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition:
+    transform var(--pc-toque),
+    background var(--pc-toque);
+}
+
+.pi-redondo:active {
+  transform: scale(0.92);
+  background: var(--pc-tom);
+}
+
+.pi-ponto {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--pc-criar);
+  box-shadow: 0 0 0 2px var(--pc-fundo);
+}
+
+.pi-rolagem {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+
+/* Busca: a primeira coisa que a pessoa toca. */
+.pi-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 2 * var(--pi-gutter));
+  height: 50px;
+  margin: 4px var(--pi-gutter) 0;
+  padding: 0 18px;
+  border-radius: var(--pc-pilula);
+  background: var(--pc-cartao);
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-corpo);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 4px 16px rgb(0 0 0 / 0.06);
+  transition: transform var(--pc-toque);
+}
+
+.pi-busca:active {
+  transform: scale(0.985);
+}
+
+/* Atalhos: ícone em quadrado de tom, rolam de lado e saem da tela. */
+.pi-atalhos {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 18px calc(var(--pi-gutter) - 6px) 4px;
+  scrollbar-width: none;
+}
+
+.pi-atalhos::-webkit-scrollbar,
+.pi-trilho::-webkit-scrollbar {
+  display: none;
+}
+
+.pi-atalho {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  width: 72px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  transition: transform var(--pc-toque);
+}
+
+.pi-atalho:active {
+  transform: scale(0.94);
+}
+
+.pi-atalho-marca {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  background: var(--pc-cartao);
+  box-shadow: inset 0 0 0 1px var(--pc-linha);
+}
+
+/* Destaque do momento: a única superfície de cor da tela. */
+.pi-destaque {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 22px var(--pi-gutter) 0;
+  padding: 18px 10px 18px 18px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--pc-acao) 9%, var(--pc-cartao));
+  animation: pi-entra 420ms var(--pi-curva) both;
+}
+
+.pi-destaque > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.pi-destaque h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.pi-destaque p {
+  margin: 0;
+  font-size: var(--pc-fs-apoio);
+  color: var(--pc-suave);
+}
+
+.pi-destaque .pc-botao {
+  margin-top: 10px;
+}
+
+.pi-destaque .pc-ilustracao {
+  flex: none;
+  width: 104px;
+}
+
+/* Seções sem caixa: título e "ver todos" na mesma linha. */
+.pi-secao {
+  margin-top: 30px;
+}
+
+.pi-secao-cabeca {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 var(--pi-gutter) 12px;
+}
+
+.pi-secao-cabeca h2 {
+  margin: 0;
+  font-size: var(--pc-fs-secao);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.pi-ver {
+  flex: none;
+  min-height: 32px;
+  font-size: var(--pc-fs-apoio);
+  font-weight: 600;
+  color: var(--pc-suave);
+}
+
+/* Trilho: começa no recuo, termina na borda, para no item. */
+.pi-trilho {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 var(--pi-gutter) 6px;
+  scroll-padding-inline: var(--pi-gutter);
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.pi-trilho > * {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+/* Oferta: a foto manda. */
+.pi-oferta {
+  display: grid;
+  gap: 3px;
+  align-content: start;
+  width: 156px;
+  transition: transform var(--pc-toque);
+}
+
+.pi-grade .pi-oferta {
+  width: auto;
+}
+
+.pi-oferta:active,
+.pi-indicacao:active,
+.pi-casa:active,
+.pi-encontro:active {
+  transform: scale(0.97);
+}
+
+.pi-oferta-foto {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  margin-bottom: 6px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--pc-tom);
+}
+
+.pi-oferta-foto img,
+.pi-casa img,
+.pi-indicacao-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pi-sem-foto {
+  color: var(--pc-suave);
+}
+
+.pi-etiqueta {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 4px 9px;
+  border-radius: var(--pc-pilula);
+  background: rgb(16 20 23 / 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.pi-preco {
+  font-size: var(--pc-fs-subtitulo);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.pi-oferta-titulo {
+  font-size: var(--pc-fs-apoio);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pi-grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 12px;
+  padding: 0 var(--pi-gutter);
+}
+
+/* Indicação: o negócio pela voz de quem indicou. */
+.pi-indicacao {
+  display: grid;
+  width: 276px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--pc-cartao);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px rgb(0 0 0 / 0.06);
+  transition: transform var(--pc-toque);
+}
+
+.pi-indicacao-foto {
+  height: 112px;
+}
+
+.pi-indicacao-corpo {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px 16px;
+}
+
+.pi-indicacao-nome {
+  font-size: var(--pc-fs-subtitulo);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pi-frase {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 42px;
+}
+
+.pi-quem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pi-contagem {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--pc-fs-apoio);
+  font-weight: 600;
+}
+
+.pi-contagem .bv-icone {
+  font-size: 18px;
+}
+
+/* Imóvel: foto larga, como num app de aluguel. */
+.pi-casa {
+  display: grid;
+  gap: 3px;
+  width: 272px;
+  transition: transform var(--pc-toque);
+}
+
+.pi-casa img {
+  height: 176px;
+  margin-bottom: 6px;
+  border-radius: 18px;
+}
+
+/* Lista plana com divisória. */
+.pi-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--pi-gutter);
+}
+
+.pi-lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.pi-lista li + li {
+  border-top: 1px solid var(--pc-linha);
+}
+
+.pi-lista-texto {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font-size: var(--pc-fs-corpo);
+  line-height: 1.3;
+}
+
+.pi-lista-texto > span:first-child {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pi-encontro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: calc(100% - 2 * var(--pi-gutter));
+  margin: 0 var(--pi-gutter);
+  transition: transform var(--pc-toque);
+}
+
+.pi-data {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--pc-cartao);
+  box-shadow: inset 0 0 0 1px var(--pc-linha);
+  font-size: 12px;
+  line-height: 1.1;
+  color: var(--pc-suave);
+  text-transform: uppercase;
+}
+
+.pi-data b {
+  font-size: 20px;
+  color: var(--pc-tinta);
+}
+
+.pi-convite {
+  margin: 26px var(--pi-gutter) 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--pc-linha);
+  font-size: var(--pc-fs-apoio);
+  color: var(--pc-suave);
+}
+
+.pi-vazio {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 28px 0;
+  text-align: center;
+}
+
+.pi-vazio .pc-ilustracao {
+  width: min(260px, 80%);
+}
+
+.pi-vazio h2 {
+  margin: 0;
+  font-size: var(--pc-fs-secao);
+  text-wrap: balance;
+}
+
+.pi-vazio p {
+  margin: 0 0 8px;
+  color: var(--pc-suave);
+  font-size: var(--pc-fs-apoio);
+}
+
+/* Barra flutuante com o Criar em Brasa ao lado. */
+.pi-barra {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+.pi-barra nav {
+  flex: 1;
+  display: flex;
+  padding: 6px;
+  border-radius: var(--pc-pilula);
+  background: color-mix(in srgb, var(--pc-cartao) 92%, transparent);
+  backdrop-filter: saturate(1.6) blur(18px);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+  box-shadow:
+    0 0 0 1px var(--pc-linha),
+    0 10px 30px rgb(0 0 0 / 0.14);
+}
+
+.pi-barra nav button {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-height: 48px;
+  padding-top: 5px;
+  border-radius: var(--pc-pilula);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pc-suave);
+  transition: transform var(--pc-toque);
+}
+
+.pi-barra nav button[aria-current="page"] {
+  background: var(--pc-tom);
+  color: var(--pc-tinta);
+}
+
+.pi-barra nav button:active {
+  transform: scale(0.94);
+}
+
+.pi .pi-criar {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--pc-criar);
+  color: var(--pc-criar-texto);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--pc-criar) 40%, transparent);
+  transition: transform var(--pc-toque);
+}
+
+.pi-criar:active {
+  transform: scale(0.92);
+}
+
+/* Folhas. */
+.pi-folha-cidade {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.pi-rotulo {
+  margin-top: 6px;
+  font-size: var(--pc-fs-miudo);
+  font-weight: 600;
+  color: var(--pc-suave);
+}
+
+.pi-segmento {
+  display: flex;
+  padding: 4px;
+  border-radius: var(--pc-pilula);
+  background: var(--pc-tom);
+}
+
+.pi-segmento button {
+  flex: 1;
+  min-height: 40px;
+  border-radius: var(--pc-pilula);
+  font-weight: 500;
+  text-align: center;
+  color: var(--pc-suave);
+  transition:
+    background var(--pc-toque),
+    color var(--pc-toque);
+}
+
+.pi-segmento button[aria-pressed="true"] {
+  background: var(--pc-cartao);
+  color: var(--pc-tinta);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+/* As folhas ganham os tokens das peças (.pc), mas não a altura de tela inteira. */
+[data-vaul-drawer].pc,
+[role="dialog"].pc {
+  min-height: 0;
+  background: var(--pc-cartao);
+}
+
+.pi-detalhe {
+  overflow: hidden;
+}
+
+.pi-detalhe-foto {
+  display: block;
+  width: calc(100% - 32px);
+  aspect-ratio: 4 / 3;
+  margin: 8px auto 4px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.pi-detalhe-corpo {
+  display: grid;
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.pi-detalhe-corpo p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@keyframes pi-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pi-destaque {
+    animation: none;
+  }
+}
+
+/* Computador: a coluna não estica; o conteúdo ganha largura de leitura. */
+@media (min-width: 768px) {
+  .pi {
+    --pi-gutter: max(24px, calc((100vw - 960px) / 2));
+  }
+
+  .pi-grade {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .pi-topo {
+    padding-right: calc(var(--pi-gutter) - 10px);
+  }
+}
