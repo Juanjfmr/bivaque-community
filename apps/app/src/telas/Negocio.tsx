@@ -111,6 +111,7 @@ export function Negocio() {
             <div className="flex flex-wrap gap-2">
               <Botao
                 icone="request_quote"
+                data-acao="pedir-orcamento"
                 disabled={!negocio.podePedir}
                 onClick={() => setPedindo(true)}
               >

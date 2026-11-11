@@ -337,3 +337,59 @@ export async function simularEvento(page: Page): Promise<void> {
     await rota.fulfill({ json: EVENTO_DA_PROVA })
   })
 }
+
+/**
+ * A ficha de um negócio, no contrato que `buscarNegocio` lê em
+ * `/api/app/negocios/<id>`: o negócio, a cidade e a permissão de pedir.
+ */
+export const NEGOCIO_DA_PROVA = {
+  id: "negocio-da-prova",
+  nome: "Clínica Bem Viver",
+  categoria: "saude_e_bem_estar",
+  categoriaNome: "Saúde e bem-estar",
+  descricao: "Fisioterapia e pilates no Centro, com atendimento agendado.",
+  cidade: "Manaus",
+  podePedir: true,
+  servicos: [
+    {
+      id: "servico-fisioterapia",
+      titulo: "Fisioterapia ortopédica",
+      descricao: "Sessões de 50 minutos com avaliação inicial.",
+    },
+    { id: "servico-pilates", titulo: "Pilates em grupo", descricao: null },
+  ],
+  foto: null,
+  fotoDescricao: null,
+}
+
+/** A ficha da prova em `/api/app/negocios/<id>`; a lista continua com `simularNegocios`. */
+export async function simularNegocio(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/, async (rota) => {
+    await rota.fulfill({ json: { negocio: NEGOCIO_DA_PROVA } })
+  })
+}
+
+/**
+ * Um pedido de serviço, no contrato que `buscarPedido` lê em
+ * `/api/app/pedidos/<id>`. O negócio é o da ficha acima, para a tela poder
+ * voltar para ela.
+ */
+export const PEDIDO_DA_PROVA = {
+  id: "pedido-da-prova",
+  negocioId: NEGOCIO_DA_PROVA.id,
+  negocioNome: NEGOCIO_DA_PROVA.nome,
+  categoriaNome: NEGOCIO_DA_PROVA.categoriaNome,
+  descricao: "Preciso de fisioterapia para o ombro direito.\nPrefiro horário de manhã.",
+  quando: "Nesta semana",
+  situacao: "open",
+  criadoEm: "2026-11-05T12:00:00.000Z",
+  atualizadoEm: "2026-11-06T09:30:00.000Z",
+  conversaId: null,
+}
+
+/** O pedido da prova em `/api/app/pedidos/<id>`. */
+export async function simularPedido(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/pedidos\/pedido-da-prova(?:\?|$)/, async (rota) => {
+    await rota.fulfill({ json: { pedido: PEDIDO_DA_PROVA } })
+  })
+}

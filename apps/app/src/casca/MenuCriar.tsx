@@ -78,6 +78,18 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
   const [concluido, setConcluido] = useState(false)
   const lista = useRef<HTMLDivElement | null>(null)
   const popup = useRef<HTMLDivElement | null>(null)
+  // A escolha que abriu um fluxo dentro do menu devolve o foco a ela quando o
+  // fluxo fecha: o Radix tenta devolver ao botão de origem, mas ele já saiu da
+  // árvore quando o menu dá lugar ao formulário.
+  const escolhaDeOrigem = useRef<string | null>(null)
+  // Fechar pelo menu (Esc, botão, clique fora) devolve o foco ao Criar; a saída
+  // por navegação não, porque a tela seguinte é quem passa a dona do foco.
+  const fechamentoPedido = useRef(false)
+
+  const fechar = useCallback(() => {
+    fechamentoPedido.current = true
+    aoFechar()
+  }, [aoFechar])
 
   const posicionar = useCallback(() => {
     const menu = popup.current
@@ -140,6 +152,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id === "create-event") {
+          escolhaDeOrigem.current = escolha.id
           setEncontro(true)
           return
         }
@@ -210,7 +223,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       <Dialog
         open={!encontro}
         onOpenChange={(aberto) => {
-          if (!aberto) aoFechar()
+          if (!aberto) fechar()
         }}
       >
         <DialogContent
@@ -221,11 +234,28 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           data-modo={painel ? "painel" : "pilha"}
           overlayProps={{ "data-criar-fundo": painel ? "painel" : "pilha" }}
           onOpenAutoFocus={(evento) => {
-            // O foco vai para a primeira escolha (§5.4), não para o botão de
+            // O foco vai para a escolha que abriu o fluxo e, na primeira
+            // abertura, para a primeira escolha (§5.4) — nunca para o botão de
             // fechar: o foco automático do Radix não decide por nós.
             evento.preventDefault()
             posicionar()
-            lista.current?.querySelector<HTMLElement>("[data-escolha]")?.focus()
+            const origem = escolhaDeOrigem.current
+            escolhaDeOrigem.current = null
+            const alvo =
+              (origem === null
+                ? null
+                : lista.current?.querySelector<HTMLElement>(`[data-escolha="${origem}"]`)) ??
+              lista.current?.querySelector<HTMLElement>("[data-escolha]")
+            alvo?.focus()
+          }}
+          onCloseAutoFocus={(evento) => {
+            // Sem escolha de origem o Radix ainda acerta na primeira abertura;
+            // depois do formulário de encontro ele restauraria o foco para o
+            // botão que já saiu da árvore. O destino certo é o Criar.
+            if (!fechamentoPedido.current) return
+            fechamentoPedido.current = false
+            evento.preventDefault()
+            document.querySelector<HTMLElement>('[data-acao="criar"]')?.focus()
           }}
           className="bv-painel bv-criar-menu"
         >
@@ -242,7 +272,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
                 type="button"
                 data-acao="fechar-sobreposicao"
                 aria-label="Fechar"
-                onClick={aoFechar}
+                onClick={fechar}
                 className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-(--muted)"
               >
                 <Icone nome="close" className="size-6" />
@@ -250,7 +280,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
             ) : null}
           </div>
           {!painel ? (
-            <button type="button" data-criar="fechar" aria-label="Fechar" onClick={aoFechar}>
+            <button type="button" data-criar="fechar" aria-label="Fechar" onClick={fechar}>
               <Icone nome="close" />
             </button>
           ) : null}
