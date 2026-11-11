@@ -10,9 +10,7 @@ const TEMAS = ["light", "dark"] as const
 
 for (const tema of TEMAS) {
   for (const variante of VARIANTES) {
-    test(`F02 vNext / ${tema} / ${variante.valor}: captura e responsividade`, async ({
-      page,
-    }) => {
+    test(`F02 vNext / ${tema} / ${variante.valor}: captura e responsividade`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: tema })
       await page.goto(`/app/previa/vnext?v=${variante.valor}`)
 
@@ -52,7 +50,9 @@ test("F02 vNext: A e B preservam a mesma busca e os mesmos filtros", async ({ pa
 
   await page.getByRole("button", { name: "Ver contexto: Mudanças e transporte" }).click()
   await expect(page.getByRole("dialog")).toBeVisible()
-  await expect(page.getByText("O item é fictício e não tem destino no aplicativo real.")).toBeVisible()
+  await expect(
+    page.getByText("O item é fictício e não tem destino no aplicativo real."),
+  ).toBeVisible()
   await page.getByRole("button", { name: "Fechar detalhe" }).click()
   await expect(page.getByRole("dialog")).not.toBeVisible()
 })
