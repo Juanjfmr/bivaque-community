@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "npx pnpm@11.18.0 install --frozen-lockfile",
+  "buildCommand": "pnpm exec vite build --config vite.vnext.config.ts",
+  "outputDirectory": "dist-vnext"
+}
