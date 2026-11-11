@@ -1,0 +1,38 @@
+name: Verify public Bivaque mobile preview
+on:
+  push:
+    branches:
+      - bivaque21st-preview-20261111
+    paths:
+      - ".github/workflows/bivaque21st-link-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe HTML and assets through public static gateway
+        run: |
+          set -euo pipefail
+          PREFIX="https://raw.githack.com/Juanjfmr/bivaque-community/bivaque21st-preview-20261111/preview-site"
+          for attempt in $(seq 1 8); do
+            code="$(curl -L -s --max-time 15 -o /tmp/bivaque-preview.html -w '%{http_code}' "$PREFIX/index.html" || true)"
+            if [ "$code" = "200" ] && grep -q "Bivaque" /tmp/bivaque-preview.html && grep -q './assets/' /tmp/bivaque-preview.html; then
+              echo "HTML OK, attempt $attempt"
+              break
+            fi
+            echo "HTML unavailable (HTTP $code, attempt $attempt)"
+            if [ "$attempt" = "8" ]; then exit 1; fi
+            sleep 5
+          done
+          JS="$(grep -oE 'src="\./assets/[^"]+\.js"' /tmp/bivaque-preview.html | sed -E 's#src="\./##;s#"$##' | head -1)"
+          CSS="$(grep -oE 'href="\./assets/[^"]+\.css"' /tmp/bivaque-preview.html | sed -E 's#href="\./##;s#"$##' | head -1)"
+          test -n "$JS"
+          test -n "$CSS"
+          for f in "$JS" "$CSS" "demo/crib.jpg" "ilustracoes/chegando.webp"; do
+            code="$(curl -Ls --max-time 20 -o /dev/null -w '%{http_code}' "$PREFIX/$f")"
+            echo "$f -> $code"
+            test "$code" = 200
+          done
