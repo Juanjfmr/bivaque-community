@@ -60,14 +60,14 @@ const ServiceCard = React.forwardRef<HTMLDivElement, ServiceCardProps>(
         scale: 1.1,
         rotate: 3,
         x: 10,
-        transition: { duration: 0.4, ease: "easeInOut" },
+        transition: { duration: 0.4, ease: "easeInOut" as const },
       },
     };
     
     const arrowAnimation = {
         hover: {
             x: 5,
-            transition: { duration: 0.3, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" as const },
+            transition: { duration: 0.3, ease: "easeInOut" as const, repeat: Infinity, repeatType: "reverse" as const },
         }
     }
 
@@ -77,7 +77,7 @@ const ServiceCard = React.forwardRef<HTMLDivElement, ServiceCardProps>(
         ref={ref}
         variants={cardAnimation}
         whileHover="hover"
-        {...props}
+        {...(props as React.ComponentProps<typeof motion.div>)}
       >
         <div className="relative z-10 flex flex-col h-full">
           <h3 className="text-2xl font-bold tracking-tight">{title}</h3>

@@ -3,7 +3,7 @@ import{Search,MapPin,ChevronLeft,Plus,Home,Users,Store,User,MessageCircle,Calend
 import BottomNavBar from "./components/21st/bottom-nav-bar";
 import{ProductCard,ProductCardImage,ProductCardContent,ProductCardHeader,ProductCardTitle,ProductCardSubtitle,ProductCardMetric}from "./components/21st/upstream/product-card";
 import SocialPostCard from "./components/21st/social-post-card";
-import{EventCard}from "./components/21st/upstream/event-card";
+import{EventCard}from "./components/21st/event-card";
 import{ChipFilter}from "./components/21st/upstream/chip-filter";
 import{PropertyCard}from "./components/21st/property-card";
 import{ServiceCard}from "./components/21st/service-card";
@@ -16,7 +16,7 @@ import{CommentThread}from "./components/21st/upstream/comment-thread";
 import{MagneticDrawer}from "./components/21st/upstream/magnetic-drawer";
 import{VercelNotificationPopover}from "./components/21st/upstream/notification-popover";
 import{Notifications2}from "./components/21st/notification-settings";
-import{BookmarkIconButton}from "./components/21st/upstream/bookmark-icon-button";
+import{BookmarkIconButton}from "./components/21st/bookmark-icon-button";
 import{ExpandMenu}from "./components/21st/upstream/expand-menu";
 import{Button}from "./components/ui/button";
 import{Toaster,toast}from "sonner";
