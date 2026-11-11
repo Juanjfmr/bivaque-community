@@ -1,0 +1,44 @@
+name: Verify githack 21st interstitial and real app
+on:
+  push:
+    branches:
+      - bivaque21st-preview-20261111
+    paths:
+      - ".github/workflows/bivaque21st-browser-live.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        working-directory: experiments/bivaque-21st-native
+        run: npm install --no-audit --no-fund
+      - name: Check browser interstitial and app
+        working-directory: experiments/bivaque-21st-native
+        run: |
+          node --input-type=module <<'JS'
+          import {chromium} from "@playwright/test";
+          const u="https://raw.githack.com/Juanjfmr/bivaque-community/bivaque21st-preview-20261111/preview-site/index.html";
+          const browser=await chromium.launch({channel:"chrome",headless:true});
+          const page=await browser.newPage({viewport:{width:375,height:812}});
+          await page.goto(u,{waitUntil:"domcontentloaded",timeout:25000});
+          console.log("INTERSTITIAL",JSON.stringify((await page.locator("body").innerText()).slice(0,1000)));
+          console.log("LINKS",JSON.stringify(await page.locator("a").evaluateAll(xs=>xs.slice(0,12).map(x=>({text:x.innerText,href:x.getAttribute("href")})))));
+          console.log("BUTTONS",JSON.stringify(await page.locator("button").evaluateAll(xs=>xs.slice(0,15).map(x=>({text:x.innerText,type:x.type})))));
+          const ctx=page.context();
+          await ctx.addCookies([{name:"__Http-phish",value:"1",domain:"raw.githack.com",path:"/"}]);
+          await page.goto(u,{waitUntil:"domcontentloaded",timeout:25000});
+          await page.waitForTimeout(2000);
+          const h1=await page.locator("h1").allTextContents();
+          const jsErrors=[];
+          console.log("AFTER_COOKIE",JSON.stringify({title:await page.title(),h1,body:(await page.locator("body").innerText()).slice(0,500),url:page.url}));
+          if(!h1.some(x=>x.includes("Manaus")))process.exitCode=1;
+          await browser.close();
+          JS
