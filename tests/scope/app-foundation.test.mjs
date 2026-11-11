@@ -38,8 +38,10 @@ test("publicação conjunta: o app é servido em /app pelo Next (SPA ADR §8)", 
   const next = read("apps/web/next.config.ts")
   assert.match(next, /source: "\/app"/)
   assert.match(next, /destination: "\/app\/index\.html"/)
-  // O portão da web não gateia o app: a entrada é a porta do próprio app.
-  assert.match(read("apps/web/proxy.ts"), /PUBLIC_PATHS[\s\S]*"\/app"/)
+  // O portão da web não gateia o app: a entrada é a porta do próprio app. A
+  // superfície pública saiu do proxy e mora em lib/security/route-surface.ts.
+  assert.match(read("apps/web/lib/security/route-surface.ts"), /caminho: "\/app"/)
+  assert.match(read("apps/web/proxy.ts"), /isPublicPath/)
   // Artefato gerado não é versionado.
   const gitignore = read(".gitignore")
   assert.match(gitignore, /apps\/web\/public\/app\//)

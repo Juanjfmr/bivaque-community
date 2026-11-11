@@ -5724,7 +5724,7 @@
     {
       "phase": "Lançamento",
       "blockers": [],
-      "updatedAt": "2026-11-05",
+      "updatedAt": "2026-11-10",
       "proof": [
         "05/11: RUN-008, as três sobras da revisão do PR #128 (commits a86f64a0, 7875b33b, 3676e56d; base 6e3b61fb). Convite: POST /api/app/entry/invite e /invite/preview conferem limitadorConfigurado() antes do corpo e respondem 503 {erro:indisponivel} em produção sem BIVAQUE_LIMITER_PEPPER, em vez do 500 do digest da origem. Combinado: lê locality_memberships pelo cliente da sessão e responde 409 sem-cidade sem gravar nem avançar o marcador (503 leitura-indisponivel se a leitura falhar), como /groups, com teste positivo e negativo. Purga: entry-progress-purge.sql passou a provar permissão — has_function_privilege falso para anon/authenticated e verdadeiro para service_role, chamada recusada com 42501 sob os dois papéis de cliente e o dono do job executando a função. Provas: vitest tests/unit/app-api 265/265 (18 arquivos), pgTAP entry-progress-purge 11/11 via psql no stack local pela fila (o CLI segue sem alcançar o pipe do Docker neste host, então test:db não rodou), gate --fast verde e test:scope 181/181. Sem migration e sem mudança de RLS nesta rodada.",
         "05/11 rodada 2 — revisão independente FAIL, auditoria PASS com ressalvas, CI vermelho no replay limpo (commits 874575e1, 87e8dc8f, 3be21dcf, a2344b9d, a3e64140, 18805363, 08fab331, e07e975f, 6cf82317, f5e48625). Replay limpo de verdade: o CLI não alcança o pipe do Docker neste host, então recriei o banco do zero com psql (drop de public/private sobre o schema base do Supabase, restauração dos grants base e aplicação de TODAS as migrations em ordem); nesse banco, entry-otp-limiter 76/76 (as 6 falhas do CI eram teste, não esquema: o IP X chegava a 8 envios e o teto novo de 8/h bloqueava o caso de reabertura da hora; os padrões de IP/e-mail também precisavam de % no LIKE), entry-provision-atomic 24/24, entry-progress-purge 5/5 e db lint sem erro. Disjuntor: email_sent e sign_in_sign_ups subiram para 600 no config.toml, acima dos 500/h; teste de escopo lê config e migration e falha se regredir; ADR-20261101 registra o custo (8 IPs não travam; ~63 ainda travam; desafio humano depois) e o card novo ENTRADA-DESAFIO-HUMANO (repo, P2, dependência BLOCK-RESEND) cobre Turnstile e o risco de CGNAT/Wi-Fi de OM; BLOCK-RESEND ganhou o item de produção do dono. Falha de provedor vai sempre para /app/entrar?erro=provedor, qualquer next. Retomada: interesses grava o marcador combinado e combinado grava avisos com o id da sessão; GET ignora marcador de versão antiga com vínculo; E2E recarrega no combinado e nos avisos e cai na etapa certa. Prévia da cidade deixou de afirmar primeiros sem dado real. Falha de rede no convite/código tem mensagem fixa e o botão volta (teste de unidade e E2E com a rota derrubada). Rascunho abandonado expira por job pg_cron diário, com pgTAP positivo/negativo e GET que devolve 503 se o delete falhar; ADR-20261102 corrigido para estado {cidade}. Origem do convite virou IP confiável + /64 + HMAC do limitador nos três lugares, com teste. Menores: 400 do aceite com mensagem por motivo, fallback da família no app, varredura transitiva de imports, has_accepted_consent com as duas versões, unavailable/email_mismatch/rate_limited sem outbox, estado Confirmando… no provisionamento e retomada com erro de verificação e Tentar de novo. Provas: pnpm test 2024/2024 (root; 208 arquivos), apps/app 190/190, mobile 76/76, web 19/19, escopo 160/160; vitest app-api+onboarding+convite 492/492; gate --fast verde; E2E f01-entrada-real 24/24 (8 casos × 375/768/1440), incluindo conta nova pelo OTP/Mailpit, falha do provisionamento com Confirmando…, erro do provedor, rede derrubada no convite e retomada em combinado/avisos. Desvio registrado: /invite/<token> é convite de comunidade, não código de família; a página aponta para /app/entrar e o token não é preservado, então o convite continua pendente (comentário da página diz a verdade). Card fica em now até a revisão independente da rodada 2.",
@@ -5745,18 +5745,20 @@
         "02/11: primeiro lote — contrato de segurança das rotas /api do app em apps/web/lib/app-api (contrato.ts, sessao.ts e sessao-do-next.ts): credencial única (cookie da web OU Bearer do app de loja), conflito recusado, token malformado ou inválido nunca cai para o cookie, CSRF de escrita com Origin e cabeçalho do app, CORS explícito sem curinga com credencial. 24/24 testes em tests/unit/app-api (positivo e negativo em cada regra); gate --fast e pnpm test verdes. As rotas consumidoras e o resto do card entram nos próximos lotes.",
         "02/11: posto em now por instrução do dono; a ordem do docs/LANCAMENTO.md manda entregar o F01 ligado ao banco (ADR-20261101-entrada-unica-por-codigo). Dependência ainda aberta: AJUDA-PUBLICA, que é feita antes; LAN-F1-IDENTIDADE, APP-F01-ENTRADA-VISUAL e APP-001 estão fechadas.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "05/11: pelo ADR-20261105 a entrada fica congelada; a revisão às cegas Nextdoor e a auditoria de acessibilidade separada deixam de ser portão do F01 (a acessibilidade mínima é a do E2E); a retirada da tela antiga do apps/web vai para ENTRADA-WEB-ANTIGA."
+        "05/11: pelo ADR-20261105 a entrada fica congelada; a revisão às cegas Nextdoor e a auditoria de acessibilidade separada deixam de ser portão do F01 (a acessibilidade mínima é a do E2E); a retirada da tela antiga do apps/web vai para ENTRADA-WEB-ANTIGA.",
+        "10/11: fechamento — revisão independente da rodada 2 PASS (reviewers d780600d e f29e13e9) no head 257ad182; o documento de I-4/I-5 foi reconstruído e mergeado no #178 (d6c9039d); E2E f01-entrada-real 27/27 (9 casos × 3 larguras, incluindo o 9º caso em tema escuro); CI do PR verde; SEC-008 e RUN-004 com revisão de contrato e auditoria do security-auditor PASS com ressalvas (RATIFICACAO.md:13); o resíduo do /auth/v1/verify fica em BLOCK-RESEND e não bloqueia o F01. Card fecha."
       ],
       "id": "LAN-F01",
       "title": "F01 Entrada e onboarding ligada ao banco",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
+      "completedAt": "2026-11-10",
       "description": "Escopo em docs/LANCAMENTO.md (F01) e ADR-20261101-entrada-unica-por-codigo. Plano da frente, em ordem: 1) contrato de segurança das rotas /api do app (SPA ADR §5.1 a §5.3), em lib/app-api com testes; 2) progresso da entrada no banco (migration R3 com RLS e pgTAP) e as rotas GET/PUT /api/app/entry/progress; 3) ponte de autenticação por código no servidor (envio e verificação do OTP, cookie de sessão, reenvio de 60 s e limites); 4) cidade, momento, grupos e avisos; 5) verificação de CPF pelo caminho do Portal que já existe, com documento e revisão; 6) portar o visual aprovado da prévia para /app/entrar, retirar a tela antiga do apps/web com redirect e ajustar o portão do proxy. Cada passo entra com teste positivo e negativo e prova de runtime própria.",
       "checklist": [
         "[x] Jornada inteira com dados reais: entrada, ação, gravação, retorno, acompanhamento e falha principal — as três sobras da revisão fechadas pelo RUN-008 (a86f64a0, 7875b33b, 3676e56d) sobre a jornada já provada em 05/11 pelo E2E f01-entrada-real 24/24; vitest app-api 265/265, pgTAP da purga 11/11, gate --fast verde e test:scope 181/181",
-        "E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
-        "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3"
+        "[x] E2E em 375/768/1440, claro e escuro; banco com casos positivos e negativos",
+        "[x] Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3"
       ],
       "tests": [
         "tests/unit/app-api/contrato.test.ts",
@@ -6663,18 +6665,20 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
+      "completedAt": "2026-11-10",
       "description": "Saiu do portão do LAN-F01 pelo ADR-20261105-entrada-enxuta-e-r3-sem-parada. A entrada do lançamento é a do app (/app/entrar); as telas antigas de entrada do apps/web (login, onboarding, recuperar e nova senha) devem redirecionar para ela, sem quebrar /consent do Google.",
       "checklist": [
         "[x] Listar as rotas antigas de entrada ainda servidas pelo apps/web",
         "[x] Redirecionar para /app/entrar preservando /consent e /auth/callback",
-        "E2E: rota antiga leva à entrada do app em 375/768/1440"
+        "[x] E2E: rota antiga leva à entrada do app em 375/768/1440"
       ],
       "dependencies": ["LAN-F01"],
       "links": ["docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"],
       "proof": [
         "05/11: lote de acabamento (Haiku 5.5) — redirecionamento 307 das rotas antigas de entrada do apps/web para /app/entrar em apps/web/next.config.ts, com /consent, /auth/callback, /auth/confirmar-email e /auth/callback-error fora; E2E antigos migrados (commits 2a9acabb, c0397181, c9f77ae1, 6b50e9f0); revisão Qwen FAIL na primeira entrega (E2E não migrados, caminho de falha do e-mail), corrigido na rodada única",
-        "10/11: 3/3 verificados — redirects em apps/web/next.config.ts e middleware-session-gate.spec.ts:18 prova /app/entrar nos 3 projetos; o card só fecha quando LAN-F01 (now) fechar, porque a regra do board não deixa done depender de now."
+        "10/11: 3/3 verificados — redirects em apps/web/next.config.ts e middleware-session-gate.spec.ts:18 prova /app/entrar nos 3 projetos; o card só fecha quando LAN-F01 (now) fechar, porque a regra do board não deixa done depender de now.",
+        "10/11: fecha junto com o LAN-F01 done — os 307 das rotas antigas estão em apps/web/next.config.ts e tests/e2e/middleware-session-gate.spec.ts:18 prova /app/entrar nos 3 projetos; checklist 3/3."
       ],
       "tests": [],
       "blockers": [],
