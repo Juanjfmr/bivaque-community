@@ -98,6 +98,6 @@ A gramática vem da tarefa. A identidade vem das peças. Um card é apropriado o
 ## Observações de cobertura
 
 - **Bivaque Clubes e a gestão interna** têm contratos próprios e não devem ser encaixados nas dez jornadas da Comunidade ou receber a mesma gramática de mural. Reservas/agenda de instalações são diferentes de presença em eventos.
-- A **land​​ing pública** é superfície de apresentação e tem autorização própria: Taste Skill ajuda em direção de arte, mas seus padrões de marketing não são os padrões do app.
+- A **landing pública** é superfície de apresentação e tem autorização própria: Taste Skill ajuda em direção de arte, mas seus padrões de marketing não são os padrões do app.
 - Sempre documentar o que um padrão externo resolve melhor, o que falha no Bivaque e qual parte seria adaptada.
 - As opções A/B são **hipóteses**, não telas aprovadas nem backlog de implementação.
