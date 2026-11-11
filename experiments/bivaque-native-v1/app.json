@@ -1,21 +1,37 @@
 {
   "expo": {
-    "name": "Bivaque — Beta Nativo",
-    "slug": "bivaque-native-beta",
-    "version": "0.1.0",
+    "name": "Bivaque — Expo UI Beta",
+    "slug": "bivaque-expo-ui-beta",
+    "version": "0.2.0",
     "orientation": "portrait",
-    "scheme": "bivaque-beta",
+    "scheme": "bivaque-ui-beta",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "android": {
-      "package": "com.bivaque.community.nativebeta",
-      "versionCode": 1,
+      "package": "com.bivaque.community.expuibeta",
+      "versionCode": 2,
       "edgeToEdgeEnabled": true,
-      "adaptiveIcon": { "backgroundColor": "#f3f5f6" },
+      "adaptiveIcon": {
+        "backgroundColor": "#f3f5f6"
+      },
       "permissions": []
     },
-    "ios": { "bundleIdentifier": "com.bivaque.community.nativebeta", "supportsTablet": false },
-    "plugins": ["expo-router", ["expo-image-picker", {"photosPermission": "Escolha fotos para criar seus anúncios no Bivaque.", "cameraPermission": false}]],
-    "experiments": {"typedRoutes": false}
+    "ios": {
+      "bundleIdentifier": "com.bivaque.community.nativebeta",
+      "supportsTablet": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Escolha fotos para criar seus anúncios no Bivaque.",
+          "cameraPermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
   }
 }
