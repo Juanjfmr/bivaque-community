@@ -10,9 +10,9 @@ import type { Database } from "supabase/database.generated"
  * `lib/notifications/channel-preferences`); este módulo só persistência e
  * leitura.
  *
- * `push` é o terceiro canal, decidido pelo dono em 04/11/2026. Ele é gravado
- * como preferência, mas quem entrega push é o LAN-PUSH (depende das chaves da
- * loja): a tela diz isso com palavras, não finge que o aviso já chega.
+ * `push` é o terceiro canal. A entrega web já existe (RUN-137): quem entrega é o
+ * outbox, com as chaves VAPID do servidor. A inscrição nativa de loja depende do
+ * empacotamento e das chaves do dono, e ainda não existe.
  */
 
 export const TIPOS_DO_AVISO = ["comments", "events", "product_news", "indications"] as const
@@ -48,9 +48,9 @@ function ehCanal(valor: unknown): valor is CanalDoAviso {
 
 /**
  * Sem linha na matriz o canal segue o tipo — exceto o e-mail das indicações,
- * que é o resumo diário e nasce desligado, e o push, que nasce desligado
- * porque ainda não há envio (LAN-PUSH). Canal ligado que não entrega é a tela
- * que mente; a escolha fica gravada para quando o envio existir.
+ * que é o resumo diário e nasce desligado, e o push, que nasce desligado e só
+ * entrega com a escolha explícita do canal (ADR-20261107). Canal ligado que não
+ * entrega é a tela que mente.
  */
 function canalPadrao(
   tipoHabilitado: boolean,

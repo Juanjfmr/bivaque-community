@@ -8,7 +8,7 @@
 // (migration 20260911054812). Keeping the TypeScript twin pure lets the
 // dispatcher be tested with the channel on and off without a database.
 
-export type NotificationChannel = "in_app" | "email"
+export type NotificationChannel = "in_app" | "email" | "push"
 
 export type NotificationTypeKey =
   | "comments"
@@ -27,7 +27,7 @@ export const NOTIFICATION_TYPE_KEYS: readonly NotificationTypeKey[] = [
   "indications",
 ]
 
-export const NOTIFICATION_CHANNELS: readonly NotificationChannel[] = ["in_app", "email"]
+export const NOTIFICATION_CHANNELS: readonly NotificationChannel[] = ["in_app", "email", "push"]
 
 // The outbox writes a notification type; the matrix stores a preference key.
 const OUTBOX_TYPE_TO_PREFERENCE_KEY: Record<string, NotificationTypeKey> = {
@@ -52,6 +52,7 @@ const OUTBOX_TYPE_TO_PREFERENCE_KEY: Record<string, NotificationTypeKey> = {
 // alone (plus the opt-out list, handled separately by the dispatcher).
 const OUTBOX_CHANNEL_TO_MATRIX_CHANNEL: Record<string, NotificationChannel | null> = {
   email: "email",
+  push: "push",
   whatsapp: null,
 }
 
@@ -83,9 +84,11 @@ function typeEnabled(key: NotificationTypeKey, preference: TypePreferenceRow | u
 }
 
 // Without a matrix row the channel follows the type — except the e-mail of
-// indications: the daily digest is opt-in (ADR-20260925-aviso-de-pedido). Same
-// rule as `private.notification_channel_allows`.
+// indications (the daily digest is opt-in, ADR-20260925-aviso-de-pedido) and
+// push, which is off until the person turns it on (ADR-20261107). Same rule as
+// `private.push_channel_enabled` and `private.notification_channel_allows`.
 function channelDefault(key: NotificationTypeKey, channel: NotificationChannel): boolean {
+  if (channel === "push") return false
   return !(key === "indications" && channel === "email")
 }
 
@@ -117,6 +120,9 @@ export function outboxDeliveryAllowed(input: {
     if (key === null) return true
     return typeEnabled(key, input.preference)
   }
+  // Push has no preference key of its own: without a mapped type there is no
+  // row to enable, so nothing is sent (mirrors private.push_channel_enabled).
+  if (matrixChannel === "push" && preferenceKeyForOutboxType(input.type) === null) return false
   return notificationChannelAllows({
     type: input.type,
     channel: matrixChannel,

@@ -23,13 +23,21 @@ import {
   salvarPreferenciasDeAviso,
   type TipoDoAviso,
 } from "@/lib/dados/avisos"
+import {
+  comPushEmTodos,
+  desinscreverPush,
+  estadoDoInterruptorDePush,
+  inscreverPush,
+} from "@/lib/dados/push"
 
 /**
  * Preferências de aviso por tipo e por canal (F09), na área Você.
  *
  * A escolha é a mesma matriz que a web antiga usa: quatro tipos × três canais.
- * O push nasce desligado porque ainda não há envio no celular (LAN-PUSH); a
- * escolha fica guardada e a frase diz isso, em vez de prometer o que não chega.
+ * O push do aparelho tem um interruptor próprio: é ele que pede a permissão do
+ * navegador e grava a inscrição do aparelho. O canal push por tipo continua na
+ * matriz, mas só entrega quando o interruptor está ligado e a pessoa escolheu o
+ * tipo (ADR-20261107).
  */
 
 type TipoVisivel = Exclude<TipoDoAviso, "product_news">
@@ -49,6 +57,8 @@ const CANAIS: ReadonlyArray<readonly [CanalDoAviso, string]> = [
   ["email", "E-mail"],
   ["push", "Push"],
 ]
+
+const ROTULO_DO_PUSH = "Avisos no aparelho"
 
 function canalDe(
   preferencias: PreferenciasDeAviso,
@@ -83,6 +93,11 @@ export function PreferenciasDeAvisos() {
   const [rodada, setRodada] = useState(0)
   const [sujo, setSujo] = useState(false)
   const [salvando, setSalvando] = useState(false)
+  const [push, setPush] = useState<{ disponivel: boolean; ligado: boolean }>({
+    disponivel: false,
+    ligado: false,
+  })
+  const [alternandoPush, setAlternandoPush] = useState(false)
   // Guarda síncrona: um clique duplicado no mesmo quadro não dispara outro PATCH.
   const envioEmCurso = useRef(false)
 
@@ -99,6 +114,13 @@ export function PreferenciasDeAvisos() {
       .catch(() => {
         if (!controle.signal.aborted) setErro(true)
       })
+    void estadoDoInterruptorDePush()
+      .then((estado) => {
+        if (!controle.signal.aborted) setPush(estado)
+      })
+      .catch(() => {
+        if (!controle.signal.aborted) setPush({ disponivel: false, ligado: false })
+      })
     return () => controle.abort()
   }, [rodada])
 
@@ -112,6 +134,58 @@ export function PreferenciasDeAvisos() {
     if (envioEmCurso.current) return
     setPreferencias((atual) => (atual === null ? atual : comCanal(atual, tipo, canal, ativo)))
     setSujo(true)
+  }
+
+  /**
+   * Liga o push só na ação da pessoa: é aqui que o navegador pede permissão.
+   * Negado mantém desligado e diz o motivo; sem as chaves do servidor o
+   * interruptor nem aparece.
+   */
+  async function alterarPush(ativo: boolean) {
+    if (alternandoPush || preferencias === null) return
+    setAlternandoPush(true)
+    try {
+      if (ativo) {
+        const resultado = await inscreverPush()
+        if (resultado.estado === "negado") {
+          avisar({
+            texto:
+              "O navegador não autorizou as notificações. Para ligar, permita os avisos deste site nas configurações do navegador.",
+            tipo: "erro",
+          })
+          setPush((atual) => ({ ...atual, ligado: false }))
+          return
+        }
+        if (resultado.estado !== "inscrito") {
+          avisar({ texto: "Não foi possível ligar os avisos neste aparelho agora.", tipo: "erro" })
+          setPush((atual) => ({ ...atual, ligado: false }))
+          return
+        }
+        setPush((atual) => ({ ...atual, ligado: true }))
+      } else {
+        // Desligar vale mesmo sem gravar: o aparelho não deve continuar inscrito.
+        await desinscreverPush().catch(() => undefined)
+        setPush((atual) => ({ ...atual, ligado: false }))
+      }
+
+      // O interruptor grava o canal push na hora: ligar e sair da tela sem
+      // gravar deixaria a inscrição sem entrega, a tela que mente.
+      const atualizadas = comPushEmTodos(preferencias, ativo)
+      setPreferencias(atualizadas)
+      setSalvando(true)
+      try {
+        const gravadas = await salvarPreferenciasDeAviso(atualizadas)
+        setPreferencias(gravadas)
+        setSujo(false)
+      } catch {
+        setSujo(true)
+        avisar({ texto: "Não foi possível gravar a escolha de push agora.", tipo: "erro" })
+      } finally {
+        setSalvando(false)
+      }
+    } finally {
+      setAlternandoPush(false)
+    }
   }
 
   function salvar() {
@@ -145,9 +219,30 @@ export function PreferenciasDeAvisos() {
   return (
     <div data-preferencias-de-aviso="sim" aria-busy={salvando} className="grid gap-3">
       <p className="text-sm text-(--on-surface-variant)">
-        Escolha o que você quer receber e por onde. O push no celular passa a chegar quando o app da
-        loja estiver instalado; a escolha fica guardada.
+        Escolha o que você quer receber e por onde. Os avisos no aparelho só chegam depois que você
+        ligar o push abaixo.
       </p>
+
+      {push.disponivel ? (
+        <div
+          data-preferencia="push-aparelho"
+          className="flex min-h-11 items-start justify-between gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+        >
+          <span className="grid min-w-0 gap-0.5">
+            <b className="text-[15px] font-semibold">Avisos no aparelho</b>
+            <small className="text-[13px] text-(--on-surface-variant)">
+              Chegam mesmo com o Bivaque fechado. O navegador pede permissão quando você liga.
+            </small>
+          </span>
+          <Checkbox
+            checked={push.ligado}
+            disabled={alternandoPush}
+            onCheckedChange={(valor) => void alterarPush(valor === true)}
+            aria-label={ROTULO_DO_PUSH}
+            className="mt-1"
+          />
+        </div>
+      ) : null}
 
       <ul className="grid gap-2">
         {TIPOS.map(([tipo, titulo, texto]) => {
@@ -178,17 +273,19 @@ export function PreferenciasDeAvisos() {
                     : "flex flex-wrap items-center gap-4 pl-1 opacity-40"
                 }
               >
-                {CANAIS.map(([canal, rotulo]) => (
-                  <span key={canal} className="flex min-h-11 items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={ligado && canalDe(preferencias, tipo, canal)}
-                      disabled={!ligado || salvando}
-                      onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
-                      aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
-                    />
-                    {rotulo}
-                  </span>
-                ))}
+                {CANAIS.filter(([canal]) => canal !== "push" || push.disponivel).map(
+                  ([canal, rotulo]) => (
+                    <span key={canal} className="flex min-h-11 items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={ligado && canalDe(preferencias, tipo, canal)}
+                        disabled={!ligado || salvando || (canal === "push" && !push.ligado)}
+                        onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
+                        aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
+                      />
+                      {rotulo}
+                    </span>
+                  ),
+                )}
               </div>
             </li>
           )

@@ -26,11 +26,10 @@ describe("email channel adapter (D1 Task 4 — Resend)", () => {
   it("stays unavailable when RESEND_API_KEY is missing — no pretend provider", () => {
     delete process.env["RESEND_API_KEY"]
     const adapters = createChannelAdapters()
-    // Email é o ÚNICO canal desde 18/09/2026 (o WhatsApp saiu do MVP). O assert
-    // de que o adaptador de whatsapp existia virou o assert de que NÃO existe
-    // canal além do e-mail: é a garantia que o enum do banco e este registro
-    // concordam, e que ninguém reintroduz um canal sem adaptador.
-    expect(Object.keys(adapters)).toEqual(["email"])
+    // O WhatsApp saiu do MVP em 18/09/2026. O push entra no RUN-029 (LAN-PUSH).
+    // O assert garante que o enum do banco e este registro concordam, e que
+    // ninguém reintroduz um canal sem adaptador.
+    expect(Object.keys(adapters)).toEqual(["email", "push"])
     // The email adapter is a real adapter only when the key exists; the
     // unavailable path returns a failure the worker turns into a retry.
   })
