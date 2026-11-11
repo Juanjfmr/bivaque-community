@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
@@ -43,6 +43,8 @@ export function Familia() {
   const [revogando, setRevogando] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
+  // Convite e revogação não podem disputar a mesma lista ou sobrescrever avisos.
+  const operacaoPendente = useRef(false)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
@@ -61,7 +63,8 @@ export function Familia() {
 
   const convidar = () => {
     const alvo = email.trim()
-    if (alvo === "" || enviando) return
+    if (alvo === "" || operacaoPendente.current) return
+    operacaoPendente.current = true
     setEnviando(true)
     setMensagem(null)
     setAviso(null)
@@ -77,11 +80,15 @@ export function Familia() {
       .catch((falha: unknown) =>
         setMensagem(frase(falha, "Não foi possível enviar o convite. Tente de novo.")),
       )
-      .finally(() => setEnviando(false))
+      .finally(() => {
+        operacaoPendente.current = false
+        setEnviando(false)
+      })
   }
 
   const revogar = (id: string) => {
-    if (revogando !== null) return
+    if (operacaoPendente.current) return
+    operacaoPendente.current = true
     setRevogando(id)
     setMensagem(null)
     setAviso(null)
@@ -97,7 +104,10 @@ export function Familia() {
       .catch((falha: unknown) =>
         setMensagem(frase(falha, "Não foi possível revogar o convite. Tente de novo.")),
       )
-      .finally(() => setRevogando(null))
+      .finally(() => {
+        operacaoPendente.current = false
+        setRevogando(null)
+      })
   }
 
   if (erro) {
@@ -139,11 +149,12 @@ export function Familia() {
             autoComplete="email"
             valor={email}
             aoMudar={setEmail}
+            disabled={enviando || revogando !== null}
             nota="O familiar recebe o código por e-mail e entra por ele. O convite vale 7 dias e a conta dele fica independente da sua."
           />
           <Botao
             type="submit"
-            disabled={enviando || email.trim() === ""}
+            disabled={enviando || revogando !== null || email.trim() === ""}
             className="justify-self-start"
           >
             {enviando ? "Enviando…" : "Enviar convite"}
@@ -178,7 +189,7 @@ export function Familia() {
                     {revogando === convite.id ? "Revogando…" : "Revogar"}
                   </span>
                 }
-                disabled={revogando !== null}
+                disabled={enviando || revogando !== null}
                 onClick={() => revogar(convite.id)}
               />
             ))}

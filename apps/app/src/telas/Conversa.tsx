@@ -34,11 +34,16 @@ export function Conversa() {
   const [erroLocal, setErroLocal] = useState("")
   const [mostrarSeguranca, setMostrarSeguranca] = useState(false)
   const controle = useRef<AbortController | null>(null)
+  // Os locks em refs barram eventos repetidos antes de React renderizar o disabled.
+  const envioEmCurso = useRef(false)
+  const paginaEmCurso = useRef(false)
   useRolagemEFoco(CARGA_CONCLUIDA)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const pedido = new AbortController()
     controle.current = pedido
+    envioEmCurso.current = false
+    paginaEmCurso.current = false
     setDados(null)
     setErro(null)
     setErroLocal("")
@@ -74,11 +79,15 @@ export function Conversa() {
   }, [id, nome, mostrarConversaNoTopo])
   async function enviar() {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || enviando || !rascunho.trim()) return
+    if (!pedido || pedido.signal.aborted || enviando || envioEmCurso.current || !rascunho.trim())
+      return
+    // Copiar a mensagem e ocupar a operação antes do primeiro await.
+    const texto = rascunho
+    envioEmCurso.current = true
     setEnviando(true)
     setErroLocal("")
     try {
-      const mensagem = await enviarMensagem(id, rascunho, { signal: pedido.signal })
+      const mensagem = await enviarMensagem(id, texto, { signal: pedido.signal })
       if (!pedido.signal.aborted) {
         setDados((atual) =>
           atual ? { ...atual, mensagens: [...atual.mensagens, mensagem] } : atual,
@@ -88,19 +97,31 @@ export function Conversa() {
     } catch {
       if (!pedido.signal.aborted) setErroLocal("Não foi possível enviar. Seu texto foi mantido.")
     } finally {
-      if (!pedido.signal.aborted) setEnviando(false)
+      if (!pedido.signal.aborted) {
+        envioEmCurso.current = false
+        setEnviando(false)
+      }
     }
   }
   async function mais() {
     const pedido = controle.current
-    if (!pedido || !dados?.anterior || carregandoMais) return
+    if (
+      !pedido ||
+      pedido.signal.aborted ||
+      !dados?.anterior ||
+      carregandoMais ||
+      paginaEmCurso.current
+    )
+      return
+    paginaEmCurso.current = true
+    const cursor = dados.anterior
     setCarregandoMais(true)
     setErroLocal("")
     try {
-      const pagina = await buscarConversa(id, { antes: dados.anterior, signal: pedido.signal })
+      const pagina = await buscarConversa(id, { antes: cursor, signal: pedido.signal })
       if (!pedido.signal.aborted)
         setDados((atual) =>
-          atual
+          atual !== null && atual.anterior === cursor
             ? {
                 ...atual,
                 mensagens: [...pagina.mensagens, ...atual.mensagens],
@@ -111,7 +132,10 @@ export function Conversa() {
     } catch {
       if (!pedido.signal.aborted) setErroLocal("Não foi possível carregar as mensagens anteriores.")
     } finally {
-      if (!pedido.signal.aborted) setCarregandoMais(false)
+      if (!pedido.signal.aborted) {
+        paginaEmCurso.current = false
+        setCarregandoMais(false)
+      }
     }
   }
   const validacao = validarParametros("conversa", { id })
