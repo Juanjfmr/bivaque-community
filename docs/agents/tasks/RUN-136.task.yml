@@ -1,0 +1,74 @@
+# RUN-136 — acessibilidade das superfícies que faltam na matriz de axe
+#
+# Fecha o critério 5 (acessível) das jornadas F02, F03 e F07, onde a matriz de
+# axe de 10/11 cobre Início/Mercado/Negócios/Guia/Conversas mas não a busca, o
+# menu Criar, o formulário de encontro, a ficha do negócio nem o pedido.
+
+task_id: RUN-136
+
+objective: >
+  As superfícies de busca, menu Criar, formulário de encontro, ficha do negócio
+  e pedido de serviço passam a ser medidas por axe (WCAG A/AA e 2.1 AA, falha em
+  sério/crítico) em 375/768/1440 e nos dois temas, com teclado, foco, contraste
+  e movimento reduzido provados no navegador — e as falhas essenciais de
+  acessibilidade dessas superfícies ficam corrigidas.
+
+authority:
+  - docs/LANCAMENTO.md (F02, F03, F07 — critério 5, acessível)
+  - docs/agents/regua-nextdoor/HANDOFF.md
+  - apps/app/AGENTS.md (prova de tela: teclado, leitor de tela, capturas nos dois temas)
+  - tools/backend-kanban/public/board.json (LAN-F02, LAN-F03, LAN-F07)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/tests/e2e/acessibilidade.spec.ts:51-82 (matriz axe de 10/11) cobre
+    cinco superfícies — Início, Mercado, Negócios, Guia e Conversas — e não cobre
+    a busca, o menu Criar, o formulário de encontro, a ficha do negócio nem o
+    pedido; a varredura de acessibilidade de 10/11 registrou a lacuna no cartão
+    LAN-F02/F03/F07.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-136.task.yml
+  - apps/app/tests/e2e/acessibilidade.spec.ts
+  - apps/app/tests/e2e/apoio.ts
+  - apps/app/src/telas/Busca.tsx
+  - apps/app/src/telas/Negocio.tsx
+  - apps/app/src/telas/Pedido.tsx
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/eventos/FormularioDeEncontro.tsx
+  - apps/app/src/pecas/pecas.tsx
+  - apps/app/src/pecas/pecas.css
+  - .visual/run-136/
+
+forbidden:
+  - criar rota ou tela nova
+  - alterar apps/web, supabase ou proxy
+  - redesenhar layout, mudar navegação ou renomear peças
+  - marcar como corrigido um defeito de produto que exija mudança fora dos allowed_paths (parar em HUMAN_DECISION)
+  - remover cobertura existente, usar fixme/skip novo ou afrouxar o limiar de contraste
+
+acceptance:
+  - A matriz de axe cobre busca, menu Criar, formulário de encontro, ficha do negócio e pedido em 375/768/1440 e nos dois temas, com as tags wcag2a/wcag2aa/wcag21aa, sem skip novo e falhando em impacto sério/crítico.
+  - O teclado alcança a ação primária de cada superfície, ativa com Enter, fecha sobreposições com Esc devolvendo o foco ao botão de origem, e as setas andam no menu Criar (medido no navegador).
+  - O contraste medido de texto (4,5; 3,0 em texto grande) e do tom contornado (4,5) passa nos dois temas nas superfícies novas.
+  - `prefers-reduced-motion: reduce` desliga as animações de entrada e de sobreposição nas superfícies novas.
+  - Nenhuma das cinco superfícies tem overflow horizontal em 375/768/1440 nem erro de console.
+  - Os casos existentes (21/21 de f05 e a matriz axe de 10/11) continuam verdes.
+
+proof:
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e (CI; o sandbox local não sobe o Vite/Playwright)
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-136.task.yml
+
+risk: acessibilidade
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
