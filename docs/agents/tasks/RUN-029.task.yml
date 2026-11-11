@@ -36,6 +36,9 @@ allowed_paths:
   - apps/web/app/api/app/voce/_comum.ts
   - apps/web/app/api/app/voce/localizacao
   - apps/web/lib/geo
+  # Criado pelo PR #182 depois da base da branch: a rota nova precisa entrar no
+  # manifesto (TOTAL_DE_ROTAS 85) para o teste de escopo do PR CI passar.
+  - apps/web/lib/security/api-surface.ts
   - apps/web/.env.example
   - apps/app/lib/dados/voce.ts
   - apps/app/src/voce
