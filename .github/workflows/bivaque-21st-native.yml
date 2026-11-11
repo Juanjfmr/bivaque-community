@@ -27,8 +27,8 @@ jobs:
         run: npm run build
       - name: TypeScript check
         run: npm run typecheck
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Verify Chrome available on runner
+        run: google-chrome --version
       - name: Test user journeys across mobile and desktop
         run: npm run test:e2e
       - uses: actions/upload-artifact@v4
@@ -40,4 +40,9 @@ jobs:
             experiments/bivaque-21st-native/playwright-report
             experiments/bivaque-21st-native/test-results
             experiments/bivaque-21st-native/dist
+            experiments/bivaque-21st-native/src
+            experiments/bivaque-21st-native/tests
+            experiments/bivaque-21st-native/package.json
+            experiments/bivaque-21st-native/README.md
+            experiments/bivaque-21st-native/source-manifest.json
           if-no-files-found: warn
