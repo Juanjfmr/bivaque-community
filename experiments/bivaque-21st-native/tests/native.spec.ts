@@ -200,3 +200,17 @@ test("Tema e movimento reduzido",async({page})=>{
  expect(await page.evaluate(()=>matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
  await page.screenshot({path:"proof/tema-escuro-375.png",fullPage:true});
 });
+
+test("Imóveis legíveis em uma coluna no celular",async({page})=>{
+ await page.setViewportSize({width:375,height:812});
+ await page.goto("/");
+ await page.getByRole("navigation",{name:"Bottom Navigation"}).getByRole("button",{name:"Mercado"}).click();
+ await page.getByRole("radio",{name:"Imóveis"}).click();
+ const cards=page.locator(".property-list .property-card");
+ await expect(cards).toHaveCount(2);
+ const layout=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,cardWidths:[...document.querySelectorAll(".property-card")].map(x=>x.getBoundingClientRect().width)}));
+ expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
+ expect(layout.cardWidths.every(w=>w>250)).toBe(true);
+ await expect(page.getByText("Apartamento 3 quartos, mobiliado")).toBeVisible();
+ await page.screenshot({path:"proof/imoveis-mobile-375.png",fullPage:true});
+});

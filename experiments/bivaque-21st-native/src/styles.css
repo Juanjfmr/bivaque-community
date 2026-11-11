@@ -30,3 +30,25 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible,textarea:focu
 .service a{color:var(--primary)}.service a:hover{text-decoration:underline}
 @media(max-width:390px){.shell{padding-left:12px;padding-right:12px}.topin{padding-left:12px;padding-right:12px;gap:7px}.topright{gap:5px}.topright .action{padding:8px 9px;font-size:11px}.feature{padding:14px;gap:5px}.feature h2{font-size:18px}.feature img{width:83px;height:100px}.cards{gap:10px}.listing [data-slot="product-card"]{font-size:12px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}}
+
+/* 21st.dev property card: Bivaque-specific anatomy, not a second nested dashboard. */
+.property-list .property-card{max-width:none;min-width:0;background:var(--card);border-color:var(--border);box-shadow:none}
+.property-list .property-card>div:nth-child(2){padding:14px;min-width:0}
+.property-list .property-card h3{font-size:clamp(15px,2vw,19px);line-height:1.3;letter-spacing:-.015em;overflow-wrap:anywhere}
+.property-list .property-card .my-6{margin:14px 0;gap:8px}
+.property-list .property-card .my-6>div{padding:8px;min-width:0;border-radius:8px}
+.property-list .property-card .my-6>div p{font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.property-list .property-card .my-6>div p:last-child{font-size:13px}
+.property-list .property-card button{min-height:42px;background:var(--primary);color:var(--background);font-size:13px}
+@media(max-width:640px){
+ .property-list{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:10px}
+ .property-list .property-card{display:grid;grid-template-columns:116px minmax(0,1fr);align-items:stretch;min-height:174px;border-radius:13px}
+ .property-list .property-card>div:first-child{height:auto;aspect-ratio:auto;min-width:0}
+ .property-list .property-card>div:first-child img{height:100%;width:100%;object-fit:cover}
+ .property-list .property-card>div:nth-child(2){padding:12px 13px}
+ .property-list .property-card h3{font-size:14px;line-height:1.3}
+ .property-list .property-card .my-6{display:none}
+ .property-list .property-card p{font-size:12px;line-height:1.4;margin-top:5px}
+ .property-list .property-card p.text-lg{font-size:15px;line-height:1.25;margin-top:7px}
+ .property-list .property-card button{font-size:12px;min-height:38px;margin-top:12px}
+}
