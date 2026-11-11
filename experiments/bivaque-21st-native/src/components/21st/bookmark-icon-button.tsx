@@ -48,6 +48,7 @@ export function BookmarkIconButton({ active, onChange }: { active?: boolean; onC
         size="icon"
         onClick={handleClick}
         aria-pressed={isSaved}
+        aria-label={isSaved ? "Remover item dos salvos" : "Salvar item"}
       >
         <motion.div
           initial={{ scale: 1 }}
@@ -61,7 +62,7 @@ export function BookmarkIconButton({ active, onChange }: { active?: boolean; onC
           <Bookmark className="opacity-60" size={16} aria-hidden="true" />
 
           <Bookmark
-            className="absolute inset-0 text-blue-500 fill-blue-500 transition-all duration-300"
+            className="absolute inset-0 text-primary fill-current transition-all duration-300"
             size={16}
             aria-hidden="true"
             style={{ opacity: isSaved ? 1 : 0 }}
@@ -88,7 +89,7 @@ export function BookmarkIconButton({ active, onChange }: { active?: boolean; onC
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute rounded-full bg-blue-500"
+                className="absolute rounded-full bg-primary"
                 style={{
                   width: `${4 + Math.random() * 2}px`,
                   height: `${4 + Math.random() * 2}px`,

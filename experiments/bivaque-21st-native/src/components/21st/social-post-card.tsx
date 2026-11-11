@@ -71,7 +71,7 @@ import {
     id = author?.username || "card-02",
   }: RuixenCard06Props) {
     return (
-      <div className="w-full max-w-lg mx-auto rounded-3xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-700 shadow-xl backdrop-blur-lg transition-all">
+      <div className="w-full max-w-lg mx-auto rounded-xl bg-card text-foreground border border-border transition-colors">
         
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4">
@@ -87,13 +87,7 @@ import {
             </div>
           </div>
           <div>
-            <Bookmark
-              onClick={onBookmark}
-              className={cn(
-                "w-5 h-5 cursor-pointer transition hover:text-yellow-500",
-                engagement?.isBookmarked ? "text-yellow-500" : "text-zinc-400"
-              )}
-            />
+            <button type="button" onClick={onBookmark} aria-label={engagement?.isBookmarked?"Remover dos salvos":"Salvar pergunta"} aria-pressed={!!engagement?.isBookmarked} className="rounded-md p-2 focus-visible:outline-2 focus-visible:outline-offset-2" ><Bookmark aria-hidden="true" className={cn("w-5 h-5 transition", engagement?.isBookmarked ? "text-primary fill-current" : "text-muted-foreground")}/></button>
           </div>
         </div>
   
@@ -120,6 +114,7 @@ import {
         {/* Reactions Footer */}
         <div className="grid grid-cols-3 divide-x divide-zinc-200 dark:divide-zinc-700 text-sm text-center">
           <button
+            type="button" aria-label="Curtir pergunta" aria-pressed={!!engagement?.isLiked}
             onClick={onLike}
             className={cn(
               "py-3 flex items-center justify-center gap-2 transition hover:bg-rose-50 dark:hover:bg-rose-900",
@@ -130,6 +125,7 @@ import {
             {engagement?.likes}
           </button>
           <button
+            type="button" aria-label={`Ver respostas: ${engagement?.comments??0}`}
             onClick={onComment}
             className="py-3 flex items-center justify-center gap-2 text-zinc-500 dark:text-zinc-400 hover:bg-blue-50 dark:hover:bg-blue-900 transition"
           >
@@ -137,6 +133,7 @@ import {
             {engagement?.comments}
           </button>
           <button
+            type="button" aria-label="Compartilhar pergunta"
             onClick={onShare}
             className="py-3 flex items-center justify-center gap-2 text-zinc-500 dark:text-zinc-400 hover:bg-green-50 dark:hover:bg-green-900 transition"
           >

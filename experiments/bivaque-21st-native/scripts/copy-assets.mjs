@@ -1,11 +1,13 @@
-import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-const source=resolve("../../apps/app/public");
-const target=resolve("public");
-for(const directory of ["demo","ilustracoes"]){
- const from=resolve(source,directory),to=resolve(target,directory);
- if(!existsSync(from))throw new Error("Original asset directory absent: "+from);
- mkdirSync(dirname(to),{recursive:true});
- cpSync(from,to,{recursive:true});
- console.log("assets copied:",directory,readdirSync(to).length);
+
+const local = resolve("public");
+const fromRepo = resolve("../../apps/app/public");
+for (const name of ["demo", "ilustracoes"]) {
+  const dest = resolve(local, name);
+  if (existsSync(dest)) continue;
+  const source = resolve(fromRepo, name);
+  if (!existsSync(source)) throw Error(`No asset directory: ${source}`);
+  mkdirSync(dirname(dest), { recursive: true });
+  cpSync(source, dest, { recursive: true });
 }

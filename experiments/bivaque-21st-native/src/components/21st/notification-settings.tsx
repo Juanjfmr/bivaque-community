@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, CreditCard, ShieldCheck, Users } from "lucide-react";
+import { Bell, ShieldCheck, Users } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -36,15 +36,7 @@ const GROUPS: Group[] = [
       { id: "soc-follows", label: "Novos seguidores", enabled: false },
     ],
   },
-  {
-    id: "billing",
-    title: "Cobranças",
-    icon: CreditCard,
-    toggles: [
-      { id: "bil-invoices", label: "Recibos", enabled: true },
-      { id: "bil-failures", label: "Falhas de pagamento", enabled: true },
-    ],
-  },
+
 ];
 
 export function Notifications2() {
