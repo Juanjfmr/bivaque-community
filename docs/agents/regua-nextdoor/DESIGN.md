@@ -346,7 +346,7 @@ busca genérica devolve apps sem parentesco.
 O acervo é grande e desigual: há muita peça de vitrine (carrossel 3D, brilho, vidro) feita para página
 de marketing, e ela não entra no app. Em 11/11/2026 o código de 19 candidatos foi lido no registro da
 21st, com a conta do dono. Pela regra da §2, o componente de biblioteca vence a peça feita à mão: entra
-com o código do autor e recebe só a identidade do Bivaque. Nenhum foi instalado ainda.
+com o código do autor e recebe só a identidade do Bivaque. Instalados até agora: Credenza (com o Drawer do shadcn sobre `vaul`) e Command Menu 04, usados nas prévias.
 
 **Adotar** (um por necessidade; o escolhido é o mais acessível e o mais próximo do shadcn/Radix):
 
@@ -408,6 +408,11 @@ dados e as mesmas ações.
 - **Falta para promover uma variante:** capturas da tela real como base, juízo cego do
   `experiment-judge`, desapegos nos dados de demonstração (o laboratório ainda não tem esse tipo) e a
   decisão registrada no card.
+- **Início comercial em prévia:** `src/previa-inicio/` em `/app/previa/inicio`, com fotos de
+  demonstração; serve de rascunho, e o que vale vai para `src/telas/Inicio.tsx`.
+- **Prévia publicada:** `apps/app/vercel.json` compila só o laboratório (`vite.vnext.config.ts`,
+  saída `dist-vnext`) para um projeto da Vercel com raiz em `apps/app`, com deploy da main
+  desligado como no resto do repositório. Publicar continua sendo ato do dono.
 - **Próximos laboratórios:** F04 Comunidade e F06 Mercado, com as opções da §4.
 
 Não se promove uma variante por diferença só cosmética, por perda de função ou de identidade, ou com

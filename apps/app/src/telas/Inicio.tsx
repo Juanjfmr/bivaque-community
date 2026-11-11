@@ -31,9 +31,9 @@ import { rotuloDaCategoria } from "@/src/inicio/categorias"
  *
  * "Vou/Confirmado" do próximo encontro grava pela rota de presença do F05 e
  * mostra o que o banco devolveu. Salvar um cartão é estado local e pertence ao
- * F06 (anúncios salvos). O que o
- * banco ainda não tem — foto de anúncio e de negócio, autor da pergunta,
- * indicações do negócio — fica de fora do cartão, sem valor inventado.
+ * F06 (anúncios salvos). As fotos chegam por URL assinada curta e o prazo de
+ * retirada vira o rótulo do anúncio. O que o banco ainda não tem — autor da
+ * pergunta e indicações do negócio — fica de fora do cartão, sem valor inventado.
  */
 
 const EXEMPLOS_DE_BUSCA = [
@@ -227,7 +227,7 @@ export function Inicio() {
                 }
               >
                 <p className="text-sm text-(--on-surface-variant)">
-                  Indicados pela comunidade de {cidade}
+                  Negócios que atendem a comunidade de {cidade}
                 </p>
                 {negocios.length === 0 ? (
                   <EstadoVazio

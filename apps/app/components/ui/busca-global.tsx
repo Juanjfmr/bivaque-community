@@ -32,7 +32,7 @@ export type ResultadoDeBusca = {
   trecho: string
   /** Data ou distância, à direita da linha. */
   apoio: string
-  /** Só anúncio e imóvel: caminho da foto para a grade. */
+  /** Só anúncio e imóvel: URL da foto (assinada pelo servidor) para a grade. */
   foto?: string
 }
 
@@ -153,7 +153,7 @@ export function BuscaGlobal({
                     <button
                       aria-selected={marcado}
                       className={cn(
-                        "min-h-9 shrink-0 rounded-full px-3.5 text-sm transition-colors",
+                        "min-h-11 shrink-0 rounded-full px-3.5 text-sm transition-colors",
                         marcado
                           ? "bg-(--foreground) text-(--background)"
                           : "text-(--muted-foreground) hover:text-(--foreground)",

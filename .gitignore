@@ -62,3 +62,6 @@ apps/mobile/build-log-*.txt
 
 # Store local do pnpm: ~82 mil arquivos, nunca versionado.
 .pnpm-store/
+
+apps/app/dist-vnext/
+apps/app/artifacts/visual-vnext/

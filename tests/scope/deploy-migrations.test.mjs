@@ -24,9 +24,13 @@ test("production migrations run from CI only, after the gate", () => {
 })
 
 test("a merge on main never deploys the site", () => {
-  // Given the Vercel configuration at the repository root and at the project's Root Directory
-  // (apps/web), which is where Vercel reads it from
-  for (const file of ["vercel.json", join("apps", "web", "vercel.json")]) {
+  // Given the Vercel configuration at the repository root and at each Root Directory a Vercel
+  // project may use (apps/web for the site, apps/app for the design lab preview)
+  for (const file of [
+    "vercel.json",
+    join("apps", "web", "vercel.json"),
+    join("apps", "app", "vercel.json"),
+  ]) {
     const vercel = JSON.parse(readFileSync(join(root, file), "utf8"))
 
     // Then pushes to main do not create deployments; production follows the producao branch
