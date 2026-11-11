@@ -340,38 +340,46 @@ busca genérica devolve apps sem parentesco.
 **Blocos da 21st.dev**
 
 O acervo é grande e desigual: há muita peça de vitrine (carrossel 3D, brilho, vidro) feita para página
-de marketing. Ela não entra no app. Entram blocos de estrutura, de autores que seguem o shadcn, que é a
-base do `apps/app`. Nenhum foi instalado nem teve o código lido. Primeiro, a lista consultada pelo MCP
-da 21st em 10/11 (com o identificador do catálogo):
+de marketing. Ela não entra no app. Em 11/11/2026 o código de 19 candidatos foi lido no registro da 21st,
+com a conta do dono, e conferido contra o que o `apps/app` já tem. O app não tem `motion`, `framer-motion`,
+`embla`, `vaul`, `lucide-react` nem `next`; já tem `radix-ui`, `cmdk`, `class-variance-authority` e as
+peças `Folha`, `Linha`, `Cartao`, `Compositor`, `Estado` e `Esqueleto`. Nenhum bloco foi instalado.
 
-| Jornada | Bloco | Veredito |
+**Adaptar** (entra como peça na biblioteca, com crédito, ícones Material e tokens):
+
+| Necessidade | Bloco | Por que entra | O que muda |
+|---|---|---|---|
+| Busca do Início e do F02 | [Command Menu 04 — ephraimduncan](https://21st.dev/@ephraimduncan/components/command-menu-04) | usa `cmdk`, que o app já tem; seções por tipo e recentes | ícones Tabler viram Material; 12 cores fixas viram tokens |
+| Galeria de fotos do anúncio e do imóvel | [Thumbnail image viewer — ibrandify](https://21st.dev/@ibrandify/components/thumbnail-image-viewer) | sem dependência; navega por teclado; 13 atributos de acessibilidade | 8 cores fixas viram tokens; troca de foto segue a §8 |
+| Primeiros passos da cidade nova | [Onboarding Checklist Drawer — ShadcnSpace](https://21st.dev/@shadcnspace/components/onboarding-checklist-drawer) | estrutura dos passos contados da §7, com progresso | vira conteúdo da `Folha`, não um drawer novo; ícones Lucide viram Material |
+| Esqueleto de conversa | [Chat Thread Skeleton — Cnippet](https://21st.dev/@cnippet-dev/components/v-skeleton-9) | 90 linhas, só a forma das bolhas | montado com a peça `Esqueleto` |
+
+**Referência de comportamento** (não se instala; usa `motion`, que o app não terá — porta-se o
+comportamento para CSS e eventos de ponteiro):
+
+| Necessidade | Bloco | O que copiar |
 |---|---|---|
-| F02 trilhos | [Carousel — shadcn](https://21st.dev/@shadcn/components/carousel) (`813`) | adaptar, se o shadcn local não resolver |
-| F02 descoberta | [Snap Carousel — ddoemonn](https://21st.dev/@ddoemonn/components/snap-carousel) (`23559`) | referência: snap, próximo cartão à vista, teclado |
-| F06 anúncios | [Carousel Cards — kokonutd](https://21st.dev/@kokonutd/components/carousel-cards) (`19168`) | referência; tirar estrela e curtida |
-| F02/F06 filtros | [Filter Token Bar — laziekiki](https://21st.dev/@laziekiki/components/filter-token-bar) (`26824`) | referência para o computador; no celular, a folha basta |
-| F02 busca | [Command Menu — ephraimduncan](https://21st.dev/@ephraimduncan/components/command-menu-04) (`27378`) | referência: seções por tipo e recentes |
-| F04 respostas | [Comment Thread — rmahammad](https://21st.dev/@rmahammad/components/comment-thread) (`26900`) | referência para envio pendente, falho e tentar de novo |
-| F05 agenda | [Calendar — wensity](https://21st.dev/@wensity/components/calendar) (`31350`) | referência; não virar agendamento de consulta |
+| Trilhos horizontais | [Snap Carousel — ddoemonn](https://21st.dev/@ddoemonn/components/snap-carousel) | snap, próximo cartão à vista, setas e teclado, movimento reduzido |
+| Envio de resposta | [Comment Thread — rmahammad](https://21st.dev/@rmahammad/components/comment-thread) | estados pendente, enviado, falhou e tentar de novo (são 2.700 linhas: só o modelo de estados) |
+| Filtros no computador | [Filter Token Bar — laziekiki](https://21st.dev/@laziekiki/components/filter-token-bar) | filtro composto com teclado; no celular a folha basta |
+| Agenda de encontros | [Calendar — wensity](https://21st.dev/@wensity/components/calendar) | pontos de evento no dia; sem virar agendamento de consulta |
+| Cartão de indicação | [Testimonial Card — preetsuthar17](https://21st.dev/@preetsuthar17/components/testimonial-card) | frase de quem indicou com autor; **sem** as estrelas do original |
+| Vazio com ação | [Empty — shadcn](https://21st.dev/@shadcn/components/empty/outline) | a peça `Estado` já resolve; serve de conferência |
+| Linha de lista | [Item — shadcn](https://21st.dev/@shadcn/components/item/header) | a peça `Linha` já resolve; serve de conferência |
 
-Descartados: carrossel com rolagem automática, carrosséis 3D e com zoom, globo 3D, agenda de consulta
-comercial e respostas aninhadas com voto, porque o efeito ou o modelo não serve ao Bivaque.
+**Recusados:**
 
-Candidatos adicionais vistos no catálogo público em 11/11, sem login:
-
-| Necessidade | Bloco | Observação |
-|---|---|---|
-| Folha com pontos de parada (lista sobre mapa, detalhe curto) | [Drawer, snap points — coss](https://21st.dev/@coss.com/components/drawer/snap-points) | comparar com a folha da biblioteca; só entra o que ela não tem |
-| Folha no celular, diálogo no computador | [Credenza — redpangilinan](https://21st.dev/@redpangilinan/components/credenza) | resolve a §12 para tarefas curtas |
-| Vazio com ação | [Empty — shadcn](https://21st.dev/@shadcn/components/empty/outline) | a ilustração vem da família do Bivaque |
-| Primeiros passos na cidade nova | [Onboarding Checklist Drawer — ShadcnSpace](https://21st.dev/@shadcnspace/components/onboarding-checklist-drawer) | estrutura dos passos contados da §7 |
-| Campo de mensagem que cresce | [Textarea with Send Button — coss](https://21st.dev/@coss.com/components/p-textarea-15) | base do compositor de conversa |
-| Esqueleto de conversa | [Chat Thread Skeleton — Cnippet](https://21st.dev/@cnippet-dev/components/v-skeleton-9) | forma do que vem, §8 |
-| Galeria de fotos do anúncio | [Thumbnail image viewer — Waqar H. Syed](https://21st.dev/@ibrandify/components/thumbnail-image-viewer) | sem efeito 3D; arrastar e miniaturas |
+- [Carousel — shadcn](https://21st.dev/@shadcn/components/carousel): traz `embla` só para o que `scroll-snap` já faz; reconsiderar só se o computador precisar de setas que o CSS não resolva.
+- [Credenza](https://21st.dev/@redpangilinan/components/credenza) e [Drawer — coss](https://21st.dev/@coss.com/components/drawer): trazem `vaul` ou Base UI para o que a `Folha` já faz.
+- [Textarea with Send Button — coss](https://21st.dev/@coss.com/components/p-textarea-15): 12 linhas; o `Compositor` já existe.
+- [Carousel Cards — kokonutd](https://21st.dev/@kokonutd/components/carousel-cards): depende de `next`, tem estrelas e nenhum atributo de acessibilidade.
+- [Product Card — ShadcnStore](https://21st.dev/@shadcnstore/components/product-card-1), [Product Card — deltacomponents](https://21st.dev/@deltacomponents/components/product-card/product-card-grid-demo) e [Hotel Card — uniquesonu](https://21st.dev/@uniquesonu/components/hotel-card-ui-component): estrelas, `next` ou `next-themes`; o app já tem `components/ui/product-card.tsx`.
+- Antes, pelo catálogo: carrossel com rolagem automática, carrosséis 3D e com zoom, globo 3D, agenda de consulta comercial e respostas aninhadas com voto.
 
 Regra de entrada, além da §2: crédito com nome, autor e link no topo do arquivo; `framer-motion`,
-`next/link` e Base UI do bloco saem e dão lugar ao que o app já usa; o movimento do bloco é trocado pelo
-vocabulário da §8. Bloco que só existe pelo efeito é recusado.
+`motion`, `next/link`, `next-themes`, Base UI e ícones de outra família saem e dão lugar ao que o app já
+usa; o movimento do bloco é trocado pelo vocabulário da §8; estrelas e notas saem sempre. Bloco que só
+existe pelo efeito é recusado.
 
 Antes de instalar um bloco: o problema aparece numa captura; há uma base para comparar; o ganho é
 observável (o próximo item à vista, o filtro que volta, o erro que se recupera), não "mais bonito";
