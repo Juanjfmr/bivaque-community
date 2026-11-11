@@ -10,7 +10,7 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
     const resposta = await inicio
     expect(resposta.status()).toBe(200)
     expect((await resposta.json()) as { cidade: string }).toMatchObject({ cidade: "Manaus" })
-    await expect(page.getByRole("heading", { name: "Sua rede em Manaus" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "O que você precisa em Manaus?" })).toBeVisible()
     await expect(page.getByText("Piquenique das famílias")).toBeVisible({ timeout: 30_000 })
     await page.getByRole("button", { name: "Buscar no Bivaque" }).click()
     const campo = page.getByRole("searchbox", { name: "Buscar no Bivaque" })

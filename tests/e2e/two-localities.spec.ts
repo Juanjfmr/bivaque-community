@@ -162,7 +162,7 @@ test.describe("two localities: each member sees only their own city", () => {
     // negative assertions in the sibling test could pass vacuously on an error
     // page)
     await expect(page).toHaveURL(/\/app\/inicio$/)
-    await expect(page.getByRole("heading", { name: "Sua rede em Manaus" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "O que você precisa em Manaus?" })).toBeVisible({
       timeout: 20000,
     })
 
@@ -187,7 +187,7 @@ test.describe("two localities: each member sees only their own city", () => {
     // And no Manaus question is on the page — the section must resolve from the
     // member's locality, not a pilot constant
     await expect(page).toHaveURL(/\/app\/inicio$/)
-    await expect(page.getByRole("heading", { name: "Sua rede em Rio de Janeiro" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "O que você precisa em Rio de Janeiro?" })).toBeVisible()
     await expect(page.getByText(MANAUS_QUESTION_MARKER)).toHaveCount(0)
 
     // And no Manaus event title leaks through the right rail or anywhere else
