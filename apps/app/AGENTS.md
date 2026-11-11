@@ -11,6 +11,7 @@ Served at `/app` beside the Next server. Root rules in [AGENTS.md](../../AGENTS.
 - Rules of the pieces: [IDENTIDADE-DAS-PECAS.md](../../docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md).
   Screen pattern: [PADRAO-DE-TELA.md](../../docs/agents/regua-nextdoor/PADRAO-DE-TELA.md). Bar and
   method: [regua-nextdoor/HANDOFF.md](../../docs/agents/regua-nextdoor/HANDOFF.md).
+- For **new composition hypotheses only**, read [DESIGN-VNEXT.md](../../docs/agents/regua-nextdoor/DESIGN-VNEXT.md), its [rule matrix](../../docs/agents/regua-nextdoor/MATRIZ-DESIGN-VNEXT.md), [F01-F10 grammars](../../docs/agents/regua-nextdoor/GRAMATICAS-VNEXT.md) and [experiment protocol](../../docs/agents/regua-nextdoor/EXPERIMENTOS-VNEXT.md). These are subordinate to accepted ADRs, approved screens and the existing piece library; they do not authorize a production redesign.
 - Every rebuilt screen starts from Nextdoor (or another mature app) screens on Mobbin, cited by link
   in the card. Illustrations come from the family in `public/ilustracoes/`; no AI photos of people.
 - Both themes follow the system. Material Symbols are self-hosted, only the glyphs used, decorative
