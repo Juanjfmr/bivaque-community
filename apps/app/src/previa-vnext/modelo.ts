@@ -6,7 +6,7 @@ import type { NomeDeIcone } from "@/lib/icones"
  */
 export type TipoDeItem = "pergunta" | "negocio" | "imovel" | "evento"
 export type TipoDeFiltro = TipoDeItem | "todos"
-export type Cenario = "completo" | "escasso" | "vazio" | "erro"
+export type Cenario = "completo" | "escasso" | "vazio" | "carregando" | "erro"
 
 export type ItemDeExemplo = Readonly<{
   id: string
@@ -117,7 +117,7 @@ export function filtrarExemplos(
   itens: readonly ItemDeExemplo[],
   opcoes: Readonly<{ busca: string; tipo: TipoDeFiltro; cenario: Cenario }>,
 ): readonly ItemDeExemplo[] {
-  if (opcoes.cenario === "vazio" || opcoes.cenario === "erro") return []
+  if (opcoes.cenario === "vazio" || opcoes.cenario === "erro" || opcoes.cenario === "carregando") return []
   const exemplos =
     opcoes.cenario === "escasso"
       ? itens.filter((item) => item.id === "p-escola" || item.id === "n-reparos")
