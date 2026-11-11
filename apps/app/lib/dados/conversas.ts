@@ -72,16 +72,27 @@ export async function buscarConversa(
     anterior: cursor(corpo["anterior"]),
   }
 }
+/**
+ * Chave de idempotência de um envio. Quem reenvia o MESMO rascunho depois de
+ * uma falha reusa a chave; editar o texto pede uma chave nova.
+ */
+export function novaChaveDeEnvio(): string {
+  return crypto.randomUUID()
+}
+
 export async function enviarMensagem(
   id: string,
   conteudo: string,
-  opcoes: { signal?: AbortSignal } = {},
+  opcoes: { signal?: AbortSignal; clientKey?: string } = {},
 ): Promise<Mensagem> {
   const corpo = await enviar(
     "POST",
     `/api/app/conversas/${encodeURIComponent(id)}/mensagens`,
-    { texto: conteudo },
-    opcoes,
+    {
+      texto: conteudo,
+      ...(opcoes.clientKey === undefined ? {} : { clientKey: opcoes.clientKey }),
+    },
+    { ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }) },
   )
   return mensagemDe(corpo["mensagem"])
 }
