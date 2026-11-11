@@ -492,7 +492,9 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Agora não" }).click()
 
     await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 30_000 })
-    await expect(page.getByRole("heading", { level: 1, name: /O que você precisa em/ })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { level: 1, name: /O que você precisa em/ }),
+    ).toBeVisible({
       timeout: 30_000,
     })
     await capturarEmDoisTemas(page, projeto, "convite-inicio")
