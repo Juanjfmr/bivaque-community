@@ -13,13 +13,13 @@ export const photos = {
 } as const;
 
 export const homes: ExperienceItem[] = [
-  {id:"moradia-1",title:"Apartamento com varanda no Parque 10",location:"Parque 10 · Manaus",image:photos.apartment,price:2600,currency:"R$",date:"Aluguel mensal",rating:4.9,badge:"Destaque"},
-  {id:"moradia-2",title:"Casa próxima à Vila Militar",location:"Ponta Negra · Manaus",image:photos.apartment2,price:3800,currency:"R$",date:"Aluguel mensal",rating:4.8,badge:"Novo"},
-  {id:"moradia-3",title:"Apartamento mobiliado de 2 quartos",location:"Adrianópolis · Manaus",image:photos.condo,price:3100,currency:"R$",date:"Aluguel mensal",rating:4.9},
-  {id:"moradia-4",title:"Residência com área de convivência",location:"Flores · Manaus",image:photos.garden,price:3300,currency:"R$",date:"Aluguel mensal",rating:4.7},
+  {id:"moradia-1",title:"Apartamento com varanda no Parque 10",location:"Parque 10 · Manaus",image:photos.apartment,price:2600,currency:"R$",date:"Aluguel mensal",priceLabel:"/ mês",rating:4.9,badge:"Destaque"},
+  {id:"moradia-2",title:"Casa próxima à Vila Militar",location:"Ponta Negra · Manaus",image:photos.apartment2,price:3800,currency:"R$",date:"Aluguel mensal",priceLabel:"/ mês",rating:4.8,badge:"Novo"},
+  {id:"moradia-3",title:"Apartamento mobiliado de 2 quartos",location:"Adrianópolis · Manaus",image:photos.condo,price:3100,currency:"R$",date:"Aluguel mensal",priceLabel:"/ mês",rating:4.9},
+  {id:"moradia-4",title:"Residência com área de convivência",location:"Flores · Manaus",image:photos.garden,price:3300,currency:"R$",date:"Aluguel mensal",priceLabel:"/ mês",rating:4.7},
 ];
 export const services: ExperienceItem[] = [
-  {id:"servico-1",title:"Eletricista recomendado por vizinhos",location:"Atende Manaus",image:photos.service,price:120,currency:"R$",date:"Valor ilustrativo",rating:4.9,badge:"Indicado"},
+  {id:"servico-1",title:"Eletricista recomendado por vizinhos",location:"Atende Manaus",image:photos.service,price:120,currency:"R$",date:"Valor ilustrativo",priceLabel:"/ serviço",rating:4.9,badge:"Indicado"},
   {id:"servico-2",title:"Montagem e pequenos reparos",location:"Zona Centro-Sul",image:photos.condo,price:140,currency:"R$",rating:4.8},
   {id:"servico-3",title:"Limpeza residencial",location:"Atende Manaus",image:photos.garden,price:160,currency:"R$",rating:4.9},
 ];
