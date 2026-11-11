@@ -1585,7 +1585,9 @@
         "Server Actions CRUD profile/catalog/portfolio",
         "/prestador dashboard com placeholders honestos"
       ],
-      "proof": ["02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."],
+      "proof": [
+        "02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."
+      ],
       "tests": ["showcase-form.test.ts"],
       "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
       "updatedAt": "2026-11-02",
@@ -1604,7 +1606,9 @@
         "search_providers RPC com pg_trgm e filtro de categoria",
         "city-reference atualiza vitrine em cidade"
       ],
-      "proof": ["02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."],
+      "proof": [
+        "02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."
+      ],
       "tests": ["provider-search-scope.sql"],
       "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
       "updatedAt": "2026-11-02",
@@ -7062,7 +7066,9 @@
         "E2E de duas sessões quando o bloqueio for acionável",
         "Prova no CI e no cartão"
       ],
-      "proof": ["11/11: aberto a partir da ressalva B2 do parecer de segurança e89e33e0 (PR #181)."],
+      "proof": [
+        "11/11: aberto a partir da ressalva B2 do parecer de segurança e89e33e0 (PR #181)."
+      ],
       "tests": [],
       "links": [],
       "dependencies": ["F09-ENVIO-PELA-RPC"],
@@ -7084,7 +7090,9 @@
         "pgTAP positivo (RPC) e negativo (INSERT direto)",
         "Registro em RATIFICACAO.md se entrar em R3"
       ],
-      "proof": ["11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181)."],
+      "proof": [
+        "11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181)."
+      ],
       "tests": [],
       "links": [],
       "dependencies": ["F09-ENVIO-PELA-RPC"],
@@ -7106,7 +7114,9 @@
         "Cobrir replay com texto diferente e soft-deleted",
         "Atualizar o contrato e o app se a resposta mudar"
       ],
-      "proof": ["11/11: aberto a partir da ressalva B5 do parecer de segurança e89e33e0 (PR #181)."],
+      "proof": [
+        "11/11: aberto a partir da ressalva B5 do parecer de segurança e89e33e0 (PR #181)."
+      ],
       "tests": [],
       "links": [],
       "dependencies": ["F09-ENVIO-PELA-RPC"],
