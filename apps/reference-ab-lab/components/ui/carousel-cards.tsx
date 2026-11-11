@@ -39,7 +39,7 @@ interface ExperienceGridProps {
   title: string;
   items: ExperienceItem[];
   viewAllHref?: string;
-  onSelect?: (item: ExperienceItem) => void;
+  onSelect?: ((item: ExperienceItem) => void) | undefined;
 }
 
 const ExperienceCard = ({ experience }: { experience: ExperienceItem }) => {
