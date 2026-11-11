@@ -5,6 +5,8 @@ O dono aprovou o F01 refeito e pediu que ele seja o padrão das próximas jornad
 `apps/app/src/previa-f01/` (prévia em `/app/previa/f01`, só no servidor de desenvolvimento). Este padrão se
 soma à régua do [HANDOFF](HANDOFF.md) (quatro dimensões) e não a substitui.
 
+> **Exploração de composições:** [Design vNext](DESIGN-VNEXT.md) identifica alternativas e falhas de AI slop para **experimentos isolados**. Não revoga este padrão, as peças aprovadas nem as telas já validadas; mudanças de composição precisam seguir [o protocolo](EXPERIMENTOS-VNEXT.md) e a autoridade vigente.
+
 ## O que deixava as telas amadoras
 
 Antes da reconstrução, a mesma tela juntava estes problemas:
