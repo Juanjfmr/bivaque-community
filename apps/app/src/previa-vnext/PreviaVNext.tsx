@@ -9,7 +9,6 @@ import {
   Esqueleto,
   Folha,
   Linha,
-  Selo,
 } from "@/src/pecas/pecas"
 import {
   type Cenario,
@@ -154,6 +153,8 @@ function Exploracao({
   aoLimpar,
 }: PropsDaComposicao) {
   const grupos = separarPorTipo(itens)
+  const destaque = grupos.pergunta[0]
+  const outrasPerguntas = grupos.pergunta.slice(1)
   return (
     <section
       className="pv-screen pv-a"
@@ -162,9 +163,25 @@ function Exploracao({
     >
       <div className="pv-a-abertura">
         <div className="pv-a-introducao">
-          <p className="pc-miudo">MANAUS · EXPLORAR A CIDADE</p>
-          <h2 className="pc-titulo">O que você precisa resolver hoje?</h2>
-          <p className="pc-apoio">Perguntas, serviços e moradia num só lugar.</p>
+          <p className="pc-miudo">MANAUS · VIDA NA CIDADE</p>
+          {destaque ? (
+            <>
+              <p className="pc-miudo pv-a-editoria">UMA PERGUNTA QUE PODE AJUDAR</p>
+              <h2 className="pv-a-titulo-destaque">{destaque.titulo}</h2>
+              <p className="pc-corpo pv-a-resumo-destaque">{destaque.resumo}</p>
+              <Botao tom="texto" onClick={() => aoAbrir(destaque)}>
+                Ler pergunta <Icone nome="chevron_right" />
+              </Botao>
+            </>
+          ) : (
+            <>
+              <h2 className="pc-titulo">Veja o que está acontecendo em Manaus</h2>
+              <p className="pc-apoio">Explore perguntas, serviços, moradia e encontros.</p>
+            </>
+          )}
+        </div>
+        <aside className="pv-a-contexto">
+          <p className="pc-miudo">ENCONTRAR OUTRO ASSUNTO</p>
           <CampoDeBusca
             rotulo="Buscar exemplos na cidade"
             placeholder="Escola, mudança, eletricista..."
@@ -172,24 +189,19 @@ function Exploracao({
             onChange={(e) => aoBuscar(e.target.value)}
           />
           <Filtros tipo={tipo} aoSelecionar={aoFiltrar} itens={base} />
-        </div>
-        <aside className="pv-a-contexto">
-          <Selo nome="chegadas" tamanho={64} />
-          <p className="pc-miudo">REDE LOCAL</p>
-          <p className="pc-subtitulo">
-            A experiência de quem chegou antes ajuda quem está chegando.
-          </p>
-          <p className="pc-apoio">Nesta prévia, os exemplos são simulados.</p>
         </aside>
       </div>
       {itens.length === 0 ? (
         <Vazio busca={busca} aoLimpar={aoLimpar} />
       ) : (
         <div className="pv-a-conteudo">
-          {grupos.pergunta.length > 0 && (
+          {outrasPerguntas.length > 0 && (
             <section className="pv-grupo">
-              <CabecaDoGrupo titulo="Perguntas da cidade" quantidade={grupos.pergunta.length} />
-              <ListaDeItens itens={grupos.pergunta} aoAbrir={aoAbrir} />
+              <CabecaDoGrupo
+                titulo="Outras perguntas da cidade"
+                quantidade={outrasPerguntas.length}
+              />
+              <ListaDeItens itens={outrasPerguntas} aoAbrir={aoAbrir} />
             </section>
           )}
           {(grupos.negocio.length > 0 || grupos.imovel.length > 0) && (
