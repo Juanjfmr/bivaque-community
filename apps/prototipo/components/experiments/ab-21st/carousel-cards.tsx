@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export interface ExperienceItem {
+  href?: string;
   id: string;
   title: string;
   image: string;
@@ -208,6 +209,7 @@ const ExperienceCard = ({ experience }: { experience: ExperienceItem }) => {
       <Image
         alt={experience.title}
         className="object-cover transition-transform duration-300 group-hover:scale-105"
+        unoptimized
         fill
         src={experience.image}
       />
@@ -316,7 +318,7 @@ const ExperienceSection = ({
             </Button>
             <Link
               className="ml-1 hidden font-medium text-xs hover:underline md:block"
-              href={item.href ?? "#"}
+              href={viewAllHref}
             >
               Show all
             </Link>
@@ -338,7 +340,7 @@ const ExperienceSection = ({
             >
               <Link
                 className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                href="#"
+                href={item.href ?? "#"}
               >
                 <ExperienceCard experience={item} />
               </Link>
@@ -350,20 +352,22 @@ const ExperienceSection = ({
   );
 };
 
-export default function CarouselCards({ sections }: { sections?: { title: string; items: ExperienceItem[] }[] }) {
+
+export default function CarouselCards({
+  sections,
+}: {
+  sections: { title: string; items: ExperienceItem[]; viewAllHref?: string }[];
+}) {
   return (
-    <div className="mt-4 w-full space-y-4">
-      {sections ? sections.map((section) => <ExperienceSection key={section.title} title={section.title} items={section.items} />) : <>
-      <ExperienceSection
-        items={sampleExperiences}
-        title="Airbnb Originals ›"
-        viewAllHref="#"
-      />
-      <ExperienceSection
-        items={popularExperiences}
-        title="Popular experiences in Paris"
-        viewAllHref="#"
-      />
+    <div className="mt-4 w-full space-y-4" data-component-source="21st.dev/kokonutd/carousel-cards">
+      {sections.map((section) => (
+        <ExperienceSection
+          key={section.title}
+          title={section.title}
+          items={section.items}
+          viewAllHref={section.viewAllHref}
+        />
+      ))}
     </div>
   );
 }
