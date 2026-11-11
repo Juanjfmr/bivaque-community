@@ -411,6 +411,9 @@ test.describe("teclado e foco nas telas reais", () => {
 })
 
 test.describe("teclado nas superfícies novas", () => {
+  // A matriz de teclado roda uma vez, no projeto que fixa 375/768/1440; os
+  // seis viewports de layout ficam nas capturas e na varredura de rolagem.
+  test.skip(({ project }) => project.name !== "desktop-1440", "a matriz fixa as três larguras")
   test("o Criar anda pelas escolhas com as setas e o Esc devolve o foco", async ({ page }) => {
     await simularProgresso(page)
     await simularInicio(page)
@@ -544,6 +547,7 @@ test.describe("teclado nas superfícies novas", () => {
 })
 
 test.describe("movimento reduzido nas telas reais", () => {
+  test.skip(({ project }) => project.name !== "desktop-1440", "a matriz fixa as três larguras")
   test("com prefers-reduced-motion a folha do guia não anima", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await simularProgresso(page)
@@ -607,6 +611,7 @@ test.describe("movimento reduzido nas telas reais", () => {
 })
 
 test.describe("contraste nas telas reais", () => {
+  test.skip(({ project }) => project.name !== "desktop-1440", "a matriz fixa as três larguras")
   test("texto e tom contornado passam AA nos dois temas", async ({ page }) => {
     await simularProgresso(page)
     await simularGuia(page)
