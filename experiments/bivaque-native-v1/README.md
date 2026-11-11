@@ -22,3 +22,5 @@ npx expo start
 A ação `Bivaque Native Android APK` compila um **APK release de testes**, com bundle JS incluído e identidade de pacote separada da versão de produção. A assinatura de testes é gerada localmente pelo Gradle (não serve para publicação na Google Play). Baixar em GitHub Actions > Artifacts e instalar no Android após permitir instalações de fontes externas.
 
 A APK é construída no GitHub Actions com `expo prebuild`, Gradle e o SDK do Android. Nenhum token Expo, Supabase ou serviço privado é necessário para a experiência local.
+
+Build Android: workflow dedicado compila pacote instalável a partir deste código em branch isolada.
