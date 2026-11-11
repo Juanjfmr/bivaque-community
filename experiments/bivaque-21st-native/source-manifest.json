@@ -1,0 +1,113 @@
+{
+  "origin": "21st.dev MCP get_component",
+  "sourceMap": [
+    {
+      "id": 8343,
+      "slug": "bottom-nav-bar",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/arunachalam/bottom-nav-bar?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/bottom-nav-bar.tsx"
+    },
+    {
+      "id": 28199,
+      "slug": "product-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/deltacomponents/product-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/product-card.tsx"
+    },
+    {
+      "id": 2652,
+      "slug": "social-post-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ruixen.ui/social-post-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/social-post-card.tsx"
+    },
+    {
+      "id": 8229,
+      "slug": "event-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ravikatiyar162/event-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/event-card.tsx"
+    },
+    {
+      "id": 44978,
+      "slug": "chip-filter",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/amankaushik481/chip-filter?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/chip-filter.tsx"
+    },
+    {
+      "id": 7100,
+      "slug": "property-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ravikatiyar162/card-4?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/property-card.tsx"
+    },
+    {
+      "id": 8223,
+      "slug": "service-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/lavikatiyar/service-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/service-card.tsx"
+    },
+    {
+      "id": 12402,
+      "slug": "agent-chat",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/serafimcloud/agent-chat?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/agent-chat.tsx"
+    },
+    {
+      "id": 27575,
+      "slug": "empty-state",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/wensity/empty-state?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/empty-state.tsx"
+    },
+    {
+      "id": 11829,
+      "slug": "interfaces-carousel",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/jshguo/interfaces-carousel?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/interfaces-carousel.tsx"
+    },
+    {
+      "id": 8568,
+      "slug": "image-uploader",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/lavikatiyar/image-uploader?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/image-uploader.tsx"
+    },
+    {
+      "id": 28355,
+      "slug": "avatar-stack",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/shadcnspace/avatar-08?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/avatar-stack.tsx"
+    },
+    {
+      "id": 5621,
+      "slug": "comment-thread",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/vaib215/reddit-nested-thread-reply?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/comment-thread.tsx"
+    },
+    {
+      "id": 19360,
+      "slug": "magnetic-drawer",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/animbits/specials-magnetic-drawer?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/magnetic-drawer.tsx"
+    },
+    {
+      "id": 10479,
+      "slug": "notification-popover",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/patrick-xin/vercel-notification-popover?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/notification-popover.tsx"
+    },
+    {
+      "id": 22225,
+      "slug": "notification-settings",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/felipemenezes098/notifications-2?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/notification-settings.tsx"
+    },
+    {
+      "id": 1696,
+      "slug": "bookmark-icon-button",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ozantekin/bookmark-icon-button?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/bookmark-icon-button.tsx"
+    },
+    {
+      "id": 25320,
+      "slug": "expand-menu",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/unlumen/expand-menu?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/expand-menu.tsx"
+    }
+  ]
+}
