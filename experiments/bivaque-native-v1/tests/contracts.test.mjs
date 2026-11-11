@@ -22,9 +22,9 @@ test('jornadas criam e consultam dados persistentes',()=>{
 });
 test('APK separado da produção',()=>{
  const app=JSON.parse(read('app.json')).expo;
- assert.equal(app.android.package,'com.bivaque.community.nativebeta');
+ assert.equal(app.android.package,'com.bivaque.community.expuibeta');
  assert.notEqual(app.android.package,'com.bivaque.community.mobile');
- assert.equal(app.scheme,'bivaque-beta');
+ assert.equal(app.scheme,'bivaque-ui-beta');
 });
 test('imagens referenciadas existem no repositório de origem',()=>{
  const source=read('src/assets.ts');
@@ -34,4 +34,23 @@ test('imagens referenciadas existem no repositório de origem',()=>{
    const path=join(root,'assets',file);
    assert.ok(existsSync(path),`asset não existe: ${file}`);
  }
+});
+
+test('Expo UI é a base nativa e os controles têm efeitos reais',()=>{
+ const p=JSON.parse(read('package.json'));
+ assert.ok(p.dependencies.expo.startsWith('~56.'),'Expo SDK 56');
+ assert.ok(p.dependencies['@expo/ui'].startsWith('~56.'),'Expo UI 56');
+ assert.ok(p.dependencies['expo-image'],'Expo Image');
+ const controls=read('src/native-controls.tsx');
+ assert.match(controls,/from '@expo\/ui'/);
+ for(const component of ['Host','BottomSheet','Button']) assert.ok(controls.includes(component));
+ const market=read('app/(tabs)/mercado.tsx');
+ assert.ok(market.includes('NativeMarketFilters'));
+ const create=read('app/criar.tsx');
+ const ask=read('app/perguntar.tsx');
+ assert.ok(create.includes('NativeChoice')&&ask.includes('NativeChoice'));
+ const profile=read('app/(tabs)/voce.tsx');
+ const store=read('src/store.tsx');
+ assert.ok(profile.includes('Switch')&&store.includes('hapticsEnabled'));
+ assert.ok(store.includes('AsyncStorage.setItem'));
 });
