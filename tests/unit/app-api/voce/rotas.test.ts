@@ -32,12 +32,22 @@ const CONTAGENS: Record<string, number> = {
   group_memberships: 1,
 }
 
+/** O que `get_my_profile_location` devolve: o CEP cru do banco, sem coordenada. */
+const LOCALIZACAO = { cep: "69000000", definida: true }
+
 /**
  * O banco dos testes: uma tabela responde pelo que a rota pede — contagem,
  * lista, atualização ou remoção. `erro` derruba a tabela escolhida para provar
  * que falha de banco vira 503, nunca lista vazia.
  */
-function cliente(opcoes: { erro?: string; semPerfil?: boolean; semLinhas?: boolean } = {}) {
+function cliente(
+  opcoes: {
+    erro?: string
+    semPerfil?: boolean
+    semLinhas?: boolean
+    localizacaoFalha?: boolean
+  } = {},
+) {
   const escritas: { tabela: string; metodo: string; valor: unknown }[] = []
   const chamadasRpc: string[] = []
 
@@ -151,6 +161,11 @@ function cliente(opcoes: { erro?: string; semPerfil?: boolean; semLinhas?: boole
     chamadasRpc.push(nome)
     if (opcoes.erro === "rpc")
       return { data: null, error: { code: "XX000", message: "segredo do banco" } }
+    if (nome === "get_my_profile_location") {
+      if (opcoes.localizacaoFalha)
+        return { data: null, error: { code: "XX000", message: "segredo do banco" } }
+      return { data: [{ cep: LOCALIZACAO.cep, definida: LOCALIZACAO.definida }], error: null }
+    }
     if (nome === "request_account_deletion") {
       return {
         data: { requested_at: "2026-11-06T12:00:00Z", due_at: "2026-12-06T12:00:00Z" },
@@ -217,10 +232,30 @@ describe("área Você do app", () => {
     const resposta = await perfil(req("GET"))
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({
-      perfil: { nome: "Ana Verificada", bio: null, cidade: "Manaus" },
+      perfil: {
+        nome: "Ana Verificada",
+        bio: null,
+        cidade: "Manaus",
+        localizacao: { cep: "69000-000", definida: true },
+      },
       contagens: { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 },
       conta: { exclusaoPendente: false },
     })
+  })
+
+  it("devolve a localização sem latitude nem longitude", async () => {
+    autenticar()
+    const corpo = await (await perfil(req("GET"))).json()
+    expect(corpo.perfil.localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(JSON.stringify(corpo)).not.toContain("latitude")
+    expect(JSON.stringify(corpo)).not.toContain("longitude")
+  })
+
+  it("falha da RPC de localização na leitura é 503, nunca perfil vazio", async () => {
+    autenticar({ localizacaoFalha: true })
+    const resposta = await perfil(req("GET"))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
   })
 
   it("sessão sem perfil é 404, não perfil vazio", async () => {
@@ -239,8 +274,20 @@ describe("área Você do app", () => {
       { tabela: "profiles", metodo: "update", valor: { display_name: "Ana Editada", bio: null } },
     ])
     expect(await resposta.json()).toMatchObject({
-      perfil: { nome: "Ana Editada", bio: null, cidade: "Manaus" },
+      perfil: {
+        nome: "Ana Editada",
+        bio: null,
+        cidade: "Manaus",
+        localizacao: { cep: "69000-000", definida: true },
+      },
     })
+  })
+
+  it("falha da RPC de localização na edição é 503, nunca perfil vazio", async () => {
+    autenticar({ localizacaoFalha: true })
+    const resposta = await editar(req("PATCH", "", '{"nome":"Ana"}'))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "escrita-indisponivel" })
   })
 
   it.each(["{}", "[]", '{"nome":"a"}', '{"bio":5}'])("recusa corpo inválido %s", async (body) => {

@@ -71,10 +71,15 @@ select columns_are(
     'bio',
     'neighborhood',
     'show_neighborhood',
+    -- RUN-029: cálculo de distância do próprio dono; o SELECT por coluna
+    -- esconde as três de authenticated (profile-location.sql prova).
+    'cep',
+    'latitude',
+    'longitude',
     'created_at',
     'updated_at'
   ],
-  'GUARD: profiles exposes only coarse social + consent columns (locality lives in the membership, P0 Task 3)'
+  'GUARD: profiles exposes coarse social + consent columns and calculation-only location columns; the three new ones are denied to authenticated (RUN-029)'
 );
 
 select hasnt_column('public', 'profiles', 'is_suspended', 'GUARD: moderation flag left profiles (R3-1)');

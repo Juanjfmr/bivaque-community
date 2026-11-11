@@ -9,6 +9,7 @@ import {
   lerPerfil,
   lerPublicacoes,
   pedirExclusao,
+  salvarLocalizacao,
   salvarPerfil,
 } from "@/lib/dados/voce"
 
@@ -34,7 +35,12 @@ afterEach(() => {
 })
 
 const CONTA = {
-  perfil: { nome: "Ana Verificada", bio: null, cidade: "Manaus" },
+  perfil: {
+    nome: "Ana Verificada",
+    bio: null,
+    cidade: "Manaus",
+    localizacao: { cep: "69000-000", definida: true },
+  },
   contagens: { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 },
   conta: { exclusaoPendente: false },
 }
@@ -49,6 +55,21 @@ describe("perfil da conta", () => {
     expect(conta.conta.exclusaoPendente).toBe(false)
   })
 
+  it("traduz a localização sem coordenada e sem CEP quando não há", async () => {
+    responder({
+      ...CONTA,
+      perfil: { ...CONTA.perfil, localizacao: { cep: null, definida: false } },
+    })
+    const conta = await lerPerfil()
+    expect(conta.perfil.localizacao).toEqual({ cep: null, definida: false })
+  })
+
+  it("localização ausente é falha de formato, nunca CEP vazio", async () => {
+    const { localizacao: _descartada, ...perfilSemLocalizacao } = CONTA.perfil
+    responder({ ...CONTA, perfil: perfilSemLocalizacao })
+    await expect(lerPerfil()).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
   it("contagem ausente é falha de formato, nunca zero", async () => {
     responder({ ...CONTA, contagens: { salvos: 2 } })
     await expect(lerPerfil()).rejects.toBeInstanceOf(FalhaDaApi)
@@ -56,7 +77,12 @@ describe("perfil da conta", () => {
 
   it("salva pelo PATCH e devolve o estado gravado", async () => {
     const buscar = responder({
-      perfil: { nome: "Ana Editada", bio: "Nova apresentação", cidade: "Manaus" },
+      perfil: {
+        nome: "Ana Editada",
+        bio: "Nova apresentação",
+        cidade: "Manaus",
+        localizacao: { cep: "69000-000", definida: true },
+      },
     })
     const perfil = await salvarPerfil({ nome: "Ana Editada", bio: "Nova apresentação" })
     const { caminho, init } = chamada(buscar)
@@ -64,6 +90,34 @@ describe("perfil da conta", () => {
     expect(init.method).toBe("PATCH")
     expect(JSON.parse(String(init.body))).toEqual({ nome: "Ana Editada", bio: "Nova apresentação" })
     expect(perfil.nome).toBe("Ana Editada")
+    expect(perfil.localizacao.cep).toBe("69000-000")
+  })
+})
+
+describe("localização do perfil", () => {
+  it("grava o CEP pelo PUT e devolve só CEP e marca de definida", async () => {
+    const buscar = responder({ localizacao: { cep: "69000-000", definida: true } })
+    const localizacao = await salvarLocalizacao("69000000")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/voce/localizacao")
+    expect(init.method).toBe("PUT")
+    expect(JSON.parse(String(init.body))).toEqual({ cep: "69000000" })
+    expect(localizacao).toEqual({ cep: "69000-000", definida: true })
+  })
+
+  it("limpar manda CEP nulo e apaga a localização", async () => {
+    const buscar = responder({ localizacao: { cep: null, definida: false } })
+    const localizacao = await salvarLocalizacao(null)
+    expect(JSON.parse(String(chamada(buscar).init.body))).toEqual({ cep: null })
+    expect(localizacao).toEqual({ cep: null, definida: false })
+  })
+
+  it("CEP não encontrado vira falha com o motivo do servidor", async () => {
+    responder({ erro: "cep-nao-encontrado" }, 422)
+    await expect(salvarLocalizacao("99999999")).rejects.toMatchObject({
+      status: 422,
+      motivoDoServidor: "cep-nao-encontrado",
+    })
   })
 })
 

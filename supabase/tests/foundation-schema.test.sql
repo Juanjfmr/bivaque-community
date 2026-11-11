@@ -22,10 +22,15 @@ select columns_are(
     'bio',
     'neighborhood',
     'show_neighborhood',
+    -- RUN-029: cálculo de distância do próprio dono; o SELECT por coluna
+    -- esconde as três de authenticated (profile-location.sql prova).
+    'cep',
+    'latitude',
+    'longitude',
     'created_at',
     'updated_at'
   ],
-  'profiles expose only coarse social fields plus consent tracking (locality lives in the membership, P0 Task 3)'
+  'profiles expose coarse social fields plus consent tracking and calculation-only location columns (locality lives in the membership, P0 Task 3; RUN-029)'
 );
 select columns_are(
   'private',

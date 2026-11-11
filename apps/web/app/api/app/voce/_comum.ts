@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { formatarCep } from "../../../../lib/geo/cep"
 import { cidadeDaSessao } from "../eventos/_comum"
 
 /**
@@ -15,7 +16,13 @@ import { cidadeDaSessao } from "../eventos/_comum"
 
 type Cliente = SupabaseClient<Database>
 
-export type PerfilDaPessoa = Readonly<{ nome: string; bio: string | null; cidade: string }>
+export type LocalizacaoDoPerfil = Readonly<{ cep: string | null; definida: boolean }>
+export type PerfilDaPessoa = Readonly<{
+  nome: string
+  bio: string | null
+  cidade: string
+  localizacao: LocalizacaoDoPerfil
+}>
 export type ContagensDoPerfil = Readonly<{
   salvos: number
   anuncios: number
@@ -27,6 +34,26 @@ export type PerfilDaConta = Readonly<{
   contagens: ContagensDoPerfil
   conta: Readonly<{ exclusaoPendente: boolean }>
 }>
+
+/**
+ * O CEP do dono da sessão e a marca de definida, nunca a coordenada.
+ *
+ * A função do banco resolve o dono por `auth.uid()`; esta camada não aceita id
+ * de fora. Falha sobe: perfil vazio não é "sem localização".
+ */
+export async function localizacaoDaSessao(client: Cliente): Promise<LocalizacaoDoPerfil> {
+  const { data, error } = await client.rpc("get_my_profile_location")
+  if (error) throw error
+  const linha = data[0]
+  if (linha === undefined) return { cep: null, definida: false }
+  // O gerador de tipos trata colunas de `returns table` como não nulas; o CEP
+  // do perfil é anulável de verdade, então quem decide é o valor em runtime.
+  const cep: unknown = linha.cep
+  return {
+    cep: typeof cep === "string" ? formatarCep(cep) : null,
+    definida: linha.definida === true,
+  }
+}
 
 /** O perfil da sessão, ou `null` quando a linha não existe. */
 export async function perfilDaSessao(
@@ -40,8 +67,11 @@ export async function perfilDaSessao(
     .maybeSingle()
   if (error) throw error
   if (data === null) return null
-  const cidade = await cidadeDaSessao(client, userId)
-  return { nome: data.display_name, bio: data.bio, cidade: cidade?.nome ?? "" }
+  const [cidade, localizacao] = await Promise.all([
+    cidadeDaSessao(client, userId),
+    localizacaoDaSessao(client),
+  ])
+  return { nome: data.display_name, bio: data.bio, cidade: cidade?.nome ?? "", localizacao }
 }
 
 async function contarSalvos(client: Cliente, userId: string): Promise<number> {
