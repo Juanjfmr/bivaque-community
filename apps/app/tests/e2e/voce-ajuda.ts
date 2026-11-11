@@ -60,6 +60,7 @@ export async function simularVoce(page: Page) {
     nome: "Ana Verificada",
     bio: "Mãe de dois, moro no Centro.",
     cidade: "Manaus",
+    localizacao: { cep: "69020000", definida: true },
   }
   const contagens = { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 }
   const conta = { exclusaoPendente: false }

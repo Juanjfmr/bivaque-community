@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-11-11
+**Snapshot:** 2026-11-07
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 184 frentes · 1 agora · 8 bloqueadas · 92 concluídas · 0 drifts
+**Mapa:** 192 frentes · 0 agora · 8 bloqueadas · 93 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -14,7 +14,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-- **LAN-F05** · P1 · F05 Eventos ligados ao banco
+Nenhum card.
 
 ## Bloqueios
 
@@ -33,8 +33,10 @@ Nenhum card.
 
 ## Triagem prioritária
 
+- **F09-B3-INSERT-DIRETO-DM** · P1 · Conversas: fechar o INSERT direto em dm_messages
 - **F10-FAMILIA** · P1 · F10 família: ligar convite e vínculo familiar ao app
 - **LAN-PUSH** · P1 · Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo
+- **LOC-LIMITE-GEOCODIFICACAO** · P1 · Localização: limitar a geocodificação e dar TTL ao cache
 - **PROXY-SURFACE-RISK** · P1 · Superfície de escape do gate de rota documentada e reduzida
 
 ## Comandos

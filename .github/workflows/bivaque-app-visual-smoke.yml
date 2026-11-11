@@ -54,7 +54,9 @@ jobs:
         with:
           name: app-visual-evidence
           if-no-files-found: ignore
+          include-hidden-files: true
           path: |
             apps/app/test-results/
             apps/app/artifacts/visual/
             apps/app/artifacts/visual-mobile/
+            .visual/

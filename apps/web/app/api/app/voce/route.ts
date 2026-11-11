@@ -9,7 +9,7 @@ import {
 import { normalizeBio, validateBio } from "../../../../lib/profile/bio"
 import { normalizarNome, validarNome } from "../../../../lib/profile/nome"
 import { cidadeDaSessao, interpretarErroDoBanco } from "../eventos/_comum"
-import { lerConta } from "./_comum"
+import { lerConta, localizacaoDaSessao } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -81,7 +81,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       throw error
     }
     if (data === null) return responder(request, { erro: "nao-encontrado" }, 404)
-    const cidade = await cidadeDaSessao(client, userId)
+    const [cidade, localizacao] = await Promise.all([
+      cidadeDaSessao(client, userId),
+      localizacaoDaSessao(client),
+    ])
     return responder(
       request,
       {
@@ -89,6 +92,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
           nome: data.display_name,
           bio: data.bio,
           cidade: cidade?.nome ?? "",
+          localizacao,
         },
       },
       200,
