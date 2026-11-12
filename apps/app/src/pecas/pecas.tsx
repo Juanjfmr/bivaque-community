@@ -866,3 +866,8 @@ export function Esqueleto({
     />
   )
 }
+
+// ── segmentos ──────────────────────────────────────────────────────────────
+// Peça novo da correção do F07 (12/11): seções irmãs de uma página. Mora no
+// próprio arquivo porque o CSS é Tailwind, como o resto de `components/bivaque`.
+export { type ItemDeSegmento, Segmentos } from "./segmentos"

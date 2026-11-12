@@ -24,6 +24,7 @@ import {
   Nota,
   Progresso,
   SELOS,
+  Segmentos,
   Selo,
   useAviso,
 } from "./pecas"
@@ -190,11 +191,12 @@ function Botoes() {
 function Escolhas() {
   const [marcados, setMarcados] = useState<readonly string[]>(["Saúde"])
   const [aba, setAba] = useState("recentes")
+  const [secao, setSecao] = useState("desapegos")
   const assuntos = ["Escola e creche", "Saúde", "Pets", "Mudança", "Esporte"]
   return (
     <Secao
       titulo="Chips e abas"
-      regra="Marcado é Grafite cheio, com o check. Aba usa o mesmo chip."
+      regra="Marcado é Grafite cheio, com o check. Aba usa o mesmo chip. Segmento navega e pinta a Brasa, com a contagem que a lista já tem."
     >
       <ul className="pc-chips" aria-label="Assuntos">
         {assuntos.map((assunto) => (
@@ -231,6 +233,16 @@ function Escolhas() {
           </button>
         ))}
       </div>
+      <Segmentos
+        itens={[
+          { id: "desapegos", rotulo: "Desapegos", contagem: 12 },
+          { id: "imoveis", rotulo: "Imóveis", contagem: 34, temMais: true },
+          { id: "negocios", rotulo: "Negócios" },
+        ]}
+        valor={secao}
+        aoEscolher={setSecao}
+        rotulo="Seções do Mercado"
+      />
     </Secao>
   )
 }
