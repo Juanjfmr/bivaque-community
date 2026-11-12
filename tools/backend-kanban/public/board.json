@@ -6411,14 +6411,16 @@
       "tests": [
         "tests/e2e/group-event-detail-denials.spec.ts",
         "tests/e2e/provider-vitrine.spec.ts",
-        "tests/e2e/group-join-reason.spec.ts"
+        "tests/e2e/group-join-reason.spec.ts",
+        "tests/e2e/group-admin-cycle.spec.ts"
       ],
       "blockers": [],
-      "updatedAt": "2026-11-10",
-      "sourceRevision": "1d395dcc",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "b35755e1",
       "links": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43266772953"
       ],
       "proof": [
         "04/11: em revisões intermediárias da mesma linha também caíram group-admin-cycle.spec.ts:120 (@stateful) e um caso de Imóveis em 320; a revisão final 1ea22a9f fechou o job verde, sem mudança de código nas telas — mesma família de instabilidade do lote serial, registrada aqui para não virar ruído de PR.",
@@ -6426,7 +6428,8 @@
         "02/11: causa achada em parte — specs que gravam na conta semeada rodavam em paralelo nos três tamanhos. recon-032 (bloquear), provider-vitrine (catálogo), recon-018 (cadastro, limite do Auth) e synthetic-people foram para o lote serial @stateful; group-base centraliza o botão antes do clique (cabeçalho fixo). Com isso o CI do #121 e do #122 fechou verde. Ficou retries: 1 só no CI da suíte da web antiga, como paliativo visível (flaky no relatório); a perda de conexão com o Supabase local sob carga segue sem causa.",
         "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120.",
         "04/11: PR #128, revisão dd75d8d0, job Install, test, and build: group-admin-cycle.spec.ts:120 (membro pendente cancela o pedido, @stateful) falhou em 1440 nos dois retries e foi flaky em 768; depois de Cancelar pedido o botão Pedir entrada não apareceu em 5 s. O código da revisão é idêntico ao de origin/ds/lancamento f1d14a2d, cujo Pull Request CI fechou verde em 03/11; mesma família de queda do lote @stateful de grupo.",
-        "10/11: reapareceu no PR #177 (run 42885590360): group-admin-cycle.spec.ts:120 em tablet-768 e desktop-1440, mesmo timeout; o rerun sem mudança de código fechou verde — mesma assinatura da instabilidade do lote serial."
+        "10/11: reapareceu no PR #177 (run 42885590360): group-admin-cycle.spec.ts:120 em tablet-768 e desktop-1440, mesmo timeout; o rerun sem mudança de código fechou verde — mesma assinatura da instabilidade do lote serial.",
+        "12/11: group-admin-cycle.spec.ts:120 (@stateful, «Cancelar pedido» não aparece) caiu de novo em dois PRs sem relação com grupos: #203 (só biome.json, run 43266772953, mobile-375 passou no retry e desktop-1440 falhou nos dois) e test/cegas-capturas (run 43237493237, tablet-768 e desktop-1440). A main na base b35755e1 fechou verde. Mesma família do lote serial; o rerun segue como contorno até a causa ser achada."
       ],
       "completedChecklist": [true, true, false, false]
     },
