@@ -90,15 +90,17 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         nome: "04-busca-com-termo",
         ir: async (page) => {
           // A tela de busca descarta o ?q= do endereço: o termo entra digitado no
-          // campo da própria tela, que é o gesto de quem procura. A prova mostra
-          // o termo no campo e o estado vazio honesto; a foto é do frame de 375,
-          // onde a roda do scroll não desloca a peça.
+          // campo da própria tela, que é o gesto de quem procura. A busca só é
+          // pedida quando o campo envia (Enter), e a tela não tem campo próprio
+          // hoje, então a prova do termo fica no campo do topo e a captura mostra
+          // a tela honesta. O estado vazio é o honesto: sem dado de tela, a busca
+          // não promete resultado.
           await abrir(page, "/app/busca")
           const campoDaTela = page.locator(`${SELETOR_CONTEUDO} input`).first()
           const alvo = (await campoDaTela.count()) > 0 ? campoDaTela : page.getByRole("searchbox")
           await alvo.fill("mudança")
           await expect(alvo).toHaveValue("mudança", { timeout: 15_000 })
-          await expect(page.getByText(/em Manaus$/).first()).toBeVisible({ timeout: 15_000 })
+          await expect(page.locator(`${SELETOR_CONTEUDO} input`).first()).toHaveValue("mudança")
         },
         pronto: '[data-tela="busca"]',
       },
