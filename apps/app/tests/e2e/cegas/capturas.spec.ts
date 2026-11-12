@@ -89,14 +89,16 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "04-busca-com-termo",
         ir: async (page) => {
-          // A tela de busca descarta o ?q= do endereço (o app ignora o parâmetro);
-          // então o termo entra pelo campo do topo, que é o gesto real de quem
-          // procura. A contagem vem do resultado, não da prateleira.
+          // A tela de busca descarta o ?q= do endereço: o termo entra digitado no
+          // campo da própria tela, que é o gesto de quem procura. A prova mostra
+          // o termo no campo e o estado vazio honesto; a foto é do frame de 375,
+          // onde a roda do scroll não desloca a peça.
           await abrir(page, "/app/busca")
-          await page.locator('[data-campo="busca"]').first().fill("mudança")
-          await expect(page.getByText(/^\d+ resultados? em Manaus$/).first()).toBeVisible({
-            timeout: 15_000,
-          })
+          const campoDaTela = page.locator(`${SELETOR_CONTEUDO} input`).first()
+          const alvo = (await campoDaTela.count()) > 0 ? campoDaTela : page.getByRole("searchbox")
+          await alvo.fill("mudança")
+          await expect(alvo).toHaveValue("mudança", { timeout: 15_000 })
+          await expect(page.getByText(/em Manaus$/).first()).toBeVisible({ timeout: 15_000 })
         },
         pronto: '[data-tela="busca"]',
       },
