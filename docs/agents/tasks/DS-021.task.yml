@@ -1,0 +1,69 @@
+# LAN-TROCA — F03: depois de publicar no app, a pessoa vê a própria publicação
+#
+# Fecha o critério 1 (a jornada é inteira) do caminho de publicar em grupo no
+# F03: hoje o compositor do app envia a publicação e volta para onde estava, sem
+# deixar claro que ela entrou nem levar a pessoa até ela. Falta a confirmação e o
+# retorno à publicação — e, se o servidor recusar, a recusa precisa ser dita sem
+# perder o que foi escrito.
+
+task_id: DS-021
+
+objective: >
+  Publicar em grupo no app termina com a publicação visível na tela do grupo e
+  com o foco na própria publicação; a recusa do servidor (sem permissão, texto
+  vazio, conteúdo recusado) aparece como mensagem honesta, sem perder o texto
+  digitado e sem sair do compositor.
+
+authority:
+  - docs/LANCAMENTO.md (F03 — critério 1 e a falha principal)
+  - docs/decisions/ADR-20261024-front-react-spa.md §5 e §8
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - tools/backend-kanban/public/board.json (LAN-F03, LAN-TROCA)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O compositor do app envia pelo cliente e a tela volta ao estado anterior sem
+    confirmar a publicação nem mover o foco para ela; os erros do servidor são
+    tratados como texto genérico. A matriz de LAN-TROCA de 10/11 lista o criar
+    publicação em grupo entre as lacunas de troca.
+
+allowed_paths:
+  - docs/agents/tasks/DS-021.task.yml
+  - apps/web/app/api/app/grupos/[id]/publicacoes/route.ts
+  - apps/app/src/grupos/
+  - apps/app/lib/dados/grupos.ts
+  - apps/app/tests/
+  - .visual/run-ds-021/
+
+forbidden:
+  - alterar apps/web além da rota de publicações do grupo (nenhuma action, tela antiga ou outra rota)
+  - tocar sessão, RLS ou validação da rota de publicações
+  - alterar supabase ou migrations
+  - criar rota nova ou peça nova fora de src/pecas
+  - redesenhar o compositor ou mudar a navegação
+  - usar skip/fixme novo ou afrouxar asserção existente
+
+acceptance:
+  - Publicar em grupo que a pessoa participa mostra a publicação na lista do grupo como primeiro item e move o foco para ela; a captura em 375/768/1440 nos dois temas fica em .visual/run-ds-021/.
+  - Recusa por falta de permissão mostra uma frase que diz o que aconteceu e o que fazer a seguir, mantém o texto escrito no compositor e não fecha o compositor.
+  - Recusa por texto vazio ou conteúdo não aceito é dita antes de enviar (validação na tela) ou traduzida do banco, nunca com mensagem crua do Postgres.
+  - Erro de rede mostra estado recuperável com a opção de tentar de novo, sem perder o texto.
+  - Um teste de navegador cobre o caminho feliz e um caminho de recusa; o resto da suíte de grupos continua verde.
+
+proof:
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e (CI; o sandbox local não sobe o Vite/Playwright)
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-021.task.yml
+
+risk: interface e navegação
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

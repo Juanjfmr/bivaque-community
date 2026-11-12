@@ -266,8 +266,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         ).toBeVisible(ESPERA)
       })
 
-      let id = ""
-      await test.step("publicar com foto: a foto sobe e a publicação abre no detalhe", async () => {
+      let publicada = ""
+      await test.step("publicar com foto: a foto sobe e a publicação entra na lista do grupo", async () => {
         await page.getByRole("button", { name: "Escrever", exact: true }).click(ESPERA)
         await page.getByLabel("Sua publicação").fill("Publicação real do F04", ESPERA)
         const imagem = await sharp({
@@ -286,11 +286,33 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           201,
         )
         await page.getByRole("button", { name: "Publicar", exact: true }).click(ESPERA)
-        await expect(page, "publicar abre a publicação gravada").toHaveURL(
-          /\/app\/publicacao\/[0-9a-f-]+$/,
+        // Publicar não sai da tela do grupo: o cartão entra no começo da lista,
+        // com o texto gravado, e o anúncio ao vivo diz o que aconteceu.
+        await expect(
+          page.locator('[data-publicacao-na-lista="sim"]').first(),
+          "a publicação gravada entra na lista do grupo",
+        ).toContainText("Publicação real do F04", ESPERA)
+        await expect(
+          page.locator('[data-anuncio-da-publicacao="sim"]'),
+          "o anúncio confirma a publicação",
+        ).toContainText("começo da lista", ESPERA)
+        const listaDoTexto = await servico.get(
+          `/rest/v1/posts?select=id&group_id=eq.${aberto}&content=eq.Publicação real do F04`,
+        )
+        const achadas = (await listaDoTexto.json()) as { id: string }[]
+        expect(achadas.length, "a publicação está gravada uma vez").toBe(1)
+        publicada = achadas[0]?.id ?? ""
+        // O cartão da lista não é um link: a publicação abre pela ação
+        // "Comentar", que leva à tela da publicação com o fio dela.
+        await page
+          .locator('[data-publicacao-na-lista="sim"]')
+          .first()
+          .getByRole("button", { name: /Comentar|comentários/ })
+          .click(ESPERA)
+        await expect(page, "o cartão abre a publicação gravada").toHaveURL(
+          new RegExp(`/app/publicacao/${publicada}$`),
           ESPERA,
         )
-        id = new URL(page.url()).pathname.split("/").at(-1) ?? ""
       })
 
       await test.step("comentar e responder: o fio é gravado", async () => {
@@ -330,7 +352,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         await page.reload({ timeout: ESPERA.timeout })
         await expect(
           page.getByText("Publicação real do F04", { exact: true }),
-          "o texto sobrevive ao recarregamento",
+          "o texto sobrevive ao recarregamento na tela da publicação",
         ).toBeVisible(ESPERA)
         await expect(
           page.locator('[data-resposta="sim"]'),
@@ -355,6 +377,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           { content: "Publicação real do F04" },
         ])
         await capturar(page, `${info.project.name}-publicacao`)
+        // A lista do grupo é a outra tela desta prova: voltar para ela.
+        await page.goto(`/app/grupo/${aberto}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await expect(
           page.getByRole("button", { name: "Tirar dos salvos" }),
@@ -365,15 +389,18 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           "quem escreveu não denuncia a própria publicação",
         ).toHaveCount(0, ESPERA)
         await page.getByRole("button", { name: "Ocultar publicação" }).click(ESPERA)
-        await expect(
-          page.getByText("Esta publicação está oculta para você no grupo."),
-          "ocultar avisa na própria publicação",
-        ).toBeVisible(ESPERA)
-        await page.goto(`/app/grupo/${aberto}`, ESPERA)
+        // Ocultar tira a publicação de "Recentes": o aviso fica na tela dela,
+        // que a prova não abre aqui (a lista é o estado da tela do grupo).
         await expect(
           page.locator('[data-cartao="publicacao"]'),
           "a publicação oculta sai da lista do grupo",
         ).toHaveCount(0, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
+        await expect(
+          page.getByText("Esta publicação está oculta para você no grupo."),
+          "a publicação oculta avisa ao ser aberta",
+        ).toBeVisible(ESPERA)
+        await page.goto(`/app/grupo/${aberto}`, ESPERA)
         await page.getByRole("button", { name: "Ocultadas", exact: true }).click(ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Mostrar novamente" }).click(ESPERA)
@@ -381,7 +408,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         // Fixar é do dono do grupo: outra sessão, mesmo banco.
         await context.clearCookies()
         await signInAs(context, "visual@bivaque.example.invalid")
-        await page.goto(`/app/publicacao/${id}`, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Fixar publicação" }).click(ESPERA)
         await expect(page.getByRole("status"), "fixar confirma na tela").toContainText(
@@ -413,7 +440,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         // escreveu, e a rota responde `proprio-conteudo`.
         await context.clearCookies()
         await signInAs(context, "visual@bivaque.example.invalid")
-        await page.goto(`/app/publicacao/${id}`, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Denunciar publicação", exact: true }).click(ESPERA)
         await page.getByLabel("Spam", { exact: true }).check(ESPERA)
@@ -423,11 +450,11 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           ESPERA,
         )
         const denuncias = await servico.get(
-          `/rest/v1/reports?select=target_id&target_type=eq.post&target_id=eq.${id}`,
+          `/rest/v1/reports?select=target_id&target_type=eq.post&target_id=eq.${publicada}`,
         )
         expect(denuncias.ok(), "a denúncia é legível pelo serviço local").toBe(true)
         expect(await denuncias.json(), "a denúncia gravada aponta para a publicação").toEqual([
-          { target_id: id },
+          { target_id: publicada },
         ])
       })
     } finally {
