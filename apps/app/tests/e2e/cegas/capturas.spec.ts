@@ -5,7 +5,6 @@ import {
   abrir,
   expect,
   NEGOCIO_DA_PROVA,
-  NEGOCIOS_DA_PROVA,
   PEDIDO_DA_PROVA,
   SELETOR_CRIAR,
   SELETOR_MENU_CRIAR,
@@ -57,8 +56,6 @@ async function assentar(page: Page): Promise<void> {
     await Promise.race([Promise.all(animacoes).then(() => undefined), limite])
   })
 }
-
-const NEGOCIO = NEGOCIOS_DA_PROVA.negocios[0]
 
 const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
   {
@@ -287,5 +284,5 @@ test("a ficha de negócio da prova abre populada", async ({ page }) => {
   await simularProgresso(page)
   await simularNegocio(page)
   await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-  await expect(page.getByRole("heading", { name: NEGOCIO.nome })).toBeVisible()
+  await expect(page.getByRole("heading", { name: NEGOCIO_DA_PROVA.nome })).toBeVisible()
 })
