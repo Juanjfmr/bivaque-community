@@ -264,9 +264,16 @@ export function Grupo() {
           {grupo.regras || "Este grupo ainda não informou regras."}
         </p>
       </details>
-      {grupo.admin ? <Pedidos key={grupo.id} id={grupo.id} /> : null}
+      {/* Chaves distintas de propósito: as duas peças são irmãs e o React recusa
+          duas com o mesmo key; o id remonta as duas quando o grupo troca. */}
+      {grupo.admin ? <Pedidos key={`pedidos-${grupo.id}`} id={grupo.id} /> : null}
       {grupo.membro ? (
-        <Escrever key={grupo.id} grupo={grupo} cidade={casca.cidade} aoPublicar={aoPublicar} />
+        <Escrever
+          key={`escrever-${grupo.id}`}
+          grupo={grupo}
+          cidade={casca.cidade}
+          aoPublicar={aoPublicar}
+        />
       ) : null}
       {/* O foco já leva ao cartão; o anúncio garante que quem usa leitor de
           tela saiba o que houve, inclusive quando a publicação não entrou. */}

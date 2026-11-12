@@ -120,7 +120,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.locator('[data-escolha="create-event"]').click()
           await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
           await page.getByLabel("Título").fill("Encontro de veteranos no centro")
-          await page.getByLabel("Data e hora").fill("2026-12-05T19:00")
+          await page.getByLabel("Data").fill("05/12/2026")
+          await page.getByLabel("Hora").fill("19:00")
           await page.getByLabel("Local").fill("Praça São Sebastião")
         },
         pronto: '[data-sobreposicao="folha"]',
@@ -133,8 +134,12 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
           await page.locator('[data-escolha="create-event"]').click()
           await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
-          await page.locator('[data-sobreposicao="folha"] button[type="submit"]').click()
-          await expect(page.locator('[data-sobreposicao="folha"] [role="alert"]')).toBeVisible()
+          // A ação primária só liga com os obrigatórios: o erro aparece no campo.
+          await page.getByLabel("Título").fill("C")
+          await page.getByLabel("Data").fill("31/02/2026")
+          await page.getByLabel("Hora").click()
+          await expect(page.locator("#encontro-titulo-erro")).toBeVisible()
+          await expect(page.locator("#encontro-data-erro")).toBeVisible()
         },
         pronto: '[data-sobreposicao="folha"]',
       },
