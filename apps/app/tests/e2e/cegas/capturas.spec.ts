@@ -94,7 +94,9 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await abrir(page, "/app/busca")
           const campo = page.locator('[data-campo="busca"]')
           await campo.fill("mudança")
-          await expect(page.getByText(/^\d+ resultados? em Manaus$/)).toBeVisible({ timeout: 15_000 })
+          await expect(page.getByText(/^\d+ resultados? em Manaus$/)).toBeVisible({
+            timeout: 15_000,
+          })
         },
         pronto: '[data-tela="busca"]',
       },
