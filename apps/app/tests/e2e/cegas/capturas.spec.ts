@@ -89,10 +89,10 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "04-busca-com-termo",
         ir: async (page) => {
-          // O mesmo gesto da matriz de acessibilidade: a casca abre a busca com o
-          // termo e a tela lê a consulta. A captura precisa das duas coisas no ar.
+          // A tela de busca descarta o ?q= do endereço (o app ignora o parâmetro);
+          // então o termo entra pelo campo do topo, que é o gesto real de quem
+          // procura. A contagem vem do resultado, não da prateleira.
           await abrir(page, "/app/busca")
-          await simularInicio(page)
           await page.locator('[data-campo="busca"]').first().fill("mudança")
           await expect(page.getByText(/^\d+ resultados? em Manaus$/).first()).toBeVisible({
             timeout: 15_000,
