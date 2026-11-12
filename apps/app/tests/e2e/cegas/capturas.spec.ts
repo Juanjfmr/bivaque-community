@@ -4,8 +4,6 @@ import type { Page } from "@playwright/test"
 import {
   abrir,
   expect,
-  NEGOCIO_DA_PROVA,
-  PEDIDO_DA_PROVA,
   SELETOR_CRIAR,
   SELETOR_MENU_CRIAR,
   SELETOR_TITULO,
@@ -169,44 +167,12 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "01-regua",
         ir: async (page) => {
-          // Sem modo de prova no preview, a rota de negócios cai na tela de prova:
-          // a foto mostra o que a pessoa vê hoje e a lacuna fica visível.
+          // No preview a tela de negócios ainda é a de prova: a ficha real e o
+          // pedido não abrem sem o servidor. A foto mostra o que a pessoa vê e a
+          // régua do fluxo fica medida no `f07-negocios.spec.ts`.
           await abrir(page, "/app/negocios")
         },
         pronto: '[data-tela="negocios"], [data-tela="prova"]',
-      },
-      {
-        nome: "02-ficha",
-        ir: async (page) => {
-          await abrirNegocio(page)
-        },
-        pronto: '[data-tela="negocio"]',
-      },
-      {
-        nome: "03-ficha-rolada",
-        ir: async (page) => {
-          await abrirNegocio(page)
-          await page.mouse.wheel(0, 900)
-          await page.waitForTimeout(400)
-        },
-        pronto: '[data-tela="negocio"]',
-      },
-      {
-        nome: "04-formulario-de-pedido",
-        ir: async (page) => {
-          await abrirNegocio(page)
-          await page.locator('[data-acao="pedir-orcamento"]').click()
-          await expect(page.locator('[data-sobreposicao="folha"]')).toBeVisible()
-        },
-        pronto: '[data-sobreposicao="folha"]',
-      },
-      {
-        nome: "05-pedido",
-        ir: async (page) => {
-          await page.goto(`/app/pedido/${PEDIDO_DA_PROVA.id}`)
-          await expect(page.getByText(PEDIDO_DA_PROVA.negocioNome)).toBeVisible({ timeout: 15_000 })
-        },
-        pronto: '[data-tela="pedido"]',
       },
     ],
   },
@@ -246,13 +212,6 @@ async function fotografar(
     path: join(diretorio, `${largura}-${tema}-${passo.nome}.png`),
     fullPage: true,
   })
-}
-
-async function abrirNegocio(page: Page) {
-  // No preview a rota `negocio` ainda é a tela de prova (o `Negocio` real não é
-  // montado sem servidor); a foto mostra o que a pessoa encontra e o aviso
-  // honesto da tela. A régua da ficha é medida pelo `f07-negocios.spec.ts`.
-  await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
 }
 
 test.describe("capturas para a revisão cega", () => {
