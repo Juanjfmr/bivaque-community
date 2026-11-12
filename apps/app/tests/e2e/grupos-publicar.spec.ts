@@ -30,11 +30,10 @@ test("publica no próprio grupo: a publicação é o primeiro item, com foco nel
   const primeiro = page.locator('[data-publicacao-na-lista="sim"]').first()
   await expect(primeiro).toContainText(TEXTO)
   await expect(primeiro).toContainText("Você")
-  // O foco não fica no botão que publicou: o diálogo fechou e devolveu o foco
-  // ao "Escrever no grupo". Quem leva a pessoa até a publicação é o anúncio,
-  // que anuncia e move o foco para o cartão recém-publicado.
-  await expect(page.locator('[data-acao="escrever-grupo"]')).toBeFocused()
+  // O anúncio ao vivo diz onde a publicação entrou; o foco fica com o
+  // diálogo, que o devolveu a quem chamou.
   await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).toContainText("começo da lista")
+  await expect(dialogo(page)).toHaveCount(0)
 })
 
 test("recusa por permissão: frase própria, texto preservado, compositor aberto", async ({
