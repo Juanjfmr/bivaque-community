@@ -3,6 +3,7 @@
 import { useLocation } from "@tanstack/react-router"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
+import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
@@ -24,6 +25,7 @@ import { TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerRecentes } from "@/src/busca/recentes"
 import { termoDaUrl } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
 import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
@@ -63,7 +65,6 @@ const TOPICOS: readonly ItemDeFiltro[] = [
   ...TOPICOS_DAS_PERGUNTAS,
 ]
 
-const SUGESTOES = ["escola", "berço", "mudança", "mecânico"] as const
 const TAMANHO_DA_LISTA = 20
 
 type Achados = Pick<BuscaDaCidade, "anuncios" | "negocios" | "perguntas" | "grupos" | "guia">
@@ -89,6 +90,7 @@ export function Busca() {
   const [escopo, setEscopo] = useState("all")
   const [topico, setTopico] = useState("todos")
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
+  const [recentes, setRecentes] = useState<readonly string[]>([])
   const { consulta, definirConsulta: setConsulta } = casca
 
   // O termo do link (LAN-TROCA) já vale como consulta no primeiro desenho: a
@@ -160,6 +162,12 @@ export function Busca() {
     if (termo !== "") setCategoriaAtiva(null)
   }, [termo])
 
+  // As recentes vêm do aparelho e só existem depois de uma busca de verdade:
+  // sem registro, a seção não aparece (nada de "recente" inventada).
+  useEffect(() => {
+    if (!comTermo) setRecentes(lerRecentes())
+  }, [comTermo])
+
   const cidade = (comTermo ? dados?.cidade : explorar?.cidade) ?? casca.cidade
   const explorando = !comTermo && categoriaAtiva === null
   const carregando = comTermo ? dados === null : explorar === null
@@ -183,6 +191,37 @@ export function Busca() {
   const negociosDaCidade = explorar?.negocios ?? []
   const anunciosDaCidade = explorar?.anuncios ?? []
   const anunciosTruncados = explorar !== null && explorar.proximo !== null
+  const perguntasDaCidade = explorar?.perguntas ?? []
+  const gruposDaCidade = explorar?.grupos ?? []
+  const bairrosDaCidade = [
+    ...new Set(
+      anunciosDaCidade.flatMap((anuncio) => (anuncio.bairro === null ? [] : [anuncio.bairro])),
+    ),
+  ].slice(0, 6)
+  const cidadeSemConteudo =
+    !comTermo &&
+    categoriaAtiva === null &&
+    explorar !== null &&
+    negociosDaCidade.length === 0 &&
+    anunciosDaCidade.length === 0 &&
+    perguntasDaCidade.length === 0 &&
+    gruposDaCidade.length === 0
+  const resumoDaCidade = [
+    negociosDaCidade.length === 0
+      ? null
+      : `${negociosDaCidade.length} ${negociosDaCidade.length === 1 ? "negócio" : "negócios"}`,
+    anunciosDaCidade.length === 0
+      ? null
+      : `${anunciosDaCidade.length} ${anunciosDaCidade.length === 1 ? "anúncio" : "anúncios"}`,
+    perguntasDaCidade.length === 0
+      ? null
+      : `${perguntasDaCidade.length} ${perguntasDaCidade.length === 1 ? "indicação" : "indicações"}`,
+    gruposDaCidade.length === 0
+      ? null
+      : `${gruposDaCidade.length} ${gruposDaCidade.length === 1 ? "grupo" : "grupos"}`,
+  ]
+    .filter((parte): parte is string => parte !== null)
+    .join(" · ")
 
   return (
     <section data-tela="busca" className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
@@ -219,88 +258,144 @@ export function Busca() {
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
       ) : explorando ? (
-        <>
-          <Secao titulo={`Explorar em ${cidade}`} className="mt-4">
-            <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
-              {EXPLORAR.filter((item) =>
-                negociosDaCidade.some((negocio) => negocioDoGrupo(item.id, negocio.categoria)),
-              )
-                .slice(0, 6)
-                .map((item) => {
-                  const quantidade = negociosDaCidade.filter((negocio) =>
-                    negocioDoGrupo(item.id, negocio.categoria),
-                  ).length
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-explorar-categoria={item.id}
-                      onClick={() => {
-                        setCategoriaAtiva(item.id)
-                        setEscopo("negocios")
-                      }}
-                      className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
-                    >
-                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
-                        <Icone nome={iconeDeDado(item.icone)} className="size-6" />
-                      </span>
-                      <span className="grid min-w-0 gap-0.5">
-                        <b className="text-[13px] leading-4">{item.rotulo}</b>
-                        <small className="text-xs text-(--on-surface-variant)">
-                          {contagem(quantidade, negociosDaCidade.length >= TAMANHO_DA_LISTA)}{" "}
-                          {quantidade === 1 ? "negócio" : "negócios"}
-                        </small>
-                      </span>
-                    </button>
-                  )
-                })}
-              {[
-                {
-                  id: "imoveis",
-                  rotulo: "Imóveis",
-                  icone: "apartment",
-                  quantidade: anunciosDaCidade.filter((a) => a.tipo === "property").length,
-                },
-                {
-                  id: "desapegos",
-                  rotulo: "Desapegos",
-                  icone: "sell",
-                  quantidade: anunciosDaCidade.filter((a) => a.tipo !== "property").length,
-                },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  data-explorar-categoria={item.id}
-                  onClick={() => void navegacao.irPara(item.id)}
-                  className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+        cidadeSemConteudo ? (
+          <Secao titulo={`${cidade} está começando`} className="mt-4">
+            <EstadoVazio
+              titulo="Nada publicado por aqui ainda"
+              texto="A busca mostra o que a cidade publicar. Você pode abrir o caminho: peça uma indicação ou anuncie algo."
+              icone="public"
+            >
+              <div className="flex flex-wrap justify-center gap-2">
+                <Botao tom="tonal" icone="add" onClick={() => void navegacao.abrir("menu-criar")}>
+                  Publicar na cidade
+                </Botao>
+                <Botao
+                  tom="contornado"
+                  icone="volunteer_activism"
+                  onClick={() => void navegacao.irPara("comunidade")}
                 >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
-                    <Icone nome={iconeDeDado(item.icone)} className="size-6" />
-                  </span>
-                  <span className="grid min-w-0 gap-0.5">
-                    <b className="text-[13px] leading-4">{item.rotulo}</b>
-                    <small className="text-xs text-(--on-surface-variant)">
-                      {contagem(item.quantidade, anunciosTruncados)} disponíveis
-                    </small>
-                  </span>
-                </button>
-              ))}
-            </div>
+                  Ver a comunidade
+                </Botao>
+              </div>
+            </EstadoVazio>
           </Secao>
-          <Secao titulo="Sugestões" className="mt-4">
-            <div className="grid gap-1">
-              {SUGESTOES.map((sugestao) => (
-                <LinhaDeLista
-                  key={sugestao}
-                  icone="trending_up"
-                  titulo={sugestao}
-                  onClick={() => setConsulta(sugestao)}
-                />
-              ))}
+        ) : (
+          <>
+            <div data-busca="primeira-entrada" className="mt-3 grid gap-1">
+              <h2 className="text-lg font-semibold">O que você precisa em {cidade}?</h2>
+              <p className="text-sm text-(--on-surface-variant)">
+                Digite acima para procurar serviços, oportunidades e respostas — ou comece por um
+                dos caminhos abaixo.
+              </p>
             </div>
-          </Secao>
-        </>
+
+            {recentes.length === 0 ? null : (
+              <Secao titulo="Buscas recentes">
+                <div className="grid gap-1">
+                  {recentes.map((recente) => (
+                    <LinhaDeLista
+                      key={recente}
+                      icone="history"
+                      titulo={recente}
+                      onClick={() => setConsulta(recente)}
+                    />
+                  ))}
+                </div>
+              </Secao>
+            )}
+
+            <Secao titulo={`Explorar em ${cidade}`}>
+              <div data-explorar="categorias" className="grid grid-cols-2 gap-2">
+                {EXPLORAR.filter((item) =>
+                  negociosDaCidade.some((negocio) => negocioDoGrupo(item.id, negocio.categoria)),
+                )
+                  .slice(0, 6)
+                  .map((item) => {
+                    const quantidade = negociosDaCidade.filter((negocio) =>
+                      negocioDoGrupo(item.id, negocio.categoria),
+                    ).length
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        data-explorar-categoria={item.id}
+                        onClick={() => {
+                          setCategoriaAtiva(item.id)
+                          setEscopo("negocios")
+                        }}
+                        className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                      >
+                        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                          <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                        </span>
+                        <span className="grid min-w-0 gap-0.5">
+                          <b className="text-[13px] leading-4">{item.rotulo}</b>
+                          <small className="text-xs text-(--on-surface-variant)">
+                            {contagem(quantidade, negociosDaCidade.length >= TAMANHO_DA_LISTA)}{" "}
+                            {quantidade === 1 ? "negócio" : "negócios"}
+                          </small>
+                        </span>
+                      </button>
+                    )
+                  })}
+                {[
+                  {
+                    id: "imoveis",
+                    rotulo: "Imóveis",
+                    icone: "apartment",
+                    quantidade: anunciosDaCidade.filter((a) => a.tipo === "property").length,
+                  },
+                  {
+                    id: "desapegos",
+                    rotulo: "Desapegos",
+                    icone: "sell",
+                    quantidade: anunciosDaCidade.filter((a) => a.tipo !== "property").length,
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-explorar-categoria={item.id}
+                    onClick={() => void navegacao.irPara(item.id)}
+                    className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
+                  >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
+                      <Icone nome={iconeDeDado(item.icone)} className="size-6" />
+                    </span>
+                    <span className="grid min-w-0 gap-0.5">
+                      <b className="text-[13px] leading-4">{item.rotulo}</b>
+                      <small className="text-xs text-(--on-surface-variant)">
+                        {contagem(item.quantidade, anunciosTruncados)} disponíveis
+                      </small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Secao>
+
+            <Secao titulo={`O que existe em ${cidade}`}>
+              <p data-busca="resumo-da-cidade" className="text-sm text-(--on-surface-variant)">
+                {resumoDaCidade}
+              </p>
+              {bairrosDaCidade.length === 0 ? null : (
+                <p className="text-sm text-(--on-surface-variant)">
+                  {`Com anúncios em ${bairrosDaCidade.join(", ")}.`}
+                </p>
+              )}
+            </Secao>
+
+            <Secao titulo="Crie o que falta">
+              <p className="text-sm text-(--on-surface-variant)">
+                Não encontrou? Peça uma indicação, anuncie um desapego ou divulgue seu negócio.
+              </p>
+              <div>
+                <Botao tom="tonal" icone="add" onClick={() => void navegacao.abrir("menu-criar")}>
+                  Abrir o Criar
+                </Botao>
+              </div>
+            </Secao>
+          </>
+        )
       ) : total === 0 ? (
         <EstadoVazio
           titulo={`Nada sobre “${termo}”`}

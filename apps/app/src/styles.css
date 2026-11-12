@@ -442,7 +442,7 @@
   background: var(--surface-high);
 }
 
-@media (max-width: 719.98px) {
+@media (max-width: 1023.98px) {
   [data-nav="principal"][data-minimizada="sim"] {
     transform: translateY(100%);
     pointer-events: none;
@@ -453,7 +453,7 @@
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1024px) {
   [data-casca="app"],
   [data-casca="entrada"],
   [data-casca="painel"] {
@@ -488,6 +488,8 @@
     gap: 6px;
     height: 100%;
     padding: 18px 0;
+    /* Um degrau acima do fundo no escuro: a coluna não some no preto. */
+    background: var(--surface-low);
     border-top: 0;
     border-right: 1px solid var(--outline-variant);
     box-shadow: none;
@@ -542,7 +544,7 @@
   opacity: 0;
 }
 
-@media (max-width: 719.98px) {
+@media (max-width: 1023.98px) {
   /* O FAB continua acionável quando a barra sai; o protótipo o mantém fora
      do nav. Aqui compensamos o bloco transformado, preservando um único botão. */
   [data-nav="principal"][data-minimizada="sim"] [data-aba] {
@@ -572,7 +574,7 @@
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1024px) {
   [data-acao="criar"] [data-criar="botao"] {
     margin-top: 0;
     width: 52px;
@@ -726,10 +728,10 @@
   object-fit: cover;
 }
 
-/* Home desktop: conteúdo principal tem duas colunas de cards, ao lado de
-   contexto enxuto (grupos, encontro e perguntas) sem repetir widgets. */
-@media (min-width: 1024px) {
-  .bv-home-principal .bv-grade {
+/* Home desktop: a coluna de leitura mantém dois cartões por linha; a grade
+   global (3 e 4 colunas) vale para telas cheias, não para 640 px. */
+@media (min-width: 720px) {
+  [data-home="leitura"] .bv-grade {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -800,11 +802,11 @@
 .bv-home-busca {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   width: 100%;
   min-width: 0;
   min-height: 48px;
-  padding: 0 13px;
+  padding: 0 2px;
   border: 1px solid var(--outline-variant);
   border-radius: 12px;
   background: var(--surface-lowest);
@@ -812,7 +814,59 @@
   touch-action: manipulation;
 }
 
-.bv-home-busca:focus-visible,
+.bv-home-busca:focus-within {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.bv-home-busca-form {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bv-home-busca-campo {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.bv-home-busca-campo::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 1;
+}
+
+.bv-home-busca-campo::-webkit-search-cancel-button {
+  display: none;
+}
+
+.bv-home-busca-acao {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+.bv-home-busca-acao:hover {
+  background: var(--muted);
+}
+
+.bv-home-busca-acao:focus-visible,
 .bv-home-atalho:focus-visible,
 .bv-home-contratar:focus-visible {
   outline: 2px solid var(--ring);
@@ -892,7 +946,79 @@
   color: var(--brasa);
 }
 
-[data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+/* Início: coluna de leitura e trilho de contexto (parecer cego de 12/11).
+   Até 1024 px a tela é uma coluna; daí para cima o feed para de esticar e
+   ganha o trilho de contexto ao lado. */
+[data-home="conteudo"] {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  [data-tela="inicio"] {
+    /* 640 de leitura + 28 de respiro + 320 de contexto: o cabeçalho e o feed
+       começam na mesma borda. */
+    max-width: 988px;
+    margin-inline: auto;
+  }
+
+  [data-home="conteudo"] {
+    grid-template-columns: minmax(0, 640px) minmax(280px, 320px);
+    justify-content: center;
+    align-items: start;
+    gap: 28px;
+  }
+
+  [data-home="contexto"] {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+/* A busca no computador: a mesma coluna do resto, em vez de 1.300 px de
+   campo e cartões esticados. */
+@media (min-width: 1024px) {
+  [data-tela="busca"] {
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+}
+
+/* A publicação do feed: cartão da biblioteca (nada de lista de texto). */
+.bv-publicacao {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface-lowest);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+}
+
+.bv-publicacao-cabeca {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.bv-publicacao-texto {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.bv-publicacao-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--outline-variant);
+}
+
+[data-tela="inicio"] [data-home="leitura"] > [data-secao="sim"]:first-child {
   margin-top: 15px;
 }
 
@@ -911,7 +1037,7 @@
     margin-top: 19px;
   }
 
-  [data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+  [data-tela="inicio"] [data-home="leitura"] > [data-secao="sim"]:first-child {
     margin-top: 15px;
   }
 

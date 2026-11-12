@@ -140,7 +140,7 @@ function Contador({ quantidade, nome }: { quantidade: number; nome: "avisos" | "
 /** A rota `busca` toma a barra: Voltar, campo e limpar (§5.2). */
 function BuscaEmTelaCheia() {
   const navegacao = useNavegacao()
-  const { consulta: busca, definirConsulta: setBusca } = useCasca()
+  const { consulta: busca, cidade, definirConsulta: setBusca } = useCasca()
   const campo = useRef<HTMLInputElement | null>(null)
 
   // O foco no campo ao abrir a busca é do protótipo (§5.2), feito no efeito e
@@ -167,8 +167,8 @@ function BuscaEmTelaCheia() {
           inputMode="search"
           value={busca}
           onChange={(evento) => setBusca(evento.target.value)}
-          aria-label="Buscar no Bivaque"
-          placeholder="Buscar no Bivaque"
+          aria-label={`Buscar em ${cidade}`}
+          placeholder={`Buscar em ${cidade}`}
           className="min-h-11 w-full min-w-0 rounded-xl border border-(--input) bg-transparent px-3 text-base outline-none focus-visible:border-(--ring)"
         />
       </span>
