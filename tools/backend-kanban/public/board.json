@@ -4625,20 +4625,24 @@
       "phase": "Reconstrução",
       "links": ["apps/web/app/(shell)/pedidos/[id]/actions.ts"],
       "dependencies": [],
-      "proof": [],
+      "proof": [
+        "12/11: fechado pelo PR #192 (na main). apps/web/app/(shell)/pedidos/[id]/actions.ts traduz as recusas conhecidas em frase com saída por lib/service-requests/tracking-falhas.ts, mantendo o detalhe só no log; tests/unit/service-requests/tracking-falhas.test.ts cobre a tradução e o caminho genérico."
+      ],
       "tests": [],
-      "updatedAt": "2026-09-23",
-      "sourceRevision": "caa0c56f",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "79eedadb",
       "id": "PEDIDO-MENSAGEM-ERRO-CRU",
       "title": "Enviar mensagem no pedido devolve a mensagem crua do banco para a tela",
       "priority": "P3",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Achado LOW, preexistente, da revisao independente do PR #79 (23/09/2026). apps/web/app/(shell)/pedidos/[id]/actions.ts:85 devolve error.message do PostgREST em { status: 'error', message }, contra o proprio comentario do arquivo que promete traduzir erro em estado de tela. As mensagens hoje sao 'blocked', 'not a participant', 'message required' (sem dado pessoal), mas em ingles e tecnicas.",
       "checklist": [
         "Traduzir os erros conhecidos em frase com saida e manter o detalhe so no log, como pedidos/novo/actions.ts",
         "Teste unitario da traducao e do caminho generico"
-      ]
+      ],
+      "completedChecklist": [true, true],
+      "completedAt": "2026-11-12"
     },
     {
       "id": "GUIA-RESPOSTA-CANDIDATA",
@@ -7136,23 +7140,28 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "city-reference.tsx:203 emite /events?locality=<id>; o 307 preserva a query, mas o app não lê locality (só locality_id), então o link de outra cidade cai na agenda da cidade de quem clica, em silêncio. Aceitar ?locality no app (rota/filtro de cidade) ou apontar o link para a rota da cidade quando existir; até lá, não prometer o que não acontece.",
+      "status": "done",
+      "description": "city-reference.tsx:203 emite /events?locality=<id>; o 307 preserva a query, mas o app não lê locality (só locality_id), então o link de outra cidade cai na agenda da cidade de quem clica, em silêncio. Aceitar ?locality no app (rota/filtro de cidade) ou apontar o link para a rota da cidade quando existir; até lá, não prometer o que não acontece. Decisão do coordenador em 12/11: na referência de outra cidade os dois links somem; na cidade da pessoa continuam iguais.",
       "checklist": [
-        "Aceitar ?locality no app ou trocar o link para a rota da cidade",
-        "E2E do link de outra cidade com o destino correto",
-        "Prova de que a agenda local não muda"
+        "Na referência de outra cidade, «Ver todos os eventos» e «Abrir o guia de chegada» não aparecem, e nenhum href sai com locality= (sem fazer o app ler ?locality)",
+        "Na cidade da pessoa os dois links continuam com o mesmo texto e destino, /events e /guide",
+        "Teste prova os dois lados, rodado de verdade, e a lista de eventos e o resto da referência alternativa seguem iguais"
       ],
       "proof": [
-        "11/11: aberto na revisão do #176 (achado MÉDIO do reviewer 7c4d0b40); o 307 e a query já são provados, falta o destino."
+        "11/11: aberto na revisão do #176 (achado MÉDIO do reviewer 7c4d0b40); o 307 e a query já são provados, falta o destino.",
+        "12/11, RUN-137: decisão de produto — esconder, não redirecionar. city-reference.tsx não emite mais href com locality=; os dois links ficam sob !isAlternate, com /events e /guide na cidade da pessoa. tests/unit/ui/city-reference.test.tsx (renderToStaticMarkup, Supabase e contexto mockados) prova os dois lados: 3/3 na revisão ca4b88c0 e falha no código anterior («Ver todos os eventos» presente na alternativa). test:unit 258 arquivos/3141 testes verdes, typecheck completo verde, lint do arquivo pelo biome com o ignore de .work removido. Sem E2E de /localidade: exige stack local do Supabase com seed e Playwright, não disponíveis neste checkout."
       ],
-      "tests": [],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/ui/city-reference.test.tsx",
+        "npx pnpm@11.18.0 typecheck"
+      ],
       "links": [],
       "dependencies": ["LAN-F05"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "9b0dbf2b",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "ca4b88c0",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-11-12"
     },
     {
       "id": "ADR-CONVITE-EMAIL-EDITAVEL",
@@ -7537,13 +7546,13 @@
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "sourceRevision": "79eedadb",
       "links": ["docs/LANCAMENTO.md"],
       "id": "CORRETA-RODAPE-CASCA",
       "title": "Corrigir o rodape de depuracao da casca que aparece em toda rota sem conteudo",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "O parecer cego de 12/12 mostrou que, em toda rota cujo conteudo chega em outra onda, a casca exibe um rodape de acessibilidade de teste ('Ir para o Mercado', 'Carregar a lista so na proxima abertura', 'Abrir dialogo', 'Abrir folha') e um botao flutuante 'Liberar cargas pendentes'. E codigo de depuracao na interface: nao pode existir no build de producao nem no preview do smoke. Remover do build, manter apenas em desenvolvimento atras de import.meta.env.DEV, e provar no E2E que a rota sem conteudo nao os mostra.",
       "checklist": [
         "Localizar o componente do rodape de depuracao e o botao 'Liberar cargas pendentes' na casca",
@@ -7553,10 +7562,13 @@
       ],
       "dependencies": [],
       "proof": [
-        "12/12: aberto pelo parecer cego de outro modelo (Qwen 3.8 Flash via subagente); achado 1 do parecer, presente em Inicio, Buscar, Guia, Comunidade, Grupo e Publicacao."
+        "12/12: aberto pelo parecer cego de outro modelo (Qwen 3.8 Flash via subagente); achado 1 do parecer, presente em Inicio, Buscar, Guia, Comunidade, Grupo e Publicacao.",
+        "12/11: fechado pelo PR #202 (79eedadb). O modo de prova só liga com import.meta.env.DEV; o build publicado ignora o global __BIVAQUE_MODO_DE_PROVA__. Prova: andaime.publicado.spec.ts roda contra o vite preview do build com o global ligado e confirma tela real sem rodapé de depuração nem «Abrir item-N»; App mobile-first verde nas 6 larguras mais o projeto publicado. A nova captura cega de F02/F03/F07/F08 entra nos lotes RUN-139 a RUN-142."
       ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-12"
     },
     {
       "phase": "LanÃ§amento",
