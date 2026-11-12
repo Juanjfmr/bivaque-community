@@ -2,13 +2,11 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { defineConfig } from "@playwright/test"
 
-// Configuração de e2e própria do app (onda 1b).
+// Configuracao de e2e propria do app (onda 1b).
 //
-// Serve o build de `vite preview` na porta 3200 (a mesma do `preview` do
-// manifesto), com os três tamanhos do protótipo. O Chromium que esta versão do
-// Playwright espera pode não estar baixado na máquina de desenvolvimento; o
-// headless shell já instalado serve (ver LICOES.md, seção do Playwright), e a
-// variável de ambiente do host sempre prevalece.
+// Serve o app na porta 3200 (a mesma do `preview` do manifesto), com os seis
+// tamanhos do prototipo. O andaime de prova so existe em desenvolvimento
+// (modo-de-prova.ts), entao o servidor e o `vite dev`, nao o preview do build.
 function chromiumInstalado(): string | undefined {
   const doAmbiente = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
   if (doAmbiente) return doAmbiente
@@ -28,8 +26,6 @@ const porta = 3200
 export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: "test-results",
-  // Os specs compartilham a mesma origem e o mesmo build; paralelizar o
-  // histórico do navegador entre eles só produz intermitência.
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
@@ -38,12 +34,10 @@ export default defineConfig({
     ...(chromium ? { launchOptions: { executablePath: chromium } } : {}),
   },
   webServer: {
-    // Só serve: o build é do gate do coordenador, feito antes da prova. Assim a
-    // prova nunca mede um build velho nem o build de outra frente na porta.
-    command: "npx pnpm@11.18.0 preview",
+    command: "npx pnpm@11.18.0 dev",
     url: `http://127.0.0.1:${porta}/app/`,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 180_000,
   },
   projects: [
     {
