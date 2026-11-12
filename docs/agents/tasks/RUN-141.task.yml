@@ -1,0 +1,66 @@
+# RUN-141 — F07 — lista de negócios com segmentos, contagem, ordenação e estado vazio
+#
+# Fecha CORRETA-F07-LISTA (parecer cego de 12/11). Lote paralelo: outros
+# lotes de tela rodam ao mesmo tempo em outros worktrees, por isso o quadro e o
+# apoio.ts comum ficam fora e o E2E passa pela fila de provas.
+
+task_id: RUN-141
+
+objective: "A lista de negócios tem nome de página próprio, abas como segmentos (Desapegos · Imóveis · Negócios) com contagem por aba, ordenação 'Mais próximos / Mais recentes', botão 'Anunciar negócio' e estado vazio com o mesmo caminho, e a aba ativa legível nos dois temas."
+
+authority:
+  - "docs/LANCAMENTO.md (critério 2 — no nível da régua; critério 3 — provada)"
+  - "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md e IDENTIDADE-DAS-PECAS.md"
+  - "apps/app/AGENTS.md (prova de tela: 375/768/1440, claro e escuro, teclado)"
+  - "parecer cego de 12/11 registrado no board pelo PR #201"
+  - "tools/backend-kanban/public/board.json (CORRETA-F07-LISTA)"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: "Parecer cego de 12/11: a página 'Negócios locais' tem o mesmo nome da aba 'Negócios', sem contagem, ordenação, atalho de cadastro nem estado vazio, e no escuro a aba ativa perde contraste."
+
+allowed_paths:
+  - "docs/agents/tasks/RUN-141.task.yml"
+  - "apps/app/src/negocios/**"
+  - "apps/app/src/mercado/**"
+  - "apps/app/src/telas/Mercado.tsx"
+  - "apps/app/src/telas/Negocio.tsx"
+  - "apps/app/src/pecas/**"
+  - "apps/app/tests/**"
+  - ".visual/run-141/"
+
+forbidden:
+  - "alterar apps/web, supabase, migrations ou rotas de API"
+  - "editar tools/backend-kanban/public/board.json ou BOARD.md (o coordenador atualiza no merge)"
+  - "editar apps/app/tests/e2e/apoio.ts (crie um arquivo de apoio próprio do lote em apps/app/tests/e2e/)"
+  - "mudar a biblioteca de peças de forma que quebre outra tela; peça nova só aditiva"
+  - "inventar dado: estado vazio mostra o que existe ou o caminho que resolve, nunca conteúdo fictício"
+  - "usar skip/fixme novo, afrouxar asserção existente ou apagar teste"
+  - "rodar E2E fora da fila: sempre `node scripts/agents/prova-fila.mjs -- <comando>`"
+
+acceptance:
+  - "O nome da página é distinto das abas, e as abas são segmentos com contagem real vinda dos dados que a tela já recebe (sem número inventado)."
+  - "A ordenação 'Mais próximos / Mais recentes' funciona; 'Mais próximos' sem origem de localização cai para recentes e diz por quê, sem jargão."
+  - "O botão 'Anunciar negócio' e o estado vazio levam ao mesmo caminho real de cadastro."
+  - "A aba ativa tem contraste AA nos dois temas (medido no teste)."
+  - "E2E em 375/768/1440, nos dois temas; os specs existentes de Mercado e negócios continuam verdes."
+  - "Capturas 375/768/1440 claro e escuro em .visual/run-141/."
+
+proof:
+  - "npx pnpm@11.18.0 lint"
+  - "npx pnpm@11.18.0 --filter @bivaque/app typecheck"
+  - "npx pnpm@11.18.0 --filter @bivaque/app test"
+  - "npx pnpm@11.18.0 --filter @bivaque/app build"
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 --filter @bivaque/app test:e2e (specs do lote e vizinhos)"
+  - "node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-141.task.yml"
+
+risk: interface do app, sem dado novo
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true
