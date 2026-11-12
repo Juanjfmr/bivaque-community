@@ -7194,6 +7194,206 @@
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
       "completedChecklist": [false, false, false]
+    },
+
+    {
+      "id": "F10-R3-SESSION-DERIVED",
+      "title": "Família: derivar a posse de auth.uid() no banco",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "description": "A create_family_invitation recebe p_inviter_user_id como parâmetro e não deriva nem compara auth.uid(): a posse hoje depende do TypeScript. Decidir e implementar a derivação no banco (molde: supabase/migrations/20260819021416_locality_transfer.sql:105-110, v_user_id uuid := auth.uid() e raise 'unauthenticated' 28000), com migration nova, pgTAP positivo/negativo e R3 registrado. Decidido por delegação no ADR-20261111-convite-familiar-pela-sessao; o cartão F10-FAMILIA não fecha como 'posse derivada da sessão' antes disso.",
+      "checklist": [
+        "Migration nova com a posse derivada de auth.uid() no banco",
+        "pgTAP positivo (titular) e negativo (outro membro, sessão ausente)",
+        "Auditoria security-auditor e revisão independente antes do merge",
+        "Registro no RATIFICACAO.md"
+      ],
+      "proof": ["11/11: aberto a partir do achado MÉDIO A4 do parecer R3 do PR #194."],
+      "tests": [],
+      "links": ["docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"],
+      "dependencies": ["BLOCK-RESEND"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ef72c839",
+      "blockers": [],
+      "completedChecklist": [false, false, false, false]
+    },
+    {
+      "id": "F10-R3-FIXTURE-ESCOPO",
+      "title": "Família: tirar a fixture de verification_outcomes do teste",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "repo",
+      "status": "next",
+      "description": "supabase/tests/family-invite-holder-only.sql:13-24 insere em private.verification_outcomes, tabela fora do allowed_paths do contrato do lote. Mover a preparação de identidade verificada para uma fixture própria declarada no contrato, sem escrever em tabela fora do escopo.",
+      "checklist": [
+        "Fixture própria declarada no contrato",
+        "Teste sem escrita em verification_outcomes",
+        "Rodar o pgTAP no CI e registrar no cartão"
+      ],
+      "proof": ["11/11: aberto a partir do achado ALTO A2 do parecer R3 do PR #194."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["BLOCK-RESEND"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ef72c839",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F10-R3-SILENCIO-REAL",
+      "title": "Família: provar o silêncio das recusas de verdade",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "repo",
+      "status": "next",
+      "description": "A lista de 10 frases recusadas no pgTAP é tautológica: compara as próprias constantes do arquivo. Provar o silêncio por asserção real (nenhum e-mail, token ou hash na resposta da API/RPC), com caso positivo e negativo.",
+      "checklist": [
+        "Asserção real sobre a resposta da API/RPC",
+        "Caso positivo e negativo no CI",
+        "Registro no cartão"
+      ],
+      "proof": ["11/11: aberto a partir do achado MÉDIO A6 do parecer R3 do PR #194."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["BLOCK-RESEND"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ef72c839",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F10-R3-OUTBOX-RETENCAO",
+      "title": "Família: o código do convite fica em claro no outbox",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "governance",
+      "status": "next",
+      "description": "O código do convite familiar fica em claro em public.outbox.payload. Decidir retenção (apagar o payload depois do envio) ou guardar só o hash, e registrar no ADR de convite; hoje o rastro dura o tempo da linha no outbox.",
+      "checklist": [
+        "Decisão registrada no ADR",
+        "Purga ou substituição por hash no envio",
+        "pgTAP do rastro"
+      ],
+      "proof": ["11/11: aberto a partir da ressalva BAIXA do parecer R3 do PR #194."],
+      "tests": [],
+      "links": ["docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"],
+      "dependencies": ["BLOCK-RESEND"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ef72c839",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F10-R3-HELPER-ENUMERACAO",
+      "title": "Família: helpers de família consultáveis por qualquer authenticado",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "governance",
+      "status": "repo",
+      "description": "is_verified_holder e has_accepted_family têm execute para authenticated e respondem sobre o id de outra pessoa (oráculo de enumeração). Fechar o execute público ou recusar ids alheios, com pgTAP positivo/negativo.",
+      "checklist": [
+        "Fechar o execute ou recusar id alheio",
+        "pgTAP positivo e negativo",
+        "Registro no RATIFICACAO.md se entrar em R3"
+      ],
+      "proof": ["11/11: aberto a partir da ressalva BAIXA da auditoria R3 do PR #194."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["BLOCK-RESEND"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ef72c839",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F10-R3-HINT-CURTO",
+      "title": "Família: a máscara do convite revela demais",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "description": "invitee_email_hint revela até 2 caracteres da parte local e 2 do domínio; com e-mails curtos a máscara quase não mascara. Rever o limite e cobrir com pgTAP/E2E.",
+      "checklist": [
+        "Definir a máscara mínima segura",
+        "Alinhar lib/convite/hint.ts e a função SQL",
+        "Cobrir com teste positivo e negativo"
+      ],
+      "proof": ["11/11: aberto a partir da ressalva BAIXA da auditoria R3 do PR #194."],
+      "tests": [],
+      "links": ["apps/web/lib/convite/hint.ts"],
+      "dependencies": ["BLOCK-RESEND"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ef72c839",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "F03-RESIDUOS-REVISAO",
+      "title": "Grupos: resíduos da revisão do publicar sem sair da tela",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Sobras BAIXAS do parecer do PR #197: rolagem deslocada ao procurar a publicação no cursor novo (apps/app/src/grupos/lista-do-grupo.ts:64-103), corrida de foco entre Escrever.tsx:141 e Grupo.tsx:150-159, conteúdo só da primeira página descartado, callback de Participação não atualiza baseParaPublicar, e faltam capturas em .visual/run-ds-021.",
+      "checklist": [
+        "Rolagem estável ao achar a publicação no cursor novo",
+        "Uma única regra de foco entre a folha e a lista",
+        "Capturas em .visual/run-ds-021"
+      ],
+      "proof": ["11/11: aberto a partir das ressalvas BAIXAS do parecer do PR #197."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["LAN-F03"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "29e5c2d4",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "OUTBOX-ASSUNTO-CRLF",
+      "title": "Outbox: o assunto do convite de evento aceita CRLF",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "description": "event_title entra no assunto do e-mail sem sanitizar (apps/web/lib/outbox/adapters.ts:206-207) e um CRLF passa; hoje o payload só vai para o JSON da Resend e não há produtor, mas a ligação futura herda o furo. Sanitizar o assunto e cobrir com unit que rejeita CR/LF.",
+      "checklist": [
+        "Sanitizar o assunto no adapter",
+        "Unit que rejeita CR/LF no assunto",
+        "Registrar no cartão do outbox"
+      ],
+      "proof": ["11/11: aberto a partir do achado MÉDIO do parecer do PR #193."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["OUTBOX-INVITE-RECIPIENTS"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "b89a8d4b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
+      "id": "ENTRADA-CONVITE-COMUNIDADE",
+      "title": "Entrada: o link /invite/<token> perde o token",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "O convite de comunidade agora leva /invite/<token> no e-mail (PR #193), mas /invite/<token> não está na superfície pública do proxy: sem sessão a pessoa vai para /login e a página redireciona a /app/entrar sem consumir o token (apps/web/app/(shell)/invite/[token]/page.tsx:51-66). Levar o convite para a entrada do app (código preenchido) ou publicar a página como entrada; provar com sessão e sem sessão.",
+      "checklist": [
+        "O link do convite de comunidade chega à entrada do app com o token",
+        "E2E sem sessão e com sessão",
+        "Registro do desvio no LAN-F01"
+      ],
+      "proof": ["11/11: aberto a partir do parecer do PR #193 (entrada da F01 registra o desvio)."],
+      "tests": [],
+      "links": [],
+      "dependencies": ["LAN-F01"],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "b89a8d4b",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
     }
   ],
   "launch": {
