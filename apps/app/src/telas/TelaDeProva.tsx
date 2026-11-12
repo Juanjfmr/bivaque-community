@@ -270,8 +270,7 @@ function EstadoDePrimeiraEntrada({
         {`Ainda não há nada para mostrar em ${cidade} por aqui.`}
       </p>
       <p className="text-sm text-(--muted-foreground)">
-        Quando alguém da cidade publicar aqui, aparece nesta tela. Enquanto isso, o Mercado já tem
-        desapegos, imóveis e negócios de Manaus.
+        {`Quando alguém de ${cidade} publicar aqui, aparece nesta tela. Enquanto isso, veja o que já está no Mercado.`}
       </p>
       <Botao tom="contorno" onClick={aoExplorar}>
         Ver o Mercado
