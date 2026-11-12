@@ -7394,6 +7394,98 @@
       "sourceRevision": "b89a8d4b",
       "blockers": [],
       "completedChecklist": [false, false, false]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ea0ca6c1",
+      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "id": "BLIND-F02",
+      "title": "Revisao as cegas da jornada F02 (Inicio e busca) contra a regua Nextdoor",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Criterio 2 do LANÇAMENTO para F02. Capturas reais de Inicio e Busca em 375/768/1440, claro e escuro, julgadas por modelo diferente do que implementou (RUN-012 foi GPT Terra), sem a defesa do executor, com referencia Mobbin citada (f-f3c0a105 Home, f-b82c0a79 Filtering posts, f-38269015 Searching). Veredito no cartao LAN-F02; abaixo da regua abre cartao de correcao.",
+      "checklist": [
+        "Capturar inicio e busca nos tres tamanhos e dois temas",
+        "Julgamento as cegas por outro modelo (pior/igual/melhor por dimensao)",
+        "Veredito registrado no cartao LAN-F02; lacunas viram cartao proprio"
+      ],
+      "dependencies": ["LAN-F02"],
+      "proof": [
+        "11/11: aberto pelo enxame. F02 tem código integrado (PR #138, CI verde), mas o criterio 2 nunca foi executado: as capturas cegas de inicio e busca nos tres tamanhos e dois temas ainda nao existem."
+      ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ea0ca6c1",
+      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "id": "BLIND-F03",
+      "title": "Revisao as cegas da jornada F03 (Criar) contra a regua Nextdoor",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Criterio 2 do LANCAMENTO para F03. Capturas do menu Criar e dos fluxos de criar pergunta, publicacao com foto, evento e anuncio nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencias Mobbin: f-e258bc98 (Creating a post event), f-5bff685e (poll). Veredito no cartao LAN-F03.",
+      "checklist": [
+        "Capturar menu Criar e cada formulario nos tres tamanhos e dois temas",
+        "Julgamento as cegas por outro modelo",
+        "Veredito registrado no cartao LAN-F03; lacunas viram cartao proprio"
+      ],
+      "dependencies": ["LAN-F03"],
+      "proof": [
+        "11/11: aberto pelo enxame. F03 tem codigo integrado (PR #145), falta o criterio 2: menu Criar e os formularios de pergunta/anuncio/evento nunca foram julgados as cegas contra a regua."
+      ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ea0ca6c1",
+      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "id": "BLIND-F07",
+      "title": "Revisao as cegas da jornada F07 (Negocios e servicos) contra a regua Nextdoor",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Criterio 2 do LANCAMENTO para F07. Capturas de categorias, ficha do negocio, pedido e ficha propria nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencias Mobbin: f-67458713 (Business profile), f-b12a50ef (Posting a recommendation), f-d39e37f1 (Setting up a business page). Veredito no cartao LAN-F07.",
+      "checklist": [
+        "Capturar categorias, ficha, pedido e ficha propria nos tres tamanhos e dois temas",
+        "Julgamento as cegas por outro modelo",
+        "Veredito registrado no cartao LAN-F07; lacunas viram cartao proprio"
+      ],
+      "dependencies": ["LAN-F07"],
+      "proof": [
+        "11/11: aberto pelo enxame. F07 tem codigo integrado (PR #137); decisao do coordenador sobre a ficha (sem contadores/horario/patrocinado/beneficio) segue a ratificar, e o criterio 2 nunca rodou."
+      ]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-11",
+      "sourceRevision": "ea0ca6c1",
+      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "id": "BLIND-F08",
+      "title": "Revisao as cegas da jornada F08 (Guia) contra a regua Nextdoor",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Criterio 2 do LANCAMENTO para F08. Capturas de lista/categoria, leitura, salvar e sugerir atualizacao nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencia Mobbin: f-7e5e34e5 (Neighborhood faves). Veredito no cartao LAN-F08.",
+      "checklist": [
+        "Capturar lista, leitura, salvar e sugerir nos tres tamanhos e dois temas",
+        "Julgamento as cegas por outro modelo",
+        "Veredito registrado no cartao LAN-F08; lacunas viram cartao proprio"
+      ],
+      "dependencies": ["LAN-F08"],
+      "proof": [
+        "11/11: aberto pelo enxame. F08 tem codigo integrado (PR #139); falta o criterio 2 e RECON-030-GUIA-FOTOS (fotos do guia) continua next."
+      ]
     }
   ],
   "launch": {
