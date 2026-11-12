@@ -5,6 +5,8 @@ on:
     paths:
       - 'experiments/bivaque-native-lab-v2/**'
       - '.github/workflows/bivaque-native-v2.yml'
+  pull_request:
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
