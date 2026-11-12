@@ -6,7 +6,7 @@
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 204 frentes · 5 agora · 8 bloqueadas · 93 concluídas · 0 drifts
+**Mapa:** 212 frentes · 0 agora · 8 bloqueadas · 98 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -14,11 +14,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-- **BLIND-F02** · P1 · Revisao as cegas da jornada F02 (Inicio e busca) contra a regua Nextdoor
-- **BLIND-F03** · P1 · Revisao as cegas da jornada F03 (Criar) contra a regua Nextdoor
-- **BLIND-F07** · P1 · Revisao as cegas da jornada F07 (Negocios e servicos) contra a regua Nextdoor
-- **BLIND-F08** · P1 · Revisao as cegas da jornada F08 (Guia) contra a regua Nextdoor
-- **BLIND-JULGAMENTO** · P1 · Julgamento cego de F02, F03, F07 e F08 por outro modelo sobre as capturas do PR #199
+Nenhum card.
 
 ## Bloqueios
 

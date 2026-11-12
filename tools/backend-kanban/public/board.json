@@ -7195,7 +7195,6 @@
       "blockers": [],
       "completedChecklist": [false, false, false]
     },
-
     {
       "id": "F10-R3-SESSION-DERIVED",
       "title": "Família: derivar a posse de auth.uid() no banco",
@@ -7406,17 +7405,21 @@
       "title": "Revisao as cegas da jornada F02 (Inicio e busca) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "Criterio 2 do LANÇAMENTO para F02. Capturas reais de Inicio e Busca em 375/768/1440, claro e escuro, julgadas por modelo diferente do que implementou (RUN-012 foi GPT Terra), sem a defesa do executor, com referencia Mobbin citada (f-f3c0a105 Home, f-b82c0a79 Filtering posts, f-38269015 Searching). Veredito no cartao LAN-F02; abaixo da regua abre cartao de correcao.",
       "checklist": [
         "Capturar inicio e busca nos tres tamanhos e dois temas",
         "Julgamento as cegas por outro modelo (pior/igual/melhor por dimensao)",
         "Veredito registrado no cartao LAN-F02; lacunas viram cartao proprio"
       ],
-      "dependencies": ["LAN-F02"],
+      "dependencies": [],
       "proof": [
-        "11/11: aberto pelo enxame. F02 tem código integrado (PR #138, CI verde), mas o criterio 2 nunca foi executado: as capturas cegas de inicio e busca nos tres tamanhos e dois temas ainda nao existem.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
-        "Lacuna da captura: no build de preview a rota /app/busca mostra a tela de prova (o conteudo chega na onda dela), entao a foto de 03-busca registra o aviso honesto, nao a busca preenchida; a busca com termo so e medida no desktop-1440 pela matriz de acessibilidade."]
+        "11/11: aberto pelo enxame. F02 tem código integrado (PR #138, CI verde), mas o criterio 2 nunca foi executado: as capturas cegas de inicio e busca nos tres tamanhos e dois temas ainda nao existem.",
+        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Lacuna da captura: no build de preview a rota /app/busca mostra a tela de prova (o conteudo chega na onda dela), entao a foto de 03-busca registra o aviso honesto, nao a busca preenchida; a busca com termo so e medida no desktop-1440 pela matriz de acessibilidade.",
+        "12/12: veredito do parecer cego (Qwen 3.8 Flash via subagente, autorizado em 12/11): ABAIXO DO NIVEL como primeira tela do produto. Achados: titulo da pagina repete o rotulo da barra; feed e uma lista de texto de 500 px no meio do vazio em 1440, sem cartao nem divisao; busca so como icone, sem campo visivel, e a tela de busca nao tem estado antes da digitacao; em 768 o rail de 100 px comprime rotulos; no escuro a barra lateral e o fundo caem no mesmo preto. Correcoes baratas: tirar o titulo repetido da Inicio; coluna de leitura com cartoes; campo 'Buscar em [cidade]' nos tres tamanhos; estado vazio da busca com buscas recentes e atalhos; barra inferior ate 1024 no tablet; barra lateral um degrau acima do fundo no escuro. Achados ligados aos cartoes CORRETA-F02-ESTADO-VAZIO, CORRETA-F02-COLUNA-DE-LEITURA e CORRETA-F02-BUSCA-VISIVEL."
+      ],
+      "completedAt": "2026-11-12"
     },
     {
       "phase": "Lançamento",
@@ -7429,17 +7432,21 @@
       "title": "Revisao as cegas da jornada F03 (Criar) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "Criterio 2 do LANCAMENTO para F03. Capturas do menu Criar e dos fluxos de criar pergunta, publicacao com foto, evento e anuncio nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencias Mobbin: f-e258bc98 (Creating a post event), f-5bff685e (poll). Veredito no cartao LAN-F03.",
       "checklist": [
         "Capturar menu Criar e cada formulario nos tres tamanhos e dois temas",
         "Julgamento as cegas por outro modelo",
         "Veredito registrado no cartao LAN-F03; lacunas viram cartao proprio"
       ],
-      "dependencies": ["LAN-F03"],
+      "dependencies": [],
       "proof": [
-        "11/11: aberto pelo enxame. F03 tem codigo integrado (PR #145), falta o criterio 2: menu Criar e os formularios de pergunta/anuncio/evento nunca foram julgados as cegas contra a regua.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
-        "Fotografado o menu Criar, o formulario de encontro vazio, preenchido e com erro de validacao, a Comunidade, o grupo e a publicacao, nos tres tamanhos e dois temas."]
+        "11/11: aberto pelo enxame. F03 tem codigo integrado (PR #145), falta o criterio 2: menu Criar e os formularios de pergunta/anuncio/evento nunca foram julgados as cegas contra a regua.",
+        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Fotografado o menu Criar, o formulario de encontro vazio, preenchido e com erro de validacao, a Comunidade, o grupo e a publicacao, nos tres tamanhos e dois temas.",
+        "12/12: veredito do parecer cego (Qwen 3.8 Flash via subagente, autorizado em 12/11): NO NIVEL no menu Criar e no formulario de encontro (o melhor material da revisao); ABAIXO nas telas que o menu leva. Achados: legendas so em duas das sete opcoes do menu; em 768 o menu abre por cima da barra de navegacao; foco automatico e hover criam tres estados visuais simultaneos; seletor de data em mm/dd/yyyy e AM/PM; erro no rodape longe do campo Título; 'Criar' habilitado com tudo vazio; Comunidade, Grupo e Publicacao sem pista do destino. Correcoes baratas: legenda por opcao ou nenhuma; folha centralizada no tablet; foco inicial no corpo do dialogo; dd/mm/aaaa e 'as 19h'; erro abaixo do campo; primaria desabilitada ate validar; cabecalho de Grupo/Publicacao com contexto e acao. Achados de formulario ligados ao cartao CORRETA-F03-FORMULARIO-PT-BR e de telas de destino ao CORRETA-F03-DESTINOS."
+      ],
+      "completedAt": "2026-11-12"
     },
     {
       "phase": "Lançamento",
@@ -7452,17 +7459,21 @@
       "title": "Revisao as cegas da jornada F07 (Negocios e servicos) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "Criterio 2 do LANCAMENTO para F07. Capturas de categorias, ficha do negocio, pedido e ficha propria nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencias Mobbin: f-67458713 (Business profile), f-b12a50ef (Posting a recommendation), f-d39e37f1 (Setting up a business page). Veredito no cartao LAN-F07.",
       "checklist": [
         "Capturar categorias, ficha, pedido e ficha propria nos tres tamanhos e dois temas",
         "Julgamento as cegas por outro modelo",
         "Veredito registrado no cartao LAN-F07; lacunas viram cartao proprio"
       ],
-      "dependencies": ["LAN-F07"],
+      "dependencies": [],
       "proof": [
-        "11/11: aberto pelo enxame. F07 tem codigo integrado (PR #137); decisao do coordenador sobre a ficha (sem contadores/horario/patrocinado/beneficio) segue a ratificar, e o criterio 2 nunca rodou.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
-        "Lacuna da captura: o preview so mostra a lista de negocios (e ali aparece a tela de prova); a ficha de negocio, o formulario de pedido e o acompanhamento nao montam sem servidor e seguem provados apenas em apps/app/tests/e2e/f07-negocios.spec.ts."]
+        "11/11: aberto pelo enxame. F07 tem codigo integrado (PR #137); decisao do coordenador sobre a ficha (sem contadores/horario/patrocinado/beneficio) segue a ratificar, e o criterio 2 nunca rodou.",
+        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Lacuna da captura: o preview so mostra a lista de negocios (e ali aparece a tela de prova); a ficha de negocio, o formulario de pedido e o acompanhamento nao montam sem servidor e seguem provados apenas em apps/app/tests/e2e/f07-negocios.spec.ts.",
+        "12/12: veredito do parecer cego (Qwen 3.8 Flash via subagente, autorizado em 12/11): ABAIXO DO NIVEL. Achados: a pagina 'Negocios locais' tem o mesmo nome do filtro 'Negocios'; nenhuma acao de criar na lista; abas sem contagem nem ordenacao; sem estado vazio; busca so icone; no escuro a aba ativa perde contraste. Correcoes baratas: renomear a pagina e deixar as abas como segmentos; botao 'Anunciar negocio'; contagem por aba e 'Mais proximos / Mais recentes'; estado vazio com botao; pseudo-texto na busca; cor de marca na aba ativa. Ligado ao cartao CORRETA-F07-LISTA."
+      ],
+      "completedAt": "2026-11-12"
     },
     {
       "phase": "Lançamento",
@@ -7475,17 +7486,21 @@
       "title": "Revisao as cegas da jornada F08 (Guia) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "Criterio 2 do LANCAMENTO para F08. Capturas de lista/categoria, leitura, salvar e sugerir atualizacao nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencia Mobbin: f-7e5e34e5 (Neighborhood faves). Veredito no cartao LAN-F08.",
       "checklist": [
         "Capturar lista, leitura, salvar e sugerir nos tres tamanhos e dois temas",
         "Julgamento as cegas por outro modelo",
         "Veredito registrado no cartao LAN-F08; lacunas viram cartao proprio"
       ],
-      "dependencies": ["LAN-F08"],
+      "dependencies": [],
       "proof": [
-        "11/11: aberto pelo enxame. F08 tem codigo integrado (PR #139); falta o criterio 2 e RECON-030-GUIA-FOTOS (fotos do guia) continua next.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
-        "Lacuna da captura: a rota /app/guia mostra a tela de prova no preview; as fotos de 01-guia e 02-guia-rolado registram so a casca e o aviso, sem verbetes. RECON-030-GUIA-FOTOS continua next."]
+        "11/11: aberto pelo enxame. F08 tem codigo integrado (PR #139); falta o criterio 2 e RECON-030-GUIA-FOTOS (fotos do guia) continua next.",
+        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Lacuna da captura: a rota /app/guia mostra a tela de prova no preview; as fotos de 01-guia e 02-guia-rolado registram so a casca e o aviso, sem verbetes. RECON-030-GUIA-FOTOS continua next.",
+        "12/12: veredito do parecer cego (Qwen 3.8 Flash via subagente, autorizado em 12/11): ABAIXO DO NIVEL. Achados: 'Guia de Manaus' repetido no cabecalho, no titulo e no seletor; sem estrutura editorial nem indice; no 375 o cabecalho quebra em duas linhas; a rolagem perde o contexto (sem cabecalho fixo nem subtitulos); nenhum caminho de contribuicao; no escuro o corpo branco puro sobre preto achatam a hierarquia. Correcoes baratas: nome da rota so no cabecalho; 3-4 secoes com ancoras; titulo 'Guia' no celular; cabecalho fixo compacto e subtitulos repetidos; botao 'Sugerir um lugar'; corpo com ~85% de opacidade no escuro. Ligado ao cartao CORRETA-F08-ESTRUTURA."
+      ],
+      "completedAt": "2026-11-12"
     },
     {
       "phase": "Lançamento",
@@ -7493,30 +7508,211 @@
       "blockers": [],
       "updatedAt": "2026-11-12",
       "sourceRevision": "e7f8cbc0",
-      "links": [
-        "docs/LANCAMENTO.md",
-        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
-      ],
+      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
       "id": "BLIND-JULGAMENTO",
       "title": "Julgamento cego de F02, F03, F07 e F08 por outro modelo sobre as capturas do PR #199",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "Criterio 2 do LANÇAMENTO nas quatro jornadas. O dono autorizou, em 12/11, o parecer do Qwen 3.8 Flash como 'parecer de outro modelo via subagente', nao como revisao independente no sentido estrito do AGENTS.md; o parecer registra a ressaltiva e a data. Julgamento sem a defesa do executor, por dimensao (hierarquia, acao primaria, densidade, rotulos, vazio, formularios, tema, larguras).",
       "checklist": [
         "Parecer por jornada com veredito (no nivel / abaixo do nivel) e achados com correcao barata",
         "Veredito anexado a BLIND-F02, BLIND-F03, BLIND-F07 e BLIND-F08 e aos cartoes LAN-F02/F03/F07/F08",
         "Achados bloqueantes viram cartao de correcao; os baixos viram cartao de fila"
       ],
-      "dependencies": [
-        "BLIND-F02",
-        "BLIND-F03",
-        "BLIND-F07",
-        "BLIND-F08"
-      ],
+      "dependencies": [],
       "proof": [
-        "12/11: aberto para registrar a rodada de julgamento das 78 capturas do PR #199; modelo e texto do parecer entram aqui na conclusao."
-      ]
+        "12/11: aberto para registrar a rodada de julgamento das 78 capturas do PR #199; modelo e texto do parecer entram aqui na conclusao.",
+        "12/12: parecer de outro modelo executado sobre as 78 capturas do PR #199 (Qwen 3.8 Flash via subagente, autorizado pelo dono em 12/11; registrado como 'parecer de outro modelo via subagente', nao como revisao independente no sentido estrito do AGENTS.md). Revisor externo, so imagens e pedido, sem abrir o repositorio. Texto completo em docs/agents/reviews/2026-11-12-parecer-cego-f02-f03-f07-f08.md.",
+        "Vereditos: F02 (Inicio e busca) abaixo do nivel; F03 (Criar) no nivel no menu e no formulario, abaixo nas telas de destino; F07 (Negocios) abaixo do nivel; F08 (Guia) abaixo do nivel.",
+        "Top 3 correcoes: estados vazios de primeira entrada em todas as rotas; conteudo em cartoes com largura de leitura e rail de contexto no desktop; validacao no campo, formato pt-BR e acao primaria que reflete o estado do formulario.",
+        "Telas mais urgentes: Inicio, Buscar e Negocios locais. Achados bloqueantes viram cartoes de correcao abaixo.",
+        "Limitacao registrada pelo proprio revisor: no preview, busca, guia e negocios mostram a tela de prova; a ficha de negocio, o formulario de pedido e o acompanhamento nao estavam no material; '01-inicio' e '02-inicio-rolado' sairam identicos (rolagem nao provada)."
+      ],
+      "completedAt": "2026-11-12"
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-RODAPE-CASCA",
+      "title": "Corrigir o rodape de depuracao da casca que aparece em toda rota sem conteudo",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "O parecer cego de 12/12 mostrou que, em toda rota cujo conteudo chega em outra onda, a casca exibe um rodape de acessibilidade de teste ('Ir para o Mercado', 'Carregar a lista so na proxima abertura', 'Abrir dialogo', 'Abrir folha') e um botao flutuante 'Liberar cargas pendentes'. E codigo de depuracao na interface: nao pode existir no build de producao nem no preview do smoke. Remover do build, manter apenas em desenvolvimento atras de import.meta.env.DEV, e provar no E2E que a rota sem conteudo nao os mostra.",
+      "checklist": [
+        "Localizar o componente do rodape de depuracao e o botao 'Liberar cargas pendentes' na casca",
+        "Retirar do build de producao e do preview; manter so em desenvolvimento",
+        "E2E: rota sem conteudo nao mostra os controles de depuracao",
+        "Rever a captura cega f02/f03/f07/f08 depois da correcao"
+      ],
+      "dependencies": [],
+      "proof": [
+        "12/12: aberto pelo parecer cego de outro modelo (Qwen 3.8 Flash via subagente); achado 1 do parecer, presente em Inicio, Buscar, Guia, Comunidade, Grupo e Publicacao."
+      ],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F02-ESTADO-VAZIO",
+      "title": "F02: Inicio e Busca com estado de primeira entrada real",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "O parecer cego reprovou o Inicio e a Busca por nao terem estado vazio de primeira entrada: a Busca abre sem buscas recentes, sugestoes de bairro/cidade ou atalhos, e o Inicio nao oferece um feed com o que existe na cidade. Entregar o estado vazio honesto nas duas telas (frase humana, o que existe ali, o caminho que resolve), seguindo PADRAO-DE-TELA e a regua Nextdoor citada no cartao. Fechar com capturas 375/768/1440 nos dois temas.",
+      "checklist": [
+        "Estado de primeira entrada do Inicio com conteudo real da cidade ou, vazio, com o caminho que resolve",
+        "Estado vazio da Busca com buscas recentes, bairros/cidade sugeridos e atalhos do Criar",
+        "Capturas 375/768/1440 claro e escuro na nova rodada cega"
+      ],
+      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "proof": [
+        "12/12: aberto pelo parecer cego; achado 4 de F02 e correcao 1 do top 3 ('estados vazios e de primeira entrada reais em todas as rotas')."
+      ],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"],
+      "id": "CORRETA-F02-COLUNA-DE-LEITURA",
+      "title": "F02: feed em cartoes com coluna de leitura no 1440 e barra inferior ate 1024",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "No parecer cego, o feed do Inicio e uma lista de texto sem cartao, com 500 px de largura no meio de 1.200 px de vazio no desktop, e no tablet o rail de 100 px comprime rotulos como 'Comunidade'. Entregar cada publicacao como cartao (autor, bairro, texto, acoes), coluna de leitura de largura maxima e rail de contexto no desktop; no tablet trocar o rail por barra inferior ate 1024. Fechar com capturas nas tres larguras e nos dois temas.",
+      "checklist": [
+        "Publicacao como cartao da biblioteca de pecas (nao desenho local)",
+        "Coluna de leitura e rail de contexto no 1440",
+        "Barra inferior ate 1024, sem rotulos quebrados no 768",
+        "Capturas 375/768/1440 claro e escuro na nova rodada cega"
+      ],
+      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "proof": ["12/12: aberto pelo parecer cego; achados 2, 5 e 6 de F02 e correcao 2 do top 3."],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
+      "id": "CORRETA-F02-BUSCA-VISIVEL",
+      "title": "F02: campo 'Buscar em [cidade]' visivel nos tres tamanhos e termo tratado",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "A busca existe so como icone da casca: o campo do topo nao navega para /app/busca nem pede a rota de busca, e a tela de busca nao tem campo proprio, so acoes. Para a proposta de achar gente e servicos por cidade, buscar precisa estar a um toque e o termo digitado tem de chegar a tela de busca (hoje ?q= e descartado). Entregar campo visivel com pseudo-texto 'Buscar em [cidade]', ligado a rota de busca com o termo, nos tres tamanhos; prova E2E de que digitar no campo abre a busca com resultados.",
+      "checklist": [
+        "Campo 'Buscar em [cidade]' visivel em 375/768/1440",
+        "Termo do campo chega a /app/busca e dispara a consulta (q na URL e na rota de dados)",
+        "Estado vazio e estado de erro da busca cobertos",
+        "E2E nos tres tamanhos provando do toque ao resultado"
+      ],
+      "dependencies": ["CORRETA-F02-ESTADO-VAZIO"],
+      "proof": [
+        "12/12: aberto pelo parecer cego (achado 3 de F02) e pela depuracao das capturas cegas de 12/12, que mostrou que o campo do topo nao navega e a tela de busca nao tem campo proprio."
+      ],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F03-FORMULARIO-PT-BR",
+      "title": "F03: formulario de encontro com data pt-BR, erro no campo e primaria que reflete o estado",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "O formulario de encontro (o melhor material da revisao cega) mostra mm/dd/yyyy e AM/PM num produto em portugues, coloca a mensagem de erro no rodape longe do campo TÃ­tulo e deixa 'Criar' habilitado com tudo vazio. Entregar data e hora em dd/mm/aaaa e 'as 19h', mensagem abaixo do campo com a borda marcada, e acao primaria desabilitada ate os obrigatorios validarem. Os demais formularios de Criar seguem a mesma regra.",
+      "checklist": [
+        "Data e hora em pt-BR na entrada e na exibicao",
+        "Erro ancorado no campo que o originou",
+        "Primaria desabilitada ate validar; estado de envio visivel",
+        "E2E de erro e de sucesso nos tres tamanhos"
+      ],
+      "dependencies": [],
+      "proof": ["12/12: aberto pelo parecer cego; achados 4 e 5 de F03 e correcao 3 do top 3."],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F03-DESTINOS",
+      "title": "F03: Comunidade, Grupo e Publicacao com identidade de destino e estados vazios",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "As telas que o menu Criar leva sao o mesmo esqueleto vazio, sem pista do destino: Grupo e Publicacao precisam mostrar o contexto (nome do grupo, cidade) e uma acao unica que caiba ali. Com o rodape de depuracao retirado (CORRETA-RODAPE-CASCA), entregar cabecalho com contexto e estado vazio honesto em cada uma.",
+      "checklist": [
+        "Cabecalho de Grupo e Publicacao com nome do grupo e cidade",
+        "Acao unica por tela, coerente com o que se cria ali",
+        "Estado vazio honesto em Comunidade, Grupo e Publicacao",
+        "Capturas 375/768/1440 claro e escuro"
+      ],
+      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "proof": ["12/12: aberto pelo parecer cego; achado 6 de F03 e mencao honrosa do parecer."],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F07-LISTA",
+      "title": "F07: lista de negocios com nome de pagina proprio, contagem, ordenacao e estado vazio",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "A pagina 'Negocios locais' tem o mesmo nome da aba 'Negocios'; nao tem contagem por aba, ordenacao, atalho de cadastro na lista nem estado vazio, e no escuro a aba ativa perde contraste. Entregar a pagina como Mercado com as abas como segmentos (Desapegos - Imoveis - Negocios), contagem por aba, linha 'Mais proximos / Mais recentes', botao 'Anunciar negocio' e estado vazio com botao; realce da aba ativa na cor de marca.",
+      "checklist": [
+        "Nome da pagina distinto das abas; abas como segmentos",
+        "Contagem por aba e ordenacao 'Mais proximos / Mais recentes'",
+        "Botao 'Anunciar negocio' e estado vazio com o mesmo caminho",
+        "Aba ativa legivel nos dois temas",
+        "Capturas 375/768/1440 claro e escuro"
+      ],
+      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "proof": ["12/12: aberto pelo parecer cego; achados 1 a 6 de F07."],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F08-ESTRUTURA",
+      "title": "F08: Guia com estrutura editorial, cabecalho fixo e caminho de contribuicao",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "O Guia repete 'de Manaus' no cabecalho, no titulo e no seletor, nao tem secoes nem indice, quebra o cabecalho no 375, perde o contexto na rolagem e nao tem caminho de contribuicao; no escuro o corpo branco puro achata a hierarquia. Entregar 3 a 4 secoes com ancoras, cabecalho fixo compacto, subtitulos repetidos e botao 'Sugerir um lugar para o Guia' ligado ao Criar (RECON-030-GUIA-FOTOS entra quando as fotos entrarem).",
+      "checklist": [
+        "Nome da rota so no cabecalho; 'Guia' cabe em uma linha no 375",
+        "Secoes com ancoras e subtitulos repetidos na rolagem",
+        "Botao 'Sugerir um lugar' ligado ao Criar",
+        "Corpo com opacidade e entrelinha ajustadas no escuro",
+        "Capturas 375/768/1440 claro e escuro"
+      ],
+      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "proof": ["12/12: aberto pelo parecer cego; achados 1 a 6 de F08."],
+      "tests": [],
+      "blockers": []
     }
   ],
   "launch": {
