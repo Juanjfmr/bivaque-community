@@ -143,4 +143,46 @@ revoke all on function public.set_member_location(uuid, text, numeric, numeric)
 grant execute on function public.set_member_location(uuid, text, numeric, numeric)
   to service_role;
 
+-- ---------------------------------------------------------------------------
+-- 4. Distância com origem nula devolve NULL, nunca quilômetros inventados
+-- ---------------------------------------------------------------------------
+
+-- 20261110211702 criou a haversine sem `strict`. Com qualquer argumento nulo,
+-- `least(1, null)` vira 1 e a função devolve ~20.015 km: uma distância
+-- inventada, que o ADR de localização proíbe. `strict` devolve NULL antes de
+-- avaliar o corpo. Mesma assinatura, mesmo search_path, mesmos grants.
+create or replace function private.distancia_em_metros(
+  p_lat_a numeric,
+  p_lng_a numeric,
+  p_lat_b numeric,
+  p_lng_b numeric
+)
+returns double precision
+language sql
+immutable
+strict
+set search_path = ''
+as $$
+  select 2 * 6371008.8 * pg_catalog.asin(
+    least(
+      1::double precision,
+      pg_catalog.sqrt(
+        pg_catalog.power(
+          pg_catalog.sin(pg_catalog.radians((p_lat_b - p_lat_a)::double precision) / 2),
+          2
+        )
+        + pg_catalog.cos(pg_catalog.radians(p_lat_a::double precision))
+          * pg_catalog.cos(pg_catalog.radians(p_lat_b::double precision))
+          * pg_catalog.power(
+            pg_catalog.sin(pg_catalog.radians((p_lng_b - p_lng_a)::double precision) / 2),
+            2
+          )
+      )
+    )
+  );
+$$;
+
+revoke all on function private.distancia_em_metros(numeric, numeric, numeric, numeric)
+  from public, anon, authenticated;
+
 commit;

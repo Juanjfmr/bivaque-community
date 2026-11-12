@@ -18,7 +18,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(52);
+select plan(53);
 
 \ir fixtures/foundation.inc
 
@@ -522,6 +522,14 @@ select throws_ok(
 );
 
 reset role;
+
+-- O helper de distância não transforma origem sem posição em distância: com
+-- qualquer argumento nulo a função é `strict` e devolve NULL.
+select is(
+  private.distancia_em_metros(null, null, -3.100000, -60.000000),
+  null,
+  'o helper de distância com origem nula devolve NULL, nunca quilômetros inventados'
+);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
