@@ -6,8 +6,7 @@ import { simularVoce } from "./voce-ajuda"
 // RUN-138 / ADR-20261112: CEP conhecido que nenhuma fonte localiza é guardado
 // sem posição. A tela mostra o CEP salvo e avisa, sem jargão, que a distância
 // ainda não pode ser calculada. A rota é simulada (mesmo contrato do servidor);
-// a captura fica em .visual/run-138 para a conferência de três tamanhos e dois
-// temas.
+// a captura fica em .visual/run-138 para a conferência de tamanhos e temas.
 const CAPTURAS = join(process.cwd(), "..", "..", ".visual", "run-138")
 
 test("CEP salvo sem posição avisa que a distância ainda não pode ser calculada", async ({
@@ -37,4 +36,36 @@ test("CEP salvo sem posição avisa que a distância ainda não pode ser calcula
       animations: "disabled",
     })
   }
+})
+
+test("gravar um CEP que ninguém localiza mostra o CEP guardado e o aviso", async ({ page }) => {
+  await simularVoce(page, { respostaDaLocalizacao: "sem-coordenada" })
+  await page.goto("/app/voce")
+
+  await page.getByRole("button", { name: "Editar" }).click()
+  await page.getByLabel("CEP").fill("69900000")
+  await page.getByRole("button", { name: "Salvar" }).click()
+
+  const aviso = page.locator('[data-aviso="cep-sem-distancia"]')
+  await expect(aviso).toBeVisible()
+  await expect(aviso).toContainText("69900-000")
+})
+
+test("CEP inexistente e fonte fora do ar explicam o que fazer, sem perder o perfil", async ({
+  page,
+}) => {
+  await simularVoce(page, { respostaDaLocalizacao: "cep-nao-encontrado" })
+  await page.goto("/app/voce")
+  await page.getByRole("button", { name: "Editar" }).click()
+  await page.getByLabel("CEP").fill("99999999")
+  await page.getByRole("button", { name: "Salvar" }).click()
+  await expect(page.getByRole("alert")).toContainText("Não encontramos esse CEP")
+
+  await page.unrouteAll()
+  await simularVoce(page, { respostaDaLocalizacao: "geocodificador-indisponivel" })
+  await page.goto("/app/voce")
+  await page.getByRole("button", { name: "Editar" }).click()
+  await page.getByLabel("CEP").fill("69000000")
+  await page.getByRole("button", { name: "Salvar" }).click()
+  await expect(page.getByRole("alert")).toContainText("Não conseguimos consultar o CEP agora")
 })
