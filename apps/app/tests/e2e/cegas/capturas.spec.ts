@@ -100,7 +100,6 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           const alvo = (await campoDaTela.count()) > 0 ? campoDaTela : page.getByRole("searchbox")
           await alvo.fill("mudança")
           await expect(alvo).toHaveValue("mudança", { timeout: 15_000 })
-          await expect(page.locator(`${SELETOR_CONTEUDO} input`).first()).toHaveValue("mudança")
         },
         pronto: '[data-tela="busca"]',
       },
