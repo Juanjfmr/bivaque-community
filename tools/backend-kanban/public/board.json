@@ -7040,7 +7040,7 @@
       "phase": "Lote 7 — Desapegos e Imóveis",
       "priority": "P2",
       "category": "backend",
-      "status": "next",
+      "status": "blocked",
       "description": "CEP válido que a BrasilAPI conhece mas devolve sem coordenada vira nao-encontrado e a rota responde 422 «CEP não encontrado». Definir o fallback (bairro/cidade, coordenada manual ou mensagem com o próximo passo) para não travar CEPs fora de capitais (achado MÉDIO do reviewer ed9d03ac no #183).",
       "checklist": [
         "Decidir o fallback de produto",
@@ -7048,15 +7048,23 @@
         "Atualizar o texto da tela e o contrato"
       ],
       "proof": [
-        "11/11: aberto a partir do parecer do reviewer ed9d03ac (PR #183); o E2E atual só cobre sucesso e CEP inválido."
+        "11/11: aberto a partir do parecer do reviewer ed9d03ac (PR #183); o E2E atual só cobre sucesso e CEP inválido.",
+        "12/11 (RUN-138): ADR-20261112 decide o fallback — CEP conhecido sem posição é guardado sem coordenada, nunca inventada. Migração 20261112190805_cep_sem_coordenada.sql troca a restrição por profiles_location_pair, aceita CEP sem coordenada em set_member_location e expõe com_coordenada em get_my_profile_location. O geocodificador passa a devolver sem-coordenada (Google tentado antes); o PUT responde 200 com distanciaDisponivel: false, mantém 422/503 e não escreve o CEP sem posição no cache. A tela Você mostra o CEP salvo e avisa que a distância ainda não pode ser calculada; 422 e 503 dizem o próximo passo.",
+        "12/11 (RUN-138) provas que rodaram: vitest tests/unit/app-api/voce (94), @bivaque/app test (477), @bivaque/app test:e2e voce-cep-sem-coordenada (18 = 3 casos × 6 viewports, capturas em .visual/run-138) e voce.spec (18), typecheck e biome nos arquivos tocados. NÃO rodaram neste checkout: db reset, test:db e db:lint — o Docker Desktop não subiu (erro na máquina)."
       ],
       "tests": [],
-      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
+      "links": [
+        "docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md",
+        "docs/decisions/ADR-20261112-cep-sem-coordenada.md"
+      ],
       "dependencies": ["LOC-IMPL"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "4c5e7451",
-      "blockers": [],
-      "completedChecklist": [false, false, false]
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "4c7f841c",
+      "blockers": [
+        "Prova de banco pendente: o Docker Desktop não sobe nesta máquina; rodar prova-fila -- supabase db reset --local --no-seed, test:db e db:lint antes de fechar.",
+        "Fechamento em done depende de LOC-IMPL, que segue em next (o validador do quadro recusa done com dependência em trabalho pendente)."
+      ],
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "F09-B2-BLOQUEIO-E-CORRIDA",
