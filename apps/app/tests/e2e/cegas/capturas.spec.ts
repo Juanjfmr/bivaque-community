@@ -66,7 +66,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrir(page, "/app/inicio")
         },
-        pronto: 'main, [data-tela="inicio"]',
+        pronto: '[data-tela="inicio"]',
       },
       {
         nome: "02-inicio-rolado",
@@ -75,7 +75,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.mouse.wheel(0, 1200)
           await page.waitForTimeout(400)
         },
-        pronto: 'main, [data-tela="inicio"]',
+        pronto: '[data-tela="inicio"]',
       },
       {
         nome: "03-busca-vazia",
@@ -280,7 +280,8 @@ test.describe("capturas para a revisão cega", () => {
  * mostrarem a tela real; se o stub mudar, o spec falha aqui em vez de fotografar
  * um estado vazio.
  */
-test("a ficha de negócio da prova abre populada", async ({ page }) => {
+test("a ficha de negócio da prova abre populada", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop-1440", "a ficha ja e fotografada na matriz")
   await simularProgresso(page)
   await simularNegocio(page)
   await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
