@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Bivaque Native Lab V2",
+    "slug": "bivaque-native-lab-v2",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Bivaque Native Lab V2"
+    },
+    "android": {
+      "package": "com.bivaque.nativelabv2"
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    }
+  }
+}
