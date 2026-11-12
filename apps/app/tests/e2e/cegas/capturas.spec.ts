@@ -179,16 +179,14 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "02-ficha",
         ir: async (page) => {
-          await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-          await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
+          await abrirNegocio(page)
         },
         pronto: '[data-tela="negocio"]',
       },
       {
         nome: "03-ficha-rolada",
         ir: async (page) => {
-          await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-          await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
+          await abrirNegocio(page)
           await page.mouse.wheel(0, 900)
           await page.waitForTimeout(400)
         },
@@ -197,8 +195,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "04-formulario-de-pedido",
         ir: async (page) => {
-          await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-          await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
+          await abrirNegocio(page)
           await page.locator('[data-acao="pedir-orcamento"]').click()
           await expect(page.locator('[data-sobreposicao="folha"]')).toBeVisible()
         },
@@ -252,6 +249,13 @@ async function fotografar(
   })
 }
 
+async function abrirNegocio(page: Page) {
+  await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+  await expect(page.getByRole("heading", { level: 1, name: NEGOCIO_DA_PROVA.nome })).toBeVisible({
+    timeout: 15_000,
+  })
+}
+
 test.describe("capturas para a revisão cega", () => {
   test("F02, F03, F07 e F08 em 375, 768 e 1440 nos dois temas", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
@@ -300,14 +304,12 @@ test("a ficha de negócio da prova abre populada, com e sem foto", async ({ page
   // no preview do smoke as telas reais dependem desse mesmo modo.
   await simularProgresso(page)
   await simularNegocio(page)
-  await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-  await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
+  await abrirNegocio(page)
   await expect(page.getByText("Fisioterapia ortopédica")).toBeVisible()
   // Com foto, a capa precisa aparecer: é o estado que mais muda a régua da ficha.
   await page.unroute(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/)
   await simularNegocio(page, { foto: true })
-  await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-  await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
+  await abrirNegocio(page)
   await expect(page.locator(`${SELETOR_CONTEUDO} img`).first()).toBeVisible()
   await assentar(page)
   await fotografar(page, "f07-negocios", 375, "light", {
