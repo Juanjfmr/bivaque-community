@@ -551,9 +551,9 @@ test.describe("teclado nas superfícies novas", () => {
     await expect(folha).toBeVisible()
     await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
 
-    // Sem os obrigatórios, a ação primária está desligada: não há envio a fazer.
+    // Sem os obrigatórios, a ação primária está desligada: não há envio a fazer,
+    // e um controle desligado nem entra na ordem de foco.
     const enviar = folha.getByRole("button", { name: "Criar", exact: true })
-    await alcancarComTab(page, enviar)
     await expect(enviar).toBeDisabled()
 
     // O erro nasce no campo: um título de uma letra, ao sair do campo, mostra a
