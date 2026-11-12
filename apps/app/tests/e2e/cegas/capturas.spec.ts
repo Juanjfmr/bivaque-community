@@ -123,8 +123,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.locator('[data-escolha="create-event"]').click()
           await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
           await page.getByLabel("Título").fill("Encontro de veteranos no centro")
-          await page.getByLabel("Quando").fill("2026-12-05T19:00")
-          await page.getByLabel("Onde").fill("Praça São Sebastião")
+          await page.getByLabel("Data e hora").fill("2026-12-05T19:00")
+          await page.getByLabel("Local").fill("Praça São Sebastião")
         },
         pronto: '[data-sobreposicao="folha"]',
       },
@@ -136,8 +136,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
           await page.locator('[data-escolha="create-event"]').click()
           await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
-          await page.getByRole("button", { name: /Publicar|Criar encontro|Salvar/i }).click()
-          await page.waitForTimeout(500)
+          await page.locator('[data-sobreposicao="folha"] button[type="submit"]').click()
+          await expect(page.locator('[data-sobreposicao="folha"] [role="alert"]')).toBeVisible()
         },
         pronto: '[data-sobreposicao="folha"]',
       },
@@ -168,11 +168,13 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
     nome: "f07-negocios",
     passos: [
       {
-        nome: "01-lista",
+        nome: "01-regua",
         ir: async (page) => {
+          // Sem modo de prova no preview, a rota de negócios cai na tela de prova:
+          // a foto mostra o que a pessoa vê hoje e a lacuna fica visível.
           await abrir(page, "/app/negocios")
         },
-        pronto: '[data-tela="negocios"]',
+        pronto: '[data-tela="negocios"], [data-tela="prova"]',
       },
       {
         nome: "02-ficha",
@@ -253,6 +255,9 @@ async function fotografar(
 test.describe("capturas para a revisão cega", () => {
   test("F02, F03, F07 e F08 em 375, 768 e 1440 nos dois temas", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
+    // O modo de prova só liga sob `dev`; no preview do smoke as telas em prova
+    // caem no aviso honesto e a ficha não abre. A matriz só roda com o modo ligado.
+    test.skip(process.env["BIVAQUE_PROVA"] !== "1", "sem modo de prova a matriz nao roda")
     test.setTimeout(600_000)
     const erros: string[] = []
     page.on("pageerror", (erro) => erros.push(`pageerror: ${erro.message}`))
