@@ -82,6 +82,11 @@ async function tentarBrasilApi(
     if (resposta.status === 404) return { estado: "nao-encontrado" }
     if (!resposta.ok) return { estado: "falhou" }
     const corpo = registro((await resposta.json()) as unknown)
+    // Evidência positiva: a fonte só conhece o CEP quando devolve o próprio CEP
+    // pedido. Corpo vazio, lista, objeto de erro ou outro CEP não prova nada.
+    const cepDoCorpo = corpo?.["cep"]
+    const conhece = typeof cepDoCorpo === "string" && cepDoCorpo.replace(/[^0-9]/g, "") === cep
+    if (!conhece) return { estado: "falhou" }
     const local = registro(corpo?.["location"])
     const coordenadas = registro(local?.["coordinates"])
     const coordenada = coordenadaValida(coordenadas?.["latitude"], coordenadas?.["longitude"])
@@ -110,9 +115,10 @@ async function tentarGoogle(
     const status = corpo?.["status"]
     if (status === "ZERO_RESULTS") return { estado: "nao-encontrado" }
     if (status !== "OK") return { estado: "falhou" }
+    // Evidência positiva: `OK` sem resultado é resposta sem prova.
     const resultados = corpo?.["results"]
-    const primeiro = Array.isArray(resultados) ? resultados[0] : undefined
-    const local = registro(registro(registro(primeiro)?.["geometry"])?.["location"])
+    if (!Array.isArray(resultados) || resultados.length === 0) return { estado: "falhou" }
+    const local = registro(registro(registro(resultados[0])?.["geometry"])?.["location"])
     const coordenada = coordenadaValida(local?.["lat"], local?.["lng"])
     return coordenada === null ? { estado: "conhecido" } : { estado: "encontrado", ...coordenada }
   } catch {
