@@ -362,10 +362,24 @@ export const NEGOCIO_DA_PROVA = {
   fotoDescricao: null,
 }
 
-/** A ficha da prova em `/api/app/negocios/<id>`; a lista continua com `simularNegocios`. */
-export async function simularNegocio(page: Page): Promise<void> {
+/**
+ * A ficha da prova em `/api/app/negocios/<id>`; a lista continua com `simularNegocios`.
+ * Com `foto`, o valor vira uma imagem de 1×1 para a captura mostrar a área da
+ * capa como ela aparece com foto, sem baixar arquivo.
+ */
+export async function simularNegocio(
+  page: Page,
+  opcoes: { readonly foto?: boolean } = {},
+): Promise<void> {
+  const ficha = opcoes.foto
+    ? {
+        ...NEGOCIO_DA_PROVA,
+        foto: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+        fotoDescricao: "Fachada da clínica",
+      }
+    : NEGOCIO_DA_PROVA
   await page.route(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/, async (rota) => {
-    await rota.fulfill({ json: { negocio: NEGOCIO_DA_PROVA } })
+    await rota.fulfill({ json: { negocio: ficha } })
   })
 }
 
