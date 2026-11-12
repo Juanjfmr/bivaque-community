@@ -7399,14 +7399,14 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
       "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
       "id": "BLIND-F02",
       "title": "Revisao as cegas da jornada F02 (Inicio e busca) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
+      "status": "now",
       "description": "Criterio 2 do LANÇAMENTO para F02. Capturas reais de Inicio e Busca em 375/768/1440, claro e escuro, julgadas por modelo diferente do que implementou (RUN-012 foi GPT Terra), sem a defesa do executor, com referencia Mobbin citada (f-f3c0a105 Home, f-b82c0a79 Filtering posts, f-38269015 Searching). Veredito no cartao LAN-F02; abaixo da regua abre cartao de correcao.",
       "checklist": [
         "Capturar inicio e busca nos tres tamanhos e dois temas",
@@ -7415,21 +7415,21 @@
       ],
       "dependencies": ["LAN-F02"],
       "proof": [
-        "11/11: aberto pelo enxame. F02 tem código integrado (PR #138, CI verde), mas o criterio 2 nunca foi executado: as capturas cegas de inicio e busca nos tres tamanhos e dois temas ainda nao existem."
-      ]
+        "11/11: aberto pelo enxame. F02 tem código integrado (PR #138, CI verde), mas o criterio 2 nunca foi executado: as capturas cegas de inicio e busca nos tres tamanhos e dois temas ainda nao existem.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Lacuna da captura: no build de preview a rota /app/busca mostra a tela de prova (o conteudo chega na onda dela), entao a foto de 03-busca registra o aviso honesto, nao a busca preenchida; a busca com termo so e medida no desktop-1440 pela matriz de acessibilidade."]
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
       "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
       "id": "BLIND-F03",
       "title": "Revisao as cegas da jornada F03 (Criar) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
+      "status": "now",
       "description": "Criterio 2 do LANCAMENTO para F03. Capturas do menu Criar e dos fluxos de criar pergunta, publicacao com foto, evento e anuncio nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencias Mobbin: f-e258bc98 (Creating a post event), f-5bff685e (poll). Veredito no cartao LAN-F03.",
       "checklist": [
         "Capturar menu Criar e cada formulario nos tres tamanhos e dois temas",
@@ -7438,21 +7438,21 @@
       ],
       "dependencies": ["LAN-F03"],
       "proof": [
-        "11/11: aberto pelo enxame. F03 tem codigo integrado (PR #145), falta o criterio 2: menu Criar e os formularios de pergunta/anuncio/evento nunca foram julgados as cegas contra a regua."
-      ]
+        "11/11: aberto pelo enxame. F03 tem codigo integrado (PR #145), falta o criterio 2: menu Criar e os formularios de pergunta/anuncio/evento nunca foram julgados as cegas contra a regua.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Fotografado o menu Criar, o formulario de encontro vazio, preenchido e com erro de validacao, a Comunidade, o grupo e a publicacao, nos tres tamanhos e dois temas."]
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
       "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
       "id": "BLIND-F07",
       "title": "Revisao as cegas da jornada F07 (Negocios e servicos) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
+      "status": "now",
       "description": "Criterio 2 do LANCAMENTO para F07. Capturas de categorias, ficha do negocio, pedido e ficha propria nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencias Mobbin: f-67458713 (Business profile), f-b12a50ef (Posting a recommendation), f-d39e37f1 (Setting up a business page). Veredito no cartao LAN-F07.",
       "checklist": [
         "Capturar categorias, ficha, pedido e ficha propria nos tres tamanhos e dois temas",
@@ -7461,21 +7461,21 @@
       ],
       "dependencies": ["LAN-F07"],
       "proof": [
-        "11/11: aberto pelo enxame. F07 tem codigo integrado (PR #137); decisao do coordenador sobre a ficha (sem contadores/horario/patrocinado/beneficio) segue a ratificar, e o criterio 2 nunca rodou."
-      ]
+        "11/11: aberto pelo enxame. F07 tem codigo integrado (PR #137); decisao do coordenador sobre a ficha (sem contadores/horario/patrocinado/beneficio) segue a ratificar, e o criterio 2 nunca rodou.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Lacuna da captura: o preview so mostra a lista de negocios (e ali aparece a tela de prova); a ficha de negocio, o formulario de pedido e o acompanhamento nao montam sem servidor e seguem provados apenas em apps/app/tests/e2e/f07-negocios.spec.ts."]
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
       "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
       "id": "BLIND-F08",
       "title": "Revisao as cegas da jornada F08 (Guia) contra a regua Nextdoor",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
+      "status": "now",
       "description": "Criterio 2 do LANCAMENTO para F08. Capturas de lista/categoria, leitura, salvar e sugerir atualizacao nos tres tamanhos e dois temas, julgadas por outro modelo sem a defesa do executor. Referencia Mobbin: f-7e5e34e5 (Neighborhood faves). Veredito no cartao LAN-F08.",
       "checklist": [
         "Capturar lista, leitura, salvar e sugerir nos tres tamanhos e dois temas",
@@ -7484,7 +7484,38 @@
       ],
       "dependencies": ["LAN-F08"],
       "proof": [
-        "11/11: aberto pelo enxame. F08 tem codigo integrado (PR #139); falta o criterio 2 e RECON-030-GUIA-FOTOS (fotos do guia) continua next."
+        "11/11: aberto pelo enxame. F08 tem codigo integrado (PR #139); falta o criterio 2 e RECON-030-GUIA-FOTOS (fotos do guia) continua next.",        "12/11: material de captura entregue pelo PR #199 (merge e7f8cbc0). Spec apps/app/tests/e2e/cegas/capturas.spec.ts, rodada verde no smoke 43242589770: 78 fotos em .visual/blind/<jornada>/<largura>-<tema>-<passo>.png, 375/768/1440 e claro/escuro.",
+        "Lacuna da captura: a rota /app/guia mostra a tela de prova no preview; as fotos de 01-guia e 02-guia-rolado registram so a casca e o aviso, sem verbetes. RECON-030-GUIA-FOTOS continua next."]
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "e7f8cbc0",
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
+      ],
+      "id": "BLIND-JULGAMENTO",
+      "title": "Julgamento cego de F02, F03, F07 e F08 por outro modelo sobre as capturas do PR #199",
+      "priority": "P1",
+      "category": "testing",
+      "status": "now",
+      "description": "Criterio 2 do LANÇAMENTO nas quatro jornadas. O dono autorizou, em 12/11, o parecer do Qwen 3.8 Flash como 'parecer de outro modelo via subagente', nao como revisao independente no sentido estrito do AGENTS.md; o parecer registra a ressaltiva e a data. Julgamento sem a defesa do executor, por dimensao (hierarquia, acao primaria, densidade, rotulos, vazio, formularios, tema, larguras).",
+      "checklist": [
+        "Parecer por jornada com veredito (no nivel / abaixo do nivel) e achados com correcao barata",
+        "Veredito anexado a BLIND-F02, BLIND-F03, BLIND-F07 e BLIND-F08 e aos cartoes LAN-F02/F03/F07/F08",
+        "Achados bloqueantes viram cartao de correcao; os baixos viram cartao de fila"
+      ],
+      "dependencies": [
+        "BLIND-F02",
+        "BLIND-F03",
+        "BLIND-F07",
+        "BLIND-F08"
+      ],
+      "proof": [
+        "12/11: aberto para registrar a rodada de julgamento das 78 capturas do PR #199; modelo e texto do parecer entram aqui na conclusao."
       ]
     }
   ],
