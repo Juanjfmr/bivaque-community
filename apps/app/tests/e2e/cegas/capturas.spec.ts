@@ -6,6 +6,7 @@ import {
   expect,
   NEGOCIO_DA_PROVA,
   PEDIDO_DA_PROVA,
+  SELETOR_CONTEUDO,
   SELETOR_CRIAR,
   SELETOR_MENU_CRIAR,
   SELETOR_TITULO,
@@ -16,6 +17,7 @@ import {
   simularProgresso,
   test,
 } from "../apoio"
+import { simularGrupos } from "../grupos-ajuda"
 import { simularInicio } from "../inicio-ajuda"
 
 /**
@@ -87,8 +89,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "04-busca-com-termo",
         ir: async (page) => {
-          await page.goto("/app/busca?q=mudança")
-          await expect(page.locator('[data-tela="busca"]')).toBeVisible()
+          await abrir(page, "/app/busca?q=mudança")
           await expect(page.getByText(/^\d+ resultados? em Manaus$/)).toBeVisible()
         },
         pronto: '[data-tela="busca"]',
@@ -96,8 +97,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "05-busca-sem-achado",
         ir: async (page) => {
-          await page.goto("/app/busca?q=zarabatana")
-          await expect(page.locator('[data-tela="busca"]')).toBeVisible()
+          await abrir(page, "/app/busca?q=zarabatana")
         },
         pronto: '[data-tela="busca"]',
       },
@@ -154,6 +154,27 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         },
         pronto: '[data-sobreposicao="folha"]',
       },
+      {
+        nome: "05-comunidade",
+        ir: async (page) => {
+          await abrir(page, "/app/comunidade")
+        },
+        pronto: '[data-tela="comunidade"]',
+      },
+      {
+        nome: "06-grupo",
+        ir: async (page) => {
+          await abrir(page, "/app/grupo/g-pets")
+        },
+        pronto: '[data-tela="grupo"]',
+      },
+      {
+        nome: "07-publicacao",
+        ir: async (page) => {
+          await abrir(page, "/app/publicacao/p-real-1")
+        },
+        pronto: '[data-tela="publicacao"], [data-publicacao]',
+      },
     ],
   },
   {
@@ -171,13 +192,12 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
         },
-        pronto: 'button:has-text("Pedir orçamento")',
+        pronto: '[data-tela="negocio"]',
       },
       {
         nome: "03-ficha-rolada",
         ir: async (page) => {
           await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-          await expect(page.locator('button:has-text("Pedir orçamento")')).toBeVisible()
           await page.mouse.wheel(0, 900)
           await page.waitForTimeout(400)
         },
@@ -197,7 +217,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrir(page, `/app/pedido/${PEDIDO_DA_PROVA.id}`)
         },
-        pronto: 'button:has-text("Ver negócio")',
+        pronto: '[data-tela="pedido"]',
       },
     ],
   },
@@ -247,6 +267,7 @@ test.describe("capturas para a revisão cega", () => {
     page.on("pageerror", (erro) => erros.push(`pageerror: ${erro.message}`))
 
     await simularProgresso(page)
+    await simularGrupos(page, { membro: true })
     await simularInicio(page)
     await simularNegocios(page)
     await simularNegocio(page)
@@ -280,10 +301,22 @@ test.describe("capturas para a revisão cega", () => {
  * mostrarem a tela real; se o stub mudar, o spec falha aqui em vez de fotografar
  * um estado vazio.
  */
-test("a ficha de negócio da prova abre populada", async ({ page }, info) => {
+test("a ficha de negócio da prova abre populada, com e sem foto", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop-1440", "a ficha ja e fotografada na matriz")
   await simularProgresso(page)
   await simularNegocio(page)
   await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-  await expect(page.getByRole("heading", { name: NEGOCIO_DA_PROVA.nome })).toBeVisible()
+  await expect(page.getByRole("heading", { level: 1, name: NEGOCIO_DA_PROVA.nome })).toBeVisible()
+  await expect(page.getByText("Fisioterapia ortopédica")).toBeVisible()
+  // Com foto, a capa precisa aparecer: é o estado que mais muda a régua da ficha.
+  await page.unroute(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/)
+  await simularNegocio(page, { foto: true })
+  await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+  await expect(page.locator(`${SELETOR_CONTEUDO} img`).first()).toBeVisible()
+  await assentar(page)
+  await fotografar(page, "f07-negocios", 375, "light", {
+    nome: "06-ficha-com-foto",
+    ir: async () => undefined,
+    pronto: '[data-tela="negocio"]',
+  })
 })
