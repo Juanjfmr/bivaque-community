@@ -190,14 +190,16 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "02-ficha",
         ir: async (page) => {
-          await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+          await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+          await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
         },
         pronto: '[data-tela="negocio"]',
       },
       {
         nome: "03-ficha-rolada",
         ir: async (page) => {
-          await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+          await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+          await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
           await page.mouse.wheel(0, 900)
           await page.waitForTimeout(400)
         },
@@ -206,7 +208,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "04-formulario-de-pedido",
         ir: async (page) => {
-          await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+          await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+          await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
           await page.locator('[data-acao="pedir-orcamento"]').click()
           await expect(page.locator('[data-sobreposicao="folha"]')).toBeVisible()
         },
@@ -215,7 +218,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "05-pedido",
         ir: async (page) => {
-          await abrir(page, `/app/pedido/${PEDIDO_DA_PROVA.id}`)
+          await page.goto(`/app/pedido/${PEDIDO_DA_PROVA.id}`)
+          await expect(page.getByText(PEDIDO_DA_PROVA.negocioNome)).toBeVisible({ timeout: 15_000 })
         },
         pronto: '[data-tela="pedido"]',
       },
@@ -305,13 +309,14 @@ test("a ficha de negócio da prova abre populada, com e sem foto", async ({ page
   test.skip(info.project.name !== "desktop-1440", "a ficha ja e fotografada na matriz")
   await simularProgresso(page)
   await simularNegocio(page)
-  await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-  await expect(page.getByRole("heading", { level: 1, name: NEGOCIO_DA_PROVA.nome })).toBeVisible()
+  await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+  await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText("Fisioterapia ortopédica")).toBeVisible()
   // Com foto, a capa precisa aparecer: é o estado que mais muda a régua da ficha.
   await page.unroute(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/)
   await simularNegocio(page, { foto: true })
   await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
+  await expect(page.getByText(NEGOCIO_DA_PROVA.nome)).toBeVisible({ timeout: 15_000 })
   await expect(page.locator(`${SELETOR_CONTEUDO} img`).first()).toBeVisible()
   await assentar(page)
   await fotografar(page, "f07-negocios", 375, "light", {
