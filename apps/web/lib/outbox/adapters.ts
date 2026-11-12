@@ -33,6 +33,32 @@ function siteOrigin(): string {
   return configuredOrigin ?? (vercelHost ? `https://${vercelHost}` : "http://127.0.0.1:3000")
 }
 
+// Convite de comunidade: a única rota que aceita o token hoje é a página do
+// servidor `/invite/<token>` (apps/web/app/(shell)/invite/[token]/page.tsx).
+// O `apps/app` só consome convite familiar (`/app/entrar?convite=<CÓDIGO>`), e
+// `/invite` não está na superfície pública do proxy: quem abre o link sem
+// sessão é levado ao login e volta pelo `?redirect=`. Quando o aceite existir
+// no app, o caminho muda aqui — não no e-mail já enviado.
+const CAMINHO_DO_CONVITE_DE_COMUNIDADE = "/invite/"
+
+// O token é credencial: só entra no link se for exatamente o que o aceite lê
+// (`Buffer.from(token, "hex")`). Qualquer outra forma, o e-mail fica no aviso
+// de sempre em vez de prometer um link que a página não consegue abrir.
+function tokenDoConvite(valor: unknown): string | null {
+  if (typeof valor !== "string") return null
+  const token = valor.trim()
+  return /^[0-9a-f]{64}$/.test(token) ? token : null
+}
+
+// Convite de evento: a tela é `/evento/<id>` no app, e o id é o UUID da linha.
+const CAMINHO_DO_EVENTO = "/app/evento/"
+
+function idDoEvento(valor: unknown): string | null {
+  if (typeof valor !== "string") return null
+  const id = valor.trim()
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id) ? id : null
+}
+
 export function renderEmail(message: OutboxMessage): RenderedEmail {
   const payload = message.payload
   switch (message.type) {
@@ -93,11 +119,32 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
         ].join("\n"),
       }
     }
-    case "community_invite":
+    case "community_invite": {
+      const origin = siteOrigin()
+      const token = tokenDoConvite(payload["invite_token"])
+
+      if (token === null) {
+        // Enfileirado sem o token (convite que não é link de membro): o corpo
+        // continua sendo o aviso de sempre, sem link torto.
+        return {
+          subject: "Você recebeu um convite de comunidade",
+          text: "Você foi convidado para uma comunidade. Acesse o Bivaque para aceitar.",
+        }
+      }
+
       return {
         subject: "Você recebeu um convite de comunidade",
-        text: "Você foi convidado para uma comunidade. Acesse o Bivaque para aceitar.",
+        text: [
+          "Alguém te convidou para entrar numa comunidade do Bivaque.",
+          "",
+          `Abra ${origin}${CAMINHO_DO_CONVITE_DE_COMUNIDADE}${token} para aceitar.`,
+          "",
+          "O link vale 7 dias e só pode ser usado uma vez. Quem aceitar ainda passa pela",
+          "aprovação de quem cuida da comunidade. O convite vale para o seu e-mail:",
+          "entre com este mesmo endereço.",
+        ].join("\n"),
       }
+    }
     case "family_invite": {
       // O código vai no corpo e no link (ADR-20261022-entrada-do-prototipo,
       // item 2). O mesmo convite continua valendo pelo link antigo, que agora
@@ -143,11 +190,32 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
           `Confirme seu e-mail e aceite o convite em ${origin}${path}`,
       }
     }
-    case "event_invite":
-      return {
-        subject: "Você recebeu um convite de evento",
-        text: "Você foi convidado para um evento. Acesse o Bivaque para responder.",
+    case "event_invite": {
+      const origin = siteOrigin()
+      const eventId = idDoEvento(payload["event_id"])
+
+      if (eventId === null) {
+        // Sem o id do evento não há destino: o corpo fica no aviso de sempre em
+        // vez de mandar a pessoa para a agenda sem saber de qual evento se trata.
+        return {
+          subject: "Você recebeu um convite de evento",
+          text: "Você foi convidado para um evento. Acesse o Bivaque para responder.",
+        }
       }
+
+      const eventTitle = typeof payload["event_title"] === "string" ? payload["event_title"] : ""
+      const title = eventTitle.trim()
+      return {
+        subject: title === "" ? "Você recebeu um convite de evento" : `Convite: ${title}`,
+        text: [
+          title === ""
+            ? "Você foi convidado para um evento no Bivaque."
+            : `Você foi convidado para o evento ${title}.`,
+          "",
+          `Abra ${origin}${CAMINHO_DO_EVENTO}${eventId} para confirmar ou recusar presença.`,
+        ].join("\n"),
+      }
+    }
     case "support_answered": {
       // ADR-20261022-fundacao-dados (DATA-002): a resposta do chamado chega por e-mail, como no
       // protótipo, e fica também em Meus chamados.
