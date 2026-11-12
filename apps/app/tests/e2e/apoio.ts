@@ -458,8 +458,10 @@ const BUSCA_VAZIA = { anuncios: [], negocios: [], perguntas: [], grupos: [], gui
 
 /**
  * `/api/app/busca` respondendo como o servidor: o termo do endereço decide se
- * volta a lista da prova ou nada. O Início da cidade fica só com a cidade, para
- * o estado sem termo não herdar resultado nenhum de outro fixture.
+ * volta a lista da prova ou nada. O Início da cidade tem só um negócio de
+ * saúde: o bastante para o estado sem termo desenhar a grade "Explorar" (que
+ * mostra apenas categorias com negócio na cidade, RUN-139) sem herdar resultado
+ * de outro fixture. A cidade vazia é provada em inicio-busca-primeira-entrada.
  */
 export async function simularBuscaDaProva(page: Page): Promise<void> {
   await page.route(/\/api\/app\/busca(?:\?|$)/, async (rota) => {
@@ -471,7 +473,19 @@ export async function simularBuscaDaProva(page: Page): Promise<void> {
   })
   await page.route(/\/api\/app\/inicio(?:\?|$)/, async (rota) => {
     await rota.fulfill({
-      json: { ...BUSCA_VAZIA, cidade: CIDADE_DA_BUSCA, eventos: [], proximo: null },
+      json: {
+        ...BUSCA_VAZIA,
+        negocios: [
+          {
+            id: "negocio-explorar",
+            display_name: "Clínica da Prova",
+            category: "saude_e_bem_estar",
+          },
+        ],
+        cidade: CIDADE_DA_BUSCA,
+        eventos: [],
+        proximo: null,
+      },
     })
   })
 }
