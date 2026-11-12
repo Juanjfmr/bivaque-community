@@ -18,7 +18,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(53);
+select plan(54);
 
 \ir fixtures/foundation.inc
 
@@ -343,7 +343,7 @@ select throws_ok(
 select throws_ok(
   $$
     update public.profiles
-       set latitude = 1
+       set cep = null, latitude = 1, longitude = 1
      where user_id = '10000000-0000-4000-8000-000000000004'
   $$,
   '23514', null,
@@ -367,7 +367,7 @@ select throws_ok(
      where user_id = '10000000-0000-4000-8000-000000000004'
   $$,
   '23514', null,
-  'CEP sem as duas coordenadas é recusado pela constraint'
+  'latitude sem longitude é recusada pela constraint'
 );
 
 -- ───────────────────────────────────────────────────────────────────────────
@@ -558,6 +558,18 @@ select is(
   public.distance_to_neighborhood('70000000-0000-4000-8000-000000000001'),
   null,
   'origem sem coordenada devolve NULL, nunca zero'
+);
+
+-- Nem a linha do CEP sem posição tem caminho de leitura para outro membro.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+
+select throws_ok(
+  $$
+    select cep from public.profiles
+     where user_id = '10000000-0000-4000-8000-000000000004'
+  $$,
+  '42501', null,
+  'outro membro não lê a linha do CEP sem posição'
 );
 
 reset role;
