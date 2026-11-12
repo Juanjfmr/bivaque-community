@@ -7140,23 +7140,28 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "city-reference.tsx:203 emite /events?locality=<id>; o 307 preserva a query, mas o app não lê locality (só locality_id), então o link de outra cidade cai na agenda da cidade de quem clica, em silêncio. Aceitar ?locality no app (rota/filtro de cidade) ou apontar o link para a rota da cidade quando existir; até lá, não prometer o que não acontece.",
+      "status": "done",
+      "description": "city-reference.tsx:203 emite /events?locality=<id>; o 307 preserva a query, mas o app não lê locality (só locality_id), então o link de outra cidade cai na agenda da cidade de quem clica, em silêncio. Aceitar ?locality no app (rota/filtro de cidade) ou apontar o link para a rota da cidade quando existir; até lá, não prometer o que não acontece. Decisão do coordenador em 12/11: na referência de outra cidade os dois links somem; na cidade da pessoa continuam iguais.",
       "checklist": [
-        "Aceitar ?locality no app ou trocar o link para a rota da cidade",
-        "E2E do link de outra cidade com o destino correto",
-        "Prova de que a agenda local não muda"
+        "Na referência de outra cidade, «Ver todos os eventos» e «Abrir o guia de chegada» não aparecem, e nenhum href sai com locality= (sem fazer o app ler ?locality)",
+        "Na cidade da pessoa os dois links continuam com o mesmo texto e destino, /events e /guide",
+        "Teste prova os dois lados, rodado de verdade, e a lista de eventos e o resto da referência alternativa seguem iguais"
       ],
       "proof": [
-        "11/11: aberto na revisão do #176 (achado MÉDIO do reviewer 7c4d0b40); o 307 e a query já são provados, falta o destino."
+        "11/11: aberto na revisão do #176 (achado MÉDIO do reviewer 7c4d0b40); o 307 e a query já são provados, falta o destino.",
+        "12/11, RUN-137: decisão de produto — esconder, não redirecionar. city-reference.tsx não emite mais href com locality=; os dois links ficam sob !isAlternate, com /events e /guide na cidade da pessoa. tests/unit/ui/city-reference.test.tsx (renderToStaticMarkup, Supabase e contexto mockados) prova os dois lados: 3/3 na revisão ca4b88c0 e falha no código anterior («Ver todos os eventos» presente na alternativa). test:unit 258 arquivos/3141 testes verdes, typecheck completo verde, lint do arquivo pelo biome com o ignore de .work removido. Sem E2E de /localidade: exige stack local do Supabase com seed e Playwright, não disponíveis neste checkout."
       ],
-      "tests": [],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/ui/city-reference.test.tsx",
+        "npx pnpm@11.18.0 typecheck"
+      ],
       "links": [],
       "dependencies": ["LAN-F05"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "9b0dbf2b",
+      "updatedAt": "2026-11-12",
+      "sourceRevision": "ca4b88c0",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-11-12"
     },
     {
       "id": "ADR-CONVITE-EMAIL-EDITAVEL",
