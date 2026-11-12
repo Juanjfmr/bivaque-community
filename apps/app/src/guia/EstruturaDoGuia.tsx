@@ -79,7 +79,7 @@ export function CabecalhoDoGuia({ cidade }: { cidade: string }) {
   return (
     <header
       data-guia="cabecalho"
-      className="sticky top-0 z-10 -mx-4 border-b border-(--outline-variant) bg-(--background) px-4 md:-mx-7 md:px-7"
+      className="sticky top-0 z-10 border-b border-(--outline-variant) bg-(--background)"
     >
       <div className="flex items-baseline gap-2 pt-3">
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1}>
