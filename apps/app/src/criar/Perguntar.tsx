@@ -113,7 +113,7 @@ export function Perguntar({
             autoComplete="off"
             required
           />
-          <div data-topicos="pergunta">
+          <div data-topicos="pergunta" className="min-w-0">
             <ChipsDeFiltro
               rotulo="Tópico da pergunta"
               itens={ITENS_DO_TOPICO}

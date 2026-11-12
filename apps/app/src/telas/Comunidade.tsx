@@ -254,7 +254,7 @@ export function Comunidade() {
             rotulo="Filtrar perguntas"
           />
 
-          <div data-topicos="filtro-comunidade">
+          <div data-topicos="filtro-comunidade" className="min-w-0">
             <ChipsDeFiltro
               itens={TOPICOS}
               valor={topico}
