@@ -302,7 +302,13 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         const achadas = (await listaDoTexto.json()) as { id: string }[]
         expect(achadas.length, "a publicação está gravada uma vez").toBe(1)
         publicada = achadas[0]?.id ?? ""
-        await page.locator('[data-publicacao-na-lista="sim"]').first().click(ESPERA)
+        // O cartão da lista não é um link: a publicação abre pela ação
+        // "Comentar", que leva à tela da publicação com o fio dela.
+        await page
+          .locator('[data-publicacao-na-lista="sim"]')
+          .first()
+          .getByRole("button", { name: /Comentar|comentários/ })
+          .click(ESPERA)
         await expect(page, "o cartão abre a publicação gravada").toHaveURL(
           new RegExp(`/app/publicacao/${publicada}$`),
           ESPERA,
@@ -346,7 +352,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         await page.reload({ timeout: ESPERA.timeout })
         await expect(
           page.getByText("Publicação real do F04", { exact: true }),
-          "o texto sobrevive ao recarregamento",
+          "o texto sobrevive ao recarregamento na tela da publicação",
         ).toBeVisible(ESPERA)
         await expect(
           page.locator('[data-resposta="sim"]'),
@@ -371,6 +377,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           { content: "Publicação real do F04" },
         ])
         await capturar(page, `${info.project.name}-publicacao`)
+        // A lista do grupo é a outra tela desta prova: voltar para ela.
+        await page.goto(`/app/grupo/${aberto}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await expect(
           page.getByRole("button", { name: "Tirar dos salvos" }),
