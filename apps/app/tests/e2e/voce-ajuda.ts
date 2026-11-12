@@ -10,7 +10,7 @@ import type { Page } from "@playwright/test"
  * contrato mudar, este arquivo muda junto, senão os specs passam medindo uma
  * tela que não é a de produção.
  */
-export async function simularVoce(page: Page) {
+export async function simularVoce(page: Page, opcoes: { distanciaDisponivel?: boolean } = {}) {
   // Preferências de aviso (F09): a área Você lê e grava a matriz de canais.
   // A simulação devolve o mesmo corpo de `/api/app/avisos/preferencias`.
   const canaisDeAviso = (escolha: {
@@ -56,11 +56,14 @@ export async function simularVoce(page: Page) {
     }
     return rota.fulfill({ json: { preferencias: preferenciasDeAviso } })
   })
+  // `distanciaDisponivel: false` simula o CEP conhecido sem posição
+  // (ADR-20261112): guardado, mas ainda sem distância calculável.
   const perfil = {
     nome: "Ana Verificada",
     bio: "Mãe de dois, moro no Centro.",
     cidade: "Manaus",
     localizacao: { cep: "69020000", definida: true },
+    distanciaDisponivel: opcoes.distanciaDisponivel ?? true,
   }
   const contagens = { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 }
   const conta = { exclusaoPendente: false }

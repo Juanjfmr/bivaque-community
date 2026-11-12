@@ -63,9 +63,9 @@ export function Voce() {
         const cepAnterior = digitosDoCep(perfil?.localizacao.cep ?? "")
         if (dados.cep !== cepAnterior) {
           try {
-            const localizacao = await salvarLocalizacao(dados.cep)
+            const salva = await salvarLocalizacao(dados.cep)
             setConta((atual) =>
-              atual === null ? atual : { ...atual, perfil: { ...atual.perfil, localizacao } },
+              atual === null ? atual : { ...atual, perfil: { ...atual.perfil, ...salva } },
             )
           } catch {
             // O perfil acima já está gravado; só a localização não foi. Fechar
@@ -124,6 +124,16 @@ export function Voce() {
           )}
         </div>
       )}
+
+      {perfil !== null && perfil.localizacao.cep !== null && !perfil.distanciaDisponivel ? (
+        <p
+          data-aviso="cep-sem-distancia"
+          className="rounded-2xl bg-(--surface-lowest) px-4 py-3 text-sm text-(--on-surface-variant) ring-1 ring-(--outline-variant)"
+        >
+          Guardamos seu CEP {perfil.localizacao.cep}, mas ainda não conseguimos localizar esse CEP
+          no mapa. Por isso a distância até o seu bairro ainda não pode ser calculada.
+        </p>
+      ) : null}
 
       {editando && perfil !== null ? (
         <EdicaoDePerfil
