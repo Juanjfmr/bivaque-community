@@ -131,8 +131,8 @@ test("a localização usa o privilégio só para o cache e a escrita medida", ()
   )
   assert.match(
     rota,
-    /responder\(request, \{ localizacao \}, 200\)/,
-    "a resposta de sucesso não é só a localização lida pela RPC",
+    /responder\(request, \{ localizacao, distanciaDisponivel \}, 200\)/,
+    "a resposta de sucesso não é só a localização lida pela RPC e se há posição",
   )
 
   // O cache é o único lugar do privilégio que toca tabela, e só cep_geocodes.
