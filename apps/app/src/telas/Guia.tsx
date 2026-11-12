@@ -173,8 +173,11 @@ export function Guia() {
   }
 
   /** O caminho real de sugestão de lugar é o Criar: o menu abre com as portas. */
-  function sugerirLugar() {
-    void navegacao.abrir("menu-criar")
+  async function sugerirLugar() {
+    // No celular o Criar só tem o FAB como âncora nas raízes; sair do Guia pelo
+    // Início é o caminho que existe, e o menu abre lá com todas as portas.
+    if (window.innerWidth < 720) await navegacao.irPara("inicio")
+    await navegacao.abrir("menu-criar")
   }
 
   const filtros = [

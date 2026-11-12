@@ -69,10 +69,11 @@ export function CabecalhoDoGuia({ cidade }: { cidade: string }) {
   // já guarda a posição. O foco vai para o título da seção, que é o destino
   // real de quem usa teclado ou leitor de tela.
   const irParaSecao = (id: string) => {
-    const destino = document.getElementById(id)
-    if (destino === null) return
-    destino.scrollIntoView({ block: "start" })
-    destino.focus({ preventScroll: true })
+    const secao = document.getElementById(id)
+    const titulo = document.getElementById(`${id}-titulo`)
+    if (secao === null || titulo === null) return
+    secao.scrollIntoView({ block: "start" })
+    titulo.focus({ preventScroll: true })
   }
 
   return (

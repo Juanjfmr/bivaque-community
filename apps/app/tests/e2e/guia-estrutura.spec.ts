@@ -1,14 +1,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
-import type { Page } from "@playwright/test"
-import {
-  expect,
-  SELETOR_CONTEUDO,
-  SELETOR_MENU_CRIAR,
-  simularGuia,
-  simularProgresso,
-  test,
-} from "./apoio"
+import { expect, type Page, test } from "@playwright/test"
+import { SELETOR_CONTEUDO, SELETOR_MENU_CRIAR, simularGuia, simularProgresso } from "./apoio"
 import { simularCriar } from "./criar-ajuda"
 
 /**
@@ -195,27 +188,46 @@ test.describe("estrutura do Guia", () => {
     )
   })
 
-  test("'Sugerir um lugar para o Guia' abre o caminho real do Criar", async ({ page }) => {
+  test("'Sugerir um lugar para o Guia' leva ao caminho real do Criar no celular", async ({
+    page,
+  }) => {
     await simularCriar(page)
     await page.setViewportSize({ width: 375, height: 812 })
     await abrirGuia(page)
 
     const sugestao = page.locator('[data-guia="contribuicao"] [data-acao="sugerir-lugar"]')
-    await expect(sugestao).toHaveText("Sugerir um lugar para o Guia")
+    await expect(sugestao).toContainText("Sugerir um lugar para o Guia")
     await sugestao.click()
-    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
 
-    // Negativo: Esc fecha o Criar e o Guia continua na tela.
+    // No celular o Criar só tem o FAB como âncora nas raízes: o caminho real
+    // passa pelo Início e abre o menu lá, com as sete portas.
+    await expect(page).toHaveURL(/\/app\/inicio$/)
+    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
+    await expect(page.locator("[data-escolha]")).toHaveCount(7)
+
+    // Negativo: Esc fecha o Criar e a tela continua utilizável.
     await page.keyboard.press("Escape")
     await expect(page.locator(SELETOR_MENU_CRIAR)).toHaveCount(0)
-    await expect(page.locator(TELA)).toBeVisible()
+    await expect(page.locator('[data-tela="inicio"]')).toBeVisible()
 
     // Positivo: a porta de indicação do Criar é o caminho de sugestão.
-    await sugestao.click()
+    await page.locator('[data-acao="criar"]').click()
     await page.locator('[data-escolha="indicate"]').click()
     const formulario = page.locator('[data-formulario-criacao="indicate"]')
     await expect(formulario).toBeVisible()
     await expect(formulario.getByRole("heading", { name: "Indicar negócio" })).toBeVisible()
+  })
+
+  test("no computador o Criar abre sobre o próprio Guia", async ({ page }) => {
+    await simularCriar(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await abrirGuia(page)
+
+    await page.locator('[data-guia="contribuicao"] [data-acao="sugerir-lugar"]').click()
+    await expect(page).toHaveURL(/\/app\/guia$/)
+    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
+    await page.locator('[data-escolha="indicate"]').click()
+    await expect(page.locator('[data-formulario-criacao="indicate"]')).toBeVisible()
   })
 
   test("corpo com token secundário, contraste AA, entrelinha e captura nos dois temas", async ({
