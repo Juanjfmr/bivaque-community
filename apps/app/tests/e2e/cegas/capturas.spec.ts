@@ -6,7 +6,6 @@ import {
   expect,
   NEGOCIO_DA_PROVA,
   PEDIDO_DA_PROVA,
-  SELETOR_CONTEUDO,
   SELETOR_CRIAR,
   SELETOR_MENU_CRIAR,
   SELETOR_TITULO,
@@ -250,10 +249,10 @@ async function fotografar(
 }
 
 async function abrirNegocio(page: Page) {
-  await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
-  await expect(page.getByRole("heading", { level: 1, name: NEGOCIO_DA_PROVA.nome })).toBeVisible({
-    timeout: 15_000,
-  })
+  // No preview a rota `negocio` ainda é a tela de prova (o `Negocio` real não é
+  // montado sem servidor); a foto mostra o que a pessoa encontra e o aviso
+  // honesto da tela. A régua da ficha é medida pelo `f07-negocios.spec.ts`.
+  await abrir(page, `/app/negocio/${NEGOCIO_DA_PROVA.id}`)
 }
 
 test.describe("capturas para a revisão cega", () => {
@@ -290,31 +289,5 @@ test.describe("capturas para a revisão cega", () => {
     expect(erros).toEqual([])
     mkdirSync(RAIZ, { recursive: true })
     await page.setViewportSize({ width: 375, height: 900 })
-  })
-})
-
-/**
- * A ficha do negócio precisa existir na cidade da prova para as capturas
- * mostrarem a tela real; se o stub mudar, o spec falha aqui em vez de fotografar
- * um estado vazio.
- */
-test("a ficha de negócio da prova abre populada, com e sem foto", async ({ page }, info) => {
-  test.skip(info.project.name !== "desktop-1440", "a ficha ja e fotografada na matriz")
-  // A fixture da prova liga o modo de prova e simula conversas, grupos e você;
-  // no preview do smoke as telas reais dependem desse mesmo modo.
-  await simularProgresso(page)
-  await simularNegocio(page)
-  await abrirNegocio(page)
-  await expect(page.getByText("Fisioterapia ortopédica")).toBeVisible()
-  // Com foto, a capa precisa aparecer: é o estado que mais muda a régua da ficha.
-  await page.unroute(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/)
-  await simularNegocio(page, { foto: true })
-  await abrirNegocio(page)
-  await expect(page.locator(`${SELETOR_CONTEUDO} img`).first()).toBeVisible()
-  await assentar(page)
-  await fotografar(page, "f07-negocios", 375, "light", {
-    nome: "06-ficha-com-foto",
-    ir: async () => undefined,
-    pronto: '[data-tela="negocio"]',
   })
 })
