@@ -4,9 +4,11 @@ import { defineConfig } from "@playwright/test"
 
 // Configuracao de e2e propria do app (onda 1b).
 //
-// Serve o app na porta 3200 (a mesma do `preview` do manifesto), com os seis
-// tamanhos do prototipo. O andaime de prova so existe em desenvolvimento
-// (modo-de-prova.ts), entao o servidor e o `vite dev`, nao o preview do build.
+// Dois servidores. As baterias dos seis tamanhos do prototipo rodam no `vite dev`
+// (porta 3200), porque o andaime de prova so existe em desenvolvimento
+// (modo-de-prova.ts). O build publicado e servido pelo `vite preview` (porta
+// 3201) e medido pelo projeto `publicado`: os specs `*.publicado.spec.ts` provam
+// o que so vale no artefato que vai ao ar. O build vem antes (gate e CI).
 function chromiumInstalado(): string | undefined {
   const doAmbiente = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
   if (doAmbiente) return doAmbiente
@@ -22,6 +24,8 @@ function chromiumInstalado(): string | undefined {
 
 const chromium = chromiumInstalado()
 const porta = 3200
+const portaDoBuild = 3201
+const SO_DO_BUILD = /.publicado.spec.ts$/
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -33,15 +37,24 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${porta}`,
     ...(chromium ? { launchOptions: { executablePath: chromium } } : {}),
   },
-  webServer: {
-    command: "npx pnpm@11.18.0 dev",
-    url: `http://127.0.0.1:${porta}/app/`,
-    reuseExistingServer: false,
-    timeout: 180_000,
-  },
+  webServer: [
+    {
+      command: "npx pnpm@11.18.0 dev",
+      url: `http://127.0.0.1:${porta}/app/`,
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      command: `npx pnpm@11.18.0 exec vite preview --host 127.0.0.1 --port ${portaDoBuild} --strictPort`,
+      url: `http://127.0.0.1:${portaDoBuild}/app/`,
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+  ],
   projects: [
     {
       name: "mobile-320",
+      testIgnore: SO_DO_BUILD,
       use: {
         browserName: "chromium",
         viewport: { width: 320, height: 700 },
@@ -51,6 +64,7 @@ export default defineConfig({
     },
     {
       name: "mobile-360",
+      testIgnore: SO_DO_BUILD,
       use: {
         browserName: "chromium",
         viewport: { width: 360, height: 740 },
@@ -60,6 +74,7 @@ export default defineConfig({
     },
     {
       name: "mobile-375",
+      testIgnore: SO_DO_BUILD,
       use: {
         browserName: "chromium",
         viewport: { width: 375, height: 812 },
@@ -69,6 +84,7 @@ export default defineConfig({
     },
     {
       name: "mobile-430",
+      testIgnore: SO_DO_BUILD,
       use: {
         browserName: "chromium",
         viewport: { width: 430, height: 932 },
@@ -78,11 +94,22 @@ export default defineConfig({
     },
     {
       name: "tablet-768",
+      testIgnore: SO_DO_BUILD,
       use: { browserName: "chromium", viewport: { width: 768, height: 1024 } },
     },
     {
       name: "desktop-1440",
+      testIgnore: SO_DO_BUILD,
       use: { browserName: "chromium", viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: "publicado",
+      testMatch: SO_DO_BUILD,
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1440, height: 900 },
+        baseURL: `http://127.0.0.1:${portaDoBuild}`,
+      },
     },
   ],
 })
