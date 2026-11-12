@@ -47,20 +47,29 @@ export function CartaoDePublicacao({
   completo = true,
   aoMarcarUtil,
   aoComentar,
+  alvoDeFoco,
 }: {
   publicacao: Publicacao
   completo?: boolean
   aoMarcarUtil?: () => void
   aoComentar?: () => void
+  /**
+   * O cartão pode receber foco por script: quem acabou de publicar chega nele
+   * depois do envio e o leitor de tela anuncia o que está lá. Como o título da
+   * página (`tabIndex={-1}`), ele não entra na ordem do Tab.
+   */
+  alvoDeFoco?: boolean
 }) {
   const { enquete, encontro } = publicacao
   const votos = enquete?.opcoes.reduce((soma, opcao) => soma + opcao.votos, 0) ?? 0
 
   return (
     <article
+      id={alvoDeFoco === true ? `publicacao-${publicacao.id}` : undefined}
+      tabIndex={alvoDeFoco === true ? -1 : undefined}
       data-cartao="publicacao"
       data-tipo={publicacao.tipo}
-      className="grid gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
+      className="grid gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
     >
       <header className="flex items-center gap-3">
         <MembroAvatar nome={publicacao.autor} tamanho="pequeno" />

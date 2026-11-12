@@ -116,6 +116,18 @@ export async function buscarGrupo(
   }
 }
 
+/** Só a quantidade da primeira página, para saber se há uma segunda. */
+export async function contarPublicacoes(
+  id: string,
+  opcoes: Opcoes & { ordem?: OrdemDoGrupo } = {},
+): Promise<number> {
+  const corpo = await ler(
+    `/api/app/grupos/${encodeURIComponent(id)}?${new URLSearchParams({ ordem: opcoes.ordem ?? "recentes" })}`,
+    opcoes,
+  )
+  return lista(corpo["publicacoes"], publicacao).length
+}
+
 export async function mudarParticipacao(
   id: string,
   entrar: boolean,
@@ -177,18 +189,30 @@ export async function buscarPublicacao(
     proximo: cursor(corpo["proximo"]),
   }
 }
+/**
+ * A publicação recém-criada volta com `publicacao` — a linha lida do banco e
+ * apresentada como as demais — e com `proximo`, o cursor que a tela usa para
+ * conferir se a publicação abriu uma página nova na lista do grupo.
+ */
+export type PublicacaoCriada = Readonly<{
+  publicacao: PublicacaoReal
+  proximo: string | null
+}>
+
 export async function publicarNoGrupo(
   id: string,
   dados: { texto: string; fotos: readonly string[] },
   opcoes: Opcoes = {},
-): Promise<string> {
+): Promise<PublicacaoCriada> {
   const corpo = await enviar(
     "POST",
     `/api/app/grupos/${encodeURIComponent(id)}/publicacoes`,
     dados,
     opcoes,
   )
-  return texto(registro(corpo["publicacao"])["id"])
+  const criada = publicacao(corpo["publicacao"])
+  if (criada.grupoId !== id) falha()
+  return { publicacao: criada, proximo: cursor(corpo["proximo"]) }
 }
 export async function anexarFotoAoGrupo(
   id: string,

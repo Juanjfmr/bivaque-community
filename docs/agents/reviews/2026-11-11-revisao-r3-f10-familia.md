@@ -1,0 +1,87 @@
+# Revisão R3 de 11/11/2026 — convite de familiar (F10)
+
+- **Cartão:** F10-FAMILIA (F10 — Você e conta ligada ao banco)
+- **Lote:** RUN-030 (`docs/agents/tasks/RUN-030.task.yml`), risco R3, delegação
+- **Autoridade:** [docs/LANCAMENTO.md](../../LANCAMENTO.md) (F10), [ADR-20261105-porta-de-dados-do-app.md](../../decisions/ADR-20261105-porta-de-dados-do-app.md), [ADR-20261105-entrada-enxuta-e-r3-sem-parada.md](../../decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md), [AGENT_ARCHITECTURE.md](../AGENT_ARCHITECTURE.md), [supabase/AGENTS.md](../../../supabase/AGENTS.md)
+- **Natureza deste documento:** revisão de segurança R3 feita no mesmo lote em que o teste pgTAP negativo foi escrito. Não é a auditoria independente exigida pelo processo de 05/11: o `security-auditor` continua obrigatório antes do merge, e nenhum achado CRÍTICO/ALTO pode ficar aberto. O que está aqui é a leitura dirigida dos pontos que sustentam o R3, com prova no banco, no servidor e no contrato das funções.
+
+## 1. Escopo
+
+A jornada de convite de familiar no que está na main `69a077aa`:
+
+- as funções de convite no banco (criação, leitura, revogação, reenvio, preview e aceite por código) e as tabelas `private.family_invitations`, `private.family_account_links` e `private.family_invite_code_attempts`;
+- as rotas do app que usam `service_role`: `GET`/`POST /api/app/voce/familia`, `DELETE /api/app/voce/familia/[id]`, `POST /api/app/entry/invite` e `POST /api/app/entry/invite/preview`;
+- o módulo de convite do servidor (`apps/web/lib/convite/`), o `outbox` como única morada do e-mail cru e a Server Action antiga de perfil, que continua alcançável.
+
+Fora do escopo: visual, o fluxo de entrega de e-mail (adaptador de outbox, dependência do dono), e qualquer migration nova — este lote não escreve banco de produção.
+
+## 2. O que foi lido
+
+| arquivo:linha | o que foi conferido |
+| --- | --- |
+| [20260802000200_private_trust_family_foundation.sql:38-81](../../../supabase/migrations/20260802000200_private_trust_family_foundation.sql#L38-L81) | colunas de `private.family_invitations` (digests de 32 bytes, `token_digest` único, `status`) e o vínculo `family_account_links` com FK composta |
+| [20260802000300_foundation_rls.sql:9-12](../../../supabase/migrations/20260802000300_foundation_rls.sql#L9-L12), [:44-46](../../../supabase/migrations/20260802000300_foundation_rls.sql#L44-L46) | `enable` e `force row level security` nas duas tabelas; `grant all` só a `service_role` |
+| [20260802000400_trust_invitation_helpers.sql:23-74](../../../supabase/migrations/20260802000400_trust_invitation_helpers.sql#L23-L74), [:79-99](../../../supabase/migrations/20260802000400_trust_invitation_helpers.sql#L79-L99) | guardas de criação (titular verificado, teto de 5 ativos) e revogação por `inviter_user_id` |
+| [20260802000700_authorization_helpers.sql:68-87](../../../supabase/migrations/20260802000700_authorization_helpers.sql#L68-L87) | `private.is_verified_holder` com execute para `authenticated` |
+| [20260806160942_family_invite_wrappers.sql:17-38](../../../supabase/migrations/20260806160942_family_invite_wrappers.sql#L17-L38), [:40-59](../../../supabase/migrations/20260806160942_family_invite_wrappers.sql#L40-L59), [:82-96](../../../supabase/migrations/20260806160942_family_invite_wrappers.sql#L82-L96) | wrappers públicos `security definer`, `revoke` de `public`/`anon`/`authenticated` e `grant` só a `service_role` |
+| [20260806172145_rename_invite_helpers.sql:15-68](../../../supabase/migrations/20260806172145_rename_invite_helpers.sql#L15-L68) | `list_pending_invites` (privada e pública) e o nome antigo removido |
+| [20260820000004_family_invite_delivery.sql:10-15](../../../supabase/migrations/20260820000004_family_invite_delivery.sql#L10-L15), [:21-51](../../../supabase/migrations/20260820000004_family_invite_delivery.sql#L21-L51), [:57-177](../../../supabase/migrations/20260820000004_family_invite_delivery.sql#L57-L177) | `invitee_email_hint` com `check` de máscara, o mascarador e a criação com hint |
+| [20260820000005_family_invite_sad_paths.sql:18-95](../../../supabase/migrations/20260820000005_family_invite_sad_paths.sql#L18-L95) | os quatro erros distintos (P0001–P0004), o e-mail divergente reusando P0001 e a leitura do e-mail **do banco** (`auth.users`), não do chamador |
+| [20260915230000_family_invite_resend.sql:12-78](../../../supabase/migrations/20260915230000_family_invite_resend.sql#L12-L78) | reenvio condicionado a `inviter_user_id`, `status = 'pending'` e digest do e-mail |
+| [20261023120000_family_invite_code.sql:49-99](../../../supabase/migrations/20261023120000_family_invite_code.sql#L49-L99), [:111-267](../../../supabase/migrations/20261023120000_family_invite_code.sql#L111-L267), [:281-368](../../../supabase/migrations/20261023120000_family_invite_code.sql#L281-L368), [:415-633](../../../supabase/migrations/20261023120000_family_invite_code.sql#L415-L633), [:724-833](../../../supabase/migrations/20261023120000_family_invite_code.sql#L724-L833) | `code_hash` único, tabela de tentativas com RLS forçada, trava advisory por origem/e-mail, limites 15/10, preview sem sessão e aceite por código |
+| [20260814081735_outbox.sql](../../../supabase/migrations/20260814081735_outbox.sql) | `public.outbox` com RLS forçada, sem privilégio para `anon`/`authenticated` — o `recipient` cru só existe aqui |
+| [apps/web/app/api/app/voce/familia/route.ts:35-70](../../../apps/web/app/api/app/voce/familia/route.ts#L35-L70) | `exigirSessao` antes de `clienteDeServicoOuNulo()`; o `user_id` do corpo é ignorado |
+| [apps/web/app/api/app/voce/familia/[id]/route.ts:17-42](../../../apps/web/app/api/app/voce/familia/%5Bid%5D/route.ts#L17-L42) | revogação só do próprio titular; convite alheio responde igual a inexistente |
+| [apps/web/app/api/app/voce/familia/_comum.ts:1-30](../../../apps/web/app/api/app/voce/familia/_comum.ts#L1-L30) | mapeamento de falha — nunca ecoa mensagem do Postgres |
+| [apps/web/lib/app-api/rota-do-app.ts:123-244](../../../apps/web/lib/app-api/rota-do-app.ts#L123-L244) | `clienteDeServicoOuNulo`, `exigirSessao`, `sessaoOpcional`, `lerCorpoJson`, `conferirEscrita` |
+| [apps/web/lib/convite/familia.ts:100-251](../../../apps/web/lib/convite/familia.ts#L100-L251) | limite por envio, verificação de titular, criação com o `userId` da sessão, `outbox` com `recipient` cru |
+| [apps/web/app/api/app/entry/invite/route.ts:42-168](../../../apps/web/app/api/app/entry/invite/route.ts#L42-L168) | aceite por código: consentimento, código, e-mail da sessão, `originDigest` |
+| [apps/web/app/api/app/entry/invite/preview/route.ts:88-119](../../../apps/web/app/api/app/entry/invite/preview/route.ts#L88-L119) | preview sem sessão devolve só máscara; o e-mail devolvido é o **da sessão** |
+| [apps/web/lib/convite/provision.ts:1-129](../../../apps/web/lib/convite/provision.ts#L1-L129) | chamadas rpc com digest em `bytea` e status propagado |
+| [apps/web/app/(shell)/profile/family-invite-section-actions.ts:107-170](../../../apps/web/app/(shell)/profile/family-invite-section-actions.ts#L107-L170) | Server Action antiga de reenvio (ver M-3) |
+| [supabase/tests/family-invite-holder-only.sql](../../../supabase/tests/family-invite-holder-only.sql) | prova nova: titular cria; não titular não lê nem cria; `anon`/`authenticated` sem execute; recusas sem e-mail, hash ou token |
+
+## 3. Achados
+
+Severidades do processo: **CRÍTICO** e **ALTO** bloqueiam o merge; **MÉDIO** e **BAIXO** viram cartão no quadro.
+
+| # | severidade | achado | prova | correção sugerida |
+| --- | --- | --- | --- | --- |
+| M-1 | MÉDIO | O limite de envio de convite **não existe sem Upstash**. `permitirEnvioDeConvite` devolve `true` quando faltam `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`; sobra só a contagem do outbox, que não é atômica — dois POST simultâneos leem o mesmo passado e passam os dois. | [familia.ts:122-133](../../../apps/web/lib/convite/familia.ts#L122-L133) e [:140-145](../../../apps/web/lib/convite/familia.ts#L140-L145) | Contar no banco, com a mesma trava de transação que o código já usa (`private.family_invite_code_attempt_gate`, [20261023120000:111-136](../../../supabase/migrations/20261023120000_family_invite_code.sql#L111-L136)): um teto por titular gravado em tabela, conferido dentro da função de criação. Enquanto isso não existir, a rota responde 503 quando o limitador não está configurado (o mesmo desenho de `limitadorConfigurado()` em `entry/invite/route.ts`). |
+| M-2 | MÉDIO | O teto de 5 convites ativos **pode ser superado** em corrida: `create_family_invitation` conta os ativos e insere depois, sem trava, e o PostgREST roda cada chamada numa transação `read committed` — duas chamadas simultâneas contam 4 e as duas inserem o 5º e o 6º. | [20260820000004_family_invite_delivery.sql:82-107](../../../supabase/migrations/20260820000004_family_invite_delivery.sql#L82-L107) | Trava de transação por titular (`pg_advisory_xact_lock` com prefixo próprio, no molde de `lock_family_invite_code_attempts`) antes da contagem, em migration nova. O efeito é limitado (convites legítimos do titular, de e-mail que ele mesmo informa), por isso MÉDIO e não ALTO. |
+| M-3 | MÉDIO | A Server Action antiga de reenvio **ecoa a mensagem do Postgres** ao cliente: `throw new Error(error.message)` e `Falha ao enfileirar o reenvio: ${outboxError.message}`. Também devolve `{ code, token }` em claro para o navegador. A rota nova não faz nenhuma das duas coisas. | [family-invite-section-actions.ts:145](../../../apps/web/app/(shell)/profile/family-invite-section-actions.ts#L145) e [:162](../../../apps/web/app/(shell)/profile/family-invite-section-actions.ts#L162); contraste com [_comum.ts:1-30](../../../apps/web/app/api/app/voce/familia/_comum.ts#L1-L30) | Substituir por `FalhaDeConvite`/`respostaDaFalhaDeConvite` (mesmas frases fixas da rota) e planejar a saída da Server Action com a tela antiga (SPA ADR §8). Fica fora da cerca deste lote (`apps/**`). |
+| B-1 | BAIXO | O mascarador `family_invite_email_hint` devolve **local e domínio inteiros** quando cada um tem até 2 caracteres: `ab@xy.zz` → `ab***@x***.zz` e `jo@gmail.com` → `jo***@gm***.com`. Na prática isso revela o endereço; o `check` não impede. É dado do próprio titular (ele digitou o e-mail), não de terceiro. | [20260820000004_family_invite_delivery.sql:36-47](../../../supabase/migrations/20260820000004_family_invite_delivery.sql#L36-L47) | Mascarar sempre a partir do primeiro caractere (`a***@x***.zz`) ou recusar a rota de criação para endereços que não sobrarem ao menos 1 caractere oculto por lado. |
+| B-2 | BAIXO | Funções `security definer` de convite são **executáveis por `PUBLIC`** pela regra implícita do Postgres. Os `revoke all ... from public, anon, authenticated` das migrations cobrem isso, mas a regra é implícita e some se alguém esquecer de repeti-la na próxima assinatura. | `has_function_privilege('anon', ...)` = `false` nas funções cobertas por [family-invite-holder-only.sql:68-186](../../../supabase/tests/family-invite-holder-only.sql#L68-L186) | Manter a prova de privilégio no pgTAP (feito neste lote) e repetir o `revoke` explícito na mesma migration de cada função nova. |
+| B-3 | BAIXO | `private.is_verified_holder(uuid)` e `private.has_accepted_family(uuid, uuid)` são `security definer` com execute para `authenticated`, e respondem sobre **qualquer** id: um membro autenticado consegue descobrir se outro usuário é titular verificado ou tem vínculo familiar com alguém. É booleano, sem dado de contato. | [20260802000700_authorization_helpers.sql:61](../../../supabase/migrations/20260802000700_authorization_helpers.sql#L61) e [:87](../../../supabase/migrations/20260802000700_authorization_helpers.sql#L87) | Quando for conveniente, derivar o id da sessão dentro da função (`auth.uid()`) em vez de aceitar o parâmetro, ou restringir aos casos em que o id é o do próprio chamador. Nenhuma rota da jornada passa id alheio. |
+
+**Não há achado CRÍTICO nem ALTO.** Todos os caminhos abaixo foram lidos, provados e estão corretos na revisão.
+
+## 4. Conclusão explícita
+
+**Posse do convite derivada da sessão — satisfeito.** O dono nunca vem do corpo: `POST /api/app/voce/familia` lê só `email` (`route.ts:48-70`) e passa `auth.sessao.usuario.id`; o `DELETE` idem; o aceite por código usa o e-mail do usuário da sessão (`entry/invite/route.ts:85`); o preview, sem sessão, devolve só a máscara (`preview/route.ts:88-119`). No banco a posse é reconferida: `revoke_family_invitation` e `resend_family_invitation` filtram por `inviter_user_id` e respondem igual para convite alheio e inexistente. Prova: as três `throws_ok` de `member-two` em [family-invite-holder-only.sql:224-262](../../../supabase/tests/family-invite-holder-only.sql#L224-L262).
+
+**`service_role` usada só no servidor e só depois de `exigirSessao` — satisfeito, com ressalva registrada.** `clienteDeServicoOuNulo()` é chamado depois de `exigirSessao` em todas as rotas do convite (`voce/familia/route.ts:37` e `:50`, `[id]/route.ts`, `entry/invite/route.ts:85-110`, `entry/invite/preview/route.ts`); a chave de serviço nunca chega a um cliente, a um Server Component público nem a um teste. A ressalva é o limite M-1: a combinação `service_role` + teto no lugar errado (aplicação) é justamente onde a contagem não é atômica. As funções públicas com execute só para `service_role` são provadas por `has_function_privilege` em [family-invite-holder-only.sql:68-186](../../../supabase/tests/family-invite-holder-only.sql#L68-L186).
+
+**E-mail do convidado nunca cru — satisfeito dentro do banco, por desenho explícito.** O banco guarda só o digest SHA-256 (`invitee_email_digest`, 32 bytes) e a máscara `invitee_email_hint`, com `check` de forma (`20260820000004:10-15`). O e-mail inteiro existe em claro num único lugar: a coluna `recipient` de `public.outbox`, que tem RLS forçada e nenhum privilégio para `anon`/`authenticated` (`20260814081735`), e é aí que a entrega por e-mail acontece por desenho. Nenhuma recusa lança endereço, digest, hash ou token: as dez frases da jornada são fixas (prova em [family-invite-holder-only.sql:296-345](../../../supabase/tests/family-invite-holder-only.sql#L296-L345)), e a rota mapeia código de erro para HTTP sem repassar `error.message` (`_comum.ts:1-30`). A exceção é a Server Action antiga (M-3).
+
+**RLS forçada nas tabelas envolvidas — satisfeito.** `private.family_invitations` e `private.family_account_links` têm `enable` + `force row level security` (`20260802000300:9-12`), sem policy: sob `set local role authenticated` a leitura devolve 0 linhas e o `update` em perfil alheio já era provado vazio. `private.family_invite_code_attempts` tem `enable` + `force` e `revoke all ... from anon, authenticated` (`20261023120000:79-83`). `public.outbox` tem `enable` + `force` (`20260814081735`). O schema `private` não está exposto na Data API. Prova desta rodada: [family-invite-holder-only.sql:206-222](../../../supabase/tests/family-invite-holder-only.sql#L206-L222).
+
+**Grants mínimos — satisfeito.** Onze funções de convite conferidas: `public`/`private` × `create` (três assinaturas), `list_pending_invites`, `list_pending_invites_with_hint`, `revoke`, `resend` (duas assinaturas), `family_invite_code_preview`, `family_invite_code_accept`, `family_invite_code_attempt_gate` e `record_family_invite_code_failure`. `anon` e `authenticated` não executam nenhuma (provado por catálogo **e** por `42501` real); `service_role` executa todas (prova positiva). Os inserts do outbox e as escritas privilegiadas só acontecem pelo cliente de serviço, no servidor.
+
+## 5. Prova desta rodada
+
+| comando | resultado |
+| --- | --- |
+| `node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-030.task.yml` | ok — R3, retry 2 (validado nesta árvore em 11/11/2026) |
+| `node scripts/agents/task-contract.mjs` (todos os contratos) | os 41 contratos da árvore passam, o novo incluído |
+| `supabase test db` / reset `--local --no-seed` / `db:lint` | **não rodaram nesta máquina**: sem Docker e sem Supabase local. O pgTAP novo fica provado no CI, depois do reset no-seed. |
+| `npx pnpm@11.18.0 test:db` | **não rodou** pelo mesmo motivo. |
+| `gate --fast`, `vitest`, `pnpm` | **não rodaram**: o sandbox desta sessão nega `spawn` com pipe (`EPERM`) antes de qualquer `tsc`/`vitest`. Não é falha do código; o gate fecha no CI. |
+
+O pgTAP novo tem `select plan(20)`: oito provas de privilégio (sete negativas por papel, `anon` e `authenticated`, e uma positiva de `service_role`); titular cria e o convite gravado tem esse titular como dono; `member-two` reconhecido por `auth.uid()` lê 0 linhas nas duas tabelas privadas; `member-two` é recusado nas três portas (listar, criar, revogar) com `42501` real; `anon` recusado na criação; nenhuma linha nova gravada; as dez recusas da jornada são uma lista fechada e nenhuma carrega endereço, digest, hash, token ou código.
+
+## 6. O que fica aberto
+
+- **M-1, M-2 e M-3 viram cartão** no quadro (a regra do processo de 05/11: achado MÉDIO/BAIXO vira cartão, não bloqueia). Nenhum deles é pré-requisito do merge.
+- **A auditoria independente do `security-auditor` continua pendente** e obrigatória antes do merge do R3; este documento não a substitui.
+- **Ratificação:** o cartão F10-FAMILIA ainda não tem linha em [RATIFICACAO.md](../../decisions/RATIFICACAO.md). O contrato do lote usa o ADR da porta de dados, já listado, e registra que é delegação; a linha própria do cartão é do coordenador, no merge.

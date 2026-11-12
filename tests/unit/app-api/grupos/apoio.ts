@@ -111,7 +111,21 @@ export function mockClient(opcoes: Opcoes = {}) {
                 ...payload,
                 parent_id: payload["reply_to_id"] ? COMMENT : null,
               })
-            : { id: POST, content: "Texto gravado", created_at: DATA }
+            : tabela === "posts" && payload["group_id"]
+              ? // A rota devolve o cartão montado: o insert de publicação
+                // precisa trazer todos os campos que a apresentação lê.
+                {
+                  id: POST,
+                  group_id: payload["group_id"],
+                  user_id: payload["user_id"],
+                  content: String(payload["content"] ?? ""),
+                  created_at: DATA,
+                  photo_path: null,
+                  photo_paths: [],
+                  comments: [{ count: 0 }],
+                  post_reactions: [{ count: 0 }],
+                }
+              : { id: POST, content: "Texto gravado", created_at: DATA }
           : [{ id: POST }]
       return {
         data,

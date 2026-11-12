@@ -3,23 +3,52 @@ import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { anexarFotoAoGrupo, type GrupoReal, publicarNoGrupo } from "@/lib/dados/grupos"
+import {
+  anexarFotoAoGrupo,
+  type GrupoReal,
+  type PublicacaoCriada,
+  publicarNoGrupo,
+} from "@/lib/dados/grupos"
 import {
   excluirRascunhoDoGrupo,
   guardarRascunhoDoGrupo,
   lerRascunhosDoGrupo,
 } from "@/lib/grupos-locais"
-import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { type Recusa, recusaAoPublicar } from "./publicacao"
 
 type Foto = { caminho: string; previa: string }
-export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }) {
-  const navegacao = useNavegacao()
+
+/** Limite de caracteres da publicação; o servidor recusa fora dele. */
+export const LIMITE_DO_TEXTO = 2000
+
+/**
+ * O compositor de publicação do grupo.
+ *
+ * O envio não sai da tela: a publicação entra na lista do grupo e recebe o
+ * foco (`aoPublicar`), sem passar pela página da publicação. A recusa do
+ * servidor é traduzida em frase com próximo passo (`recusaAoPublicar`) — o
+ * texto e as fotos continuam no compositor, aberto, para a pessoa corrigir ou
+ * tentar de novo.
+ */
+export function Escrever({
+  grupo,
+  cidade,
+  aoPublicar,
+}: {
+  grupo: GrupoReal
+  cidade: string
+  aoPublicar: (criada: PublicacaoCriada) => void
+}) {
   const { aberto, aoMudarAberto: setAberto } = useSobreposicaoDaEntrada("grupo-escrever")
   const [texto, setTexto] = useState("")
   const [fotos, setFotos] = useState<readonly Foto[]>([])
   const [rascunhos, setRascunhos] = useState<readonly string[]>([])
   const [erro, setErro] = useState("")
+  const [recusa, setRecusa] = useState<Recusa | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  // O limite é dito antes do envio: texto que o servidor recusaria não sai.
+  const [avisoDoLimite, setAvisoDoLimite] = useState(false)
   const [enviandoFoto, setEnviandoFoto] = useState(false)
   const leitor = useRef<FileReader | null>(null)
   const [controle] = useState(() => new AbortController())
@@ -78,29 +107,41 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
   }
   async function publicar() {
     if (ocupado || enviandoFoto) return
+    setAvisoDoLimite(false)
+    const escrito = texto.trim()
+    if (escrito.length < 1) {
+      setRecusa(null)
+      setErro("Escreva alguma coisa antes de publicar.")
+      return
+    }
+    if (escrito.length > LIMITE_DO_TEXTO) {
+      setRecusa(null)
+      setAvisoDoLimite(true)
+      return
+    }
     setOcupado(true)
     setErro("")
+    setRecusa(null)
     try {
-      const id = await publicarNoGrupo(
+      const criada = await publicarNoGrupo(
         grupo.id,
         { texto, fotos: fotos.map((foto) => foto.caminho) },
         { signal: controle.signal },
       )
       if (controle.signal.aborted) return
-      const indice = rascunhos.indexOf(texto.trim())
-      if (indice >= 0) excluirRascunhoDoGrupo(cidade, grupo.id, indice)
+      const indice = rascunhos.indexOf(texto)
+      if (indice >= 0) {
+        const lista = excluirRascunhoDoGrupo(cidade, grupo.id, indice)
+        if (lista) setRascunhos(lista)
+      }
       setTexto("")
       setFotos([])
-      // A publicação em tela aberta se fecha na própria navegação: fechar a
-      // sobreposição aqui daria um `history.back()` que desfaz a ida à publicação.
-      void navegacao.irPara("publicacao", { parametros: { id } })
+      // A sobreposição se fecha sem `history.back()`: o compositor é o que
+      // abriu esta entrada, e voltar demais tiraria a pessoa do grupo.
+      setAberto(false)
+      aoPublicar(criada)
     } catch (falha: unknown) {
-      if (!controle.signal.aborted)
-        setErro(
-          falha instanceof FalhaDaApi && falha.mensagem
-            ? falha.mensagem
-            : "Não foi possível publicar. Seu texto e suas fotos foram mantidos. Tente de novo.",
-        )
+      if (!controle.signal.aborted) setRecusa(recusaAoPublicar(falha))
     } finally {
       if (!controle.signal.aborted) setOcupado(false)
     }
@@ -120,6 +161,10 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
     setRascunhos(lista)
     setErro("")
     setAberto(false)
+  }
+  function tentarDeNovo() {
+    setRecusa(null)
+    void publicar()
   }
   return (
     <section
@@ -156,6 +201,7 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
                   tom="texto"
                   onClick={() => {
                     setTexto(rascunho)
+                    setRecusa(null)
                     setAberto(true)
                   }}
                 >
@@ -177,9 +223,9 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
           ))}
         </div>
       )}
-      {erro && !aberto ? (
+      {recusa !== null && !aberto ? (
         <p role="alert" className="text-sm text-(--destructive)">
-          {erro}
+          {recusa.frase}
         </p>
       ) : null}
       <Dialog open={aberto} onOpenChange={setAberto}>
@@ -193,10 +239,18 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
             id="texto-grupo"
             rotulo="Sua publicação"
             valor={texto}
-            aoMudar={setTexto}
+            aoMudar={(valor: string) => {
+              setTexto(valor)
+              if (valor.trim().length <= LIMITE_DO_TEXTO) setAvisoDoLimite(false)
+            }}
             area
-            nota={`${texto.length}/2000 caracteres`}
+            nota={`${texto.length}/${LIMITE_DO_TEXTO} caracteres`}
           />
+          {texto.length > LIMITE_DO_TEXTO || avisoDoLimite ? (
+            <p data-aviso="limite-do-texto" className="text-sm text-(--destructive)">
+              {`Sua publicação tem ${texto.length} caracteres; o limite é ${LIMITE_DO_TEXTO}. Encurte o texto para publicar — ele continua aqui.`}
+            </p>
+          ) : null}
           <p className="text-sm">
             {grupo.regras || "O grupo ainda não informou regras sobre fotos."}
           </p>
@@ -236,6 +290,25 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
               </div>
             ))}
           </div>
+          {recusa !== null ? (
+            <div
+              role="alert"
+              data-recusa={recusa.tipo}
+              className="grid gap-2 rounded-xl bg-(--surface-low) p-3 text-sm"
+            >
+              <p>{recusa.frase}</p>
+              {recusa.tipo === "recuperavel" ? (
+                <Botao tom="tonal" icone="refresh" disabled={ocupado} onClick={tentarDeNovo}>
+                  Tentar de novo
+                </Botao>
+              ) : null}
+              {recusa.tipo === "recusa" && recusa.tentavel ? (
+                <small className="text-(--on-surface-variant)">
+                  Seu texto e suas fotos continuam aqui.
+                </small>
+              ) : null}
+            </div>
+          ) : null}
           {erro ? (
             <p role="alert" className="text-sm text-(--destructive)">
               {erro}
@@ -255,7 +328,10 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
             </Botao>
             <Botao
               disabled={
-                ocupado || enviandoFoto || texto.trim().length < 1 || texto.trim().length > 2000
+                ocupado ||
+                enviandoFoto ||
+                texto.trim().length < 1 ||
+                texto.trim().length > LIMITE_DO_TEXTO
               }
               onClick={() => void publicar()}
             >
