@@ -389,15 +389,18 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           "quem escreveu não denuncia a própria publicação",
         ).toHaveCount(0, ESPERA)
         await page.getByRole("button", { name: "Ocultar publicação" }).click(ESPERA)
-        await expect(
-          page.getByText("Esta publicação está oculta para você no grupo."),
-          "ocultar avisa na própria publicação",
-        ).toBeVisible(ESPERA)
-        await page.goto(`/app/grupo/${aberto}`, ESPERA)
+        // Ocultar tira a publicação de "Recentes": o aviso fica na tela dela,
+        // que a prova não abre aqui (a lista é o estado da tela do grupo).
         await expect(
           page.locator('[data-cartao="publicacao"]'),
           "a publicação oculta sai da lista do grupo",
         ).toHaveCount(0, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
+        await expect(
+          page.getByText("Esta publicação está oculta para você no grupo."),
+          "a publicação oculta avisa ao ser aberta",
+        ).toBeVisible(ESPERA)
+        await page.goto(`/app/grupo/${aberto}`, ESPERA)
         await page.getByRole("button", { name: "Ocultadas", exact: true }).click(ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Mostrar novamente" }).click(ESPERA)
