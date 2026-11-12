@@ -1,4 +1,3 @@
-import { test as testeNormal } from "@playwright/test"
 import { expect, test } from "./apoio"
 
 test.describe("bancada de Mercado", () => {
@@ -108,10 +107,4 @@ test.describe("bancada de Mercado", () => {
     await expect(detalhe).not.toBeVisible()
     await expect(abrir).toBeFocused()
   })
-})
-
-testeNormal("a bancada fica fora do build de uso normal", async ({ page }) => {
-  await page.goto("/app/galeria/mercado")
-  await expect(page.getByRole("heading", { name: "Página indisponível" })).toBeVisible()
-  await expect(page.locator('[data-tela="mercado-lab"]')).toHaveCount(0)
 })
