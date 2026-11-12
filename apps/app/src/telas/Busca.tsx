@@ -1,6 +1,7 @@
-﻿"use client"
+"use client"
 
-import { useEffect, useState } from "react"
+import { useLocation } from "@tanstack/react-router"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto, CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
@@ -23,6 +24,7 @@ import { TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { termoDaUrl } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
 import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
 
@@ -37,6 +39,13 @@ import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/catego
  * Sem termo, a grade "Explorar" lê o Início da cidade; com termo (2+ letras),
  * os resultados vêm da rota de busca. Foto de anúncio e de negócio ainda não
  * existe no banco, então o cartão usa a capa com ícone.
+ *
+ * O termo também chega pelo endereço (LAN-TROCA): `/explorar/busca?q=<termo>`
+ * cai aqui como `/app/busca?q=<termo>`, e aí a tela já nasce consultando o
+ * termo — no primeiro render, sem passar pelo estado vazio. A URL é só a porta
+ * de entrada; a partir dela quem escreve é a pessoa, e a digitação vence o `q`
+ * de origem (o endereço não é reescrito enquanto ela digita). Que o campo não
+ * seja limpo ao sair da tela é decisão do produto, não desta rota.
  */
 
 const FILTROS: readonly ItemDeFiltro[] = [
@@ -81,8 +90,41 @@ export function Busca() {
   const [topico, setTopico] = useState("todos")
   const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
   const { consulta, definirConsulta: setConsulta } = casca
-  const termo = consulta.trim()
+
+  // O termo do link (LAN-TROCA) já vale como consulta no primeiro desenho: a
+  // semente é lida do endereço na montagem, então o primeiro pedido é o da
+  // busca, sem passar pelo Início. O campo da casca recebe o mesmo termo num
+  // efeito de layout, antes de a tela aparecer — nada é escrito durante o render.
+  // Chegar por um link com termo válido manda no campo; depois disso, quem
+  // escreve é a pessoa.
+  const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
+  const termoDoEndereco = termoDaUrl(busca)
+  const [semente, setSemente] = useState<string | null>(() => termoDoEndereco || null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a semente é aplicada uma vez
+  useLayoutEffect(() => {
+    if (semente === null) return
+    if (semente !== consulta) setConsulta(semente)
+    setSemente(null)
+  }, [semente])
+
+  // Depois da chegada, um endereço com outro termo válido (o Voltar para outra
+  // busca) leva esse termo ao campo. Termo ausente ou que a busca não aceita não
+  // mexe no que a pessoa digitou.
+  const enderecoLido = useRef(false)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: responde só ao endereço
+  useEffect(() => {
+    if (!enderecoLido.current) {
+      enderecoLido.current = true
+      return
+    }
+    if (termoDoEndereco !== "" && termoDoEndereco !== consulta.trim()) {
+      setConsulta(termoDoEndereco)
+    }
+  }, [termoDoEndereco])
+
+  const termo = (semente ?? consulta).trim()
   const comTermo = termo.length >= 2
+
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura

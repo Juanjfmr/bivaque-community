@@ -407,3 +407,71 @@ export async function simularPedido(page: Page): Promise<void> {
     await rota.fulfill({ json: { pedido: PEDIDO_DA_PROVA } })
   })
 }
+
+/**
+ * A busca da prova (LAN-TROCA): um resultado de cada tipo que a tela mostra,
+ * todos falando do mesmo termo, mais um termo que não acha nada. Serve para
+ * separar "a lista filtrada chegou" de "o estado vazio abriu" sem depender dos
+ * fixtures de outra tela — o que interessa aqui é o termo que veio no endereço,
+ * não o conteúdo do banco.
+ */
+export const TERMO_DA_PROVA = "ipiranga"
+export const TERMO_SEM_ACHADO = "zarabatana"
+export const CIDADE_DA_BUSCA = "Manaus"
+
+/**
+ * O corpo cru que a rota `/api/app/busca` devolve (`apps/web/app/api/app/busca/route.ts`):
+ * as colunas do banco, não os nomes do app. Assim a prova passa pelo mesmo
+ * parser (`buscarNaCidade`) que a resposta real.
+ */
+export const BUSCA_DA_PROVA = {
+  anuncios: [
+    {
+      id: "anuncio-ipiranga",
+      title: "Moto 150cc seminova do Ipiranga",
+      kind: "item",
+      price_cents: 850000,
+      neighborhood: "Ipiranga",
+    },
+  ],
+  negocios: [{ id: "negocio-ipiranga", display_name: "Oficina Ipiranga", category: "servicos" }],
+  perguntas: [
+    {
+      id: "pergunta-ipiranga",
+      title: "Alguém indica mecânico perto da avenida Ipiranga?",
+      reply_count: 2,
+      is_resolved: false,
+      group_name: null,
+    },
+  ],
+  grupos: [{ id: "grupo-ipiranga", name: "Vizinhos do Ipiranga", members: 5 }],
+  guia: [
+    {
+      id: "guia-ipiranga",
+      name: "Serviços e escolas do Ipiranga",
+      description: "Endereços e contatos do bairro.",
+    },
+  ],
+} as const
+
+const BUSCA_VAZIA = { anuncios: [], negocios: [], perguntas: [], grupos: [], guia: [] } as const
+
+/**
+ * `/api/app/busca` respondendo como o servidor: o termo do endereço decide se
+ * volta a lista da prova ou nada. O Início da cidade fica só com a cidade, para
+ * o estado sem termo não herdar resultado nenhum de outro fixture.
+ */
+export async function simularBuscaDaProva(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/busca(?:\?|$)/, async (rota) => {
+    const termo = new URL(rota.request().url()).searchParams.get("q") ?? ""
+    const achou = termo.toLocaleLowerCase("pt-BR") === TERMO_DA_PROVA
+    await rota.fulfill({
+      json: { cidade: CIDADE_DA_BUSCA, ...(achou ? BUSCA_DA_PROVA : BUSCA_VAZIA) },
+    })
+  })
+  await page.route(/\/api\/app\/inicio(?:\?|$)/, async (rota) => {
+    await rota.fulfill({
+      json: { ...BUSCA_VAZIA, cidade: CIDADE_DA_BUSCA, eventos: [], proximo: null },
+    })
+  })
+}
