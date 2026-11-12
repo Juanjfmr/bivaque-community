@@ -128,23 +128,55 @@ describe("geocodificarCep", () => {
     expect(resultado).toEqual({ estado: "indisponivel" })
   })
 
-  it("coordenada malformada da BrasilAPI não inventa número", async () => {
+  it("coordenada malformada da BrasilAPI não inventa número: o CEP fica sem posição", async () => {
     const buscar = buscarCom(() => coordenadas("sem-numero", "-60.0217"))
 
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "" })
 
-    expect(resultado).toEqual({ estado: "nao-encontrado" })
+    expect(resultado).toEqual({ estado: "sem-coordenada" })
   })
 
-  it("coordenada fora da faixa é recusada", async () => {
+  it("coordenada fora da faixa é recusada e não vira posição inventada", async () => {
     const buscar = buscarCom(() => coordenadas("120", "-60.0217"))
 
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "" })
 
-    expect(resultado).toEqual({ estado: "nao-encontrado" })
+    expect(resultado).toEqual({ estado: "sem-coordenada" })
   })
 
-  it("Google com coordenada fora da faixa não inventa número nem finge CEP inexistente", async () => {
+  it("BrasilAPI conhece o CEP sem coordenada: sem-coordenada, não CEP inexistente", async () => {
+    const buscar = buscarCom((url) =>
+      ehBrasilApi(url)
+        ? resposta({ cep: CEP, city: "Manaus" })
+        : resposta({ status: "ZERO_RESULTS" }),
+    )
+
+    const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
+
+    expect(resultado).toEqual({ estado: "sem-coordenada" })
+    // O Google é tentado antes de concluir que não há posição.
+    expect(buscar).toHaveBeenCalledTimes(2)
+  })
+
+  it("Google localiza o CEP que a BrasilAPI conhece sem coordenada", async () => {
+    const buscar = buscarCom((url) =>
+      ehBrasilApi(url)
+        ? resposta({ cep: CEP })
+        : resposta({
+            status: "OK",
+            results: [{ geometry: { location: { lat: -3.1, lng: -60 } } }],
+          }),
+    )
+
+    const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
+
+    expect(resultado).toEqual({
+      estado: "encontrado",
+      coordenada: { latitude: -3.1, longitude: -60, fonte: "google" },
+    })
+  })
+
+  it("Google com coordenada fora da faixa não inventa número e mantém o CEP conhecido", async () => {
     const buscar = buscarCom((url) =>
       ehBrasilApi(url)
         ? resposta({}, 500)
@@ -156,7 +188,7 @@ describe("geocodificarCep", () => {
 
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
 
-    // A BrasilAPI falhou, então não dá para afirmar que o CEP não existe.
-    expect(resultado).toEqual({ estado: "indisponivel" })
+    // O Google disse que conhece o CEP: sem posição não é CEP inexistente.
+    expect(resultado).toEqual({ estado: "sem-coordenada" })
   })
 })
