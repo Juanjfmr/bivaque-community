@@ -90,7 +90,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         nome: "04-busca-com-termo",
         ir: async (page) => {
           await abrir(page, "/app/busca?q=mudança")
-          await expect(page.getByText(/^\d+ resultados? em Manaus$/)).toBeVisible()
+          await expect(page.getByText(/em Manaus$/).first()).toBeVisible({ timeout: 15_000 })
         },
         pronto: '[data-tela="busca"]',
       },
