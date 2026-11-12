@@ -255,9 +255,6 @@ async function fotografar(
 test.describe("capturas para a revisão cega", () => {
   test("F02, F03, F07 e F08 em 375, 768 e 1440 nos dois temas", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
-    // O modo de prova só liga sob `dev`; no preview do smoke as telas em prova
-    // caem no aviso honesto e a ficha não abre. A matriz só roda com o modo ligado.
-    test.skip(process.env["BIVAQUE_PROVA"] !== "1", "sem modo de prova a matriz nao roda")
     test.setTimeout(600_000)
     const erros: string[] = []
     page.on("pageerror", (erro) => erros.push(`pageerror: ${erro.message}`))
@@ -299,9 +296,8 @@ test.describe("capturas para a revisão cega", () => {
  */
 test("a ficha de negócio da prova abre populada, com e sem foto", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop-1440", "a ficha ja e fotografada na matriz")
-  // O modo de prova só liga sob `dev`; no preview do smoke a rota cai na tela de
-  // prova. A régua desta ficha já é medida por `f07-negocios.spec.ts`.
-  test.skip(process.env["BIVAQUE_PROVA"] !== "1", "sem modo de prova a ficha nao abre")
+  // A fixture da prova liga o modo de prova e simula conversas, grupos e você;
+  // no preview do smoke as telas reais dependem desse mesmo modo.
   await simularProgresso(page)
   await simularNegocio(page)
   await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
