@@ -209,16 +209,21 @@ select is(
   'a sessão de member-two está no contexto (auth.uid() o reconhece)'
 );
 
-select is(
-  (select count(*) from private.family_invitations)::integer,
-  0,
-  'member-two não lê nenhum convite direto da tabela (RLS forçada)'
+-- As tabelas do schema private não dão privilégio de tabela a authenticated:
+-- a recusa vem antes da RLS (42501), que é a fronteira mais forte. Onde houver
+-- policy, ela nega a linha; aqui a prova é a própria recusa de leitura.
+select throws_ok(
+  'select count(*) from private.family_invitations',
+  '42501',
+  null,
+  'member-two não lê convite direto da tabela private'
 );
 
-select is(
-  (select count(*) from private.family_account_links)::integer,
-  0,
-  'member-two não lê nenhum vínculo familiar direto da tabela (RLS forçada)'
+select throws_ok(
+  'select count(*) from private.family_account_links',
+  '42501',
+  null,
+  'member-two não lê vínculo familiar direto da tabela private'
 );
 
 select throws_ok(
