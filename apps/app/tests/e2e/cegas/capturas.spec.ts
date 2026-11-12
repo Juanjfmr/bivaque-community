@@ -80,33 +80,11 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         pronto: '[data-tela="inicio"]',
       },
       {
-        nome: "03-busca-vazia",
+        nome: "03-busca",
         ir: async (page) => {
+          // A busca é uma tela em prova: a rota existe, o conteúdo chega na onda
+          // dela. Foto do que a pessoa vê hoje, com o aviso honesto da tela.
           await abrir(page, "/app/busca")
-        },
-        pronto: '[data-tela="busca"]',
-      },
-      {
-        nome: "04-busca-com-termo",
-        ir: async (page) => {
-          // A tela de busca descarta o ?q= do endereço: o termo entra digitado no
-          // campo da própria tela, que é o gesto de quem procura. A busca só é
-          // pedida quando o campo envia (Enter), e a tela não tem campo próprio
-          // hoje, então a prova do termo fica no campo do topo e a captura mostra
-          // a tela honesta. O estado vazio é o honesto: sem dado de tela, a busca
-          // não promete resultado.
-          await abrir(page, "/app/busca")
-          const campoDaTela = page.locator(`${SELETOR_CONTEUDO} input`).first()
-          const alvo = (await campoDaTela.count()) > 0 ? campoDaTela : page.getByRole("searchbox")
-          await alvo.fill("mudança")
-          await expect(alvo).toHaveValue("mudança", { timeout: 15_000 })
-        },
-        pronto: '[data-tela="busca"]',
-      },
-      {
-        nome: "05-busca-sem-achado",
-        ir: async (page) => {
-          await abrir(page, "/app/busca?q=zarabatana")
         },
         pronto: '[data-tela="busca"]',
       },
@@ -316,6 +294,9 @@ test.describe("capturas para a revisão cega", () => {
  */
 test("a ficha de negócio da prova abre populada, com e sem foto", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop-1440", "a ficha ja e fotografada na matriz")
+  // O modo de prova só liga sob `dev`; no preview do smoke a rota cai na tela de
+  // prova. A régua desta ficha já é medida por `f07-negocios.spec.ts`.
+  test.skip(process.env["BIVAQUE_PROVA"] !== "1", "sem modo de prova a ficha nao abre")
   await simularProgresso(page)
   await simularNegocio(page)
   await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
