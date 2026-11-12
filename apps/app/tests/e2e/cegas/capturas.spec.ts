@@ -89,8 +89,12 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
       {
         nome: "04-busca-com-termo",
         ir: async (page) => {
-          await abrir(page, "/app/busca?q=mudança")
-          await expect(page.getByText(/em Manaus$/).first()).toBeVisible({ timeout: 15_000 })
+          // O campo de busca recebe o termo do endereço; digitar de novo é o gesto
+          // que dispara a leitura e deixa a tela no estado "com resultado".
+          await abrir(page, "/app/busca")
+          const campo = page.locator('[data-campo="busca"]')
+          await campo.fill("mudança")
+          await expect(page.getByText(/^\d+ resultados? em Manaus$/)).toBeVisible({ timeout: 15_000 })
         },
         pronto: '[data-tela="busca"]',
       },
