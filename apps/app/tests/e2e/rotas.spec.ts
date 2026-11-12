@@ -32,8 +32,8 @@ const ROTAS_COM_CASCA: ReadonlyArray<readonly [url: string, titulo: string | Reg
   ["/app/salvos", "Salvos"],
   ["/app/meus-anuncios", "Meus anúncios"],
   ["/app/minhas", "Minhas indicações"],
-  // Título é `Guia de {cidade}` — a cidade é dado, e o nome pode ter espaço.
-  ["/app/guia", /^Guia de .+$/],
+  // Título é "Guia": a cidade é dado e aparece uma vez só, no cabeçalho da tela.
+  ["/app/guia", "Guia"],
   ["/app/pedidos", "Pedidos de serviço"],
   ["/app/pedido/p-1", "Pedido de serviço"],
   ["/app/privacidade", "Política de privacidade"],
