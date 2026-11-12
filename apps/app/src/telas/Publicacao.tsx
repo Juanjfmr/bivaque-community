@@ -19,6 +19,7 @@ import {
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
+import { useCasca } from "@/src/contexto/casca"
 import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
 import { quandoDe } from "@/src/telas/comum"
@@ -26,6 +27,7 @@ import { quandoDe } from "@/src/telas/comum"
 export function Publicacao() {
   const { id = "" } = useParams({ strict: false }) as { id?: string }
   const navegacao = useNavegacao()
+  const casca = useCasca()
   const [dados, setDados] = useState<DetalheDaPublicacao | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
@@ -208,13 +210,18 @@ export function Publicacao() {
       >
         Publicação
       </h1>
-      <Botao
-        tom="texto"
-        className="justify-self-start"
-        onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
-      >
-        {grupo.nome}
-      </Botao>
+      {/* O destino: de qual grupo e de qual cidade é o que está sendo lido. */}
+      <div className="flex flex-wrap items-center gap-1 px-1">
+        <Botao
+          tom="texto"
+          onClick={() => void navegacao.irPara("grupo", { parametros: { id: grupo.id } })}
+        >
+          {grupo.nome}
+        </Botao>
+        <span className="text-sm text-(--on-surface-variant)">
+          · <span data-cidade-do-grupo="sim">{casca.cidade}</span>
+        </span>
+      </div>
       <CartaoDePublicacao
         publicacao={{
           ...p,

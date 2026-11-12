@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
-import { Campo } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   anexarFotoAoGrupo,
@@ -45,6 +45,9 @@ export function Escrever({
   const [fotos, setFotos] = useState<readonly Foto[]>([])
   const [rascunhos, setRascunhos] = useState<readonly string[]>([])
   const [erro, setErro] = useState("")
+  // O erro do texto e o da foto ficam no campo que os originou, não no rodapé.
+  const [erroDoTexto, setErroDoTexto] = useState("")
+  const [erroDaFoto, setErroDaFoto] = useState("")
   const [recusa, setRecusa] = useState<Recusa | null>(null)
   const [ocupado, setOcupado] = useState(false)
   // O limite é dito antes do envio: texto que o servidor recusaria não sai.
@@ -65,8 +68,9 @@ export function Escrever({
   async function anexar(arquivos: readonly File[]) {
     if (enviandoFoto || ocupado) return
     setErro("")
+    setErroDaFoto("")
     if (fotos.length + arquivos.length > 4) {
-      setErro("Escolha até quatro fotos por publicação.")
+      setErroDaFoto("Escolha até quatro fotos por publicação.")
       return
     }
     setEnviandoFoto(true)
@@ -94,7 +98,7 @@ export function Escrever({
       }
     } catch (falha: unknown) {
       if (!controle.signal.aborted)
-        setErro(
+        setErroDaFoto(
           falha instanceof FalhaDaApi
             ? "Não foi possível enviar a foto. Escolha uma imagem válida e tente de novo."
             : falha instanceof Error
@@ -108,10 +112,11 @@ export function Escrever({
   async function publicar() {
     if (ocupado || enviandoFoto) return
     setAvisoDoLimite(false)
+    setErroDoTexto("")
     const escrito = texto.trim()
     if (escrito.length < 1) {
       setRecusa(null)
-      setErro("Escreva alguma coisa antes de publicar.")
+      setErroDoTexto("Escreva alguma coisa antes de publicar.")
       return
     }
     if (escrito.length > LIMITE_DO_TEXTO) {
@@ -166,6 +171,7 @@ export function Escrever({
     setRecusa(null)
     void publicar()
   }
+  const passouDoLimite = texto.length > LIMITE_DO_TEXTO || avisoDoLimite
   return (
     <section
       data-compositor-grupo="sim"
@@ -235,32 +241,45 @@ export function Escrever({
             A publicação será lida por quem tem acesso a {grupo.nome}. As fotos são tratadas para
             remover a localização.
           </DialogDescription>
-          <Campo
-            id="texto-grupo"
-            rotulo="Sua publicação"
-            valor={texto}
-            aoMudar={(valor: string) => {
-              setTexto(valor)
-              if (valor.trim().length <= LIMITE_DO_TEXTO) setAvisoDoLimite(false)
-            }}
-            area
-            nota={`${texto.length}/${LIMITE_DO_TEXTO} caracteres`}
-          />
-          {texto.length > LIMITE_DO_TEXTO || avisoDoLimite ? (
-            <p data-aviso="limite-do-texto" className="text-sm text-(--destructive)">
-              {`Sua publicação tem ${texto.length} caracteres; o limite é ${LIMITE_DO_TEXTO}. Encurte o texto para publicar — ele continua aqui.`}
+          <div className="grid gap-1.5">
+            <label htmlFor="texto-grupo" className="text-sm font-medium">
+              Sua publicação
+            </label>
+            <Textarea
+              id="texto-grupo"
+              value={texto}
+              onChange={(evento) => {
+                const valor = evento.target.value
+                setTexto(valor)
+                setErroDoTexto("")
+                if (valor.trim().length <= LIMITE_DO_TEXTO) setAvisoDoLimite(false)
+              }}
+              aria-invalid={passouDoLimite || erroDoTexto !== "" ? true : undefined}
+              aria-describedby="texto-grupo-contagem texto-grupo-erro"
+              className="min-h-24 rounded-xl"
+            />
+            <p id="texto-grupo-contagem" className="text-xs text-(--muted-foreground)">
+              {texto.length}/{LIMITE_DO_TEXTO} caracteres
             </p>
-          ) : null}
+            <p id="texto-grupo-erro" aria-live="polite" className="text-sm text-(--destructive)">
+              {passouDoLimite
+                ? `Sua publicação tem ${texto.length} caracteres; o limite é ${LIMITE_DO_TEXTO}. Encurte o texto para publicar — ele continua aqui.`
+                : erroDoTexto}
+            </p>
+          </div>
           <p className="text-sm">
             {grupo.regras || "O grupo ainda não informou regras sobre fotos."}
           </p>
-          <label className="grid gap-2 text-sm">
+          <label className="grid gap-2 text-sm" htmlFor="texto-grupo-fotos">
             Adicionar fotos (até 4, de até 5 MB)
             <input
+              id="texto-grupo-fotos"
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
               disabled={ocupado || enviandoFoto || fotos.length >= 4}
+              aria-describedby="texto-grupo-fotos-erro"
+              aria-invalid={erroDaFoto === "" ? undefined : true}
               onChange={(evento) => {
                 const arquivos = Array.from(evento.currentTarget.files ?? [])
                 evento.currentTarget.value = ""
@@ -269,6 +288,13 @@ export function Escrever({
               className="min-h-11 max-w-full"
             />
           </label>
+          <p
+            id="texto-grupo-fotos-erro"
+            aria-live="polite"
+            className="text-sm text-(--destructive)"
+          >
+            {erroDaFoto}
+          </p>
           {enviandoFoto ? <p role="status">Enviando foto…</p> : null}
           <div className="grid grid-cols-2 gap-2">
             {fotos.map((foto, indice) => (

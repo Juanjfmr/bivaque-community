@@ -1,9 +1,23 @@
 import { useEffect, useRef, useState } from "react"
-import { Botao } from "@/components/bivaque/botao"
-import { Campo, Selecao } from "@/components/bivaque/campos"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarDesapego } from "@/lib/dados/criar"
+import { AreaDeTexto, Botao, Campo, CampoDeArquivo, CampoDeEscolha } from "@/src/pecas/pecas"
+import { type CampoDoDesapego, errosDoDesapego, precoBRL, semErros } from "./formularios"
 import { excluirRascunho, guardarRascunho, lerRascunho } from "./rascunho"
+
+const CATEGORIAS = [
+  { valor: "casa_moveis", rotulo: "Casa e móveis" },
+  { valor: "eletronicos", rotulo: "Eletrônicos" },
+  { valor: "esporte", rotulo: "Esporte" },
+  { valor: "infantil", rotulo: "Infantil" },
+  { valor: "veiculos", rotulo: "Veículos" },
+  { valor: "outros", rotulo: "Outros" },
+] as const
+
+const CONDICOES = [
+  { valor: "used", rotulo: "Usado" },
+  { valor: "new", rotulo: "Novo" },
+] as const
 
 export function Desapego({
   cidade,
@@ -28,6 +42,10 @@ export function Desapego({
     }),
   )
   const [revisando, setRevisando] = useState(false)
+  // O erro de um campo aparece depois que a pessoa passou por ele: o obrigatório
+  // vazio não acusa quem ainda não digitou, e o que já foi escrito fica.
+  const [tocados, setTocados] = useState<ReadonlySet<CampoDoDesapego>>(new Set())
+  const [erroDaFoto, setErroDaFoto] = useState<string | null>(null)
   const [erro, setErro] = useState("")
   const [aviso, setAviso] = useState("")
   const [salvando, setSalvando] = useState(false)
@@ -44,6 +62,15 @@ export function Desapego({
   useEffect(() => {
     guardarRascunho(chave, dados)
   }, [chave, dados])
+
+  const erros = errosDoDesapego(dados)
+  const podeRevisar = semErros(erros)
+  const erroDe = (campo: CampoDoDesapego): string | null =>
+    tocados.has(campo) ? (erros[campo] ?? null) : null
+  const tocar = (campo: CampoDoDesapego): void =>
+    setTocados((atual) => (atual.has(campo) ? atual : new Set(atual).add(campo)))
+  const mudar = (pedaco: Partial<typeof dados>): void =>
+    setDados((atual) => ({ ...atual, ...pedaco }))
 
   async function publicar() {
     if (controle.current) return
@@ -75,22 +102,22 @@ export function Desapego({
   }
 
   return (
-    <div data-formulario-criacao="create-item" className="grid min-w-0 gap-3">
+    <div data-formulario-criacao="create-item" className="pc pc-embutido grid min-w-0 gap-3">
       <header className="grid gap-1">
-        <h2 className="text-lg font-semibold">Anunciar desapego</h2>
-        <p className="text-sm text-(--on-surface-variant)">
-          Descreva o item, preço e condições. Revise antes de publicar.
-        </p>
+        <h2 className="pc-subtitulo">Anunciar desapego</h2>
+        <p className="pc-apoio">Descreva o item, preço e condições. Revise antes de publicar.</p>
       </header>
       <form
         className="grid gap-3"
         aria-busy={salvando}
+        noValidate
         onSubmit={(evento) => {
           evento.preventDefault()
           if (revisando) void publicar()
           else {
             setErro("")
-            setRevisando(true)
+            if (podeRevisar) setRevisando(true)
+            else setTocados(new Set(["titulo", "bairro", "preco", "descricao"]))
           }
         }}
       >
@@ -99,114 +126,109 @@ export function Desapego({
             <b>Revise seu anúncio</b>
             <p className="break-words">{dados.titulo}</p>
             <p className="text-sm">
-              R$ {dados.preco} · {dados.bairro} · {dados.condicao === "new" ? "Novo" : "Usado"}
+              {precoBRL(dados.preco)} · {dados.bairro} ·{" "}
+              {dados.condicao === "new" ? "Novo" : "Usado"}
             </p>
             <p className="whitespace-pre-wrap break-words text-sm">{dados.descricao}</p>
-            <p className="text-xs text-(--on-surface-variant)">
-              Será publicado para a cidade da sua conta.
-            </p>
+            <p className="pc-miudo">Será publicado para a cidade da sua conta.</p>
           </div>
         ) : (
           <>
             <Campo
               id="criacao-titulo"
               rotulo="Qual item quer anunciar?"
-              valor={dados.titulo}
-              aoMudar={(titulo) => setDados({ ...dados, titulo })}
-              minLength={5}
+              value={dados.titulo}
+              onChange={(evento) => mudar({ titulo: evento.target.value })}
+              onBlur={() => tocar("titulo")}
+              erro={erroDe("titulo")}
               maxLength={120}
-              required
-              placeholder="Mesa de jantar com quatro cadeiras"
-            />
-            <Campo
-              id="criacao-complemento"
-              rotulo="Bairro de retirada"
-              valor={dados.bairro}
-              aoMudar={(bairro) => setDados({ ...dados, bairro })}
-              maxLength={80}
+              autoComplete="off"
               required
             />
-            <Campo
-              id="criacao-preco"
-              rotulo="Preço pedido (R$)"
-              valor={dados.preco}
-              aoMudar={(preco) => setDados({ ...dados, preco })}
-              type="number"
-              inputMode="decimal"
-              min="1"
-              step="0.01"
-              max="1000000"
-              required
-            />
-            <Selecao
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Campo
+                id="criacao-complemento"
+                rotulo="Bairro de retirada"
+                value={dados.bairro}
+                onChange={(evento) => mudar({ bairro: evento.target.value })}
+                onBlur={() => tocar("bairro")}
+                erro={erroDe("bairro")}
+                maxLength={80}
+                autoComplete="off"
+                required
+              />
+              <Campo
+                id="criacao-preco"
+                rotulo="Preço pedido (R$)"
+                value={dados.preco}
+                onChange={(evento) => mudar({ preco: evento.target.value })}
+                onBlur={() => tocar("preco")}
+                erro={erroDe("preco")}
+                ajuda="Só números, como 650 ou 650,00"
+                type="number"
+                inputMode="decimal"
+                min="1"
+                step="0.01"
+                max="1000000"
+                required
+              />
+            </div>
+            <CampoDeEscolha
               id="criacao-categoria"
               rotulo="Categoria"
-              valor={dados.categoria}
-              aoMudar={(categoria) => setDados({ ...dados, categoria })}
-              opcoes={[
-                { valor: "casa_moveis", titulo: "Casa e móveis" },
-                { valor: "eletronicos", titulo: "Eletrônicos" },
-                { valor: "esporte", titulo: "Esporte" },
-                { valor: "infantil", titulo: "Infantil" },
-                { valor: "veiculos", titulo: "Veículos" },
-                { valor: "outros", titulo: "Outros" },
-              ]}
+              value={dados.categoria}
+              opcoes={CATEGORIAS}
+              onChange={(evento) => mudar({ categoria: evento.target.value })}
             />
-            <Selecao
+            <CampoDeEscolha
               id="criacao-condicao"
               rotulo="Condição"
-              valor={dados.condicao}
-              aoMudar={(condicao) => setDados({ ...dados, condicao })}
-              opcoes={[
-                { valor: "used", titulo: "Usado" },
-                { valor: "new", titulo: "Novo" },
-              ]}
+              value={dados.condicao}
+              opcoes={CONDICOES}
+              onChange={(evento) => mudar({ condicao: evento.target.value })}
             />
-            <Campo
+            <AreaDeTexto
               id="criacao-descricao"
               rotulo="Estado de conservação e retirada"
-              valor={dados.descricao}
-              aoMudar={(descricao) => setDados({ ...dados, descricao })}
-              area
-              minLength={10}
+              value={dados.descricao}
+              onChange={(evento) => mudar({ descricao: evento.target.value })}
+              onBlur={() => tocar("descricao")}
+              erro={erroDe("descricao")}
               maxLength={2000}
-              required
-              nota="Informe ao menos 10 caracteres. Evite documentos pessoais, telefones e endereços privados."
+              rows={4}
             />
-            <label className="grid gap-2 text-sm font-medium" htmlFor="criacao-foto">
-              Foto do item (opcional)
-              <input
-                id="criacao-foto"
-                className="min-h-11 max-w-full"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(evento) => {
-                  const file = evento.target.files?.[0]
-                  if (!file) return
-                  if (
-                    !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-                    file.size === 0 ||
-                    file.size > 10 * 1024 * 1024
-                  ) {
-                    setErro("Escolha uma imagem JPEG, PNG ou WebP de até 10 MB.")
-                    return
+            <CampoDeArquivo
+              id="criacao-foto"
+              rotulo="Foto do item (opcional)"
+              dica="JPEG, PNG ou WebP de até 10 MB"
+              escolhido={dados.foto === "" ? null : "Foto escolhida"}
+              aceitar="image/jpeg,image/png,image/webp"
+              erro={erroDaFoto}
+              aoEscolher={(file) => {
+                if (!file) return
+                if (
+                  !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+                  file.size === 0 ||
+                  file.size > 10 * 1024 * 1024
+                ) {
+                  setErroDaFoto("Escolha uma imagem JPEG, PNG ou WebP de até 10 MB.")
+                  return
+                }
+                setErroDaFoto(null)
+                leitor.current?.abort()
+                const leitura = new FileReader()
+                leitor.current = leitura
+                leitura.onload = () => {
+                  if (typeof leitura.result === "string") {
+                    const foto = leitura.result
+                    setDados((atual) => ({ ...atual, foto }))
                   }
-                  leitor.current?.abort()
-                  const leitura = new FileReader()
-                  leitor.current = leitura
-                  leitura.onload = () => {
-                    if (typeof leitura.result === "string") {
-                      const foto = leitura.result
-                      setDados((atual) => ({ ...atual, foto }))
-                      setErro("")
-                    }
-                  }
-                  leitura.onerror = () =>
-                    setErro("Não foi possível ler a foto. Escolha outra imagem.")
-                  leitura.readAsDataURL(file)
-                }}
-              />
-            </label>
+                }
+                leitura.onerror = () =>
+                  setErroDaFoto("Não foi possível ler a foto. Escolha outra imagem.")
+                leitura.readAsDataURL(file)
+              }}
+            />
           </>
         )}
         {dados.foto && (
@@ -217,7 +239,7 @@ export function Desapego({
               className="max-h-40 max-w-full rounded-xl object-contain"
             />
             {!revisando && (
-              <Botao type="button" tom="texto" onClick={() => setDados({ ...dados, foto: "" })}>
+              <Botao tom="texto" onClick={() => mudar({ foto: "" })}>
                 Remover foto
               </Botao>
             )}
@@ -235,7 +257,6 @@ export function Desapego({
         )}
         <div className="flex flex-wrap justify-end gap-2">
           <Botao
-            type="button"
             tom="texto"
             disabled={salvando}
             onClick={() => (revisando ? setRevisando(false) : aoCancelar())}
@@ -244,8 +265,7 @@ export function Desapego({
           </Botao>
           {!revisando && (
             <Botao
-              type="button"
-              tom="contornado"
+              tom="contorno"
               data-acao="salvar-rascunho-criacao"
               onClick={() =>
                 setAviso(
@@ -258,7 +278,12 @@ export function Desapego({
               Salvar rascunho
             </Botao>
           )}
-          <Botao type="submit" disabled={salvando}>
+          <Botao
+            tom="principal"
+            type="submit"
+            disabled={salvando || (!revisando && !podeRevisar)}
+            carregando={salvando}
+          >
             {salvando ? "Publicando…" : revisando ? "Publicar anúncio" : "Revisar anúncio"}
           </Botao>
         </div>

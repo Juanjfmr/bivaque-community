@@ -305,14 +305,18 @@ export function Campo({
   ajuda,
   erro,
   acessorio,
+  id: idExterno,
   ...entrada
 }: {
   rotulo: string
   ajuda?: ReactNode
   erro?: string | null
   acessorio?: ReactNode
-} & Omit<ComponentProps<"input">, "placeholder">) {
-  const id = useId()
+  /** Id conhecido por quem chama (as provas apontam para ele); sem ele, um gerado. */
+  id?: string
+} & Omit<ComponentProps<"input">, "placeholder" | "id">) {
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idAjuda = `${id}-ajuda`
   const idErro = `${id}-erro`
   return (
@@ -339,14 +343,17 @@ export function CampoDeEscolha({
   erro,
   opcoes,
   value,
+  id: idExterno,
   ...entrada
 }: {
   rotulo: string
   erro?: string | null
   opcoes: readonly { valor: string; rotulo: string }[]
   value: string
-} & Omit<ComponentProps<"select">, "children" | "value">) {
-  const id = useId()
+  id?: string
+} & Omit<ComponentProps<"select">, "children" | "value" | "id">) {
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">
@@ -380,9 +387,11 @@ export function CampoDeEscolha({
 export function AreaDeTexto({
   rotulo,
   erro,
+  id: idExterno,
   ...entrada
-}: { rotulo: string; erro?: string | null } & ComponentProps<"textarea">) {
-  const id = useId()
+}: { rotulo: string; erro?: string | null; id?: string } & Omit<ComponentProps<"textarea">, "id">) {
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">
@@ -515,6 +524,7 @@ export function CampoDeArquivo({
   aceitar,
   aoEscolher,
   erro,
+  id: idExterno,
 }: {
   rotulo: string
   dica: string
@@ -523,8 +533,10 @@ export function CampoDeArquivo({
   aceitar: string
   aoEscolher: (arquivo: File | undefined) => void
   erro?: string | null
+  id?: string
 }) {
-  const id = useId()
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">

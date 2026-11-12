@@ -28,6 +28,7 @@ import {
   encontroSumiu,
   foiAbortada,
   mensagemDaFalha,
+  rotuloDeDataHora,
   sessaoVencida,
 } from "@/src/eventos/formulario"
 import { texto } from "@/src/telas/comum"
@@ -125,8 +126,7 @@ export function Evento() {
     )
   }
 
-  const quando = new Date(encontro.comecaEm)
-  const rotuloDaData = Number.isNaN(quando.getTime()) ? "" : rotuloDeDataHora(quando)
+  const rotuloDaData = rotuloDeDataHora(new Date(encontro.comecaEm))
   const cancelado = encontro.situacao === "cancelled"
   const presenca = encontro.presenca
   const podeMarcar = !encontro.visitante && !encontro.souOrganizador && !cancelado
@@ -334,11 +334,4 @@ function Fato({ valor, rotulo }: { valor: string; rotulo: string }) {
       <small className="text-center text-[12px] text-(--on-surface-variant)">{rotulo}</small>
     </div>
   )
-}
-
-function rotuloDeDataHora(data: Date): string {
-  const dia = data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })
-  const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-  const comMaiuscula = dia.charAt(0).toUpperCase() + dia.slice(1)
-  return `${comMaiuscula} · ${hora}`
 }

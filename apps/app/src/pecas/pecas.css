@@ -50,6 +50,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Peças dentro de uma folha ou diálogo: o invólucro não é a tela inteira, então
+   não reserva a altura da janela nem pinta o fundo. */
+.pc.pc-embutido {
+  min-height: 0;
+  background: none;
+}
+
 .pc :where(h1, h2, h3, p, ul, ol, dl, dd, fieldset, figure) {
   margin: 0;
   padding: 0;
