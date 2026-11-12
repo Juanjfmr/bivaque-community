@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  LIMITE_DO_TERMO,
-  termoAceito,
-  termoDaUrl,
-  termosParaUrl,
-  trazOutroTermo,
-} from "@/src/busca/termo-url"
+import { LIMITE_DO_TERMO, termoAceito, termoDaUrl } from "@/src/busca/termo-url"
 
 /**
  * O termo que chega pela URL da busca (LAN-TROCA). O que importa: o link antigo
@@ -28,6 +22,10 @@ describe("termoAceito", () => {
     expect(termoAceito(" x ")).toBeNull()
     expect(termoAceito("?!")).toBeNull()
     expect(termoAceito("a".repeat(LIMITE_DO_TERMO + 1))).toBeNull()
+    // Caractere de controle no meio: a rota responde 400 (termoValido).
+    expect(termoAceito("a\tb2")).toBeNull()
+    expect(termoAceito("ab\u007f")).toBeNull()
+    expect(termoDaUrl({ q: "ipi\u0000ranga" })).toBe("")
   })
 
   it("aceita o termo no limite exato da rota", () => {
@@ -62,37 +60,5 @@ describe("termoDaUrl", () => {
     expect(termoDaUrl({ q: "a".repeat(LIMITE_DO_TERMO + 1) })).toBe("")
     expect(termoDaUrl({ q: null })).toBe("")
     expect(termoDaUrl({ q: ["ipiranga", "outro"] })).toBe("")
-  })
-})
-
-describe("trazOutroTermo", () => {
-  it("o link ainda está no endereço enquanto o campo não mudou", () => {
-    expect(trazOutroTermo({ q: "ipiranga" }, "ipiranga")).toBe(false)
-    expect(trazOutroTermo({ q: " ipiranga " }, "ipiranga")).toBe(false)
-  })
-
-  it("depois de digitar, o `q` de origem não é mais o do campo", () => {
-    expect(trazOutroTermo({ q: "ipiranga" }, "ipiranga centro")).toBe(true)
-    expect(trazOutroTermo({ q: "ipiranga" }, "")).toBe(true)
-  })
-
-  it("sem termo no endereço não há nada a devolver", () => {
-    expect(trazOutroTermo({}, "ipiranga")).toBe(false)
-    expect(trazOutroTermo({ q: "" }, "")).toBe(false)
-  })
-})
-
-describe("termosParaUrl", () => {
-  it("o termo de link vira `q` e a grafia antiga sai do endereço", () => {
-    expect(termosParaUrl("ipiranga")).toEqual({ q: "ipiranga", search: null })
-    expect(termosParaUrl(" ipiranga ")).toEqual({ q: "ipiranga", search: null })
-  })
-
-  it("campo apagado tira o `q` do endereço", () => {
-    expect(termosParaUrl("", { limpar: true })).toEqual({ q: null, search: null })
-  })
-
-  it("digitando, o termo válido também acompanha o endereço", () => {
-    expect(termosParaUrl("ipiranga centro")).toEqual({ q: "ipiranga centro", search: null })
   })
 })

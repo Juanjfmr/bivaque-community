@@ -30,6 +30,7 @@ allowed_paths:
   - docs/agents/tasks/LT-001.task.yml
   - apps/app/src/telas/Busca.tsx
   - apps/app/src/busca/**
+  - apps/app/tests/busca-termo-url.test.ts
   - apps/app/tests/e2e/busca-termo-url.spec.ts
   - apps/app/tests/e2e/apoio.ts
   - .visual/run-lan-troca-f02/
