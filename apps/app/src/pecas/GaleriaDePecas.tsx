@@ -242,6 +242,7 @@ function Escolhas() {
         valor={secao}
         aoEscolher={setSecao}
         rotulo="Seções do Mercado"
+        grupo="mercado"
       />
     </Secao>
   )

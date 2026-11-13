@@ -27,6 +27,7 @@ export function Segmentos({
   valor,
   aoEscolher,
   rotulo,
+  grupo,
   acao,
 }: {
   itens: readonly ItemDeSegmento[]
@@ -34,11 +35,17 @@ export function Segmentos({
   aoEscolher: (id: string) => void
   /** Nome do grupo para leitor de tela ("Seções do Mercado"). */
   rotulo: string
+  /** Identifica a família de segmentos na tela. */
+  grupo: string
   /** O atalho de cadastro, quando a tela tem um: fica à direita dos segmentos. */
   acao?: ReactNode
 }) {
   return (
-    <div data-segmentos="mercado" className="flex min-w-0 flex-wrap items-center gap-2">
+    <div
+      data-segmentos={grupo}
+      data-subabas={grupo === "mercado" ? grupo : undefined}
+      className="flex min-w-0 flex-wrap items-center gap-2"
+    >
       <nav
         aria-label={rotulo}
         className="flex min-w-0 basis-full gap-1 overflow-x-auto overscroll-x-contain sm:basis-0 sm:flex-1"
@@ -50,6 +57,7 @@ export function Segmentos({
               key={item.id}
               type="button"
               data-secao={item.id}
+              data-subaba={grupo === "mercado" ? item.id : undefined}
               aria-current={ativo ? "page" : undefined}
               onClick={() => {
                 if (!ativo) aoEscolher(item.id)
@@ -72,9 +80,7 @@ export function Segmentos({
           )
         })}
       </nav>
-      {acao === undefined ? null : (
-        <div className="ml-auto shrink-0 sm:ml-0">{acao}</div>
-      )}
+      {acao === undefined ? null : <div className="ml-auto shrink-0 sm:ml-0">{acao}</div>}
     </div>
   )
 }

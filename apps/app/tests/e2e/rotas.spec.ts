@@ -21,7 +21,7 @@ const ROTAS_COM_CASCA: ReadonlyArray<readonly [url: string, titulo: string | Reg
   ["/app/catalogo", "Desapegos"],
   ["/app/desapegos", "Desapegos"],
   ["/app/imoveis", "Imóveis"],
-  ["/app/negocios", "Negócios locais"],
+  ["/app/negocios", "Mercado da cidade"],
   ["/app/anuncio/a-1", "Anúncio"],
   ["/app/negocio/n-1", "Negócio local"],
   ["/app/pergunta/q-1", "Indicação"],

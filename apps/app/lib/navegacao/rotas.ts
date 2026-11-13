@@ -124,7 +124,7 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["catalogo", "/catalogo", "Desapegos", "mercado", { pai: "inicio" }],
   ["desapegos", "/desapegos", "Desapegos", "mercado", { pai: "inicio" }],
   ["imoveis", "/imoveis", "Imóveis", "mercado", { pai: "inicio" }],
-  ["negocios", "/negocios", "Negócios locais", "mercado", { pai: "inicio" }],
+  ["negocios", "/negocios", "Mercado da cidade", "mercado", { pai: "inicio" }],
   ["mercado", "/mercado", "Mercado", "mercado", { pai: "inicio" }],
   ["anuncio", "/anuncio/$id", "Anúncio", "mercado", { parametro: "id", pai: "desapegos" }],
   ["negocio", "/negocio/$id", "Negócio local", "mercado", { parametro: "id", pai: "negocios" }],

@@ -1,19 +1,16 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { Selecao } from "@/components/bivaque/campos"
 import { CartaoDeNegocio } from "@/components/bivaque/cartao-de-anuncio"
 import { ChipsDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
-import { type ListaDoMercado, lerMercado } from "@/lib/dados/mercado"
 import { type ListaDeNegocios, lerNegocios } from "@/lib/dados/negocios"
 import { useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { type ItemDeSegmento, Segmentos } from "@/src/pecas/segmentos"
 import { FalhaDaLeitura } from "./FalhaDaLeitura"
-import { avisoDaOrdem, type OrdemDosNegocios, ordemDe } from "./ordem"
 
 /**
  * A lista de negócios da cidade (F07), com as três seções do Mercado no topo.
@@ -25,12 +22,6 @@ import { avisoDaOrdem, type OrdemDosNegocios, ordemDe } from "./ordem"
  * zero inventado.
  */
 
-type Contagem = Readonly<{ total: number; temMais: boolean }>
-
-function contar(lista: ListaDoMercado): Contagem {
-  return { total: lista.anuncios.length, temMais: lista.proximo !== null }
-}
-
 export function Negocios() {
   const navegacao = useNavegacao()
   const entrada = useEntradaDaTela()
@@ -41,10 +32,6 @@ export function Negocios() {
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
-  const [ordem, setOrdem] = useState<OrdemDosNegocios>("recentes")
-  const [contagens, setContagens] = useState<
-    Readonly<{ desapegos: Contagem | null; imoveis: Contagem | null }>
-  >({ desapegos: null, imoveis: null })
   const controle = useRef<AbortController | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
@@ -65,24 +52,6 @@ export function Negocios() {
       })
     return () => leitura.abort()
   }, [categoria, rodada])
-
-  // A contagem das seções irmãs vem da primeira página da lista de cada uma.
-  // A leitura que falha deixa o segmento só com o nome.
-  useEffect(() => {
-    const leitura = new AbortController()
-    setContagens({ desapegos: null, imoveis: null })
-    void Promise.allSettled([
-      lerMercado({ tipo: "item" }, { signal: leitura.signal }),
-      lerMercado({ tipo: "property" }, { signal: leitura.signal }),
-    ]).then(([desapegos, imoveis]) => {
-      if (leitura.signal.aborted) return
-      setContagens({
-        desapegos: desapegos.status === "fulfilled" ? contar(desapegos.value) : null,
-        imoveis: imoveis.status === "fulfilled" ? contar(imoveis.value) : null,
-      })
-    })
-    return () => leitura.abort()
-  }, [])
 
   async function carregarMais() {
     const leitura = controle.current
@@ -108,24 +77,19 @@ export function Negocios() {
     {
       id: "desapegos",
       rotulo: "Desapegos",
-      contagem: contagens.desapegos?.total ?? null,
-      temMais: contagens.desapegos?.temMais ?? false,
+      contagem: null,
     },
     {
       id: "imoveis",
       rotulo: "Imóveis",
-      contagem: contagens.imoveis?.total ?? null,
-      temMais: contagens.imoveis?.temMais ?? false,
+      contagem: null,
     },
     {
       id: "negocios",
       rotulo: "Negócios",
-      contagem: dados === null ? null : dados.negocios.length,
-      temMais: dados !== null && dados.proximo !== null,
+      contagem: null,
     },
   ]
-
-  const aviso = avisoDaOrdem(ordem, false)
 
   return (
     <section data-tela="negocios" className="grid gap-2">
@@ -146,10 +110,11 @@ export function Negocios() {
         itens={segmentos}
         valor="negocios"
         rotulo="Seções do Mercado"
+        grupo="mercado"
         aoEscolher={(secao) => void navegacao.irPara(secao)}
         acao={
           <Botao tom="tonal" icone="add" data-acao="anunciar-negocio" onClick={anunciar}>
-            Anunciar negócio
+            Divulgar meu negócio
           </Botao>
         }
       />
@@ -172,29 +137,12 @@ export function Negocios() {
               })
             }
           />
-          <div className="mt-2 max-w-xs">
-            <Selecao
-              id="ordenar-negocios"
-              rotulo="Ordenar por"
-              valor={ordem}
-              aoMudar={(novo) => setOrdem(ordemDe(novo))}
-              opcoes={[
-                { valor: "recentes", titulo: "Mais recentes" },
-                { valor: "proximos", titulo: "Mais próximos" },
-              ]}
-            />
-          </div>
-          {aviso === null ? null : (
-            <p data-aviso="ordem" role="status" className="text-sm text-(--on-surface-variant)">
-              {aviso}
-            </p>
-          )}
           {dados.negocios.length === 0 ? (
             <EstadoVazio
               titulo="Ainda sem negócios cadastrados"
               texto="Quando um negócio desta categoria estiver disponível na sua cidade, ele aparece aqui."
               icone="storefront"
-              acao={{ rotulo: "Anunciar negócio", aoAcionar: anunciar }}
+              acao={{ rotulo: "Divulgar meu negócio", aoAcionar: anunciar }}
             />
           ) : (
             <>

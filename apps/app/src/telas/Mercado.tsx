@@ -7,7 +7,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Selecao } from "@/components/bivaque/campos"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
-import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
+import type { ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
@@ -47,6 +47,7 @@ import {
   mudarFiltroNaUrl,
   semAcento,
 } from "@/src/mercado/filtros-url"
+import { Segmentos } from "@/src/pecas/segmentos"
 
 /**
  * O Mercado do app, do banco (LAN-F06, no molde do F05).
@@ -67,13 +68,7 @@ const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "negocios", rotulo: "Negócios" },
 ]
 
-export function ListaDeMercado({
-  inicial,
-  comAbas = true,
-}: {
-  inicial: AbaDoMercado
-  comAbas?: boolean
-}) {
+export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<ListaDoMercado | null>(null)
@@ -286,14 +281,13 @@ export function ListaDeMercado({
         </section>
       ) : null}
 
-      {comAbas ? (
-        <ChipsDeFiltro
-          itens={SUBABAS}
-          valor={inicial}
-          aoEscolher={(aba) => void navegacao.irPara(aba)}
-          rotulo="Seções do Mercado"
-        />
-      ) : null}
+      <Segmentos
+        itens={SUBABAS}
+        valor={inicial}
+        aoEscolher={(aba) => void navegacao.irPara(aba)}
+        rotulo="Seções do Mercado"
+        grupo="mercado"
+      />
 
       {filtros.q === "" ? null : (
         <Botao
@@ -508,9 +502,9 @@ export function Catalogo() {
 }
 
 export function Imoveis() {
-  return <ListaDeMercado inicial="imoveis" comAbas={false} />
+  return <ListaDeMercado inicial="imoveis" />
 }
 
 export function Negocios() {
-  return <ListaDeMercado inicial="negocios" comAbas={false} />
+  return <ListaDeMercado inicial="negocios" />
 }

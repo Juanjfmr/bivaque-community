@@ -17,7 +17,7 @@ import { tituloDaTela } from "@/src/titulos"
 const ROTULOS_DAS_SUBABAS: Record<(typeof SUBABAS_DO_MERCADO)[number], string> = {
   desapegos: "Desapegos",
   imoveis: "Imóveis",
-  negocios: "Negócios",
+  negocios: "Mercado da cidade",
 }
 
 const ITENS_DE_PROVA = Array.from({ length: 40 }, (_, indice) => `item-${indice + 1}`)

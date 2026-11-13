@@ -26,7 +26,7 @@ const INVENTARIO: ReadonlyArray<readonly [nome: string, molde: string, titulo: s
   ["catalogo", "/catalogo", "Desapegos"],
   ["desapegos", "/desapegos", "Desapegos"],
   ["imoveis", "/imoveis", "Imóveis"],
-  ["negocios", "/negocios", "Negócios locais"],
+  ["negocios", "/negocios", "Mercado da cidade"],
   ["anuncio", "/anuncio/$id", "Anúncio"],
   ["negocio", "/negocio/$id", "Negócio local"],
   ["pergunta", "/pergunta/$id", "Indicação"],
