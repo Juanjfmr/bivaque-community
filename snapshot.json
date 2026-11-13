@@ -3,7 +3,7 @@
   "title": "Prontidão do Bivaque",
   "scopeVersion": "2026-11-05",
   "source": "docs/LANCAMENTO.md",
-  "generatedAt": "2026-11-13T18:09:58.530Z",
+  "generatedAt": "2026-11-13T18:29:20.539Z",
   "revision": "7c755a6233a4207978febcab367a5a6797ddcdda",
   "boardUpdatedAt": "2026-11-07",
   "stage": "Em construção",
@@ -487,14 +487,14 @@
       ]
     },
     "backend": {
-      "status": "pending",
+      "status": "success",
       "revision": "7c755a6233a4207978febcab367a5a6797ddcdda",
       "urls": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/43479895171"
       ]
     },
     "integration": {
-      "status": "pending",
+      "status": "success",
       "revision": "7c755a6233a4207978febcab367a5a6797ddcdda",
       "urls": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/43479895171"
