@@ -22,6 +22,8 @@ export type PerfilDaPessoa = Readonly<{
   bio: string | null
   cidade: string
   localizacao: LocalizacaoDoPerfil
+  /** false quando o CEP existe mas nenhuma fonte o localiza (ADR-20261112). */
+  distanciaDisponivel: boolean
 }>
 export type ContagensDoPerfil = Readonly<{
   salvos: number
@@ -36,22 +38,29 @@ export type PerfilDaConta = Readonly<{
 }>
 
 /**
- * O CEP do dono da sessão e a marca de definida, nunca a coordenada.
+ * O CEP do dono da sessão, a marca de definida e se há posição — nunca a
+ * coordenada em si.
  *
  * A função do banco resolve o dono por `auth.uid()`; esta camada não aceita id
  * de fora. Falha sobe: perfil vazio não é "sem localização".
  */
-export async function localizacaoDaSessao(client: Cliente): Promise<LocalizacaoDoPerfil> {
+export async function localizacaoDaSessao(
+  client: Cliente,
+): Promise<Readonly<{ localizacao: LocalizacaoDoPerfil; distanciaDisponivel: boolean }>> {
   const { data, error } = await client.rpc("get_my_profile_location")
   if (error) throw error
   const linha = data[0]
-  if (linha === undefined) return { cep: null, definida: false }
+  if (linha === undefined)
+    return { localizacao: { cep: null, definida: false }, distanciaDisponivel: false }
   // O gerador de tipos trata colunas de `returns table` como não nulas; o CEP
   // do perfil é anulável de verdade, então quem decide é o valor em runtime.
   const cep: unknown = linha.cep
   return {
-    cep: typeof cep === "string" ? formatarCep(cep) : null,
-    definida: linha.definida === true,
+    localizacao: {
+      cep: typeof cep === "string" ? formatarCep(cep) : null,
+      definida: linha.definida === true,
+    },
+    distanciaDisponivel: linha.com_coordenada === true,
   }
 }
 
@@ -67,11 +76,17 @@ export async function perfilDaSessao(
     .maybeSingle()
   if (error) throw error
   if (data === null) return null
-  const [cidade, localizacao] = await Promise.all([
+  const [cidade, { localizacao, distanciaDisponivel }] = await Promise.all([
     cidadeDaSessao(client, userId),
     localizacaoDaSessao(client),
   ])
-  return { nome: data.display_name, bio: data.bio, cidade: cidade?.nome ?? "", localizacao }
+  return {
+    nome: data.display_name,
+    bio: data.bio,
+    cidade: cidade?.nome ?? "",
+    localizacao,
+    distanciaDisponivel,
+  }
 }
 
 async function contarSalvos(client: Cliente, userId: string): Promise<number> {

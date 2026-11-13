@@ -32,8 +32,8 @@ const CONTAGENS: Record<string, number> = {
   group_memberships: 1,
 }
 
-/** O que `get_my_profile_location` devolve: o CEP cru do banco, sem coordenada. */
-const LOCALIZACAO = { cep: "69000000", definida: true }
+/** O que `get_my_profile_location` devolve: o CEP cru e se há posição, nunca a coordenada. */
+const LOCALIZACAO = { cep: "69000000", definida: true, com_coordenada: true }
 
 /**
  * O banco dos testes: uma tabela responde pelo que a rota pede — contagem,
@@ -46,6 +46,7 @@ function cliente(
     semPerfil?: boolean
     semLinhas?: boolean
     localizacaoFalha?: boolean
+    semCoordenada?: boolean
   } = {},
 ) {
   const escritas: { tabela: string; metodo: string; valor: unknown }[] = []
@@ -164,7 +165,16 @@ function cliente(
     if (nome === "get_my_profile_location") {
       if (opcoes.localizacaoFalha)
         return { data: null, error: { code: "XX000", message: "segredo do banco" } }
-      return { data: [{ cep: LOCALIZACAO.cep, definida: LOCALIZACAO.definida }], error: null }
+      return {
+        data: [
+          {
+            cep: LOCALIZACAO.cep,
+            definida: LOCALIZACAO.definida,
+            com_coordenada: opcoes.semCoordenada ? false : LOCALIZACAO.com_coordenada,
+          },
+        ],
+        error: null,
+      }
     }
     if (nome === "request_account_deletion") {
       return {
@@ -237,6 +247,7 @@ describe("área Você do app", () => {
         bio: null,
         cidade: "Manaus",
         localizacao: { cep: "69000-000", definida: true },
+        distanciaDisponivel: true,
       },
       contagens: { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 },
       conta: { exclusaoPendente: false },
@@ -247,6 +258,16 @@ describe("área Você do app", () => {
     autenticar()
     const corpo = await (await perfil(req("GET"))).json()
     expect(corpo.perfil.localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(corpo.perfil.distanciaDisponivel).toBe(true)
+    expect(JSON.stringify(corpo)).not.toContain("latitude")
+    expect(JSON.stringify(corpo)).not.toContain("longitude")
+  })
+
+  it("marca a localização sem coordenada e avisa que a distância não sai", async () => {
+    autenticar({ semCoordenada: true })
+    const corpo = await (await perfil(req("GET"))).json()
+    expect(corpo.perfil.localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(corpo.perfil.distanciaDisponivel).toBe(false)
     expect(JSON.stringify(corpo)).not.toContain("latitude")
     expect(JSON.stringify(corpo)).not.toContain("longitude")
   })
@@ -279,6 +300,7 @@ describe("área Você do app", () => {
         bio: null,
         cidade: "Manaus",
         localizacao: { cep: "69000-000", definida: true },
+        distanciaDisponivel: true,
       },
     })
   })

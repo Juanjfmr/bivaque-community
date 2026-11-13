@@ -198,14 +198,19 @@ export function CityReference({
             ))}
           </ul>
         )}
-        <div className="mt-3">
-          <Link
-            href={isAlternate ? `/events?locality=${viewing.id}` : "/events"}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:underline"
-          >
-            Ver todos os eventos
-          </Link>
-        </div>
+        {/* EVENTOS-LOCALITY-LINK: o app não lê `locality` na agenda, então um
+            link para a agenda de outra cidade cairia na local em silêncio. Na
+            referência alternativa o link não aparece. */}
+        {isAlternate ? null : (
+          <div className="mt-3">
+            <Link
+              href="/events"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:underline"
+            >
+              Ver todos os eventos
+            </Link>
+          </div>
+        )}
       </section>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -220,14 +225,16 @@ export function CityReference({
           <p className="mt-2 text-sm text-muted">
             Colégio, hospital, transportadora, despachante: referências para quem está chegando.
           </p>
-          <div className="mt-3">
-            <Link
-              href={isAlternate ? `/guide?locality=${viewing.id}` : "/guide"}
-              className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-            >
-              Abrir o guia de chegada
-            </Link>
-          </div>
+          {isAlternate ? null : (
+            <div className="mt-3">
+              <Link
+                href="/guide"
+                className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+              >
+                Abrir o guia de chegada
+              </Link>
+            </div>
+          )}
         </section>
 
         {/* Vitrine de prestadores — onda G Task 5 */}

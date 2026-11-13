@@ -16,7 +16,7 @@
       "!**/.omo",
       "!**/.visual",
       "!.claude/worktrees",
-      "!**/.work",
+      "!.work",
       "!**/.reasonix",
       "!**/docs/historico/agents/design-audit/experiments",
       "!**/docs/historico/design/visual-guide-2026-09-06",

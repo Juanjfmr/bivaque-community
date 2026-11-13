@@ -3151,6 +3151,7 @@ export type Database = {
         Args: never
         Returns: {
           cep: string
+          com_coordenada: boolean
           definida: boolean
         }[]
       }
