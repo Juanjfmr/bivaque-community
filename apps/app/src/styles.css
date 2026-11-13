@@ -1369,7 +1369,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 
 /* ── o título grande que sobe (§6, item 29) ──────────────────────────────── */
 
-@media (max-width: 719.98px) {
+@media (max-width: 1023.98px) {
   [data-topo="barra"] {
     border-bottom-color: transparent;
     transition: border-color 0.18s ease-out;

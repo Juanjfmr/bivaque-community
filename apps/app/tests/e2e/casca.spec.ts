@@ -303,9 +303,9 @@ test.describe("menu Criar (§4 do inventário)", () => {
 })
 
 test.describe("título grande e dockagem (§6.7)", () => {
-  test("abaixo de 720 px o título some sob a barra e volta depois", async ({ page }) => {
+  test("abaixo de 1024 px o título some sob a barra e volta depois", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "o efeito só existe abaixo de 720 px")
+    test.skip(largura >= 1024, "o efeito só existe abaixo de 1024 px")
 
     await abrir(page, "/app/salvos")
     const barra = page.locator(SELETOR_BARRA)
@@ -329,7 +329,7 @@ test.describe("título grande e dockagem (§6.7)", () => {
 
   test("na Início o título grande nunca sobe", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "o efeito só existe abaixo de 720 px")
+    test.skip(largura >= 1024, "o efeito só existe abaixo de 1024 px")
     await abrir(page, "/app/inicio")
     await rolarOCorpo(page, 400)
     await expect(page.locator(SELETOR_BARRA)).toHaveAttribute("data-docada", "nao")
