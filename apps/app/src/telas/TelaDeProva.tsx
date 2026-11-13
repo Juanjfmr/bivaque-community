@@ -10,6 +10,7 @@ import { SUBABAS_DO_MERCADO, validarParametros } from "@/lib/navegacao/rotas"
 import { usePortaDeCargas } from "@/src/contexto/cargas"
 import { useCasca } from "@/src/contexto/casca"
 import { FILTRO_SEGURAR_CARGA, modoDeProvaAtivo } from "@/src/modo-de-prova"
+import { Botao } from "@/src/pecas/pecas"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 import { tituloDaTela } from "@/src/titulos"
 
@@ -25,13 +26,14 @@ const ITENS_DE_PROVA = Array.from({ length: 40 }, (_, indice) => `item-${indice 
 const PERGUNTA_DIFICIL = "mudança de cidade/2026 ?!"
 
 /**
- * Tela vazia de prova.
+ * Rota ainda sem jornada.
  *
- * A onda 1b entrega navegação e a 1c, a casca: a tela desenha o título real da
- * rota e, em **modo de prova**, os controles que deixam a bateria medir a
+ * A tela desenha o título real da rota. Em **modo de prova** (só no servidor de
+ * desenvolvimento), acrescenta os controles que deixam a bateria medir a
  * navegação (filtros, rolagem, foco, sobreposição e carga pendente). Fora do
- * modo de prova, a tela fica vazia: **nenhuma jornada das ondas 2 a 8 é
- * implementada aqui**, e nada de conteúdo fictício aparece no uso normal.
+ * modo de prova — e sempre no build de produção — a tela mostra o estado de
+ * primeira entrada: uma frase sobre o que aquele lugar passa a ter e o caminho
+ * honesto, sem controles de depuração.
  */
 export function TelaDeProva({ nome }: { nome: string }) {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
@@ -78,6 +80,13 @@ export function TelaDeProva({ nome }: { nome: string }) {
         titulo={tituloDaTela(nome, casca.cidade)}
         subtitulo={prova ? "Tela de prova: o conteúdo desta rota chega na onda dela." : undefined}
       />
+
+      {prova ? null : (
+        <EstadoDePrimeiraEntrada
+          cidade={casca.cidade}
+          aoExplorar={() => void navegacao.irPara("mercado")}
+        />
+      )}
 
       {subAba === null ? null : (
         <nav data-subabas="mercado" aria-label="Seções do Mercado" className="flex gap-2">
@@ -236,5 +245,36 @@ export function TelaDeProva({ nome }: { nome: string }) {
         </ul>
       ) : null}
     </section>
+  )
+}
+
+/**
+ * Estado de primeira entrada das rotas que ainda não têm jornada.
+ *
+ * Não é "não disponível": diz o que aquele lugar passa a ter e leva a uma parte
+ * do app que já funciona. Nenhum controle de depuração aparece aqui.
+ */
+function EstadoDePrimeiraEntrada({
+  cidade,
+  aoExplorar,
+}: {
+  cidade: string
+  aoExplorar: () => void
+}) {
+  return (
+    <div
+      data-estado="primeira-entrada"
+      className="grid justify-items-start gap-3 rounded-2xl bg-(--surface) px-4 py-6"
+    >
+      <p className="text-base font-medium text-(--foreground)">
+        {`Ainda não há nada para mostrar em ${cidade} por aqui.`}
+      </p>
+      <p className="text-sm text-(--muted-foreground)">
+        {`Quando alguém de ${cidade} publicar aqui, aparece nesta tela. Enquanto isso, veja o que já está no Mercado.`}
+      </p>
+      <Botao tom="contorno" onClick={aoExplorar}>
+        Ver o Mercado
+      </Botao>
+    </div>
   )
 }
