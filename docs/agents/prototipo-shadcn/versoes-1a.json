@@ -78,5 +78,20 @@
     "package": "vite",
     "version": "8.3.4",
     "publishedAt": "2026-10-08T12:07:04.441Z"
+  },
+  {
+    "package": "@capacitor/android",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:19:06.334Z"
+  },
+  {
+    "package": "@capacitor/cli",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:20:03.298Z"
+  },
+  {
+    "package": "@capacitor/core",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:20:18.325Z"
   }
 ]

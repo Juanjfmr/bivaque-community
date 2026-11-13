@@ -6334,6 +6334,39 @@
     },
     {
       "phase": "Lançamento",
+      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:scope"],
+      "blockers": [
+        "Teste no Android real: ato do dono (instalar o APK, ligar o cabo USB e avaliar rolagem, teclado e transições)"
+      ],
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "d2718d0",
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/decisions/ADR-20261024-front-react-spa.md",
+        "apps/app/capacitor.config.ts"
+      ],
+      "proof": [
+        "13/11: aberto a pedido do dono para antecipar a dúvida Capacitor x React Native antes da fase 7. Levantamento: nada do Capacitor existia em apps/app; o servidor já aceitava Bearer e a origem capacitor://localhost; o cliente do app só usa cookie.",
+        "13/11: Capacitor 8.5.3 (publicado em 07/10, dentro do corte de versoes-1a.json) em apps/app; projeto Android em apps/app/android; APK de depuração compilado (assembleDebug, compileSdk 36, minSdk 24), pacote com.bivaque.community.experimento, abrindo http://localhost:3000/app/. Gate verde em lint, typecheck, build:app, test e secrets; o build da web foi pulado por falta de apps/web/.env.local e fica para o CI do PR. Não rodou em aparelho nem emulador (o contêiner não tem KVM).",
+        "Como rodar: no computador, stack local com seed, npx pnpm@11.18.0 app:export e o Next em localhost:3000; com o celular no cabo, adb reverse tcp:3000 tcp:3000 e adb reverse tcp:54321 tcp:54321; adb install do APK. Para recompilar: npx pnpm@11.18.0 --filter @bivaque/app build, npx cap sync android (em apps/app) e ./gradlew assembleDebug (em apps/app/android). BIVAQUE_CASCA_URL troca o endereço no cap sync."
+      ],
+      "id": "EXP-CASCA-CAPACITOR",
+      "title": "Experimento: casca Capacitor no Android real para decidir Capacitor x React Native",
+      "priority": "P1",
+      "category": "infra",
+      "status": "blocked",
+      "description": "Casca Capacitor que abre o app servido pelo Next do computador (loopback por adb reverse), para o dono sentir rolagem do feed, teclado na conversa e transições num Android real antes da fase 7. Não é o pacote de loja: identificador de experimento, sem ponte de token, sem login nativo, sem push. O resultado decide se LAN-LOJA segue em Capacitor ou se o ADR do SPA é reaberto (cláusula de reabertura do próprio ADR).",
+      "checklist": [
+        "Capacitor e projeto Android no repositório, sobre o apps/app",
+        "APK de depuração compilado e inspecionado",
+        "Dono avalia no Android real: rolagem do Início e de um grupo com fotos, teclado numa conversa, transições e botão voltar",
+        "Registrar o veredito: seguir Capacitor em LAN-LOJA ou reabrir o ADR do SPA com a evidência"
+      ],
+      "dependencies": [],
+      "completedChecklist": [true, true, false, false]
+    },
+    {
+      "phase": "Lançamento",
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-11",
