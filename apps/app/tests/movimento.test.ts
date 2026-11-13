@@ -60,20 +60,22 @@ describe("minimizar a navegação ao rolar (§6.7, §5.3)", () => {
     expect(calcularMinimizada({ ...base, y: 300, ultimoY: 300, minimizada: true })).toBe(true)
   })
 
-  it("não minimiza acima de 720 px, fora das raízes, nem com o Criar aberto", () => {
-    expect(calcularMinimizada({ ...base, y: 400, largura: 720 })).toBe(false)
+  it("não minimiza a partir de 1024 px, fora das raízes, nem com o Criar aberto", () => {
+    expect(calcularMinimizada({ ...base, y: 400, largura: 768 })).toBe(true)
+    expect(calcularMinimizada({ ...base, y: 400, largura: 1024 })).toBe(false)
     expect(calcularMinimizada({ ...base, y: 400, raiz: false })).toBe(false)
     expect(calcularMinimizada({ ...base, y: 400, menuCriarAberto: true })).toBe(false)
   })
 })
 
 describe("título que sobe (§6.7)", () => {
-  it("não existe na Início, na Busca nem na conversa, e some a partir de 720 px", () => {
+  it("não existe na Início, na Busca nem na conversa, e some a partir de 1024 px", () => {
     expect(tituloPodeSubir("inicio", 375)).toBe(false)
     expect(tituloPodeSubir("busca", 375)).toBe(false)
     expect(tituloPodeSubir("conversa", 375)).toBe(false)
     expect(tituloPodeSubir("salvos", 375)).toBe(true)
-    expect(tituloPodeSubir("salvos", 720)).toBe(false)
+    expect(tituloPodeSubir("salvos", 768)).toBe(true)
+    expect(tituloPodeSubir("salvos", 1024)).toBe(false)
   })
 
   it("doca quando o título passa sob a barra, com folga de 4 px", () => {
@@ -94,6 +96,7 @@ describe("folhas (§6.6)", () => {
   it("a página de trás encolhe só no celular e fora da gaveta", () => {
     expect(paginaEncolhe(375, false)).toBe(true)
     expect(paginaEncolhe(375, true)).toBe(false)
-    expect(paginaEncolhe(768, false)).toBe(false)
+    expect(paginaEncolhe(768, false)).toBe(true)
+    expect(paginaEncolhe(1024, false)).toBe(false)
   })
 })

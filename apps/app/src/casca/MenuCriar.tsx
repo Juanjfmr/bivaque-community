@@ -99,7 +99,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       painel || tipo !== null || concluido ? 620 : 262,
       window.innerWidth - 24,
     )
-    const central = window.innerWidth < 720
+    const central = window.innerWidth < 1024
     const esquerda = painel
       ? ancora.left
       : central

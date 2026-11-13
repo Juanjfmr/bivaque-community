@@ -168,7 +168,7 @@ test.describe("navegação de baixo e lateral", () => {
     const nav = page.locator(SELETOR_NAVEGACAO)
     await expect(nav).toHaveCount(1)
     const largura = page.viewportSize()?.width ?? 0
-    if (largura >= 720) {
+    if (largura >= 1024) {
       await expect(nav).toBeVisible()
     } else {
       await expect(nav).toBeHidden()
@@ -177,7 +177,7 @@ test.describe("navegação de baixo e lateral", () => {
 
   test("minimiza ao rolar para baixo e volta ao subir", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "a minimização é do celular")
+    test.skip(largura >= 1024, "a minimização é do celular")
 
     await abrir(page, "/app/inicio")
     const nav = page.locator(SELETOR_NAVEGACAO)

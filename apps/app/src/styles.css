@@ -348,7 +348,7 @@
   flex: none;
 }
 
-/* Em 375 px o topo precisa caber com as ações; 720 px continua sendo a troca da navegação. */
+/* Em 375 px o topo precisa caber com as ações; 1024 px é a troca da navegação. */
 @media (max-width: 479.98px) {
   [data-topo="barra"] [data-titulo="topo"] {
     font-size: 16px;
@@ -390,7 +390,7 @@
 }
 
 /* A navegação: barra de baixo no celular e coluna da esquerda a partir de
-   720 px — o mesmo nó, como no protótipo. */
+   1024 px — o mesmo nó, como no protótipo. */
 [data-nav="principal"] {
   position: fixed;
   inset: auto 0 0 0;
@@ -1678,7 +1678,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
    Celular primeiro: faixa de foto 16:10, valor e formulário em uma coluna. */
 
 /* As composições A e B tomam a altura toda, sem o recuo da casca. A casca da
-   entrada não tem navegação; sem isso, a coluna reservada a ela em ≥720 px sobra
+   entrada não tem navegação; sem isso, a coluna reservada a ela em ≥1024 px sobra
    à esquerda, e o corpo fica na faixa `auto` da grade, com a altura do conteúdo. */
 [data-casca="entrada"]:has(.entrada-acesso, .entrada-etapa) [data-casca="corpo"] {
   grid-row: 1 / -1;

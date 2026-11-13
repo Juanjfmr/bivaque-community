@@ -54,7 +54,7 @@ export const NAVEGACAO = {
 
 /** Título grande que sobe (`shell/navigation.js:87`). */
 export const TITULO = {
-  larguraDeDocagem: 720,
+  larguraDeDocagem: 1024,
   folgaDaBarra: 4,
 } as const
 
@@ -138,12 +138,12 @@ export type EntradaDaMinimizacao = {
 
 /**
  * A decisão de minimizar a barra de baixo ao rolar (`shell/navigation.js:97-101`
- * e `syncMobileNavigation`, `:91-96`): só abaixo de 720 px, só nas rotas-raiz e
+ * e `syncMobileNavigation`, `:91-96`): só abaixo de 1024 px, só nas rotas-raiz e
  * nunca com o menu Criar aberto.
  */
 export function calcularMinimizada(entrada: EntradaDaMinimizacao): boolean {
   const { y, ultimoY, minimizada, largura, raiz, menuCriarAberto } = entrada
-  if (largura >= 720) return false
+  if (largura >= 1024) return false
   if (!raiz) return false
   if (menuCriarAberto) return false
   if (!minimizada && y > ultimoY + NAVEGACAO.folga && y > NAVEGACAO.limiteParaMinimizar) return true
@@ -156,7 +156,7 @@ export function calcularMinimizada(entrada: EntradaDaMinimizacao): boolean {
 /**
  * O título grande sobe ao passar sob a barra (`syncTopTitle`,
  * `shell/navigation.js:87-89`). Onde ele não existe: Início, Busca e conversa,
- * e nunca a partir de 720 px.
+ * e nunca a partir de 1024 px.
  */
 export function tituloPodeSubir(nomeDaRota: string, largura: number): boolean {
   if (largura >= TITULO.larguraDeDocagem) return false
@@ -180,8 +180,8 @@ export function distanciaFechaFolha(deslocamento: number, velocidade: number): b
 
 /**
  * A página de trás encolhe com a folha aberta (`shell/sheet-depth.js:3-5`): só
- * abaixo de 720 px e fora da gaveta lateral.
+ * abaixo de 1024 px e fora da gaveta lateral.
  */
 export function paginaEncolhe(largura: number, gaveta: boolean): boolean {
-  return largura < 720 && !gaveta
+  return largura < 1024 && !gaveta
 }
