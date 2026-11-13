@@ -42,13 +42,22 @@ const CABECALHOS: Record<string, string> = {
   "content-type": "application/json",
 }
 
-type Localizacao = { cep: string | null; definida: boolean }
+type Localizacao = { cep: string | null; definida: boolean; comCoordenada?: boolean }
 
 function clienteDaSessao(localizacao: Localizacao) {
   return {
     rpc: vi.fn(async (funcao: string) => {
       if (funcao !== "get_my_profile_location") return { data: null, error: null }
-      return { data: [{ cep: localizacao.cep, definida: localizacao.definida }], error: null }
+      return {
+        data: [
+          {
+            cep: localizacao.cep,
+            definida: localizacao.definida,
+            com_coordenada: localizacao.comCoordenada ?? localizacao.definida,
+          },
+        ],
+        error: null,
+      }
     }),
   }
 }
@@ -221,6 +230,7 @@ describe("PUT /api/app/voce/localizacao", () => {
     ])
     expect(await resposta.json()).toEqual({
       localizacao: { cep: "69000-000", definida: true },
+      distanciaDisponivel: true,
     })
   })
 
@@ -242,7 +252,38 @@ describe("PUT /api/app/voce/localizacao", () => {
       p_longitude: -60.0217,
     })
     const corpo = await resposta.json()
-    expect(corpo).toEqual({ localizacao: { cep: "69000-000", definida: true } })
+    expect(corpo).toEqual({
+      localizacao: { cep: "69000-000", definida: true },
+      distanciaDisponivel: true,
+    })
+    expect(JSON.stringify(corpo)).not.toContain("latitude")
+    expect(JSON.stringify(corpo)).not.toContain("longitude")
+  })
+
+  it("guarda o CEP conhecido sem coordenada e responde 200 sem posição", async () => {
+    autenticar({
+      localizacao: { cep: "69900000", definida: true, comCoordenada: false },
+    })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.geocodificarCep.mockResolvedValue({ estado: "sem-coordenada" })
+
+    const resposta = await PUT(pedido({ cep: "69900-000" }))
+
+    expect(resposta.status).toBe(200)
+    // Sem posição: as duas coordenadas vão nulas, nunca zero nem inventadas.
+    expect(servico.chamadas).toEqual([
+      {
+        funcao: "set_member_location",
+        args: { p_user_id: USER, p_cep: "69900000", p_latitude: null, p_longitude: null },
+      },
+    ])
+    expect(mocks.gravarCepNoCache, "CEP sem posição não entra no cache").not.toHaveBeenCalled()
+    const corpo = await resposta.json()
+    expect(corpo).toEqual({
+      localizacao: { cep: "69900-000", definida: true },
+      distanciaDisponivel: false,
+    })
     expect(JSON.stringify(corpo)).not.toContain("latitude")
     expect(JSON.stringify(corpo)).not.toContain("longitude")
   })
@@ -282,6 +323,7 @@ describe("PUT /api/app/voce/localizacao", () => {
     ])
     expect(await resposta.json()).toEqual({
       localizacao: { cep: null, definida: false },
+      distanciaDisponivel: false,
     })
   })
 

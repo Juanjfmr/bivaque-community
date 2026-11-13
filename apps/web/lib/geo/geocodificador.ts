@@ -21,6 +21,7 @@ export type CoordenadaDoCep = Readonly<{
 
 export type ResultadoDaGeocodificacao =
   | Readonly<{ estado: "encontrado"; coordenada: CoordenadaDoCep }>
+  | Readonly<{ estado: "sem-coordenada" }>
   | Readonly<{ estado: "nao-encontrado" }>
   | Readonly<{ estado: "indisponivel" }>
 
@@ -35,6 +36,8 @@ type Opcoes = Readonly<{
 
 type Tentativa =
   | Readonly<{ estado: "encontrado"; latitude: number; longitude: number }>
+  /** A fonte respondeu que conhece o CEP, mas sem posição utilizável. */
+  | Readonly<{ estado: "conhecido" }>
   | Readonly<{ estado: "nao-encontrado" }>
   | Readonly<{ estado: "falhou" }>
 
@@ -79,12 +82,15 @@ async function tentarBrasilApi(
     if (resposta.status === 404) return { estado: "nao-encontrado" }
     if (!resposta.ok) return { estado: "falhou" }
     const corpo = registro((await resposta.json()) as unknown)
+    // Evidência positiva: a fonte só conhece o CEP quando devolve o próprio CEP
+    // pedido. Corpo vazio, lista, objeto de erro ou outro CEP não prova nada.
+    const cepDoCorpo = corpo?.["cep"]
+    const conhece = typeof cepDoCorpo === "string" && cepDoCorpo.replace(/[^0-9]/g, "") === cep
+    if (!conhece) return { estado: "falhou" }
     const local = registro(corpo?.["location"])
     const coordenadas = registro(local?.["coordinates"])
     const coordenada = coordenadaValida(coordenadas?.["latitude"], coordenadas?.["longitude"])
-    return coordenada === null
-      ? { estado: "nao-encontrado" }
-      : { estado: "encontrado", ...coordenada }
+    return coordenada === null ? { estado: "conhecido" } : { estado: "encontrado", ...coordenada }
   } catch {
     return { estado: "falhou" }
   }
@@ -109,13 +115,12 @@ async function tentarGoogle(
     const status = corpo?.["status"]
     if (status === "ZERO_RESULTS") return { estado: "nao-encontrado" }
     if (status !== "OK") return { estado: "falhou" }
+    // Evidência positiva: `OK` sem resultado é resposta sem prova.
     const resultados = corpo?.["results"]
-    const primeiro = Array.isArray(resultados) ? resultados[0] : undefined
-    const local = registro(registro(registro(primeiro)?.["geometry"])?.["location"])
+    if (!Array.isArray(resultados) || resultados.length === 0) return { estado: "falhou" }
+    const local = registro(registro(registro(resultados[0])?.["geometry"])?.["location"])
     const coordenada = coordenadaValida(local?.["lat"], local?.["lng"])
-    return coordenada === null
-      ? { estado: "nao-encontrado" }
-      : { estado: "encontrado", ...coordenada }
+    return coordenada === null ? { estado: "conhecido" } : { estado: "encontrado", ...coordenada }
   } catch {
     return { estado: "falhou" }
   }
@@ -124,8 +129,10 @@ async function tentarGoogle(
 /**
  * O CEP vira coordenada, ou a resposta diz por que não virou.
  *
- * `nao-encontrado` é o CEP que nenhuma fonte conhece; `indisponivel` é quando
- * alguma fonte falhou e não dá para afirmar que o CEP não existe.
+ * `sem-coordenada` é o CEP que alguma fonte conhece e nenhuma localiza — o
+ * Google é tentado antes de concluir (ADR-20261112). `nao-encontrado` é o CEP
+ * que nenhuma fonte conhece; `indisponivel` é quando as fontes falham e nenhuma
+ * chegou a dizer que conhece o CEP.
  */
 export async function geocodificarCep(
   cep: string,
@@ -158,6 +165,11 @@ export async function geocodificarCep(
     }
   }
 
+  // Uma fonte que conhece o CEP vale mais que outra que falhou: dá para
+  // guardar a localização sem posição em vez de recusar um CEP verdadeiro.
+  if (brasil.estado === "conhecido" || google?.estado === "conhecido") {
+    return { estado: "sem-coordenada" }
+  }
   if (brasil.estado === "falhou" || google?.estado === "falhou") {
     return { estado: "indisponivel" }
   }

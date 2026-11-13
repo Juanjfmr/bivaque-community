@@ -10,7 +10,15 @@ import type { Page } from "@playwright/test"
  * contrato mudar, este arquivo muda junto, senão os specs passam medindo uma
  * tela que não é a de produção.
  */
-export async function simularVoce(page: Page) {
+export async function simularVoce(
+  page: Page,
+  opcoes: {
+    /** Estado da leitura: CEP guardado sem posição (ADR-20261112). */
+    distanciaDisponivel?: boolean
+    /** O que a gravação do CEP responde, para o caminho de falha da tela. */
+    respostaDaLocalizacao?: "sem-coordenada" | "cep-nao-encontrado" | "geocodificador-indisponivel"
+  } = {},
+) {
   // Preferências de aviso (F09): a área Você lê e grava a matriz de canais.
   // A simulação devolve o mesmo corpo de `/api/app/avisos/preferencias`.
   const canaisDeAviso = (escolha: {
@@ -56,11 +64,20 @@ export async function simularVoce(page: Page) {
     }
     return rota.fulfill({ json: { preferencias: preferenciasDeAviso } })
   })
-  const perfil = {
+  // `distanciaDisponivel: false` simula o CEP conhecido sem posição
+  // (ADR-20261112): guardado, mas ainda sem distância calculável.
+  const perfil: {
+    nome: string
+    bio: string
+    cidade: string
+    localizacao: { cep: string | null; definida: boolean }
+    distanciaDisponivel: boolean
+  } = {
     nome: "Ana Verificada",
     bio: "Mãe de dois, moro no Centro.",
     cidade: "Manaus",
-    localizacao: { cep: "69020000", definida: true },
+    localizacao: { cep: "69020-000", definida: true },
+    distanciaDisponivel: opcoes.distanciaDisponivel ?? true,
   }
   const contagens = { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 }
   const conta = { exclusaoPendente: false }
@@ -186,6 +203,25 @@ export async function simularVoce(page: Page) {
           ? rota.fulfill({ status: 404, json: { erro: "nao-encontrado" } })
           : rota.fulfill({ json: { removido: true } })
       }
+    }
+    if (recurso === "localizacao" && metodo === "PUT") {
+      if (opcoes.respostaDaLocalizacao === "cep-nao-encontrado")
+        return rota.fulfill({ status: 422, json: { erro: "cep-nao-encontrado" } })
+      if (opcoes.respostaDaLocalizacao === "geocodificador-indisponivel")
+        return rota.fulfill({ status: 503, json: { erro: "geocodificador-indisponivel" } })
+      const corpo = rota.request().postDataJSON() as { cep?: string | null }
+      const digitos = typeof corpo.cep === "string" ? corpo.cep : ""
+      perfil.localizacao = {
+        cep: digitos === "" ? null : `${digitos.slice(0, 5)}-${digitos.slice(5)}`,
+        definida: digitos !== "",
+      }
+      perfil.distanciaDisponivel = opcoes.respostaDaLocalizacao !== "sem-coordenada"
+      return rota.fulfill({
+        json: {
+          localizacao: perfil.localizacao,
+          distanciaDisponivel: perfil.distanciaDisponivel,
+        },
+      })
     }
     if (recurso === "apagar-conta" && metodo === "POST") {
       conta.exclusaoPendente = true
