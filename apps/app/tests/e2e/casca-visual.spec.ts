@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test("a busca tem uma entrada que filtra e limpa os resultados", async ({ page }) => {
   await page.goto("/app/busca")
-  const campo = page.getByRole("searchbox", { name: "Buscar no Bivaque", exact: true })
+  const campo = page.getByRole("searchbox", { name: "Buscar em Manaus", exact: true })
   await expect(campo).toHaveCount(1)
   await campo.fill("berço")
   await expect(page.getByText("Berço com colchão", { exact: true })).toBeVisible()
@@ -17,8 +17,8 @@ test("a busca tem uma entrada que filtra e limpa os resultados", async ({ page }
   await page.getByRole("button", { name: "Limpar busca", exact: true }).click()
   await expect(campo).toHaveValue("")
   await expect(campo).toBeFocused()
-  await expect(page.getByRole("heading", { name: "Sugestões", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "berço", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Explorar em Manaus", exact: true })).toBeVisible()
+  await campo.fill("berço")
   await expect(campo).toHaveValue("berço")
   await expect(page.getByText("Berço com colchão", { exact: true })).toBeVisible()
 })

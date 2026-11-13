@@ -107,13 +107,13 @@ test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fix
 
 test("P1: home desktop separa o catálogo do contexto sem duplicar seções", async ({ page }) => {
   await page.goto("/app/inicio")
-  const principal = page.locator(".bv-home-principal")
-  const lateral = page.getByRole("complementary", { name: "Comunidade na cidade" })
+  const principal = page.locator('[data-home="leitura"]')
+  const lateral = page.locator('[data-home="contexto"]')
   await expect(principal).toBeVisible()
-  await expect(lateral).toBeVisible()
   await expect(page.getByRole("heading", { name: "Serviços recomendados" })).toHaveCount(1)
   await expect(page.getByRole("heading", { name: "Oportunidades perto de você" })).toHaveCount(1)
   if ((page.viewportSize()?.width ?? 0) < 1024) return
+  await expect(lateral).toBeVisible()
   const limites = await Promise.all([principal.boundingBox(), lateral.boundingBox()])
   const a = limites[0]
   const b = limites[1]
