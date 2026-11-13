@@ -85,7 +85,7 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/ajuda", "perfil"],
   // Não existe container "cidade" nesta versão (PROCESSO §7), então a pergunta
   // é de onde se chega aqui. Dentro do shell, os dois únicos links para
-  // /localidade estão em Explorar — `explorar/busca` e `explorar/servicos`. O
+  // /localidade estão em Explorar — `/app/busca` e `explorar/servicos`. O
   // terceiro é a tela de boas-vindas do onboarding, que roda fora do shell e
   // não tem lateral para acender. A lateral responde "onde estou e como volto",
   // não "de quem é o dado": acender Perfil aqui mandaria a pessoa para um

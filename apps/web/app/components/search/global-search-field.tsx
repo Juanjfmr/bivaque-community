@@ -2,7 +2,7 @@
 
 // RECON-021 — the header search field from the member pranchas ("Buscar no
 // Bivaque", the most prominent header element in all of them, prancha 61).
-// A native GET form to /explorar/busca with the canonical `q`: it works
+// A native GET form to /app/busca with the canonical `q`: it works
 // without JS, and the term survives reload, back/forward and opening in a
 // new tab because it lives in the URL. Enter submits (implicit submission of
 // a single-field form); a second magnifier as a submit button only repeated
@@ -19,7 +19,7 @@ export function GlobalSearchField() {
   const fieldId = useId()
   return (
     <search className="block w-full">
-      <form action="/explorar/busca" method="get" className="w-full">
+      <form action="/app/busca" method="get" className="w-full">
         <label htmlFor={fieldId} className="sr-only">
           Buscar no Bivaque
         </label>

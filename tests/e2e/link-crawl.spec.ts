@@ -177,7 +177,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
-  { route: "/explorar/busca", porta: "FLUXO: formulário GET da busca global do cabeçalho" },
   {
     route: "/guide/[id]/correcao",
     porta: "CONDICIONAL: 'Sugerir atualização' no artigo, quando a referência tem guia publicado",

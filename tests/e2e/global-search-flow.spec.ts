@@ -1,8 +1,7 @@
 import { type BrowserContext, expect, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
-// RECON-021 — fluxo da busca global: campo do cabecalho -> /explorar/busca
-// agrupada -> /explorar/servicos com filtros, contagem e ficha alcancavel.
+// RECON-021 — fluxo da busca global: o campo do cabeçalho entrega o termo ao app.
 //
 // Contas do seed (mesma senha publica bivaque-e2e-local):
 //   visual@    — membro de Manaus, NAO e da Vila Ajuricaba (nao ve prestador)
@@ -59,7 +58,7 @@ async function signIn(context: BrowserContext, email: string) {
 }
 
 test.describe("busca global do cabecalho", () => {
-  test("o campo existe no shell e leva a rota de resultados agrupados", async ({ browser }) => {
+  test("o campo envia o termo diretamente à busca do app", async ({ browser }) => {
     const context = await browser.newContext()
     await signIn(context, "visual@bivaque.example.invalid")
     const page = await context.newPage()
@@ -73,70 +72,18 @@ test.describe("busca global do cabecalho", () => {
     await field.fill("escola")
     await page.keyboard.press("Enter")
 
-    await expect(page).toHaveURL(/\/explorar\/busca\?q=escola/)
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Resultados para/)
-    const guia = page.getByRole("region", { name: "Guia da cidade" })
-    await expect(guia).toBeVisible()
-    await expect(guia.getByText("Escola Modelo do Centro")).toBeVisible()
-
-    // A entrada pendente da mesma cidade nao pode aparecer nem como item.
-    await expect(page.getByText("Escola de Acolhimento Militar")).toHaveCount(0)
+    await expect(page).toHaveURL(/\/app\/busca\?q=escola/)
 
     await context.close()
   })
 
-  test("ver todos do grupo Guia chega com o filtro preenchido", async ({ browser }) => {
-    const context = await browser.newContext()
-    await signIn(context, "visual@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.goto("/explorar/busca?q=escola")
-    await page.getByRole("link", { name: /Ver todos em Guia da cidade/ }).click()
-
-    await expect(page).toHaveURL(/\/guide\?q=escola/)
-    await expect(page.getByLabel("Buscar no guia")).toHaveValue("escola")
-    await expect(page.getByText("Escola Modelo do Centro")).toBeVisible()
-
-    await context.close()
-  })
-
-  test("sessao expirada e estado proprio, diferente de erro e de vazio", async ({ browser }) => {
-    const context = await browser.newContext()
-    await signIn(context, "visual@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.route("**/rest/v1/rpc/search_providers", (route) =>
-      route.fulfill({
-        status: 401,
-        contentType: "application/json",
-        body: JSON.stringify({ code: "PGRST301", message: "JWT expired" }),
-      }),
-    )
-    await page.goto("/explorar/busca?q=escola")
-    await expect(page.getByText("Sua sessão expirou")).toBeVisible()
-    await expect(page.getByRole("link", { name: "Entrar novamente" })).toBeVisible()
-
-    await context.close()
-  })
-
-  test("falha de consulta nao vira vazio: erro recuperavel com nova tentativa", async ({
-    browser,
-  }) => {
-    const context = await browser.newContext()
-    await signIn(context, "visual@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.route("**/rest/v1/rpc/search_providers", (route) =>
-      route.fulfill({ status: 500, contentType: "application/json", body: "{}" }),
-    )
-    await page.goto("/explorar/busca?q=escola")
-    await expect(page.getByText("Não foi possível buscar agora. Tente novamente.")).toBeVisible()
-
-    await page.unroute("**/rest/v1/rpc/search_providers")
-    await page.getByRole("button", { name: "Tentar novamente" }).click()
-    await expect(page.getByText("Escola Modelo do Centro")).toBeVisible()
-
-    await context.close()
+  test("a URL antiga responde 307 para o app e preserva q", async () => {
+    const baseUrl = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
+    const resposta = await fetch(`${baseUrl}/explorar/busca?q=escola`, { redirect: "manual" })
+    expect(resposta.status).toBe(307)
+    const destino = new URL(resposta.headers.get("location") ?? "", baseUrl)
+    expect(destino.pathname).toBe("/app/busca")
+    expect(destino.searchParams.get("q")).toBe("escola")
   })
 })
 

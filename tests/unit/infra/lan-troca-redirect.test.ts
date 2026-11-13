@@ -23,6 +23,8 @@ const TROCADAS = [
   ["/configuracoes/bloqueados", "/app/bloqueados"],
   ["/configuracoes/familia", "/app/voce"],
   ["/inicio", "/app/inicio"],
+  ["/explorar/busca", "/app/busca"],
+  ["/explorar/busca?q=termo", "/app/busca?q=termo"],
   ["/explorar", "/app/busca"],
   ["/events", "/app/agenda"],
   ["/events/novo", "/app/agenda"],
@@ -111,6 +113,14 @@ describe("LAN-TROCA fase 1", () => {
       expect((await resolver(caminho)).headers.get("location")).toBeNull()
     },
   )
+
+  it("a pasta antiga de busca não deixa tela nem action para trás", () => {
+    const pasta = join(shell, "explorar/busca")
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
 
   // F05: a tela antiga sai inteira — nenhum page.tsx e nenhuma action sobram
   // para alguém "voltar" editando a pasta. A prova é de ausência: o diretório
