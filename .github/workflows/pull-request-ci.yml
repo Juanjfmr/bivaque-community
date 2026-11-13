@@ -90,6 +90,16 @@ jobs:
       - name: Start local Supabase
         run: pnpm exec supabase start
 
+      - name: Reduce Kong upstream keep-alive idle timeout
+        run: |
+          set -euo pipefail
+          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          test -n "$kong"
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" kong check /etc/kong/kong.conf.default
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" kong prepare --nginx-conf /home/kong/custom_nginx.template
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" kong reload
+          echo "Kong upstream_keepalive_idle_timeout aplicado: 10s ($kong)"
+
       # `generate:types` and `test:db` pull two more images on first use. The
       # public ECR answers anonymous pulls with "toomanyrequests: Rate exceeded"
       # at busy hours, which failed this job twice before any test ran
@@ -190,6 +200,28 @@ jobs:
       - name: Root E2E tests (stateful, serial)
         run: pnpm test:e2e:stateful --trace=retain-on-failure
 
+      - name: Collect local Supabase diagnostics
+        if: failure()
+        run: |
+          mkdir -p ci-stack-logs
+          for service in kong rest auth db; do
+            container=$(docker ps -a --filter "name=supabase_${service}_" --format "{{.Names}}" | head -n1)
+            if [ -z "$container" ]; then
+              echo "Container supabase_${service}_* não encontrado" > "ci-stack-logs/${service}-container-missing.txt"
+              continue
+            fi
+            docker logs --tail 200 "$container" > "ci-stack-logs/${service}.log" 2>&1 || true
+            docker inspect --format '{{.RestartCount}}' "$container" > "ci-stack-logs/${service}-restart-count.txt" 2>&1 || true
+          done
+          db=$(docker ps -a --filter "name=supabase_db_" --format "{{.Names}}" | head -n1)
+          if [ -n "$db" ]; then
+            docker exec -u postgres "$db" psql -U postgres -d postgres -Atc \
+              "SHOW max_connections; SELECT count(*) FROM pg_stat_activity;" \
+              > ci-stack-logs/db-connections.txt 2>&1 || true
+          else
+            echo "Container do banco não encontrado" > ci-stack-logs/db-connections.txt
+          fi
+
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v7
@@ -201,6 +233,7 @@ jobs:
             test-results/
             apps/web/playwright-report/
             apps/web/test-results/
+            ci-stack-logs/
 
       # `.visual/` é ignorado pelo Git e concentra as capturas de tela das
       # provas visuais. Sem o artefato, a evidência de uma falha de UI morre
