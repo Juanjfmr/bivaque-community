@@ -1,0 +1,82 @@
+# CI-E2E-UPSTREAM-INSTAVEL — fix de causa do flaky de E2E no CI.
+#
+# O job Install, test, and build cai intermitente em testes @stateful, em PRs que
+# não tocam o código, com [WebServer] An invalid response was received from the
+# upstream server (502 do Kong) e The destination stream closed early (ruído RSC).
+# Causa apurada (investigação somente-leitura + confirmação nos containers locais):
+# corrida de keep-alive entre Kong 2.8.1 (upstream_keepalive_idle_timeout default 60s,
+# POST/RPC NÃO retentado — nginx proxy_next_upstream sem non_idempotent) e PostgREST
+# v14.13/warp (fecha conexão ociosa em 30s). Janela 30–60s em que o Kong reusa socket
+# que o PostgREST já fechou -> 502 no hop Kong->upstream. GETs são retentados (retries=5)
+# e quase nunca falham; RPCs são POST -> o 502 chega ao cliente. Saturação de CPU do
+# runner (4 vCPU, 9 contêineres + Next + Chromium) alarga a janela; o lote serial ainda
+# cai porque workers=1 não elimina as pausas ociosas. Fix de causa: idle do Kong < 30s.
+# NÃO é aumentar timeout/retries (o card proíbe). Só infra/CI, sem tocar produto/testes.
+
+task_id: RUN-144
+
+objective: >
+  Eliminar a corrida de keep-alive Kong->PostgREST que causa o 502 intermitente no E2E
+  do CI, alinhando o idle do upstream do Kong abaixo do timeout de 30s do warp/PostgREST
+  (ex.: upstream_keepalive_idle_timeout=10), aplicado no workflow após supabase start.
+  Junto, coletar a testemunha que hoje falta: um step if: failure() que guarda docker logs
+  de kong/rest/auth/db + RestartCount + max_connections/pg_stat_activity no artefato, para
+  que qualquer vermelho residual venha com evidência em vez de adivinhação. Nenhuma
+  mudança de produto, de teste, de timeout ou de retries.
+
+authority:
+  - docs/LANCAMENTO.md (prova de runtime confiável; o flaky atrasa a fase 6)
+  - tools/backend-kanban/public/board.json (card CI-E2E-UPSTREAM-INSTAVEL, priorizado pelo dono)
+  - Investigação somente-leitura da causa raiz (explore, 13/11) + confirmação nos containers locais
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Quedas recorrentes em PRs sem relação com o código: group-admin-cycle.spec.ts:120,
+    group-join-reason.spec.ts:176, f10-voce-localizacao.spec.ts:56 (CEP, cai só no mobile-375,
+    passa em 768/1440), reports-member-flow.spec.ts:169. [WebServer] "The destination stream
+    closed early" e "An invalid response was received from the upstream server" / "failed to
+    read notify level". O rerun sem mudança de código fecha verde. Confirmado nos containers
+    locais: supabase_kong tem KONG_NGINX_WORKER_PROCESSES=1 e NENHUM override KONG_UPSTREAM_KEEPALIVE_*
+    (usa default idle 60s, pool 60); PostgREST v14.13 usa warp default settingsTimeout=30 e
+    db-pool=10 (sem PGRST_DB_POOL no env do CLI); GoTrue sem IdleTimeout. O template nginx do
+    Kong não define proxy_next_upstream -> default nginx (error timeout, sem non_idempotent)
+    -> POST de RPC não é retentado. "destination stream closed early" é do React RSC
+    (react-server-dom-turbopack ...server.node.production.js:3920), sintoma/ruído, não causa.
+    O CI não coleta docker logs da stack (pull-request-ci.yml:193-203 só playwright-report/test-results).
+
+allowed_paths:
+  - docs/agents/tasks/RUN-144.task.yml
+  - .github/workflows/pull-request-ci.yml
+  - .visual/run-144
+
+forbidden:
+  - alterar código de produto (apps/web, apps/app), specs de teste, playwright.config.ts, package.json (scripts travados por tests/scope/local-command-surface.test.mjs), supabase/config.toml (o knob do Kong não existe lá)
+  - aumentar timeout ou retries como solução (o card proíbe; o retries:1 existente permanece como paliativo registrado, não é o fix)
+  - remover/afrouxar teste ou marcar skip para passar
+  - habilitar Supavisor/[db.pooler] ou mexer em max_connections sem evidência de esgotamento (a assinatura é 502 do Kong, não "too many clients")
+  - push, merge ou force-push; ler/criar/editar .env; imprimir secrets
+  - tocar em .work/main ou em outra worktree; resetar banco compartilhado/remoto
+
+acceptance:
+  - "Após 'supabase start', o workflow aplica upstream_keepalive_idle_timeout < 30s (ex.: 10) no contêiner Kong, por mecanismo que funciona no runner (docker exec + kong reload, ou recriar o contêiner com KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 — escolher e provar que aplica). O mecanismo é verificado na stack local antes de ir para o workflow."
+  - "Step if: failure() coleta docker logs de kong/rest/auth/db + docker inspect RestartCount + SHOW max_connections e contagem de pg_stat_activity, e inclui esses logs no path do artefato de falha."
+  - "Nenhuma mudança de produto, teste, timeout ou retries; test:scope segue verde (o workflow não é travado pelo contrato de escopo, mas package.json/playwright.config.ts não são tocados)."
+  - "A causa é confirmada por evidência (config dos containers OU experimento de ociosidade controlada: POST de RPC via Kong com gap de 35s reproduz 502 esporádico, gap de 10s não; com o fix, gap de 35s não reproduz). Se o experimento refutar a hipótese, PARE e reporte a testemunha coletada — o escopo muda."
+  - "O fix é validado no CI: execuções do job 'Install, test, and build' na branch do fix fecham verdes (o aceite final do card são 10 seguidas; acumular e registrar)."
+
+proof:
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-144.task.yml
+  - verificação do mecanismo na stack local (docker exec no Kong; experimento de ociosidade se viável)
+  - execuções verdes do job no CI (registrar runs)
+
+risk: mudança de infra/CI (keep-alive do Kong + coleta de logs)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

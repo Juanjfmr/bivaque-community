@@ -93,12 +93,49 @@ jobs:
       - name: Reduce Kong upstream keep-alive idle timeout
         run: |
           set -euo pipefail
-          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
-          test -n "$kong"
-          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" kong check /etc/kong/kong.conf.default
-          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" kong prepare --nginx-conf /home/kong/custom_nginx.template
-          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" kong reload
-          echo "Kong upstream_keepalive_idle_timeout aplicado: 10s ($kong)"
+          python3 - <<'PY'
+          import json
+          import subprocess
+
+          kong = subprocess.check_output(
+              ["docker", "ps", "--filter", "name=supabase_kong_", "--format", "{{.Names}}"],
+              text=True,
+          ).splitlines()[0]
+          original = json.loads(subprocess.check_output(["docker", "inspect", kong], text=True))[0]
+          config = original["Config"]
+          host = original["HostConfig"]
+          args = ["docker", "run", "--detach", "--name", kong]
+
+          if config.get("User"):
+              args.extend(["--user", config["User"]])
+          if host.get("RestartPolicy", {}).get("Name"):
+              args.extend(["--restart", host["RestartPolicy"]["Name"]])
+          for network, settings in original["NetworkSettings"]["Networks"].items():
+              args.extend(["--network", network])
+              for alias in settings.get("Aliases") or []:
+                  args.extend(["--network-alias", alias])
+              break
+          for port, bindings in (host.get("PortBindings") or {}).items():
+              for binding in bindings or []:
+                  address = binding.get("HostIp") or "0.0.0.0"
+                  args.extend(["--publish", f"{address}:{binding['HostPort']}:{port}"])
+          for key, value in (config.get("Labels") or {}).items():
+              args.extend(["--label", f"{key}={value}"])
+          env = {item.split("=", 1)[0]: item.split("=", 1)[1] for item in config.get("Env") or []}
+          env["KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT"] = "10"
+          for key, value in env.items():
+              args.extend(["--env", f"{key}={value}"])
+          entrypoint = config.get("Entrypoint") or []
+          if entrypoint:
+              args.extend(["--entrypoint", entrypoint[0]])
+          args.extend([config["Image"]])
+          args.extend(entrypoint[1:])
+          args.extend(config.get("Cmd") or [])
+
+          subprocess.run(["docker", "rm", "--force", kong], check=True, stdout=subprocess.DEVNULL)
+          subprocess.run(args, check=True, stdout=subprocess.DEVNULL)
+          print(f"Kong recriado com KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10: {kong}")
+          PY
 
       # `generate:types` and `test:db` pull two more images on first use. The
       # public ECR answers anonymous pulls with "toomanyrequests: Rate exceeded"
