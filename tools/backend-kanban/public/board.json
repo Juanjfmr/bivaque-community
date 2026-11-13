@@ -6269,14 +6269,15 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-13",
-      "sourceRevision": "94e5c870",
+      "sourceRevision": "2bd49670",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-019 fase 1, autorizada pelo coordenador após o inventário de .visual/run-019/relatorio.md; família incluída pelo PR #147. Commits 21e333fb (13 regras 307 para 12 rotas, IDs/query e negativas) e 1b7c82e3 (E2E e rastreador adaptados). Gate --fast passou (lint e tipos, incluindo E2E), escopo 222/222 e unitários 2.525/2.525 em 226 arquivos, com um worker. Contrato substitui blocked_by por nota da fase 1 e lacunas no fechamento deste cartão. Sem revisão por outro modelo, E2E, servidor, banco, build ou gate completo local por ordem explícita; runtime/rastreador ficam para CI. LAN-TROCA permanece next, sem fechamento integral.",
         "06/11: rodada única após FAIL de .visual/run-019/revisao-qwen.md, confrontada com 5f34bfe2. Corrigida a recusa de /groups para /app/entrar?redirect=/groups e o comentário corrompido; decisão revista mantém /indicacoes/:id na web até F04 para preservar Ajudou a resolver, com spec recommendation-reply-notify restaurado de origin/main, negativa unitária e rastreador ajustados; jornada de serviço de duas personas restaurada entre criação/painel web e pedido/conversa no app, sem skip. Ficam 12 regras 307 para 11 rotas. Gate --fast, escopo 222/222 e unitários 2.525/2.525 (226 arquivos, um worker, 60,32 s) passaram no diff local. Relatório registra o recorte e a ausência da gravação de leitura do acompanhamento antigo. Sem E2E, servidor, ambiente, segredos ou nova revisão externa por ordem explícita. BLOQUEIO: git add recusado ao criar .git/worktrees/lan-troca/index.lock fora da raiz gravável do sandbox; nenhum commit novo nem push. Próximo passo: criar os três commits por item em sessão com acesso aos metadados Git e executar git push origin chore/lan-troca; runtime segue para CI.",
         "10/11: fase 1 + eventos — PR #176 mergeado em 0d3acb30; 18 arquivos antigos de /events removidos, 5 regras 307, 11 specs migrados + events-redirects.spec.ts, revisão independente PASS. Restam as superfícies de F02/F04/F06/F07/F09/F10 listadas no card.",
-        "13/11: LT-002 — F02 /explorar/busca trocada (PR #215, merge 94e5c870). 307 para /app/busca preservando q; página antiga (page/loading/error) removida; formulário global aponta direto para o app; TROCADAS 72/72 com teste de ausência da pasta; busca-redirects.spec.ts verde no CI em 375/768/1440 (o termo é usado pelo app via pedido a /api/app/busca?q; sem sessão responde erro, não a tela antiga). Revisão independente Qwen: FAIL (B1, asserção de sessão copiada do molde) -> retry -> PASS; regressão ENOENT (teste unitário lia a página removida por caminho segmentado) corrigida relocando a prova da porta /localidade para servicos; prova de URL ajustada ao pedido porque o app não persiste o q no endereço. Ressalvas com dono: EVENTOS-RESIDUOS-POS-TROCA (capturador + módulo órfão groups.ts), BUSCA-SESSAO-VENCIDA (401 vs erro + negativa), BUSCA-RETENCAO-URL (materialização apaga o q; fix de uma palavra). Próximo lote: F09 avisos/preferências."
+        "13/11: LT-002 — F02 /explorar/busca trocada (PR #215, merge 94e5c870). 307 para /app/busca preservando q; página antiga (page/loading/error) removida; formulário global aponta direto para o app; TROCADAS 72/72 com teste de ausência da pasta; busca-redirects.spec.ts verde no CI em 375/768/1440 (o termo é usado pelo app via pedido a /api/app/busca?q; sem sessão responde erro, não a tela antiga). Revisão independente Qwen: FAIL (B1, asserção de sessão copiada do molde) -> retry -> PASS; regressão ENOENT (teste unitário lia a página removida por caminho segmentado) corrigida relocando a prova da porta /localidade para servicos; prova de URL ajustada ao pedido porque o app não persiste o q no endereço. Ressalvas com dono: EVENTOS-RESIDUOS-POS-TROCA (capturador + módulo órfão groups.ts), BUSCA-SESSAO-VENCIDA (401 vs erro + negativa), BUSCA-RETENCAO-URL (materialização apaga o q; fix de uma palavra).",
+        "13/11: LT-003 — F02 busca retém o q na URL (PR #216, merge 2bd49670); BUSCA-RETENCAO-URL fechado. 'busca' em ROTAS_COM_BUSCA (fix de uma palavra) faz a materialização preservar o search; E2E do app 31/31 local (revisão Qwen) + busca-redirects/global-search-flow verdes no CI integrado em 375/768/1440. A busca de F02 está completa: trocada e com o termo retido no endereço. Prioridade ajustada pelo dono: CI-E2E-UPSTREAM-INSTAVEL (causa do flaky que atrasa os PRs) antes do F09."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6402,9 +6403,9 @@
       "id": "CI-E2E-UPSTREAM-INSTAVEL",
       "title": "E2E da web antiga cai por resposta inválida do Supabase local no CI",
       "phase": "Lançamento",
-      "priority": "P2",
+      "priority": "P1",
       "category": "testing",
-      "status": "next",
+      "status": "now",
       "description": "Em 02/11 o job Install, test, and build caiu duas vezes, em PRs que não tocam o código (#120 e #121), com [WebServer] An invalid response was received from the upstream server e The destination stream closed early. Os testes que caíram: group-event-detail-denials (grupo privado, mobile-375) e provider-vitrine (tablet-768). A nova execução passou no #120. Teste instável no CI ensina a ignorar vermelho.",
       "checklist": [
         "Reproduzir com a mesma carga do CI (workers e projetos)",
@@ -6420,8 +6421,8 @@
         "tests/e2e/group-admin-cycle.spec.ts"
       ],
       "blockers": [],
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "b35755e1",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "2bd49670",
       "links": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427",
@@ -6434,9 +6435,10 @@
         "02/11: duas quedas em PRs sem relação com o código; nova execução verde no #120.",
         "04/11: PR #128, revisão dd75d8d0, job Install, test, and build: group-admin-cycle.spec.ts:120 (membro pendente cancela o pedido, @stateful) falhou em 1440 nos dois retries e foi flaky em 768; depois de Cancelar pedido o botão Pedir entrada não apareceu em 5 s. O código da revisão é idêntico ao de origin/ds/lancamento f1d14a2d, cujo Pull Request CI fechou verde em 03/11; mesma família de queda do lote @stateful de grupo.",
         "10/11: reapareceu no PR #177 (run 42885590360): group-admin-cycle.spec.ts:120 em tablet-768 e desktop-1440, mesmo timeout; o rerun sem mudança de código fechou verde — mesma assinatura da instabilidade do lote serial.",
-        "12/11: group-admin-cycle.spec.ts:120 (@stateful, «Cancelar pedido» não aparece) caiu de novo em dois PRs sem relação com grupos: #203 (só biome.json, run 43266772953, mobile-375 passou no retry e desktop-1440 falhou nos dois) e test/cegas-capturas (run 43237493237, tablet-768 e desktop-1440). A main na base b35755e1 fechou verde. Mesma família do lote serial; o rerun segue como contorno até a causa ser achada."
+        "12/11: group-admin-cycle.spec.ts:120 (@stateful, «Cancelar pedido» não aparece) caiu de novo em dois PRs sem relação com grupos: #203 (só biome.json, run 43266772953, mobile-375 passou no retry e desktop-1440 falhou nos dois) e test/cegas-capturas (run 43237493237, tablet-768 e desktop-1440). A main na base b35755e1 fechou verde. Mesma família do lote serial; o rerun segue como contorno até a causa ser achada.",
+        "13/11: dono priorizou este card sobre o F09 (o flaky atrasa todo PR da fase 6). Reapareceu no LT-003 (PR #216, run 43495653063): f10-voce-localizacao.spec.ts:56 (CEP) caiu só no mobile-375 (passou em 768/1440) e reports-member-flow.spec.ts:169 flaky, com [WebServer] The destination stream closed early / invalid response from the upstream server; o rerun fechou verde. Os specs da busca do LT-003 estavam verdes — a queda é da família de conexão, não do diff. Investigação somente-leitura da causa raiz em curso (explore); item 2 do checklist reaberto porque a causa da perda de conexão sob carga segue sem confirmação. Fix deve atacar a causa, não timeout/retries."
       ],
-      "completedChecklist": [true, true, false, false]
+      "completedChecklist": [true, false, false, false]
     },
     {
       "id": "APP-E2E-PREEXISTENTES",
@@ -7256,24 +7258,26 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "O redirect 307 entrega /app/busca?q=<termo> e o app USA o termo, mas a URL final perde o q. Causa raiz (investigação somente-leitura): a casca materializa a entrada logo após montar (Casca.tsx:61-63 -> materializarEntrada -> gravar, react.tsx:217-223) e esse navigate NÃO passa search; em rota sem middleware o TanStack Router cai no default {} (router-core router.js:332) e o history.replace apaga o q. A rota busca está fora de ROTAS_COM_BUSCA (roteador.tsx:76), então não tem o middleware que preserva o search. O termo sobrevive porque a semente é capturada no primeiro render, antes do replace (Busca.tsx:102-110). Fix mínimo: adicionar 'busca' a ROTAS_COM_BUSCA (uma palavra) — o middleware manterBuscaDoMercado já é genérico e passa a preservar o q na carga e nas regravações de rolagem/foco. validateSearch NÃO resolve (validar != reter). Sem efeito colateral: digitação não navega; troca de rota passa {} explícito; search explícito continua vencendo. Contraste: o Mercado retém o filtro pelo mesmo middleware; inicio-busca-primeira-entrada.spec.ts:57-58 já prova retenção com search explícito. Executar depois que o LT-002 estiver na main.",
       "checklist": [
         "Rota busca em ROTAS_COM_BUSCA (roteador.tsx:76) + comentário ajustado; materialização e regravações preservam o q na URL",
         "E2E do app (busca-termo-url.spec.ts) prova a retenção do q na carga inicial, esperando a materialização (history.state.bivaqueEntrada.versao), sem timing frágil",
-        "tests/e2e/busca-redirects.spec.ts: asserção de URL com q de volta + acumulador de pedidos reiniciado por largura (ressalva 1 da revisão do LT-002)",
+        "tests/e2e/busca-redirects.spec.ts: asserção de URL com q provada após a materialização; a prova por pedido foi substituída pela retenção de URL (mais forte, resolve a ressalva 1 da revisão do LT-002)",
         "tests/e2e/global-search-flow.spec.ts:75: asserção de URL robusta após a materialização (ressalva 2 da revisão do LT-002)"
       ],
       "proof": [
-        "13/11: registrado a partir da revisão independente do LT-002 (ressalva 3: retenção sem dono) e de investigação somente-leitura da causa raiz. Cadeia: Casca.tsx:61-63 -> react.tsx:217-223 (navigate sem search) -> router.js:332 (default {} em rota sem middleware; busca fora de ROTAS_COM_BUSCA, roteador.tsx:76) -> replace apaga o q. Fix de uma palavra confirmado sem efeito colateral; o E2E atual do app segue passando (asserções de URL via irPara com {} explícito continuam sem q)."
+        "13/11: registrado a partir da revisão independente do LT-002 (ressalva 3: retenção sem dono) e de investigação somente-leitura da causa raiz. Cadeia: Casca.tsx:61-63 -> react.tsx:217-223 (navigate sem search) -> router.js:332 (default {} em rota sem middleware; busca fora de ROTAS_COM_BUSCA, roteador.tsx:76) -> replace apaga o q. Fix de uma palavra confirmado sem efeito colateral; o E2E atual do app segue passando (asserções de URL via irPara com {} explícito continuam sem q).",
+        "13/11: fechado pelo LT-003, PR #216 (merge 2bd49670). 'busca' em ROTAS_COM_BUSCA + comentário generalizado. Revisão independente Qwen PASS: rodou o E2E do app local em 375/768/1440, 31 passaram (retenção do q nos dois temas + digitação vence/limpar/Voltar/endereço inválido). CI integrado: busca-redirects e global-search-flow verdes nas três larguras (retenção provada após materialização). Retry 1: waitForURL antes do poll no global-search-flow (corrida com a navegação do Enter). Gate caiu uma vez em flaky não relacionado (f10-voce-localizacao CEP mobile-375 + reports-member-flow, upstream instável — CI-E2E-UPSTREAM-INSTAVEL); rerun fechou verde. App test 504/504, tsc e2e exit 0, gate --fast verde."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/LT-002.task.yml"],
+      "links": ["docs/agents/tasks/LT-002.task.yml", "docs/agents/tasks/LT-003.task.yml"],
       "dependencies": [],
       "updatedAt": "2026-11-13",
-      "sourceRevision": "7c755a62",
+      "sourceRevision": "2bd49670",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-13"
     },
     {
       "id": "F10-R3-SESSION-DERIVED",
