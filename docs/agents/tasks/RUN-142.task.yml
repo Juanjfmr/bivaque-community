@@ -1,0 +1,64 @@
+# RUN-142 — F08 — Guia com estrutura editorial, cabeçalho fixo e caminho de contribuição
+#
+# Fecha CORRETA-F08-ESTRUTURA (parecer cego de 12/11). Lote paralelo: outros
+# lotes de tela rodam ao mesmo tempo em outros worktrees, por isso o quadro e o
+# apoio.ts comum ficam fora e o E2E passa pela fila de provas.
+
+task_id: RUN-142
+
+objective: "O Guia diz o nome da cidade só uma vez, cabe em uma linha no 375, se organiza em 3 a 4 seções com âncoras e subtítulos que acompanham a rolagem, tem cabeçalho fixo compacto e o botão 'Sugerir um lugar para o Guia' ligado ao Criar; no escuro o corpo tem opacidade e entrelinha que preservam a hierarquia."
+
+authority:
+  - "docs/LANCAMENTO.md (critério 2 — no nível da régua; critério 3 — provada)"
+  - "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md e IDENTIDADE-DAS-PECAS.md"
+  - "apps/app/AGENTS.md (prova de tela: 375/768/1440, claro e escuro, teclado)"
+  - "parecer cego de 12/11 registrado no board pelo PR #201"
+  - "tools/backend-kanban/public/board.json (CORRETA-F08-ESTRUTURA)"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: "Parecer cego de 12/11: 'de Manaus' repetido no cabeçalho, no título e no seletor; sem seções nem índice; cabeçalho quebra no 375 e perde o contexto na rolagem; sem caminho de contribuição; corpo branco puro no escuro."
+
+allowed_paths:
+  - "docs/agents/tasks/RUN-142.task.yml"
+  - "apps/app/src/guia/**"
+  - "apps/app/src/telas/Guia.tsx"
+  - "apps/app/src/pecas/**"
+  - "apps/app/tests/**"
+  - ".visual/run-142/"
+
+forbidden:
+  - "alterar apps/web, supabase, migrations ou rotas de API"
+  - "editar tools/backend-kanban/public/board.json ou BOARD.md (o coordenador atualiza no merge)"
+  - "editar apps/app/tests/e2e/apoio.ts (crie um arquivo de apoio próprio do lote em apps/app/tests/e2e/)"
+  - "mudar a biblioteca de peças de forma que quebre outra tela; peça nova só aditiva"
+  - "inventar dado: estado vazio mostra o que existe ou o caminho que resolve, nunca conteúdo fictício"
+  - "usar skip/fixme novo, afrouxar asserção existente ou apagar teste"
+  - "rodar E2E fora da fila: sempre `node scripts/agents/prova-fila.mjs -- <comando>`"
+
+acceptance:
+  - "O nome da cidade aparece só no cabeçalho; 'Guia' cabe em uma linha no 375."
+  - "3 a 4 seções com âncoras navegáveis por teclado e subtítulo que permanece visível na rolagem; cabeçalho fixo compacto."
+  - "O botão 'Sugerir um lugar para o Guia' leva ao caminho real de sugestão do Criar."
+  - "No escuro, o corpo usa o token de texto secundário com contraste AA e entrelinha ajustada (medido no teste)."
+  - "E2E em 375/768/1440, nos dois temas; os specs existentes do Guia continuam verdes."
+  - "Capturas 375/768/1440 claro e escuro em .visual/run-142/."
+
+proof:
+  - "npx pnpm@11.18.0 lint"
+  - "npx pnpm@11.18.0 --filter @bivaque/app typecheck"
+  - "npx pnpm@11.18.0 --filter @bivaque/app test"
+  - "npx pnpm@11.18.0 --filter @bivaque/app build"
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 --filter @bivaque/app test:e2e (specs do lote e vizinhos)"
+  - "node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-142.task.yml"
+
+risk: interface do app, sem dado novo
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true
