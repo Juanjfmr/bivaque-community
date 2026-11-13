@@ -3,68 +3,129 @@ import { describe, expect, it } from "vitest"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   corpoDoEncontro,
+  encontroValido,
+  errosDoEncontro,
+  instanteDoEncontro,
   mensagemDaFalha,
-  paraCampoDeDataHora,
-  validarEncontro,
+  paraDataEHora,
+  type RascunhoDoEncontro,
+  rotuloDeDataHora,
 } from "@/src/eventos/formulario"
 
 /**
  * A régua do formulário no app. Ela não substitui a do servidor — evita mandar
  * o que já se sabe que volta 400, e mantém os mesmos limites para a mensagem
- * aparecer antes do pedido.
+ * aparecer no campo antes do pedido.
+ *
+ * Data e hora são digitadas em pt-BR; o campo nativo de data não serve porque
+ * segue o idioma do navegador.
  */
 
-const valido = {
+const valido: RascunhoDoEncontro = {
   titulo: "Café da manhã",
   descricao: "Encontro aberto.",
-  comecaEm: "2026-11-10T09:00",
+  data: "10/11/2026",
+  hora: "09:00",
   local: "Praça do centro",
 }
 
-describe("validação do encontro", () => {
+describe("erros do encontro, campo por campo", () => {
   it("aceita o formulário completo", () => {
-    expect(validarEncontro(valido)).toBeNull()
+    expect(errosDoEncontro(valido)).toEqual({})
+    expect(encontroValido(valido)).toBe(true)
   })
 
-  it("exige título com pelo menos dois caracteres", () => {
-    expect(validarEncontro({ ...valido, titulo: " a " })).toBe(
-      "O título precisa de pelo menos 2 caracteres.",
-    )
+  it("o título curto acusa o título, e só ele", () => {
+    expect(errosDoEncontro({ ...valido, titulo: " a " })).toEqual({
+      titulo: "O título precisa de pelo menos 2 caracteres.",
+    })
   })
 
   it("recusa título, descrição e local acima do teto do servidor", () => {
-    expect(validarEncontro({ ...valido, titulo: "x".repeat(201) })).toContain("200")
-    expect(validarEncontro({ ...valido, descricao: "x".repeat(2001) })).toContain("2000")
-    expect(validarEncontro({ ...valido, local: "x".repeat(201) })).toContain("200")
+    const grande = errosDoEncontro({
+      ...valido,
+      titulo: "x".repeat(201),
+      descricao: "x".repeat(2001),
+      local: "x".repeat(201),
+    })
+    expect(grande.titulo).toContain("200")
+    expect(grande.descricao).toContain("2000")
+    expect(grande.local).toContain("200")
   })
 
-  it("exige data e recusa data impossível", () => {
-    expect(validarEncontro({ ...valido, comecaEm: "  " })).toBe(
-      "Informe a data e a hora do encontro.",
+  it("a data vazia pede o formato brasileiro no próprio campo", () => {
+    expect(errosDoEncontro({ ...valido, data: "  " }).data).toBe("Informe a data, como 05/12/2026.")
+  })
+
+  it("mês invertido em formato americano é recusado, não adivinhado", () => {
+    expect(errosDoEncontro({ ...valido, data: "2026-12-05" }).data).toBe(
+      "Data em dia/mês/ano, como 05/12/2026.",
     )
-    expect(validarEncontro({ ...valido, comecaEm: "2026-13-45T99:99" })).toBe(
-      "Data e hora inválidas.",
+  })
+
+  it("dia que não existe no calendário é recusado", () => {
+    expect(errosDoEncontro({ ...valido, data: "31/02/2026" }).data).toBe(
+      "Essa data não existe. Confira o dia e o mês.",
     )
+  })
+
+  it("a hora é de 24 h: 19:00 passa, 25:00 e 7:00 não", () => {
+    expect(errosDoEncontro({ ...valido, hora: "19:00" }).hora).toBeUndefined()
+    expect(errosDoEncontro({ ...valido, hora: "25:00" }).hora).toBe("Hora em 24 h, como 19:30.")
+    expect(errosDoEncontro({ ...valido, hora: "7:00" }).hora).toBe("Hora em 24 h, como 19:30.")
+    expect(errosDoEncontro({ ...valido, hora: "" }).hora).toBe("Informe a hora, como 19:30.")
+  })
+})
+
+describe("instante do encontro", () => {
+  it("data e hora digitadas viram o instante do fuso de quem usa", () => {
+    const quando = instanteDoEncontro({ data: "10/11/2026", hora: "09:00" })
+    expect(quando).not.toBeNull()
+    expect(quando?.getFullYear()).toBe(2026)
+    expect(quando?.getMonth()).toBe(10)
+    expect(quando?.getDate()).toBe(10)
+    expect(quando?.getHours()).toBe(9)
+  })
+
+  it("data ou hora que não existem não viram instante", () => {
+    expect(instanteDoEncontro({ data: "31/02/2026", hora: "09:00" })).toBeNull()
+    expect(instanteDoEncontro({ data: "10/11/2026", hora: "24:00" })).toBeNull()
   })
 })
 
 describe("corpo enviado", () => {
   it("tira espaço sobrando e manda o instante em ISO", () => {
     const corpo = corpoDoEncontro({ ...valido, titulo: "  Café  ", local: "  Praça  " })
-    expect(corpo.titulo).toBe("Café")
-    expect(corpo.local).toBe("Praça")
-    expect(corpo.comecaEm).toBe(new Date("2026-11-10T09:00").toISOString())
+    expect(corpo).not.toBeNull()
+    expect(corpo?.titulo).toBe("Café")
+    expect(corpo?.local).toBe("Praça")
+    expect(corpo?.comecaEm).toBe(instanteDoEncontro(valido)?.toISOString())
+  })
+
+  it("sem data válida, não há corpo", () => {
+    expect(corpoDoEncontro({ ...valido, data: "" })).toBeNull()
   })
 })
 
-describe("ida e volta do campo de data", () => {
-  it("o valor do campo volta igual ao que foi digitado", () => {
-    const iso = new Date("2026-11-10T09:30").toISOString()
-    expect(paraCampoDeDataHora(iso)).toBe("2026-11-10T09:30")
+describe("ida e volta da data", () => {
+  it("o ISO que o servidor devolve volta como dd/mm/aaaa e HH:MM", () => {
+    const iso = new Date(2026, 10, 10, 9, 30).toISOString()
+    expect(paraDataEHora(iso)).toEqual({ data: "10/11/2026", hora: "09:30" })
   })
 
   it("data inválida não vira campo preenchido", () => {
-    expect(paraCampoDeDataHora("nada")).toBe("")
+    expect(paraDataEHora("nada")).toEqual({ data: "", hora: "" })
+  })
+})
+
+describe("exibição da data em português", () => {
+  it("dia da semana, dd/mm/aaaa e hora em 24 h", () => {
+    expect(rotuloDeDataHora(new Date(2026, 11, 5, 19, 0))).toBe("Sábado, 05/12/2026 · às 19h")
+    expect(rotuloDeDataHora(new Date(2026, 11, 5, 19, 30))).toBe("Sábado, 05/12/2026 · às 19h30")
+  })
+
+  it("data inválida não vira rótulo", () => {
+    expect(rotuloDeDataHora(new Date("nada"))).toBe("")
   })
 })
 

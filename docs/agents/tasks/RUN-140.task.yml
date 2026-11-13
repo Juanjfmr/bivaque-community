@@ -1,0 +1,70 @@
+# RUN-140 — F03 — formulários do Criar em pt-BR e telas de destino com contexto
+#
+# Fecha CORRETA-F03-FORMULARIO-PT-BR, CORRETA-F03-DESTINOS (parecer cego de 12/11). Lote paralelo: outros
+# lotes de tela rodam ao mesmo tempo em outros worktrees, por isso o quadro e o
+# apoio.ts comum ficam fora e o E2E passa pela fila de provas.
+
+task_id: RUN-140
+
+objective: "Os formulários do Criar mostram data e hora em pt-BR (dd/mm/aaaa, 'às 19h'), ancoram o erro no campo que o originou e só habilitam a ação primária quando os obrigatórios validam; Comunidade, Grupo e Publicação mostram o contexto (nome do grupo, cidade), uma ação única coerente e estado vazio honesto."
+
+authority:
+  - "docs/LANCAMENTO.md (critério 2 — no nível da régua; critério 3 — provada)"
+  - "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md e IDENTIDADE-DAS-PECAS.md"
+  - "apps/app/AGENTS.md (prova de tela: 375/768/1440, claro e escuro, teclado)"
+  - "parecer cego de 12/11 registrado no board pelo PR #201"
+  - "tools/backend-kanban/public/board.json (CORRETA-F03-FORMULARIO-PT-BR, CORRETA-F03-DESTINOS)"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: "Parecer cego de 12/11: formulário de encontro com mm/dd/yyyy e AM/PM, erro no rodapé longe do campo Título e 'Criar' habilitado com tudo vazio; Grupo e Publicação sem pista do destino."
+
+allowed_paths:
+  - "docs/agents/tasks/RUN-140.task.yml"
+  - "apps/app/src/eventos/**"
+  - "apps/app/src/criar/**"
+  - "apps/app/src/perguntas/**"
+  - "apps/app/src/grupos/**"
+  - "apps/app/src/telas/Comunidade.tsx"
+  - "apps/app/src/telas/Grupo.tsx"
+  - "apps/app/src/telas/Publicacao.tsx"
+  - "apps/app/src/telas/Evento.tsx"
+  - "apps/app/src/pecas/**"
+  - "apps/app/tests/**"
+  - ".visual/run-140/"
+
+forbidden:
+  - "alterar apps/web, supabase, migrations ou rotas de API"
+  - "editar tools/backend-kanban/public/board.json ou BOARD.md (o coordenador atualiza no merge)"
+  - "editar apps/app/tests/e2e/apoio.ts (crie um arquivo de apoio próprio do lote em apps/app/tests/e2e/)"
+  - "mudar a biblioteca de peças de forma que quebre outra tela; peça nova só aditiva"
+  - "inventar dado: estado vazio mostra o que existe ou o caminho que resolve, nunca conteúdo fictício"
+  - "usar skip/fixme novo, afrouxar asserção existente ou apagar teste"
+  - "rodar E2E fora da fila: sempre `node scripts/agents/prova-fila.mjs -- <comando>`"
+
+acceptance:
+  - "Data e hora aparecem e são digitadas em pt-BR (dd/mm/aaaa, 24 h) na entrada e na exibição dos formulários do Criar e do encontro."
+  - "A mensagem de erro fica logo abaixo do campo que a originou, com a borda do campo marcada e aria-describedby; nenhum erro de campo só no rodapé."
+  - "A ação primária fica desabilitada até os obrigatórios validarem e mostra o estado de envio; o erro do servidor continua visível e preserva o que foi digitado."
+  - "Grupo e Publicação têm cabeçalho com nome do grupo e cidade e uma ação única coerente; Comunidade, Grupo e Publicação têm estado vazio honesto."
+  - "E2E de erro e de sucesso dos formulários e dos destinos em 375/768/1440, nos dois temas; os specs existentes de Criar, grupos e eventos continuam verdes."
+  - "Capturas 375/768/1440 claro e escuro em .visual/run-140/."
+
+proof:
+  - "npx pnpm@11.18.0 lint"
+  - "npx pnpm@11.18.0 --filter @bivaque/app typecheck"
+  - "npx pnpm@11.18.0 --filter @bivaque/app test"
+  - "npx pnpm@11.18.0 --filter @bivaque/app build"
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 --filter @bivaque/app test:e2e (specs do lote e vizinhos)"
+  - "node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-140.task.yml"
+
+risk: interface do app, sem dado novo
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true

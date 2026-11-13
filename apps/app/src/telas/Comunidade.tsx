@@ -61,6 +61,25 @@ const FILTRO_DO_SERVIDOR: Readonly<Record<string, FiltroDePerguntas>> = {
   mine: "minhas",
 }
 
+/**
+ * O vazio fala do filtro escolhido. Dizer "ninguém perguntou nada" em "Minhas"
+ * seria mentira sobre a cidade; o vazio aponta o próximo passo de cada caso.
+ */
+const VAZIO_DA_COMUNIDADE: Readonly<Record<string, { titulo: string; texto: string }>> = {
+  help: {
+    titulo: "Ninguém esperando resposta",
+    texto: "Você pode buscar uma indicação ou iniciar uma nova pergunta.",
+  },
+  ok: {
+    titulo: "Nenhuma indicação resolvida ainda",
+    texto: "Quando uma pergunta receber a resposta certa, ela fica guardada aqui.",
+  },
+  mine: {
+    titulo: "Você ainda não perguntou nada",
+    texto: "Peça uma indicação à cidade: quem já passou por isso responde.",
+  },
+}
+
 export function Comunidade() {
   const casca = useCasca()
   const navegacao = useNavegacao()
@@ -207,7 +226,7 @@ export function Comunidade() {
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
-      ) : aba === "ind" ? (
+      ) : (
         <>
           <div className="flex items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 py-3">
             <Icone nome="history_edu" className="size-6 shrink-0 text-(--primary)" />
@@ -235,7 +254,7 @@ export function Comunidade() {
             rotulo="Filtrar perguntas"
           />
 
-          <div data-topicos="filtro-comunidade">
+          <div data-topicos="filtro-comunidade" className="min-w-0">
             <ChipsDeFiltro
               itens={TOPICOS}
               valor={topico}
@@ -247,9 +266,16 @@ export function Comunidade() {
           {perguntas.length === 0 ? (
             <EstadoVazio
               titulo={
-                filtro === "help" ? "Ninguém esperando resposta" : "Nenhuma pergunta por aqui"
+                topico === "todos"
+                  ? (VAZIO_DA_COMUNIDADE[filtro]?.titulo ?? "Nenhuma pergunta por aqui")
+                  : "Nenhuma pergunta deste tópico"
               }
-              texto="Você pode buscar uma indicação ou iniciar uma nova pergunta."
+              texto={
+                topico === "todos"
+                  ? (VAZIO_DA_COMUNIDADE[filtro]?.texto ??
+                    "Você pode buscar uma indicação ou iniciar uma nova pergunta.")
+                  : "Troque o tópico ou faça a primeira pergunta sobre ele."
+              }
               icone="forum"
               acao={{
                 rotulo: "Pedir indicação",
@@ -283,12 +309,6 @@ export function Comunidade() {
             </div>
           )}
         </>
-      ) : (
-        <EstadoVazio
-          titulo="Ainda sem grupos nesta cidade"
-          texto="Grupos reúnem quem tem a mesma rotina, o mesmo ciclo ou o mesmo interesse."
-          icone="group"
-        />
       )}
     </section>
   )

@@ -551,10 +551,21 @@ test.describe("teclado nas superfícies novas", () => {
     await expect(folha).toBeVisible()
     await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
 
-    // Enter sem preencher prova o caminho do erro sem sair da folha.
-    await alcancarComTab(page, folha.getByRole("button", { name: "Criar", exact: true }))
-    await page.keyboard.press("Enter")
-    await expect(folha.getByRole("alert")).toBeVisible()
+    // Sem os obrigatórios, a ação primária está desligada: não há envio a fazer,
+    // e um controle desligado nem entra na ordem de foco.
+    const enviar = folha.getByRole("button", { name: "Criar", exact: true })
+    await expect(enviar).toBeDisabled()
+
+    // O erro nasce no campo: um título de uma letra, ao sair do campo, mostra a
+    // frase logo abaixo e o campo aponta para ela por aria-describedby.
+    const titulo = folha.getByLabel("Título")
+    await alcancarComTab(page, titulo)
+    await page.keyboard.type("C")
+    await page.keyboard.press("Tab")
+    await expect(folha.locator("#encontro-titulo-erro")).toContainText("pelo menos 2 caracteres")
+    await expect(titulo).toHaveAttribute("aria-describedby", /encontro-titulo-erro/)
+    await expect(titulo).toHaveAttribute("aria-invalid", "true")
+    await expect(enviar).toBeDisabled()
 
     await page.keyboard.press("Escape")
     await expect(folha).toHaveCount(0)

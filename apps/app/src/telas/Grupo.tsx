@@ -38,6 +38,26 @@ import { quandoDe } from "@/src/telas/comum"
  */
 type BaseParaPublicar = Readonly<{ ordem: OrdemDoGrupo; proximo: string | null }>
 
+/** O que cada ordem mostra quando não há nada: o vazio fala da ordem, não do grupo. */
+const VAZIO_DO_GRUPO: Readonly<Record<OrdemDoGrupo, { titulo: string; texto: string }>> = {
+  recentes: {
+    titulo: "Ainda sem publicações",
+    texto: "Quando alguém escrever no grupo, o que importa aparece aqui.",
+  },
+  discutidas: {
+    titulo: "Ainda sem publicações",
+    texto: "Quando alguém escrever no grupo, o que importa aparece aqui.",
+  },
+  salvas: {
+    titulo: "Nada salvo neste grupo",
+    texto: "Use Salvar numa publicação do grupo para encontrá-la aqui.",
+  },
+  ocultadas: {
+    titulo: "Nada oculto neste grupo",
+    texto: "Ocultar esconde uma publicação só de você; o que você ocultar aparece aqui.",
+  },
+}
+
 export function Grupo() {
   const { id = "" } = useParams({ strict: false }) as { id?: string }
   const navegacao = useNavegacao()
@@ -192,13 +212,21 @@ export function Grupo() {
     )
   const { grupo, publicacoes } = dados
   const primeira = recemPublicada !== null && publicacoes[0]?.id === recemPublicada.id
+  // O grupo é da cidade de quem lê: a política do banco só mostra grupo da
+  // própria localidade, e a cidade é a mesma que o topo do app mostra.
+  const subtitulo = [
+    casca.cidade,
+    grupo.membros === null ? "" : `${grupo.membros} membros`,
+    grupo.fechado ? "Fechado" : "Aberto",
+  ]
+    .filter((parte) => parte !== "")
+    .join(" · ")
+  // O vazio diz o que existe de fato na ordem escolhida: "sem publicações" num
+  // filtro de salvas seria mentira sobre o grupo.
+  const vazio = VAZIO_DO_GRUPO[ordem]
   return (
     <section data-tela="grupo" className="grid gap-3">
-      <CabecaDePagina
-        titulo={grupo.nome}
-        subtitulo={`${grupo.membros === null ? "" : `${grupo.membros} membros · `}${grupo.fechado ? "Fechado" : "Aberto"}`}
-        acao={grupo.fechado ? <Etiqueta tom="neutro">Fechado</Etiqueta> : undefined}
-      />
+      <CabecaDePagina titulo={grupo.nome} subtitulo={subtitulo} />
       <Participacao
         key={grupo.id}
         grupo={grupo}
@@ -236,9 +264,16 @@ export function Grupo() {
           {grupo.regras || "Este grupo ainda não informou regras."}
         </p>
       </details>
-      {grupo.admin ? <Pedidos key={grupo.id} id={grupo.id} /> : null}
+      {/* Chaves distintas de propósito: as duas peças são irmãs e o React recusa
+          duas com o mesmo key; o id remonta as duas quando o grupo troca. */}
+      {grupo.admin ? <Pedidos key={`pedidos-${grupo.id}`} id={grupo.id} /> : null}
       {grupo.membro ? (
-        <Escrever key={grupo.id} grupo={grupo} cidade={casca.cidade} aoPublicar={aoPublicar} />
+        <Escrever
+          key={`escrever-${grupo.id}`}
+          grupo={grupo}
+          cidade={casca.cidade}
+          aoPublicar={aoPublicar}
+        />
       ) : null}
       {/* O foco já leva ao cartão; o anúncio garante que quem usa leitor de
           tela saiba o que houve, inclusive quando a publicação não entrou. */}
@@ -282,8 +317,10 @@ export function Grupo() {
           </fieldset>
           {publicacoes.length === 0 ? (
             <EstadoVazio
-              titulo="Ainda sem publicações"
-              texto="Quando alguém escrever no grupo, o que importa aparece aqui."
+              titulo={grupo.membro ? vazio.titulo : "Conversas de quem participa"}
+              texto={
+                grupo.membro ? vazio.texto : "Entre no grupo para ler e escrever com quem já está."
+              }
               icone="forum"
             />
           ) : (
