@@ -230,6 +230,29 @@ test.describe("estrutura do Guia", () => {
     await expect(page.locator('[data-formulario-criacao="indicate"]')).toBeVisible()
   })
 
+  test("o guia vazio mostra o caminho de sugestão em vez de conteúdo inventado", async ({
+    page,
+  }) => {
+    // A rota registrada depois vence: o guia da cidade responde sem referências.
+    await page.route(/\/api\/app\/guia(?:\?|$)/, async (rota) => {
+      await rota.fulfill({ json: { cidade: CIDADE, entradas: [], proximo: null } })
+    })
+    await simularCriar(page)
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto("/app/guia")
+    await expect(page.locator('[data-tela="guia"]')).toBeVisible()
+
+    const vazio = page.locator('[data-estado="vazio"]')
+    await expect(vazio).toBeVisible()
+    await expect(vazio).toContainText("O guia ainda está sendo montado")
+    const acao = vazio.locator('[data-acao="acao-do-vazio"]')
+    await expect(acao).toContainText("Sugerir um lugar para o Guia")
+
+    await acao.click()
+    await expect(page).toHaveURL(/\/app\/inicio$/)
+    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
+  })
+
   test("corpo com token secundário, contraste AA, entrelinha e captura nos dois temas", async ({
     page,
   }) => {
