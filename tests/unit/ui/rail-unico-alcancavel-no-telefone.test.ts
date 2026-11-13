@@ -39,7 +39,10 @@ const read = (...segments: string[]) => readFileSync(join(root, ...segments), "u
 describe("/inicio: o que o trilho oferece continua alcançável no telefone", () => {
   const rail = read("apps", "web", "app", "(shell)", "inicio", "right-rail.tsx")
   const explorar = read("apps", "web", "app", "(shell)", "explorar", "page.tsx")
-  const busca = read("apps", "web", "app", "(shell)", "explorar", "busca", "page.tsx")
+  // LT-002: a página explorar/busca saiu (307 para /app/busca). A porta /localidade
+  // fora do trilho sobrevive em explorar/servicos ("Trocar de cidade"); a prova
+  // reloca para lá em vez de ler um arquivo removido.
+  const servicos = read("apps", "web", "app", "(shell)", "explorar", "servicos", "page.tsx")
   const shell = read("apps", "web", "app", "components", "bivaque", "app-shell.tsx")
   const page = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
 
@@ -55,7 +58,7 @@ describe("/inicio: o que o trilho oferece continua alcançável no telefone", ()
 
   it("'De mudança?' tem porta fora do trilho", () => {
     expect(rail).toContain('href="/localidade"')
-    expect(busca).toContain('href="/localidade"')
+    expect(servicos).toContain('href="/localidade"')
   })
 
   it("Indicações tem porta no cabeçalho, em toda largura", () => {

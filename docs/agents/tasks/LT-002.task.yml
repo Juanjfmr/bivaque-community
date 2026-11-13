@@ -45,6 +45,7 @@ allowed_paths:
   - apps/web/app/(shell)/explorar/page.tsx
   - apps/web/app/(shell)/guide/page.tsx
   - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/ui/rail-unico-alcancavel-no-telefone.test.ts
   - tests/e2e/global-search-flow.spec.ts
   - tests/e2e/link-crawl.spec.ts
   - tests/e2e/busca-redirects.spec.ts
@@ -71,6 +72,7 @@ acceptance:
 
 proof:
   - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
   - npx pnpm@11.18.0 test:scope
   - npx pnpm@11.18.0 exec vitest run tests/unit/infra/lan-troca-redirect.test.ts --maxWorkers=1
   - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
