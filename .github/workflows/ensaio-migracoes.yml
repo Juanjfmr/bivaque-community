@@ -90,6 +90,9 @@ jobs:
           xargs -r rm -f < /tmp/pendentes.txt
           echo "migracoes no estado de producao: $(ls supabase/migrations | wc -l)"
           pnpm exec supabase start
+          # O pgTAP mede contra um banco sem o seed de desenvolvimento, como no
+          # Pull Request CI; produção também não tem as personas do seed.
+          pnpm exec supabase db reset --local --no-seed
 
       - name: Aplica as pendentes como o db push --include-all
         run: |
