@@ -36,7 +36,7 @@ test.describe("barra do topo por rota", () => {
     // A marca é o símbolo do Bivaque em `components/bivaque/marca.tsx`
     // (`data-marca="simbolo"`), como no protótipo (`utilities/format.js: mark`).
     const marcaNoTopo = page.locator(`${SELETOR_BARRA} [data-marca="simbolo"]`)
-    if ((page.viewportSize()?.width ?? 0) < 720) await expect(marcaNoTopo).toBeVisible()
+    if ((page.viewportSize()?.width ?? 0) < 1024) await expect(marcaNoTopo).toBeVisible()
     else {
       await expect(marcaNoTopo).toBeHidden()
       await expect(page.locator('[data-marca="rail"] [data-marca="simbolo"]')).toBeVisible()
