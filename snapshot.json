@@ -3,8 +3,8 @@
   "title": "Prontidão do Bivaque",
   "scopeVersion": "2026-11-05",
   "source": "docs/LANCAMENTO.md",
-  "generatedAt": "2026-11-13T04:31:33.877Z",
-  "revision": "242d6cc2f8ff7d8fc8e8036b4fca808ac6cabaab",
+  "generatedAt": "2026-11-13T07:18:33.465Z",
+  "revision": "26e2899b73fba2ea8bc43ef945119c1a55b9d6e6",
   "boardUpdatedAt": "2026-11-07",
   "stage": "Em construção",
   "metrics": {
@@ -58,7 +58,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "unverified",
         "declared": true,
         "verified": false,
         "evidenceCount": 0,
@@ -69,7 +69,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "unverified"
     },
     {
       "id": "F02",
@@ -99,7 +99,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -110,7 +110,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "pending"
     },
     {
       "id": "F03",
@@ -140,7 +140,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -151,7 +151,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "pending"
     },
     {
       "id": "F04",
@@ -182,7 +182,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "unverified",
         "declared": true,
         "verified": false,
         "evidenceCount": 0,
@@ -193,7 +193,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "partial"
     },
     {
       "id": "F05",
@@ -223,7 +223,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "unverified",
         "declared": true,
         "verified": false,
         "evidenceCount": 0,
@@ -234,7 +234,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "unverified"
     },
     {
       "id": "F06",
@@ -264,7 +264,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -275,7 +275,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "pending"
     },
     {
       "id": "F07",
@@ -306,7 +306,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -317,7 +317,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "partial"
     },
     {
       "id": "F08",
@@ -347,7 +347,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -358,7 +358,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "pending"
     },
     {
       "id": "F09",
@@ -388,7 +388,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -399,7 +399,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "partial"
     },
     {
       "id": "F10",
@@ -430,7 +430,7 @@
         ]
       },
       "integration": {
-        "status": "failed",
+        "status": "pending",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -441,7 +441,7 @@
         ]
       },
       "blocked": false,
-      "status": "failed"
+      "status": "partial"
     }
   ],
   "gates": [
@@ -479,25 +479,25 @@
   "changes": [],
   "checks": {
     "frontend": {
-      "status": "inconclusive",
-      "revision": "242d6cc2f8ff7d8fc8e8036b4fca808ac6cabaab",
+      "status": "pending",
+      "revision": "26e2899b73fba2ea8bc43ef945119c1a55b9d6e6",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43362760715",
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43362760691"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43384790750",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43384790650"
       ]
     },
     "backend": {
-      "status": "inconclusive",
-      "revision": "242d6cc2f8ff7d8fc8e8036b4fca808ac6cabaab",
+      "status": "pending",
+      "revision": "26e2899b73fba2ea8bc43ef945119c1a55b9d6e6",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43362760715"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43384790750"
       ]
     },
     "integration": {
-      "status": "failure",
-      "revision": "242d6cc2f8ff7d8fc8e8036b4fca808ac6cabaab",
+      "status": "pending",
+      "revision": "26e2899b73fba2ea8bc43ef945119c1a55b9d6e6",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43362760715"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/43384790750"
       ]
     }
   },
