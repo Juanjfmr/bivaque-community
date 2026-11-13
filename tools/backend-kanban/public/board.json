@@ -7581,14 +7581,14 @@
     },
     {
       "phase": "LanÃ§amento",
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "26e2899b",
       "links": ["docs/LANCAMENTO.md"],
       "id": "CORRETA-F02-ESTADO-VAZIO",
       "title": "F02: Inicio e Busca com estado de primeira entrada real",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "O parecer cego reprovou o Inicio e a Busca por nao terem estado vazio de primeira entrada: a Busca abre sem buscas recentes, sugestoes de bairro/cidade ou atalhos, e o Inicio nao oferece um feed com o que existe na cidade. Entregar o estado vazio honesto nas duas telas (frase humana, o que existe ali, o caminho que resolve), seguindo PADRAO-DE-TELA e a regua Nextdoor citada no cartao. Fechar com capturas 375/768/1440 nos dois temas.",
       "checklist": [
         "Estado de primeira entrada do Inicio com conteudo real da cidade ou, vazio, com o caminho que resolve",
@@ -7597,21 +7597,24 @@
       ],
       "dependencies": ["CORRETA-RODAPE-CASCA"],
       "proof": [
-        "12/12: aberto pelo parecer cego; achado 4 de F02 e correcao 1 do top 3 ('estados vazios e de primeira entrada reais em todas as rotas')."
+        "12/12: aberto pelo parecer cego; achado 4 de F02 e correcao 1 do top 3 ('estados vazios e de primeira entrada reais em todas as rotas').",
+        "13/11: fechado pelo RUN-139, PR #209 (merge 26e2899b). Estado de primeira entrada honesto no Início e na Busca (frase humana, o que existe na cidade, o caminho que resolve; buscas recentes só com registro real). E2E do lote 205/0 + specs reais alinhados; capturas 375/768/1440 nos dois temas. Revisão independente Qwen: PASS com ressalvas."
       ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "26e2899b",
       "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"],
       "id": "CORRETA-F02-COLUNA-DE-LEITURA",
       "title": "F02: feed em cartoes com coluna de leitura no 1440 e barra inferior ate 1024",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "No parecer cego, o feed do Inicio e uma lista de texto sem cartao, com 500 px de largura no meio de 1.200 px de vazio no desktop, e no tablet o rail de 100 px comprime rotulos como 'Comunidade'. Entregar cada publicacao como cartao (autor, bairro, texto, acoes), coluna de leitura de largura maxima e rail de contexto no desktop; no tablet trocar o rail por barra inferior ate 1024. Fechar com capturas nas tres larguras e nos dois temas.",
       "checklist": [
         "Publicacao como cartao da biblioteca de pecas (nao desenho local)",
@@ -7620,20 +7623,25 @@
         "Capturas 375/768/1440 claro e escuro na nova rodada cega"
       ],
       "dependencies": ["CORRETA-RODAPE-CASCA"],
-      "proof": ["12/12: aberto pelo parecer cego; achados 2, 5 e 6 de F02 e correcao 2 do top 3."],
+      "proof": [
+        "12/12: aberto pelo parecer cego; achados 2, 5 e 6 de F02 e correcao 2 do top 3.",
+        "13/11: fechado pelo RUN-139, PR #209 (merge 26e2899b). Feed em cartões da biblioteca de peças, coluna de leitura + rail de contexto no 1440, barra inferior até 1024 sem rótulo quebrado no 768; espaço da barra reservado no conteúdo. E2E + capturas nos três tamanhos e dois temas. Ressalva B da revisão (breakpoint JS ainda em 720 vs CSS 1024) vira o cartão CORRETA-F02-BREAKPOINT-JS."
+      ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "26e2899b",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
       "id": "CORRETA-F02-BUSCA-VISIVEL",
       "title": "F02: campo 'Buscar em [cidade]' visivel nos tres tamanhos e termo tratado",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "A busca existe so como icone da casca: o campo do topo nao navega para /app/busca nem pede a rota de busca, e a tela de busca nao tem campo proprio, so acoes. Para a proposta de achar gente e servicos por cidade, buscar precisa estar a um toque e o termo digitado tem de chegar a tela de busca (hoje ?q= e descartado). Entregar campo visivel com pseudo-texto 'Buscar em [cidade]', ligado a rota de busca com o termo, nos tres tamanhos; prova E2E de que digitar no campo abre a busca com resultados.",
       "checklist": [
         "Campo 'Buscar em [cidade]' visivel em 375/768/1440",
@@ -7643,7 +7651,35 @@
       ],
       "dependencies": ["CORRETA-F02-ESTADO-VAZIO"],
       "proof": [
-        "12/12: aberto pelo parecer cego (achado 3 de F02) e pela depuracao das capturas cegas de 12/12, que mostrou que o campo do topo nao navega e a tela de busca nao tem campo proprio."
+        "12/12: aberto pelo parecer cego (achado 3 de F02) e pela depuracao das capturas cegas de 12/12, que mostrou que o campo do topo nao navega e a tela de busca nao tem campo proprio.",
+        "13/11: fechado pelo RUN-139, PR #209 (merge 26e2899b). Campo 'Buscar em [cidade]' visível em 375/768/1440; o termo chega a /app/busca?q= e dispara a consulta (provado do toque ao resultado); vazio e erro cobertos. Decisão C do coordenador: o spec do lote prova 375/768/1440 (skip condicional por viewport), 320/360/430 seguem cobertos por mobile-first (verde). Decisão A: a fixture de apoio.ts foi ajustada pelo coordenador (e2239b28) para o busca-termo-url, aceita explicitamente — aditiva, sem afrouxar asserção."
+      ],
+      "tests": [],
+      "blockers": [],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-13"
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "26e2899b",
+      "links": ["docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"],
+      "id": "CORRETA-F02-BREAKPOINT-JS",
+      "title": "F02: alinhar o breakpoint JS da casca a 1024 (a barra inferior já é CSS até 1024)",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Ressalva B da revisão independente do RUN-139: o CSS da navegação passou de rail para barra inferior até 1024, mas o JS ficou em 720 — lib/casca.ts (navegacaoVisivel/criaVisivel), lib/movimento.ts (minimização ao rolar, título sob a barra) e casca/MenuCriar.tsx (central = innerWidth < 720). Na faixa 720–1023 a barra inferior não minimiza, não some fora das rotas-raiz e o Criar abre com geometria de desktop. Os fluxos funcionam no 768 (E2E verde); falta a consistência de comportamento. Alinhar o JS a 1024, atualizar os guards de largura do casca.spec.ts e os comentários que ainda dizem 720.",
+      "checklist": [
+        "lib/casca.ts: navegacaoVisivel/criaVisivel usam 1024",
+        "lib/movimento.ts: minimização e título sob a barra usam 1024",
+        "casca/MenuCriar.tsx: geometria central usa 1024",
+        "casca.spec.ts: guards de largura atualizados, asserções mantidas; comentários de 720 corrigidos",
+        "E2E da casca em 375/768/1440 verde nos dois temas"
+      ],
+      "dependencies": ["CORRETA-F02-COLUNA-DE-LEITURA"],
+      "proof": [
+        "13/11: descoberto pela revisão independente Qwen do RUN-139 (ressalva B, PR #209). O CSS passou a 1024 mas o JS ficou em 720; aceito como follow-up porque os fluxos funcionam no 768 e a aceitação literal do RUN-139 foi atendida."
       ],
       "tests": [],
       "blockers": []
