@@ -52,9 +52,9 @@ const raiz = createRootRoute({
 })
 
 /**
- * Nas rotas do Mercado, a busca (filtros na URL) sobrevive às navegações que
- * não mexem nela — inclusive as regravações de estado da entrada (rolagem,
- * foco) que a camada fina faz em `replace`. Quem passa `search` explícito
+ * Nas rotas que persistem busca (filtros na URL), o search sobrevive às
+ * navegações que não mexem nele — inclusive as regravações de estado da entrada
+ * (rolagem, foco) que a camada fina faz em `replace`. Quem passa `search` explícito
  * manda; sem ele, o filtro atual continua no endereço (LAN-F06). A troca de aba
  * passa `search: {}` explícito (`buscaAoTrocarDeRota`): o filtro da aba
  * anterior não segue para a nova.
@@ -73,7 +73,7 @@ const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) =>
 }
 
 const BUSCA_PERSISTENTE = { middlewares: [manterBuscaDoMercado] }
-const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado"])
+const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado", "busca"])
 
 /**
  * As telas reais do produto entram aqui conforme cada onda. Fora do modo de
