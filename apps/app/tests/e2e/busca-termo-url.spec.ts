@@ -90,6 +90,11 @@ test.describe("aterrissagem com o termo no endereço", () => {
       await simularBuscaDaProva(page)
       await page.goto(`/app/busca?q=${TERMO_DA_PROVA}`)
 
+      await expect
+        .poll(() => page.evaluate(() => window.history.state?.bivaqueEntrada?.versao ?? 0))
+        .toBe(1)
+      expect(new URL(page.url()).searchParams.get("q")).toBe(TERMO_DA_PROVA)
+
       // O primeiro render útil já tem o termo no campo e a consulta resolvida:
       // nada de estado vazio entre a chegada e o resultado.
       await expect(campoDaBusca(page)).toHaveValue(TERMO_DA_PROVA)

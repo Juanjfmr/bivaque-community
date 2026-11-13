@@ -72,6 +72,9 @@ test.describe("busca global do cabecalho", () => {
     await field.fill("escola")
     await page.keyboard.press("Enter")
 
+    await expect
+      .poll(() => page.evaluate(() => window.history.state?.bivaqueEntrada?.versao ?? 0))
+      .toBe(1)
     await expect(page).toHaveURL(/\/app\/busca\?q=escola/)
 
     await context.close()
