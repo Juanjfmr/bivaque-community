@@ -41,7 +41,7 @@ export function Segmentos({
     <div data-segmentos="mercado" className="flex min-w-0 flex-wrap items-center gap-2">
       <nav
         aria-label={rotulo}
-        className="flex min-w-0 max-w-full flex-1 gap-1 overflow-x-auto overscroll-x-contain"
+        className="flex min-w-0 basis-full gap-1 overflow-x-auto overscroll-x-contain sm:basis-0 sm:flex-1"
       >
         {itens.map((item) => {
           const ativo = item.id === valor
@@ -72,7 +72,9 @@ export function Segmentos({
           )
         })}
       </nav>
-      {acao === undefined ? null : <div className="shrink-0">{acao}</div>}
+      {acao === undefined ? null : (
+        <div className="ml-auto shrink-0 sm:ml-0">{acao}</div>
+      )}
     </div>
   )
 }

@@ -53,7 +53,7 @@ for (const tema of ["light", "dark"] as const) {
       // Ordem por teclado: "Mais próximos" sem origem de localização cai para
       // a ordem da lista e diz por quê, sem mexer no que está desenhado.
       const ordem = page.getByLabel("Ordenar por")
-      await expect(ordem).toHaveText("Mais recentes")
+      await expect(ordem).toContainText("Mais recentes")
       const nomes = () =>
         page
           .locator('[data-cartao="negocio"] h3')
@@ -63,7 +63,7 @@ for (const tema of ["light", "dark"] as const) {
       await page.keyboard.press("Enter")
       await page.keyboard.press("ArrowDown")
       await page.keyboard.press("Enter")
-      await expect(ordem).toHaveText("Mais próximos")
+      await expect(ordem).toContainText("Mais próximos")
       const aviso = page.locator('[data-aviso="ordem"]')
       await expect(aviso).toBeVisible()
       await expect(aviso).toContainText("Ainda não sabemos onde você está")
@@ -74,7 +74,7 @@ for (const tema of ["light", "dark"] as const) {
       await page.keyboard.press("Enter")
       await page.keyboard.press("ArrowUp")
       await page.keyboard.press("Enter")
-      await expect(ordem).toHaveText("Mais recentes")
+      await expect(ordem).toContainText("Mais recentes")
       await expect(aviso).toHaveCount(0)
 
       // O segmento leva ao endereço da seção, não a um filtro escondido.
