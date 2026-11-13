@@ -6,6 +6,8 @@ export type PerfilDaPessoa = Readonly<{
   bio: string | null
   cidade: string
   localizacao: LocalizacaoDoPerfil
+  /** false quando o CEP existe mas ainda não tem posição conhecida. */
+  distanciaDisponivel: boolean
 }>
 export type ContagensDoPerfil = Readonly<{
   salvos: number
@@ -99,6 +101,7 @@ function lerPerfilDaPessoa(corpo: Corpo): PerfilDaPessoa {
     bio: textoOuNulo(corpo, "bio"),
     cidade: textoOuNulo(corpo, "cidade") ?? "",
     localizacao: lerLocalizacao(corpo["localizacao"]),
+    distanciaDisponivel: booleano(corpo, "distanciaDisponivel"),
   }
 }
 
@@ -156,15 +159,18 @@ export async function salvarPerfil(
 /**
  * Grava o CEP do perfil — ou apaga a localização, com `null`.
  *
- * O servidor geocodifica e devolve só o CEP e a marca de definida; latitude e
- * longitude não passam por esta camada.
+ * O servidor geocodifica e devolve o CEP, a marca de definida e se a distância
+ * pode ser calculada; latitude e longitude não passam por esta camada.
  */
 export async function salvarLocalizacao(
   cep: string | null,
   opcoes: Opcoes = {},
-): Promise<LocalizacaoDoPerfil> {
+): Promise<Readonly<{ localizacao: LocalizacaoDoPerfil; distanciaDisponivel: boolean }>> {
   const corpo = await enviar("PUT", "/api/app/voce/localizacao", { cep }, opcoes)
-  return lerLocalizacao(corpo["localizacao"])
+  return {
+    localizacao: lerLocalizacao(corpo["localizacao"]),
+    distanciaDisponivel: booleano(corpo, "distanciaDisponivel"),
+  }
 }
 
 export async function lerPublicacoes(opcoes: Opcoes = {}): Promise<PublicacoesDaPessoa> {
