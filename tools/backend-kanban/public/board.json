@@ -6785,12 +6785,15 @@
     {
       "phase": "Lançamento",
       "status": "repo",
-      "dependencies": [],
+      "dependencies": ["F10-R3-SESSION-DERIVED"],
       "tests": [],
       "blockers": [],
-      "proof": [],
-      "updatedAt": "2026-11-06",
-      "sourceRevision": "f9492a1d",
+      "proof": [
+        "13/11: reconciliado pelo coordenador — o cartão estava desatualizado (06/11). A jornada JÁ está ligada e provada: rotas GET/POST/DELETE /api/app/voce/familia + tela Familia.tsx pela sessão (RUN-018, PR #147, merge 3093390f); service_role só no servidor após exigirSessao, id sempre da sessão, nunca do corpo. pgTAP positivo/negativo (plan 20) + revisão R3 sem CRÍTICO/ALTO (RUN-030/031, PR #194, ef72c839; docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md). E2E real f10-voce-real.spec.ts:180 (convite entra na lista, revogação some) em 375/768/1440. ADR-20261111-convite-familiar-pela-sessao listado em RATIFICACAO.md. Limite de envio (5704b78d) e corrida de convites (261a1ab5) corrigidos.",
+        "Pendência que impede fechar como 'posse derivada da sessão' (ADR-20261111): o banco ainda aceita o id do titular por parâmetro; a posse é verificada na rota, não derivada de auth.uid() no banco. O hardening F10-R3-SESSION-DERIVED não é trivial: o caminho usa service_role, que não carrega o JWT do usuário, então auth.uid() seria nulo — exige redesenhar como a posse chega ao banco."
+      ],
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "ad5ac070",
       "id": "F10-FAMILIA",
       "title": "F10 família: ligar convite e vínculo familiar ao app",
       "priority": "P1",
