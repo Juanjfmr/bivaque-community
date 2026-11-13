@@ -7199,25 +7199,55 @@
     },
     {
       "id": "EVENTOS-RESIDUOS-POS-TROCA",
-      "title": "Eventos: limpar resíduos da tela antiga depois da troca",
+      "title": "Eventos e busca: limpar resíduos das telas antigas depois da troca",
       "phase": "Lançamento",
       "priority": "P3",
       "category": "repo",
       "status": "next",
-      "description": "Sobras da troca de /events: create-menu perdeu o atalho de criar evento; comentário falso em event-invites.spec.ts:96 (o evento 5 é upcoming; a seção some porque o membro 6 é organizador); scripts/visual/capture.mjs:188,361 ainda captura /events/novo; resíduos sem consumidor em active-nav.ts:58 e feed-right-rail.tsx:170; board.json/RUN-020/RUN-007 citam arquivos removidos.",
+      "description": "Sobras da troca de /events: create-menu perdeu o atalho de criar evento; comentário falso em event-invites.spec.ts:96 (o evento 5 é upcoming; a seção some porque o membro 6 é organizador); scripts/visual/capture.mjs:188,361 ainda captura /events/novo; resíduos sem consumidor em active-nav.ts:58 e feed-right-rail.tsx:170; board.json/RUN-020/RUN-007 citam arquivos removidos. Sobras da troca de /explorar/busca (LT-002, PR #215): scripts/visual/capture.mjs:198-206,442-445 ainda mira /explorar/busca?q=… com o título 'Resultados para' da tela removida (a rota agora 307-para-app); apps/web/lib/search/groups.ts + tests/unit/search/groups.test.ts ficaram órfãos (buildSearchGroups sem consumidor de produção; só lib/search/params segue usado por servicos).",
       "checklist": [
         "Restaurar o atalho de criar evento no menu",
         "Corrigir comentário e captura órfã",
-        "Limpar resíduos e referências no board/docs"
+        "Limpar resíduos e referências no board/docs",
+        "Capturador: as 4 capturas de /explorar/busca miram /app/busca com o título real do app, ou saem se já cobertas pela captura do app",
+        "Remover lib/search/groups.ts e seu teste (conferir importadores antes; params fica)"
       ],
-      "proof": ["11/11: aberto na revisão do #176 (ressalvas BAIXAS do reviewer 7c4d0b40)."],
+      "proof": [
+        "11/11: aberto na revisão do #176 (ressalvas BAIXAS do reviewer 7c4d0b40).",
+        "13/11: estendido com as ressalvas A2/A3 da revisão independente Qwen do LT-002 (PR #215): capturador fora de allowed_paths do lote e módulo órfão confirmado por grep (único importador de groups.ts era a página removida)."
+      ],
       "tests": [],
       "links": [],
       "dependencies": ["LAN-TROCA"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "9b0dbf2b",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "bd69e091",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [false, false, false, false, false]
+    },
+    {
+      "id": "BUSCA-SESSAO-VENCIDA",
+      "title": "F02: Busca distingue sessão vencida de erro e recupera a prova negativa no navegador",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Lacuna descoberta na revisão independente do LT-002 (B1): Busca.tsx trata toda falha de consulta como EstadoDeErro — o 401 que a API devolve sem sessão (busca.test.ts:105) vira 'Confira a conexão', não estado de sessão vencida. O cliente já classifica 401 como sem-sessao (apps/app/lib/api/cliente.ts:27,37); falta a Busca consumir isso e renderizar o estado de acesso (molde: Agenda.tsx e EstadoDeSessaoVencida). Inclui a ressalva A4: a prova negativa 'entrada pendente não aparece na busca' saiu do e2e web na troca e ficou só em nível de rota (busca.test.ts:138); restaurar prova de navegador no app. Executar depois que o LT-002 estiver na main e atualizar tests/e2e/busca-redirects.spec.ts para o estado novo, sem afrouxar a prova do 307.",
+      "checklist": [
+        "Busca renderiza estado de sessão vencida quando a API responde 401, com porta para /app/entrar",
+        "E2E do app prova o estado de sessão vencida em /app/busca nas três larguras",
+        "Prova negativa de navegador: entrada pendente não aparece nos resultados da busca",
+        "tests/e2e/busca-redirects.spec.ts atualizado para o estado novo (307 e q preservados)"
+      ],
+      "proof": [
+        "13/11: descoberto na revisão independente Qwen do LT-002; o retry 632e7bf8 corrigiu só o spec (asserção nasceu da fonte), a lacuna do app fica registrada aqui. Cadeia provada: rota-do-app.ts:177 (401 JSON) -> cliente.ts:110 (throw) -> Busca.tsx:148,256-257 (EstadoDeErro). A4: negativo removido do e2e web, resta busca.test.ts:138."
+      ],
+      "tests": [],
+      "links": ["docs/agents/tasks/LT-002.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "bd69e091",
+      "blockers": [],
+      "completedChecklist": [false, false, false, false]
     },
     {
       "id": "F10-R3-SESSION-DERIVED",
