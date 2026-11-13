@@ -86,7 +86,7 @@ jobs:
       - name: Banco no estado de produção
         run: |
           set -euo pipefail
-          git checkout "$PRODUCAO_REF" -- supabase/migrations
+          git checkout "$PRODUCAO_REF" -- supabase/migrations supabase/seed.sql
           xargs -r rm -f < /tmp/pendentes.txt
           echo "migracoes no estado de producao: $(ls supabase/migrations | wc -l)"
           pnpm exec supabase start
@@ -94,7 +94,7 @@ jobs:
       - name: Aplica as pendentes como o db push --include-all
         run: |
           set -euo pipefail
-          git checkout HEAD -- supabase/migrations
+          git checkout HEAD -- supabase/migrations supabase/seed.sql
           echo "migracoes na main: $(ls supabase/migrations | wc -l)"
           pnpm exec supabase migration up --local --include-all
 
