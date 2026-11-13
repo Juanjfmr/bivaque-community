@@ -18,6 +18,9 @@ test("/explorar/busca leva ao app com o termo em 375, 768 e 1440 px, sem sessão
     await page.setViewportSize({ width, height: 900 })
     await page.goto(caminho)
     await expect(page).toHaveURL(/\/app\/busca\?q=escola$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    const erro = page.locator('[data-estado="erro"]')
+    await expect(erro).toBeVisible()
+    await expect(erro.getByText("Não foi possível carregar")).toBeVisible()
+    await expect(erro.getByText("Confira a conexão e tente de novo.")).toBeVisible()
   }
 })
