@@ -1,0 +1,54 @@
+name: OM Geoapify batch (one-off)
+# Single authorized run requested on 2026-10-21; rerunning could spend credits.
+on:
+  push:
+    branches: [feat/om-catalog-staging-20261021]
+    paths: [.github/workflows/om-geoapify-execute.yml]
+permissions:
+  contents: read
+concurrency:
+  group: bivaque-geoapify-once
+  cancel-in-progress: false
+jobs:
+  geocode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 26
+    env:
+      GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare 537-address batch
+        run: |
+          mkdir -p /tmp/om
+          python scripts/om-catalog/normalize.py data/om/raw_oms_1416.csv /tmp/om
+          python scripts/om-catalog/audit_sites.py --organizations /tmp/om/military_organizations.csv --sites /tmp/om/military_sites.csv --out /tmp/om/audit --localities data/om/ibge_localities.csv
+          python scripts/om-catalog/geoapify_batch.py --queue /tmp/om/audit/geocoding_queue.csv --out /tmp/om/geocoding --max-addresses 537
+      - name: Submit and retrieve (requires repository secret)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$GEOAPIFY_API_KEY" ]; then
+            echo '::error::GEOAPIFY_API_KEY Actions Secret missing; aborting without submission.'
+            exit 1
+          fi
+          python scripts/om-catalog/geoapify_batch.py --queue /tmp/om/audit/geocoding_queue.csv --out /tmp/om/geocoding --operation submit --max-addresses 537
+          JOB_ID=$(python -c 'import json;print(json.load(open("/tmp/om/geocoding/batch_job.json"))["id"])')
+          for i in $(seq 1 18); do
+            python scripts/om-catalog/geoapify_batch.py --queue /tmp/om/audit/geocoding_queue.csv --out /tmp/om/geocoding --operation collect --job-id "$JOB_ID" --max-addresses 537
+            if test -f /tmp/om/geocoding/provider_results_unverified.json; then
+              python scripts/om-catalog/parse_geoapify_results.py --manifest /tmp/om/geocoding/geocoding_manifest.json --results /tmp/om/geocoding/provider_results_unverified.json --queue /tmp/om/audit/geocoding_queue.csv --out /tmp/om/geocoding/unverified_suggestions.csv
+              exit 0
+            fi
+            sleep 60
+          done
+          echo '::error::Batch still processing; retrieve using job ID within 24h.'
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bivaque-om-geocoding-unverified
+          path: /tmp/om/geocoding
+          retention-days: 3
