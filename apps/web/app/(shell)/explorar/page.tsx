@@ -102,7 +102,7 @@ export default function ExplorarPage() {
           para /explorar/servicos — buscava PRESTADORES sob o rótulo do
           produto inteiro, a substituição de domínio que o processo proíbe. O
           campo do cabeçalho (GlobalSearchField) é o da prancha e leva a
-          /explorar/busca; um rótulo, um destino. */}
+          /app/busca; um rótulo, um destino. */}
       <section aria-labelledby="do-que-precisa-titulo" className="mt-5">
         <h2 id="do-que-precisa-titulo" className="text-base font-semibold tracking-tight">
           Do que você precisa?

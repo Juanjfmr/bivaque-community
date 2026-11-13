@@ -91,7 +91,7 @@ function GuideContent() {
   const [entries, setEntries] = useState<GuideEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  // RECON-021: o "Ver todos" de /explorar/busca chega com o termo em `q` —
+  // RECON-021: o "Ver todos" da busca chega com o termo em `q` —
   // o filtro local já existe, só nasce preenchido.
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
   const [category, setCategory] = useState<"all" | GuideCategory>("all")

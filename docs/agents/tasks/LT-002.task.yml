@@ -1,0 +1,87 @@
+# LAN-TROCA — F02 (lado web): a tela antiga de busca sai, o termo chega ao app.
+#
+# O lado do app já está pronto: /app/busca lê ?q e nasce consultando (PR #195,
+# apps/app/src/busca/termo-url.ts; busca-termo-url.spec.ts verde no RUN-139).
+# Falta a troca do lado web: o 307 de /explorar/busca para /app/busca preservando
+# q, e a retirada da página antiga. O contrato LT-001 (só app) está superado e
+# tinha baseline errado (afirmava um redirect que nunca existiu).
+#
+# Molde: RUN-133 (retirada completa de events, PR #176).
+
+task_id: LT-002
+
+objective: >
+  Nenhuma rota de membro do apps/web serve a tela antiga de busca. /explorar/busca
+  responde 307 para /app/busca preservando o termo q; a página antiga é removida; o
+  formulário global de busca aponta direto para /app/busca; o teste de troca (TROCADAS)
+  e os specs que visitavam /explorar/busca passam a provar o redirecionamento. Quem
+  abre /explorar/busca?q=<termo> cai na busca do app com o termo já digitado.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (ordem da troca e redirect, teste por perfil)
+  - docs/agents/tasks/RUN-133.task.yml (molde de retirada completa)
+  - tools/backend-kanban/public/board.json (LAN-TROCA, LAN-F02)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/next.config.ts NÃO tem regra de /explorar/busca (git log --all -S
+    'explorar/busca' -- apps/web/next.config.ts é vazio; o baseline do LT-001 afirmava
+    que existia — errado). apps/web/app/(shell)/explorar/busca/page.tsx existe e serve
+    a tela antiga. O formulário global apps/web/app/components/search/global-search-field.tsx:22
+    aponta para /explorar/busca. tests/unit/infra/lan-troca-redirect.test.ts não lista
+    /explorar/busca em TROCADAS e afirma que página fora da lista continua na web.
+    Specs que visitam /explorar/busca: tests/e2e/global-search-flow.spec.ts e
+    tests/e2e/link-crawl.spec.ts. O lado do app já lê q (apps/app/src/busca/termo-url.ts,
+    Busca.tsx), provado por busca-termo-url.spec.ts no RUN-139.
+
+allowed_paths:
+  - docs/agents/tasks/LT-002.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/explorar/busca
+  - apps/web/app/components/search/global-search-field.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/(shell)/explorar/page.tsx
+  - apps/web/app/(shell)/guide/page.tsx
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/e2e/global-search-flow.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/busca-redirects.spec.ts
+  - .visual/lt-002
+
+forbidden:
+  - alterar apps/app (o lado do app já está pronto), apps/web/proxy.ts, supabase, migrations ou a API de busca
+  - criar rota nova, tela nova ou peça nova no app
+  - trocar outras rotas além de /explorar/busca (não alargar para /explorar/servicos, /guide, etc.)
+  - apagar spec sem substituir a cobertura por asserção de 307 (a jornada não pode sumir da prova)
+  - usar skip/fixme novo ou afrouxar asserção existente
+  - push, merge ou force-push; ler/criar/editar .env
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "/explorar/busca responde 307 para /app/busca preservando q (e os demais query params úteis); /explorar/busca sem q cai em /app/busca."
+  - "Não existe page.tsx sob apps/web/app/(shell)/explorar/busca; a remoção é completa, não um 404 sobre código vivo."
+  - "O formulário global de busca (global-search-field.tsx) aponta para /app/busca; referências residuais a /explorar/busca em active-nav.ts, explorar/page.tsx e guide/page.tsx são atualizadas ou justificadas no diff."
+  - "tests/unit/infra/lan-troca-redirect.test.ts inclui a troca, prova 307, destino existente no catálogo do app (/app/busca) e ausência de segundo salto, e segue verde; as negativas (página fora de TROCADAS continua na web) seguem válidas."
+  - "global-search-flow.spec.ts e link-crawl.spec.ts passam a exigir o 307 ou deixam de visitar /explorar/busca com justificativa; nenhuma cobertura de jornada é simplesmente apagada."
+  - "Um spec de navegador (busca-redirects.spec.ts) prova em 375/768/1440 que /explorar/busca?q=<termo> redireciona para /app/busca com o termo, sem sessão (o app responde sessao-vencida, não a tela antiga)."
+  - "Sem ciclo de redirect: o destino /app/busca é público por pasta e não volta para rota que o proxy redireciona."
+  - "Passam: gate --fast, test:scope, vitest do teste de troca, tsc -p tests/e2e; o E2E de navegador roda no CI (sem Supabase local)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/lan-troca-redirect.test.ts --maxWorkers=1
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-002.task.yml
+
+risk: retirada de tela antiga e redirecionamento
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

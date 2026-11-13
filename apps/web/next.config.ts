@@ -108,6 +108,7 @@ const nextConfig: NextConfig = {
           ["/configuracoes/bloqueados", "/app/bloqueados"],
           ["/configuracoes/familia", "/app/voce"],
           ["/inicio", "/app/inicio"],
+          ["/explorar/busca", "/app/busca"],
           ["/explorar", "/app/busca"],
           // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes
           // de `/events/:id` porque o Next aplica a primeira regra que casa e
