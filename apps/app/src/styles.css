@@ -443,6 +443,11 @@
 }
 
 @media (max-width: 1023.98px) {
+  #conteudo {
+    padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+  }
+
   [data-nav="principal"][data-minimizada="sim"] {
     transform: translateY(100%);
     pointer-events: none;
@@ -2677,6 +2682,14 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
   .entrada-etapa-dias > label {
     white-space: nowrap;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  [data-casca="app"] [data-cabeca="pagina"] {
+    min-width: 0;
+    width: 100%;
+    max-width: calc(100vw - 32px);
   }
 }
 /* Cantos do bloco nos campos; a altura fica nos 44 px da regra do celular e
