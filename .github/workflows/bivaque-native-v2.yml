@@ -1,0 +1,37 @@
+name: Bivaque Native Lab V2 · Validate
+on:
+  push:
+    branches: ['experiment/bivaque-native-lab-v2-20261112']
+    paths:
+      - 'experiments/bivaque-native-lab-v2/**'
+      - '.github/workflows/bivaque-native-v2.yml'
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/bivaque-native-lab-v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: TypeScript
+        run: npm run check
+      - name: Export web Expo
+        run: npm run build
+      - name: Guardar artefato web
+        uses: actions/upload-artifact@v4
+        with:
+          name: bivaque-native-v2-web
+          path: experiments/bivaque-native-lab-v2/dist
+          retention-days: 5
