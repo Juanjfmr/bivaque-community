@@ -19,6 +19,22 @@ Consultas somente de leitura em 2026-11-13 (UTC, projeto `bivaque-community`):
 
 O Supabase Security Advisor reportou 15 tabelas com RLS mas sem policy (INFO), 4 funções `SECURITY DEFINER` executáveis por `anon` (WARN), 58 executáveis por `authenticated` (WARN), `pg_net` no schema `public` (WARN) e proteção contra senhas vazadas desativada (WARN). Nem todo aviso é vulnerabilidade: tabelas internas sem policy e RPCs públicas deliberadas podem ser corretas. Referências: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable e https://supabase.com/docs/guides/database/postgres/row-level-security.
 
+## 1B. Divergência confirmada entre banco conectado e código (13/11/2026)
+
+A consulta **read-only** ao histórico do Supabase conectado mostrou **205 migrations aplicadas**, última versão `20261024090000_complete_event_session_identity`. A `main` possui migrations posteriores até novembro; em particular, `20261024120000_group_base.sql` **ainda não consta nesse histórico**. Nela, a policy `group_memberships_update_moderator` é removida, o grant de UPDATE de `group_memberships` é revogado, e a policy de UPDATE de `groups` passa a exigir `private.is_group_owner(id)`.
+
+**Correção de escopo do AUTHZ-002:** o item relativo a moderador atribuir papel `owner` não é defeito novo da `main`; já há correção no repositório, mas o Supabase conectado não a recebeu. Resta na `main` um **outro** problema verificável por código: a migration `20261107093000_grupos_cidade_padrao.sql` concede a `authenticated` UPDATE por coluna em `groups.owner_user_id`, `groups.locality_id` e `groups.created_by`; `groups_update_owner` protege apenas quem pode editar a linha, não quais colunas de titularidade/identidade podem mudar. Por isso, os testes de mudança direta de titularidade/localidade continuam prioritários mesmo depois do rollout da group_base.
+
+**Não promover migrations atrasadas automaticamente.** A execução de dezenas de mudanças requer análise de compatibilidade, ordem, backups e contratos de deploy. Nenhuma mudança remota foi executada nesta auditoria.
+
+## 1C. Testes RED e proposta de patch (não validados em runtime)
+
+- `supabase/tests/authz-suspension-write-freeze.sql`: 10 asserções, incluindo positivo para membro ativo, leitura para membro suspenso e negativos para UPDATE/DELETE de posts e comentários. Usa `pg_temp.authz_probe_mutation()` sob `SECURITY INVOKER` e subtransações que desfazem a operação de prova.
+- `supabase/tests/authz-group-sensitive-columns.sql`: 9 asserções para moderador, dono, grants de membership e tentativas diretas de trocar `owner_user_id`, `created_by` e `locality_id`.
+- `docs/security/proposals/authz-001-002-hardening.sql`: SQL de correção preparado para revisão R3 e para ser copiado em uma migration **nova gerada pelo CLI**, somente depois de reproduzir os testes em ambiente local.
+
+Os testes foram adicionados à branch de auditoria sem execução neste ambiente. CI pode sinalizar falhas intencionais enquanto o contrato não estiver corrigido; **não mesclar a branch com testes RED**. A validação não foi simulada nem declarada concluída.
+
 ## 2. Achados com prioridade
 
 ### AUTHZ-001 — Suspensão não é aplicada a UPDATE/DELETE de conteúdo (P0, hipótese forte)
