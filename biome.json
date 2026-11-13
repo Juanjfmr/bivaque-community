@@ -24,6 +24,7 @@
       "!**/supabase/.temp",
       "!**/supabase/templates",
       "!**/apps/web/public/app",
+      "!**/apps/app/android",
       "!**/apps/mobile/dist-android",
       "!**/apps/mobile/dist-ios",
       "!**/apps/mobile/.expo",

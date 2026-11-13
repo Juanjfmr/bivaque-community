@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bivaque (experimento)</string>
+    <string name="title_activity_main">Bivaque (experimento)</string>
+    <string name="package_name">com.bivaque.community.experimento</string>
+    <string name="custom_url_scheme">com.bivaque.community.experimento</string>
+</resources>

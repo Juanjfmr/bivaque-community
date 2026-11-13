@@ -97,7 +97,9 @@ test("só o cliente único chama /api/app", () => {
       (caminho) =>
         !caminho.includes("tests") &&
         !caminho.includes("node_modules") &&
-        !caminho.includes("dist"),
+        !caminho.includes("dist") &&
+        // cópia gerada do build dentro do projeto Android (não versionada)
+        !caminho.includes("android"),
     )
     .filter((caminho) => relativo(caminho) !== "apps/app/lib/api/cliente.ts")
     .filter((caminho) => !EXCECOES.has(relativo(caminho)))
