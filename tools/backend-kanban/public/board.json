@@ -7686,14 +7686,14 @@
     },
     {
       "phase": "LanÃ§amento",
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "283562b8",
       "links": ["docs/LANCAMENTO.md"],
       "id": "CORRETA-F03-FORMULARIO-PT-BR",
       "title": "F03: formulario de encontro com data pt-BR, erro no campo e primaria que reflete o estado",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "O formulario de encontro (o melhor material da revisao cega) mostra mm/dd/yyyy e AM/PM num produto em portugues, coloca a mensagem de erro no rodape longe do campo TÃ­tulo e deixa 'Criar' habilitado com tudo vazio. Entregar data e hora em dd/mm/aaaa e 'as 19h', mensagem abaixo do campo com a borda marcada, e acao primaria desabilitada ate os obrigatorios validarem. Os demais formularios de Criar seguem a mesma regra.",
       "checklist": [
         "Data e hora em pt-BR na entrada e na exibicao",
@@ -7702,20 +7702,25 @@
         "E2E de erro e de sucesso nos tres tamanhos"
       ],
       "dependencies": [],
-      "proof": ["12/12: aberto pelo parecer cego; achados 4 e 5 de F03 e correcao 3 do top 3."],
+      "proof": [
+        "12/12: aberto pelo parecer cego; achados 4 e 5 de F03 e correcao 3 do top 3.",
+        "13/11: fechado pelo RUN-140, PR #210 (merge 283562b8). Data/hora em dd/mm/aaaa e 24h na entrada e exibição; erro ancorado no campo com borda marcada (incl. AreaDeTexto e CampoDeArquivo no retry) e aria-describedby; primária desligada até validar, estado de envio, erro do servidor preserva o digitado. E2E 229/0 + retry 168/0 com borda computada nas 6 larguras; spec real f05-eventos alinhado. Revisão Qwen: FAIL dirigido → retry → resolvido. Ressalvas não bloqueantes em CORRETA-F03-RESSALVAS."
+      ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "283562b8",
       "links": ["docs/LANCAMENTO.md"],
       "id": "CORRETA-F03-DESTINOS",
       "title": "F03: Comunidade, Grupo e Publicacao com identidade de destino e estados vazios",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "As telas que o menu Criar leva sao o mesmo esqueleto vazio, sem pista do destino: Grupo e Publicacao precisam mostrar o contexto (nome do grupo, cidade) e uma acao unica que caiba ali. Com o rodape de depuracao retirado (CORRETA-RODAPE-CASCA), entregar cabecalho com contexto e estado vazio honesto em cada uma.",
       "checklist": [
         "Cabecalho de Grupo e Publicacao com nome do grupo e cidade",
@@ -7724,9 +7729,14 @@
         "Capturas 375/768/1440 claro e escuro"
       ],
       "dependencies": ["CORRETA-RODAPE-CASCA"],
-      "proof": ["12/12: aberto pelo parecer cego; achado 6 de F03 e mencao honrosa do parecer."],
+      "proof": [
+        "12/12: aberto pelo parecer cego; achado 6 de F03 e mencao honrosa do parecer.",
+        "13/11: fechado pelo RUN-140, PR #210 (merge 283562b8). Grupo e Publicação com nome do grupo e cidade, ação única por tela, estado vazio honesto em Comunidade/Grupo/Publicação (e Comunidade filtrada). E2E + capturas nos três tamanhos e dois temas. Ressalva: a cidade do cabeçalho vem de casca.cidade e não do payload (que já traz cidade) — registrada em CORRETA-F03-RESSALVAS."
+      ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
@@ -7753,14 +7763,14 @@
     },
     {
       "phase": "LanÃ§amento",
-      "updatedAt": "2026-11-12",
-      "sourceRevision": "e7f8cbc0",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "08593fe5",
       "links": ["docs/LANCAMENTO.md"],
       "id": "CORRETA-F08-ESTRUTURA",
       "title": "F08: Guia com estrutura editorial, cabecalho fixo e caminho de contribuicao",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "O Guia repete 'de Manaus' no cabecalho, no titulo e no seletor, nao tem secoes nem indice, quebra o cabecalho no 375, perde o contexto na rolagem e nao tem caminho de contribuicao; no escuro o corpo branco puro achata a hierarquia. Entregar 3 a 4 secoes com ancoras, cabecalho fixo compacto, subtitulos repetidos e botao 'Sugerir um lugar para o Guia' ligado ao Criar (RECON-030-GUIA-FOTOS entra quando as fotos entrarem).",
       "checklist": [
         "Nome da rota so no cabecalho; 'Guia' cabe em uma linha no 375",
@@ -7770,7 +7780,57 @@
         "Capturas 375/768/1440 claro e escuro"
       ],
       "dependencies": ["CORRETA-RODAPE-CASCA"],
-      "proof": ["12/12: aberto pelo parecer cego; achados 1 a 6 de F08."],
+      "proof": [
+        "12/12: aberto pelo parecer cego; achados 1 a 6 de F08.",
+        "13/11: fechado pelo RUN-142, PR #211 (merge 08593fe5). Guia com 3-4 seções e âncoras navegáveis por teclado, cabeçalho fixo compacto, 'Guia' numa linha no 375, 'Sugerir um lugar para o Guia' ligado ao Criar, corpo escuro com token secundário + contraste AA + entrelinha (medidos). E2E 60/0; spec real f08-guia alinhado ao h1 'Guia'. Revisão Qwen: PASS com ressalva. Ressalvas em CORRETA-F08-RESSALVAS."
+      ],
+      "tests": [],
+      "blockers": [],
+      "completedChecklist": [true, true, true, true, true],
+      "completedAt": "2026-11-13"
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "283562b8",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F03-RESSALVAS",
+      "title": "F03: ressalvas nao bloqueantes da revisao do RUN-140",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Ressalvas da revisao independente do RUN-140 (PR #210), aceitas no merge: (1) a cidade do cabecalho de Grupo/Publicacao vem de casca.cidade, mas o payload ja traz cidade (lib/dados/grupos.ts) — renderizar o dado do banco e a versao honesta; (2) o preco usa type=number, que nao aceita virgula em navegador en-US contra a ajuda 'como 650 ou 650,00' — usar campo de texto (o regex ja resolve) ou ajuda sem virgula; (3) capturas 375/1440 de desapego-erro/revisao com ghosting (fullPage sobre dialogo) — recapturar com clip no dialogo.",
+      "checklist": [
+        "Cidade do cabecalho de Grupo/Publicacao vinda do payload, nao de casca.cidade",
+        "Preco aceita virgula (campo de texto) ou ajuda sem virgula",
+        "Recapturar desapego-erro/revisao com clip no dialogo (sem ghosting)"
+      ],
+      "dependencies": [],
+      "proof": [
+        "13/11: registrado pelo coordenador no merge do RUN-140 (PR #210); ressalvas 2-4 do veredito Qwen, nao bloqueantes."
+      ],
+      "tests": [],
+      "blockers": []
+    },
+    {
+      "phase": "LanÃ§amento",
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "08593fe5",
+      "links": ["docs/LANCAMENTO.md"],
+      "id": "CORRETA-F08-RESSALVAS",
+      "title": "F08: ressalvas da revisao do RUN-142 (cidade repetida no desktop, scroll-mt no 320)",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Ressalvas da revisao independente do RUN-142 (PR #211), aceitas no merge: (1) o nome da cidade repete-se no desktop (titulo da casca 'Guia de {cidade}' + seletor de cidade da barra + chip da tela); a aceitacao literal 'cidade so no cabecalho' cumpre-se, mas a desduplicacao completa exige mexer na casca compartilhada — ocultar o chip da tela >=720 e avaliar o seletor, sem quebrar as demais telas; (2) scroll-mt-[96px] fixo (EstruturaDoGuia.tsx) pode enterrar o titulo da secao sob a barra no 320, onde as pilulas quebram em duas linhas — tornar o scroll-mt responsivo e cobrir com teste.",
+      "checklist": [
+        "Cidade uma unica vez tambem no desktop (chip da tela >=720 e casca avaliados)",
+        "scroll-mt responsivo ao cabecalho no 320, com teste de ancora"
+      ],
+      "dependencies": [],
+      "proof": [
+        "13/11: registrado pelo coordenador no merge do RUN-142 (PR #211); ressalva media e achado baixo do veredito Qwen. O console.error de chave duplicada g-pets e pre-existente (confirmado na main limpa), nao deste lote."
+      ],
       "tests": [],
       "blockers": []
     }
