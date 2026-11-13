@@ -84,7 +84,7 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
 
     await page.goto("/app/guia")
     await expect(
-      page.getByRole("heading", { level: 1, name: `Guia de Manaus` }),
+      page.getByRole("heading", { level: 1, name: "Guia", exact: true }),
       "o guia real não está servido em /app/guia: rode `npx pnpm@11.18.0 app:export`",
     ).toBeVisible({ timeout: 30_000 })
 
@@ -257,7 +257,7 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     await semearSessaoDeMembro(context, MEMBRO_DE_OUTRA_CIDADE)
 
     await page.goto("/app/guia")
-    await expect(page.locator('[data-tela="guia"] h1')).toContainText("Guia de", {
+    await expect(page.locator('[data-tela="guia"] h1')).toContainText("Guia", {
       timeout: 30_000,
     })
     await expect(
