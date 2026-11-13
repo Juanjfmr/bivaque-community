@@ -1,0 +1,69 @@
+# RUN-137 — o link de outra cidade não promete o que não acontece
+#
+# Fecha EVENTOS-LOCALITY-LINK. Na referência de cidade (`/localidade`), quando a
+# pessoa olha OUTRA cidade, «Ver todos os eventos» e «Abrir o guia de chegada»
+# apontam para `/events?locality=<id>` e `/guide?locality=<id>`. O app não lê
+# `locality`, então o link cai na agenda e no guia da cidade de quem clica, em
+# silêncio. Decisão de produto (12/11): na cidade alternativa esses dois links
+# somem; na própria cidade continuam iguais.
+
+task_id: RUN-137
+
+objective: >
+  Quem olha a referência de outra cidade não vê mais um link que leva à agenda
+  ou ao guia da própria cidade: «Ver todos os eventos» e «Abrir o guia de
+  chegada» deixam de aparecer na cidade alternativa e continuam, iguais, na
+  cidade da pessoa.
+
+authority:
+  - tools/backend-kanban/public/board.json (EVENTOS-LOCALITY-LINK)
+  - docs/LANCAMENTO.md
+  - decisão de produto do coordenador em 12/11 (esconder, não redirecionar)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/components/bivaque/city-reference.tsx:203 emite
+    /events?locality=<id> e :225 emite /guide?locality=<id> quando isAlternate;
+    o app não lê `locality` (só `locality_id`), então os dois links de outra
+    cidade levam ao conteúdo local (achado MÉDIO da revisão do #176).
+
+allowed_paths:
+  - docs/agents/tasks/RUN-137.task.yml
+  - apps/web/app/components/bivaque/city-reference.tsx
+  - tests/unit/**/city-reference*
+  - tests/e2e/**
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/run-137/
+
+forbidden:
+  - alterar apps/app, supabase, migrations, proxy ou redirects do next.config
+  - inventar agenda ou guia de outra cidade, ou fazer o app ler ?locality
+  - mudar o desenho dos links na cidade da própria pessoa
+  - usar skip/fixme novo ou afrouxar asserção existente
+
+acceptance:
+  - Na cidade alternativa, a seção de eventos e a do guia não renderizam «Ver todos os eventos» nem «Abrir o guia de chegada»; nenhum href com `locality=` sai de city-reference.tsx.
+  - Na cidade da pessoa, os dois links continuam com o mesmo texto e destino (`/events` e `/guide`).
+  - A lista de eventos da cidade alternativa e o resto da referência continuam como estão.
+  - Um teste prova os dois lados (alternativa sem os links, própria cidade com eles), rodado de verdade.
+  - O cartão EVENTOS-LOCALITY-LINK recebe a prova e o checklist atualizado no board.json, com BOARD.md regenerado.
+
+proof:
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 typecheck
+  - teste que cubra city-reference nos dois casos (unitário de componente ou E2E existente da referência de cidade)
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-137.task.yml
+  - node tools/backend-kanban/src/board.mjs --check
+
+risk: interface da web antiga, sem dado
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true

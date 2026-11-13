@@ -63,14 +63,14 @@ export function Voce() {
         const cepAnterior = digitosDoCep(perfil?.localizacao.cep ?? "")
         if (dados.cep !== cepAnterior) {
           try {
-            const localizacao = await salvarLocalizacao(dados.cep)
+            const salva = await salvarLocalizacao(dados.cep)
             setConta((atual) =>
-              atual === null ? atual : { ...atual, perfil: { ...atual.perfil, localizacao } },
+              atual === null ? atual : { ...atual, perfil: { ...atual.perfil, ...salva } },
             )
-          } catch {
+          } catch (falha: unknown) {
             // O perfil acima já está gravado; só a localização não foi. Fechar
             // o formulário aqui seria fingir sucesso.
-            setMensagem("Perfil salvo, mas a localização não foi atualizada. Tente de novo.")
+            setMensagem(mensagemDaLocalizacao(falha))
             return
           }
         }
@@ -124,6 +124,16 @@ export function Voce() {
           )}
         </div>
       )}
+
+      {perfil !== null && perfil.localizacao.cep !== null && !perfil.distanciaDisponivel ? (
+        <p
+          data-aviso="cep-sem-distancia"
+          className="rounded-2xl bg-(--surface-lowest) px-4 py-3 text-sm text-(--on-surface-variant) ring-1 ring-(--outline-variant)"
+        >
+          Guardamos seu CEP {perfil.localizacao.cep}, mas ainda não conseguimos localizar esse CEP
+          no mapa. Por isso a distância até o seu bairro ainda não pode ser calculada.
+        </p>
+      ) : null}
 
       {editando && perfil !== null ? (
         <EdicaoDePerfil
@@ -223,6 +233,18 @@ export function Voce() {
       </Secao>
     </section>
   )
+}
+
+/** A falha da localização dita para a pessoa, pelo motivo que o servidor deu. */
+function mensagemDaLocalizacao(falha: unknown): string {
+  const motivo = falha instanceof FalhaDaApi ? falha.motivoDoServidor : null
+  if (motivo === "cep-nao-encontrado")
+    return "Não encontramos esse CEP. Confira os oito dígitos e tente de novo."
+  if (motivo === "geocodificador-indisponivel")
+    return "Não conseguimos consultar o CEP agora. Tente de novo em instantes."
+  return falha instanceof FalhaDaApi && falha.mensagem !== null
+    ? falha.mensagem
+    : "Perfil salvo, mas a localização não foi atualizada. Tente de novo."
 }
 
 function Contador({ valor, rotulo }: { valor: number; rotulo: readonly [string, string] }) {

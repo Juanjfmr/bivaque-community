@@ -60,8 +60,9 @@ function respostaDaFalhaDeEscrita(request: NextRequest, codigo: string): NextRes
  * ignorado, porque o dono é sempre `auth.sessao.usuario.id`. O cliente de
  * serviço abre DEPOIS da sessão e só para o cache `public.cep_geocodes` e a
  * função `set_member_location` — o único caminho de escrita da coordenada.
- * A resposta devolve só o CEP e a marca de definida: latitude e longitude não
- * saem do banco.
+ * A resposta devolve o CEP, a marca de definida e se a distância pode ser
+ * calculada: latitude e longitude não saem do banco. CEP conhecido que nenhuma
+ * fonte localiza é gravado sem posição e responde 200 (ADR-20261112).
  */
 export async function PUT(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
@@ -108,25 +109,30 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
           return responder(request, { erro: "cep-nao-encontrado" }, 422)
         if (geocodificada.estado === "indisponivel")
           return responder(request, { erro: "geocodificador-indisponivel" }, 503)
-        coordenada = { cep, ...geocodificada.coordenada }
-        try {
-          await gravarCepNoCache(servico, cep, geocodificada.coordenada)
-        } catch {
-          // Sem cache o próximo pedido geocodifica de novo; isso não é motivo
-          // para falhar a gravação que a pessoa pediu.
+        if (geocodificada.estado === "encontrado") {
+          coordenada = { cep, ...geocodificada.coordenada }
+          try {
+            await gravarCepNoCache(servico, cep, geocodificada.coordenada)
+          } catch {
+            // Sem cache o próximo pedido geocodifica de novo; isso não é motivo
+            // para falhar a gravação que a pessoa pediu.
+          }
         }
       }
+      // `sem-coordenada` grava o CEP sem posição (ADR-20261112): coordenada
+      // nula aqui é ausência de posição, nunca zero. O cache só recebe CEP com
+      // coordenada, então uma nova tentativa pode trazer a posição depois.
       const { error } = await gravarLocalizacao(servico, {
         p_user_id: userId,
         p_cep: cep,
-        p_latitude: coordenada.latitude,
-        p_longitude: coordenada.longitude,
+        p_latitude: coordenada?.latitude ?? null,
+        p_longitude: coordenada?.longitude ?? null,
       })
       if (error !== null) return respostaDaFalhaDeEscrita(request, error.code)
     }
 
-    const localizacao = await localizacaoDaSessao(cliente)
-    return responder(request, { localizacao }, 200)
+    const { localizacao, distanciaDisponivel } = await localizacaoDaSessao(cliente)
+    return responder(request, { localizacao, distanciaDisponivel }, 200)
   } catch (erro) {
     // O catch-all também responde 503: sem o código, a diferença entre sessão,
     // cache e RPC vira adivinhação no CI. O código é operacional e não carrega
