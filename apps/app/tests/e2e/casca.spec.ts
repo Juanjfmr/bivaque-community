@@ -168,7 +168,7 @@ test.describe("navegação de baixo e lateral", () => {
     const nav = page.locator(SELETOR_NAVEGACAO)
     await expect(nav).toHaveCount(1)
     const largura = page.viewportSize()?.width ?? 0
-    if (largura >= 720) {
+    if (largura >= 1024) {
       await expect(nav).toBeVisible()
     } else {
       await expect(nav).toBeHidden()
@@ -177,7 +177,7 @@ test.describe("navegação de baixo e lateral", () => {
 
   test("minimiza ao rolar para baixo e volta ao subir", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "a minimização é do celular")
+    test.skip(largura >= 1024, "a minimização é do celular")
 
     await abrir(page, "/app/inicio")
     const nav = page.locator(SELETOR_NAVEGACAO)
@@ -303,9 +303,9 @@ test.describe("menu Criar (§4 do inventário)", () => {
 })
 
 test.describe("título grande e dockagem (§6.7)", () => {
-  test("abaixo de 720 px o título some sob a barra e volta depois", async ({ page }) => {
+  test("abaixo de 1024 px o título some sob a barra e volta depois", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "o efeito só existe abaixo de 720 px")
+    test.skip(largura >= 1024, "o efeito só existe abaixo de 1024 px")
 
     await abrir(page, "/app/salvos")
     const barra = page.locator(SELETOR_BARRA)
@@ -329,7 +329,7 @@ test.describe("título grande e dockagem (§6.7)", () => {
 
   test("na Início o título grande nunca sobe", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "o efeito só existe abaixo de 720 px")
+    test.skip(largura >= 1024, "o efeito só existe abaixo de 1024 px")
     await abrir(page, "/app/inicio")
     await rolarOCorpo(page, 400)
     await expect(page.locator(SELETOR_BARRA)).toHaveAttribute("data-docada", "nao")
