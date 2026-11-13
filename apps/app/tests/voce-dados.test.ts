@@ -40,6 +40,7 @@ const CONTA = {
     bio: null,
     cidade: "Manaus",
     localizacao: { cep: "69000-000", definida: true },
+    distanciaDisponivel: true,
   },
   contagens: { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 },
   conta: { exclusaoPendente: false },
@@ -55,13 +56,25 @@ describe("perfil da conta", () => {
     expect(conta.conta.exclusaoPendente).toBe(false)
   })
 
-  it("traduz a localização sem coordenada e sem CEP quando não há", async () => {
+  it("traduz a localização sem CEP quando não há", async () => {
     responder({
       ...CONTA,
-      perfil: { ...CONTA.perfil, localizacao: { cep: null, definida: false } },
+      perfil: {
+        ...CONTA.perfil,
+        localizacao: { cep: null, definida: false },
+        distanciaDisponivel: false,
+      },
     })
     const conta = await lerPerfil()
     expect(conta.perfil.localizacao).toEqual({ cep: null, definida: false })
+    expect(conta.perfil.distanciaDisponivel).toBe(false)
+  })
+
+  it("CEP guardado sem posição diz que a distância ainda não pode ser calculada", async () => {
+    responder({ ...CONTA, perfil: { ...CONTA.perfil, distanciaDisponivel: false } })
+    const conta = await lerPerfil()
+    expect(conta.perfil.localizacao.cep).toBe("69000-000")
+    expect(conta.perfil.distanciaDisponivel).toBe(false)
   })
 
   it("localização ausente é falha de formato, nunca CEP vazio", async () => {
@@ -82,6 +95,7 @@ describe("perfil da conta", () => {
         bio: "Nova apresentação",
         cidade: "Manaus",
         localizacao: { cep: "69000-000", definida: true },
+        distanciaDisponivel: true,
       },
     })
     const perfil = await salvarPerfil({ nome: "Ana Editada", bio: "Nova apresentação" })
@@ -95,21 +109,38 @@ describe("perfil da conta", () => {
 })
 
 describe("localização do perfil", () => {
-  it("grava o CEP pelo PUT e devolve só CEP e marca de definida", async () => {
-    const buscar = responder({ localizacao: { cep: "69000-000", definida: true } })
-    const localizacao = await salvarLocalizacao("69000000")
+  it("grava o CEP pelo PUT e devolve CEP, marca de definida e se há posição", async () => {
+    const buscar = responder({
+      localizacao: { cep: "69000-000", definida: true },
+      distanciaDisponivel: true,
+    })
+    const salva = await salvarLocalizacao("69000000")
     const { caminho, init } = chamada(buscar)
     expect(caminho).toBe("/api/app/voce/localizacao")
     expect(init.method).toBe("PUT")
     expect(JSON.parse(String(init.body))).toEqual({ cep: "69000000" })
-    expect(localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(salva.localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(salva.distanciaDisponivel).toBe(true)
+  })
+
+  it("CEP conhecido sem posição volta como gravado, com a distância indisponível", async () => {
+    responder({
+      localizacao: { cep: "69900-000", definida: true },
+      distanciaDisponivel: false,
+    })
+    const salva = await salvarLocalizacao("69900000")
+    expect(salva.localizacao).toEqual({ cep: "69900-000", definida: true })
+    expect(salva.distanciaDisponivel).toBe(false)
   })
 
   it("limpar manda CEP nulo e apaga a localização", async () => {
-    const buscar = responder({ localizacao: { cep: null, definida: false } })
-    const localizacao = await salvarLocalizacao(null)
+    const buscar = responder({
+      localizacao: { cep: null, definida: false },
+      distanciaDisponivel: false,
+    })
+    const salva = await salvarLocalizacao(null)
     expect(JSON.parse(String(chamada(buscar).init.body))).toEqual({ cep: null })
-    expect(localizacao).toEqual({ cep: null, definida: false })
+    expect(salva.localizacao).toEqual({ cep: null, definida: false })
   })
 
   it("CEP não encontrado vira falha com o motivo do servidor", async () => {

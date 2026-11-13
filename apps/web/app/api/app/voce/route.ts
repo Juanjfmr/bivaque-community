@@ -81,7 +81,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       throw error
     }
     if (data === null) return responder(request, { erro: "nao-encontrado" }, 404)
-    const [cidade, localizacao] = await Promise.all([
+    const [cidade, daSessao] = await Promise.all([
       cidadeDaSessao(client, userId),
       localizacaoDaSessao(client),
     ])
@@ -92,7 +92,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
           nome: data.display_name,
           bio: data.bio,
           cidade: cidade?.nome ?? "",
-          localizacao,
+          localizacao: daSessao.localizacao,
+          distanciaDisponivel: daSessao.distanciaDisponivel,
         },
       },
       200,
