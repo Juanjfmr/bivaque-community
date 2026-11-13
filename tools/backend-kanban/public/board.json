@@ -7250,6 +7250,31 @@
       "completedChecklist": [false, false, false, false]
     },
     {
+      "id": "BUSCA-RETENCAO-URL",
+      "title": "F02: Busca retém o q na URL — a materialização da entrada apaga o termo do endereço",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "O redirect 307 entrega /app/busca?q=<termo> e o app USA o termo, mas a URL final perde o q. Causa raiz (investigação somente-leitura): a casca materializa a entrada logo após montar (Casca.tsx:61-63 -> materializarEntrada -> gravar, react.tsx:217-223) e esse navigate NÃO passa search; em rota sem middleware o TanStack Router cai no default {} (router-core router.js:332) e o history.replace apaga o q. A rota busca está fora de ROTAS_COM_BUSCA (roteador.tsx:76), então não tem o middleware que preserva o search. O termo sobrevive porque a semente é capturada no primeiro render, antes do replace (Busca.tsx:102-110). Fix mínimo: adicionar 'busca' a ROTAS_COM_BUSCA (uma palavra) — o middleware manterBuscaDoMercado já é genérico e passa a preservar o q na carga e nas regravações de rolagem/foco. validateSearch NÃO resolve (validar != reter). Sem efeito colateral: digitação não navega; troca de rota passa {} explícito; search explícito continua vencendo. Contraste: o Mercado retém o filtro pelo mesmo middleware; inicio-busca-primeira-entrada.spec.ts:57-58 já prova retenção com search explícito. Executar depois que o LT-002 estiver na main.",
+      "checklist": [
+        "Rota busca em ROTAS_COM_BUSCA (roteador.tsx:76) + comentário ajustado; materialização e regravações preservam o q na URL",
+        "E2E do app (busca-termo-url.spec.ts) prova a retenção do q na carga inicial, esperando a materialização (history.state.bivaqueEntrada.versao), sem timing frágil",
+        "tests/e2e/busca-redirects.spec.ts: asserção de URL com q de volta + acumulador de pedidos reiniciado por largura (ressalva 1 da revisão do LT-002)",
+        "tests/e2e/global-search-flow.spec.ts:75: asserção de URL robusta após a materialização (ressalva 2 da revisão do LT-002)"
+      ],
+      "proof": [
+        "13/11: registrado a partir da revisão independente do LT-002 (ressalva 3: retenção sem dono) e de investigação somente-leitura da causa raiz. Cadeia: Casca.tsx:61-63 -> react.tsx:217-223 (navigate sem search) -> router.js:332 (default {} em rota sem middleware; busca fora de ROTAS_COM_BUSCA, roteador.tsx:76) -> replace apaga o q. Fix de uma palavra confirmado sem efeito colateral; o E2E atual do app segue passando (asserções de URL via irPara com {} explícito continuam sem q)."
+      ],
+      "tests": [],
+      "links": ["docs/agents/tasks/LT-002.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-13",
+      "sourceRevision": "7c755a62",
+      "blockers": [],
+      "completedChecklist": [false, false, false, false]
+    },
+    {
       "id": "F10-R3-SESSION-DERIVED",
       "title": "Família: derivar a posse de auth.uid() no banco",
       "phase": "Lançamento",
