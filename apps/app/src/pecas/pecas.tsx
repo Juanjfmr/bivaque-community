@@ -401,6 +401,7 @@ export function AreaDeTexto({
       <textarea
         id={id}
         className="pc-area"
+        data-erro={erro ? "sim" : "nao"}
         aria-invalid={erro ? "true" : undefined}
         aria-describedby={idErro}
         {...entrada}
@@ -540,7 +541,12 @@ export function CampoDeArquivo({
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">
-      <label htmlFor={id} className="pc-arquivo" data-escolhido={escolhido ? "sim" : "nao"}>
+      <label
+        htmlFor={id}
+        className="pc-arquivo"
+        data-escolhido={escolhido ? "sim" : "nao"}
+        data-erro={erro ? "sim" : "nao"}
+      >
         <Icone nome={escolhido ? "check_circle" : "upload"} preenchido={escolhido !== null} />
         <span>
           <strong>{escolhido ? "Arquivo pronto" : rotulo}</strong>

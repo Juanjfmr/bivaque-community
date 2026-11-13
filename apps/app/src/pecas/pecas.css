@@ -645,6 +645,11 @@
   box-shadow: 0 0 0 1px var(--pc-tinta);
 }
 
+.pc-area[data-erro="sim"] {
+  border-color: var(--pc-perigo);
+  box-shadow: 0 0 0 1px var(--pc-perigo);
+}
+
 .pc-busca {
   display: flex;
   align-items: center;
@@ -820,6 +825,11 @@
 .pc-arquivo[data-escolhido="sim"] {
   border-style: solid;
   border-color: var(--pc-feito);
+}
+
+.pc-arquivo[data-erro="sim"] {
+  border-color: var(--pc-perigo);
+  box-shadow: 0 0 0 1px var(--pc-perigo);
 }
 
 .pc-arquivo .bv-icone {

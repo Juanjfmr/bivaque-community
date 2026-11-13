@@ -161,6 +161,17 @@ test("pergunta e desapego: erro no campo e ação primária desligada até valid
   await anuncio.locator("#criacao-titulo").fill("Mesa com quatro cadeiras seminova")
   await anuncio.locator("#criacao-complemento").fill("Flores")
   await anuncio.locator("#criacao-preco").fill("0")
+  const descricao = anuncio.locator("#criacao-descricao")
+  await descricao.focus()
+  await anuncio.locator("#criacao-preco").click()
+  await expect(anuncio.locator("#criacao-descricao-erro")).toContainText("Descreva o item.")
+  await expect(descricao).toHaveAttribute("aria-invalid", "true")
+  await expect(descricao).toHaveAttribute("aria-describedby", /criacao-descricao-erro/)
+  await expect(await descricao.evaluate((element) => getComputedStyle(element).borderColor)).toBe(
+    await descricao.evaluate((element) =>
+      getComputedStyle(element).getPropertyValue("--destructive").trim().replaceAll(" ", ", "),
+    ),
+  )
   await anuncio.locator("#criacao-descricao").fill("Mesa de madeira em bom estado.")
   await expect(anuncio.locator("#criacao-preco-erro")).toContainText("Informe um valor como 650")
   await expect(anuncio.locator("#criacao-preco")).toHaveAttribute("aria-invalid", "true")
