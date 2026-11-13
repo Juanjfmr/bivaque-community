@@ -7665,13 +7665,13 @@
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
-      "sourceRevision": "26e2899b",
+      "sourceRevision": "0aa2d9eb",
       "links": ["docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"],
       "id": "CORRETA-F02-BREAKPOINT-JS",
       "title": "F02: alinhar o breakpoint JS da casca a 1024 (a barra inferior já é CSS até 1024)",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Ressalva B da revisão independente do RUN-139: o CSS da navegação passou de rail para barra inferior até 1024, mas o JS ficou em 720 — lib/casca.ts (navegacaoVisivel/criaVisivel), lib/movimento.ts (minimização ao rolar, título sob a barra) e casca/MenuCriar.tsx (central = innerWidth < 720). Na faixa 720–1023 a barra inferior não minimiza, não some fora das rotas-raiz e o Criar abre com geometria de desktop. Os fluxos funcionam no 768 (E2E verde); falta a consistência de comportamento. Alinhar o JS a 1024, atualizar os guards de largura do casca.spec.ts e os comentários que ainda dizem 720.",
       "checklist": [
         "lib/casca.ts: navegacaoVisivel/criaVisivel usam 1024",
@@ -7682,10 +7682,13 @@
       ],
       "dependencies": ["CORRETA-F02-COLUNA-DE-LEITURA"],
       "proof": [
-        "13/11: descoberto pela revisão independente Qwen do RUN-139 (ressalva B, PR #209). O CSS passou a 1024 mas o JS ficou em 720; aceito como follow-up porque os fluxos funcionam no 768 e a aceitação literal do RUN-139 foi atendida."
+        "13/11: descoberto pela revisão independente Qwen do RUN-139 (ressalva B, PR #209). O CSS passou a 1024 mas o JS ficou em 720; aceito como follow-up porque os fluxos funcionam no 768 e a aceitação literal do RUN-139 foi atendida.",
+        "13/11: fechado pelo RUN-143, PR #214 (merge 0aa2d9eb). JS alinhado a 1024 (casca.ts, movimento.ts, MenuCriar.tsx, NavegacaoPrincipal.tsx); a docagem do título no CSS também estava em 719.98 e foi a 1023.98 (causa real da falha 'título ainda visível' no 768, diagnosticada no retry). Guards §5.3/§6.7 do casca.spec.ts e movimento.spec.ts em 1024 com asserções mantidas; comentário de paginaEncolhe corrigido. E2E 181/0 com os testes §6.7 rodando no 768; 504 unitários, typecheck, build, Biome verdes. Revisão Qwen: FAIL → retry → PASS. CI verde (rerun dos flaky de grupo). Residual fora do escopo: Guia.tsx:179 (innerWidth<720) é comportamento de tela, não da casca."
       ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true, true, true, true],
+      "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
