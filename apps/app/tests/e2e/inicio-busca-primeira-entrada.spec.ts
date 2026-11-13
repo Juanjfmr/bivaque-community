@@ -55,9 +55,7 @@ test.describe("campo 'Buscar em [cidade]'", () => {
       await campo.press("Enter")
 
       await expect(page).toHaveURL(/\/app\/busca\?q=/)
-      await expect
-        .poll(() => new URL(page.url()).searchParams.get("q"))
-        .toBe(TERMO)
+      await expect.poll(() => new URL(page.url()).searchParams.get("q")).toBe(TERMO)
       await expect(page.getByText(RESULTADO, { exact: true })).toBeVisible()
       await expect
         .poll(() => pedidos.busca().some((url) => new URL(url).searchParams.get("q") === TERMO))
@@ -111,7 +109,9 @@ test.describe("estado de primeira entrada", () => {
       await simularCidadeVazia(page)
       await page.goto("/app/inicio")
 
-      await expect(page.getByRole("heading", { name: "A primeira publicação abre a cidade" })).toBeVisible()
+      await expect(
+        page.getByRole("heading", { name: "A primeira publicação abre a cidade" }),
+      ).toBeVisible()
       await expect(page.getByRole("button", { name: "Publicar na cidade" })).toBeVisible()
       await expect(page.locator('[data-tela="inicio"] [data-cartao]')).toHaveCount(0)
       await expect(page.getByText(/\d+ (negócio|negócios)/)).toHaveCount(0)
@@ -138,9 +138,7 @@ test.describe("estado de primeira entrada", () => {
     await simularCidadeVazia(page)
     await page.goto("/app/busca")
 
-    await expect(
-      page.getByRole("heading", { name: "Nada publicado por aqui ainda" }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Nada publicado por aqui ainda" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Publicar na cidade" })).toBeVisible()
     await expect(page.locator('[data-explorar="categorias"]')).toHaveCount(0)
   })
@@ -246,7 +244,10 @@ test.describe("navegação e coluna de leitura", () => {
     await simularInicio(page)
     await page.goto("/app/inicio")
 
-    const cartao = page.locator('[data-cartao="publicacao"]').filter({ hasText: "Pediatra" }).first()
+    const cartao = page
+      .locator('[data-cartao="publicacao"]')
+      .filter({ hasText: "Pediatra" })
+      .first()
     await expect(cartao).toBeVisible()
     await expect(cartao).toContainText("Alguém da cidade")
     await expect(cartao).toContainText("Manaus")

@@ -55,7 +55,7 @@ describe("buscas recentes", () => {
 
   it("lixo guardado vira lista vazia em vez de quebrar a tela", () => {
     expect(lerRecentes(armazenamento({ "bivaque:buscas-recentes": "{" }))).toEqual([])
-    expect(lerRecentes(armazenamento({ "bivaque:buscas-recentes": "[1,null,\"ok\"]" }))).toEqual([
+    expect(lerRecentes(armazenamento({ "bivaque:buscas-recentes": '[1,null,"ok"]' }))).toEqual([
       "ok",
     ])
   })
