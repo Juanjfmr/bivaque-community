@@ -20,12 +20,12 @@ conferir antes, a ordem dos passos e o que fica sem funcionar.
 - Nenhuma das 38 apaga tabela, apaga coluna ou muda tipo; os `delete` estão dentro de funções
   (exclusão de conta, limpeza do limitador) e não rodam na hora da migração.
 - **6 delas têm data anterior à última já aplicada** (`20261024090000`), porque entraram depois com
-  a linha do app: `20261023100000` a `20261023120000`. O `supabase db push` do workflow recusa
-  migração fora de ordem sem `--include-all`; do jeito que está, o push para `producao` **falha no
-  job de migrações**.
-- Correção prevista: ensaio local da ordem real — banco com as migrações de `3194fcf1`, depois as 38
-  na ordem em que `db push --include-all` aplicaria — e, passando, o workflow ganha
-  `--include-all`. Resultado do ensaio local: *pendente* (o banco local está ocupado pelo RUN-138).
+  a linha do app: `20261023100000` a `20261023120000`. O `supabase db push` recusa migração fora de
+  ordem sem `--include-all`; por isso o workflow de publicação usa `--include-all`.
+- Ensaio da ordem real (workflow `ensaio-migracoes.yml`, banco local **sem seed**, como produção):
+  as 38 pendentes aplicam sem erro na ordem de produção, o pgTAP e o `db:lint` passam no resultado,
+  e o esquema obtido pela ordem real é **idêntico** ao de um banco criado do zero. **Resultado:
+  verde** no commit `d195b123` (12/11/2026); o `deploy-migrations.yml` ganhou `--include-all`.
 
 ### 2. Variáveis de ambiente na Vercel (Production)
 
