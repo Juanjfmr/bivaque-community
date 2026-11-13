@@ -9,6 +9,7 @@ import { Grade } from "@/components/bivaque/grade"
 import { type ListaDeNegocios, lerNegocios } from "@/lib/dados/negocios"
 import { useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { type ItemDeSegmento, Segmentos } from "@/src/pecas/segmentos"
 import { FalhaDaLeitura } from "./FalhaDaLeitura"
 
@@ -94,7 +95,7 @@ export function Negocios() {
   return (
     <section data-tela="negocios" className="grid gap-2">
       <CabecaDePagina
-        titulo="Mercado da cidade"
+        titulo={tituloDaRota("negocios")}
         subtitulo={
           dados === null
             ? "Serviços da sua cidade."

@@ -60,7 +60,7 @@ import { Segmentos } from "@/src/pecas/segmentos"
  * vira "nada anunciado".
  */
 
-export type AbaDoMercado = "desapegos" | "imoveis" | "negocios"
+export type AbaDoMercado = "desapegos" | "imoveis"
 
 const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "desapegos", rotulo: "Desapegos" },
@@ -110,8 +110,6 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   // A `pagina` da URL persegue o cursor do servidor até a página pedida.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
-    // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
-    if (inicial === "negocios") return
     const controle = new AbortController()
     setDados(null)
     setErro(null)
@@ -203,10 +201,9 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
     })
   }
 
-  const carregando = inicial !== "negocios" && dados === null && erro === null
+  const carregando = dados === null && erro === null
   const cidade = dados?.cidade ?? casca.cidade
-  const titulo =
-    inicial === "desapegos" ? "Desapegos" : inicial === "imoveis" ? "Imóveis" : "Negócios locais"
+  const titulo = inicial === "desapegos" ? "Desapegos" : "Imóveis"
 
   return (
     <section data-tela={inicial} className="grid gap-2">
@@ -420,13 +417,6 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
-      ) : inicial === "negocios" ? (
-        // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
-        <EstadoVazio
-          titulo="Ainda sem negócios cadastrados"
-          texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-          icone="storefront"
-        />
       ) : (inicial === "imoveis" ? imoveisFiltrados.length === 0 : itens.length === 0) ? (
         <EstadoVazio
           titulo={
@@ -503,8 +493,4 @@ export function Catalogo() {
 
 export function Imoveis() {
   return <ListaDeMercado inicial="imoveis" />
-}
-
-export function Negocios() {
-  return <ListaDeMercado inicial="negocios" />
 }

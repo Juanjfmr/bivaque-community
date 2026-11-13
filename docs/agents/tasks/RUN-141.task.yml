@@ -28,6 +28,11 @@ allowed_paths:
   - "apps/app/src/pecas/**"
   - "apps/app/tests/**"
   - ".visual/run-141/"
+  # Ampliação autorizada pelo coordenador (13/11, retry 1): unificar o nome da
+  # página em toda superfície exige tocar a rota, o mapa de prova e a paleta.
+  - "apps/app/lib/navegacao/rotas.ts"
+  - "apps/app/src/telas/TelaDeProva.tsx"
+  - "apps/app/src/casca/Paleta.tsx"
 
 forbidden:
   - "alterar apps/web, supabase, migrations ou rotas de API"
@@ -39,10 +44,15 @@ forbidden:
   - "rodar E2E fora da fila: sempre `node scripts/agents/prova-fila.mjs -- <comando>`"
 
 acceptance:
-  - "O nome da página é distinto das abas, e as abas são segmentos com contagem real vinda dos dados que a tela já recebe (sem número inventado)."
-  - "A ordenação 'Mais próximos / Mais recentes' funciona; 'Mais próximos' sem origem de localização cai para recentes e diz por quê, sem jargão."
-  - "O botão 'Anunciar negócio' e o estado vazio levam ao mesmo caminho real de cadastro."
+  # Emenda do coordenador (13/11, retry 1): o resumo da API não traz totais,
+  # distância nem data. Contagem por aba e ordenação por proximidade foram
+  # retiradas do produto para não inventar dado; viram cartão de follow-up
+  # quando a API trouxer totais/criadoEm/distância. Escopo entregue abaixo.
+  - "O nome da página é distinto das abas e unificado em toda superfície (topo, h1, rota, paleta de atalhos); as abas são segmentos, sem contagem inventada (contagem null enquanto a API não trouxer totais)."
+  - "A lista usa a ordem do servidor; não há controle de ordenação por proximidade enquanto a API não trouxer distância/data (removido, com o ramo morto e seu teste, para não afirmar o que não faz)."
+  - "O botão 'Divulgar meu negócio' e o estado vazio levam ao mesmo caminho real de cadastro (a opção my-biz do menu Criar)."
   - "A aba ativa tem contraste AA nos dois temas (medido no teste)."
+  - "A navegação por segmentos é simétrica: trocar entre Desapegos/Imóveis/Negócios mantém a linha de segmentos e o caminho de volta."
   - "E2E em 375/768/1440, nos dois temas; os specs existentes de Mercado e negócios continuam verdes."
   - "Capturas 375/768/1440 claro e escuro em .visual/run-141/."
 

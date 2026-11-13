@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/command"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
+import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { normalizar } from "@/lib/texto"
 
 /**
@@ -98,7 +99,7 @@ const ITENS: readonly Item[] = [
   },
   {
     id: "ir-negocios",
-    rotulo: "Negócios locais",
+    rotulo: tituloDaRota("negocios"),
     icone: "storefront",
     grupo: "Ir para",
     destino: "negocios",
