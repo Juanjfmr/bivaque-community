@@ -25,13 +25,17 @@ export function Conversas() {
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
   const controle = useRef<AbortController | null>(null)
+  const paginaEmCurso = useRef(false)
   useRolagemEFoco(CARGA_CONCLUIDA)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const pedido = new AbortController()
     controle.current = pedido
+    paginaEmCurso.current = false
     setDados(null)
     setErro(null)
+    setErroMais(false)
+    setCarregandoMais(false)
     void lerConversas({ signal: pedido.signal })
       .then((valor) => {
         if (!pedido.signal.aborted) setDados(valor)
@@ -44,17 +48,26 @@ export function Conversas() {
   }, [rodada])
   async function mais() {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || !dados?.proximo || carregandoMais) return
+    if (!pedido || pedido.signal.aborted || !dados?.proximo || paginaEmCurso.current) return
+    paginaEmCurso.current = true
+    const cursor = dados.proximo
     setCarregandoMais(true)
     setErroMais(false)
     try {
-      const pagina = await lerConversas({ depois: dados.proximo, signal: pedido.signal })
-      if (!pedido.signal.aborted)
-        setDados({ conversas: [...dados.conversas, ...pagina.conversas], proximo: pagina.proximo })
+      const pagina = await lerConversas({ depois: cursor, signal: pedido.signal })
+      if (!pedido.signal.aborted && controle.current === pedido)
+        setDados((atual) =>
+          atual?.proximo === cursor
+            ? { conversas: [...atual.conversas, ...pagina.conversas], proximo: pagina.proximo }
+            : atual,
+        )
     } catch {
-      if (!pedido.signal.aborted) setErroMais(true)
+      if (!pedido.signal.aborted && controle.current === pedido) setErroMais(true)
     } finally {
-      if (!pedido.signal.aborted) setCarregandoMais(false)
+      if (!pedido.signal.aborted && controle.current === pedido) {
+        paginaEmCurso.current = false
+        setCarregandoMais(false)
+      }
     }
   }
   const filtradas =
