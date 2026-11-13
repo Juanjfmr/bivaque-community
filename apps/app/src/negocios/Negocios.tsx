@@ -9,7 +9,19 @@ import { Grade } from "@/components/bivaque/grade"
 import { type ListaDeNegocios, lerNegocios } from "@/lib/dados/negocios"
 import { useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { tituloDaRota } from "@/lib/navegacao/rotas"
+import { type ItemDeSegmento, Segmentos } from "@/src/pecas/segmentos"
 import { FalhaDaLeitura } from "./FalhaDaLeitura"
+
+/**
+ * A lista de negócios da cidade (F07), com as três seções do Mercado no topo.
+ *
+ * A página tem nome próprio ("Mercado da cidade") — antes ela e a aba se
+ * chamavam "Negócios" — e as seções são segmentos que navegam de verdade. A
+ * contagem de cada segmento é a que a lista daquela seção já entrega, com o `+`
+ * quando há mais páginas; falha de leitura deixa a seção sem número, nunca com
+ * zero inventado.
+ */
 
 export function Negocios() {
   const navegacao = useNavegacao()
@@ -58,10 +70,32 @@ export function Negocios() {
     }
   }
 
+  // O caminho real de cadastro é o menu Criar, o mesmo do botão da casca: não
+  // existe rota própria de cadastro de negócio.
+  const anunciar = () => void navegacao.abrir("menu-criar")
+
+  const segmentos: readonly ItemDeSegmento[] = [
+    {
+      id: "desapegos",
+      rotulo: "Desapegos",
+      contagem: null,
+    },
+    {
+      id: "imoveis",
+      rotulo: "Imóveis",
+      contagem: null,
+    },
+    {
+      id: "negocios",
+      rotulo: "Negócios",
+      contagem: null,
+    },
+  ]
+
   return (
     <section data-tela="negocios" className="grid gap-2">
       <CabecaDePagina
-        titulo="Negócios locais"
+        titulo={tituloDaRota("negocios")}
         subtitulo={
           dados === null
             ? "Serviços da sua cidade."
@@ -70,6 +104,18 @@ export function Negocios() {
         acao={
           <Botao tom="texto" onClick={() => void navegacao.irPara("pedidos")}>
             Meus pedidos
+          </Botao>
+        }
+      />
+      <Segmentos
+        itens={segmentos}
+        valor="negocios"
+        rotulo="Seções do Mercado"
+        grupo="mercado"
+        aoEscolher={(secao) => void navegacao.irPara(secao)}
+        acao={
+          <Botao tom="tonal" icone="add" data-acao="anunciar-negocio" onClick={anunciar}>
+            Divulgar meu negócio
           </Botao>
         }
       />
@@ -97,6 +143,7 @@ export function Negocios() {
               titulo="Ainda sem negócios cadastrados"
               texto="Quando um negócio desta categoria estiver disponível na sua cidade, ele aparece aqui."
               icone="storefront"
+              acao={{ rotulo: "Divulgar meu negócio", aoAcionar: anunciar }}
             />
           ) : (
             <>

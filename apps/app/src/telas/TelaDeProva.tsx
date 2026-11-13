@@ -6,19 +6,13 @@ import { subAbaDoMercado } from "@/lib/navegacao/abas"
 import { descritorDaAcao } from "@/lib/navegacao/entrada"
 import { useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA, criarCargaPendente } from "@/lib/navegacao/restauracao"
-import { SUBABAS_DO_MERCADO, validarParametros } from "@/lib/navegacao/rotas"
+import { SUBABAS_DO_MERCADO, tituloDaRota, validarParametros } from "@/lib/navegacao/rotas"
 import { usePortaDeCargas } from "@/src/contexto/cargas"
 import { useCasca } from "@/src/contexto/casca"
 import { FILTRO_SEGURAR_CARGA, modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { Botao } from "@/src/pecas/pecas"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 import { tituloDaTela } from "@/src/titulos"
-
-const ROTULOS_DAS_SUBABAS: Record<(typeof SUBABAS_DO_MERCADO)[number], string> = {
-  desapegos: "Desapegos",
-  imoveis: "Imóveis",
-  negocios: "Negócios",
-}
 
 const ITENS_DE_PROVA = Array.from({ length: 40 }, (_, indice) => `item-${indice + 1}`)
 
@@ -99,7 +93,7 @@ export function TelaDeProva({ nome }: { nome: string }) {
               onClick={() => void navegacao.irPara(aba)}
               className="min-h-11 rounded-xl px-3 text-sm font-medium aria-[current=page]:bg-(--secondary-container)"
             >
-              {ROTULOS_DAS_SUBABAS[aba]}
+              {tituloDaRota(aba)}
             </button>
           ))}
         </nav>

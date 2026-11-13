@@ -7,7 +7,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Selecao } from "@/components/bivaque/campos"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
-import { ChipsDeFiltro, type ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
+import type { ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
@@ -47,6 +47,7 @@ import {
   mudarFiltroNaUrl,
   semAcento,
 } from "@/src/mercado/filtros-url"
+import { Segmentos } from "@/src/pecas/segmentos"
 
 /**
  * O Mercado do app, do banco (LAN-F06, no molde do F05).
@@ -59,7 +60,7 @@ import {
  * vira "nada anunciado".
  */
 
-export type AbaDoMercado = "desapegos" | "imoveis" | "negocios"
+export type AbaDoMercado = "desapegos" | "imoveis"
 
 const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "desapegos", rotulo: "Desapegos" },
@@ -67,13 +68,7 @@ const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "negocios", rotulo: "Negócios" },
 ]
 
-export function ListaDeMercado({
-  inicial,
-  comAbas = true,
-}: {
-  inicial: AbaDoMercado
-  comAbas?: boolean
-}) {
+export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<ListaDoMercado | null>(null)
@@ -115,8 +110,6 @@ export function ListaDeMercado({
   // A `pagina` da URL persegue o cursor do servidor até a página pedida.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
-    // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
-    if (inicial === "negocios") return
     const controle = new AbortController()
     setDados(null)
     setErro(null)
@@ -208,10 +201,9 @@ export function ListaDeMercado({
     })
   }
 
-  const carregando = inicial !== "negocios" && dados === null && erro === null
+  const carregando = dados === null && erro === null
   const cidade = dados?.cidade ?? casca.cidade
-  const titulo =
-    inicial === "desapegos" ? "Desapegos" : inicial === "imoveis" ? "Imóveis" : "Negócios locais"
+  const titulo = inicial === "desapegos" ? "Desapegos" : "Imóveis"
 
   return (
     <section data-tela={inicial} className="grid gap-2">
@@ -286,14 +278,13 @@ export function ListaDeMercado({
         </section>
       ) : null}
 
-      {comAbas ? (
-        <ChipsDeFiltro
-          itens={SUBABAS}
-          valor={inicial}
-          aoEscolher={(aba) => void navegacao.irPara(aba)}
-          rotulo="Seções do Mercado"
-        />
-      ) : null}
+      <Segmentos
+        itens={SUBABAS}
+        valor={inicial}
+        aoEscolher={(aba) => void navegacao.irPara(aba)}
+        rotulo="Seções do Mercado"
+        grupo="mercado"
+      />
 
       {filtros.q === "" ? null : (
         <Botao
@@ -426,13 +417,6 @@ export function ListaDeMercado({
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
-      ) : inicial === "negocios" ? (
-        // shortcut: negócios sem rota nesta rodada; quando houver /api/app/negocios, ligar aqui
-        <EstadoVazio
-          titulo="Ainda sem negócios cadastrados"
-          texto="As indicações da comunidade ajudarão a formar o guia de serviços."
-          icone="storefront"
-        />
       ) : (inicial === "imoveis" ? imoveisFiltrados.length === 0 : itens.length === 0) ? (
         <EstadoVazio
           titulo={
@@ -508,9 +492,5 @@ export function Catalogo() {
 }
 
 export function Imoveis() {
-  return <ListaDeMercado inicial="imoveis" comAbas={false} />
-}
-
-export function Negocios() {
-  return <ListaDeMercado inicial="negocios" comAbas={false} />
+  return <ListaDeMercado inicial="imoveis" />
 }

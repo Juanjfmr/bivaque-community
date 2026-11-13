@@ -93,7 +93,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     test.setTimeout(180_000)
     await semearSessaoDeMembro(context, MEMBRO)
     await page.goto("/app/negocios")
-    await expect(page.getByRole("heading", { level: 1, name: "Negócios locais" })).toBeVisible({
+    await expect(page.getByRole("heading", { level: 1, name: "Mercado da cidade" })).toBeVisible({
       timeout: 30_000,
     })
     await expect(
