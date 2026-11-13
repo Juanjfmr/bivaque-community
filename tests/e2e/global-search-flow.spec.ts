@@ -72,6 +72,9 @@ test.describe("busca global do cabecalho", () => {
     await field.fill("escola")
     await page.keyboard.press("Enter")
 
+    // O Enter navega do shell web para o app: esperar a navegação assentar antes
+    // de avaliar o state, senão o poll corre com a troca de contexto de execução.
+    await page.waitForURL(/\/app\/busca/)
     await expect
       .poll(() => page.evaluate(() => window.history.state?.bivaqueEntrada?.versao ?? 0))
       .toBe(1)
