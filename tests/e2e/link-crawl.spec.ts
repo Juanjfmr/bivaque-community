@@ -111,6 +111,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
   },
   {
+    route: "/explorar/servicos",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era a lista /mercado e a página /explorar, ambas trocadas para o app (F02/F06); a lista de serviços segue na web até o lote próprio",
+  },
+  {
     route: "/groups",
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor e 'Criar o primeiro grupo' em Interesses, que só aparecem para quem não tem grupo; o painel 'Grupos ativos' saiu com o feed da Início (lote 5 N2)",
@@ -217,6 +222,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/mercado/novo",
     porta:
       "DÍVIDA LAN-TROCA: a porta era o menu '+' da casca web, que a fase 1 substituiu pela casca do app (F06)",
+  },
+  {
+    route: "/negocio",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era 'Meu negócio' na lista /mercado, trocada para o app (F06); a gestão do negócio próprio segue na web (F07)",
   },
   {
     route: "/negocio/catalogo",
