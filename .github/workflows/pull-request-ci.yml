@@ -4,17 +4,63 @@ on:
   push:
     branches: [main]
   pull_request:
+    # `labeled` faz aplicar a label ci:full disparar o run completo neste PR.
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  # Ciclo de implementação: feedback em <=5 min, sem Supabase/build/E2E (ADR-20261114).
+  fast:
+    name: Fast checks
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta
+    # (chromium). Pinar 24.04 até o Playwright ser atualizado (pin intencional).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Typecheck E2E specs
+        run: pnpm exec tsc -p tests/e2e/tsconfig.json
+
+      - name: Unit, privacy and scope tests
+        run: pnpm test
+
+      - name: Secrets scan
+        run: pnpm test:secrets
+
   ci:
     name: Install, test, and build
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta
     # (chromium). Pinar 24.04 até o Playwright ser atualizado (pin intencional).
     runs-on: ubuntu-24.04
+    # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
+    # ver ADR-20261114.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
 
     steps:
       - name: Checkout
