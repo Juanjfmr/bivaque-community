@@ -15,7 +15,8 @@ permissions:
 jobs:
   reference-comparison:
     name: HTML R72 vs React / 320-375-430 / light-dark
-    runs-on: ubuntu-latest
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     steps:
