@@ -27,13 +27,13 @@ const render = (locality?: typeof OWN) =>
   renderToStaticMarkup(createElement(CityReference, locality === undefined ? {} : { locality }))
 
 describe("CityReference — links de agenda e guia por cidade", () => {
-  it("na cidade da pessoa mantém «Ver todos os eventos» para /events e «Abrir o guia de chegada» para /guide", () => {
+  it("na cidade da pessoa mantém «Ver todos os eventos» para /events e «Abrir o guia de chegada» para /app/guia", () => {
     const html = render()
 
     expect(html).toContain("Ver todos os eventos")
     expect(html).toContain('href="/events"')
     expect(html).toContain("Abrir o guia de chegada")
-    expect(html).toContain('href="/guide"')
+    expect(html).toContain('href="/app/guia"')
     expect(html).not.toContain("locality=")
   })
 
