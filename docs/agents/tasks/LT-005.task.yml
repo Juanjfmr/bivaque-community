@@ -49,7 +49,7 @@ baseline:
     (rotas.ts:128,126; Mercado.tsx -> /api/app/mercado, filtros-url.ts:52-73 consome q/tipo/
     quartos/valor_max/preco_min/preco_max/pagina), /app/meus-anuncios (rotas.ts:143;
     MeusAnuncios.tsx -> /api/app/mercado/meus, gestão gerenciar.tsx). E2E f06-mercado-real.spec.ts
-    prova listas/detalhe/interesse/editar+pausar+reativar com banco real. O hold da fase 1
+    prova listas, detalhe, interesse, editar, pausar e reativar com banco real. O hold da fase 1
     (.visual/run-019/relatorio.md:51,60 — filtros não consumidos) foi resolvido (32784b4d, 74aefd68).
 
 allowed_paths:
