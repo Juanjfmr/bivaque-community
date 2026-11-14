@@ -1,5 +1,6 @@
 "use client"
 
+import { useLocation } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
@@ -34,6 +35,7 @@ import {
   CorpoDoGuia,
   SecaoDoGuia,
 } from "@/src/guia/EstruturaDoGuia"
+import { filtrosDaUrl } from "@/src/guia/filtros-da-url"
 import { type Passo, SECOES } from "@/src/guia/secoes"
 import { Verbete } from "@/src/guia/Verbete"
 
@@ -54,6 +56,11 @@ import { Verbete } from "@/src/guia/Verbete"
  * A leitura do verbete abre numa folha sobre a lista. A folha é estado local da
  * tela: o Voltar do sistema não a fecha — quem fecha é o botão, o Escape ou o
  * arrasto —, e o histórico do roteador não é empilhado por ela.
+ *
+ * O termo e a categoria também chegam pelo endereço (LAN-TROCA):
+ * `/app/guia?q=<termo>&categoria=<cat>` abre a tela já filtrada, e o endereço
+ * mantém o recorte depois da materialização da entrada (ROTAS_COM_BUSCA). O
+ * `?locality=` do guia antigo não é lido: a lista é sempre a da cidade da sessão.
  */
 
 /** Um passo do roteiro de chegada: leva à rota que resolve, sem prometer nada. */
@@ -87,9 +94,16 @@ function PassoDoGuia({ passo }: { passo: Passo }) {
 
 export function Guia() {
   const navegacao = useNavegacao()
-  const [termo, setTermo] = useState("")
-  const [busca, setBusca] = useState("")
-  const [categoria, setCategoria] = useState<CategoriaDoGuia | null>(null)
+  // O recorte do link (LAN-TROCA) vale já no primeiro desenho: o termo e a
+  // categoria são lidos do endereço na montagem, então o primeiro pedido é o da
+  // consulta. A URL é só a porta de entrada; a partir dela quem escreve é a
+  // pessoa — digitar e tocar o chip vencem o valor de origem, e o endereço não
+  // é reescrito enquanto ela digita.
+  const endereco = useLocation({ select: (linha) => linha.search as Record<string, unknown> })
+  const origem = filtrosDaUrl(endereco)
+  const [termo, setTermo] = useState(origem.termo)
+  const [busca, setBusca] = useState(origem.termo)
+  const [categoria, setCategoria] = useState<CategoriaDoGuia | null>(origem.categoria)
   const [dados, setDados] = useState<GuiaDaCidade | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
@@ -115,6 +129,22 @@ export function Guia() {
     const timer = setTimeout(() => setBusca(termo), 300)
     return () => clearTimeout(timer)
   }, [termo])
+
+  // Depois da chegada, um endereço com outro recorte (o Voltar para outra
+  // entrada do Guia) leva o termo e a categoria à tela. Ausente ou inválido não
+  // mexe no que a pessoa digitou ou filtrou.
+  const enderecoLido = useRef(false)
+  useEffect(() => {
+    if (!enderecoLido.current) {
+      enderecoLido.current = true
+      return
+    }
+    if (origem.termo !== "") {
+      setTermo(origem.termo)
+      setBusca(origem.termo)
+    }
+    if (origem.categoria !== null) setCategoria(origem.categoria)
+  }, [origem.termo, origem.categoria])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
