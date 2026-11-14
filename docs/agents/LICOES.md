@@ -204,4 +204,21 @@ Toda troca de rota de lista (LAN-TROCA) inclui, na mesma unidade de trabalho:
    que se lembrou de rodar (city-reference.test.tsx ficou para trás na 1ª rodada do LT-007).
 4. `next build` roda typecheck com typed routes: href novo fora do union (ex.: `/app/guia`, que é
    rewrite do SPA) exige `as Route` (padrão do repo). Verifique com `next typegen` + typecheck da
-   web, não com o typecheck da raiz.
+   web, não com o typecheck da raiz. Desde 14/11 o `next typegen` roda DENTRO do script typecheck
+   da web — o fast CI pega essa classe em ~1.5 min, não no build de 20 min.
+
+## Processo enxuto: onde o rigor paga e onde é cerimônia (14/11)
+
+O retrabalho do LT-007 (3 tentativas de completo) veio de prova local incompleta e contrato com
+lacuna, não do rigor. O completo no fechamento PEGOU a regressão do link-crawl — cortá-lo trocaria
+tempo por defeito embarcado. A rede fica; a cerimônia sai:
+
+- Lote R0 mecânico (sem comportamento de produto, sem fronteira de confiança: pin de runner,
+  fiação de workflow, script de 1 linha) dispensa revisão por outro modelo — a matriz já permite.
+  Verificação do coordenador + CI bastam. Não classificar infra como R2 por hábito (RUN-146 era R0).
+- R3 de verdade (RLS, dado pessoal, auth, migração destrutiva) mantém revisão + security-auditor.
+  Elevação por palavra-chave incidental (ex.: "secrets" no nome de um step) não cria decisão nova:
+  citar o ADR existente, não escrever outro (ADR-20261105 já diz isso).
+- Evidência no quadro: 1-2 linhas (o que rodou, SHA, resultado). Um push de quadro por fechamento,
+  não por evento. Contratos e pareceres no tamanho que os campos exigem, sem ensaio.
+- Não re-rodar local o que o CI já provou no mesmo SHA.
