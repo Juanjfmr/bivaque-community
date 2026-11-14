@@ -43,6 +43,8 @@ allowed_paths:
   - apps/web/next.config.ts
   - apps/web/app/(shell)/guide/page.tsx
   - apps/web/app/components/shell
+  - apps/web/lib/recommendations/guide-search.ts
+  - scripts/visual/capture.mjs
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/unit
   - tests/e2e
