@@ -6454,7 +6454,8 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
+      "completedAt": "2026-11-14",
       "description": "Instrução direta do dono (14/11): no máximo 5 min de CI por ciclo, teste completo no final do lote. Job fast (install, lint, typecheck, typecheck:e2e, pnpm test, varredura de credenciais) em todo push; job completo (todos os steps atuais) e visuais (App mobile-first, HTML R72) só com a label ci:full no PR, push na main ou dispatch; types labeled dispara o re-run. Rito: coordenador aplica a label no fechamento, espera completo verde, só então mergeia. Decisão R3 por delegação: ADR-20261114. Sem branch protection, a trava é o rito (ADR alternativa 4). Dashboard readiness não dá falso verde: classifyChecks exige presença e sucesso de cada step (readiness-github.mjs:8-13); run fast-only sem steps de E2E/DB = inconclusive.",
       "checklist": [
         "Job fast sempre, sem Supabase/build/E2E, alvo <=5 min (medir no PR)",
@@ -6467,14 +6468,16 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-14",
-      "sourceRevision": "8cec117f",
+      "sourceRevision": "3dccdbc4",
       "links": [
         "docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md",
         "docs/agents/tasks/RUN-147.task.yml"
       ],
       "proof": [
-        "14/11: implementado pelo DeepSeek (commit 8cec117f, branch ds/ci-fast-cycle): 3 workflows, só adições (56 linhas); YAML válido, contrato R3 válido, secrets scan limpo. Coordenador verificou o diff no disco (fast com os comandos exatos dos steps rápidos; ci intacto + if; visuais com paths/timeouts preservados). Achado do executor sobre readiness-github.mjs resolvido pela leitura: classifyChecks exige cada step presente e verde -> fast-only = inconclusive, sem falso verde. Revisão Qwen + auditoria R3 em curso; prova de runtime no PR."
-      ]
+        "14/11: implementado pelo DeepSeek (commit 8cec117f, branch ds/ci-fast-cycle): 3 workflows, só adições (56 linhas); YAML válido, contrato R3 válido, secrets scan limpo. Coordenador verificou o diff no disco (fast com os comandos exatos dos steps rápidos; ci intacto + if; visuais com paths/timeouts preservados). Achado do executor sobre readiness-github.mjs resolvido pela leitura: classifyChecks exige cada step presente e verde -> fast-only = inconclusive, sem falso verde. Revisão Qwen + auditoria R3 em curso; prova de runtime no PR.",
+        "14/11: FECHADO — PR #224 mergeado em 3dccdbc4 (squash de 321736bf). Prova de runtime completa: SEM label, run 43604585319 no SHA final 321736bf = Fast checks success 1.5 min, completo e visuais skipped; COM a label ci:full, runs 43604939946 (Pull Request CI), 43604939862 (App mobile-first, success 33.7 min) e 43604939861 (R72, success) no mesmo SHA — o evento labeled disparou os três. O completo caiu na 1ª tentativa só pelo flaky conhecido (group-admin-cycle:120, causa Kong↔PostgREST confirmada no kong-errors.log da testemunha RUN-145; ocorrência registrada em CI-E2E-UPSTREAM-INSTAVEL); rerun --failed verde: Install/test/build success 17.1 min, Fast 1.4 min, mesmo SHA 321736bf — ressalva R1 do auditor satisfeita (run completo no SHA mergeado). Revisão Qwen PASS + auditoria security-auditor PASS com ressalvas (R2: label criada e disparo conferido). Dashboard readiness não dá falso verde (classifyChecks exige steps presentes; runs de PR invisíveis ao readiness). Ciclo medido: ~1.5 min por push; completo ~17-25 min + visuais ~34 min, uma vez no fechamento."
+      ],
+      "completedChecklist": [true, true, true, true, true]
     },
     {
       "id": "F09-NOME-PRESTADOR-AVISO",
