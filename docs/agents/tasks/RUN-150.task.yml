@@ -6,8 +6,8 @@
 # e2e-stateful matrix (mobile-375/tablet-768/desktop-1440), cada um com sua stack
 # Supabase e banco INDEPENDENTE, serial dentro do viewport. Sem colisão
 # cross-viewport (bancos separados); a separação das mesmas linhas fica preservada
-# pelo serial dentro de cada viewport. Agregador "ci" preserva o nome de check
-# "Install, test, and build" e o gate ci:full. Scripts do package.json intactos
+# pelo serial dentro de cada viewport. Agregador ci preserva o nome de check
+# Install, test, and build e o gate ci:full. Scripts do package.json intactos
 # (guard local-command-surface passa). Tradeoff: mais minutos de runner (4 stacks)
 # por wall time menor. Risco: ECR rate-limit com 4 pulls concorrentes (backoff +
 # Docker Hub fallback já no workflow). Medir; reverter se vermelho ou sem ganho.
