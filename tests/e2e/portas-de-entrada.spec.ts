@@ -7,6 +7,7 @@ import { signInAs } from "./helpers/session"
 
 const OTHER = "membro-1@bivaque.example.invalid"
 const PROPERTY = "b2000000-0000-4000-8000-000000000001"
+const GUIDE_ENTRY = "a0000000-0000-4000-8000-000000000003"
 
 test.describe("portas de entrada", () => {
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "portas iguais nas três larguras")
@@ -38,14 +39,20 @@ test.describe("portas de entrada", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
   })
 
-  test("o cartão do Guia abre a referência completa", async ({ page }) => {
+  test("a lista do Guia migra, e a referência completa segue na web", async ({ page }) => {
     await signInAs(page.context(), OTHER)
+    // A lista antiga agora responde 307 para o Guia do app.
     await page.goto("/guide")
-    const card = page.locator("#guia-referencias").getByRole("heading", { level: 3 }).first()
-    const name = (await card.innerText()).trim()
-    await card.getByRole("link").click()
-    await expect(page).toHaveURL(/\/guide\/[0-9a-f-]+$/)
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(name)
+    await expect(page).toHaveURL(/\/app\/guia$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Guia", exact: true })).toBeVisible({
+      timeout: 20_000,
+    })
+    // O cartão da lista era a porta do verbete web; o app abre o verbete em folha
+    // (f08-guia-real). A referência continua de pé por URL direta, com a ficha e
+    // a porta de correção.
+    await page.goto(`/guide/${GUIDE_ENTRY}`)
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Transportadora Ajuricaba")
+    await expect(page.getByRole("link", { name: "Sugerir atualização" })).toBeVisible()
   })
 })
 

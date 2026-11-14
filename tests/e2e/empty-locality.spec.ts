@@ -17,6 +17,11 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 // action path forward ("Criar evento"), and **does not** see the standard
 // "nenhuma ..." copy that would describe a quiet room.
 //
+// O Guia saiu da web no LAN-TROCA (F08, LT-007): /guide responde 307 para o
+// Guia do app, que declara o vazio honesto ("O guia ainda está sendo montado",
+// com a porta real de sugestão) sem aplicar o limiar de densidade — o limiar
+// segue valendo em eventos, na web.
+//
 // O caso do FEED saiu no lote 5, tarefa N2 (ADR-20261023): a cidade não tem
 // feed — a conversa é de perguntas e respostas, e publicar só existe dentro de
 // um grupo. A densidade da cidade continua provada em eventos e Guia.
@@ -149,32 +154,35 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     await expect(page.getByRole("button", { name: "Criar encontro" }).first()).toBeVisible()
   })
 
-  test("guide renders the honest empty state without a fake action", async ({ page }) => {
+  test("guide redirects to the app guide with the honest empty state", async ({ page }) => {
     // Given a member whose locality has fewer than 30 members
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
 
-    // When they open the guide
+    // When they open the old guide list
     await page.goto(`${APP_URL}/guide`, { waitUntil: "load" })
 
-    // Then the guide heading is visible
-    await expect(page.getByRole("heading", { name: "Guia de chegada" })).toBeVisible({
+    // Then the LAN-TROCA redirect takes them to the app guide
+    await expect(page).toHaveURL(/\/app\/guia$/)
+
+    // And the app guide heading is visible
+    await expect(page.getByRole("heading", { level: 1, name: "Guia", exact: true })).toBeVisible({
       timeout: 15000,
     })
 
-    // And the honest empty state is rendered
-    await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible()
-
-    // And the standard "O guia desta cidade está vazio." copy is not rendered
-    await expect(page.getByText("O guia desta cidade está vazio.")).toHaveCount(0)
-
-    // And there is no action button — suggestions do not enter the public
-    // guide directly; the operator curates from indications as F arrives.
-    // The empty state must not pretend otherwise. Scoped to <main>: the
-    // global AppShell header carries a "Criar publicação" button outside the
-    // page content, which must not count here.
+    // And the honest empty state of a city just starting is rendered, not the
+    // quiet-room copy that would describe a finished room
+    const vazio = page.locator('[data-estado="vazio"]')
+    await expect(vazio).toBeVisible()
     await expect(
-      page.getByRole("main").getByRole("button", { name: /sugerir|criar|adicionar/i }),
-    ).toHaveCount(0)
+      vazio.getByRole("heading", { name: "O guia ainda está sendo montado" }),
+    ).toBeVisible()
+    await expect(vazio).toContainText("Você pode sugerir o primeiro lugar.")
+
+    // And the way forward is the real suggestion port, not a promise that the
+    // place enters the guide by itself: the operator curates the queue.
+    await expect(vazio.locator('[data-acao="acao-do-vazio"]')).toHaveText(
+      "Sugerir um lugar para o Guia",
+    )
   })
 
   test("the empty state is not a blank page or an error message", async ({ page }) => {

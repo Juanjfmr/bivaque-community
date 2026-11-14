@@ -231,42 +231,44 @@ test.describe("two localities: each member sees only their own city", () => {
     // Given a Manaus member
     await signInAs(page, MANAUS_EMAIL)
 
-    // When they open the guide
+    // When they open the old guide list
     await page.goto(`${APP_URL}/guide`, { waitUntil: "load" })
 
-    // Then the guide heading is visible
-    await expect(page.getByRole("heading", { name: "Guia de chegada" })).toBeVisible({
+    // Then the LAN-TROCA redirect takes them to the app guide
+    await expect(page).toHaveURL(/\/app\/guia$/)
+
+    // And the app guide heading is visible
+    await expect(page.getByRole("heading", { level: 1, name: "Guia", exact: true })).toBeVisible({
       timeout: 15000,
     })
 
-    // And a Manaus guide entry is visible — positive proof the guide renders
-    // for the member's own locality.
-    //
-    // Escopado à seção "Referências por assunto": desde a reconstrução da
-    // tela (RECON-008) o nome de cada entrada aparece duas vezes na página,
-    // uma no card da lista e outra em "Atualizados recentemente". Um
-    // getByText de página inteira resolve para dois nós e estoura o strict
-    // mode antes de chegar a asserção. O que este teste prova continua o
-    // mesmo: uma entrada da MINHA cidade é renderizada na listagem.
-    const referencias = page.locator('section[aria-labelledby="guia-referencias-titulo"]')
-    await expect(referencias.getByText(MANAUS_GUIDE_ENTRY)).toBeVisible({ timeout: 15000 })
+    // And a Manaus guide entry is visible — positive proof the guide renders for
+    // the member's own locality. The app lists the city's entries from the
+    // server, so the same row the old web list showed is the assertion.
+    const lista = page.locator('[data-tela="guia"]')
+    await expect(
+      lista.locator('[data-linha="lista"]', { hasText: MANAUS_GUIDE_ENTRY }),
+    ).toBeVisible({ timeout: 15000 })
   })
 
   test("second-locality member does not see Manaus guide entries", async ({ page }) => {
     // Given a second-locality member
     await signInAs(page, SECOND_LOCALITY_EMAIL)
 
-    // When they open the guide
+    // When they open the old guide list
     await page.goto(`${APP_URL}/guide`, { waitUntil: "load" })
 
-    // Then the guide heading is visible for their own locality
-    await expect(page.getByRole("heading", { name: "Guia de chegada" })).toBeVisible({
+    // Then the LAN-TROCA redirect takes them to the app guide
+    await expect(page).toHaveURL(/\/app\/guia$/)
+
+    // And the app guide heading is visible for their own locality
+    await expect(page.getByRole("heading", { level: 1, name: "Guia", exact: true })).toBeVisible({
       timeout: 15000,
     })
 
-    // And a Manaus guide entry is not on the page. The guide must scope to
-    // the member's locality; a Manaus entry surfacing for a second-locality
-    // member is the leak this test exists to catch.
+    // And a Manaus guide entry is not on the page. The guide must scope to the
+    // member's locality; a Manaus entry surfacing for a second-locality member is
+    // the leak this test exists to catch.
     await expect(page.getByText(MANAUS_GUIDE_ENTRY)).toHaveCount(0)
   })
 })

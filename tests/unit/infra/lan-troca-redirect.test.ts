@@ -22,6 +22,8 @@ const TROCADAS = [
   ["/imoveis", "/app/imoveis"],
   ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis?q=centro&quartos=2&valor_max=4000"],
   ["/meus-anuncios", "/app/meus-anuncios"],
+  ["/guide", "/app/guia"],
+  ["/guide?q=escola&categoria=school", "/app/guia?q=escola&categoria=school"],
   ["/pedidos", "/app/pedidos"],
   [`/pedidos/${ID}`, `/app/pedido/${ID}`],
   [`/prestadores/${ID}`, `/app/negocio/${ID}`],
@@ -152,10 +154,13 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  it.each(["mercado", "imoveis"])("a lista antiga de %s não deixa page.tsx para trás", (nome) => {
-    const arquivo = join(shell, nome, "page.tsx")
-    expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
-  })
+  it.each(["mercado", "imoveis", "guide"])(
+    "a lista antiga de %s não deixa page.tsx para trás",
+    (nome) => {
+      const arquivo = join(shell, nome, "page.tsx")
+      expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
+    },
+  )
 
   it("a pasta antiga de meus-anuncios não deixa arquivos para trás", () => {
     const pasta = join(shell, "meus-anuncios")
