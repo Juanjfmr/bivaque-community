@@ -39,6 +39,8 @@ baseline:
 
 allowed_paths:
   - docs/agents/tasks/RUN-147.task.yml
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+  - docs/decisions/RATIFICACAO.md
   - .github/workflows/pull-request-ci.yml
   - .github/workflows/bivaque-app-visual-smoke.yml
   - .github/workflows/bivaque-r72-mobile-comparison.yml
