@@ -6798,22 +6798,26 @@
     },
     {
       "id": "F08-RESSALVAS",
-      "title": "F08 Guia: Voltar do sistema não fecha a folha do verbete",
+      "title": "F08 Guia: ressalvas (Voltar do verbete, resemeadura sem teste, URL ao digitar)",
       "phase": "Lançamento",
       "priority": "P3",
       "category": "frontend",
       "status": "repo",
-      "description": "Ressalva do RUN-009 (F08) integrado pelo PR #139. O Voltar do sistema não fecha a folha do verbete.",
+      "description": "Ressalva do RUN-009 (F08) integrado pelo PR #139: o Voltar do sistema não fecha a folha do verbete. Ressalvas do LT-006 (PR #222, revisão Qwen Flash PASS não bloqueante): (1) o efeito de resemeadura por mudança de endereço no Guia (Voltar para outra entrada) ainda sem teste — o molde LT-003 tinha trocarEndereco; (2) 'URL não reescrita enquanto digita' provado só por ausência de navegação no código, sem asserção E2E dedicada.",
       "checklist": [
         "Voltar do sistema fechar a folha do verbete, com id de sobreposição próprio em lib/navegacao",
-        "E2E do Voltar do sistema com a folha aberta"
+        "E2E do Voltar do sistema com a folha aberta",
+        "LT-006: teste do efeito de resemeadura por mudança de endereço no Guia (molde trocarEndereco do LT-003)",
+        "LT-006: asserção E2E de que a URL não é reescrita enquanto a pessoa digita no Guia"
       ],
-      "proof": [],
+      "proof": [
+        "14/11: estendido com as 2 ressalvas não bloqueantes da revisão independente Qwen Flash do LT-006 (PR #222, commit 6220fd6c)."
+      ],
       "tests": [],
-      "links": ["docs/agents/tasks/RUN-009.task.yml"],
+      "links": ["docs/agents/tasks/RUN-009.task.yml", "docs/agents/tasks/LT-006.task.yml"],
       "dependencies": [],
-      "updatedAt": "2026-11-06",
-      "sourceRevision": "83470086"
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "6220fd6c"
     },
     {
       "phase": "Lançamento",
