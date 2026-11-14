@@ -6444,6 +6444,30 @@
       "completedChecklist": [true, false, false, false]
     },
     {
+      "id": "F09-NOME-PRESTADOR-AVISO",
+      "title": "F09: aviso de resposta a pedido mostra o nome do prestador (enriquecimento)",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Follow-up da troca F09 (LT-004, decisão D3): a caixa antiga de /notifications enriquecia a linha do aviso de resposta a pedido com o nome do prestador (serviceRequestReplyLabel, notifications/page.tsx:562-568). O app mostra a frase neutra 'Seu pedido recebeu uma resposta' porque rotuloDoAviso (lib/notifications/destino-do-app.ts:45-64) não tem o caso do nome do prestador. Na troca, journey-pedir-servico.spec.ts migrou para a frase neutra (o lote de troca não toca app/API). Este lote devolve o nome do prestador ao aviso no app (servidor ou app), restaurando a prova do nome na jornada. Não bloqueia a troca F09.",
+      "checklist": [
+        "rotuloDoAviso (ou o servidor de avisos) passa a incluir o nome do prestador no aviso de resposta a pedido de serviço",
+        "journey-pedir-servico.spec.ts volta a asseverar o nome do prestador no aviso",
+        "Prova positiva e negativa (prestador sem nome não quebra o aviso) + E2E nas três larguras"
+      ],
+      "proof": [
+        "14/11: aberto na decisão D3 do contrato LT-004 (troca F09). A frase neutra atual foi confirmada pelo mapa F09 do explore: deep-links.ts:126-128 cai no neutro; o app é superconjunto da tela antiga exceto por este enriquecimento."
+      ],
+      "tests": [],
+      "links": ["docs/agents/tasks/LT-004.task.yml"],
+      "dependencies": ["LAN-TROCA"],
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "ce75accc",
+      "blockers": [],
+      "completedChecklist": [false, false, false]
+    },
+    {
       "id": "APP-E2E-PREEXISTENTES",
       "title": "Instabilidades E2E do apps/app e cobertura no CI",
       "phase": "Lançamento",
