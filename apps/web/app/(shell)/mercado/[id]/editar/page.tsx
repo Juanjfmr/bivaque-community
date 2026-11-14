@@ -347,7 +347,7 @@ export default function EditarAnuncioPage() {
             <Button
               variant="primary"
               size="sm"
-              onPress={() => router.push("/meus-anuncios" as Route)}
+              onPress={() => router.push("/app/meus-anuncios" as Route)}
             >
               Voltar para meus anúncios
             </Button>
@@ -360,7 +360,7 @@ export default function EditarAnuncioPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
       <Link
-        href={"/meus-anuncios" as Route}
+        href={"/app/meus-anuncios" as Route}
         className="flex w-fit items-center gap-1.5 text-sm text-muted hover:text-[var(--semantic-text-primary)]"
       >
         <ArrowLeft size={16} aria-hidden="true" />
@@ -368,7 +368,7 @@ export default function EditarAnuncioPage() {
       </Link>
 
       <nav aria-label="Trilha" className="flex items-center gap-2 text-xs text-muted">
-        <Link href={"/meus-anuncios" as Route} className="hover:underline">
+        <Link href={"/app/meus-anuncios" as Route} className="hover:underline">
           Meus anúncios
         </Link>
         <span aria-hidden="true">›</span>
@@ -569,7 +569,7 @@ export default function EditarAnuncioPage() {
           variant="tertiary"
           className="min-h-11"
           isDisabled={saving}
-          onPress={() => router.push("/meus-anuncios" as Route)}
+          onPress={() => router.push("/app/meus-anuncios" as Route)}
         >
           Cancelar
         </Button>

@@ -117,7 +117,7 @@ export function AlertManager({
           description="Salve uma busca em Explorar moradia para receber avisos quando surgir um imóvel novo."
           action={
             <Link
-              href={"/imoveis" as Route}
+              href={"/app/imoveis" as Route}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-instant)]"
             >
               Buscar imóveis

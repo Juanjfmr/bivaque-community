@@ -24,14 +24,18 @@ test.describe("portas de entrada", () => {
     await expect(page.getByRole("button", { name: /Salvar/ })).toHaveCount(0)
   })
 
-  test("Imóveis leva a anunciar e a gerenciar alertas", async ({ page }) => {
+  test("a lista migra, e as portas web de anúncio e alertas continuam acessíveis", async ({
+    page,
+  }) => {
     await signInAs(page.context(), OTHER)
     await page.goto("/imoveis")
-    await page.getByRole("link", { name: "Anunciar imóvel" }).click()
+    await expect(page).toHaveURL(/\/app\/imoveis$/)
+    await page.goto("/imoveis/novo")
     await expect(page).toHaveURL(/\/imoveis\/novo$/)
-    await page.goto("/imoveis")
-    await page.getByRole("link", { name: "Meus alertas" }).click()
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+    await page.goto("/imoveis/alertas")
     await expect(page).toHaveURL(/\/imoveis\/alertas$/)
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
   })
 
   test("o cartão do Guia abre a referência completa", async ({ page }) => {

@@ -48,8 +48,9 @@ describe("novidades do Mercado no Início", () => {
 
   it("lê só anúncios ativos de item, com o mesmo público de /mercado", () => {
     const loader = read("apps", "web", "lib", "listings", "highlights.ts")
-    const mercado = read("apps", "web", "app", "(shell)", "mercado", "page.tsx")
-    for (const clause of ['.eq("status", "active")', '.eq("kind", "item")']) {
+    const mercado = read("apps", "web", "app", "api", "app", "mercado", "route.ts")
+    expect(loader).toContain('.eq("kind", "item")')
+    for (const clause of ['.eq("status", "active")']) {
       expect(loader).toContain(clause)
       expect(mercado).toContain(clause)
     }

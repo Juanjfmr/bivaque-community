@@ -111,6 +111,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
   },
   {
+    route: "/explorar/servicos",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era a lista /mercado e a página /explorar, ambas trocadas para o app (F02/F06); a lista de serviços segue na web até o lote próprio",
+  },
+  {
     route: "/groups",
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor e 'Criar o primeiro grupo' em Interesses, que só aparecem para quem não tem grupo; o painel 'Grupos ativos' saiu com o feed da Início (lote 5 N2)",
@@ -183,11 +188,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     dependeDeDados: true,
   },
   {
-    route: "/imoveis",
-    porta:
-      "DÍVIDA LAN-TROCA: a lista antiga perdeu a porta do rail e do mercado da Início web; a nova é /app/imoveis, sem os filtros de URL (F06)",
-  },
-  {
     route: "/imoveis/alertas",
     porta:
       "DÍVIDA LAN-TROCA: 'Criar alerta' dentro de /imoveis antigos, sem equivalente no app (F06)",
@@ -213,11 +213,20 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta:
       "DÍVIDA LAN-TROCA: a porta era o rail da Início web e a aba Sobre da comunidade, fora do percurso do rastreador (F02/F08)",
   },
-  { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
+  {
+    route: "/mercado/[id]/editar",
+    porta:
+      "URL DIRETA: a edição web de desapego permanece só por URL; o Gerenciar do app edita em folha inline e não referencia esta rota (gap registrado em LAN-F06)",
+  },
   {
     route: "/mercado/novo",
     porta:
       "DÍVIDA LAN-TROCA: a porta era o menu '+' da casca web, que a fase 1 substituiu pela casca do app (F06)",
+  },
+  {
+    route: "/negocio",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era 'Meu negócio' na lista /mercado, trocada para o app (F06); a gestão do negócio próprio segue na web (F07)",
   },
   {
     route: "/negocio/catalogo",

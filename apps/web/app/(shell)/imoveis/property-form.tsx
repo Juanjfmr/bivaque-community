@@ -522,7 +522,7 @@ export function PropertyForm({
         ) : (
           <>
             <a
-              href={listingId ? `/imoveis/${listingId}` : "/imoveis"}
+              href={listingId ? `/imoveis/${listingId}` : ("/app/imoveis" as Route)}
               className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]"
             >
               Cancelar

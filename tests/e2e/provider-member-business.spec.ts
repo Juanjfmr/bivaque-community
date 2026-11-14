@@ -171,8 +171,7 @@ test.describe("página de negócio do membro", { tag: "@stateful" }, () => {
     await page.getByRole("link", { name: "Seu negócio" }).click()
     await expect(page.getByRole("heading", { name: "Seu negócio" })).toBeVisible()
 
-    await page.goto("/mercado")
-    await page.getByRole("link", { name: "Meu negócio" }).click()
+    await page.goto("/negocio")
     await expect(page.getByRole("heading", { name: "Seu negócio" })).toBeVisible()
 
     await page.goto("/mercado/novo")
