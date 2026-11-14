@@ -210,7 +210,8 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   },
   {
     route: "/mercado/[id]/editar",
-    porta: "BOTÃO: Gerenciar anúncios em /app/meus-anuncios; a edição web permanece",
+    porta:
+      "URL DIRETA: a edição web de desapego permanece só por URL; o Gerenciar do app edita em folha inline e não referencia esta rota (gap registrado em LAN-F06)",
   },
   {
     route: "/mercado/novo",

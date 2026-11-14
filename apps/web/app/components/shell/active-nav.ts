@@ -55,13 +55,6 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/guide", "explorar"],
   ["/events", "explorar"],
   ["/mercado", "explorar"],
-  // Decisão do dono em 12/09/2026, contra o DESIGN_SYSTEM §7, que manda a
-  // gestão dos próprios anúncios para Perfil. Os cinco caminhos de entrada
-  // desta tela estão todos dentro do Mercado, e Perfil não tem nenhum. O §7
-  // não está errado, está não construído: no dia em que Perfil ganhar uma
-  // entrada para cá, esta linha muda junto com ela. Comparar com /salvos, que
-  // é igualmente "coisa da pessoa" e fica em Perfil — porque tem item próprio
-  // na lateral, isto é, é alcançável de lá.
   ["/imoveis", "explorar"],
   ["/recommendations", "explorar"],
   // Indicações é uma vista da comunidade (ADR-20260925-memoria-de-indicacoes).
