@@ -1,0 +1,44 @@
+task_id: RUN-200
+objective: Revisar a descoberta e participação no Início sem alterar arquivos.
+authority:
+  - docs/LANCAMENTO.md (F02 e F04)
+  - docs/design/2026-11-14-ponto-de-encontro.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: Inicio.tsx em 29e5c2d4 prioriza vitrine e oferece salvar apenas em memória.
+allowed_paths:
+  - apps/app/src/telas/Inicio.tsx
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/src/inicio/inicio.css
+  - apps/app/tests/e2e/inicio-comunidade.spec.ts
+  - apps/app/src/criar/DialogoDePergunta.tsx
+  - apps/app/lib/navegacao/react.tsx
+  - apps/app/src/styles.css
+  - apps/app/tests/e2e/jornadas-reais.spec.ts
+  - apps/app/tests/e2e/mobile-first.spec.ts
+  - apps/app/tests/e2e/r72-mobile-p0.spec.ts
+  - apps/app/tests/e2e/r72-mobile-p1.spec.ts
+  - apps/app/tests/e2e/home-vitrine-21st.spec.ts
+  - docs/design/2026-11-14-ponto-de-encontro.md
+  - docs/agents/tasks/RUN-200.task.yml
+  - tools/backend-kanban/public/board.json
+forbidden:
+  - modificar arquivos ou executar escritas
+  - alterar contratos ou servidor
+acceptance:
+  - perguntas e ações locais têm destinos reais
+  - seção de grupos restaura no histórico
+  - presença depende da resposta do servidor e distingue falha
+  - composição cabe em 375/768/1440 nos dois temas
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-200.task.yml
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - node node_modules/typescript/bin/tsc --noEmit -p apps/app/tsconfig.json
+  - node node_modules/@playwright/test/cli.js test --config .visual/discovery/playwright.config.ts inicio-comunidade
+risk: interface e navegação
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: FAIL
+closure:
+  requires_runtime_evidence: true

@@ -89,9 +89,9 @@ test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fix
   await expect(negocio).toBeVisible()
   // O Início lê /api/app/inicio, que não traz foto: o cartão usa a capa do
   // desenho, sem inventar imagem (6ec43f62). A foto assinada é da ficha.
-  await expect(negocio.locator('[data-capa="foto"]')).toBeVisible()
+  await expect(negocio.locator('[data-capa="foto"]')).toHaveCount(0)
   await expect(negocio.locator('[data-capa="foto"] img')).toHaveCount(0)
-  await negocio.locator('[data-acao="abrir-foto"]').first().click()
+  await negocio.click()
   await expect(page).toHaveURL(/\/app\/negocio\/[^/]+$/)
   const capaNegocio = page.locator('[data-tela="negocio"] [data-capa="foto"] img')
   await expect(capaNegocio).toBeVisible()
@@ -111,8 +111,8 @@ test("P1: home desktop separa o catálogo do contexto sem duplicar seções", as
   const lateral = page.getByRole("complementary", { name: "Comunidade na cidade" })
   await expect(principal).toBeVisible()
   await expect(lateral).toBeVisible()
-  await expect(page.getByRole("heading", { name: "Serviços recomendados" })).toHaveCount(1)
-  await expect(page.getByRole("heading", { name: "Oportunidades perto de você" })).toHaveCount(1)
+  await expect(page.getByRole("heading", { name: "Serviços na cidade" })).toHaveCount(1)
+  await expect(page.getByRole("heading", { name: "Circulando pela comunidade" })).toHaveCount(1)
   if ((page.viewportSize()?.width ?? 0) < 1024) return
   const limites = await Promise.all([principal.boundingBox(), lateral.boundingBox()])
   const a = limites[0]

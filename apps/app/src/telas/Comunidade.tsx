@@ -9,17 +9,21 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDePergunta } from "@/components/bivaque/linha-de-pergunta"
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import {
   type FiltroDePerguntas,
   type ListaDePerguntas,
   lerPerguntas,
   TOPICOS_DAS_PERGUNTAS,
 } from "@/lib/dados/perguntas"
-import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import {
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+  useSobreposicaoDaEntrada,
+} from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
-import { Perguntar } from "@/src/criar/Perguntar"
+import { DialogoDePergunta } from "@/src/criar/DialogoDePergunta"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
 import { Diretorio } from "@/src/grupos/Diretorio"
@@ -64,16 +68,18 @@ const FILTRO_DO_SERVIDOR: Readonly<Record<string, FiltroDePerguntas>> = {
 export function Comunidade() {
   const casca = useCasca()
   const navegacao = useNavegacao()
+  const entrada = useEntradaDaTela()
   const [lista, setLista] = useState<ListaDePerguntas | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [aba, setAba] = useState("ind")
+  const aba = entrada.filtros["secao"] === "grp" ? "grp" : "ind"
+  const setAba = (secao: string) =>
+    void navegacao.atualizar({ filtros: { ...entrada.filtros, secao } })
   const [filtro, setFiltro] = useState("help")
   const [topico, setTopico] = useState("todos")
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
-  const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
-    useSobreposicaoDaEntrada("perguntar")
+  const { aoMudarAberto: setCriandoPergunta } = useSobreposicaoDaEntrada("perguntar")
   // Uma sessão de rede por tela: sair cancela a página que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -146,7 +152,7 @@ export function Comunidade() {
   const resolvidas = lista?.resolvidas ?? 0
 
   return (
-    <section data-tela="comunidade" className="grid gap-2">
+    <section data-tela="comunidade" className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
       <CabecaDePagina
         titulo="Comunidade"
         subtitulo="O que a comunidade sabe fica disponível para quem chegar depois."
@@ -174,28 +180,7 @@ export function Comunidade() {
         />
       </div>
 
-      <Dialog open={criandoPergunta} onOpenChange={setCriandoPergunta}>
-        <DialogContent
-          showCloseButton
-          unstyled
-          data-fluxo="perguntar"
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[90dvh] max-w-xl overflow-y-auto rounded-t-2xl border border-(--outline-variant) bg-(--surface-lowest) p-5 shadow-xl sm:inset-x-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 sm:rounded-2xl"
-        >
-          <DialogTitle className="pr-12 text-xl">Pedir uma indicação</DialogTitle>
-          <DialogDescription className="text-sm text-(--on-surface-variant)">
-            Peça uma indicação à cidade da sua conta. Você revisa antes de publicar.
-          </DialogDescription>
-          {criandoPergunta ? (
-            <Perguntar
-              cidade={casca.cidade}
-              aoCancelar={() => setCriandoPergunta(false)}
-              aoSalvar={(id) =>
-                void navegacao.irPara("pergunta", { parametros: { id }, replace: true })
-              }
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <DialogoDePergunta />
 
       {aba === "grp" ? (
         <Diretorio />
@@ -207,7 +192,7 @@ export function Comunidade() {
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
-      ) : aba === "ind" ? (
+      ) : (
         <>
           <div className="flex items-center gap-3 rounded-2xl bg-(--secondary-container) px-4 py-3">
             <Icone nome="history_edu" className="size-6 shrink-0 text-(--primary)" />
@@ -283,12 +268,6 @@ export function Comunidade() {
             </div>
           )}
         </>
-      ) : (
-        <EstadoVazio
-          titulo="Ainda sem grupos nesta cidade"
-          texto="Grupos reúnem quem tem a mesma rotina, o mesmo ciclo ou o mesmo interesse."
-          icone="group"
-        />
       )}
     </section>
   )

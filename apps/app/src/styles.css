@@ -634,18 +634,6 @@
     padding-block: 12px 8px;
   }
 
-  [data-tela="inicio"] [data-secao="sim"] {
-    margin-top: 20px;
-  }
-
-  [data-tela="inicio"] nav[aria-label="Áreas"] {
-    margin-top: 8px;
-  }
-
-  [data-tela="inicio"] [data-acao="contratar"] {
-    margin-top: 8px;
-  }
-
   /* A imagem e a área textual são alvos independentes, ambos acionáveis.
      Evita touch target curto para abrir detalhes de anúncios. */
   [data-cartao="anuncio"] [data-acao="abrir-foto"],
@@ -726,14 +714,6 @@
   object-fit: cover;
 }
 
-/* Home desktop: conteúdo principal tem duas colunas de cards, ao lado de
-   contexto enxuto (grupos, encontro e perguntas) sem repetir widgets. */
-@media (min-width: 1024px) {
-  .bv-home-principal .bv-grade {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* Na lista de imóveis o rótulo continua associado ao Select, mas no telefone
    não ocupa uma linha inteira adicional acima da ordenação. */
 @media (max-width: 719.98px) {
@@ -755,182 +735,11 @@
   }
 }
 
-/* ── Home: descoberta útil antes da decoração ──────────────────────────── */
-.bv-home-intro {
-  display: grid;
-  min-width: 0;
-  gap: 12px;
-  margin-top: 8px;
-  padding: 16px 14px 12px;
-  border-radius: 20px;
-  background: linear-gradient(
-    150deg,
-    color-mix(in srgb, var(--brasa) 5%, var(--surface-low)),
-    var(--surface-low) 48%
-  );
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-variant) 52%, transparent);
-}
-
-[data-home="abertura"] [data-cabeca="pagina"] {
-  padding: 5px 0 0;
-}
-
-[data-home="abertura"] h1 {
-  max-width: 26ch;
-  color: var(--on-surface);
-  font-size: clamp(26px, 5.2vw, 34px);
-  line-height: 1.12;
-  letter-spacing: -0.04em;
-}
-
-[data-home="abertura"] [data-cabeca="pagina"] p {
-  max-width: 52ch;
-  margin-top: 4px;
-  color: var(--on-surface-variant);
-  font-size: 12.5px;
-  line-height: 1.4;
-}
-
-.bv-home-ferramentas {
-  display: grid;
-  min-width: 0;
-  gap: 8px;
-}
-
-.bv-home-busca {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  padding: 0 13px;
-  border: 1px solid var(--outline-variant);
-  border-radius: 12px;
-  background: var(--surface-lowest);
-  text-align: left;
-  touch-action: manipulation;
-}
-
-.bv-home-busca:focus-visible,
-.bv-home-atalho:focus-visible,
-.bv-home-contratar:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.bv-home-atalhos {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: stretch;
-  width: 100%;
-  min-width: 0;
-  gap: 3px;
-}
-
-.bv-home-atalho {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-width: 0;
-  min-height: 58px;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 1px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--surface-lowest) 82%, transparent);
-  color: var(--on-surface);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
-  white-space: nowrap;
-  touch-action: manipulation;
-}
-
-.bv-home-atalho-icone {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  flex: none;
-  place-items: center;
-  color: var(--on-surface-variant);
-}
-
-.bv-home-atalho:active {
-  background: var(--secondary-container);
-}
-
-@media (min-width: 720px) {
-  .bv-home-intro {
-    padding: 20px 22px 16px;
-  }
-}
-
-.bv-home-contratar {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 66px;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 10px 12px;
-  border-radius: 15px;
-  background: var(--surface-container);
-  color: var(--on-surface);
-}
-
-.bv-home-contratar-icone {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  flex: none;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--surface-lowest);
-  color: var(--brasa);
-}
-
-[data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
-  margin-top: 15px;
-}
-
-[data-tela="inicio"] .bv-titulo-de-secao h2 {
-  font-size: 19px;
-  line-height: 1.25;
-  letter-spacing: -0.035em;
-}
-
-[data-tela="inicio"] .bv-titulo-de-secao button {
-  font-size: 12px;
-}
-
 @media (max-width: 719.98px) {
-  [data-tela="inicio"] [data-secao="sim"] {
-    margin-top: 19px;
-  }
-
-  [data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
-    margin-top: 15px;
-  }
-
-  /* O Criar é peça da casca: a geometria dele vive nas regras da navegação
-     (`[data-acao="criar"]`, acima) e nenhuma tela a redefine — 56 px compacto,
-     58 px aberto no celular. A regra de 50 px que morava aqui foi embora com o
-     achado do card APP-001 (50 contra 56 px) e com a regra de identidade de
-     que o CSS da tela cuida só da disposição. */
-
   [data-nav="principal"] [data-aba] {
     gap: 2px;
     font-size: 11px;
     letter-spacing: 0;
-  }
-}
-
-@media (max-width: 359.98px) {
-  [data-home="abertura"] h1 {
-    font-size: 25px;
   }
 }
 
@@ -948,10 +757,6 @@
 }
 
 @media (max-width: 719.98px) {
-  .bv-home-principal [data-grade="carrossel-mobile"] > [data-vitrine="21st"] {
-    flex-basis: min(75%, 284px);
-  }
-
   .bv-vitrine [data-slot="product-card-content"] {
     padding: 12px;
   }
@@ -980,9 +785,6 @@
 }
 
 @media (max-width: 359.98px) {
-  [data-home="abertura"] h1 {
-    font-size: 24px;
-  }
   .bv-vitrine [data-slot="product-card-content"] {
     padding: 12px;
   }

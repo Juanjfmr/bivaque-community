@@ -150,6 +150,7 @@ export function useRolagemEFoco(carga: CargaDaEntrada): void {
 
 export type OpcoesDeNavegacao = {
   readonly parametros?: Readonly<Record<string, string>>
+  readonly filtros?: EstadoDaEntrada["filtros"]
   readonly replace?: boolean
   /** Descritor que a entrada de baixo guarda; sem ele, o foco atual. */
   readonly foco?: DescritorDeFoco
@@ -263,7 +264,12 @@ export function useNavegacao(): Navegacao {
         to: destinoRota.caminho,
         params: opcoes.parametros ?? {},
         ...(busca === undefined ? {} : { search: busca }),
-        state: { [CHAVE_DA_ENTRADA]: decisao.entrada },
+        state: {
+          [CHAVE_DA_ENTRADA]: {
+            ...decisao.entrada,
+            filtros: opcoes.filtros ?? decisao.entrada.filtros,
+          },
+        },
         replace: opcoes.replace ?? decisao.replace,
         resetScroll: false,
       })

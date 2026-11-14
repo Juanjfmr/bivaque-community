@@ -7,26 +7,13 @@ test.beforeEach(async ({ page }) => {
   await simularInicio(page)
 })
 
-test("R72 P0: Home contém carrosséis operáveis e prévia do próximo cartão", async ({ page }) => {
+test("R72 P0: Início permite abrir os anúncios sem rolagem horizontal", async ({ page }) => {
   await page.goto("/app/inicio")
-  const trilhos = page.locator('[data-tela="inicio"] [data-grade="carrossel-mobile"]')
-  await expect(trilhos).toHaveCount(2)
-  await expect(trilhos.first().locator("[data-cartao]").first()).toBeVisible()
-  if ((page.viewportSize()?.width ?? 0) >= 720) return
-  const dimensoes = await trilhos.first().evaluate((elemento) => {
-    const cartao = elemento.querySelector("[data-cartao]")
-    return {
-      largura: elemento.clientWidth,
-      rolagem: elemento.scrollWidth,
-      cartao: cartao?.getBoundingClientRect().width ?? 0,
-    }
-  })
-  expect(dimensoes.rolagem).toBeGreaterThan(dimensoes.largura)
-  expect(dimensoes.cartao).toBeLessThan(dimensoes.largura * 0.9)
-  await trilhos.first().evaluate((elemento) => {
-    elemento.scrollLeft = elemento.clientWidth
-  })
-  await expect.poll(() => trilhos.first().evaluate((el) => el.scrollLeft)).toBeGreaterThan(0)
+  const anuncio = page.locator('[data-tela="inicio"] [data-cartao="anuncio"]').first()
+  await expect(anuncio).toBeVisible()
+  expect(await anuncio.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1)
+  await anuncio.click()
+  await expect(page).toHaveURL(/\/app\/anuncio\/i3$/)
 })
 
 test("R72 P0: Busca explora categorias em duas colunas e encontra negócios", async ({ page }) => {

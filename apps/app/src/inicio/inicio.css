@@ -1,0 +1,131 @@
+/* O Início organiza as peças existentes por conversa, participação e utilidade. */
+.bv-inicio {
+  container: bivaque-inicio / inline-size;
+  min-width: 0;
+}
+.bv-chegada {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: 16px;
+  padding-block: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.bv-chegada [data-cabeca="pagina"] {
+  padding: 0;
+}
+.bv-chegada [data-cabeca="pagina"] h1 {
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.bv-chegada [data-cabeca="pagina"] p {
+  font-size: 14px;
+  margin-top: 8px;
+}
+.bv-chegada-arte {
+  width: 100%;
+}
+.bv-descoberta {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.bv-descoberta > .pc-botao {
+  justify-content: flex-start;
+}
+.bv-caminhos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-width: 0;
+  gap: 0;
+  inline-size: 100%;
+  max-inline-size: 32rem;
+  justify-self: center;
+}
+.bv-caminhos > .pc-botao {
+  min-width: 0;
+}
+.bv-caminho-conteudo {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.bv-encontro-da-cidade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+.bv-home-principal,
+.bv-viver-a-cidade {
+  min-width: 0;
+}
+.bv-inicio [data-secao="sim"] {
+  gap: 16px;
+  margin-top: 24px;
+}
+.bv-inicio .bv-titulo-de-secao {
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+.bv-inicio .bv-titulo-de-secao h2 {
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+.bv-inicio .bv-titulo-de-secao > div {
+  margin-inline-start: auto;
+}
+.bv-home-principal > [data-secao="sim"] > .pc-botao {
+  justify-self: start;
+}
+.bv-perguntas-da-cidade {
+  display: grid;
+  gap: 8px;
+}
+.bv-turma-arte {
+  width: 160px;
+  justify-self: center;
+}
+.bv-viver-a-cidade {
+  border-top: 1px solid var(--border);
+}
+.bv-inicio .pc-linha-titulo,
+.bv-inicio .pc-apoio {
+  overflow-wrap: break-word;
+}
+.bv-inicio .pc-linha-acessorio {
+  max-width: 112px;
+  text-align: right;
+  white-space: normal;
+}
+
+@container bivaque-inicio (min-width: 40rem) {
+  .bv-chegada {
+    grid-template-columns: minmax(0, 1fr) 176px;
+    padding-block: 32px;
+  }
+  .bv-caminhos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@container bivaque-inicio (min-width: 56rem) {
+  .bv-encontro-da-cidade {
+    grid-template-columns: minmax(0, 1fr) minmax(248px, 300px);
+    gap: 32px;
+  }
+  .bv-viver-a-cidade {
+    border-top: 0;
+    border-inline-start: 1px solid var(--border);
+    padding-inline-start: 24px;
+  }
+  .bv-chegada {
+    grid-template-columns: minmax(0, 1fr) 160px;
+  }
+  .bv-descoberta {
+    grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr);
+    align-items: center;
+    gap: 32px;
+  }
+}

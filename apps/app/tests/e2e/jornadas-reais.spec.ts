@@ -9,9 +9,7 @@ test.beforeEach(async ({ page }) => {
 // Sem o fixture de apoio: estes casos exercitam as telas usadas pela pessoa.
 test("o Início normal mostra conteúdo e não o andaime de navegação", async ({ page }) => {
   await page.goto("/app/inicio")
-  await expect(
-    page.getByRole("heading", { name: "Serviços recomendados", exact: true }),
-  ).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Serviços na cidade", exact: true })).toBeVisible()
   await expect(page.locator('[data-prova="controles-do-app"]')).toHaveCount(0)
 })
 
@@ -51,7 +49,7 @@ for (const rota of [
     await page.getByRole("button", { name: "Ir para o início", exact: true }).click()
     await expect(page).toHaveURL(/\/app\/inicio$/)
     await expect(
-      page.getByRole("heading", { name: "Serviços recomendados", exact: true }),
+      page.getByRole("heading", { name: "Serviços na cidade", exact: true }),
     ).toBeVisible()
   })
 }
