@@ -138,55 +138,6 @@ jobs:
       - name: Start local Supabase
         run: pnpm exec supabase start
 
-      # CI-E2E-UPSTREAM-INSTAVEL: o lote serial cai com 502 (recv() failed 104 /
-      # upstream prematurely closed) na corrida Kong<->PostgREST. A receita provada
-      # na reinvestigacao do RUN-144 aplica upstream_keepalive_idle_timeout=10 no
-      # Kong EM EXECUCAO: `kong prepare` com o template custom + HUP no master.
-      # NUNCA `kong reload` (regenera o template default e derruba o server 8088 de
-      # templates de email -> GoTrue 404 -> F01 sem codigo) e NUNCA recriar o
-      # container (perde os binds dos templates: a mesma regressao do RUN-144).
-      - name: Apply Kong upstream keepalive idle timeout
-        run: |
-          set -euo pipefail
-          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
-          if [ -z "$kong" ]; then
-            echo "::error::container supabase_kong_* nao encontrado; o override nao foi aplicado"
-            exit 1
-          fi
-
-          # `prepare` le o env do processo do exec e escreve .kong_env, que o init
-          # do nginx relê no HUP. O -p e obrigatorio: sem ele o --nginx-conf e
-          # silenciosamente ignorado nesta imagem.
-          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" \
-            kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template
-          docker exec "$kong" sh -c 'kill -HUP $(cat /usr/local/kong/pids/nginx.pid)'
-          sleep 2
-
-          echo "Kong: $kong"
-          echo "--- .kong_env ---"
-          docker exec "$kong" grep -i upstream_keepalive_idle_timeout /usr/local/kong/.kong_env
-          if ! docker exec "$kong" grep -qiE '^upstream_keepalive_idle_timeout *= *10$' /usr/local/kong/.kong_env; then
-            echo "::error::.kong_env nao ficou com upstream_keepalive_idle_timeout = 10; o HUP nao aplicou o valor"
-            exit 1
-          fi
-
-          echo "--- server 8088 no nginx.conf gerado ---"
-          if ! docker exec "$kong" grep -q 'listen 0.0.0.0:8088' /usr/local/kong/nginx.conf; then
-            echo "::error::nginx.conf gerado nao tem o server 8088 dos templates; o GoTrue cairia no template default (F01)"
-            exit 1
-          fi
-          docker exec "$kong" grep -n '8088' /usr/local/kong/nginx.conf
-
-          echo "--- fetch de um template de email em 127.0.0.1:8088 ---"
-          # A imagem nao tem curl; o wget do BusyBox responde o status HTTP.
-          docker exec "$kong" wget -q -S -O /dev/null http://127.0.0.1:8088/email/confirmation.html 2>&1 \
-            | tee /tmp/kong-8088.txt || true
-          if ! grep -q '200 OK' /tmp/kong-8088.txt; then
-            echo "::error::o server 8088 nao respondeu 200 para o template; o F01 quebraria (GoTrue 404 -> magic link)"
-            exit 1
-          fi
-          echo 'OK: upstream_keepalive_idle_timeout=10 aplicado, 8088 vivo servindo os templates'
-
       # `generate:types` and `test:db` pull two more images on first use. The
       # public ECR answers anonymous pulls with "toomanyrequests: Rate exceeded"
       # at busy hours, which failed this job twice before any test ran
@@ -272,6 +223,58 @@ jobs:
 
       - name: Reset local database (with seed)
         run: pnpm exec supabase db reset --local
+
+      # CI-E2E-UPSTREAM-INSTAVEL: mitigacao candidata da corrida Kong<->PostgREST
+      # (502: recv() failed 104 / upstream prematurely closed) no lote serial. Aplica
+      # upstream_keepalive_idle_timeout=10 no Kong EM EXECUCAO via `kong prepare` com
+      # o template custom + HUP no master (receita provada na reinvestigacao do
+      # RUN-144). NUNCA `kong reload` (regenera o template default, derruba o server
+      # 8088 de templates -> GoTrue 404 -> F01 sem codigo) e NUNCA recriar o container
+      # (perde os binds: a regressao do RUN-144). DEPOIS dos resets: se o reset
+      # reinicia o Kong, o entrypoint regenera .kong_env sem o override e aplicar
+      # antes seria neutralizado. A cura nao e provada (idle=10 absolvido no
+      # experimento isolado); o card fecha pelos 10 runs verdes, nao por este step.
+      - name: Apply Kong upstream keepalive idle timeout
+        run: |
+          set -euo pipefail
+          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -z "$kong" ]; then
+            echo "::error::container supabase_kong_* nao encontrado; o override nao foi aplicado"
+            exit 1
+          fi
+
+          # `prepare` le o env do processo do exec e escreve .kong_env, que o init
+          # do nginx relê no HUP. O -p e obrigatorio: sem ele o --nginx-conf e
+          # silenciosamente ignorado nesta imagem.
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" \
+            kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template
+          docker exec "$kong" sh -c 'kill -HUP $(cat /usr/local/kong/pids/nginx.pid)'
+          sleep 2
+
+          echo "Kong: $kong"
+          echo "--- .kong_env ---"
+          docker exec "$kong" grep -i upstream_keepalive_idle_timeout /usr/local/kong/.kong_env
+          if ! docker exec "$kong" grep -qiE '^upstream_keepalive_idle_timeout *= *10$' /usr/local/kong/.kong_env; then
+            echo "::error::.kong_env nao ficou com upstream_keepalive_idle_timeout = 10; o HUP nao aplicou o valor"
+            exit 1
+          fi
+
+          echo "--- server 8088 no nginx.conf gerado ---"
+          if ! docker exec "$kong" grep -q 'listen 0.0.0.0:8088' /usr/local/kong/nginx.conf; then
+            echo "::error::nginx.conf gerado nao tem o server 8088 dos templates; o GoTrue cairia no template default (F01)"
+            exit 1
+          fi
+          docker exec "$kong" grep -n '8088' /usr/local/kong/nginx.conf
+
+          echo "--- fetch de um template de email em 127.0.0.1:8088 ---"
+          # A imagem nao tem curl; o wget do BusyBox responde o status HTTP.
+          docker exec "$kong" wget -q -S -O /dev/null http://127.0.0.1:8088/email/confirmation.html 2>&1 \
+            | tee /tmp/kong-8088.txt || true
+          if ! grep -q '200 OK' /tmp/kong-8088.txt; then
+            echo "::error::o server 8088 nao respondeu 200 para o template; o F01 quebraria (GoTrue 404 -> magic link)"
+            exit 1
+          fi
+          echo 'OK: upstream_keepalive_idle_timeout=10 aplicado, 8088 vivo servindo os templates'
 
       # Dois lotes de propósito: o normal roda em paralelo e EXCLUI os specs
       # marcados @stateful; esses rodam em serial depois, porque escrevem nas

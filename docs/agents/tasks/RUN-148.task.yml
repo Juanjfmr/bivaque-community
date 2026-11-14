@@ -16,11 +16,14 @@
 task_id: RUN-148
 
 objective: >
-  Eliminar a corrida de conexão Kong↔PostgREST que derruba o lote serial do E2E no
-  CI, aplicando upstream_keepalive_idle_timeout=10 no Kong em execução via prepare
-  com o template custom + HUP no master (receita provada na reinvestigação do
-  RUN-144), com verificação do valor aplicado e do servidor 8088 vivo. Sem recriar
-  o contêiner, sem regressão do F01 (entrada por código continua OTP, não magic link).
+  Aplicar mitigação candidata da corrida de conexão Kong↔PostgREST que derruba o lote
+  serial do E2E no CI: upstream_keepalive_idle_timeout=10 no Kong em execução via
+  prepare com o template custom + HUP no master (receita provada na reinvestigação do
+  RUN-144), com verificação do valor aplicado e do servidor 8088 vivo, DEPOIS dos
+  resets do banco. Sem recriar o contêiner, sem regressão do F01 (entrada por código
+  continua OTP, não magic link). A cura NÃO é provada (idle=10 absolvido no experimento
+  isolado; o 502 sob carga segue em aberto) — o card CI-E2E-UPSTREAM-INSTAVEL fecha
+  pelo critério de 10 runs verdes, não por este step.
 
 authority:
   - tools/backend-kanban/public/board.json (CI-E2E-UPSTREAM-INSTAVEL, causa confirmada em 14/11)
@@ -52,10 +55,10 @@ forbidden:
   - tocar em .work/main ou em outra worktree; mutar a stack local compartilhada (docker exec só-leitura é permitido)
 
 acceptance:
-  - "Um step novo após Start local Supabase: localiza o Kong (molde do witness: docker ps --filter name=supabase_kong_), aplica docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 <kong> kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template e HUP direto no master (kill -HUP $(cat /usr/local/kong/pids/nginx.pid)), com set -euo pipefail."
+  - "Um step novo após o último Reset local database (with seed), antes dos lotes E2E (se o reset reinicia o Kong, aplicar antes seria neutralizado): localiza o Kong (molde do witness: docker ps --filter name=supabase_kong_), aplica docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 <kong> kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template e HUP direto no master (kill -HUP $(cat /usr/local/kong/pids/nginx.pid)), com set -euo pipefail."
   - "Verificação no mesmo step, falhando alto: .kong_env contém o valor 10; nginx.conf gerado contém o servidor 8088; o fetch de um template de email em 127.0.0.1:8088 responde 200 (caminho exato conforme o template custom). Saída visível no log do CI."
   - "Nenhum outro step alterado; testemunha RUN-145 intacta; runner e pins inalterados; YAML válido."
-  - "Prova de runtime no PR deste lote (label ci:full no fechamento): completo verde, F01 entrada por código verde (OTP, não magic link), e o step imprime o valor aplicado + 8088 vivo. O coordenador conduz a prova."
+  - "Prova de runtime no PR deste lote (label ci:full no fechamento): o step imprime idle=10 aplicado + 8088 vivo, F01 entrada por código verde (OTP, não magic link), completo verde. Se o completo cair pelo 502 conhecido, o rerun é o contorno sancionado — causa em aberto, não defeito do step. O coordenador conduz a prova."
 
 proof:
   - node -e "require('yaml').parse(require('fs').readFileSync('.github/workflows/pull-request-ci.yml','utf8'))"
