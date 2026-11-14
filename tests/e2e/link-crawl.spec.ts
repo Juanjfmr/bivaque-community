@@ -174,6 +174,12 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
   },
   {
+    route: "/denuncias",
+    porta:
+      "CONDICIONAL: 'Minhas denúncias' na Ajuda e o retorno do fluxo de denúncia; a lista só é alcançada quando a persona já denunciou, o que o rastreador nem sempre exercita (portas intactas, LT-007 não as tocou)",
+    dependeDeDados: true,
+  },
+  {
     route: "/denuncias/[id]",
     porta: "CONDICIONAL: lista de /denuncias, quando a pessoa já denunciou",
     dependeDeDados: true,
