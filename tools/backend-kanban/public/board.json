@@ -6403,9 +6403,9 @@
       "id": "CI-E2E-UPSTREAM-INSTAVEL",
       "title": "E2E da web antiga cai por resposta inválida do Supabase local no CI",
       "phase": "Lançamento",
-      "priority": "P1",
+      "priority": "P2",
       "category": "testing",
-      "status": "now",
+      "status": "next",
       "description": "Em 02/11 o job Install, test, and build caiu duas vezes, em PRs que não tocam o código (#120 e #121), com [WebServer] An invalid response was received from the upstream server e The destination stream closed early. Os testes que caíram: group-event-detail-denials (grupo privado, mobile-375) e provider-vitrine (tablet-768). A nova execução passou no #120. Teste instável no CI ensina a ignorar vermelho.",
       "checklist": [
         "Reproduzir com a mesma carga do CI (workers e projetos)",
@@ -6422,7 +6422,7 @@
       ],
       "blockers": [],
       "updatedAt": "2026-11-13",
-      "sourceRevision": "d2718d07",
+      "sourceRevision": "44f7cb4d",
       "links": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427",
@@ -6437,7 +6437,8 @@
         "10/11: reapareceu no PR #177 (run 42885590360): group-admin-cycle.spec.ts:120 em tablet-768 e desktop-1440, mesmo timeout; o rerun sem mudança de código fechou verde — mesma assinatura da instabilidade do lote serial.",
         "12/11: group-admin-cycle.spec.ts:120 (@stateful, «Cancelar pedido» não aparece) caiu de novo em dois PRs sem relação com grupos: #203 (só biome.json, run 43266772953, mobile-375 passou no retry e desktop-1440 falhou nos dois) e test/cegas-capturas (run 43237493237, tablet-768 e desktop-1440). A main na base b35755e1 fechou verde. Mesma família do lote serial; o rerun segue como contorno até a causa ser achada.",
         "13/11: dono priorizou este card sobre o F09 (o flaky atrasa todo PR da fase 6). Reapareceu no LT-003 (PR #216, run 43495653063): f10-voce-localizacao.spec.ts:56 (CEP) caiu só no mobile-375 (passou em 768/1440) e reports-member-flow.spec.ts:169 flaky, com [WebServer] The destination stream closed early / invalid response from the upstream server; o rerun fechou verde. Os specs da busca do LT-003 estavam verdes — a queda é da família de conexão, não do diff. Investigação somente-leitura da causa raiz em curso (explore); item 2 do checklist reaberto porque a causa da perda de conexão sob carga segue sem confirmação. Fix deve atacar a causa, não timeout/retries.",
-        "13/11: RUN-144 (PR #217) BLOCKED após 2 retries — NÃO mergeado. Hipótese keep-alive Kong(60s)/PostgREST(30s): recriar o Kong com KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 aplica o valor (provado em .kong_env), mas (a) causou regressão F01 — entrada por código recebe magic link em vez de OTP, 15 falhas, e F01 passava no run verde 43495653063; causa não isolada; (b) o 502 persistiu no run 43513829451; (c) experimento de ociosidade inconclusivo (RPC sem auth deu 401, não prova ausência de 502); (d) timeout warp 30s sem fonte primária (os 30s documentados são do pool PG). Revisão independente FAIL: o step não verificava o valor aplicado e a testemunha era só access log. Retry 2 deixou melhorias não commitadas (preserva healthcheck, verifica idle=10 pós-boot, coleta error.log/502). HUMAN_DECISION pendente: reabrir a causa com testemunha melhorada vs aceitar o flaky (rerun) e seguir o lançamento. Testemunha em .visual/run-144/ci-artifacts (worktree w-ci-flaky)."
+        "13/11: RUN-144 (PR #217) BLOCKED após 2 retries — NÃO mergeado. Hipótese keep-alive Kong(60s)/PostgREST(30s): recriar o Kong com KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 aplica o valor (provado em .kong_env), mas (a) causou regressão F01 — entrada por código recebe magic link em vez de OTP, 15 falhas, e F01 passava no run verde 43495653063; causa não isolada; (b) o 502 persistiu no run 43513829451; (c) experimento de ociosidade inconclusivo (RPC sem auth deu 401, não prova ausência de 502); (d) timeout warp 30s sem fonte primária (os 30s documentados são do pool PG). Revisão independente FAIL: o step não verificava o valor aplicado e a testemunha era só access log. Retry 2 deixou melhorias não commitadas (preserva healthcheck, verifica idle=10 pós-boot, coleta error.log/502). HUMAN_DECISION pendente: reabrir a causa com testemunha melhorada vs aceitar o flaky (rerun) e seguir o lançamento. Testemunha em .visual/run-144/ci-artifacts (worktree w-ci-flaky).",
+        "13/11: REINVESTIGAÇÃO (.visual/run-144/REINVESTIGACAO.md) — (1) causa da regressão F01 ISOLADA e confirmada no auth.log do CI: a recriação do Kong não preservava HostConfig.Binds; os templates de email são bind-mounts servidos em kong:8088/email/*.html; sem eles o GoTrue recebe 404 e cai no template padrão (magic link SEM código) -> lerCodigoDoEmail falha. idle=10 absolvido (controle sem override falha igual). (2) Hipótese keep-alive REFUTADA: RPC autenticada real via Kong, 0/40 502s em 5 braços (gaps 10/35/50s, idle 60 e 10); conexão poolada ficou ESTABLISHED 57s+. (3) Timeout warp em fonte primária: warp-3.4.7 + time-manager-0.2.2 -> ociosa fecha entre 30s e 60s (não 30s determinístico; os 30s da doc são do pool PG). (4) Mecanismo prepare+HUP aplica override sem recriar (preserva binds), mas é desnecessário pois a hipótese caiu. DONO DECIDIU: abandonar RUN-144 (PR #217 fechado), salvar só a testemunha (RUN-145, PR #219: coleta error.log/502 com rota/timestamp, tail 10000 do Kong) e seguir o lançamento (F09). Causa real do 502 EM ABERTO — candidatos: storage-api keepAliveTimeout, fechamento em voo sob CPU starvation do runner, janela pós-db reset; diagnosticar na próxima falha com a testemunha. Card despriorizado P2/next."
       ],
       "completedChecklist": [true, false, false, false]
     },
