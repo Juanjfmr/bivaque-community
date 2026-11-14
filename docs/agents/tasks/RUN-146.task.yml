@@ -1,0 +1,63 @@
+# CI infra — pinar o runner dos workflows com Playwright em ubuntu-24.04.
+#
+# ubuntu-latest migrou para ubuntu 26.04, que o Playwright 1.51.1 (pin do repo) não
+# suporta: playwright install --with-deps chromium falha com Playwright does not
+# support chromium on ubuntu26.04-x64. Isso bloqueia TODO PR (gate + App mobile-first).
+# Fix seguro: pinar runs-on em ubuntu-24.04 nos 3 workflows que instalam chromium,
+# SEM mexer no pin do Playwright (AGENTS.md: não atualizar pins casualmente).
+# Comentário no workflow explica o pin para não ser revertido sem entender.
+
+task_id: RUN-146
+
+objective: >
+  Desbloquear a CI pinando o runner em ubuntu-24.04 nos workflows que instalam o
+  chromium do Playwright (pull-request-ci, bivaque-app-visual-smoke,
+  bivaque-r72-mobile-comparison), pois ubuntu-latest virou 26.04 e o Playwright
+  1.51.1 não o suporta. Nenhuma mudança de produto, teste, ou no pin do Playwright.
+
+authority:
+  - docs/LANCAMENTO.md (a CI verde é pré-requisito de merge de todo lote)
+  - AGENTS.md (não atualizar pins casualmente — pinar o runner, não o Playwright)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    PR #222 (LT-006), run 43593495425: step Install Playwright Chromium falha com
+    "Cannot install dependencies for ubuntu26.04-x64 with Playwright 1.51.1" /
+    "Playwright does not support chromium on ubuntu26.04-x64". App mobile-first
+    (run 43593495402) falha pelo mesmo motivo. Os 3 workflows usam runs-on ubuntu-latest
+    e o Playwright está pinado em 1.51.1 (package.json:40).
+
+allowed_paths:
+  - docs/agents/tasks/RUN-146.task.yml
+  - .github/workflows/pull-request-ci.yml
+  - .github/workflows/bivaque-app-visual-smoke.yml
+  - .github/workflows/bivaque-r72-mobile-comparison.yml
+  - .visual/run-146
+
+forbidden:
+  - alterar o pin do Playwright ou qualquer dependência do package.json
+  - alterar código de produto, testes, supabase, migrations
+  - mudar outro aspecto dos workflows além do runs-on (e o comentário explicativo)
+  - push, merge ou force-push; ler/criar/editar .env; imprimir secrets
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "runs-on: ubuntu-24.04 nos 3 workflows que instalam chromium, com comentário explicando o pin; YAML válido."
+  - "Nenhuma outra mudança nos workflows; pin do Playwright inalterado."
+  - "A CI do PR deste lote roda em ubuntu-24.04 e o step Install Playwright Chromium passa (prova de runtime do fix)."
+
+proof:
+  - validação YAML dos 3 workflows
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-146.task.yml
+  - CI verde do PR deste lote (Install Playwright Chromium passa em ubuntu-24.04)
+
+risk: mudança de infra/CI (pin do runner)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
