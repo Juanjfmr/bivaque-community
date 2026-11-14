@@ -31,11 +31,10 @@ export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: "test-results",
   fullyParallel: false,
-  // RUN-149 (medição): paralelismo por arquivo (fullyParallel segue false). Os 7
-  // projetos rodavam em série num worker só (~32 min). workers:4 é o primeiro
-  // experimento; se o scaffold modo-de-prova tiver estado compartilhado entre
-  // specs, colide e o caminho passa a ser sharding com isolamento. Reverter se vermelho.
-  workers: 4,
+  // RUN-149 mediu workers:4: COLIDE (scaffold modo-de-prova tem estado compartilhado;
+  // o spec de paginação lista-paginada corrompeu com workers paralelos) e não acelerou
+  // (33m vs 32m). O caminho do visual é sharding em runners isolados, não workers>1.
+  workers: 1,
   reporter: [["list"]],
   use: {
     baseURL: `http://127.0.0.1:${porta}`,
