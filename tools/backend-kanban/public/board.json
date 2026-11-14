@@ -6270,7 +6270,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-14",
-      "sourceRevision": "aa21294c",
+      "sourceRevision": "b5be43d4",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6281,7 +6281,8 @@
         "13/11: LT-003 — F02 busca retém o q na URL (PR #216, merge 2bd49670); BUSCA-RETENCAO-URL fechado. 'busca' em ROTAS_COM_BUSCA (fix de uma palavra) faz a materialização preservar o search; E2E do app 31/31 local (revisão Qwen) + busca-redirects/global-search-flow verdes no CI integrado em 375/768/1440. A busca de F02 está completa: trocada e com o termo retido no endereço. Prioridade ajustada pelo dono: CI-E2E-UPSTREAM-INSTAVEL (causa do flaky que atrasa os PRs) antes do F09.",
         "14/11: LT-004 — F09 avisos trocado (PR #220, merge a15a6e56). /notifications -> /app/avisos e /configuracoes/notificacoes -> /app/voce (307); páginas antigas removidas; deep-links.ts MOVIDO para lib/notifications (consumidor vivo destino-do-app.ts); índice /configuracoes -> conta; links do shell atualizados; 14 specs migrados sem perda de cobertura (nav-invariante -> prova de 307; journey-pedir-servico -> frase neutra, follow-up F09-NOME-PRESTADOR-AVISO aberto); TROCADAS 74/74 + ausência das pastas; avisos-redirects.spec.ts verde no CI em 375/768/1440. Revisão independente Qwen PASS (rodou as provas). Ressalvas: operation-proof.mjs -> card EVENTOS-RESIDUOS-POS-TROCA; N-1 (nota): a integração cruzada 'marcar lidas na caixa do app -> badge da sidebar web some' deixou de ser provada num só spec (metades provadas isoladas; risco baixo, registrar se alguém depender do badge web). Flaky: testemunha RUN-145 mergeada (4219d15f) capturou a causa real (corrida Kong/PostgREST sob carga do CI); fix definitivo em lote futuro. Próximo: F06 listas ou F04 conforme mapa.",
         "14/11: LT-005 — F06 listas trocadas (PR #221, merge 5a512258): /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada). Só as 3 páginas de lista removidas; troca parcial (criação/edição de imóvel, alertas, criação/edição web de desapego ficam na web). TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão. Revisão independente Qwen: FAIL leve (D1 nota falsa link-crawl, D2 assert URL com query, D3 comentário órfão) -> corrigidos -> re-revisão PASS. GAP registrado em LAN-F06: /mercado/[id]/editar só por URL direta (app edita desapego inline). Filtros parcialmente consumidos (q client-side). Corrigidos também falso-positivo do secrets scan no contrato e formatação de 3 specs. Consequência da troca: /explorar/servicos e /negocio perderam a porta (eram linkados pela lista /mercado) -> declaradas em PORTAS_FORA_DO_LINK como dívida (F02/F07). Próximo: F04 ou F08 conforme mapa.",
-        "14/11: LT-006 — F08 lado app (PR #222, merge aa21294c): Guia retém e consome q/categoria da URL. guia em ROTAS_COM_BUSCA (middleware renomeado manterBusca, lógica inalterada); leitura pura filtros-da-url.ts (termo 1..80, categoria válida, locality ignorado) + 8 testes; Guia.tsx semeia do endereço na montagem, digitação vence a origem e não reescreve a URL; E2E guia-filtros-url 23 passed local em 375/768/1440 nos dois temas, negativo verificado (sem guia no set a retenção falha). Revisão Qwen PASS com 2 ressalvas não bloqueantes -> F08-RESSALVAS. CI verde após RUN-146 (PR #223, merge 779d6b2c: runner pinado ubuntu-24.04, ubuntu-latest virou 26.04 incompatível com Playwright 1.51.1): gate 23m25s, App mobile-first 38m10s, HTML R72. Perda declarada: ?locality= não suportado. Próximo: LT-007 troca parcial de /guide (as outras 3 rotas do guia ficam na web)."
+        "14/11: LT-006 — F08 lado app (PR #222, merge aa21294c): Guia retém e consome q/categoria da URL. guia em ROTAS_COM_BUSCA (middleware renomeado manterBusca, lógica inalterada); leitura pura filtros-da-url.ts (termo 1..80, categoria válida, locality ignorado) + 8 testes; Guia.tsx semeia do endereço na montagem, digitação vence a origem e não reescreve a URL; E2E guia-filtros-url 23 passed local em 375/768/1440 nos dois temas, negativo verificado (sem guia no set a retenção falha). Revisão Qwen PASS com 2 ressalvas não bloqueantes -> F08-RESSALVAS. CI verde após RUN-146 (PR #223, merge 779d6b2c: runner pinado ubuntu-24.04, ubuntu-latest virou 26.04 incompatível com Playwright 1.51.1): gate 23m25s, App mobile-first 38m10s, HTML R72. Perda declarada: ?locality= não suportado. Próximo: LT-007 troca parcial de /guide (as outras 3 rotas do guia ficam na web).",
+        "14/11: LT-007 — F08 web parcial (PR #225, merge b5be43d4): /guide -> /app/guia 307 com query; lista antiga removida (715 linhas); subrotas /guide/[id], /guide/sugerir, /guide/[id]/correcao ficam na web (regra exata não as captura, prova negativa unit+E2E). TROCADAS 81/81; guia-redirects.spec.ts novo (307+query sem sessão em 375/768/1440); specs migradas (portas-de-entrada, empty-locality, two-localities); 5 links web da lista direto pro app (Salvos, busca global x2, city-reference, entry-moment). Revisão Qwen PASS. Completo verde no SHA a2c51d9d (run 43622057312, 17.9 min) após 5 correções de inventário (links, unitário href, typed routes via typegen, portas das subrotas, allowance /denuncias) + idle=10 do RUN-148. Perda declarada: ?locality=. Checklist de troca completo no LICOES. F08: lista trocada nos dois lados; gaps do verbete endereçável/sugestão/correção seguem em F08-RESSALVAS."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6455,7 +6456,8 @@
       "phase": "Lançamento",
       "priority": "P3",
       "category": "testing",
-      "status": "repo",
+      "status": "done",
+      "completedAt": "2026-11-14",
       "description": "PORTAS_FORA_DO_LINK declara /denuncias/[id] e /denuncias/nova, mas não a lista /denuncias. A lista só é alcançada quando a persona denuncia; se o fluxo não roda limpo (ex.: 502 do CI-E2E-UPSTREAM-INSTAVEL), /denuncias fica unreached e cai em semPorta (link-crawl.spec.ts:443), derrubando o completo por ruído alheio ao diff. Visto no LT-007 (run 43616944587). Fix: declarar /denuncias com dependeDeDados:true (molde /guide/[id]) ou tornar o fluxo de denúncia determinístico no rastreador.",
       "checklist": [
         "Declarar /denuncias em PORTAS_FORA_DO_LINK (dependeDeDados:true) ou garantir a reachability determinística",
@@ -6465,11 +6467,13 @@
       "tests": ["tests/e2e/link-crawl.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-14",
-      "sourceRevision": "5e4af006",
+      "sourceRevision": "b5be43d4",
       "links": ["tests/e2e/link-crawl.spec.ts"],
       "proof": [
-        "14/11: descoberto no fechamento do LT-007 (run 43616944587, semPorta=[/denuncias]); fragilidade pré-existente, não causada pela troca do guia."
-      ]
+        "14/11: descoberto no fechamento do LT-007 (run 43616944587, semPorta=[/denuncias]); fragilidade pré-existente, não causada pela troca do guia.",
+        "14/11: resolvido no LT-007 (merge b5be43d4): /denuncias declarado dependeDeDados:true em PORTAS_FORA_DO_LINK (portas legítimas intactas: Ajuda e retorno do fluxo); link-crawl verde no run 43622057312 (SHA a2c51d9d, completo 17.9 min)."
+      ],
+      "completedChecklist": [true, true]
     },
     {
       "id": "RUN-147",
