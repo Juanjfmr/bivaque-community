@@ -31,7 +31,11 @@ export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: "test-results",
   fullyParallel: false,
-  workers: 1,
+  // RUN-149 (medição): paralelismo por arquivo (fullyParallel segue false). Os 7
+  // projetos rodavam em série num worker só (~32 min). workers:4 é o primeiro
+  // experimento; se o scaffold modo-de-prova tiver estado compartilhado entre
+  // specs, colide e o caminho passa a ser sharding com isolamento. Reverter se vermelho.
+  workers: 4,
   reporter: [["list"]],
   use: {
     baseURL: `http://127.0.0.1:${porta}`,
