@@ -183,9 +183,20 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
   {
+    route: "/guide/[id]",
+    porta:
+      "CONDICIONAL: referência do Guia linkada nos pedidos de indicação (ask-indication/indication-detail), atrás de dado que o rastreador nem sempre vê; a lista /guide saiu para o app (F08/LT-007), o verbete web permanece",
+    dependeDeDados: true,
+  },
+  {
     route: "/guide/[id]/correcao",
     porta: "CONDICIONAL: 'Sugerir atualização' no artigo, quando a referência tem guia publicado",
     dependeDeDados: true,
+  },
+  {
+    route: "/guide/sugerir",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era 'Sugerir um lugar' na lista /guide, trocada para o app (F08); o app ainda não tem a porta de sugestão de lugar novo (gap em F08-RESSALVAS)",
   },
   {
     route: "/imoveis/alertas",
