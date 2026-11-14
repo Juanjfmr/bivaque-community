@@ -89,24 +89,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      # Os specs de E2E da raiz são TypeScript e não passam pelo typecheck dos
-      # workspaces; sem este passo um spec quebrado só aparecia depois de subir
-      # o Supabase inteiro. Os specs de apps/app entram no `tsc --noEmit` do
-      # build do app, que inclui `tests/`.
-      - name: Typecheck E2E specs
-        run: pnpm exec tsc -p tests/e2e/tsconfig.json
-
-      - name: Unit, privacy and scope tests
-        run: pnpm test
-
-      - name: Secrets scan
-        run: pnpm test:secrets
+      # Lint, typecheck, typecheck:e2e, unit/privacy/scope e secrets scan rodam no
+      # job fast (sempre). O agregador ci exige o fast, então não se duplicam aqui
+      # (RUN-151: ~60s a menos no ci-core). O build do Next abaixo faz o próprio
+      # typecheck; os specs E2E da raiz são typecheckados no fast.
 
       # `supabase start` pulls the whole stack from the public ECR, and the ECR
       # refused it twice in a row with "toomanyrequests: Data limit exceeded"
@@ -505,17 +491,18 @@ jobs:
   # se qualquer parte falhou. O if always() garante que roda mesmo se um need falhar.
   ci:
     name: Install, test, and build
-    needs: [ci-core, e2e-stateful]
+    needs: [fast, ci-core, e2e-stateful]
     if: always() && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Aggregate CI results
         run: |
+          fa="${{ needs.fast.result }}"
           core="${{ needs.ci-core.result }}"
           st="${{ needs.e2e-stateful.result }}"
-          echo "ci-core: $core | e2e-stateful: $st"
-          for r in "$core" "$st"; do
+          echo "fast: $fa | ci-core: $core | e2e-stateful: $st"
+          for r in "$fa" "$core" "$st"; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
               echo "::error::uma parte do CI falhou ($r)"
               exit 1
