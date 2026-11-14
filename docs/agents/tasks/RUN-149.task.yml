@@ -42,6 +42,7 @@ allowed_paths:
   - docs/agents/tasks/RUN-149.task.yml
   - playwright.config.ts
   - apps/app/playwright.config.ts
+  - .github/workflows/bivaque-app-visual-smoke.yml
   - .visual/run-149
 
 forbidden:
@@ -55,7 +56,8 @@ acceptance:
   - "A: playwright.config.ts webServer.command no CI = só start (build fica no step dedicado); local mantém build&&start."
   - "B: apps/app/playwright.config.ts workers:4, fullyParallel false."
   - "Medição: completo + visual no PR com ci:full; durações por step registradas em .visual/run-149 contra a baseline (visual 32m05, stateful 8m40, comuns 3m50, build 17s)."
-  - "Decisão com números: se B verde e mais rápido, mantém; se B vermelho por colisão de estado, reverte B (mantém A) e registra sharding com isolamento como próximo passo. Merge do subconjunto seguro."
+  - "Decisão com números: B (workers:4) COLIDIU e foi revertido (workers:1, lição no config). A (start-only) mantido. Visual distribuído por PROJETO em 7 runners isolados (matrix, fail-fast false) + agregador com o nome de check antigo; cada job roda um projeto com workers:1 e scaffold próprio, sem Supabase."
+  - "Medição do visual shardado: wall time (max dos 7 jobs) contra baseline 32m05s; agregador verde quando todos passam ou pulado, vermelho se algum falha. Merge do subconjunto verde e mais rápido."
 
 proof:
   - gate do PR com ci:full: fast + full + visual verdes (ou B revertido se colidir), durações por step medidas

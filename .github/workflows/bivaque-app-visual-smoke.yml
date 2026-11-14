@@ -16,14 +16,31 @@ permissions:
   contents: read
 
 jobs:
-  app-visual-smoke:
-    name: App mobile-first / 320-360-375-430-768-1440
+  # RUN-149/150: o visual rodava em série num worker só (7 projetos, ~32 min) e
+  # workers>1 COLIDE (scaffold modo-de-prova compartilha estado). A distribuição é
+  # por PROJETO em runners isolados: cada job tem seu vite dev/preview + scaffold
+  # próprios, sem colisão, sem Supabase (só install + build Vite + chromium). Os 6
+  # tamanhos são balanceados; publicado roda só *.publicado.spec.ts. Wall time cai
+  # para ~o projeto mais lento + setup. O agregador abaixo é o check único do gate.
+  visual:
+    name: Visual / ${{ matrix.project }}
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
     # ver ADR-20261114.
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - mobile-320
+          - mobile-360
+          - mobile-375
+          - mobile-430
+          - tablet-768
+          - desktop-1440
+          - publicado
 
     steps:
       - name: Checkout
@@ -49,16 +66,15 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Verify the app suite, six sizes
-        # A suíte inteira, pelo script do pacote: spec nova entra sozinha. A
-        # lista fixa de antes deixou 15 casos vermelhos passarem batido.
-        run: pnpm --filter @bivaque/app test:e2e --trace=retain-on-failure
+      - name: Run project ${{ matrix.project }}
+        # Um projeto por runner, workers:1 (config do app): sem colisão de scaffold.
+        run: pnpm --filter @bivaque/app exec playwright test --project=${{ matrix.project }} --trace=retain-on-failure
 
       - name: Save test and screenshot evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: app-visual-evidence
+          name: visual-${{ matrix.project }}
           if-no-files-found: ignore
           include-hidden-files: true
           path: |
@@ -66,3 +82,21 @@ jobs:
             apps/app/artifacts/visual/
             apps/app/artifacts/visual-mobile/
             .visual/
+
+  # Check único do gate (nome antigo preservado): agrega os 7 projetos. Verde se
+  # todos passaram ou se o visual foi pulado (PR sem ci:full); vermelho se algum falhou.
+  visual-aggregate:
+    name: App mobile-first / 320-360-375-430-768-1440
+    needs: [visual]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate visual projects
+        run: |
+          result="${{ needs.visual.result }}"
+          echo "visual matrix: $result"
+          if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+            echo "::error::um ou mais projetos visuais falharam"
+            exit 1
+          fi
