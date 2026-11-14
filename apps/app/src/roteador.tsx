@@ -59,7 +59,7 @@ const raiz = createRootRoute({
  * passa `search: {}` explícito (`buscaAoTrocarDeRota`): o filtro da aba
  * anterior não segue para a nova.
  */
-const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) => {
+const manterBusca: SearchMiddleware<Record<string, unknown>> = (ctx) => {
   const atual = ctx.search ?? {}
   // O tipo público não declara, mas o segundo argumento de `next` pede o meta:
   // ele diz se o pedido passou `search` explícito (o filtro da tela) ou não —
@@ -72,8 +72,8 @@ const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) =>
   return resultado.meta && "explicit" in resultado.meta ? (resultado.search ?? atual) : atual
 }
 
-const BUSCA_PERSISTENTE = { middlewares: [manterBuscaDoMercado] }
-const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado", "busca"])
+const BUSCA_PERSISTENTE = { middlewares: [manterBusca] }
+const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado", "busca", "guia"])
 
 /**
  * As telas reais do produto entram aqui conforme cada onda. Fora do modo de
