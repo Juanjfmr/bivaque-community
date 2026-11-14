@@ -6426,7 +6426,7 @@
       ],
       "blockers": [],
       "updatedAt": "2026-11-14",
-      "sourceRevision": "321736bf",
+      "sourceRevision": "5e4af006",
       "links": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41420144623",
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/41438522427",
@@ -6444,9 +6444,32 @@
         "13/11: RUN-144 (PR #217) BLOCKED após 2 retries — NÃO mergeado. Hipótese keep-alive Kong(60s)/PostgREST(30s): recriar o Kong com KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 aplica o valor (provado em .kong_env), mas (a) causou regressão F01 — entrada por código recebe magic link em vez de OTP, 15 falhas, e F01 passava no run verde 43495653063; causa não isolada; (b) o 502 persistiu no run 43513829451; (c) experimento de ociosidade inconclusivo (RPC sem auth deu 401, não prova ausência de 502); (d) timeout warp 30s sem fonte primária (os 30s documentados são do pool PG). Revisão independente FAIL: o step não verificava o valor aplicado e a testemunha era só access log. Retry 2 deixou melhorias não commitadas (preserva healthcheck, verifica idle=10 pós-boot, coleta error.log/502). HUMAN_DECISION pendente: reabrir a causa com testemunha melhorada vs aceitar o flaky (rerun) e seguir o lançamento. Testemunha em .visual/run-144/ci-artifacts (worktree w-ci-flaky).",
         "13/11: REINVESTIGAÇÃO (.visual/run-144/REINVESTIGACAO.md) — (1) causa da regressão F01 ISOLADA e confirmada no auth.log do CI: a recriação do Kong não preservava HostConfig.Binds; os templates de email são bind-mounts servidos em kong:8088/email/*.html; sem eles o GoTrue recebe 404 e cai no template padrão (magic link SEM código) -> lerCodigoDoEmail falha. idle=10 absolvido (controle sem override falha igual). (2) Hipótese keep-alive REFUTADA: RPC autenticada real via Kong, 0/40 502s em 5 braços (gaps 10/35/50s, idle 60 e 10); conexão poolada ficou ESTABLISHED 57s+. (3) Timeout warp em fonte primária: warp-3.4.7 + time-manager-0.2.2 -> ociosa fecha entre 30s e 60s (não 30s determinístico; os 30s da doc são do pool PG). (4) Mecanismo prepare+HUP aplica override sem recriar (preserva binds), mas é desnecessário pois a hipótese caiu. DONO DECIDIU: abandonar RUN-144 (PR #217 fechado), salvar só a testemunha (RUN-145, PR #219: coleta error.log/502 com rota/timestamp, tail 10000 do Kong) e seguir o lançamento (F09). Causa real do 502 EM ABERTO — candidatos: storage-api keepAliveTimeout, fechamento em voo sob CPU starvation do runner, janela pós-db reset; diagnosticar na próxima falha com a testemunha. Card despriorizado P2/next.",
         "14/11: TESTEMUNHA CAPTUROU A CAUSA REAL (run 43535002080, kong-errors.log): eventos [error] 'upstream prematurely closed connection while reading response header from upstream' e 'recv() failed (104: Connection reset by peer)', upstream = PostgREST (172.18.0.6:3000), ex. POST /rest/v1/rpc/my_group_notify_level às 00:49:37 + GET dm_read_states/dm_messages. É a corrida de conexão Kong↔PostgREST, disparada SOB CARGA do CI (CPU starvation) — por isso o experimento isolado de ociosidade (0/40) não reproduziu. A assinatura keep-alive ESTÁ confirmada no CI; a 'refutação' anterior foi do experimento isolado, não do mecanismo. Bug menor do grep da testemunha (502 casava com bytes) corrigido em f5310d48 (foca [error]/upstream/status 502 real). Próximo fix (lote futuro): idle=10 via prepare+HUP (preserva binds, sem regressão F01), validado sob carga do CI; ou tratar o fechamento em voo. RUN-145 (PR #219) segue para merge como testemunha.",
-        "14/11: RUN-147 PR #224 (só workflows/docs, run 43604939946, SHA 321736bf): group-admin-cycle.spec.ts:120 (@stateful, membro pendente cancela o pedido) caiu nas 3 larguras nos dois retries; 281 passed, resto do completo verde. A testemunha RUN-145 (já mergeada, 4219d15f) confirmou a MESMA causa no kong-errors.log: recv() failed (104: Connection reset by peer) e upstream prematurely closed -> 502 em my_group_notify_level, dm_messages e group_memberships entre 14:32 e 14:42, janela do lote serial. Rerun do job falho aplicado (contorno sancionado pelo dono em 13/11); artefatos em .visual/run-147/ci-artifacts. Fix definitivo (idle=10 via prepare+HUP, preserva binds) segue em lote futuro."
+        "14/11: RUN-147 PR #224 (só workflows/docs, run 43604939946, SHA 321736bf): group-admin-cycle.spec.ts:120 (@stateful, membro pendente cancela o pedido) caiu nas 3 larguras nos dois retries; 281 passed, resto do completo verde. A testemunha RUN-145 (já mergeada, 4219d15f) confirmou a MESMA causa no kong-errors.log: recv() failed (104: Connection reset by peer) e upstream prematurely closed -> 502 em my_group_notify_level, dm_messages e group_memberships entre 14:32 e 14:42, janela do lote serial. Rerun do job falho aplicado (contorno sancionado pelo dono em 13/11); artefatos em .visual/run-147/ci-artifacts. Fix definitivo (idle=10 via prepare+HUP, preserva binds) segue em lote futuro.",
+        "14/11: RUN-148 mergeado (PR #227, 5e4af006): step após os resets aplica idle=10 no Kong em execução (prepare com template custom + HUP no master, receita provada do RUN-144), 3 verificações fail-fast (valor no .kong_env, server 8088, fetch 200 do template). Completo verde em 22.9 min no SHA 6dcb91aa (run 43615866491), F01 verde — mecanismo aplicado e verificado, 1º run verde. A cura NÃO é provada (idle=10 absolvido no experimento isolado; 502 sob carga em aberto); o card segue aberto pelo critério de 10 verdes. Revisão Qwen PASS + correção (reposicionar o step após os resets)."
       ],
       "completedChecklist": [true, false, false, false]
+    },
+    {
+      "id": "CI-LINKCRAWL-SEM-PORTA-DENUNCIAS",
+      "title": "link-crawl: a lista /denuncias não tem allowance e flakeia quando a persona não denuncia",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "testing",
+      "status": "repo",
+      "description": "PORTAS_FORA_DO_LINK declara /denuncias/[id] e /denuncias/nova, mas não a lista /denuncias. A lista só é alcançada quando a persona denuncia; se o fluxo não roda limpo (ex.: 502 do CI-E2E-UPSTREAM-INSTAVEL), /denuncias fica unreached e cai em semPorta (link-crawl.spec.ts:443), derrubando o completo por ruído alheio ao diff. Visto no LT-007 (run 43616944587). Fix: declarar /denuncias com dependeDeDados:true (molde /guide/[id]) ou tornar o fluxo de denúncia determinístico no rastreador.",
+      "checklist": [
+        "Declarar /denuncias em PORTAS_FORA_DO_LINK (dependeDeDados:true) ou garantir a reachability determinística",
+        "link-crawl verde em run com o lote serial sob carga"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "5e4af006",
+      "links": ["tests/e2e/link-crawl.spec.ts"],
+      "proof": [
+        "14/11: descoberto no fechamento do LT-007 (run 43616944587, semPorta=[/denuncias]); fragilidade pré-existente, não causada pela troca do guia."
+      ]
     },
     {
       "id": "RUN-147",

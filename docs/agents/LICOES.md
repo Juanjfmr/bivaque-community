@@ -206,6 +206,10 @@ Toda troca de rota de lista (LAN-TROCA) inclui, na mesma unidade de trabalho:
    rewrite do SPA) exige `as Route` (padrão do repo). Verifique com `next typegen` + typecheck da
    web, não com o typecheck da raiz. Desde 14/11 o `next typegen` roda DENTRO do script typecheck
    da web — o fast CI pega essa classe em ~1.5 min, não no build de 20 min.
+5. As subrotas que FICAM na web perdem a porta da lista que saiu (ex.: `/guide/[id]` e
+   `/guide/sugerir` eram linkados pela lista `/guide`). Declare-as em `PORTAS_FORA_DO_LINK`
+   (`dependeDeDados:true` se o alcance depende de dado/fluxo; sem o flag se é dívida pura), senão
+   o `semPorta` do link-crawl derruba o completo. Lição da 4ª tentativa do LT-007.
 
 ## Processo enxuto: onde o rigor paga e onde é cerimônia (14/11)
 
