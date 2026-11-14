@@ -1,8 +1,8 @@
 # CI infra — pinar o runner dos workflows com Playwright em ubuntu-24.04.
 #
 # ubuntu-latest migrou para ubuntu 26.04, que o Playwright 1.51.1 (pin do repo) não
-# suporta: playwright install --with-deps chromium falha com "Playwright does not
-# support chromium on ubuntu26.04-x64". Isso bloqueia TODO PR (gate + App mobile-first).
+# suporta: playwright install --with-deps chromium falha com Playwright does not
+# support chromium on ubuntu26.04-x64. Isso bloqueia TODO PR (gate + App mobile-first).
 # Fix seguro: pinar runs-on em ubuntu-24.04 nos 3 workflows que instalam chromium,
 # SEM mexer no pin do Playwright (AGENTS.md: não atualizar pins casualmente).
 # Comentário no workflow explica o pin para não ser revertido sem entender.
