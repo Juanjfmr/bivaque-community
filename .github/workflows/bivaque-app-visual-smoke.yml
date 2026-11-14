@@ -18,12 +18,13 @@ permissions:
 jobs:
   # RUN-149/150: o visual rodava em série num worker só (7 projetos, ~32 min) e
   # workers>1 COLIDE (scaffold modo-de-prova compartilha estado). A distribuição é
-  # por PROJETO em runners isolados: cada job tem seu vite dev/preview + scaffold
-  # próprios, sem colisão, sem Supabase (só install + build Vite + chromium). Os 6
-  # tamanhos são balanceados; publicado roda só *.publicado.spec.ts. Wall time cai
-  # para ~o projeto mais lento + setup. O agregador abaixo é o check único do gate.
+  # por SHARD de arquivo (--shard=N/7) em runners isolados: cada job tem seu vite
+  # dev/preview + scaffold próprios, sem colisão, sem Supabase (só install + build
+  # Vite + chromium). A união dos 7 shards cobre a suíte inteira (todos os projetos),
+  # sem recorte — o guard tests/scope/app-suite-ci.test.mjs segue válido (test:e2e,
+  # sem --project nem lista de specs). Wall time cai para ~a suíte / 7 + setup.
   visual:
-    name: Visual / ${{ matrix.project }}
+    name: Visual / shard ${{ matrix.shard }}
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -33,14 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - mobile-320
-          - mobile-360
-          - mobile-375
-          - mobile-430
-          - tablet-768
-          - desktop-1440
-          - publicado
+        shard: [1, 2, 3, 4, 5, 6, 7]
 
     steps:
       - name: Checkout
@@ -66,15 +60,15 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run project ${{ matrix.project }}
-        # Um projeto por runner, workers:1 (config do app): sem colisão de scaffold.
-        run: pnpm --filter @bivaque/app exec playwright test --project=${{ matrix.project }} --trace=retain-on-failure
+      - name: Run shard ${{ matrix.shard }}/7
+        # Script do pacote (config inteiro) + shard de arquivo; workers:1 no config.
+        run: pnpm --filter @bivaque/app test:e2e --shard=${{ matrix.shard }}/7 --trace=retain-on-failure
 
       - name: Save test and screenshot evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: visual-${{ matrix.project }}
+          name: visual-shard-${{ matrix.shard }}
           if-no-files-found: ignore
           include-hidden-files: true
           path: |
