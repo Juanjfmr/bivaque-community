@@ -2,6 +2,8 @@ name: Bivaque R72 Mobile Parity
 
 on:
   pull_request:
+    # `labeled` faz aplicar a label ci:full disparar o run completo neste PR.
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - 'apps/app/**'
       - 'scripts/app/capturar.mjs'
@@ -18,6 +20,9 @@ jobs:
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
+    # ver ADR-20261114.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
 
     steps:
       - name: Checkout with R72 history
