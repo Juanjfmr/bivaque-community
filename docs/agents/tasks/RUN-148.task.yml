@@ -1,0 +1,73 @@
+# CI — matar a corrida Kong↔PostgREST (502) no lote serial, sem recriar o Kong.
+#
+# Causa confirmada pela testemunha RUN-145 (kong-errors.log): recv() failed (104) /
+# upstream prematurely closed -> 502 em my_group_notify_level etc. SOB CARGA do CI.
+# O RUN-144 tentou recriar o Kong com idle=10 e quebrou o F01 (perdeu os binds dos
+# templates de email -> GoTrue 404 -> magic link sem codigo). A reinvestigacao
+# (.visual/run-144/REINVESTIGACAO.md, worktree w-ci-flaky) PROVOU o mecanismo correto:
+# kong prepare com o template CUSTOM + HUP direto no master nginx (nao kong reload,
+# que regenera o template default e derruba o servidor 8088). idle=10 absolvido da
+# regressao; a causa era a recriacao. Este lote aplica a receita provada.
+#
+# ULTRA: o lote fecha com o mecanismo aplicado+verificado e o completo verde. O
+# criterio de 10 execucoes verdes do CARD acumula nos fechamentos seguintes — nao
+# e prova deste lote (provar negativa com 10 runs de 20 min nao se justifica).
+
+task_id: RUN-148
+
+objective: >
+  Eliminar a corrida de conexão Kong↔PostgREST que derruba o lote serial do E2E no
+  CI, aplicando upstream_keepalive_idle_timeout=10 no Kong em execução via prepare
+  com o template custom + HUP no master (receita provada na reinvestigação do
+  RUN-144), com verificação do valor aplicado e do servidor 8088 vivo. Sem recriar
+  o contêiner, sem regressão do F01 (entrada por código continua OTP, não magic link).
+
+authority:
+  - tools/backend-kanban/public/board.json (CI-E2E-UPSTREAM-INSTAVEL, causa confirmada em 14/11)
+  - .work/w-ci-flaky/.visual/run-144/REINVESTIGACAO.md (mecanismo prepare+HUP provado em runtime)
+  - Instrução do dono (14/11): abrir o lote do flaky como próximo após o LT-007
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Testemunha RUN-145 nos runs 43535002080 e 43604939946 (kong-errors.log):
+    upstream prematurely closed connection / recv() failed (104: Connection reset by
+    peer), upstream PostgREST, 502 em my_group_notify_level, dm_messages,
+    group_memberships na janela do lote serial; group-admin-cycle.spec.ts:120 cai
+    nas 3 larguras. RUN-144 (PR #217, abandonado): recriar o Kong perdeu os binds ->
+    templates 404 -> GoTrue cai no template default (magic link sem código) -> 15
+    falhas no F01. kong reload simples também derruba o 8088 (template default).
+
+allowed_paths:
+  - docs/agents/tasks/RUN-148.task.yml
+  - .github/workflows/pull-request-ci.yml
+  - .visual/run-148
+
+forbidden:
+  - recriar/parar/reiniciar o contêiner Kong (docker rm, stop, restart, compose up --force-recreate) ou usar kong reload
+  - alterar o pin do Playwright, o runner, os steps do job completo além do novo step, produto, testes, supabase, migrations
+  - remover ou enfraquecer a testemunha RUN-145 (Collect local Supabase diagnostics)
+  - aplicar o override sem verificar o valor E o servidor 8088 (falha alto se qualquer um faltar)
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree; mutar a stack local compartilhada (docker exec só-leitura é permitido)
+
+acceptance:
+  - "Um step novo após Start local Supabase: localiza o Kong (molde do witness: docker ps --filter name=supabase_kong_), aplica docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 <kong> kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template e HUP direto no master (kill -HUP $(cat /usr/local/kong/pids/nginx.pid)), com set -euo pipefail."
+  - "Verificação no mesmo step, falhando alto: .kong_env contém o valor 10; nginx.conf gerado contém o servidor 8088; o fetch de um template de email em 127.0.0.1:8088 responde 200 (caminho exato conforme o template custom). Saída visível no log do CI."
+  - "Nenhum outro step alterado; testemunha RUN-145 intacta; runner e pins inalterados; YAML válido."
+  - "Prova de runtime no PR deste lote (label ci:full no fechamento): completo verde, F01 entrada por código verde (OTP, não magic link), e o step imprime o valor aplicado + 8088 vivo. O coordenador conduz a prova."
+
+proof:
+  - node -e "require('yaml').parse(require('fs').readFileSync('.github/workflows/pull-request-ci.yml','utf8'))"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-148.task.yml
+  - gate do PR deste lote com a label ci:full: completo verde + step de verificação imprime idle=10 e 8088 vivo (prova de runtime)
+
+risk: mudança de infra/CI no Kong da stack de teste; risco de regressão F01 se o mecanismo for errado (receita provada mitiga)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
