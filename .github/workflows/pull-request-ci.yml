@@ -211,7 +211,7 @@ jobs:
           done
           kong=$(docker ps -a --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
           if [ -n "$kong" ]; then
-            docker logs "$kong" 2>&1 | grep -iE "502|upstream|prematurely|closed connection|error" > ci-stack-logs/kong-errors.log || true
+            docker logs "$kong" 2>&1 | grep -iE '\[error\]|\[crit\]|\[warn\]|upstream|prematurely|reset by peer|HTTP/1.1" 502' > ci-stack-logs/kong-errors.log || true
           fi
           db=$(docker ps -a --filter "name=supabase_db_" --format "{{.Names}}" | head -n1)
           if [ -n "$db" ]; then
