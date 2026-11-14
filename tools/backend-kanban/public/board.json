@@ -7229,30 +7229,32 @@
     },
     {
       "id": "EVENTOS-RESIDUOS-POS-TROCA",
-      "title": "Eventos e busca: limpar resíduos das telas antigas depois da troca",
+      "title": "Eventos, busca e avisos: limpar resíduos das telas antigas depois da troca",
       "phase": "Lançamento",
       "priority": "P3",
       "category": "repo",
       "status": "next",
-      "description": "Sobras da troca de /events: create-menu perdeu o atalho de criar evento; comentário falso em event-invites.spec.ts:96 (o evento 5 é upcoming; a seção some porque o membro 6 é organizador); scripts/visual/capture.mjs:188,361 ainda captura /events/novo; resíduos sem consumidor em active-nav.ts:58 e feed-right-rail.tsx:170; board.json/RUN-020/RUN-007 citam arquivos removidos. Sobras da troca de /explorar/busca (LT-002, PR #215): scripts/visual/capture.mjs:198-206,442-445 ainda mira /explorar/busca?q=… com o título 'Resultados para' da tela removida (a rota agora 307-para-app); apps/web/lib/search/groups.ts + tests/unit/search/groups.test.ts ficaram órfãos (buildSearchGroups sem consumidor de produção; só lib/search/params segue usado por servicos).",
+      "description": "Sobras da troca de /events: create-menu perdeu o atalho de criar evento; comentário falso em event-invites.spec.ts:96 (o evento 5 é upcoming; a seção some porque o membro 6 é organizador); scripts/visual/capture.mjs:188,361 ainda captura /events/novo; resíduos sem consumidor em active-nav.ts:58 e feed-right-rail.tsx:170; board.json/RUN-020/RUN-007 citam arquivos removidos. Sobras da troca de /explorar/busca (LT-002, PR #215): scripts/visual/capture.mjs:198-206,442-445 ainda mira /explorar/busca?q=… com o título 'Resultados para' da tela removida (a rota agora 307-para-app); apps/web/lib/search/groups.ts + tests/unit/search/groups.test.ts ficaram órfãos (buildSearchGroups sem consumidor de produção; só lib/search/params segue usado por servicos). Sobras da troca de avisos (LT-004, F09): scripts/visual/operation-proof.mjs:64-67 assevera link 'Notificações' com href /notifications — já stale ANTES do lote (o nav do operador, (admin)/operator-nav.tsx:15-22, não tem esse item) e fora do gate; ferramenta de setembro, não roda no CI.",
       "checklist": [
         "Restaurar o atalho de criar evento no menu",
         "Corrigir comentário e captura órfã",
         "Limpar resíduos e referências no board/docs",
         "Capturador: as 4 capturas de /explorar/busca miram /app/busca com o título real do app, ou saem se já cobertas pela captura do app",
-        "Remover lib/search/groups.ts e seu teste (conferir importadores antes; params fica)"
+        "Remover lib/search/groups.ts e seu teste (conferir importadores antes; params fica)",
+        "operation-proof.mjs:64-67: remover/atualizar a asserção do link Notificações /notifications (stale pré-existente; conferir o nav do operador antes)"
       ],
       "proof": [
         "11/11: aberto na revisão do #176 (ressalvas BAIXAS do reviewer 7c4d0b40).",
-        "13/11: estendido com as ressalvas A2/A3 da revisão independente Qwen do LT-002 (PR #215): capturador fora de allowed_paths do lote e módulo órfão confirmado por grep (único importador de groups.ts era a página removida)."
+        "13/11: estendido com as ressalvas A2/A3 da revisão independente Qwen do LT-002 (PR #215): capturador fora de allowed_paths do lote e módulo órfão confirmado por grep (único importador de groups.ts era a página removida).",
+        "14/11: estendido com o resíduo do LT-004 (F09): operation-proof.mjs:64-67 apontado pelo implementador e pelo mapa F09 do explore; stale pré-existente (nav do operador sem o item), fora do gate, precedente RUN-133 (capturador -> card de residual)."
       ],
       "tests": [],
       "links": [],
       "dependencies": ["LAN-TROCA"],
-      "updatedAt": "2026-11-13",
-      "sourceRevision": "bd69e091",
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "4219d15f",
       "blockers": [],
-      "completedChecklist": [false, false, false, false, false]
+      "completedChecklist": [false, false, false, false, false, false]
     },
     {
       "id": "BUSCA-SESSAO-VENCIDA",
