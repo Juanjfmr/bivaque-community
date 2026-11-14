@@ -6507,6 +6507,56 @@
       "completedChecklist": [true, true, true, true, true]
     },
     {
+      "id": "RUN-149",
+      "title": "CI: sharding visual por arquivo (32->8 min) + webServer CI start-only",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "completedAt": "2026-11-14",
+      "description": "Visual do app (7 projetos, workers:1, ~32 min) distribuído por shard de arquivo (--shard=N/7) em 7 runners isolados, sem Supabase (só install+build Vite+chromium). workers>1 foi testado e REPROVADO (scaffold modo-de-prova compartilha estado; spec de paginação colidiu, sem ganho) — revertido para workers:1. webServer da web no CI = só start (elimina 2 rebuilds do Next; reuseExistingServer era false no CI). Guard app-suite-ci intacto (test:e2e, sem --project nem lista de specs).",
+      "checklist": [
+        "Sharding visual por arquivo, guard da suíte intacto",
+        "webServer CI start-only (build único validado)",
+        "Medir wall time vs baseline 32 min"
+      ],
+      "dependencies": [],
+      "tests": ["tests/scope/app-suite-ci.test.mjs"],
+      "blockers": [],
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "6342e2ce",
+      "links": ["docs/agents/tasks/RUN-149.task.yml"],
+      "proof": [
+        "14/11: PR #228 mergeado em 6342e2ce. Visual --shard: 7 shards verdes (4.9-7.8 min) + agregador, wall 7.8 min vs baseline 32.1 (4.1x). workers:4 reprovado (colisão, 33 min sem ganho). webServer start-only: full verde, build único 12s. Guard app-suite-ci pass 1/fail 0."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "RUN-150",
+      "title": "CI: stateful por viewport em 3 runners independentes (full 17->11 min)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "completedAt": "2026-11-14",
+      "description": "Lote stateful (serial num runner, 3 viewports, ~8-10 min) distribuído: ci-core (build/db/pgTAP/comuns) + e2e-stateful matrix (mobile-375/tablet-768/desktop-1440), cada um com stack Supabase e banco INDEPENDENTE, serial dentro do viewport (preserva separação das mesmas linhas; sem colisão cross-viewport). Agregador ci preserva o check Install, test, and build e o gate ci:full. Scripts intactos (guard local-command-surface). Tradeoff: 4 stacks concorrentes (mais minutos de runner) por wall time menor.",
+      "checklist": [
+        "ci-core sem stateful + e2e-stateful matrix 3 viewports com bancos independentes",
+        "Agregador preserva nome do check e gate; guards verdes",
+        "Medir wall time vs baseline 17-21 min"
+      ],
+      "dependencies": [],
+      "tests": ["tests/scope/local-command-surface.test.mjs"],
+      "blockers": [],
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "9b182875",
+      "links": ["docs/agents/tasks/RUN-150.task.yml"],
+      "proof": [
+        "14/11: PR #229 mergeado em 9b182875. Run 43647205114 (SHA 63fbef3d): ci-core 11 min, stateful mobile-375 5.7/tablet-768 5.6/desktop-1440 9.3 min, agregador success, fast 1.5 min — tudo verde, sem colisão. Wall full 11 min vs baseline 17-21. Fechamento = max(full 11, visual 7.8) ~11 min (alvo 8-12). Gargalo restante: ci-core 11 min (setup+comuns)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
       "id": "F09-NOME-PRESTADOR-AVISO",
       "title": "F09: aviso de resposta a pedido mostra o nome do prestador (enriquecimento)",
       "phase": "Lançamento",

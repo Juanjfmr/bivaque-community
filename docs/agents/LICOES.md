@@ -226,3 +226,19 @@ tempo por defeito embarcado. A rede fica; a cerimônia sai:
 - Evidência no quadro: 1-2 linhas (o que rodou, SHA, resultado). Um push de quadro por fechamento,
   não por evento. Contratos e pareceres no tamanho que os campos exigem, sem ensaio.
 - Não re-rodar local o que o CI já provou no mesmo SHA.
+
+## CI rápida: o que ficou medido (14/11)
+
+Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
+- Fast por ciclo: ~1.5 min (RUN-147; completo só no fechamento pela label ci:full).
+- Visual do app: 32 -> 7.8 min, sharding por arquivo `--shard=N/7` em runners isolados,
+  sem Supabase (RUN-149). **workers>1 NÃO funciona**: o scaffold modo-de-prova compartilha
+  estado entre specs (o spec de paginação colidiu). Sharding por arquivo respeita o guard
+  app-suite-ci; `--project` não (o guard proíbe recorte).
+- Full: 17-21 -> 11 min, stateful por viewport em 3 runners com bancos Supabase
+  independentes (RUN-150). Serial dentro do viewport preserva a separação das mesmas
+  linhas; bancos separados eliminam a colisão cross-viewport.
+- Gargalo restante: ci-core ~11 min (setup da stack ~5 min + E2E comuns). Próxima alavanca
+  seria shardar os comuns ou reduzir setup — retorno decrescente, só se o dono pedir.
+- Piso por runner: o setup da stack (~5 min) não some; paralelizar troca minutos de runner
+  por wall time. ECR rate-limita com muitos pulls concorrentes (backoff + Docker Hub fallback).
