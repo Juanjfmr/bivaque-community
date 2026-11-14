@@ -6,7 +6,7 @@ import {
   resolveNotificationHref,
   SERVICE_REQUEST_FIRST_REPLY,
   serviceRequestReplyLabel,
-} from "web/app/(shell)/notifications/deep-links"
+} from "web/lib/notifications/deep-links"
 
 // ADR-20260922-aviso-da-primeira-resposta: o tipo service_request carrega dois avisos, e a
 // action os separa. O risco nomeado no ADR é a resposta aparecer como "pedido encerrado".

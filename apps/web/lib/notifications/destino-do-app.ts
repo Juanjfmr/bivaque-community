@@ -1,7 +1,4 @@
-import {
-  formatNotificationLabel,
-  type NotificationRow,
-} from "../../app/(shell)/notifications/deep-links"
+import { formatNotificationLabel, type NotificationRow } from "./deep-links"
 
 /**
  * O aviso do banco e o seu destino dentro do app (F09).

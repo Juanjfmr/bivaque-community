@@ -58,12 +58,8 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     expect(resolveActiveNav("/profile", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
   })
 
-  it("preserva o fallback DS-011: mensagens e notificações caem em Perfil", () => {
+  it("preserva o fallback DS-011: mensagens caem em Perfil", () => {
     expect(resolveActiveNav("/messages", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
-    expect(resolveActiveNav("/notifications", PRIMARY)).toEqual({
-      kind: "primary",
-      id: "perfil",
-    })
     expect(resolveActiveNav("/denuncias/nova", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
     expect(resolveActiveNav("/ajuda", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
   })
@@ -173,7 +169,6 @@ describe("barra inferior do celular usa a mesma regra da lateral", () => {
     ["/cidade/abc", "explorar"],
     ["/indicacoes", "comunidades"],
     ["/indicacoes/abc", "comunidades"],
-    ["/notifications", "perfil"],
   ])("%s acende %s", (path, id) => {
     expect(resolveActiveNav(path, PRIMARY)).toEqual({ kind: "primary", id })
   })

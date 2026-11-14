@@ -36,9 +36,7 @@ export const PRIMARY_CONTAINERS = ["inicio", "explorar", "comunidades", "perfil"
 export type PrimaryContainer = (typeof PRIMARY_CONTAINERS)[number]
 
 // Destinos secundários que representam a si mesmos na lateral porque têm item
-// próprio desenhado em app-shell.tsx. `/notifications` fica DE FORA de
-// propósito: o contrato DS-011 (tests/e2e/nav-container-invariant.spec.ts)
-// exige que ela continue caindo em "perfil". Só `/salvos` acende a si mesma.
+// próprio desenhado em app-shell.tsx. Só `/salvos` acende a si mesma.
 export const SECONDARY_SELF_ROUTES = ["/salvos"] as const
 
 // A que container cada ÁREA pertence. É a regra de produto, não uma lista de
@@ -77,7 +75,6 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/negocio", "perfil"],
   ["/configuracoes", "perfil"],
   ["/messages", "perfil"],
-  ["/notifications", "perfil"],
   // A conversa contextual membro↔prestador vive em Perfil, e o pedido é o
   // workspace dessa conversa (DESIGN_SYSTEM §7.1).
   ["/pedidos", "perfil"],

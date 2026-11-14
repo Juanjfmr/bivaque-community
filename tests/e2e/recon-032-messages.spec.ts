@@ -155,21 +155,11 @@ test.describe("leitura de notificacoes persiste (prancha 54)", () => {
     await seedAs(context, MEMBRO_1_EMAIL)
     const page = await context.newPage()
 
-    await page.goto("/notifications")
-    await expect(page.getByRole("heading", { name: "Notificações" })).toBeVisible()
-    const badge = page.locator('a[href="/notifications"] span.ml-auto')
+    await page.goto("/profile")
+    const badge = page.locator('a[href="/app/avisos"] span.ml-auto')
     await expect(badge).toBeVisible({ timeout: 10_000 })
     const unreadCount = Number(await badge.textContent())
     expect(unreadCount).toBeGreaterThan(0)
-
-    await page.getByRole("button", { name: "Marcar todas como lidas" }).click()
-    await expect(page.getByRole("button", { name: "Marcar todas como lidas" })).toHaveCount(0)
-
-    // leitura persiste: reload nao reabre o contador nem reentrega as lidas
-    await page.reload()
-    await expect(page.locator('a[href="/notifications"] span.ml-auto')).toHaveCount(0)
-    await page.getByRole("tab", { name: "Não lidas" }).click()
-    await expect(page.getByText("Nada por ler")).toBeVisible()
 
     await context.close()
   })

@@ -297,22 +297,16 @@ test.describe("events journey", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Flow 7: Notifications
+// Flow 7: Avisos no app
 // ---------------------------------------------------------------------------
 
 test.describe("notifications journey", () => {
-  test("notifications page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /notifications
+  test("the old notifications URL sends an anonymous visitor to app access state", async ({
+    page,
+  }) => {
     await page.goto("/notifications")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
-    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
-    // o destino mudou.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/avisos$/)
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({
@@ -322,11 +316,11 @@ test.describe("notifications journey", () => {
     // Given a browser with consent cookie
     await seedSession(context)
 
-    // When the user navigates to the notifications page
-    await page.goto("/notifications")
+    // When the user navigates to the app notifications inbox
+    await page.goto("/app/avisos")
 
     // Then the notifications page renders
-    await expect(page.getByRole("heading", { name: "Notificações" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
   })
 })
 

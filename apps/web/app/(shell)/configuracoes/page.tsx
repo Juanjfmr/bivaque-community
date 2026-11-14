@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 
-// A prancha 52 abre pela seção de Notificações. O índice real é a coluna
-// vertical do layout; esta rota só encaminha para a primeira seção.
+// O índice de configurações abre na única seção web que permanece: Conta.
 export default function ConfiguracoesPage() {
-  redirect("/configuracoes/notificacoes")
+  redirect("/configuracoes/conta")
 }

@@ -12,7 +12,6 @@ import { usePathname } from "next/navigation"
 // transformar a área em quatro telas sem nome.
 const SECTION_NAMES: Record<string, string> = {
   conta: "Conta",
-  notificacoes: "Notificações",
   familia: "Família",
   bloqueados: "Privacidade",
 }

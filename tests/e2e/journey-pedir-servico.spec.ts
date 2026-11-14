@@ -63,16 +63,14 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         },
       )
 
-      // O cabeçalho e os avisos continuam na web; o aviso abre o pedido no app.
+      // O cabeçalho continua na web; a caixa de avisos abre o pedido no app.
       const glance = await memberContext.newPage()
       await glance.goto("/profile")
       await expect(
         glance.getByRole("link", { name: /^Conversas, \d+ com mensagem nova/ }),
       ).toBeVisible({ timeout: 20_000 })
-      await glance.goto("/notifications")
-      const notice = glance.getByRole("button", {
-        name: new RegExp(`${PROVIDER_NAME} respondeu seu pedido`),
-      })
+      await glance.goto("/app/avisos")
+      const notice = glance.getByText("Seu pedido recebeu uma resposta")
       await expect(notice.first()).toBeVisible({ timeout: 20_000 })
       await notice.first().click()
       await expect(glance).toHaveURL(new RegExp(`/app/pedido/${requestId}$`), {

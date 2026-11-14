@@ -105,7 +105,7 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     // O autor do pedido é o membro-46 (seed members 1..300); o seedSession()
     // aponta para a dono-vila@, que não receberia notificação deste pedido.
     await signInAs(authorPage, OPEN_REQUEST_AUTHOR_EMAIL)
-    await authorPage.goto("/notifications")
+    await authorPage.goto("/app/avisos")
     // A RECON-006 (prancha 54) trocou as abas por tema — Vizinhanca, Minha
     // atividade, Alertas — pelo filtro de leitura: Todas e Nao lidas. Nao ha
     // mais aba para clicar, e a pagina abre em "Todas", que inclui esta

@@ -112,9 +112,9 @@ export const HEADINGS = {
   // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
   // e a variante com termo é chave própria logo abaixo.
   "/explorar/servicos": "^Prestadores de serviço$",
-  // /configuracoes/page.tsx:6 redireciona para a subrota de notificações, e é
+  // /configuracoes/page.tsx redireciona para a única seção web que fica, e é
   // isso que a captura registra; a rota declara expectedPath para o destino.
-  "/configuracoes": "^Configurações · Notificações$",
+  "/configuracoes": "^Configurações · Conta$",
   "/groups": "Grupos",
   "/communities": "Comunidades",
   // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
@@ -124,7 +124,6 @@ export const HEADINGS = {
   "/community": DYNAMIC_HEADING,
   "/guide": "Guia",
   "/events": "^Explorar eventos$",
-  "/notifications": "^Notificações$",
   "/messages": "^Mensagens$",
   // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
   "/community?vista=indicacoes": DYNAMIC_HEADING,
@@ -238,7 +237,6 @@ export const HEADINGS = {
   // continua nomeada ("Configurações") e a subtela entra no mesmo H1. Assim uma
   // captura que aterrissasse na subtela errada deixa de passar como válida
   // (RECON-042, defeito 3). As duas pontas — título e mapa — andam juntas.
-  "/configuracoes/notificacoes": "^Configurações · Notificações$",
   "/configuracoes/conta": "^Configurações · Conta$",
   "/configuracoes/familia": "^Configurações · Família$",
   "/configuracoes/bloqueados": "^Configurações · Privacidade$",
@@ -522,7 +520,6 @@ export const ROUTES = [
     auth: true,
   },
   { path: "/messages", name: "messages", auth: true },
-  { path: "/notifications", name: "notifications", auth: true },
   { path: "/profile", name: "profile", auth: true },
   // RECON-032 (pranchas 54 e 56). Fixtures concretas, não templates:
   // - /denuncias/nova: alvo é um post do seed que o visual@ vê pela RLS e
@@ -568,15 +565,14 @@ export const ROUTES = [
   // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
   // é a conta do seed: membro verificado (default), com a coluna vertical de
   // seções e as subrotas reais.
-  // /configuracoes redireciona para a subrota de notificações: o destino é
+  // /configuracoes redireciona para Conta: o destino é
   // contrato declarado, não surpresa (a tela é a mesma, o caminho muda).
   {
     path: "/configuracoes",
     name: "configuracoes",
     auth: true,
-    expectedPath: "/configuracoes/notificacoes",
+    expectedPath: "/configuracoes/conta",
   },
-  { path: "/configuracoes/notificacoes", name: "configuracoes-notificacoes", auth: true },
   { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
   { path: "/configuracoes/familia", name: "configuracoes-familia", auth: true },
   { path: "/configuracoes/bloqueados", name: "configuracoes-bloqueados", auth: true },

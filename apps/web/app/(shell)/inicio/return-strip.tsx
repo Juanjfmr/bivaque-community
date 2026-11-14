@@ -4,23 +4,23 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { createBrowserClient } from "../../../lib/supabase/client"
-import { MemberAvatar } from "../../components/bivaque/avatar"
 import {
   formatNotificationLabel,
   type NotificationRow,
   rendersWithActor,
   resolveNotificationHref,
-} from "../notifications/deep-links"
+} from "../../../lib/notifications/deep-links"
+import { createBrowserClient } from "../../../lib/supabase/client"
+import { MemberAvatar } from "../../components/bivaque/avatar"
 import { useAvatarSrc } from "./use-avatar-src"
 
 // RECON-002 (prancha 01): a tira de retorno abaixo do composer. Só existe com
 // notificação não-lida real — sem linha legível, sem card. Consulta que falha
-// é tratada como "nada a mostrar" (a caixa completa vive em /notifications;
+// é tratada como "nada a mostrar" (a caixa completa vive em /app/avisos;
 // um teaser quebrado não tem versão honesta para mostrar).
 //
 // Rótulo e destino vêm do MESMO classificador da central de retorno
-// (notifications/deep-links.ts), não de cópia inventada aqui: a tira e a
+// (lib/notifications/deep-links.ts), não de cópia inventada aqui: a tira e a
 // caixa dizem a mesma frase sobre a mesma notificação.
 
 type Strip = {
@@ -113,7 +113,7 @@ async function buildOne(
   }
 
   const subject = await loadSubject(supabase, row)
-  const href = resolveNotificationHref(row, null) ?? "/notifications"
+  const href = resolveNotificationHref(row, null) ?? "/app/avisos"
   const cta =
     row.type === "comment" || row.type === "recommendation_reply"
       ? "Ver resposta"

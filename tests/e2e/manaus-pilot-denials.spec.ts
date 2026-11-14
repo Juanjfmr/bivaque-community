@@ -28,13 +28,7 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
 // ---------------------------------------------------------------------------
 
 test.describe("anonymous visitor: protected route denial", () => {
-  const PROTECTED_ROUTES = [
-    "/community",
-    "/groups",
-    "/profile",
-    "/recommendations",
-    "/notifications",
-  ]
+  const PROTECTED_ROUTES = ["/community", "/groups", "/profile", "/recommendations"]
 
   for (const route of PROTECTED_ROUTES) {
     test(`${route} refuses an anonymous visitor and sends them to the app entry`, async ({
@@ -253,21 +247,14 @@ test.describe("events RSVP: denial paths", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Denial 7: Notifications page denial — non-affiliated user
+// Denial 7: the old notifications URL redirects before the proxy gate
 // ---------------------------------------------------------------------------
 
-test.describe("notifications: denial paths", () => {
-  test("notifications page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /notifications
+test.describe("notifications redirect: anonymous visitor", () => {
+  test("the old URL lands on the app's expired-session state", async ({ page }) => {
     await page.goto("/notifications")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
-    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/avisos$/)
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 })
 

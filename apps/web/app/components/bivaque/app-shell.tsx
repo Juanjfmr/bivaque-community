@@ -116,7 +116,7 @@ export function AppShell({ children }: AppShellProperties) {
             active={activeNav.kind === "secondary" && activeNav.href === "/salvos"}
           />
           <SidebarSecondaryItem
-            href="/notifications"
+            href="/app/avisos"
             label="Notificações"
             Icon={Bell}
             badge={unreadCount}
@@ -216,7 +216,7 @@ export function AppShell({ children }: AppShellProperties) {
               ) : null}
             </a>
 
-            <a href="/notifications" aria-label="Notificações" className={ICON_BUTTON}>
+            <a href="/app/avisos" aria-label="Notificações" className={ICON_BUTTON}>
               <Bell size={20} aria-hidden="true" />
               {unreadCount > 0 ? (
                 <span
