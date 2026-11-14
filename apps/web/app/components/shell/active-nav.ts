@@ -62,7 +62,6 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   // entrada para cá, esta linha muda junto com ela. Comparar com /salvos, que
   // é igualmente "coisa da pessoa" e fica em Perfil — porque tem item próprio
   // na lateral, isto é, é alcançável de lá.
-  ["/meus-anuncios", "explorar"],
   ["/imoveis", "explorar"],
   ["/recommendations", "explorar"],
   // Indicações é uma vista da comunidade (ADR-20260925-memoria-de-indicacoes).

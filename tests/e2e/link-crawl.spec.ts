@@ -183,11 +183,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     dependeDeDados: true,
   },
   {
-    route: "/imoveis",
-    porta:
-      "DÍVIDA LAN-TROCA: a lista antiga perdeu a porta do rail e do mercado da Início web; a nova é /app/imoveis, sem os filtros de URL (F06)",
-  },
-  {
     route: "/imoveis/alertas",
     porta:
       "DÍVIDA LAN-TROCA: 'Criar alerta' dentro de /imoveis antigos, sem equivalente no app (F06)",
@@ -213,7 +208,10 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta:
       "DÍVIDA LAN-TROCA: a porta era o rail da Início web e a aba Sobre da comunidade, fora do percurso do rastreador (F02/F08)",
   },
-  { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
+  {
+    route: "/mercado/[id]/editar",
+    porta: "BOTÃO: Gerenciar anúncios em /app/meus-anuncios; a edição web permanece",
+  },
   {
     route: "/mercado/novo",
     porta:

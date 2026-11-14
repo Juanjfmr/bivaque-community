@@ -84,7 +84,7 @@ function visibleBadges(rows: { field: string; value: string; is_visible: boolean
 const OWNER_SHORTCUTS = [
   { href: "/salvos", label: "Salvos", Icon: Bookmark },
   { href: "/messages", label: "Mensagens", Icon: MessageCircle },
-  { href: "/meus-anuncios", label: "Meus anúncios", Icon: Tag },
+  { href: "/app/meus-anuncios" as Route, label: "Meus anúncios", Icon: Tag },
   { href: "/pedidos", label: "Meus orçamentos", Icon: ClipboardList },
 ] as const
 

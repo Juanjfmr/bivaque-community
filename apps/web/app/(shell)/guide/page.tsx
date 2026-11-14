@@ -314,7 +314,7 @@ function GuideContent() {
         <Link
           role="tab"
           aria-selected="false"
-          href="/mercado"
+          href={"/app/mercado" as Route}
           className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-[var(--semantic-text-secondary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
         >
           Mercado

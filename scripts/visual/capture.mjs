@@ -172,12 +172,10 @@ export const HEADINGS = {
   // Lote 4 (PORT-004): o documento do protótipo.
   "/onboarding/documento": "^(Envie um documento\\.|A equipe pediu outro documento\\.)$",
   "/onboarding/perfil": "^Deixe com a sua cara\\.$",
-  "/mercado": "^O que você precisa pode estar por perto$",
   "/mercado/novo": "^Novo anúncio$",
   "/negocio": "^(Seu negócio|Crie a página do seu negócio)$",
   "/negocio/catalogo": "^Catálogo e portfólio$",
   "/prestadores/<member-business>": DYNAMIC_HEADING,
-  "/meus-anuncios": "^Meus anúncios$",
   "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
   // O h1 do detalhe é o título do próprio evento.
   "/events/70000000-0000-4000-8000-000000000005": DYNAMIC_HEADING,
@@ -203,7 +201,6 @@ export const HEADINGS = {
   // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
   "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
   "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
-  "/imoveis": "^Explorar moradia$",
   "/imoveis/novo": "^Novo anúncio de moradia$",
   // A ficha do imóvel é nomeada pelo título do anúncio.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
@@ -314,10 +311,9 @@ export const ROUTES = [
   // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
   // capturava o 404 honesto há runs. Eventos são 70000000-… no seed.
   { path: "/events/70000000-0000-4000-8000-000000000005", name: "event-detail", auth: true },
-  // RECON-025: o Mercado. A rota de detalhe depende de um anúncio no seed,
+  // RECON-025: criação e edição de desapego. A rota de detalhe depende de anúncio no seed,
   // que este lote não pode criar (supabase/seed.sql fora dos allowed_paths);
   // capture-a quando a fixture existir.
-  { path: "/mercado", name: "mercado", auth: true },
   { path: "/mercado/novo", name: "mercado-novo", auth: true },
   { path: "/negocio", name: "member-business", auth: true, account: "visual" },
   {
@@ -338,7 +334,6 @@ export const ROUTES = [
   // allowed_paths deste lote, então o caminho fica cadastrado com um id
   // determinístico e a captura cai no estado honesto "indisponível" até existir
   // a fixture — nunca em 404 silencioso nem em tela de login.
-  { path: "/meus-anuncios", name: "meus-anuncios", auth: true },
   {
     path: "/mercado/a0000000-0000-4000-8000-000000000001/editar",
     name: "mercado-editar",
@@ -448,7 +443,6 @@ export const ROUTES = [
   // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
   // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
   // honesto, que NÃO conta como fidelidade comprovada.
-  { path: "/imoveis", name: "imoveis", auth: true },
   { path: "/imoveis/novo", name: "imoveis-novo", auth: true },
   { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
   // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o

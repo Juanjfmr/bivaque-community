@@ -1,0 +1,111 @@
+# LAN-TROCA — F06: as listas antigas de mercado/imóveis/meus-anúncios saem da web.
+#
+# Molde: RUN-133 / LT-002 / LT-004. O lado do app JÁ está pronto e provado com banco real:
+# /app/mercado e /app/imoveis (Mercado.tsx -> /api/app/mercado?tipo=item|property, filtros
+# de URL consumidos em filtros-url.ts) e /app/meus-anuncios (MeusAnuncios.tsx ->
+# /api/app/mercado/meus, gestão editar desapego + situação). E2E f06-mercado-real.spec.ts.
+# O motivo do hold da fase 1 (filtros da URL não consumidos) CAIU. Este lote é só o lado web.
+#
+# DECISÕES DE ESCOPO (do mapa F06 do explore):
+# (D1) Troca PARCIAL ao estilo fase 1: saem só as 3 listas (mercado/page, imoveis/page,
+#      meus-anuncios/page). FICAM na web: criação/edição de imóvel (imoveis/novo, [id]/editar
+#      — app só tem rascunho local), alertas (imoveis/alertas — sem equivalente no app),
+#      criação/edição web de desapego (mercado/novo, [id]/editar), detalhes [id] (já 307 fase 1),
+#      e as peças compartilhadas (mercado-shared, property-form, alert-form, save-listing-button,
+#      share-button, loading/error/not-found de imoveis). NÃO remover nada com importador vivo.
+# (D2) Filtros parcialmente consumidos pelo app: q é client-side sobre a página carregada;
+#      categoria/condicao/regiao/ordem (mercado) e bairro/tipo_negocio/sort (imoveis) NÃO são
+#      consumidos; tipo fora de apartamento/casa cai em todos. Limitação a registrar, não bloqueia.
+# (D3) Após a troca, as portas de criação/edição/alertas de imóvel dependem do menu Criar web
+#      + URL direta. Gap de edição de imóvel é PRÉ-EXISTENTE (sem link desde a fase 1); F06 não
+#      remove porta que ainda existia. Registrar no card.
+# (D4) Drift do card LAN-F06 (checklist stale vs código landed 06/11) — reconciliar no fechamento.
+
+task_id: LT-005
+
+objective: >
+  Nenhuma rota de membro do apps/web serve as listas antigas de mercado, imóveis e meus
+  anúncios. /mercado responde 307 para /app/mercado, /imoveis para /app/imoveis e
+  /meus-anuncios para /app/meus-anuncios, preservando os query params úteis; as 3 páginas
+  de lista são removidas (o resto das pastas fica); os links residuais são atualizados ou
+  justificados; o teste TROCADAS e os specs que visitavam as listas passam a provar o
+  redirecionamento e o comportamento no app. Sem sessão, o destino responde o estado de
+  acesso do app, não a tela antiga.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (ordem da troca e redirect)
+  - docs/agents/tasks/RUN-133.task.yml, LT-002.task.yml, LT-004.task.yml (moldes)
+  - tools/backend-kanban/public/board.json (LAN-TROCA, LAN-F06; mapa F06 do explore 14/11)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/next.config.ts NÃO tem regra para /mercado, /imoveis, /meus-anuncios (listas);
+    só os detalhes /mercado/:id e /imoveis/:id são 307 (fase 1, :103-104 com lookahead). As
+    listas antigas existem: (shell)/mercado/page.tsx (601 linhas), (shell)/imoveis/page.tsx,
+    (shell)/meus-anuncios/page.tsx (608 linhas, lista só desapegos kind=item). TROCADAS não
+    lista as 3 listas. Destinos no app existem e estão ligados: /app/mercado e /app/imoveis
+    (rotas.ts:128,126; Mercado.tsx -> /api/app/mercado, filtros-url.ts:52-73 consome q/tipo/
+    quartos/valor_max/preco_min/preco_max/pagina), /app/meus-anuncios (rotas.ts:143;
+    MeusAnuncios.tsx -> /api/app/mercado/meus, gestão gerenciar.tsx). E2E f06-mercado-real.spec.ts
+    prova listas/detalhe/interesse/editar+pausar+reativar com banco real. O hold da fase 1
+    (.visual/run-019/relatorio.md:51,60 — filtros não consumidos) foi resolvido (32784b4d, 74aefd68).
+
+allowed_paths:
+  - docs/agents/tasks/LT-005.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/mercado/page.tsx
+  - apps/web/app/(shell)/imoveis/page.tsx
+  - apps/web/app/(shell)/meus-anuncios
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/(shell)/guide/page.tsx
+  - apps/web/app/(shell)/profile/page.tsx
+  - apps/web/app/(shell)/imoveis/alertas/alert-manager.tsx
+  - apps/web/app/(shell)/imoveis/property-form.tsx
+  - apps/web/app/(shell)/mercado/novo/page.tsx
+  - apps/web/app/(shell)/mercado/[id]/editar/page.tsx
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/listings/highlights.test.ts
+  - tests/unit/ui/cidade-consulta.test.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/e2e/portas-de-entrada.spec.ts
+  - tests/e2e/provider-member-business.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/mercado-redirects.spec.ts
+  - scripts/visual/capture.mjs
+  - .visual/lt-005
+
+forbidden:
+  - alterar apps/app, a API /api/app/mercado, apps/web/proxy.ts, lib/security/route-surface.ts, supabase, migrations
+  - remover mercado-shared.tsx, property-form.tsx, alert-form.tsx, save-listing-button.tsx, share-button.tsx, loading/error/not-found de imoveis/, ou qualquer lib com importador vivo (catalog, filters, lifecycle, queries, client, alerts)
+  - remover/alterar as subrotas que ficam: mercado/novo, mercado/[id], mercado/[id]/editar, imoveis/novo, imoveis/[id], imoveis/[id]/editar, imoveis/alertas
+  - apagar spec sem substituir a cobertura por asserção de 307 ou prova no app; usar skip/fixme novo ou afrouxar asserção
+  - push, merge ou force-push; ler/criar/editar .env; imprimir secrets
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "/mercado -> 307 /app/mercado, /imoveis -> 307 /app/imoveis, /meus-anuncios -> 307 /app/meus-anuncios, preservando query params úteis; as 3 páginas de lista removidas; o resto das pastas (subrotas + peças compartilhadas + boundaries) permanece. Sem ciclo; as subrotas que ficam NÃO redirecionam (lookaheads preservados)."
+  - "TROCADAS inclui as 3 trocas + variantes com query (ex. /mercado?preco_min=10000&pagina=2, /imoveis?q=centro&quartos=2&valor_max=4000), prova 307 + destino no catálogo + sem segundo salto; teste de ausência da pasta meus-anuncios e dos arquivos mercado/page.tsx e imoveis/page.tsx (molde adaptado, a falha nomeia o que sobrou). Negativas seguem válidas (subrotas que ficam)."
+  - "Specs migrados sem perda de cobertura: portas-de-entrada.spec.ts:27-35 (portas de imóvel que ficam na web — prova de 307 da lista + cobertura das portas com entrada direta ou justificativa); provider-member-business.spec.ts:174-176 (link Meu negócio que só existia na lista — 307 ou goto /negocio justificado); os 2 unitários de leitura por caminho (highlights.test.ts:51, cidade-consulta.test.ts:116) atualizados para fonte viva (lição ENOENT do LT-002). Novo mercado-redirects.spec.ts prova 307 + aterrissagem 375/768/1440 sem sessão."
+  - "Links residuais atualizados ou justificados no diff (guide/page.tsx:317, profile/page.tsx:87, alert-manager.tsx:120, property-form.tsx:525, mercado/novo/page.tsx:236, mercado/[id]/editar/page.tsx — apontar direto /app/meus-anuncios onde fizer sentido). active-nav.ts: /meus-anuncios pode sair (precedente LT-004); /mercado e /imoveis ficam (subcaminhos web). link-crawl.spec.ts: entrada /imoveis (:186-189) e descrição da porta /mercado/[id]/editar (:216) atualizadas."
+  - "capture.mjs: remover /mercado, /meus-anuncios, /imoveis de HEADINGS e ROUTES (os dois mapas, contrato visual-capture-proof.test.mjs); ficam /mercado/novo, /mercado/:id/editar, /imoveis/novo, /imoveis/:id, /imoveis/alertas."
+  - "Passam: gate --fast, test (suíte completa), test:scope, vitest do teste de troca, tsc -p tests/e2e. O E2E de navegador roda no CI."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/lan-troca-redirect.test.ts --maxWorkers=1
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-005.task.yml
+
+risk: retirada de telas antigas e redirecionamento (F06 listas, troca parcial)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

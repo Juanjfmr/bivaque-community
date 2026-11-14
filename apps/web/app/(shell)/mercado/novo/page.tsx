@@ -233,7 +233,7 @@ export default function NovoAnuncioPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
       <Link
-        href={"/mercado" as Route}
+        href={"/app/mercado" as Route}
         className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-fast)] hover:text-[var(--semantic-text-primary)]"
       >
         <ArrowLeft size={16} aria-hidden="true" />

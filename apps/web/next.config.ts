@@ -99,6 +99,9 @@ const nextConfig: NextConfig = {
         [
           ["/messages", "/app/conversas"],
           ["/messages/:id", "/app/conversa/:id"],
+          ["/mercado", "/app/mercado"],
+          ["/imoveis", "/app/imoveis"],
+          ["/meus-anuncios", "/app/meus-anuncios"],
           // As páginas estáticas e /:id/editar continuam na web.
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
