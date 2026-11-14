@@ -12,7 +12,9 @@ permissions:
 jobs:
   ci:
     name: Install, test, and build
-    runs-on: ubuntu-latest
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta
+    # (chromium). Pinar 24.04 até o Playwright ser atualizado (pin intencional).
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
