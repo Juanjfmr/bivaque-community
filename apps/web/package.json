@@ -8,7 +8,7 @@
     "lint": "biome check .",
     "start": "next start",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "next typegen && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@bivaque/contracts": "workspace:*",
