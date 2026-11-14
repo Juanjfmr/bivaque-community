@@ -6270,7 +6270,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-14",
-      "sourceRevision": "5a512258",
+      "sourceRevision": "aa21294c",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6280,7 +6280,8 @@
         "13/11: LT-002 — F02 /explorar/busca trocada (PR #215, merge 94e5c870). 307 para /app/busca preservando q; página antiga (page/loading/error) removida; formulário global aponta direto para o app; TROCADAS 72/72 com teste de ausência da pasta; busca-redirects.spec.ts verde no CI em 375/768/1440 (o termo é usado pelo app via pedido a /api/app/busca?q; sem sessão responde erro, não a tela antiga). Revisão independente Qwen: FAIL (B1, asserção de sessão copiada do molde) -> retry -> PASS; regressão ENOENT (teste unitário lia a página removida por caminho segmentado) corrigida relocando a prova da porta /localidade para servicos; prova de URL ajustada ao pedido porque o app não persiste o q no endereço. Ressalvas com dono: EVENTOS-RESIDUOS-POS-TROCA (capturador + módulo órfão groups.ts), BUSCA-SESSAO-VENCIDA (401 vs erro + negativa), BUSCA-RETENCAO-URL (materialização apaga o q; fix de uma palavra).",
         "13/11: LT-003 — F02 busca retém o q na URL (PR #216, merge 2bd49670); BUSCA-RETENCAO-URL fechado. 'busca' em ROTAS_COM_BUSCA (fix de uma palavra) faz a materialização preservar o search; E2E do app 31/31 local (revisão Qwen) + busca-redirects/global-search-flow verdes no CI integrado em 375/768/1440. A busca de F02 está completa: trocada e com o termo retido no endereço. Prioridade ajustada pelo dono: CI-E2E-UPSTREAM-INSTAVEL (causa do flaky que atrasa os PRs) antes do F09.",
         "14/11: LT-004 — F09 avisos trocado (PR #220, merge a15a6e56). /notifications -> /app/avisos e /configuracoes/notificacoes -> /app/voce (307); páginas antigas removidas; deep-links.ts MOVIDO para lib/notifications (consumidor vivo destino-do-app.ts); índice /configuracoes -> conta; links do shell atualizados; 14 specs migrados sem perda de cobertura (nav-invariante -> prova de 307; journey-pedir-servico -> frase neutra, follow-up F09-NOME-PRESTADOR-AVISO aberto); TROCADAS 74/74 + ausência das pastas; avisos-redirects.spec.ts verde no CI em 375/768/1440. Revisão independente Qwen PASS (rodou as provas). Ressalvas: operation-proof.mjs -> card EVENTOS-RESIDUOS-POS-TROCA; N-1 (nota): a integração cruzada 'marcar lidas na caixa do app -> badge da sidebar web some' deixou de ser provada num só spec (metades provadas isoladas; risco baixo, registrar se alguém depender do badge web). Flaky: testemunha RUN-145 mergeada (4219d15f) capturou a causa real (corrida Kong/PostgREST sob carga do CI); fix definitivo em lote futuro. Próximo: F06 listas ou F04 conforme mapa.",
-        "14/11: LT-005 — F06 listas trocadas (PR #221, merge 5a512258): /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada). Só as 3 páginas de lista removidas; troca parcial (criação/edição de imóvel, alertas, criação/edição web de desapego ficam na web). TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão. Revisão independente Qwen: FAIL leve (D1 nota falsa link-crawl, D2 assert URL com query, D3 comentário órfão) -> corrigidos -> re-revisão PASS. GAP registrado em LAN-F06: /mercado/[id]/editar só por URL direta (app edita desapego inline). Filtros parcialmente consumidos (q client-side). Corrigidos também falso-positivo do secrets scan no contrato e formatação de 3 specs. Consequência da troca: /explorar/servicos e /negocio perderam a porta (eram linkados pela lista /mercado) -> declaradas em PORTAS_FORA_DO_LINK como dívida (F02/F07). Próximo: F04 ou F08 conforme mapa."
+        "14/11: LT-005 — F06 listas trocadas (PR #221, merge 5a512258): /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada). Só as 3 páginas de lista removidas; troca parcial (criação/edição de imóvel, alertas, criação/edição web de desapego ficam na web). TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão. Revisão independente Qwen: FAIL leve (D1 nota falsa link-crawl, D2 assert URL com query, D3 comentário órfão) -> corrigidos -> re-revisão PASS. GAP registrado em LAN-F06: /mercado/[id]/editar só por URL direta (app edita desapego inline). Filtros parcialmente consumidos (q client-side). Corrigidos também falso-positivo do secrets scan no contrato e formatação de 3 specs. Consequência da troca: /explorar/servicos e /negocio perderam a porta (eram linkados pela lista /mercado) -> declaradas em PORTAS_FORA_DO_LINK como dívida (F02/F07). Próximo: F04 ou F08 conforme mapa.",
+        "14/11: LT-006 — F08 lado app (PR #222, merge aa21294c): Guia retém e consome q/categoria da URL. guia em ROTAS_COM_BUSCA (middleware renomeado manterBusca, lógica inalterada); leitura pura filtros-da-url.ts (termo 1..80, categoria válida, locality ignorado) + 8 testes; Guia.tsx semeia do endereço na montagem, digitação vence a origem e não reescreve a URL; E2E guia-filtros-url 23 passed local em 375/768/1440 nos dois temas, negativo verificado (sem guia no set a retenção falha). Revisão Qwen PASS com 2 ressalvas não bloqueantes -> F08-RESSALVAS. CI verde após RUN-146 (PR #223, merge 779d6b2c: runner pinado ubuntu-24.04, ubuntu-latest virou 26.04 incompatível com Playwright 1.51.1): gate 23m25s, App mobile-first 38m10s, HTML R72. Perda declarada: ?locality= não suportado. Próximo: LT-007 troca parcial de /guide (as outras 3 rotas do guia ficam na web)."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6445,6 +6446,34 @@
         "14/11: TESTEMUNHA CAPTUROU A CAUSA REAL (run 43535002080, kong-errors.log): eventos [error] 'upstream prematurely closed connection while reading response header from upstream' e 'recv() failed (104: Connection reset by peer)', upstream = PostgREST (172.18.0.6:3000), ex. POST /rest/v1/rpc/my_group_notify_level às 00:49:37 + GET dm_read_states/dm_messages. É a corrida de conexão Kong↔PostgREST, disparada SOB CARGA do CI (CPU starvation) — por isso o experimento isolado de ociosidade (0/40) não reproduziu. A assinatura keep-alive ESTÁ confirmada no CI; a 'refutação' anterior foi do experimento isolado, não do mecanismo. Bug menor do grep da testemunha (502 casava com bytes) corrigido em f5310d48 (foca [error]/upstream/status 502 real). Próximo fix (lote futuro): idle=10 via prepare+HUP (preserva binds, sem regressão F01), validado sob carga do CI; ou tratar o fechamento em voo. RUN-145 (PR #219) segue para merge como testemunha."
       ],
       "completedChecklist": [true, false, false, false]
+    },
+    {
+      "id": "RUN-147",
+      "title": "CI em dois tempos: fast por ciclo (<=5 min), completo no fechamento do lote",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "now",
+      "description": "Instrução direta do dono (14/11): no máximo 5 min de CI por ciclo, teste completo no final do lote. Job fast (install, lint, typecheck, typecheck:e2e, pnpm test, varredura de credenciais) em todo push; job completo (todos os steps atuais) e visuais (App mobile-first, HTML R72) só com a label ci:full no PR, push na main ou dispatch; types labeled dispara o re-run. Rito: coordenador aplica a label no fechamento, espera completo verde, só então mergeia. Decisão R3 por delegação: ADR-20261114. Sem branch protection, a trava é o rito (ADR alternativa 4). Dashboard readiness não dá falso verde: classifyChecks exige presença e sucesso de cada step (readiness-github.mjs:8-13); run fast-only sem steps de E2E/DB = inconclusive.",
+      "checklist": [
+        "Job fast sempre, sem Supabase/build/E2E, alvo <=5 min (medir no PR)",
+        "Job completo mantém todos os steps e o nome Install, test, and build; gate por label ci:full/main/dispatch",
+        "Visuais com o mesmo gate, paths e timeouts preservados; types labeled nos 3 workflows",
+        "Prova de runtime: PR sem label roda só o fast; com label roda completo + visuais",
+        "Revisão independente + security-auditor (R3) antes do merge; registro na RATIFICACAO.md"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "8cec117f",
+      "links": [
+        "docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md",
+        "docs/agents/tasks/RUN-147.task.yml"
+      ],
+      "proof": [
+        "14/11: implementado pelo DeepSeek (commit 8cec117f, branch ds/ci-fast-cycle): 3 workflows, só adições (56 linhas); YAML válido, contrato R3 válido, secrets scan limpo. Coordenador verificou o diff no disco (fast com os comandos exatos dos steps rápidos; ci intacto + if; visuais com paths/timeouts preservados). Achado do executor sobre readiness-github.mjs resolvido pela leitura: classifyChecks exige cada step presente e verde -> fast-only = inconclusive, sem falso verde. Revisão Qwen + auditoria R3 em curso; prova de runtime no PR."
+      ]
     },
     {
       "id": "F09-NOME-PRESTADOR-AVISO",
