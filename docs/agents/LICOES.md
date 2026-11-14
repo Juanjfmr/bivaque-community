@@ -160,3 +160,22 @@ O Playwright reaproveita um servidor que já esteja na porta 3000 (`reuseExistin
 por outra frente faz o e2e passar testando o build do outro worktree (visto na COM-003). O
 `prova-sequencia.mjs e2e` encerra o que estiver na porta 3000 antes de subir o servidor, porque quem roda segura a
 fila. Rode o e2e sempre por ele, nunca com o Playwright direto.
+
+## CI em dois tempos: fast por ciclo, completo no fechamento (RUN-147, 14/11)
+
+Cada push em PR roda só o job `Fast checks` (install, lint, typecheck, typecheck:e2e, `pnpm test`,
+varredura de credenciais) — ~1.5 min medido. O job completo ("Install, test, and build", com Supabase,
+build, pgTAP, E2E) e os visuais (App mobile-first, HTML R72) só rodam com a label `ci:full` no PR,
+push na main ou workflow_dispatch; `types: labeled` faz a aplicação da label disparar o run.
+
+- **Rito de fechamento:** o coordenador aplica `ci:full`, confirma que os runs apareceram (label
+  inexistente falha silenciosamente — a label já existe no repo), espera o completo verde no MESMO
+  SHA que será mergeado, registra run-id/SHA no cartão, e só então mergeia. PR sem label é ciclo em
+  andamento, não está apto a merge. Não há branch protection: a trava é o rito (ADR-20261114,
+  alternativa 4; o quadro envia direto para main e a protection bloquearia esse caminho).
+- **Flaky conhecido:** se o completo cair só no `group-admin-cycle.spec.ts:120` (@stateful) com a
+  assinatura Kong↔PostgREST (502, testemunha RUN-145 no kong-errors.log), é o
+  CI-E2E-UPSTREAM-INSTAVEL: confira a testemunha, registre a ocorrência no cartão e aplique
+  `gh run rerun <id> --failed` (contorno sancionado pelo dono em 13/11). Não blame o diff antes de
+  conferir a causa — o rerun mantém o mesmo SHA.
+- Decisão, alternativas e riscos: ADR-20261114 (R3 por delegação, instrução direta do dono de 14/11).

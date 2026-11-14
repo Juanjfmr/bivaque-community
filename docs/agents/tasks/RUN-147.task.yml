@@ -1,0 +1,80 @@
+# CI — ciclo rápido (<=5 min) por push + teste completo só no fechamento do lote.
+#
+# Problema: o job ci roda TUDO em série (Supabase + build + DB + E2E, 16-23 min) e o
+# App mobile-first 38-45 min, a CADA push. O dono pediu (14/11): no máximo 5 min por
+# ciclo, teste completo no final do lote.
+#
+# Design: job fast (install + lint + typecheck + typecheck:e2e + pnpm test + varredura
+# de credenciais) roda SEMPRE; o job completo (todos os steps atuais) e os visuais
+# (App mobile-first, HTML R72) só rodam com a label ci:full no PR, ou push na main,
+# ou workflow_dispatch. Aplicar a label dispara o re-run completo (types: labeled).
+# O coordenador aplica a label no fechamento do lote e espera o completo verde antes
+# do merge. Decisão registrada no ADR-20261114 (R3 por delegação, instrução do dono).
+# NÃO mudar o pin do Playwright nem o runner (ubuntu-24.04, RUN-146).
+
+task_id: RUN-147
+
+objective: >
+  Dar feedback rápido (<=5 min) por ciclo de CI e rodar a suíte completa apenas no
+  fechamento do lote. Um job fast (install, lint, typecheck, typecheck:e2e, pnpm test,
+  varredura de credenciais) roda em todo pull_request e push; o job completo (Supabase,
+  build, DB, E2E) e os workflows App mobile-first e HTML R72 rodam apenas quando o PR
+  tem a label ci:full, ou em push na main, ou workflow_dispatch. Adicionar labeled aos
+  types de pull_request para que aplicar a label dispare o re-run. Nenhuma mudança de
+  produto, teste ou pin.
+
+authority:
+  - docs/LANCAMENTO.md (a CI completa verde continua pré-requisito de merge, no fechamento do lote)
+  - Instrução direta do dono (14/11): no máximo 5 min por ciclo, teste completo no final do lote
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md (decisão R3 por delegação)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    pull-request-ci.yml job ci roda em série install+lint+typecheck+unit+varredura e
+    depois Supabase+build+DB+E2E (PR #223: 16m48s; PR #222: 23m25s);
+    bivaque-app-visual-smoke.yml (App mobile-first) leva 38-45 min (PR #223: 44m55s;
+    PR #222: 38m10s) a cada pull_request. Cada ciclo de implementação/revisão paga
+    esse custo inteiro, mesmo para mudanças que não tocam banco/E2E.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-147.task.yml
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+  - docs/decisions/RATIFICACAO.md
+  - .github/workflows/pull-request-ci.yml
+  - .github/workflows/bivaque-app-visual-smoke.yml
+  - .github/workflows/bivaque-r72-mobile-comparison.yml
+  - .visual/run-147
+
+forbidden:
+  - alterar o pin do Playwright, o runner (ubuntu-24.04), ou qualquer dependência
+  - alterar código de produto, testes, supabase, migrations
+  - remover ou enfraquecer nenhuma verificação existente (o job completo mantém TODOS os steps atuais, na mesma ordem)
+  - mudar os steps do job completo além do gate por label (o conteúdo permanece idêntico)
+  - remover os filtros de paths dos workflows visuais
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "pull-request-ci.yml ganha um job fast (name: Fast checks, timeout-minutes: 10) com checkout, pnpm, node, install, lint, typecheck, typecheck:e2e, pnpm test e varredura de credenciais — os mesmos comandos dos steps atuais, sem Supabase/build/E2E. Roda em todo pull_request e push, sem if."
+  - "O job completo (id ci) mantém o name Install, test, and build e TODOS os steps atuais, e ganha if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')."
+  - "bivaque-app-visual-smoke.yml e bivaque-r72-mobile-comparison.yml ganham o mesmo if no job, preservando os filtros de paths e os timeouts atuais."
+  - "on.pull_request.types inclui opened, synchronize, reopened e labeled nos 3 workflows, para que aplicar a label ci:full dispare o re-run completo."
+  - "YAML válido nos 3 workflows; nenhuma verificação removida; runner e pin do Playwright inalterados; comentário curto no gate explicando o rito (label no fechamento do lote)."
+  - "Prova de runtime: o PR deste lote sem a label roda só o fast (medir duração, alvo <=5 min); com a label ci:full roda o completo e os visuais. O coordenador valida isso no PR deste lote."
+
+proof:
+  - node -e "require('yaml').parse(require('fs').readFileSync('.github/workflows/pull-request-ci.yml','utf8'))"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-147.task.yml
+  - gate do PR deste lote: primeiro sem a label (só o fast roda, medir duração <=5 min), depois com a label ci:full (completo + visuais rodam) — prova de runtime do split
+
+risk: mudança de infra/CI (split fast/full + gate por label); desloca quando as verificações de segurança rodam
+risk_level: R3
+adr: docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
