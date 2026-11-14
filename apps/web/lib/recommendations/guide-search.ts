@@ -2,14 +2,14 @@
 //
 // O Guia não tem RPC de busca: a leitura é o SELECT direto em
 // `arrival_guide_entries` filtrado por localidade e `status = 'approved'` (o
-// mesmo caminho de (shell)/guide/page.tsx:122-128), e o termo é aplicado em
-// memória sobre `name`/`description` (:247-256). Nada de função nova.
+// mesmo caminho de app/api/app/guia/route.ts:59-62), e o termo é aplicado em
+// memória sobre `name`/`description`. Nada de função nova.
 //
 // O que este módulo guarda é só a parte pura — o filtro e o rótulo da
 // contagem — para ela ser verificável sem navegador. A leitura e a RLS
 // continuam no componente, onde o cliente do Supabase vive.
 
-/** Tradução do enum public.arrival_guide_category (guide/page.tsx:47-52). */
+/** Tradução do enum public.arrival_guide_category. */
 export const GUIDE_CATEGORY_LABELS: Record<string, string> = {
   school: "Colégio",
   hospital: "Hospital",

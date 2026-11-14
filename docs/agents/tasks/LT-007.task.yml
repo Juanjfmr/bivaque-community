@@ -1,0 +1,92 @@
+# LAN-TROCA — F08 (lado web): troca parcial de /guide -> /app/guia.
+#
+# O LT-006 (merge aa21294c) fez o Guia do app reter e consumir q/categoria da URL.
+# Agora a lista antiga sai: 307 de /guide para /app/guia preservando a query, página
+# antiga removida, specs migradas. TROCA PARCIAL: /guide/[id], /guide/sugerir e
+# /guide/[id]/correcao FICAM na web (o app não tem rota endereçável do verbete, porta
+# de sugestão de lugar novo nem acompanhamento de correção — gaps de lotes próprios).
+# Molde exato: LT-005 (F06 listas, troca parcial) e LT-002/LT-004 (307 + specs).
+#
+# ESCOPO LIMITADO: só a lista. NÃO tocar apps/app, API, banco. NÃO suportar ?locality=
+# (o app lista só a cidade da sessão; perda declarada). Os links web da LISTA (Salvos,
+# busca global, city-reference, entry-moment) apontam DIRETO para /app/guia (molde
+# LT-005): o rastreador de links não conhece o 307 de página removida, e link para
+# tela morta é regressão (lição da rodada 2, CI do PR #225). O 307 fica para URLs
+# externas/bookmarks. Emenda de 14/11: a versão inicial proibia tocar saved-items.ts;
+# o CI provou que o link precisava migrar com a troca.
+
+task_id: LT-007
+
+objective: >
+  A lista antiga do Guia sai da web: /guide redireciona 307 para /app/guia preservando
+  q/categoria (o app já consome, LT-006), a página antiga é removida com seus testes
+  migrados, e as subrotas /guide/[id], /guide/sugerir e /guide/[id]/correcao permanecem
+  na web sem serem capturadas pela regra. A troca parcial segue o precedente F06 (LT-005):
+  listas trocadas, criação/edição/leitura profunda ficam.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (ordem da troca)
+  - docs/agents/tasks/LT-005.task.yml (molde de troca parcial) e LT-006.task.yml (app pronto)
+  - tools/backend-kanban/public/board.json (LAN-TROCA, LAN-F08; mapa F08 do explore 14/11)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/guide/page.tsx ainda serve a lista antiga (consome ?q= e
+    ?locality=). O app já retém/consome q/categoria (LT-006, merge aa21294c: guia em
+    ROTAS_COM_BUSCA, filtros-da-url.ts, Guia.tsx semeia do endereço). O Salvos web linka
+    /guide?q=<nome> (apps/web/lib/saves/saved-items.ts:122). Specs que visitam a lista:
+    portas-de-entrada.spec.ts:43, empty-locality.spec.ts:157, two-localities.spec.ts:235,260.
+    /guide/sugerir (question-first-order.spec.ts:161) e /guide/[id]/correcao
+    (link-crawl.spec.ts:186) ficam na web. next.config.ts ainda não tem regra para /guide.
+
+allowed_paths:
+  - docs/agents/tasks/LT-007.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/guide/page.tsx
+  - apps/web/app/components/shell
+  - apps/web/app/components/bivaque/city-reference.tsx
+  - apps/web/lib/recommendations/guide-search.ts
+  - apps/web/lib/saves/saved-items.ts
+  - apps/web/lib/search/groups.ts
+  - apps/web/lib/onboarding/entry-moment.ts
+  - scripts/visual/capture.mjs
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit
+  - tests/e2e
+  - .visual/lt-007
+
+forbidden:
+  - alterar apps/app, a API /api/app/guia, proxy/middleware, supabase, migrations
+  - trocar ou remover /guide/[id], /guide/sugerir, /guide/[id]/correcao (ficam na web; a regra 307 não pode capturá-las)
+  - alterar os links das SUBROTAS do guia (/guide/[id], /guide/sugerir, correcao) — só os links da LISTA migram para /app/guia (Salvos, busca global, city-reference, entry-moment), com os unitários atualizados na mesma unidade
+  - suportar ?locality= (o app lista só a cidade da sessão; perda declarada, não implementada)
+  - usar skip/fixme novo ou afrouxar asserção; tocar outra jornada
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "next.config.ts: par [/guide, /app/guia] no array de redirects (307, permanent false), query preservada pelo Next (molde /mercado). A regra é exata: /guide/sugerir, /guide/[id] e /guide/[id]/correcao NÃO são capturadas (prova negativa)."
+  - "apps/web/app/(shell)/guide/page.tsx removido; subrotas intactas. Nenhum import órfão da página removida (lição LT-002: teste que lê arquivo removido por caminho segmentado dá ENOENT)."
+  - "TROCADAS (tests/unit/infra/lan-troca-redirect.test.ts): par /guide -> /app/guia + caso com query (?q= e categoria preservados); guide no it.each de ausência de page.tsx (molde mercado/imoveis, linha 155). Destino /app/guia existe no catálogo (apps/app/lib/navegacao/rotas.ts). Todos os casos verdes."
+  - "Specs que visitam a lista migradas no molde LT-005: portas-de-entrada.spec.ts:43, empty-locality.spec.ts:157, two-localities.spec.ts:235,260 (prova do 307 ou alvo no app, conforme o precedente das rotas já trocadas no mesmo spec). question-first-order (/guide/sugerir) e link-crawl (correcao) inalterados. Novo guia-redirects.spec.ts (molde mercado-redirects/busca-redirects): 307 de /guide com q/categoria preservados, sem sessão, em 375/768/1440; negativa de que as subrotas não são capturadas."
+  - "Shell/nav web que apontava para /guide aponta para /app/guia (molde LT-005 active-nav); unitários afetados adaptados sem perda de cobertura."
+  - "Perda do ?locality= declarada no relatório (o parâmetro segue na URL pelo 307/retenção, mas o app não o lê). f08-guia-real.spec.ts e os unitários do guia seguem verdes."
+  - "Passam: gate --fast, pnpm test (raiz), tsc -p tests/e2e. O E2E de navegador roda no CI."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-007.task.yml
+
+risk: troca parcial de rota de membro (lista do Guia) com redirect e migração de testes
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

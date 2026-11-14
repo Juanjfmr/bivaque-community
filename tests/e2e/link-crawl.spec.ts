@@ -174,6 +174,12 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
   },
   {
+    route: "/denuncias",
+    porta:
+      "CONDICIONAL: 'Minhas denúncias' na Ajuda e o retorno do fluxo de denúncia; a lista só é alcançada quando a persona já denunciou, o que o rastreador nem sempre exercita (portas intactas, LT-007 não as tocou)",
+    dependeDeDados: true,
+  },
+  {
     route: "/denuncias/[id]",
     porta: "CONDICIONAL: lista de /denuncias, quando a pessoa já denunciou",
     dependeDeDados: true,
@@ -183,9 +189,20 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
   {
+    route: "/guide/[id]",
+    porta:
+      "CONDICIONAL: referência do Guia linkada nos pedidos de indicação (ask-indication/indication-detail), atrás de dado que o rastreador nem sempre vê; a lista /guide saiu para o app (F08/LT-007), o verbete web permanece",
+    dependeDeDados: true,
+  },
+  {
     route: "/guide/[id]/correcao",
     porta: "CONDICIONAL: 'Sugerir atualização' no artigo, quando a referência tem guia publicado",
     dependeDeDados: true,
+  },
+  {
+    route: "/guide/sugerir",
+    porta:
+      "DÍVIDA LAN-TROCA: a porta era 'Sugerir um lugar' na lista /guide, trocada para o app (F08); o app ainda não tem a porta de sugestão de lugar novo (gap em F08-RESSALVAS)",
   },
   {
     route: "/imoveis/alertas",

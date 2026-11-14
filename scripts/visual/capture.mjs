@@ -122,7 +122,6 @@ export const HEADINGS = {
   // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
   // INVALID em três viewports mesmo com a tela certa na frente.
   "/community": DYNAMIC_HEADING,
-  "/guide": "Guia",
   "/events": "^Explorar eventos$",
   "/messages": "^Mensagens$",
   // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
@@ -161,8 +160,8 @@ export const HEADINGS = {
   // RECON-040 — as 37 rotas entregues depois que o guard-rail ficou parado na
   // branch lateral. Cada valor abaixo veio do h1 que o arquivo que renderiza a
   // rota realmente escreve; a rota cujo título é o próprio dado usa
-  // DYNAMIC_HEADING. Query string é chave própria: /guide e /guide?q=escola são
-  // duas entradas, como /explorar/servicos e a variante com termo.
+  // DYNAMIC_HEADING. Query string é chave própria: a variante com termo é
+  // entrada distinta da rota sem query, como /explorar/servicos e a sua.
   "/recuperar-senha": "^Esqueceu sua senha\\?$",
   "/nova-senha": "^Este link não vale mais$",
   // O mesmo caminho serve dois painéis legítimos: o pendente (sessionStorage)
@@ -188,8 +187,6 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/admin/media": "^Imagens da comunidade$",
   "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
-  // O h1 é "Seu guia de {cidade}": prefixo fixo, a cidade é dado.
-  "/guide?q=escola": "^Seu guia de ",
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
   "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
   "/explorar/busca?q=escola": "^Resultados para “escola”$",
@@ -405,10 +402,8 @@ export const ROUTES = [
     name: "provider-invite",
     auth: false,
   },
-  { path: "/guide", name: "arrival-guide", auth: true },
-  // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`
-  // preenchido (hunk de uma linha no /guide).
-  { path: "/guide?q=escola", name: "arrival-guide-termo", auth: true },
+  // A lista do Guia saiu para o app (LT-007): /guide e /guide?q= não se capturam
+  // mais aqui; as subrotas que ficam na web seguem abaixo.
   // RECON-030: o artigo estruturado (prancha 25) estende a entrada curada.
   // Fixture concreta do seed: Escola Modelo do Centro (Manaus, aprovada).
   {

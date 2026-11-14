@@ -102,6 +102,10 @@ const nextConfig: NextConfig = {
           ["/mercado", "/app/mercado"],
           ["/imoveis", "/app/imoveis"],
           ["/meus-anuncios", "/app/meus-anuncios"],
+          // F08: só a lista do Guia. A regra é exata, então `/guide/[id]`,
+          // `/guide/sugerir` e `/guide/[id]/correcao` seguem na web; a query
+          // (q/categoria) continua pelo Next e o app a consome (LT-006).
+          ["/guide", "/app/guia"],
           // As páginas estáticas e /:id/editar continuam na web.
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],

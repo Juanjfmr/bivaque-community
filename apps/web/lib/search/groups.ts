@@ -130,7 +130,7 @@ export function buildSearchGroups({
       title: entry.name,
       snippet: snippet(entry.description),
       meta: GUIDE_CATEGORY_LABELS[entry.category] ?? null,
-      href: `/guide?q=${encoded}`,
+      href: `/app/guia?q=${encoded}`,
     }))
 
   // The RPC already matched the term (trigram + ilike on display_name) under
@@ -162,7 +162,7 @@ export function buildSearchGroups({
   }
   const verTodos: Record<SearchGroupKey, string> = {
     indicacoes: `${INDICATIONS_HREF}&q=${encoded}`,
-    guia: `/guide?q=${encoded}`,
+    guia: `/app/guia?q=${encoded}`,
     servicos: `/explorar/servicos?q=${encoded}`,
     // The events domain has no term filter (prancha 48 defines only the
     // period tabs) — the destination is real, the term handoff is a declared
