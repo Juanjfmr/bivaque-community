@@ -53,8 +53,8 @@ jobs:
       - name: Secrets scan
         run: pnpm test:secrets
 
-  ci:
-    name: Install, test, and build
+  ci-core:
+    name: CI core / build, db, e2e comuns
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta
     # (chromium). Pinar 24.04 até o Playwright ser atualizado (pin intencional).
     runs-on: ubuntu-24.04
@@ -277,18 +277,11 @@ jobs:
           echo 'OK: upstream_keepalive_idle_timeout=10 aplicado, 8088 vivo servindo os templates'
 
       # Dois lotes de propósito: o normal roda em paralelo e EXCLUI os specs
-      # marcados @stateful; esses rodam em serial depois, porque escrevem nas
-      # mesmas linhas (grupo privado, save da mesma conta, pendentes da vila) e
-      # colidiam entre si quando tudo rodava junto. Ver o contrato em
+      # marcados @stateful; esses rodam no job matrix e2e-stateful (um runner por
+      # viewport, banco independente, serial dentro de cada um). Ver o contrato em
       # tests/scope/local-command-surface.test.mjs.
       - name: Root E2E tests (parallel, excluding @stateful)
         run: pnpm test:e2e
-
-      # O trace de falha vai junto no artefato (test-results/): o relatório só
-      # mostra o passo que travou, e um spec stateful que passa local e falha
-      # aqui não tem outra testemunha do que a tela tinha (PR #98, 21/10/2026).
-      - name: Root E2E tests (stateful, serial)
-        run: pnpm test:e2e:stateful --trace=retain-on-failure
 
       # Testemunha do flaky (CI-E2E-UPSTREAM-INSTAVEL): em falha, guarda os logs da
       # stack local. O tail de 200 linhas do Kong só pegava access log e o evento 502
@@ -347,3 +340,184 @@ jobs:
           include-hidden-files: true
           path: .visual/
           retention-days: 7
+
+  # RUN-150 (fase C): o lote stateful rodava em série num runner só (3 viewports,
+  # ~8-10 min). Agora um runner por viewport, cada um com sua stack Supabase e banco
+  # INDEPENDENTE: serial dentro do viewport (preserva a separação das mesmas linhas —
+  # grupo privado, save da mesma conta, pendentes da vila), sem colisão cross-viewport
+  # porque os bancos são separados. O script test:e2e:stateful não muda (guard
+  # local-command-surface); --project recorta o viewport. O setup é duplicado do
+  # ci-core porque cada runner precisa da própria stack; o tradeoff é mais minutos de
+  # runner em troca de wall time menor no fechamento.
+  e2e-stateful:
+    name: Stateful / ${{ matrix.project }}
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [mobile-375, tablet-768, desktop-1440]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Next.js build artifacts
+        uses: actions/cache@v6
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.[jt]s', 'apps/web/**/*.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-next-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Pre-pull Supabase stack images
+        run: |
+          pull() {
+            local ecr="public.ecr.aws/supabase/$1" hub="$2"
+            for delay in 0 10 30 60; do
+              sleep "$delay"
+              docker pull -q "$ecr" && return 0
+            done
+            docker pull -q "$hub" && docker tag "$hub" "$ecr"               || echo "::warning::$1 nao baixou do ECR nem do Docker Hub; o supabase start tenta de novo"
+          }
+          pull postgres:17.6.1.136 supabase/postgres:17.6.1.136
+          pull gotrue:v2.190.0 supabase/gotrue:v2.190.0
+          pull postgrest:v14.13 postgrest/postgrest:v14.13
+          pull storage-api:v1.60.20 supabase/storage-api:v1.60.20
+          pull postgres-meta:v0.96.6 supabase/postgres-meta:v0.96.6
+          pull studio:2026.06.15-sha-a412298 supabase/studio:2026.06.15-sha-a412298
+          pull kong:2.8.1 kong:2.8.1
+          pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
+          pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+
+      - name: Start local Supabase
+        run: pnpm exec supabase start
+
+      - name: Write local Supabase env
+        run: |
+          pnpm exec supabase status -o env > /tmp/supabase.env
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
+            echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
+            echo "BIVAQUE_E2E_OPERATOR_PASSWORD=bivaque-e2e-local"
+            echo "BIVAQUE_LIMITER_PEPPER=ci-e2e-limiter-pepper"
+          } > apps/web/.env.local
+
+      - name: Build web app
+        run: pnpm build
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Reset local database (with seed)
+        run: pnpm exec supabase db reset --local
+
+      - name: Apply Kong upstream keepalive idle timeout
+        run: |
+          set -euo pipefail
+          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -z "$kong" ]; then
+            echo "::error::container supabase_kong_* nao encontrado; o override nao foi aplicado"
+            exit 1
+          fi
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" \
+            kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template
+          docker exec "$kong" sh -c 'kill -HUP $(cat /usr/local/kong/pids/nginx.pid)'
+          sleep 2
+          docker exec "$kong" grep -i upstream_keepalive_idle_timeout /usr/local/kong/.kong_env
+          if ! docker exec "$kong" grep -qiE '^upstream_keepalive_idle_timeout *= *10$' /usr/local/kong/.kong_env; then
+            echo "::error::.kong_env nao ficou com upstream_keepalive_idle_timeout = 10; o HUP nao aplicou o valor"
+            exit 1
+          fi
+          if ! docker exec "$kong" grep -q 'listen 0.0.0.0:8088' /usr/local/kong/nginx.conf; then
+            echo "::error::nginx.conf gerado nao tem o server 8088 dos templates; o GoTrue cairia no template default (F01)"
+            exit 1
+          fi
+          docker exec "$kong" wget -q -S -O /dev/null http://127.0.0.1:8088/email/confirmation.html 2>&1 \
+            | tee /tmp/kong-8088.txt || true
+          if ! grep -q '200 OK' /tmp/kong-8088.txt; then
+            echo "::error::o server 8088 nao respondeu 200 para o template; o F01 quebraria (GoTrue 404 -> magic link)"
+            exit 1
+          fi
+          echo 'OK: upstream_keepalive_idle_timeout=10 aplicado, 8088 vivo servindo os templates'
+
+      # Serial dentro do viewport (workers:1 no script); banco independente por runner.
+      - name: Root E2E tests (stateful, ${{ matrix.project }})
+        run: pnpm test:e2e:stateful --project=${{ matrix.project }} --trace=retain-on-failure
+
+      - name: Collect local Supabase diagnostics
+        if: failure()
+        run: |
+          mkdir -p ci-stack-logs
+          for service in kong rest auth db; do
+            container=$(docker ps -a --filter "name=supabase_${service}_" --format "{{.Names}}" | head -n1)
+            if [ -z "$container" ]; then
+              echo "Container supabase_${service}_* nao encontrado" > "ci-stack-logs/${service}-container-missing.txt"
+              continue
+            fi
+            tail_lines=200
+            if [ "$service" = "kong" ]; then tail_lines=10000; fi
+            docker logs --tail "$tail_lines" "$container" > "ci-stack-logs/${service}.log" 2>&1 || true
+            docker inspect --format '{{.RestartCount}}' "$container" > "ci-stack-logs/${service}-restart-count.txt" 2>&1 || true
+          done
+          kong=$(docker ps -a --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -n "$kong" ]; then
+            docker logs "$kong" 2>&1 | grep -iE '\[error\]|\[crit\]|\[warn\]|upstream|prematurely|reset by peer|HTTP/1.1" 502' > ci-stack-logs/kong-errors.log || true
+          fi
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-artifacts-stateful-${{ matrix.project }}
+          if-no-files-found: ignore
+          path: |
+            playwright-report/
+            test-results/
+            apps/web/playwright-report/
+            apps/web/test-results/
+            ci-stack-logs/
+
+  # Agregador: preserva o nome de check "Install, test, and build" (gate de merge).
+  # Verde se ci-core e os 3 stateful passaram (ou foram pulados sem a label); vermelho
+  # se qualquer parte falhou. O if always() garante que roda mesmo se um need falhar.
+  ci:
+    name: Install, test, and build
+    needs: [ci-core, e2e-stateful]
+    if: always() && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate CI results
+        run: |
+          core="${{ needs.ci-core.result }}"
+          st="${{ needs.e2e-stateful.result }}"
+          echo "ci-core: $core | e2e-stateful: $st"
+          for r in "$core" "$st"; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::uma parte do CI falhou ($r)"
+              exit 1
+            fi
+          done

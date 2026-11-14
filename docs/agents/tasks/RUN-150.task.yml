@@ -1,0 +1,65 @@
+# RUN-150 — fase C: stateful por viewport em runners com bancos independentes.
+#
+# O full job (ci) rodava o lote stateful em série num runner só (3 viewports,
+# ~8-10 min), limitando o fechamento a ~17-21 min (o visual já caiu para ~8 min
+# com o sharding do RUN-149). Agora: ci-core (build/db/comuns, sem stateful) +
+# e2e-stateful matrix (mobile-375/tablet-768/desktop-1440), cada um com sua stack
+# Supabase e banco INDEPENDENTE, serial dentro do viewport. Sem colisão
+# cross-viewport (bancos separados); a separação das mesmas linhas fica preservada
+# pelo serial dentro de cada viewport. Agregador "ci" preserva o nome de check
+# "Install, test, and build" e o gate ci:full. Scripts do package.json intactos
+# (guard local-command-surface passa). Tradeoff: mais minutos de runner (4 stacks)
+# por wall time menor. Risco: ECR rate-limit com 4 pulls concorrentes (backoff +
+# Docker Hub fallback já no workflow). Medir; reverter se vermelho ou sem ganho.
+
+task_id: RUN-150
+
+objective: >
+  Reduzir o wall time do job completo distribuindo o lote stateful por viewport em
+  3 runners com bancos Supabase independentes (serial dentro de cada viewport),
+  com agregador preservando o nome do check e o gate. Medir contra a baseline
+  (stateful 8m40s, full 17-21 min); manter se verde e mais rápido, reverter se não.
+
+authority:
+  - Instrução do dono (14/11): seguir a implementação da CI rápida (fase C do plano)
+  - docs/agents/LICOES.md (processo enxuto; prova local antes do ci:full)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Full job 17-21 min (run 43641662985: 21.6 min; stateful serial 648s = 10m48s
+    nos 3 viewports; comuns 305s). Visual já em ~7.8 min (RUN-149). O fechamento é
+    max(full, visual) e o full domina. O stateful é serial por colisão de linhas
+    no MESMO banco; bancos separados por viewport removem a colisão cross-viewport.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-150.task.yml
+  - .github/workflows/pull-request-ci.yml
+  - .visual/run-150
+
+forbidden:
+  - alterar scripts do package.json, código de produto, specs, testes, fixtures, supabase, migrations
+  - alterar runner, pins, ou remover/enfraquecer qualquer verificação ou guard
+  - mudar o nome do check "Install, test, and build" ou o gate ci:full/main/dispatch
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "ci-core: tudo do ci original exceto o stateful (mantém build, pgTAP, db:lint, drift, comuns). e2e-stateful: matrix 3 viewports, stack+banco próprios, reset with-seed, Kong idle=10, test:e2e:stateful --project=X --trace=retain-on-failure, serial (workers:1 do script)."
+  - "Agregador ci (name Install, test, and build) needs ci-core+e2e-stateful, if always() com o mesmo gate; vermelho se qualquer need falhou/cancelou, verde se passou/pulou."
+  - "Guards local-command-surface e app-suite-ci verdes (scripts intactos). YAML válido."
+  - "Medição: wall time do completo (max de ci-core e dos 3 stateful) contra baseline 17-21 min; registrar por job. Merge se verde e mais rápido; reverter se vermelho ou sem ganho."
+
+proof:
+  - gate do PR com ci:full: fast + ci-core + 3 stateful + agregador + visual; wall time por job medido
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-150.task.yml
+
+risk: mudança de infra/CI (reestrutura do job completo + agregador); risco de ECR rate-limit e colisão stateful
+risk_level: R0
+
+reviewer_must_differ_from_executor: false
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
