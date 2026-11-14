@@ -128,17 +128,7 @@ export function Porta({ progresso, concluir, erro, avisoDoProvedor }: PropsDaEta
         <Ilustracao nome="porta" proporcao="16 / 10" className="f01-porta-cena" prioridade />
       </div>
       <div className="f01-porta-conteudo">
-        <picture>
-          <source
-            srcSet={`${base}brand/bivaque-logo-horizontal-white.svg`}
-            media="(prefers-color-scheme: dark)"
-          />
-          <img
-            className="f01-logo"
-            src={`${base}brand/bivaque-logo-horizontal.svg`}
-            alt="Bivaque"
-          />
-        </picture>
+        <img className="f01-logo" src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
         <h1 className="pc-destaque f01-porta-titulo" tabIndex={-1}>
           A comunidade militar da sua cidade.
         </h1>

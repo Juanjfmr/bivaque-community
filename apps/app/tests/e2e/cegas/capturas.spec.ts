@@ -32,7 +32,7 @@ import { simularInicio } from "../inicio-ajuda"
  */
 
 const LARGURAS = [375, 768, 1440] as const
-const TEMAS = ["light", "dark"] as const
+const TEMAS = ["light"] as const
 const RAIZ = join(process.cwd(), "..", "..", ".visual", "blind")
 
 type Passo = Readonly<{
@@ -220,7 +220,7 @@ async function fotografar(
 }
 
 test.describe("capturas para a revisão cega", () => {
-  test("F02, F03, F07 e F08 em 375, 768 e 1440 nos dois temas", async ({ page }, info) => {
+  test("F02, F03, F07 e F08 em 375, 768 e 1440", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
     test.setTimeout(600_000)
     const erros: string[] = []

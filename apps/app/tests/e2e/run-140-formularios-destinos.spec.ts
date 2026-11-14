@@ -11,7 +11,7 @@ import { CIDADE_DO_LOTE, simularEncontros, simularSemResolvidas } from "./run-14
  * RUN-140 — os formulários do Criar em pt-BR e os destinos com contexto.
  *
  * Duas coisas se provam aqui, nas seis larguras do `playwright.config.ts` (as
- * três do lote são 375, 768 e 1440) e nos dois temas:
+ * três do lote são 375, 768 e 1440):
  *
  * 1. data e hora em pt-BR (dd/mm/aaaa e 24 h), erro logo abaixo do campo que o
  *    originou — com borda marcada e `aria-describedby` — e a ação primária
@@ -29,7 +29,7 @@ const PASTA = join(process.cwd(), "..", "..", ".visual", "run-140")
 async function capturar(page: Page, passo: string): Promise<void> {
   mkdirSync(PASTA, { recursive: true })
   const largura = page.viewportSize()?.width ?? 0
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     await page.emulateMedia({ colorScheme: tema })
     await page.screenshot({ path: join(PASTA, `${largura}-${tema}-${passo}.png`), fullPage: true })
     expect(

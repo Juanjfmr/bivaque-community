@@ -28,7 +28,7 @@ test("CEP salvo sem posição avisa que a distância ainda não pode ser calcula
   expect(transbordo, "a tela não pode transbordar na horizontal").toBeLessThanOrEqual(1)
 
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     await page.emulateMedia({ colorScheme: tema })
     await page.screenshot({
       path: join(CAPTURAS, `${testInfo.project.name}-voce-cep-sem-coordenada-${tema}.png`),

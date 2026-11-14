@@ -64,7 +64,7 @@ function luminancia(cor: string) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
-for (const tema of ["light", "dark"] as const) {
+for (const tema of ["light"] as const) {
   test.describe(`F07 — interface em ${tema}`, () => {
     test.use({ colorScheme: tema })
 

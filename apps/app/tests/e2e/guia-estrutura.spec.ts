@@ -9,12 +9,12 @@ import { simularCriar } from "./criar-ajuda"
  *
  * Mede o que a pessoa vê: a cidade uma vez só, o título numa linha no 375, as
  * seções com âncora de teclado, o cabeçalho preso com o nome da seção em
- * leitura, o caminho real de sugestão no Criar e o contraste do corpo no
- * escuro. A matriz de capturas usa a largura do projeto — 320, 360, 375, 430,
+ * leitura, o caminho real de sugestão no Criar e o contraste do corpo. A matriz
+ * de capturas usa a largura do projeto — 320, 360, 375, 430,
  * 768 e 1440 —, então 375/768/1440 saem dos próprios projetos.
  */
 
-const TEMAS = ["light", "dark"] as const
+const TEMAS = ["light"] as const
 const CIDADE = "Manaus"
 const TELA = '[data-tela="guia"]'
 const CABECALHO = '[data-guia="cabecalho"]'
@@ -253,9 +253,7 @@ test.describe("estrutura do Guia", () => {
     await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
   })
 
-  test("corpo com token secundário, contraste AA, entrelinha e captura nos dois temas", async ({
-    page,
-  }) => {
+  test("corpo com token secundário, contraste AA, entrelinha e captura", async ({ page }) => {
     test.setTimeout(180_000)
     mkdirSync(DIRETORIO_DAS_CAPTURAS, { recursive: true })
 

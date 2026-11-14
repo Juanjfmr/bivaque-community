@@ -64,12 +64,10 @@ test.describe("bancada de Mercado", () => {
     await expect(page.getByRole("heading", { name: "Sofá retrátil seminovo" })).toBeVisible()
   })
 
-  test("a bancada cabe nos dois temas e deixa capturas para avaliação", async ({
-    page,
-  }, informacoes) => {
+  test("a bancada cabe e deixa capturas para avaliação", async ({ page }, informacoes) => {
     const erros: string[] = []
     page.on("pageerror", (erro) => erros.push(erro.message))
-    for (const tema of ["light", "dark"] as const) {
+    for (const tema of ["light"] as const) {
       await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
       await page.evaluate(() => document.fonts.ready)
       await expect
