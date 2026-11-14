@@ -179,3 +179,29 @@ push na main ou workflow_dispatch; `types: labeled` faz a aplicação da label d
   `gh run rerun <id> --failed` (contorno sancionado pelo dono em 13/11). Não blame o diff antes de
   conferir a causa — o rerun mantém o mesmo SHA.
 - Decisão, alternativas e riscos: ADR-20261114 (R3 por delegação, instrução direta do dono de 14/11).
+
+## Fechamento de lote: prova local antes do ci:full (14/11)
+
+Antes de aplicar a label `ci:full`, rode local no HEAD final: `pnpm test` (suíte raiz COMPLETA,
+nunca um subconjunto), `pnpm --filter web exec next typegen` seguido de `pnpm --filter web typecheck`
+(typed routes do Next: o typecheck da raiz usa `.next/types` velho e não pega href que saiu do
+union), e `gate --fast`. Só então aplique a label e empurre o commit condicionado ao gate verde.
+O completo no CI é a prova final, não a primeira linha de defesa: cada tentativa gasta ~20 min
+(lição do LT-007: 3 tentativas por link para tela morta, unitário esquecido e typed routes).
+
+## Troca de lista: inventário de links na mesma unidade (14/11)
+
+Toda troca de rota de lista (LAN-TROCA) inclui, na mesma unidade de trabalho:
+
+1. Inventário EXAUSTIVO de quem linka a rota na web — grep sem truncar resultado, todos os
+   padrões: `href="`, `href:`, `action="`, `router.push`, templates com query. Os links da lista
+   migram DIRETO para o app (molde LT-005); o 307 fica para URLs externas/bookmarks. Proibir a
+   migração do link é manter um link para tela morta (erro do contrato LT-007, emendado).
+2. O rastreador de links NÃO conhece 307 de página removida: a lista `redirecionadas` do
+   `buildPatterns` só reclassifica páginas que ainda existem. Link web para tela morta vira
+   "rota inexistente" no link-crawl (aconteceu com o Salvos → /guide?q= no LT-007).
+3. Unitários que assertam o href migram junto, e a prova é a suíte raiz completa — não o arquivo
+   que se lembrou de rodar (city-reference.test.tsx ficou para trás na 1ª rodada do LT-007).
+4. `next build` roda typecheck com typed routes: href novo fora do union (ex.: `/app/guia`, que é
+   rewrite do SPA) exige `as Route` (padrão do repo). Verifique com `next typegen` + typecheck da
+   web, não com o typecheck da raiz.
