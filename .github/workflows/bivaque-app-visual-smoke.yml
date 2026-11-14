@@ -16,14 +16,25 @@ permissions:
   contents: read
 
 jobs:
-  app-visual-smoke:
-    name: App mobile-first / 320-360-375-430-768-1440
+  # RUN-149/150: o visual rodava em série num worker só (7 projetos, ~32 min) e
+  # workers>1 COLIDE (scaffold modo-de-prova compartilha estado). A distribuição é
+  # por SHARD de arquivo (--shard=N/7) em runners isolados: cada job tem seu vite
+  # dev/preview + scaffold próprios, sem colisão, sem Supabase (só install + build
+  # Vite + chromium). A união dos 7 shards cobre a suíte inteira (todos os projetos),
+  # sem recorte — o guard tests/scope/app-suite-ci.test.mjs segue válido (test:e2e,
+  # sem --project nem lista de specs). Wall time cai para ~a suíte / 7 + setup.
+  visual:
+    name: Visual / shard ${{ matrix.shard }}
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
     # ver ADR-20261114.
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7]
 
     steps:
       - name: Checkout
@@ -49,16 +60,15 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Verify the app suite, six sizes
-        # A suíte inteira, pelo script do pacote: spec nova entra sozinha. A
-        # lista fixa de antes deixou 15 casos vermelhos passarem batido.
-        run: pnpm --filter @bivaque/app test:e2e --trace=retain-on-failure
+      - name: Run shard ${{ matrix.shard }}/7
+        # Script do pacote (config inteiro) + shard de arquivo; workers:1 no config.
+        run: pnpm --filter @bivaque/app test:e2e --shard=${{ matrix.shard }}/7 --trace=retain-on-failure
 
       - name: Save test and screenshot evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: app-visual-evidence
+          name: visual-shard-${{ matrix.shard }}
           if-no-files-found: ignore
           include-hidden-files: true
           path: |
@@ -66,3 +76,21 @@ jobs:
             apps/app/artifacts/visual/
             apps/app/artifacts/visual-mobile/
             .visual/
+
+  # Check único do gate (nome antigo preservado): agrega os 7 projetos. Verde se
+  # todos passaram ou se o visual foi pulado (PR sem ci:full); vermelho se algum falhou.
+  visual-aggregate:
+    name: App mobile-first / 320-360-375-430-768-1440
+    needs: [visual]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate visual projects
+        run: |
+          result="${{ needs.visual.result }}"
+          echo "visual matrix: $result"
+          if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+            echo "::error::um ou mais projetos visuais falharam"
+            exit 1
+          fi

@@ -31,6 +31,9 @@ export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: "test-results",
   fullyParallel: false,
+  // RUN-149 mediu workers:4: COLIDE (scaffold modo-de-prova tem estado compartilhado;
+  // o spec de paginação lista-paginada corrompeu com workers paralelos) e não acelerou
+  // (33m vs 32m). O caminho do visual é sharding em runners isolados, não workers>1.
   workers: 1,
   reporter: [["list"]],
   use: {
