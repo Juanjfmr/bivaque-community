@@ -190,6 +190,38 @@ jobs:
       - name: Root E2E tests (stateful, serial)
         run: pnpm test:e2e:stateful --trace=retain-on-failure
 
+      # Testemunha do flaky (CI-E2E-UPSTREAM-INSTAVEL): em falha, guarda os logs da
+      # stack local. O tail de 200 linhas do Kong só pegava access log e o evento 502
+      # ficava de fora; aqui o tail do Kong é maior e os erros/upstream são extraídos
+      # à parte, com rota e timestamp, para diagnosticar a causa real do 502.
+      - name: Collect local Supabase diagnostics
+        if: failure()
+        run: |
+          mkdir -p ci-stack-logs
+          for service in kong rest auth db; do
+            container=$(docker ps -a --filter "name=supabase_${service}_" --format "{{.Names}}" | head -n1)
+            if [ -z "$container" ]; then
+              echo "Container supabase_${service}_* nao encontrado" > "ci-stack-logs/${service}-container-missing.txt"
+              continue
+            fi
+            tail_lines=200
+            if [ "$service" = "kong" ]; then tail_lines=10000; fi
+            docker logs --tail "$tail_lines" "$container" > "ci-stack-logs/${service}.log" 2>&1 || true
+            docker inspect --format '{{.RestartCount}}' "$container" > "ci-stack-logs/${service}-restart-count.txt" 2>&1 || true
+          done
+          kong=$(docker ps -a --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -n "$kong" ]; then
+            docker logs "$kong" 2>&1 | grep -iE '\[error\]|\[crit\]|\[warn\]|upstream|prematurely|reset by peer|HTTP/1.1" 502' > ci-stack-logs/kong-errors.log || true
+          fi
+          db=$(docker ps -a --filter "name=supabase_db_" --format "{{.Names}}" | head -n1)
+          if [ -n "$db" ]; then
+            docker exec -u postgres "$db" psql -U postgres -d postgres -Atc \
+              "SHOW max_connections; SELECT count(*) FROM pg_stat_activity;" \
+              > ci-stack-logs/db-connections.txt 2>&1 || true
+          else
+            echo "Container do banco nao encontrado" > ci-stack-logs/db-connections.txt
+          fi
+
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v7
@@ -201,6 +233,7 @@ jobs:
             test-results/
             apps/web/playwright-report/
             apps/web/test-results/
+            ci-stack-logs/
 
       # `.visual/` é ignorado pelo Git e concentra as capturas de tela das
       # provas visuais. Sem o artefato, a evidência de uma falha de UI morre
