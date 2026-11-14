@@ -127,7 +127,7 @@ export function welcomeBlocks(view: WelcomeView): WelcomeBlocks {
         icon: "map",
         title: `Conhecer ${homeCity}`,
         description: "O que a comunidade indica, por assunto.",
-        href: "/guide",
+        href: "/app/guia",
       },
     ],
   }

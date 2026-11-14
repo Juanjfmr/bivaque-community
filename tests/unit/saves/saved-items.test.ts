@@ -62,7 +62,7 @@ describe("buildGuideSavedItems", () => {
       available: true,
       title: "Escola Modelo do Centro",
       category: "school",
-      href: "/guide?q=Escola%20Modelo%20do%20Centro",
+      href: "/app/guia?q=Escola%20Modelo%20do%20Centro",
     })
   })
 

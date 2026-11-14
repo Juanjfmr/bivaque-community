@@ -8,9 +8,12 @@
 # Molde exato: LT-005 (F06 listas, troca parcial) e LT-002/LT-004 (307 + specs).
 #
 # ESCOPO LIMITADO: só a lista. NÃO tocar apps/app, API, banco. NÃO suportar ?locality=
-# (o app lista só a cidade da sessão; perda declarada). O link do Salvos web
-# (/guide?q=<nome>, lib/saves/saved-items.ts:122) NÃO muda: o 307 preserva q e o app
-# consome (LT-006).
+# (o app lista só a cidade da sessão; perda declarada). Os links web da LISTA (Salvos,
+# busca global, city-reference, entry-moment) apontam DIRETO para /app/guia (molde
+# LT-005): o rastreador de links não conhece o 307 de página removida, e link para
+# tela morta é regressão (lição da rodada 2, CI do PR #225). O 307 fica para URLs
+# externas/bookmarks. Emenda de 14/11: a versão inicial proibia tocar saved-items.ts;
+# o CI provou que o link precisava migrar com a troca.
 
 task_id: LT-007
 
@@ -43,7 +46,11 @@ allowed_paths:
   - apps/web/next.config.ts
   - apps/web/app/(shell)/guide/page.tsx
   - apps/web/app/components/shell
+  - apps/web/app/components/bivaque/city-reference.tsx
   - apps/web/lib/recommendations/guide-search.ts
+  - apps/web/lib/saves/saved-items.ts
+  - apps/web/lib/search/groups.ts
+  - apps/web/lib/onboarding/entry-moment.ts
   - scripts/visual/capture.mjs
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/unit
@@ -53,7 +60,7 @@ allowed_paths:
 forbidden:
   - alterar apps/app, a API /api/app/guia, proxy/middleware, supabase, migrations
   - trocar ou remover /guide/[id], /guide/sugerir, /guide/[id]/correcao (ficam na web; a regra 307 não pode capturá-las)
-  - alterar o link do Salvos web (lib/saves/saved-items.ts) — o 307 preserva q e o app consome
+  - alterar os links das SUBROTAS do guia (/guide/[id], /guide/sugerir, correcao) — só os links da LISTA migram para /app/guia (Salvos, busca global, city-reference, entry-moment), com os unitários atualizados na mesma unidade
   - suportar ?locality= (o app lista só a cidade da sessão; perda declarada, não implementada)
   - usar skip/fixme novo ou afrouxar asserção; tocar outra jornada
   - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais

@@ -7,7 +7,7 @@
 // layer IS, none of which is a timeline:
 //
 //   1. Próximos eventos — quadro de avisos do que atravessa as três forças.
-//   2. Guia de chegada — referência curada e buscável (rota /guide).
+//   2. Guia de chegada — referência curada e buscável (rota /app/guia).
 //   3. Vitrine de prestadores — busca viva por nome/categoria dentro do
 //      alcance do chamador (onda G Task 5); vazia é o estado normal do dia um.
 //   4. Caminho para pedir entrada numa vila — /communities.
@@ -228,7 +228,7 @@ export function CityReference({
           {isAlternate ? null : (
             <div className="mt-3">
               <Link
-                href="/guide"
+                href="/app/guia"
                 className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
               >
                 Abrir o guia de chegada

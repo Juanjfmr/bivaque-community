@@ -85,7 +85,7 @@ describe("buildSearchGroups", () => {
     expect(groups.find((g) => g.key === "servicos")?.verTodosHref).toBe(
       `/explorar/servicos?q=${encoded}`,
     )
-    expect(groups.find((g) => g.key === "guia")?.verTodosHref).toBe(`/guide?q=${encoded}`)
+    expect(groups.find((g) => g.key === "guia")?.verTodosHref).toBe(`/app/guia?q=${encoded}`)
     // Eventos has no term filter in its own domain (prancha 48): the honest
     // destination is the list itself, declared in the card — never a link
     // that pretends to carry a parameter the page ignores.

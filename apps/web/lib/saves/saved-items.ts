@@ -119,7 +119,7 @@ export function buildGuideSavedItems(
       title: entry.name,
       excerpt: excerptOf(entry.description ?? ""),
       category: entry.category,
-      href: `/guide?q=${encodeURIComponent(entry.name)}`,
+      href: `/app/guia?q=${encodeURIComponent(entry.name)}`,
     }
   })
 }
