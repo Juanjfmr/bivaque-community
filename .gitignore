@@ -10,6 +10,9 @@ test-results/
 apps/app/artifacts/visual/
 # build do app copiado para ser servido em /app pelo Next (gerado, não versionado)
 apps/web/public/app/
+# conteúdo web e gravação do APK de experimento (gerados, não versionados)
+apps/app/dist-casca/
+apps/app/casca-gravacao/
 dev-server.log
 dev-server.pid
 .env

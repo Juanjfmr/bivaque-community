@@ -6336,34 +6336,42 @@
       "phase": "Lançamento",
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:scope"],
       "blockers": [
-        "Teste no Android real: ato do dono (instalar o APK, ligar o cabo USB e avaliar rolagem, teclado e transições)"
+        "Teste no Android real: ato do dono (instalar o APK de demonstração no celular e avaliar rolagem, teclado e transições)"
       ],
-      "updatedAt": "2026-11-13",
-      "sourceRevision": "d2718d0",
+      "updatedAt": "2026-11-14",
+      "sourceRevision": "1ecc0c0",
       "links": [
         "docs/LANCAMENTO.md",
         "docs/decisions/ADR-20261024-front-react-spa.md",
-        "apps/app/capacitor.config.ts"
+        "apps/app/capacitor.config.ts",
+        "scripts/app/gravar-casca.mjs",
+        "scripts/app/montar-casca.mjs",
+        "scripts/app/povoar-casca.mjs",
+        "apps/app/src/casca-demo/instalar.ts"
       ],
       "proof": [
         "13/11: aberto a pedido do dono para antecipar a dúvida Capacitor x React Native antes da fase 7. Levantamento: nada do Capacitor existia em apps/app; o servidor já aceitava Bearer e a origem capacitor://localhost; o cliente do app só usa cookie.",
         "13/11: Capacitor 8.5.3 (publicado em 07/10, dentro do corte de versoes-1a.json) em apps/app; projeto Android em apps/app/android; APK de depuração compilado (assembleDebug, compileSdk 36, minSdk 24), pacote com.bivaque.community.experimento, abrindo http://localhost:3000/app/. Gate verde em lint, typecheck, build:app, test e secrets; o build da web foi pulado por falta de apps/web/.env.local e fica para o CI do PR. Não rodou em aparelho nem emulador (o contêiner não tem KVM).",
-        "Como rodar: no computador, stack local com seed, npx pnpm@11.18.0 app:export e o Next em localhost:3000; com o celular no cabo, adb reverse tcp:3000 tcp:3000 e adb reverse tcp:54321 tcp:54321; adb install do APK. Para recompilar: npx pnpm@11.18.0 --filter @bivaque/app build, npx cap sync android (em apps/app) e ./gradlew assembleDebug (em apps/app/android). BIVAQUE_CASCA_URL troca o endereço no cap sync."
+        "Como rodar: no computador, stack local com seed, npx pnpm@11.18.0 app:export e o Next em localhost:3000; com o celular no cabo, adb reverse tcp:3000 tcp:3000 e adb reverse tcp:54321 tcp:54321; adb install do APK. Para recompilar: npx pnpm@11.18.0 --filter @bivaque/app build, npx cap sync android (em apps/app) e ./gradlew assembleDebug (em apps/app/android). BIVAQUE_CASCA_URL troca o endereço no cap sync.",
+        "14/11: o dono pediu um caminho sem PC nem cabo. APK autônomo: scripts/app/povoar-casca.mjs publica 16 publicações e 6 desapegos com foto no banco LOCAL pela API do app (o seed não tem imagem); scripts/app/gravar-casca.mjs navega como a persona do seed e grava 133 respostas de /api e 17 imagens de 114 telas (só GET, só localhost); scripts/app/montar-casca.mjs monta apps/app/dist-casca; apps/app/src/casca-demo/instalar.ts responde à API a partir da gravação. Gravação e dist-casca são gerados, não versionados. Prova no Chromium a 390x844, servindo dist-casca como o servidor do Capacitor e com toda rede externa bloqueada: Início, Comunidade, Grupos, grupo com fotos, publicação, Mercado com fotos, Conversas, envio de mensagem (aparece na conversa) e recarga em rota profunda, sem erro de console nem pedido falho. O build de produção não contém a demonstração (busca por gravacao.json e instalarDemonstracao em apps/app/dist: nada). Gate completo verde, com build da web. Limites: respostas instantâneas (sem rede), escritas não persistem, e ainda não rodou em aparelho.",
+        "14/11: defeito real achado na verificação e corrigido: quandoDe só lia número e a API manda criadaEm em texto ISO, então toda publicação de grupo mostrava \"há 20771 dias\". Teste apps/app/tests/quando.test.ts falhou antes e passa depois.",
+        "Como regerar: stack local com seed e Next em localhost:3000; node scripts/app/povoar-casca.mjs; node scripts/app/gravar-casca.mjs; npx pnpm@11.18.0 app:casca; ./gradlew assembleDebug em apps/app/android."
       ],
       "id": "EXP-CASCA-CAPACITOR",
       "title": "Experimento: casca Capacitor no Android real para decidir Capacitor x React Native",
       "priority": "P1",
       "category": "infra",
       "status": "blocked",
-      "description": "Casca Capacitor que abre o app servido pelo Next do computador (loopback por adb reverse), para o dono sentir rolagem do feed, teclado na conversa e transições num Android real antes da fase 7. Não é o pacote de loja: identificador de experimento, sem ponte de token, sem login nativo, sem push. O resultado decide se LAN-LOJA segue em Capacitor ou se o ADR do SPA é reaberto (cláusula de reabertura do próprio ADR).",
+      "description": "Casca Capacitor para o dono sentir rolagem do feed, teclado na conversa e transições num Android real antes da fase 7. Modo padrão: APK autônomo, com o app embutido (build --mode casca) respondendo à API por uma gravação da stack local com seed; instala e abre, sem servidor, cabo ou login. Modo servidor (BIVAQUE_CASCA_URL): abre o app servido por um Next. Não é o pacote de loja: identificador de experimento, sem ponte de token, sem login nativo, sem push. O resultado decide se LAN-LOJA segue em Capacitor ou se o ADR do SPA é reaberto.",
       "checklist": [
         "Capacitor e projeto Android no repositório, sobre o apps/app",
         "APK de depuração compilado e inspecionado",
+        "APK autônomo com o app embutido e gravação da API, provado no navegador sem rede",
         "Dono avalia no Android real: rolagem do Início e de um grupo com fotos, teclado numa conversa, transições e botão voltar",
         "Registrar o veredito: seguir Capacitor em LAN-LOJA ou reabrir o ADR do SPA com a evidência"
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, false, false]
+      "completedChecklist": [true, true, true, false, false]
     },
     {
       "phase": "Lançamento",

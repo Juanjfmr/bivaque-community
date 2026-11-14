@@ -1,30 +1,29 @@
 import type { CapacitorConfig } from "@capacitor/cli"
 
 /*
- * Casca de experimento (EXP-CASCA-CAPACITOR): o webview abre o app servido
- * pelo Next do computador, não os arquivos embutidos. Serve para sentir
- * rolagem, teclado e transições num Android real antes da fase 7.
+ * Casca de experimento (EXP-CASCA-CAPACITOR): serve para sentir rolagem,
+ * teclado e transições num Android real antes da fase 7. Dois modos:
  *
- * O endereço padrão é o loopback do aparelho: com o cabo USB e
- * `adb reverse tcp:3000 tcp:3000`, `localhost:3000` no celular é o Next do
- * computador. Por isso a sessão por cookie e a lista de origens do servidor
- * valem sem mudança. `BIVAQUE_CASCA_URL` troca o endereço na hora do
- * `cap sync`.
+ * - **demonstração (padrão):** o APK leva o app embutido (`dist-casca`, build
+ *   `--mode casca`) e responde à API com uma gravação da stack local com seed.
+ *   Instala e abre, sem servidor, cabo ou login.
+ * - **servidor:** com `BIVAQUE_CASCA_URL`, o webview abre o app servido por um
+ *   Next (por exemplo `http://localhost:3000/app/` com `adb reverse`), com a
+ *   sessão por cookie de verdade.
  *
- * Isto não é o pacote de loja: o identificador é de experimento e o tráfego
- * sem TLS só existe porque o destino é o loopback. O pacote de loja
- * (LAN-LOJA) embute o build e fala com a API por token.
+ * Isto não é o pacote de loja: o identificador é de experimento. O pacote de
+ * loja (LAN-LOJA) embute o build de produção e fala com a API por token.
  */
-const endereco = process.env["BIVAQUE_CASCA_URL"] ?? "http://localhost:3000/app/"
+const endereco = process.env["BIVAQUE_CASCA_URL"]
 
 const config: CapacitorConfig = {
   appId: "com.bivaque.community.experimento",
   appName: "Bivaque (experimento)",
-  webDir: "dist",
-  server: {
-    url: endereco,
-    cleartext: endereco.startsWith("http://"),
-  },
+  webDir: "dist-casca",
+  server:
+    endereco === undefined
+      ? { appStartPath: "/app/" }
+      : { url: endereco, cleartext: endereco.startsWith("http://") },
 }
 
 export default config

@@ -81,7 +81,9 @@ export function contagemDeComentarios(dados: DadosDaCidade | null): ReadonlyMap<
 
 /** "há 5 min", "há 3 h", "ontem", "há 4 dias" (protótipo: gAgo). */
 export function quandoDe(valor: unknown): string {
-  const at = typeof valor === "number" && Number.isFinite(valor) ? valor : 0
+  // A API manda a data em texto ISO (`criadaEm`); a demonstração, em milissegundos.
+  const lido = typeof valor === "string" ? Date.parse(valor) : valor
+  const at = typeof lido === "number" && Number.isFinite(lido) ? lido : 0
   const minutos = Math.max(1, Math.round((Date.now() - at) / 60000))
   if (minutos < 60) return `há ${minutos} min`
   const horas = Math.round(minutos / 60)

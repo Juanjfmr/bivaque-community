@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "pnpm --filter @bivaque/app build && node scripts/export-app-to-web.mjs && pnpm --filter web build",
+    "app:casca": "node scripts/app/montar-casca.mjs && pnpm --filter @bivaque/app exec cap sync android",
     "app:export": "pnpm --filter @bivaque/app build && node scripts/export-app-to-web.mjs",
     "db:lint": "supabase db lint --local --level error",
     "db:reset": "supabase db reset --local",

@@ -25,6 +25,8 @@
       "!**/supabase/templates",
       "!**/apps/web/public/app",
       "!**/apps/app/android",
+      "!**/apps/app/dist-casca",
+      "!**/apps/app/casca-gravacao",
       "!**/apps/mobile/dist-android",
       "!**/apps/mobile/dist-ios",
       "!**/apps/mobile/.expo",

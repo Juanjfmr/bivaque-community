@@ -46,6 +46,12 @@ if (import.meta.env.DEV && caminho.startsWith(`${prefixo}f01`)) {
   void import("@/src/pecas/GaleriaDePecas").then(({ GaleriaDePecas }) =>
     createRoot(elemento).render(<GaleriaDePecas />),
   )
+} else if (import.meta.env.MODE === "casca") {
+  // APK de experimento sem servidor: as respostas da API vêm de uma gravação.
+  // A comparação fica direta no `if` para o build de produção eliminar o ramo.
+  void import("@/src/casca-demo/instalar")
+    .then(({ instalarDemonstracao }) => instalarDemonstracao())
+    .then(() => createRoot(elemento).render(<Aplicacao />))
 } else {
   createRoot(elemento).render(<Aplicacao />)
 }
