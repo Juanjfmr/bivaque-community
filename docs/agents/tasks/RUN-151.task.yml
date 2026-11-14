@@ -1,0 +1,60 @@
+# RUN-151 — ci-core enxuto: remove checks redundantes do fast (~60s).
+#
+# O ci-core re-rodava lint, typecheck, typecheck:e2e, unit/privacy/scope e a
+# varredura de credenciais, que o job fast JÁ roda em todo push. ~60s duplicados.
+# Remove do ci-core; o agregador ci passa a exigir o fast (needs fast+ci-core+
+# e2e-stateful), então a cobertura do gate não muda — a varredura segue no fast.
+# O build do Next faz o próprio typecheck. Medido no run 43647205114: ci-core
+# 11 min, sendo comuns 309s, setup ~243s, redundantes ~60s. Ganho ~1 min
+# (ci-core 11->10). O piso do fechamento é o stateful desktop-1440 (9.3 min);
+# comuns sharding só levaria a 9.3 (retorno decrescente, não feito aqui).
+# Refinamento da estrutura de CI do ADR-20261114 (fast/full).
+
+task_id: RUN-151
+
+objective: >
+  Remover do ci-core os checks que o job fast já roda (lint, typecheck, typecheck:e2e,
+  unit/privacy/scope, varredura de credenciais), ~60s a menos, e fazer o agregador ci
+  exigir o fast para que o gate de merge mantenha a cobertura. Medir ci-core contra 11 min.
+
+authority:
+  - Instrução do dono (14/11): atacar o gargalo ci-core (setup + comuns)
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md (estrutura fast/full)
+  - docs/agents/LICOES.md (CI rápida; não re-rodar o que já foi provado)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Run 43647205114, ci-core 11 min: lint 3s + typecheck 13s + unit 42s + varredura 2s
+    (+ typecheck:e2e ~1s) = ~60s que o fast já roda. comuns 309s, setup ~243s.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-151.task.yml
+  - .github/workflows/pull-request-ci.yml
+  - .visual/run-151
+
+forbidden:
+  - alterar scripts, produto, specs, testes, fixtures, supabase, migrations, runner, pins
+  - remover qualquer verificação da cobertura total (fast mantém lint/typecheck/unit/varredura)
+  - mudar o nome do check Install, test, and build ou o gate ci:full/main/dispatch
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "ci-core sem lint/typecheck/typecheck:e2e/unit/varredura (mantém build, pgTAP, db:lint, drift, comuns; stateful vai no matrix). Agregador ci needs fast+ci-core+e2e-stateful, vermelho se qualquer um falhou."
+  - "Guards local-command-surface e app-suite-ci verdes; YAML válido; fast inalterado."
+  - "Medição: ci-core contra 11 min (alvo ~10); fechamento contra ~11. Merge se verde."
+
+proof:
+  - gate do PR com ci:full: fast + ci-core + stateful + agregador; ci-core medido
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-151.task.yml
+
+risk: mudança de infra/CI (remove duplicação; gate passa a exigir o fast)
+risk_level: R0
+
+reviewer_must_differ_from_executor: false
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
