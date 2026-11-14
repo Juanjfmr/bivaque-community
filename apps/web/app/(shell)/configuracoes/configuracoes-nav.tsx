@@ -1,6 +1,7 @@
 "use client"
 
 import { Bell, Lock, ShieldCheck, User } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -16,10 +17,10 @@ const ITEMS = [
     matches: ["/profile"],
   },
   {
-    href: "/configuracoes/notificacoes",
+    href: "/app/voce" as Route,
     label: "Notificações",
     icon: Bell,
-    matches: ["/configuracoes/notificacoes"],
+    matches: [],
   },
   {
     href: "/configuracoes/conta",

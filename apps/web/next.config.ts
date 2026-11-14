@@ -107,7 +107,9 @@ const nextConfig: NextConfig = {
           ["/prestadores/:id", "/app/negocio/:id"],
           ["/configuracoes/bloqueados", "/app/bloqueados"],
           ["/configuracoes/familia", "/app/voce"],
+          ["/configuracoes/notificacoes", "/app/voce"],
           ["/inicio", "/app/inicio"],
+          ["/notifications", "/app/avisos"],
           ["/explorar/busca", "/app/busca"],
           ["/explorar", "/app/busca"],
           // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes

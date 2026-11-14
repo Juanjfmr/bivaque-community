@@ -3,17 +3,17 @@ import { join } from "node:path"
 import type { OutboxMessage } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 import {
-  formatNotificationLabel,
-  type NotificationRow,
-  rendersWithActor,
-  resolveNotificationHref,
-} from "web/app/(shell)/notifications/deep-links"
-import {
   notificationChannelAllows,
   outboxDeliveryAllowed,
   preferenceKeyForOutboxType,
   type TypePreferenceRow,
 } from "web/lib/notifications/channel-preferences"
+import {
+  formatNotificationLabel,
+  type NotificationRow,
+  rendersWithActor,
+  resolveNotificationHref,
+} from "web/lib/notifications/deep-links"
 import { renderEmail } from "web/lib/outbox/adapters"
 
 // ADR-20260925-aviso-de-pedido. O banco decide quem é avisado (pgTAP
@@ -162,26 +162,5 @@ describe("Configurações no celular", () => {
       "utf8",
     )
     expect(layout).toContain("grid-cols-[minmax(0,1fr)]")
-  })
-
-  it("a tabela de canais rola sozinha se faltar espaço, nunca a página", () => {
-    const page = readFileSync(
-      join(
-        import.meta.dirname,
-        "..",
-        "..",
-        "..",
-        "apps",
-        "web",
-        "app",
-        "(shell)",
-        "configuracoes",
-        "notificacoes",
-        "page.tsx",
-      ),
-      "utf8",
-    )
-    expect(page).toContain('aria-label="Resumo diário de pedidos de indicação por e-mail"')
-    expect(page).toContain("overflow-x-auto")
   })
 })

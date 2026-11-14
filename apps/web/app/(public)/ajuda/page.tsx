@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   title: "Ajuda · Bivaque",
 }
 
-type DestinationLink = Readonly<{ href: Route; label: string }>
+type DestinationLink = Readonly<{ href: Route | "/app/avisos"; label: string }>
 
 const ACCOUNT_LINKS: DestinationLink[] = [
   { href: "/login", label: "Entrar" },
@@ -39,7 +39,7 @@ const ACCOUNT_LINKS: DestinationLink[] = [
 const USAGE_LINKS: DestinationLink[] = [
   { href: "/explorar", label: "Explorar" },
   { href: "/salvos", label: "Salvos" },
-  { href: "/notifications", label: "Notificações" },
+  { href: "/app/avisos", label: "Notificações" },
   { href: "/denuncias", label: "Minhas denúncias" },
 ]
 
@@ -121,7 +121,7 @@ function DestinationList({ links }: Readonly<{ links: DestinationLink[] }>) {
     <ul className="help-links">
       {links.map((link) => (
         <li key={link.href}>
-          <Link href={link.href}>
+          <Link href={link.href as Route}>
             {link.label}
             <MaterialIcon name="chevron_right" />
           </Link>

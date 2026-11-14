@@ -15,7 +15,7 @@ const DESTINO_POR_ROTULO: Record<string, string> = {
   Comunidades: "/communities",
   Perfil: "/profile",
   Salvos: "/salvos",
-  Notificações: "/notifications",
+  Notificações: "/app/avisos",
   Configurações: "/configuracoes",
 }
 

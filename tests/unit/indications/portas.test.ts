@@ -12,10 +12,7 @@ const web = (...segments: string[]) => readFileSync(join(root, "apps", "web", ..
 
 describe("toda porta de um pedido leva a /indicacoes/<id>", () => {
   it.each([
-    [
-      "notificação de resposta e alvo de denúncia",
-      ["app", "(shell)", "notifications", "deep-links.ts"],
-    ],
+    ["notificação de resposta e alvo de denúncia", ["lib", "notifications", "deep-links.ts"]],
     ["denúncia", ["lib", "reports", "reports.ts"]],
     ["salvos", ["lib", "saves", "saved-items.ts"]],
     ["origem de um item do Guia", ["app", "(shell)", "guide", "[id]", "page.tsx"]],

@@ -22,7 +22,9 @@ const TROCADAS = [
   [`/prestadores/${ID}`, `/app/negocio/${ID}`],
   ["/configuracoes/bloqueados", "/app/bloqueados"],
   ["/configuracoes/familia", "/app/voce"],
+  ["/configuracoes/notificacoes", "/app/voce"],
   ["/inicio", "/app/inicio"],
+  ["/notifications", "/app/avisos"],
   ["/explorar/busca", "/app/busca"],
   ["/explorar/busca?q=termo", "/app/busca?q=termo"],
   ["/explorar", "/app/busca"],
@@ -133,4 +135,15 @@ describe("LAN-TROCA fase 1", () => {
       : []
     expect(sobras).toEqual([])
   })
+
+  it.each(["notifications", "configuracoes/notificacoes"])(
+    "a pasta antiga %s não deixa tela nem action para trás",
+    (relativa) => {
+      const pasta = join(shell, relativa)
+      const sobras = existsSync(pasta)
+        ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+        : []
+      expect(sobras).toEqual([])
+    },
+  )
 })
