@@ -49,6 +49,8 @@ allowed_paths:
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/unit/ui/perfil.test.ts
   - tests/unit/profile
+  # O teste da rota do app é a unidade tocada pelo portão de admissão (RUN-163).
+  - tests/unit/app-api/voce/interesses.test.ts
   - tests/e2e/user-group-interests.spec.ts
   - tests/e2e/link-crawl.spec.ts
   - .visual/f10-troca-interests

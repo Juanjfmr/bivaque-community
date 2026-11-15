@@ -22,7 +22,10 @@ export const dynamic = "force-dynamic"
 // `user_group_interests` é tabela operacional: não tem grant para o cliente da
 // sessão, só para `service_role`. Por isso as duas rotas usam o cliente de
 // serviço com autorização explícita aqui no código, DEPOIS de `exigirSessao`, e
-// passam sempre o id da sessão — nunca um id do corpo.
+// passam sempre o id da sessão — nunca um id do corpo. Como a leitura é
+// privilegiada, a sessão sozinha não é permissão: a admissão da pessoa
+// (verificação própria ou familiar admitido) é conferida antes de tudo, como a
+// tela web fazia em `interests-actions.ts` (RUN-163).
 //
 // A cidade é a do vínculo `current` da sessão (ADR-20261105 §3.3). Grupo de
 // outra cidade é recusado pelo próprio RPC (42501), que vira 409. Por isso a
@@ -32,8 +35,32 @@ export const dynamic = "force-dynamic"
 const CORPO_MAXIMO = 32 * 1024
 const LIMITE_DE_GRUPOS = 20
 const FORA_DA_CIDADE = "42501"
+const NAO_ADMITIDO = "Conclua a verificação de acesso para escolher interesses."
 
 type GruposLidos = { readonly ok: true; readonly grupos: string[] } | { readonly ok: false }
+
+type Servico = NonNullable<ReturnType<typeof clienteDeServicoOuNulo>>
+
+/**
+ * A admissão da pessoa, a mesma que a tela web exigia antes da troca: verificação
+ * própria `verified` OU convite familiar aceito. O dependente familiar entra sem
+ * CPF e sem verificação própria (D16), então exigir `verified` recusaria
+ * exatamente quem o convite admitiu; a regra do familiar fica no banco
+ * (`has_verified_family_holder`), nunca no cliente.
+ *
+ * `null` é "não deu para conferir", que não é o mesmo que "não foi admitido":
+ * quem não conseguiu conferir não lê nem grava, e a rota responde 503. A segunda
+ * leitura só acontece para quem não é verificado.
+ */
+async function admissao(servico: Servico, userId: string): Promise<boolean | null> {
+  const status = await servico.rpc("read_verification_status", { p_user_id: userId })
+  if (status.error) return null
+  if (status.data[0]?.status === "verified") return true
+
+  const familia = await servico.rpc("has_verified_family_holder", { p_user_id: userId })
+  if (familia.error) return null
+  return familia.data === true
+}
 
 /**
  * Lê a lista de grupos do corpo. Ausente, fora de array, item que não é UUID ou
@@ -65,6 +92,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const cabecalhos = sessao.sessao.cabecalhos
   const userId = sessao.sessao.usuario.id
+
+  // A admissão vem antes de qualquer leitura de grupo: a lista é lida com
+  // service_role, então a sessão sozinha não é permissão (PORT-005).
+  const admitida = await admissao(servico, userId)
+  if (admitida === null) {
+    return responder(request, { erro: "admissao-indisponivel" }, 503, cabecalhos)
+  }
+  if (!admitida) {
+    return responder(request, { erro: "nao-admitido", mensagem: NAO_ADMITIDO }, 403, cabecalhos)
+  }
+
   try {
     const cidade = await cidadeDaSessao(servico, userId)
     // Sem vínculo atual não há cidade para escopar o que se oferece.
@@ -127,6 +165,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const cabecalhos = sessao.sessao.cabecalhos
   const userId = sessao.sessao.usuario.id
+
+  // Mesma admissão da leitura: gravar interesse é dado da pessoa, e a escrita é
+  // feita com service_role depois desta conferência.
+  const admitida = await admissao(servico, userId)
+  if (admitida === null) {
+    return responder(request, { erro: "admissao-indisponivel" }, 503, cabecalhos)
+  }
+  if (!admitida) {
+    return responder(request, { erro: "nao-admitido", mensagem: NAO_ADMITIDO }, 403, cabecalhos)
+  }
 
   // A cidade é a do vínculo `current`, lida pelo id da SESSÃO: um `locality_id`
   // no corpo não escolhe a cidade de ninguém.

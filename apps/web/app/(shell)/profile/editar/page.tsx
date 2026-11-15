@@ -2,6 +2,7 @@
 
 import { Button, Input, ListBox, Select, Switch, TextArea } from "@heroui/react"
 import { ArrowLeft } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
@@ -478,7 +479,7 @@ export default function EditarPerfilPage() {
       </section>
 
       <Link
-        href="/profile/interests"
+        href={"/app/voce" as Route}
         className="flex min-h-11 items-center justify-between gap-3 rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line transition-colors hover:bg-ui-subtle"
       >
         <span>

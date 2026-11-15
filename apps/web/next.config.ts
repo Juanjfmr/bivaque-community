@@ -123,10 +123,13 @@ const nextConfig: NextConfig = {
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos", "/app/pedidos"],
           ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],
-          // F10: o perfil de OUTRA pessoa abre no app. `/profile` (próprio),
-          // `/profile/editar` e `/profile/interests` ficam na web por enquanto
-          // (lote próprio), e o lookahead impede o id de capturar os dois
-          // segmentos fixos.
+          // F10: o perfil de OUTRA pessoa abre no app. `/profile` (próprio) e
+          // `/profile/editar` ficam na web por enquanto (lote próprio), e o
+          // lookahead impede o id de capturar os dois segmentos fixos. RUN-163:
+          // a tela de interesses saiu, e a regra exata dela vem ANTES da regra
+          // do id — com o lookahead a ordem não muda o resultado, mas a exata
+          // primeiro deixa o destino determinístico.
+          ["/profile/interests", "/app/voce"],
           ["/profile/:id((?!(?:editar|interests)/?$)[^/]+)", "/app/perfil/:id"],
           ["/prestadores/:id", "/app/negocio/:id"],
           ["/configuracoes/bloqueados", "/app/bloqueados"],

@@ -53,7 +53,10 @@ describe("editar perfil", () => {
     expect(edit).toContain('id="profile-bio"')
     expect(edit).toContain("saveAffiliationAction(normalized)")
     expect(edit).toContain("saveBioAction(bio)")
-    expect(edit).toContain('href="/profile/interests"')
+    // RUN-163: a tela de interesses da web saiu; o bloco aponta direto ao app,
+    // sem passar pelo 307 da URL antiga.
+    expect(edit).toContain('"/app/voce" as Route')
+    expect(edit).not.toContain("/profile/interests")
   })
 })
 

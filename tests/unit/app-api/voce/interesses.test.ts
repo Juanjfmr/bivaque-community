@@ -68,6 +68,17 @@ const GRUPOS_DISPONIVEIS = [
 ]
 
 /**
+ * A admissão da rota (RUN-163): ela confere a verificação antes de qualquer
+ * leitura de grupo, então todo teste daqui precisa de uma pessoa admitida —
+ * o padrão é quem já é verificado. As três intenções do portão têm teste
+ * próprio em `tests/unit/profile/interests-require-verification.test.ts`.
+ */
+const ADMISSAO: Record<string, () => Promise<{ data: unknown; error: null }>> = {
+  read_verification_status: () => Promise.resolve({ data: [{ status: "verified" }], error: null }),
+  has_verified_family_holder: () => Promise.resolve({ data: false, error: null }),
+}
+
+/**
  * Responde cada RPC pelo nome: a leitura e a gravação vivem na mesma rota e o
  * teste precisa de respostas diferentes para as duas.
  */
@@ -77,6 +88,8 @@ function rpcs(tabela: {
   gravacao?: { message: string; code?: string } | null
 }) {
   mockRpc.mockImplementation((nome: string) => {
+    const admissao = ADMISSAO[nome]
+    if (admissao) return admissao()
     if (nome === "list_available_groups_for_interests")
       return Promise.resolve({ data: tabela.disponiveis ?? [], error: null })
     if (nome === "list_user_group_interests")
@@ -211,12 +224,15 @@ describe("GET /api/app/voce/interesses", () => {
     const resposta = await GET(leitura())
     expect(resposta.status).toBe(409)
     expect(await resposta.json()).toEqual({ erro: "sem-cidade" })
-    expect(mockRpc).not.toHaveBeenCalled()
+    for (const rpc of ["list_available_groups_for_interests", "list_user_group_interests"]) {
+      expect(mockRpc).not.toHaveBeenCalledWith(rpc, expect.anything())
+    }
   })
 
   it("falha de leitura do banco vira 503, não lista vazia", async () => {
-    mockRpc.mockImplementation(() =>
-      Promise.resolve({ data: null, error: { message: "db offline" } }),
+    mockRpc.mockImplementation(
+      (nome: string) =>
+        ADMISSAO[nome]?.() ?? Promise.resolve({ data: null, error: { message: "db offline" } }),
     )
     const resposta = await GET(leitura())
     expect(resposta.status).toBe(503)
@@ -316,7 +332,7 @@ describe("POST /api/app/voce/interesses", () => {
     const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A] } }))
     expect(resposta.status).toBe(409)
     expect(await resposta.json()).toEqual({ erro: "sem-cidade" })
-    expect(mockRpc).not.toHaveBeenCalled()
+    expect(mockRpc).not.toHaveBeenCalledWith("record_user_group_interests", expect.anything())
   })
 
   it("falha na leitura do vínculo vira 503, não 409", async () => {
@@ -324,7 +340,7 @@ describe("POST /api/app/voce/interesses", () => {
     const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A] } }))
     expect(resposta.status).toBe(503)
     expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
-    expect(mockRpc).not.toHaveBeenCalled()
+    expect(mockRpc).not.toHaveBeenCalledWith("record_user_group_interests", expect.anything())
   })
 
   it("grava com o id da SESSÃO e a cidade do vínculo, e devolve o estado gravado", async () => {
@@ -342,7 +358,9 @@ describe("POST /api/app/voce/interesses", () => {
     expect(await resposta.json()).toEqual({ ok: true, interesses: [GRUPO_A, GRUPO_B] })
     expect(mockEq).toHaveBeenCalledWith("user_id", PESSOA.id)
     expect(mockEq).toHaveBeenCalledWith("kind", "current")
-    expect(mockRpc).toHaveBeenCalledTimes(1)
+    for (const rpc of ["list_available_groups_for_interests", "list_user_group_interests"]) {
+      expect(mockRpc).not.toHaveBeenCalledWith(rpc, expect.anything())
+    }
     expect(mockRpc).toHaveBeenCalledWith("record_user_group_interests", {
       p_user_id: PESSOA.id,
       p_locality_id: CIDADE,
@@ -442,6 +460,8 @@ describe("pessoa com interesses de uma cidade anterior", () => {
   /** O RPC real recusa o conjunto inteiro quando um grupo não é da cidade. */
   function rpcsComRegraDaCidade(): void {
     mockRpc.mockImplementation((nome: string, argumentos?: { p_group_ids?: string[] }) => {
+      const admissao = ADMISSAO[nome]
+      if (admissao) return admissao()
       if (nome === "list_available_groups_for_interests")
         return Promise.resolve({ data: GRUPOS_DISPONIVEIS, error: null })
       if (nome === "list_user_group_interests")
