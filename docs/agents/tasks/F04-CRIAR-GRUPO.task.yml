@@ -1,0 +1,70 @@
+# F04-6 — criar grupo pelo app.
+#
+# A web cria grupo via RPC create_group (groups/page.tsx:223-263). O app so lista
+# (GET /api/app/grupos). Falta o POST + a folha de criacao + a porta no Diretorio.
+# A RPC create_group JA existe (20261024120000_group_base.sql:151-203, exige vinculo
+# verificado, cria membership owner). SEM migration. NAO usar MenuCriar (as 7 escolhas
+# sao inventario fixo, teste casca.spec.ts:266-271); a porta e no Diretorio de grupos.
+
+task_id: RUN-155
+
+objective: >
+  Criar grupo pelo app: POST /api/app/grupos (a rota hoje so GET) usando a RPC
+  create_group existente, validacao unica compartilhada, folha CriarGrupo, porta
+  Criar grupo no Diretorio. O criador vira owner e o grupo aparece no diretorio.
+
+authority:
+  - docs/LANCAMENTO.md (F04: grupos com entrada, pedido e motivo)
+  - Mapa do explorer 14/11 (RPC create_group existe; molde eventos/route.ts)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /api/app/grupos so GET (apps/web/app/api/app/grupos/route.ts:10). A web cria via
+    RPC create_group (groups/page.tsx:223-263, validacao nome :228-236). O app nao tem
+    criacao; Diretorio.tsx so lista.
+
+allowed_paths:
+  - docs/agents/tasks/F04-CRIAR-GRUPO.task.yml
+  - apps/web/app/api/app/grupos
+  - apps/web/lib/communities
+  - apps/web/lib/grupos
+  - apps/app/lib/dados/grupos.ts
+  - apps/app/src/grupos
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/lib/navegacao/entrada.ts
+  - apps/app/src/casca/Sobreposicoes.tsx
+  - apps/app/tests
+  - tests/unit/app-api/grupos
+  - tests/e2e/f04-grupos-real.spec.ts
+  - .visual/f04-criar-grupo
+
+forbidden:
+  - criar migration ou tabela nova (RPC create_group ja existe)
+  - usar MenuCriar para a porta (inventario fixo); a porta e no Diretorio
+  - tocar outras jornadas (Pergunta/guia/mercado), tema, util de grupo
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST /api/app/grupos (o GET fica) no contrato ADR §5 (sessao cookie, x-bivaque-app, CSRF, erro tipado). Molde: apps/web/app/api/app/eventos/route.ts:116-178. Usa RPC create_group. Validacao unica (nome 3-80, descricao, regras; espelhar groups/page.tsx:228-236) em modulo compartilhado reusado pela rota. Devolve o grupo criado (apresentarGrupo)."
+  - "apps/app/lib/dados/grupos.ts criarGrupo({nome,descricao,regras,fechado}). Folha CriarGrupo.tsx (molde FormularioDeEncontro.tsx + formularios.ts, erros puros + teste). id grupo-novo em entrada.ts (union Sobreposicao) + Sobreposicoes.tsx. Porta Criar grupo no Diretorio.tsx (dono natural)."
+  - "Testes: unit grupos/novo.test.ts (201, sem cidade 403, nome duplicado/recusado, CSRF; molde acoes.test.ts), grupos-dados (caminho/corpo/erros), E2E f04-grupos-real (criar→vira owner→aparece no diretorio; recusa de nome). Positivo E negativo."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F04-CRIAR-GRUPO.task.yml
+
+risk: endpoint de escrita (RPC valida vinculo/escopo) + folha nova; sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
