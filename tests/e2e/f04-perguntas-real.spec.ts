@@ -298,8 +298,10 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
     await expect(page.getByRole("heading", { level: 1, name: TEXTO_DA_PESSOA })).toBeVisible({
       timeout: 30_000,
     })
+    // Sem `exact`: a etiqueta carrega o ícone (aria-hidden) antes do texto, e o
+    // texto do elemento é "check_circleResolvida" — `exact: true` nunca casa.
     await expect(
-      page.getByText("Resolvida", { exact: true }),
+      page.getByText("Resolvida"),
       "o seed deixa a pergunta da própria pessoa resolvida",
     ).toBeVisible({ timeout: 30_000 })
 
@@ -309,10 +311,10 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
     await expect(respostaDoAntonio).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole("button", { name: "Reabrir pergunta" }).click()
-    await expect(
-      page.getByText("Resolvida", { exact: true }),
-      "reabrir tira a etiqueta de resolvida",
-    ).toHaveCount(0, { timeout: 30_000 })
+    await expect(page.getByText("Resolvida"), "reabrir tira a etiqueta de resolvida").toHaveCount(
+      0,
+      { timeout: 30_000 },
+    )
     await capturar(page, testInfo.project.name, "pergunta-reaberta")
 
     // O que a tela mostra depois do recarregamento é o banco, não o estado local.
@@ -334,7 +336,7 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
 
     await page.reload()
     await expect(
-      page.getByText("Resolvida", { exact: true }),
+      page.getByText("Resolvida"),
       "a marcação precisa sobreviver ao recarregamento",
     ).toBeVisible({ timeout: 30_000 })
     await expect(
