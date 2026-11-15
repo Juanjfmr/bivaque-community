@@ -284,3 +284,43 @@ export async function revogarConvite(id: string, opcoes: Opcoes = {}): Promise<v
   )
   if (corpo["removido"] !== true) throw foraDoContrato()
 }
+
+export type GrupoParaInteresse = Readonly<{ id: string; nome: string; jaMembro: boolean }>
+export type InteressesDaPessoa = Readonly<{
+  /** Grupos da cidade que podem ser marcados; `jaMembro` já participa. */
+  grupos: readonly GrupoParaInteresse[]
+  /** Os grupos marcados hoje, sempre entre os de `grupos` — a fonte é o banco, não o rascunho. */
+  interesses: readonly string[]
+}>
+
+function ids(valor: readonly unknown[]): readonly string[] {
+  return valor.map((item) => {
+    if (typeof item !== "string" || item === "") throw foraDoContrato()
+    return item
+  })
+}
+
+/** Os interesses da própria pessoa (F10): grupos da cidade e o que já está marcado. */
+export async function lerInteresses(opcoes: Opcoes = {}): Promise<InteressesDaPessoa> {
+  const corpo = await ler("/api/app/voce/interesses", opcoes)
+  return {
+    grupos: lista(corpo, "grupos").map((valor) => {
+      const item = registro(valor)
+      return {
+        id: texto(item, "id"),
+        nome: texto(item, "nome"),
+        jaMembro: booleano(item, "jaMembro"),
+      }
+    }),
+    interesses: ids(lista(corpo, "interesses")),
+  }
+}
+
+/** Grava o conjunto inteiro (replace-set) e devolve o que o servidor gravou. */
+export async function salvarInteresses(
+  grupos: readonly string[],
+  opcoes: Opcoes = {},
+): Promise<readonly string[]> {
+  const corpo = await enviar("POST", "/api/app/voce/interesses", { grupos }, opcoes)
+  return ids(lista(corpo, "interesses"))
+}

@@ -61,10 +61,15 @@ test("as rotas da jornada usam a sessão sob RLS, nunca o cliente de serviço", 
   // (RUN-018), cujos wrappers públicos de convite só têm execute para
   // service_role, e a localização (RUN-029), que precisa do cache de CEP e da
   // função set_member_location — único caminho de escrita da coordenada.
+  //
+  // A terceira é os interesses (RUN-160), com teste próprio abaixo: a tabela
+  // user_group_interests é operacional e os três RPCs têm execute só para
+  // service_role, então a sessão sob RLS não lê nem grava interesse nenhum.
   const rotas = arquivos(ROTAS)
     .filter((caminho) => caminho.endsWith("route.ts"))
     .filter((caminho) => !relativo(caminho).includes("/familia/"))
     .filter((caminho) => !relativo(caminho).includes("/localizacao/"))
+    .filter((caminho) => !relativo(caminho).includes("/interesses/"))
   assert.ok(rotas.length >= 6, `esperava as rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = ler(caminho)
@@ -156,6 +161,49 @@ test("a localização usa o privilégio só para o cache e a escrita medida", ()
     exemplo,
     /NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/,
     "a chave do Google foi exposta ao cliente",
+  )
+})
+
+test("os interesses usam o privilégio só depois da sessão e só nos RPCs de interesse", () => {
+  // RUN-160 / F10: `user_group_interests` é tabela operacional — não tem grant
+  // para anon/authenticated — e os três RPCs de interesse têm execute só para o
+  // papel de serviço. A sessão, sozinha, não lê nem grava interesse nenhum; a
+  // exceção é medida, e é esta a prova dela.
+  const rota = read(...ROTAS.split("/"), "interesses", "route.ts")
+  const sessao = rota.indexOf("exigirSessao(")
+  const privilegio = rota.indexOf("clienteDeServicoOuNulo(")
+  assert.ok(sessao >= 0, "a rota de interesses não resolve a sessão pelo encanamento")
+  assert.ok(privilegio > sessao, "a rota de interesses abre o privilégio antes da sessão")
+  for (const rpc of [
+    "list_available_groups_for_interests",
+    "list_user_group_interests",
+    "record_user_group_interests",
+  ]) {
+    assert.match(rota, new RegExp(rpc), `a rota de interesses não usa ${rpc}`)
+  }
+  // Exatamente um cliente de privilégio por handler, e nenhum aberto à mão.
+  assert.strictEqual(
+    (rota.match(/clienteDeServicoOuNulo\(/g) ?? []).length,
+    2,
+    "a rota de interesses abre o cliente de serviço fora do encanamento",
+  )
+  assert.doesNotMatch(rota, /createServerClient/, "a rota de interesses monta cliente próprio")
+  assert.doesNotMatch(
+    rota,
+    /from\("user_group_interests"\)/,
+    "a rota de interesses toca a tabela operacional direto",
+  )
+  assert.match(rota, /conferirEscrita\(/, "a escrita de interesses não confere a porta")
+  assert.match(rota, /opcoesDoApp/, "a rota de interesses não responde ao preflight do contrato")
+  assert.match(
+    rota,
+    /from "\.\.\/\.\.\/eventos\/_comum"/,
+    "a rota de interesses não usa a cidade e o UUID do _comum",
+  )
+  assert.doesNotMatch(
+    rota,
+    /searchParams\.get\("(user_id|usuario|userId|dono|locality_id)"\)|corpo\[(?:"|')(user_id|userId|usuario|locality_id)(?:"|')\]/,
+    "a rota de interesses aceita dono ou cidade vindos do pedido",
   )
 })
 

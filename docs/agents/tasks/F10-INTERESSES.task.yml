@@ -1,0 +1,94 @@
+# F10 — gestao de interesses pos-onboarding (pares usuario-grupo).
+#
+# Interesses sao pares usuario↔grupo (NAO taxonomia de temas): a migration
+# 20260821000003_user_group_interests diz Interests map directly to groups — no
+# parallel taxonomy, finalidade unica sugerir grupos (LGPD). O dado JA e gravado
+# no onboarding pelo RPC canonico record_user_group_interests (POST
+# /api/app/entry/interests). Falta so a gestao pos-onboarding (ler/alterar/limpar)
+# e a porta na tela Voce. SEM migration — tabela + RPCs prontos (list_available_
+# groups_for_interests / list_user_group_interests / record_user_group_interests).
+# Molde exato: entry/interests/route.ts:65-124 (CSRF, teto 20, UUIDs, dedupe,
+# 409 sem-cidade, 503 sem eco) + interests-actions.ts:145-212.
+#
+# NAO construir Sugeridos nem personalizacao de feed (deferidos por
+# ADR-20261023-comunidade-do-prototipo.md:127,184; fora do lancamento). NAO trocar
+# a tela web /profile/interests neste lote — o F10 nao fecha so com interesses
+# (perfil alheio pendente); a troca vem quando /profile sair por inteiro.
+#
+# Portao de admissao: seguir o molde entry/interests (pos-provisionamento, a
+# pessoa ja esta no app); cidade so do vinculo da sessao, recusa de grupo de outra
+# cidade vem do proprio RPC (42501). Registrar a decisao.
+
+task_id: RUN-160
+
+objective: >
+  Gestao de interesses pos-onboarding no app: GET /api/app/voce/interesses (grupos
+  disponiveis da cidade + interesses atuais) e POST replace-set reusando
+  record_user_group_interests, cliente lerInteresses/salvarInteresses, e uma linha
+  Interesses na tela Voce abrindo folha com checkboxes por grupo (molde
+  InteressesEGrupos/interests-section). Sem Sugeridos, sem migration, sem troca web.
+
+authority:
+  - docs/LANCAMENTO.md:63 (F10) + lacuna perfil alheio/interesses no LAN-TROCA/RUN-019
+  - Mapa do explorer 15/11 (interesses = pares usuario-grupo, RPCs prontos, molde entry/interests)
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+  - ADR-20261023-comunidade-do-prototipo.md:127,184 (Sugeridos deferido)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Voce.tsx:191-279 nao tem linha de interesses; nenhuma rota app-API le
+    user_group_interests pos-onboarding (so entry/interests). O dado ja e gravado
+    no onboarding (TelaDeEntrada.tsx:353 -> salvarInteresses -> POST
+    /api/app/entry/interests -> record_user_group_interests). A web gere em
+    /profile/interests (interests-section.tsx:40-175). Tabela sem grant para
+    authenticated — operacional so via RPCs service_role.
+
+allowed_paths:
+  - docs/agents/tasks/F10-INTERESSES.task.yml
+  - apps/web/app/api/app/voce/interesses
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/voce.ts
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/voce
+  - apps/app/tests
+  - tests/unit/app-api/voce
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f10-voce-real.spec.ts
+  - tests/scope/f10-voce-porta.test.mjs
+  - .visual/f10-interesses
+
+forbidden:
+  - criar migration, tabela ou pgTAP novo (user_group_interests e RPCs ja existem e tem prova)
+  - construir Sugeridos ou personalizacao de feed (deferidos por ADR-20261023)
+  - trocar/remover a tela web /profile/interests ou /profile/editar (F10 nao fecha neste lote)
+  - expor Forca/OM, cidade/CEP de terceiros, ou interesses de outra pessoa (so os proprios)
+  - tocar perfil alheio (lote separado) ou outras jornadas/tema
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "GET /api/app/voce/interesses no contrato ADR §5 (exigirSessao), molde entry/interests/route.ts:83-108 + interests-actions.ts:145-163: cliente de servico com autorizacao explicita, cidade do vinculo da sessao, devolve {grupos:[{id,nome,jaMembro}], interesses:[groupIds]} via list_available_groups_for_interests + list_user_group_interests. Falha->503 sem eco. SEM service_role no cliente app."
+  - "POST /api/app/voce/interesses replace-set via record_user_group_interests, molde entry/interests/route.ts:65-124: conferirEscrita (CSRF), teto 20, UUIDs validos, dedupe, cidade so da sessao (grupo de outra cidade -> 409/42501 do RPC), 503 sem eco. Devolve o estado gravado."
+  - "Registrar a rota em apps/web/lib/security/api-surface.ts (SESSAO) e bumpar TOTAL_DE_ROTAS (conferir contagem real em disco; hoje 91, deve virar 92 — GET e POST no mesmo route.ts contam 1). tests/unit/security/api-surface.test.ts verde."
+  - "apps/app/lib/dados/voce.ts (ou src/voce/interesses.ts): lerInteresses() + salvarInteresses(groupIds). Cliente unico."
+  - "Voce.tsx: linha Interesses (LinhaDeAjuste, molde :193-217) abrindo folha/sobreposicao com checkboxes por grupo da cidade (molde visual InteressesEGrupos etapas-comunidade.tsx:277-379 e interests-section.tsx), jaMembro desabilitado, Salvar/Limpar, carregando/vazio/erro. SEM Sugeridos. NAO quebrar as demais secoes do Voce."
+  - "Testes: unit da rota (GET grupos+interesses, POST replace-set, CSRF, teto 20, uuid invalido, grupo de outra cidade recusado, 503 sem eco; molde tests/unit/app-api/entrada-interesses.test.ts:1-60); voce-dados/interesses-dados (ler/salvar contrato); E2E real f10-voce-real (marcar interesses->reload->persiste->limpar; grupo de outra cidade nao aparece). Positivo E negativo."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI. test:db so como nao-regressao."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F10-INTERESSES.task.yml
+
+risk: endpoint de leitura/escrita nos RPCs de interesses existentes (cidade da sessao); sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
