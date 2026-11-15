@@ -1,0 +1,82 @@
+# RUN-167 — F05: cancelar encontro pelo organizador no app.
+#
+# LANCAMENTO.md:58 exige presenca e cancelamento; cancelar PRESENCA existe
+# (Evento.tsx:258-262) e o app ate renderiza Encontro cancelado (:173-174) e a
+# agenda corta cancelados (apps/web/app/api/app/eventos/route.ts:76-79) — mas o
+# organizador nao tem como cancelar o proprio evento pelo app: a
+# cancelEventAction da web morreu com a tela na fase 5 (375c336d). O caminho do
+# banco esta vivo e provado: a atualizacao de status e restringida ao dono pela
+# politica de organizador no banco (runs do RUN-017; eventos_update_organizer) e
+# o trigger private.notify_event_change() (20260911054812:269-297) ja avisa quem
+# confirmou presenca, honrando preferencias. Sem migration, sem change no banco.
+#
+# Menor forma: o PATCH /api/app/eventos/[id] ganha um ramo EXCLUSIVO de
+# cancelamento (status cancelled, sem tocar titulo/data/alcance), e a ficha do
+# organizador mostra Cancelar encontro com Confirmacao perigo (peca existente).
+
+task_id: RUN-167
+
+objective: >
+  Cancelar encontro pelo organizador no app: PATCH /api/app/eventos/[id] aceita o
+  cancelamento exclusivo (molde da antiga cancelEventAction da web), a ficha
+  mostra o botao de perigo com Confirmacao somente para o organizador, o estado
+  persiste, a agenda corta o cancelado, e quem tinha presenca confirmada recebe
+  o aviso em cascata pelo trigger existente.
+
+authority:
+  - docs/LANCAMENTO.md:58 (linha F05) + criterios de pronto (:38-48)
+  - Mapa do explorer 16/11 (F05 Lote 2) + decisao registrada no card F05-CANCELAR-EVENTO
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/app/eventos/[id]/route.ts PATCH nao aceita status
+    (validacao de event-form nao expoe o campo); Evento.tsx:176-180 so mostra
+    Editar; cancelEventAction da web removida em 375c336d (git show
+    375c336d --stat). O banco aceita: eventos_update_organizer + trigger
+    notify_event_change ativos na main.
+
+allowed_paths:
+  - docs/agents/tasks/F05-CANCELAR.task.yml
+  - apps/web/app/api/app/eventos
+  - apps/web/lib/events
+  - apps/app/lib/dados/eventos.ts
+  - apps/app/src/telas/Evento.tsx
+  - apps/app/tests
+  - tests/unit/app-api/eventos
+  - tests/e2e/f05-eventos-real.spec.ts
+  - .visual/f05-cancelar
+
+forbidden:
+  - criar migration ou tocar banco/triggers/politicas (tudo ja existe e e provado)
+  - expor edicao de status generica (so o valor cancelled, no ramo exclusivo; alcance segue imutavel)
+  - tocar outras acoes da ficha (presenca, pergunta, editar) alem de revalidar o estado depois do cancelamento
+  - reintroduzir fan-out de convites (nao e linha F05; decisao 16/11 no LAN-TROCA)
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "PATCH /api/app/eventos/[id]: corpo com acao=cancelar (ou o campo exclusivo status=cancelled — escolher o menor no molde das rotas app existentes) no ADR §5: exigirSessao + conferirEscrita; posse decidida no banco pela politica de organizador — nao-organizador recebe 403 sem confirmar existencia alem do necessario; evento ja cancelado e idempotente; outros valores de status recusados 400 ANTES de escrever; titulo/descricao/data/alcance intocados pelo ramo; 503 sem eco."
+  - "lib/events/event-form.ts (ou modulo de validacao do ramo, a casa que as rotas app ja usam): regra exclusiva do cancelamento compartilhada, nao duplicada."
+  - "apps/app/lib/dados/eventos.ts: cancelarEncontro(id) no cliente unico; Evento.tsx: para o organizador de evento ativo, acao 'Cancelar encontro' (perigo) com Confirmacao (id de sobreposicao da entrada, nao estado cru); ao confirmar: ocupado, sucesso -> revalidar (etiqueta 'Encontro cancelado' visivel, Editar some ou passa a estado honesto), falha -> mensagem e permanece; para cancelado, nenhum dos dois. Demo sem id nao mostra acao."
+  - "Agenda: cancelado nao volta na lista (corte do route.ts ja existe — provar). Avisos: quem estava going recebe event_change (o trigger faz o trabalho) — provar no E2E pela leitura de /api/app/avisos da outra persona ou fixture de notificacao."
+  - "Testes: unit do PATCH cancelar (organizador ok; nao-organizador 403; ja cancelado idempotente; status invalido 400; CSRF 403; sem sessao 401; alcance permanece), molde tests/unit/app-api/eventos/rotas.test.ts; E2E real f05-eventos-real (organizador cancela pelo app -> recarrega -> etiqueta; pessoa com presenca confirmada ve o aviso; agenda nao lista), nas 3 larguras via stateful no CI; stub do app se houver superficie previa tocada."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test. E2E navegador no CI. TOTAL_DE_ROTAS NAO muda (nenhum arquivo novo de rota)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F05-CANCELAR.task.yml
+
+risk: PATCH de escrita com posse decidida no banco; ramo exclusivo sem mudanca de schema
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
