@@ -280,3 +280,8 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   DialogContent desmontar ANTES do reload; e limpe o estado gravado (ex.: interesses) no afterEach,
   senão vaza para o retry. E o botão Fechar da folha exige exact:true (a alça Arrastar para fechar
   casa por substring). RUN-160, reincidência de lições já pagas — executor escreve E2E sem rodar.
+- Campo aditivo de contrato (ex.: autorId) que torna o parser do cliente estrito: o campo precisa
+  entrar em TODOS os caminhos que devolvem o objeto parseado — inclusive POST/PATCH de escrita, não
+  só o GET. No RUN-161 o POST do comentário não devolvia autorId, o parser lançava foraDoContrato e
+  o comentário não aparecia no fio (f04-grupos vermelho, consistente em 2 runs). Ao adicionar campo
+  a um parser, varra as rotas de escrita que devolvem aquele objeto; teste de mutação prova o furo.
