@@ -20,6 +20,11 @@ export const dynamic = "force-dynamic"
  * `exigirSessao` só registra o array quando ele já vem com a renovação do
  * token; por isso a remoção é aplicada aqui explicitamente. Aplicar de novo o
  * que já foi registrado não muda nada: o cookie é o mesmo nome.
+ *
+ * Escopo `local` (decisão RUN-157): sem opção o GoTrue revoga a sessão em todos
+ * os aparelhos, e o subtítulo da tela ("Encerrar a sessão neste aparelho")
+ * seria mentira. Local ainda limpa o cookie deste navegador pelo mesmo
+ * `setAll`; o que ele não faz é deslogar a pessoa nos outros aparelhos.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
@@ -28,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
   const userId = auth.sessao.usuario.id
   try {
-    const { error } = await auth.sessao.cliente.auth.signOut()
+    const { error } = await auth.sessao.cliente.auth.signOut({ scope: "local" })
     if (error) throw error
     return aplicarCookies(
       responder(request, { ok: true }, 200),

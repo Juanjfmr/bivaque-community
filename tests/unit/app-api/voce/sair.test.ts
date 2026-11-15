@@ -26,6 +26,7 @@ type ConfiguracaoDoSsr = {
 }
 
 const sessoesEncerradas: number[] = []
+const escoposDeSaida: (string | undefined)[] = []
 let respostaDoGoTrue: { error: { message: string } | null } = { error: null }
 
 function requisicao(cabecalhos: Record<string, string> = CABECALHOS) {
@@ -35,6 +36,7 @@ function requisicao(cabecalhos: Record<string, string> = CABECALHOS) {
 beforeEach(() => {
   vi.clearAllMocks()
   sessoesEncerradas.length = 0
+  escoposDeSaida.length = 0
   respostaDoGoTrue = { error: null }
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321")
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "chave-anonima")
@@ -46,8 +48,9 @@ beforeEach(() => {
     return {
       auth: {
         getUser: async () => ({ data: { user: PESSOA }, error: null }),
-        signOut: async () => {
+        signOut: async (opcoes?: { scope?: string }) => {
           sessoesEncerradas.push(Date.now())
+          escoposDeSaida.push(opcoes?.scope)
           if (respostaDoGoTrue.error === null) {
             // O que o `@supabase/ssr` pede ao encerrar: os cookies do pacote de
             // sessão com valor vazio e `maxAge: 0`.
@@ -73,6 +76,15 @@ describe("POST /api/app/voce/sair", () => {
     expect(removidos).toContain("sb-projeto-auth-token=;")
     expect(removidos).toMatch(/Max-Age=0/i)
     expect(resposta.headers.get("cache-control")).toBe("no-store")
+  })
+
+  it("encerra a sessão só neste aparelho (escopo local), como o subtítulo promete", async () => {
+    const resposta = await POST(requisicao())
+
+    expect(resposta.status).toBe(200)
+    expect(escoposDeSaida, "sem escopo o GoTrue desloga a pessoa de todos os aparelhos").toEqual([
+      "local",
+    ])
   })
 
   it("sem sessão é 401 e não chega ao GoTrue", async () => {

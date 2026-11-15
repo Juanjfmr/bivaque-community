@@ -18,7 +18,7 @@ export async function simularVoce(
     /** O que a gravação do CEP responde, para o caminho de falha da tela. */
     respostaDaLocalizacao?: "sem-coordenada" | "cep-nao-encontrado" | "geocodificador-indisponivel"
     /** O que a saída responde, para o caminho de falha da tela. */
-    respostaDoSair?: "indisponivel"
+    respostaDoSair?: "indisponivel" | "ja-saiu"
   } = {},
 ) {
   // A entrada lê o progresso para saber se há sessão. Depois de sair não há, e
@@ -233,6 +233,9 @@ export async function simularVoce(
     if (recurso === "sair" && metodo === "POST") {
       if (opcoes.respostaDoSair === "indisponivel")
         return rota.fulfill({ status: 503, json: { erro: "saida-indisponivel" } })
+      // Sessão que já não existe: o mesmo corpo do `exigirSessao`.
+      if (opcoes.respostaDoSair === "ja-saiu")
+        return rota.fulfill({ status: 401, json: { autenticado: false } })
       return rota.fulfill({ json: { ok: true } })
     }
     if (recurso === "apagar-conta" && metodo === "POST") {
