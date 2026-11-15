@@ -6287,7 +6287,8 @@
         "15/11: jornada de gaps + trocas (5 lotes mergeados): RUN-152 tema claro-only (81763cc6, decisão do dono — lançamento só claro, escuro dormente); RUN-153 F04 resolver/reabrir + útil fake removido (2db19a6b, destrava /indicacoes/[id]); RUN-155 F04 criar grupo (dff7dacd); RUN-156 F06 resíduo criar/editar desapego (343e9775, últimos URLs diretos); RUN-154 F08 verbete endereçável + botão fake removido + minhas sugestões (03ace7a4, destrava /guide/[id], resolve F08-RESSALVAS 1-2). CI rápida no ar (RUN-147/149/150/151: fast ~1.5 min, fechamento ~9-11 min). Lições: lotes que mexem em specs Playwright exigem E2E real no CI (typecheck não pega quebra de runtime); branches paralelos que mexem no TOTAL_DE_ROTAS precisam re-sync após merges; executores DeepSeek param antes de validar em worktree novo (install) — retomar com executor de conclusão.",
         "15/11: mais 2 lotes — RUN-157 F10 sair da conta (55af2822, escopo local 'neste aparelho', servidor revoga sem cliente Supabase no app; causa-raiz do cookie no WeakMap registrada em SESSAO-COOKIES-WEAKMAP); RUN-158 F04 seguir/salvar indicações (0400887a, um toggle 'Seguir respostas' em recommendation_saves, reuse total sem migration — banco já notificava quem salvou; fecha também 'indicações em Salvos' do F10). Lacunas F04/F06/F10 atualizadas no checklist. 7 lotes de jornada no dia.",
         "15/11: RUN-159 F04 denúncia de pergunta+resposta (ecc2d95d, reuse do mecanismo reports sem migration) — 8º lote. F04 completo exceto 'Também perguntar à cidade' (R3 grande, deferido com card F04-TAMBEM-PERGUNTAR; drift da lista de lacunas reconciliado).",
-        "15/11: RUN-160 F10 gestão de interesses pós-onboarding (2a25105b, pares usuário↔grupo, reuse dos RPCs sem migration; service_role com exceção medida como família/localização) — 9º lote. F10 resta perfil alheio. Lição: E2E escrito sem rodar reincide em armadilhas (restauração de sobreposição no reload reabre o modal e aria-hidden o heading; getByRole Fechar substring casa a alça)."
+        "15/11: RUN-160 F10 gestão de interesses pós-onboarding (2a25105b, pares usuário↔grupo, reuse dos RPCs sem migration; service_role com exceção medida como família/localização) — 9º lote. F10 resta perfil alheio. Lição: E2E escrito sem rodar reincide em armadilhas (restauração de sobreposição no reload reabre o modal e aria-hidden o heading; getByRole Fechar substring casa a alça).",
+        "15/11: RUN-161 F10 perfil alheio (6f5119cd, BLOCK-AFFILIATION respeitado, reuse das RPCs DONE-PROFILE-RPCS sem migration) — 10º lote, FECHA O F10 (funcionalidades). Regressão caught+fix: campo aditivo autorId tornou o parser do cliente estrito mas o POST do comentário não o devolvia (o fio recusava o comentário); lição: campo aditivo entra em TODOS os caminhos que devolvem o objeto parseado, inclusive escritas. Resta a troca de /profile próprio + /profile/interests. Gap: invitation_accepted cai em /app/voce."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6300,7 +6301,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); Também perguntar à cidade (F04, R3, card F04-TAMBEM-PERGUNTAR; grupos/seguir/salvar/resolver/denúncias fechados: RUN-153/155/158/159); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); perfil alheio (F10; indicações em Salvos, sair da conta e interesses fechados: RUN-157/158/160)",
+        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); Também perguntar à cidade (F04, R3, card F04-TAMBEM-PERGUNTAR; grupos/seguir/salvar/resolver/denúncias fechados: RUN-153/155/158/159); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); troca de /profile próprio + /profile/interests (F10; funcionalidades completas: indicações em Salvos, sair, interesses, perfil alheio — RUN-157/158/160/161)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -6863,6 +6864,34 @@
       "links": ["docs/agents/tasks/F10-INTERESSES.task.yml"],
       "proof": [
         "15/11: PR #239 mergeado em 2a25105b. Implementado pelo DeepSeek (5969bd8d) + fixes: F1 cidade antiga (a2b455ac, GET devolve interesses⊆grupos, prova de mutação), E2E reload/estado (39d4e6c6: fecha a folha antes do reload — a restauração de sobreposição reabria o modal e aria-hidden o h1; limparInteressesDaPersona no afterEach), Fechar exact:true (97408ffa, alça Arrastar para fechar). Revisão R2 Qwen APROVA com 1 correção (F1) aplicada; service_role ratificado (exceção medida como família/localização, teste dedicado). CI run 43715113838 todo verde. App test 560. Fecha a lacuna interesses do LAN-TROCA (F10); resta perfil alheio. Não troca a tela web (F10 não fecha neste lote)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "RUN-161",
+      "title": "F10: perfil alheio no app (BLOCK-AFFILIATION) — fecha o F10",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Ver o perfil de outro membro no app. Backend já pronto (DONE-PROFILE-RPCS: RPCs com viewer explícito + anti-spoofing, pgTAP + E2E). Rota GET /api/app/membros/[id]: visibilidade por profile_is_visible_to_viewer com viewer DA SESSÃO, invisível→404 (não 403); corpo SÓ {id,nome,bio,publicacoes,eventos}. BLOCK-AFFILIATION: sem profile_affiliations_for/Força/OM, sem cidade/CEP/contadores/badges. autorId/donoId/outroId aditivos nas respostas de conteúdo + nome-de-membro linkado + tela PerfilDeMembro. Troca /profile/[userId]→/app/perfil/[id] (lookahead não captura próprio/editar/interests). Sem migration.",
+      "checklist": [
+        "Rota membros + BLOCK-AFFILIATION",
+        "autorId aditivo + tela + links",
+        "Troca web + testes positivo/negativo + CI verde"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/member-profile-denials.spec.ts",
+        "tests/unit/app-api/membros/rotas.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "6f5119cd",
+      "links": ["docs/agents/tasks/F10-PERFIL-ALHEIO.task.yml"],
+      "proof": [
+        "15/11: PR #240 mergeado em 6f5119cd. Implementado pelo DeepSeek (f2648089) + emenda allowed_paths/components + teste perfil-dados (58f44df2) + fix regressão autorId no POST do comentário (aa9cd65a: o parser estrito do cliente exige autorId mas o POST não devolvia → comentário não entrava no fio; f04-grupos-real:400 destravado; prova de mutação). Revisão R2 Qwen PASS (BLOCK-AFFILIATION conferido: sem profile_affiliations_for/cidade/contadores, 404 não 403, viewer da sessão; redirect não captura próprio/editar/interests). CI run 43722119938 todo verde. App test 564. FECHA O F10. Gap registrado: invitation_accepted ainda cai em /app/voce (destino-do-app.ts:126, fora do escopo) — deep-link web /profile/<ator> segue via redirect."
       ],
       "completedChecklist": [true, true, true]
     },
