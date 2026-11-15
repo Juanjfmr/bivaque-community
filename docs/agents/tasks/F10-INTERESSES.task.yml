@@ -55,6 +55,7 @@ allowed_paths:
   - tests/unit/app-api/voce
   - tests/unit/security/api-surface.test.ts
   - tests/e2e/f10-voce-real.spec.ts
+  - tests/scope/f10-voce-porta.test.mjs
   - .visual/f10-interesses
 
 forbidden:
