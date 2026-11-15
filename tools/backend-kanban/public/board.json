@@ -6565,7 +6565,10 @@
       "status": "done",
       "completedAt": "2026-11-14",
       "description": "ci-core re-rodava lint/typecheck/typecheck:e2e/unit/varredura que o fast já roda (~60s). Removidos do ci-core; agregador ci passa a exigir fast (needs fast+ci-core+e2e-stateful), cobertura do gate intacta (varredura segue no fast). Build do Next faz o próprio typecheck.",
-      "checklist": ["ci-core sem checks redundantes; agregador exige fast", "Guards verdes; medir ci-core"],
+      "checklist": [
+        "ci-core sem checks redundantes; agregador exige fast",
+        "Guards verdes; medir ci-core"
+      ],
       "dependencies": [],
       "tests": ["tests/scope/local-command-surface.test.mjs"],
       "blockers": [],
@@ -6585,7 +6588,11 @@
       "category": "frontend",
       "status": "now",
       "description": "Decisão do dono 14/11: lançamento apenas tema claro. App força data-tema=claro (tema.ts), escuro dormente atrás de :root[data-tema=escuro] sem media query (styles.css), @custom-variant dark retém utilities dark: do Tailwind. <source media=dark> removidos. Testes visuais claro-only (TEMAS=[light]); tema.spec.ts prova sistema-escuro-mantém-claro + dormente acende via data-tema. Tokens escuros preservados (reversível). LANCAMENTO atualizado (escopo 14/11).",
-      "checklist": ["App força claro; escuro dormente reversível", "Testes visuais claro-only", "Revisão R2 + CI claro-only verde"],
+      "checklist": [
+        "App força claro; escuro dormente reversível",
+        "Testes visuais claro-only",
+        "Revisão R2 + CI claro-only verde"
+      ],
       "dependencies": [],
       "tests": ["apps/app/tests/e2e/tema.spec.ts"],
       "blockers": [],
@@ -6604,14 +6611,19 @@
       "category": "frontend",
       "status": "repo",
       "description": "A decisão do dono (14/11, lançamento só claro) vale para a superfície pública, mas o RUN-152 cobriu só o app. apps/web mantém @media prefers-color-scheme: dark (brand-tokens.css, landing.css) e meta theme-color dark (page.tsx:42-43). Portar/gated o escuro da landing para claro-only (mesmo mecanismo data-tema do app, ou forçar claro). Achado da revisão R2 do RUN-152.",
-      "checklist": ["Landing web claro-only (escuro dormente ou removido)", "Prova visual claro-only"],
+      "checklist": [
+        "Landing web claro-only (escuro dormente ou removido)",
+        "Prova visual claro-only"
+      ],
       "dependencies": ["RUN-152"],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "74b39b8b",
       "links": ["docs/LANCAMENTO.md"],
-      "proof": ["14/11: registrado a partir da revisão R2 do RUN-152 (apps/web fora do allowed_paths daquele lote)."]
+      "proof": [
+        "14/11: registrado a partir da revisão R2 do RUN-152 (apps/web fora do allowed_paths daquele lote)."
+      ]
     },
     {
       "id": "F09-NOME-PRESTADOR-AVISO",
