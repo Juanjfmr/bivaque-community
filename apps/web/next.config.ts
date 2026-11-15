@@ -111,9 +111,11 @@ const nextConfig: NextConfig = {
           // pela folha do Criar (não há `/app/mercado/novo`) e edita dentro do
           // anúncio, então os destinos são a lista e o anúncio. As duas regras
           // vêm antes de `:id` porque o Next aplica a primeira que casa, e o
-          // lookahead impede que "novo" vire id.
+          // lookahead impede que "novo" vire id. Na regra de editar o `$` não
+          // fecha (há "/editar" atrás), então o bloqueio é de "novo/" — sem ele,
+          // `/mercado/novo/editar` viraria o anúncio "novo".
           ["/mercado/novo", "/app/mercado"],
-          ["/mercado/:id((?!novo/?$)[^/]+)/editar", "/app/anuncio/:id"],
+          ["/mercado/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos", "/app/pedidos"],
