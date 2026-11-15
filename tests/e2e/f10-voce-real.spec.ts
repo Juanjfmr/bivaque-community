@@ -1,7 +1,12 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { expect, type Page, test } from "@playwright/test"
-import { MEMBRO_SEMEADO, restaurarPerfilSemeado, semearSessaoDeMembro } from "./entrada-real-ajuda"
+import {
+  limparInteressesDaPersona,
+  MEMBRO_SEMEADO,
+  restaurarPerfilSemeado,
+  semearSessaoDeMembro,
+} from "./entrada-real-ajuda"
 
 // F10 — a área "Você" lendo e gravando no banco de verdade (RUN-016 /
 // ADR-20261105). Contra o Next que serve `/app` e o Supabase local com seed.
@@ -32,9 +37,11 @@ async function capturar(page: Page, projeto: string, etapa: string): Promise<voi
 test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
   // Rede de segurança: se um passo falhar antes do "desfaz" da tela, o perfil da
   // persona volta ao seed mesmo assim, e as próximas larguras e specs não herdam
-  // "Ana E2E".
+  // "Ana E2E". O mesmo vale para os interesses: quem marcou um grupo e falhou
+  // antes do "Limpar" não deixa o retry começar com a caixa já marcada.
   test.afterEach(async () => {
     await restaurarPerfilSemeado(MEMBRO_SEMEADO, { nome: NOME_SEMEADO, bio: null })
+    await limparInteressesDaPersona(MEMBRO_SEMEADO)
   })
 
   test("o perfil vem da conta, a edição sobrevive ao recarregar e as listas são as do banco", async ({
@@ -270,7 +277,13 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     await expect(caixa).toHaveAttribute("aria-checked", "true")
     await capturar(page, testInfo.project.name, "voce-interesses")
 
-    // O que fica é o que o banco gravou: recarregar e reabrir a folha.
+    // O que fica é o que o banco gravou: recarregar e reabrir a folha. A folha é
+    // fechada antes de recarregar porque o app restaura a sobreposição aberta na
+    // entrada, e o fundo inerte do modal tira o heading "Você" da árvore de
+    // acessibilidade — com ela fechada, o estado restaurado é o da tela.
+    const folha = page.locator('[data-sobreposicao="interesses"]')
+    await folha.getByRole("button", { name: "Fechar" }).click()
+    await expect(folha).toHaveCount(0)
     await page.reload()
     await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
       timeout: 30_000,
@@ -294,7 +307,8 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     await expect(caixa).toHaveAttribute("aria-checked", "false")
     await expect(page.getByRole("button", { name: "Limpar" })).toHaveCount(0)
 
-    await page.getByRole("button", { name: "Fechar" }).click()
+    await folha.getByRole("button", { name: "Fechar" }).click()
+    await expect(folha).toHaveCount(0)
     await page.reload()
     await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
       timeout: 30_000,

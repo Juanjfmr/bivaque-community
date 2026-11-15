@@ -182,7 +182,7 @@ export function enderecoSintetico(prefixo: string): string {
 type RespostaHttp = Readonly<{ status: number; corpo: unknown }>
 
 type PedidoHttp = Readonly<{
-  metodo?: "GET" | "POST" | "PATCH"
+  metodo?: "GET" | "POST" | "PATCH" | "DELETE"
   cabecalhos?: Readonly<Record<string, string>>
   corpo?: unknown
 }>
@@ -723,6 +723,31 @@ export async function restaurarPerfilSemeado(
   if (resposta.status !== 200 && resposta.status !== 204) {
     throw new Error(
       `O perfil semeado não foi restaurado: HTTP ${resposta.status} (${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+}
+
+/**
+ * Apaga os interesses de uma persona do seed. `user_group_interests` é tabela
+ * operacional sem grant para o cliente (só `service_role`), então o `finally` do
+ * teste de interesses fala com ela pelo papel de serviço: se a tela falhar antes
+ * do "Limpar", a tentativa seguinte não herda o grupo marcado.
+ */
+export async function limparInteressesDaPersona(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/user_group_interests?user_id=eq.${id}`,
+    {
+      metodo: "DELETE",
+      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+    },
+    "Supabase (limpar interesses da persona)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 204) {
+    throw new Error(
+      `Os interesses semeados não foram limpos: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
     )
   }
 }
