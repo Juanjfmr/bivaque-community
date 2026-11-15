@@ -24,6 +24,9 @@ const TROCADAS = [
   ["/imoveis/novo", "/app/imoveis"],
   ["/imoveis/novo?tipo=casa", "/app/imoveis?tipo=casa"],
   [`/imoveis/${ID}/editar`, `/app/anuncio/${ID}`],
+  // RUN-169: a gestão dos alertas de busca é do app.
+  ["/imoveis/alertas", "/app/imoveis/alertas"],
+  ["/imoveis/alertas?aba=imoveis", "/app/imoveis/alertas?aba=imoveis"],
   ["/mercado", "/app/mercado"],
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado?preco_min=10000&pagina=2"],
   ["/imoveis", "/app/imoveis"],
@@ -147,8 +150,15 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  it("a lista de alertas continua na web, sem redirect", async () => {
-    expect((await resolver("/imoveis/alertas")).headers.get("location")).toBeNull()
+  // RUN-169: a lista de alertas saiu da web — nenhuma tela nem action sobra para
+  // alguém "voltar" editando a pasta, e o form do detalhe saiu junto.
+  it("a pasta antiga de alertas não deixa tela nem action para trás", () => {
+    const pasta = join(shell, "imoveis/alertas")
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+    expect(existsSync(join(shell, "imoveis", "alert-form.tsx"))).toBe(false)
   })
 
   it("a pasta antiga de busca não deixa tela nem action para trás", () => {

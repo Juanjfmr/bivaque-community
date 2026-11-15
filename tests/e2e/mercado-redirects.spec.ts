@@ -23,6 +23,8 @@ const TROCAS = [
   ["/mercado/novo?categoria=eletronicos", "/app/mercado"],
   [`/mercado/${ANUNCIO_ID}/editar?aba=fotos`, `/app/anuncio/${ANUNCIO_ID}`],
   ["/imoveis/novo", "/app/imoveis"],
+  // RUN-169: a gestão dos alertas de busca é do app, e a query segue na troca.
+  ["/imoveis/alertas?aba=imoveis", "/app/imoveis/alertas"],
   [`/imoveis/${ANUNCIO_ID}/editar`, `/app/anuncio/${ANUNCIO_ID}`],
 ] as const
 
@@ -75,10 +77,11 @@ test("as regras de criar e editar não capturam a lista nem o anúncio", async (
   }
 })
 
-// Sem sessão, alertas responde com o portão da própria web (/login): é isso que
-// prova que a porta não foi trocada, e não a ausência de redirect.
-test("a lista de alertas de imóvel continua na web, fora do app", async () => {
+// RUN-169: a lista de alertas de imóvel saiu da web. O endereço antigo chega à
+// tela do app (provado no TROCAS, com a query) e não vira um anúncio "alertas".
+test("a lista de alertas de imóvel é do app, não do detalhe do anúncio", async () => {
   const resposta = await fetch(`${BASE_URL}/imoveis/alertas`, { redirect: "manual" })
   const destino = new URL(resposta.headers.get("location") ?? "/", BASE_URL).pathname
-  expect(destino.startsWith("/app")).toBe(false)
+  expect(destino.startsWith("/app/anuncio")).toBe(false)
+  expect(destino).toBe("/app/imoveis/alertas")
 })

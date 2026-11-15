@@ -118,11 +118,14 @@ const nextConfig: NextConfig = {
           // fecha (há "/editar" atrás), então o bloqueio é de "novo/" — sem ele,
           // `/mercado/novo/editar` viraria o anúncio "novo".
           // RUN-164: criar e editar imóvel seguem o mesmo molde — a folha do
-          // app publica e o gerenciar edita. `/imoveis/alertas` e o detalhe
-          // (`:id`) não são capturados: o lookahead exclui "novo" e "alertas".
+          // app publica e o gerenciar edita. RUN-169: a lista de alertas também
+          // é do app, e a regra exata dela vem antes de `:id`; o lookahead da
+          // genérica segue excluindo "novo" e "alertas" para que o id nunca
+          // capture as duas telas fixas.
           ["/mercado/novo", "/app/mercado"],
           ["/mercado/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
+          ["/imoveis/alertas", "/app/imoveis/alertas"],
           ["/imoveis/novo", "/app/imoveis"],
           ["/imoveis/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],

@@ -5,7 +5,6 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
-import type { ListingAlert } from "./alerts"
 import type { ListingFilters } from "./filters"
 import type { ListingDeal, ListingStatus, PropertyType } from "./types"
 
@@ -243,30 +242,6 @@ export async function getPropertyDetail(
   }
 }
 
-// As assinaturas do próprio usuário. A RLS (`listing_alerts_select_owner`)
-// devolve só o que é dele — a tela não filtra por conta própria.
-export async function listListingAlerts(client: Client): Promise<ListingAlert[]> {
-  const { data, error } = await client
-    .from("listing_alerts")
-    .select(
-      "id, name, kind, locality_id, neighborhood, deal, max_value_cents, min_bedrooms, is_active, created_at",
-    )
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    throw new Error(`Falha ao carregar os alertas: ${error.message}`)
-  }
-
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    kind: row.kind,
-    localityId: row.locality_id,
-    neighborhood: row.neighborhood,
-    deal: row.deal,
-    maxValueCents: row.max_value_cents,
-    minBedrooms: row.min_bedrooms,
-    isActive: row.is_active,
-    createdAt: row.created_at,
-  }))
-}
+// As assinaturas do próprio usuário vivem na porta do app (RUN-169):
+// `/api/app/imoveis/alertas`, com a leitura sob a mesma policy
+// `listing_alerts_select_owner`.

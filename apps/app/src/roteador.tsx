@@ -11,6 +11,7 @@ import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { Negocios } from "@/src/negocios/Negocios"
 import { Agenda } from "@/src/telas/Agenda"
 import { Ajuda } from "@/src/telas/Ajuda"
+import { AlertasDeImovel } from "@/src/telas/AlertasDeImovel"
 import { Anuncio } from "@/src/telas/Anuncio"
 import { ApagarConta } from "@/src/telas/ApagarConta"
 import { Avisos } from "@/src/telas/Avisos"
@@ -86,6 +87,7 @@ const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado", 
  */
 const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   ajuda: Ajuda,
+  "alertas-de-imovel": AlertasDeImovel,
   anuncio: Anuncio,
   "apagar-conta": ApagarConta,
   avisos: Avisos,

@@ -7,7 +7,6 @@ import { getPropertyDetail, isListingSaved, signPhotoPaths } from "../../../../l
 import { createListingClient } from "../../../../lib/listings/ssr-client"
 import { PROPERTY_TYPE_LABELS } from "../../../../lib/listings/types"
 import { Card } from "../../../components/bivaque/card"
-import { ListingAlertForm } from "../alert-form"
 import { SaveListingButton } from "../save-listing-button"
 import { ShareButton } from "../share-button"
 import { PropertyInterestButton } from "./interest-button"
@@ -231,15 +230,6 @@ export default async function ImovelDetailPage({ params }: { params: Promise<{ i
               </ul>
             </section>
           ) : null}
-
-          <ListingAlertForm
-            variant="compact"
-            hidden={{
-              bairro: property.neighborhood ?? "",
-              tipo_negocio: property.deal,
-              localityId: "",
-            }}
-          />
         </div>
 
         <aside className="space-y-4">
