@@ -5908,7 +5908,8 @@
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora.",
         "07/11: na main — perguntas (#140) e grupos (#153, merge 4673a768), E2E real nas três larguras no CI. Ressalvas seguem em F04-RESSALVAS. Fecha quando INDICACOES-MEMORIA fechar(em) (dependências do card).",
-        "07/11: dependências RED-003 e RECON-050 retiradas — tratam de comunidades, legado fora do produto atual (AGENTS.md); INDICACOES-MEMORIA fechado com o E2E do CI. F04 completo: perguntas (#140), grupos (#153), tópicos (#155)."
+        "07/11: dependências RED-003 e RECON-050 retiradas — tratam de comunidades, legado fora do produto atual (AGENTS.md); INDICACOES-MEMORIA fechado com o E2E do CI. F04 completo: perguntas (#140), grupos (#153), tópicos (#155).",
+        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04 (denúncias) conforme LAN-TROCA."
       ],
       "id": "LAN-F04",
       "title": "F04 Comunidade e grupos ligados ao banco, com o redesenho provado",
@@ -5925,10 +5926,7 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "INDICACOES-MEMORIA", "INDICACOES-AVISO", "APP-001"],
-      "completedAt": "2026-11-07",
-      "proof": [
-        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04 (denúncias) conforme LAN-TROCA."
-      ]
+      "completedAt": "2026-11-07"
     },
     {
       "phase": "Lançamento",
