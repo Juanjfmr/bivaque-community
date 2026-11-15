@@ -1,0 +1,1 @@
+import React from "react";export const Input=React.forwardRef<HTMLInputElement,React.InputHTMLAttributes<HTMLInputElement>>(function Input(p,ref){return <input ref={ref} {...p} className={"w-full rounded-xl border border-border bg-card px-3 py-2 text-sm "+(p.className||"")}/>});

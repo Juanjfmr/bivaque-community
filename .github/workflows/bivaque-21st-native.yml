@@ -1,0 +1,54 @@
+name: Bivaque 21st.dev native P0-P1
+on:
+  push:
+    branches:
+      - experiment/bivaque-21st-native-p0p1-20261111
+    paths:
+      - "experiments/bivaque-21st-native/**"
+      - ".github/workflows/bivaque-21st-native.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "experiments/bivaque-21st-native/**"
+      - ".github/workflows/bivaque-21st-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-mobile-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: experiments/bivaque-21st-native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Prove original 21st sources and build React app
+        run: npm run build
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Verify Chrome available on runner
+        run: google-chrome --version
+      - name: Test user journeys across mobile and desktop
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bivaque-21st-p0p1-evidence
+          path: |
+            experiments/bivaque-21st-native/proof
+            experiments/bivaque-21st-native/playwright-report
+            experiments/bivaque-21st-native/test-results
+            experiments/bivaque-21st-native/dist
+            experiments/bivaque-21st-native/src
+            experiments/bivaque-21st-native/tests
+            experiments/bivaque-21st-native/package.json
+            experiments/bivaque-21st-native/README.md
+            experiments/bivaque-21st-native/source-manifest.json
+          if-no-files-found: warn

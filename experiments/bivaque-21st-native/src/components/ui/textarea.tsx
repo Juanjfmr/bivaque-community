@@ -1,0 +1,1 @@
+import React from "react";export const Textarea=React.forwardRef<HTMLTextAreaElement,React.TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea(p,ref){return <textarea ref={ref} {...p} className={"w-full rounded-xl border border-border bg-card p-3 text-sm "+(p.className||"")}/>});
