@@ -287,6 +287,11 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   só o GET. No RUN-161 o POST do comentário não devolvia autorId, o parser lançava foraDoContrato e
   o comentário não aparecia no fio (f04-grupos vermelho, consistente em 2 runs). Ao adicionar campo
   a um parser, varra as rotas de escrita que devolvem aquele objeto; teste de mutação prova o furo.
+- Parser do task-contract (subconjunto deliberado de YAML): item de lista quebrado em duas linhas
+  engole o resto do arquivo — os campos somem com erros "campo obrigatório ausente" sem apontar a
+  linha; e aspas duplas em linha de comentário de cabeçalho viram conteúdo e estouram "esperava
+  chave: valor". Cada `- ` em uma linha; comentários sem aspas. Paga 3× em 16/11 (CIDADE, RUN-169,
+  RUN-170).
 - Item de menu que abre sobreposição: NÃO abrir a nova folha no mesmo clique que fecha o menu —
   o fechamento do Radix Menu é um history.back() da entrada, que popa a sobreposição recém-aberta
   (o gesto de bloquear nunca abria a confirmação; trace do CI: click sem after, 180 s pendurado).

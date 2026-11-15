@@ -6274,7 +6274,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "2b48e8bd",
+      "sourceRevision": "1c488b1f",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6293,7 +6293,8 @@
         "15/11: RUN-160 F10 gestão de interesses pós-onboarding (2a25105b, pares usuário↔grupo, reuse dos RPCs sem migration; service_role com exceção medida como família/localização) — 9º lote. F10 resta perfil alheio. Lição: E2E escrito sem rodar reincide em armadilhas (restauração de sobreposição no reload reabre o modal e aria-hidden o heading; getByRole Fechar substring casa a alça).",
         "15/11: RUN-161 F10 perfil alheio (6f5119cd, BLOCK-AFFILIATION respeitado, reuse das RPCs DONE-PROFILE-RPCS sem migration) — 10º lote, FECHA O F10 (funcionalidades). Regressão caught+fix: campo aditivo autorId tornou o parser do cliente estrito mas o POST do comentário não o devolvia (o fio recusava o comentário); lição: campo aditivo entra em TODOS os caminhos que devolvem o objeto parseado, inclusive escritas. Resta a troca de /profile próprio + /profile/interests. Gap: invitation_accepted cai em /app/voce.",
         "16/11: RUN-162 (PR #241, f237d683) fecha F08-RESSALVAS so com testes. RUN-163 (PR #242, 9ca86c53) troca /profile/interests → /app/voce e PORTA O PORTAO DE ADMISSAO para a rota do app (a web exigia verified OU familiar admitido antes de listar com service_role; a rota nao conferia — a troca mataria a fronteira). F05 reclassificado: criar/editar era drift; convites fan-out nao e linha do LANCAMENTO.",
-        "16/11: RUN-165 mergeado (2b48e8bd). A pasta (shell)/messages nao serve mais tela (307) e perdeu seu unico gesto vivo (bloquear) para o app — a remocao dela (RUN-166) esta destravada."
+        "16/11: RUN-165 mergeado (2b48e8bd). A pasta (shell)/messages nao serve mais tela (307) e perdeu seu unico gesto vivo (bloquear) para o app — a remocao dela (RUN-166) esta destravada.",
+        "16/11: CIDADE-169 mergeado (1c488b1f) — /cidade e /localidade deixaram de servir tela de membro; o painel de cidade do app navega por id real."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6306,7 +6307,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade = jornada de troca propria (card CIDADE-LOCALIDADE-TROCA); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel FECHADO (RUN-164, b3a2786d), alertas/filtros/salvar em lotes B/C/D — salvar em curso); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); sobra a REMOCAO da pasta /messages (RUN-166); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar RUN-168 e alertas RUN-169 em revisao/CI; resta filtros server-side no Lote C — herdara bairro/tipo_negocio da perda declarada do B); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); sobra a REMOCAO da pasta /messages (RUN-166); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -7042,27 +7043,60 @@
       "completedChecklist": [true, true, true, true]
     },
     {
+      "id": "CIDADE-169",
+      "title": "Consulta de cidade no app (C1) + /localidade diluído na mesma tela (C2)",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "Porta de leitura GET /api/app/cidade/[id] (UUID do catalogo OU literal atual = vinculo current da SESSAO; 404 uniforme; agregado espelhado do city-consult web: guia aprovado 8, encontros alcance-cidade, desapegos e imoveis ativos; sem comunidades/perguntas/vitrine; sem service_role; sem migration — a regra lida e a do ADR-20260925 aceite pelo dono 25/09). Tela CidadeConsulta com pecas reais; PainelDeCidade passa a navegar de verdade (UF→municipio pelo catalogo publico ja consumido na entrada; 'Minha cidade' → /app/cidade/atual). Troca: 307 /cidade/:id e /localidade; pastas web + city-consult + city-reference removidas; vitrine nao morreu (provider-vitrine repontado para /app/negocios, mesma RPC search_providers sob RLS).",
+      "checklist": [
+        "Rota de leitura no ADR §5 com provas positivo/negativo",
+        "Tela + painel navegando por id real",
+        "Troca das duas telas com remocao em cadeia e pins migrados",
+        "CI verde no head final"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/app-api/cidade/rotas.test.ts",
+        "tests/e2e/cidade-consulta-real.spec.ts",
+        "apps/app/tests/e2e/cidade-consulta-painel.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "1c488b1f",
+      "links": ["docs/agents/tasks/CIDADE-CONSULTA.task.yml"],
+      "proof": [
+        "16/11: PR #246 mergeado em 1c488b1f (executor DeepSeek c11aca57.. + fix de seletores 479ec786 + reconciliacao do manifesto no rebane vs #243). Revisao R2 Qwen: PASS com 3 condicoes — (1) board acompanhado neste commit; (2) bissectabilidade resolvida pelo squash (confessado no relatorio); (3) cosmeticos registrados como follow-up no TROCA-RESIDUOS. Seletores corrigidos contra o contrato real das pecas (data-chip da lição 16/11; data-selecao do painel), provados LOCALMENTE: materializacao-entrada 6/6 + casca-visual/cidade-consulta-painel/casca 137/137 nas 6 larguras. CI 43764431788 (visual tudo) + Pull Request CI tudo verde no head.",
+        "16/11: sobras declaradas: nada de (shell)/inicio saiu (todos os modulos ainda tem importador vivo — fica com o dono F02 ao morrer o inicio residual); CTA 'Vou me mudar para cá' aponta /profile?mudar=<id> ate o Lote B do F10 pousar a transferencia no app (destino ensinado a ler o param em curso no RUN-170)."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
       "id": "CIDADE-LOCALIDADE-TROCA",
       "title": "Cidade/localidade: telas de membro ainda na web precisam de jornada de troca própria",
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "O texto antigo do LAN-TROCA misturava isto com filtros/IDs (fechados pelo RUN-162). /cidade/[id] (city-consult) e /localidade servem tela de membro na web SEM redirect; nao ha rota equivalente no app (catalogo sem cidade/localidade; PainelDeCidade so muda a cidade VISTA, por nome). E troca de jornada, nao fix de query/ID: portar a consulta de outra cidade + a entrada de localidade ao app e depois trocar. Estado provado: lan-troca-redirect.test.ts:114-121 (sem redirect de proposito), link-crawl:101-103,218-221 (portas declaradas).",
       "checklist": [
-        "Decidir o formato no app (consulta de cidade + entrada de localidade)",
-        "Implementar pela porta /api/app",
-        "Trocar as telas com 307 + gates + provas"
+        "[x] Decidir o formato no app: consulta por rota endereçavel /app/cidade/$id (atual = vinculo da sessao) — CIDADE-169",
+        "[x] Implementar pela porta /api/app: GET /api/app/cidade/[id] sob a regra de 25/09, sem migration",
+        "[x] Trocar as telas com 307 + gates + provas: /cidade/[id] e /localidade fora do ar; pills de transferencia movidas para F10-TROCA-PERFIL-PROPRIO (nao sao consulta)"
       ],
       "dependencies": [],
       "tests": ["tests/e2e/link-crawl.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "9ca86c53",
+      "sourceRevision": "1c488b1f",
       "links": [],
       "proof": [
-        "16/11: aberto pela decisao do mapa F02/F08 ao reconciliar a linha de lacunas do LAN-TROCA."
-      ]
+        "16/11: aberto pela decisao do mapa F02/F08 ao reconciliar a linha de lacunas do LAN-TROCA.",
+        "16/11: RESOLVIDO pelo CIDADE-169 (PR #246, merge 1c488b1f). A pilula '(saindo)'/teclado do /localidade NAO voltou — pertence a transferencia, registrada no card F10-TROCA-PERFIL-PROPRIO."
+      ],
+      "completedAt": "2026-11-16"
     },
     {
       "id": "RUN-166",
@@ -7541,7 +7575,8 @@
         "Remover revalidatePath de rotas removidas (correction-actions:76-77, listings/actions:307)",
         "Atualizar create-menu/market-strip para a porta do app (ou aceitar o redirect)",
         "Confirmar e remover ações de foto de listing órfãs, se sem página viva",
-        "Confirmar e remover apps/web/lib/user-group-interests-rpcs.ts (órfão após RUN-163)"
+        "Confirmar e remover apps/web/lib/user-group-interests-rpcs.ts (órfão após RUN-163)",
+        "Cosmético CIDADE-169: links /localidade residuais (explorar/servicos:466, communities/[id]:544 — caem no 307) e active-nav.ts:82 mapeia tela morta; repontar quando essas telas forem editadas"
       ],
       "dependencies": [],
       "tests": [],
@@ -7551,7 +7586,8 @@
       "links": ["docs/agents/tasks/F08-VERBETE.task.yml", "docs/agents/tasks/F06-RESIDUO.task.yml"],
       "proof": [
         "15/11: registrado pelo coordenador ao fechar RUN-154/156, confrontado no disco (git grep). NÃO inclui o RPC mark_recommendation_resolved: a migration vigente (20261024110000_lote5_pergunta.sql:276) JÁ limpa resolved_reply_id — a ressalva da revisão do RUN-153 não se confirma no código.",
-        "16/11: RUN-163 deixou o modulo de RPCs de interesses 6rfao com a morte da action web (declarado no relatorio do lote, fora do allowed_paths dele)."
+        "16/11: RUN-163 deixou o modulo de RPCs de interesses 6rfao com a morte da action web (declarado no relatorio do lote, fora do allowed_paths dele).",
+        "16/11: aberto pela condicao 3 da revisao do CIDADE-169."
       ]
     },
     {
