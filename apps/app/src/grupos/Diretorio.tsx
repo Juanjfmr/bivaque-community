@@ -3,11 +3,15 @@ import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { type ListaDeGrupos, lerGrupos } from "@/lib/dados/grupos"
-import { useNavegacao } from "@/lib/navegacao/react"
+import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { CriarGrupo } from "./CriarGrupo"
 import { EstadoDaLeitura } from "./EstadoDaLeitura"
 
 export function Diretorio() {
   const navegacao = useNavegacao()
+  // A porta de criar grupo mora aqui, e não no menu Criar: as escolhas de lá
+  // são inventário fixo (casca.spec.ts). O dono natural do grupo é o diretório.
+  const { aberto: criando, aoMudarAberto: setCriando } = useSobreposicaoDaEntrada("grupo-novo")
   const [dados, setDados] = useState<ListaDeGrupos | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
@@ -47,6 +51,16 @@ export function Diretorio() {
   if (!dados) return <EsqueletoDeLista linhas={3} />
   return (
     <div data-diretorio-grupos="sim" className="grid gap-3">
+      <div className="flex justify-end">
+        <Botao
+          tom="tonal"
+          icone="group_add"
+          data-acao="criar-grupo"
+          onClick={() => setCriando(true)}
+        >
+          Criar grupo
+        </Botao>
+      </div>
       {dados.grupos.length === 0 ? (
         <EstadoVazio
           titulo="Ainda sem grupos nesta cidade"
@@ -79,6 +93,14 @@ export function Diretorio() {
         <Botao tom="tonal" disabled={mais} onClick={() => void carregarMais()}>
           {mais ? "Carregando…" : "Ver mais grupos"}
         </Botao>
+      ) : null}
+      {criando ? (
+        <CriarGrupo
+          aoFechar={() => setCriando(false)}
+          // `replace`: o grupo criado toma o lugar da folha na entrada, senão o
+          // Voltar de dentro do grupo reabriria a folha em vez do diretório.
+          aoSalvar={(id) => void navegacao.irPara("grupo", { parametros: { id }, replace: true })}
+        />
       ) : null}
     </div>
   )

@@ -33,7 +33,14 @@ export function Sobreposicoes() {
   const aoFechar = () => navegacao.fecharSobreposicao()
 
   if (aberta === "menu-criar") return <MenuCriar aoFechar={aoFechar} />
-  if (aberta === "menu-de-linha" || aberta === "confirmacao" || aberta === "paleta") return null
+  if (
+    aberta === "menu-de-linha" ||
+    aberta === "confirmacao" ||
+    aberta === "paleta" ||
+    // A folha de criar grupo é da tela do Diretório, que a desenha com o próprio id.
+    aberta === "grupo-novo"
+  )
+    return null
 
   if (aberta === "cidade") {
     return (

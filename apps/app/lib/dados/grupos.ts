@@ -102,6 +102,22 @@ export async function lerGrupos(opcoes: Opcoes & { depois?: string } = {}): Prom
     proximo: cursor(corpo["proximo"]),
   }
 }
+export type DadosDoNovoGrupo = Readonly<{
+  nome: string
+  descricao: string
+  regras: string
+  fechado: boolean
+}>
+
+/**
+ * Cria o grupo pela rota do app. O servidor resolve a cidade do vínculo
+ * `current` e a RPC `create_group` cria o vínculo `owner`: o grupo volta como a
+ * sessão o vê, já participando e administrando.
+ */
+export async function criarGrupo(dados: DadosDoNovoGrupo, opcoes: Opcoes = {}): Promise<GrupoReal> {
+  const corpo = await enviar("POST", "/api/app/grupos", dados, opcoes)
+  return grupo(corpo["grupo"])
+}
 export async function buscarGrupo(
   id: string,
   opcoes: Opcoes & { depois?: string; ordem?: OrdemDoGrupo } = {},
