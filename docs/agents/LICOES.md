@@ -273,7 +273,9 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
 - board.json: as chaves do card vêm em ordem não-padrão (proof pode estar ANTES do id). Leia o
   objeto INTEIRO antes de acrescentar campo — proof duplicado passou pelo board.mjs (JSON.parse
   fica com o último valor e descartou o histórico) mas o biome noDuplicateObjectKeys pegou, e
-  derruba o gate de todos os PRs. Rode biome check no board.json antes de todo push de quadro.
+  derruba o gate de todos os PRs. Rode biome check no board.json antes de todo push de quadro —
+  inclusive quando o card é escrito por script em lote (JSON.stringify ≠ formato biome; 16/11,
+  o próprio autor da lição violou no batch de fechamento e todos os PRs seguintes falharam fast).
 - E2E com sobreposição (folha/modal): o app RESTAURA o estado da sobreposição no reload. Se o teste
   deixa a folha aberta e dá reload, ela reabre restaurada e o Radix põe aria-hidden no fundo — o
   heading da tela some do getByRole e a asserção estoura por timeout. Feche a folha e espere o
