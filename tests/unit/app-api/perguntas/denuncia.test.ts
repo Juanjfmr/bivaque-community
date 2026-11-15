@@ -184,11 +184,7 @@ it("com respostaId o alvo é a resposta daquela pergunta", async () => {
 
 it.each([
   ["pergunta própria", { pedido: { author_id: USER } }, {}],
-  [
-    "resposta própria",
-    { resposta: { author_id: USER, request_id: ID } },
-    { respostaId: RESPOSTA },
-  ],
+  ["resposta própria", { resposta: { author_id: USER, request_id: ID } }, { respostaId: RESPOSTA }],
 ])("%s é recusada antes da escrita", async (_rotulo, opcoes, extra) => {
   const mock = mockClient(opcoes)
   autenticar(mock)
