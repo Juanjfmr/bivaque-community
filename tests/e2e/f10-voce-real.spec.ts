@@ -282,7 +282,7 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     // entrada, e o fundo inerte do modal tira o heading "Você" da árvore de
     // acessibilidade — com ela fechada, o estado restaurado é o da tela.
     const folha = page.locator('[data-sobreposicao="interesses"]')
-    await folha.getByRole("button", { name: "Fechar" }).click()
+    await folha.getByRole("button", { name: "Fechar", exact: true }).click()
     await expect(folha).toHaveCount(0)
     await page.reload()
     await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
@@ -307,7 +307,7 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     await expect(caixa).toHaveAttribute("aria-checked", "false")
     await expect(page.getByRole("button", { name: "Limpar" })).toHaveCount(0)
 
-    await folha.getByRole("button", { name: "Fechar" }).click()
+    await folha.getByRole("button", { name: "Fechar", exact: true }).click()
     await expect(folha).toHaveCount(0)
     await page.reload()
     await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
