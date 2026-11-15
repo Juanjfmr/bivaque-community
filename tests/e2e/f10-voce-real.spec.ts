@@ -244,7 +244,9 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     expect(restantes, "o cookie da sessão não pode sobreviver à saída").toHaveLength(0)
 
     // Sem sessão, a tela protegida da web devolve à entrada — nunca à tela antiga.
-    await page.goto("/configuracoes/familia")
+    // /community segue na web (LAN-TROCA) e é gateada por sessão. /configuracoes/familia
+    // não serve: tem redirect de troca para /app/voce (next.config.ts:128), que é público.
+    await page.goto("/community")
     await expect(page).toHaveURL(/\/app\/entrar/, { timeout: 30_000 })
   })
 })
