@@ -1,0 +1,90 @@
+# F04 — salvar/seguir indicacoes pelo app (um toggle so).
+#
+# LANCAMENTO.md:57 exige salvar e seguir na linha F04; o quadro (LAN-TROCA:6299)
+# ainda lista seguir/salvar como gap. SALVAR e SEGUIR sao a MESMA acao: um registro
+# em recommendation_saves, como a web ja faz (indication-detail.tsx:433-458, botao
+# Seguir respostas/Seguindo respostas). O banco JA tem tabela, RLS, triggers de
+# notificacao (20260821000012 notifica quem salvou), rotulos e deep-link — o app e
+# o unico elo que falta. SEM migration, SEM pgTAP novo, SEM R3. Molde end-to-end:
+# salvar do guia (RUN-154): guia/[id]/salvo + guia/salvos + Salvos.tsx:169-195.
+#
+# LIMITACAO REAL: a policy recommendation_saves_insert_own so aceita pedido da
+# cidade (locality_id nao nulo). Pedido de grupo e visivel mas salvar da 42501.
+# A jornada F04 do app e da cidade; o minimo correto e mapear 42501->403 com
+# mensagem honesta. Estender a pedidos de grupo exigiria migration R3 — NAO fazer.
+#
+# Este lote fecha tambem o item F10 indicacoes em Salvos (mesmo mecanismo) e
+# destrava a troca de /indicacoes/[id]. NAO corrigir contagens.salvos do Voce
+# (conta so listing_saves, inconsistencia pre-existente) nem outros gaps F04.
+
+task_id: RUN-158
+
+objective: >
+  Salvar/seguir indicacao pelo app com um toggle Seguir respostas/Seguindo
+  respostas na tela Pergunta (registro em recommendation_saves), campo salva no
+  detalhe, rota PUT/DELETE perguntas/[id]/salvo + GET perguntas/salvas, e secao
+  perguntas em Salvos que navega a pergunta. Reuse total: tabela, permissoes,
+  triggers, rotulos e deep-link ja existem e tem prova de banco. Sem migration.
+
+authority:
+  - docs/LANCAMENTO.md:57 (F04: salvar, seguir)
+  - Mapa do explorer 15/11 (recommendation_saves existente, molde guia/salvo, web indication-detail)
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Pergunta.tsx nao tem acao de salvar/seguir; perguntas.ts sem campo salva;
+    Salvos.tsx:21-26 so 3 secoes (anuncios demo, grupo, guia), sem indicacoes.
+    Nao existe /api/app/perguntas/[id]/salvo nem /api/app/perguntas/salvas. O banco
+    tem recommendation_saves (20260802001100_recommendations.sql:74-82, RLS
+    :210-242) e o trigger de seguidores (20260821000012). A web ja faz
+    (indication-detail.tsx:433-458) e lista em /salvos (saved-items.ts:190-222).
+
+allowed_paths:
+  - docs/agents/tasks/F04-SALVAR.task.yml
+  - apps/web/app/api/app/perguntas
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/src/telas/Pergunta.tsx
+  - apps/app/src/telas/Salvos.tsx
+  - apps/app/tests
+  - tests/unit/app-api/perguntas
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f04-perguntas-real.spec.ts
+  - .visual/f04-salvar
+
+forbidden:
+  - criar migration, tabela, policy ou pgTAP novo (recommendation_saves e RLS ja existem e tem prova)
+  - estender o save a pedidos de grupo (exigiria migration R3); mapear 42501->403 honesto
+  - corrigir contagens.salvos do Voce (pre-existente) ou tocar outras jornadas/tema
+  - implementar fixar/ocultar/denuncia/Tambem perguntar (outros gaps, fora deste lote)
+  - trocar/remover a tela web /indicacoes/[id] (a troca e passo posterior, nao deste lote)
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "PUT/DELETE /api/app/perguntas/[id]/salvo no contrato ADR §5 (molde apps/web/app/api/app/guia/[id]/salvo/route.ts:37-94): exigirSessao + conferirEscrita (CSRF), ehUuid->404, checagem de visibilidade do pedido pela sessao->404, insert tolerando 23505 (idempotente), devolve {salvo:true/false} gravado; interpretarErroDoBanco mapeia 42501->403 (pedido de grupo, mensagem honesta); DELETE do proprio save sempre permitido. SEM service_role."
+  - "GET /api/app/perguntas/[id] ganha campo salva (consulta a recommendation_saves do proprio user, como web indication-detail.tsx:121-129). GET /api/app/perguntas/salvas (molde guia/salvos/route.ts:18-65): saves do proprio user (pela sessao), ordem saved_at desc, limite 50, join so com pedidos visiveis (is_deleted=false); falha->503, nunca lista vazia."
+  - "Registrar as 2 rotas novas em apps/web/lib/security/api-surface.ts (SESSAO) e bumpar TOTAL_DE_ROTAS (conferir contagem real em disco; hoje 88, deve virar 90). tests/unit/security/api-surface.test.ts verde."
+  - "apps/app/lib/dados/perguntas.ts: marcarSalvaPergunta(id, salvar) (PUT/DELETE) + lerPerguntasSalvas() + campo salva no tipo/parse do detalhe. Molde marcarNoGuia (guia.ts:170-180)."
+  - "Pergunta.tsx: UM toggle Seguir respostas/Seguindo respostas (rotulo da web, indication-detail.tsx:457), estado otimista com reversao em falha, distingue carregando/erro. Cobre salvar E seguir. Salvos.tsx: secao data-salvos=perguntas (molde guia :169-195) com LinhaDeLista que navega a pergunta; carregando/vazio/erro."
+  - "Testes: unit da rota (PUT idempotente, DELETE, 401/CSRF, 404 uuid/nao-visivel, 403 pedido de grupo, GET salvos lista/503; molde tests/unit/app-api/guia/rotas.test.ts:180-201,346-399,540-567); perguntas-dados (marcarSalvaPergunta/lerPerguntasSalvas/campo salva); E2E real f04-perguntas-real (salvar->reload->persiste->aparece em /app/salvos->dessalvar devolve o seed; molde f08-guia-real.spec.ts:130-200; o seed NAO tem recommendation_saves, criar pelo UI e devolver). Positivo E negativo em toda permissao."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F04-SALVAR.task.yml
+
+risk: endpoint de escrita (permissoes de recommendation_saves ja existem, com prova de banco); sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
