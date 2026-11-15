@@ -10,7 +10,13 @@ import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { buscarPergunta, type PerguntaDaConversa, responderPergunta } from "@/lib/dados/perguntas"
+import {
+  type AcaoDeResolucao,
+  buscarPergunta,
+  mudarResolucao,
+  type PerguntaDaConversa,
+  responderPergunta,
+} from "@/lib/dados/perguntas"
 import { idLocal } from "@/lib/id"
 import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -27,10 +33,13 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * A pergunta e a conversa dela, do banco (F04 / ADR-20261105).
  *
  * O desenho não mudou — autoria e contexto, título, etiqueta de estado, respostas
- * com "Útil" e o campo de resposta. Mudou de onde vem o dado:
+ * e o campo de resposta. Mudou de onde vem o dado:
  * `lib/dados/perguntas`, que fala com `/api/app/perguntas`. Por isso a tela
  * distingue carregando, falha recuperável, sessão vencida, acesso negado e
  * pergunta que não existe mais.
+ *
+ * Só quem perguntou resolve ou reabre, e quem decide isso é o banco: a tela
+ * esconde os botões de quem não é autor, mas a RPC recusa de novo.
  *
  * A resposta é GRAVADA antes de aparecer: o que a tela mostra é o que o servidor
  * devolveu, não um otimismo local. Quando a escrita falha, o texto continua no
@@ -40,6 +49,15 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * ela abre daqui mesmo, só nesta sessão, como o cadastro dela avisa.
  */
 const CHAVE_DE_RESPOSTA = "resposta-da-pessoa"
+
+/** A frase da resolução quando o servidor não mandou uma. */
+function fraseDaResolucao(falha: unknown): string {
+  if (falha instanceof FalhaDaApi && falha.codigo === "sem-sessao") {
+    return "Sua sessão expirou. Entre de novo para continuar."
+  }
+  if (falha instanceof FalhaDaApi && falha.mensagem !== null) return falha.mensagem
+  return "Não foi possível mudar a resolução. Tente de novo."
+}
 
 export function Pergunta() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
@@ -51,7 +69,8 @@ export function Pergunta() {
   const [resposta, setResposta] = useState("")
   const [erroAoResponder, setErroAoResponder] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
-  const [uteis, setUteis] = useState<ReadonlySet<string>>(() => new Set())
+  const [mudandoResolucao, setMudandoResolucao] = useState(false)
+  const [erroDaResolucao, setErroDaResolucao] = useState<string | null>(null)
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -79,6 +98,7 @@ export function Pergunta() {
           assunto: "",
           criadaEm: "",
           resolvida: local.is_resolved === true,
+          resolvidaPorResposta: null,
           propria: true,
           autor: "Você",
           cidade: casca.cidade,
@@ -149,14 +169,28 @@ export function Pergunta() {
   // Capturado depois do guarda: `enviar` é declaração de função (hoisted), e o
   // TypeScript não carrega o estreitamento de `dados` para dentro dela.
   const atual = dados
+  // A pergunta de demonstração não tem banco: resolver nela seria mentira.
+  const podeResolver = pergunta.propria && local === null
 
-  const alternarUtil = (chave: string) => {
-    setUteis((atual) => {
-      const proximo = new Set(atual)
-      if (proximo.has(chave)) proximo.delete(chave)
-      else proximo.add(chave)
-      return proximo
-    })
+  async function mudar(acao: AcaoDeResolucao, respostaId?: string) {
+    if (mudandoResolucao) return
+    setMudandoResolucao(true)
+    setErroDaResolucao(null)
+    try {
+      const estado = await mudarResolucao(id, acao, respostaId, { signal: controle.signal })
+      setDados({
+        ...atual,
+        pergunta: {
+          ...pergunta,
+          resolvida: estado.resolvida,
+          resolvidaPorResposta: estado.resolvidaPorResposta,
+        },
+      })
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) setErroDaResolucao(fraseDaResolucao(falha))
+    } finally {
+      setMudandoResolucao(false)
+    }
   }
 
   async function enviar() {
@@ -219,7 +253,25 @@ export function Pergunta() {
           )}
           <span className="text-[13px] text-(--on-surface-variant)">{pergunta.assunto}</span>
         </div>
+        {podeResolver && pergunta.resolvida ? (
+          <div className="flex justify-start">
+            <Botao
+              tom="texto"
+              icone="undo"
+              disabled={mudandoResolucao}
+              onClick={() => void mudar("reabrir")}
+            >
+              Reabrir pergunta
+            </Botao>
+          </div>
+        ) : null}
       </article>
+
+      {erroDaResolucao === null ? null : (
+        <p role="alert" className="text-sm text-(--destructive)">
+          {erroDaResolucao}
+        </p>
+      )}
 
       <Secao titulo="Respostas">
         {respostas.length === 0 ? (
@@ -231,8 +283,6 @@ export function Pergunta() {
         ) : (
           <div className="grid gap-3">
             {respostas.map((item) => {
-              const chave = item.id
-              const ajudou = uteis.has(chave) ? 1 : 0
               if (item.removida) {
                 return (
                   <p
@@ -262,16 +312,24 @@ export function Pergunta() {
                     </span>
                   </div>
                   <p className="text-[15px] leading-6">{item.corpo}</p>
-                  <div className="flex items-center gap-2">
-                    <Botao
-                      tom={uteis.has(chave) ? "tonal" : "texto"}
-                      icone="thumb_up"
-                      aria-pressed={uteis.has(chave)}
-                      onClick={() => alternarUtil(chave)}
-                    >
-                      {ajudou > 0 ? `Útil · ${ajudou}` : "Útil"}
-                    </Botao>
-                  </div>
+                  {!podeResolver ? null : pergunta.resolvidaPorResposta === item.id ? (
+                    <div className="flex items-center gap-2">
+                      <Etiqueta tom="ok" icone="check_circle">
+                        Resolveu a pergunta
+                      </Etiqueta>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Botao
+                        tom="texto"
+                        icone="check_circle"
+                        disabled={mudandoResolucao}
+                        onClick={() => void mudar("marcar", item.id)}
+                      >
+                        Ajudou a resolver
+                      </Botao>
+                    </div>
+                  )}
                 </article>
               )
             })}

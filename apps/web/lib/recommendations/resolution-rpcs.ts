@@ -22,15 +22,18 @@ export interface ResolutionRpcs {
   }
 }
 
+/** O erro do PostgREST com o código SQLstate, que é o que a rota traduz. */
+export type ErroDoRpc = { message: string; code?: string }
+
 export async function callResolutionRpc<K extends keyof ResolutionRpcs>(
   supabase: ServiceClient,
   name: K,
   args: ResolutionRpcs[K]["args"],
-): Promise<{ error: { message: string } | null }> {
+): Promise<{ error: ErroDoRpc | null }> {
   const fn = supabase.rpc as unknown as (
     name: K,
     args: ResolutionRpcs[K]["args"],
-  ) => Promise<{ data: unknown; error: { message: string } | null }>
+  ) => Promise<{ data: unknown; error: ErroDoRpc | null }>
   const { error } = await fn.call(supabase, name, args)
   return { error }
 }

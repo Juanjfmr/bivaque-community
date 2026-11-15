@@ -1,0 +1,78 @@
+# F04 — resolver/reabrir pergunta + remover util fake de resposta.
+#
+# Dois gaps do F04 no MESMO arquivo (Pergunta.tsx), por isso um lote so:
+# 1. Ajudou a resolver: as RPCs mark_recommendation_resolved / reopen_recommendation
+#    JA existem (wrapper apps/web/lib/recommendations/resolution-rpcs.ts). O GET
+#    /api/app/perguntas/[id] ja devolve resolvidaPorResposta. Falta o endpoint de
+#    escrita + parsing no app + botoes. Destrava a troca de /indicacoes/[id] (o
+#    LAN-TROCA mantem na web exatamente por falta deste botao).
+# 2. Util em resposta de pergunta: HOJE e um Set local (Pergunta.tsx:54,153-160)
+#    que nao persiste = tela de mentira. O Util real do lancamento e o de
+#    comentario de grupo (comment_reactions, ja existe). Decisao do dono 14/11:
+#    REMOVER o util fake de resposta (sem migration; feature completa pos-lancamento).
+#
+# SEM migration. As RPCs ja validam posse (auth.uid()). R2.
+
+task_id: RUN-153
+
+objective: >
+  Fechar dois gaps do F04: (1) resolver/reabrir pergunta pelo app — endpoint POST
+  /api/app/perguntas/[id]/resolucao usando as RPCs existentes, parsing de
+  resolvidaPorResposta no app, botoes "Ajudou a resolver"/"Reabrir" na tela Pergunta
+  (so o autor); (2) remover o "Util" fake de resposta de pergunta (Set local que nao
+  persiste), mantendo o Util real de comentario de grupo intacto.
+
+authority:
+  - docs/LANCAMENTO.md (F04: resposta que resolveu; Util)
+  - Decisao do dono 14/11: util de resposta fake sai (o real e o de grupo)
+  - Mapa do explorer 14/11 (RPCs existentes, molde mercado/[id]/situacao)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Pergunta.tsx so LE resolvidaPorResposta (nao escreve); alternarUtil e Set local
+    sem persistencia. RPCs mark_recommendation_resolved/reopen_recommendation existem
+    (resolution-rpcs.ts). GET perguntas/[id] ja devolve resolvidaPorResposta.
+    /indicacoes/[id] segue na web por falta do botao resolver (LAN-TROCA proof 06/11).
+
+allowed_paths:
+  - docs/agents/tasks/F04-RESOLVER.task.yml
+  - apps/web/app/api/app/perguntas
+  - apps/web/lib/recommendations
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/src/telas/Pergunta.tsx
+  - apps/app/tests
+  - tests/unit/app-api/perguntas
+  - tests/e2e/f04-perguntas-real.spec.ts
+  - .visual/f04-resolver
+
+forbidden:
+  - criar migration ou tabela nova (as RPCs ja existem)
+  - tocar o Util real de comentario de grupo (comment_reactions / marcarComentarioUtil)
+  - tocar outras jornadas, Guia, grupos, mercado, tema, navegacao rotas
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST /api/app/perguntas/[id]/resolucao { acao: resolver|reabrir|marcar, respostaId? } no contrato ADR app §5 (sessao do cookie, x-bivaque-app, CSRF, erro tipado). Molde: apps/web/app/api/app/mercado/[id]/situacao/route.ts (mapa P0002→404, 42501→403, 22023→409). Usa as RPCs via resolution-rpcs.ts. So o autor resolve/reabre (posse do banco)."
+  - "apps/app/lib/dados/perguntas.ts: tipo + parse de resolvidaPorResposta; mudarResolucao(id, acao, respostaId?). Pergunta.tsx: etiqueta Resolvida + botao Ajudou a resolver por resposta quando propria; Reabrir quando resolvida; o botao so aparece para o autor."
+  - "Remover o Util fake de resposta: uteis Set, alternarUtil, botao Util de resposta saem de Pergunta.tsx. O Util de comentario de grupo (outra tela) intacto."
+  - "Testes: unit da rota (autor resolve/reabre, terceiro 403/404, respostaId de outra pergunta recusado, CSRF); perguntas-dados (caminho/corpo/campo); E2E f04-perguntas-real (autor marca→recarrega→persiste; nao-autor nao ve botao; util fake removido). Positivo E negativo."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz, unit API). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F04-RESOLVER.task.yml
+
+risk: endpoint de escrita em perguntas (posse via RPC existente) + remocao de UI fake
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
