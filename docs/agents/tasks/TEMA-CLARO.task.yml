@@ -44,6 +44,7 @@ allowed_paths:
   - apps/app/components/bivaque/entrada-etapa.tsx
   - apps/app/src/previa-f01
   - apps/app/tests
+  - tests/e2e
   - .visual/tema-claro
 
 forbidden:

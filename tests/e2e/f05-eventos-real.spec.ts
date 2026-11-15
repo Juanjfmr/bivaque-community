@@ -42,17 +42,13 @@ const ENCONTRO_PASSADO_SEMEADO = "Caminhada matinal no parque"
 
 async function capturar(page: Page, projeto: string, etapa: string): Promise<void> {
   mkdirSync(DIRETORIO_DAS_CAPTURAS, { recursive: true })
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await page.evaluate(async () => {
-      await document.fonts.ready
-    })
-    await page.screenshot({
-      path: join(DIRETORIO_DAS_CAPTURAS, `${projeto}-${tema}-${etapa}.png`),
-      fullPage: true,
-    })
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+  await page.screenshot({
+    path: join(DIRETORIO_DAS_CAPTURAS, `${projeto}-claro-${etapa}.png`),
+    fullPage: true,
+  })
 }
 
 /** Canais do `color` computado do título da tela. */
@@ -190,29 +186,24 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       "encontro passado não entra na agenda",
     ).toHaveCount(0)
 
-    // Cor computada no escuro: o tema do sistema chega até a tela.
-    await page.emulateMedia({ colorScheme: "dark" })
-    await page.waitForFunction(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
-    const noEscuro = await corDoTitulo(page)
-    expect(noEscuro, "no escuro o título é claro").toHaveLength(3)
-    for (const canal of noEscuro) expect(canal).toBeGreaterThan(128)
+    // Cor computada no claro: o lançamento (14/11) é claro-only e o app ignora
+    // o esquema do sistema.
+    const noClaro = await corDoTitulo(page)
+    expect(noClaro, "no claro o título é escuro").toHaveLength(3)
+    for (const canal of noClaro) expect(canal).toBeLessThan(128)
 
-    // A ação da tela é legível no escuro — medido, não olhado. O botão anima
-    // `color` e `background-color` (pecas.css), então a medida espera a cor
-    // assentar: logo depois da troca de tema ela ainda está no meio do caminho.
+    // A ação da tela é legível — medido, não olhado. O botão anima `color` e
+    // `background-color` (pecas.css), então a medida espera a cor assentar.
     await expect
       .poll(
         async () => {
           const criar = await coresDoBotao(page, "Criar encontro")
           return contraste(criar.texto, criar.fundo)
         },
-        { message: '"Criar encontro" no escuro, depois da transição, abaixo de 4.5:1' },
+        { message: '"Criar encontro" no claro, depois da transição, abaixo de 4.5:1' },
       )
       .toBeGreaterThanOrEqual(4.5)
 
-    await page.emulateMedia({ colorScheme: "light" })
-    const noClaro = await corDoTitulo(page)
-    for (const canal of noClaro) expect(canal).toBeLessThan(128)
     await capturar(page, projeto, "agenda")
 
     await linhaDoFuturo.click()
@@ -235,9 +226,7 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       "a presença precisa sobreviver ao recarregamento",
     ).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 })
 
-    // Contraste das ações de presença no escuro — medido, não olhado.
-    await page.emulateMedia({ colorScheme: "dark" })
-    await page.waitForFunction(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
+    // Contraste das ações de presença — medido, não olhado.
     // Os botões animam a cor: a medida espera a transição assentar.
     for (const nome of ["Não vou", "Cancelar presença"]) {
       await expect
@@ -246,11 +235,10 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
             const cores = await coresDoBotao(page, nome)
             return contraste(cores.texto, cores.fundo)
           },
-          { message: `"${nome}" no escuro, depois da transição, abaixo de 4.5:1` },
+          { message: `"${nome}" no claro, depois da transição, abaixo de 4.5:1` },
         )
         .toBeGreaterThanOrEqual(4.5)
     }
-    await page.emulateMedia({ colorScheme: "light" })
     await capturar(page, projeto, "encontro-com-presenca")
 
     // Cancelar volta ao estado anterior, e também sobrevive ao recarregamento.

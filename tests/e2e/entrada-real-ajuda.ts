@@ -1163,28 +1163,16 @@ async function capturar(page: Page, arquivo: string): Promise<void> {
 }
 
 /**
- * Um ponto-chave nos dois temas. A captura escura troca a mídia e volta ao claro,
- * então a jornada continua uma vez só — não é preciso repetir o fluxo por tema.
+ * Um ponto-chave no tema claro — o lançamento (14/11) é só claro; o app ignora
+ * o esquema do sistema.
  */
-export async function capturarEmDoisTemas(
-  page: Page,
-  projeto: string,
-  etapa: string,
-): Promise<void> {
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await capturar(page, `${projeto}-${tema}-${etapa}.png`)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+export async function capturarNoClaro(page: Page, projeto: string, etapa: string): Promise<void> {
+  await capturar(page, `${projeto}-claro-${etapa}.png`)
 }
 
-/** As capturas canônicas pedidas pelo contrato: `<projeto>-<tema>.png`. */
+/** As capturas canônicas pedidas pelo contrato: `<projeto>-claro.png`. */
 export async function capturarFinais(page: Page, projeto: string): Promise<void> {
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await capturar(page, `${projeto}-${tema}.png`)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await capturar(page, `${projeto}-claro.png`)
 }
 
 // ── Marca de grupo padrão (RUN-025b, ADR-20261107 item 4) ──────────────────

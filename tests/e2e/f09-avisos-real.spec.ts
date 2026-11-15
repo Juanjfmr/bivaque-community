@@ -11,16 +11,14 @@ const CAPTURAS = join(process.cwd(), ".visual", "run-022")
 
 async function capturar(page: Page, projeto: string, tela: string) {
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
-    await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
-    await page.evaluate(() => document.fonts.ready)
-    await page.screenshot({
-      path: join(CAPTURAS, `${projeto}-${tela}-${tema}.png`),
-      fullPage: true,
-      animations: "disabled",
-    })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  }
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.evaluate(() => document.fonts.ready)
+  await page.screenshot({
+    path: join(CAPTURAS, `${projeto}-${tela}-claro.png`),
+    fullPage: true,
+    animations: "disabled",
+  })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 }
 
 /**

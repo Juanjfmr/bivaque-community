@@ -33,14 +33,10 @@ async function conferirBanco(context: BrowserContext, tabela: string, id: string
 async function capturar(page: Page, nome: string) {
   const pasta = join(process.cwd(), ".visual", "run-015")
   mkdirSync(pasta, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
-    await page.emulateMedia({ colorScheme: tema })
-    await page.screenshot({ path: join(pasta, `${nome}-${tema}.png`), fullPage: true })
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-    ).toBe(true)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await page.screenshot({ path: join(pasta, `${nome}-claro.png`), fullPage: true })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  )
 }
 
 test.describe("F03 — criação real", { tag: "@stateful" }, () => {

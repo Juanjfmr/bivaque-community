@@ -43,17 +43,13 @@ const MEMBRO_DE_OUTRA_CIDADE = "membro-rio@bivaque.example.invalid"
 
 async function capturar(page: Page, projeto: string, etapa: string): Promise<void> {
   mkdirSync(DIRETORIO_DAS_CAPTURAS, { recursive: true })
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await page.evaluate(async () => {
-      await document.fonts.ready
-    })
-    await page.screenshot({
-      path: join(DIRETORIO_DAS_CAPTURAS, `${projeto}-${tema}-${etapa}.png`),
-      fullPage: true,
-    })
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+  await page.screenshot({
+    path: join(DIRETORIO_DAS_CAPTURAS, `${projeto}-claro-${etapa}.png`),
+    fullPage: true,
+  })
 }
 
 /** O token da sessão semeada, para falar com a rota sem passar pela interface. */
