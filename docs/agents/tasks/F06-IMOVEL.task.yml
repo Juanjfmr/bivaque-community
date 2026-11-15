@@ -51,6 +51,7 @@ allowed_paths:
   - tests/unit/listings
   - tests/e2e/f06-mercado-real.spec.ts
   - tests/e2e/mercado-redirects.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
   - tests/e2e/link-crawl.spec.ts
   - tests/unit/infra/lan-troca-redirect.test.ts
   - scripts/visual/capture.mjs
