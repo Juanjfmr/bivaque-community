@@ -7,6 +7,7 @@ import {
   buscarPublicacao,
   comentarPublicacao,
   contarPublicacoes,
+  criarGrupo,
   denunciarPublicacao,
   lerGrupos,
   lerPedidosDoGrupo,
@@ -62,6 +63,26 @@ it.each([{}, { grupos: null }, { grupos: [{}], cidade: "", proximo: null }])(
     await expect(lerGrupos()).rejects.toBeInstanceOf(FalhaDaApi)
   },
 )
+it("cria grupo pelo cliente único e devolve o grupo da sessão", async () => {
+  const fetch = resposta({ grupo })
+  const signal = new AbortController().signal
+  const dados = { nome: "Famílias", descricao: "", regras: "Respeito", fechado: false }
+  expect(await criarGrupo(dados, { signal })).toEqual(grupo)
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/app/grupos",
+    expect.objectContaining({ method: "POST", signal, body: JSON.stringify(dados) }),
+  )
+})
+it("criação preserva a recusa do servidor e rejeita resposta fora do contrato", async () => {
+  resposta({ erro: "nome-em-uso", mensagem: "Já existe um grupo com esse nome." }, 409)
+  await expect(
+    criarGrupo({ nome: "Famílias", descricao: "", regras: "", fechado: false }),
+  ).rejects.toMatchObject({ status: 409, motivoDoServidor: "nome-em-uso" })
+  resposta({ grupo: { ...grupo, admin: "sim" } })
+  await expect(
+    criarGrupo({ nome: "Famílias", descricao: "", regras: "", fechado: false }),
+  ).rejects.toBeInstanceOf(FalhaDaApi)
+})
 it("conserva o status da recusa para a tela", async () => {
   resposta({ erro: "sem-sessao" }, 401)
   await expect(buscarGrupo("g1")).rejects.toMatchObject({ status: 401 })
@@ -256,6 +277,7 @@ it("pedidos leem motivo e paginação pelo cliente único", async () => {
 })
 it.each([
   () => lerGrupos(),
+  () => criarGrupo({ nome: "Famílias", descricao: "", regras: "", fechado: false }),
   () => buscarGrupo("g1"),
   () => buscarPublicacao("p1"),
   () => mudarParticipacao("g1", true),

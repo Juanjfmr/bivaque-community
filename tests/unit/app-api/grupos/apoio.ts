@@ -64,6 +64,8 @@ type Opcoes = {
   salvas?: boolean
   ocultas?: boolean
   reacoesComentarios?: { comment_id: string; user_id: string }[]
+  /** Id que a RPC `create_group` devolve. */
+  criado?: string
 }
 export function mockClient(opcoes: Opcoes = {}) {
   const chamadas: { tabela: string; metodo: string; args: unknown[] }[] = []
@@ -183,6 +185,9 @@ export function mockClient(opcoes: Opcoes = {}) {
         data: null,
         error: { code: opcoes.codigo ?? "XX000", message: "segredo-do-banco" },
       })
+    // `create_group` devolve o id do grupo criado; a leitura que a rota faz
+    // depois segue por `from("groups")`, como no caminho de detalhe.
+    if (nome === "create_group") return Promise.resolve({ data: opcoes.criado ?? ID, error: null })
     return builder(nome)
   })
   const upload = vi.fn(async () => ({

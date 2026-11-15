@@ -137,6 +137,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
     const servico = await servicoLocal()
     const aberto = randomUUID()
     const fechado = randomUUID()
+    const nomeDoGrupo = `Grupo F04 criado ${randomUUID().slice(0, 8)}`
+    let grupoCriado = ""
     let banco: APIRequestContext | null = null
     try {
       await test.step("fixture: os grupos aberto e fechado da cidade", async () => {
@@ -176,6 +178,82 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
             })),
           }),
         )
+      })
+
+      await test.step("criar grupo: quem cria vira dono e o grupo aparece no diretório", async () => {
+        await signInAs(context, "visual@bivaque.example.invalid")
+        await page.goto("/app/comunidade", ESPERA)
+        await page.getByRole("radio", { name: "Filtrar por Grupos", exact: true }).click(ESPERA)
+        const diretorio = page.locator("[data-diretorio-grupos]")
+        await expect(diretorio, "a aba Grupos mostra o diretório").toBeVisible(ESPERA)
+        await diretorio.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        const folha = page.locator('[data-sobreposicao="grupo-novo"]')
+        await expect(folha, "a folha de criar grupo abre sobre o diretório").toBeVisible(ESPERA)
+        const campoDoNome = folha.getByLabel("Nome do grupo")
+        await campoDoNome.fill("ab", ESPERA)
+        await campoDoNome.blur(ESPERA)
+        await expect(
+          folha.getByText("Dê um nome ao grupo, com pelo menos 3 letras."),
+          "nome curto é recusado no campo que o originou",
+        ).toBeVisible(ESPERA)
+        await expect(
+          folha.getByRole("button", { name: "Criar grupo", exact: true }),
+          "com o nome inválido a ação primária fica desligada",
+        ).toBeDisabled(ESPERA)
+        await campoDoNome.fill(nomeDoGrupo, ESPERA)
+        await folha.getByLabel("Sobre o grupo").fill("Criado pelo app na prova do F04", ESPERA)
+        await folha.getByLabel("Regras do grupo").fill("Respeito entre os membros.", ESPERA)
+        await folha.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        await expect(page, "criar abre o grupo gravado").toHaveURL(
+          /\/app\/grupo\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+          ESPERA,
+        )
+        grupoCriado = new URL(page.url()).pathname.split("/").at(-1) ?? ""
+        // O painel de pedidos é do administrador do grupo: é a tela dizendo que
+        // quem criou é o dono, e a linha do vínculo confirma no banco.
+        await expect(
+          page.locator("[data-pedidos-entrada]"),
+          "quem criou administra o grupo",
+        ).toBeVisible(ESPERA)
+        const sessoes = await apiForSession(context)
+        const vinculo = await sessoes.get(
+          `/rest/v1/group_memberships?select=role,status&group_id=eq.${grupoCriado}`,
+        )
+        expect(vinculo.ok(), "o vínculo é legível pela sessão de quem criou").toBe(true)
+        expect(await vinculo.json(), "quem criou é dono aprovado").toEqual([
+          { role: "owner", status: "approved" },
+        ])
+        await sessoes.dispose()
+
+        await page.goto("/app/comunidade", ESPERA)
+        await page.getByRole("radio", { name: "Filtrar por Grupos", exact: true }).click(ESPERA)
+        const lista = page.locator("[data-diretorio-grupos]")
+        const alvo = lista.locator("article", { hasText: nomeDoGrupo })
+        const mais = lista.getByRole("button", { name: "Ver mais grupos" })
+        for (let volta = 0; volta < 40; volta++) {
+          if (await alvo.isVisible()) break
+          if (!(await mais.isVisible())) break
+          await mais.click(ESPERA)
+          await expect(
+            lista.getByRole("button", { name: "Carregando…" }),
+            "a página seguinte termina de carregar",
+          ).toHaveCount(0, ESPERA)
+        }
+        await expect(alvo, "o grupo criado aparece no diretório").toBeVisible(ESPERA)
+
+        // Repetir o nome é recusado pelo servidor: a folha fica aberta e o que
+        // a pessoa digitou continua nela.
+        await lista.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        const repetida = page.locator('[data-sobreposicao="grupo-novo"]')
+        await repetida.getByLabel("Nome do grupo").fill(nomeDoGrupo, ESPERA)
+        await repetida.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        await expect(
+          repetida.getByRole("alert"),
+          "nome repetido é recusado com o próximo passo",
+        ).toContainText("Já existe um grupo com esse nome. Busque e entre nele.", ESPERA)
+        // `exact`: a alça da folha chama-se "Arrastar para fechar" e casaria
+        // com o nome "Fechar" na busca por substring.
+        await repetida.getByRole("button", { name: "Fechar", exact: true }).click(ESPERA)
       })
 
       await test.step("entrar: quem não é membro não publica nem lê o grupo fechado", async () => {
@@ -457,7 +535,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
     } finally {
       await test.step("limpeza: a fixture sai do banco e do storage", async () => {
         try {
-          await limpar(servico, [aberto, fechado])
+          await limpar(servico, [aberto, fechado, ...(grupoCriado === "" ? [] : [grupoCriado])])
         } finally {
           await banco?.dispose()
           await servico.dispose()
