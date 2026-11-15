@@ -27,17 +27,13 @@ const CEP_SEMEADO = "69000-000"
 const CEP_DIGITOS = "69000000"
 const NOME_SEMEADO = "Ana Verificada"
 
-/** Captura a tela no tema claro e no escuro, na largura do projeto atual. */
-async function capturarEmDoisTemas(page: Page, projeto: string, etapa: string): Promise<void> {
+/** Captura a tela no tema claro (o lançamento 14/11 é claro-only), na largura do projeto. */
+async function capturarNoClaro(page: Page, projeto: string, etapa: string): Promise<void> {
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await page.screenshot({
-      path: join(CAPTURAS, `${projeto}-${etapa}-${tema}.png`),
-      fullPage: true,
-    })
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await page.screenshot({
+    path: join(CAPTURAS, `${projeto}-${etapa}-claro.png`),
+    fullPage: true,
+  })
 }
 
 function semCoordenada(valor: unknown): boolean {
@@ -103,7 +99,7 @@ test.describe("F10 — CEP do perfil no app", { tag: "@stateful" }, () => {
     expect(semCoordenada(corpoDaResposta), "a resposta não pode trazer coordenada").toBe(true)
 
     await expect(page.getByText(NOME_SEMEADO)).toBeVisible({ timeout: 30_000 })
-    await capturarEmDoisTemas(page, testInfo.project.name, "voce-cep-gravado")
+    await capturarNoClaro(page, testInfo.project.name, "voce-cep-gravado")
 
     // Depois de recarregar, o CEP volta do banco pela leitura da tela; o corpo
     // do GET também não carrega coordenada.
@@ -127,7 +123,7 @@ test.describe("F10 — CEP do perfil no app", { tag: "@stateful" }, () => {
     await expect(page.getByLabel("CEP"), "o CEP gravado precisa voltar na edição").toHaveValue(
       CEP_SEMEADO,
     )
-    await capturarEmDoisTemas(page, testInfo.project.name, "voce-cep-recarregado")
+    await capturarNoClaro(page, testInfo.project.name, "voce-cep-recarregado")
 
     // CEP pela metade não pode apagar a localização em silêncio: o Salvar fica
     // desabilitado até os oito dígitos ou o campo vazio (limpeza explícita).

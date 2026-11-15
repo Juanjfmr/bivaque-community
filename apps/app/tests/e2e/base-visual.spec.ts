@@ -61,7 +61,7 @@ test("V14: perguntas mostram o título completo sem truncar no celular", async (
   expect(geometria.semCorteVertical).toBe(true)
 })
 
-test("V15: o botão preenchido usa a Brasa oficial em claro e escuro", async ({ page }) => {
+test("V15: o botão preenchido usa a Brasa oficial", async ({ page }) => {
   await page.addInitScript(() => {
     ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ = true
   })

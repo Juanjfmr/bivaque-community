@@ -14,7 +14,7 @@ import {
  *
  * O que se prova, na tela real:
  *
- * - o campo aparece em 375, 768 e 1440, nos dois temas, com o pseudo-texto da
+ * - o campo aparece em 375, 768 e 1440, com o pseudo-texto da
  *   cidade; enviar o termo abre `/app/busca?q=<termo>`, dispara a consulta e
  *   mostra o resultado;
  * - termo vazio (e um caractere só) não navega: a tela fica onde está;
@@ -37,7 +37,7 @@ test.beforeEach(() => {
 })
 
 test.describe("campo 'Buscar em [cidade]'", () => {
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     test(`aparece e leva o termo ao resultado (tema ${tema})`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: tema })
       await simularInicio(page)
@@ -103,7 +103,7 @@ test.describe("campo 'Buscar em [cidade]'", () => {
 })
 
 test.describe("estado de primeira entrada", () => {
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     test(`Início sem conteúdo diz o que falta e como resolver (tema ${tema})`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: tema })
       await simularCidadeVazia(page)

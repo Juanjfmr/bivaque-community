@@ -45,34 +45,28 @@ async function tokenDaSessao(context: BrowserContext) {
 
 async function capturar(page: Page, projeto: string, etapa: string) {
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await page.evaluate(async () => {
-      await document.fonts.ready
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+  // Tema claro: o lançamento (14/11) é só claro; o app ignora o esquema do sistema.
+  await expect
+    .poll(async () => {
+      const cor = await page
+        .locator("[data-tela] h1")
+        .first()
+        .evaluate((elemento) => getComputedStyle(elemento).color)
+      const canais = (cor.match(/[\d.]+/g) ?? []).map(Number).slice(0, 3)
+      return canais.length === 3 && canais.every((canal) => canal < 128)
     })
-    await expect
-      .poll(async () => {
-        const cor = await page
-          .locator("[data-tela] h1")
-          .first()
-          .evaluate((elemento) => getComputedStyle(elemento).color)
-        const canais = (cor.match(/[\d.]+/g) ?? []).map(Number).slice(0, 3)
-        return (
-          canais.length === 3 &&
-          canais.every((canal) => (tema === "claro" ? canal < 128 : canal > 128))
-        )
-      })
-      .toBe(true)
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true)
-    await page.screenshot({
-      path: join(CAPTURAS, `${projeto}-${tema}-${etapa}.png`),
-      fullPage: true,
-      animations: "disabled",
-    })
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+    .toBe(true)
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true)
+  await page.screenshot({
+    path: join(CAPTURAS, `${projeto}-claro-${etapa}.png`),
+    fullPage: true,
+    animations: "disabled",
+  })
 }
 
 async function abrirFicha(page: Page) {

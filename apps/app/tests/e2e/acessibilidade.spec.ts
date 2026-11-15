@@ -1,4 +1,4 @@
-﻿import { mkdirSync } from "node:fs"
+import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import AxeBuilder from "@axe-core/playwright"
 import type { Locator, Page } from "@playwright/test"
@@ -31,8 +31,8 @@ import { aplicarStubMercado } from "./stub-mercado"
 /**
  * Acessibilidade das superfícies reais e da casca (§5.9).
  *
- * A matriz de axe roda nas superfícies reais, em 375, 768 e 1440, nos dois
- * temas, pelas tags WCAG A/AA e 2.1 AA, e falha em impacto sério ou crítico —
+ * A matriz de axe roda nas superfícies reais, em 375, 768 e 1440, pelas tags
+ * WCAG A/AA e 2.1 AA, e falha em impacto sério ou crítico —
  * contraste AA entra por aí, sem limiar afrouxado. Além das cinco telas do
  * lançamento, ela cobre a busca (vazia e com termo), o menu Criar, o formulário
  * de encontro, a ficha do negócio e o pedido. Teclado, foco, movimento reduzido
@@ -45,7 +45,7 @@ import { aplicarStubMercado } from "./stub-mercado"
  */
 
 const LARGURAS = [375, 768, 1440] as const
-const TEMAS = ["light", "dark"] as const
+const TEMAS = ["light"] as const
 const TAGS_DO_AXE = ["wcag2a", "wcag2aa", "wcag21aa"] as const
 
 type Superficie = Readonly<{
@@ -352,9 +352,7 @@ async function medirContrasteDaTela(page: Page, rotuloDoBotao: string): Promise<
 
 test.describe("axe nas telas reais", () => {
   for (const superficie of SUPERFICIES) {
-    test(`${superficie.nome}: sem violação séria em 375/768/1440, claro e escuro`, async ({
-      page,
-    }, info) => {
+    test(`${superficie.nome}: sem violação séria em 375/768/1440`, async ({ page }, info) => {
       // A matriz fixa as três larguras de dentro de um projeto só; rodar nos seis
       // projetos repetiria as mesmas análises seis vezes.
       test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
@@ -642,7 +640,7 @@ test.describe("movimento reduzido nas telas reais", () => {
 })
 
 test.describe("contraste nas telas reais", () => {
-  test("texto e tom contornado passam AA nos dois temas", async ({ page }) => {
+  test("texto e tom contornado passam AA", async ({ page }) => {
     await simularProgresso(page)
     await simularGuia(page)
 
@@ -792,7 +790,7 @@ test.describe("sem rolagem horizontal e sem erro de console", () => {
 })
 
 test.describe("capturas das superfícies novas", () => {
-  test("375, 768 e 1440 nos dois temas", async ({ page }, info) => {
+  test("375, 768 e 1440", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
     test.setTimeout(300_000)
     const diretorio = join(process.cwd(), "..", "..", ".visual", "run-136")

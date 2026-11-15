@@ -9,7 +9,7 @@ import { abrir, caminhoAtual, GUIA_DA_PROVA, SELETOR_CONTEUDO, simularProgresso 
  * (`/app/guia?q=…&categoria=…`) e a tela abre já com o termo no campo, a
  * categoria no chip e a lista filtrada. O que se prova:
  *
- * - o aterrissagem em 375, 768 e 1440, nos dois temas: campo com o termo, chip
+ * - o aterrissagem em 375, 768 e 1440: campo com o termo, chip
  *   da categoria aceso, só a referência que bate com o recorte, sem estado vazio
  *   nem erro, e q/categoria ainda no endereço depois da materialização da
  *   entrada — o endereço é compartilhável e o Voltar devolve o recorte;
@@ -88,7 +88,7 @@ test.describe("aterrissagem com o recorte no endereço", () => {
     )
   })
 
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     test(`abre com o termo no campo, a categoria no chip e a lista filtrada (tema ${tema})`, async ({
       page,
     }) => {

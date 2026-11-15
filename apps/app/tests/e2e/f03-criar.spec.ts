@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => simularCriar(page))
 async function capturar(page: Page, etapa: string) {
   const pasta = join(process.cwd(), "../..", ".visual", "run-015")
   mkdirSync(pasta, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     await page.emulateMedia({ colorScheme: tema })
     await page.screenshot({ path: join(pasta, `mobile-375-${etapa}-${tema}.png`), fullPage: true })
     expect(

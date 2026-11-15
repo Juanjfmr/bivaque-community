@@ -16,7 +16,7 @@ import {
  * LT-001 — o link antigo `/explorar/busca?q=<termo>` cai na busca do app e a
  * tela abre já com o termo no campo e a lista filtrada. O que se prova:
  *
- * - o aterrissagem em 375, 768 e 1440, nos dois temas: campo com o termo,
+ * - o aterrissagem em 375, 768 e 1440: campo com o termo,
  *   contagem e um resultado de cada tipo, sem estado vazio nem grade
  *   "Explorar" no caminho, e o campo segue com o foco de quem digita;
  * - o primeiro pedido já é a consulta, com o termo do endereço, e o Início
@@ -82,7 +82,7 @@ test.describe("aterrissagem com o termo no endereço", () => {
     )
   })
 
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     test(`abre com o termo no campo, a contagem e um resultado de cada tipo (tema ${tema})`, async ({
       page,
     }) => {

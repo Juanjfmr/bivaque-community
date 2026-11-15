@@ -19,12 +19,16 @@ coisa funciona; nada fora daqui entra no lançamento sem uma linha nova aqui, co
 - 04/11/2026, decisão do dono: a notificação push no celular entra no lançamento (F09 e app de
   loja). Motivo: sem push a pessoa não volta ao app. O token do aparelho é dado pessoal; o desenho
   passa por ADR por delegação antes do código (card LAN-PUSH).
+- 14/11/2026, decisão do dono: o lançamento sai **apenas com o tema claro**. O tema escuro fica
+  fora do escopo do lançamento (o código pode permanecer dormente, gated por `data-tema="escuro"`).
+  Motivo: foco do dono; reduz a superfície de prova visual. Os critérios que citavam "dois temas"
+  passam a valer só para o claro.
 
 ## O que é "lançado"
 
 Uma pessoa de qualquer cidade do Brasil instala ou abre o Bivaque, entra, tem o vínculo militar
 verificado, escolhe a cidade e usa as dez jornadas abaixo com dados reais, no celular e no
-computador, nos dois temas, sem erro e sem tela de mentira. O app de loja (Android e iOS) está
+computador, no tema claro, sem erro e sem tela de mentira. O app de loja (Android e iOS) está
 pronto para envio. Publicar e enviar às lojas são atos do dono.
 
 ## Quando uma jornada está pronta
@@ -35,7 +39,7 @@ Todos os itens, sem exceção:
    principal funcionam no app integrado, com dados reais do banco local.
 2. **No nível da régua.** Revisão às cegas (por outro modelo) contra as telas do Nextdoor no Mobbin, citadas no
    cartão, sem "abaixo da régua" em interface e clareza. Cada tela parte de referências reais.
-3. **Provada.** E2E em 375, 768 e 1440 px, claro e escuro; teste de banco com caso positivo e
+3. **Provada.** E2E em 375, 768 e 1440 px, no tema claro (o escuro saiu do escopo em 14/11); teste de banco com caso positivo e
    negativo em toda permissão; capturas em `.visual/`; gate completo verde na revisão integrada.
 4. **Segura e privada.** Rotas no contrato do ADR do app (§5), RLS forçada, nada de CPF cru, payload
    do Portal ou dado proibido gravado; `security-auditor` sem CRITICAL/HIGH nos lotes R3.

@@ -1,8 +1,9 @@
-﻿import { abrir, expect, SELETOR_BARRA, SELETOR_NAVEGACAO, test } from "./apoio"
+import { abrir, expect, SELETOR_BARRA, SELETOR_NAVEGACAO, test } from "./apoio"
 
 /**
- * O tema: os tokens do protótipo, claro e escuro seguindo o sistema, inclusive
- * quando a pessoa troca o tema com o app aberto (ADR §2).
+ * O tema: os tokens do protótipo, claros por decisão do lançamento (dono,
+ * 14/11), sem seguir o sistema. O escuro fica dormente atrás de
+ * `data-tema="escuro"` no documento.
  *
  * As cores medidas são as da paleta da fase 1 (ADR-20261102-paleta-fria), que
  * substituiu a tradução dos tokens do protótipo de HTML.
@@ -51,8 +52,7 @@ function contraste(um: string, outro: string): number {
 }
 
 test.describe("tema pelos tokens do protótipo", () => {
-  test("claro é o padrão e o sistema manda", async ({ page }) => {
-    await page.emulateMedia({ colorScheme: "light" })
+  test("claro é o tema do app", async ({ page }) => {
     await abrir(page, "/app/inicio")
 
     expect(await corDoToken(page, "--background")).toContain(CLARO.fundo)
@@ -63,73 +63,65 @@ test.describe("tema pelos tokens do protótipo", () => {
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", CLARO.barra)
   })
 
-  test("escuro segue o sistema, com os mesmos nomes de token", async ({ page }) => {
+  test("o sistema em escuro não muda o app; o escuro só acende com data-tema", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" })
     await abrir(page, "/app/inicio")
 
+    expect(await corDoToken(page, "--background")).toContain(CLARO.fundo)
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
+      "light",
+    )
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", CLARO.barra)
+
+    // Dormente, não removido: o atributo explícito devolve os tokens escuros.
+    await page.evaluate(() => {
+      document.documentElement.dataset["tema"] = "escuro"
+    })
     expect(await corDoToken(page, "--background")).toContain(ESCURO.fundo)
-    expect(await corDoToken(page, "--foreground")).toContain(ESCURO.tinta)
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
       "dark",
     )
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", ESCURO.barra)
   })
 
-  test("a troca de tema com o app aberto acompanha na hora", async ({ page }) => {
+  test("trocar o tema do sistema com o app aberto não muda nada", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "light" })
     await abrir(page, "/app/inicio")
     expect(await corDoToken(page, "--background")).toContain(CLARO.fundo)
 
     await page.emulateMedia({ colorScheme: "dark" })
-    await expect
-      .poll(async () => await corDoToken(page, "--background"), { timeout: 5_000 })
-      .toContain(ESCURO.fundo)
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", ESCURO.barra)
-
-    // E volta, sem recarregar: os dois sentidos.
-    await page.emulateMedia({ colorScheme: "light" })
-    await expect
-      .poll(async () => await corDoToken(page, "--background"), { timeout: 5_000 })
-      .toContain(CLARO.fundo)
+    await page.waitForTimeout(500)
+    expect(await corDoToken(page, "--background")).toContain(CLARO.fundo)
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", CLARO.barra)
   })
 
-  test("a casca pinta com os tokens: fundo e tinta mudam juntos", async ({ page }) => {
-    for (const [esquema, esperado] of [
-      ["light", CLARO],
-      ["dark", ESCURO],
-    ] as const) {
-      await page.emulateMedia({ colorScheme: esquema })
-      await abrir(page, "/app/inicio")
-      const fundo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
-      const tinta = await page.evaluate(
-        () => getComputedStyle(document.querySelector('[data-titulo="topo"]') as Element).color,
-      )
-      expect(fundo, esquema).toContain(esperado.fundo)
-      expect(tinta, esquema).toContain(esperado.tinta)
-    }
+  test("a casca pinta com os tokens: fundo e tinta juntos", async ({ page }) => {
+    await abrir(page, "/app/inicio")
+    const fundo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+    const tinta = await page.evaluate(
+      () => getComputedStyle(document.querySelector('[data-titulo="topo"]') as Element).color,
+    )
+    expect(fundo).toContain(CLARO.fundo)
+    expect(tinta).toContain(CLARO.tinta)
   })
 
-  test("o texto da casca fica legível nos dois temas", async ({ page }) => {
-    for (const esquema of ["light", "dark"] as const) {
-      await page.emulateMedia({ colorScheme: esquema })
-      await abrir(page, "/app/inicio")
-      const medidas = await page.evaluate(() => {
-        const ler = (seletor: string) => {
-          const elemento = document.querySelector(seletor)
-          if (!elemento) throw new Error(`sem ${seletor}`)
-          const estilo = getComputedStyle(elemento)
-          return { cor: estilo.color, fundo: getComputedStyle(document.body).backgroundColor }
-        }
-        return {
-          titulo: ler('[data-titulo="topo"]'),
-          aba: ler('[data-nav="principal"] [data-aba="inicio"]'),
-        }
-      })
-      for (const [onde, par] of Object.entries(medidas)) {
-        expect(contraste(par.cor, par.fundo), `${esquema}: ${onde}`).toBeGreaterThanOrEqual(4.5)
+  test("o texto da casca fica legível", async ({ page }) => {
+    await abrir(page, "/app/inicio")
+    const medidas = await page.evaluate(() => {
+      const ler = (seletor: string) => {
+        const elemento = document.querySelector(seletor)
+        if (!elemento) throw new Error(`sem ${seletor}`)
+        const estilo = getComputedStyle(elemento)
+        return { cor: estilo.color, fundo: getComputedStyle(document.body).backgroundColor }
       }
-      await expect(page.locator(SELETOR_BARRA)).toBeVisible()
-      await expect(page.locator(SELETOR_NAVEGACAO)).toBeVisible()
+      return {
+        titulo: ler('[data-titulo="topo"]'),
+        aba: ler('[data-nav="principal"] [data-aba="inicio"]'),
+      }
+    })
+    for (const [onde, par] of Object.entries(medidas)) {
+      expect(contraste(par.cor, par.fundo), onde).toBeGreaterThanOrEqual(4.5)
     }
+    await expect(page.locator(SELETOR_BARRA)).toBeVisible()
+    await expect(page.locator(SELETOR_NAVEGACAO)).toBeVisible()
   })
 })

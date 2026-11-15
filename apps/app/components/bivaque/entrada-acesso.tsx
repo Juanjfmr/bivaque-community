@@ -191,13 +191,7 @@ export function EntradaAcesso({
       className="entrada-acesso"
     >
       <div className="entrada-acesso-marca">
-        <picture>
-          <source
-            media="(prefers-color-scheme: dark)"
-            srcSet={`${base}brand/bivaque-logo-horizontal-white.svg`}
-          />
-          <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
-        </picture>
+        <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
       </div>
 
       <div className="entrada-acesso-painel">

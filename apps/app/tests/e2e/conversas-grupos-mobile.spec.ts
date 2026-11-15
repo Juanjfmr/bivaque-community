@@ -12,7 +12,7 @@ test("caixa abre conversa contextual", async ({ page }, testInfo) => {
   await expect(thread).toContainText("Anúncio")
   const diretorio = join(process.cwd(), "../../.visual/run-011/capturas-simuladas")
   mkdirSync(diretorio, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
     await page.screenshot({
       path: join(diretorio, `${testInfo.project.name}-caixa-${tema}.png`),

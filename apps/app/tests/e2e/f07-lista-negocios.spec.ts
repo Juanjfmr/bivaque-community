@@ -17,7 +17,7 @@ const TAMANHOS = ["mobile-375", "tablet-768", "desktop-1440"] as const
 
 const segmento = (id: string) => `[data-segmentos="mercado"] [data-secao="${id}"]`
 
-for (const tema of ["light", "dark"] as const) {
+for (const tema of ["light"] as const) {
   test.describe(`F07 lista de negócios — ${tema}`, () => {
     test.use({ colorScheme: tema })
 
@@ -40,7 +40,7 @@ for (const tema of ["light", "dark"] as const) {
       await expect(page.locator(segmento("desapegos"))).not.toHaveAttribute("aria-current", "page")
       await expect(page.locator('[data-segmentos="mercado"] [data-contagem]')).toHaveCount(0)
 
-      // A aba ativa passa AA nos dois temas — medido no que o navegador pintou.
+      // A aba ativa passa AA — medido no que o navegador pintou.
       expect(await contrasteDe(page, segmento("negocios"))).toBeGreaterThanOrEqual(4.5)
       await expect(page.locator('[data-cartao="negocio"]')).toHaveCount(2)
       await capturar(page, `${info.project.name}-${tema}-01-lista`)

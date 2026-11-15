@@ -17,9 +17,11 @@
    e é ele que gera as utilidades (`bg-background`, `text-foreground`, …) a
    partir dos mesmos nomes.
 
-   O tema segue o sistema: cada bloco semântico aparece duas vezes, em `:root` e
-   na consulta de esquema escuro, então a troca de tema do aparelho vale na hora
-   e sem JavaScript. `color-scheme` acompanha, para barra de rolagem e campos. */
+   O lançamento é só claro (dono, 14/11): o `:root` claro é o tema do app e não
+   segue o sistema. O escuro fica dormente atrás de `data-tema="escuro"` no
+   documento — nenhuma tela liga esse atributo hoje, e ele só volta a valer se
+   alguém o setar de propósito. `color-scheme` acompanha, para barra de rolagem
+   e campos. */
 
 /* ── as fontes do protótipo, servidas pelo próprio app ───────────────────── */
 
@@ -123,67 +125,71 @@
   --altura-da-barra: 64px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+/* Escuro dormente (lançamento claro-only, dono 14/11): só ativa com
+   data-tema="escuro" no <html>, nunca pelo esquema do sistema. */
+:root[data-tema="escuro"] {
+  color-scheme: dark;
 
-    --background: rgb(16 20 23);
-    --foreground: rgb(232 236 238);
-    --card: rgb(26 32 36);
-    --card-foreground: rgb(232 236 238);
-    --popover: rgb(26 32 36);
-    --popover-foreground: rgb(232 236 238);
-    --primary: rgb(232 236 238);
-    --primary-foreground: rgb(16 20 23);
-    --secondary: rgb(36 50 57);
-    --secondary-foreground: rgb(232 236 238);
-    --muted: rgb(32 39 44);
-    --muted-foreground: rgb(156 170 178);
-    --accent: rgb(38 46 51);
-    --accent-foreground: rgb(232 236 238);
-    --destructive: rgb(255 180 171);
-    --destructive-foreground: rgb(105 0 5);
-    --border: rgb(48 58 62);
-    --input: rgb(56 66 72);
-    --ring: rgb(232 236 238);
-    --success: rgb(159 188 192);
-    --success-foreground: rgb(23 30 32);
-    /* No escuro a ação é clara e sólida: o azul-acinzentado lia como desativado. */
-    --acao: rgb(232 236 238);
-    --acao-foreground: rgb(16 20 23);
-    --brasa: rgb(224 122 90);
-    --brasa-foreground: rgb(23 30 32);
-    --accent-text: rgb(224 122 90);
+  --background: rgb(16 20 23);
+  --foreground: rgb(232 236 238);
+  --card: rgb(26 32 36);
+  --card-foreground: rgb(232 236 238);
+  --popover: rgb(26 32 36);
+  --popover-foreground: rgb(232 236 238);
+  --primary: rgb(232 236 238);
+  --primary-foreground: rgb(16 20 23);
+  --secondary: rgb(36 50 57);
+  --secondary-foreground: rgb(232 236 238);
+  --muted: rgb(32 39 44);
+  --muted-foreground: rgb(156 170 178);
+  --accent: rgb(38 46 51);
+  --accent-foreground: rgb(232 236 238);
+  --destructive: rgb(255 180 171);
+  --destructive-foreground: rgb(105 0 5);
+  --border: rgb(48 58 62);
+  --input: rgb(56 66 72);
+  --ring: rgb(232 236 238);
+  --success: rgb(159 188 192);
+  --success-foreground: rgb(23 30 32);
+  /* No escuro a ação é clara e sólida: o azul-acinzentado lia como desativado. */
+  --acao: rgb(232 236 238);
+  --acao-foreground: rgb(16 20 23);
+  --brasa: rgb(224 122 90);
+  --brasa-foreground: rgb(23 30 32);
+  --accent-text: rgb(224 122 90);
 
-    --surface: rgb(16 20 23);
-    --surface-lowest: rgb(26 32 36);
-    --surface-low: rgb(21 26 30);
-    --surface-container: rgb(32 39 44);
-    --surface-high: rgb(38 46 51);
-    --surface-highest: rgb(46 55 60);
-    --on-surface: rgb(232 236 238);
-    --on-surface-variant: rgb(156 170 178);
-    --outline: rgb(122 138 146);
-    --outline-variant: rgb(48 58 62);
-    --primary-container: rgb(38 52 59);
-    --on-primary-container: rgb(232 236 238);
-    --secondary-container: rgb(38 58 61);
-    --on-secondary-container: rgb(232 236 238);
-    --tertiary: rgb(240 160 138);
-    --tertiary-container: rgb(62 42 38);
-    --on-tertiary-container: rgb(240 160 138);
-    --inverse-surface: rgb(232 236 238);
-    --inverse-on-surface: rgb(28 38 43);
-    --scrim: rgb(0 0 0 / 0.52);
-    --shadow-soft: rgb(0 0 0 / 0.45);
-    --shadow-strong: rgb(0 0 0 / 0.55);
-    /* No escuro as fotos baixam um pouco (protótipo: `--bv-photo-dim`). */
-    --photo-dim: brightness(0.86) contrast(1.02);
-  }
+  --surface: rgb(16 20 23);
+  --surface-lowest: rgb(26 32 36);
+  --surface-low: rgb(21 26 30);
+  --surface-container: rgb(32 39 44);
+  --surface-high: rgb(38 46 51);
+  --surface-highest: rgb(46 55 60);
+  --on-surface: rgb(232 236 238);
+  --on-surface-variant: rgb(156 170 178);
+  --outline: rgb(122 138 146);
+  --outline-variant: rgb(48 58 62);
+  --primary-container: rgb(38 52 59);
+  --on-primary-container: rgb(232 236 238);
+  --secondary-container: rgb(38 58 61);
+  --on-secondary-container: rgb(232 236 238);
+  --tertiary: rgb(240 160 138);
+  --tertiary-container: rgb(62 42 38);
+  --on-tertiary-container: rgb(240 160 138);
+  --inverse-surface: rgb(232 236 238);
+  --inverse-on-surface: rgb(28 38 43);
+  --scrim: rgb(0 0 0 / 0.52);
+  --shadow-soft: rgb(0 0 0 / 0.45);
+  --shadow-strong: rgb(0 0 0 / 0.55);
+  /* No escuro as fotos baixam um pouco (protótipo: `--bv-photo-dim`). */
+  --photo-dim: brightness(0.86) contrast(1.02);
 }
 
+/* As utilidades `dark:` do Tailwind seguem o mesmo portão do bloco acima:
+   sem data-tema="escuro" elas não existem, mesmo com o sistema em escuro. */
+@custom-variant dark (&:where([data-tema="escuro"], [data-tema="escuro"] *));
+
 /* O tema do Tailwind: as utilidades saem destes nomes, e o valor é o token
-   semântico — que muda com o esquema do sistema. */
+   semântico — que hoje é sempre o claro. */
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

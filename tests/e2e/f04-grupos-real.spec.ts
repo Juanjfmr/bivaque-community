@@ -28,13 +28,10 @@ const ESPERA = { timeout: 20_000 } as const
 
 async function capturar(page: Page, nome: string) {
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
-    await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
-    await page.waitForFunction(() => document.fonts.status === "loaded", undefined, ESPERA)
-    await page.screenshot({ path: join(CAPTURAS, `${nome}-${tema}.png`), fullPage: true })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.waitForFunction(() => document.fonts.status === "loaded", undefined, ESPERA)
+  await page.screenshot({ path: join(CAPTURAS, `${nome}-claro.png`), fullPage: true })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 }
 
 async function servicoLocal(): Promise<APIRequestContext> {
