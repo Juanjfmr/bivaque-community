@@ -81,14 +81,12 @@ describe("o endereço nos três formulários de anúncio", () => {
     if (!result.ok) expect(result.field).toBe("address")
   })
 
-  it("os formulários gravam o endereço e avisam que ele fica visível", () => {
-    const novo = web("app", "(shell)", "mercado", "novo", "page.tsx")
-    const editar = web("app", "(shell)", "mercado", "[id]", "editar", "page.tsx")
+  // Os formulários de desapego saíram da web para o app (RUN-156); o de imóveis
+  // segue na web e o par criar/editar de ações continua sendo a porta da API.
+  it("os formulários que ficaram gravam o endereço e avisam que ele fica visível", () => {
     const imovel = web("app", "(shell)", "imoveis", "property-form.tsx")
     const actions = web("lib", "listings", "actions.ts")
-    for (const source of [novo, editar, imovel]) expect(source).toContain("{ADDRESS_HINT}")
-    expect(novo).toContain("address: value.address,")
-    expect(editar).toContain("address: value.address,")
+    expect(imovel).toContain("{ADDRESS_HINT}")
     expect(actions.match(/address: addressValue\(draft\.address\)/g)?.length).toBe(2)
   })
 

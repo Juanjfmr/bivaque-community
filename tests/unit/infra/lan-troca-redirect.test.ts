@@ -16,6 +16,9 @@ const TROCADAS = [
   [`/messages?conversation=${ID}`, `/app/conversa/${ID}?conversation=${ID}`],
   [`/messages/${ID}`, `/app/conversa/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
+  [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
+  ["/mercado/novo", "/app/mercado"],
+  ["/mercado/novo?categoria=eletronicos", "/app/mercado?categoria=eletronicos"],
   [`/imoveis/${ID}`, `/app/anuncio/${ID}`],
   ["/mercado", "/app/mercado"],
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado?preco_min=10000&pagina=2"],
@@ -158,6 +161,15 @@ describe("LAN-TROCA fase 1", () => {
     "a lista antiga de %s não deixa page.tsx para trás",
     (nome) => {
       const arquivo = join(shell, nome, "page.tsx")
+      expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
+    },
+  )
+
+  // F06 resíduo: criar e editar desapego saíram sem deixar page.tsx para trás.
+  it.each(["mercado/novo", "mercado/[id]/editar"])(
+    "a página trocada %s não deixa page.tsx para trás",
+    (relativa) => {
+      const arquivo = join(shell, relativa, "page.tsx")
       expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
     },
   )
