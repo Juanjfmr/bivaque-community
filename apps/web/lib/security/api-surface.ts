@@ -162,6 +162,7 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/pedidos/[id]", "exigirSessao(", PORTA],
   ["/api/app/perguntas", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]", "exigirSessao(", PORTA],
+  ["/api/app/perguntas/[id]/resolucao", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/respostas", "exigirSessao(", PORTA],
   ["/api/app/voce", "exigirSessao(", PORTA],
   ["/api/app/voce/apagar-conta", "exigirSessao(", PORTA],

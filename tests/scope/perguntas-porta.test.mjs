@@ -38,7 +38,7 @@ test("as rotas de perguntas usam a sessão sob RLS, nunca o cliente de serviço"
   const rotas = arquivos("apps/web/app/api/app/perguntas").filter((caminho) =>
     caminho.endsWith("route.ts"),
   )
-  assert.equal(rotas.length, 3, `esperava as três rotas da jornada, achei ${rotas.length}`)
+  assert.equal(rotas.length, 4, `esperava as quatro rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = readFileSync(caminho, "utf8")
     assert.match(fonte, /exigirSessao/, `${caminho} não resolve a sessão pelo encanamento`)

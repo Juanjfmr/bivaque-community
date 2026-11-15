@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
+import { POST as mudarResolucao } from "web/app/api/app/perguntas/[id]/resolucao/route"
 import { POST as responder } from "web/app/api/app/perguntas/[id]/respostas/route"
 import { GET as detalhe } from "web/app/api/app/perguntas/[id]/route"
 import { GET as listar } from "web/app/api/app/perguntas/route"
@@ -202,6 +203,7 @@ describe("rotas de perguntas do app", () => {
     ["GET lista", () => listar(req("GET"))],
     ["GET detalhe", () => detalhe(req("GET"), context)],
     ["POST resposta", () => responder(req("POST", `${BASE}/${ID}/respostas`, "{}"), context)],
+    ["POST resolução", () => mudarResolucao(req("POST", `${BASE}/${ID}/resolucao`, "{}"), context)],
   ])("%s recusa ausência de sessão", async (_label, invoke) => {
     expect((await invoke()).status).toBe(401)
   })
@@ -537,6 +539,159 @@ describe("rotas de perguntas do app", () => {
         req("POST", `${BASE}/${ID}/respostas`, '{"texto":"Uma resposta"}'),
         context,
       )
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+  })
+
+  describe("resolução", () => {
+    const RESPOSTA = "d0000000-0000-4000-8000-000000000010"
+    const OUTRA_RESPOSTA = "d0000000-0000-4000-8000-0000000000ff"
+
+    function pedirResolucao(corpo: unknown, requestHeaders = headers) {
+      return mudarResolucao(
+        req("POST", `${BASE}/${ID}/resolucao`, JSON.stringify(corpo), requestHeaders),
+        context,
+      )
+    }
+
+    it("o autor marca a resposta que resolveu e a RPC recebe pergunta e resposta da sessão", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      // Autoria no corpo é ruído: quem resolve é a pessoa da sessão.
+      const resposta = await pedirResolucao({
+        acao: "marcar",
+        respostaId: RESPOSTA,
+        author_id: OUTRA_PESSOA,
+      })
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ resolvida: true, resolvidaPorResposta: RESPOSTA })
+      expect(mock.rpcCalls).toEqual([
+        {
+          nome: "mark_recommendation_reply_resolved",
+          args: { p_request_id: ID, p_reply_id: RESPOSTA },
+        },
+      ])
+    })
+
+    it("o autor reabre a pergunta, e ela volta aberta", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await pedirResolucao({ acao: "reabrir" })
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ resolvida: false, resolvidaPorResposta: null })
+      expect(mock.rpcCalls).toEqual([{ nome: "reopen_recommendation", args: { p_request_id: ID } }])
+    })
+
+    it("resolver sem resposta fecha a pergunta sem apontar resposta", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await pedirResolucao({ acao: "resolver" })
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ resolvida: true, resolvidaPorResposta: null })
+      expect(mock.rpcCalls).toEqual([
+        { nome: "mark_recommendation_resolved", args: { p_request_id: ID } },
+      ])
+    })
+
+    it("quem não é o autor recebe 404, sem a mensagem do Postgres", async () => {
+      const mock = mockClient({
+        rpcError: {
+          reopen_recommendation: {
+            code: "P0002",
+            message: "request not found or you are not the author",
+          },
+        },
+      })
+      authenticate(mock)
+      const resposta = await pedirResolucao({ acao: "reabrir" })
+      expect(resposta.status).toBe(404)
+      const corpo = await json(resposta)
+      expect(corpo).toEqual({ erro: "pergunta-nao-encontrada" })
+      expect(JSON.stringify(corpo)).not.toContain("author")
+    })
+
+    it("a resposta de outra pergunta é recusada pelo banco e vira 404", async () => {
+      const mock = mockClient({
+        rpcError: {
+          mark_recommendation_reply_resolved: {
+            code: "P0002",
+            message: "request not found, reply does not belong to it, or you are not the author",
+          },
+        },
+      })
+      authenticate(mock)
+      const resposta = await pedirResolucao({ acao: "marcar", respostaId: OUTRA_RESPOSTA })
+      expect(resposta.status).toBe(404)
+      expect(mock.rpcCalls[0]?.args).toEqual({ p_request_id: ID, p_reply_id: OUTRA_RESPOSTA })
+    })
+
+    it("recusa da posse e passagem impossível têm frase própria", async () => {
+      const dono = mockClient({
+        rpcError: { mark_recommendation_resolved: { code: "42501", message: "permission denied" } },
+      })
+      authenticate(dono)
+      const recusado = await pedirResolucao({ acao: "resolver" })
+      expect(recusado.status).toBe(403)
+      expect(await json(recusado)).toEqual({
+        erro: "recusado",
+        mensagem: "Só quem perguntou pode resolver ou reabrir esta pergunta.",
+      })
+
+      const estado = mockClient({
+        rpcError: { reopen_recommendation: { code: "22023", message: "invalid argument" } },
+      })
+      authenticate(estado)
+      const conflito = await pedirResolucao({ acao: "reabrir" })
+      expect(conflito.status).toBe(409)
+      expect(await json(conflito)).toEqual({
+        erro: "estado-invalido",
+        mensagem: "Esta mudança não é possível agora.",
+      })
+    })
+
+    it.each([
+      ["ação desconhecida", { acao: "apagar" }],
+      ["marcar sem resposta", { acao: "marcar" }],
+      ["resposta que não é id", { acao: "marcar", respostaId: "nao-e-uuid" }],
+      ["resposta que não é texto", { acao: "marcar", respostaId: 7 }],
+    ])("corpo inválido (%s) é 400, sem chamar o banco", async (_label, corpo) => {
+      const mock = mockClient()
+      authenticate(mock)
+      expect((await pedirResolucao(corpo)).status).toBe(400)
+      expect(mock.rpcCalls).toHaveLength(0)
+    })
+
+    it("id fora do formato é 404, sem chamar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: "nao-e-uuid" }) }
+      const resposta = await mudarResolucao(
+        req("POST", `${BASE}/nao-e-uuid/resolucao`, JSON.stringify({ acao: "reabrir" })),
+        invalido,
+      )
+      expect(resposta.status).toBe(404)
+      expect(mock.rpcCalls).toHaveLength(0)
+    })
+
+    it("escrita por cookie exige a porta do app", async () => {
+      const semCabecalho = mockClient()
+      authenticate(semCabecalho)
+      const semApp = { origin: "http://localhost:3000", "content-type": "application/json" }
+      expect((await pedirResolucao({ acao: "reabrir" }, semApp)).status).toBe(403)
+      expect(semCabecalho.rpcCalls).toHaveLength(0)
+
+      const origemFora = mockClient()
+      authenticate(origemFora)
+      const deFora = { ...headers, origin: "https://fora.example" }
+      expect((await pedirResolucao({ acao: "reabrir" }, deFora)).status).toBe(403)
+      expect(origemFora.rpcCalls).toHaveLength(0)
+    })
+
+    it("falha do banco na escrita é 503", async () => {
+      const mock = mockClient({ rpcError: { reopen_recommendation: { message: "boom" } } })
+      authenticate(mock)
+      const resposta = await pedirResolucao({ acao: "reabrir" })
       expect(resposta.status).toBe(503)
       expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
     })
