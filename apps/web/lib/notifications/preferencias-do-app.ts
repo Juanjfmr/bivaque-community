@@ -4,7 +4,7 @@ import type { Database } from "supabase/database.generated"
 /**
  * As preferências de aviso que o app lê e grava (F09).
  *
- * O formato é o que a web antiga já usa: quatro tipos visíveis e a matriz
+ * O formato é o que a web antiga já usa: cinco tipos visíveis e a matriz
  * tipo × canal de `notification_channel_preferences`. A regra de entrega fica
  * onde sempre esteve (`private.notification_channel_allows` e
  * `lib/notifications/channel-preferences`); este módulo só persistência e
@@ -15,7 +15,13 @@ import type { Database } from "supabase/database.generated"
  * loja): a tela diz isso com palavras, não finge que o aviso já chega.
  */
 
-export const TIPOS_DO_AVISO = ["comments", "events", "product_news", "indications"] as const
+export const TIPOS_DO_AVISO = [
+  "comments",
+  "events",
+  "product_news",
+  "indications",
+  "messages",
+] as const
 export const CANAIS_DO_AVISO = ["in_app", "email", "push"] as const
 
 export type TipoDoAviso = (typeof TIPOS_DO_AVISO)[number]
@@ -32,6 +38,8 @@ export type PreferenciasDoAviso = Readonly<{
   events: boolean
   productNews: boolean
   indications: boolean
+  /** Mensagens diretas: `direct_message` no banco, `messages` na coluna. */
+  messages: boolean
   resumoCidade: "off" | "daily" | "weekly"
   channels: readonly CanalDaPreferencia[]
 }>
@@ -69,7 +77,7 @@ export async function lerPreferencias(
   const [preferencia, matriz] = await Promise.all([
     client
       .from("notification_preferences")
-      .select("comments, events, product_news, indications, city_digest_frequency")
+      .select("comments, events, product_news, indications, messages, city_digest_frequency")
       .eq("user_id", userId)
       .maybeSingle(),
     client
@@ -85,11 +93,13 @@ export async function lerPreferencias(
   const events = linha?.events ?? true
   const productNews = linha?.product_news ?? false
   const indications = linha?.indications ?? true
+  const messages = linha?.messages ?? true
   const tipoHabilitado: Record<TipoDoAviso, boolean> = {
     comments,
     events,
     product_news: productNews,
     indications,
+    messages,
   }
 
   const guardado = new Map(
@@ -113,6 +123,7 @@ export async function lerPreferencias(
     events,
     productNews,
     indications,
+    messages,
     resumoCidade: linha?.city_digest_frequency ?? "off",
     channels,
   }
@@ -124,6 +135,7 @@ export type AtualizacaoDePreferencias = Readonly<{
   events: boolean
   productNews: boolean
   indications: boolean
+  messages: boolean
   channels: readonly CanalDaPreferencia[] | null
 }>
 
@@ -143,18 +155,20 @@ export function validarAtualizacao(
   const events = corpo["events"]
   const productNews = corpo["productNews"]
   const indications = corpo["indications"]
+  const messages = corpo["messages"]
   if (
     typeof comments !== "boolean" ||
     typeof events !== "boolean" ||
     typeof productNews !== "boolean" ||
-    typeof indications !== "boolean"
+    typeof indications !== "boolean" ||
+    typeof messages !== "boolean"
   ) {
     return null
   }
 
   const brutos = corpo["channels"]
   if (brutos === undefined) {
-    return { comments, events, productNews, indications, resumoCidade, channels: null }
+    return { comments, events, productNews, indications, messages, resumoCidade, channels: null }
   }
   if (!Array.isArray(brutos)) return null
 
@@ -173,7 +187,7 @@ export function validarAtualizacao(
     vistos.add(chave)
     channels.push({ notificationType, channel, enabled })
   }
-  return { comments, events, productNews, indications, resumoCidade, channels }
+  return { comments, events, productNews, indications, messages, resumoCidade, channels }
 }
 
 export async function salvarPreferencias(
@@ -188,6 +202,7 @@ export async function salvarPreferencias(
     events: atualizacao.events,
     product_news: atualizacao.productNews,
     indications: atualizacao.indications,
+    messages: atualizacao.messages,
     ...(atualizacao.resumoCidade === undefined
       ? {}
       : { city_digest_frequency: atualizacao.resumoCidade }),
@@ -203,6 +218,7 @@ export async function salvarPreferencias(
     events: atualizacao.events,
     product_news: atualizacao.productNews,
     indications: atualizacao.indications,
+    messages: atualizacao.messages,
   }
   const linhas = atualizacao.channels.map((item) => ({
     user_id: userId,

@@ -38,6 +38,7 @@ function preferencias(): PreferenciasDeAviso {
     events: false,
     productNews: false,
     indications: true,
+    messages: true,
     resumoCidade: "off",
     channels: [
       { notificationType: "comments", channel: "in_app", enabled: true },
@@ -133,6 +134,7 @@ describe("porta de avisos", () => {
       events: false,
       productNews: false,
       indications: true,
+      messages: true,
       resumoCidade: "off",
       channels: preferencias().channels.map((canal) => ({
         notificationType: canal.notificationType as "comments",
