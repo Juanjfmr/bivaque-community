@@ -6629,6 +6629,34 @@
       ]
     },
     {
+      "id": "RUN-153",
+      "title": "F04: resolver/reabrir pergunta pelo app + remover útil fake de resposta",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Endpoint POST /api/app/perguntas/[id]/resolucao (RPCs existentes mark_recommendation_resolved/reopen, posse auth.uid(), CSRF, mapa P0002→404/42501→403/22023→409) + botões Ajudou a resolver/Reabrir (só autor) + etiqueta Resolvida. Remove o útil fake de resposta (Set local sem persistência; o útil real de comentário de grupo fica). Destrava a troca de /indicacoes/[id] (LAN-TROCA mantinha na web por falta deste botão). Decisão do dono 14/11: útil de resposta fake sai (feature completa pós-lançamento). Sem migration.",
+      "checklist": [
+        "Endpoint resolucao + botões resolver/reabrir (só autor)",
+        "Útil fake de resposta removido (grupo intacto)",
+        "Testes positivo/negativo + CI verde"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/f04-perguntas-real.spec.ts",
+        "tests/unit/app-api/perguntas/rotas.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "2db19a6b",
+      "links": ["docs/agents/tasks/F04-RESOLVER.task.yml"],
+      "proof": [
+        "15/11: PR #232 mergeado em 2db19a6b. Implementado pelo DeepSeek (4d3571f1) + fix do teste (675ae4e2: a etiqueta Resolvida carrega o ícone check_circle como ligadura no textContent, getByText exact:true não casava — removido exact, provado em navegador real). Revisão R2 Qwen PASS (2 notas menores: edge case pré-existente do RPC resolver sem resposta, inalcançável pela UI; risco baixo de estado pós-await). CI run 43669296794 todo verde (ci-core + fast + 3 stateful + agregador). App test 518. Resíduo: o RPC mark_recommendation_resolved não limpa resolved_reply_id quando já havia resposta marcada (pré-existente, registrar)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
       "id": "TEMA-CLARO-LANDING-WEB",
       "title": "Landing pública (apps/web) ainda segue o escuro do sistema - portar para claro-only",
       "phase": "Lançamento",
