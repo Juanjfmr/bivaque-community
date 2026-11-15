@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 86
+export const TOTAL_DE_ROTAS = 87
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
