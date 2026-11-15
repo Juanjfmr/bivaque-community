@@ -129,12 +129,16 @@ test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
       })
       expect(recusada.status()).toBe(403)
 
+      // O bloqueio do seed (seed.sql:1758) pertence a esta mesma pessoa: a lista
+      // certa é a NOSSA linha sumir (mais recente = topo, created_at desc em
+      // bloqueados/route.ts:29), nunca a tela ficar vazia.
       await page.goto("/app/bloqueados")
-      await page
-        .getByRole("button", { name: /Desbloquear/ })
-        .first()
-        .click()
-      await expect(page.getByText("Ninguém bloqueado")).toBeVisible({ timeout: 30_000 })
+      const linhas = page.getByRole("button", { name: /Desbloquear/ })
+      await expect(linhas.first()).toBeVisible({ timeout: 30_000 })
+      const antes = await linhas.count()
+      expect(antes).toBeGreaterThanOrEqual(2)
+      await linhas.first().click()
+      await expect(linhas).toHaveCount(antes - 1)
 
       const liberada = await outra.request.post(`/api/app/conversas/${CONVERSA}/mensagens`, {
         headers: { origin: ORIGEM, "x-bivaque-app": "bivaque-spa" },
