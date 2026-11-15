@@ -123,12 +123,21 @@ function lerSaida(corpo: Corpo): SaidaDoPerfil | null {
   }
 }
 
+function lerCidade(valor: unknown): CidadeDoPerfil {
+  const item = registro(valor)
+  // O campo precisa EXISTIR (contrato); vazio é "sessão sem cidade" — o
+  // servidor manda id "" quando não há vínculo `current`, e isso não pode virar
+  // a tela inteira em erro.
+  const id = item["id"]
+  if (typeof id !== "string") throw foraDoContrato()
+  return { id, nome: textoOuNulo(item, "nome") ?? "" }
+}
+
 function lerPerfilDaPessoa(corpo: Corpo): PerfilDaPessoa {
-  const cidade = registro(corpo["cidade"])
   return {
     nome: texto(corpo, "nome"),
     bio: textoOuNulo(corpo, "bio"),
-    cidade: { id: texto(cidade, "id"), nome: textoOuNulo(cidade, "nome") ?? "" },
+    cidade: lerCidade(corpo["cidade"]),
     outbound: lerSaida(corpo),
     localizacao: lerLocalizacao(corpo["localizacao"]),
     distanciaDisponivel: booleano(corpo, "distanciaDisponivel"),

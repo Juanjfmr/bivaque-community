@@ -80,6 +80,11 @@ describe("perfil com cidade e saída", () => {
     await expect(lerPerfil()).rejects.toBeInstanceOf(FalhaDaApi)
   })
 
+  it("sessão sem cidade vem com id vazio, e não derruba a tela", async () => {
+    responder({ ...CONTA, perfil: { ...PERFIL, cidade: { id: "", nome: "" }, outbound: null } })
+    await expect(lerPerfil()).resolves.toMatchObject({ perfil: { cidade: { id: "" } } })
+  })
+
   it("saída sem a marca de só leitura é falha de contrato", async () => {
     responder({
       ...CONTA,
