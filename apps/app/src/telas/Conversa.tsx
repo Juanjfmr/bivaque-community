@@ -266,7 +266,22 @@ export function Conversa() {
         </span>
         {bloqueadoPorMim ? null : (
           <MenuDaLinha rotulo="Opções da conversa" className="ml-auto shrink-0">
-            <ItemDoMenu perigo onClick={() => void navegacao.abrir("confirmacao")}>
+            {/*
+              A confirmação SUBSTITUI o menu na mesma entrada. Deixar o Radix
+              fechar o menu (Voltar da entrada) fecharia a confirmação junto,
+              porque cada entrada tem uma sobreposição só — e a pessoa via o
+              menu reabrir sem o diálogo (RUN-165).
+            */}
+            <ItemDoMenu
+              perigo
+              onSelect={(evento) => evento.preventDefault()}
+              onClick={() =>
+                void navegacao.atualizarCom((atual) => ({
+                  ...atual,
+                  sobreposicao: "confirmacao",
+                }))
+              }
+            >
               Bloquear {nome}
             </ItemDoMenu>
           </MenuDaLinha>
@@ -340,11 +355,6 @@ export function Conversa() {
             </div>
           ))}
         </div>
-      )}
-      {erroLocal && (
-        <p role="alert" className="text-xs text-(--destructive)">
-          {erroLocal}
-        </p>
       )}
       {aviso && (
         <p role="status" className="text-xs text-(--on-surface-variant)">
@@ -422,6 +432,11 @@ export function Conversa() {
               </Botao>
             </div>
           </form>
+          {erroLocal && (
+            <p role="alert" className="text-xs text-(--destructive)">
+              {erroLocal}
+            </p>
+          )}
         </div>
       )}
       <Confirmacao
