@@ -270,3 +270,7 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   (/community), não rota trocada: /configuracoes/familia tem redirect de troca para /app/voce
   (público, next.config.ts:128), que carrega sem sessão. Redirect de troca é incondicional; a
   prova de portão exige rota não-trocada.
+- board.json: as chaves do card vêm em ordem não-padrão (proof pode estar ANTES do id). Leia o
+  objeto INTEIRO antes de acrescentar campo — proof duplicado passou pelo board.mjs (JSON.parse
+  fica com o último valor e descartou o histórico) mas o biome noDuplicateObjectKeys pegou, e
+  derruba o gate de todos os PRs. Rode biome check no board.json antes de todo push de quadro.
