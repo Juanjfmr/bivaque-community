@@ -36,6 +36,7 @@ allowed_paths:
   - docs/agents/tasks/MESSAGES-REMOCAO.task.yml
   - apps/web/app/(shell)/messages
   - apps/web/app/(shell)/profile/page.tsx
+  - apps/web/app/components/bivaque/app-shell.tsx
   - apps/web/lib/messages/unread-conversations.ts
   - apps/web/app/components/shell
   - apps/web/next.config.ts
