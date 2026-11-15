@@ -262,3 +262,11 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
 - Ressalva de revisão não é fato até confrontar o código: a nota "RPC não limpa resolved_reply_id"
   do RUN-153 não se confirmou — a migration vigente já limpa. Registrar resíduo sem verificar
   criaria card falso.
+- E2E real que falha: baixe o trace do CI (`gh run download … -n playwright-artifacts-stateful-…`)
+  e leia a sequência de rede antes de culpar a implementação. No RUN-157 o trace provou que o
+  sign-out funcionava (200, cookie Max-Age=0, porta renderizada); o defeito era a ÚLTIMA asserção
+  do teste, que escolheu a rota errada.
+- Para provar "sem sessão, rota protegida devolve à entrada", use rota AINDA gateada na web
+  (/community), não rota trocada: /configuracoes/familia tem redirect de troca para /app/voce
+  (público, next.config.ts:128), que carrega sem sessão. Redirect de troca é incondicional; a
+  prova de portão exige rota não-trocada.
