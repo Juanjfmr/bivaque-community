@@ -6282,7 +6282,8 @@
         "14/11: LT-004 — F09 avisos trocado (PR #220, merge a15a6e56). /notifications -> /app/avisos e /configuracoes/notificacoes -> /app/voce (307); páginas antigas removidas; deep-links.ts MOVIDO para lib/notifications (consumidor vivo destino-do-app.ts); índice /configuracoes -> conta; links do shell atualizados; 14 specs migrados sem perda de cobertura (nav-invariante -> prova de 307; journey-pedir-servico -> frase neutra, follow-up F09-NOME-PRESTADOR-AVISO aberto); TROCADAS 74/74 + ausência das pastas; avisos-redirects.spec.ts verde no CI em 375/768/1440. Revisão independente Qwen PASS (rodou as provas). Ressalvas: operation-proof.mjs -> card EVENTOS-RESIDUOS-POS-TROCA; N-1 (nota): a integração cruzada 'marcar lidas na caixa do app -> badge da sidebar web some' deixou de ser provada num só spec (metades provadas isoladas; risco baixo, registrar se alguém depender do badge web). Flaky: testemunha RUN-145 mergeada (4219d15f) capturou a causa real (corrida Kong/PostgREST sob carga do CI); fix definitivo em lote futuro. Próximo: F06 listas ou F04 conforme mapa.",
         "14/11: LT-005 — F06 listas trocadas (PR #221, merge 5a512258): /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada). Só as 3 páginas de lista removidas; troca parcial (criação/edição de imóvel, alertas, criação/edição web de desapego ficam na web). TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão. Revisão independente Qwen: FAIL leve (D1 nota falsa link-crawl, D2 assert URL com query, D3 comentário órfão) -> corrigidos -> re-revisão PASS. GAP registrado em LAN-F06: /mercado/[id]/editar só por URL direta (app edita desapego inline). Filtros parcialmente consumidos (q client-side). Corrigidos também falso-positivo do secrets scan no contrato e formatação de 3 specs. Consequência da troca: /explorar/servicos e /negocio perderam a porta (eram linkados pela lista /mercado) -> declaradas em PORTAS_FORA_DO_LINK como dívida (F02/F07). Próximo: F04 ou F08 conforme mapa.",
         "14/11: LT-006 — F08 lado app (PR #222, merge aa21294c): Guia retém e consome q/categoria da URL. guia em ROTAS_COM_BUSCA (middleware renomeado manterBusca, lógica inalterada); leitura pura filtros-da-url.ts (termo 1..80, categoria válida, locality ignorado) + 8 testes; Guia.tsx semeia do endereço na montagem, digitação vence a origem e não reescreve a URL; E2E guia-filtros-url 23 passed local em 375/768/1440 nos dois temas, negativo verificado (sem guia no set a retenção falha). Revisão Qwen PASS com 2 ressalvas não bloqueantes -> F08-RESSALVAS. CI verde após RUN-146 (PR #223, merge 779d6b2c: runner pinado ubuntu-24.04, ubuntu-latest virou 26.04 incompatível com Playwright 1.51.1): gate 23m25s, App mobile-first 38m10s, HTML R72. Perda declarada: ?locality= não suportado. Próximo: LT-007 troca parcial de /guide (as outras 3 rotas do guia ficam na web).",
-        "14/11: LT-007 — F08 web parcial (PR #225, merge b5be43d4): /guide -> /app/guia 307 com query; lista antiga removida (715 linhas); subrotas /guide/[id], /guide/sugerir, /guide/[id]/correcao ficam na web (regra exata não as captura, prova negativa unit+E2E). TROCADAS 81/81; guia-redirects.spec.ts novo (307+query sem sessão em 375/768/1440); specs migradas (portas-de-entrada, empty-locality, two-localities); 5 links web da lista direto pro app (Salvos, busca global x2, city-reference, entry-moment). Revisão Qwen PASS. Completo verde no SHA a2c51d9d (run 43622057312, 17.9 min) após 5 correções de inventário (links, unitário href, typed routes via typegen, portas das subrotas, allowance /denuncias) + idle=10 do RUN-148. Perda declarada: ?locality=. Checklist de troca completo no LICOES. F08: lista trocada nos dois lados; gaps do verbete endereçável/sugestão/correção seguem em F08-RESSALVAS."
+        "14/11: LT-007 — F08 web parcial (PR #225, merge b5be43d4): /guide -> /app/guia 307 com query; lista antiga removida (715 linhas); subrotas /guide/[id], /guide/sugerir, /guide/[id]/correcao ficam na web (regra exata não as captura, prova negativa unit+E2E). TROCADAS 81/81; guia-redirects.spec.ts novo (307+query sem sessão em 375/768/1440); specs migradas (portas-de-entrada, empty-locality, two-localities); 5 links web da lista direto pro app (Salvos, busca global x2, city-reference, entry-moment). Revisão Qwen PASS. Completo verde no SHA a2c51d9d (run 43622057312, 17.9 min) após 5 correções de inventário (links, unitário href, typed routes via typegen, portas das subrotas, allowance /denuncias) + idle=10 do RUN-148. Perda declarada: ?locality=. Checklist de troca completo no LICOES. F08: lista trocada nos dois lados; gaps do verbete endereçável/sugestão/correção seguem em F08-RESSALVAS.",
+        "15/11: jornada de gaps + trocas (5 lotes mergeados): RUN-152 tema claro-only (81763cc6, decisão do dono — lançamento só claro, escuro dormente); RUN-153 F04 resolver/reabrir + útil fake removido (2db19a6b, destrava /indicacoes/[id]); RUN-155 F04 criar grupo (dff7dacd); RUN-156 F06 resíduo criar/editar desapego (343e9775, últimos URLs diretos); RUN-154 F08 verbete endereçável + botão fake removido + minhas sugestões (03ace7a4, destrava /guide/[id], resolve F08-RESSALVAS 1-2). CI rápida no ar (RUN-147/149/150/151: fast ~1.5 min, fechamento ~9-11 min). Lições: lotes que mexem em specs Playwright exigem E2E real no CI (typecheck não pega quebra de runtime); branches paralelos que mexem no TOTAL_DE_ROTAS precisam re-sync após merges; executores DeepSeek param antes de validar em worktree novo (install) — retomar com executor de conclusão."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6653,6 +6654,78 @@
       "links": ["docs/agents/tasks/F04-RESOLVER.task.yml"],
       "proof": [
         "15/11: PR #232 mergeado em 2db19a6b. Implementado pelo DeepSeek (4d3571f1) + fix do teste (675ae4e2: a etiqueta Resolvida carrega o ícone check_circle como ligadura no textContent, getByText exact:true não casava — removido exact, provado em navegador real). Revisão R2 Qwen PASS (2 notas menores: edge case pré-existente do RPC resolver sem resposta, inalcançável pela UI; risco baixo de estado pós-await). CI run 43669296794 todo verde (ci-core + fast + 3 stateful + agregador). App test 518. Resíduo: o RPC mark_recommendation_resolved não limpa resolved_reply_id quando já havia resposta marcada (pré-existente, registrar)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "RUN-154",
+      "title": "F08: verbete do Guia endereçável + remover botão fake + minhas sugestões",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Verbete em rota própria /app/guia/$id (catálogo + VerbeteDoGuia + TELAS_REAIS; Guia abre por navegação, Salvos leva ao verbete, Voltar fecha — resolve F08-RESSALVAS itens 1-2). Remove o botão fake Sugerir um lugar (fora do escopo F08 do lançamento; decisão do dono 14/11). Acompanhamento de correção: GET /api/app/guia/[id]/correcoes (dono, RLS select own existente, vazio≠404) + seção Minhas sugestões no verbete. Swap web: /guide/:id e /guide/:id/correcao → app, páginas web removidas, /guide/sugerir fica. Sem migration; artigo estruturado guide_articles não migrado (gap registrado).",
+      "checklist": [
+        "Verbete endereçável + Voltar fecha",
+        "Botão fake removido",
+        "Correção: GET + Minhas sugestões",
+        "Swap web + CI verde"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f08-guia-real.spec.ts", "tests/e2e/guia-redirects.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "03ace7a4",
+      "links": ["docs/agents/tasks/F08-VERBETE.task.yml"],
+      "proof": [
+        "15/11: PR #233 mergeado em 03ace7a4. Implementado pelo DeepSeek (f8a11135) + fixes: E2E (0c0f2acd: nome do verbete no h1, âncora Contribuir, reduced-motion na rota), unit knock-on (b6397093: cidade-consulta lê verbete.podeSalvar), manifesto (0e3a2db1: TOTAL 87 após merge da main com resolucao F04). Revisão R2 Qwen PASS com correção obrigatória (acessibilidade) aplicada. CI run 43674679843 todo verde. Resíduos: artigo guide_articles não migrado; correction-actions.ts revalidatePath em rota removida (no-op); loadOwnCorrectionRequests web órfã."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
+      "id": "RUN-155",
+      "title": "F04: criar grupo pelo app (POST /api/app/grupos + folha CriarGrupo)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "POST /api/app/grupos (RPC create_group existente, sessão cookie + CSRF + erro tipado, apresentarGrupo; GET intacto) + régua única lib/grupos/criacao.ts (nome 3-80 sem acento/caixa) + folha CriarGrupo (erros puros) + porta Criar grupo no Diretório (MenuCriar intocado). Criador vira owner, grupo aparece no diretório. Sem migration.",
+      "checklist": [
+        "POST grupos + régua única",
+        "Folha CriarGrupo + porta no Diretório",
+        "Testes positivo/negativo + CI verde"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f04-grupos-real.spec.ts", "tests/unit/app-api/grupos/novo.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "dff7dacd",
+      "links": ["docs/agents/tasks/F04-CRIAR-GRUPO.task.yml"],
+      "proof": [
+        "15/11: PR #234 mergeado em dff7dacd. Implementado pelo DeepSeek (d7efdc38) + fix locator (86fa3b8b: Fechar da folha com exact:true, a alça Arrastar para fechar casava por substring). Revisão R2 Qwen PASS-COM-RESSALVA (3 LOW: corrida de nome sem índice único — shortcut como na web; mensagem CSRF 403 inalcançável; limites duplicados entre pacotes). CI run 43673852885 todo verde. App test 533, suíte raiz 3187."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "RUN-156",
+      "title": "F06: troca as telas web de criar/editar desapego (resíduo)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Redirects 307 /mercado/novo → /app/mercado e /mercado/[id]/editar → /app/anuncio/[id] (query preservada). Páginas web removidas (novo 493 + editar 587 linhas). O app já cria/edita de verdade. provider-member-business.spec.ts:177 prova o redirect (porta extra saiu; criação de negócio segue por /explorar/servicos, /profile, /negocio). capture.mjs sem rotas que só redirecionam. Sem migration.",
+      "checklist": ["Redirects + páginas removidas", "Testes realocados sem afrouxar", "CI verde"],
+      "dependencies": [],
+      "tests": ["tests/e2e/mercado-redirects.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "343e9775",
+      "links": ["docs/agents/tasks/F06-RESIDUO.task.yml"],
+      "proof": [
+        "15/11: PR #235 mergeado em 343e9775. Implementado pelo DeepSeek (a8137c6c) + fixes: knock-ons (bf46f3d4: provider test + capture.mjs), regex P1 (694d342f: lookahead (?!novo/) sem o $ inerte que capturava /mercado/novo/editar → /app/anuncio/novo; provado com pathToRegexp real do Next 16.3). Revisão R2 Qwen REQ_CHANGES→P1 corrigido. CI run 43674160666 todo verde. Resíduo: lib/listings/actions.ts server actions órfãs + revalidatePath em rota removida (card próprio); create-menu/market-strip ainda apontam /mercado/novo (caem no redirect)."
       ],
       "completedChecklist": [true, true, true]
     },
@@ -7029,27 +7102,52 @@
       "completedAt": "2026-11-06"
     },
     {
+      "id": "TROCA-RESIDUOS",
+      "title": "Resíduos das trocas 15/11: código órfão e revalidatePath em rota removida",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Limpeza mecânica pós-trocas RUN-154/156 (sem comportamento de produto): (1) loadOwnCorrectionRequests (apps/web/lib/guide/guide-article.ts:264) ficou órfã — a página web /guide/[id]/correcao que a chamava saiu, o app usa GET /api/app/guia/[id]/correcoes; (2) revalidatePath em rota removida é no-op: correction-actions.ts:76-77 (/guide/[id] e /guide/[id]/correcao) e listings/actions.ts:307 (/mercado/[id]/editar); (3) create-menu.tsx:47 e market-strip.tsx:56 ainda apontam /mercado/novo (caem no redirect para /app/mercado — funcional, mas link velho). Confirmar se replaceListingPhotoAction/uploadListingPhotoAction/deleteListingPhotoObjectAction (listings/actions.ts) ficaram sem página viva antes de remover.",
+      "checklist": [
+        "Remover loadOwnCorrectionRequests órfã (ou religar se houver consumidor)",
+        "Remover revalidatePath de rotas removidas (correction-actions:76-77, listings/actions:307)",
+        "Atualizar create-menu/market-strip para a porta do app (ou aceitar o redirect)",
+        "Confirmar e remover ações de foto de listing órfãs, se sem página viva"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "03ace7a4",
+      "links": ["docs/agents/tasks/F08-VERBETE.task.yml", "docs/agents/tasks/F06-RESIDUO.task.yml"],
+      "proof": [
+        "15/11: registrado pelo coordenador ao fechar RUN-154/156, confrontado no disco (git grep). NÃO inclui o RPC mark_recommendation_resolved: a migration vigente (20261024110000_lote5_pergunta.sql:276) JÁ limpa resolved_reply_id — a ressalva da revisão do RUN-153 não se confirma no código."
+      ]
+    },
+    {
       "id": "F08-RESSALVAS",
-      "title": "F08 Guia: ressalvas (Voltar do verbete, resemeadura sem teste, URL ao digitar)",
+      "title": "F08 Guia: ressalvas LT-006 (resemeadura sem teste, URL ao digitar)",
       "phase": "Lançamento",
       "priority": "P3",
       "category": "frontend",
       "status": "repo",
-      "description": "Ressalva do RUN-009 (F08) integrado pelo PR #139: o Voltar do sistema não fecha a folha do verbete. Ressalvas do LT-006 (PR #222, revisão Qwen Flash PASS não bloqueante): (1) o efeito de resemeadura por mudança de endereço no Guia (Voltar para outra entrada) ainda sem teste — o molde LT-003 tinha trocarEndereco; (2) 'URL não reescrita enquanto digita' provado só por ausência de navegação no código, sem asserção E2E dedicada.",
+      "description": "Ressalvas do LT-006 (PR #222, revisão Qwen Flash PASS não bloqueante): (1) o efeito de resemeadura por mudança de endereço no Guia (Voltar para outra entrada) ainda sem teste — o molde LT-003 tinha trocarEndereco; (2) 'URL não reescrita enquanto digita' provado só por ausência de navegação no código, sem asserção E2E dedicada. A ressalva original do RUN-009 (Voltar do sistema não fecha a folha do verbete) foi resolvida pelo RUN-154: o verbete virou rota /app/guia/$id e o Voltar do sistema volta à lista.",
       "checklist": [
-        "Voltar do sistema fechar a folha do verbete, com id de sobreposição próprio em lib/navegacao",
-        "E2E do Voltar do sistema com a folha aberta",
+        "[x] Voltar do sistema sair do verbete (RUN-154: virou rota /app/guia/$id, não folha)",
+        "[x] E2E do Voltar com o verbete aberto (f08-guia-real: URL direta sobrevive a recarga e Voltar)",
         "LT-006: teste do efeito de resemeadura por mudança de endereço no Guia (molde trocarEndereco do LT-003)",
         "LT-006: asserção E2E de que a URL não é reescrita enquanto a pessoa digita no Guia"
       ],
       "proof": [
-        "14/11: estendido com as 2 ressalvas não bloqueantes da revisão independente Qwen Flash do LT-006 (PR #222, commit 6220fd6c)."
+        "14/11: estendido com as 2 ressalvas não bloqueantes da revisão independente Qwen Flash do LT-006 (PR #222, commit 6220fd6c).",
+        "15/11: itens 1-2 resolvidos pelo RUN-154 (03ace7a4) — o verbete endereçável faz o Voltar do sistema voltar à lista, provado em f08-guia-real.spec.ts. Restam os 2 itens do LT-006."
       ],
       "tests": [],
       "links": ["docs/agents/tasks/RUN-009.task.yml", "docs/agents/tasks/LT-006.task.yml"],
       "dependencies": [],
-      "updatedAt": "2026-11-14",
-      "sourceRevision": "6220fd6c"
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "03ace7a4"
     },
     {
       "phase": "Lançamento",
