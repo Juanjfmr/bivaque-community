@@ -52,6 +52,7 @@ allowed_paths:
   - tests/unit/app-api/perguntas
   - tests/unit/security/api-surface.test.ts
   - tests/e2e/f04-perguntas-real.spec.ts
+  - tests/scope/perguntas-porta.test.mjs
   - .visual/f04-salvar
 
 forbidden:
