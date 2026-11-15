@@ -17,6 +17,7 @@ import { Avisos } from "@/src/telas/Avisos"
 import { Bloqueados } from "@/src/telas/Bloqueados"
 import { Busca } from "@/src/telas/Busca"
 import { Chamados } from "@/src/telas/Chamados"
+import { CidadeConsulta } from "@/src/telas/CidadeConsulta"
 import { Comunidade } from "@/src/telas/Comunidade"
 import { Conduta } from "@/src/telas/Conduta"
 import { Contato } from "@/src/telas/Contato"
@@ -90,6 +91,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   avisos: Avisos,
   bloqueados: Bloqueados,
   chamados: Chamados,
+  cidade: CidadeConsulta,
   conduta: Conduta,
   contato: Contato,
   dono: Dono,

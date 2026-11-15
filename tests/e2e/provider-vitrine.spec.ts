@@ -1,9 +1,14 @@
-// Onda G Task 9 — os três ciclos da vitrine em E2E, contra o seed real.
+// Onda G Task 9 → CIDADE-169 — os ciclos da vitrine em E2E, contra o seed real.
 //
-// 1. Membro da vila acha o prestador pela busca da localidade e abre a ficha.
+// 1. Membro da vila acha o prestador pelo Mercado da cidade e abre a ficha.
 // 2. O prestador entra e publica um item de catálogo pelo painel.
 // 3. O membro FORA do alcance não acha a ficha (a fronteira que a Task 7
 //    venderá quando existir alcance pago).
+//
+// A porta da vitrine era `/localidade` (o `CityReference` da web). Com a
+// consulta de cidade no app (CIDADE-169), `/localidade` responde 307 e a
+// vitrine que restou é a do Mercado da cidade (`/app/negocios`), que lê a mesma
+// RPC `search_providers` — a prova migra para lá em vez de morrer com a tela.
 //
 // O aceite por magic link do convite é provado no banco por
 // supabase/tests/provider-invitation.sql; este spec cobre o pós-login.
@@ -58,28 +63,20 @@ async function signInAs(page: Page, email: string): Promise<void> {
 }
 
 test.describe("vitrine de prestadores", () => {
-  test("membro da vila acha o prestador pela busca da localidade e abre a ficha", async ({
-    page,
-  }) => {
+  test("membro da vila acha o prestador no Mercado da cidade e abre a ficha", async ({ page }) => {
     await signInAs(page, "membro-1@bivaque.example.invalid")
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    await page.goto("/localidade")
+    await page.goto("/app/negocios")
 
-    // Timeout generoso no primeiro assert: cold start de lote serial.
-    const busca = page.getByLabel("Buscar por nome")
-    await expect(busca).toBeVisible({ timeout: 20000 })
-    await busca.fill("climatiza")
-    // Desambiguado pelo formulário: a página tem mais de um botão "Buscar" (o
-    // do shell, por exemplo) e o locator global caía em strict mode violation.
-    // O campo "Buscar por nome" pertence ao form da vitrine; o submit é dele.
-    await page
-      .locator("form")
-      .filter({ hasText: "Buscar por nome" })
-      .getByRole("button", { name: "Buscar" })
-      .click()
+    // O filtro da tela é por categoria; a busca por nome é do Mercado global.
+    // O chip é um item de ToggleGroup cujo nome acessível é "Filtrar por <rótulo>",
+    // então o contrato da peça é o data-chip (mesmo de f07-negocios-real).
+    await page.locator('[data-chip="assistencia_tecnica"]').click()
 
-    await page.getByRole("link", { name: /Climatiza Manaus/ }).click()
+    const ficha = page.getByRole("button", { name: "Ver negócio: Climatiza Manaus", exact: true })
+    await expect(ficha).toBeVisible({ timeout: 20000 })
+    await ficha.click()
 
     await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible({
       timeout: 10000,
@@ -114,19 +111,6 @@ test.describe("vitrine de prestadores", () => {
     await publicar.getByLabel("Preço em centavos").fill("25000")
     await publicar.getByRole("button", { name: "Publicar" }).click()
 
-    // TEMPORÁRIO (diagnóstico): estado da página logo após a ação.
-    await page.waitForTimeout(2500)
-    console.log("DBG_B_pos_url:", page.url())
-    const corpoPos = await page.locator("body").innerText()
-    console.log(
-      "DBG_B_tem_item:",
-      corpoPos.includes("Instalação de split"),
-      "| DBG_B_erro_global:",
-      /application error|ocorreu um erro/i.test(corpoPos),
-      "| DBG_B_cauda:",
-      corpoPos.slice(-260).replace(/\s+/g, " | "),
-    )
-
     // .first(): títulos repetidos são permitidos no catálogo — execuções
     // anteriores do próprio spec podem ter publicado o mesmo nome.
     await expect(page.getByText("Instalação de split").first()).toBeVisible({
@@ -138,15 +122,14 @@ test.describe("vitrine de prestadores", () => {
     await signInAs(page, "membro-vazia@bivaque.example.invalid")
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    await page.goto("/localidade")
+    await page.goto("/app/negocios")
 
     // §3.4 e Task 5 Step 3: sem FICHA nenhuma no alcance do chamador, o
-    // estado é o vazio honesto SEM formulário de filtro ("mostre o filtro
-    // só quando houver ficha") — e Climatiza Manaus não aparece em lugar
+    // estado é o vazio honesto — e Climatiza Manaus não aparece em lugar
     // nenhum da página.
-    await expect(page.getByText("Ainda não há prestadores cadastrados por aqui.")).toBeVisible({
+    await expect(page.getByText("Ainda sem negócios cadastrados")).toBeVisible({
       timeout: 20000,
     })
-    await expect(page.getByRole("link", { name: /Climatiza Manaus/ })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: /Climatiza Manaus/ })).toHaveCount(0)
   })
 })

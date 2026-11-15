@@ -25,6 +25,7 @@ export type NomeDeRota =
   | "voce"
   | "busca"
   | "catalogo"
+  | "cidade"
   | "desapegos"
   | "imoveis"
   | "negocios"
@@ -124,6 +125,11 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["voce", "/voce", "Você", "voce", { raiz: true }],
   ["busca", "/busca", "Buscar", "origem", { pai: "inicio" }],
   ["catalogo", "/catalogo", "Desapegos", "mercado", { pai: "inicio" }],
+  // A consulta de cidade (CIDADE-169): a tela da cidade da pessoa (`/cidade/atual`)
+  // e a de QUALQUER cidade do catálogo (`/cidade/<id>`). É leitura — a leitura de
+  // outra cidade é a regra aprovada em 25/09/2026. Não acende aba: chega-se pelo
+  // chip da casca.
+  ["cidade", "/cidade/$id", "Cidade", "origem", { parametro: "id", pai: "inicio" }],
   ["desapegos", "/desapegos", "Desapegos", "mercado", { pai: "inicio" }],
   ["imoveis", "/imoveis", "Imóveis", "mercado", { pai: "inicio" }],
   ["negocios", "/negocios", "Mercado da cidade", "mercado", { pai: "inicio" }],
@@ -199,7 +205,8 @@ export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
     rota.nome !== "indisponivel" &&
     rota.nome !== "avisos" &&
     rota.nome !== "verbete" &&
-    rota.nome !== "perfil",
+    rota.nome !== "perfil" &&
+    rota.nome !== "cidade",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

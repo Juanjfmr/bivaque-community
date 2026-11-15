@@ -51,6 +51,8 @@ const TROCADAS = [
   [`/events/${ID}`, `/app/evento/${ID}`],
   [`/events/${ID}/editar`, `/app/evento/${ID}`],
   [`/events/${ID}/perguntas`, `/app/evento/${ID}`],
+  // CIDADE-169: a consulta de cidade é tela do app; o id do catálogo vai junto.
+  [`/cidade/${ID}`, `/app/cidade/${ID}`],
 ] as const
 
 // Mesmos matchers do resolve-routes do Next, sem servidor. O helper experimental
@@ -156,6 +158,35 @@ describe("LAN-TROCA fase 1", () => {
       : []
     expect(sobras).toEqual([])
   })
+
+  // CIDADE-169: a consulta de cidade e a referência da cidade são do app. A
+  // prova é de ausência — nenhuma tela sobra para alguém "voltar" editando a
+  // pasta, e o endereço antigo responde 307.
+  it.each(["cidade", "localidade"])("a tela antiga %s não deixa arquivos para trás", (relativa) => {
+    const pasta = join(shell, relativa)
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
+
+  it("/localidade cai na consulta da cidade da própria sessão, com a query preservada", async () => {
+    const resposta = await resolver("/localidade?de=email")
+    expect(resposta.status).toBe(307)
+    const destino = new URL(resposta.headers.get("location") ?? "", ORIGEM)
+    expect(destino.pathname).toBe("/app/cidade/atual")
+    expect(destino.searchParams.get("de")).toBe("email")
+    expect((await resolver("/app/cidade/atual")).headers.get("location")).toBeNull()
+  })
+
+  // A regra é do segmento exato: subárvore de `/localidade` nunca existiu e
+  // continua sem redirect, em vez de virar consulta por acidente.
+  it.each(["/localidade/qualquer", `/cidade/${ID}/editar`])(
+    "%s não é capturado pela consulta",
+    async (caminho) => {
+      expect((await resolver(caminho)).headers.get("location")).toBeNull()
+    },
+  )
 
   // F05: a tela antiga sai inteira — nenhum page.tsx e nenhuma action sobram
   // para alguém "voltar" editando a pasta. A prova é de ausência: o diretório

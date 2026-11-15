@@ -1,0 +1,119 @@
+# CIDADE-169 — consulta de cidade no app (C1) + diluicao do /localidade na mesma tela (C2).
+#
+# O LANCAMENTO nao nomeia ver outra cidade como linha de jornada, mas o ADR
+# 20260925-consulta-outra-cidade (R3 ACEITO pelo dono em 25/09; tabela via
+# migration 20260925161111; pgTAP consulta-outra-cidade.sql com 19 assercoes)
+# aprovou a leitura. Criterio 6 da fase 6 manda trocar /cidade/[id] e
+# /localidade; redirect sem destino mataria produto aprovado — o destino ja
+# existe no app (detalhes de evento/verbete/anuncio ja suportam visitante). A
+# transferencia de cidade NAO e daqui — e do F10-TROCA-PERFIL-PROPRIO (pills e
+# declare_locality_transfer vao la). Sem migration nenhuma: so porta + tela.
+#
+# C1: GET /api/app/cidade/[id] (id do catalogo localities OU o literal atual
+# = cidade do vinculo current da sessao) devolvendo o agregado do city-consult
+# web: cidade, guia aprovado (8), encontros de alcance cidade (5), desapegos e
+# imoveis ativos de alcance cidade (8+8), SEM comunidades/perguntas/vitrine.
+# Tela /app/cidade/$id reusa os detalhes existentes (visita ja funciona).
+# C2: /localidade cai na mesma tela com a cidade propria (atual); vitrine de
+# prestadores nao e linha nenhuma — aposentar so com prova de entrada viva
+# restante (ver acceptance).
+
+task_id: CIDADE-169
+
+objective: >
+  Portar a consulta de cidade para o app (rota de leitura sobre a regra de
+  leitura de 25/09 + tela endereçavel + entrada real pelo painel de cidade),
+  trocar /cidade/[id] e /localidade por 307, remover as telas web e os modulos
+  inicio residuais que elas importam, e migrar/aposentar os specs pinados nelas.
+
+authority:
+  - docs/LANCAMENTO.md criterios 1-6 (:38-48) e fase 6 (:101)
+  - ADR-20260925-consulta-outra-cidade.md (aceite do dono; nao reabrir a regra)
+  - Mapa do explorer 16/11 (C1/C2; transferencia fica fora)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /cidade/[id] e /localidade servem tela de membro na web sem redirect
+    (next.config.ts sem regras; proxy generico); as duas importam os modulos de
+    (shell)/inicio (city-consult.tsx:11-25) que sobreviveram a troca do /inicio
+    so por isso; o app nao tem rota de cidade (rotas.ts:116-179) e o
+    PainelDeCidade so troca rotulo (casca.tsx:107-114; PainelDeCidade.tsx:15-17).
+
+allowed_paths:
+  - docs/agents/tasks/CIDADE-CONSULTA.task.yml
+  - apps/web/app/api/app/cidade
+  - apps/web/lib/cidade
+  - apps/web/app/(shell)/cidade
+  - apps/web/app/(shell)/localidade
+  - apps/web/app/(shell)/inicio
+  - apps/web/app/components/shell/city-switcher.tsx
+  - apps/web/app/components/bivaque/city-reference.tsx
+  - apps/web/next.config.ts
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/navegacao/rotas.ts
+  - apps/app/lib/navegacao/entrada.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/src/telas
+  - apps/app/src/casca
+  - apps/app/lib/dados
+  - apps/app/tests
+  - tests/unit/app-api/cidade
+  - tests/unit/security/api-surface.test.ts
+  - tests/unit/ui/cidade-consulta.test.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/e2e/portas-de-entrada.spec.ts
+  - tests/e2e/transfer-switch.spec.ts
+  - tests/e2e/locality-tabs-keyboard.spec.ts
+  - tests/e2e/provider-vitrine.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  # EMENDA 15/11 (antes do commit): o E2E real da tela nova e arquivo proprio,
+  # como o acceptance pede (E2E real novo); nao cabia em nenhum dos specs
+  # existentes sem transformar prova pinada em prova de outra coisa.
+  - tests/e2e/cidade-consulta-real.spec.ts
+  # EMENDA 15/11 (antes do commit): a lista de excecoes do guard-rail de abas
+  # citava a tela de /localidade, que este lote remove. Sem emenda o arquivo
+  # ficaria vermelho citando caminho inexistente.
+  - tests/unit/visual/tabs-style-applied.test.ts
+  # EMENDA 15/11 (antes do commit): este teste importa o CityReference, que este
+  # lote aposenta junto com /localidade. Sem a emenda o suite fica vermelho
+  # importando componente inexistente.
+  - tests/unit/ui/city-reference.test.tsx
+  - tests/unit/ui/rail-unico-alcancavel-no-telefone.test.ts
+  - scripts/visual/capture.mjs
+  - .visual/cidade-consulta
+
+forbidden:
+  - criar migration ou mexer em RPCs/permissoes do banco (a regra de 25/09 esta aprovada e provada)
+  - portar a transferencia de cidade, as pills outbound ou declare_locality_transfer (F10-TROCA-PERFIL-PROPRIO)
+  - reintroduzir ?locality= espalhado por rotas F02/F05/F06/F08 ou "Ver todos" com locality= (EVENTOS-LOCALITY-LINK done)
+  - portar a vitrine de prestadores para dentro da consulta (a tabela do ADR nao inclui; nao e linha do LANCAMENTO)
+  - adicionar comunidades/perguntas/convite-a-publicar na consulta (o web city-consult nunca exibiu)
+  - mover dados demo para o estado real; remover captura sem realocar a prova
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "GET /api/app/cidade/[id] no contrato ADR do app §5: exigirSessao; id do catalogo OU literal atual (cidade do vinculo current da SESSAO — nunca nome/parametro externo); formato invalido ou cidade fora do catalogo -> 404; bundle lido sob as permissoes existentes (guia aprovado, encontros publicos/town, desapegos e imoveis ativos de alcance cidade conforme a regra de leitura aprovada em 25/09; o web city-consult.tsx:55 le exatamente os mesmos dados por ela); sem service_role; 503 sem eco. A rota cita nos comentarios os arquivos do web portados e a decisao do ADR."
+  - "App: rota cidade no catalogo (path /cidade/$id, origem, sem pai de aba) + entrada de painel; tela CidadeConsulta reusando pecas reais de lista (linhas do guia/evento/mercado) com links aos detalhes existentes (que abrem em visita); CTA 'Vou me mudar para cá' aponta /profile?mudar=<id>#cidade ENQUANTO a transferencia nao pousar (F10) — registrar no RELATORIO; painel de cidade: escolher cidade real abre /app/cidade/<id> via catalogo (/api/localities/[uf] ja consumido na entrada — se o picker atual so rotulo nao der id, estender o minimo); a cidade do membro abre via atual. A consulta NAO muda a cidade da sessao em lugar nenhum."
+  - "Troca: 307 /cidade/:id -> /app/cidade/:id e /localidade -> /app/cidade/atual (ou /app/cidade se o catalogo preferir path sem id — decidir e manter TROCADAS coerente). Query preservada; prova de ausencia das duas pastas; negativas de prefixo. Remover (shell)/cidade e (shell)/localidade; depois remover em (shell)/inicio SOMENTE o que ficar sem importador vivo (grep antes de cada arquivo; city-consult levava hub-loaders/market-strip/week-events/questions-guide; page.tsx do inicio ja esta atras de 307 — sair se o ultimo importador morrer). city-reference.tsx/search_providers: verificar entradas vivas de /localidade e do proprio componente em todo apps/web; sem entrada viva, aposentar e registrar provider-vitrine.spec.ts (migra para a entrada viva restante; se nao existir NENHUMA, NAO matar a prova — BLOCKED parcial no RELATORIO para decisao do coordenador/card F07)."
+  - "Pins: cidade-consulta.test.ts migra para as fontes do app mantendo as tres intencoes; transfer-switch/locality-tabs-keyboard: o que provava pills outbound/teclado do /localidade vira prova da tela nova sem pills (a transferencia morre no F10 — registrar no card la); rail-unico hrefs /localidade -> /app/cidade; link-crawl apaga as portas :101-103 e :218-221; capture.mjs atualizado."
+  - "Testes novos: unit da rota (atual; id do catalogo; id fora 404; formato invalido 404; bundle SEM comunidades/perguntas; visitante conforme a regra; CSRF nao se aplica a GET; 503 sem eco), app dados + e2e stub do painel->consulta, E2E real (membro abre a consulta da propria cidade e de outra cidade; blocos linkam detalhes que abrem em visita; 375/768/1440 claro). TOTAL_DE_ROTAS 93->94 (um route.ts novo); api-surface com marcador e teste verde."
+  - "Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. E2E navegador no CI. Antes de tocar qualquer arquivo fora dos allowed_paths, EMENDAR este contrato primeiro (licao paga 15/11)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/CIDADE-CONSULTA.task.yml
+
+risk: tela nova de leitura sobre regra aprovada; remocao em cadeia do inicio residual; vitrine pode ficar sem entrada (gatilho de decisao registrada)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -4,18 +4,19 @@ import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
-// DS-021 — Native semantics first; canonical compound behavior.
+// DS-021 — semântica nativa antes de contrato composto.
 //
-// Phase 4 RUN-007 documented that the locality switcher at /localidade
-// advertises `role="tab"` semantics but delivers no APG keyboard contract:
-// no roving `tabIndex`, no `aria-controls`, no `tabpanel`, and
-// ArrowLeft/ArrowRight/Home/End do not move `aria-selected`. The visible
-// BottomNav uses a real HeroUI/React Aria Tabs implementation; this spec
-// pins the keyboard contract for the locality switcher to match.
+// Este spec provava o contrato APG (roving tabIndex, aria-controls, setas,
+// Home/End) das pílulas do seletor de localidade em /localidade. As pílulas eram
+// a interface da TRANSFERÊNCIA de cidade, e ela saiu com o F10 —
+// F10-TROCA-PERFIL-PROPRIO (registro em .visual/cidade-consulta/RELATORIO.md).
+// A tela de cidade agora é uma consulta de leitura (CIDADE-169): não há
+// tablist, e o que existe são LINHAS que navegam.
 //
-// The seed carries `membro-transferencia@bivaque.example.invalid` already
-// declared as a not-yet-degraded transfer (Rio current, Manaus leaving),
-// which is the only state in which the locality switcher renders.
+// O contrato que restou é o que a tela de fato tem: cada linha é um <button>
+// nativo (foco, Enter e Espaço vêm do navegador, não de um tablist inventado) e
+// a ausência de tablist é deliberada. O que a transferência precisará de teclado
+// volta com ela, no card dela.
 //
 // `import.meta.dirname` cannot be used here: Playwright transpiles specs
 // to CJS, and the emitted `require` blows up at load time. All paths
@@ -24,6 +25,8 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
+/** Manaus tem UUID durável (20260802000100) e conteúdo de seed. */
+const MANAUS = "00000000-0000-4000-8000-000000000001"
 
 const TRANSFERRING_EMAIL =
   process.env["BIVAQUE_E2E_TRANSFERRING_EMAIL"] ?? "membro-transferencia@bivaque.example.invalid"
@@ -106,130 +109,37 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-const TABLIST = '[role="tablist"][aria-label="Cidades"]'
-const CURRENT_TAB_NAME = "Rio de Janeiro"
-const OUTBOUND_TAB_NAME = /Manaus \(saindo\)/
+const LINHAS = '[data-tela="cidade"] [data-linha="lista"]'
 
-async function loadLocalidadeTabs(page: Page) {
+async function abrirConsultaDeManaus(page: Page) {
   await signInAs(page, TRANSFERRING_EMAIL)
-  await page.goto(`${APP_URL}/localidade`, { waitUntil: "load" })
-  await expect(page.locator(TABLIST)).toBeVisible({ timeout: 15000 })
-  await expect(page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })).toBeVisible()
-  await expect(page.getByRole("tab", { name: OUTBOUND_TAB_NAME })).toBeVisible()
+  await page.goto(`${APP_URL}/app/cidade/${MANAUS}`, { waitUntil: "load" })
+  await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible({ timeout: 15000 })
 }
 
-test.describe("DS-021 — locality tabs keyboard and ARIA contract (APG)", () => {
-  test("active tab has tabindex=0 and aria-selected=true; the others have tabindex=-1 and aria-selected=false", async ({
-    page,
-  }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    await expect(current).toHaveAttribute("aria-selected", "true")
-    await expect(current).toHaveAttribute("tabindex", "0")
-    await expect(outbound).toHaveAttribute("aria-selected", "false")
-    await expect(outbound).toHaveAttribute("tabindex", "-1")
+test.describe("DS-021 — contrato de teclado da consulta de cidade", () => {
+  test("não existe tablist: a transferência saiu, e a tela é leitura", async ({ page }) => {
+    await abrirConsultaDeManaus(page)
+    await expect(page.getByRole("tablist")).toHaveCount(0)
+    await expect(page.getByRole("tab")).toHaveCount(0)
   })
 
-  test("each tab declares aria-controls pointing to a tabpanel with matching id", async ({
-    page,
-  }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    const currentId = await current.getAttribute("id")
-    const outboundId = await outbound.getAttribute("id")
-    expect(currentId).toBeTruthy()
-    expect(outboundId).toBeTruthy()
-    expect(currentId).not.toEqual(outboundId)
-
-    const currentControls = await current.getAttribute("aria-controls")
-    expect(currentControls).toBeTruthy()
-    expect(currentControls).not.toEqual(outboundId)
-
-    const currentPanel = page.locator(`[role="tabpanel"]#${currentControls}`)
-    await expect(currentPanel).toHaveCount(1)
-    await expect(currentPanel).toHaveAttribute("aria-labelledby", currentId ?? "")
+  test("cada linha é um botão nativo com nome acessível", async ({ page }) => {
+    await abrirConsultaDeManaus(page)
+    const primeira = page.locator(LINHAS).first()
+    await expect(primeira).toBeVisible()
+    // Botão de verdade: o teclado vem do navegador, sem tablist inventado.
+    expect(await primeira.evaluate((elemento) => elemento.tagName)).toBe("BUTTON")
+    await primeira.focus()
+    await expect(primeira).toBeFocused()
+    await expect(primeira.locator("[data-titulo-linha]")).toHaveText(/\S/)
   })
 
-  test("ArrowRight moves selection and focus to the next tab and updates aria-selected", async ({
-    page,
-  }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    await current.focus()
-    await expect(current).toBeFocused()
-    await page.keyboard.press("ArrowRight")
-
-    await expect(outbound).toBeFocused()
-    await expect(outbound).toHaveAttribute("aria-selected", "true")
-    await expect(outbound).toHaveAttribute("tabindex", "0")
-    await expect(current).toHaveAttribute("aria-selected", "false")
-    await expect(current).toHaveAttribute("tabindex", "-1")
-  })
-
-  test("ArrowLeft moves selection and focus back to the previous tab", async ({ page }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    await outbound.focus()
-    await expect(outbound).toBeFocused()
-    await page.keyboard.press("ArrowLeft")
-
-    await expect(current).toBeFocused()
-    await expect(current).toHaveAttribute("aria-selected", "true")
-    await expect(outbound).toHaveAttribute("aria-selected", "false")
-  })
-
-  test("Home moves selection to the first tab", async ({ page }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    await outbound.focus()
-    await page.keyboard.press("Home")
-
-    await expect(current).toBeFocused()
-    await expect(current).toHaveAttribute("aria-selected", "true")
-    await expect(outbound).toHaveAttribute("aria-selected", "false")
-  })
-
-  test("End moves selection to the last tab", async ({ page }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    await current.focus()
-    await page.keyboard.press("End")
-
-    await expect(outbound).toBeFocused()
-    await expect(outbound).toHaveAttribute("aria-selected", "true")
-    await expect(current).toHaveAttribute("aria-selected", "false")
-  })
-
-  test("keyboard selection swap is reflected in the rendered CityReference", async ({ page }) => {
-    await loadLocalidadeTabs(page)
-
-    const current = page.getByRole("tab", { name: CURRENT_TAB_NAME, exact: true })
-    const outbound = page.getByRole("tab", { name: OUTBOUND_TAB_NAME })
-
-    await current.focus()
-    await expect(page.getByRole("heading", { name: "Rio de Janeiro" })).toBeVisible()
-
-    await page.keyboard.press("ArrowRight")
-    await expect(outbound).toBeFocused()
-    await expect(page.getByText(/Você está saindo de Manaus em/)).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Manaus", exact: true })).toBeVisible()
+  test("Enter na linha abre o detalhe de sempre", async ({ page }) => {
+    await abrirConsultaDeManaus(page)
+    const primeira = page.locator(LINHAS).first()
+    await primeira.focus()
+    await page.keyboard.press("Enter")
+    await expect(page).toHaveURL(/\/app\/(guia|evento|anuncio)\/.+$/)
   })
 })

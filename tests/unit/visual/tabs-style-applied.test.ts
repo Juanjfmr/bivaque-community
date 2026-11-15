@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join, relative } from "node:path"
 import { describe, expect, it } from "vitest"
 
@@ -61,11 +61,6 @@ const EXCEPTIONS = [
     reason:
       'navegação primária em largura pequena (barra inferior); recebe variant="primary" de propósito, não é fileira de abas de conteúdo',
   },
-  {
-    file: "apps/web/app/(shell)/localidade/page.tsx",
-    reason:
-      "seletor segmentado em pílula das duas cidades do membro (atual e destino), não fileira de abas de conteúdo; a prancha apresenta cidade como cartões/seletor",
-  },
 ] as const
 
 function unstyleWithoutException(sources: Map<string, string>): string[] {
@@ -115,11 +110,16 @@ describe("tabs rows use the product style", () => {
   it("carries the written declaration inside each shell exception it keeps", () => {
     // bottom-nav.tsx é intocável neste lote; o motivo dela vive na lista acima.
     // Toda exceção sob (shell) precisa declarar em si mesma por que difere.
+    // CIDADE-169: a única exceção sob (shell) era /localidade, que saiu com a
+    // consulta de cidade. Sem ela, a regra que resta é a que pega a deriva de
+    // verdade: exceção não pode citar arquivo que não existe.
     const shellExceptions = EXCEPTIONS.filter((entry) => entry.file.includes("(shell)/"))
-    expect(shellExceptions.length).toBeGreaterThan(0)
     for (const entry of shellExceptions) {
       const source = readFileSync(join(process.cwd(), entry.file), "utf8")
       expect(source).toMatch(/RECON-047/)
+    }
+    for (const entry of EXCEPTIONS) {
+      expect(existsSync(join(process.cwd(), entry.file)), `exceção órfã: ${entry.file}`).toBe(true)
     }
   })
 })

@@ -9,10 +9,9 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { ModalCloseTrigger } from "../bivaque/close-button"
 import { CityPicker } from "./city-picker"
 
-// O chip de cidade do cabeçalho (decisão do dono, 25/09/2026): deixa de ser
-// texto fixo e vira a porta para CONSULTAR outra cidade (/cidade/[id]). Mudar
-// a SUA cidade é outra coisa, com consequência — mora no perfil, e o diálogo
-// só aponta para lá.
+// Deixa de ser texto fixo e vira a porta para CONSULTAR outra cidade
+// (/app/cidade/[id], CIDADE-169). Mudar a SUA cidade é outra coisa, com
+// consequência — mora no perfil, e o diálogo só aponta para lá.
 //
 // Em toda largura: no telefone é só o pino (o nome está no rodapé do menu e
 // no Início); do tablet para cima, pino + nome da cidade.
@@ -63,7 +62,7 @@ export function CitySwitcher() {
                     autoFocus
                     onPick={(city) => {
                       dialog.close()
-                      router.push(`/cidade/${city.id}` as Route)
+                      router.push(`/app/cidade/${city.id}` as Route)
                     }}
                   />
                 </div>
