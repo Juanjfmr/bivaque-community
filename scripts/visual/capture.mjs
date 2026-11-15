@@ -171,11 +171,12 @@ export const HEADINGS = {
   // Lote 4 (PORT-004): o documento do protótipo.
   "/onboarding/documento": "^(Envie um documento\\.|A equipe pediu outro documento\\.)$",
   "/onboarding/perfil": "^Deixe com a sua cara\\.$",
-  "/mercado/novo": "^Novo anúncio$",
+  // Mercado: criar e editar desapego saíram da web na F06 resíduo (RUN-156).
+  // `/mercado/novo` e `/mercado/[id]/editar` agora redirecionam para o app
+  // (/app/mercado e /app/anuncio/[id]); capturá-los mediria o redirect.
   "/negocio": "^(Seu negócio|Crie a página do seu negócio)$",
   "/negocio/catalogo": "^Catálogo e portfólio$",
   "/prestadores/<member-business>": DYNAMIC_HEADING,
-  "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
   // O h1 do detalhe é o título do próprio evento.
   "/events/70000000-0000-4000-8000-000000000005": DYNAMIC_HEADING,
   // Evento da conta de captura (RECON-051): a única rota de EDIÇÃO de evento
@@ -308,10 +309,9 @@ export const ROUTES = [
   // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
   // capturava o 404 honesto há runs. Eventos são 70000000-… no seed.
   { path: "/events/70000000-0000-4000-8000-000000000005", name: "event-detail", auth: true },
-  // RECON-025: criação e edição de desapego. A rota de detalhe depende de anúncio no seed,
-  // que este lote não pode criar (supabase/seed.sql fora dos allowed_paths);
-  // capture-a quando a fixture existir.
-  { path: "/mercado/novo", name: "mercado-novo", auth: true },
+  // F06 resíduo (RUN-156): as telas web de criar e editar desapego saíram; o app
+  // cria pela folha do Criar e edita dentro do anúncio. As rotas antigas agora
+  // são redirect, não tela — não entram na captura.
   { path: "/negocio", name: "member-business", auth: true, account: "visual" },
   {
     path: "/negocio/catalogo",
@@ -325,16 +325,6 @@ export const ROUTES = [
     auth: true,
     account: "visual",
     fixture: "member-business",
-  },
-  // RECON-026: a gestão dos próprios anúncios. `/meus-anuncios` é rota fixa. A
-  // edição depende de um anúncio no seed; `supabase/seed.sql` está fora dos
-  // allowed_paths deste lote, então o caminho fica cadastrado com um id
-  // determinístico e a captura cai no estado honesto "indisponível" até existir
-  // a fixture — nunca em 404 silencioso nem em tela de login.
-  {
-    path: "/mercado/a0000000-0000-4000-8000-000000000001/editar",
-    name: "mercado-editar",
-    auth: true,
   },
   // RECON-029: o evento REAL do seed (organizador 30000000-...-001) — o id
   // acima é um post id, não um evento; esta fixture concreta sustenta a captura

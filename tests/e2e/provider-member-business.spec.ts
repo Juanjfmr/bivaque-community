@@ -174,9 +174,11 @@ test.describe("página de negócio do membro", { tag: "@stateful" }, () => {
     await page.goto("/negocio")
     await expect(page.getByRole("heading", { name: "Seu negócio" })).toBeVisible()
 
+    // F06 resíduo: /mercado/novo saiu da web com a porta extra de criar negócio.
+    // A criação segue provada acima por /explorar/servicos, /profile e /negocio;
+    // o endereço antigo agora chega à lista do app.
     await page.goto("/mercado/novo")
-    await page.getByRole("link", { name: "Crie a página do seu negócio" }).click()
-    await expect(page.getByRole("heading", { name: "Seu negócio" })).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/mercado(\?.*)?$/)
 
     expect(providerId).toBeTruthy()
   })
