@@ -15,8 +15,11 @@ const buttonVariants = cva(
           "bg-(--brasa) text-(--brasa-foreground) hover:brightness-95 focus-visible:ring-(--brasa)/40",
         outline:
           "border-(--border) bg-(--background) hover:bg-(--muted) hover:text-(--foreground) aria-expanded:bg-(--muted) aria-expanded:text-(--foreground) dark:border-(--input) dark:bg-(--input)/30 dark:hover:bg-(--input)/50",
+        // O hover do tonal é um token, não `color-mix`: o valor computado de
+        // `color-mix` sai como `oklch()/color(srgb …)` e a medição de contraste
+        // que lê `backgroundColor` como rgb lia 1,36:1 num botão de 12,5:1.
         secondary:
-          "bg-(--secondary) text-(--secondary-foreground) hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-(--secondary) aria-expanded:text-(--secondary-foreground)",
+          "bg-(--secondary) text-(--secondary-foreground) hover:bg-(--surface-highest) aria-expanded:bg-(--secondary) aria-expanded:text-(--secondary-foreground)",
         ghost:
           "hover:bg-(--muted) hover:text-(--foreground) aria-expanded:bg-(--muted) aria-expanded:text-(--foreground) dark:hover:bg-(--muted)/50",
         destructive:
