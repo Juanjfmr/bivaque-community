@@ -4,6 +4,8 @@ type Corpo = Record<string, unknown>
 export type ConversaDaCaixa = Readonly<{
   id: string
   nome: string
+  /** O outro participante, para abrir o perfil pelo cabeçalho. */
+  outroId: string
   tipo: string
   contextoId: string
   ultima: string
@@ -36,6 +38,7 @@ function conversaDe(valor: unknown): ConversaDaCaixa {
   return {
     id: texto(item["id"]),
     nome: texto(item["nome"]),
+    outroId: texto(item["outroId"]),
     tipo: texto(item["tipo"]),
     contextoId: texto(item["contextoId"]),
     ultima: typeof item["ultima"] === "string" ? item["ultima"] : "",

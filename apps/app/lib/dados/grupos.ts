@@ -18,6 +18,8 @@ export type PublicacaoReal = Readonly<{
   texto: string
   criadaEm: string
   autor: string
+  /** Id de quem publicou, para abrir o perfil. */
+  autorId: string
   propria: boolean
   comentarios: number
   uteis: number
@@ -84,6 +86,7 @@ function publicacao(valor: unknown): PublicacaoReal {
     texto: texto(p["texto"]),
     criadaEm: texto(p["criadaEm"]),
     autor: texto(p["autor"]),
+    autorId: texto(p["autorId"]),
     propria: booleano(p["propria"]),
     comentarios: numero(p["comentarios"]),
     uteis: numero(p["uteis"]),
@@ -164,6 +167,8 @@ export type ComentarioReal = Readonly<{
   texto: string
   criadaEm: string
   autor: string
+  /** Id de quem comentou, para abrir o perfil. */
+  autorId: string
   propria: boolean
   parentId: string | null
   respondeA: string | null
@@ -184,6 +189,7 @@ function comentario(valor: unknown): ComentarioReal {
     texto: texto(c["texto"]),
     criadaEm: texto(c["criadaEm"]),
     autor: texto(c["autor"]),
+    autorId: texto(c["autorId"]),
     propria: booleano(c["propria"]),
     parentId: cursor(c["parentId"]),
     respondeA: cursor(c["respondeA"]),

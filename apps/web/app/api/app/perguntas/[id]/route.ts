@@ -77,6 +77,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           resolvidaPorResposta: pedido.data.resolved_reply_id,
           propria: pedido.data.author_id === userId,
           autor: nomes.get(pedido.data.author_id) ?? "",
+          autorId: pedido.data.author_id,
           cidade: pedido.data.localities?.city_name ?? "",
           salva: salva.data !== null,
         },
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           // Resposta removida volta sem texto e sem autor — o aviso é a tela.
           corpo: linha.is_removed ? "" : linha.body,
           autor: linha.is_removed ? "" : (nomes.get(linha.author_id ?? "") ?? ""),
+          autorId: linha.is_removed ? "" : (linha.author_id ?? ""),
           propria: !linha.is_removed && linha.author_id === userId,
           criadaEm: linha.created_at,
           removida: linha.is_removed === true,

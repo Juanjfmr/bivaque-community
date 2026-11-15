@@ -144,6 +144,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         respostas: linha.reply_count,
         propria: autorId !== "" && autorId === userId,
         autor: nomes.get(autorId) ?? "",
+        autorId,
       }
     })
     return responder(

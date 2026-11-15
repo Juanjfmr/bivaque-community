@@ -34,6 +34,7 @@ import { Negocio } from "@/src/telas/Negocio"
 import { Ocultados } from "@/src/telas/Ocultados"
 import { Pedido } from "@/src/telas/Pedido"
 import { Pedidos } from "@/src/telas/Pedidos"
+import { PerfilDeMembro } from "@/src/telas/PerfilDeMembro"
 import { Pergunta } from "@/src/telas/Pergunta"
 import { Privacidade } from "@/src/telas/Privacidade"
 import { Publicacao } from "@/src/telas/Publicacao"
@@ -116,6 +117,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   minhas: Minhas,
   negocios: Negocios,
   pergunta: Pergunta,
+  perfil: PerfilDeMembro,
   publicacao: Publicacao,
   salvos: Salvos,
   verbete: VerbeteDoGuia,

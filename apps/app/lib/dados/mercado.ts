@@ -39,6 +39,8 @@ export type AnuncioDetalhado = Readonly<
     /** Só existe para o nível que o anunciante escolheu — a tela nunca mostra. */
     endereco: string | null
     donoNome: string | null
+    /** Id de quem anuncia, para abrir o perfil. */
+    donoId: string | null
     fotos: readonly string[]
     meu: boolean
     salvo: boolean
@@ -190,6 +192,7 @@ export async function buscarAnuncio(
     ...lerAnuncio(corpo),
     endereco: texto(corpo["endereco"]),
     donoNome: texto(corpo["donoNome"]),
+    donoId: texto(corpo["donoId"]),
     fotos,
     meu: corpo["meu"] === true,
     salvo: corpo["salvo"] === true,

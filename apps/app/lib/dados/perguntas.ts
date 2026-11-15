@@ -20,6 +20,8 @@ export type PerguntaDaLista = Readonly<{
   criadaEm: string
   /** Nome público de quem perguntou; a tela decide o que dizer quando é vazio. */
   autor: string
+  /** Id de quem perguntou, para abrir o perfil. Vazio quando o banco não deu. */
+  autorId: string
   propria: boolean
   resolvida: boolean
   respostas: number
@@ -39,6 +41,8 @@ export type RespostaDaConversa = Readonly<{
   id: string
   corpo: string
   autor: string
+  /** Id de quem respondeu; vazio na resposta removida pela moderação. */
+  autorId: string
   propria: boolean
   criadaEm: string
   /** Removida pela moderação: sem texto e sem autor, só o aviso. */
@@ -57,6 +61,7 @@ export type PerguntaDaConversa = Readonly<{
     resolvidaPorResposta: string | null
     propria: boolean
     autor: string
+    autorId: string
     cidade: string
     /** Seguindo respostas: a pessoa salvou a pergunta (`recommendation_saves`). */
     salva: boolean
@@ -141,6 +146,7 @@ function lerPergunta(linha: unknown): PerguntaDaLista {
     assunto: assunto(pergunta["categoria"]),
     criadaEm: exigirTexto(pergunta, "criadaEm"),
     autor: texto(pergunta["autor"]) ?? "",
+    autorId: texto(pergunta["autorId"]) ?? "",
     propria: pergunta["propria"] === true,
     resolvida: pergunta["resolvida"] === true,
     respostas: exigirNumero(pergunta, "respostas"),
@@ -153,6 +159,7 @@ function lerResposta(linha: unknown): RespostaDaConversa {
     id: exigirTexto(resposta, "id"),
     corpo: typeof resposta["corpo"] === "string" ? resposta["corpo"] : "",
     autor: texto(resposta["autor"]) ?? "",
+    autorId: texto(resposta["autorId"]) ?? "",
     propria: resposta["propria"] === true,
     criadaEm: exigirTexto(resposta, "criadaEm"),
     removida: resposta["removida"] === true,
@@ -202,6 +209,7 @@ export async function buscarPergunta(
       resolvidaPorResposta: texto(pergunta["resolvidaPorResposta"]),
       propria: pergunta["propria"] === true,
       autor: texto(pergunta["autor"]) ?? "",
+      autorId: texto(pergunta["autorId"]) ?? "",
       cidade: texto(pergunta["cidade"]) ?? "",
       salva: pergunta["salva"] === true,
     },
@@ -264,6 +272,7 @@ export async function responderPergunta(
     corpo: exigirTexto(gravada, "corpo"),
     // Quem acabou de responder é quem está na sessão: a tela mostra "Você".
     autor: "",
+    autorId: "",
     propria: true,
     criadaEm: exigirTexto(gravada, "criadaEm"),
     removida: false,

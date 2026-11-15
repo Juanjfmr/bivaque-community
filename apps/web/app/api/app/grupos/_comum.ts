@@ -150,6 +150,7 @@ export async function apresentarPublicacoes(
     texto: linha.content,
     criadaEm: linha.created_at,
     autor: nomes.get(linha.user_id) ?? "",
+    autorId: linha.user_id,
     propria: linha.user_id === userId,
     comentarios: linha.comments[0]?.count ?? 0,
     uteis: linha.post_reactions[0]?.count ?? 0,

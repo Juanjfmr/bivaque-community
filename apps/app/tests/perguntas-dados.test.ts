@@ -41,6 +41,7 @@ const PERGUNTA = {
   respostas: 2,
   propria: false,
   autor: "Ana",
+  autorId: "u-ana",
 }
 
 describe("lista de perguntas", () => {
@@ -62,6 +63,7 @@ describe("lista de perguntas", () => {
       respostas: 2,
       propria: false,
       autor: "Ana",
+      autorId: "u-ana",
     })
     expect(lista.proximo).toBe("20")
     expect(lista.cidade).toBe("Manaus")
@@ -261,6 +263,7 @@ describe("responder", () => {
       id: "r1",
       corpo: "A mesma equipe atendeu.",
       autor: "",
+      autorId: "",
       propria: true,
       criadaEm: "2026-11-01T12:00:00Z",
       removida: false,

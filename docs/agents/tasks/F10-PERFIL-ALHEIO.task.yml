@@ -1,0 +1,110 @@
+# F10 — perfil alheio (ver o perfil de outro membro) no app.
+#
+# O backend JA esta pronto e provado (card DONE-PROFILE-RPCS): RPCs com viewer
+# explicito + anti-spoofing, pgTAP (other-member-profile.sql) + E2E web
+# (member-profile-denials.spec.ts). O app nao tem NADA: nem rota, nem tela, nem
+# API; os nomes de membros sao texto morto e as APIs descartam o author_id.
+# Molde de leitura: apps/web/app/(shell)/profile/[userId]/page.tsx:87-280.
+#
+# FRONTEIRAS INEGOCIAVEIS (BLOCK-AFFILIATION + contrato da web):
+# - NAO chamar profile_affiliations_for nem renderizar Forca/OM (bloqueado por
+#   governanca LGPD; a web antiga renderiza opt-in mas o app NAO deve copiar).
+# - NAO expor cidade/CEP/coordenadas, contadores ou badges do alvo (o contrato da
+#   web ja exclui; ler localidade por fora das RPCs seria contorno de visibilidade).
+# - Visibilidade = mesma localidade + sem exclusao pendente, via RPC
+#   profile_is_visible_to_viewer (viewer da SESSAO, anti-spoofing). Invisivel -> 404
+#   (nao 403, para nao confirmar existencia).
+# - So nome, bio, publicacoes (de grupo que o LEITOR e membro aprovado) e eventos.
+#
+# SEM migration — RPCs ja existem com grant para authenticated (20260821000023,
+# 20261024100000, bio 20260911024732). Avatar ja tem rota protegida /api/avatar/[id].
+# R2 (reuso de leitura existente; nenhum dado novo alem do que a web ja expoe).
+#
+# Este lote fecha o F10 (ultimo gap). A troca de /profile/[userId] vem junto
+# (criterio 6); /profile (proprio) e /profile/interests ficam para lote posterior.
+
+task_id: RUN-161
+
+objective: >
+  Perfil alheio no app: rota GET /api/app/membros/[id] (nome, bio, publicacoes,
+  eventos via RPCs existentes com viewer da sessao; 404 se invisivel; SEM
+  afiliacao/cidade/contadores), expor autorId/donoId aditivo nas respostas de
+  conteudo que hoje so devolvem nome, rota+tela de perfil no app, e links nos
+  nomes hoje mortos (perguntas/respostas, grupo, conversa, anuncio). Trocar
+  /profile/[userId] web. Respeitar BLOCK-AFFILIATION.
+
+authority:
+  - docs/LANCAMENTO.md:63 (F10) + lacuna perfil alheio no LAN-TROCA/RUN-019
+  - Card DONE-PROFILE-RPCS (backend pronto) + mapa do explorer 15/11
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+  - BLOCK-AFFILIATION (docs/LANCAMENTO.md:63, docs/legal/PRIVACIDADE.md:30)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nenhuma rota /api/app/membros|perfil existe; rotas.ts sem nome de membro/perfil;
+    Pergunta.tsx:342-346, Publicacao.tsx:173-176, Conversa.tsx:153-168, Anuncio.tsx:200
+    mostram nome sem link; as APIs convertem author_id->nome e descartam o id
+    (perguntas/[id]/route.ts:79,87; grupos/_comum.ts:152). O aviso invitation_accepted
+    cai em /app/voce por falta de destino (destino-do-app.ts:124-126). A web
+    /profile/[userId] mostra nome/bio/publicacoes/eventos (page.tsx:87-280).
+
+allowed_paths:
+  - docs/agents/tasks/F10-PERFIL-ALHEIO.task.yml
+  - apps/web/app/api/app/membros
+  - apps/web/app/api/app/perguntas
+  - apps/web/app/api/app/grupos
+  - apps/web/app/api/app/conversas
+  - apps/web/app/api/app/mercado
+  - apps/web/lib/profile
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/profile/[userId]
+  - apps/app/lib/navegacao/rotas.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/lib/dados
+  - apps/app/src/telas
+  - apps/app/components/bivaque/nome-de-membro.tsx
+  - apps/app/components/bivaque/cartao-de-publicacao.tsx
+  - apps/app/tests
+  - tests/unit/app-api
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f10-voce-real.spec.ts
+  - tests/e2e/member-profile-denials.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - .visual/f10-perfil-alheio
+
+forbidden:
+  - chamar profile_affiliations_for ou renderizar Forca/OM/posto/unidade (BLOCK-AFFILIATION)
+  - expor cidade/CEP/coordenadas, contadores ou badges do alvo (contrato da web exclui)
+  - criar migration, tabela ou pgTAP novo (RPCs ja existem e tem prova)
+  - usar 403 para perfil invisivel (deve ser 404, nao confirmar existencia)
+  - trocar /profile (proprio) ou /profile/interests (lotes posteriores)
+  - tocar outras jornadas/tema; usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "GET /api/app/membros/[id] no contrato ADR §5 (exigirSessao): ehUuid->404; profile_is_visible_to_viewer(alvo, viewer DA SESSAO) -> 404 se invisivel (anti-spoofing, viewer nunca do corpo); nome via profiles sob a sessao, bio via get_profile_bio, publicacoes via profile_posts_for e eventos via profile_events_for (viewer explicito). Devolve so {id, nome, bio, publicacoes, eventos} — SEM afiliacao/cidade/contadores/badges. Falha->503 sem eco. Molde profile/[userId]/page.tsx:119-189 + lib/profile-rpcs.ts."
+  - "Expor autorId/donoId ADITIVO nas respostas que hoje so devolvem autor/donoNome (perguntas detalhe+lista, grupos publicacoes, conversas, mercado anuncio) — sem quebrar o contrato existente; o nome continua vindo. Atualizar os testes de contrato afetados."
+  - "Registrar a rota em api-surface.ts (SESSAO) e bumpar TOTAL_DE_ROTAS (conferir contagem real; hoje 92, deve virar 93). api-surface.test.ts verde."
+  - "App: rota perfil-alheio no catalogo (rotas.ts + roteador.tsx, molde anuncio/verbete), tela PerfilDeMembro (avatar por iniciais ou /api/avatar/[id] autenticado, nome, bio, publicacoes/eventos; carregando/vazio/404/erro), cliente lerPerfilDeMembro. Links nos nomes hoje mortos (Pergunta/respostas, Publicacao, Conversa cabecalho, Anuncio dono) navegando ao perfil. Aviso invitation_accepted ganha destino real (destino-do-app.ts) se estiver no escopo do arquivo."
+  - "Troca web: redirect /profile/[userId] -> /app/perfil/[id] (next.config.ts, sem capturar /profile proprio nem /profile/interests), remover a pagina web profile/[userId], atualizar member-profile-denials.spec.ts + TROCADAS. Sem ciclo."
+  - "Testes: unit da rota (visivel mesma cidade devolve nome/bio; outra cidade->404; uuid invalido->404; SEM afiliacao/cidade no corpo; 503; positivo E negativo); contrato autorId nas listas; E2E real (abrir perfil de outro membro da cidade->nome; outra cidade->404; nome linkado navega). test:db so nao-regressao (pgTAP other-member-profile ja existe)."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F10-PERFIL-ALHEIO.task.yml
+
+risk: leitura de perfil de terceiro sob RPCs existentes; fronteira BLOCK-AFFILIATION (sem Forca/OM/cidade); sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -134,6 +134,7 @@ describe("publicar, ler e comentar em grupo", () => {
       id: POST,
       grupoId: ID,
       autor: "Ana",
+      autorId: USER,
       texto: "Uma publicação real.",
       criadaEm: DATA,
       propria: true,
@@ -345,11 +346,16 @@ describe("publicar, ler e comentar em grupo", () => {
       postContext,
     )
     expect(r.status).toBe(201)
-    expect((await r.json()).comentario).toMatchObject({
+    const corpo = (await r.json()) as { comentario: Record<string, unknown> }
+    expect(corpo.comentario).toMatchObject({
       texto: "Uma resposta",
       propria: true,
       parentId: null,
+      // O cliente exige o id do autor (para linkar o perfil): sem ele o fio
+      // recusa a resposta inteira. Quem comentou é a sessão, nunca o corpo.
+      autorId: USER,
     })
+    expect(corpo.comentario.autorId).not.toBe("outro")
     expect(mock.chamadas).toContainEqual({
       tabela: "comments",
       metodo: "insert",

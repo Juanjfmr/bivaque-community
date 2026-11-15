@@ -247,11 +247,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   { route: "/onboarding/status", porta: "FLUXO: proxy e notificação de entrada recusada" },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding" },
   { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },
-  {
-    route: "/profile/[userId]",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta eram os autores no feed da Início web; o perfil de outra pessoa segue na web (F10)",
-  },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
   {
     route: "/recommendations",
@@ -373,6 +368,9 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/configuracoes/familia",
         "/inicio",
         "/explorar",
+        // F10: o perfil alheio saiu da web (page.tsx removido) e é 307 para o
+        // app; a entrada em PORTAS_FORA_DO_LINK deixou de existir.
+        "/profile/[userId]",
       ],
     )
     const reached = new Set<string>()

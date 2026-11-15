@@ -8,6 +8,7 @@ import { Campo } from "@/components/bivaque/campos"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
+import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { FalhaDaApi } from "@/lib/api/cliente"
@@ -21,7 +22,7 @@ import {
   responderPergunta,
 } from "@/lib/dados/perguntas"
 import { idLocal } from "@/lib/id"
-import { useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { lerPerguntasLocais } from "@/lib/perguntas-locais"
@@ -85,6 +86,7 @@ export function Pergunta() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
   const casca = useCasca()
+  const navegacao = useNavegacao()
   const [dados, setDados] = useState<PerguntaDaConversa | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "sumiu" | null>(null)
   const [rodada, setRodada] = useState(0)
@@ -150,6 +152,7 @@ export function Pergunta() {
           resolvidaPorResposta: null,
           propria: true,
           autor: "Você",
+          autorId: "",
           cidade: casca.cidade,
           salva: false,
         },
@@ -319,6 +322,7 @@ export function Pergunta() {
               id: idLocal("resposta-demo-"),
               corpo,
               autor: "",
+              autorId: "",
               propria: true,
               criadaEm: new Date().toISOString(),
               removida: false,
@@ -342,9 +346,14 @@ export function Pergunta() {
             {iniciais(pergunta.propria ? "Você" : pergunta.autor || "Alguém")}
           </span>
           <span className="grid gap-0.5">
-            <b className="text-sm">
-              {pergunta.propria ? "Você" : pergunta.autor || "Alguém da cidade"}
-            </b>
+            <NomeDeMembro
+              nome={pergunta.propria ? "Você" : pergunta.autor || "Alguém da cidade"}
+              aoAbrir={
+                pergunta.propria || pergunta.autorId === ""
+                  ? undefined
+                  : () => void navegacao.irPara("perfil", { parametros: { id: pergunta.autorId } })
+              }
+            />
             <small className="text-[13px] text-(--on-surface-variant)">
               {pergunta.cidade || casca.cidade}
             </small>
@@ -443,9 +452,17 @@ export function Pergunta() {
                       {iniciais(item.propria ? "Você" : item.autor || "Membro")}
                     </span>
                     <span className="grid gap-0.5">
-                      <b className="text-sm">
-                        {item.propria ? "Você" : item.autor || "Membro da comunidade"}
-                      </b>
+                      <NomeDeMembro
+                        nome={item.propria ? "Você" : item.autor || "Membro da comunidade"}
+                        aoAbrir={
+                          item.propria || item.autorId === ""
+                            ? undefined
+                            : () =>
+                                void navegacao.irPara("perfil", {
+                                  parametros: { id: item.autorId },
+                                })
+                        }
+                      />
                       <small className="text-[12px] text-(--on-surface-variant)">
                         Membro da comunidade
                       </small>

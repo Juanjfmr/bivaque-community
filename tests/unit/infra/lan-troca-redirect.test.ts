@@ -29,6 +29,7 @@ const TROCADAS = [
   ["/guide?q=escola&categoria=school", "/app/guia?q=escola&categoria=school"],
   ["/pedidos", "/app/pedidos"],
   [`/pedidos/${ID}`, `/app/pedido/${ID}`],
+  [`/profile/${ID}`, `/app/perfil/${ID}`],
   [`/prestadores/${ID}`, `/app/negocio/${ID}`],
   ["/configuracoes/bloqueados", "/app/bloqueados"],
   ["/configuracoes/familia", "/app/voce"],
@@ -181,4 +182,21 @@ describe("LAN-TROCA fase 1", () => {
       : []
     expect(sobras).toEqual([])
   })
+
+  // F10: o perfil de outra pessoa saiu da web — nenhuma tela sobra para alguém
+  // "voltar" editando a pasta, e o próprio perfil (`/profile`) segue na web.
+  it("a tela antiga de perfil alheio não deixa page.tsx para trás", () => {
+    const pasta = join(shell, "profile", "[userId]")
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
+
+  it.each(["/profile/interests", "/profile/editar", "/profile"])(
+    "%s (perfil próprio) continua na web, sem redirect",
+    async (caminho) => {
+      expect((await resolver(caminho)).headers.get("location")).toBeNull()
+    },
+  )
 })

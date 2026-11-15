@@ -352,6 +352,7 @@ describe("rotas de perguntas do app", () => {
           respostas: 2,
           propria: true,
           autor: "Ana Verificada",
+          autorId: USER,
         },
       ])
       expect(corpo["cidade"]).toBe("Manaus")
@@ -445,6 +446,7 @@ describe("rotas de perguntas do app", () => {
         categoria: "saude_bem_estar",
         propria: true,
         autor: "Ana Verificada",
+        autorId: USER,
         cidade: "Manaus",
       })
       expect(corpo["respostas"]).toEqual([
@@ -452,6 +454,7 @@ describe("rotas de perguntas do app", () => {
           id: respostaDaConversa.id,
           corpo: respostaDaConversa.body,
           autor: "Helena Castro",
+          autorId: OUTRA_PESSOA,
           propria: false,
           criadaEm: DATA,
           removida: false,
@@ -470,6 +473,7 @@ describe("rotas de perguntas do app", () => {
           id: respostaDaConversa.id,
           corpo: "",
           autor: "",
+          autorId: "",
           propria: false,
           criadaEm: DATA,
           removida: true,

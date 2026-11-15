@@ -125,7 +125,7 @@ describe("conversas do app", () => {
     const resposta = await listar(req("GET"))
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toMatchObject({
-      conversas: [{ id: ID, nome: "Maria", ultima: "Olá" }],
+      conversas: [{ id: ID, nome: "Maria", outroId: OUTRO, ultima: "Olá" }],
     })
   })
   it("detalha mensagens visíveis e identifica as próprias", async () => {
@@ -133,7 +133,7 @@ describe("conversas do app", () => {
     const resposta = await detalhe(req("GET", `/${ID}`), context)
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toMatchObject({
-      conversa: { id: ID, nome: "Maria" },
+      conversa: { id: ID, nome: "Maria", outroId: OUTRO },
       mensagens: [{ conteudo: "Olá", minha: true }],
     })
   })
