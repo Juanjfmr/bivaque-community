@@ -6135,14 +6135,15 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-07",
+      "updatedAt": "2026-11-16",
       "sourceRevision": "954dd638",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
         "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo.",
-        "07/11: conversas (#135) e avisos (#151) na main, com E2E real no CI. Fecha quando NOTIF-DEEPLINKS e LAN-PUSH fecharem (dependências do card)."
+        "07/11: conversas (#135) e avisos (#151) na main, com E2E real no CI. Fecha quando NOTIF-DEEPLINKS e LAN-PUSH fecharem (dependências do card).",
+        "16/11: RUN-165 (2b48e8bd) colocou bloquear, denunciar mensagem e a preferencia Mensagens no app e provou em runtime o destino do aviso de DM (duas sessoes no CI). O card segue next por LAN-PUSH (canal push nasce desligado, decisao donia) e pela remocao da tela web /messages (RUN-166)."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6273,7 +6274,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "9ca86c53",
+      "sourceRevision": "2b48e8bd",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6291,7 +6292,8 @@
         "15/11: RUN-159 F04 denúncia de pergunta+resposta (ecc2d95d, reuse do mecanismo reports sem migration) — 8º lote. F04 completo exceto 'Também perguntar à cidade' (R3 grande, deferido com card F04-TAMBEM-PERGUNTAR; drift da lista de lacunas reconciliado).",
         "15/11: RUN-160 F10 gestão de interesses pós-onboarding (2a25105b, pares usuário↔grupo, reuse dos RPCs sem migration; service_role com exceção medida como família/localização) — 9º lote. F10 resta perfil alheio. Lição: E2E escrito sem rodar reincide em armadilhas (restauração de sobreposição no reload reabre o modal e aria-hidden o heading; getByRole Fechar substring casa a alça).",
         "15/11: RUN-161 F10 perfil alheio (6f5119cd, BLOCK-AFFILIATION respeitado, reuse das RPCs DONE-PROFILE-RPCS sem migration) — 10º lote, FECHA O F10 (funcionalidades). Regressão caught+fix: campo aditivo autorId tornou o parser do cliente estrito mas o POST do comentário não o devolvia (o fio recusava o comentário); lição: campo aditivo entra em TODOS os caminhos que devolvem o objeto parseado, inclusive escritas. Resta a troca de /profile próprio + /profile/interests. Gap: invitation_accepted cai em /app/voce.",
-        "16/11: RUN-162 (PR #241, f237d683) fecha F08-RESSALVAS so com testes. RUN-163 (PR #242, 9ca86c53) troca /profile/interests → /app/voce e PORTA O PORTAO DE ADMISSAO para a rota do app (a web exigia verified OU familiar admitido antes de listar com service_role; a rota nao conferia — a troca mataria a fronteira). F05 reclassificado: criar/editar era drift; convites fan-out nao e linha do LANCAMENTO."
+        "16/11: RUN-162 (PR #241, f237d683) fecha F08-RESSALVAS so com testes. RUN-163 (PR #242, 9ca86c53) troca /profile/interests → /app/voce e PORTA O PORTAO DE ADMISSAO para a rota do app (a web exigia verified OU familiar admitido antes de listar com service_role; a rota nao conferia — a troca mataria a fronteira). F05 reclassificado: criar/editar era drift; convites fan-out nao e linha do LANCAMENTO.",
+        "16/11: RUN-165 mergeado (2b48e8bd). A pasta (shell)/messages nao serve mais tela (307) e perdeu seu unico gesto vivo (bloquear) para o app — a remocao dela (RUN-166) esta destravada."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6304,7 +6306,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade = jornada de troca propria (card CIDADE-LOCALIDADE-TROCA); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel FECHADO (RUN-164, b3a2786d), alertas/filtros/salvar em lotes B/C/D — salvar em curso); F07; seguranca na conversa e preferencias (F09; RUN-165 em curso; troca da pasta /messages depois); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade = jornada de troca propria (card CIDADE-LOCALIDADE-TROCA); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel FECHADO (RUN-164, b3a2786d), alertas/filtros/salvar em lotes B/C/D — salvar em curso); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); sobra a REMOCAO da pasta /messages (RUN-166); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -7005,6 +7007,41 @@
       "completedChecklist": [true, true, true, true]
     },
     {
+      "id": "RUN-165",
+      "title": "F09-A: seguranca na conversa pelo app — bloquear, denunciar mensagem, preferencia Mensagens",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "O verbo bloquear estava morto na sombra do 307 de /messages (a rota so listava/desbloqueava). RUN-165: POST /api/app/voce/bloqueados (blocker da sessao, RLS decide, simetria 404 com o DELETE, duplicata idempotente, sem eco); rota nova POST /api/app/mensagens/[id]/denuncia (alvo message, visibilidade pela leitura da sessao, propria 403, duplicata 409, reusa lib/reports); Conversa.tsx com menu ⋯ (Bloquear com Confirmacao da entrada, compositor em estado bloqueado honesto, denuncia por bolha); messages entrou na matriz tipo×canal e na tela de preferencias (push nasce desligado). Sem migration. R3 por delegacao: ADR-20261116 + linha na RATIFICACAO.",
+      "checklist": [
+        "POST bloqueados + rota de denuncia (ADR §5, testes positivo/negativo)",
+        "Menu na conversa: bloquear com confirmacao e denuncia por bolha",
+        "Preferencia messages na matriz e na tela",
+        "E2E real de duas sessoes + destino do aviso de DM provados"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/app-api/voce/bloqueio.test.ts",
+        "tests/unit/app-api/mensagens/denuncia.test.ts",
+        "tests/e2e/f09-conversas-real.spec.ts",
+        "tests/e2e/f09-avisos-real.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "2b48e8bd",
+      "links": [
+        "docs/agents/tasks/F09-SEGURANCA-CONVERSA.task.yml",
+        "docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md"
+      ],
+      "proof": [
+        "16/11: PR #243 mergeado em 2b48e8bd. Revisao independente COM LENTE DE SEGURANCA (Qwen; o papel security-auditor nao estava disponivel no harness — parecer registrado na RATIFICACAO cobre a lente): PASS, zero bloqueante; L1/L2/M1 sao a decisao vigente do ADR (D1/D2 adiada) ou melhorias nao-implementaveis sem migration. Knock-ons declarados no contrato emenda 47a152ad: avisos/rotas.test.ts (campo aditivo 12→15 canais) e copia de Bloqueados.tsx ajustada a regra vigente (fecha escrita nos 2 sentidos, historico legivel, sem aviso). TOTAL_DE_ROTAS 93→94 conferido em disco.",
+        "16/11: CI do head final 8eeacbeb — Pull Request CI 43759574793 TODO verde (fast/core/stateful×3/agregador) e Visual Smoke 43759574706 com os 7 shards + mobile-first verdes. O lote carregou dois fixes fora do seu escopo declarado: fakes DEV autorId/outroId quebrados na main desde RUN-161 (causa dos shards vermelhos de TODOS os PRs paralelos) e o gesto bloquear que nao abria (fechamento do menu Radix = history.back pipocava a Confirmacao — troca de sobreposicao na mesma entrada; provado no teste DEV novo). Ressalva E2E: 'Ninguem bloqueado' era hostile-to-seed (seed.sql:1758 ja bloqueia alguem para o membro do teste) — assercao corrigida para a linha do teste sumindo."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
       "id": "CIDADE-LOCALIDADE-TROCA",
       "title": "Cidade/localidade: telas de membro ainda na web precisam de jornada de troca própria",
       "phase": "Lançamento",
@@ -7026,6 +7063,27 @@
       "proof": [
         "16/11: aberto pela decisao do mapa F02/F08 ao reconciliar a linha de lacunas do LAN-TROCA."
       ]
+    },
+    {
+      "id": "RUN-166",
+      "title": "Remover a pasta (shell)/messages: tela antiga sai com codigo e testes (criterio 6)",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "O 307 de /messages ja manda todo usuario real para /app/conversas, mas a pasta com 6 arquivos (page, [id], conversation-inbox com o insert direto de dm_blocks, etc.) continua em disco servindo rota de membro — fase 6 nao fecha com ela viva, e o AGENTS manda a tela sair COM codigo e testes. destravado pelo RUN-165 (os gestos que ela carregava — bloquear/denunciar — agora moram no app). Pins a migrar na remocao: prova de ausencia no molde das trocas (lan-troca-redirect.test.ts), link-crawl :357-373, specs que visitam /messages (f09-conversas-real:29, manaus-pilot-*, recon-032-messages, copy-fala-com-a-pessoa:93, shell-*), sidebar web que ainda linka (shell-sidebar-labels.test.ts:62), capturas. Sem mudanca de redirect.",
+      "checklist": [
+        "Inventario de importadores/pins antes de remover (licao LT-007)",
+        "Remover pasta + migrar provas que ainda valem para o app",
+        "Prova de ausencia + link-crawl sem porta stale + CI verde"
+      ],
+      "dependencies": ["RUN-165"],
+      "tests": ["tests/unit/infra/lan-troca-redirect.test.ts", "tests/e2e/link-crawl.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "2b48e8bd",
+      "links": ["docs/decisions/ADR-20261024-front-react-spa.md"],
+      "proof": ["16/11: aberto no fechamento do RUN-165 (mapa F09 do explorer 16/11, secao (e)5)."]
     },
     {
       "id": "F05-CANCELAR-EVENTO",
@@ -7824,16 +7882,17 @@
       "description": "A RPC send_conversation_message tem o ramo de conta bloqueada e a corrida do on conflict→reselect sem teste. Cobrir com dois clientes reais e pgTAP em rollback, sem depender do E2E feliz.",
       "checklist": [
         "pgTAP do bloqueio (42501) e da corrida com dois inserts",
-        "E2E de duas sessões quando o bloqueio for acionável",
+        "[x] E2E de duas sessões quando o bloqueio for acionável (RUN-165: bloqueio pelo app, POST da outra ponta 403 via send_conversation_message, desbloqueio em Você reabre 201, estado sobrevive a recarga; CI stateful verde)",
         "Prova no CI e no cartão"
       ],
       "proof": [
-        "11/11: aberto a partir da ressalva B2 do parecer de segurança e89e33e0 (PR #181)."
+        "11/11: aberto a partir da ressalva B2 do parecer de segurança e89e33e0 (PR #181).",
+        "16/11: item 2 cumprido pelo RUN-165 (2b48e8bd, run 43759574793). Sobra o item 1: pgTAP da corrida on conflict→reselect com dois inserts (42501 do bloqueio ja coberto em dm-context-denials.sql)."
       ],
       "tests": [],
       "links": [],
       "dependencies": ["F09-ENVIO-PELA-RPC"],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-16",
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
       "completedChecklist": [false, false, false]

@@ -287,3 +287,11 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   só o GET. No RUN-161 o POST do comentário não devolvia autorId, o parser lançava foraDoContrato e
   o comentário não aparecia no fio (f04-grupos vermelho, consistente em 2 runs). Ao adicionar campo
   a um parser, varra as rotas de escrita que devolvem aquele objeto; teste de mutação prova o furo.
+- Item de menu que abre sobreposição: NÃO abrir a nova folha no mesmo clique que fecha o menu —
+  o fechamento do Radix Menu é um history.back() da entrada, que popa a sobreposição recém-aberta
+  (o gesto de bloquear nunca abria a confirmação; trace do CI: click sem after, 180 s pendurado).
+  Troque a sobreposição da entrada (menu-de-linha → confirmacao) em vez de empilhar. RUN-165.
+- E2E @stateful em persona semeada não pode assertar tela VAZIA quando o seed já dá linhas àquela
+  persona: "Ninguém bloqueado" após desbloquear era mentira por construção — seed.sql:1758 já
+  bloqueia alguém para o membro do teste. Asserte a SUA linha sumindo (contagem antes/depois) e o
+  efeito no servidor (POST 201), nunca a vacuidade da tela. RUN-165.
