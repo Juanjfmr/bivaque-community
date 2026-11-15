@@ -58,8 +58,20 @@ export type PerguntaDaConversa = Readonly<{
     propria: boolean
     autor: string
     cidade: string
+    /** Seguindo respostas: a pessoa salvou a pergunta (`recommendation_saves`). */
+    salva: boolean
   }>
   respostas: readonly RespostaDaConversa[]
+}>
+
+/** Uma pergunta que a pessoa está seguindo, para a tela Salvos. */
+export type PerguntaSalva = Readonly<{
+  id: string
+  titulo: string
+  /** Categoria do pedido, já em português; vazio quando o servidor não souber. */
+  assunto: string
+  criadaEm: string
+  resolvida: boolean
 }>
 
 export type AcaoDeResolucao = "resolver" | "reabrir" | "marcar"
@@ -191,9 +203,47 @@ export async function buscarPergunta(
       propria: pergunta["propria"] === true,
       autor: texto(pergunta["autor"]) ?? "",
       cidade: texto(pergunta["cidade"]) ?? "",
+      salva: pergunta["salva"] === true,
     },
     respostas: respostas.map(lerResposta),
   }
+}
+
+/**
+ * Seguir respostas (F04): salvar e seguir são a mesma ação, um registro em
+ * `recommendation_saves`. Devolve o estado GRAVADO, nunca o esperado.
+ */
+export async function marcarSalvaPergunta(
+  id: string,
+  salvar: boolean,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<boolean> {
+  const caminho = `/api/app/perguntas/${encodeURIComponent(id)}/salvo`
+  const corpo = salvar
+    ? await enviar("PUT", caminho, undefined, opcoes)
+    : await enviar("DELETE", caminho, undefined, opcoes)
+  const salvo = corpo["salvo"]
+  if (typeof salvo !== "boolean") throw foraDoContrato()
+  return salvo
+}
+
+/** As perguntas que a pessoa segue, na ordem em que seguiu — a lista de Salvos. */
+export async function lerPerguntasSalvas(
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly PerguntaSalva[]> {
+  const corpo = await ler("/api/app/perguntas/salvas", opcoes)
+  const lista = corpo["perguntas"]
+  if (!Array.isArray(lista)) throw foraDoContrato()
+  return lista.map((linha) => {
+    const pergunta = exigirRegistro(linha)
+    return {
+      id: exigirTexto(pergunta, "id"),
+      titulo: exigirTexto(pergunta, "titulo"),
+      assunto: assunto(pergunta["categoria"]),
+      criadaEm: exigirTexto(pergunta, "criadaEm"),
+      resolvida: pergunta["resolvida"] === true,
+    }
+  })
 }
 
 /** Responde pela sessão e devolve a resposta GRAVADA, não o texto enviado. */

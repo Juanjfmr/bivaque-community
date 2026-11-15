@@ -13,6 +13,7 @@ import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   type AcaoDeResolucao,
   buscarPergunta,
+  marcarSalvaPergunta,
   mudarResolucao,
   type PerguntaDaConversa,
   responderPergunta,
@@ -59,6 +60,14 @@ function fraseDaResolucao(falha: unknown): string {
   return "Não foi possível mudar a resolução. Tente de novo."
 }
 
+function fraseDoSeguir(falha: unknown): string {
+  if (falha instanceof FalhaDaApi && falha.codigo === "sem-sessao") {
+    return "Sua sessão expirou. Entre de novo para continuar."
+  }
+  if (falha instanceof FalhaDaApi && falha.mensagem !== null) return falha.mensagem
+  return "Não foi possível seguir esta pergunta. Tente de novo."
+}
+
 export function Pergunta() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
@@ -71,6 +80,8 @@ export function Pergunta() {
   const [enviando, setEnviando] = useState(false)
   const [mudandoResolucao, setMudandoResolucao] = useState(false)
   const [erroDaResolucao, setErroDaResolucao] = useState<string | null>(null)
+  const [mudandoSeguir, setMudandoSeguir] = useState(false)
+  const [erroDoSeguir, setErroDoSeguir] = useState<string | null>(null)
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -102,6 +113,7 @@ export function Pergunta() {
           propria: true,
           autor: "Você",
           cidade: casca.cidade,
+          salva: false,
         },
         respostas: [],
       })
@@ -112,6 +124,7 @@ export function Pergunta() {
     setDados(null)
     setErro(null)
     setErroAoResponder(null)
+    setErroDoSeguir(null)
     void buscarPergunta(id, { signal: pedido.signal })
       .then((lida) => {
         if (!pedido.signal.aborted) setDados(lida)
@@ -193,6 +206,27 @@ export function Pergunta() {
     }
   }
 
+  // Seguir respostas: otimista, porque o rótulo é a própria confirmação. A
+  // falha desfaz o que a tela já mostrou e diz por quê.
+  async function alternarSeguir() {
+    if (mudandoSeguir) return
+    const alvo = !pergunta.salva
+    setMudandoSeguir(true)
+    setErroDoSeguir(null)
+    setDados({ ...atual, pergunta: { ...pergunta, salva: alvo } })
+    try {
+      const salvo = await marcarSalvaPergunta(id, alvo, { signal: controle.signal })
+      setDados({ ...atual, pergunta: { ...pergunta, salva: salvo } })
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) {
+        setDados(atual)
+        setErroDoSeguir(fraseDoSeguir(falha))
+      }
+    } finally {
+      setMudandoSeguir(false)
+    }
+  }
+
   async function enviar() {
     const corpo = resposta.trim()
     if (corpo === "" || enviando) return
@@ -265,7 +299,25 @@ export function Pergunta() {
             </Botao>
           </div>
         ) : null}
+        {local === null ? (
+          <div className="flex justify-start">
+            <Botao
+              tom="tonal"
+              icone={pergunta.salva ? "bookmark" : "bookmark_border"}
+              disabled={mudandoSeguir}
+              onClick={() => void alternarSeguir()}
+            >
+              {pergunta.salva ? "Seguindo respostas" : "Seguir respostas"}
+            </Botao>
+          </div>
+        ) : null}
       </article>
+
+      {erroDoSeguir === null ? null : (
+        <p role="alert" className="text-sm text-(--destructive)">
+          {erroDoSeguir}
+        </p>
+      )}
 
       {erroDaResolucao === null ? null : (
         <p role="alert" className="text-sm text-(--destructive)">

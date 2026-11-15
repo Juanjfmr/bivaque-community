@@ -6,7 +6,9 @@ vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: v
 import { POST as mudarResolucao } from "web/app/api/app/perguntas/[id]/resolucao/route"
 import { POST as responder } from "web/app/api/app/perguntas/[id]/respostas/route"
 import { GET as detalhe } from "web/app/api/app/perguntas/[id]/route"
+import { DELETE as deixarDeSeguir, PUT as seguir } from "web/app/api/app/perguntas/[id]/salvo/route"
 import { GET as listar } from "web/app/api/app/perguntas/route"
+import { GET as listarSalvas } from "web/app/api/app/perguntas/salvas/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
@@ -71,12 +73,23 @@ type Options = {
   errorTable?: string
   rpcError?: Record<string, { code?: string; message: string }>
   insertError?: { code: string; message: string }
+  salva?: boolean
+  salvas?: string[]
+  pedidos?: Array<{
+    id: string
+    title: string
+    category: string
+    created_at: string
+    is_resolved: boolean
+  }>
+  saveError?: { code: string; message: string }
 }
 
 function mockClient(options: Options = {}) {
   const eqCalls: Array<{ table: string; column: string; value: unknown }> = []
   const inCalls: Array<{ table: string; column: string; values: unknown }> = []
   const inserts: Array<{ table: string; value: unknown }> = []
+  const deletes: string[] = []
   const rpcCalls: Array<{ nome: string; args: Record<string, unknown> }> = []
 
   const rpc = vi.fn((nome: string, args: Record<string, unknown>) => {
@@ -117,7 +130,26 @@ function mockClient(options: Options = {}) {
             error: null,
           }
         }
+        if (options.pedidos !== undefined)
+          return { data: options.pedidos, count: null, error: null }
         return { data: options.autores ?? [{ id: ID, author_id: USER }], count: null, error: null }
+      }
+      if (table === "recommendation_saves") {
+        if (operation === "insert" || operation === "delete") {
+          return { data: null, count: null, error: options.saveError ?? null }
+        }
+        if (options.salvas !== undefined) {
+          return {
+            data: options.salvas.map((request_id) => ({ request_id })),
+            count: null,
+            error: null,
+          }
+        }
+        return {
+          data: single && options.salva === true ? { request_id: ID } : null,
+          count: null,
+          error: null,
+        }
       }
       if (table === "profiles") {
         return {
@@ -157,6 +189,11 @@ function mockClient(options: Options = {}) {
       inserts.push({ table, value })
       return query
     }
+    query["delete"] = () => {
+      operation = "delete"
+      deletes.push(table)
+      return query
+    }
     // O builder do PostgREST é awaitable; o stub precisa reproduzir esse contrato.
     // biome-ignore lint/suspicious/noThenProperty: reproduz o builder fluente do PostgREST
     Object.defineProperty(query, "then", {
@@ -165,7 +202,7 @@ function mockClient(options: Options = {}) {
     return query
   })
 
-  return { client: { from, rpc } as never, from, rpc, eqCalls, inCalls, inserts, rpcCalls }
+  return { client: { from, rpc } as never, from, rpc, eqCalls, inCalls, inserts, deletes, rpcCalls }
 }
 
 function req(method: string, url = BASE, body?: string, requestHeaders = headers) {
@@ -204,6 +241,9 @@ describe("rotas de perguntas do app", () => {
     ["GET detalhe", () => detalhe(req("GET"), context)],
     ["POST resposta", () => responder(req("POST", `${BASE}/${ID}/respostas`, "{}"), context)],
     ["POST resolução", () => mudarResolucao(req("POST", `${BASE}/${ID}/resolucao`, "{}"), context)],
+    ["PUT salvo", () => seguir(req("PUT"), context)],
+    ["DELETE salvo", () => deixarDeSeguir(req("DELETE"), context)],
+    ["GET salvas", () => listarSalvas(req("GET", `${BASE}/salvas`))],
   ])("%s recusa ausência de sessão", async (_label, invoke) => {
     expect((await invoke()).status).toBe(401)
   })
@@ -233,6 +273,29 @@ describe("rotas de perguntas do app", () => {
       )
       expect(resposta.status).toBe(403)
       expect(mock.inserts).toHaveLength(0)
+    })
+
+    it("o seguimento também exige a porta do app", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      expect(
+        (
+          await seguir(
+            req("PUT", BASE, undefined, { ...headers, origin: "https://fora.example" }),
+            context,
+          )
+        ).status,
+      ).toBe(403)
+      expect(
+        (
+          await deixarDeSeguir(
+            req("DELETE", BASE, undefined, { ...headers, origin: "https://fora.example" }),
+            context,
+          )
+        ).status,
+      ).toBe(403)
+      expect(mock.inserts).toHaveLength(0)
+      expect(mock.deletes).toHaveLength(0)
     })
   })
 
@@ -442,6 +505,169 @@ describe("rotas de perguntas do app", () => {
       const mock = mockClient({ rpcError: { list_question_replies: { message: "boom" } } })
       authenticate(mock)
       expect((await detalhe(req("GET"), context)).status).toBe(503)
+    })
+
+    it("diz se a pessoa está seguindo a pergunta, pela própria sessão", async () => {
+      const mock = mockClient({ salva: true })
+      authenticate(mock)
+      const corpo = await json(await detalhe(req("GET"), context))
+      expect((corpo["pergunta"] as Record<string, unknown>)["salva"]).toBe(true)
+      expect(mock.eqCalls).toContainEqual({
+        table: "recommendation_saves",
+        column: "user_id",
+        value: USER,
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "recommendation_saves",
+        column: "request_id",
+        value: ID,
+      })
+    })
+
+    it("quem não segue lê o marcador desligado", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const corpo = await json(await detalhe(req("GET"), context))
+      expect((corpo["pergunta"] as Record<string, unknown>)["salva"]).toBe(false)
+    })
+  })
+
+  describe("seguir respostas", () => {
+    it("grava com o usuário da sessão e devolve o estado lido do banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      expect(await json(await seguir(req("PUT"), context))).toEqual({ salvo: true })
+      expect(mock.inserts).toEqual([
+        { table: "recommendation_saves", value: { user_id: USER, request_id: ID } },
+      ])
+      expect(await json(await deixarDeSeguir(req("DELETE"), context))).toEqual({ salvo: false })
+      expect(mock.deletes).toContain("recommendation_saves")
+    })
+
+    it("seguir duas vezes é o mesmo estado", async () => {
+      const mock = mockClient({ saveError: { code: "23505", message: "duplicate key" } })
+      authenticate(mock)
+      expect((await json(await seguir(req("PUT"), context))).salvo).toBe(true)
+    })
+
+    it("id fora do formato é 404, sem consultar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: "nao-e-uuid" }) }
+      expect((await seguir(req("PUT"), invalido)).status).toBe(404)
+      expect((await deixarDeSeguir(req("DELETE"), invalido)).status).toBe(404)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("pergunta que não é visível é 404 ao seguir, não 403 de policy", async () => {
+      const mock = mockClient({ pedido: null })
+      authenticate(mock)
+      const resposta = await seguir(req("PUT"), context)
+      expect(resposta.status).toBe(404)
+      expect(mock.inserts).toHaveLength(0)
+    })
+
+    it("pergunta apagada não é salva", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      expect((await seguir(req("PUT"), context)).status).toBe(200)
+      expect(mock.eqCalls).toContainEqual({
+        table: "recommendation_requests",
+        column: "is_deleted",
+        value: false,
+      })
+    })
+
+    it("pedido de grupo é 403 com a frase honesta, sem eco do Postgres", async () => {
+      // A policy `recommendation_saves_insert_own` só aceita pedido da cidade;
+      // o pedido de grupo é visível e por isso o 404 não seria verdade.
+      const mock = mockClient({
+        saveError: { code: "42501", message: 'new row violates row-level security policy "x"' },
+      })
+      authenticate(mock)
+      const resposta = await seguir(req("PUT"), context)
+      expect(resposta.status).toBe(403)
+      const corpo = await json(resposta)
+      expect(corpo["mensagem"]).toContain("grupo")
+      expect(JSON.stringify(corpo)).not.toMatch(/row-level security/)
+    })
+
+    it("falha inesperada do banco ao seguir é 503", async () => {
+      const mock = mockClient({ saveError: { code: "XX000", message: "boom" } })
+      authenticate(mock)
+      expect((await seguir(req("PUT"), context)).status).toBe(503)
+    })
+
+    it("remover o próprio seguimento dispensa a pergunta existir", async () => {
+      // A policy de delete só olha o dono; exigir a pergunta visível deixaria o
+      // item preso em Salvos depois que a moderação apaga o pedido.
+      const mock = mockClient({ pedido: null })
+      authenticate(mock)
+      const resposta = await deixarDeSeguir(req("DELETE"), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ salvo: false })
+      expect(mock.deletes).toContain("recommendation_saves")
+      expect(
+        mock.eqCalls.filter((chamada) => chamada.table === "recommendation_requests"),
+      ).toHaveLength(0)
+    })
+  })
+
+  describe("perguntas seguidas", () => {
+    it("lista o que a sessão segue, na ordem do salvamento e só com pedido visível", async () => {
+      const mock = mockClient({
+        salvas: [ID],
+        pedidos: [
+          {
+            id: ID,
+            title: linha.title,
+            category: "saude_bem_estar",
+            created_at: DATA,
+            is_resolved: false,
+          },
+        ],
+      })
+      authenticate(mock)
+      const resposta = await listarSalvas(req("GET", `${BASE}/salvas`))
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({
+        perguntas: [
+          {
+            id: ID,
+            titulo: linha.title,
+            categoria: "saude_bem_estar",
+            criadaEm: DATA,
+            resolvida: false,
+          },
+        ],
+      })
+      expect(mock.inCalls).toContainEqual({
+        table: "recommendation_requests",
+        column: "id",
+        values: [ID],
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "recommendation_requests",
+        column: "is_deleted",
+        value: false,
+      })
+    })
+
+    it("sem seguimentos responde lista vazia sem consultar as perguntas", async () => {
+      const mock = mockClient({ salvas: [] })
+      authenticate(mock)
+      expect(await json(await listarSalvas(req("GET", `${BASE}/salvas`)))).toEqual({
+        perguntas: [],
+      })
+      expect(mock.inCalls).toHaveLength(0)
+    })
+
+    it("falha de leitura vira 503, nunca lista vazia", async () => {
+      const mock = mockClient({ errorTable: "recommendation_saves" })
+      authenticate(mock)
+      const resposta = await listarSalvas(req("GET", `${BASE}/salvas`))
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "leitura-indisponivel" })
     })
   })
 

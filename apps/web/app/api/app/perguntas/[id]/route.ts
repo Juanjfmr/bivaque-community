@@ -48,6 +48,16 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       throw conversa.error
     }
 
+    // Seguir respostas (F04): o mesmo registro de `recommendation_saves` que a
+    // web antiga lê. A policy de SELECT já é só do próprio `user_id`.
+    const salva = await client
+      .from("recommendation_saves")
+      .select("request_id")
+      .eq("user_id", userId)
+      .eq("request_id", id)
+      .maybeSingle()
+    if (salva.error) throw salva.error
+
     const linhas = conversa.data ?? []
     const autoresDasRespostas = linhas
       .filter((linha) => !linha.is_removed && typeof linha.author_id === "string")
@@ -68,6 +78,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           propria: pedido.data.author_id === userId,
           autor: nomes.get(pedido.data.author_id) ?? "",
           cidade: pedido.data.localities?.city_name ?? "",
+          salva: salva.data !== null,
         },
         respostas: linhas.map((linha) => ({
           id: linha.id,
