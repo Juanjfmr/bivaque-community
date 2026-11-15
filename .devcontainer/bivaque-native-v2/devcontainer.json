@@ -1,0 +1,22 @@
+{
+  "name": "Bivaque Native Lab V2 (Expo + Web)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "forwardPorts": [
+    8081
+  ],
+  "portsAttributes": {
+    "8081": {
+      "label": "Bivaque Native V2 · Web mobile",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "cd experiments/bivaque-native-lab-v2 && npm install --no-audit --no-fund",
+  "postStartCommand": "bash -lc 'cd experiments/bivaque-native-lab-v2 && (nohup env CI=1 npx expo start --web --port 8081 > /tmp/bivaque-native-v2.log 2>&1 < /dev/null &)'",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "workbench.startupEditor": "none"
+      }
+    }
+  }
+}
