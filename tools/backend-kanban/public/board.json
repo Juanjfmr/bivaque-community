@@ -5925,7 +5925,10 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "INDICACOES-MEMORIA", "INDICACOES-AVISO", "APP-001"],
-      "completedAt": "2026-11-07"
+      "completedAt": "2026-11-07",
+      "proof": [
+        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04 (denúncias) conforme LAN-TROCA."
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6283,7 +6286,8 @@
         "14/11: LT-005 — F06 listas trocadas (PR #221, merge 5a512258): /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada). Só as 3 páginas de lista removidas; troca parcial (criação/edição de imóvel, alertas, criação/edição web de desapego ficam na web). TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão. Revisão independente Qwen: FAIL leve (D1 nota falsa link-crawl, D2 assert URL com query, D3 comentário órfão) -> corrigidos -> re-revisão PASS. GAP registrado em LAN-F06: /mercado/[id]/editar só por URL direta (app edita desapego inline). Filtros parcialmente consumidos (q client-side). Corrigidos também falso-positivo do secrets scan no contrato e formatação de 3 specs. Consequência da troca: /explorar/servicos e /negocio perderam a porta (eram linkados pela lista /mercado) -> declaradas em PORTAS_FORA_DO_LINK como dívida (F02/F07). Próximo: F04 ou F08 conforme mapa.",
         "14/11: LT-006 — F08 lado app (PR #222, merge aa21294c): Guia retém e consome q/categoria da URL. guia em ROTAS_COM_BUSCA (middleware renomeado manterBusca, lógica inalterada); leitura pura filtros-da-url.ts (termo 1..80, categoria válida, locality ignorado) + 8 testes; Guia.tsx semeia do endereço na montagem, digitação vence a origem e não reescreve a URL; E2E guia-filtros-url 23 passed local em 375/768/1440 nos dois temas, negativo verificado (sem guia no set a retenção falha). Revisão Qwen PASS com 2 ressalvas não bloqueantes -> F08-RESSALVAS. CI verde após RUN-146 (PR #223, merge 779d6b2c: runner pinado ubuntu-24.04, ubuntu-latest virou 26.04 incompatível com Playwright 1.51.1): gate 23m25s, App mobile-first 38m10s, HTML R72. Perda declarada: ?locality= não suportado. Próximo: LT-007 troca parcial de /guide (as outras 3 rotas do guia ficam na web).",
         "14/11: LT-007 — F08 web parcial (PR #225, merge b5be43d4): /guide -> /app/guia 307 com query; lista antiga removida (715 linhas); subrotas /guide/[id], /guide/sugerir, /guide/[id]/correcao ficam na web (regra exata não as captura, prova negativa unit+E2E). TROCADAS 81/81; guia-redirects.spec.ts novo (307+query sem sessão em 375/768/1440); specs migradas (portas-de-entrada, empty-locality, two-localities); 5 links web da lista direto pro app (Salvos, busca global x2, city-reference, entry-moment). Revisão Qwen PASS. Completo verde no SHA a2c51d9d (run 43622057312, 17.9 min) após 5 correções de inventário (links, unitário href, typed routes via typegen, portas das subrotas, allowance /denuncias) + idle=10 do RUN-148. Perda declarada: ?locality=. Checklist de troca completo no LICOES. F08: lista trocada nos dois lados; gaps do verbete endereçável/sugestão/correção seguem em F08-RESSALVAS.",
-        "15/11: jornada de gaps + trocas (5 lotes mergeados): RUN-152 tema claro-only (81763cc6, decisão do dono — lançamento só claro, escuro dormente); RUN-153 F04 resolver/reabrir + útil fake removido (2db19a6b, destrava /indicacoes/[id]); RUN-155 F04 criar grupo (dff7dacd); RUN-156 F06 resíduo criar/editar desapego (343e9775, últimos URLs diretos); RUN-154 F08 verbete endereçável + botão fake removido + minhas sugestões (03ace7a4, destrava /guide/[id], resolve F08-RESSALVAS 1-2). CI rápida no ar (RUN-147/149/150/151: fast ~1.5 min, fechamento ~9-11 min). Lições: lotes que mexem em specs Playwright exigem E2E real no CI (typecheck não pega quebra de runtime); branches paralelos que mexem no TOTAL_DE_ROTAS precisam re-sync após merges; executores DeepSeek param antes de validar em worktree novo (install) — retomar com executor de conclusão."
+        "15/11: jornada de gaps + trocas (5 lotes mergeados): RUN-152 tema claro-only (81763cc6, decisão do dono — lançamento só claro, escuro dormente); RUN-153 F04 resolver/reabrir + útil fake removido (2db19a6b, destrava /indicacoes/[id]); RUN-155 F04 criar grupo (dff7dacd); RUN-156 F06 resíduo criar/editar desapego (343e9775, últimos URLs diretos); RUN-154 F08 verbete endereçável + botão fake removido + minhas sugestões (03ace7a4, destrava /guide/[id], resolve F08-RESSALVAS 1-2). CI rápida no ar (RUN-147/149/150/151: fast ~1.5 min, fechamento ~9-11 min). Lições: lotes que mexem em specs Playwright exigem E2E real no CI (typecheck não pega quebra de runtime); branches paralelos que mexem no TOTAL_DE_ROTAS precisam re-sync após merges; executores DeepSeek param antes de validar em worktree novo (install) — retomar com executor de conclusão.",
+        "15/11: mais 2 lotes — RUN-157 F10 sair da conta (55af2822, escopo local 'neste aparelho', servidor revoga sem cliente Supabase no app; causa-raiz do cookie no WeakMap registrada em SESSAO-COOKIES-WEAKMAP); RUN-158 F04 seguir/salvar indicações (0400887a, um toggle 'Seguir respostas' em recommendation_saves, reuse total sem migration — banco já notificava quem salvou; fecha também 'indicações em Salvos' do F10). Lacunas F04/F06/F10 atualizadas no checklist. 7 lotes de jornada no dia."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6296,7 +6300,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); grupos, seguir/salvar/resolver e denúncias (F04); convites/fan-out e criar/editar evento (F05); criar/editar anúncios, Meus anúncios e alertas (F06); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); indicações em Salvos, perfil alheio/interesses e portas de conta (F10)",
+        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); denúncias (F04; grupos/seguir/salvar/resolver fechados: RUN-153/155/158); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); perfil alheio/interesses (F10; indicações em Salvos e sair da conta fechados: RUN-157/158)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -6751,6 +6755,34 @@
       "links": ["docs/agents/tasks/F10-SAIR.task.yml"],
       "proof": [
         "15/11: PR #236 mergeado em 55af2822. Implementado pelo DeepSeek (0fb04433) + fixes: escopo local (c177fade, decisão do coordenador — signOut global revogava todos os aparelhos mas a cópia diz neste aparelho; teste distingue o escopo + ramo 401), rota gateada no E2E real (f57b5585: /community em vez de /configuracoes/familia que é trocada p/ /app/voce público). Revisão R2 Qwen PASS. CI run 43695984691 todo verde. Runtime real provado pelo trace do CI: POST sair 200, cookie sb-127-auth-token Max-Age=0, /app/entrar carrega, entry/progress 401, porta renderizada. Follow-up: causa-raiz do cookie (card SESSAO-COOKIES-WEAKMAP)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "RUN-158",
+      "title": "F04: seguir/salvar indicações pelo app (um toggle em recommendation_saves)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Salvar e seguir são a MESMA ação — uma linha em recommendation_saves (como a web, botão 'Seguir respostas'). O banco já tem tabela, permissões, trigger de notificação (20260821000012 notifica quem salvou), rótulo e deep-link; o app era o único elo. Rotas PUT/DELETE /api/app/perguntas/[id]/salvo (sessão+CSRF, uuid/visibilidade→404, insert idempotente 23505, 42501→403 honesto de pedido de grupo, DELETE do próprio sempre permitido) + GET /api/app/perguntas/salvas; campo salva aditivo no detalhe; toggle único otimista com reversão na Pergunta; seção data-salvos=perguntas em Salvos (fecha também 'indicações em Salvos' do F10). SEM migration/pgTAP novo (reuse total, molde guia RUN-154). Limitação: save de pedido de grupo negado pela permissão atual (só cidade) → 403 honesto; estender = R3, fora.",
+      "checklist": [
+        "Rotas salvo/salvas + campo salva",
+        "Toggle único + seção perguntas em Salvos",
+        "Testes positivo/negativo + CI verde"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/f04-perguntas-real.spec.ts",
+        "tests/unit/app-api/perguntas/rotas.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "0400887a",
+      "links": ["docs/agents/tasks/F04-SALVAR.task.yml"],
+      "proof": [
+        "15/11: PR #237 mergeado em 0400887a. Implementado pelo DeepSeek (4bcb6f60) + contrato declara knock-on da contagem (a795033f, perguntas-porta 4→6). Revisão R2 Qwen PASS (mecanismo conferido direto na migration 20260802001100: PK user_id+request_id→23505 real, insert_own exige locality_id→grupo 42501, select/delete só do dono). CI run 43699069481 todo verde. App test 550, suíte raiz 3218. Fecha a lacuna seguir/salvar do LAN-TROCA (F04) e 'indicações em Salvos' (F10); drift do LAN-F04 done-sem-salvar/seguir reconciliado. 403 de grupo provado em unidade (seed sem pedido de grupo). Não corrige contagens.salvos (pré-existente)."
       ],
       "completedChecklist": [true, true, true]
     },
