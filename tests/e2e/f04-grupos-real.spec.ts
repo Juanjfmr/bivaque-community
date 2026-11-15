@@ -251,7 +251,9 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           repetida.getByRole("alert"),
           "nome repetido é recusado com o próximo passo",
         ).toContainText("Já existe um grupo com esse nome. Busque e entre nele.", ESPERA)
-        await repetida.getByRole("button", { name: "Fechar" }).click(ESPERA)
+        // `exact`: a alça da folha chama-se "Arrastar para fechar" e casaria
+        // com o nome "Fechar" na busca por substring.
+        await repetida.getByRole("button", { name: "Fechar", exact: true }).click(ESPERA)
       })
 
       await test.step("entrar: quem não é membro não publica nem lê o grupo fechado", async () => {
