@@ -16,7 +16,11 @@ import { abrir, caminhoAtual, GUIA_DA_PROVA, SELETOR_CONTEUDO, simularProgresso 
  * - `/app/guia` sem recorte abre o Guia inteiro, como um link nenhum;
  * - categoria fora da lista, termo vazio ou acima do limite que o servidor aceita
  *   abrem o Guia inteiro, sem erro cru e sem pedir à rota o que ela recusaria;
- * - digitar vence o termo de origem e tocar o chip vence a categoria de origem.
+ * - digitar vence o termo de origem e tocar o chip vence a categoria de origem,
+ *   e o endereço não é reescrito com o que a pessoa digita — nem depois da pausa
+ *   que consulta: quem põe o recorte no endereço é o link, não a digitação;
+ * - o Voltar para um endereço com outro recorte (a tela continua montada) leva
+ *   esse recorte à tela, sem reconstruí-la, e a recarga mantém.
  *
  * O app é servido em http://127.0.0.1:3200 (playwright.config.ts) e a rota do
  * guia responde pelo fixture daqui, que filtra como o servidor e recusa o que ele
@@ -80,6 +84,18 @@ async function materializada(page: Page): Promise<void> {
     .toBe(1)
 }
 
+/**
+ * O endereço muda sem recarregar, como no Voltar para outra entrada: o roteador
+ * relê a URL e a tela continua montada, com o que a pessoa digitou.
+ */
+async function trocarEndereco(page: Page, caminho: string): Promise<void> {
+  await page.evaluate((destino) => {
+    window.history.pushState(window.history.state, "", destino)
+    window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }))
+  }, caminho)
+  await expect.poll(() => new URL(page.url()).search).toBe(new URL(caminho, page.url()).search)
+}
+
 test.describe("aterrissagem com o recorte no endereço", () => {
   test.beforeEach(() => {
     test.skip(
@@ -114,6 +130,42 @@ test.describe("aterrissagem com o recorte no endereço", () => {
       await expect(page.locator(SELETOR_CONTEUDO)).not.toContainText("Não foi possível")
     })
   }
+})
+
+test.describe("a troca de endereço ressemeia o recorte", () => {
+  test.beforeEach(() => {
+    test.skip(
+      !new RegExp(`^(?:${LARGURAS_DO_ATERRIZAGEM})$`).test(projetoAtual()),
+      "a troca de endereço é provada em 375, 768 e 1440",
+    )
+  })
+
+  test("o Voltar para um endereço com outro termo ressemeia a lista, e a recarga mantém", async ({
+    page,
+  }) => {
+    await simularProgresso(page)
+    await simularGuiaFiltrado(page)
+
+    await abrir(page, `/app/guia?q=${TERMO_DA_PROVA}`)
+    await materializada(page)
+    await expect(linha(page, HOSPITAL)).toBeVisible()
+    await expect(linha(page, ESCOLA)).toHaveCount(0)
+
+    // Outra entrada do Guia: o endereço muda, a tela não é reconstruída.
+    await trocarEndereco(page, `/app/guia?q=${encodeURIComponent("rio negro")}`)
+
+    await expect(page.getByLabel(CAMPO)).toHaveValue("rio negro")
+    await expect(linha(page, ESCOLA)).toBeVisible()
+    await expect(linha(page, HOSPITAL)).toHaveCount(0)
+
+    // E o recorte do novo endereço é o que a recarga abre.
+    await page.reload()
+    await materializada(page)
+    expect(new URL(page.url()).searchParams.get("q")).toBe("rio negro")
+    await expect(page.getByLabel(CAMPO)).toHaveValue("rio negro")
+    await expect(linha(page, ESCOLA)).toBeVisible()
+    await expect(linha(page, HOSPITAL)).toHaveCount(0)
+  })
 })
 
 test.describe("o que o link não pode quebrar", () => {
@@ -167,10 +219,17 @@ test.describe("o filtro manual vence o recorte do link", () => {
 
     await page.getByLabel(CAMPO).fill("rio negro")
 
+    // Digitar não reescreve o endereço: o `q` ainda é o do link, e não o termo
+    // que está sendo digitado.
+    expect(new URL(page.url()).searchParams.get("q")).toBe(TERMO_DA_PROVA)
+
     await expect(page.getByLabel(CAMPO)).toHaveValue("rio negro")
     await expect(linha(page, ESCOLA)).toBeVisible()
     // O resultado do link não volta a aparecer depois da digitação.
     await expect(linha(page, HOSPITAL)).toHaveCount(0)
+    // Nem depois da pausa que consulta o endereço passa a carregar a digitação:
+    // quem escreve o recorte no endereço é o link, nunca o campo.
+    expect(new URL(page.url()).searchParams.get("q")).toBe(TERMO_DA_PROVA)
   })
 
   test("tocar outro chip troca a categoria e não volta à do link", async ({ page }) => {
