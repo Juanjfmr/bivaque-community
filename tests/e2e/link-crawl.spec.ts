@@ -199,16 +199,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "DÍVIDA LAN-TROCA: 'Criar alerta' dentro de /imoveis antigos, sem equivalente no app (F06)",
   },
   {
-    route: "/imoveis/novo",
-    porta:
-      "DÍVIDA LAN-TROCA: 'Anunciar imóvel' dentro de /imoveis antigos, sem destino direto no app (F06)",
-  },
-  {
-    route: "/imoveis/[id]/editar",
-    porta: "CONDICIONAL: 'Editar anúncio' no detalhe, só para o dono",
-    dependeDeDados: true,
-  },
-  {
     route: "/indicacoes",
     porta:
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",

@@ -52,6 +52,9 @@ const TITULOS_FORA_DA_GRADE = [
 const APARTAMENTO = "Apartamento 2 quartos no Centro"
 const CASA = "Casa 3 quartos com quintal"
 
+/** Imóvel de outra pessoa no seed (`30000000-…-001b`): serve à negativa do PATCH. */
+const IMOVEL_DE_TERCEIRO = "b2000000-0000-4000-8000-000000000001"
+
 /**
  * O token da sessão semeada, lido do próprio cookie que o app usa. O PostgREST
  * autentica por `Authorization: Bearer`; a leitura do banco pela mesma pessoa
@@ -386,6 +389,121 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
         ).toBe(200)
       } finally {
         await api.dispose()
+      }
+    }
+  })
+
+  // Gestão de IMÓVEL (RUN-164): a folha de Imóveis publica de verdade (POST
+  // kind property), o anúncio criado abre no detalhe, e o gerenciar edita as
+  // colunas do imóvel (PATCH) com a recarga provando o gravado no banco. O
+  // anúncio criado é encerrado no fim para a grade voltar ao seed.
+  test("criar e editar o próprio imóvel persiste através da recarga", async ({ page, context }) => {
+    test.setTimeout(240_000)
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    const titulo = `Cobertura de teste ${Date.now()}`
+    const tituloEditado = `${titulo} — editada`
+    let imovelId = ""
+
+    try {
+      await page.goto("/app/imoveis")
+      await expect(page.getByRole("heading", { level: 1, name: "Imóveis" })).toBeVisible({
+        timeout: 30_000,
+      })
+      await page.locator('[data-acao="anunciar-imovel"]').click()
+      const folha = page.locator('[data-fluxo="rascunho-imovel"]')
+      await expect(folha).toBeVisible()
+      await folha.locator("#imovel-titulo").fill(titulo)
+      await folha.locator("#imovel-bairro").fill("Centro")
+      await folha.locator("#imovel-preco").fill("2100")
+      await folha.locator("#imovel-quartos").fill("2")
+      await folha.locator("#imovel-area").fill("58")
+      await folha.locator("#imovel-descricao").fill("Anúncio sintético do teste de imóvel.")
+
+      const criacao = page.waitForResponse(
+        (r) =>
+          /\/api\/app\/mercado$/.test(new URL(r.url()).pathname) && r.request().method() === "POST",
+      )
+      await folha.locator('[data-acao="publicar-imovel"]').click()
+      const resposta = await criacao
+      const corpo = (await resposta.json()) as { anuncio?: { id?: string } }
+      expect(resposta.status(), JSON.stringify(corpo)).toBe(201)
+      imovelId = corpo.anuncio?.id ?? ""
+      expect(imovelId).toMatch(/^[0-9a-f-]{36}$/)
+
+      // O app abre o anúncio recém-publicado, com os dados do banco.
+      await expect(page).toHaveURL(new RegExp(`/app/anuncio/${imovelId}$`))
+      await expect(page.getByRole("heading", { level: 1, name: titulo })).toBeVisible({
+        timeout: 30_000,
+      })
+      await expect(page.locator('[data-tela="anuncio"]')).toContainText(/R\$\s*2\.100/)
+
+      // Gerenciar o próprio imóvel: o formulário vem preenchido e grava o novo título.
+      await page.goto("/app/meus-anuncios")
+      const cartao = page.locator('[data-tela="meus-anuncios"] [data-cartao="anuncio"]', {
+        hasText: titulo,
+      })
+      await expect(cartao).toBeVisible({ timeout: 30_000 })
+      await page.locator(`[data-acao="gerenciar-anuncio"][data-valor="${imovelId}"]`).click()
+      const dialogo = page.locator(`[data-gerenciar-anuncio="${imovelId}"]`)
+      await expect(dialogo.getByLabel("Título")).toHaveValue(titulo)
+      // "Vendido" não existe para imóvel: só pausar e encerrar.
+      await expect(dialogo.getByRole("button", { name: "Marcar como vendido" })).toHaveCount(0)
+      await dialogo.getByLabel("Título").fill(tituloEditado)
+      await dialogo.getByLabel(/Aluguel por mês/).fill("2300")
+      await dialogo.getByRole("button", { name: "Salvar alterações" }).click()
+      await expect(dialogo.getByRole("alert")).toContainText("Alterações salvas", {
+        timeout: 30_000,
+      })
+
+      // Recarregar: o que aparece é o que está no banco.
+      await page.reload()
+      await expect(
+        page.locator('[data-tela="meus-anuncios"] [data-cartao="anuncio"]', {
+          hasText: tituloEditado,
+        }),
+      ).toBeVisible({ timeout: 30_000 })
+      await page.goto(`/app/anuncio/${imovelId}`)
+      await expect(page.getByRole("heading", { level: 1, name: tituloEditado })).toBeVisible({
+        timeout: 30_000,
+      })
+      await expect(page.locator('[data-tela="anuncio"]')).toContainText(/R\$\s*2\.300/)
+
+      // Negativo: o imóvel do seed é de outra pessoa, e o PATCH por ela é
+      // recusado sem tocar a linha.
+      const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+      try {
+        const cabecalhos = {
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
+          "content-type": "application/json",
+        }
+        const alheio = await api.patch(`/api/app/mercado/${IMOVEL_DE_TERCEIRO}`, {
+          headers: cabecalhos,
+          data: { title: "Tentativa em imóvel alheio", deal: "rent", propertyType: "apartment" },
+        })
+        expect(alheio.status(), "editar imóvel de outra pessoa precisa ser 404").toBe(404)
+      } finally {
+        await api.dispose()
+      }
+    } finally {
+      // Encerra o imóvel criado pelas próprias rotas, para a grade voltar ao
+      // seed. Sem anúncio criado não há o que devolver.
+      if (imovelId !== "") {
+        const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+        try {
+          const encerrado = await api.post(`/api/app/mercado/${imovelId}/situacao`, {
+            headers: {
+              authorization: `Bearer ${await tokenDaSessao(context)}`,
+              "content-type": "application/json",
+            },
+            data: { acao: "close" },
+          })
+          expect([200, 409], `encerrar o imóvel do teste falhou (${encerrado.status()})`).toContain(
+            encerrado.status(),
+          )
+        } finally {
+          await api.dispose()
+        }
       }
     }
   })

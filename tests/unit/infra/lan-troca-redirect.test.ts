@@ -20,6 +20,10 @@ const TROCADAS = [
   ["/mercado/novo", "/app/mercado"],
   ["/mercado/novo?categoria=eletronicos", "/app/mercado?categoria=eletronicos"],
   [`/imoveis/${ID}`, `/app/anuncio/${ID}`],
+  // RUN-164: criar e editar imóvel saem da web; a lista é o destino do criar.
+  ["/imoveis/novo", "/app/imoveis"],
+  ["/imoveis/novo?tipo=casa", "/app/imoveis?tipo=casa"],
+  [`/imoveis/${ID}/editar`, `/app/anuncio/${ID}`],
   ["/mercado", "/app/mercado"],
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado?preco_min=10000&pagina=2"],
   ["/imoveis", "/app/imoveis"],
@@ -130,6 +134,21 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
+  // RUN-164: as regras de criar/editar imóvel não engolem a lista de alertas
+  // nem transformam um subcaminho qualquer num anúncio.
+  it.each([`/imoveis/${ID}/denunciar`, "/imoveis/novo/editar"])(
+    "%s não é capturado como anúncio de imóvel",
+    async (caminho) => {
+      const localizacao = (await resolver(caminho)).headers.get("location")
+      const destino = localizacao === null ? "" : new URL(localizacao, ORIGEM).pathname
+      expect(destino.startsWith("/app/anuncio"), `destino de ${caminho}`).toBe(false)
+    },
+  )
+
+  it("a lista de alertas continua na web, sem redirect", async () => {
+    expect((await resolver("/imoveis/alertas")).headers.get("location")).toBeNull()
+  })
+
   it("a pasta antiga de busca não deixa tela nem action para trás", () => {
     const pasta = join(shell, "explorar/busca")
     const sobras = existsSync(pasta)
@@ -169,8 +188,9 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  // F06 resíduo: criar e editar desapego saíram sem deixar page.tsx para trás.
-  it.each(["mercado/novo", "mercado/[id]/editar"])(
+  // F06 resíduo: criar e editar desapego e imóvel saíram sem deixar page.tsx
+  // para trás (RUN-156 e RUN-164).
+  it.each(["mercado/novo", "mercado/[id]/editar", "imoveis/novo", "imoveis/[id]/editar"])(
     "a página trocada %s não deixa page.tsx para trás",
     (relativa) => {
       const arquivo = join(shell, relativa, "page.tsx")

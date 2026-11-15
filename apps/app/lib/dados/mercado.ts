@@ -272,6 +272,79 @@ export async function editarDesapego(
   )
 }
 
+/**
+ * O imóvel no vocabulário da web: o mesmo rascunho que o formulário de Moradia
+ * enviava (título, negócio, tipo, valor do lado do negócio, quartos, área...).
+ * É de propósito que não há tradução no meio — o servidor valida com
+ * `validatePropertyDraft`, a mesma função da tela antiga.
+ */
+export type DadosDoImovel = Readonly<{
+  title: string
+  deal: "rent" | "sale"
+  propertyType: "apartment" | "house"
+  /** O valor do campo único de preço, em reais inteiros (a validação recusa centavos). */
+  valor: string
+  bedrooms: string
+  areaM2: string
+  description: string
+  neighborhood: string
+  /** Opcional: vazio é "não informar", nunca erro. Ausente preserva o gravado. */
+  address?: string
+}>
+
+function corpoDoImovel(dados: DadosDoImovel, extras: { vagas?: string } = {}) {
+  return {
+    title: dados.title,
+    deal: dados.deal,
+    propertyType: dados.propertyType,
+    // Aluguel e venda são exclusivos: o lado que não é o negócio vai vazio.
+    rent: dados.deal === "rent" ? dados.valor : "",
+    salePrice: dados.deal === "sale" ? dados.valor : "",
+    bedrooms: dados.bedrooms,
+    areaM2: dados.areaM2,
+    description: dados.description,
+    neighborhood: dados.neighborhood,
+    ...(dados.address === undefined ? {} : { address: dados.address }),
+    ...(extras.vagas === undefined ? {} : { parkingSpots: extras.vagas }),
+  }
+}
+
+/**
+ * Publica o imóvel pelo POST do Mercado (`kind: "property"`). `vagas` só na
+ * criação: a leitura do app não devolve vagas, então a edição não a manda e o
+ * servidor preserva a gravada.
+ */
+export async function publicarImovel(
+  dados: DadosDoImovel & Readonly<{ vagas: string }>,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<string> {
+  const corpo = await enviar(
+    "POST",
+    "/api/app/mercado",
+    { kind: "property", ...corpoDoImovel(dados, { vagas: dados.vagas }) },
+    opcoes,
+  )
+  const anuncio = corpo["anuncio"]
+  if (
+    typeof anuncio === "object" &&
+    anuncio !== null &&
+    "id" in anuncio &&
+    typeof anuncio.id === "string" &&
+    anuncio.id !== ""
+  )
+    return anuncio.id
+  throw new FalhaDaApi("indisponivel", 0)
+}
+
+/** Grava a edição do próprio imóvel pelo PATCH; o servidor valida e decide. */
+export async function editarImovel(
+  id: string,
+  dados: DadosDoImovel,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<void> {
+  await enviar("PATCH", `/api/app/mercado/${encodeURIComponent(id)}`, corpoDoImovel(dados), opcoes)
+}
+
 /** Ações de situação que o app oferece — o servidor decide a passagem. */
 export type AcaoDeSituacao = "pause" | "reactivate" | "close" | "sell"
 

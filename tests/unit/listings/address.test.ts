@@ -81,13 +81,21 @@ describe("o endereço nos três formulários de anúncio", () => {
     if (!result.ok) expect(result.field).toBe("address")
   })
 
-  // Os formulários de desapego saíram da web para o app (RUN-156); o de imóveis
-  // segue na web e o par criar/editar de ações continua sendo a porta da API.
-  it("os formulários que ficaram gravam o endereço e avisam que ele fica visível", () => {
-    const imovel = web("app", "(shell)", "imoveis", "property-form.tsx")
-    const actions = web("lib", "listings", "actions.ts")
-    expect(imovel).toContain("{ADDRESS_HINT}")
-    expect(actions.match(/address: addressValue\(draft\.address\)/g)?.length).toBe(2)
+  // Os formulários de imóvel saíram da web (RUN-164): a folha de Imóveis do app
+  // é quem publica, a gestão edita, e a rota grava o endereço pelo módulo que
+  // fala com as duas. O aviso de que ele fica visível continua na folha.
+  it("a folha de imóvel avisa que o endereço fica visível, e a rota o grava", () => {
+    const folha = readFileSync(
+      join(root, "apps", "app", "components", "bivaque", "formulario-imovel.tsx"),
+      "utf8",
+    )
+    expect(folha).toContain("aparece para quem vê o anúncio")
+    expect(web("app", "api", "app", "mercado", "_criar.ts")).toContain(
+      "p_listing: anuncioDoRascunho(rascunho",
+    )
+    expect(web("lib", "listings", "property.ts")).toContain(
+      "address: enderecoDoRascunho(rascunho.address)",
+    )
   })
 
   it("as páginas do anúncio mostram o endereço quando ele existe", () => {

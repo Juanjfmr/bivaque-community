@@ -12,49 +12,14 @@ import { isDefiniteSqlRejection } from "../storage/rpc-outcome"
 import { sanitizeImage } from "../storage/sanitize-image"
 import { createServerClient as createServiceClient } from "../supabase/server"
 import type { ActionState } from "./action-state"
-import { validateAddress } from "./address"
 import { buildListingPhotoPath } from "./catalog"
 import { parseListingFilters, type RawSearchParams } from "./filters"
 import { createListingClient } from "./ssr-client"
 import { MAX_LISTING_PHOTOS, MAX_PHOTO_BYTES } from "./types"
-import {
-  type PropertyDraftInput,
-  parseOptionalArea,
-  parseOptionalCents,
-  parseOptionalInt,
-  validatePropertyDraft,
-} from "./validation"
 
 const GENERIC_ERROR: ActionState = {
   ok: false,
   message: "Não foi possível salvar agora. Tente de novo em instantes.",
-}
-
-function readPropertyDraft(formData: FormData): PropertyDraftInput {
-  const value = (key: string) => String(formData.get(key) ?? "")
-  return {
-    title: value("title"),
-    deal: value("deal"),
-    propertyType: value("propertyType"),
-    rent: value("rent"),
-    condoFee: value("condoFee"),
-    iptu: value("iptu"),
-    salePrice: value("salePrice"),
-    bedrooms: value("bedrooms"),
-    suites: value("suites"),
-    parkingSpots: value("parkingSpots"),
-    areaM2: value("areaM2"),
-    description: value("description"),
-    neighborhood: value("neighborhood"),
-    address: value("address"),
-    availableFrom: value("availableFrom"),
-  }
-}
-
-// Já validado por validatePropertyDraft; aqui só normaliza (vazio vira null).
-function addressValue(raw: string | undefined): string | null {
-  const result = validateAddress(raw)
-  return result.ok ? result.value : null
 }
 
 async function currentUserId(): Promise<string | null> {
@@ -358,135 +323,6 @@ export async function uploadListingPhotoAction(
           : "Não foi possível enviar a foto. Confira a imagem e tente novamente.",
     }
   }
-}
-
-export async function createPropertyAction(formData: FormData): Promise<ActionState> {
-  if ((await currentUserId()) === null) {
-    return { ok: false, message: "Sessão expirada. Entre novamente para publicar." }
-  }
-
-  const draft = readPropertyDraft(formData)
-  const validation = validatePropertyDraft(draft)
-  if (!validation.ok) {
-    return { ok: false, field: validation.field, message: validation.message }
-  }
-
-  const intent = String(formData.get("intent") ?? "publish")
-  const status = intent === "draft" ? "draft" : "active"
-  const localityId = String(formData.get("localityId") ?? "")
-  const communityId = String(formData.get("communityId") ?? "")
-
-  // SEC-006 (reconferência 2026-10-19) — `listings` e `property_details` nascem
-  // na mesma transação (RPC). A tentativa anterior de compensar com `delete`
-  // não conferia o resultado: se a limpeza também falhasse, sobrava um anúncio
-  // sem detalhe. A RPC deriva o dono de auth.uid() e mantém os grants atuais.
-  const client = await createListingClient()
-  let listingId: string | null = null
-  let rpcError: string | null = null
-  try {
-    const { data, error } = await client.rpc("create_property_listing", {
-      p_listing: {
-        status,
-        title: draft.title.trim(),
-        description: draft.description.trim() || null,
-        neighborhood: draft.neighborhood.trim() || null,
-        address: addressValue(draft.address),
-        published_at: status === "active" ? new Date().toISOString() : null,
-        locality_id: communityId === "" ? localityId || null : null,
-        community_id: communityId === "" ? null : communityId,
-      },
-      p_details: {
-        deal: draft.deal,
-        property_type: draft.propertyType,
-        rent_cents: parseOptionalCents(draft.rent),
-        condo_fee_cents: parseOptionalCents(draft.condoFee),
-        iptu_cents: parseOptionalCents(draft.iptu),
-        sale_price_cents: parseOptionalCents(draft.salePrice),
-        bedrooms: parseOptionalInt(draft.bedrooms),
-        suites: parseOptionalInt(draft.suites),
-        parking_spots: parseOptionalInt(draft.parkingSpots),
-        area_m2: parseOptionalArea(draft.areaM2),
-        available_from: draft.availableFrom.trim() || null,
-      },
-    })
-    if (error) rpcError = error.message
-    else if (typeof data === "string") listingId = data
-    else rpcError = "A criação do anúncio não devolveu identificador."
-  } catch (error) {
-    console.error("[moradia] falha ao criar o anúncio:", error)
-    rpcError = "Não foi possível salvar agora. Tente de novo em instantes."
-  }
-
-  if (rpcError !== null || listingId === null) {
-    return { ...GENERIC_ERROR, message: rpcError ?? "Não foi possível salvar agora." }
-  }
-
-  revalidatePath("/imoveis")
-  return { ok: true, message: "Anúncio criado.", listingId }
-}
-
-export async function updatePropertyAction(formData: FormData): Promise<ActionState> {
-  const userId = await currentUserId()
-  if (userId === null) {
-    return { ok: false, message: "Sessão expirada. Entre novamente para editar." }
-  }
-
-  const listingId = String(formData.get("listingId") ?? "")
-  if (listingId === "") {
-    return { ok: false, message: "Anúncio não identificado." }
-  }
-
-  const draft = readPropertyDraft(formData)
-  const validation = validatePropertyDraft(draft)
-  if (!validation.ok) {
-    return { ok: false, field: validation.field, message: validation.message }
-  }
-
-  const client = await createListingClient()
-  const { error: listingError } = await client
-    .from("listings")
-    .update({
-      title: draft.title.trim(),
-      description: draft.description.trim() || null,
-      neighborhood: draft.neighborhood.trim() || null,
-      address: addressValue(draft.address),
-    })
-    .eq("id", listingId)
-
-  if (listingError) {
-    return { ...GENERIC_ERROR, message: listingError.message }
-  }
-
-  const { error: detailsError } = await client
-    .from("property_details")
-    .update({
-      deal: draft.deal as "rent" | "sale",
-      property_type: draft.propertyType as
-        | "apartment"
-        | "house"
-        | "studio"
-        | "room"
-        | "land"
-        | "commercial",
-      rent_cents: parseOptionalCents(draft.rent),
-      condo_fee_cents: parseOptionalCents(draft.condoFee),
-      iptu_cents: parseOptionalCents(draft.iptu),
-      sale_price_cents: parseOptionalCents(draft.salePrice),
-      bedrooms: parseOptionalInt(draft.bedrooms),
-      suites: parseOptionalInt(draft.suites),
-      parking_spots: parseOptionalInt(draft.parkingSpots),
-      area_m2: parseOptionalArea(draft.areaM2),
-      available_from: draft.availableFrom.trim() || null,
-    })
-    .eq("listing_id", listingId)
-
-  if (detailsError) {
-    return { ...GENERIC_ERROR, message: detailsError.message }
-  }
-
-  revalidatePath(`/imoveis/${listingId}`)
-  revalidatePath("/imoveis")
-  return { ok: true, message: "Anúncio atualizado.", listingId }
 }
 
 function alertNameFromFilters(raw: RawSearchParams): string {

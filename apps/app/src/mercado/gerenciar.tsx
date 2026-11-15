@@ -10,8 +10,10 @@ import {
   type AcaoDeSituacao,
   type AnuncioDaLista,
   editarDesapego,
+  editarImovel,
   mudarSituacao,
 } from "@/lib/dados/mercado"
+import { errosDoImovel } from "@/src/criar/formularios"
 import {
   type EstadoDaGestao,
   type EventoDaGestao,
@@ -21,10 +23,11 @@ import {
 
 /**
  * Gerenciar o próprio anúncio (LAN-F06, prancha 21 no molde das telas): editar
- * texto, preço e foto — só desapego; imóvel continua pela jornada própria — e
- * mudar a situação pela sessão (pausar, reativar, encerrar, vendido). Nada é
- * otimista: a situação mostrada é a que o servidor devolveu, e o erro preserva
- * o que a pessoa digitou.
+ * texto, preço e foto no desapego; texto, negócio, tipo e detalhes no imóvel —
+ * as mesmas colunas da antiga `updatePropertyAction`; e mudar a situação pela
+ * sessão (pausar, reativar, encerrar, vendido). Nada é otimista: a situação
+ * mostrada é a que o servidor devolveu, e o erro preserva o que a pessoa
+ * digitou.
  */
 
 const OPCOES_CATEGORIA = [
@@ -105,6 +108,19 @@ export function GerenciarAnuncio({
     foto: "",
   })
   const [status, setStatus] = useState(anuncio.status)
+  // O imóvel edita as colunas que a leitura do app expõe; suítes, vagas,
+  // condomínio, IPTU e disponibilidade não vêm na lista, então o corpo não as
+  // manda e o servidor preserva o gravado.
+  const [imovel, setImovel] = useState({
+    titulo: anuncio.titulo,
+    tipoImovel: anuncio.tipoImovel === "house" ? "casa" : "apartamento",
+    negocio: anuncio.deal === "sale" ? "venda" : "aluguel",
+    bairro: anuncio.bairro ?? "",
+    valor: precoParaCampo(anuncio.precoCents),
+    quartos: anuncio.quartos === null ? "" : String(anuncio.quartos),
+    area: anuncio.areaM2 === null ? "" : String(anuncio.areaM2),
+    descricao: anuncio.descricao ?? "",
+  })
   const [aviso, setAviso] = useState("")
   const [gestao, setGestao] = useState<EstadoDaGestao>(GESTAO_LIVRE)
   // A ref aplica a guarda no mesmo turno do clique, antes do próximo render.
@@ -128,12 +144,39 @@ export function GerenciarAnuncio({
   const leitor = useRef<FileReader | null>(null)
 
   async function salvar() {
-    if (!item || !despachar({ tipo: "iniciar-edicao" })) return
+    if (!despachar({ tipo: "iniciar-edicao" })) return
     setAviso("")
+    const primeiro = item
+      ? undefined
+      : Object.values(errosDoImovel({ ...imovel, vagas: "" })).find(
+          (mensagem) => mensagem !== undefined,
+        )
+    if (primeiro !== undefined) {
+      setAviso(primeiro)
+      despachar({ tipo: "concluir" })
+      return
+    }
     const envio = new AbortController()
     controle.current = envio
     try {
-      await editarDesapego(anuncio.id, dados, { signal: envio.signal })
+      if (item) {
+        await editarDesapego(anuncio.id, dados, { signal: envio.signal })
+      } else {
+        await editarImovel(
+          anuncio.id,
+          {
+            title: imovel.titulo,
+            deal: imovel.negocio === "venda" ? "sale" : "rent",
+            propertyType: imovel.tipoImovel === "casa" ? "house" : "apartment",
+            valor: imovel.valor,
+            bedrooms: imovel.quartos,
+            areaM2: imovel.area,
+            description: imovel.descricao,
+            neighborhood: imovel.bairro,
+          },
+          { signal: envio.signal },
+        )
+      }
       setAviso("Alterações salvas.")
       aoGravar()
     } catch (falha) {
@@ -370,14 +413,109 @@ export function GerenciarAnuncio({
             </div>
           </form>
         ) : (
-          <div className="flex justify-end gap-2">
-            <p className="self-start text-sm text-(--on-surface-variant)">
-              A edição do texto é para desapego; deste imóvel você muda só a situação.
-            </p>
-            <Botao tom="texto" disabled={ocupado} onClick={aoFechar}>
-              Fechar
-            </Botao>
-          </div>
+          <form
+            data-formulario="imovel"
+            className="grid gap-3"
+            aria-busy={ocupado}
+            noValidate
+            onSubmit={(evento) => {
+              evento.preventDefault()
+              void salvar()
+            }}
+          >
+            <Campo
+              id="editar-imovel-titulo"
+              rotulo="Título"
+              valor={imovel.titulo}
+              aoMudar={(titulo) => setImovel({ ...imovel, titulo })}
+              maxLength={120}
+              required
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Selecao
+                id="editar-imovel-tipo"
+                rotulo="Tipo"
+                valor={imovel.tipoImovel}
+                aoMudar={(tipoImovel) => setImovel({ ...imovel, tipoImovel })}
+                opcoes={[
+                  { valor: "apartamento", titulo: "Apartamento" },
+                  { valor: "casa", titulo: "Casa" },
+                ]}
+              />
+              <Selecao
+                id="editar-imovel-negocio"
+                rotulo="Finalidade"
+                valor={imovel.negocio}
+                aoMudar={(negocio) => setImovel({ ...imovel, negocio })}
+                opcoes={[
+                  { valor: "aluguel", titulo: "Aluguel" },
+                  { valor: "venda", titulo: "Venda" },
+                ]}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo
+                id="editar-imovel-bairro"
+                rotulo="Bairro"
+                valor={imovel.bairro}
+                aoMudar={(bairro) => setImovel({ ...imovel, bairro })}
+                maxLength={80}
+                required
+              />
+              <Campo
+                id="editar-imovel-valor"
+                rotulo={
+                  imovel.negocio === "aluguel" ? "Aluguel por mês (R$)" : "Valor de venda (R$)"
+                }
+                valor={imovel.valor}
+                aoMudar={(valor) => setImovel({ ...imovel, valor })}
+                type="number"
+                inputMode="numeric"
+                min="1"
+                step="1"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo
+                id="editar-imovel-quartos"
+                rotulo="Quartos"
+                valor={imovel.quartos}
+                aoMudar={(quartos) => setImovel({ ...imovel, quartos })}
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max="20"
+                step="1"
+              />
+              <Campo
+                id="editar-imovel-area"
+                rotulo="Área (m²)"
+                valor={imovel.area}
+                aoMudar={(area) => setImovel({ ...imovel, area })}
+                type="number"
+                inputMode="decimal"
+                min="1"
+                step="0.01"
+              />
+            </div>
+            <Campo
+              id="editar-imovel-descricao"
+              rotulo="Descrição"
+              valor={imovel.descricao}
+              aoMudar={(descricao) => setImovel({ ...imovel, descricao })}
+              area
+              nota="Suítes, vagas, condomínio, IPTU e disponibilidade continuam como estão."
+            />
+            <div className="flex justify-end gap-2">
+              <Botao type="button" tom="texto" disabled={ocupado} onClick={aoFechar}>
+                Fechar
+              </Botao>
+              <Botao type="submit" data-acao="salvar-edicao" disabled={gestao.fase !== "livre"}>
+                {salvando ? "Salvando…" : "Salvar alterações"}
+              </Botao>
+            </div>
+          </form>
         )}
 
         {aviso === "" ? null : (

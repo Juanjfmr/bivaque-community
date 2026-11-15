@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { errosDaPergunta, errosDoDesapego, precoBRL, semErros } from "@/src/criar/formularios"
+import {
+  errosDaPergunta,
+  errosDoDesapego,
+  errosDoImovel,
+  precoBRL,
+  semErros,
+} from "@/src/criar/formularios"
 
 /**
  * A régua dos formulários do Criar, por campo: os limites são os do servidor
@@ -77,5 +83,54 @@ describe("desapego", () => {
     // O Intl separa "R$" do número com espaço fixo; a tela não depende disso.
     expect(precoBRL("750.5").replace(/\u00a0/g, " ")).toBe("R$ 750,50")
     expect(precoBRL("")).toBe("R$ —")
+  })
+})
+
+describe("imóvel", () => {
+  const valido = {
+    titulo: "Apartamento 2 quartos no Centro",
+    bairro: "Centro",
+    valor: "1800",
+    quartos: "2",
+    vagas: "1",
+    area: "62,5",
+    descricao: "Próximo ao comércio.",
+  }
+
+  it("aceita o imóvel completo e o imóvel sem os opcionais", () => {
+    expect(errosDoImovel(valido)).toEqual({})
+    expect(errosDoImovel({ ...valido, quartos: "", vagas: "", area: "", descricao: "" })).toEqual(
+      {},
+    )
+  })
+
+  it("cada obrigatório vazio volta no próprio campo", () => {
+    expect(errosDoImovel({ ...valido, titulo: "x" }).titulo).toBe("Dê um título ao imóvel.")
+    expect(errosDoImovel({ ...valido, bairro: " " }).bairro).toBe("Informe o bairro.")
+    expect(errosDoImovel({ ...valido, valor: "" }).valor).toBe("Informe o valor do imóvel.")
+  })
+
+  it("o valor é real inteiro: centavos voltam 400 do servidor", () => {
+    expect(errosDoImovel({ ...valido, valor: "1800,50" }).valor).toBe(
+      "Informe um valor em reais, sem centavos e sem símbolo.",
+    )
+    expect(errosDoImovel({ ...valido, valor: "caro" }).valor).toBe(
+      "Informe um valor em reais, sem centavos e sem símbolo.",
+    )
+    expect(errosDoImovel({ ...valido, valor: "100000001" }).valor).toBe(
+      "Valor acima do limite permitido.",
+    )
+  })
+
+  it("área, quartos e vagas seguem o teto do servidor", () => {
+    expect(errosDoImovel({ ...valido, area: "0" }).area).toBe("Área fora do intervalo permitido.")
+    expect(errosDoImovel({ ...valido, area: "100001" }).area).toBe(
+      "Área fora do intervalo permitido.",
+    )
+    expect(errosDoImovel({ ...valido, area: "62,555" }).area).toBe(
+      "Informe a área em metros quadrados.",
+    )
+    expect(errosDoImovel({ ...valido, quartos: "21" }).quartos).toBe("Número acima do limite.")
+    expect(errosDoImovel({ ...valido, vagas: "x" }).vagas).toBe("Informe um número inteiro.")
   })
 })
