@@ -1,0 +1,83 @@
+# RUN-166 — matar a pasta (shell)/messages: tela antiga sai com codigo e testes (criterio 6).
+#
+# /messages e /messages/[id] ja respondem 307 para o app (next.config.ts:85-97,
+# LT-004) e o unico gesto que a tela ainda carregava (bloquear) pousou no app
+# com o RUN-165 (2b48e8bd). Mas a pasta continua em disco com 6 arquivos
+# (page.tsx, [id]/page.tsx, conversation-inbox.tsx com o INSERT DIRETO de
+# dm_blocks pelo browser, etc.) — criterio 6 do lancamento nao fecha com rota de
+# membro servindo tela, e o insert direto era o ultimo caminho fora da porta
+# ADR §5. NAO ha mudanca de redirect neste lote: so remocao + provas migradas.
+
+task_id: RUN-166
+
+objective: >
+  Remover apps/web/app/(shell)/messages por completo, migrar as provas que ainda
+  valem para o app (a caixa/conversa real ja e coberta por f09-conversas-real),
+  repontar os pins (ausencia no molde das trocas, link-crawl sem a porta,
+  sidebar web que ainda linka /messages cai para o 307 vivo) e registrar no
+  quadro a remocao do caminho de insert direto de dm_blocks fora da porta.
+
+authority:
+  - docs/LANCAMENTO.md criterio 6 (:47-48) e fase 6 (:101)
+  - ADR-20261024-front-react-spa.md §8 (a tela sai com codigo e testes)
+  - Card RUN-166 no board (aberto no fechamento do RUN-165) + mapa F09 do explorer 16/11
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/messages/ existe com 6 arquivos (ls); o redirect 307 ja
+    manda todo usuario real para /app/conversas (next.config.ts:85-97) e
+    lan-troca-redirect.test.ts lista /messages em TROCADAS (:15-17) sem prova de
+    ausencia; link-crawl.spec.ts trata a pasta como link valido sem porta
+    (:357-373); conversation-inbox.tsx:278-298 faz dm_blocks.insert pelo
+    cliente do browser (caminho morto para o usuario, vivo para o gate).
+
+allowed_paths:
+  - docs/agents/tasks/MESSAGES-REMOCAO.task.yml
+  - apps/web/app/(shell)/messages
+  - apps/web/app/components/shell
+  - apps/web/next.config.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/recon-032-messages.spec.ts
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/manaus-pilot-denials.spec.ts
+  - tests/e2e/copy-fala-com-a-pessoa.test.ts
+  - tests/unit/ui/shell-sidebar-labels.test.ts
+  - tests/unit/ui
+  - apps/app/tests
+  - scripts/visual/capture.mjs
+  - .visual/messages-remocao
+
+forbidden:
+  - criar migration ou mexer no banco/RLS (o veto ao insert direto B3 e card proprio, F09-B3-INSERT-DIRETO-DM)
+  - mudar redirects existentes (ja 307 — este lote NAO troca destino)
+  - tocar Conversa.tsx/Conversas.tsx do app alem do que uma prova realocada exigir
+  - apagar prova sem realocar: o que as specs mortas garantem hoje ja tem dono no app? liste um a um no RELATORIO (positivos do link-crawl, denials do manaus-pilot, labels da sidebar)
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Remover a pasta inteira (6 arquivos). Grep final: nenhuma referencia viva a '(shell)/messages' ou import de conversation-inbox sobra (comentarios que explicam o 307 podem citar o caminho morto como historia, com data)."
+  - "lan-troca-redirect.test.ts: /messages sai de TROCADAS e entra no molde de PROVA DE AUSENCIA da pasta (como notifications/:150-159); os redirects 307 continuam provados (a regra nao mudou); negativas intactas."
+  - "link-crawl.spec.ts :357-373: a pasta nao pode mais aparecer como 'link valido sem porta'; as linhas caem junto com a prova de ausencia. Sidebar web (shell-sidebar-labels.test.ts:62 e o componente real): o item Conversas que linka /messages passa a linkar /app/conversas OU perde o item se a casca web ja nao serve shell de membro — ler o estado de (shell) apos a remocao e decidir com evidencia, sem quebrar os outros labels."
+  - "Specs que visitam /messages (recon-032-messages, manaus-pilot-full-journey :195-206, manaus-pilot-denials :31, copy-fala-com-a-pessoa :93): cada visita vira prova do 307 (goto + expect URL /app/conversas) OU realocada para o app quando o corpo do teste provava comportamento de tela que o app ja cobre (f09-conversas-real). Tabela item-a-item no RELATORIO: o que garantia → onde esta provado agora. Nenhuma garantia some no escuro."
+  - "Provas de leitura de dm_blocks pela web que morreram com o conversation-inbox (o INSERT): registrar no RELATORIO que o unico produtor de bloqueio vivo e POST /api/app/voce/bloqueados (RUN-165) e que F09-B3-INSERT-DIRETO-DM (revogar o grant) segue no card proprio — este lote nao toca grants."
+  - "Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope; TOTAL_DE_ROTAS inalterado (nenhuma rota nova — conferir disco mesmo assim apos rebase em origin/main, que andou muito hoje)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/MESSAGES-REMOCAO.task.yml
+
+risk: remocao em cadeia com pins antigos; nenhuma mudanca de comportamento de rota
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
