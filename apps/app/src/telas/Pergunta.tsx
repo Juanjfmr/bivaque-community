@@ -1,25 +1,27 @@
 "use client"
 
 import { useParams } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
-import { Botao } from "@/components/bivaque/botao"
+import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Secao } from "@/components/bivaque/secao"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   type AcaoDeResolucao,
   buscarPergunta,
+  denunciarPergunta,
   marcarSalvaPergunta,
   mudarResolucao,
   type PerguntaDaConversa,
   responderPergunta,
 } from "@/lib/dados/perguntas"
 import { idLocal } from "@/lib/id"
-import { useRolagemEFoco } from "@/lib/navegacao/react"
+import { useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { lerPerguntasLocais } from "@/lib/perguntas-locais"
@@ -50,6 +52,17 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * ela abre daqui mesmo, só nesta sessão, como o cadastro dela avisa.
  */
 const CHAVE_DE_RESPOSTA = "resposta-da-pessoa"
+
+/** O alvo da denúncia: a pergunta inteira ou uma resposta dela. */
+type AlvoDaDenuncia = Readonly<{ tipo: "pergunta" } | { tipo: "resposta"; respostaId: string }>
+
+/** A lista fechada de motivos, a mesma de `lib/reports` no servidor. */
+const MOTIVOS_DA_DENUNCIA: ReadonlyArray<readonly [valor: string, rotulo: string]> = [
+  ["spam", "Spam"],
+  ["conteudo-inadequado", "Conteúdo inadequado"],
+  ["informacao-enganosa", "Informação enganosa"],
+  ["outro", "Outro"],
+]
 
 /** A frase da resolução quando o servidor não mandou uma. */
 function fraseDaResolucao(falha: unknown): string {
@@ -82,12 +95,37 @@ export function Pergunta() {
   const [erroDaResolucao, setErroDaResolucao] = useState<string | null>(null)
   const [mudandoSeguir, setMudandoSeguir] = useState(false)
   const [erroDoSeguir, setErroDoSeguir] = useState<string | null>(null)
+  // Denúncia (F04): a sobreposição vive na entrada, como o menu da publicação de
+  // grupo; o alvo escolhido vive aqui.
+  const { aberto: denunciaAberta, aoMudarAberto: aoMudarDenuncia } =
+    useSobreposicaoDaEntrada("menu-de-linha")
+  const [alvoDaDenuncia, setAlvoDaDenuncia] = useState<AlvoDaDenuncia | null>(null)
+  const [denunciando, setDenunciando] = useState(false)
+  const [motivo, setMotivo] = useState("")
+  const [explicacao, setExplicacao] = useState("")
+  const [enviandoDenuncia, setEnviandoDenuncia] = useState(false)
+  const [erroDaDenuncia, setErroDaDenuncia] = useState<string | null>(null)
+  const [avisoDaDenuncia, setAvisoDaDenuncia] = useState("")
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   useEffect(() => () => controle.abort(), [controle])
+
+  // A entrada guarda a sobreposição, não o alvo: uma recarga com o menu aberto
+  // volta sem alvo, e a casca deixaria o corpo inerte com um diálogo que não
+  // existe. Fecha pela entrada anterior, que guarda rolagem e foco.
+  const fechandoSemAlvo = useRef(false)
+  useEffect(() => {
+    if (!denunciaAberta) {
+      fechandoSemAlvo.current = false
+      return
+    }
+    if (alvoDaDenuncia !== null || fechandoSemAlvo.current) return
+    fechandoSemAlvo.current = true
+    aoMudarDenuncia(false)
+  }, [denunciaAberta, alvoDaDenuncia, aoMudarDenuncia])
 
   // Pergunta de demonstração: o id é local e o banco nunca a conheceu.
   const local = useMemo(
@@ -227,6 +265,46 @@ export function Pergunta() {
     }
   }
 
+  function abrirDenuncia(alvo: AlvoDaDenuncia) {
+    setAlvoDaDenuncia(alvo)
+    setDenunciando(false)
+    setMotivo("")
+    setExplicacao("")
+    setErroDaDenuncia(null)
+    setAvisoDaDenuncia("")
+    aoMudarDenuncia(true)
+  }
+
+  // A denúncia é GRAVADA antes do aviso: quem denunciou lê a confirmação, e a
+  // duplicata (409) chega com a frase do servidor, não com sucesso inventado.
+  async function denunciar() {
+    if (alvoDaDenuncia === null || enviandoDenuncia || motivo === "") return
+    setEnviandoDenuncia(true)
+    setErroDaDenuncia(null)
+    setAvisoDaDenuncia("")
+    try {
+      await denunciarPergunta(
+        id,
+        alvoDaDenuncia.tipo === "resposta"
+          ? { motivo, explicacao, respostaId: alvoDaDenuncia.respostaId }
+          : { motivo, explicacao },
+        { signal: controle.signal },
+      )
+      if (controle.signal.aborted) return
+      aoMudarDenuncia(false)
+      setAvisoDaDenuncia("Denúncia enviada. A moderação vai analisar.")
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha))
+        setErroDaDenuncia(
+          falha instanceof FalhaDaApi && falha.mensagem !== null
+            ? falha.mensagem
+            : "Não foi possível enviar a denúncia. Tente de novo.",
+        )
+    } finally {
+      if (!controle.signal.aborted) setEnviandoDenuncia(false)
+    }
+  }
+
   async function enviar() {
     const corpo = resposta.trim()
     if (corpo === "" || enviando) return
@@ -271,6 +349,16 @@ export function Pergunta() {
               {pergunta.cidade || casca.cidade}
             </small>
           </span>
+          {!pergunta.propria && local === null ? (
+            <BotaoDeIcone
+              nome="more_vert"
+              rotulo="Opções da pergunta"
+              aberto="dialog"
+              disabled={enviandoDenuncia}
+              className="ml-auto"
+              onClick={() => abrirDenuncia({ tipo: "pergunta" })}
+            />
+          ) : null}
         </div>
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[22px] leading-7">
           {pergunta.titulo}
@@ -362,6 +450,16 @@ export function Pergunta() {
                         Membro da comunidade
                       </small>
                     </span>
+                    {item.propria ? null : (
+                      <BotaoDeIcone
+                        nome="more_vert"
+                        rotulo="Opções da resposta"
+                        aberto="dialog"
+                        disabled={enviandoDenuncia}
+                        className="ml-auto"
+                        onClick={() => abrirDenuncia({ tipo: "resposta", respostaId: item.id })}
+                      />
+                    )}
                   </div>
                   <p className="text-[15px] leading-6">{item.corpo}</p>
                   {!podeResolver ? null : pergunta.resolvidaPorResposta === item.id ? (
@@ -419,6 +517,72 @@ export function Pergunta() {
           </div>
         </Secao>
       )}
+
+      {avisoDaDenuncia === "" ? null : <p role="status">{avisoDaDenuncia}</p>}
+
+      <Dialog open={denunciaAberta && alvoDaDenuncia !== null} onOpenChange={aoMudarDenuncia}>
+        <DialogContent>
+          <DialogTitle>
+            {denunciando && alvoDaDenuncia !== null
+              ? `Denunciar ${alvoDaDenuncia.tipo}`
+              : `Opções da ${alvoDaDenuncia?.tipo ?? "pergunta"}`}
+          </DialogTitle>
+          <DialogDescription>
+            {denunciando
+              ? "O motivo será enviado à moderação. Não inclua dados pessoais."
+              : "A moderação analisa toda denúncia."}
+          </DialogDescription>
+          {denunciando ? (
+            <form
+              className="grid gap-3"
+              onSubmit={(evento) => {
+                evento.preventDefault()
+                void denunciar()
+              }}
+            >
+              <fieldset className="grid gap-2">
+                <legend>Motivo</legend>
+                {MOTIVOS_DA_DENUNCIA.map(([valor, rotulo]) => (
+                  <label key={valor} className="flex min-h-11 items-center gap-3">
+                    <input
+                      type="radio"
+                      name="motivo-denuncia"
+                      value={valor}
+                      checked={motivo === valor}
+                      onChange={() => setMotivo(valor)}
+                    />
+                    {rotulo}
+                  </label>
+                ))}
+              </fieldset>
+              <Campo
+                id="explicacao-denuncia"
+                rotulo="Explicação (opcional)"
+                valor={explicacao}
+                aoMudar={setExplicacao}
+                area
+                nota={`${explicacao.length}/300 caracteres`}
+              />
+              <Botao
+                type="submit"
+                disabled={enviandoDenuncia || motivo === "" || explicacao.trim().length > 300}
+              >
+                {enviandoDenuncia ? "Enviando…" : "Enviar denúncia"}
+              </Botao>
+              <Botao type="button" tom="texto" onClick={() => setDenunciando(false)}>
+                Voltar às opções
+              </Botao>
+            </form>
+          ) : alvoDaDenuncia !== null ? (
+            <div className="grid gap-2">
+              <Botao tom="texto" disabled={enviandoDenuncia} onClick={() => setDenunciando(true)}>
+                Denunciar {alvoDaDenuncia.tipo}
+              </Botao>
+            </div>
+          ) : null}
+          {erroDaDenuncia === null ? null : <p role="alert">{erroDaDenuncia}</p>}
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarPergunta,
+  denunciarPergunta,
   lerPerguntas,
   lerPerguntasSalvas,
   marcarSalvaPergunta,
@@ -282,6 +283,45 @@ describe("responder", () => {
       codigo: "invalido",
       mensagem: "Escreva uma resposta com pelo menos 5 caracteres.",
     })
+  })
+})
+
+describe("denúncia", () => {
+  it("denuncia a pergunta com o motivo e a explicação, e devolve o id gravado", async () => {
+    const buscar = responder({ denuncia: { id: "d1" } }, 201)
+    const signal = new AbortController().signal
+    expect(
+      await denunciarPergunta("q1", { motivo: "spam", explicacao: "Repetida" }, { signal }),
+    ).toBe("d1")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/perguntas/q1/denuncia")
+    expect(init.method).toBe("POST")
+    expect(init.signal).toBe(signal)
+    expect(JSON.parse(String(init.body))).toEqual({ motivo: "spam", explicacao: "Repetida" })
+  })
+
+  it("com resposta, o alvo vai no corpo", async () => {
+    const buscar = responder({ denuncia: { id: "d2" } }, 201)
+    await denunciarPergunta("q1", { motivo: "outro", explicacao: "", respostaId: "r1" })
+    expect(JSON.parse(String(chamada(buscar).init.body))).toEqual({
+      motivo: "outro",
+      explicacao: "",
+      respostaId: "r1",
+    })
+  })
+
+  it("duplicata chega como 409 com a frase do servidor", async () => {
+    responder({ erro: "ja-denunciado", mensagem: "Você já denunciou esta pergunta." }, 409)
+    await expect(denunciarPergunta("q1", { motivo: "spam", explicacao: "" })).rejects.toMatchObject(
+      { status: 409, mensagem: "Você já denunciou esta pergunta." },
+    )
+  })
+
+  it("resposta sem o id da denúncia é falha, não sucesso presumido", async () => {
+    responder({ denuncia: {} }, 201)
+    await expect(
+      denunciarPergunta("q1", { motivo: "spam", explicacao: "" }),
+    ).rejects.toBeInstanceOf(FalhaDaApi)
   })
 })
 

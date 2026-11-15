@@ -270,6 +270,33 @@ export async function responderPergunta(
   }
 }
 
+export type DenunciaDaPergunta = Readonly<{
+  /** Motivo da lista fechada (spam, conteudo-inadequado, informacao-enganosa, outro). */
+  motivo: string
+  explicacao: string
+  /** Sem ele o alvo é a pergunta; com ele, aquela resposta da pergunta. */
+  respostaId?: string
+}>
+
+/**
+ * Denuncia a pergunta ou uma resposta dela (F04). O mecanismo é o mesmo da
+ * publicação de grupo: `reports`, com motivo fechado e autoria da sessão.
+ * Devolve o id GRAVADO da denúncia.
+ */
+export async function denunciarPergunta(
+  id: string,
+  denuncia: DenunciaDaPergunta,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<string> {
+  const corpo = await enviar(
+    "POST",
+    `/api/app/perguntas/${encodeURIComponent(id)}/denuncia`,
+    denuncia,
+    opcoes,
+  )
+  return exigirTexto(exigirRegistro(corpo["denuncia"]), "id")
+}
+
 /**
  * Resolve a pergunta na resposta escolhida, resolve sem resposta ou reabre.
  *
