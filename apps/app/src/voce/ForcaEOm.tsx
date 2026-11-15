@@ -109,7 +109,7 @@ export function ForcaEOm() {
             gravar()
           }}
         >
-          <p className="text-sm text-(--on-surface-variant)">{PRIVADO}.</p>
+          <p className="text-sm text-(--on-surface-variant)">{PRIVADO}</p>
           <Selecao
             id="afiliacao-forca"
             rotulo="Força Armada"
@@ -124,7 +124,7 @@ export function ForcaEOm() {
             aoMudar={setOm}
             maxLength={LIMITE_DA_OM}
             autoComplete="off"
-            nota={`${PRIVADO}. Deixar em branco apaga a OM.`}
+            nota={`${PRIVADO} Deixar em branco apaga a OM.`}
           />
           {mensagem === null ? null : (
             <p role="alert" className="text-sm text-(--destructive)">

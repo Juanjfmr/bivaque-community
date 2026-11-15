@@ -42,5 +42,8 @@ linha F10 pede foto.
   307 da troca (Lote B), que só roda depois deste lote pousar.
 - A troca real (`/profile`+`/editar` → `/app/voce`, remoção das telas e dos ~20 pins) é o Lote B,
   destravado por este lote e pelo #246.
+- Editar Força/OM pelo app zera a visibilidade da linha mesmo que a web a tenha deixado visível —
+  mudança na direção de *menos* exposição, aceitável porque o toggle "Exibir" morre com a tela no
+  Lote B e nenhum outro membro jamais consumiu esses campos (BLOCK-AFFILIATION).
 - A RATIFICAÇÃO ganha esta linha; a emenda ao contrato de privacidade (toggle aposentado) é o item
   que o dono ratifica ou reverte no marco.

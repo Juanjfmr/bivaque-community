@@ -1,5 +1,5 @@
 /**
- * A postura de cada rota de `apps/web/app/api/**` — as 99 rotas, uma por linha,
+ * A postura de cada rota de `apps/web/app/api/**` — as 101 rotas, uma por linha,
  * com a guarda que a rota de fato usa e a prova negativa (ou o motivo explícito
  * de ser pública).
  *
@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 99
+export const TOTAL_DE_ROTAS = 101
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
