@@ -170,6 +170,12 @@ describe("mensagem de falha por ação", () => {
     expect(mensagemDaFalha(semMensagem("de-outra-cidade"), "presenca")).toContain("outra cidade")
   })
 
+  it("a falha do cancelamento tem frase própria", () => {
+    expect(mensagemDaFalha(semMensagem(null), "cancelar")).toBe(
+      "Não foi possível cancelar o encontro. Tente de novo.",
+    )
+  })
+
   it("sessão vencida pede entrar de novo, em qualquer ação", () => {
     const falha = new FalhaDaApi("sem-sessao", 401)
     expect(mensagemDaFalha(falha, "presenca")).toContain("sessão expirou")

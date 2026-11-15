@@ -189,6 +189,23 @@ export async function editarEncontro(
   await enviar("PATCH", `/api/app/eventos/${encodeURIComponent(id)}`, dados, opcoes)
 }
 
+/**
+ * Cancelar o encontro (RUN-167): só quem organiza. O corpo é o ramo exclusivo
+ * do PATCH — a situação e mais nada —, e a tela recarrega o encontro para
+ * mostrar o que ficou gravado.
+ */
+export async function cancelarEncontro(
+  id: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<void> {
+  await enviar(
+    "PATCH",
+    `/api/app/eventos/${encodeURIComponent(id)}`,
+    { status: "cancelled" },
+    opcoes,
+  )
+}
+
 /** Pergunta ao organizador: a conversa é do evento e o destinatário vem do banco. */
 export async function perguntarAoOrganizador(
   id: string,

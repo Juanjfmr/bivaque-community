@@ -8,6 +8,25 @@ export const EVENT_TITLE_MAX = 200
 export const EVENT_DESCRIPTION_MAX = 2000
 export const EVENT_VENUE_MAX = 200
 
+/** A única situação que o app grava. O resto é do relógio e do banco. */
+export const EVENTO_CANCELADO = "cancelled" as const
+
+export type IntencaoDoPatch = "editar" | "cancelar" | "invalido"
+
+/**
+ * O que o PATCH do app pede: editar os dados ou cancelar o encontro (RUN-167).
+ *
+ * Cancelar é um ramo EXCLUSIVO: só `status: "cancelled"` passa, e o update do
+ * cancelamento leva o status e mais nada — título, descrição, data e alcance
+ * nunca são tocados por ele. Qualquer outro valor é dado inválido, recusado
+ * antes de qualquer escrita: expor a situação em geral deixaria o organizador
+ * marcar o encontro como concluído, que não é dele.
+ */
+export function intencaoDoPatch(corpo: Record<string, unknown>): IntencaoDoPatch {
+  if (!("status" in corpo)) return "editar"
+  return corpo["status"] === EVENTO_CANCELADO ? "cancelar" : "invalido"
+}
+
 export type EventFormInput = {
   title: string
   description: string

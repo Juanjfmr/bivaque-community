@@ -1,4 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
+import type { Database } from "supabase/database.generated"
 import {
   conferirEscrita,
   exigirSessao,
@@ -8,7 +10,9 @@ import {
 } from "../../../../../lib/app-api/rota-do-app"
 import {
   buildEventUpdatePayload,
+  EVENTO_CANCELADO,
   eventInputFromBody,
+  intencaoDoPatch,
   validateEventForm,
 } from "../../../../../lib/events/event-form"
 import { log } from "../../../../../lib/logger"
@@ -115,6 +119,19 @@ export async function PATCH(request: NextRequest, { params }: Context): Promise<
   }
   const lido = await lerCorpoJson(request)
   if (!lido.ok) return responder(request, { erro: "corpo-invalido" }, 400)
+  const intencao = intencaoDoPatch(lido.corpo)
+  if (intencao === "invalido")
+    return responder(
+      request,
+      {
+        erro: "dados-invalidos",
+        mensagem: "Este endereço só cancela o encontro: o resto dos dados muda na edição.",
+      },
+      400,
+    )
+  if (intencao === "cancelar") {
+    return cancelarEncontro(request, auth.sessao.cliente, id, auth.sessao.usuario.id)
+  }
   const corpo = eventInputFromBody(lido.corpo)
   if (!corpo)
     return responder(
@@ -170,4 +187,60 @@ export async function PATCH(request: NextRequest, { params }: Context): Promise<
 
 export function OPTIONS(request: NextRequest): NextResponse {
   return opcoesDoApp(request)
+}
+
+/**
+ * O ramo exclusivo do cancelamento (RUN-167): grava `status = cancelled` e mais
+ * nada. É o que a `cancelEventAction` da web antiga fazia antes de a tela sair
+ * (375c336d), agora no contrato do ADR §5.
+ *
+ * A posse é do banco (`events_update_organizer`) e a checagem de autoria antes
+ * do update é o que dá o 403 sem confirmar existência além do necessário — a
+ * RLS recusaria a mesma coisa, com erro que esta rota não saberia traduzir. Já
+ * cancelado é o mesmo estado: não reescreve (o trigger de aviso não tem o que
+ * anunciar) e devolve 200, para a tela poder repetir sem susto.
+ */
+async function cancelarEncontro(
+  request: NextRequest,
+  client: SupabaseClient<Database>,
+  id: string,
+  userId: string,
+): Promise<NextResponse> {
+  try {
+    const current = await client
+      .from("events")
+      .select("id,organizer_id,status")
+      .eq("id", id)
+      .maybeSingle()
+    if (current.error) throw current.error
+    if (!current.data) return responder(request, { erro: "evento-nao-encontrado" }, 404)
+    if (current.data.organizer_id !== userId)
+      return responder(request, { erro: "nao-organiza" }, 403)
+    if (current.data.status === EVENTO_CANCELADO)
+      return responder(request, { evento: { id: current.data.id } }, 200)
+
+    const result = await client
+      .from("events")
+      .update({ status: EVENTO_CANCELADO })
+      .eq("id", id)
+      .eq("organizer_id", userId)
+      .select("id")
+      .single()
+    if (result.error) {
+      const falha = interpretarErroDoBanco(result.error.code, {
+        recusado: "Só quem organiza pode cancelar este encontro.",
+        dados: "Este encontro não pode ser cancelado.",
+      })
+      if (falha.status !== 503) return responder(request, falha.corpo, falha.status)
+      throw result.error
+    }
+    if (!result.data) throw new Error("cancel without result")
+    return responder(request, { evento: { id: result.data.id } }, 200)
+  } catch (error) {
+    log.error("app evento: cancel failed", {
+      error: error instanceof Error ? error.message : "unknown",
+      userId,
+    })
+    return responder(request, { erro: "escrita-indisponivel" }, 503)
+  }
 }

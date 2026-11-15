@@ -37,6 +37,13 @@ const MEMBRO_DE_OUTRA_CIDADE = "membro-rio@bivaque.example.invalid"
 /** Evento semeado cujo organizador NÃO é a persona do teste. */
 const EVENTO_DE_OUTRO_ORGANIZADOR = "70000000-0000-4000-8000-0000000000a1"
 
+/**
+ * Segunda persona de Manaus, com senha do seed: é ela quem confirma presença no
+ * encontro que a persona do teste organiza (o organizador não confirma no
+ * próprio evento). O aviso do cancelamento é dela, não do organizador.
+ */
+const PESSOA_QUE_VAI = "membro-1@bivaque.example.invalid"
+
 const ENCONTRO_FUTURO_SEMEADO = "Piquenique das famílias"
 const ENCONTRO_PASSADO_SEMEADO = "Caminhada matinal no parque"
 
@@ -372,6 +379,96 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 1, name: tituloEditado }),
       "a edição precisa sobreviver ao recarregamento",
     ).toBeVisible({ timeout: 30_000 })
+  })
+
+  test("o organizador cancela pelo app e quem ia recebe o aviso", async ({
+    browser,
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(240_000)
+    const titulo = `Feira de trocas ${testInfo.project.name}`
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    // O encontro é criado pelo teste, com título do projeto: as três larguras
+    // rodam em série e nenhuma herda o cancelamento da anterior.
+    await page.goto("/app/agenda")
+    await page.getByRole("button", { name: "Criar encontro" }).click()
+    await expect(page.getByRole("dialog")).toBeVisible()
+    await page.getByLabel("Título").fill(titulo)
+    await page.getByLabel("Data").fill("20/01/2027")
+    await page.getByLabel("Hora").fill("18:00")
+    await page.getByLabel("Local").fill("Praça da Saudade")
+    await page.getByRole("button", { name: "Criar", exact: true }).click()
+    await expect(page.getByRole("heading", { level: 1, name: titulo })).toBeVisible({
+      timeout: 30_000,
+    })
+    const caminhoDoEncontro = new URL(page.url()).pathname
+
+    // Segunda pessoa, sessão própria: confirma presença no encontro do outro.
+    const contextoDeQuemVai = await browser.newContext({ baseURL: new URL(page.url()).origin })
+    try {
+      await semearSessaoDeMembro(contextoDeQuemVai, PESSOA_QUE_VAI)
+      const paginaDeQuemVai = await contextoDeQuemVai.newPage()
+      await paginaDeQuemVai.goto(caminhoDoEncontro)
+      await expect(paginaDeQuemVai.getByRole("heading", { level: 1, name: titulo })).toBeVisible({
+        timeout: 30_000,
+      })
+      await paginaDeQuemVai.getByRole("button", { name: "Vou", exact: true }).click()
+      await expect(
+        paginaDeQuemVai.getByRole("button", { name: "Presença confirmada" }),
+      ).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 })
+
+      // O organizador cancela pela tela: confirmação de perigo, e a ficha passa
+      // a mostrar o que o banco passou a ter.
+      await page.getByRole("button", { name: "Cancelar encontro", exact: true }).click()
+      await page.getByRole("button", { name: "Sim, cancelar" }).click()
+      await expect(page.getByText("Encontro cancelado")).toBeVisible({ timeout: 30_000 })
+      // Cancelado é final: nem editar, nem cancelar de novo.
+      await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0)
+      await expect(
+        page.getByRole("button", { name: "Cancelar encontro", exact: true }),
+      ).toHaveCount(0)
+
+      await page.reload()
+      await expect(
+        page.getByText("Encontro cancelado"),
+        "o cancelamento precisa sobreviver ao recarregamento",
+      ).toBeVisible({ timeout: 30_000 })
+
+      // A agenda não lista o cancelado (o corte é do route.ts, não da tela).
+      await page.goto("/app/agenda")
+      await expect(page.getByRole("heading", { level: 1, name: "Agenda da cidade" })).toBeVisible({
+        timeout: 30_000,
+      })
+      await expect(
+        page.locator('[data-tela="agenda"] [data-linha="lista"]', { hasText: titulo }),
+        "encontro cancelado não volta para a agenda",
+      ).toHaveCount(0)
+
+      // Quem tinha presença confirmada vê o cancelamento e o aviso em cascata
+      // que o trigger do banco gravou (nenhuma migration nesta linha).
+      await paginaDeQuemVai.reload()
+      await expect(paginaDeQuemVai.getByText("Encontro cancelado")).toBeVisible({ timeout: 30_000 })
+      await expect(
+        paginaDeQuemVai.getByText("O encontro foi cancelado. Não é preciso confirmar presença."),
+      ).toBeVisible()
+      await expect(paginaDeQuemVai.getByRole("button", { name: "Cancelar presença" })).toHaveCount(
+        0,
+      )
+      await expect(paginaDeQuemVai.getByRole("button", { name: "Vou", exact: true })).toHaveCount(0)
+
+      await paginaDeQuemVai.goto("/app/avisos")
+      await expect(paginaDeQuemVai.locator('[data-tela="avisos"]')).toBeVisible({
+        timeout: 30_000,
+      })
+      await expect(
+        paginaDeQuemVai.getByText("atualizou um evento com sua presença").first(),
+        "quem confirmou presença precisa do aviso de mudança no encontro",
+      ).toBeVisible({ timeout: 30_000 })
+    } finally {
+      await contextoDeQuemVai.close()
+    }
   })
 
   test("servidor fora mostra erro com Tentar de novo, nunca lista vazia", async ({
