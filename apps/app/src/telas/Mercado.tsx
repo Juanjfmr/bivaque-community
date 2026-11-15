@@ -13,7 +13,12 @@ import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
 import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
-import { type ListaDoMercado, lerMercado } from "@/lib/dados/mercado"
+import {
+  type AnuncioDaLista,
+  type ListaDoMercado,
+  lerMercado,
+  marcarSalvoAnuncio,
+} from "@/lib/dados/mercado"
 import { iconeDeDado } from "@/lib/icones"
 import {
   useNavegacao,
@@ -24,7 +29,7 @@ import {
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
-import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
+import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
 import {
   atributosDoImovel,
   complementoDoImovel,
@@ -35,6 +40,7 @@ import {
   rotuloDaCapa,
   totalMensal,
 } from "@/src/mercado/cartao"
+import { mensagemDaFalha } from "@/src/mercado/falha"
 import {
   type FiltrosDaUrl,
   lerFiltrosDaUrl,
@@ -69,7 +75,7 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   const [dados, setDados] = useState<ListaDoMercado | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
+  const [avisoSalvo, setAvisoSalvo] = useState<string | null>(null)
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   // Os filtros vêm e vão pela URL (LAN-F06): link antigo com filtro abre
   // filtrado, recarregar mantém a seleção, e o Voltar do roteador a devolve.
@@ -171,13 +177,33 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
     setOrdenacao("relevancia")
   }
 
-  const alternarSalvo = (id: string) => {
-    setSalvos((atual) => {
-      const proximo = new Set(atual)
-      if (proximo.has(id)) proximo.delete(id)
-      else proximo.add(id)
-      return proximo
-    })
+  /**
+   * O marcador do cartão grava em `listing_saves` (LAN-F06). A tela vira antes,
+   * porque o toque precisa responder na hora; se o servidor recusar, o cartão
+   * volta ao estado anterior e a mensagem diz o que aconteceu. O estado de
+   * verdade é o da lista: recarregar mostra o que o banco tem.
+   */
+  const alternarSalvo = async (anuncio: AnuncioDaLista) => {
+    const alvo = !anuncio.salvo
+    const ajustar = (salvo: boolean) =>
+      setDados((atual) =>
+        atual === null
+          ? atual
+          : {
+              ...atual,
+              anuncios: atual.anuncios.map((item) =>
+                item.id === anuncio.id ? { ...item, salvo } : item,
+              ),
+            },
+      )
+    setAvisoSalvo(null)
+    ajustar(alvo)
+    try {
+      await marcarSalvoAnuncio(anuncio.id, alvo)
+    } catch (falha: unknown) {
+      ajustar(!alvo)
+      if (!foiAbortada(falha)) setAvisoSalvo(mensagemDaFalha(falha, "salvar"))
+    }
   }
 
   const carregando = dados === null && erro === null
@@ -351,6 +377,12 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
         </div>
       ) : null}
 
+      {avisoSalvo === null ? null : (
+        <p role="alert" className="text-sm text-(--destructive)">
+          {avisoSalvo}
+        </p>
+      )}
+
       {erro === "sessao" ? (
         <EstadoDeSessaoVencida />
       ) : erro === "negado" ? (
@@ -400,7 +432,7 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
                   preco: precoEmReais(anuncio),
                   icone: ehImovel(anuncio) ? "apartment" : iconeDeDado(anuncio.categoria),
                   meta: anuncio.bairro ?? anuncio.cidade ?? cidade,
-                  salvo: salvos.has(anuncio.id),
+                  salvo: anuncio.salvo,
                   ...(inicial === "imoveis"
                     ? {
                         detalhes: atributosDoImovel(anuncio),
@@ -410,7 +442,7 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
                       }
                     : {}),
                 }}
-                aoSalvar={() => alternarSalvo(anuncio.id)}
+                aoSalvar={() => void alternarSalvo(anuncio)}
                 aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
               />
             ))}

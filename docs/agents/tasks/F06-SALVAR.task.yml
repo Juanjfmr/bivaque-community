@@ -45,6 +45,9 @@ allowed_paths:
   - apps/web/app/api/app/mercado/salvos
   - apps/web/app/api/app/mercado/[id]/salvo
   - apps/web/app/api/app/mercado/route.ts
+  # Emenda 15/11: o cursor e o limite das duas listas (mercado e salvos) passam a
+  # morar em _comum, para a rota nova reusar em vez de copiar a validacao.
+  - apps/web/app/api/app/mercado/_comum.ts
   - apps/web/lib/security/api-surface.ts
   - apps/app/lib/dados/mercado.ts
   - apps/app/src/telas/Anuncio.tsx
@@ -56,6 +59,9 @@ allowed_paths:
   - tests/unit/app-api/mercado
   - tests/unit/security/api-surface.test.ts
   - tests/e2e/f06-mercado-real.spec.ts
+  # Emenda 15/11: o teste de escopo conta as rotas do mercado e a lista de telas
+  # ligadas a uma jornada — as duas coisas mudam neste lote.
+  - tests/scope/app-porta-de-dados.test.mjs
   - .visual/f06-salvar
 
 forbidden:

@@ -10,11 +10,15 @@ describe("interceptacoes do Mercado", () => {
     ["http://127.0.0.1:3200/api/app/mercado/i3", 3],
     ["http://127.0.0.1:3200/api/app/mercado/i3?origem=lista", 3],
     ["http://127.0.0.1:3200/api/app/mercado", 0],
+    // O marcador e a lista dos salvos têm caminho próprio, exclusivo com o detalhe.
+    ["http://127.0.0.1:3200/api/app/mercado/i3/salvo", 4],
+    ["http://127.0.0.1:3200/api/app/mercado/salvos?tipo=item", 5],
+    ["http://127.0.0.1:3200/api/app/mercado/salvos", 5],
   ])("intercepta %s apenas com o handler %i", (url, indice) => {
     const registrar = vi.fn()
     aplicarStubMercado({ route: registrar } as unknown as Page)
     const padroes = registrar.mock.calls.map(([padrao]) => padrao)
-    expect(padroes).toHaveLength(4)
+    expect(padroes).toHaveLength(6)
     expect(padroes.every((padrao) => padrao instanceof RegExp)).toBe(true)
     expect(padroes.map((padrao: RegExp) => padrao.test(url))).toEqual(
       padroes.map((_, atual) => atual === indice),

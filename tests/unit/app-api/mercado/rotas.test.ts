@@ -27,8 +27,10 @@ import type { AnuncioBruto } from "web/app/api/app/mercado/_comum"
 import { PATCH as editar } from "web/app/api/app/mercado/[id]/_editar"
 import { POST as interesse } from "web/app/api/app/mercado/[id]/interesse/route"
 import { GET as detalhe } from "web/app/api/app/mercado/[id]/route"
+import { DELETE as dessalvar, POST as salvar } from "web/app/api/app/mercado/[id]/salvo/route"
 import { POST as situacao } from "web/app/api/app/mercado/[id]/situacao/route"
 import { GET as listar } from "web/app/api/app/mercado/route"
+import { GET as listarSalvos } from "web/app/api/app/mercado/salvos/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "web/lib/storage/listing-photo"
 
@@ -130,6 +132,13 @@ type Options = {
   listing?: typeof ANUNCIO | null
   profileName?: string | null
   saved?: boolean
+  /** Linhas de `listing_saves` que a lista (GET mercado e GET salvos) lê. */
+  saves?: ReadonlyArray<{ listing_id: string; created_at?: string }>
+  /** Erro do INSERT em `listing_saves` (23505 = duplicata). */
+  insertError?: { code: string; message: string } | null
+  /** Linhas que o DELETE devolve na volta (`select`); `[]` é "não havia linha". */
+  deleteRows?: ReadonlyArray<{ listing_id: string }>
+  deleteError?: { code: string; message: string } | null
   errorTable?: string
   rpcError?: { code?: string; message: string } | null
   writeError?: { code: string; message: string } | null
@@ -139,6 +148,9 @@ type Options = {
 
 function mockClient(options: Options = {}) {
   const eqCalls: Array<{ table: string; column: string; value: unknown }> = []
+  const inCalls: Array<{ table: string; column: string; values: readonly unknown[] }> = []
+  const insertCalls: Array<{ table: string; payload: Record<string, unknown> }> = []
+  const deleteCalls: Array<{ table: string }> = []
   const orCalls: string[] = []
   const notCalls: string[] = []
   const gteCalls: Array<{ column: string; value: unknown }> = []
@@ -166,6 +178,7 @@ function mockClient(options: Options = {}) {
 
   const from = vi.fn((table: string) => {
     let atualizando = false
+    let operacao: "insert" | "delete" | null = null
     const answer = (single = false) => {
       if (table === "listings" && atualizando && options.writeError) {
         return { data: null, error: options.writeError }
@@ -202,13 +215,33 @@ function mockClient(options: Options = {}) {
           error: null,
         }
       }
+      if (table === "listing_saves" && operacao === "insert") {
+        return { data: null, error: options.insertError ?? null }
+      }
+      if (table === "listing_saves" && operacao === "delete") {
+        return {
+          data: options.deleteRows ?? [{ listing_id: ID }],
+          error: options.deleteError ?? null,
+        }
+      }
       if (table === "listing_saves") {
-        return { data: options.saved ? { listing_id: ID } : null, error: null }
+        if (single) return { data: options.saved ? { listing_id: ID } : null, error: null }
+        return { data: options.saves ?? [], error: null }
       }
       return { data: null, error: null }
     }
     const query: Record<string, unknown> = {}
     query["select"] = () => query
+    query["insert"] = (payload: Record<string, unknown>) => {
+      operacao = "insert"
+      insertCalls.push({ table, payload })
+      return query
+    }
+    query["delete"] = () => {
+      operacao = "delete"
+      deleteCalls.push({ table })
+      return query
+    }
     query["update"] = (payload: Record<string, unknown>) => {
       atualizando = true
       updateCalls.push(payload)
@@ -216,6 +249,10 @@ function mockClient(options: Options = {}) {
     }
     query["eq"] = (column: string, value: unknown) => {
       eqCalls.push({ table, column, value })
+      return query
+    }
+    query["in"] = (column: string, values: readonly unknown[]) => {
+      inCalls.push({ table, column, values })
       return query
     }
     query["or"] = (filtro: string) => {
@@ -252,6 +289,9 @@ function mockClient(options: Options = {}) {
     client: { from, rpc, storage } as never,
     from,
     eqCalls,
+    inCalls,
+    insertCalls,
+    deleteCalls,
     orCalls,
     notCalls,
     gteCalls,
@@ -295,11 +335,17 @@ describe("rotas de mercado do app", () => {
 
   it.each([
     ["GET lista", () => listar(req("GET", `${BASE}?tipo=item`))],
+    ["GET salvos", () => listarSalvos(req("GET", `${BASE}/salvos?tipo=item`))],
     ["GET detalhe", () => detalhe(req("GET"), context)],
     [
       "POST interesse",
       () => interesse(req("POST", `${BASE}/${ID}/interesse`, undefined, headersSemCorpo), context),
     ],
+    [
+      "POST salvo",
+      () => salvar(req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo), context),
+    ],
+    ["DELETE salvo", () => dessalvar(req("DELETE", `${BASE}/${ID}/salvo`), context)],
     ["PATCH editar", () => editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)],
     [
       "POST situação",
@@ -382,6 +428,7 @@ describe("rotas de mercado do app", () => {
           areaM2: null,
           condoFeeCents: null,
           foto: "https://assinada/fotos/1.jpg",
+          salvo: false,
           criadoEm: DATE,
         },
       ])
@@ -1077,6 +1124,301 @@ describe("rotas de mercado do app", () => {
       )
       expect(resposta.status).toBe(404)
       expect(mock.rpcCalls).toHaveLength(0)
+    })
+  })
+
+  describe("o marcador na lista (flag salvo)", () => {
+    it("diz salvo e não salvo pelo que a própria tabela devolve", async () => {
+      const comSalvo = mockClient({ saves: [{ listing_id: ID }] })
+      authenticate(comSalvo)
+      const corpo = await json(await listar(req("GET", `${BASE}?tipo=item`)))
+      expect((corpo["anuncios"] as Record<string, unknown>[])[0]).toMatchObject({ salvo: true })
+
+      const semSalvo = mockClient()
+      authenticate(semSalvo)
+      const outro = await json(await listar(req("GET", `${BASE}?tipo=item`)))
+      expect((outro["anuncios"] as Record<string, unknown>[])[0]).toMatchObject({ salvo: false })
+    })
+
+    it("lê os salvos uma vez por página, com os ids da página (sem N+1)", async () => {
+      const mock = mockClient({ listings: [ANUNCIO, IMOVEL] })
+      authenticate(mock)
+      await listar(req("GET", `${BASE}?tipo=item`))
+      expect(mock.from.mock.calls.filter(([tabela]) => tabela === "listing_saves")).toHaveLength(1)
+      expect(mock.inCalls).toContainEqual({
+        table: "listing_saves",
+        column: "listing_id",
+        values: [ANUNCIO.id, IMOVEL.id],
+      })
+    })
+
+    it("falha ao ler os salvos é 503, nunca marcador falso", async () => {
+      const mock = mockClient({ errorTable: "listing_saves" })
+      authenticate(mock)
+      const resposta = await listar(req("GET", `${BASE}?tipo=item`))
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "leitura-indisponivel" })
+    })
+  })
+
+  describe("salvo (POST/DELETE)", () => {
+    it("grava com o usuário da SESSÃO e o anúncio do caminho", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo),
+        context,
+      )
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ salvo: true })
+      expect(mock.insertCalls).toEqual([
+        { table: "listing_saves", payload: { listing_id: ID, user_id: USER } },
+      ])
+    })
+
+    it("salvar duas vezes é o mesmo estado (23505 vira 200)", async () => {
+      const mock = mockClient({ insertError: { code: "23505", message: "duplicate key" } })
+      authenticate(mock)
+      const resposta = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo),
+        context,
+      )
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ salvo: true })
+    })
+
+    it("anúncio invisível sob RLS é 404, sem gravar", async () => {
+      const mock = mockClient({ listing: null })
+      authenticate(mock)
+      const resposta = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo),
+        context,
+      )
+      expect(resposta.status).toBe(404)
+      expect(await json(resposta)).toEqual({ erro: "anuncio-nao-encontrado" })
+      expect(mock.insertCalls).toHaveLength(0)
+    })
+
+    it("id fora do formato é 404, sem consultar o banco", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: "nao-e-uuid" }) }
+      const resposta = await salvar(
+        req("POST", `${BASE}/nao-e-uuid/salvo`, undefined, headersSemCorpo),
+        invalido,
+      )
+      expect(resposta.status).toBe(404)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("recusa de RLS no insert é 403 recusado, sem eco do Postgres", async () => {
+      const mock = mockClient({ insertError: { code: "42501", message: "new row violates rls" } })
+      authenticate(mock)
+      const resposta = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo),
+        context,
+      )
+      expect(resposta.status).toBe(403)
+      const corpo = await json(resposta)
+      expect(corpo).toEqual({
+        erro: "recusado",
+        mensagem: "Sua conta não pode salvar este anúncio.",
+      })
+      expect(JSON.stringify(corpo)).not.toContain("rls")
+    })
+
+    it("falha do insert é 503 sem eco, nunca 'salvo' fingido", async () => {
+      const mock = mockClient({ insertError: { code: "XX000", message: "boom" } })
+      authenticate(mock)
+      const resposta = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo),
+        context,
+      )
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+
+    it("falha de leitura do anúncio é 503 antes de gravar", async () => {
+      const mock = mockClient({ errorTable: "listings" })
+      authenticate(mock)
+      const resposta = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, headersSemCorpo),
+        context,
+      )
+      expect(resposta.status).toBe(503)
+      expect(mock.insertCalls).toHaveLength(0)
+    })
+
+    it("a escrita recusa origem fora da lista e cookie sem o cabeçalho do app", async () => {
+      const origem = mockClient()
+      authenticate(origem)
+      const fora = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, {
+          ...headers,
+          origin: "https://fora.example",
+        }),
+        context,
+      )
+      expect(fora.status).toBe(403)
+      expect(origem.from).not.toHaveBeenCalled()
+
+      const cabecalho = mockClient()
+      authenticate(cabecalho)
+      const semApp = await salvar(
+        req("POST", `${BASE}/${ID}/salvo`, undefined, { origin: "http://localhost:3000" }),
+        context,
+      )
+      expect(semApp.status).toBe(403)
+      expect(cabecalho.from).not.toHaveBeenCalled()
+    })
+
+    it("dessalvar apaga só a linha da sessão para aquele anúncio", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await dessalvar(req("DELETE", `${BASE}/${ID}/salvo`), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ salvo: false })
+      expect(mock.deleteCalls).toEqual([{ table: "listing_saves" }])
+      // O filtro leva a sessão: o salvamento de outra pessoa nunca é apagado daqui.
+      expect(mock.eqCalls).toContainEqual({
+        table: "listing_saves",
+        column: "user_id",
+        value: USER,
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "listing_saves",
+        column: "listing_id",
+        value: ID,
+      })
+    })
+
+    it("dessalvar o que não estava salvo é 404, no molde de bloqueados", async () => {
+      const mock = mockClient({ deleteRows: [] })
+      authenticate(mock)
+      const resposta = await dessalvar(req("DELETE", `${BASE}/${ID}/salvo`), context)
+      expect(resposta.status).toBe(404)
+      expect(await json(resposta)).toEqual({ erro: "salvo-nao-encontrado" })
+    })
+
+    it("falha ao apagar é 503 sem eco", async () => {
+      const mock = mockClient({ deleteError: { code: "XX000", message: "boom" } })
+      authenticate(mock)
+      const resposta = await dessalvar(req("DELETE", `${BASE}/${ID}/salvo`), context)
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+
+    it("o DELETE também recusa origem fora da lista", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await dessalvar(
+        req("DELETE", `${BASE}/${ID}/salvo`, undefined, {
+          ...headersSemCorpo,
+          origin: "https://fora.example",
+        }),
+        context,
+      )
+      expect(resposta.status).toBe(403)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("lista de salvos (GET /api/app/mercado/salvos)", () => {
+    it.each([
+      ["sem tipo", "?"],
+      ["tipo inválido", "?tipo=servico"],
+      ["limite zero", "?tipo=item&limite=0"],
+      ["limite acima do teto", "?tipo=item&limite=51"],
+      ["cursor malformado", `?tipo=item&depois=${encodeURIComponent("invalido")}`],
+      ["cursor sem instante", `?tipo=item&depois=${encodeURIComponent(`|${ID}`)}`],
+    ])("query inválida (%s) é 400 sem consultar o banco", async (_label, query) => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos${query}`))
+      expect(resposta.status).toBe(400)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("devolve os anúncios na ordem do salvamento, com foto assinada e salvo", async () => {
+      const mock = mockClient({
+        saves: [
+          { listing_id: IMOVEL.id, created_at: "2026-12-02T10:00:00.000Z" },
+          { listing_id: ID, created_at: DATE },
+        ],
+        listings: [ANUNCIO, IMOVEL],
+      })
+      authenticate(mock)
+      const corpo = await json(await listarSalvos(req("GET", `${BASE}/salvos?tipo=item`)))
+      expect((corpo["anuncios"] as Record<string, unknown>[]).map((item) => item["id"])).toEqual([
+        IMOVEL.id,
+        ID,
+      ])
+      expect((corpo["anuncios"] as Record<string, unknown>[])[0]).toMatchObject({
+        salvo: true,
+        foto: "https://assinada/fotos/1.jpg",
+      })
+      expect(corpo["proximo"]).toBeNull()
+      // A aba pedida vai para o banco; a visibilidade é a da RLS da tabela.
+      expect(mock.eqCalls).toContainEqual({
+        table: "listings",
+        column: "kind",
+        value: "item",
+      })
+    })
+
+    it("ordena pelo salvamento mais recente e pagina pelo cursor composto", async () => {
+      const mock = mockClient({
+        saves: [{ listing_id: ID, created_at: DATE }],
+        listings: [ANUNCIO],
+      })
+      authenticate(mock)
+      await listarSalvos(
+        req(
+          "GET",
+          `${BASE}/salvos?tipo=item&limite=1&depois=${encodeURIComponent(`${DATE}|${ID}`)}`,
+        ),
+      )
+      expect(mock.orderCalls[0]).toEqual({ column: "created_at", ascending: false })
+      expect(mock.orCalls[0]).toBe(
+        `created_at.lt."${DATE}",and(created_at.eq."${DATE}",listing_id.lt.${ID})`,
+      )
+    })
+
+    it("página cheia devolve o cursor do último salvamento", async () => {
+      const mock = mockClient({
+        saves: [{ listing_id: ID, created_at: DATE }],
+        listings: [ANUNCIO],
+      })
+      authenticate(mock)
+      const corpo = await json(await listarSalvos(req("GET", `${BASE}/salvos?tipo=item&limite=1`)))
+      expect(corpo["proximo"]).toBe(`${DATE}|${ID}`)
+    })
+
+    it("anúncio que saiu do ar não vira item de tela, e não é erro", async () => {
+      const mock = mockClient({
+        saves: [{ listing_id: ID, created_at: DATE }],
+        listings: [],
+      })
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos?tipo=item`))
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ anuncios: [], proximo: null })
+    })
+
+    it("sem nenhum salvo devolve lista vazia sem consultar anúncio", async () => {
+      const mock = mockClient({ saves: [] })
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos?tipo=property`))
+      expect(await json(resposta)).toEqual({ anuncios: [], proximo: null })
+      expect(mock.from.mock.calls.filter(([tabela]) => tabela === "listings")).toHaveLength(0)
+    })
+
+    it("falha de leitura é 503, nunca lista vazia", async () => {
+      const mock = mockClient({ errorTable: "listing_saves" })
+      authenticate(mock)
+      const resposta = await listarSalvos(req("GET", `${BASE}/salvos?tipo=item`))
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "leitura-indisponivel" })
     })
   })
 })

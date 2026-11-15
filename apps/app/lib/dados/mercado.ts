@@ -31,6 +31,8 @@ export type AnuncioDaLista = Readonly<{
   condoFeeCents: number | null
   /** URL assinada pronta, ou null quando o anúncio não tem foto. */
   foto: string | null
+  /** O marcador da pessoa, vindo da lista/detalhe — nunca do aparelho. */
+  salvo: boolean
   criadoEm: string | null
 }>
 
@@ -117,6 +119,8 @@ function lerAnuncio(corpo: Corpo): AnuncioDaLista {
     areaM2: numeroOuNulo(corpo["areaM2"]),
     condoFeeCents: numeroOuNulo(corpo["condoFeeCents"]),
     foto: texto(corpo["foto"]),
+    // Campo aditivo: a lista da cidade e a dos salvos mandam; detalhe também.
+    salvo: corpo["salvo"] === true,
     criadoEm: texto(corpo["criadoEm"]),
   }
 }
@@ -195,7 +199,6 @@ export async function buscarAnuncio(
     donoId: texto(corpo["donoId"]),
     fotos,
     meu: corpo["meu"] === true,
-    salvo: corpo["salvo"] === true,
   }
 }
 
@@ -361,4 +364,46 @@ export async function mudarSituacao(
     opcoes,
   )
   return exigirTexto(corpo, "status")
+}
+
+/**
+ * Salvar (`ativo`) ou dessalvar um anúncio. Uma chamada, um verbo: o servidor
+ * grava em `listing_saves` com o usuário da SESSÃO. A tela já mostrou o estado
+ * novo; falhou, ela volta atrás com a mensagem daqui.
+ */
+export async function marcarSalvoAnuncio(
+  id: string,
+  ativo: boolean,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<void> {
+  await enviar(
+    ativo ? "POST" : "DELETE",
+    `/api/app/mercado/${encodeURIComponent(id)}/salvo`,
+    undefined,
+    opcoes,
+  )
+}
+
+export type ListaDeSalvos = Readonly<{
+  anuncios: readonly AnuncioDaLista[]
+  proximo: string | null
+}>
+
+/** Os anúncios salvos de uma aba (`item` ou `property`), na ordem do salvamento. */
+export async function listarAnunciosSalvos(
+  filtros: Readonly<{ tipo: AnuncioTipo; depois?: string; limite?: number }>,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<ListaDeSalvos> {
+  const busca = new URLSearchParams({ tipo: exigirTipo(filtros.tipo) })
+  if (filtros.depois !== undefined) busca.set("depois", filtros.depois)
+  if (filtros.limite !== undefined) busca.set("limite", String(filtros.limite))
+  const corpo = await ler(`/api/app/mercado/salvos?${busca.toString()}`, opcoes)
+  const anuncios = corpo["anuncios"]
+  if (!Array.isArray(anuncios)) throw foraDoContrato()
+  const proximo = corpo["proximo"]
+  if (proximo !== null && typeof proximo !== "string") throw foraDoContrato()
+  return {
+    anuncios: anuncios.map((linha) => lerAnuncio(exigirRegistro(linha))),
+    proximo,
+  }
 }

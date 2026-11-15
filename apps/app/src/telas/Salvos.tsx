@@ -1,37 +1,48 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
+import type { ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
-import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { lerPublicacoesSalvas, type PublicacaoReal } from "@/lib/dados/grupos"
 import { type EntradaDoGuia, lerSalvosDoGuia } from "@/lib/dados/guia"
+import { type AnuncioDaLista, listarAnunciosSalvos, marcarSalvoAnuncio } from "@/lib/dados/mercado"
 import { lerPerguntasSalvas, type PerguntaSalva } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { useCasca } from "@/src/contexto/casca"
+import { foiAbortada } from "@/src/eventos/formulario"
 import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
-import { registro, texto } from "@/src/telas/comum"
+import { mensagemDaFalha } from "@/src/mercado/falha"
+import { Segmentos } from "@/src/pecas/segmentos"
+
+type AbaDosSalvos = "desapegos" | "imoveis"
+
+const ABAS: readonly ItemDeFiltro[] = [
+  { id: "desapegos", rotulo: "Desapegos" },
+  { id: "imoveis", rotulo: "Imóveis" },
+]
 
 /**
- * Salvos: os anúncios da demonstração, as publicações de grupo, as perguntas
- * que a pessoa segue e as referências do guia que ela salvou. A seção de
- * anúncios continua de leitura; as outras vêm das rotas da sessão
- * (`/api/app/grupos/salvas`, `/api/app/perguntas/salvas` e `/api/app/guia/salvos`),
- * então sobrevivem ao recarregar e valem para a conta, não para o aparelho.
+ * Salvos: os anúncios que a pessoa guardou, as publicações de grupo, as perguntas
+ * que ela segue e as referências do guia. A seção de anúncios deixou de ser
+ * demonstração (LAN-F06): vem de `/api/app/mercado/salvos`, na ordem do
+ * salvamento, e dessalvar aqui apaga a linha em `listing_saves` — o anúncio some
+ * desta lista e o marcador dele nas outras telas volta a "não salvo". As demais
+ * seções já vinham das rotas da sessão.
  */
 export function Salvos() {
-  const casca = useCasca()
   const navegacao = useNavegacao()
-  const [dados, setDados] = useState<DadosDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
-  const [rodada, setRodada] = useState(0)
+  const [aba, setAba] = useState<AbaDosSalvos>("desapegos")
+  const [anuncios, setAnuncios] = useState<readonly AnuncioDaLista[] | null>(null)
+  const [erroDosAnuncios, setErroDosAnuncios] = useState(false)
+  const [rodadaDosAnuncios, setRodadaDosAnuncios] = useState(0)
+  const [avisoDosAnuncios, setAvisoDosAnuncios] = useState<string | null>(null)
   const [publicacoes, setPublicacoes] = useState<readonly PublicacaoReal[] | null>(null)
   const [erroDasPublicacoes, setErroDasPublicacoes] = useState(false)
   const [rodadaDasPublicacoes, setRodadaDasPublicacoes] = useState(0)
@@ -44,21 +55,25 @@ export function Salvos() {
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
+  // Uma página por aba basta para a tela; o cursor da rota cobre quem guardar
+  // mais que isso.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     const controle = new AbortController()
-    setDados(null)
-    setErro(false)
-    void dadosDoApp
-      .lerCidade(casca.cidade, { signal: controle.signal })
-      .then((lidos) => {
-        if (!controle.signal.aborted) setDados(lidos)
+    setAnuncios(null)
+    setErroDosAnuncios(false)
+    void listarAnunciosSalvos(
+      { tipo: aba === "imoveis" ? "property" : "item", limite: 50 },
+      { signal: controle.signal },
+    )
+      .then((lista) => {
+        if (!controle.signal.aborted) setAnuncios(lista.anuncios)
       })
       .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+        if (!controle.signal.aborted) setErroDosAnuncios(true)
       })
     return () => controle.abort()
-  }, [casca.cidade, rodada])
+  }, [aba, rodadaDosAnuncios])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
@@ -105,14 +120,20 @@ export function Salvos() {
     return () => controle.abort()
   }, [rodadaDasPerguntas])
 
-  const itens = useMemo(() => {
-    if (dados === null) return []
-    return dados.anuncios
-      .map((anuncio) => ({ anuncio, apresentacao: registro(anuncio.apresentacao) }))
-      .filter(({ apresentacao }) => apresentacao["saved"] === true)
-  }, [dados])
+  /** Dessalvar daqui apaga a linha no banco; a linha da tela sai na hora. */
+  async function dessalvar(id: string) {
+    const anterior = anuncios
+    setAvisoDosAnuncios(null)
+    setAnuncios((atual) => (atual === null ? atual : atual.filter((anuncio) => anuncio.id !== id)))
+    try {
+      await marcarSalvoAnuncio(id, false)
+    } catch (falha: unknown) {
+      setAnuncios(anterior)
+      if (!foiAbortada(falha)) setAvisoDosAnuncios(mensagemDaFalha(falha, "salvar"))
+    }
+  }
 
-  const carregando = dados === null && !erro
+  const imoveis = aba === "imoveis"
 
   return (
     <section data-tela="salvos" className="grid gap-2">
@@ -121,38 +142,64 @@ export function Salvos() {
         subtitulo="Anúncios e referências do guia guardados para ver com calma."
       />
 
-      {erro ? (
-        <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
-      ) : carregando ? (
-        <EsqueletoDeLista linhas={3} />
-      ) : itens.length === 0 ? (
-        <EstadoVazio
-          titulo="Nenhum anúncio salvo"
-          texto="Toque no marcador de um anúncio para guardá-lo nesta lista."
-          icone="bookmark_border"
-          acao={{
-            rotulo: "Ver anúncios",
-            aoAcionar: () => void navegacao.irPara("desapegos"),
-          }}
+      <section data-salvos="anuncios" className="grid gap-2">
+        <Segmentos
+          itens={ABAS}
+          valor={aba}
+          aoEscolher={(escolhida) => setAba(escolhida === "imoveis" ? "imoveis" : "desapegos")}
+          rotulo="Seções dos salvos"
+          grupo="salvos"
         />
-      ) : (
-        <Grade formato="cartoes">
-          {itens.map(({ anuncio, apresentacao }) => (
-            <CartaoDeFoto
-              key={anuncio.id}
-              anuncio={{
-                id: anuncio.id,
-                titulo: texto(apresentacao["title"], anuncio.title),
-                preco: typeof anuncio.price_cents === "number" ? anuncio.price_cents / 100 : null,
-                icone: iconeDeDado(apresentacao["icon"]),
-                meta: texto(apresentacao["hood"], anuncio.neighborhood ?? casca.cidade),
-                salvo: true,
-              }}
-              aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
-            />
-          ))}
-        </Grade>
-      )}
+
+        {avisoDosAnuncios === null ? null : (
+          <p role="alert" className="text-sm text-(--destructive)">
+            {avisoDosAnuncios}
+          </p>
+        )}
+
+        {erroDosAnuncios ? (
+          <EstadoDeErro
+            titulo="Não foi possível carregar seus anúncios salvos"
+            aoTentar={() => setRodadaDosAnuncios((atual) => atual + 1)}
+          />
+        ) : anuncios === null ? (
+          <EsqueletoDeLista linhas={3} />
+        ) : anuncios.length === 0 ? (
+          <EstadoVazio
+            titulo={imoveis ? "Nenhum imóvel salvo" : "Nenhum anúncio salvo"}
+            texto={
+              imoveis
+                ? "Toque no marcador de um imóvel para guardá-lo nesta lista."
+                : "Toque no marcador de um anúncio para guardá-lo nesta lista."
+            }
+            icone="bookmark_border"
+            acao={{
+              rotulo: imoveis ? "Ver imóveis" : "Ver anúncios",
+              aoAcionar: () => void navegacao.irPara(imoveis ? "imoveis" : "desapegos"),
+            }}
+          />
+        ) : (
+          <Grade formato="cartoes">
+            {anuncios.map((anuncio) => (
+              <CartaoDeFoto
+                key={anuncio.id}
+                anuncio={{
+                  id: anuncio.id,
+                  fonte: anuncio.foto,
+                  titulo: anuncio.titulo,
+                  preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
+                  porMes: anuncio.deal === "rent",
+                  icone: anuncio.tipo === "property" ? "apartment" : iconeDeDado(anuncio.categoria),
+                  meta: anuncio.bairro ?? anuncio.cidade ?? "",
+                  salvo: true,
+                }}
+                aoSalvar={() => void dessalvar(anuncio.id)}
+                aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
+              />
+            ))}
+          </Grade>
+        )}
+      </section>
 
       <section data-salvos="publicacoes" className="grid gap-2">
         <h2 className="text-[17px]">Publicações salvas</h2>
